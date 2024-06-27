@@ -474,11 +474,11 @@ FAILURE 1
 @todo_wine@---
 FAILURE 1
 --- success/failure for COPY command
-@todo_wine@FAILURE 1
+FAILURE 1
 SUCCESS 0
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
+FAILURE 1
+FAILURE 1
+FAILURE 1
 --- success/failure for MOVE command
 FAILURE 1
 SUCCESS 0

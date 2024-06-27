@@ -606,8 +606,8 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
  *
  */
 
-void WCMD_copy(WCHAR * args) {
-
+RETURN_CODE WCMD_copy(WCHAR * args)
+{
   BOOL    opt_d, opt_v, opt_n, opt_z, opt_y, opt_noty;
   WCHAR  *thisparam;
   int     argno = 0;
@@ -639,15 +639,15 @@ void WCMD_copy(WCHAR * args) {
   COPY_FILES *destination   = NULL;
   COPY_FILES *thiscopy      = NULL;
   COPY_FILES *prevcopy      = NULL;
+  RETURN_CODE return_code;
 
   /* Assume we were successful! */
-  errorlevel = NO_ERROR;
+  return_code = NO_ERROR;
 
   /* If no args supplied at all, report an error */
   if (param1[0] == 0x00) {
     WCMD_output_stderr (WCMD_LoadMessage(WCMD_NOARG));
-    errorlevel = ERROR_INVALID_FUNCTION;
-    return;
+    return errorlevel = ERROR_INVALID_FUNCTION;
   }
 
   opt_d = opt_v = opt_n = opt_z = opt_y = opt_noty = FALSE;
@@ -726,7 +726,7 @@ void WCMD_copy(WCHAR * args) {
     if (*thisparam=='+') {
       if (lastcopyentry == NULL) {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-        errorlevel = ERROR_INVALID_FUNCTION;
+        return_code = ERROR_INVALID_FUNCTION;
         goto exitreturn;
       } else {
         concatnextfilename = TRUE;
@@ -781,7 +781,7 @@ void WCMD_copy(WCHAR * args) {
     } else {
       /* We have processed sources and destinations and still found more to do - invalid */
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-      errorlevel = ERROR_INVALID_FUNCTION;
+      return_code = ERROR_INVALID_FUNCTION;
       goto exitreturn;
     }
     concatnextfilename    = FALSE;
@@ -798,7 +798,7 @@ void WCMD_copy(WCHAR * args) {
   /* Ensure we have at least one source file */
   if (!sourcelist) {
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-    errorlevel = ERROR_INVALID_FUNCTION;
+    return_code = ERROR_INVALID_FUNCTION;
     goto exitreturn;
   }
 
@@ -828,6 +828,7 @@ void WCMD_copy(WCHAR * args) {
   if (destination == NULL) {
 
     WINE_TRACE("No destination supplied, so need to calculate it\n");
+
     lstrcpyW(destname, L".");
     lstrcatW(destname, L"\\");
 
@@ -846,7 +847,8 @@ void WCMD_copy(WCHAR * args) {
     WINE_TRACE("Destination supplied, processing to see if file or directory\n");
 
     /* Convert to fully qualified path/filename */
-    if (!WCMD_get_fullpath(destination->name, ARRAY_SIZE(destname), destname, &filenamepart)) return;
+    if (!WCMD_get_fullpath(destination->name, ARRAY_SIZE(destname), destname, &filenamepart))
+        return errorlevel = ERROR_INVALID_FUNCTION;
     WINE_TRACE("Full dest name is '%s'\n", wine_dbgstr_w(destname));
 
     /* If parameter is a directory, ensure it ends in \ */
@@ -914,6 +916,7 @@ void WCMD_copy(WCHAR * args) {
   thiscopy = sourcelist;
   prevcopy = NULL;
 
+  return_code = NO_ERROR;
   while (thiscopy != NULL) {
 
     WCHAR  srcpath[MAX_PATH];
@@ -928,7 +931,8 @@ void WCMD_copy(WCHAR * args) {
 
     /* Convert to fully qualified path/filename in srcpath, file filenamepart pointing
        to where the filename portion begins (used for wildcard expansion).             */
-    if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart)) return;
+    if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart))
+        return errorlevel = ERROR_INVALID_FUNCTION;
     WINE_TRACE("Full src name is '%s'\n", wine_dbgstr_w(srcpath));
 
     /* If parameter is a directory, ensure it ends in \* */
@@ -938,7 +942,8 @@ void WCMD_copy(WCHAR * args) {
       /* We need to know where the filename part starts, so append * and
          recalculate the full resulting path                              */
       lstrcatW(thiscopy->name, L"*");
-      if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart)) return;
+      if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart))
+          return errorlevel = ERROR_INVALID_FUNCTION;
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
 
     } else if ((wcspbrk(srcpath, L"*?") == NULL) &&
@@ -948,7 +953,8 @@ void WCMD_copy(WCHAR * args) {
       /* We need to know where the filename part starts, so append \* and
          recalculate the full resulting path                              */
       lstrcatW(thiscopy->name, L"\\*");
-      if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart)) return;
+      if (!WCMD_get_fullpath(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart))
+          return errorlevel = ERROR_INVALID_FUNCTION;
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
     }
 
@@ -1046,7 +1052,7 @@ void WCMD_copy(WCHAR * args) {
             }
             if (!status) {
               WCMD_print_error ();
-              errorlevel = ERROR_INVALID_FUNCTION;
+              return_code = ERROR_INVALID_FUNCTION;
             } else {
               WINE_TRACE("Copied successfully\n");
               if (anyconcats) writtenoneconcat = TRUE;
@@ -1058,11 +1064,12 @@ void WCMD_copy(WCHAR * args) {
               if (!destination->binarycopy && !anyconcats && !thiscopy->binarycopy) {
                 if (!WCMD_AppendEOF(outname)) {
                   WCMD_print_error ();
-                  errorlevel = ERROR_INVALID_FUNCTION;
+                  return_code = ERROR_INVALID_FUNCTION;
                 }
               }
             }
-          }
+          } else if (prompt)
+              return_code = ERROR_INVALID_FUNCTION;
         }
       } while (!srcisdevice && FindNextFileW(hff, &fd) != 0);
       if (!srcisdevice) FindClose (hff);
@@ -1070,7 +1077,7 @@ void WCMD_copy(WCHAR * args) {
       /* Error if the first file was not found */
       if (!anyconcats || !writtenoneconcat) {
         WCMD_print_error ();
-        errorlevel = ERROR_INVALID_FUNCTION;
+        return_code = ERROR_INVALID_FUNCTION;
       }
     }
 
@@ -1079,10 +1086,10 @@ void WCMD_copy(WCHAR * args) {
   }
 
   /* Append EOF if ascii destination and we were concatenating */
-  if (!errorlevel && !destination->binarycopy && anyconcats && writtenoneconcat) {
+  if (!return_code && !destination->binarycopy && anyconcats && writtenoneconcat) {
     if (!WCMD_AppendEOF(destination->name)) {
       WCMD_print_error ();
-      errorlevel = ERROR_INVALID_FUNCTION;
+      return_code = ERROR_INVALID_FUNCTION;
     }
   }
 
@@ -1104,7 +1111,7 @@ exitreturn:
     free(destination);
   }
 
-  return;
+  return errorlevel = return_code;
 }
 
 /****************************************************************************
