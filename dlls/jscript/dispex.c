@@ -2029,7 +2029,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
 static HRESULT delete_prop(dispex_prop_t *prop, BOOL *ret)
 {
-    if(prop->type == PROP_PROTREF) {
+    if(prop->type == PROP_PROTREF || prop->type == PROP_DELETED) {
         *ret = TRUE;
         return S_OK;
     }

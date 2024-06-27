@@ -1712,6 +1712,18 @@ try {
     }
 })();
 
+(function() {
+    function constr() {}
+    constr.prototype = { prop: 1 };
+    var o = new constr(), r;
+    ok(o.prop === 1, "o.prop = " + o.prop);
+    r = delete constr.prototype.prop;
+    ok(r === true, "delete returned " + r);
+    ok(o.prop === undefined, "o.prop = " + o.prop);
+    r = delete o["prop"];
+    ok(r === true, "delete returned " + r);
+})();
+
 if (false)
     if (true)
         ok(false, "if evaluated");
