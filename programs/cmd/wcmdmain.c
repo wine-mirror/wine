@@ -1808,7 +1808,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
     switch (cmd_index) {
 
       case WCMD_CALL:
-        WCMD_call (parms_start);
+        return_code = WCMD_call(parms_start);
         break;
       case WCMD_CD:
       case WCMD_CHDIR:

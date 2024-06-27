@@ -645,7 +645,7 @@ extern void WCMD_expand(const WCHAR *, WCHAR *);
  *	If there is a leading ':', calls within this batch program
  *	otherwise launches another program.
  */
-void WCMD_call(WCHAR *command)
+RETURN_CODE WCMD_call(WCHAR *command)
 {
     WCHAR buffer[MAXSTRING];
     WCMD_expand(command, buffer);
@@ -680,4 +680,5 @@ void WCMD_call(WCHAR *command)
         WCMD_restore_for_loop_context();
   } else
       WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_CALLINSCRIPT));
+  return errorlevel ? ERROR_INVALID_FUNCTION : NO_ERROR;
 }

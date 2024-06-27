@@ -159,7 +159,7 @@ typedef int RETURN_CODE;
 
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch(WCHAR *, WCHAR *, WCHAR *, HANDLE);
-void WCMD_call (WCHAR *command);
+RETURN_CODE WCMD_call(WCHAR *command);
 void WCMD_change_tty (void);
 void WCMD_choice (const WCHAR *);
 void WCMD_clear_screen (void);
