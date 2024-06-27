@@ -1734,7 +1734,7 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir)
  */
 static RETURN_CODE execute_single_command(const WCHAR *command)
 {
-    RETURN_CODE return_code = NO_ERROR;
+    RETURN_CODE return_code;
     WCHAR *cmd, *parms_start;
     int status, cmd_index, count;
     WCHAR *whichcmd;
@@ -1791,6 +1791,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
       WINE_TRACE("Got directory %s as %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(cmd));
       status = SetCurrentDirectoryW(cmd);
       if (!status) WCMD_print_error ();
+      return_code = ERROR_INVALID_FUNCTION;
       goto cleanup;
     }
 
@@ -1805,6 +1806,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
 
     }
 
+    return_code = RETURN_CODE_OLD_CHAINING;
     switch (cmd_index) {
 
       case WCMD_CALL:
@@ -1936,6 +1938,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
       default:
         prev_echo_mode = echo_mode;
         WCMD_run_program (whichcmd, FALSE);
+        return_code = errorlevel;
         echo_mode = prev_echo_mode;
     }
 
@@ -3659,6 +3662,16 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
     return return_code;
 }
 
+static RETURN_CODE temp_fixup_return_code(CMD_NODE *node, RETURN_CODE return_code, RETURN_CODE fallback_return_code)
+{
+    if (return_code == RETURN_CODE_OLD_CHAINING)
+    {
+        FIXME("Not migrated (%ls) used in chaining\n", node->op == CMD_SINGLE ? node->command->command : L"Too complex");
+        return_code = fallback_return_code;
+    }
+    return return_code;
+}
+
 RETURN_CODE node_execute(CMD_NODE *node)
 {
     HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
@@ -3674,7 +3687,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
     {
         WCMD_print_error();
         /* FIXME potentially leaking here (if first redir created ok, and second failed */
-        return ERROR_INVALID_FUNCTION;
+        return errorlevel = ERROR_INVALID_FUNCTION;
     }
     switch (node->op)
     {
@@ -3684,11 +3697,27 @@ RETURN_CODE node_execute(CMD_NODE *node)
         else return_code = NO_ERROR;
         break;
     case CMD_CONCAT:
-    case CMD_ONSUCCESS:
-    case CMD_ONFAILURE:
         return_code = node_execute(node->left);
         if (return_code != RETURN_CODE_ABORTED)
             return_code = node_execute(node->right);
+        break;
+    case CMD_ONSUCCESS:
+        return_code = node_execute(node->left);
+        return_code = temp_fixup_return_code(node->left, return_code, NO_ERROR);
+        if (return_code == NO_ERROR)
+        {
+            return_code = node_execute(node->right);
+            temp_fixup_return_code(node->right, return_code, 0 /* not used */);
+        }
+        break;
+    case CMD_ONFAILURE:
+        return_code = node_execute(node->left);
+        return_code = temp_fixup_return_code(node->left, return_code, ERROR_INVALID_FUNCTION);
+        if (return_code != NO_ERROR)
+        {
+            return_code = node_execute(node->right);
+            temp_fixup_return_code(node->right, return_code, 0 /* not used */);
+        }
         break;
     case CMD_PIPE:
         {
@@ -3714,11 +3743,13 @@ RETURN_CODE node_execute(CMD_NODE *node)
             output = redirection_create_file(REDIR_WRITE_TO, 1, filename);
             if (set_std_redirections(output))
             {
-                return_code = node_execute(node->left);
+                RETURN_CODE return_code_left = node_execute(node->left);
+                return_code = NO_ERROR;
 
                 CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
                 SetStdHandle(STD_OUTPUT_HANDLE, old_stdhandles[1]);
 
+                return_code = temp_fixup_return_code(node->left, return_code, NO_ERROR);
                 if (return_code == NO_ERROR)
                 {
                     HANDLE h = CreateFileW(filename, GENERIC_READ,
@@ -3728,10 +3759,13 @@ RETURN_CODE node_execute(CMD_NODE *node)
                     {
                         SetStdHandle(STD_INPUT_HANDLE, h);
                         return_code = node_execute(node->right);
+                        temp_fixup_return_code(node->right, return_code, 0 /* not used */);
                     }
                     else return_code = ERROR_INVALID_FUNCTION;
                 }
                 DeleteFileW(filename);
+                if (return_code_left != NO_ERROR || return_code != NO_ERROR)
+                    errorlevel = ERROR_INVALID_FUNCTION;
             }
             else return_code = ERROR_INVALID_FUNCTION;
             redirection_dispose_list(output);

@@ -156,6 +156,8 @@ typedef int RETURN_CODE;
 #define RETURN_CODE_SYNTAX_ERROR         255
 #define RETURN_CODE_CANT_LAUNCH          9009
 #define RETURN_CODE_ABORTED              (-999999)
+/* temporary to detect builtin commands not migrated to handle return code */
+#define RETURN_CODE_OLD_CHAINING         (-999998)
 
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch(WCHAR *, WCHAR *, WCHAR *, HANDLE);
