@@ -1947,17 +1947,19 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 /***********************************************************************
  *              WindowPosChanging   (MACDRV.@)
  */
-BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect)
+BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const RECT *window_rect,
+                              const RECT *client_rect, RECT *visible_rect)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
     DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     BOOL ret = FALSE;
 
-    TRACE("%p swp %04x window %s client %s visible %s\n", hwnd,
-          swp_flags, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
+    TRACE("hwnd %p, swp_flags %04x, shaped %u, window_rect %s, client_rect %s, visible_rect %s\n",
+          hwnd, swp_flags, shaped, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
           wine_dbgstr_rect(visible_rect));
 
     if (!data && !(data = macdrv_create_win_data(hwnd, window_rect, client_rect))) return FALSE; /* use default surface */
+    data->shaped = shaped;
 
     macdrv_window_to_mac_rect(data, style, visible_rect, window_rect, client_rect);
     TRACE("visible_rect %s -> %s\n", wine_dbgstr_rect(window_rect),

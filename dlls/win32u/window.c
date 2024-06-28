@@ -1834,11 +1834,16 @@ static BOOL get_default_window_surface( HWND hwnd, const RECT *surface_rect, str
 static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
                                                      RECT *visible_rect, RECT *surface_rect )
 {
-    BOOL needs_surface, layered, ulw_layered = FALSE;
+    BOOL shaped, needs_surface, layered, ulw_layered = FALSE;
     struct window_surface *new_surface;
+    RECT dummy;
+    HRGN shape;
+
+    if (get_window_region( hwnd, FALSE, &shape, &dummy )) shaped = FALSE;
+    else if ((shaped = !!shape)) NtGdiDeleteObjectApp( shape );
 
     *visible_rect = *window_rect;
-    if (!user_driver->pWindowPosChanging( hwnd, swp_flags, window_rect, client_rect, visible_rect )) needs_surface = FALSE;
+    if (!user_driver->pWindowPosChanging( hwnd, swp_flags, shaped, window_rect, client_rect, visible_rect )) needs_surface = FALSE;
     else if (swp_flags & SWP_HIDEWINDOW) needs_surface = FALSE;
     else if (swp_flags & SWP_SHOWWINDOW) needs_surface = TRUE;
     else needs_surface = !!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE);

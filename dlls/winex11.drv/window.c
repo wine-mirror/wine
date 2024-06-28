@@ -2579,12 +2579,18 @@ done:
 /***********************************************************************
  *		WindowPosChanging   (X11DRV.@)
  */
-BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect )
+BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const RECT *window_rect,
+                               const RECT *client_rect, RECT *visible_rect )
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
     BOOL ret = FALSE;
 
+    TRACE( "hwnd %p, swp_flags %04x, shaped %u, window_rect %s, client_rect %s, visible_rect %s\n",
+           hwnd, swp_flags, shaped, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
+           wine_dbgstr_rect(visible_rect) );
+
     if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return FALSE; /* use default surface */
+    data->shaped = shaped;
 
     /* check if we need to switch the window to managed */
     if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, window_rect ))

@@ -884,7 +884,7 @@ static LRESULT nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
     return 0;
 }
 
-static BOOL nulldrv_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect )
+static BOOL nulldrv_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect )
 {
     return TRUE;
 }
