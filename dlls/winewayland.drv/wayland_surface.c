@@ -38,7 +38,7 @@ static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_sur
                                          uint32_t serial)
 {
     struct wayland_surface *surface;
-    BOOL initial_configure = FALSE;
+    BOOL should_post = FALSE, initial_configure = FALSE;
     HWND hwnd = data;
 
     TRACE("serial=%u\n", serial);
@@ -52,15 +52,16 @@ static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_sur
         /* If we have a previously requested config, we have already sent a
          * WM_WAYLAND_CONFIGURE which hasn't been handled yet. In that case,
          * avoid sending another message to reduce message queue traffic. */
-        BOOL should_post = surface->requested.serial == 0;
+        should_post = surface->requested.serial == 0;
         initial_configure = surface->current.serial == 0;
         surface->pending.serial = serial;
         surface->requested = surface->pending;
         memset(&surface->pending, 0, sizeof(surface->pending));
-        if (should_post) NtUserPostMessage(hwnd, WM_WAYLAND_CONFIGURE, 0, 0);
     }
 
     pthread_mutex_unlock(&surface->mutex);
+
+    if (should_post) NtUserPostMessage(hwnd, WM_WAYLAND_CONFIGURE, 0, 0);
 
     /* Flush the window surface in case there is content that we weren't
      * able to flush before due to the lack of the initial configure. */
