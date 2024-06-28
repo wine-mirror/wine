@@ -43,6 +43,7 @@ struct video_encoder
     const GUID *const *output_types;
     UINT output_type_count;
 
+    IMFMediaType *input_type;
     IMFMediaType *output_type;
 
     IMFAttributes *attributes;
@@ -91,6 +92,8 @@ static ULONG WINAPI transform_Release(IMFTransform *iface)
 
     if (!refcount)
     {
+        if (encoder->input_type)
+            IMFMediaType_Release(encoder->input_type);
         if (encoder->output_type)
             IMFMediaType_Release(encoder->output_type);
         IMFAttributes_Release(encoder->attributes);
@@ -238,8 +241,52 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
 
 static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    FIXME("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
-    return E_NOTIMPL;
+    struct video_encoder *encoder = impl_from_IMFTransform(iface);
+    GUID major, subtype;
+    UINT64 ratio;
+    ULONG i;
+
+    TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
+
+    if (!type)
+    {
+        if (encoder->input_type)
+        {
+            IMFMediaType_Release(encoder->input_type);
+            encoder->input_type = NULL;
+        }
+
+        return S_OK;
+    }
+
+    if (!encoder->output_type)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major)) ||
+            FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+        return E_INVALIDARG;
+
+    if (!IsEqualGUID(&major, &MFMediaType_Video))
+        return MF_E_INVALIDMEDIATYPE;
+
+    for (i = 0; i < encoder->input_type_count; ++i)
+        if (IsEqualGUID(&subtype, encoder->input_types[i]))
+            break;
+    if (i == encoder->input_type_count)
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &ratio))
+            || FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &ratio)))
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
+
+    if (encoder->input_type)
+        IMFMediaType_Release(encoder->input_type);
+    IMFMediaType_AddRef((encoder->input_type = type));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
@@ -254,6 +301,11 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
 
     if (!type)
     {
+        if (encoder->input_type)
+        {
+            IMFMediaType_Release(encoder->input_type);
+            encoder->input_type = NULL;
+        }
         if (encoder->output_type)
         {
             IMFMediaType_Release(encoder->output_type);
