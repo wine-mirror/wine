@@ -1973,11 +1973,66 @@ static HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT
     }
 }
 
+static HRESULT dispex_prop_call(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *dp, VARIANT *r,
+                                EXCEPINFO *ei, IServiceProvider *caller)
+{
+    switch(get_dispid_type(id)) {
+    case DISPEXPROP_CUSTOM:
+        if(!dispex->info->desc->vtbl->invoke)
+            return DISP_E_MEMBERNOTFOUND;
+        return dispex->info->desc->vtbl->invoke(dispex, id, lcid, flags, dp, r, ei, caller);
+
+    case DISPEXPROP_DYNAMIC: {
+        DWORD idx = id - DISPID_DYNPROP_0;
+        dynamic_prop_t *prop;
+
+        if(!get_dynamic_data(dispex) || dispex->dynamic_data->prop_cnt <= idx)
+            return DISP_E_MEMBERNOTFOUND;
+
+        prop = dispex->dynamic_data->props + idx;
+
+        switch(flags) {
+        case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+            if(!r)
+                return E_INVALIDARG;
+            /* fall through */
+        case DISPATCH_METHOD:
+            if(V_VT(&prop->var) != VT_DISPATCH) {
+                FIXME("invoke %s\n", debugstr_variant(&prop->var));
+                return E_NOTIMPL;
+            }
+
+            return invoke_disp_value(dispex, V_DISPATCH(&prop->var), lcid, flags, dp, r, ei, caller);
+        default:
+            FIXME("unhandled flags %x on dynamic property\n", flags);
+            return E_NOTIMPL;
+        }
+    }
+    case DISPEXPROP_BUILTIN:
+        if(flags == DISPATCH_CONSTRUCT) {
+            if(id == DISPID_VALUE) {
+                if(dispex->info->desc->vtbl->value) {
+                    return dispex->info->desc->vtbl->value(dispex, lcid, flags, dp, r, ei, caller);
+                }
+                FIXME("DISPATCH_CONSTRUCT flag but missing value function\n");
+                return E_FAIL;
+            }
+            FIXME("DISPATCH_CONSTRUCT flag without DISPID_VALUE\n");
+            return E_FAIL;
+        }
+
+        return invoke_builtin_prop(dispex, id, lcid, flags, dp, r, ei, caller);
+
+    default:
+        assert(0);
+        return E_FAIL;
+    }
+}
+
 static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    HRESULT hres;
 
     TRACE("%s (%p)->(%lx %lx %x %p %p %p %p)\n", This->info->desc->name, This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
@@ -1988,7 +2043,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
         wFlags = DISPATCH_PROPERTYPUT;
 
     if(This->info->desc->vtbl->disp_invoke) {
-        hres = This->info->desc->vtbl->disp_invoke(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+        HRESULT hres = This->info->desc->vtbl->disp_invoke(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
         if(hres != S_FALSE)
             return hres;
     }
@@ -2007,57 +2062,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
         }
         return dispex_prop_put(This, id, lcid, pdp->rgvarg, pei, pspCaller);
     }
-    }
 
-    switch(get_dispid_type(id)) {
-    case DISPEXPROP_CUSTOM:
-        if(!This->info->desc->vtbl->invoke)
-            return DISP_E_MEMBERNOTFOUND;
-        return This->info->desc->vtbl->invoke(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-
-    case DISPEXPROP_DYNAMIC: {
-        DWORD idx = id - DISPID_DYNPROP_0;
-        dynamic_prop_t *prop;
-
-        if(!get_dynamic_data(This) || This->dynamic_data->prop_cnt <= idx)
-            return DISP_E_MEMBERNOTFOUND;
-
-        prop = This->dynamic_data->props+idx;
-
-        switch(wFlags) {
-        case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
-            if(!pvarRes)
-                return E_INVALIDARG;
-            /* fall through */
-        case DISPATCH_METHOD:
-            if(V_VT(&prop->var) != VT_DISPATCH) {
-                FIXME("invoke %s\n", debugstr_variant(&prop->var));
-                return E_NOTIMPL;
-            }
-
-            return invoke_disp_value(This, V_DISPATCH(&prop->var), lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-        default:
-            FIXME("unhandled wFlags %x\n", wFlags);
-            return E_NOTIMPL;
-        }
-    }
-    case DISPEXPROP_BUILTIN:
-        if(wFlags == DISPATCH_CONSTRUCT) {
-            if(id == DISPID_VALUE) {
-                if(This->info->desc->vtbl->value) {
-                    return This->info->desc->vtbl->value(This, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-                }
-                FIXME("DISPATCH_CONSTRUCT flag but missing value function\n");
-                return E_FAIL;
-            }
-            FIXME("DISPATCH_CONSTRUCT flag without DISPID_VALUE\n");
-            return E_FAIL;
-        }
-
-        return invoke_builtin_prop(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
     default:
-        assert(0);
-        return E_FAIL;
+        return dispex_prop_call(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
     }
 }
 
