@@ -1333,6 +1333,10 @@ static void test_Command(void)
     _Connection *connection;
     ADOCommandConstruction *adocommand;
     Parameters *parameters, *parameters2;
+    _Parameter *parameter = NULL;
+    IDispatch *disp;
+    BSTR str;
+    VARIANT value;
 
     hr = CoCreateInstance( &CLSID_Command, NULL, CLSCTX_INPROC_SERVER, &IID__Command, (void **)&command );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -1401,8 +1405,24 @@ static void test_Command(void)
     hr = _Command_putref_ActiveConnection( command,  NULL );
     ok( hr == S_OK, "got %08lx\n", hr );
 
+    VariantInit(&value);
+    str = SysAllocString(L"_");
+    hr = _Command_CreateParameter(command, str, adInteger, adParamInput, 0, value, &parameter );
+    SysFreeString(str);
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( parameter != NULL, "Invalid pointer\n");
+
     hr = _Command_get_Parameters( command,  &parameters );
     ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = _Parameter_QueryInterface(parameter, &IID_IDispatch, (void**)&disp);
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = Parameters_Append(parameters, disp);
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    IDispatch_Release(disp);
+    _Parameter_Release(parameter);
 
     hr = _Command_get_Parameters( command,  &parameters2 );
     ok( hr == S_OK, "got %08lx\n", hr );

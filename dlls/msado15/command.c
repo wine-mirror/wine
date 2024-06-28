@@ -50,6 +50,23 @@ struct command
     struct list parameters;
 };
 
+struct parameter
+{
+    _Parameter Parameter_iface;
+    LONG ref;
+
+    BSTR name;
+    DataTypeEnum datatype;
+    ParameterDirectionEnum direction;
+    ADO_LONGPTR size;
+    VARIANT value;
+};
+
+static inline struct parameter *impl_from_Parameter( _Parameter *iface )
+{
+    return CONTAINING_RECORD( iface, struct parameter, Parameter_iface );
+}
+
 static inline struct command *impl_from_Command( _Command *iface )
 {
     return CONTAINING_RECORD( iface, struct command, Command_iface );
@@ -442,12 +459,292 @@ static HRESULT WINAPI command_Execute( _Command *iface, VARIANT *affected, VARIA
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI parameter_QueryInterface(_Parameter *iface, REFIID riid, void **obj)
+{
+    TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
+
+    *obj = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown)   ||
+        IsEqualIID(riid, &IID_IDispatch)  ||
+        IsEqualIID(riid, &IID__Parameter))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+
+    _Parameter_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI parameter_AddRef(_Parameter *iface)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    return InterlockedIncrement( &parameter->ref );
+}
+
+static ULONG WINAPI parameter_Release(_Parameter *iface)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    LONG ref = InterlockedDecrement( &parameter->ref );
+    if (!ref)
+    {
+        SysFreeString(parameter->name);
+        VariantClear(&parameter->value);
+
+        free( parameter );
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI parameter_GetTypeInfoCount(_Parameter *iface, UINT *count)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE( "%p, %p\n", parameter, count );
+    *count = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_GetTypeInfo(_Parameter *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE( "%p, %u, %lu, %p\n", parameter, index, lcid, info );
+    return get_typeinfo(Parameter_tid, info);
+}
+
+static HRESULT WINAPI parameter_GetIDsOfNames(_Parameter *iface, REFIID riid, LPOLESTR *names, UINT count,
+                                                LCID lcid, DISPID *dispid)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", parameter, debugstr_guid(riid), names, count, lcid, dispid );
+
+    hr = get_typeinfo(Parameter_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, dispid);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI parameter_Invoke(_Parameter *iface, DISPID member, REFIID riid, LCID lcid, WORD flags,
+                                        DISPPARAMS *params, VARIANT *result, EXCEPINFO *excep_info, UINT *arg_err)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", parameter, member, debugstr_guid(riid), lcid, flags, params,
+           result, excep_info, arg_err );
+
+    hr = get_typeinfo(Parameter_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &parameter->Parameter_iface, member, flags, params,
+                               result, excep_info, arg_err);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI parameter_get_Properties(_Parameter *iface, Properties **object)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    FIXME("%p, %p\n", parameter, object);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameter_get_Name(_Parameter *iface, BSTR *str)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %p\n", parameter, str);
+    *str = SysAllocString(parameter->name);
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_put_Name(_Parameter *iface, BSTR str)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %s\n", parameter, debugstr_w(str));
+
+    SysFreeString(parameter->name);
+    parameter->name = SysAllocString(str);
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_get_Value(_Parameter *iface, VARIANT *val)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %p\n", parameter, val);
+
+    return VariantCopy(val, &parameter->value);
+}
+
+static HRESULT WINAPI parameter_put_Value(_Parameter *iface, VARIANT val)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %s\n", parameter, debugstr_variant(&val));
+
+    VariantClear(&parameter->value);
+    return VariantCopy(&parameter->value, &val);
+}
+
+static HRESULT WINAPI parameter_get_Type(_Parameter *iface, DataTypeEnum *data_type)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %p\n", parameter, data_type);
+    *data_type = parameter->datatype;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_put_Type(_Parameter *iface, DataTypeEnum data_type)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %d\n", parameter, data_type);
+    parameter->datatype = data_type;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_put_Direction(_Parameter *iface, ParameterDirectionEnum direction)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %d\n", parameter, direction);
+    parameter->direction = direction;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_get_Direction(_Parameter *iface, ParameterDirectionEnum *direction)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %p\n", parameter, direction);
+    *direction = parameter->direction;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_put_Precision(_Parameter *iface, unsigned char precision)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    FIXME("%p, %d\n", parameter, precision);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameter_get_Precision(_Parameter *iface, unsigned char *precision)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    FIXME("%p, %p\n", parameter, precision);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameter_put_NumericScale(_Parameter *iface, unsigned char scale)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    FIXME("%p, %d\n", parameter, scale);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameter_get_NumericScale(_Parameter *iface, unsigned char *scale)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    FIXME("%p, %p\n", parameter, scale);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameter_put_Size(_Parameter *iface, ADO_LONGPTR size)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %Id\n", parameter, size);
+    parameter->size = size;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_get_Size(_Parameter *iface, ADO_LONGPTR *size)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    TRACE("%p, %p\n", parameter, size);
+    *size = parameter->size;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameter_AppendChunk(_Parameter *iface, VARIANT val)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    FIXME("%p, %s\n", parameter, debugstr_variant(&val));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameter_get_Attributes(_Parameter *iface, LONG *attrs)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    FIXME("%p, %p\n", parameter, attrs);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameter_put_Attributes(_Parameter *iface, LONG attrs)
+{
+    struct parameter *parameter = impl_from_Parameter( iface );
+    FIXME("%p, %ld\n", parameter, attrs);
+    return E_NOTIMPL;
+}
+
+static const _ParameterVtbl parameter_vtbl =
+{
+    parameter_QueryInterface,
+    parameter_AddRef,
+    parameter_Release,
+    parameter_GetTypeInfoCount,
+    parameter_GetTypeInfo,
+    parameter_GetIDsOfNames,
+    parameter_Invoke,
+    parameter_get_Properties,
+    parameter_get_Name,
+    parameter_put_Name,
+    parameter_get_Value,
+    parameter_put_Value,
+    parameter_get_Type,
+    parameter_put_Type,
+    parameter_put_Direction,
+    parameter_get_Direction,
+    parameter_put_Precision,
+    parameter_get_Precision,
+    parameter_put_NumericScale,
+    parameter_get_NumericScale,
+    parameter_put_Size,
+    parameter_get_Size,
+    parameter_AppendChunk,
+    parameter_get_Attributes,
+    parameter_put_Attributes
+};
+
 static HRESULT WINAPI command_CreateParameter( _Command *iface, BSTR name, DataTypeEnum type,
                                                ParameterDirectionEnum direction, ADO_LONGPTR size, VARIANT value,
-                                               _Parameter **parameter )
+                                               _Parameter **obj )
 {
-    FIXME( "%p, %s, %d, %d, %Id, %p\n", iface, debugstr_w(name), type, direction, size, parameter );
-    return E_NOTIMPL;
+    struct parameter *parameter;
+    TRACE( "%p, %s, %d, %d, %Id, %s, %p\n", iface, debugstr_w(name), type, direction, size,
+                    debugstr_variant(&value), obj );
+
+    if (!(parameter = malloc( sizeof(*parameter) ))) return E_OUTOFMEMORY;
+    parameter->Parameter_iface.lpVtbl = &parameter_vtbl;
+    parameter->ref = 1;
+    parameter->name = SysAllocString(name);
+    parameter->datatype = type;
+    parameter->direction = direction;
+    parameter->size = size;
+    VariantCopy(&parameter->value, &value);
+
+    *obj = &parameter->Parameter_iface;
+    TRACE( "returning iface %p\n", *obj );
+    return S_OK;
 }
 
 static HRESULT WINAPI command_get_Parameters( _Command *iface, Parameters **parameters )
