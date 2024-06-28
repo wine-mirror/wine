@@ -174,7 +174,6 @@ static COLORREF get_color_key( const BITMAPINFO *info, COLORREF color_key )
     if (color_key & (1 << 24)) /* PALETTEINDEX */ return 0;
     if (color_key >> 16 == 0x10ff) /* DIBINDEX */ return 0;
 
-    if (info->bmiHeader.biBitCount == 24) return color_key;
     if (info->bmiHeader.biCompression == BI_BITFIELDS)
     {
         UINT *masks = (UINT *)info->bmiColors;
@@ -222,12 +221,34 @@ static void *window_surface_get_shape( struct window_surface *surface, BITMAPINF
     return gdi_bits.ptr;
 }
 
+static BYTE shape_from_alpha_mask( UINT32 *bits, UINT32 alpha_mask, UINT32 alpha )
+{
+    BYTE i, bit, mask = 0;
+    for (i = 0, bit = 7; i < 8; i++, bit--) mask |= ((bits[i] & alpha_mask) == alpha) << bit;
+    return ~mask;
+}
+
+static BYTE shape_from_color_key_16( UINT16 *bits, UINT16 color_mask, UINT16 color_key )
+{
+    BYTE i, bit, mask = 0;
+    for (i = 0, bit = 7; i < 8; i++, bit--) mask |= ((bits[i] & color_mask) == color_key) << bit;
+    return ~mask;
+}
+
+static BYTE shape_from_color_key_32( UINT32 *bits, UINT32 color_mask, UINT32 color_key )
+{
+    BYTE i, bit, mask = 0;
+    for (i = 0, bit = 7; i < 8; i++, bit--) mask |= ((bits[i] & color_mask) == color_key) << bit;
+    return ~mask;
+}
+
 static void set_surface_shape( struct window_surface *surface, const RECT *rect, const RECT *dirty,
                                const BITMAPINFO *color_info, void *color_bits )
 {
-    UINT width, height, shape_stride;
+    UINT width, height, x, y, shape_stride, color_stride, alpha_mask = surface->alpha_mask;
     char shape_buf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *shape_info = (BITMAPINFO *)shape_buf;
+    COLORREF color_key = surface->color_key;
     RECT *shape_rect, tmp_rect;
     WINEREGION *data;
     void *shape_bits;
@@ -239,7 +260,9 @@ static void set_surface_shape( struct window_surface *surface, const RECT *rect,
     if (!surface->shape_bitmap) surface->shape_bitmap = NtGdiCreateBitmap( width, height, 1, 1, NULL );
     if (!(shape_bits = window_surface_get_shape( surface, shape_info ))) return;
 
+    color_stride = color_info->bmiHeader.biSizeImage / height;
     shape_stride = shape_info->bmiHeader.biSizeImage / abs( shape_info->bmiHeader.biHeight );
+
     if (!surface->shape_region) set_surface_shape_rect( shape_bits, shape_stride, dirty );
     else if ((data = GDI_GetObjPtr( surface->shape_region, NTGDI_OBJ_REGION )))
     {
@@ -250,6 +273,59 @@ static void set_surface_shape( struct window_surface *surface, const RECT *rect,
             set_surface_shape_rect( shape_bits, shape_stride, &tmp_rect );
         }
         GDI_ReleaseObj( surface->shape_region );
+    }
+
+    switch (color_info->bmiHeader.biBitCount)
+    {
+    case 16:
+    {
+        UINT *masks = (UINT *)color_info->bmiColors, color_mask;
+        BYTE *shape = shape_bits, *color = color_bits;
+
+        if (color_key == CLR_INVALID) color_mask = 0;
+        else color_mask = masks[0] | masks[1] | masks[2];
+        if (!color_mask) break;
+
+        color += dirty->top * color_stride;
+        shape += dirty->top * shape_stride;
+
+        for (y = dirty->top; y < dirty->bottom; y++, color += color_stride, shape += shape_stride)
+        {
+            for (x = dirty->left; x < dirty->right; x += 8)
+            {
+                shape[x / 8] &= shape_from_color_key_16( (UINT16 *)color + x, color_mask, color_key );
+            }
+        }
+        break;
+    }
+    case 24: case 32:
+    {
+        BYTE *shape = shape_bits, *color = color_bits;
+        UINT color_mask, alpha = 0;
+
+        if (color_key == CLR_INVALID) color_mask = 0;
+        else if (color_info->bmiHeader.biCompression == BI_RGB) color_mask = 0xffffff;
+        else
+        {
+            UINT *masks = (UINT *)color_info->bmiColors;
+            color_mask = masks[0] | masks[1] | masks[2];
+        }
+        if (!alpha_mask && !color_mask) break;
+        if (!alpha_mask) alpha = -1;
+
+        color += dirty->top * color_stride;
+        shape += dirty->top * shape_stride;
+
+        for (y = dirty->top; y < dirty->bottom; y++, color += color_stride, shape += shape_stride)
+        {
+            for (x = dirty->left; x < dirty->right; x += 8)
+            {
+                shape[x / 8] &= shape_from_alpha_mask( (UINT32 *)color + x, alpha_mask, alpha );
+                shape[x / 8] &= shape_from_color_key_32( (UINT32 *)color + x, color_mask, color_key );
+            }
+        }
+        break;
+    }
     }
 
     surface->funcs->set_shape( surface, shape_info, shape_bits );
@@ -270,7 +346,7 @@ static void update_surface_shape( struct window_surface *surface, const RECT *re
 {
     if (surface == &dummy_surface) return;
 
-    if (surface->shape_region)
+    if (surface->shape_region || surface->alpha_mask || surface->color_key != CLR_INVALID)
         set_surface_shape( surface, rect, dirty, color_info, color_bits );
     else
         clear_surface_shape( surface );
