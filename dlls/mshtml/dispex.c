@@ -1894,6 +1894,42 @@ static HRESULT WINAPI DispatchEx_GetDispID(IWineJSDispatchHost *iface, BSTR bstr
     return S_OK;
 }
 
+static HRESULT dispex_prop_get(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *r, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    switch(get_dispid_type(id)) {
+    case DISPEXPROP_CUSTOM: {
+        DISPPARAMS dp = { .cArgs = 0 };
+        if(!dispex->info->desc->vtbl->invoke)
+            return DISP_E_MEMBERNOTFOUND;
+        return dispex->info->desc->vtbl->invoke(dispex, id, lcid, DISPATCH_PROPERTYGET, &dp, r, ei, caller);
+    }
+
+    case DISPEXPROP_DYNAMIC: {
+        DWORD idx = id - DISPID_DYNPROP_0;
+        dynamic_prop_t *prop;
+
+        if(!get_dynamic_data(dispex) || dispex->dynamic_data->prop_cnt <= idx)
+            return DISP_E_MEMBERNOTFOUND;
+
+        prop = dispex->dynamic_data->props+idx;
+        if(prop->flags & DYNPROP_DELETED)
+            return DISP_E_MEMBERNOTFOUND;
+
+        V_VT(r) = VT_EMPTY;
+        return variant_copy(r, &prop->var);
+    }
+
+    case DISPEXPROP_BUILTIN: {
+        DISPPARAMS dp = { .cArgs = 0 };
+        return invoke_builtin_prop(dispex, id, lcid, DISPATCH_PROPERTYGET, &dp, r, ei, caller);
+    }
+
+    default:
+        assert(0);
+        return E_FAIL;
+    }
+}
+
 static HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei, IServiceProvider *caller)
 {
     static DISPID propput_dispid = DISPID_PROPERTYPUT;
@@ -1958,6 +1994,11 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
     }
 
     switch(wFlags) {
+    case DISPATCH_PROPERTYGET:
+        if(!pvarRes)
+            return E_INVALIDARG;
+        return dispex_prop_get(This, id, lcid, pvarRes, pei, pspCaller);
+
     case DISPATCH_PROPERTYPUT: {
         if(pdp->cArgs != 1 || (pdp->cNamedArgs == 1 && *pdp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
            || pdp->cNamedArgs > 1) {
@@ -1995,11 +2036,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
             }
 
             return invoke_disp_value(This, V_DISPATCH(&prop->var), lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-        case DISPATCH_PROPERTYGET:
-            if(prop->flags & DYNPROP_DELETED)
-                return DISP_E_MEMBERNOTFOUND;
-            V_VT(pvarRes) = VT_EMPTY;
-            return variant_copy(pvarRes, &prop->var);
         default:
             FIXME("unhandled wFlags %x\n", wFlags);
             return E_NOTIMPL;
