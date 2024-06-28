@@ -619,18 +619,11 @@ static void android_surface_set_clip( struct window_surface *window_surface, con
 }
 
 /***********************************************************************
- *           android_surface_set_shape
- */
-static void android_surface_set_shape( struct window_surface *window_surface,
-                                       const BITMAPINFO *shape_info, const void *shape_bits )
-{
-}
-
-/***********************************************************************
  *           android_surface_flush
  */
 static BOOL android_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
-                                   const BITMAPINFO *color_info, const void *color_bits )
+                                   const BITMAPINFO *color_info, const void *color_bits, BOOL shape_changed,
+                                   const BITMAPINFO *shape_info, const void *shape_bits )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
     ANativeWindow_Buffer buffer;
@@ -712,7 +705,6 @@ static void android_surface_destroy( struct window_surface *window_surface )
 static const struct window_surface_funcs android_surface_funcs =
 {
     android_surface_set_clip,
-    android_surface_set_shape,
     android_surface_flush,
     android_surface_destroy
 };

@@ -217,15 +217,6 @@ static void wayland_window_surface_set_clip(struct window_surface *window_surfac
     /* TODO */
 }
 
-/***********************************************************************
- *           wayland_window_surface_set_shape
- */
-static void wayland_window_surface_set_shape(struct window_surface *window_surface,
-                                             const BITMAPINFO *shape_info, const void *shape_bits)
-{
-    /* TODO */
-}
-
 /**********************************************************************
  *          get_region_data
  */
@@ -328,7 +319,8 @@ static void wayland_shm_buffer_copy(struct wayland_shm_buffer *src,
  *           wayland_window_surface_flush
  */
 static BOOL wayland_window_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
-                                         const BITMAPINFO *color_info, const void *color_bits)
+                                         const BITMAPINFO *color_info, const void *color_bits, BOOL shape_changed,
+                                         const BITMAPINFO *shape_info, const void *shape_bits)
 {
     RECT surface_rect = {.right = color_info->bmiHeader.biWidth, .bottom = abs(color_info->bmiHeader.biHeight)};
     struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
@@ -439,7 +431,6 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 static const struct window_surface_funcs wayland_window_surface_funcs =
 {
     wayland_window_surface_set_clip,
-    wayland_window_surface_set_shape,
     wayland_window_surface_flush,
     wayland_window_surface_destroy
 };

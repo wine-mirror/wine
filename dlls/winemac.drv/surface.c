@@ -75,19 +75,11 @@ static void macdrv_surface_set_clip(struct window_surface *window_surface, const
 }
 
 /***********************************************************************
- *              macdrv_surface_set_shape
- */
-static void macdrv_surface_set_shape(struct window_surface *window_surface,
-                                     const BITMAPINFO *shape_info, const void *shape_bits)
-{
-    /* TODO */
-}
-
-/***********************************************************************
  *              macdrv_surface_flush
  */
 static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
-                                 const BITMAPINFO *color_info, const void *color_bits)
+                                 const BITMAPINFO *color_info, const void *color_bits, BOOL shape_changed,
+                                 const BITMAPINFO *shape_info, const void *shape_bits)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
     CGImageAlphaInfo alpha_info = (window_surface->alpha_mask ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst);
@@ -121,7 +113,6 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
 static const struct window_surface_funcs macdrv_surface_funcs =
 {
     macdrv_surface_set_clip,
-    macdrv_surface_set_shape,
     macdrv_surface_flush,
     macdrv_surface_destroy,
 };

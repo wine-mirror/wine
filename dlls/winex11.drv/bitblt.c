@@ -1786,36 +1786,11 @@ static void x11drv_surface_set_clip( struct window_surface *window_surface, cons
 }
 
 /***********************************************************************
- *           x11drv_surface_set_shape
- */
-static void x11drv_surface_set_shape( struct window_surface *window_surface,
-                                      const BITMAPINFO *shape_info, const void *shape_bits )
-{
-#ifdef HAVE_LIBXSHAPE
-    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
-
-    if (!shape_bits)
-        XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, None, ShapeSet );
-    else
-    {
-        struct gdi_image_bits bits = {.ptr = (void *)shape_bits};
-        XVisualInfo vis = default_visual;
-        Pixmap shape;
-
-        vis.depth = 1;
-        shape = create_pixmap_from_image( 0, &vis, shape_info, &bits, DIB_RGB_COLORS );
-        XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, shape, ShapeSet );
-        XFreePixmap( gdi_display, shape );
-    }
-    XFlush( gdi_display );
-#endif /* HAVE_LIBXSHAPE */
-}
-
-/***********************************************************************
  *           x11drv_surface_flush
  */
 static BOOL x11drv_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
-                                  const BITMAPINFO *color_info, const void *color_bits )
+                                  const BITMAPINFO *color_info, const void *color_bits, BOOL shape_changed,
+                                  const BITMAPINFO *shape_info, const void *shape_bits )
 {
     UINT alpha_mask = window_surface->alpha_mask, alpha_bits = window_surface->alpha_bits;
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
@@ -1859,6 +1834,25 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
                    dirty->top, rect->left + dirty->left, rect->top + dirty->top,
                    dirty->right - dirty->left, dirty->bottom - dirty->top );
 
+    if (shape_changed)
+    {
+#ifdef HAVE_LIBXSHAPE
+        if (!shape_bits)
+            XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, None, ShapeSet );
+        else
+        {
+            struct gdi_image_bits bits = {.ptr = (void *)shape_bits};
+            XVisualInfo vis = default_visual;
+            Pixmap shape;
+
+            vis.depth = 1;
+            shape = create_pixmap_from_image( 0, &vis, shape_info, &bits, DIB_RGB_COLORS );
+            XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, shape, ShapeSet );
+            XFreePixmap( gdi_display, shape );
+        }
+#endif /* HAVE_LIBXSHAPE */
+    }
+
     XFlush( gdi_display );
 
     return TRUE;
@@ -1880,7 +1874,6 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 static const struct window_surface_funcs x11drv_surface_funcs =
 {
     x11drv_surface_set_clip,
-    x11drv_surface_set_shape,
     x11drv_surface_flush,
     x11drv_surface_destroy
 };
