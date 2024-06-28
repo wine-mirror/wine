@@ -1328,25 +1328,26 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 
     if (whole_rgn)
     {
+        struct window_rects rects;
         UINT context;
-        RECT client, window, update;
+        RECT update;
         INT type;
 
         context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
 
         /* check if update rgn overlaps with nonclient area */
         type = NtGdiGetRgnBox( whole_rgn, &update );
-        get_window_rects( hwnd, COORDS_SCREEN, &window, &client, get_thread_dpi() );
+        get_window_rects( hwnd, COORDS_SCREEN, &rects, get_thread_dpi() );
 
         if ((*flags & UPDATE_NONCLIENT) ||
-            update.left < client.left || update.top < client.top ||
-            update.right > client.right || update.bottom > client.bottom)
+            update.left < rects.client.left || update.top < rects.client.top ||
+            update.right > rects.client.right || update.bottom > rects.client.bottom)
         {
-            client_rgn = NtGdiCreateRectRgn( client.left, client.top, client.right, client.bottom );
+            client_rgn = NtGdiCreateRectRgn( rects.client.left, rects.client.top, rects.client.right, rects.client.bottom );
             NtGdiCombineRgn( client_rgn, client_rgn, whole_rgn, RGN_AND );
 
             /* check if update rgn contains complete nonclient area */
-            if (type == SIMPLEREGION && EqualRect( &window, &update ))
+            if (type == SIMPLEREGION && EqualRect( &rects.window, &update ))
             {
                 NtGdiDeleteObjectApp( whole_rgn );
                 whole_rgn = (HRGN)1;

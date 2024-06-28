@@ -259,8 +259,8 @@ extern BOOL get_window_rect( HWND hwnd, RECT *rect, UINT dpi );
 enum coords_relative;
 extern BOOL get_window_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, UINT dpi );
 extern BOOL get_client_rect_rel( HWND hwnd, enum coords_relative rel, RECT *rect, UINT dpi );
-extern BOOL get_window_rects( HWND hwnd, enum coords_relative relative, RECT *window_rect,
-                              RECT *client_rect, UINT dpi );
+extern BOOL get_window_rects( HWND hwnd, enum coords_relative relative,
+                              struct window_rects *rects, UINT dpi );
 extern HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *class,
                                    DWORD tid );
 extern int map_window_points( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count,
