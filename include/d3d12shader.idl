@@ -31,6 +31,10 @@ typedef enum D3D12_SHADER_VERSION_TYPE
     D3D12_SHVER_RESERVED0 = 0xfff0,
 } D3D12_SHADER_VERSION_TYPE;
 
+cpp_quote("#define D3D12_SHVER_GET_TYPE(v) (((v) >> 16) & 0xffff)")
+cpp_quote("#define D3D12_SHVER_GET_MAJOR(v) (((v) >> 4) & 0xf)")
+cpp_quote("#define D3D12_SHVER_GET_MINOR(v) (((v) >> 0) & 0xf)")
+
 typedef struct _D3D12_SHADER_DESC
 {
     UINT Version;
