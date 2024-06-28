@@ -3116,8 +3116,7 @@ static void map_dpi_winpos( WINDOWPOS *winpos )
 /***********************************************************************
  *           calc_winpos
  */
-static BOOL calc_winpos( WINDOWPOS *winpos, RECT *old_window_rect, RECT *old_client_rect,
-                                  RECT *new_window_rect, RECT *new_client_rect )
+static BOOL calc_winpos( WINDOWPOS *winpos, struct window_rects *old_rects, struct window_rects *new_rects )
 {
     WND *win;
 
@@ -3130,21 +3129,21 @@ static BOOL calc_winpos( WINDOWPOS *winpos, RECT *old_window_rect, RECT *old_cli
         win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
 
     /* Calculate new position and size */
-    get_window_rects( winpos->hwnd, COORDS_PARENT, old_window_rect, old_client_rect, get_thread_dpi() );
-    *new_window_rect = *old_window_rect;
-    *new_client_rect = *old_client_rect;
+    get_window_rects( winpos->hwnd, COORDS_PARENT, &old_rects->window, &old_rects->client, get_thread_dpi() );
+    old_rects->visible = win->visible_rect;
+    *new_rects = *old_rects;
 
     if (!(winpos->flags & SWP_NOSIZE))
     {
         if (win->dwStyle & WS_MINIMIZE)
         {
-            new_window_rect->right  = new_window_rect->left + get_system_metrics( SM_CXMINIMIZED );
-            new_window_rect->bottom = new_window_rect->top + get_system_metrics( SM_CYMINIMIZED );
+            new_rects->window.right  = new_rects->window.left + get_system_metrics( SM_CXMINIMIZED );
+            new_rects->window.bottom = new_rects->window.top + get_system_metrics( SM_CYMINIMIZED );
         }
         else
         {
-            new_window_rect->right  = new_window_rect->left + winpos->cx;
-            new_window_rect->bottom = new_window_rect->top + winpos->cy;
+            new_rects->window.right  = new_rects->window.left + winpos->cx;
+            new_rects->window.bottom = new_rects->window.top + winpos->cy;
         }
     }
 
@@ -3158,21 +3157,21 @@ static BOOL calc_winpos( WINDOWPOS *winpos, RECT *old_window_rect, RECT *old_cli
             winpos->x = -32000;
             winpos->y = -32000;
         }
-        new_window_rect->left    = winpos->x;
-        new_window_rect->top     = winpos->y;
-        new_window_rect->right  += winpos->x - old_window_rect->left;
-        new_window_rect->bottom += winpos->y - old_window_rect->top;
+        new_rects->window.left    = winpos->x;
+        new_rects->window.top     = winpos->y;
+        new_rects->window.right  += winpos->x - old_rects->window.left;
+        new_rects->window.bottom += winpos->y - old_rects->window.top;
 
-        OffsetRect( new_client_rect, winpos->x - old_window_rect->left,
-                     winpos->y - old_window_rect->top );
+        OffsetRect( &new_rects->client, winpos->x - old_rects->window.left,
+                    winpos->y - old_rects->window.top );
+        OffsetRect( &new_rects->visible, winpos->x - old_rects->window.left,
+                    winpos->y - old_rects->window.top );
     }
     winpos->flags |= SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE;
 
-    TRACE( "hwnd %p, after %p, swp %d,%d %dx%d flags %08x current %s style %08x new %s\n",
-           winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y,
-           winpos->cx, winpos->cy, winpos->flags,
-           wine_dbgstr_rect( old_window_rect ), win->dwStyle,
-           wine_dbgstr_rect( new_window_rect ));
+    TRACE( "hwnd %p, after %p, swp %d,%d %dx%d flags %08x style %08x old_rects %s new_rects %s\n",
+           winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags, win->dwStyle,
+           debugstr_window_rects( old_rects ), debugstr_window_rects( new_rects ) );
 
     release_win_ptr( win );
     return TRUE;
@@ -3541,8 +3540,7 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
 
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( winpos->hwnd ));
 
-    if (!calc_winpos( winpos, &old_rects.window, &old_rects.client,
-                      &new_rects.window, &new_rects.client )) goto done;
+    if (!calc_winpos( winpos, &old_rects, &new_rects )) goto done;
 
     /* Fix redundant flags */
     if (!fixup_swp_flags( winpos, &old_rects.window, parent_x, parent_y )) goto done;
