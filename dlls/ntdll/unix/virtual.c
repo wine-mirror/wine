@@ -4998,6 +4998,7 @@ static unsigned int fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFOR
          * so that the app doesn't believe it's fully available */
         {
             struct reserved_area *area;
+            BOOL in_reserved = FALSE;
 
             LIST_FOR_EACH_ENTRY( area, &reserved_areas, struct reserved_area, entry )
             {
@@ -5012,6 +5013,7 @@ static unsigned int fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFOR
                 if (area_start <= base || area_start <= (char *)address_space_start)
                 {
                     if (area_end < alloc_end) info->RegionSize = area_end - base;
+                    in_reserved = TRUE;
                     break;
                 }
                 /* report the remaining part of the 64K after the view as free */
@@ -5022,18 +5024,22 @@ static unsigned int fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFOR
                     if (base < next)
                     {
                         info->RegionSize = min( next, alloc_end ) - base;
+                        in_reserved = TRUE;
                         break;
                     }
                     else alloc_base = base;
                 }
                 /* pretend it's allocated */
                 if (area_start < alloc_end) info->RegionSize = area_start - base;
+                break;
+            }
+            if (!in_reserved)
+            {
                 info->State             = MEM_RESERVE;
                 info->Protect           = PAGE_NOACCESS;
                 info->AllocationBase    = alloc_base;
                 info->AllocationProtect = PAGE_NOACCESS;
                 info->Type              = MEM_PRIVATE;
-                break;
             }
         }
 #endif
