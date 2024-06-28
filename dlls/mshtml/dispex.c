@@ -1894,6 +1894,49 @@ static HRESULT WINAPI DispatchEx_GetDispID(IWineJSDispatchHost *iface, BSTR bstr
     return S_OK;
 }
 
+static HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    static DISPID propput_dispid = DISPID_PROPERTYPUT;
+
+    switch(get_dispid_type(id)) {
+    case DISPEXPROP_CUSTOM: {
+        DISPPARAMS dp = { .cArgs = 1, .rgvarg = v, .cNamedArgs = 1, .rgdispidNamedArgs = &propput_dispid };
+        if(!dispex->info->desc->vtbl->invoke)
+            return DISP_E_MEMBERNOTFOUND;
+        return dispex->info->desc->vtbl->invoke(dispex, id, lcid, DISPATCH_PROPERTYPUT, &dp, NULL, ei, caller);
+    }
+
+    case DISPEXPROP_DYNAMIC: {
+        DWORD idx = id - DISPID_DYNPROP_0;
+        dynamic_prop_t *prop;
+        HRESULT hres;
+
+        if(!get_dynamic_data(dispex) || dispex->dynamic_data->prop_cnt <= idx)
+            return DISP_E_MEMBERNOTFOUND;
+
+        prop = dispex->dynamic_data->props + idx;
+
+        TRACE("put %s\n", debugstr_variant(v));
+        VariantClear(&prop->var);
+        hres = variant_copy(&prop->var, v);
+        if(FAILED(hres))
+            return hres;
+
+        prop->flags &= ~DYNPROP_DELETED;
+        return S_OK;
+    }
+
+    case DISPEXPROP_BUILTIN: {
+        DISPPARAMS dp = { .cArgs = 1, .rgvarg = v, .cNamedArgs = 1, .rgdispidNamedArgs = &propput_dispid };
+        return invoke_builtin_prop(dispex, id, lcid, DISPATCH_PROPERTYPUT, &dp, NULL, ei, caller);
+    }
+
+    default:
+        assert(0);
+        return E_FAIL;
+    }
+}
+
 static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1912,6 +1955,17 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
         hres = This->info->desc->vtbl->disp_invoke(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
         if(hres != S_FALSE)
             return hres;
+    }
+
+    switch(wFlags) {
+    case DISPATCH_PROPERTYPUT: {
+        if(pdp->cArgs != 1 || (pdp->cNamedArgs == 1 && *pdp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
+           || pdp->cNamedArgs > 1) {
+            FIXME("invalid args\n");
+            return E_INVALIDARG;
+        }
+        return dispex_prop_put(This, id, lcid, pdp->rgvarg, pei, pspCaller);
+    }
     }
 
     switch(get_dispid_type(id)) {
@@ -1946,21 +2000,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
                 return DISP_E_MEMBERNOTFOUND;
             V_VT(pvarRes) = VT_EMPTY;
             return variant_copy(pvarRes, &prop->var);
-        case DISPATCH_PROPERTYPUT:
-            if(pdp->cArgs != 1 || (pdp->cNamedArgs == 1 && *pdp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
-               || pdp->cNamedArgs > 1) {
-                FIXME("invalid args\n");
-                return E_INVALIDARG;
-            }
-
-            TRACE("put %s\n", debugstr_variant(pdp->rgvarg));
-            VariantClear(&prop->var);
-            hres = variant_copy(&prop->var, pdp->rgvarg);
-            if(FAILED(hres))
-                return hres;
-
-            prop->flags &= ~DYNPROP_DELETED;
-            return S_OK;
         default:
             FIXME("unhandled wFlags %x\n", wFlags);
             return E_NOTIMPL;
