@@ -32,6 +32,7 @@ typedef enum tid_t {
     Connection_tid,
     Field_tid,
     Fields_tid,
+    Parameters_tid,
     Properties_tid,
     Property_tid,
     Recordset_tid,

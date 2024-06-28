@@ -33,6 +33,7 @@ struct command
 {
     _Command         Command_iface;
     ADOCommandConstruction ADOCommandConstruction_iface;
+    Parameters       Parameters_iface;
     LONG             ref;
     CommandTypeEnum  type;
     BSTR             text;
@@ -48,6 +49,156 @@ static inline struct command *impl_from_ADOCommandConstruction( ADOCommandConstr
 {
     return CONTAINING_RECORD( iface, struct command, ADOCommandConstruction_iface );
 }
+
+static inline struct command *impl_from_Parameters( Parameters *iface )
+{
+    return CONTAINING_RECORD( iface, struct command, Parameters_iface );
+}
+
+static HRESULT WINAPI parameters_QueryInterface(Parameters *iface, REFIID riid, void **obj)
+{
+    TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
+
+    *obj = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown)    ||
+        IsEqualIID(riid, &IID_IDispatch)   ||
+        IsEqualIID(riid, &IID__Collection) ||
+        IsEqualIID(riid, &IID__DynaCollection)  ||
+        IsEqualIID(riid, &IID_Parameters))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+
+    Parameters_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI parameters_AddRef(Parameters *iface)
+{
+    struct command *command = impl_from_Parameters( iface );
+    return _Command_AddRef(&command->Command_iface);
+}
+
+static ULONG WINAPI parameters_Release(Parameters *iface)
+{
+    struct command *command = impl_from_Parameters( iface );
+    return _Command_Release(&command->Command_iface);
+}
+
+static HRESULT WINAPI parameters_GetTypeInfoCount(Parameters *iface, UINT *count)
+{
+    struct command *command = impl_from_Parameters( iface );
+    TRACE( "%p, %p\n", command, count );
+    *count = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameters_GetTypeInfo(Parameters *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    struct command *command = impl_from_Parameters( iface );
+    TRACE( "%p, %u, %lu, %p\n", command, index, lcid, info );
+    return get_typeinfo(Parameters_tid, info);
+}
+
+static HRESULT WINAPI parameters_GetIDsOfNames(Parameters *iface, REFIID riid, LPOLESTR *names, UINT count,
+                                                LCID lcid, DISPID *dispid)
+{
+    struct command *command = impl_from_Parameters( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", command, debugstr_guid(riid), names, count, lcid, dispid );
+
+    hr = get_typeinfo(Parameters_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, dispid);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI parameters_Invoke(Parameters *iface, DISPID member, REFIID riid, LCID lcid, WORD flags,
+    DISPPARAMS *params, VARIANT *result, EXCEPINFO *excep_info, UINT *arg_err)
+{
+    struct command *command = impl_from_Parameters( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", command, member, debugstr_guid(riid), lcid, flags, params,
+           result, excep_info, arg_err );
+
+    hr = get_typeinfo(Parameters_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &command->Parameters_iface, member, flags, params,
+                               result, excep_info, arg_err);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI parameters_get_Count(Parameters *iface, LONG *count)
+{
+    FIXME( "%p, %p\n", iface, count);
+    *count = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI parameters__NewEnum(Parameters *iface, IUnknown **object)
+{
+    FIXME( "%p, %p\n", iface, object);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameters_Refresh(Parameters *iface)
+{
+    FIXME( "%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameters_Append(Parameters *iface, IDispatch *object)
+{
+    FIXME( "%p, %p\n", iface, object);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameters_Delete(Parameters *iface, VARIANT index)
+{
+    FIXME( "%p, %s\n", iface, debugstr_variant(&index));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI parameters_get_Item(Parameters *iface, VARIANT index, _Parameter **object)
+{
+    FIXME( "%p, %s, %p\n", iface, debugstr_variant(&index), object);
+    return E_NOTIMPL;
+}
+
+static const struct ParametersVtbl parameters_vtbl =
+{
+    parameters_QueryInterface,
+    parameters_AddRef,
+    parameters_Release,
+    parameters_GetTypeInfoCount,
+    parameters_GetTypeInfo,
+    parameters_GetIDsOfNames,
+    parameters_Invoke,
+    parameters_get_Count,
+    parameters__NewEnum,
+    parameters_Refresh,
+    parameters_Append,
+    parameters_Delete,
+    parameters_get_Item
+};
 
 static HRESULT WINAPI command_QueryInterface( _Command *iface, REFIID riid, void **obj )
 {
@@ -253,8 +404,17 @@ static HRESULT WINAPI command_CreateParameter( _Command *iface, BSTR name, DataT
 
 static HRESULT WINAPI command_get_Parameters( _Command *iface, Parameters **parameters )
 {
-    FIXME( "%p, %p\n", iface, parameters );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+
+    TRACE( "%p, %p\n", iface, parameters );
+
+    if (!parameters)
+        return E_INVALIDARG;
+
+    *parameters = &command->Parameters_iface;
+    Parameters_AddRef(*parameters);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI command_put_CommandType( _Command *iface, CommandTypeEnum type )
@@ -446,6 +606,7 @@ HRESULT Command_create( void **obj )
     if (!(command = malloc( sizeof(*command) ))) return E_OUTOFMEMORY;
     command->Command_iface.lpVtbl = &command_vtbl;
     command->ADOCommandConstruction_iface.lpVtbl = &construct_vtbl;
+    command->Parameters_iface.lpVtbl = &parameters_vtbl;
     command->type = adCmdUnknown;
     command->text = NULL;
     command->connection = NULL;

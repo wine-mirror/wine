@@ -1332,6 +1332,7 @@ static void test_Command(void)
     BSTR cmd_text = (BSTR)"test";
     _Connection *connection;
     ADOCommandConstruction *adocommand;
+    Parameters *parameters, *parameters2;
 
     hr = CoCreateInstance( &CLSID_Command, NULL, CLSCTX_INPROC_SERVER, &IID__Command, (void **)&command );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -1351,6 +1352,9 @@ static void test_Command(void)
     hr = _Command_QueryInterface( command, &IID_ADOCommandConstruction, (void **)&adocommand );
     ok( hr == S_OK, "got %08lx\n", hr );
     ADOCommandConstruction_Release( adocommand );
+
+    hr = _Command_QueryInterface( command, &IID_Parameters, (void **)&parameters );
+    ok( hr == E_NOINTERFACE, "got %08lx\n", hr );
 
     hr = _Command_get_CommandType( command, &cmd_type );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -1396,6 +1400,15 @@ static void test_Command(void)
 
     hr = _Command_putref_ActiveConnection( command,  NULL );
     ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = _Command_get_Parameters( command,  &parameters );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = _Command_get_Parameters( command,  &parameters2 );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( parameters == parameters2, "got %08lx\n", hr );
+    Parameters_Release(parameters);
+    Parameters_Release(parameters2);
 
     _Command_Release( command );
 }
