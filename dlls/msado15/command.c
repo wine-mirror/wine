@@ -24,10 +24,18 @@
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 #include "msado15_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
+
+struct param_item
+{
+    struct list entry;
+
+    IDispatch *param;
+};
 
 struct command
 {
@@ -38,6 +46,8 @@ struct command
     CommandTypeEnum  type;
     BSTR             text;
     _Connection     *connection;
+
+    struct list parameters;
 };
 
 static inline struct command *impl_from_Command( _Command *iface )
@@ -148,8 +158,9 @@ static HRESULT WINAPI parameters_Invoke(Parameters *iface, DISPID member, REFIID
 
 static HRESULT WINAPI parameters_get_Count(Parameters *iface, LONG *count)
 {
-    FIXME( "%p, %p\n", iface, count);
-    *count = 0;
+    struct command *command = impl_from_Parameters( iface );
+    TRACE( "%p, %p\n", iface, count);
+    *count = list_count(&command->parameters);
     return S_OK;
 }
 
@@ -167,14 +178,41 @@ static HRESULT WINAPI parameters_Refresh(Parameters *iface)
 
 static HRESULT WINAPI parameters_Append(Parameters *iface, IDispatch *object)
 {
-    FIXME( "%p, %p\n", iface, object);
-    return E_NOTIMPL;
+    struct command *command = impl_from_Parameters( iface );
+    struct param_item *param;
+
+    TRACE( "%p, %p\n", iface, object);
+
+    if (!(param = calloc(1, sizeof(*param))))
+        return E_OUTOFMEMORY;
+    param->param = object;
+    IDispatch_AddRef(object);
+
+    list_add_tail(&command->parameters, &param->entry);
+    return S_OK;
 }
 
 static HRESULT WINAPI parameters_Delete(Parameters *iface, VARIANT index)
 {
-    FIXME( "%p, %s\n", iface, debugstr_variant(&index));
-    return E_NOTIMPL;
+    struct command *command = impl_from_Parameters( iface );
+    struct param_item *para, *para2;
+    int cnt = 0;
+
+    TRACE( "%p, %s\n", iface, debugstr_variant(&index));
+
+    LIST_FOR_EACH_ENTRY_SAFE(para, para2, &command->parameters, struct param_item, entry)
+    {
+        if(cnt == V_I4(&index))
+        {
+            list_remove(&para->entry);
+            if (para->param)
+                IDispatch_Release(para->param);
+            free(para);
+            break;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI parameters_get_Item(Parameters *iface, VARIANT index, _Parameter **object)
@@ -242,7 +280,17 @@ static ULONG WINAPI command_Release( _Command *iface )
     LONG ref = InterlockedDecrement( &command->ref );
     if (!ref)
     {
+        struct param_item *para, *para2;
         TRACE( "destroying %p\n", command );
+
+        LIST_FOR_EACH_ENTRY_SAFE(para, para2, &command->parameters, struct param_item, entry)
+        {
+            list_remove(&para->entry);
+            if (para->param)
+                IDispatch_Release(para->param);
+            free(para);
+        }
+
         if (command->connection) _Connection_Release(command->connection);
         free( command->text );
         free( command );
@@ -610,6 +658,7 @@ HRESULT Command_create( void **obj )
     command->type = adCmdUnknown;
     command->text = NULL;
     command->connection = NULL;
+    list_init(&command->parameters);
     command->ref = 1;
 
     *obj = &command->Command_iface;
