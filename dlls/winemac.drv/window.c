@@ -1923,9 +1923,8 @@ void macdrv_MoveWindowBits(HWND hwnd, const RECT *window_rect, const RECT *clien
 /***********************************************************************
  *              WindowPosChanged   (MACDRV.@)
  */
-void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
-                             const RECT *window_rect, const RECT *client_rect,
-                             const RECT *visible_rect, struct window_surface *surface)
+void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, const struct window_rects *new_rects,
+                             struct window_surface *surface)
 {
     struct macdrv_thread_data *thread_data;
     struct macdrv_win_data *data;
@@ -1939,9 +1938,9 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     old_window_rect = data->window_rect;
     old_whole_rect  = data->whole_rect;
     old_client_rect = data->client_rect;
-    data->window_rect = *window_rect;
-    data->whole_rect  = *visible_rect;
-    data->client_rect = *client_rect;
+    data->window_rect = new_rects->window;
+    data->whole_rect  = new_rects->visible;
+    data->client_rect = new_rects->client;
     if (data->cocoa_window && !data->ulw_layered)
     {
         if (surface) window_surface_add_ref(surface);
@@ -1965,10 +1964,8 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
         data->surface = surface;
     }
 
-    TRACE("win %p/%p window %s whole %s client %s style %08x flags %08x surface %p\n",
-           hwnd, data->cocoa_window, wine_dbgstr_rect(window_rect),
-           wine_dbgstr_rect(visible_rect), wine_dbgstr_rect(client_rect),
-           new_style, swp_flags, surface);
+    TRACE("win %p/%p new_rects %s style %08x flags %08x surface %p\n", hwnd, data->cocoa_window,
+          debugstr_window_rects(new_rects), new_style, swp_flags, surface);
 
     sync_gl_view(data, &old_whole_rect, &old_client_rect);
 

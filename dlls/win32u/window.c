@@ -2037,8 +2037,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
                 user_driver->pMoveWindowBits( hwnd, &new_rects->window, &new_rects->client, &new_rects->visible, valid_rects );
         }
 
-        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, &new_rects->window,
-                                        &new_rects->client, &new_rects->visible, new_surface );
+        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, new_rects, new_surface );
     }
 
     return ret;
