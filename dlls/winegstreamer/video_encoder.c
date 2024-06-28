@@ -38,6 +38,8 @@ struct video_encoder
     IMFTransform IMFTransform_iface;
     LONG refcount;
 
+    const GUID *const *input_types;
+    UINT input_type_count;
     const GUID *const *output_types;
     UINT output_type_count;
 
@@ -174,8 +176,51 @@ static HRESULT WINAPI transform_AddInputStreams(IMFTransform *iface, DWORD strea
 static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
-    return E_NOTIMPL;
+    struct video_encoder *encoder = impl_from_IMFTransform(iface);
+    IMFVideoMediaType *input_type;
+    UINT64 ratio;
+    UINT32 value;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
+
+    *type = NULL;
+
+    if (!encoder->output_type)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    if (index >= encoder->input_type_count)
+        return MF_E_NO_MORE_TYPES;
+
+    if (!(hr = MFCreateVideoMediaTypeFromSubtype(encoder->input_types[index], &input_type)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_FRAME_SIZE, &ratio))
+            || FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_FRAME_SIZE, ratio)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_FRAME_RATE, &ratio))
+            || FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_FRAME_RATE, ratio)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaType_GetUINT32(encoder->output_type, &MF_MT_INTERLACE_MODE, &value))
+            || FAILED(hr = IMFVideoMediaType_SetUINT32(input_type, &MF_MT_INTERLACE_MODE, value)))
+        goto done;
+
+    if (FAILED(IMFMediaType_GetUINT32(encoder->output_type, &MF_MT_VIDEO_NOMINAL_RANGE, &value)))
+        value = MFNominalRange_Wide;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT32(input_type, &MF_MT_VIDEO_NOMINAL_RANGE, value)))
+        goto done;
+
+    if (FAILED(IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio)))
+        ratio = (UINT64)1 << 32 | 1;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_PIXEL_ASPECT_RATIO, ratio)))
+        goto done;
+
+    IMFMediaType_AddRef((*type = (IMFMediaType *)input_type));
+
+done:
+    IMFVideoMediaType_Release(input_type);
+    return hr;
 }
 
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id,
@@ -345,8 +390,8 @@ static const IMFTransformVtbl transform_vtbl =
     transform_ProcessOutput,
 };
 
-static HRESULT video_encoder_create(const GUID *const *output_types, UINT output_type_count,
-        struct video_encoder **out)
+static HRESULT video_encoder_create(const GUID *const *input_types, UINT input_type_count,
+        const GUID *const *output_types, UINT output_type_count, struct video_encoder **out)
 {
     struct video_encoder *encoder;
     HRESULT hr;
@@ -357,6 +402,8 @@ static HRESULT video_encoder_create(const GUID *const *output_types, UINT output
     encoder->IMFTransform_iface.lpVtbl = &transform_vtbl;
     encoder->refcount = 1;
 
+    encoder->input_types = input_types;
+    encoder->input_type_count = input_type_count;
     encoder->output_types = output_types;
     encoder->output_type_count = output_type_count;
 
@@ -375,6 +422,14 @@ failed:
     free(encoder);
     return hr;
 }
+
+static const GUID *const h264_encoder_input_types[] =
+{
+    &MFVideoFormat_IYUV,
+    &MFVideoFormat_YV12,
+    &MFVideoFormat_NV12,
+    &MFVideoFormat_YUY2,
+};
 
 static const GUID *const h264_encoder_output_types[] =
 {
@@ -406,8 +461,8 @@ HRESULT h264_encoder_create(REFIID riid, void **out)
         return hr;
     }
 
-    if (FAILED(hr = video_encoder_create(h264_encoder_output_types, ARRAY_SIZE(h264_encoder_output_types),
-            &encoder)))
+    if (FAILED(hr = video_encoder_create(h264_encoder_input_types, ARRAY_SIZE(h264_encoder_input_types),
+            h264_encoder_output_types, ARRAY_SIZE(h264_encoder_output_types), &encoder)))
         return hr;
 
     TRACE("Created h264 encoder transform %p.\n", &encoder->IMFTransform_iface);
