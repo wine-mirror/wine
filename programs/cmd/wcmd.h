@@ -167,7 +167,7 @@ void WCMD_choice (const WCHAR *);
 void WCMD_clear_screen (void);
 void WCMD_color (void);
 RETURN_CODE WCMD_copy(WCHAR *);
-void WCMD_create_dir (WCHAR *);
+RETURN_CODE WCMD_create_dir(WCHAR *);
 RETURN_CODE WCMD_delete(WCHAR *);
 void WCMD_directory (WCHAR *);
 RETURN_CODE WCMD_echo(const WCHAR *);

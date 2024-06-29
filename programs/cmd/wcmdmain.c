@@ -1849,7 +1849,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         break;
       case WCMD_MD:
       case WCMD_MKDIR:
-        WCMD_create_dir (parms_start);
+        return_code = WCMD_create_dir(parms_start);
         break;
       case WCMD_MOVE:
         return_code = WCMD_move();

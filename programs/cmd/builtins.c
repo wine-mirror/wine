@@ -1158,23 +1158,30 @@ static BOOL create_full_path(WCHAR* path)
     return FALSE;
 }
 
-void WCMD_create_dir (WCHAR *args) {
+RETURN_CODE WCMD_create_dir(WCHAR *args)
+{
     int   argno = 0;
     WCHAR *argN = args;
+    RETURN_CODE return_code;
 
-    if (param1[0] == 0x00) {
+    if (param1[0] == L'\0')
+    {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-        return;
+        return errorlevel = ERROR_INVALID_FUNCTION;
     }
+    return_code = NO_ERROR;
     /* Loop through all args */
-    while (TRUE) {
+    for (;;)
+    {
         WCHAR *thisArg = WCMD_parameter(args, argno++, &argN, FALSE, FALSE);
         if (!argN) break;
-        if (!create_full_path(thisArg)) {
-            WCMD_print_error ();
-            errorlevel = ERROR_INVALID_FUNCTION;
+        if (!create_full_path(thisArg))
+        {
+            WCMD_print_error();
+            return_code = ERROR_INVALID_FUNCTION;
         }
     }
+    return errorlevel = return_code;
 }
 
 /* Parse the /A options given by the user on the commandline
