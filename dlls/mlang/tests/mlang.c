@@ -2314,7 +2314,7 @@ static void test_GetGlobalFontLinkObject(void)
     ok(ret == E_INVALIDARG, "expected E_INVALIDARG got %#lx\n", ret);
 
     unknown = (void *)0xdeadbeef;
-    ret = GetGlobalFontLinkObject(&unknown);
+    ret = GetGlobalFontLinkObject((IMLangFontLink**)&unknown);
     ok(ret == S_OK, "expected S_OK got %#lx\n", ret);
     ok(unknown != NULL && unknown != (void *)0xdeadbeef,
        "GetGlobalFontLinkObject() returned %p\n", unknown);
@@ -2340,9 +2340,7 @@ static void test_GetGlobalFontLinkObject(void)
     ok(ret == S_OK, "expected S_OK got %#lx\n", ret);
     IMLangCodePages_Release(IMLCP);
 
-    todo_wine
     ok(unknown == IMLFL, "IUnknown from GetGlobalFontLinkObject isn't IMLangFontLink\n");
-    todo_wine
     ok(unknown == IMLCP, "IUnknown from GetGlobalFontLinkObject isn't IMLangCodePages\n");
 
     refcount = IUnknown_Release((IUnknown*)unknown);

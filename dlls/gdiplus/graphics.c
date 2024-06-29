@@ -5354,7 +5354,6 @@ GpStatus WINGDIPAPI GdipIsVisibleRectI(GpGraphics *graphics, INT x, INT y, INT w
 /* Populates gdip_font_link_info struct based on the base_font and input string */
 static void generate_font_link_info(struct gdip_format_string_info *info, DWORD length, GDIPCONST GpFont *base_font)
 {
-    IUnknown *unk;
     IMLangFontLink *iMLFL;
     GpFont *gpfont;
     HFONT map_hfont, hfont, old_font;
@@ -5365,9 +5364,7 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
     list_init(&info->font_link_info.sections);
     info->font_link_info.base_font = base_font;
 
-    GetGlobalFontLinkObject((void**)&unk);
-    IUnknown_QueryInterface(unk, &IID_IMLangFontLink, (void**)&iMLFL);
-    IUnknown_Release(unk);
+    GetGlobalFontLinkObject(&iMLFL);
 
     get_font_hfont(info->graphics, base_font, NULL, &hfont, NULL, NULL);
     IMLangFontLink_GetFontCodePages(iMLFL, info->hdc, hfont, &font_codepages);

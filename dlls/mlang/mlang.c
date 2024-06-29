@@ -3887,11 +3887,11 @@ static BOOL WINAPI allocate_font_link_cb(PINIT_ONCE init_once, PVOID args, PVOID
     return SUCCEEDED(MultiLanguage_create(NULL, (void**)&font_link_global));
 }
 
-HRESULT WINAPI GetGlobalFontLinkObject(void **unknown)
+HRESULT WINAPI GetGlobalFontLinkObject(IMLangFontLink **obj)
 {
-    TRACE("%p\n", unknown);
+    TRACE("%p\n", obj);
 
-    if (!unknown) return E_INVALIDARG;
+    if (!obj) return E_INVALIDARG;
 
     if (!InitOnceExecuteOnce(&font_link_global_init_once, allocate_font_link_cb, NULL, NULL))
     {
@@ -3899,8 +3899,5 @@ HRESULT WINAPI GetGlobalFontLinkObject(void **unknown)
         return E_FAIL;
     }
 
-    IUnknown_AddRef(font_link_global);
-    *unknown = font_link_global;
-
-    return S_OK;
+    return IUnknown_QueryInterface(font_link_global, &IID_IMLangFontLink, (void**)obj);
 }
