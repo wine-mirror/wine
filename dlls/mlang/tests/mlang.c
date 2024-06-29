@@ -2308,6 +2308,7 @@ static void test_GetGlobalFontLinkObject(void)
     IMLangFontLink *IMLFL;
     IMLangCodePages *IMLCP;
     IMultiLanguage *IML;
+    IMultiLanguage2 *IML2;
 
     ret = GetGlobalFontLinkObject(NULL);
     ok(ret == E_INVALIDARG, "expected E_INVALIDARG got %#lx\n", ret);
@@ -2326,6 +2327,10 @@ static void test_GetGlobalFontLinkObject(void)
     ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMultiLanguage, (void**)&IML);
     todo_wine ok(ret == E_NOINTERFACE, "expected E_NOINTERFACE got %#lx\n", ret);
     if (ret == S_OK) IMultiLanguage_Release(IML);
+
+    ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMultiLanguage2, (void**)&IML2);
+    todo_wine ok(ret == E_NOINTERFACE, "expected E_NOINTERFACE got %#lx\n", ret);
+    if (ret == S_OK) IMultiLanguage2_Release(IML2);
 
     ret = IUnknown_QueryInterface((IUnknown*)unknown, &IID_IMLangFontLink, (void**)&IMLFL);
     ok(ret == S_OK, "expected S_OK got %#lx\n", ret);
