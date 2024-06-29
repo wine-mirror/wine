@@ -616,7 +616,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, co
         return FALSE;
     }
 
-    switch (info.Protect)
+    switch (info.Protect & ~(PAGE_GUARD | PAGE_NOCACHE))
     {
     case PAGE_READWRITE:
     case PAGE_WRITECOPY:
