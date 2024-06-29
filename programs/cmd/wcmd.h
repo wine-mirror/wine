@@ -186,7 +186,7 @@ void WINAPIV WCMD_output_stderr (const WCHAR *format, ...);
 void WCMD_output_asis (const WCHAR *message);
 void WCMD_output_asis_stderr (const WCHAR *message);
 void WCMD_pause (void);
-void WCMD_popd (void);
+RETURN_CODE WCMD_popd(void);
 void WCMD_print_error (void);
 RETURN_CODE WCMD_pushd(const WCHAR *args);
 void WCMD_remove_dir (WCHAR *command);

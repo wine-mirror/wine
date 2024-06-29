@@ -1929,17 +1929,19 @@ RETURN_CODE WCMD_pushd(const WCHAR *args)
  *	Pop a directory from the stack
  */
 
-void WCMD_popd (void) {
+RETURN_CODE WCMD_popd(void)
+{
     struct env_stack *temp = pushd_directories;
 
     if (!pushd_directories)
-      return;
+        return ERROR_INVALID_FUNCTION;
 
     /* pop the old environment from the stack, and make it the current dir */
     pushd_directories = temp->next;
     SetCurrentDirectoryW(temp->strings);
     LocalFree (temp->strings);
     LocalFree (temp);
+    return NO_ERROR;
 }
 
 /****************************************************************************
