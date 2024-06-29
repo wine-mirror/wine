@@ -194,7 +194,7 @@ RETURN_CODE WCMD_rename(void);
 void WCMD_run_program (WCHAR *command, BOOL called);
 void WCMD_setlocal (const WCHAR *args);
 void WCMD_setshow_date (void);
-void WCMD_setshow_default (const WCHAR *args);
+RETURN_CODE WCMD_setshow_default(const WCHAR *args);
 void WCMD_setshow_env (WCHAR *command);
 void WCMD_setshow_path (const WCHAR *args);
 void WCMD_setshow_prompt (void);

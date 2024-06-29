@@ -2414,8 +2414,9 @@ void WCMD_endlocal (void) {
  *	Set/Show the current default directory
  */
 
-void WCMD_setshow_default (const WCHAR *args) {
-
+RETURN_CODE WCMD_setshow_default(const WCHAR *args)
+{
+  RETURN_CODE return_code;
   BOOL status;
   WCHAR string[1024];
   WCHAR cwd[1024];
@@ -2436,6 +2437,7 @@ void WCMD_setshow_default (const WCHAR *args) {
   }
 
   GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
+  return_code = NO_ERROR;
 
   if (!*args) {
     lstrcatW(cwd, L"\r\n");
@@ -2466,7 +2468,9 @@ void WCMD_setshow_default (const WCHAR *args) {
           WCHAR ext[MAX_PATH];
 
           /* Convert path into actual directory spec */
-          if (!WCMD_get_fullpath(string, ARRAY_SIZE(fpath), fpath, NULL)) return;
+          if (!WCMD_get_fullpath(string, ARRAY_SIZE(fpath), fpath, NULL))
+              return errorlevel = ERROR_INVALID_FUNCTION;
+
           _wsplitpath(fpath, drive, dir, fname, ext);
 
           /* Rebuild path */
@@ -2482,9 +2486,8 @@ void WCMD_setshow_default (const WCHAR *args) {
 
     status = SetCurrentDirectoryW(string);
     if (!status) {
-      errorlevel = ERROR_INVALID_FUNCTION;
       WCMD_print_error ();
-      return;
+      return_code = ERROR_INVALID_FUNCTION;
     } else {
 
       /* Save away the actual new directory, to store as current location */
@@ -2511,8 +2514,8 @@ void WCMD_setshow_default (const WCHAR *args) {
       SetEnvironmentVariableW(env, string);
     }
 
-   }
-  return;
+  }
+  return errorlevel = return_code;
 }
 
 /****************************************************************************

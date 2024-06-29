@@ -1814,7 +1814,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         break;
       case WCMD_CD:
       case WCMD_CHDIR:
-        WCMD_setshow_default (parms_start);
+        return_code = WCMD_setshow_default(parms_start);
         break;
       case WCMD_CLS:
         WCMD_clear_screen ();
