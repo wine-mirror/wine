@@ -1909,7 +1909,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         WCMD_volume (FALSE, parms_start);
         break;
       case WCMD_PUSHD:
-        WCMD_pushd(parms_start);
+        return_code = WCMD_pushd(parms_start);
         break;
       case WCMD_POPD:
         WCMD_popd();

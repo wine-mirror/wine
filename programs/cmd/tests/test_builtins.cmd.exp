@@ -508,12 +508,12 @@ FAILURE 1
 SUCCESS 0
 SUCCESS 0
 --- success/failure for PUSHD/POPD commands
-@todo_wine@SUCCESS 0
 SUCCESS 0
+SUCCESS 0
+FAILURE 1
+SUCCESS 666
 @todo_wine@FAILURE 1
-@todo_wine@SUCCESS 666
-@todo_wine@FAILURE 1
-@todo_wine@--- success/failure for DIR command
+--- success/failure for DIR command
 FAILURE 1
 FAILURE 1
 SUCCESS 0

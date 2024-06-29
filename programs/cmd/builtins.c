@@ -1875,15 +1875,19 @@ RETURN_CODE WCMD_goto(void)
  *	Push a directory onto the stack
  */
 
-void WCMD_pushd (const WCHAR *args)
+RETURN_CODE WCMD_pushd(const WCHAR *args)
 {
     struct env_stack *curdir;
     WCHAR *thisdir;
+    RETURN_CODE return_code;
+
+    if (!*args)
+        return errorlevel = NO_ERROR;
 
     if (wcschr(args, '/') != NULL) {
       SetLastError(ERROR_INVALID_PARAMETER);
       WCMD_print_error();
-      return;
+      return errorlevel = ERROR_INVALID_FUNCTION;
     }
 
     curdir  = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
@@ -1892,18 +1896,19 @@ void WCMD_pushd (const WCHAR *args)
       LocalFree(curdir);
       LocalFree(thisdir);
       WINE_ERR ("out of memory\n");
-      return;
+      return errorlevel = ERROR_INVALID_FUNCTION;
     }
 
     /* Change directory using CD code with /D parameter */
     lstrcpyW(quals, L"/D");
     GetCurrentDirectoryW (1024, thisdir);
-    errorlevel = NO_ERROR;
-    WCMD_setshow_default(args);
-    if (errorlevel) {
+
+    return_code = WCMD_setshow_default(args);
+    if (return_code != NO_ERROR)
+    {
       LocalFree(curdir);
       LocalFree(thisdir);
-      return;
+      return errorlevel = ERROR_INVALID_FUNCTION;
     } else {
       curdir -> next    = pushd_directories;
       curdir -> strings = thisdir;
@@ -1914,6 +1919,7 @@ void WCMD_pushd (const WCHAR *args)
       }
       pushd_directories = curdir;
     }
+    return errorlevel = return_code;
 }
 
 
