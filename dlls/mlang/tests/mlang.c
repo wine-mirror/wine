@@ -2340,6 +2340,10 @@ static void test_GetGlobalFontLinkObject(void)
     ok(ret == S_OK, "expected S_OK got %#lx\n", ret);
     IMLangCodePages_Release(IMLCP);
 
+    todo_wine
+    ok(unknown == IMLFL, "IUnknown from GetGlobalFontLinkObject isn't IMLangFontLink\n");
+    todo_wine
+    ok(unknown == IMLCP, "IUnknown from GetGlobalFontLinkObject isn't IMLangCodePages\n");
 
     refcount = IUnknown_Release((IUnknown*)unknown);
     ok(refcount == 1, "Got refcount %ld\n", refcount);
