@@ -166,7 +166,7 @@ RETURN_CODE WCMD_batch(const WCHAR *, WCHAR *, const WCHAR *, HANDLE);
 RETURN_CODE WCMD_call(WCHAR *command);
 void WCMD_change_tty (void);
 void WCMD_choice (const WCHAR *);
-void WCMD_clear_screen (void);
+RETURN_CODE WCMD_clear_screen(void);
 void WCMD_color (void);
 RETURN_CODE WCMD_copy(WCHAR *);
 RETURN_CODE WCMD_create_dir(WCHAR *);

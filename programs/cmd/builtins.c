@@ -249,13 +249,15 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
  * Clear the terminal screen.
  */
 
-void WCMD_clear_screen (void) {
-
+RETURN_CODE WCMD_clear_screen(void)
+{
   /* Emulate by filling the screen from the top left to bottom right with
         spaces, then moving the cursor to the top left afterwards */
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
+  if (*quals)
+      return errorlevel = ERROR_INVALID_FUNCTION;
   if (GetConsoleScreenBufferInfo(hStdOut, &consoleInfo))
   {
       COORD topLeft;
@@ -269,6 +271,7 @@ void WCMD_clear_screen (void) {
       FillConsoleOutputAttribute(hStdOut, consoleInfo.wAttributes, screenSize, topLeft, &written);
       SetConsoleCursorPosition(hStdOut, topLeft);
   }
+  return NO_ERROR;
 }
 
 /****************************************************************************

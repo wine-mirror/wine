@@ -1820,7 +1820,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_setshow_default(parms_start);
         break;
       case WCMD_CLS:
-        WCMD_clear_screen ();
+        return_code = WCMD_clear_screen();
         break;
       case WCMD_COPY:
         return_code = WCMD_copy(parms_start);

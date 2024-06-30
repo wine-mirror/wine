@@ -601,7 +601,7 @@ SUCCESS 0
 --- success/failure for CLS command
 @todo_wine@@formfeed@SUCCESS 666
 @todo_wine@@formfeed@SUCCESS 666
-@todo_wine@FAILURE 1
+FAILURE 1
 --- success/failure for COLOR command
 @todo_wine@FAILURE 1
 --- success/failure for TITLE command
