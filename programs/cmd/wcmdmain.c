@@ -3470,7 +3470,7 @@ static RETURN_CODE for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NO
             return errorlevel = ERROR_INVALID_FUNCTION; /* FOR loop aborts at first failure here */
         }
         return_code = for_control_execute_from_FILE(for_ctrl, input, node);
-        fclose(input);
+        pclose(input);
     }
     else
     {
