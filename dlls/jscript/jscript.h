@@ -225,6 +225,7 @@ static inline IDispatchEx *to_dispex(jsdisp_t *jsdisp)
 
 jsdisp_t *as_jsdisp(IDispatch*);
 jsdisp_t *to_jsdisp(IDispatch*);
+IWineJSDispatchHost *get_host_dispatch(IDispatch*);
 
 jsdisp_t *jsdisp_addref(jsdisp_t*);
 ULONG jsdisp_release(jsdisp_t*);

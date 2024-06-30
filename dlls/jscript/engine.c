@@ -637,14 +637,20 @@ static HRESULT disp_cmp(IDispatch *disp1, IDispatch *disp2, BOOL *ret)
         return S_OK;
     }
 
-    hres = IDispatch_QueryInterface(disp1, &IID_IUnknown, (void**)&unk1);
-    if(FAILED(hres))
-        return hres;
+    unk1 = (IUnknown *)get_host_dispatch(disp1);
+    if(!unk1) {
+        hres = IDispatch_QueryInterface(disp1, &IID_IUnknown, (void**)&unk1);
+        if(FAILED(hres))
+            return hres;
+    }
 
-    hres = IDispatch_QueryInterface(disp2, &IID_IUnknown, (void**)&unk2);
-    if(FAILED(hres)) {
-        IUnknown_Release(unk1);
-        return hres;
+    unk2 = (IUnknown *)get_host_dispatch(disp2);
+    if(!unk2) {
+        hres = IDispatch_QueryInterface(disp2, &IID_IUnknown, (void**)&unk2);
+        if(FAILED(hres)) {
+            IUnknown_Release(unk1);
+            return hres;
+        }
     }
 
     if(unk1 == unk2) {
