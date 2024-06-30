@@ -4764,7 +4764,7 @@ msgstr "환경변수를 찾을 수 없습니다.\n"
 msgid "No signal sent.\n"
 msgstr "시그널 전송 실패.\n"
 
-#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:410
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:409
 msgid "File name is too long.\n"
 msgstr "너무 긴 파일 이름.\n"
 
@@ -14463,68 +14463,64 @@ msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "볼륨 레이블을 입력하세요(11문자까지 입력 가능, <Enter>: 입력 안 함)?"
 
 #: programs/cmd/cmd.rc:394
-msgid "PATH not found\n"
-msgstr "PATH를 찾을 수 없습니다\n"
-
-#: programs/cmd/cmd.rc:395
 msgid "Press any key to continue... "
 msgstr "계속하려면 아무 키나 누르세요... "
 
-#: programs/cmd/cmd.rc:396
+#: programs/cmd/cmd.rc:395
 msgid "Wine Command Prompt"
 msgstr "Wine 명령 프롬프트"
 
-#: programs/cmd/cmd.rc:397
+#: programs/cmd/cmd.rc:396
 msgid "Microsoft Windows %1!S!\n"
 msgstr "Microsoft Windows %1!S!\n"
 
-#: programs/cmd/cmd.rc:398
+#: programs/cmd/cmd.rc:397
 msgid "More? "
 msgstr "더? "
 
-#: programs/cmd/cmd.rc:399
+#: programs/cmd/cmd.rc:398
 msgid "The input line is too long.\n"
 msgstr "입력 줄이 너무 깁니다.\n"
 
-#: programs/cmd/cmd.rc:400
+#: programs/cmd/cmd.rc:399
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "드라이브 %1!c! 볼륨: %2\n"
 
-#: programs/cmd/cmd.rc:401
+#: programs/cmd/cmd.rc:400
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "드라이브 %1!c!는 레이블을 가지고 있지 않습니다.\n"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:129
+#: programs/cmd/cmd.rc:401 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (예|아니요)"
 
-#: programs/cmd/cmd.rc:403 programs/reg/reg.rc:130
+#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (예|아니요|모두)"
 
-#: programs/cmd/cmd.rc:404
+#: programs/cmd/cmd.rc:403
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 "'%1'을(를) 내부, 외부 명령어, 또는 배치 스크립트로 인식할 수 없습니다.\n"
 
-#: programs/cmd/cmd.rc:405
+#: programs/cmd/cmd.rc:404
 msgid "Division by zero error.\n"
 msgstr "0으로 나누기 오류가 발생했습니다.\n"
 
-#: programs/cmd/cmd.rc:406
+#: programs/cmd/cmd.rc:405
 msgid "Expected an operand.\n"
 msgstr "피연산자가 필요합니다.\n"
 
-#: programs/cmd/cmd.rc:407
+#: programs/cmd/cmd.rc:406
 msgid "Expected an operator.\n"
 msgstr "연산자가 필요합니다.\n"
 
-#: programs/cmd/cmd.rc:408
+#: programs/cmd/cmd.rc:407
 msgid "Mismatch in parentheses.\n"
 msgstr "괄호가 일치하지 않습니다.\n"
 
-#: programs/cmd/cmd.rc:409
+#: programs/cmd/cmd.rc:408
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -14532,19 +14528,19 @@ msgstr ""
 "잘못된 형식의 숫자 - 10진수(12)나,\n"
 "16진수(0x34)나 8진수(056)중의 하나이어야 합니다.\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:410
 #, fuzzy
 #| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
 msgstr "문법 오류\n"
 
-#: programs/cmd/cmd.rc:412
+#: programs/cmd/cmd.rc:411
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of line"
 msgstr "파일 끝.\n"
 
-#: programs/cmd/cmd.rc:413
+#: programs/cmd/cmd.rc:412
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of file"

@@ -4793,7 +4793,7 @@ msgstr "Omgevingsvariable niet gevonden.\n"
 msgid "No signal sent.\n"
 msgstr "Geen signaal verzonden.\n"
 
-#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:410
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:409
 msgid "File name is too long.\n"
 msgstr "Bestandsnaam is te lang.\n"
 
@@ -14561,68 +14561,64 @@ msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Volume naam (11 tekens, ENTER voor geen)?"
 
 #: programs/cmd/cmd.rc:394
-msgid "PATH not found\n"
-msgstr "PATH niet gevonden\n"
-
-#: programs/cmd/cmd.rc:395
 msgid "Press any key to continue... "
 msgstr "Druk op een willekeurige toets om verder te gaan... "
 
-#: programs/cmd/cmd.rc:396
+#: programs/cmd/cmd.rc:395
 msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
-#: programs/cmd/cmd.rc:397
+#: programs/cmd/cmd.rc:396
 msgid "Microsoft Windows %1!S!\n"
 msgstr "Microsoft Windows %1!S!\n"
 
-#: programs/cmd/cmd.rc:398
+#: programs/cmd/cmd.rc:397
 msgid "More? "
 msgstr "Meer? "
 
-#: programs/cmd/cmd.rc:399
+#: programs/cmd/cmd.rc:398
 msgid "The input line is too long.\n"
 msgstr "De invoerregel is te lang.\n"
 
-#: programs/cmd/cmd.rc:400
+#: programs/cmd/cmd.rc:399
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Volume in schijfstation %1!c! is %2\n"
 
-#: programs/cmd/cmd.rc:401
+#: programs/cmd/cmd.rc:400
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Volume in schijfstation %1!c! heeft geen label.\n"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:129
+#: programs/cmd/cmd.rc:401 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (Ja|Nee)"
 
-#: programs/cmd/cmd.rc:403 programs/reg/reg.rc:130
+#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (Ja|Nee|Alles)"
 
-#: programs/cmd/cmd.rc:404
+#: programs/cmd/cmd.rc:403
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 "'%1' niet herkend als interne of externe opdracht dan wel als batchbestand.\n"
 
-#: programs/cmd/cmd.rc:405
+#: programs/cmd/cmd.rc:404
 msgid "Division by zero error.\n"
 msgstr "Delen door nul fout.\n"
 
-#: programs/cmd/cmd.rc:406
+#: programs/cmd/cmd.rc:405
 msgid "Expected an operand.\n"
 msgstr "Verwacht een operand.\n"
 
-#: programs/cmd/cmd.rc:407
+#: programs/cmd/cmd.rc:406
 msgid "Expected an operator.\n"
 msgstr "Verwacht een operator.\n"
 
-#: programs/cmd/cmd.rc:408
+#: programs/cmd/cmd.rc:407
 msgid "Mismatch in parentheses.\n"
 msgstr "Haakjes komen niet overeen.\n"
 
-#: programs/cmd/cmd.rc:409
+#: programs/cmd/cmd.rc:408
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -14630,19 +14626,19 @@ msgstr ""
 "Misvormd nummer - moet of decimaal (12),\n"
 " hexadecimaal (0x34) of octaal (056) zijn.\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:410
 #, fuzzy
 #| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
 msgstr "Formuleringsfout\n"
 
-#: programs/cmd/cmd.rc:412
+#: programs/cmd/cmd.rc:411
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of line"
 msgstr "Einde van bestand.\n"
 
-#: programs/cmd/cmd.rc:413
+#: programs/cmd/cmd.rc:412
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of file"

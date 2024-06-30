@@ -4775,7 +4775,7 @@ msgstr "環境変数が見つかりません。\n"
 msgid "No signal sent.\n"
 msgstr "シグナルが送られていません。\n"
 
-#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:410
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:409
 msgid "File name is too long.\n"
 msgstr "ファイル名が長すぎます。\n"
 
@@ -14507,67 +14507,63 @@ msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "ボリューム ラベル(半角11文字、<Enter>で無指定)?"
 
 #: programs/cmd/cmd.rc:394
-msgid "PATH not found\n"
-msgstr "PATH が見つかりません\n"
-
-#: programs/cmd/cmd.rc:395
 msgid "Press any key to continue... "
 msgstr "続けるには何かキーを押して下さい... "
 
-#: programs/cmd/cmd.rc:396
+#: programs/cmd/cmd.rc:395
 msgid "Wine Command Prompt"
 msgstr "Wine コマンド プロンプト"
 
-#: programs/cmd/cmd.rc:397
+#: programs/cmd/cmd.rc:396
 msgid "Microsoft Windows %1!S!\n"
 msgstr "Microsoft Windows %1!S!\n"
 
-#: programs/cmd/cmd.rc:398
+#: programs/cmd/cmd.rc:397
 msgid "More? "
 msgstr "続行? "
 
-#: programs/cmd/cmd.rc:399
+#: programs/cmd/cmd.rc:398
 msgid "The input line is too long.\n"
 msgstr "入力行が長すぎます。\n"
 
-#: programs/cmd/cmd.rc:400
+#: programs/cmd/cmd.rc:399
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "ドライブ %1!c! のボリューム ラベルは %2 です\n"
 
-#: programs/cmd/cmd.rc:401
+#: programs/cmd/cmd.rc:400
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "ドライブ %1!c! のボリューム ラベルがありません。\n"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:129
+#: programs/cmd/cmd.rc:401 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (Yes|No)"
 
-#: programs/cmd/cmd.rc:403 programs/reg/reg.rc:130
+#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (Yes|No|All)"
 
-#: programs/cmd/cmd.rc:404
+#: programs/cmd/cmd.rc:403
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "%1 を内部または外部コマンド、バッチ スクリプトとして認識できません。\n"
 
-#: programs/cmd/cmd.rc:405
+#: programs/cmd/cmd.rc:404
 msgid "Division by zero error.\n"
 msgstr "0 による除算エラー。\n"
 
-#: programs/cmd/cmd.rc:406
+#: programs/cmd/cmd.rc:405
 msgid "Expected an operand.\n"
 msgstr "被演算子がありません。\n"
 
-#: programs/cmd/cmd.rc:407
+#: programs/cmd/cmd.rc:406
 msgid "Expected an operator.\n"
 msgstr "演算子がありません。\n"
 
-#: programs/cmd/cmd.rc:408
+#: programs/cmd/cmd.rc:407
 msgid "Mismatch in parentheses.\n"
 msgstr "括弧が対応していません。\n"
 
-#: programs/cmd/cmd.rc:409
+#: programs/cmd/cmd.rc:408
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -14575,19 +14571,19 @@ msgstr ""
 "数値の形式に誤りがあります - 10 進数 (12)、16 進数 (0x34)、\n"
 "8 進数 (056) のいずれかとする必要があります。\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:410
 #, fuzzy
 #| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
 msgstr "構文エラー\n"
 
-#: programs/cmd/cmd.rc:412
+#: programs/cmd/cmd.rc:411
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of line"
 msgstr "ファイルの終端です。\n"
 
-#: programs/cmd/cmd.rc:413
+#: programs/cmd/cmd.rc:412
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of file"

@@ -3283,27 +3283,27 @@ void WCMD_setshow_env (WCHAR *s) {
  * Set/Show the path environment variable
  */
 
-void WCMD_setshow_path (const WCHAR *args) {
-
+RETURN_CODE WCMD_setshow_path(const WCHAR *args)
+{
   WCHAR string[1024];
-  DWORD status;
 
   if (!*param1 && !*param2) {
-    status = GetEnvironmentVariableW(L"PATH", string, ARRAY_SIZE(string));
-    if (status != 0) {
-      WCMD_output_asis(L"PATH=");
-      WCMD_output_asis ( string);
-      WCMD_output_asis(L"\r\n");
-    }
-    else {
-      WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOPATH));
-    }
+    if (!GetEnvironmentVariableW(L"PATH", string, ARRAY_SIZE(string)))
+      wcscpy(string, L"(null)");
+    WCMD_output_asis(L"PATH=");
+    WCMD_output_asis(string);
+    WCMD_output_asis(L"\r\n");
   }
   else {
     if (*args == '=') args++; /* Skip leading '=' */
-    status = SetEnvironmentVariableW(L"PATH", args);
-    if (!status) WCMD_print_error();
+    if (args[0] == L';' && *WCMD_skip_leading_spaces((WCHAR *)(args + 1)) == L'\0') args = NULL;
+    if (!SetEnvironmentVariableW(L"PATH", args))
+    {
+        WCMD_print_error();
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    }
   }
+  return errorlevel = NO_ERROR;
 }
 
 /****************************************************************************

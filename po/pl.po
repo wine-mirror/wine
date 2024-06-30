@@ -4803,7 +4803,7 @@ msgstr "Nie znaleziono zmiennej środowiskowej.\n"
 msgid "No signal sent.\n"
 msgstr "Brak wysłanego sygnału.\n"
 
-#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:410
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:409
 msgid "File name is too long.\n"
 msgstr "Nazwa pliku zbyt długa.\n"
 
@@ -14545,69 +14545,65 @@ msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Etykieta Wolumenu (11 znaków, <Enter> aby pominąć)?"
 
 #: programs/cmd/cmd.rc:394
-msgid "PATH not found\n"
-msgstr "Nie znaleziono PATH\n"
-
-#: programs/cmd/cmd.rc:395
 msgid "Press any key to continue... "
 msgstr "Naciśnij jakikolwiek klawisz, aby kontynuować... "
 
-#: programs/cmd/cmd.rc:396
+#: programs/cmd/cmd.rc:395
 msgid "Wine Command Prompt"
 msgstr "Wiersz Poleceń Wine"
 
-#: programs/cmd/cmd.rc:397
+#: programs/cmd/cmd.rc:396
 msgid "Microsoft Windows %1!S!\n"
 msgstr "Microsoft Windows %1!S!\n"
 
-#: programs/cmd/cmd.rc:398
+#: programs/cmd/cmd.rc:397
 msgid "More? "
 msgstr "Więcej? "
 
-#: programs/cmd/cmd.rc:399
+#: programs/cmd/cmd.rc:398
 msgid "The input line is too long.\n"
 msgstr "Wpisany tekst jest zbyt długi.\n"
 
-#: programs/cmd/cmd.rc:400
+#: programs/cmd/cmd.rc:399
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Wolumen w napędzie %1!c! to %2\n"
 
-#: programs/cmd/cmd.rc:401
+#: programs/cmd/cmd.rc:400
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Wolumen w napędzie %1!c! nie ma etykiety.\n"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:129
+#: programs/cmd/cmd.rc:401 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (Tak|Nie)"
 
-#: programs/cmd/cmd.rc:403 programs/reg/reg.rc:130
+#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (Tak|Nie|Wszystkie)"
 
-#: programs/cmd/cmd.rc:404
+#: programs/cmd/cmd.rc:403
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 "Nie można rozpoznać '%1' ani jako polecenia wewnętrznego, ani zewnętrznego, "
 "czy nawet skryptu wsadowego.\n"
 
-#: programs/cmd/cmd.rc:405
+#: programs/cmd/cmd.rc:404
 msgid "Division by zero error.\n"
 msgstr "Błąd dzielenia przez zero.\n"
 
-#: programs/cmd/cmd.rc:406
+#: programs/cmd/cmd.rc:405
 msgid "Expected an operand.\n"
 msgstr "Oczekiwano zmiennej niezależnej.\n"
 
-#: programs/cmd/cmd.rc:407
+#: programs/cmd/cmd.rc:406
 msgid "Expected an operator.\n"
 msgstr "Oczekiwano operatora.\n"
 
-#: programs/cmd/cmd.rc:408
+#: programs/cmd/cmd.rc:407
 msgid "Mismatch in parentheses.\n"
 msgstr "Nierówna liczba nawiasach.\n"
 
-#: programs/cmd/cmd.rc:409
+#: programs/cmd/cmd.rc:408
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -14615,19 +14611,19 @@ msgstr ""
 "Zły format liczbowy - musi on być jednym z formatów dziesiętnych (12),\n"
 " szesnastkowych (0x34) lub ósemkowych (056).\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:410
 #, fuzzy
 #| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
 msgstr "Błąd składni\n"
 
-#: programs/cmd/cmd.rc:412
+#: programs/cmd/cmd.rc:411
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of line"
 msgstr "Koniec pliku.\n"
 
-#: programs/cmd/cmd.rc:413
+#: programs/cmd/cmd.rc:412
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of file"

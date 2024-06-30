@@ -199,7 +199,7 @@ RETURN_CODE WCMD_setlocal(WCHAR *args);
 RETURN_CODE WCMD_setshow_date(void);
 RETURN_CODE WCMD_setshow_default(const WCHAR *args);
 void WCMD_setshow_env (WCHAR *command);
-void WCMD_setshow_path (const WCHAR *args);
+RETURN_CODE WCMD_setshow_path(const WCHAR *args);
 void WCMD_setshow_prompt (void);
 RETURN_CODE WCMD_setshow_time(void);
 void WCMD_shift (const WCHAR *args);
@@ -438,7 +438,6 @@ extern WCHAR version_string[];
 #define WCMD_ARGERR           1027
 #define WCMD_VOLUMESERIALNO   1028
 #define WCMD_VOLUMEPROMPT     1029
-#define WCMD_NOPATH           1030
 #define WCMD_ANYKEY           1031
 #define WCMD_CONSTITLE        1032
 #define WCMD_VERSION          1033

@@ -1859,7 +1859,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_move();
         break;
       case WCMD_PATH:
-        WCMD_setshow_path (parms_start);
+        return_code = WCMD_setshow_path(parms_start);
         break;
       case WCMD_PAUSE:
         WCMD_pause ();
