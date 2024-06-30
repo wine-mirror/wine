@@ -1787,8 +1787,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
             if (getifaddrs( &ifaddrs ) < 0)
             {
-                status = sock_errno_to_status( errno );
-                break;
+                return sock_errno_to_status( errno );
             }
 
             for (ifaddr = ifaddrs; ifaddr != NULL; ifaddr = ifaddr->ifa_next)
