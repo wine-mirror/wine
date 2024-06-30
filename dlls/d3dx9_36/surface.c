@@ -932,7 +932,7 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
     IWICBitmapFrameDecode *bitmap_frame = NULL;
     IWICBitmapDecoder *bitmap_decoder = NULL;
     uint32_t src_image_size = src_data_size;
-    IWICImagingFactory *wic_factory = NULL;
+    IWICImagingFactory *wic_factory;
     const void *src_image = src_data;
     WICPixelFormatGUID pixel_format;
     IWICStream *wic_stream = NULL;
@@ -1032,8 +1032,7 @@ exit:
         IWICBitmapDecoder_Release(bitmap_decoder);
     if (wic_stream)
         IWICStream_Release(wic_stream);
-    if (wic_factory)
-        IWICImagingFactory_Release(wic_factory);
+    IWICImagingFactory_Release(wic_factory);
 
     return hr;
 }
