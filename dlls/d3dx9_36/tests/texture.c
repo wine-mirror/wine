@@ -2202,6 +2202,15 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
 
     IDirect3DTexture9_Release(texture);
 
+    /* Skip level bits are bits 30-26. Bit 31 needs to be ignored. */
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit), D3DX_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_FILTER_POINT | (0x20u << D3DX_SKIP_DDS_MIP_LEVELS_SHIFT), 0, &img_info, NULL, &texture);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_image_info(&img_info, 2, 2, 1, 2, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, TRUE);
+    IDirect3DTexture9_Release(texture);
+
     /*
      * The values returned in the D3DXIMAGE_INFO structure represent the mip
      * level the texture data was retrieved from, i.e if we skip the first mip
@@ -2470,6 +2479,23 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
             D3DX_DEFAULT, D3DX_DEFAULT, 1, D3DUSAGE_DEPTHSTENCIL, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT,
             D3DX_DEFAULT, 0, NULL, NULL, &volume_texture);
     ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#lx.\n", hr);
+
+    /* Skip level bits are bits 30-26. Bit 31 needs to be ignored. */
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_FILTER_POINT | (0x20u << D3DX_SKIP_DDS_MIP_LEVELS_SHIFT), 0, &img_info, NULL, &texture);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_image_info(&img_info, 8, 8, 1, 4, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, TRUE);
+    IDirect3DVolumeTexture9_Release(texture);
+
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_SKIP_DDS_MIP_LEVELS(1, D3DX_FILTER_POINT), 0, &img_info, NULL, &texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_image_info(&img_info, 4, 4, 1, 3, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+    IDirect3DVolumeTexture9_Release(texture);
 
     /* Load a 2D texture DDS file with multiple mips into a volume texture. */
     hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
