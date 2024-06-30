@@ -693,6 +693,7 @@ call :setError 666 & (echo foo | more &&echo SUCCESS !errorlevel!||echo FAILURE 
 echo --- success/failure for PAUSE command
 call :setError 666 & (pause < NUL > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem TODO: pause is harder to test when fd 1 is a console handle as we don't control output
+
 echo ---
 setlocal DisableDelayedExpansion
 echo ------------ Testing 'set' ------------

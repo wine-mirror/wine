@@ -4054,26 +4054,23 @@ RETURN_CODE WCMD_assoc(const WCHAR *args, BOOL assoc)
  * Colors the terminal screen.
  */
 
-void WCMD_color (void) {
-
+RETURN_CODE WCMD_color(void)
+{
+  RETURN_CODE return_code = ERROR_INVALID_FUNCTION;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-  if (param1[0] != 0x00 && lstrlenW(param1) > 2) {
-    WCMD_output_stderr(WCMD_LoadMessage(WCMD_ARGERR));
-    return;
-  }
-
-  if (GetConsoleScreenBufferInfo(hStdOut, &consoleInfo))
+  if (param1[0] != 0x00 && lstrlenW(param1) > 2)
   {
-      COORD topLeft;
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_ARGERR));
+  }
+  else if (GetConsoleScreenBufferInfo(hStdOut, &consoleInfo))
+  {
+      COORD topLeft = {0, 0};
       DWORD screenSize;
-      DWORD color = 0;
+      DWORD color;
 
       screenSize = consoleInfo.dwSize.X * (consoleInfo.dwSize.Y + 1);
-
-      topLeft.X = 0;
-      topLeft.Y = 0;
 
       /* Convert the color hex digits */
       if (param1[0] == 0x00) {
@@ -4083,16 +4080,14 @@ void WCMD_color (void) {
       }
 
       /* Fail if fg == bg color */
-      if (((color & 0xF0) >> 4) == (color & 0x0F)) {
-        errorlevel = ERROR_INVALID_FUNCTION;
-        return;
+      if (((color & 0xF0) >> 4) != (color & 0x0F))
+      {
+          FillConsoleOutputAttribute(hStdOut, color, screenSize, topLeft, &screenSize);
+          SetConsoleTextAttribute(hStdOut, color);
+          return_code = NO_ERROR;
       }
-
-      /* Set the current screen contents and ensure all future writes
-         remain this color                                             */
-      FillConsoleOutputAttribute(hStdOut, color, screenSize, topLeft, &screenSize);
-      SetConsoleTextAttribute(hStdOut, color);
   }
+  return errorlevel = return_code;
 }
 
 /****************************************************************************

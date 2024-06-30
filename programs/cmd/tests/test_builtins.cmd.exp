@@ -603,7 +603,7 @@ SUCCESS 0
 @todo_wine@@formfeed@SUCCESS 666
 FAILURE 1
 --- success/failure for COLOR command
-@todo_wine@FAILURE 1
+FAILURE 1
 --- success/failure for TITLE command
 SUCCESS 666
 SUCCESS 666

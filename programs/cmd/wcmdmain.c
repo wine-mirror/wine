@@ -1920,7 +1920,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_assoc(parms_start, TRUE);
         break;
       case WCMD_COLOR:
-        WCMD_color();
+        return_code = WCMD_color();
         break;
       case WCMD_FTYPE:
         return_code = WCMD_assoc(parms_start, FALSE);
