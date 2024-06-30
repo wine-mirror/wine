@@ -619,7 +619,7 @@ foo@space@
 
 SUCCESS 0
 --- success/failure for PAUSE command
-@todo_wine@FAILURE 1
+FAILURE 1
 ---
 ------------ Testing 'set' ------------
 1

@@ -2087,8 +2087,9 @@ RETURN_CODE WCMD_move(void)
  * Suspend execution of a batch script until a key is typed
  */
 
-void WCMD_pause (void)
+RETURN_CODE WCMD_pause(void)
 {
+  RETURN_CODE return_code = NO_ERROR;
   DWORD oldmode;
   BOOL have_console;
   DWORD count;
@@ -2100,9 +2101,11 @@ void WCMD_pause (void)
       SetConsoleMode(hIn, 0);
 
   WCMD_output_asis(anykey);
-  WCMD_ReadFile(hIn, &key, 1, &count);
+  if (!WCMD_ReadFile(hIn, &key, 1, &count) || !count)
+      return_code = ERROR_INVALID_FUNCTION;
   if (have_console)
     SetConsoleMode(hIn, oldmode);
+  return return_code;
 }
 
 /****************************************************************************

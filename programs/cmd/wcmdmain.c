@@ -1861,7 +1861,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_setshow_path(parms_start);
         break;
       case WCMD_PAUSE:
-        WCMD_pause ();
+        return_code = WCMD_pause();
         break;
       case WCMD_PROMPT:
         return_code = WCMD_setshow_prompt();
