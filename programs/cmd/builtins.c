@@ -3156,8 +3156,9 @@ exprerrorreturn:
  * Set/Show the environment variables
  */
 
-void WCMD_setshow_env (WCHAR *s) {
-
+RETURN_CODE WCMD_setshow_env(WCHAR *s)
+{
+  RETURN_CODE return_code = NO_ERROR;
   LPVOID env;
   WCHAR *p;
   BOOL status;
@@ -3166,13 +3167,12 @@ void WCMD_setshow_env (WCHAR *s) {
   if (param1[0] == 0x00 && quals[0] == 0x00) {
     env = GetEnvironmentStringsW();
     WCMD_setshow_sortenv( env, NULL );
-    return;
   }
 
   /* See if /P supplied, and if so echo the prompt, and read in a reply */
-  if (CompareStringW(LOCALE_USER_DEFAULT,
-                     NORM_IGNORECASE | SORT_STRINGSORT,
-                     s, 2, L"/P", -1) == CSTR_EQUAL) {
+  else if (CompareStringW(LOCALE_USER_DEFAULT,
+                          NORM_IGNORECASE | SORT_STRINGSORT,
+                          s, 2, L"/P", -1) == CSTR_EQUAL) {
     DWORD count;
 
     s += 2;
@@ -3188,20 +3188,22 @@ void WCMD_setshow_env (WCHAR *s) {
     /* If no parameter, or no '=' sign, return an error */
     if (!(*s) || ((p = wcschr (s, '=')) == NULL )) {
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-      return;
+      return_code = ERROR_INVALID_FUNCTION;
     }
+    else
+    {
+      /* Output the prompt */
+      *p++ = '\0';
+      if (*p) WCMD_output_asis(p);
 
-    /* Output the prompt */
-    *p++ = '\0';
-    if (*p) WCMD_output_asis(p);
-
-    /* Read the reply */
-    if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) && count > 1) {
-      string[count-1] = '\0'; /* ReadFile output is not null-terminated! */
-      if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
-      WINE_TRACE("set /p: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
-                 wine_dbgstr_w(string));
-      SetEnvironmentVariableW(s, string);
+      /* Read the reply */
+      if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) && count > 1) {
+        string[count-1] = '\0'; /* ReadFile output is not null-terminated! */
+        if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
+        TRACE("set /p: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
+              wine_dbgstr_w(string));
+        SetEnvironmentVariableW(s, string);
+      }
     }
 
   /* See if /A supplied, and if so calculate the results of all the expressions */
@@ -3234,11 +3236,10 @@ void WCMD_setshow_env (WCHAR *s) {
     /* If parsing failed, issue the error message */
     if (rc > 0) {
       WCMD_output_stderr(WCMD_LoadMessage(rc));
-      return;
+      return_code = ERROR_INVALID_FUNCTION;
     }
-
     /* If we have no context (interactive or cmd.exe /c) print the final result */
-    if (!context) {
+    else if (!context) {
       swprintf(string, ARRAY_SIZE(string), L"%d", result);
       WCMD_output_asis(string);
     }
@@ -3259,22 +3260,24 @@ void WCMD_setshow_env (WCHAR *s) {
       env = GetEnvironmentStringsW();
       if (WCMD_setshow_sortenv( env, s ) == 0) {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_MISSINGENV), s);
-        errorlevel = ERROR_INVALID_FUNCTION;
+        return_code = ERROR_INVALID_FUNCTION;
       }
-      return;
     }
-    *p++ = '\0';
+    else
+    {
+      *p++ = '\0';
 
-    if (!*p) p = NULL;
-    WINE_TRACE("set: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
-               wine_dbgstr_w(p));
-    status = SetEnvironmentVariableW(s, p);
-    gle = GetLastError();
-    if ((!status) & (gle == ERROR_ENVVAR_NOT_FOUND)) {
-      errorlevel = ERROR_INVALID_FUNCTION;
-    } else if (!status) WCMD_print_error();
-    else if (!interactive) errorlevel = NO_ERROR;
+      if (!*p) p = NULL;
+      TRACE("set: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
+            wine_dbgstr_w(p));
+      status = SetEnvironmentVariableW(s, p);
+      gle = GetLastError();
+      if ((!status) & (gle == ERROR_ENVVAR_NOT_FOUND)) {
+          return_code = ERROR_INVALID_FUNCTION;
+      } else if (!status) WCMD_print_error();
+    }
   }
+  return errorlevel = return_code;
 }
 
 /****************************************************************************

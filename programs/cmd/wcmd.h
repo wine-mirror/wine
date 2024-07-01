@@ -198,7 +198,7 @@ void WCMD_run_program (WCHAR *command, BOOL called);
 RETURN_CODE WCMD_setlocal(WCHAR *args);
 RETURN_CODE WCMD_setshow_date(void);
 RETURN_CODE WCMD_setshow_default(const WCHAR *args);
-void WCMD_setshow_env (WCHAR *command);
+RETURN_CODE WCMD_setshow_env(WCHAR *command);
 RETURN_CODE WCMD_setshow_path(const WCHAR *args);
 void WCMD_setshow_prompt (void);
 RETURN_CODE WCMD_setshow_time(void);
