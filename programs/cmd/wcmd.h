@@ -208,7 +208,7 @@ RETURN_CODE WCMD_type(WCHAR *);
 RETURN_CODE WCMD_verify(void);
 RETURN_CODE WCMD_version(void);
 RETURN_CODE WCMD_volume(void);
-void WCMD_mklink(WCHAR *args);
+RETURN_CODE WCMD_mklink(WCHAR *args);
 
 WCHAR *WCMD_fgets (WCHAR *buf, DWORD n, HANDLE stream);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw, BOOL wholecmdline);

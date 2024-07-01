@@ -4088,7 +4088,7 @@ RETURN_CODE WCMD_color(void)
  * WCMD_mklink
  */
 
-void WCMD_mklink(WCHAR *args)
+RETURN_CODE WCMD_mklink(WCHAR *args)
 {
     int   argno = 0;
     WCHAR *argN = args;
@@ -4098,11 +4098,6 @@ void WCMD_mklink(WCHAR *args)
     BOOL ret = FALSE;
     WCHAR file1[MAX_PATH];
     WCHAR file2[MAX_PATH];
-
-    if (param1[0] == 0x00 || param2[0] == 0x00) {
-        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-        return;
-    }
 
     file1[0] = 0;
 
@@ -4119,7 +4114,12 @@ void WCMD_mklink(WCHAR *args)
             hard = TRUE;
         else if (lstrcmpiW(thisArg, L"/J") == 0)
             junction = TRUE;
-        else {
+        else if (*thisArg == L'/')
+        {
+            return errorlevel = ERROR_INVALID_FUNCTION;
+        }
+        else
+        {
             if(!file1[0])
                 lstrcpyW(file1, thisArg);
             else
@@ -4127,13 +4127,18 @@ void WCMD_mklink(WCHAR *args)
         }
     }
 
-    if(hard)
-        ret = CreateHardLinkW(file1, file2, NULL);
-    else if(!junction)
-        ret = CreateSymbolicLinkW(file1, file2, isdir);
-    else
-        WINE_TRACE("Juction links currently not supported.\n");
+    if (*file1 && *file2)
+    {
+        if (hard)
+            ret = CreateHardLinkW(file1, file2, NULL);
+        else if(!junction)
+            ret = CreateSymbolicLinkW(file1, file2, isdir);
+        else
+            TRACE("Junction links currently not supported.\n");
+    }
 
-    if(!ret)
-        WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), file1);
+    if (ret) return errorlevel = NO_ERROR;
+
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), file1);
+    return errorlevel = ERROR_INVALID_FUNCTION;
 }
