@@ -1386,7 +1386,7 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
     BOOL file_size = FALSE;
     BOOL file_format = FALSE;
     BOOL file_mip_levels = FALSE;
-    IDirect3DCubeTexture9 *tex, *buftex;
+    IDirect3DCubeTexture9 *tex, *staging_tex;
 
     TRACE("device %p, src_data %p, src_data_size %u, size %u, mip_levels %u, usage %#lx, "
             "format %#x, pool %#x, filter %#lx, mip_filter %#lx, color_key 0x%08lx, src_info %p, "
@@ -1397,6 +1397,7 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
     if (!device || !cube_texture || !src_data || !src_data_size)
         return D3DERR_INVALIDCALL;
 
+    staging_tex = tex = *cube_texture = NULL;
     hr = D3DXGetImageInfoFromFileInMemory(src_data, src_data_size, &img_info);
     if (FAILED(hr))
         return hr;
@@ -1435,64 +1436,84 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
 
     hr = D3DXCheckCubeTextureRequirements(device, &size, &mip_levels, usage, &format, pool);
     if (FAILED(hr))
-        return hr;
+    {
+        FIXME("Couldn't find suitable texture parameters.\n");
+        goto err;
+    }
 
     if ((file_size && size != img_info.Width)
             || (file_format && format != img_info.Format)
             || (file_mip_levels && mip_levels != img_info.MipLevels))
-        return D3DERR_NOTAVAILABLE;
+    {
+        hr = D3DERR_NOTAVAILABLE;
+        goto err;
+    }
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     if (FAILED(hr))
-        return D3DERR_INVALIDCALL;
+    {
+        hr = D3DERR_INVALIDCALL;
+        goto err;
+    }
 
     dynamic_texture = (caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && (usage & D3DUSAGE_DYNAMIC);
     if (pool == D3DPOOL_DEFAULT && !dynamic_texture)
     {
-        hr = D3DXCreateCubeTexture(device, size, mip_levels, 0, format, D3DPOOL_SYSTEMMEM, &buftex);
-        tex = buftex;
+        TRACE("Creating staging texture.\n");
+        hr = D3DXCreateCubeTexture(device, size, mip_levels, 0, format, D3DPOOL_SYSTEMMEM, &staging_tex);
+        tex = staging_tex;
     }
     else
     {
         hr = D3DXCreateCubeTexture(device, size, mip_levels, usage, format, pool, &tex);
-        buftex = NULL;
     }
-    if (FAILED(hr))
-        return hr;
 
+    if (FAILED(hr))
+    {
+        FIXME("Texture creation failed.\n");
+        goto err;
+    }
+
+    TRACE("Texture created correctly. Now loading the texture data into it.\n");
     hr = load_cube_texture_from_dds(tex, src_data, palette, filter, color_key, &img_info);
     if (FAILED(hr))
     {
-        IDirect3DCubeTexture9_Release(tex);
-        return hr;
+        FIXME("Texture loading failed.\n");
+        goto err;
     }
 
     loaded_miplevels = min(IDirect3DCubeTexture9_GetLevelCount(tex), img_info.MipLevels);
     hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, palette, loaded_miplevels - 1, mip_filter);
     if (FAILED(hr))
     {
-        IDirect3DCubeTexture9_Release(tex);
-        return hr;
+        FIXME("Texture filtering failed.\n");
+        goto err;
     }
 
-    if (buftex)
+    if (staging_tex)
     {
-        hr = D3DXCreateCubeTexture(device, size, mip_levels, usage, format, pool, &tex);
+        hr = D3DXCreateCubeTexture(device, size, mip_levels, usage, format, pool, cube_texture);
         if (FAILED(hr))
-        {
-            IDirect3DCubeTexture9_Release(buftex);
-            return hr;
-        }
+            goto err;
 
-        IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)buftex, (IDirect3DBaseTexture9 *)tex);
-        IDirect3DCubeTexture9_Release(buftex);
+        IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)staging_tex, (IDirect3DBaseTexture9 *)(*cube_texture));
+        IDirect3DCubeTexture9_Release(staging_tex);
+    }
+    else
+    {
+        *cube_texture = tex;
     }
 
     if (src_info)
         *src_info = img_info;
 
-    *cube_texture = tex;
-    return D3D_OK;
+    return hr;
+
+err:
+    if (tex)
+        IDirect3DCubeTexture9_Release(tex);
+
+    return hr;
 }
 
 
