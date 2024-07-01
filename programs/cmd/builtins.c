@@ -3408,8 +3408,9 @@ RETURN_CODE WCMD_shift(const WCHAR *args)
 /****************************************************************************
  * WCMD_start
  */
-void WCMD_start(WCHAR *args)
+RETURN_CODE WCMD_start(WCHAR *args)
 {
+    RETURN_CODE return_code = NO_ERROR;
     int argno;
     int have_title;
     WCHAR file[MAX_PATH];
@@ -3456,6 +3457,11 @@ void WCMD_start(WCHAR *args)
      * application native Windows programs will use to invoke 'start'.
      *
      * WCMD_parameter_with_delims will take care of everything for us.
+     */
+    /* FIXME: using an external start.exe has several caveats:
+     * - cannot discriminate syntax error in arguments from child's return code
+     * - need to access start.exe's child to get its running state
+     *   (not start.exe itself)
      */
     have_title = FALSE;
     for (argno=0; ; argno++) {
@@ -3521,9 +3527,10 @@ void WCMD_start(WCHAR *args)
     {
         SetLastError(ERROR_FILE_NOT_FOUND);
         WCMD_print_error ();
-        errorlevel = RETURN_CODE_CANT_LAUNCH;
+        return_code = errorlevel = ERROR_INVALID_FUNCTION;
     }
     free(cmdline);
+    return return_code;
 }
 
 /****************************************************************************
