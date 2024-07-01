@@ -645,14 +645,13 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
     }
     else if (header->caps2 & DDS_CAPS2_CUBEMAP)
     {
-        DWORD face;
-
-        faces = 0;
-        for (face = DDS_CAPS2_CUBEMAP_POSITIVEX; face <= DDS_CAPS2_CUBEMAP_NEGATIVEZ; face <<= 1)
+        if ((header->caps2 & DDS_CAPS2_CUBEMAP_ALL_FACES) != DDS_CAPS2_CUBEMAP_ALL_FACES)
         {
-            if (header->caps2 & face)
-                faces++;
+            WARN("Tried to load a partial cubemap DDS file.\n");
+            return D3DXERR_INVALIDDATA;
         }
+
+        faces = 6;
         image->resource_type = D3DRTYPE_CUBETEXTURE;
     }
     else

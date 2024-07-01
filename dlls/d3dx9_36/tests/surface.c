@@ -408,7 +408,7 @@ static void test_dds_header_handling(void)
         /* Partial cubemaps are not supported. */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 1, (4 * 4), 1,
           (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_POSITIVEX),
-          { D3DXERR_INVALIDDATA, }, TRUE, FALSE, (64 * 6) },
+          { D3DXERR_INVALIDDATA, }, FALSE, FALSE, (64 * 6) },
     };
 
     dds = calloc(1, sizeof(*dds));
