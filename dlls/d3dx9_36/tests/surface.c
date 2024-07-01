@@ -375,31 +375,40 @@ static void test_dds_header_handling(void)
             D3DRESOURCETYPE resource_type;
         }
         expected;
-        BOOL todo;
+        BOOL todo_hr;
+        BOOL todo_info;
         uint32_t pixel_data_size;
     } info_tests[] = {
         /* Depth value set to 4, but no caps bits are set. Depth is ignored. */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 4, (4 * 4), 3, 0, 0,
-          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_TEXTURE, }, FALSE, 292 },
+          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_TEXTURE, }, FALSE, FALSE, 292 },
         /* The volume texture caps2 field is ignored. */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 4, (4 * 4), 3,
           (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), DDS_CAPS2_VOLUME,
-          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_TEXTURE, }, FALSE, 292 },
+          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_TEXTURE, }, FALSE, FALSE, 292 },
         /*
          * The DDS_DEPTH flag is the only thing checked to determine if a DDS
          * file represents a volume texture.
          */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 4, (4 * 4), 3,
           0, 0,
-          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, 292 },
+          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, FALSE, 292 },
         /* Even if the depth field is set to 0, it's still a volume texture. */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 0, (4 * 4), 3,
           0, 0,
-          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, 292 },
+          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, FALSE, 292 },
         /* The DDS_DEPTH flag overrides cubemap caps. */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 4, (4 * 4), 3,
           (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_ALL_FACES),
-          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, (292 * 6) },
+          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, FALSE, (292 * 6) },
+        /* Cubemap where width field does not equal height. */
+        { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 5, 1, (4 * 4), 1,
+          (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_ALL_FACES),
+          { D3D_OK, 4, 5, 1, 1, D3DRTYPE_CUBETEXTURE, }, FALSE, FALSE, (80 * 6) },
+        /* Partial cubemaps are not supported. */
+        { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 1, (4 * 4), 1,
+          (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_POSITIVEX),
+          { D3DXERR_INVALIDDATA, }, TRUE, FALSE, (64 * 6) },
     };
 
     dds = calloc(1, sizeof(*dds));
@@ -452,12 +461,12 @@ static void test_dds_header_handling(void)
 
         memset(&info, 0, sizeof(info));
         hr = D3DXGetImageInfoFromFileInMemory(dds, file_size, &info);
-        ok(hr == info_tests[i].expected.hr, "Unexpected hr %#lx.\n", hr);
+        todo_wine_if(info_tests[i].todo_hr) ok(hr == info_tests[i].expected.hr, "Unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(info_tests[i].expected.hr))
         {
             check_image_info(&info, info_tests[i].expected.width, info_tests[i].expected.height,
                     info_tests[i].expected.depth, info_tests[i].expected.mip_levels, D3DFMT_X8R8G8B8,
-                    info_tests[i].expected.resource_type, D3DXIFF_DDS, info_tests[i].todo);
+                    info_tests[i].expected.resource_type, D3DXIFF_DDS, info_tests[i].todo_info);
         }
         winetest_pop_context();
     }
