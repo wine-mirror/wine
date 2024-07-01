@@ -1380,7 +1380,8 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
 {
     BOOL dynamic_texture, format_specified = FALSE;
     IDirect3DCubeTexture9 *tex, *staging_tex;
-    uint32_t loaded_miplevels;
+    uint32_t loaded_miplevels, skip_levels;
+    struct d3dx_image image;
     D3DXIMAGE_INFO img_info;
     D3DCAPS9 caps;
     HRESULT hr;
@@ -1395,15 +1396,29 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
         return D3DERR_INVALIDCALL;
 
     staging_tex = tex = *cube_texture = NULL;
-    hr = D3DXGetImageInfoFromFileInMemory(src_data, src_data_size, &img_info);
+    skip_levels = mip_filter != D3DX_DEFAULT ? mip_filter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
+    skip_levels &= D3DX_SKIP_DDS_MIP_LEVELS_MASK;
+    if (skip_levels)
+        FIXME("Skipping mip levels is currently unsupported for cube textures.\n");
+    hr = d3dx_image_init(src_data, src_data_size, &image, 0, 0);
     if (FAILED(hr))
+    {
+        FIXME("Unrecognized file format, returning failure.\n");
         return hr;
+    }
 
-    if (img_info.ImageFileFormat != D3DXIFF_DDS)
-        return D3DXERR_INVALIDDATA;
+    d3dximage_info_from_d3dx_image(&img_info, &image);
+    if (img_info.ResourceType != D3DRTYPE_CUBETEXTURE)
+    {
+        hr = E_FAIL;
+        goto err;
+    }
 
     if (img_info.Width != img_info.Height)
-        return D3DXERR_INVALIDDATA;
+    {
+        hr = D3DXERR_INVALIDDATA;
+        goto err;
+    }
 
     /* Handle default values. */
     if (!size || size == D3DX_DEFAULT_NONPOW2 || size == D3DX_FROM_FILE || size == D3DX_DEFAULT)
@@ -1479,12 +1494,14 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
         *cube_texture = tex;
     }
 
+    d3dx_image_cleanup(&image);
     if (src_info)
         *src_info = img_info;
 
     return hr;
 
 err:
+    d3dx_image_cleanup(&image);
     if (tex)
         IDirect3DCubeTexture9_Release(tex);
 

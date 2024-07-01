@@ -2422,10 +2422,10 @@ static void test_D3DXCreateCubeTextureFromFileInMemory(IDirect3DDevice9 *device)
     ok(hr == D3DERR_INVALIDCALL, "D3DXCreateCubeTextureFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCubeTextureFromFileInMemory(device, dds_24bit, sizeof(dds_24bit), &cube_texture);
-    todo_wine ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     hr = D3DXCreateCubeTextureFromFileInMemory(device, bmp_32bpp_4_4_argb, sizeof(bmp_32bpp_4_4_argb), &cube_texture);
-    todo_wine ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 
     hr = D3DXCreateCubeTextureFromFileInMemory(device, dds_cube_map, sizeof(dds_cube_map), &cube_texture);
     if (SUCCEEDED(hr))
