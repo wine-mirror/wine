@@ -122,10 +122,25 @@ static HRESULT create_file(const char *filename, const unsigned char *data, cons
 #define DDS_PIXELFORMAT 0x00001000
 #define DDS_MIPMAPCOUNT 0x00020000
 #define DDS_LINEARSIZE 0x00080000
+#define DDS_PITCH 0x00000008
+#define DDS_DEPTH 0x00800000
 
 /* dds_header.caps */
 #define DDSCAPS_ALPHA    0x00000002
 #define DDS_CAPS_TEXTURE 0x00001000
+#define DDS_CAPS_COMPLEX 0x00000008
+
+#define DDS_CAPS2_VOLUME  0x00200000
+#define DDS_CAPS2_CUBEMAP 0x00000200
+#define DDS_CAPS2_CUBEMAP_POSITIVEX 0x00000400
+#define DDS_CAPS2_CUBEMAP_NEGATIVEX 0x00000800
+#define DDS_CAPS2_CUBEMAP_POSITIVEY 0x00001000
+#define DDS_CAPS2_CUBEMAP_NEGATIVEY 0x00002000
+#define DDS_CAPS2_CUBEMAP_POSITIVEZ 0x00004000
+#define DDS_CAPS2_CUBEMAP_NEGATIVEZ 0x00008000
+#define DDS_CAPS2_CUBEMAP_ALL_FACES ( DDS_CAPS2_CUBEMAP_POSITIVEX | DDS_CAPS2_CUBEMAP_NEGATIVEX \
+                                    | DDS_CAPS2_CUBEMAP_POSITIVEY | DDS_CAPS2_CUBEMAP_NEGATIVEY \
+                                    | DDS_CAPS2_CUBEMAP_POSITIVEZ | DDS_CAPS2_CUBEMAP_NEGATIVEZ )
 
 /* dds_pixel_format.flags */
 #define DDS_PF_ALPHA 0x00000001
@@ -340,6 +355,52 @@ static void test_dds_header_handling(void)
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 9, 262146, { D3D_OK, 9 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 10, 262146, { D3D_OK, 10 } },
     };
+    struct
+    {
+        uint32_t flags;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        uint32_t row_pitch;
+        uint32_t mip_levels;
+        uint32_t caps;
+        uint32_t caps2;
+        struct
+        {
+            HRESULT hr;
+            uint32_t width;
+            uint32_t height;
+            uint32_t depth;
+            uint32_t mip_levels;
+            D3DRESOURCETYPE resource_type;
+        }
+        expected;
+        BOOL todo;
+        uint32_t pixel_data_size;
+    } info_tests[] = {
+        /* Depth value set to 4, but no caps bits are set. Depth is ignored. */
+        { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 4, (4 * 4), 3, 0, 0,
+          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_TEXTURE, }, FALSE, 292 },
+        /* The volume texture caps2 field is ignored. */
+        { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 4, (4 * 4), 3,
+          (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), DDS_CAPS2_VOLUME,
+          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_TEXTURE, }, TRUE, 292 },
+        /*
+         * The DDS_DEPTH flag is the only thing checked to determine if a DDS
+         * file represents a volume texture.
+         */
+        { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 4, (4 * 4), 3,
+          0, 0,
+          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, TRUE, 292 },
+        /* Even if the depth field is set to 0, it's still a volume texture. */
+        { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 0, (4 * 4), 3,
+          0, 0,
+          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_VOLUMETEXTURE, }, TRUE, 292 },
+        /* The DDS_DEPTH flag overrides cubemap caps. */
+        { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 4, (4 * 4), 3,
+          (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_ALL_FACES),
+          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, TRUE, (292 * 6) },
+    };
 
     dds = calloc(1, sizeof(*dds));
     if (!dds)
@@ -370,6 +431,35 @@ static void test_dds_header_handling(void)
             ok(info.MipLevels == tests[i].expected.miplevels, "%d: Got MipLevels %u, expected %u\n",
                     i, info.MipLevels, tests[i].expected.miplevels);
         }
+    }
+
+    for (i = 0; i < ARRAY_SIZE(info_tests); i++)
+    {
+        uint32_t file_size = sizeof(dds->magic) + sizeof(dds->header) + info_tests[i].pixel_data_size;
+        assert(file_size <= sizeof(*dds));
+
+        winetest_push_context("Test %u", i);
+        dds->magic = MAKEFOURCC('D','D','S',' ');
+        fill_dds_header(&dds->header);
+        dds->header.flags = info_tests[i].flags;
+        dds->header.width = info_tests[i].width;
+        dds->header.height = info_tests[i].height;
+        dds->header.depth = info_tests[i].depth;
+        dds->header.pitch_or_linear_size = info_tests[i].row_pitch;
+        dds->header.miplevels = info_tests[i].mip_levels;
+        dds->header.caps = info_tests[i].caps;
+        dds->header.caps2 = info_tests[i].caps2;
+
+        memset(&info, 0, sizeof(info));
+        hr = D3DXGetImageInfoFromFileInMemory(dds, file_size, &info);
+        ok(hr == info_tests[i].expected.hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(info_tests[i].expected.hr))
+        {
+            check_image_info(&info, info_tests[i].expected.width, info_tests[i].expected.height,
+                    info_tests[i].expected.depth, info_tests[i].expected.mip_levels, D3DFMT_X8R8G8B8,
+                    info_tests[i].expected.resource_type, D3DXIFF_DDS, info_tests[i].todo);
+        }
+        winetest_pop_context();
     }
 
     free(dds);

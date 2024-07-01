@@ -430,8 +430,9 @@ static inline void check_image_info_(const char *file, uint32_t line, const D3DX
         ok_(file, line)(info->MipLevels == mip_levels, "Expected mip_levels %u, got %u.\n", mip_levels,
                 info->MipLevels);
     ok_(file, line)(info->Format == format, "Expected texture format %d, got %d.\n", format, info->Format);
-    ok_(file, line)(info->ResourceType == resource_type, "Expected resource_type %d, got %d.\n", resource_type,
-            info->ResourceType);
+    todo_wine_if(wine_todo && info->ResourceType != resource_type)
+        ok_(file, line)(info->ResourceType == resource_type, "Expected resource_type %d, got %d.\n", resource_type,
+                info->ResourceType);
     ok_(file, line)(info->ImageFileFormat == image_file_format, "Expected image_file_format %d, got %d.\n",
             image_file_format, info->ImageFileFormat);
 }
