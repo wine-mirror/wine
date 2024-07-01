@@ -638,9 +638,9 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
         return D3DXERR_INVALIDDATA;
 
     TRACE("Pixel format is %#x.\n", image->format);
-    if (header->caps2 & DDS_CAPS2_VOLUME)
+    if (header->flags & DDS_DEPTH)
     {
-        image->size.depth = header->depth;
+        image->size.depth = max(header->depth, 1);
         image->resource_type = D3DRTYPE_VOLUMETEXTURE;
     }
     else if (header->caps2 & DDS_CAPS2_CUBEMAP)

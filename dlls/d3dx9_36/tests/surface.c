@@ -384,22 +384,22 @@ static void test_dds_header_handling(void)
         /* The volume texture caps2 field is ignored. */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 4, (4 * 4), 3,
           (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), DDS_CAPS2_VOLUME,
-          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_TEXTURE, }, TRUE, 292 },
+          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_TEXTURE, }, FALSE, 292 },
         /*
          * The DDS_DEPTH flag is the only thing checked to determine if a DDS
          * file represents a volume texture.
          */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 4, (4 * 4), 3,
           0, 0,
-          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, TRUE, 292 },
+          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, 292 },
         /* Even if the depth field is set to 0, it's still a volume texture. */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 0, (4 * 4), 3,
           0, 0,
-          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_VOLUMETEXTURE, }, TRUE, 292 },
+          { D3D_OK, 4, 4, 1, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, 292 },
         /* The DDS_DEPTH flag overrides cubemap caps. */
         { (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 4, (4 * 4), 3,
           (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_ALL_FACES),
-          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, TRUE, (292 * 6) },
+          { D3D_OK, 4, 4, 4, 3, D3DRTYPE_VOLUMETEXTURE, }, FALSE, (292 * 6) },
     };
 
     dds = calloc(1, sizeof(*dds));
