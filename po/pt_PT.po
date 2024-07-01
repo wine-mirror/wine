@@ -4863,7 +4863,7 @@ msgstr "Variável de ambiente não encontrada.\n"
 msgid "No signal sent.\n"
 msgstr "Nenhum sinal enviado.\n"
 
-#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:409
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:406
 msgid "File name is too long.\n"
 msgstr "Nome de ficheiro é muito comprido.\n"
 
@@ -14634,7 +14634,7 @@ msgstr "Ciclo enquanto resolve referências"
 msgid "Referral hop limit exceeded"
 msgstr "Limite de salto de referências excedido"
 
-#: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:373
+#: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:370
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -14642,7 +14642,7 @@ msgstr ""
 "Ainda não implementado\n"
 "\n"
 
-#: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:376
+#: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:373
 msgid "%1: File Not Found\n"
 msgstr "%1: Ficheiro não encontrado\n"
 
@@ -14784,22 +14784,18 @@ msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <ficheiro> copia um ficheiro.\n"
 
 #: programs/cmd/cmd.rc:56
-msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY muda o dispositivo de entrada/saída.\n"
-
-#: programs/cmd/cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE mostra ou altera a data do sistema.\n"
 
-#: programs/cmd/cmd.rc:62
+#: programs/cmd/cmd.rc:59
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <ficheiro> apaga um ficheiro ou conjunto de ficheiros.\n"
 
-#: programs/cmd/cmd.rc:65
+#: programs/cmd/cmd.rc:62
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR lista o conteúdo de uma pasta.\n"
 
-#: programs/cmd/cmd.rc:75
+#: programs/cmd/cmd.rc:72
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
@@ -14819,11 +14815,11 @@ msgstr ""
 "comando ECHO OFF pode ser impedido de ser mostrado colocando-se um\n"
 "símbolo @ precedendo o mesmo.\n"
 
-#: programs/cmd/cmd.rc:78
+#: programs/cmd/cmd.rc:75
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <ficheiro> apaga um ficheiro ou conjunto de ficheiros.\n"
 
-#: programs/cmd/cmd.rc:85
+#: programs/cmd/cmd.rc:82
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -14838,7 +14834,7 @@ msgstr ""
 "\n"
 "O símbolo % deve ser duplicado quando usar o FOR num ficheiro de lote.\n"
 
-#: programs/cmd/cmd.rc:97
+#: programs/cmd/cmd.rc:94
 msgid ""
 "The GOTO command transfers execution to another statement within a batch\n"
 "file.\n"
@@ -14862,7 +14858,7 @@ msgstr ""
 "\n"
 "GOTO não tem efeito quando usado interactivamente.\n"
 
-#: programs/cmd/cmd.rc:101
+#: programs/cmd/cmd.rc:98
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -14870,7 +14866,7 @@ msgstr ""
 "HELP <comando> mostra uma breve ajuda sobre o <comando>.\n"
 "HELP sem argumentos mostra todos os comandos suportados pelo CMD.\n"
 
-#: programs/cmd/cmd.rc:111
+#: programs/cmd/cmd.rc:108
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -14890,7 +14886,7 @@ msgstr ""
 "Na segunda forma do comando, texto1 e texto2 devem estar entre aspas.\n"
 "A comparação não diferencia maiúsculas de minúsculas.\n"
 
-#: programs/cmd/cmd.rc:118
+#: programs/cmd/cmd.rc:115
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -14904,15 +14900,15 @@ msgstr ""
 "O comando LABEL irá aguardar que informe o novo rótulo para a unidade\n"
 "especificado. Pode mostrar o rótulo do disco com o comando VOL.\n"
 
-#: programs/cmd/cmd.rc:121
+#: programs/cmd/cmd.rc:118
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <nome> é a versão abreviada de MKDIR. Cria uma sub-pasta.\n"
 
-#: programs/cmd/cmd.rc:123
+#: programs/cmd/cmd.rc:120
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <nome> cria uma sub-pasta chamada <nome>.\n"
 
-#: programs/cmd/cmd.rc:131
+#: programs/cmd/cmd.rc:128
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -14928,7 +14924,7 @@ msgstr ""
 "\n"
 "MOVE falhará se o local antigo e o novo local estão em diferentes unidades.\n"
 
-#: programs/cmd/cmd.rc:142
+#: programs/cmd/cmd.rc:139
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -14950,7 +14946,7 @@ msgstr ""
 "PATH, por exemplo:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: programs/cmd/cmd.rc:148
+#: programs/cmd/cmd.rc:145
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -14962,7 +14958,7 @@ msgstr ""
 "Isto é útil principalmente em ficheiros de lote para permitir ao utilizador\n"
 "ler a saída de um comando anterior antes que desenrole do ecrã.\n"
 
-#: programs/cmd/cmd.rc:169
+#: programs/cmd/cmd.rc:166
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -15004,7 +15000,7 @@ msgstr ""
 "O 'prompt' também pode ser mudado através da variável de ambiente PROMPT,\n"
 "assim, o comando 'SET PROMPT=texto' tem o mesmo efeito que 'PROMPT texto'.\n"
 
-#: programs/cmd/cmd.rc:173
+#: programs/cmd/cmd.rc:170
 msgid ""
 "A command line beginning with REM (followed by a space) performs no action,\n"
 "and can therefore be used as a comment in a batch file.\n"
@@ -15012,23 +15008,23 @@ msgstr ""
 "Um comando iniciado com REM (seguido de um espaço) não faz nenhuma ação e,\n"
 "portanto, pode ser usado como comentário num ficheiro de lote.\n"
 
-#: programs/cmd/cmd.rc:176
+#: programs/cmd/cmd.rc:173
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN é a versão abreviada de RENAME. Renomeia um ficheiro.\n"
 
-#: programs/cmd/cmd.rc:178
+#: programs/cmd/cmd.rc:175
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <ficheiro1> <ficheiro2> renomeia um ficheiro.\n"
 
-#: programs/cmd/cmd.rc:181
+#: programs/cmd/cmd.rc:178
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <pasta> é a versão abreviada de RMDIR. Apaga uma pasta.\n"
 
-#: programs/cmd/cmd.rc:183
+#: programs/cmd/cmd.rc:180
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <pasta> apaga uma pasta.\n"
 
-#: programs/cmd/cmd.rc:229
+#: programs/cmd/cmd.rc:226
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -15062,7 +15058,7 @@ msgstr ""
 "nativo. Note que não é possível alterar o ambiente do sistema operacional\n"
 "hóspede a partir do cmd.\n"
 
-#: programs/cmd/cmd.rc:234
+#: programs/cmd/cmd.rc:231
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of the\n"
 "list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
@@ -15072,7 +15068,7 @@ msgstr ""
 "lista, assim o parâmetro 2 sobrepõe o parametro 1 e assim por diante. Isto\n"
 "não tem efeito se chamado a partir da linha de comando.\n"
 
-#: programs/cmd/cmd.rc:212
+#: programs/cmd/cmd.rc:209
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -15130,15 +15126,15 @@ msgstr ""
 "/ProgIDOpen    Abre um documento usando o progID indicado.\n"
 "/?             Mostra esta ajuda e termina.\n"
 
-#: programs/cmd/cmd.rc:237
+#: programs/cmd/cmd.rc:234
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME define ou mostra a hora actual do sistema.\n"
 
-#: programs/cmd/cmd.rc:240
+#: programs/cmd/cmd.rc:237
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <texto> configura o título da janela do cmd.\n"
 
-#: programs/cmd/cmd.rc:244
+#: programs/cmd/cmd.rc:241
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
 "redirected). No check is made that the file is readable text.\n"
@@ -15146,7 +15142,7 @@ msgstr ""
 "TYPE <ficheiro> copia <ficheiro> para o dispositivo consola (ou outro, se\n"
 "redireccionado). Nenhuma verificação é feita se o ficheiro pode ser lido.\n"
 
-#: programs/cmd/cmd.rc:253
+#: programs/cmd/cmd.rc:250
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -15165,15 +15161,15 @@ msgstr ""
 "\n"
 "O 'flag' de verificação não tem função no Wine.\n"
 
-#: programs/cmd/cmd.rc:256
+#: programs/cmd/cmd.rc:253
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER mostra a versão do cmd em execução.\n"
 
-#: programs/cmd/cmd.rc:259
+#: programs/cmd/cmd.rc:256
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL mostra o nome de um volume de um dispositivo de disco.\n"
 
-#: programs/cmd/cmd.rc:263
+#: programs/cmd/cmd.rc:260
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file which\n"
 "were introduced by a preceding SETLOCAL.\n"
@@ -15181,7 +15177,7 @@ msgstr ""
 "ENDLOCAL termina localização de mudanças de ambiente num ficheiro de lote\n"
 "que foram iniciadas por um SETLOCAL anterior.\n"
 
-#: programs/cmd/cmd.rc:271
+#: programs/cmd/cmd.rc:268
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -15196,7 +15192,7 @@ msgstr ""
 "lote e são mantidas até ao ENDLOCAL seguinte (ou até ao fim do ficheiro),\n"
 "após o qual as opções anteriores são repostas.\n"
 
-#: programs/cmd/cmd.rc:275
+#: programs/cmd/cmd.rc:272
 msgid ""
 "PUSHD <directory> saves the current directory onto a stack, and then\n"
 "changes the current directory to the supplied one.\n"
@@ -15204,11 +15200,11 @@ msgstr ""
 "PUSHD <dir> guarda a pasta actual numa pilha, e depois muda a pasta\n"
 "actual para a pasta indicada.\n"
 
-#: programs/cmd/cmd.rc:278
+#: programs/cmd/cmd.rc:275
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD muda a pasta actual para a última guardada com PUSHD.\n"
 
-#: programs/cmd/cmd.rc:288
+#: programs/cmd/cmd.rc:285
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -15228,7 +15224,7 @@ msgstr ""
 "Se não indicar um tipo de ficheiro após o sinal de igual, a associação\n"
 "actual é removida, se existir alguma.\n"
 
-#: programs/cmd/cmd.rc:300
+#: programs/cmd/cmd.rc:297
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -15252,13 +15248,13 @@ msgstr ""
 "Se não especificar um comando aberto depois do sinal de igual, remove o\n"
 "texto associado ao tipo de ficheiro especificado.\n"
 
-#: programs/cmd/cmd.rc:303
+#: programs/cmd/cmd.rc:300
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE faz saída paginada do conteúdo de ficheiros ou do que receber de um "
 "tubo.\n"
 
-#: programs/cmd/cmd.rc:308
+#: programs/cmd/cmd.rc:305
 msgid ""
 "CHOICE displays a text and waits, until the User presses an allowed Key\n"
 "from a selectable list.\n"
@@ -15268,7 +15264,7 @@ msgstr ""
 "pressione uma tecla entre uma lista de opções.\n"
 "CHOICE é usado principalmente para construir menus em ficheiros de lote.\n"
 
-#: programs/cmd/cmd.rc:324
+#: programs/cmd/cmd.rc:321
 msgid ""
 "Create a symbolic link.\n"
 "\n"
@@ -15282,7 +15278,7 @@ msgid ""
 "target is the path that link_name points to.\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:312
+#: programs/cmd/cmd.rc:309
 msgid ""
 "EXIT terminates the current command session and returns to the operating\n"
 "system or shell from which you invoked cmd.\n"
@@ -15290,7 +15286,7 @@ msgstr ""
 "EXIT termina a sessão de comando actual e retorna ao sistema operacional\n"
 "ou shell que tenha invocado o cmd.\n"
 
-#: programs/cmd/cmd.rc:364
+#: programs/cmd/cmd.rc:361
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -15373,110 +15369,110 @@ msgstr ""
 "\n"
 "Digite HELP <comando> para mais informações sobre qualquer destes comandos\n"
 
-#: programs/cmd/cmd.rc:365
+#: programs/cmd/cmd.rc:362
 msgid "Are you sure?"
 msgstr "Tem a certeza?"
 
-#: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
+#: programs/cmd/cmd.rc:363 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "S"
 
-#: programs/cmd/cmd.rc:367 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
+#: programs/cmd/cmd.rc:364 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: programs/cmd/cmd.rc:368
+#: programs/cmd/cmd.rc:365
 msgid "File association missing for extension %1\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:369
+#: programs/cmd/cmd.rc:366
 msgid "No open command associated with file type '%1'\n"
 msgstr "Não há nenhum comando aberto associado com o tipo de ficheiro '%1'\n"
 
-#: programs/cmd/cmd.rc:370
+#: programs/cmd/cmd.rc:367
 msgid "Overwrite %1?"
 msgstr "Reescrever %1?"
 
-#: programs/cmd/cmd.rc:371
+#: programs/cmd/cmd.rc:368
 msgid "More..."
 msgstr "Mais..."
 
-#: programs/cmd/cmd.rc:372
+#: programs/cmd/cmd.rc:369
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Linha possivelmente truncada em ficheiro de lote: Usando:\n"
 
-#: programs/cmd/cmd.rc:374
+#: programs/cmd/cmd.rc:371
 msgid "Argument missing\n"
 msgstr "Argumento em falta\n"
 
-#: programs/cmd/cmd.rc:375
+#: programs/cmd/cmd.rc:372
 msgid "Syntax error\n"
 msgstr "Erro de sintaxe\n"
 
-#: programs/cmd/cmd.rc:377
+#: programs/cmd/cmd.rc:374
 msgid "No help available for %1\n"
 msgstr "Ajuda não disponível para %1\n"
 
-#: programs/cmd/cmd.rc:378
+#: programs/cmd/cmd.rc:375
 msgid "Target to GOTO not found\n"
 msgstr "Destino do GOTO não encontrado\n"
 
-#: programs/cmd/cmd.rc:379
+#: programs/cmd/cmd.rc:376
 msgid "Current Date is %1\n"
 msgstr "A data actual é %1\n"
 
-#: programs/cmd/cmd.rc:380
+#: programs/cmd/cmd.rc:377
 msgid "Current Time is %1\n"
 msgstr "A hora actual é %1\n"
 
-#: programs/cmd/cmd.rc:381
+#: programs/cmd/cmd.rc:378
 msgid "Enter new date: "
 msgstr "Digite a nova data: "
 
-#: programs/cmd/cmd.rc:382
+#: programs/cmd/cmd.rc:379
 msgid "Enter new time: "
 msgstr "Digite a nova hora: "
 
-#: programs/cmd/cmd.rc:383
+#: programs/cmd/cmd.rc:380
 msgid "Environment variable %1 not defined\n"
 msgstr "Variável de ambiente %1 não definida\n"
 
-#: programs/cmd/cmd.rc:384 programs/xcopy/xcopy.rc:41
+#: programs/cmd/cmd.rc:381 programs/xcopy/xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "Falhou ao abrir '%1'\n"
 
-#: programs/cmd/cmd.rc:385
+#: programs/cmd/cmd.rc:382
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Não é possível chamar a etiqueta de lote fora de um guião de lote\n"
 
-#: programs/cmd/cmd.rc:386 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
+#: programs/cmd/cmd.rc:383 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "T"
 
-#: programs/cmd/cmd.rc:387
+#: programs/cmd/cmd.rc:384
 msgid "Delete %1?"
 msgstr "Apagar %1?"
 
-#: programs/cmd/cmd.rc:388
+#: programs/cmd/cmd.rc:385
 msgid "Echo is %1\n"
 msgstr "Echo é %1\n"
 
-#: programs/cmd/cmd.rc:389
+#: programs/cmd/cmd.rc:386
 msgid "Verify is %1\n"
 msgstr "Verificar é %1\n"
 
-#: programs/cmd/cmd.rc:390
+#: programs/cmd/cmd.rc:387
 msgid "Verify must be ON or OFF\n"
 msgstr "Verificar deve estar ON ou OFF\n"
 
-#: programs/cmd/cmd.rc:391
+#: programs/cmd/cmd.rc:388
 msgid "Parameter error\n"
 msgstr "Erro de argumento\n"
 
-#: programs/cmd/cmd.rc:392
+#: programs/cmd/cmd.rc:389
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -15484,86 +15480,86 @@ msgstr ""
 "O Número de Série do Volume é %1!04x!-%2!04x!\n"
 "\n"
 
-#: programs/cmd/cmd.rc:393
+#: programs/cmd/cmd.rc:390
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Nome do Volume (11 caracteres, <Enter> para nenhum)?"
 
-#: programs/cmd/cmd.rc:394
+#: programs/cmd/cmd.rc:391
 msgid "Press any key to continue... "
 msgstr "Prima uma tecla qualquer para continuar... "
 
-#: programs/cmd/cmd.rc:395
+#: programs/cmd/cmd.rc:392
 msgid "Wine Command Prompt"
 msgstr "Prompt de Comandos do Wine"
 
-#: programs/cmd/cmd.rc:396
+#: programs/cmd/cmd.rc:393
 msgid "Microsoft Windows %1!S!\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:397
+#: programs/cmd/cmd.rc:394
 msgid "More? "
 msgstr "Mais? "
 
-#: programs/cmd/cmd.rc:398
+#: programs/cmd/cmd.rc:395
 msgid "The input line is too long.\n"
 msgstr "A linha de entrada é demasiado longa.\n"
 
-#: programs/cmd/cmd.rc:399
+#: programs/cmd/cmd.rc:396
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "O volume na unidade %1!c! é %2\n"
 
-#: programs/cmd/cmd.rc:400
+#: programs/cmd/cmd.rc:397
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "O volume na unidade %1!c! não tem nome.\n"
 
-#: programs/cmd/cmd.rc:401 programs/reg/reg.rc:129
+#: programs/cmd/cmd.rc:398 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (Sim|Não)"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:130
+#: programs/cmd/cmd.rc:399 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (Sim|Não|Todos)"
 
-#: programs/cmd/cmd.rc:403
+#: programs/cmd/cmd.rc:400
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:404
+#: programs/cmd/cmd.rc:401
 msgid "Division by zero error.\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:405
+#: programs/cmd/cmd.rc:402
 msgid "Expected an operand.\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:406
+#: programs/cmd/cmd.rc:403
 msgid "Expected an operator.\n"
 msgstr "Operador esperado.\n"
 
-#: programs/cmd/cmd.rc:407
+#: programs/cmd/cmd.rc:404
 msgid "Mismatch in parentheses.\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:408
+#: programs/cmd/cmd.rc:405
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:410
+#: programs/cmd/cmd.rc:407
 #, fuzzy
 #| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
 msgstr "Erro de sintaxe\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:408
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of line"
 msgstr "Fim de ficheiro.\n"
 
-#: programs/cmd/cmd.rc:412
+#: programs/cmd/cmd.rc:409
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of file"

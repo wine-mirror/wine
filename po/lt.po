@@ -4783,7 +4783,7 @@ msgstr "Aplinkos kintamasis nerastas.\n"
 msgid "No signal sent.\n"
 msgstr "Joks signalas neišsiųstas.\n"
 
-#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:409
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:406
 msgid "File name is too long.\n"
 msgstr "Failo vardas per ilgas.\n"
 
@@ -13638,7 +13638,7 @@ msgstr "Aptiktas ciklas apdorojant perdavimus"
 msgid "Referral hop limit exceeded"
 msgstr "Viršyta perdavimo šuolių riba"
 
-#: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:373
+#: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:370
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -13646,7 +13646,7 @@ msgstr ""
 "Dar nerealizuota\n"
 "\n"
 
-#: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:376
+#: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:373
 msgid "%1: File Not Found\n"
 msgstr "%1: failas nerastas\n"
 
@@ -13796,22 +13796,18 @@ msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <failas> kopijuoja failą.\n"
 
 #: programs/cmd/cmd.rc:56
-msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY pakeičia įvedimo/išvedimo įrenginį.\n"
-
-#: programs/cmd/cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE parodo arba pakeičia sistemos datą.\n"
 
-#: programs/cmd/cmd.rc:62
+#: programs/cmd/cmd.rc:59
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <failas> pašalina failą ar failų rinkinį.\n"
 
-#: programs/cmd/cmd.rc:65
+#: programs/cmd/cmd.rc:62
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR parodo katalogo turinį.\n"
 
-#: programs/cmd/cmd.rc:75
+#: programs/cmd/cmd.rc:72
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
@@ -13831,11 +13827,11 @@ msgstr ""
 "numatyta). ECHO OFF komandos rodymo galima išvengti prieš ją pridedant\n"
 "simbolį @.\n"
 
-#: programs/cmd/cmd.rc:78
+#: programs/cmd/cmd.rc:75
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <failas> pašalina failą ar failų rinkinį.\n"
 
-#: programs/cmd/cmd.rc:85
+#: programs/cmd/cmd.rc:82
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -13849,7 +13845,7 @@ msgstr ""
 "\n"
 "Simbolis % privalo būti dubliuotas, kai FOR naudojamas komandų faile.\n"
 
-#: programs/cmd/cmd.rc:97
+#: programs/cmd/cmd.rc:94
 msgid ""
 "The GOTO command transfers execution to another statement within a batch\n"
 "file.\n"
@@ -13872,7 +13868,7 @@ msgstr ""
 "\n"
 "GOTO neturi poveikio naudojant interaktyviai.\n"
 
-#: programs/cmd/cmd.rc:101
+#: programs/cmd/cmd.rc:98
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -13880,7 +13876,7 @@ msgstr ""
 "HELP <komanda> parodo trumpą informaciją apie komandą.\n"
 "HELP be argumentų parodo visas įtaisytas CMD komandas.\n"
 
-#: programs/cmd/cmd.rc:111
+#: programs/cmd/cmd.rc:108
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -13900,7 +13896,7 @@ msgstr ""
 "Antroje komandos formoje, eilutė1 ir eilutė2 privalo būti tarp dvigubų\n"
 "kabučių. Palyginimas neskiria didžiųjų ir mažųjų raidžių.\n"
 
-#: programs/cmd/cmd.rc:118
+#: programs/cmd/cmd.rc:115
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -13914,15 +13910,15 @@ msgstr ""
 "Komanda paklaus naujo tomo vardo duotam diskui.\n"
 "Parodyti disko tomo vardą galima su komanda VOL.\n"
 
-#: programs/cmd/cmd.rc:121
+#: programs/cmd/cmd.rc:118
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <vardas> yra trumpa MKDIR versija. Sukuria katalogą.\n"
 
-#: programs/cmd/cmd.rc:123
+#: programs/cmd/cmd.rc:120
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <vardas> sukuria katalogą.\n"
 
-#: programs/cmd/cmd.rc:131
+#: programs/cmd/cmd.rc:128
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -13939,7 +13935,7 @@ msgstr ""
 "MOVE nepavyksta, jei sena ir nauja vietos yra su skirtingais DOS disko "
 "vardais.\n"
 
-#: programs/cmd/cmd.rc:142
+#: programs/cmd/cmd.rc:139
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -13961,7 +13957,7 @@ msgstr ""
 "pavyzdžiui:\n"
 "PATH %PATH%;c:\\laikinas\n"
 
-#: programs/cmd/cmd.rc:148
+#: programs/cmd/cmd.rc:145
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -13974,7 +13970,7 @@ msgstr ""
 "perskaityti ankstesnės komandos rezultatą kol jis nepasislinko už ekrano\n"
 "ribų.\n"
 
-#: programs/cmd/cmd.rc:169
+#: programs/cmd/cmd.rc:166
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -14018,7 +14014,7 @@ msgstr ""
 "taigi, komanda „SET PROMPT=tekstas“ turi tą patį efektą kaip\n"
 "„PROMPT tekstas“.\n"
 
-#: programs/cmd/cmd.rc:173
+#: programs/cmd/cmd.rc:170
 msgid ""
 "A command line beginning with REM (followed by a space) performs no action,\n"
 "and can therefore be used as a comment in a batch file.\n"
@@ -14026,23 +14022,23 @@ msgstr ""
 "Komandos eilutė prasidedanti REM (ir tarpu) neatlieka jokio veiksmo ir\n"
 "todėl gali būti naudojama kaip komentaras komandų faile.\n"
 
-#: programs/cmd/cmd.rc:176
+#: programs/cmd/cmd.rc:173
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <failas> yra trumpa RENAME versija. Pervadina failą.\n"
 
-#: programs/cmd/cmd.rc:178
+#: programs/cmd/cmd.rc:175
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <failas> pervadina failą.\n"
 
-#: programs/cmd/cmd.rc:181
+#: programs/cmd/cmd.rc:178
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <katalogas> yra trumpa RMDIR versija. Pašalina katalogą.\n"
 
-#: programs/cmd/cmd.rc:183
+#: programs/cmd/cmd.rc:180
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <katalogas> pašalina katalogą.\n"
 
-#: programs/cmd/cmd.rc:229
+#: programs/cmd/cmd.rc:226
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -14076,7 +14072,7 @@ msgstr ""
 "Win32 realizacijoje. Pastebėkite, kad neįmanoma įtakoti operacinės sistemos\n"
 "aplinkos iš komandų interpretatoriaus.\n"
 
-#: programs/cmd/cmd.rc:234
+#: programs/cmd/cmd.rc:231
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of the\n"
 "list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
@@ -14086,7 +14082,7 @@ msgstr ""
 "priekio, taip parametras 2 tampa parametru 1 ir t. t. Ši komanda neturi\n"
 "jokio poveikio, kai kviečiama iš komandos eilutės.\n"
 
-#: programs/cmd/cmd.rc:212
+#: programs/cmd/cmd.rc:209
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -14144,15 +14140,15 @@ msgstr ""
 "/ProgIDOpen    Atverti dokumentą naudojant nurodytą progID.\n"
 "/?             Parodyti šį pranešimą ir išeiti.\n"
 
-#: programs/cmd/cmd.rc:237
+#: programs/cmd/cmd.rc:234
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME parodo arba nustato sistemos laiką.\n"
 
-#: programs/cmd/cmd.rc:240
+#: programs/cmd/cmd.rc:237
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <eilutė> nustato cmd lango antraštę.\n"
 
-#: programs/cmd/cmd.rc:244
+#: programs/cmd/cmd.rc:241
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
 "redirected). No check is made that the file is readable text.\n"
@@ -14160,7 +14156,7 @@ msgstr ""
 "TYPE <failas> nukopijuoja <failą> į pulto įrenginį (arba kitur, jei\n"
 "nukreipta). Nėra tikrinama, ar faile yra skaitomas tekstas.\n"
 
-#: programs/cmd/cmd.rc:253
+#: programs/cmd/cmd.rc:250
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -14179,15 +14175,15 @@ msgstr ""
 "\n"
 "Tikrinimo žymos bitas neturi jokios funkcijos „Wine“.\n"
 
-#: programs/cmd/cmd.rc:256
+#: programs/cmd/cmd.rc:253
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER parodo dabar vykdomo cmd versiją.\n"
 
-#: programs/cmd/cmd.rc:259
+#: programs/cmd/cmd.rc:256
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL parodo disko įrenginio tomo vardą.\n"
 
-#: programs/cmd/cmd.rc:263
+#: programs/cmd/cmd.rc:260
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file which\n"
 "were introduced by a preceding SETLOCAL.\n"
@@ -14195,7 +14191,7 @@ msgstr ""
 "ENDLOCAL komandų faile baigia aplinkos pakeitimų, kurie padaryti ankstesnio\n"
 "SETLOCAL, lokalizavimą.\n"
 
-#: programs/cmd/cmd.rc:271
+#: programs/cmd/cmd.rc:268
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -14210,7 +14206,7 @@ msgstr ""
 "išlaikomi iki kol sutinkamas kitas ENDLOCAL (arba failo pabaiga, kas\n"
 "pasitaiko pirmiau), tada atkuriamos ankstesnės aplinkos nuostatos.\n"
 
-#: programs/cmd/cmd.rc:275
+#: programs/cmd/cmd.rc:272
 msgid ""
 "PUSHD <directory> saves the current directory onto a stack, and then\n"
 "changes the current directory to the supplied one.\n"
@@ -14218,11 +14214,11 @@ msgstr ""
 "PUSHD <katalogas> išsaugo dabartinį katalogą į dėklą, o po to pakeičia\n"
 "dabartinį katalogą į nurodytą.\n"
 
-#: programs/cmd/cmd.rc:278
+#: programs/cmd/cmd.rc:275
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD pakeičia dabartinį katalogą į paskutinį išsaugotą su PUSHD.\n"
 
-#: programs/cmd/cmd.rc:288
+#: programs/cmd/cmd.rc:285
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -14242,7 +14238,7 @@ msgstr ""
 "Po lygybės ženklo nenurodžius failo tipo pašalina dabartinį\n"
 "susiejimą, jei yra.\n"
 
-#: programs/cmd/cmd.rc:300
+#: programs/cmd/cmd.rc:297
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -14266,11 +14262,11 @@ msgstr ""
 "Po lygybės ženklo nenurodžius atvėrimo komandos pašalina su nurodytu failo\n"
 "tipu susietą komandos eilutę.\n"
 
-#: programs/cmd/cmd.rc:303
+#: programs/cmd/cmd.rc:300
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE parodo failo išvedimą ar kanalo įvedimą puslapiais.\n"
 
-#: programs/cmd/cmd.rc:308
+#: programs/cmd/cmd.rc:305
 msgid ""
 "CHOICE displays a text and waits, until the User presses an allowed Key\n"
 "from a selectable list.\n"
@@ -14280,7 +14276,7 @@ msgstr ""
 "pasirinkimų sąrašo.\n"
 "CHOICE dažniausiai naudojama pasirinkimo meniu konstravimui komandų faile.\n"
 
-#: programs/cmd/cmd.rc:324
+#: programs/cmd/cmd.rc:321
 msgid ""
 "Create a symbolic link.\n"
 "\n"
@@ -14304,7 +14300,7 @@ msgstr ""
 "nuorodos_vardas yra naujos simbolinės nuorodos vardas.\n"
 "paskirtis yra kelias į kurį rodo nuorodos_vardas.\n"
 
-#: programs/cmd/cmd.rc:312
+#: programs/cmd/cmd.rc:309
 msgid ""
 "EXIT terminates the current command session and returns to the operating\n"
 "system or shell from which you invoked cmd.\n"
@@ -14312,7 +14308,7 @@ msgstr ""
 "EXIT baigia dabartinį komandų seansą ir grįžta į operacinę sistemą ar\n"
 "apvalkalą iš kur CMD iškviestas.\n"
 
-#: programs/cmd/cmd.rc:364
+#: programs/cmd/cmd.rc:361
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -14395,110 +14391,110 @@ msgstr ""
 "Įveskite HELP <komanda> platesnei informacijai apie išvardintas komandas "
 "gauti.\n"
 
-#: programs/cmd/cmd.rc:365
+#: programs/cmd/cmd.rc:362
 msgid "Are you sure?"
 msgstr "Ar tikrai?"
 
-#: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
+#: programs/cmd/cmd.rc:363 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "T"
 
-#: programs/cmd/cmd.rc:367 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
+#: programs/cmd/cmd.rc:364 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: programs/cmd/cmd.rc:368
+#: programs/cmd/cmd.rc:365
 msgid "File association missing for extension %1\n"
 msgstr "Trūksta failo susiejimo prievardžiui %1\n"
 
-#: programs/cmd/cmd.rc:369
+#: programs/cmd/cmd.rc:366
 msgid "No open command associated with file type '%1'\n"
 msgstr "Jokia atvėrimo komanda nesusieta su failo tipu „%1“\n"
 
-#: programs/cmd/cmd.rc:370
+#: programs/cmd/cmd.rc:367
 msgid "Overwrite %1?"
 msgstr "Perrašyti %1?"
 
-#: programs/cmd/cmd.rc:371
+#: programs/cmd/cmd.rc:368
 msgid "More..."
 msgstr "Daugiau..."
 
-#: programs/cmd/cmd.rc:372
+#: programs/cmd/cmd.rc:369
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Paketinio apdorojimo eilutė galimai nukirsta. Naudojama:\n"
 
-#: programs/cmd/cmd.rc:374
+#: programs/cmd/cmd.rc:371
 msgid "Argument missing\n"
 msgstr "Trūksta argumento\n"
 
-#: programs/cmd/cmd.rc:375
+#: programs/cmd/cmd.rc:372
 msgid "Syntax error\n"
 msgstr "Sintaksės klaida\n"
 
-#: programs/cmd/cmd.rc:377
+#: programs/cmd/cmd.rc:374
 msgid "No help available for %1\n"
 msgstr "Nėra informacijos apie %1\n"
 
-#: programs/cmd/cmd.rc:378
+#: programs/cmd/cmd.rc:375
 msgid "Target to GOTO not found\n"
 msgstr "GOTO tikslas nerastas\n"
 
-#: programs/cmd/cmd.rc:379
+#: programs/cmd/cmd.rc:376
 msgid "Current Date is %1\n"
 msgstr "Dabartinė data yra %1\n"
 
-#: programs/cmd/cmd.rc:380
+#: programs/cmd/cmd.rc:377
 msgid "Current Time is %1\n"
 msgstr "Dabartinis laikas yra %1\n"
 
-#: programs/cmd/cmd.rc:381
+#: programs/cmd/cmd.rc:378
 msgid "Enter new date: "
 msgstr "Įveskite naują datą: "
 
-#: programs/cmd/cmd.rc:382
+#: programs/cmd/cmd.rc:379
 msgid "Enter new time: "
 msgstr "Įveskite naują laiką: "
 
-#: programs/cmd/cmd.rc:383
+#: programs/cmd/cmd.rc:380
 msgid "Environment variable %1 not defined\n"
 msgstr "Aplinkos kintamasis %1 neapibrėžtas\n"
 
-#: programs/cmd/cmd.rc:384 programs/xcopy/xcopy.rc:41
+#: programs/cmd/cmd.rc:381 programs/xcopy/xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "Nepavyko atverti „%1“\n"
 
-#: programs/cmd/cmd.rc:385
+#: programs/cmd/cmd.rc:382
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Negalima iškviesti žymės esančios už komandų failo ribų\n"
 
-#: programs/cmd/cmd.rc:386 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
+#: programs/cmd/cmd.rc:383 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "V"
 
-#: programs/cmd/cmd.rc:387
+#: programs/cmd/cmd.rc:384
 msgid "Delete %1?"
 msgstr "Šalinti %1?"
 
-#: programs/cmd/cmd.rc:388
+#: programs/cmd/cmd.rc:385
 msgid "Echo is %1\n"
 msgstr "„Echo“ yra %1\n"
 
-#: programs/cmd/cmd.rc:389
+#: programs/cmd/cmd.rc:386
 msgid "Verify is %1\n"
 msgstr "„Verify“ yra %1\n"
 
-#: programs/cmd/cmd.rc:390
+#: programs/cmd/cmd.rc:387
 msgid "Verify must be ON or OFF\n"
 msgstr "VERIFY turi būti ON arba OFF\n"
 
-#: programs/cmd/cmd.rc:391
+#: programs/cmd/cmd.rc:388
 msgid "Parameter error\n"
 msgstr "Parametro klaida\n"
 
-#: programs/cmd/cmd.rc:392
+#: programs/cmd/cmd.rc:389
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -14506,70 +14502,70 @@ msgstr ""
 "Tomo serijos numeris yra %1!04x!-%2!04x!\n"
 "\n"
 
-#: programs/cmd/cmd.rc:393
+#: programs/cmd/cmd.rc:390
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Tomo vardas (11 simbolių, <Įvesti> – bevardis)?"
 
-#: programs/cmd/cmd.rc:394
+#: programs/cmd/cmd.rc:391
 msgid "Press any key to continue... "
 msgstr "Norėdami tęsti spauskite bet kurį klavišą... "
 
-#: programs/cmd/cmd.rc:395
+#: programs/cmd/cmd.rc:392
 msgid "Wine Command Prompt"
 msgstr "„Wine“ komandų interpretatorius"
 
-#: programs/cmd/cmd.rc:396
+#: programs/cmd/cmd.rc:393
 msgid "Microsoft Windows %1!S!\n"
 msgstr "Microsoft Windows %1!S!\n"
 
-#: programs/cmd/cmd.rc:397
+#: programs/cmd/cmd.rc:394
 msgid "More? "
 msgstr "Daugiau? "
 
-#: programs/cmd/cmd.rc:398
+#: programs/cmd/cmd.rc:395
 msgid "The input line is too long.\n"
 msgstr "Įvedimo eilutė per ilga.\n"
 
-#: programs/cmd/cmd.rc:399
+#: programs/cmd/cmd.rc:396
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Tomas diske %1!c! yra %2\n"
 
-#: programs/cmd/cmd.rc:400
+#: programs/cmd/cmd.rc:397
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Tomas diske %1!c! neturi vardo.\n"
 
-#: programs/cmd/cmd.rc:401 programs/reg/reg.rc:129
+#: programs/cmd/cmd.rc:398 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (Taip|Ne)"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:130
+#: programs/cmd/cmd.rc:399 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (Taip|Ne|Visus)"
 
-#: programs/cmd/cmd.rc:403
+#: programs/cmd/cmd.rc:400
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 "Nepavyko atpažinti „%1“ kaip vidinės ar išorinės komandos, ar komandų "
 "failo.\n"
 
-#: programs/cmd/cmd.rc:404
+#: programs/cmd/cmd.rc:401
 msgid "Division by zero error.\n"
 msgstr "Dalybos iš nulio klaida.\n"
 
-#: programs/cmd/cmd.rc:405
+#: programs/cmd/cmd.rc:402
 msgid "Expected an operand.\n"
 msgstr "Tikėtasi operando.\n"
 
-#: programs/cmd/cmd.rc:406
+#: programs/cmd/cmd.rc:403
 msgid "Expected an operator.\n"
 msgstr "Tikėtasi operacijos ženklo.\n"
 
-#: programs/cmd/cmd.rc:407
+#: programs/cmd/cmd.rc:404
 msgid "Mismatch in parentheses.\n"
 msgstr "Skliaustų neatitiktis.\n"
 
-#: programs/cmd/cmd.rc:408
+#: programs/cmd/cmd.rc:405
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -14577,15 +14573,15 @@ msgstr ""
 "Blogai sudarytas skaičius – privalo būti dešimtainis (12),\n"
 " šešioliktainis (0x34) arba aštuntainis (056).\n"
 
-#: programs/cmd/cmd.rc:410
+#: programs/cmd/cmd.rc:407
 msgid "Syntax error: unexpected %1\n"
 msgstr "Sintaksės klaida: netikėtas %1\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:408
 msgid "End of line"
 msgstr "Eilutės pabaiga"
 
-#: programs/cmd/cmd.rc:412
+#: programs/cmd/cmd.rc:409
 msgid "End of file"
 msgstr "Failo pabaiga"
 

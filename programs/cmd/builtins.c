@@ -45,7 +45,7 @@ const WCHAR inbuilt[][10] = {
         L"CHDIR",
         L"CLS",
         L"COPY",
-        L"CTTY",
+        L"",
         L"DATE",
         L"DEL",
         L"DIR",
@@ -272,18 +272,6 @@ RETURN_CODE WCMD_clear_screen(void)
       SetConsoleCursorPosition(hStdOut, topLeft);
   }
   return NO_ERROR;
-}
-
-/****************************************************************************
- * WCMD_change_tty
- *
- * Change the default i/o device (ie redirect STDin/STDout).
- */
-
-void WCMD_change_tty (void) {
-
-  WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
-
 }
 
 /****************************************************************************

@@ -4846,7 +4846,7 @@ msgstr "متغير البيئة غير موجود.\n"
 msgid "No signal sent.\n"
 msgstr "الإشارة لم ترسل.\n"
 
-#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:409
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:406
 msgid "File name is too long.\n"
 msgstr "اسم الملف طويل جدًا.\n"
 
@@ -14724,7 +14724,7 @@ msgstr "حدثت دوامة أثناء التقاط التحويلات"
 msgid "Referral hop limit exceeded"
 msgstr "تم تجاوز الحد الأقصى للتحويلات"
 
-#: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:373
+#: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:370
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -14732,7 +14732,7 @@ msgstr ""
 "لم تنفذ بعد\n"
 "\n"
 
-#: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:376
+#: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:373
 msgid "%1: File Not Found\n"
 msgstr "%1: الملف غير موجود\n"
 
@@ -14891,22 +14891,18 @@ msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <filename> يقوم بنسخ الملفات.\n"
 
 #: programs/cmd/cmd.rc:56
-msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY يقوم بتغيير جهاز الإدخال والإخراج.\n"
-
-#: programs/cmd/cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE يقوم بإظهار أو تعديل التاريخ.\n"
 
-#: programs/cmd/cmd.rc:62
+#: programs/cmd/cmd.rc:59
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <filename> يقوم بحذف ملف أو مجموعة ملفات.\n"
 
-#: programs/cmd/cmd.rc:65
+#: programs/cmd/cmd.rc:62
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR يعرض قائمة بمحتويات المجلد الحالي.\n"
 
-#: programs/cmd/cmd.rc:75
+#: programs/cmd/cmd.rc:72
 #, fuzzy
 #| msgid ""
 #| "ECHO <string> displays <string> on the current terminal device.\n"
@@ -14936,11 +14932,11 @@ msgstr ""
 "default). يقوم هذا اﻷمر بحظر عرض الأوامر المنفذة بواسطة المخطوطة\n"
 "والغير مسبوقة بإشارة @.\n"
 
-#: programs/cmd/cmd.rc:78
+#: programs/cmd/cmd.rc:75
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <filename> يقوم بحذف ملف أو مجموعة ملفات.\n"
 
-#: programs/cmd/cmd.rc:85
+#: programs/cmd/cmd.rc:82
 #, fuzzy
 #| msgid ""
 #| "The FOR command is used to execute a command for each of a set of files.\n"
@@ -14957,7 +14953,7 @@ msgstr ""
 "\n"
 "الصيغة: FOR %variable IN (set) DO command\n"
 
-#: programs/cmd/cmd.rc:97
+#: programs/cmd/cmd.rc:94
 #, fuzzy
 #| msgid ""
 #| "The GOTO command transfers execution to another statement within a\n"
@@ -14993,7 +14989,7 @@ msgstr ""
 "\n"
 "لا يملك الأمر GOTO أي تأثير عند استخدامه ببيئة غير نشطة.\n"
 
-#: programs/cmd/cmd.rc:101
+#: programs/cmd/cmd.rc:98
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -15002,7 +14998,7 @@ msgstr ""
 "يقوم بعرض المساعدة لأمر معين ، وفي حال إطلاقه يقوم بعرض المساعدة الخاصة بسطر "
 "الأوامر.\n"
 
-#: programs/cmd/cmd.rc:111
+#: programs/cmd/cmd.rc:108
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -15022,7 +15018,7 @@ msgstr ""
 "في الصيغة الثانية يجب إحاطة كلًا من السلسلتين بعلامات الاقتباس\n"
 "عملية المقارنة حساسة من هذه الناحية.\n"
 
-#: programs/cmd/cmd.rc:118
+#: programs/cmd/cmd.rc:115
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -15036,15 +15032,15 @@ msgstr ""
 "يتطلب الامر توكيدًا منك بعد اختيارك الاسم الجديد.\n"
 "يمكنك إظهار الاسم الحالي بالأمر VOL.\n"
 
-#: programs/cmd/cmd.rc:121
+#: programs/cmd/cmd.rc:118
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD هي اختصار لـ MKDIR.\n"
 
-#: programs/cmd/cmd.rc:123
+#: programs/cmd/cmd.rc:120
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <name> يحاول إنشاء مجلد فرعي.\n"
 
-#: programs/cmd/cmd.rc:131
+#: programs/cmd/cmd.rc:128
 #, fuzzy
 #| msgid ""
 #| "MOVE relocates a file or directory to a new point within the file "
@@ -15072,7 +15068,7 @@ msgstr ""
 "\n"
 "MOVE تفشل عملية النقل في حال كان المصدر و الوجهة ليسا على قرص واحد.\n"
 
-#: programs/cmd/cmd.rc:142
+#: programs/cmd/cmd.rc:139
 #, fuzzy
 #| msgid ""
 #| "PATH displays or changes the cmd search path.\n"
@@ -15105,7 +15101,7 @@ msgstr ""
 "مع المتغيرات ، مثلًا:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: programs/cmd/cmd.rc:148
+#: programs/cmd/cmd.rc:145
 #, fuzzy
 #| msgid ""
 #| "PAUSE displays a message on the screen asking the user to press a key.\n"
@@ -15123,7 +15119,7 @@ msgstr ""
 "هذا الأمر مفيد في ملفات المخطوطات للسماح للمستخدم بقراءة\n"
 "مخرجات الأوامر السابقة قبل تمرير الشاشة.\n"
 
-#: programs/cmd/cmd.rc:169
+#: programs/cmd/cmd.rc:166
 #, fuzzy
 #| msgid ""
 #| "PROMPT sets the command-line prompt.\n"
@@ -15189,7 +15185,7 @@ msgstr ""
 "يمكن أيضًا تعديل التلقينات بواسطة المتغير البيئي PROMT\n"
 "أي أن الأمر 'SET PROMPT=text' يعطي نفس نتيجة 'PROMPT text'.\n"
 
-#: programs/cmd/cmd.rc:173
+#: programs/cmd/cmd.rc:170
 #, fuzzy
 #| msgid ""
 #| "A command line beginning with REM (followed by a space) performs no\n"
@@ -15201,27 +15197,27 @@ msgstr ""
 "إن أي سطر أمري يبدأ بـ REM متبوعة بمسافة لن يؤدي\n"
 "أي عمل ، ويمكن استعماله كتعليق ضمن المخطوط.\n"
 
-#: programs/cmd/cmd.rc:176
+#: programs/cmd/cmd.rc:173
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN هي اختصار لـ RENAME.\n"
 
-#: programs/cmd/cmd.rc:178
+#: programs/cmd/cmd.rc:175
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <filename> لإعادة تسمية الملف.\n"
 
-#: programs/cmd/cmd.rc:181
+#: programs/cmd/cmd.rc:178
 #, fuzzy
 #| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD هي اختصار لـ RMDIR.\n"
 
-#: programs/cmd/cmd.rc:183
+#: programs/cmd/cmd.rc:180
 #, fuzzy
 #| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <dir> يحذف مجلدًا فرعيًا.\n"
 
-#: programs/cmd/cmd.rc:229
+#: programs/cmd/cmd.rc:226
 #, fuzzy
 #| msgid ""
 #| "SET displays or changes the cmd environment variables.\n"
@@ -15274,7 +15270,7 @@ msgstr ""
 "بالغضافة إلى قيم Win32 الأصلية ، مع ملاحظة عدم الإمكانية\n"
 "على التأثير على بيئة النظام من خلال سطر أوامر واين.\n"
 
-#: programs/cmd/cmd.rc:234
+#: programs/cmd/cmd.rc:231
 #, fuzzy
 #| msgid ""
 #| "SHIFT is used in a batch file to remove one parameter from the head of\n"
@@ -15289,7 +15285,7 @@ msgstr ""
 "مثلًا استبدال المعامل 1 بالمعامل 2 و هكذا ، مع ملاحظة أن الأمر .\n"
 "لا يملك اي تأثير إذا استخدم مباشرة دون مخطوطة.\n"
 
-#: programs/cmd/cmd.rc:212
+#: programs/cmd/cmd.rc:209
 #, fuzzy
 #| msgid ""
 #| "Start a program, or open a document in the program normally used for "
@@ -15374,15 +15370,15 @@ msgstr ""
 "/ProgIDOpen  افتح المستند باستخدام معرف برنامجي محدد.\n"
 "/?           أظهر هذه المساعدة ثم اخرج.\n"
 
-#: programs/cmd/cmd.rc:237
+#: programs/cmd/cmd.rc:234
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME لعرض أو ضبط توقيت النظام.\n"
 
-#: programs/cmd/cmd.rc:240
+#: programs/cmd/cmd.rc:237
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <string> لضبط عنوان نافذة سطر الأوامر.\n"
 
-#: programs/cmd/cmd.rc:244
+#: programs/cmd/cmd.rc:241
 #, fuzzy
 #| msgid ""
 #| "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
@@ -15395,7 +15391,7 @@ msgstr ""
 "يقوم بعرض ملف معين على سطر الاوامر ( أو بمكان آخر ) دون التحقق ما إذا كان "
 "الملف نصيًا.\n"
 
-#: programs/cmd/cmd.rc:253
+#: programs/cmd/cmd.rc:250
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -15413,15 +15409,15 @@ msgstr ""
 "\n"
 "إشارة التحقق لا تملك عملا في واين.\n"
 
-#: programs/cmd/cmd.rc:256
+#: programs/cmd/cmd.rc:253
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER يظهر إصدارة سطر الأوامر الحالية.\n"
 
-#: programs/cmd/cmd.rc:259
+#: programs/cmd/cmd.rc:256
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL يظهر اسم القسم في القرص.\n"
 
-#: programs/cmd/cmd.rc:263
+#: programs/cmd/cmd.rc:260
 #, fuzzy
 #| msgid ""
 #| "ENDLOCAL ends localization of environment changes in a batch file\n"
@@ -15433,7 +15429,7 @@ msgstr ""
 "ENDLOCAL ينهي عملية أقلمة المتغيرات البيئية من مخطوطة\n"
 "و التي قدمة بواسطة SETLOCAL.\n"
 
-#: programs/cmd/cmd.rc:271
+#: programs/cmd/cmd.rc:268
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -15449,7 +15445,7 @@ msgstr ""
 "ياتي أولًا ، وفي هذه النقطة المتغيرات البيئية السابقة\n"
 "سيعاد تحميلها.\n"
 
-#: programs/cmd/cmd.rc:275
+#: programs/cmd/cmd.rc:272
 #, fuzzy
 #| msgid ""
 #| "PUSHD <directoryname> saves the current directory onto a\n"
@@ -15461,11 +15457,11 @@ msgstr ""
 "PUSHD <directoryname> يحفظ الدليل الحالي في حافظته\n"
 "ثم ينتقل إلى الدليل المعطى.\n"
 
-#: programs/cmd/cmd.rc:278
+#: programs/cmd/cmd.rc:275
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD يقوم بتغيير المجلد الحالي إلى نظيره المحفوظ بواسطة PUSHD.\n"
 
-#: programs/cmd/cmd.rc:288
+#: programs/cmd/cmd.rc:285
 #, fuzzy
 #| msgid ""
 #| "ASSOC shows or modifies file extension associations.\n"
@@ -15495,7 +15491,7 @@ msgstr ""
 "في حال عدم كتابة أي شيء بعد إشارة المساواة سقوم بحذف الاقتران الحالي إن كان "
 "موجودا.\n"
 
-#: programs/cmd/cmd.rc:300
+#: programs/cmd/cmd.rc:297
 #, fuzzy
 #| msgid ""
 #| "FTYPE shows or modifies open commands associated with file types.\n"
@@ -15531,11 +15527,11 @@ msgstr ""
 "في حال عدم وضع أي معامل بعد إشارة المساواة = ستقوم الاداة بحذف أمر الاقتران "
 "الموجود للنوع المحدد من الملفات.\n"
 
-#: programs/cmd/cmd.rc:303
+#: programs/cmd/cmd.rc:300
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE يقوم بعرض المخرجات سواء من ملف أو من القنوات في صفحات.\n"
 
-#: programs/cmd/cmd.rc:308
+#: programs/cmd/cmd.rc:305
 #, fuzzy
 #| msgid ""
 #| "CHOICE displays a text and waits, until the User\n"
@@ -15550,7 +15546,7 @@ msgstr ""
 "يضغط المفتاح المتاح من قائمة الاختيارات.\n"
 "CHOICE تستخدم هذه الاداة بشكل رئيسي لبناء قائمة اختيارات ضمن المخطوطة.\n"
 
-#: programs/cmd/cmd.rc:324
+#: programs/cmd/cmd.rc:321
 msgid ""
 "Create a symbolic link.\n"
 "\n"
@@ -15564,7 +15560,7 @@ msgid ""
 "target is the path that link_name points to.\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:312
+#: programs/cmd/cmd.rc:309
 #, fuzzy
 #| msgid ""
 #| "EXIT terminates the current command session and returns\n"
@@ -15576,7 +15572,7 @@ msgstr ""
 "EXIT يقوم بإنهاء جلسة الأوامر الحالية ، ويعود إلى نظام\n"
 "التشغيل أو إلى الصدفة التي شغلت منها سطر الأوامر.\n"
 
-#: programs/cmd/cmd.rc:364
+#: programs/cmd/cmd.rc:361
 #, fuzzy
 #| msgid ""
 #| "CMD built-in commands are:\n"
@@ -15698,112 +15694,112 @@ msgstr ""
 "\n"
 "أدخل HELP <أمر> لعرض معلومات أكثر عن الأوامر المدرجة أعلاه.\n"
 
-#: programs/cmd/cmd.rc:365
+#: programs/cmd/cmd.rc:362
 msgid "Are you sure?"
 msgstr "هل أنت متاكد ؟"
 
-#: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
+#: programs/cmd/cmd.rc:363 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: programs/cmd/cmd.rc:367 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
+#: programs/cmd/cmd.rc:364 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: programs/cmd/cmd.rc:368
+#: programs/cmd/cmd.rc:365
 #, fuzzy
 #| msgid "File association missing for extension '%1'\n"
 msgid "File association missing for extension %1\n"
 msgstr "لا يتوفر اقتران مع هذا النوع من الملفات '%1'\n"
 
-#: programs/cmd/cmd.rc:369
+#: programs/cmd/cmd.rc:366
 msgid "No open command associated with file type '%1'\n"
 msgstr "لا يوجد أمر مفتوح مقترن بنوع الملفات '%1'\n"
 
-#: programs/cmd/cmd.rc:370
+#: programs/cmd/cmd.rc:367
 msgid "Overwrite %1?"
 msgstr "الكتابة فوق %1 ؟"
 
-#: programs/cmd/cmd.rc:371
+#: programs/cmd/cmd.rc:368
 msgid "More..."
 msgstr "أكثر..."
 
-#: programs/cmd/cmd.rc:372
+#: programs/cmd/cmd.rc:369
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "الخط المعالج في المخطوطة يبدو مقطوعًا . استخدم:\n"
 
-#: programs/cmd/cmd.rc:374
+#: programs/cmd/cmd.rc:371
 msgid "Argument missing\n"
 msgstr "نقص في الإدخالات\n"
 
-#: programs/cmd/cmd.rc:375
+#: programs/cmd/cmd.rc:372
 msgid "Syntax error\n"
 msgstr "خطأ بنيوي\n"
 
-#: programs/cmd/cmd.rc:377
+#: programs/cmd/cmd.rc:374
 msgid "No help available for %1\n"
 msgstr "لا يوجد مساعدة في %1\n"
 
-#: programs/cmd/cmd.rc:378
+#: programs/cmd/cmd.rc:375
 msgid "Target to GOTO not found\n"
 msgstr "الهدف الذي ترغب في الذهاب إليه غير موجود\n"
 
-#: programs/cmd/cmd.rc:379
+#: programs/cmd/cmd.rc:376
 msgid "Current Date is %1\n"
 msgstr "التاريخ الحالي هو %1\n"
 
-#: programs/cmd/cmd.rc:380
+#: programs/cmd/cmd.rc:377
 msgid "Current Time is %1\n"
 msgstr "التوقيت الحالي هو %1\n"
 
-#: programs/cmd/cmd.rc:381
+#: programs/cmd/cmd.rc:378
 msgid "Enter new date: "
 msgstr "أدخل التاريخ الجديد: "
 
-#: programs/cmd/cmd.rc:382
+#: programs/cmd/cmd.rc:379
 msgid "Enter new time: "
 msgstr "أدخل التوقيت الجديد: "
 
-#: programs/cmd/cmd.rc:383
+#: programs/cmd/cmd.rc:380
 msgid "Environment variable %1 not defined\n"
 msgstr "متغير البيئة %1 غير معرف\n"
 
-#: programs/cmd/cmd.rc:384 programs/xcopy/xcopy.rc:41
+#: programs/cmd/cmd.rc:381 programs/xcopy/xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "فشل فتح '%1'\n"
 
-#: programs/cmd/cmd.rc:385
+#: programs/cmd/cmd.rc:382
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "لم يتمكن من استدعاء هذا الاسم خارج المخطوطة\n"
 
-#: programs/cmd/cmd.rc:386 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
+#: programs/cmd/cmd.rc:383 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: programs/cmd/cmd.rc:387
+#: programs/cmd/cmd.rc:384
 msgid "Delete %1?"
 msgstr "احذف %1 ؟"
 
-#: programs/cmd/cmd.rc:388
+#: programs/cmd/cmd.rc:385
 msgid "Echo is %1\n"
 msgstr "الصدى هو %1\n"
 
-#: programs/cmd/cmd.rc:389
+#: programs/cmd/cmd.rc:386
 msgid "Verify is %1\n"
 msgstr "التحقق هو %1\n"
 
-#: programs/cmd/cmd.rc:390
+#: programs/cmd/cmd.rc:387
 msgid "Verify must be ON or OFF\n"
 msgstr "تحقق حيث انها يجب ان تكون مشغلة أو مطفأة\n"
 
-#: programs/cmd/cmd.rc:391
+#: programs/cmd/cmd.rc:388
 msgid "Parameter error\n"
 msgstr "خطأ في المعامل\n"
 
-#: programs/cmd/cmd.rc:392
+#: programs/cmd/cmd.rc:389
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -15811,68 +15807,68 @@ msgstr ""
 "الرقم التسلسلي للقسم هو %1!04x!-%2!04x!\n"
 "\n"
 
-#: programs/cmd/cmd.rc:393
+#: programs/cmd/cmd.rc:390
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "اسم القسم ( 11 محرفًا ) أو أضغط مفتاح الإدخال لتركه فارغًا ؟"
 
-#: programs/cmd/cmd.rc:394
+#: programs/cmd/cmd.rc:391
 msgid "Press any key to continue... "
 msgstr "اضغط أي مفتاح للاستمرار... "
 
-#: programs/cmd/cmd.rc:395
+#: programs/cmd/cmd.rc:392
 msgid "Wine Command Prompt"
 msgstr "سطر أوامر واين"
 
-#: programs/cmd/cmd.rc:396
+#: programs/cmd/cmd.rc:393
 msgid "Microsoft Windows %1!S!\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:397
+#: programs/cmd/cmd.rc:394
 msgid "More? "
 msgstr "إضافي؟ "
 
-#: programs/cmd/cmd.rc:398
+#: programs/cmd/cmd.rc:395
 msgid "The input line is too long.\n"
 msgstr "سطر الإدخال طويل جدًا.\n"
 
-#: programs/cmd/cmd.rc:399
+#: programs/cmd/cmd.rc:396
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "القسم الموجود في المحرك %1!c! هو %2\n"
 
-#: programs/cmd/cmd.rc:400
+#: programs/cmd/cmd.rc:397
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "القسم الموجود في المحرك %1!c! لا يملك اسمًا.\n"
 
-#: programs/cmd/cmd.rc:401 programs/reg/reg.rc:129
+#: programs/cmd/cmd.rc:398 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (Yes|No)"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:130
+#: programs/cmd/cmd.rc:399 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (Yes|No|All)"
 
-#: programs/cmd/cmd.rc:403
+#: programs/cmd/cmd.rc:400
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "لا يمكن استكشاف '%1' كأمر داخلي أو خارجي و لا حتى مخطوطة.\n"
 
-#: programs/cmd/cmd.rc:404
+#: programs/cmd/cmd.rc:401
 msgid "Division by zero error.\n"
 msgstr "خطأ القسمة على الصفر.\n"
 
-#: programs/cmd/cmd.rc:405
+#: programs/cmd/cmd.rc:402
 msgid "Expected an operand.\n"
 msgstr "معمول متوقع.\n"
 
-#: programs/cmd/cmd.rc:406
+#: programs/cmd/cmd.rc:403
 msgid "Expected an operator.\n"
 msgstr "عامل متوقع.\n"
 
-#: programs/cmd/cmd.rc:407
+#: programs/cmd/cmd.rc:404
 msgid "Mismatch in parentheses.\n"
 msgstr "عدم تطابق في المعترضات .\n"
 
-#: programs/cmd/cmd.rc:408
+#: programs/cmd/cmd.rc:405
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -15880,19 +15876,19 @@ msgstr ""
 "صيغة الرقم غير سليمة حيث أنها يمكن أن تكون عشرية (12),\n"
 " أو ست عشرية (0x34) أو ثماني (056).\n"
 
-#: programs/cmd/cmd.rc:410
+#: programs/cmd/cmd.rc:407
 #, fuzzy
 #| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
 msgstr "خطأ بنيوي\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:408
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of line"
 msgstr "نهاية الملف.\n"
 
-#: programs/cmd/cmd.rc:412
+#: programs/cmd/cmd.rc:409
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of file"

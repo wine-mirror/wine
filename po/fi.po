@@ -4776,7 +4776,7 @@ msgstr "Ympäristömuuttujaa ei löytynyt.\n"
 msgid "No signal sent.\n"
 msgstr "Signaalia ei lähetetty.\n"
 
-#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:409
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:406
 msgid "File name is too long.\n"
 msgstr "Tiedostonimi on liian pitkä.\n"
 
@@ -13614,7 +13614,7 @@ msgstr "Silmukka viittauksissa"
 msgid "Referral hop limit exceeded"
 msgstr "Liian monta peräkkäistä viittausta"
 
-#: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:373
+#: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:370
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -13622,7 +13622,7 @@ msgstr ""
 "Ei vielä toteutettu\n"
 "\n"
 
-#: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:376
+#: programs/attrib/attrib.rc:31 programs/cmd/cmd.rc:373
 msgid "%1: File Not Found\n"
 msgstr "%1: Tiedostoa ei löydy\n"
 
@@ -13774,22 +13774,18 @@ msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <tiedostonimi> kopioi tiedoston.\n"
 
 #: programs/cmd/cmd.rc:56
-msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY vaihtaa I/O-laitetta.\n"
-
-#: programs/cmd/cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE näyttää ja muuttaa järjestelmän aikaa.\n"
 
-#: programs/cmd/cmd.rc:62
+#: programs/cmd/cmd.rc:59
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <tiedostonimi> poistaa tiedoston tai tiedostot.\n"
 
-#: programs/cmd/cmd.rc:65
+#: programs/cmd/cmd.rc:62
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR listaa hakemiston sisällön.\n"
 
-#: programs/cmd/cmd.rc:75
+#: programs/cmd/cmd.rc:72
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
@@ -13809,11 +13805,11 @@ msgstr ""
 "oletusarvoisesti OFF). ECHO OFF -komentoa voi estää näkymästä laittamalla\n"
 "sen alkuun @-merkin.\n"
 
-#: programs/cmd/cmd.rc:78
+#: programs/cmd/cmd.rc:75
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <tiedostonimi> poistaa tiedoston tai joukon tiedostoja.\n"
 
-#: programs/cmd/cmd.rc:85
+#: programs/cmd/cmd.rc:82
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -13827,7 +13823,7 @@ msgstr ""
 "\n"
 "Kun FOR esiintyy komentojonotiedostossa, %-merkki täytyy kahdentaa.\n"
 
-#: programs/cmd/cmd.rc:97
+#: programs/cmd/cmd.rc:94
 msgid ""
 "The GOTO command transfers execution to another statement within a batch\n"
 "file.\n"
@@ -13849,7 +13845,7 @@ msgstr ""
 "\n"
 "Interaktiivisella komentorivillä GOTO ei tee mitään.\n"
 
-#: programs/cmd/cmd.rc:101
+#: programs/cmd/cmd.rc:98
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -13857,7 +13853,7 @@ msgstr ""
 "HELP <komento> näyttää lyhyitä aiheeseen liittyviä yksityiskohtia.\n"
 "HELP ilman argumenttia näyttää kaikki CMD:n sisäänrakennetut komennot.\n"
 
-#: programs/cmd/cmd.rc:111
+#: programs/cmd/cmd.rc:108
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -13877,7 +13873,7 @@ msgstr ""
 "Komennon toisessa muodossa merkkijonojen on oltava lainausmerkeissä.\n"
 "Vertailu ei huomioi isoja ja pieniä kirjaimia.\n"
 
-#: programs/cmd/cmd.rc:118
+#: programs/cmd/cmd.rc:115
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -13890,15 +13886,15 @@ msgstr ""
 "Syntaksi: LABEL [asema:]\n"
 "Komento kysyy uutta osion nimeä. Aiemman nimen näkee komennolla VOL.\n"
 
-#: programs/cmd/cmd.rc:121
+#: programs/cmd/cmd.rc:118
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <nimi> on MKDIR-komennon lyhenne. Se luo alihakemiston.\n"
 
-#: programs/cmd/cmd.rc:123
+#: programs/cmd/cmd.rc:120
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <name> luo alihakemiston.\n"
 
-#: programs/cmd/cmd.rc:131
+#: programs/cmd/cmd.rc:128
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
@@ -13915,7 +13911,7 @@ msgstr ""
 "\n"
 "MOVE epäonnistuu, jos lähde ja kohde ovat eri DOS-asemilla.\n"
 
-#: programs/cmd/cmd.rc:142
+#: programs/cmd/cmd.rc:139
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -13936,7 +13932,7 @@ msgstr ""
 "esimerkiksi seuraavasti:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: programs/cmd/cmd.rc:148
+#: programs/cmd/cmd.rc:145
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
@@ -13949,7 +13945,7 @@ msgstr ""
 "mahdollisuuden lukea edellisen komennon tuloste, ennen kuin se vierii pois\n"
 "ruudulta.\n"
 
-#: programs/cmd/cmd.rc:169
+#: programs/cmd/cmd.rc:166
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -13991,7 +13987,7 @@ msgstr ""
 "Kehotetta voi muuttaa myös PROMPT-ympäristömuuttujalla, joten komento\n"
 "'SET PROMPT=teksti' tekee saman kuin 'PROMPT teksti'.\n"
 
-#: programs/cmd/cmd.rc:173
+#: programs/cmd/cmd.rc:170
 msgid ""
 "A command line beginning with REM (followed by a space) performs no action,\n"
 "and can therefore be used as a comment in a batch file.\n"
@@ -13999,25 +13995,25 @@ msgstr ""
 "Rivi, joka alkaa REM (jota seuraa välilyönti) ei tee mitään, ja sitä voi\n"
 "siis käyttää kommenttina komentojonotiedostossa.\n"
 
-#: programs/cmd/cmd.rc:176
+#: programs/cmd/cmd.rc:173
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <tiedostonimi> on RENAME-komennon lyhenne. Se nimeää tiedoston\n"
 "uudelleen.\n"
 
-#: programs/cmd/cmd.rc:178
+#: programs/cmd/cmd.rc:175
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <tiedostonimi> nimeää tiedoston uudelleen.\n"
 
-#: programs/cmd/cmd.rc:181
+#: programs/cmd/cmd.rc:178
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <hakemisto> on RMDIR-komennon lyhenne. Se poistaa hakemiston.\n"
 
-#: programs/cmd/cmd.rc:183
+#: programs/cmd/cmd.rc:180
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <hakemisto> poistaa hakemiston.\n"
 
-#: programs/cmd/cmd.rc:229
+#: programs/cmd/cmd.rc:226
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -14051,7 +14047,7 @@ msgstr ""
 "Win32-toteutuksessa. Käyttöjärjestelmän ympäristöä ei voi muuttaa cmd:n\n"
 "sisältä.\n"
 
-#: programs/cmd/cmd.rc:234
+#: programs/cmd/cmd.rc:231
 msgid ""
 "SHIFT is used in a batch file to remove one parameter from the head of the\n"
 "list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
@@ -14061,7 +14057,7 @@ msgstr ""
 "poistamiseen listan alusta, joten parametrista 2 tulee parametri 1 ja niin\n"
 "edelleen. Se ei vaikuta mihinkään, jos sitä kutsutaan komentoriviltä.\n"
 
-#: programs/cmd/cmd.rc:212
+#: programs/cmd/cmd.rc:209
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -14118,15 +14114,15 @@ msgstr ""
 "/ProgIDOpen     Avaa dokumentti määrätyllä progID:llä.\n"
 "/?              Näytä tämä ohje ja lopeta.\n"
 
-#: programs/cmd/cmd.rc:237
+#: programs/cmd/cmd.rc:234
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME asettaa ja näyttää järjestelmän nykyisen ajan.\n"
 
-#: programs/cmd/cmd.rc:240
+#: programs/cmd/cmd.rc:237
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <merkkijono> asettaa CMD-ikkunan otsikon.\n"
 
-#: programs/cmd/cmd.rc:244
+#: programs/cmd/cmd.rc:241
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
 "redirected). No check is made that the file is readable text.\n"
@@ -14134,7 +14130,7 @@ msgstr ""
 "TYPE <tiedostonimi> kopioi tiedoston <tiedostonimi> konsolilaitteeseen (tai\n"
 "uudelleenohjattuna muualle). Tiedoston tekstimuotoisuutta ei tarkisteta.\n"
 
-#: programs/cmd/cmd.rc:253
+#: programs/cmd/cmd.rc:250
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -14153,15 +14149,15 @@ msgstr ""
 "\n"
 "Verify-lippu ei tee mitään Winessä.\n"
 
-#: programs/cmd/cmd.rc:256
+#: programs/cmd/cmd.rc:253
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER näyttää, mitä cmd:n versio on.\n"
 
-#: programs/cmd/cmd.rc:259
+#: programs/cmd/cmd.rc:256
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL näyttää levyn osion nimen.\n"
 
-#: programs/cmd/cmd.rc:263
+#: programs/cmd/cmd.rc:260
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file which\n"
 "were introduced by a preceding SETLOCAL.\n"
@@ -14169,7 +14165,7 @@ msgstr ""
 "ENDLOCAL lopettaa komentojonotiedoston ympäristömuutosten paikallisuuden,\n"
 "jonka SETLOCAL on aloittanut.\n"
 
-#: programs/cmd/cmd.rc:271
+#: programs/cmd/cmd.rc:268
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -14185,7 +14181,7 @@ msgstr ""
 "(tai tiedoston loppuun, jos komentoa ei ole), minkä jälkeen aiemmat\n"
 "ympäristöasetukset palautetaan.\n"
 
-#: programs/cmd/cmd.rc:275
+#: programs/cmd/cmd.rc:272
 msgid ""
 "PUSHD <directory> saves the current directory onto a stack, and then\n"
 "changes the current directory to the supplied one.\n"
@@ -14193,13 +14189,13 @@ msgstr ""
 "PUSHD <hakemisto> tallentaa nykyisen hakemiston pinoon ja muuttaa sitten\n"
 "nykyisen hakemiston annetuksi.\n"
 
-#: programs/cmd/cmd.rc:278
+#: programs/cmd/cmd.rc:275
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD muuttaa nykyisen hakemiston siksi, joka on viimeksi tallennettu\n"
 "PUSHD-komennolla.\n"
 
-#: programs/cmd/cmd.rc:288
+#: programs/cmd/cmd.rc:285
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -14219,7 +14215,7 @@ msgstr ""
 "Jos annetaan yhtäsuuruusmerkki mutta ei tyyppiä, ASSOC poistaa\n"
 "tiedostopäätteen nykyisen kytkennän.\n"
 
-#: programs/cmd/cmd.rc:300
+#: programs/cmd/cmd.rc:297
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
@@ -14243,11 +14239,11 @@ msgstr ""
 "Jos yhtäsuuruusmerkin jälkeen ei määritellä mitään komentoa, kyseiseen\n"
 "tiedostotyyppiin liitetty komento poistetaan.\n"
 
-#: programs/cmd/cmd.rc:303
+#: programs/cmd/cmd.rc:300
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE näyttää tiedostojen tulosteen tai putkitetun syötteen sivuina.\n"
 
-#: programs/cmd/cmd.rc:308
+#: programs/cmd/cmd.rc:305
 msgid ""
 "CHOICE displays a text and waits, until the User presses an allowed Key\n"
 "from a selectable list.\n"
@@ -14257,7 +14253,7 @@ msgstr ""
 "näppäintä, joka on listassa.\n"
 "CHOICE-komentoa käytetään lähinnä valikkoihin komentojonotiedostoissa.\n"
 
-#: programs/cmd/cmd.rc:324
+#: programs/cmd/cmd.rc:321
 msgid ""
 "Create a symbolic link.\n"
 "\n"
@@ -14281,7 +14277,7 @@ msgstr ""
 "linkin_nimi on uuden symbolisen linkin nimi.\n"
 "kohde on polku, johon linkki osoittaa.\n"
 
-#: programs/cmd/cmd.rc:312
+#: programs/cmd/cmd.rc:309
 msgid ""
 "EXIT terminates the current command session and returns to the operating\n"
 "system or shell from which you invoked cmd.\n"
@@ -14289,7 +14285,7 @@ msgstr ""
 "EXIT päättää nykyisen komentoistunnon ja palaa käyttöjärjestelmään tai\n"
 "komentoriville, jolta kutsuit cmd:tä.\n"
 
-#: programs/cmd/cmd.rc:364
+#: programs/cmd/cmd.rc:361
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -14371,110 +14367,110 @@ msgstr ""
 "\n"
 "Kirjoita HELP <komento>, niin saat lisätietoa yllä olevasta komennosta.\n"
 
-#: programs/cmd/cmd.rc:365
+#: programs/cmd/cmd.rc:362
 msgid "Are you sure?"
 msgstr "Oletko varma?"
 
-#: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
+#: programs/cmd/cmd.rc:363 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "K"
 
-#: programs/cmd/cmd.rc:367 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
+#: programs/cmd/cmd.rc:364 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "E"
 
-#: programs/cmd/cmd.rc:368
+#: programs/cmd/cmd.rc:365
 msgid "File association missing for extension %1\n"
 msgstr "Päätteellä %1 ei ole tiedostokytkentää\n"
 
-#: programs/cmd/cmd.rc:369
+#: programs/cmd/cmd.rc:366
 msgid "No open command associated with file type '%1'\n"
 msgstr "Tiedostotyyppiin '%1' ei ole liitetty avauskomentoa\n"
 
-#: programs/cmd/cmd.rc:370
+#: programs/cmd/cmd.rc:367
 msgid "Overwrite %1?"
 msgstr "Kirjoita tiedoston %1 yli?"
 
-#: programs/cmd/cmd.rc:371
+#: programs/cmd/cmd.rc:368
 msgid "More..."
 msgstr "Lisää..."
 
-#: programs/cmd/cmd.rc:372
+#: programs/cmd/cmd.rc:369
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Rivi komentojonossa on mahdollisesti katkennut. Käytetään:\n"
 
-#: programs/cmd/cmd.rc:374
+#: programs/cmd/cmd.rc:371
 msgid "Argument missing\n"
 msgstr "Argumentti puuttuu\n"
 
-#: programs/cmd/cmd.rc:375
+#: programs/cmd/cmd.rc:372
 msgid "Syntax error\n"
 msgstr "Syntaksivirhe\n"
 
-#: programs/cmd/cmd.rc:377
+#: programs/cmd/cmd.rc:374
 msgid "No help available for %1\n"
 msgstr "Ei ohjetta %1:lle\n"
 
-#: programs/cmd/cmd.rc:378
+#: programs/cmd/cmd.rc:375
 msgid "Target to GOTO not found\n"
 msgstr "GOTO-komennolle ei löytynyt kohdetta\n"
 
-#: programs/cmd/cmd.rc:379
+#: programs/cmd/cmd.rc:376
 msgid "Current Date is %1\n"
 msgstr "Nykyinen päiväys on %1\n"
 
-#: programs/cmd/cmd.rc:380
+#: programs/cmd/cmd.rc:377
 msgid "Current Time is %1\n"
 msgstr "Nykyinen aika on %1\n"
 
-#: programs/cmd/cmd.rc:381
+#: programs/cmd/cmd.rc:378
 msgid "Enter new date: "
 msgstr "Syötä uusi päiväys: "
 
-#: programs/cmd/cmd.rc:382
+#: programs/cmd/cmd.rc:379
 msgid "Enter new time: "
 msgstr "Syötä uusi aika: "
 
-#: programs/cmd/cmd.rc:383
+#: programs/cmd/cmd.rc:380
 msgid "Environment variable %1 not defined\n"
 msgstr "Ympäristömuuttujaa %1 ei määritelty\n"
 
-#: programs/cmd/cmd.rc:384 programs/xcopy/xcopy.rc:41
+#: programs/cmd/cmd.rc:381 programs/xcopy/xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "'%1' ei auennut\n"
 
-#: programs/cmd/cmd.rc:385
+#: programs/cmd/cmd.rc:382
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Komentojonon nimiötä ei voi kutsua komentojonon ulkopuolelta\n"
 
-#: programs/cmd/cmd.rc:386 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
+#: programs/cmd/cmd.rc:383 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: programs/cmd/cmd.rc:387
+#: programs/cmd/cmd.rc:384
 msgid "Delete %1?"
 msgstr "Poista %1?"
 
-#: programs/cmd/cmd.rc:388
+#: programs/cmd/cmd.rc:385
 msgid "Echo is %1\n"
 msgstr "Echo on %1\n"
 
-#: programs/cmd/cmd.rc:389
+#: programs/cmd/cmd.rc:386
 msgid "Verify is %1\n"
 msgstr "Verify on %1\n"
 
-#: programs/cmd/cmd.rc:390
+#: programs/cmd/cmd.rc:387
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify-lipun täytyy olla ON tai OFF\n"
 
-#: programs/cmd/cmd.rc:391
+#: programs/cmd/cmd.rc:388
 msgid "Parameter error\n"
 msgstr "Parametrivirhe\n"
 
-#: programs/cmd/cmd.rc:392
+#: programs/cmd/cmd.rc:389
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -14482,68 +14478,68 @@ msgstr ""
 "Osion sarjanumero on %1!04x!-%2!04x!\n"
 "\n"
 
-#: programs/cmd/cmd.rc:393
+#: programs/cmd/cmd.rc:390
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Osion nimi (11 merkkiä, <Enter> tarkoittaa tyhjää)?"
 
-#: programs/cmd/cmd.rc:394
+#: programs/cmd/cmd.rc:391
 msgid "Press any key to continue... "
 msgstr "Paina mitä tahansa näppäintä jatkaaksesi... "
 
-#: programs/cmd/cmd.rc:395
+#: programs/cmd/cmd.rc:392
 msgid "Wine Command Prompt"
 msgstr "Winen komentokehote"
 
-#: programs/cmd/cmd.rc:396
+#: programs/cmd/cmd.rc:393
 msgid "Microsoft Windows %1!S!\n"
 msgstr "Microsoft Windows %1!S!\n"
 
-#: programs/cmd/cmd.rc:397
+#: programs/cmd/cmd.rc:394
 msgid "More? "
 msgstr "Lisää? "
 
-#: programs/cmd/cmd.rc:398
+#: programs/cmd/cmd.rc:395
 msgid "The input line is too long.\n"
 msgstr "Syöterivi on liian pitkä.\n"
 
-#: programs/cmd/cmd.rc:399
+#: programs/cmd/cmd.rc:396
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Osio asemassa %1!c! on %2\n"
 
-#: programs/cmd/cmd.rc:400
+#: programs/cmd/cmd.rc:397
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Osiolla asemassa %1!c! ei ole nimeä.\n"
 
-#: programs/cmd/cmd.rc:401 programs/reg/reg.rc:129
+#: programs/cmd/cmd.rc:398 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (Kyllä|Ei)"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:130
+#: programs/cmd/cmd.rc:399 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (Kyllä|Ei|kAikki)"
 
-#: programs/cmd/cmd.rc:403
+#: programs/cmd/cmd.rc:400
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "'%1' ei ole sisäinen eikä ulkoinen komento eikä komentojono.\n"
 
-#: programs/cmd/cmd.rc:404
+#: programs/cmd/cmd.rc:401
 msgid "Division by zero error.\n"
 msgstr "Virheellinen jako nollalla.\n"
 
-#: programs/cmd/cmd.rc:405
+#: programs/cmd/cmd.rc:402
 msgid "Expected an operand.\n"
 msgstr "Odotettiin operandia.\n"
 
-#: programs/cmd/cmd.rc:406
+#: programs/cmd/cmd.rc:403
 msgid "Expected an operator.\n"
 msgstr "Odotettiin operaattoria.\n"
 
-#: programs/cmd/cmd.rc:407
+#: programs/cmd/cmd.rc:404
 msgid "Mismatch in parentheses.\n"
 msgstr "Sulut eivät täsmää.\n"
 
-#: programs/cmd/cmd.rc:408
+#: programs/cmd/cmd.rc:405
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -14551,19 +14547,19 @@ msgstr ""
 "Luvun muoto ei kelpaa – täytyy olla desimaaliluku (12),\n"
 " heksadesimaaliluku (0x34) tai oktaaliluku (056).\n"
 
-#: programs/cmd/cmd.rc:410
+#: programs/cmd/cmd.rc:407
 #, fuzzy
 #| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
 msgstr "Syntaksivirhe\n"
 
-#: programs/cmd/cmd.rc:411
+#: programs/cmd/cmd.rc:408
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of line"
 msgstr "Tiedoston loppu.\n"
 
-#: programs/cmd/cmd.rc:412
+#: programs/cmd/cmd.rc:409
 #, fuzzy
 #| msgid "End of file.\n"
 msgid "End of file"

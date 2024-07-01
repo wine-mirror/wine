@@ -164,7 +164,6 @@ BOOL WCMD_print_volume_information(const WCHAR *);
 RETURN_CODE WCMD_assoc(const WCHAR *, BOOL);
 RETURN_CODE WCMD_batch(const WCHAR *, WCHAR *, const WCHAR *, HANDLE);
 RETURN_CODE WCMD_call(WCHAR *command);
-void WCMD_change_tty (void);
 RETURN_CODE WCMD_choice(const WCHAR *);
 RETURN_CODE WCMD_clear_screen(void);
 RETURN_CODE WCMD_color(void);
@@ -357,7 +356,7 @@ extern BOOL delayedsubst;
 #define WCMD_CHDIR     2
 #define WCMD_CLS       3
 #define WCMD_COPY      4
-#define WCMD_CTTY      5
+/* no longer used slot */
 #define WCMD_DATE      6
 #define WCMD_DEL       7
 #define WCMD_DIR       8

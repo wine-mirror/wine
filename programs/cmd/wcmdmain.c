@@ -1763,7 +1763,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
       count++;
     }
     for (cmd_index=0; cmd_index<=WCMD_EXIT; cmd_index++) {
-      if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+      if (count && CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
         whichcmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
     }
     parms_start = WCMD_skip_leading_spaces (&whichcmd[count]);
@@ -1824,9 +1824,6 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         break;
       case WCMD_COPY:
         return_code = WCMD_copy(parms_start);
-        break;
-      case WCMD_CTTY:
-        WCMD_change_tty ();
         break;
       case WCMD_DATE:
         return_code = WCMD_setshow_date();

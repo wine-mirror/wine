@@ -51,9 +51,6 @@ default directory.\n"
   WCMD_COPY,
 "COPY <filename> copies a file.\n"
 
-  WCMD_CTTY,
-"CTTY changes the input/output device.\n"
-
   WCMD_DATE,
 "DATE shows or changes the system date.\n"
 
