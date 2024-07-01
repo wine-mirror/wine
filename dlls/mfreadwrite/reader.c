@@ -771,8 +771,8 @@ static HRESULT source_reader_push_transform_samples(struct source_reader *reader
     return hr;
 }
 
-/* update the transform output type while keeping subtype which matches the old output type */
-static HRESULT transform_entry_update_output_type(struct transform_entry *entry, IMFMediaType *old_output_type)
+/* update the transform output type while keeping subtype which matches the desired type */
+static HRESULT set_matching_transform_output_type(IMFTransform *transform, IMFMediaType *old_output_type)
 {
     IMFMediaType *new_output_type;
     GUID subtype, desired;
@@ -782,17 +782,27 @@ static HRESULT transform_entry_update_output_type(struct transform_entry *entry,
     IMFMediaType_GetGUID(old_output_type, &MF_MT_SUBTYPE, &desired);
 
     /* find an available output type matching the desired subtype */
-    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(entry->transform, 0, i++, &new_output_type)))
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, i++, &new_output_type)))
     {
         IMFMediaType_GetGUID(new_output_type, &MF_MT_SUBTYPE, &subtype);
-        if (IsEqualGUID(&subtype, &desired) && SUCCEEDED(hr = IMFTransform_SetOutputType(entry->transform, 0, new_output_type, 0)))
+        if (IsEqualGUID(&subtype, &desired) && SUCCEEDED(hr = IMFTransform_SetOutputType(transform, 0, new_output_type, 0)))
         {
-            entry->pending_flags |= MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED;
             IMFMediaType_Release(new_output_type);
             return S_OK;
         }
         IMFMediaType_Release(new_output_type);
     }
+
+    return hr;
+}
+
+/* update the transform output type while keeping subtype which matches the old output type */
+static HRESULT transform_entry_update_output_type(struct transform_entry *entry, IMFMediaType *old_output_type)
+{
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = set_matching_transform_output_type(entry->transform, old_output_type)))
+        entry->pending_flags |= MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED;
 
     return hr;
 }
@@ -2091,7 +2101,8 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
                     && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
             {
                 if (SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type))
-                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0)) && allow_processor
+                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0))
+                        && FAILED(hr = set_matching_transform_output_type(transform, output_type)) && allow_processor
                         && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
                 {
                     struct transform_entry *converter;
