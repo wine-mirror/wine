@@ -125,10 +125,7 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struc
     TRACE( "hwnd %p, surface_rect %s, window_surface %p.\n", hwnd, wine_dbgstr_rect( surface_rect ), window_surface );
 
     /* check that old surface is an offscreen_window_surface, or release it */
-    if ((previous = *window_surface) && previous->funcs == &offscreen_window_surface_funcs &&
-        EqualRect( surface_rect, &previous->rect )) return;
-    if (previous) window_surface_release( previous );
-    *window_surface = NULL;
+    if ((previous = *window_surface) && previous->funcs == &offscreen_window_surface_funcs) return;
 
     memset( info, 0, sizeof(*info) );
     info->bmiHeader.biSize        = sizeof(info->bmiHeader);
@@ -145,6 +142,8 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struc
 
     TRACE( "created window surface %p\n", surface );
     *window_surface = surface;
+
+    if (previous) window_surface_release( previous );
 }
 
 /* window surface common helpers */
