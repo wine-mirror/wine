@@ -588,6 +588,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
 
     staging_tex = tex = *texture = NULL;
     skip_levels = mipfilter != D3DX_DEFAULT ? mipfilter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
+    skip_levels &= D3DX_SKIP_DDS_MIP_LEVELS_MASK;
     hr = d3dx_image_init(srcdata, srcdatasize, &image, skip_levels, 0);
     if (FAILED(hr))
     {
@@ -1115,6 +1116,7 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
 
     staging_tex = tex = *volume_texture = NULL;
     skip_levels = mip_filter != D3DX_DEFAULT ? mip_filter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
+    skip_levels &= D3DX_SKIP_DDS_MIP_LEVELS_MASK;
     hr = d3dx_image_init(data, data_size, &image, skip_levels, 0);
     if (FAILED(hr))
     {

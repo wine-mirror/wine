@@ -2208,7 +2208,7 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
             D3DX_DEFAULT, D3DX_FILTER_POINT | (0x20u << D3DX_SKIP_DDS_MIP_LEVELS_SHIFT), 0, &img_info, NULL, &texture);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-    check_image_info(&img_info, 2, 2, 1, 2, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, TRUE);
+    check_image_info(&img_info, 2, 2, 1, 2, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
     IDirect3DTexture9_Release(texture);
 
     /*
@@ -2486,7 +2486,7 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
             D3DX_DEFAULT, D3DX_FILTER_POINT | (0x20u << D3DX_SKIP_DDS_MIP_LEVELS_SHIFT), 0, &img_info, NULL, &texture);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-    check_image_info(&img_info, 8, 8, 1, 4, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, TRUE);
+    check_image_info(&img_info, 8, 8, 1, 4, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
     IDirect3DVolumeTexture9_Release(texture);
 
     hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
