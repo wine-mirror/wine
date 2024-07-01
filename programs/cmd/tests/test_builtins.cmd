@@ -664,7 +664,7 @@ goto :eof
 :afterSuccessFailureShift
 echo --- success/failure for HELP command
 call :setError 666 & help >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
-call :setError 666 & help help >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+call :setError 666 & help dir >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
 call :setError 666 & help ACommandThatLikelyDoesntExist >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
 echo --- success/failure for PROMPT command
 call :setError 666 & prompt >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!

@@ -1733,43 +1733,50 @@ int WCMD_for_nexttoken(int lasttoken, const WCHAR *tokenstr,
   return nexttoken;
 }
 
+static int find_in_array(const WCHAR array[][10], size_t sz, const WCHAR *what)
+{
+    int i;
+
+    for (i = 0; i < sz; i++)
+        if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                           what, -1, array[i], -1) == CSTR_EQUAL)
+            return i;
+    return -1;
+}
+
 /**************************************************************************
  * WCMD_give_help
  *
  *	Simple on-line help. Help text is stored in the resource file.
  */
 
-void WCMD_give_help (const WCHAR *args)
+RETURN_CODE WCMD_give_help(WCHAR *args)
 {
-  size_t i;
+    WCHAR *help_on = WCMD_parameter(args, 0, NULL, FALSE, FALSE);
 
-  args = WCMD_skip_leading_spaces((WCHAR*) args);
-  if (!*args) {
-    WCMD_output_asis (WCMD_LoadMessage(WCMD_ALLHELP));
-  }
-  else {
-    /* Display help message for builtin commands */
-    for (i=0; i<=WCMD_EXIT; i++) {
-      if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-	  args, -1, inbuilt[i], -1) == CSTR_EQUAL) {
-	WCMD_output_asis (WCMD_LoadMessage(i));
-	return;
-      }
+    /* yes, return code / errorlevel look inverted, but native does it this way */
+    if (!*help_on)
+        WCMD_output_asis(WCMD_LoadMessage(WCMD_ALLHELP));
+    else
+    {
+        int i;
+        /* Display help message for builtin commands */
+        if ((i = find_in_array(inbuilt, ARRAY_SIZE(inbuilt), help_on)) >= 0)
+            WCMD_output_asis(WCMD_LoadMessage(i));
+        else if ((i = find_in_array(externals, ARRAY_SIZE(externals), help_on)) >= 0)
+        {
+            WCHAR cmd[128];
+            lstrcpyW(cmd, help_on);
+            lstrcatW(cmd, L" /?");
+            WCMD_run_program(cmd, FALSE);
+        }
+        else
+        {
+            WCMD_output(WCMD_LoadMessage(WCMD_NOCMDHELP), help_on);
+            return errorlevel = NO_ERROR;
+        }
     }
-    /* Launch the command with the /? option for external commands shipped with cmd.exe */
-    for (i = 0; i <= ARRAY_SIZE(externals); i++) {
-      if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-	  args, -1, externals[i], -1) == CSTR_EQUAL) {
-        WCHAR cmd[128];
-        lstrcpyW(cmd, args);
-        lstrcatW(cmd, L" /?");
-        WCMD_run_program(cmd, FALSE);
-        return;
-      }
-    }
-    WCMD_output (WCMD_LoadMessage(WCMD_NOCMDHELP), args);
-  }
-  return;
+    return errorlevel = ERROR_INVALID_FUNCTION;
 }
 
 /****************************************************************************

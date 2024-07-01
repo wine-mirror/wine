@@ -138,7 +138,7 @@ static void test_basic(void)
     ok(stderr_size > 0, "unexpected stderr buffer size %ld.\n", stderr_size);
 
     /* errorlevel for usage is 0. But, cmd.exe's exit code is 1. */
-    todo_wine run_dir("/?", 1);
+    run_dir("/?", 1);
     ok(stdout_size > 0, "unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "unexpected stderr buffer size %ld.\n", stderr_size);
 }

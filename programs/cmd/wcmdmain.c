@@ -1807,7 +1807,6 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
       cmd_index = WCMD_HELP;
       memcpy(parms_start, whichcmd, count * sizeof(WCHAR));
       parms_start[count] = '\0';
-
     }
 
     return_code = RETURN_CODE_OLD_CHAINING;
@@ -1846,7 +1845,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_goto();
         break;
       case WCMD_HELP:
-        WCMD_give_help (parms_start);
+        return_code = WCMD_give_help(parms_start);
         break;
       case WCMD_LABEL:
         return_code = WCMD_label();

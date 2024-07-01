@@ -177,7 +177,7 @@ RETURN_CODE WCMD_endlocal(void);
 void WCMD_enter_paged_mode(const WCHAR *);
 RETURN_CODE WCMD_exit(void);
 BOOL WCMD_get_fullpath(const WCHAR *, SIZE_T, WCHAR *, WCHAR **);
-void WCMD_give_help (const WCHAR *args);
+RETURN_CODE WCMD_give_help(WCHAR *args);
 RETURN_CODE WCMD_goto(void);
 RETURN_CODE WCMD_label(void);
 void WCMD_leave_paged_mode(void);

@@ -593,9 +593,9 @@ FAILURE 1
 SUCCESS 666
 SUCCESS 666
 --- success/failure for HELP command
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
-@todo_wine@SUCCESS 0
+FAILURE 1
+FAILURE 1
+SUCCESS 0
 --- success/failure for PROMPT command
 @todo_wine@SUCCESS 0
 ---
