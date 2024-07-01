@@ -202,7 +202,7 @@ RETURN_CODE WCMD_setshow_env(WCHAR *command);
 RETURN_CODE WCMD_setshow_path(const WCHAR *args);
 void WCMD_setshow_prompt (void);
 RETURN_CODE WCMD_setshow_time(void);
-void WCMD_shift (const WCHAR *args);
+RETURN_CODE WCMD_shift(const WCHAR *args);
 void WCMD_start (WCHAR *args);
 void WCMD_title (const WCHAR *);
 RETURN_CODE WCMD_type(WCHAR *);

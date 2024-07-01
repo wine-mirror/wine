@@ -1474,7 +1474,6 @@ RETURN_CODE WCMD_delete(WCHAR *args)
         argsProcessed = TRUE;
         if (!WCMD_delete_one(thisArg))
         {
-            WCMD_output_stderr(WCMD_LoadMessage(WCMD_FILENOTFOUND), thisArg);
             errorlevel = ERROR_INVALID_FUNCTION;
         }
     }
@@ -3374,7 +3373,8 @@ RETURN_CODE WCMD_setshow_time(void)
  * Optional /n says where to start shifting (n=0-8)
  */
 
-void WCMD_shift (const WCHAR *args) {
+RETURN_CODE WCMD_shift(const WCHAR *args)
+{
   int start;
 
   if (context != NULL) {
@@ -3388,7 +3388,7 @@ void WCMD_shift (const WCHAR *args) {
     } else {
       SetLastError(ERROR_INVALID_PARAMETER);
       WCMD_print_error();
-      return;
+      return errorlevel = ERROR_INVALID_FUNCTION;
     }
 
     WINE_TRACE("Shifting variables, starting at %d\n", start);
@@ -3397,7 +3397,7 @@ void WCMD_shift (const WCHAR *args) {
     }
     context -> shift_count[9] = context -> shift_count[9] + 1;
   }
-
+  return NO_ERROR;
 }
 
 /****************************************************************************

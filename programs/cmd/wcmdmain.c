@@ -1887,7 +1887,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_setshow_env(parms_start);
         break;
       case WCMD_SHIFT:
-        WCMD_shift (parms_start);
+        return_code = WCMD_shift(parms_start);
         break;
       case WCMD_START:
         WCMD_start (parms_start);

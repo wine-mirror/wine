@@ -589,7 +589,7 @@ SUCCESS 0
 FAILURE 2
 FAILURE 2
 --- success/failure for SHIFT command
-@todo_wine@FAILURE 1
+FAILURE 1
 SUCCESS 666
 SUCCESS 666
 --- success/failure for HELP command
