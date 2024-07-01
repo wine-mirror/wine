@@ -736,6 +736,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     msi_set_property( package->db, L"AdminUser", L"1", -1 );
     msi_set_property( package->db, L"Privileged", L"1", -1 );
     msi_set_property( package->db, L"MsiRunningElevated", L"1", -1 );
+    msi_set_property( package->db, L"MsiTrueAdminUser", L"1", -1 );
 
     /* set the os things */
     OSVersion.dwOSVersionInfoSize = sizeof(OSVersion);
@@ -965,6 +966,7 @@ void msi_adjust_privilege_properties( MSIPACKAGE *package )
     msi_set_property( package->db, L"AdminUser", L"1", -1 );
     msi_set_property( package->db, L"Privileged", L"1", -1 );
     msi_set_property( package->db, L"MsiRunningElevated", L"1", -1 );
+    msi_set_property( package->db, L"MsiTrueAdminUser", L"1", -1 );
 }
 
 MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db )

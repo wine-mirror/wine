@@ -5591,6 +5591,30 @@ static void test_installprops(void)
     r = MsiGetPropertyA(hpkg, "MsiNetAssemblySupport", buf, &size);
     if (r == ERROR_SUCCESS) trace( "MsiNetAssemblySupport \"%s\"\n", buf );
 
+    buf[0] = 0;
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "AdminUser", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("AdminUser = %s\n", buf);
+
+    buf[0] = 0;
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "Privileged", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("Privileged = %s\n", buf);
+
+    buf[0] = 0;
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "MsiTrueAdminUser", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("MsiTrueAdminUser = %s\n", buf);
+
+    buf[0] = 0;
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "MsiRunningElevated", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("MsiRunningElevated = %s\n", buf);
+
     GetNativeSystemInfo(&si);
 
     sprintf(buf, "%d", LOBYTE(LOWORD(GetVersion())) * 100 + HIBYTE(LOWORD(GetVersion())));
