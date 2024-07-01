@@ -161,7 +161,7 @@ typedef int RETURN_CODE;
 
 BOOL WCMD_print_volume_information(const WCHAR *);
 
-void WCMD_assoc (const WCHAR *, BOOL);
+RETURN_CODE WCMD_assoc(const WCHAR *, BOOL);
 RETURN_CODE WCMD_batch(const WCHAR *, WCHAR *, const WCHAR *, HANDLE);
 RETURN_CODE WCMD_call(WCHAR *command);
 void WCMD_change_tty (void);

@@ -1918,13 +1918,13 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_popd();
         break;
       case WCMD_ASSOC:
-        WCMD_assoc(parms_start, TRUE);
+        return_code = WCMD_assoc(parms_start, TRUE);
         break;
       case WCMD_COLOR:
         WCMD_color();
         break;
       case WCMD_FTYPE:
-        WCMD_assoc(parms_start, FALSE);
+        return_code = WCMD_assoc(parms_start, FALSE);
         break;
       case WCMD_MORE:
         WCMD_more(parms_start);

@@ -582,12 +582,12 @@ FAILURE 1
 FAILURE 1
 --- success/failure for ASSOC command
 SUCCESS 0
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
+FAILURE 1
+FAILURE 1
 --- success/failure for FTYPE command
 SUCCESS 0
-@todo_wine@FAILURE 2
-@todo_wine@FAILURE 2
+FAILURE 2
+FAILURE 2
 --- success/failure for SHIFT command
 @todo_wine@FAILURE 1
 SUCCESS 666

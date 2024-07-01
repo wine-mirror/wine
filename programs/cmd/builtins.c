@@ -3867,8 +3867,8 @@ RETURN_CODE WCMD_exit(void)
  *	Lists or sets file associations  (assoc = TRUE)
  *      Lists or sets file types         (assoc = FALSE)
  */
-void WCMD_assoc (const WCHAR *args, BOOL assoc) {
-
+RETURN_CODE WCMD_assoc(const WCHAR *args, BOOL assoc)
+{
     HKEY    key;
     DWORD   accessOptions = KEY_READ;
     WCHAR   *newValue;
@@ -3885,7 +3885,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
     /* Open a key to HKEY_CLASSES_ROOT for enumerating */
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"", 0, accessOptions, &key) != ERROR_SUCCESS) {
       WINE_FIXME("Unexpected failure opening HKCR key: %ld\n", GetLastError());
-      return;
+      return ERROR_INVALID_FUNCTION;
     }
 
     /* If no parameters then list all associations */
@@ -3955,7 +3955,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
           if (rc == ERROR_SUCCESS) WCMD_output_asis(keyValue);
           WCMD_output_asis(L"\r\n");
           RegCloseKey(readKey);
-
+          errorlevel = rc == ERROR_SUCCESS ? NO_ERROR : ERROR_INVALID_FUNCTION;
         } else {
           WCHAR  msgbuffer[MAXSTRING];
 
@@ -3966,7 +3966,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
             LoadStringW(hinst, WCMD_NOFTYPE, msgbuffer, ARRAY_SIZE(msgbuffer));
           }
           WCMD_output_stderr(msgbuffer, keyValue);
-          errorlevel = ERROR_FILE_NOT_FOUND;
+          errorlevel = assoc ? ERROR_INVALID_FUNCTION : ERROR_FILE_NOT_FOUND;
         }
 
       /* Not a query - it's a set or clear of a value */
@@ -4032,6 +4032,8 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
 
     /* Clean up */
     RegCloseKey(key);
+
+    return errorlevel;
 }
 
 /****************************************************************************
