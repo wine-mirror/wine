@@ -1928,7 +1928,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         WCMD_more(parms_start);
         break;
       case WCMD_CHOICE:
-        WCMD_choice(parms_start);
+        return_code = WCMD_choice(parms_start);
         break;
       case WCMD_MKLINK:
         WCMD_mklink(parms_start);

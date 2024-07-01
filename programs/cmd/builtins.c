@@ -291,7 +291,8 @@ void WCMD_change_tty (void) {
  *
  */
 
-void WCMD_choice (const WCHAR * args) {
+RETURN_CODE WCMD_choice (const WCHAR * args)
+{
     WCHAR answer[16];
     WCHAR buffer[16];
     WCHAR *ptr = NULL;
@@ -306,11 +307,12 @@ void WCMD_choice (const WCHAR * args) {
     BOOL opt_s = FALSE;
 
     have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
-    errorlevel = NO_ERROR;
-
     my_command = xstrdupW(WCMD_skip_leading_spaces((WCHAR*)args));
 
-    ptr = WCMD_skip_leading_spaces(my_command);
+    ptr = my_command;
+    /* syntax errors are reported with ERRORLEVEL=1, which doesn't allow to
+     * discriminate from a choosen option!
+     */
     while (*ptr == '/') {
         switch (towupper(ptr[1])) {
             case 'C':
@@ -322,7 +324,7 @@ void WCMD_choice (const WCHAR * args) {
                 if (!*ptr || iswspace(*ptr)) {
                     WINE_FIXME("bad parameter %s for /C\n", wine_dbgstr_w(ptr));
                     free(my_command);
-                    return;
+                    return errorlevel = ERROR_INVALID_FUNCTION;
                 }
 
                 /* remember the allowed keys (overwrite previous /C option) */
@@ -359,7 +361,7 @@ void WCMD_choice (const WCHAR * args) {
                 if (!opt_default || (*ptr != ',')) {
                     WINE_FIXME("bad option %s for /T\n", opt_default ? wine_dbgstr_w(ptr) : "");
                     free(my_command);
-                    return;
+                    return errorlevel = ERROR_INVALID_FUNCTION;
                 }
                 ptr++;
 
@@ -378,7 +380,7 @@ void WCMD_choice (const WCHAR * args) {
             default:
                 WINE_FIXME("bad parameter: %s\n", wine_dbgstr_w(ptr));
                 free(my_command);
-                return;
+                return errorlevel = ERROR_INVALID_FUNCTION;
         }
     }
 
@@ -422,11 +424,11 @@ void WCMD_choice (const WCHAR * args) {
 
         /* FIXME: Add support for option /T */
         answer[1] = 0; /* terminate single character string */
-        if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count))
+        if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count) || !count)
         {
             free(my_command);
-            errorlevel = NO_ERROR;
-            return;
+            /* FIXME: is this choice 1 or ERROR_INVALID_FUNCTION? */
+            return errorlevel = 1;
         }
 
         if (!opt_s)
@@ -442,7 +444,7 @@ void WCMD_choice (const WCHAR * args) {
             errorlevel = (ptr - opt_c) + 1;
             TRACE("answer: %d\n", errorlevel);
             free(my_command);
-            return;
+            return errorlevel;
         }
         else
         {

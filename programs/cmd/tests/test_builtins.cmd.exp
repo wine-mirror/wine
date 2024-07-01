@@ -608,11 +608,11 @@ FAILURE 1
 SUCCESS 666
 SUCCESS 666
 --- success/failure for CHOICE command
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 2
-@todo_wine@FAILURE 1
-@todo_wine@--- success/failure for MORE command
+FAILURE 1
+FAILURE 1
+FAILURE 2
+FAILURE 1
+--- success/failure for MORE command
 SUCCESS 0
 @todo_wine@SUCCESS 0
 foo@space@
@@ -659,7 +659,7 @@ I'm here!@space@
 I'm here!@space@
 ------------ Testing 'choice' ------------
 @todo_wine@Example message [A,B,C]?A@or_broken@choice unavailable
-@todo_wine@1@or_broken@9009
+1@or_broken@9009
 @todo_wine@Example message [A,B,C]?B@or_broken@choice unavailable
 @todo_wine@2@or_broken@9009
 @todo_wine@[D,E,F]?F@or_broken@choice unavailable

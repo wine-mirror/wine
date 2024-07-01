@@ -165,7 +165,7 @@ RETURN_CODE WCMD_assoc(const WCHAR *, BOOL);
 RETURN_CODE WCMD_batch(const WCHAR *, WCHAR *, const WCHAR *, HANDLE);
 RETURN_CODE WCMD_call(WCHAR *command);
 void WCMD_change_tty (void);
-void WCMD_choice (const WCHAR *);
+RETURN_CODE WCMD_choice(const WCHAR *);
 RETURN_CODE WCMD_clear_screen(void);
 RETURN_CODE WCMD_color(void);
 RETURN_CODE WCMD_copy(WCHAR *);
