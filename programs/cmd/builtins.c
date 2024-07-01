@@ -3756,64 +3756,57 @@ BOOL WCMD_print_volume_information(const WCHAR *path)
 }
 
 /****************************************************************************
- * WCMD_volume
+ * WCMD_label
  *
- * Display volume information (set_label = FALSE)
- * Additionally set volume label (set_label = TRUE)
- * Returns 1 on success, 0 otherwise
+ * Set volume label
  */
 
-int WCMD_old_volume(BOOL set_label, const WCHAR *path)
+RETURN_CODE WCMD_label(void)
 {
-  DWORD count, serial;
-  WCHAR string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
-  BOOL status;
+  DWORD count;
+  WCHAR string[MAX_PATH], curdir[MAX_PATH];
 
-  if (!*path) {
-    status = GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir);
-    if (!status) {
-      WCMD_print_error ();
-      return 0;
+  /* FIXME incomplete implementation:
+   * - no support for /MP qualifier,
+   * - no support for passing label as parameter
+   */
+  if (*quals)
+      return errorlevel = ERROR_INVALID_FUNCTION;
+  if (!*param1) {
+    if (!GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir)) {
+      WCMD_print_error();
+      return errorlevel = ERROR_INVALID_FUNCTION;
     }
-    status = GetVolumeInformationW(NULL, label, ARRAY_SIZE(label), &serial, NULL, NULL, NULL, 0);
   }
-  else {
-    if ((path[1] != ':') || (lstrlenW(path) != 2)) {
+  else if (param1[1] == ':' && !param1[2]) {
+    curdir[0] = param1[0];
+    curdir[1] = param1[1];
+  } else {
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-      return 0;
-    }
-    wsprintfW (curdir, L"%s\\", path);
-    status = GetVolumeInformationW(curdir, label, ARRAY_SIZE(label), &serial, NULL, NULL, NULL, 0);
+      return errorlevel = ERROR_INVALID_FUNCTION;
   }
-  if (!status) {
-    WCMD_print_error ();
-    return 0;
+  curdir[2] = L'\\';
+  curdir[3] = L'\0';
+  if (!WCMD_print_volume_information(curdir)) {
+    WCMD_print_error();
+    return errorlevel = ERROR_INVALID_FUNCTION;
   }
-  if (label[0] != '\0') {
-    WCMD_output (WCMD_LoadMessage(WCMD_VOLUMELABEL),
-      	curdir[0], label);
+
+  if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) &&
+      count > 1) {
+    string[count-1] = '\0';		/* ReadFile output is not null-terminatrred! */
+    if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
   }
-  else {
-    WCMD_output (WCMD_LoadMessage(WCMD_VOLUMENOLABEL),
-      	curdir[0]);
-  }
-  WCMD_output (WCMD_LoadMessage(WCMD_VOLUMESERIALNO),
-    	HIWORD(serial), LOWORD(serial));
-  if (set_label) {
-    WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEPROMPT));
-    if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) &&
-        count > 1) {
-      string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
-      if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
-    }
-    if (*path) {
-      if (!SetVolumeLabelW(curdir, string)) WCMD_print_error ();
-    }
-    else {
-      if (!SetVolumeLabelW(NULL, string)) WCMD_print_error ();
+  else return errorlevel = ERROR_INVALID_FUNCTION;
+  if (*param1) {
+    if (!SetVolumeLabelW(curdir, string))
+    {
+        errorlevel = GetLastError();
+        WCMD_print_error();
+        return errorlevel;
     }
   }
-  return 1;
+  return errorlevel = NO_ERROR;
 }
 
 RETURN_CODE WCMD_volume(void)

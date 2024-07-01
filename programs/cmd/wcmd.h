@@ -179,6 +179,7 @@ RETURN_CODE WCMD_exit(void);
 BOOL WCMD_get_fullpath(const WCHAR *, SIZE_T, WCHAR *, WCHAR **);
 void WCMD_give_help (const WCHAR *args);
 RETURN_CODE WCMD_goto(void);
+RETURN_CODE WCMD_label(void);
 void WCMD_leave_paged_mode(void);
 void WCMD_more (WCHAR *);
 RETURN_CODE WCMD_move (void);
@@ -208,7 +209,6 @@ RETURN_CODE WCMD_type(WCHAR *);
 RETURN_CODE WCMD_verify(void);
 RETURN_CODE WCMD_version(void);
 RETURN_CODE WCMD_volume(void);
-int  WCMD_old_volume (BOOL set_label, const WCHAR *args);
 void WCMD_mklink(WCHAR *args);
 
 WCHAR *WCMD_fgets (WCHAR *buf, DWORD n, HANDLE stream);

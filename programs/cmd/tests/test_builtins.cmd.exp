@@ -564,8 +564,8 @@ SUCCESS 0
 FAILURE 1
 FAILURE 1
 --- success/failure for LABEL command
-@todo_wine@FAILURE 1
-@todo_wine@---
+FAILURE 1
+---
 ------------ Testing 'set' ------------
 1
 0

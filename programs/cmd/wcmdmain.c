@@ -1849,7 +1849,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         WCMD_give_help (parms_start);
         break;
       case WCMD_LABEL:
-        WCMD_old_volume (TRUE, parms_start);
+        return_code = WCMD_label();
         break;
       case WCMD_MD:
       case WCMD_MKDIR:
