@@ -181,7 +181,7 @@ RETURN_CODE WCMD_give_help(WCHAR *args);
 RETURN_CODE WCMD_goto(void);
 RETURN_CODE WCMD_label(void);
 void WCMD_leave_paged_mode(void);
-void WCMD_more (WCHAR *);
+RETURN_CODE WCMD_more(WCHAR *);
 RETURN_CODE WCMD_move (void);
 WCHAR* WINAPIV WCMD_format_string (const WCHAR *format, ...);
 void WINAPIV WCMD_output (const WCHAR *format, ...);

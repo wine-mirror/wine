@@ -3605,17 +3605,17 @@ RETURN_CODE WCMD_type(WCHAR *args)
  * Output either a file or stdin to screen in pages
  */
 
-void WCMD_more (WCHAR *args) {
-
+RETURN_CODE WCMD_more(WCHAR *args)
+{
   int   argno         = 0;
   WCHAR *argN         = args;
   WCHAR  moreStr[100];
   WCHAR  moreStrPage[100];
   WCHAR  buffer[512];
   DWORD count;
+  RETURN_CODE return_code = NO_ERROR;
 
   /* Prefix the NLS more with '-- ', then load the text */
-  errorlevel = NO_ERROR;
   lstrcpyW(moreStr, L"-- ");
   LoadStringW(hinst, WCMD_MORESTR, &moreStr[3], ARRAY_SIZE(moreStr)-3);
 
@@ -3647,8 +3647,7 @@ void WCMD_more (WCHAR *args) {
     /* Restore stdin to what it was */
     SetStdHandle(STD_INPUT_HANDLE, hstdin);
     CloseHandle(hConIn);
-
-    return;
+    WCMD_output_asis (L"\r\n");
   } else {
     BOOL needsPause = FALSE;
 
@@ -3679,7 +3678,6 @@ void WCMD_more (WCHAR *args) {
       if (h == INVALID_HANDLE_VALUE) {
         WCMD_print_error ();
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
-        errorlevel = ERROR_INVALID_FUNCTION;
       } else {
         ULONG64 curPos  = 0;
         ULONG64 fileLen = 0;
@@ -3706,6 +3704,7 @@ void WCMD_more (WCHAR *args) {
 
     WCMD_leave_paged_mode();
   }
+  return errorlevel = return_code;
 }
 
 /****************************************************************************
