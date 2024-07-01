@@ -1833,7 +1833,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_delete(parms_start);
         break;
       case WCMD_DIR:
-        WCMD_directory (parms_start);
+        return_code = WCMD_directory(parms_start);
         break;
       case WCMD_ECHO:
         return_code = WCMD_echo(&whichcmd[count]);

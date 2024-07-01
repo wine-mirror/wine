@@ -514,11 +514,11 @@ SUCCESS 0
 @todo_wine@SUCCESS 666
 @todo_wine@FAILURE 1
 @todo_wine@--- success/failure for DIR command
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
+FAILURE 1
+FAILURE 1
 SUCCESS 0
 SUCCESS 0
-@todo_wine@FAILURE 1
+FAILURE 1
 SUCCESS 0
 @todo_wine@---
 ------------ Testing 'set' ------------

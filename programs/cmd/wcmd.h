@@ -169,7 +169,7 @@ void WCMD_color (void);
 RETURN_CODE WCMD_copy(WCHAR *);
 RETURN_CODE WCMD_create_dir(WCHAR *);
 RETURN_CODE WCMD_delete(WCHAR *);
-void WCMD_directory (WCHAR *);
+RETURN_CODE WCMD_directory(WCHAR *);
 RETURN_CODE WCMD_echo(const WCHAR *);
 void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(const WCHAR *);

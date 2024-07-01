@@ -631,7 +631,7 @@ static void init_time_format(void)
  *
  */
 
-void WCMD_directory (WCHAR *args)
+RETURN_CODE WCMD_directory(WCHAR *args)
 {
   WCHAR path[MAX_PATH], cwd[MAX_PATH];
   DWORD status;
@@ -649,6 +649,7 @@ void WCMD_directory (WCHAR *args)
   WCHAR dir[MAX_PATH];
   WCHAR fname[MAX_PATH];
   WCHAR ext[MAX_PATH];
+  unsigned num_empty = 0, num_with_data = 0;
 
   errorlevel = NO_ERROR;
 
@@ -736,8 +737,7 @@ void WCMD_directory (WCHAR *args)
               } else {
                 SetLastError(ERROR_INVALID_PARAMETER);
                 WCMD_print_error();
-                errorlevel = ERROR_INVALID_FUNCTION;
-                return;
+                return errorlevel = ERROR_INVALID_FUNCTION;
               }
               break;
     case 'O': p = p + 1;
@@ -756,8 +756,7 @@ void WCMD_directory (WCHAR *args)
                 default:
                     SetLastError(ERROR_INVALID_PARAMETER);
                     WCMD_print_error();
-                    errorlevel = ERROR_INVALID_FUNCTION;
-                    return;
+                    return errorlevel = ERROR_INVALID_FUNCTION;
                 }
                 p++;
               }
@@ -787,8 +786,7 @@ void WCMD_directory (WCHAR *args)
                 default:
                     SetLastError(ERROR_INVALID_PARAMETER);
                     WCMD_print_error();
-                    errorlevel = ERROR_INVALID_FUNCTION;
-                    return;
+                    return errorlevel = ERROR_INVALID_FUNCTION;
                 }
 
                 /* Keep running list of bits we care about */
@@ -806,8 +804,7 @@ void WCMD_directory (WCHAR *args)
     default:
               SetLastError(ERROR_INVALID_PARAMETER);
               WCMD_print_error();
-              errorlevel = ERROR_INVALID_FUNCTION;
-              return;
+              return errorlevel = ERROR_INVALID_FUNCTION;
     }
     p = p + 1;
   }
@@ -957,6 +954,10 @@ void WCMD_directory (WCHAR *args)
     errorlevel = NO_ERROR;
     prevEntry = thisEntry;
     thisEntry = WCMD_list_directory (thisEntry, 0);
+    if (errorlevel)
+        num_empty++;
+    else
+        num_with_data++;
   }
 
   /* Trailer Information */
@@ -964,6 +965,8 @@ void WCMD_directory (WCHAR *args)
     WCMD_dir_trailer(prevEntry->dirName);
   }
 
+  if (num_empty && !num_with_data)
+      errorlevel = ERROR_INVALID_FUNCTION;
 exit:
   if (paged_mode) WCMD_leave_paged_mode();
 
@@ -975,4 +978,6 @@ exit:
     free(prevEntry->fileName);
     free(prevEntry);
   }
+
+  return errorlevel;
 }
