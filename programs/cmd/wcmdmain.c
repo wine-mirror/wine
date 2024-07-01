@@ -1600,7 +1600,7 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
           TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
           context->skip_rest = TRUE;
         }
-        if (return_code != RETURN_CODE_ABORTED && return_code != RETURN_CODE_OLD_CHAINING)
+        if (return_code != RETURN_CODE_ABORTED)
             errorlevel = return_code;
         return return_code;
       } else {
@@ -1803,7 +1803,6 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
       parms_start[count] = '\0';
     }
 
-    return_code = RETURN_CODE_OLD_CHAINING;
     switch (cmd_index) {
 
       case WCMD_CALL:
@@ -1858,6 +1857,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_setshow_prompt();
         break;
       case WCMD_REM:
+        return_code = NO_ERROR;
         break;
       case WCMD_REN:
       case WCMD_RENAME:
@@ -3653,16 +3653,6 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
     return return_code;
 }
 
-static RETURN_CODE temp_fixup_return_code(CMD_NODE *node, RETURN_CODE return_code, RETURN_CODE fallback_return_code)
-{
-    if (return_code == RETURN_CODE_OLD_CHAINING)
-    {
-        FIXME("Not migrated (%ls) used in chaining\n", node->op == CMD_SINGLE ? node->command->command : L"Too complex");
-        return_code = fallback_return_code;
-    }
-    return return_code;
-}
-
 RETURN_CODE node_execute(CMD_NODE *node)
 {
     HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
@@ -3694,22 +3684,16 @@ RETURN_CODE node_execute(CMD_NODE *node)
         break;
     case CMD_ONSUCCESS:
         return_code = node_execute(node->left);
-        return_code = temp_fixup_return_code(node->left, return_code, NO_ERROR);
         if (return_code == NO_ERROR)
-        {
             return_code = node_execute(node->right);
-            temp_fixup_return_code(node->right, return_code, 0 /* not used */);
-        }
         break;
     case CMD_ONFAILURE:
         return_code = node_execute(node->left);
-        return_code = temp_fixup_return_code(node->left, return_code, ERROR_INVALID_FUNCTION);
         if (return_code != NO_ERROR && return_code != RETURN_CODE_ABORTED)
         {
             /* that's needed for commands (POPD, RMDIR) that don't set errorlevel in case of failure. */
             errorlevel = return_code;
             return_code = node_execute(node->right);
-            temp_fixup_return_code(node->right, return_code, 0 /* not used */);
         }
         break;
     case CMD_PIPE:
@@ -3744,7 +3728,6 @@ RETURN_CODE node_execute(CMD_NODE *node)
                 CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
                 SetStdHandle(STD_OUTPUT_HANDLE, saved_output);
 
-                return_code = temp_fixup_return_code(node->left, return_code, NO_ERROR);
                 if (return_code == NO_ERROR)
                 {
                     HANDLE h = CreateFileW(filename, GENERIC_READ,
@@ -3754,7 +3737,6 @@ RETURN_CODE node_execute(CMD_NODE *node)
                     {
                         SetStdHandle(STD_INPUT_HANDLE, h);
                         return_code = node_execute(node->right);
-                        temp_fixup_return_code(node->right, return_code, 0 /* not used */);
                     }
                     else return_code = ERROR_INVALID_FUNCTION;
                 }
