@@ -3321,7 +3321,8 @@ RETURN_CODE WCMD_setshow_path(const WCHAR *args)
  * Set or show the command prompt.
  */
 
-void WCMD_setshow_prompt (void) {
+RETURN_CODE WCMD_setshow_prompt(void)
+{
 
   WCHAR *s;
 
@@ -3336,6 +3337,7 @@ void WCMD_setshow_prompt (void) {
     }
     else SetEnvironmentVariableW(L"PROMPT", s);
   }
+  return errorlevel = NO_ERROR;
 }
 
 /****************************************************************************
