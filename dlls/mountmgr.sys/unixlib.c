@@ -133,7 +133,7 @@ static void detect_devices( const char **paths, char *names, ULONG size )
 
 void queue_device_op( enum device_op op, const char *udi, const char *device,
                       const char *mount_point, enum device_type type, const GUID *guid,
-                      const char *serial, const struct scsi_info *scsi_info )
+                      const char *serial, const char *label, const struct scsi_info *scsi_info )
 {
     struct device_info *info;
     char *str, *end;
@@ -152,6 +152,7 @@ void queue_device_op( enum device_op op, const char *udi, const char *device,
     ADD_STR(device);
     ADD_STR(mount_point);
     ADD_STR(serial);
+    ADD_STR(label);
 #undef ADD_STR
     if (guid)
     {
@@ -188,6 +189,7 @@ static NTSTATUS dequeue_device_op( void *args )
     if (dst->device) dst->device = (char *)dst + (src->device - (char *)src);
     if (dst->mount_point) dst->mount_point = (char *)dst + (src->mount_point - (char *)src);
     if (dst->serial) dst->serial = (char *)dst + (src->serial - (char *)src);
+    if (dst->label) dst->label = (char *)dst + (src->label - (char *)src);
     if (dst->guid) dst->guid = &dst->guid_buffer;
     if (dst->scsi_info) dst->scsi_info = &dst->scsi_buffer;
 

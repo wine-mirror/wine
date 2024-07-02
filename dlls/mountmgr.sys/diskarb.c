@@ -180,9 +180,9 @@ static void appeared_callback( DADiskRef disk, void *context )
     }
 
     if (removable)
-        queue_device_op( ADD_DOS_DEVICE, device, device, mount_point, type, guid_ptr, NULL, &scsi_info );
+        queue_device_op( ADD_DOS_DEVICE, device, device, mount_point, type, guid_ptr, NULL, NULL, &scsi_info );
     else
-        if (guid_ptr) queue_device_op( ADD_VOLUME, device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL, &scsi_info );
+        if (guid_ptr) queue_device_op( ADD_VOLUME, device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL, NULL, &scsi_info );
 
 done:
     CFRelease( dict );
@@ -208,7 +208,7 @@ static void disappeared_callback( DADiskRef disk, void *context )
 
     TRACE( "got unmount notification for '%s'\n", device );
 
-    queue_device_op( REMOVE_DEVICE, device, NULL, NULL, 0, NULL, NULL, NULL );
+    queue_device_op( REMOVE_DEVICE, device, NULL, NULL, 0, NULL, NULL, NULL, NULL );
 
 done:
     CFRelease( dict );

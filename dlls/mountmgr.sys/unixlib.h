@@ -36,6 +36,7 @@ struct device_info
     const char       *device;
     const char       *mount_point;
     const char       *serial;
+    const char       *label;
     GUID             *guid;
     struct scsi_info *scsi_info;
 
@@ -179,7 +180,8 @@ enum mountmgr_funcs
 
 extern void queue_device_op( enum device_op op, const char *udi, const char *device,
                              const char *mount_point, enum device_type type, const GUID *guid,
-                             const char *disk_serial, const struct scsi_info *info );
+                             const char *disk_serial, const char *label,
+                             const struct scsi_info *info );
 extern void run_dbus_loop(void);
 extern void run_diskarbitration_loop(void);
 

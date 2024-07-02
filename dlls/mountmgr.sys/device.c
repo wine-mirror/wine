@@ -949,7 +949,7 @@ static void set_dos_devices_disk_serial( struct disk_device *device )
 /* change the information for an existing volume */
 static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive, const char *device,
                                  const char *mount_point, enum device_type type, const GUID *guid,
-                                 const char *disk_serial )
+                                 const char *label, const char *disk_serial )
 {
     void *id = NULL;
     unsigned int id_len = 0;
@@ -995,6 +995,8 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
         get_filesystem_label( volume );
         get_filesystem_serial( volume );
     }
+    if (label && label[0] && !volume->label[0])
+        RtlMultiByteToUnicodeN(volume->label, ARRAY_SIZE(volume->label), NULL, label, strlen(label)+1);
 
     TRACE("fs_type %#x, label %s, serial %08lx\n", volume->fs_type, debugstr_w(volume->label), volume->serial);
 
@@ -1098,7 +1100,7 @@ static void create_drive_devices(void)
         {
             /* don't reset uuid if we used an existing volume */
             const GUID *guid = volume ? NULL : get_default_uuid(i);
-            set_volume_info( drive->volume, drive, device, link, drive_type, guid, NULL );
+            set_volume_info( drive->volume, drive, device, link, drive_type, guid, NULL, NULL );
         }
         if (volume) release_volume( volume );
     }
@@ -1198,7 +1200,7 @@ static void create_scsi_entry( struct volume *volume, const struct scsi_info *in
 /* create a new disk volume */
 NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
                      enum device_type type, const GUID *guid, const char *disk_serial,
-                     const struct scsi_info *scsi_info )
+                     const char *label, const struct scsi_info *scsi_info )
 {
     struct volume *volume;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1219,7 +1221,7 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
     else status = create_volume( udi, type, &volume );
 
 found:
-    if (!status) status = set_volume_info( volume, NULL, device, mount_point, type, guid, disk_serial );
+    if (!status) status = set_volume_info( volume, NULL, device, mount_point, type, guid, label, disk_serial );
     if (!status && scsi_info) create_scsi_entry( volume, scsi_info );
     if (volume) release_volume( volume );
     LeaveCriticalSection( &device_section );
@@ -1248,7 +1250,7 @@ NTSTATUS remove_volume( const char *udi )
 /* create a new dos drive */
 NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                          const char *mount_point, enum device_type type, const GUID *guid,
-                         const struct scsi_info *scsi_info )
+                         const char *label, const struct scsi_info *scsi_info )
 {
     HKEY hkey;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1305,7 +1307,7 @@ found:
         struct set_dosdev_symlink_params params = { dosdev, mount_point };
         MOUNTMGR_CALL( set_dosdev_symlink, &params );
     }
-    set_volume_info( volume, drive, device, mount_point, type, guid, NULL );
+    set_volume_info( volume, drive, device, mount_point, type, guid, label, NULL );
 
     TRACE( "added device %c: udi %s for %s on %s type %u\n",
            'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),

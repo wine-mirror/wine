@@ -90,11 +90,11 @@ struct scsi_info
 
 extern NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
                             enum device_type type, const GUID *guid, const char *disk_serial,
-                            const struct scsi_info *info );
+                            const char *label, const struct scsi_info *info );
 extern NTSTATUS remove_volume( const char *udi );
 extern NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                                 const char *mount_point, enum device_type type, const GUID *guid,
-                                const struct scsi_info *info );
+                                const char *label, const struct scsi_info *info );
 extern NTSTATUS remove_dos_device( int letter, const char *udi );
 extern NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize,
                                   IO_STATUS_BLOCK *iosb );
