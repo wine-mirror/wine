@@ -3886,6 +3886,14 @@ static void test_h264_encoder(void)
         ATTR_UINT32(test_attr_guid, 0),
         {0},
     };
+    static const struct attribute_desc test_attributes[] =
+     {
+        ATTR_RATIO(MF_MT_FRAME_SIZE,           1920, 1080),
+        ATTR_RATIO(MF_MT_FRAME_RATE,           10, 1),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE,      MFVideoInterlace_MixedInterlaceOrProgressive),
+        ATTR_UINT32(MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_Normal),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO,   2, 1),
+     };
     const struct attribute_desc expect_input_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -3907,7 +3915,7 @@ static void test_h264_encoder(void)
         ATTR_UINT32(test_attr_guid, 0),
         {0},
     };
-    static const MFT_OUTPUT_STREAM_INFO expect_output_info = {.cbSize = 0x8000};
+    static const MFT_OUTPUT_STREAM_INFO expect_output_info[] = {{.cbSize = 0x8000}, {.cbSize = 0x3bc400}};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_NV12};
     IMFMediaType *media_type;
@@ -3970,7 +3978,7 @@ static void test_h264_encoder(void)
     check_mft_set_output_type_required(transform, output_type_desc);
     check_mft_set_output_type(transform, output_type_desc, S_OK);
     check_mft_get_output_current_type(transform, expect_output_type_desc);
-    check_mft_get_output_stream_info(transform, S_OK, &expect_output_info);
+    check_mft_get_output_stream_info(transform, S_OK, &expect_output_info[0]);
 
     /* Input types can now be enumerated. */
     i = -1;
@@ -3993,6 +4001,43 @@ static void test_h264_encoder(void)
     check_mft_get_input_current_type(transform, expect_input_type_desc);
     check_mft_get_input_stream_info(transform, S_OK, NULL);
 
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#lx.\n", hr);
+
+    /* Input type attributes should match output type attributes. */
+    for (i = 0; i < ARRAY_SIZE(test_attributes); ++i)
+    {
+        winetest_push_context("attr %lu", i);
+
+        init_media_type(media_type, input_type_desc, -1);
+        hr = IMFMediaType_SetItem(media_type, test_attributes[i].key, &test_attributes[i].value);
+        ok(hr == S_OK, "SetItem returned %#lx.\n", hr);
+        hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
+
+        winetest_pop_context();
+    }
+
+    /* Output info cbSize will change only if we change output type frame size. */
+    for (i = 0; i < ARRAY_SIZE(test_attributes); ++i)
+    {
+        winetest_push_context("attr %lu", i);
+
+        init_media_type(media_type, output_type_desc, -1);
+        hr = IMFMediaType_SetItem(media_type, test_attributes[i].key, &test_attributes[i].value);
+        ok(hr == S_OK, "SetItem returned %#lx.\n", hr);
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+
+        if (IsEqualGUID(test_attributes[i].key, &MF_MT_FRAME_SIZE))
+            check_mft_get_output_stream_info(transform, S_OK, &expect_output_info[1]);
+        else
+            check_mft_get_output_stream_info(transform, S_OK, &expect_output_info[0]);
+
+        winetest_pop_context();
+    }
+
+    IMFMediaType_Release(media_type);
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
 
