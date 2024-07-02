@@ -43,6 +43,29 @@ bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 
+static inline BOOL is_mf_video_area_empty(const MFVideoArea *area)
+{
+    return !area->OffsetX.value && !area->OffsetY.value && !area->Area.cx && !area->Area.cy;
+}
+
+static inline void get_mf_video_content_rect(const MFVideoInfo *info, RECT *rect)
+{
+    if (!is_mf_video_area_empty(&info->MinimumDisplayAperture))
+    {
+        rect->left = info->MinimumDisplayAperture.OffsetX.value;
+        rect->top = info->MinimumDisplayAperture.OffsetY.value;
+        rect->right = rect->left + info->MinimumDisplayAperture.Area.cx;
+        rect->bottom = rect->top + info->MinimumDisplayAperture.Area.cy;
+    }
+    else
+    {
+        rect->left = 0;
+        rect->top = 0;
+        rect->right = info->dwWidth;
+        rect->bottom = info->dwHeight;
+    }
+}
+
 struct wg_sample_queue;
 
 HRESULT wg_sample_queue_create(struct wg_sample_queue **out);

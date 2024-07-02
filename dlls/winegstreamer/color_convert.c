@@ -95,9 +95,59 @@ static inline struct color_convert *impl_from_IUnknown(IUnknown *iface)
     return CONTAINING_RECORD(iface, struct color_convert, IUnknown_inner);
 }
 
+static void update_video_aperture(MFVideoInfo *input_info, MFVideoInfo *output_info)
+{
+    static const MFVideoArea empty_area = {0};
+
+    /* Tests show that the color converter ignores aperture entirely, probably a side
+     * effect of an internal conversion to VIDEOINFOHEADER2, as the component is also
+     * exposing a IMediaObject interface, and designed for dshow.
+     */
+
+    input_info->GeometricAperture = empty_area;
+    input_info->MinimumDisplayAperture = empty_area;
+    input_info->PanScanAperture = empty_area;
+
+    output_info->GeometricAperture = empty_area;
+    output_info->MinimumDisplayAperture = empty_area;
+    output_info->PanScanAperture = empty_area;
+}
+
+static HRESULT normalize_media_types(IMFMediaType **input_type, IMFMediaType **output_type)
+{
+    MFVIDEOFORMAT *input_format, *output_format;
+    UINT32 size;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateMFVideoFormatFromMFMediaType(*input_type, &input_format, &size)))
+        return hr;
+    if (FAILED(hr = MFCreateMFVideoFormatFromMFMediaType(*output_type, &output_format, &size)))
+    {
+        CoTaskMemFree(input_format);
+        return hr;
+    }
+
+    update_video_aperture(&input_format->videoInfo, &output_format->videoInfo);
+
+    if (FAILED(hr = MFCreateVideoMediaType(input_format, (IMFVideoMediaType **)input_type)))
+        goto done;
+    if (FAILED(hr = MFCreateVideoMediaType(output_format, (IMFVideoMediaType **)output_type)))
+    {
+        IMFMediaType_Release(*input_type);
+        *input_type = NULL;
+    }
+
+done:
+    CoTaskMemFree(input_format);
+    CoTaskMemFree(output_format);
+    return hr;
+}
+
 static HRESULT try_create_wg_transform(struct color_convert *impl)
 {
+    IMFMediaType *input_type = impl->input_type, *output_type = impl->output_type;
     struct wg_transform_attrs attrs = {0};
+    HRESULT hr;
 
     if (impl->wg_transform)
     {
@@ -105,7 +155,13 @@ static HRESULT try_create_wg_transform(struct color_convert *impl)
         impl->wg_transform = 0;
     }
 
-    return wg_transform_create_mf(impl->input_type, impl->output_type, &attrs, &impl->wg_transform);
+    if (FAILED(hr = normalize_media_types(&input_type, &output_type)))
+        return hr;
+    hr = wg_transform_create_mf(input_type, output_type, &attrs, &impl->wg_transform);
+    IMFMediaType_Release(output_type);
+    IMFMediaType_Release(input_type);
+
+    return hr;
 }
 
 static HRESULT WINAPI unknown_QueryInterface(IUnknown *iface, REFIID iid, void **out)

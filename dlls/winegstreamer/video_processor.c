@@ -91,6 +91,26 @@ struct video_processor
     IMFVideoSampleAllocatorEx *allocator;
 };
 
+static void update_video_aperture(MFVideoInfo *input_info, MFVideoInfo *output_info)
+{
+    RECT input_rect, output_rect;
+
+    get_mf_video_content_rect(input_info, &input_rect);
+    get_mf_video_content_rect(output_info, &output_rect);
+
+    if (!EqualRect(&input_rect, &output_rect))
+    {
+        FIXME("Mismatched content size %s vs %s\n", wine_dbgstr_rect(&input_rect),
+                wine_dbgstr_rect(&output_rect));
+    }
+
+    input_info->MinimumDisplayAperture.OffsetX.value = input_rect.left;
+    input_info->MinimumDisplayAperture.OffsetY.value = input_rect.top;
+    input_info->MinimumDisplayAperture.Area.cx = input_rect.right - input_rect.left;
+    input_info->MinimumDisplayAperture.Area.cy = input_rect.bottom - input_rect.top;
+    output_info->MinimumDisplayAperture = input_info->MinimumDisplayAperture;
+}
+
 static HRESULT normalize_media_types(BOOL bottom_up, IMFMediaType **input_type, IMFMediaType **output_type)
 {
     MFVIDEOFORMAT *input_format, *output_format;
@@ -113,6 +133,8 @@ static HRESULT normalize_media_types(BOOL bottom_up, IMFMediaType **input_type, 
         input_format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
     if (bottom_up && normalize_output)
         output_format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
+
+    update_video_aperture(&input_format->videoInfo, &output_format->videoInfo);
 
     if (FAILED(hr = MFCreateVideoMediaType(input_format, (IMFVideoMediaType **)input_type)))
         goto done;
