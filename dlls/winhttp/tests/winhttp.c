@@ -609,6 +609,7 @@ static void test_WinHttpAddHeaders(void)
         L"field: value ",
         L"name: value",
         L"name:",
+        L"g : value",
     };
     static const WCHAR test_indices[][6] =
     {
@@ -949,6 +950,9 @@ static void test_WinHttpAddHeaders(void)
 
     ret = WinHttpAddRequestHeaders(request, test_headers[13], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
     ok(ret, "WinHttpAddRequestHeaders failed\n");
+
+    ret = WinHttpAddRequestHeaders(request, test_headers[16], ~0u, WINHTTP_ADDREQ_FLAG_ADD);
+    ok(!ret, "adding %s succeeded.\n", debugstr_w(test_headers[16]));
 
     index = 0;
     buffer[0] = 0;
@@ -2287,6 +2291,13 @@ static const char redirectmsg[] =
 "Location: /temporary\r\n"
 "Connection: close\r\n\r\n";
 
+static const char badreplyheadermsg[] =
+"HTTP/1.1 200 OK\r\n"
+"Server: winetest\r\n"
+"SpaceAfterHdr  :   bad\r\n"
+"OkHdr: ok\r\n"
+"\r\n";
+
 static const char proxy_pac[] =
 "function FindProxyForURL(url, host) {\r\n"
 "    url = url.replace(/[:/]/g, '_');\r\n"
@@ -2558,7 +2569,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
             ok(!!strstr(buffer, "Test5: Value5\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
             ok(!!strstr(buffer, "Test6: Value6\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
             ok(!!strstr(buffer, "Cookie: 111\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
-            send(c, okmsg, sizeof(okmsg) - 1, 0);
+            send(c, badreplyheadermsg, sizeof(badreplyheadermsg) - 1, 0);
         }
         if (strstr(buffer, "GET /proxy.pac"))
         {
@@ -3852,8 +3863,17 @@ static void test_not_modified(int port)
 
 static void test_bad_header( int port )
 {
-    WCHAR buffer[32];
+    static const WCHAR expected_headers[] =
+    {
+        L"HTTP/1.1 200 OK\r\n"
+        L"Server: winetest\r\n"
+        L"SpaceAfterHdr: bad\r\n"
+        L"OkHdr: ok\r\n"
+        L"\r\n"
+    };
+
     HINTERNET ses, con, req;
+    WCHAR buffer[512];
     DWORD index, len;
     unsigned int i;
     BOOL ret;
@@ -3911,6 +3931,20 @@ static void test_bad_header( int port )
 
     ret = WinHttpReceiveResponse( req, NULL );
     ok( ret, "failed to receive response %lu\n", GetLastError() );
+
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM, L"OkHdr", buffer, &len, WINHTTP_NO_HEADER_INDEX );
+    todo_wine ok( ret, "got error %lu.\n", GetLastError() );
+
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, buffer, &len, WINHTTP_NO_HEADER_INDEX );
+    ok( ret, "got error %lu.\n", GetLastError() );
+    todo_wine ok( !wcscmp( buffer, expected_headers ), "got %s.\n", debugstr_w(buffer) );
+
+    len = sizeof(buffer);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM, L"SpaceAfterHdr", buffer, &len, WINHTTP_NO_HEADER_INDEX );
+    todo_wine ok( ret, "got error %lu.\n", GetLastError() );
+    todo_wine ok( !wcscmp( buffer, L"bad" ), "got %s.\n", debugstr_w(buffer) );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
@@ -6035,6 +6069,7 @@ START_TEST (winhttp)
         CloseHandle(thread);
         return;
     }
+
     test_IWinHttpRequest(si.port);
     test_connection_info(si.port);
     test_basic_request(si.port, NULL, L"/basic");
