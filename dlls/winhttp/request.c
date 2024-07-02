@@ -2697,9 +2697,29 @@ static DWORD read_reply( struct request *request )
             free_header( header );
             break;
         }
+
+        lenW = wcslen( header->field );
+        assert( len - offset >= lenW + 1 );
+        memcpy( raw_headers + offset, header->field, lenW * sizeof(WCHAR) );
+        offset += lenW;
+
+        lenW = 2;
+        assert( len - offset >= lenW + 1 );
+        memcpy( raw_headers + offset, L": ", lenW * sizeof(WCHAR) );
+        offset += lenW;
+
+        lenW = wcslen( header->value );
+        assert( len - offset >= lenW + 1 );
+        memcpy( raw_headers + offset, header->value, lenW * sizeof(WCHAR) );
+        offset += lenW;
+
+        lenW = crlf_len;
+        assert( len - offset >= lenW + 1 );
+        memcpy( raw_headers + offset, L"\r\n", lenW * sizeof(WCHAR) );
+        offset += lenW;
+
+        raw_headers[offset] = 0;
         free_header( header );
-        memcpy( raw_headers + offset + buflen - 1, L"\r\n", sizeof(L"\r\n") );
-        offset += buflen + crlf_len - 1;
     }
 
     TRACE("raw headers: %s\n", debugstr_w(raw_headers));
