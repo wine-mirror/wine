@@ -3934,17 +3934,17 @@ static void test_bad_header( int port )
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM, L"OkHdr", buffer, &len, WINHTTP_NO_HEADER_INDEX );
-    todo_wine ok( ret, "got error %lu.\n", GetLastError() );
+    ok( ret, "got error %lu.\n", GetLastError() );
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, buffer, &len, WINHTTP_NO_HEADER_INDEX );
     ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( !wcscmp( buffer, expected_headers ), "got %s.\n", debugstr_w(buffer) );
+    ok( !wcscmp( buffer, expected_headers ), "got %s.\n", debugstr_w(buffer) );
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_CUSTOM, L"SpaceAfterHdr", buffer, &len, WINHTTP_NO_HEADER_INDEX );
-    todo_wine ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( !wcscmp( buffer, L"bad" ), "got %s.\n", debugstr_w(buffer) );
+    ok( ret, "got error %lu.\n", GetLastError() );
+    ok( !wcscmp( buffer, L"bad" ), "got %s.\n", debugstr_w(buffer) );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );

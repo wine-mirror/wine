@@ -303,9 +303,9 @@ static BOOL valid_token_char( WCHAR c )
     }
 }
 
-static struct header *parse_header( const WCHAR *string, size_t string_len )
+static struct header *parse_header( const WCHAR *string, size_t string_len, BOOL reply )
 {
-    const WCHAR *p, *q;
+    const WCHAR *p, *q, *name_end;
     struct header *header;
     int len;
 
@@ -315,12 +315,21 @@ static struct header *parse_header( const WCHAR *string, size_t string_len )
         WARN("no ':' in line %s\n", debugstr_w(string));
         return NULL;
     }
-    if (q == string)
+    name_end = q;
+    if (reply)
+    {
+        while (name_end != string)
+        {
+            if (name_end[-1] != ' ') break;
+            --name_end;
+        }
+    }
+    if (name_end == string)
     {
         WARN("empty field name in line %s\n", debugstr_w(string));
         return NULL;
     }
-    while (*p != ':')
+    while (p != name_end)
     {
         if (!valid_token_char( *p ))
         {
@@ -329,7 +338,7 @@ static struct header *parse_header( const WCHAR *string, size_t string_len )
         }
         p++;
     }
-    len = q - string;
+    len = name_end - string;
     if (!(header = calloc( 1, sizeof(*header) ))) return NULL;
     if (!(header->field = malloc( (len + 1) * sizeof(WCHAR) )))
     {
@@ -491,7 +500,7 @@ DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD 
         while (*q == '\r' || *q == '\n')
             ++q;
 
-        if ((header = parse_header( p, end - p )))
+        if ((header = parse_header( p, end - p, FALSE )))
         {
             ret = process_header( request, header->field, header->value, flags, TRUE );
             free_header( header );
@@ -2691,7 +2700,7 @@ static DWORD read_reply( struct request *request )
         }
         lenW = MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers + offset, buflen );
 
-        if (!(header = parse_header( raw_headers + offset, lenW - 1 ))) break;
+        if (!(header = parse_header( raw_headers + offset, lenW - 1, TRUE ))) break;
         if ((ret = process_header( request, header->field, header->value, WINHTTP_ADDREQ_FLAG_ADD, FALSE )))
         {
             free_header( header );
