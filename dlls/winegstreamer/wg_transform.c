@@ -72,10 +72,28 @@ static struct wg_transform *get_transform(wg_transform_t trans)
 static void align_video_info_planes(MFVideoInfo *video_info, gsize plane_align,
         GstVideoInfo *info, GstVideoAlignment *align)
 {
+    const MFVideoArea *aperture = &video_info->MinimumDisplayAperture;
+
     gst_video_alignment_reset(align);
 
     align->padding_right = ((plane_align + 1) - (info->width & plane_align)) & plane_align;
     align->padding_bottom = ((plane_align + 1) - (info->height & plane_align)) & plane_align;
+
+    if (!is_mf_video_area_empty(aperture))
+    {
+        align->padding_right = max(align->padding_right, video_info->dwWidth - aperture->OffsetX.value - aperture->Area.cx);
+        align->padding_bottom = max(align->padding_bottom, video_info->dwHeight - aperture->OffsetY.value - aperture->Area.cy);
+        align->padding_top = aperture->OffsetX.value;
+        align->padding_left = aperture->OffsetY.value;
+    }
+
+    if (video_info->VideoFlags & MFVideoFlag_BottomUpLinearRep)
+    {
+        gsize top = align->padding_top;
+        align->padding_top = align->padding_bottom;
+        align->padding_bottom = top;
+    }
+
     align->stride_align[0] = plane_align;
     align->stride_align[1] = plane_align;
     align->stride_align[2] = plane_align;

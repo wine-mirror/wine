@@ -410,6 +410,12 @@ static GstCaps *caps_from_video_format(const MFVIDEOFORMAT *format, UINT32 forma
                 format->videoInfo.FramesPerSecond.Numerator,
                 format->videoInfo.FramesPerSecond.Denominator, NULL);
 
+    if (!is_mf_video_area_empty(&format->videoInfo.MinimumDisplayAperture))
+    {
+        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->videoInfo.MinimumDisplayAperture.Area.cx, NULL);
+        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->videoInfo.MinimumDisplayAperture.Area.cy, NULL);
+    }
+
     if (video_format == GST_VIDEO_FORMAT_ENCODED)
         init_caps_from_video_subtype(caps, &format->guidFormat, format, format_size);
 

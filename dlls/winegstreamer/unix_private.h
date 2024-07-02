@@ -69,6 +69,11 @@ extern NTSTATUS wg_transform_notify_qos(void *args);
 
 /* wg_media_type.c */
 
+static inline BOOL is_mf_video_area_empty(const MFVideoArea *area)
+{
+    return !area->OffsetX.value && !area->OffsetY.value && !area->Area.cx && !area->Area.cy;
+}
+
 extern GstCaps *caps_from_media_type(const struct wg_media_type *media_type);
 extern NTSTATUS caps_to_media_type(GstCaps *caps, struct wg_media_type *media_type,
         UINT32 video_plane_align);
