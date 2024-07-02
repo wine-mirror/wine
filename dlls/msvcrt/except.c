@@ -211,8 +211,8 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
 {
     ULONG_PTR frame = rec->ExceptionInformation[1];
     const cxx_function_descr *descr = (void*)rec->ExceptionInformation[2];
-    EXCEPTION_RECORD *prev_rec = (void*)rec->ExceptionInformation[4];
-    EXCEPTION_RECORD *untrans_rec = (void*)rec->ExceptionInformation[6];
+    EXCEPTION_RECORD *untrans_rec = (void*)rec->ExceptionInformation[4];
+    EXCEPTION_RECORD *prev_rec = (void*)rec->ExceptionInformation[6];
     CONTEXT *context = (void*)rec->ExceptionInformation[7];
     int *unwind_help = (int *)(frame + descr->unwind_help);
     EXCEPTION_POINTERS ep = { prev_rec, context };
@@ -323,9 +323,10 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
         catch_record.ExceptionInformation[1] = orig_frame;
         catch_record.ExceptionInformation[2] = (ULONG_PTR)descr;
         catch_record.ExceptionInformation[3] = tryblock->start_level;
-        catch_record.ExceptionInformation[4] = (ULONG_PTR)rec;
+        catch_record.ExceptionInformation[4] = (ULONG_PTR)untrans_rec;
         catch_record.ExceptionInformation[5] = (ULONG_PTR)handler;
-        catch_record.ExceptionInformation[6] = (ULONG_PTR)untrans_rec;
+        /* tyFlow expects ExceptionInformation[6] to contain exception record */
+        catch_record.ExceptionInformation[6] = (ULONG_PTR)rec;
         catch_record.ExceptionInformation[7] = (ULONG_PTR)context;
         catch_record.ExceptionInformation[10] = -1;
         RtlUnwindEx((void*)frame, (void*)dispatch->ControlPc, &catch_record, NULL, &ctx, NULL);
