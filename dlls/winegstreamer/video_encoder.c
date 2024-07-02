@@ -54,6 +54,45 @@ static inline struct video_encoder *impl_from_IMFTransform(IMFTransform *iface)
     return CONTAINING_RECORD(iface, struct video_encoder, IMFTransform_iface);
 }
 
+static HRESULT create_input_type(struct video_encoder *encoder, const GUID *subtype, IMFMediaType **out)
+{
+    IMFVideoMediaType *input_type;
+    UINT64 ratio;
+    UINT32 value;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateVideoMediaTypeFromSubtype(subtype, &input_type)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_FRAME_SIZE, &ratio))
+            || FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_FRAME_SIZE, ratio)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_FRAME_RATE, &ratio))
+            || FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_FRAME_RATE, ratio)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaType_GetUINT32(encoder->output_type, &MF_MT_INTERLACE_MODE, &value))
+            || FAILED(hr = IMFVideoMediaType_SetUINT32(input_type, &MF_MT_INTERLACE_MODE, value)))
+        goto done;
+
+    if (FAILED(IMFMediaType_GetUINT32(encoder->output_type, &MF_MT_VIDEO_NOMINAL_RANGE, &value)))
+        value = MFNominalRange_Wide;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT32(input_type, &MF_MT_VIDEO_NOMINAL_RANGE, value)))
+        goto done;
+
+    if (FAILED(IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio)))
+        ratio = (UINT64)1 << 32 | 1;
+    if (FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_PIXEL_ASPECT_RATIO, ratio)))
+        goto done;
+
+    IMFMediaType_AddRef((*out = (IMFMediaType *)input_type));
+
+done:
+    IMFVideoMediaType_Release(input_type);
+    return hr;
+}
+
 static HRESULT WINAPI transform_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
 {
     struct video_encoder *encoder = impl_from_IMFTransform(iface);
@@ -180,10 +219,6 @@ static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD
         IMFMediaType **type)
 {
     struct video_encoder *encoder = impl_from_IMFTransform(iface);
-    IMFVideoMediaType *input_type;
-    UINT64 ratio;
-    UINT32 value;
-    HRESULT hr;
 
     TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
 
@@ -194,36 +229,7 @@ static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD
     if (index >= encoder->input_type_count)
         return MF_E_NO_MORE_TYPES;
 
-    if (!(hr = MFCreateVideoMediaTypeFromSubtype(encoder->input_types[index], &input_type)))
-        return hr;
-
-    if (FAILED(hr = IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_FRAME_SIZE, &ratio))
-            || FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_FRAME_SIZE, ratio)))
-        goto done;
-
-    if (FAILED(hr = IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_FRAME_RATE, &ratio))
-            || FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_FRAME_RATE, ratio)))
-        goto done;
-
-    if (FAILED(hr = IMFMediaType_GetUINT32(encoder->output_type, &MF_MT_INTERLACE_MODE, &value))
-            || FAILED(hr = IMFVideoMediaType_SetUINT32(input_type, &MF_MT_INTERLACE_MODE, value)))
-        goto done;
-
-    if (FAILED(IMFMediaType_GetUINT32(encoder->output_type, &MF_MT_VIDEO_NOMINAL_RANGE, &value)))
-        value = MFNominalRange_Wide;
-    if (FAILED(hr = IMFVideoMediaType_SetUINT32(input_type, &MF_MT_VIDEO_NOMINAL_RANGE, value)))
-        goto done;
-
-    if (FAILED(IMFMediaType_GetUINT64(encoder->output_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio)))
-        ratio = (UINT64)1 << 32 | 1;
-    if (FAILED(hr = IMFVideoMediaType_SetUINT64(input_type, &MF_MT_PIXEL_ASPECT_RATIO, ratio)))
-        goto done;
-
-    IMFMediaType_AddRef((*type = (IMFMediaType *)input_type));
-
-done:
-    IMFVideoMediaType_Release(input_type);
-    return hr;
+    return create_input_type(encoder, encoder->input_types[index], type);
 }
 
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id,
