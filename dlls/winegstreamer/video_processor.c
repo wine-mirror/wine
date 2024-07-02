@@ -91,34 +91,47 @@ struct video_processor
     IMFVideoSampleAllocatorEx *allocator;
 };
 
-static HRESULT normalize_stride(IMFMediaType *media_type, BOOL bottom_up, IMFMediaType **ret)
+static HRESULT normalize_media_types(BOOL bottom_up, IMFMediaType **input_type, IMFMediaType **output_type)
 {
-    MFVIDEOFORMAT *format;
-    LONG stride;
+    MFVIDEOFORMAT *input_format, *output_format;
+    BOOL normalize_input, normalize_output;
     UINT32 size;
     HRESULT hr;
 
-    if (SUCCEEDED(hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&stride)))
+    normalize_input = FAILED(IMFMediaType_GetItem(*input_type, &MF_MT_DEFAULT_STRIDE, NULL));
+    normalize_output = FAILED(IMFMediaType_GetItem(*output_type, &MF_MT_DEFAULT_STRIDE, NULL));
+
+    if (FAILED(hr = MFCreateMFVideoFormatFromMFMediaType(*input_type, &input_format, &size)))
+        return hr;
+    if (FAILED(hr = MFCreateMFVideoFormatFromMFMediaType(*output_type, &output_format, &size)))
     {
-        *ret = media_type;
-        IMFMediaType_AddRef(media_type);
+        CoTaskMemFree(input_format);
         return hr;
     }
 
-    if (SUCCEEDED(hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &format, &size)))
+    if (bottom_up && normalize_input)
+        input_format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
+    if (bottom_up && normalize_output)
+        output_format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
+
+    if (FAILED(hr = MFCreateVideoMediaType(input_format, (IMFVideoMediaType **)input_type)))
+        goto done;
+    if (FAILED(hr = MFCreateVideoMediaType(output_format, (IMFVideoMediaType **)output_type)))
     {
-        if (bottom_up) format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
-        hr = MFCreateVideoMediaType(format, (IMFVideoMediaType **)ret);
-        CoTaskMemFree(format);
+        IMFMediaType_Release(*input_type);
+        *input_type = NULL;
     }
 
+done:
+    CoTaskMemFree(input_format);
+    CoTaskMemFree(output_format);
     return hr;
 }
 
 static HRESULT try_create_wg_transform(struct video_processor *impl)
 {
     BOOL bottom_up = !impl->device_manager; /* when not D3D-enabled, the transform outputs bottom up RGB buffers */
-    IMFMediaType *input_type, *output_type;
+    IMFMediaType *input_type = impl->input_type, *output_type = impl->output_type;
     struct wg_transform_attrs attrs = {0};
     HRESULT hr;
 
@@ -128,13 +141,8 @@ static HRESULT try_create_wg_transform(struct video_processor *impl)
         impl->wg_transform = 0;
     }
 
-    if (FAILED(hr = normalize_stride(impl->input_type, bottom_up, &input_type)))
+    if (FAILED(hr = normalize_media_types(bottom_up, &input_type, &output_type)))
         return hr;
-    if (FAILED(hr = normalize_stride(impl->output_type, bottom_up, &output_type)))
-    {
-        IMFMediaType_Release(input_type);
-        return hr;
-    }
     hr = wg_transform_create_mf(input_type, output_type, &attrs, &impl->wg_transform);
     IMFMediaType_Release(output_type);
     IMFMediaType_Release(input_type);
