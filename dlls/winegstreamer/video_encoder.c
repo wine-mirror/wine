@@ -44,6 +44,7 @@ struct video_encoder
     UINT output_type_count;
 
     IMFMediaType *input_type;
+    MFT_INPUT_STREAM_INFO input_info;
     IMFMediaType *output_type;
 
     IMFAttributes *attributes;
@@ -168,8 +169,12 @@ static HRESULT WINAPI transform_GetStreamIDs(IMFTransform *iface, DWORD input_si
 
 static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
 {
-    FIXME("iface %p, id %#lx, info %p.\n", iface, id, info);
-    return E_NOTIMPL;
+    struct video_encoder *encoder = impl_from_IMFTransform(iface);
+
+    TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
+
+    *info = encoder->input_info;
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
