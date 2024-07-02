@@ -131,6 +131,7 @@ static gboolean transform_sink_query_allocation(struct wg_transform *transform, 
     gsize plane_align = transform->attrs.output_plane_align;
     GstStructure *config, *params;
     GstVideoAlignment align;
+    const char *mime_type;
     gboolean needs_pool;
     GstBufferPool *pool;
     GstVideoInfo info;
@@ -139,7 +140,9 @@ static gboolean transform_sink_query_allocation(struct wg_transform *transform, 
     GST_LOG("transform %p, %"GST_PTR_FORMAT, transform, query);
 
     gst_query_parse_allocation(query, &caps, &needs_pool);
-    if (stream_type_from_caps(caps) != GST_STREAM_TYPE_VIDEO || !needs_pool)
+
+    mime_type = gst_structure_get_name(gst_caps_get_structure(caps, 0));
+    if (strcmp(mime_type, "video/x-raw") || !needs_pool)
         return false;
 
     if (!gst_video_info_from_caps(&info, caps)
@@ -912,6 +915,7 @@ NTSTATUS wg_transform_read_data(void *args)
     struct wg_sample *sample = params->sample;
     GstVideoAlignment align = {0};
     GstBuffer *output_buffer;
+    const char *output_mime;
     GstCaps *output_caps;
     bool discard_data;
     NTSTATUS status;
@@ -927,8 +931,9 @@ NTSTATUS wg_transform_read_data(void *args)
 
     output_buffer = gst_sample_get_buffer(transform->output_sample);
     output_caps = gst_sample_get_caps(transform->output_sample);
+    output_mime = gst_structure_get_name(gst_caps_get_structure(output_caps, 0));
 
-    if (stream_type_from_caps(output_caps) == GST_STREAM_TYPE_VIDEO)
+    if (!strcmp(output_mime, "video/x-raw"))
     {
         gsize plane_align = transform->attrs.output_plane_align;
 
@@ -949,7 +954,7 @@ NTSTATUS wg_transform_read_data(void *args)
         return STATUS_SUCCESS;
     }
 
-    if (stream_type_from_caps(output_caps) == GST_STREAM_TYPE_VIDEO)
+    if (!strcmp(output_mime, "video/x-raw"))
         status = read_transform_output_video(sample, output_buffer,
                 &src_video_info, &dst_video_info);
     else
