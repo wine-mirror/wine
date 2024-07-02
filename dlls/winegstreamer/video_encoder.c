@@ -46,6 +46,7 @@ struct video_encoder
     IMFMediaType *input_type;
     MFT_INPUT_STREAM_INFO input_info;
     IMFMediaType *output_type;
+    MFT_OUTPUT_STREAM_INFO output_info;
 
     IMFAttributes *attributes;
 };
@@ -179,8 +180,12 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
 
 static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    FIXME("iface %p, id %#lx, info %p.\n", iface, id, info);
-    return E_NOTIMPL;
+    struct video_encoder *encoder = impl_from_IMFTransform(iface);
+
+    TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
+
+    *info = encoder->output_info;
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
@@ -544,6 +549,10 @@ HRESULT h264_encoder_create(REFIID riid, void **out)
     if (FAILED(hr = video_encoder_create(h264_encoder_input_types, ARRAY_SIZE(h264_encoder_input_types),
             h264_encoder_output_types, ARRAY_SIZE(h264_encoder_output_types), &encoder)))
         return hr;
+
+    /* FIXME: Hardcode a size that is large enough to make things work for now.
+     * The right way is to calculate the size based on output frame size. */
+    encoder->output_info.cbSize = 0x3bc400;
 
     TRACE("Created h264 encoder transform %p.\n", &encoder->IMFTransform_iface);
 
