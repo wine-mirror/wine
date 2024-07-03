@@ -49,6 +49,7 @@ static void test_JsonObjectStatics(void)
 {
     static const WCHAR *json_object_name = L"Windows.Data.Json.JsonObject";
     IActivationFactory *factory = (void *)0xdeadbeef;
+    IInspectable *inspectable = (void *)0xdeadbeef;
     IJsonObject *json_object = (void *)0xdeadbeef;
     HSTRING str;
     HRESULT hr;
@@ -56,7 +57,6 @@ static void test_JsonObjectStatics(void)
 
     hr = WindowsCreateString( json_object_name, wcslen( json_object_name ), &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
     WindowsDeleteString( str );
     ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
@@ -73,6 +73,19 @@ static void test_JsonObjectStatics(void)
     hr = IActivationFactory_QueryInterface( factory, &IID_IJsonObject, (void **)&json_object );
     ok( hr == E_NOINTERFACE, "got hr %#lx.\n", hr );
 
+    hr = WindowsCreateString( json_object_name, wcslen( json_object_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = RoActivateInstance( str, &inspectable );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IJsonObject, (void **)&json_object );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    check_interface( inspectable, &IID_IAgileObject );
+
+    IJsonObject_Release( json_object );
+    IInspectable_Release( inspectable );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
