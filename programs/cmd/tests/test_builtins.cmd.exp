@@ -456,6 +456,7 @@ FAILURE 33
 foo@space@
 SUCCESS 666
 FAILURE 1
+@todo_wine@ERRORLEVEL 666
 SUCCESS 666
 SUCCESS 666
 FAILURE 33
@@ -513,6 +514,7 @@ SUCCESS 0
 FAILURE 1
 SUCCESS 666
 @todo_wine@FAILURE 1
+ERRORLEVEL 666
 --- success/failure for DIR command
 FAILURE 1
 FAILURE 1
@@ -520,6 +522,19 @@ SUCCESS 0
 SUCCESS 0
 FAILURE 1
 SUCCESS 0
+--- success/failure for RMDIR/RD command
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 145
+@todo_wine@FAILURE 267
+SUCCESS 666
+@todo_wine@FAILURE 2
+@todo_wine@FAILURE 3
+ERRORLEVEL 666
+ERRORLEVEL 666
+ERRORLEVEL 666
+ERRORLEVEL 666
+ERRORLEVEL 666
+ERRORLEVEL 666
 @todo_wine@---
 ------------ Testing 'set' ------------
 1

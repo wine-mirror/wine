@@ -458,6 +458,7 @@ call :setError 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
 call :setError 33 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
 call :setError 666 & (echo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (echo foo >> h:\i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & echo foo >> h:\i\dont\exist\at\all.txt & echo ERRORLEVEL !errorlevel!
 call :setError 666 & ((if 1==1 echo "">NUL) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((if 1==0 echo "">NUL) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((if 1==1 (call :setError 33)) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
@@ -550,6 +551,7 @@ call :setError 666 & (pushd abc &&echo SUCCESS !errorlevel!||echo FAILURE !error
 call :setError 666 & (pushd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (popd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (popd &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & popd & echo ERRORLEVEL !errorlevel!
 cd .. && rd /q /s foo
 
 echo --- success/failure for DIR command
@@ -564,6 +566,29 @@ call :setError 666 & (dir fileA zzz >NUL &&echo SUCCESS !errorlevel!||echo FAILU
 call :setError 666 & (dir zzz fileA >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (dir dir\zzz >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (dir file* >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+echo --- success/failure for RMDIR/RD command
+mkdir foo & cd foo
+mkdir abc
+call :setError 666 & (rmdir &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo "">abc\abc
+call :setError 666 & (rmdir abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (rmdir abc\abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+erase abc\abc
+call :setError 666 & (rmdir abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (rmdir abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (rmdir @:\cba\abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+mkdir foo & cd foo
+mkdir abc
+call :setError 666 & rmdir & echo ERRORLEVEL !errorlevel!
+echo "">abc\abc
+call :setError 666 & rmdir abc & echo ERRORLEVEL !errorlevel!
+call :setError 666 & rmdir abc\abc & echo ERRORLEVEL !errorlevel!
+erase abc\abc
+call :setError 666 & rmdir abc & echo ERRORLEVEL !errorlevel!
+call :setError 666 & rmdir abc & echo ERRORLEVEL !errorlevel!
+call :setError 666 & rmdir @:\cba\abc & echo ERRORLEVEL !errorlevel!
 cd .. && rd /q /s foo
 
 echo ---
