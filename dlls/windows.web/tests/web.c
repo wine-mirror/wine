@@ -120,20 +120,18 @@ static void test_JsonValueStatics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, NULL, (IJsonValue **)&json_value );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     if (hr == S_OK) IJsonValue_Release( json_value );
     hr = WindowsCreateString( L"Wine", wcslen( L"Wine" ), &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, str, NULL );
-    todo_wine
     ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, str, (IJsonValue **)&json_value );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    if (hr == S_OK) IJsonValue_Release( json_value );
     WindowsDeleteString( str );
 
+    ref = IJsonValue_Release( json_value );
+    ok( ref == 0, "got ref %ld.\n", ref );
     ref = IJsonValueStatics_Release( json_value_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
