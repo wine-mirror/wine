@@ -1505,6 +1505,7 @@ enable_windows_security_credentials_ui_userconsentverifier
 enable_windows_storage_applicationdata
 enable_windows_system_profile_systemmanufacturers
 enable_windows_ui
+enable_windows_web
 enable_windowscodecs
 enable_windowscodecsext
 enable_winealsa_drv
@@ -22785,6 +22786,8 @@ wine_fn_config_makefile dlls/windows.system.profile.systemmanufacturers enable_w
 wine_fn_config_makefile dlls/windows.system.profile.systemmanufacturers/tests enable_tests
 wine_fn_config_makefile dlls/windows.ui enable_windows_ui
 wine_fn_config_makefile dlls/windows.ui/tests enable_tests
+wine_fn_config_makefile dlls/windows.web enable_windows_web
+wine_fn_config_makefile dlls/windows.web/tests enable_tests
 wine_fn_config_makefile dlls/windowscodecs enable_windowscodecs
 wine_fn_config_makefile dlls/windowscodecs/tests enable_tests
 wine_fn_config_makefile dlls/windowscodecsext enable_windowscodecsext

@@ -1,0 +1,7 @@
+MODULE  = windows.web.dll
+IMPORTS = combase
+
+SOURCES = \
+	classes.idl \
+	json_object.c \
+	main.c
