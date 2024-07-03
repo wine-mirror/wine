@@ -97,7 +97,7 @@ static HRESULT WINAPI analytics_version_info_get_DeviceFamily( IAnalyticsVersion
 
 static HRESULT WINAPI analytics_version_info_get_DeviceFamilyVersion( IAnalyticsVersionInfo *iface, HSTRING *value )
 {
-    DWORD revision, size;
+    DWORD revision, size = sizeof(revision);
     WCHAR buffer[32];
     UINT64 version;
     UINT len;
