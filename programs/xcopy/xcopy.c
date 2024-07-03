@@ -703,22 +703,22 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
 {
     DWORD flags = *pflags;
     WCHAR *cmdline, *word, *end, *next;
-    int rc = RC_INITERROR;
+    int rc;
 
     cmdline = _wcsdup(GetCommandLineW());
     if (cmdline == NULL)
-        return rc;
+        exit(RC_INITERROR);
 
     /* Skip first arg, which is the program name */
     if ((rc = find_end_of_word(cmdline, &word)) != RC_OK)
-        goto out;
+        exit(rc);
     word = skip_whitespace(word);
 
     while (*word)
     {
         WCHAR first;
         if ((rc = find_end_of_word(word, &end)) != RC_OK)
-            goto out;
+            exit(rc);
 
         next = skip_whitespace(end);
         first = word[0];
@@ -734,7 +734,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                 lstrcpyW(supplieddestination, word);
             } else {
                 XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARMS));
-                goto out;
+                exit(RC_INITERROR);
             }
         } else {
             /* Process all the switch options
@@ -772,7 +772,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                                              &word[1], 8, L"EXCLUDE:", -1) == CSTR_EQUAL) {
                             if (XCOPY_ProcessExcludeList(&word[9])) {
                               XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
-                              goto out;
+                              exit(RC_INITERROR);
                             } else {
                               flags |= OPT_EXCLUDELIST;
 
@@ -831,7 +831,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                                              wine_dbgstr_w(datestring), wine_dbgstr_w(timestring));
                               } else {
                                   XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
-                                  goto out;
+                                  exit(RC_INITERROR);
                               }
                           } else {
                               flags |= OPT_DATENEWER;
@@ -851,7 +851,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                 default:
                     WINE_TRACE("Unhandled parameter '%s'\n", wine_dbgstr_w(word));
                     XCOPY_wprintf(XCOPY_LoadMessage(STRING_INVPARM), word);
-                    goto out;
+                    exit(RC_INITERROR);
                 }
 
                 /* Unless overridden above, skip over the '/' and the first character */
@@ -876,11 +876,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
         lstrcpyW(supplieddestination, L".");
 
     *pflags = flags;
-    rc = RC_OK;
-
- out:
-    free(cmdline);
-    return rc;
+    return RC_OK;
 }
 
 
