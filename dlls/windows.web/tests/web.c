@@ -90,6 +90,40 @@ static void test_JsonObjectStatics(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_JsonValueStatics(void)
+{
+    static const WCHAR *json_value_statics_name = L"Windows.Data.Json.JsonValue";
+    IJsonValueStatics *json_value_statics = (void *)0xdeadbeef;
+    IActivationFactory *factory = (void *)0xdeadbeef;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( json_value_statics_name, wcslen( json_value_statics_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( json_value_statics_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IAgileObject );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IJsonValueStatics, (void **)&json_value_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IJsonValueStatics_Release( json_value_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(web)
 {
     HRESULT hr;
@@ -98,6 +132,7 @@ START_TEST(web)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_JsonObjectStatics();
+    test_JsonValueStatics();
 
     RoUninitialize();
 }

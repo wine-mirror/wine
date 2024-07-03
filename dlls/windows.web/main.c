@@ -40,6 +40,8 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
 
     if (!wcscmp( buffer, RuntimeClass_Windows_Data_Json_JsonObject ))
         IActivationFactory_QueryInterface( json_object_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( buffer, RuntimeClass_Windows_Data_Json_JsonValue ))
+        IActivationFactory_QueryInterface( json_value_factory, &IID_IActivationFactory, (void **)factory );
 
     if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;
