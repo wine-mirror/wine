@@ -738,13 +738,12 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                  Note: Windows docs say /P prompts when dest is created
                        but tests show it is done for each src file
                        regardless of the destination                   */
-            int skip=0;
-            WCHAR *p = word, *rest;
+            WCHAR *p = word + 1, *rest;
 
             while (*p) {
-                rest = NULL;
+                rest = p + 1;
 
-                switch (toupper(p[1])) {
+                switch (toupper(*p)) {
                 case 'I': flags |= OPT_ASSUMEDIR;     break;
                 case 'S': flags |= OPT_RECURSIVE;     break;
                 case 'Q': flags |= OPT_QUIET;         break;
@@ -766,14 +765,12 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
 
                 /* E can be /E or /EXCLUDE */
                 case 'E': if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                                             &p[1], 8, L"EXCLUDE:", -1) == CSTR_EQUAL) {
-                            if (XCOPY_ProcessExcludeList(&p[9])) {
+                                             p, 8, L"EXCLUDE:", -1) == CSTR_EQUAL) {
+                            if (XCOPY_ProcessExcludeList(&p[8])) {
                               XCOPY_FailMessage(ERROR_INVALID_PARAMETER);
                               exit(RC_INITERROR);
                             } else {
                               flags |= OPT_EXCLUDELIST;
-
-                              /* Do not support concatenated switches onto exclude lists yet */
                               rest = p + wcslen(p);
                             }
                           } else {
@@ -782,9 +779,9 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                           break;
 
                 /* D can be /D or /D: */
-                case 'D': if (p[2]==':' && is_digit(p[3])) {
+                case 'D': if (p[1]==':' && is_digit(p[2])) {
                               SYSTEMTIME st;
-                              WCHAR     *pos = &p[3];
+                              WCHAR     *pos = &p[2];
                               BOOL       isError = FALSE;
                               memset(&st, 0x00, sizeof(st));
 
@@ -835,9 +832,9 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                           }
                           break;
 
-                case '-': if (toupper(p[2])=='Y') {
+                case '-': if (toupper(p[1])=='Y') {
                               flags &= ~OPT_NOPROMPT;
-                              rest = &p[3];  /* Skip over 3 characters */
+                              rest = &p[2];  /* Skip over 2 characters */
                           }
                           break;
                 case '?': XCOPY_wprintf(XCOPY_LoadMessage(STRING_HELP));
@@ -851,18 +848,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                     exit(RC_INITERROR);
                 }
 
-                /* Unless overridden above, skip over the '/' and the first character */
-                if (rest == NULL) rest = &p[2];
-
-                /* By now, rest should point either to the null after the
-                   switch, or the beginning of the next switch if there
-                   was no whitespace between them                          */
-                if (!skip && *rest && *rest != '/') {
-                    WINE_FIXME("Unexpected characters found and ignored '%s'\n", wine_dbgstr_w(rest));
-                    skip=1;
-                } else {
-                    p = rest;
-                }
+                p = rest;
             }
         }
         free(word);
