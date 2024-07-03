@@ -3792,6 +3792,8 @@ static void test_coop_level_mode_set(void)
     hr = IDirectDraw7_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#lx.\n", hr);
 
+    flush_events(); /* flush any pending window resize X11 event */
+
     /* If the window is changed at the same time, messages are sent to the new window. */
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#lx.\n", hr);
