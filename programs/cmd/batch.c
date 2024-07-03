@@ -46,6 +46,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, WCHAR *startLabel, HANDLE pgmHandl
 {
   HANDLE h = INVALID_HANDLE_VALUE;
   BATCH_CONTEXT *prev_context;
+  RETURN_CODE return_code = NO_ERROR;
 
   if (startLabel == NULL) {
     h = CreateFileW (file, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
@@ -85,18 +86,28 @@ void WCMD_batch (WCHAR *file, WCHAR *command, WCHAR *startLabel, HANDLE pgmHandl
  * 	the rest are handled by the main command processor.
  */
 
-  while (context -> skip_rest == FALSE) {
-      CMD_NODE *toExecute = NULL;         /* Commands left to be executed */
-      if (!WCMD_ReadAndParseLine(NULL, &toExecute, h))
-        break;
-      /* Note: although this batch program itself may be called, we are not retrying
-         the command as a result of a call failing to find a program, hence the
-         retryCall parameter below is FALSE                                           */
-      node_execute(toExecute);
-      node_dispose_tree(toExecute);
-      toExecute = NULL;
+  while (!context->skip_rest)
+  {
+      CMD_NODE *node;
+
+      switch (WCMD_ReadAndParseLine(NULL, &node, h))
+      {
+      case RPL_EOF:
+          context->skip_rest = TRUE;
+          break;
+      case RPL_SUCCESS:
+          return_code = node_execute(node);
+          node_dispose_tree(node);
+          break;
+      case RPL_SYNTAXERROR:
+          return_code = RETURN_CODE_SYNTAX_ERROR;
+          break;
+      }
   }
   CloseHandle (h);
+
+  if (return_code != RETURN_CODE_ABORTED && return_code != RETURN_CODE_OLD_CHAINING)
+      errorlevel = return_code;
 
 /*
  *  If there are outstanding setlocal's to the current context, unwind them.

@@ -2562,7 +2562,6 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
     {
         TRACE("Brackets do not match, error out without executing.\n");
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_BADPAREN));
-        errorlevel = RETURN_CODE_SYNTAX_ERROR;
     }
     else
     {
@@ -2765,7 +2764,7 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* bu
  *     - Anything else gets put into the command string (including
  *            redirects)
  */
-WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE readFrom)
+enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE readFrom)
 {
     WCHAR    *curPos;
     int       inQuotes = 0;
@@ -2790,6 +2789,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                                              /* handling brackets as a normal character */
     BOOL      acceptCommand = TRUE;
     struct node_builder builder;
+    BOOL      ret;
 
     *output = NULL;
     /* Allocate working space for a command read from keyboard, file etc */
@@ -2800,7 +2800,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     if (optionalcmd)
         wcscpy(extraSpace, optionalcmd);
     if (!(curPos = fetch_next_line(optionalcmd == NULL, TRUE, readFrom, extraSpace)))
-        return NULL;
+        return RPL_EOF;
 
     TRACE("About to parse line (%ls)\n", extraSpace);
 
@@ -2827,7 +2827,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
       /* Prevent overflow caused by the caret escape char */
       if (*curLen >= MAXSTRING) {
         WINE_ERR("Overflow detected in command\n");
-        return NULL;
+        return RPL_SYNTAXERROR;
       }
 
       /* Certain commands need special handling */
@@ -3156,10 +3156,10 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
       }
     }
 
-    node_builder_generate(&builder, output);
+    ret = node_builder_generate(&builder, output);
     node_builder_dispose(&builder);
 
-    return extraSpace;
+    return ret ? RPL_SUCCESS : RPL_SYNTAXERROR;
 }
 
 static BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
@@ -3822,6 +3822,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   char osver[50];
   STARTUPINFOW startupInfo;
   const WCHAR *arg;
+  enum read_parse_line rpl_status;
 
   if (!GetEnvironmentVariableW(L"COMSPEC", comspec, ARRAY_SIZE(comspec)))
   {
@@ -4073,12 +4074,15 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
        */
 
       /* Parse the command string, without reading any more input */
-      WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      node_execute(toExecute);
-      node_dispose_tree(toExecute);
-      toExecute = NULL;
+      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
+      if (rpl_status == RPL_SUCCESS && toExecute)
+      {
+          node_execute(toExecute);
+          node_dispose_tree(toExecute);
+      }
+      else if (rpl_status == RPL_SYNTAXERROR)
+          errorlevel = RETURN_CODE_SYNTAX_ERROR;
 
-      free(cmd);
       return errorlevel;
   }
 
@@ -4152,12 +4156,17 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
   }
 
-  if (opt_k) {
+  if (opt_k)
+  {
+      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
       /* Parse the command string, without reading any more input */
-      WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
-      node_execute(toExecute);
-      node_dispose_tree(toExecute);
-      toExecute = NULL;
+      if (rpl_status == RPL_SUCCESS && toExecute)
+      {
+          node_execute(toExecute);
+          node_dispose_tree(toExecute);
+      }
+      else if (rpl_status == RPL_SYNTAXERROR)
+          errorlevel = RETURN_CODE_SYNTAX_ERROR;
       free(cmd);
   }
 
@@ -4168,16 +4177,15 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   interactive = TRUE;
   if (!opt_k) WCMD_version ();
   if (echo_mode) WCMD_output_asis(L"\r\n");
-  while (TRUE) {
-
-    /* Read until EOF (which for std input is never, but if redirect
-       in place, may occur                                          */
-    if (!WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE)))
-      break;
-    node_execute(toExecute);
-    node_dispose_tree(toExecute);
-    if (toExecute && echo_mode) WCMD_output_asis(L"\r\n");
-    toExecute = NULL;
+  /* Read until EOF (which for std input is never, but if redirect in place, may occur */
+  while ((rpl_status = WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE))) != RPL_EOF)
+  {
+      if (rpl_status == RPL_SUCCESS && toExecute)
+      {
+          node_execute(toExecute);
+          node_dispose_tree(toExecute);
+          if (echo_mode) WCMD_output_asis(L"\r\n");
+      }
   }
   return 0;
 }
