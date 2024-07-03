@@ -588,7 +588,7 @@ static HRESULT SHELL32_CreateExtensionUIObject(IShellFolder2 *iface,
     IPersistFile *persist_file;
     char extensionA[20];
     WCHAR extensionW[20], buf[MAX_PATH];
-    DWORD size = MAX_PATH;
+    DWORD size = sizeof(buf);
     STRRET path;
     WCHAR *file;
     GUID guid;
