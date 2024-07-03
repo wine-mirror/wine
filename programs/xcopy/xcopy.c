@@ -844,8 +844,7 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                           }
                           break;
                 case '?': XCOPY_wprintf(XCOPY_LoadMessage(STRING_HELP));
-                          rc = RC_HELP;
-                          goto out;
+                          exit(RC_OK);
                 case 'V':
                     WINE_FIXME("ignoring /V\n");
                     break;
@@ -1098,12 +1097,8 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
      * Parse the command line
      */
     if ((rc = XCOPY_ParseCommandLine(suppliedsource, supplieddestination,
-                                     &flags)) != RC_OK) {
-        if (rc == RC_HELP)
-            return RC_OK;
-        else
-            return rc;
-    }
+                                     &flags)) != RC_OK)
+        return rc;
 
     /* Trace out the supplied information */
     WINE_TRACE("Supplied parameters:\n");
