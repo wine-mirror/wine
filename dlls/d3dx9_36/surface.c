@@ -1474,6 +1474,13 @@ static void get_relevant_argb_components(const struct argb_conversion_info *info
     }
 }
 
+static float d3dx_clamp(float value, float min_value, float max_value)
+{
+    if (isnan(value))
+        return max_value;
+    return value < min_value ? min_value : value > max_value ? max_value : value;
+}
+
 /************************************************************
  * make_argb_color
  *
@@ -1550,7 +1557,11 @@ static void format_from_vec4(const struct pixel_format_desc *format, const struc
         else if (format->type == FORMAT_ARGBF)
             v = *(DWORD *)&src_component;
         else
-            v = (DWORD)(src_component * ((1 << format->bits[c]) - 1) + 0.5f);
+        {
+            float val = d3dx_clamp(src_component, 0.0f, 1.0f);
+
+            v = val * ((1u << format->bits[c]) - 1) + 0.5f;
+        }
 
         for (i = format->shift[c] / 8 * 8; i < format->shift[c] + format->bits[c]; i += 8)
         {

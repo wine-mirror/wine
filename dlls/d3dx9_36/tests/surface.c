@@ -1692,10 +1692,10 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
-        todo_wine check_pixel_4bpp(&lockrect, 0, 0, 0xff001aff);
-        todo_wine check_pixel_4bpp(&lockrect, 1, 0, 0xffffffff);
-        todo_wine check_pixel_4bpp(&lockrect, 0, 1, 0x000000ff);
-        todo_wine check_pixel_4bpp(&lockrect, 1, 1, 0x00000000);
+        check_pixel_4bpp(&lockrect, 0, 0, 0xff001aff);
+        check_pixel_4bpp(&lockrect, 1, 0, 0xffffffff);
+        check_pixel_4bpp(&lockrect, 0, 1, 0x000000ff);
+        check_pixel_4bpp(&lockrect, 1, 1, 0x00000000);
         hr = IDirect3DSurface9_UnlockRect(surf);
         ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
 
@@ -1945,9 +1945,9 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
         todo_wine check_pixel_2bpp(&lockrect, 0, 0, 0xff25);
-        todo_wine check_pixel_2bpp(&lockrect, 1, 0, 0xffff);
+        check_pixel_2bpp(&lockrect, 1, 0, 0xffff);
         todo_wine check_pixel_2bpp(&lockrect, 0, 1, 0x0012);
-        todo_wine check_pixel_2bpp(&lockrect, 1, 1, 0x0000);
+        check_pixel_2bpp(&lockrect, 1, 1, 0x0000);
         hr = IDirect3DSurface9_UnlockRect(surf);
         ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
 
