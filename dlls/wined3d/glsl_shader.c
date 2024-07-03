@@ -11799,10 +11799,10 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
          * always output all the texture coordinates.
          *
          * Likewise, we have to invalidate the shader when using per-vertex
-         * colours and diffuse/specular attribute presence changes, or when
-         * normal presence changes. */
-        if (!shader_glsl_full_ffp_varyings(gl_info) || (state->render_states[WINED3D_RS_COLORVERTEX]
-                && (diffuse != context->last_was_diffuse || specular != context->last_was_specular))
+         * colours and specular attribute presence changes, or when
+         * normal, diffuse, or point size presence changes. */
+        if (!shader_glsl_full_ffp_varyings(gl_info) || diffuse != context->last_was_diffuse
+                || (state->render_states[WINED3D_RS_COLORVERTEX] && specular != context->last_was_specular)
                 || normal != context->last_was_normal || point_size != context->last_was_point_size)
             context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 
