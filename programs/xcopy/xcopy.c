@@ -684,18 +684,17 @@ static int find_end_of_word(const WCHAR *word, WCHAR **end)
 }
 
 /* Remove all double quotes from a word */
-static void strip_quotes(WCHAR *word, WCHAR **end)
+static void strip_quotes(WCHAR *word)
 {
-    WCHAR *rp, *wp;
-    for (rp = word, wp = word; *rp != '\0'; rp++) {
-        if (*rp == '"')
+    WCHAR *wp;
+    for (wp = word; *word != '\0'; word++) {
+        if (*word == '"')
             continue;
-        if (wp < rp)
-            *wp = *rp;
+        if (wp < word)
+            *wp = *word;
         wp++;
     }
     *wp = '\0';
-    *end = wp;
 }
 
 static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
@@ -716,18 +715,16 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
 
     while (*word)
     {
-        WCHAR first;
         if ((rc = find_end_of_word(word, &end)) != RC_OK)
             exit(rc);
 
         next = skip_whitespace(end);
-        first = word[0];
         *end = '\0';
-        strip_quotes(word, &end);
         WINE_TRACE("Processing Arg: '%s'\n", wine_dbgstr_w(word));
 
         /* First non-switch parameter is source, second is destination */
-        if (first != '/') {
+        if (word[0] != '/') {
+            strip_quotes(word);
             if (suppliedsource[0] == 0x00) {
                 lstrcpyW(suppliedsource, word);
             } else if (supplieddestination[0] == 0x00) {
