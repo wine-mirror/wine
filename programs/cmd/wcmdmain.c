@@ -3691,7 +3691,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
     {
         WCMD_print_error();
         /* FIXME potentially leaking here (if first redir created ok, and second failed */
-        return errorlevel = ERROR_INVALID_FUNCTION;
+        return ERROR_INVALID_FUNCTION;
     }
     switch (node->op)
     {
