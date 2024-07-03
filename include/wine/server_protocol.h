@@ -910,6 +910,7 @@ typedef volatile struct
 typedef volatile struct
 {
     user_handle_t        active;
+    user_handle_t        focus;
 } input_shm_t;
 
 typedef volatile union
@@ -6614,7 +6615,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 824
+#define SERVER_PROTOCOL_VERSION 825
 
 /* ### protocol_version end ### */
 
