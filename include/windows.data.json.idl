@@ -115,6 +115,20 @@ namespace Windows.Data.Json {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Data.Json.JsonValue),
+        uuid(5f6b544a-2f53-48e1-91a3-f78b50a6345c)
+    ]
+    interface IJsonValueStatics : IInspectable
+    {
+        HRESULT Parse([in] HSTRING input, [out, retval] Windows.Data.Json.JsonValue **value);
+        HRESULT TryParse([in] HSTRING input, [out] Windows.Data.Json.JsonValue **result, [out, retval] boolean *succeeded);
+        HRESULT CreateBooleanValue([in] boolean input, [out, retval] Windows.Data.Json.JsonValue **value);
+        HRESULT CreateNumberValue([in] DOUBLE input, [out, retval] Windows.Data.Json.JsonValue **value);
+        HRESULT CreateStringValue([in] HSTRING input, [out, retval] Windows.Data.Json.JsonValue **value);
+    }
+
+    [
         activatable(Windows.Foundation.UniversalApiContract, 1.0),
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
