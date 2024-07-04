@@ -49,6 +49,10 @@ struct video_encoder
     MFT_OUTPUT_STREAM_INFO output_info;
 
     IMFAttributes *attributes;
+
+    wg_transform_t wg_transform;
+    struct wg_transform_attrs wg_transform_attrs;
+    struct wg_sample_queue *wg_sample_queue;
 };
 
 static inline struct video_encoder *impl_from_IMFTransform(IMFTransform *iface)
@@ -96,6 +100,18 @@ done:
     return hr;
 }
 
+static HRESULT video_encoder_try_create_wg_transform(struct video_encoder *encoder)
+{
+    if (encoder->wg_transform)
+    {
+        wg_transform_destroy(encoder->wg_transform);
+        encoder->wg_transform = 0;
+    }
+
+    return wg_transform_create_mf(encoder->input_type, encoder->output_type,
+            &encoder->wg_transform_attrs, &encoder->wg_transform);
+}
+
 static HRESULT WINAPI transform_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
 {
     struct video_encoder *encoder = impl_from_IMFTransform(iface);
@@ -139,6 +155,9 @@ static ULONG WINAPI transform_Release(IMFTransform *iface)
         if (encoder->output_type)
             IMFMediaType_Release(encoder->output_type);
         IMFAttributes_Release(encoder->attributes);
+        if (encoder->wg_transform)
+            wg_transform_destroy(encoder->wg_transform);
+        wg_sample_queue_destroy(encoder->wg_sample_queue);
         free(encoder);
     }
 
@@ -274,7 +293,11 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
             IMFMediaType_Release(encoder->input_type);
             encoder->input_type = NULL;
         }
-
+        if (encoder->wg_transform)
+        {
+            wg_transform_destroy(encoder->wg_transform);
+            encoder->wg_transform = 0;
+        }
         return S_OK;
     }
 
@@ -309,7 +332,13 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
         IMFMediaType_Release(encoder->input_type);
     IMFMediaType_AddRef((encoder->input_type = type));
 
-    return S_OK;
+    if (FAILED(hr = video_encoder_try_create_wg_transform(encoder)))
+    {
+        IMFMediaType_Release(encoder->input_type);
+        encoder->input_type = NULL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
@@ -333,6 +362,11 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
         {
             IMFMediaType_Release(encoder->output_type);
             encoder->output_type = NULL;
+        }
+        if (encoder->wg_transform)
+        {
+            wg_transform_destroy(encoder->wg_transform);
+            encoder->wg_transform = 0;
         }
         return S_OK;
     }
@@ -372,6 +406,12 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     IMFMediaType_AddRef((encoder->output_type = type));
 
     /* FIXME: Add MF_MT_MPEG_SEQUENCE_HEADER attribute. */
+
+    if (encoder->wg_transform)
+    {
+        wg_transform_destroy(encoder->wg_transform);
+        encoder->wg_transform = 0;
+    }
 
     return S_OK;
 }
@@ -499,9 +539,14 @@ static HRESULT video_encoder_create(const GUID *const *input_types, UINT input_t
     encoder->output_types = output_types;
     encoder->output_type_count = output_type_count;
 
+    encoder->wg_transform_attrs.input_queue_length = 15;
+
     if (FAILED(hr = MFCreateAttributes(&encoder->attributes, 16)))
         goto failed;
     if (FAILED(hr = IMFAttributes_SetUINT32(encoder->attributes, &MFT_ENCODER_SUPPORTS_CONFIG_EVENT, TRUE)))
+        goto failed;
+
+    if (FAILED(hr = wg_sample_queue_create(&encoder->wg_sample_queue)))
         goto failed;
 
     *out = encoder;
