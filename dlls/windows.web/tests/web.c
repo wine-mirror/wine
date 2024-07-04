@@ -95,6 +95,7 @@ static void test_JsonValueStatics(void)
     static const WCHAR *json_value_statics_name = L"Windows.Data.Json.JsonValue";
     IJsonValueStatics *json_value_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
+    IJsonValue *json_value = (void *)0xdeadbeef;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -117,6 +118,21 @@ static void test_JsonValueStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IJsonValueStatics, (void **)&json_value_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IJsonValueStatics_CreateStringValue( json_value_statics, NULL, (IJsonValue **)&json_value );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr == S_OK) IJsonValue_Release( json_value );
+    hr = WindowsCreateString( L"Wine", wcslen( L"Wine" ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_CreateStringValue( json_value_statics, str, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonValueStatics_CreateStringValue( json_value_statics, str, (IJsonValue **)&json_value );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr == S_OK) IJsonValue_Release( json_value );
+    WindowsDeleteString( str );
 
     ref = IJsonValueStatics_Release( json_value_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
