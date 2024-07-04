@@ -56,7 +56,8 @@ static inline struct video_encoder *impl_from_IMFTransform(IMFTransform *iface)
     return CONTAINING_RECORD(iface, struct video_encoder, IMFTransform_iface);
 }
 
-static HRESULT create_input_type(struct video_encoder *encoder, const GUID *subtype, IMFMediaType **out)
+static HRESULT video_encoder_create_input_type(struct video_encoder *encoder,
+        const GUID *subtype, IMFMediaType **out)
 {
     IMFVideoMediaType *input_type;
     UINT64 ratio;
@@ -239,7 +240,7 @@ static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD
     if (index >= encoder->input_type_count)
         return MF_E_NO_MORE_TYPES;
 
-    return create_input_type(encoder, encoder->input_types[index], type);
+    return video_encoder_create_input_type(encoder, encoder->input_types[index], type);
 }
 
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id,
@@ -293,7 +294,7 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     if (i == encoder->input_type_count)
         return MF_E_INVALIDMEDIATYPE;
 
-    if (FAILED(hr = create_input_type(encoder, &subtype, &good_input_type)))
+    if (FAILED(hr = video_encoder_create_input_type(encoder, &subtype, &good_input_type)))
         return hr;
     hr = IMFMediaType_Compare(good_input_type, (IMFAttributes *)type,
             MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
