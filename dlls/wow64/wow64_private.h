@@ -39,7 +39,8 @@ extern ULONG_PTR highest_user_address;
 extern ULONG_PTR default_zero_bits;
 extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock;
 
-extern void (WINAPI *pBTCpuNotifyFlushInstructionCache2)( const void *, SIZE_T );
+extern void (WINAPI *pBTCpuFlushInstructionCache2)( const void *, SIZE_T );
+extern void (WINAPI *pBTCpuFlushInstructionCacheHeavy)( const void *, SIZE_T );
 extern void (WINAPI *pBTCpuNotifyMapViewOfSection)( void * );
 extern void (WINAPI *pBTCpuNotifyMemoryAlloc)( void *, SIZE_T, ULONG, ULONG, BOOL, NTSTATUS );
 extern void (WINAPI *pBTCpuNotifyMemoryDirty)( void *, SIZE_T );

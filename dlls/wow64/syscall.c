@@ -104,7 +104,8 @@ static void     (WINAPI *pBTCpuThreadInit)(void);
 static void     (WINAPI *pBTCpuSimulate)(void) __attribute__((used));
 static void *   (WINAPI *p__wine_get_unix_opcode)(void);
 static void *   (WINAPI *pKiRaiseUserExceptionDispatcher)(void);
-void (WINAPI *pBTCpuNotifyFlushInstructionCache2)( const void *, SIZE_T ) = NULL;
+void (WINAPI *pBTCpuFlushInstructionCache2)( const void *, SIZE_T ) = NULL;
+void (WINAPI *pBTCpuFlushInstructionCacheHeavy)( const void *, SIZE_T ) = NULL;
 void (WINAPI *pBTCpuNotifyMapViewOfSection)( void * ) = NULL;
 void (WINAPI *pBTCpuNotifyMemoryAlloc)( void *, SIZE_T, ULONG, ULONG, BOOL, NTSTATUS ) = NULL;
 void (WINAPI *pBTCpuNotifyMemoryDirty)( void *, SIZE_T ) = NULL;
@@ -804,7 +805,8 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     GET_PTR( BTCpuResetToConsistentState );
     GET_PTR( BTCpuSetContext );
     GET_PTR( BTCpuSimulate );
-    GET_PTR( BTCpuNotifyFlushInstructionCache2 );
+    GET_PTR( BTCpuFlushInstructionCache2 );
+    GET_PTR( BTCpuFlushInstructionCacheHeavy );
     GET_PTR( BTCpuNotifyMapViewOfSection );
     GET_PTR( BTCpuNotifyMemoryAlloc );
     GET_PTR( BTCpuNotifyMemoryDirty );
@@ -1343,7 +1345,7 @@ void WINAPI Wow64ProcessPendingCrossProcessItems(void)
 
     if (flush)
     {
-        if (pBTCpuNotifyFlushInstructionCache2) pBTCpuNotifyFlushInstructionCache2( NULL, ~0ull );
+        if (pBTCpuFlushInstructionCacheHeavy) pBTCpuFlushInstructionCacheHeavy( NULL, 0 );
         while (entry)
         {
             next = entry->next;
@@ -1376,8 +1378,16 @@ void WINAPI Wow64ProcessPendingCrossProcessItems(void)
                                        entry->id == CrossProcessPostVirtualProtect, entry->args[1] );
             break;
         case CrossProcessFlushCache:
-            if (!pBTCpuNotifyFlushInstructionCache2) break;
-            pBTCpuNotifyFlushInstructionCache2( (void *)entry->addr, entry->size );
+            if (!pBTCpuFlushInstructionCache2) break;
+            pBTCpuFlushInstructionCache2( (void *)entry->addr, entry->size );
+            break;
+        case CrossProcessFlushCacheHeavy:
+            if (!pBTCpuFlushInstructionCacheHeavy) break;
+            pBTCpuFlushInstructionCacheHeavy( (void *)entry->addr, entry->size );
+            break;
+        case CrossProcessMemoryWrite:
+            if (!pBTCpuNotifyMemoryDirty) break;
+            pBTCpuNotifyMemoryDirty( (void *)entry->addr, entry->size );
             break;
         }
         next = entry->next;

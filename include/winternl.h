@@ -4251,6 +4251,8 @@ typedef enum
     CrossProcessPreVirtualProtect  = 4,
     CrossProcessPostVirtualProtect = 5,
     CrossProcessFlushCache         = 6,
+    CrossProcessFlushCacheHeavy    = 7,
+    CrossProcessMemoryWrite        = 8,
 } CROSS_PROCESS_NOTIFICATION;
 
 #define CROSS_PROCESS_LIST_FLUSH 0x80000000

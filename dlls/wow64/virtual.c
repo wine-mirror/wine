@@ -240,7 +240,7 @@ NTSTATUS WINAPI wow64_NtFlushInstructionCache( UINT *args )
 
     if (RtlIsCurrentProcess( process ))
     {
-        if (pBTCpuNotifyFlushInstructionCache2) pBTCpuNotifyFlushInstructionCache2( addr, size );
+        if (pBTCpuFlushInstructionCache2) pBTCpuFlushInstructionCache2( addr, size );
     }
     else send_cross_process_notification( process, CrossProcessFlushCache, addr, size, 0 );
 
