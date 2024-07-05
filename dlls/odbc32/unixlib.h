@@ -190,6 +190,8 @@ struct param_binding
 struct handle
 {
     UINT64 unix_handle;
+    UINT32 drivers_idx;
+    void  *drivers_key;
     struct param_binding bind_col;
     struct param_binding bind_parameter;
     UINT32 row_count;   /* number of rows returned by SQLFetch() */

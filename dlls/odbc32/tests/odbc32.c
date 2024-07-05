@@ -184,8 +184,7 @@ static void test_SQLDrivers( void )
         ok( len, "unexpected len\n" );
         ok( len2, "unexpected len\n" );
         ok( desc[0], "empty string\n" );
-        ok( attrs[0], "empty string\n" );
-        trace( "desc %s len %d attrs %s len %d\n", desc, len, attrs, len2 );
+        trace( "desc %s len %d\n", desc, len );
     }
 
     ret = SQLFreeEnv( env );

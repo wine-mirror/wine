@@ -43,7 +43,6 @@
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(odbc);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define ODBC_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
@@ -1934,6 +1933,14 @@ SQLRETURN WINAPI SQLTablePrivileges(SQLHSTMT StatementHandle, SQLCHAR *CatalogNa
     return ret;
 }
 
+static HKEY open_drivers_key( void )
+{
+    static const WCHAR driversW[] = L"Software\\ODBC\\ODBCINST.INI\\ODBC Drivers";
+    HKEY key;
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, driversW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL )) return key;
+    return NULL;
+}
+
 /*************************************************************************
  *				SQLDrivers           [ODBC32.071]
  */
@@ -1942,10 +1949,10 @@ SQLRETURN WINAPI SQLDrivers(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, S
                             SQLCHAR *DriverAttributes, SQLSMALLINT BufferLength2,
                             SQLSMALLINT *AttributesLength)
 {
-    struct SQLDrivers_params params = { 0, Direction, DriverDescription, BufferLength1, DescriptionLength,
-                                        DriverAttributes, BufferLength2, AttributesLength };
     struct handle *handle = EnvironmentHandle;
-    SQLRETURN ret;
+    DWORD len_desc = BufferLength1;
+    SQLRETURN ret = SQL_ERROR;
+    LONG res;
 
     TRACE("(EnvironmentHandle %p, Direction %d, DriverDescription %p, BufferLength1 %d, DescriptionLength %p,"
           " DriverAttributes %p, BufferLength2 %d, AttributesLength %p)\n", EnvironmentHandle, Direction,
@@ -1953,12 +1960,43 @@ SQLRETURN WINAPI SQLDrivers(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, S
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.EnvironmentHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLDrivers, &params );
+    if (Direction == SQL_FETCH_FIRST)
+    {
+        handle->drivers_idx = 0;
+        RegCloseKey( handle->drivers_key );
+        if (!(handle->drivers_key = open_drivers_key())) return SQL_ERROR;
+    }
 
-    if (ret == SQL_NO_DATA && Direction == SQL_FETCH_FIRST)
-        ERR_(winediag)("No ODBC drivers could be found. Check the settings for your libodbc provider.\n");
+    res = RegEnumValueA( handle->drivers_key, handle->drivers_idx, (char *)DriverDescription, &len_desc,
+                         NULL, NULL, NULL, NULL );
+    if (res == ERROR_NO_MORE_ITEMS)
+    {
+        ret = SQL_NO_DATA;
+        goto done;
+    }
+    else if (res == ERROR_SUCCESS)
+    {
+        if (DescriptionLength) *DescriptionLength = len_desc;
 
+        handle->drivers_idx++;
+        ret = SQL_SUCCESS;
+    }
+    else goto done;
+
+    if (DriverAttributes)
+    {
+        FIXME( "read attributes from registry\n" );
+        if (BufferLength2 >= 2) memset( DriverAttributes, 0, 2 );
+    }
+    if (AttributesLength) *AttributesLength = 2;
+
+done:
+    if (ret)
+    {
+        RegCloseKey( handle->drivers_key );
+        handle->drivers_key = NULL;
+        handle->drivers_idx = 0;
+    }
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -2940,10 +2978,10 @@ SQLRETURN WINAPI SQLDriversW(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, 
                              SQLSMALLINT BufferLength1, SQLSMALLINT *DescriptionLength, SQLWCHAR *DriverAttributes,
                              SQLSMALLINT BufferLength2, SQLSMALLINT *AttributesLength)
 {
-    struct SQLDriversW_params params = { 0, Direction, DriverDescription, BufferLength1, DescriptionLength,
-                                         DriverAttributes, BufferLength2, AttributesLength };
     struct handle *handle = EnvironmentHandle;
-    SQLRETURN ret;
+    DWORD len_desc = BufferLength1;
+    SQLRETURN ret = SQL_ERROR;
+    LONG res;
 
     TRACE("(EnvironmentHandle %p, Direction %d, DriverDescription %p, BufferLength1 %d, DescriptionLength %p,"
           " DriverAttributes %p, BufferLength2 %d, AttributesLength %p)\n", EnvironmentHandle, Direction,
@@ -2951,12 +2989,43 @@ SQLRETURN WINAPI SQLDriversW(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, 
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.EnvironmentHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLDriversW, &params );
+    if (Direction == SQL_FETCH_FIRST)
+    {
+        handle->drivers_idx = 0;
+        RegCloseKey( handle->drivers_key );
+        if (!(handle->drivers_key = open_drivers_key())) return SQL_ERROR;
+    }
 
-    if (ret == SQL_NO_DATA && Direction == SQL_FETCH_FIRST)
-        ERR_(winediag)("No ODBC drivers could be found. Check the settings for your libodbc provider.\n");
+    res = RegEnumValueW( handle->drivers_key, handle->drivers_idx, DriverDescription, &len_desc,
+                         NULL, NULL, NULL, NULL );
+    if (res == ERROR_NO_MORE_ITEMS)
+    {
+        ret = SQL_NO_DATA;
+        goto done;
+    }
+    else if (res == ERROR_SUCCESS)
+    {
+        if (DescriptionLength) *DescriptionLength = len_desc;
 
+        handle->drivers_idx++;
+        ret = SQL_SUCCESS;
+    }
+    else goto done;
+
+    if (DriverAttributes)
+    {
+        FIXME( "read attributes from registry\n" );
+        if (BufferLength2 >= 2) memset( DriverAttributes, 0, 2 * sizeof(WCHAR) );
+    }
+    if (AttributesLength) *AttributesLength = 2;
+
+done:
+    if (ret)
+    {
+        RegCloseKey( handle->drivers_key );
+        handle->drivers_key = NULL;
+        handle->drivers_idx = 0;
+    }
     TRACE("Returning %d\n", ret);
     return ret;
 }
