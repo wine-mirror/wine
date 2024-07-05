@@ -2069,7 +2069,8 @@ static void test_CompareStringW(void)
     *str2 = 'B';
 
     /* CompareStringW should abort on the first non-matching character */
-    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, str1, 100, str2, 100);
+    ret = CompareStringW(MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT),
+            0, str1, 100, str2, 100);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
 
     success = VirtualFree(buf, 0, MEM_RELEASE);
