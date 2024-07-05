@@ -339,7 +339,7 @@ struct font_backend_funcs
 extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
                          const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                          void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
-                         DWORD ntmflags, DWORD version, DWORD flags,
+                         DWORD ntmflags, DWORD weight, DWORD version, DWORD flags,
                          const struct bitmap_font_size *size );
 extern UINT font_init(void);
 extern const struct font_backend_funcs *init_freetype_lib(void);
@@ -370,7 +370,7 @@ extern BOOL opentype_enum_full_names( const struct tt_name_v0 *tt_name_v0,
                                       opentype_enum_names_cb callback, void *user );
 
 extern BOOL opentype_get_properties( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
-                                     DWORD *version, FONTSIGNATURE *fs, DWORD *ntm_flags );
+                                     DWORD *version, FONTSIGNATURE *fs, DWORD *ntm_flags, UINT *weight );
 
 /* gdiobj.c */
 extern HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type,

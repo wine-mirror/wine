@@ -724,7 +724,7 @@ BOOL opentype_enum_full_names( const struct tt_name_v0 *header, opentype_enum_na
 }
 
 BOOL opentype_get_properties( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
-                              DWORD *version, FONTSIGNATURE *fs, DWORD *ntm_flags )
+                              DWORD *version, FONTSIGNATURE *fs, DWORD *ntm_flags, UINT *weight )
 {
     const struct tt_os2_v1 *tt_os2_v1;
     const struct tt_head *tt_head;
@@ -762,6 +762,7 @@ BOOL opentype_get_properties( const void *data, size_t size, const struct ttc_sf
     if (selection & OS2_FSSELECTION_BOLD) flags |= NTM_BOLD;
     if (selection & OS2_FSSELECTION_REGULAR) flags |= NTM_REGULAR;
     if (flags == 0) flags = NTM_REGULAR;
+    *weight = GET_BE_WORD( tt_os2_v1->usWeightClass );
 
     if (opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_CFF__TAG, &cff_header, &table_size ))
         flags |= NTM_PS_OPENTYPE;

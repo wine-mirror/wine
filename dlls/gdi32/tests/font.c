@@ -7827,7 +7827,7 @@ static void test_font_weight(void)
     SelectObject(hdc, hfont2);
     memset(&tm2, 0, sizeof(tm2));
     GetTextMetricsW(hdc, &tm2);
-    todo_wine ok(tm1.tmMaxCharWidth == tm2.tmMaxCharWidth, "got %ld, %ld.\n", tm1.tmMaxCharWidth, tm2.tmMaxCharWidth);
+    ok(tm1.tmMaxCharWidth == tm2.tmMaxCharWidth, "got %ld, %ld.\n", tm1.tmMaxCharWidth, tm2.tmMaxCharWidth);
 
     SelectObject(hdc, old);
     ReleaseDC(NULL, hdc);

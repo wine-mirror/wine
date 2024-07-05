@@ -1163,6 +1163,7 @@ struct unix_face
     WCHAR *style_name;
     WCHAR *full_name;
     DWORD ntm_flags;
+    UINT weight;
     DWORD font_version;
     FONTSIGNATURE fs;
     struct bitmap_font_size size;
@@ -1202,7 +1203,7 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
     if (opentype_get_ttc_sfnt_v1( data_ptr, data_size, face_index, &face_count, &ttc_sfnt_v1 ) &&
         opentype_get_tt_name_v0( data_ptr, data_size, ttc_sfnt_v1, &tt_name_v0 ) &&
         opentype_get_properties( data_ptr, data_size, ttc_sfnt_v1, &This->font_version,
-                                 &This->fs, &This->ntm_flags ))
+                                 &This->fs, &This->ntm_flags, &This->weight ))
     {
         struct family_names_data family_names;
         struct face_name_data style_name;
@@ -1246,6 +1247,8 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
     }
     else if ((This->ft_face = new_ft_face( unix_name, data_ptr, data_size, face_index, flags & ADDFONT_ALLOW_BITMAP )))
     {
+        TT_OS2 *os2;
+
         WARN( "unable to parse font, falling back to FreeType\n" );
         This->scalable = FT_IS_SCALABLE( This->ft_face );
         This->num_faces = This->ft_face->num_faces;
@@ -1267,8 +1270,11 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
 
         This->style_name = ft_face_get_style_name( This->ft_face, system_lcid );
         This->full_name = ft_face_get_full_name( This->ft_face, system_lcid );
-
         This->ntm_flags = get_ntm_flags( This->ft_face );
+        if ((os2 = pFT_Get_Sfnt_Table(This->ft_face, ft_sfnt_os2)))
+            This->weight = os2->usWeightClass;
+        else
+            This->weight = This->ntm_flags & NTM_BOLD ? FW_BOLD : FW_NORMAL;
         This->font_version = get_font_version( This->ft_face );
         if (!This->scalable) get_bitmap_size( This->ft_face, &This->size );
         get_fontsig( This->ft_face, &This->fs );
@@ -1315,7 +1321,7 @@ static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_p
     if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
 
     ret = add_gdi_face( unix_face->family_name, unix_face->second_name, unix_face->style_name, unix_face->full_name,
-                        file, data_ptr, data_size, face_index, unix_face->fs, unix_face->ntm_flags,
+                        file, data_ptr, data_size, face_index, unix_face->fs, unix_face->ntm_flags, unix_face->weight,
                         unix_face->font_version, flags, unix_face->scalable ? NULL : &unix_face->size );
 
     TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",

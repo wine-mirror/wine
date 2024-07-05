@@ -85,6 +85,7 @@ struct gdi_font_face
     UINT          face_index;
     FONTSIGNATURE fs;
     UINT          ntmFlags;
+    UINT          weight;
     UINT          version;
     UINT          flags;                 /* ADDFONT flags */
     BOOL          scalable;
@@ -1165,7 +1166,7 @@ static BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_f
 static struct gdi_font_face *create_face( struct gdi_font_family *family, const WCHAR *style,
                                           const WCHAR *fullname, const WCHAR *file,
                                           void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
-                                          DWORD ntmflags, DWORD version, DWORD flags,
+                                          DWORD ntmflags, DWORD weight, DWORD version, DWORD flags,
                                           const struct bitmap_font_size *size )
 {
     struct gdi_font_face *face = calloc( 1, sizeof(*face) );
@@ -1176,6 +1177,7 @@ static struct gdi_font_face *create_face( struct gdi_font_family *family, const 
     face->face_index = index;
     face->fs         = fs;
     face->ntmFlags   = ntmflags;
+    face->weight     = weight;
     face->version    = version;
     face->flags      = flags;
     face->data_ptr   = data_ptr;
@@ -1191,7 +1193,7 @@ static struct gdi_font_face *create_face( struct gdi_font_family *family, const 
 int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
                   const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                   void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
-                  DWORD ntmflags, DWORD version, DWORD flags,
+                  DWORD ntmflags, DWORD weight, DWORD version, DWORD flags,
                   const struct bitmap_font_size *size )
 {
     struct gdi_font_face *face;
@@ -1202,7 +1204,7 @@ int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
     else if (!(family = create_family( family_name, second_name ))) return ret;
 
     if ((face = create_face( family, style, fullname, file, data_ptr, data_size,
-                             index, fs, ntmflags, version, flags, size )))
+                             index, fs, ntmflags, weight, version, flags, size )))
     {
         if (flags & ADDFONT_ADD_TO_CACHE) add_face_to_cache( face );
         release_face( face );
@@ -1235,7 +1237,7 @@ int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
         else if (!(family = create_family( vert_family, vert_second ))) return ret;
 
         if ((face = create_face( family, style, fullname, file, data_ptr, data_size,
-                                 index, fs, ntmflags, version, flags | ADDFONT_VERTICAL_FONT, size )))
+                                 index, fs, ntmflags, weight, version, flags | ADDFONT_VERTICAL_FONT, size )))
         {
             if (flags & ADDFONT_ADD_TO_CACHE) add_face_to_cache( face );
             release_face( face );
@@ -1253,6 +1255,7 @@ struct cached_face
     DWORD                   index;
     DWORD                   flags;
     DWORD                   ntmflags;
+    DWORD                   weight;
     DWORD                   version;
     struct bitmap_font_size size;
     FONTSIGNATURE           fs;
@@ -1280,8 +1283,8 @@ static void load_face_from_cache( HKEY hkey_family, struct gdi_font_family *fami
             ((DWORD *)cached)[info->DataLength / sizeof(DWORD)] = 0;
             if ((face = create_face( family, name, cached->full_name,
                                      cached->full_name + lstrlenW(cached->full_name) + 1,
-                                     NULL, 0, cached->index, cached->fs, cached->ntmflags, cached->version,
-                                     cached->flags, scalable ? NULL : &cached->size )))
+                                     NULL, 0, cached->index, cached->fs, cached->ntmflags, cached->weight,
+                                     cached->version, cached->flags, scalable ? NULL : &cached->size )))
             {
                 if (!scalable)
                     TRACE("Adding bitmap size h %d w %d size %d x_ppem %d y_ppem %d\n",
@@ -1372,6 +1375,7 @@ static void add_face_to_cache( struct gdi_font_face *face )
     cached->index = face->face_index;
     cached->flags = face->flags;
     cached->ntmflags = face->ntmFlags;
+    cached->weight = face->weight;
     cached->version = face->version;
     cached->fs = face->fs;
     if (!face->scalable) cached->size = face->size;
@@ -2444,7 +2448,7 @@ static struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const
     font->fs = face->fs;
     font->lf = *lf;
     font->fake_italic = (lf->lfItalic && !(face->ntmFlags & NTM_ITALIC));
-    font->fake_bold = (lf->lfWeight > 550 && !(face->ntmFlags & NTM_BOLD));
+    font->fake_bold = lf->lfWeight > 550 && !(face->ntmFlags & NTM_BOLD) && face->weight < 550;
     font->scalable = face->scalable;
     font->face_index = face->face_index;
     font->ntmFlags = face->ntmFlags;
