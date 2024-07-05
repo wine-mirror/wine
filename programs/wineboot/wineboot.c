@@ -1498,7 +1498,7 @@ static void install_root_pnp_devices(void)
         }
 
         if (!SetupDiSetDeviceRegistryPropertyA(set, &device, SPDRP_HARDWAREID,
-                (const BYTE *)root_devices[i].hardware_id, (strlen(root_devices[i].hardware_id) + 2) * sizeof(WCHAR)))
+                (const BYTE *)root_devices[i].hardware_id, strlen(root_devices[i].hardware_id) + 2))
         {
             WINE_ERR("Failed to set hardware id for %s, error %#lx.\n", debugstr_a(root_devices[i].name), GetLastError());
             continue;
