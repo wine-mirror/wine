@@ -35,6 +35,7 @@ static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,voi
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS,void*,ULONG,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static void     (WINAPI *pRtlOpenCrossProcessEmulatorWorkConnection)(HANDLE,HANDLE*,void**);
+static void *   (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char *);
 static USHORT   (WINAPI *pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI *pRtlWow64GetSharedInfoProcess)(HANDLE,BOOLEAN*,WOW64INFO*);
@@ -50,6 +51,7 @@ static CROSS_PROCESS_WORK_ENTRY * (WINAPI *pRtlWow64PopCrossProcessWorkFromFreeL
 static BOOLEAN (WINAPI *pRtlWow64PushCrossProcessWorkOntoFreeList)(CROSS_PROCESS_WORK_HDR*,CROSS_PROCESS_WORK_ENTRY*);
 static BOOLEAN (WINAPI *pRtlWow64PushCrossProcessWorkOntoWorkList)(CROSS_PROCESS_WORK_HDR*,CROSS_PROCESS_WORK_ENTRY*,void**);
 static BOOLEAN (WINAPI *pRtlWow64RequestCrossProcessHeavyFlush)(CROSS_PROCESS_WORK_HDR*);
+static void (WINAPI *pProcessPendingCrossProcessEmulatorWork)(void);
 #else
 static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtWow64GetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
@@ -80,6 +82,16 @@ static USHORT current_machine;
 static USHORT native_machine;
 #endif
 
+struct arm64ec_shared_info
+{
+    ULONG     Wow64ExecuteFlags;
+    USHORT    NativeMachineType;
+    USHORT    EmulatedMachineType;
+    ULONGLONG SectionHandle;
+    ULONGLONG CrossProcessWorkList;
+    ULONGLONG unknown;
+};
+
 static BOOL is_machine_32bit( USHORT machine )
 {
     return machine == IMAGE_FILE_MACHINE_I386 || machine == IMAGE_FILE_MACHINE_ARMNT;
@@ -108,6 +120,7 @@ static void init(void)
     GET_PROC( NtQuerySystemInformationEx );
     GET_PROC( RtlGetNativeSystemInformation );
     GET_PROC( RtlOpenCrossProcessEmulatorWorkConnection );
+    GET_PROC( RtlFindExportedRoutineByName );
     GET_PROC( RtlWow64GetCurrentMachine );
     GET_PROC( RtlWow64GetProcessMachines );
     GET_PROC( RtlWow64GetSharedInfoProcess );
@@ -122,6 +135,7 @@ static void init(void)
     GET_PROC( RtlWow64PushCrossProcessWorkOntoFreeList );
     GET_PROC( RtlWow64PushCrossProcessWorkOntoWorkList );
     GET_PROC( RtlWow64RequestCrossProcessHeavyFlush );
+    GET_PROC( ProcessPendingCrossProcessEmulatorWork );
 #else
     GET_PROC( NtWow64AllocateVirtualMemory64 );
     GET_PROC( NtWow64GetNativeSystemInformation );
@@ -418,7 +432,33 @@ static void push_onto_free_list( CROSS_PROCESS_WORK_HDR *list, CROSS_PROCESS_WOR
 #endif
 }
 
-CROSS_PROCESS_WORK_ENTRY *pop_from_work_list( CROSS_PROCESS_WORK_HDR *list )
+static void push_onto_work_list( CROSS_PROCESS_WORK_HDR *list, CROSS_PROCESS_WORK_ENTRY *entry )
+{
+#ifdef _WIN64
+    void *ret;
+    pRtlWow64PushCrossProcessWorkOntoWorkList( list, entry, &ret );
+#else
+    entry->next = list->first;
+    list->first = (char *)entry - (char *)list;
+#endif
+}
+
+static CROSS_PROCESS_WORK_ENTRY *pop_from_free_list( CROSS_PROCESS_WORK_HDR *list )
+{
+#ifdef _WIN64
+    return pRtlWow64PopCrossProcessWorkFromFreeList( list );
+#else
+    CROSS_PROCESS_WORK_ENTRY *ret;
+
+    if (!list->first) return NULL;
+    ret = (CROSS_PROCESS_WORK_ENTRY *)((char *)list + list->first);
+    list->first = ret->next;
+    ret->next = 0;
+    return ret;
+#endif
+}
+
+static CROSS_PROCESS_WORK_ENTRY *pop_from_work_list( CROSS_PROCESS_WORK_HDR *list )
 {
 #ifdef _WIN64
     BOOLEAN flush;
@@ -439,6 +479,15 @@ CROSS_PROCESS_WORK_ENTRY *pop_from_work_list( CROSS_PROCESS_WORK_HDR *list )
         prev_pos = pos;
         pos = next;
     }
+#endif
+}
+
+static void request_cross_process_flush( CROSS_PROCESS_WORK_HDR *list )
+{
+#ifdef _WIN64
+    pRtlWow64RequestCrossProcessHeavyFlush( list );
+#else
+    list->first |= CROSS_PROCESS_LIST_FLUSH;
 #endif
 }
 
@@ -810,15 +859,7 @@ static void test_amd64_shared_info( HANDLE process )
     NTSTATUS status;
     SIZE_T res;
     BOOLEAN wow64 = 0xcc;
-    struct arm64ec_shared_info
-    {
-        ULONG     Wow64ExecuteFlags;
-        USHORT    NativeMachineType;
-        USHORT    EmulatedMachineType;
-        ULONGLONG SectionHandle;
-        ULONGLONG CrossProcessWorkList;
-        ULONGLONG unknown;
-    } *info = NULL;
+    struct arm64ec_shared_info *info = NULL;
 
     NtQueryInformationProcess( process, ProcessBasicInformation, &proc_info, sizeof(proc_info), NULL );
 
@@ -1414,6 +1455,392 @@ static void test_image_mappings(void)
     }
 }
 
+static DWORD hook_code[] =
+{
+    0x58000048, /* ldr x8, 1f */
+    0xd61f0100, /* br x8 */
+    0, 0        /* 1: .quad ptr */
+};
+
+static const DWORD log_params_code[] =
+{
+    0x10008009, /* adr x9, .+0x1000 */
+    0xf940012a, /* ldr x10, [x9] */
+    0xa8810540, /* stp x0, x1, [x10], #0x10 */
+    0xa8810d42, /* stp x2, x3, [x10], #0x10 */
+    0xa8811544, /* stp x4, x5, [x10], #0x10 */
+    0xa8811d46, /* stp x6, x7, [x10], #0x10 */
+    0xf900012a, /* str x10, [x9] */
+    0xf9400520, /* ldr x0, [x9, #0x8] */
+    0xd65f03c0, /* ret */
+};
+
+static void CALLBACK dummy_apc( ULONG_PTR arg )
+{
+}
+
+struct expected_notification
+{
+    UINT    nb_args;
+    ULONG64 args[6];
+};
+
+static void reset_results( ULONG64 *results )
+{
+    memset( results + 1, 0xcc, 0x1000 - sizeof(*results) );
+    results[0] = (ULONG_PTR)(results + 2);
+}
+
+#define expect_notifications(results, count, expect) expect_notifications_(results, count, expect, __LINE__)
+static void expect_notifications_( ULONG64 *results, UINT count, const struct expected_notification *expect,
+                                   int line )
+{
+    ULONG64 *regs = results + 2;
+    UINT i, j, len = (results[0] - (ULONG_PTR)regs) / 8 / sizeof(*regs);
+
+    ok_(__FILE__,line)( count == len, "wrong notification count %u / %u\n", len, count );
+    for (i = 0; i < min( count, len ); i++, expect++, regs += 8)
+        for (j = 0; j < expect->nb_args; j++)
+            ok_(__FILE__,line)( regs[j] == expect->args[j], "%u: wrong args[%u] %I64x / %I64x\n",
+                                i, j, regs[j], expect->args[j] );
+    reset_results( results );
+}
+
+static void add_work_item( CROSS_PROCESS_WORK_LIST *list, UINT id, ULONG64 addr, ULONG64 size,
+                           UINT arg0, UINT arg1, UINT arg2, UINT arg3 )
+{
+    CROSS_PROCESS_WORK_ENTRY *entry = pop_from_free_list( &list->free_list );
+
+    entry->id = id;
+    entry->addr = addr;
+    entry->size = size;
+    entry->args[0] = arg0;
+    entry->args[1] = arg1;
+    entry->args[2] = arg2;
+    entry->args[3] = arg3;
+    push_onto_work_list( &list->work_list, entry );
+}
+
+static void process_work_items(void)
+{
+#ifdef _WIN64
+    if (pProcessPendingCrossProcessEmulatorWork)
+    {
+        pProcessPendingCrossProcessEmulatorWork();
+        return;
+    }
+#endif
+    QueueUserAPC( dummy_apc, GetCurrentThread(), 0 );
+    SleepEx( 1, TRUE );
+}
+
+static BYTE old_code[sizeof(hook_code)];
+
+static void *hook_notification_function( HMODULE module, const char *win32_name, const char *win64_name )
+{
+    BYTE *ptr;
+    BOOL ret;
+
+    if (current_machine == IMAGE_FILE_MACHINE_AMD64)
+    {
+        static const BYTE fast_forward[] = { 0x48, 0x8b, 0xc4, 0x48, 0x89, 0x58, 0x20, 0x55, 0x5d, 0xe9 };
+
+        if (!(ptr = pRtlFindExportedRoutineByName( module, win64_name )))
+        {
+            skip( "%s not exported\n", win64_name  );
+            return NULL;
+        }
+        if (memcmp( ptr, fast_forward, sizeof(fast_forward) ))
+        {
+            skip( "unrecognized x64 thunk for %s\n", win64_name  );
+            return NULL;
+        }
+        ptr += sizeof(fast_forward);
+        ptr += sizeof(LONG) + *(LONG *)ptr;
+    }
+    else if (!(ptr = pRtlFindExportedRoutineByName( module, win32_name )))
+    {
+        skip( "%s not exported\n", win32_name  );
+        return NULL;
+    }
+
+    memcpy( old_code, ptr, sizeof(old_code) );
+    ret = WriteProcessMemory( GetCurrentProcess(), ptr, hook_code, sizeof(hook_code), NULL );
+    ok( ret, "hooking failed %p %lu\n", ptr, GetLastError() );
+    return ptr;
+}
+
+static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
+{
+    void *code, *ptr, *addr = NULL;
+    DWORD old_prot;
+    SIZE_T size;
+    ULONG64 *results;
+    NTSTATUS status;
+    HANDLE file, mapping;
+
+    code = VirtualAlloc( NULL, 0x2000, MEM_COMMIT, PAGE_READWRITE );
+    memcpy( code, log_params_code, sizeof(log_params_code) );
+    VirtualProtect( code, 0x1000, PAGE_EXECUTE_READ, &old_prot );
+    *(void **)&hook_code[2] = code;
+
+    results = (ULONG64 *)((char *)code + 0x1000);
+    reset_results( results );
+
+    file = CreateFileA( "c:\\windows\\system32\\version.dll", GENERIC_READ | GENERIC_EXECUTE,
+                        FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n" );
+    mapping = CreateFileMappingA( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    if ((ptr = hook_notification_function( module, "BTCpuNotifyMemoryAlloc", "NotifyMemoryAlloc" )))
+    {
+        struct expected_notification expect_cross[2] =
+        {
+            { 6, { 0x1234567890, 0x6543210000, MEM_COMMIT, PAGE_EXECUTE_READ, 0, 0 } },
+            { 6, { 0x1234567890, 0x6543210000, MEM_COMMIT, PAGE_EXECUTE_READ, 1, 0xdeadbeef } }
+        };
+        struct expected_notification expect_alloc[2] =
+        {
+            { 6, { 0, 0x123456, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE, 0, 0 } },
+            { 6, { 0, 0x124000, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE, 1, 0 } }
+        };
+
+        add_work_item( list, CrossProcessPreVirtualAlloc, expect_cross[0].args[0], expect_cross[0].args[1],
+                       expect_cross[0].args[2], expect_cross[0].args[3], 0, 0 );
+        add_work_item( list, CrossProcessPostVirtualAlloc, expect_cross[1].args[0], expect_cross[1].args[1],
+                       expect_cross[1].args[2], expect_cross[1].args[3], 0xdeadbeef, 0 );
+        process_work_items();
+        expect_notifications( results, 2, expect_cross );
+        ok( !list->work_list.first, "list not empty\n" );
+
+        size = expect_alloc[0].args[1];
+        status = NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE );
+        ok( !status, "NtAllocateVirtualMemory failed %lx\n", status );
+        expect_alloc[1].args[0] = (ULONG_PTR)addr;
+        expect_notifications( results, 2, expect_alloc );
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
+    if ((ptr = hook_notification_function( module, "BTCpuNotifyMemoryProtect", "NotifyMemoryProtect" )))
+    {
+        struct expected_notification expect_cross[2] =
+        {
+            { 5, { 0x1234567890, 0x6543210000, PAGE_READWRITE, 0, 0 } },
+            { 5, { 0x1234567890, 0x6543210000, PAGE_READWRITE, 1, 0xdeadbeef } }
+        };
+        struct expected_notification expect_protect[2] =
+        {
+            { 5, { 0, 0x123456, PAGE_EXECUTE_READ, 0, 0 } },
+            { 5, { 0, 0x124000, PAGE_EXECUTE_READ, 1, 0 } }
+        };
+
+        reset_results( results );
+        add_work_item( list, CrossProcessPreVirtualProtect, expect_cross[0].args[0],
+                       expect_cross[0].args[1], expect_cross[0].args[2], 0, 0, 0 );
+        add_work_item( list, CrossProcessPostVirtualProtect, expect_cross[1].args[0],
+                       expect_cross[1].args[1], expect_cross[1].args[2], 0xdeadbeef, 0, 0 );
+        process_work_items();
+        expect_notifications( results, 2, expect_cross );
+        ok( !list->work_list.first, "list not empty\n" );
+
+        expect_protect[1].args[0] = (ULONG_PTR)addr;
+        addr = (char *)addr + 0x123;
+        expect_protect[0].args[0] = (ULONG_PTR)addr;
+        size = expect_protect[0].args[1];
+        status = NtProtectVirtualMemory( GetCurrentProcess(), &addr, &size, PAGE_EXECUTE_READ, &old_prot );
+        ok( !status, "NtProtectVirtualMemory failed %lx\n", status );
+        expect_notifications( results, 2, expect_protect );
+
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+        reset_results( results );
+    }
+
+    if ((ptr = hook_notification_function( module, "BTCpuNotifyMemoryFree", "NotifyMemoryFree" )))
+    {
+        struct expected_notification expect_cross[2] =
+        {
+            { 5, { 0x1234567890, 0x6543210000, MEM_RELEASE, 0, 0 } },
+            { 5, { 0x1234567890, 0x6543210000, MEM_RELEASE, 1, 0xdeadbeef } }
+        };
+        struct expected_notification expect_free[2] =
+        {
+            { 5, { 0, 0x123456, MEM_RELEASE, 0, 0 } },
+            { 5, { 0, 0x124000, MEM_RELEASE, 1, 0 } }
+        };
+
+        add_work_item( list, CrossProcessPreVirtualFree, expect_cross[0].args[0],
+                       expect_cross[0].args[1], expect_cross[0].args[2], 0, 0, 0 );
+        add_work_item( list, CrossProcessPostVirtualFree, expect_cross[1].args[0],
+                       expect_cross[1].args[1], expect_cross[1].args[2], 0xdeadbeef, 0, 0 );
+        process_work_items();
+        expect_notifications( results, 2, expect_cross );
+        ok( !list->work_list.first, "list not empty\n" );
+
+        expect_free[0].args[0] = (ULONG_PTR)addr;
+        expect_free[1].args[0] = (ULONG_PTR)addr;
+        size = expect_free[0].args[1];
+        status = NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
+        ok( !status, "NtFreeVirtualMemory failed %lx\n", status );
+        expect_notifications( results, 2, expect_free );
+
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
+    if ((ptr = hook_notification_function( module, "BTCpuNotifyMemoryDirty", "BTCpu64NotifyMemoryDirty" )))
+    {
+        struct expected_notification expect = { 2, { 0x1234567890, 0x6543210000 } };
+
+        add_work_item( list, CrossProcessMemoryWrite, expect.args[0], expect.args[1], 0, 0, 0, 0 );
+        process_work_items();
+        expect_notifications( results, 1, &expect );
+        ok( !list->work_list.first, "list not empty\n" );
+
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
+    if ((ptr = hook_notification_function( module, "BTCpuFlushInstructionCache2", "BTCpu64FlushInstructionCache" )))
+    {
+        struct expected_notification expect_cross = { 2, { 0x1234567890, 0x6543210000 } };
+        struct expected_notification expect_flush = { 2, { 0, 0x1234 } };
+
+        reset_results( results );
+        add_work_item(list, CrossProcessFlushCache, expect_cross.args[0],
+                      expect_cross.args[1], 0, 0, 0, 0 );
+        process_work_items();
+        expect_notifications( results, 1, &expect_cross );
+        ok( !list->work_list.first, "list not empty\n" );
+
+        expect_flush.args[0] = (ULONG_PTR)ptr;
+        NtFlushInstructionCache( GetCurrentProcess(), ptr, expect_flush.args[1] );
+        expect_notifications( results, 1, &expect_flush );
+
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
+    if ((ptr = hook_notification_function( module, "BTCpuFlushInstructionCacheHeavy", "FlushInstructionCacheHeavy" )))
+    {
+        struct expected_notification expect = { 2, { 0x1234567890, 0x6543210000 } };
+        struct expected_notification expect2 = { 2 };
+
+        reset_results( results );
+        add_work_item( list, CrossProcessFlushCacheHeavy, expect.args[0], expect.args[1], 0, 0, 0, 0 );
+        process_work_items();
+        expect_notifications( results, 1, &expect );
+        ok( !list->work_list.first, "list not empty\n" );
+
+        request_cross_process_flush( &list->work_list );
+        process_work_items();
+        expect_notifications( results, 1, &expect2 );
+        ok( !list->work_list.first, "list not empty\n" );
+
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
+    if ((ptr = hook_notification_function( module, "BTCpuNotifyMapViewOfSection", "NotifyMapViewOfSection" )))
+    {
+        struct expected_notification expect = { 6 };
+        LARGE_INTEGER offset;
+
+        addr = NULL;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection( mapping, GetCurrentProcess(), &addr, 0, 0, &offset, &size,
+                                     ViewShare, 0, PAGE_READONLY );
+        ok( NT_SUCCESS(status), "NtMapViewOfSection failed %lx\n", status );
+        todo_wine
+        expect_notifications( results, 0, NULL );
+        NtUnmapViewOfSection( GetCurrentProcess(), addr );
+
+        /* only NtMapViewOfSection calls coming from the loader trigger a notification */
+        NtCurrentTeb()->Tib.ArbitraryUserPointer = (WCHAR *)L"c:\\windows\\system32\\version.dll";
+        addr = NULL;
+        size = 0;
+        results[1] = STATUS_SUCCESS;
+        status = NtMapViewOfSection( mapping, GetCurrentProcess(), &addr, 0, 0, &offset, &size,
+                                     ViewShare, 0, PAGE_READONLY );
+        ok( NT_SUCCESS(status), "NtMapViewOfSection failed %lx\n", status );
+        expect.args[0] = results[2];  /* FIXME: first parameter unknown */
+        expect.args[1] = (ULONG_PTR)addr;
+        expect.args[3] = size;
+        expect.args[5] = PAGE_READONLY;
+        todo_wine
+        expect_notifications( results, 1, &expect );
+        NtUnmapViewOfSection( GetCurrentProcess(), addr );
+
+        results[1] = 0xdeadbeef;
+        status = NtMapViewOfSection( mapping, GetCurrentProcess(), &addr, 0, 0, &offset, &size,
+                                     ViewShare, 0, PAGE_READONLY );
+        todo_wine
+        ok( status == 0xdeadbeef, "NtMapViewOfSection failed %lx\n", status );
+        expect.args[0] = results[2];  /* FIXME: first parameter unknown */
+        expect.args[1] = (ULONG_PTR)addr;
+        expect.args[3] = size;
+        expect.args[5] = PAGE_READONLY;
+        todo_wine
+        expect_notifications( results, 1, &expect );
+
+        NtCurrentTeb()->Tib.ArbitraryUserPointer = NULL;
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
+    if ((ptr = hook_notification_function( module, "BTCpuNotifyUnmapViewOfSection", "NotifyUnmapViewOfSection" )))
+    {
+        struct expected_notification expect[2] = { { 3 }, { 3 } };
+        LARGE_INTEGER offset;
+
+        addr = NULL;
+        size = 0;
+        offset.QuadPart = 0;
+        status = NtMapViewOfSection( mapping, GetCurrentProcess(), &addr, 0, 0, &offset, &size,
+                                     ViewShare, 0, PAGE_READONLY );
+        ok( NT_SUCCESS(status), "NtMapViewOfSection failed %lx\n", status );
+        NtUnmapViewOfSection( GetCurrentProcess(), (char *)addr + 0x123 );
+        expect[0].args[0] = expect[1].args[0] = (ULONG_PTR)addr + 0x123;
+        expect[1].args[1] = 1;
+        expect_notifications( results, 2, expect );
+
+        NtUnmapViewOfSection( GetCurrentProcess(), (char *)0x12345 );
+        expect[0].args[0] = expect[1].args[0] = 0x12345;
+        expect[1].args[1] = 1;
+        expect[1].args[2] = (ULONG)STATUS_NOT_MAPPED_VIEW;
+        expect_notifications( results, 2, expect );
+
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
+    if ((ptr = hook_notification_function( module, "BTCpuNotifyReadFile", "BTCpu64NotifyReadFile" )))
+    {
+        char buffer[0x123];
+        IO_STATUS_BLOCK io;
+        struct expected_notification expect[2] =
+        {
+            { 5, { (ULONG_PTR)file, (ULONG_PTR)buffer, sizeof(buffer), 0, 0 } },
+            { 5, { (ULONG_PTR)file, (ULONG_PTR)buffer, sizeof(buffer), 1, 0 } }
+        };
+
+        reset_results( results );
+        status = NtReadFile( file, 0, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
+        ok( !status, "NtReadFile failed %lx\n", status );
+        todo_wine
+        expect_notifications( results, 2, expect );
+
+        status = NtReadFile( (HANDLE)0xdead, 0, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
+        ok( status == STATUS_INVALID_HANDLE, "NtReadFile failed %lx\n", status );
+        expect[0].args[0] = expect[1].args[0] = 0xdead;
+        expect[1].args[4] = (ULONG)STATUS_INVALID_HANDLE;
+        todo_wine
+        expect_notifications( results, 2, expect );
+
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
+    NtClose( mapping );
+    NtClose( file );
+    VirtualFree( code, 0, MEM_RELEASE );
+}
+
+
 #ifdef _WIN64
 
 static void test_cross_process_work_list(void)
@@ -1619,6 +2046,32 @@ static void test_exception_dispatcher(void)
     ok( !*hook, "hook %p set to %p\n", hook, *hook );
 #endif
 }
+
+static void test_memory_notifications(void)
+{
+    HMODULE module = GetModuleHandleA( "xtajit64.dll" );
+    struct arm64ec_shared_info *info;
+    DWORD i;
+
+    if (current_machine == IMAGE_FILE_MACHINE_ARM64) return;
+    if (!(module = GetModuleHandleA( "xtajit64.dll" )))
+    {
+        skip( "xtaji64.dll not loaded\n" );
+        return;
+    }
+    for (i = 0x600; i < 0xc00; i += sizeof(ULONG))
+    {
+        info = (struct arm64ec_shared_info *)((char *)NtCurrentTeb()->Peb + i);
+        if (info->NativeMachineType == native_machine &&
+            info->EmulatedMachineType == IMAGE_FILE_MACHINE_AMD64)
+        {
+            test_notifications( module, (CROSS_PROCESS_WORK_LIST *)info->CrossProcessWorkList );
+            return;
+        }
+    }
+    skip( "arm64ec shared info not found\n" );
+}
+
 
 #else  /* _WIN64 */
 
@@ -2090,6 +2543,7 @@ static void test_init_block(void)
             break;
         case 0xe0:  /* win10 1809 */
         case 0xf0:  /* win10 2004 */
+        case 0x128: /* win11 24h2 */
             block64 = ptr;
             CHECK_FUNC( block64[3], "LdrInitializeThunk" );
             CHECK_FUNC( block64[4], "KiUserExceptionDispatcher" );
@@ -2106,7 +2560,7 @@ static void test_init_block(void)
             break;
         default:
             ok( 0, "unknown init block %08lx\n", init_block[0] );
-            for (i = 0; i < 32; i++) trace("%04lx: %08lx\n", i, init_block[i]);
+            for (i = 0; i < init_block[0] / sizeof(ULONG); i++) trace("%04lx: %08lx\n", i, init_block[i]);
             break;
         }
 #undef CHECK_FUNC
@@ -2122,6 +2576,40 @@ static void test_init_block(void)
         }
     }
     else todo_wine win_skip( "LdrSystemDllInitBlock not supported\n" );
+}
+
+
+static void test_memory_notifications(void)
+{
+    HMODULE module = (HMODULE)(ULONG_PTR)xtajit_module;
+    WOW64INFO *info;
+    DWORD i;
+
+    if (!xtajit_module)
+    {
+        skip( "xtajit.dll not loaded\n" );
+        return;
+    }
+    if ((ULONG_PTR)module != xtajit_module)
+    {
+        skip( "xtajit.dll loaded above 4G\n" );
+        return;
+    }
+
+    for (i = 0x400; i < 0x800; i += sizeof(ULONG))
+    {
+        info = (WOW64INFO *)((char *)NtCurrentTeb()->Peb + i);
+        if (info->NativeMachineType == native_machine &&
+            info->EmulatedMachineType == IMAGE_FILE_MACHINE_I386)
+        {
+            if (info->CrossProcessWorkList >> 32)
+                skip( "cross-process work list above 4G (%I64x)\n", info->CrossProcessWorkList );
+            else
+                test_notifications( module, ULongToPtr( info->CrossProcessWorkList ));
+            return;
+        }
+    }
+    skip( "WOW64INFO not found\n" );
 }
 
 
@@ -2509,6 +2997,7 @@ START_TEST(wow64)
     test_iosb();
     test_syscalls();
 #endif
+    test_memory_notifications();
     test_cpu_area();
     test_exception_dispatcher();
     test_arm64ec();
