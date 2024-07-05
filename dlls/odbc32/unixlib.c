@@ -445,33 +445,33 @@ static NTSTATUS odbc_process_attach( void *args )
 static NTSTATUS wrap_SQLAllocConnect( void *args )
 {
     struct SQLAllocConnect_params *params = args;
-    return SQLAllocConnect( (SQLHENV)(ULONG_PTR)params->EnvironmentHandle, (SQLHDBC *)&params->ConnectionHandle );
+    return SQLAllocConnect( (SQLHENV)(ULONG_PTR)params->EnvironmentHandle, (SQLHDBC *)params->ConnectionHandle );
 }
 
 static NTSTATUS wrap_SQLAllocEnv( void *args )
 {
     struct SQLAllocEnv_params *params = args;
-    return SQLAllocEnv( (SQLHENV *)&params->EnvironmentHandle );
+    return SQLAllocEnv( (SQLHENV *)params->EnvironmentHandle );
 }
 
 static NTSTATUS wrap_SQLAllocHandle( void *args )
 {
     struct SQLAllocHandle_params *params = args;
     return SQLAllocHandle( params->HandleType, (SQLHANDLE)(ULONG_PTR)params->InputHandle,
-                           (SQLHANDLE *)&params->OutputHandle );
+                           (SQLHANDLE *)params->OutputHandle );
 }
 
 static NTSTATUS wrap_SQLAllocHandleStd( void *args )
 {
     struct SQLAllocHandleStd_params *params = args;
     return SQLAllocHandleStd( params->HandleType, (SQLHANDLE)(ULONG_PTR)params->InputHandle,
-                              (SQLHANDLE *)&params->OutputHandle );
+                              (SQLHANDLE *)params->OutputHandle );
 }
 
 static NTSTATUS wrap_SQLAllocStmt( void *args )
 {
     struct SQLAllocStmt_params *params = args;
-    return SQLAllocStmt( (SQLHDBC)(ULONG_PTR)params->ConnectionHandle, (SQLHSTMT *)&params->StatementHandle );
+    return SQLAllocStmt( (SQLHDBC)(ULONG_PTR)params->ConnectionHandle, (SQLHSTMT *)params->StatementHandle );
 }
 
 static NTSTATUS wrap_SQLBindCol( void *args )

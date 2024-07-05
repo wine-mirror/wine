@@ -187,6 +187,9 @@ struct handle
 {
     /* handles */
     UINT64 unix_handle;
+    void  *win32_handle;
+    const struct win32_funcs *win32_funcs;
+    struct handle *parent;
     /* drivers and data sources */
     UINT32 drivers_idx;
     void  *drivers_key;
@@ -201,33 +204,33 @@ struct handle
 
 struct SQLAllocConnect_params
 {
-    UINT64 EnvironmentHandle;
-    UINT64 ConnectionHandle;
+    UINT64  EnvironmentHandle;
+    UINT64 *ConnectionHandle;
 };
 
 struct SQLAllocEnv_params
 {
-    UINT64 EnvironmentHandle;
+    UINT64 *EnvironmentHandle;
 };
 
 struct SQLAllocHandle_params
 {
-    INT16  HandleType;
-    UINT64 InputHandle;
-    UINT64 OutputHandle;
+    INT16   HandleType;
+    UINT64  InputHandle;
+    UINT64 *OutputHandle;
 };
 
 struct SQLAllocHandleStd_params
 {
-    INT16  HandleType;
-    UINT64 InputHandle;
-    UINT64 OutputHandle;
+    INT16   HandleType;
+    UINT64  InputHandle;
+    UINT64 *OutputHandle;
 };
 
 struct SQLAllocStmt_params
 {
-    UINT64 ConnectionHandle;
-    UINT64 StatementHandle;
+    UINT64  ConnectionHandle;
+    UINT64 *StatementHandle;
 };
 
 struct SQLBindCol_params
