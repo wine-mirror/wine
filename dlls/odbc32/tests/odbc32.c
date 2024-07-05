@@ -315,41 +315,6 @@ static void test_SQLExecDirect( void )
 
     id[0] = 1;
     len_id[0] = sizeof(id[0]);
-    ret = SQLBindParam( stmt, 1, SQL_INTEGER, SQL_INTEGER, 0, 0, id, len_id );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
-
-    memcpy( name, "Mary", sizeof("Mary") );
-    len_name[0] = sizeof( "Mary" ) - 1;
-    ret = SQLBindParam( stmt, 2, SQL_CHAR, SQL_VARCHAR, 0, 0, name, len_name );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
-
-    ret = SQLExecute( stmt );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
-
-    ret = SQLFetch( stmt );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
-    ok( id[0] == 1, "got %d\n", id[0] );
-    ok( len_id[0] == sizeof(id[0]), "got %d\n", (int)len_id[0] );
-    ok( !strcmp( (const char *)name, "Mary" ), "got %s\n", name );
-    ok( len_name[0] == sizeof("Mary") - 1, "got %d\n", (int)len_name[0] );
-
-    ret = SQLFreeStmt( stmt, 0 );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-
-    ret = SQLAllocStmt( con, &stmt );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-
-    ret = SQLPrepare( stmt, (SQLCHAR *)"SELECT * FROM winetest WHERE Id = ? AND Name = ?",
-                      ARRAYSIZE("SELECT * FROM winetest WHERE Id = ? AND Name = ?") - 1 );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
-
-    id[0] = 1;
-    len_id[0] = sizeof(id[0]);
     ret = SQLBindParameter( stmt, 1, SQL_PARAM_INPUT, SQL_INTEGER, SQL_INTEGER, 0, 0, id, 0, len_id );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );

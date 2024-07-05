@@ -40,7 +40,6 @@ enum sql_funcs
     unix_SQLAllocHandleStd,
     unix_SQLAllocStmt,
     unix_SQLBindCol,
-    unix_SQLBindParam,
     unix_SQLBindParameter,
     unix_SQLBrowseConnect,
     unix_SQLBrowseConnectW,
@@ -159,15 +158,6 @@ struct bind_col_args
     INT64 buffer_length;
 };
 
-struct bind_param_args
-{
-    INT16  value_type;
-    INT16  parameter_type;
-    UINT64 length_precision;
-    INT16  parameter_scale;
-    void  *parameter_value;
-};
-
 struct bind_parameter_args
 {
     INT16  input_output_type;
@@ -185,7 +175,6 @@ struct param
     union
     {
         struct bind_col_args col;
-        struct bind_param_args param;
         struct bind_parameter_args parameter;
     };
     UINT8 *len;  /* result length array stored in Unix lib */
@@ -202,7 +191,6 @@ struct handle
 {
     UINT64 unix_handle;
     struct param_binding bind_col;
-    struct param_binding bind_param;
     struct param_binding bind_parameter;
     UINT32 row_count;   /* number of rows returned by SQLFetch() */
 };
@@ -245,18 +233,6 @@ struct SQLBindCol_params
     INT16  TargetType;
     void  *TargetValue;
     INT64  BufferLength;
-    void  *StrLen_or_Ind;
-};
-
-struct SQLBindParam_params
-{
-    UINT64 StatementHandle;
-    UINT16 ParameterNumber;
-    INT16  ValueType;
-    INT16  ParameterType;
-    UINT64 LengthPrecision;
-    INT16  ParameterScale;
-    void  *ParameterValue;
     void  *StrLen_or_Ind;
 };
 

@@ -371,14 +371,6 @@ static NTSTATUS wrap_SQLBindCol( void *args )
                        params->TargetValue, params->BufferLength, params->StrLen_or_Ind );
 }
 
-static NTSTATUS wrap_SQLBindParam( void *args )
-{
-    struct SQLBindParam_params *params = args;
-    return SQLBindParam( (SQLHSTMT)(ULONG_PTR)params->StatementHandle, params->ParameterNumber, params->ValueType,
-                         params->ParameterType, params->LengthPrecision, params->ParameterScale,
-                         params->ParameterValue, params->StrLen_or_Ind );
-}
-
 static NTSTATUS wrap_SQLBindParameter( void *args )
 {
     struct SQLBindParameter_params *params = args;
@@ -1155,7 +1147,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_SQLAllocHandleStd,
     wrap_SQLAllocStmt,
     wrap_SQLBindCol,
-    wrap_SQLBindParam,
     wrap_SQLBindParameter,
     wrap_SQLBrowseConnect,
     wrap_SQLBrowseConnectW,
@@ -1295,35 +1286,6 @@ static NTSTATUS wow64_SQLBindCol( void *args )
     };
 
     return wrap_SQLBindCol( &params );
-}
-
-static NTSTATUS wow64_SQLBindParam( void *args )
-{
-    struct
-    {
-        UINT64 StatementHandle;
-        UINT16 ParameterNumber;
-        INT16  ValueType;
-        INT16  ParameterType;
-        UINT64 LengthPrecision;
-        INT16  ParameterScale;
-        PTR32  ParameterValue;
-        PTR32  StrLen_or_Ind;
-    } const *params32 = args;
-
-    struct SQLBindParam_params params =
-    {
-        params32->StatementHandle,
-        params32->ParameterNumber,
-        params32->ValueType,
-        params32->ParameterType,
-        params32->LengthPrecision,
-        params32->ParameterScale,
-        ULongToPtr(params32->ParameterValue),
-        ULongToPtr(params32->StrLen_or_Ind)
-    };
-
-    return wrap_SQLBindParam( &params );
 }
 
 static NTSTATUS wow64_SQLBindParameter( void *args )
@@ -3557,7 +3519,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wrap_SQLAllocHandleStd,
     wrap_SQLAllocStmt,
     wow64_SQLBindCol,
-    wow64_SQLBindParam,
     wow64_SQLBindParameter,
     wow64_SQLBrowseConnect,
     wow64_SQLBrowseConnectW,
