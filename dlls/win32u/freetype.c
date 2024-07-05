@@ -3751,19 +3751,8 @@ static BOOL freetype_set_outline_text_metrics( struct gdi_font *font )
         TM.tmAveCharWidth = 1; 
     }
     TM.tmMaxCharWidth = SCALE_X(ft_face->bbox.xMax - ft_face->bbox.xMin);
-    TM.tmWeight = FW_REGULAR;
-    if (font->fake_bold)
-        TM.tmWeight = FW_BOLD;
-    else
-    {
-        if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
-        {
-            if (pOS2->usWeightClass > FW_MEDIUM)
-                TM.tmWeight = pOS2->usWeightClass;
-        }
-        else if (pOS2->usWeightClass <= FW_MEDIUM)
-            TM.tmWeight = pOS2->usWeightClass;
-    }
+    TM.tmWeight = font->fake_bold ? FW_BOLD : pOS2->usWeightClass;
+
     TM.tmOverhang = 0;
     TM.tmDigitizedAspectX = 96; /* FIXME */
     TM.tmDigitizedAspectY = 96; /* FIXME */

@@ -7776,7 +7776,7 @@ static INT CALLBACK test_font_weight_enum(const LOGFONTW *lf, const TEXTMETRICW 
     if (type != TRUETYPE_FONTTYPE) return 1;
     ok(!wcscmp(lf->lfFaceName, L"wine_heavy"), "got %s.\n", debugstr_w(lf->lfFaceName));
     ok((ntm->ntmFlags & (NTM_REGULAR | NTM_BOLD)) == NTM_REGULAR, "got %#lx.\n", ntm->ntmFlags);
-    todo_wine ok(ntm->tmWeight == 700, "got %ld.\n", ntm->tmWeight);
+    ok(ntm->tmWeight == 700, "got %ld.\n", ntm->tmWeight);
     *called = 1;
 
     return 1;
