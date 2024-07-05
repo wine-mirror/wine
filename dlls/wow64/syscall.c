@@ -106,11 +106,11 @@ static void *   (WINAPI *p__wine_get_unix_opcode)(void);
 static void *   (WINAPI *pKiRaiseUserExceptionDispatcher)(void);
 void (WINAPI *pBTCpuNotifyFlushInstructionCache2)( const void *, SIZE_T ) = NULL;
 void (WINAPI *pBTCpuNotifyMapViewOfSection)( void * ) = NULL;
-void (WINAPI *pBTCpuNotifyMemoryAlloc)( void *, SIZE_T, ULONG, ULONG ) = NULL;
+void (WINAPI *pBTCpuNotifyMemoryAlloc)( void *, SIZE_T, ULONG, ULONG, BOOL, NTSTATUS ) = NULL;
 void (WINAPI *pBTCpuNotifyMemoryDirty)( void *, SIZE_T ) = NULL;
-void (WINAPI *pBTCpuNotifyMemoryFree)( void *, SIZE_T, ULONG ) = NULL;
-void (WINAPI *pBTCpuNotifyMemoryProtect)( void *, SIZE_T, ULONG ) = NULL;
-void (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void * ) = NULL;
+void (WINAPI *pBTCpuNotifyMemoryFree)( void *, SIZE_T, ULONG, BOOL, NTSTATUS ) = NULL;
+void (WINAPI *pBTCpuNotifyMemoryProtect)( void *, SIZE_T, ULONG, BOOL, NTSTATUS ) = NULL;
+void (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void *, BOOL, NTSTATUS ) = NULL;
 NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * ) = NULL;
 void (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * ) = NULL;
 void (WINAPI *pBTCpuThreadTerm)( HANDLE ) = NULL;
@@ -1348,7 +1348,7 @@ void WINAPI Wow64ProcessPendingCrossProcessItems(void)
         {
             next = entry->next;
             RtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, entry );
-            entry = CROSS_PROCESS_LIST_ENTRY( &list->work_list, next );
+            entry = next ? CROSS_PROCESS_LIST_ENTRY( &list->work_list, next ) : NULL;
         }
         return;
     }
@@ -1358,26 +1358,22 @@ void WINAPI Wow64ProcessPendingCrossProcessItems(void)
         switch (entry->id)
         {
         case CrossProcessPreVirtualAlloc:
-            /* FIXME */
-            break;
         case CrossProcessPostVirtualAlloc:
             if (!pBTCpuNotifyMemoryAlloc) break;
-            if (entry->args[2]) break;
-            pBTCpuNotifyMemoryAlloc( (void *)entry->addr, entry->size, entry->args[0], entry->args[1] );
+            pBTCpuNotifyMemoryAlloc( (void *)entry->addr, entry->size, entry->args[0], entry->args[1],
+                                     entry->id == CrossProcessPostVirtualAlloc, entry->args[2] );
             break;
         case CrossProcessPreVirtualFree:
-            if (!pBTCpuNotifyMemoryFree) break;
-            pBTCpuNotifyMemoryFree( (void *)entry->addr, entry->size, entry->args[0] );
-            break;
         case CrossProcessPostVirtualFree:
-            /* FIXME */
+            if (!pBTCpuNotifyMemoryFree) break;
+            pBTCpuNotifyMemoryFree( (void *)entry->addr, entry->size, entry->args[0],
+                                     entry->id == CrossProcessPostVirtualFree, entry->args[1] );
             break;
         case CrossProcessPreVirtualProtect:
-            if (!pBTCpuNotifyMemoryProtect) break;
-            pBTCpuNotifyMemoryProtect( (void *)entry->addr, entry->size, entry->args[0] );
-            break;
         case CrossProcessPostVirtualProtect:
-            /* FIXME */
+            if (!pBTCpuNotifyMemoryProtect) break;
+            pBTCpuNotifyMemoryProtect( (void *)entry->addr, entry->size, entry->args[0],
+                                       entry->id == CrossProcessPostVirtualProtect, entry->args[1] );
             break;
         case CrossProcessFlushCache:
             if (!pBTCpuNotifyFlushInstructionCache2) break;
@@ -1386,7 +1382,7 @@ void WINAPI Wow64ProcessPendingCrossProcessItems(void)
         }
         next = entry->next;
         RtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, entry );
-        entry = CROSS_PROCESS_LIST_ENTRY( &list->work_list, next );
+        entry = next ? CROSS_PROCESS_LIST_ENTRY( &list->work_list, next ) : NULL;
     }
 }
 

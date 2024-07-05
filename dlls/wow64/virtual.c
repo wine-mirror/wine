@@ -155,19 +155,18 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemory( UINT *args )
 
     if (!addr && (type & MEM_COMMIT)) type |= MEM_RESERVE;
 
-    if (!is_current)
-        send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
-                                         addr, size, 3, type, protect, 0 );
+    if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
+                                                      addr, size, 3, type, protect, 0 );
+    else if (pBTCpuNotifyMemoryAlloc) pBTCpuNotifyMemoryAlloc( addr, size, type, protect, FALSE, 0 );
 
     status = NtAllocateVirtualMemory( process, &addr, get_zero_bits( zero_bits ), &size, type, protect );
 
-    if (!is_current)
-        send_cross_process_notification( process, CrossProcessPostVirtualAlloc,
-                                         addr, size, 3, type, protect, status );
+    if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualAlloc,
+                                                      addr, size, 3, type, protect, status );
+    else if (pBTCpuNotifyMemoryAlloc) pBTCpuNotifyMemoryAlloc( addr, size, type, protect, TRUE, status );
 
     if (!status)
     {
-        if (is_current && pBTCpuNotifyMemoryAlloc) pBTCpuNotifyMemoryAlloc( addr, size, type, protect );
         put_addr( addr32, addr );
         put_size( size32, size );
     }
@@ -201,15 +200,16 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemoryEx( UINT *args )
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
                                                       addr, size, 3, type, protect, 0 );
+    else if (pBTCpuNotifyMemoryAlloc) pBTCpuNotifyMemoryAlloc( addr, size, type, protect, FALSE, 0 );
 
     status = NtAllocateVirtualMemoryEx( process, &addr, &size, type, protect, params64, count );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualAlloc,
                                                       addr, size, 3, type, protect, status );
+    else if (pBTCpuNotifyMemoryAlloc) pBTCpuNotifyMemoryAlloc( addr, size, type, protect, TRUE, status );
 
     if (!status)
     {
-        if (is_current && pBTCpuNotifyMemoryAlloc) pBTCpuNotifyMemoryAlloc( addr, size, type, protect );
         put_addr( addr32, addr );
         put_size( size32, size );
     }
@@ -288,17 +288,16 @@ NTSTATUS WINAPI wow64_NtFreeVirtualMemory( UINT *args )
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
 
-    if (is_current)
-    {
-        if (pBTCpuNotifyMemoryFree) pBTCpuNotifyMemoryFree( addr, size, type );
-    }
-    else send_cross_process_notification( process, CrossProcessPreVirtualFree,
-                                          addr, size, 2, type, 0 );
+    if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualFree,
+                                                      addr, size, 2, type, 0 );
+    else if (pBTCpuNotifyMemoryFree) pBTCpuNotifyMemoryFree( addr, size, type, FALSE, 0 );
 
     status = NtFreeVirtualMemory( process, &addr, &size, type );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualFree,
                                                       addr, size, 2, type, status );
+    else if (pBTCpuNotifyMemoryFree) pBTCpuNotifyMemoryFree( addr, size, type, TRUE, status );
+
     if (!status)
     {
         put_addr( addr32, addr );
@@ -506,17 +505,15 @@ NTSTATUS WINAPI wow64_NtProtectVirtualMemory( UINT *args )
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
 
-    if (is_current)
-    {
-        if (pBTCpuNotifyMemoryProtect) pBTCpuNotifyMemoryProtect( addr, size, new_prot );
-    }
-    else send_cross_process_notification( process, CrossProcessPreVirtualProtect,
-                                          addr, size, 2, new_prot, 0 );
+    if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualProtect,
+                                                      addr, size, 2, new_prot, 0 );
+    else if (pBTCpuNotifyMemoryProtect) pBTCpuNotifyMemoryProtect( addr, size, new_prot, FALSE, 0 );
 
     status = NtProtectVirtualMemory( process, &addr, &size, new_prot, old_prot );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualProtect,
                                                       addr, size, 2, new_prot, status );
+    else if (pBTCpuNotifyMemoryProtect) pBTCpuNotifyMemoryProtect( addr, size, new_prot, TRUE, status );
 
     if (!status)
     {
@@ -787,10 +784,13 @@ NTSTATUS WINAPI wow64_NtUnmapViewOfSection( UINT *args )
     HANDLE process = get_handle( &args );
     void *addr = get_ptr( &args );
 
-    if (pBTCpuNotifyUnmapViewOfSection && RtlIsCurrentProcess( process ))
-        pBTCpuNotifyUnmapViewOfSection( addr );
+    BOOL is_current = RtlIsCurrentProcess( process );
+    NTSTATUS status;
 
-    return NtUnmapViewOfSection( process, addr );
+    if (is_current && pBTCpuNotifyUnmapViewOfSection) pBTCpuNotifyUnmapViewOfSection( addr, FALSE, 0 );
+    status = NtUnmapViewOfSection( process, addr );
+    if (is_current && pBTCpuNotifyUnmapViewOfSection) pBTCpuNotifyUnmapViewOfSection( addr, TRUE, status );
+    return status;
 }
 
 
@@ -803,10 +803,13 @@ NTSTATUS WINAPI wow64_NtUnmapViewOfSectionEx( UINT *args )
     void *addr = get_ptr( &args );
     ULONG flags = get_ulong( &args );
 
-    if (pBTCpuNotifyUnmapViewOfSection && RtlIsCurrentProcess( process ))
-        pBTCpuNotifyUnmapViewOfSection( addr );
+    BOOL is_current = RtlIsCurrentProcess( process );
+    NTSTATUS status;
 
-    return NtUnmapViewOfSectionEx( process, addr, flags );
+    if (is_current && pBTCpuNotifyUnmapViewOfSection) pBTCpuNotifyUnmapViewOfSection( addr, FALSE, 0 );
+    status = NtUnmapViewOfSectionEx( process, addr, flags );
+    if (is_current && pBTCpuNotifyUnmapViewOfSection) pBTCpuNotifyUnmapViewOfSection( addr, TRUE, status );
+    return status;
 }
 
 

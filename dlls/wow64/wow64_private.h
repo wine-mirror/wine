@@ -41,11 +41,11 @@ extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock;
 
 extern void (WINAPI *pBTCpuNotifyFlushInstructionCache2)( const void *, SIZE_T );
 extern void (WINAPI *pBTCpuNotifyMapViewOfSection)( void * );
-extern void (WINAPI *pBTCpuNotifyMemoryAlloc)( void *, SIZE_T, ULONG, ULONG );
+extern void (WINAPI *pBTCpuNotifyMemoryAlloc)( void *, SIZE_T, ULONG, ULONG, BOOL, NTSTATUS );
 extern void (WINAPI *pBTCpuNotifyMemoryDirty)( void *, SIZE_T );
-extern void (WINAPI *pBTCpuNotifyMemoryFree)( void *, SIZE_T, ULONG );
-extern void (WINAPI *pBTCpuNotifyMemoryProtect)( void *, SIZE_T, ULONG );
-extern void (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void * );
+extern void (WINAPI *pBTCpuNotifyMemoryFree)( void *, SIZE_T, ULONG, BOOL, NTSTATUS );
+extern void (WINAPI *pBTCpuNotifyMemoryProtect)( void *, SIZE_T, ULONG, BOOL, NTSTATUS );
+extern void (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void *, BOOL, NTSTATUS );
 extern void (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * );
 extern void (WINAPI *pBTCpuThreadTerm)( HANDLE );
 
