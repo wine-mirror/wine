@@ -468,11 +468,55 @@ static GstCaps *transform_get_parsed_caps(GstCaps *caps, const char *media_type)
     return parsed_caps;
 }
 
+static bool transform_create_decoder_elements(struct wg_transform *transform,
+        const gchar *input_mime, const gchar *output_mime, GstElement **first, GstElement **last)
+{
+    GstCaps *parsed_caps = NULL, *sink_caps = NULL;
+    GstElement *element;
+    bool ret = false;
+
+    if (!strcmp(input_mime, "audio/x-raw") || !strcmp(input_mime, "video/x-raw"))
+        return true;
+
+    if (!(parsed_caps = transform_get_parsed_caps(transform->input_caps, input_mime)))
+        return false;
+
+    /* Since we append conversion elements, we don't want to filter decoders
+     * based on the actual output caps now. Matching decoders with the
+     * raw output media type should be enough.
+     */
+    if (!(sink_caps = gst_caps_new_empty_simple(output_mime)))
+        goto done;
+
+    if ((element = find_element(GST_ELEMENT_FACTORY_TYPE_PARSER, transform->input_caps, parsed_caps))
+            && !append_element(transform->container, element, first, last))
+        goto done;
+    else if (!element)
+    {
+        gst_caps_unref(parsed_caps);
+        parsed_caps = gst_caps_ref(transform->input_caps);
+    }
+
+    if (!(element = find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, parsed_caps, sink_caps))
+            || !append_element(transform->container, element, first, last))
+        goto done;
+
+    set_max_threads(element);
+
+    ret = true;
+
+done:
+    if (sink_caps)
+        gst_caps_unref(sink_caps);
+    if (parsed_caps)
+        gst_caps_unref(parsed_caps);
+    return ret;
+}
+
 NTSTATUS wg_transform_create(void *args)
 {
     struct wg_transform_create_params *params = args;
     GstElement *first = NULL, *last = NULL, *element;
-    GstCaps *sink_caps = NULL, *parsed_caps = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     const gchar *input_mime, *output_mime;
     GstPadTemplate *template = NULL;
@@ -531,33 +575,8 @@ NTSTATUS wg_transform_create(void *args)
     gst_pad_set_query_function(transform->my_sink, transform_sink_query_cb);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
 
-    if (!(parsed_caps = transform_get_parsed_caps(transform->input_caps, input_mime)))
+    if (!transform_create_decoder_elements(transform, input_mime, output_mime, &first, &last))
         goto out;
-
-    /* Since we append conversion elements, we don't want to filter decoders
-     * based on the actual output caps now. Matching decoders with the
-     * raw output media type should be enough.
-     */
-    if (!(sink_caps = gst_caps_new_empty_simple(output_mime)))
-        goto out;
-
-    if (strcmp(input_mime, "audio/x-raw") && strcmp(input_mime, "video/x-raw"))
-    {
-        if ((element = find_element(GST_ELEMENT_FACTORY_TYPE_PARSER, transform->input_caps, parsed_caps))
-                && !append_element(transform->container, element, &first, &last))
-            goto out;
-        else if (!element)
-        {
-            gst_caps_unref(parsed_caps);
-            parsed_caps = gst_caps_ref(transform->input_caps);
-        }
-
-        if (!(element = find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, parsed_caps, sink_caps))
-                || !append_element(transform->container, element, &first, &last))
-            goto out;
-
-        set_max_threads(element);
-    }
 
     if (g_str_has_prefix(output_mime, "audio/"))
     {
@@ -632,9 +651,6 @@ NTSTATUS wg_transform_create(void *args)
             || !push_event(transform->my_src, event))
         goto out;
 
-    gst_caps_unref(parsed_caps);
-    gst_caps_unref(sink_caps);
-
     GST_INFO("Created winegstreamer transform %p.", transform);
     params->transform = (wg_transform_t)(ULONG_PTR)transform;
     return STATUS_SUCCESS;
@@ -650,10 +666,6 @@ out:
         gst_object_unref(transform->my_src);
     if (transform->input_caps)
         gst_caps_unref(transform->input_caps);
-    if (parsed_caps)
-        gst_caps_unref(parsed_caps);
-    if (sink_caps)
-        gst_caps_unref(sink_caps);
     if (transform->allocator)
         wg_allocator_destroy(transform->allocator);
     if (transform->drain_query)
