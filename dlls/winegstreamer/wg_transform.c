@@ -513,10 +513,62 @@ done:
     return ret;
 }
 
+static bool transform_create_converter_elements(struct wg_transform *transform,
+        const gchar *output_mime, GstElement **first, GstElement **last)
+{
+    GstElement *element;
+
+    if (g_str_has_prefix(output_mime, "audio/"))
+    {
+        if (strcmp(output_mime, "audio/x-raw"))
+        {
+            GST_FIXME("output caps %"GST_PTR_FORMAT" not implemented!", transform->output_caps);
+            return false;
+        }
+        else
+        {
+            /* The MF audio decoder transforms allow decoding to various formats
+             * as well as resampling the audio at the same time, whereas
+             * GStreamer decoder plugins usually only support decoding to a
+             * single format and at the original rate.
+             *
+             * The WMA decoder transform also has output samples interleaved on
+             * Windows, whereas GStreamer avdec_wmav2 output uses
+             * non-interleaved format.
+             */
+            if (!(element = create_element("audioconvert", "base"))
+                    || !append_element(transform->container, element, first, last))
+                return false;
+            if (!(element = create_element("audioresample", "base"))
+                    || !append_element(transform->container, element, first, last))
+                return false;
+        }
+    }
+
+    if (g_str_has_prefix(output_mime, "video/"))
+    {
+        if (strcmp(output_mime, "video/x-raw"))
+        {
+            GST_FIXME("output caps %"GST_PTR_FORMAT" not implemented!", transform->output_caps);
+            return false;
+        }
+        else
+        {
+            if (!(element = create_element("videoconvert", "base"))
+                    || !append_element(transform->container, element, first, last))
+                return false;
+            /* Let GStreamer choose a default number of threads. */
+            gst_util_set_object_arg(G_OBJECT(element), "n-threads", "0");
+        }
+    }
+
+    return true;
+}
+
 NTSTATUS wg_transform_create(void *args)
 {
     struct wg_transform_create_params *params = args;
-    GstElement *first = NULL, *last = NULL, *element;
+    GstElement *first = NULL, *last = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     const gchar *input_mime, *output_mime;
     GstPadTemplate *template = NULL;
@@ -577,50 +629,8 @@ NTSTATUS wg_transform_create(void *args)
 
     if (!transform_create_decoder_elements(transform, input_mime, output_mime, &first, &last))
         goto out;
-
-    if (g_str_has_prefix(output_mime, "audio/"))
-    {
-        if (strcmp(output_mime, "audio/x-raw"))
-        {
-            GST_FIXME("output caps %"GST_PTR_FORMAT" not implemented!", transform->output_caps);
-            goto out;
-        }
-        else
-        {
-            /* The MF audio decoder transforms allow decoding to various formats
-             * as well as resampling the audio at the same time, whereas
-             * GStreamer decoder plugins usually only support decoding to a
-             * single format and at the original rate.
-             *
-             * The WMA decoder transform also has output samples interleaved on
-             * Windows, whereas GStreamer avdec_wmav2 output uses
-             * non-interleaved format.
-             */
-            if (!(element = create_element("audioconvert", "base"))
-                    || !append_element(transform->container, element, &first, &last))
-                goto out;
-            if (!(element = create_element("audioresample", "base"))
-                    || !append_element(transform->container, element, &first, &last))
-                goto out;
-        }
-    }
-
-    if (g_str_has_prefix(output_mime, "video/"))
-    {
-        if (strcmp(output_mime, "video/x-raw"))
-        {
-            GST_FIXME("output caps %"GST_PTR_FORMAT" not implemented!", transform->output_caps);
-            goto out;
-        }
-        else
-        {
-            if (!(element = create_element("videoconvert", "base"))
-                    || !append_element(transform->container, element, &first, &last))
-                goto out;
-            /* Let GStreamer choose a default number of threads. */
-            gst_util_set_object_arg(G_OBJECT(element), "n-threads", "0");
-        }
-    }
+    if (!transform_create_converter_elements(transform, output_mime, &first, &last))
+        goto out;
 
     if (!link_src_to_element(transform->my_src, first))
         goto out;
