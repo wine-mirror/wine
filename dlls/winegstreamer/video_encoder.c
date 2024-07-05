@@ -361,6 +361,12 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
             || FAILED(IMFMediaType_GetUINT32(type, &MF_MT_INTERLACE_MODE, &uint32_value)))
         return MF_E_INVALIDMEDIATYPE;
 
+    if (encoder->input_type)
+    {
+        IMFMediaType_Release(encoder->input_type);
+        encoder->input_type = NULL;
+    }
+
     if (encoder->output_type)
         IMFMediaType_Release(encoder->output_type);
     IMFMediaType_AddRef((encoder->output_type = type));
