@@ -3244,11 +3244,8 @@ SQLRETURN WINAPI SQLColAttributesW(SQLHSTMT StatementHandle, SQLUSMALLINT Column
                                    SQLPOINTER CharacterAttributes, SQLSMALLINT BufferLength, SQLSMALLINT *StringLength,
                                    SQLLEN *NumericAttributes)
 {
-    struct SQLColAttributesW_params params = { 0, ColumnNumber, FieldIdentifier, CharacterAttributes, BufferLength,
-                                               StringLength };
     struct handle *handle = StatementHandle;
-    INT64 attrs;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, ColumnNumber %d, FieldIdentifier %d, CharacterAttributes %p, BufferLength %d, "
           "StringLength %p, NumericAttributes %p)\n", StatementHandle, ColumnNumber, FieldIdentifier,
@@ -3256,15 +3253,25 @@ SQLRETURN WINAPI SQLColAttributesW(SQLHSTMT StatementHandle, SQLUSMALLINT Column
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle   = handle->unix_handle;
-    params.NumericAttributes = &attrs;
-    if (SUCCESS((ret = ODBC_CALL( SQLColAttributesW, &params )))) *NumericAttributes = attrs;
-
-    if (ret == SQL_SUCCESS && SQLColAttributes_KnownStringAttribute(FieldIdentifier) && CharacterAttributes &&
-        StringLength && *StringLength != wcslen(CharacterAttributes) * 2)
+    if (handle->unix_handle)
     {
-        TRACE("CHEAT: resetting name length for ADO\n");
-        *StringLength = wcslen(CharacterAttributes) * 2;
+        INT64 attrs;
+        struct SQLColAttributesW_params params = { handle->unix_handle, ColumnNumber, FieldIdentifier,
+                                                   CharacterAttributes, BufferLength, StringLength, &attrs };
+        if (SUCCESS((ret = ODBC_CALL( SQLColAttributesW, &params )))) *NumericAttributes = attrs;
+
+        if (ret == SQL_SUCCESS && SQLColAttributes_KnownStringAttribute(FieldIdentifier) && CharacterAttributes &&
+            StringLength && *StringLength != wcslen(CharacterAttributes) * 2)
+        {
+            TRACE("CHEAT: resetting name length for ADO\n");
+            *StringLength = wcslen(CharacterAttributes) * 2;
+        }
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLColAttributesW( handle->win32_handle, ColumnNumber, FieldIdentifier,
+                                                      CharacterAttributes, BufferLength, StringLength,
+                                                      NumericAttributes );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3278,10 +3285,9 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
                              WCHAR *UserName, SQLSMALLINT NameLength2, WCHAR *Authentication,
                              SQLSMALLINT NameLength3)
 {
-    struct SQLConnectW_params params = { 0, ServerName, NameLength1, UserName, NameLength2, Authentication,
-                                         NameLength3 };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    WCHAR *filename;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, ServerName %s, NameLength1 %d, UserName %s, NameLength2 %d, Authentication %s,"
           " NameLength3 %d)\n", ConnectionHandle, debugstr_wn(ServerName, NameLength1), NameLength1,
@@ -3289,8 +3295,50 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLConnectW, &params );
+    if (!(filename = get_driver_filename( ServerName )))
+    {
+        WARN( "can't find driver filename\n" );
+        goto done;
+    }
+
+    if (has_suffix( filename, L".dll" ))
+    {
+        if (!(handle->win32_funcs = load_driver( filename )))
+        {
+            WARN( "failed to load driver %s\n", debugstr_w(filename) );
+            goto done;
+        }
+        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
+
+        if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
+                                                                 &handle->parent->win32_handle )))) goto done;
+
+        handle->parent->win32_funcs = handle->win32_funcs;
+        if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
+                                                                 &handle->win32_handle )))) goto done;
+
+        ret = handle->win32_funcs->SQLConnectW( handle->win32_handle, ServerName, NameLength1, UserName, NameLength2,
+                                                Authentication, NameLength3 );
+    }
+    else
+    {
+        struct SQLAllocEnv_params params_alloc_env = { &handle->parent->unix_handle };
+        struct SQLAllocConnect_params params_alloc_connect = { 0, &handle->unix_handle };
+        struct SQLConnectW_params params_connect = { 0, ServerName, NameLength1, UserName, NameLength2,
+                                                     Authentication, NameLength3 };
+
+        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+        if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+
+        params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
+        if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+
+        params_connect.ConnectionHandle = handle->unix_handle;
+        ret = ODBC_CALL( SQLConnectW, &params_connect );
+    }
+
+done:
+    free( filename );
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3302,12 +3350,8 @@ SQLRETURN WINAPI SQLDescribeColW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNu
                                  SQLSMALLINT BufferLength, SQLSMALLINT *NameLength, SQLSMALLINT *DataType,
                                  SQLULEN *ColumnSize, SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
 {
-    struct SQLDescribeColW_params params = { 0, ColumnNumber, ColumnName, BufferLength, NameLength, DataType,
-                                             NULL, DecimalDigits, Nullable };
     struct handle *handle = StatementHandle;
-    SQLSMALLINT dummy;
-    UINT64 size;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, ColumnNumber %d, ColumnName %p, BufferLength %d, NameLength %p, DataType %p,"
           " ColumnSize %p, DecimalDigits %p, Nullable %p)\n", StatementHandle, ColumnNumber, ColumnName,
@@ -3315,20 +3359,20 @@ SQLRETURN WINAPI SQLDescribeColW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNu
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    if (!NameLength) params.NameLength = &dummy; /* workaround for drivers that don't accept NULL NameLength */
-    params.ColumnSize      = &size;
-    if (SUCCESS((ret = ODBC_CALL( SQLDescribeColW, &params ))))
+    if (handle->unix_handle)
     {
-        if (ColumnName && NameLength) TRACE("ColumnName %s\n", debugstr_wn(ColumnName, *NameLength));
-        if (DataType) TRACE("DataType %d\n", *DataType);
-        if (ColumnSize)
-        {
-            *ColumnSize = size;
-            TRACE("ColumnSize %s\n", debugstr_sqlulen(*ColumnSize));
-        }
-        if (DecimalDigits) TRACE("DecimalDigits %d\n", *DecimalDigits);
-        if (Nullable) TRACE("Nullable %d\n", *Nullable);
+        SQLSMALLINT dummy;
+        UINT64 size;
+        struct SQLDescribeColW_params params = { handle->unix_handle, ColumnNumber, ColumnName, BufferLength,
+                                                 NameLength, DataType, &size, DecimalDigits, Nullable };
+        if (!NameLength) params.NameLength = &dummy; /* workaround for drivers that don't accept NULL NameLength */
+
+        if (SUCCESS((ret = ODBC_CALL( SQLDescribeCol, &params ))) && ColumnSize) *ColumnSize = size;
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLDescribeColW( handle->win32_handle, ColumnNumber, ColumnName, BufferLength,
+                                                    NameLength, DataType, ColumnSize, DecimalDigits, Nullable );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3342,24 +3386,35 @@ SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, 
                            WCHAR *SqlState, SQLINTEGER *NativeError, WCHAR *MessageText,
                            SQLSMALLINT BufferLength, SQLSMALLINT *TextLength)
 {
-    struct SQLErrorW_params params = { 0, 0, 0, SqlState, NativeError, MessageText, BufferLength, TextLength };
     struct handle *env = EnvironmentHandle, *con = ConnectionHandle, *stmt = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(EnvironmentHandle %p, ConnectionHandle %p, StatementHandle %p, SqlState %p, NativeError %p,"
           " MessageText %p, BufferLength %d, TextLength %p)\n", EnvironmentHandle, ConnectionHandle,
           StatementHandle, SqlState, NativeError, MessageText, BufferLength, TextLength);
 
-    if (env) params.EnvironmentHandle = env->unix_handle;
-    if (con) params.ConnectionHandle = con->unix_handle;
-    if (stmt) params.StatementHandle = stmt->unix_handle;
-    if (SUCCESS((ret = ODBC_CALL( SQLErrorW, &params ))))
+    if ((env && env->unix_handle) || (con && con->unix_handle) || (stmt && stmt->unix_handle))
+    {
+        struct SQLErrorW_params params = { env ? env->unix_handle : 0,
+                                           con ? con->unix_handle : 0,
+                                           stmt ? stmt->unix_handle : 0,
+                                           SqlState, NativeError, MessageText, BufferLength, TextLength };
+        ret = ODBC_CALL( SQLErrorW, &params );
+    }
+    else if ((env && env->win32_handle) || (con && con->win32_handle) || (stmt && stmt->win32_handle))
+    {
+        ret = env->win32_funcs->SQLErrorW( env ? env->win32_handle : NULL,
+                                           con ? con->win32_handle : NULL,
+                                           stmt ? stmt->win32_handle : NULL,
+                                           SqlState, NativeError, MessageText, BufferLength, TextLength );
+    }
+
+    if (SUCCESS(ret ))
     {
         TRACE(" SqlState %s\n", debugstr_wn(SqlState, 5));
         TRACE(" Error %d\n", *NativeError);
         TRACE(" MessageText %s\n", debugstr_wn(MessageText, *TextLength));
     }
-
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3369,17 +3424,24 @@ SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, 
  */
 SQLRETURN WINAPI SQLExecDirectW(SQLHSTMT StatementHandle, WCHAR *StatementText, SQLINTEGER TextLength)
 {
-    struct SQLExecDirectW_params params = { 0, StatementText, TextLength };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, StatementText %s, TextLength %d)\n", StatementHandle,
           debugstr_wn(StatementText, TextLength), TextLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLExecDirectW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLExecDirectW_params params = { handle->unix_handle, StatementText, TextLength };
+        ret = ODBC_CALL( SQLExecDirectW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLExecDirectW( handle->win32_handle, StatementText, TextLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3390,17 +3452,24 @@ SQLRETURN WINAPI SQLExecDirectW(SQLHSTMT StatementHandle, WCHAR *StatementText, 
 SQLRETURN WINAPI SQLGetCursorNameW(SQLHSTMT StatementHandle, WCHAR *CursorName, SQLSMALLINT BufferLength,
                                    SQLSMALLINT *NameLength)
 {
-    struct SQLGetCursorNameW_params params = { 0, CursorName, BufferLength, NameLength };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CursorName %p, BufferLength %d, NameLength %p)\n", StatementHandle, CursorName,
           BufferLength, NameLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetCursorNameW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetCursorNameW_params params = { handle->unix_handle, CursorName, BufferLength, NameLength };
+        ret = ODBC_CALL( SQLGetCursorNameW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetCursorNameW( handle->win32_handle, CursorName, BufferLength, NameLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3410,17 +3479,24 @@ SQLRETURN WINAPI SQLGetCursorNameW(SQLHSTMT StatementHandle, WCHAR *CursorName, 
  */
 SQLRETURN WINAPI SQLPrepareW(SQLHSTMT StatementHandle, WCHAR *StatementText, SQLINTEGER TextLength)
 {
-    struct SQLPrepareW_params params = { 0, StatementText, TextLength };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, StatementText %s, TextLength %d)\n", StatementHandle,
           debugstr_wn(StatementText, TextLength), TextLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLPrepareW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLPrepareW_params params = { handle->unix_handle, StatementText, TextLength };
+        ret = ODBC_CALL( SQLPrepareW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLPrepareW( handle->win32_handle, StatementText, TextLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3430,17 +3506,24 @@ SQLRETURN WINAPI SQLPrepareW(SQLHSTMT StatementHandle, WCHAR *StatementText, SQL
  */
 SQLRETURN WINAPI SQLSetCursorNameW(SQLHSTMT StatementHandle, WCHAR *CursorName, SQLSMALLINT NameLength)
 {
-    struct SQLSetCursorNameW_params params = { 0, CursorName, NameLength };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CursorName %s, NameLength %d)\n", StatementHandle,
           debugstr_wn(CursorName, NameLength), NameLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLSetCursorNameW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLSetCursorNameW_params params = { handle->unix_handle, CursorName, NameLength };
+        ret = ODBC_CALL( SQLSetCursorNameW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLSetCursorNameW( handle->win32_handle, CursorName, NameLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3453,11 +3536,8 @@ SQLRETURN WINAPI SQLColAttributeW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnN
                                   SQLSMALLINT BufferLength, SQLSMALLINT *StringLength,
                                   SQLLEN *NumericAttribute)
 {
-    struct SQLColAttributeW_params params = { 0, ColumnNumber, FieldIdentifier, CharacterAttribute, BufferLength,
-                                              StringLength };
     struct handle *handle = StatementHandle;
-    INT64 attr;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("StatementHandle %p ColumnNumber %d FieldIdentifier %d CharacterAttribute %p BufferLength %d"
           " StringLength %p NumericAttribute %p\n", StatementHandle, ColumnNumber, FieldIdentifier,
@@ -3465,15 +3545,26 @@ SQLRETURN WINAPI SQLColAttributeW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnN
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle  = handle->unix_handle;
-    params.NumericAttribute = &attr;
-    if (SUCCESS((ret = ODBC_CALL( SQLColAttributeW, &params ))) && NumericAttribute) *NumericAttribute = attr;
-
-    if (ret == SQL_SUCCESS && CharacterAttribute != NULL && SQLColAttributes_KnownStringAttribute(FieldIdentifier) &&
-        StringLength && *StringLength != wcslen(CharacterAttribute) * 2)
+    if (handle->unix_handle)
     {
-        TRACE("CHEAT: resetting name length for ADO\n");
-        *StringLength = wcslen(CharacterAttribute) * 2;
+        INT64 attr;
+        struct SQLColAttributeW_params params = { handle->unix_handle, ColumnNumber, FieldIdentifier,
+                                                  CharacterAttribute, BufferLength, StringLength, &attr };
+
+        if (SUCCESS((ret = ODBC_CALL( SQLColAttributeW, &params ))) && NumericAttribute) *NumericAttribute = attr;
+
+        if (ret == SQL_SUCCESS && CharacterAttribute != NULL && SQLColAttributes_KnownStringAttribute(FieldIdentifier) &&
+            StringLength && *StringLength != wcslen(CharacterAttribute) * 2)
+        {
+            TRACE("CHEAT: resetting name length for ADO\n");
+            *StringLength = wcslen(CharacterAttribute) * 2;
+        }
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLColAttributeW( handle->win32_handle, ColumnNumber, FieldIdentifier,
+                                                     CharacterAttribute, BufferLength, StringLength,
+                                                     NumericAttribute );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3486,17 +3577,26 @@ SQLRETURN WINAPI SQLColAttributeW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnN
 SQLRETURN WINAPI SQLGetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribute, SQLPOINTER Value,
                                     SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
-    struct SQLGetConnectAttrW_params params = { 0, Attribute, Value, BufferLength, StringLength };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, Attribute %d, Value %p, BufferLength %d, StringLength %p)\n", ConnectionHandle,
           Attribute, Value, BufferLength, StringLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetConnectAttrW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetConnectAttrW_params params = { handle->unix_handle, Attribute, Value, BufferLength,
+                                                    StringLength };
+        ret = ODBC_CALL( SQLGetConnectAttrW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetConnectAttrW( handle->win32_handle, Attribute, Value, BufferLength,
+                                                       StringLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3507,17 +3607,26 @@ SQLRETURN WINAPI SQLGetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
 SQLRETURN WINAPI SQLGetDescFieldW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
                                   SQLPOINTER Value, SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
-    struct SQLGetDescFieldW_params params = { 0, RecNumber, FieldIdentifier, Value, BufferLength, StringLength };
     struct handle *handle = DescriptorHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(DescriptorHandle %p, RecNumber %d, FieldIdentifier %d, Value %p, BufferLength %d, StringLength %p)\n",
           DescriptorHandle, RecNumber, FieldIdentifier, Value, BufferLength, StringLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.DescriptorHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetDescFieldW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetDescFieldW_params params = { handle->unix_handle, RecNumber, FieldIdentifier, Value,
+                                                  BufferLength, StringLength };
+        ret = ODBC_CALL( SQLGetDescFieldW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetDescFieldW( handle->win32_handle, RecNumber, FieldIdentifier, Value,
+                                                     BufferLength, StringLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3530,11 +3639,8 @@ SQLRETURN WINAPI SQLGetDescRecW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber
                                 SQLSMALLINT *SubType, SQLLEN *Length, SQLSMALLINT *Precision,
                                 SQLSMALLINT *Scale, SQLSMALLINT *Nullable)
 {
-    struct SQLGetDescRecW_params params = { 0, RecNumber, Name, BufferLength, StringLength, Type, SubType,
-                                            NULL, Precision, Scale, Nullable };
     struct handle *handle = DescriptorHandle;
-    INT64 len;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(DescriptorHandle %p, RecNumber %d, Name %p, BufferLength %d, StringLength %p, Type %p, SubType %p,"
           " Length %p, Precision %p, Scale %p, Nullable %p)\n", DescriptorHandle, RecNumber, Name, BufferLength,
@@ -3542,9 +3648,19 @@ SQLRETURN WINAPI SQLGetDescRecW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.DescriptorHandle = handle->unix_handle;
-    params.Length           = &len;
-    if (SUCCESS((ret = ODBC_CALL( SQLGetDescRecW, &params )))) *Length = len;
+    if (handle->unix_handle)
+    {
+        INT64 len;
+        struct SQLGetDescRecW_params params = { handle->unix_handle, RecNumber, Name, BufferLength, StringLength,
+                                                Type, SubType, &len, Precision, Scale, Nullable };
+        if (SUCCESS((ret = ODBC_CALL( SQLGetDescRecW, &params )))) *Length = len;
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetDescRecW( handle->win32_handle, RecNumber, Name, BufferLength, StringLength,
+                                                   Type, SubType, Length, Precision, Scale, Nullable );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3556,18 +3672,26 @@ SQLRETURN WINAPI SQLGetDiagFieldW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLS
                                   SQLSMALLINT DiagIdentifier, SQLPOINTER DiagInfo, SQLSMALLINT BufferLength,
                                   SQLSMALLINT *StringLength)
 {
-    struct SQLGetDiagFieldW_params params = { HandleType, 0, RecNumber, DiagIdentifier, DiagInfo, BufferLength,
-                                              StringLength };
     struct handle *handle = Handle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(HandleType %d, Handle %p, RecNumber %d, DiagIdentifier %d, DiagInfo %p, BufferLength %d,"
           " StringLength %p)\n", HandleType, Handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength, StringLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.Handle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetDiagFieldW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetDiagFieldW_params params = { HandleType, handle->unix_handle, RecNumber, DiagIdentifier,
+                                                  DiagInfo, BufferLength, StringLength };
+        ret = ODBC_CALL( SQLGetDiagFieldW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetDiagFieldW( HandleType, handle->win32_handle, RecNumber, DiagIdentifier,
+                                                     DiagInfo, BufferLength, StringLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3579,10 +3703,8 @@ SQLRETURN WINAPI SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMA
                                 SQLINTEGER *NativeError, WCHAR *MessageText, SQLSMALLINT BufferLength,
                                 SQLSMALLINT *TextLength)
 {
-    struct SQLGetDiagRecW_params params = { HandleType, 0, RecNumber, SqlState, NativeError, MessageText,
-                                            BufferLength, TextLength };
     struct handle *handle = Handle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(HandleType %d, Handle %p, RecNumber %d, SqlState %p, NativeError %p, MessageText %p, BufferLength %d,"
           " TextLength %p)\n", HandleType, Handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
@@ -3590,8 +3712,18 @@ SQLRETURN WINAPI SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMA
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.Handle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetDiagRecW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetDiagRecW_params params = { HandleType, handle->unix_handle, RecNumber, SqlState, NativeError,
+                                                MessageText, BufferLength, TextLength };
+        ret = ODBC_CALL( SQLGetDiagRecW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetDiagRecW( HandleType, handle->win32_handle, RecNumber, SqlState, NativeError,
+                                                   MessageText, BufferLength, TextLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3602,9 +3734,8 @@ SQLRETURN WINAPI SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMA
 SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute, SQLPOINTER Value,
                                  SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
-    struct SQLGetStmtAttrW_params params = { 0, Attribute, Value, BufferLength, StringLength };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, Attribute %d, Value %p, BufferLength %d, StringLength %p)\n", StatementHandle,
           Attribute, Value, BufferLength, StringLength);
@@ -3617,8 +3748,16 @@ SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetStmtAttrW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetStmtAttrW_params params = { handle->unix_handle, Attribute, Value, BufferLength, StringLength };
+        ret = ODBC_CALL( SQLGetStmtAttrW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetStmtAttrW( handle->win32_handle, Attribute, Value, BufferLength, StringLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3629,17 +3768,24 @@ SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
 SQLRETURN WINAPI SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribute, SQLPOINTER Value,
                                     SQLINTEGER StringLength)
 {
-    struct SQLSetConnectAttrW_params params = { 0, Attribute, Value, StringLength };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, Attribute %d, Value %p, StringLength %d)\n", ConnectionHandle, Attribute,
           Value, StringLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLSetConnectAttrW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLSetConnectAttrW_params params = { handle->unix_handle, Attribute, Value, StringLength };
+        ret = ODBC_CALL( SQLSetConnectAttrW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLSetConnectAttrW( handle->win32_handle, Attribute, Value, StringLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3651,10 +3797,8 @@ SQLRETURN WINAPI SQLColumnsW(SQLHSTMT StatementHandle, WCHAR *CatalogName, SQLSM
                              WCHAR *SchemaName, SQLSMALLINT NameLength2, WCHAR *TableName,
                              SQLSMALLINT NameLength3, WCHAR *ColumnName, SQLSMALLINT NameLength4)
 {
-    struct SQLColumnsW_params params = { 0, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
-                                         NameLength3, ColumnName, NameLength4 };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, ColumnName %s, NameLength4 %d)\n", StatementHandle,
@@ -3663,8 +3807,18 @@ SQLRETURN WINAPI SQLColumnsW(SQLHSTMT StatementHandle, WCHAR *CatalogName, SQLSM
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLColumnsW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLColumnsW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName, NameLength2,
+                                             TableName, NameLength3, ColumnName, NameLength4 };
+        ret = ODBC_CALL( SQLColumnsW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLColumnsW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
+                                                NameLength2, TableName, NameLength3, ColumnName, NameLength4 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3676,10 +3830,9 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
                                    SQLSMALLINT Length, WCHAR *OutConnectionString, SQLSMALLINT BufferLength,
                                    SQLSMALLINT *Length2, SQLUSMALLINT DriverCompletion)
 {
-    struct SQLDriverConnectW_params params = { 0, WindowHandle, InConnectionString, Length, OutConnectionString,
-                                               BufferLength, Length2, DriverCompletion };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    WCHAR *datasource, *filename = NULL;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
           " BufferLength %d, Length2 %p, DriverCompletion %d)\n", ConnectionHandle, WindowHandle,
@@ -3688,8 +3841,57 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLDriverConnectW, &params );
+    /* FIXME: try DRIVER attribute if DSN is absent */
+    if (!(datasource = get_datasource( InConnectionString )))
+    {
+        WARN( "can't find data source\n" );
+        goto done;
+    }
+    if (!(filename = get_driver_filename( datasource )))
+    {
+        WARN( "can't find driver filename\n" );
+        goto done;
+    }
+
+    if (has_suffix( filename, L".dll" ))
+    {
+        if (!(handle->win32_funcs = load_driver( filename )))
+        {
+            WARN( "failed to load driver %s\n", debugstr_w(filename) );
+            goto done;
+        }
+        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
+
+        if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
+                                                                 &handle->parent->win32_handle )))) goto done;
+
+        handle->parent->win32_funcs = handle->win32_funcs;
+        if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
+                                                                 &handle->win32_handle )))) goto done;
+
+        ret = handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, WindowHandle, InConnectionString, Length,
+                                                      OutConnectionString, BufferLength, Length2, DriverCompletion );
+    }
+    else
+    {
+        struct SQLAllocEnv_params params_alloc_env = { &handle->parent->unix_handle };
+        struct SQLAllocConnect_params params_alloc_connect = { 0, &handle->unix_handle };
+        struct SQLDriverConnectW_params params = { 0, WindowHandle, InConnectionString, Length, OutConnectionString,
+                                                   BufferLength, Length2, DriverCompletion };
+
+        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+        if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+
+        params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
+        if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+
+        params.ConnectionHandle = handle->unix_handle;
+        ret = ODBC_CALL( SQLDriverConnectW, &params );
+    }
+
+done:
+    free( filename );
+    free( datasource );
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3699,16 +3901,23 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
  */
 SQLRETURN WINAPI SQLGetConnectOptionW(SQLHDBC ConnectionHandle, SQLUSMALLINT Option, SQLPOINTER Value)
 {
-    struct SQLGetConnectOptionW_params params = { 0, Option, Value };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, Option %d, Value %p)\n", ConnectionHandle, Option, Value);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetConnectOptionW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetConnectOptionW_params params = { handle->unix_handle, Option, Value };
+        ret = ODBC_CALL( SQLGetConnectOptionW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetConnectOptionW( handle->win32_handle, Option, Value );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3719,17 +3928,24 @@ SQLRETURN WINAPI SQLGetConnectOptionW(SQLHDBC ConnectionHandle, SQLUSMALLINT Opt
 SQLRETURN WINAPI SQLGetInfoW(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQLPOINTER InfoValue,
                              SQLSMALLINT BufferLength, SQLSMALLINT *StringLength)
 {
-    struct SQLGetInfoW_params params = { 0, InfoType, InfoValue, BufferLength, StringLength };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle, %p, InfoType %d, InfoValue %p, BufferLength %d, StringLength %p)\n", ConnectionHandle,
           InfoType, InfoValue, BufferLength, StringLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetInfoW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetInfoW_params params = { handle->unix_handle, InfoType, InfoValue, BufferLength, StringLength };
+        ret = ODBC_CALL( SQLGetInfoW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetInfoW( handle->win32_handle, InfoType, InfoValue, BufferLength, StringLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3739,16 +3955,23 @@ SQLRETURN WINAPI SQLGetInfoW(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQ
  */
 SQLRETURN WINAPI SQLGetTypeInfoW(SQLHSTMT StatementHandle, SQLSMALLINT DataType)
 {
-    struct SQLGetTypeInfoW_params params = { 0, DataType };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, DataType %d)\n", StatementHandle, DataType);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLGetTypeInfoW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLGetTypeInfoW_params params = { handle->unix_handle, DataType };
+        ret = ODBC_CALL( SQLGetTypeInfoW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLGetTypeInfoW( handle->win32_handle, DataType );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3758,16 +3981,23 @@ SQLRETURN WINAPI SQLGetTypeInfoW(SQLHSTMT StatementHandle, SQLSMALLINT DataType)
  */
 SQLRETURN WINAPI SQLSetConnectOptionW(SQLHDBC ConnectionHandle, SQLUSMALLINT Option, SQLULEN Value)
 {
-    struct SQLSetConnectOptionW_params params = { 0, Option, Value };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, Option %d, Value %s)\n", ConnectionHandle, Option, debugstr_sqllen(Value));
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLSetConnectOptionW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLSetConnectOptionW_params params = { handle->unix_handle, Option, Value };
+        ret = ODBC_CALL( SQLSetConnectOptionW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLSetConnectOptionW( handle->win32_handle, Option, Value );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3780,10 +4010,8 @@ SQLRETURN WINAPI SQLSpecialColumnsW(SQLHSTMT StatementHandle, SQLUSMALLINT Ident
                                     SQLSMALLINT NameLength2, SQLWCHAR *TableName, SQLSMALLINT NameLength3,
                                     SQLUSMALLINT Scope, SQLUSMALLINT Nullable)
 {
-    struct SQLSpecialColumnsW_params params = { 0, IdentifierType, CatalogName, NameLength1, SchemaName, NameLength2,
-                                                TableName, NameLength3, Scope, Nullable };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, IdentifierType %d, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d,"
           " TableName %s, NameLength3 %d, Scope %d, Nullable %d)\n", StatementHandle, IdentifierType,
@@ -3792,8 +4020,19 @@ SQLRETURN WINAPI SQLSpecialColumnsW(SQLHSTMT StatementHandle, SQLUSMALLINT Ident
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLSpecialColumnsW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLSpecialColumnsW_params params = { handle->unix_handle, IdentifierType, CatalogName, NameLength1,
+                                                    SchemaName, NameLength2, TableName, NameLength3, Scope, Nullable };
+        ret = ODBC_CALL( SQLSpecialColumnsW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLSpecialColumnsW( handle->win32_handle, IdentifierType, CatalogName,
+                                                       NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                                       Scope, Nullable );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3805,10 +4044,8 @@ SQLRETURN WINAPI SQLStatisticsW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
                                 SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName,
                                 SQLSMALLINT NameLength3, SQLUSMALLINT Unique, SQLUSMALLINT Reserved)
 {
-    struct SQLStatisticsW_params params = { 0, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
-                                            NameLength3, Unique, Reserved };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d SchemaName %s, NameLength2 %d, TableName %s"
           " NameLength3 %d, Unique %d, Reserved %d)\n", StatementHandle,
@@ -3817,8 +4054,18 @@ SQLRETURN WINAPI SQLStatisticsW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLStatisticsW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLStatisticsW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
+                                                NameLength2, TableName, NameLength3, Unique, Reserved };
+        ret = ODBC_CALL( SQLStatisticsW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLStatisticsW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
+                                                   NameLength2, TableName, NameLength3, Unique, Reserved );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3830,10 +4077,8 @@ SQLRETURN WINAPI SQLTablesW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQL
                             SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName,
                             SQLSMALLINT NameLength3, SQLWCHAR *TableType, SQLSMALLINT NameLength4)
 {
-    struct SQLTablesW_params params = { 0, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
-                                        NameLength3, TableType, NameLength4 };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, TableType %s, NameLength4 %d)\n", StatementHandle,
@@ -3842,8 +4087,18 @@ SQLRETURN WINAPI SQLTablesW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQL
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLTablesW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLTablesW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName, NameLength2,
+                                            TableName, NameLength3, TableType, NameLength4 };
+        ret = ODBC_CALL( SQLTablesW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLTablesW( handle->win32_handle, CatalogName, NameLength1, SchemaName, NameLength2,
+                                               TableName, NameLength3, TableType, NameLength4 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3854,10 +4109,9 @@ SQLRETURN WINAPI SQLTablesW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQL
 SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnectionString, SQLSMALLINT StringLength1,
                                    SQLWCHAR *OutConnectionString, SQLSMALLINT BufferLength, SQLSMALLINT *StringLength2)
 {
-    struct SQLBrowseConnectW_params params = { 0, InConnectionString, StringLength1, OutConnectionString,
-                                               BufferLength, StringLength2 };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    WCHAR *datasource, *filename = NULL;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InConnectionString %s, StringLength1 %d, OutConnectionString %p, BufferLength %d, "
           "StringLength2 %p)\n", ConnectionHandle, debugstr_wn(InConnectionString, StringLength1), StringLength1,
@@ -3865,8 +4119,57 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLBrowseConnectW, &params );
+    /* FIXME: try DRIVER attribute if DSN is absent */
+    if (!(datasource = get_datasource( InConnectionString )))
+    {
+        WARN( "can't find data source\n" );
+        goto done;
+    }
+    if (!(filename = get_driver_filename( datasource )))
+    {
+        WARN( "can't find driver filename\n" );
+        goto done;
+    }
+
+    if (has_suffix( filename, L".dll" ))
+    {
+        if (!(handle->win32_funcs = load_driver( filename )))
+        {
+            WARN( "failed to load driver %s\n", debugstr_w(filename) );
+            goto done;
+        }
+        TRACE( "using Windows driver %s\n", debugstr_w(filename) );
+
+        if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
+                                                                 &handle->parent->win32_handle )))) goto done;
+
+        handle->parent->win32_funcs = handle->win32_funcs;
+        if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
+                                                                 &handle->win32_handle )))) goto done;
+
+        ret = handle->win32_funcs->SQLBrowseConnectW( handle->win32_handle, InConnectionString, StringLength1,
+                                                      OutConnectionString, BufferLength, StringLength2 );
+    }
+    else
+    {
+        struct SQLAllocEnv_params params_alloc_env = { &handle->parent->unix_handle };
+        struct SQLAllocConnect_params params_alloc_connect = { 0, &handle->unix_handle };
+        struct SQLBrowseConnectW_params params = { 0, InConnectionString, StringLength1, OutConnectionString,
+                                                   BufferLength, StringLength2 };
+
+        TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+        if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+
+        params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
+        if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+
+        params.ConnectionHandle = handle->unix_handle;
+        ret = ODBC_CALL( SQLBrowseConnectW, &params );
+    }
+
+done:
+    free( filename );
+    free( datasource );
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3878,10 +4181,8 @@ SQLRETURN WINAPI SQLColumnPrivilegesW(SQLHSTMT StatementHandle, SQLWCHAR *Catalo
                                       SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName,
                                       SQLSMALLINT NameLength3, SQLWCHAR *ColumnName, SQLSMALLINT NameLength4)
 {
-    struct SQLColumnPrivilegesW_params params = { 0, CatalogName, NameLength1, SchemaName, NameLength2,
-                                                  TableName, NameLength3, ColumnName, NameLength4 };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, ColumnName %s, NameLength3 %d)\n", StatementHandle,
@@ -3892,8 +4193,18 @@ SQLRETURN WINAPI SQLColumnPrivilegesW(SQLHSTMT StatementHandle, SQLWCHAR *Catalo
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLColumnPrivilegesW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLColumnPrivilegesW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
+                                                      NameLength2, TableName, NameLength3, ColumnName, NameLength4 };
+        ret = ODBC_CALL( SQLColumnPrivilegesW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLColumnPrivilegesW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
+                                                         NameLength2, TableName, NameLength3, ColumnName, NameLength4 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -3975,11 +4286,8 @@ SQLRETURN WINAPI SQLForeignKeysW(SQLHSTMT StatementHandle, SQLWCHAR *PkCatalogNa
                                  SQLWCHAR *FkSchemaName, SQLSMALLINT NameLength5, SQLWCHAR *FkTableName,
                                  SQLSMALLINT NameLength6)
 {
-    struct SQLForeignKeysW_params params = { 0, PkCatalogName, NameLength1, PkSchemaName, NameLength2,
-                                             PkTableName, NameLength2, FkCatalogName, NameLength3,
-                                             FkSchemaName, NameLength5, FkTableName, NameLength6 };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, PkCatalogName %s, NameLength1 %d, PkSchemaName %s, NameLength2 %d,"
           " PkTableName %s, NameLength3 %d, FkCatalogName %s, NameLength4 %d, FkSchemaName %s,"
@@ -3993,8 +4301,20 @@ SQLRETURN WINAPI SQLForeignKeysW(SQLHSTMT StatementHandle, SQLWCHAR *PkCatalogNa
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLForeignKeysW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLForeignKeysW_params params = { handle->unix_handle, PkCatalogName, NameLength1, PkSchemaName,
+                                                 NameLength2, PkTableName, NameLength2, FkCatalogName, NameLength3,
+                                                 FkSchemaName, NameLength5, FkTableName, NameLength6 };
+        ret = ODBC_CALL( SQLForeignKeysW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLForeignKeysW( handle->win32_handle, PkCatalogName, NameLength1, PkSchemaName,
+                                                    NameLength2, PkTableName, NameLength3, FkCatalogName, NameLength4,
+                                                    FkSchemaName, NameLength5, FkTableName, NameLength6 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -4005,10 +4325,8 @@ SQLRETURN WINAPI SQLForeignKeysW(SQLHSTMT StatementHandle, SQLWCHAR *PkCatalogNa
 SQLRETURN WINAPI SQLNativeSqlW(SQLHDBC ConnectionHandle, SQLWCHAR *InStatementText, SQLINTEGER TextLength1,
                                SQLWCHAR *OutStatementText, SQLINTEGER BufferLength, SQLINTEGER *TextLength2)
 {
-    struct SQLNativeSqlW_params params = { 0, InStatementText, TextLength1, OutStatementText, BufferLength,
-                                           TextLength2 };
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InStatementText %s, TextLength1 %d, OutStatementText %p, BufferLength %d, "
           "TextLength2 %p)\n", ConnectionHandle, debugstr_wn(InStatementText, TextLength1), TextLength1,
@@ -4016,8 +4334,18 @@ SQLRETURN WINAPI SQLNativeSqlW(SQLHDBC ConnectionHandle, SQLWCHAR *InStatementTe
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.ConnectionHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLNativeSqlW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLNativeSqlW_params params = { handle->unix_handle, InStatementText, TextLength1, OutStatementText,
+                                               BufferLength, TextLength2 };
+        ret = ODBC_CALL( SQLNativeSqlW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLNativeSqlW( handle->win32_handle, InStatementText, TextLength1, OutStatementText,
+                                                  BufferLength, TextLength2 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -4029,10 +4357,8 @@ SQLRETURN WINAPI SQLPrimaryKeysW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName
                                  SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName,
                                  SQLSMALLINT NameLength3)
 {
-    struct SQLPrimaryKeysW_params params = { 0, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
-                                             NameLength2 };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d)\n", StatementHandle,
@@ -4042,8 +4368,18 @@ SQLRETURN WINAPI SQLPrimaryKeysW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLPrimaryKeysW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLPrimaryKeysW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
+                                                 NameLength2, TableName, NameLength2 };
+        ret = ODBC_CALL( SQLPrimaryKeysW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLPrimaryKeysW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
+                                                    NameLength2, TableName, NameLength2 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -4055,10 +4391,8 @@ SQLRETURN WINAPI SQLProcedureColumnsW(SQLHSTMT StatementHandle, SQLWCHAR *Catalo
                                       SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *ProcName,
                                       SQLSMALLINT NameLength3, SQLWCHAR *ColumnName, SQLSMALLINT NameLength4 )
 {
-    struct SQLProcedureColumnsW_params params = { 0, CatalogName, NameLength1, SchemaName, NameLength2,
-                                                  ProcName, NameLength3, ColumnName, NameLength4 };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, ProcName %s,"
           " NameLength3 %d, ColumnName %s, NameLength4 %d)\n", StatementHandle,
@@ -4069,8 +4403,18 @@ SQLRETURN WINAPI SQLProcedureColumnsW(SQLHSTMT StatementHandle, SQLWCHAR *Catalo
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLProcedureColumnsW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLProcedureColumnsW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
+                                                      NameLength2, ProcName, NameLength3, ColumnName, NameLength4 };
+        ret = ODBC_CALL( SQLProcedureColumnsW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLProcedureColumnsW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
+                                                         NameLength2, ProcName, NameLength3, ColumnName, NameLength4 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -4082,10 +4426,8 @@ SQLRETURN WINAPI SQLProceduresW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
                                 SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *ProcName,
                                 SQLSMALLINT NameLength3)
 {
-    struct SQLProceduresW_params params = { 0, CatalogName, NameLength1, SchemaName, NameLength2, ProcName,
-                                            NameLength3 };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, ProcName %s,"
           " NameLength3 %d)\n", StatementHandle, debugstr_wn(CatalogName, NameLength1), NameLength1,
@@ -4093,8 +4435,18 @@ SQLRETURN WINAPI SQLProceduresW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLProceduresW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLProceduresW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
+                                                NameLength2, ProcName, NameLength3 };
+        ret = ODBC_CALL( SQLProceduresW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLProceduresW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
+                                                   NameLength2, ProcName, NameLength3 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -4106,10 +4458,8 @@ SQLRETURN WINAPI SQLTablePrivilegesW(SQLHSTMT StatementHandle, SQLWCHAR *Catalog
                                      SQLWCHAR *SchemaName, SQLSMALLINT NameLength2, SQLWCHAR *TableName,
                                      SQLSMALLINT NameLength3)
 {
-    struct SQLTablePrivilegesW_params params = { 0, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
-                                                 NameLength3 };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d)\n", StatementHandle, debugstr_wn(CatalogName, NameLength1), NameLength1,
@@ -4117,8 +4467,18 @@ SQLRETURN WINAPI SQLTablePrivilegesW(SQLHSTMT StatementHandle, SQLWCHAR *Catalog
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLTablePrivilegesW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLTablePrivilegesW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
+                                                     NameLength2, TableName, NameLength3 };
+        ret = ODBC_CALL( SQLTablePrivilegesW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLTablePrivilegesW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
+                                                        NameLength2, TableName, NameLength3 );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -4188,17 +4548,26 @@ done:
 SQLRETURN WINAPI SQLSetDescFieldW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
                                   SQLPOINTER Value, SQLINTEGER BufferLength)
 {
-    struct SQLSetDescFieldW_params params = { 0, RecNumber, FieldIdentifier, Value, BufferLength };
     struct handle *handle = DescriptorHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(DescriptorHandle %p, RecNumber %d, FieldIdentifier %d, Value %p, BufferLength %d)\n", DescriptorHandle,
           RecNumber, FieldIdentifier, Value, BufferLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.DescriptorHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLSetDescFieldW, &params );
+    if (handle->unix_handle)
+    {
+        struct SQLSetDescFieldW_params params = { handle->unix_handle, RecNumber, FieldIdentifier, Value,
+                                                  BufferLength };
+        ret = ODBC_CALL( SQLSetDescFieldW, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLSetDescFieldW( handle->win32_handle, RecNumber, FieldIdentifier, Value,
+                                                     BufferLength );
+    }
+
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -4209,25 +4578,31 @@ SQLRETURN WINAPI SQLSetDescFieldW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumb
 SQLRETURN WINAPI SQLSetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute, SQLPOINTER Value,
                                  SQLINTEGER StringLength)
 {
-    struct SQLSetStmtAttrW_params params = { 0, Attribute, Value, StringLength };
     struct handle *handle = StatementHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, Attribute %d, Value %p, StringLength %d)\n", StatementHandle, Attribute,
           Value, StringLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.StatementHandle = handle->unix_handle;
-    if (SUCCESS((ret = ODBC_CALL( SQLSetStmtAttrW, &params ))))
+    if (handle->unix_handle)
     {
-        SQLULEN row_count = (SQLULEN)Value;
-        if (Attribute == SQL_ATTR_ROW_ARRAY_SIZE && row_count != handle->row_count)
+        struct SQLSetStmtAttrW_params params = { handle->unix_handle, Attribute, Value, StringLength };
+        if (SUCCESS((ret = ODBC_CALL( SQLSetStmtAttrW, &params ))))
         {
-            TRACE( "resizing result length array\n" );
-            if (!resize_result_lengths( handle, row_count )) ret = SQL_ERROR;
-            else handle->row_count = row_count;
+            SQLULEN row_count = (SQLULEN)Value;
+            if (Attribute == SQL_ATTR_ROW_ARRAY_SIZE && row_count != handle->row_count)
+            {
+                TRACE( "resizing result length array\n" );
+                if (!resize_result_lengths( handle, row_count )) ret = SQL_ERROR;
+                else handle->row_count = row_count;
+            }
         }
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLSetStmtAttrW( handle->win32_handle, Attribute, Value, StringLength );
     }
 
     TRACE("Returning %d\n", ret);
