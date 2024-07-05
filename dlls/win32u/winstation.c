@@ -49,6 +49,7 @@ struct shared_input_cache
 {
     const shared_object_t *object;
     UINT64 id;
+    DWORD tid;
 };
 
 struct session_thread_data
@@ -57,6 +58,7 @@ struct session_thread_data
     const shared_object_t *shared_queue;           /* thread message queue shared session cached object */
     struct shared_input_cache shared_input;        /* current thread input shared session cached object */
     struct shared_input_cache shared_foreground;   /* foreground thread input shared session cached object */
+    struct shared_input_cache other_thread_input;  /* other thread input shared session cached object */
 };
 
 struct session_block
@@ -315,7 +317,10 @@ NTSTATUS get_shared_input( UINT tid, struct object_lock *lock, const input_shm_t
 
     if (tid == GetCurrentThreadId()) cache = &data->shared_input;
     else if (!tid) cache = &data->shared_foreground;
-    else return STATUS_INVALID_HANDLE;
+    else cache = &data->other_thread_input;
+
+    if (tid != cache->tid) memset( cache, 0, sizeof(*cache) );
+    cache->tid = tid;
 
     do { status = try_get_shared_input( tid, lock, input_shm, cache ); }
     while (!status && !cache->id);

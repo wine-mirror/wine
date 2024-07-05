@@ -2928,23 +2928,6 @@ enum coords_relative
 @END
 
 
-/* Get input data for a given thread */
-@REQ(get_thread_input_data)
-    thread_id_t    tid;           /* id of thread */
-@REPLY
-    user_handle_t  focus;         /* handle to the focus window */
-    user_handle_t  capture;       /* handle to the capture window */
-    user_handle_t  active;        /* handle to the active window */
-    user_handle_t  foreground;    /* handle to the global foreground window */
-    user_handle_t  menu_owner;    /* handle to the menu owner */
-    user_handle_t  move_size;     /* handle to the moving/resizing window */
-    user_handle_t  caret;         /* handle to the caret window */
-    user_handle_t  cursor;        /* handle to the cursor */
-    int            show_count;    /* cursor show count */
-    rectangle_t    rect;          /* caret rectangle */
-@END
-
-
 /* Get the thread input of the given thread */
 @REQ(get_thread_input)
     thread_id_t    tid;           /* id of thread */

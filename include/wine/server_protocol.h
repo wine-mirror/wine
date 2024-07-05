@@ -4055,29 +4055,6 @@ struct attach_thread_input_reply
 
 
 
-struct get_thread_input_data_request
-{
-    struct request_header __header;
-    thread_id_t    tid;
-};
-struct get_thread_input_data_reply
-{
-    struct reply_header __header;
-    user_handle_t  focus;
-    user_handle_t  capture;
-    user_handle_t  active;
-    user_handle_t  foreground;
-    user_handle_t  menu_owner;
-    user_handle_t  move_size;
-    user_handle_t  caret;
-    user_handle_t  cursor;
-    int            show_count;
-    rectangle_t    rect;
-    char __pad_60[4];
-};
-
-
-
 struct get_thread_input_request
 {
     struct request_header __header;
@@ -5930,7 +5907,6 @@ enum request
     REQ_register_hotkey,
     REQ_unregister_hotkey,
     REQ_attach_thread_input,
-    REQ_get_thread_input_data,
     REQ_get_thread_input,
     REQ_get_last_input_time,
     REQ_get_key_state,
@@ -6224,7 +6200,6 @@ union generic_request
     struct register_hotkey_request register_hotkey_request;
     struct unregister_hotkey_request unregister_hotkey_request;
     struct attach_thread_input_request attach_thread_input_request;
-    struct get_thread_input_data_request get_thread_input_data_request;
     struct get_thread_input_request get_thread_input_request;
     struct get_last_input_time_request get_last_input_time_request;
     struct get_key_state_request get_key_state_request;
@@ -6516,7 +6491,6 @@ union generic_reply
     struct register_hotkey_reply register_hotkey_reply;
     struct unregister_hotkey_reply unregister_hotkey_reply;
     struct attach_thread_input_reply attach_thread_input_reply;
-    struct get_thread_input_data_reply get_thread_input_data_reply;
     struct get_thread_input_reply get_thread_input_reply;
     struct get_last_input_time_reply get_last_input_time_reply;
     struct get_key_state_reply get_key_state_reply;
@@ -6623,7 +6597,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 829
+#define SERVER_PROTOCOL_VERSION 830
 
 /* ### protocol_version end ### */
 

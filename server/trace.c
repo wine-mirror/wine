@@ -3516,25 +3516,6 @@ static void dump_attach_thread_input_request( const struct attach_thread_input_r
     fprintf( stderr, ", attach=%d", req->attach );
 }
 
-static void dump_get_thread_input_data_request( const struct get_thread_input_data_request *req )
-{
-    fprintf( stderr, " tid=%04x", req->tid );
-}
-
-static void dump_get_thread_input_data_reply( const struct get_thread_input_data_reply *req )
-{
-    fprintf( stderr, " focus=%08x", req->focus );
-    fprintf( stderr, ", capture=%08x", req->capture );
-    fprintf( stderr, ", active=%08x", req->active );
-    fprintf( stderr, ", foreground=%08x", req->foreground );
-    fprintf( stderr, ", menu_owner=%08x", req->menu_owner );
-    fprintf( stderr, ", move_size=%08x", req->move_size );
-    fprintf( stderr, ", caret=%08x", req->caret );
-    fprintf( stderr, ", cursor=%08x", req->cursor );
-    fprintf( stderr, ", show_count=%d", req->show_count );
-    dump_rectangle( ", rect=", &req->rect );
-}
-
 static void dump_get_thread_input_request( const struct get_thread_input_request *req )
 {
     fprintf( stderr, " tid=%04x", req->tid );
@@ -4845,7 +4826,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_register_hotkey_request,
     (dump_func)dump_unregister_hotkey_request,
     (dump_func)dump_attach_thread_input_request,
-    (dump_func)dump_get_thread_input_data_request,
     (dump_func)dump_get_thread_input_request,
     (dump_func)dump_get_last_input_time_request,
     (dump_func)dump_get_key_state_request,
@@ -5135,7 +5115,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_register_hotkey_reply,
     (dump_func)dump_unregister_hotkey_reply,
     NULL,
-    (dump_func)dump_get_thread_input_data_reply,
     (dump_func)dump_get_thread_input_reply,
     (dump_func)dump_get_last_input_time_reply,
     (dump_func)dump_get_key_state_reply,
@@ -5425,7 +5404,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "register_hotkey",
     "unregister_hotkey",
     "attach_thread_input",
-    "get_thread_input_data",
     "get_thread_input",
     "get_last_input_time",
     "get_key_state",
