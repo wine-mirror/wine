@@ -55,6 +55,7 @@ static void test_SQLAllocHandle( void )
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     ret = SQLFreeConnect( 0 );
     ok( ret == SQL_INVALID_HANDLE, "got %d\n", ret );
+
     ret = SQLFreeEnv( env );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     ret = SQLFreeEnv( 0 );
@@ -68,12 +69,12 @@ static void diag( SQLHANDLE handle, SQLSMALLINT type )
     SQLCHAR state[5], msg[256];
     SQLRETURN ret;
 
-    memset( state, 0, sizeof(state) );
+    state[0] = 0;
+    msg[0] = 0;
     err = -1;
     len = 0;
     ret = SQLGetDiagRec( type, handle, 1, state, &err, msg, sizeof(msg), &len );
-    ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    trace( "state %s, err %d, msg %s len %d\n", state, err, msg, len );
+    if (ret == SQL_SUCCESS) trace( "state '%s' err %d msg '%s' len %d\n", state, err, msg, len );
 }
 
 static void test_SQLConnect( void )
@@ -101,7 +102,7 @@ static void test_SQLConnect( void )
     ret = SQLAllocConnect( env, &con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
-    ret = SQLConnect( con, (SQLCHAR *)"winetest", 8, NULL, 0, NULL, 0 );
+    ret = SQLConnect( con, (SQLCHAR *)"winetest", 8, (SQLCHAR *)"winetest", 8, (SQLCHAR *)"winetest", 8 );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
     if (ret != SQL_SUCCESS)
     {
@@ -121,10 +122,84 @@ static void test_SQLConnect( void )
     len = -1;
     memset( str, 0, sizeof(str) );
     ret = SQLGetInfo( con, SQL_ODBC_VER, str, sizeof(str), &len );
+    if (ret == SQL_SUCCESS)
+    {
+        ok( str[0], "empty string\n" );
+        ok( len != -1, "len not set\n" );
+        trace( "version %s\n", str );
+    }
+
+    ret = SQLDisconnect( con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    ok( str[0], "empty string\n" );
-    ok( len != -1, "len not set\n" );
-    trace( "version %s\n", str );
+
+    ret = SQLFreeConnect( con );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLFreeEnv( env );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+}
+
+static void test_SQLDriverConnect( void )
+{
+    SQLHENV env;
+    SQLHDBC con;
+    SQLRETURN ret;
+    SQLSMALLINT len;
+    SQLCHAR str[256];
+
+    ret = SQLAllocEnv( &env );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLAllocConnect( env, &con );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    len = 0;
+    str[0] = 0;
+    ret = SQLDriverConnect( con, NULL, (SQLCHAR *)"DSN=winetest", strlen("DSN=winetest"), str, sizeof(str), &len, 0 );
+    if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
+    if (ret != SQL_SUCCESS)
+    {
+        SQLFreeConnect( con );
+        SQLFreeEnv( env );
+        skip( "data source winetest not available\n" );
+        return;
+    }
+
+    ret = SQLDisconnect( con );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLFreeConnect( con );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLFreeEnv( env );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+}
+
+static void test_SQLBrowseConnect( void )
+{
+    SQLHENV env;
+    SQLHDBC con;
+    SQLRETURN ret;
+    SQLSMALLINT len;
+    SQLCHAR str[256];
+
+    ret = SQLAllocEnv( &env );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLAllocConnect( env, &con );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    len = 0;
+    str[0] = 0;
+    ret = SQLBrowseConnect( con, (SQLCHAR *)"DSN=winetest", 12, str, sizeof(str), &len );
+    if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
+    if (ret != SQL_SUCCESS)
+    {
+        SQLFreeConnect( con );
+        SQLFreeEnv( env );
+        skip( "data source winetest not available\n" );
+        return;
+    }
 
     ret = SQLDisconnect( con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
@@ -151,13 +226,19 @@ static void test_SQLDataSources( void )
     memset( desc, 0, sizeof(desc) );
     ret = SQLDataSources( env, SQL_FETCH_FIRST, server, sizeof(server), &len, desc, sizeof(desc), &len2 );
     ok( ret == SQL_SUCCESS || ret == SQL_NO_DATA, "got %d\n", ret );
-    if (ret == SQL_SUCCESS)
+    while (ret == SQL_SUCCESS)
     {
-        ok( len, "unexpected len\n" );
-        ok( len2, "unexpected len\n" );
+        ok( len == strlen((const char *)server), "unexpected len\n" );
+        ok( len2 == strlen((const char *)desc), "unexpected len\n" );
         ok( server[0], "empty string\n" );
         ok( desc[0], "empty string\n" );
         trace( "server %s len %d desc %s len %d\n", server, len, desc, len2 );
+
+        len = len2 = -1;
+        memset( server, 0, sizeof(server) );
+        memset( desc, 0, sizeof(desc) );
+        ret = SQLDataSources( env, SQL_FETCH_NEXT, server, sizeof(server), &len, desc, sizeof(desc), &len2 );
+        ok( ret == SQL_SUCCESS || ret == SQL_NO_DATA, "got %d\n", ret );
     }
 
     ret = SQLFreeEnv( env );
@@ -179,12 +260,25 @@ static void test_SQLDrivers( void )
     memset( attrs, 0, sizeof(attrs) );
     ret = SQLDrivers( env, SQL_FETCH_FIRST, desc, sizeof(desc), &len, attrs, sizeof(attrs), &len2 );
     ok( ret == SQL_SUCCESS || ret == SQL_NO_DATA, "got %d\n", ret );
-    if (ret == SQL_SUCCESS)
+    while (ret == SQL_SUCCESS)
     {
-        ok( len, "unexpected len\n" );
-        ok( len2, "unexpected len\n" );
+        SQLCHAR *ptr;
+
+        trace( "desc %s len %d len2 %d\n", desc, len, len2 );
+        ok( len == strlen((const char *)desc), "unexpected len %u\n", len );
         ok( desc[0], "empty string\n" );
-        trace( "desc %s len %d\n", desc, len );
+        ptr = attrs;
+        while (*ptr)
+        {
+            trace( " attr %s\n", ptr );
+            ptr += strlen( (const char *)ptr ) + 1;
+        }
+
+        len = len2 = 0;
+        memset( desc, 0, sizeof(desc) );
+        memset( attrs, 0, sizeof(attrs) );
+        ret = SQLDrivers( env, SQL_FETCH_NEXT, desc, sizeof(desc), &len, attrs, sizeof(attrs), &len2 );
+        ok( ret == SQL_SUCCESS || ret == SQL_NO_DATA, "got %d\n", ret );
     }
 
     ret = SQLFreeEnv( env );
@@ -208,7 +302,8 @@ static void test_SQLExecDirect( void )
     ret = SQLAllocConnect( env, &con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
-    ret = SQLConnect( con, (SQLCHAR *)"winetest", 8, NULL, 0, NULL, 0 );
+    ret = SQLConnect( con, (SQLCHAR *)"winetest", 8, (SQLCHAR *)"winetest", 8, (SQLCHAR *)"winetest", 8 );
+    if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
     if (ret != SQL_SUCCESS)
     {
         SQLFreeConnect( con );
@@ -221,9 +316,11 @@ static void test_SQLExecDirect( void )
     ret = SQLAllocStmt( con, &stmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
+    SQLExecDirect( stmt, (SQLCHAR *)"USE winetest", ARRAYSIZE("USE winetest") - 1 );
     SQLExecDirect( stmt, (SQLCHAR *)"DROP TABLE winetest", ARRAYSIZE("DROP TABLE winetest") - 1 );
     ret = SQLExecDirect( stmt, (SQLCHAR *)"CREATE TABLE winetest ( Id int, Name varchar(255) )",
                          ARRAYSIZE("CREATE TABLE winetest ( Id int, Name varchar(255) )") - 1 );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
 
@@ -361,6 +458,8 @@ START_TEST(odbc32)
 {
     test_SQLAllocHandle();
     test_SQLConnect();
+    test_SQLDriverConnect();
+    test_SQLBrowseConnect();
     test_SQLDataSources();
     test_SQLDrivers();
     test_SQLExecDirect();
