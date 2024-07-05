@@ -101,7 +101,7 @@ static HANDLE create_hklm_key( const WCHAR *path, ULONG path_size )
     return NULL;
 }
 
-static HANDLE create_key( HANDLE root, const WCHAR *path, ULONG path_size, ULONG options, ULONG *disposition )
+static HANDLE create_key( HANDLE root, const WCHAR *path, ULONG path_size )
 {
     UNICODE_STRING name = { path_size, path_size, (WCHAR *)path };
     OBJECT_ATTRIBUTES attr;
@@ -113,7 +113,23 @@ static HANDLE create_key( HANDLE root, const WCHAR *path, ULONG path_size, ULONG
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    if (NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition )) return NULL;
+    if (NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, 0, NULL )) return NULL;
+    return ret;
+}
+
+static HANDLE open_key( HANDLE root, const WCHAR *path, ULONG path_size )
+{
+    UNICODE_STRING name = { path_size, path_size, (WCHAR *)path };
+    OBJECT_ATTRIBUTES attr;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &name;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (NtOpenKey( &ret, MAXIMUM_ALLOWED, &attr )) return NULL;
     return ret;
 }
 
@@ -131,6 +147,25 @@ static BOOL set_value( HANDLE key, const WCHAR *name, ULONG name_size, ULONG typ
     return !NtSetValueKey( key, &str, 0, type, value, count );
 }
 
+static HANDLE open_odbcinst_key( void )
+{
+    static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C'};
+    static const WCHAR odbcinstW[] = {'O','D','B','C','I','N','S','T','.','I','N','I'};
+    HANDLE ret, root = create_hklm_key( odbcW, sizeof(odbcW) );
+    ret = create_key( root, odbcinstW, sizeof(odbcinstW) );
+    NtClose( root );
+    return ret;
+}
+
+static HANDLE open_drivers_key( void )
+{
+    static const WCHAR driversW[] = {'O','D','B','C',' ','D','r','i','v','e','r','s'};
+    HANDLE ret, root = open_odbcinst_key();
+    ret = create_key( root, driversW, sizeof(driversW) );
+    NtClose( root );
+    return ret;
+}
+
 /***********************************************************************
  * odbc_replicate_odbcinst_to_registry
  *
@@ -144,155 +179,230 @@ static BOOL set_value( HANDLE key, const WCHAR *name, ULONG name_size, ULONG typ
  */
 static void replicate_odbcinst_to_registry( SQLHENV env )
 {
-    static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C'};
-    static const WCHAR odbcinstW[] = {'O','D','B','C','I','N','S','T','.','I','N','I'};
-    static const WCHAR driversW[] = {'O','D','B','C',' ','D','r','i','v','e','r','s'};
-    HANDLE key_odbc, key_odbcinst, key_drivers;
-    BOOL success = FALSE;
+    HANDLE key_odbcinst, key_drivers;
+    SQLRETURN ret;
+    SQLUSMALLINT dir = SQL_FETCH_FIRST;
+    WCHAR desc[256], attrs[1024];
+    SQLSMALLINT len_desc, len_attrs;
 
-    if (!(key_odbc = create_hklm_key( odbcW, sizeof(odbcW) ))) return;
-
-    if ((key_odbcinst = create_key( key_odbc, odbcinstW, sizeof(odbcinstW), 0, NULL )))
+    if (!(key_odbcinst = open_odbcinst_key())) return;
+    if (!(key_drivers = open_drivers_key()))
     {
-        if ((key_drivers = create_key( key_odbcinst, driversW, sizeof(driversW), 0, NULL )))
-        {
-            SQLRETURN ret;
-            SQLUSMALLINT dir = SQL_FETCH_FIRST;
-            WCHAR desc [256];
-            SQLSMALLINT len;
-
-            success = TRUE;
-            while (SUCCESS((ret = SQLDriversW( env, dir, (SQLWCHAR *)desc, sizeof(desc), &len, NULL, 0, NULL ))))
-            {
-                dir = SQL_FETCH_NEXT;
-                if (len == lstrlenW( desc ))
-                {
-                    static const WCHAR installedW[] = {'I','n','s','t','a','l','l','e','d',0};
-                    HANDLE key_driver;
-                    WCHAR buffer[256];
-                    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buffer;
-
-                    if (!query_value( key_drivers, desc, len * sizeof(WCHAR), info, sizeof(buffer) ))
-                    {
-                        if (!set_value( key_drivers, desc, len * sizeof(WCHAR), REG_SZ, (const BYTE *)installedW,
-                                        sizeof(installedW) ))
-                        {
-                            TRACE( "error replicating driver %s\n", debugstr_w(desc) );
-                            success = FALSE;
-                        }
-                    }
-                    if ((key_driver = create_key( key_odbcinst, desc, lstrlenW( desc ) * sizeof(WCHAR), 0, NULL )))
-                        NtClose( key_driver );
-                    else
-                    {
-                        TRACE( "error ensuring driver key %s\n", debugstr_w(desc) );
-                        success = FALSE;
-                    }
-                }
-                else
-                {
-                    WARN( "unusually long driver name %s not replicated\n", debugstr_w(desc) );
-                    success = FALSE;
-                }
-            }
-            NtClose( key_drivers );
-        }
-        else TRACE( "error opening Drivers key\n" );
-
         NtClose( key_odbcinst );
+        return;
     }
-    else TRACE( "error creating/opening ODBCINST.INI key\n" );
 
-    if (!success) WARN( "may not have replicated all ODBC drivers to the registry\n" );
-    NtClose( key_odbc );
+    while (SUCCESS((ret = SQLDriversW( env, dir, (SQLWCHAR *)desc, ARRAY_SIZE(desc), &len_desc, attrs,
+                                       ARRAY_SIZE(attrs), &len_attrs ))))
+    {
+        static const WCHAR installedW[] = {'I','n','s','t','a','l','l','e','d',0};
+        HANDLE key_driver;
+        WCHAR buffer[1024];
+        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+
+        dir = SQL_FETCH_NEXT;
+        if (!query_value( key_drivers, desc, len_desc * sizeof(WCHAR), info, sizeof(buffer) ))
+        {
+            set_value( key_drivers, desc, len_desc * sizeof(WCHAR), REG_SZ, (const BYTE *)installedW,
+                       sizeof(installedW) );
+        }
+
+        if ((key_driver = create_key( key_odbcinst, desc, wcslen( desc ) * sizeof(WCHAR) )))
+        {
+            static const WCHAR driverW[] = {'D','r','i','v','e','r',0}, driver_eqW[] = {'D','r','i','v','e','r','='};
+            const WCHAR *driver = NULL, *ptr = attrs;
+
+            while (*ptr)
+            {
+                if (len_attrs > ARRAY_SIZE(driver_eqW) && !memcmp( driver_eqW, ptr, sizeof(driver_eqW) ))
+                {
+                    driver = ptr + 7;
+                    break;
+                }
+                len_attrs -= wcslen( ptr ) + 1;
+                ptr += wcslen( ptr ) + 1;
+            }
+            if (driver) set_value( key_driver, driverW, sizeof(driverW), REG_SZ, (const BYTE *)driver,
+                                   wcslen(driver) * sizeof(WCHAR) );
+            NtClose( key_driver );
+        }
+    }
+
+    NtClose( key_drivers );
+    NtClose( key_odbcinst );
+}
+
+struct drivers
+{
+    ULONG   count;
+    WCHAR **names;
+};
+
+static void get_drivers( struct drivers *drivers )
+{
+    ULONG idx = 0, count = 0, capacity, info_size, info_max_size;
+    KEY_VALUE_BASIC_INFORMATION *info = NULL;
+    WCHAR **names;
+    NTSTATUS status = STATUS_SUCCESS;
+    HANDLE key;
+
+    drivers->count = 0;
+    drivers->names = NULL;
+
+    if (!(key = open_drivers_key())) return;
+
+    capacity = 4;
+    if (!(names = malloc( capacity * sizeof(*names) ))) goto done;
+    info_max_size = offsetof(KEY_VALUE_BASIC_INFORMATION, Name) + 512;
+    if (!(info = malloc( info_max_size ))) goto done;
+
+    while (!status && info)
+    {
+        status = NtEnumerateValueKey( key, idx, KeyValueBasicInformation, info, info_max_size, &info_size );
+        while (status == STATUS_BUFFER_OVERFLOW)
+        {
+            info_max_size = info_size;
+            if (!(info = realloc( info, info_max_size ))) goto error;
+            status = NtEnumerateValueKey( key, idx, KeyValueFullInformation, info, info_max_size, &info_size );
+        }
+
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
+            drivers->count = count;
+            drivers->names = names;
+            goto done;
+        }
+        idx++;
+        if (status) break;
+        if (info->Type != REG_SZ) continue;
+
+        if (count >= capacity)
+        {
+            capacity = capacity * 3 / 2;
+            if (!(names = realloc( names, capacity * sizeof(*names) ))) break;
+        }
+
+        if (!(names[count] = malloc( info->NameLength + sizeof(WCHAR) ))) break;
+        memcpy( names[count], info->Name, info->NameLength );
+        names[count][info->NameLength / sizeof(WCHAR)] = 0;
+        count++;
+    }
+
+error:
+    if (names) while (count) free( names[--count] );
+    free( names );
+
+done:
+    free( info );
+    NtClose( key );
+}
+
+/* unixODBC returns the driver filename in the description, use it to look up the driver name */
+static WCHAR *get_driver_name( const WCHAR *filename )
+{
+    struct drivers drivers;
+    HANDLE key_odbcinst, key_driver;
+    WCHAR *ret = NULL;
+    ULONG i;
+
+    get_drivers( &drivers );
+    if (!drivers.count) return NULL;
+
+    key_odbcinst = open_odbcinst_key();
+    for (i = 0; i < drivers.count; i++)
+    {
+        static const WCHAR driverW[] = {'D','r','i','v','e','r',0};
+        WCHAR buffer[1024];
+        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+
+        if ((key_driver = open_key( key_odbcinst, drivers.names[i], wcslen(drivers.names[i]) * sizeof(WCHAR) )))
+        {
+            if (query_value( key_driver, driverW, sizeof(driverW), info, sizeof(buffer) ) && info->Type == REG_SZ &&
+                !wcsnicmp( (const WCHAR *)info->Data, filename, info->DataLength / sizeof(WCHAR) ) &&
+                (ret = malloc( (wcslen(drivers.names[i]) + 1) * sizeof(WCHAR) )))
+            {
+                wcscpy( ret, drivers.names[i] );
+                break;
+            }
+            NtClose( key_driver );
+        }
+    }
+
+    for (i = 0; i < drivers.count; i++) free( drivers.names[i] );
+    free( drivers.names );
+    NtClose( key_odbcinst );
+    return ret;
+}
+
+static HANDLE open_odbcini_key( BOOL user )
+{
+    static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C'};
+    static const WCHAR odbcinstW[] = {'O','D','B','C','.','I','N','I'};
+    HANDLE ret, root = user ? create_hkcu_key( odbcW, sizeof(odbcW) ) : create_hklm_key( odbcW, sizeof(odbcW) );
+    ret = create_key( root, odbcinstW, sizeof(odbcinstW) );
+    NtClose( root );
+    return ret;
+}
+
+static HANDLE open_sources_key( BOOL user )
+{
+    static const WCHAR sourcesW[] = {'O','D','B','C',' ','D','a','t','a',' ','S','o','u','r','c','e','s'};
+    HANDLE ret, root = open_odbcini_key( user );
+    ret = create_key( root, sourcesW, sizeof(sourcesW) );
+    NtClose( root );
+    return ret;
 }
 
 /***********************************************************************
  * replicate_odbc_to_registry
  *
- * Utility to replicate_to_registry() to replicate either the USER or
- * SYSTEM data sources.
- *
- * For now simply place the "Driver description" (as returned by SQLDataSources)
- * into the registry as the driver.  This is enough to satisfy Crystal's
- * requirement that there be a driver entry.  (It doesn't seem to care what
- * the setting is).
- * A slightly more accurate setting would be to access the registry to find
- * the actual driver library for the given description (which appears to map
- * to one of the HKLM/Software/ODBC/ODBCINST.INI keys).  (If you do this note
- * that this will add a requirement that this function be called after
- * replicate_odbcinst_to_registry())
+ * Utility to replicate either the USER or SYSTEM data sources.
+ * This function must be called after replicate_odbcinst_to_registry().
  */
 static void replicate_odbc_to_registry( BOOL is_user, SQLHENV env )
 {
-    static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C'};
-    static const WCHAR odbciniW[] = {'O','D','B','C','.','I','N','I'};
-    HANDLE key_odbc, key_odbcini, key_source;
+    HANDLE key_odbcini, key_sources;
     SQLRETURN ret;
     SQLUSMALLINT dir;
     WCHAR dsn[SQL_MAX_DSN_LENGTH + 1], desc[256];
     SQLSMALLINT len_dsn, len_desc;
-    BOOL success = FALSE;
-    const char *which;
 
-    if (is_user)
+    if (!(key_odbcini = open_odbcini_key( is_user ))) return;
+    if (!(key_sources = open_sources_key( is_user )))
     {
-        key_odbc = create_hkcu_key( odbcW, sizeof(odbcW) );
-        which = "user";
-    }
-    else
-    {
-        key_odbc = create_hklm_key( odbcW, sizeof(odbcW) );
-        which = "system";
-    }
-    if (!key_odbc) return;
-
-    if ((key_odbcini = create_key( key_odbc, odbciniW, sizeof(odbciniW), 0, NULL )))
-    {
-        success = TRUE;
-        dir = is_user ? SQL_FETCH_FIRST_USER : SQL_FETCH_FIRST_SYSTEM;
-        while (SUCCESS((ret = SQLDataSourcesW( env, dir, (SQLWCHAR *)dsn, sizeof(dsn), &len_dsn, (SQLWCHAR *)desc,
-                                               sizeof(desc), &len_desc ))))
-        {
-            dir = SQL_FETCH_NEXT;
-            if (len_dsn == lstrlenW( dsn ) && len_desc == lstrlenW( desc ))
-            {
-                if ((key_source = create_key( key_odbcini, dsn, len_dsn * sizeof(WCHAR), 0, NULL )))
-                {
-                    static const WCHAR driverW[] = {'D','r','i','v','e','r'};
-                    WCHAR buffer[256];
-                    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buffer;
-                    ULONG size;
-
-                    if (!(size = query_value( key_source, driverW, sizeof(driverW), info, sizeof(buffer) )))
-                    {
-                        if (!set_value( key_source, driverW, sizeof(driverW), REG_SZ, (const BYTE *)desc,
-                                        len_desc * sizeof(WCHAR) ))
-                        {
-                            TRACE( "error replicating description of %s (%s)\n", debugstr_w(dsn), debugstr_w(desc) );
-                            success = FALSE;
-                        }
-                    }
-                    NtClose( key_source );
-                }
-                else
-                {
-                    TRACE( "error opening %s DSN key %s\n", which, debugstr_w(dsn) );
-                    success = FALSE;
-                }
-            }
-            else
-            {
-                WARN( "unusually long %s data source name %s (%s) not replicated\n", which, debugstr_w(dsn), debugstr_w(desc) );
-                success = FALSE;
-            }
-        }
         NtClose( key_odbcini );
+        return;
     }
-    else TRACE( "error creating/opening %s ODBC.INI registry key\n", which );
 
-    if (!success) WARN( "may not have replicated all %s ODBC DSNs to the registry\n", which );
-    NtClose( key_odbc );
+    dir = is_user ? SQL_FETCH_FIRST_USER : SQL_FETCH_FIRST_SYSTEM;
+    while (SUCCESS((ret = SQLDataSourcesW( env, dir, dsn, sizeof(dsn), &len_dsn, desc, sizeof(desc), &len_desc ))))
+    {
+        HANDLE key_source;
+        WCHAR buffer[1024], *name = get_driver_name( desc );
+        KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+
+        dir = SQL_FETCH_NEXT;
+        if (!query_value( key_sources, dsn, len_dsn * sizeof(WCHAR), info, sizeof(buffer) ) && name)
+        {
+            set_value( key_sources, dsn, len_dsn * sizeof(WCHAR), REG_SZ, (const BYTE *)name,
+                       (wcslen(name) + 1) * sizeof(WCHAR) );
+        }
+        free( name );
+
+        if ((key_source = create_key( key_odbcini, dsn, len_dsn * sizeof(WCHAR) )))
+        {
+            static const WCHAR driverW[] = {'D','r','i','v','e','r'};
+            if (!query_value( key_source, driverW, sizeof(driverW), info, sizeof(buffer) ))
+            {
+                set_value( key_source, driverW, sizeof(driverW), REG_SZ, (const BYTE *)desc,
+                           (len_desc + 1) * sizeof(WCHAR) );
+            }
+            NtClose( key_source );
+        }
+    }
+
+    NtClose( key_sources );
+    NtClose( key_odbcini );
 }
 
 /***********************************************************************
