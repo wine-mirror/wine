@@ -609,22 +609,6 @@ static NTSTATUS wrap_SQLCopyDesc( void *args )
     return SQLCopyDesc( (SQLHDESC)(ULONG_PTR)params->SourceDescHandle, (SQLHDESC)(ULONG_PTR)params->TargetDescHandle );
 }
 
-static NTSTATUS wrap_SQLDataSources( void *args )
-{
-    struct SQLDataSources_params *params = args;
-    return SQLDataSources( (SQLHENV)(ULONG_PTR)params->EnvironmentHandle, params->Direction, params->ServerName,
-                           params->BufferLength1, params->NameLength1, params->Description,
-                           params->BufferLength2, params->NameLength2 );
-}
-
-static NTSTATUS wrap_SQLDataSourcesW( void *args )
-{
-    struct SQLDataSourcesW_params *params = args;
-    return SQLDataSourcesW( (SQLHENV)(ULONG_PTR)params->EnvironmentHandle, params->Direction, params->ServerName,
-                            params->BufferLength1, params->NameLength1, params->Description,
-                            params->BufferLength2, params->NameLength2 );
-}
-
 static NTSTATUS wrap_SQLDescribeCol( void *args )
 {
     struct SQLDescribeCol_params *params = args;
@@ -668,22 +652,6 @@ static NTSTATUS wrap_SQLDriverConnectW( void *args )
     return SQLDriverConnectW( (SQLHDBC)(ULONG_PTR)params->ConnectionHandle, (SQLHWND)(ULONG_PTR)params->WindowHandle,
                               params->InConnectionString, params->Length, params->OutConnectionString,
                               params->BufferLength, params->Length2, params->DriverCompletion );
-}
-
-static NTSTATUS wrap_SQLDrivers( void *args )
-{
-    struct SQLDrivers_params *params = args;
-    return SQLDrivers( (SQLHENV)(ULONG_PTR)params->EnvironmentHandle, params->Direction, params->DriverDescription,
-                       params->BufferLength1, params->DescriptionLength, params->DriverAttributes,
-                       params->BufferLength2, params->AttributesLength );
-}
-
-static NTSTATUS wrap_SQLDriversW( void *args )
-{
-    struct SQLDriversW_params *params = args;
-    return SQLDriversW( (SQLHENV)(ULONG_PTR)params->EnvironmentHandle, params->Direction, params->DriverDescription,
-                        params->BufferLength1, params->DescriptionLength, params->DriverAttributes,
-                        params->BufferLength2, params->AttributesLength );
 }
 
 static NTSTATUS wrap_SQLEndTran( void *args )
@@ -1274,16 +1242,12 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_SQLConnect,
     wrap_SQLConnectW,
     wrap_SQLCopyDesc,
-    wrap_SQLDataSources,
-    wrap_SQLDataSourcesW,
     wrap_SQLDescribeCol,
     wrap_SQLDescribeColW,
     wrap_SQLDescribeParam,
     wrap_SQLDisconnect,
     wrap_SQLDriverConnect,
     wrap_SQLDriverConnectW,
-    wrap_SQLDrivers,
-    wrap_SQLDriversW,
     wrap_SQLEndTran,
     wrap_SQLError,
     wrap_SQLErrorW,
@@ -1767,64 +1731,6 @@ static NTSTATUS wow64_SQLConnectW( void *args )
     return wrap_SQLConnectW( &params );
 }
 
-static NTSTATUS wow64_SQLDataSources( void *args )
-{
-    struct
-    {
-        UINT64 EnvironmentHandle;
-        UINT16 Direction;
-        PTR32  ServerName;
-        INT16  BufferLength1;
-        PTR32  NameLength1;
-        PTR32  Description;
-        INT16  BufferLength2;
-        PTR32  NameLength2;
-    } const *params32 = args;
-
-    struct SQLDataSources_params params =
-    {
-        params32->EnvironmentHandle,
-        params32->Direction,
-        ULongToPtr(params32->ServerName),
-        params32->BufferLength1,
-        ULongToPtr(params32->NameLength1),
-        ULongToPtr(params32->Description),
-        params32->BufferLength2,
-        ULongToPtr(params32->NameLength2)
-    };
-
-    return wrap_SQLDataSources( &params );
-}
-
-static NTSTATUS wow64_SQLDataSourcesW( void *args )
-{
-    struct
-    {
-        UINT64 EnvironmentHandle;
-        UINT16 Direction;
-        PTR32  ServerName;
-        INT16  BufferLength1;
-        PTR32  NameLength1;
-        PTR32  Description;
-        INT16  BufferLength2;
-        PTR32  NameLength2;
-    } const *params32 = args;
-
-    struct SQLDataSourcesW_params params =
-    {
-        params32->EnvironmentHandle,
-        params32->Direction,
-        ULongToPtr(params32->ServerName),
-        params32->BufferLength1,
-        ULongToPtr(params32->NameLength1),
-        ULongToPtr(params32->Description),
-        params32->BufferLength2,
-        ULongToPtr(params32->NameLength2)
-    };
-
-    return wrap_SQLDataSourcesW( &params );
-}
-
 static NTSTATUS wow64_SQLDescribeCol( void *args )
 {
     struct
@@ -1910,64 +1816,6 @@ static NTSTATUS wow64_SQLDescribeParam( void *args )
     };
 
     return wrap_SQLDescribeParam( &params );
-}
-
-static NTSTATUS wow64_SQLDrivers( void *args )
-{
-    struct
-    {
-        UINT64 EnvironmentHandle;
-        UINT16 Direction;
-        PTR32  DriverDescription;
-        INT16  BufferLength1;
-        PTR32  DescriptionLength;
-        PTR32  DriverAttributes;
-        INT16  BufferLength2;
-        PTR32  AttributesLength;
-    } const *params32 = args;
-
-    struct SQLDrivers_params params =
-    {
-        params32->EnvironmentHandle,
-        params32->Direction,
-        ULongToPtr(params32->DriverDescription),
-        params32->BufferLength1,
-        ULongToPtr(params32->DescriptionLength),
-        ULongToPtr(params32->DriverAttributes),
-        params32->BufferLength2,
-        ULongToPtr(params32->AttributesLength)
-    };
-
-    return wrap_SQLDrivers( &params );
-}
-
-static NTSTATUS wow64_SQLDriversW( void *args )
-{
-    struct
-    {
-        UINT64 EnvironmentHandle;
-        UINT16 Direction;
-        PTR32  DriverDescription;
-        INT16  BufferLength1;
-        PTR32  DescriptionLength;
-        PTR32  DriverAttributes;
-        INT16  BufferLength2;
-        PTR32  AttributesLength;
-    } const *params32 = args;
-
-    struct SQLDriversW_params params =
-    {
-        params32->EnvironmentHandle,
-        params32->Direction,
-        ULongToPtr(params32->DriverDescription),
-        params32->BufferLength1,
-        ULongToPtr(params32->DescriptionLength),
-        ULongToPtr(params32->DriverAttributes),
-        params32->BufferLength2,
-        ULongToPtr(params32->AttributesLength)
-    };
-
-    return wrap_SQLDriversW( &params );
 }
 
 static NTSTATUS wow64_SQLDriverConnect( void *args )
@@ -3646,16 +3494,12 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_SQLConnect,
     wow64_SQLConnectW,
     wrap_SQLCopyDesc,
-    wow64_SQLDataSources,
-    wow64_SQLDataSourcesW,
     wow64_SQLDescribeCol,
     wow64_SQLDescribeColW,
     wow64_SQLDescribeParam,
     wrap_SQLDisconnect,
     wow64_SQLDriverConnect,
     wow64_SQLDriverConnectW,
-    wow64_SQLDrivers,
-    wow64_SQLDriversW,
     wrap_SQLEndTran,
     wow64_SQLError,
     wow64_SQLErrorW,

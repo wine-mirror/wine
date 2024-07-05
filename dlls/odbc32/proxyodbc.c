@@ -402,6 +402,14 @@ SQLRETURN WINAPI SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandl
     return ret;
 }
 
+static HKEY open_sources_key( HKEY root )
+{
+    static const WCHAR sourcesW[] = L"Software\\ODBC\\ODBC.INI\\ODBC Data Sources";
+    HKEY key;
+    if (!RegCreateKeyExW( root, sourcesW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL )) return key;
+    return NULL;
+}
+
 /*************************************************************************
  *				SQLDataSources           [ODBC32.057]
  */
@@ -409,10 +417,10 @@ SQLRETURN WINAPI SQLDataSources(SQLHENV EnvironmentHandle, SQLUSMALLINT Directio
                                 SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1, SQLCHAR *Description,
                                 SQLSMALLINT BufferLength2, SQLSMALLINT *NameLength2)
 {
-    struct SQLDataSources_params params = { 0, Direction, ServerName, BufferLength1, NameLength1, Description,
-                                            BufferLength2, NameLength2 };
     struct handle *handle = EnvironmentHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
+    DWORD len_source = BufferLength1, len_desc = BufferLength2;
+    LONG res;
 
     TRACE("(EnvironmentHandle %p, Direction %d, ServerName %p, BufferLength1 %d, NameLength1 %p, Description %p,"
           " BufferLength2 %d, NameLength2 %p)\n", EnvironmentHandle, Direction, ServerName, BufferLength1,
@@ -420,16 +428,52 @@ SQLRETURN WINAPI SQLDataSources(SQLHENV EnvironmentHandle, SQLUSMALLINT Directio
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.EnvironmentHandle = handle->unix_handle;
-    if (SUCCESS((ret = ODBC_CALL( SQLDataSources, &params ))) && TRACE_ON(odbc))
+    if (Direction == SQL_FETCH_FIRST)
     {
-        if (ServerName && NameLength1 && *NameLength1 > 0)
-            TRACE(" DataSource %s", debugstr_an((const char *)ServerName, *NameLength1));
-        if (Description && NameLength2 && *NameLength2 > 0)
-            TRACE(" Description %s", debugstr_an((const char *)Description, *NameLength2));
-        TRACE("\n");
+        handle->sources_idx = 0;
+        handle->sources_system = FALSE;
+        RegCloseKey( handle->sources_key );
+        if (!(handle->sources_key = open_sources_key( HKEY_CURRENT_USER ))) return SQL_ERROR;
     }
 
+    res = RegEnumValueA( handle->sources_key, handle->sources_idx, (char *)ServerName, &len_source, NULL,
+                         NULL, (BYTE *)Description, &len_desc );
+    if (res == ERROR_NO_MORE_ITEMS)
+    {
+        if (handle->sources_system)
+        {
+            ret = SQL_NO_DATA;
+            goto done;
+        }
+        /* user key exhausted, continue with system key */
+        RegCloseKey( handle->sources_key );
+        if (!(handle->sources_key = open_sources_key( HKEY_LOCAL_MACHINE ))) goto done;
+        handle->sources_idx = 0;
+        handle->sources_system = TRUE;
+        res = RegEnumValueA( handle->sources_key, handle->sources_idx, (char *)ServerName, &len_source, NULL,
+                             NULL, (BYTE *)Description, &len_desc );
+    }
+    if (res == ERROR_NO_MORE_ITEMS)
+    {
+        ret = SQL_NO_DATA;
+        goto done;
+    }
+    else if (res == ERROR_SUCCESS)
+    {
+        if (NameLength1) *NameLength1 = len_source;
+        if (NameLength2) *NameLength2 = len_desc - 1;
+
+        handle->sources_idx++;
+        ret = SQL_SUCCESS;
+    }
+
+done:
+    if (ret)
+    {
+        RegCloseKey( handle->sources_key );
+        handle->sources_key = NULL;
+        handle->sources_idx = 0;
+    }
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -2787,10 +2831,10 @@ SQLRETURN WINAPI SQLDataSourcesW(SQLHENV EnvironmentHandle, SQLUSMALLINT Directi
                                  SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1, WCHAR *Description,
                                  SQLSMALLINT BufferLength2, SQLSMALLINT *NameLength2)
 {
-    struct SQLDataSourcesW_params params = { 0, Direction, ServerName, BufferLength1, NameLength1, Description,
-                                             BufferLength2, NameLength2 };
     struct handle *handle = EnvironmentHandle;
-    SQLRETURN ret;
+    SQLRETURN ret = SQL_ERROR;
+    DWORD len_source = BufferLength1, len_desc = BufferLength2;
+    LONG res;
 
     TRACE("(EnvironmentHandle %p, Direction %d, ServerName %p, BufferLength1 %d, NameLength1 %p, Description %p,"
           " BufferLength2 %d, NameLength2 %p)\n", EnvironmentHandle, Direction, ServerName, BufferLength1,
@@ -2798,18 +2842,52 @@ SQLRETURN WINAPI SQLDataSourcesW(SQLHENV EnvironmentHandle, SQLUSMALLINT Directi
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    params.EnvironmentHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLDataSourcesW, &params );
-
-    if (ret >= 0 && TRACE_ON(odbc))
+    if (Direction == SQL_FETCH_FIRST)
     {
-        if (ServerName && NameLength1 && *NameLength1 > 0)
-            TRACE(" DataSource %s", debugstr_wn(ServerName, *NameLength1));
-        if (Description && NameLength2 && *NameLength2 > 0)
-            TRACE(" Description %s", debugstr_wn(Description, *NameLength2));
-        TRACE("\n");
+        handle->sources_idx = 0;
+        handle->sources_system = FALSE;
+        RegCloseKey( handle->sources_key );
+        if (!(handle->sources_key = open_sources_key( HKEY_CURRENT_USER ))) return SQL_ERROR;
     }
 
+    res = RegEnumValueW( handle->sources_key, handle->sources_idx, ServerName, &len_source, NULL, NULL,
+                         (BYTE *)Description, &len_desc );
+    if (res == ERROR_NO_MORE_ITEMS)
+    {
+        if (handle->sources_system)
+        {
+            ret = SQL_NO_DATA;
+            goto done;
+        }
+        /* user key exhausted, continue with system key */
+        RegCloseKey( handle->sources_key );
+        if (!(handle->sources_key = open_sources_key( HKEY_LOCAL_MACHINE ))) goto done;
+        handle->sources_idx = 0;
+        handle->sources_system = TRUE;
+        res = RegEnumValueW( handle->sources_key, handle->sources_idx, ServerName, &len_source, NULL, NULL,
+                             (BYTE *)Description, &len_desc );
+    }
+    if (res == ERROR_NO_MORE_ITEMS)
+    {
+        ret = SQL_NO_DATA;
+        goto done;
+    }
+    else if (res == ERROR_SUCCESS)
+    {
+        if (NameLength1) *NameLength1 = len_source;
+        if (NameLength2) *NameLength2 = len_desc - 1;
+
+        handle->sources_idx++;
+        ret = SQL_SUCCESS;
+    }
+
+done:
+    if (ret)
+    {
+        RegCloseKey( handle->sources_key );
+        handle->sources_key = NULL;
+        handle->sources_idx = 0;
+    }
     TRACE("Returning %d\n", ret);
     return ret;
 }

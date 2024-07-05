@@ -57,16 +57,12 @@ enum sql_funcs
     unix_SQLConnect,
     unix_SQLConnectW,
     unix_SQLCopyDesc,
-    unix_SQLDataSources,
-    unix_SQLDataSourcesW,
     unix_SQLDescribeCol,
     unix_SQLDescribeColW,
     unix_SQLDescribeParam,
     unix_SQLDisconnect,
     unix_SQLDriverConnect,
     unix_SQLDriverConnectW,
-    unix_SQLDrivers,
-    unix_SQLDriversW,
     unix_SQLEndTran,
     unix_SQLError,
     unix_SQLErrorW,
@@ -189,9 +185,15 @@ struct param_binding
 
 struct handle
 {
+    /* handles */
     UINT64 unix_handle;
+    /* drivers and data sources */
     UINT32 drivers_idx;
     void  *drivers_key;
+    UINT32 sources_idx;
+    void  *sources_key;
+    BOOL   sources_system;
+    /* parameter bindings */
     struct param_binding bind_col;
     struct param_binding bind_parameter;
     UINT32 row_count;   /* number of rows returned by SQLFetch() */
@@ -412,30 +414,6 @@ struct SQLCopyDesc_params
     UINT64 TargetDescHandle;
 };
 
-struct SQLDataSources_params
-{
-    UINT64 EnvironmentHandle;
-    UINT16 Direction;
-    UCHAR *ServerName;
-    INT16  BufferLength1;
-    INT16 *NameLength1;
-    UCHAR *Description;
-    INT16  BufferLength2;
-    INT16 *NameLength2;
-};
-
-struct SQLDataSourcesW_params
-{
-    UINT64 EnvironmentHandle;
-    UINT16 Direction;
-    WCHAR *ServerName;
-    INT16  BufferLength1;
-    INT16 *NameLength1;
-    WCHAR *Description;
-    INT16  BufferLength2;
-    INT16 *NameLength2;
-};
-
 struct SQLDescribeCol_params
 {
     UINT64  StatementHandle;
@@ -499,30 +477,6 @@ struct SQLDriverConnectW_params
     INT16  BufferLength;
     INT16 *Length2;
     UINT16 DriverCompletion;
-};
-
-struct SQLDrivers_params
-{
-    UINT64 EnvironmentHandle;
-    UINT16 Direction;
-    UCHAR *DriverDescription;
-    INT16  BufferLength1;
-    INT16 *DescriptionLength;
-    UCHAR *DriverAttributes;
-    INT16  BufferLength2;
-    INT16 *AttributesLength;
-};
-
-struct SQLDriversW_params
-{
-    UINT64 EnvironmentHandle;
-    UINT16 Direction;
-    WCHAR *DriverDescription;
-    INT16  BufferLength1;
-    INT16 *DescriptionLength;
-    WCHAR *DriverAttributes;
-    INT16  BufferLength2;
-    INT16 *AttributesLength;
 };
 
 struct SQLEndTran_params
