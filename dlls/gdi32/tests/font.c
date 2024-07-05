@@ -7767,6 +7767,76 @@ static void test_GetOutlineTextMetrics_subst(void)
     ReleaseDC(0, hdc);
 }
 
+static INT CALLBACK test_font_weight_enum(const LOGFONTW *lf, const TEXTMETRICW *tm, DWORD type, LPARAM lparam
+)
+{
+    const NEWTEXTMETRICW *ntm = (const NEWTEXTMETRICW *)tm;
+    int *called = (int *)lparam;
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+    ok(!wcscmp(lf->lfFaceName, L"wine_heavy"), "got %s.\n", debugstr_w(lf->lfFaceName));
+    ok((ntm->ntmFlags & (NTM_REGULAR | NTM_BOLD)) == NTM_REGULAR, "got %#lx.\n", ntm->ntmFlags);
+    todo_wine ok(ntm->tmWeight == 700, "got %ld.\n", ntm->tmWeight);
+    *called = 1;
+
+    return 1;
+}
+
+static void test_font_weight(void)
+{
+    HFONT hfont1, hfont2, old;
+    char ttf_name[MAX_PATH];
+    TEXTMETRICW tm1, tm2;
+    int enum_called;
+    LOGFONTW lf;
+    DWORD count;
+    BOOL bret;
+    HDC hdc;
+
+    bret = write_ttf_file("wine_heavy.ttf", ttf_name);
+    ok(bret, "Failed to create test font file.\n");
+
+    count = AddFontResourceExA(ttf_name, 0, NULL);
+    ok(count == 1, "got %lu.\n", count);
+
+    hdc = GetDC(NULL);
+
+    memset(&lf, 0, sizeof(lf));
+    wcscpy(lf.lfFaceName, L"wine_heavy");
+    lf.lfHeight = 90;
+    lf.lfWeight = FW_BOLD;
+    lf.lfCharSet = DEFAULT_CHARSET;
+
+    enum_called = 0;
+    EnumFontFamiliesExW(hdc, &lf, test_font_weight_enum, (LPARAM)&enum_called, 0);
+    ok(enum_called, "font not found.\n");
+
+    enum_called = 0;
+    lf.lfWeight = FW_REGULAR;
+    EnumFontFamiliesExW(hdc, &lf, test_font_weight_enum, (LPARAM)&enum_called, 0);
+    ok(enum_called, "font not found.\n");
+
+    lf.lfWeight = FW_REGULAR;
+    hfont1 = CreateFontIndirectW(&lf);
+    lf.lfWeight = FW_BOLD;
+    hfont2 = CreateFontIndirectW(&lf);
+
+    old = SelectObject(hdc, hfont1);
+    memset(&tm1, 0, sizeof(tm1));
+    GetTextMetricsW(hdc, &tm1);
+    SelectObject(hdc, hfont2);
+    memset(&tm2, 0, sizeof(tm2));
+    GetTextMetricsW(hdc, &tm2);
+    todo_wine ok(tm1.tmMaxCharWidth == tm2.tmMaxCharWidth, "got %ld, %ld.\n", tm1.tmMaxCharWidth, tm2.tmMaxCharWidth);
+
+    SelectObject(hdc, old);
+    ReleaseDC(NULL, hdc);
+    DeleteObject(hfont1);
+    DeleteObject(hfont2);
+    bret = RemoveFontResourceExA(ttf_name, 0, NULL);
+    ok(bret, "got error %ld\n", GetLastError());
+}
+
 START_TEST(font)
 {
     static const char *test_names[] =
@@ -7856,6 +7926,7 @@ START_TEST(font)
     test_lang_names();
     test_char_width();
     test_select_object();
+    test_font_weight();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.
