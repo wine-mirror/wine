@@ -1016,7 +1016,7 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue )
 
 static enum server_fd_type pipe_end_get_fd_type( struct fd *fd )
 {
-    return FD_TYPE_PIPE;
+    return FD_TYPE_DEVICE;
 }
 
 static void pipe_end_peek( struct pipe_end *pipe_end )
