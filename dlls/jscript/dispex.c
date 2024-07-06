@@ -244,6 +244,34 @@ static dispex_prop_t *alloc_protref(jsdisp_t *This, const WCHAR *name, DWORD ref
     return ret;
 }
 
+static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
+{
+    dispex_prop_t *prop;
+
+    if(This->builtin_info->idx_length) {
+        const WCHAR *ptr;
+        unsigned idx = 0;
+
+        for(ptr = name; is_digit(*ptr) && idx < 0x10000; ptr++)
+            idx = idx*10 + (*ptr-'0');
+        if(!*ptr && idx < This->builtin_info->idx_length(This)) {
+            unsigned flags = PROPF_ENUMERABLE;
+            if(This->builtin_info->idx_put)
+                flags |= PROPF_WRITABLE;
+            prop = alloc_prop(This, name, PROP_IDX, flags);
+            if(!prop)
+                return E_OUTOFMEMORY;
+
+            prop->u.idx = idx;
+            *ret = prop;
+            return S_OK;
+        }
+    }
+
+    *ret = NULL;
+    return S_OK;
+}
+
 static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
 {
     const builtin_prop_t *builtin;
@@ -301,28 +329,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
         return S_OK;
     }
 
-    if(This->builtin_info->idx_length) {
-        const WCHAR *ptr;
-        unsigned idx = 0;
-
-        for(ptr = name; is_digit(*ptr) && idx < 0x10000; ptr++)
-            idx = idx*10 + (*ptr-'0');
-        if(!*ptr && idx < This->builtin_info->idx_length(This)) {
-            unsigned flags = PROPF_ENUMERABLE;
-            if(This->builtin_info->idx_put)
-                flags |= PROPF_WRITABLE;
-            prop = alloc_prop(This, name, PROP_IDX, flags);
-            if(!prop)
-                return E_OUTOFMEMORY;
-
-            prop->u.idx = idx;
-            *ret = prop;
-            return S_OK;
-        }
-    }
-
-    *ret = NULL;
-    return S_OK;
+    return find_external_prop(This, name, case_insens, ret);
 }
 
 static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
