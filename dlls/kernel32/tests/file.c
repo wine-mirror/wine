@@ -3305,7 +3305,6 @@ static void test_GetFileType(void)
     ok( h != INVALID_HANDLE_VALUE, "CreateMailslot failed\n" );
     SetLastError( 12345678 );
     type = GetFileType( h );
-    todo_wine
     ok( type == FILE_TYPE_UNKNOWN, "expected type unknown got %ld\n", type );
     todo_wine
     ok( GetLastError() == NO_ERROR, "expected ERROR_NO_ERROR got %lx\n", GetLastError() );

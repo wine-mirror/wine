@@ -94,7 +94,6 @@ static int mailslot_test(void)
     SetLastError(0xdeadbeef);
     ret = ReadFile(hSlot, buffer, 0, &count, NULL);
     ok(!ret, "ReadFile should fail\n");
-    todo_wine
     ok(GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %lu\n", GetLastError());
     ok(count == 0, "expected 0, got %lu\n", count);
 
@@ -264,9 +263,7 @@ static int mailslot_test(void)
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
     ok( dwNext == 1, "dwNext incorrect\n");
-    todo_wine {
     ok( dwMsgCount == 2, "dwMsgCount incorrect\n");
-    }
 
     /* write a 3rd message with zero size */
     ok( WriteFile( hWriter2, buffer, 0, &count, NULL), "3rd write failed\n");
@@ -276,8 +273,7 @@ static int mailslot_test(void)
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
     ok( dwNext == 1, "dwNext incorrect\n");
-    todo_wine
-        ok( dwMsgCount == 3, "dwMsgCount incorrect %lu\n", dwMsgCount);
+    ok( dwMsgCount == 3, "dwMsgCount incorrect %lu\n", dwMsgCount);
 
     buffer[0]=buffer[1]=0;
 
@@ -295,9 +291,7 @@ static int mailslot_test(void)
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
     ok( dwNext == 2, "dwNext incorrect\n");
-    todo_wine {
-        ok( dwMsgCount == 2, "dwMsgCount incorrect %lu\n", dwMsgCount);
-    }
+    ok( dwMsgCount == 2, "dwMsgCount incorrect %lu\n", dwMsgCount);
 
     /* read the second message */
     ok( ReadFile( hSlot, buffer, sizeof buffer, &count, NULL),
@@ -310,15 +304,11 @@ static int mailslot_test(void)
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
     ok( dwNext == 0, "dwNext incorrect %lu\n", dwNext);
-    todo_wine {
-        ok( dwMsgCount == 1, "dwMsgCount incorrect %lu\n", dwMsgCount);
-    }
+    ok( dwMsgCount == 1, "dwMsgCount incorrect %lu\n", dwMsgCount);
 
     /* read the 3rd (zero length) message */
-    todo_wine {
     ok( ReadFile( hSlot, buffer, sizeof buffer, &count, NULL),
         "3rd slot read failed\n");
-    }
     ok( count == 0, "failed to get 3rd message\n");
 
     /*
@@ -346,9 +336,9 @@ static int mailslot_test(void)
     io.Status = 0xdeadbeef;
     io.Information = 0xdeadbeef;
     ret = NtReadFile( hSlot, NULL, NULL, NULL, &io, buffer, 1, NULL, NULL );
-    todo_wine ok( ret == STATUS_BUFFER_TOO_SMALL, "got %#x\n", ret );
-    todo_wine ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
-    todo_wine ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
+    ok( ret == STATUS_BUFFER_TOO_SMALL, "got %#x\n", ret );
+    ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
+    ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
 
     io.Status = 0xdeadbeef;
     io.Information = 0xdeadbeef;
@@ -359,8 +349,8 @@ static int mailslot_test(void)
     ok( io.Information == sizeof(info), "got size %Iu\n", io.Information );
     ok( !info.MaximumMessageSize, "got maximum size %lu\n", info.MaximumMessageSize );
     ok( !info.MailslotQuota, "got quota %lu\n", info.MailslotQuota );
-    todo_wine ok( info.NextMessageSize == 2, "got next size %lu\n", info.NextMessageSize );
-    todo_wine ok( info.MessagesAvailable == 1, "got message count %lu\n", info.MessagesAvailable );
+    ok( info.NextMessageSize == 2, "got next size %lu\n", info.NextMessageSize );
+    ok( info.MessagesAvailable == 1, "got message count %lu\n", info.MessagesAvailable );
     ok( !info.ReadTimeout.QuadPart, "got timeout %I64u\n", info.ReadTimeout.QuadPart );
 
     io.Status = 0xdeadbeef;
@@ -425,8 +415,8 @@ static int mailslot_test(void)
 
     ret = WaitForSingleObject( hSlot, 1000 );
     ok( !ret, "got %d\n", ret );
-    todo_wine ok( !io.Status, "got status %#lx\n", io.Status );
-    todo_wine ok( io.Information == 4, "got size %Iu\n", io.Information );
+    ok( !io.Status, "got status %#lx\n", io.Status );
+    ok( io.Information == 4, "got size %Iu\n", io.Information );
 
     CloseHandle( hWriter );
     CloseHandle( hSlot );

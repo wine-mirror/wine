@@ -1777,7 +1777,6 @@ enum server_fd_type
     FD_TYPE_DIR,
     FD_TYPE_SOCKET,
     FD_TYPE_SERIAL,
-    FD_TYPE_MAILSLOT,
     FD_TYPE_CHAR,
     FD_TYPE_DEVICE,
     FD_TYPE_NB_TYPES
@@ -6599,7 +6598,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 835
+#define SERVER_PROTOCOL_VERSION 836
 
 /* ### protocol_version end ### */
 
