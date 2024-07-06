@@ -410,12 +410,12 @@ static int mailslot_test(void)
     io.Status = 0xdeadbeef;
     io.Information = 0xdeadbeef;
     ret = NtReadFile( hSlot, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
-    todo_wine ok( ret == STATUS_PENDING, "got %#x\n", ret );
+    ok( ret == STATUS_PENDING, "got %#x\n", ret );
     ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
     ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
 
     ret = WaitForSingleObject( hSlot, 0 );
-    todo_wine ok( ret == WAIT_TIMEOUT, "got %d\n", ret );
+    ok( ret == WAIT_TIMEOUT, "got %d\n", ret );
 
     hWriter = CreateFileA( szmspath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
     ok( hWriter != INVALID_HANDLE_VALUE, "got err %lu\n", GetLastError() );

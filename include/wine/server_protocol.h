@@ -4847,10 +4847,12 @@ struct create_mailslot_request
 {
     struct request_header __header;
     unsigned int   access;
+    unsigned int   options;
+    char __pad_20[4];
     timeout_t      read_timeout;
     unsigned int   max_msgsize;
     /* VARARG(objattr,object_attributes); */
-    char __pad_28[4];
+    char __pad_36[4];
 };
 struct create_mailslot_reply
 {
@@ -6597,7 +6599,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 834
+#define SERVER_PROTOCOL_VERSION 835
 
 /* ### protocol_version end ### */
 

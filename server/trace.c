@@ -4076,6 +4076,7 @@ static void dump_get_system_handles_reply( const struct get_system_handles_reply
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", options=%08x", req->options );
     dump_timeout( ", read_timeout=", &req->read_timeout );
     fprintf( stderr, ", max_msgsize=%08x", req->max_msgsize );
     dump_varargs_object_attributes( ", objattr=", cur_size );

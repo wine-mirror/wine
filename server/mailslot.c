@@ -474,7 +474,7 @@ static enum server_fd_type mailslot_device_file_get_fd_type( struct fd *fd )
 
 static struct mailslot *create_mailslot( struct object *root,
                                          const struct unicode_str *name, unsigned int attr,
-                                         int max_msgsize, timeout_t read_timeout,
+                                         unsigned int options, int max_msgsize, timeout_t read_timeout,
                                          const struct security_descriptor *sd )
 {
     struct mailslot *mailslot;
@@ -494,8 +494,7 @@ static struct mailslot *create_mailslot( struct object *root,
         fcntl( fds[1], F_SETFL, O_NONBLOCK );
         shutdown( fds[0], SHUT_RD );
         mailslot->write_fd = fds[0];
-        if ((mailslot->fd = create_anonymous_fd( &mailslot_fd_ops, fds[1], &mailslot->obj,
-                                                 FILE_SYNCHRONOUS_IO_NONALERT )))
+        if ((mailslot->fd = create_anonymous_fd( &mailslot_fd_ops, fds[1], &mailslot->obj, options )))
         {
             allow_fd_caching( mailslot->fd );
             return mailslot;
@@ -566,7 +565,7 @@ DECL_HANDLER(create_mailslot)
         if (!(root = get_directory_obj( current->process, objattr->rootdir ))) return;
     }
 
-    if ((mailslot = create_mailslot( root, &name, objattr->attributes, req->max_msgsize,
+    if ((mailslot = create_mailslot( root, &name, objattr->attributes, req->options, req->max_msgsize,
                                      req->read_timeout, sd )))
     {
         reply->handle = alloc_handle( current->process, mailslot, req->access, objattr->attributes );

@@ -692,8 +692,8 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
     else
         timeout.QuadPart = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
 
-    if (!set_ntstatus( NtCreateMailslotFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr,
-                                             &iosb, 0, 0, nMaxMessageSize, &timeout )))
+    if (!set_ntstatus( NtCreateMailslotFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &iosb,
+                                             FILE_SYNCHRONOUS_IO_NONALERT, 0, nMaxMessageSize, &timeout )))
         handle = INVALID_HANDLE_VALUE;
 
     RtlFreeUnicodeString( &nameW );

@@ -3432,6 +3432,7 @@ struct handle_info
 /* Create a mailslot */
 @REQ(create_mailslot)
     unsigned int   access;        /* wanted access rights */
+    unsigned int   options;
     timeout_t      read_timeout;
     unsigned int   max_msgsize;
     VARARG(objattr,object_attributes); /* object attributes */
