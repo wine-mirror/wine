@@ -22,18 +22,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windef.h>
 #include <winbase.h>
-
+#include <winternl.h>
 #include "wine/test.h"
 
 static const char szmspath[] = "\\\\.\\mailslot\\wine_mailslot_test";
 
 static int mailslot_test(void)
 {
+    UNICODE_STRING nt_path = RTL_CONSTANT_STRING( L"\\??\\MAILSLOT\\wine_mailslot_test" );
     HANDLE hSlot, hSlot2, hWriter, hWriter2;
     unsigned char buffer[16];
     DWORD count, dwMax, dwNext, dwMsgCount, dwTimeout;
+    FILE_MAILSLOT_QUERY_INFORMATION info;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
     BOOL ret;
 
     /* sanity check on GetMailslotInfo */
@@ -102,6 +108,20 @@ static int mailslot_test(void)
             "slot write\n");
     ok( GetLastError() == ERROR_ACCESS_DENIED, "wrong error %lu\n", GetLastError() );
 
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    ret = NtReadFile( hSlot, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
+    ok( ret == STATUS_IO_TIMEOUT, "got %#x\n", ret );
+    ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
+    ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
+
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    ret = NtWriteFile( hSlot, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
+    ok( ret == STATUS_ACCESS_DENIED, "got %#x\n", ret );
+    ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
+    ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
+
     /* now try and open the client, but with the wrong sharing mode */
     hWriter = CreateFileA(szmspath, GENERIC_WRITE,
                              0, NULL, OPEN_EXISTING, 0, NULL);
@@ -140,6 +160,13 @@ static int mailslot_test(void)
             "can read client\n");
     ok( GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_ACCESS_DENIED,
             "wrong error %lu\n", GetLastError() );
+
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    ret = NtReadFile( hWriter, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
+    todo_wine ok( ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret );
+    ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
+    ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
 
     /*
      * seeing as there's something in the slot,
@@ -310,6 +337,48 @@ static int mailslot_test(void)
     if (!ret) ok( GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %lu\n", GetLastError() );
     else ok( count == 0, "wrong count %lu\n", count );
 
+    /* Try to perform a partial read. */
+    count = 0;
+    ret = WriteFile( hWriter, buffer, 2, &count, NULL );
+    ok( ret, "got %d\n", ret );
+    ok( count == 2, "got count %lu\n", count );
+
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    ret = NtReadFile( hSlot, NULL, NULL, NULL, &io, buffer, 1, NULL, NULL );
+    todo_wine ok( ret == STATUS_BUFFER_TOO_SMALL, "got %#x\n", ret );
+    todo_wine ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
+    todo_wine ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
+
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    memset( &info, 0xcc, sizeof(info) );
+    ret = NtQueryInformationFile( hSlot, &io, &info, sizeof(info), FileMailslotQueryInformation );
+    ok( ret == STATUS_SUCCESS, "got %#x\n", ret );
+    ok( io.Status == STATUS_SUCCESS, "got status %#lx\n", io.Status );
+    ok( io.Information == sizeof(info), "got size %Iu\n", io.Information );
+    ok( !info.MaximumMessageSize, "got maximum size %lu\n", info.MaximumMessageSize );
+    ok( !info.MailslotQuota, "got quota %lu\n", info.MailslotQuota );
+    todo_wine ok( info.NextMessageSize == 2, "got next size %lu\n", info.NextMessageSize );
+    todo_wine ok( info.MessagesAvailable == 1, "got message count %lu\n", info.MessagesAvailable );
+    ok( !info.ReadTimeout.QuadPart, "got timeout %I64u\n", info.ReadTimeout.QuadPart );
+
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    memset( &info, 0xcc, sizeof(info) );
+    ret = NtQueryInformationFile( hWriter, &io, &info, sizeof(info), FileMailslotQueryInformation );
+    todo_wine ok( ret == STATUS_SUCCESS || ret == STATUS_INVALID_PARAMETER /* Win < 8 */, "got %#x\n", ret );
+    if (ret == STATUS_SUCCESS)
+    {
+        ok( io.Status == STATUS_SUCCESS, "got status %#lx\n", io.Status );
+        ok( io.Information == sizeof(info), "got size %Iu\n", io.Information );
+        ok( !info.MaximumMessageSize, "got maximum size %lu\n", info.MaximumMessageSize );
+        ok( !info.MailslotQuota, "got quota %lu\n", info.MailslotQuota );
+        ok( info.NextMessageSize == 2, "got next size %lu\n", info.NextMessageSize );
+        ok( info.MessagesAvailable == 1, "got message count %lu\n", info.MessagesAvailable );
+        ok( !info.ReadTimeout.QuadPart, "got timeout %I64u\n", info.ReadTimeout.QuadPart );
+    }
+
     /* finally close the mailslot and its client */
     ok( CloseHandle( hWriter2 ), "closing 2nd client\n");
     ok( CloseHandle( hWriter ), "closing the client\n");
@@ -326,6 +395,41 @@ static int mailslot_test(void)
     dwTimeout = GetTickCount() - dwTimeout;
     ok( dwTimeout >= 900, "timeout too short %lu\n", dwTimeout );
     ok( CloseHandle( hSlot ), "closing the mailslot\n");
+
+    InitializeObjectAttributes( &attr, &nt_path, 0, NULL, NULL );
+    ret = NtCreateMailslotFile( &hSlot, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr, &io, 0, 0, 0, NULL );
+    ok( !ret, "got %#x\n", ret );
+
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    ret = NtWriteFile( hSlot, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
+    todo_wine ok( ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret );
+    ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
+    ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
+
+    io.Status = 0xdeadbeef;
+    io.Information = 0xdeadbeef;
+    ret = NtReadFile( hSlot, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
+    todo_wine ok( ret == STATUS_PENDING, "got %#x\n", ret );
+    ok( io.Status == 0xdeadbeef, "got status %#lx\n", io.Status );
+    ok( io.Information == 0xdeadbeef, "got size %Iu\n", io.Information );
+
+    ret = WaitForSingleObject( hSlot, 0 );
+    todo_wine ok( ret == WAIT_TIMEOUT, "got %d\n", ret );
+
+    hWriter = CreateFileA( szmspath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
+    ok( hWriter != INVALID_HANDLE_VALUE, "got err %lu\n", GetLastError() );
+
+    ret = WriteFile( hWriter, "data", 4, &count, NULL );
+    ok( ret == TRUE, "got error %lu\n", GetLastError() );
+
+    ret = WaitForSingleObject( hSlot, 1000 );
+    ok( !ret, "got %d\n", ret );
+    todo_wine ok( !io.Status, "got status %#lx\n", io.Status );
+    todo_wine ok( io.Information == 4, "got size %Iu\n", io.Information );
+
+    CloseHandle( hWriter );
+    CloseHandle( hSlot );
 
     return 0;
 }
