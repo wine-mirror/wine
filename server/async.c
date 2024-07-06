@@ -368,16 +368,6 @@ obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_
 
     async->initial_status = get_error();
 
-    if (!async->pending && NT_ERROR( get_error() ))
-    {
-        async->iosb->status = get_error();
-        async_call_completion_callback( async );
-
-        close_handle( async->thread->process, async->wait_handle );
-        async->wait_handle = 0;
-        return 0;
-    }
-
     if (get_error() != STATUS_PENDING)
     {
         /* status and data are already set and returned */
@@ -391,6 +381,16 @@ obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_
             set_reply_data_ptr( async->iosb->out_data, async->iosb->out_size );
             async->iosb->out_data = NULL;
         }
+    }
+
+    if (!async->pending && NT_ERROR( async->iosb->status ))
+    {
+        async_call_completion_callback( async );
+
+        close_handle( async->thread->process, async->wait_handle );
+        async->wait_handle = 0;
+        set_error( async->iosb->status );
+        return 0;
     }
 
     if (async->iosb->status != STATUS_PENDING)
