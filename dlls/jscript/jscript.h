@@ -312,6 +312,7 @@ struct _function_code_t *Function_get_code(jsdisp_t*);
 
 HRESULT throw_error(script_ctx_t*,HRESULT,const WCHAR*);
 jsdisp_t *create_builtin_error(script_ctx_t *ctx);
+void handle_dispatch_exception(script_ctx_t *ctx, EXCEPINFO *ei);
 
 HRESULT create_object(script_ctx_t*,jsdisp_t*,jsdisp_t**);
 HRESULT create_math(script_ctx_t*,jsdisp_t**);

@@ -402,6 +402,21 @@ HRESULT throw_error(script_ctx_t *ctx, HRESULT error, const WCHAR *str)
     return DISP_E_EXCEPTION;
 }
 
+void handle_dispatch_exception(script_ctx_t *ctx, EXCEPINFO *ei)
+{
+    TRACE("%08lx %s %s\n", ei->scode, debugstr_w(ei->bstrSource), debugstr_w(ei->bstrDescription));
+
+    reset_ei(ctx->ei);
+    ctx->ei->error = (SUCCEEDED(ei->scode) || ei->scode == DISP_E_EXCEPTION) ? E_FAIL : ei->scode;
+    if(ei->bstrSource)
+        ctx->ei->source = jsstr_alloc_len(ei->bstrSource, SysStringLen(ei->bstrSource));
+    if(ei->bstrDescription)
+        ctx->ei->message = jsstr_alloc_len(ei->bstrDescription, SysStringLen(ei->bstrDescription));
+    SysFreeString(ei->bstrSource);
+    SysFreeString(ei->bstrDescription);
+    SysFreeString(ei->bstrHelpFile);
+}
+
 void set_error_location(jsexcept_t *ei, bytecode_t *code, unsigned loc, unsigned source_id, jsstr_t *line)
 {
     if(is_jscript_error(ei->error)) {

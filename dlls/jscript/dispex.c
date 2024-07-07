@@ -2496,19 +2496,8 @@ static HRESULT disp_invoke(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD f
         hres = IDispatch_Invoke(disp, id, &IID_NULL, ctx->lcid, flags, params, r, &ei, &err);
     }
 
-    if(hres == DISP_E_EXCEPTION) {
-        TRACE("DISP_E_EXCEPTION: %08lx %s %s\n", ei.scode, debugstr_w(ei.bstrSource), debugstr_w(ei.bstrDescription));
-        reset_ei(ctx->ei);
-        ctx->ei->error = (SUCCEEDED(ei.scode) || ei.scode == DISP_E_EXCEPTION) ? E_FAIL : ei.scode;
-        if(ei.bstrSource)
-            ctx->ei->source = jsstr_alloc_len(ei.bstrSource, SysStringLen(ei.bstrSource));
-        if(ei.bstrDescription)
-            ctx->ei->message = jsstr_alloc_len(ei.bstrDescription, SysStringLen(ei.bstrDescription));
-        SysFreeString(ei.bstrSource);
-        SysFreeString(ei.bstrDescription);
-        SysFreeString(ei.bstrHelpFile);
-    }
-
+    if(hres == DISP_E_EXCEPTION)
+        handle_dispatch_exception(ctx, &ei);
     return hres;
 }
 
