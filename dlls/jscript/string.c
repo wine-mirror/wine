@@ -1517,18 +1517,14 @@ static HRESULT String_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct pr
     return jsdisp_index_lookup(&string->dispex, name, jsstr_length(string->str), desc);
 }
 
-static unsigned String_idx_length(jsdisp_t *jsdisp)
+static HRESULT String_next_prop(jsdisp_t *jsdisp, unsigned id, struct property_info *desc)
 {
     StringInstance *string = string_from_jsdisp(jsdisp);
 
-    /*
-     * NOTE: For invoke version < 2, indexed array is not implemented at all.
-     * Newer jscript.dll versions implement it on string type, not class,
-     * which is not how it should work according to spec. IE9 implements it
-     * properly, but it uses its own JavaScript engine inside MSHTML. We
-     * implement it here, but in the way IE9 and spec work.
-     */
-    return string->dispex.ctx->version < 2 ? 0 : jsstr_length(string->str);
+    if(string->dispex.ctx->version < 2)
+        return S_FALSE;
+
+    return jsdisp_next_index(&string->dispex, jsstr_length(string->str), id, desc);
 }
 
 static HRESULT String_prop_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
@@ -1600,7 +1596,7 @@ static const builtin_info_t StringInst_info = {
     .props       = StringInst_props,
     .destructor  = String_destructor,
     .lookup_prop = String_lookup_prop,
-    .idx_length  = String_idx_length,
+    .next_prop   = String_next_prop,
     .prop_get    = String_prop_get,
 };
 

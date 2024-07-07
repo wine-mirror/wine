@@ -123,10 +123,10 @@ static HRESULT Arguments_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct
     return jsdisp_index_lookup(&arguments->jsdisp, name, arguments->argc, desc);
 }
 
-static unsigned Arguments_idx_length(jsdisp_t *jsdisp)
+static HRESULT Arguments_next_prop(jsdisp_t *jsdisp, unsigned id, struct property_info *desc)
 {
     ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
-    return arguments->argc;
+    return jsdisp_next_index(&arguments->jsdisp, arguments->argc, id, desc);
 }
 
 static jsval_t *get_argument_ref(ArgumentsInstance *arguments, unsigned idx)
@@ -193,7 +193,7 @@ static const builtin_info_t Arguments_info = {
     .call        = Arguments_value,
     .destructor  = Arguments_destructor,
     .lookup_prop = Arguments_lookup_prop,
-    .idx_length  = Arguments_idx_length,
+    .next_prop   = Arguments_next_prop,
     .prop_get    = Arguments_prop_get,
     .prop_put    = Arguments_prop_put,
     .gc_traverse = Arguments_gc_traverse

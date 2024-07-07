@@ -191,8 +191,8 @@ typedef struct {
     const builtin_prop_t *props;
     void (*destructor)(jsdisp_t*);
     void (*on_put)(jsdisp_t*,const WCHAR*);
-    unsigned (*idx_length)(jsdisp_t*);
     HRESULT (*lookup_prop)(jsdisp_t*,const WCHAR*,struct property_info*);
+    HRESULT (*next_prop)(jsdisp_t*,unsigned,struct property_info*);
     HRESULT (*prop_get)(jsdisp_t*,unsigned,jsval_t*);
     HRESULT (*prop_put)(jsdisp_t*,unsigned,jsval_t);
     HRESULT (*gc_traverse)(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*);
@@ -289,6 +289,7 @@ HRESULT jsdisp_get_idx_id(jsdisp_t*,DWORD,DISPID*);
 HRESULT disp_delete(IDispatch*,DISPID,BOOL*);
 HRESULT disp_delete_name(script_ctx_t*,IDispatch*,jsstr_t*,BOOL*);
 HRESULT jsdisp_index_lookup(jsdisp_t*,const WCHAR*,unsigned,struct property_info*);
+HRESULT jsdisp_next_index(jsdisp_t*,unsigned,unsigned,struct property_info*);
 HRESULT jsdisp_delete_idx(jsdisp_t*,DWORD);
 HRESULT jsdisp_get_own_property(jsdisp_t*,const WCHAR*,BOOL,property_desc_t*);
 HRESULT jsdisp_define_property(jsdisp_t*,const WCHAR*,property_desc_t*);

@@ -427,6 +427,17 @@ HRESULT jsdisp_index_lookup(jsdisp_t *obj, const WCHAR *name, unsigned length, s
     return S_OK;
 }
 
+HRESULT jsdisp_next_index(jsdisp_t *obj, unsigned length, unsigned id, struct property_info *desc)
+{
+    if(id + 1 == length)
+        return S_FALSE;
+    desc->id = id + 1;
+    desc->flags = PROPF_ENUMERABLE;
+    if(obj->builtin_info->prop_put)
+        desc->flags |= PROPF_WRITABLE;
+    return S_OK;
+}
+
 static IDispatch *get_this(DISPPARAMS *dp)
 {
     DWORD i;
@@ -650,15 +661,28 @@ static HRESULT fill_props(jsdisp_t *obj)
     dispex_prop_t *prop;
     HRESULT hres;
 
-    if(obj->builtin_info->idx_length) {
-        unsigned i = 0, len = obj->builtin_info->idx_length(obj);
+    if(obj->builtin_info->next_prop) {
+        struct property_info desc;
+        unsigned id = ~0;
         WCHAR name[12];
 
-        for(i = 0; i < len; i++) {
-            swprintf(name, ARRAY_SIZE(name), L"%u", i);
-            hres = find_prop_name(obj, string_hash(name), name, FALSE, &prop);
+        for(;;) {
+            hres = obj->builtin_info->next_prop(obj, id, &desc);
             if(FAILED(hres))
                 return hres;
+            if(hres == S_FALSE)
+                break;
+
+            swprintf(name, ARRAYSIZE(name), L"%u", desc.id);
+
+            prop = lookup_dispex_prop(obj, string_hash(name), name, FALSE);
+            if(!prop) {
+                prop = alloc_prop(obj, name, PROP_EXTERN, desc.flags);
+                if(!prop)
+                    return E_OUTOFMEMORY;
+                prop->u.id = desc.id;
+            }
+            id = desc.id;
         }
     }
 

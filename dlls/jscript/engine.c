@@ -485,13 +485,6 @@ static HRESULT scope_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct pro
     return jsdisp_index_lookup(&scope->dispex, name, scope->detached_vars->argc, desc);
 }
 
-static unsigned scope_idx_length(jsdisp_t *dispex)
-{
-    scope_chain_t *scope = scope_from_dispex(dispex);
-
-    return scope->detached_vars->argc;
-}
-
 static HRESULT scope_prop_get(jsdisp_t *dispex, unsigned idx, jsval_t *r)
 {
     scope_chain_t *scope = scope_from_dispex(dispex);
@@ -554,7 +547,6 @@ static const builtin_info_t scope_info = {
     JSCLASS_NONE,
     .destructor  = scope_destructor,
     .lookup_prop = scope_lookup_prop,
-    .idx_length  = scope_idx_length,
     .prop_get    = scope_prop_get,
     .prop_put    = scope_prop_put,
     .gc_traverse = scope_gc_traverse
