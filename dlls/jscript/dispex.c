@@ -608,7 +608,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
     case PROP_BUILTIN:
         return JS_E_FUNCTION_EXPECTED;
     case PROP_PROTREF:
-        return invoke_prop_func(This->prototype, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface,
+        return invoke_prop_func(This->prototype, jsthis ? jsthis : to_disp(This),
                                 This->prototype->props+prop->u.ref, flags, argc, argv, r, caller);
     case PROP_JSVAL: {
         if(!is_object_instance(prop->u.val)) {
@@ -619,20 +619,20 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
         TRACE("call %s %p\n", debugstr_w(prop->name), get_object(prop->u.val));
 
         return disp_call_value_with_caller(This->ctx, get_object(prop->u.val),
-                jsval_disp(jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface),
+                jsval_disp(jsthis ? jsthis : to_disp(This)),
                 flags, argc, argv, r, caller);
     }
     case PROP_ACCESSOR:
     case PROP_EXTERN: {
         jsval_t val;
 
-        hres = prop_get(This, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface, prop, &val);
+        hres = prop_get(This, jsthis ? jsthis : to_disp(This), prop, &val);
         if(FAILED(hres))
             return hres;
 
         if(is_object_instance(val)) {
             hres = disp_call_value_with_caller(This->ctx, get_object(val),
-                    jsval_disp(jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface),
+                    jsval_disp(jsthis ? jsthis : to_disp(This)),
                     flags, argc, argv, r, caller);
         }else {
             FIXME("invoke %s\n", debugstr_jsval(val));
