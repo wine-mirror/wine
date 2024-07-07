@@ -1501,6 +1501,22 @@ static void String_destructor(jsdisp_t *dispex)
     jsstr_release(This->str);
 }
 
+static HRESULT String_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct property_info *desc)
+{
+    StringInstance *string = string_from_jsdisp(jsdisp);
+
+    /*
+     * NOTE: For invoke version < 2, indexed array is not implemented at all.
+     * Newer jscript.dll versions implement it on string type, not class,
+     * which is not how it should work according to spec. IE9+ implements it
+     * properly.
+     */
+    if(string->dispex.ctx->version < 2)
+        return DISP_E_UNKNOWNNAME;
+
+    return jsdisp_index_lookup(&string->dispex, name, jsstr_length(string->str), desc);
+}
+
 static unsigned String_idx_length(jsdisp_t *jsdisp)
 {
     StringInstance *string = string_from_jsdisp(jsdisp);
@@ -1579,12 +1595,13 @@ static const builtin_prop_t StringInst_props[] = {
 };
 
 static const builtin_info_t StringInst_info = {
-    .class      = JSCLASS_STRING,
-    .props_cnt  = ARRAY_SIZE(StringInst_props),
-    .props      = StringInst_props,
-    .destructor = String_destructor,
-    .idx_length = String_idx_length,
-    .prop_get   = String_prop_get,
+    .class       = JSCLASS_STRING,
+    .props_cnt   = ARRAY_SIZE(StringInst_props),
+    .props       = StringInst_props,
+    .destructor  = String_destructor,
+    .lookup_prop = String_lookup_prop,
+    .idx_length  = String_idx_length,
+    .prop_get    = String_prop_get,
 };
 
 /* ECMA-262 3rd Edition    15.5.3.2 */

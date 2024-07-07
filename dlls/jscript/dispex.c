@@ -248,21 +248,20 @@ static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_i
 {
     dispex_prop_t *prop;
 
-    if(This->builtin_info->idx_length) {
-        const WCHAR *ptr;
-        unsigned idx = 0;
+    if(This->builtin_info->lookup_prop) {
+        struct property_info desc;
+        HRESULT hres;
 
-        for(ptr = name; is_digit(*ptr) && idx < 0x10000; ptr++)
-            idx = idx*10 + (*ptr-'0');
-        if(!*ptr && idx < This->builtin_info->idx_length(This)) {
-            unsigned flags = PROPF_ENUMERABLE;
-            if(This->builtin_info->prop_put)
-                flags |= PROPF_WRITABLE;
-            prop = alloc_prop(This, name, PROP_EXTERN, flags);
+        hres = This->builtin_info->lookup_prop(This, name, &desc);
+        if(hres != DISP_E_UNKNOWNNAME) {
+            if(FAILED(hres))
+                return hres;
+
+            prop = alloc_prop(This, name, PROP_EXTERN, desc.flags);
             if(!prop)
                 return E_OUTOFMEMORY;
 
-            prop->u.id = idx;
+            prop->u.id = desc.id;
             *ret = prop;
             return S_OK;
         }
@@ -396,6 +395,25 @@ static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, DWORD create_
 
     *ret = prop;
     return hres;
+}
+
+HRESULT jsdisp_index_lookup(jsdisp_t *obj, const WCHAR *name, unsigned length, struct property_info *desc)
+{
+    const WCHAR *ptr;
+    unsigned idx = 0;
+
+    for(ptr = name; is_digit(*ptr); ptr++) {
+        idx = idx * 10 + (*ptr - '0');
+        if (idx >= length)
+            return DISP_E_UNKNOWNNAME;
+    }
+    if(*ptr)
+        return DISP_E_UNKNOWNNAME;
+    desc->id = idx;
+    desc->flags = PROPF_ENUMERABLE;
+    if(obj->builtin_info->prop_put)
+        desc->flags |= PROPF_WRITABLE;
+    return S_OK;
 }
 
 static IDispatch *get_this(DISPPARAMS *dp)

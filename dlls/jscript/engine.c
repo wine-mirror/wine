@@ -478,6 +478,13 @@ static void scope_destructor(jsdisp_t *dispex)
         IDispatch_Release(scope->obj);
 }
 
+static HRESULT scope_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct property_info *desc)
+{
+    scope_chain_t *scope = scope_from_dispex(jsdisp);
+
+    return jsdisp_index_lookup(&scope->dispex, name, scope->detached_vars->argc, desc);
+}
+
 static unsigned scope_idx_length(jsdisp_t *dispex)
 {
     scope_chain_t *scope = scope_from_dispex(dispex);
@@ -546,6 +553,7 @@ static HRESULT scope_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, 
 static const builtin_info_t scope_info = {
     JSCLASS_NONE,
     .destructor  = scope_destructor,
+    .lookup_prop = scope_lookup_prop,
     .idx_length  = scope_idx_length,
     .prop_get    = scope_prop_get,
     .prop_put    = scope_prop_put,

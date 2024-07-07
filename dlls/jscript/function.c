@@ -117,6 +117,12 @@ static void Arguments_destructor(jsdisp_t *jsdisp)
         scope_release(arguments->scope);
 }
 
+static HRESULT Arguments_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct property_info *desc)
+{
+    ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
+    return jsdisp_index_lookup(&arguments->jsdisp, name, arguments->argc, desc);
+}
+
 static unsigned Arguments_idx_length(jsdisp_t *jsdisp)
 {
     ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
@@ -186,6 +192,7 @@ static const builtin_info_t Arguments_info = {
     .class       = JSCLASS_ARGUMENTS,
     .call        = Arguments_value,
     .destructor  = Arguments_destructor,
+    .lookup_prop = Arguments_lookup_prop,
     .idx_length  = Arguments_idx_length,
     .prop_get    = Arguments_prop_get,
     .prop_put    = Arguments_prop_put,
