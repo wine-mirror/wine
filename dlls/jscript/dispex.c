@@ -244,6 +244,30 @@ static dispex_prop_t *alloc_protref(jsdisp_t *This, const WCHAR *name, DWORD ref
     return ret;
 }
 
+static dispex_prop_t *lookup_dispex_prop(jsdisp_t *obj, unsigned hash, const WCHAR *name, BOOL case_insens)
+{
+    unsigned bucket, pos, prev = ~0;
+
+    bucket = get_props_idx(obj, hash);
+    pos = obj->props[bucket].bucket_head;
+    while(pos != ~0) {
+        if(case_insens ? !wcsicmp(name, obj->props[pos].name) : !wcscmp(name, obj->props[pos].name)) {
+            if(prev != ~0) {
+                obj->props[prev].bucket_next = obj->props[pos].bucket_next;
+                obj->props[pos].bucket_next = obj->props[bucket].bucket_head;
+                obj->props[bucket].bucket_head = pos;
+            }
+
+            return &obj->props[pos];
+        }
+
+        prev = pos;
+        pos = obj->props[pos].bucket_next;
+    }
+
+    return NULL;
+}
+
 static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
 {
     dispex_prop_t *prop;
@@ -274,26 +298,13 @@ static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_i
 static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
 {
     const builtin_prop_t *builtin;
-    unsigned bucket, pos, prev = ~0;
     dispex_prop_t *prop;
     HRESULT hres;
 
-    bucket = get_props_idx(This, hash);
-    pos = This->props[bucket].bucket_head;
-    while(pos != ~0) {
-        if(case_insens ? !wcsicmp(name, This->props[pos].name) : !wcscmp(name, This->props[pos].name)) {
-            if(prev != ~0) {
-                This->props[prev].bucket_next = This->props[pos].bucket_next;
-                This->props[pos].bucket_next = This->props[bucket].bucket_head;
-                This->props[bucket].bucket_head = pos;
-            }
-
-            *ret = &This->props[pos];
-            return S_OK;
-        }
-
-        prev = pos;
-        pos = This->props[pos].bucket_next;
+    prop = lookup_dispex_prop(This, hash, name, case_insens);
+    if(prop) {
+        *ret = prop;
+        return S_OK;
     }
 
     builtin = find_builtin_prop(This, name, case_insens);
