@@ -190,6 +190,8 @@ typedef struct {
     DWORD props_cnt;
     const builtin_prop_t *props;
     void (*destructor)(jsdisp_t*);
+    ULONG (*addref)(jsdisp_t*);
+    ULONG (*release)(jsdisp_t*);
     void (*on_put)(jsdisp_t*,const WCHAR*);
     HRESULT (*lookup_prop)(jsdisp_t*,const WCHAR*,struct property_info*);
     HRESULT (*next_prop)(jsdisp_t*,unsigned,struct property_info*);
@@ -230,34 +232,9 @@ static inline IDispatchEx *to_dispex(jsdisp_t *jsdisp)
 
 jsdisp_t *as_jsdisp(IDispatch*);
 jsdisp_t *to_jsdisp(IDispatch*);
-void jsdisp_free(jsdisp_t*);
-
-#ifndef TRACE_REFCNT
-
-/*
- * We do a lot of refcount calls during script execution, so having an inline
- * version is a nice perf win. Define TRACE_REFCNT macro when debugging
- * refcount bugs to have traces. Also, since jsdisp_t is not thread safe anyways,
- * there is no point in using atomic operations.
- */
-static inline jsdisp_t *jsdisp_addref(jsdisp_t *jsdisp)
-{
-    jsdisp->ref++;
-    return jsdisp;
-}
-
-static inline void jsdisp_release(jsdisp_t *jsdisp)
-{
-    if(!--jsdisp->ref)
-        jsdisp_free(jsdisp);
-}
-
-#else
 
 jsdisp_t *jsdisp_addref(jsdisp_t*);
-void jsdisp_release(jsdisp_t*);
-
-#endif
+ULONG jsdisp_release(jsdisp_t*);
 
 enum jsdisp_enum_type {
     JSDISP_ENUM_ALL,

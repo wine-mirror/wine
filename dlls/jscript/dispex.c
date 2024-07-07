@@ -877,6 +877,11 @@ HRESULT gc_run(script_ctx_t *ctx)
         chunk->ref[chunk_idx++] = obj->ref;
     }
     LIST_FOR_EACH_ENTRY(obj, &thread_data->objects, jsdisp_t, entry) {
+        /* Skip objects with external reference counter */
+        if(obj->builtin_info->addref) {
+            obj->gc_marked = FALSE;
+            continue;
+        }
         for(prop = obj->props, props_end = prop + obj->prop_cnt; prop < props_end; prop++) {
             switch(prop->type) {
             case PROP_JSVAL:
@@ -1763,6 +1768,69 @@ static const ITypeCompVtbl ScriptTypeCompVtbl = {
     ScriptTypeComp_BindType
 };
 
+static void jsdisp_free(jsdisp_t *obj)
+{
+    dispex_prop_t *prop;
+
+    list_remove(&obj->entry);
+
+    TRACE("(%p)\n", obj);
+
+    if(obj->has_weak_refs) {
+        struct list *list = &RB_ENTRY_VALUE(rb_get(&obj->ctx->thread_data->weak_refs, obj), struct weak_refs_entry, entry)->list;
+        do {
+            remove_weakmap_entry(LIST_ENTRY(list->next, struct weakmap_entry, weak_refs_entry));
+        } while(obj->has_weak_refs);
+    }
+
+    for(prop = obj->props; prop < obj->props+obj->prop_cnt; prop++) {
+        switch(prop->type) {
+        case PROP_JSVAL:
+            jsval_release(prop->u.val);
+            break;
+        case PROP_ACCESSOR:
+            if(prop->u.accessor.getter)
+                jsdisp_release(prop->u.accessor.getter);
+            if(prop->u.accessor.setter)
+                jsdisp_release(prop->u.accessor.setter);
+            break;
+        default:
+            break;
+        };
+        free(prop->name);
+    }
+    free(obj->props);
+    script_release(obj->ctx);
+    if(obj->prototype)
+        jsdisp_release(obj->prototype);
+
+    if(obj->builtin_info->destructor)
+        obj->builtin_info->destructor(obj);
+    free(obj);
+}
+
+jsdisp_t *jsdisp_addref(jsdisp_t *obj)
+{
+    if(obj->builtin_info->addref)
+        obj->builtin_info->addref(obj);
+    else
+        ++obj->ref;
+    return obj;
+}
+
+ULONG jsdisp_release(jsdisp_t *obj)
+{
+    ULONG ref;
+
+    if(obj->builtin_info->release)
+        return obj->builtin_info->release(obj);
+
+    ref = --obj->ref;
+    if(!ref)
+        jsdisp_free(obj);
+    return ref;
+}
+
 static inline jsdisp_t *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, jsdisp_t, IDispatchEx_iface);
@@ -1794,6 +1862,8 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
 static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
+    if(This->builtin_info->addref)
+        return This->builtin_info->addref(This);
     jsdisp_addref(This);
     return This->ref;
 }
@@ -1801,11 +1871,7 @@ static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
-    ULONG ref = --This->ref;
-    TRACE("(%p) ref=%ld\n", This, ref);
-    if(!ref)
-        jsdisp_free(This);
-    return ref;
+    return jsdisp_release(This);
 }
 
 static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IDispatchEx *iface, UINT *pctinfo)
@@ -2284,68 +2350,6 @@ HRESULT create_dispex(script_ctx_t *ctx, const builtin_info_t *builtin_info, jsd
     *dispex = ret;
     return S_OK;
 }
-
-void jsdisp_free(jsdisp_t *obj)
-{
-    dispex_prop_t *prop;
-
-    list_remove(&obj->entry);
-
-    TRACE("(%p)\n", obj);
-
-    if(obj->has_weak_refs) {
-        struct list *list = &RB_ENTRY_VALUE(rb_get(&obj->ctx->thread_data->weak_refs, obj), struct weak_refs_entry, entry)->list;
-        do {
-            remove_weakmap_entry(LIST_ENTRY(list->next, struct weakmap_entry, weak_refs_entry));
-        } while(obj->has_weak_refs);
-    }
-
-    for(prop = obj->props; prop < obj->props+obj->prop_cnt; prop++) {
-        switch(prop->type) {
-        case PROP_JSVAL:
-            jsval_release(prop->u.val);
-            break;
-        case PROP_ACCESSOR:
-            if(prop->u.accessor.getter)
-                jsdisp_release(prop->u.accessor.getter);
-            if(prop->u.accessor.setter)
-                jsdisp_release(prop->u.accessor.setter);
-            break;
-        default:
-            break;
-        };
-        free(prop->name);
-    }
-    free(obj->props);
-    script_release(obj->ctx);
-    if(obj->prototype)
-        jsdisp_release(obj->prototype);
-
-    if(obj->builtin_info->destructor)
-        obj->builtin_info->destructor(obj);
-    free(obj);
-}
-
-#ifdef TRACE_REFCNT
-
-jsdisp_t *jsdisp_addref(jsdisp_t *jsdisp)
-{
-    ULONG ref = ++jsdisp->ref;
-    TRACE("(%p) ref=%ld\n", jsdisp, ref);
-    return jsdisp;
-}
-
-void jsdisp_release(jsdisp_t *jsdisp)
-{
-    ULONG ref = --jsdisp->ref;
-
-    TRACE("(%p) ref=%ld\n", jsdisp, ref);
-
-    if(!ref)
-        jsdisp_free(jsdisp);
-}
-
-#endif
 
 HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, jsdisp_t *constr)
 {
