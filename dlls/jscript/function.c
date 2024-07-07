@@ -132,7 +132,7 @@ static jsval_t *get_argument_ref(ArgumentsInstance *arguments, unsigned idx)
     return arguments->scope->detached_vars->var + idx;
 }
 
-static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
+static HRESULT Arguments_prop_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
 {
     ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
 
@@ -141,7 +141,7 @@ static HRESULT Arguments_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
     return jsval_copy(*get_argument_ref(arguments, idx), r);
 }
 
-static HRESULT Arguments_idx_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
+static HRESULT Arguments_prop_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
 {
     ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
     jsval_t copy, *ref;
@@ -187,8 +187,8 @@ static const builtin_info_t Arguments_info = {
     .call        = Arguments_value,
     .destructor  = Arguments_destructor,
     .idx_length  = Arguments_idx_length,
-    .idx_get     = Arguments_idx_get,
-    .idx_put     = Arguments_idx_put,
+    .prop_get    = Arguments_prop_get,
+    .prop_put    = Arguments_prop_put,
     .gc_traverse = Arguments_gc_traverse
 };
 

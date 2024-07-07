@@ -1515,7 +1515,7 @@ static unsigned String_idx_length(jsdisp_t *jsdisp)
     return string->dispex.ctx->version < 2 ? 0 : jsstr_length(string->str);
 }
 
-static HRESULT String_idx_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
+static HRESULT String_prop_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
 {
     StringInstance *string = string_from_jsdisp(jsdisp);
     jsstr_t *ret;
@@ -1584,7 +1584,7 @@ static const builtin_info_t StringInst_info = {
     .props      = StringInst_props,
     .destructor = String_destructor,
     .idx_length = String_idx_length,
-    .idx_get    = String_idx_get,
+    .prop_get   = String_prop_get,
 };
 
 /* ECMA-262 3rd Edition    15.5.3.2 */

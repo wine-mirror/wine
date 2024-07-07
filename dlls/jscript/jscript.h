@@ -186,8 +186,8 @@ typedef struct {
     void (*destructor)(jsdisp_t*);
     void (*on_put)(jsdisp_t*,const WCHAR*);
     unsigned (*idx_length)(jsdisp_t*);
-    HRESULT (*idx_get)(jsdisp_t*,unsigned,jsval_t*);
-    HRESULT (*idx_put)(jsdisp_t*,unsigned,jsval_t);
+    HRESULT (*prop_get)(jsdisp_t*,unsigned,jsval_t*);
+    HRESULT (*prop_put)(jsdisp_t*,unsigned,jsval_t);
     HRESULT (*gc_traverse)(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*);
 } builtin_info_t;
 

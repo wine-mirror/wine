@@ -485,14 +485,14 @@ static unsigned scope_idx_length(jsdisp_t *dispex)
     return scope->detached_vars->argc;
 }
 
-static HRESULT scope_idx_get(jsdisp_t *dispex, unsigned idx, jsval_t *r)
+static HRESULT scope_prop_get(jsdisp_t *dispex, unsigned idx, jsval_t *r)
 {
     scope_chain_t *scope = scope_from_dispex(dispex);
 
     return jsval_copy(scope->detached_vars->var[idx], r);
 }
 
-static HRESULT scope_idx_put(jsdisp_t *dispex, unsigned idx, jsval_t val)
+static HRESULT scope_prop_put(jsdisp_t *dispex, unsigned idx, jsval_t val)
 {
     scope_chain_t *scope = scope_from_dispex(dispex);
     jsval_t copy, *ref;
@@ -547,8 +547,8 @@ static const builtin_info_t scope_info = {
     JSCLASS_NONE,
     .destructor  = scope_destructor,
     .idx_length  = scope_idx_length,
-    .idx_get     = scope_idx_get,
-    .idx_put     = scope_idx_put,
+    .prop_get    = scope_prop_get,
+    .prop_put    = scope_prop_put,
     .gc_traverse = scope_gc_traverse
 };
 

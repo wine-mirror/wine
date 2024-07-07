@@ -36,7 +36,7 @@ typedef enum {
     PROP_PROTREF,
     PROP_ACCESSOR,
     PROP_DELETED,
-    PROP_IDX
+    PROP_EXTERN
 } prop_type_t;
 
 struct _dispex_prop_t {
@@ -49,7 +49,7 @@ struct _dispex_prop_t {
         jsval_t val;
         const builtin_prop_t *p;
         DWORD ref;
-        unsigned idx;
+        unsigned id;
         struct {
             jsdisp_t *getter;
             jsdisp_t *setter;
@@ -256,13 +256,13 @@ static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_i
             idx = idx*10 + (*ptr-'0');
         if(!*ptr && idx < This->builtin_info->idx_length(This)) {
             unsigned flags = PROPF_ENUMERABLE;
-            if(This->builtin_info->idx_put)
+            if(This->builtin_info->prop_put)
                 flags |= PROPF_WRITABLE;
-            prop = alloc_prop(This, name, PROP_IDX, flags);
+            prop = alloc_prop(This, name, PROP_EXTERN, flags);
             if(!prop)
                 return E_OUTOFMEMORY;
 
-            prop->u.idx = idx;
+            prop->u.id = idx;
             *ret = prop;
             return S_OK;
         }
@@ -475,8 +475,8 @@ static HRESULT prop_get(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t *prop, 
             hres = S_OK;
         }
         break;
-    case PROP_IDX:
-        hres = prop_obj->builtin_info->idx_get(prop_obj, prop->u.idx, r);
+    case PROP_EXTERN:
+        hres = prop_obj->builtin_info->prop_get(prop_obj, prop->u.id, r);
         break;
     default:
         ERR("type %d\n", prop->type);
@@ -536,12 +536,12 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
             return S_OK;
         }
         return jsdisp_call_value(prop->u.accessor.setter, jsval_obj(This), DISPATCH_METHOD, 1, &val, NULL);
-    case PROP_IDX:
-        if(!This->builtin_info->idx_put) {
-            TRACE("no put_idx\n");
+    case PROP_EXTERN:
+        if(!This->builtin_info->prop_put) {
+            TRACE("no prop_put\n");
             return S_OK;
         }
-        return This->builtin_info->idx_put(This, prop->u.idx, val);
+        return This->builtin_info->prop_put(This, prop->u.id, val);
     default:
         ERR("type %d\n", prop->type);
         return E_FAIL;
@@ -583,7 +583,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
                 flags, argc, argv, r, caller);
     }
     case PROP_ACCESSOR:
-    case PROP_IDX: {
+    case PROP_EXTERN: {
         jsval_t val;
 
         hres = prop_get(This, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface, prop, &val);
@@ -2976,7 +2976,7 @@ HRESULT jsdisp_get_own_property(jsdisp_t *obj, const WCHAR *name, BOOL flags_onl
     switch(prop->type) {
     case PROP_BUILTIN:
     case PROP_JSVAL:
-    case PROP_IDX:
+    case PROP_EXTERN:
         desc->mask |= PROPF_WRITABLE;
         desc->explicit_value = TRUE;
         if(!flags_only) {
