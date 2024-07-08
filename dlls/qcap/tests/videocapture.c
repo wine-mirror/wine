@@ -665,12 +665,7 @@ static void test_multiple_objects(IMoniker *moniker)
     hr = IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)&filter);
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)&filter2);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IBaseFilter_Release(filter);
-        return;
-    }
+    ok(hr == S_OK, "got %#lx.\n", hr);
     ok(filter != filter2, "got same objects.\n");
 
     hr = IBaseFilter_EnumPins(filter, &enum_pins);

@@ -47,6 +47,11 @@ struct create_params
     video_capture_device_t       *device;
 };
 
+struct start_params
+{
+    video_capture_device_t       device;
+};
+
 struct destroy_params
 {
     video_capture_device_t       device;
@@ -130,6 +135,7 @@ struct read_frame_params
 enum unix_funcs
 {
     unix_create,
+    unix_start,
     unix_destroy,
     unix_check_format,
     unix_set_format,

@@ -215,9 +215,18 @@ static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
 static HRESULT vfw_capture_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
+    struct start_params params;
+    HRESULT hr;
 
     if (!filter->source.pin.peer)
         return S_OK;
+
+    params.device = filter->device;
+    if (FAILED(hr = V4L_CALL( start, &params )))
+    {
+        ERR("start stream failed.\n");
+        return hr;
+    }
 
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Running;
