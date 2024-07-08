@@ -40,6 +40,7 @@
 #include "nsiface.h"
 
 #include "mshtml_private_iface.h"
+#include "../jscript/jsdisp.h"
 
 #include <assert.h>
 

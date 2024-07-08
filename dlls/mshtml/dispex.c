@@ -2243,7 +2243,90 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IWineJSDispatchHost *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI DispatchEx_CallFunction(IWineJSDispatchHost *iface, DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret,
+static HRESULT WINAPI JSDispatchHost_GetJSDispatch(IWineJSDispatchHost *iface, IWineJSDispatch **ret)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+    FIXME("%p\n", This);
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI JSDispatchHost_LookupProperty(IWineJSDispatchHost *iface, const WCHAR *name, DWORD flags,
+                                                    struct property_info *desc)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+    func_info_t *func;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("%s (%p)->(%s)\n", This->info->desc->name, This, debugstr_w(name));
+
+    /* FIXME: name cast works as long as the object doesn't require the actual BSTR for its custom
+     * properties, we will need to fix it properly. */
+    hres = get_builtin_id(This, (BSTR)name, flags, &id);
+    if(FAILED(hres))
+        return hres;
+
+    hres = get_builtin_func(This->info, id, &func);
+    if(FAILED(hres))
+        return hres;
+    desc->id = id;
+    desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
+    if(func->func_disp_idx < 0)
+        desc->flags |= PROPF_ENUMERABLE;
+    desc->name = func->name;
+    return S_OK;
+}
+
+static HRESULT WINAPI JSDispatchHost_NextProperty(IWineJSDispatchHost *iface, DISPID id, struct property_info *desc)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+    func_info_t *func;
+    HRESULT hres;
+
+    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+
+    if(id == DISPID_STARTENUM) {
+        func = This->info->funcs;
+    }else {
+        hres = get_builtin_func(This->info, id, &func);
+        if(FAILED(hres))
+            return hres;
+        func++;
+    }
+
+    while(func < This->info->funcs + This->info->func_cnt) {
+        if(func->func_disp_idx == -1) {
+            desc->id = func->id;
+            desc->name = func->name;
+            desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
+            return S_OK;
+        }
+        func++;
+    }
+    return S_FALSE;
+}
+
+static HRESULT WINAPI JSDispatchHost_GetProperty(IWineJSDispatchHost *iface, DISPID id, LCID lcid, VARIANT *r,
+                                                 EXCEPINFO *ei, IServiceProvider *caller)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+
+    return dispex_prop_get(This, id, lcid, r, ei, caller);
+}
+
+static HRESULT WINAPI JSDispatchHost_SetProperty(IWineJSDispatchHost *iface, DISPID id, LCID lcid, VARIANT *v,
+                                                 EXCEPINFO *ei, IServiceProvider *caller)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+
+    return dispex_prop_put(This, id, lcid, v, ei, caller);
+}
+
+static HRESULT WINAPI JSDispatchHost_CallFunction(IWineJSDispatchHost *iface, DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret,
                                               EXCEPINFO *ei, IServiceProvider *caller)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
@@ -2258,6 +2341,15 @@ static HRESULT WINAPI DispatchEx_CallFunction(IWineJSDispatchHost *iface, DISPID
     if(func->tid != iid || func->func_disp_idx < 0)
         return E_UNEXPECTED;
     return call_builtin_function(This, func, dp, ret, ei, caller);
+}
+
+static HRESULT WINAPI JSDispatchHost_ToString(IWineJSDispatchHost *iface, BSTR *str)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    TRACE("%s (%p)\n", This->info->desc->name, This);
+
+    return dispex_to_string(This, str);
 }
 
 static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
@@ -2276,7 +2368,13 @@ static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     DispatchEx_GetMemberName,
     DispatchEx_GetNextDispID,
     DispatchEx_GetNameSpaceParent,
-    DispatchEx_CallFunction,
+    JSDispatchHost_GetJSDispatch,
+    JSDispatchHost_LookupProperty,
+    JSDispatchHost_NextProperty,
+    JSDispatchHost_GetProperty,
+    JSDispatchHost_SetProperty,
+    JSDispatchHost_CallFunction,
+    JSDispatchHost_ToString,
 };
 
 static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)
