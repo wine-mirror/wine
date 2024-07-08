@@ -112,12 +112,12 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         return hr;
 
     src_format_desc = get_format_info(src_format);
-    if (src_format_desc->type == FORMAT_UNKNOWN)
+    if (is_unknown_format(src_format_desc))
         return E_NOTIMPL;
 
     IDirect3DVolume9_GetDesc(dst_volume, &desc);
     dst_format_desc = get_format_info(desc.Format);
-    if (dst_format_desc->type == FORMAT_UNKNOWN)
+    if (is_unknown_format(dst_format_desc))
         return E_NOTIMPL;
 
     if (!dst_box)

@@ -290,7 +290,7 @@ static HRESULT check_texture_requirements(struct IDirect3DDevice9 *device, UINT 
 
             /* This format can be used, let's evaluate it.
                Weights chosen quite arbitrarily... */
-            score = 512 * (curfmt->type == fmt->type);
+            score = 512 * (format_types_match(curfmt, fmt));
             score -= 32 * (curchannels - channels);
 
             for (j = 0; j < 4; j++)
@@ -1287,7 +1287,7 @@ HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D f
             return hr;
 
         format = get_format_info(desc.Format);
-        if (format->type != FORMAT_ARGB && format->type != FORMAT_ARGBF16 && format->type != FORMAT_ARGBF)
+        if (is_unknown_format(format) || is_index_format(format) || is_compressed_format(format))
         {
             FIXME("Unsupported texture format %#x.\n", desc.Format);
             return D3DERR_INVALIDCALL;
@@ -1684,7 +1684,7 @@ HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DX
             return D3DERR_INVALIDCALL;
 
         format = get_format_info(desc.Format);
-        if (format->type != FORMAT_ARGB && format->type != FORMAT_ARGBF16 && format->type != FORMAT_ARGBF)
+        if (is_unknown_format(format) || is_index_format(format) || is_compressed_format(format))
         {
             FIXME("Unsupported texture format %#x\n", desc.Format);
             return D3DERR_INVALIDCALL;
@@ -1749,7 +1749,7 @@ HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LP
             return D3DERR_INVALIDCALL;
 
         format = get_format_info(desc.Format);
-        if (format->type != FORMAT_ARGB && format->type != FORMAT_ARGBF16 && format->type != FORMAT_ARGBF)
+        if (is_unknown_format(format) || is_index_format(format) || is_compressed_format(format))
         {
             FIXME("Unsupported texture format %#x\n", desc.Format);
             return D3DERR_INVALIDCALL;

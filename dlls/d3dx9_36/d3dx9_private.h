@@ -173,20 +173,34 @@ struct d3dx_include_from_file
 extern CRITICAL_SECTION from_file_mutex;
 extern const struct ID3DXIncludeVtbl d3dx_include_from_file_vtbl;
 
+static inline BOOL is_unknown_format(const struct pixel_format_desc *format)
+{
+    return (format->format == D3DFMT_UNKNOWN);
+}
+
+static inline BOOL is_index_format(const struct pixel_format_desc *format)
+{
+    return (format->type == FORMAT_INDEX);
+}
+
+static inline BOOL is_compressed_format(const struct pixel_format_desc *format)
+{
+    return (format->type == FORMAT_DXT);
+}
+
+static inline BOOL format_types_match(const struct pixel_format_desc *src, const struct pixel_format_desc *dst)
+{
+    return (src->type == dst->type);
+}
+
 static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)
 {
-    if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
-            || format->type == FORMAT_ARGBF || format->type == FORMAT_DXT || format->type == FORMAT_ARGB_SNORM)
-        return TRUE;
-    return !!format->to_rgba;
+    return !is_unknown_format(format);
 }
 
 static inline BOOL is_conversion_to_supported(const struct pixel_format_desc *format)
 {
-    if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
-            || format->type == FORMAT_ARGBF || format->type == FORMAT_DXT || format->type == FORMAT_ARGB_SNORM)
-        return TRUE;
-    return !!format->from_rgba;
+    return !is_index_format(format) && !is_unknown_format(format);
 }
 
 HRESULT map_view_of_file(const WCHAR *filename, void **buffer, DWORD *length);

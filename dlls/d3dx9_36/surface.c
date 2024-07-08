@@ -457,7 +457,7 @@ static HRESULT d3dx_calculate_pixels_size(D3DFORMAT format, uint32_t width, uint
 {
     const struct pixel_format_desc *format_desc = get_format_info(format);
 
-    if (format_desc->type == FORMAT_UNKNOWN)
+    if (is_unknown_format(format_desc))
         return E_NOTIMPL;
 
     if (format_desc->block_width != 1 || format_desc->block_height != 1)
@@ -539,7 +539,7 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
     if (FAILED(hr)) return hr;
 
     pixel_format = get_format_info(src_desc.Format);
-    if (pixel_format->type == FORMAT_UNKNOWN) return E_NOTIMPL;
+    if (is_unknown_format(pixel_format)) return E_NOTIMPL;
 
     file_size = calculate_dds_file_size(src_desc.Format, src_desc.Width, src_desc.Height, 1, 1, 1);
     if (!file_size)
@@ -847,7 +847,7 @@ static HRESULT d3dx_image_wic_frame_decode(struct d3dx_image *image,
         return hr;
     }
 
-    if (fmt_desc->type == FORMAT_INDEX)
+    if (is_index_format(fmt_desc))
     {
         uint32_t nb_colors, i;
 
@@ -1712,7 +1712,7 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
 
             for (x = 0; x < min_width; x++) {
                 if (!src_format->to_rgba && !dst_format->from_rgba
-                        && src_format->type == dst_format->type
+                        && format_types_match(src_format, dst_format)
                         && src_format->bytes_per_pixel <= 4 && dst_format->bytes_per_pixel <= 4)
                 {
                     DWORD val;
@@ -1818,7 +1818,7 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
                 const BYTE *src_ptr = src_row_ptr + (x * src_size->width / dst_size->width) * src_format->bytes_per_pixel;
 
                 if (!src_format->to_rgba && !dst_format->from_rgba
-                        && src_format->type == dst_format->type
+                        && format_types_match(src_format, dst_format)
                         && src_format->bytes_per_pixel <= 4 && dst_format->bytes_per_pixel <= 4)
                 {
                     DWORD val;
@@ -1963,7 +1963,7 @@ HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pi
     RECT unaligned_rect;
 
     memset(pixels, 0, sizeof(*pixels));
-    if (fmt_desc->type == FORMAT_UNKNOWN)
+    if (is_unknown_format(fmt_desc))
     {
         FIXME("Unsupported format %#x.\n", format);
         return E_NOTIMPL;
@@ -1973,7 +1973,7 @@ HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pi
     ptr += (top / fmt_desc->block_height) * row_pitch;
     ptr += (left / fmt_desc->block_width) * fmt_desc->block_byte_count;
 
-    if (fmt_desc->type == FORMAT_DXT)
+    if (is_compressed_format(fmt_desc))
     {
         uint32_t left_aligned, top_aligned;
 
@@ -2013,14 +2013,14 @@ HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
             debug_d3dx_pixels(dst_pixels), dst_desc, debug_d3dx_pixels(src_pixels), src_desc,
             filter_flags, color_key);
 
-    if (src_desc->type == FORMAT_DXT)
+    if (is_compressed_format(src_desc))
         set_volume_struct(&src_size, (src_pixels->unaligned_rect.right - src_pixels->unaligned_rect.left),
                 (src_pixels->unaligned_rect.bottom - src_pixels->unaligned_rect.top), src_pixels->size.depth);
     else
         src_size = src_pixels->size;
 
     dst_size_aligned = dst_pixels->size;
-    if (dst_desc->type == FORMAT_DXT)
+    if (is_compressed_format(dst_desc))
         set_volume_struct(&dst_size, (dst_pixels->unaligned_rect.right - dst_pixels->unaligned_rect.left),
                 (dst_pixels->unaligned_rect.bottom - dst_pixels->unaligned_rect.top), dst_pixels->size.depth);
     else
@@ -2055,7 +2055,7 @@ HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
      * If the source is a compressed image, we need to decompress it first
      * before doing any modifications.
      */
-    if (src_desc->type == FORMAT_DXT)
+    if (is_compressed_format(src_desc))
     {
         uint32_t uncompressed_row_pitch, uncompressed_slice_pitch;
         const struct pixel_format_desc *uncompressed_desc;
@@ -2079,7 +2079,7 @@ HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
     }
 
     /* Same as the above, need to decompress the destination prior to modifying. */
-    if (dst_desc->type == FORMAT_DXT)
+    if (is_compressed_format(dst_desc))
     {
         uint32_t uncompressed_row_pitch, uncompressed_slice_pitch;
         const struct pixel_format_desc *uncompressed_desc;
@@ -2238,7 +2238,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     }
 
     srcformatdesc = get_format_info(src_format);
-    if (srcformatdesc->type == FORMAT_UNKNOWN)
+    if (is_unknown_format(srcformatdesc))
     {
         FIXME("Unsupported format %#x.\n", src_format);
         return E_NOTIMPL;

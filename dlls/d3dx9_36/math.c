@@ -3017,7 +3017,7 @@ HRESULT WINAPI D3DXSHProjectCubeMap(unsigned int order, IDirect3DCubeTexture9 *t
     }
 
     format = get_format_info(desc.Format);
-    if (format->type != FORMAT_ARGB && format->type != FORMAT_ARGBF16 && format->type != FORMAT_ARGBF)
+    if (is_unknown_format(format) || is_index_format(format) || is_compressed_format(format))
     {
         FIXME("Unsupported texture format %#x.\n", desc.Format);
         return D3DERR_INVALIDCALL;
