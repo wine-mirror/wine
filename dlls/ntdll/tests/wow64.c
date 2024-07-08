@@ -2041,18 +2041,78 @@ static void test_exception_dispatcher(void)
 #endif
 }
 
+static void test_xtajit64(void)
+{
+#ifdef __arm64ec__
+    HMODULE module = GetModuleHandleA( "xtajit64.dll" );
+    BOOLEAN (WINAPI *pBTCpu64IsProcessorFeaturePresent)( UINT feature );
+    void (WINAPI *pUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION *info );
+    UINT i;
+
+    if (!module)
+    {
+        win_skip( "xtaji64.dll not loaded\n" );
+        return;
+    }
+#define GET_PROC(func) p##func = pRtlFindExportedRoutineByName( module, #func )
+    GET_PROC( BTCpu64IsProcessorFeaturePresent );
+    GET_PROC( UpdateProcessorInformation );
+#undef GET_PROC
+
+    if (pBTCpu64IsProcessorFeaturePresent)
+    {
+        static const ULONGLONG expect_features =
+            (1ull << PF_COMPARE_EXCHANGE_DOUBLE) |
+            (1ull << PF_MMX_INSTRUCTIONS_AVAILABLE) |
+            (1ull << PF_XMMI_INSTRUCTIONS_AVAILABLE) |
+            (1ull << PF_RDTSC_INSTRUCTION_AVAILABLE) |
+            (1ull << PF_XMMI64_INSTRUCTIONS_AVAILABLE) |
+            (1ull << PF_NX_ENABLED) |
+            (1ull << PF_SSE3_INSTRUCTIONS_AVAILABLE) |
+            (1ull << PF_COMPARE_EXCHANGE128) |
+            (1ull << PF_FASTFAIL_AVAILABLE) |
+            (1ull << PF_RDTSCP_INSTRUCTION_AVAILABLE) |
+            (1ull << PF_SSSE3_INSTRUCTIONS_AVAILABLE) |
+            (1ull << PF_SSE4_1_INSTRUCTIONS_AVAILABLE) |
+            (1ull << PF_SSE4_2_INSTRUCTIONS_AVAILABLE);
+
+        for (i = 0; i < 64; i++)
+        {
+            BOOLEAN ret = pBTCpu64IsProcessorFeaturePresent( i );
+            if (expect_features & (1ull << i)) ok( ret, "missing feature %u\n", i );
+            else if (ret) trace( "extra feature %u supported\n", i );
+        }
+    }
+    else win_skip( "BTCpu64IsProcessorFeaturePresent missing\n" );
+
+    if (pUpdateProcessorInformation)
+    {
+        SYSTEM_CPU_INFORMATION info;
+
+        memset( &info, 0xcc, sizeof(info) );
+        info.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64;
+        pUpdateProcessorInformation( &info );
+
+        ok( info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64,
+            "wrong architecture %u\n", info.ProcessorArchitecture );
+        ok( info.ProcessorLevel == 21, "wrong level %u\n", info.ProcessorLevel );
+        ok( info.ProcessorRevision == 1, "wrong revision %u\n", info.ProcessorRevision );
+        ok( info.MaximumProcessors == 0xcccc, "wrong max proc %u\n", info.MaximumProcessors );
+        ok( info.ProcessorFeatureBits == 0xcccccccc, "wrong features %lx\n", info.ProcessorFeatureBits );
+    }
+    else win_skip( "UpdateProcessorInformation missing\n" );
+#endif
+}
+
+
 static void test_memory_notifications(void)
 {
-    HMODULE module = GetModuleHandleA( "xtajit64.dll" );
+    HMODULE module;
     struct arm64ec_shared_info *info;
     DWORD i;
 
     if (current_machine == IMAGE_FILE_MACHINE_ARM64) return;
-    if (!(module = GetModuleHandleA( "xtajit64.dll" )))
-    {
-        skip( "xtaji64.dll not loaded\n" );
-        return;
-    }
+    if (!(module = GetModuleHandleA( "xtajit64.dll" ))) return;
     for (i = 0x600; i < 0xc00; i += sizeof(ULONG))
     {
         info = (struct arm64ec_shared_info *)((char *)NtCurrentTeb()->Peb + i);
@@ -2983,6 +3043,7 @@ START_TEST(wow64)
     test_selectors();
     test_image_mappings();
 #ifdef _WIN64
+    test_xtajit64();
     test_cross_process_work_list();
 #else
     test_nt_wow64();
