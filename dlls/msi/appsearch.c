@@ -940,80 +940,122 @@ static UINT search_directory( MSIPACKAGE *package, struct signature *sig, const 
     return rc;
 }
 
+static UINT load_drlocator( MSIRECORD *row, void *param )
+{
+    MSIPACKAGE *package = param;
+    MSIDRLOCATOR *locator;
+
+    if (!(locator = calloc( 1, sizeof(MSIDRLOCATOR) ))) return ERROR_FUNCTION_FAILED;
+
+    locator->Signature = msi_dup_record_field( row, 1 );
+
+    TRACE("Loading DrLocator %s\n", debugstr_w(locator->Signature));
+
+    locator->Parent     = msi_dup_record_field( row, 2 );
+    locator->Path       = msi_dup_record_field( row, 3 );
+    locator->Depth      = MSI_RecordGetInteger( row,4 );
+    list_add_tail( &package->drlocators, &locator->entry );
+    return ERROR_SUCCESS;
+}
+
+static UINT load_all_drlocators( MSIPACKAGE *package )
+{
+    MSIQUERY *view;
+    UINT r;
+
+    r = MSI_DatabaseOpenViewW( package->db, L"SELECT * FROM `DrLocator`", &view );
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    r = MSI_IterateRecords( view, NULL, load_drlocator, package );
+    msiobj_release( &view->hdr );
+    return r;
+}
+
+static void free_drlocators( MSIPACKAGE *package )
+{
+    struct list *item, *cursor;
+
+    LIST_FOR_EACH_SAFE( item, cursor, &package->drlocators )
+    {
+        MSIDRLOCATOR *locator = LIST_ENTRY( item, MSIDRLOCATOR, entry );
+
+        list_remove( &locator->entry );
+        free( locator->Signature );
+        free( locator->Parent );
+        free( locator->Path );
+        free( locator );
+    }
+}
+
 static UINT search_sig_name( MSIPACKAGE *, const WCHAR *, struct signature *, WCHAR ** );
 
-static UINT search_dr( MSIPACKAGE *package, WCHAR **appValue, struct signature *sig )
+static UINT search_dr( MSIPACKAGE *package, WCHAR **app_value, struct signature *sig )
 {
-    LPWSTR parent = NULL;
-    LPCWSTR parentName;
-    WCHAR path[MAX_PATH];
-    WCHAR expanded[MAX_PATH];
-    MSIRECORD *row;
-    int depth;
-    DWORD sz, attr;
+    WCHAR path[MAX_PATH], expanded[MAX_PATH], *parent = NULL;
+    MSIDRLOCATOR *locator = NULL;
+    DWORD attr;
     UINT rc;
 
     TRACE("%s\n", debugstr_w(sig->Name));
 
-    *appValue = NULL;
+    if ((rc = load_all_drlocators( package ))) return rc;
 
-    row = MSI_QueryGetRecord( package->db, L"SELECT * FROM `DrLocator` WHERE `Signature_` = '%s'", sig->Name );
-    if (!row)
+    *app_value = NULL;
+
+    LIST_FOR_EACH_ENTRY( locator, &package->drlocators, MSIDRLOCATOR, entry )
     {
-        TRACE("failed to query DrLocator for %s\n", debugstr_w(sig->Name));
-        return ERROR_SUCCESS;
+        if (!wcscmp( sig->Name, locator->Signature )) break;
     }
 
-    /* check whether parent is set */
-    parentName = MSI_RecordGetString(row, 2);
-    if (parentName)
+    if (!locator)
     {
-        struct signature parentSig;
+        TRACE("failed to find DrLocator for %s\n", debugstr_w(sig->Name));
+        goto done;
+    }
+    if (locator->Seen)
+    {
+        TRACE("DrLocator %s already seen\n", debugstr_w(sig->Name));
+        goto done;
+    }
+    locator->Seen = TRUE;
 
-        search_sig_name( package, parentName, &parentSig, &parent );
-        free_signature( &parentSig );
-        if (!parent)
-        {
-            msiobj_release(&row->hdr);
-            return ERROR_SUCCESS;
-        }
+    if (locator->Parent)
+    {
+        struct signature parent_sig;
+
+        search_sig_name( package, locator->Parent, &parent_sig, &parent );
+        free_signature( &parent_sig );
+        if (!parent) return ERROR_SUCCESS;
     }
 
-    sz = MAX_PATH;
-    MSI_RecordGetStringW(row, 3, path, &sz);
-
-    if (MSI_RecordIsNull(row,4))
-        depth = 0;
+    if (locator->Path)
+        expand_any_path( package, locator->Path, expanded, MAX_PATH );
     else
-        depth = MSI_RecordGetInteger(row,4);
-
-    if (sz)
-        expand_any_path( package, path, expanded, MAX_PATH );
-    else
-        lstrcpyW(expanded, path);
+        expanded[0] = 0;
 
     if (parent)
     {
         attr = msi_get_file_attributes( package, parent );
-        if (attr != INVALID_FILE_ATTRIBUTES &&
-            !(attr & FILE_ATTRIBUTE_DIRECTORY))
+        if (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY))
         {
-            PathRemoveFileSpecW(parent);
-            PathAddBackslashW(parent);
+            PathRemoveFileSpecW( parent );
+            PathAddBackslashW( parent );
         }
 
-        lstrcpyW(path, parent);
-        lstrcatW(path, expanded);
+        wcscpy( path, parent );
+        wcscat( path, expanded );
     }
-    else if (sz) lstrcpyW(path, expanded);
+    else wcscpy( path, expanded );
 
-    PathAddBackslashW(path);
+    PathAddBackslashW( path );
 
-    rc = search_directory( package, sig, path, depth, appValue );
+    rc = search_directory( package, sig, path, locator->Depth, app_value );
 
-    free(parent);
-    msiobj_release(&row->hdr);
-    TRACE("returning %d\n", rc);
+done:
+    free_drlocators( package );
+    free( parent );
+    TRACE("returning %u\n", rc);
     return rc;
 }
 

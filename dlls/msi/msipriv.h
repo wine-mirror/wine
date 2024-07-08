@@ -406,6 +406,7 @@ typedef struct tagMSIPACKAGE
     struct list folders;
     struct list binaries;
     struct list cabinet_streams;
+    struct list drlocators;
     LPWSTR ActionFormat;
     LPWSTR LastAction;
     LPWSTR LastActionTemplate;
@@ -714,6 +715,16 @@ struct tagMSIMIME
     LPWSTR clsid;
     MSICLASS *Class;
 };
+
+typedef struct
+{
+    struct list entry;
+    WCHAR *Signature;
+    WCHAR *Parent;
+    WCHAR *Path;
+    int Depth;
+    BOOL Seen;
+} MSIDRLOCATOR;
 
 #define SEQUENCE_UI       0x1
 #define SEQUENCE_EXEC     0x2

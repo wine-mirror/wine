@@ -933,6 +933,7 @@ static MSIPACKAGE *alloc_package( void )
         list_init( &package->patches );
         list_init( &package->binaries );
         list_init( &package->cabinet_streams );
+        list_init( &package->drlocators );
     }
 
     return package;
