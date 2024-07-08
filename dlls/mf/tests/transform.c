@@ -3857,7 +3857,7 @@ static void test_h264_encoder(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
         {0},
     };
-    static const struct attribute_desc expect_available_input_attributes[] =
+    const struct attribute_desc expect_available_input_attributes[] =
     {
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
@@ -9244,7 +9244,7 @@ static void test_video_processor_with_dxgi_manager(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
     };
 
-    static const MFVideoArea aperture = {.Area={set_width, set_height}};
+    const MFVideoArea aperture = {.Area={set_width, set_height}};
     const struct attribute_desc nv12_with_aperture[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
