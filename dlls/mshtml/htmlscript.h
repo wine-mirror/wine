@@ -50,3 +50,4 @@ void update_browser_script_mode(GeckoBrowser*,IUri*);
 BOOL find_global_prop(HTMLInnerWindow*,BSTR,DWORD,ScriptHost**,DISPID*);
 IDispatch *get_script_disp(ScriptHost*);
 IActiveScriptSite *get_first_script_site(HTMLInnerWindow*);
+void initialize_script_global(HTMLInnerWindow*);

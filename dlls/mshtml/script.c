@@ -1388,6 +1388,23 @@ static ScriptHost *get_script_host(HTMLInnerWindow *window, const GUID *guid)
     return create_script_host(window, guid);
 }
 
+void initialize_script_global(HTMLInnerWindow *script_global)
+{
+    ScriptHost *script_host;
+    HRESULT hres;
+
+    if(script_global->jscript)
+        return;
+
+    script_host = get_script_host(script_global, &CLSID_JScript);
+    if(!script_host)
+        return;
+
+    hres = IActiveScript_QueryInterface(script_host->script, &IID_IWineJScript, (void **)&script_global->jscript);
+    if(FAILED(hres))
+        ERR("Could not get IWineJScript, don't use native jscript.dll\n");
+}
+
 static ScriptHost *get_elem_script_host(HTMLInnerWindow *window, HTMLScriptElement *script_elem)
 {
     GUID guid;

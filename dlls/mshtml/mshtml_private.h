@@ -427,6 +427,7 @@ struct DispatchEx {
 
     nsCycleCollectingAutoRefCnt ccref;
 
+    IWineJSDispatch *jsdisp;
     dispex_data_t *info;
     dispex_dynamic_data_t *dynamic_data;
 };
@@ -631,6 +632,7 @@ struct HTMLInnerWindow {
 
     struct list children;
     struct list script_hosts;
+    IWineJScript *jscript;
 
     IHTMLEventObj *event;
 

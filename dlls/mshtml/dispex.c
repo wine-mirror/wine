@@ -28,6 +28,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlscript.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -1710,14 +1711,31 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
-static dispex_data_t *ensure_dispex_info(dispex_static_data_t *desc, compat_mode_t compat_mode)
+static dispex_data_t *ensure_dispex_info(DispatchEx *dispex, dispex_static_data_t *desc,
+                                         compat_mode_t compat_mode, HTMLInnerWindow *script_global)
 {
+    HRESULT hres;
+
     if(!desc->info_cache[compat_mode]) {
         EnterCriticalSection(&cs_dispex_static_data);
         if(!desc->info_cache[compat_mode])
             desc->info_cache[compat_mode] = preprocess_dispex_data(desc, compat_mode);
         LeaveCriticalSection(&cs_dispex_static_data);
+        if(!desc->info_cache[compat_mode])
+            return NULL;
     }
+
+    if(compat_mode >= COMPAT_MODE_IE9 && script_global) {
+        if(!script_global->jscript)
+            initialize_script_global(script_global);
+        if(script_global->jscript) {
+            hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
+                                               &dispex->jsdisp);
+            if(FAILED(hres))
+                ERR("Failed to initialize jsdisp: %08lx\n", hres);
+        }
+    }
+
     return desc->info_cache[compat_mode];
 }
 
@@ -1726,7 +1744,7 @@ static BOOL ensure_real_info(DispatchEx *dispex)
     if(dispex->info != dispex->info->desc->delayed_init_info)
         return TRUE;
 
-    dispex->info = ensure_dispex_info(dispex->info->desc, dispex_compat_mode(dispex));
+    dispex->info = ensure_dispex_info(dispex, dispex->info->desc, dispex_compat_mode(dispex), NULL);
     return dispex->info != NULL;
 }
 
@@ -1872,6 +1890,8 @@ static HRESULT WINAPI DispatchEx_GetDispID(IWineJSDispatchHost *iface, BSTR bstr
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
+    if(This->jsdisp)
+        return IWineJSDispatch_GetDispID(This->jsdisp, bstrName, grfdex, pid);
 
     hres = get_builtin_id(This, bstrName, grfdex, pid);
     if(hres != DISP_E_UNKNOWNNAME)
@@ -2048,6 +2068,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
             return hres;
     }
 
+    if(This->jsdisp)
+        return IWineJSDispatch_InvokeEx(This->jsdisp, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
     switch(wFlags) {
     case DISPATCH_PROPERTYGET:
         if(!pvarRes)
@@ -2076,6 +2099,10 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IWineJSDispatchHost *iface, 
 
     TRACE("%s (%p)->(%s %lx)\n", This->info->desc->name, This, debugstr_w(name), grfdex);
 
+    if(!ensure_real_info(This))
+        return E_OUTOFMEMORY;
+    if(This->jsdisp)
+        return IWineJSDispatch_DeleteMemberByName(This->jsdisp, name, grfdex);
     if(dispex_compat_mode(This) < COMPAT_MODE_IE8 && !This->info->desc->vtbl->delete)
         return E_NOTIMPL;
 
@@ -2096,6 +2123,10 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IWineJSDispatchHost *iface
 
     TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
 
+    if(!ensure_real_info(This))
+        return E_OUTOFMEMORY;
+    if(This->jsdisp)
+        return IWineJSDispatch_DeleteMemberByDispID(This->jsdisp, id);
     if(is_custom_dispid(id) && This->info->desc->vtbl->delete)
         return This->info->desc->vtbl->delete(This, id);
 
@@ -2137,6 +2168,8 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IWineJSDispatchHost *iface, DISPI
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
+    if(This->jsdisp)
+        return IWineJSDispatch_GetMemberName(This->jsdisp, id, pbstrName);
 
     if(is_custom_dispid(id)) {
         if(This->info->desc->vtbl->get_name)
@@ -2192,6 +2225,8 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IWineJSDispatchHost *iface, DWORD
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
+    if(This->jsdisp)
+        return IWineJSDispatch_GetNextDispID(This->jsdisp, grfdex, id, pid);
 
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
@@ -2246,8 +2281,12 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IWineJSDispatchHost *iface, 
 static HRESULT WINAPI JSDispatchHost_GetJSDispatch(IWineJSDispatchHost *iface, IWineJSDispatch **ret)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    FIXME("%p\n", This);
-    return E_NOINTERFACE;
+
+    if(!This->jsdisp)
+        return E_NOINTERFACE;
+    *ret = This->jsdisp;
+    IWineJSDispatch_AddRef(*ret);
+    return S_OK;
 }
 
 static HRESULT WINAPI JSDispatchHost_LookupProperty(IWineJSDispatchHost *iface, const WCHAR *name, DWORD flags,
@@ -2449,6 +2488,7 @@ static nsresult NSAPI dispex_unlink(void *p)
 static void NSAPI dispex_delete_cycle_collectable(void *p)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(p);
+    IWineJSDispatch *jsdisp = This->jsdisp;
     dynamic_prop_t *prop;
 
     if(This->info->desc->vtbl->unlink)
@@ -2482,6 +2522,8 @@ static void NSAPI dispex_delete_cycle_collectable(void *p)
 
 destructor:
     This->info->desc->vtbl->destructor(This);
+    if(jsdisp)
+        IWineJSDispatch_Free(jsdisp);
 }
 
 void init_dispex_cc(void)
@@ -2505,6 +2547,7 @@ void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWind
 
     dispex->IWineJSDispatchHost_iface.lpVtbl = &JSDispatchHostVtbl;
     dispex->dynamic_data = NULL;
+    dispex->jsdisp = NULL;
     ccref_init(&dispex->ccref, 1);
 
     if(data->vtbl->get_compat_mode) {
@@ -2522,6 +2565,6 @@ void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWind
         }
         dispex->info = data->delayed_init_info;
     }else {
-        dispex->info = ensure_dispex_info(data, compat_mode);
+        dispex->info = ensure_dispex_info(dispex, data, compat_mode, script_global);
     }
 }
