@@ -27,8 +27,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 static HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    const WCHAR *str = NULL;
+    jsstr_t *ret = NULL;
     jsdisp_t *jsdisp;
-    const WCHAR *str;
     IDispatch *disp;
     HRESULT hres;
 
@@ -74,6 +75,8 @@ static HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
     jsdisp = to_jsdisp(disp);
     if(!jsdisp) {
         str = L"[object Object]";
+    }else if(jsdisp->builtin_info->to_string) {
+        hres = jsdisp->builtin_info->to_string(jsdisp, &ret);
     }else if(names[jsdisp->builtin_info->class]) {
         str = names[jsdisp->builtin_info->class];
     }else {
@@ -87,11 +90,14 @@ static HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
 
 set_output:
     if(r) {
-        jsstr_t *ret;
-        ret = jsstr_alloc(str);
-        if(!ret)
-            return E_OUTOFMEMORY;
+        if(!ret) {
+            ret = jsstr_alloc(str);
+            if(!ret)
+                return E_OUTOFMEMORY;
+        }
         *r = jsval_string(ret);
+    }else if(ret) {
+        jsstr_release(ret);
     }
 
     return S_OK;

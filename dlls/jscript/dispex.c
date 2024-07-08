@@ -3349,6 +3349,21 @@ static HRESULT HostObject_next_prop(jsdisp_t *jsdisp, unsigned id, struct proper
     return IWineJSDispatchHost_NextProperty(This->host_iface, id, desc);
 }
 
+static HRESULT HostObject_to_string(jsdisp_t *jsdisp, jsstr_t **ret)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IWineJSDispatchHost_ToString(This->host_iface, &str);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = jsstr_alloc(str);
+    SysFreeString(str);
+    return *ret ? S_OK : E_OUTOFMEMORY;
+}
+
 static const builtin_info_t HostObject_info = {
     .class       = JSCLASS_OBJECT,
     .addref      = HostObject_addref,
@@ -3357,6 +3372,7 @@ static const builtin_info_t HostObject_info = {
     .prop_get    = HostObject_prop_get,
     .prop_put    = HostObject_prop_put,
     .next_prop   = HostObject_next_prop,
+    .to_string   = HostObject_to_string,
 };
 
 HRESULT init_host_object(script_ctx_t *ctx, IWineJSDispatchHost *host_iface, IWineJSDispatch **ret)
