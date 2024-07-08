@@ -185,7 +185,7 @@ typedef struct {
     ULONG (*addref)(jsdisp_t*);
     ULONG (*release)(jsdisp_t*);
     void (*on_put)(jsdisp_t*,const WCHAR*);
-    HRESULT (*lookup_prop)(jsdisp_t*,const WCHAR*,struct property_info*);
+    HRESULT (*lookup_prop)(jsdisp_t*,const WCHAR*,unsigned,struct property_info*);
     HRESULT (*next_prop)(jsdisp_t*,unsigned,struct property_info*);
     HRESULT (*prop_get)(jsdisp_t*,unsigned,jsval_t*);
     HRESULT (*prop_put)(jsdisp_t*,unsigned,jsval_t);

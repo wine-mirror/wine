@@ -117,7 +117,7 @@ static void Arguments_destructor(jsdisp_t *jsdisp)
         scope_release(arguments->scope);
 }
 
-static HRESULT Arguments_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct property_info *desc)
+static HRESULT Arguments_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, unsigned flags, struct property_info *desc)
 {
     ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
     return jsdisp_index_lookup(&arguments->jsdisp, name, arguments->argc, desc);

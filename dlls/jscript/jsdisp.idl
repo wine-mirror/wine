@@ -25,6 +25,8 @@ struct property_info
 {
     UINT32 id;
     UINT32 flags;
+    const WCHAR *name;
+    UINT32 index;
 };
 
 const unsigned int PROPF_ENUMERABLE   = 0x0400;

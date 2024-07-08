@@ -1501,7 +1501,7 @@ static void String_destructor(jsdisp_t *dispex)
     jsstr_release(This->str);
 }
 
-static HRESULT String_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct property_info *desc)
+static HRESULT String_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, unsigned flags, struct property_info *desc)
 {
     StringInstance *string = string_from_jsdisp(jsdisp);
 

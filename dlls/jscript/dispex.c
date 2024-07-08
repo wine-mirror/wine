@@ -276,12 +276,13 @@ static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_i
         struct property_info desc;
         HRESULT hres;
 
-        hres = This->builtin_info->lookup_prop(This, name, &desc);
+        hres = This->builtin_info->lookup_prop(This, name,
+                                               case_insens ? fdexNameCaseInsensitive : fdexNameCaseSensitive, &desc);
         if(hres != DISP_E_UNKNOWNNAME) {
             if(FAILED(hres))
                 return hres;
 
-            prop = alloc_prop(This, name, PROP_EXTERN, desc.flags);
+            prop = alloc_prop(This, desc.name ? desc.name : name, PROP_EXTERN, desc.flags);
             if(!prop)
                 return E_OUTOFMEMORY;
 
@@ -424,6 +425,8 @@ HRESULT jsdisp_index_lookup(jsdisp_t *obj, const WCHAR *name, unsigned length, s
     desc->flags = PROPF_ENUMERABLE;
     if(obj->builtin_info->prop_put)
         desc->flags |= PROPF_WRITABLE;
+    desc->name = NULL;
+    desc->index = idx;
     return S_OK;
 }
 
@@ -435,6 +438,8 @@ HRESULT jsdisp_next_index(jsdisp_t *obj, unsigned length, unsigned id, struct pr
     desc->flags = PROPF_ENUMERABLE;
     if(obj->builtin_info->prop_put)
         desc->flags |= PROPF_WRITABLE;
+    desc->name = NULL;
+    desc->index = desc->id;
     return S_OK;
 }
 
@@ -664,7 +669,7 @@ static HRESULT fill_props(jsdisp_t *obj)
     if(obj->builtin_info->next_prop) {
         struct property_info desc;
         unsigned id = ~0;
-        WCHAR name[12];
+        WCHAR buf[12];
 
         for(;;) {
             hres = obj->builtin_info->next_prop(obj, id, &desc);
@@ -673,11 +678,14 @@ static HRESULT fill_props(jsdisp_t *obj)
             if(hres == S_FALSE)
                 break;
 
-            swprintf(name, ARRAYSIZE(name), L"%u", desc.id);
+            if(!desc.name) {
+                swprintf(buf, ARRAYSIZE(buf), L"%u", desc.index);
+                desc.name = buf;
+            }
 
-            prop = lookup_dispex_prop(obj, string_hash(name), name, FALSE);
+            prop = lookup_dispex_prop(obj, string_hash(desc.name), desc.name, FALSE);
             if(!prop) {
-                prop = alloc_prop(obj, name, PROP_EXTERN, desc.flags);
+                prop = alloc_prop(obj, desc.name, PROP_EXTERN, desc.flags);
                 if(!prop)
                     return E_OUTOFMEMORY;
                 prop->u.id = desc.id;

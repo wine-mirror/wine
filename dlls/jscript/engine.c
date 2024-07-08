@@ -478,7 +478,7 @@ static void scope_destructor(jsdisp_t *dispex)
         IDispatch_Release(scope->obj);
 }
 
-static HRESULT scope_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, struct property_info *desc)
+static HRESULT scope_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, unsigned flags, struct property_info *desc)
 {
     scope_chain_t *scope = scope_from_dispex(jsdisp);
 
