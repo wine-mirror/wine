@@ -407,6 +407,23 @@ NTSTATUS WINAPI wow64_NtLockVirtualMemory( UINT *args )
 }
 
 
+static void notify_map_view_of_section( HANDLE handle, void *addr, SIZE_T size, ULONG alloc,
+                                        ULONG protect, NTSTATUS *ret_status )
+{
+    SECTION_IMAGE_INFORMATION info;
+    NTSTATUS status;
+
+    if (!NtCurrentTeb()->Tib.ArbitraryUserPointer) return;
+    if (NtQuerySection( handle, SectionImageInformation, &info, sizeof(info), NULL )) return;
+    if (info.Machine != current_machine) return;
+    init_image_mapping( addr );
+    if (!pBTCpuNotifyMapViewOfSection) return;
+    status = pBTCpuNotifyMapViewOfSection( NULL, addr, NULL, size, alloc, protect );
+    if (NT_SUCCESS(status)) return;
+    NtUnmapViewOfSection( GetCurrentProcess(), addr );
+    *ret_status = status;
+}
+
 /**********************************************************************
  *           wow64_NtMapViewOfSection
  */
@@ -433,17 +450,10 @@ NTSTATUS WINAPI wow64_NtMapViewOfSection( UINT *args )
                                  commit, offset, size_32to64( &size, size32 ), inherit, alloc, protect );
     if (NT_SUCCESS(status))
     {
-        SECTION_IMAGE_INFORMATION info;
-
-        if (RtlIsCurrentProcess( process ) &&
-            !NtQuerySection( handle, SectionImageInformation, &info, sizeof(info), NULL ) &&
-            info.Machine == current_machine)
-        {
-            if (pBTCpuNotifyMapViewOfSection) pBTCpuNotifyMapViewOfSection( addr );
-            init_image_mapping( addr );
-        }
         put_addr( addr32, addr );
         put_size( size32, size );
+        if (RtlIsCurrentProcess( process ))
+            notify_map_view_of_section( handle, addr, size, alloc, protect, &status );
     }
     NtCurrentTeb()->Tib.ArbitraryUserPointer = prev;
     return status;
@@ -479,17 +489,9 @@ NTSTATUS WINAPI wow64_NtMapViewOfSectionEx( UINT *args )
                                    size_32to64( &size, size32 ), alloc, protect, params64, count );
     if (NT_SUCCESS(status))
     {
-        SECTION_IMAGE_INFORMATION info;
-
-        if (is_current &&
-            !NtQuerySection( handle, SectionImageInformation, &info, sizeof(info), NULL ) &&
-            info.Machine == current_machine)
-        {
-            if (pBTCpuNotifyMapViewOfSection) pBTCpuNotifyMapViewOfSection( addr );
-            init_image_mapping( addr );
-        }
         put_addr( addr32, addr );
         put_size( size32, size );
+        if (is_current) notify_map_view_of_section( handle, addr, size, alloc, protect, &status );
     }
     NtCurrentTeb()->Tib.ArbitraryUserPointer = prev;
     return status;

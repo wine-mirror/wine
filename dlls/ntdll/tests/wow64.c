@@ -1748,7 +1748,6 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         status = NtMapViewOfSection( mapping, GetCurrentProcess(), &addr, 0, 0, &offset, &size,
                                      ViewShare, 0, PAGE_READONLY );
         ok( NT_SUCCESS(status), "NtMapViewOfSection failed %lx\n", status );
-        todo_wine
         expect_notifications( results, 0, NULL );
         NtUnmapViewOfSection( GetCurrentProcess(), addr );
 
@@ -1764,20 +1763,17 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         expect.args[1] = (ULONG_PTR)addr;
         expect.args[3] = size;
         expect.args[5] = PAGE_READONLY;
-        todo_wine
         expect_notifications( results, 1, &expect );
         NtUnmapViewOfSection( GetCurrentProcess(), addr );
 
         results[1] = 0xdeadbeef;
         status = NtMapViewOfSection( mapping, GetCurrentProcess(), &addr, 0, 0, &offset, &size,
                                      ViewShare, 0, PAGE_READONLY );
-        todo_wine
         ok( status == 0xdeadbeef, "NtMapViewOfSection failed %lx\n", status );
         expect.args[0] = results[2];  /* FIXME: first parameter unknown */
         expect.args[1] = (ULONG_PTR)addr;
         expect.args[3] = size;
         expect.args[5] = PAGE_READONLY;
-        todo_wine
         expect_notifications( results, 1, &expect );
 
         NtCurrentTeb()->Tib.ArbitraryUserPointer = NULL;
@@ -1800,8 +1796,8 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         expect[1].args[1] = 1;
         expect_notifications( results, 2, expect );
 
-        NtUnmapViewOfSection( GetCurrentProcess(), (char *)0x12345 );
-        expect[0].args[0] = expect[1].args[0] = 0x12345;
+        NtUnmapViewOfSection( GetCurrentProcess(), (char *)0x1234 );
+        expect[0].args[0] = expect[1].args[0] = 0x1234;
         expect[1].args[1] = 1;
         expect[1].args[2] = (ULONG)STATUS_NOT_MAPPED_VIEW;
         expect_notifications( results, 2, expect );
