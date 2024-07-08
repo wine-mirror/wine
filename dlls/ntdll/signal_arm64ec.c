@@ -39,6 +39,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
+/* xtajit64.dll functions */
+static NTSTATUS (WINAPI *pProcessInit)(void);
+static NTSTATUS (WINAPI *pThreadInit)(void);
 
 static inline CHPE_V2_CPU_AREA_INFO *get_arm64ec_cpu_area(void)
 {
@@ -85,6 +88,41 @@ static BOOL send_cross_process_notification( HANDLE process, UINT id, const void
     NtUnmapViewOfSection( GetCurrentProcess(), list );
     NtClose( section );
     return TRUE;
+}
+
+
+/*******************************************************************
+ *         arm64ec_process_init
+ */
+NTSTATUS arm64ec_process_init( HMODULE module )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    __os_arm64x_dispatch_call_no_redirect = RtlFindExportedRoutineByName( module, "ExitToX64" );
+    __os_arm64x_dispatch_fptr = RtlFindExportedRoutineByName( module, "DispatchJump" );
+    __os_arm64x_dispatch_ret = RtlFindExportedRoutineByName( module, "RetToEntryThunk" );
+
+#define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
+    GET_PTR( ProcessInit );
+    GET_PTR( ThreadInit );
+#undef GET_PTR
+
+    if (pProcessInit) status = pProcessInit();
+
+    if (!status) status = arm64ec_thread_init();
+    return status;
+}
+
+
+/*******************************************************************
+ *         arm64ec_thread_init
+ */
+NTSTATUS arm64ec_thread_init(void)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (pThreadInit) status = pThreadInit();
+    return status;
 }
 
 

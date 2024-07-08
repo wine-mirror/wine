@@ -4144,6 +4144,44 @@ static void elevate_token(void)
     NtClose( linked.LinkedToken );
 }
 
+#ifdef __arm64ec__
+
+static void load_arm64ec_module(void)
+{
+    ULONG buffer[16];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    UNICODE_STRING nameW = RTL_CONSTANT_STRING( L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\amd64" );
+    WCHAR module[64] = L"C:\\windows\\system32\\xtajit64.dll";
+    OBJECT_ATTRIBUTES attr;
+    WINE_MODREF *wm;
+    NTSTATUS status;
+    HANDLE key;
+
+    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (!NtOpenKey( &key, KEY_READ | KEY_WOW64_64KEY, &attr ))
+    {
+        UNICODE_STRING valueW = RTL_CONSTANT_STRING( L"" );
+        ULONG dirlen = wcslen( L"C:\\windows\\system32\\" );
+        ULONG size = sizeof(buffer);
+
+        if (!NtQueryValueKey( key, &valueW, KeyValuePartialInformation, buffer, size, &size ) && info->Type == REG_SZ)
+        {
+            size = sizeof(module) - (dirlen + 1) * sizeof(WCHAR);
+            memcpy( module + dirlen, info->Data, min( info->DataLength, size ));
+        }
+        NtClose( key );
+    }
+
+    if ((status = load_dll( NULL, module, 0, &wm, FALSE )) ||
+        (status = arm64ec_process_init( wm->ldr.DllBase )))
+    {
+        ERR( "could not load %s, status %lx\n", debugstr_w(module), status );
+        NtTerminateProcess( GetCurrentProcess(), status );
+    }
+}
+
+#endif
+
 #ifdef _WIN64
 
 static void build_wow64_main_module(void)
@@ -4316,6 +4354,10 @@ void loader_init( CONTEXT *context, void **entry )
 
         wm = build_main_module();
         build_ntdll_module();
+#ifdef __arm64ec__
+        load_arm64ec_module();
+        update_load_config( wm->ldr.DllBase );
+#endif
 
         if ((status = load_dll( NULL, L"kernel32.dll", 0, &kernel32, FALSE )) != STATUS_SUCCESS)
         {
@@ -4344,11 +4386,16 @@ void loader_init( CONTEXT *context, void **entry )
         }
         imports_fixup_done = TRUE;
     }
-    else wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
-
+    else
+    {
 #ifdef _WIN64
-    if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
+        if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
 #endif
+#ifdef __arm64ec__
+        arm64ec_thread_init();
+#endif
+        wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
+    }
 
     RtlAcquirePebLock();
     InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
