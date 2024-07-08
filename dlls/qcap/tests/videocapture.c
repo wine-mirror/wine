@@ -649,6 +649,113 @@ static void test_connection(IMoniker *moniker)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_multiple_objects(IMoniker *moniker)
+{
+    struct testfilter testsink, testsink2;
+    IAMStreamConfig *config, *config2;
+    IMediaControl *control, *control2;
+    IFilterGraph2 *graph, *graph2;
+    IBaseFilter *filter, *filter2;
+    IEnumPins *enum_pins;
+    OAFilterState state;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)&filter2);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    if (FAILED(hr))
+    {
+        IBaseFilter_Release(filter);
+        return;
+    }
+    ok(filter != filter2, "got same objects.\n");
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    pin = NULL;
+    while (IEnumPins_Next(enum_pins, 1, &pin, NULL) == S_OK)
+    {
+        PIN_DIRECTION dir;
+        IPin_QueryDirection(pin, &dir);
+        if (dir == PINDIR_OUTPUT)
+            break;
+        IPin_Release(pin);
+    }
+    IEnumPins_Release(enum_pins);
+    ok(!!pin, "got NULL.\n");
+
+    hr = IBaseFilter_EnumPins(filter2, &enum_pins);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    pin2 = NULL;
+    while (IEnumPins_Next(enum_pins, 1, &pin2, NULL) == S_OK)
+    {
+        PIN_DIRECTION dir;
+        IPin_QueryDirection(pin2, &dir);
+        if (dir == PINDIR_OUTPUT)
+            break;
+        IPin_Release(pin2);
+    }
+    IEnumPins_Release(enum_pins);
+    ok(!!pin2, "got NULL.\n");
+
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    testfilter_init(&testsink);
+    IFilterGraph2_AddFilter(graph, &testsink.filter.IBaseFilter_iface, L"sink");
+    IFilterGraph2_AddFilter(graph, filter, L"source");
+    hr = IPin_QueryInterface(pin, &IID_IAMStreamConfig, (void **)&config);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph2);
+    IFilterGraph2_QueryInterface(graph2, &IID_IMediaControl, (void **)&control2);
+    testfilter_init(&testsink2);
+    IFilterGraph2_AddFilter(graph2, &testsink2.filter.IBaseFilter_iface, L"sink");
+    IFilterGraph2_AddFilter(graph2, filter2, L"source");
+    hr = IPin_QueryInterface(pin2, &IID_IAMStreamConfig, (void **)&config2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, pin, &testsink.sink.pin.IPin_iface, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph2, pin2, &testsink2.sink.pin.IPin_iface, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Running, "Got state %lu.\n", state);
+
+    hr = IMediaControl_Run(control2);
+    /* Depending on device driver Windows has different behaviour on attempt to concurrently use capture
+     * device in the same process. So far observed variants are:
+     *  - running both graphs succeeds but only the graph started second receives samples, attempt to change
+     *    state of the first returns MF_E_VIDEO_RECORDING_DEVICE_PREEMPTED;
+     *  - attempt to change second filter or graph state fails with HRESULT_FROM_WIN32(ERROR_NO_SYSTEM_RESOURCES). */
+    ok(hr == S_OK || hr == HRESULT_FROM_WIN32(ERROR_NO_SYSTEM_RESOURCES), "Got hr %#lx.\n", hr);
+
+    IAMStreamConfig_Release(config);
+    IMediaControl_Release(control);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+
+    IAMStreamConfig_Release(config2);
+    IMediaControl_Release(control2);
+    ref = IFilterGraph2_Release(graph2);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    IPin_Release(pin2);
+    ref = IBaseFilter_Release(filter2);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 START_TEST(videocapture)
 {
     ICreateDevEnum *dev_enum;
@@ -693,11 +800,11 @@ START_TEST(videocapture)
         test_pins(filter);
         test_misc_flags(filter);
         test_unconnected_filter_state(filter);
-
         ref = IBaseFilter_Release(filter);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
         test_connection(moniker);
+        test_multiple_objects(moniker);
 
         IMoniker_Release(moniker);
     }
