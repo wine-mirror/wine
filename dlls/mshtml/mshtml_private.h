@@ -78,11 +78,20 @@
 #define MSHTML_E_NODOC            0x800a025c
 #define MSHTML_E_NOT_FUNC         0x800a138a
 
+typedef struct HTMLWindow HTMLWindow;
+typedef struct HTMLInnerWindow HTMLInnerWindow;
+typedef struct HTMLOuterWindow HTMLOuterWindow;
+typedef struct HTMLDocumentNode HTMLDocumentNode;
+typedef struct HTMLDocumentObj HTMLDocumentObj;
+typedef struct HTMLFrameBase HTMLFrameBase;
+typedef struct GeckoBrowser GeckoBrowser;
+typedef struct HTMLAttributeCollection HTMLAttributeCollection;
 typedef struct DOMEvent DOMEvent;
 typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
 typedef struct EventTarget EventTarget;
+typedef struct ScriptHost ScriptHost;
 
 #define TID_LIST \
     XIID(NULL) \
@@ -481,7 +490,7 @@ extern void (__cdecl *ccp_init)(ExternalCycleCollectionParticipant*,const CCObjC
 extern void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,const char*,nsCycleCollectionTraversalCallback*);
 extern void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*);
 
-void init_dispatch(DispatchEx*,dispex_static_data_t*,compat_mode_t);
+void init_dispatch(DispatchEx*,dispex_static_data_t*,HTMLInnerWindow*,compat_mode_t);
 void dispex_props_unlink(DispatchEx*);
 HRESULT change_type(VARIANT*,VARIANT*,VARTYPE,IServiceProvider*);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
@@ -504,17 +513,6 @@ typedef enum {
 } dispex_prop_type_t;
 
 dispex_prop_type_t get_dispid_type(DISPID);
-
-typedef struct HTMLWindow HTMLWindow;
-typedef struct HTMLInnerWindow HTMLInnerWindow;
-typedef struct HTMLOuterWindow HTMLOuterWindow;
-typedef struct HTMLDocumentNode HTMLDocumentNode;
-typedef struct HTMLDocumentObj HTMLDocumentObj;
-typedef struct HTMLFrameBase HTMLFrameBase;
-typedef struct GeckoBrowser GeckoBrowser;
-typedef struct HTMLAttributeCollection HTMLAttributeCollection;
-
-typedef struct ScriptHost ScriptHost;
 
 typedef enum {
     GLOBAL_SCRIPTVAR,

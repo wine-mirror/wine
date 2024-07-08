@@ -1200,7 +1200,7 @@ static HRESULT create_mutation_observer(compat_mode_t compat_mode, IDispatch *ca
     }
 
     obj->IWineMSHTMLMutationObserver_iface.lpVtbl = &WineMSHTMLMutationObserverVtbl;
-    init_dispatch(&obj->dispex, &mutation_observer_dispex, compat_mode);
+    init_dispatch(&obj->dispex, &mutation_observer_dispex, NULL, compat_mode);
 
     IDispatch_AddRef(callback);
     obj->callback = callback;
@@ -1299,7 +1299,7 @@ HRESULT create_mutation_observer_ctor(compat_mode_t compat_mode, IDispatch **ret
         return E_OUTOFMEMORY;
     }
 
-    init_dispatch(&obj->dispex, &mutation_observer_ctor_dispex, compat_mode);
+    init_dispatch(&obj->dispex, &mutation_observer_ctor_dispex, NULL, compat_mode);
 
     *ret = (IDispatch *)&obj->dispex.IWineJSDispatchHost_iface;
     return S_OK;

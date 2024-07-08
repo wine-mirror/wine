@@ -183,7 +183,7 @@ static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, compat_m
     rule->IHTMLStyleSheetRule_iface.lpVtbl = &HTMLStyleSheetRuleVtbl;
     rule->nsstylesheetrule = NULL;
 
-    init_dispatch(&rule->dispex, &HTMLStyleSheetRule_dispex, compat_mode);
+    init_dispatch(&rule->dispex, &HTMLStyleSheetRule_dispex, NULL, compat_mode);
 
     if (nsstylesheetrule)
     {
@@ -399,7 +399,7 @@ static HRESULT create_style_sheet_rules_collection(nsIDOMCSSRuleList *nslist, co
     collection->IHTMLStyleSheetRulesCollection_iface.lpVtbl = &HTMLStyleSheetRulesCollectionVtbl;
     collection->nslist = nslist;
 
-    init_dispatch(&collection->dispex, &HTMLStyleSheetRulesCollection_dispex, compat_mode);
+    init_dispatch(&collection->dispex, &HTMLStyleSheetRulesCollection_dispex, NULL, compat_mode);
 
     if(nslist)
         nsIDOMCSSRuleList_AddRef(nslist);
@@ -779,7 +779,7 @@ HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, compat_mode_
         nsIDOMStyleSheetList_AddRef(nslist);
     collection->nslist = nslist;
 
-    init_dispatch(&collection->dispex, &HTMLStyleSheetsCollection_dispex, compat_mode);
+    init_dispatch(&collection->dispex, &HTMLStyleSheetsCollection_dispex, NULL, compat_mode);
 
     *ret = &collection->IHTMLStyleSheetsCollection_iface;
     return S_OK;
@@ -1260,7 +1260,7 @@ HRESULT create_style_sheet(nsIDOMStyleSheet *nsstylesheet, compat_mode_t compat_
     style_sheet->IHTMLStyleSheet4_iface.lpVtbl = &HTMLStyleSheet4Vtbl;
     style_sheet->nsstylesheet = NULL;
 
-    init_dispatch(&style_sheet->dispex, &HTMLStyleSheet_dispex, compat_mode);
+    init_dispatch(&style_sheet->dispex, &HTMLStyleSheet_dispex, NULL, compat_mode);
 
     if(nsstylesheet) {
         nsres = nsIDOMStyleSheet_QueryInterface(nsstylesheet, &IID_nsIDOMCSSStyleSheet,

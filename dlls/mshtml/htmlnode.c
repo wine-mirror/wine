@@ -418,7 +418,7 @@ HRESULT create_child_collection(nsIDOMNodeList *nslist, compat_mode_t compat_mod
     nsIDOMNodeList_AddRef(nslist);
     collection->nslist = nslist;
 
-    init_dispatch(&collection->dispex, &HTMLDOMChildrenCollection_dispex, compat_mode);
+    init_dispatch(&collection->dispex, &HTMLDOMChildrenCollection_dispex, NULL, compat_mode);
 
     *ret = &collection->IHTMLDOMChildrenCollection_iface;
     return S_OK;

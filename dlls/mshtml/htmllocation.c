@@ -606,7 +606,7 @@ HRESULT create_location(HTMLOuterWindow *window, HTMLLocation **ret)
     location->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    init_dispatch(&location->dispex, &HTMLLocation_dispex, COMPAT_MODE_QUIRKS);
+    init_dispatch(&location->dispex, &HTMLLocation_dispex, NULL, COMPAT_MODE_QUIRKS);
 
     *ret = location;
     return S_OK;

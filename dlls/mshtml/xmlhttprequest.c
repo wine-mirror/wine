@@ -1665,7 +1665,8 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow* window, HTMLXMLHttpReq
     ret->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    init_dispatch(&ret->dispex, &HTMLXMLHttpRequestFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
+    init_dispatch(&ret->dispex, &HTMLXMLHttpRequestFactory_dispex, NULL,
+                  dispex_compat_mode(&window->event_target.dispex));
 
     *ret_ptr = ret;
     return S_OK;

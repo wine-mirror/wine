@@ -1699,7 +1699,8 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
     if(!ret)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&ret->dispex, &HTMLTxtRange_dispex, dispex_compat_mode(&doc->node.event_target.dispex));
+    init_dispatch(&ret->dispex, &HTMLTxtRange_dispex, NULL,
+                  dispex_compat_mode(&doc->node.event_target.dispex));
 
     ret->IHTMLTxtRange_iface.lpVtbl = &HTMLTxtRangeVtbl;
     ret->IOleCommandTarget_iface.lpVtbl = &OleCommandTargetVtbl;
@@ -2004,7 +2005,7 @@ HRESULT create_dom_range(nsIDOMRange *nsrange, compat_mode_t compat_mode, IHTMLD
     if(!ret)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&ret->dispex, &HTMLDOMRange_dispex, compat_mode);
+    init_dispatch(&ret->dispex, &HTMLDOMRange_dispex, NULL, compat_mode);
 
     ret->IHTMLDOMRange_iface.lpVtbl = &HTMLDOMRangeVtbl;
 
