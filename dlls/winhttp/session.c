@@ -681,16 +681,24 @@ static void request_destroy( struct object_header *hdr )
     free( request );
 }
 
-static void str_to_buffer( WCHAR *buffer, const WCHAR *str, LPDWORD buflen )
+static BOOL return_string_option( WCHAR *buffer, const WCHAR *str, LPDWORD buflen )
 {
-    int len = 0;
-    if (str) len = lstrlenW( str );
+    int len = sizeof(WCHAR);
+    if (str) len += lstrlenW( str ) * sizeof(WCHAR);
     if (buffer && *buflen > len)
     {
-        if (str) memcpy( buffer, str, len * sizeof(WCHAR) );
-        buffer[len] = 0;
+        if (str) memcpy( buffer, str, len );
+        len -= sizeof(WCHAR);
+        buffer[len / sizeof(WCHAR)] = 0;
+        *buflen = len;
+        return TRUE;
     }
-    *buflen = len * sizeof(WCHAR);
+    else
+    {
+        *buflen = len;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
 }
 
 static WCHAR *blob_to_str( DWORD encoding, CERT_NAME_BLOB *blob )
@@ -868,20 +876,16 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         return TRUE;
 
     case WINHTTP_OPTION_USERNAME:
-        str_to_buffer( buffer, request->connect->username, buflen );
-        return TRUE;
+        return return_string_option( buffer, request->connect->username, buflen );
 
     case WINHTTP_OPTION_PASSWORD:
-        str_to_buffer( buffer, request->connect->password, buflen );
-        return TRUE;
+        return return_string_option( buffer, request->connect->password, buflen );
 
     case WINHTTP_OPTION_PROXY_USERNAME:
-        str_to_buffer( buffer, request->connect->session->proxy_username, buflen );
-        return TRUE;
+        return return_string_option( buffer, request->connect->session->proxy_username, buflen );
 
     case WINHTTP_OPTION_PROXY_PASSWORD:
-        str_to_buffer( buffer, request->connect->session->proxy_password, buflen );
-        return TRUE;
+        return return_string_option( buffer, request->connect->session->proxy_password, buflen );
 
     case WINHTTP_OPTION_MAX_HTTP_AUTOMATIC_REDIRECTS:
         if (!validate_buffer( buffer, buflen, sizeof(DWORD) )) return FALSE;
