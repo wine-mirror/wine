@@ -69,6 +69,11 @@ static inline const WCHAR *get_machine_wow64_dir( USHORT machine )
     }
 }
 
+static inline TEB32 *NtCurrentTeb32(void)
+{
+    return (TEB32 *)((char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset);
+}
+
 static inline ULONG get_ulong( UINT **args ) { return *(*args)++; }
 static inline HANDLE get_handle( UINT **args ) { return LongToHandle( *(*args)++ ); }
 static inline void *get_ptr( UINT **args ) { return ULongToPtr( *(*args)++ ); }

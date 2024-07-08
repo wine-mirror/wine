@@ -286,9 +286,7 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
  */
 static void __attribute__((used)) call_raise_user_exception_dispatcher( ULONG code )
 {
-    TEB32 *teb32 = (TEB32 *)((char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset);
-
-    teb32->ExceptionCode = code;
+    NtCurrentTeb32()->ExceptionCode = code;
 
     switch (current_machine)
     {
@@ -846,10 +844,9 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
  */
 static void thread_init(void)
 {
-    TEB32 *teb32 = (TEB32 *)((char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset);
     void *cpu_area_ctx;
 
-    teb32->WOW32Reserved = PtrToUlong( pBTCpuGetBopCode() );
+    NtCurrentTeb32()->WOW32Reserved = PtrToUlong( pBTCpuGetBopCode() );
     RtlWow64GetCurrentCpuArea( NULL, &cpu_area_ctx, NULL );
     NtCurrentTeb()->TlsSlots[WOW64_TLS_WOW64INFO] = wow64info;
     if (pBTCpuThreadInit) pBTCpuThreadInit();
@@ -1172,7 +1169,7 @@ NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
                                                void **ret_ptr, ULONG *ret_len )
 {
     WOW64_CPURESERVED *cpu = NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED];
-    TEB32 *teb32 = (TEB32 *)((char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset);
+    TEB32 *teb32 = NtCurrentTeb32();
     ULONG teb_frame = teb32->Tib.ExceptionList;
     struct user_callback_frame frame;
     USHORT flags = cpu->Flags;
