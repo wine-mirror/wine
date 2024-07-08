@@ -1818,14 +1818,12 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         reset_results( results );
         status = NtReadFile( file, 0, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
         ok( !status, "NtReadFile failed %lx\n", status );
-        todo_wine
         expect_notifications( results, 2, expect );
 
         status = NtReadFile( (HANDLE)0xdead, 0, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
         ok( status == STATUS_INVALID_HANDLE, "NtReadFile failed %lx\n", status );
         expect[0].args[0] = expect[1].args[0] = 0xdead;
         expect[1].args[4] = (ULONG)STATUS_INVALID_HANDLE;
-        todo_wine
         expect_notifications( results, 2, expect );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );

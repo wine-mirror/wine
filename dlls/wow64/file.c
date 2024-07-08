@@ -657,8 +657,10 @@ NTSTATUS WINAPI wow64_NtReadFile( UINT *args )
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
+    if (pBTCpuNotifyReadFile) pBTCpuNotifyReadFile( handle, buffer, len, FALSE, 0 );
     status = NtReadFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
                          iosb_32to64( &io, io32 ), buffer, len, offset, key );
+    if (pBTCpuNotifyReadFile) pBTCpuNotifyReadFile( handle, buffer, len, TRUE, status );
     put_iosb( io32, &io );
     return status;
 }
