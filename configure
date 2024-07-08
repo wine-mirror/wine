@@ -1609,6 +1609,7 @@ enable_xmllite
 enable_xolehlp
 enable_xpsprint
 enable_xpssvcs
+enable_xtajit64
 enable_fonts
 enable_include
 enable_adsiid
@@ -21900,10 +21901,12 @@ then
     enable_wow64=${enable_wow64:-aarch64,x86_64}
     enable_wow64win=${enable_wow64win:-aarch64,x86_64}
     enable_wow64cpu=${enable_wow64cpu:-x86_64}
+    enable_xtajit64=${enable_xtajit64:-arm64ec}
 else
     enable_wow64=${enable_wow64:-no}
     enable_wow64win=${enable_wow64win:-no}
     enable_wow64cpu=${enable_wow64cpu:-no}
+    enable_xtajit64=${enable_xtajit64:-no}
 fi
 
 enable_cmd=${enable_cmd:-yes}
@@ -22926,6 +22929,7 @@ wine_fn_config_makefile dlls/xmllite/tests enable_tests
 wine_fn_config_makefile dlls/xolehlp enable_xolehlp
 wine_fn_config_makefile dlls/xpsprint enable_xpsprint
 wine_fn_config_makefile dlls/xpssvcs enable_xpssvcs
+wine_fn_config_makefile dlls/xtajit64 enable_xtajit64
 wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/adsiid enable_adsiid
