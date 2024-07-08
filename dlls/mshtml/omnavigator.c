@@ -425,7 +425,7 @@ static dispex_static_data_t HTMLScreen_dispex = {
     HTMLScreen_iface_tids
 };
 
-HRESULT create_html_screen(compat_mode_t compat_mode, IHTMLScreen **ret)
+HRESULT create_html_screen(HTMLInnerWindow *window, IHTMLScreen **ret)
 {
     HTMLScreen *screen;
 
@@ -435,7 +435,8 @@ HRESULT create_html_screen(compat_mode_t compat_mode, IHTMLScreen **ret)
 
     screen->IHTMLScreen_iface.lpVtbl = &HTMLSreenVtbl;
 
-    init_dispatch(&screen->dispex, &HTMLScreen_dispex, NULL, compat_mode);
+    init_dispatch(&screen->dispex, &HTMLScreen_dispex, window,
+                  dispex_compat_mode(&window->event_target.dispex));
 
     *ret = &screen->IHTMLScreen_iface;
     return S_OK;

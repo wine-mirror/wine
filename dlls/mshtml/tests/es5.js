@@ -2601,3 +2601,48 @@ sync_test("initProgressEvent", function() {
     ok(e.loaded === 99, "loaded after re-init = " + e.loaded);
     ok(e.total === 50, "total after re-init = " + e.total);
 });
+
+sync_test("screen", function() {
+    var o = screen;
+
+    ok(typeof(o) == "object", "typeof(o) = " + typeof(o));
+    ok(o instanceof Object, "o is not an instance of Object");
+
+    o.prop = 1;
+    ok(o.prop === 1, "o.prop = " + o.prop);
+    ok(o.hasOwnProperty("prop"), 'o.hasOwnProperty("prop") = ' + o.hasOwnProperty("prop"));
+    test_own_data_prop_desc(o, "prop", true, true, true);
+
+    Object.defineProperty(o, "defprop", {writable: false, enumerable: false, configurable: true, value: 2});
+    ok(o.defprop === 2, "o.prop = " + o.prop);
+    test_own_data_prop_desc(o, "defprop", false, false, true);
+
+    ok(typeof(Object.keys(o)) === "object", "Object.keys(o) = " + Object.keys(o));
+    ok(Object.isExtensible(o) === true, "Object.isExtensible(o) = " + Object.isExtensible(o));
+    ok(Object.isFrozen(o) === false, "Object.isFrozen(o) = " + Object.isFrozen(o));
+    ok(Object.isSealed(o) === false, "Object.isSealed(o) = " + Object.isSealed(o));
+
+    Object.seal(o);
+    test_own_data_prop_desc(o, "prop", true, true, false);
+    test_own_data_prop_desc(o, "defprop", false, false, false);
+    ok(Object.isExtensible(o) === false, "Object.isExtensible(o) = " + Object.isExtensible(o));
+    ok(Object.isFrozen(o) === false, "Object.isFrozen(o) = " + Object.isFrozen(o));
+    ok(Object.isSealed(o) === true, "Object.isSealed(o) = " + Object.isSealed(o));
+
+    o.prop2 = 3;
+    ok(!("prop2" in o), "o.prop2 = " + o.prop2);
+
+    function check_enum(o, name) {
+        var ret = 0;
+        for(var iter in o) {
+            if(iter == name) ret++;
+        }
+        ok(ret < 2, name + " enumerated " + ret + " times");
+        return ret != 0;
+    }
+    ok(check_enum(o, "width"), "width not enumerated");
+    ok(check_enum(o, "height"), "height not enumerated");
+    ok(check_enum(o, "prop"), "prop not enumerated");
+    ok(!check_enum(o, "defprop"), "defprop enumerated");
+    ok(!check_enum(o, "prop2"), "prop2 enumerated");
+});

@@ -1216,7 +1216,7 @@ static HRESULT WINAPI HTMLWindow2_get_screen(IHTMLWindow2 *iface, IHTMLScreen **
     if(!window->screen) {
         HRESULT hres;
 
-        hres = create_html_screen(dispex_compat_mode(&window->event_target.dispex), &window->screen);
+        hres = create_html_screen(window, &window->screen);
         if(FAILED(hres))
             return hres;
     }

@@ -242,7 +242,7 @@ sync_test("builtin_toString", function() {
             ok(s === (tostr ? tostr : (v < 9 ? "[object]" : "[object " + name + "]")), msg + " toString returned " + s);
         }
         s = Object.prototype.toString.call(obj);
-        todo_wine_if(v >= 9 && name != "Object").
+        todo_wine_if(v >= 9 && name != "Object" && name != "Screen").
         ok(s === (v < 9 ? "[object Object]" : "[object " + name + "]"), msg + " Object.toString returned " + s);
     }
 
