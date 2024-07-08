@@ -279,15 +279,33 @@ HRESULT variant_to_jsval(script_ctx_t *ctx, VARIANT *var, jsval_t *r)
         *r = jsval_string(str);
         return S_OK;
     }
-    case VT_DISPATCH: {
+    case VT_DISPATCH:
         if(!V_DISPATCH(var)) {
             *r = ctx->html_mode ? jsval_null() : jsval_null_disp();
             return S_OK;
         }
+        if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5) {
+            IWineJSDispatchHost *disp_host;
+            HRESULT hres;
+            hres = IDispatch_QueryInterface(V_DISPATCH(var), &IID_IWineJSDispatchHost, (void **)&disp_host);
+            if(SUCCEEDED(hres)) {
+                IWineJSDispatch *jsdisp_iface;
+                hres = IWineJSDispatchHost_GetJSDispatch(disp_host, &jsdisp_iface);
+                IWineJSDispatchHost_Release(disp_host);
+                if(SUCCEEDED(hres)) {
+                    jsdisp_t *jsdisp = to_jsdisp((IDispatch *)jsdisp_iface);
+                    if(jsdisp->ctx == ctx) {
+                        *r = jsval_obj(jsdisp);
+                        return S_OK;
+                    }else {
+                        jsdisp_release(jsdisp);
+                    }
+                }
+            }
+        }
         IDispatch_AddRef(V_DISPATCH(var));
         *r = jsval_disp(V_DISPATCH(var));
         return S_OK;
-    }
     case VT_I1:
         *r = jsval_number(V_I1(var));
         return S_OK;
@@ -356,11 +374,18 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
         }
         V_VT(retv) = VT_NULL;
         return S_OK;
-    case JSV_OBJECT:
+    case JSV_OBJECT: {
+        IWineJSDispatchHost *host_disp = get_host_dispatch(get_object(val));
         V_VT(retv) = VT_DISPATCH;
+        if(host_disp) {
+            V_DISPATCH(retv) = (IDispatch *)host_disp;
+            return S_OK;
+        }
+
         V_DISPATCH(retv) = get_object(val);
         IDispatch_AddRef(get_object(val));
         return S_OK;
+    }
     case JSV_STRING:
         V_VT(retv) = VT_BSTR;
         return jsstr_to_bstr(get_string(val), &V_BSTR(retv));
