@@ -1946,6 +1946,9 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     surface->window = window;
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
     XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
+#ifdef HAVE_LIBXSHAPE
+    XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, None, ShapeSet );
+#endif
 
     TRACE( "created %p for %lx %s image %p\n", surface, window, wine_dbgstr_rect(rect), surface->image->ximage->data );
 
