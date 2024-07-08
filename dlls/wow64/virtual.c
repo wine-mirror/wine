@@ -426,7 +426,9 @@ NTSTATUS WINAPI wow64_NtMapViewOfSection( UINT *args )
     void *addr;
     SIZE_T size;
     NTSTATUS status;
+    void *prev = NtCurrentTeb()->Tib.ArbitraryUserPointer;
 
+    NtCurrentTeb()->Tib.ArbitraryUserPointer = ULongToPtr( NtCurrentTeb32()->Tib.ArbitraryUserPointer );
     status = NtMapViewOfSection( handle, process, addr_32to64( &addr, addr32 ), get_zero_bits( zero_bits ),
                                  commit, offset, size_32to64( &size, size32 ), inherit, alloc, protect );
     if (NT_SUCCESS(status))
@@ -443,6 +445,7 @@ NTSTATUS WINAPI wow64_NtMapViewOfSection( UINT *args )
         put_addr( addr32, addr );
         put_size( size32, size );
     }
+    NtCurrentTeb()->Tib.ArbitraryUserPointer = prev;
     return status;
 }
 
@@ -467,9 +470,11 @@ NTSTATUS WINAPI wow64_NtMapViewOfSectionEx( UINT *args )
     MEM_EXTENDED_PARAMETER *params64;
     BOOL is_current = RtlIsCurrentProcess( process );
     BOOL set_limit = (!*addr32 && is_current);
+    void *prev = NtCurrentTeb()->Tib.ArbitraryUserPointer;
 
     if ((status = mem_extended_parameters_32to64( &params64, params32, &count, set_limit ))) return status;
 
+    NtCurrentTeb()->Tib.ArbitraryUserPointer = ULongToPtr( NtCurrentTeb32()->Tib.ArbitraryUserPointer );
     status = NtMapViewOfSectionEx( handle, process, addr_32to64( &addr, addr32 ), offset,
                                    size_32to64( &size, size32 ), alloc, protect, params64, count );
     if (NT_SUCCESS(status))
@@ -486,6 +491,7 @@ NTSTATUS WINAPI wow64_NtMapViewOfSectionEx( UINT *args )
         put_addr( addr32, addr );
         put_size( size32, size );
     }
+    NtCurrentTeb()->Tib.ArbitraryUserPointer = prev;
     return status;
 }
 
