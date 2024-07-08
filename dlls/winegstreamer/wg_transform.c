@@ -520,49 +520,45 @@ static bool transform_create_converter_elements(struct wg_transform *transform,
 
     if (g_str_has_prefix(output_mime, "audio/"))
     {
-        if (strcmp(output_mime, "audio/x-raw"))
-        {
-            GST_FIXME("output caps %"GST_PTR_FORMAT" not implemented!", transform->output_caps);
+        /* The MF audio decoder transforms allow decoding to various formats
+         * as well as resampling the audio at the same time, whereas
+         * GStreamer decoder plugins usually only support decoding to a
+         * single format and at the original rate.
+         *
+         * The WMA decoder transform also has output samples interleaved on
+         * Windows, whereas GStreamer avdec_wmav2 output uses
+         * non-interleaved format.
+         */
+        if (!(element = create_element("audioconvert", "base"))
+                || !append_element(transform->container, element, first, last))
             return false;
-        }
-        else
-        {
-            /* The MF audio decoder transforms allow decoding to various formats
-             * as well as resampling the audio at the same time, whereas
-             * GStreamer decoder plugins usually only support decoding to a
-             * single format and at the original rate.
-             *
-             * The WMA decoder transform also has output samples interleaved on
-             * Windows, whereas GStreamer avdec_wmav2 output uses
-             * non-interleaved format.
-             */
-            if (!(element = create_element("audioconvert", "base"))
-                    || !append_element(transform->container, element, first, last))
-                return false;
-            if (!(element = create_element("audioresample", "base"))
-                    || !append_element(transform->container, element, first, last))
-                return false;
-        }
+        if (!(element = create_element("audioresample", "base"))
+                || !append_element(transform->container, element, first, last))
+            return false;
     }
 
     if (g_str_has_prefix(output_mime, "video/"))
     {
-        if (strcmp(output_mime, "video/x-raw"))
-        {
-            GST_FIXME("output caps %"GST_PTR_FORMAT" not implemented!", transform->output_caps);
+        if (!(element = create_element("videoconvert", "base"))
+                || !append_element(transform->container, element, first, last))
             return false;
-        }
-        else
-        {
-            if (!(element = create_element("videoconvert", "base"))
-                    || !append_element(transform->container, element, first, last))
-                return false;
-            /* Let GStreamer choose a default number of threads. */
-            gst_util_set_object_arg(G_OBJECT(element), "n-threads", "0");
-        }
+        /* Let GStreamer choose a default number of threads. */
+        gst_util_set_object_arg(G_OBJECT(element), "n-threads", "0");
     }
 
     return true;
+}
+
+static bool transform_create_encoder_element(struct wg_transform *transform,
+        const gchar *output_mime, GstElement **first, GstElement **last)
+{
+    GstElement *element;
+
+    if (!strcmp(output_mime, "audio/x-raw") || !strcmp(output_mime, "video/x-raw"))
+        return true;
+
+    return (element = find_element(GST_ELEMENT_FACTORY_TYPE_ENCODER, NULL, transform->output_caps))
+            && append_element(transform->container, element, first, last);
 }
 
 NTSTATUS wg_transform_create(void *args)
@@ -627,9 +623,12 @@ NTSTATUS wg_transform_create(void *args)
     gst_pad_set_query_function(transform->my_sink, transform_sink_query_cb);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
 
+    /* Create elements. */
     if (!transform_create_decoder_elements(transform, input_mime, output_mime, &first, &last))
         goto out;
     if (!transform_create_converter_elements(transform, output_mime, &first, &last))
+        goto out;
+    if (!transform_create_encoder_element(transform, output_mime, &first, &last))
         goto out;
 
     if (!link_src_to_element(transform->my_src, first))

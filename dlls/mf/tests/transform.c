@@ -3910,12 +3910,12 @@ static void test_h264_encoder(void)
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
         ATTR_UINT32(MF_MT_AVG_BITRATE, 193540),
-        ATTR_BLOB(MF_MT_MPEG_SEQUENCE_HEADER, test_h264_sequence_header, sizeof(test_h264_sequence_header)),
+        ATTR_BLOB(MF_MT_MPEG_SEQUENCE_HEADER, test_h264_sequence_header, sizeof(test_h264_sequence_header), .todo = TRUE),
         ATTR_UINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive),
         ATTR_UINT32(test_attr_guid, 0),
         {0},
     };
-    static const MFT_OUTPUT_STREAM_INFO expect_output_info[] = {{.cbSize = 0x8000}, {.cbSize = 0x3bc400}};
+    MFT_OUTPUT_STREAM_INFO output_info, expect_output_info[] = {{.cbSize = 0x8000}, {.cbSize = 0x3bc400}};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_NV12};
     IMFMediaType *media_type;
@@ -3940,10 +3940,7 @@ static void test_h264_encoder(void)
     check_mft_get_info(class_id, &expect_mft_info);
 
     hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
-    todo_wine
     ok(hr == S_OK, "CoCreateInstance returned %#lx.\n", hr);
-    if (hr != S_OK)
-        goto failed;
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, FALSE);
@@ -3977,8 +3974,13 @@ static void test_h264_encoder(void)
 
     check_mft_set_output_type_required(transform, output_type_desc);
     check_mft_set_output_type(transform, output_type_desc, S_OK);
-    check_mft_get_output_current_type(transform, expect_output_type_desc);
-    check_mft_get_output_stream_info(transform, S_OK, &expect_output_info[0]);
+    check_mft_get_output_current_type_(__LINE__, transform, expect_output_type_desc, FALSE, TRUE);
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+    check_member(output_info, expect_output_info[0], "%#lx", dwFlags);
+    todo_wine
+    check_member(output_info, expect_output_info[0], "%#lx", cbSize);
+    check_member(output_info, expect_output_info[0], "%#lx", cbAlignment);
 
     /* Input types can now be enumerated. */
     i = -1;
@@ -4032,7 +4034,14 @@ static void test_h264_encoder(void)
         if (IsEqualGUID(test_attributes[i].key, &MF_MT_FRAME_SIZE))
             check_mft_get_output_stream_info(transform, S_OK, &expect_output_info[1]);
         else
-            check_mft_get_output_stream_info(transform, S_OK, &expect_output_info[0]);
+        {
+            hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+            ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+            check_member(output_info, expect_output_info[0], "%#lx", dwFlags);
+            todo_wine
+            check_member(output_info, expect_output_info[0], "%#lx", cbSize);
+            check_member(output_info, expect_output_info[0], "%#lx", cbAlignment);
+        }
 
         winetest_pop_context();
     }
