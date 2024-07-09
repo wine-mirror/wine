@@ -953,7 +953,9 @@ static UINT load_drlocator( MSIRECORD *row, void *param )
 
     locator->Parent     = msi_dup_record_field( row, 2 );
     locator->Path       = msi_dup_record_field( row, 3 );
-    locator->Depth      = MSI_RecordGetInteger( row,4 );
+    locator->Depth      = MSI_RecordGetInteger( row, 4 );
+    if (locator->Depth == MSI_NULL_INTEGER) locator->Depth = 0;
+
     list_add_tail( &package->drlocators, &locator->entry );
     return ERROR_SUCCESS;
 }
