@@ -27,6 +27,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <pthread.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -202,6 +203,16 @@ static NTSTATUS udp_stats_get_all_parameters( const void *key, UINT key_size, vo
     return STATUS_NOT_SUPPORTED;
 }
 
+#ifdef __APPLE__
+static int pcblist_mib[CTL_MAXNAME];
+static size_t pcblist_mib_len = CTL_MAXNAME;
+
+static void init_pcblist64_mib( void )
+{
+    sysctlnametomib( "net.inet.udp.pcblist64", pcblist_mib, &pcblist_mib_len );
+}
+#endif
+
 static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
                                             void *dynamic_data, UINT dynamic_size,
                                             void *static_data, UINT static_size, UINT_PTR *count )
@@ -296,14 +307,21 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
     }
 #elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_PCBLIST) && defined(HAVE_STRUCT_XINPGEN)
     {
-        int mib[] = { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_PCBLIST };
         size_t len = 0;
         char *buf = NULL;
         struct xinpgen *xig, *orig_xig;
 
-        if (sysctl( mib, ARRAY_SIZE(mib), NULL, &len, NULL, 0 ) < 0)
+#ifdef __APPLE__
+        static pthread_once_t mib_init_once = PTHREAD_ONCE_INIT;
+        pthread_once( &mib_init_once, init_pcblist64_mib );
+#else
+        int pcblist_mib[] = { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_PCBLIST };
+        size_t pcblist_mib_len = ARRAY_SIZE(mib);
+#endif
+
+        if (sysctl( pcblist_mib, pcblist_mib_len, NULL, &len, NULL, 0 ) < 0)
         {
-            ERR( "Failure to read net.inet.udp.pcblist via sysctlbyname!\n" );
+            ERR( "Failure to read net.inet.udp.pcblist via sysctl!\n" );
             status = STATUS_NOT_SUPPORTED;
             goto err;
         }
@@ -315,9 +333,9 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
             goto err;
         }
 
-        if (sysctl( mib, ARRAY_SIZE(mib), buf, &len, NULL, 0 ) < 0)
+        if (sysctl( pcblist_mib, pcblist_mib_len, buf, &len, NULL, 0 ) < 0)
         {
-            ERR( "Failure to read net.inet.udp.pcblist via sysctlbyname!\n" );
+            ERR( "Failure to read net.inet.udp.pcblist via sysctl!\n" );
             status = STATUS_NOT_SUPPORTED;
             goto err;
         }
@@ -335,7 +353,10 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
              xig->xig_len > sizeof (struct xinpgen);
              xig = (struct xinpgen *)((char *)xig + xig->xig_len))
         {
-#if __FreeBSD_version >= 1200026
+#ifdef __APPLE__
+            struct xinpcb64 *in = (struct xinpcb64 *)xig;
+            struct xsocket64 *sock = &in->xi_socket;
+#elif __FreeBSD_version >= 1200026
             struct xinpcb *in = (struct xinpcb *)xig;
             struct xsocket *sock = &in->xi_socket;
 #else
