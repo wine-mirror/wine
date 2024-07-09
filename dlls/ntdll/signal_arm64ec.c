@@ -58,6 +58,40 @@ static inline BOOL is_valid_arm64ec_frame( ULONG_PTR frame )
 
 
 /**********************************************************************
+ *           create_cross_process_work_list
+ */
+static NTSTATUS create_cross_process_work_list( struct arm64ec_shared_info *info )
+{
+    SIZE_T map_size = 0x4000;
+    LARGE_INTEGER size;
+    NTSTATUS status;
+    HANDLE section;
+    CROSS_PROCESS_WORK_LIST *list = NULL;
+    CROSS_PROCESS_WORK_ENTRY *end;
+    UINT i;
+
+    size.QuadPart = map_size;
+    status = NtCreateSection( &section, SECTION_ALL_ACCESS, NULL, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    if (status) return status;
+    status = NtMapViewOfSection( section, GetCurrentProcess(), (void **)&list, 0, 0, NULL,
+                                 &map_size, ViewShare, MEM_TOP_DOWN, PAGE_READWRITE );
+    if (status)
+    {
+        NtClose( section );
+        return status;
+    }
+
+    end = (CROSS_PROCESS_WORK_ENTRY *)((char *)list + map_size);
+    for (i = 0; list->entries + i + 1 <= end; i++)
+        RtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, &list->entries[i] );
+
+    info->SectionHandle = section;
+    info->CrossProcessWorkList = list;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
  *           send_cross_process_notification
  */
 static BOOL send_cross_process_notification( HANDLE process, UINT id, const void *addr, SIZE_T size,
@@ -97,6 +131,7 @@ static BOOL send_cross_process_notification( HANDLE process, UINT id, const void
 NTSTATUS arm64ec_process_init( HMODULE module )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    struct arm64ec_shared_info *info = (struct arm64ec_shared_info *)(RtlGetCurrentPeb() + 1);
 
     __os_arm64x_dispatch_call_no_redirect = RtlFindExportedRoutineByName( module, "ExitToX64" );
     __os_arm64x_dispatch_fptr = RtlFindExportedRoutineByName( module, "DispatchJump" );
@@ -108,7 +143,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
 #undef GET_PTR
 
     if (pProcessInit) status = pProcessInit();
-
+    if (!status) status = create_cross_process_work_list( info );
     if (!status) status = arm64ec_thread_init();
     return status;
 }

@@ -122,6 +122,19 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 extern TEB_FLS_DATA *fls_alloc_data(void);
 extern void heap_thread_detach(void);
 
+#if defined __aarch64__ || defined __arm64ec__
+/* equivalent of WOW64INFO, stored after the 64-bit PEB */
+struct arm64ec_shared_info
+{
+    ULONG                    Wow64ExecuteFlags;
+    USHORT                   NativeMachineType;
+    USHORT                   EmulatedMachineType;
+    HANDLE                   SectionHandle;
+    CROSS_PROCESS_WORK_LIST *CrossProcessWorkList;
+    void                    *unknown;
+};
+#endif
+
 /* register context */
 
 #ifdef __i386__
