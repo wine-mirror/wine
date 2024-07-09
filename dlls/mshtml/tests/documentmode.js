@@ -234,7 +234,7 @@ sync_test("builtin_toString", function() {
     ];
     var v = document.documentMode, e;
 
-    function test(msg, obj, name, tostr) {
+    function test(msg, obj, name, tostr, is_todo) {
         var s;
         if(obj.toString) {
             s = obj.toString();
@@ -242,23 +242,23 @@ sync_test("builtin_toString", function() {
             ok(s === (tostr ? tostr : (v < 9 ? "[object]" : "[object " + name + "]")), msg + " toString returned " + s);
         }
         s = Object.prototype.toString.call(obj);
-        todo_wine_if(v >= 9 && name != "Object" && name != "Screen").
+        todo_wine_if(v >= 9 && is_todo).
         ok(s === (v < 9 ? "[object Object]" : "[object " + name + "]"), msg + " Object.toString returned " + s);
     }
 
     for(var i = 0; i < tags.length; i++)
         if(tags[i].length < 3 || v >= tags[i][2])
-            test("tag '" + tags[i][0] + "'", document.createElement(tags[i][0]), "HTML" + tags[i][1] + "Element");
+            test("tag '" + tags[i][0] + "'", document.createElement(tags[i][0]), "HTML" + tags[i][1] + "Element", null, true);
 
     e = document.createElement("a");
     ok(e.toString() === "", "tag 'a' (without href) toString returned " + e.toString());
     e.href = "https://www.winehq.org/";
-    test("tag 'a'", e, "HTMLAnchorElement", "https://www.winehq.org/");
+    test("tag 'a'", e, "HTMLAnchorElement", "https://www.winehq.org/", true);
 
     e = document.createElement("area");
     ok(e.toString() === "", "tag 'area' (without href) toString returned " + e.toString());
     e.href = "https://www.winehq.org/";
-    test("tag 'area'", e, "HTMLAreaElement", "https://www.winehq.org/");
+    test("tag 'area'", e, "HTMLAreaElement", "https://www.winehq.org/", true);
 
     e = document.createElement("style");
     document.body.appendChild(e);
@@ -292,63 +292,63 @@ sync_test("builtin_toString", function() {
     }
     if(!localStorage) win_skip("localStorage is buggy and not available, skipping");
 
-    test("attribute", document.createAttribute("class"), "Attr");
+    test("attribute", document.createAttribute("class"), "Attr", null, true);
     if(false /* todo_wine */) test("attributes", e.attributes, "NamedNodeMap");
-    test("childNodes", document.body.childNodes, "NodeList");
-    if(clientRects) test("clientRect", clientRects[0], "ClientRect");
-    if(clientRects) test("clientRects", clientRects, "ClientRectList");
-    if(currentStyle) test("currentStyle", currentStyle, "MSCurrentStyleCSSProperties");
-    if(v >= 11 /* todo_wine */) test("document", document, v < 11 ? "Document" : "HTMLDocument");
-    test("elements", document.getElementsByTagName("body"), "HTMLCollection");
-    test("history", window.history, "History");
-    test("implementation", document.implementation, "DOMImplementation");
-    if(localStorage) test("localStorage", localStorage, "Storage");
-    test("location", window.location, "Object", window.location.href);
-    if(v >= 11 /* todo_wine */) test("mimeTypes", window.navigator.mimeTypes, v < 11 ? "MSMimeTypesCollection" : "MimeTypeArray");
-    test("navigator", window.navigator, "Navigator");
-    test("performance", window.performance, "Performance");
-    test("performanceNavigation", window.performance.navigation, "PerformanceNavigation");
-    test("performanceTiming", window.performance.timing, "PerformanceTiming");
-    if(v >= 11 /* todo_wine */) test("plugins", window.navigator.plugins, v < 11 ? "MSPluginsCollection" : "PluginArray");
+    test("childNodes", document.body.childNodes, "NodeList", null, true);
+    if(clientRects) test("clientRect", clientRects[0], "ClientRect", null, true);
+    if(clientRects) test("clientRects", clientRects, "ClientRectList", null, true);
+    if(currentStyle) test("currentStyle", currentStyle, "MSCurrentStyleCSSProperties", null, true);
+    if(v >= 11 /* todo_wine */) test("document", document, v < 11 ? "Document" : "HTMLDocument", null, true);
+    test("elements", document.getElementsByTagName("body"), "HTMLCollection", null, true);
+    test("history", window.history, "History", null, true);
+    test("implementation", document.implementation, "DOMImplementation", null, true);
+    if(localStorage) test("localStorage", localStorage, "Storage", null, true);
+    test("location", window.location, "Object", window.location.href, null, true);
+    if(v >= 11 /* todo_wine */) test("mimeTypes", window.navigator.mimeTypes, v < 11 ? "MSMimeTypesCollection" : "MimeTypeArray", null, true);
+    test("navigator", window.navigator, "Navigator", null, true);
+    test("performance", window.performance, "Performance", null, true);
+    test("performanceNavigation", window.performance.navigation, "PerformanceNavigation", null, true);
+    test("performanceTiming", window.performance.timing, "PerformanceTiming", null, true);
+    if(v >= 11 /* todo_wine */) test("plugins", window.navigator.plugins, v < 11 ? "MSPluginsCollection" : "PluginArray", null, true);
     test("screen", window.screen, "Screen");
-    test("sessionStorage", window.sessionStorage, "Storage");
-    test("style", document.body.style, "MSStyleCSSProperties");
-    test("styleSheet", sheet, "CSSStyleSheet");
-    test("styleSheetRule", sheet.rules[0], "CSSStyleRule");
-    test("styleSheetRules", sheet.rules, "MSCSSRuleList");
-    test("styleSheets", document.styleSheets, "StyleSheetList");
-    test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null);
-    test("textRange", txtRange, "TextRange");
-    test("window", window, "Window", "[object Window]");
-    test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest");
+    test("sessionStorage", window.sessionStorage, "Storage", null, true);
+    test("style", document.body.style, "MSStyleCSSProperties", null, true);
+    test("styleSheet", sheet, "CSSStyleSheet", null, true);
+    test("styleSheetRule", sheet.rules[0], "CSSStyleRule", null, true);
+    test("styleSheetRules", sheet.rules, "MSCSSRuleList", null, true);
+    test("styleSheets", document.styleSheets, "StyleSheetList", null, true);
+    test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null, true);
+    test("textRange", txtRange, "TextRange", null, true);
+    test("window", window, "Window", "[object Window]", true);
+    test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest", null, true);
     if(v < 10) {
-        test("namespaces", document.namespaces, "MSNamespaceInfoCollection");
+        test("namespaces", document.namespaces, "MSNamespaceInfoCollection", null, true);
     }
     if(v < 11) {
-        test("eventObject", document.createEventObject(), "MSEventObj");
-        test("selection", document.selection, "MSSelection");
+        test("eventObject", document.createEventObject(), "MSEventObj", null, true);
+        test("selection", document.selection, "MSSelection", null, true);
     }
     if(v >= 9) {
-        test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration");
-        test("doctype", document.doctype, "DocumentType");
+        test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration", null, true);
+        test("doctype", document.doctype, "DocumentType", null, true);
 
-        test("Event", document.createEvent("Event"), "Event");
-        test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent");
-        test("KeyboardEvent", document.createEvent("KeyboardEvent"), "KeyboardEvent");
-        test("MouseEvent", document.createEvent("MouseEvent"), "MouseEvent");
-        test("UIEvent", document.createEvent("UIEvent"), "UIEvent");
+        test("Event", document.createEvent("Event"), "Event", null, true);
+        test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent", null, true);
+        test("KeyboardEvent", document.createEvent("KeyboardEvent"), "KeyboardEvent", null, true);
+        test("MouseEvent", document.createEvent("MouseEvent"), "MouseEvent", null, true);
+        test("UIEvent", document.createEvent("UIEvent"), "UIEvent", null, true);
     }
     if(v >= 10) {
-        test("classList", e.classList, "DOMTokenList", "testclass    another ");
-        test("console", window.console, "Console");
-        test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
+        test("classList", e.classList, "DOMTokenList", "testclass    another ", true);
+        test("console", window.console, "Console", null, true);
+        test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList", null, true);
     }
     if(v >= 11) {
-        test("MutationObserver", new window.MutationObserver(function() {}), "MutationObserver");
+        test("MutationObserver", new window.MutationObserver(function() {}), "MutationObserver", null, true);
     }
     if(v >= 9) {
         document.body.innerHTML = "<!--...-->";
-        test("comment", document.body.firstChild, "Comment");
+        test("comment", document.body.firstChild, "Comment", null, true);
     }
 });
 
