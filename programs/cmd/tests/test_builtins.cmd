@@ -468,6 +468,35 @@ call :setError 666 & ((for %%i in () do call :setError 33) &&echo SUCCESS !error
 call :setError 666 & ((for %%i in (a) do call :setError 0) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((for %%i in (a) do call :setError 33) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 
+echo --- success/failure for external command
+mkdir foo & cd foo
+call :setError 666 & (I\dont\exist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & I\dont\exist.exe & echo ERRORLEVEL !errorlevel!
+call :setError 666 & (Idontexist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & Idontexist.exe & echo ERRORLEVEL !errorlevel!
+call :setError 666 & (cmd.exe /c "echo foo & exit /b 0" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (cmd.exe /c "echo foo & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+echo --- success/failure for CALL command
+mkdir foo & cd foo
+echo exit /b %%1 > foobar.bat
+rem call :setError 666 & (call I\dont\exist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem terminates batch exec on native...
+call :setError 666 & (call Idontexist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobar.bat 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobar.bat 1024 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call cmd.exe /c "echo foo & exit /b 0" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call cmd.exe /c "echo foo & exit /b 1025" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call rmdir foobar.dir &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+echo --- success/failure for START command
+call :setError 666 & (start "" /foobar >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem call :setError 666 & (start /B I\dont\exist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem can't run this test, generates a nice popup under windows
+call :setError 666 & (start "" /B /WAIT cmd.exe /c "echo foo & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem A call :setError 666 & (start "" /B cmd.exe /c "(choice /C:YN /T:3 /D:Y > NUL) & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem can't do on Wine until /T is properly handled in CHOICE
+rem SUCCESS 666
 echo --- success/failure for TYPE command
 mkdir foo & cd foo
 echo a > fileA
@@ -589,6 +618,18 @@ erase abc\abc
 call :setError 666 & rmdir abc & echo ERRORLEVEL !errorlevel!
 call :setError 666 & rmdir abc & echo ERRORLEVEL !errorlevel!
 call :setError 666 & rmdir @:\cba\abc & echo ERRORLEVEL !errorlevel!
+cd .. && rd /q /s foo
+
+echo --- success/failure for MKLINK command
+mkdir foo & cd foo
+call :setError 666 & (mklink &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /h foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /h foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /z foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo bar > foo
+call :setError 666 & (mklink /h foo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /h bar foo >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mklink /h bar foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 cd .. && rd /q /s foo
 
 echo --- success/failure for SETLOCAL/ENDLOCAL commands

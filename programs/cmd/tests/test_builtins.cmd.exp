@@ -465,6 +465,28 @@ SUCCESS 666
 SUCCESS 666
 SUCCESS 0
 FAILURE 33
+--- success/failure for external command
+@todo_wine@FAILURE 1
+@todo_wine@ERRORLEVEL 3
+@todo_wine@FAILURE 1
+ERRORLEVEL 9009
+foo@space@
+SUCCESS 0
+foo@space@
+FAILURE 1024
+--- success/failure for CALL command
+FAILURE 1
+SUCCESS 0
+FAILURE 1024
+foo@space@
+SUCCESS 0
+foo@space@
+FAILURE 1025
+@todo_wine@FAILURE 2
+--- success/failure for START command
+@todo_wine@FAILURE 1
+foo@space@
+SUCCESS 1024
 --- success/failure for TYPE command
 FAILURE 1
 SUCCESS 0
@@ -535,6 +557,14 @@ ERRORLEVEL 666
 ERRORLEVEL 666
 ERRORLEVEL 666
 ERRORLEVEL 666
+--- success/failure for MKLINK command
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 1
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 1
 --- success/failure for SETLOCAL/ENDLOCAL commands
 FAILURE 1
 SUCCESS 0
