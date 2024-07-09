@@ -3728,6 +3728,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
             WCHAR temp_path[MAX_PATH];
             WCHAR filename[MAX_PATH];
             CMD_REDIRECTION *output;
+            HANDLE saved_output;
 
             /* FIXME: a real pipe instead of writing to an intermediate file would be
              * better.
@@ -3742,6 +3743,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
             GetTempFileNameW(temp_path, L"CMD", 0, filename);
             TRACE("Using temporary file of %ls\n", filename);
 
+            saved_output = GetStdHandle(STD_OUTPUT_HANDLE);
             /* set output for left hand side command */
             output = redirection_create_file(REDIR_WRITE_TO, 1, filename);
             if (set_std_redirections(output))
@@ -3750,7 +3752,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
                 return_code = NO_ERROR;
 
                 CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
-                SetStdHandle(STD_OUTPUT_HANDLE, old_stdhandles[1]);
+                SetStdHandle(STD_OUTPUT_HANDLE, saved_output);
 
                 return_code = temp_fixup_return_code(node->left, return_code, NO_ERROR);
                 if (return_code == NO_ERROR)
