@@ -965,6 +965,8 @@ static UINT load_all_drlocators( MSIPACKAGE *package )
     MSIQUERY *view;
     UINT r;
 
+    if (!list_empty( &package->drlocators )) return ERROR_SUCCESS;
+
     r = MSI_DatabaseOpenViewW( package->db, L"SELECT * FROM `DrLocator`", &view );
     if (r != ERROR_SUCCESS)
         return ERROR_SUCCESS;
@@ -997,11 +999,9 @@ static UINT search_dr( MSIPACKAGE *package, WCHAR **app_value, struct signature 
     WCHAR path[MAX_PATH], expanded[MAX_PATH], *parent = NULL;
     MSIDRLOCATOR *locator = NULL;
     DWORD attr;
-    UINT rc;
+    UINT rc = ERROR_SUCCESS;
 
     TRACE("%s\n", debugstr_w(sig->Name));
-
-    if ((rc = load_all_drlocators( package ))) return rc;
 
     *app_value = NULL;
 
@@ -1055,7 +1055,6 @@ static UINT search_dr( MSIPACKAGE *package, WCHAR **app_value, struct signature 
     rc = search_directory( package, sig, path, locator->Depth, app_value );
 
 done:
-    free_drlocators( package );
     free( parent );
     TRACE("returning %u\n", rc);
     return rc;
@@ -1099,6 +1098,8 @@ static UINT ITERATE_AppSearch(MSIRECORD *row, LPVOID param)
 
     TRACE("%s %s\n", debugstr_w(propName), debugstr_w(sigName));
 
+    if ((r = load_all_drlocators( package ))) return r;
+
     r = search_sig_name( package, sigName, &sig, &value );
     if (value)
     {
@@ -1116,6 +1117,7 @@ static UINT ITERATE_AppSearch(MSIRECORD *row, LPVOID param)
     MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONDATA, uirow);
     msiobj_release( &uirow->hdr );
 
+    free_drlocators( package );
     return r;
 }
 
@@ -1153,6 +1155,8 @@ static UINT ITERATE_CCPSearch(MSIRECORD *row, LPVOID param)
 
     TRACE("%s\n", debugstr_w(signature));
 
+    if ((r = load_all_drlocators( package ))) return r;
+
     search_sig_name( package, signature, &sig, &value );
     if (value)
     {
@@ -1163,6 +1167,7 @@ static UINT ITERATE_CCPSearch(MSIRECORD *row, LPVOID param)
     }
 
     free_signature(&sig);
+    free_drlocators( package );
     return r;
 }
 
