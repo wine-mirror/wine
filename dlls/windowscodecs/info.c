@@ -50,8 +50,7 @@ static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     if (!actual_size)
         return E_INVALIDARG;
 
-    ret = RegGetValueW(classkey, NULL, value, RRF_RT_REG_SZ|RRF_NOEXPAND, NULL,
-        buffer, &cbdata);
+    ret = RegQueryValueExW(classkey, value, 0, NULL, (void *)buffer, &cbdata);
 
     if (ret == ERROR_FILE_NOT_FOUND)
     {
