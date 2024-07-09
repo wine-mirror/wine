@@ -367,6 +367,7 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
         {
             IMFMediaType_Release(encoder->output_type);
             encoder->output_type = NULL;
+            memset(&encoder->output_info, 0, sizeof(encoder->output_info));
         }
         if (encoder->wg_transform)
         {
@@ -411,6 +412,11 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     IMFMediaType_AddRef((encoder->output_type = type));
 
     /* FIXME: Add MF_MT_MPEG_SEQUENCE_HEADER attribute. */
+
+    /* FIXME: Hardcode a size that native uses for 1920 * 1080.
+     * And hope it's large enough to make things work for now.
+     * The right way is to calculate it based on frame width and height. */
+    encoder->output_info.cbSize = 0x3bc400;
 
     if (encoder->wg_transform)
     {
@@ -626,10 +632,6 @@ HRESULT h264_encoder_create(REFIID riid, void **out)
     if (FAILED(hr = video_encoder_create(h264_encoder_input_types, ARRAY_SIZE(h264_encoder_input_types),
             h264_encoder_output_types, ARRAY_SIZE(h264_encoder_output_types), &encoder)))
         return hr;
-
-    /* FIXME: Hardcode a size that is large enough to make things work for now.
-     * The right way is to calculate the size based on output frame size. */
-    encoder->output_info.cbSize = 0x3bc400;
 
     TRACE("Created h264 encoder transform %p.\n", &encoder->IMFTransform_iface);
 
