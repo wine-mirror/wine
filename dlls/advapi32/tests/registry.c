@@ -914,13 +914,13 @@ static void test_get_value(void)
     size = 0;
     ret = pRegGetValueA(hkey_main, NULL, "TP1_ZB_SZ", RRF_RT_REG_SZ, &type, NULL, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    todo_wine ok(size == 1, "size=%ld\n", size);
+    ok(size == 1, "size=%ld\n", size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ret = pRegGetValueA(hkey_main, NULL, "TP1_ZB_SZ", RRF_RT_REG_SZ, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-    todo_wine ok(size == 1, "size=%ld\n", size);
+    ok(size == 1, "size=%ld\n", size);
     ok(type == REG_SZ, "type=%ld\n", type);
-    todo_wine ok(!strcmp(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(!strcmp(buf, ""), "Expected \"\", got \"%s\"\n", buf);
 
     /* Query REG_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
@@ -2219,15 +2219,15 @@ static void test_string_termination(void)
     {
         outsize = insize;
         ret = pRegGetValueA(subkey, NULL, "stringtest", RRF_RT_REG_SZ, NULL, buffer, &outsize);
-        todo_wine ok(ret == ERROR_MORE_DATA, "RegGetValueA returned: %ld\n", ret);
-        todo_wine ok(outsize == insize + 1, "wrong size: %lu != %lu\n", outsize, insize + 1);
+        ok(ret == ERROR_MORE_DATA, "RegGetValueA returned: %ld\n", ret);
+        ok(outsize == insize + 1, "wrong size: %lu != %lu\n", outsize, insize + 1);
         memset(buffer, 0xbd, sizeof(buffer));
         ret = pRegGetValueA(subkey, NULL, "stringtest", RRF_RT_REG_SZ, NULL, buffer, &outsize);
         ok(ret == ERROR_SUCCESS, "RegGetValueA returned: %ld\n", ret);
-        todo_wine ok(outsize == insize + 1, "wrong size: %lu != %lu\n", outsize, insize + 1);
+        ok(outsize == insize + 1, "wrong size: %lu != %lu\n", outsize, insize + 1);
         ok(memcmp(buffer, string, insize) == 0, "bad string: %s/%lu != %s\n",
            debugstr_an((char*)buffer, insize), insize, string);
-        todo_wine ok(buffer[insize] == 0, "buffer overflow at %lu %02x\n", insize, buffer[insize]);
+        ok(buffer[insize] == 0, "buffer overflow at %lu %02x\n", insize, buffer[insize]);
     }
 
     RegDeleteKeyA(subkey, "");
@@ -2332,13 +2332,13 @@ static void test_multistring_termination(void)
     {
         outsize = insize;
         ret = pRegGetValueA(subkey, NULL, "multistringtest", RRF_RT_REG_SZ, NULL, buffer, &outsize);
-        todo_wine ok(ret == ERROR_MORE_DATA, "RegGetValueA returned: %ld\n", ret);
-        todo_wine ok(outsize == insize + 1, "wrong size: %lu != %lu\n", outsize, insize + 1);
+        ok(ret == ERROR_MORE_DATA, "RegGetValueA returned: %ld\n", ret);
+        ok(outsize == insize + 1, "wrong size: %lu != %lu\n", outsize, insize + 1);
         outsize = insize + 2;
         memset(buffer, 0xbd, sizeof(buffer));
         ret = pRegGetValueA(subkey, NULL, "multistringtest", RRF_RT_REG_SZ, NULL, buffer, &outsize);
         ok(ret == ERROR_SUCCESS, "RegGetValueA returned: %ld\n", ret);
-        todo_wine ok(outsize == insize + 1, "wrong size: %lu != %lu\n", outsize, insize + 1);
+        ok(outsize == insize + 1, "wrong size: %lu != %lu\n", outsize, insize + 1);
         ok(buffer[insize] == 0, "buffer overflow at %lu %02x\n", insize, buffer[insize + 1]);
         ok(buffer[insize + 1] == 0xbd, "buffer overflow at %lu %02x\n", insize, buffer[insize + 1]);
     }

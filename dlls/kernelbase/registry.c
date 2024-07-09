@@ -1955,16 +1955,18 @@ LSTATUS WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
 
     ret = RegQueryValueExW(hKey, pszValue, NULL, &dwType, pvData, &cbData);
 
-    /* If we are going to expand we need to read in the whole the value even
-     * if the passed buffer was too small as the expanded string might be
-     * smaller than the unexpanded one and could fit into cbData bytes. */
-    if ((ret == ERROR_SUCCESS || ret == ERROR_MORE_DATA) &&
-        dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND))
+    /* If the value is a string, we need to read in the whole value to be able
+     * to know exactly how many bytes are needed after expanding the string and
+     * ensuring that it is null-terminated. */
+    if (is_string(dwType) &&
+        (ret == ERROR_MORE_DATA ||
+         (ret == ERROR_SUCCESS && dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND)) ||
+         (ret == ERROR_SUCCESS && (cbData < sizeof(WCHAR) || (pvData && *((WCHAR *)pvData + cbData / sizeof(WCHAR) - 1))))))
     {
         do {
             heap_free(pvBuf);
 
-            pvBuf = heap_alloc(cbData);
+            pvBuf = heap_alloc(cbData + sizeof(WCHAR));
             if (!pvBuf)
             {
                 ret = ERROR_NOT_ENOUGH_MEMORY;
@@ -1981,25 +1983,33 @@ LSTATUS WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
                  * overlapping buffers. */
                 CopyMemory(pvBuf, pvData, cbData);
             }
-
-            /* Both the type or the value itself could have been modified in
-             * between so we have to keep retrying until the buffer is large
-             * enough or we no longer have to expand the value. */
-        } while (dwType == REG_EXPAND_SZ && ret == ERROR_MORE_DATA);
+        } while (ret == ERROR_MORE_DATA);
 
         if (ret == ERROR_SUCCESS)
         {
+            /* Ensure null termination */
+            if (cbData < sizeof(WCHAR) || *((WCHAR *)pvBuf + cbData / sizeof(WCHAR) - 1))
+            {
+                *((WCHAR *)pvBuf + cbData / sizeof(WCHAR)) = 0;
+                cbData += sizeof(WCHAR);
+            }
+
             /* Recheck dwType in case it changed since the first call */
-            if (dwType == REG_EXPAND_SZ)
+            if (dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND))
             {
                 cbData = ExpandEnvironmentStringsW(pvBuf, pvData,
                                                    pcbData ? *pcbData : 0) * sizeof(WCHAR);
                 dwType = REG_SZ;
-                if(pvData && pcbData && cbData > *pcbData)
+                if (pvData && cbData > *pcbData)
                     ret = ERROR_MORE_DATA;
             }
             else if (pvData)
-                CopyMemory(pvData, pvBuf, *pcbData);
+            {
+                if (cbData > *pcbData)
+                    ret = ERROR_MORE_DATA;
+                else
+                    CopyMemory(pvData, pvBuf, cbData);
+            }
         }
 
         heap_free(pvBuf);
@@ -2060,16 +2070,18 @@ LSTATUS WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
 
     ret = RegQueryValueExA(hKey, pszValue, NULL, &dwType, pvData, &cbData);
 
-    /* If we are going to expand we need to read in the whole the value even
-     * if the passed buffer was too small as the expanded string might be
-     * smaller than the unexpanded one and could fit into cbData bytes. */
-    if ((ret == ERROR_SUCCESS || ret == ERROR_MORE_DATA) &&
-        dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND))
+    /* If the value is a string, we need to read in the whole value to be able
+     * to know exactly how many bytes are needed after expanding the string and
+     * ensuring that it is null-terminated. */
+    if (is_string(dwType) &&
+        (ret == ERROR_MORE_DATA ||
+         (ret == ERROR_SUCCESS && dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND)) ||
+         (ret == ERROR_SUCCESS && (!cbData || (pvData && *((char *)pvData + cbData - 1))))))
     {
         do {
             heap_free(pvBuf);
 
-            pvBuf = heap_alloc(cbData);
+            pvBuf = heap_alloc(cbData + 1);
             if (!pvBuf)
             {
                 ret = ERROR_NOT_ENOUGH_MEMORY;
@@ -2086,25 +2098,33 @@ LSTATUS WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
                  * overlapping buffers. */
                 CopyMemory(pvBuf, pvData, cbData);
             }
-
-            /* Both the type or the value itself could have been modified in
-             * between so we have to keep retrying until the buffer is large
-             * enough or we no longer have to expand the value. */
-        } while (dwType == REG_EXPAND_SZ && ret == ERROR_MORE_DATA);
+        } while (ret == ERROR_MORE_DATA);
 
         if (ret == ERROR_SUCCESS)
         {
+            /* Ensure null termination */
+            if (!cbData || *((char *)pvBuf + cbData - 1))
+            {
+                *((char *)pvBuf + cbData) = 0;
+                cbData++;
+            }
+
             /* Recheck dwType in case it changed since the first call */
-            if (dwType == REG_EXPAND_SZ)
+            if (dwType == REG_EXPAND_SZ && !(dwFlags & RRF_NOEXPAND))
             {
                 cbData = ExpandEnvironmentStringsA(pvBuf, pvData,
                                                    pcbData ? *pcbData : 0);
                 dwType = REG_SZ;
-                if(pvData && pcbData && cbData > *pcbData)
+                if (pvData && cbData > *pcbData)
                     ret = ERROR_MORE_DATA;
             }
             else if (pvData)
-                CopyMemory(pvData, pvBuf, *pcbData);
+            {
+                if (cbData > *pcbData)
+                    ret = ERROR_MORE_DATA;
+                else
+                    CopyMemory(pvData, pvBuf, cbData);
+            }
         }
 
         heap_free(pvBuf);
