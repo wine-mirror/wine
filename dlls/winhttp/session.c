@@ -739,6 +739,33 @@ static BOOL copy_sockaddr( const struct sockaddr *addr, SOCKADDR_STORAGE *addr_s
     }
 }
 
+static WCHAR *build_url( struct request *request )
+{
+    URL_COMPONENTS uc;
+    DWORD len = 0;
+    WCHAR *ret;
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    uc.nScheme = (request->hdr.flags & WINHTTP_FLAG_SECURE) ? INTERNET_SCHEME_HTTPS : INTERNET_SCHEME_HTTP;
+    uc.lpszHostName = request->connect->hostname;
+    uc.dwHostNameLength = wcslen( uc.lpszHostName );
+    uc.nPort = request->connect->hostport;
+    uc.lpszUserName = request->connect->username;
+    uc.dwUserNameLength = request->connect->username ? wcslen( request->connect->username ) : 0;
+    uc.lpszPassword = request->connect->password;
+    uc.dwPasswordLength = request->connect->password ? wcslen( request->connect->password ) : 0;
+    uc.lpszUrlPath = request->path;
+    uc.dwUrlPathLength = wcslen( uc.lpszUrlPath );
+
+    WinHttpCreateUrl( &uc, 0, NULL, &len );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER || !(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+
+    if (WinHttpCreateUrl( &uc, 0, ret, &len )) return ret;
+    free( ret );
+    return NULL;
+}
+
 static BOOL request_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
 {
     struct request *request = (struct request *)hdr;
@@ -915,6 +942,17 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         *(DWORD *)buffer = request->websocket_set_send_buffer_size;
         *buflen = sizeof(DWORD);
         return TRUE;
+
+    case WINHTTP_OPTION_URL:
+    {
+        WCHAR *url;
+        BOOL ret;
+
+        if (!(url = build_url( request ))) return FALSE;
+        ret = return_string_option( buffer, url, buflen );
+        free( url );
+        return ret;
+    }
 
     default:
         FIXME( "unimplemented option %lu\n", option );
