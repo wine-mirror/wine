@@ -301,7 +301,7 @@ sync_test("builtin_toString", function() {
     if(v >= 11 /* todo_wine */) test("document", document, v < 11 ? "Document" : "HTMLDocument", null, true);
     test("elements", document.getElementsByTagName("body"), "HTMLCollection", null, true);
     test("history", window.history, "History", null, true);
-    test("implementation", document.implementation, "DOMImplementation", null, true);
+    test("implementation", document.implementation, "DOMImplementation");
     if(localStorage) test("localStorage", localStorage, "Storage", null, true);
     test("location", window.location, "Object", window.location.href, null, true);
     if(v >= 11 /* todo_wine */) test("mimeTypes", window.navigator.mimeTypes, v < 11 ? "MSMimeTypesCollection" : "MimeTypeArray", null, true);

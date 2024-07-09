@@ -2646,3 +2646,15 @@ sync_test("screen", function() {
     ok(!check_enum(o, "defprop"), "defprop enumerated");
     ok(!check_enum(o, "prop2"), "prop2 enumerated");
 });
+
+sync_test("builtin_func", function() {
+    var o = document.implementation;
+    var f = o.hasFeature;
+
+    ok(f instanceof Function, "f is not an instance of Function");
+    ok(Object.getPrototypeOf(f) === Function.prototype, "Object.getPrototypeOf(f) = " + Object.getPrototypeOf(f));
+    ok(!f.hasOwnProperty("length"), "f has own length property");
+    ok(f.length === 0, "f.length = " + f.length);
+    ok(f.call(o, "test", 1) === false, 'f.call(o, "test", 1) = ' + f.call(o, "test", 1));
+    ok("" + f === "\nfunction hasFeature() {\n    [native code]\n}\n", "f = " + f);
+});
