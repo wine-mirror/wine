@@ -605,6 +605,7 @@
 @ stdcall KeQueryActiveProcessorCountEx(long)
 @ stdcall KeQueryActiveProcessorCount(ptr)
 @ stdcall KeQueryActiveGroupCount() GetActiveProcessorGroupCount
+@ stdcall KeQueryGroupAffinity(long)
 @ stdcall KeQueryInterruptTime()
 @ stdcall KeQueryPriorityThread(ptr)
 @ stub KeQueryRuntimeThread

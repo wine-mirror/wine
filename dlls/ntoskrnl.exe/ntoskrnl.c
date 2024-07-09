@@ -3490,6 +3490,15 @@ ULONG WINAPI KeGetCurrentProcessorNumberEx(PPROCESSOR_NUMBER process_number)
 }
 
 /***********************************************************************
+ *          KeQueryGroupAffinity   (NTOSKRNL.EXE.@)
+ */
+KAFFINITY WINAPI KeQueryGroupAffinity(USHORT group_number)
+{
+    FIXME("%u stub\n", group_number);
+    return 0;
+}
+
+/***********************************************************************
  *          KeQueryMaximumProcessorCountEx   (NTOSKRNL.EXE.@)
  */
 ULONG WINAPI KeQueryMaximumProcessorCountEx(USHORT group_number)
