@@ -268,6 +268,28 @@ static dispex_prop_t *lookup_dispex_prop(jsdisp_t *obj, unsigned hash, const WCH
     return NULL;
 }
 
+static HRESULT update_external_prop(jsdisp_t *obj, dispex_prop_t *prop, const struct property_info *desc)
+{
+    if(desc->func_iid) {
+        jsdisp_t *func;
+        HRESULT hres;
+
+        hres = create_host_function(obj->ctx, desc, &func);
+        if(FAILED(hres))
+            return hres;
+
+        prop->type = PROP_JSVAL;
+        prop->flags = desc->flags;
+        prop->u.val = jsval_obj(func);
+        return S_OK;
+    }
+
+    prop->type = PROP_EXTERN;
+    prop->flags = desc->flags;
+    prop->u.id = desc->id;
+    return S_OK;
+}
+
 static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
 {
     dispex_prop_t *prop;
@@ -282,13 +304,13 @@ static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_i
             if(FAILED(hres))
                 return hres;
 
-            prop = alloc_prop(This, desc.name ? desc.name : name, PROP_EXTERN, desc.flags);
+            prop = alloc_prop(This, desc.name ? desc.name : name, PROP_DELETED, 0);
             if(!prop)
                 return E_OUTOFMEMORY;
 
-            prop->u.id = desc.id;
+            hres = update_external_prop(This, prop, &desc);
             *ret = prop;
-            return S_OK;
+            return hres;
         }
     }
 
@@ -427,6 +449,7 @@ HRESULT jsdisp_index_lookup(jsdisp_t *obj, const WCHAR *name, unsigned length, s
         desc->flags |= PROPF_WRITABLE;
     desc->name = NULL;
     desc->index = idx;
+    desc->func_iid = 0;
     return S_OK;
 }
 
@@ -440,6 +463,7 @@ HRESULT jsdisp_next_index(jsdisp_t *obj, unsigned length, unsigned id, struct pr
         desc->flags |= PROPF_WRITABLE;
     desc->name = NULL;
     desc->index = desc->id;
+    desc->func_iid = 0;
     return S_OK;
 }
 
@@ -685,10 +709,12 @@ static HRESULT fill_props(jsdisp_t *obj)
 
             prop = lookup_dispex_prop(obj, string_hash(desc.name), desc.name, FALSE);
             if(!prop) {
-                prop = alloc_prop(obj, desc.name, PROP_EXTERN, desc.flags);
+                prop = alloc_prop(obj, desc.name, PROP_DELETED, 0);
                 if(!prop)
                     return E_OUTOFMEMORY;
-                prop->u.id = desc.id;
+                hres = update_external_prop(obj, prop, &desc);
+                if(FAILED(hres))
+                    return hres;
             }
             id = desc.id;
         }

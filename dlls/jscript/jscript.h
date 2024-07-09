@@ -276,6 +276,7 @@ HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,cons
         jsdisp_t*,jsdisp_t**);
 HRESULT create_builtin_constructor(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**);
+HRESULT create_host_function(script_ctx_t*,const struct property_info*,jsdisp_t**);
 HRESULT Function_invoke(jsdisp_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*);
 
 HRESULT Function_value(script_ctx_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*);

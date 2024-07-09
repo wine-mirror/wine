@@ -64,6 +64,13 @@ typedef struct {
 } BindFunction;
 
 typedef struct {
+    FunctionInstance function;
+    const WCHAR *name;
+    UINT32 id;
+    UINT32 iid;
+} HostFunction;
+
+typedef struct {
     jsdisp_t jsdisp;
     jsval_t *buf;
     scope_chain_t *scope;
@@ -914,6 +921,120 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
     function->func_code = func_code;
     function->function.length = function->func_code->param_cnt;
 
+    *ret = &function->function.dispex;
+    return S_OK;
+}
+
+static const builtin_info_t HostFunction_info = {
+    .class       = JSCLASS_FUNCTION,
+    .call        = Function_value,
+    .destructor  = Function_destructor,
+    .gc_traverse = Function_gc_traverse
+};
+
+static HRESULT HostFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsval_t vthis, unsigned flags,
+         unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HostFunction *function = (HostFunction*)func;
+    VARIANT buf[6], retv;
+    DISPPARAMS dp = { .cArgs = argc, .rgvarg = buf };
+    IWineJSDispatchHost *obj;
+    EXCEPINFO ei = { 0 };
+    IDispatch *this_obj;
+    HRESULT hres = S_OK;
+    unsigned i;
+
+    if(flags & DISPATCH_CONSTRUCT)
+        return E_UNEXPECTED;
+
+    if(is_object_instance(vthis))
+        this_obj = get_object(vthis);
+    else if(is_undefined(vthis) || is_null(vthis))
+        this_obj = lookup_global_host(ctx);
+    else
+        return E_UNEXPECTED;
+
+    obj = get_host_dispatch(this_obj);
+    if(!obj) {
+        TRACE("no host dispatch\n");
+        return E_UNEXPECTED;
+    }
+
+    if(argc > ARRAYSIZE(buf) && !(dp.rgvarg = malloc(argc * sizeof(*dp.rgvarg)))) {
+        IWineJSDispatchHost_Release(obj);
+        return E_OUTOFMEMORY;
+    }
+
+    for(i = 0; i < argc; i++) {
+        hres = jsval_to_variant(argv[i], &dp.rgvarg[dp.cArgs - i - 1]);
+        if(FAILED(hres))
+            break;
+    }
+
+    if(SUCCEEDED(hres)) {
+        V_VT(&retv) = VT_EMPTY;
+        hres = IWineJSDispatchHost_CallFunction(obj, function->id, function->iid, &dp, r ? &retv : NULL, &ei,
+                                                &ctx->jscaller->IServiceProvider_iface);
+        if(hres == DISP_E_EXCEPTION)
+            handle_dispatch_exception(ctx, &ei);
+        if(SUCCEEDED(hres) && r) {
+            hres = variant_to_jsval(ctx, &retv, r);
+            VariantClear(&retv);
+        }
+    }
+
+    while(i--)
+        VariantClear(&dp.rgvarg[dp.cArgs - i - 1]);
+    if(dp.rgvarg != buf)
+        free(dp.rgvarg);
+    IWineJSDispatchHost_Release(obj);
+    return hres;
+}
+
+static HRESULT HostFunction_toString(FunctionInstance *func, jsstr_t **ret)
+{
+    HostFunction *function = (HostFunction*)func;
+    return native_function_string(function->name, ret);
+}
+
+static function_code_t *HostFunction_get_code(FunctionInstance *function)
+{
+    return NULL;
+}
+
+static void HostFunction_destructor(FunctionInstance *func)
+{
+}
+
+static HRESULT HostFunction_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, FunctionInstance *func)
+{
+    return S_OK;
+}
+
+static const function_vtbl_t HostFunctionVtbl = {
+    HostFunction_call,
+    HostFunction_toString,
+    HostFunction_get_code,
+    HostFunction_destructor,
+    HostFunction_gc_traverse
+};
+
+HRESULT create_host_function(script_ctx_t *ctx, const struct property_info *desc, jsdisp_t **ret)
+{
+    HostFunction *function;
+    HRESULT hres;
+
+    if(!ctx->function_constr)
+        return E_UNEXPECTED;
+
+    hres = create_function(ctx, &HostFunction_info, &HostFunctionVtbl, sizeof(HostFunction), PROPF_METHOD,
+                           FALSE, NULL, (void**)&function);
+    if(FAILED(hres))
+        return hres;
+
+    function->name = desc->name;
+    function->id = desc->id;
+    function->iid = desc->func_iid;
     *ret = &function->function.dispex;
     return S_OK;
 }

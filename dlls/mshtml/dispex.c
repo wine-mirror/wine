@@ -2310,8 +2310,12 @@ static HRESULT WINAPI JSDispatchHost_LookupProperty(IWineJSDispatchHost *iface, 
         return hres;
     desc->id = id;
     desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
-    if(func->func_disp_idx < 0)
+    if(func->func_disp_idx < 0) {
         desc->flags |= PROPF_ENUMERABLE;
+        desc->func_iid = 0;
+    }else {
+        desc->func_iid = func->tid;
+    }
     desc->name = func->name;
     return S_OK;
 }
@@ -2338,6 +2342,7 @@ static HRESULT WINAPI JSDispatchHost_NextProperty(IWineJSDispatchHost *iface, DI
             desc->id = func->id;
             desc->name = func->name;
             desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
+            desc->func_iid = 0;
             return S_OK;
         }
         func++;
