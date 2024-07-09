@@ -280,6 +280,7 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     struct video_encoder *encoder = impl_from_IMFTransform(iface);
     IMFMediaType *good_input_type;
     GUID major, subtype;
+    UINT64 ratio;
     BOOL result;
     HRESULT hr;
     ULONG i;
@@ -317,10 +318,14 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     if (i == encoder->input_type_count)
         return MF_E_INVALIDMEDIATYPE;
 
+    if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &ratio))
+            || FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &ratio)))
+        return MF_E_INVALIDMEDIATYPE;
+
     if (FAILED(hr = video_encoder_create_input_type(encoder, &subtype, &good_input_type)))
         return hr;
     hr = IMFMediaType_Compare(good_input_type, (IMFAttributes *)type,
-            MF_ATTRIBUTES_MATCH_OUR_ITEMS, &result);
+            MF_ATTRIBUTES_MATCH_INTERSECTION, &result);
     IMFMediaType_Release(good_input_type);
     if (FAILED(hr) || !result)
         return MF_E_INVALIDMEDIATYPE;
