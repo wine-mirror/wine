@@ -82,7 +82,7 @@ static void test_SQLConnect( void )
     SQLHENV env;
     SQLHDBC con;
     SQLRETURN ret;
-    SQLINTEGER size, version;
+    SQLINTEGER size, version, pooling;
     SQLUINTEGER timeout;
     SQLSMALLINT len;
     char str[32];
@@ -98,6 +98,11 @@ static void test_SQLConnect( void )
     ok( version != -1, "version not set\n" );
     ok( size == -1, "size set\n" );
     trace( "ODBC version %d\n", version );
+
+    pooling = -1;
+    ret = SQLGetEnvAttr( env, SQL_ATTR_CONNECTION_POOLING, &pooling, sizeof(pooling), NULL );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( !pooling, "got %d\n", pooling );
 
     ret = SQLAllocConnect( env, &con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );

@@ -1738,6 +1738,10 @@ SQLRETURN WINAPI SQLGetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
     {
         switch (Attribute)
         {
+        case SQL_ATTR_CONNECTION_POOLING:
+            *(SQLINTEGER *)Value = SQL_CP_OFF;
+            break;
+
         case SQL_ATTR_ODBC_VERSION:
             *(SQLINTEGER *)Value = handle->env_attr_version;
             break;
