@@ -40,6 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 /* xtajit64.dll functions */
+static void     (WINAPI *pBTCpu64FlushInstructionCache)(const void*,SIZE_T);
 static BOOLEAN  (WINAPI *pBTCpu64IsProcessorFeaturePresent)(UINT);
 static NTSTATUS (WINAPI *pProcessInit)(void);
 static NTSTATUS (WINAPI *pThreadInit)(void);
@@ -142,6 +143,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     __os_arm64x_dispatch_ret = RtlFindExportedRoutineByName( module, "RetToEntryThunk" );
 
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
+    GET_PTR( BTCpu64FlushInstructionCache );
     GET_PTR( BTCpu64IsProcessorFeaturePresent );
     GET_PTR( ProcessInit );
     GET_PTR( ThreadInit );
@@ -483,6 +485,8 @@ NTSTATUS SYSCALL_API NtFlushInstructionCache( HANDLE process, const void *addr, 
     {
         if (!RtlIsCurrentProcess( process ))
             send_cross_process_notification( process, CrossProcessFlushCache, addr, size, 0 );
+        else if (pBTCpu64FlushInstructionCache)
+            pBTCpu64FlushInstructionCache( addr, size );
     }
     return status;
 }
