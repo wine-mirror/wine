@@ -385,6 +385,7 @@ static struct handle *create_handle( struct handle *parent )
     struct handle *ret;
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     ret->parent = parent;
+    ret->env_attr_version = SQL_OV_ODBC2;
     ret->row_count = 1;
     return ret;
 }
