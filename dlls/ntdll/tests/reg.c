@@ -253,9 +253,7 @@ static void test_NtOpenKey(void)
     attr.Length = sizeof(attr);
     key = (HANDLE)0xdeadbeef;
     status = pNtOpenKey(&key, 0, &attr);
-    todo_wine
     ok(status == STATUS_ACCESS_DENIED, "Expected STATUS_ACCESS_DENIED, got: 0x%08lx\n", status);
-    todo_wine
     ok(!key, "key = %p\n", key);
     if (status == STATUS_SUCCESS) NtClose(key);
 

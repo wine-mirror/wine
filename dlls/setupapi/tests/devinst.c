@@ -1948,11 +1948,9 @@ static void test_device_key(void)
 
     SetLastError(0xdeadbeef);
     key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, 0);
-todo_wine {
     ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
     ok(GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_ACCESS_DENIED, /* win2k3 */
             "Got unexpected error %#lx.\n", GetLastError());
-}
 
     key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, KEY_READ);
     ok(key != INVALID_HANDLE_VALUE, "Failed to open device key, error %#lx.\n", GetLastError());

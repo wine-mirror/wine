@@ -1003,7 +1003,7 @@ DECL_HANDLER(get_next_device_request)
 
         if (iosb && iosb->in_size > get_reply_max_size())
             set_error( STATUS_BUFFER_OVERFLOW );
-        else if (!irp->file || (reply->next = alloc_handle( current->process, irp, 0, 0 )))
+        else if (!irp->file || (reply->next = alloc_handle_no_access_check( current->process, irp, 0, 0 )))
         {
             if (fill_irp_params( manager, irp, &reply->params ))
             {
@@ -1137,7 +1137,7 @@ DECL_HANDLER(get_kernel_object_handle)
         return;
 
     if ((ref = kernel_object_from_ptr( manager, req->user_ptr )))
-        reply->handle = alloc_handle( current->process, ref->object, req->access, 0 );
+        reply->handle = alloc_handle_no_access_check( current->process, ref->object, req->access, 0 );
     else
         set_error( STATUS_INVALID_HANDLE );
 
