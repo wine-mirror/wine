@@ -48,7 +48,7 @@ typedef struct {
     IHTMLDOMImplementation2 IHTMLDOMImplementation2_iface;
 
     nsIDOMDOMImplementation *implementation;
-    GeckoBrowser *browser;
+    HTMLDocumentNode *doc;
 } HTMLDOMImplementation;
 
 static inline HTMLDOMImplementation *impl_from_IHTMLDOMImplementation(IHTMLDOMImplementation *iface)
@@ -119,7 +119,7 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
 
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(title), new_document);
 
-    if(!This->browser)
+    if(!This->doc || !This->doc->browser)
         return E_UNEXPECTED;
 
     nsAString_InitDepend(&title_str, title);
@@ -130,7 +130,7 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
         return E_FAIL;
     }
 
-    hres = create_document_node(doc, This->browser, NULL, dispex_compat_mode(&This->dispex), &new_document_node);
+    hres = create_document_node(doc, This->doc->browser, NULL, dispex_compat_mode(&This->dispex), &new_document_node);
     nsIDOMDocument_Release(doc);
     if(FAILED(hres))
         return hres;
@@ -197,7 +197,7 @@ static void HTMLDOMImplementation_unlink(DispatchEx *dispex)
 static void HTMLDOMImplementation_destructor(DispatchEx *dispex)
 {
     HTMLDOMImplementation *This = HTMLDOMImplementation_from_DispatchEx(dispex);
-    assert(!This->browser);
+    assert(!This->doc);
     free(This);
 }
 
@@ -240,7 +240,7 @@ HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementa
 
     dom_implementation->IHTMLDOMImplementation_iface.lpVtbl = &HTMLDOMImplementationVtbl;
     dom_implementation->IHTMLDOMImplementation2_iface.lpVtbl = &HTMLDOMImplementation2Vtbl;
-    dom_implementation->browser = doc_node->browser;
+    dom_implementation->doc = doc_node;
 
     init_dispatch(&dom_implementation->dispex, &HTMLDOMImplementation_dispex, doc_node->window, doc_node->document_mode);
 
@@ -258,7 +258,7 @@ HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementa
 void detach_dom_implementation(IHTMLDOMImplementation *iface)
 {
     HTMLDOMImplementation *dom_implementation = impl_from_IHTMLDOMImplementation(iface);
-    dom_implementation->browser = NULL;
+    dom_implementation->doc = NULL;
 }
 
 typedef struct {
