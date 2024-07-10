@@ -1552,7 +1552,7 @@ void set_statustext(HTMLDocumentObj*,INT,LPCWSTR);
 IInternetSecurityManager *get_security_manager(void);
 
 extern HINSTANCE hInst;
-void create_console(compat_mode_t compat_mode, IWineMSHTMLConsole **ret);
+void create_console(HTMLInnerWindow *window, IWineMSHTMLConsole **ret);
 HRESULT create_media_query_list(HTMLInnerWindow *window, BSTR media_query, IDispatch **ret);
 
 HRESULT create_mutation_observer_ctor(compat_mode_t compat_mode, IDispatch **ret);

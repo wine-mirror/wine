@@ -3181,7 +3181,7 @@ static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, 
     TRACE("iface %p, console %p.\n", iface, console);
 
     if (!window->console)
-        create_console(dispex_compat_mode(&window->event_target.dispex), &window->console);
+        create_console(window, &window->console);
 
     *console = (IDispatch *)window->console;
     if (window->console)

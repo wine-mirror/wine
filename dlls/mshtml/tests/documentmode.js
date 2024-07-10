@@ -340,7 +340,7 @@ sync_test("builtin_toString", function() {
     }
     if(v >= 10) {
         test("classList", e.classList, "DOMTokenList", "testclass    another ", true);
-        test("console", window.console, "Console", null, true);
+        test("console", window.console, "Console");
         test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
     }
     if(v >= 11) {
