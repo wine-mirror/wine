@@ -1699,7 +1699,7 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
     if(!ret)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&ret->dispex, &HTMLTxtRange_dispex, NULL,
+    init_dispatch(&ret->dispex, &HTMLTxtRange_dispex, doc->script_global,
                   dispex_compat_mode(&doc->node.event_target.dispex));
 
     ret->IHTMLTxtRange_iface.lpVtbl = &HTMLTxtRangeVtbl;

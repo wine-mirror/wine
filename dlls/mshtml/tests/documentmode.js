@@ -318,7 +318,7 @@ sync_test("builtin_toString", function() {
     test("styleSheetRules", sheet.rules, "MSCSSRuleList", null, true);
     test("styleSheets", document.styleSheets, "StyleSheetList", null, true);
     test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null, true);
-    test("textRange", txtRange, "TextRange", null, true);
+    test("textRange", txtRange, "TextRange");
     test("window", window, "Window", "[object Window]", true);
     test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest", null, true);
     if(v < 10) {
