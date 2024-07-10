@@ -190,6 +190,8 @@ struct handle
     void  *win32_handle;
     const struct win32_funcs *win32_funcs;
     struct handle *parent;
+    /* attributes */
+    UINT32 env_attr_version;
     /* drivers and data sources */
     UINT32 drivers_idx;
     void  *drivers_key;

@@ -800,6 +800,30 @@ static int has_suffix( const WCHAR *str, const WCHAR *suffix )
     return len >= len2 && !wcsicmp( str + len - len2, suffix );
 }
 
+static SQLRETURN set_env_attr( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->unix_handle)
+    {
+        struct SQLSetEnvAttr_params params = { handle->unix_handle, attr, value, len };
+        ret = ODBC_CALL( SQLSetEnvAttr, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLSetEnvAttr( handle->win32_handle, attr, value, len );
+    }
+    return ret;
+}
+
+static SQLRETURN prepare_env( struct handle *handle )
+{
+    SQLRETURN ret;
+    if ((ret = set_env_attr( handle, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)(ULONG_PTR)handle->env_attr_version, 0 )))
+        return ret;
+    return SQL_SUCCESS;
+}
+
 /*************************************************************************
  *				SQLConnect           [ODBC32.007]
  */
@@ -836,6 +860,7 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
 
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
                                                                  &handle->parent->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
@@ -853,6 +878,7 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
 
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
@@ -1667,7 +1693,7 @@ SQLRETURN WINAPI SQLGetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
         switch (Attribute)
         {
         case SQL_ATTR_ODBC_VERSION:
-            *(SQLINTEGER *)Value = 2;
+            *(SQLINTEGER *)Value = handle->env_attr_version;
             break;
 
         default:
@@ -2112,7 +2138,7 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
                                SQLINTEGER StringLength)
 {
     struct handle *handle = EnvironmentHandle;
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_SUCCESS;
 
     TRACE("(EnvironmentHandle %p, Attribute %d, Value %p, StringLength %d)\n", EnvironmentHandle, Attribute, Value,
           StringLength);
@@ -2125,6 +2151,20 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
     else if (handle->win32_handle)
     {
         ret = handle->win32_funcs->SQLSetEnvAttr( handle->win32_handle, Attribute, Value, StringLength );
+    }
+    else
+    {
+        switch (Attribute)
+        {
+        case SQL_ATTR_ODBC_VERSION:
+            handle->env_attr_version = (UINT32)(ULONG_PTR)Value;
+            break;
+
+        default:
+            FIXME( "unhandled attribute %d\n", Attribute );
+            ret = SQL_ERROR;
+            break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -2478,6 +2518,7 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
 
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
                                                                  &handle->parent->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
@@ -2495,6 +2536,7 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
 
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
@@ -3147,6 +3189,7 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
                                                                  &handle->parent->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
@@ -3164,6 +3207,7 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
@@ -3312,6 +3356,7 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
 
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
                                                                  &handle->parent->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
@@ -3329,6 +3374,7 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
 
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
@@ -3864,6 +3910,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
                                                                  &handle->parent->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
@@ -3881,6 +3928,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
@@ -4142,6 +4190,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_ENV, NULL,
                                                                  &handle->parent->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
@@ -4159,6 +4208,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params_alloc_env )))) goto done;
+        if (!SUCCESS((ret = prepare_env( handle->parent )))) goto done;
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;

@@ -454,6 +454,30 @@ static void test_SQLExecDirect( void )
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 }
 
+static void test_SQLSetEnvAttr(void)
+{
+    SQLINTEGER version;
+    SQLHENV env;
+    SQLRETURN ret;
+
+    ret = SQLAllocEnv( &env );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLSetEnvAttr (env, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC2, 0);
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLSetEnvAttr (env, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0);
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    version = -1;
+    ret = SQLGetEnvAttr( env, SQL_ATTR_ODBC_VERSION, &version, sizeof(version), NULL );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( version == SQL_OV_ODBC3, "wrong version %d\n", version );
+
+    ret = SQLFreeEnv( env );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+}
+
 START_TEST(odbc32)
 {
     test_SQLAllocHandle();
@@ -463,4 +487,5 @@ START_TEST(odbc32)
     test_SQLDataSources();
     test_SQLDrivers();
     test_SQLExecDirect();
+    test_SQLSetEnvAttr();
 }
