@@ -2873,6 +2873,7 @@ static void create_child_font_list( struct gdi_font *font )
     if (font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
         facename_compare( font_name, microsoft_sans_serifW, -1 ) != 0)
     {
+        add_child_font( font, microsoft_sans_serifW );
         if ((font_link = find_gdi_font_link( microsoft_sans_serifW )))
         {
             TRACE("found entry in default fallback list\n");
