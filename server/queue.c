@@ -624,11 +624,12 @@ void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect, unsig
 /* change the foreground input and reset the cursor clip rect */
 static void set_foreground_input( struct desktop *desktop, struct thread_input *input )
 {
-    const input_shm_t *input_shm, *old_input_shm, dummy_shm = {0};
+    const input_shm_t *input_shm, *old_input_shm;
+    shared_object_t dummy_obj = {0};
 
     if (desktop->foreground_input == input) return;
-    input_shm = input ? input->shared : &dummy_shm;
-    old_input_shm = desktop->foreground_input ? desktop->foreground_input->shared : &dummy_shm;
+    input_shm = input ? input->shared : &dummy_obj.shm.input;
+    old_input_shm = desktop->foreground_input ? desktop->foreground_input->shared : &dummy_obj.shm.input;
 
     set_clip_rectangle( desktop, NULL, SET_CURSOR_NOCLIP, 1 );
     desktop->foreground_input = input;
