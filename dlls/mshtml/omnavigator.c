@@ -1159,7 +1159,7 @@ static dispex_static_data_t OmNavigator_dispex = {
     OmNavigator_iface_tids
 };
 
-HRESULT create_navigator(compat_mode_t compat_mode, IOmNavigator **navigator)
+HRESULT create_navigator(HTMLInnerWindow *script_global, IOmNavigator **navigator)
 {
     OmNavigator *ret;
 
@@ -1169,7 +1169,8 @@ HRESULT create_navigator(compat_mode_t compat_mode, IOmNavigator **navigator)
 
     ret->IOmNavigator_iface.lpVtbl = &OmNavigatorVtbl;
 
-    init_dispatch(&ret->dispex, &OmNavigator_dispex, NULL, compat_mode);
+    init_dispatch(&ret->dispex, &OmNavigator_dispex, script_global,
+                  dispex_compat_mode(&script_global->event_target.dispex));
 
     *navigator = &ret->IOmNavigator_iface;
     return S_OK;

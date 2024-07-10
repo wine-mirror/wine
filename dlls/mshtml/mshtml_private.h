@@ -1043,7 +1043,7 @@ HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow*,HTMLOptionElementFactor
 HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow*,HTMLImageElementFactory**);
 HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,HTMLXMLHttpRequestFactory**);
 HRESULT create_location(HTMLOuterWindow*,HTMLLocation**);
-HRESULT create_navigator(compat_mode_t,IOmNavigator**);
+HRESULT create_navigator(HTMLInnerWindow*,IOmNavigator**);
 HRESULT create_html_screen(HTMLInnerWindow*,IHTMLScreen**);
 HRESULT create_performance(HTMLInnerWindow*,IHTMLPerformance**);
 HRESULT create_history(HTMLInnerWindow*,OmHistory**);

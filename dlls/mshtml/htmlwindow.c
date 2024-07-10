@@ -829,7 +829,7 @@ static HRESULT WINAPI HTMLWindow2_get_navigator(IHTMLWindow2 *iface, IOmNavigato
 
     if(!window->navigator) {
         HRESULT hres;
-        hres = create_navigator(dispex_compat_mode(&window->event_target.dispex), &window->navigator);
+        hres = create_navigator(window, &window->navigator);
         if(FAILED(hres))
             return hres;
     }
