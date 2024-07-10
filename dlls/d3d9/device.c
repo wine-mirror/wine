@@ -1800,6 +1800,13 @@ static HRESULT WINAPI d3d9_device_UpdateSurface(IDirect3DDevice9Ex *iface,
         return D3DERR_INVALIDCALL;
     }
 
+    if (src_desc.multisample_type != WINED3D_MULTISAMPLE_NONE || dst_desc.multisample_type != WINED3D_MULTISAMPLE_NONE)
+    {
+        wined3d_mutex_unlock();
+        WARN("Cannot use UpdateSurface with multisampled surfaces.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     if (src_rect)
         wined3d_box_set(&src_box, src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1);
     else

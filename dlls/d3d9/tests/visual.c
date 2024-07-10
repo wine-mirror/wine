@@ -4548,10 +4548,10 @@ static void test_multisample_stretch_rect(void)
 
     /* UpdateSurface does not support multisampled surfaces. */
     hr = IDirect3DDevice9_UpdateSurface(device, rt, NULL, ms_rt, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice9_UpdateSurface(device, ms_rt, NULL, rt, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(filters); ++i)
     {
