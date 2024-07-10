@@ -42,9 +42,11 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 /* xtajit64.dll functions */
 static void     (WINAPI *pBTCpu64FlushInstructionCache)(const void*,SIZE_T);
 static BOOLEAN  (WINAPI *pBTCpu64IsProcessorFeaturePresent)(UINT);
+static NTSTATUS (WINAPI *pNotifyMapViewOfSection)(void*,void*,void*,SIZE_T,ULONG,ULONG);
 static void     (WINAPI *pNotifyMemoryAlloc)(void*,SIZE_T,ULONG,ULONG,BOOL,NTSTATUS);
 static void     (WINAPI *pNotifyMemoryFree)(void*,SIZE_T,ULONG,BOOL,NTSTATUS);
 static void     (WINAPI *pNotifyMemoryProtect)(void*,SIZE_T,ULONG,BOOL,NTSTATUS);
+static void     (WINAPI *pNotifyUnmapViewOfSection)(void*,BOOL,NTSTATUS);
 static NTSTATUS (WINAPI *pProcessInit)(void);
 static NTSTATUS (WINAPI *pThreadInit)(void);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
@@ -148,9 +150,11 @@ NTSTATUS arm64ec_process_init( HMODULE module )
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
     GET_PTR( BTCpu64FlushInstructionCache );
     GET_PTR( BTCpu64IsProcessorFeaturePresent );
+    GET_PTR( NotifyMapViewOfSection );
     GET_PTR( NotifyMemoryAlloc );
     GET_PTR( NotifyMemoryFree );
     GET_PTR( NotifyMemoryProtect );
+    GET_PTR( NotifyUnmapViewOfSection );
     GET_PTR( ProcessInit );
     GET_PTR( ThreadInit );
     GET_PTR( UpdateProcessorInformation );
@@ -293,8 +297,8 @@ DEFINE_SYSCALL(NtLockFile, (HANDLE file, HANDLE event, PIO_APC_ROUTINE apc, void
 DEFINE_SYSCALL(NtLockVirtualMemory, (HANDLE process, PVOID *addr, SIZE_T *size, ULONG unknown))
 DEFINE_SYSCALL(NtMakePermanentObject, (HANDLE handle))
 DEFINE_SYSCALL(NtMakeTemporaryObject, (HANDLE handle))
-DEFINE_SYSCALL(NtMapViewOfSection, (HANDLE handle, HANDLE process, PVOID *addr_ptr, ULONG_PTR zero_bits, SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect))
-DEFINE_SYSCALL(NtMapViewOfSectionEx, (HANDLE handle, HANDLE process, PVOID *addr_ptr, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type, ULONG protect, MEM_EXTENDED_PARAMETER *parameters, ULONG count))
+DEFINE_WRAPPED_SYSCALL(NtMapViewOfSection, (HANDLE handle, HANDLE process, PVOID *addr_ptr, ULONG_PTR zero_bits, SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect))
+DEFINE_WRAPPED_SYSCALL(NtMapViewOfSectionEx, (HANDLE handle, HANDLE process, PVOID *addr_ptr, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type, ULONG protect, MEM_EXTENDED_PARAMETER *parameters, ULONG count))
 DEFINE_SYSCALL(NtNotifyChangeDirectoryFile, (HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *iosb, void *buffer, ULONG buffer_size, ULONG filter, BOOLEAN subtree))
 DEFINE_SYSCALL(NtNotifyChangeKey, (HANDLE key, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io, ULONG filter, BOOLEAN subtree, void *buffer, ULONG length, BOOLEAN async))
 DEFINE_SYSCALL(NtNotifyChangeMultipleKeys, (HANDLE key, ULONG count, OBJECT_ATTRIBUTES *attr, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io, ULONG filter, BOOLEAN subtree, void *buffer, ULONG length, BOOLEAN async))
@@ -425,8 +429,8 @@ DEFINE_SYSCALL(NtUnloadDriver, (const UNICODE_STRING *name))
 DEFINE_SYSCALL(NtUnloadKey, (OBJECT_ATTRIBUTES *attr))
 DEFINE_SYSCALL(NtUnlockFile, (HANDLE handle, IO_STATUS_BLOCK *io_status, LARGE_INTEGER *offset, LARGE_INTEGER *count, ULONG *key))
 DEFINE_SYSCALL(NtUnlockVirtualMemory, (HANDLE process, PVOID *addr, SIZE_T *size, ULONG unknown))
-DEFINE_SYSCALL(NtUnmapViewOfSection, (HANDLE process, PVOID addr))
-DEFINE_SYSCALL(NtUnmapViewOfSectionEx, (HANDLE process, PVOID addr, ULONG flags))
+DEFINE_WRAPPED_SYSCALL(NtUnmapViewOfSection, (HANDLE process, PVOID addr))
+DEFINE_WRAPPED_SYSCALL(NtUnmapViewOfSectionEx, (HANDLE process, PVOID addr, ULONG flags))
 DEFINE_SYSCALL(NtWaitForAlertByThreadId, (const void *address, const LARGE_INTEGER *timeout))
 DEFINE_SYSCALL(NtWaitForDebugEvent, (HANDLE handle, BOOLEAN alertable, LARGE_INTEGER *timeout, DBGUI_WAIT_STATE_CHANGE *state))
 DEFINE_SYSCALL(NtWaitForKeyedEvent, (HANDLE handle, const void *key, BOOLEAN alertable, const LARGE_INTEGER *timeout))
@@ -530,6 +534,46 @@ NTSTATUS SYSCALL_API NtGetContextThread( HANDLE handle, CONTEXT *context )
     return status;
 }
 
+static void notify_map_view_of_section( HANDLE handle, void *addr, SIZE_T size, ULONG alloc,
+                                        ULONG protect, NTSTATUS *ret_status )
+{
+    SECTION_IMAGE_INFORMATION info;
+    NTSTATUS status;
+
+    if (!pNotifyMapViewOfSection) return;
+    if (!NtCurrentTeb()->Tib.ArbitraryUserPointer) return;
+    if (NtQuerySection( handle, SectionImageInformation, &info, sizeof(info), NULL )) return;
+    status = pNotifyMapViewOfSection( NULL, addr, NULL, size, alloc, protect );
+    if (NT_SUCCESS(status)) return;
+    NtUnmapViewOfSection( GetCurrentProcess(), addr );
+    *ret_status = status;
+}
+
+NTSTATUS SYSCALL_API NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_ptr,
+                                         ULONG_PTR zero_bits, SIZE_T commit_size,
+                                         const LARGE_INTEGER *offset, SIZE_T *size_ptr,
+                                         SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
+{
+    NTSTATUS status = syscall_NtMapViewOfSection( handle, process, addr_ptr, zero_bits, commit_size,
+                                                  offset, size_ptr, inherit, alloc_type, protect );
+
+    if (NT_SUCCESS(status) && RtlIsCurrentProcess( process ))
+        notify_map_view_of_section( handle, *addr_ptr, *size_ptr, alloc_type, protect, &status );
+    return status;
+}
+
+NTSTATUS SYSCALL_API NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr_ptr,
+                                           const LARGE_INTEGER *offset, SIZE_T *size_ptr, ULONG alloc_type,
+                                           ULONG protect, MEM_EXTENDED_PARAMETER *parameters, ULONG count )
+{
+    NTSTATUS status = syscall_NtMapViewOfSectionEx( handle, process, addr_ptr, offset, size_ptr,
+                                                    alloc_type, protect, parameters, count );
+
+    if (NT_SUCCESS(status) && RtlIsCurrentProcess( process ))
+        notify_map_view_of_section( handle, *addr_ptr, *size_ptr, alloc_type, protect, &status );
+    return status;
+}
+
 NTSTATUS SYSCALL_API NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr,
                                              ULONG new_prot, ULONG *old_prot )
 {
@@ -571,6 +615,28 @@ NTSTATUS SYSCALL_API NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     context_x64_to_arm( &arm_ctx, (ARM64EC_NT_CONTEXT *)context );
     return syscall_NtSetContextThread( handle, &arm_ctx );
+}
+
+NTSTATUS SYSCALL_API NtUnmapViewOfSection( HANDLE process, void *addr )
+{
+    BOOL is_current = RtlIsCurrentProcess( process );
+    NTSTATUS status;
+
+    if (is_current && pNotifyUnmapViewOfSection) pNotifyUnmapViewOfSection( addr, FALSE, 0 );
+    status = syscall_NtUnmapViewOfSection( process, addr );
+    if (is_current && pNotifyUnmapViewOfSection) pNotifyUnmapViewOfSection( addr, TRUE, status );
+    return status;
+}
+
+NTSTATUS SYSCALL_API NtUnmapViewOfSectionEx( HANDLE process, void *addr, ULONG flags )
+{
+    BOOL is_current = RtlIsCurrentProcess( process );
+    NTSTATUS status;
+
+    if (is_current && pNotifyUnmapViewOfSection) pNotifyUnmapViewOfSection( addr, FALSE, 0 );
+    status = syscall_NtUnmapViewOfSectionEx( process, addr, flags );
+    if (is_current && pNotifyUnmapViewOfSection) pNotifyUnmapViewOfSection( addr, TRUE, status );
+    return status;
 }
 
 
