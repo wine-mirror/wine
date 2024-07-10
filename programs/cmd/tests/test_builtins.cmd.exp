@@ -706,6 +706,10 @@ foo
 I'm here!@space@
 I'm here!@space@
 I'm here!@space@
+prompt XbarX
+prompt YfooY
+'prompt' YfooY
+@todo_wine@promptYfooY
 ------------ Testing 'choice' ------------
 Example message [A,B,C]?A@or_broken@choice unavailable
 1@or_broken@9009

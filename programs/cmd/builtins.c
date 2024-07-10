@@ -3176,7 +3176,7 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
     }
 
     /* If no parameter, or no '=' sign, return an error */
-    if (!(*s) || ((p = wcschr (s, '=')) == NULL )) {
+    if (!(*s) || ((p = wcschr(s, '=')) == NULL )) {
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
       return_code = ERROR_INVALID_FUNCTION;
     }
@@ -3184,7 +3184,15 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
     {
       /* Output the prompt */
       *p++ = '\0';
-      if (*p) WCMD_output_asis(p);
+      if (*p) {
+        p = WCMD_strtrim(p);
+        if (*p == L'"') {
+          WCHAR* last = wcsrchr(p+1, L'"');
+          p++;
+          if (last) *last = L'\0';
+        }
+        WCMD_output_asis(p);
+      }
 
       /* Read the reply */
       if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) && count > 1) {
@@ -3192,7 +3200,7 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
         if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
         TRACE("set /p: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
               wine_dbgstr_w(string));
-        SetEnvironmentVariableW(s, string);
+        if (*string) SetEnvironmentVariableW(s, string);
       }
     }
 

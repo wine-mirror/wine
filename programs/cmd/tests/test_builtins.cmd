@@ -853,6 +853,11 @@ del folder\sub1.bat
 rmdir "fol;der"
 rmdir folder
 PATH=%PATH_BACKUP%
+set WINE_FOO=foo
+echo bar| cmd /v:on /c "set /p WINE_FOO=prompt & echo X!WINE_FOO!X"
+echo:| cmd /v:on /c "set /p WINE_FOO=prompt & echo Y!WINE_FOO!Y"
+echo:| cmd /v:on /c "set /p WINE_FOO='prompt' & echo Y!WINE_FOO!Y"
+echo:| cmd /v:on /c "set /p WINE_FOO="prompt" & echo Y!WINE_FOO!Y"
 
 echo ------------ Testing 'choice' ------------
 
