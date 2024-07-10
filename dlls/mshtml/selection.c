@@ -253,7 +253,7 @@ HRESULT HTMLSelectionObject_Create(HTMLDocumentNode *doc, nsISelection *nsselect
     if(!selection)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&selection->dispex, &HTMLSelectionObject_dispex, NULL,
+    init_dispatch(&selection->dispex, &HTMLSelectionObject_dispex, doc->script_global,
                   dispex_compat_mode(&doc->node.event_target.dispex));
 
     selection->IHTMLSelectionObject_iface.lpVtbl = &HTMLSelectionObjectVtbl;

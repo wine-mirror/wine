@@ -326,7 +326,7 @@ sync_test("builtin_toString", function() {
     }
     if(v < 11) {
         test("eventObject", document.createEventObject(), "MSEventObj", null, true);
-        test("selection", document.selection, "MSSelection", null, true);
+        test("selection", document.selection, "MSSelection");
     }
     if(v >= 9) {
         test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration", null, true);
