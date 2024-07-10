@@ -824,6 +824,30 @@ static SQLRETURN prepare_env( struct handle *handle )
     return SQL_SUCCESS;
 }
 
+static SQLRETURN set_con_attr( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->unix_handle)
+    {
+        struct SQLSetConnectAttr_params params = { handle->unix_handle, attr, value, len };
+        ret = ODBC_CALL( SQLSetConnectAttr, &params );
+    }
+    else if (handle->win32_handle)
+    {
+        ret = handle->win32_funcs->SQLSetConnectAttr( handle->win32_handle, attr, value, len );
+    }
+    return ret;
+}
+
+static SQLRETURN prepare_con( struct handle *handle )
+{
+    SQLRETURN ret;
+    if ((ret = set_con_attr( handle, SQL_ATTR_LOGIN_TIMEOUT, (SQLPOINTER)(ULONG_PTR)handle->con_attr_login_timeout, 0 )))
+        return ret;
+    return SQL_SUCCESS;
+}
+
 /*************************************************************************
  *				SQLConnect           [ODBC32.007]
  */
@@ -865,6 +889,7 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
                                                                  &handle->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLConnect( handle->win32_handle, ServerName, NameLength1, UserName, NameLength2,
                                                Authentication, NameLength3 );
@@ -882,6 +907,7 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         params_connect.ConnectionHandle = handle->unix_handle;
         ret = ODBC_CALL( SQLConnect, &params_connect );
@@ -1430,7 +1456,7 @@ SQLRETURN WINAPI SQLGetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
                                    SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_SUCCESS;
 
     TRACE("(ConnectionHandle %p, Attribute %d, Value %p, BufferLength %d, StringLength %p)\n", ConnectionHandle,
           Attribute, Value, BufferLength, StringLength);
@@ -1447,6 +1473,20 @@ SQLRETURN WINAPI SQLGetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
     {
         ret = handle->win32_funcs->SQLGetConnectAttr( handle->win32_handle, Attribute, Value, BufferLength,
                                                       StringLength );
+    }
+    else
+    {
+        switch (Attribute)
+        {
+        case SQL_ATTR_LOGIN_TIMEOUT:
+            *(SQLINTEGER *)Value = handle->con_attr_login_timeout;
+            break;
+
+        default:
+            FIXME( "unhandled attribute %d\n", Attribute );
+            ret = SQL_ERROR;
+            break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -1990,7 +2030,7 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
                                    SQLINTEGER StringLength)
 {
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_SUCCESS;
 
     TRACE("(ConnectionHandle %p, Attribute %d, Value %p, StringLength %d)\n", ConnectionHandle, Attribute, Value,
           StringLength);
@@ -2005,6 +2045,20 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
     else if (handle->win32_handle)
     {
         ret = handle->win32_funcs->SQLSetConnectAttr( handle->win32_handle, Attribute, Value, StringLength );
+    }
+    else
+    {
+        switch (Attribute)
+        {
+        case SQL_ATTR_LOGIN_TIMEOUT:
+            handle->con_attr_login_timeout = (UINT32)(ULONG_PTR)Value;
+            break;
+
+        default:
+            FIXME( "unhandled attribute %d\n", Attribute );
+            ret = SQL_ERROR;
+            break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -2523,6 +2577,7 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
                                                                  &handle->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLBrowseConnect( handle->win32_handle, InConnectionString, StringLength1,
                                                      OutConnectionString, BufferLength, StringLength2 );
@@ -2540,6 +2595,7 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         params.ConnectionHandle = handle->unix_handle;
         ret = ODBC_CALL( SQLBrowseConnect, &params );
@@ -3194,6 +3250,7 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
                                                                  &handle->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLDriverConnect( handle->win32_handle, WindowHandle, InConnectionString, Length,
                                                      OutConnectionString, BufferLength, Length2, DriverCompletion );
@@ -3211,6 +3268,7 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         params.ConnectionHandle = handle->unix_handle;
         ret = ODBC_CALL( SQLDriverConnect, &params );
@@ -3361,6 +3419,7 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
                                                                  &handle->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLConnectW( handle->win32_handle, ServerName, NameLength1, UserName, NameLength2,
                                                 Authentication, NameLength3 );
@@ -3378,6 +3437,7 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         params_connect.ConnectionHandle = handle->unix_handle;
         ret = ODBC_CALL( SQLConnectW, &params_connect );
@@ -3624,7 +3684,7 @@ SQLRETURN WINAPI SQLGetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
                                     SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_SUCCESS;
 
     TRACE("(ConnectionHandle %p, Attribute %d, Value %p, BufferLength %d, StringLength %p)\n", ConnectionHandle,
           Attribute, Value, BufferLength, StringLength);
@@ -3641,6 +3701,20 @@ SQLRETURN WINAPI SQLGetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
     {
         ret = handle->win32_funcs->SQLGetConnectAttrW( handle->win32_handle, Attribute, Value, BufferLength,
                                                        StringLength );
+    }
+    else
+    {
+        switch (Attribute)
+        {
+        case SQL_ATTR_LOGIN_TIMEOUT:
+            *(SQLINTEGER *)Value = handle->con_attr_login_timeout;
+            break;
+
+        default:
+            FIXME( "unhandled attribute %d\n", Attribute );
+            ret = SQL_ERROR;
+            break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -3831,6 +3905,20 @@ SQLRETURN WINAPI SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
     {
         ret = handle->win32_funcs->SQLSetConnectAttrW( handle->win32_handle, Attribute, Value, StringLength );
     }
+    else
+    {
+        switch (Attribute)
+        {
+        case SQL_ATTR_LOGIN_TIMEOUT:
+            handle->con_attr_login_timeout = (UINT32)(ULONG_PTR)Value;
+            break;
+
+        default:
+            FIXME( "unhandled attribute %d\n", Attribute );
+            ret = SQL_ERROR;
+            break;
+        }
+    }
 
     TRACE("Returning %d\n", ret);
     return ret;
@@ -3915,6 +4003,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
                                                                  &handle->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, WindowHandle, InConnectionString, Length,
                                                       OutConnectionString, BufferLength, Length2, DriverCompletion );
@@ -3932,6 +4021,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         params.ConnectionHandle = handle->unix_handle;
         ret = ODBC_CALL( SQLDriverConnectW, &params );
@@ -4195,6 +4285,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
         handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = handle->win32_funcs->SQLAllocHandle( SQL_HANDLE_DBC, handle->parent->win32_handle,
                                                                  &handle->win32_handle )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLBrowseConnectW( handle->win32_handle, InConnectionString, StringLength1,
                                                       OutConnectionString, BufferLength, StringLength2 );
@@ -4212,6 +4303,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 
         params_alloc_connect.EnvironmentHandle = handle->parent->unix_handle;
         if (!SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params_alloc_connect )))) goto done;
+        if (!SUCCESS((ret = prepare_con( handle )))) goto done;
 
         params.ConnectionHandle = handle->unix_handle;
         ret = ODBC_CALL( SQLBrowseConnectW, &params );

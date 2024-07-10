@@ -192,6 +192,7 @@ struct handle
     struct handle *parent;
     /* attributes */
     UINT32 env_attr_version;
+    UINT32 con_attr_login_timeout;
     /* drivers and data sources */
     UINT32 drivers_idx;
     void  *drivers_key;

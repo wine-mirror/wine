@@ -478,6 +478,35 @@ static void test_SQLSetEnvAttr(void)
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 }
 
+static void test_SQLSetConnectAttr(void)
+{
+    SQLUINTEGER timeout;
+    SQLHENV env;
+    SQLHDBC con;
+    SQLRETURN ret;
+
+    ret = SQLAllocEnv( &env );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLAllocConnect( env, &con );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    timeout = 10;
+    ret = SQLSetConnectAttr( con, SQL_ATTR_LOGIN_TIMEOUT, (SQLPOINTER)(ULONG_PTR)timeout, sizeof(timeout) );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    timeout = 0;
+    ret = SQLGetConnectAttr( con, SQL_ATTR_LOGIN_TIMEOUT, &timeout, sizeof(timeout), NULL );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( timeout == 10, "wrong timeout %d\n", timeout );
+
+    ret = SQLFreeConnect( con );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLFreeEnv( env );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+}
+
 START_TEST(odbc32)
 {
     test_SQLAllocHandle();
@@ -488,4 +517,5 @@ START_TEST(odbc32)
     test_SQLDrivers();
     test_SQLExecDirect();
     test_SQLSetEnvAttr();
+    test_SQLSetConnectAttr();
 }
