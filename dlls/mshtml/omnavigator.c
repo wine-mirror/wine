@@ -130,7 +130,8 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
         return E_FAIL;
     }
 
-    hres = create_document_node(doc, This->doc->browser, NULL, dispex_compat_mode(&This->dispex), &new_document_node);
+    hres = create_document_node(doc, This->doc->browser, NULL, This->doc->script_global,
+                                dispex_compat_mode(&This->dispex), &new_document_node);
     nsIDOMDocument_Release(doc);
     if(FAILED(hres))
         return hres;
@@ -242,7 +243,7 @@ HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementa
     dom_implementation->IHTMLDOMImplementation2_iface.lpVtbl = &HTMLDOMImplementation2Vtbl;
     dom_implementation->doc = doc_node;
 
-    init_dispatch(&dom_implementation->dispex, &HTMLDOMImplementation_dispex, doc_node->window, doc_node->document_mode);
+    init_dispatch(&dom_implementation->dispex, &HTMLDOMImplementation_dispex, doc_node->script_global, doc_node->document_mode);
 
     nsres = nsIDOMDocument_GetImplementation(doc_node->dom_document, &dom_implementation->implementation);
     if(NS_FAILED(nsres)) {

@@ -2665,7 +2665,6 @@ async_test("script_global", function() {
     var doc = document.implementation.createHTMLDocument("test");
     todo_wine.
     ok(doc instanceof Object, "created doc is not an instance of Object");
-    todo_wine.
     ok(doc.implementation instanceof Object, "created doc.implementation is not an instance of Object");
 
     document.body.innerHTML = "";

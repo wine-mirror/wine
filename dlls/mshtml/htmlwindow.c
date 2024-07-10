@@ -109,7 +109,7 @@ static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIAN
 static void detach_inner_window(HTMLInnerWindow *window)
 {
     HTMLOuterWindow *outer_window = window->base.outer_window;
-    HTMLDocumentNode *doc = window->doc;
+    HTMLDocumentNode *doc = window->doc, *doc_iter;
 
     while(!list_empty(&window->children)) {
         HTMLOuterWindow *child = LIST_ENTRY(list_tail(&window->children), HTMLOuterWindow, sibling_entry);
@@ -126,6 +126,8 @@ static void detach_inner_window(HTMLInnerWindow *window)
     if(outer_window && is_main_content_window(outer_window))
         window->doc->cp_container.forward_container = NULL;
 
+    LIST_FOR_EACH_ENTRY(doc_iter, &window->documents, HTMLDocumentNode, script_global_entry)
+        doc_iter->script_global = NULL;
     if(doc)
         detach_document_node(doc);
 
@@ -4239,6 +4241,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
         return E_OUTOFMEMORY;
     window->base.IHTMLWindow2_iface.lpVtbl = &HTMLWindow2Vtbl;
 
+    list_init(&window->documents);
     list_init(&window->children);
     list_init(&window->script_hosts);
     list_init(&window->bindings);
@@ -4367,7 +4370,7 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
     if(outer_window->parent)
         parent_mode = outer_window->parent->base.inner_window->doc->document_mode;
 
-    hres = create_document_node(nsdoc, outer_window->browser, window, parent_mode, &window->doc);
+    hres = create_document_node(nsdoc, outer_window->browser, window, window, parent_mode, &window->doc);
     nsIDOMDocument_Release(nsdoc);
     if(FAILED(hres))
         return hres;

@@ -5337,6 +5337,10 @@ static void HTMLDocumentNode_unlink(DispatchEx *dispex)
     HTMLInnerWindow *window = This->window;
     HTMLDOMNode_unlink(dispex);
 
+    if(This->script_global) {
+        list_remove(&This->script_global_entry);
+        This->script_global = NULL;
+    }
     if(window) {
         This->window = NULL;
         IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
@@ -5709,7 +5713,7 @@ static dispex_static_data_t HTMLDocumentNode_dispex = {
     HTMLDocumentNode_init_dispex_info
 };
 
-static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindow *window)
+static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindow *window, HTMLInnerWindow *script_global)
 {
     HTMLDocumentNode *doc;
 
@@ -5738,6 +5742,11 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     if(window)
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
+    if(script_global) {
+        doc->script_global = script_global;
+        list_add_tail(&script_global->documents, &doc->script_global_entry);
+    }
+
     ConnectionPointContainer_Init(&doc->cp_container, (IUnknown*)&doc->IHTMLDocument2_iface, HTMLDocumentNode_cpc);
     HTMLDocumentNode_Persist_Init(doc);
     HTMLDocumentNode_Service_Init(doc);
@@ -5753,12 +5762,12 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
 }
 
 HRESULT create_document_node(nsIDOMDocument *nsdoc, GeckoBrowser *browser, HTMLInnerWindow *window,
-                             compat_mode_t parent_mode, HTMLDocumentNode **ret)
+                             HTMLInnerWindow *script_global, compat_mode_t parent_mode, HTMLDocumentNode **ret)
 {
     HTMLDocumentObj *doc_obj = browser->doc;
     HTMLDocumentNode *doc;
 
-    doc = alloc_doc_node(doc_obj, window);
+    doc = alloc_doc_node(doc_obj, window, script_global);
     if(!doc)
         return E_OUTOFMEMORY;
 
@@ -5809,7 +5818,7 @@ static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *do
 {
     HTMLDocumentNode *doc_frag;
 
-    doc_frag = alloc_doc_node(doc_node->doc_obj, doc_node->window);
+    doc_frag = alloc_doc_node(doc_node->doc_obj, doc_node->window, doc_node->script_global);
     if(!doc_frag)
         return E_OUTOFMEMORY;
 

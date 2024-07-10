@@ -632,6 +632,7 @@ struct HTMLInnerWindow {
 
     struct list children;
     struct list script_hosts;
+    struct list documents;
     IWineJScript *jscript;
 
     IHTMLEventObj *event;
@@ -994,6 +995,9 @@ struct HTMLDocumentNode {
     GeckoBrowser *browser;
     struct list browser_entry;
 
+    HTMLInnerWindow *script_global;
+    struct list script_global_entry;
+
     compat_mode_t document_mode;
     BOOL document_mode_locked;
 
@@ -1027,7 +1031,7 @@ struct HTMLDocumentNode {
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT MHTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
-HRESULT create_document_node(nsIDOMDocument*,GeckoBrowser*,HTMLInnerWindow*,
+HRESULT create_document_node(nsIDOMDocument*,GeckoBrowser*,HTMLInnerWindow*,HTMLInnerWindow*,
                              compat_mode_t,HTMLDocumentNode**);
 HRESULT create_doctype_node(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
 
