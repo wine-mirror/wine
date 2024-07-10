@@ -2658,3 +2658,33 @@ sync_test("builtin_func", function() {
     ok(f.call(o, "test", 1) === false, 'f.call(o, "test", 1) = ' + f.call(o, "test", 1));
     ok("" + f === "\nfunction hasFeature() {\n    [native code]\n}\n", "f = " + f);
 });
+
+async_test("script_global", function() {
+    // Created documents share script global, so their objects are instances of Object from
+    // the current script context.
+    var doc = document.implementation.createHTMLDocument("test");
+    todo_wine.
+    ok(doc instanceof Object, "created doc is not an instance of Object");
+    todo_wine.
+    ok(doc.implementation instanceof Object, "created doc.implementation is not an instance of Object");
+
+    document.body.innerHTML = "";
+    var iframe = document.createElement("iframe");
+
+    // Documents created in iframe use iframe's script global, so their objects are not instances of
+    // current script context Object.
+    iframe.onload = guard(function() {
+        var doc = iframe.contentWindow.document;
+        ok(!(doc instanceof Object), "doc is an instance of Object");
+        ok(!(doc.implementation instanceof Object), "doc.implementation is an instance of Object");
+
+        doc = doc.implementation.createHTMLDocument("test");
+        ok(!(doc instanceof Object), "created iframe doc is an instance of Object");
+        ok(!(doc.implementation instanceof Object), "created iframe doc.implementation is an instance of Object");
+
+        next_test();
+    });
+
+    iframe.src = "about:blank";
+    document.body.appendChild(iframe);
+});
