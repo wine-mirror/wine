@@ -816,10 +816,11 @@ static SQLRETURN set_env_attr( struct handle *handle, SQLINTEGER attr, SQLPOINTE
     return ret;
 }
 
+#define INT_PTR(val) (SQLPOINTER)(ULONG_PTR)val
 static SQLRETURN prepare_env( struct handle *handle )
 {
     SQLRETURN ret;
-    if ((ret = set_env_attr( handle, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)(ULONG_PTR)handle->env_attr_version, 0 )))
+    if ((ret = set_env_attr( handle, SQL_ATTR_ODBC_VERSION, INT_PTR(handle->env_attr_version), 0 )))
         return ret;
     return SQL_SUCCESS;
 }
@@ -843,8 +844,9 @@ static SQLRETURN set_con_attr( struct handle *handle, SQLINTEGER attr, SQLPOINTE
 static SQLRETURN prepare_con( struct handle *handle )
 {
     SQLRETURN ret;
-    if ((ret = set_con_attr( handle, SQL_ATTR_LOGIN_TIMEOUT, (SQLPOINTER)(ULONG_PTR)handle->con_attr_login_timeout, 0 )))
-        return ret;
+
+    if ((ret = set_con_attr( handle, SQL_ATTR_CONNECTION_TIMEOUT, INT_PTR(handle->con_attr_con_timeout), 0 ))) return ret;
+    if ((ret = set_con_attr( handle, SQL_ATTR_LOGIN_TIMEOUT, INT_PTR(handle->con_attr_login_timeout), 0 ))) return ret;
     return SQL_SUCCESS;
 }
 
@@ -1478,6 +1480,10 @@ SQLRETURN WINAPI SQLGetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
     {
         switch (Attribute)
         {
+        case SQL_ATTR_CONNECTION_TIMEOUT:
+            *(SQLINTEGER *)Value = handle->con_attr_con_timeout;
+            break;
+
         case SQL_ATTR_LOGIN_TIMEOUT:
             *(SQLINTEGER *)Value = handle->con_attr_login_timeout;
             break;
@@ -2050,6 +2056,10 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
     {
         switch (Attribute)
         {
+        case SQL_ATTR_CONNECTION_TIMEOUT:
+            handle->con_attr_con_timeout = (UINT32)(ULONG_PTR)Value;
+            break;
+
         case SQL_ATTR_LOGIN_TIMEOUT:
             handle->con_attr_login_timeout = (UINT32)(ULONG_PTR)Value;
             break;
@@ -3706,6 +3716,10 @@ SQLRETURN WINAPI SQLGetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
     {
         switch (Attribute)
         {
+        case SQL_ATTR_CONNECTION_TIMEOUT:
+            *(SQLINTEGER *)Value = handle->con_attr_con_timeout;
+            break;
+
         case SQL_ATTR_LOGIN_TIMEOUT:
             *(SQLINTEGER *)Value = handle->con_attr_login_timeout;
             break;
@@ -3909,6 +3923,10 @@ SQLRETURN WINAPI SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
     {
         switch (Attribute)
         {
+        case SQL_ATTR_CONNECTION_TIMEOUT:
+            handle->con_attr_con_timeout = (UINT32)(ULONG_PTR)Value;
+            break;
+
         case SQL_ATTR_LOGIN_TIMEOUT:
             handle->con_attr_login_timeout = (UINT32)(ULONG_PTR)Value;
             break;
