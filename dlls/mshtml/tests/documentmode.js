@@ -308,7 +308,7 @@ sync_test("builtin_toString", function() {
     test("navigator", window.navigator, "Navigator", null, true);
     test("performance", window.performance, "Performance", null, true);
     test("performanceNavigation", window.performance.navigation, "PerformanceNavigation");
-    test("performanceTiming", window.performance.timing, "PerformanceTiming", null, true);
+    test("performanceTiming", window.performance.timing, "PerformanceTiming");
     if(v >= 11 /* todo_wine */) test("plugins", window.navigator.plugins, v < 11 ? "MSPluginsCollection" : "PluginArray", null, true);
     test("screen", window.screen, "Screen");
     test("sessionStorage", window.sessionStorage, "Storage", null, true);

@@ -1713,7 +1713,7 @@ static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLP
         timing->window = This->window;
         IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
 
-        init_dispatch(&timing->dispex, &HTMLPerformanceTiming_dispex, NULL,
+        init_dispatch(&timing->dispex, &HTMLPerformanceTiming_dispex, This->window,
                       dispex_compat_mode(&This->dispex));
 
         This->timing = &timing->IHTMLPerformanceTiming_iface;
