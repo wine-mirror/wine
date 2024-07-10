@@ -40,9 +40,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 /* xtajit64.dll functions */
+static BOOLEAN  (WINAPI *pBTCpu64IsProcessorFeaturePresent)(UINT);
 static NTSTATUS (WINAPI *pProcessInit)(void);
 static NTSTATUS (WINAPI *pThreadInit)(void);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
+
+static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX];
 
 static inline CHPE_V2_CPU_AREA_INFO *get_arm64ec_cpu_area(void)
 {
@@ -139,13 +142,19 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     __os_arm64x_dispatch_ret = RtlFindExportedRoutineByName( module, "RetToEntryThunk" );
 
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
+    GET_PTR( BTCpu64IsProcessorFeaturePresent );
     GET_PTR( ProcessInit );
     GET_PTR( ThreadInit );
     GET_PTR( UpdateProcessorInformation );
 #undef GET_PTR
 
     if (pProcessInit) status = pProcessInit();
-    if (!status) status = create_cross_process_work_list( info );
+    if (!status)
+    {
+        for (unsigned int i = 0; i < PROCESSOR_FEATURE_MAX; i++)
+            emulated_processor_features[i] = pBTCpu64IsProcessorFeaturePresent( i );
+        status = create_cross_process_work_list( info );
+    }
     if (!status) status = arm64ec_thread_init();
     return status;
 }
@@ -1292,7 +1301,28 @@ NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
  */
 BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
 {
-    return feature < PROCESSOR_FEATURE_MAX && user_shared_data->ProcessorFeatures[feature];
+    static const ULONGLONG arm64_features =
+        (1ull << PF_COMPARE_EXCHANGE_DOUBLE) |
+        (1ull << PF_NX_ENABLED) |
+        (1ull << PF_ARM_VFP_32_REGISTERS_AVAILABLE) |
+        (1ull << PF_ARM_NEON_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_SECOND_LEVEL_ADDRESS_TRANSLATION) |
+        (1ull << PF_FASTFAIL_AVAILABLE) |
+        (1ull << PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE) |
+        (1ull << PF_ARM_64BIT_LOADSTORE_ATOMIC) |
+        (1ull << PF_ARM_EXTERNAL_CACHE_AVAILABLE) |
+        (1ull << PF_ARM_FMAC_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V8_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V83_JSCVT_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE);
+
+    if (feature >= PROCESSOR_FEATURE_MAX) return FALSE;
+    if (arm64_features & (1ull << feature)) return user_shared_data->ProcessorFeatures[feature];
+    return emulated_processor_features[feature];
 }
 
 
