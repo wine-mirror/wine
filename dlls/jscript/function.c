@@ -312,6 +312,30 @@ static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t 
     return S_OK;
 }
 
+static HRESULT native_function_string(const WCHAR *name, jsstr_t **ret)
+{
+    DWORD name_len;
+    jsstr_t *str;
+    WCHAR *ptr;
+
+    static const WCHAR native_prefixW[] = L"\nfunction ";
+    static const WCHAR native_suffixW[] = L"() {\n    [native code]\n}\n";
+
+    name_len = name ? lstrlenW(name) : 0;
+    str = jsstr_alloc_buf(ARRAY_SIZE(native_prefixW) + ARRAY_SIZE(native_suffixW) + name_len - 2, &ptr);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    memcpy(ptr, native_prefixW, sizeof(native_prefixW));
+    ptr += ARRAY_SIZE(native_prefixW) - 1;
+    memcpy(ptr, name, name_len * sizeof(WCHAR));
+    ptr += name_len;
+    memcpy(ptr, native_suffixW, sizeof(native_suffixW));
+
+    *ret = str;
+    return S_OK;
+}
+
 static HRESULT Function_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -669,26 +693,7 @@ static HRESULT NativeFunction_call(script_ctx_t *ctx, FunctionInstance *func, js
 static HRESULT NativeFunction_toString(FunctionInstance *func, jsstr_t **ret)
 {
     NativeFunction *function = (NativeFunction*)func;
-    DWORD name_len;
-    jsstr_t *str;
-    WCHAR *ptr;
-
-    static const WCHAR native_prefixW[] = L"\nfunction ";
-    static const WCHAR native_suffixW[] = L"() {\n    [native code]\n}\n";
-
-    name_len = function->name ? lstrlenW(function->name) : 0;
-    str = jsstr_alloc_buf(ARRAY_SIZE(native_prefixW) + ARRAY_SIZE(native_suffixW) + name_len - 2, &ptr);
-    if(!str)
-        return E_OUTOFMEMORY;
-
-    memcpy(ptr, native_prefixW, sizeof(native_prefixW));
-    ptr += ARRAY_SIZE(native_prefixW) - 1;
-    memcpy(ptr, function->name, name_len*sizeof(WCHAR));
-    ptr += name_len;
-    memcpy(ptr, native_suffixW, sizeof(native_suffixW));
-
-    *ret = str;
-    return S_OK;
+    return native_function_string(function->name, ret);
 }
 
 static function_code_t *NativeFunction_get_code(FunctionInstance *function)
