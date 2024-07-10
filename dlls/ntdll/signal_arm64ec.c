@@ -42,6 +42,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 /* xtajit64.dll functions */
 static void     (WINAPI *pBTCpu64FlushInstructionCache)(const void*,SIZE_T);
 static BOOLEAN  (WINAPI *pBTCpu64IsProcessorFeaturePresent)(UINT);
+static void     (WINAPI *pBTCpu64NotifyReadFile)(HANDLE,void*,SIZE_T,BOOL,NTSTATUS);
 static NTSTATUS (WINAPI *pNotifyMapViewOfSection)(void*,void*,void*,SIZE_T,ULONG,ULONG);
 static void     (WINAPI *pNotifyMemoryAlloc)(void*,SIZE_T,ULONG,ULONG,BOOL,NTSTATUS);
 static void     (WINAPI *pNotifyMemoryFree)(void*,SIZE_T,ULONG,BOOL,NTSTATUS);
@@ -150,6 +151,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
     GET_PTR( BTCpu64FlushInstructionCache );
     GET_PTR( BTCpu64IsProcessorFeaturePresent );
+    GET_PTR( BTCpu64NotifyReadFile );
     GET_PTR( NotifyMapViewOfSection );
     GET_PTR( NotifyMemoryAlloc );
     GET_PTR( NotifyMemoryFree );
@@ -367,7 +369,7 @@ DEFINE_SYSCALL(NtQueueApcThread, (HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
 DEFINE_SYSCALL(NtQueueApcThreadEx, (HANDLE handle, HANDLE reserve_handle, PNTAPCFUNC func, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3))
 DEFINE_WRAPPED_SYSCALL(NtRaiseException, (EXCEPTION_RECORD *rec, ARM64_NT_CONTEXT *context, BOOL first_chance))
 DEFINE_SYSCALL(NtRaiseHardError, (NTSTATUS status, ULONG count, ULONG params_mask, void **params, HARDERROR_RESPONSE_OPTION option, HARDERROR_RESPONSE *response))
-DEFINE_SYSCALL(NtReadFile, (HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io, void *buffer, ULONG length, LARGE_INTEGER *offset, ULONG *key))
+DEFINE_WRAPPED_SYSCALL(NtReadFile, (HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io, void *buffer, ULONG length, LARGE_INTEGER *offset, ULONG *key))
 DEFINE_SYSCALL(NtReadFileScatter, (HANDLE file, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io, FILE_SEGMENT_ELEMENT *segments, ULONG length, LARGE_INTEGER *offset, ULONG *key))
 DEFINE_SYSCALL(NtReadVirtualMemory, (HANDLE process, const void *addr, void *buffer, SIZE_T size, SIZE_T *bytes_read))
 DEFINE_SYSCALL(NtRegisterThreadTerminatePort, (HANDLE handle))
@@ -607,6 +609,18 @@ NTSTATUS SYSCALL_API NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, 
 
     context_x64_to_arm( &arm_ctx, (ARM64EC_NT_CONTEXT *)context );
     return syscall_NtRaiseException( rec, &arm_ctx, first_chance );
+}
+
+NTSTATUS SYSCALL_API NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                                 IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                                 LARGE_INTEGER *offset, ULONG *key )
+{
+    NTSTATUS status;
+
+    if (pBTCpu64NotifyReadFile) pBTCpu64NotifyReadFile( handle, buffer, length, FALSE, 0 );
+    status = syscall_NtReadFile( handle, event, apc, apc_user, io, buffer, length, offset, key );
+    if (pBTCpu64NotifyReadFile) pBTCpu64NotifyReadFile( handle, buffer, length, TRUE, status );
+    return status;
 }
 
 NTSTATUS SYSCALL_API NtSetContextThread( HANDLE handle, const CONTEXT *context )
