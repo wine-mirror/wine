@@ -1377,17 +1377,23 @@ SQLRETURN WINAPI SQLFreeEnv(SQLHENV EnvironmentHandle)
     return ret;
 }
 
-static void free_bindings( struct handle *handle )
+static void free_col_bindings( struct handle *handle )
 {
     if (handle->bind_col.param)
     {
         free( handle->bind_col.param->len );
         free( handle->bind_col.param );
+        handle->bind_col.param = NULL;
     }
+}
+
+static void free_param_bindings( struct handle *handle )
+{
     if (handle->bind_parameter.param)
     {
         free( handle->bind_parameter.param->len );
         free( handle->bind_parameter.param );
+        handle->bind_parameter.param = NULL;
     }
 }
 
@@ -1407,7 +1413,6 @@ SQLRETURN WINAPI SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
     {
         struct SQLFreeHandle_params params = { HandleType, handle->unix_handle };
         ret = ODBC_CALL( SQLFreeHandle, &params );
-        free_bindings( handle );
     }
     else if (handle->win32_handle)
     {
@@ -1416,6 +1421,8 @@ SQLRETURN WINAPI SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
 
     RegCloseKey( handle->drivers_key );
     RegCloseKey( handle->sources_key );
+    free_col_bindings( handle );
+    free_param_bindings( handle );
     free( handle );
 
     TRACE("Returning %d\n", ret);
@@ -1438,14 +1445,32 @@ SQLRETURN WINAPI SQLFreeStmt(SQLHSTMT StatementHandle, SQLUSMALLINT Option)
     {
         struct SQLFreeStmt_params params = { handle->unix_handle, Option };
         ret = ODBC_CALL( SQLFreeStmt, &params );
-        free_bindings( handle );
     }
     else if (handle->win32_handle)
     {
         ret = handle->win32_funcs->SQLFreeStmt( handle->win32_handle, Option );
     }
 
-    free( handle );
+    switch (Option)
+    {
+    case SQL_CLOSE:
+        break;
+
+    case SQL_UNBIND:
+        free_col_bindings( handle );
+        break;
+
+    case SQL_RESET_PARAMS:
+        free_param_bindings( handle );
+        break;
+
+    case SQL_DROP:
+    default:
+        free_col_bindings( handle );
+        free_param_bindings( handle );
+        free( handle );
+        break;
+    }
 
     TRACE("Returning %d\n", ret);
     return ret;
