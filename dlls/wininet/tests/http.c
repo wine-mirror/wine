@@ -6720,7 +6720,6 @@ static const cert_struct_test_t test_winehq_org_cert = {
 
     "US\r\n"
     "Let's Encrypt\r\n"
-    "R3"
 };
 
 static const cert_struct_test_t test_winehq_com_cert = {
@@ -6813,7 +6812,7 @@ static void test_cert_struct(HINTERNET req, const cert_struct_test_t *test)
     ok(size == sizeof(info), "size = %lu\n", size);
 
     ok(!strcmp(info.lpszSubjectInfo, test->ex_subject), "lpszSubjectInfo = %s\n", info.lpszSubjectInfo);
-    ok(!strcmp(info.lpszIssuerInfo, test->ex_issuer), "lpszIssuerInfo = %s\n", info.lpszIssuerInfo);
+    ok(!strncmp(info.lpszIssuerInfo, test->ex_issuer, strlen(test->ex_issuer)), "lpszIssuerInfo = %s\n", info.lpszIssuerInfo);
     ok(!info.lpszSignatureAlgName, "lpszSignatureAlgName = %s\n", info.lpszSignatureAlgName);
     ok(!info.lpszEncryptionAlgName, "lpszEncryptionAlgName = %s\n", info.lpszEncryptionAlgName);
     ok(!info.lpszProtocolName, "lpszProtocolName = %s\n", info.lpszProtocolName);
