@@ -1136,24 +1136,6 @@ static void X11DRV_send_keyboard_input( HWND hwnd, WORD vkey, WORD scan, UINT fl
 
 
 /***********************************************************************
- *           get_async_key_state
- */
-static BOOL get_async_key_state( BYTE state[256] )
-{
-    BOOL ret;
-
-    SERVER_START_REQ( get_key_state )
-    {
-        req->async = 1;
-        req->key = -1;
-        wine_server_set_reply( req, state, 256 );
-        ret = !wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/***********************************************************************
  *           set_async_key_state
  */
 static void set_async_key_state( const BYTE state[256] )
@@ -1205,7 +1187,7 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     keymapnotify_hwnd = thread_data->keymapnotify_hwnd;
     thread_data->keymapnotify_hwnd = NULL;
 
-    if (!get_async_key_state( keystate )) return FALSE;
+    if (!NtUserGetAsyncKeyboardState( keystate )) return FALSE;
 
     memset(keys, 0, sizeof(keys));
 
@@ -1292,7 +1274,7 @@ static void adjust_lock_state( BYTE *keystate, HWND hwnd, WORD vkey, WORD scan, 
      * to block changing state, we can't prevent it on X server side. Having
      * different states would cause us to try to adjust it again on the next
      * key event. We prevent that by overriding hooks and setting key states here. */
-    if (get_async_key_state( keystate ) && (keystate[vkey] & 0x01) == prev_state)
+    if (NtUserGetAsyncKeyboardState( keystate ) && (keystate[vkey] & 0x01) == prev_state)
     {
         WARN("keystate %x not changed (%#.2x), probably blocked by hooks\n", vkey, keystate[vkey]);
         keystate[vkey] ^= 0x01;
@@ -1307,7 +1289,7 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, UINT time )
     /* Note: X sets the below states on key down and clears them on key up.
        Windows triggers them on key down. */
 
-    if (!get_async_key_state( keystate )) return;
+    if (!NtUserGetAsyncKeyboardState( keystate )) return;
 
     /* Adjust the CAPSLOCK state if it has been changed outside wine */
     if (!(keystate[VK_CAPITAL] & 0x01) != !(state & LockMask) && vkey != VK_CAPITAL)

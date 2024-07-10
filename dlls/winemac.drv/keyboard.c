@@ -1044,25 +1044,6 @@ static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, unsigned
 
 
 /***********************************************************************
- *           get_async_key_state
- */
-static BOOL get_async_key_state(BYTE state[256])
-{
-    BOOL ret;
-
-    SERVER_START_REQ(get_key_state)
-    {
-        req->async = 1;
-        req->key = -1;
-        wine_server_set_reply(req, state, 256);
-        ret = !wine_server_call(req);
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
  *           update_modifier_state
  */
 static void update_modifier_state(unsigned int modifier, unsigned int modifiers, const BYTE *keystate,
@@ -1190,7 +1171,7 @@ void macdrv_hotkey_press(const macdrv_event *event)
         BOOL got_keystate;
         DWORD flags;
 
-        if ((got_keystate = get_async_key_state(keystate)))
+        if ((got_keystate = NtUserGetAsyncKeyboardState(keystate)))
         {
             update_modifier_state(MOD_ALT, event->hotkey_press.mod_flags, keystate, VK_LMENU, VK_RMENU,
                                   0x38, 0x138, event->hotkey_press.time_ms, FALSE);

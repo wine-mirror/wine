@@ -6488,6 +6488,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_D3DKMTOpenAdapterFromGdiDisplayName:
         return d3dkmt_open_adapter_from_gdi_display_name( (void *)arg );
 
+    case NtUserCallOneParam_GetAsyncKeyboardState:
+        return get_async_keyboard_state( (void *)arg );
+
     /* temporary exports */
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );

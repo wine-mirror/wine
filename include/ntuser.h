@@ -912,6 +912,7 @@ enum
     NtUserCallOneParam_SetKeyboardAutoRepeat,
     NtUserCallOneParam_SetThreadDpiAwarenessContext,
     NtUserCallOneParam_D3DKMTOpenAdapterFromGdiDisplayName,
+    NtUserCallOneParam_GetAsyncKeyboardState,
     /* temporary exports */
     NtUserGetDeskPattern,
 };
@@ -1035,6 +1036,11 @@ typedef struct _D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME D3DKMT_OPENADAPTERFROMGDIDI
 static inline NTSTATUS NtUserD3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc )
 {
     return NtUserCallOneParam( (UINT_PTR)desc, NtUserCallOneParam_D3DKMTOpenAdapterFromGdiDisplayName );
+}
+
+static inline BOOL NtUserGetAsyncKeyboardState( BYTE state[256] )
+{
+    return NtUserCallOneParam( (UINT_PTR)state, NtUserCallOneParam_GetAsyncKeyboardState );
 }
 
 /* NtUserCallTwoParam codes, not compatible with Windows */

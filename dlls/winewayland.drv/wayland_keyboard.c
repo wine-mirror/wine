@@ -617,29 +617,13 @@ static BOOL find_xkb_layout_variant(const char *name, const char **layout, const
     return FALSE;
 }
 
-static BOOL get_async_key_state(BYTE state[256])
-{
-    BOOL ret;
-
-    SERVER_START_REQ(get_key_state)
-    {
-        req->async = 1;
-        req->key = -1;
-        wine_server_set_reply(req, state, 256);
-        ret = !wine_server_call(req);
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
 static void release_all_keys(HWND hwnd)
 {
     BYTE state[256];
     int vkey;
     INPUT input = {.type = INPUT_KEYBOARD};
 
-    get_async_key_state(state);
+    NtUserGetAsyncKeyboardState(state);
 
     for (vkey = 1; vkey < 256; vkey++)
     {

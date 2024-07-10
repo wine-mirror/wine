@@ -989,6 +989,24 @@ BOOL WINAPI NtUserGetKeyboardState( BYTE *state )
     return ret;
 }
 
+/***********************************************************************
+ *           get_async_keyboard_state
+ */
+BOOL get_async_keyboard_state( BYTE state[256] )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( get_key_state )
+    {
+        req->async = 1;
+        req->key = -1;
+        wine_server_set_reply( req, state, 256 );
+        ret = !wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 /**********************************************************************
  *	     NtUserSetKeyboardState    (win32u.@)
  */
