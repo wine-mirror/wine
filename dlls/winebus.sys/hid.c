@@ -600,7 +600,7 @@ static BOOL hid_descriptor_add_set_periodic(struct unix_device *iface)
             UNIT(1, 0x14), /* Eng Rot:Angular Pos */
             UNIT_EXPONENT(1, -2),
             LOGICAL_MINIMUM(1, 0),
-            LOGICAL_MAXIMUM(4, 36000),
+            LOGICAL_MAXIMUM(4, 35900),
             REPORT_SIZE(1, 16),
             REPORT_COUNT(1, 1),
             OUTPUT(1, Data|Var|Abs),
@@ -960,7 +960,7 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
                 UNIT(1, 0x14), /* Eng Rot:Angular Pos */
                 UNIT_EXPONENT(1, -2),
                 LOGICAL_MINIMUM(1, 0),
-                LOGICAL_MAXIMUM(4, 36000),
+                LOGICAL_MAXIMUM(4, 35900),
                 REPORT_SIZE(1, 16),
                 REPORT_COUNT(1, 2),
                 OUTPUT(1, Data|Var|Abs),
