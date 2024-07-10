@@ -42,7 +42,9 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 /* xtajit64.dll functions */
 static void     (WINAPI *pBTCpu64FlushInstructionCache)(const void*,SIZE_T);
 static BOOLEAN  (WINAPI *pBTCpu64IsProcessorFeaturePresent)(UINT);
+static void     (WINAPI *pBTCpu64NotifyMemoryDirty)(void*,SIZE_T);
 static void     (WINAPI *pBTCpu64NotifyReadFile)(HANDLE,void*,SIZE_T,BOOL,NTSTATUS);
+static void     (WINAPI *pFlushInstructionCacheHeavy)(const void*,SIZE_T);
 static NTSTATUS (WINAPI *pNotifyMapViewOfSection)(void*,void*,void*,SIZE_T,ULONG,ULONG);
 static void     (WINAPI *pNotifyMemoryAlloc)(void*,SIZE_T,ULONG,ULONG,BOOL,NTSTATUS);
 static void     (WINAPI *pNotifyMemoryFree)(void*,SIZE_T,ULONG,BOOL,NTSTATUS);
@@ -151,7 +153,9 @@ NTSTATUS arm64ec_process_init( HMODULE module )
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
     GET_PTR( BTCpu64FlushInstructionCache );
     GET_PTR( BTCpu64IsProcessorFeaturePresent );
+    GET_PTR( BTCpu64NotifyMemoryDirty );
     GET_PTR( BTCpu64NotifyReadFile );
+    GET_PTR( FlushInstructionCacheHeavy );
     GET_PTR( NotifyMapViewOfSection );
     GET_PTR( NotifyMemoryAlloc );
     GET_PTR( NotifyMemoryFree );
@@ -161,6 +165,9 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     GET_PTR( ThreadInit );
     GET_PTR( UpdateProcessorInformation );
 #undef GET_PTR
+
+    info->NativeMachineType = IMAGE_FILE_MACHINE_ARM64;
+    info->EmulatedMachineType = IMAGE_FILE_MACHINE_AMD64;
 
     if (pProcessInit) status = pProcessInit();
     if (!status)
@@ -702,6 +709,74 @@ static NTSTATUS WINAPI LdrpSetX64Information( ULONG type, ULONG_PTR input, void 
     default:
         FIXME( "not implemented type %u\n", type );
         return STATUS_INVALID_PARAMETER;
+    }
+}
+
+
+/**********************************************************************
+ *           ProcessPendingCrossProcessEmulatorWork  (ntdll.@)
+ */
+void WINAPI ProcessPendingCrossProcessEmulatorWork(void)
+{
+    struct arm64ec_shared_info *info = (struct arm64ec_shared_info *)(RtlGetCurrentPeb() + 1);
+    CROSS_PROCESS_WORK_LIST *list = (void *)info->CrossProcessWorkList;
+    CROSS_PROCESS_WORK_ENTRY *entry;
+    BOOLEAN flush = FALSE;
+    UINT next;
+
+    if (!list) return;
+    entry = RtlWow64PopAllCrossProcessWorkFromWorkList( &list->work_list, &flush );
+
+    if (flush)
+    {
+        if (pFlushInstructionCacheHeavy) pFlushInstructionCacheHeavy( NULL, 0 );
+        while (entry)
+        {
+            next = entry->next;
+            RtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, entry );
+            entry = next ? CROSS_PROCESS_LIST_ENTRY( &list->work_list, next ) : NULL;
+        }
+        return;
+    }
+
+    while (entry)
+    {
+        switch (entry->id)
+        {
+        case CrossProcessPreVirtualAlloc:
+        case CrossProcessPostVirtualAlloc:
+            if (!pNotifyMemoryAlloc) break;
+            pNotifyMemoryAlloc( (void *)entry->addr, entry->size, entry->args[0], entry->args[1],
+                                entry->id == CrossProcessPostVirtualAlloc, entry->args[2] );
+            break;
+        case CrossProcessPreVirtualFree:
+        case CrossProcessPostVirtualFree:
+            if (!pNotifyMemoryFree) break;
+            pNotifyMemoryFree( (void *)entry->addr, entry->size, entry->args[0],
+                               entry->id == CrossProcessPostVirtualFree, entry->args[1] );
+            break;
+        case CrossProcessPreVirtualProtect:
+        case CrossProcessPostVirtualProtect:
+            if (!pNotifyMemoryProtect) break;
+            pNotifyMemoryProtect( (void *)entry->addr, entry->size, entry->args[0],
+                                  entry->id == CrossProcessPostVirtualProtect, entry->args[1] );
+            break;
+        case CrossProcessFlushCache:
+            if (!pBTCpu64FlushInstructionCache) break;
+            pBTCpu64FlushInstructionCache( (void *)entry->addr, entry->size );
+            break;
+        case CrossProcessFlushCacheHeavy:
+            if (!pFlushInstructionCacheHeavy) break;
+            pFlushInstructionCacheHeavy( (void *)entry->addr, entry->size );
+            break;
+        case CrossProcessMemoryWrite:
+            if (!pBTCpu64NotifyMemoryDirty) break;
+            pBTCpu64NotifyMemoryDirty( (void *)entry->addr, entry->size );
+            break;
+        }
+        next = entry->next;
+        RtlWow64PushCrossProcessWorkOntoFreeList( &list->free_list, entry );
+        entry = next ? CROSS_PROCESS_LIST_ENTRY( &list->work_list, next ) : NULL;
     }
 }
 

@@ -460,6 +460,7 @@
 @ stub PfxInitialize
 @ stub PfxInsertPrefix
 @ stub PfxRemovePrefix
+@ stdcall -arch=arm64ec ProcessPendingCrossProcessEmulatorWork()
 # @ stub PropertyLengthAsVariant
 @ stub RtlAbortRXact
 @ stdcall RtlAbsoluteToSelfRelativeSD(ptr ptr ptr)
