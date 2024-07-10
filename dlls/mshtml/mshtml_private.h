@@ -1159,7 +1159,7 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**);
 HRESULT create_style_sheet(nsIDOMStyleSheet*,compat_mode_t,IHTMLStyleSheet**);
 HRESULT create_style_sheet_collection(nsIDOMStyleSheetList*,compat_mode_t,
                                       IHTMLStyleSheetsCollection**);
-HRESULT create_dom_range(nsIDOMRange*,compat_mode_t,IHTMLDOMRange**);
+HRESULT create_dom_range(nsIDOMRange*,HTMLDocumentNode*,IHTMLDOMRange**);
 HRESULT create_markup_pointer(IMarkupPointer**);
 
 void detach_document_node(HTMLDocumentNode*);

@@ -5129,7 +5129,7 @@ static HRESULT WINAPI DocumentRange_createRange(IDocumentRange *iface, IHTMLDOMR
     if(NS_FAILED(nsIDOMDocument_CreateRange(This->dom_document, &nsrange)))
         return E_FAIL;
 
-    hres = create_dom_range(nsrange, dispex_compat_mode(&This->node.event_target.dispex), p);
+    hres = create_dom_range(nsrange, This, p);
     nsIDOMRange_Release(nsrange);
     return hres;
 }

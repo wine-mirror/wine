@@ -1997,7 +1997,7 @@ static dispex_static_data_t HTMLDOMRange_dispex = {
     HTMLDOMRange_iface_tids
 };
 
-HRESULT create_dom_range(nsIDOMRange *nsrange, compat_mode_t compat_mode, IHTMLDOMRange **p)
+HRESULT create_dom_range(nsIDOMRange *nsrange, HTMLDocumentNode *doc, IHTMLDOMRange **p)
 {
     HTMLDOMRange *ret;
 
@@ -2005,7 +2005,8 @@ HRESULT create_dom_range(nsIDOMRange *nsrange, compat_mode_t compat_mode, IHTMLD
     if(!ret)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&ret->dispex, &HTMLDOMRange_dispex, NULL, compat_mode);
+    init_dispatch(&ret->dispex, &HTMLDOMRange_dispex, doc->script_global,
+                  dispex_compat_mode(&doc->node.event_target.dispex));
 
     ret->IHTMLDOMRange_iface.lpVtbl = &HTMLDOMRangeVtbl;
 
