@@ -2867,18 +2867,32 @@ static void create_child_font_list( struct gdi_font *font )
             add_child_font( font, entry->family_name );
     }
     /*
-     * if not SYMBOL or OEM then we also get all the fonts for Microsoft
-     * Sans Serif.  This is how asian windows get default fallbacks for fonts
+     * if not SYMBOL or OEM then we also get Microsoft Sans Serif
+     * and all its fonts. This is how asian windows get default
+     * fallbacks for fonts. We also include Tahoma and its fonts
+     * as a backup.
      */
-    if (font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
-        facename_compare( font_name, microsoft_sans_serifW, -1 ) != 0)
+    if (font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET)
     {
-        add_child_font( font, microsoft_sans_serifW );
-        if ((font_link = find_gdi_font_link( microsoft_sans_serifW )))
+        if (facename_compare( font_name, microsoft_sans_serifW, -1 ) != 0)
         {
-            TRACE("found entry in default fallback list\n");
-            LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
-                add_child_font( font, entry->family_name );
+            add_child_font( font, microsoft_sans_serifW );
+            if ((font_link = find_gdi_font_link( microsoft_sans_serifW )))
+            {
+                TRACE("found entry in default fallback list\n");
+                LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
+                    add_child_font( font, entry->family_name );
+            }
+        }
+        if (facename_compare( font_name, tahomaW, -1 ) != 0)
+        {
+            add_child_font( font, tahomaW );
+            if ((font_link = find_gdi_font_link( tahomaW )))
+            {
+                TRACE("found entry in default fallback list\n");
+                LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
+                    add_child_font( font, entry->family_name );
+            }
         }
     }
 }
