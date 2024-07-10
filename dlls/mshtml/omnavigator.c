@@ -2411,7 +2411,7 @@ static dispex_static_data_t media_query_list_dispex = {
     media_query_list_iface_tids
 };
 
-HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch **ret)
+HRESULT create_media_query_list(HTMLInnerWindow *window, BSTR media_query, IDispatch **ret)
 {
     struct media_query_list *media_query_list;
     nsISupports *nsunk;
@@ -2433,7 +2433,7 @@ HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch 
     media_query_list->callback->ref = 1;
 
     nsAString_InitDepend(&nsstr, media_query);
-    nsres = nsIDOMWindow_MatchMedia(window->outer_window->nswindow, &nsstr, &nsunk);
+    nsres = nsIDOMWindow_MatchMedia(window->dom_window, &nsstr, &nsunk);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
         free(media_query_list->callback);
@@ -2449,8 +2449,8 @@ HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch 
 
     media_query_list->IWineMSHTMLMediaQueryList_iface.lpVtbl = &media_query_list_vtbl;
     list_init(&media_query_list->listeners);
-    init_dispatch(&media_query_list->dispex, &media_query_list_dispex, NULL,
-                  dispex_compat_mode(&window->inner_window->event_target.dispex));
+    init_dispatch(&media_query_list->dispex, &media_query_list_dispex, window,
+                  dispex_compat_mode(&window->event_target.dispex));
 
     *ret = (IDispatch*)&media_query_list->IWineMSHTMLMediaQueryList_iface;
     return S_OK;

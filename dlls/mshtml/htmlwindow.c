@@ -3170,7 +3170,7 @@ static HRESULT WINAPI window_private_matchMedia(IWineHTMLWindowPrivate *iface, B
 
     TRACE("iface %p, media_query %s\n", iface, debugstr_w(media_query));
 
-    return create_media_query_list(This, media_query, media_query_list);
+    return create_media_query_list(This->inner_window, media_query, media_query_list);
 }
 
 static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, IDispatch **console)
