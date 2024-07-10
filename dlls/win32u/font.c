@@ -2870,7 +2870,7 @@ static void create_child_font_list( struct gdi_font *font )
      * if not SYMBOL or OEM then we also get all the fonts for Microsoft
      * Sans Serif.  This is how asian windows get default fallbacks for fonts
      */
-    if (ansi_cp.MaximumCharacterSize == 2 && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
+    if (font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
         facename_compare( font_name, microsoft_sans_serifW, -1 ) != 0)
     {
         if ((font_link = find_gdi_font_link( microsoft_sans_serifW )))
