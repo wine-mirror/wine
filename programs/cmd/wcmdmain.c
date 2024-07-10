@@ -1431,12 +1431,8 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   /* Quick way to get the filename is to extract the first argument. */
   WINE_TRACE("Running '%s' (%d)\n", wine_dbgstr_w(command), called);
   firstParam = WCMD_parameter(command, 0, NULL, FALSE, TRUE);
-  if (!firstParam) return;
 
-  if (!firstParam[0]) {
-      errorlevel = NO_ERROR;
-      return;
-  }
+  if (!firstParam[0]) return;
 
   /* Calculate the search path and stem to search for */
   if (wcspbrk(firstParam, L"/\\:") == NULL) {  /* No explicit path given, search path */

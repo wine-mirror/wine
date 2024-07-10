@@ -664,11 +664,19 @@ RETURN_CODE WCMD_call(WCHAR *command)
     /* Run other program if no leading ':' */
     if (*command != ':')
     {
-        WCMD_run_program(buffer, TRUE);
-        /* If the thing we try to run does not exist, call returns 1 */
-        if (errorlevel == RETURN_CODE_CANT_LAUNCH)
-            errorlevel = ERROR_INVALID_FUNCTION;
-        return_code = errorlevel;
+        if (*WCMD_skip_leading_spaces(buffer) == L'\0')
+            /* FIXME it's incomplete as (call) should return 1, and (call ) should return 0...
+             * but we need to get the untouched string in command
+             */
+            return_code = errorlevel = NO_ERROR;
+        else
+        {
+            WCMD_run_program(buffer, TRUE);
+            /* If the thing we try to run does not exist, call returns 1 */
+            if (errorlevel == RETURN_CODE_CANT_LAUNCH)
+                errorlevel = ERROR_INVALID_FUNCTION;
+            return_code = errorlevel;
+        }
     }
     else if (context)
     {
