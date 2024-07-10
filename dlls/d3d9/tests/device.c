@@ -2718,6 +2718,19 @@ static void test_scene(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
 
+    /* Calling Reset clears scene state. */
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    reset_device(device, NULL);
+    hr = IDirect3DDevice9_EndScene(device);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
     /* Create some surfaces to test stretchrect between the scenes */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 128, 128,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surface1, NULL);

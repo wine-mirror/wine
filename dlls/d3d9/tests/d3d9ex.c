@@ -5058,6 +5058,145 @@ static void test_desktop_window(void)
     IDirect3DDevice9Ex_Release(device);
 }
 
+static void test_scene(void)
+{
+    IDirect3DSurface9 *surface1, *surface2, *surface3;
+    IDirect3DSurface9 *backBuffer, *rt, *ds;
+    RECT rect = {0, 0, 128, 128};
+    IDirect3DDevice9Ex *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9Ex_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D9, hr %#lx.\n", hr);
+
+    /* Get the caps, they will be needed to tell if an operation is supposed to be valid */
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice9Ex_GetDeviceCaps(device, &caps);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Test an EndScene without BeginScene. Should return an error */
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+
+    /* Test a normal BeginScene / EndScene pair, this should work */
+    hr = IDirect3DDevice9Ex_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Test another EndScene without having begun a new scene. Should return an error */
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+
+    /* Two nested BeginScene and EndScene calls */
+    hr = IDirect3DDevice9Ex_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_BeginScene(device);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+
+    /* Calling Reset does not clear scene state, different from d3d9. */
+    hr = IDirect3DDevice9Ex_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    reset_device(device, NULL);
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9Ex_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Create some surfaces to test stretchrect between the scenes */
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surface1, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surface2, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateDepthStencilSurface(device, 800, 600,
+            D3DFMT_D16, D3DMULTISAMPLE_NONE, 0, FALSE, &surface3, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateRenderTarget(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9Ex_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_GetDepthStencilSurface(device, &ds);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* First make sure a simple StretchRect call works */
+    hr = IDirect3DDevice9Ex_StretchRect(device, surface1, NULL, surface2, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_StretchRect(device, backBuffer, &rect, rt, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (0) /* Disabled for now because it crashes in wine */
+    {
+        HRESULT expected = caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES ? D3D_OK : D3DERR_INVALIDCALL;
+        hr = IDirect3DDevice9Ex_StretchRect(device, ds, NULL, surface3, NULL, 0);
+        ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
+    }
+
+    /* Now try it in a BeginScene - EndScene pair. Seems to be allowed in a
+     * BeginScene - Endscene pair with normal surfaces and render targets, but
+     * not depth stencil surfaces. */
+    hr = IDirect3DDevice9Ex_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9Ex_StretchRect(device, surface1, NULL, surface2, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_StretchRect(device, backBuffer, &rect, rt, NULL, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    /* This is supposed to fail inside a BeginScene - EndScene pair. */
+    hr = IDirect3DDevice9Ex_StretchRect(device, ds, NULL, surface3, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Does a SetRenderTarget influence BeginScene / EndScene ?
+     * Set a new render target, then see if it started a new scene. Flip the rt back and see if that maybe
+     * ended the scene. Expected result is that the scene is not affected by SetRenderTarget
+     */
+    hr = IDirect3DDevice9Ex_SetRenderTarget(device, 0, rt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_BeginScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_SetRenderTarget(device, 0, backBuffer);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9Ex_EndScene(device);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IDirect3DSurface9_Release(rt);
+    IDirect3DSurface9_Release(ds);
+    IDirect3DSurface9_Release(backBuffer);
+    IDirect3DSurface9_Release(surface1);
+    IDirect3DSurface9_Release(surface2);
+    IDirect3DSurface9_Release(surface3);
+    refcount = IDirect3DDevice9Ex_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(d3d9ex)
 {
     DEVMODEW current_mode;
@@ -5118,6 +5257,7 @@ START_TEST(d3d9ex)
     test_sysmem_draw();
     test_pinned_buffers();
     test_desktop_window();
+    test_scene();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
