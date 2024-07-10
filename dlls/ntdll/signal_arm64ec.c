@@ -42,6 +42,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 /* xtajit64.dll functions */
 static NTSTATUS (WINAPI *pProcessInit)(void);
 static NTSTATUS (WINAPI *pThreadInit)(void);
+static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
 
 static inline CHPE_V2_CPU_AREA_INFO *get_arm64ec_cpu_area(void)
 {
@@ -140,6 +141,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
     GET_PTR( ProcessInit );
     GET_PTR( ThreadInit );
+    GET_PTR( UpdateProcessorInformation );
 #undef GET_PTR
 
     if (pProcessInit) status = pProcessInit();
@@ -332,7 +334,7 @@ DEFINE_SYSCALL(NtQuerySemaphore, (HANDLE handle, SEMAPHORE_INFORMATION_CLASS cla
 DEFINE_SYSCALL(NtQuerySymbolicLinkObject, (HANDLE handle, UNICODE_STRING *target, ULONG *length))
 DEFINE_SYSCALL(NtQuerySystemEnvironmentValue, (UNICODE_STRING *name, WCHAR *buffer, ULONG length, ULONG *retlen))
 DEFINE_SYSCALL(NtQuerySystemEnvironmentValueEx, (UNICODE_STRING *name, GUID *vendor, void *buffer, ULONG *retlen, ULONG *attrib))
-DEFINE_SYSCALL(NtQuerySystemInformation, (SYSTEM_INFORMATION_CLASS class, void *info, ULONG size, ULONG *ret_size))
+DEFINE_WRAPPED_SYSCALL(NtQuerySystemInformation, (SYSTEM_INFORMATION_CLASS class, void *info, ULONG size, ULONG *ret_size))
 DEFINE_SYSCALL(NtQuerySystemInformationEx, (SYSTEM_INFORMATION_CLASS class, void *query, ULONG query_len, void *info, ULONG size, ULONG *ret_size))
 DEFINE_SYSCALL(NtQuerySystemTime, (LARGE_INTEGER *time))
 DEFINE_SYSCALL(NtQueryTimer, (HANDLE handle, TIMER_INFORMATION_CLASS class, void *info, ULONG len, ULONG *ret_len))
@@ -513,6 +515,13 @@ NTSTATUS SYSCALL_API NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SI
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualProtect,
                                                       *addr_ptr, *size_ptr, 2, new_prot, status );
+}
+
+NTSTATUS SYSCALL_API NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class, void *info, ULONG size, ULONG *ret_size )
+{
+    NTSTATUS status = syscall_NtQuerySystemInformation( class, info, size, ret_size );
+
+    if (!status && class == SystemCpuInformation && pUpdateProcessorInformation) pUpdateProcessorInformation( info );
     return status;
 }
 
@@ -1274,7 +1283,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
                                                void *info, ULONG size, ULONG *ret_size )
 {
-    return NtQuerySystemInformation( class, info, size, ret_size );
+    return syscall_NtQuerySystemInformation( class, info, size, ret_size );
 }
 
 
