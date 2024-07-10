@@ -1686,7 +1686,7 @@ static HRESULT WINAPI HTMLPerformance_get_navigation(IHTMLPerformance *iface,
         navigation->window = This->window;
         IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
 
-        init_dispatch(&navigation->dispex, &HTMLPerformanceNavigation_dispex, NULL,
+        init_dispatch(&navigation->dispex, &HTMLPerformanceNavigation_dispex, This->window,
                       dispex_compat_mode(&This->dispex));
 
         This->navigation = &navigation->IHTMLPerformanceNavigation_iface;
