@@ -2316,6 +2316,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
     CMD_REDIRECTION *redir = NULL;
     unsigned bogus_line;
     CMD_NODE *left = NULL, *right;
+    CMD_FOR_CONTROL *for_ctrl = NULL;
     union token_parameter pmt;
     enum builder_token tkn;
     BOOL done;
@@ -2326,7 +2327,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
         tkn = node_builder_peek_next_token(builder, &pmt);
         done = FALSE;
 
-        TRACE("\t%u/%u) %s", builder->pos, builder->num, debugstr_token(tkn, pmt));
+        TRACE("\t%u/%u) %s\n", builder->pos, builder->num, debugstr_token(tkn, pmt));
         switch (tkn)
         {
         case TKN_EOF:
@@ -2470,7 +2471,6 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
             ERROR_IF(left);
             ERROR_IF(redir);
             {
-                CMD_FOR_CONTROL *for_ctrl;
                 CMD_NODE *do_block;
 
                 node_builder_consume(builder);
@@ -2506,13 +2506,10 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                     }
                     node_builder_consume(builder);
                 } while (tkn != TKN_CLOSEPAR);
-                if (!node_builder_expect_token(builder, TKN_DO) ||
-                    !node_builder_parse(builder, 0, &do_block))
-                {
-                    for_control_dispose(for_ctrl);
-                    ERROR_IF(TRUE);
-                }
+                ERROR_IF(!node_builder_expect_token(builder, TKN_DO));
+                ERROR_IF(!node_builder_parse(builder, 0, &do_block));
                 left = node_create_for(for_ctrl, do_block);
+                for_ctrl = NULL;
             }
             break;
         case TKN_REDIRECTION:
@@ -2529,6 +2526,7 @@ error_handling:
     TRACE("Parser failed at line %u:token %s\n", bogus_line, debugstr_token(tkn, pmt));
     node_dispose_tree(left);
     redirection_dispose_list(redir);
+    if (for_ctrl) for_control_dispose(for_ctrl);
 
     return FALSE;
 }
