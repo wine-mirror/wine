@@ -107,6 +107,18 @@ static void test_SQLConnect( void )
     ret = SQLAllocConnect( env, &con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
+    len = -1;
+    ret = SQLGetInfo( con, SQL_ODBC_VER, NULL, 0, &len );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( len != -1, "len not set\n" );
+
+    memset( str, 0, sizeof(str) );
+    ret = SQLGetInfo( con, SQL_ODBC_VER, str, sizeof(str), &len );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( str[0], "empty string\n" );
+    ok( len == strlen(str), "got %d\n", len );
+    trace( "version %s\n", str );
+
     ret = SQLConnect( con, (SQLCHAR *)"winetest", 8, (SQLCHAR *)"winetest", 8, (SQLCHAR *)"winetest", 8 );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
     if (ret != SQL_SUCCESS)
@@ -123,16 +135,6 @@ static void test_SQLConnect( void )
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     ok( timeout != 0xdeadbeef, "timeout not set\n" );
     ok( size == -1, "size set\n" );
-
-    len = -1;
-    memset( str, 0, sizeof(str) );
-    ret = SQLGetInfo( con, SQL_ODBC_VER, str, sizeof(str), &len );
-    if (ret == SQL_SUCCESS)
-    {
-        ok( str[0], "empty string\n" );
-        ok( len != -1, "len not set\n" );
-        trace( "version %s\n", str );
-    }
 
     ret = SQLDisconnect( con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );

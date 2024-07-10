@@ -1823,6 +1823,25 @@ SQLRETURN WINAPI SQLGetInfo(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQL
 
     if (!handle) return SQL_INVALID_HANDLE;
 
+    switch (InfoType)
+    {
+    case SQL_ODBC_VER:
+    {
+        const char version[] = "03.80.0000";
+        int len = sizeof(version);
+        char *value = InfoValue;
+
+        if (StringLength) *StringLength = len;
+        if (value && BufferLength >= len)
+        {
+            strcpy( value, version );
+            if (StringLength) *StringLength = len - 1;
+        }
+        return SQL_SUCCESS;
+    }
+    default: break;
+    }
+
     if (handle->unix_handle)
     {
         struct SQLGetInfo_params params = { handle->unix_handle, InfoType, InfoValue, BufferLength, StringLength };
@@ -4121,6 +4140,25 @@ SQLRETURN WINAPI SQLGetInfoW(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQ
           InfoType, InfoValue, BufferLength, StringLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
+
+    switch (InfoType)
+    {
+    case SQL_ODBC_VER:
+    {
+        const WCHAR version[] = L"03.80.0000";
+        int len = ARRAY_SIZE(version);
+        WCHAR *value = InfoValue;
+
+        if (StringLength) *StringLength = len;
+        if (value && BufferLength >= len)
+        {
+            wcscpy( value, version );
+            if (StringLength) *StringLength = len - 1;
+        }
+        return SQL_SUCCESS;
+    }
+    default: break;
+    }
 
     if (handle->unix_handle)
     {
