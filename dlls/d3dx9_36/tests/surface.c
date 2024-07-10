@@ -251,7 +251,7 @@ static void test_dds_header_handling(void)
         BYTE data[4096 * 1024];
     } *dds;
 
-    struct
+    static const struct
     {
         struct dds_pixel_format pixel_format;
         DWORD flags;
@@ -355,7 +355,7 @@ static void test_dds_header_handling(void)
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 9, 262146, { D3D_OK, 9 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 10, 262146, { D3D_OK, 10 } },
     };
-    struct
+    static const struct
     {
         uint32_t flags;
         uint32_t width;
