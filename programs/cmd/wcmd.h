@@ -108,18 +108,13 @@ typedef struct _CMD_FOR_CONTROL
     };
 } CMD_FOR_CONTROL;
 
-typedef struct _CMD_COMMAND
-{
-  WCHAR              *command;     /* Command string to execute                */
-} CMD_COMMAND;
-
 typedef struct _CMD_NODE
 {
     CMD_OPERATOR      op;            /* operator */
     CMD_REDIRECTION  *redirects;     /* Redirections */
     union
     {
-        CMD_COMMAND  *command;       /* CMD_SINGLE */
+        WCHAR        *command;       /* CMD_SINGLE */
         struct                       /* binary operator (CMD_CONCAT, ONFAILURE, ONSUCCESS, PIPE) */
         {
             struct _CMD_NODE *left;

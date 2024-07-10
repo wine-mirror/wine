@@ -986,23 +986,12 @@ static const char *debugstr_redirection(const CMD_REDIRECTION *redir)
     }
 }
 
-static CMD_COMMAND *command_create(const WCHAR *ptr, size_t len)
+static WCHAR *command_create(const WCHAR *ptr, size_t len)
 {
-    CMD_COMMAND *ret = xalloc(sizeof(CMD_COMMAND));
-
-    ret->command = xalloc((len + 1) * sizeof(WCHAR));
-    memcpy(ret->command, ptr, len * sizeof(WCHAR));
-    ret->command[len] = L'\0';
-    return ret;
-}
-
-static void command_dispose(CMD_COMMAND *cmd)
-{
-    if (cmd)
-    {
-        free(cmd->command);
-        free(cmd);
-    }
+    WCHAR *command = xalloc((len + 1) * sizeof(WCHAR));
+    memcpy(command, ptr, len * sizeof(WCHAR));
+    command[len] = L'\0';
+    return command;
 }
 
 static void for_control_dispose(CMD_FOR_CONTROL *for_ctrl)
@@ -1263,7 +1252,7 @@ void node_dispose_tree(CMD_NODE *node)
     switch (node->op)
     {
     case CMD_SINGLE:
-        command_dispose(node->command);
+        free(node->command);
         break;
     case CMD_CONCAT:
     case CMD_PIPE:
@@ -1286,7 +1275,7 @@ void node_dispose_tree(CMD_NODE *node)
     free(node);
 }
 
-static CMD_NODE *node_create_single(CMD_COMMAND *c)
+static CMD_NODE *node_create_single(WCHAR *c)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
@@ -2198,7 +2187,7 @@ syntax_error:
 /* used to store additional information dedicated a given token */
 union token_parameter
 {
-    CMD_COMMAND *command;
+    WCHAR *command;
     CMD_REDIRECTION *redirection;
     void *none;
 };
@@ -2228,7 +2217,7 @@ static const char* debugstr_token(enum builder_token tkn, union token_parameter 
     if (tkn >= ARRAY_SIZE(tokens)) return "<<<>>>";
     switch (tkn)
     {
-    case TKN_COMMAND:     return wine_dbg_sprintf("%s {{%ls}}", tokens[tkn], tkn_pmt.command ? tkn_pmt.command->command : L"<<nul>>");
+    case TKN_COMMAND:     return wine_dbg_sprintf("%s {{%s}}", tokens[tkn], debugstr_w(tkn_pmt.command));
     case TKN_REDIRECTION: return wine_dbg_sprintf("%s {{%s}}", tokens[tkn], debugstr_redirection(tkn_pmt.redirection));
     default:              return wine_dbg_sprintf("%s", tokens[tkn]);
     }
@@ -2446,15 +2435,15 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 node_builder_consume(builder);
                 tkn = node_builder_peek_next_token(builder, &pmt);
                 ERROR_IF(tkn != TKN_COMMAND);
-                if (!wcscmp(pmt.command->command, L"/?"))
+                if (!wcscmp(pmt.command, L"/?"))
                 {
                     node_builder_consume(builder);
-                    command_dispose(pmt.command);
+                    free(pmt.command);
                     left = node_create_single(command_create(L"help if", 7));
                     break;
                 }
-                ERROR_IF(!if_condition_parse(pmt.command->command, &end, &cond));
-                command_dispose(pmt.command);
+                ERROR_IF(!if_condition_parse(pmt.command, &end, &cond));
+                free(pmt.command);
                 node_builder_consume(builder);
                 if (!node_builder_parse(builder, 0, &then_block))
                 {
@@ -2487,16 +2476,16 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 node_builder_consume(builder);
                 tkn = node_builder_peek_next_token(builder, &pmt);
                 ERROR_IF(tkn != TKN_COMMAND);
-                if (!wcscmp(pmt.command->command, L"/?"))
+                if (!wcscmp(pmt.command, L"/?"))
                 {
                     node_builder_consume(builder);
-                    command_dispose(pmt.command);
+                    free(pmt.command);
                     left = node_create_single(command_create(L"help for", 8));
                     break;
                 }
                 node_builder_consume(builder);
-                for_ctrl = for_control_parse(pmt.command->command);
-                command_dispose(pmt.command);
+                for_ctrl = for_control_parse(pmt.command);
+                free(pmt.command);
                 ERROR_IF(for_ctrl == NULL);
                 ERROR_IF(!node_builder_expect_token(builder, TKN_IN));
                 ERROR_IF(!node_builder_expect_token(builder, TKN_OPENPAR));
@@ -2506,8 +2495,8 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                     switch (tkn)
                     {
                     case TKN_COMMAND:
-                        for_control_append_set(for_ctrl, pmt.command->command);
-                        command_dispose(pmt.command);
+                        for_control_append_set(for_ctrl, pmt.command);
+                        free(pmt.command);
                         break;
                     case TKN_EOL:
                     case TKN_CLOSEPAR:
@@ -2569,7 +2558,7 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
             switch (tkn)
             {
             case TKN_COMMAND:
-                tknstr = tkn_pmt.command->command;
+                tknstr = tkn_pmt.command;
                 break;
             case TKN_EOF:
                 tknstr = WCMD_LoadMessage(WCMD_ENDOFFILE);
@@ -2608,7 +2597,7 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
     {
         tkn = node_builder_peek_next_token(builder, &tkn_pmt);
         if (tkn == TKN_EOF) break;
-        if (tkn == TKN_COMMAND) command_dispose(tkn_pmt.command);
+        if (tkn == TKN_COMMAND) free(tkn_pmt.command);
         if (tkn == TKN_REDIRECTION) redirection_dispose_list(tkn_pmt.redirection);
         node_builder_consume(builder);
     }
@@ -3673,8 +3662,8 @@ RETURN_CODE node_execute(CMD_NODE *node)
     switch (node->op)
     {
     case CMD_SINGLE:
-        if (node->command->command[0] != ':')
-            return_code = execute_single_command(node->command->command);
+        if (node->command[0] != ':')
+            return_code = execute_single_command(node->command);
         else return_code = NO_ERROR;
         break;
     case CMD_CONCAT:
