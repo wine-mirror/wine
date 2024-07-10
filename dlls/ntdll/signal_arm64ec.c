@@ -42,6 +42,9 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 /* xtajit64.dll functions */
 static void     (WINAPI *pBTCpu64FlushInstructionCache)(const void*,SIZE_T);
 static BOOLEAN  (WINAPI *pBTCpu64IsProcessorFeaturePresent)(UINT);
+static void     (WINAPI *pNotifyMemoryAlloc)(void*,SIZE_T,ULONG,ULONG,BOOL,NTSTATUS);
+static void     (WINAPI *pNotifyMemoryFree)(void*,SIZE_T,ULONG,BOOL,NTSTATUS);
+static void     (WINAPI *pNotifyMemoryProtect)(void*,SIZE_T,ULONG,BOOL,NTSTATUS);
 static NTSTATUS (WINAPI *pProcessInit)(void);
 static NTSTATUS (WINAPI *pThreadInit)(void);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
@@ -145,6 +148,9 @@ NTSTATUS arm64ec_process_init( HMODULE module )
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
     GET_PTR( BTCpu64FlushInstructionCache );
     GET_PTR( BTCpu64IsProcessorFeaturePresent );
+    GET_PTR( NotifyMemoryAlloc );
+    GET_PTR( NotifyMemoryFree );
+    GET_PTR( NotifyMemoryProtect );
     GET_PTR( ProcessInit );
     GET_PTR( ThreadInit );
     GET_PTR( UpdateProcessorInformation );
@@ -443,11 +449,14 @@ NTSTATUS SYSCALL_API NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
                                                       *ret, *size_ptr, 3, type, protect, 0 );
+    else if (pNotifyMemoryAlloc) pNotifyMemoryAlloc( *ret, *size_ptr, type, protect, FALSE, 0 );
 
     status = syscall_NtAllocateVirtualMemory( process, ret, zero_bits, size_ptr, type, protect );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualAlloc,
                                                       *ret, *size_ptr, 3, type, protect, status );
+    else if (pNotifyMemoryAlloc) pNotifyMemoryAlloc( *ret, *size_ptr, type, protect, TRUE, status );
+
     return status;
 }
 
@@ -461,11 +470,14 @@ NTSTATUS SYSCALL_API NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
                                                       *ret, *size_ptr, 3, type, protect, 0 );
+    else if (pNotifyMemoryAlloc) pNotifyMemoryAlloc( *ret, *size_ptr, type, protect, FALSE, 0 );
 
     status = syscall_NtAllocateVirtualMemoryEx( process, ret, size_ptr, type, protect, parameters, count );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualAlloc,
                                                       *ret, *size_ptr, 3, type, protect, status );
+    else if (pNotifyMemoryAlloc) pNotifyMemoryAlloc( *ret, *size_ptr, type, protect, TRUE, status );
+
     return status;
 }
 
@@ -498,11 +510,14 @@ NTSTATUS SYSCALL_API NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualFree,
                                                       *addr_ptr, *size_ptr, 2, type, 0 );
+    else if (pNotifyMemoryFree) pNotifyMemoryFree( *addr_ptr, *size_ptr, type, FALSE, 0 );
 
     status = syscall_NtFreeVirtualMemory( process, addr_ptr, size_ptr, type );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualFree,
                                                       *addr_ptr, *size_ptr, 2, type, status );
+    else if (pNotifyMemoryFree) pNotifyMemoryFree( *addr_ptr, *size_ptr, type, TRUE, status );
+
     return status;
 }
 
@@ -523,11 +538,15 @@ NTSTATUS SYSCALL_API NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SI
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualProtect,
                                                       *addr_ptr, *size_ptr, 2, new_prot, 0 );
+    else if (pNotifyMemoryProtect) pNotifyMemoryProtect( *addr_ptr, *size_ptr, new_prot, FALSE, 0 );
 
     status = syscall_NtProtectVirtualMemory( process, addr_ptr, size_ptr, new_prot, old_prot );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualProtect,
                                                       *addr_ptr, *size_ptr, 2, new_prot, status );
+    else if (pNotifyMemoryProtect) pNotifyMemoryProtect( *addr_ptr, *size_ptr, new_prot, TRUE, status );
+
+    return status;
 }
 
 NTSTATUS SYSCALL_API NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class, void *info, ULONG size, ULONG *ret_size )
