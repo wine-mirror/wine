@@ -466,9 +466,9 @@ SUCCESS 666
 SUCCESS 0
 FAILURE 33
 --- success/failure for external command
-@todo_wine@FAILURE 1
+FAILURE 1
 @todo_wine@ERRORLEVEL 3
-@todo_wine@FAILURE 1
+FAILURE 1
 ERRORLEVEL 9009
 foo@space@
 SUCCESS 0
@@ -482,7 +482,7 @@ foo@space@
 SUCCESS 0
 foo@space@
 FAILURE 1025
-@todo_wine@FAILURE 2
+FAILURE 2
 --- success/failure for START command
 @todo_wine@FAILURE 1
 foo@space@

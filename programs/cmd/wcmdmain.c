@@ -1413,7 +1413,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command);
  *          so go back through wcmd_execute.
  */
 
-void WCMD_run_program (WCHAR *command, BOOL called)
+RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
 {
   WCHAR  temp[MAX_PATH];
   WCHAR  pathtosearch[MAXSTRING];
@@ -1432,7 +1432,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   WINE_TRACE("Running '%s' (%d)\n", wine_dbgstr_w(command), called);
   firstParam = WCMD_parameter(command, 0, NULL, FALSE, TRUE);
 
-  if (!firstParam[0]) return;
+  if (!firstParam[0]) return NO_ERROR;
 
   /* Calculate the search path and stem to search for */
   if (wcspbrk(firstParam, L"/\\:") == NULL) {  /* No explicit path given, search path */
@@ -1445,7 +1445,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
     if (lstrlenW(firstParam) >= MAX_PATH)
     {
         WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_LINETOOLONG));
-        return;
+        return ERROR_INVALID_FUNCTION;
     }
 
     lstrcpyW(stemofsearch, firstParam);
@@ -1453,7 +1453,8 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   } else {
 
     /* Convert eg. ..\fred to include a directory by removing file part */
-    if (!WCMD_get_fullpath(firstParam, ARRAY_SIZE(pathtosearch), pathtosearch, NULL)) return;
+    if (!WCMD_get_fullpath(firstParam, ARRAY_SIZE(pathtosearch), pathtosearch, NULL))
+        return ERROR_INVALID_FUNCTION;
     lastSlash = wcsrchr(pathtosearch, '\\');
     if (lastSlash && wcschr(lastSlash, '.') != NULL) extensionsupplied = TRUE;
     lstrcpyW(stemofsearch, lastSlash+1);
@@ -1527,7 +1528,8 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
         /* Since you can have eg. ..\.. on the path, need to expand
            to full information                                      */
-        if (!WCMD_get_fullpath(temp, ARRAY_SIZE(thisDir), thisDir, NULL)) return;
+        if (!WCMD_get_fullpath(temp, ARRAY_SIZE(thisDir), thisDir, NULL))
+            return ERROR_INVALID_FUNCTION;
     }
 
     /* 1. If extension supplied, see if that file exists */
@@ -1600,7 +1602,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
         }
         if (return_code != RETURN_CODE_ABORTED && return_code != RETURN_CODE_OLD_CHAINING)
             errorlevel = return_code;
-        return;
+        return return_code;
       } else {
         DWORD exit_code;
         /* thisDir contains the file to be launched, but with what?
@@ -1625,8 +1627,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
           /* strip first and last quote WCHARacters and try again */
           WCMD_strip_quotes(command);
           opt_s = TRUE;
-          WCMD_run_program(command, called);
-          return;
+          return WCMD_run_program(command, called);
         }
 
         if (!status)
@@ -1641,16 +1642,14 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
         CloseHandle(pe.hProcess);
         CloseHandle(pe.hThread);
-        return;
+        return errorlevel;
       }
     }
   }
 
   /* Not found anywhere - were we called? */
-  if (called) {
-    execute_single_command(command);
-    return;
-  }
+  if (called)
+      return errorlevel = execute_single_command(command);
 
   /* Not found anywhere - give up */
   WCMD_output_stderr(WCMD_LoadMessage(WCMD_NO_COMMAND_FOUND), command);
@@ -1658,8 +1657,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   /* If a command fails to launch, it sets errorlevel 9009 - which
      does not seem to have any associated constant definition     */
   errorlevel = RETURN_CODE_CANT_LAUNCH;
-  return;
-
+  return ERROR_INVALID_FUNCTION;
 }
 
 /* this is obviously wrong... will require more work to be fixed */
@@ -1931,8 +1929,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         break;
       default:
         prev_echo_mode = echo_mode;
-        WCMD_run_program (whichcmd, FALSE);
-        return_code = errorlevel;
+        return_code = WCMD_run_program(whichcmd, FALSE);
         echo_mode = prev_echo_mode;
     }
 
