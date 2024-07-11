@@ -289,10 +289,8 @@ struct wayland_win_data
     struct wayland_surface *wayland_surface;
     /* wine window_surface backing this window */
     struct window_surface *window_surface;
-    /* USER window rectangle relative to win32 parent window client area */
-    RECT window_rect;
-    /* USER client rectangle relative to win32 parent window client area */
-    RECT client_rect;
+    /* window rects, relative to parent client area */
+    struct window_rects rects;
     BOOL managed;
 };
 
