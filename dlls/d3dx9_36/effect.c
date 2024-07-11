@@ -441,19 +441,6 @@ static inline uint32_t read_u32(const char **ptr)
     return u;
 }
 
-static void skip_u32_unknown(const char **ptr, unsigned int count)
-{
-    unsigned int i;
-    uint32_t u;
-
-    WARN("Skipping %u unknown DWORDs:\n", count);
-    for (i = 0; i < count; ++i)
-    {
-        u = read_u32(ptr);
-        WARN("\t0x%08x\n", u);
-    }
-}
-
 static inline D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
 {
     return (D3DXHANDLE)parameter;
@@ -6292,7 +6279,7 @@ static BOOL param_set_top_level_param(void *top_level_param, struct d3dx_paramet
 static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, UINT data_size,
         uint32_t start, const char **skip_constants, unsigned int skip_constants_count)
 {
-    unsigned int string_count, resource_count, params_count;
+    unsigned int string_count, resource_count, params_count, shader_count;
     const char *ptr = data + start;
     unsigned int i;
     HRESULT hr;
@@ -6303,7 +6290,10 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
     effect->technique_count = read_u32(&ptr);
     TRACE("Technique count: %u.\n", effect->technique_count);
 
-    skip_u32_unknown(&ptr, 1);
+    /* This value appears to be equal to a number of shader variables, with each pass contributing
+       one additional slot. */
+    shader_count = read_u32(&ptr);
+    TRACE("Shader count: %u.\n", shader_count);
 
     effect->object_count = read_u32(&ptr);
     TRACE("Object count: %u.\n", effect->object_count);
