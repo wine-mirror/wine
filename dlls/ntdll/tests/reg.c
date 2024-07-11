@@ -2547,7 +2547,6 @@ struct query_reg_values_test
         WINE_TODO_NAME = 0x40,
         WINE_TODO_TYPE = 0x80,
         WINE_TODO_SIZE = 0x100,
-        WINE_TODO_DATA = 0x200,
     }
     flags;
     ULONG expected_type;
@@ -2611,7 +2610,6 @@ static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, 
         todo_wine_if(test->flags & WINE_TODO_SIZE)
         ok(value_data_size == expected_size, "Expected size %lu, got %lu\n", expected_size, value_data_size);
 
-        todo_wine_if(test->flags & WINE_TODO_DATA && !(test->flags & SPLIT_MULTI && query_routine_calls == 0))
         if (expected_data == query->DefaultData || expected_data == NULL)
             ok(value_data == expected_data, "Expected data %p, got %p\n", expected_data, value_data);
         else
@@ -3024,7 +3022,6 @@ static void test_RtlQueryRegistryValues(void)
 
                     if (expected_data)
                     {
-                        todo_wine_if(test->flags & WINE_TODO_DATA)
                         ok(!memcmp(query_reg_values_direct_str.Buffer, expected_data, expected_size),
                            "Expected data %s, got %s\n", debugstr_w(expected_data),
                            debugstr_w(query_reg_values_direct_str.Buffer));
