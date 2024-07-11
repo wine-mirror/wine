@@ -52,6 +52,7 @@ static void     (WINAPI *pNotifyMemoryProtect)(void*,SIZE_T,ULONG,BOOL,NTSTATUS)
 static void     (WINAPI *pNotifyUnmapViewOfSection)(void*,BOOL,NTSTATUS);
 static NTSTATUS (WINAPI *pProcessInit)(void);
 static NTSTATUS (WINAPI *pThreadInit)(void);
+static void     (WINAPI *pThreadTerm)(HANDLE,LONG);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
 
 static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX];
@@ -163,6 +164,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     GET_PTR( NotifyUnmapViewOfSection );
     GET_PTR( ProcessInit );
     GET_PTR( ThreadInit );
+    GET_PTR( ThreadTerm );
     GET_PTR( UpdateProcessorInformation );
 #undef GET_PTR
 
@@ -431,7 +433,7 @@ DEFINE_SYSCALL(NtSuspendThread, (HANDLE handle, ULONG *count))
 DEFINE_SYSCALL(NtSystemDebugControl, (SYSDBG_COMMAND command, void *in_buff, ULONG in_len, void *out_buff, ULONG out_len, ULONG *retlen))
 DEFINE_SYSCALL(NtTerminateJobObject, (HANDLE handle, NTSTATUS status))
 DEFINE_SYSCALL(NtTerminateProcess, (HANDLE handle, LONG exit_code))
-DEFINE_SYSCALL(NtTerminateThread, (HANDLE handle, LONG exit_code))
+DEFINE_WRAPPED_SYSCALL(NtTerminateThread, (HANDLE handle, LONG exit_code))
 DEFINE_SYSCALL(NtTestAlert, (void))
 DEFINE_SYSCALL(NtTraceControl, (ULONG code, void *inbuf, ULONG inbuf_len, void *outbuf, ULONG outbuf_len, ULONG *size))
 DEFINE_SYSCALL(NtUnloadDriver, (const UNICODE_STRING *name))
@@ -636,6 +638,12 @@ NTSTATUS SYSCALL_API NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     context_x64_to_arm( &arm_ctx, (ARM64EC_NT_CONTEXT *)context );
     return syscall_NtSetContextThread( handle, &arm_ctx );
+}
+
+NTSTATUS SYSCALL_API NtTerminateThread( HANDLE handle, LONG exit_code )
+{
+    if (pThreadTerm) pThreadTerm( handle, exit_code );
+    return syscall_NtTerminateThread( handle, exit_code );
 }
 
 NTSTATUS SYSCALL_API NtUnmapViewOfSection( HANDLE process, void *addr )

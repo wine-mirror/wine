@@ -16,5 +16,5 @@
 #@ stub ProcessTerm
 #@ stub ResetToConsistentState
 @ stdcall ThreadInit()
-#@ stub ThreadTerm
+@ stdcall ThreadTerm(ptr long)
 @ stdcall UpdateProcessorInformation(ptr)

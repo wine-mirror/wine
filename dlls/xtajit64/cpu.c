@@ -203,6 +203,15 @@ NTSTATUS WINAPI ThreadInit(void)
 
 
 /**********************************************************************
+ *           ThreadTerm  (xtajit64.@)
+ */
+void WINAPI ThreadTerm( HANDLE handle, LONG exit_code )
+{
+    TRACE( "%p %lx\n", handle, exit_code );
+}
+
+
+/**********************************************************************
  *           UpdateProcessorInformation  (xtajit64.@)
  */
 void WINAPI UpdateProcessorInformation( SYSTEM_CPU_INFORMATION *info )
