@@ -63,6 +63,10 @@ mp3decdata.bin RCDATA mp3decdata.bin
 /* @makedep: h264data.bin */
 h264data.bin RCDATA h264data.bin
 
+/* Generated from running the tests on Windows */
+/* @makedep: h264encdata.bin */
+h264encdata.bin RCDATA h264encdata.bin
+
 /* Generated with:
   gst-launch-1.0 videotestsrc num-buffers=30 pattern=smpte100 ! \
       video/x-raw,format=I420,width=84,height=82,framerate=30000/1001 ! \
