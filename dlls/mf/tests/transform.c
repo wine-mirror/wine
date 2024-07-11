@@ -9725,6 +9725,8 @@ failed:
 
 START_TEST(transform)
 {
+    winetest_mute_threshold = 1;
+
     init_functions();
 
     test_sample_copier();
