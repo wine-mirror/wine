@@ -1000,7 +1000,7 @@ SQLRETURN WINAPI SQLDataSources(SQLHENV EnvironmentHandle, SQLUSMALLINT Directio
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    if (Direction == SQL_FETCH_FIRST)
+    if (Direction == SQL_FETCH_FIRST || (Direction == SQL_FETCH_NEXT && !handle->sources_key))
     {
         handle->sources_idx = 0;
         handle->sources_system = FALSE;
@@ -3185,7 +3185,7 @@ SQLRETURN WINAPI SQLDrivers(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, S
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    if (Direction == SQL_FETCH_FIRST)
+    if (Direction == SQL_FETCH_FIRST || (Direction == SQL_FETCH_NEXT && !handle->drivers_key))
     {
         handle->drivers_idx = 0;
         RegCloseKey( handle->drivers_key );
@@ -4425,7 +4425,7 @@ SQLRETURN WINAPI SQLDataSourcesW(SQLHENV EnvironmentHandle, SQLUSMALLINT Directi
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    if (Direction == SQL_FETCH_FIRST)
+    if (Direction == SQL_FETCH_FIRST || (Direction == SQL_FETCH_NEXT && !handle->sources_key))
     {
         handle->sources_idx = 0;
         handle->sources_system = FALSE;
@@ -4699,7 +4699,7 @@ SQLRETURN WINAPI SQLDriversW(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, 
 
     if (!handle) return SQL_INVALID_HANDLE;
 
-    if (Direction == SQL_FETCH_FIRST)
+    if (Direction == SQL_FETCH_FIRST || (Direction == SQL_FETCH_NEXT && !handle->drivers_key))
     {
         handle->drivers_idx = 0;
         RegCloseKey( handle->drivers_key );
