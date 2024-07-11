@@ -422,7 +422,8 @@ HTMLDOMAttribute *unsafe_impl_from_IHTMLDOMAttribute(IHTMLDOMAttribute *iface)
     return iface->lpVtbl == &HTMLDOMAttributeVtbl ? impl_from_IHTMLDOMAttribute(iface) : NULL;
 }
 
-HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dispid, compat_mode_t compat_mode, HTMLDOMAttribute **attr)
+HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dispid,
+                                HTMLDocumentNode *doc, HTMLDOMAttribute **attr)
 {
     HTMLAttributeCollection *col;
     HTMLDOMAttribute *ret;
@@ -437,7 +438,8 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
     ret->dispid = dispid;
     ret->elem = elem;
 
-    init_dispatch(&ret->dispex, &HTMLDOMAttribute_dispex, NULL, compat_mode);
+    init_dispatch(&ret->dispex, &HTMLDOMAttribute_dispex, doc->script_global,
+                  dispex_compat_mode(&doc->script_global->event_target.dispex));
 
     /* For attributes attached to an element, (elem,dispid) pair should be valid used for its operation. */
     if(elem) {

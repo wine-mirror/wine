@@ -292,7 +292,7 @@ sync_test("builtin_toString", function() {
     }
     if(!localStorage) win_skip("localStorage is buggy and not available, skipping");
 
-    test("attribute", document.createAttribute("class"), "Attr", null, true);
+    test("attribute", document.createAttribute("class"), "Attr");
     if(false /* todo_wine */) test("attributes", e.attributes, "NamedNodeMap");
     test("childNodes", document.body.childNodes, "NodeList", null, true);
     if(clientRects) test("clientRect", clientRects[0], "ClientRect", null, true);

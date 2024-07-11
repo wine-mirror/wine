@@ -1208,7 +1208,7 @@ typedef struct {
 
 HTMLDOMAttribute *unsafe_impl_from_IHTMLDOMAttribute(IHTMLDOMAttribute*);
 
-HRESULT HTMLDOMAttribute_Create(const WCHAR*,HTMLElement*,DISPID,compat_mode_t,HTMLDOMAttribute**);
+HRESULT HTMLDOMAttribute_Create(const WCHAR*,HTMLElement*,DISPID,HTMLDocumentNode*,HTMLDOMAttribute**);
 
 HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**);
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**);
