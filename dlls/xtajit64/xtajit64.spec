@@ -13,7 +13,7 @@
 @ stdcall NotifyMemoryProtect(ptr long long long long)
 @ stdcall NotifyUnmapViewOfSection(ptr long long)
 @ stdcall ProcessInit()
-#@ stub ProcessTerm
+@ stdcall ProcessTerm(ptr long long)
 #@ stub ResetToConsistentState
 @ stdcall ThreadInit()
 @ stdcall ThreadTerm(ptr long)

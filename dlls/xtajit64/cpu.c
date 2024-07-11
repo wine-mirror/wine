@@ -194,6 +194,15 @@ NTSTATUS WINAPI ProcessInit(void)
 
 
 /**********************************************************************
+ *           ProcessTerm  (xtajit64.@)
+ */
+void WINAPI ProcessTerm( HANDLE handle, BOOL is_post, NTSTATUS status )
+{
+    TRACE( "%p\n", handle );
+}
+
+
+/**********************************************************************
  *           ThreadInit  (xtajit64.@)
  */
 NTSTATUS WINAPI ThreadInit(void)

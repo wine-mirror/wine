@@ -51,6 +51,7 @@ static void     (WINAPI *pNotifyMemoryFree)(void*,SIZE_T,ULONG,BOOL,NTSTATUS);
 static void     (WINAPI *pNotifyMemoryProtect)(void*,SIZE_T,ULONG,BOOL,NTSTATUS);
 static void     (WINAPI *pNotifyUnmapViewOfSection)(void*,BOOL,NTSTATUS);
 static NTSTATUS (WINAPI *pProcessInit)(void);
+static void     (WINAPI *pProcessTerm)(HANDLE,BOOL,NTSTATUS);
 static NTSTATUS (WINAPI *pThreadInit)(void);
 static void     (WINAPI *pThreadTerm)(HANDLE,LONG);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
@@ -163,6 +164,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     GET_PTR( NotifyMemoryProtect );
     GET_PTR( NotifyUnmapViewOfSection );
     GET_PTR( ProcessInit );
+    GET_PTR( ProcessTerm );
     GET_PTR( ThreadInit );
     GET_PTR( ThreadTerm );
     GET_PTR( UpdateProcessorInformation );
@@ -432,7 +434,7 @@ DEFINE_SYSCALL(NtSuspendProcess, (HANDLE handle))
 DEFINE_SYSCALL(NtSuspendThread, (HANDLE handle, ULONG *count))
 DEFINE_SYSCALL(NtSystemDebugControl, (SYSDBG_COMMAND command, void *in_buff, ULONG in_len, void *out_buff, ULONG out_len, ULONG *retlen))
 DEFINE_SYSCALL(NtTerminateJobObject, (HANDLE handle, NTSTATUS status))
-DEFINE_SYSCALL(NtTerminateProcess, (HANDLE handle, LONG exit_code))
+DEFINE_WRAPPED_SYSCALL(NtTerminateProcess, (HANDLE handle, LONG exit_code))
 DEFINE_WRAPPED_SYSCALL(NtTerminateThread, (HANDLE handle, LONG exit_code))
 DEFINE_SYSCALL(NtTestAlert, (void))
 DEFINE_SYSCALL(NtTraceControl, (ULONG code, void *inbuf, ULONG inbuf_len, void *outbuf, ULONG outbuf_len, ULONG *size))
@@ -638,6 +640,20 @@ NTSTATUS SYSCALL_API NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     context_x64_to_arm( &arm_ctx, (ARM64EC_NT_CONTEXT *)context );
     return syscall_NtSetContextThread( handle, &arm_ctx );
+}
+
+NTSTATUS SYSCALL_API NtTerminateProcess( HANDLE handle, LONG exit_code )
+{
+    NTSTATUS status;
+
+    if (!handle && pProcessTerm)
+    {
+        pProcessTerm( handle, FALSE, 0 );
+        status = syscall_NtTerminateProcess( handle, exit_code );
+        pProcessTerm( handle, TRUE, status );
+        return status;
+    }
+    return syscall_NtTerminateProcess( handle, exit_code );
 }
 
 NTSTATUS SYSCALL_API NtTerminateThread( HANDLE handle, LONG exit_code )
