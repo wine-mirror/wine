@@ -22,8 +22,6 @@
 #include "wcmd.h"
 #include "wine/debug.h"
 
-extern struct env_stack *saved_environment;
-
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 /****************************************************************************
@@ -68,12 +66,12 @@ RETURN_CODE WCMD_batch(const WCHAR *file, WCHAR *command, const WCHAR *startLabe
 
   prev_context = context;
   context = LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
-  context -> h = h;
+  context->h = h;
   context->batchfileW = xstrdupW(file);
-  context -> command = command;
-  memset(context -> shift_count, 0x00, sizeof(context -> shift_count));
-  context -> prev_context = prev_context;
-  context -> skip_rest = FALSE;
+  context->command = command;
+  memset(context->shift_count, 0x00, sizeof(context->shift_count));
+  context->prev_context = prev_context;
+  context->skip_rest = FALSE;
 
   /* If processing a call :label, 'goto' the label in question */
   if (startLabel) {
@@ -106,17 +104,8 @@ RETURN_CODE WCMD_batch(const WCHAR *file, WCHAR *command, const WCHAR *startLabe
   }
   CloseHandle (h);
 
-/*
- *  If there are outstanding setlocal's to the current context, unwind them.
- */
-  while (saved_environment && saved_environment->batchhandle == context->h) {
-      WCMD_endlocal();
-  }
-
-/*
- *	If invoked by a CALL, we return to the context of our caller. Otherwise return
- *	to the caller's caller.
- */
+  /* If there are outstanding setlocal's to the current context, unwind them. */
+  while (WCMD_endlocal() == NO_ERROR) {}
 
   free(context->batchfileW);
   LocalFree(context);

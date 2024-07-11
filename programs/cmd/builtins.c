@@ -94,7 +94,7 @@ static const WCHAR externals[][10] = {
 };
 
 static HINSTANCE hinst;
-struct env_stack *saved_environment;
+static struct env_stack *saved_environment;
 static BOOL verify_mode = FALSE;
 
 /* set /a routines work from single character operators, but some of the
@@ -2372,7 +2372,7 @@ RETURN_CODE WCMD_setlocal(WCHAR *args)
   env_copy->strings = WCMD_dupenv (env);
   if (env_copy->strings)
   {
-    env_copy->batchhandle = context->h;
+    env_copy->context = context;
     env_copy->next = saved_environment;
     env_copy->delayedsubst = delayedsubst;
     delayedsubst = newdelay;
@@ -2407,7 +2407,7 @@ RETURN_CODE WCMD_endlocal(void)
 
   /* setlocal needs a saved environment from within the same context (batch
      program) as it was saved in                                            */
-  if (!saved_environment || saved_environment->batchhandle != context->h)
+  if (!saved_environment || saved_environment->context != context)
     return ERROR_INVALID_FUNCTION;
 
   /* pop the old environment from the stack */

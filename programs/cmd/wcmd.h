@@ -253,28 +253,29 @@ int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate);
 
 /* Data structure to hold context when executing batch files */
 
-typedef struct _BATCH_CONTEXT {
-  WCHAR *command;	/* The command which invoked the batch file */
-  HANDLE h;             /* Handle to the open batch file */
-  WCHAR *batchfileW;    /* Name of same */
-  int shift_count[10];	/* Offset in terms of shifts for %0 - %9 */
-  struct _BATCH_CONTEXT *prev_context; /* Pointer to the previous context block */
-  BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
-  CMD_NODE *toExecute;  /* Commands left to be executed */
+typedef struct _BATCH_CONTEXT
+{
+    WCHAR *command;	  /* The command which invoked the batch file */
+    HANDLE h;             /* Handle to the open batch file */
+    WCHAR *batchfileW;    /* Name of same */
+    int shift_count[10];  /* Offset in terms of shifts for %0 - %9 */
+    struct _BATCH_CONTEXT *prev_context; /* Pointer to the previous context block */
+    BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
 } BATCH_CONTEXT;
 
 /* Data structure to handle building lists during recursive calls */
 
 struct env_stack
 {
-  struct env_stack *next;
-  union {
-    int    stackdepth;       /* Only used for pushd and popd */
-    WCHAR   cwd;             /* Only used for set/endlocal   */
-  } u;
-  WCHAR *strings;
-  HANDLE batchhandle;        /* Used to ensure set/endlocals stay in scope */
-  BOOL delayedsubst;         /* Is delayed substitution in effect */
+    BATCH_CONTEXT *context;
+    struct env_stack *next;
+    union
+    {
+        int     stackdepth;   /* Only used for pushd and popd */
+        WCHAR   cwd;          /* Only used for set/endlocal   */
+    } u;
+    WCHAR *strings;
+    BOOL delayedsubst;        /* Is delayed substitution in effect */
 };
 
 /* Data structure to save setlocal and pushd information */
