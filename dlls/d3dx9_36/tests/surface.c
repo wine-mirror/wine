@@ -265,6 +265,39 @@ static void check_dds_pixel_format_(unsigned int line,
         ok_(__FILE__, line)(info.Format == expected_format, "D3DXGetImageInfoFromFileInMemory returned format %#x, expected %#x\n",
                 info.Format, expected_format);
     }
+
+    /* Test again with unused fields set. */
+    if (flags & DDS_PF_FOURCC)
+        rmask = gmask = bmask = amask = bpp = ~0u;
+    else if ((flags & (DDS_PF_INDEXED | DDS_PF_ALPHA)) == (DDS_PF_INDEXED | DDS_PF_ALPHA))
+        rmask = gmask = bmask = fourcc = ~0u;
+    else if (flags & DDS_PF_INDEXED)
+        rmask = gmask = bmask = amask = fourcc = ~0u;
+    else if ((flags & (DDS_PF_RGB | DDS_PF_ALPHA)) == (DDS_PF_RGB | DDS_PF_ALPHA))
+        fourcc = ~0u;
+    else if (flags & DDS_PF_RGB)
+        fourcc = amask = ~0u;
+    else if ((flags & (DDS_PF_LUMINANCE | DDS_PF_ALPHA)) == (DDS_PF_LUMINANCE | DDS_PF_ALPHA))
+        gmask = bmask = fourcc = ~0u;
+    else if (flags & DDS_PF_LUMINANCE)
+        gmask = bmask = amask = fourcc = ~0u;
+    else if (flags & DDS_PF_ALPHA_ONLY)
+        rmask = gmask = bmask = fourcc = ~0u;
+    else if (flags & DDS_PF_BUMPDUDV)
+        fourcc = ~0u;
+    else if (flags & DDS_PF_BUMPLUMINANCE)
+        fourcc = amask = ~0u;
+
+    dds.header.pixel_format.fourcc = fourcc;
+    dds.header.pixel_format.bpp = bpp;
+    dds.header.pixel_format.rmask = rmask;
+    dds.header.pixel_format.gmask = gmask;
+    dds.header.pixel_format.bmask = bmask;
+    dds.header.pixel_format.amask = amask;
+    hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
+    ok_(__FILE__, line)(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x.\n", info.Format);
 }
 
 static void test_dds_header_handling(void)
@@ -720,6 +753,18 @@ static void test_D3DXGetImageInfo(void)
     todo_wine check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_G8R8_G8B8, 0, 0, 0, 0, 0, D3DFMT_G8R8_G8B8);
     todo_wine check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_UYVY, 0, 0, 0, 0, 0, D3DFMT_UYVY);
     todo_wine check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_YUY2, 0, 0, 0, 0, 0, D3DFMT_YUY2);
+    /*
+     * D3DFMTs that aren't fourCC values, but are supported in the fourCC
+     * field.
+     */
+    todo_wine check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_A16B16G16R16, 0, 0, 0, 0, 0, D3DFMT_A16B16G16R16);
+    todo_wine check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_Q16W16V16U16, 0, 0, 0, 0, 0, D3DFMT_Q16W16V16U16);
+    check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_R16F, 0, 0, 0, 0, 0, D3DFMT_R16F);
+    check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_G16R16F, 0, 0, 0, 0, 0, D3DFMT_G16R16F);
+    check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_A16B16G16R16F, 0, 0, 0, 0, 0, D3DFMT_A16B16G16R16F);
+    check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_R32F, 0, 0, 0, 0, 0, D3DFMT_R32F);
+    check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_G32R32F, 0, 0, 0, 0, 0, D3DFMT_G32R32F);
+    check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_A32B32G32R32F, 0, 0, 0, 0, 0, D3DFMT_A32B32G32R32F);
     check_dds_pixel_format(DDS_PF_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0, D3DFMT_R5G6B5);
     check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000, D3DFMT_A1R5G5B5);
     check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x0f00, 0x00f0, 0x000f, 0xf000, D3DFMT_A4R4G4B4);
@@ -741,7 +786,10 @@ static void test_D3DXGetImageInfo(void)
     check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 8, 0x0f, 0, 0, 0xf0, D3DFMT_A4L4);
     check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0, 0, D3DFMT_V8U8);
     check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0, 0, D3DFMT_V16U16);
+    todo_wine check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 32, 0xff, 0xff00, 0x00ff0000, 0xff000000, D3DFMT_Q8W8V8U8);
+    todo_wine check_dds_pixel_format(DDS_PF_BUMPDUDV | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, D3DFMT_A2W10V10U10);
     check_dds_pixel_format(DDS_PF_BUMPLUMINANCE, 0, 32, 0x0000ff, 0x00ff00, 0xff0000, 0, D3DFMT_X8L8V8U8);
+    todo_wine check_dds_pixel_format(DDS_PF_BUMPLUMINANCE, 0, 16, 0x001f, 0x03e0, 0xfc00, 0, D3DFMT_L6V5U5);
     check_dds_pixel_format(DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0, D3DFMT_P8);
     check_dds_pixel_format(DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00, D3DFMT_A8P8);
 
