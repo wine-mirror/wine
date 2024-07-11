@@ -2228,9 +2228,10 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
     if (surface) window_surface_release( surface );
 
     if (!(flags & ULW_COLORKEY)) key = CLR_INVALID;
-    if (!(user_driver->pCreateLayeredWindow( hwnd, &surface_rect, key, &surface )) || !surface) return FALSE;
+    if (IsRectEmpty( &surface_rect )) window_surface_add_ref( (surface = &dummy_surface) );
+    else if (!(user_driver->pCreateLayeredWindow( hwnd, &surface_rect, key, &surface )) || !surface) return FALSE;
 
-    if (!hdc_src) ret = TRUE;
+    if (!hdc_src || surface == &dummy_surface) ret = TRUE;
     else
     {
         BLENDFUNCTION src_blend = { AC_SRC_OVER, 0, 255, 0 };
