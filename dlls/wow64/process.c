@@ -1061,7 +1061,12 @@ NTSTATUS WINAPI wow64_NtTerminateProcess( UINT *args )
     HANDLE handle = get_handle( &args );
     LONG exit_code = get_ulong( &args );
 
-    return NtTerminateProcess( handle, exit_code );
+    NTSTATUS status;
+
+    if (!handle && pBTCpuProcessTerm) pBTCpuProcessTerm( handle, FALSE, 0 );
+    status = NtTerminateProcess( handle, exit_code );
+    if (!handle && pBTCpuProcessTerm) pBTCpuProcessTerm( handle, TRUE, status );
+    return status;
 }
 
 

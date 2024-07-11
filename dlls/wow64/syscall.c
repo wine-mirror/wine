@@ -115,6 +115,7 @@ void     (WINAPI *pBTCpuNotifyReadFile)( HANDLE, void *, SIZE_T, BOOL, NTSTATUS 
 void     (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void *, BOOL, NTSTATUS ) = NULL;
 NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * ) = NULL;
 void     (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * ) = NULL;
+void     (WINAPI *pBTCpuProcessTerm)( HANDLE, BOOL, NTSTATUS ) = NULL;
 void     (WINAPI *pBTCpuThreadTerm)( HANDLE, LONG ) = NULL;
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
@@ -814,6 +815,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     GET_PTR( BTCpuNotifyReadFile );
     GET_PTR( BTCpuNotifyUnmapViewOfSection );
     GET_PTR( BTCpuUpdateProcessorInformation );
+    GET_PTR( BTCpuProcessTerm );
     GET_PTR( BTCpuThreadTerm );
     GET_PTR( __wine_get_unix_opcode );
 
