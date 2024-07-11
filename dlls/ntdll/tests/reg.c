@@ -2770,7 +2770,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     },
     {
         {{ query_routine, RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope" }},
-        STATUS_SUCCESS, 1, WINE_TODO_SIZE, REG_MULTI_SZ, L"Brussels\0Paris\0%PATH%\0", sizeof(L"Brussels\0Paris\0%PATH%\0")
+        STATUS_SUCCESS, 1, 0, REG_MULTI_SZ, L"Brussels\0Paris\0%PATH%\0", sizeof(L"Brussels\0Paris\0%PATH%\0")
     },
     /* The default value is used if the registry value does not exist */
     {
@@ -2788,6 +2788,16 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_MULTI_SZ, (WCHAR*)L"Brussels\0Paris\0%PATH%\0" }},
         STATUS_SUCCESS, 3, EXPECT_DEFAULT_DATA | SPLIT_MULTI
+    },
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist",
+           NULL, REG_MULTI_SZ, (WCHAR*)L"A\0B\0C", sizeof(L"A\0B\0C") }},
+        STATUS_SUCCESS, 2, EXPECT_DEFAULT_DATA | SPLIT_MULTI
+    },
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist",
+           NULL, REG_MULTI_SZ, (WCHAR*)L"A\0B\0C", sizeof(L"A\0B\0C") - sizeof(L'\0') }},
+        STATUS_SUCCESS, 2, EXPECT_DEFAULT_DATA | SPLIT_MULTI
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_DWORD, (WCHAR*)0xdeadbeef }},
@@ -2866,8 +2876,8 @@ static struct query_reg_values_test query_reg_values_tests[] =
     }, */
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"I don't exist",
-           &query_reg_values_direct_str, REG_MULTI_SZ, (WCHAR*)L"A\0B\0C\0", sizeof(L"A\0B\0C\0") }},
-        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA | WINE_TODO_SIZE
+           &query_reg_values_direct_str, REG_MULTI_SZ, (WCHAR*)L"A\0B\0C", sizeof(L"A\0B\0C") - sizeof(L'\0') }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA
     },
     /* The default value is not used if it is not valid */
     {
@@ -2920,7 +2930,7 @@ static void test_RtlQueryRegistryValues(void)
     ok(status == ERROR_SUCCESS, "Failed to create registry value WindowsDrive: %lu\n", status);
 
     status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"CapitalsOfEurope", REG_MULTI_SZ,
-                             L"Brussels\0Paris\0%PATH%", sizeof(L"Brussels\0Paris\0%PATH%"));
+                             L"Brussels\0Paris\0%PATH%", sizeof(L"Brussels\0Paris\0%PATH%") - sizeof(L'\0'));
     ok(status == ERROR_SUCCESS, "Failed to create registry value CapitalsOfEurope: %lu\n", status);
 
     status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"MeaningOfLife32", REG_DWORD,

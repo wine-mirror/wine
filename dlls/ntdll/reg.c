@@ -254,6 +254,16 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
         type = pInfo->Type;
         data = (WCHAR*)((char*)pInfo + pInfo->DataOffset);
         len = pInfo->DataLength;
+
+        /* Ensure that multi-strings from the registry are double-null-terminated */
+        if (type == REG_MULTI_SZ)
+        {
+            while (len < 2 * sizeof(WCHAR) || data[len / sizeof(WCHAR) - 2] || data[len / sizeof(WCHAR) - 1])
+            {
+                data[len / sizeof(WCHAR)] = 0;
+                len += sizeof(WCHAR);
+            }
+        }
     }
     else
     {
@@ -275,10 +285,13 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
                 break;
 
             case REG_MULTI_SZ:
-                for (wstr = data; *wstr; wstr += count)
+                wstr = data;
+                for (;;)
                 {
                     count = wcslen(wstr) + 1;
                     len += count * sizeof(WCHAR);
+                    if (!*wstr) break;
+                    wstr += count;
                 }
                 break;
             }
@@ -322,7 +335,6 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
             if (!(pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND))
                 return STATUS_INVALID_PARAMETER;
 
-            len += sizeof(WCHAR);
             if (str->Buffer == NULL)
             {
                 str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, len);
@@ -330,10 +342,8 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
             }
             else if (str->MaximumLength < len)
                 return STATUS_BUFFER_TOO_SMALL;
-            len -= sizeof(WCHAR);
             memcpy(str->Buffer, data, len);
-            str->Buffer[len / sizeof(WCHAR)] = 0;
-            str->Length = len;
+            str->Length = (len >= sizeof(WCHAR) ? len - sizeof(WCHAR) : len);
             break;
 
         default:
@@ -379,7 +389,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
         }
         else /* REG_MULTI_SZ */
         {
-            for (offset = 0; offset < len; offset += count)
+            for (offset = 0; offset + 2 * sizeof(WCHAR) < len; offset += count)
             {
                 wstr = (WCHAR*)((char*)data + offset);
                 count = (wcslen(wstr) + 1) * sizeof(WCHAR);
@@ -544,9 +554,10 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
                 if (status == STATUS_NO_MORE_ENTRIES)
                     break;
                 if (status == STATUS_BUFFER_OVERFLOW ||
-                    status == STATUS_BUFFER_TOO_SMALL)
+                    status == STATUS_BUFFER_TOO_SMALL ||
+                    (status == STATUS_SUCCESS && pInfo->Type == REG_MULTI_SZ && buflen < len + 2 * sizeof(L'\0')))
                 {
-                    buflen = len;
+                    buflen = len + 2 * sizeof(L'\0');
                     RtlFreeHeap(GetProcessHeap(), 0, pInfo);
                     pInfo = RtlAllocateHeap(GetProcessHeap(), 0, buflen);
                     NtEnumerateValueKey(handle, i, KeyValueFullInformation,
@@ -578,9 +589,10 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
             status = NtQueryValueKey(handle, &Value, KeyValueFullInformation,
                 pInfo, buflen, &len);
             if (status == STATUS_BUFFER_OVERFLOW ||
-                status == STATUS_BUFFER_TOO_SMALL)
+                status == STATUS_BUFFER_TOO_SMALL ||
+                (status == STATUS_SUCCESS && pInfo->Type == REG_MULTI_SZ && buflen < len + 2 * sizeof(L'\0')))
             {
-                buflen = len;
+                buflen = len + 2 * sizeof(L'\0');
                 RtlFreeHeap(GetProcessHeap(), 0, pInfo);
                 pInfo = RtlAllocateHeap(GetProcessHeap(), 0, buflen);
                 status = NtQueryValueKey(handle, &Value,
