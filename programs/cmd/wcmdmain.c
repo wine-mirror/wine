@@ -1649,12 +1649,6 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
   return ERROR_INVALID_FUNCTION;
 }
 
-/* this is obviously wrong... will require more work to be fixed */
-static inline unsigned clamp_fd(unsigned fd)
-{
-    return fd <= 2 ? fd : 1;
-}
-
 static BOOL set_std_redirections(CMD_REDIRECTION *redir)
 {
     static DWORD std_index[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
@@ -1664,6 +1658,12 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir)
 
     for (; redir; redir = redir->next)
     {
+        CMD_REDIRECTION *next;
+
+        /* if we have several elements changing same std stream, only use last one */
+        for (next = redir->next; next; next = next->next)
+            if (redir->fd == next->fd) break;
+        if (next) continue;
         switch (redir->kind)
         {
         case REDIR_READ_FROM:
@@ -1697,17 +1697,26 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir)
             }
             break;
         case REDIR_WRITE_CLONE:
+            if (redir->clone > 2 || redir->clone == redir->fd)
+            {
+                WARN("Can't duplicate %d from %d\n", redir->fd, redir->clone);
+                return FALSE;
+            }
             if (!DuplicateHandle(GetCurrentProcess(),
-                                 GetStdHandle(std_index[clamp_fd(redir->clone)]),
+                                 GetStdHandle(std_index[redir->clone]),
                                  GetCurrentProcess(),
                                  &h,
                                  0, TRUE, DUPLICATE_SAME_ACCESS))
             {
                 WARN("Duplicating handle failed with gle %ld\n", GetLastError());
+                return FALSE;
             }
             break;
         }
-        SetStdHandle(std_index[clamp_fd(redir->fd)], h);
+        if (redir->fd > 2)
+            CloseHandle(h);
+        else
+            SetStdHandle(std_index[redir->fd], h);
     }
     return TRUE;
 }
@@ -3654,10 +3663,9 @@ RETURN_CODE node_execute(CMD_NODE *node)
     if (!set_std_redirections(node->redirects))
     {
         WCMD_print_error();
-        /* FIXME potentially leaking here (if first redir created ok, and second failed */
-        return ERROR_INVALID_FUNCTION;
+        return_code = ERROR_INVALID_FUNCTION;
     }
-    switch (node->op)
+    else switch (node->op)
     {
     case CMD_SINGLE:
         if (node->command[0] != ':')

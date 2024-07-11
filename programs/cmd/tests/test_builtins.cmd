@@ -217,6 +217,20 @@ type C
 (if 1==0 (echo A) else echo B) > C
 type C
 (if 1==0 (echo A > B) else echo C)
+echo --- multiredirections
+erase /q a b & (echo >a >b)
+if exist a echo a shouldn't exist
+if not exist b echo b should exist
+erase /q a b & (echo >a >>b)
+if exist a echo a shouldn't exist
+if not exist b echo b should exist
+erase /q a b & (echo >a | (echo b > b))
+if not exist a echo a should exist
+if not exist b echo b should exist
+erase /q a b & (echo cc1 2>a 1>&2 2>b)
+if exist a echo a shouldn't exist
+if not exist b (echo b should exist) else (echo cc2 & type b)
+
 cd .. & rd /s/q foobar
 
 echo ------------ Testing circumflex escape character ------------

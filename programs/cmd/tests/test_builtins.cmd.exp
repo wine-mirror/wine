@@ -202,8 +202,8 @@ fooc@space@
 food1
 food2
 food21
-@todo_wine@foo7@space@@space@@or_broken@not supported@space@
-@todo_wine@foo@or_broken@not supported
+foo7@space@@space@@or_broken@not supported@space@
+foo@or_broken@not supported
 --- redirect at beginning of line
 foo
 foo1
@@ -229,6 +229,8 @@ foo
 A
 B
 C
+--- multiredirections
+cc2@space@
 ------------ Testing circumflex escape character ------------
 hello, world
 hello, world
