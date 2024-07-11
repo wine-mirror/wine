@@ -1583,7 +1583,7 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
         BOOL oldinteractive = interactive;
 
         interactive = FALSE;
-        return_code = WCMD_batch(thisDir, command, NULL, INVALID_HANDLE_VALUE);
+        return_code = WCMD_call_batch(thisDir, command);
         interactive = oldinteractive;
         if (context && !called) {
           TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");

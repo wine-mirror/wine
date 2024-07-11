@@ -155,7 +155,6 @@ typedef int RETURN_CODE;
 BOOL WCMD_print_volume_information(const WCHAR *);
 
 RETURN_CODE WCMD_assoc(const WCHAR *, BOOL);
-RETURN_CODE WCMD_batch(const WCHAR *, WCHAR *, const WCHAR *, HANDLE);
 RETURN_CODE WCMD_call(WCHAR *command);
 RETURN_CODE WCMD_choice(WCHAR *);
 RETURN_CODE WCMD_clear_screen(void);
@@ -220,6 +219,8 @@ enum read_parse_line {RPL_SUCCESS, RPL_EOF, RPL_SYNTAXERROR};
 enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output, HANDLE readFrom);
 void      node_dispose_tree(CMD_NODE *cmds);
 RETURN_CODE node_execute(CMD_NODE *node);
+
+RETURN_CODE WCMD_call_batch(const WCHAR *, WCHAR *);
 
 void *xrealloc(void *, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free);
 
