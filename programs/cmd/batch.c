@@ -702,3 +702,67 @@ RETURN_CODE WCMD_call(WCHAR *command)
   }
   return return_code;
 }
+
+void WCMD_set_label_end(WCHAR *string)
+{
+    static const WCHAR labelEndsW[] = L"><|& :\t";
+    WCHAR *p;
+
+    /* Label ends at whitespace or redirection characters */
+    if ((p = wcspbrk(string, labelEndsW))) *p = L'\0';
+}
+
+static BOOL find_next_label(HANDLE h, ULONGLONG end, WCHAR candidate[MAXSTRING])
+{
+    while (WCMD_fgets(candidate, MAXSTRING, h))
+    {
+        WCHAR *str = candidate;
+
+        /* Ignore leading whitespace or no-echo character */
+        while (*str == L'@' || iswspace(*str)) str++;
+
+        /* If the first real character is a : then this is a label */
+        if (*str == L':')
+        {
+            /* Skip spaces between : and label */
+            for (str++; iswspace(*str); str++) {}
+            memmove(candidate, str, (wcslen(str) + 1) * sizeof(WCHAR));
+            WCMD_set_label_end(candidate);
+
+            return TRUE;
+        }
+        if (end)
+        {
+            LARGE_INTEGER li = {.QuadPart = 0}, curli;
+            if (!SetFilePointerEx(h, li, &curli, FILE_CURRENT)) return FALSE;
+            if (curli.QuadPart > end) break;
+        }
+    }
+    return FALSE;
+}
+
+BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
+{
+    LARGE_INTEGER where = *pos, zeroli = {.QuadPart = 0};
+    WCHAR candidate[MAXSTRING];
+
+    if (!*label) return FALSE;
+
+    if (!SetFilePointerEx(h, *pos, NULL, FILE_BEGIN)) return FALSE;
+    while (find_next_label(h, ~(ULONGLONG)0, candidate))
+    {
+        TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
+        if (!lstrcmpiW(candidate, label))
+            return SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
+    }
+    TRACE("Label not found, trying from beginning of file\n");
+    if (!SetFilePointerEx(h, zeroli, NULL, FILE_BEGIN)) return FALSE;
+    while (find_next_label(h, where.QuadPart, candidate))
+    {
+        TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
+        if (!lstrcmpiW(candidate, label))
+            return SetFilePointerEx(h, zeroli, pos, FILE_CURRENT);
+    }
+    TRACE("Reached wrap point, label not found\n");
+    return FALSE;
+}

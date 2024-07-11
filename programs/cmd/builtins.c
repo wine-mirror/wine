@@ -1815,89 +1815,35 @@ RETURN_CODE WCMD_give_help(WCHAR *args)
 
 RETURN_CODE WCMD_goto(void)
 {
-  WCHAR string[MAX_PATH];
-  WCHAR *labelend = NULL;
-  const WCHAR labelEndsW[] = L"><|& :\t";
-
-  if (context != NULL) {
-    WCHAR *paramStart = param1, *str;
-
-    if (param1[0] == 0x00) {
-      WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-      return ERROR_INVALID_FUNCTION;
-    }
-
-    /* Handle special :EOF label */
-    if (lstrcmpiW(L":eof", param1) == 0) {
-      context -> skip_rest = TRUE;
-      return RETURN_CODE_ABORTED;
-    }
-
-    /* Support goto :label as well as goto label plus remove trailing chars */
-    if (*paramStart == ':') paramStart++;
-    labelend = wcspbrk(paramStart, labelEndsW);
-    if (labelend) *labelend = 0x00;
-    WINE_TRACE("goto label: '%s'\n", wine_dbgstr_w(paramStart));
-
-    /* Loop through potentially twice - once from current file position
-       through to the end, and second time from start to current file
-       position                                                         */
-    if (*paramStart) {
-        int loop;
-        LARGE_INTEGER startli;
-        for (loop=0; loop<2; loop++) {
-            if (loop==0) {
-              /* On first loop, save the file size */
-              startli.QuadPart = 0;
-              startli.u.LowPart = SetFilePointer(context -> h, startli.u.LowPart,
-                                                 &startli.u.HighPart, FILE_CURRENT);
-            } else {
-              /* On second loop, start at the beginning of the file */
-              WINE_TRACE("Label not found, trying from beginning of file\n");
-              if (loop==1) SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
-            }
-
-            while (WCMD_fgets (string, ARRAY_SIZE(string), context -> h)) {
-              str = string;
-
-              /* Ignore leading whitespace or no-echo character */
-              while (*str=='@' || iswspace (*str)) str++;
-
-              /* If the first real character is a : then this is a label */
-              if (*str == ':') {
-                str++;
-
-                /* Skip spaces between : and label */
-                while (iswspace (*str)) str++;
-                WINE_TRACE("str before brk %s\n", wine_dbgstr_w(str));
-
-                /* Label ends at whitespace or redirection characters */
-                labelend = wcspbrk(str, labelEndsW);
-                if (labelend) *labelend = 0x00;
-                WINE_TRACE("comparing found label %s\n", wine_dbgstr_w(str));
-
-                if (lstrcmpiW (str, paramStart) == 0) return RETURN_CODE_ABORTED;
-              }
-
-              /* See if we have gone beyond the end point if second time through */
-              if (loop==1) {
-                LARGE_INTEGER curli;
-                curli.QuadPart = 0;
-                curli.u.LowPart = SetFilePointer(context -> h, curli.u.LowPart,
-                                                &curli.u.HighPart, FILE_CURRENT);
-                if (curli.QuadPart > startli.QuadPart) {
-                  WINE_TRACE("Reached wrap point, label not found\n");
-                  break;
-                }
-              }
-            }
+    if (context != NULL)
+    {
+        WCHAR *paramStart = param1;
+        LARGE_INTEGER li, zeroli = {.QuadPart = 0};
+        if (!param1[0])
+        {
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
+            return ERROR_INVALID_FUNCTION;
         }
-    }
 
-    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
-    context -> skip_rest = TRUE;
-  }
-  return ERROR_INVALID_FUNCTION;
+        /* Handle special :EOF label */
+        if (lstrcmpiW(L":eof", param1) == 0)
+        {
+            context->skip_rest = TRUE;
+            return RETURN_CODE_ABORTED;
+        }
+
+        /* Support goto :label as well as goto label plus remove trailing chars */
+        if (*paramStart == ':') paramStart++;
+        WCMD_set_label_end(paramStart);
+        TRACE("goto label: '%s'\n", wine_dbgstr_w(paramStart));
+
+        SetFilePointerEx(context->h, zeroli, &li, FILE_CURRENT);
+        if (WCMD_find_label(context->h, paramStart, &li))
+            return RETURN_CODE_ABORTED;
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
+        context->skip_rest = TRUE;
+    }
+    return ERROR_INVALID_FUNCTION;
 }
 
 /*****************************************************************************

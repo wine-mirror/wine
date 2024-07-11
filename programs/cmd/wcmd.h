@@ -221,6 +221,8 @@ void      node_dispose_tree(CMD_NODE *cmds);
 RETURN_CODE node_execute(CMD_NODE *node);
 
 RETURN_CODE WCMD_call_batch(const WCHAR *, WCHAR *);
+BOOL WCMD_find_label(HANDLE h, const WCHAR*, LARGE_INTEGER *pos);
+void WCMD_set_label_end(WCHAR *string);
 
 void *xrealloc(void *, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free);
 
