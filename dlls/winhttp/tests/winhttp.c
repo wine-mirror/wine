@@ -5795,7 +5795,9 @@ static void test_max_http_automatic_redirects (void)
     size = sizeof(url);
     ret = WinHttpQueryOption(request, WINHTTP_OPTION_URL, url, &size);
     ok(ret, "got %lu\n", GetLastError());
-    ok(!wcscmp(url, L"http://test.winehq.org/tests/redirecttest.php?id=2&max=3"), "got %s\n", wine_dbgstr_w(url));
+    ok(!wcscmp(url, L"http://test.winehq.org/tests/redirecttest.php?id=2&max=3") ||
+       broken(!wcscmp(url, L"http://test.winehq.org/tests/redirecttest.php?id=1&max=3")) /* < Win10 1809 */,
+       "got %s\n", wine_dbgstr_w(url));
 
  done:
     ret = WinHttpCloseHandle(request);
