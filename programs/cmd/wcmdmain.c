@@ -2691,8 +2691,18 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
 
     if (feed)
     {
-        HANDLE from = context ? context->h : GetStdHandle(STD_INPUT_HANDLE);
-        if (!WCMD_fgets(buffer, MAXSTRING, from))
+        BOOL ret;
+        if (context)
+        {
+            LARGE_INTEGER zeroli = {.QuadPart = 0};
+
+            ret = SetFilePointerEx(context->h, context->file_position, NULL, FILE_BEGIN) &&
+                !!WCMD_fgets(buffer, MAXSTRING, context->h) &&
+                SetFilePointerEx(context->h, zeroli, &context->file_position, FILE_CURRENT);
+        }
+        else
+            ret = !!WCMD_fgets(buffer, MAXSTRING, GetStdHandle(STD_INPUT_HANDLE));
+        if (!ret)
         {
             buffer[0] = L'\0';
             return NULL;

@@ -260,6 +260,7 @@ typedef struct _BATCH_CONTEXT
 {
     WCHAR *command;	  /* The command which invoked the batch file */
     HANDLE h;             /* Handle to the open batch file */
+    LARGE_INTEGER file_position;
     WCHAR *batchfileW;    /* Name of same */
     int shift_count[10];  /* Offset in terms of shifts for %0 - %9 */
     struct _BATCH_CONTEXT *prev_context; /* Pointer to the previous context block */

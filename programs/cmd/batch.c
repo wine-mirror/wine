@@ -87,6 +87,7 @@ RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
     prev_context = context;
     context = malloc(sizeof (BATCH_CONTEXT));
     context->h = h;
+    context->file_position.QuadPart = 0;
     context->batchfileW = xstrdupW(file);
     context->command = command;
     memset(context->shift_count, 0x00, sizeof(context->shift_count));
@@ -658,7 +659,6 @@ RETURN_CODE WCMD_call(WCHAR *command)
     }
     else if (context)
     {
-        LARGE_INTEGER li;
         WCHAR gotoLabel[MAX_PATH];
         BATCH_CONTEXT *prev_context;
 
@@ -668,15 +668,10 @@ RETURN_CODE WCMD_call(WCHAR *command)
            as for loop variables do not survive a call                    */
         WCMD_save_for_loop_context(TRUE);
 
-        /* Save the current file position, call the same file,
-           restore position                                    */
-        li.QuadPart = 0;
-        li.u.LowPart = SetFilePointer(context->h, li.u.LowPart,
-                                      &li.u.HighPart, FILE_CURRENT);
-
         prev_context = context;
         context = malloc(sizeof (BATCH_CONTEXT));
         context->h = prev_context->h;
+        context->file_position = prev_context->file_position; /* will be overwritten by WCMD_GOTO below */
         context->batchfileW = prev_context->batchfileW;
         context->command = buffer;
         memset(context->shift_count, 0x00, sizeof(context->shift_count));
@@ -692,7 +687,8 @@ RETURN_CODE WCMD_call(WCHAR *command)
         free(context);
         context = prev_context;
         return_code = errorlevel;
-        SetFilePointer(context->h, li.u.LowPart, &li.u.HighPart, FILE_BEGIN);
+        if (!SetFilePointerEx(context->h, context->file_position, NULL, FILE_BEGIN))
+            return ERROR_INVALID_FUNCTION;
 
         /* Restore the for loop context */
         WCMD_restore_for_loop_context();

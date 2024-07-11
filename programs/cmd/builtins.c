@@ -1818,7 +1818,7 @@ RETURN_CODE WCMD_goto(void)
     if (context != NULL)
     {
         WCHAR *paramStart = param1;
-        LARGE_INTEGER li, zeroli = {.QuadPart = 0};
+
         if (!param1[0])
         {
             WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
@@ -1837,8 +1837,7 @@ RETURN_CODE WCMD_goto(void)
         WCMD_set_label_end(paramStart);
         TRACE("goto label: '%s'\n", wine_dbgstr_w(paramStart));
 
-        SetFilePointerEx(context->h, zeroli, &li, FILE_CURRENT);
-        if (WCMD_find_label(context->h, paramStart, &li))
+        if (WCMD_find_label(context->h, paramStart, &context->file_position))
             return RETURN_CODE_ABORTED;
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
         context->skip_rest = TRUE;
