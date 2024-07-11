@@ -914,7 +914,7 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(handle->win32_funcs = load_driver( filename )))
+        if (!(handle->win32_funcs = handle->parent->win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
@@ -922,7 +922,6 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
-        handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLConnect( handle->win32_handle, ServerName, NameLength1, UserName, NameLength2,
@@ -2647,7 +2646,7 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(handle->win32_funcs = load_driver( filename )))
+        if (!(handle->win32_funcs = handle->parent->win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
@@ -2655,7 +2654,6 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
-        handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLBrowseConnect( handle->win32_handle, InConnectionString, StringLength1,
@@ -3309,7 +3307,7 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(handle->win32_funcs = load_driver( filename )))
+        if (!(handle->win32_funcs = handle->parent->win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
@@ -3317,7 +3315,6 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
-        handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLDriverConnect( handle->win32_handle, WindowHandle, InConnectionString, Length,
@@ -3467,7 +3464,7 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(handle->win32_funcs = load_driver( filename )))
+        if (!(handle->win32_funcs = handle->parent->win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
@@ -3475,7 +3472,6 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
-        handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLConnectW( handle->win32_handle, ServerName, NameLength1, UserName, NameLength2,
@@ -4048,7 +4044,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(handle->win32_funcs = load_driver( filename )))
+        if (!(handle->win32_funcs = handle->parent->win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
@@ -4056,7 +4052,6 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
-        handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, WindowHandle, InConnectionString, Length,
@@ -4338,7 +4333,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 
     if (has_suffix( filename, L".dll" ))
     {
-        if (!(handle->win32_funcs = load_driver( filename )))
+        if (!(handle->win32_funcs = handle->parent->win32_funcs = load_driver( filename )))
         {
             WARN( "failed to load driver %s\n", debugstr_w(filename) );
             goto done;
@@ -4346,7 +4341,6 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
         TRACE( "using Windows driver %s\n", debugstr_w(filename) );
 
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
-        handle->parent->win32_funcs = handle->win32_funcs;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
         ret = handle->win32_funcs->SQLBrowseConnectW( handle->win32_handle, InConnectionString, StringLength1,
