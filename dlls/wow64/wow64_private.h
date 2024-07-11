@@ -49,7 +49,7 @@ extern void     (WINAPI *pBTCpuNotifyMemoryProtect)( void *, SIZE_T, ULONG, BOOL
 extern void     (WINAPI *pBTCpuNotifyReadFile)( HANDLE, void *, SIZE_T, BOOL, NTSTATUS );
 extern void     (WINAPI *pBTCpuNotifyUnmapViewOfSection)( void *, BOOL, NTSTATUS );
 extern void     (WINAPI *pBTCpuUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION * );
-extern void     (WINAPI *pBTCpuThreadTerm)( HANDLE );
+extern void     (WINAPI *pBTCpuThreadTerm)( HANDLE, LONG );
 
 struct object_attr64
 {

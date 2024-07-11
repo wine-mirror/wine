@@ -1829,6 +1829,18 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
 
+    if ((ptr = hook_notification_function( module, "BTCpuThreadTerm", "ThreadTerm" )))
+    {
+        struct expected_notification expect = { 2, { 0xdead, 0xbeef } };
+
+        reset_results( results );
+        status = NtTerminateThread( (HANDLE)0xdead, 0xbeef );
+        ok( status == STATUS_INVALID_HANDLE, "NtTerminateThread failed %lx\n", status );
+        expect_notifications( results, 1, &expect );
+
+        WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
+    }
+
     NtClose( mapping );
     NtClose( file );
     VirtualFree( code, 0, MEM_RELEASE );
