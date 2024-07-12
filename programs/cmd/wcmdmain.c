@@ -2695,10 +2695,21 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
         if (context)
         {
             LARGE_INTEGER zeroli = {.QuadPart = 0};
-
-            ret = SetFilePointerEx(context->h, context->file_position, NULL, FILE_BEGIN) &&
-                !!WCMD_fgets(buffer, MAXSTRING, context->h) &&
-                SetFilePointerEx(context->h, zeroli, &context->file_position, FILE_CURRENT);
+            HANDLE h = CreateFileW(context->batchfileW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                                   NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (h == INVALID_HANDLE_VALUE)
+            {
+                SetLastError(ERROR_FILE_NOT_FOUND);
+                WCMD_print_error();
+                ret = FALSE;
+            }
+            else
+            {
+                ret = SetFilePointerEx(h, context->file_position, NULL, FILE_BEGIN) &&
+                    !!WCMD_fgets(buffer, MAXSTRING, h) &&
+                    SetFilePointerEx(h, zeroli, &context->file_position, FILE_CURRENT);
+                CloseHandle(h);
+            }
         }
         else
             ret = !!WCMD_fgets(buffer, MAXSTRING, GetStdHandle(STD_INPUT_HANDLE));

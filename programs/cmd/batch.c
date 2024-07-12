@@ -71,22 +71,12 @@ static RETURN_CODE WCMD_batch_main_loop(void)
 
 RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
 {
-    HANDLE h = INVALID_HANDLE_VALUE;
     BATCH_CONTEXT *prev_context;
     RETURN_CODE return_code = NO_ERROR;
-
-    h = CreateFileW (file, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                     NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (h == INVALID_HANDLE_VALUE) {
-        SetLastError (ERROR_FILE_NOT_FOUND);
-        WCMD_print_error ();
-        return ERROR_INVALID_FUNCTION;
-    }
 
     /* Create a context structure for this batch file. */
     prev_context = context;
     context = malloc(sizeof (BATCH_CONTEXT));
-    context->h = h;
     context->file_position.QuadPart = 0;
     context->batchfileW = xstrdupW(file);
     context->command = command;
@@ -95,7 +85,6 @@ RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
     context->skip_rest = FALSE;
 
     return_code = WCMD_batch_main_loop();
-    CloseHandle (h);
 
     free(context->batchfileW);
     free(context);
@@ -670,7 +659,6 @@ RETURN_CODE WCMD_call(WCHAR *command)
 
         prev_context = context;
         context = malloc(sizeof (BATCH_CONTEXT));
-        context->h = prev_context->h;
         context->file_position = prev_context->file_position; /* will be overwritten by WCMD_GOTO below */
         context->batchfileW = prev_context->batchfileW;
         context->command = buffer;
@@ -687,8 +675,6 @@ RETURN_CODE WCMD_call(WCHAR *command)
         free(context);
         context = prev_context;
         return_code = errorlevel;
-        if (!SetFilePointerEx(context->h, context->file_position, NULL, FILE_BEGIN))
-            return ERROR_INVALID_FUNCTION;
 
         /* Restore the for loop context */
         WCMD_restore_for_loop_context();

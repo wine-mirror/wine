@@ -1818,6 +1818,8 @@ RETURN_CODE WCMD_goto(void)
     if (context != NULL)
     {
         WCHAR *paramStart = param1;
+        HANDLE h;
+        BOOL ret;
 
         if (!param1[0])
         {
@@ -1831,14 +1833,23 @@ RETURN_CODE WCMD_goto(void)
             context->skip_rest = TRUE;
             return RETURN_CODE_ABORTED;
         }
+        h = CreateFileW(context->batchfileW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h == INVALID_HANDLE_VALUE)
+        {
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            WCMD_print_error();
+            return ERROR_INVALID_FUNCTION;
+        }
 
         /* Support goto :label as well as goto label plus remove trailing chars */
         if (*paramStart == ':') paramStart++;
         WCMD_set_label_end(paramStart);
         TRACE("goto label: '%s'\n", wine_dbgstr_w(paramStart));
 
-        if (WCMD_find_label(context->h, paramStart, &context->file_position))
-            return RETURN_CODE_ABORTED;
+        ret = WCMD_find_label(h, paramStart, &context->file_position);
+        CloseHandle(h);
+        if (ret) return RETURN_CODE_ABORTED;
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
         context->skip_rest = TRUE;
     }

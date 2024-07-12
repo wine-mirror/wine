@@ -2010,7 +2010,7 @@ Normal+tab+garbage
 Success
 @todo_wine@Success
 ---- Testing nasty bits ----
-@todo_wine@------------ Testing combined CALLs/GOTOs ------------
+------------ Testing combined CALLs/GOTOs ------------
 world
 cheball
 barbare
