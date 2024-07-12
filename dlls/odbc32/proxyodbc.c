@@ -854,7 +854,20 @@ static SQLRETURN set_con_attr( struct handle *handle, SQLINTEGER attr, SQLPOINTE
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetConnectAttr( handle->win32_handle, attr, value, len );
+        switch (attr)
+        {
+        case SQL_ATTR_CURRENT_CATALOG:
+        case SQL_ATTR_TRACEFILE:
+        case SQL_ATTR_TRANSLATE_LIB:
+            ERR( "string attribute %u not handled\n", attr );
+            return SQL_ERROR;
+        default:
+            break;
+        }
+        if (handle->win32_funcs->SQLSetConnectAttrW)
+            ret = handle->win32_funcs->SQLSetConnectAttrW( handle->win32_handle, attr, value, len );
+        else if (handle->win32_funcs->SQLSetConnectAttr)
+            ret = handle->win32_funcs->SQLSetConnectAttr( handle->win32_handle, attr, value, len );
     }
     return ret;
 }
