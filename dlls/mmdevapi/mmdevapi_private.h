@@ -53,8 +53,6 @@ typedef struct MMDevice {
     IMMEndpoint IMMEndpoint_iface;
     LONG ref;
 
-    CRITICAL_SECTION crst;
-
     EDataFlow flow;
     DWORD state;
     GUID devguid;

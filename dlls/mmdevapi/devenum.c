@@ -366,9 +366,6 @@ static MMDevice *MMDevice_Create(const WCHAR *name, GUID *id, EDataFlow flow, DW
         cur->IMMDevice_iface.lpVtbl = &MMDeviceVtbl;
         cur->IMMEndpoint_iface.lpVtbl = &MMEndpointVtbl;
 
-        InitializeCriticalSectionEx(&cur->crst, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
-        cur->crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MMDevice.crst");
-
         list_add_tail(&device_list, &cur->entry);
     }else if(cur->ref > 0)
         WARN("Modifying an MMDevice with postitive reference count!\n");
@@ -584,8 +581,6 @@ static void MMDevice_Destroy(MMDevice *This)
 {
     TRACE("Freeing %s\n", debugstr_w(This->drv_id));
     list_remove(&This->entry);
-    This->crst.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->crst);
     free(This->drv_id);
     free(This);
 }
