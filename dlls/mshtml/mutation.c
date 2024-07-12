@@ -312,9 +312,9 @@ static nsresult run_end_load(HTMLDocumentNode *This, nsISupports *arg1, nsISuppo
 
     bind_event_scripts(This);
 
-    if(This->window == window) {
+    if(This->window == window && window->base.outer_window) {
         window->dom_interactive_time = get_time_stamp();
-        set_ready_state(This->window->base.outer_window, READYSTATE_INTERACTIVE);
+        set_ready_state(window->base.outer_window, READYSTATE_INTERACTIVE);
     }
     IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
     return NS_OK;
