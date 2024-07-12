@@ -20229,6 +20229,8 @@ static void test_d3d_state_reset(void)
     ok(hr == DD_OK, "got %#lx.\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, TRUE);
     ok(hr == DD_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
 
     hr = IDirect3DDevice7_GetViewport(device, &vp1);
     ok(hr == DD_OK, "got %#lx.\n", hr);
@@ -20269,6 +20271,8 @@ static void test_d3d_state_reset(void)
     hr = IDirect3DDevice7_GetRenderState(device, D3DRENDERSTATE_ZENABLE, &state);
     ok(hr == DD_OK, "got %#lx.\n", hr);
     ok(state == TRUE, "got %#lx.\n", state);
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == D3DERR_SCENE_IN_SCENE, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
     ok(hr == DD_OK, "got %#lx.\n", hr);
