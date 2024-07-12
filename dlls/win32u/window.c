@@ -1202,7 +1202,7 @@ static HWND set_window_owner( HWND hwnd, HWND owner )
 /* Helper function for SetWindowLong(). */
 LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOOL ansi )
 {
-    BOOL ok, made_visible = FALSE, layered = TRUE;
+    BOOL ok, made_visible = FALSE, layered = FALSE;
     LONG_PTR retval = 0;
     STYLESTRUCT style;
     WND *win;
