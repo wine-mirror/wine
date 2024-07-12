@@ -1217,8 +1217,16 @@ SQLRETURN WINAPI SQLError(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, S
     }
     else if ((env && env->win32_handle) || (con && con->win32_handle) || (stmt && stmt->win32_handle))
     {
-        ret = env->win32_funcs->SQLError( env->win32_handle, con->win32_handle, stmt->win32_handle, SqlState,
-                                          NativeError, MessageText, BufferLength, TextLength );
+        const struct win32_funcs *win32_funcs = NULL;
+
+        if (env) win32_funcs = env->win32_funcs;
+        else if (con) win32_funcs = con->win32_funcs;
+        else if (stmt) win32_funcs = stmt->win32_funcs;
+
+        ret = win32_funcs->SQLError( env ? env->win32_handle : NULL,
+                                     con ? con->win32_handle : NULL,
+                                     stmt ? stmt->win32_handle : NULL,
+                                     SqlState, NativeError, MessageText, BufferLength, TextLength );
     }
 
     if (SUCCESS( ret ))
@@ -3781,10 +3789,16 @@ SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, 
     }
     else if ((env && env->win32_handle) || (con && con->win32_handle) || (stmt && stmt->win32_handle))
     {
-        ret = env->win32_funcs->SQLErrorW( env ? env->win32_handle : NULL,
-                                           con ? con->win32_handle : NULL,
-                                           stmt ? stmt->win32_handle : NULL,
-                                           SqlState, NativeError, MessageText, BufferLength, TextLength );
+        const struct win32_funcs *win32_funcs = NULL;
+
+        if (env) win32_funcs = env->win32_funcs;
+        else if (con) win32_funcs = con->win32_funcs;
+        else if (stmt) win32_funcs = stmt->win32_funcs;
+
+        ret = win32_funcs->SQLErrorW( env ? env->win32_handle : NULL,
+                                      con ? con->win32_handle : NULL,
+                                      stmt ? stmt->win32_handle : NULL,
+                                      SqlState, NativeError, MessageText, BufferLength, TextLength );
     }
 
     if (SUCCESS(ret ))
