@@ -3911,6 +3911,12 @@ echo abc > 012345678901234
 if exist 012345678901234 (echo Failure) else echo Success
 popd
 rmdir /s /q c:\abcdefghij
+echo ---- Testing nasty bits ----
+echo erase /q foobar.bat > foobar.bat
+echo echo shouldnot >> foobar.bat
+call foobar.bat
+if exist foobar.bat (echo stillthere & erase /q foobar.bat >NUL)
+
 echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd
