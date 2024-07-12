@@ -1410,7 +1410,7 @@ HRESULT get_node(nsIDOMNode *nsnode, BOOL create, HTMLDOMNode **ret)
 
     hres = get_document_node(dom_document, &document);
     nsIDOMDocument_Release(dom_document);
-    if(!document)
+    if(FAILED(hres))
         return E_FAIL;
 
     hres = create_node(document, nsnode, ret);
