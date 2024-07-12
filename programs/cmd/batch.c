@@ -32,7 +32,7 @@ static RETURN_CODE WCMD_batch_main_loop(void)
     {
         CMD_NODE *node;
 
-        switch (WCMD_ReadAndParseLine(NULL, &node, context->h))
+        switch (WCMD_ReadAndParseLine(NULL, &node))
         {
         case RPL_EOF:
             context->skip_rest = TRUE;

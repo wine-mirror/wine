@@ -2677,7 +2677,7 @@ static void lexer_push_command(struct node_builder *builder,
     *copyTo       = command;
 }
 
-static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* buffer)
+static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
 {
     /* display prompt */
     if (interactive && !context)
@@ -2689,10 +2689,14 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* bu
             WCMD_show_prompt();
     }
 
-    if (feed && !WCMD_fgets(buffer, MAXSTRING, from))
+    if (feed)
     {
-        buffer[0] = L'\0';
-        return NULL;
+        HANDLE from = context ? context->h : GetStdHandle(STD_INPUT_HANDLE);
+        if (!WCMD_fgets(buffer, MAXSTRING, from))
+        {
+            buffer[0] = L'\0';
+            return NULL;
+        }
     }
     /* Handle truncated input - issue warning */
     if (wcslen(buffer) == MAXSTRING - 1)
@@ -2753,7 +2757,7 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* bu
  *     - Anything else gets put into the command string (including
  *            redirects)
  */
-enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE readFrom)
+enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output)
 {
     WCHAR    *curPos;
     int       inQuotes = 0;
@@ -2788,7 +2792,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     /* If initial command read in, use that, otherwise get input from handle */
     if (optionalcmd)
         wcscpy(extraSpace, optionalcmd);
-    if (!(curPos = fetch_next_line(optionalcmd == NULL, TRUE, readFrom, extraSpace)))
+    if (!(curPos = fetch_next_line(optionalcmd == NULL, TRUE, extraSpace)))
         return RPL_EOF;
 
     TRACE("About to parse line (%ls)\n", extraSpace);
@@ -3051,12 +3055,13 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                   if (curPos[1] == L'\0') {
                     TRACE("Caret found at end of line\n");
                     extraSpace[0] = L'^';
-                    if (!fetch_next_line(TRUE, FALSE, readFrom, extraSpace + 1))
+                    if (optionalcmd) break;
+                    if (!fetch_next_line(TRUE, FALSE, extraSpace + 1))
                         break;
                     if (!extraSpace[1]) /* empty line */
                     {
                         extraSpace[1] = L'\r';
-                        if (!fetch_next_line(TRUE, FALSE, readFrom, extraSpace + 2))
+                        if (!fetch_next_line(TRUE, FALSE, extraSpace + 2))
                             break;
                     }
                     curPos = extraSpace;
@@ -3127,7 +3132,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           node_builder_push_token(&builder, TKN_EOL);
 
           /* If we have reached the end of the string, see if bracketing is outstanding */
-          if (builder.opened_parenthesis > 0 && readFrom != INVALID_HANDLE_VALUE) {
+          if (builder.opened_parenthesis > 0 && optionalcmd == NULL) {
               TRACE("Need to read more data as outstanding brackets or carets\n");
               inOneLine = FALSE;
               ignoreBracket = FALSE;
@@ -3137,7 +3142,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
               /* fetch next non empty line */
               do {
-                  curPos = fetch_next_line(TRUE, FALSE, readFrom, extraSpace);
+                  curPos = fetch_next_line(TRUE, FALSE, extraSpace);
               } while (curPos && *curPos == L'\0');
               if (!curPos)
                   curPos = extraSpace;
@@ -4053,7 +4058,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
        */
 
       /* Parse the command string, without reading any more input */
-      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
+      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute);
       if (rpl_status == RPL_SUCCESS && toExecute)
       {
           node_execute(toExecute);
@@ -4137,7 +4142,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
   if (opt_k)
   {
-      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
+      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute);
       /* Parse the command string, without reading any more input */
       if (rpl_status == RPL_SUCCESS && toExecute)
       {
@@ -4157,7 +4162,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   if (!opt_k) WCMD_output_asis(version_string);
   if (echo_mode) WCMD_output_asis(L"\r\n");
   /* Read until EOF (which for std input is never, but if redirect in place, may occur */
-  while ((rpl_status = WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE))) != RPL_EOF)
+  while ((rpl_status = WCMD_ReadAndParseLine(NULL, &toExecute)) != RPL_EOF)
   {
       if (rpl_status == RPL_SUCCESS && toExecute)
       {

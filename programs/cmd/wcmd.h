@@ -216,7 +216,7 @@ WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int 
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
 enum read_parse_line {RPL_SUCCESS, RPL_EOF, RPL_SYNTAXERROR};
-enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output, HANDLE readFrom);
+enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output);
 void      node_dispose_tree(CMD_NODE *cmds);
 RETURN_CODE node_execute(CMD_NODE *node);
 
