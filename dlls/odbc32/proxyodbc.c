@@ -3276,6 +3276,57 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
     return ret;
 }
 
+static WCHAR *strnAtoW( const SQLCHAR *str, int in_len )
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, (const char *)str, in_len, NULL, 0 );
+        if ((ret = malloc( (len + 1) * sizeof(WCHAR) )))
+        {
+            MultiByteToWideChar( CP_ACP, 0, (const char *)str, in_len, ret, len );
+            ret[len] = 0;
+        }
+    }
+    return ret;
+}
+
+static SQLRETURN driver_connect_win32_a( struct handle *handle, SQLHWND window, SQLCHAR *in_conn_str,
+                                         SQLSMALLINT inlen, SQLCHAR *out_conn_str, SQLSMALLINT buflen,
+                                         SQLSMALLINT *outlen, SQLUSMALLINT completion )
+{
+    SQLRETURN ret = SQL_ERROR;
+    SQLWCHAR *in, *out = NULL;
+    SQLSMALLINT lenW;
+
+    if (handle->win32_funcs->SQLDriverConnect)
+        return handle->win32_funcs->SQLDriverConnect( handle->win32_handle, window, in_conn_str, inlen, out_conn_str,
+                                                      buflen, outlen, completion );
+
+    if (!(in = strnAtoW( in_conn_str, inlen ))) return SQL_ERROR;
+    if (!(out = malloc( buflen * sizeof(WCHAR) ))) goto done;
+    ret = handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, window, in, inlen, out, buflen, &lenW,
+                                                  completion );
+    if (SUCCESS( ret ))
+    {
+        int len = WideCharToMultiByte( CP_ACP, 0, out, -1, (char *)out_conn_str, buflen, NULL, NULL );
+        if (outlen) *outlen = len - 1;
+    }
+done:
+    free( in );
+    free( out );
+    return ret;
+}
+
+static SQLRETURN driver_connect_unix_a( struct handle *handle, SQLHWND window, SQLCHAR *in_conn_str, SQLSMALLINT len,
+                                        SQLCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *len2,
+                                        SQLUSMALLINT completion )
+{
+    struct SQLDriverConnect_params params = { handle->unix_handle, window, in_conn_str, len, out_conn_str, buflen,
+                                              len2, completion };
+    return ODBC_CALL( SQLDriverConnect, &params );
+}
+
 /*************************************************************************
  *				SQLDriverConnect           [ODBC32.041]
  */
@@ -3287,8 +3338,8 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
     WCHAR *datasource = NULL, *filename = NULL, *connection_string = strdupAW( (const char *)InConnectionString );
     SQLRETURN ret = SQL_ERROR;
 
-    TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString, %p,"
-          " BufferLength, %d, Length2 %p, DriverCompletion %d)\n", ConnectionHandle, WindowHandle,
+    TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
+          " BufferLength %d, Length2 %p, DriverCompletion %d)\n", ConnectionHandle, WindowHandle,
           debugstr_an((const char *)InConnectionString, Length), Length, OutConnectionString, BufferLength,
           Length2, DriverCompletion);
 
@@ -3318,20 +3369,18 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        ret = handle->win32_funcs->SQLDriverConnect( handle->win32_handle, WindowHandle, InConnectionString, Length,
-                                                     OutConnectionString, BufferLength, Length2, DriverCompletion );
+        ret = driver_connect_win32_a( handle, WindowHandle, InConnectionString, Length, OutConnectionString,
+                                      BufferLength, Length2, DriverCompletion );
     }
     else
     {
-        struct SQLDriverConnect_params params = { 0, WindowHandle, InConnectionString, Length, OutConnectionString,
-                                                  BufferLength, Length2, DriverCompletion };
-
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+
         if (!SUCCESS((ret = create_env( handle->parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        params.ConnectionHandle = handle->unix_handle;
-        ret = ODBC_CALL( SQLDriverConnect, &params );
+        ret = driver_connect_unix_a( handle, WindowHandle, InConnectionString, Length, OutConnectionString,
+                                     BufferLength, Length2, DriverCompletion );
     }
 
 done:
@@ -4013,6 +4062,27 @@ SQLRETURN WINAPI SQLColumnsW(SQLHSTMT StatementHandle, WCHAR *CatalogName, SQLSM
     return ret;
 }
 
+static SQLRETURN driver_connect_win32_w( struct handle *handle, SQLHWND window, SQLWCHAR *in_conn_str,
+                                         SQLSMALLINT len, SQLWCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *len2,
+                                         SQLUSMALLINT completion )
+{
+    if (handle->win32_funcs->SQLDriverConnectW)
+        return handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, window, in_conn_str, len, out_conn_str,
+                                                       buflen, len2, completion );
+
+    if (handle->win32_funcs->SQLDriverConnect) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
+static SQLRETURN driver_connect_unix_w( struct handle *handle, SQLHWND window, SQLWCHAR *in_conn_str, SQLSMALLINT len,
+                                        SQLWCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *len2,
+                                        SQLUSMALLINT completion )
+{
+    struct SQLDriverConnectW_params params = { handle->unix_handle, window, in_conn_str, len, out_conn_str, buflen,
+                                               len2, completion };
+    return ODBC_CALL( SQLDriverConnectW, &params );
+}
+
 /*************************************************************************
  *				SQLDriverConnectW          [ODBC32.141]
  */
@@ -4055,20 +4125,18 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        ret = handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, WindowHandle, InConnectionString, Length,
-                                                      OutConnectionString, BufferLength, Length2, DriverCompletion );
+        ret = driver_connect_win32_w( handle, WindowHandle, InConnectionString, Length, OutConnectionString,
+                                      BufferLength, Length2, DriverCompletion );
     }
     else
     {
-        struct SQLDriverConnectW_params params = { 0, WindowHandle, InConnectionString, Length, OutConnectionString,
-                                                   BufferLength, Length2, DriverCompletion };
-
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+
         if (!SUCCESS((ret = create_env( handle->parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        params.ConnectionHandle = handle->unix_handle;
-        ret = ODBC_CALL( SQLDriverConnectW, &params );
+        ret = driver_connect_unix_w( handle, WindowHandle, InConnectionString, Length, OutConnectionString,
+                                     BufferLength, Length2, DriverCompletion);
     }
 
 done:
