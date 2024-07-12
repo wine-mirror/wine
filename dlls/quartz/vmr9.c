@@ -181,6 +181,42 @@ static inline struct quartz_vmr *impl_from_IBaseFilter(IBaseFilter *iface)
     return CONTAINING_RECORD(iface, struct quartz_vmr, renderer.filter.IBaseFilter_iface);
 }
 
+static void copy_plane(BYTE **dstp, unsigned int dst_pitch, unsigned int dst_height,
+                       const BYTE **srcp, unsigned int src_pitch, int src_height)
+{
+    size_t copy_size = min(src_pitch, dst_pitch);
+    const BYTE *src = *srcp;
+    BYTE *dst = *dstp;
+    unsigned int i;
+
+    if (src_height < 0)
+    {
+        TRACE("Inverting image.\n");
+
+        src_height = -src_height;
+        src += src_height * src_pitch;
+
+        for (i = 0; i < src_height; ++i)
+        {
+            src -= src_pitch;
+            memcpy(dst, src, copy_size);
+            dst += dst_pitch;
+        }
+    }
+    else
+    {
+        for (i = 0; i < src_height; ++i)
+        {
+            memcpy(dst, src, copy_size);
+            dst += dst_pitch;
+            src += src_pitch;
+        }
+    }
+
+    *srcp += src_pitch * src_height;
+    *dstp += dst_pitch * dst_height;
+}
+
 static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
@@ -257,36 +293,40 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
         return hr;
     }
 
-    if (height > 0 && bitmap_header->biCompression == BI_RGB)
+    if (bitmap_header->biCompression == mmioFOURCC('N','V','1','2'))
     {
-        BYTE *dst = (BYTE *)locked_rect.pBits + (height * locked_rect.Pitch);
+        BYTE *dst = locked_rect.pBits;
         const BYTE *src = data;
 
-        TRACE("Inverting image.\n");
+        copy_plane(&dst, locked_rect.Pitch, dst_desc.Height, &src, src_pitch, height);
+        copy_plane(&dst, locked_rect.Pitch, dst_desc.Height / 2, &src, src_pitch, height / 2);
+    }
+    else if (bitmap_header->biCompression == mmioFOURCC('Y','V','1','2'))
+    {
+        BYTE *dst = locked_rect.pBits;
+        const BYTE *src = data;
 
-        while (height--)
-        {
-            dst -= locked_rect.Pitch;
-            memcpy(dst, src, width * depth / 8);
-            src += src_pitch;
-        }
+        copy_plane(&dst, locked_rect.Pitch, dst_desc.Height, &src, src_pitch, height);
+        copy_plane(&dst, locked_rect.Pitch / 2, dst_desc.Height / 2, &src, src_pitch / 2, height / 2);
+        copy_plane(&dst, locked_rect.Pitch / 2, dst_desc.Height / 2, &src, src_pitch / 2, height / 2);
+    }
+    else if (height > 0 && bitmap_header->biCompression == BI_RGB)
+    {
+        BYTE *dst = locked_rect.pBits;
+        const BYTE *src = data;
+
+        copy_plane(&dst, locked_rect.Pitch, dst_desc.Height, &src, src_pitch, -height);
     }
     else if (locked_rect.Pitch != src_pitch)
     {
         BYTE *dst = locked_rect.pBits;
         const BYTE *src = data;
 
-        height = abs(height);
-
         TRACE("Source pitch %u does not match dest pitch %u; copying manually.\n",
                 src_pitch, locked_rect.Pitch);
 
-        while (height--)
-        {
-            memcpy(dst, src, width * depth / 8);
-            src += src_pitch;
-            dst += locked_rect.Pitch;
-        }
+        height = abs(height);
+        copy_plane(&dst, locked_rect.Pitch, dst_desc.Height, &src, src_pitch, height);
     }
     else
     {
