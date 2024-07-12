@@ -189,6 +189,7 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
     REFERENCE_TIME start_time, end_time;
     VMR9PresentationInfo info = {};
     D3DLOCKED_RECT locked_rect;
+    D3DSURFACE_DESC dst_desc;
     BYTE *data = NULL;
     HRESULT hr;
     int height;
@@ -239,6 +240,16 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
     info.szAspectRatio.cx = width;
     info.szAspectRatio.cy = height;
     info.lpSurf = filter->surfaces[(++filter->cur_surface) % filter->num_surfaces];
+
+    if (FAILED(hr = IDirect3DSurface9_GetDesc(info.lpSurf, &dst_desc)))
+    {
+        ERR("Failed to get rendering surface description.\n");
+        return hr;
+    }
+
+    if (width > dst_desc.Width || abs(height) > dst_desc.Height)
+        FIXME("src surface (%ux%u) larger than rendering surface (%ux%u).\n", width, height,
+                dst_desc.Width, dst_desc.Height);
 
     if (FAILED(hr = IDirect3DSurface9_LockRect(info.lpSurf, &locked_rect, NULL, D3DLOCK_DISCARD)))
     {
