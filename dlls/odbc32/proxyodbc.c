@@ -338,32 +338,20 @@ static const struct win32_funcs *load_driver( const WCHAR *filename )
 {
     HMODULE module;
     struct win32_driver *driver;
-    WCHAR *ptr, *path = wcsdup( filename );
+    WCHAR *ptr;
     UINT32 i;
 
     for (i = 0; i < win32_drivers.count; i++)
     {
-        if (!wcsicmp( filename, win32_drivers.drivers[i]->filename ))
-        {
-            free( path );
-            return &win32_drivers.drivers[i]->funcs;
-        }
+        if (!wcsicmp( filename, win32_drivers.drivers[i]->filename )) return &win32_drivers.drivers[i]->funcs;
     }
 
-    if (!(driver = malloc( sizeof(*driver) + (wcslen(filename) + 1) * sizeof(WCHAR) )))
-    {
-        free( path );
-        return NULL;
-    }
+    if (!(driver = malloc( sizeof(*driver) + (wcslen(filename) + 1) * sizeof(WCHAR) ))) return NULL;
     ptr = (WCHAR *)(driver + 1);
     wcscpy( ptr, filename );
     driver->filename = ptr;
 
-    if ((ptr = wcsrchr( path, '\\' )) || (ptr = wcsrchr( path, '/' ))) *ptr = 0;
-    SetDllDirectoryW( path );
-    module = LoadLibraryW( filename );
-    SetDllDirectoryW( NULL );
-    free( path );
+    module = LoadLibraryExW( filename, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS );
     if (!module)
     {
         free( driver );
