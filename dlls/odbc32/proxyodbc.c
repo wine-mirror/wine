@@ -1730,6 +1730,40 @@ SQLRETURN WINAPI SQLGetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSM
     return ret;
 }
 
+static SQLRETURN get_diag_rec_unix_a( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT rec_num,
+                                      SQLCHAR *state, SQLINTEGER *native_err, SQLCHAR *msg, SQLSMALLINT buflen,
+                                      SQLSMALLINT *retlen )
+{
+    struct SQLGetDiagRec_params params = { handle_type, handle->unix_handle, rec_num, state, native_err, msg,
+                                           buflen, retlen };
+    return ODBC_CALL( SQLGetDiagRec, &params );
+}
+
+static SQLRETURN get_diag_rec_win32_a( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT rec_num,
+                                       SQLCHAR *state, SQLINTEGER *native_err, SQLCHAR *msg, SQLSMALLINT buflen,
+                                       SQLSMALLINT *retlen )
+{
+    SQLRETURN ret = SQL_ERROR;
+    SQLWCHAR stateW[6], *msgW = NULL;
+    SQLSMALLINT lenW;
+
+    if (handle->win32_funcs->SQLGetDiagRec)
+        return handle->win32_funcs->SQLGetDiagRec( handle_type, handle->win32_handle, rec_num, state, native_err,
+                                                   msg, buflen, retlen );
+
+    if (!(msgW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+    ret = handle->win32_funcs->SQLGetDiagRecW( handle_type, handle->win32_handle, rec_num, stateW, native_err,
+                                               msgW, buflen, &lenW );
+    if (SUCCESS( ret ))
+    {
+        int len = WideCharToMultiByte( CP_ACP, 0, msgW, -1, (char *)msg, buflen, NULL, NULL );
+        if (retlen) *retlen = len - 1;
+        WideCharToMultiByte( CP_ACP, 0, stateW, -1, (char *)state, 6, NULL, NULL );
+    }
+    free( msgW );
+    return ret;
+}
+
 /*************************************************************************
  *				SQLGetDiagRec           [ODBC32.036]
  */
@@ -1748,14 +1782,13 @@ SQLRETURN WINAPI SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMAL
 
     if (handle->unix_handle)
     {
-        struct SQLGetDiagRec_params params = { HandleType, handle->unix_handle, RecNumber, SqlState, NativeError,
-                                               MessageText, BufferLength, TextLength };
-        ret = ODBC_CALL( SQLGetDiagRec, &params );
+        ret = get_diag_rec_unix_a( HandleType, handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
+                                   TextLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetDiagRec( HandleType, handle->win32_handle, RecNumber, SqlState, NativeError,
-                                                  MessageText, BufferLength, TextLength );
+        ret = get_diag_rec_win32_a( HandleType, handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
+                                    TextLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3917,6 +3950,26 @@ SQLRETURN WINAPI SQLGetDiagFieldW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLS
     return ret;
 }
 
+static SQLRETURN get_diag_rec_unix_w( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT rec_num,
+                                      SQLWCHAR *state, SQLINTEGER *native_err, SQLWCHAR *msg, SQLSMALLINT buflen,
+                                      SQLSMALLINT *retlen )
+{
+    struct SQLGetDiagRecW_params params = { handle_type, handle->unix_handle, rec_num, state, native_err, msg,
+                                            buflen, retlen };
+    return ODBC_CALL( SQLGetDiagRecW, &params );
+}
+
+static SQLRETURN get_diag_rec_win32_w( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT rec_num,
+                                       SQLWCHAR *state, SQLINTEGER *native_err, SQLWCHAR *msg, SQLSMALLINT buflen,
+                                       SQLSMALLINT *retlen )
+{
+    if (handle->win32_funcs->SQLGetDiagRecW)
+        return handle->win32_funcs->SQLGetDiagRecW( handle_type, handle->win32_handle, rec_num, state, native_err,
+                                                    msg, buflen, retlen );
+    if (handle->win32_funcs->SQLGetDiagRec) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetDiagRecW           [ODBC32.136]
  */
@@ -3935,14 +3988,13 @@ SQLRETURN WINAPI SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMA
 
     if (handle->unix_handle)
     {
-        struct SQLGetDiagRecW_params params = { HandleType, handle->unix_handle, RecNumber, SqlState, NativeError,
-                                                MessageText, BufferLength, TextLength };
-        ret = ODBC_CALL( SQLGetDiagRecW, &params );
+        ret = get_diag_rec_unix_w( HandleType, handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
+                                   TextLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetDiagRecW( HandleType, handle->win32_handle, RecNumber, SqlState, NativeError,
-                                                   MessageText, BufferLength, TextLength );
+        ret = get_diag_rec_win32_w( HandleType, handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
+                                    TextLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4069,7 +4121,6 @@ static SQLRETURN driver_connect_win32_w( struct handle *handle, SQLHWND window, 
     if (handle->win32_funcs->SQLDriverConnectW)
         return handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, window, in_conn_str, len, out_conn_str,
                                                        buflen, len2, completion );
-
     if (handle->win32_funcs->SQLDriverConnect) FIXME( "Unicode to ANSI conversion not handled\n" );
     return SQL_ERROR;
 }
