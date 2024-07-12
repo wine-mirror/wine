@@ -1359,12 +1359,12 @@ SQLRETURN WINAPI SQLFreeConnect(SQLHDBC ConnectionHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLFreeConnect_params params = { handle->unix_handle };
-        ret = ODBC_CALL( SQLFreeConnect, &params );
+        struct SQLFreeHandle_params params = { SQL_HANDLE_DBC, handle->unix_handle };
+        ret = ODBC_CALL( SQLFreeHandle, &params );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLFreeConnect( handle->win32_handle );
+        ret = handle->win32_funcs->SQLFreeHandle( SQL_HANDLE_DBC, handle->win32_handle );
     }
 
     free( handle );
@@ -1386,12 +1386,12 @@ SQLRETURN WINAPI SQLFreeEnv(SQLHENV EnvironmentHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLFreeEnv_params params = { handle->unix_handle };
-        ret = ODBC_CALL( SQLFreeEnv, &params );
+        struct SQLFreeHandle_params params = { SQL_HANDLE_ENV, handle->unix_handle };
+        ret = ODBC_CALL( SQLFreeHandle, &params );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLFreeEnv( handle->win32_handle );
+        ret = handle->win32_funcs->SQLFreeHandle( SQL_HANDLE_ENV, handle->win32_handle );
     }
 
     RegCloseKey( handle->drivers_key );
