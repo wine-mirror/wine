@@ -2650,6 +2650,57 @@ static WCHAR *get_datasource( const WCHAR *connection_string )
     return ret;
 }
 
+static WCHAR *strnAtoW( const SQLCHAR *str, int len )
+{
+    WCHAR *ret;
+    int lenW;
+
+    if (!str) return NULL;
+
+    if (len == SQL_NTS) len = strlen( (const char *)str );
+    lenW = MultiByteToWideChar( CP_ACP, 0, (const char *)str, len, NULL, 0 );
+    if ((ret = malloc( (lenW + 1) * sizeof(WCHAR) )))
+    {
+        MultiByteToWideChar( CP_ACP, 0, (const char *)str, len, ret, lenW );
+        ret[lenW] = 0;
+    }
+    return ret;
+}
+
+static SQLRETURN browse_connect_win32_a( struct handle *handle, SQLCHAR *in_conn_str, SQLSMALLINT inlen,
+                                         SQLCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *outlen )
+{
+    SQLRETURN ret = SQL_ERROR;
+    SQLWCHAR *in = NULL, *out = NULL;
+    SQLSMALLINT lenW;
+
+    if (handle->win32_funcs->SQLBrowseConnect)
+        return handle->win32_funcs->SQLBrowseConnect( handle->win32_handle, in_conn_str, inlen, out_conn_str,
+                                                      buflen, outlen );
+    if (handle->win32_funcs->SQLBrowseConnectW)
+    {
+        if (!(in = strnAtoW( in_conn_str, inlen ))) return SQL_ERROR;
+        if (!(out = malloc( buflen * sizeof(WCHAR) ))) goto done;
+        ret = handle->win32_funcs->SQLBrowseConnectW( handle->win32_handle, in, inlen, out, buflen, &lenW );
+        if (SUCCESS( ret ))
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, out, -1, (char *)out_conn_str, buflen, NULL, NULL );
+            if (outlen) *outlen = len - 1;
+        }
+    }
+done:
+    free( in );
+    free( out );
+    return ret;
+}
+
+static SQLRETURN browse_connect_unix_a( struct handle *handle, SQLCHAR *in_conn_str, SQLSMALLINT len,
+                                        SQLCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *len2 )
+{
+    struct SQLBrowseConnect_params params = { handle->unix_handle, in_conn_str, len, out_conn_str, buflen, len2 };
+    return ODBC_CALL( SQLBrowseConnect, &params );
+}
+
 /*************************************************************************
  *				SQLBrowseConnect           [ODBC32.055]
  */
@@ -2690,20 +2741,18 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        ret = handle->win32_funcs->SQLBrowseConnect( handle->win32_handle, InConnectionString, StringLength1,
-                                                     OutConnectionString, BufferLength, StringLength2 );
+        ret = browse_connect_win32_a( handle, InConnectionString, StringLength1, OutConnectionString,
+                                      BufferLength, StringLength2 );
     }
     else
     {
-        struct SQLBrowseConnect_params params = { 0, InConnectionString, StringLength1, OutConnectionString,
-                                                  BufferLength, StringLength2 };
-
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+
         if (!SUCCESS((ret = create_env( handle->parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        params.ConnectionHandle = handle->unix_handle;
-        ret = ODBC_CALL( SQLBrowseConnect, &params );
+        ret = browse_connect_unix_a( handle, InConnectionString, StringLength1, OutConnectionString,
+                                     BufferLength, StringLength2 );
     }
 
 done:
@@ -3306,21 +3355,6 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
     }
 
     TRACE("Returning %d\n", ret);
-    return ret;
-}
-
-static WCHAR *strnAtoW( const SQLCHAR *str, int in_len )
-{
-    WCHAR *ret = NULL;
-    if (str)
-    {
-        int len = MultiByteToWideChar( CP_ACP, 0, (const char *)str, in_len, NULL, 0 );
-        if ((ret = malloc( (len + 1) * sizeof(WCHAR) )))
-        {
-            MultiByteToWideChar( CP_ACP, 0, (const char *)str, in_len, ret, len );
-            ret[len] = 0;
-        }
-    }
     return ret;
 }
 
@@ -4423,6 +4457,23 @@ SQLRETURN WINAPI SQLTablesW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQL
     return ret;
 }
 
+static SQLRETURN browse_connect_win32_w( struct handle *handle, SQLWCHAR *in_conn_str, SQLSMALLINT len,
+                                         SQLWCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *len2 )
+{
+    if (handle->win32_funcs->SQLBrowseConnectW)
+        return handle->win32_funcs->SQLBrowseConnectW( handle->win32_handle, in_conn_str, len, out_conn_str,
+                                                       buflen, len2 );
+    if (handle->win32_funcs->SQLBrowseConnect) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
+static SQLRETURN browse_connect_unix_w( struct handle *handle, SQLWCHAR *in_conn_str, SQLSMALLINT len,
+                                        SQLWCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *len2 )
+{
+    struct SQLBrowseConnectW_params params = { handle->unix_handle, in_conn_str, len, out_conn_str, buflen, len2 };
+    return ODBC_CALL( SQLBrowseConnectW, &params );
+}
+
 /*************************************************************************
  *				SQLBrowseConnectW          [ODBC32.155]
  */
@@ -4463,20 +4514,18 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        ret = handle->win32_funcs->SQLBrowseConnectW( handle->win32_handle, InConnectionString, StringLength1,
-                                                      OutConnectionString, BufferLength, StringLength2 );
+        ret = browse_connect_win32_w( handle, InConnectionString, StringLength1, OutConnectionString, BufferLength,
+                                      StringLength2 );
     }
     else
     {
-        struct SQLBrowseConnectW_params params = { 0, InConnectionString, StringLength1, OutConnectionString,
-                                                   BufferLength, StringLength2 };
-
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+
         if (!SUCCESS((ret = create_env( handle->parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        params.ConnectionHandle = handle->unix_handle;
-        ret = ODBC_CALL( SQLBrowseConnectW, &params );
+        ret = browse_connect_unix_w( handle, InConnectionString, StringLength1, OutConnectionString, BufferLength,
+                                     StringLength2 );
     }
 
 done:
