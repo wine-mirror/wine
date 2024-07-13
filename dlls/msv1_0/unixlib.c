@@ -217,6 +217,7 @@ static NTSTATUS ntlm_check_version( void *args )
     struct fork_params params = { &ctx, argv };
     int len;
 
+    ctx.mode = MODE_CLIENT;
     argv[0] = (char *)"ntlm_auth";
     argv[1] = (char *)"--version";
     argv[2] = NULL;
