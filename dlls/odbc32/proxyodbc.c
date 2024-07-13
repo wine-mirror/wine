@@ -2386,6 +2386,10 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
             handle->env_attr_version = (UINT32)(ULONG_PTR)Value;
             break;
 
+        case SQL_ATTR_CONNECTION_POOLING:
+            FIXME("Ignore Pooling value\n");
+            break;
+
         default:
             FIXME( "unhandled attribute %d\n", Attribute );
             ret = SQL_ERROR;
