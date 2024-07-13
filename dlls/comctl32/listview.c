@@ -7371,7 +7371,7 @@ static INT LISTVIEW_GetNextItem(const LISTVIEW_INFO *infoPtr, INT nItem, UINT uF
     {
       if ((infoPtr->uView == LV_VIEW_LIST) || (infoPtr->uView == LV_VIEW_DETAILS))
       {
-        while (nItem < infoPtr->nItemCount)
+        while (nItem < infoPtr->nItemCount - 1)
         {
           nItem++;
           if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)

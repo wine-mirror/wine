@@ -7250,7 +7250,7 @@ static void test_LVM_GETNEXTITEM(void)
     lr = SendMessageA(hwnd, LVM_GETNEXTITEM, 1, LVNI_ABOVE);
     expect(0, lr);
     lr = SendMessageA(hwnd, LVM_GETNEXTITEM, 1, LVNI_BELOW);
-    todo_wine expect(-1, lr);
+    expect(-1, lr);
 
     DestroyWindow(hwnd);
 }
