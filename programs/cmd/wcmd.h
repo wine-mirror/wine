@@ -157,7 +157,7 @@ BOOL WCMD_print_volume_information(const WCHAR *);
 RETURN_CODE WCMD_assoc(const WCHAR *, BOOL);
 RETURN_CODE WCMD_batch(const WCHAR *, WCHAR *, const WCHAR *, HANDLE);
 RETURN_CODE WCMD_call(WCHAR *command);
-RETURN_CODE WCMD_choice(const WCHAR *);
+RETURN_CODE WCMD_choice(WCHAR *);
 RETURN_CODE WCMD_clear_screen(void);
 RETURN_CODE WCMD_color(void);
 RETURN_CODE WCMD_copy(WCHAR *);

@@ -279,147 +279,154 @@ RETURN_CODE WCMD_clear_screen(void)
  *
  */
 
-RETURN_CODE WCMD_choice (const WCHAR * args)
+RETURN_CODE WCMD_choice(WCHAR *args)
 {
+    RETURN_CODE return_code = NO_ERROR;
     WCHAR answer[16];
     WCHAR buffer[16];
     WCHAR *ptr = NULL;
     WCHAR *opt_c = NULL;
-    WCHAR *my_command = NULL;
+    WCHAR *opt_m = NULL;
     WCHAR opt_default = 0;
-    DWORD opt_timeout = 0;
+    DWORD opt_timeout = -1;
+    WCHAR *end;
     DWORD count;
     DWORD oldmode;
     BOOL have_console;
     BOOL opt_n = FALSE;
-    BOOL opt_s = FALSE;
+    BOOL opt_cs = FALSE;
+    int argno;
 
-    have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
-    my_command = xstrdupW(WCMD_skip_leading_spaces((WCHAR*)args));
+    for (argno = 0; ; argno++)
+    {
+        WCHAR *arg = WCMD_parameter(args, argno, NULL, FALSE, FALSE);
+        if (!*arg) break;
 
-    ptr = my_command;
-    /* syntax errors are reported with ERRORLEVEL=1, which doesn't allow to
-     * discriminate from a choosen option!
-     */
-    while (*ptr == '/') {
-        switch (towupper(ptr[1])) {
-            case 'C':
-                ptr += 2;
-                /* the colon is optional */
-                if (*ptr == ':')
-                    ptr++;
-
-                if (!*ptr || iswspace(*ptr)) {
-                    WINE_FIXME("bad parameter %s for /C\n", wine_dbgstr_w(ptr));
-                    free(my_command);
-                    return errorlevel = ERROR_INVALID_FUNCTION;
+        if (!wcsicmp(arg, L"/N")) opt_n = TRUE;
+        else if (!wcsicmp(arg, L"/CS")) opt_cs = TRUE;
+        else if (arg[0] == L'/' && wcschr(L"CDTM", towupper(arg[1])))
+        {
+            WCHAR opt = towupper(arg[1]);
+            if (arg[2] == L'\0')
+            {
+                arg = WCMD_parameter(args, ++argno, NULL, FALSE, FALSE);
+                if (!*arg)
+                {
+                    return_code = ERROR_INVALID_FUNCTION;
+                    break;
                 }
-
-                /* remember the allowed keys (overwrite previous /C option) */
-                opt_c = ptr;
-                while (*ptr && (!iswspace(*ptr)))
-                    ptr++;
-
-                if (*ptr) {
-                    /* terminate allowed chars */
-                    *ptr = 0;
-                    ptr = WCMD_skip_leading_spaces(&ptr[1]);
-                }
-                WINE_TRACE("answer-list: %s\n", wine_dbgstr_w(opt_c));
+            }
+            else if (arg[2] == L':')
+                arg += 3;
+            else
+            {
+                return_code = ERROR_INVALID_FUNCTION;
                 break;
-
-            case 'N':
-                opt_n = TRUE;
-                ptr = WCMD_skip_leading_spaces(&ptr[2]);
+            }
+            switch (opt)
+            {
+            case L'C':
+                opt_c = wcsdup(arg);
                 break;
-
-            case 'S':
-                opt_s = TRUE;
-                ptr = WCMD_skip_leading_spaces(&ptr[2]);
+            case L'M':
+                opt_m = wcsdup(arg);
                 break;
-
-            case 'T':
-                ptr = &ptr[2];
-                /* the colon is optional */
-                if (*ptr == ':')
-                    ptr++;
-
-                opt_default = *ptr++;
-
-                if (!opt_default || (*ptr != ',')) {
-                    WINE_FIXME("bad option %s for /T\n", opt_default ? wine_dbgstr_w(ptr) : "");
-                    free(my_command);
-                    return errorlevel = ERROR_INVALID_FUNCTION;
-                }
-                ptr++;
-
-                count = 0;
-                while (((answer[count] = *ptr)) && iswdigit(*ptr) && (count < 15)) {
-                    count++;
-                    ptr++;
-                }
-
-                answer[count] = 0;
-                opt_timeout = wcstol(answer, NULL, 10);
-
-                ptr = WCMD_skip_leading_spaces(ptr);
+            case L'D':
+                opt_default = *arg;
                 break;
-
-            default:
-                WINE_FIXME("bad parameter: %s\n", wine_dbgstr_w(ptr));
-                free(my_command);
-                return errorlevel = ERROR_INVALID_FUNCTION;
+            case L'T':
+                opt_timeout = wcstol(arg, &end, 10);
+                if (end == arg || (*end && !iswspace(*end)))
+                    opt_timeout = 10000;
+                break;
+            }
         }
+        else
+            return_code = ERROR_INVALID_FUNCTION;
     }
 
-    if (opt_timeout)
-        WINE_FIXME("timeout not supported: %c,%ld\n", opt_default, opt_timeout);
+    /* use default keys, when needed: localized versions of "Y"es and "No" */
+    if (!opt_c)
+    {
+        LoadStringW(hinst, WCMD_YES, buffer, ARRAY_SIZE(buffer));
+        LoadStringW(hinst, WCMD_NO, buffer + 1, ARRAY_SIZE(buffer) - 1);
+        opt_c = buffer;
+        buffer[2] = L'\0';
+    }
+    /* validate various options */
+    if (!opt_cs) wcsupr(opt_c);
+    /* check that default is in the choices list */
+    if (!wcschr(opt_c, opt_cs ? opt_default : towupper(opt_default)))
+        return_code = ERROR_INVALID_FUNCTION;
+    /* check that there's no duplicates in the choices list */
+    for (ptr = opt_c; *ptr; ptr++)
+        if (wcschr(ptr + 1, opt_cs ? *ptr : towupper(*ptr)))
+            return_code = ERROR_INVALID_FUNCTION;
 
+    TRACE("CHOICE message(%s) choices(%s) timeout(%ld) default(%c)\n",
+          debugstr_w(opt_m), debugstr_w(opt_c), opt_timeout, opt_default ? opt_default : '?');
+    if (return_code != NO_ERROR ||
+        (opt_timeout == -1) != (opt_default == L'\0') ||
+        (opt_timeout != -1 && opt_timeout > 9999))
+    {
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_ARGERR));
+        if (return_code == NO_ERROR) return_code = ERROR_INVALID_FUNCTION;
+        if (opt_c != buffer) free(opt_c);
+        free(opt_m);
+        return errorlevel = return_code;
+    }
+    if (opt_timeout != -1)
+    {
+        WINE_FIXME("timeout not supported: %c,%ld\n", opt_default, opt_timeout);
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    }
+    have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
     if (have_console)
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), 0);
 
     /* use default keys, when needed: localized versions of "Y"es and "No" */
-    if (!opt_c) {
+    if (!opt_c)
+    {
         LoadStringW(hinst, WCMD_YES, buffer, ARRAY_SIZE(buffer));
         LoadStringW(hinst, WCMD_NO, buffer + 1, ARRAY_SIZE(buffer) - 1);
         opt_c = buffer;
-        buffer[2] = 0;
+        buffer[2] = L'\0';
     }
 
     /* print the question, when needed */
-    if (*ptr)
-        WCMD_output_asis(ptr);
+    if (opt_m)
+        WCMD_output_asis(opt_m);
 
-    if (!opt_s) {
+    if (!opt_cs)
         wcsupr(opt_c);
-        WINE_TRACE("case insensitive answer-list: %s\n", wine_dbgstr_w(opt_c));
-    }
 
-    if (!opt_n) {
+    if (!opt_n)
+    {
         /* print a list of all allowed answers inside brackets */
         WCMD_output_asis(L"[");
-        ptr = opt_c;
-        answer[1] = 0;
-        while ((answer[0] = *ptr++)) {
-            WCMD_output_asis(answer);
-            if (*ptr)
+        answer[1] = L'\0';
+        for (ptr = opt_c; *ptr; ptr++)
+        {
+            if (ptr != opt_c)
                 WCMD_output_asis(L",");
+            answer[0] = *ptr;
+            WCMD_output_asis(answer);
         }
         WCMD_output_asis(L"]?");
     }
 
-    while (TRUE) {
-
+    while (TRUE)
+    {
         /* FIXME: Add support for option /T */
         answer[1] = 0; /* terminate single character string */
         if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count) || !count)
         {
-            free(my_command);
             /* FIXME: is this choice 1 or ERROR_INVALID_FUNCTION? */
-            return errorlevel = 1;
+            return_code = 1;
+            break;
         }
 
-        if (!opt_s)
+        if (!opt_cs)
             answer[0] = towupper(answer[0]);
 
         ptr = wcschr(opt_c, answer[0]);
@@ -429,10 +436,9 @@ RETURN_CODE WCMD_choice (const WCHAR * args)
             if (have_console)
                 SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
 
-            errorlevel = (ptr - opt_c) + 1;
+            return_code = (ptr - opt_c) + 1;
             TRACE("answer: %d\n", errorlevel);
-            free(my_command);
-            return errorlevel;
+            break;
         }
         else
         {
@@ -441,6 +447,9 @@ RETURN_CODE WCMD_choice (const WCHAR * args)
             WCMD_output_asis(L"\a");
         }
     }
+    if (opt_c != buffer) free(opt_c);
+    free(opt_m);
+    return errorlevel = return_code;
 }
 
 /****************************************************************************
