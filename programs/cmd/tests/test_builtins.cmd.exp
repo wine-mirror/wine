@@ -707,19 +707,19 @@ I'm here!@space@
 I'm here!@space@
 I'm here!@space@
 ------------ Testing 'choice' ------------
-@todo_wine@Example message [A,B,C]?A@or_broken@choice unavailable
+Example message [A,B,C]?A@or_broken@choice unavailable
 1@or_broken@9009
-@todo_wine@Example message [A,B,C]?B@or_broken@choice unavailable
-@todo_wine@2@or_broken@9009
-@todo_wine@[D,E,F]?F@or_broken@choice unavailable
-@todo_wine@3@or_broken@9009
-@todo_wine@[A,B,C,X,Y,Z]?Y@or_broken@choice unavailable
-@todo_wine@5@or_broken@9009
-@todo_wine@A@or_broken@choice unavailable
-@todo_wine@1@or_broken@9009
-@todo_wine@[a,b,c,A,B,C]?A@or_broken@choice unavailable
-@todo_wine@4@or_broken@9009
-@todo_wine@255@or_broken@9009
+Example message [A,B,C]?B@or_broken@choice unavailable
+2@or_broken@9009
+[D,E,F]?F@or_broken@choice unavailable
+3@or_broken@9009
+[A,B,C,X,Y,Z]?Y@or_broken@choice unavailable
+5@or_broken@9009
+A@or_broken@choice unavailable
+1@or_broken@9009
+[a,b,c,A,B,C]?A@or_broken@choice unavailable
+4@or_broken@9009
+255@or_broken@9009
 ------------ Testing variable expansion ------------
 ~p0 should be path containing batch file
 @path@

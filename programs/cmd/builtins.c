@@ -290,7 +290,6 @@ RETURN_CODE WCMD_choice(WCHAR *args)
     WCHAR opt_default = 0;
     DWORD opt_timeout = -1;
     WCHAR *end;
-    DWORD count;
     DWORD oldmode;
     BOOL have_console;
     BOOL opt_n = FALSE;
@@ -370,39 +369,24 @@ RETURN_CODE WCMD_choice(WCHAR *args)
         (opt_timeout != -1 && opt_timeout > 9999))
     {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_ARGERR));
-        if (return_code == NO_ERROR) return_code = ERROR_INVALID_FUNCTION;
+        errorlevel = 255;
         if (opt_c != buffer) free(opt_c);
         free(opt_m);
-        return errorlevel = return_code;
+        return ERROR_INVALID_FUNCTION;
     }
-    if (opt_timeout != -1)
-    {
-        WINE_FIXME("timeout not supported: %c,%ld\n", opt_default, opt_timeout);
-        return errorlevel = ERROR_INVALID_FUNCTION;
-    }
+
     have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
     if (have_console)
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), 0);
-
-    /* use default keys, when needed: localized versions of "Y"es and "No" */
-    if (!opt_c)
-    {
-        LoadStringW(hinst, WCMD_YES, buffer, ARRAY_SIZE(buffer));
-        LoadStringW(hinst, WCMD_NO, buffer + 1, ARRAY_SIZE(buffer) - 1);
-        opt_c = buffer;
-        buffer[2] = L'\0';
-    }
 
     /* print the question, when needed */
     if (opt_m)
         WCMD_output_asis(opt_m);
 
-    if (!opt_cs)
-        wcsupr(opt_c);
-
     if (!opt_n)
     {
         /* print a list of all allowed answers inside brackets */
+        if (opt_m) WCMD_output_asis(L" ");
         WCMD_output_asis(L"[");
         answer[1] = L'\0';
         for (ptr = opt_c; *ptr; ptr++)
@@ -415,41 +399,80 @@ RETURN_CODE WCMD_choice(WCHAR *args)
         WCMD_output_asis(L"]?");
     }
 
-    while (TRUE)
+    while (return_code == NO_ERROR)
     {
-        /* FIXME: Add support for option /T */
-        answer[1] = 0; /* terminate single character string */
-        if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count) || !count)
+        if (opt_timeout == 0)
+            answer[0] = opt_default;
+        else
         {
-            /* FIXME: is this choice 1 or ERROR_INVALID_FUNCTION? */
-            return_code = 1;
+            LARGE_INTEGER li, zeroli = {0};
+            OVERLAPPED overlapped = {0};
+            DWORD count;
+
+            overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+            if (SetFilePointerEx(GetStdHandle(STD_INPUT_HANDLE), zeroli, &li, FILE_CURRENT))
+            {
+                overlapped.Offset = li.LowPart;
+                overlapped.OffsetHigh = li.HighPart;
+            }
+            if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, NULL, &overlapped))
+            {
+                switch (WaitForSingleObject(overlapped.hEvent, opt_timeout == -1 ? INFINITE : opt_timeout * 1000))
+                {
+                case WAIT_OBJECT_0:
+                    break;
+                case WAIT_TIMEOUT:
+                    answer[0] = opt_default;
+                    break;
+                default:
+                    return_code = ERROR_INVALID_FUNCTION;
+                }
+            }
+            else if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count, NULL))
+            {
+                if (count == 0)
+                {
+                    if (opt_timeout != -1)
+                        answer[0] = opt_default;
+                    else
+                        return_code = ERROR_INVALID_FUNCTION;
+                }
+            }
+            else
+                return_code = ERROR_INVALID_FUNCTION;
+            CloseHandle(overlapped.hEvent);
+        }
+        if (return_code != NO_ERROR)
+        {
+            errorlevel = 255;
             break;
         }
-
         if (!opt_cs)
             answer[0] = towupper(answer[0]);
 
+        answer[1] = L'\0'; /* terminate single character string */
         ptr = wcschr(opt_c, answer[0]);
-        if (ptr) {
+        if (ptr)
+        {
             WCMD_output_asis(answer);
             WCMD_output_asis(L"\r\n");
-            if (have_console)
-                SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
 
-            return_code = (ptr - opt_c) + 1;
-            TRACE("answer: %d\n", errorlevel);
-            break;
+            return_code = errorlevel = (ptr - opt_c) + 1;
+            TRACE("answer: %d\n", return_code);
         }
         else
         {
             /* key not allowed: play the bell */
-            WINE_TRACE("key not allowed: %s\n", wine_dbgstr_w(answer));
+            TRACE("key not allowed: %s\n", wine_dbgstr_w(answer));
             WCMD_output_asis(L"\a");
         }
     }
+    if (have_console)
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
+
     if (opt_c != buffer) free(opt_c);
     free(opt_m);
-    return errorlevel = return_code;
+    return return_code;
 }
 
 /****************************************************************************
