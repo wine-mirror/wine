@@ -3723,12 +3723,13 @@ RETURN_CODE node_execute(CMD_NODE *node)
             if (set_std_redirections(output))
             {
                 RETURN_CODE return_code_left = node_execute(node->left);
-                return_code = NO_ERROR;
-
                 CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
                 SetStdHandle(STD_OUTPUT_HANDLE, saved_output);
 
-                if (return_code == NO_ERROR)
+                if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
+                    ExitProcess(255);
+                return_code = ERROR_INVALID_FUNCTION;
+                if (return_code_left != RETURN_CODE_ABORTED && errorlevel != RETURN_CODE_CANT_LAUNCH)
                 {
                     HANDLE h = CreateFileW(filename, GENERIC_READ,
                                            FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
@@ -3737,12 +3738,12 @@ RETURN_CODE node_execute(CMD_NODE *node)
                     {
                         SetStdHandle(STD_INPUT_HANDLE, h);
                         return_code = node_execute(node->right);
+                        if (errorlevel == RETURN_CODE_CANT_LAUNCH && saved_context)
+                            ExitProcess(255);
                     }
-                    else return_code = ERROR_INVALID_FUNCTION;
                 }
                 DeleteFileW(filename);
-                if (return_code_left != NO_ERROR || return_code != NO_ERROR)
-                    errorlevel = ERROR_INVALID_FUNCTION;
+                errorlevel = return_code;
             }
             else return_code = ERROR_INVALID_FUNCTION;
             redirection_dispose_list(output);
