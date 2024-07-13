@@ -490,6 +490,19 @@ call :setError 666 & (Idontexist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !
 call :setError 666 & Idontexist.exe & echo ERRORLEVEL !errorlevel!
 call :setError 666 & (cmd.exe /c "echo foo & exit /b 0" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (cmd.exe /c "echo foo & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (I\dont\exist.html &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem native cmd on Windows 7 shows a dialog for missing association, and waits for its dismisal...
+rem later native cmd.exe shows the dialog, but is not blocking. so, skip the Windows7 case
+rem FIRMWARE_TYPE (undocumented readonly dynamic env variable) appears from Windows 8 onwards
+set foobar_doskip=
+if not defined WINEPREFIX if not defined FIRMWARE_TYPE (set foobar_doskip=1)
+if defined foobar_doskip (
+  echo Skipping on Win7
+  set foobar_doskip=
+) else (
+  echo:>foobar.IDontExist
+  call :setError 666 & (foobar.IDontExist &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+)
 cd .. && rd /q /s foo
 echo --- success/failure for CALL command
 mkdir foo & cd foo
@@ -520,9 +533,7 @@ call :setError 666 & (start "" /foobar >NUL &&echo SUCCESS !errorlevel!||echo FA
 rem call :setError 666 & (start /B I\dont\exist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem can't run this test, generates a nice popup under windows
 call :setError 666 & (start "" /B /WAIT cmd.exe /c "echo foo & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-rem A call :setError 666 & (start "" /B cmd.exe /c "(choice /C:YN /T:3 /D:Y > NUL) & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-rem can't do on Wine until /T is properly handled in CHOICE
-rem SUCCESS 666
+call :setError 666 & (start "" /B cmd.exe /c "(choice /C:YN /T:3 /D:Y > NUL) & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 echo --- success/failure for TYPE command
 mkdir foo & cd foo
 echo a > fileA
@@ -1073,6 +1084,14 @@ setlocal EnableDelayedExpansion
 set WINE_FOO=foo bar
 for %%i in ("!WINE_FOO!") do echo %%i
 for %%i in (!WINE_FOO!) do echo %%i
+
+setlocal DisableDelayedExpansion
+
+set "BEFORE_DELAY=before!"
+setlocal EnableDelayedExpansion
+set "AFTER_DELAY=after^!"
+echo !BEFORE_DELAY!
+echo !AFTER_DELAY!
 setlocal DisableDelayedExpansion
 
 echo --- in digit variables

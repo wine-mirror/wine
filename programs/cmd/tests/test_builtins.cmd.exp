@@ -477,6 +477,8 @@ foo@space@
 SUCCESS 0
 foo@space@
 FAILURE 1024
+FAILURE 1
+@todo_wine@SUCCESS 666@or_broken@Skipping on Win7
 --- success/failure for CALL command
 FAILURE 1
 SUCCESS 0
@@ -501,6 +503,7 @@ FAILURE 255
 @todo_wine@FAILURE 1
 foo@space@
 SUCCESS 1024
+@todo_wine@SUCCESS 666
 --- success/failure for TYPE command
 FAILURE 1
 SUCCESS 0
@@ -828,6 +831,8 @@ N
 "foo bar"
 foo
 bar
+before!
+@todo_wine@after!
 --- in digit variables
 a %1 %2
 b %1 %2
