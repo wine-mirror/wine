@@ -883,7 +883,7 @@ static BOOL msvcrt_alloc_buffer(FILE* file)
     } else {
         file->_base = (char*)(&file->_charbuf);
         file->_bufsiz = 2;
-        file->_flag |= _IONBF;
+        file->_flag |= MSVCRT__NOBUF;
     }
     file->_ptr = file->_base;
     file->_cnt = 0;
@@ -896,7 +896,7 @@ static BOOL add_std_buffer(FILE *file)
     static char buffers[2][BUFSIZ];
 
     if((file->_file!=STDOUT_FILENO && file->_file!=STDERR_FILENO)
-            || (file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF))
+            || (file->_flag & (MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF))
             || !_isatty(file->_file))
         return FALSE;
 
@@ -3885,7 +3885,7 @@ int CDECL _filbuf(FILE* file)
         return EOF;
 
     /* Allocate buffer if needed */
-    if(!(file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF)))
+    if(!(file->_flag & (MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF)))
         msvcrt_alloc_buffer(file);
 
     if(!(file->_flag & _IOREAD)) {
@@ -4136,7 +4136,7 @@ wchar_t * CDECL fgetws(wchar_t *s, int size, FILE* file)
 int CDECL _flsbuf(int c, FILE* file)
 {
     /* Flush output buffer */
-    if(!(file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF))) {
+    if(!(file->_flag & (MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF))) {
         msvcrt_alloc_buffer(file);
     }
 
@@ -4221,13 +4221,13 @@ size_t CDECL _fwrite_nolock(const void *ptr, size_t size, size_t nmemb, FILE* fi
             written += pcnt;
             wrcnt -= pcnt;
             ptr = (const char*)ptr + pcnt;
-        } else if((file->_flag & _IONBF)
+        } else if((file->_flag & MSVCRT__NOBUF)
                 || ((file->_flag & (_IOMYBUF | MSVCRT__USERBUF)) && wrcnt >= file->_bufsiz)
                 || (!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF)) && wrcnt >= MSVCRT_INTERNAL_BUFSIZ)) {
             size_t pcnt;
             int bufsiz;
 
-            if(file->_flag & _IONBF)
+            if(file->_flag & MSVCRT__NOBUF)
                 bufsiz = 1;
             else if(!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF)))
                 bufsiz = MSVCRT_INTERNAL_BUFSIZ;
@@ -4510,7 +4510,7 @@ size_t CDECL _fread_nolock(void *ptr, size_t size, size_t nmemb, FILE* file)
     }
   }
 
-  if(rcnt>0 && !(file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF)))
+  if(rcnt>0 && !(file->_flag & (MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF)))
       msvcrt_alloc_buffer(file);
 
   while(rcnt>0)
@@ -5084,11 +5084,11 @@ int CDECL setvbuf(FILE* file, char *buf, int mode, size_t size)
     _fflush_nolock(file);
     if(file->_flag & _IOMYBUF)
         free(file->_base);
-    file->_flag &= ~(_IONBF | _IOMYBUF | MSVCRT__USERBUF);
+    file->_flag &= ~(MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF);
     file->_cnt = 0;
 
     if(mode == _IONBF) {
-        file->_flag |= _IONBF;
+        file->_flag |= MSVCRT__NOBUF;
         file->_base = file->_ptr = (char*)&file->_charbuf;
         file->_bufsiz = 2;
     }else if(buf) {
@@ -5823,7 +5823,7 @@ int CDECL _ungetc_nolock(int c, FILE * file)
                 (file->_flag&_IORW && !(file->_flag&_IOWRT))))
         return EOF;
 
-    if((!(file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF))
+    if((!(file->_flag & (MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF))
                 && msvcrt_alloc_buffer(file))
             || (!file->_cnt && file->_ptr==file->_base))
         file->_ptr++;

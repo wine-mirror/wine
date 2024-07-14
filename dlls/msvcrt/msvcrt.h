@@ -43,6 +43,13 @@ typedef struct _iobuf
 #define _IOMYBUF    0x0040
 #define _IOSTRG     0x1000
 #endif
+
+#define MSVCRT__NOBUF 0x0400
+
+#else
+
+#define MSVCRT__NOBUF _IONBF
+
 #endif
 
 #include <errno.h>
