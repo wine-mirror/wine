@@ -1631,6 +1631,8 @@ static HRESULT serializeBMP(HBITMAP hbmp, void **buffer, unsigned int *length)
     filehdr = *buffer;
     filehdr->bfType = BITMAP_FORMAT_BMP;
     filehdr->bfSize = *length;
+    filehdr->bfReserved1 = 0;
+    filehdr->bfReserved2 = 0;
     filehdr->bfOffBits =
         sizeof(BITMAPFILEHEADER) +
         sizeof(BITMAPINFOHEADER) +
