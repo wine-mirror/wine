@@ -169,6 +169,8 @@ static uint64_t client_handle_from_host(struct wine_instance *instance, uint64_t
     return result;
 }
 
+struct vk_callback_funcs callback_funcs;
+
 static UINT append_string(const char *name, char *strings, UINT *strings_len)
 {
     UINT len = name ? strlen(name) + 1 : 0;
@@ -244,6 +246,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     ptr = (char *)(params + 1);
     strings = (char *)params + size;
 
+    params->dispatch.callback = callback_funcs.call_vulkan_debug_utils_callback;
     params->user_callback = object->user_callback;
     params->user_data = object->user_data;
     params->severity = severity;
@@ -296,7 +299,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     }
 
     /* applications should always return VK_FALSE */
-    KeUserModeCallback( NtUserCallVulkanDebugUtilsCallback, params, size + strings_len, &ret_ptr, &ret_len );
+    KeUserDispatchCallback(&params->dispatch, size + strings_len, &ret_ptr, &ret_len);
     free(params);
 
     if (ret_len == sizeof(VkBool32)) return *(VkBool32 *)ret_ptr;
@@ -331,6 +334,7 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     if (!(params = malloc(sizeof(*params) + strings_len))) return VK_FALSE;
     strings = (char *)(params + 1);
 
+    params->dispatch.callback = callback_funcs.call_vulkan_debug_report_callback;
     params->user_callback = object->user_callback;
     params->user_data = object->user_data;
     params->flags = flags;
@@ -344,7 +348,7 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     params->layer_len = append_string(layer_prefix, strings, &strings_len);
     params->message_len = append_string(message, strings, &strings_len);
 
-    KeUserModeCallback(NtUserCallVulkanDebugReportCallback, params, sizeof(*params) + strings_len, &ret_ptr, &ret_len);
+    KeUserDispatchCallback(&params->dispatch, sizeof(*params) + strings_len, &ret_ptr, &ret_len);
     free(params);
 
     if (ret_len == sizeof(VkBool32)) return *(VkBool32 *)ret_ptr;
@@ -631,8 +635,10 @@ static VkResult wine_vk_device_convert_create_info(struct wine_phys_dev *phys_de
     return VK_SUCCESS;
 }
 
-NTSTATUS init_vulkan(void *args)
+NTSTATUS init_vulkan(void *arg)
 {
+    const struct vk_callback_funcs *funcs = arg;
+
     vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
     if (!vk_funcs)
     {
@@ -640,6 +646,7 @@ NTSTATUS init_vulkan(void *args)
         return STATUS_UNSUCCESSFUL;
     }
 
+    callback_funcs = *funcs;
     p_vkCreateInstance = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkCreateInstance");
     p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
     p_vkEnumerateInstanceExtensionProperties = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceExtensionProperties");

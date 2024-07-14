@@ -61,9 +61,6 @@ enum
     NtUserPostDDEMessage,
     NtUserRenderSynthesizedFormat,
     NtUserUnpackDDEMessage,
-    /* Vulkan support */
-    NtUserCallVulkanDebugReportCallback,
-    NtUserCallVulkanDebugUtilsCallback,
     /* OpenGL support */
     NtUserCallOpenGLDebugMessageCallback,
     /* Driver-specific callbacks */
