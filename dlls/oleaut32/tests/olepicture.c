@@ -1496,6 +1496,125 @@ static void test_load_save_empty_picture(void)
     IStream_Release(stream);
 }
 
+static void test_load_save_dib(void)
+{
+    IPicture *pic;
+    PICTDESC desc;
+    short type;
+    OLE_HANDLE handle;
+    HGLOBAL hmem;
+    DWORD *mem;
+    IPersistStream *src_stream;
+    IStream *dst_stream;
+    LARGE_INTEGER offset;
+    HRESULT hr;
+    LONG size;
+    ULARGE_INTEGER maxsize;
+    unsigned int bpp;
+
+    for (bpp = 4; bpp <= 32; bpp <<= 1) {
+        char buffer[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
+        BITMAPINFO *info = (BITMAPINFO *)buffer;
+        RGBQUAD *colors = info->bmiColors;
+        DWORD expected_size, expected_bpp;
+        void *bits;
+
+        winetest_push_context("bpp %u", bpp);
+        expected_size = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)
+            + (bpp <= 8 ? sizeof(RGBQUAD) * (1u << bpp) : 0)
+            + sizeof(DWORD); /* pixels */;
+        expected_bpp = bpp <= 8 ? bpp : 24;
+
+        memset(info, 0, sizeof(*info));
+        info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        info->bmiHeader.biWidth = 1;
+        info->bmiHeader.biHeight = 1;
+        info->bmiHeader.biPlanes = 1;
+        info->bmiHeader.biBitCount = bpp;
+        info->bmiHeader.biCompression = BI_RGB;
+        memset(colors, 0xaa, sizeof(RGBQUAD) * 256);
+
+        desc.cbSizeofstruct = sizeof(desc);
+        desc.picType = PICTYPE_BITMAP;
+        desc.bmp.hpal = 0;
+        desc.bmp.hbitmap = CreateDIBSection(NULL, info, DIB_RGB_COLORS, &bits, NULL, 0);
+        hr = OleCreatePictureIndirect(&desc, &IID_IPicture, TRUE, (void**)&pic);
+
+        hr = IPicture_get_Type(pic, &type);
+        ok(hr == S_OK,"get_Type error %#8lx\n", hr);
+        ok(type == PICTYPE_BITMAP,"expected picture type PICTYPE_BITMAP, got %d\n", type);
+
+        hr = IPicture_get_Handle(pic, &handle);
+        ok(hr == S_OK,"get_Handle error %#8lx\n", hr);
+        ok(IntToPtr(handle) == desc.bmp.hbitmap, "get_Handle returned wrong handle %#x\n", handle);
+
+        hmem = GlobalAlloc(GMEM_ZEROINIT, 4096);
+        hr = CreateStreamOnHGlobal(hmem, FALSE, &dst_stream);
+        ok(hr == S_OK, "createstreamonhglobal error %#lx\n", hr);
+
+        size = -1;
+        hr = IPicture_SaveAsFile(pic, dst_stream, TRUE, &size);
+        ok(hr == S_OK, "IPicture_SaveasFile error %#lx\n", hr);
+        todo_wine
+        ok(size == expected_size, "expected %ld, got %ld\n", expected_size, size);
+        if (size == expected_size) {
+            mem = GlobalLock(hmem);
+            ok(!memcmp(&mem[0], "BM", 2), "got wrong bmp header %04lx\n", mem[0]);
+            info = (BITMAPINFO *)(((BITMAPFILEHEADER *)&mem[0]) + 1);
+            ok(info->bmiHeader.biBitCount == expected_bpp, "expected bpp %lu, got %hu\n", expected_bpp, info->bmiHeader.biBitCount);
+            ok(info->bmiHeader.biCompression == BI_RGB, "expected BI_RGB, got %lu\n", info->bmiHeader.biCompression);
+            GlobalUnlock(hmem);
+        }
+
+        size = -1;
+        hr = IPicture_SaveAsFile(pic, dst_stream, FALSE, &size);
+        todo_wine
+        ok(hr == E_FAIL, "expected E_FAIL, got %#lx\n", hr);
+        todo_wine
+        ok(size == -1, "expected -1, got %ld\n", size);
+
+        offset.QuadPart = 0;
+        hr = IStream_Seek(dst_stream, offset, SEEK_SET, NULL);
+        ok(hr == S_OK, "IStream_Seek %#lx\n", hr);
+
+        hr = IPicture_QueryInterface(pic, &IID_IPersistStream, (void **)&src_stream);
+        ok(hr == S_OK, "QueryInterface error %#lx\n", hr);
+
+        maxsize.QuadPart = 0;
+        hr = IPersistStream_GetSizeMax(src_stream, &maxsize);
+        ok(hr == S_OK, "GetSizeMax error %#lx\n", hr);
+        ok(maxsize.QuadPart == expected_size + 8, "expected %lx, got %s\n", expected_size + 8, wine_dbgstr_longlong(maxsize.QuadPart));
+
+        hr = IPersistStream_Save(src_stream, dst_stream, TRUE);
+        ok(hr == S_OK, "Save error %#lx\n", hr);
+
+        maxsize.QuadPart = 0;
+        hr = IPersistStream_GetSizeMax(src_stream, &maxsize);
+        ok(hr == S_OK, "GetSizeMax error %#lx\n", hr);
+        ok(maxsize.QuadPart == expected_size + 8, "expected %lx, got %s\n", expected_size + 8, wine_dbgstr_longlong(maxsize.QuadPart));
+
+        IPersistStream_Release(src_stream);
+        IStream_Release(dst_stream);
+
+        mem = GlobalLock(hmem);
+        ok(!memcmp(mem, "lt\0\0", 4), "got wrong stream header %04lx\n", mem[0]);
+        ok(mem[1] == expected_size, "expected stream size %lu, got %lu\n", expected_size, mem[1]);
+        ok(!memcmp(&mem[2], "BM", 2), "got wrong bmp header %04lx\n", mem[2]);
+        info = (BITMAPINFO *)(((BITMAPFILEHEADER *)&mem[2]) + 1);
+        todo_wine_if(bpp != expected_bpp)
+        ok(info->bmiHeader.biBitCount == expected_bpp, "expected bpp %lu, got %hu\n", expected_bpp, info->bmiHeader.biBitCount);
+        todo_wine_if(bpp == 16 || bpp == 32)
+        ok(info->bmiHeader.biCompression == BI_RGB, "expected BI_RGB, got %lu\n", info->bmiHeader.biCompression);
+
+        GlobalUnlock(hmem);
+        GlobalFree(hmem);
+
+        DeleteObject(desc.bmp.hbitmap);
+        IPicture_Release(pic);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(olepicture)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -1533,6 +1652,7 @@ START_TEST(olepicture)
     test_OleLoadPicturePath();
     test_himetric();
     test_load_save_bmp();
+    test_load_save_dib();
     test_load_save_icon();
     test_load_save_empty_picture();
 }
