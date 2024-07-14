@@ -109,24 +109,24 @@ void *wine_vk_get_instance_proc_addr(const char *name);
 
 struct wine_vk_debug_utils_params
 {
-    PFN_vkDebugUtilsMessengerCallbackEXT user_callback;
-    void *user_data;
+    UINT64 user_callback; /* client pointer */
+    UINT64 user_data; /* client pointer */
 
-    VkDebugUtilsMessageSeverityFlagBitsEXT severity;
-    VkDebugUtilsMessageTypeFlagsEXT message_types;
+    UINT32 severity;
+    UINT32 message_types;
     VkDebugUtilsMessengerCallbackDataEXT data;
 };
 
 struct wine_vk_debug_report_params
 {
-    PFN_vkDebugReportCallbackEXT user_callback;
-    void *user_data;
+    UINT64 user_callback; /* client pointer */
+    UINT64 user_data; /* client pointer */
 
-    VkDebugReportFlagsEXT flags;
-    VkDebugReportObjectTypeEXT object_type;
-    uint64_t object_handle;
-    size_t location;
-    int32_t code;
+    UINT32 flags;
+    UINT32 object_type;
+    UINT64 object_handle;
+    UINT64 location;
+    UINT32 code;
     const char *layer_prefix;
     const char *message;
 };

@@ -605,15 +605,19 @@ void WINAPI vkFreeCommandBuffers(VkDevice device, VkCommandPool cmd_pool, uint32
 static NTSTATUS WINAPI call_vulkan_debug_report_callback( void *args, ULONG size )
 {
     struct wine_vk_debug_report_params *params = args;
-    VkBool32 ret = params->user_callback(params->flags, params->object_type, params->object_handle, params->location,
-                                         params->code, params->layer_prefix, params->message, params->user_data);
+    PFN_vkDebugReportCallbackEXT callback = (void *)(UINT_PTR)params->user_callback;
+    void *user_data = (void *)(UINT_PTR)params->user_data;
+    VkBool32 ret = callback(params->flags, params->object_type, params->object_handle, params->location,
+                            params->code, params->layer_prefix, params->message, user_data);
     return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 
 static NTSTATUS WINAPI call_vulkan_debug_utils_callback( void *args, ULONG size )
 {
     struct wine_vk_debug_utils_params *params = args;
-    VkBool32 ret = params->user_callback(params->severity, params->message_types, &params->data, params->user_data);
+    PFN_vkDebugUtilsMessengerCallbackEXT callback = (void *)(UINT_PTR)params->user_callback;
+    void *user_data = (void *)(UINT_PTR)params->user_data;
+    VkBool32 ret = callback(params->severity, params->message_types, &params->data, user_data);
     return NtCallbackReturn( &ret, sizeof(ret), STATUS_SUCCESS );
 }
 

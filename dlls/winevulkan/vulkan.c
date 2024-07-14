@@ -600,8 +600,8 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
 
         object->utils_messengers[i].instance = object;
         object->utils_messengers[i].host_debug_messenger = VK_NULL_HANDLE;
-        object->utils_messengers[i].user_callback = debug_utils_messenger->pfnUserCallback;
-        object->utils_messengers[i].user_data = debug_utils_messenger->pUserData;
+        object->utils_messengers[i].user_callback = (UINT_PTR)debug_utils_messenger->pfnUserCallback;
+        object->utils_messengers[i].user_data = (UINT_PTR)debug_utils_messenger->pUserData;
 
         /* convert_VkInstanceCreateInfo_* already copied the chain, so we can modify it in-place. */
         debug_utils_messenger->pfnUserCallback = (void *) &debug_utils_callback_conversion;
@@ -612,8 +612,8 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
     {
         object->default_callback.instance = object;
         object->default_callback.host_debug_callback = VK_NULL_HANDLE;
-        object->default_callback.user_callback = debug_report_callback->pfnCallback;
-        object->default_callback.user_data = debug_report_callback->pUserData;
+        object->default_callback.user_callback = (UINT_PTR)debug_report_callback->pfnCallback;
+        object->default_callback.user_data = (UINT_PTR)debug_report_callback->pUserData;
 
         debug_report_callback->pfnCallback = (void *) &debug_report_callback_conversion;
         debug_report_callback->pUserData = &object->default_callback;
@@ -2283,8 +2283,8 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance handle,
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     object->instance = instance;
-    object->user_callback = create_info->pfnUserCallback;
-    object->user_data = create_info->pUserData;
+    object->user_callback = (UINT_PTR)create_info->pfnUserCallback;
+    object->user_data = (UINT_PTR)create_info->pUserData;
 
     wine_create_info = *create_info;
 
@@ -2338,8 +2338,8 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance handle,
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     object->instance = instance;
-    object->user_callback = create_info->pfnCallback;
-    object->user_data = create_info->pUserData;
+    object->user_callback = (UINT_PTR)create_info->pfnCallback;
+    object->user_data = (UINT_PTR)create_info->pUserData;
 
     wine_create_info = *create_info;
 
