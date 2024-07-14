@@ -467,12 +467,13 @@ if 1==0 (echo q1) else echo q2&echo q3
 echo ------------- Testing internal commands return codes
 setlocal EnableDelayedExpansion
 
-echo --- call and IF/FOR blocks
+echo --- success/failure for basics
 call :setError 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
 call :setError 33 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
 call :setError 666 & (echo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (echo foo >> h:\i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & echo foo >> h:\i\dont\exist\at\all.txt & echo ERRORLEVEL !errorlevel!
+echo --- success/failure for IF/FOR blocks
 call :setError 666 & ((if 1==1 echo "">NUL) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((if 1==0 echo "">NUL) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((if 1==1 (call :setError 33)) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
@@ -481,7 +482,6 @@ call :setError 666 & ((for %%i in () do echo "") &&echo SUCCESS !errorlevel!||ec
 call :setError 666 & ((for %%i in () do call :setError 33) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((for %%i in (a) do call :setError 0) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((for %%i in (a) do call :setError 33) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-
 echo --- success/failure for external command
 mkdir foo & cd foo
 call :setError 666 & (I\dont\exist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
@@ -503,6 +503,18 @@ call :setError 666 & (call cmd.exe /c "echo foo & exit /b 0" &&echo SUCCESS !err
 call :setError 666 & (call cmd.exe /c "echo foo & exit /b 1025" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call rmdir foobar.dir &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 cd .. && rd /q /s foo
+echo --- success/failure for pipes
+call :setError 666 & ((echo a | echo b) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo a | call :setError 34) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((call :setError 33 | echo a) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo a | rmdir I\dont\exist\at\all) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((rmdir I\dont\exist\at\all | echo a) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem in a pipe, if LHS or RHS can't be started, the whole cmd is abandonned (not just the pipe!!)
+echo ^( %%1 ^| %%2 ^) > foo.bat
+echo echo AFTER %%ERRORLEVEL%% >> foo.bat
+call :setError 666 & (cmd.exe /q /c "call foo.bat echo I\dont\exist.exe" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (cmd.exe /q /c "call foo.bat I\dont\exist.exe echo" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+erase /q foo.bat
 echo --- success/failure for START command
 call :setError 666 & (start "" /foobar >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem call :setError 666 & (start /B I\dont\exist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
@@ -567,6 +579,12 @@ call :setError 666 & (erase fileE &&echo SUCCESS !errorlevel!||echo FAILURE !err
 call :setError 666 & (erase i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (erase file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 cd .. && rd /q /s foo
+
+echo --- success/failure for change drive command
+call :setError 666 & (c: &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (1: &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call c: &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call 1: &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 
 echo --- success/failure for MKDIR,MD command
 mkdir foo & cd foo

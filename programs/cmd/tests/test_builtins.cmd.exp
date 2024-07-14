@@ -452,13 +452,14 @@ p2
 q2
 q3
 ------------- Testing internal commands return codes
---- call and IF/FOR blocks
+--- success/failure for basics
 SUCCESS 0
 FAILURE 33
 foo@space@
 SUCCESS 666
 FAILURE 1
 ERRORLEVEL 666
+--- success/failure for IF/FOR blocks
 SUCCESS 666
 SUCCESS 666
 FAILURE 33
@@ -485,7 +486,18 @@ SUCCESS 0
 foo@space@
 FAILURE 1025
 FAILURE 2
---- success/failure for START command
+--- success/failure for pipes
+b
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 1
+a
+@todo_wine@SUCCESS 0
+FAILURE 3
+a
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 255
+@todo_wine@FAILURE 255
+@todo_wine@--- success/failure for START command
 @todo_wine@FAILURE 1
 foo@space@
 SUCCESS 1024
@@ -520,6 +532,11 @@ SUCCESS 0
 FAILURE 1
 SUCCESS 0
 FAILURE 1
+FAILURE 1
+--- success/failure for change drive command
+@todo_wine@SUCCESS 666
+FAILURE 1
+@todo_wine@SUCCESS 0
 FAILURE 1
 --- success/failure for MKDIR,MD command
 FAILURE 1
