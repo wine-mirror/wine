@@ -306,7 +306,6 @@ function test_timeout() {
     xhr.onload = function() { ok(false, "onload called"); }
     xhr.ontimeout = function(e) {
         var r = Object.prototype.toString.call(e);
-        todo_wine.
         ok(r === ("[object " + (v < 10 ? "Event" : "ProgressEvent") + "]"), "Object.toString = " + r);
         var props = [ "initProgressEvent", "lengthComputable", "loaded", "total" ];
         for(r = 0; r < props.length; r++) {

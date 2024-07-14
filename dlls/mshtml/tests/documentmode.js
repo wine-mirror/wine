@@ -58,7 +58,6 @@ if(window.addEventListener) {
         pageshow_fired = true;
 
         var r = Object.prototype.toString.call(e);
-        todo_wine.
         ok(r === "[object PageTransitionEvent]", "pageshow toString = " + r);
         ok("persisted" in e, "'persisted' not in pageshow event");
         ok(document.readyState === "complete", "pageshow readyState = " + document.readyState);
@@ -70,7 +69,6 @@ if(window.addEventListener) {
         ok(document.documentMode >= 11, "pagehide fired");
 
         var r = Object.prototype.toString.call(e);
-        todo_wine.
         ok(r === "[object PageTransitionEvent]", "pagehide toString = " + r);
         ok("persisted" in e, "'persisted' not in pagehide event");
     }, true);
@@ -332,11 +330,11 @@ sync_test("builtin_toString", function() {
         test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration", null, true);
         test("doctype", document.doctype, "DocumentType", null, true);
 
-        test("Event", document.createEvent("Event"), "Event", null, true);
-        test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent", null, true);
-        test("KeyboardEvent", document.createEvent("KeyboardEvent"), "KeyboardEvent", null, true);
-        test("MouseEvent", document.createEvent("MouseEvent"), "MouseEvent", null, true);
-        test("UIEvent", document.createEvent("UIEvent"), "UIEvent", null, true);
+        test("Event", document.createEvent("Event"), "Event");
+        test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent");
+        test("KeyboardEvent", document.createEvent("KeyboardEvent"), "KeyboardEvent");
+        test("MouseEvent", document.createEvent("MouseEvent"), "MouseEvent");
+        test("UIEvent", document.createEvent("UIEvent"), "UIEvent");
     }
     if(v >= 10) {
         test("classList", e.classList, "DOMTokenList", "testclass    another ", true);
@@ -1958,7 +1956,7 @@ async_test("storage events", function() {
             return;
         }
         var s = Object.prototype.toString.call(e);
-        todo_wine.
+        todo_wine_if(e.target != window && e.target != document).
         ok(s === "[object StorageEvent]", "Object.toString = " + s);
         ok(e.key === key, "key = " + e.key + ", expected " + key);
         ok(e.oldValue === oldValue, "oldValue = " + e.oldValue + ", expected " + oldValue);

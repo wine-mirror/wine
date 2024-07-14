@@ -398,7 +398,7 @@ static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *i
         blocking_xhr = thread_data->blocking_xhr;
 
     compat_mode = dispex_compat_mode(&This->xhr->event_target.dispex);
-    hres = create_event_from_nsevent(nsevent, compat_mode, &event);
+    hres = create_event_from_nsevent(nsevent, This->xhr->window, compat_mode, &event);
     if(FAILED(hres)) {
         if(!blocking_xhr || This->xhr == blocking_xhr)
             This->xhr->ready_state = ready_state;
