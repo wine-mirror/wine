@@ -1027,9 +1027,15 @@ print OUT "#define WIN32_NO_STATUS\n";
 print OUT "#include \"windef.h\"\n";
 print OUT "#include \"winbase.h\"\n";
 print OUT "#include \"winternl.h\"\n";
-print OUT "#include \"wingdi.h\"\n\n";
+print OUT "#include \"wingdi.h\"\n";
+print OUT "#include \"ntuser.h\"\n\n";
 print OUT "#include \"wine/wgl.h\"\n";
 print OUT "#include \"wine/unixlib.h\"\n\n";
+
+print OUT "struct process_attach_params\n";
+print OUT "{\n";
+print OUT "    UINT64 call_gl_debug_message_callback;\n";
+print OUT "};\n\n";
 
 foreach (sort keys %wgl_functions)
 {
@@ -1059,6 +1065,7 @@ print OUT "};\n\n";
 
 print OUT "enum unix_funcs\n";
 print OUT "{\n";
+print OUT "    unix_process_attach,\n";
 print OUT "    unix_thread_attach,\n";
 print OUT "    unix_process_detach,\n";
 print OUT "    unix_get_pixel_formats,\n";
@@ -1079,8 +1086,9 @@ foreach (sort keys %ext_functions)
 }
 print OUT "};\n\n";
 
-print OUT "struct wine_gl_debug_message_params\n";
+print OUT "struct gl_debug_message_callback_params\n";
 print OUT "{\n";
+print OUT "    struct dispatch_callback_params dispatch;\n";
 print OUT "    UINT64 debug_callback; /* client pointer */\n";
 print OUT "    UINT64 debug_user; /* client pointer */\n";
 print OUT "    UINT32 source;\n";
@@ -1181,6 +1189,7 @@ print OUT "#ifdef _WIN64\n";
 print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
 print OUT "#endif\n\n";
 
+print OUT "extern NTSTATUS process_attach( void *args );\n";
 print OUT "extern NTSTATUS thread_attach( void *args );\n";
 print OUT "extern NTSTATUS process_detach( void *args );\n";
 print OUT "extern NTSTATUS get_pixel_formats( void *args );\n";
@@ -1228,6 +1237,7 @@ foreach (sort keys %ext_functions)
 
 print OUT "const unixlib_entry_t __wine_unix_call_funcs[] =\n";
 print OUT "{\n";
+print OUT "    &process_attach,\n";
 print OUT "    &thread_attach,\n";
 print OUT "    &process_detach,\n";
 print OUT "    &get_pixel_formats,\n";

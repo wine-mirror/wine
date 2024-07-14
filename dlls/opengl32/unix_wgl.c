@@ -50,6 +50,8 @@ static BOOL is_wow64(void)
     return !!NtCurrentTeb()->WowTebOffset;
 }
 
+static UINT64 call_gl_debug_message_callback;
+
 static pthread_mutex_t wgl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* handle management */
@@ -898,7 +900,7 @@ static BOOL wrap_wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs 
 static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GLenum severity,
                                        GLsizei length, const GLchar *message, const void *user )
 {
-    struct wine_gl_debug_message_params *params;
+    struct gl_debug_message_callback_params *params;
     void *ret_ptr;
     ULONG ret_len;
     struct wgl_handle *ptr = (struct wgl_handle *)user;
@@ -912,8 +914,9 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
         return;
     }
 
-    size = offsetof(struct wine_gl_debug_message_params, message[len] );
+    size = offsetof(struct gl_debug_message_callback_params, message[len] );
     if (!(params = malloc( size ))) return;
+    params->dispatch.callback = call_gl_debug_message_callback;
     params->debug_callback = ptr->u.context->debug_callback;
     params->debug_user = ptr->u.context->debug_user;
     params->source = source;
@@ -923,8 +926,7 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
     params->length = length;
     memcpy( params->message, message, len );
 
-    KeUserModeCallback( NtUserCallOpenGLDebugMessageCallback, params, size,
-                        &ret_ptr, &ret_len );
+    KeUserDispatchCallback( &params->dispatch, size, &ret_ptr, &ret_len );
     free( params );
 }
 
@@ -1145,6 +1147,13 @@ NTSTATUS ext_wglSetPbufferAttribARB( void *args )
     pthread_mutex_lock( &wgl_lock );
     params->ret = wrap_wglSetPbufferAttribARB( params->hPbuffer, params->piAttribList );
     pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS process_attach( void *args )
+{
+    struct process_attach_params *params = args;
+    call_gl_debug_message_callback = params->call_gl_debug_message_callback;
     return STATUS_SUCCESS;
 }
 

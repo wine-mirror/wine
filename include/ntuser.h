@@ -61,8 +61,6 @@ enum
     NtUserPostDDEMessage,
     NtUserRenderSynthesizedFormat,
     NtUserUnpackDDEMessage,
-    /* OpenGL support */
-    NtUserCallOpenGLDebugMessageCallback,
     /* Driver-specific callbacks */
     NtUserDriverCallbackFirst,
     NtUserDriverCallbackLast = NtUserDriverCallbackFirst + 9,

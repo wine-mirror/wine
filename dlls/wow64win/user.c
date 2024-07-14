@@ -1450,11 +1450,6 @@ static NTSTATUS WINAPI wow64_NtUserCallDispatchCallback( void *arg, ULONG size )
     return dispatch_callback( NtUserCallDispatchCallback, arg, size );
 }
 
-static NTSTATUS WINAPI wow64_NtUserCallOpenGLDebugMessageCallback( void *arg, ULONG size )
-{
-    return dispatch_callback( NtUserCallOpenGLDebugMessageCallback, arg, size );
-}
-
 static NTSTATUS WINAPI wow64_NtUserDriverCallbackFirst0( void *arg, ULONG size )
 {
     return dispatch_callback( NtUserDriverCallbackFirst + 0, arg, size );
@@ -1528,8 +1523,6 @@ ntuser_callback user_callbacks[] =
     wow64_NtUserPostDDEMessage,
     wow64_NtUserRenderSynthesizedFormat,
     wow64_NtUserUnpackDDEMessage,
-    /* OpenGL support */
-    wow64_NtUserCallOpenGLDebugMessageCallback,
     /* Driver-specific callbacks */
     wow64_NtUserDriverCallbackFirst0,
     wow64_NtUserDriverCallbackFirst1,

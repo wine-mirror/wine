@@ -12,9 +12,15 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wingdi.h"
+#include "ntuser.h"
 
 #include "wine/wgl.h"
 #include "wine/unixlib.h"
+
+struct process_attach_params
+{
+    UINT64 call_gl_debug_message_callback;
+};
 
 struct wglCopyContext_params
 {
@@ -25333,6 +25339,7 @@ struct get_pixel_formats_params
 
 enum unix_funcs
 {
+    unix_process_attach,
     unix_thread_attach,
     unix_process_detach,
     unix_get_pixel_formats,
@@ -28377,8 +28384,9 @@ enum unix_funcs
     unix_wglSwapIntervalEXT,
 };
 
-struct wine_gl_debug_message_params
+struct gl_debug_message_callback_params
 {
+    struct dispatch_callback_params dispatch;
     UINT64 debug_callback; /* client pointer */
     UINT64 debug_user; /* client pointer */
     UINT32 source;

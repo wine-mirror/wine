@@ -22,6 +22,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 #endif
 
+extern NTSTATUS process_attach( void *args );
 extern NTSTATUS thread_attach( void *args );
 extern NTSTATUS process_detach( void *args );
 extern NTSTATUS get_pixel_formats( void *args );
@@ -24196,6 +24197,7 @@ static NTSTATUS ext_wglSwapIntervalEXT( void *args )
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    &process_attach,
     &thread_attach,
     &process_detach,
     &get_pixel_formats,
