@@ -2664,16 +2664,23 @@ SQLRETURN WINAPI SQLTransact(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle
     TRACE("(EnvironmentHandle %p, ConnectionHandle %p, CompletionType %d)\n", EnvironmentHandle, ConnectionHandle,
           CompletionType);
 
-    if (!env || !con) return SQL_INVALID_HANDLE;
+    if (!env && !con) return SQL_INVALID_HANDLE;
 
-    if (env->unix_handle)
+    if ( (env && env->unix_handle) || (con && con->unix_handle))
     {
-        struct SQLTransact_params params = { env->unix_handle, con->unix_handle, CompletionType };
+        struct SQLTransact_params params = { env ? env->unix_handle : 0,
+                                             con ? con->unix_handle : 0, CompletionType };
         ret = ODBC_CALL( SQLTransact, &params );
     }
-    else if (env->win32_handle)
+    else if ( (env && env->win32_handle) || (con && con->win32_handle))
     {
-        ret = env->win32_funcs->SQLTransact( env->win32_handle, con->win32_handle, CompletionType );
+        const struct win32_funcs *win32_funcs;
+
+        if (env) win32_funcs = env->win32_funcs;
+        else win32_funcs = con->win32_funcs;
+
+        ret = win32_funcs->SQLTransact( env ? env->win32_handle : NULL,
+                                        con ? con->win32_handle : NULL, CompletionType );
     }
 
     TRACE("Returning %d\n", ret);
