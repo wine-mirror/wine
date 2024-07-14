@@ -1875,11 +1875,15 @@ GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer )
     return gl_unmap_named_buffer( unix_glUnmapNamedBufferEXT, buffer );
 }
 
-static NTSTATUS WINAPI call_opengl_debug_message_callback( void *args, ULONG size )
+typedef void (WINAPI *gl_debug_message)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
+
+static NTSTATUS WINAPI call_gl_debug_message_callback( void *args, ULONG size )
 {
     struct wine_gl_debug_message_params *params = args;
-    params->user_callback( params->source, params->type, params->id, params->severity,
-                           params->length, params->message, params->user_data );
+    gl_debug_message callback = (void *)(UINT_PTR)params->debug_callback;
+    const void *user = (void *)(UINT_PTR)params->debug_user;
+    callback( params->source, params->type, params->id, params->severity,
+              params->length, params->message, user );
     return STATUS_SUCCESS;
 }
 
@@ -1901,7 +1905,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         }
 
         kernel_callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
-        kernel_callback_table[NtUserCallOpenGLDebugMessageCallback] = call_opengl_debug_message_callback;
+        kernel_callback_table[NtUserCallOpenGLDebugMessageCallback] = call_gl_debug_message_callback;
         /* fallthrough */
     case DLL_THREAD_ATTACH:
         if ((status = UNIX_CALL( thread_attach, NtCurrentTeb() )))

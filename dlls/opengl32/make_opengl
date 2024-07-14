@@ -1079,18 +1079,16 @@ foreach (sort keys %ext_functions)
 }
 print OUT "};\n\n";
 
-print OUT "typedef void (WINAPI *gl_debug_cb)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);\n";
 print OUT "struct wine_gl_debug_message_params\n";
 print OUT "{\n";
-print OUT "    gl_debug_cb user_callback;\n";
-print OUT "    const void *user_data;\n";
-print OUT "\n";
-print OUT "    GLenum source;\n";
-print OUT "    GLenum type;\n";
-print OUT "    GLuint id;\n";
-print OUT "    GLenum severity;\n";
-print OUT "    GLsizei length;\n";
-print OUT "    const GLchar *message;\n";
+print OUT "    UINT64 debug_callback; /* client pointer */\n";
+print OUT "    UINT64 debug_user; /* client pointer */\n";
+print OUT "    UINT32 source;\n";
+print OUT "    UINT32 type;\n";
+print OUT "    UINT32 id;\n";
+print OUT "    UINT32 severity;\n";
+print OUT "    UINT32 length;\n";
+print OUT "    const char *message;\n";
 print OUT "};\n\n";
 
 print OUT "#define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )\n\n";

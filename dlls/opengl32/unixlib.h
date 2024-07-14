@@ -28377,18 +28377,16 @@ enum unix_funcs
     unix_wglSwapIntervalEXT,
 };
 
-typedef void (WINAPI *gl_debug_cb)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void *);
 struct wine_gl_debug_message_params
 {
-    gl_debug_cb user_callback;
-    const void *user_data;
-
-    GLenum source;
-    GLenum type;
-    GLuint id;
-    GLenum severity;
-    GLsizei length;
-    const GLchar *message;
+    UINT64 debug_callback; /* client pointer */
+    UINT64 debug_user; /* client pointer */
+    UINT32 source;
+    UINT32 type;
+    UINT32 id;
+    UINT32 severity;
+    UINT32 length;
+    const char *message;
 };
 
 #define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
