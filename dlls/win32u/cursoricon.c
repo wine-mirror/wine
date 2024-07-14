@@ -41,7 +41,7 @@ struct cursoricon_object
 {
     struct user_object      obj;        /* object header */
     struct list             entry;      /* entry in shared icons list */
-    ULONG_PTR               param;      /* opaque param used by 16-bit code */
+    struct free_icon_params params;     /* opaque params used by 16-bit code */
     UNICODE_STRING          module;     /* module for icons loaded from resources */
     WCHAR                  *resname;    /* resource name for icons loaded from resources */
     HRSRC                   rsrc;       /* resource for shared icons */
@@ -179,7 +179,7 @@ static BOOL free_icon_handle( HICON handle )
     if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
     else if (obj)
     {
-        ULONG param = obj->param;
+        struct free_icon_params params = obj->params;
         void *ret_ptr;
         ULONG ret_len;
         UINT i;
@@ -213,7 +213,7 @@ static BOOL free_icon_handle( HICON handle )
         }
         if (!IS_INTRESOURCE( obj->resname )) free( obj->resname );
         free( obj );
-        if (param) KeUserModeCallback( NtUserCallFreeIcon, &param, sizeof(param), &ret_ptr, &ret_len );
+        if (params.param) KeUserModeCallback( NtUserCallFreeIcon, &params, sizeof(params), &ret_ptr, &ret_len );
         user_driver->pDestroyCursorIcon( handle );
         return TRUE;
     }
@@ -685,13 +685,13 @@ ULONG_PTR get_icon_param( HICON handle )
     if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
     else if (obj)
     {
-        ret = obj->param;
+        ret = obj->params.param;
         release_user_handle_ptr( obj );
     }
     return ret;
 }
 
-ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param )
+ULONG_PTR set_icon_param( HICON handle, const struct free_icon_params *params )
 {
     ULONG_PTR ret = 0;
     struct cursoricon_object *obj = get_user_handle_ptr( handle, NTUSER_OBJ_ICON );
@@ -699,8 +699,8 @@ ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param )
     if (obj == OBJ_OTHER_PROCESS) WARN( "icon handle %p from other process\n", handle );
     else if (obj)
     {
-        ret = obj->param;
-        obj->param = param;
+        ret = obj->params.param;
+        obj->params = *params;
         release_user_handle_ptr( obj );
     }
     return ret;

@@ -1094,9 +1094,15 @@ static inline BOOL NtUserSetCaretPos( int x, int y )
     return NtUserCallTwoParam( x, y, NtUserCallTwoParam_SetCaretPos );
 }
 
+struct free_icon_params
+{
+    UINT64 param;
+};
+
 static inline UINT_PTR NtUserSetIconParam( HICON icon, ULONG_PTR param )
 {
-    return NtUserCallTwoParam( HandleToUlong(icon), param, NtUserCallTwoParam_SetIconParam );
+    struct free_icon_params params = {.param = param};
+    return NtUserCallTwoParam( HandleToUlong(icon), (UINT_PTR)&params, NtUserCallTwoParam_SetIconParam );
 }
 
 static inline BOOL NtUserUnhookWindowsHook( INT id, HOOKPROC proc )
