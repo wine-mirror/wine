@@ -268,7 +268,7 @@
 @ stdcall SendARP( long long ptr ptr )
 @ stub SetAdapterIpAddress
 @ stub SetBlockRoutes
-#@ stub SetCurrentThreadCompartmentId
+@ stdcall SetCurrentThreadCompartmentId( long )
 @ stdcall SetIfEntry( ptr )
 @ stub SetIfEntryToStack
 #@ stub SetIpForwardEntry2

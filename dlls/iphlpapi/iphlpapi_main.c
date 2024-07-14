@@ -4824,3 +4824,12 @@ NET_IF_COMPARTMENT_ID WINAPI GetCurrentThreadCompartmentId( void )
     FIXME( "stub\n" );
     return NET_IF_COMPARTMENT_ID_PRIMARY;
 }
+
+/***********************************************************************
+ *    SetCurrentThreadCompartmentId (IPHLPAPI.@)
+ */
+DWORD WINAPI SetCurrentThreadCompartmentId( NET_IF_COMPARTMENT_ID id )
+{
+    FIXME( "(%x): stub\n", id );
+    return ERROR_SUCCESS;
+}
