@@ -61,10 +61,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BS
 static HRESULT WINAPI HTMLDOMAttribute_put_nodeValue(IHTMLDOMAttribute *iface, VARIANT v)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    DISPID dispidNamed = DISPID_PROPERTYPUT;
-    DISPPARAMS dp = {&v, &dispidNamed, 1, 1};
     EXCEPINFO ei;
-    VARIANT ret;
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
@@ -72,9 +69,7 @@ static HRESULT WINAPI HTMLDOMAttribute_put_nodeValue(IHTMLDOMAttribute *iface, V
         return VariantCopy(&This->value, &v);
 
     memset(&ei, 0, sizeof(ei));
-
-    return IWineJSDispatchHost_InvokeEx(&This->elem->node.event_target.dispex.IWineJSDispatchHost_iface, This->dispid, LOCALE_SYSTEM_DEFAULT,
-            DISPATCH_PROPERTYPUT, &dp, &ret, &ei, NULL);
+    return dispex_prop_put(&This->elem->node.event_target.dispex, This->dispid, LOCALE_SYSTEM_DEFAULT, &v, &ei, NULL);
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, VARIANT *p)
