@@ -5141,7 +5141,8 @@ void EventTarget_Init(EventTarget *event_target, dispex_static_data_t *dispex_da
 
 void init_event_target(EventTarget *event_target, dispex_static_data_t *dispex_data, HTMLInnerWindow *script_global)
 {
-    init_dispatch(&event_target->dispex, dispex_data, script_global, dispex_compat_mode(&script_global->event_target.dispex));
+    compat_mode_t compat_mode = script_global && script_global->doc ? script_global->doc->document_mode : COMPAT_MODE_NONE;
+    init_dispatch(&event_target->dispex, dispex_data, script_global, compat_mode);
     event_target->IEventTarget_iface.lpVtbl = &EventTargetVtbl;
     wine_rb_init(&event_target->handler_map, event_id_cmp);
 }

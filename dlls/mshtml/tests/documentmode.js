@@ -107,126 +107,126 @@ sync_test("page transition events", function() {
 
 sync_test("builtin_toString", function() {
     var tags = [
-        [ "abbr",            "Phrase" ],
-        [ "acronym",         "Phrase" ],
-        [ "address",         "Block" ],
+        [ "abbr",            "Phrase", -1 ],
+        [ "acronym",         "Phrase", -1 ],
+        [ "address",         "Block", -1 ],
      // [ "applet",          "Applet" ],  // makes Windows pop up a dialog box
         [ "article",         "" ],
         [ "aside",           "" ],
-        [ "audio",           "Audio" ],
-        [ "b",               "Phrase" ],
-        [ "base",            "Base" ],
-        [ "basefont",        "BaseFont" ],
+        [ "audio",           "Audio", -1 ],
+        [ "b",               "Phrase", -1 ],
+        [ "base",            "Base", -1 ],
+        [ "basefont",        "BaseFont", -1 ],
         [ "bdi",             "Unknown" ],
-        [ "bdo",             "Phrase" ],
-        [ "big",             "Phrase" ],
-        [ "blockquote",      "Block" ],
+        [ "bdo",             "Phrase", -1 ],
+        [ "big",             "Phrase", -1 ],
+        [ "blockquote",      "Block", -1 ],
         [ "body",            "Body" ],
-        [ "br",              "BR" ],
+        [ "br",              "BR", -1 ],
         [ "button",          "Button" ],
-        [ "canvas",          "Canvas" ],
-        [ "caption",         "TableCaption" ],
-        [ "center",          "Block" ],
-        [ "cite",            "Phrase" ],
-        [ "code",            "Phrase" ],
-        [ "col",             "TableCol" ],
-        [ "colgroup",        "TableCol" ],
+        [ "canvas",          "Canvas", -1 ],
+        [ "caption",         "TableCaption", -1 ],
+        [ "center",          "Block", -1 ],
+        [ "cite",            "Phrase", -1 ],
+        [ "code",            "Phrase", -1 ],
+        [ "col",             "TableCol", -1 ],
+        [ "colgroup",        "TableCol", -1 ],
         [ "data",            "Unknown" ],
         [ "datalist",        "DataList", 10 ],
-        [ "dd",              "DD" ],
-        [ "del",             "Mod" ],
+        [ "dd",              "DD", -1 ],
+        [ "del",             "Mod", -1 ],
         [ "details",         "Unknown" ],
-        [ "dfn",             "Phrase" ],
+        [ "dfn",             "Phrase", -1 ],
         [ "dialog",          "Unknown" ],
-        [ "dir",             "Directory" ],
-        [ "div",             "Div" ],
-        [ "dl",              "DList" ],
-        [ "dt",              "DT" ],
-        [ "em",              "Phrase" ],
+        [ "dir",             "Directory", -1 ],
+        [ "div",             "Div", -1 ],
+        [ "dl",              "DList", -1 ],
+        [ "dt",              "DT", -1 ],
+        [ "em",              "Phrase", -1 ],
         [ "embed",           "Embed" ],
-        [ "fieldset",        "FieldSet" ],
+        [ "fieldset",        "FieldSet", -1 ],
         [ "figcaption",      "" ],
         [ "figure",          "" ],
-        [ "font",            "Font" ],
+        [ "font",            "Font", -1 ],
         [ "footer",          "" ],
-        [ "form",            "Form" ],
-        [ "frame",           "Frame" ],
-        [ "frameset",        "FrameSet" ],
-        [ "h1",              "Heading" ],
-        [ "h2",              "Heading" ],
-        [ "h3",              "Heading" ],
-        [ "h4",              "Heading" ],
-        [ "h5",              "Heading" ],
-        [ "h6",              "Heading" ],
+        [ "form",            "Form", -1 ],
+        [ "frame",           "Frame", -1 ],
+        [ "frameset",        "FrameSet", -1 ],
+        [ "h1",              "Heading", -1 ],
+        [ "h2",              "Heading", -1 ],
+        [ "h3",              "Heading", -1 ],
+        [ "h4",              "Heading", -1 ],
+        [ "h5",              "Heading", -1 ],
+        [ "h6",              "Heading", -1 ],
         [ "h7",              "Unknown" ],
         [ "head",            "Head" ],
         [ "header",          "" ],
-        [ "hr",              "HR" ],
+        [ "hr",              "HR", -1 ],
         [ "html",            "Html" ],
-        [ "i",               "Phrase" ],
-        [ "iframe",          "IFrame" ],
+        [ "i",               "Phrase", -1 ],
+        [ "iframe",          "IFrame", -1 ],
         [ "img",             "Image" ],
         [ "input",           "Input" ],
-        [ "ins",             "Mod" ],
-        [ "kbd",             "Phrase" ],
+        [ "ins",             "Mod", -1 ],
+        [ "kbd",             "Phrase", -1 ],
         [ "label",           "Label" ],
-        [ "legend",          "Legend" ],
-        [ "li",              "LI" ],
+        [ "legend",          "Legend", -1 ],
+        [ "li",              "LI", -1 ],
         [ "link",            "Link" ],
         [ "main",            "Unknown" ],
-        [ "map",             "Map" ],
+        [ "map",             "Map", -1 ],
         [ "mark",            "" ],
         [ "meta",            "Meta" ],
         [ "meter",           "Unknown" ],
         [ "nav",             "" ],
         [ "noframes",        "" ],
         [ "noscript",        "" ],
-        [ "object",          "Object" ],
-        [ "ol",              "OList" ],
-        [ "optgroup",        "OptGroup" ],
+        [ "object",          "Object", -1 ],
+        [ "ol",              "OList", -1 ],
+        [ "optgroup",        "OptGroup", -1 ],
         [ "option",          "Option" ],
         [ "output",          "Unknown" ],
-        [ "p",               "Paragraph" ],
-        [ "param",           "Param" ],
+        [ "p",               "Paragraph", -1 ],
+        [ "param",           "Param", -1 ],
         [ "picture",         "Unknown" ],
-        [ "pre",             "Pre" ],
+        [ "pre",             "Pre", -1 ],
         [ "progress",        "Progress", 10 ],
-        [ "q",               "Quote" ],
-        [ "rp",              "Phrase" ],
-        [ "rt",              "Phrase" ],
-        [ "ruby",            "Phrase" ],
-        [ "s",               "Phrase" ],
-        [ "samp",            "Phrase" ],
+        [ "q",               "Quote", -1 ],
+        [ "rp",              "Phrase", -1 ],
+        [ "rt",              "Phrase", -1 ],
+        [ "ruby",            "Phrase", -1 ],
+        [ "s",               "Phrase", -1 ],
+        [ "samp",            "Phrase", -1 ],
         [ "script",          "Script" ],
         [ "section",         "" ],
-        [ "select",          "Select" ],
-        [ "small",           "Phrase" ],
-        [ "source",          "Source" ],
-        [ "span",            "Span" ],
-        [ "strike",          "Phrase" ],
-        [ "strong",          "Phrase" ],
+        [ "select",          "Select", -1 ],
+        [ "small",           "Phrase", -1 ],
+        [ "source",          "Source", -1 ],
+        [ "span",            "Span", -1 ],
+        [ "strike",          "Phrase", -1 ],
+        [ "strong",          "Phrase", -1 ],
         [ "style",           "Style" ],
-        [ "sub",             "Phrase" ],
+        [ "sub",             "Phrase", -1 ],
         [ "summary",         "Unknown" ],
-        [ "sup",             "Phrase" ],
+        [ "sup",             "Phrase", -1 ],
         [ "svg",             "Unknown" ],
         [ "table",           "Table" ],
-        [ "tbody",           "TableSection" ],
+        [ "tbody",           "TableSection", -1 ],
         [ "td",              "TableDataCell" ],
         [ "template",        "Unknown" ],
         [ "textarea",        "TextArea" ],
-        [ "tfoot",           "TableSection" ],
-        [ "th",              "TableHeaderCell" ],
-        [ "thead",           "TableSection" ],
+        [ "tfoot",           "TableSection", -1 ],
+        [ "th",              "TableHeaderCell", -1 ],
+        [ "thead",           "TableSection", -1 ],
         [ "time",            "Unknown" ],
         [ "title",           "Title" ],
         [ "tr",              "TableRow" ],
         [ "track",           "Track", 10 ],
-        [ "tt",              "Phrase" ],
-        [ "u",               "Phrase" ],
-        [ "ul",              "UList" ],
-        [ "var",             "Phrase" ],
-        [ "video",           "Video" ],
+        [ "tt",              "Phrase", -1 ],
+        [ "u",               "Phrase", -1 ],
+        [ "ul",              "UList", -1 ],
+        [ "var",             "Phrase", -1 ],
+        [ "video",           "Video", -1 ],
         [ "wbr",             "" ],
         [ "winetest",        "Unknown" ]
     ];
@@ -246,17 +246,17 @@ sync_test("builtin_toString", function() {
 
     for(var i = 0; i < tags.length; i++)
         if(tags[i].length < 3 || v >= tags[i][2])
-            test("tag '" + tags[i][0] + "'", document.createElement(tags[i][0]), "HTML" + tags[i][1] + "Element", null, true);
+            test("tag '" + tags[i][0] + "'", document.createElement(tags[i][0]), "HTML" + tags[i][1] + "Element", null, tags[i].length > 2);
 
     e = document.createElement("a");
     ok(e.toString() === "", "tag 'a' (without href) toString returned " + e.toString());
     e.href = "https://www.winehq.org/";
-    test("tag 'a'", e, "HTMLAnchorElement", "https://www.winehq.org/", true);
+    test("tag 'a'", e, "HTMLAnchorElement", "https://www.winehq.org/");
 
     e = document.createElement("area");
     ok(e.toString() === "", "tag 'area' (without href) toString returned " + e.toString());
     e.href = "https://www.winehq.org/";
-    test("tag 'area'", e, "HTMLAreaElement", "https://www.winehq.org/", true);
+    test("tag 'area'", e, "HTMLAreaElement", "https://www.winehq.org/");
 
     e = document.createElement("style");
     document.body.appendChild(e);
@@ -315,7 +315,7 @@ sync_test("builtin_toString", function() {
     test("styleSheetRule", sheet.rules[0], "CSSStyleRule", null, true);
     test("styleSheetRules", sheet.rules, "MSCSSRuleList", null, true);
     test("styleSheets", document.styleSheets, "StyleSheetList", null, true);
-    test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null, true);
+    test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null);
     test("textRange", txtRange, "TextRange");
     test("window", window, "Window", "[object Window]", true);
     test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest");
@@ -328,7 +328,7 @@ sync_test("builtin_toString", function() {
     }
     if(v >= 9) {
         test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration", null, true);
-        test("doctype", document.doctype, "DocumentType", null, true);
+        test("doctype", document.doctype, "DocumentType");
 
         test("Event", document.createEvent("Event"), "Event");
         test("CustomEvent", document.createEvent("CustomEvent"), "CustomEvent");
@@ -346,7 +346,7 @@ sync_test("builtin_toString", function() {
     }
     if(v >= 9) {
         document.body.innerHTML = "<!--...-->";
-        test("comment", document.body.firstChild, "Comment", null, true);
+        test("comment", document.body.firstChild, "Comment");
     }
 });
 
