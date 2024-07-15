@@ -413,9 +413,27 @@ BOOL WINAPI SetupGetSourceFileLocationW( HINF hinf, PINFCONTEXT context, PCWSTR 
     TRACE("%p, %p, %s, %p, %p, 0x%08lx, %p\n", hinf, context, debugstr_w(filename), source_id,
           buffer, buffer_size, required_size);
 
-    if (!context) context = &ctx;
+    if (context)
+    {
+        WCHAR *ctx_filename;
+        DWORD filename_size;
 
-    if (!(source_id_str = get_source_id( hinf, context, filename )))
+        if (!SetupGetStringFieldW( context, 1, NULL, 0, &filename_size ))
+            return FALSE;
+        if (!(ctx_filename = malloc( filename_size * sizeof(WCHAR) )))
+            return FALSE;
+        SetupGetStringFieldW( context, 1, ctx_filename, filename_size, NULL );
+
+        source_id_str = get_source_id( hinf, &ctx, ctx_filename );
+
+        free( ctx_filename );
+    }
+    else
+    {
+        source_id_str = get_source_id( hinf, &ctx, filename );
+    }
+
+    if (!source_id_str)
         return FALSE;
 
     *source_id = wcstol( source_id_str, &end, 10 );
@@ -426,7 +444,7 @@ BOOL WINAPI SetupGetSourceFileLocationW( HINF hinf, PINFCONTEXT context, PCWSTR 
     }
     free( source_id_str );
 
-    if (SetupGetStringFieldW( context, 4, buffer, buffer_size, required_size ))
+    if (SetupGetStringFieldW( &ctx, 4, buffer, buffer_size, required_size ))
         return TRUE;
 
     if (required_size) *required_size = 1;

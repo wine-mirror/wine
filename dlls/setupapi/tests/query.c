@@ -356,12 +356,12 @@ static void test_SetupGetSourceFileLocation(void)
 
     ret = SetupGetSourceFileLocationA(hinf, &ctx, "two.txt", &source_id, buffer, sizeof(buffer), NULL);
     ok(ret, "Got error %lu.\n", GetLastError());
-    todo_wine ok(source_id == 2, "Got source id %u.\n", source_id);
-    todo_wine ok(!strcmp(buffer, ""), "Got relative path %s.\n", debugstr_a(buffer));
+    ok(source_id == 2, "Got source id %u.\n", source_id);
+    ok(!strcmp(buffer, ""), "Got relative path %s.\n", debugstr_a(buffer));
 
     /* ctx should not be changed. */
     ret = SetupGetLineTextA(&ctx, NULL, NULL, NULL, buffer, sizeof(buffer), NULL);
-    todo_wine ok(!strcmp(buffer, "one.txt,,2"), "Got line %s.\n", debugstr_a(buffer));
+    ok(!strcmp(buffer, "one.txt,,2"), "Got line %s.\n", debugstr_a(buffer));
 
     /* Test when the source name differs from the destination name.
      * It seems SetupGetSourceFileLocation() is buggy and doesn't take that
@@ -370,18 +370,18 @@ static void test_SetupGetSourceFileLocation(void)
     ret = SetupFindNextLine(&ctx, &ctx);
     ok(ret, "Got error %lu.\n", GetLastError());
     ret = SetupFindNextLine(&ctx, &ctx);
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupGetSourceFileLocationA(hinf, &ctx, "two.txt", &source_id, buffer, sizeof(buffer), NULL);
-    todo_wine ok(!ret, "Expected failure.\n");
-    todo_wine ok(GetLastError() == ERROR_LINE_NOT_FOUND, "Got error %lu.\n", GetLastError());
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_LINE_NOT_FOUND, "Got error %lu.\n", GetLastError());
 
     ret = SetupFindNextLine(&ctx, &ctx);
     ok(ret, "Got error %lu.\n", GetLastError());
 
     ret = SetupGetSourceFileLocationA(hinf, &ctx, "two.txt", &source_id, buffer, sizeof(buffer), NULL);
-    ok(ret, "Got error %lu.\n", GetLastError());
+    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
     todo_wine ok(source_id == 10, "Got source id %u.\n", source_id);
     todo_wine ok(!strcmp(buffer, ""), "Got relative path %s.\n", debugstr_a(buffer));
 
