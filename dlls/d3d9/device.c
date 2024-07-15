@@ -1185,6 +1185,7 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
                     surface->parent_device = &device->IDirect3DDevice9Ex_iface;
             }
 
+            device->in_scene = FALSE;
             device->device_state = D3D9_DEVICE_STATE_OK;
 
             if (extended)

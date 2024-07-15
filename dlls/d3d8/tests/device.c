@@ -2180,7 +2180,7 @@ static void test_scene(void)
 
     reset_device(device, NULL);
     hr = IDirect3DDevice8_EndScene(device);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
 
     hr = IDirect3DDevice8_BeginScene(device);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);

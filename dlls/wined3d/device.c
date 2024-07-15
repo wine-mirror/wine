@@ -5233,6 +5233,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     if (reset_state)
     {
         TRACE("Resetting state.\n");
+        if (device->inScene)
+            wined3d_device_end_scene(device);
         wined3d_device_context_emit_reset_state(&device->cs->c, false);
         state_cleanup(state);
 
