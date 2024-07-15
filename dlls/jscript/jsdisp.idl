@@ -34,6 +34,8 @@ const unsigned int PROPF_ENUMERABLE   = 0x0400;
 const unsigned int PROPF_WRITABLE     = 0x0800;
 const unsigned int PROPF_CONFIGURABLE = 0x1000;
 
+interface IWineJSDispatchHost;
+
 [
     object,
     uuid(d359f2fe-5531-741b-a41a-5cf92edc971c),
@@ -42,6 +44,7 @@ const unsigned int PROPF_CONFIGURABLE = 0x1000;
 interface IWineJSDispatch : IDispatchEx
 {
     void Free();
+    HRESULT GetScriptGlobal(IWineJSDispatchHost **ret);
 }
 
 [

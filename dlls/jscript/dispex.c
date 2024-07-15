@@ -2308,6 +2308,20 @@ static void WINAPI WineJSDispatch_Free(IWineJSDispatch *iface)
    jsdisp_free(This);
  }
 
+static HRESULT WINAPI WineJSDispatch_GetScriptGlobal(IWineJSDispatch *iface, IWineJSDispatchHost **ret)
+{
+   jsdisp_t *This = impl_from_IWineJSDispatch(iface);
+   IDispatch *disp;
+
+   if(!This->ctx->site)
+       return E_UNEXPECTED;
+
+   if(!(disp = lookup_global_host(This->ctx)))
+       return E_NOINTERFACE;
+
+   return IDispatch_QueryInterface(disp, &IID_IWineJSDispatchHost, (void **)ret);
+}
+
 static IWineJSDispatchVtbl DispatchExVtbl = {
     DispatchEx_QueryInterface,
     DispatchEx_AddRef,
@@ -2325,6 +2339,7 @@ static IWineJSDispatchVtbl DispatchExVtbl = {
     DispatchEx_GetNextDispID,
     DispatchEx_GetNameSpaceParent,
     WineJSDispatch_Free,
+    WineJSDispatch_GetScriptGlobal,
 };
 
 jsdisp_t *as_jsdisp(IDispatch *disp)

@@ -2573,3 +2573,11 @@ void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWind
         dispex->info = ensure_dispex_info(dispex, data, compat_mode, script_global);
     }
 }
+
+void init_dispatch_with_owner(DispatchEx *dispex, dispex_static_data_t *desc, DispatchEx *owner)
+{
+    HTMLInnerWindow *script_global = get_script_global(owner);
+    init_dispatch(dispex, desc, script_global, dispex_compat_mode(owner));
+    if(script_global)
+        IHTMLWindow2_Release(&script_global->base.IHTMLWindow2_iface);
+}

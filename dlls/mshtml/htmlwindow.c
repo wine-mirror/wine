@@ -4208,6 +4208,26 @@ void init_window_cc(void)
     ccp_init(&outer_window_ccp, &ccp_callback);
 }
 
+HTMLInnerWindow *get_script_global(DispatchEx *dispex)
+{
+    IWineJSDispatchHost *disp;
+    HTMLInnerWindow *ret;
+    HRESULT hres;
+
+    if(!dispex->jsdisp)
+        return NULL;
+    hres = IWineJSDispatch_GetScriptGlobal(dispex->jsdisp, &disp);
+    if(FAILED(hres))
+        return NULL;
+
+    assert(disp->lpVtbl == &WindowDispExVtbl);
+    ret = impl_from_IWineJSDispatchHost(disp)->base.inner_window;
+    if(ret)
+        IHTMLWindow2_AddRef(&ret->base.IHTMLWindow2_iface);
+    IWineJSDispatchHost_Release(disp);
+    return ret;
+}
+
 static void *alloc_window(size_t size)
 {
     HTMLWindow *window;

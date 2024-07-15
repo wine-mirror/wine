@@ -307,7 +307,7 @@ sync_test("builtin_toString", function() {
     test("performance", window.performance, "Performance");
     test("performanceNavigation", window.performance.navigation, "PerformanceNavigation");
     test("performanceTiming", window.performance.timing, "PerformanceTiming");
-    if(v >= 11 /* todo_wine */) test("plugins", window.navigator.plugins, v < 11 ? "MSPluginsCollection" : "PluginArray", null, true);
+    if(v >= 11 /* todo_wine */) test("plugins", window.navigator.plugins, v < 11 ? "MSPluginsCollection" : "PluginArray");
     test("screen", window.screen, "Screen");
     test("sessionStorage", window.sessionStorage, "Storage", null, true);
     test("style", document.body.style, "MSStyleCSSProperties", null, true);
