@@ -390,12 +390,6 @@ static LPWSTR get_source_id( HINF hinf, PINFCONTEXT context, PCWSTR filename )
         return NULL;
     }
 
-    if (!SetupFindFirstLineW( hinf, source_disks_names_platform, source_id, context ) &&
-        !SetupFindFirstLineW( hinf, source_disks_names, source_id, context ))
-    {
-        free( source_id );
-        return NULL;
-    }
     return source_id;
 }
 
@@ -444,7 +438,7 @@ BOOL WINAPI SetupGetSourceFileLocationW( HINF hinf, PINFCONTEXT context, PCWSTR 
     }
     free( source_id_str );
 
-    if (SetupGetStringFieldW( &ctx, 4, buffer, buffer_size, required_size ))
+    if (SetupGetStringFieldW( &ctx, 2, buffer, buffer_size, required_size ))
         return TRUE;
 
     if (required_size) *required_size = 1;

@@ -349,7 +349,7 @@ static void test_SetupGetSourceFileLocation(void)
     ret = SetupGetSourceFileLocationA(hinf, NULL, "two.txt", &source_id, buffer, sizeof(buffer), NULL);
     ok(ret, "Got error %lu.\n", GetLastError());
     ok(source_id == 4, "Got source id %u.\n", source_id);
-    todo_wine ok(!strcmp(buffer, "there"), "Got relative path %s.\n", debugstr_a(buffer));
+    ok(!strcmp(buffer, "there"), "Got relative path %s.\n", debugstr_a(buffer));
 
     ret = SetupFindFirstLineA(hinf, "copy_section", NULL, &ctx);
     ok(ret, "Got error %lu.\n", GetLastError());
@@ -381,14 +381,14 @@ static void test_SetupGetSourceFileLocation(void)
     ok(ret, "Got error %lu.\n", GetLastError());
 
     ret = SetupGetSourceFileLocationA(hinf, &ctx, "two.txt", &source_id, buffer, sizeof(buffer), NULL);
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
-    todo_wine ok(source_id == 10, "Got source id %u.\n", source_id);
-    todo_wine ok(!strcmp(buffer, ""), "Got relative path %s.\n", debugstr_a(buffer));
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ok(source_id == 10, "Got source id %u.\n", source_id);
+    ok(!strcmp(buffer, ""), "Got relative path %s.\n", debugstr_a(buffer));
 
     ret = SetupGetSourceFileLocationA(hinf, NULL, "three.txt", &source_id, buffer, sizeof(buffer), NULL);
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
-    todo_wine ok(source_id == 6, "Got source id %u.\n", source_id);
-    todo_wine ok(!strcmp(buffer, ""), "Got relative path %s.\n", debugstr_a(buffer));
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ok(source_id == 6, "Got source id %u.\n", source_id);
+    ok(!strcmp(buffer, ""), "Got relative path %s.\n", debugstr_a(buffer));
 
     SetLastError(0xdeadbeef);
     ret = SetupGetSourceFileLocationA(hinf, NULL, "four.txt", &source_id, buffer, sizeof(buffer), NULL);
