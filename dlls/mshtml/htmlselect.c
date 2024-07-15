@@ -1215,7 +1215,7 @@ static void HTMLSelectElement_unlink(DispatchEx *dispex)
 
 #define DISPID_OPTIONCOL_0 MSHTML_DISPID_CUSTOM_MIN
 
-static HRESULT HTMLSelectElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLSelectElement_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     const WCHAR *ptr;
     DWORD idx = 0;

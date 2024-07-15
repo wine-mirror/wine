@@ -860,7 +860,7 @@ static void HTMLFrameElement_destructor(DispatchEx *dispex)
     HTMLFrameBase_destructor(&This->framebase);
 }
 
-static HRESULT HTMLFrameElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLFrameElement_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLFrameElement *This = frame_from_DispatchEx(dispex);
 
@@ -1297,7 +1297,7 @@ static void HTMLIFrame_destructor(DispatchEx *dispex)
     HTMLFrameBase_destructor(&This->framebase);
 }
 
-static HRESULT HTMLIFrame_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLIFrame_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLIFrame *This = iframe_from_DispatchEx(dispex);
 

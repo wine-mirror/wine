@@ -506,10 +506,10 @@ static void HTMLElementCollection_destructor(DispatchEx *dispex)
 
 #define DISPID_ELEMCOL_0 MSHTML_DISPID_CUSTOM_MIN
 
-static HRESULT HTMLElementCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLElementCollection_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     HTMLElementCollection *This = impl_from_DispatchEx(dispex);
-    WCHAR *ptr;
+    const WCHAR *ptr;
     DWORD idx=0;
 
     if(!*name)

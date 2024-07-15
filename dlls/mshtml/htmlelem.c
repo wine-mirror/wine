@@ -1052,12 +1052,12 @@ static void HTMLRectCollection_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static HRESULT HTMLRectCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLRectCollection_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
+    const WCHAR *ptr;
     UINT32 len = 0;
     DWORD idx = 0;
-    WCHAR *ptr;
 
     for(ptr = name; *ptr && is_digit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
@@ -7086,7 +7086,7 @@ static HRESULT token_list_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
-static HRESULT token_list_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT token_list_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     WCHAR *end;
     LONG idx;
@@ -7464,9 +7464,9 @@ static void HTMLFiltersCollection_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static HRESULT HTMLFiltersCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLFiltersCollection_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
-    WCHAR *ptr;
+    const WCHAR *ptr;
     int idx = 0;
 
     for(ptr = name; *ptr && is_digit(*ptr); ptr++)
@@ -7570,7 +7570,7 @@ static HRESULT get_attr_dispid_by_idx(HTMLAttributeCollection *This, LONG *idx, 
     return get_attr_dispid_by_relative_idx(This, idx, DISPID_STARTENUM, dispid);
 }
 
-static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BSTR name, DISPID *id)
+static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, const WCHAR *name, DISPID *id)
 {
     HRESULT hres;
 
@@ -7587,7 +7587,7 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BST
     }
 
     hres = IWineJSDispatchHost_GetDispID(&This->elem->node.event_target.dispex.IWineJSDispatchHost_iface,
-            name, fdexNameCaseInsensitive, id);
+                                         (BSTR)name, fdexNameCaseInsensitive, id);
     return hres;
 }
 
@@ -8052,7 +8052,7 @@ static void HTMLAttributeCollection_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static HRESULT HTMLAttributeCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLAttributeCollection_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     HTMLAttributeCollection *This = HTMLAttributeCollection_from_DispatchEx(dispex);
     HTMLDOMAttribute *attr;

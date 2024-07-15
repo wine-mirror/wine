@@ -155,7 +155,7 @@ void *CSSStyle_query_interface(DispatchEx*,REFIID);
 void CSSStyle_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*);
 void CSSStyle_unlink(DispatchEx*);
 void CSSStyle_destructor(DispatchEx*);
-HRESULT CSSStyle_get_dispid(DispatchEx*,BSTR,DWORD,DISPID*);
+HRESULT CSSStyle_get_dispid(DispatchEx*,const WCHAR*,DWORD,DISPID*);
 void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode);
 
 HRESULT get_style_property(CSSStyle*,styleid_t,BSTR*);

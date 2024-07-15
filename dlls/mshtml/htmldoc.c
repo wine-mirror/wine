@@ -5375,7 +5375,7 @@ static HRESULT HTMLDocumentNode_get_name(DispatchEx *dispex, DISPID id, BSTR *na
     return (*name = SysAllocString(This->elem_vars[idx])) ? S_OK : E_OUTOFMEMORY;
 }
 
-static HRESULT HTMLDocumentNode_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLDocumentNode_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
     HRESULT hres = DISP_E_UNKNOWNNAME;

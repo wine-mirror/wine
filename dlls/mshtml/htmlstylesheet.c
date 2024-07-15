@@ -292,12 +292,12 @@ static void HTMLStyleSheetRulesCollection_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static HRESULT HTMLStyleSheetRulesCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLStyleSheetRulesCollection_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     HTMLStyleSheetRulesCollection *This = HTMLStyleSheetRulesCollection_from_DispatchEx(dispex);
+    const WCHAR *ptr;
     UINT32 len = 0;
     DWORD idx = 0;
-    WCHAR *ptr;
 
     for(ptr = name; *ptr && is_digit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
@@ -669,12 +669,12 @@ static void HTMLStyleSheetsCollection_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static HRESULT HTMLStyleSheetsCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLStyleSheetsCollection_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     HTMLStyleSheetsCollection *This = HTMLStyleSheetsCollection_from_DispatchEx(dispex);
+    const WCHAR *ptr;
     UINT32 len = 0;
     DWORD idx = 0;
-    WCHAR *ptr;
 
     for(ptr = name; *ptr && is_digit(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');

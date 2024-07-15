@@ -67,7 +67,7 @@ void update_plugin_window(PluginHost*,HWND,const RECT*);
 void detach_plugin_host(PluginHost*);
 
 HRESULT get_plugin_disp(HTMLPluginContainer*,IDispatch**);
-HRESULT get_plugin_dispid(HTMLPluginContainer*,WCHAR*,DISPID*);
+HRESULT get_plugin_dispid(HTMLPluginContainer*,const WCHAR*,DISPID*);
 HRESULT invoke_plugin_prop(HTMLPluginContainer*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*);
 void notif_container_change(HTMLPluginContainer*,DISPID);
 void bind_activex_event(HTMLDocumentNode*,HTMLPluginContainer*,WCHAR*,IDispatch*);

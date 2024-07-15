@@ -750,7 +750,7 @@ static void HTMLFormElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsform);
 }
 
-static HRESULT HTMLFormElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLFormElement_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLFormElement *This = impl_from_DispatchEx(dispex);
     nsIDOMHTMLCollection *elements;

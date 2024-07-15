@@ -999,7 +999,7 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     return hres;
 }
 
-static HRESULT function_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT function_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     DWORD i;
 
@@ -1173,7 +1173,7 @@ static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **re
     return DISP_E_MEMBERNOTFOUND;
 }
 
-static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID *ret)
+static HRESULT get_builtin_id(DispatchEx *This, const WCHAR *name, DWORD grfdex, DISPID *ret)
 {
     int min, max, n, c;
     HRESULT hres;
@@ -2304,9 +2304,7 @@ static HRESULT WINAPI JSDispatchHost_LookupProperty(IWineJSDispatchHost *iface, 
 
     TRACE("%s (%p)->(%s)\n", This->info->desc->name, This, debugstr_w(name));
 
-    /* FIXME: name cast works as long as the object doesn't require the actual BSTR for its custom
-     * properties, we will need to fix it properly. */
-    hres = get_builtin_id(This, (BSTR)name, flags, &id);
+    hres = get_builtin_id(This, name, flags, &id);
     if(FAILED(hres))
         return hres;
 

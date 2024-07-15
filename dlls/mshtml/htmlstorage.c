@@ -1100,7 +1100,7 @@ static HRESULT get_prop(HTMLStorage *This, const WCHAR *name, DISPID *dispid)
     return S_OK;
 }
 
-static HRESULT HTMLStorage_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLStorage_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     HTMLStorage *This = impl_from_DispatchEx(dispex);
     HRESULT hres;

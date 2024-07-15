@@ -704,7 +704,7 @@ HRESULT get_plugin_disp(HTMLPluginContainer *plugin_container, IDispatch **ret)
     return S_OK;
 }
 
-HRESULT get_plugin_dispid(HTMLPluginContainer *plugin_container, WCHAR *name, DISPID *ret)
+HRESULT get_plugin_dispid(HTMLPluginContainer *plugin_container, const WCHAR *name, DISPID *ret)
 {
     IDispatch *disp;
     DISPID id;
@@ -720,7 +720,7 @@ HRESULT get_plugin_dispid(HTMLPluginContainer *plugin_container, WCHAR *name, DI
     if(!disp)
         return DISP_E_UNKNOWNNAME;
 
-    hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &name, 1, 0, &id);
+    hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, (WCHAR **)&name, 1, 0, &id);
     if(FAILED(hres)) {
         TRACE("no prop %s\n", debugstr_w(name));
         return DISP_E_UNKNOWNNAME;

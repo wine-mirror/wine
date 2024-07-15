@@ -9549,7 +9549,7 @@ void CSSStyle_destructor(DispatchEx *dispex)
     free(This);
 }
 
-HRESULT CSSStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+HRESULT CSSStyle_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     CSSStyle *This = impl_from_DispatchEx(dispex);
     const style_tbl_entry_t *style_entry;

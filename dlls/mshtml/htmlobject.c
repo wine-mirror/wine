@@ -663,7 +663,7 @@ static void HTMLObjectElement_destructor(DispatchEx *dispex)
     HTMLElement_destructor(&This->plugin_container.element.node.event_target.dispex);
 }
 
-static HRESULT HTMLObjectElement_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLObjectElement_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLObjectElement *This = impl_from_DispatchEx(dispex);
 

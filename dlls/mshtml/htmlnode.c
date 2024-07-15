@@ -317,10 +317,10 @@ static void HTMLDOMChildrenCollection_destructor(DispatchEx *dispex)
 
 #define DISPID_CHILDCOL_0 MSHTML_DISPID_CUSTOM_MIN
 
-static HRESULT HTMLDOMChildrenCollection_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT HTMLDOMChildrenCollection_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     HTMLDOMChildrenCollection *This = impl_from_DispatchEx(dispex);
-    WCHAR *ptr;
+    const WCHAR *ptr;
     DWORD idx=0;
     UINT32 len = 0;
 
