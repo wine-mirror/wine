@@ -2863,7 +2863,7 @@ static HRESULT WINAPI HTMLDocument4_createEventObject(IHTMLDocument4 *iface,
         return E_NOTIMPL;
     }
 
-    return create_event_obj(NULL, dispex_compat_mode(&This->node.event_target.dispex), ppEventObj);
+    return create_event_obj(NULL, This, ppEventObj);
 }
 
 static HRESULT WINAPI HTMLDocument4_fireEvent(IHTMLDocument4 *iface, BSTR bstrEventName,

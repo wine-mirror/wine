@@ -323,7 +323,7 @@ sync_test("builtin_toString", function() {
         test("namespaces", document.namespaces, "MSNamespaceInfoCollection");
     }
     if(v < 11) {
-        test("eventObject", document.createEventObject(), "MSEventObj", null, true);
+        test("eventObject", document.createEventObject(), "MSEventObj");
         test("selection", document.selection, "MSSelection");
     }
     if(v >= 9) {

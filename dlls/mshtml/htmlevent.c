@@ -1815,7 +1815,7 @@ static dispex_static_data_t HTMLEventObj_dispex = {
     HTMLEventObj_iface_tids
 };
 
-static HTMLEventObj *alloc_event_obj(DOMEvent *event, compat_mode_t compat_mode)
+static HTMLEventObj *alloc_event_obj(DOMEvent *event, HTMLInnerWindow *script_global)
 {
     HTMLEventObj *event_obj;
 
@@ -1830,18 +1830,21 @@ static HTMLEventObj *alloc_event_obj(DOMEvent *event, compat_mode_t compat_mode)
     event_obj->IHTMLEventObj5_iface.lpVtbl = &HTMLEventObj5Vtbl;
     event_obj->IHTMLEventObj6_iface.lpVtbl = &HTMLEventObj6Vtbl;
     event_obj->event = event;
-    if(event)
+    if(event) {
         IDOMEvent_AddRef(&event->IDOMEvent_iface);
-
-    init_dispatch(&event_obj->dispex, &HTMLEventObj_dispex, NULL, compat_mode);
+        init_dispatch_with_owner(&event_obj->dispex, &HTMLEventObj_dispex, &event->dispex);
+    }else {
+        init_dispatch(&event_obj->dispex, &HTMLEventObj_dispex, script_global,
+                      dispex_compat_mode(&script_global->event_target.dispex));
+    }
     return event_obj;
 }
 
-HRESULT create_event_obj(DOMEvent *event, compat_mode_t compat_mode, IHTMLEventObj **ret)
+HRESULT create_event_obj(DOMEvent *event, HTMLDocumentNode *doc, IHTMLEventObj **ret)
 {
     HTMLEventObj *event_obj;
 
-    event_obj = alloc_event_obj(event, compat_mode);
+    event_obj = alloc_event_obj(event, doc->script_global);
     if(!event_obj)
         return E_OUTOFMEMORY;
 
@@ -4424,7 +4427,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     } while(iter);
 
     if(!event->event_obj && !event->no_event_obj) {
-        event_obj_ref = alloc_event_obj(event, dispex_compat_mode(&event->dispex));
+        event_obj_ref = alloc_event_obj(event, NULL);
         if(event_obj_ref)
             event->event_obj = &event_obj_ref->IHTMLEventObj_iface;
     }
@@ -4556,7 +4559,7 @@ HRESULT fire_event(HTMLDOMNode *node, const WCHAR *event_name, VARIANT *event_va
     }
 
     if(!event_obj) {
-        event_obj = alloc_event_obj(NULL, dispex_compat_mode(&node->event_target.dispex));
+        event_obj = alloc_event_obj(NULL, node->doc->script_global);
         if(!event_obj)
             return E_OUTOFMEMORY;
     }
