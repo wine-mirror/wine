@@ -7538,7 +7538,6 @@ static HRESULT create_filters_collection(compat_mode_t compat_mode, IHTMLFilters
 
 static HRESULT get_attr_dispid_by_relative_idx(HTMLAttributeCollection *This, LONG *idx, DISPID start, DISPID *dispid)
 {
-    IWineJSDispatchHost *dispex = &This->elem->node.event_target.dispex.IWineJSDispatchHost_iface;
     DISPID id = start;
     LONG len = -1;
     HRESULT hres;
@@ -7546,7 +7545,7 @@ static HRESULT get_attr_dispid_by_relative_idx(HTMLAttributeCollection *This, LO
     FIXME("filter non-enumerable attributes out\n");
 
     while(1) {
-        hres = IWineJSDispatchHost_GetNextDispID(dispex, fdexEnumAll, id, &id);
+        hres = dispex_next_id(&This->elem->node.event_target.dispex, id, &id);
         if(FAILED(hres))
             return hres;
         else if(hres == S_FALSE)

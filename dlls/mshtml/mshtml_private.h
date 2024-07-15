@@ -512,6 +512,7 @@ HRESULT dispex_prop_get(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *r, EX
                         IServiceProvider *caller);
 HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei,
                         IServiceProvider *caller);
+HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, DISPID *ret);
 
 typedef enum {
     DISPEXPROP_CUSTOM,

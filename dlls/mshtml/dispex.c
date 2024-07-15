@@ -2215,41 +2215,33 @@ static HRESULT next_dynamic_id(DispatchEx *dispex, DWORD idx, DISPID *ret_id)
     return S_OK;
 }
 
-static HRESULT WINAPI DispatchEx_GetNextDispID(IWineJSDispatchHost *iface, DWORD grfdex, DISPID id, DISPID *pid)
+HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, DISPID *ret)
 {
-    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
     func_info_t *func;
     HRESULT hres;
-
-    TRACE("%s (%p)->(%lx %lx %p)\n", This->info->desc->name, This, grfdex, id, pid);
-
-    if(!ensure_real_info(This))
-        return E_OUTOFMEMORY;
-    if(This->jsdisp)
-        return IWineJSDispatch_GetNextDispID(This->jsdisp, grfdex, id, pid);
 
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
 
-        if(!get_dynamic_data(This) || This->dynamic_data->prop_cnt <= idx)
+        if(!get_dynamic_data(dispex) || dispex->dynamic_data->prop_cnt <= idx)
             return DISP_E_MEMBERNOTFOUND;
 
-        return next_dynamic_id(This, idx+1, pid);
+        return next_dynamic_id(dispex, idx+1, ret);
     }
 
     if(!is_custom_dispid(id)) {
         if(id == DISPID_STARTENUM) {
-            func = This->info->funcs;
+            func = dispex->info->funcs;
         }else {
-            hres = get_builtin_func(This->info, id, &func);
+            hres = get_builtin_func(dispex->info, id, &func);
             if(FAILED(hres))
                 return hres;
             func++;
         }
 
-        while(func < This->info->funcs + This->info->func_cnt) {
+        while(func < dispex->info->funcs + dispex->info->func_cnt) {
             if(func->func_disp_idx == -1) {
-                *pid = func->id;
+                *ret = func->id;
                 return S_OK;
             }
             func++;
@@ -2258,17 +2250,30 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IWineJSDispatchHost *iface, DWORD
         id = DISPID_STARTENUM;
     }
 
-    if(This->info->desc->vtbl->next_dispid) {
-        hres = This->info->desc->vtbl->next_dispid(This, id, pid);
+    if(dispex->info->desc->vtbl->next_dispid) {
+        hres = dispex->info->desc->vtbl->next_dispid(dispex, id, ret);
         if(hres != S_FALSE)
             return hres;
     }
 
-    if(get_dynamic_data(This) && This->dynamic_data->prop_cnt)
-        return next_dynamic_id(This, 0, pid);
+    if(get_dynamic_data(dispex) && dispex->dynamic_data->prop_cnt)
+        return next_dynamic_id(dispex, 0, ret);
 
-    *pid = DISPID_STARTENUM;
+    *ret = DISPID_STARTENUM;
     return S_FALSE;
+}
+
+static HRESULT WINAPI DispatchEx_GetNextDispID(IWineJSDispatchHost *iface, DWORD grfdex, DISPID id, DISPID *pid)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    TRACE("%s (%p)->(%lx %lx %p)\n", This->info->desc->name, This, grfdex, id, pid);
+
+    if(!ensure_real_info(This))
+        return E_OUTOFMEMORY;
+    if(This->jsdisp)
+        return IWineJSDispatch_GetNextDispID(This->jsdisp, grfdex, id, pid);
+    return dispex_next_id(This, id, pid);
 }
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IWineJSDispatchHost *iface, IUnknown **ppunk)
