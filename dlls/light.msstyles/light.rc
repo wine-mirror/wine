@@ -113,7 +113,7 @@ BLUE_INI TEXTFILE
 "HighlightText = 255 255 255\r\n"
 "BtnFace = 245 245 245\r\n"
 "BtnShadow = 166 166 166\r\n"
-"GrayText = 166 166 166\r\n"
+"GrayText = 106 106 106\r\n"
 "BtnText = 0 0 0\r\n"
 "InactiveCaptionText = 200 200 200\r\n"
 "BtnHighlight = 255 255 255\r\n"
