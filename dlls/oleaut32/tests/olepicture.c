@@ -1601,9 +1601,7 @@ static void test_load_save_dib(void)
         ok(mem[1] == expected_size, "expected stream size %lu, got %lu\n", expected_size, mem[1]);
         ok(!memcmp(&mem[2], "BM", 2), "got wrong bmp header %04lx\n", mem[2]);
         info = (BITMAPINFO *)(((BITMAPFILEHEADER *)&mem[2]) + 1);
-        todo_wine_if(bpp != expected_bpp)
         ok(info->bmiHeader.biBitCount == expected_bpp, "expected bpp %lu, got %hu\n", expected_bpp, info->bmiHeader.biBitCount);
-        todo_wine_if(bpp == 16 || bpp == 32)
         ok(info->bmiHeader.biCompression == BI_RGB, "expected BI_RGB, got %lu\n", info->bmiHeader.biCompression);
 
         GlobalUnlock(hmem);

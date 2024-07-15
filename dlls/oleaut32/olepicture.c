@@ -1538,6 +1538,8 @@ static HRESULT serializeBMP(HBITMAP hbmp, void **buffer, unsigned int *length)
 {
     char infobuf[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)] = { 0 };
     BITMAPINFO *info = (BITMAPINFO *)infobuf;
+    BITMAP bm;
+    HBITMAP hdib = NULL;
     BITMAPINFO *bitmap;
     BITMAPFILEHEADER *filehdr;
     int numentries;
@@ -1545,8 +1547,43 @@ static HRESULT serializeBMP(HBITMAP hbmp, void **buffer, unsigned int *length)
     HRESULT hr = S_OK;
     unsigned char *data = NULL;
 
-    /* Find out bitmap size and padded length */
     hdc = GetDC(0);
+    if (!GetObjectW(hbmp, sizeof(bm), &bm)) {
+        hr = E_INVALIDARG;
+        goto done;
+    }
+
+    /* Convert 16bpp/32bpp bitmap to 24bpp */
+    if (bm.bmBitsPixel == 16 || bm.bmBitsPixel == 32) {
+        void *bits;
+        info->bmiHeader.biSize = sizeof(info->bmiHeader);
+        info->bmiHeader.biWidth = bm.bmWidth;
+        info->bmiHeader.biHeight = bm.bmHeight;
+        info->bmiHeader.biPlanes = 1;
+        info->bmiHeader.biBitCount = 24;
+        info->bmiHeader.biCompression = BI_RGB;
+        hdib = CreateDIBSection(hdc, info, DIB_RGB_COLORS, &bits, NULL, 0);
+        if (!hdib) {
+            hr = E_OUTOFMEMORY;
+            goto done;
+        }
+        if (buffer) {
+            HDC src, dst;
+            src = CreateCompatibleDC(hdc);
+            dst = CreateCompatibleDC(hdc);
+            SelectObject(src, hbmp);
+            SelectObject(dst, hdib);
+            if (!BitBlt(dst, 0, 0, bm.bmWidth, bm.bmHeight, src, 0, 0, SRCCOPY))
+                hr = E_INVALIDARG;
+            DeleteDC(src);
+            DeleteDC(dst);
+            if (FAILED(hr))
+                goto done;
+        }
+        hbmp = hdib;
+    }
+
+    /* Find out bitmap size and padded length */
     info->bmiHeader.biSize = sizeof(info->bmiHeader);
     if (!GetDIBits(hdc, hbmp, 0, 0, NULL, info, DIB_RGB_COLORS)) {
         hr = E_INVALIDARG;
@@ -1607,6 +1644,7 @@ static HRESULT serializeBMP(HBITMAP hbmp, void **buffer, unsigned int *length)
 done:
     free(data);
     ReleaseDC(0, hdc);
+    if (hdib) DeleteObject(hdib);
     return hr;
 }
 
