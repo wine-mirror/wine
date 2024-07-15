@@ -3700,7 +3700,10 @@ RETURN_CODE node_execute(CMD_NODE *node)
             WCHAR filename[MAX_PATH];
             CMD_REDIRECTION *output;
             HANDLE saved_output;
+            BATCH_CONTEXT *saved_context = context;
 
+            /* pipe LHS & RHS are run outside of any batch context */
+            context = NULL;
             /* FIXME: a real pipe instead of writing to an intermediate file would be
              * better.
              * But waiting for completion of commands will require more work.
@@ -3743,6 +3746,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
             }
             else return_code = ERROR_INVALID_FUNCTION;
             redirection_dispose_list(output);
+            context = saved_context;
         }
         break;
     case CMD_IF:

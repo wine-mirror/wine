@@ -489,7 +489,7 @@ FAILURE 2
 --- success/failure for pipes
 b
 @todo_wine@SUCCESS 0
-@todo_wine@FAILURE 1
+FAILURE 1
 a
 @todo_wine@SUCCESS 0
 FAILURE 3
