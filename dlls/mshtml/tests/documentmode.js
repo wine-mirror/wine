@@ -320,7 +320,7 @@ sync_test("builtin_toString", function() {
     test("window", window, "Window", "[object Window]", true);
     test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest", null, true);
     if(v < 10) {
-        test("namespaces", document.namespaces, "MSNamespaceInfoCollection", null, true);
+        test("namespaces", document.namespaces, "MSNamespaceInfoCollection");
     }
     if(v < 11) {
         test("eventObject", document.createEventObject(), "MSEventObj", null, true);

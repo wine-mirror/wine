@@ -2819,8 +2819,7 @@ static HRESULT WINAPI HTMLDocument4_get_namespaces(IHTMLDocument4 *iface, IDispa
     if(!This->namespaces) {
         HRESULT hres;
 
-        hres = create_namespace_collection(dispex_compat_mode(&This->node.event_target.dispex),
-                                           &This->namespaces);
+        hres = create_namespace_collection(This, &This->namespaces);
         if(FAILED(hres))
             return hres;
     }
