@@ -169,16 +169,45 @@ static uint64_t client_handle_from_host(struct wine_instance *instance, uint64_t
     return result;
 }
 
+static UINT append_string(const char *name, char *strings, UINT *strings_len)
+{
+    UINT len = name ? strlen(name) + 1 : 0;
+    if (strings && len) memcpy(strings + *strings_len, name, len);
+    *strings_len += len;
+    return len;
+}
+
+static void append_debug_utils_label(const VkDebugUtilsLabelEXT *label, struct debug_utils_label *dst,
+        char *strings, UINT *strings_len)
+{
+    if (label->pNext) FIXME("Unsupported VkDebugUtilsLabelEXT pNext chain\n");
+    memcpy(dst->color, label->color, sizeof(dst->color));
+    dst->label_name_len = append_string(label->pLabelName, strings, strings_len);
+}
+
+static void append_debug_utils_object(const VkDebugUtilsObjectNameInfoEXT *object, struct debug_utils_object *dst,
+        char *strings, UINT *strings_len)
+{
+    if (object->pNext) FIXME("Unsupported VkDebugUtilsObjectNameInfoEXT pNext chain\n");
+    dst->object_type = object->objectType;
+    dst->object_handle = object->objectHandle;
+    dst->object_name_len = append_string(object->pObjectName, strings, strings_len);
+}
+
 static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     VkDebugUtilsMessageTypeFlagsEXT message_types,
     const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
     void *user_data)
 {
-    struct wine_vk_debug_utils_params params;
-    VkDebugUtilsObjectNameInfoEXT *object_name_infos;
+    const VkDeviceAddressBindingCallbackDataEXT *address = NULL;
+    struct wine_vk_debug_utils_params *params;
     struct wine_debug_utils_messenger *object;
-    void *ret_ptr;
+    struct debug_utils_object dummy_object, *objects;
+    struct debug_utils_label dummy_label, *labels;
+    UINT size, strings_len;
+    char *ptr, *strings;
     ULONG ret_len;
+    void *ret_ptr;
     unsigned int i;
 
     TRACE("%i, %u, %p, %p\n", severity, message_types, callback_data, user_data);
@@ -191,44 +220,85 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
         return VK_FALSE;
     }
 
-    /* FIXME: we should pack all referenced structs instead of passing pointers */
-    params.user_callback = object->user_callback;
-    params.user_data = object->user_data;
-    params.severity = severity;
-    params.message_types = message_types;
-    params.data = *((VkDebugUtilsMessengerCallbackDataEXT *) callback_data);
-
-    object_name_infos = calloc(params.data.objectCount, sizeof(*object_name_infos));
-
-    for (i = 0; i < params.data.objectCount; i++)
+    if ((address = callback_data->pNext))
     {
-        object_name_infos[i].sType = callback_data->pObjects[i].sType;
-        object_name_infos[i].pNext = callback_data->pObjects[i].pNext;
-        object_name_infos[i].objectType = callback_data->pObjects[i].objectType;
-        object_name_infos[i].pObjectName = callback_data->pObjects[i].pObjectName;
+        if (address->sType != VK_STRUCTURE_TYPE_DEVICE_ADDRESS_BINDING_CALLBACK_DATA_EXT) address = NULL;
+        if (!address || address->pNext) FIXME("Unsupported VkDebugUtilsMessengerCallbackDataEXT pNext chain\n");
+    }
 
-        if (wine_vk_is_type_wrapped(callback_data->pObjects[i].objectType))
+    strings_len = 0;
+    append_string(callback_data->pMessageIdName, NULL, &strings_len);
+    append_string(callback_data->pMessage, NULL, &strings_len);
+    for (i = 0; i < callback_data->queueLabelCount; i++)
+        append_debug_utils_label(callback_data->pQueueLabels + i, &dummy_label, NULL, &strings_len);
+    for (i = 0; i < callback_data->cmdBufLabelCount; i++)
+        append_debug_utils_label(callback_data->pCmdBufLabels + i, &dummy_label, NULL, &strings_len);
+    for (i = 0; i < callback_data->objectCount; i++)
+        append_debug_utils_object(callback_data->pObjects + i, &dummy_object, NULL, &strings_len);
+
+    size = sizeof(*params);
+    size += sizeof(*labels) * (callback_data->queueLabelCount + callback_data->cmdBufLabelCount);
+    size += sizeof(*object) * callback_data->objectCount;
+
+    if (!(params = malloc(size + strings_len))) return VK_FALSE;
+    ptr = (char *)(params + 1);
+    strings = (char *)(params + size);
+
+    params->user_callback = object->user_callback;
+    params->user_data = object->user_data;
+    params->severity = severity;
+    params->message_types = message_types;
+    params->flags = callback_data->flags;
+    params->message_id_number = callback_data->messageIdNumber;
+
+    strings_len = 0;
+    params->message_id_name_len = append_string(callback_data->pMessageIdName, strings, &strings_len);
+    params->message_len = append_string(callback_data->pMessage, strings, &strings_len);
+
+    labels = (void *)ptr;
+    for (i = 0; i < callback_data->queueLabelCount; i++)
+        append_debug_utils_label(callback_data->pQueueLabels + i, labels + i, strings, &strings_len);
+    params->queue_label_count = callback_data->queueLabelCount;
+    ptr += callback_data->queueLabelCount * sizeof(*labels);
+
+    labels = (void *)ptr;
+    for (i = 0; i < callback_data->cmdBufLabelCount; i++)
+        append_debug_utils_label(callback_data->pCmdBufLabels + i, labels + i, strings, &strings_len);
+    params->cmd_buf_label_count = callback_data->cmdBufLabelCount;
+    ptr += callback_data->cmdBufLabelCount * sizeof(*labels);
+
+    objects = (void *)ptr;
+    for (i = 0; i < callback_data->objectCount; i++)
+    {
+        append_debug_utils_object(callback_data->pObjects + i, objects + i, strings, &strings_len);
+
+        if (wine_vk_is_type_wrapped(objects[i].object_type))
         {
-            object_name_infos[i].objectHandle = client_handle_from_host(object->instance, callback_data->pObjects[i].objectHandle);
-            if (!object_name_infos[i].objectHandle)
+            objects[i].object_handle = client_handle_from_host(object->instance, objects[i].object_handle);
+            if (!objects[i].object_handle)
             {
                 WARN("handle conversion failed 0x%s\n", wine_dbgstr_longlong(callback_data->pObjects[i].objectHandle));
-                free(object_name_infos);
+                free(params);
                 return VK_FALSE;
             }
         }
-        else
-        {
-            object_name_infos[i].objectHandle = callback_data->pObjects[i].objectHandle;
-        }
+    }
+    params->object_count = callback_data->objectCount;
+    ptr += callback_data->objectCount * sizeof(*objects);
+
+    if (address)
+    {
+        params->has_address_binding = TRUE;
+        params->address_binding.flags = address->flags;
+        params->address_binding.base_address = address->baseAddress;
+        params->address_binding.size = address->size;
+        params->address_binding.binding_type = address->bindingType;
     }
 
-    params.data.pObjects = object_name_infos;
-
     /* applications should always return VK_FALSE */
-    KeUserModeCallback( NtUserCallVulkanDebugUtilsCallback, &params, sizeof(params), &ret_ptr, &ret_len );
+    KeUserModeCallback( NtUserCallVulkanDebugUtilsCallback, params, size + strings_len, &ret_ptr, &ret_len );
+    free(params);
 
-    free(object_name_infos);
     if (ret_len == sizeof(VkBool32)) return *(VkBool32 *)ret_ptr;
     return VK_FALSE;
 }
@@ -236,10 +306,12 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type,
     uint64_t object_handle, size_t location, int32_t code, const char *layer_prefix, const char *message, void *user_data)
 {
-    struct wine_vk_debug_report_params params;
+    struct wine_vk_debug_report_params *params;
     struct wine_debug_report_callback *object;
-    void *ret_ptr;
+    UINT strings_len;
     ULONG ret_len;
+    void *ret_ptr;
+    char *strings;
 
     TRACE("%#x, %#x, 0x%s, 0x%s, %d, %p, %p, %p\n", flags, object_type, wine_dbgstr_longlong(object_handle),
         wine_dbgstr_longlong(location), code, layer_prefix, message, user_data);
@@ -252,21 +324,29 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
         return VK_FALSE;
     }
 
-    /* FIXME: we should pack all referenced structs instead of passing pointers */
-    params.user_callback = object->user_callback;
-    params.user_data = object->user_data;
-    params.flags = flags;
-    params.object_type = object_type;
-    params.location = location;
-    params.code = code;
-    params.layer_prefix = layer_prefix;
-    params.message = message;
+    strings_len = 0;
+    append_string(layer_prefix, NULL, &strings_len);
+    append_string(message, NULL, &strings_len);
 
-    params.object_handle = client_handle_from_host(object->instance, object_handle);
-    if (!params.object_handle)
-        params.object_type = VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
+    if (!(params = malloc(sizeof(*params) + strings_len))) return VK_FALSE;
+    strings = (char *)(params + 1);
 
-    KeUserModeCallback( NtUserCallVulkanDebugReportCallback, &params, sizeof(params), &ret_ptr, &ret_len );
+    params->user_callback = object->user_callback;
+    params->user_data = object->user_data;
+    params->flags = flags;
+    params->object_type = object_type;
+    params->location = location;
+    params->code = code;
+    params->object_handle = client_handle_from_host(object->instance, object_handle);
+    if (!params->object_handle) params->object_type = VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
+
+    strings_len = 0;
+    params->layer_len = append_string(layer_prefix, strings, &strings_len);
+    params->message_len = append_string(message, strings, &strings_len);
+
+    KeUserModeCallback(NtUserCallVulkanDebugReportCallback, params, sizeof(*params) + strings_len, &ret_ptr, &ret_len);
+    free(params);
+
     if (ret_len == sizeof(VkBool32)) return *(VkBool32 *)ret_ptr;
     return VK_FALSE;
 }
