@@ -2789,6 +2789,52 @@ SQLRETURN WINAPI SQLBulkOperations(SQLHSTMT StatementHandle, SQLSMALLINT Operati
     return ret;
 }
 
+static SQLRETURN col_attributes_unix_a( struct handle *handle, SQLUSMALLINT col, SQLUSMALLINT field_id,
+                                        SQLPOINTER char_attrs, SQLSMALLINT buflen, SQLSMALLINT *retlen,
+                                        SQLLEN *num_attrs )
+{
+    SQLRETURN ret;
+    INT64 attrs;
+    struct SQLColAttributes_params params = { handle->unix_handle, col, field_id, char_attrs, buflen, retlen, &attrs };
+    if (SUCCESS((ret = ODBC_CALL( SQLColAttributes, &params )))) *num_attrs = attrs;
+    return ret;
+}
+
+static SQLRETURN col_attributes_win32_a( struct handle *handle, SQLUSMALLINT col, SQLUSMALLINT field_id,
+                                         SQLPOINTER char_attrs, SQLSMALLINT buflen, SQLSMALLINT *retlen,
+                                         SQLLEN *num_attrs )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLColAttributes)
+    {
+        return handle->win32_funcs->SQLColAttributes( handle->win32_handle, col, field_id, char_attrs, buflen,
+                                                      retlen, num_attrs );
+    }
+    else if (handle->win32_funcs->SQLColAttributesW)
+    {
+        if (buflen < 0)
+            ret = handle->win32_funcs->SQLColAttributesW( handle->win32_handle, col, field_id, char_attrs, buflen,
+                                                          retlen, num_attrs );
+        else
+        {
+            SQLWCHAR *strW;
+            SQLSMALLINT lenW;
+
+            if (!(strW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+            ret = handle->win32_funcs->SQLColAttributesW( handle->win32_handle, col, field_id, strW, buflen, &lenW,
+                                                          num_attrs );
+            if (SUCCESS( ret ))
+            {
+                int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, char_attrs, buflen, NULL, NULL );
+                if (retlen) *retlen = len - 1;
+            }
+            free( strW );
+        }
+    }
+    return ret;
+}
+
 /*************************************************************************
  *				SQLColAttributes           [ODBC32.006]
  */
@@ -2807,16 +2853,13 @@ SQLRETURN WINAPI SQLColAttributes(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnN
 
     if (handle->unix_handle)
     {
-        INT64 attrs;
-        struct SQLColAttributes_params params = { handle->unix_handle, ColumnNumber, FieldIdentifier,
-                                                  CharacterAttributes, BufferLength, StringLength, &attrs };
-        if (SUCCESS((ret = ODBC_CALL( SQLColAttributes, &params )))) *NumericAttributes = attrs;
+        ret = col_attributes_unix_a( handle, ColumnNumber, FieldIdentifier, CharacterAttributes, BufferLength,
+                                     StringLength, NumericAttributes );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLColAttributes( handle->win32_handle, ColumnNumber, FieldIdentifier,
-                                                     CharacterAttributes, BufferLength, StringLength,
-                                                     NumericAttributes );
+        ret = col_attributes_win32_a( handle, ColumnNumber, FieldIdentifier, CharacterAttributes, BufferLength,
+                                      StringLength, NumericAttributes );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3515,6 +3558,37 @@ static BOOL SQLColAttributes_KnownStringAttribute(SQLUSMALLINT fDescType)
     return FALSE;
 }
 
+static SQLRETURN col_attributes_unix_w( struct handle *handle, SQLUSMALLINT col, SQLUSMALLINT field_id,
+                                        SQLPOINTER char_attrs, SQLSMALLINT buflen, SQLSMALLINT *retlen,
+                                        SQLLEN *num_attrs )
+{
+    SQLRETURN ret;
+    INT64 attrs;
+    struct SQLColAttributesW_params params = { handle->unix_handle, col, field_id, char_attrs, buflen, retlen,
+                                               &attrs };
+
+    if (SUCCESS((ret = ODBC_CALL( SQLColAttributesW, &params )))) *num_attrs = attrs;
+
+    if (ret == SQL_SUCCESS && SQLColAttributes_KnownStringAttribute(field_id) && char_attrs &&
+        retlen && *retlen != wcslen( char_attrs ) * sizeof(WCHAR))
+    {
+        TRACE("CHEAT: resetting name length for ADO\n");
+        *retlen = wcslen( char_attrs ) * sizeof(WCHAR);
+    }
+    return ret;
+}
+
+static SQLRETURN col_attributes_win32_w( struct handle *handle, SQLUSMALLINT col, SQLUSMALLINT field_id,
+                                         SQLPOINTER char_attrs, SQLSMALLINT buflen, SQLSMALLINT *retlen,
+                                         SQLLEN *num_attrs )
+{
+    if (handle->win32_funcs->SQLColAttributesW)
+        return handle->win32_funcs->SQLColAttributesW( handle->win32_handle, col, field_id, char_attrs, buflen,
+                                                       retlen, num_attrs );
+    if (handle->win32_funcs->SQLColAttributes) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLColAttributesW          [ODBC32.106]
  */
@@ -3533,23 +3607,13 @@ SQLRETURN WINAPI SQLColAttributesW(SQLHSTMT StatementHandle, SQLUSMALLINT Column
 
     if (handle->unix_handle)
     {
-        INT64 attrs;
-        struct SQLColAttributesW_params params = { handle->unix_handle, ColumnNumber, FieldIdentifier,
-                                                   CharacterAttributes, BufferLength, StringLength, &attrs };
-        if (SUCCESS((ret = ODBC_CALL( SQLColAttributesW, &params )))) *NumericAttributes = attrs;
-
-        if (ret == SQL_SUCCESS && SQLColAttributes_KnownStringAttribute(FieldIdentifier) && CharacterAttributes &&
-            StringLength && *StringLength != wcslen(CharacterAttributes) * 2)
-        {
-            TRACE("CHEAT: resetting name length for ADO\n");
-            *StringLength = wcslen(CharacterAttributes) * 2;
-        }
+        ret = col_attributes_unix_w( handle, ColumnNumber, FieldIdentifier, CharacterAttributes, BufferLength,
+                                     StringLength, NumericAttributes );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLColAttributesW( handle->win32_handle, ColumnNumber, FieldIdentifier,
-                                                      CharacterAttributes, BufferLength, StringLength,
-                                                      NumericAttributes );
+        ret = col_attributes_win32_w( handle, ColumnNumber, FieldIdentifier, CharacterAttributes, BufferLength,
+                                      StringLength, NumericAttributes );
     }
 
     TRACE("Returning %d\n", ret);
