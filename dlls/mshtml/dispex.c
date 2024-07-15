@@ -1877,11 +1877,35 @@ static HRESULT WINAPI DispatchEx_Invoke(IWineJSDispatchHost *iface, DISPID dispI
             pVarResult, pExcepInfo, NULL);
 }
 
+HRESULT dispex_get_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *pid)
+{
+    dynamic_prop_t *dprop = NULL;
+    HRESULT hres;
+
+    hres = get_builtin_id(dispex, name, flags, pid);
+    if(hres != DISP_E_UNKNOWNNAME)
+        return hres;
+
+    hres = get_dynamic_prop(dispex, name, flags & ~fdexNameEnsure, &dprop);
+    if(FAILED(hres)) {
+        if(dispex->info->desc->vtbl->find_dispid) {
+            hres = dispex->info->desc->vtbl->find_dispid(dispex, name, flags, pid);
+            if(SUCCEEDED(hres))
+                return hres;
+        }
+        if(flags & fdexNameEnsure)
+            hres = alloc_dynamic_prop(dispex, name, dprop, &dprop);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    *pid = DISPID_DYNPROP_0 + (dprop - dispex->dynamic_data->props);
+    return S_OK;
+}
+
 static HRESULT WINAPI DispatchEx_GetDispID(IWineJSDispatchHost *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    dynamic_prop_t *dprop = NULL;
-    HRESULT hres;
 
     TRACE("%s (%p)->(%s %lx %p)\n", This->info->desc->name, This, debugstr_w(bstrName), grfdex, pid);
 
@@ -1892,26 +1916,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IWineJSDispatchHost *iface, BSTR bstr
         return E_OUTOFMEMORY;
     if(This->jsdisp)
         return IWineJSDispatch_GetDispID(This->jsdisp, bstrName, grfdex, pid);
-
-    hres = get_builtin_id(This, bstrName, grfdex, pid);
-    if(hres != DISP_E_UNKNOWNNAME)
-        return hres;
-
-    hres = get_dynamic_prop(This, bstrName, grfdex & ~fdexNameEnsure, &dprop);
-    if(FAILED(hres)) {
-        if(This->info->desc->vtbl->find_dispid) {
-            hres = This->info->desc->vtbl->find_dispid(This, bstrName, grfdex, pid);
-            if(SUCCEEDED(hres))
-                return hres;
-        }
-        if(grfdex & fdexNameEnsure)
-            hres = alloc_dynamic_prop(This, bstrName, dprop, &dprop);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    *pid = DISPID_DYNPROP_0 + (dprop - This->dynamic_data->props);
-    return S_OK;
+    return dispex_get_id(This, bstrName, grfdex, pid);
 }
 
 HRESULT dispex_prop_get(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *r, EXCEPINFO *ei, IServiceProvider *caller)

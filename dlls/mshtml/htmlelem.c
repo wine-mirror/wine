@@ -1149,14 +1149,11 @@ static dispex_static_data_t HTMLRectCollection_dispex = {
 DISPEX_IDISPATCH_IMPL(HTMLElement, IHTMLElement,
                       impl_from_IHTMLElement(iface)->node.event_target.dispex)
 
-static inline WCHAR *translate_attr_name(WCHAR *attr_name, compat_mode_t compat_mode)
+static inline const WCHAR *translate_attr_name(const WCHAR *attr_name, compat_mode_t compat_mode)
 {
-    static WCHAR classNameW[] = L"className";
-    WCHAR *ret = attr_name;
-
     if(compat_mode >= COMPAT_MODE_IE8 && !wcsicmp(attr_name, L"class"))
-        ret = classNameW;
-    return ret;
+        return L"className";
+    return attr_name;
 }
 
 static HRESULT set_elem_attr_value_by_dispid(HTMLElement *elem, DISPID dispid, VARIANT *v)
@@ -1186,7 +1183,7 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
     TRACE("(%p)->(%s %s %08lx)\n", This, debugstr_w(strAttributeName), debugstr_variant(&AttributeValue), lFlags);
 
     if(compat_mode < COMPAT_MODE_IE9 || !This->dom_element) {
-        hres = IWineJSDispatchHost_GetDispID(&This->node.event_target.dispex.IWineJSDispatchHost_iface, translate_attr_name(strAttributeName, compat_mode),
+        hres = dispex_get_id(&This->node.event_target.dispex, translate_attr_name(strAttributeName, compat_mode),
                 (lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive) | fdexNameEnsure, &dispid);
         if(FAILED(hres))
             return hres;
@@ -1282,8 +1279,8 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
         FIXME("Unsupported flags %lx\n", lFlags);
 
     if(compat_mode < COMPAT_MODE_IE9 || !This->dom_element) {
-        hres = IWineJSDispatchHost_GetDispID(&This->node.event_target.dispex.IWineJSDispatchHost_iface, translate_attr_name(strAttributeName, compat_mode),
-                                     lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
+        hres = dispex_get_id(&This->node.event_target.dispex, translate_attr_name(strAttributeName, compat_mode),
+                             lFlags & ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
         if(FAILED(hres)) {
             V_VT(AttributeValue) = VT_NULL;
             return (hres == DISP_E_UNKNOWNNAME) ? S_OK : hres;
@@ -1330,8 +1327,8 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
     TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
     if(compat_mode < COMPAT_MODE_IE9 || !This->dom_element) {
-        hres = IWineJSDispatchHost_GetDispID(&This->node.event_target.dispex.IWineJSDispatchHost_iface, translate_attr_name(strAttributeName, compat_mode),
-                                     lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
+        hres = dispex_get_id(&This->node.event_target.dispex, translate_attr_name(strAttributeName, compat_mode),
+                             lFlags & ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);
         if(hres == DISP_E_UNKNOWNNAME) {
             *pfSuccess = VARIANT_FALSE;
             return S_OK;
@@ -4423,8 +4420,7 @@ static HRESULT WINAPI HTMLElement4_setAttributeNode(IHTMLElement4 *iface, IHTMLD
         return E_INVALIDARG;
     }
 
-    hres = IWineJSDispatchHost_GetDispID(&This->node.event_target.dispex.IWineJSDispatchHost_iface,
-            attr->name, fdexNameCaseInsensitive|fdexNameEnsure, &dispid);
+    hres = dispex_get_id(&This->node.event_target.dispex, attr->name, fdexNameCaseInsensitive | fdexNameEnsure, &dispid);
     if(FAILED(hres))
         return hres;
 
@@ -6393,7 +6389,7 @@ HRESULT HTMLElement_populate_props(DispatchEx *dispex)
             continue;
         }
 
-        hres = IWineJSDispatchHost_GetDispID(&dispex->IWineJSDispatchHost_iface, name, fdexNameCaseInsensitive, &id);
+        hres = dispex_get_id(dispex, name, fdexNameCaseInsensitive, &id);
         if(hres != DISP_E_UNKNOWNNAME) {
             nsIDOMAttr_Release(attr);
             SysFreeString(name);
@@ -7586,9 +7582,7 @@ static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, con
         }
     }
 
-    hres = IWineJSDispatchHost_GetDispID(&This->elem->node.event_target.dispex.IWineJSDispatchHost_iface,
-                                         (BSTR)name, fdexNameCaseInsensitive, id);
-    return hres;
+    return dispex_get_id(&This->elem->node.event_target.dispex, name, fdexNameCaseInsensitive, id);
 }
 
 static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG *list_pos, HTMLDOMAttribute **attr)
