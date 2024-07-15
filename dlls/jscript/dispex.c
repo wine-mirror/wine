@@ -325,13 +325,12 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
     HRESULT hres;
 
     prop = lookup_dispex_prop(This, hash, name, case_insens);
-    if(prop) {
+    if(prop && prop->type != PROP_DELETED) {
         *ret = prop;
         return S_OK;
     }
 
-    builtin = find_builtin_prop(This, name, case_insens);
-    if(builtin) {
+    if(!prop && (builtin = find_builtin_prop(This, name, case_insens))) {
         unsigned flags = builtin->flags;
         if(flags & PROPF_METHOD) {
             jsdisp_t *obj;
@@ -362,7 +361,10 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
         return S_OK;
     }
 
-    return find_external_prop(This, name, case_insens, ret);
+    hres = find_external_prop(This, name, case_insens, ret);
+    if(hres == S_OK && !*ret)
+        *ret = prop;
+    return hres;
 }
 
 static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
