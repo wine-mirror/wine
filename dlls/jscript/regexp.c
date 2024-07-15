@@ -45,7 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 #define ReportRegExpErrorHelper(a,b,c,d) throw_error((a)->context, E_FAIL, L"")
 #define JS_ReportErrorNumber(a,b,c,d) throw_error((a), E_FAIL, L"")
 #define JS_ReportErrorFlagsAndNumber(a,b,c,d,e,f) throw_error((a), E_FAIL, L"")
-#define JS_COUNT_OPERATION(a,b) throw_error((a), E_FAIL, L"")
+#define JS_COUNT_OPERATION(a,b) do { } while(0)
 
 
 typedef BYTE JSPackedBool;
