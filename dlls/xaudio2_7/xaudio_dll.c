@@ -1353,14 +1353,14 @@ static void WINAPI XA2M_DestroyVoice(IXAudio2MasteringVoice *iface)
 }
 
 #if XAUDIO2_VER >= 8
-static void WINAPI XA2M_GetChannelMask(IXAudio2MasteringVoice *iface,
+static HRESULT WINAPI XA2M_GetChannelMask(IXAudio2MasteringVoice *iface,
         DWORD *pChannelMask)
 {
     XA2VoiceImpl *This = impl_from_IXAudio2MasteringVoice(iface);
 
     TRACE("%p, %p\n", This, pChannelMask);
 
-    FAudioMasteringVoice_GetChannelMask(This->faudio_voice, (uint32_t *)pChannelMask);
+    return FAudioMasteringVoice_GetChannelMask(This->faudio_voice, (uint32_t *)pChannelMask);
 }
 #endif
 
