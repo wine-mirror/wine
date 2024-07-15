@@ -786,8 +786,7 @@ static HRESULT create_mime_types_collection(OmNavigator *navigator, HTMLMimeType
     col->IHTMLMimeTypesCollection_iface.lpVtbl = &HTMLMimeTypesCollectionVtbl;
     col->navigator = navigator;
 
-    init_dispatch(&col->dispex, &HTMLMimeTypesCollection_dispex, NULL,
-                  dispex_compat_mode(&navigator->dispex));
+    init_dispatch_with_owner(&col->dispex, &HTMLMimeTypesCollection_dispex, &navigator->dispex);
 
     *ret = col;
     return S_OK;

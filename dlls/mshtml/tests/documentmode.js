@@ -302,7 +302,7 @@ sync_test("builtin_toString", function() {
     test("implementation", document.implementation, "DOMImplementation");
     if(localStorage) test("localStorage", localStorage, "Storage", null, true);
     test("location", window.location, "Object", window.location.href, null, true);
-    if(v >= 11 /* todo_wine */) test("mimeTypes", window.navigator.mimeTypes, v < 11 ? "MSMimeTypesCollection" : "MimeTypeArray", null, true);
+    if(v >= 11 /* todo_wine */) test("mimeTypes", window.navigator.mimeTypes, v < 11 ? "MSMimeTypesCollection" : "MimeTypeArray");
     test("navigator", window.navigator, "Navigator");
     test("performance", window.performance, "Performance");
     test("performanceNavigation", window.performance.navigation, "PerformanceNavigation");
