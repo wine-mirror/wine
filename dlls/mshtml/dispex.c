@@ -1914,7 +1914,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IWineJSDispatchHost *iface, BSTR bstr
     return S_OK;
 }
 
-static HRESULT dispex_prop_get(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *r, EXCEPINFO *ei, IServiceProvider *caller)
+HRESULT dispex_prop_get(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *r, EXCEPINFO *ei, IServiceProvider *caller)
 {
     switch(get_dispid_type(id)) {
     case DISPEXPROP_CUSTOM: {
@@ -1950,7 +1950,7 @@ static HRESULT dispex_prop_get(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT
     }
 }
 
-static HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei, IServiceProvider *caller)
+HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei, IServiceProvider *caller)
 {
     static DISPID propput_dispid = DISPID_PROPERTYPUT;
 

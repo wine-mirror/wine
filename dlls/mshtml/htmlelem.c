@@ -1161,8 +1161,6 @@ static inline WCHAR *translate_attr_name(WCHAR *attr_name, compat_mode_t compat_
 
 static HRESULT set_elem_attr_value_by_dispid(HTMLElement *elem, DISPID dispid, VARIANT *v)
 {
-    DISPID propput_dispid = DISPID_PROPERTYPUT;
-    DISPPARAMS dp = {v, &propput_dispid, 1, 1};
     EXCEPINFO ei;
 
     if(dispid == DISPID_IHTMLELEMENT_STYLE) {
@@ -1170,8 +1168,7 @@ static HRESULT set_elem_attr_value_by_dispid(HTMLElement *elem, DISPID dispid, V
         return S_OK;
     }
 
-    return IWineJSDispatchHost_InvokeEx(&elem->node.event_target.dispex.IWineJSDispatchHost_iface, dispid,
-            LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    return dispex_prop_put(&elem->node.event_target.dispex, dispid, LOCALE_SYSTEM_DEFAULT, v, &ei, NULL);
 }
 
 static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttributeName,
@@ -1238,11 +1235,8 @@ done:
 
 HRESULT get_elem_attr_value_by_dispid(HTMLElement *elem, DISPID dispid, VARIANT *ret)
 {
-    DISPPARAMS dispParams = {NULL, NULL, 0, 0};
     EXCEPINFO excep;
-
-    return IWineJSDispatchHost_InvokeEx(&elem->node.event_target.dispex.IWineJSDispatchHost_iface, dispid, LOCALE_SYSTEM_DEFAULT,
-            DISPATCH_PROPERTYGET, &dispParams, ret, &excep, NULL);
+    return dispex_prop_get(&elem->node.event_target.dispex, dispid, LOCALE_SYSTEM_DEFAULT, ret, &excep, NULL);
 }
 
 HRESULT attr_value_to_string(VARIANT *v)
@@ -2483,8 +2477,7 @@ static HRESULT WINAPI HTMLElement_toString(IHTMLElement *iface, BSTR *String)
     if(!String)
         return E_INVALIDARG;
 
-    hres = IWineJSDispatchHost_InvokeEx(&This->node.event_target.dispex.IWineJSDispatchHost_iface, DISPID_VALUE,
-                                LOCALE_SYSTEM_DEFAULT, DISPATCH_PROPERTYGET, NULL, &var, NULL, NULL);
+    hres = dispex_prop_get(&This->node.event_target.dispex, DISPID_VALUE, LOCALE_SYSTEM_DEFAULT, &var, NULL, NULL);
     if(SUCCEEDED(hres)) {
         assert(V_VT(&var) == VT_BSTR);
         *String = V_BSTR(&var);
