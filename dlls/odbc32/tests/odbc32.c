@@ -119,7 +119,8 @@ static void test_SQLConnect( void )
     ok( len == strlen(str), "got %d\n", len );
     trace( "version %s\n", str );
 
-    ret = SQLConnect( con, (SQLCHAR *)"winetest", 8, (SQLCHAR *)"winetest", 8, (SQLCHAR *)"winetest", 8 );
+    ret = SQLConnect( con, (SQLCHAR *)"winetest", SQL_NTS, (SQLCHAR *)"winetest", SQL_NTS, (SQLCHAR *)"winetest",
+                      SQL_NTS );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
     if (ret != SQL_SUCCESS)
     {

@@ -739,6 +739,12 @@ SQLRETURN WINAPI SQLColAttribute(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNu
     return ret;
 }
 
+static const char *debugstr_sqlstr( const SQLCHAR *str, SQLSMALLINT len )
+{
+    if (len == SQL_NTS) len = strlen( (const char *)str );
+    return wine_dbgstr_an( (const char *)str, len );
+}
+
 /*************************************************************************
  *				SQLColumns           [ODBC32.040]
  */
@@ -751,10 +757,9 @@ SQLRETURN WINAPI SQLColumns(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, SQLS
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, ColumnName %s, NameLength4 %d)\n", StatementHandle,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)TableName, NameLength3), NameLength3,
-          debugstr_an((const char *)ColumnName, NameLength4), NameLength4);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(TableName, NameLength3), NameLength3,
+          debugstr_sqlstr(ColumnName, NameLength4), NameLength4);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -944,9 +949,8 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
 
     TRACE("(ConnectionHandle %p, ServerName %s, NameLength1 %d, UserName %s, NameLength2 %d, Authentication %s,"
           " NameLength3 %d)\n", ConnectionHandle,
-          debugstr_an((const char *)ServerName, NameLength1), NameLength1,
-          debugstr_an((const char *)UserName, NameLength2), NameLength2,
-          debugstr_an((const char *)Authentication, NameLength3), NameLength3);
+          debugstr_sqlstr(ServerName, NameLength1), NameLength1, debugstr_sqlstr(UserName, NameLength2),
+          NameLength2, debugstr_sqlstr(Authentication, NameLength3), NameLength3);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -1219,9 +1223,9 @@ SQLRETURN WINAPI SQLError(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, S
 
     if (SUCCESS( ret ))
     {
-        TRACE(" SqlState %s\n", debugstr_an((const char *)SqlState, 5));
+        TRACE(" SqlState %s\n", debugstr_sqlstr(SqlState, 5));
         TRACE(" Error %d\n", *NativeError);
-        TRACE(" MessageText %s\n", debugstr_an((const char *)MessageText, *TextLength));
+        TRACE(" MessageText %s\n", debugstr_sqlstr(MessageText, *TextLength));
     }
     TRACE("Returning %d\n", ret);
     return ret;
@@ -1236,7 +1240,7 @@ SQLRETURN WINAPI SQLExecDirect(SQLHSTMT StatementHandle, SQLCHAR *StatementText,
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, StatementText %s, TextLength %d)\n", StatementHandle,
-          debugstr_an((const char *)StatementText, TextLength), TextLength);
+          debugstr_sqlstr(StatementText, TextLength), TextLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -2104,7 +2108,7 @@ SQLRETURN WINAPI SQLPrepare(SQLHSTMT StatementHandle, SQLCHAR *StatementText, SQ
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, StatementText %s, TextLength %d)\n", StatementHandle,
-          debugstr_an((const char *)StatementText, TextLength), TextLength);
+          debugstr_sqlstr(StatementText, TextLength), TextLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -2260,7 +2264,7 @@ SQLRETURN WINAPI SQLSetCursorName(SQLHSTMT StatementHandle, SQLCHAR *CursorName,
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CursorName %s, NameLength %d)\n", StatementHandle,
-          debugstr_an((const char *)CursorName, NameLength), NameLength);
+          debugstr_sqlstr(CursorName, NameLength), NameLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -2549,9 +2553,8 @@ SQLRETURN WINAPI SQLSpecialColumns(SQLHSTMT StatementHandle, SQLUSMALLINT Identi
 
     TRACE("(StatementHandle %p, IdentifierType %d, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d,"
           " TableName %s, NameLength3 %d, Scope %d, Nullable %d)\n", StatementHandle, IdentifierType,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)TableName, NameLength3), NameLength3, Scope, Nullable);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(TableName, NameLength3), NameLength3, Scope, Nullable);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -2583,9 +2586,8 @@ SQLRETURN WINAPI SQLStatistics(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, S
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d SchemaName %s, NameLength2 %d, TableName %s"
           " NameLength3 %d, Unique %d, Reserved %d)\n", StatementHandle,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)TableName, NameLength3), NameLength3, Unique, Reserved);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(TableName, NameLength3), NameLength3, Unique, Reserved);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -2617,10 +2619,9 @@ SQLRETURN WINAPI SQLTables(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, SQLSM
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, TableType %s, NameLength4 %d)\n", StatementHandle,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)TableName, NameLength3), NameLength3,
-          debugstr_an((const char *)TableType, NameLength4), NameLength4);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(TableName, NameLength3), NameLength3, debugstr_sqlstr(TableType, NameLength4),
+          NameLength4);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -2755,7 +2756,7 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InConnectionString %s, StringLength1 %d, OutConnectionString %p, BufferLength, %d, "
-          "StringLength2 %p)\n", ConnectionHandle, debugstr_an((const char *)InConnectionString, StringLength1),
+          "StringLength2 %p)\n", ConnectionHandle, debugstr_sqlstr(InConnectionString, StringLength1),
           StringLength1, OutConnectionString, BufferLength, StringLength2);
 
     if (!handle) return SQL_INVALID_HANDLE;
@@ -2921,10 +2922,9 @@ SQLRETURN WINAPI SQLColumnPrivileges(SQLHSTMT StatementHandle, SQLCHAR *CatalogN
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, ColumnName %s, NameLength4 %d)\n", StatementHandle,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)TableName, NameLength3), NameLength3,
-          debugstr_an((const char *)ColumnName, NameLength4), NameLength4);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(TableName, NameLength3), NameLength3, debugstr_sqlstr(ColumnName, NameLength4),
+          NameLength4);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3021,12 +3021,10 @@ SQLRETURN WINAPI SQLForeignKeys(SQLHSTMT StatementHandle, SQLCHAR *PkCatalogName
     TRACE("(StatementHandle %p, PkCatalogName %s, NameLength1 %d, PkSchemaName %s, NameLength2 %d,"
           " PkTableName %s, NameLength3 %d, FkCatalogName %s, NameLength4 %d, FkSchemaName %s,"
           " NameLength5 %d, FkTableName %s, NameLength6 %d)\n", StatementHandle,
-          debugstr_an((const char *)PkCatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)PkSchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)PkTableName, NameLength3), NameLength3,
-          debugstr_an((const char *)FkCatalogName, NameLength4), NameLength4,
-          debugstr_an((const char *)FkSchemaName, NameLength5), NameLength5,
-          debugstr_an((const char *)FkTableName, NameLength6), NameLength6);
+          debugstr_sqlstr(PkCatalogName, NameLength1), NameLength1, debugstr_sqlstr(PkSchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(PkTableName, NameLength3), NameLength3,
+          debugstr_sqlstr(FkCatalogName, NameLength4), NameLength4, debugstr_sqlstr(FkSchemaName, NameLength5),
+          NameLength5, debugstr_sqlstr(FkTableName, NameLength6), NameLength6);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3084,8 +3082,8 @@ SQLRETURN WINAPI SQLNativeSql(SQLHDBC ConnectionHandle, SQLCHAR *InStatementText
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InStatementText %s, TextLength1 %d, OutStatementText %p, BufferLength, %d, "
-          "TextLength2 %p)\n", ConnectionHandle, debugstr_an((const char *)InStatementText, TextLength1),
-          TextLength1, OutStatementText, BufferLength, TextLength2);
+          "TextLength2 %p)\n", ConnectionHandle, debugstr_sqlstr(InStatementText, TextLength1), TextLength1,
+          OutStatementText, BufferLength, TextLength2);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3171,9 +3169,8 @@ SQLRETURN WINAPI SQLPrimaryKeys(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, 
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d)\n", StatementHandle,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)TableName, NameLength3), NameLength3);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(TableName, NameLength3), NameLength3);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3205,10 +3202,9 @@ SQLRETURN WINAPI SQLProcedureColumns(SQLHSTMT StatementHandle, SQLCHAR *CatalogN
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, ProcName %s,"
           " NameLength3 %d, ColumnName %s, NameLength4 %d)\n", StatementHandle,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)ProcName, NameLength3), NameLength3,
-          debugstr_an((const char *)ColumnName, NameLength4), NameLength4);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(ProcName, NameLength3), NameLength3, debugstr_sqlstr(ColumnName, NameLength4),
+          NameLength4);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3240,9 +3236,8 @@ SQLRETURN WINAPI SQLProcedures(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, S
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, ProcName %s,"
           " NameLength3 %d)\n", StatementHandle,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)ProcName, NameLength3), NameLength3);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(ProcName, NameLength3), NameLength3);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3303,9 +3298,8 @@ SQLRETURN WINAPI SQLTablePrivileges(SQLHSTMT StatementHandle, SQLCHAR *CatalogNa
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           "NameLength3  %d)\n", StatementHandle,
-          debugstr_an((const char *)CatalogName, NameLength1), NameLength1,
-          debugstr_an((const char *)SchemaName, NameLength2), NameLength2,
-          debugstr_an((const char *)TableName, NameLength3), NameLength3);
+          debugstr_sqlstr(CatalogName, NameLength1), NameLength1, debugstr_sqlstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlstr(TableName, NameLength3), NameLength3);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3493,7 +3487,7 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 
     TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
           " BufferLength %d, Length2 %p, DriverCompletion %d)\n", ConnectionHandle, WindowHandle,
-          debugstr_an((const char *)InConnectionString, Length), Length, OutConnectionString, BufferLength,
+          debugstr_sqlstr(InConnectionString, Length), Length, OutConnectionString, BufferLength,
           Length2, DriverCompletion);
 
     if (!handle) return SQL_INVALID_HANDLE;
@@ -3663,6 +3657,12 @@ SQLRETURN WINAPI SQLColAttributesW(SQLHSTMT StatementHandle, SQLUSMALLINT Column
     return ret;
 }
 
+static const char *debugstr_sqlwstr( const SQLWCHAR *str, SQLSMALLINT len )
+{
+    if (len == SQL_NTS) len = wcslen( (const WCHAR *)str );
+    return wine_dbgstr_wn( (const WCHAR *)str, len );
+}
+
 /*************************************************************************
  *				SQLConnectW          [ODBC32.107]
  */
@@ -3675,8 +3675,9 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, ServerName %s, NameLength1 %d, UserName %s, NameLength2 %d, Authentication %s,"
-          " NameLength3 %d)\n", ConnectionHandle, debugstr_wn(ServerName, NameLength1), NameLength1,
-          debugstr_wn(UserName, NameLength2), NameLength2, debugstr_wn(Authentication, NameLength3), NameLength3);
+          " NameLength3 %d)\n", ConnectionHandle, debugstr_sqlwstr(ServerName, NameLength1), NameLength1,
+          debugstr_sqlwstr(UserName, NameLength2), NameLength2, debugstr_sqlwstr(Authentication, NameLength3),
+          NameLength3);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3788,9 +3789,9 @@ SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, 
 
     if (SUCCESS(ret ))
     {
-        TRACE(" SqlState %s\n", debugstr_wn(SqlState, 5));
+        TRACE(" SqlState %s\n", debugstr_sqlwstr(SqlState, 5));
         TRACE(" Error %d\n", *NativeError);
-        TRACE(" MessageText %s\n", debugstr_wn(MessageText, *TextLength));
+        TRACE(" MessageText %s\n", debugstr_sqlwstr(MessageText, *TextLength));
     }
     TRACE("Returning %d\n", ret);
     return ret;
@@ -3805,7 +3806,7 @@ SQLRETURN WINAPI SQLExecDirectW(SQLHSTMT StatementHandle, WCHAR *StatementText, 
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, StatementText %s, TextLength %d)\n", StatementHandle,
-          debugstr_wn(StatementText, TextLength), TextLength);
+          debugstr_sqlwstr(StatementText, TextLength), TextLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3860,7 +3861,7 @@ SQLRETURN WINAPI SQLPrepareW(SQLHSTMT StatementHandle, WCHAR *StatementText, SQL
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, StatementText %s, TextLength %d)\n", StatementHandle,
-          debugstr_wn(StatementText, TextLength), TextLength);
+          debugstr_sqlwstr(StatementText, TextLength), TextLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -3887,7 +3888,7 @@ SQLRETURN WINAPI SQLSetCursorNameW(SQLHSTMT StatementHandle, WCHAR *CursorName, 
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CursorName %s, NameLength %d)\n", StatementHandle,
-          debugstr_wn(CursorName, NameLength), NameLength);
+          debugstr_sqlwstr(CursorName, NameLength), NameLength);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4253,8 +4254,9 @@ SQLRETURN WINAPI SQLColumnsW(SQLHSTMT StatementHandle, WCHAR *CatalogName, SQLSM
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, ColumnName %s, NameLength4 %d)\n", StatementHandle,
-          debugstr_wn(CatalogName, NameLength1), NameLength1, debugstr_wn(SchemaName, NameLength2), NameLength2,
-          debugstr_wn(TableName, NameLength3), NameLength3, debugstr_wn(ColumnName, NameLength4), NameLength4);
+          debugstr_sqlwstr(CatalogName, NameLength1), NameLength1, debugstr_sqlwstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlwstr(TableName, NameLength3), NameLength3, debugstr_sqlwstr(ColumnName, NameLength4),
+          NameLength4);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4307,7 +4309,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
     TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
           " BufferLength %d, Length2 %p, DriverCompletion %d)\n", ConnectionHandle, WindowHandle,
-          debugstr_wn(InConnectionString, Length), Length, OutConnectionString, BufferLength, Length2,
+          debugstr_sqlwstr(InConnectionString, Length), Length, OutConnectionString, BufferLength, Length2,
           DriverCompletion);
 
     if (!handle) return SQL_INVALID_HANDLE;
@@ -4495,8 +4497,8 @@ SQLRETURN WINAPI SQLSpecialColumnsW(SQLHSTMT StatementHandle, SQLUSMALLINT Ident
 
     TRACE("(StatementHandle %p, IdentifierType %d, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d,"
           " TableName %s, NameLength3 %d, Scope %d, Nullable %d)\n", StatementHandle, IdentifierType,
-          debugstr_wn(CatalogName, NameLength1), NameLength1, debugstr_wn(SchemaName, NameLength2), NameLength2,
-          debugstr_wn(TableName, NameLength3), NameLength3, Scope, Nullable);
+          debugstr_sqlwstr(CatalogName, NameLength1), NameLength1, debugstr_sqlwstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlwstr(TableName, NameLength3), NameLength3, Scope, Nullable);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4529,8 +4531,8 @@ SQLRETURN WINAPI SQLStatisticsW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d SchemaName %s, NameLength2 %d, TableName %s"
           " NameLength3 %d, Unique %d, Reserved %d)\n", StatementHandle,
-          debugstr_wn(CatalogName, NameLength1), NameLength1, debugstr_wn(SchemaName, NameLength2), NameLength2,
-          debugstr_wn(TableName, NameLength3), NameLength3, Unique, Reserved);
+          debugstr_sqlwstr(CatalogName, NameLength1), NameLength1, debugstr_sqlwstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlwstr(TableName, NameLength3), NameLength3, Unique, Reserved);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4562,8 +4564,9 @@ SQLRETURN WINAPI SQLTablesW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQL
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, TableType %s, NameLength4 %d)\n", StatementHandle,
-          debugstr_wn(CatalogName, NameLength1), NameLength1, debugstr_wn(SchemaName, NameLength2), NameLength2,
-          debugstr_wn(TableName, NameLength3), NameLength3, debugstr_wn(TableType, NameLength4), NameLength4);
+          debugstr_sqlwstr(CatalogName, NameLength1), NameLength1, debugstr_sqlwstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlwstr(TableName, NameLength3), NameLength3, debugstr_sqlwstr(TableType, NameLength4),
+          NameLength4);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4611,7 +4614,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InConnectionString %s, StringLength1 %d, OutConnectionString %p, BufferLength %d, "
-          "StringLength2 %p)\n", ConnectionHandle, debugstr_wn(InConnectionString, StringLength1), StringLength1,
+          "StringLength2 %p)\n", ConnectionHandle, debugstr_sqlwstr(InConnectionString, StringLength1), StringLength1,
           OutConnectionString, BufferLength, StringLength2);
 
     if (!handle) return SQL_INVALID_HANDLE;
@@ -4673,10 +4676,9 @@ SQLRETURN WINAPI SQLColumnPrivilegesW(SQLHSTMT StatementHandle, SQLWCHAR *Catalo
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
           " NameLength3 %d, ColumnName %s, NameLength3 %d)\n", StatementHandle,
-          debugstr_wn(CatalogName, NameLength1), NameLength1,
-          debugstr_wn(SchemaName, NameLength2), NameLength2,
-          debugstr_wn(TableName, NameLength3), NameLength3,
-          debugstr_wn(ColumnName, NameLength4), NameLength4);
+          debugstr_sqlwstr(CatalogName, NameLength1), NameLength1, debugstr_sqlwstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlwstr(TableName, NameLength3), NameLength3, debugstr_sqlwstr(ColumnName, NameLength4),
+          NameLength4);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4779,12 +4781,10 @@ SQLRETURN WINAPI SQLForeignKeysW(SQLHSTMT StatementHandle, SQLWCHAR *PkCatalogNa
     TRACE("(StatementHandle %p, PkCatalogName %s, NameLength1 %d, PkSchemaName %s, NameLength2 %d,"
           " PkTableName %s, NameLength3 %d, FkCatalogName %s, NameLength4 %d, FkSchemaName %s,"
           " NameLength5 %d, FkTableName %s, NameLength6 %d)\n", StatementHandle,
-          debugstr_wn(PkCatalogName, NameLength1), NameLength1,
-          debugstr_wn(PkSchemaName, NameLength2), NameLength2,
-          debugstr_wn(PkTableName, NameLength3), NameLength3,
-          debugstr_wn(FkCatalogName, NameLength4), NameLength4,
-          debugstr_wn(FkSchemaName, NameLength5), NameLength5,
-          debugstr_wn(FkTableName, NameLength6), NameLength6);
+          debugstr_sqlwstr(PkCatalogName, NameLength1), NameLength1, debugstr_sqlwstr(PkSchemaName, NameLength2),
+          NameLength2, debugstr_sqlwstr(PkTableName, NameLength3), NameLength3,
+          debugstr_sqlwstr(FkCatalogName, NameLength4), NameLength4, debugstr_sqlwstr(FkSchemaName, NameLength5),
+          NameLength5, debugstr_sqlwstr(FkTableName, NameLength6), NameLength6);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4816,7 +4816,7 @@ SQLRETURN WINAPI SQLNativeSqlW(SQLHDBC ConnectionHandle, SQLWCHAR *InStatementTe
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InStatementText %s, TextLength1 %d, OutStatementText %p, BufferLength %d, "
-          "TextLength2 %p)\n", ConnectionHandle, debugstr_wn(InStatementText, TextLength1), TextLength1,
+          "TextLength2 %p)\n", ConnectionHandle, debugstr_sqlwstr(InStatementText, TextLength1), TextLength1,
           OutStatementText, BufferLength, TextLength2);
 
     if (!handle) return SQL_INVALID_HANDLE;
@@ -4848,10 +4848,9 @@ SQLRETURN WINAPI SQLPrimaryKeysW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
-          " NameLength3 %d)\n", StatementHandle,
-          debugstr_wn(CatalogName, NameLength1), NameLength1,
-          debugstr_wn(SchemaName, NameLength2), NameLength2,
-          debugstr_wn(TableName, NameLength3), NameLength3);
+          " NameLength3 %d)\n", StatementHandle, debugstr_sqlwstr(CatalogName, NameLength1), NameLength1,
+          debugstr_sqlwstr(SchemaName, NameLength2), NameLength2, debugstr_sqlwstr(TableName, NameLength3),
+          NameLength3);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4883,10 +4882,9 @@ SQLRETURN WINAPI SQLProcedureColumnsW(SQLHSTMT StatementHandle, SQLWCHAR *Catalo
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, ProcName %s,"
           " NameLength3 %d, ColumnName %s, NameLength4 %d)\n", StatementHandle,
-          debugstr_wn(CatalogName, NameLength1), NameLength1,
-          debugstr_wn(SchemaName, NameLength2), NameLength2,
-          debugstr_wn(ProcName, NameLength3), NameLength3,
-          debugstr_wn(ColumnName, NameLength4), NameLength4);
+          debugstr_sqlwstr(CatalogName, NameLength1), NameLength1, debugstr_sqlwstr(SchemaName, NameLength2),
+          NameLength2, debugstr_sqlwstr(ProcName, NameLength3), NameLength3, debugstr_sqlwstr(ColumnName, NameLength4),
+          NameLength4);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4917,8 +4915,9 @@ SQLRETURN WINAPI SQLProceduresW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, ProcName %s,"
-          " NameLength3 %d)\n", StatementHandle, debugstr_wn(CatalogName, NameLength1), NameLength1,
-          debugstr_wn(SchemaName, NameLength2), NameLength2, debugstr_wn(ProcName, NameLength3), NameLength3);
+          " NameLength3 %d)\n", StatementHandle, debugstr_sqlwstr(CatalogName, NameLength1), NameLength1,
+          debugstr_sqlwstr(SchemaName, NameLength2), NameLength2, debugstr_sqlwstr(ProcName, NameLength3),
+          NameLength3);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
@@ -4949,8 +4948,9 @@ SQLRETURN WINAPI SQLTablePrivilegesW(SQLHSTMT StatementHandle, SQLWCHAR *Catalog
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, CatalogName %s, NameLength1 %d, SchemaName %s, NameLength2 %d, TableName %s,"
-          " NameLength3 %d)\n", StatementHandle, debugstr_wn(CatalogName, NameLength1), NameLength1,
-          debugstr_wn(SchemaName, NameLength2), NameLength2, debugstr_wn(TableName, NameLength3), NameLength3);
+          " NameLength3 %d)\n", StatementHandle, debugstr_sqlwstr(CatalogName, NameLength1), NameLength1,
+          debugstr_sqlwstr(SchemaName, NameLength2), NameLength2, debugstr_sqlwstr(TableName, NameLength3),
+          NameLength3);
 
     if (!handle) return SQL_INVALID_HANDLE;
 
