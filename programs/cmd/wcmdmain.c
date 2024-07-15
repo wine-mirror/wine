@@ -1732,7 +1732,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
 {
     RETURN_CODE return_code;
     WCHAR *cmd, *parms_start;
-    int status, cmd_index, count;
+    int cmd_index, count;
     WCHAR *whichcmd;
     WCHAR *new_cmd = NULL;
     BOOL prev_echo_mode;
@@ -1767,27 +1767,29 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
  * else if it exists after whitespace is ignored
  */
 
-    if ((cmd[1] == ':') && IsCharAlphaW(cmd[0]) &&
-        (!cmd[2] || cmd[2] == ' ' || cmd[2] == '\t')) {
+    if (cmd[1] == L':' && (!cmd[2] || iswspace(cmd[2]))) {
       WCHAR envvar[5];
       WCHAR dir[MAX_PATH];
 
       /* Ignore potential garbage on the same line */
-      cmd[2]=0x00;
+      cmd[2] = L'\0';
 
       /* According to MSDN CreateProcess docs, special env vars record
          the current directory on each drive, in the form =C:
          so see if one specified, and if so go back to it             */
       lstrcpyW(envvar, L"=");
       lstrcatW(envvar, cmd);
-      if (GetEnvironmentVariableW(envvar, dir, MAX_PATH) == 0) {
+      if (GetEnvironmentVariableW(envvar, dir, ARRAY_SIZE(dir)) == 0) {
         wsprintfW(cmd, L"%s\\", cmd);
         WINE_TRACE("No special directory settings, using dir of %s\n", wine_dbgstr_w(cmd));
       }
       WINE_TRACE("Got directory %s as %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(cmd));
-      status = SetCurrentDirectoryW(cmd);
-      if (!status) WCMD_print_error ();
-      return_code = ERROR_INVALID_FUNCTION;
+      if (!SetCurrentDirectoryW(cmd))
+      {
+          WCMD_print_error();
+          return_code = errorlevel = ERROR_INVALID_FUNCTION;
+      }
+      else return_code = NO_ERROR;
       goto cleanup;
     }
 
