@@ -898,18 +898,11 @@ static BOOL wrap_wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs 
 static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GLenum severity,
                                        GLsizei length, const GLchar *message, const void *user )
 {
-    struct wine_gl_debug_message_params params =
-    {
-        .source = source,
-        .type = type,
-        .id = id,
-        .severity = severity,
-        .length = length,
-        .message = message,
-    };
+    struct wine_gl_debug_message_params *params;
     void *ret_ptr;
     ULONG ret_len;
     struct wgl_handle *ptr = (struct wgl_handle *)user;
+    UINT len = strlen( message ) + 1, size;
 
     if (!ptr->u.context->debug_callback) return;
     if (!NtCurrentTeb())
@@ -919,11 +912,20 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
         return;
     }
 
-    params.debug_callback = ptr->u.context->debug_callback;
-    params.debug_user = ptr->u.context->debug_user;
+    size = offsetof(struct wine_gl_debug_message_params, message[len] );
+    if (!(params = malloc( size ))) return;
+    params->debug_callback = ptr->u.context->debug_callback;
+    params->debug_user = ptr->u.context->debug_user;
+    params->source = source;
+    params->type = type;
+    params->id = id;
+    params->severity = severity;
+    params->length = length;
+    memcpy( params->message, message, len );
 
-    KeUserModeCallback( NtUserCallOpenGLDebugMessageCallback, &params, sizeof(params),
+    KeUserModeCallback( NtUserCallOpenGLDebugMessageCallback, params, size,
                         &ret_ptr, &ret_len );
+    free( params );
 }
 
 static void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *user )

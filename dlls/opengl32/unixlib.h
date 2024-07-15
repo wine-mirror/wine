@@ -28386,7 +28386,7 @@ struct wine_gl_debug_message_params
     UINT32 id;
     UINT32 severity;
     UINT32 length;
-    const char *message;
+    char message[1];
 };
 
 #define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )

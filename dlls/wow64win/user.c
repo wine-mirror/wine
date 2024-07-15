@@ -1467,8 +1467,7 @@ static NTSTATUS WINAPI wow64_NtUserCallVulkanDebugUtilsCallback( void *arg, ULON
 
 static NTSTATUS WINAPI wow64_NtUserCallOpenGLDebugMessageCallback( void *arg, ULONG size )
 {
-    FIXME( "\n" );
-    return 0;
+    return dispatch_callback( NtUserCallOpenGLDebugMessageCallback, arg, size );
 }
 
 static NTSTATUS WINAPI wow64_NtUserDriverCallbackFirst0( void *arg, ULONG size )

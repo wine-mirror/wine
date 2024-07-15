@@ -1088,7 +1088,7 @@ print OUT "    UINT32 type;\n";
 print OUT "    UINT32 id;\n";
 print OUT "    UINT32 severity;\n";
 print OUT "    UINT32 length;\n";
-print OUT "    const char *message;\n";
+print OUT "    char message[1];\n";
 print OUT "};\n\n";
 
 print OUT "#define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )\n\n";
