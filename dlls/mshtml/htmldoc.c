@@ -5389,7 +5389,7 @@ static HRESULT HTMLDocumentNode_get_dispid(DispatchEx *dispex, BSTR name, DWORD 
     return hres;
 }
 
-static HRESULT HTMLDocumentNode_find_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLDocumentNode_find_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
     HRESULT hres = DISP_E_UNKNOWNNAME;

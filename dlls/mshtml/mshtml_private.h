@@ -382,7 +382,7 @@ typedef struct {
     HRESULT (*get_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);
 
     /* Similar to get_dispid, but called only when a dynamic property can't be found */
-    HRESULT (*find_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);
+    HRESULT (*find_dispid)(DispatchEx*,const WCHAR*,DWORD,DISPID*);
 
     /* Similar to get_dispid, but called before any other lookup */
     HRESULT (*lookup_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);

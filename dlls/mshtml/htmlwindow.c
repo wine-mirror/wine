@@ -3309,7 +3309,7 @@ static ULONG WINAPI WindowDispEx_Release(IWineJSDispatchHost *iface)
 DISPEX_IDISPATCH_NOUNK_IMPL(WindowDispEx, IWineJSDispatchHost,
                             impl_from_IWineJSDispatchHost(iface)->base.inner_window->event_target.dispex)
 
-static global_prop_t *alloc_global_prop(HTMLInnerWindow *This, global_prop_type_t type, BSTR name)
+static global_prop_t *alloc_global_prop(HTMLInnerWindow *This, global_prop_type_t type, const WCHAR *name)
 {
     if(This->global_prop_cnt == This->global_prop_size) {
         global_prop_t *new_props;
@@ -3781,12 +3781,12 @@ static HRESULT HTMLWindow_lookup_dispid(DispatchEx *dispex, BSTR name, DWORD grf
     return search_window_props(This, name, grfdex, dispid);
 }
 
-static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
     HTMLOuterWindow *frame;
     global_prop_t *prop;
-    IHTMLElement *elem;
+    HTMLElement *elem;
     HRESULT hres;
 
     hres = get_frame_by_name(This->base.outer_window, name, FALSE, &frame);
@@ -3799,9 +3799,9 @@ static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, BSTR name, DWORD grfde
         return S_OK;
     }
 
-    hres = IHTMLDocument3_getElementById(&This->doc->IHTMLDocument3_iface, name, &elem);
+    hres = get_doc_elem_by_id(This->doc, name, &elem);
     if(SUCCEEDED(hres) && elem) {
-        IHTMLElement_Release(elem);
+        IHTMLElement_Release(&elem->IHTMLElement_iface);
 
         prop = alloc_global_prop(This, GLOBAL_ELEMENTVAR, name);
         if(!prop)
