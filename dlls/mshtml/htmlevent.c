@@ -5139,6 +5139,13 @@ void EventTarget_Init(EventTarget *event_target, dispex_static_data_t *dispex_da
     wine_rb_init(&event_target->handler_map, event_id_cmp);
 }
 
+void init_event_target(EventTarget *event_target, dispex_static_data_t *dispex_data, HTMLInnerWindow *script_global)
+{
+    init_dispatch(&event_target->dispex, dispex_data, script_global, dispex_compat_mode(&script_global->event_target.dispex));
+    event_target->IEventTarget_iface.lpVtbl = &EventTargetVtbl;
+    wine_rb_init(&event_target->handler_map, event_id_cmp);
+}
+
 void traverse_event_target(EventTarget *event_target, nsCycleCollectionTraversalCallback *cb)
 {
     listener_container_t *iter;

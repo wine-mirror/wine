@@ -318,7 +318,7 @@ sync_test("builtin_toString", function() {
     test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null, true);
     test("textRange", txtRange, "TextRange");
     test("window", window, "Window", "[object Window]", true);
-    test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest", null, true);
+    test("xmlHttpRequest", new XMLHttpRequest(), "XMLHttpRequest");
     if(v < 10) {
         test("namespaces", document.namespaces, "MSNamespaceInfoCollection");
     }
