@@ -385,7 +385,7 @@ typedef struct {
     HRESULT (*find_dispid)(DispatchEx*,const WCHAR*,DWORD,DISPID*);
 
     /* Similar to get_dispid, but called before any other lookup */
-    HRESULT (*lookup_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);
+    HRESULT (*lookup_dispid)(DispatchEx*,const WCHAR*,DWORD,DISPID*);
 
     /* These are called when the object implements GetMemberName, InvokeEx, DeleteMemberByDispID and GetNextDispID for custom props */
     HRESULT (*get_name)(DispatchEx*,DISPID,BSTR*);
@@ -1277,7 +1277,7 @@ HRESULT get_document_node(nsIDOMDocument*,HTMLDocumentNode**);
 
 HTMLElement *unsafe_impl_from_IHTMLElement(IHTMLElement*);
 
-HRESULT search_window_props(HTMLInnerWindow*,BSTR,DWORD,DISPID*);
+HRESULT search_window_props(HTMLInnerWindow*,const WCHAR*,DWORD,DISPID*);
 HRESULT get_frame_by_name(HTMLOuterWindow*,const WCHAR*,BOOL,HTMLOuterWindow**);
 HRESULT get_doc_elem_by_id(HTMLDocumentNode*,const WCHAR*,HTMLElement**);
 HTMLOuterWindow *get_target_window(HTMLOuterWindow*,nsAString*,BOOL*);

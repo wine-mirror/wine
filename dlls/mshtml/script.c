@@ -1770,12 +1770,16 @@ void bind_event_scripts(HTMLDocumentNode *doc)
     nsIDOMNodeList_Release(node_list);
 }
 
-BOOL find_global_prop(HTMLInnerWindow *window, BSTR name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id)
+BOOL find_global_prop(HTMLInnerWindow *window, const WCHAR *name, DWORD flags, ScriptHost **ret_host, DISPID *ret_id)
 {
     IDispatchEx *dispex;
     IDispatch *disp;
     ScriptHost *iter;
+    BSTR str;
     HRESULT hres;
+
+    if(!(str = SysAllocString(name)))
+        return E_OUTOFMEMORY;
 
     LIST_FOR_EACH_ENTRY(iter, &window->script_hosts, ScriptHost, entry) {
         disp = get_script_disp(iter);
@@ -1784,7 +1788,7 @@ BOOL find_global_prop(HTMLInnerWindow *window, BSTR name, DWORD flags, ScriptHos
 
         hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_GetDispID(dispex, name, flags & (~fdexNameEnsure), ret_id);
+            hres = IDispatchEx_GetDispID(dispex, str, flags & (~fdexNameEnsure), ret_id);
             IDispatchEx_Release(dispex);
         }else {
             FIXME("No IDispatchEx\n");
@@ -1793,11 +1797,13 @@ BOOL find_global_prop(HTMLInnerWindow *window, BSTR name, DWORD flags, ScriptHos
 
         IDispatch_Release(disp);
         if(SUCCEEDED(hres)) {
+            SysFreeString(str);
             *ret_host = iter;
             return TRUE;
         }
     }
 
+    SysFreeString(str);
     return FALSE;
 }
 

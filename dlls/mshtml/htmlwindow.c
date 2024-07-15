@@ -3341,7 +3341,7 @@ static inline DWORD prop_to_dispid(HTMLInnerWindow *This, global_prop_t *prop)
     return MSHTML_DISPID_CUSTOM_MIN + (prop-This->global_props);
 }
 
-HRESULT search_window_props(HTMLInnerWindow *This, BSTR bstrName, DWORD grfdex, DISPID *pid)
+HRESULT search_window_props(HTMLInnerWindow *This, const WCHAR *name, DWORD grfdex, DISPID *pid)
 {
     DWORD i;
     ScriptHost *script_host;
@@ -3349,16 +3349,16 @@ HRESULT search_window_props(HTMLInnerWindow *This, BSTR bstrName, DWORD grfdex, 
 
     for(i=0; i < This->global_prop_cnt; i++) {
         /* FIXME: case sensitivity */
-        if(!wcscmp(This->global_props[i].name, bstrName)) {
+        if(!wcscmp(This->global_props[i].name, name)) {
             *pid = MSHTML_DISPID_CUSTOM_MIN+i;
             return S_OK;
         }
     }
 
-    if(find_global_prop(This->base.inner_window, bstrName, grfdex, &script_host, &id)) {
+    if(find_global_prop(This->base.inner_window, name, grfdex, &script_host, &id)) {
         global_prop_t *prop;
 
-        prop = alloc_global_prop(This, GLOBAL_SCRIPTVAR, bstrName);
+        prop = alloc_global_prop(This, GLOBAL_SCRIPTVAR, name);
         if(!prop)
             return E_OUTOFMEMORY;
 
@@ -3774,7 +3774,7 @@ static HRESULT HTMLWindow_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
     return (*name = SysAllocString(This->global_props[idx].name)) ? S_OK : E_OUTOFMEMORY;
 }
 
-static HRESULT HTMLWindow_lookup_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+static HRESULT HTMLWindow_lookup_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
 
