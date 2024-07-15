@@ -4706,11 +4706,19 @@ static HRESULT WINAPI ddraw_surface1_SetClipper(IDirectDrawSurface *iface, IDire
 static HRESULT ddraw_surface_set_wined3d_textures_colour_key(struct ddraw_surface *surface, DWORD flags,
         struct wined3d_color_key *color_key)
 {
+    struct d3d_device *device;
     HRESULT hr;
 
     hr = wined3d_texture_set_color_key(surface->wined3d_texture, flags, color_key);
     if (surface->draw_texture && SUCCEEDED(hr))
         hr = wined3d_texture_set_color_key(surface->draw_texture, flags, color_key);
+
+    LIST_FOR_EACH_ENTRY(device, &surface->ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
+    {
+        wined3d_stateblock_texture_changed(device->state, surface->wined3d_texture);
+        if (surface->draw_texture)
+            wined3d_stateblock_texture_changed(device->state, surface->draw_texture);
+    }
 
     return hr;
 }
