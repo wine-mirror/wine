@@ -55,7 +55,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_nodeName(IHTMLDOMAttribute *iface, BS
         return *p ? S_OK : E_OUTOFMEMORY;
     }
 
-    return IWineJSDispatchHost_GetMemberName(&This->elem->node.event_target.dispex.IWineJSDispatchHost_iface, This->dispid, p);
+    return dispex_prop_name(&This->elem->node.event_target.dispex, This->dispid, p);
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_put_nodeValue(IHTMLDOMAttribute *iface, VARIANT v)
@@ -105,7 +105,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
         return S_OK;
     }
 
-    hres = IWineJSDispatchHost_GetMemberName(&This->elem->node.event_target.dispex.IWineJSDispatchHost_iface, This->dispid, &name);
+    hres = dispex_prop_name(&This->elem->node.event_target.dispex, This->dispid, &name);
     if(FAILED(hres))
         return hres;
 

@@ -2163,11 +2163,38 @@ static HRESULT WINAPI DispatchEx_GetMemberProperties(IWineJSDispatchHost *iface,
     return E_NOTIMPL;
 }
 
+HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret)
+{
+    func_info_t *func;
+    HRESULT hres;
+
+    if(is_custom_dispid(id)) {
+        if(dispex->info->desc->vtbl->get_name)
+            return dispex->info->desc->vtbl->get_name(dispex, id, ret);
+        return DISP_E_MEMBERNOTFOUND;
+    }
+
+    if(is_dynamic_dispid(id)) {
+        DWORD idx = id - DISPID_DYNPROP_0;
+
+        if(!get_dynamic_data(dispex) || dispex->dynamic_data->prop_cnt <= idx)
+            return DISP_E_MEMBERNOTFOUND;
+
+        *ret = SysAllocString(dispex->dynamic_data->props[idx].name);
+        return *ret ? S_OK : E_OUTOFMEMORY;
+    }
+
+    hres = get_builtin_func(dispex->info, id, &func);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = SysAllocString(func->name);
+    return *ret ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT WINAPI DispatchEx_GetMemberName(IWineJSDispatchHost *iface, DISPID id, BSTR *pbstrName)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    func_info_t *func;
-    HRESULT hres;
 
     TRACE("%s (%p)->(%lx %p)\n", This->info->desc->name, This, id, pbstrName);
 
@@ -2175,34 +2202,7 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IWineJSDispatchHost *iface, DISPI
         return E_OUTOFMEMORY;
     if(This->jsdisp)
         return IWineJSDispatch_GetMemberName(This->jsdisp, id, pbstrName);
-
-    if(is_custom_dispid(id)) {
-        if(This->info->desc->vtbl->get_name)
-            return This->info->desc->vtbl->get_name(This, id, pbstrName);
-        return DISP_E_MEMBERNOTFOUND;
-    }
-
-    if(is_dynamic_dispid(id)) {
-        DWORD idx = id - DISPID_DYNPROP_0;
-
-        if(!get_dynamic_data(This) || This->dynamic_data->prop_cnt <= idx)
-            return DISP_E_MEMBERNOTFOUND;
-
-        *pbstrName = SysAllocString(This->dynamic_data->props[idx].name);
-        if(!*pbstrName)
-            return E_OUTOFMEMORY;
-
-        return S_OK;
-    }
-
-    hres = get_builtin_func(This->info, id, &func);
-    if(FAILED(hres))
-        return hres;
-
-    *pbstrName = SysAllocString(func->name);
-    if(!*pbstrName)
-        return E_OUTOFMEMORY;
-    return S_OK;
+    return dispex_prop_name(This, id, pbstrName);
 }
 
 static HRESULT next_dynamic_id(DispatchEx *dispex, DWORD idx, DISPID *ret_id)
