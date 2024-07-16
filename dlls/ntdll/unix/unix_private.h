@@ -147,6 +147,7 @@ extern void *pKiRaiseUserExceptionDispatcher;
 extern void *pKiUserExceptionDispatcher;
 extern void *pKiUserApcDispatcher;
 extern void *pKiUserCallbackDispatcher;
+extern void *pKiUserEmulationDispatcher;
 extern void *pLdrInitializeThunk;
 extern void *pRtlUserThreadStart;
 extern void *p__wine_ctrl_routine;
@@ -413,6 +414,13 @@ static inline BOOL is_inside_signal_stack( void *ptr )
 {
     return ((char *)ptr >= (char *)get_signal_stack() &&
             (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
+}
+
+static inline BOOL is_ec_code( ULONG_PTR ptr )
+{
+    const UINT64 *map = (const UINT64 *)peb->EcCodeBitMap;
+    ULONG_PTR page = ptr / page_size;
+    return (map[page / 64] >> (page & 63)) & 1;
 }
 
 static inline void mutex_lock( pthread_mutex_t *mutex )

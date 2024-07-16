@@ -320,10 +320,21 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
  */
 NTSTATUS signal_set_full_context( CONTEXT *context )
 {
+    struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
     if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
-        arm64_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+        frame->restore_flags |= CONTEXT_INTEGER;
+
+    if (is_arm64ec() && !is_ec_code( frame->pc ))
+    {
+        CONTEXT *user_context = (CONTEXT *)((frame->sp - sizeof(CONTEXT)) & ~15);
+
+        user_context->ContextFlags = CONTEXT_FULL;
+        NtGetContextThread( GetCurrentThread(), user_context );
+        frame->sp = (ULONG_PTR)user_context;
+        frame->pc = (ULONG_PTR)pKiUserEmulationDispatcher;
+    }
     return status;
 }
 
