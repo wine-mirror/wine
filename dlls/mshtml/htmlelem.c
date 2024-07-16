@@ -1073,21 +1073,6 @@ static HRESULT HTMLRectCollection_get_dispid(DispatchEx *dispex, const WCHAR *na
     return S_OK;
 }
 
-static HRESULT HTMLRectCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    HTMLRectCollection *This = HTMLRectCollection_from_DispatchEx(dispex);
-    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
-    UINT32 len = 0;
-    WCHAR buf[11];
-
-    nsIDOMClientRectList_GetLength(This->rect_list, &len);
-    if(idx >= len)
-        return DISP_E_MEMBERNOTFOUND;
-
-    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
-    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1132,7 +1117,7 @@ static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
     .traverse         = HTMLRectCollection_traverse,
     .unlink           = HTMLRectCollection_unlink,
     .get_dispid       = HTMLRectCollection_get_dispid,
-    .get_name         = HTMLRectCollection_get_name,
+    .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLRectCollection_invoke,
 };
 static const tid_t HTMLRectCollection_iface_tids[] = {

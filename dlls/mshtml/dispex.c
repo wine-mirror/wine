@@ -2169,6 +2169,20 @@ HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret)
     HRESULT hres;
 
     if(is_custom_dispid(id)) {
+        if(dispex->info->desc->vtbl->get_prop_desc) {
+            struct property_info desc;
+            WCHAR buf[12];
+
+            hres = dispex->info->desc->vtbl->get_prop_desc(dispex, id, &desc);
+            if(FAILED(hres))
+                return hres;
+            if(!desc.name) {
+                swprintf(buf, ARRAYSIZE(buf), L"%u", desc.index);
+                desc.name = buf;
+            }
+            *ret = SysAllocString(desc.name);
+            return *ret ? S_OK : E_OUTOFMEMORY;
+        }
         if(dispex->info->desc->vtbl->get_name)
             return dispex->info->desc->vtbl->get_name(dispex, id, ret);
         return DISP_E_MEMBERNOTFOUND;
@@ -2296,6 +2310,18 @@ static HRESULT WINAPI JSDispatchHost_GetJSDispatch(IWineJSDispatchHost *iface, I
         return E_NOINTERFACE;
     *ret = This->jsdisp;
     IWineJSDispatch_AddRef(*ret);
+    return S_OK;
+}
+
+HRESULT dispex_index_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc)
+{
+    desc->id = id;
+    desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
+    if(dispex->info->desc->vtbl->next_dispid)
+        desc->flags |= PROPF_ENUMERABLE;
+    desc->name = NULL;
+    desc->index = id - MSHTML_DISPID_CUSTOM_MIN;
+    desc->func_iid = 0;
     return S_OK;
 }
 

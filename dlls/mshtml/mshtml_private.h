@@ -392,6 +392,7 @@ typedef struct {
     HRESULT (*invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*delete)(DispatchEx*,DISPID);
     HRESULT (*next_dispid)(DispatchEx*,DISPID,DISPID*);
+    HRESULT (*get_prop_desc)(DispatchEx*,DISPID,struct property_info*);
 
     /* Similar to invoke, but allows overriding all dispids */
     HRESULT (*disp_invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
@@ -515,6 +516,7 @@ HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *v, EX
 HRESULT dispex_get_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *pid);
 HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, DISPID *ret);
 HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret);
+HRESULT dispex_index_prop_desc(DispatchEx*,DISPID,struct property_info*);
 
 typedef enum {
     DISPEXPROP_CUSTOM,
