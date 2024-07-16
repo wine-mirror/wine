@@ -2299,33 +2299,56 @@ static HRESULT WINAPI JSDispatchHost_GetJSDispatch(IWineJSDispatchHost *iface, I
     return S_OK;
 }
 
+static HRESULT get_host_property_descriptor(DispatchEx *This, DISPID id, struct property_info *desc)
+{
+    HRESULT hres;
+
+    desc->id = id;
+
+    switch(get_dispid_type(id)) {
+    case DISPEXPROP_BUILTIN: {
+        func_info_t *func;
+
+        hres = get_builtin_func(This->info, id, &func);
+        if(FAILED(hres))
+            return hres;
+        desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
+        desc->name = func->name;
+        if(func->func_disp_idx < 0) {
+            desc->flags |= PROPF_ENUMERABLE;
+            desc->func_iid = 0;
+        }else {
+            desc->func_iid = func->tid;
+        }
+        break;
+    }
+    case DISPEXPROP_DYNAMIC:
+        desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
+        desc->name = This->dynamic_data->props[id - DISPID_DYNPROP_0].name;
+        desc->func_iid = 0;
+        break;
+    case DISPEXPROP_CUSTOM:
+        FIXME("custom properties not yet supported\n");
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI JSDispatchHost_LookupProperty(IWineJSDispatchHost *iface, const WCHAR *name, DWORD flags,
                                                     struct property_info *desc)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    func_info_t *func;
     DISPID id;
     HRESULT hres;
 
     TRACE("%s (%p)->(%s)\n", This->info->desc->name, This, debugstr_w(name));
 
-    hres = get_builtin_id(This, name, flags, &id);
+    hres = dispex_get_id(This, name, flags, &id);
     if(FAILED(hres))
         return hres;
 
-    hres = get_builtin_func(This->info, id, &func);
-    if(FAILED(hres))
-        return hres;
-    desc->id = id;
-    desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
-    if(func->func_disp_idx < 0) {
-        desc->flags |= PROPF_ENUMERABLE;
-        desc->func_iid = 0;
-    }else {
-        desc->func_iid = func->tid;
-    }
-    desc->name = func->name;
-    return S_OK;
+    return get_host_property_descriptor(This, id, desc);
 }
 
 static HRESULT WINAPI JSDispatchHost_NextProperty(IWineJSDispatchHost *iface, DISPID id, struct property_info *desc)
