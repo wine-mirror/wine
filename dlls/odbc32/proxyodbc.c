@@ -684,7 +684,7 @@ static SQLRETURN col_attribute_win32_a( struct handle *handle, SQLUSMALLINT col,
         return handle->win32_funcs->SQLColAttribute( handle->win32_handle, col, field_id, char_attr, buflen,
                                                      retlen, num_attr );
     }
-    else if (handle->win32_funcs->SQLColAttributeW)
+    if (handle->win32_funcs->SQLColAttributeW)
     {
         if (buflen < 0)
             ret = handle->win32_funcs->SQLColAttributeW( handle->win32_handle, col, field_id, char_attr, buflen,
@@ -2874,7 +2874,7 @@ static SQLRETURN col_attributes_win32_a( struct handle *handle, SQLUSMALLINT col
         return handle->win32_funcs->SQLColAttributes( handle->win32_handle, col, field_id, char_attrs, buflen,
                                                       retlen, num_attrs );
     }
-    else if (handle->win32_funcs->SQLColAttributesW)
+    if (handle->win32_funcs->SQLColAttributesW)
     {
         if (buflen < 0)
             ret = handle->win32_funcs->SQLColAttributesW( handle->win32_handle, col, field_id, char_attrs, buflen,
@@ -2929,6 +2929,44 @@ SQLRETURN WINAPI SQLColAttributes(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnN
     return ret;
 }
 
+static SQLRETURN column_privs_unix_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
+                                      SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3, SQLCHAR *column,
+                                      SQLSMALLINT len4 )
+{
+    struct SQLColumnPrivileges_params params = { handle->unix_handle, catalog, len1, schema, len2, table, len3,
+                                                 column, len4 };
+    return ODBC_CALL( SQLColumnPrivileges, &params );
+}
+
+static SQLRETURN column_privs_win32_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
+                                      SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3, SQLCHAR *column,
+                                      SQLSMALLINT len4 )
+{
+    SQLWCHAR *catalogW = NULL, *schemaW = NULL, *tableW = NULL, *columnW = NULL;
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLColumnPrivileges)
+    {
+        return handle->win32_funcs->SQLColumnPrivileges( handle->win32_handle, catalog, len1, schema, len2, table,
+                                                         len3, column, len4 );
+    }
+    if (handle->win32_funcs->SQLColumnPrivilegesW)
+    {
+        if (!(catalogW = strnAtoW( catalog, len1 ))) return SQL_ERROR;
+        if (!(schemaW = strnAtoW( schema, len2 ))) goto done;
+        if (!(tableW = strnAtoW( table, len3 ))) goto done;
+        if (!(columnW = strnAtoW( column, len4 ))) goto done;
+        ret = handle->win32_funcs->SQLColumnPrivilegesW( handle->win32_handle, catalogW, len1, schemaW, len2, tableW,
+                                                         len3, columnW, len4 );
+    }
+done:
+    free( catalogW );
+    free( schemaW );
+    free( tableW );
+    free( columnW );
+    return ret;
+}
+
 /*************************************************************************
  *				SQLColumnPrivileges           [ODBC32.056]
  */
@@ -2949,14 +2987,13 @@ SQLRETURN WINAPI SQLColumnPrivileges(SQLHSTMT StatementHandle, SQLCHAR *CatalogN
 
     if (handle->unix_handle)
     {
-        struct SQLColumnPrivileges_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
-                                                     NameLength2, TableName, NameLength3, ColumnName, NameLength4 };
-        ret = ODBC_CALL( SQLColumnPrivileges, &params );
+        ret = column_privs_unix_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                   ColumnName, NameLength4 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLColumnPrivileges( handle->win32_handle, CatalogName, NameLength1, SchemaName,
-                                                        NameLength2, TableName, NameLength3, ColumnName, NameLength4 );
+        ret = column_privs_win32_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                    ColumnName, NameLength4 );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4689,6 +4726,26 @@ done:
     return ret;
 }
 
+static SQLRETURN column_privs_unix_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1, SQLWCHAR *schema,
+                                      SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3, SQLWCHAR *column,
+                                      SQLSMALLINT len4 )
+{
+    struct SQLColumnPrivilegesW_params params = { handle->unix_handle, catalog, len1, schema, len2, table, len3,
+                                                  column, len4 };
+    return ODBC_CALL( SQLColumnPrivilegesW, &params );
+}
+
+static SQLRETURN column_privs_win32_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1, SQLWCHAR *schema,
+                                       SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3, SQLWCHAR *column,
+                                       SQLSMALLINT len4 )
+{
+    if (handle->win32_funcs->SQLColumnPrivilegesW)
+        return handle->win32_funcs->SQLColumnPrivilegesW( handle->win32_handle, catalog, len1, schema, len2, table,
+                                                          len3, column, len4 );
+    if (handle->win32_funcs->SQLColumnPrivileges) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLColumnPrivilegesW          [ODBC32.156]
  */
@@ -4709,14 +4766,13 @@ SQLRETURN WINAPI SQLColumnPrivilegesW(SQLHSTMT StatementHandle, SQLWCHAR *Catalo
 
     if (handle->unix_handle)
     {
-        struct SQLColumnPrivilegesW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
-                                                      NameLength2, TableName, NameLength3, ColumnName, NameLength4 };
-        ret = ODBC_CALL( SQLColumnPrivilegesW, &params );
+        ret = column_privs_unix_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                   ColumnName, NameLength4 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLColumnPrivilegesW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
-                                                         NameLength2, TableName, NameLength3, ColumnName, NameLength4 );
+        ret = column_privs_win32_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                    ColumnName, NameLength4 );
     }
 
     TRACE("Returning %d\n", ret);
