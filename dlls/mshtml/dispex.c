@@ -2354,8 +2354,7 @@ static HRESULT get_host_property_descriptor(DispatchEx *This, DISPID id, struct 
         desc->func_iid = 0;
         break;
     case DISPEXPROP_CUSTOM:
-        FIXME("custom properties not yet supported\n");
-        return E_NOTIMPL;
+        return This->info->desc->vtbl->get_prop_desc(This, id, desc);
     }
 
     return S_OK;

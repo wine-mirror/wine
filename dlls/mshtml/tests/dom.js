@@ -331,6 +331,18 @@ sync_test("rects", function() {
     ok(rects.length === 1, "rect.length = " + rects.length);
     ok(rects[0].top === rect.top, "rects[0].top = " + rects[0].top + " rect.top = " + rect.top);
     ok(rects[0].bottom === rect.bottom, "rects[0].bottom = " + rects[0].bottom + " rect.bottom = " + rect.bottom);
+
+    ok("" + rects[0] === "[object ClientRect]", "rects[0] = " + rects[0]);
+    ok(rects.hasOwnProperty("0"), 'rects.hasOwnProperty("0") = ' + rects.hasOwnProperty("0"));
+    todo_wine.
+    ok(rects.hasOwnProperty("1"), 'rects.hasOwnProperty("1") = ' + rects.hasOwnProperty("1"));
+    var desc = Object.getOwnPropertyDescriptor(rects, "0");
+    ok(desc.writable === true, "writable = " + desc.writable);
+    todo_wine.
+    ok(desc.enumerable === true, "enumerable = " + desc.enumerable);
+    ok(desc.configurable === true, "configurable = " + desc.configurable);
+    ok("" + desc.value === "[object ClientRect]", "desc.value = " + desc.value);
+
     ok(rect.height === rect.bottom - rect.top, "rect.height = " + rect.height + " rect.bottom = " + rect.bottom + " rect.top = " + rect.top);
     ok(rect.width === rect.right - rect.left, "rect.width = " + rect.width + " rect.right = " + rect.right + " rect.left = " + rect.left);
 
