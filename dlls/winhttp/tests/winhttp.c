@@ -3336,9 +3336,7 @@ static void test_redirect(int port)
     url[0] = 0;
     size = (lstrlenW(expected) + 1) * sizeof(WCHAR);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_URL, url, &size);
-    todo_wine
     ok(ret, "got %lu\n", GetLastError());
-    todo_wine
     ok(!wcscmp(url, expected), "expected %s got %s\n", wine_dbgstr_w(expected), wine_dbgstr_w(url));
 
     ret = WinHttpReceiveResponse(req, NULL);
@@ -4430,11 +4428,8 @@ static void test_credentials(void)
     size = (lstrlenW(proxy_userW) + 1) * sizeof(WCHAR);
     buffer[0] = 0;
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_USERNAME, &buffer, &size);
-    todo_wine
     ok(ret, "failed to query proxy username %lu\n", GetLastError());
-    todo_wine
     ok(!wcscmp(buffer, proxy_userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
-    todo_wine
     ok(size == lstrlenW(proxy_userW) * sizeof(WCHAR), "unexpected result %lu\n", size);
 
     buffer[0] = 0x1;
@@ -4487,11 +4482,8 @@ static void test_credentials(void)
     size = (lstrlenW(proxy_passW) + 1) * sizeof(WCHAR);
     buffer[0] = 0;
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PROXY_PASSWORD, &buffer, &size);
-    todo_wine
     ok(ret, "failed to query proxy password %lu\n", GetLastError());
-    todo_wine
     ok(!wcscmp(buffer, proxy_passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
-    todo_wine
     ok(size == lstrlenW(proxy_passW) * sizeof(WCHAR), "unexpected result %lu\n", size);
 
     buffer[0] = 0x1;
@@ -4520,11 +4512,8 @@ static void test_credentials(void)
     size = (lstrlenW(userW) + 1) * sizeof(WCHAR);
     buffer[0] = 0;
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_USERNAME, &buffer, &size);
-    todo_wine
     ok(ret, "failed to query username %lu\n", GetLastError());
-    todo_wine
     ok(!wcscmp(buffer, userW), "unexpected result %s\n", wine_dbgstr_w(buffer));
-    todo_wine
     ok(size == lstrlenW(userW) * sizeof(WCHAR), "unexpected result %lu\n", size);
 
     buffer[0] = 0x1;
@@ -4553,11 +4542,8 @@ static void test_credentials(void)
     buffer[0] = 0;
     size = (lstrlenW(passW) + 1) * sizeof(WCHAR);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_PASSWORD, &buffer, &size);
-    todo_wine
     ok(ret, "failed to query password %lu\n", GetLastError());
-    todo_wine
     ok(!wcscmp(buffer, passW), "unexpected result %s\n", wine_dbgstr_w(buffer));
-    todo_wine
     ok(size == lstrlenW(passW) * sizeof(WCHAR), "unexpected result %lu\n", size);
 
     buffer[0] = 0x1;

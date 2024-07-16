@@ -685,7 +685,7 @@ static BOOL return_string_option( WCHAR *buffer, const WCHAR *str, LPDWORD bufle
 {
     int len = sizeof(WCHAR);
     if (str) len += lstrlenW( str ) * sizeof(WCHAR);
-    if (buffer && *buflen > len)
+    if (buffer && *buflen >= len)
     {
         if (str) memcpy( buffer, str, len );
         len -= sizeof(WCHAR);
