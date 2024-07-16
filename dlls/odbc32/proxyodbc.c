@@ -989,6 +989,33 @@ static SQLRETURN create_con( struct handle *handle )
     return prepare_con( handle );
 }
 
+static SQLRETURN connect_win32_a( struct handle *handle, SQLCHAR *servername, SQLSMALLINT len1, SQLCHAR *username,
+                                  SQLSMALLINT len2, SQLCHAR *auth, SQLSMALLINT len3 )
+{
+    SQLRETURN ret = SQL_ERROR;
+    SQLWCHAR *servernameW, *usernameW = NULL, *authW = NULL;
+
+    if (handle->win32_funcs->SQLConnect)
+        return handle->win32_funcs->SQLConnect( handle->win32_handle, servername, len1, username, len2, auth, len3 );
+
+    if (!(servernameW = strnAtoW( servername, len1 ))) return SQL_ERROR;
+    if (!(usernameW = strnAtoW( username, len2 ))) goto done;
+    if (!(authW = strnAtoW( auth, len3 ))) goto done;
+    ret = handle->win32_funcs->SQLConnectW( handle->win32_handle, servernameW, len1, usernameW, len2, authW, len3 );
+done:
+    free( servernameW );
+    free( usernameW );
+    free( authW );
+    return ret;
+}
+
+static SQLRETURN connect_unix_a( struct handle *handle, SQLCHAR *servername, SQLSMALLINT len1, SQLCHAR *username,
+                                 SQLSMALLINT len2, SQLCHAR *authentication, SQLSMALLINT len3 )
+{
+    struct SQLConnect_params params = { handle->unix_handle, servername, len1, username, len2, authentication, len3 };
+    return ODBC_CALL( SQLConnect, &params );
+}
+
 /*************************************************************************
  *				SQLConnect           [ODBC32.007]
  */
@@ -1025,20 +1052,16 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        ret = handle->win32_funcs->SQLConnect( handle->win32_handle, ServerName, NameLength1, UserName, NameLength2,
-                                               Authentication, NameLength3 );
+        ret = connect_win32_a( handle, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
     }
     else
     {
-        struct SQLConnect_params params = { 0, ServerName, NameLength1, UserName, NameLength2, Authentication,
-                                            NameLength3 };
-
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+
         if (!SUCCESS((ret = create_env( handle->parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        params.ConnectionHandle = handle->unix_handle;
-        ret = ODBC_CALL( SQLConnect, &params );
+        ret = connect_unix_a( handle, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
     }
 
 done:
@@ -3751,8 +3774,24 @@ SQLRETURN WINAPI SQLColAttributesW(SQLHSTMT StatementHandle, SQLUSMALLINT Column
 
 static const char *debugstr_sqlwstr( const SQLWCHAR *str, SQLSMALLINT len )
 {
-    if (len == SQL_NTS) len = wcslen( (const WCHAR *)str );
-    return wine_dbgstr_wn( (const WCHAR *)str, len );
+    if (len == SQL_NTS) len = wcslen( str );
+    return wine_dbgstr_wn( str, len );
+}
+
+static SQLRETURN connect_win32_w( struct handle *handle, SQLWCHAR *servername, SQLSMALLINT len1, SQLWCHAR *username,
+                                  SQLSMALLINT len2, SQLWCHAR *auth, SQLSMALLINT len3 )
+{
+    if (handle->win32_funcs->SQLConnectW)
+        return handle->win32_funcs->SQLConnectW( handle->win32_handle, servername, len1, username, len2, auth, len3 );
+    if (handle->win32_funcs->SQLConnect) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
+static SQLRETURN connect_unix_w( struct handle *handle, SQLWCHAR *servername, SQLSMALLINT len1, SQLWCHAR *username,
+                                 SQLSMALLINT len2, SQLWCHAR *auth, SQLSMALLINT len3 )
+{
+    struct SQLConnectW_params params = { handle->unix_handle, servername, len1, username, len2, auth, len3 };
+    return ODBC_CALL( SQLConnectW, &params );
 }
 
 /*************************************************************************
@@ -3791,20 +3830,16 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, WCHAR *ServerName, SQLSMA
         if (!SUCCESS((ret = create_env( handle->parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        ret = handle->win32_funcs->SQLConnectW( handle->win32_handle, ServerName, NameLength1, UserName, NameLength2,
-                                                Authentication, NameLength3 );
+        ret = connect_win32_w( handle, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
     }
     else
     {
-        struct SQLConnectW_params params = { 0, ServerName, NameLength1, UserName, NameLength2, Authentication,
-                                             NameLength3 };
-
         TRACE( "using Unix driver %s\n", debugstr_w(filename) );
+
         if (!SUCCESS((ret = create_env( handle->parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
-        params.ConnectionHandle = handle->unix_handle;
-        ret = ODBC_CALL( SQLConnectW, &params );
+        ret = connect_unix_w( handle, ServerName, NameLength1, UserName, NameLength2, Authentication, NameLength3 );
     }
 
 done:
@@ -4465,7 +4500,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
         if (!SUCCESS((ret = create_con( handle )))) goto done;
 
         ret = driver_connect_unix_w( handle, WindowHandle, InConnectionString, Length, OutConnectionString,
-                                     BufferLength, Length2, DriverCompletion);
+                                     BufferLength, Length2, DriverCompletion );
     }
 
 done:
