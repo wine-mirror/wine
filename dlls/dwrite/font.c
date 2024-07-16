@@ -1820,8 +1820,8 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
 
         hr = IDWriteRenderingParams_QueryInterface(params, &IID_IDWriteRenderingParams3, (void**)&params3);
         if (hr == S_OK) {
-            *rendering_mode = IDWriteRenderingParams3_GetRenderingMode1(params3);
-            mode = IDWriteRenderingParams3_GetGridFitMode(params3);
+            mode = IDWriteRenderingParams3_GetRenderingMode1(params3);
+            *gridfit_mode = IDWriteRenderingParams3_GetGridFitMode(params3);
             IDWriteRenderingParams3_Release(params3);
         }
         else
