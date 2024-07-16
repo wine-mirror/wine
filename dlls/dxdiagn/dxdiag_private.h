@@ -23,10 +23,6 @@
 
 #include <stdarg.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-
 #include "wine/list.h"
 #include "dxdiag.h"
 #include "resource.h"

@@ -31,6 +31,7 @@
 #include "d3d9.h"
 #include "strmif.h"
 #include "initguid.h"
+#include "mmdeviceapi.h"
 #include "wine/fil_data.h"
 #include "psapi.h"
 #include "wbemcli.h"
@@ -1242,6 +1243,7 @@ static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
 struct enum_context
 {
     IDxDiagContainerImpl_Container *cont;
+    IMMDeviceCollection *devices;
     HRESULT hr;
     int index;
 };
@@ -1261,6 +1263,7 @@ BOOL CALLBACK dsound_enum(LPGUID guid, LPCWSTR desc, LPCWSTR module, LPVOID cont
     IDxDiagContainerImpl_Container *device;
     WCHAR buffer[256];
     const WCHAR *p, *name;
+    UINT32 i, count;
 
     /* the default device is enumerated twice, one time without GUID */
     if (!guid) return TRUE;
@@ -1296,6 +1299,62 @@ BOOL CALLBACK dsound_enum(LPGUID guid, LPCWSTR desc, LPCWSTR module, LPVOID cont
     if (FAILED(enum_ctx->hr))
         return FALSE;
 
+    if (enum_ctx->devices && SUCCEEDED(IMMDeviceCollection_GetCount(enum_ctx->devices, &count)))
+    {
+        static const PROPERTYKEY devicepath_key =
+        {
+            {0xb3f8fa53, 0x0004, 0x438e, {0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc}}, 2
+        };
+        IPropertyStore *ps;
+        WCHAR *start, *end;
+        IMMDevice *mmdev;
+        PROPVARIANT pv;
+        HRESULT hr;
+
+        for (i = 0; i < count; ++i)
+        {
+            mmdev = NULL;
+            ps = NULL;
+            hr = IMMDeviceCollection_Item(enum_ctx->devices, i, &mmdev);
+            if (SUCCEEDED(hr))
+                hr = IMMDevice_OpenPropertyStore(mmdev, STGM_READ, &ps);
+            PropVariantInit(&pv);
+            if (SUCCEEDED(hr))
+                hr = IPropertyStore_GetValue(ps, (const PROPERTYKEY*)&PKEY_AudioEndpoint_GUID, &pv);
+            if (SUCCEEDED(hr))
+            {
+                StringFromGUID2(guid, buffer, ARRAY_SIZE(buffer));
+                hr = pv.vt == VT_LPWSTR && !wcsicmp(buffer, pv.pwszVal) ? S_OK : E_FAIL;
+                PropVariantClear(&pv);
+            }
+            PropVariantInit(&pv);
+            if (SUCCEEDED(hr))
+                hr = IPropertyStore_GetValue(ps, &devicepath_key, &pv);
+            if (SUCCEEDED(hr) && pv.vt == VT_LPWSTR)
+            {
+                if ((start = wcsstr(pv.pwszVal, L"}.")))
+                    start += 2;
+                else
+                    start = pv.pwszVal;
+                if (wcsnicmp(start, L"ROOT", 4) && (end = wcschr(start, '\\')) && (end = wcschr(end + 1, '\\'))
+                        && end - start < ARRAY_SIZE(buffer))
+                {
+                    memcpy(buffer, start, (end - start) * sizeof(WCHAR));
+                    buffer[end - start] = 0;
+                    start = buffer;
+                }
+                add_bstr_property(device, L"szHardwareID", start);
+                PropVariantClear(&pv);
+            }
+            if (ps)
+                IPropertyStore_Release(ps);
+            if (mmdev)
+                IMMDevice_Release(mmdev);
+            if (SUCCEEDED(hr))
+                break;
+        }
+    }
+
     enum_ctx->index++;
     return TRUE;
 }
@@ -1304,6 +1363,7 @@ static HRESULT build_directsound_tree(IDxDiagContainerImpl_Container *node)
 {
     struct enum_context enum_ctx;
     IDxDiagContainerImpl_Container *cont;
+    IMMDeviceEnumerator *mmdevenum;
 
     cont = allocate_information_node(L"DxDiag_SoundDevices");
     if (!cont)
@@ -1315,7 +1375,20 @@ static HRESULT build_directsound_tree(IDxDiagContainerImpl_Container *node)
     enum_ctx.hr = S_OK;
     enum_ctx.index = 0;
 
+    enum_ctx.devices = NULL;
+    if (SUCCEEDED(CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator,
+            (void **)&mmdevenum)))
+    {
+        IMMDeviceEnumerator_EnumAudioEndpoints(mmdevenum, eAll, DEVICE_STATE_ACTIVE, &enum_ctx.devices);
+        IMMDeviceEnumerator_Release(mmdevenum);
+    }
+
     DirectSoundEnumerateW(dsound_enum, &enum_ctx);
+    if (enum_ctx.devices)
+    {
+        IMMDeviceCollection_Release(enum_ctx.devices);
+        enum_ctx.devices = NULL;
+    }
     if (FAILED(enum_ctx.hr))
         return enum_ctx.hr;
 

@@ -945,6 +945,7 @@ static void test_DxDiag_SoundDevices(void)
         {L"szGuidDeviceID", VT_BSTR},
         {L"szDriverName", VT_BSTR},
         {L"szDriverPath", VT_BSTR},
+        {L"szHardwareID", VT_BSTR},
     };
 
     IDxDiagContainer *sound_cont = NULL;
