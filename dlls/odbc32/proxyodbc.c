@@ -4228,7 +4228,7 @@ SQLRETURN WINAPI SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
                                     SQLINTEGER StringLength)
 {
     struct handle *handle = ConnectionHandle;
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_SUCCESS;
 
     TRACE("(ConnectionHandle %p, Attribute %d, Value %p, StringLength %d)\n", ConnectionHandle, Attribute,
           Value, StringLength);
