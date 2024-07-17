@@ -374,6 +374,23 @@ static void sync_window_style( struct x11drv_win_data *data )
     }
 }
 
+static void sync_empty_window_shape( struct x11drv_win_data *data )
+{
+#ifdef HAVE_LIBXSHAPE
+    if (IsRectEmpty( &data->window_rect ))  /* set an empty shape */
+    {
+        static XRectangle empty_rect;
+        XShapeCombineRectangles( data->display, data->whole_window, ShapeBounding, 0, 0,
+                                 &empty_rect, 1, ShapeSet, YXBanded );
+    }
+    else
+    {
+        XShapeCombineMask( gdi_display, data->whole_window, ShapeBounding, 0, 0, None, ShapeSet );
+        /* invalidate surface shape to make sure it gets updated again */
+        if (data->surface) window_surface_set_shape( data->surface, 0 );
+    }
+#endif
+}
 
 /***********************************************************************
  *              sync_window_region
@@ -386,16 +403,6 @@ static void sync_window_region( struct x11drv_win_data *data, HRGN win_region )
     HRGN hrgn = win_region;
 
     if (!data->whole_window) return;
-
-    if (IsRectEmpty( &data->window_rect ))  /* set an empty shape */
-    {
-        static XRectangle empty_rect;
-        data->shaped = FALSE;
-        XShapeCombineRectangles( data->display, data->whole_window, ShapeBounding, 0, 0,
-                                 &empty_rect, 1, ShapeSet, YXBanded );
-        return;
-    }
-
     if (data->surface) return; /* use surface shape instead */
     data->shaped = FALSE;
 
@@ -1434,7 +1441,7 @@ static void sync_window_position( struct x11drv_win_data *data,
     XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
 #ifdef HAVE_LIBXSHAPE
     if (IsRectEmpty( old_window_rect ) != IsRectEmpty( &data->window_rect ))
-        sync_window_region( data, (HRGN)1 );
+        sync_empty_window_shape( data );
     if (data->shaped)
     {
         int old_x_offset = old_window_rect->left - old_whole_rect->left;
@@ -1789,7 +1796,8 @@ static void create_whole_window( struct x11drv_win_data *data )
     sync_window_text( data->display, data->whole_window, text );
 
     /* set the window region */
-    if (win_rgn || IsRectEmpty( &data->window_rect )) sync_window_region( data, win_rgn );
+    if (IsRectEmpty( &data->window_rect )) sync_empty_window_shape( data );
+    else if (win_rgn) sync_window_region( data, win_rgn );
 
     /* set the window opacity */
     if (!NtUserGetLayeredWindowAttributes( data->hwnd, &key, &alpha, &layered_flags )) layered_flags = 0;
