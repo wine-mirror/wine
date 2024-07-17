@@ -1181,6 +1181,50 @@ SQLRETURN WINAPI SQLDataSourcesA(SQLHENV EnvironmentHandle, SQLUSMALLINT Directi
                            BufferLength2, NameLength2 );
 }
 
+static SQLRETURN describe_col_unix_a( struct handle *handle, SQLUSMALLINT col_number, SQLCHAR *col_name,
+                                      SQLSMALLINT buflen, SQLSMALLINT *retlen, SQLSMALLINT *data_type,
+                                      SQLULEN *col_size, SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable )
+{
+    SQLRETURN ret;
+    SQLSMALLINT dummy;
+    UINT64 size;
+    struct SQLDescribeCol_params params = { handle->unix_handle, col_number, col_name, buflen, retlen, data_type,
+                                            &size, decimal_digits, nullable };
+    if (!retlen) params.NameLength = &dummy; /* workaround for drivers that don't accept NULL NameLength */
+
+    if (SUCCESS((ret = ODBC_CALL( SQLDescribeCol, &params ))) && col_size) *col_size = size;
+    return ret;
+}
+
+static SQLRETURN describe_col_win32_a( struct handle *handle, SQLUSMALLINT col_number, SQLCHAR *col_name,
+                                       SQLSMALLINT buflen, SQLSMALLINT *retlen, SQLSMALLINT *data_type,
+                                       SQLULEN *col_size, SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLDescribeCol)
+    {
+        return handle->win32_funcs->SQLDescribeCol( handle->win32_handle, col_number, col_name, buflen, retlen,
+                                                    data_type, col_size, decimal_digits, nullable );
+    }
+    if (handle->win32_funcs->SQLDescribeColW)
+    {
+        SQLWCHAR *nameW;
+        SQLSMALLINT lenW;
+
+        if (!(nameW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+        ret = handle->win32_funcs->SQLDescribeColW( handle->win32_handle, col_number, nameW, buflen, &lenW,
+                                                    data_type, col_size, decimal_digits, nullable );
+        if (SUCCESS( ret ))
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, nameW, -1, (char *)col_name, buflen, NULL, NULL );
+            if (retlen) *retlen = len - 1;
+        }
+        free( nameW );
+    }
+    return ret;
+}
+
 /*************************************************************************
  *				SQLDescribeCol           [ODBC32.008]
  */
@@ -1199,18 +1243,13 @@ SQLRETURN WINAPI SQLDescribeCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNum
 
     if (handle->unix_handle)
     {
-        UINT64 size;
-        SQLSMALLINT dummy;
-        struct SQLDescribeCol_params params = { handle->unix_handle, ColumnNumber, ColumnName, BufferLength,
-                                                NameLength, DataType, &size, DecimalDigits, Nullable };
-        if (!params.NameLength) params.NameLength = &dummy; /* workaround for drivers that don't accept NULL NameLength */
-
-        if (SUCCESS((ret = ODBC_CALL( SQLDescribeCol, &params ))) && ColumnSize) *ColumnSize = size;
+        ret = describe_col_unix_a( handle, ColumnNumber, ColumnName, BufferLength, NameLength, DataType,
+                                   ColumnSize, DecimalDigits, Nullable );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLDescribeCol( handle->win32_handle, ColumnNumber, ColumnName, BufferLength,
-                                                   NameLength, DataType, ColumnSize, DecimalDigits, Nullable );
+        ret = describe_col_win32_a( handle, ColumnNumber, ColumnName, BufferLength, NameLength, DataType,
+                                    ColumnSize, DecimalDigits, Nullable );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3848,6 +3887,32 @@ done:
     return ret;
 }
 
+static SQLRETURN describe_col_unix_w( struct handle *handle, SQLUSMALLINT col_number, SQLWCHAR *col_name,
+                                      SQLSMALLINT buf_len, SQLSMALLINT *name_len, SQLSMALLINT *data_type,
+                                      SQLULEN *col_size, SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable )
+{
+    SQLRETURN ret;
+    SQLSMALLINT dummy;
+    UINT64 size;
+    struct SQLDescribeColW_params params = { handle->unix_handle, col_number, col_name, buf_len, name_len,
+                                             data_type, &size, decimal_digits, nullable };
+    if (!name_len) params.NameLength = &dummy; /* workaround for drivers that don't accept NULL NameLength */
+
+    if (SUCCESS((ret = ODBC_CALL( SQLDescribeColW, &params ))) && col_size) *col_size = size;
+    return ret;
+}
+
+static SQLRETURN describe_col_win32_w( struct handle *handle, SQLUSMALLINT col_number, SQLWCHAR *col_name,
+                                       SQLSMALLINT buf_len, SQLSMALLINT *name_len, SQLSMALLINT *data_type,
+                                       SQLULEN *col_size, SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable )
+{
+    if (handle->win32_funcs->SQLDescribeColW)
+        return handle->win32_funcs->SQLDescribeColW( handle->win32_handle, col_number, col_name, buf_len, name_len,
+                                                     data_type, col_size, decimal_digits, nullable );
+    if (handle->win32_funcs->SQLDescribeCol) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLDescribeColW          [ODBC32.108]
  */
@@ -3866,18 +3931,13 @@ SQLRETURN WINAPI SQLDescribeColW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNu
 
     if (handle->unix_handle)
     {
-        SQLSMALLINT dummy;
-        UINT64 size;
-        struct SQLDescribeColW_params params = { handle->unix_handle, ColumnNumber, ColumnName, BufferLength,
-                                                 NameLength, DataType, &size, DecimalDigits, Nullable };
-        if (!NameLength) params.NameLength = &dummy; /* workaround for drivers that don't accept NULL NameLength */
-
-        if (SUCCESS((ret = ODBC_CALL( SQLDescribeCol, &params ))) && ColumnSize) *ColumnSize = size;
+        ret = describe_col_unix_w( handle, ColumnNumber, ColumnName, BufferLength, NameLength, DataType,
+                                   ColumnSize, DecimalDigits, Nullable );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLDescribeColW( handle->win32_handle, ColumnNumber, ColumnName, BufferLength,
-                                                    NameLength, DataType, ColumnSize, DecimalDigits, Nullable );
+        ret = describe_col_win32_w( handle, ColumnNumber, ColumnName, BufferLength, NameLength, DataType,
+                                    ColumnSize, DecimalDigits, Nullable );
     }
 
     TRACE("Returning %d\n", ret);
