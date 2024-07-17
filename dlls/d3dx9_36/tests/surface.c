@@ -1078,6 +1078,158 @@ static void test_format_conversion(IDirect3DDevice9 *device)
     }
 }
 
+static void test_dxt_premultiplied_alpha(IDirect3DDevice9 *device)
+{
+    static const uint32_t dxt_pma_decompressed_expected[] =
+    {
+        0x00000000, 0x22ffffff, 0x44ffffff, 0x66ffffff, 0x88f7f3f7, 0xaac5c2c5, 0xcca5a2a5, 0xff848284,
+        0x00000000, 0x22ffffff, 0x44ffffff, 0x66ffffff, 0x88f7f3f7, 0xaac5c2c5, 0xcca5a2a5, 0xff848284,
+    };
+    static const uint32_t dxt_decompressed_expected[] =
+    {
+        0x00848284, 0x22848284, 0x44848284, 0x66848284, 0x88848284, 0xaa848284, 0xcc848284, 0xff848284,
+        0x00848284, 0x22848284, 0x44848284, 0x66848284, 0x88848284, 0xaa848284, 0xcc848284, 0xff848284,
+    };
+    static const uint8_t dxt3_block[] =
+    {
+        0x20,0x64,0xa8,0xfc,0x20,0x64,0xa8,0xfc,0x10,0x84,0x10,0x84,0x00,0x00,0x00,0x00,
+    };
+    static const uint8_t dxt5_block[] =
+    {
+        0x22,0xcc,0x86,0xc6,0xe6,0x86,0xc6,0xe6,0x10,0x84,0x10,0x84,0x00,0x00,0x00,0x00,
+    };
+    static const uint32_t test_compress_pixels[] =
+    {
+        0xffffffff, 0x00ffffff, 0xffffffff, 0x00ffffff, 0xffffffff, 0x00ffffff, 0xffffffff, 0x00ffffff,
+        0xffffffff, 0x00ffffff, 0xffffffff, 0x00ffffff, 0xffffffff, 0x00ffffff, 0xffffffff, 0x00ffffff,
+    };
+    static const struct test
+    {
+        D3DFORMAT pma_fmt;
+        D3DFORMAT nonpma_fmt;
+        const uint8_t *dxt_block;
+        const char *name;
+    } tests[] =
+    {
+        { D3DFMT_DXT2, D3DFMT_DXT3, dxt3_block, "DXT2 / DXT3" },
+        { D3DFMT_DXT4, D3DFMT_DXT5, dxt5_block, "DXT4 / DXT5" },
+    };
+    static const RECT src_rect = { 0, 0, 4, 4 };
+    IDirect3DSurface9 *decomp_surf;
+    D3DLOCKED_RECT lock_rect;
+    uint32_t i, x, y;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &decomp_surf, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        struct surface_readback surface_rb;
+        IDirect3DSurface9 *pma_surf, *surf;
+        IDirect3DTexture9 *pma_tex, *tex;
+
+        winetest_push_context("Test %s", tests[i].name);
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, tests[i].pma_fmt, D3DPOOL_SYSTEMMEM, &pma_tex, NULL);
+        if (FAILED(hr))
+        {
+            skip("Failed to create texture for format %#x, hr %#lx.\n", tests[i].pma_fmt, hr);
+            winetest_pop_context();
+            continue;
+        }
+
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, tests[i].nonpma_fmt, D3DPOOL_SYSTEMMEM, &tex, NULL);
+        if (FAILED(hr))
+        {
+            skip("Failed to create texture for format %#x, hr %#lx.\n", tests[i].nonpma_fmt, hr);
+            IDirect3DTexture9_Release(pma_tex);
+            winetest_pop_context();
+            continue;
+        }
+
+        hr = IDirect3DTexture9_GetSurfaceLevel(pma_tex, 0, &pma_surf);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &surf);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+        /* Compress and load the same image onto each DXT surface. */
+        hr = D3DXLoadSurfaceFromMemory(pma_surf, NULL, NULL, test_compress_pixels, D3DFMT_A8B8G8R8, 16, NULL, &src_rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, test_compress_pixels, D3DFMT_A8B8G8R8, 16, NULL, &src_rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+        /*
+         * For DXT2/DXT4, the source image has all of its color channels
+         * premultiplied by the alpha value prior to compression. If the
+         * alpha channel's value is 0, then the color channel values are
+         * lost.
+         */
+        get_surface_decompressed_readback(device, pma_surf, &surface_rb);
+        for (y = 0; y < 4; ++y)
+        {
+            for (x = 0; x < 4; ++x)
+            {
+                const uint32_t expected_pixel = !(x & 0x01) ? 0xffffffff : 0x00000000;
+
+                check_readback_pixel_4bpp(&surface_rb, x, y, expected_pixel, !expected_pixel);
+            }
+        }
+        release_surface_readback(&surface_rb);
+
+        /* For DXT3/DXT5, no premultiplication by the alpha channel value is done. */
+        get_surface_decompressed_readback(device, surf, &surface_rb);
+        for (y = 0; y < 4; ++y)
+        {
+            for (x = 0; x < 4; ++x)
+                check_readback_pixel_4bpp(&surface_rb, x, y, test_compress_pixels[(y * 4) + x], FALSE);
+        }
+        release_surface_readback(&surface_rb);
+
+        /*
+         * Load our test DXT block with the premultiplied alpha DXT format.
+         * The block is decompressed, and then the premultiplied alpha
+         * operation is undone prior to being copied to the destination
+         * surface.
+         */
+        hr = D3DXLoadSurfaceFromMemory(decomp_surf, NULL, NULL, tests[i].dxt_block, tests[i].pma_fmt, 16, NULL, &src_rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        IDirect3DSurface9_LockRect(decomp_surf, &lock_rect, NULL, D3DLOCK_READONLY);
+        for (y = 0; y < 4; ++y)
+        {
+            for (x = 0; x < 4; ++x)
+            {
+                const uint32_t expected_pixel = dxt_pma_decompressed_expected[(y * 4) + x];
+                const BOOL todo = ((expected_pixel >> 24) & 0xff) != 0xff;
+
+                todo_wine_if(todo) check_pixel_4bpp(&lock_rect, x, y, expected_pixel);
+            }
+        }
+        IDirect3DSurface9_UnlockRect(decomp_surf);
+
+        /*
+         * Load our test DXT block as a non-premultiplied alpha DXT format.
+         * The block is decompressed, and the data is copied over directly.
+         */
+        hr = D3DXLoadSurfaceFromMemory(decomp_surf, NULL, NULL, tests[i].dxt_block, tests[i].nonpma_fmt, 16, NULL, &src_rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        IDirect3DSurface9_LockRect(decomp_surf, &lock_rect, NULL, D3DLOCK_READONLY);
+        for (y = 0; y < 4; ++y)
+        {
+            for (x = 0; x < 4; ++x)
+                check_pixel_4bpp(&lock_rect, x, y, dxt_decompressed_expected[(y * 4) + x]);
+        }
+        IDirect3DSurface9_UnlockRect(decomp_surf);
+
+        IDirect3DSurface9_Release(pma_surf);
+        IDirect3DTexture9_Release(pma_tex);
+        IDirect3DSurface9_Release(surf);
+        IDirect3DTexture9_Release(tex);
+        winetest_pop_context();
+    }
+    IDirect3DSurface9_Release(decomp_surf);
+}
+
 static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 {
     HRESULT hr;
@@ -2285,6 +2437,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     }
 
     test_format_conversion(device);
+    test_dxt_premultiplied_alpha(device);
 
     /* cleanup */
     if(testdummy_ok) DeleteFileA("testdummy.bmp");
