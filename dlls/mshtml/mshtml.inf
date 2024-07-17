@@ -217,6 +217,10 @@ HKCR,".mpe","Content Type",,"video/mpeg"
 HKCR,".mpeg","Content Type",,"video/mpeg"
 HKCR,".mpg","Content Type",,"video/mpeg"
 
+;; PDF
+HKCR,"MIME\Database\Content Type\application/pdf","Extension",,".pdf"
+HKCR,".pdf","Content Type",,"application/pdf"
+
 ;; PJPG
 HKCR,"MIME\Database\Content Type\image/pjpeg","CLSID",,"%CLSID_HTMLDocument%"
 HKCR,"MIME\Database\Content Type\image/pjpeg","Extension",,".jpg"
