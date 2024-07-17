@@ -54,6 +54,10 @@ SOURCES = \
 	blue_edit_border_hvscroll.svg \
 	blue_edit_border_noscroll.svg \
 	blue_edit_border_vscroll.svg \
+	blue_explorer_listview_item_hot.svg \
+	blue_explorer_listview_item_hot_selected.svg \
+	blue_explorer_listview_item_selected.svg \
+	blue_explorer_listview_item_selected_not_focus.svg \
 	blue_explorer_treeview_glyph_16px.svg \
 	blue_explorer_treeview_glyph_20px.svg \
 	blue_explorer_treeview_glyph_24px.svg \
