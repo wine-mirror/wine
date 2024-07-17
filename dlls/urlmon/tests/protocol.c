@@ -854,7 +854,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
                    !memcmp(szStatusText, text_plain, lstrlenW(text_plain)*sizeof(WCHAR)),
                    "szStatusText != text/plain\n");
             else if(empty_file)
-                ok(!lstrcmpW(szStatusText, L"application/javascript"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
+                ok(!lstrcmpW(szStatusText, L"text/javascript"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
             else if((pi & PI_MIMEVERIFICATION) && emulate_prot && !mimefilter_test
                     && tested_protocol==HTTP_TEST && !short_read)
                 ok(lstrlenW(gifW) <= lstrlenW(szStatusText) &&
