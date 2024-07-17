@@ -293,13 +293,16 @@ UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification,
 static void get_source_info( HINF hinf, const WCHAR *src_file, SP_FILE_COPY_PARAMS_W *params,
                              WCHAR *src_root, WCHAR *src_path)
 {
-    INFCONTEXT file_ctx, disk_ctx;
-    INT id, diskid;
+    INFCONTEXT disk_ctx;
+    UINT diskid;
+    INT id;
     DWORD len;
 
-    /* find the SourceDisksFiles entry */
-    if (!SetupFindFirstLineW( hinf, L"SourceDisksFiles", src_file, &file_ctx )) return;
-    if (!SetupGetIntField( &file_ctx, 1, &diskid )) return;
+    if (!SetupGetSourceFileLocationW( hinf, NULL, src_file, &diskid, src_path, MAX_PATH, &len ))
+        return;
+
+    if (len > sizeof(WCHAR))
+        params->SourcePath = src_path;
 
     /* now find the diskid in the SourceDisksNames section */
     if (!SetupFindFirstLineW( hinf, L"SourceDisksNames", NULL, &disk_ctx )) return;
@@ -323,12 +326,6 @@ static void get_source_info( HINF hinf, const WCHAR *src_file, SP_FILE_COPY_PARA
         lstrcatW( src_root, L"\\" );
         SetupGetStringFieldW( &disk_ctx, 4, src_root + lstrlenW( src_root ),
                               MAX_PATH - lstrlenW( src_root ), NULL );
-    }
-
-    if (SetupGetStringFieldW( &file_ctx, 2, NULL, 0, &len ) && len > sizeof(WCHAR) && len < MAX_PATH)
-    {
-        SetupGetStringFieldW( &file_ctx, 2, src_path, MAX_PATH, NULL );
-        params->SourcePath = src_path;
     }
 }
 
