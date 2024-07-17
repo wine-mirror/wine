@@ -1968,12 +1968,18 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pAlphaBlend->offBmiSrc);
             void *bits;
+            DIBSECTION dib;
+            DWORD copy_size;
 
             SetGraphicsMode(hdcSrc, GM_ADVANCED);
             SetWorldTransform(hdcSrc, &pAlphaBlend->xformSrc);
 
             hBmp = CreateDIBSection(hdc, pbi, pAlphaBlend->iUsageSrc, &bits, NULL, 0);
-            memcpy(bits, (const BYTE *)mr + pAlphaBlend->offBitsSrc, pAlphaBlend->cbBitsSrc);
+
+            GetObjectW(hBmp, sizeof(dib), &dib);
+            copy_size = min(dib.dsBmih.biSizeImage, pAlphaBlend->cbBitsSrc);
+
+            memcpy(bits, (const BYTE *)mr + pAlphaBlend->offBitsSrc, copy_size);
             hBmpOld = SelectObject(hdcSrc, hBmp);
 
             GdiAlphaBlend(hdc, pAlphaBlend->xDest, pAlphaBlend->yDest, pAlphaBlend->cxDest, pAlphaBlend->cyDest,
