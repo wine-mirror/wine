@@ -151,8 +151,7 @@ static struct macdrv_window_surface *get_mac_surface(struct window_surface *surf
 /***********************************************************************
  *              create_surface
  */
-static struct window_surface *create_surface(HWND hwnd, macdrv_window window, const RECT *rect,
-                                             struct window_surface *old_surface)
+static struct window_surface *create_surface(HWND hwnd, macdrv_window window, const RECT *rect)
 {
     struct macdrv_window_surface *surface = NULL;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
@@ -195,7 +194,6 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
     if (!window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, rect, info, bitmap)) goto failed;
 
     surface->window = window;
-    if (old_surface) surface->header.bounds = old_surface->bounds;
     surface->provider = provider;
 
     window_background = macdrv_window_background_color();
@@ -238,7 +236,7 @@ BOOL macdrv_CreateWindowSurface(HWND hwnd, const RECT *surface_rect, struct wind
         }
     }
 
-    *surface = create_surface(data->hwnd, data->cocoa_window, surface_rect, data->surface);
+    *surface = create_surface(data->hwnd, data->cocoa_window, surface_rect);
 
 done:
     release_win_data(data);
@@ -263,7 +261,7 @@ BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *surface_rect, COLORREF co
     surface = data->surface;
     if (!surface || !EqualRect(&surface->rect, surface_rect))
     {
-        data->surface = create_surface(data->hwnd, data->cocoa_window, surface_rect, NULL);
+        data->surface = create_surface(data->hwnd, data->cocoa_window, surface_rect);
         if (surface) window_surface_release(surface);
         surface = data->surface;
         if (data->unminimized_surface)
