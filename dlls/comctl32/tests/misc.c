@@ -890,7 +890,7 @@ static void test_themed_background(void)
         {TRACKBAR_CLASSA, 0, wm_ctlcolorstatic_seq},
         {WC_TREEVIEWA, 0, treeview_seq},
         {WC_TREEVIEWA, TVS_HASBUTTONS, treeview_seq},
-        {WC_TREEVIEWA, TVS_HASBUTTONS, treeview_seq, TRUE, L"explorer"},
+        {WC_TREEVIEWA, TVS_HASBUTTONS, treeview_seq, FALSE, L"explorer"},
         {UPDOWN_CLASSA, 0, empty_seq},
         {WC_SCROLLBARA, 0, scrollbar_seq},
         {WC_SCROLLBARA, SBS_SIZEBOX, empty_seq},
@@ -957,7 +957,6 @@ static void test_themed_background(void)
         {
             hdc = GetDC(child);
             color = GetPixel(hdc, 40, 40);
-            todo_wine_if(tests[i].window_theme && !lstrcmpW(tests[i].window_theme, L"explorer"))
             ok(color == 0xffffff, "Expected color %#x, got %#lx.\n", 0xffffff, color);
             ReleaseDC(child, hdc);
         }

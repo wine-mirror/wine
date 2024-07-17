@@ -2918,7 +2918,7 @@ TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
     if (infoPtr->dwStyle & TVS_HASBUTTONS && (theme = GetWindowTheme(infoPtr->hwnd)))
     {
         if (IsThemeBackgroundPartiallyTransparent(theme, TVP_GLYPH, 0))
-            DrawThemeParentBackground(infoPtr->hwnd, hdc, NULL);
+            FillRect(hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1));
     }
 
     for (item = infoPtr->root->firstChild;
