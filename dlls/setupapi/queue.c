@@ -299,18 +299,18 @@ static void get_source_info( HINF hinf, const WCHAR *src_file, SP_FILE_COPY_PARA
     if (!SetupGetSourceFileLocationW( hinf, NULL, src_file, &diskid, src_path, MAX_PATH, &len ))
         return;
 
-    if (len > sizeof(WCHAR))
+    if (len > 1)
         params->SourcePath = src_path;
 
-    if (SetupGetSourceInfoW( hinf, diskid, SRCINFO_DESCRIPTION, NULL, 0, &len ) && len > sizeof(WCHAR)
+    if (SetupGetSourceInfoW( hinf, diskid, SRCINFO_DESCRIPTION, NULL, 0, &len ) && len > 1
             && (params->SourceDescription = malloc( len * sizeof(WCHAR) )))
         SetupGetSourceInfoW( hinf, diskid, SRCINFO_DESCRIPTION, (WCHAR *)params->SourceDescription, len, NULL );
 
-    if (SetupGetSourceInfoW( hinf, diskid, SRCINFO_TAGFILE, NULL, 0, &len ) && len > sizeof(WCHAR)
+    if (SetupGetSourceInfoW( hinf, diskid, SRCINFO_TAGFILE, NULL, 0, &len ) && len > 1
             && (params->SourceTagfile = malloc( len * sizeof(WCHAR) )))
         SetupGetSourceInfoW( hinf, diskid, SRCINFO_TAGFILE, (WCHAR *)params->SourceTagfile, len, NULL );
 
-    if (SetupGetSourceInfoW( hinf, diskid, SRCINFO_PATH, NULL, 0, &len ) && len > sizeof(WCHAR)
+    if (SetupGetSourceInfoW( hinf, diskid, SRCINFO_PATH, NULL, 0, &len ) && len > 1
             && len < MAX_PATH - lstrlenW( src_root ) - 1)
     {
         lstrcatW( src_root, L"\\" );
