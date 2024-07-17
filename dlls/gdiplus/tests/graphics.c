@@ -4911,7 +4911,6 @@ static void test_measure_string(void)
     expect(Ok, status);
     expect(3, glyphs);
     expect(1, lines);
-    todo_wine
     expectf_(5.0 + width/2.0, bounds.X, 0.01);
     todo_wine
     expectf(5.0 + height/2.0, bounds.Y);
@@ -4979,7 +4978,6 @@ static void test_measure_string(void)
     expect(Ok, status);
     expect(3, glyphs);
     expect(1, lines);
-    todo_wine
     expectf_(5.0 + width, bounds.X, 0.01);
     todo_wine
     expectf(5.0 + height, bounds.Y);

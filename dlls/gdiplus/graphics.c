@@ -5826,22 +5826,35 @@ struct measure_string_args {
 static GpStatus measure_string_callback(struct gdip_format_string_info *info)
 {
     struct measure_string_args *args = info->user_data;
+    RectF *bounds = args->bounds;
     REAL new_width, new_height;
 
     new_width = info->bounds->Width / args->rel_width;
-    new_height = (info->bounds->Height + info->bounds->Y) / args->rel_height - args->bounds->Y;
+    new_height = (info->bounds->Height + info->bounds->Y) / args->rel_height - bounds->Y;
 
-    if (new_width > args->bounds->Width)
-        args->bounds->Width = new_width;
+    if (new_width > bounds->Width)
+        bounds->Width = new_width;
 
-    if (new_height > args->bounds->Height)
-        args->bounds->Height = new_height;
+    if (new_height > bounds->Height)
+        bounds->Height = new_height;
 
     if (args->codepointsfitted)
         *args->codepointsfitted = info->index + info->length;
 
     if (args->linesfilled)
         (*args->linesfilled)++;
+
+    switch (info->format ? info->format->align : StringAlignmentNear)
+    {
+    case StringAlignmentCenter:
+        bounds->X = bounds->X + (info->rect->Width/2) - (bounds->Width/2);
+        break;
+    case StringAlignmentFar:
+        bounds->X = bounds->X + info->rect->Width - bounds->Width;
+        break;
+    default:
+        break;
+    }
 
     return Ok;
 }
