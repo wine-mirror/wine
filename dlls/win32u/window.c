@@ -825,7 +825,12 @@ BOOL enable_window( HWND hwnd, BOOL enable )
     if (enable)
     {
         ret = (set_window_style( hwnd, 0, WS_DISABLED ) & WS_DISABLED) != 0;
-        if (ret) send_message( hwnd, WM_ENABLE, TRUE, 0 );
+        if (ret)
+        {
+            NtUserNotifyWinEvent( EVENT_OBJECT_STATECHANGE, hwnd, OBJID_WINDOW, 0 );
+
+            send_message( hwnd, WM_ENABLE, TRUE, 0 );
+        }
     }
     else
     {
@@ -834,6 +839,8 @@ BOOL enable_window( HWND hwnd, BOOL enable )
         ret = (set_window_style( hwnd, WS_DISABLED, 0 ) & WS_DISABLED) != 0;
         if (!ret)
         {
+            NtUserNotifyWinEvent( EVENT_OBJECT_STATECHANGE, hwnd, OBJID_WINDOW, 0 );
+
             if (hwnd == get_focus())
                 NtUserSetFocus( 0 ); /* A disabled window can't have the focus */
 
