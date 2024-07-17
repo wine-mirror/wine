@@ -743,7 +743,7 @@ static void test_D3DXGetImageInfo(void)
     check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0, 0, D3DFMT_V16U16);
     check_dds_pixel_format(DDS_PF_BUMPLUMINANCE, 0, 32, 0x0000ff, 0x00ff00, 0xff0000, 0, D3DFMT_X8L8V8U8);
     check_dds_pixel_format(DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0, D3DFMT_P8);
-    todo_wine check_dds_pixel_format(DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00, D3DFMT_A8P8);
+    check_dds_pixel_format(DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00, D3DFMT_A8P8);
 
     test_dds_header_handling();
 
@@ -1752,13 +1752,13 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_a8p8, sizeof(dds_a8p8), &rect, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
-        todo_wine check_pixel_4bpp(&lockrect, 0, 0, 0xf0000000);
-        todo_wine check_pixel_4bpp(&lockrect, 1, 0, 0xe0004000);
-        todo_wine check_pixel_4bpp(&lockrect, 0, 1, 0xb0400000);
-        todo_wine check_pixel_4bpp(&lockrect, 1, 1, 0xa0404000);
+        check_pixel_4bpp(&lockrect, 0, 0, 0xf0000000);
+        check_pixel_4bpp(&lockrect, 1, 0, 0xe0004000);
+        check_pixel_4bpp(&lockrect, 0, 1, 0xb0400000);
+        check_pixel_4bpp(&lockrect, 1, 1, 0xa0404000);
         hr = IDirect3DSurface9_UnlockRect(surf);
         ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
 

@@ -355,6 +355,8 @@ static D3DFORMAT dds_indexed_to_d3dformat(const struct dds_pixel_format *pixel_f
 {
     if (pixel_format->bpp == 8)
         return D3DFMT_P8;
+    if (pixel_format->bpp == 16 && pixel_format->amask == 0xff00)
+        return D3DFMT_A8P8;
 
     WARN("Unknown indexed pixel format (bpp %lu).\n", pixel_format->bpp);
     return D3DFMT_UNKNOWN;
