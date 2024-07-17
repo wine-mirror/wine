@@ -35,6 +35,23 @@
 
 #include "wine/test.h"
 
+#ifdef __i386__
+#define MYEXT "x86"
+#define WRONGEXT "ARM"
+#elif defined(__x86_64__)
+#define MYEXT "AMD64"
+#define WRONGEXT "ARM64"
+#elif defined(__arm__)
+#define MYEXT "ARM"
+#define WRONGEXT "x86"
+#elif defined(__aarch64__)
+#define MYEXT "ARM64"
+#define WRONGEXT "AMD64"
+#else
+#define MYEXT
+#define WRONGEXT
+#endif
+
 static const char inffile[] = "test.inf";
 static const WCHAR inffileW[] = {'t','e','s','t','.','i','n','f',0};
 static char CURR_DIR[MAX_PATH];
@@ -87,6 +104,12 @@ static void create_inf_file(LPCSTR filename, const char *data)
 static void create_file(const char *filename)
 {
     create_inf_file(filename, "dummy");
+}
+
+static void create_directory(const char *name)
+{
+    BOOL ret = CreateDirectoryA(name, NULL);
+    ok(ret, "Failed to create %s, error %lu.\n", name, GetLastError());
 }
 
 static BOOL delete_file(const char *filename)
@@ -2393,6 +2416,60 @@ static void test_append_reg(void)
     ok(ret, "Failed to delete INF file, error %lu.\n", GetLastError());
 }
 
+static void test_source_disks_architecture(void)
+{
+    static const char inf_data[] =
+            "[Version]\n"
+            "Signature=\"$Chicago$\"\n"
+            "[install_section]\n"
+            "CopyFiles=section1\n"
+            "[section1]\n"
+            "one.txt\n"
+            "[SourceDisksNames." MYEXT "]\n"
+            "1=,,,heis\n"
+            "2=,,,duo\n"
+            "[SourceDisksNames." WRONGEXT "]\n"
+            "1=,,,treis\n"
+            "2=,,,tessares\n"
+            "[SourceDisksFiles." MYEXT "]\n"
+            "one.txt=1\n"
+            "[SourceDisksFiles." WRONGEXT "]\n"
+            "one.txt=2\n"
+            "[DestinationDirs]\n"
+            "DefaultDestDir=40000,dst\n";
+
+    char path[MAX_PATH];
+    void *context;
+    HINF hinf;
+    BOOL ret;
+
+    create_inf_file(inffile, inf_data);
+
+    sprintf(path, "%s\\%s", CURR_DIR, inffile);
+    hinf = SetupOpenInfFileA(path, NULL, INF_STYLE_WIN4, NULL);
+    ok(hinf != INVALID_HANDLE_VALUE, "Failed to open INF file, error %#lx.\n", GetLastError());
+
+    create_directory("src");
+    create_directory("src/heis");
+    create_file("src/heis/one.txt");
+    create_directory("dst");
+
+    context = SetupInitDefaultQueueCallbackEx(NULL, INVALID_HANDLE_VALUE, 0, 0, 0);
+    ret = SetupInstallFromInfSectionA(NULL, hinf, "install_section", SPINST_FILES,
+            NULL, "src", 0, SetupDefaultQueueCallbackA, context, NULL, NULL);
+    ok(ret, "Failed to install, error %#lx.\n", GetLastError());
+    SetupTermDefaultQueueCallback(context);
+
+    ok(delete_file("dst/one.txt"), "Destination file should exist.\n");
+
+    SetupCloseInfFile(hinf);
+    delete_file("src/heis/one.txt");
+    delete_file("src/heis");
+    delete_file("src/");
+    delete_file("dst/");
+    ok(delete_file(inffile), "Failed to delete INF file.\n");
+}
+
 static WCHAR service_name[] = L"Wine Test Service";
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
@@ -2503,6 +2580,7 @@ START_TEST(install)
     test_register_dlls();
     test_rename();
     test_append_reg();
+    test_source_disks_architecture();
 
     UnhookWindowsHookEx(hhook);
 
