@@ -669,7 +669,7 @@ static SQLRETURN col_attribute_unix_a( struct handle *handle, SQLUSMALLINT col, 
     SQLRETURN ret;
     INT64 attr;
     struct SQLColAttribute_params params = { handle->unix_handle, col, field_id, char_attr, buflen, retlen, &attr };
-    if (SUCCESS((ret = ODBC_CALL( SQLColAttribute, &params )))) *num_attr = attr;
+    if (SUCCESS((ret = ODBC_CALL( SQLColAttribute, &params ))) && num_attr) *num_attr = attr;
     return ret;
 }
 
@@ -3939,7 +3939,7 @@ static SQLRETURN col_attribute_unix_w( struct handle *handle, SQLUSMALLINT col, 
     INT64 attr;
     struct SQLColAttributeW_params params = { handle->unix_handle, col, field_id, char_attr, buflen, retlen, &attr };
 
-    if (SUCCESS((ret = ODBC_CALL( SQLColAttributeW, &params )))) *num_attr = attr;
+    if (SUCCESS((ret = ODBC_CALL( SQLColAttributeW, &params ))) && num_attr) *num_attr = attr;
 
     if (ret == SQL_SUCCESS && SQLColAttributes_KnownStringAttribute(field_id) && char_attr &&
         retlen && *retlen != wcslen( char_attr ) * sizeof(WCHAR))
