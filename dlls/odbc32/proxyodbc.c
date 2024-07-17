@@ -1308,6 +1308,47 @@ SQLRETURN WINAPI SQLEndTran(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLIN
     return ret;
 }
 
+static SQLRETURN error_unix_a( struct handle *env, struct handle *con, struct handle *stmt, SQLCHAR *state,
+                               SQLINTEGER *native_err, SQLCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
+{
+    struct SQLError_params params = { env ? env->unix_handle : 0, con ? con->unix_handle : 0,
+                                      stmt ? stmt->unix_handle : 0, state, native_err, msg, buflen, retlen };
+    return ODBC_CALL( SQLError, &params );
+}
+
+static SQLRETURN error_win32_a( struct handle *env, struct handle *con, struct handle *stmt, SQLCHAR *state,
+                                SQLINTEGER *native_err, SQLCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
+{
+    const struct win32_funcs *win32_funcs;
+    SQLRETURN ret = SQL_ERROR;
+
+    if (env) win32_funcs = env->win32_funcs;
+    else if (con) win32_funcs = con->win32_funcs;
+    else if (stmt) win32_funcs = stmt->win32_funcs;
+
+    if (win32_funcs->SQLError)
+        return win32_funcs->SQLError( env ? env->win32_handle : NULL, con ? con->win32_handle : NULL,
+                                      stmt ? stmt->win32_handle : NULL, state, native_err, msg, buflen, retlen );
+
+    if (win32_funcs->SQLErrorW)
+    {
+        SQLWCHAR stateW[6], *msgW = NULL;
+        SQLSMALLINT lenW;
+
+        if (!(msgW = malloc( buflen * sizeof(SQLWCHAR) ))) return SQL_ERROR;
+        ret = win32_funcs->SQLErrorW( env ? env->win32_handle : NULL, con ? con->win32_handle : NULL,
+                                      stmt ? stmt->win32_handle : NULL, stateW, native_err, msgW, buflen, &lenW );
+        if (SUCCESS( ret ))
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, msgW, -1, (char *)msg, buflen, NULL, NULL );
+            if (retlen) *retlen = len - 1;
+            WideCharToMultiByte( CP_ACP, 0, stateW, -1, (char *)state, 6, NULL, NULL );
+        }
+        free( msgW );
+    }
+    return ret;
+}
+
 /*************************************************************************
  *				SQLError           [ODBC32.010]
  */
@@ -1322,26 +1363,15 @@ SQLRETURN WINAPI SQLError(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, S
           " MessageText %p, BufferLength %d, TextLength %p)\n", EnvironmentHandle, ConnectionHandle,
           StatementHandle, SqlState, NativeError, MessageText, BufferLength, TextLength);
 
+    if (!env && !con && !stmt) return SQL_INVALID_HANDLE;
+
     if ((env && env->unix_handle) || (con && con->unix_handle) || (stmt && stmt->unix_handle))
     {
-        struct SQLError_params params = { env ? env->unix_handle : 0,
-                                          con ? con->unix_handle : 0,
-                                          stmt ? stmt->unix_handle : 0,
-                                          SqlState, NativeError, MessageText, BufferLength, TextLength };
-        ret = ODBC_CALL( SQLError, &params );
+        ret = error_unix_a( env, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
     }
     else if ((env && env->win32_handle) || (con && con->win32_handle) || (stmt && stmt->win32_handle))
     {
-        const struct win32_funcs *win32_funcs = NULL;
-
-        if (env) win32_funcs = env->win32_funcs;
-        else if (con) win32_funcs = con->win32_funcs;
-        else if (stmt) win32_funcs = stmt->win32_funcs;
-
-        ret = win32_funcs->SQLError( env ? env->win32_handle : NULL,
-                                     con ? con->win32_handle : NULL,
-                                     stmt ? stmt->win32_handle : NULL,
-                                     SqlState, NativeError, MessageText, BufferLength, TextLength );
+        ret = error_win32_a( env, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
     }
 
     if (SUCCESS( ret ))
@@ -3944,11 +3974,35 @@ SQLRETURN WINAPI SQLDescribeColW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNu
     return ret;
 }
 
+static SQLRETURN error_unix_w( struct handle *env, struct handle *con, struct handle *stmt, SQLWCHAR *state,
+                               SQLINTEGER *native_err, SQLWCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
+{
+    struct SQLErrorW_params params = { env ? env->unix_handle : 0, con ? con->unix_handle : 0,
+                                       stmt ? stmt->unix_handle : 0, state, native_err, msg, buflen, retlen };
+    return ODBC_CALL( SQLErrorW, &params );
+}
+
+static SQLRETURN error_win32_w( struct handle *env, struct handle *con, struct handle *stmt, SQLWCHAR *state,
+                                SQLINTEGER *native_err, SQLWCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
+{
+    const struct win32_funcs *win32_funcs;
+
+    if (env) win32_funcs = env->win32_funcs;
+    else if (con) win32_funcs = con->win32_funcs;
+    else if (stmt) win32_funcs = stmt->win32_funcs;
+
+    if (win32_funcs->SQLErrorW)
+        return win32_funcs->SQLErrorW( env ? env->win32_handle : NULL, con ? con->win32_handle : NULL,
+                                       stmt ? stmt->win32_handle : NULL, state, native_err, msg, buflen, retlen );
+    if (win32_funcs->SQLError) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLErrorW          [ODBC32.110]
  */
 SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, SQLHSTMT StatementHandle,
-                           WCHAR *SqlState, SQLINTEGER *NativeError, WCHAR *MessageText,
+                           SQLWCHAR *SqlState, SQLINTEGER *NativeError, SQLWCHAR *MessageText,
                            SQLSMALLINT BufferLength, SQLSMALLINT *TextLength)
 {
     struct handle *env = EnvironmentHandle, *con = ConnectionHandle, *stmt = StatementHandle;
@@ -3958,29 +4012,18 @@ SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, 
           " MessageText %p, BufferLength %d, TextLength %p)\n", EnvironmentHandle, ConnectionHandle,
           StatementHandle, SqlState, NativeError, MessageText, BufferLength, TextLength);
 
+    if (!env && !con && !stmt) return SQL_INVALID_HANDLE;
+
     if ((env && env->unix_handle) || (con && con->unix_handle) || (stmt && stmt->unix_handle))
     {
-        struct SQLErrorW_params params = { env ? env->unix_handle : 0,
-                                           con ? con->unix_handle : 0,
-                                           stmt ? stmt->unix_handle : 0,
-                                           SqlState, NativeError, MessageText, BufferLength, TextLength };
-        ret = ODBC_CALL( SQLErrorW, &params );
+        ret = error_unix_w( env, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
     }
     else if ((env && env->win32_handle) || (con && con->win32_handle) || (stmt && stmt->win32_handle))
     {
-        const struct win32_funcs *win32_funcs = NULL;
-
-        if (env) win32_funcs = env->win32_funcs;
-        else if (con) win32_funcs = con->win32_funcs;
-        else if (stmt) win32_funcs = stmt->win32_funcs;
-
-        ret = win32_funcs->SQLErrorW( env ? env->win32_handle : NULL,
-                                      con ? con->win32_handle : NULL,
-                                      stmt ? stmt->win32_handle : NULL,
-                                      SqlState, NativeError, MessageText, BufferLength, TextLength );
+        ret = error_win32_w( env, con, stmt, SqlState, NativeError, MessageText, BufferLength, TextLength );
     }
 
-    if (SUCCESS(ret ))
+    if (SUCCESS( ret ))
     {
         TRACE(" SqlState %s\n", debugstr_sqlwstr(SqlState, 5));
         TRACE(" Error %d\n", *NativeError);
