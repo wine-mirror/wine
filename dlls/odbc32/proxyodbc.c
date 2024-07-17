@@ -1387,6 +1387,29 @@ SQLRETURN WINAPI SQLError(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, S
     return ret;
 }
 
+static SQLRETURN exec_direct_unix_a( struct handle *handle, SQLCHAR *text, SQLINTEGER len )
+{
+    struct SQLExecDirect_params params = { handle->unix_handle, text, len };
+    return ODBC_CALL( SQLExecDirect, &params );
+}
+
+static SQLRETURN exec_direct_win32_a( struct handle *handle, SQLCHAR *text, SQLINTEGER len )
+{
+    SQLRETURN ret = SQL_ERROR;
+    SQLWCHAR *textW;
+
+    if (handle->win32_funcs->SQLExecDirect)
+        return handle->win32_funcs->SQLExecDirect( handle->win32_handle, text, len );
+
+    if (handle->win32_funcs->SQLExecDirectW)
+    {
+        if (!(textW = strnAtoW( text, len ))) return SQL_ERROR;
+        ret = handle->win32_funcs->SQLExecDirectW( handle->win32_handle, textW, len );
+        free( textW );
+    }
+    return ret;
+}
+
 /*************************************************************************
  *				SQLExecDirect           [ODBC32.011]
  */
@@ -1402,12 +1425,11 @@ SQLRETURN WINAPI SQLExecDirect(SQLHSTMT StatementHandle, SQLCHAR *StatementText,
 
     if (handle->unix_handle)
     {
-        struct SQLExecDirect_params params = { handle->unix_handle, StatementText, TextLength };
-        ret = ODBC_CALL( SQLExecDirect, &params );
+        ret = exec_direct_unix_a( handle, StatementText, TextLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLExecDirect( handle->win32_handle, StatementText, TextLength );
+        ret = exec_direct_win32_a( handle, StatementText, TextLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4042,10 +4064,24 @@ SQLRETURN WINAPI SQLErrorW(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle, 
     return ret;
 }
 
+static SQLRETURN exec_direct_unix_w( struct handle *handle, SQLWCHAR *text, SQLINTEGER len )
+{
+    struct SQLExecDirectW_params params = { handle->unix_handle, text, len };
+    return ODBC_CALL( SQLExecDirectW, &params );
+}
+
+static SQLRETURN exec_direct_win32_w( struct handle *handle, SQLWCHAR *text, SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLExecDirectW)
+        return handle->win32_funcs->SQLExecDirectW( handle->win32_handle, text, len );
+    if (handle->win32_funcs->SQLExecDirect) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLExecDirectW          [ODBC32.111]
  */
-SQLRETURN WINAPI SQLExecDirectW(SQLHSTMT StatementHandle, WCHAR *StatementText, SQLINTEGER TextLength)
+SQLRETURN WINAPI SQLExecDirectW(SQLHSTMT StatementHandle, SQLWCHAR *StatementText, SQLINTEGER TextLength)
 {
     struct handle *handle = StatementHandle;
     SQLRETURN ret = SQL_ERROR;
@@ -4057,12 +4093,11 @@ SQLRETURN WINAPI SQLExecDirectW(SQLHSTMT StatementHandle, WCHAR *StatementText, 
 
     if (handle->unix_handle)
     {
-        struct SQLExecDirectW_params params = { handle->unix_handle, StatementText, TextLength };
-        ret = ODBC_CALL( SQLExecDirectW, &params );
+        ret = exec_direct_unix_w( handle, StatementText, TextLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLExecDirectW( handle->win32_handle, StatementText, TextLength );
+        ret = exec_direct_win32_w( handle, StatementText, TextLength );
     }
 
     TRACE("Returning %d\n", ret);
