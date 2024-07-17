@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <commctrl.h>
+#include <uxtheme.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -829,6 +830,7 @@ static void test_themed_background(void)
     HMODULE uxtheme;
     COLORREF color;
     WNDCLASSA cls;
+    HRESULT hr;
     HDC hdc;
     int i;
 
@@ -838,6 +840,7 @@ static void test_themed_background(void)
         DWORD style;
         const struct message *seq;
         BOOL todo;
+        const WCHAR *window_theme;
     }
     tests[] =
     {
@@ -886,6 +889,8 @@ static void test_themed_background(void)
         {TOOLTIPS_CLASSA, 0, empty_seq},
         {TRACKBAR_CLASSA, 0, wm_ctlcolorstatic_seq},
         {WC_TREEVIEWA, 0, treeview_seq},
+        {WC_TREEVIEWA, TVS_HASBUTTONS, treeview_seq},
+        {WC_TREEVIEWA, TVS_HASBUTTONS, treeview_seq, TRUE, L"explorer"},
         {UPDOWN_CLASSA, 0, empty_seq},
         {WC_SCROLLBARA, 0, scrollbar_seq},
         {WC_SCROLLBARA, SBS_SIZEBOX, empty_seq},
@@ -933,11 +938,29 @@ static void test_themed_background(void)
         child = CreateWindowA(tests[i].class_name, "    ", WS_CHILD | WS_VISIBLE | tests[i].style,
                               0, 0, 50, 100, parent, 0, 0, 0);
         ok(child != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
+
+        /* Extra preparations */
+        if (tests[i].window_theme)
+        {
+            hr = SetWindowTheme(child, tests[i].window_theme, NULL);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+
         flush_events();
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         RedrawWindow(child, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ERASENOW | RDW_FRAME);
         ok_sequence(sequences, PARENT_SEQ_INDEX, tests[i].seq, "paint background", tests[i].todo);
+
+        /* Extra background tests */
+        if (!lstrcmpA(tests[i].class_name, WC_TREEVIEWA))
+        {
+            hdc = GetDC(child);
+            color = GetPixel(hdc, 40, 40);
+            todo_wine_if(tests[i].window_theme && !lstrcmpW(tests[i].window_theme, L"explorer"))
+            ok(color == 0xffffff, "Expected color %#x, got %#lx.\n", 0xffffff, color);
+            ReleaseDC(child, hdc);
+        }
 
         /* For message sequences that contain both DrawThemeParentBackground() messages and
          * WM_CTLCOLOR*, do a color test to check which is really in effect for controls that can be
