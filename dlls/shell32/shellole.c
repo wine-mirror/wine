@@ -87,6 +87,7 @@ static const struct {
 	{&CLSID_ShellImageDataFactory, ShellImageDataFactory_Constructor},
 	{&CLSID_FileOperation, IFileOperation_Constructor},
 	{&CLSID_ActiveDesktop, ActiveDesktop_Constructor},
+	{&CLSID_EnumerableObjectCollection, EnumerableObjectCollection_Constructor},
 	{NULL, NULL}
 };
 

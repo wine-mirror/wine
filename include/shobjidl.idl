@@ -4134,3 +4134,17 @@ interface IFileOperation : IUnknown
     HRESULT PerformOperations();
     HRESULT GetAnyOperationsAborted([out] BOOL *aborted);
 }
+
+[
+    object,
+    uuid(2c1c7e2e-2d0e-4059-831e-1e6f82335c2e),
+    pointer_default(unique)
+]
+interface IEnumObjects : IUnknown
+{
+    [local] HRESULT Next([in] ULONG celt, [in] REFIID riid, [out, iid_is(riid)] void **rgelt, [out, optional] ULONG *pceltFetched);
+    [call_as(Next)] HRESULT RemoteNext([in] ULONG  celt, [in] REFIID riid, [out, size_is(celt), length_is(*pceltFetched), iid_is(riid)] void **rgelt, [out] ULONG *pceltFetched);
+    HRESULT Skip([in] ULONG celt);
+    HRESULT Reset();
+    HRESULT Clone([out] IEnumObjects **ppenum);
+}

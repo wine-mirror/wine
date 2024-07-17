@@ -21,6 +21,7 @@ SOURCES = \
 	dragdrophelper.c \
 	ebrowser.c \
 	enumidlist.c \
+	enumobjects.c \
 	folders.c \
 	iconcache.c \
 	new_menu.c \
