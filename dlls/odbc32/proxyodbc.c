@@ -993,15 +993,18 @@ static SQLRETURN connect_win32_a( struct handle *handle, SQLCHAR *servername, SQ
                                   SQLSMALLINT len2, SQLCHAR *auth, SQLSMALLINT len3 )
 {
     SQLRETURN ret = SQL_ERROR;
-    SQLWCHAR *servernameW, *usernameW = NULL, *authW = NULL;
+    SQLWCHAR *servernameW = NULL, *usernameW = NULL, *authW = NULL;
 
     if (handle->win32_funcs->SQLConnect)
         return handle->win32_funcs->SQLConnect( handle->win32_handle, servername, len1, username, len2, auth, len3 );
 
-    if (!(servernameW = strnAtoW( servername, len1 ))) return SQL_ERROR;
-    if (!(usernameW = strnAtoW( username, len2 ))) goto done;
-    if (!(authW = strnAtoW( auth, len3 ))) goto done;
-    ret = handle->win32_funcs->SQLConnectW( handle->win32_handle, servernameW, len1, usernameW, len2, authW, len3 );
+    if (handle->win32_funcs->SQLConnectW)
+    {
+        if (!(servernameW = strnAtoW( servername, len1 ))) return SQL_ERROR;
+        if (!(usernameW = strnAtoW( username, len2 ))) goto done;
+        if (!(authW = strnAtoW( auth, len3 ))) goto done;
+        ret = handle->win32_funcs->SQLConnectW( handle->win32_handle, servernameW, len1, usernameW, len2, authW, len3 );
+    }
 done:
     free( servernameW );
     free( usernameW );
@@ -1944,23 +1947,26 @@ static SQLRETURN get_diag_rec_win32_a( SQLSMALLINT handle_type, struct handle *h
                                        SQLSMALLINT *retlen )
 {
     SQLRETURN ret = SQL_ERROR;
-    SQLWCHAR stateW[6], *msgW = NULL;
+    SQLWCHAR stateW[6], *msgW;
     SQLSMALLINT lenW;
 
     if (handle->win32_funcs->SQLGetDiagRec)
         return handle->win32_funcs->SQLGetDiagRec( handle_type, handle->win32_handle, rec_num, state, native_err,
                                                    msg, buflen, retlen );
 
-    if (!(msgW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
-    ret = handle->win32_funcs->SQLGetDiagRecW( handle_type, handle->win32_handle, rec_num, stateW, native_err,
-                                               msgW, buflen, &lenW );
-    if (SUCCESS( ret ))
+    if (handle->win32_funcs->SQLGetDiagRecW)
     {
-        int len = WideCharToMultiByte( CP_ACP, 0, msgW, -1, (char *)msg, buflen, NULL, NULL );
-        if (retlen) *retlen = len - 1;
-        WideCharToMultiByte( CP_ACP, 0, stateW, -1, (char *)state, 6, NULL, NULL );
+        if (!(msgW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+        ret = handle->win32_funcs->SQLGetDiagRecW( handle_type, handle->win32_handle, rec_num, stateW, native_err,
+                                                   msgW, buflen, &lenW );
+        if (SUCCESS( ret ))
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, msgW, -1, (char *)msg, buflen, NULL, NULL );
+            if (retlen) *retlen = len - 1;
+            WideCharToMultiByte( CP_ACP, 0, stateW, -1, (char *)state, 6, NULL, NULL );
+        }
+        free( msgW );
     }
-    free( msgW );
     return ret;
 }
 
@@ -3627,21 +3633,24 @@ static SQLRETURN driver_connect_win32_a( struct handle *handle, SQLHWND window, 
                                          SQLSMALLINT *outlen, SQLUSMALLINT completion )
 {
     SQLRETURN ret = SQL_ERROR;
-    SQLWCHAR *in, *out = NULL;
+    SQLWCHAR *in = NULL, *out = NULL;
     SQLSMALLINT lenW;
 
     if (handle->win32_funcs->SQLDriverConnect)
         return handle->win32_funcs->SQLDriverConnect( handle->win32_handle, window, in_conn_str, inlen, out_conn_str,
                                                       buflen, outlen, completion );
 
-    if (!(in = strnAtoW( in_conn_str, inlen ))) return SQL_ERROR;
-    if (!(out = malloc( buflen * sizeof(WCHAR) ))) goto done;
-    ret = handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, window, in, inlen, out, buflen, &lenW,
-                                                  completion );
-    if (SUCCESS( ret ))
+    if (handle->win32_funcs->SQLDriverConnectW)
     {
-        int len = WideCharToMultiByte( CP_ACP, 0, out, -1, (char *)out_conn_str, buflen, NULL, NULL );
-        if (outlen) *outlen = len - 1;
+        if (!(in = strnAtoW( in_conn_str, inlen ))) return SQL_ERROR;
+        if (!(out = malloc( buflen * sizeof(WCHAR) ))) goto done;
+        ret = handle->win32_funcs->SQLDriverConnectW( handle->win32_handle, window, in, inlen, out, buflen, &lenW,
+                                                      completion );
+        if (SUCCESS( ret ))
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, out, -1, (char *)out_conn_str, buflen, NULL, NULL );
+            if (outlen) *outlen = len - 1;
+        }
     }
 done:
     free( in );
