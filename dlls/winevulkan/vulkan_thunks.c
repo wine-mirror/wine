@@ -1638,7 +1638,7 @@ typedef struct VkDebugReportCallbackCreateInfoEXT32
     VkStructureType sType;
     PTR32 pNext;
     VkDebugReportFlagsEXT flags;
-    PFN_vkDebugReportCallbackEXT pfnCallback;
+    PTR32 pfnCallback;
     PTR32 pUserData;
 } VkDebugReportCallbackCreateInfoEXT32;
 
@@ -1649,7 +1649,7 @@ typedef struct VkDebugUtilsMessengerCreateInfoEXT32
     VkDebugUtilsMessengerCreateFlagsEXT flags;
     VkDebugUtilsMessageSeverityFlagsEXT messageSeverity;
     VkDebugUtilsMessageTypeFlagsEXT messageType;
-    PFN_vkDebugUtilsMessengerCallbackEXT pfnUserCallback;
+    PTR32 pfnUserCallback;
     PTR32 pUserData;
 } VkDebugUtilsMessengerCreateInfoEXT32;
 
@@ -11159,7 +11159,7 @@ static inline void convert_VkDebugReportCallbackCreateInfoEXT_win32_to_host(cons
     out->sType = in->sType;
     out->pNext = NULL;
     out->flags = in->flags;
-    out->pfnCallback = in->pfnCallback;
+    out->pfnCallback = (PFN_vkDebugReportCallbackEXT)UlongToPtr(in->pfnCallback);
     out->pUserData = UlongToPtr(in->pUserData);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -11174,7 +11174,7 @@ static inline void convert_VkDebugUtilsMessengerCreateInfoEXT_win32_to_host(cons
     out->flags = in->flags;
     out->messageSeverity = in->messageSeverity;
     out->messageType = in->messageType;
-    out->pfnUserCallback = in->pfnUserCallback;
+    out->pfnUserCallback = (PFN_vkDebugUtilsMessengerCallbackEXT)UlongToPtr(in->pfnUserCallback);
     out->pUserData = UlongToPtr(in->pUserData);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -18141,7 +18141,7 @@ static inline void convert_VkInstanceCreateInfo_win32_to_host(struct conversion_
             out_ext->sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
             out_ext->pNext = NULL;
             out_ext->flags = in_ext->flags;
-            out_ext->pfnCallback = in_ext->pfnCallback;
+            out_ext->pfnCallback = (PFN_vkDebugReportCallbackEXT)UlongToPtr(in_ext->pfnCallback);
             out_ext->pUserData = UlongToPtr(in_ext->pUserData);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
@@ -18194,7 +18194,7 @@ static inline void convert_VkInstanceCreateInfo_win32_to_host(struct conversion_
             out_ext->flags = in_ext->flags;
             out_ext->messageSeverity = in_ext->messageSeverity;
             out_ext->messageType = in_ext->messageType;
-            out_ext->pfnUserCallback = in_ext->pfnUserCallback;
+            out_ext->pfnUserCallback = (PFN_vkDebugUtilsMessengerCallbackEXT)UlongToPtr(in_ext->pfnUserCallback);
             out_ext->pUserData = UlongToPtr(in_ext->pUserData);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
