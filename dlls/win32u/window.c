@@ -1870,8 +1870,9 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
         window_surface_add_ref( new_surface );
     }
 
+    if (create_layered || is_layered) needs_surface = TRUE;
     if (!needs_surface || IsRectEmpty( visible_rect )) needs_surface = FALSE; /* use default surface */
-    else needs_surface = !user_driver->pCreateWindowSurface( hwnd, surface_rect, &new_surface );
+    else needs_surface = !user_driver->pCreateWindowSurface( hwnd, create_layered, surface_rect, &new_surface );
 
     /* create or update window surface for top-level windows if the driver doesn't implement CreateWindowSurface */
     if (needs_surface && new_surface == &dummy_surface && (create_opaque && !create_layered))
@@ -2235,11 +2236,7 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
 
     surface = create_window_surface( hwnd, swp_flags, TRUE, &window_rect, &client_rect, &visible_rect, &surface_rect );
     apply_window_pos( hwnd, 0, swp_flags, surface, &window_rect, &client_rect, &visible_rect, NULL );
-    if (surface) window_surface_release( surface );
-
-    if (!(flags & ULW_COLORKEY)) key = CLR_INVALID;
-    if (IsRectEmpty( &surface_rect )) window_surface_add_ref( (surface = &dummy_surface) );
-    else if (!(user_driver->pCreateLayeredWindow( hwnd, &surface_rect, key, &surface )) || !surface) return FALSE;
+    if (!surface) return FALSE;
 
     if (!hdc_src || surface == &dummy_surface) ret = TRUE;
     else
@@ -2272,6 +2269,7 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
         NtGdiDeleteObjectApp( hdc );
         window_surface_unlock( surface );
 
+        if (!(flags & ULW_COLORKEY)) key = CLR_INVALID;
         window_surface_set_layered( surface, key, -1, 0xff000000 );
         window_surface_flush( surface );
 

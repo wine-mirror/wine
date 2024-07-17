@@ -179,7 +179,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 87
+#define WINE_GDI_DRIVER_VERSION 88
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -342,11 +342,10 @@ struct user_driver_funcs
     void    (*pSetWindowText)(HWND,LPCWSTR);
     UINT    (*pShowWindow)(HWND,INT,RECT*,UINT);
     LRESULT (*pSysCommand)(HWND,WPARAM,LPARAM);
-    BOOL    (*pCreateLayeredWindow)(HWND,const RECT *,COLORREF,struct window_surface **);
     void    (*pUpdateLayeredWindow)(HWND,const RECT *,COLORREF,BYTE,UINT);
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
     BOOL    (*pWindowPosChanging)(HWND,UINT,BOOL,const RECT *,const RECT *,RECT *);
-    BOOL    (*pCreateWindowSurface)(HWND,const RECT *,struct window_surface**);
+    BOOL    (*pCreateWindowSurface)(HWND,BOOL,const RECT *,struct window_surface**);
     void    (*pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,
                                  const RECT *,struct window_surface*);
     /* system parameters */
