@@ -1621,7 +1621,7 @@ static HRESULT WINAPI recordset_CancelUpdate( _Recordset *iface )
         return S_OK;
 
     recordset->editmode = adEditNone;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_Close( _Recordset *iface )
