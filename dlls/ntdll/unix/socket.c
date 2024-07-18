@@ -1191,7 +1191,7 @@ NTSTATUS sock_write( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc,
     static const DWORD async_size = offsetof( struct async_send_ioctl, iov[1] );
     struct async_send_ioctl *async;
 
-    if (!(async = (struct async_send_ioctl *)alloc_fileio( async_size, async_recv_proc, handle )))
+    if (!(async = (struct async_send_ioctl *)alloc_fileio( async_size, async_send_proc, handle )))
         return STATUS_NO_MEMORY;
 
     async->count = 1;
