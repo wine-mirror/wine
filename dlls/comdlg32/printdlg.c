@@ -1796,6 +1796,7 @@ static LRESULT PRINTDLG_WMCommandA(HWND hDlg, WPARAM wParam,
 	}
 	break;
 
+     case psh1:                       /* Setup button */
      case psh2:                       /* Properties button */
        {
          HANDLE hPrinter;
@@ -1952,6 +1953,7 @@ static LRESULT PRINTDLG_WMCommandW(HWND hDlg, WPARAM wParam,
         }
         break;
 
+     case psh1:                       /* Setup button */
      case psh2:                       /* Properties button */
        {
          HANDLE hPrinter;
