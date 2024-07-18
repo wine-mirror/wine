@@ -21,6 +21,7 @@
 #include "d3d10_1.h"
 #include "d3dx10.h"
 #include "wine/test.h"
+#include <stdint.h>
 
 #define D3DERR_INVALIDCALL 0x8876086c
 
@@ -47,6 +48,7 @@
 #define DDS_PF_ALPHA 0x00000001
 #define DDS_PF_ALPHA_ONLY 0x00000002
 #define DDS_PF_FOURCC 0x00000004
+#define DDS_PF_INDEXED 0x00000020
 #define DDS_PF_RGB 0x00000040
 #define DDS_PF_LUMINANCE 0x00020000
 #define DDS_PF_BUMPLUMINANCE 0x00040000
@@ -82,6 +84,15 @@ struct dds_header
     DWORD reserved2;
 };
 
+struct dds_header_dxt10
+{
+    uint32_t dxgi_format;
+    uint32_t resource_dimension;
+    uint32_t misc_flag;
+    uint32_t array_size;
+    uint32_t misc_flags2;
+};
+
 static void fill_dds_header(struct dds_header *header)
 {
     memset(header, 0, sizeof(*header));
@@ -100,6 +111,35 @@ static void fill_dds_header(struct dds_header *header)
     header->pixel_format.bmask = 0x0000ff;
     header->pixel_format.amask = 0;
     header->caps = DDS_CAPS_TEXTURE;
+}
+
+static void set_dxt10_dds_header(struct dds_header *header, uint32_t append_flags, uint32_t width, uint32_t height,
+        uint32_t depth, uint32_t mip_levels, uint32_t pitch, uint32_t caps, uint32_t caps2)
+{
+    memset(header, 0, sizeof(*header));
+
+    header->size = sizeof(*header);
+    header->flags = DDS_CAPS | DDS_PIXELFORMAT | append_flags;
+    header->height = height;
+    header->width = width;
+    header->depth = depth;
+    header->miplevels = mip_levels;
+    header->pitch_or_linear_size = pitch;
+    header->pixel_format.size = sizeof(header->pixel_format);
+    header->pixel_format.flags = DDS_PF_FOURCC;
+    header->pixel_format.fourcc = MAKEFOURCC('D','X','1','0');
+    header->caps = caps;
+    header->caps2 = caps2;
+}
+
+static void set_dds_header_dxt10(struct dds_header_dxt10 *dxt10, DXGI_FORMAT format, uint32_t resource_dimension,
+        uint32_t misc_flag, uint32_t array_size, uint32_t misc_flags2)
+{
+    dxt10->dxgi_format = format;
+    dxt10->resource_dimension = resource_dimension;
+    dxt10->misc_flag = misc_flag;
+    dxt10->array_size = array_size;
+    dxt10->misc_flags2 = misc_flags2;
 }
 
 /* 1x1 1bpp bmp image */
@@ -2759,10 +2799,8 @@ static void test_D3DX10CreateThreadPump(void)
     ok(!ret, "Got unexpected refcount %lu.\n", ret);
 }
 
-#define check_dds_pixel_format(flags, fourcc, bpp, rmask, gmask, bmask, amask, format) \
-        check_dds_pixel_format_(__LINE__, flags, fourcc, bpp, rmask, gmask, bmask, amask, format)
-static void check_dds_pixel_format_(unsigned int line, DWORD flags, DWORD fourcc, DWORD bpp,
-        DWORD rmask, DWORD gmask, DWORD bmask, DWORD amask, DXGI_FORMAT expected_format)
+static void check_dds_pixel_format_image_info(unsigned int line, DWORD flags, DWORD fourcc, DWORD bpp,
+        DWORD rmask, DWORD gmask, DWORD bmask, DWORD amask, HRESULT expected_hr, DXGI_FORMAT expected_format)
 {
     D3DX10_IMAGE_INFO info;
     HRESULT hr;
@@ -2770,6 +2808,7 @@ static void check_dds_pixel_format_(unsigned int line, DWORD flags, DWORD fourcc
     {
         DWORD magic;
         struct dds_header header;
+        PALETTEENTRY palette[256];
         BYTE data[256];
     } dds;
 
@@ -2785,13 +2824,48 @@ static void check_dds_pixel_format_(unsigned int line, DWORD flags, DWORD fourcc
     memset(dds.data, 0, sizeof(dds.data));
 
     hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
-    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx for pixel format %#x.\n", hr, expected_format);
-    if (SUCCEEDED(hr))
-    {
-        ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x, expected %#x\n",
-                info.Format, expected_format);
-    }
+    ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr) && hr == expected_hr)
+        ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x.\n", info.Format);
 }
+
+#define check_dds_pixel_format(flags, fourcc, bpp, rmask, gmask, bmask, amask, format) \
+        check_dds_pixel_format_image_info(__LINE__, flags, fourcc, bpp, rmask, gmask, bmask, amask, S_OK, format)
+
+#define check_dds_pixel_format_unsupported(flags, fourcc, bpp, rmask, gmask, bmask, amask, expected_hr) \
+        check_dds_pixel_format_image_info(__LINE__, flags, fourcc, bpp, rmask, gmask, bmask, amask, expected_hr, \
+                DXGI_FORMAT_UNKNOWN)
+
+static void check_dds_dxt10_format_image_info(unsigned int line, DXGI_FORMAT format, DXGI_FORMAT expected_format,
+        HRESULT expected_hr, BOOL todo_format)
+{
+    const unsigned int stride = (4 * get_bpp_from_format(format) + 7) / 8;
+    D3DX10_IMAGE_INFO info;
+    HRESULT hr;
+    struct
+    {
+        DWORD magic;
+        struct dds_header header;
+        struct dds_header_dxt10 dxt10;
+        BYTE data[256];
+    } dds;
+
+    dds.magic = MAKEFOURCC('D','D','S',' ');
+    set_dxt10_dds_header(&dds.header, 0, 4, 4, 1, 1, stride, 0, 0);
+    set_dds_header_dxt10(&dds.dxt10, format, D3D10_RESOURCE_DIMENSION_TEXTURE2D, 0, 1, 0);
+
+    hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
+    ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr) && hr == expected_hr)
+        todo_wine_if(todo_format) ok_(__FILE__, line)(info.Format == expected_format, "Unexpected format %#x.\n",
+                info.Format);
+}
+
+#define check_dds_dxt10_format(format, expected_format, todo_format) \
+    check_dds_dxt10_format_image_info(__LINE__, format, expected_format, S_OK, todo_format)
+
+#define check_dds_dxt10_format_unsupported(format, expected_hr) \
+    check_dds_dxt10_format_image_info(__LINE__, format, DXGI_FORMAT_UNKNOWN, expected_hr, FALSE)
 
 static void test_get_image_info(void)
 {
@@ -2935,6 +3009,59 @@ static void test_get_image_info(void)
     check_dds_pixel_format(DDS_PF_LUMINANCE, 0, 16, 0xffff, 0, 0, 0, DXGI_FORMAT_R16G16B16A16_UNORM);
     check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 16, 0x00ff, 0, 0, 0xff00, DXGI_FORMAT_R8G8B8A8_UNORM);
     check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 8, 0x0f, 0, 0, 0xf0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00, DXGI_FORMAT_R8G8B8A8_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, 0x24, 0, 0, 0, 0, 0, DXGI_FORMAT_R16G16B16A16_UNORM); /* D3DFMT_A16B16G16R16 */
+    check_dds_pixel_format(DDS_PF_FOURCC, 0x6e, 0, 0, 0, 0, 0, DXGI_FORMAT_R16G16B16A16_SNORM); /* D3DFMT_Q16W16V16U16 */
+    check_dds_pixel_format(DDS_PF_FOURCC, 0x6f, 0, 0, 0, 0, 0, DXGI_FORMAT_R16_FLOAT); /* D3DFMT_R16F */
+    check_dds_pixel_format(DDS_PF_FOURCC, 0x70, 0, 0, 0, 0, 0, DXGI_FORMAT_R16G16_FLOAT); /* D3DFMT_G16R16F */
+    check_dds_pixel_format(DDS_PF_FOURCC, 0x71, 0, 0, 0, 0, 0, DXGI_FORMAT_R16G16B16A16_FLOAT); /* D3DFMT_A16B16G16R16F */
+    check_dds_pixel_format(DDS_PF_FOURCC, 0x72, 0, 0, 0, 0, 0, DXGI_FORMAT_R32_FLOAT); /* D3DFMT_R32F */
+    check_dds_pixel_format(DDS_PF_FOURCC, 0x73, 0, 0, 0, 0, 0, DXGI_FORMAT_R32G32_FLOAT); /* D3DFMT_G32R32F */
+    check_dds_pixel_format(DDS_PF_FOURCC, 0x74, 0, 0, 0, 0, 0, DXGI_FORMAT_R32G32B32A32_FLOAT); /* D3DFMT_A32B32G32R32F */
+
+    /* Test for DDS pixel formats that are valid on d3dx9, but not d3dx10. */
+    todo_wine check_dds_pixel_format_unsupported(DDS_PF_FOURCC, MAKEFOURCC('U','Y','V','Y'), 0, 0, 0, 0, 0, E_FAIL);
+    todo_wine check_dds_pixel_format_unsupported(DDS_PF_FOURCC, MAKEFOURCC('Y','U','Y','2'), 0, 0, 0, 0, 0, E_FAIL);
+    /* Bumpmap formats aren't supported. */
+    todo_wine check_dds_pixel_format_unsupported(DDS_PF_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0, 0, E_FAIL);
+    todo_wine check_dds_pixel_format_unsupported(DDS_PF_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0, 0, E_FAIL);
+    todo_wine check_dds_pixel_format_unsupported(DDS_PF_BUMPDUDV, 0, 32, 0xff, 0xff00, 0x00ff0000, 0xff000000, E_FAIL);
+    todo_wine check_dds_pixel_format_unsupported(DDS_PF_BUMPLUMINANCE, 0, 32, 0x0000ff, 0x00ff00, 0xff0000, 0, E_FAIL);
+
+    /* Newer fourCC formats. */
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('B','C','4','U'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC4_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('B','C','5','U'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC5_UNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('B','C','4','S'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC4_SNORM);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('B','C','5','S'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC5_SNORM);
+    /* ATI1 is unsupported, but ATI2 is supported. */
+    todo_wine check_dds_pixel_format_unsupported(DDS_PF_FOURCC, MAKEFOURCC('A','T','I','1'), 0, 0, 0, 0, 0, E_FAIL);
+    check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('A','T','I','2'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC5_UNORM);
+
+    todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_B5G6R5_UNORM, E_FAIL);
+    todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_B5G5R5A1_UNORM, E_FAIL);
+    /* Formats that are newer than d3d10. */
+    todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_BC6H_UF16, E_FAIL);
+    todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_BC6H_SF16, E_FAIL);
+    todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_BC7_UNORM, E_FAIL);
+    todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_B4G4R4A4_UNORM, E_FAIL);
+
+    /*
+     * These formats should map 1:1 from the DXT10 header, unlike legacy DDS
+     * file equivalents.
+     */
+    check_dds_dxt10_format(DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, TRUE);
+    check_dds_dxt10_format(DXGI_FORMAT_R16_UNORM, DXGI_FORMAT_R16_UNORM, TRUE);
+    check_dds_dxt10_format(DXGI_FORMAT_R8G8_UNORM, DXGI_FORMAT_R8G8_UNORM, TRUE);
+
+    /* BGRA formats are only supported on d3dx10_40+. */
+#if D3DX10_SDK_VERSION >= 40
+    check_dds_dxt10_format(DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM, TRUE);
+    check_dds_dxt10_format(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, TRUE);
+#else
+    todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_B8G8R8X8_UNORM, E_FAIL);
+    todo_wine check_dds_dxt10_format_unsupported(DXGI_FORMAT_B8G8R8A8_UNORM, E_FAIL);
+#endif
 
     /* D3DX10GetImageInfoFromResource tests */
 
