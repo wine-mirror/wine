@@ -3218,6 +3218,53 @@ SQLRETURN WINAPI SQLExtendedFetch(SQLHSTMT StatementHandle, SQLUSMALLINT FetchOr
     return ret;
 }
 
+static SQLRETURN foreign_keys_unix_a( struct handle *handle, SQLCHAR *pk_catalog, SQLSMALLINT len1,
+                                      SQLCHAR *pk_schema, SQLSMALLINT len2, SQLCHAR *pk_table, SQLSMALLINT len3,
+                                      SQLCHAR *fk_catalog, SQLSMALLINT len4, SQLCHAR *fk_schema, SQLSMALLINT len5,
+                                      SQLCHAR *fk_table, SQLSMALLINT len6 )
+{
+    struct SQLForeignKeys_params params = { handle->unix_handle, pk_catalog, len1, pk_schema, len2, pk_table, len3,
+                                            fk_catalog, len4, fk_schema, len5, fk_table, len6 };
+    return ODBC_CALL( SQLForeignKeys, &params );
+}
+
+static SQLRETURN foreign_keys_win32_a( struct handle *handle, SQLCHAR *pk_catalog, SQLSMALLINT len1,
+                                       SQLCHAR *pk_schema, SQLSMALLINT len2, SQLCHAR *pk_table, SQLSMALLINT len3,
+                                       SQLCHAR *fk_catalog, SQLSMALLINT len4, SQLCHAR *fk_schema, SQLSMALLINT len5,
+                                       SQLCHAR *fk_table, SQLSMALLINT len6 )
+{
+    SQLWCHAR *pk_catalogW = NULL, *pk_schemaW = NULL, *pk_tableW = NULL;
+    SQLWCHAR *fk_catalogW = NULL, *fk_schemaW = NULL, *fk_tableW = NULL;
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLForeignKeys)
+    {
+        return handle->win32_funcs->SQLForeignKeys( handle->win32_handle, pk_catalog, len1, pk_schema, len2,
+                                                    pk_table, len3, fk_catalog, len4, fk_schema, len5, fk_table,
+                                                    len6 );
+    }
+    if (handle->win32_funcs->SQLForeignKeysW)
+    {
+        if (!(pk_catalogW = strnAtoW( pk_catalog, len1 ))) return SQL_ERROR;
+        if (!(pk_schemaW = strnAtoW( pk_schema, len2 ))) goto done;
+        if (!(pk_tableW = strnAtoW( pk_table, len3 ))) goto done;
+        if (!(fk_catalogW = strnAtoW( fk_catalog, len4 ))) goto done;
+        if (!(fk_schemaW = strnAtoW( fk_schema, len5 ))) goto done;
+        if (!(fk_tableW = strnAtoW( fk_table, len6 ))) goto done;
+        ret = handle->win32_funcs->SQLForeignKeysW( handle->win32_handle, pk_catalogW, len1, pk_schemaW, len2,
+                                                    pk_tableW, len3, fk_catalogW, len4, fk_schemaW, len5, fk_tableW,
+                                                    len6 );
+    }
+done:
+    free( pk_catalogW );
+    free( pk_schemaW );
+    free( pk_tableW );
+    free( fk_catalogW );
+    free( fk_schemaW );
+    free( fk_tableW );
+    return ret;
+}
+
 /*************************************************************************
  *				SQLForeignKeys           [ODBC32.060]
  */
@@ -3242,16 +3289,15 @@ SQLRETURN WINAPI SQLForeignKeys(SQLHSTMT StatementHandle, SQLCHAR *PkCatalogName
 
     if (handle->unix_handle)
     {
-        struct SQLForeignKeys_params params = { handle->unix_handle, PkCatalogName, NameLength1, PkSchemaName,
-                                                NameLength2, PkTableName, NameLength3, FkCatalogName, NameLength4,
-                                                FkSchemaName, NameLength5, FkTableName, NameLength6 };
-        ret = ODBC_CALL( SQLForeignKeys, &params );
+        ret = foreign_keys_unix_a( handle, PkCatalogName, NameLength1, PkSchemaName, NameLength2, PkTableName,
+                                   NameLength3, FkCatalogName, NameLength4, FkSchemaName, NameLength5, FkTableName,
+                                   NameLength6 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLForeignKeys( handle->win32_handle, PkCatalogName, NameLength1, PkSchemaName,
-                                                   NameLength2, PkTableName, NameLength3, FkCatalogName, NameLength4,
-                                                   FkSchemaName, NameLength5, FkTableName, NameLength6 );
+        ret = foreign_keys_win32_a( handle, PkCatalogName, NameLength1, PkSchemaName, NameLength2, PkTableName,
+                                    NameLength3, FkCatalogName, NameLength4, FkSchemaName, NameLength5, FkTableName,
+                                    NameLength6 );
     }
 
     TRACE("Returning %d\n", ret);
@@ -5083,6 +5129,28 @@ done:
     return ret;
 }
 
+static SQLRETURN foreign_keys_unix_w( struct handle *handle, SQLWCHAR *pk_catalog, SQLSMALLINT len1,
+                                      SQLWCHAR *pk_schema, SQLSMALLINT len2, SQLWCHAR *pk_table, SQLSMALLINT len3,
+                                      SQLWCHAR *fk_catalog, SQLSMALLINT len4, SQLWCHAR *fk_schema, SQLSMALLINT len5,
+                                      SQLWCHAR *fk_table, SQLSMALLINT len6 )
+{
+    struct SQLForeignKeysW_params params = { handle->unix_handle, pk_catalog, len1, pk_schema, len2, pk_table, len3,
+                                             fk_catalog, len4, fk_schema, len5, fk_table, len6 };
+    return ODBC_CALL( SQLForeignKeysW, &params );
+}
+
+static SQLRETURN foreign_keys_win32_w( struct handle *handle, SQLWCHAR *pk_catalog, SQLSMALLINT len1,
+                                       SQLWCHAR *pk_schema, SQLSMALLINT len2, SQLWCHAR *pk_table, SQLSMALLINT len3,
+                                       SQLWCHAR *fk_catalog, SQLSMALLINT len4, SQLWCHAR *fk_schema, SQLSMALLINT len5,
+                                       SQLWCHAR *fk_table, SQLSMALLINT len6 )
+{
+    if (handle->win32_funcs->SQLForeignKeysW)
+        return handle->win32_funcs->SQLForeignKeysW( handle->win32_handle, pk_catalog, len1, pk_schema, len2, pk_table,
+                                                     len3, fk_catalog, len4, fk_schema, len5, fk_table, len6 );
+    if (handle->win32_funcs->SQLForeignKeys) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLForeignKeysW          [ODBC32.160]
  */
@@ -5107,16 +5175,15 @@ SQLRETURN WINAPI SQLForeignKeysW(SQLHSTMT StatementHandle, SQLWCHAR *PkCatalogNa
 
     if (handle->unix_handle)
     {
-        struct SQLForeignKeysW_params params = { handle->unix_handle, PkCatalogName, NameLength1, PkSchemaName,
-                                                 NameLength2, PkTableName, NameLength2, FkCatalogName, NameLength3,
-                                                 FkSchemaName, NameLength5, FkTableName, NameLength6 };
-        ret = ODBC_CALL( SQLForeignKeysW, &params );
+        ret = foreign_keys_unix_w( handle, PkCatalogName, NameLength1, PkSchemaName, NameLength2, PkTableName,
+                                   NameLength2, FkCatalogName, NameLength3, FkSchemaName, NameLength5, FkTableName,
+                                   NameLength6 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLForeignKeysW( handle->win32_handle, PkCatalogName, NameLength1, PkSchemaName,
-                                                    NameLength2, PkTableName, NameLength3, FkCatalogName, NameLength4,
-                                                    FkSchemaName, NameLength5, FkTableName, NameLength6 );
+        ret = foreign_keys_win32_w( handle, PkCatalogName, NameLength1, PkSchemaName, NameLength2, PkTableName,
+                                    NameLength3, FkCatalogName, NameLength4, FkSchemaName, NameLength5, FkTableName,
+                                    NameLength6 );
     }
 
     TRACE("Returning %d\n", ret);
