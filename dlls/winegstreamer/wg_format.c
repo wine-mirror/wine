@@ -920,7 +920,6 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
     if (!(caps = gst_caps_new_empty_simple("video/x-h264")))
         return NULL;
     gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "byte-stream", NULL);
-    gst_caps_set_simple(caps, "alignment", G_TYPE_STRING, "au", NULL);
 
     if (format->u.video.width)
         gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video.width, NULL);
