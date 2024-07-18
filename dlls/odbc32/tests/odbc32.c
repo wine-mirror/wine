@@ -137,6 +137,18 @@ static void test_SQLConnect( void )
     ok( timeout != 0xdeadbeef, "timeout not set\n" );
     ok( size == -1, "size set\n" );
 
+    ret = SQLTransact( NULL, NULL, SQL_COMMIT );
+    ok( ret == SQL_INVALID_HANDLE, "got %d\n", ret );
+
+    ret = SQLTransact( env, NULL, SQL_COMMIT );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLTransact( NULL, con, SQL_COMMIT );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLTransact( env, con, SQL_COMMIT );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
     ret = SQLDisconnect( con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
