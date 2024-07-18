@@ -136,7 +136,7 @@
 233 stub    SQLGetDescFieldA
 234 stub    SQLGetDescRecA
 235 stub    SQLGetDiagFieldA
-236 stdcall SQLGetDiagRecA(long long long ptr ptr ptr long ptr)
+236 stdcall SQLGetDiagRecA(long long long ptr ptr ptr long ptr) SQLGetDiagRec
 238 stub    SQLGetStmtAttrA
 239 stub    SQLSetConnectAttrA
 240 stub    SQLColumnsA
@@ -150,7 +150,7 @@
 254 stub    SQLTablesA
 255 stub    SQLBrowseConnectA
 256 stub    SQLColumnPrivilegesA
-257 stdcall SQLDataSourcesA(long long str long ptr ptr long ptr)
+257 stdcall SQLDataSourcesA(long long str long ptr ptr long ptr) SQLDataSources
 260 stub    SQLForeignKeysA
 262 stub    SQLNativeSqlA
 265 stub    SQLPrimaryKeysA

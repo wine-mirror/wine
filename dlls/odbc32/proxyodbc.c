@@ -1176,14 +1176,6 @@ done:
     return ret;
 }
 
-SQLRETURN WINAPI SQLDataSourcesA(SQLHENV EnvironmentHandle, SQLUSMALLINT Direction, SQLCHAR *ServerName,
-                                 SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1, SQLCHAR *Description,
-                                 SQLSMALLINT BufferLength2, SQLSMALLINT *NameLength2)
-{
-    return SQLDataSources( EnvironmentHandle, Direction, ServerName, BufferLength1, NameLength1, Description,
-                           BufferLength2, NameLength2 );
-}
-
 static SQLRETURN describe_col_unix_a( struct handle *handle, SQLUSMALLINT col_number, SQLCHAR *col_name,
                                       SQLSMALLINT buflen, SQLSMALLINT *retlen, SQLSMALLINT *data_type,
                                       SQLULEN *col_size, SQLSMALLINT *decimal_digits, SQLSMALLINT *nullable )
@@ -5478,17 +5470,6 @@ SQLRETURN WINAPI SQLSetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
 
     TRACE("Returning %d\n", ret);
     return ret;
-}
-
-/*************************************************************************
- *				SQLGetDiagRecA           [ODBC32.236]
- */
-SQLRETURN WINAPI SQLGetDiagRecA(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLINT RecNumber,
-                                SQLCHAR *SqlState, SQLINTEGER *NativeError, SQLCHAR *MessageText,
-                                SQLSMALLINT BufferLength, SQLSMALLINT *TextLength)
-{
-    return SQLGetDiagRec( HandleType, Handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
-                          TextLength );
 }
 
 /***********************************************************************
