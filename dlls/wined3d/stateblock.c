@@ -3332,7 +3332,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         texture = state->textures[i];
         wined3d_device_set_texture(device, i, texture);
 
-        if (!i && texture)
+        if (!i && texture && (texture->color_key_flags & WINED3D_CKEY_SRC_BLT))
         {
             wined3d_format_get_float_color_key(texture->resource.format, &texture->src_blt_color_key, float_key);
             wined3d_device_context_push_constants(context,

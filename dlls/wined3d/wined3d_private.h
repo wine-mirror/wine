@@ -3348,6 +3348,7 @@ struct wined3d_texture
 
     /* Color key field accessed from the client side. */
     struct wined3d_color_key src_blt_color_key;
+    uint32_t color_key_flags;
 
     struct wined3d_dirty_regions
     {
