@@ -6111,7 +6111,7 @@ static float color_to_float(DWORD color, DWORD size, DWORD offset)
 void wined3d_format_get_float_color_key(const struct wined3d_format *format,
         const struct wined3d_color_key *key, struct wined3d_color *float_colors)
 {
-    struct wined3d_color slop;
+    struct wined3d_color slop = {INFINITY, INFINITY, INFINITY, INFINITY};
 
     switch (format->id)
     {
@@ -6133,10 +6133,14 @@ void wined3d_format_get_float_color_key(const struct wined3d_format *format,
         case WINED3DFMT_R8G8B8X8_UNORM:
         case WINED3DFMT_R16G16_UNORM:
         case WINED3DFMT_B10G10R10A2_UNORM:
-            slop.r = 0.5f / wined3d_mask_from_size(format->red_size);
-            slop.g = 0.5f / wined3d_mask_from_size(format->green_size);
-            slop.b = 0.5f / wined3d_mask_from_size(format->blue_size);
-            slop.a = 0.5f / wined3d_mask_from_size(format->alpha_size);
+            if (format->red_size)
+                slop.r = 0.5f / wined3d_mask_from_size(format->red_size);
+            if (format->green_size)
+                slop.g = 0.5f / wined3d_mask_from_size(format->green_size);
+            if (format->blue_size)
+                slop.b = 0.5f / wined3d_mask_from_size(format->blue_size);
+            if (format->alpha_size)
+                slop.a = 0.5f / wined3d_mask_from_size(format->alpha_size);
 
             float_colors[0].r = color_to_float(key->color_space_low_value, format->red_size, format->red_offset)
                     - slop.r;
