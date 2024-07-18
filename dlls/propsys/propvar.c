@@ -1025,3 +1025,13 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
 
     return res;
 }
+
+HRESULT WINAPI PropVariantToVariant(const PROPVARIANT *propvar, VARIANT *var)
+{
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI VariantToPropVariant(const VARIANT *var, PROPVARIANT *propvar)
+{
+    return E_NOTIMPL;
+}
