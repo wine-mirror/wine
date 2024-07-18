@@ -842,9 +842,9 @@ static WCHAR *strdupAW( const char *src )
     return dst;
 }
 
-static HKEY open_odbcini_key( HKEY root )
+static HKEY open_sources_key( HKEY root )
 {
-    static const WCHAR sourcesW[] = L"Software\\ODBC\\ODBC.INI";
+    static const WCHAR sourcesW[] = L"Software\\ODBC\\ODBC.INI\\ODBC Data Sources";
     HKEY key;
     if (!RegCreateKeyExW( root, sourcesW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL )) return key;
     return NULL;
@@ -860,27 +860,43 @@ static WCHAR *get_reg_value( HKEY key, const WCHAR *name )
     return NULL;
 }
 
+static HKEY open_odbcinst_key( void )
+{
+    static const WCHAR odbcinstW[] = L"Software\\ODBC\\ODBCINST.INI";
+    HKEY key;
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, odbcinstW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL )) return key;
+    return NULL;
+}
+
 static WCHAR *get_driver_filename( const SQLWCHAR *source )
 {
-    HKEY key_root, key_source;
-    WCHAR *ret = NULL;
+    HKEY key_sources, key_odbcinst, key_driver;
+    WCHAR *driver_name, *ret;
 
-    if (!(key_root = open_odbcini_key( HKEY_CURRENT_USER ))) return NULL;
-    if (!RegOpenKeyExW( key_root, source, 0, KEY_READ, &key_source ))
+    if (!(key_sources = open_sources_key( HKEY_CURRENT_USER ))) return NULL;
+    if (!(driver_name = get_reg_value( key_sources, source )))
     {
-        ret = get_reg_value( key_source, L"Driver" );
-        RegCloseKey( key_source );
+        RegCloseKey( key_sources );
+        if (!(key_sources = open_sources_key( HKEY_LOCAL_MACHINE ))) return NULL;
+        if (!(driver_name = get_reg_value( key_sources, source )))
+        {
+            RegCloseKey( key_sources );
+            return NULL;
+        }
     }
-    RegCloseKey( key_root );
-    if (ret) return ret;
+    RegCloseKey( key_sources );
 
-    if (!(key_root = open_odbcini_key( HKEY_LOCAL_MACHINE ))) return NULL;
-    if (!RegOpenKeyExW( key_root, source, 0, KEY_READ, &key_source ))
+    if (!(key_odbcinst = open_odbcinst_key()) || RegOpenKeyExW( key_odbcinst, driver_name, 0, KEY_READ, &key_driver ))
     {
-        ret = get_reg_value( key_source, L"Driver" );
-        RegCloseKey( key_source );
+        RegCloseKey( key_odbcinst );
+        free( driver_name );
+        return NULL;
     }
-    RegCloseKey( key_root );
+
+    ret = get_reg_value( key_driver, L"Driver" );
+
+    RegCloseKey( key_driver );
+    RegCloseKey( key_odbcinst );
     return ret;
 }
 
@@ -1098,14 +1114,6 @@ SQLRETURN WINAPI SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandl
 
     TRACE("Returning %d\n", ret);
     return ret;
-}
-
-static HKEY open_sources_key( HKEY root )
-{
-    static const WCHAR sourcesW[] = L"Software\\ODBC\\ODBC.INI\\ODBC Data Sources";
-    HKEY key;
-    if (!RegCreateKeyExW( root, sourcesW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, NULL )) return key;
-    return NULL;
 }
 
 /*************************************************************************
