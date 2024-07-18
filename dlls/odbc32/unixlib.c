@@ -209,7 +209,7 @@ static void replicate_odbcinst_to_registry( SQLHENV env )
 
         if ((key_driver = create_key( key_odbcinst, desc, wcslen( desc ) * sizeof(WCHAR) )))
         {
-            static const WCHAR driverW[] = {'D','r','i','v','e','r',0}, driver_eqW[] = {'D','r','i','v','e','r','='};
+            static const WCHAR driverW[] = {'D','r','i','v','e','r'}, driver_eqW[] = {'D','r','i','v','e','r','='};
             const WCHAR *driver = NULL, *ptr = attrs;
 
             while (*ptr)
@@ -223,7 +223,7 @@ static void replicate_odbcinst_to_registry( SQLHENV env )
                 ptr += wcslen( ptr ) + 1;
             }
             if (driver) set_value( key_driver, driverW, sizeof(driverW), REG_SZ, (const BYTE *)driver,
-                                   wcslen(driver) * sizeof(WCHAR) );
+                                   (wcslen(driver) + 1) * sizeof(WCHAR) );
             NtClose( key_driver );
         }
     }
