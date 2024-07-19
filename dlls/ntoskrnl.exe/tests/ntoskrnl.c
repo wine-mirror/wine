@@ -59,9 +59,6 @@ static BOOL (WINAPI *pRtlFreeUnicodeString)(UNICODE_STRING *);
 static BOOL (WINAPI *pCancelIoEx)(HANDLE, OVERLAPPED *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
 static BOOL (WINAPI *pSetFileCompletionNotificationModes)(HANDLE, UCHAR);
-static HRESULT (WINAPI *pSignerSign)(SIGNER_SUBJECT_INFO *subject, SIGNER_CERT *cert,
-        SIGNER_SIGNATURE_INFO *signature, SIGNER_PROVIDER_INFO *provider,
-        const WCHAR *timestamp, CRYPT_ATTRIBUTES *attr, void *sip_data);
 
 static void load_resource(const WCHAR *name, WCHAR *filename)
 {
@@ -249,6 +246,10 @@ static void testsign_cleanup(struct testsign_context *ctx)
 
 static void testsign_sign(struct testsign_context *ctx, const WCHAR *filename)
 {
+    static HRESULT (WINAPI *pSignerSign)(SIGNER_SUBJECT_INFO *subject, SIGNER_CERT *cert,
+            SIGNER_SIGNATURE_INFO *signature, SIGNER_PROVIDER_INFO *provider,
+            const WCHAR *timestamp, CRYPT_ATTRIBUTES *attr, void *sip_data);
+
     SIGNER_ATTR_AUTHCODE authcode = {sizeof(authcode)};
     SIGNER_SIGNATURE_INFO signature = {sizeof(signature)};
     SIGNER_SUBJECT_INFO subject = {sizeof(subject)};
@@ -257,6 +258,9 @@ static void testsign_sign(struct testsign_context *ctx, const WCHAR *filename)
     SIGNER_FILE_INFO file = {sizeof(file)};
     DWORD index = 0;
     HRESULT hr;
+
+    if (!pSignerSign)
+        pSignerSign = (void *)GetProcAddress(LoadLibraryA("mssign32"), "SignerSign");
 
     subject.dwSubjectChoice = 1;
     subject.pdwIndex = &index;
@@ -1890,7 +1894,6 @@ START_TEST(ntoskrnl)
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
     pSetFileCompletionNotificationModes = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),
                                                                  "SetFileCompletionNotificationModes");
-    pSignerSign = (void *)GetProcAddress(LoadLibraryA("mssign32"), "SignerSign");
 
     if (IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64)
     {
