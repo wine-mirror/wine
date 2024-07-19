@@ -2632,9 +2632,9 @@ static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
             D3DX_SKIP_DDS_MIP_LEVELS(1, D3DX_DEFAULT), 0, &info, NULL, &cube_texture);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
-    check_texture_mip_levels(cube_texture, 1, TRUE);
-    check_image_info(&info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_CUBETEXTURE, D3DXIFF_DDS, TRUE);
-    check_cube_texture_level_desc(cube_texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 2, TRUE);
+    check_texture_mip_levels(cube_texture, 1, FALSE);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_CUBETEXTURE, D3DXIFF_DDS, FALSE);
+    check_cube_texture_level_desc(cube_texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 2, FALSE);
 
     for (i = 0; i < 6; ++i)
     {
@@ -2647,7 +2647,7 @@ static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
         {
             for (x = 0; x < desc.Width; ++x)
             {
-                check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, TRUE);
+                check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, FALSE);
             }
         }
         release_surface_readback(&surface_rb);

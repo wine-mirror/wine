@@ -202,7 +202,7 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
         set_d3dbox(&box, 0, 0, image_info.Width, image_info.Height, 0, image_info.Depth);
     }
 
-    hr = d3dx_image_get_pixels(&image, 0, &pixels);
+    hr = d3dx_image_get_pixels(&image, 0, 0, &pixels);
     if (FAILED(hr))
         goto exit;
 
