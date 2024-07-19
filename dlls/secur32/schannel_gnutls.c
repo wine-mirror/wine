@@ -904,6 +904,7 @@ static const WCHAR *get_hash_str( gnutls_session_t session, BOOL full )
     static const WCHAR sha384W[] = {'S','H','A','3','8','4',0};
     static const WCHAR sha512W[] = {'S','H','A','5','1','2',0};
     static const WCHAR unknownW[] = {'<','u','n','k','n','o','w','n','>',0};
+    static const WCHAR emptyW[] = {0};
     gnutls_mac_algorithm_t mac = pgnutls_mac_get( session );
 
     switch (mac)
@@ -913,6 +914,7 @@ static const WCHAR *get_hash_str( gnutls_session_t session, BOOL full )
     case GNUTLS_MAC_SHA256: return sha256W;
     case GNUTLS_MAC_SHA384: return sha384W;
     case GNUTLS_MAC_SHA512: return sha512W;
+    case GNUTLS_MAC_AEAD:   return emptyW;
     default:
         FIXME( "unknown mac %u\n", mac );
         return unknownW;
@@ -991,14 +993,16 @@ static const WCHAR *get_chaining_mode_str( gnutls_session_t session )
 
 static NTSTATUS schan_get_cipher_info( void *args )
 {
-    const WCHAR tlsW[] = {'T','L','S','_',0};
-    const WCHAR underscoreW[] = {'_',0};
-    const WCHAR widthW[] = {'_','W','I','T','H','_',0};
+    static const WCHAR tlsW[] = {'T','L','S','_',0};
+    static const WCHAR underscoreW[] = {'_',0};
+    static const WCHAR widthW[] = {'_','W','I','T','H','_',0};
+    static const WCHAR sha384W[] = {'S','H','A','3','8','4',0};
     const struct get_cipher_info_params *params = args;
     gnutls_session_t session = session_from_handle( params->session );
     SecPkgContext_CipherInfo *info = params->info;
     char buf[11];
     WCHAR *ptr;
+    const WCHAR *hash;
     int len;
 
     info->dwProtocol = get_protocol_version( session );
@@ -1028,7 +1032,9 @@ static NTSTATUS schan_get_cipher_info( void *args )
     wcscat( info->szCipherSuite, underscoreW );
     wcscat( info->szCipherSuite, get_chaining_mode_str( session ) );
     wcscat( info->szCipherSuite, underscoreW );
-    wcscat( info->szCipherSuite, get_hash_str( session, FALSE ) );
+    hash = get_hash_str( session, FALSE );
+    if (hash[0]) wcscat( info->szCipherSuite, hash );
+    else wcscat( info->szCipherSuite, sha384W ); /* FIXME */
     return SEC_E_OK;
 }
 
