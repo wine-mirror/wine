@@ -43,6 +43,7 @@ static GUID iface_guid2 = {0xdeadf00d, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95
 
 static BOOL (WINAPI *pSetupDiSetDevicePropertyW)(HDEVINFO, SP_DEVINFO_DATA *, const DEVPROPKEY *, DEVPROPTYPE, const BYTE *, DWORD, DWORD);
 static BOOL (WINAPI *pSetupDiGetDevicePropertyW)(HDEVINFO, SP_DEVINFO_DATA *, const DEVPROPKEY *, DEVPROPTYPE *, BYTE *, DWORD, DWORD *, DWORD);
+static BOOL (WINAPI *pSetupQueryInfOriginalFileInformationA)(SP_INF_INFORMATION *, UINT, SP_ALTPLATFORM_INFO *, SP_ORIGINAL_FILE_INFO_A *);
 
 static BOOL wow64;
 
@@ -2106,7 +2107,7 @@ static void test_device_interface_key(void)
     ok(ret == ERROR_FILE_NOT_FOUND, "key shouldn't exist\n");
 
     dikey = SetupDiCreateDeviceInterfaceRegKeyA(set, &iface, 0, KEY_ALL_ACCESS, NULL, NULL);
-    ok(dikey != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
+    ok(dikey != INVALID_HANDLE_VALUE, "Got error %#lx\n", GetLastError());
 
     ret = RegOpenKeyA(parent, "#\\Device Parameters", &key);
     ok(!ret, "key should exist: %lu\n", ret);
@@ -2122,7 +2123,7 @@ static void test_device_interface_key(void)
     RegCloseKey(key);
 
     ret = SetupDiDeleteDeviceInterfaceRegKey(set, &iface, 0);
-    ok(ret, "got error %lu\n", GetLastError());
+    ok(ret, "Got error %#lx\n", GetLastError());
 
     ret = RegOpenKeyA(parent, "#\\Device Parameters", &key);
     ok(ret == ERROR_FILE_NOT_FOUND, "key shouldn't exist\n");
@@ -3407,12 +3408,293 @@ todo_wine {
     SetupDiDestroyDeviceInfoList(set);
 }
 
+static BOOL file_exists(const char *path)
+{
+    return GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
+}
+
+static BOOL is_in_inf_dir(const char *path)
+{
+    char expect[MAX_PATH];
+
+    GetWindowsDirectoryA(expect, sizeof(expect));
+    strcat(expect, "\\inf\\");
+    return !strncasecmp(path, expect, strrchr(path, '\\') - path);
+}
+
+static void test_original_file_name(const char *original, const char *dest)
+{
+    SP_ORIGINAL_FILE_INFO_A orig_info;
+    SP_INF_INFORMATION *inf_info;
+    DWORD size;
+    HINF hinf;
+    BOOL res;
+
+    if (!pSetupQueryInfOriginalFileInformationA)
+    {
+        win_skip("SetupQueryInfOriginalFileInformationA is not available\n");
+        return;
+    }
+
+    hinf = SetupOpenInfFileA(dest, NULL, INF_STYLE_WIN4, NULL);
+    ok(hinf != NULL, "Failed to open INF file, error %lu.\n", GetLastError());
+
+    res = SetupGetInfInformationA(hinf, INFINFO_INF_SPEC_IS_HINF, NULL, 0, &size);
+    ok(res, "Failed to get INF information, error %lu.\n", GetLastError());
+
+    inf_info = malloc(size);
+
+    res = SetupGetInfInformationA(hinf, INFINFO_INF_SPEC_IS_HINF, inf_info, size, NULL);
+    ok(res, "Failed to get INF information, error %lu.\n", GetLastError());
+
+    orig_info.cbSize = 0;
+    SetLastError(0xdeadbeef);
+    res = pSetupQueryInfOriginalFileInformationA(inf_info, 0, NULL, &orig_info);
+    ok(!res, "Got %d.\n", res);
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "Got error %#lx.\n", GetLastError());
+
+    orig_info.cbSize = sizeof(orig_info);
+    SetLastError(0xdeadbeef);
+    res = pSetupQueryInfOriginalFileInformationA(inf_info, 0, NULL, &orig_info);
+    ok(res == TRUE, "Got %d.\n", res);
+    todo_wine ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(!orig_info.OriginalCatalogName[0], "Got original catalog name %s.\n",
+            debugstr_a(orig_info.OriginalCatalogName));
+    ok(!strcmp(original, orig_info.OriginalInfName), "Expected orignal inf name %s, got %s.\n",
+            debugstr_a(original), debugstr_a(orig_info.OriginalInfName));
+
+    free(inf_info);
+
+    SetupCloseInfFile(hinf);
+}
+
+static void test_copy_oem_inf(void)
+{
+    char path[MAX_PATH * 2], dest[MAX_PATH], tmpfile[MAX_PATH], orig_dest[MAX_PATH];
+    char *filepart, pnf[MAX_PATH];
+    DWORD size;
+    BOOL ret;
+
+    static const char inf_data1[] =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "; This is a WINE test INF file\n";
+
+    static const char inf_data2[] =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "; This is another WINE test INF file\n";
+
+    /* try NULL SourceInfFileName */
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(NULL, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got error %#lx.\n", GetLastError());
+
+    /* try empty SourceInfFileName */
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA("", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND
+            || GetLastError() == ERROR_INVALID_PARAMETER /* vista, 2k8 */, "Got error %#lx.\n", GetLastError());
+
+    /* try a relative nonexistent SourceInfFileName */
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA("nonexistent", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+
+    /* try an absolute nonexistent SourceInfFileName */
+    GetCurrentDirectoryA(sizeof(path), path);
+    strcat(path, "\\nonexistent");
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+
+    get_temp_filename(tmpfile);
+    create_file(tmpfile, inf_data1);
+
+    /* try a relative SourceInfFileName */
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    if (GetLastError() == ERROR_WRONG_INF_TYPE || GetLastError() == ERROR_UNSUPPORTED_TYPE /* Win7 */)
+    {
+        /* FIXME:
+         * Vista needs a [Manufacturer] entry in the inf file. Doing this will give some
+         * popups during the installation though as it also needs a catalog file (signed?).
+         */
+        win_skip("Needs a different inf file on Vista+.\n");
+        ret = DeleteFileA(tmpfile);
+        ok(ret, "Failed to delete %s, error %#lx.\n", debugstr_a(tmpfile), GetLastError());
+        return;
+    }
+
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+    ok(file_exists(tmpfile), "Expected source inf to exist.\n");
+
+    /* try SP_COPY_REPLACEONLY, dest does not exist */
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+    ok(file_exists(tmpfile), "Expected source inf to exist.\n");
+
+    /* Test a successful call. */
+    GetCurrentDirectoryA(sizeof(path), path);
+    strcat(path, "\\");
+    strcat(path, tmpfile);
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough permissions to copy INF.\n");
+        DeleteFileA(tmpfile);
+        return;
+    }
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(file_exists(path), "Expected source inf to exist.\n");
+    ok(file_exists(dest), "Expected dest file to exist.\n");
+    ok(is_in_inf_dir(dest), "Got unexpected path '%s'.\n", dest);
+    strcpy(orig_dest, dest);
+
+    /* Existing INF files are checked for a match. */
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(file_exists(path), "Expected source inf to exist.\n");
+    ok(file_exists(dest), "Expected dest file to exist.\n");
+    ok(!strcmp(orig_dest, dest), "Expected '%s', got '%s'.\n", orig_dest, dest);
+
+    /* try SP_COPY_REPLACEONLY, dest exists */
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, dest, sizeof(dest), NULL, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(file_exists(path), "Expected source inf to exist.\n");
+    ok(file_exists(dest), "Expected dest file to exist.\n");
+    ok(!strcmp(orig_dest, dest), "Expected '%s', got '%s'.\n", orig_dest, dest);
+
+    strcpy(dest, "aaa");
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_NOOVERWRITE, dest, sizeof(dest), NULL, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_FILE_EXISTS, "Got error %#lx.\n", GetLastError());
+    ok(!strcmp(orig_dest, dest), "Expected '%s', got '%s'.\n", orig_dest, dest);
+
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, NULL, 0, NULL, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(file_exists(path), "Expected source inf to exist.\n");
+    ok(file_exists(orig_dest), "Expected dest file to exist.\n");
+
+    strcpy(dest, "aaa");
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, 5, &size, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got error %#lx.\n", GetLastError());
+    ok(file_exists(path), "Expected source inf to exist.\n");
+    ok(file_exists(orig_dest), "Expected dest inf to exist.\n");
+    ok(!strcmp(dest, "aaa"), "Expected dest to be unchanged\n");
+    ok(size == strlen(orig_dest) + 1, "Got %ld.\n", size);
+
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), &size, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(!strcmp(orig_dest, dest), "Expected '%s', got '%s'.\n", orig_dest, dest);
+    ok(size == strlen(dest) + 1, "Got %ld.\n", size);
+
+    test_original_file_name(strrchr(path, '\\') + 1, dest);
+
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, &filepart);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(!strcmp(orig_dest, dest), "Expected '%s', got '%s'.\n", orig_dest, dest);
+    ok(filepart == strrchr(dest, '\\') + 1, "Got unexpected file part %s.\n", filepart);
+
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_DELETESOURCE, NULL, 0, NULL, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(!file_exists(path), "Expected source inf not to exist.\n");
+
+    strcpy(pnf, dest);
+    *(strrchr(pnf, '.') + 1) = 'p';
+
+    ret = SetupUninstallOEMInfA(strrchr(dest, '\\') + 1, 0, NULL);
+    ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
+    todo_wine ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
+    DeleteFileA(dest);
+    ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
+
+    create_file(tmpfile, inf_data1);
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(is_in_inf_dir(dest), "Got unexpected path '%s'.\n", dest);
+    strcpy(orig_dest, dest);
+
+    create_file(tmpfile, inf_data2);
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(is_in_inf_dir(dest), "Got unexpected path '%s'.\n", dest);
+    ok(strcmp(dest, orig_dest), "Expected INF files to be copied to different paths.\n");
+
+    ret = SetupUninstallOEMInfA(strrchr(dest, '\\') + 1, 0, NULL);
+    ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
+    todo_wine ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
+    DeleteFileA(dest);
+    strcpy(pnf, dest);
+    *(strrchr(pnf, '.') + 1) = 'p';
+    todo_wine ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
+
+    ret = SetupUninstallOEMInfA(strrchr(orig_dest, '\\') + 1, 0, NULL);
+    ok(ret, "Failed to uninstall '%s', error %#lx.\n", orig_dest, GetLastError());
+    todo_wine ok(!file_exists(orig_dest), "Expected inf '%s' not to exist.\n", dest);
+    DeleteFileA(orig_dest);
+    strcpy(pnf, dest);
+    *(strrchr(pnf, '.') + 1) = 'p';
+    todo_wine ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
+
+    GetWindowsDirectoryA(orig_dest, sizeof(orig_dest));
+    strcat(orig_dest, "\\inf\\");
+    strcat(orig_dest, tmpfile);
+    ret = CopyFileA(tmpfile, orig_dest, TRUE);
+    ok(ret, "Failed to copy file, error %#lx.\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(!strcasecmp(dest, orig_dest), "Expected '%s', got '%s'.\n", orig_dest, dest);
+
+    /* Since it wasn't actually installed, SetupUninstallOEMInf would fail here. */
+    ret = DeleteFileA(dest);
+    ok(ret, "Failed to delete '%s', error %#lx.\n", tmpfile, GetLastError());
+
+    ret = DeleteFileA(tmpfile);
+    ok(ret, "Failed to delete '%s', error %#lx.\n", tmpfile, GetLastError());
+}
+
 START_TEST(devinst)
 {
     static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
+    HMODULE module = GetModuleHandleA("setupapi.dll");
     HKEY hkey;
 
+    pSetupQueryInfOriginalFileInformationA = (void *)GetProcAddress(module, "SetupQueryInfOriginalFileInformationA");
+
     test_get_actual_section();
+    test_copy_oem_inf();
 
     if ((hkey = SetupDiOpenClassRegKey(NULL, KEY_ALL_ACCESS)) == INVALID_HANDLE_VALUE)
     {
