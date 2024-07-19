@@ -1727,6 +1727,46 @@ SQLRETURN WINAPI SQLFreeStmt(SQLHSTMT StatementHandle, SQLUSMALLINT Option)
     return ret;
 }
 
+static SQLRETURN get_connect_attr_unix_a( struct handle *handle, SQLINTEGER attr, SQLPOINTER value,
+                                          SQLINTEGER buflen, SQLINTEGER *retlen )
+{
+    struct SQLGetConnectAttr_params params = { handle->unix_handle, attr, value, buflen, retlen };
+    return ODBC_CALL( SQLGetConnectAttr, &params );
+}
+
+static SQLRETURN get_connect_attr_win32_a( struct handle *handle, SQLINTEGER attr, SQLPOINTER value,
+                                           SQLINTEGER buflen, SQLINTEGER *retlen )
+{
+    SQLRETURN ret = SQL_ERROR;
+    SQLPOINTER val = value;
+    SQLWCHAR *strW = NULL;
+
+    if (handle->win32_funcs->SQLGetConnectAttr)
+        return handle->win32_funcs->SQLGetConnectAttr( handle->win32_handle, attr, value, buflen, retlen );
+
+    if (handle->win32_funcs->SQLGetConnectAttrW)
+    {
+        switch (attr)
+        {
+        case SQL_ATTR_CURRENT_CATALOG:
+        case SQL_ATTR_TRACEFILE:
+        case SQL_ATTR_TRANSLATE_LIB:
+            if (!(val = strW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+        default:
+            break;
+        }
+
+        ret = handle->win32_funcs->SQLGetConnectAttrW( handle->win32_handle, attr, val, buflen, retlen );
+        if (SUCCESS( ret ) && strW)
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, (char *)value, buflen, NULL, NULL );
+            if (retlen) *retlen = len - 1;
+        }
+        free( strW );
+    }
+    return ret;
+}
+
 /*************************************************************************
  *				SQLGetConnectAttr           [ODBC32.032]
  */
@@ -1743,14 +1783,11 @@ SQLRETURN WINAPI SQLGetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
 
     if (handle->unix_handle)
     {
-        struct SQLGetConnectAttr_params params = { handle->unix_handle, Attribute, Value, BufferLength,
-                                                   StringLength };
-        ret = ODBC_CALL( SQLGetConnectAttr, &params );
+        ret = get_connect_attr_unix_a( handle, Attribute, Value, BufferLength, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetConnectAttr( handle->win32_handle, Attribute, Value, BufferLength,
-                                                      StringLength );
+        ret = get_connect_attr_win32_a( handle, Attribute, Value, BufferLength, StringLength );
     }
     else
     {
@@ -4294,6 +4331,22 @@ SQLRETURN WINAPI SQLColAttributeW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnN
     return ret;
 }
 
+static SQLRETURN get_connect_attr_unix_w( struct handle *handle, SQLINTEGER attr, SQLPOINTER value,
+                                          SQLINTEGER buflen, SQLINTEGER *retlen )
+{
+    struct SQLGetConnectAttrW_params params = { handle->unix_handle, attr, value, buflen, retlen };
+    return ODBC_CALL( SQLGetConnectAttrW, &params );
+}
+
+static SQLRETURN get_connect_attr_win32_w( struct handle *handle, SQLINTEGER attr, SQLPOINTER value,
+                                           SQLINTEGER buflen, SQLINTEGER *retlen )
+{
+    if (handle->win32_funcs->SQLGetConnectAttrW)
+        return handle->win32_funcs->SQLGetConnectAttrW( handle->win32_handle, attr, value, buflen, retlen );
+    if (handle->win32_funcs->SQLGetConnectAttr) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetConnectAttrW          [ODBC32.132]
  */
@@ -4310,14 +4363,11 @@ SQLRETURN WINAPI SQLGetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
 
     if (handle->unix_handle)
     {
-        struct SQLGetConnectAttrW_params params = { handle->unix_handle, Attribute, Value, BufferLength,
-                                                    StringLength };
-        ret = ODBC_CALL( SQLGetConnectAttrW, &params );
+        return get_connect_attr_unix_w( handle, Attribute, Value, BufferLength, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetConnectAttrW( handle->win32_handle, Attribute, Value, BufferLength,
-                                                       StringLength );
+        ret = get_connect_attr_win32_w( handle, Attribute, Value, BufferLength, StringLength );
     }
     else
     {
