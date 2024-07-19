@@ -2485,35 +2485,33 @@ static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
      */
     hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map_4_2, sizeof(dds_cube_map_4_2), D3DX_DEFAULT, 1,
             D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_FILTER_NONE, D3DX_DEFAULT, 0, &info, NULL, &cube_texture);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_texture_mip_levels(cube_texture, 1, FALSE);
+    check_image_info(&info, 4, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_CUBETEXTURE, D3DXIFF_DDS, FALSE);
+    check_cube_texture_level_desc(cube_texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 4, FALSE);
+
+    IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 0, &desc);
+    for (i = 0; i < 6; ++i)
     {
-        check_texture_mip_levels(cube_texture, 1, FALSE);
-        check_image_info(&info, 4, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_CUBETEXTURE, D3DXIFF_DDS, FALSE);
-        check_cube_texture_level_desc(cube_texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 4, FALSE);
+        const uint32_t expected_color = dds_cube_map_non_square_expected[i];
 
-        IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 0, &desc);
-        for (i = 0; i < 6; ++i)
+        winetest_push_context("Face %u", i);
+        get_cube_texture_surface_readback(device, cube_texture, i, 0, &surface_rb);
+        for (y = 0; y < desc.Height; ++y)
         {
-            const uint32_t expected_color = dds_cube_map_non_square_expected[i];
-
-            winetest_push_context("Face %u", i);
-            get_cube_texture_surface_readback(device, cube_texture, i, 0, &surface_rb);
-            for (y = 0; y < desc.Height; ++y)
+            for (x = 0; x < desc.Width; ++x)
             {
-                for (x = 0; x < desc.Width; ++x)
-                {
-                    if (y < info.Height)
-                        check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, FALSE);
-                    else
-                        check_readback_pixel_4bpp(&surface_rb, x, y, 0xff000000, FALSE);
-                }
+                if (y < info.Height)
+                    check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, FALSE);
+                else
+                    check_readback_pixel_4bpp(&surface_rb, x, y, 0xff000000, FALSE);
             }
-            release_surface_readback(&surface_rb);
-            winetest_pop_context();
         }
-        IDirect3DCubeTexture9_Release(cube_texture);
+        release_surface_readback(&surface_rb);
+        winetest_pop_context();
     }
+    IDirect3DCubeTexture9_Release(cube_texture);
 
     /*
      * Load the same cubemap, but this time with a point filter. Source image
@@ -2521,67 +2519,63 @@ static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
      */
     hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map_4_2, sizeof(dds_cube_map_4_2), D3DX_DEFAULT, 1,
             D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_FILTER_POINT, D3DX_DEFAULT, 0, &info, NULL, &cube_texture);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_texture_mip_levels(cube_texture, 1, FALSE);
+    check_image_info(&info, 4, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_CUBETEXTURE, D3DXIFF_DDS, FALSE);
+    check_cube_texture_level_desc(cube_texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 4, FALSE);
+
+    IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 0, &desc);
+    for (i = 0; i < 6; ++i)
     {
-        check_texture_mip_levels(cube_texture, 1, FALSE);
-        check_image_info(&info, 4, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_CUBETEXTURE, D3DXIFF_DDS, FALSE);
-        check_cube_texture_level_desc(cube_texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 4, FALSE);
+        const uint32_t expected_color = dds_cube_map_non_square_expected[i];
 
-        IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 0, &desc);
-        for (i = 0; i < 6; ++i)
+        winetest_push_context("Face %u", i);
+        get_cube_texture_surface_readback(device, cube_texture, i, 0, &surface_rb);
+        for (y = 0; y < desc.Height; ++y)
         {
-            const uint32_t expected_color = dds_cube_map_non_square_expected[i];
-
-            winetest_push_context("Face %u", i);
-            get_cube_texture_surface_readback(device, cube_texture, i, 0, &surface_rb);
-            for (y = 0; y < desc.Height; ++y)
+            for (x = 0; x < desc.Width; ++x)
             {
-                for (x = 0; x < desc.Width; ++x)
-                {
-                    check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, FALSE);
-                }
+                check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, FALSE);
             }
-            release_surface_readback(&surface_rb);
-            winetest_pop_context();
         }
-        IDirect3DCubeTexture9_Release(cube_texture);
+        release_surface_readback(&surface_rb);
+        winetest_pop_context();
     }
+    IDirect3DCubeTexture9_Release(cube_texture);
 
     /*
      * Cubemap file with a width of 2 and a height of 4.
      */
     hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map_2_4, sizeof(dds_cube_map_2_4), D3DX_DEFAULT, 1,
             D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_FILTER_NONE, D3DX_DEFAULT, 0, &info, NULL, &cube_texture);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_texture_mip_levels(cube_texture, 1, FALSE);
+    check_image_info(&info, 2, 4, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_CUBETEXTURE, D3DXIFF_DDS, FALSE);
+    check_cube_texture_level_desc(cube_texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 4, FALSE);
+
+    IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 0, &desc);
+    for (i = 0; i < 6; ++i)
     {
-        check_texture_mip_levels(cube_texture, 1, FALSE);
-        check_image_info(&info, 2, 4, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_CUBETEXTURE, D3DXIFF_DDS, FALSE);
-        check_cube_texture_level_desc(cube_texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 4, FALSE);
+        const uint32_t expected_color = dds_cube_map_non_square_expected[i];
 
-        IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 0, &desc);
-        for (i = 0; i < 6; ++i)
+        winetest_push_context("Face %u", i);
+        get_cube_texture_surface_readback(device, cube_texture, i, 0, &surface_rb);
+        for (y = 0; y < desc.Height; ++y)
         {
-            const uint32_t expected_color = dds_cube_map_non_square_expected[i];
-
-            winetest_push_context("Face %u", i);
-            get_cube_texture_surface_readback(device, cube_texture, i, 0, &surface_rb);
-            for (y = 0; y < desc.Height; ++y)
+            for (x = 0; x < desc.Width; ++x)
             {
-                for (x = 0; x < desc.Width; ++x)
-                {
-                    if (x < info.Width)
-                        check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, FALSE);
-                    else
-                        check_readback_pixel_4bpp(&surface_rb, x, y, 0xff000000, FALSE);
-                }
+                if (x < info.Width)
+                    check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, FALSE);
+                else
+                    check_readback_pixel_4bpp(&surface_rb, x, y, 0xff000000, FALSE);
             }
-            release_surface_readback(&surface_rb);
-            winetest_pop_context();
         }
-        IDirect3DCubeTexture9_Release(cube_texture);
+        release_surface_readback(&surface_rb);
+        winetest_pop_context();
     }
+    IDirect3DCubeTexture9_Release(cube_texture);
 
     /* Multi-mip cubemap DDS file. */
     hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map_4_4, sizeof(dds_cube_map_4_4), D3DX_DEFAULT, D3DX_FROM_FILE,

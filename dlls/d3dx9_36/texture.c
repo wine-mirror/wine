@@ -1413,15 +1413,11 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
         goto err;
     }
 
-    if (img_info.Width != img_info.Height)
-    {
-        hr = D3DXERR_INVALIDDATA;
-        goto err;
-    }
-
     /* Handle default values. */
-    if (!size || size == D3DX_DEFAULT_NONPOW2 || size == D3DX_FROM_FILE || size == D3DX_DEFAULT)
-        size = (size == D3DX_DEFAULT) ? make_pow2(img_info.Width) : img_info.Width;
+    if (!size || size == D3DX_DEFAULT_NONPOW2 || size == D3DX_FROM_FILE)
+        size = max(img_info.Width, img_info.Height);
+    else if (size == D3DX_DEFAULT)
+        size = make_pow2(max(img_info.Width, img_info.Height));
 
     format_specified = (format != D3DFMT_UNKNOWN && format != D3DX_DEFAULT);
     if (format == D3DFMT_FROM_FILE || format == D3DFMT_UNKNOWN || format == D3DX_DEFAULT)
