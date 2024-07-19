@@ -1014,7 +1014,7 @@ static void test_communication(void)
 
     /* Create client credentials */
     init_cred(&cred);
-    cred.grbitEnabledProtocols = SP_PROT_TLS1_CLIENT;
+    cred.grbitEnabledProtocols = SP_PROT_TLS1_2_CLIENT;
     cred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS|SCH_CRED_MANUAL_CRED_VALIDATION;
 
     status = AcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME_A, SECPKG_CRED_OUTBOUND, NULL,
@@ -1265,7 +1265,7 @@ static void test_communication(void)
     ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_CONNECTION_INFO) failed: %08lx\n", status);
     if(status == SEC_E_OK) {
         ok(conn_info.dwCipherStrength >= 128, "conn_info.dwCipherStrength = %ld\n", conn_info.dwCipherStrength);
-        ok(conn_info.dwHashStrength >= 128, "conn_info.dwHashStrength = %ld\n", conn_info.dwHashStrength);
+        ok(!conn_info.dwHashStrength, "conn_info.dwHashStrength = %ld\n", conn_info.dwHashStrength);
     }
 
     memset(&cipher, 0, sizeof(cipher));
@@ -1274,17 +1274,16 @@ static void test_communication(void)
     ok(status == SEC_E_OK, "got %08lx\n", status);
     if (status == SEC_E_OK)
     {
-        ok(cipher.dwProtocol == 0x301, "got %lx\n", cipher.dwProtocol);
-        todo_wine ok(cipher.dwCipherSuite == 0xc014, "got %lx\n", cipher.dwCipherSuite);
-        todo_wine ok(cipher.dwBaseCipherSuite == 0xc014, "got %lx\n", cipher.dwBaseCipherSuite);
-        ok(!wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA") ||
-           !wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA_P256"), /* < win10 */
+        ok(cipher.dwProtocol == 0x303, "got %lx\n", cipher.dwProtocol);
+        todo_wine ok(cipher.dwCipherSuite == 0xc030, "got %lx\n", cipher.dwCipherSuite);
+        todo_wine ok(cipher.dwBaseCipherSuite == 0xc030, "got %lx\n", cipher.dwBaseCipherSuite);
+        ok(!wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"),
            "got %s\n", wine_dbgstr_w(cipher.szCipherSuite));
         ok(!wcscmp(cipher.szCipher, L"AES"), "got %s\n", wine_dbgstr_w(cipher.szCipher));
         ok(cipher.dwCipherLen == 256, "got %lu\n", cipher.dwCipherLen);
         ok(cipher.dwCipherBlockLen == 16, "got %lu\n", cipher.dwCipherBlockLen);
-        ok(!wcscmp(cipher.szHash, L"SHA1"), "got %s\n", wine_dbgstr_w(cipher.szHash));
-        ok(cipher.dwHashLen == 160, "got %lu\n", cipher.dwHashLen);
+        ok(!cipher.szHash[0], "got %s\n", wine_dbgstr_w(cipher.szHash));
+        ok(!cipher.dwHashLen, "got %lu\n", cipher.dwHashLen);
         ok(!wcscmp(cipher.szExchange, L"ECDH") || !wcscmp(cipher.szExchange, L"ECDH_P256"), /* < win10 */
            "got %s\n", wine_dbgstr_w(cipher.szExchange));
         ok(cipher.dwMinExchangeLen == 0 || cipher.dwMinExchangeLen == 256,  /* < win10 */
@@ -1381,11 +1380,11 @@ static void test_communication(void)
     status = DecryptMessage(&context, &buffers[0], 0, NULL);
     ok(status == SEC_I_RENEGOTIATE, "Expected SEC_I_RENEGOTIATE, got %08lx\n", status);
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_STREAM_HEADER, "got %lu\n", buffers[0].pBuffers[0].BufferType);
-    ok(buffers[0].pBuffers[0].cbBuffer == 5, "got %lu\n", buffers[0].pBuffers[0].cbBuffer);
+    todo_wine ok(buffers[0].pBuffers[0].cbBuffer == 13, "got %lu\n", buffers[0].pBuffers[0].cbBuffer);
     ok(buffers[0].pBuffers[1].BufferType == SECBUFFER_DATA, "got %lu\n", buffers[0].pBuffers[1].BufferType);
     ok(buffers[0].pBuffers[1].cbBuffer == 0, "got %lu\n", buffers[0].pBuffers[1].cbBuffer);
     ok(buffers[0].pBuffers[2].BufferType == SECBUFFER_STREAM_TRAILER, "got %lu\n", buffers[0].pBuffers[2].BufferType);
-    todo_wine ok(buffers[0].pBuffers[2].cbBuffer == 32, "got %lu\n", buffers[0].pBuffers[2].cbBuffer);
+    todo_wine ok(buffers[0].pBuffers[2].cbBuffer == 20, "got %lu\n", buffers[0].pBuffers[2].cbBuffer);
 
     pfx.pbData = (BYTE *)pfxdata;
     pfx.cbData = sizeof(pfxdata);
@@ -1454,7 +1453,7 @@ static void test_communication(void)
             ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, &context2, &buffers[0], &attrs, NULL);
         buffers[1].pBuffers[0].cbBuffer = buf_size;
     }
-    ok (status == SEC_E_CERT_EXPIRED, "got %08lx\n", status);
+    ok (status == SEC_E_ALGORITHM_MISMATCH, "got %08lx\n", status);
 
 done:
     DeleteSecurityContext(&context);
@@ -1494,7 +1493,7 @@ static void test_application_protocol_negotiation(void)
     if ((sock = create_ssl_socket( "test.winehq.org" )) == -1) return;
 
     init_cred(&cred);
-    cred.grbitEnabledProtocols = SP_PROT_TLS1_CLIENT;
+    cred.grbitEnabledProtocols = SP_PROT_TLS1_2_CLIENT;
     cred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS|SCH_CRED_MANUAL_CRED_VALIDATION;
 
     status = AcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME_A, SECPKG_CRED_OUTBOUND, NULL,
