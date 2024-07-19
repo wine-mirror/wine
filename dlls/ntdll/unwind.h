@@ -57,6 +57,7 @@ static inline UINT eflags_to_cpsr( UINT eflags )
     if (eflags & 0x0001) ret |= 0x20000000;  /* carry */
     if (eflags & 0x0040) ret |= 0x40000000;  /* zero */
     if (eflags & 0x0080) ret |= 0x80000000;  /* negative */
+    if (eflags & 0x0100) ret |= 0x00200000;  /* trap */
     if (eflags & 0x0800) ret |= 0x10000000;  /* overflow */
     return ret;
 }
@@ -65,6 +66,7 @@ static inline UINT cpsr_to_eflags( UINT cpsr )
 {
     UINT ret = 0x202;
 
+    if (cpsr & 0x00200000) ret |= 0x0100;  /* trap */
     if (cpsr & 0x10000000) ret |= 0x0800;  /* overflow */
     if (cpsr & 0x20000000) ret |= 0x0001;  /* carry */
     if (cpsr & 0x40000000) ret |= 0x0040;  /* zero */
