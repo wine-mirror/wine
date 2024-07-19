@@ -3470,8 +3470,8 @@ static void test_original_file_name(const char *original, const char *dest)
 
 static void test_copy_oem_inf(void)
 {
-    char path[MAX_PATH * 2], dest[MAX_PATH], tmpfile[MAX_PATH], orig_dest[MAX_PATH];
-    char *filepart, pnf[MAX_PATH];
+    char path[MAX_PATH * 2], dest[MAX_PATH], orig_dest[MAX_PATH];
+    char orig_cwd[MAX_PATH], *cwd, *filepart, pnf[MAX_PATH];
     DWORD size;
     BOOL ret;
 
@@ -3484,6 +3484,13 @@ static void test_copy_oem_inf(void)
         "[Version]\n"
         "Signature=\"$Chicago$\"\n"
         "; This is another WINE test INF file\n";
+
+    GetCurrentDirectoryA(sizeof(orig_cwd), orig_cwd);
+    cwd = tempnam(NULL, "wine");
+    ret = CreateDirectoryA(cwd, NULL);
+    ok(ret, "Failed to create %s, error %#lx.\n", debugstr_a(cwd), GetLastError());
+    ret = SetCurrentDirectoryA(cwd);
+    ok(ret, "Failed to cd to %s, error %#lx.\n", debugstr_a(cwd), GetLastError());
 
     /* try NULL SourceInfFileName */
     SetLastError(0xdeadbeef);
@@ -3512,12 +3519,11 @@ static void test_copy_oem_inf(void)
     ok(!ret, "Got %d.\n", ret);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
 
-    get_temp_filename(tmpfile);
-    create_file(tmpfile, inf_data1);
+    create_file("winetest.inf", inf_data1);
 
     /* try a relative SourceInfFileName */
     SetLastError(0xdeadbeef);
-    ret = SetupCopyOEMInfA(tmpfile, NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
+    ret = SetupCopyOEMInfA("winetest.inf", NULL, 0, SP_COPY_NOOVERWRITE, NULL, 0, NULL, NULL);
     ok(!ret, "Got %d.\n", ret);
     if (GetLastError() == ERROR_WRONG_INF_TYPE || GetLastError() == ERROR_UNSUPPORTED_TYPE /* Win7 */)
     {
@@ -3526,32 +3532,28 @@ static void test_copy_oem_inf(void)
          * popups during the installation though as it also needs a catalog file (signed?).
          */
         win_skip("Needs a different inf file on Vista+.\n");
-        ret = DeleteFileA(tmpfile);
-        ok(ret, "Failed to delete %s, error %#lx.\n", debugstr_a(tmpfile), GetLastError());
-        return;
+        goto out;
     }
 
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
-    ok(file_exists(tmpfile), "Expected source inf to exist.\n");
+    ok(file_exists("winetest.inf"), "Expected source inf to exist.\n");
 
     /* try SP_COPY_REPLACEONLY, dest does not exist */
     SetLastError(0xdeadbeef);
     ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
     ok(!ret, "Got %d.\n", ret);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
-    ok(file_exists(tmpfile), "Expected source inf to exist.\n");
+    ok(file_exists("winetest.inf"), "Expected source inf to exist.\n");
 
     /* Test a successful call. */
     GetCurrentDirectoryA(sizeof(path), path);
-    strcat(path, "\\");
-    strcat(path, tmpfile);
+    strcat(path, "\\winetest.inf");
     SetLastError(0xdeadbeef);
     ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
     if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
     {
         skip("Not enough permissions to copy INF.\n");
-        DeleteFileA(tmpfile);
-        return;
+        goto out;
     }
     ok(ret == TRUE, "Got %d.\n", ret);
     ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
@@ -3634,7 +3636,7 @@ static void test_copy_oem_inf(void)
     DeleteFileA(dest);
     ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
 
-    create_file(tmpfile, inf_data1);
+    create_file("winetest.inf", inf_data1);
     SetLastError(0xdeadbeef);
     ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
     ok(ret == TRUE, "Got %d.\n", ret);
@@ -3642,7 +3644,7 @@ static void test_copy_oem_inf(void)
     ok(is_in_inf_dir(dest), "Got unexpected path '%s'.\n", dest);
     strcpy(orig_dest, dest);
 
-    create_file(tmpfile, inf_data2);
+    create_file("winetest.inf", inf_data2);
     SetLastError(0xdeadbeef);
     ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
     ok(ret == TRUE, "Got %d.\n", ret);
@@ -3667,9 +3669,8 @@ static void test_copy_oem_inf(void)
     todo_wine ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
 
     GetWindowsDirectoryA(orig_dest, sizeof(orig_dest));
-    strcat(orig_dest, "\\inf\\");
-    strcat(orig_dest, tmpfile);
-    ret = CopyFileA(tmpfile, orig_dest, TRUE);
+    strcat(orig_dest, "\\inf\\winetest.inf");
+    ret = CopyFileA("winetest.inf", orig_dest, TRUE);
     ok(ret, "Failed to copy file, error %#lx.\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
@@ -3679,10 +3680,16 @@ static void test_copy_oem_inf(void)
 
     /* Since it wasn't actually installed, SetupUninstallOEMInf would fail here. */
     ret = DeleteFileA(dest);
-    ok(ret, "Failed to delete '%s', error %#lx.\n", tmpfile, GetLastError());
+    ok(ret, "Failed to delete %s, error %#lx.\n", debugstr_a(dest), GetLastError());
 
-    ret = DeleteFileA(tmpfile);
-    ok(ret, "Failed to delete '%s', error %#lx.\n", tmpfile, GetLastError());
+out:
+    ret = DeleteFileA("winetest.inf");
+    ok(ret, "Failed to delete winetest.inf, error %#lx.\n", GetLastError());
+
+    SetCurrentDirectoryA(orig_cwd);
+    ret = RemoveDirectoryA(cwd);
+    ok(ret, "Failed to delete %s, error %#lx.\n", cwd, GetLastError());
+
 }
 
 START_TEST(devinst)
