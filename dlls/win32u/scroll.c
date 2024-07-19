@@ -1024,6 +1024,24 @@ done:
             refresh_scroll_bar( hwnd, bar, TRUE, TRUE );
         else if (action & SA_SSI_REPAINT_ARROWS)
             refresh_scroll_bar( hwnd, bar, TRUE, FALSE );
+
+        if (redraw)
+        {
+            switch (bar)
+            {
+                case SB_CTL:
+                    NtUserNotifyWinEvent( EVENT_OBJECT_VALUECHANGE, hwnd, OBJID_CLIENT, 0 );
+                    break;
+                case SB_HORZ:
+                    if (get_window_long( hwnd, GWL_STYLE ) & WS_HSCROLL)
+                        NtUserNotifyWinEvent( EVENT_OBJECT_VALUECHANGE, hwnd, OBJID_HSCROLL, 0 );
+                    break;
+                case SB_VERT:
+                    if (get_window_long( hwnd, GWL_STYLE ) & WS_VSCROLL)
+                        NtUserNotifyWinEvent( EVENT_OBJECT_VALUECHANGE, hwnd, OBJID_VSCROLL, 0 );
+                    break;
+            }
+        }
     }
 
     return ret; /* Return current position */
