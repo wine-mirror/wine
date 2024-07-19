@@ -1315,7 +1315,6 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
 {
     SIP_SUBJECTINFO subject_info = {sizeof(SIP_SUBJECTINFO)};
     SIP_INDIRECT_DATA *indirect_data;
-    const WCHAR *filepart = file;
     CRYPTCATMEMBER *member;
     WCHAR hash_buffer[100];
     GUID subject_guid;
@@ -1330,7 +1329,6 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
     subject_info.pgSubjectType = &subject_guid;
     subject_info.pwsFileName = file;
     subject_info.DigestAlgorithm.pszObjId = (char *)szOID_OIWSEC_sha1;
-    subject_info.dwFlags = SPC_INC_PE_RESOURCES_FLAG | SPC_INC_PE_IMPORT_ADDR_TABLE_FLAG | SPC_EXC_PE_PAGE_HASHES_FLAG | 0x10000;
     ret = CryptSIPCreateIndirectData(&subject_info, &size, NULL);
     todo_wine ok(ret, "Failed to get indirect data size, error %lu\n", GetLastError());
 
@@ -1346,19 +1344,6 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
         member = CryptCATPutMemberInfo(catalog, (WCHAR *)file,
                 hash_buffer, &subject_guid, 0, size, (BYTE *)indirect_data);
         ok(!!member, "Failed to write member, error %lu\n", GetLastError());
-
-        if (wcsrchr(file, '\\'))
-            filepart = wcsrchr(file, '\\') + 1;
-
-        ret = !!CryptCATPutAttrInfo(catalog, member, (WCHAR *)L"File",
-                CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
-                (wcslen(filepart) + 1) * 2, (BYTE *)filepart);
-        ok(ret, "Failed to write attr, error %lu\n", GetLastError());
-
-        ret = !!CryptCATPutAttrInfo(catalog, member, (WCHAR *)L"OSAttr",
-                CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
-                sizeof(L"2:6.0"), (BYTE *)L"2:6.0");
-        ok(ret, "Failed to write attr, error %lu\n", GetLastError());
     }
 
     free(indirect_data);
