@@ -2343,15 +2343,12 @@ static void test_VariantToPropVariant(void)
     PropVariantInit(&propvar);
 
     hr = VariantToPropVariant(NULL, &propvar);
-    todo_wine
     ok(hr == E_INVALIDARG, "VariantToPropVariant returned %#lx.\n", hr);
     hr = VariantToPropVariant(&var, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "VariantToPropVariant returned %#lx.\n", hr);
 
     V_VT(&var) = 0xdead;
     hr = VariantToPropVariant(&var, &propvar);
-    todo_wine
     ok(hr == DISP_E_BADVARTYPE, "VariantToPropVariant returned %#lx.\n", hr);
     V_VT(&var) = VT_ILLEGAL;
     hr = VariantToPropVariant(&var, &propvar);
@@ -2364,12 +2361,9 @@ static void test_VariantToPropVariant(void)
 
     V_VT(&var) = VT_EMPTY;
     hr = VariantToPropVariant(&var, &propvar);
-    todo_wine
     ok(hr == S_OK, "VariantToPropVariant returned %#lx.\n", hr);
     ok(propvar.vt == VT_EMPTY, "Unexpected propvar.vt %d.\n", propvar.vt);
 
-    todo_wine
-    {
     V_VT(&var) = VT_NULL;
     hr = VariantToPropVariant(&var, &propvar);
     ok(hr == S_OK, "VariantToPropVariant returned %#lx.\n", hr);
@@ -2389,19 +2383,14 @@ static void test_VariantToPropVariant(void)
 
     check_VariantToPropVariant(var, propvar, R4, fltVal, 0.123f, "%f");
     check_VariantToPropVariant(var, propvar, R8, dblVal, 0.456f, "%f");
-    }
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(L"test");
     hr = VariantToPropVariant(&var, &propvar);
-    todo_wine
     ok(hr == S_OK, "VariantToPropVariant returned %#lx.\n", hr);
-    if (hr == S_OK)
-    {
     ok(propvar.vt == VT_BSTR, "Unexpected propvar.vt %d.\n", propvar.vt);
     ok(propvar.bstrVal != V_BSTR(&var), "Got same string pointer.\n");
     ok(!wcscmp(propvar.bstrVal, V_BSTR(&var)), "Unexpected propvar.bstrVal %s.\n", debugstr_w(propvar.bstrVal));
-    }
 
     PropVariantClear(&propvar);
     VariantClear(&var);

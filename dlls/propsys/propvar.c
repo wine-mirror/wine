@@ -36,6 +36,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsys);
 
+static HRESULT VARIANT_ValidateType(VARTYPE vt)
+{
+    VARTYPE vtExtra = vt & (VT_VECTOR | VT_ARRAY | VT_BYREF | VT_RESERVED);
+
+    vt &= VT_TYPEMASK;
+
+    if (!(vtExtra & (VT_VECTOR | VT_RESERVED)))
+    {
+        if (vt < VT_VOID || vt == VT_RECORD || vt == VT_CLSID)
+        {
+            if ((vtExtra & (VT_BYREF | VT_ARRAY)) && vt <= VT_NULL)
+                return DISP_E_BADVARTYPE;
+            if (vt != (VARTYPE)15)
+                return S_OK;
+        }
+    }
+
+    return DISP_E_BADVARTYPE;
+}
+
 static HRESULT PROPVAR_ConvertFILETIME(const FILETIME *ft, PROPVARIANT *ppropvarDest, VARTYPE vt)
 {
     SYSTEMTIME time;
@@ -1033,5 +1053,64 @@ HRESULT WINAPI PropVariantToVariant(const PROPVARIANT *propvar, VARIANT *var)
 
 HRESULT WINAPI VariantToPropVariant(const VARIANT *var, PROPVARIANT *propvar)
 {
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("var %p, propvar %p, var->vt %04x.\n", var, propvar, var->vt);
+
+    if (!var || !propvar)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = VARIANT_ValidateType(var->vt)))
+        return hr;
+
+    PropVariantInit(propvar);
+    propvar->vt = var->vt;
+
+    switch (var->vt)
+    {
+        case VT_EMPTY:
+        case VT_NULL:
+            break;
+        case VT_I1:
+            propvar->cVal = V_I1(var);
+            break;
+        case VT_I2:
+            propvar->iVal = V_I2(var);
+            break;
+        case VT_I4:
+            propvar->lVal = V_I4(var);
+            break;
+        case VT_I8:
+            propvar->hVal.QuadPart = V_I8(var);
+            break;
+        case VT_UI1:
+            propvar->bVal = V_UI1(var);
+            break;
+        case VT_UI2:
+            propvar->uiVal = V_UI2(var);
+            break;
+        case VT_UI4:
+            propvar->ulVal = V_UI4(var);
+            break;
+        case VT_UI8:
+            propvar->uhVal.QuadPart = V_UI8(var);
+            break;
+        case VT_BOOL:
+            propvar->boolVal = V_BOOL(var);
+            break;
+        case VT_R4:
+            propvar->fltVal = V_R4(var);
+            break;
+        case VT_R8:
+            propvar->dblVal = V_R8(var);
+            break;
+        case VT_BSTR:
+            propvar->bstrVal = SysAllocString(V_BSTR(var));
+            break;
+        default:
+            FIXME("Unsupported type %d.\n", var->vt);
+            return E_INVALIDARG;
+    }
+
+    return S_OK;
 }
