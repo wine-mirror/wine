@@ -2322,6 +2322,91 @@ static void test_VariantToString(void)
     VariantClear(&v);
 }
 
+#define check_VariantToPropVariant(var, propvar, type, member, value, format) do                     \
+{                                                                                                    \
+    V_VT(&(var)) = VT_##type;                                                                        \
+    V_##type(&(var)) = (value);                                                                      \
+    hr = VariantToPropVariant(&(var), &(propvar));                                                   \
+    ok_(__FILE__, __LINE__)(hr == S_OK, "VariantToPropVariant returned %#lx.\n", hr);                \
+    ok_(__FILE__, __LINE__)((propvar).vt == VT_##type, "Unexpected propvar.vt %d.\n", (propvar).vt); \
+    ok_(__FILE__, __LINE__)((propvar).member == (value),                                             \
+            "Unexpected propvar."#member" "format".\n", (propvar).member);                           \
+} while (0)
+
+static void test_VariantToPropVariant(void)
+{
+    PROPVARIANT propvar;
+    VARIANT var;
+    HRESULT hr;
+
+    VariantInit(&var);
+    PropVariantInit(&propvar);
+
+    hr = VariantToPropVariant(NULL, &propvar);
+    todo_wine
+    ok(hr == E_INVALIDARG, "VariantToPropVariant returned %#lx.\n", hr);
+    hr = VariantToPropVariant(&var, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "VariantToPropVariant returned %#lx.\n", hr);
+
+    V_VT(&var) = 0xdead;
+    hr = VariantToPropVariant(&var, &propvar);
+    todo_wine
+    ok(hr == DISP_E_BADVARTYPE, "VariantToPropVariant returned %#lx.\n", hr);
+    V_VT(&var) = VT_ILLEGAL;
+    hr = VariantToPropVariant(&var, &propvar);
+    todo_wine
+    ok(hr == TYPE_E_TYPEMISMATCH, "VariantToPropVariant returned %#lx.\n", hr);
+    V_VT(&var) = VT_CLSID;
+    hr = VariantToPropVariant(&var, &propvar);
+    todo_wine
+    ok(hr == DISP_E_BADVARTYPE, "VariantToPropVariant returned %#lx.\n", hr);
+
+    V_VT(&var) = VT_EMPTY;
+    hr = VariantToPropVariant(&var, &propvar);
+    todo_wine
+    ok(hr == S_OK, "VariantToPropVariant returned %#lx.\n", hr);
+    ok(propvar.vt == VT_EMPTY, "Unexpected propvar.vt %d.\n", propvar.vt);
+
+    todo_wine
+    {
+    V_VT(&var) = VT_NULL;
+    hr = VariantToPropVariant(&var, &propvar);
+    ok(hr == S_OK, "VariantToPropVariant returned %#lx.\n", hr);
+    ok(propvar.vt == VT_NULL, "Unexpected propvar.vt %d.\n", propvar.vt);
+
+    check_VariantToPropVariant(var, propvar, I1,  cVal,          -123,    "%c");
+    check_VariantToPropVariant(var, propvar, I2,  iVal,          -456,    "%d");
+    check_VariantToPropVariant(var, propvar, I4,  lVal,          -789,    "%ld");
+    check_VariantToPropVariant(var, propvar, I8,  hVal.QuadPart, -101112, "%I64d");
+
+    check_VariantToPropVariant(var, propvar, UI1, bVal,           0xcd,               "%#x");
+    check_VariantToPropVariant(var, propvar, UI2, uiVal,          0xdead,             "%#x");
+    check_VariantToPropVariant(var, propvar, UI4, ulVal,          0xdeadbeef,         "%#lx");
+    check_VariantToPropVariant(var, propvar, UI8, uhVal.QuadPart, 0xdeadbeefdeadbeef, "%I64x");
+
+    check_VariantToPropVariant(var, propvar, BOOL, boolVal, TRUE, "%d");
+
+    check_VariantToPropVariant(var, propvar, R4, fltVal, 0.123f, "%f");
+    check_VariantToPropVariant(var, propvar, R8, dblVal, 0.456f, "%f");
+    }
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"test");
+    hr = VariantToPropVariant(&var, &propvar);
+    todo_wine
+    ok(hr == S_OK, "VariantToPropVariant returned %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+    ok(propvar.vt == VT_BSTR, "Unexpected propvar.vt %d.\n", propvar.vt);
+    ok(propvar.bstrVal != V_BSTR(&var), "Got same string pointer.\n");
+    ok(!wcscmp(propvar.bstrVal, V_BSTR(&var)), "Unexpected propvar.bstrVal %s.\n", debugstr_w(propvar.bstrVal));
+    }
+
+    PropVariantClear(&propvar);
+    VariantClear(&var);
+}
+
 START_TEST(propsys)
 {
     test_InitPropVariantFromGUIDAsString();
@@ -2350,4 +2435,5 @@ START_TEST(propsys)
     test_PSCreatePropertyStoreFromObject();
     test_VariantToStringWithDefault();
     test_VariantToString();
+    test_VariantToPropVariant();
 }
