@@ -439,7 +439,7 @@ BOOL WINAPI GetUserProfileDirectoryW( HANDLE hToken, LPWSTR lpProfileDir,
     if (!GetProfilesDirectoryW( dirW, &dir_len )) goto done;
 
     len += dir_len + 2;
-    if (*lpcchSize < len)
+    if (*lpcchSize < len || !lpProfileDir)
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
         *lpcchSize = len;
