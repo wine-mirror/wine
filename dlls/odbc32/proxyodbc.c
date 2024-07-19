@@ -1327,7 +1327,7 @@ static SQLRETURN error_win32_a( struct handle *env, struct handle *con, struct h
 
     if (env) win32_funcs = env->win32_funcs;
     else if (con) win32_funcs = con->win32_funcs;
-    else if (stmt) win32_funcs = stmt->win32_funcs;
+    else win32_funcs = stmt->win32_funcs;
 
     if (win32_funcs->SQLError)
         return win32_funcs->SQLError( env ? env->win32_handle : NULL, con ? con->win32_handle : NULL,
@@ -4066,7 +4066,7 @@ static SQLRETURN error_win32_w( struct handle *env, struct handle *con, struct h
 
     if (env) win32_funcs = env->win32_funcs;
     else if (con) win32_funcs = con->win32_funcs;
-    else if (stmt) win32_funcs = stmt->win32_funcs;
+    else win32_funcs = stmt->win32_funcs;
 
     if (win32_funcs->SQLErrorW)
         return win32_funcs->SQLErrorW( env ? env->win32_handle : NULL, con ? con->win32_handle : NULL,
