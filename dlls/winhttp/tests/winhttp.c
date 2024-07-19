@@ -5111,8 +5111,9 @@ static void test_IWinHttpRequest(int port)
     SysFreeString( url );
 
     hr = IWinHttpRequest_Send( req, empty );
-    ok( hr == S_OK || hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_INVALID_SERVER_RESPONSE ) ||
-        hr == SEC_E_ILLEGAL_MESSAGE /* winxp */, "got %#lx\n", hr );
+    ok( hr == S_OK ||
+        hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_INVALID_SERVER_RESPONSE ) ||
+        hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_SECURE_CHANNEL_ERROR ) /* win7 */, "got %#lx\n", hr );
     if (hr != S_OK) goto done;
 
     hr = IWinHttpRequest_get_ResponseText( req, &response );
@@ -6068,7 +6069,9 @@ static void test_client_cert_authentication(void)
     ok( req != NULL, "failed to open a request %lu\n", GetLastError() );
 
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    ok( ret, "failed to send request %lu\n", GetLastError() );
+    ok( ret || broken(!ret && GetLastError() == ERROR_WINHTTP_SECURE_FAILURE) /* win7 */,
+        "failed to send request %lu\n", GetLastError() );
+    if (!ret) goto done;
 
     SetLastError( 0xdeadbeef );
     ret = WinHttpReceiveResponse( req, NULL );
@@ -6093,11 +6096,13 @@ static void test_client_cert_authentication(void)
     ret = WinHttpReceiveResponse( req, NULL );
     todo_wine {
     ok( !ret, "unexpected success\n" );
-    ok( GetLastError() == ERROR_WINHTTP_SECURE_FAILURE, "got %lu\n", GetLastError() );
+    ok( GetLastError() == ERROR_WINHTTP_SECURE_FAILURE || GetLastError() == SEC_E_CERT_EXPIRED, /* win8 */
+        "got %lu\n", GetLastError() );
     }
 
     CertFreeCertificateContext( cert );
     CertCloseStore( store, 0 );
+done:
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
