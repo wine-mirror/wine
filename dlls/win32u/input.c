@@ -1807,6 +1807,12 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
         user_driver->pSetCapture( hwnd, gui_flags );
 
         if (previous)
+            NtUserNotifyWinEvent( EVENT_SYSTEM_CAPTUREEND, previous, OBJID_WINDOW, 0 );
+
+        if (hwnd)
+            NtUserNotifyWinEvent( EVENT_SYSTEM_CAPTURESTART, hwnd, OBJID_WINDOW, 0 );
+
+        if (previous)
             send_message( previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd );
 
         if (prev_ret) *prev_ret = previous;
