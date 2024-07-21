@@ -31,6 +31,9 @@
 #include "winnls.h"
 #include "winsvc.h"
 #include "setupapi.h"
+#include "softpub.h"
+#include "mscat.h"
+#include "shlwapi.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "cfgmgr32.h"
@@ -5346,4 +5349,319 @@ BOOL WINAPI SetupDiGetCustomDevicePropertyW(HDEVINFO devinfo, SP_DEVINFO_DATA *d
 
     SetLastError(ERROR_INVALID_DATA);
     return FALSE;
+}
+
+/***********************************************************************
+ *      SetupCopyOEMInfA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
+                              DWORD media_type, DWORD style, PSTR dest,
+                              DWORD buffer_size, PDWORD required_size, PSTR *component )
+{
+    BOOL ret = FALSE;
+    LPWSTR destW = NULL, sourceW = NULL, locationW = NULL;
+    DWORD size;
+
+    TRACE("%s, %s, %ld, %ld, %p, %ld, %p, %p\n", debugstr_a(source), debugstr_a(location),
+          media_type, style, dest, buffer_size, required_size, component);
+
+    if (dest && !(destW = MyMalloc( buffer_size * sizeof(WCHAR) ))) return FALSE;
+    if (source && !(sourceW = strdupAtoW( source ))) goto done;
+    if (location && !(locationW = strdupAtoW( location ))) goto done;
+
+    ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW, buffer_size, &size, NULL );
+
+    if (required_size) *required_size = size;
+
+    if (dest)
+    {
+        if (buffer_size >= size)
+        {
+            WideCharToMultiByte( CP_ACP, 0, destW, -1, dest, buffer_size, NULL, NULL );
+            if (component) *component = strrchr( dest, '\\' ) + 1;
+        }
+        else
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    }
+
+done:
+    MyFree( destW );
+    free( sourceW );
+    free( locationW );
+    if (ret) SetLastError(ERROR_SUCCESS);
+    return ret;
+}
+
+static int compare_files(HANDLE file1, HANDLE file2)
+{
+    char buffer1[2048];
+    char buffer2[2048];
+    DWORD size1;
+    DWORD size2;
+
+    while (ReadFile(file1, buffer1, sizeof(buffer1), &size1, NULL)
+            && ReadFile(file2, buffer2, sizeof(buffer2), &size2, NULL))
+    {
+        int ret;
+        if (size1 != size2)
+            return size1 > size2 ? 1 : -1;
+        if (!size1)
+            return 0;
+        ret = memcmp( buffer1, buffer2, size1 );
+        if (ret)
+            return ret;
+    }
+
+    return 0;
+}
+
+static BOOL find_existing_inf(const WCHAR *source, WCHAR *target)
+{
+    LARGE_INTEGER source_file_size, dest_file_size;
+    HANDLE source_file, dest_file;
+    WIN32_FIND_DATAW find_data;
+    HANDLE find_handle;
+
+    source_file = CreateFileW(source, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
+    if (source_file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (!GetFileSizeEx(source_file, &source_file_size))
+    {
+        CloseHandle(source_file);
+        return FALSE;
+    }
+
+    GetWindowsDirectoryW(target, MAX_PATH);
+    wcscat(target, L"\\inf\\*");
+    if ((find_handle = FindFirstFileW(target, &find_data)) != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            GetWindowsDirectoryW(target, MAX_PATH);
+            wcscat(target, L"\\inf\\");
+            wcscat(target, find_data.cFileName);
+            dest_file = CreateFileW(target, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
+            if (dest_file == INVALID_HANDLE_VALUE)
+                continue;
+
+            SetFilePointer(source_file, 0, NULL, FILE_BEGIN);
+
+            if (GetFileSizeEx(dest_file, &dest_file_size)
+                    && dest_file_size.QuadPart == source_file_size.QuadPart
+                    && !compare_files(source_file, dest_file))
+            {
+                CloseHandle(dest_file);
+                CloseHandle(source_file);
+                FindClose(find_handle);
+                return TRUE;
+            }
+            CloseHandle(dest_file);
+        } while (FindNextFileW(find_handle, &find_data));
+
+        FindClose(find_handle);
+    }
+
+    CloseHandle(source_file);
+    return FALSE;
+}
+
+/* arbitrary limit not related to what native actually uses */
+#define OEM_INDEX_LIMIT 999
+
+/***********************************************************************
+ *      SetupCopyOEMInfW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD media_type,
+        DWORD style, WCHAR *dest, DWORD buffer_size, DWORD *required_size, WCHAR **filepart)
+{
+    WCHAR target[MAX_PATH], catalog_file[MAX_PATH], pnf_path[MAX_PATH], *p;
+    BOOL ret = FALSE;
+    FILE *pnf_file;
+    unsigned int i;
+    DWORD size;
+    HINF hinf;
+
+    TRACE("source %s, location %s, media_type %lu, style %#lx, dest %p, buffer_size %lu, required_size %p, filepart %p.\n",
+            debugstr_w(source), debugstr_w(location), media_type, style, dest, buffer_size, required_size, filepart);
+
+    if (!source)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* check for a relative path */
+    if (!(*source == '\\' || (*source && source[1] == ':')))
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    if (find_existing_inf(source, target))
+    {
+        TRACE("Found existing INF %s.\n", debugstr_w(target));
+        if (style & SP_COPY_NOOVERWRITE)
+        {
+            SetLastError(ERROR_FILE_EXISTS);
+            ret = FALSE;
+        }
+        else
+            ret = TRUE;
+        goto done;
+    }
+
+    GetWindowsDirectoryW(target, ARRAY_SIZE(target));
+    wcscat(target, L"\\inf\\");
+    wcscat(target, wcsrchr(source, '\\') + 1);
+    if (GetFileAttributesW(target) != INVALID_FILE_ATTRIBUTES)
+    {
+        for (i = 0; i < OEM_INDEX_LIMIT; i++)
+        {
+            GetWindowsDirectoryW(target, ARRAY_SIZE(target));
+            wcscat(target, L"\\inf\\");
+            swprintf(target + wcslen(target), ARRAY_SIZE(target) - wcslen(target), L"oem%u.inf", i);
+
+            if (GetFileAttributesW(target) == INVALID_FILE_ATTRIBUTES)
+                break;
+        }
+        if (i == OEM_INDEX_LIMIT)
+        {
+            SetLastError(ERROR_FILENAME_EXCED_RANGE);
+            return FALSE;
+        }
+    }
+
+    hinf = SetupOpenInfFileW(source, NULL, INF_STYLE_WIN4, NULL);
+    if (hinf == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (SetupGetLineTextW(NULL, hinf, L"Version", L"CatalogFile",
+            catalog_file, ARRAY_SIZE(catalog_file), NULL))
+    {
+        GUID msguid = DRIVER_ACTION_VERIFY;
+        WCHAR source_cat[MAX_PATH];
+        HCATADMIN handle;
+        HCATINFO cat;
+
+        SetupCloseInfFile(hinf);
+
+        wcscpy(source_cat, source);
+        p = wcsrchr(source_cat, '\\');
+        if (p)
+            p++;
+        else
+            p = source_cat;
+        wcscpy(p, catalog_file);
+
+        TRACE("Installing catalog file %s.\n", debugstr_w(source_cat));
+
+        if (!CryptCATAdminAcquireContext(&handle, &msguid, 0))
+        {
+            ERR("Failed to acquire security context, error %lu.\n", GetLastError());
+            return FALSE;
+        }
+
+        if (!(cat = CryptCATAdminAddCatalog(handle, source_cat, catalog_file, 0)))
+        {
+            ERR("Failed to add catalog, error %lu.\n", GetLastError());
+            CryptCATAdminReleaseContext(handle, 0);
+            return FALSE;
+        }
+
+        CryptCATAdminReleaseCatalogContext(handle, cat, 0);
+        CryptCATAdminReleaseContext(handle, 0);
+    }
+    else
+    {
+        SetupCloseInfFile(hinf);
+    }
+
+    if (!(ret = CopyFileW(source, target, TRUE)))
+        return ret;
+
+    wcscpy(pnf_path, target);
+    PathRemoveExtensionW(pnf_path);
+    PathAddExtensionW(pnf_path, L".pnf");
+    if ((pnf_file = _wfopen(pnf_path, L"w")))
+    {
+        fputws(PNF_HEADER, pnf_file);
+        fputws(source, pnf_file);
+        fclose(pnf_file);
+    }
+
+done:
+    if (style & SP_COPY_DELETESOURCE)
+        DeleteFileW(source);
+
+    size = wcslen(target) + 1;
+    if (dest)
+    {
+        if (buffer_size >= size)
+        {
+            wcscpy(dest, target);
+            if (filepart)
+                *filepart = wcsrchr(dest, '\\') + 1;
+        }
+        else
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            ret = FALSE;
+        }
+    }
+
+    if (required_size)
+        *required_size = size;
+    if (ret)
+        SetLastError(ERROR_SUCCESS);
+
+    return ret;
+}
+
+/***********************************************************************
+ *      SetupUninstallOEMInfA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupUninstallOEMInfA(const char *inf_file, DWORD flags, void *reserved)
+{
+    WCHAR *inf_fileW = NULL;
+    BOOL ret;
+
+    TRACE("inf_file %s, flags %#lx, reserved %p.\n", debugstr_a(inf_file), flags, reserved);
+
+    if (inf_file && !(inf_fileW = strdupAtoW(inf_file)))
+        return FALSE;
+    ret = SetupUninstallOEMInfW(inf_fileW, flags, reserved);
+    free(inf_fileW);
+    return ret;
+}
+
+/***********************************************************************
+ *      SetupUninstallOEMInfW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupUninstallOEMInfW(const WCHAR *inf_file, DWORD flags, void *reserved)
+{
+    WCHAR target[MAX_PATH];
+
+    TRACE("inf_file %s, flags %#lx, reserved %p.\n", debugstr_w(inf_file), flags, reserved);
+
+    if (!inf_file)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!GetWindowsDirectoryW( target, ARRAY_SIZE( target )))
+        return FALSE;
+
+    wcscat(target, L"\\inf\\");
+    wcscat(target, inf_file);
+
+    if (flags & SUOI_FORCEDELETE)
+        return DeleteFileW(target);
+
+    FIXME("not deleting %s\n", debugstr_w(target));
+
+    return TRUE;
 }
