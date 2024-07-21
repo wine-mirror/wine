@@ -37,6 +37,7 @@
 #include "setupapi.h"
 #include "cfgmgr32.h"
 #include "cguid.h"
+#include "fci.h"
 
 #include "wine/test.h"
 #include "wine/mssign.h"
@@ -47,11 +48,22 @@ static GUID guid2 = {0x6a55b5a5, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,
 static GUID iface_guid = {0xdeadbeef, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 static GUID iface_guid2 = {0xdeadf00d, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 
+static HRESULT (WINAPI *pDriverStoreAddDriverPackageA)(const char *inf_path, void *unk1,
+        void *unk2, WORD architecture, char *ret_path, DWORD *ret_len);
+static HRESULT (WINAPI *pDriverStoreDeleteDriverPackageA)(const char *path, void *unk1, void *unk2);
+static HRESULT (WINAPI *pDriverStoreFindDriverPackageA)(const char *inf_path, void *unk1,
+        void *unk2, WORD architecture, void *unk4, char *ret_path, DWORD *ret_len);
 static BOOL (WINAPI *pSetupDiSetDevicePropertyW)(HDEVINFO, SP_DEVINFO_DATA *, const DEVPROPKEY *, DEVPROPTYPE, const BYTE *, DWORD, DWORD);
 static BOOL (WINAPI *pSetupDiGetDevicePropertyW)(HDEVINFO, SP_DEVINFO_DATA *, const DEVPROPKEY *, DEVPROPTYPE *, BYTE *, DWORD, DWORD *, DWORD);
 static BOOL (WINAPI *pSetupQueryInfOriginalFileInformationA)(SP_INF_INFORMATION *, UINT, SP_ALTPLATFORM_INFO *, SP_ORIGINAL_FILE_INFO_A *);
 
 static BOOL wow64;
+
+static void create_directory(const char *name)
+{
+    BOOL ret = CreateDirectoryA(name, NULL);
+    ok(ret, "Failed to create %s, error %lu.\n", name, GetLastError());
+}
 
 static void create_file(const char *name, const char *data)
 {
@@ -64,6 +76,18 @@ static void create_file(const char *name, const char *data)
     ret = WriteFile(file, data, strlen(data), &size, NULL);
     ok(ret && size == strlen(data), "Failed to write %s, error %lu.\n", name, GetLastError());
     CloseHandle(file);
+}
+
+static void delete_directory(const char *name)
+{
+    BOOL ret = RemoveDirectoryA(name);
+    ok(ret, "Failed to delete %s, error %lu.\n", name, GetLastError());
+}
+
+static void delete_file(const char *name)
+{
+    BOOL ret = DeleteFileA(name);
+    ok(ret, "Failed to delete %s, error %lu.\n", name, GetLastError());
 }
 
 static void load_resource(const char *name, const char *filename)
@@ -393,6 +417,193 @@ static void get_temp_filename(LPSTR path)
     ptr = strrchr(temp, '\\');
 
     lstrcpyA(path, ptr + 1);
+}
+
+static void * CDECL mem_alloc(ULONG cb)
+{
+    return HeapAlloc(GetProcessHeap(), 0, cb);
+}
+
+static void CDECL mem_free(void *memory)
+{
+    HeapFree(GetProcessHeap(), 0, memory);
+}
+
+static BOOL CDECL get_next_cabinet(PCCAB pccab, ULONG  cbPrevCab, void *ctx)
+{
+    sprintf(pccab->szCab, ctx, pccab->iCab);
+    return TRUE;
+}
+
+static LONG CDECL progress(UINT typeStatus, ULONG cb1, ULONG cb2, void *ctx)
+{
+    return 0;
+}
+
+static int CDECL file_placed(PCCAB pccab, char *pszFile, LONG cbFile,
+                             BOOL fContinuation, void *ctx)
+{
+    return 0;
+}
+
+static INT_PTR CDECL fci_open(char *pszFile, int oflag, int pmode, int *err, void *ctx)
+{
+    HANDLE handle;
+    DWORD dwAccess = 0;
+    DWORD dwShareMode = 0;
+    DWORD dwCreateDisposition = OPEN_EXISTING;
+
+    dwAccess = GENERIC_READ | GENERIC_WRITE;
+    dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+
+    if (GetFileAttributesA(pszFile) != INVALID_FILE_ATTRIBUTES)
+        dwCreateDisposition = OPEN_EXISTING;
+    else
+        dwCreateDisposition = CREATE_NEW;
+
+    handle = CreateFileA(pszFile, dwAccess, dwShareMode, NULL,
+                         dwCreateDisposition, 0, NULL);
+
+    ok(handle != INVALID_HANDLE_VALUE, "Failed to CreateFile %s\n", pszFile);
+
+    return (INT_PTR)handle;
+}
+
+static UINT CDECL fci_read(INT_PTR hf, void *memory, UINT cb, int *err, void *ctx)
+{
+    HANDLE handle = (HANDLE)hf;
+    DWORD dwRead;
+    BOOL res;
+
+    res = ReadFile(handle, memory, cb, &dwRead, NULL);
+    ok(res, "Failed to ReadFile\n");
+
+    return dwRead;
+}
+
+static UINT CDECL fci_write(INT_PTR hf, void *memory, UINT cb, int *err, void *ctx)
+{
+    HANDLE handle = (HANDLE)hf;
+    DWORD dwWritten;
+    BOOL res;
+
+    res = WriteFile(handle, memory, cb, &dwWritten, NULL);
+    ok(res, "Failed to WriteFile\n");
+
+    return dwWritten;
+}
+
+static int CDECL fci_close(INT_PTR hf, int *err, void *ctx)
+{
+    HANDLE handle = (HANDLE)hf;
+    ok(CloseHandle(handle), "Failed to CloseHandle\n");
+
+    return 0;
+}
+
+static LONG CDECL fci_seek(INT_PTR hf, LONG dist, int seektype, int *err, void *ctx)
+{
+    HANDLE handle = (HANDLE)hf;
+    DWORD ret;
+
+    ret = SetFilePointer(handle, dist, NULL, seektype);
+    ok(ret != INVALID_SET_FILE_POINTER, "Failed to SetFilePointer\n");
+
+    return ret;
+}
+
+static int CDECL fci_delete(char *pszFile, int *err, void *ctx)
+{
+    BOOL ret = DeleteFileA(pszFile);
+    ok(ret, "Failed to DeleteFile %s\n", pszFile);
+
+    return 0;
+}
+
+static BOOL CDECL get_temp_file(char *pszTempName, int cbTempName, void *ctx)
+{
+    LPSTR tempname;
+
+    tempname = malloc(MAX_PATH);
+    GetTempFileNameA(".", "xx", 0, tempname);
+
+    if (tempname && (strlen(tempname) < (unsigned)cbTempName))
+    {
+        lstrcpyA(pszTempName, tempname);
+        free(tempname);
+        return TRUE;
+    }
+
+    free(tempname);
+
+    return FALSE;
+}
+
+static INT_PTR CDECL get_open_info(char *name, USHORT *date, USHORT *time, USHORT *attribs, int *err, void *ctx)
+{
+    BY_HANDLE_FILE_INFORMATION finfo;
+    FILETIME filetime;
+    HANDLE handle;
+    DWORD attrs;
+    BOOL res;
+
+    handle = CreateFileA(name, GENERIC_READ, FILE_SHARE_READ, NULL,
+            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+
+    ok(handle != INVALID_HANDLE_VALUE, "Failed to create %s, error %lu.\n", debugstr_a(name), GetLastError());
+
+    res = GetFileInformationByHandle(handle, &finfo);
+    ok(res, "Expected GetFileInformationByHandle to succeed\n");
+
+    FileTimeToLocalFileTime(&finfo.ftLastWriteTime, &filetime);
+    FileTimeToDosDateTime(&filetime, date, time);
+
+    attrs = GetFileAttributesA(name);
+    ok(attrs != INVALID_FILE_ATTRIBUTES, "Failed to GetFileAttributes\n");
+
+    return (INT_PTR)handle;
+}
+
+static BOOL add_file(HFCI hfci, const char *file, TCOMP compress)
+{
+    char path[MAX_PATH], filename[MAX_PATH];
+
+    GetCurrentDirectoryA(sizeof(path), path);
+    strcat(path, "\\");
+    strcat(path, file);
+
+    strcpy(filename, file);
+
+    return FCIAddFile(hfci, path, filename, FALSE, get_next_cabinet, progress, get_open_info, compress);
+}
+
+static void create_cab_file(const char *name, const char *source)
+{
+    CCAB cab_params = {0};
+    HFCI hfci;
+    ERF erf;
+    BOOL res;
+
+    cab_params.cb = INT_MAX;
+    cab_params.cbFolderThresh = 900000;
+    cab_params.setID = 0xbeef;
+    cab_params.iCab = 1;
+    GetCurrentDirectoryA(sizeof(cab_params.szCabPath), cab_params.szCabPath);
+    strcat(cab_params.szCabPath, "\\");
+    strcpy(cab_params.szCab, name);
+
+    hfci = FCICreate(&erf, file_placed, mem_alloc, mem_free, fci_open, fci_read,
+            fci_write, fci_close, fci_seek, fci_delete, get_temp_file, &cab_params, NULL);
+
+    ok(hfci != NULL, "Failed to create an FCI context\n");
+
+    res = add_file(hfci, source, tcompTYPE_MSZIP);
+    ok(res, "Failed to add %s\n", source);
+
+    res = FCIFlushCabinet(hfci, FALSE, get_next_cabinet, progress);
+    ok(res, "Failed to flush the cabinet\n");
+    res = FCIDestroy(hfci);
+    ok(res, "Failed to destroy the cabinet\n");
 }
 
 static void test_install_class(void)
@@ -3711,7 +3922,7 @@ static void check_original_file_name(const char *dest_inf, const char *src_inf, 
 
 static void test_copy_oem_inf(struct testsign_context *ctx)
 {
-    char path[MAX_PATH * 2], dest[MAX_PATH], orig_dest[MAX_PATH];
+    char path[MAX_PATH * 2], dest[MAX_PATH], orig_dest[MAX_PATH], orig_store[MAX_PATH];
     char orig_cwd[MAX_PATH], *cwd, *filepart, pnf[MAX_PATH];
     SYSTEM_INFO system_info;
     HANDLE catalog;
@@ -3790,6 +4001,13 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
 
     testsign_sign(ctx, L"winetest.cat");
 
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA("winetest.inf", 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(ret == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got %#x.\n", ret);
+    ok(!dest[0], "Got %s.\n", debugstr_a(dest));
+    todo_wine ok(!size, "Got size %lu.\n", size);
+
     /* Test with a relative path. */
     SetLastError(0xdeadbeef);
     memset(dest, 0xcc, sizeof(dest));
@@ -3825,6 +4043,14 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     /* Test a successful call. */
     GetCurrentDirectoryA(sizeof(path), path);
     strcat(path, "\\winetest.inf");
+
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA(path, 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(ret == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got %#x.\n", ret);
+    ok(!dest[0], "Got %s.\n", debugstr_a(dest));
+    todo_wine ok(!size, "Got size %lu.\n", size);
+
     SetLastError(0xdeadbeef);
     ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
     ok(ret == TRUE, "Got %d.\n", ret);
@@ -3835,6 +4061,12 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     strcpy(orig_dest, dest);
 
     check_original_file_name(dest, "winetest.inf", "winetest.cat");
+
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA(path, 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(!ret, "Got %#x.\n", ret);
+    strcpy(orig_store, dest);
 
     SetLastError(0xdeadbeef);
     ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
@@ -3914,6 +4146,13 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     DeleteFileA(dest);
     ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
 
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA(path, 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Got %#x.\n", ret);
+    ok(!dest[0], "Got %s.\n", debugstr_a(dest));
+    todo_wine ok(!size, "Got size %lu.\n", size);
+
     create_file("winetest.inf", inf_data1);
     SetLastError(0xdeadbeef);
     ret = SetupCopyOEMInfA(path, NULL, SPOST_NONE, 0, dest, sizeof(dest), NULL, NULL);
@@ -3980,6 +4219,360 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
 
 }
 
+static void check_driver_store_file_exists(const char *driver_store, const char *file, BOOL exists)
+{
+    char path[MAX_PATH];
+
+    sprintf(path, "%s\\%s", driver_store, file);
+    ok(file_exists(path) == exists, "Expected %s to %s.\n", debugstr_a(path), exists ? "exist" : "not exist");
+}
+
+static const char driver_store_hardware_id[] = "winetest_store_hardware_id\0";
+
+static void create_driver_store_test_device(HDEVINFO set, const char *name, SP_DEVINFO_DATA *device)
+{
+    static const GUID guid = {0x77777777};
+    BOOL ret;
+
+    if (SetupDiOpenDeviceInfoA(set, name, NULL, 0, device))
+    {
+        ret = SetupDiCallClassInstaller(DIF_REMOVE, set, device);
+        ok(ret, "Failed to remove device, error %#lx.\n", GetLastError());
+    }
+
+    ret = SetupDiCreateDeviceInfoA(set, name, &guid, NULL, NULL, 0, device);
+    ok(ret, "Failed to create device, error %#lx.\n", GetLastError());
+    ret = SetupDiSetDeviceRegistryPropertyA(set, device, SPDRP_HARDWAREID,
+            (const BYTE *)driver_store_hardware_id, sizeof(driver_store_hardware_id));
+    ok(ret, "Failed to set hardware ID, error %#lx.\n", GetLastError());
+    ret = SetupDiCallClassInstaller(DIF_REGISTERDEVICE, set, device);
+    ok(ret, "Failed to call class installer, error %#lx.\n", GetLastError());
+}
+
+static void test_driver_store(struct testsign_context *ctx)
+{
+    static const char repository_dir[] = "C:\\windows\\system32\\DriverStore\\FileRepository\\";
+    SP_DEVINFO_DATA device = {sizeof(device)}, device2 = {sizeof(device2)};
+    char dest[MAX_PATH], orig_dest[MAX_PATH], inf_path[MAX_PATH];
+    SP_DRVINFO_DATA_A driver = {sizeof(driver)};
+    char orig_cwd[MAX_PATH], *cwd;
+    char driver_path[MAX_PATH];
+    SYSTEM_INFO system_info;
+    HANDLE catalog;
+    HDEVINFO set;
+    DWORD size;
+    BOOL ret;
+
+    static const char inf_data1[] =
+        "[Version]\n"
+        "Signature=\"$Chicago$\"\n"
+        "CatalogFile=winetest.cat\n"
+        "Class=Bogus\n"
+        "ClassGUID={6a55b5a4-3f65-11db-b704-0011955c2bdb}\n"
+
+        "[Manufacturer]\n"
+        "mfg1=mfg_section,NT" MYEXT "\n"
+        "mfg2=mfg_section_wrongarch,NT" WRONGEXT "\n"
+
+        "[mfg_section.nt" MYEXT "]\n"
+        "desc1=device_section,winetest_store_hardware_id\n"
+
+        "[mfg_section_wrongarch.nt" WRONGEXT "]\n"
+        "desc1=device_section2,winetest_store_hardware_id\n"
+
+        "[device_section.nt" MYEXT "]\n"
+        "CopyFiles=file_section\n"
+
+        "[device_section_wrongarch.nt" WRONGEXT "]\n"
+        "CopyFiles=file_section_wrongarch\n"
+
+        "[device_section.nt" MYEXT ".CoInstallers]\n"
+        "CopyFiles=coinst_file_section\n"
+
+        "[file_section]\n"
+        "winetest_dst.txt,winetest_src.txt\n"
+        "winetest_child.txt\n"
+        "winetest_niece.txt\n"
+        "winetest_cab.txt\n"
+
+        "[file_section_wrongarch]\n"
+        "winetest_wrongarch.txt\n"
+
+        "[coinst_file_section]\n"
+        "winetest_coinst.txt\n"
+
+        "[SourceDisksFiles]\n"
+        "winetest_src.txt=1\n"
+        "winetest_child.txt=1,subdir\n"
+        "winetest_niece.txt=2\n"
+        "winetest_ignored.txt=1\n"
+        "winetest_ignored2.txt=1\n"
+        "winetest_wrongarch.txt=1\n"
+        "winetest_cab.txt=3\n"
+        "winetest_coinst.txt=1\n"
+
+        "[SourceDisksNames]\n"
+        "1=,winetest_src.txt\n"
+        "2=,winetest_niece.txt,,sister\n"
+        "3=,winetest_cab.cab\n"
+
+        "[DestinationDirs]\n"
+        "DefaultDestDir=11\n"
+        ;
+
+    if (wow64)
+        return;
+
+    GetSystemInfo(&system_info);
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "Failed to create device list, error %#lx.\n", GetLastError());
+
+    create_driver_store_test_device(set, "Root\\winetest_store\\1", &device);
+
+    GetCurrentDirectoryA(sizeof(orig_cwd), orig_cwd);
+    cwd = tempnam(NULL, "wine");
+    ret = CreateDirectoryA(cwd, NULL);
+    ok(ret, "Failed to create %s, error %lu.\n", debugstr_a(cwd), GetLastError());
+    ret = SetCurrentDirectoryA(cwd);
+    ok(ret, "Failed to cd to %s, error %lu.\n", debugstr_a(cwd), GetLastError());
+
+    create_file("winetest.inf", inf_data1);
+    create_file("winetest_src.txt", "data1");
+    create_file("winetest_unused.txt", "unused");
+    create_file("winetest_ignored2.txt", "ignored2");
+    create_directory("subdir");
+    create_directory("sister");
+    create_file("subdir\\winetest_child.txt", "child");
+    create_file("sister\\winetest_niece.txt", "niece");
+    create_file("winetest_cab.txt", "cab");
+    create_cab_file("winetest_cab.cab", "winetest_cab.txt");
+    create_file("winetest_coinst.txt", "coinst");
+
+    /* If the catalog doesn't exist, or any files are missing from it,
+     * validation fails and we get a UI dialog. */
+
+    catalog = CryptCATOpen((WCHAR *)L"winetest.cat", CRYPTCAT_OPEN_CREATENEW, 0, CRYPTCAT_VERSION_1, 0);
+    ok(catalog != INVALID_HANDLE_VALUE, "Failed to create catalog, error %#lx\n", GetLastError());
+
+    add_file_to_catalog(catalog, L"winetest.inf");
+    add_file_to_catalog(catalog, L"winetest_src.txt");
+    add_file_to_catalog(catalog, L"subdir\\winetest_child.txt");
+    add_file_to_catalog(catalog, L"sister\\winetest_niece.txt");
+    add_file_to_catalog(catalog, L"winetest_cab.txt");
+    add_file_to_catalog(catalog, L"winetest_coinst.txt");
+    add_file_to_catalog(catalog, L"winetest_unused.txt");
+    add_file_to_catalog(catalog, L"winetest_ignored2.txt");
+
+    ret = CryptCATPersistStore(catalog);
+    todo_wine ok(ret, "Failed to write catalog, error %lu\n", GetLastError());
+
+    ret = CryptCATClose(catalog);
+    ok(ret, "Failed to close catalog, error %lu\n", GetLastError());
+
+    testsign_sign(ctx, L"winetest.cat");
+
+    /* Delete one of the files referenced in the catalog, to show that files
+     * present in the catalog and not used in the INF don't need to be present. */
+    delete_file("winetest_unused.txt");
+    /* Also delete the cab source file. */
+    delete_file("winetest_cab.txt");
+
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA("winetest.inf", 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(ret == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got %#x.\n", ret);
+    ok(!dest[0], "Got %s.\n", debugstr_a(dest));
+    todo_wine ok(!size, "Got size %lu.\n", size);
+
+    /* Windows 7 allows relative paths. Windows 8+ do not.
+     * However, all versions seem to accept relative paths in
+     * DriverStoreFindDriverPackage(). */
+
+    sprintf(inf_path, "%s\\winetest.inf", cwd);
+
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreAddDriverPackageA(inf_path, 0, 0, system_info.wProcessorArchitecture, dest, &size);
+    ok(!ret, "Got %#x.\n", ret);
+    ok(size > ARRAY_SIZE(repository_dir), "Got size %lu.\n", size);
+    ok(size == strlen(dest) + 1, "Expected size %Iu, got %lu.\n", strlen(dest) + 1, size);
+    ok(!memicmp(dest, repository_dir, strlen(repository_dir)), "Got path %s.\n", debugstr_a(dest));
+    ok(!strcmp(dest + strlen(dest) - 13, "\\winetest.inf"), "Got path %s.\n", debugstr_a(dest));
+
+    strcpy(orig_dest, dest);
+
+    /* Add again. */
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreAddDriverPackageA(inf_path, 0, 0, system_info.wProcessorArchitecture, dest, &size);
+    ok(!ret, "Got %#x.\n", ret);
+    ok(!strcmp(dest, orig_dest), "Expected %s, got %s.\n", debugstr_a(orig_dest), debugstr_a(dest));
+    ok(size == strlen(dest) + 1, "Expected size %Iu, got %lu.\n", strlen(dest) + 1, size);
+
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA("winetest.inf", 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(!ret, "Got %#x.\n", ret);
+    ok(!strcmp(dest, orig_dest), "Expected %s, got %s.\n", debugstr_a(orig_dest), debugstr_a(dest));
+    ok(size == strlen(dest) + 1, "Expected size %Iu, got %lu.\n", strlen(dest) + 1, size);
+
+    /* Test the length parameter.
+     * Anything less than MAX_PATH returns E_INVALIDARG.
+     * It's not clear what happens if the returned path is longer than MAX_PATH. */
+
+    size = MAX_PATH - 1;
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA("winetest.inf", 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(ret == E_INVALIDARG, "Got %#x.\n", ret);
+    ok(dest[0] == (char)0xcc, "Got %s.\n", debugstr_a(dest));
+    ok(size == MAX_PATH - 1, "Expected size %Iu, got %lu.\n", strlen(orig_dest) + 1, size);
+
+    size = 0;
+    ret = pDriverStoreFindDriverPackageA("winetest.inf", 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(ret == E_INVALIDARG, "Got %#x.\n", ret);
+    ok(!size, "Got size %lu.\n", size);
+
+    /* Adding to the store also copies to the C:\windows\inf dir. */
+    ret = SetupCopyOEMInfA(orig_dest, NULL, 0, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
+    ok(ret == TRUE, "Got %#x.\n", ret);
+
+    /* The catalog, and files referenced through a CopyFiles section,
+     * are also present. */
+    strcpy(dest, orig_dest);
+    *strrchr(dest, '\\') = 0;
+    check_driver_store_file_exists(dest, "winetest.cat", TRUE);
+    check_driver_store_file_exists(dest, "winetest_src.txt", TRUE);
+    check_driver_store_file_exists(dest, "subdir/winetest_child.txt", TRUE);
+    check_driver_store_file_exists(dest, "sister/winetest_niece.txt", TRUE);
+    check_driver_store_file_exists(dest, "winetest_cab.txt", TRUE);
+    check_driver_store_file_exists(dest, "winetest_coinst.txt", TRUE);
+    check_driver_store_file_exists(dest, "winetest_dst.txt", FALSE);
+    check_driver_store_file_exists(dest, "winetest_ignored2.txt", FALSE);
+    check_driver_store_file_exists(dest, "winetest_cab.cab", FALSE);
+
+    /* The inf is installed to C:\windows\inf, but the driver isn't installed
+     * for existing devices that match, and hence files aren't installed to
+     * their final destination. */
+
+    ret = SetupDiBuildDriverInfoList(set, &device, SPDIT_COMPATDRIVER);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+
+    ret = SetupDiSelectBestCompatDrv(set, &device);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+
+    ret = SetupDiGetSelectedDriverA(set, &device, &driver);
+    ok(driver.DriverType == SPDIT_COMPATDRIVER, "Got wrong type %#lx.\n", driver.DriverType);
+    ok(!strcmp(driver.Description, "desc1"), "Got wrong description '%s'.\n", driver.Description);
+    ok(!strcmp(driver.MfgName, "mfg1"), "Got wrong manufacturer '%s'.\n", driver.MfgName);
+    ok(!strcmp(driver.ProviderName, ""), "Got wrong provider '%s'.\n", driver.ProviderName);
+
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DRIVER, NULL,
+            (BYTE *)driver_path, sizeof(driver_path), NULL);
+    ok(!ret, "Expected failure.\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "Got unexpected error %#lx.\n", GetLastError());
+
+    ok(!file_exists("C:\\windows\\system32\\winetest_dst.txt"), "Expected dst to not exist.\n");
+
+    /* The apparent point of the driver store is to provide a source directory
+     * for INF files that doesn't require the original install medium.
+     * Hence, test that we can move the original files out of place and then
+     * trigger device installation.
+     *
+     * (Of course, it would have been easier just to install the driver files
+     * directly, even if the corresponding device doesn't exist yet, but that's
+     * not the model that Microsoft chose, for some reason. */
+
+    ret = MoveFileExA("winetest.cat", "not_winetest.cat", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = MoveFileExA("winetest_src.txt", "not_winetest_src.txt", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = MoveFileExA("winetest_cab.cab", "not_winetest_cab.cab", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = MoveFileExA("sister", "not_sister", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+
+    /* Also call DriverStoreFindDriverPackageA() again here, to prove that it
+     * only needs to compare the inf, not any of the other files. */
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA("winetest.inf", 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(!ret || ret == HRESULT_FROM_WIN32(ERROR_NOT_FOUND) /* Win < 8 */, "Got %#x.\n", ret);
+    if (!ret)
+    {
+        ok(!strcmp(dest, orig_dest), "Expected %s, got %s.\n", debugstr_a(orig_dest), debugstr_a(dest));
+        ok(size == strlen(dest) + 1, "Expected size %Iu, got %lu.\n", strlen(dest) + 1, size);
+    }
+
+    ret = MoveFileExA("winetest.inf", "not_winetest.inf", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+
+    /* However, the inf name does need to match. */
+    size = ARRAY_SIZE(dest);
+    memset(dest, 0xcc, sizeof(dest));
+    ret = pDriverStoreFindDriverPackageA("not_winetest.inf", 0, 0, system_info.wProcessorArchitecture, 0, dest, &size);
+    ok(ret == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got %#x.\n", ret);
+    ok(!dest[0], "Got %s.\n", debugstr_a(dest));
+    todo_wine ok(!size, "Got size %lu.\n", size);
+
+    ret = SetupDiCallClassInstaller(DIF_INSTALLDEVICEFILES, set, &device);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+
+    delete_file("C:\\windows\\system32\\winetest_dst.txt");
+    delete_file("C:\\windows\\system32\\winetest_child.txt");
+    delete_file("C:\\windows\\system32\\winetest_niece.txt");
+    delete_file("C:\\windows\\system32\\winetest_cab.txt");
+    todo_wine delete_file("C:\\windows\\system32\\winetest_coinst.txt");
+
+    ret = MoveFileExA("not_winetest.inf", "winetest.inf", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = MoveFileExA("not_winetest.cat", "winetest.cat", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = MoveFileExA("not_winetest_src.txt", "winetest_src.txt", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = MoveFileExA("not_winetest_cab.cab", "winetest_cab.cab", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+    ret = MoveFileExA("not_sister", "sister", 0);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+
+    ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
+    ok(ret, "Got error %#lx.\n", GetLastError());
+
+    ret = pDriverStoreDeleteDriverPackageA(orig_dest, 0, 0);
+    ok(!ret, "Got %#x.\n", ret);
+
+    ret = SetupCopyOEMInfA(orig_dest, NULL, 0, SP_COPY_REPLACEONLY, NULL, 0, NULL, NULL);
+    ok(!ret, "Got %#x.\n", ret);
+    todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %lu.\n", GetLastError());
+
+    /* All files reachable through CopyFiles have to be present. If any are
+     * missing, DriverStoreAddDriverPackage() fails with
+     * HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND).
+     *
+     * On Windows 8, this also seems to result in an internal leak: attempting
+     * to delete the source directory afterward ("cwd") fails with
+     * ERROR_SHARING_VIOLATION, even though FindFirstFile() confirms that it's
+     * empty. */
+
+    delete_file("subdir\\winetest_child.txt");
+    delete_file("sister\\winetest_niece.txt");
+    delete_file("winetest_cab.cab");
+    delete_file("winetest_coinst.txt");
+    delete_file("winetest_ignored2.txt");
+    delete_file("winetest_src.txt");
+    delete_file("winetest.cat");
+    delete_file("winetest.inf");
+    delete_directory("subdir");
+    delete_directory("sister");
+
+    SetCurrentDirectoryA(orig_cwd);
+    ret = RemoveDirectoryA(cwd);
+    ok(ret, "Failed to delete %s, error %lu.\n", cwd, GetLastError());
+
+    ret = SetupDiDestroyDeviceInfoList(set);
+    ok(ret, "Failed to destroy device list.\n");
+}
+
 START_TEST(devinst)
 {
     static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
@@ -3987,6 +4580,9 @@ START_TEST(devinst)
     struct testsign_context ctx;
     HKEY hkey;
 
+    pDriverStoreAddDriverPackageA = (void *)GetProcAddress(module, "DriverStoreAddDriverPackageA");
+    pDriverStoreFindDriverPackageA = (void *)GetProcAddress(module, "DriverStoreFindDriverPackageA");
+    pDriverStoreDeleteDriverPackageA = (void *)GetProcAddress(module, "DriverStoreDeleteDriverPackageA");
     pSetupQueryInfOriginalFileInformationA = (void *)GetProcAddress(module, "SetupQueryInfOriginalFileInformationA");
 
     test_get_actual_section();
@@ -4028,6 +4624,7 @@ START_TEST(devinst)
         return;
 
     test_copy_oem_inf(&ctx);
+    test_driver_store(&ctx);
 
     testsign_cleanup(&ctx);
 }
