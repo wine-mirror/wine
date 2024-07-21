@@ -293,7 +293,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         0,    /* TokenVirtualizationAllowed */
         sizeof(DWORD), /* TokenVirtualizationEnabled */
         sizeof(TOKEN_MANDATORY_LABEL) + sizeof(SID), /* TokenIntegrityLevel [sizeof(SID) includes one SubAuthority] */
-        0,    /* TokenUIAccess */
+        sizeof(DWORD), /* TokenUIAccess */
         0,    /* TokenMandatoryPolicy */
         0,    /* TokenLogonSid */
         sizeof(DWORD), /* TokenIsAppContainer */
@@ -563,6 +563,11 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
             tml->Label.Attributes = SE_GROUP_INTEGRITY | SE_GROUP_INTEGRITY_ENABLED;
             memcpy( psid, &high_level, sizeof(SID) );
         }
+        break;
+
+    case TokenUIAccess:
+        *(DWORD *)info = 1;
+        FIXME("TokenUIAccess stub!\n");
         break;
 
     case TokenAppContainerSid:
