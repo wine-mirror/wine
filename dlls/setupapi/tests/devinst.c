@@ -3912,7 +3912,7 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     *(strrchr(pnf, '.') + 1) = 'p';
 
     ret = SetupUninstallOEMInfA(strrchr(dest, '\\') + 1, 0, NULL);
-    ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
+    todo_wine ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
     todo_wine ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
     DeleteFileA(dest);
     todo_wine ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
@@ -3950,7 +3950,7 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     ok(strcmp(dest, orig_dest), "Expected INF files to be copied to different paths.\n");
 
     ret = SetupUninstallOEMInfA(strrchr(dest, '\\') + 1, 0, NULL);
-    ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
+    todo_wine ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
     todo_wine ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
     DeleteFileA(dest);
     strcpy(pnf, dest);
@@ -3958,7 +3958,7 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     todo_wine ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
 
     ret = SetupUninstallOEMInfA(strrchr(orig_dest, '\\') + 1, 0, NULL);
-    ok(ret, "Failed to uninstall '%s', error %#lx.\n", orig_dest, GetLastError());
+    todo_wine ok(ret, "Failed to uninstall '%s', error %#lx.\n", orig_dest, GetLastError());
     todo_wine ok(!file_exists(orig_dest), "Expected inf '%s' not to exist.\n", dest);
     DeleteFileA(orig_dest);
     strcpy(pnf, dest);

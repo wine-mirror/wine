@@ -412,19 +412,13 @@ static void test_SetupUninstallOEMInf(void)
 
     SetLastError(0xdeadbeef);
     ret = SetupUninstallOEMInfA("", 0, NULL);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
-    }
+    todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = SetupUninstallOEMInfA("nonexistent.inf", 0, NULL);
-    todo_wine
-    {
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
-    }
 }
 
 struct default_callback_context

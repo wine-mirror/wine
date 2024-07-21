@@ -6179,7 +6179,9 @@ BOOL WINAPI SetupUninstallOEMInfA(const char *inf_file, DWORD flags, void *reser
  */
 BOOL WINAPI SetupUninstallOEMInfW(const WCHAR *inf_file, DWORD flags, void *reserved)
 {
+    struct driver_package package;
     WCHAR target[MAX_PATH];
+    DWORD ret;
 
     TRACE("inf_file %s, flags %#lx, reserved %p.\n", debugstr_w(inf_file), flags, reserved);
 
@@ -6195,12 +6197,21 @@ BOOL WINAPI SetupUninstallOEMInfW(const WCHAR *inf_file, DWORD flags, void *rese
     wcscat(target, L"\\inf\\");
     wcscat(target, inf_file);
 
-    if (flags & SUOI_FORCEDELETE)
-        return DeleteFileW(target);
+    if ((ret = parse_inf(&package, target)))
+    {
+        SetLastError(ret);
+        return FALSE;
+    }
 
-    FIXME("not deleting %s\n", debugstr_w(target));
+    if (package.already_installed)
+        ret = driver_package_delete(&package);
+    else
+        ret = ERROR_FILE_NOT_FOUND;
 
-    return TRUE;
+    driver_package_cleanup(&package);
+
+    SetLastError(ret);
+    return !ret;
 }
 
 HRESULT WINAPI DriverStoreFindDriverPackageW(const WCHAR *inf_path, void *unk1,
