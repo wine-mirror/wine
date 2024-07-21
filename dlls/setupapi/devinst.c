@@ -6042,6 +6042,68 @@ static DWORD driver_package_install_to_store(const struct driver_package *packag
     return ret;
 }
 
+static DWORD driver_package_delete(const struct driver_package *package)
+{
+    WCHAR infdir_path[MAX_PATH];
+    WCHAR *inf_path;
+
+    inf_path = concat_path(package->dst_root, package->inf_name);
+
+    if (find_existing_inf(inf_path, infdir_path))
+    {
+        if (!DeleteFileW(infdir_path))
+            ERR("Failed to delete %s, error %lu.\n", debugstr_w(infdir_path), GetLastError());
+        PathRemoveExtensionW(infdir_path);
+        PathAddExtensionW(infdir_path, L".pnf");
+        if (!DeleteFileW(infdir_path))
+            ERR("Failed to delete %s, error %lu.\n", debugstr_w(infdir_path), GetLastError());
+    }
+    else
+    {
+        ERR("Driver package INF %s not found in INF directory!\n", debugstr_w(inf_path));
+    }
+
+    free(inf_path);
+
+    for (size_t i = 0; i < package->file_count; ++i)
+    {
+        const struct file *file = &package->files[i];
+        WCHAR *path;
+
+        if (file->subdir)
+            path = sprintf_path(L"%s\\%s\\%s", package->dst_root, file->subdir, file->filename);
+        else
+            path = sprintf_path(L"%s\\%s", package->dst_root, file->filename);
+
+        if (DeleteFileW(path))
+        {
+            for (;;)
+            {
+                *wcsrchr(path, '\\') = 0;
+                if (wcslen(path) == wcslen(package->dst_root))
+                    break;
+                if (!RemoveDirectoryW(path))
+                {
+                    if (GetLastError() != ERROR_DIR_NOT_EMPTY)
+                        ERR("Failed to remove %s, error %lu.\n", debugstr_w(path), GetLastError());
+                    break;
+                }
+            }
+        }
+        else
+        {
+            ERR("Failed to delete %s, error %lu.\n", debugstr_w(path), GetLastError());
+        }
+
+        free(path);
+    }
+
+    if (!RemoveDirectoryW(package->dst_root))
+        ERR("Failed to remove %s, error %lu.\n", debugstr_w(package->dst_root), GetLastError());
+
+    return ERROR_SUCCESS;
+}
+
 /***********************************************************************
  *      SetupCopyOEMInfW  (SETUPAPI.@)
  */
@@ -6238,6 +6300,45 @@ HRESULT WINAPI DriverStoreAddDriverPackageA(const char *inf_path, void *unk1,
         }
         *ret_len = len;
     }
+    free(inf_pathW);
+    return hr;
+}
+
+HRESULT WINAPI DriverStoreDeleteDriverPackageW(const WCHAR *inf_path, void *unk1, void *unk2)
+{
+    struct driver_package package;
+    DWORD ret;
+
+    TRACE("inf_path %s, unk1 %p, unk2 %p.\n", debugstr_w(inf_path), unk1, unk2);
+
+    if (unk1)
+        FIXME("Ignoring unk1 %p.\n", unk1);
+    if (unk2)
+        FIXME("Ignoring unk2 %p.\n", unk2);
+
+    if ((ret = parse_inf(&package, inf_path)))
+        return HRESULT_FROM_WIN32(ret);
+
+    if (package.already_installed)
+        ret = driver_package_delete(&package);
+    else
+        ret = ERROR_FILE_NOT_FOUND;
+
+    driver_package_cleanup(&package);
+    return HRESULT_FROM_WIN32(ret);
+}
+
+HRESULT WINAPI DriverStoreDeleteDriverPackageA(const char *inf_path, void *unk1, void *unk2)
+{
+    WCHAR *inf_pathW;
+    HRESULT hr;
+
+    TRACE("inf_path %s, unk1 %p, unk2 %p.\n", debugstr_a(inf_path), unk1, unk2);
+
+    if (!(inf_pathW = strdupAtoW(inf_path)))
+        return E_OUTOFMEMORY;
+
+    hr = DriverStoreDeleteDriverPackageW(inf_pathW, unk1, unk2);
     free(inf_pathW);
     return hr;
 }

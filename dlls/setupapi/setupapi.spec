@@ -210,6 +210,8 @@
 @ stdcall DoesUserHavePrivilege(wstr)
 @ stdcall DriverStoreAddDriverPackageA(ptr ptr ptr long ptr ptr)
 @ stdcall DriverStoreAddDriverPackageW(ptr ptr ptr long ptr ptr)
+@ stdcall DriverStoreDeleteDriverPackageA(ptr ptr ptr)
+@ stdcall DriverStoreDeleteDriverPackageW(ptr ptr ptr)
 @ stdcall DuplicateString(wstr)
 @ stdcall EnablePrivilege(wstr long)
 @ stub ExtensionPropSheetPageProc
