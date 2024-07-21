@@ -6110,6 +6110,7 @@ static DWORD driver_package_delete(const struct driver_package *package)
 BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD media_type,
         DWORD style, WCHAR *dest, DWORD buffer_size, DWORD *required_size, WCHAR **filepart)
 {
+    struct driver_package package;
     WCHAR target[MAX_PATH];
     DWORD size, ret;
 
@@ -6122,14 +6123,32 @@ BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD m
         return FALSE;
     }
 
-    /* check for a relative path */
-    if (!(*source == '\\' || (*source && source[1] == ':')))
+    if ((ret = parse_inf(&package, source)))
     {
-        SetLastError(ERROR_FILE_NOT_FOUND);
+        SetLastError(ret);
         return FALSE;
     }
 
-    ret = copy_inf(source, style, target);
+    if (package.already_installed)
+    {
+        if (find_existing_inf(source, target))
+        {
+            if (style & SP_COPY_NOOVERWRITE)
+                ret = ERROR_FILE_EXISTS;
+            else
+                ret = ERROR_SUCCESS;
+        }
+        else
+        {
+            ERR("Inf %s is already installed to driver store, but not found in C:\\windows\\inf!\n",
+                    debugstr_w(source));
+            ret = ERROR_FILE_NOT_FOUND;
+        }
+    }
+    else
+    {
+        ret = driver_package_install_to_store(&package, style, target);
+    }
 
     if (style & SP_COPY_DELETESOURCE)
         DeleteFileW(source);

@@ -3794,29 +3794,26 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     SetLastError(0xdeadbeef);
     memset(dest, 0xcc, sizeof(dest));
     ret = SetupCopyOEMInfA("winetest.inf", NULL, 0, SP_COPY_NOOVERWRITE, dest, sizeof(dest), NULL, &filepart);
-    todo_wine ok(ret == TRUE, "Got %d.\n", ret);
-    todo_wine ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
     ok(file_exists("winetest.inf"), "Expected source inf to exist.\n");
-    if (ret)
-    {
-        ok(file_exists(dest), "Expected dest file to exist.\n");
-        ok(is_in_inf_dir(dest), "Got unexpected path '%s'.\n", dest);
-        ok(filepart == strrchr(dest, '\\') + 1, "Got unexpected file part %s.\n", filepart);
+    ok(file_exists(dest), "Expected dest file to exist.\n");
+    ok(is_in_inf_dir(dest), "Got unexpected path '%s'.\n", dest);
+    ok(filepart == strrchr(dest, '\\') + 1, "Got unexpected file part %s.\n", filepart);
 
-        ret = SetupUninstallOEMInfA("bogus.inf", 0, NULL);
-        ok(!ret, "Got %d.\n", ret);
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
+    ret = SetupUninstallOEMInfA("bogus.inf", 0, NULL);
+    ok(!ret, "Got %d.\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got error %#lx.\n", GetLastError());
 
-        strcpy(pnf, dest);
-        *(strrchr(pnf, '.') + 1) = 'p';
-        SetLastError(0xdeadbeef);
-        ret = SetupUninstallOEMInfA(filepart, 0, NULL);
-        ok(ret == TRUE, "Got %d.\n", ret);
-        ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
-        ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
-        DeleteFileA(dest);
-        ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
-    }
+    strcpy(pnf, dest);
+    *(strrchr(pnf, '.') + 1) = 'p';
+    SetLastError(0xdeadbeef);
+    ret = SetupUninstallOEMInfA(filepart, 0, NULL);
+    ok(ret == TRUE, "Got %d.\n", ret);
+    ok(!GetLastError(), "Got error %#lx.\n", GetLastError());
+    ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
+    DeleteFileA(dest);
+    ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
 
     /* try SP_COPY_REPLACEONLY, dest does not exist */
     SetLastError(0xdeadbeef);
@@ -3912,10 +3909,10 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     *(strrchr(pnf, '.') + 1) = 'p';
 
     ret = SetupUninstallOEMInfA(strrchr(dest, '\\') + 1, 0, NULL);
-    todo_wine ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
-    todo_wine ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
+    ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
+    ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
     DeleteFileA(dest);
-    todo_wine ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
+    ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
 
     create_file("winetest.inf", inf_data1);
     SetLastError(0xdeadbeef);
@@ -3950,20 +3947,20 @@ static void test_copy_oem_inf(struct testsign_context *ctx)
     ok(strcmp(dest, orig_dest), "Expected INF files to be copied to different paths.\n");
 
     ret = SetupUninstallOEMInfA(strrchr(dest, '\\') + 1, 0, NULL);
-    todo_wine ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
-    todo_wine ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
+    ok(ret, "Failed to uninstall '%s', error %#lx.\n", dest, GetLastError());
+    ok(!file_exists(dest), "Expected inf '%s' not to exist.\n", dest);
     DeleteFileA(dest);
     strcpy(pnf, dest);
     *(strrchr(pnf, '.') + 1) = 'p';
-    todo_wine ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
+    ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
 
     ret = SetupUninstallOEMInfA(strrchr(orig_dest, '\\') + 1, 0, NULL);
-    todo_wine ok(ret, "Failed to uninstall '%s', error %#lx.\n", orig_dest, GetLastError());
-    todo_wine ok(!file_exists(orig_dest), "Expected inf '%s' not to exist.\n", dest);
+    ok(ret, "Failed to uninstall '%s', error %#lx.\n", orig_dest, GetLastError());
+    ok(!file_exists(orig_dest), "Expected inf '%s' not to exist.\n", dest);
     DeleteFileA(orig_dest);
     strcpy(pnf, dest);
     *(strrchr(pnf, '.') + 1) = 'p';
-    todo_wine ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
+    ok(!file_exists(pnf), "Expected pnf '%s' not to exist.\n", pnf);
 
     ret = DeleteFileA("winetest2.cat");
     ok(ret, "Failed to delete file, error %#lx.\n", GetLastError());
