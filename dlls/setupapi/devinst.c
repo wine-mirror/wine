@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "windef.h"
@@ -4694,10 +4695,27 @@ static BOOL version_is_compatible(const WCHAR *version)
     return !wcsnicmp(version, machine_ext, len);
 }
 
+static bool any_version_is_compatible(INFCONTEXT *ctx)
+{
+    WCHAR version[LINE_LEN];
+    DWORD j;
+
+    if (SetupGetFieldCount(ctx) < 2)
+        return true;
+
+    for (j = 2; SetupGetStringFieldW(ctx, j, version, ARRAY_SIZE(version), NULL); ++j)
+    {
+        if (version_is_compatible(version))
+            return true;
+    }
+
+    return false;
+}
+
 static void enum_compat_drivers_from_file(struct device *device, const WCHAR *path)
 {
     static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
-    WCHAR mfg_key[LINE_LEN], id[MAX_DEVICE_ID_LEN], version[MAX_DEVICE_ID_LEN];
+    WCHAR mfg_key[LINE_LEN], id[MAX_DEVICE_ID_LEN];
     DWORD i, j, k, driver_count = device->driver_count;
     struct driver driver, *drivers = device->drivers;
     INFCONTEXT ctx;
@@ -4717,20 +4735,8 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
         if (!SetupGetStringFieldW(&ctx, 1, mfg_key, ARRAY_SIZE(mfg_key), NULL))
             lstrcpyW(mfg_key, driver.manufacturer);
 
-        if (SetupGetFieldCount(&ctx) >= 2)
-        {
-            BOOL compatible = FALSE;
-            for (j = 2; SetupGetStringFieldW(&ctx, j, version, ARRAY_SIZE(version), NULL); ++j)
-            {
-                if (version_is_compatible(version))
-                {
-                    compatible = TRUE;
-                    break;
-                }
-            }
-            if (!compatible)
-                continue;
-        }
+        if (!any_version_is_compatible(&ctx))
+            continue;
 
         if (!SetupDiGetActualSectionToInstallW(hinf, mfg_key, driver.mfg_key,
                 ARRAY_SIZE(driver.mfg_key), NULL, NULL))
