@@ -862,6 +862,8 @@
 @ stdcall GetTapeStatus(ptr)
 @ stdcall -import GetTempFileNameA(str str long ptr)
 @ stdcall -import GetTempFileNameW(wstr wstr long ptr)
+@ stdcall -import GetTempPath2A(long ptr)
+@ stdcall -import GetTempPath2W(long ptr)
 @ stdcall -import GetTempPathA(long ptr)
 @ stdcall -import GetTempPathW(long ptr)
 @ stdcall -import GetThreadContext(long ptr)
