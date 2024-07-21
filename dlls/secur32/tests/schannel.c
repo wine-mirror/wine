@@ -1275,24 +1275,30 @@ static void test_communication(void)
     if (status == SEC_E_OK)
     {
         ok(cipher.dwProtocol == 0x303, "got %lx\n", cipher.dwProtocol);
-        todo_wine ok(cipher.dwCipherSuite == 0xc030, "got %lx\n", cipher.dwCipherSuite);
-        todo_wine ok(cipher.dwBaseCipherSuite == 0xc030, "got %lx\n", cipher.dwBaseCipherSuite);
-        ok(!wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"),
+        todo_wine
+        ok(cipher.dwCipherSuite == 0xc030 || broken(cipher.dwCipherSuite == 0x9f) /* <= win8 */,
+           "got %lx\n", cipher.dwCipherSuite);
+        todo_wine
+        ok(cipher.dwBaseCipherSuite == 0xc030 || broken(cipher.dwCipherSuite == 0x9f) /* <= win8 */,
+           "got %lx\n", cipher.dwBaseCipherSuite);
+        ok(!wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384") ||
+           !wcscmp(cipher.szCipherSuite, L"TLS_DHE_RSA_WITH_AES_256_GCM_SHA384") /* <= win8 */,
            "got %s\n", wine_dbgstr_w(cipher.szCipherSuite));
         ok(!wcscmp(cipher.szCipher, L"AES"), "got %s\n", wine_dbgstr_w(cipher.szCipher));
         ok(cipher.dwCipherLen == 256, "got %lu\n", cipher.dwCipherLen);
         ok(cipher.dwCipherBlockLen == 16, "got %lu\n", cipher.dwCipherBlockLen);
         ok(!cipher.szHash[0], "got %s\n", wine_dbgstr_w(cipher.szHash));
         ok(!cipher.dwHashLen, "got %lu\n", cipher.dwHashLen);
-        ok(!wcscmp(cipher.szExchange, L"ECDH") || !wcscmp(cipher.szExchange, L"ECDH_P256"), /* < win10 */
-           "got %s\n", wine_dbgstr_w(cipher.szExchange));
-        ok(cipher.dwMinExchangeLen == 0 || cipher.dwMinExchangeLen == 256,  /* < win10 */
-           "got %lu\n", cipher.dwMinExchangeLen);
-        ok(cipher.dwMaxExchangeLen == 65536 || cipher.dwMaxExchangeLen == 256, /* < win10 */
-           "got %lu\n", cipher.dwMaxExchangeLen);
+        ok(!wcscmp(cipher.szExchange, L"ECDH") || !wcscmp(cipher.szExchange, L"ECDH_P256") ||
+           !wcscmp(cipher.szExchange, L"DH") /* <= win8 */, "got %s\n", wine_dbgstr_w(cipher.szExchange));
+        ok(cipher.dwMinExchangeLen == 0 || cipher.dwMinExchangeLen == 256 /* < win10 */ ||
+           cipher.dwMinExchangeLen == 1024 /* <= win8 */, "got %lu\n", cipher.dwMinExchangeLen);
+        ok(cipher.dwMaxExchangeLen == 65536 || cipher.dwMaxExchangeLen == 256 /* < win10 */ ||
+           cipher.dwMinExchangeLen == 1024 /* <= win8 */, "got %lu\n", cipher.dwMaxExchangeLen);
         ok(!wcscmp(cipher.szCertificate, L"RSA"), "got %s\n", wine_dbgstr_w(cipher.szCertificate));
-        todo_wine ok(cipher.dwKeyType == 0x1d || cipher.dwKeyType == 0x17, /* < win10 */
-                     "got %#lx\n", cipher.dwKeyType);
+        todo_wine
+        ok(cipher.dwKeyType == 0x1d || cipher.dwKeyType == 0x17 /* < win10 */ ||
+           broken(!cipher.dwKeyType) /* <= win8 */, "got %#lx\n", cipher.dwKeyType);
     }
 
     status = QueryContextAttributesA(&context, SECPKG_ATTR_KEY_INFO, &key_info);
@@ -1453,7 +1459,8 @@ static void test_communication(void)
             ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, &context2, &buffers[0], &attrs, NULL);
         buffers[1].pBuffers[0].cbBuffer = buf_size;
     }
-    ok (status == SEC_E_ALGORITHM_MISMATCH, "got %08lx\n", status);
+    ok(status == SEC_E_ALGORITHM_MISMATCH || broken(status == SEC_E_CERT_EXPIRED) /* < win10 1507 */,
+       "got %08lx\n", status);
 
 done:
     DeleteSecurityContext(&context);
