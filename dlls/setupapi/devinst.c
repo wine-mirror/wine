@@ -5471,46 +5471,22 @@ static BOOL find_existing_inf(const WCHAR *source, WCHAR *target)
 /* arbitrary limit not related to what native actually uses */
 #define OEM_INDEX_LIMIT 999
 
-/***********************************************************************
- *      SetupCopyOEMInfW  (SETUPAPI.@)
- */
-BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD media_type,
-        DWORD style, WCHAR *dest, DWORD buffer_size, DWORD *required_size, WCHAR **filepart)
+static DWORD copy_inf(const WCHAR *source, DWORD style, WCHAR *ret_path)
 {
     WCHAR target[MAX_PATH], catalog_file[MAX_PATH], pnf_path[MAX_PATH], *p;
-    BOOL ret = FALSE;
     FILE *pnf_file;
     unsigned int i;
-    DWORD size;
     HINF hinf;
-
-    TRACE("source %s, location %s, media_type %lu, style %#lx, dest %p, buffer_size %lu, required_size %p, filepart %p.\n",
-            debugstr_w(source), debugstr_w(location), media_type, style, dest, buffer_size, required_size, filepart);
-
-    if (!source)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    /* check for a relative path */
-    if (!(*source == '\\' || (*source && source[1] == ':')))
-    {
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
 
     if (find_existing_inf(source, target))
     {
         TRACE("Found existing INF %s.\n", debugstr_w(target));
+
+        wcscpy(ret_path, target);
         if (style & SP_COPY_NOOVERWRITE)
-        {
-            SetLastError(ERROR_FILE_EXISTS);
-            ret = FALSE;
-        }
+            return ERROR_FILE_EXISTS;
         else
-            ret = TRUE;
-        goto done;
+            return ERROR_SUCCESS;
     }
 
     GetWindowsDirectoryW(target, ARRAY_SIZE(target));
@@ -5528,15 +5504,12 @@ BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD m
                 break;
         }
         if (i == OEM_INDEX_LIMIT)
-        {
-            SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            return FALSE;
-        }
+            return ERROR_FILENAME_EXCED_RANGE;
     }
 
     hinf = SetupOpenInfFileW(source, NULL, INF_STYLE_WIN4, NULL);
     if (hinf == INVALID_HANDLE_VALUE)
-        return FALSE;
+        return GetLastError();
 
     if (SetupGetLineTextW(NULL, hinf, L"Version", L"CatalogFile",
             catalog_file, ARRAY_SIZE(catalog_file), NULL))
@@ -5561,14 +5534,14 @@ BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD m
         if (!CryptCATAdminAcquireContext(&handle, &msguid, 0))
         {
             ERR("Failed to acquire security context, error %lu.\n", GetLastError());
-            return FALSE;
+            return GetLastError();
         }
 
         if (!(cat = CryptCATAdminAddCatalog(handle, source_cat, catalog_file, 0)))
         {
             ERR("Failed to add catalog, error %lu.\n", GetLastError());
             CryptCATAdminReleaseContext(handle, 0);
-            return FALSE;
+            return GetLastError();
         }
 
         CryptCATAdminReleaseCatalogContext(handle, cat, 0);
@@ -5579,8 +5552,8 @@ BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD m
         SetupCloseInfFile(hinf);
     }
 
-    if (!(ret = CopyFileW(source, target, TRUE)))
-        return ret;
+    if (!CopyFileW(source, target, TRUE))
+        return GetLastError();
 
     wcscpy(pnf_path, target);
     PathRemoveExtensionW(pnf_path);
@@ -5592,12 +5565,45 @@ BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD m
         fclose(pnf_file);
     }
 
-done:
+    wcscpy(ret_path, target);
+    return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *      SetupCopyOEMInfW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupCopyOEMInfW(const WCHAR *source, const WCHAR *location, DWORD media_type,
+        DWORD style, WCHAR *dest, DWORD buffer_size, DWORD *required_size, WCHAR **filepart)
+{
+    WCHAR target[MAX_PATH];
+    DWORD size, ret;
+
+    TRACE("source %s, location %s, media_type %lu, style %#lx, dest %p, buffer_size %lu, required_size %p, filepart %p.\n",
+            debugstr_w(source), debugstr_w(location), media_type, style, dest, buffer_size, required_size, filepart);
+
+    if (!source)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* check for a relative path */
+    if (!(*source == '\\' || (*source && source[1] == ':')))
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    ret = copy_inf(source, style, target);
+
     if (style & SP_COPY_DELETESOURCE)
         DeleteFileW(source);
 
     size = wcslen(target) + 1;
-    if (dest)
+    if (required_size)
+        *required_size = size;
+
+    if ((!ret || ret == ERROR_FILE_EXISTS) && dest)
     {
         if (buffer_size >= size)
         {
@@ -5608,16 +5614,12 @@ done:
         else
         {
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            ret = FALSE;
+            return FALSE;
         }
     }
 
-    if (required_size)
-        *required_size = size;
-    if (ret)
-        SetLastError(ERROR_SUCCESS);
-
-    return ret;
+    SetLastError(ret);
+    return !ret;
 }
 
 /***********************************************************************
