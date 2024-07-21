@@ -208,6 +208,8 @@
 @ stub DelimStringToMultiSz
 @ stub DestroyTextFileReadBuffer
 @ stdcall DoesUserHavePrivilege(wstr)
+@ stdcall DriverStoreAddDriverPackageA(ptr ptr ptr long ptr ptr)
+@ stdcall DriverStoreAddDriverPackageW(ptr ptr ptr long ptr ptr)
 @ stdcall DuplicateString(wstr)
 @ stdcall EnablePrivilege(wstr long)
 @ stub ExtensionPropSheetPageProc
