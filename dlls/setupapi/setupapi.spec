@@ -212,6 +212,8 @@
 @ stdcall DriverStoreAddDriverPackageW(ptr ptr ptr long ptr ptr)
 @ stdcall DriverStoreDeleteDriverPackageA(ptr ptr ptr)
 @ stdcall DriverStoreDeleteDriverPackageW(ptr ptr ptr)
+@ stdcall DriverStoreFindDriverPackageA(ptr ptr ptr long ptr ptr ptr)
+@ stdcall DriverStoreFindDriverPackageW(ptr ptr ptr long ptr ptr ptr)
 @ stdcall DuplicateString(wstr)
 @ stdcall EnablePrivilege(wstr long)
 @ stub ExtensionPropSheetPageProc

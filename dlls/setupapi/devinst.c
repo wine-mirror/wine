@@ -6203,6 +6203,114 @@ BOOL WINAPI SetupUninstallOEMInfW(const WCHAR *inf_file, DWORD flags, void *rese
     return TRUE;
 }
 
+HRESULT WINAPI DriverStoreFindDriverPackageW(const WCHAR *inf_path, void *unk1,
+        void *unk2, WORD architecture, void *unk4, WCHAR *ret_path, DWORD *ret_len)
+{
+    struct driver_package package;
+    SYSTEM_INFO system_info;
+    HRESULT hr;
+    DWORD ret;
+
+    TRACE("inf_path %s, unk1 %p, unk2 %p, architecture %#x, unk4 %p, ret_path %p, ret_len %p.\n",
+            debugstr_w(inf_path), unk1, unk2, architecture, unk4, ret_path, ret_len);
+
+    if (unk1)
+        FIXME("Ignoring unk1 %p.\n", unk1);
+    if (unk2)
+        FIXME("Ignoring unk2 %p.\n", unk2);
+    if (unk4)
+        FIXME("Ignoring unk4 %p.\n", unk4);
+
+    if (*ret_len < MAX_PATH)
+    {
+        FIXME("Length %lu too short, returning E_INVALIDARG.\n", *ret_len);
+        return E_INVALIDARG;
+    }
+
+    GetSystemInfo(&system_info);
+    if (architecture != system_info.wProcessorArchitecture)
+    {
+        FIXME("Wrong architecture %#x, expected %#x.\n", architecture, system_info.wProcessorArchitecture);
+        return E_INVALIDARG;
+    }
+
+    if ((ret = parse_inf(&package, inf_path)))
+        return HRESULT_FROM_WIN32(ret);
+
+    if (package.already_installed)
+    {
+        DWORD len = wcslen(package.dst_root) + 1 + wcslen(package.inf_name) + 1;
+
+        if (len > *ret_len)
+        {
+            FIXME("Buffer too small.\n");
+            /* FIXME: What do we return here? */
+            hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        }
+        else
+        {
+            swprintf(ret_path, len, L"%s\\%s", package.dst_root, package.inf_name);
+            hr = S_OK;
+        }
+        *ret_len = len;
+    }
+    else
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+        *ret_path = 0;
+        *ret_len = 1;
+    }
+
+    driver_package_cleanup(&package);
+    return hr;
+}
+
+HRESULT WINAPI DriverStoreFindDriverPackageA(const char *inf_path, void *unk1,
+        void *unk2, WORD architecture, void *unk4, char *ret_path, DWORD *ret_len)
+{
+    WCHAR ret_pathW[MAX_PATH];
+    WCHAR *inf_pathW;
+    DWORD lenW, len;
+    HRESULT hr;
+
+    TRACE("inf_path %s, unk1 %p, unk2 %p, architecture %#x, unk4 %p, ret_path %p, ret_len %p.\n",
+            debugstr_a(inf_path), unk1, unk2, architecture, unk4, ret_path, ret_len);
+
+    if (*ret_len < MAX_PATH)
+    {
+        FIXME("Length %lu too short, returning E_INVALIDARG.\n", *ret_len);
+        return E_INVALIDARG;
+    }
+
+    if (!(inf_pathW = strdupAtoW(inf_path)))
+        return E_OUTOFMEMORY;
+
+    lenW = ARRAY_SIZE(ret_pathW);
+    hr = DriverStoreFindDriverPackageW(inf_pathW, unk1, unk2, architecture, unk4, ret_pathW, &lenW);
+    if (!hr)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, ret_pathW, lenW, NULL, 0, NULL, NULL);
+        if (len > *ret_len)
+        {
+            FIXME("Buffer too small.\n");
+            /* FIXME: What do we return here? */
+            hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        }
+        else
+        {
+            WideCharToMultiByte(CP_ACP, 0, ret_pathW, lenW, ret_path, len, NULL, NULL);
+        }
+        *ret_len = len;
+    }
+    else
+    {
+        *ret_path = 0;
+        *ret_len = 1;
+    }
+    free(inf_pathW);
+    return hr;
+}
+
 HRESULT WINAPI DriverStoreAddDriverPackageW(const WCHAR *inf_path, void *unk1,
         void *unk2, WORD architecture, WCHAR *ret_path, DWORD *ret_len)
 {
