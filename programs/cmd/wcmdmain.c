@@ -2922,9 +2922,11 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
         /* In a for loop, the DO command will follow a close bracket followed by
            whitespace, followed by DO, ie closeBracket inserts a NULL entry, curLen
            is then 0, and all whitespace is skipped                                */
-        } else if (inFor && WCMD_keyword_ws_found(L"do", curPos)) {
+        } else if (inFor && lastWasIn && WCMD_keyword_ws_found(L"do", curPos)) {
 
           WINE_TRACE("Found 'DO '\n");
+          inFor = FALSE;
+          lastWasIn = FALSE;
           lastWasDo = TRUE;
           acceptCommand = TRUE;
           onlyWhiteSpace = TRUE;
