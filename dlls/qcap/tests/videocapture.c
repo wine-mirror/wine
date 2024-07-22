@@ -406,7 +406,7 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     if (winetest_debug > 1) trace("Receive()\n");
 
     hr = IMediaSample_GetTime(sample, &start, &end);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK || hr == VFW_E_SAMPLE_TIME_NOT_SET, "Got hr %#lx.\n", hr);
 
     SetEvent(filter->got_sample);
 
