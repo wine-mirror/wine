@@ -3946,7 +3946,7 @@ static HRESULT HTMLWindow_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid
     return S_OK;
 }
 
-static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex)
+static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex, HTMLInnerWindow **script_global)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
     return lock_document_mode(This->doc);

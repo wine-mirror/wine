@@ -296,7 +296,7 @@ sync_test("builtin_toString", function() {
     if(clientRects) test("clientRect", clientRects[0], "ClientRect", null, true);
     if(clientRects) test("clientRects", clientRects, "ClientRectList");
     if(currentStyle) test("currentStyle", currentStyle, "MSCurrentStyleCSSProperties", null, true);
-    if(v >= 11 /* todo_wine */) test("document", document, v < 11 ? "Document" : "HTMLDocument", null, true);
+    if(v >= 11 /* todo_wine */) test("document", document, v < 11 ? "Document" : "HTMLDocument");
     test("elements", document.getElementsByTagName("body"), "HTMLCollection", null, true);
     test("history", window.history, "History");
     test("implementation", document.implementation, "DOMImplementation");
@@ -379,7 +379,6 @@ sync_test("builtin_obj", function() {
     }catch(ex) {
         e = ex.number;
     }
-    todo_wine_if(v >= 9).
     ok(e === (v < 9 ? 0xa0005 : 0x0ffff) - 0x80000000, "[f.call(Object, 'div')] e = " + e);
 
     e = 0;
@@ -388,7 +387,6 @@ sync_test("builtin_obj", function() {
     }catch(ex) {
         e = ex.number;
     }
-    todo_wine_if(v >= 9).
     ok(e === (v < 9 ? 0xa0005 : 0x0ffff) - 0x80000000, "[f.call(null, 'div')] e = " + e);
 
     var elem1 = f.call(document, "div");

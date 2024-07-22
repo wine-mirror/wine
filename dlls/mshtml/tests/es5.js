@@ -41,6 +41,15 @@ var JS_E_ARRAYBUFFER_EXPECTED = 0x800a15e4;
 
 var tests = [];
 
+function check_enum(o, name) {
+    var ret = 0;
+    for(var iter in o) {
+        if(iter == name) ret++;
+    }
+    ok(ret < 2, name + " enumerated " + ret + " times");
+    return ret != 0;
+}
+
 sync_test("script vars", function() {
     function foo() { }
     foo.prototype.foo = 13;
@@ -2637,14 +2646,6 @@ sync_test("screen", function() {
     o.prop2 = 3;
     ok(!("prop2" in o), "o.prop2 = " + o.prop2);
 
-    function check_enum(o, name) {
-        var ret = 0;
-        for(var iter in o) {
-            if(iter == name) ret++;
-        }
-        ok(ret < 2, name + " enumerated " + ret + " times");
-        return ret != 0;
-    }
     ok(check_enum(o, "width"), "width not enumerated");
     ok(check_enum(o, "height"), "height not enumerated");
     ok(check_enum(o, "prop"), "prop not enumerated");
@@ -2691,4 +2692,36 @@ async_test("script_global", function() {
 
     iframe.src = "about:blank";
     document.body.appendChild(iframe);
+});
+
+sync_test("form_as_prop", function() {
+    document.body.innerHTML = '<form id="testid" name="testname"></form>';
+    var form = document.body.firstChild;
+    var o = Object.create(document);
+
+    ok(document.testid === form, "document.testid = " + document.testid);
+    ok(o.testid === form, "o.testid = " + o.testid);
+    ok(document.hasOwnProperty("testid"), 'document.hasOwnProperty("testid") = ' + document.hasOwnProperty("testid"));
+    ok(!o.hasOwnProperty("testid"), 'o.hasOwnProperty("testid") = ' + o.hasOwnProperty("testid"));
+    test_own_data_prop_desc(document, "testid", true, true, true);
+
+    ok(document.testname === form, "document.testname = " + document.testname);
+    ok(o.testname === form, "o.testname = " + o.testname);
+    ok(document.hasOwnProperty("testname"), 'document.hasOwnProperty("testname") = ' + document.hasOwnProperty("testname"));
+    ok(!o.hasOwnProperty("testname"), 'o.hasOwnProperty("testname") = ' + o.hasOwnProperty("testname"));
+    test_own_data_prop_desc(document, "testname", true, true, true);
+    todo_wine.
+    ok(!check_enum(document, "testid"), "testid enumerated in document");
+    ok(check_enum(document, "testname"), "testid not enumerated in document");
+    todo_wine.
+    ok(!check_enum(o, "testid"), "testid enumerated in o");
+    ok(check_enum(o, "testname"), "testid not enumerated in o");
+
+    document.body.innerHTML = '';
+    ok(!("testid" in o), "testid is in o");
+    ok(!("testname" in o), "testname is in o");
+    ok(!("testid" in document), "testid is in document");
+    ok(!("testname" in document), "testname is in document");
+    ok(!document.hasOwnProperty("testid"), 'document.hasOwnProperty("testid") = ' + document.hasOwnProperty("testid"));
+    ok(!document.hasOwnProperty("testname"), 'document.hasOwnProperty("testname") = ' + document.hasOwnProperty("testname"));
 });

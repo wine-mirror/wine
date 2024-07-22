@@ -1734,13 +1734,14 @@ static dispex_data_t *ensure_dispex_info(DispatchEx *dispex, dispex_static_data_
 
 static BOOL ensure_real_info(DispatchEx *dispex)
 {
+    HTMLInnerWindow *script_global = NULL;
     compat_mode_t compat_mode;
 
     if(dispex->info != dispex->info->desc->delayed_init_info)
         return TRUE;
 
-    compat_mode = dispex->info->desc->vtbl->get_compat_mode(dispex);
-    dispex->info = ensure_dispex_info(dispex, dispex->info->desc, compat_mode, NULL);
+    compat_mode = dispex->info->desc->vtbl->get_compat_mode(dispex, &script_global);
+    dispex->info = ensure_dispex_info(dispex, dispex->info->desc, compat_mode, script_global);
     return dispex->info != NULL;
 }
 

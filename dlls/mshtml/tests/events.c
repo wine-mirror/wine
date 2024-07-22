@@ -4239,7 +4239,6 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     /* jscript prop on prototype chain */
     bstr = SysAllocString(L"hasOwnProperty");
     hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &bstr, 1, 0, &has_own_prop_id);
-    todo_wine_if(document_mode >= 9)
     ok(hres == (document_mode < 9 ? DISP_E_UNKNOWNNAME : S_OK), "GetIDsOfNames(hasOwnProperty) returned: %08lx\n", hres);
     SysFreeString(bstr);
 

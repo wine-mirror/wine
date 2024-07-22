@@ -398,7 +398,7 @@ typedef struct {
     HRESULT (*disp_invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
 
     /* Used by objects that want to delay their compat mode initialization until actually needed */
-    compat_mode_t (*get_compat_mode)(DispatchEx*);
+    compat_mode_t (*get_compat_mode)(DispatchEx*,HTMLInnerWindow**);
 
     /* Used by objects that want to populate some dynamic props on initialization */
     HRESULT (*populate_props)(DispatchEx*);
