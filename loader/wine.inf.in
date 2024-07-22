@@ -2116,7 +2116,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,windowscodecs.dll,1
 11,,winegstreamer.dll,1
 55,,wineps.drv,1
-11,,wineqtdecoder.dll,1
 11,,winevulkan.dll,1
 55,,winprint.dll,1
 11,,wintrust.dll,1
