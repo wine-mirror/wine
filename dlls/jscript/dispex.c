@@ -369,41 +369,44 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
 
 static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
 {
-    dispex_prop_t *prop, *del=NULL;
+    dispex_prop_t *prot_prop, *own_prop;
     HRESULT hres;
 
-    hres = find_prop_name(This, hash, name, case_insens, &prop);
+    hres = find_prop_name(This, hash, name, case_insens, &own_prop);
     if(FAILED(hres))
         return hres;
-    if(prop && prop->type==PROP_DELETED) {
-        del = prop;
-    } else if(prop) {
-        fix_protref_prop(This, prop);
-        *ret = prop;
+    if(own_prop && own_prop->type != PROP_DELETED) {
+        fix_protref_prop(This, own_prop);
+        *ret = own_prop;
         return S_OK;
     }
 
     if(This->prototype) {
-        hres = find_prop_name_prot(This->prototype, hash, name, case_insens, &prop);
+        hres = find_prop_name_prot(This->prototype, hash, name, case_insens, &prot_prop);
         if(FAILED(hres))
             return hres;
-        if(prop && prop->type != PROP_DELETED) {
-            if(del) {
-                del->type = PROP_PROTREF;
-                del->u.ref = prop - This->prototype->props;
-                prop = del;
+        if(prot_prop && prot_prop->type != PROP_DELETED) {
+            if(own_prop && case_insens && wcscmp(prot_prop->name, own_prop->name)) {
+                hres = find_prop_name(This, prot_prop->hash, prot_prop->name, FALSE, &own_prop);
+                if(FAILED(hres))
+                    return hres;
+                if(own_prop && own_prop->type != PROP_DELETED) {
+                    *ret = own_prop;
+                    return S_OK;
+                }
+            }
+            if(own_prop) {
+                own_prop->type = PROP_PROTREF;
+                own_prop->u.ref = prot_prop - This->prototype->props;
             }else {
-                prop = alloc_protref(This, prop->name, prop - This->prototype->props);
-                if(!prop)
+                own_prop = alloc_protref(This, prot_prop->name, prot_prop - This->prototype->props);
+                if(!own_prop)
                     return E_OUTOFMEMORY;
             }
-
-            *ret = prop;
-            return S_OK;
         }
     }
 
-    *ret = del;
+    *ret = own_prop;
     return S_OK;
 }
 
