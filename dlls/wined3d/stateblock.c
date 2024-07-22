@@ -2266,7 +2266,8 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const stru
     stateblock->changed.store_stream_offset = 1;
     list_init(&stateblock->changed.changed_lights);
 
-    wined3d_stateblock_invalidate_push_constants(stateblock);
+    if (type == WINED3D_SBT_PRIMARY)
+        wined3d_stateblock_invalidate_push_constants(stateblock);
 
     if (type == WINED3D_SBT_RECORDED || type == WINED3D_SBT_PRIMARY)
         return WINED3D_OK;
