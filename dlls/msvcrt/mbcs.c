@@ -3266,6 +3266,17 @@ size_t CDECL mbrtowc(wchar_t *dst, const char *str,
     return len;
 }
 
+static inline int get_utf8_char_len(char ch)
+{
+    if((ch&0xf8) == 0xf0)
+        return 4;
+    else if((ch&0xf0) == 0xe0)
+        return 3;
+    else if((ch&0xe0) == 0xc0)
+        return 2;
+    return 1;
+}
+
 /*********************************************************************
  *		_mbstowcs_l(MSVCRT.@)
  */
@@ -3311,7 +3322,10 @@ size_t CDECL _mbstowcs_l(wchar_t *wcstr, const char *mbstr,
         if(mbstr[size] == '\0')
             break;
 
-        size += (_isleadbyte_l((unsigned char)mbstr[size], locale) ? 2 : 1);
+        if (locinfo->lc_codepage == CP_UTF8)
+            size += get_utf8_char_len(mbstr[size]);
+        else
+            size += (_isleadbyte_l((unsigned char)mbstr[size], locale) ? 2 : 1);
     }
 
     if(size) {

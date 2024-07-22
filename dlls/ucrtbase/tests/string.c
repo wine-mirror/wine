@@ -815,6 +815,28 @@ static void test__mbsncpy_s(void)
     _setmbcp(oldcp);
 }
 
+static void test_mbstowcs(void)
+{
+    static const char mbs[] = { 0xc3, 0xa9, 0 };
+    WCHAR wcs[2];
+    size_t ret;
+
+    if (!setlocale(LC_ALL, "en_US.UTF-8"))
+    {
+        win_skip("skipping UTF8 mbstowcs tests\n");
+        return;
+    }
+
+    ret = mbstowcs(NULL, mbs, 0);
+    ok(ret == 1, "mbstowcs returned %Id\n", ret);
+    memset(wcs, 0xfe, sizeof(wcs));
+    ret = mbstowcs(wcs, mbs, 1);
+    ok(ret == 1, "mbstowcs returned %Id\n", ret);
+    ok(wcs[0] == 0xe9, "wcsstring[0] = %x\n", wcs[0]);
+    ok(wcs[1] == 0xfefe, "wcsstring[1] = %x\n", wcs[1]);
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(string)
 {
     ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
@@ -834,4 +856,5 @@ START_TEST(string)
     test__mbbtype_l();
     test_strcmp();
     test__mbsncpy_s();
+    test_mbstowcs();
 }
