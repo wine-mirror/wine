@@ -4366,6 +4366,45 @@ static void test_PrefetchVirtualMemory(void)
         "PrefetchVirtualMemory unexpected status on 2 page-aligned entries: %ld\n", GetLastError() );
 }
 
+static void test_ReadProcessMemory(void)
+{
+    BYTE buf[0x2000];
+    DWORD old_prot;
+    SIZE_T copied;
+    HANDLE hproc;
+    void *ptr;
+    BOOL ret;
+
+    ret = DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+            &hproc, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "DuplicateHandle failed %lu\n", GetLastError());
+    ptr = VirtualAlloc(NULL, 2 * si.dwPageSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    ok(ptr != NULL, "Virtual failed %lu\n", GetLastError());
+    ret = VirtualProtect(((BYTE *)ptr) + si.dwPageSize, si.dwPageSize, PAGE_NOACCESS, &old_prot);
+    ok(ret, "VirtualProtect failed %lu\n", GetLastError());
+
+    copied = 1;
+    ret = ReadProcessMemory(GetCurrentProcess(), ptr, buf, 2 * si.dwPageSize, &copied);
+    ok(!ret, "ReadProcessMemory succeeded\n");
+    ok(!copied, "copied = %Id\n", copied);
+    ok(GetLastError() == ERROR_PARTIAL_COPY, "GetLastError() = %lu\n", GetLastError());
+
+    ret = ReadProcessMemory(GetCurrentProcess(), ptr, buf, si.dwPageSize, &copied);
+    ok(ret, "ReadProcessMemory failed %lu\n", GetLastError());
+    ok(copied == si.dwPageSize, "copied = %Id\n", copied);
+
+    ret = ReadProcessMemory(hproc, ptr, buf, 2 * si.dwPageSize, &copied);
+    todo_wine ok(!ret, "ReadProcessMemory succeeded\n");
+
+    ret = ReadProcessMemory(hproc, ptr, buf, si.dwPageSize, &copied);
+    ok(ret, "ReadProcessMemory failed %lu\n", GetLastError());
+    ok(copied == si.dwPageSize, "copied = %Id\n", copied);
+
+    ret = VirtualFree(ptr, 0, MEM_RELEASE);
+    ok(ret, "VirtualFree failed %lu\n", GetLastError());
+    CloseHandle(hproc);
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -4447,6 +4486,7 @@ START_TEST(virtual)
     test_IsBadCodePtr();
     test_write_watch();
     test_PrefetchVirtualMemory();
+    test_ReadProcessMemory();
 #if defined(__i386__) || defined(__x86_64__)
     test_stack_commit();
 #endif
