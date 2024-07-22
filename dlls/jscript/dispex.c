@@ -290,10 +290,8 @@ static HRESULT update_external_prop(jsdisp_t *obj, dispex_prop_t *prop, const st
     return S_OK;
 }
 
-static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_insens, dispex_prop_t **ret)
+static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_insens, dispex_prop_t *prop, dispex_prop_t **ret)
 {
-    dispex_prop_t *prop;
-
     if(This->builtin_info->lookup_prop) {
         struct property_info desc;
         HRESULT hres;
@@ -304,17 +302,25 @@ static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_i
             if(FAILED(hres))
                 return hres;
 
-            prop = alloc_prop(This, desc.name ? desc.name : name, PROP_DELETED, 0);
-            if(!prop)
+            if(prop && desc.name && wcscmp(prop->name, desc.name)) {
+                prop = lookup_dispex_prop(This, string_hash(desc.name), desc.name, case_insens);
+                if(prop && prop->type != PROP_EXTERN && prop->type != PROP_DELETED && prop->type != PROP_PROTREF) {
+                    *ret = prop;
+                    return S_OK;
+                }
+            }
+            if(!prop && !(prop = alloc_prop(This, desc.name ? desc.name : name, PROP_DELETED, 0)))
                 return E_OUTOFMEMORY;
 
             hres = update_external_prop(This, prop, &desc);
             *ret = prop;
             return hres;
+        }else if(prop && prop->type == PROP_EXTERN) {
+            prop->type = PROP_DELETED;
         }
     }
 
-    *ret = NULL;
+    *ret = prop;
     return S_OK;
 }
 
@@ -326,7 +332,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
 
     if(!prop)
         prop = lookup_dispex_prop(This, hash, name, case_insens);
-    if(prop && prop->type != PROP_DELETED) {
+    if(prop && prop->type != PROP_DELETED && prop->type != PROP_EXTERN) {
         *ret = prop;
         return S_OK;
     }
@@ -362,10 +368,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
         return S_OK;
     }
 
-    hres = find_external_prop(This, name, case_insens, ret);
-    if(hres == S_OK && !*ret)
-        *ret = prop;
-    return hres;
+    return find_external_prop(This, name, case_insens, prop, ret);
 }
 
 static HRESULT find_prop_name_prot(jsdisp_t *This, unsigned hash, const WCHAR *name, BOOL case_insens,
