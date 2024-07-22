@@ -149,7 +149,7 @@ sync_test("builtin_toString", function() {
         [ "figure",          "" ],
         [ "font",            "Font", -1 ],
         [ "footer",          "" ],
-        [ "form",            "Form", -1 ],
+        [ "form",            "Form" ],
         [ "frame",           "Frame", -1 ],
         [ "frameset",        "FrameSet", -1 ],
         [ "h1",              "Heading", -1 ],

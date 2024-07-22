@@ -846,31 +846,6 @@ static HRESULT HTMLFormElement_get_dispid(DispatchEx *dispex, const WCHAR *name,
     return hres;
 }
 
-static HRESULT HTMLFormElement_dispex_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    HTMLFormElement *This = impl_from_DispatchEx(dispex);
-    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
-    nsIDOMHTMLCollection *elements;
-    nsresult nsres;
-    UINT32 len = 0;
-    WCHAR buf[11];
-
-    nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
-    if(NS_FAILED(nsres))
-        return map_nsresult(nsres);
-
-    nsres = nsIDOMHTMLCollection_GetLength(elements, &len);
-    nsIDOMHTMLCollection_Release(elements);
-    if(NS_FAILED(nsres))
-        return map_nsresult(nsres);
-
-    if(idx >= len)
-        return DISP_E_MEMBERNOTFOUND;
-
-    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
-    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT HTMLFormElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -920,7 +895,7 @@ static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
         .traverse       = HTMLFormElement_traverse,
         .unlink         = HTMLFormElement_unlink,
         .get_dispid     = HTMLFormElement_get_dispid,
-        .get_name       = HTMLFormElement_dispex_get_name,
+        .get_prop_desc  = dispex_index_prop_desc,
         .invoke         = HTMLFormElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
