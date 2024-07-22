@@ -1943,7 +1943,7 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface)
         }
         else
         {
-            graph_start(graph, 0);
+            hr = graph_start(graph, 0);
         }
     }
 
