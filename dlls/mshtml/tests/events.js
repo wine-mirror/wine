@@ -362,7 +362,6 @@ sync_test("stop_propagation", function() {
     div2.removeEventListener("click", stop_immediate_propagation, true);
     calls = "";
     div2.click();
-    todo_wine.
     ok(calls === "cancelBubble(false),div1.click(capture),cancelBubble[1],stop,div2.click(capture),immediateStop and cancelBubble(false),cancelBubble[2],",  // weird native behavior
        "calls = " + calls);
 

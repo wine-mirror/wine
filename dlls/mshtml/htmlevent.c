@@ -4265,8 +4265,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
         }
     }
 
-    for(listener = listeners; !event->stop_immediate_propagation
-            && listener < listeners + listeners_cnt; listener++) {
+    for(listener = listeners; listener < listeners + listeners_cnt; listener++) {
         if(listener->type != LISTENER_TYPE_ATTACHED) {
             DISPID named_arg = DISPID_THIS;
             VARIANTARG args[2];
@@ -4329,6 +4328,9 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
                 WARN("%p %s attached <<< %08lx\n", event_target, debugstr_w(event->type), hres);
             }
         }
+
+        if(event->stop_immediate_propagation)
+            break;
     }
 
     for(listener = listeners; listener < listeners + listeners_cnt; listener++)
