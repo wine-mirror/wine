@@ -653,8 +653,8 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
                                 This->prototype->props+prop->u.ref, flags, argc, argv, r, caller);
     case PROP_JSVAL: {
         if(!is_object_instance(prop->u.val)) {
-            FIXME("invoke %s\n", debugstr_jsval(prop->u.val));
-            return E_FAIL;
+            FIXME("value %s is not a function\n", debugstr_jsval(prop->u.val));
+            return JS_E_FUNCTION_EXPECTED;
         }
 
         TRACE("call %s %p\n", debugstr_w(prop->name), get_object(prop->u.val));
@@ -672,12 +672,16 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
             return hres;
 
         if(is_object_instance(val)) {
-            hres = disp_call_value_with_caller(This->ctx, get_object(val),
-                    jsval_disp(jsthis ? jsthis : to_disp(This)),
-                    flags, argc, argv, r, caller);
+            jsdisp_t *jsfunc = to_jsdisp(get_object(val));
+            if(!jsfunc || is_class(jsfunc, JSCLASS_FUNCTION))
+                hres = disp_call_value_with_caller(This->ctx, get_object(val),
+                                                   jsval_disp(jsthis ? jsthis : to_disp(This)),
+                                                   flags, argc, argv, r, caller);
+            else
+                hres = JS_E_INVALID_PROPERTY;
         }else {
-            FIXME("invoke %s\n", debugstr_jsval(val));
-            hres = E_NOTIMPL;
+            WARN("value %s is not a function\n", debugstr_jsval(val));
+            hres = JS_E_FUNCTION_EXPECTED;
         }
 
         jsval_release(val);

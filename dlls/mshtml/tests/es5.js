@@ -838,6 +838,11 @@ sync_test("defineProperty", function() {
     expect_exception(function() {
         Object.defineProperty(obj, "funcprop", nullDisp);
     }, JS_E_OBJECT_EXPECTED);
+    expect_exception(function() {
+        var o = {};
+        Object.defineProperty(o, "f", { get: function() { return 0; } });
+        o.f();
+    }, JS_E_FUNCTION_EXPECTED);
 });
 
 sync_test("defineProperties", function() {
