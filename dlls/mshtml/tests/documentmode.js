@@ -660,60 +660,40 @@ sync_test("xhr open", function() {
 });
 
 sync_test("style_props", function() {
-    var style = document.body.style;
+    var style = document.body.style, currentStyle = document.body.currentStyle, computedStyle = window.getComputedStyle ? window.getComputedStyle(document.body) : undefined;
 
-    function test_exposed(prop, expect) {
-        if(expect)
+    function test_exposed(prop, expect_style, expect_currentStyle, expect_computedStyle) {
+        if(expect_style)
             ok(prop in style, prop + " not found in style object.");
         else
             ok(!(prop in style), prop + " found in style object.");
+        if(expect_currentStyle)
+            ok(prop in currentStyle, prop + " not found in currentStyle object.");
+        else
+            ok(!(prop in currentStyle), prop + " found in currentStyle object.");
+        if(computedStyle) {
+            if(expect_computedStyle)
+                ok(prop in computedStyle, prop + " not found in computedStyle object.");
+            else
+                ok(!(prop in computedStyle), prop + " found in computedStyle object.");
+        }
     }
 
     var v = document.documentMode;
 
-    test_exposed("removeAttribute", true);
-    test_exposed("zIndex", true);
-    test_exposed("z-index", true);
-    test_exposed("filter", true);
-    test_exposed("pixelTop", true);
-    test_exposed("float", true);
-    test_exposed("css-float", false);
-    test_exposed("style-float", false);
-    test_exposed("setProperty", v >= 9);
-    test_exposed("removeProperty", v >= 9);
-    test_exposed("background-clip", v >= 9);
-    test_exposed("msTransform", v >= 9);
-    test_exposed("transform", v >= 10);
-
-    style = document.body.currentStyle;
-
-    test_exposed("zIndex", true);
-    test_exposed("z-index", true);
-    test_exposed("filter", true);
-    test_exposed("pixelTop", false);
-    test_exposed("float", true);
-    test_exposed("css-float", false);
-    test_exposed("style-float", false);
-    test_exposed("setProperty", v >= 9);
-    test_exposed("removeProperty", v >= 9);
-    test_exposed("background-clip", v >= 9);
-    test_exposed("transform", v >= 10);
-
-    if(window.getComputedStyle) {
-        style = window.getComputedStyle(document.body);
-
-        test_exposed("removeAttribute", false);
-        test_exposed("zIndex", true);
-        test_exposed("z-index", true);
-        test_exposed("pixelTop", false);
-        test_exposed("float", true);
-        test_exposed("css-float", false);
-        test_exposed("style-float", false);
-        test_exposed("setProperty", v >= 9);
-        test_exposed("removeProperty", v >= 9);
-        test_exposed("background-clip", v >= 9);
-        test_exposed("transform", v >= 10);
-    }
+    test_exposed("removeAttribute", true, broken(true) ? v >= 9 : false /* todo_wine */, false);
+    test_exposed("zIndex", true, true, true);
+    test_exposed("z-index", true, true, true);
+    test_exposed("filter", true, true, broken(true) ? v >= 10 : v >= 9 /* todo_wine */);
+    test_exposed("pixelTop", true, false, false);
+    test_exposed("float", true, true, true);
+    test_exposed("css-float", false, false, false);
+    test_exposed("style-float", false, false, false);
+    test_exposed("setProperty", v >= 9, v >= 9, v >= 9);
+    test_exposed("removeProperty", v >= 9, v >= 9, v >= 9);
+    test_exposed("background-clip", v >= 9, v >= 9, v >= 9);
+    test_exposed("msTransform", v >= 9, v >= 9, v >= 9);
+    test_exposed("transform", v >= 10, v >= 10, v >= 10);
 });
 
 sync_test("createElement_inline_attr", function() {
