@@ -399,6 +399,20 @@ sync_test("style_properties", function() {
     ok(val === "", "removeProperty() returned " + val);
     ok(style.testVal === "test", "testVal = " + style.testVal);
 
+    val = style.getPropertyValue("testVal");
+    ok(val === "", 'style.getPropertyValue("testVal") = ' + val);
+    ok(style.testVal === "test", "testVal = " + style.testVal);
+
+    style.setProperty("testVal", "1px");
+    val = style.getPropertyValue("testVal");
+    ok(val === "", 'style.getPropertyValue("testVal") = ' + val);
+    ok(style.testVal === "test", "testVal = " + style.testVal);
+
+    style.setProperty("test", "1px");
+    val = style.getPropertyValue("test");
+    ok(val === "", 'style.getPropertyValue("test") = ' + val);
+    ok(!("test" in style), "test in style");
+
     style["z-index"] = 1;
     ok(style.zIndex === 1, "zIndex = " + style.zIndex);
     ok(style["z-index"] === 1, "z-index = " + style["z-index"]);
