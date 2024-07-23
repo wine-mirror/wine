@@ -504,7 +504,7 @@ static HRESULT WINAPI HTMLEventObj_put_cancelBubble(IHTMLEventObj *iface, VARIAN
     TRACE("(%p)->(%x)\n", This, v);
 
     if(This->event)
-        IDOMEvent_stopPropagation(&This->event->IDOMEvent_iface);
+        IDOMEvent_put_cancelBubble(&This->event->IDOMEvent_iface, v);
     return S_OK;
 }
 
@@ -514,8 +514,7 @@ static HRESULT WINAPI HTMLEventObj_get_cancelBubble(IHTMLEventObj *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = variant_bool(This->event && This->event->stop_propagation);
-    return S_OK;
+    return IDOMEvent_get_cancelBubble(&This->event->IDOMEvent_iface, p);
 }
 
 static HRESULT WINAPI HTMLEventObj_get_fromElement(IHTMLEventObj *iface, IHTMLElement **p)
