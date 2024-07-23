@@ -680,7 +680,7 @@ static HRESULT alloc_dynamic_prop(DispatchEx *This, const WCHAR *name, dynamic_p
         return E_OUTOFMEMORY;
 
     VariantInit(&prop->var);
-    prop->flags = 0;
+    prop->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
     data->prop_cnt++;
     *ret = prop;
     return S_OK;
@@ -2354,11 +2354,13 @@ static HRESULT get_host_property_descriptor(DispatchEx *This, DISPID id, struct 
         }
         break;
     }
-    case DISPEXPROP_DYNAMIC:
-        desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
-        desc->name = This->dynamic_data->props[id - DISPID_DYNPROP_0].name;
+    case DISPEXPROP_DYNAMIC: {
+        dynamic_prop_t *prop = &This->dynamic_data->props[id - DISPID_DYNPROP_0];
+        desc->flags = prop->flags & PROPF_PUBLIC_MASK;
+        desc->name = prop->name;
         desc->func_iid = 0;
         break;
+    }
     case DISPEXPROP_CUSTOM:
         return This->info->desc->vtbl->get_prop_desc(This, id, desc);
     }
@@ -2441,6 +2443,23 @@ static HRESULT WINAPI JSDispatchHost_DeleteProperty(IWineJSDispatchHost *iface, 
     return dispex_prop_delete(This, id);
 }
 
+static HRESULT WINAPI JSDispatchHost_ConfigureProperty(IWineJSDispatchHost *iface, DISPID id, UINT32 flags)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    TRACE("%s (%p)->(%lx %x)\n", This->info->desc->name, This, id, flags);
+
+    if(is_dynamic_dispid(id)) {
+        DWORD idx = id - DISPID_DYNPROP_0;
+        if(This->dynamic_data && idx < This->dynamic_data->prop_cnt) {
+            dynamic_prop_t *prop = &This->dynamic_data->props[idx];
+            prop->flags = (prop->flags & ~PROPF_PUBLIC_MASK) | flags;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI JSDispatchHost_CallFunction(IWineJSDispatchHost *iface, DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret,
                                               EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -2489,6 +2508,7 @@ static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     JSDispatchHost_GetProperty,
     JSDispatchHost_SetProperty,
     JSDispatchHost_DeleteProperty,
+    JSDispatchHost_ConfigureProperty,
     JSDispatchHost_CallFunction,
     JSDispatchHost_ToString,
 };

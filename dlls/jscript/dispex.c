@@ -3303,14 +3303,26 @@ HRESULT jsdisp_change_prototype(jsdisp_t *obj, jsdisp_t *proto)
     return S_OK;
 }
 
+static void set_prop_flags(jsdisp_t *obj, dispex_prop_t *prop, UINT32 flags)
+{
+    if(prop->type == PROP_EXTERN && obj->builtin_info->prop_config) {
+        HRESULT hres = obj->builtin_info->prop_config(obj, prop->u.id, flags);
+        if(hres != S_OK)
+            return;
+    }
+    prop->flags = (prop->flags & ~PROPF_PUBLIC_MASK) | flags;
+}
+
 void jsdisp_freeze(jsdisp_t *obj, BOOL seal)
 {
     unsigned int i;
 
+    fill_props(obj);
     for(i = 0; i < obj->prop_cnt; i++) {
+        unsigned int mask = PROPF_CONFIGURABLE;
         if(!seal && obj->props[i].type == PROP_JSVAL)
-            obj->props[i].flags &= ~PROPF_WRITABLE;
-        obj->props[i].flags &= ~PROPF_CONFIGURABLE;
+            mask |= PROPF_WRITABLE;
+        set_prop_flags(obj, &obj->props[i], obj->props[i].flags & PROPF_PUBLIC_MASK & ~mask);
     }
 
     obj->extensible = FALSE;
@@ -3322,9 +3334,10 @@ BOOL jsdisp_is_frozen(jsdisp_t *obj, BOOL sealed)
 
     if(obj->extensible)
         return FALSE;
+    fill_props(obj);
 
     for(i = 0; i < obj->prop_cnt; i++) {
-        if(obj->props[i].type == PROP_JSVAL) {
+        if(obj->props[i].type == PROP_JSVAL || obj->props[i].type == PROP_EXTERN) {
             if(!sealed && (obj->props[i].flags & PROPF_WRITABLE))
                 return FALSE;
         }else if(obj->props[i].type != PROP_ACCESSOR)
@@ -3429,6 +3442,13 @@ static HRESULT HostObject_prop_delete(jsdisp_t *jsdisp, unsigned id)
     return IWineJSDispatchHost_DeleteProperty(This->host_iface, id);
 }
 
+static HRESULT HostObject_prop_config(jsdisp_t *jsdisp, unsigned id, unsigned flags)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+
+    return IWineJSDispatchHost_ConfigureProperty(This->host_iface, id, flags);
+}
+
 static HRESULT HostObject_to_string(jsdisp_t *jsdisp, jsstr_t **ret)
 {
     HostObject *This = HostObject_from_jsdisp(jsdisp);
@@ -3453,6 +3473,7 @@ static const builtin_info_t HostObject_info = {
     .prop_put    = HostObject_prop_put,
     .next_prop   = HostObject_next_prop,
     .prop_delete = HostObject_prop_delete,
+    .prop_config = HostObject_prop_config,
     .to_string   = HostObject_to_string,
 };
 

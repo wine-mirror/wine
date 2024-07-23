@@ -3492,6 +3492,13 @@ static HRESULT WINAPI WindowDispEx_DeleteProperty(IWineJSDispatchHost *iface, DI
     return IWineJSDispatchHost_DeleteProperty(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, id);
 }
 
+static HRESULT WINAPI WindowDispEx_ConfigureProperty(IWineJSDispatchHost *iface, DISPID id, UINT32 flags)
+{
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
+
+    return IWineJSDispatchHost_ConfigureProperty(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, id, flags);
+}
+
 static HRESULT WINAPI WindowDispEx_CallFunction(IWineJSDispatchHost *iface, DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret,
                                                 EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -3530,6 +3537,7 @@ static const IWineJSDispatchHostVtbl WindowDispExVtbl = {
     WindowDispEx_GetProperty,
     WindowDispEx_SetProperty,
     WindowDispEx_DeleteProperty,
+    WindowDispEx_ConfigureProperty,
     WindowDispEx_CallFunction,
     WindowDispEx_ToString,
 };
