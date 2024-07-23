@@ -190,6 +190,7 @@ typedef struct {
     HRESULT (*next_prop)(jsdisp_t*,unsigned,struct property_info*);
     HRESULT (*prop_get)(jsdisp_t*,unsigned,jsval_t*);
     HRESULT (*prop_put)(jsdisp_t*,unsigned,jsval_t);
+    HRESULT (*prop_delete)(jsdisp_t*,unsigned);
     HRESULT (*to_string)(jsdisp_t*,jsstr_t**);
     HRESULT (*gc_traverse)(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*);
 } builtin_info_t;

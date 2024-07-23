@@ -2209,7 +2209,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatch *iface, DISPID id, LCI
     return leave_script(This->ctx, hres);
 }
 
-static HRESULT delete_prop(dispex_prop_t *prop, BOOL *ret)
+static HRESULT delete_prop(jsdisp_t *obj, dispex_prop_t *prop, BOOL *ret)
 {
     if(prop->type == PROP_PROTREF || prop->type == PROP_DELETED) {
         *ret = TRUE;
@@ -2223,13 +2223,26 @@ static HRESULT delete_prop(dispex_prop_t *prop, BOOL *ret)
 
     *ret = TRUE;
 
-    if(prop->type == PROP_JSVAL)
+    switch(prop->type) {
+    case PROP_JSVAL:
         jsval_release(prop->u.val);
-    if(prop->type == PROP_ACCESSOR) {
+        break;
+    case PROP_ACCESSOR:
         if(prop->u.accessor.getter)
             jsdisp_release(prop->u.accessor.getter);
         if(prop->u.accessor.setter)
             jsdisp_release(prop->u.accessor.setter);
+        break;
+    case PROP_EXTERN:
+        if(obj->builtin_info->prop_delete) {
+            HRESULT hres;
+            hres = obj->builtin_info->prop_delete(obj, prop->u.id);
+            if(FAILED(hres))
+                return hres;
+        }
+        break;
+    default:
+        break;
     }
     prop->type = PROP_DELETED;
     return S_OK;
@@ -2255,7 +2268,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IWineJSDispatch *iface, BSTR
         return S_OK;
     }
 
-    return delete_prop(prop, &b);
+    return delete_prop(This, prop, &b);
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IWineJSDispatch *iface, DISPID id)
@@ -2272,7 +2285,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IWineJSDispatch *iface, DI
         return DISP_E_MEMBERNOTFOUND;
     }
 
-    return delete_prop(prop, &b);
+    return delete_prop(This, prop, &b);
 }
 
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IWineJSDispatch *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
@@ -2951,7 +2964,7 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
     if(FAILED(hres) || !prop)
         return hres;
 
-    hres = delete_prop(prop, &b);
+    hres = delete_prop(obj, prop, &b);
     if(FAILED(hres))
         return hres;
     return b ? S_OK : JS_E_INVALID_ACTION;
@@ -2969,7 +2982,7 @@ HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)
 
         prop = get_prop(jsdisp, id);
         if(prop)
-            hres = delete_prop(prop, ret);
+            hres = delete_prop(jsdisp, prop, ret);
         else
             hres = DISP_E_MEMBERNOTFOUND;
 
@@ -3045,7 +3058,7 @@ HRESULT disp_delete_name(script_ctx_t *ctx, IDispatch *disp, jsstr_t *name, BOOL
 
         hres = find_prop_name(jsdisp, string_hash(ptr), ptr, FALSE, NULL, &prop);
         if(prop) {
-            hres = delete_prop(prop, ret);
+            hres = delete_prop(jsdisp, prop, ret);
         }else {
             *ret = TRUE;
             hres = S_OK;
@@ -3409,6 +3422,13 @@ static HRESULT HostObject_next_prop(jsdisp_t *jsdisp, unsigned id, struct proper
     return IWineJSDispatchHost_NextProperty(This->host_iface, id, desc);
 }
 
+static HRESULT HostObject_prop_delete(jsdisp_t *jsdisp, unsigned id)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+
+    return IWineJSDispatchHost_DeleteProperty(This->host_iface, id);
+}
+
 static HRESULT HostObject_to_string(jsdisp_t *jsdisp, jsstr_t **ret)
 {
     HostObject *This = HostObject_from_jsdisp(jsdisp);
@@ -3432,6 +3452,7 @@ static const builtin_info_t HostObject_info = {
     .prop_get    = HostObject_prop_get,
     .prop_put    = HostObject_prop_put,
     .next_prop   = HostObject_next_prop,
+    .prop_delete = HostObject_prop_delete,
     .to_string   = HostObject_to_string,
 };
 

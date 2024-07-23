@@ -2097,6 +2097,32 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
     }
 }
 
+static HRESULT dispex_prop_delete(DispatchEx *dispex, DISPID id)
+{
+    if(is_custom_dispid(id) && dispex->info->desc->vtbl->delete)
+        return dispex->info->desc->vtbl->delete(dispex, id);
+
+    if(dispex_compat_mode(dispex) < COMPAT_MODE_IE8) {
+        /* Not implemented by IE */
+        return E_NOTIMPL;
+    }
+
+    if(is_dynamic_dispid(id)) {
+        DWORD idx = id - DISPID_DYNPROP_0;
+        dynamic_prop_t *prop;
+
+        if(!get_dynamic_data(dispex) || idx >= dispex->dynamic_data->prop_cnt)
+            return S_OK;
+
+        prop = dispex->dynamic_data->props + idx;
+        VariantClear(&prop->var);
+        prop->flags |= DYNPROP_DELETED;
+        return S_OK;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IWineJSDispatchHost *iface, BSTR name, DWORD grfdex)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
@@ -2133,28 +2159,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IWineJSDispatchHost *iface
         return E_OUTOFMEMORY;
     if(This->jsdisp)
         return IWineJSDispatch_DeleteMemberByDispID(This->jsdisp, id);
-    if(is_custom_dispid(id) && This->info->desc->vtbl->delete)
-        return This->info->desc->vtbl->delete(This, id);
-
-    if(dispex_compat_mode(This) < COMPAT_MODE_IE8) {
-        /* Not implemented by IE */
-        return E_NOTIMPL;
-    }
-
-    if(is_dynamic_dispid(id)) {
-        DWORD idx = id - DISPID_DYNPROP_0;
-        dynamic_prop_t *prop;
-
-        if(!get_dynamic_data(This) || idx >= This->dynamic_data->prop_cnt)
-            return S_OK;
-
-        prop = This->dynamic_data->props + idx;
-        VariantClear(&prop->var);
-        prop->flags |= DYNPROP_DELETED;
-        return S_OK;
-    }
-
-    return S_OK;
+    return dispex_prop_delete(This, id);
 }
 
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IWineJSDispatchHost *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
@@ -2427,6 +2432,15 @@ static HRESULT WINAPI JSDispatchHost_SetProperty(IWineJSDispatchHost *iface, DIS
     return dispex_prop_put(This, id, lcid, v, ei, caller);
 }
 
+static HRESULT WINAPI JSDispatchHost_DeleteProperty(IWineJSDispatchHost *iface, DISPID id)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+
+    return dispex_prop_delete(This, id);
+}
+
 static HRESULT WINAPI JSDispatchHost_CallFunction(IWineJSDispatchHost *iface, DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret,
                                               EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -2474,6 +2488,7 @@ static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     JSDispatchHost_NextProperty,
     JSDispatchHost_GetProperty,
     JSDispatchHost_SetProperty,
+    JSDispatchHost_DeleteProperty,
     JSDispatchHost_CallFunction,
     JSDispatchHost_ToString,
 };
