@@ -83,16 +83,16 @@ typedef struct DOMEvent {
     EventTarget *target;
     EventTarget *current_target;
     ULONGLONG time_stamp;
-    BOOL bubbles;
-    BOOL cancelable;
-    BOOL prevent_default;
-    BOOL stop_propagation;
-    BOOL stop_immediate_propagation;
-    BOOL trusted;
+    unsigned bubbles : 1;
+    unsigned cancelable : 1;
+    unsigned prevent_default : 1;
+    unsigned stop_propagation : 1;
+    unsigned stop_immediate_propagation : 1;
+    unsigned trusted : 1;
+    unsigned no_event_obj : 1;
     DOM_EVENT_PHASE phase;
 
     IHTMLEventObj *event_obj;
-    BOOL no_event_obj;
 } DOMEvent;
 
 const WCHAR *get_event_name(eventid_t);
