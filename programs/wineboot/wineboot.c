@@ -1612,7 +1612,7 @@ static void update_wineprefix( BOOL force )
         install_root_pnp_devices();
         update_user_profile();
 
-        WINE_MESSAGE( "wine: configuration in %s has been updated.\n", debugstr_w(prettyprint_configdir()) );
+        TRACE( "wine: configuration in %s has been updated.\n", debugstr_w(prettyprint_configdir()) );
     }
 
 done:
