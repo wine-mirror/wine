@@ -129,6 +129,15 @@ static void init_shfo_tests(void)
     CreateDirectoryA("testdir2\\nested", NULL);
     createTestFile("testdir2\\one.txt");
     createTestFile("testdir2\\nested\\two.txt");
+    CreateDirectoryA("testdir4", NULL);
+    CreateDirectoryA("testdir4\\nested", NULL);
+    CreateDirectoryA("testdir4\\nested\\subnested", NULL);
+    createTestFile("testdir4\\nested\\2.txt");
+    createTestFile("testdir4\\nested\\subnested\\3.txt");
+    CreateDirectoryA("testdir6", NULL);
+    CreateDirectoryA("testdir6\\nested", NULL);
+    CreateDirectoryA("testdir8", NULL);
+    CreateDirectoryA("testdir8\\nested", NULL);
 }
 
 /* cleans after tests */
@@ -155,6 +164,38 @@ static void clean_after_shfo_tests(void)
     RemoveDirectoryA("testdir2\\test4.txt");
     RemoveDirectoryA("testdir2\\nested");
     RemoveDirectoryA("testdir2");
+    DeleteFileA("testdir4\\nested\\subnested\\3.txt");
+    DeleteFileA("testdir4\\nested\\two.txt");
+    DeleteFileA("testdir4\\nested\\2.txt");
+    RemoveDirectoryA("testdir4\\nested\\subnested");
+    RemoveDirectoryA("testdir4\\nested");
+    RemoveDirectoryA("testdir4");
+    DeleteFileA("testdir6\\testdir2\\nested\\two.txt");
+    DeleteFileA("testdir6\\testdir2\\one.txt");
+    DeleteFileA("testdir6\\nested\\subnested\\3.txt");
+    DeleteFileA("testdir6\\nested\\nested\\two.txt");
+    DeleteFileA("testdir6\\nested\\two.txt");
+    DeleteFileA("testdir6\\nested\\2.txt");
+    DeleteFileA("testdir6\\two.txt");
+    RemoveDirectoryA("testdir6\\testdir2\\nested");
+    RemoveDirectoryA("testdir6\\nested\\subnested");
+    RemoveDirectoryA("testdir6\\nested\\nested");
+    RemoveDirectoryA("testdir6\\testdir2");
+    RemoveDirectoryA("testdir6\\subnested");
+    RemoveDirectoryA("testdir6\\nested");
+    RemoveDirectoryA("testdir6");
+    DeleteFileA("testdir8\\nested\\subnested\\3.txt");
+    DeleteFileA("testdir8\\nested\\nested\\subnested\\3.txt");
+    DeleteFileA("testdir8\\nested\\nested\\2.txt");
+    DeleteFileA("testdir8\\subnested\\3.txt");
+    DeleteFileA("testdir8\\nested\\2.txt");
+    DeleteFileA("testdir8\\2.txt");
+    RemoveDirectoryA("testdir8\\nested\\nested\\subnested");
+    RemoveDirectoryA("testdir8\\nested\\nested");
+    RemoveDirectoryA("testdir8\\nested\\subnested");
+    RemoveDirectoryA("testdir8\\subnested");
+    RemoveDirectoryA("testdir8\\nested");
+    RemoveDirectoryA("testdir8");
     RemoveDirectoryA("c:\\testdir3");
     DeleteFileA("nonexistent\\notreal\\test2.txt");
     RemoveDirectoryA("nonexistent\\notreal");
@@ -1993,8 +2034,158 @@ static void test_move(void)
     clean_after_shfo_tests();
     init_shfo_tests();
 
+    /* test moving dir to destination containing dir of the same name */
+    set_curr_dir_path(from, "testdir2\\nested\0");
+    set_curr_dir_path(to, "testdir4\0");
+    retval = SHFileOperationA(&shfo);
+    ok(!retval, "got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+
+    todo_wine ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
+    todo_wine ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
+
+    ok(dir_exists("testdir4\\nested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir4\\nested\\two.txt"), "file should exist\n");
+    ok(file_exists("testdir4\\nested\\2.txt"), "file should exist\n");
+
+    clean_after_shfo_tests();
+    init_shfo_tests();
+
+    /* test moving empty dir to destination containing dir of the same name */
+    DeleteFileA("testdir2\\nested\\two.txt");
+    set_curr_dir_path(from, "testdir2\\nested\0");
+    set_curr_dir_path(to, "testdir4\0");
+    retval = SHFileOperationA(&shfo);
+    ok(!retval, "got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+
+    todo_wine ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
+
+    ok(dir_exists("testdir4\\nested"), "dir should exist\n");
+    ok(file_exists("testdir4\\nested\\2.txt"), "file should exist\n");
+
+    clean_after_shfo_tests();
+    init_shfo_tests();
+
+    /* test moving multiple dirs to destination containing dir of the same name */
+    set_curr_dir_path(from, "testdir2\\nested\0testdir4\\nested\0");
+    set_curr_dir_path(to, "testdir6\0");
+    retval = SHFileOperationA(&shfo);
+    ok(!retval, "got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+
+    todo_wine ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
+    todo_wine ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
+
+    todo_wine ok(!dir_exists("testdir4\\nested"), "dir should be moved\n");
+    todo_wine ok(!file_exists("testdir4\\nested\\2.txt"), "file should be moved\n");
+    todo_wine ok(!dir_exists("testdir4\\nested\\subnested"), "dir should be moved\n");
+    todo_wine ok(!file_exists("testdir4\\nested\\subnested\\3.txt"), "file should be moved\n");
+
+    ok(dir_exists("testdir6\\nested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir6\\nested\\two.txt"), "file should exist\n");
+    todo_wine ok(file_exists("testdir6\\nested\\2.txt"), "file should exist\n");
+    todo_wine ok(dir_exists("testdir6\\nested\\subnested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir6\\nested\\subnested\\3.txt"), "file should exist\n");
+
+    clean_after_shfo_tests();
+    init_shfo_tests();
+
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
     shfo2.fFlags |= FOF_MULTIDESTFILES;
+
+    /* test moving dir to destination containing dir of the same name with FOF_MULTIDESTFILES set */
+    set_curr_dir_path(from, "testdir2\\nested\0");
+    set_curr_dir_path(to, "testdir6\0");
+    retval = SHFileOperationA(&shfo2);
+    ok(!retval, "got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+
+    todo_wine ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
+    todo_wine ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
+
+    ok(!file_exists("testdir6\\nested\\two.txt"), "file should not exist\n");
+    ok(dir_exists("testdir6\\nested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir6\\two.txt"), "file should exist\n");
+
+    clean_after_shfo_tests();
+    init_shfo_tests();
+
+    /* same as above, without 'nested' in from path */
+    set_curr_dir_path(from, "testdir2\0");
+    set_curr_dir_path(to, "testdir6\0");
+    retval = SHFileOperationA(&shfo2);
+    ok(!retval, "got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+
+    ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
+    ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
+
+    ok(!file_exists("testdir6\\two.txt"), "file should not exist\n");
+    ok(dir_exists("testdir6\\nested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir6\\nested\\two.txt"), "file should exist\n");
+
+    clean_after_shfo_tests();
+    init_shfo_tests();
+
+    /* test moving multiple dirs to multiple destinations containing dir of the same name */
+    set_curr_dir_path(from, "testdir2\\nested\0testdir4\\nested\0");
+    set_curr_dir_path(to, "testdir6\0testdir8\0");
+    retval = SHFileOperationA(&shfo2);
+    ok(!retval, "got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+
+    todo_wine ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
+    todo_wine ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
+
+    todo_wine ok(!dir_exists("testdir4\\nested"), "dir should be moved\n");
+    todo_wine ok(!file_exists("testdir4\\nested\\2.txt"), "file should be moved\n");
+
+    ok(!file_exists("testdir6\\nested\\two.txt"), "file should not exist\n");
+    ok(!file_exists("testdir6\\nested\\2.txt"), "file should not exist\n");
+    ok(dir_exists("testdir6\\nested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir6\\two.txt"), "file should exist\n");
+
+    ok(!dir_exists("testdir8\\nested\\subnested"), "dir should not exist\n");
+    ok(!file_exists("testdir8\\nested\\subnested\\3.txt"), "file should not exist\n");
+    ok(!file_exists("testdir8\\nested\\two.txt"), "file should not exist\n");
+    ok(!file_exists("testdir8\\nested\\2.txt"), "file should not exist\n");
+    ok(dir_exists("testdir8\\nested"), "dir should exist\n");
+    todo_wine ok(dir_exists("testdir8\\subnested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir8\\subnested\\3.txt"), "file should exist\n");
+    todo_wine ok(file_exists("testdir8\\2.txt"), "file should exist\n");
+
+    clean_after_shfo_tests();
+    init_shfo_tests();
+
+    /* same as above, but include subdir in destinations */
+    set_curr_dir_path(from, "testdir2\\nested\0testdir4\\nested\0");
+    set_curr_dir_path(to, "testdir6\\nested\0testdir8\\nested\0");
+    retval = SHFileOperationA(&shfo2);
+    ok(!retval, "got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+
+    ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
+    ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
+
+    ok(!dir_exists("testdir4\\nested"), "dir should be moved\n");
+    ok(!file_exists("testdir4\\nested\\2.txt"), "file should be moved\n");
+
+    ok(dir_exists("testdir6\\nested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir6\\nested\\two.txt"), "file should exist\n");
+    ok(!file_exists("testdir6\\nested\\2.txt"), "file should not exist\n");
+    ok(!file_exists("testdir6\\two.txt"), "file should not exist\n");
+
+    ok(!dir_exists("testdir8\\subnested"), "dir should not exist\n");
+    ok(!file_exists("testdir8\\2.txt"), "file should not exist\n");
+    ok(!file_exists("testdir8\\nested\\two.txt"), "file should not exist\n");
+    ok(dir_exists("testdir8\\nested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir8\\nested\\2.txt"), "file should exist\n");
+    todo_wine ok(dir_exists("testdir8\\nested\\subnested"), "dir should exist\n");
+    todo_wine ok(file_exists("testdir8\\nested\\subnested\\3.txt"), "file should exist\n");
+
+    clean_after_shfo_tests();
+    init_shfo_tests();
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
