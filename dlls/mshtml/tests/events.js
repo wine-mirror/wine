@@ -255,63 +255,151 @@ sync_test("stop_propagation", function() {
 
     function stop_propagation(e) {
         calls += "stop,";
+        ok(e.cancelBubble === (e.cancelBubble_winetest ? true : false), "cancelBubble before stopPropagation = " + e.cancelBubble);
         e.stopPropagation();
+        e.cancelBubble_winetest = true;
+        ok(e.cancelBubble === true, "cancelBubble after stopPropagation = " + e.cancelBubble);
         ok(e.bubbles === true, "bubbles = " + e.bubbles);
         ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
     }
 
     function stop_immediate_propagation(e) {
         calls += "immediateStop,";
+        ok(e.cancelBubble === (e.cancelBubble_winetest ? true : false), "cancelBubble before stopImmediatePropagation = " + e.cancelBubble);
         e.stopImmediatePropagation();
+        e.cancelBubble_winetest = true;
+        ok(e.cancelBubble === true, "cancelBubble after stopImmediatePropagation = " + e.cancelBubble);
         ok(e.bubbles === true, "bubbles = " + e.bubbles);
         ok(e.cancelable === true, "cancelable = " + e.cancelable);
         ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
     }
 
-    div1.addEventListener("click", stop_immediate_propagation, true);
+    function stop_immediate_propagation_cancel_bubble_false(e) {
+        calls += "immediateStop and cancelBubble(false),";
+        ok(e.cancelBubble === (e.cancelBubble_winetest ? true : false), "cancelBubble before stopImmediatePropagation = " + e.cancelBubble);
+        e.stopImmediatePropagation();
+        e.cancelBubble = false;
+        e.cancelBubble_winetest = e.eventPhase < 2 ? true : false;
+        ok(e.cancelBubble === (e.cancelBubble_winetest ? true : false), "cancelBubble after stopImmediatePropagation and setting cancelBubble to false = " + e.cancelBubble);
+        ok(e.bubbles === true, "bubbles = " + e.bubbles);
+        ok(e.cancelable === true, "cancelable = " + e.cancelable);
+        ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+    }
+
+    function cancel_bubble_impl(i) {
+        return function(e) {
+            calls += "cancelBubble["+i+"],";
+            ok(e.cancelBubble === (e.cancelBubble_winetest ? true : false), "cancelBubble before setting cancelBubble = " + e.cancelBubble);
+            e.cancelBubble = true;
+            if(e.eventPhase < 2)
+                ok(e.cancelBubble === (e.cancelBubble_winetest ? true : false), "cancelBubble after setting cancelBubble during capture phase = " + e.cancelBubble);
+            else
+                ok(e.cancelBubble === true, "cancelBubble after setting cancelBubble during bubble phase = " + e.cancelBubble);
+            e.cancelBubble_winetest = e.cancelBubble;
+            ok(e.bubbles === true, "bubbles = " + e.bubbles);
+            ok(e.cancelable === true, "cancelable = " + e.cancelable);
+            ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+        }
+    }
+
+    var cancel_bubble = [];
+    for(var i = 0; i < 4; i++)
+        cancel_bubble.push(cancel_bubble_impl(i));
+
+    function cancel_bubble_false(e) {
+        calls += "cancelBubble(false),";
+        ok(e.cancelBubble === (e.cancelBubble_winetest ? true : false), "cancelBubble before setting cancelBubble to false = " + e.cancelBubble);
+        e.cancelBubble = false;
+        if(e.cancelBubble_winetest && e.eventPhase !== 1)
+            delete e.cancelBubble_winetest;
+        ok(e.cancelBubble === (e.cancelBubble_winetest ? true : false), "cancelBubble after setting cancelBubble to false = " + e.cancelBubble);
+        ok(e.bubbles === true, "bubbles = " + e.bubbles);
+        ok(e.cancelable === true, "cancelable = " + e.cancelable);
+        ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+    }
+
+    div1.addEventListener("click", stop_immediate_propagation_cancel_bubble_false, true);
     div1.addEventListener("click", stop_propagation, true);
+    div1.addEventListener("click", cancel_bubble[0], true);
+    div1.addEventListener("click", cancel_bubble_false, true);
     div1.addEventListener("click", record_call("div1.click(capture)"), true);
 
     div2.addEventListener("click", stop_immediate_propagation, true);
+    div2.addEventListener("click", cancel_bubble[1], true);
     div2.addEventListener("click", stop_propagation, true);
     div2.addEventListener("click", record_call("div2.click(capture)"), true);
 
+    div1.addEventListener("click", cancel_bubble[2], false);
+    div1.addEventListener("click", cancel_bubble_false, false);
     div1.addEventListener("click", stop_propagation, false);
     div1.addEventListener("click", record_call("div1.click(bubble)"), false);
 
+    div2.addEventListener("click", stop_immediate_propagation_cancel_bubble_false, false);
     div2.addEventListener("click", stop_propagation, false);
+    div2.addEventListener("click", cancel_bubble[3], false);
+    div2.addEventListener("click", cancel_bubble_false, false);
     div2.addEventListener("click", record_call("div2.click(bubble)"), false);
 
     calls = "";
     div2.click();
-    ok(calls === "immediateStop,", "calls = " + calls);
+    ok(calls === "immediateStop and cancelBubble(false),", "calls = " + calls);
 
-    div1.removeEventListener("click", stop_immediate_propagation, true);
+    div1.removeEventListener("click", stop_immediate_propagation_cancel_bubble_false, true);
     calls = "";
     div2.click();
-    ok(calls === "stop,div1.click(capture),", "calls = " + calls);
+    ok(calls === "stop,cancelBubble[0],cancelBubble(false),div1.click(capture),", "calls = " + calls);
 
     div1.removeEventListener("click", stop_propagation, true);
     calls = "";
     div2.click();
-    ok(calls === "div1.click(capture),immediateStop,", "calls = " + calls);
+    ok(calls === "cancelBubble[0],cancelBubble(false),div1.click(capture),immediateStop,", "calls = " + calls);
+
+    div1.removeEventListener("click", cancel_bubble[0], true);
+    calls = "";
+    div2.click();
+    ok(calls === "cancelBubble(false),div1.click(capture),immediateStop,", "calls = " + calls);
 
     div2.removeEventListener("click", stop_immediate_propagation, true);
     calls = "";
     div2.click();
-    ok(calls === "div1.click(capture),stop,div2.click(capture),stop,div2.click(bubble),",
+    todo_wine.
+    ok(calls === "cancelBubble(false),div1.click(capture),cancelBubble[1],stop,div2.click(capture),immediateStop and cancelBubble(false),cancelBubble[2],",  // weird native behavior
+       "calls = " + calls);
+
+    div2.removeEventListener("click", stop_immediate_propagation_cancel_bubble_false, false);
+    calls = "";
+    div2.click();
+    ok(calls === "cancelBubble(false),div1.click(capture),cancelBubble[1],stop,div2.click(capture),stop,cancelBubble[3],cancelBubble(false),div2.click(bubble),cancelBubble[2],cancelBubble(false),stop,div1.click(bubble),",
+       "calls = " + calls);
+
+    div2.removeEventListener("click", cancel_bubble_false, false);
+    calls = "";
+    div2.click();
+    ok(calls === "cancelBubble(false),div1.click(capture),cancelBubble[1],stop,div2.click(capture),stop,cancelBubble[3],div2.click(bubble),",
+       "calls = " + calls);
+
+    div2.removeEventListener("click", cancel_bubble[1], true);
+    calls = "";
+    div2.click();
+    ok(calls === "cancelBubble(false),div1.click(capture),stop,div2.click(capture),stop,cancelBubble[3],div2.click(bubble),",
        "calls = " + calls);
 
     div2.removeEventListener("click", stop_propagation, true);
     calls = "";
     div2.click();
-    ok(calls === "div1.click(capture),div2.click(capture),stop,div2.click(bubble),",
+    ok(calls === "cancelBubble(false),div1.click(capture),div2.click(capture),stop,cancelBubble[3],div2.click(bubble),",
        "calls = " + calls);
 
     div2.removeEventListener("click", stop_propagation, false);
     calls = "";
     div2.click();
-    ok(calls === "div1.click(capture),div2.click(capture),div2.click(bubble),stop,div1.click(bubble),",
+    ok(calls === "cancelBubble(false),div1.click(capture),div2.click(capture),cancelBubble[3],div2.click(bubble),",
+       "calls = " + calls);
+
+    div2.removeEventListener("click", cancel_bubble[3], false);
+    calls = "";
+    div2.click();
+    ok(calls === "cancelBubble(false),div1.click(capture),div2.click(capture),div2.click(bubble),cancelBubble[2],cancelBubble(false),stop,div1.click(bubble),",
        "calls = " + calls);
 });
 
