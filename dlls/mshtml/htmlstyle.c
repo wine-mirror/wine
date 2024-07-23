@@ -120,6 +120,12 @@ typedef struct {
 
 static const style_tbl_entry_t style_tbl[] = {
     {
+        L"-ms-transition",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITION,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
         L"animation",
         DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATION,
         DISPID_UNKNOWN,
@@ -702,6 +708,18 @@ static const style_tbl_entry_t style_tbl[] = {
 
 C_ASSERT(ARRAY_SIZE(style_tbl) == STYLEID_MAX_VALUE);
 
+static const WCHAR *get_style_nsname(const style_tbl_entry_t *style_entry)
+{
+    if(style_entry->name[0] == '-')
+        return style_entry->name + sizeof("-ms-")-1;
+    return style_entry->name;
+}
+
+static const WCHAR *get_style_prop_nsname(const style_tbl_entry_t *style_entry, const WCHAR *orig_name)
+{
+    return style_entry ? get_style_nsname(style_entry) : orig_name;
+}
+
 static const style_tbl_entry_t *lookup_style_tbl(CSSStyle *style, const WCHAR *name)
 {
     int c, i, min = 0, max = ARRAY_SIZE(style_tbl)-1;
@@ -788,7 +806,7 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     nsAString str_name, str_empty;
     nsresult nsres;
 
-    nsAString_InitDepend(&str_name, style_tbl[sid].name);
+    nsAString_InitDepend(&str_name, get_style_nsname(&style_tbl[sid]));
     nsAString_InitDepend(&str_empty, L"");
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, value, &str_empty);
     nsAString_Finish(&str_name);
@@ -867,7 +885,7 @@ static HRESULT get_nsstyle_attr_nsval(nsIDOMCSSStyleDeclaration *nsstyle, stylei
     nsAString str_name;
     nsresult nsres;
 
-    nsAString_InitDepend(&str_name, style_tbl[sid].name);
+    nsAString_InitDepend(&str_name, get_style_nsname(&style_tbl[sid]));
     nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(nsstyle, &str_name, value);
     nsAString_Finish(&str_name);
     if(NS_FAILED(nsres))
@@ -2946,7 +2964,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         return S_OK;
     }
 
-    nsAString_InitDepend(&name_str, style_entry->name);
+    nsAString_InitDepend(&name_str, get_style_nsname(style_entry));
     nsAString_Init(&ret_str, NULL);
     nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->css_style.nsstyle, &name_str, &ret_str);
     if(NS_SUCCEEDED(nsres)) {
@@ -4443,7 +4461,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_getPropertyValue(IHTMLCSSStyleDecl
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), value);
 
     style_entry = lookup_style_tbl(This, name);
-    nsAString_InitDepend(&name_str, style_entry ? style_entry->name : name);
+    nsAString_InitDepend(&name_str, get_style_prop_nsname(style_entry, name));
     nsAString_InitDepend(&value_str, NULL);
     nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(This->nsstyle, &name_str, &value_str);
     nsAString_Finish(&name_str);
@@ -4467,7 +4485,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_removeProperty(IHTMLCSSStyleDeclar
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrPropertyName), pbstrPropertyValue);
 
     style_entry = lookup_style_tbl(This, bstrPropertyName);
-    nsAString_InitDepend(&name_str, style_entry ? style_entry->name : bstrPropertyName);
+    nsAString_InitDepend(&name_str, get_style_prop_nsname(style_entry, bstrPropertyName));
     nsAString_Init(&ret_str, NULL);
     nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->nsstyle, &name_str, &ret_str);
     nsAString_Finish(&name_str);
@@ -4500,7 +4518,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclarati
         nsAString_InitDepend(&priority_str, NULL);
     }
 
-    nsAString_InitDepend(&name_str, style_entry ? style_entry->name : name);
+    nsAString_InitDepend(&name_str, get_style_prop_nsname(style_entry, name));
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &name_str, &value_str, &priority_str);
     nsAString_Finish(&name_str);
     nsAString_Finish(&value_str);
@@ -8760,15 +8778,19 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTransitionDelay(IHTMLCSSSty
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTransition(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_property(This, STYLEID_MSTRANSITION, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTransition(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_property(This, STYLEID_MSTRANSITION, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_msTouchAction(IHTMLCSSStyleDeclaration2 *iface, BSTR v)

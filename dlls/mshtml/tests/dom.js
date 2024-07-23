@@ -472,6 +472,20 @@ sync_test("style_properties", function() {
     ok(computed_style.zIndex === 4, "computed_style.zIndex = " + computed_style.zIndex);
 
     window.getComputedStyle(elem, null);
+
+    /* ms* prefixed styles alias */
+    var list = [
+        [ "transition", "background-color 0.5s linear 0.1s" ]
+    ];
+    for(var i = 0; i < list.length; i++) {
+        var s = list[i][0], v = list[i][1], ms = "ms" + s[0].toUpperCase() + s.substring(1);
+        style[s] = v;
+        ok(style[s] === v, "style." + s + " = " + style[s] + ", expected " + v);
+        ok(style[ms] === v, "style." + ms + " = " + style[ms] + ", expected " + v);
+        elem.style[ms] = v;
+        ok(elem.style[s] === v, "elem.style." + s + " = " + elem.style[s] + ", expected " + v);
+        ok(elem.style[ms] === v, "elem.style." + ms + " = " + elem.style[ms] + ", expected " + v);
+    }
 });
 
 sync_test("stylesheets", function() {

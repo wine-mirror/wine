@@ -693,7 +693,9 @@ sync_test("style_props", function() {
     test_exposed("removeProperty", v >= 9, v >= 9, v >= 9);
     test_exposed("background-clip", v >= 9, v >= 9, v >= 9);
     test_exposed("msTransform", v >= 9, v >= 9, v >= 9);
+    test_exposed("msTransition", v >= 10, v >= 10, v >= 10);
     test_exposed("transform", v >= 10, v >= 10, v >= 10);
+    test_exposed("transition", v >= 10, v >= 10, v >= 10);
 });
 
 sync_test("createElement_inline_attr", function() {
