@@ -318,7 +318,7 @@ static const style_tbl_entry_t style_tbl[] = {
         ATTR_FIX_PX
     },
     {
-        L"-moz-box-sizing",
+        L"box-sizing",
         DISPID_IHTMLCSSSTYLEDECLARATION_BOXSIZING,
         DISPID_A_BOXSIZING
     },
