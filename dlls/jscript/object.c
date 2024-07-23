@@ -55,7 +55,8 @@ static HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
         L"[object Object]",
         L"[object Object]",
         L"[object Object]",
-        L"[object Object]"
+        L"[object Object]",
+        NULL
     };
 
     TRACE("\n");

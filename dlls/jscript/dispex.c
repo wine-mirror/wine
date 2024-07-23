@@ -3418,7 +3418,7 @@ static HRESULT HostObject_to_string(jsdisp_t *jsdisp, jsstr_t **ret)
 }
 
 static const builtin_info_t HostObject_info = {
-    .class       = JSCLASS_OBJECT,
+    .class       = JSCLASS_HOST,
     .addref      = HostObject_addref,
     .release     = HostObject_release,
     .lookup_prop = HostObject_lookup_prop,

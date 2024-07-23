@@ -119,6 +119,7 @@ typedef enum {
     JSCLASS_MAP,
     JSCLASS_SET,
     JSCLASS_WEAKMAP,
+    JSCLASS_HOST,
 } jsclass_t;
 
 jsdisp_t *iface_to_jsdisp(IDispatch*);
