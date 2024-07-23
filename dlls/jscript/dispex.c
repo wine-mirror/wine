@@ -429,16 +429,27 @@ static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, DWORD create_
     if(SUCCEEDED(hres) && (!prop || prop->type == PROP_DELETED)) {
         TRACE("creating prop %s flags %lx\n", debugstr_w(name), create_flags);
 
-        if(prop) {
-            prop->type = PROP_JSVAL;
-            prop->flags = create_flags;
-            prop->u.val = jsval_undefined();
-        }else {
-            prop = alloc_prop(This, name, PROP_JSVAL, create_flags);
+        if(!prop) {
+            prop = alloc_prop(This, name, PROP_DELETED, 0);
             if(!prop)
                 return E_OUTOFMEMORY;
         }
 
+        if(This->builtin_info->lookup_prop) {
+            struct property_info desc;
+            hres = This->builtin_info->lookup_prop(This, name, fdexNameEnsure, &desc);
+            if(hres == S_OK) {
+                hres = update_external_prop(This, prop, &desc);
+                if(FAILED(hres))
+                    return hres;
+                *ret = prop;
+                return S_OK;
+            }
+        }
+
+        hres = S_OK;
+        prop->type = PROP_JSVAL;
+        prop->flags = create_flags;
         prop->u.val = jsval_undefined();
     }
 
