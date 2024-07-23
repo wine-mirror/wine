@@ -1914,8 +1914,8 @@ static void add_virtual_modes( struct device_manager_ctx *ctx, const DEVMODEW *c
             mode.dmPelsWidth = screen_sizes[j].width;
             mode.dmPelsHeight = screen_sizes[j].height;
 
-            if (mode.dmPelsWidth > maximum->dmPelsWidth || mode.dmPelsHeight > maximum->dmPelsWidth) continue;
-            if (mode.dmPelsWidth == maximum->dmPelsWidth && mode.dmPelsHeight == maximum->dmPelsWidth) continue;
+            if (mode.dmPelsWidth > maximum->dmPelsWidth || mode.dmPelsHeight > maximum->dmPelsHeight) continue;
+            if (mode.dmPelsWidth == maximum->dmPelsWidth && mode.dmPelsHeight == maximum->dmPelsHeight) continue;
             if (mode.dmPelsWidth == initial->dmPelsWidth && mode.dmPelsHeight == initial->dmPelsHeight) continue;
             modes[modes_count++] = mode;
         }
