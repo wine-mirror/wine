@@ -475,6 +475,7 @@ sync_test("style_properties", function() {
 
     /* ms* prefixed styles alias */
     var list = [
+        [ "transform", "translate(5px, 5px)" ],
         [ "transition", "background-color 0.5s linear 0.1s" ]
     ];
     for(var i = 0; i < list.length; i++) {

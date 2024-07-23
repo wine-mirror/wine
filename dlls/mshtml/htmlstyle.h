@@ -40,6 +40,7 @@ struct HTMLStyle {
 
 /* NOTE: Make sure to keep in sync with style_tbl in htmlstyle.c */
 typedef enum {
+    STYLEID_MSTRANSFORM,
     STYLEID_MSTRANSITION,
     STYLEID_ANIMATION,
     STYLEID_ANIMATION_NAME,

@@ -120,6 +120,11 @@ typedef struct {
 
 static const style_tbl_entry_t style_tbl[] = {
     {
+        L"-ms-transform",
+        DISPID_IHTMLCSSSTYLEDECLARATION_MSTRANSFORM,
+        DISPID_UNKNOWN
+    },
+    {
         L"-ms-transition",
         DISPID_IHTMLCSSSTYLEDECLARATION2_MSTRANSITION,
         DISPID_UNKNOWN,
@@ -7280,15 +7285,19 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_boxShadow(IHTMLCSSStyleDeclara
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_msTransform(IHTMLCSSStyleDeclaration *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_property(This, STYLEID_MSTRANSFORM, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_msTransform(IHTMLCSSStyleDeclaration *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_property(This, STYLEID_MSTRANSFORM, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_msTransformOrigin(IHTMLCSSStyleDeclaration *iface, BSTR v)
