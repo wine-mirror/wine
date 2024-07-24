@@ -1423,9 +1423,9 @@ static void test_init_page_creation(void)
     {
         page = (HWND)SendMessageA(hp, PSM_INDEXTOHWND, p, 0);
         if(p == 2)
-            todo_wine ok(page == NULL, "Page %d created.\n", p);
+            ok(page == NULL, "Page %d created.\n", p);
         else
-            todo_wine ok(page != NULL, "Page %d not created.\n", p);
+            ok(page != NULL, "Page %d not created.\n", p);
     }
 
     DestroyWindow(hp);

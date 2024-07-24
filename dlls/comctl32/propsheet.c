@@ -3625,6 +3625,14 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                          psInfo->ppshheader.pszCaption);
       }
 
+      for (int index = 0; index < psInfo->nPages;)
+      {
+        DWORD premature = HPSP_get_flags(psInfo->proppage[index].hpage) & PSP_PREMATURE;
+        if (premature && !PROPSHEET_CreatePage(hwnd, index, psInfo, psInfo->proppage[index].hpage))
+          PROPSHEET_RemovePage(hwnd, index, NULL);
+        else
+          index++;
+      }
 
       if (psInfo->useCallback)
              (*(psInfo->ppshheader.pfnCallback))(hwnd, PSCB_INITIALIZED, 0);
