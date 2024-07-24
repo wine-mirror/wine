@@ -1450,20 +1450,32 @@ DWORD WINAPI DECLSPEC_HOTPATCH ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst,
 {
     UNICODE_STRING us_src;
     PWSTR dstW = NULL;
-    DWORD ret;
+    DWORD count_neededW;
+    DWORD count_neededA = 0;
 
     RtlCreateUnicodeStringFromAsciiz( &us_src, src );
-    if (count)
-    {
-        if (!(dstW = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR)))) return 0;
-        ret = ExpandEnvironmentStringsW( us_src.Buffer, dstW, count);
-        if (ret) WideCharToMultiByte( CP_ACP, 0, dstW, ret, dst, count, NULL, NULL );
-    }
-    else ret = ExpandEnvironmentStringsW( us_src.Buffer, NULL, 0 );
 
+    /* We always need to call ExpandEnvironmentStringsW, since we need the result to calculate the needed buffer size */
+    count_neededW = ExpandEnvironmentStringsW( us_src.Buffer, NULL, 0 );
+    if (!(dstW = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, count_neededW * sizeof(WCHAR) ))) goto cleanup;
+    count_neededW = ExpandEnvironmentStringsW( us_src.Buffer, dstW, count_neededW );
+
+    /* Calculate needed buffer */
+    count_neededA = WideCharToMultiByte( CP_ACP, 0, dstW, count_neededW, NULL, 0, NULL, NULL );
+
+    /* If provided buffer is enough, do actual conversion */
+    if (count > count_neededA)
+        count_neededA = WideCharToMultiByte( CP_ACP, 0, dstW, count_neededW, dst, count, NULL, NULL );
+    else if(dst)
+        *dst = 0;
+
+cleanup:
     RtlFreeUnicodeString( &us_src );
     HeapFree( GetProcessHeap(), 0, dstW );
-    return ret;
+
+    if (count_neededA >= count) /* When the buffer is too small, native over-reports by one byte */
+        return count_neededA + 1;
+    return count_neededA;
 }
 
 

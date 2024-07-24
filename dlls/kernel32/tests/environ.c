@@ -483,59 +483,56 @@ static void test_ExpandEnvironmentStringsA(void)
     const char *expected_str;
     int count_in;
     int expected_count_out;
-    BOOL todo_status;
-    BOOL todo_str;
-    BOOL todo_len;
     } tests[] =
     {
-        /*  0 */ { "Long long value",       "",                   0, 17, FALSE, TRUE, TRUE },
-        /*  1 */ { "Long long value",       "",                   1, 17, TRUE, TRUE, TRUE },
-        /*  2 */ { "Long long value",       "",                   2, 17, TRUE, TRUE, TRUE },
-        /*  3 */ { "Long long value",       "",                   3, 17, TRUE, TRUE, TRUE },
-        /*  4 */ { "Long long value",       "",                  15, 17, TRUE, TRUE, TRUE },
-        /*  5 */ { "Long long value",       "",                  16, 17, FALSE, TRUE, TRUE },
+        /*  0 */ { "Long long value",       "",                   0, 17 },
+        /*  1 */ { "Long long value",       "",                   1, 17 },
+        /*  2 */ { "Long long value",       "",                   2, 17 },
+        /*  3 */ { "Long long value",       "",                   3, 17 },
+        /*  4 */ { "Long long value",       "",                  15, 17 },
+        /*  5 */ { "Long long value",       "",                  16, 17 },
         /*  6 */ { "Long long value",       "Long long value",   17, 16 },
-        /*  7 */ { "%TVAR% long long",      "",                   0, 16, FALSE, TRUE, TRUE },
-        /*  8 */ { "%TVAR% long long",      "",                   1, 16, TRUE, FALSE, TRUE },
-        /*  9 */ { "%TVAR% long long",      "",                   2, 16, TRUE, FALSE, TRUE },
-        /* 10 */ { "%TVAR% long long",      "",                   4, 16, TRUE, FALSE, TRUE },
-        /* 11 */ { "%TVAR% long long",      "",                   5, 16, TRUE, TRUE, TRUE },
-        /* 12 */ { "%TVAR% long long",      "",                   6, 16, TRUE, TRUE, TRUE },
-        /* 13 */ { "%TVAR% long long",      "",                   7, 16, TRUE, TRUE, TRUE },
-        /* 14 */ { "%TVAR% long long",      "",                  15, 16, FALSE, TRUE, TRUE },
+        /*  7 */ { "%TVAR% long long",      "",                   0, 16 },
+        /*  8 */ { "%TVAR% long long",      "",                   1, 16 },
+        /*  9 */ { "%TVAR% long long",      "",                   2, 16 },
+        /* 10 */ { "%TVAR% long long",      "",                   4, 16 },
+        /* 11 */ { "%TVAR% long long",      "",                   5, 16 },
+        /* 12 */ { "%TVAR% long long",      "",                   6, 16 },
+        /* 13 */ { "%TVAR% long long",      "",                   7, 16 },
+        /* 14 */ { "%TVAR% long long",      "",                  15, 16 },
         /* 15 */ { "%TVAR% long long",      "WINE long long",    16, 15 },
-        /* 16 */ { "%TVAR%%TVAR% long",     "",                   4, 15, TRUE, FALSE, TRUE },
-        /* 17 */ { "%TVAR%%TVAR% long",     "",                   5, 15, TRUE, TRUE, TRUE },
-        /* 18 */ { "%TVAR%%TVAR% long",     "",                   6, 15, TRUE, TRUE, TRUE },
-        /* 19 */ { "%TVAR%%TVAR% long",     "",                   8, 15, TRUE, TRUE, TRUE },
-        /* 20 */ { "%TVAR%%TVAR% long",     "",                   9, 15, TRUE, TRUE, TRUE },
-        /* 21 */ { "%TVAR%%TVAR% long",     "",                  10, 15, TRUE, TRUE, TRUE },
-        /* 22 */ { "%TVAR%%TVAR% long",     "",                  14, 15, FALSE, TRUE, TRUE },
+        /* 16 */ { "%TVAR%%TVAR% long",     "",                   4, 15 },
+        /* 17 */ { "%TVAR%%TVAR% long",     "",                   5, 15 },
+        /* 18 */ { "%TVAR%%TVAR% long",     "",                   6, 15 },
+        /* 19 */ { "%TVAR%%TVAR% long",     "",                   8, 15 },
+        /* 20 */ { "%TVAR%%TVAR% long",     "",                   9, 15 },
+        /* 21 */ { "%TVAR%%TVAR% long",     "",                  10, 15 },
+        /* 22 */ { "%TVAR%%TVAR% long",     "",                  14, 15 },
         /* 23 */ { "%TVAR%%TVAR% long",     "WINEWINE long",     15, 14 },
-        /* 24 */ { "%TVAR% %TVAR% long",    "",                   5, 16, TRUE, TRUE, TRUE },
-        /* 25 */ { "%TVAR% %TVAR% long",    "",                   6, 16, TRUE, TRUE, TRUE },
-        /* 26 */ { "%TVAR% %TVAR% long",    "",                   8, 16, TRUE, TRUE, TRUE },
-        /* 27 */ { "%TVAR% %TVAR% long",    "",                   9, 16, TRUE, TRUE, TRUE },
-        /* 28 */ { "%TVAR% %TVAR% long",    "",                  10, 16, TRUE, TRUE, TRUE },
-        /* 29 */ { "%TVAR% %TVAR% long",    "",                  11, 16, TRUE, TRUE, TRUE },
-        /* 30 */ { "%TVAR% %TVAR% long",    "",                  12, 16, TRUE, TRUE, TRUE },
-        /* 31 */ { "%TVAR% %TVAR% long",    "",                  14, 16, TRUE, TRUE, TRUE },
-        /* 32 */ { "%TVAR% %TVAR% long",    "",                  15, 16, FALSE, TRUE, TRUE },
+        /* 24 */ { "%TVAR% %TVAR% long",    "",                   5, 16 },
+        /* 25 */ { "%TVAR% %TVAR% long",    "",                   6, 16 },
+        /* 26 */ { "%TVAR% %TVAR% long",    "",                   8, 16 },
+        /* 27 */ { "%TVAR% %TVAR% long",    "",                   9, 16 },
+        /* 28 */ { "%TVAR% %TVAR% long",    "",                  10, 16 },
+        /* 29 */ { "%TVAR% %TVAR% long",    "",                  11, 16 },
+        /* 30 */ { "%TVAR% %TVAR% long",    "",                  12, 16 },
+        /* 31 */ { "%TVAR% %TVAR% long",    "",                  14, 16 },
+        /* 32 */ { "%TVAR% %TVAR% long",    "",                  15, 16 },
         /* 33 */ { "%TVAR% %TVAR% long",    "WINE WINE long",    16, 15 },
-        /* 34 */ { "%TVAR2% long long",     "",                   1, 19, TRUE, TRUE, TRUE },
-        /* 35 */ { "%TVAR2% long long",     "",                   2, 19, TRUE, TRUE, TRUE },
-        /* 36 */ { "%TVAR2% long long",     "",                   4, 19, TRUE, TRUE, TRUE },
-        /* 37 */ { "%TVAR2% long long",     "",                   7, 19, TRUE, TRUE, TRUE },
-        /* 38 */ { "%TVAR2% long long",     "",                   8, 19, TRUE, TRUE, TRUE },
-        /* 39 */ { "%TVAR2% long long",     "",                   9, 19, TRUE, TRUE, TRUE },
-        /* 40 */ { "%TVAR2% long long",     "",                  10, 19, TRUE, TRUE, TRUE },
-        /* 41 */ { "%TVAR2% long long",     "",                  18, 19, FALSE, TRUE, TRUE },
+        /* 34 */ { "%TVAR2% long long",     "",                   1, 19 },
+        /* 35 */ { "%TVAR2% long long",     "",                   2, 19 },
+        /* 36 */ { "%TVAR2% long long",     "",                   4, 19 },
+        /* 37 */ { "%TVAR2% long long",     "",                   7, 19 },
+        /* 38 */ { "%TVAR2% long long",     "",                   8, 19 },
+        /* 39 */ { "%TVAR2% long long",     "",                   9, 19 },
+        /* 40 */ { "%TVAR2% long long",     "",                  10, 19 },
+        /* 41 */ { "%TVAR2% long long",     "",                  18, 19 },
         /* 42 */ { "%TVAR2% long long",     "%TVAR2% long long", 19, 18 },
-        /* 43 */ { "%TVAR long long",       "",                   1, 17, TRUE, TRUE, TRUE },
-        /* 44 */ { "%TVAR long long",       "",                   2, 17, TRUE, TRUE, TRUE },
-        /* 45 */ { "%TVAR long long",       "",                   3, 17, TRUE, TRUE, TRUE },
-        /* 46 */ { "%TVAR long long",       "",                  15, 17, TRUE, TRUE, TRUE },
-        /* 47 */ { "%TVAR long long",       "",                  16, 17, FALSE, TRUE, TRUE },
+        /* 43 */ { "%TVAR long long",       "",                   1, 17 },
+        /* 44 */ { "%TVAR long long",       "",                   2, 17 },
+        /* 45 */ { "%TVAR long long",       "",                   3, 17 },
+        /* 46 */ { "%TVAR long long",       "",                  15, 17 },
+        /* 47 */ { "%TVAR long long",       "",                  16, 17 },
         /* 48 */ { "%TVAR long long",       "%TVAR long long",   17, 16 },
     };
 
@@ -630,11 +627,8 @@ static void test_ExpandEnvironmentStringsA(void)
         SetLastError(0xdeadbeef);
         strcpy(buf, "abcdefghijklmnopqrstuv");
         ret = ExpandEnvironmentStringsA(test->input, buf, test->count_in);
-        todo_wine_if(test->todo_len)
         ok(ret == test->expected_count_out, "Test %d: got %lu\n", i, ret);
-        todo_wine_if(test->todo_status)
         ok(GetLastError() == 0xdeadbeef, "Test %d: got last error %ld\n", i, GetLastError());
-        todo_wine_if(test->todo_str)
         ok(!strcmp(buf, test->expected_str), "Test %d: got %s\n", i, debugstr_a(buf));
     }
 
@@ -649,23 +643,17 @@ static void test_ExpandEnvironmentStringsA(void)
         SetLastError(0xdeadbeef);
         ret_size = ExpandEnvironmentStringsA(japanese_test, NULL, 0);
         ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
-        todo_wine
         ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
 
         SetLastError(0xdeadbeef);
         ret_size = ExpandEnvironmentStringsA(japanese_test, buf, ret_size);
-        todo_wine
         ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
-        todo_wine
         ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
-        todo_wine
         ok(!strcmp(buf, japanese_test), "Got %s\n", debugstr_a(buf));
 
         SetLastError(0xdeadbeef);
         ret_size = ExpandEnvironmentStringsA(japanese_test, buf, japanese_len / 2); /* Buffer too small */
-        todo_wine
         ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
-        todo_wine
         ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
     }
     else

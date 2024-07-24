@@ -294,6 +294,7 @@ static void test_get_profiles_dir(void)
     /* Rather than a BOOL, the return value is also the number of characters
      * stored in the buffer.
      */
+    todo_wine
     ok(profiles_len - 1 == r, "expected %ld, got %d\n", profiles_len - 1, r);
     ok(!strcmp(buf, profiles_dir), "expected %s, got %s\n", profiles_dir, buf);
     ok(strlen(buf) + 1 == cch, "String length is %Iu, but cch is %lu\n", strlen(buf), cch);
