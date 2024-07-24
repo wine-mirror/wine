@@ -1625,7 +1625,7 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
             video_decoder_output_types, ARRAY_SIZE(video_decoder_output_types), NULL, &decoder)))
         return hr;
 
-    if (FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &AVDecVideoAcceleration_H264, TRUE)))
+    if (FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &CODECAPI_AVDecVideoAcceleration_H264, TRUE)))
     {
         IMFTransform_Release(&decoder->IMFTransform_iface);
         return hr;

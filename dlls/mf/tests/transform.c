@@ -4094,7 +4094,7 @@ static void test_h264_decoder(void)
         ATTR_UINT32(MF_SA_D3D11_AWARE, 1),
         ATTR_UINT32(MFT_DECODER_EXPOSE_OUTPUT_TYPES_IN_NATIVE_ORDER, 0),
         /* more H264 decoder specific attributes from CODECAPI */
-        ATTR_UINT32(AVDecVideoAcceleration_H264, 1),
+        ATTR_UINT32(CODECAPI_AVDecVideoAcceleration_H264, 1),
         {0},
     };
     static const DWORD input_width = 120, input_height = 248;
