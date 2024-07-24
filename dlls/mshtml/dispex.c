@@ -1859,7 +1859,8 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IWineJSDispatchHost *iface, REFII
 
     /* Native ignores all cNames > 1, and doesn't even fill them */
     if(cNames)
-        hres = IWineJSDispatchHost_GetDispID(&This->IWineJSDispatchHost_iface, rgszNames[0], 0, rgDispId);
+        hres = IWineJSDispatchHost_GetDispID(&This->IWineJSDispatchHost_iface, rgszNames[0],
+                                             fdexNameCaseInsensitive, rgDispId);
 
     return hres;
 }
