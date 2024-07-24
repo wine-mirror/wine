@@ -646,6 +646,39 @@ static void test_ExpandEnvironmentStringsA(void)
 
     success = SetEnvironmentVariableA("TVAR", NULL);
     ok(success, "SetEnvironmentVariableA failed with %ld\n", GetLastError());
+
+    if (GetACP() == 932) /* shift-jis */
+    {
+        const char *japanese_test = "\x88\xEA\x93\xF1\x8E\x4F\x8E\x6C\x8C\xDC\x98\x5A\x8E\xB5\x94\xAA\x8B\xE3"; /* Japanese Kanji for "one" to "nine", in shift-jis */
+        int japanese_len = strlen(japanese_test);
+
+        SetLastError(0xdeadbeef);
+        ret_size = ExpandEnvironmentStringsA(japanese_test, NULL, 0);
+        todo_wine
+        ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
+        todo_wine
+        ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
+
+        SetLastError(0xdeadbeef);
+        ret_size = ExpandEnvironmentStringsA(japanese_test, buf, ret_size);
+        todo_wine
+        ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
+        todo_wine
+        ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
+        todo_wine
+        ok(!strcmp(buf, japanese_test), "Got %s\n", debugstr_a(buf));
+
+        SetLastError(0xdeadbeef);
+        ret_size = ExpandEnvironmentStringsA(japanese_test, buf, japanese_len / 2); /* Buffer too small */
+        todo_wine
+        ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
+        todo_wine
+        ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
+    }
+    else
+    {
+        skip("Skipping japanese language tests\n");
+    }
 }
 
 static void test_GetComputerName(void)
