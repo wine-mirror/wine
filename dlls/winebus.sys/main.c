@@ -159,15 +159,25 @@ static void unix_device_set_feature_report(DEVICE_OBJECT *device, HID_XFER_PACKE
     winebus_call(device_set_feature_report, &params);
 }
 
-static DWORD get_device_index(struct device_desc *desc)
+static DWORD get_device_index(struct device_desc *desc, struct list **before)
 {
     struct device_extension *ext;
     DWORD index = 0;
 
+    *before = NULL;
+
+    /* The device list is sorted, so just increment the index until it doesn't match an index already in the list */
     LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
     {
         if (ext->desc.vid == desc->vid && ext->desc.pid == desc->pid && ext->desc.input == desc->input)
-            index = max(ext->index + 1, index);
+        {
+            if (ext->index != index)
+            {
+                *before = &ext->entry;
+                break;
+            }
+            index++;
+        }
     }
 
     return index;
@@ -283,6 +293,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     DEVICE_OBJECT *device;
     UNICODE_STRING nameW;
     WCHAR dev_name[256];
+    struct list *before;
     NTSTATUS status;
 
     TRACE("desc %s, unix_device %#I64x\n", debugstr_device_desc(desc), unix_device);
@@ -302,7 +313,7 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     ext = (struct device_extension *)device->DeviceExtension;
     ext->device             = device;
     ext->desc               = *desc;
-    ext->index              = get_device_index(desc);
+    ext->index              = get_device_index(desc, &before);
     ext->unix_device        = unix_device;
     list_init(&ext->reports);
 
@@ -321,7 +332,10 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     ext->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
     /* add to list of pnp devices */
-    list_add_tail(&device_list, &ext->entry);
+    if (before)
+        list_add_before(before, &ext->entry);
+    else
+        list_add_tail(&device_list, &ext->entry);
 
     RtlLeaveCriticalSection(&device_list_cs);
 
