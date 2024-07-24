@@ -78,6 +78,24 @@ enum eAVEncCommonStreamEndHandling
     eAVEncCommonStreamEndHandling_EnsureComplete = 1,
 };
 
+enum eAVEncVideoChromaResolution
+{
+    eAVEncVideoChromaResolution_SameAsSource = 0,
+    eAVEncVideoChromaResolution_444          = 1,
+    eAVEncVideoChromaResolution_422          = 2,
+    eAVEncVideoChromaResolution_420          = 3,
+    eAVEncVideoChromaResolution_411          = 4,
+};
+
+enum eAVEncVideoChromaSubsampling
+{
+    eAVEncVideoChromaSubsamplingFormat_SameAsSource                   = 0,
+    eAVEncVideoChromaSubsamplingFormat_ProgressiveChroma              = 0x8,
+    eAVEncVideoChromaSubsamplingFormat_Horizontally_Cosited           = 0x4,
+    eAVEncVideoChromaSubsamplingFormat_Vertically_Cosited             = 0x2,
+    eAVEncVideoChromaSubsamplingFormat_Vertically_AlignedChromaPlanes = 0x1,
+};
+
 enum eAVEncVideoOutputFrameRateConversion
 {
     eAVEncVideoOutputFrameRateConversion_Disable = 0,
@@ -153,6 +171,11 @@ DEFINE_GUID(CODECAPI_AVEncVideoHeaderHours,     0x2acc7702, 0xe2da, 0x4158, 0xbf
 DEFINE_GUID(CODECAPI_AVEncVideoHeaderMinutes,   0xdc1a99ce, 0x0307, 0x408b, 0x88, 0x0b, 0xb8, 0x34, 0x8e, 0xe8, 0xca, 0x7f);
 DEFINE_GUID(CODECAPI_AVEncVideoHeaderSeconds,   0x4a2e1a05, 0xa780, 0x4f58, 0x81, 0x20, 0x9a, 0x44, 0x9d, 0x69, 0x65, 0x6b);
 DEFINE_GUID(CODECAPI_AVEncVideoHeaderFrames,    0xafd5f567, 0x5c1b, 0x4adc, 0xbd, 0xaf, 0x73, 0x56, 0x10, 0x38, 0x14, 0x36);
+
+DEFINE_GUID(CODECAPI_AVEncVideoInputChromaResolution,   0xbb0cec33, 0x16f1, 0x47b0, 0x8a, 0x88, 0x37, 0x81, 0x5b, 0xee, 0x17, 0x39);
+DEFINE_GUID(CODECAPI_AVEncVideoOutputChromaResolution,  0x6097b4c9, 0x7c1d, 0x4e64, 0xbf, 0xcc, 0x9e, 0x97, 0x65, 0x31, 0x8a, 0xe7);
+DEFINE_GUID(CODECAPI_AVEncVideoInputChromaSubsampling,  0xa8e73a39, 0x4435, 0x4ec3, 0xa6, 0xea, 0x98, 0x30, 0x0f, 0x4b, 0x36, 0xf7);
+DEFINE_GUID(CODECAPI_AVEncVideoOutputChromaSubsampling, 0xfa561c6c, 0x7d17, 0x44f0, 0x83, 0xc9, 0x32, 0xed, 0x12, 0xe9, 0x63, 0x43);
 
 DEFINE_GUID(CODECAPI_AVEncVideoOutputFrameRate,           0xea85e7c3, 0x9567, 0x4d99, 0x87, 0xc4, 0x02, 0xc1, 0xc2, 0x78, 0xca, 0x7c);
 DEFINE_GUID(CODECAPI_AVEncVideoOutputFrameRateConversion, 0x8c068bf4, 0x369a, 0x4ba3, 0x82, 0xfd, 0xb2, 0x51, 0x8f, 0xb3, 0x39, 0x6e);
