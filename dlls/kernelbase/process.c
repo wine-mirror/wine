@@ -1490,10 +1490,10 @@ DWORD WINAPI DECLSPEC_HOTPATCH ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR ds
     res = 0;
     status = RtlExpandEnvironmentStrings_U( NULL, &us_src, &us_dst, &res );
     res /= sizeof(WCHAR);
-    if (!set_ntstatus( status ))
+    if (status != STATUS_BUFFER_TOO_SMALL)
     {
-        if (status != STATUS_BUFFER_TOO_SMALL) return 0;
-        if (len && dst) dst[len - 1] = 0;
+        if(!set_ntstatus( status ))
+            return 0;
     }
     return res;
 }
