@@ -37,12 +37,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 struct enum_objects
 {
     IEnumObjects IEnumObjects_iface;
+    IObjectCollection IObjectCollection_iface;
     LONG ref;
 };
 
 static inline struct enum_objects *impl_from_IEnumObjects(IEnumObjects *iface)
 {
     return CONTAINING_RECORD(iface, struct enum_objects, IEnumObjects_iface);
+}
+
+static inline struct enum_objects *impl_from_IObjectCollection(IObjectCollection *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_objects, IObjectCollection_iface);
 }
 
 static HRESULT WINAPI enum_objects_QueryInterface(IEnumObjects *iface, REFIID riid, void **obj)
@@ -56,6 +62,10 @@ static HRESULT WINAPI enum_objects_QueryInterface(IEnumObjects *iface, REFIID ri
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IEnumObjects))
     {
         *obj = &This->IEnumObjects_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IObjectCollection) || IsEqualIID(riid, &IID_IObjectArray))
+    {
+        *obj = &This->IObjectCollection_iface;
     }
 
     if (*obj)
@@ -144,6 +154,91 @@ static const IEnumObjectsVtbl enum_objects_vtbl =
     enum_objects_Clone,
 };
 
+static HRESULT WINAPI object_collection_QueryInterface(IObjectCollection *iface, REFIID riid, void **obj)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+    return IEnumObjects_QueryInterface(&This->IEnumObjects_iface, riid, obj);
+}
+
+static ULONG WINAPI object_collection_AddRef(IObjectCollection *iface)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+    return IEnumObjects_AddRef(&This->IEnumObjects_iface);
+}
+
+static ULONG WINAPI object_collection_Release(IObjectCollection *iface)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+    return IEnumObjects_Release(&This->IEnumObjects_iface);
+}
+
+static HRESULT WINAPI object_collection_GetCount(IObjectCollection *iface, UINT *count)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+
+    FIXME("(%p)->(%p): stub!\n", This, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_collection_GetAt(IObjectCollection *iface, UINT index, REFIID riid, void **obj)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+
+    FIXME("(%p %u, %s)->(%p): stub!\n", This, index, debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_collection_AddObject(IObjectCollection *iface, IUnknown *obj)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+
+    FIXME("(%p %p): stub!\n", This, obj);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_collection_AddFromArray(IObjectCollection *iface, IObjectArray *source_array)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+
+    FIXME("(%p %p): stub!\n", This, source_array);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_collection_RemoveObjectAt(IObjectCollection *iface, UINT index)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+
+    FIXME("(%p %u): stub!\n", This, index);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_collection_Clear(IObjectCollection *iface)
+{
+    struct enum_objects *This = impl_from_IObjectCollection(iface);
+
+    FIXME("(%p): stub!\n", This);
+
+    return E_NOTIMPL;
+}
+
+static const IObjectCollectionVtbl object_collection_vtbl =
+{
+    object_collection_QueryInterface,
+    object_collection_AddRef,
+    object_collection_Release,
+    object_collection_GetCount,
+    object_collection_GetAt,
+    object_collection_AddObject,
+    object_collection_AddFromArray,
+    object_collection_RemoveObjectAt,
+    object_collection_Clear
+};
+
 HRESULT WINAPI EnumerableObjectCollection_Constructor(IUnknown *outer, REFIID riid, void **obj)
 {
     struct enum_objects *This;
@@ -159,6 +254,7 @@ HRESULT WINAPI EnumerableObjectCollection_Constructor(IUnknown *outer, REFIID ri
 
     This->ref = 1;
     This->IEnumObjects_iface.lpVtbl = &enum_objects_vtbl;
+    This->IObjectCollection_iface.lpVtbl = &object_collection_vtbl;
 
     hr = IEnumObjects_QueryInterface(&This->IEnumObjects_iface, riid, obj);
     IEnumObjects_Release(&This->IEnumObjects_iface);
