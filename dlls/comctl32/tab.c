@@ -3368,6 +3368,11 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case TCM_SETEXTENDEDSTYLE:
       return TAB_SetExtendedStyle (infoPtr, wParam, lParam);
 
+    case WM_GETOBJECT:
+      if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+        return 0x1000f;
+      break;
+
     case WM_GETFONT:
       return TAB_GetFont (infoPtr);
 
