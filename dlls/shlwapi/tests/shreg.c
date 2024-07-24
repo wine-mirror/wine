@@ -290,11 +290,8 @@ static void test_SHQueryValueEx(void)
             broken(ERROR_SUCCESS == dwRet), /* < IE5.5*/
             "Expected ERROR_MORE_DATA, got (%lu)\n", dwRet);
 
-        todo_wine
-        {
-                ok( (0 == strcmp("", buf)) || (0 == strcmp(sTestpath2, buf)),
-                    "Expected empty or unexpanded string (win98), got (%s)\n", buf); 
-        }
+        ok( !strcmp("", buf) || !strcmp(sTestpath2, buf),
+            "Expected empty or unexpanded string (win98), got (%s)\n", buf);
 
         ok( dwSize >= nUsedBuffer2 ||
             broken(dwSize == (strlen("") + 1)), /* < IE 5.5 */

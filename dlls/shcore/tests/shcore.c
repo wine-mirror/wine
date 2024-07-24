@@ -567,10 +567,7 @@ static void test_SHQueryValueEx(void)
     ret = pSHQueryValueExA(hKey, "Test3", NULL, &type, buf, &size);
     ok(ret == ERROR_MORE_DATA, "Unexpected retval %ld.\n", ret);
 
-    todo_wine
-    {
     ok(!strcmp("", buf), "Unexpanded string %s.\n", buf);
-    }
 
     ok(size >= buffer_len2, "Buffer size %lu should be >= %lu.\n", size, buffer_len2);
     ok(type == REG_SZ, "Unexpected type %ld.\n", type);

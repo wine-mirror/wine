@@ -384,7 +384,7 @@ done:
 NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE_T src_len,
                                              WCHAR *dst, SIZE_T count, SIZE_T *plen )
 {
-    SIZE_T len, total_size = 1;  /* 1 for terminating '\0' */
+    SIZE_T len, copy, total_size = 1;  /* 1 for terminating '\0' */
     LPCWSTR env, var;
 
     if (!renv)
@@ -402,6 +402,7 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
             var = src;
             src += len;
             src_len -= len;
+            copy = len;
         }
         else  /* we are at the start of a variable */
         {
@@ -413,6 +414,11 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
                     src += len + 1;  /* Skip the variable name */
                     src_len -= len + 1;
                     len = wcslen(var);
+                    copy = len;
+                    if (count <= copy) /* Either copy the entire value, or nothing at all */
+                        copy = 0;
+                    if (dst && count)  /* When the variable is the last thing that fits into dst, the string is null terminated */
+                       dst[copy] = 0;  /* Either right after, or if it doesn't fit, where it would start */
                 }
                 else
                 {
@@ -420,6 +426,7 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
                     len++;
                     src += len;
                     src_len -= len;
+                    copy = len;
                 }
             }
             else  /* unfinished variable name, ignore it */
@@ -427,15 +434,17 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
                 var = src;
                 src += len;
                 src_len = 0;
+                copy = len;
             }
         }
         total_size += len;
         if (dst)
         {
             if (count < len) len = count;
-            memcpy(dst, var, len * sizeof(WCHAR));
+            if (count <= copy) copy = count ? count - 1 : 0; /* If the buffer is too small, we copy one character less */
+            memcpy(dst, var, copy * sizeof(WCHAR));
             count -= len;
-            dst += len;
+            dst += copy;
         }
     }
 

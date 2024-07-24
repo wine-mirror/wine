@@ -256,56 +256,55 @@ static void test_RtlExpandEnvironmentStrings(void)
         const WCHAR *expected_str;
         int count_in;
         int expected_count_out;
-        BOOL todo_str;
     } tests[] =
     {
         /*  0 */ { L"Long long value",       L"abcdefghijklmnopqrstuv",  0, 16 },
-        /*  1 */ { L"Long long value",       L"abcdefghijklmnopqrstuv",  1, 16, TRUE },
-        /*  2 */ { L"Long long value",       L"Lbcdefghijklmnopqrstuv",  2, 16, TRUE },
-        /*  3 */ { L"Long long value",       L"Locdefghijklmnopqrstuv",  3, 16, TRUE },
-        /*  4 */ { L"Long long value",       L"Long long valuopqrstuv", 15, 16, TRUE },
+        /*  1 */ { L"Long long value",       L"abcdefghijklmnopqrstuv",  1, 16 },
+        /*  2 */ { L"Long long value",       L"Lbcdefghijklmnopqrstuv",  2, 16 },
+        /*  3 */ { L"Long long value",       L"Locdefghijklmnopqrstuv",  3, 16 },
+        /*  4 */ { L"Long long value",       L"Long long valuopqrstuv", 15, 16 },
         /*  5 */ { L"Long long value",       L"Long long value",        16, 16 },
         /*  6 */ { L"Long long value",       L"Long long value",        17, 16 },
         /*  7 */ { L"%TVAR% long long",      L"abcdefghijklmnopqrstuv",  0, 15 },
-        /*  8 */ { L"%TVAR% long long",      L"",                        1, 15, TRUE },
-        /*  9 */ { L"%TVAR% long long",      L"",                        2, 15, TRUE },
-        /* 10 */ { L"%TVAR% long long",      L"",                        4, 15, TRUE },
-        /* 11 */ { L"%TVAR% long long",      L"WINE",                    5, 15, TRUE },
-        /* 12 */ { L"%TVAR% long long",      L"WINE fghijklmnopqrstuv",  6, 15, TRUE },
-        /* 13 */ { L"%TVAR% long long",      L"WINE lghijklmnopqrstuv",  7, 15, TRUE },
+        /*  8 */ { L"%TVAR% long long",      L"",                        1, 15 },
+        /*  9 */ { L"%TVAR% long long",      L"",                        2, 15 },
+        /* 10 */ { L"%TVAR% long long",      L"",                        4, 15 },
+        /* 11 */ { L"%TVAR% long long",      L"WINE",                    5, 15 },
+        /* 12 */ { L"%TVAR% long long",      L"WINE fghijklmnopqrstuv",  6, 15 },
+        /* 13 */ { L"%TVAR% long long",      L"WINE lghijklmnopqrstuv",  7, 15 },
         /* 14 */ { L"%TVAR% long long",      L"WINE long long",         15, 15 },
         /* 15 */ { L"%TVAR% long long",      L"WINE long long",         16, 15 },
-        /* 16 */ { L"%TVAR%%TVAR% long",     L"",                        4, 14, TRUE },
-        /* 17 */ { L"%TVAR%%TVAR% long",     L"WINE",                    5, 14, TRUE },
-        /* 18 */ { L"%TVAR%%TVAR% long",     L"WINE",                    6, 14, TRUE },
-        /* 19 */ { L"%TVAR%%TVAR% long",     L"WINE",                    8, 14, TRUE },
-        /* 20 */ { L"%TVAR%%TVAR% long",     L"WINEWINE",                9, 14, TRUE },
-        /* 21 */ { L"%TVAR%%TVAR% long",     L"WINEWINE jklmnopqrstuv", 10, 14, TRUE },
+        /* 16 */ { L"%TVAR%%TVAR% long",     L"",                        4, 14 },
+        /* 17 */ { L"%TVAR%%TVAR% long",     L"WINE",                    5, 14 },
+        /* 18 */ { L"%TVAR%%TVAR% long",     L"WINE",                    6, 14 },
+        /* 19 */ { L"%TVAR%%TVAR% long",     L"WINE",                    8, 14 },
+        /* 20 */ { L"%TVAR%%TVAR% long",     L"WINEWINE",                9, 14 },
+        /* 21 */ { L"%TVAR%%TVAR% long",     L"WINEWINE jklmnopqrstuv", 10, 14 },
         /* 22 */ { L"%TVAR%%TVAR% long",     L"WINEWINE long",          14, 14 },
         /* 23 */ { L"%TVAR%%TVAR% long",     L"WINEWINE long",          15, 14 },
-        /* 24 */ { L"%TVAR% %TVAR% long",    L"WINE",                    5, 15, TRUE },
-        /* 25 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   6, 15, TRUE },
-        /* 26 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   8, 15, TRUE },
-        /* 27 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   9, 15, TRUE },
-        /* 28 */ { L"%TVAR% %TVAR% long",    L"WINE WINE",              10, 15, TRUE },
-        /* 29 */ { L"%TVAR% %TVAR% long",    L"WINE WINE klmnopqrstuv", 11, 15, TRUE },
-        /* 30 */ { L"%TVAR% %TVAR% long",    L"WINE WINE llmnopqrstuv", 12, 15, TRUE },
-        /* 31 */ { L"%TVAR% %TVAR% long",    L"WINE WINE lonnopqrstuv", 14, 15, TRUE },
+        /* 24 */ { L"%TVAR% %TVAR% long",    L"WINE",                    5, 15 },
+        /* 25 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   6, 15 },
+        /* 26 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   8, 15 },
+        /* 27 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   9, 15 },
+        /* 28 */ { L"%TVAR% %TVAR% long",    L"WINE WINE",              10, 15 },
+        /* 29 */ { L"%TVAR% %TVAR% long",    L"WINE WINE klmnopqrstuv", 11, 15 },
+        /* 30 */ { L"%TVAR% %TVAR% long",    L"WINE WINE llmnopqrstuv", 12, 15 },
+        /* 31 */ { L"%TVAR% %TVAR% long",    L"WINE WINE lonnopqrstuv", 14, 15 },
         /* 32 */ { L"%TVAR% %TVAR% long",    L"WINE WINE long",         15, 15 },
         /* 33 */ { L"%TVAR% %TVAR% long",    L"WINE WINE long",         16, 15 },
-        /* 34 */ { L"%TVAR2% long long",     L"abcdefghijklmnopqrstuv",  1, 18, TRUE },
-        /* 35 */ { L"%TVAR2% long long",     L"%bcdefghijklmnopqrstuv",  2, 18, TRUE },
-        /* 36 */ { L"%TVAR2% long long",     L"%TVdefghijklmnopqrstuv",  4, 18, TRUE },
-        /* 37 */ { L"%TVAR2% long long",     L"%TVAR2ghijklmnopqrstuv",  7, 18, TRUE },
-        /* 38 */ { L"%TVAR2% long long",     L"%TVAR2%hijklmnopqrstuv",  8, 18, TRUE },
-        /* 39 */ { L"%TVAR2% long long",     L"%TVAR2% ijklmnopqrstuv",  9, 18, TRUE },
-        /* 40 */ { L"%TVAR2% long long",     L"%TVAR2% ljklmnopqrstuv", 10, 18, TRUE },
+        /* 34 */ { L"%TVAR2% long long",     L"abcdefghijklmnopqrstuv",  1, 18 },
+        /* 35 */ { L"%TVAR2% long long",     L"%bcdefghijklmnopqrstuv",  2, 18 },
+        /* 36 */ { L"%TVAR2% long long",     L"%TVdefghijklmnopqrstuv",  4, 18 },
+        /* 37 */ { L"%TVAR2% long long",     L"%TVAR2ghijklmnopqrstuv",  7, 18 },
+        /* 38 */ { L"%TVAR2% long long",     L"%TVAR2%hijklmnopqrstuv",  8, 18 },
+        /* 39 */ { L"%TVAR2% long long",     L"%TVAR2% ijklmnopqrstuv",  9, 18 },
+        /* 40 */ { L"%TVAR2% long long",     L"%TVAR2% ljklmnopqrstuv", 10, 18 },
         /* 41 */ { L"%TVAR2% long long",     L"%TVAR2% long long",      18, 18 },
         /* 42 */ { L"%TVAR2% long long",     L"%TVAR2% long long",      19, 18 },
-        /* 43 */ { L"%TVAR long long",       L"abcdefghijklmnopqrstuv",  1, 16, TRUE },
-        /* 44 */ { L"%TVAR long long",       L"%bcdefghijklmnopqrstuv",  2, 16, TRUE },
-        /* 45 */ { L"%TVAR long long",       L"%Tcdefghijklmnopqrstuv",  3, 16, TRUE },
-        /* 46 */ { L"%TVAR long long",       L"%TVAR long lonopqrstuv", 15, 16, TRUE },
+        /* 43 */ { L"%TVAR long long",       L"abcdefghijklmnopqrstuv",  1, 16 },
+        /* 44 */ { L"%TVAR long long",       L"%bcdefghijklmnopqrstuv",  2, 16 },
+        /* 45 */ { L"%TVAR long long",       L"%Tcdefghijklmnopqrstuv",  3, 16 },
+        /* 46 */ { L"%TVAR long long",       L"%TVAR long lonopqrstuv", 15, 16 },
         /* 47 */ { L"%TVAR long long",       L"%TVAR long long",        16, 16 },
         /* 48 */ { L"%TVAR long long",       L"%TVAR long long",        17, 16 },
     };
@@ -325,7 +324,6 @@ static void test_RtlExpandEnvironmentStrings(void)
         status = pRtlExpandEnvironmentStrings(NULL, (WCHAR*)test->input, wcslen(test->input), buf, test->count_in, &out_len);
         ok(out_len == test->expected_count_out, "Test %d: got %Iu\n", i, out_len);
         ok(status == expected_status, "Test %d: Expected status %lx, got %lx\n", i, expected_status, status);
-        todo_wine_if(test->todo_str)
         ok(!wcscmp(buf, test->expected_str), "Test %d: got %s\n", i, debugstr_w(buf));
     }
 
@@ -347,7 +345,6 @@ static void test_RtlExpandEnvironmentStrings(void)
         status = pRtlExpandEnvironmentStrings_U(NULL, &us_src, &us_dst, &out_len);
         ok(out_len / sizeof(WCHAR) == test->expected_count_out, "Test %d: got %lu\n", i, out_len);
         ok(status == expected_status, "Test %d: Expected status %lx, got %lx\n", i, expected_status, status);
-        todo_wine_if(test->todo_str)
         ok(!wcscmp(buf, test->expected_str), "Test %d: got %s\n", i, debugstr_w(buf));
     }
     status = RtlSetEnvironmentVariable(NULL, &us_name, NULL);
