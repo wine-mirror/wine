@@ -1730,7 +1730,8 @@ char * CDECL _ctime64(const __time64_t *time)
  */
 errno_t CDECL _ctime64_s(char *res, size_t len, const __time64_t *time)
 {
-    struct tm *t;
+    struct tm t;
+    int ret;
 
     if (!MSVCRT_CHECK_PMT( res != NULL )) return EINVAL;
     if (!MSVCRT_CHECK_PMT( len >= 26 )) return EINVAL;
@@ -1738,9 +1739,10 @@ errno_t CDECL _ctime64_s(char *res, size_t len, const __time64_t *time)
     if (!MSVCRT_CHECK_PMT( time != NULL )) return EINVAL;
     if (!MSVCRT_CHECK_PMT( *time > 0 )) return EINVAL;
 
-    t = _localtime64( time );
-    strcpy( res, asctime( t ) );
-    return 0;
+    ret = _localtime64_s( &t, time );
+    if (ret)
+        return ret;
+    return asctime_s( res, len, &t );
 }
 
 /*********************************************************************
