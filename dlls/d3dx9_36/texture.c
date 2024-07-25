@@ -597,6 +597,9 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     if (!device || !texture || !srcdata || !srcdatasize)
         return D3DERR_INVALIDCALL;
 
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
+
     staging_tex = tex = *texture = NULL;
     mipfilter = d3dx9_get_mip_filter_value(mipfilter, &skip_levels);
     hr = d3dx_image_init(srcdata, srcdatasize, &image, skip_levels, 0);
@@ -1124,6 +1127,9 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     if (!device || !data || !data_size || !volume_texture)
         return D3DERR_INVALIDCALL;
 
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
+
     staging_tex = tex = *volume_texture = NULL;
     mip_filter = d3dx9_get_mip_filter_value(mip_filter, &skip_levels);
     hr = d3dx_image_init(data, data_size, &image, skip_levels, 0);
@@ -1404,6 +1410,9 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
 
     if (!device || !cube_texture || !src_data || !src_data_size)
         return D3DERR_INVALIDCALL;
+
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
 
     staging_tex = tex = *cube_texture = NULL;
     mip_filter = d3dx9_get_mip_filter_value(mip_filter, &skip_levels);
