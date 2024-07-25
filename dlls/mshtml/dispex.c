@@ -1678,13 +1678,6 @@ HRESULT remove_attribute(DispatchEx *This, DISPID id, VARIANT_BOOL *success)
     }
 }
 
-compat_mode_t dispex_compat_mode(DispatchEx *dispex)
-{
-    return dispex->info != dispex->info->desc->delayed_init_info
-        ? dispex->info->compat_mode
-        : dispex->info->desc->vtbl->get_compat_mode(dispex);
-}
-
 HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
 {
     static const WCHAR prefix[8] = L"[object ";
@@ -1741,11 +1734,21 @@ static dispex_data_t *ensure_dispex_info(DispatchEx *dispex, dispex_static_data_
 
 static BOOL ensure_real_info(DispatchEx *dispex)
 {
+    compat_mode_t compat_mode;
+
     if(dispex->info != dispex->info->desc->delayed_init_info)
         return TRUE;
 
-    dispex->info = ensure_dispex_info(dispex, dispex->info->desc, dispex_compat_mode(dispex), NULL);
+    compat_mode = dispex->info->desc->vtbl->get_compat_mode(dispex);
+    dispex->info = ensure_dispex_info(dispex, dispex->info->desc, compat_mode, NULL);
     return dispex->info != NULL;
+}
+
+compat_mode_t dispex_compat_mode(DispatchEx *dispex)
+{
+    if(!ensure_real_info(dispex))
+        return COMPAT_MODE_NONE;
+    return dispex->info->compat_mode;
 }
 
 static inline DispatchEx *impl_from_IWineJSDispatchHost(IWineJSDispatchHost *iface)
