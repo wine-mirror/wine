@@ -5225,7 +5225,7 @@ GpStatus METAFILE_FillPie(GpMetafile *metafile, GpBrush *brush, const GpRectF *r
     is_int_rect = is_integer_rect(rect);
 
     stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeFillPie,
-            FIELD_OFFSET(EmfPlusFillPie, RectData) + is_int_rect ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF),
+            FIELD_OFFSET(EmfPlusFillPie, RectData) + (is_int_rect ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF)),
             (void **)&record);
     if (stat != Ok) return stat;
     if (inline_color)
