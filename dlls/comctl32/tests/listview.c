@@ -3095,7 +3095,7 @@ static void test_custom_sort(void)
         sorted = 1;
     }
 
-    todo_wine ok(sorted, "ListView not sorted correctly.\n");
+    ok(sorted, "ListView not sorted correctly.\n");
 
     DestroyWindow(list_view);
 }

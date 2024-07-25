@@ -9396,7 +9396,7 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare,
     if (infoPtr->nFocusedItem >= 0)
         focusedItem = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nFocusedItem);
 
-    context.items = hdpaItems;
+    context.items = infoPtr->hdpaItems;
     context.compare_func = pfnCompare;
     context.lParam = lParamSort;
     if (IsEx)
