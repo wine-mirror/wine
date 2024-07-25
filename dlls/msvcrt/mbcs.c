@@ -3322,8 +3322,20 @@ size_t CDECL _mbstowcs_l(wchar_t *wcstr, const char *mbstr,
         if(mbstr[size] == '\0')
             break;
 
-        if (locinfo->lc_codepage == CP_UTF8)
-            size += get_utf8_char_len(mbstr[size]);
+        if(locinfo->lc_codepage == CP_UTF8) {
+            int j, chlen = get_utf8_char_len(mbstr[size]);
+
+            for(j = 1; j < chlen; j++)
+            {
+                if(!mbstr[size + j])
+                {
+                    if(count) wcstr[0] = '\0';
+                    *_errno() = EILSEQ;
+                    return -1;
+                }
+            }
+            size += chlen;
+        }
         else
             size += (_isleadbyte_l((unsigned char)mbstr[size], locale) ? 2 : 1);
     }
