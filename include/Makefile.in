@@ -334,6 +334,7 @@ SOURCES = \
 	gameux.idl \
 	gamingtcui.h \
 	gdiplus.h \
+	gdiplusbase.h \
 	gdipluscolor.h \
 	gdipluscolormatrix.h \
 	gdipluseffects.h \

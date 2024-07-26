@@ -28,6 +28,7 @@ namespace Gdiplus
 #include "gdiplusmem.h"
     };
 
+#include "gdiplusbase.h"
 #include "gdiplusenums.h"
 #include "gdiplustypes.h"
 #include "gdiplusinit.h"
