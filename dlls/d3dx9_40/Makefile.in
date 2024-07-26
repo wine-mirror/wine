@@ -23,7 +23,6 @@ SOURCES = \
 	surface.c \
 	texture.c \
 	txc_compress_dxtn.c \
-	txc_fetch_dxtn.c \
 	util.c \
 	version.rc \
 	volume.c \

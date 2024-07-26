@@ -25,6 +25,9 @@
 #include "ole2.h"
 #include "wincodec.h"
 
+#define BCDEC_IMPLEMENTATION
+#define BCDEC_STATIC
+#include "bcdec.h"
 #include "txc_dxtn.h"
 #include <assert.h>
 
@@ -2701,33 +2704,42 @@ static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct p
         BOOL is_dst, void **out_memory, uint32_t *out_row_pitch, uint32_t *out_slice_pitch,
         const struct pixel_format_desc **out_desc)
 {
-    void (*fetch_dxt_texel)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
-    uint32_t x, y, z, tmp_pitch, uncompressed_slice_pitch, uncompressed_row_pitch;
+    uint32_t uncompressed_slice_pitch, uncompressed_row_pitch, block_buf_row_pitch, block_width_mask, block_height_mask;
+    void (*decompress_bcn_block)(const void *src, void *dst, int dst_row_pitch);
     const struct pixel_format_desc *uncompressed_desc = NULL;
     const struct volume *size = &pixels->size;
     BYTE *uncompressed_mem;
+    uint8_t block_buf[64];
+    unsigned int x, y, z;
+    RECT aligned_rect;
 
     switch (desc->format)
     {
         case D3DX_PIXEL_FORMAT_DXT1_UNORM:
             uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
-            fetch_dxt_texel = fetch_2d_texel_rgba_dxt1;
+            decompress_bcn_block = bcdec_bc1;
             break;
+
         case D3DX_PIXEL_FORMAT_DXT2_UNORM:
         case D3DX_PIXEL_FORMAT_DXT3_UNORM:
             uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
-            fetch_dxt_texel = fetch_2d_texel_rgba_dxt3;
+            decompress_bcn_block = bcdec_bc2;
             break;
+
         case D3DX_PIXEL_FORMAT_DXT4_UNORM:
         case D3DX_PIXEL_FORMAT_DXT5_UNORM:
             uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
-            fetch_dxt_texel = fetch_2d_texel_rgba_dxt5;
+            decompress_bcn_block = bcdec_bc3;
             break;
+
         default:
             FIXME("Unexpected compressed texture format %u.\n", desc->format);
             return E_NOTIMPL;
     }
 
+    block_width_mask = desc->block_width - 1;
+    block_height_mask = desc->block_height - 1;
+    block_buf_row_pitch = desc->block_width * uncompressed_desc->bytes_per_pixel;
     uncompressed_row_pitch = size->width * uncompressed_desc->bytes_per_pixel;
     uncompressed_slice_pitch = uncompressed_row_pitch * size->height;
     if (!(uncompressed_mem = malloc(size->depth * uncompressed_slice_pitch)))
@@ -2741,7 +2753,7 @@ static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct p
      */
     if (is_dst)
     {
-        const RECT aligned_rect = { 0, 0, size->width, size->height };
+        SetRect(&aligned_rect, 0, 0, size->width, size->height);
 
         /*
          * If our destination covers the entire set of blocks, no
@@ -2750,26 +2762,71 @@ static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct p
         if (EqualRect(&aligned_rect, &pixels->unaligned_rect))
             goto exit;
     }
+    /*
+     * For compressed source pixels, width/height will represent the size of
+     * the unaligned rectangle. I.e, if we have an 8x8 source with an
+     * unaligned rect of (2,2)-(6,6) our width/height will be 4.
+     */
+    else
+    {
+        SetRect(&aligned_rect, 0, 0, (pixels->unaligned_rect.right + block_width_mask) & ~block_width_mask,
+                (pixels->unaligned_rect.bottom + block_height_mask) & ~block_height_mask);
+    }
 
     TRACE("Decompressing pixels.\n");
-    tmp_pitch = pixels->row_pitch * desc->block_width / desc->block_byte_count;
     for (z = 0; z < size->depth; ++z)
     {
-        const BYTE *slice_data = ((BYTE *)pixels->data) + (pixels->slice_pitch * z);
+        const uint8_t *src_slice = &((const uint8_t *)pixels->data)[z * pixels->slice_pitch];
+        uint8_t *dst_slice = &uncompressed_mem[z * uncompressed_slice_pitch];
 
-        for (y = 0; y < size->height; ++y)
+        for (y = 0; y < aligned_rect.bottom; y += desc->block_height)
         {
-            BYTE *ptr = &uncompressed_mem[(z * uncompressed_slice_pitch) + (y * uncompressed_row_pitch)];
-            for (x = 0; x < size->width; ++x)
-            {
-                const POINT pt = { x, y };
+            const uint8_t *src_ptr = &src_slice[(y / desc->block_height) * pixels->row_pitch];
 
-                if (!is_dst)
-                    fetch_dxt_texel(tmp_pitch, slice_data, x + pixels->unaligned_rect.left,
-                            y + pixels->unaligned_rect.top, ptr);
-                else if (!PtInRect(&pixels->unaligned_rect, pt))
-                    fetch_dxt_texel(tmp_pitch, slice_data, x, y, ptr);
-                ptr += uncompressed_desc->bytes_per_pixel;
+            for (x = 0; x < aligned_rect.right; x += desc->block_width)
+            {
+                struct volume dst_block_size;
+                RECT src_rect, dst_rect;
+                uint8_t *dst_ptr;
+
+                SetRect(&src_rect, x, y, x + desc->block_width, y + desc->block_height);
+                IntersectRect(&src_rect, &src_rect, &pixels->unaligned_rect);
+                dst_rect = src_rect;
+                OffsetRect(&dst_rect, -pixels->unaligned_rect.left, -pixels->unaligned_rect.top);
+
+                set_volume_struct(&dst_block_size, dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top, 1);
+                dst_ptr = &dst_slice[(dst_rect.top * uncompressed_row_pitch)];
+                dst_ptr += dst_rect.left * uncompressed_desc->bytes_per_pixel;
+
+                if (dst_block_size.width != desc->block_width || dst_block_size.height != desc->block_height)
+                {
+                    if (!is_dst)
+                    {
+                        unsigned int block_buf_offset;
+
+                        decompress_bcn_block(src_ptr, block_buf, block_buf_row_pitch);
+                        block_buf_offset = (src_rect.top - y) * block_buf_row_pitch;
+                        block_buf_offset += uncompressed_desc->bytes_per_pixel * (src_rect.left - x);
+                        copy_pixels(&block_buf[block_buf_offset], block_buf_row_pitch, 0, dst_ptr,
+                                uncompressed_row_pitch, 0, &dst_block_size, uncompressed_desc);
+                    }
+                    /*
+                     * If this is the destination, we can just copy the whole
+                     * block. It will be partially overwritten later.
+                     */
+                    else
+                    {
+                        dst_ptr = &dst_slice[y * uncompressed_row_pitch + x * uncompressed_desc->bytes_per_pixel];
+                        decompress_bcn_block(src_ptr, dst_ptr, uncompressed_row_pitch);
+                    }
+
+                }
+                /* Full block copy. */
+                else if (!is_dst)
+                {
+                    decompress_bcn_block(src_ptr, dst_ptr, uncompressed_row_pitch);
+                }
+                src_ptr += desc->block_byte_count;
             }
         }
     }
