@@ -22,7 +22,6 @@ SOURCES = \
 	sprite.c \
 	surface.c \
 	texture.c \
-	txc_compress_dxtn.c \
 	util.c \
 	version.rc \
 	volume.c \

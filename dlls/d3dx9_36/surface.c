@@ -28,7 +28,9 @@
 #define BCDEC_IMPLEMENTATION
 #define BCDEC_STATIC
 #include "bcdec.h"
-#include "txc_dxtn.h"
+#define STB_DXT_IMPLEMENTATION
+#define STB_DXT_STATIC
+#include "stb_dxt.h"
 #include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
@@ -2907,6 +2909,112 @@ static HRESULT d3dx_pixels_unpack_index(struct d3dx_pixels *pixels, const struct
     return S_OK;
 }
 
+static void d3dx_compress_block(enum d3dx_pixel_format_id fmt, uint8_t *block_buf, void *dst_buf)
+{
+    switch (fmt)
+    {
+        case D3DX_PIXEL_FORMAT_DXT1_UNORM:
+            stb_compress_dxt_block(dst_buf, block_buf, FALSE, 0);
+            break;
+
+        case D3DX_PIXEL_FORMAT_DXT2_UNORM:
+        case D3DX_PIXEL_FORMAT_DXT3_UNORM:
+        {
+            uint8_t *dst_data_offset = dst_buf;
+            unsigned int y;
+
+            /* STB doesn't do DXT2/DXT3, we'll do the alpha part ourselves. */
+            for (y = 0; y < 4; ++y)
+            {
+                uint8_t *tmp_row = &block_buf[y * 4 * 4];
+
+                dst_data_offset[0]  = (tmp_row[7] & 0xf0);
+                dst_data_offset[0] |= (tmp_row[3] >> 4);
+                dst_data_offset[1]  = (tmp_row[15] & 0xf0);
+                dst_data_offset[1] |= (tmp_row[11] >> 4);
+
+                /*
+                 * Set all alpha values to 0xff so they aren't considered during
+                 * compression. This modifies the source data being passed in.
+                 */
+                tmp_row[3] = tmp_row[7] = tmp_row[11] = tmp_row[15] = 0xff;
+                dst_data_offset += 2;
+            }
+            stb_compress_dxt_block(dst_data_offset, block_buf, FALSE, 0);
+            break;
+        }
+
+        case D3DX_PIXEL_FORMAT_DXT4_UNORM:
+        case D3DX_PIXEL_FORMAT_DXT5_UNORM:
+            stb_compress_dxt_block(dst_buf, block_buf, TRUE, 0);
+            break;
+
+        default:
+            assert(0);
+            break;
+    }
+}
+
+/*
+ * Source data passed into this function is potentially modified (currently
+ * only in the case of DXT2/DXT3). As of now we only pass temporary buffers
+ * into this function, but this should be taken to account if used elsewhere
+ * outside of d3dx_load_pixels_from_pixels() in the future.
+ */
+static HRESULT d3dx_pixels_compress(struct d3dx_pixels *src_pixels,
+        const struct pixel_format_desc *src_desc, struct d3dx_pixels *dst_pixels,
+        const struct pixel_format_desc *dst_desc)
+{
+    unsigned int x, y, z, block_buf_row_pitch;
+    uint8_t block_buf[64];
+
+    switch (dst_desc->format)
+    {
+        case D3DX_PIXEL_FORMAT_DXT1_UNORM:
+        case D3DX_PIXEL_FORMAT_DXT2_UNORM:
+        case D3DX_PIXEL_FORMAT_DXT3_UNORM:
+        case D3DX_PIXEL_FORMAT_DXT4_UNORM:
+        case D3DX_PIXEL_FORMAT_DXT5_UNORM:
+            assert(src_desc->format == D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM);
+            break;
+
+        default:
+            FIXME("Unexpected compressed texture format %u.\n", dst_desc->format);
+            return E_NOTIMPL;
+    }
+
+    TRACE("Compressing pixels.\n");
+    block_buf_row_pitch = src_desc->bytes_per_pixel * dst_desc->block_width;
+    for (z = 0; z < src_pixels->size.depth; ++z)
+    {
+        const uint8_t *src_slice = &((const uint8_t *)src_pixels->data)[z * src_pixels->slice_pitch];
+        uint8_t *dst_slice = &((uint8_t *)dst_pixels->data)[z * dst_pixels->slice_pitch];
+
+        for (y = 0; y < src_pixels->size.height; y += dst_desc->block_height)
+        {
+            const unsigned int tmp_src_height = min(dst_desc->block_height, src_pixels->size.height - y);
+            uint8_t *dst_ptr = &dst_slice[(y / dst_desc->block_height) * dst_pixels->row_pitch];
+            const uint8_t *src_ptr = &src_slice[y * src_pixels->row_pitch];
+
+            for (x = 0; x < src_pixels->size.width; x += dst_desc->block_width)
+            {
+                const unsigned int tmp_src_width = min(dst_desc->block_width, src_pixels->size.width - x);
+                struct volume block_buf_size = { tmp_src_width, tmp_src_height, 1 };
+
+                if (tmp_src_width != dst_desc->block_width || tmp_src_height != dst_desc->block_height)
+                    memset(block_buf, 0, sizeof(block_buf));
+                copy_pixels(src_ptr, src_pixels->row_pitch, src_pixels->slice_pitch, block_buf, block_buf_row_pitch, 0,
+                        &block_buf_size, src_desc);
+                d3dx_compress_block(dst_desc->format, block_buf, dst_ptr);
+                src_ptr += (src_desc->bytes_per_pixel * dst_desc->block_width);
+                dst_ptr += dst_desc->block_byte_count;
+            }
+        }
+    }
+
+    return S_OK;
+}
+
 HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
         const PALETTEENTRY *palette, enum d3dx_pixel_format_id format, uint32_t left, uint32_t top, uint32_t right,
         uint32_t bottom, uint32_t front, uint32_t back, struct d3dx_pixels *pixels)
@@ -3085,35 +3193,13 @@ HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
                 color_key);
         if (SUCCEEDED(hr))
         {
-            GLenum gl_format = 0;
-            uint32_t i;
+            d3dx_pixels_init(uncompressed_mem, uncompressed_row_pitch, uncompressed_slice_pitch, NULL,
+                    uncompressed_desc->format, 0, 0, dst_size_aligned.width, dst_size_aligned.height, 0,
+                    dst_pixels->size.depth, &uncompressed_pixels);
 
-            TRACE("Compressing DXTn surface.\n");
-            switch (dst_desc->format)
-            {
-                case D3DX_PIXEL_FORMAT_DXT1_UNORM:
-                    gl_format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-                    break;
-                case D3DX_PIXEL_FORMAT_DXT2_UNORM:
-                case D3DX_PIXEL_FORMAT_DXT3_UNORM:
-                    gl_format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-                    break;
-                case D3DX_PIXEL_FORMAT_DXT4_UNORM:
-                case D3DX_PIXEL_FORMAT_DXT5_UNORM:
-                    gl_format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-                    break;
-                default:
-                    ERR("Unexpected destination compressed format %u.\n", dst_desc->format);
-            }
-
-            for (i = 0; i < dst_size_aligned.depth; ++i)
-            {
-                BYTE *uncompressed_mem_slice = (BYTE *)uncompressed_mem + (i * uncompressed_slice_pitch);
-                BYTE *dst_memory_slice = ((BYTE *)dst_pixels->data) + (i * dst_pixels->slice_pitch);
-
-                tx_compress_dxtn(4, dst_size_aligned.width, dst_size_aligned.height, uncompressed_mem_slice, gl_format,
-                        dst_memory_slice, dst_pixels->row_pitch);
-            }
+            hr = d3dx_pixels_compress(&uncompressed_pixels, uncompressed_desc, dst_pixels, dst_desc);
+            if (FAILED(hr))
+                WARN("Failed to compress pixels, hr %#lx.\n", hr);
         }
         free(uncompressed_mem);
         goto exit;
