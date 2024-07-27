@@ -484,7 +484,8 @@ static uint32_t d3dx_calculate_layer_pixels_size(D3DFORMAT format, uint32_t widt
     layer_size = 0;
     for (i = 0; i < mip_levels; ++i)
     {
-        d3dx_calculate_pixels_size(format, dims.width, dims.height, &row_pitch, &slice_pitch);
+        if (FAILED(d3dx_calculate_pixels_size(format, dims.width, dims.height, &row_pitch, &slice_pitch)))
+            return 0;
         layer_size += slice_pitch * dims.depth;
         d3dx_get_next_mip_level_size(&dims);
     }
@@ -500,7 +501,8 @@ static UINT calculate_dds_file_size(D3DFORMAT format, UINT width, UINT height, U
     for (i = 0; i < miplevels; i++)
     {
         UINT pitch, size = 0;
-        d3dx_calculate_pixels_size(format, width, height, &pitch, &size);
+        if (FAILED(d3dx_calculate_pixels_size(format, width, height, &pitch, &size)))
+            return 0;
         size *= depth;
         file_size += size;
         width = max(1, width / 2);
@@ -539,6 +541,8 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
     if (pixel_format->type == FORMAT_UNKNOWN) return E_NOTIMPL;
 
     file_size = calculate_dds_file_size(src_desc.Format, src_desc.Width, src_desc.Height, 1, 1, 1);
+    if (!file_size)
+        return D3DERR_INVALIDCALL;
 
     hr = d3dx_calculate_pixels_size(src_desc.Format, src_desc.Width, src_desc.Height, &dst_pitch, &surface_size);
     if (FAILED(hr)) return hr;
@@ -588,6 +592,7 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
 {
     const struct dds_header *header = src_data;
     uint32_t expected_src_data_size;
+    HRESULT hr;
 
     if (src_data_size < sizeof(*header) || header->pixel_format.size != sizeof(header->pixel_format))
         return D3DXERR_INVALIDDATA;
@@ -623,6 +628,8 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
 
     image->layer_pitch = d3dx_calculate_layer_pixels_size(image->format, image->size.width, image->size.height,
             image->size.depth, image->mip_levels);
+    if (!image->layer_pitch)
+        return D3DXERR_INVALIDDATA;
     expected_src_data_size = (image->layer_pitch * image->layer_count) + sizeof(*header);
     if (src_data_size < expected_src_data_size)
     {
@@ -640,7 +647,9 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
         initial_mip_levels = image->mip_levels;
         for (i = 0; i < starting_mip_level; i++)
         {
-            d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
+            hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
+            if (FAILED(hr))
+                return hr;
 
             image->pixels += slice_pitch * image->size.depth;
             d3dx_get_next_mip_level_size(&image->size);
