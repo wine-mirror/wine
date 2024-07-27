@@ -512,8 +512,7 @@ BOOL WINAPI GetProfilesDirectoryA( LPSTR lpProfilesDir, LPDWORD lpcchSize )
     }
     *lpcchSize = expanded_len - 1;
     /* The return value is also the expected length. */
-    ret = ExpandEnvironmentStringsA(unexpanded_profiles_dir, lpProfilesDir,
-                                    expanded_len) - 1;
+    ret = ExpandEnvironmentStringsA(unexpanded_profiles_dir, lpProfilesDir, expanded_len);
 end:
     HeapFree(GetProcessHeap(), 0, unexpanded_profiles_dir);
     RegCloseKey(key);
