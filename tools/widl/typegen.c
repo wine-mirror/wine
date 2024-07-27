@@ -91,12 +91,14 @@ static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align
 static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type,
                                     const char *name, unsigned int *typestring_offset);
 static unsigned int write_struct_tfs(FILE *file, type_t *type, const char *name, unsigned int *tfsoff);
-static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
-                                const char *name, int write_ptr, unsigned int *tfsoff);
 static const var_t *find_array_or_string_in_struct(const type_t *type);
 static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
                                      type_t *type, enum type_context context,
                                      const char *name, unsigned int *typestring_offset);
+static unsigned int write_type_tfs(FILE *file, const attr_list_t *attrs,
+                                   type_t *type, const char *name,
+                                   enum type_context context,
+                                   unsigned int *typeformat_offset);
 static unsigned int get_required_buffer_size_type( const type_t *type, const char *name,
                                                    const attr_list_t *attrs, int toplevel_param,
                                                    unsigned int *alignment );
@@ -2578,7 +2580,7 @@ static unsigned int write_user_tfs(FILE *file, type_t *type, unsigned int *tfsof
     else
     {
         if (!processed(utype))
-            write_embedded_types(file, NULL, utype, utype->name, TRUE, tfsoff);
+            write_type_tfs(file, NULL, utype, utype->name, TYPE_CONTEXT_CONTAINER, tfsoff);
         absoff = utype->typestring_offset;
     }
 
@@ -3238,7 +3240,8 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
         : 0;
 
     if (!is_string_type(attrs, type_array_get_element_type(type)))
-        write_embedded_types(file, attrs, type_array_get_element_type(type), name, FALSE, typestring_offset);
+        write_type_tfs(file, attrs, type_array_get_element_type(type),
+                name, TYPE_CONTEXT_CONTAINER_NO_POINTERS, typestring_offset);
 
     size = type_memsize(is_conformant_array(type) ? type_array_get_element_type(type) : type);
     align = type_buffer_alignment(is_conformant_array(type) ? type_array_get_element_type(type) : type);
@@ -3415,7 +3418,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
               name, USHRT_MAX, total_size - USHRT_MAX);
 
     if (fields) LIST_FOR_EACH_ENTRY(f, fields, var_t, entry)
-        write_embedded_types(file, f->attrs, f->declspec.type, f->name, FALSE, tfsoff);
+        write_type_tfs(file, f->attrs, f->declspec.type, f->name, TYPE_CONTEXT_CONTAINER_NO_POINTERS, tfsoff);
 
     array = find_array_or_string_in_struct(type);
     if (array && !processed(array->declspec.type))
@@ -3582,7 +3585,7 @@ static unsigned int write_union_tfs(FILE *file, const attr_list_t *attrs,
         if (cases)
             nbranch += list_count(cases);
         if (f->declspec.type)
-            write_embedded_types(file, f->attrs, f->declspec.type, f->name, TRUE, tfsoff);
+            write_type_tfs(file, f->attrs, f->declspec.type, f->name, TYPE_CONTEXT_CONTAINER, tfsoff);
     }
 
     start_offset = *tfsoff;
@@ -3927,12 +3930,6 @@ static unsigned int write_type_tfs(FILE *file, const attr_list_t *attrs,
     }
     error("invalid type %s for var %s\n", type->name, name);
     return 0;
-}
-
-static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
-                                const char *name, int write_ptr, unsigned int *tfsoff)
-{
-    return write_type_tfs(file, attrs, type, name, write_ptr ? TYPE_CONTEXT_CONTAINER : TYPE_CONTEXT_CONTAINER_NO_POINTERS, tfsoff);
 }
 
 static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned int *offset)
