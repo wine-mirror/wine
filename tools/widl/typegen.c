@@ -2382,7 +2382,7 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
 
     if (!is_interpreted_func(current_iface, current_func))
     {
-        if (out_attr && !in_attr && pointer_type == FC_RP)
+        if (context == TYPE_CONTEXT_TOPLEVELPARAM && out_attr && !in_attr && pointer_type == FC_RP)
             flags |= FC_ALLOCED_ON_STACK;
     }
     else
@@ -2466,7 +2466,7 @@ static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs,
 
     if (!is_interpreted_func(current_iface, current_func))
     {
-        if (out_attr && !in_attr && pointer_fc == FC_RP)
+        if (context == TYPE_CONTEXT_TOPLEVELPARAM && out_attr && !in_attr && pointer_fc == FC_RP)
             flags |= FC_ALLOCED_ON_STACK;
     }
     else
