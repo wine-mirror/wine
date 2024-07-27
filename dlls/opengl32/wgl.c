@@ -520,6 +520,7 @@ static enum attrib_match wgl_attrib_match_criteria( int attrib )
     case WGL_DOUBLE_BUFFER_ARB:
     case WGL_STEREO_ARB:
     case WGL_PIXEL_TYPE_ARB:
+    case WGL_DRAW_TO_PBUFFER_ARB:
     case WGL_BIND_TO_TEXTURE_RGB_ARB:
     case WGL_BIND_TO_TEXTURE_RGBA_ARB:
     case WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV:
