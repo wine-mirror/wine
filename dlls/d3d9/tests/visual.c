@@ -28824,6 +28824,109 @@ static void test_format_conversion(void)
     release_test_context(&context);
 }
 
+static void test_ffp_w(void)
+{
+    IDirect3DVertexDeclaration9 *vdecl;
+    struct d3d9_test_context context;
+    struct surface_readback rb;
+    D3DMATRIX identity, matrix;
+    IDirect3DDevice9 *device;
+    uint32_t colour;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
+        {0,  0, D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 16, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+
+    static const struct
+    {
+        struct vec4 position;
+        unsigned int diffuse;
+    }
+    quad[] =
+    {
+        {{-0.5f, -0.5f, 0.5f, 0.5f}, 0xff0000ff},
+        {{-0.5f,  0.5f, 0.5f, 0.5f}, 0xff0000ff},
+        {{ 0.5f, -0.5f, 0.5f, 0.5f}, 0xff0000ff},
+        {{ 0.5f,  0.5f, 0.5f, 0.5f}, 0xff0000ff},
+    };
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vdecl);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    memset(&identity, 0, sizeof(identity));
+    identity._11 = identity._22 = identity._33 = identity._44 = 1.0f;
+
+    for (unsigned int decl_test = 0; decl_test < 2; ++decl_test)
+    {
+        winetest_push_context(decl_test ? "FVF" : "Vertex declaration");
+
+        if (!decl_test)
+            hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZW | D3DFVF_DIFFUSE);
+        else
+            hr = IDirect3DDevice9_SetVertexDeclaration(device, vdecl);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        get_rt_readback(context.backbuffer, &rb);
+        colour = get_readback_color(&rb, 161, 240) & 0x00ffffff;
+        ok(colour == 0x000000ff, "Got colour 0x%08x.\n", colour);
+        colour = get_readback_color(&rb, 159, 240) & 0x00ffffff;
+        todo_wine ok(colour == 0x00ff0000, "Got colour 0x%08x.\n", colour);
+        release_surface_readback(&rb);
+
+        /* Translate X by one unit using the world matrix.
+         * This transposes the geometry by 1 unit, proving that the input W is 1.0,
+         * not 0.5 (from the input attribute). */
+        matrix = identity;
+        matrix._41 = 1.0f;
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &matrix);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        get_rt_readback(context.backbuffer, &rb);
+        colour = get_readback_color(&rb, 481, 240) & 0x00ffffff;
+        ok(colour == 0x000000ff, "Got colour 0x%08x.\n", colour);
+        colour = get_readback_color(&rb, 479, 240) & 0x00ffffff;
+        todo_wine ok(colour == 0x00ff0000, "Got colour 0x%08x.\n", colour);
+        release_surface_readback(&rb);
+
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &identity);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        winetest_pop_context();
+    }
+
+    IDirect3DVertexDeclaration9_Release(vdecl);
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -28981,4 +29084,5 @@ START_TEST(visual)
     test_default_diffuse();
     test_default_attribute_components();
     test_format_conversion();
+    test_ffp_w();
 }
