@@ -1528,7 +1528,7 @@ static int describe_pixel_format( int iPixelFormat, struct wgl_pixel_format *pf 
     pf->framebuffer_srgb_capable = value;
 
     pf->bind_to_texture_rgb = pf->bind_to_texture_rgba =
-        use_render_texture_emulation && render_type != GLX_COLOR_INDEX_BIT && (render_type & GLX_PBUFFER_BIT);
+        use_render_texture_emulation && render_type != GLX_COLOR_INDEX_BIT && (drawable_type & GLX_PBUFFER_BIT);
     pf->bind_to_texture_rectangle_rgb = pf->bind_to_texture_rectangle_rgba = GL_FALSE;
 
     if (pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_FLOAT_COMPONENTS_NV, &value )) value = -1;
