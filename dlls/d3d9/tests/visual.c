@@ -28890,7 +28890,7 @@ static void test_ffp_w(void)
         colour = get_readback_color(&rb, 161, 240) & 0x00ffffff;
         ok(colour == 0x000000ff, "Got colour 0x%08x.\n", colour);
         colour = get_readback_color(&rb, 159, 240) & 0x00ffffff;
-        todo_wine ok(colour == 0x00ff0000, "Got colour 0x%08x.\n", colour);
+        ok(colour == 0x00ff0000, "Got colour 0x%08x.\n", colour);
         release_surface_readback(&rb);
 
         /* Translate X by one unit using the world matrix.
@@ -28914,7 +28914,7 @@ static void test_ffp_w(void)
         colour = get_readback_color(&rb, 481, 240) & 0x00ffffff;
         ok(colour == 0x000000ff, "Got colour 0x%08x.\n", colour);
         colour = get_readback_color(&rb, 479, 240) & 0x00ffffff;
-        todo_wine ok(colour == 0x00ff0000, "Got colour 0x%08x.\n", colour);
+        ok(colour == 0x00ff0000, "Got colour 0x%08x.\n", colour);
         release_surface_readback(&rb);
 
         hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &identity);
