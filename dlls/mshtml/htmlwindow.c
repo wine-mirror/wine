@@ -3830,8 +3830,8 @@ static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, const WCHAR *name, DWO
     return DISP_E_UNKNOWNNAME;
 }
 
-static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
-        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+                          VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
     global_prop_t *prop;
@@ -3943,6 +3943,24 @@ static HRESULT HTMLWindow_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid
         return S_FALSE;
 
     *pid = idx + MSHTML_DISPID_CUSTOM_MIN;
+    return S_OK;
+}
+
+HRESULT HTMLWindow_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    global_prop_t *prop;
+
+    if(id - MSHTML_DISPID_CUSTOM_MIN >= This->global_prop_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    prop = &This->global_props[id - MSHTML_DISPID_CUSTOM_MIN];
+    desc->name = prop->name;
+    desc->id = id;
+    desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
+    if(prop->type == GLOBAL_DISPEXVAR)
+        desc->flags |= PROPF_ENUMERABLE;
+    desc->func_iid = 0;
     return S_OK;
 }
 

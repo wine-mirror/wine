@@ -1069,6 +1069,10 @@ void HTMLDocumentObj_Service_Init(HTMLDocumentObj*);
 void HTMLDocumentObj_OleCmd_Init(HTMLDocumentObj*);
 void TargetContainer_Init(HTMLDocumentObj*);
 
+HRESULT HTMLWindow_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc);
+HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+                          VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller);
+
 void HTMLDocumentNode_Persist_Init(HTMLDocumentNode*);
 void HTMLDocumentNode_Service_Init(HTMLDocumentNode*);
 void HTMLDocumentNode_OleCmd_Init(HTMLDocumentNode*);

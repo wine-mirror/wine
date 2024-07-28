@@ -870,17 +870,15 @@ static HRESULT HTMLFrameElement_get_dispid(DispatchEx *dispex, const WCHAR *name
     return search_window_props(This->framebase.content_window->base.inner_window, name, grfdex, dispid);
 }
 
-static HRESULT HTMLFrameElement_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+static HRESULT HTMLFrameElement_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc)
 {
     HTMLFrameElement *This = frame_from_DispatchEx(dispex);
-    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
 
-    if(!This->framebase.content_window ||
-       idx >= This->framebase.content_window->base.inner_window->global_prop_cnt)
+    if(!This->framebase.content_window)
         return DISP_E_MEMBERNOTFOUND;
 
-    *name = SysAllocString(This->framebase.content_window->base.inner_window->global_props[idx].name);
-    return *name ? S_OK : E_OUTOFMEMORY;
+    return HTMLWindow_get_prop_desc(&This->framebase.content_window->base.inner_window->event_target.dispex,
+                                    id, desc);
 }
 
 static HRESULT HTMLFrameElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
@@ -893,8 +891,8 @@ static HRESULT HTMLFrameElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
         return E_FAIL;
     }
 
-    return IWineJSDispatchHost_InvokeEx(&This->framebase.content_window->IWineJSDispatchHost_iface, id, lcid,
-            flags, params, res, ei, caller);
+    return HTMLWindow_invoke(&This->framebase.content_window->base.inner_window->event_target.dispex,
+                             id, lcid, flags, params, res, ei, caller);
 }
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
@@ -915,7 +913,7 @@ static const event_target_vtbl_t HTMLFrameElement_event_target_vtbl = {
         .traverse       = HTMLFrameElement_traverse,
         .unlink         = HTMLFrameElement_unlink,
         .get_dispid     = HTMLFrameElement_get_dispid,
-        .get_name       = HTMLFrameElement_get_name,
+        .get_prop_desc  = HTMLFrameElement_get_prop_desc,
         .invoke         = HTMLFrameElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
