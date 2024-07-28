@@ -1743,14 +1743,14 @@ static dispex_data_t *ensure_dispex_info(DispatchEx *dispex, dispex_static_data_
 
 static BOOL ensure_real_info(DispatchEx *dispex)
 {
-    HTMLInnerWindow *script_global = NULL;
-    compat_mode_t compat_mode;
+    HTMLInnerWindow *script_global;
 
     if(dispex->info != dispex->info->desc->delayed_init_info)
         return TRUE;
 
-    compat_mode = dispex->info->desc->vtbl->get_compat_mode(dispex, &script_global);
-    dispex->info = ensure_dispex_info(dispex, dispex->info->desc, compat_mode, script_global);
+    script_global = dispex->info->desc->vtbl->get_script_global(dispex);
+    dispex->info = ensure_dispex_info(dispex, dispex->info->desc,
+                                      script_global->doc->document_mode, script_global);
     return dispex->info != NULL;
 }
 
@@ -2652,7 +2652,7 @@ void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWind
     dispex->jsdisp = NULL;
     ccref_init(&dispex->ccref, 1);
 
-    if(data->vtbl->get_compat_mode) {
+    if(data->vtbl->get_script_global) {
         /* delayed init */
         if(!data->delayed_init_info) {
             EnterCriticalSection(&cs_dispex_static_data);

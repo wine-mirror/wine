@@ -5535,14 +5535,14 @@ static HRESULT HTMLDocumentNode_get_prop_desc(DispatchEx *dispex, DISPID id, str
     return S_OK;
 }
 
-static compat_mode_t HTMLDocumentNode_get_compat_mode(DispatchEx *dispex, HTMLInnerWindow **script_global)
+static HTMLInnerWindow *HTMLDocumentNode_get_script_global(DispatchEx *dispex)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
 
-    TRACE("(%p) returning %u\n", This, This->document_mode);
+    TRACE("(%p) using %u compat mode\n", This, This->document_mode);
 
-    *script_global = This->script_global;
-    return lock_document_mode(This);
+    lock_document_mode(This);
+    return This->script_global;
 }
 
 static nsISupports *HTMLDocumentNode_get_gecko_target(DispatchEx *dispex)
@@ -5639,7 +5639,7 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
         .invoke              = HTMLDocumentNode_invoke,
         .disp_invoke         = HTMLDocumentNode_disp_invoke,
         .next_dispid         = HTMLDocumentNode_next_dispid,
-        .get_compat_mode     = HTMLDocumentNode_get_compat_mode,
+        .get_script_global   = HTMLDocumentNode_get_script_global,
     },
     .get_gecko_target        = HTMLDocumentNode_get_gecko_target,
     .bind_event              = HTMLDocumentNode_bind_event,

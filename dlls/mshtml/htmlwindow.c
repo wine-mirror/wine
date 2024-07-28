@@ -3960,11 +3960,11 @@ HRESULT HTMLWindow_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_
     return S_OK;
 }
 
-static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex, HTMLInnerWindow **script_global)
+static HTMLInnerWindow *HTMLWindow_get_script_global(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
-    *script_global = This;
-    return lock_document_mode(This->doc);
+    lock_document_mode(This->doc);
+    return This;
 }
 
 static IWineJSDispatchHost *HTMLWindow_get_outer_iface(DispatchEx *dispex)
@@ -4155,7 +4155,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         .invoke              = HTMLWindow_invoke,
         .next_dispid         = HTMLWindow_next_dispid,
         .get_prop_desc       = HTMLWindow_get_prop_desc,
-        .get_compat_mode     = HTMLWindow_get_compat_mode,
+        .get_script_global   = HTMLWindow_get_script_global,
         .get_outer_iface     = HTMLWindow_get_outer_iface,
     },
     .get_gecko_target        = HTMLWindow_get_gecko_target,
