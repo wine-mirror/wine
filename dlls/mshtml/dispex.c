@@ -2475,6 +2475,14 @@ static HRESULT WINAPI JSDispatchHost_CallFunction(IWineJSDispatchHost *iface, DI
     return call_builtin_function(This, func, dp, ret, ei, caller);
 }
 
+static HRESULT WINAPI JSDispatchHost_GetOuterDispatch(IWineJSDispatchHost *iface, IWineJSDispatchHost **ret)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+
+    *ret = dispex_outer_iface(This);
+    return S_OK;
+}
+
 static HRESULT WINAPI JSDispatchHost_ToString(IWineJSDispatchHost *iface, BSTR *str)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
@@ -2508,6 +2516,7 @@ static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     JSDispatchHost_DeleteProperty,
     JSDispatchHost_ConfigureProperty,
     JSDispatchHost_CallFunction,
+    JSDispatchHost_GetOuterDispatch,
     JSDispatchHost_ToString,
 };
 
