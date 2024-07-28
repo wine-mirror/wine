@@ -937,7 +937,7 @@ static void guard_rec(type_t *type)
 
 static int is_embedded_complex(const type_t *type)
 {
-    switch (typegen_detect_type(type, NULL, TDT_ALL_TYPES))
+    switch (typegen_detect_type(type, NULL, TDT_IGNORE_STRINGS))
     {
     case TGT_USER_TYPE:
     case TGT_STRUCT:
