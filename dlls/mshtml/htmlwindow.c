@@ -3970,10 +3970,17 @@ static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex, HTMLInnerWin
     return lock_document_mode(This->doc);
 }
 
-static IDispatch *HTMLWindow_get_dispatch_this(DispatchEx *dispex)
+static IWineJSDispatchHost *HTMLWindow_get_outer_iface(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
-    return (IDispatch*)&This->base.outer_window->base.IHTMLWindow2_iface;
+    IWineJSDispatchHost *ret;
+
+    if(This->base.outer_window)
+        ret = &This->base.outer_window->IWineJSDispatchHost_iface;
+    else
+        ret = &This->event_target.dispex.IWineJSDispatchHost_iface;
+    IWineJSDispatchHost_AddRef(ret);
+    return ret;
 }
 
 static nsISupports *HTMLWindow_get_gecko_target(DispatchEx *dispex)
@@ -4152,8 +4159,8 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         .invoke              = HTMLWindow_invoke,
         .next_dispid         = HTMLWindow_next_dispid,
         .get_compat_mode     = HTMLWindow_get_compat_mode,
+        .get_outer_iface     = HTMLWindow_get_outer_iface,
     },
-    .get_dispatch_this       = HTMLWindow_get_dispatch_this,
     .get_gecko_target        = HTMLWindow_get_gecko_target,
     .bind_event              = HTMLWindow_bind_event,
     .set_current_event       = HTMLWindow_set_current_event

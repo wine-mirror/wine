@@ -745,6 +745,15 @@ HRESULT dispex_get_dynid(DispatchEx *This, const WCHAR *name, BOOL hidden, DISPI
     return S_OK;
 }
 
+IWineJSDispatchHost *dispex_outer_iface(DispatchEx *dispex)
+{
+    if(dispex->info->desc->vtbl->get_outer_iface)
+        return dispex->info->desc->vtbl->get_outer_iface(dispex);
+
+    IWineJSDispatchHost_AddRef(&dispex->IWineJSDispatchHost_iface);
+    return &dispex->IWineJSDispatchHost_iface;
+}
+
 static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {

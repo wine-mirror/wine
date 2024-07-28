@@ -375,6 +375,9 @@ typedef struct {
     /* Called on the last release, when the refcount reaches 0 */
     void (*last_release)(DispatchEx*);
 
+    /* Called to get outer interface when it may be different than DispatchEx */
+    IWineJSDispatchHost *(*get_outer_iface)(DispatchEx*);
+
     /* Called when the object wants to handle DISPID_VALUE invocations */
     HRESULT (*value)(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
 
@@ -517,6 +520,7 @@ HRESULT dispex_get_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID
 HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, DISPID *ret);
 HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret);
 HRESULT dispex_index_prop_desc(DispatchEx*,DISPID,struct property_info*);
+IWineJSDispatchHost *dispex_outer_iface(DispatchEx *dispex);
 
 typedef enum {
     DISPEXPROP_CUSTOM,

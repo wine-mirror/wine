@@ -127,7 +127,6 @@ void detach_nsevent(HTMLDocumentNode*,const WCHAR*);
 /* We extend dispex vtbl for EventTarget functions to avoid separated vtbl. */
 typedef struct {
     dispex_static_data_vtbl_t dispex_vtbl;
-    IDispatch *(*get_dispatch_this)(DispatchEx*);
     nsISupports *(*get_gecko_target)(DispatchEx*);
     void (*bind_event)(DispatchEx*,eventid_t);
     EventTarget *(*get_parent_event_target)(DispatchEx*);

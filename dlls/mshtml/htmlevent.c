@@ -321,12 +321,13 @@ static void remove_event_listener(EventTarget *event_target, const WCHAR *type_n
 
 static IEventTarget *get_event_target_iface(EventTarget *event_target)
 {
-    const event_target_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
+    const dispex_static_data_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
     IEventTarget *ret;
 
-    if(vtbl->get_dispatch_this) {
-        IDispatch *disp = vtbl->get_dispatch_this(&event_target->dispex);
-        IDispatch_QueryInterface(disp, &IID_IEventTarget, (void**)&ret);
+    if(vtbl->get_outer_iface) {
+        IWineJSDispatchHost *disp = vtbl->get_outer_iface(&event_target->dispex);
+        IWineJSDispatchHost_QueryInterface(disp, &IID_IEventTarget, (void**)&ret);
+        IWineJSDispatchHost_Release(disp);
     }else {
         ret = &event_target->IEventTarget_iface;
         IEventTarget_AddRef(ret);
@@ -4191,11 +4192,8 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
             skip_onevent_listener = TRUE;
 
             V_VT(&arg) = VT_DISPATCH;
-            V_DISPATCH(&arg) = (IDispatch*)&event_target->dispex.IWineJSDispatchHost_iface;
+            V_DISPATCH(&arg) = (IDispatch*)dispex_outer_iface(&event_target->dispex);
             V_VT(&v) = VT_EMPTY;
-            if(vtbl->get_dispatch_this)
-                V_DISPATCH(&arg) = vtbl->get_dispatch_this(&event_target->dispex);
-            IDispatch_AddRef(V_DISPATCH(&arg));
 
             TRACE("%p %s >>>\n", event_target, debugstr_w(event->type));
             hres = call_disp_func(listener->function, &dp, &v);
@@ -4272,10 +4270,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
             DISPPARAMS dp = {args, &named_arg, 2, 1};
 
             V_VT(args) = VT_DISPATCH;
-            V_DISPATCH(args) = (IDispatch*)&event_target->dispex.IWineJSDispatchHost_iface;
-            if(vtbl->get_dispatch_this)
-                V_DISPATCH(args) = vtbl->get_dispatch_this(&event_target->dispex);
-            IDispatch_AddRef(V_DISPATCH(args));
+            V_DISPATCH(args) = (IDispatch *)dispex_outer_iface(&event_target->dispex);
 
             V_VT(args+1) = VT_DISPATCH;
             V_DISPATCH(args+1) = dispatch_mode == DISPATCH_LEGACY
