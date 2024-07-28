@@ -3033,6 +3033,12 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_ty
     }
 
     for(iter = &obj->props[idx]; iter < obj->props + obj->prop_cnt; iter++) {
+        if(iter->type == PROP_EXTERN) {
+            dispex_prop_t *prop;
+            hres = find_external_prop(obj, iter->name, FALSE, iter, &prop);
+            if(FAILED(hres) || prop != iter)
+                iter->type = PROP_DELETED;
+        }
         if(iter->type == PROP_DELETED)
             continue;
         if(enum_type != JSDISP_ENUM_ALL && iter->type == PROP_PROTREF)
