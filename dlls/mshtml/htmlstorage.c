@@ -1117,17 +1117,6 @@ static HRESULT HTMLStorage_get_dispid(DispatchEx *dispex, const WCHAR *name, DWO
     return get_prop(This, name, dispid);
 }
 
-static HRESULT HTMLStorage_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    HTMLStorage *This = impl_from_DispatchEx(dispex);
-    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
-
-    if(idx >= This->num_props)
-        return DISP_E_MEMBERNOTFOUND;
-
-    return (*name = SysAllocString(This->props[idx])) ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT HTMLStorage_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1278,16 +1267,27 @@ static HRESULT HTMLStorage_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pi
     return S_OK;
 }
 
+static HRESULT HTMLStorage_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc)
+{
+    HTMLStorage *This = impl_from_DispatchEx(dispex);
+
+    desc->name = This->props[id - MSHTML_DISPID_CUSTOM_MIN];
+    desc->id = id;
+    desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
+    desc->func_iid = 0;
+    return S_OK;
+}
+
 static const dispex_static_data_vtbl_t HTMLStorage_dispex_vtbl = {
     .query_interface  = HTMLStorage_query_interface,
     .destructor       = HTMLStorage_destructor,
     .traverse         = HTMLStorage_traverse,
     .unlink           = HTMLStorage_unlink,
     .get_dispid       = HTMLStorage_get_dispid,
-    .get_name         = HTMLStorage_get_name,
     .invoke           = HTMLStorage_invoke,
     .delete           = HTMLStorage_delete,
     .next_dispid      = HTMLStorage_next_dispid,
+    .get_prop_desc    = HTMLStorage_get_prop_desc,
 };
 
 static const tid_t HTMLStorage_iface_tids[] = {
@@ -1451,7 +1451,7 @@ HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **
     storage->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    init_dispatch(&storage->dispex, &HTMLStorage_dispex, NULL,
+    init_dispatch(&storage->dispex, &HTMLStorage_dispex, window,
                   dispex_compat_mode(&window->event_target.dispex));
 
     *p = &storage->IHTMLStorage_iface;

@@ -300,7 +300,7 @@ sync_test("builtin_toString", function() {
     test("elements", document.getElementsByTagName("body"), "HTMLCollection", null, true);
     test("history", window.history, "History");
     test("implementation", document.implementation, "DOMImplementation");
-    if(localStorage) test("localStorage", localStorage, "Storage", null, true);
+    if(localStorage) test("localStorage", localStorage, "Storage");
     test("location", window.location, "Object", window.location.href, null, true);
     if(v >= 11 /* todo_wine */) test("mimeTypes", window.navigator.mimeTypes, v < 11 ? "MSMimeTypesCollection" : "MimeTypeArray");
     test("navigator", window.navigator, "Navigator");
@@ -309,7 +309,7 @@ sync_test("builtin_toString", function() {
     test("performanceTiming", window.performance.timing, "PerformanceTiming");
     if(v >= 11 /* todo_wine */) test("plugins", window.navigator.plugins, v < 11 ? "MSPluginsCollection" : "PluginArray");
     test("screen", window.screen, "Screen");
-    test("sessionStorage", window.sessionStorage, "Storage", null, true);
+    test("sessionStorage", window.sessionStorage, "Storage");
     test("style", document.body.style, "MSStyleCSSProperties", null, true);
     test("styleSheet", sheet, "CSSStyleSheet", null, true);
     test("styleSheetRule", sheet.rules[0], "CSSStyleRule", null, true);
