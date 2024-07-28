@@ -2391,31 +2391,16 @@ static HRESULT WINAPI JSDispatchHost_LookupProperty(IWineJSDispatchHost *iface, 
 static HRESULT WINAPI JSDispatchHost_NextProperty(IWineJSDispatchHost *iface, DISPID id, struct property_info *desc)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    func_info_t *func;
+    DISPID next;
     HRESULT hres;
 
     TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
 
-    if(id == DISPID_STARTENUM) {
-        func = This->info->funcs;
-    }else {
-        hres = get_builtin_func(This->info, id, &func);
-        if(FAILED(hres))
-            return hres;
-        func++;
-    }
+    hres = dispex_next_id(This, id, &next);
+    if(hres != S_OK)
+        return hres;
 
-    while(func < This->info->funcs + This->info->func_cnt) {
-        if(func->func_disp_idx == -1) {
-            desc->id = func->id;
-            desc->name = func->name;
-            desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
-            desc->func_iid = 0;
-            return S_OK;
-        }
-        func++;
-    }
-    return S_FALSE;
+    return get_host_property_descriptor(This, next, desc);
 }
 
 static HRESULT WINAPI JSDispatchHost_GetProperty(IWineJSDispatchHost *iface, DISPID id, LCID lcid, VARIANT *r,
