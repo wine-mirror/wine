@@ -2468,9 +2468,7 @@ static HRESULT WINAPI JSDispatchHost_CallFunction(IWineJSDispatchHost *iface, DI
     TRACE("%s (%p)->(%lx %x %p %p %p %p)\n", This->info->desc->name, This, id, iid, dp, ret, ei, caller);
 
     hres = get_builtin_func(This->info, id, &func);
-    if(FAILED(hres))
-        return hres;
-    if(func->tid != iid || func->func_disp_idx < 0)
+    if(FAILED(hres) || func->tid != iid || func->func_disp_idx < 0)
         return E_UNEXPECTED;
     return call_builtin_function(This, func, dp, ret, ei, caller);
 }
