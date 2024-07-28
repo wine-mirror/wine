@@ -3789,17 +3789,6 @@ static void HTMLWindow_last_release(DispatchEx *dispex)
     remove_target_tasks(This->task_magic);
 }
 
-static HRESULT HTMLWindow_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
-    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
-
-    if(idx >= This->global_prop_cnt)
-        return DISP_E_MEMBERNOTFOUND;
-
-    return (*name = SysAllocString(This->global_props[idx].name)) ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT HTMLWindow_lookup_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
@@ -3905,7 +3894,7 @@ HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, 
 
             prop->type = GLOBAL_DISPEXVAR;
             prop->id = dispex_id;
-            return IWineJSDispatchHost_InvokeEx(&This->event_target.dispex.IWineJSDispatchHost_iface, dispex_id, 0, flags, params, res, ei, caller);
+            return dispex_prop_put(&This->event_target.dispex, dispex_id, 0, params->rgvarg, ei, caller);
         }
         default:
             FIXME("Not supported flags: %x\n", flags);
@@ -4163,11 +4152,11 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         .traverse            = HTMLWindow_traverse,
         .unlink              = HTMLWindow_unlink,
         .last_release        = HTMLWindow_last_release,
-        .get_name            = HTMLWindow_get_name,
         .lookup_dispid       = HTMLWindow_lookup_dispid,
         .find_dispid         = HTMLWindow_find_dispid,
         .invoke              = HTMLWindow_invoke,
         .next_dispid         = HTMLWindow_next_dispid,
+        .get_prop_desc       = HTMLWindow_get_prop_desc,
         .get_compat_mode     = HTMLWindow_get_compat_mode,
         .get_outer_iface     = HTMLWindow_get_outer_iface,
     },
