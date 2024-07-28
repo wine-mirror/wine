@@ -1305,17 +1305,15 @@ static HRESULT HTMLIFrame_get_dispid(DispatchEx *dispex, const WCHAR *name, DWOR
     return search_window_props(This->framebase.content_window->base.inner_window, name, grfdex, dispid);
 }
 
-static HRESULT HTMLIFrame_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+static HRESULT HTMLIFrame_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc)
 {
     HTMLIFrame *This = iframe_from_DispatchEx(dispex);
-    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
 
-    if(!This->framebase.content_window ||
-       idx >= This->framebase.content_window->base.inner_window->global_prop_cnt)
+    if(!This->framebase.content_window)
         return DISP_E_MEMBERNOTFOUND;
 
-    *name = SysAllocString(This->framebase.content_window->base.inner_window->global_props[idx].name);
-    return *name ? S_OK : E_OUTOFMEMORY;
+    return HTMLWindow_get_prop_desc(&This->framebase.content_window->base.inner_window->event_target.dispex,
+                                    id, desc);
 }
 
 static HRESULT HTMLIFrame_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
@@ -1328,8 +1326,8 @@ static HRESULT HTMLIFrame_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
         return E_FAIL;
     }
 
-    return IWineJSDispatchHost_InvokeEx(&This->framebase.content_window->IWineJSDispatchHost_iface, id, lcid,
-            flags, params, res, ei, caller);
+    return HTMLWindow_invoke(&This->framebase.content_window->base.inner_window->event_target.dispex,
+                             id, lcid, flags, params, res, ei, caller);
 }
 
 static const NodeImplVtbl HTMLIFrameImplVtbl = {
@@ -1350,7 +1348,7 @@ static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
         .traverse       = HTMLIFrame_traverse,
         .unlink         = HTMLIFrame_unlink,
         .get_dispid     = HTMLIFrame_get_dispid,
-        .get_name       = HTMLIFrame_get_name,
+        .get_prop_desc  = HTMLIFrame_get_prop_desc,
         .invoke         = HTMLIFrame_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,

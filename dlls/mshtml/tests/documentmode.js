@@ -164,7 +164,7 @@ sync_test("builtin_toString", function() {
         [ "hr",              "HR", -1 ],
         [ "html",            "Html" ],
         [ "i",               "Phrase", -1 ],
-        [ "iframe",          "IFrame", -1 ],
+        [ "iframe",          "IFrame" ],
         [ "img",             "Image" ],
         [ "input",           "Input" ],
         [ "ins",             "Mod", -1 ],
