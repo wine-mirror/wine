@@ -2362,7 +2362,8 @@ static HRESULT WINAPI WineJSDispatch_GetScriptGlobal(IWineJSDispatch *iface, IWi
    if(!(disp = lookup_global_host(This->ctx)))
        return E_NOINTERFACE;
 
-   return IDispatch_QueryInterface(disp, &IID_IWineJSDispatchHost, (void **)ret);
+   *ret = get_host_dispatch(disp);
+   return S_OK;
 }
 
 static IWineJSDispatchVtbl DispatchExVtbl = {

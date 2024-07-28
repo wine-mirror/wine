@@ -2151,17 +2151,14 @@ static IHTMLWindow2 *get_source_window(IServiceProvider *caller, compat_mode_t c
     if(hres != S_OK)
         cmdtarget = NULL;
 
-    if(compat_mode < COMPAT_MODE_IE9) {
-        /* Legacy modes query caller unconditionally, and use it instead, if it has a command target */
-        hres = IServiceProvider_QueryService(caller, &SID_GetCaller, &IID_IServiceProvider, (void**)&parent);
-        if(hres == S_OK && parent) {
-            hres = IServiceProvider_QueryService(parent, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&parent_cmdtarget);
-            IServiceProvider_Release(parent);
-            if(hres == S_OK && parent_cmdtarget) {
-                if(cmdtarget)
-                    IOleCommandTarget_Release(cmdtarget);
-                cmdtarget = parent_cmdtarget;
-            }
+    hres = IServiceProvider_QueryService(caller, &SID_GetCaller, &IID_IServiceProvider, (void**)&parent);
+    if(hres == S_OK && parent) {
+        hres = IServiceProvider_QueryService(parent, &IID_IActiveScriptSite, &IID_IOleCommandTarget, (void**)&parent_cmdtarget);
+        IServiceProvider_Release(parent);
+        if(hres == S_OK && parent_cmdtarget) {
+            if(cmdtarget)
+                IOleCommandTarget_Release(cmdtarget);
+            cmdtarget = parent_cmdtarget;
         }
     }
 
@@ -3966,6 +3963,7 @@ HRESULT HTMLWindow_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_
 static compat_mode_t HTMLWindow_get_compat_mode(DispatchEx *dispex, HTMLInnerWindow **script_global)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    *script_global = This;
     return lock_document_mode(This->doc);
 }
 
@@ -4310,7 +4308,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
     window->base.outer_window = outer_window;
     window->base.inner_window = window;
 
-    EventTarget_Init(&window->event_target, &HTMLWindow_dispex, COMPAT_MODE_NONE);
+    init_event_target(&window->event_target, &HTMLWindow_dispex, NULL);
 
     window->task_magic = get_task_target_magic();
 

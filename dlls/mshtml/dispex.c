@@ -1730,7 +1730,7 @@ static dispex_data_t *ensure_dispex_info(DispatchEx *dispex, dispex_static_data_
     if(compat_mode >= COMPAT_MODE_IE9 && script_global) {
         if(!script_global->jscript)
             initialize_script_global(script_global);
-        if(script_global->jscript) {
+        if(script_global->jscript && !dispex->jsdisp) {
             hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
                                                &dispex->jsdisp);
             if(FAILED(hres))
