@@ -256,7 +256,7 @@ static void get_drivers( struct drivers *drivers )
     info_max_size = offsetof(KEY_VALUE_BASIC_INFORMATION, Name) + 512;
     if (!(info = malloc( info_max_size ))) goto error;
 
-    while (!status && info)
+    while (1)
     {
         status = NtEnumerateValueKey( key, idx, KeyValueBasicInformation, info, info_max_size, &info_size );
         while (status == STATUS_BUFFER_OVERFLOW)
