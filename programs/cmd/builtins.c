@@ -3185,7 +3185,6 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
       /* Output the prompt */
       *p++ = '\0';
       if (*p) {
-        p = WCMD_strtrim(p);
         if (*p == L'"') {
           WCHAR* last = wcsrchr(p+1, L'"');
           p++;
