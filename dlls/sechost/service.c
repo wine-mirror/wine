@@ -1910,7 +1910,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceCtrlDispatcherA( const SERVICE_TABLE_E
         SetLastError( ERROR_SERVICE_ALREADY_RUNNING );
         return FALSE;
     }
-    while (servent[nb_services].lpServiceName) nb_services++;
+    while (servent[nb_services].lpServiceName && servent[nb_services].lpServiceProc)
+        nb_services++;
     if (!nb_services)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1948,7 +1949,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceCtrlDispatcherW( const SERVICE_TABLE_E
         SetLastError( ERROR_SERVICE_ALREADY_RUNNING );
         return FALSE;
     }
-    while (servent[nb_services].lpServiceName) nb_services++;
+    while (servent[nb_services].lpServiceName && servent[nb_services].lpServiceProc)
+        nb_services++;
     if (!nb_services)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
