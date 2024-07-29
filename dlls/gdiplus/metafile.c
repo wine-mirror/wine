@@ -5532,7 +5532,7 @@ GpStatus METAFILE_DrawArc(GpMetafile *metafile, GpPen *pen, const GpRectF *rect,
     integer_rect = is_integer_rect(rect);
 
     stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeDrawArc, FIELD_OFFSET(EmfPlusDrawArc, RectData) +
-        integer_rect ? sizeof(record->RectData.rect) : sizeof(record->RectData.rectF),
+        (integer_rect ? sizeof(record->RectData.rect) : sizeof(record->RectData.rectF)),
         (void **)&record);
     if (stat != Ok)
         return stat;
