@@ -254,7 +254,7 @@ static void get_drivers( struct drivers *drivers )
     capacity = 4;
     if (!(names = malloc( capacity * sizeof(*names) ))) goto done;
     info_max_size = offsetof(KEY_VALUE_BASIC_INFORMATION, Name) + 512;
-    if (!(info = malloc( info_max_size ))) goto done;
+    if (!(info = malloc( info_max_size ))) goto error;
 
     while (!status && info)
     {
