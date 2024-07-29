@@ -37,8 +37,6 @@
 
 #include "main.h"
 
-extern char **environ;
-
 #if defined(__APPLE__) && defined(__x86_64__) && !defined(HAVE_WINE_PRELOADER)
 
 /* Not using the preloader on x86_64:
@@ -260,8 +258,8 @@ int main( int argc, char *argv[] )
 
     if ((handle = load_ntdll( argv[0] )))
     {
-        void (*init_func)(int, char **, char **) = dlsym( handle, "__wine_main" );
-        if (init_func) init_func( argc, argv, environ );
+        void (*init_func)(int, char **) = dlsym( handle, "__wine_main" );
+        if (init_func) init_func( argc, argv );
         fprintf( stderr, "wine: __wine_main function not found in ntdll.so\n" );
         exit(1);
     }

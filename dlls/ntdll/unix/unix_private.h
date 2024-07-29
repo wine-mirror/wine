@@ -172,7 +172,6 @@ extern SIZE_T startup_info_size;
 extern BOOL is_prefix_bootstrap;
 extern int main_argc;
 extern char **main_argv;
-extern char **main_envp;
 extern WCHAR **main_wargv;
 extern const WCHAR system_dir[];
 extern unsigned int supported_machines_count;

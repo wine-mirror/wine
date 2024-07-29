@@ -1953,7 +1953,6 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
 
     main_argc = argc;
     main_argv = argv;
-    main_envp = environ;
 
     init_paths( argv );
     virtual_init();
@@ -2149,11 +2148,10 @@ static void check_command_line( int argc, char *argv[] )
  *
  * Main entry point called by the wine loader.
  */
-DECLSPEC_EXPORT void __wine_main( int argc, char *argv[], char *envp[] )
+DECLSPEC_EXPORT void __wine_main( int argc, char *argv[] )
 {
     main_argc = argc;
     main_argv = argv;
-    main_envp = envp;
 
     init_paths( argv );
 
