@@ -739,6 +739,16 @@ DWORD WINAPI GetFirmwareEnvironmentVariableW(LPCWSTR name, LPCWSTR guid, PVOID b
 }
 
 /***********************************************************************
+ *           SetFirmwareEnvironmentVariableA     (KERNEL32.@)
+ */
+BOOL WINAPI SetFirmwareEnvironmentVariableA(const char *name, const char *guid, void *buffer, DWORD size)
+{
+    FIXME("stub: %s %s %p %lu\n", debugstr_a(name), debugstr_a(guid), buffer, size);
+    SetLastError(ERROR_INVALID_FUNCTION);
+    return FALSE;
+}
+
+/***********************************************************************
  *           SetFirmwareEnvironmentVariableW     (KERNEL32.@)
  */
 BOOL WINAPI SetFirmwareEnvironmentVariableW(const WCHAR *name, const WCHAR *guid, void *buffer, DWORD size)
