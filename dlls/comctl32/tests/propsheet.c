@@ -1388,6 +1388,49 @@ static void test_invalid_hpropsheetpage(void)
     DestroyWindow(hdlg);
 }
 
+static void test_init_page_creation(void)
+{
+    PROPSHEETPAGEA psp[3];
+    PROPSHEETHEADERA psh;
+    HWND hp;
+    HWND page;
+
+    memset(&psh, 0, sizeof(psh));
+    memset(psp, 0, sizeof(psp));
+
+    for (int p = 0; p < 3; p++)
+    {
+        psp[p].dwSize = sizeof(PROPSHEETPAGEA);
+        psp[p].dwFlags = PSP_USETITLE | (p != 2 ? PSP_PREMATURE : 0);
+        psp[p].hInstance = GetModuleHandleA(NULL);
+        psp[p].pszTemplate = (const char *)MAKEINTRESOURCE(IDD_PROP_PAGE_EDIT);
+        psp[p].pszIcon = NULL;
+        psp[p].pfnDlgProc = (DLGPROC) page_dlg_proc;
+        psp[p].pszTitle = "page title";
+        psp[p].lParam = 0;
+    }
+
+    psh.dwSize = sizeof(PROPSHEETHEADERA);
+    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_MODELESS;
+    psh.hwndParent = GetDesktopWindow();
+    psh.pszCaption = "test caption";
+    psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGEA);
+    psh.ppsp = (LPCPROPSHEETPAGEA)&psp;
+
+    hp = (HWND)pPropertySheetA(&psh);
+
+    for (int p = 0; p < 3; p++)
+    {
+        page = (HWND)SendMessageA(hp, PSM_INDEXTOHWND, p, 0);
+        if(p == 2)
+            todo_wine ok(page == NULL, "Page %d created.\n", p);
+        else
+            todo_wine ok(page != NULL, "Page %d not created.\n", p);
+    }
+
+    DestroyWindow(hp);
+}
+
 static void init_comctl32_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -1442,6 +1485,7 @@ START_TEST(propsheet)
     test_CreatePropertySheetPage();
     test_page_dialog_texture();
     test_invalid_hpropsheetpage();
+    test_init_page_creation();
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
