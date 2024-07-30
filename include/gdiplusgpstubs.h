@@ -21,6 +21,28 @@
 
 #ifdef __cplusplus
 
+class Bitmap;
+class Brush;
+class CachedBitmap;
+class Font;
+class FontCollection;
+class FontFamily;
+class Graphics;
+class GraphicsPath;
+class HatchBrush;
+class Image;
+class ImageAttributes;
+class InstalledFontCollection;
+class LinearGradientBrush;
+class Matrix;
+class Metafile;
+class PathGradientBrush;
+class PathIterator;
+class Pen;
+class Region;
+class SolidBrush;
+class TextureBrush;
+
 class GpGraphics {};
 class GpPen {};
 class GpBrush {};
