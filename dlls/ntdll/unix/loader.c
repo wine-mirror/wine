@@ -73,11 +73,13 @@
 # ifndef _POSIX_SPAWN_DISABLE_ASLR
 #  define _POSIX_SPAWN_DISABLE_ASLR 0x0100
 # endif
+# define environ (*_NSGetEnviron())
+#else
+  extern char **environ;
 #endif
 #ifdef __ANDROID__
 # include <jni.h>
 #endif
-extern char **environ;
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
