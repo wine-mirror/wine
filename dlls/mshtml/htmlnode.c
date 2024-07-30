@@ -1288,11 +1288,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     node->IHTMLDOMNode2_iface.lpVtbl = &HTMLDOMNode2Vtbl;
     node->IHTMLDOMNode3_iface.lpVtbl = &HTMLDOMNode3Vtbl;
 
-    /* FIXME: We can't use new bindings for nodes with custom properties yet */
-    if(dispex_data->vtbl->get_name)
-        EventTarget_Init(&node->event_target, dispex_data, doc->document_mode);
-    else
-        init_event_target(&node->event_target, dispex_data, doc->script_global);
+    init_event_target(&node->event_target, dispex_data, doc->script_global);
 
     if(&doc->node != node)
         IHTMLDOMNode_AddRef(&doc->node.IHTMLDOMNode_iface);

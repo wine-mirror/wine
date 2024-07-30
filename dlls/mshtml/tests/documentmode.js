@@ -199,7 +199,7 @@ sync_test("builtin_toString", function() {
         [ "samp",            "Phrase", -1 ],
         [ "script",          "Script" ],
         [ "section",         "" ],
-        [ "select",          "Select", -1 ],
+        [ "select",          "Select" ],
         [ "small",           "Phrase", -1 ],
         [ "source",          "Source", -1 ],
         [ "span",            "Span", -1 ],

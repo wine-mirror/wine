@@ -1234,19 +1234,6 @@ static HRESULT HTMLSelectElement_get_dispid(DispatchEx *dispex, const WCHAR *nam
     return S_OK;
 }
 
-static HRESULT HTMLSelectElement_dispex_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    DWORD idx = id - DISPID_OPTIONCOL_0;
-    WCHAR buf[11];
-    UINT len;
-
-    if(idx > MSHTML_CUSTOM_DISPID_CNT)
-        return DISP_E_MEMBERNOTFOUND;
-
-    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
-    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT HTMLSelectElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -1297,7 +1284,7 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
         .traverse       = HTMLSelectElement_traverse,
         .unlink         = HTMLSelectElement_unlink,
         .get_dispid     = HTMLSelectElement_get_dispid,
-        .get_name       = HTMLSelectElement_dispex_get_name,
+        .get_prop_desc  = dispex_index_prop_desc,
         .invoke         = HTMLSelectElement_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,
