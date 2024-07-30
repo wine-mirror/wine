@@ -7085,16 +7085,6 @@ static HRESULT token_list_get_dispid(DispatchEx *dispex, const WCHAR *name, DWOR
     return S_OK;
 }
 
-static HRESULT token_list_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    LONG idx = id - MSHTML_DISPID_CUSTOM_MIN;
-    WCHAR buf[12];
-    UINT len;
-
-    len = swprintf(buf, ARRAY_SIZE(buf), L"%d", idx);
-    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT token_list_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -7127,7 +7117,7 @@ static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
     .unlink           = token_list_unlink,
     .value            = token_list_value,
     .get_dispid       = token_list_get_dispid,
-    .get_name         = token_list_get_name,
+    .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = token_list_invoke
 };
 
@@ -7142,7 +7132,7 @@ static dispex_static_data_t token_list_dispex = {
     token_list_iface_tids
 };
 
-static HRESULT create_token_list(compat_mode_t compat_mode, IHTMLElement *element, IWineDOMTokenList **ret)
+static HRESULT create_token_list(compat_mode_t compat_mode, HTMLElement *element, IWineDOMTokenList **ret)
 {
     struct token_list *obj;
 
@@ -7154,9 +7144,9 @@ static HRESULT create_token_list(compat_mode_t compat_mode, IHTMLElement *elemen
     }
 
     obj->IWineDOMTokenList_iface.lpVtbl = &WineDOMTokenListVtbl;
-    init_dispatch(&obj->dispex, &token_list_dispex, NULL, compat_mode);
-    IHTMLElement_AddRef(element);
-    obj->element = element;
+    init_dispatch_with_owner(&obj->dispex, &token_list_dispex, &element->node.event_target.dispex);
+    obj->element = &element->IHTMLElement_iface;
+    IHTMLElement_AddRef(obj->element);
 
     *ret = &obj->IWineDOMTokenList_iface;
     return S_OK;
@@ -7230,7 +7220,7 @@ static HRESULT WINAPI htmlelement_private_get_classList(IWineHTMLElementPrivate 
 
     TRACE("iface %p, class_list %p.\n", iface, class_list);
 
-    return create_token_list(dispex_compat_mode(&This->node.event_target.dispex), &This->IHTMLElement_iface,
+    return create_token_list(dispex_compat_mode(&This->node.event_target.dispex), This,
             (IWineDOMTokenList **)class_list);
 }
 

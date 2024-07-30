@@ -337,7 +337,7 @@ sync_test("builtin_toString", function() {
         test("UIEvent", document.createEvent("UIEvent"), "UIEvent");
     }
     if(v >= 10) {
-        test("classList", e.classList, "DOMTokenList", "testclass    another ", true);
+        test("classList", e.classList, "DOMTokenList", "testclass    another ");
         test("console", window.console, "Console");
         test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
     }
