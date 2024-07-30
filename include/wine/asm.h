@@ -245,9 +245,9 @@
                        ".byte 0x75,0x03\n\t"      /* jne 1f */ \
                        ".byte 0x0f,0x05\n\t"      /* syscall */ \
                        ".byte 0xc3\n\t"           /* ret */ \
-                       "jmp 1f\n\t" \
-                       ".byte 0xc3\n"             /* ret */ \
-                       "1:\t.byte 0xff,0x14,0x25\n\t" /* 1: callq *(0x7ffe1000) */ \
+                       ".byte 0xeb,0x01\n\t"      /* jmp 1f */ \
+                       ".byte 0xc3\n\t"           /* ret */ \
+                       ".byte 0xff,0x14,0x25\n\t" /* 1: callq *(0x7ffe1000) */ \
                        ".long 0x7ffe1000\n\t" \
                        "ret" )
 # else
@@ -260,10 +260,10 @@
                        ".byte 0x75,0x03\n\t"      /* jne 1f */ \
                        ".byte 0x0f,0x05\n\t"      /* syscall */ \
                        ".byte 0xc3\n\t"           /* ret */ \
-                       "jmp 1f\n\t" \
+                       ".byte 0xeb,0x02\n\t"      /* jmp 1f */ \
                        ".byte 0xc3\n"             /* ret */ \
-                       "nop\n" \
-                       "1:\tcallq *" __ASM_NAME("__wine_syscall_dispatcher") "(%rip)\n\t" \
+                       "nop\n\t" \
+                       "callq *" __ASM_NAME("__wine_syscall_dispatcher") "(%rip)\n\t" /* 1: callq __wine_syscall_dispatcher */ \
                        "ret" )
 # endif
 #elif defined __arm__
