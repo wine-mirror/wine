@@ -704,12 +704,31 @@ HRESULT get_plugin_disp(HTMLPluginContainer *plugin_container, IDispatch **ret)
     return S_OK;
 }
 
-HRESULT get_plugin_dispid(HTMLPluginContainer *plugin_container, const WCHAR *name, DISPID *ret)
+static inline HTMLPluginContainer *impl_from_DispatchEx(DispatchEx *iface)
 {
+    return CONTAINING_RECORD(iface, HTMLPluginContainer, element.node.event_target.dispex);
+}
+
+void HTMLPluginContainer_destructor(DispatchEx *dispex)
+{
+    HTMLPluginContainer *This = impl_from_DispatchEx(dispex);
+
+    if(This->plugin_host)
+        detach_plugin_host(This->plugin_host);
+    free(This->props);
+
+    HTMLElement_destructor(&This->element.node.event_target.dispex);
+}
+
+HRESULT HTMLPluginContainer_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *ret)
+{
+    HTMLPluginContainer *plugin_container = impl_from_DispatchEx(dispex);
     IDispatch *disp;
     DISPID id;
     DWORD i;
     HRESULT hres;
+
+    TRACE("(%p)->(%s %lx %p)\n", plugin_container, debugstr_w(name), grfdex, ret);
 
     if(!plugin_container->plugin_host) {
         WARN("no plugin host\n");
@@ -755,10 +774,13 @@ HRESULT get_plugin_dispid(HTMLPluginContainer *plugin_container, const WCHAR *na
     return S_OK;
 }
 
-HRESULT invoke_plugin_prop(HTMLPluginContainer *plugin_container, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
-        VARIANT *res, EXCEPINFO *ei)
+HRESULT HTMLPluginContainer_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+                                   VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
+    HTMLPluginContainer *plugin_container = impl_from_DispatchEx(dispex);
     PluginHost *host;
+
+    TRACE("(%p)->(%ld)\n", plugin_container, id);
 
     host = plugin_container->plugin_host;
     if(!host || !host->disp) {
