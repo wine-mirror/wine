@@ -7450,16 +7450,6 @@ static HRESULT HTMLFiltersCollection_get_dispid(DispatchEx *dispex, const WCHAR 
     return S_OK;
 }
 
-static HRESULT HTMLFiltersCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
-    WCHAR buf[11];
-    UINT len;
-
-    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
-    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT HTMLFiltersCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -7477,7 +7467,7 @@ static const dispex_static_data_vtbl_t HTMLFiltersCollection_dispex_vtbl = {
     .query_interface  = HTMLFiltersCollection_query_interface,
     .destructor       = HTMLFiltersCollection_destructor,
     .get_dispid       = HTMLFiltersCollection_get_dispid,
-    .get_name         = HTMLFiltersCollection_get_name,
+    .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLFiltersCollection_invoke,
 };
 
