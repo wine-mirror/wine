@@ -80,3 +80,4 @@ void HTMLPluginContainer_destructor(DispatchEx *dispex);
 HRESULT HTMLPluginContainer_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid);
 HRESULT HTMLPluginContainer_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
                                    VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller);
+HRESULT HTMLPluginContainer_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc);

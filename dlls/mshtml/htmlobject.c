@@ -653,15 +653,6 @@ static void HTMLObjectElement_unlink(DispatchEx *dispex)
     unlink_ref(&This->nsobject);
 }
 
-static HRESULT HTMLObjectElement_dispex_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    HTMLObjectElement *This = impl_from_DispatchEx(dispex);
-
-    FIXME("(%p)->(%lx %p)\n", This, id, name);
-
-    return E_NOTIMPL;
-}
-
 static const NodeImplVtbl HTMLObjectElementImplVtbl = {
     .clsid                 = &CLSID_HTMLObjectElement,
     .cpc_entries           = HTMLElement_cpc,
@@ -678,7 +669,7 @@ static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
         .traverse       = HTMLObjectElement_traverse,
         .unlink         = HTMLObjectElement_unlink,
         .get_dispid     = HTMLPluginContainer_get_dispid,
-        .get_name       = HTMLObjectElement_dispex_get_name,
+        .get_prop_desc  = HTMLPluginContainer_get_prop_desc,
         .invoke         = HTMLPluginContainer_invoke
     },
     HTMLELEMENT_EVENT_TARGET_VTBL_ENTRIES,

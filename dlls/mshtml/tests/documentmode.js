@@ -181,7 +181,7 @@ sync_test("builtin_toString", function() {
         [ "nav",             "" ],
         [ "noframes",        "" ],
         [ "noscript",        "" ],
-        [ "object",          "Object", -1 ],
+        [ "object",          "Object" ],
         [ "ol",              "OList", -1 ],
         [ "optgroup",        "OptGroup", -1 ],
         [ "option",          "Option" ],

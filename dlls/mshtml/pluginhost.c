@@ -813,6 +813,32 @@ HRESULT HTMLPluginContainer_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WOR
             lcid, flags, params, res, ei, NULL);
 }
 
+HRESULT HTMLPluginContainer_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc)
+{
+    HTMLPluginContainer *plugin_container = impl_from_DispatchEx(dispex);
+    PluginHost *host;
+
+    if(id >= MSHTML_DISPID_CUSTOM_MIN + plugin_container->props_len)
+        return DISP_E_MEMBERNOTFOUND;
+
+    host = plugin_container->plugin_host;
+    if(!host || !host->disp) {
+        WARN("Called with no disp\n");
+        return E_UNEXPECTED;
+    }
+
+    if(!check_script_safety(host)) {
+        FIXME("Insecure object\n");
+        return E_FAIL;
+    }
+
+    desc->id = id;
+    desc->flags = 0;
+    desc->name = plugin_container->props[id - MSHTML_DISPID_CUSTOM_MIN]->name;
+    desc->func_iid = 0;
+    return S_OK;
+}
+
 typedef struct {
     DISPID id;
     IDispatch *disp;
