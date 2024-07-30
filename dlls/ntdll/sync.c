@@ -313,6 +313,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         NTSTATUS status = wait_semaphore( crit, timeout );
 
         if (status == STATUS_WAIT_0) break;
+        if (status != WAIT_TIMEOUT) return status;
 
         timeout = (TRACE_ON(relay) ? 300 : 60);
 
@@ -368,6 +369,8 @@ NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 
     if (InterlockedIncrement( &crit->LockCount ))
     {
+        NTSTATUS status;
+
         if (crit->OwningThread == ULongToHandle(GetCurrentThreadId()))
         {
             crit->RecursionCount++;
@@ -375,7 +378,7 @@ NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
         }
 
         /* Now wait for it */
-        RtlpWaitForCriticalSection( crit );
+        if ((status = RtlpWaitForCriticalSection( crit ))) RtlRaiseStatus( status );
     }
 done:
     crit->OwningThread   = ULongToHandle(GetCurrentThreadId());
