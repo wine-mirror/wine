@@ -769,7 +769,7 @@ static dispex_static_data_t HTMLRect_dispex = {
     HTMLRect_init_dispex_info
 };
 
-static HRESULT create_html_rect(nsIDOMClientRect *nsrect, compat_mode_t compat_mode, IHTMLRect **ret)
+static HRESULT create_html_rect(nsIDOMClientRect *nsrect, DispatchEx *owner, IHTMLRect **ret)
 {
     HTMLRect *rect;
 
@@ -780,7 +780,7 @@ static HRESULT create_html_rect(nsIDOMClientRect *nsrect, compat_mode_t compat_m
     rect->IHTMLRect_iface.lpVtbl = &HTMLRectVtbl;
     rect->IHTMLRect2_iface.lpVtbl = &HTMLRect2Vtbl;
 
-    init_dispatch(&rect->dispex, &HTMLRect_dispex, NULL, compat_mode);
+    init_dispatch_with_owner(&rect->dispex, &HTMLRect_dispex, owner);
 
     nsIDOMClientRect_AddRef(nsrect);
     rect->nsrect = nsrect;
@@ -995,7 +995,7 @@ static HRESULT WINAPI HTMLRectCollection_item(IHTMLRectCollection *iface, VARIAN
         return S_OK;
     }
 
-    hres = create_html_rect(nsrect, dispex_compat_mode(&This->dispex), &rect);
+    hres = create_html_rect(nsrect, &This->dispex, &rect);
     nsIDOMClientRect_Release(nsrect);
     if(FAILED(hres))
         return hres;
@@ -1093,7 +1093,7 @@ static HRESULT HTMLRectCollection_invoke(DispatchEx *dispex, DISPID id, LCID lci
             return DISP_E_MEMBERNOTFOUND;
         }
 
-        hres = create_html_rect(rect, dispex_compat_mode(&This->dispex), &html_rect);
+        hres = create_html_rect(rect, &This->dispex, &html_rect);
         nsIDOMClientRect_Release(rect);
         if(FAILED(hres))
             return hres;
@@ -3065,7 +3065,7 @@ static HRESULT WINAPI HTMLElement2_getBoundingClientRect(IHTMLElement2 *iface, I
         return E_FAIL;
     }
 
-    hres = create_html_rect(nsrect, dispex_compat_mode(&This->node.event_target.dispex), pRect);
+    hres = create_html_rect(nsrect, &This->node.event_target.dispex, pRect);
 
     nsIDOMClientRect_Release(nsrect);
     return hres;

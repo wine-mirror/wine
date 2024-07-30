@@ -293,7 +293,7 @@ sync_test("builtin_toString", function() {
     test("attribute", document.createAttribute("class"), "Attr");
     if(false /* todo_wine */) test("attributes", e.attributes, "NamedNodeMap");
     test("childNodes", document.body.childNodes, "NodeList", null, true);
-    if(clientRects) test("clientRect", clientRects[0], "ClientRect", null, true);
+    if(clientRects) test("clientRect", clientRects[0], "ClientRect");
     if(clientRects) test("clientRects", clientRects, "ClientRectList");
     if(currentStyle) test("currentStyle", currentStyle, "MSCurrentStyleCSSProperties", null, true);
     if(v >= 11 /* todo_wine */) test("document", document, v < 11 ? "Document" : "HTMLDocument");
