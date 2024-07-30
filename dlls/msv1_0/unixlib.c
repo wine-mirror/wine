@@ -40,7 +40,12 @@
 #include "wine/debug.h"
 #include "unixlib.h"
 
-extern char **environ;
+#ifdef __APPLE__
+# include <crt_externs.h>
+# define environ (*_NSGetEnviron())
+#else
+  extern char **environ;
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
