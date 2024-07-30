@@ -48,12 +48,18 @@ typedef struct {
     HTMLPluginContainer *element;
 } PluginHost;
 
+struct plugin_prop
+{
+    DISPID id;
+    WCHAR name[1];
+};
+
 struct HTMLPluginContainer {
     HTMLElement element;
 
     PluginHost *plugin_host;
 
-    DISPID *props;
+    struct plugin_prop **props;
     DWORD props_size;
     DWORD props_len;
 };
