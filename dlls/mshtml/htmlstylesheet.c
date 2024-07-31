@@ -171,7 +171,7 @@ static dispex_static_data_t HTMLStyleSheetRule_dispex = {
     HTMLStyleSheetRule_iface_tids
 };
 
-static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, compat_mode_t compat_mode,
+static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, DispatchEx *owner,
                                        IHTMLStyleSheetRule **ret)
 {
     HTMLStyleSheetRule *rule;
@@ -183,7 +183,7 @@ static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, compat_m
     rule->IHTMLStyleSheetRule_iface.lpVtbl = &HTMLStyleSheetRuleVtbl;
     rule->nsstylesheetrule = NULL;
 
-    init_dispatch(&rule->dispex, &HTMLStyleSheetRule_dispex, NULL, compat_mode);
+    init_dispatch_with_owner(&rule->dispex, &HTMLStyleSheetRule_dispex, owner);
 
     if (nsstylesheetrule)
     {
@@ -241,7 +241,7 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_item(IHTMLStyleSheetRulesCol
     if(!nsstylesheetrule)
         return E_INVALIDARG;
 
-    hres = create_style_sheet_rule(nsstylesheetrule, dispex_compat_mode(&This->dispex), p);
+    hres = create_style_sheet_rule(nsstylesheetrule, &This->dispex, p);
     nsIDOMCSSRule_Release(nsstylesheetrule);
     return hres;
 }
@@ -335,7 +335,7 @@ static HRESULT HTMLStyleSheetRulesCollection_invoke(DispatchEx *dispex, DISPID i
             return S_OK;
         }
 
-        hres = create_style_sheet_rule(nsstylesheetrule, dispex_compat_mode(&This->dispex), &stylesheetrule);
+        hres = create_style_sheet_rule(nsstylesheetrule, &This->dispex, &stylesheetrule);
         nsIDOMCSSRule_Release(nsstylesheetrule);
         if(FAILED(hres))
             return hres;

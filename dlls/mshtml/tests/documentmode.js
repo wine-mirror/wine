@@ -312,7 +312,7 @@ sync_test("builtin_toString", function() {
     test("sessionStorage", window.sessionStorage, "Storage");
     test("style", document.body.style, "MSStyleCSSProperties", null, true);
     test("styleSheet", sheet, "CSSStyleSheet");
-    test("styleSheetRule", sheet.rules[0], "CSSStyleRule", null, true);
+    test("styleSheetRule", sheet.rules[0], "CSSStyleRule");
     test("styleSheetRules", sheet.rules, "MSCSSRuleList");
     test("styleSheets", document.styleSheets, "StyleSheetList");
     test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null);
