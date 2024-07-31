@@ -247,7 +247,7 @@ HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
                                                   (void **)&obj->pCF);
                 if (obj->pCF)
                     hres = IUnknown_QueryInterface(obj->pCF, riid, ppv);
-                break;
+                return hres;
             }
         }
     }
