@@ -408,6 +408,7 @@ RETURN_CODE WCMD_choice(WCHAR *args)
             LARGE_INTEGER li, zeroli = {0};
             OVERLAPPED overlapped = {0};
             DWORD count;
+            char choice;
 
             overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
             if (SetFilePointerEx(GetStdHandle(STD_INPUT_HANDLE), zeroli, &li, FILE_CURRENT))
@@ -415,11 +416,12 @@ RETURN_CODE WCMD_choice(WCHAR *args)
                 overlapped.Offset = li.LowPart;
                 overlapped.OffsetHigh = li.HighPart;
             }
-            if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, NULL, &overlapped))
+            if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), &choice, 1, NULL, &overlapped))
             {
                 switch (WaitForSingleObject(overlapped.hEvent, opt_timeout == -1 ? INFINITE : opt_timeout * 1000))
                 {
                 case WAIT_OBJECT_0:
+                    answer[0] = choice;
                     break;
                 case WAIT_TIMEOUT:
                     answer[0] = opt_default;
@@ -428,7 +430,7 @@ RETURN_CODE WCMD_choice(WCHAR *args)
                     return_code = ERROR_INVALID_FUNCTION;
                 }
             }
-            else if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count, NULL))
+            else if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), &choice, 1, &count, NULL))
             {
                 if (count == 0)
                 {
@@ -437,6 +439,8 @@ RETURN_CODE WCMD_choice(WCHAR *args)
                     else
                         return_code = ERROR_INVALID_FUNCTION;
                 }
+                else
+                    answer[0] = choice;
             }
             else
                 return_code = ERROR_INVALID_FUNCTION;
