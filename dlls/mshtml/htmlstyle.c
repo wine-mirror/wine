@@ -2940,8 +2940,8 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         DISPID dispid;
         unsigned i;
 
-        hres = IWineJSDispatchHost_GetDispID(&This->css_style.dispex.IWineJSDispatchHost_iface, strAttributeName,
-                (lFlags&1) ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
+        hres = dispex_get_id(&This->css_style.dispex, strAttributeName,
+                             (lFlags & 1) ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
         if(hres != S_OK) {
             *pfSuccess = VARIANT_FALSE;
             return S_OK;
@@ -9714,14 +9714,14 @@ static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration 
     return E_NOTIMPL;
 }
 
-void init_css_style(CSSStyle *style, nsIDOMCSSStyleDeclaration *nsstyle, dispex_static_data_t *dispex_info, compat_mode_t compat_mode)
+void init_css_style(CSSStyle *style, nsIDOMCSSStyleDeclaration *nsstyle, dispex_static_data_t *dispex_info, DispatchEx *owner)
 {
     style->IHTMLCSSStyleDeclaration_iface.lpVtbl = &HTMLCSSStyleDeclarationVtbl;
     style->IHTMLCSSStyleDeclaration2_iface.lpVtbl = &HTMLCSSStyleDeclaration2Vtbl;
     style->nsstyle = nsstyle;
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
 
-    init_dispatch(&style->dispex, dispex_info, NULL, compat_mode);
+    init_dispatch_with_owner(&style->dispex, dispex_info, owner);
 }
 
 HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
@@ -9750,7 +9750,7 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
     style->elem = elem;
     IHTMLDOMNode_AddRef(&elem->node.IHTMLDOMNode_iface);
 
-    init_css_style(&style->css_style, nsstyle, &HTMLStyle_dispex, dispex_compat_mode(&elem->node.event_target.dispex));
+    init_css_style(&style->css_style, nsstyle, &HTMLStyle_dispex, &elem->node.event_target.dispex);
     nsIDOMCSSStyleDeclaration_Release(nsstyle);
 
     *ret = style;
@@ -9775,14 +9775,14 @@ static dispex_static_data_t HTMLW3CComputedStyle_dispex = {
     CSSStyle_init_dispex_info
 };
 
-HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, compat_mode_t compat_mode, IHTMLCSSStyleDeclaration **p)
+HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, DispatchEx *owner, IHTMLCSSStyleDeclaration **p)
 {
     CSSStyle *style;
 
     if(!(style = calloc(1, sizeof(*style))))
         return E_OUTOFMEMORY;
 
-    init_css_style(style, nsstyle, &HTMLW3CComputedStyle_dispex, compat_mode);
+    init_css_style(style, nsstyle, &HTMLW3CComputedStyle_dispex, owner);
     *p = &style->IHTMLCSSStyleDeclaration_iface;
     return S_OK;
 }

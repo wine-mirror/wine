@@ -295,7 +295,7 @@ sync_test("builtin_toString", function() {
     test("childNodes", document.body.childNodes, "NodeList");
     if(clientRects) test("clientRect", clientRects[0], "ClientRect");
     if(clientRects) test("clientRects", clientRects, "ClientRectList");
-    if(currentStyle) test("currentStyle", currentStyle, "MSCurrentStyleCSSProperties", null, true);
+    if(currentStyle) test("currentStyle", currentStyle, "MSCurrentStyleCSSProperties");
     if(v >= 11 /* todo_wine */) test("document", document, v < 11 ? "Document" : "HTMLDocument");
     test("elements", document.getElementsByTagName("body"), "HTMLCollection");
     test("history", window.history, "History");
@@ -310,7 +310,7 @@ sync_test("builtin_toString", function() {
     if(v >= 11 /* todo_wine */) test("plugins", window.navigator.plugins, v < 11 ? "MSPluginsCollection" : "PluginArray");
     test("screen", window.screen, "Screen");
     test("sessionStorage", window.sessionStorage, "Storage");
-    test("style", document.body.style, "MSStyleCSSProperties", null, true);
+    test("style", document.body.style, "MSStyleCSSProperties");
     test("styleSheet", sheet, "CSSStyleSheet");
     test("styleSheetRule", sheet.rules[0], "CSSStyleRule");
     test("styleSheetRules", sheet.rules, "MSCSSRuleList");
@@ -327,7 +327,7 @@ sync_test("builtin_toString", function() {
         test("selection", document.selection, "MSSelection");
     }
     if(v >= 9) {
-        test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration", null, true);
+        test("computedStyle", window.getComputedStyle(e), "CSSStyleDeclaration");
         test("doctype", document.doctype, "DocumentType");
 
         test("Event", document.createEvent("Event"), "Event");

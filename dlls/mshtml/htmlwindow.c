@@ -2429,7 +2429,7 @@ static HRESULT WINAPI HTMLWindow7_getComputedStyle(IHTMLWindow7 *iface, IHTMLDOM
         return S_OK;
     }
 
-    hres = create_computed_style(nsstyle, dispex_compat_mode(&This->inner_window->event_target.dispex), p);
+    hres = create_computed_style(nsstyle, &This->inner_window->event_target.dispex, p);
     nsIDOMCSSStyleDeclaration_Release(nsstyle);
     return hres;
 }
