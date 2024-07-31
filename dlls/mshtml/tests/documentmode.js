@@ -311,7 +311,7 @@ sync_test("builtin_toString", function() {
     test("screen", window.screen, "Screen");
     test("sessionStorage", window.sessionStorage, "Storage");
     test("style", document.body.style, "MSStyleCSSProperties", null, true);
-    test("styleSheet", sheet, "CSSStyleSheet", null, true);
+    test("styleSheet", sheet, "CSSStyleSheet");
     test("styleSheetRule", sheet.rules[0], "CSSStyleRule", null, true);
     test("styleSheetRules", sheet.rules, "MSCSSRuleList", null, true);
     test("styleSheets", document.styleSheets, "StyleSheetList");

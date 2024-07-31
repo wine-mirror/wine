@@ -1175,7 +1175,7 @@ HRESULT get_readystate_string(READYSTATE,BSTR*);
 
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectionObject**);
 HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**);
-HRESULT create_style_sheet(nsIDOMStyleSheet*,compat_mode_t,IHTMLStyleSheet**);
+HRESULT create_style_sheet(nsIDOMStyleSheet*,DispatchEx*,IHTMLStyleSheet**);
 HRESULT create_style_sheet_collection(nsIDOMStyleSheetList*,HTMLDocumentNode*,
                                       IHTMLStyleSheetsCollection**);
 HRESULT create_dom_range(nsIDOMRange*,HTMLDocumentNode*,IHTMLDOMRange**);

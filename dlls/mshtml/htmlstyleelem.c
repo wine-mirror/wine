@@ -150,8 +150,7 @@ static HRESULT WINAPI HTMLStyleElement_get_styleSheet(IHTMLStyleElement *iface, 
         assert(nsres == NS_OK);
 
         if(ss) {
-            HRESULT hres = create_style_sheet(ss, dispex_compat_mode(&This->element.node.event_target.dispex),
-                                              &This->style_sheet);
+            HRESULT hres = create_style_sheet(ss, &This->element.node.event_target.dispex, &This->style_sheet);
             nsIDOMStyleSheet_Release(ss);
             if(FAILED(hres))
                 return hres;
