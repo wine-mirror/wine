@@ -2183,6 +2183,12 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     }
 
     IDirect3DSurface9_GetDesc(dst_surface, &surfdesc);
+    if (surfdesc.MultiSampleType != D3DMULTISAMPLE_NONE)
+    {
+        TRACE("Multisampled destination surface, doing nothing.\n");
+        return D3D_OK;
+    }
+
     destformatdesc = get_format_info(surfdesc.Format);
     if (!dst_rect)
     {

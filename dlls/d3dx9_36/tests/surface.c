@@ -946,7 +946,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
        /* D3DXLoadSurfaceFromMemory should return success with a multisampled render target. */
        SetRect(&rect, 0, 0, 2, 2);
        hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &rect, pixdata_a8r8g8b8, D3DFMT_A8R8G8B8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-       todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+       ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
        /* The call succeeds, but the surface isn't actually written to. */
        get_surface_readback(device, newsurf, D3DFMT_A8R8G8B8, &surface_rb);
@@ -987,7 +987,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
        /* Contents of the multisampled surface are preserved. */
        hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, 8, NULL, &rect, D3DX_FILTER_POINT, 0);
-       todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+       ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
        get_surface_readback(device, newsurf, D3DFMT_A8R8G8B8, &surface_rb);
        check_readback_pixel_4bpp(&surface_rb, 0, 0, pixdata_a8r8g8b8[0], TRUE);
