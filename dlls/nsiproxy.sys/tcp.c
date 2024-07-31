@@ -645,7 +645,7 @@ static NTSTATUS tcp_conns_enumerate_all( UINT filter, struct nsi_tcp_conn_key *k
         pthread_once( &mib_init_once, init_pcblist64_mib );
 #else
         int pcblist_mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_PCBLIST };
-        size_t pcblist_mib_len = ARRAY_SIZE(mib);
+        size_t pcblist_mib_len = ARRAY_SIZE(pcblist_mib);
 #endif
 
         if (sysctl( pcblist_mib, pcblist_mib_len, NULL, &len, NULL, 0 ) < 0)

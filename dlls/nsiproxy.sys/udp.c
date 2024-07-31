@@ -316,7 +316,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
         pthread_once( &mib_init_once, init_pcblist64_mib );
 #else
         int pcblist_mib[] = { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_PCBLIST };
-        size_t pcblist_mib_len = ARRAY_SIZE(mib);
+        size_t pcblist_mib_len = ARRAY_SIZE(pcblist_mib);
 #endif
 
         if (sysctl( pcblist_mib, pcblist_mib_len, NULL, &len, NULL, 0 ) < 0)
