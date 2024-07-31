@@ -1300,8 +1300,8 @@ ULONG WINAPI wrapper_Release(IUnknown *iface);
 extern const void *iface_wrapper_vtbl[];
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*,BOOL);
-IHTMLElementCollection *create_collection_from_nodelist(nsIDOMNodeList*,compat_mode_t);
-IHTMLElementCollection *create_collection_from_htmlcol(nsIDOMHTMLCollection*,compat_mode_t);
+IHTMLElementCollection *create_collection_from_nodelist(nsIDOMNodeList*,DispatchEx*);
+IHTMLElementCollection *create_collection_from_htmlcol(nsIDOMHTMLCollection*,DispatchEx*);
 HRESULT create_child_collection(nsIDOMNodeList*,compat_mode_t,IHTMLDOMChildrenCollection**);
 
 HRESULT attr_value_to_string(VARIANT*);
