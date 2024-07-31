@@ -314,7 +314,7 @@ sync_test("builtin_toString", function() {
     test("styleSheet", sheet, "CSSStyleSheet", null, true);
     test("styleSheetRule", sheet.rules[0], "CSSStyleRule", null, true);
     test("styleSheetRules", sheet.rules, "MSCSSRuleList", null, true);
-    test("styleSheets", document.styleSheets, "StyleSheetList", null, true);
+    test("styleSheets", document.styleSheets, "StyleSheetList");
     test("textNode", document.createTextNode("testNode"), "Text", v < 9 ? "testNode" : null);
     test("textRange", txtRange, "TextRange");
     test("window", window, "Window", "[object Window]");

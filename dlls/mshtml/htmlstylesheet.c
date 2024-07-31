@@ -690,21 +690,6 @@ static HRESULT HTMLStyleSheetsCollection_get_dispid(DispatchEx *dispex, const WC
     return S_OK;
 }
 
-static HRESULT HTMLStyleSheetsCollection_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
-{
-    HTMLStyleSheetsCollection *This = HTMLStyleSheetsCollection_from_DispatchEx(dispex);
-    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
-    UINT32 len = 0;
-    WCHAR buf[11];
-
-    nsIDOMStyleSheetList_GetLength(This->nslist, &len);
-    if(idx >= len)
-        return DISP_E_MEMBERNOTFOUND;
-
-    len = swprintf(buf, ARRAY_SIZE(buf), L"%u", idx);
-    return (*name = SysAllocStringLen(buf, len)) ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT HTMLStyleSheetsCollection_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -751,7 +736,7 @@ static const dispex_static_data_vtbl_t HTMLStyleSheetsCollection_dispex_vtbl = {
     .traverse         = HTMLStyleSheetsCollection_traverse,
     .unlink           = HTMLStyleSheetsCollection_unlink,
     .get_dispid       = HTMLStyleSheetsCollection_get_dispid,
-    .get_name         = HTMLStyleSheetsCollection_get_name,
+    .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLStyleSheetsCollection_invoke
 };
 static const tid_t HTMLStyleSheetsCollection_iface_tids[] = {
@@ -765,7 +750,7 @@ static dispex_static_data_t HTMLStyleSheetsCollection_dispex = {
     HTMLStyleSheetsCollection_iface_tids
 };
 
-HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, compat_mode_t compat_mode,
+HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, HTMLDocumentNode *doc,
                                       IHTMLStyleSheetsCollection **ret)
 {
     HTMLStyleSheetsCollection *collection;
@@ -779,7 +764,8 @@ HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, compat_mode_
         nsIDOMStyleSheetList_AddRef(nslist);
     collection->nslist = nslist;
 
-    init_dispatch(&collection->dispex, &HTMLStyleSheetsCollection_dispex, NULL, compat_mode);
+    init_dispatch(&collection->dispex, &HTMLStyleSheetsCollection_dispex, doc->script_global,
+                  dispex_compat_mode(&doc->node.event_target.dispex));
 
     *ret = &collection->IHTMLStyleSheetsCollection_iface;
     return S_OK;

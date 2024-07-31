@@ -1934,8 +1934,7 @@ static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
         return map_nsresult(nsres);
     }
 
-    hres = create_style_sheet_collection(nsstylelist,
-                                         dispex_compat_mode(&This->node.event_target.dispex), p);
+    hres = create_style_sheet_collection(nsstylelist, This, p);
     nsIDOMStyleSheetList_Release(nsstylelist);
     return hres;
 }
