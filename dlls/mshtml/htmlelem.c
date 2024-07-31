@@ -5964,7 +5964,7 @@ static HRESULT WINAPI ElementSelector_querySelectorAll(IElementSelector *iface, 
         return map_nsresult(nsres);
     }
 
-    hres = create_child_collection(node_list, dispex_compat_mode(&This->node.event_target.dispex), pel);
+    hres = create_child_collection(node_list, &This->node.event_target.dispex, pel);
     nsIDOMNodeList_Release(node_list);
     return hres;
 }

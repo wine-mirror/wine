@@ -1302,7 +1302,7 @@ extern const void *iface_wrapper_vtbl[];
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*,BOOL);
 IHTMLElementCollection *create_collection_from_nodelist(nsIDOMNodeList*,DispatchEx*);
 IHTMLElementCollection *create_collection_from_htmlcol(nsIDOMHTMLCollection*,DispatchEx*);
-HRESULT create_child_collection(nsIDOMNodeList*,compat_mode_t,IHTMLDOMChildrenCollection**);
+HRESULT create_child_collection(nsIDOMNodeList*,DispatchEx*,IHTMLDOMChildrenCollection**);
 
 HRESULT attr_value_to_string(VARIANT*);
 HRESULT get_elem_attr_value_by_dispid(HTMLElement*,DISPID,VARIANT*);
