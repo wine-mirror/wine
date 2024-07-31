@@ -721,10 +721,9 @@ static HRESULT CALLBACK taskdialog_callback_proc_progress_bar(HWND hwnd, UINT no
         ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_STATE, PBST_PAUSED, 0);
         ok(ret == PBST_NORMAL, "Expect state: %d got state: %lx\n", PBST_NORMAL, ret);
         ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_STATE, PBST_ERROR, 0);
-        /* Progress bar has fixme on handling PBM_SETSTATE message */
-        todo_wine ok(ret == PBST_PAUSED, "Expect state: %d got state: %lx\n", PBST_PAUSED, ret);
+        ok(ret == PBST_PAUSED, "Expect state: %d got state: %lx\n", PBST_PAUSED, ret);
         ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_STATE, PBST_NORMAL, 0);
-        todo_wine ok(ret == PBST_ERROR, "Expect state: %d got state: %lx\n", PBST_ERROR, ret);
+        ok(ret == PBST_ERROR, "Expect state: %d got state: %lx\n", PBST_ERROR, ret);
 
         /* TDM_SET_PROGRESS_BAR_RANGE */
         ret = SendMessageW(hwnd, TDM_SET_PROGRESS_BAR_RANGE, 0, MAKELPARAM(0, 200));

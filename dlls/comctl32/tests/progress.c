@@ -392,10 +392,10 @@ void test_bar_states(void)
     {
         state = SendMessageA(progress_bar, PBM_SETSTATE, tests[i].state, 0);
         flush_events();
-        ok_sequence(sequences, CHILD_SEQ_INDEX, tests[i].expected_seq, "PBM_SETSTATE", TRUE);
-        todo_wine ok(state == (tests[i].error ? 0 : tests[i].previous_state), "Expected %ld, but got %d.\n", tests[i].previous_state, state);
+        ok_sequence(sequences, CHILD_SEQ_INDEX, tests[i].expected_seq, "PBM_SETSTATE", FALSE);
+        ok(state == (tests[i].error ? 0 : tests[i].previous_state), "Expected %ld, but got %d.\n", tests[i].previous_state, state);
         state = SendMessageA(progress_bar, PBM_GETSTATE, 0, 0);
-        todo_wine ok(state == (tests[i].error ? tests[i].previous_state : tests[i].state), "Expected %ld, but got %d.\n", tests[i].state, state);
+        ok(state == (tests[i].error ? tests[i].previous_state : tests[i].state), "Expected %ld, but got %d.\n", tests[i].state, state);
     }
 
     DestroyWindow(progress_bar);
