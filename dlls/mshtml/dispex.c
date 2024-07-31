@@ -1021,14 +1021,18 @@ static HRESULT function_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD 
     return DISP_E_UNKNOWNNAME;
 }
 
-static HRESULT function_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
+static HRESULT function_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc)
 {
     DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
 
     if(idx >= ARRAY_SIZE(function_props))
         return DISP_E_MEMBERNOTFOUND;
 
-    return (*name = SysAllocString(function_props[idx].name)) ? S_OK : E_OUTOFMEMORY;
+    desc->id = id;
+    desc->flags = 0;
+    desc->name = function_props[idx].name;
+    desc->func_iid = 0;
+    return S_OK;
 }
 
 static HRESULT function_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
@@ -1058,7 +1062,7 @@ static const dispex_static_data_vtbl_t function_dispex_vtbl = {
     .destructor       = function_destructor,
     .value            = function_value,
     .get_dispid       = function_get_dispid,
-    .get_name         = function_get_name,
+    .get_prop_desc    = function_get_prop_desc,
     .invoke           = function_invoke
 };
 
@@ -1079,7 +1083,7 @@ static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
     if(!ret)
         return NULL;
 
-    init_dispatch(&ret->dispex, &function_dispex, NULL, dispex_compat_mode(obj));
+    init_dispatch_with_owner(&ret->dispex, &function_dispex, obj);
     ret->obj = obj;
     ret->info = info;
 
@@ -2188,23 +2192,21 @@ HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret)
     HRESULT hres;
 
     if(is_custom_dispid(id)) {
-        if(dispex->info->desc->vtbl->get_prop_desc) {
-            struct property_info desc;
-            WCHAR buf[12];
+        struct property_info desc;
+        WCHAR buf[12];
 
-            hres = dispex->info->desc->vtbl->get_prop_desc(dispex, id, &desc);
-            if(FAILED(hres))
-                return hres;
-            if(!desc.name) {
-                swprintf(buf, ARRAYSIZE(buf), L"%u", desc.index);
-                desc.name = buf;
-            }
-            *ret = SysAllocString(desc.name);
-            return *ret ? S_OK : E_OUTOFMEMORY;
+        if(!dispex->info->desc->vtbl->get_prop_desc)
+            return DISP_E_MEMBERNOTFOUND;
+
+        hres = dispex->info->desc->vtbl->get_prop_desc(dispex, id, &desc);
+        if(FAILED(hres))
+            return hres;
+        if(!desc.name) {
+            swprintf(buf, ARRAYSIZE(buf), L"%u", desc.index);
+            desc.name = buf;
         }
-        if(dispex->info->desc->vtbl->get_name)
-            return dispex->info->desc->vtbl->get_name(dispex, id, ret);
-        return DISP_E_MEMBERNOTFOUND;
+        *ret = SysAllocString(desc.name);
+        return *ret ? S_OK : E_OUTOFMEMORY;
     }
 
     if(is_dynamic_dispid(id)) {
