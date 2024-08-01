@@ -236,6 +236,7 @@ static const char effect_desc[] =
 
 static void test_create_effect_and_pool(IDirect3DDevice9 *device)
 {
+    D3DXEFFECT_DESC desc;
     HRESULT hr;
     ID3DXEffect *effect;
     ID3DXBaseEffect *base;
@@ -258,6 +259,16 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(!desc.Parameters, "Unexpected value %u.\n", desc.Parameters);
 
     hr = effect->lpVtbl->QueryInterface(effect, &IID_ID3DXBaseEffect, (void **)&base);
     ok(hr == E_NOINTERFACE, "QueryInterface failed, got %lx, expected %lx (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
@@ -2472,6 +2483,7 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
     IDirect3DTexture9 *texture_set;
     IDirect3DTexture9 *texture;
     D3DXHANDLE parameter;
+    D3DXEFFECT_DESC desc;
     ID3DXEffect *effect;
     unsigned int i;
     ULONG count;
@@ -2480,6 +2492,16 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
     hr = D3DXCreateEffect(device, test_effect_parameter_value_blob_object,
             sizeof(test_effect_parameter_value_blob_object), NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#lx, expected 0 (D3D_OK).\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 7, "Unexpected value %u.\n", desc.Parameters);
 
     parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "tex");
     ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
@@ -2586,6 +2608,7 @@ static const DWORD test_effect_variable_names_blob[] =
 
 static void test_effect_variable_names(IDirect3DDevice9 *device)
 {
+    D3DXEFFECT_DESC desc;
     ID3DXEffect *effect;
     ULONG count;
     HRESULT hr;
@@ -2594,6 +2617,16 @@ static void test_effect_variable_names(IDirect3DDevice9 *device)
     hr = D3DXCreateEffect(device, test_effect_variable_names_blob,
             sizeof(test_effect_variable_names_blob), NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "D3DXCreateEffect failed, got %#lx, expected %#lx\n", hr, D3D_OK);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 6, "Unexpected value %u.\n", desc.Parameters);
 
     /*
      * check invalid calls
@@ -2993,6 +3026,7 @@ static void test_effect_states(IDirect3DDevice9 *device)
     }}};
 
     IDirect3DVertexShader9 *vshader;
+    D3DXEFFECT_DESC desc;
     ID3DXEffect *effect;
     UINT byte_code_size;
     D3DXVECTOR4 fvect;
@@ -3007,6 +3041,16 @@ static void test_effect_states(IDirect3DDevice9 *device)
     hr = D3DXCreateEffect(device, test_effect_states_effect_blob, sizeof(test_effect_states_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 3, "Unexpected value %u.\n", desc.Parameters);
 
     hr = effect->lpVtbl->End(effect);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
@@ -4561,6 +4605,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     D3DXVECTOR4 fdata[ARRAY_SIZE(test_effect_preshader_fvect_p)];
     int idata[ARRAY_SIZE(test_effect_preshader_iconsts)][4];
     IDirect3DVertexShader9 *vshader;
+    D3DXEFFECT_DESC desc;
     unsigned int i;
     D3DCAPS9 caps;
 
@@ -4576,6 +4621,16 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
 
     test_effect_clear_vconsts(device);
 
@@ -5024,12 +5079,24 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
                 {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {INFINITY, INFINITY, 3.0f, 4.0f}},
     };
     unsigned int i, j, passes_count;
+    D3DXEFFECT_DESC desc;
     ID3DXEffect *effect;
     HRESULT hr;
 
     hr = D3DXCreateEffect(device, test_effect_preshader_ops_blob, sizeof(test_effect_preshader_ops_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 3, "Unexpected value %u.\n", desc.Parameters);
+
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 0);
@@ -5141,6 +5208,7 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
         {"ts3", TRUE},
     };
     ID3DXEffect *effect, *effect2;
+    D3DXEFFECT_DESC desc;
     HRESULT hr;
     D3DXHANDLE tech;
     unsigned int i;
@@ -5148,6 +5216,16 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
 
     tech = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
     ok(!!tech, "GetTechniqueByName failed.\n");
@@ -5178,6 +5256,7 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
 
 static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
 {
+    D3DXEFFECT_DESC desc;
     ID3DXEffect *effect;
     HRESULT hr;
     D3DXHANDLE param;
@@ -5187,6 +5266,16 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
     ok(hr == D3D_OK, "Got result %#lx.\n", hr);
@@ -5386,6 +5475,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
             + TEST_EFFECT_BITMASK_BLOCK_SIZE - 1) / TEST_EFFECT_BITMASK_BLOCK_SIZE];
     static const D3DLIGHT9 light_filler = {D3DLIGHT_POINT};
 
+    D3DXEFFECT_DESC desc;
     ID3DXEffect *effect;
     HRESULT hr;
     D3DXHANDLE param;
@@ -5401,10 +5491,19 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     IDirect3DVertexShader9 *vshader;
     unsigned char buffer[256];
 
-
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
 
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "g_iVect");
     ok(!!param, "GetParameterByName failed.\n");
@@ -6562,6 +6661,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
 {
     ID3DXEffect *effect1, *effect2, *effect3, *effect4;
     ID3DXEffectPool *pool;
+    D3DXEFFECT_DESC desc;
     HRESULT hr;
     D3DXHANDLE param, param_child, param2, param_child2;
     unsigned int i, passes_count;
@@ -6575,6 +6675,17 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, pool, &effect2, NULL);
     ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+
+    hr = effect2->lpVtbl->GetDesc(effect2, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
+
     effect2->lpVtbl->SetFloat(effect2, "arr2[0]", 28.0f);
     effect2->lpVtbl->Release(effect2);
 
@@ -7019,6 +7130,7 @@ static const DWORD test_effect_skip_constants_blob[] =
 
 static void test_effect_skip_constants(IDirect3DDevice9 *device)
 {
+    D3DXEFFECT_DESC desc;
     HRESULT hr;
     ID3DXEffect *effect;
     unsigned int passes_count;
@@ -7038,6 +7150,16 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, " v1#,.+-= &\t\nv2*/!\"'v5 v6[1]", 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!desc.Creator, "Unexpected pointer.\n");
+    if (desc.Creator)
+        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
+    ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
+    ok(desc.Parameters == 6, "Unexpected value %u.\n", desc.Parameters);
 
     ok(!effect->lpVtbl->IsParameterUsed(effect, "v1", "tech0"),
             "Unexpected IsParameterUsed result.\n");
@@ -8107,6 +8229,7 @@ static const DWORD test_two_techniques_blob[] =
 static void test_effect_find_next_valid_technique(void)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
+    D3DXEFFECT_DESC effect_desc;
     IDirect3DDevice9 *device;
     D3DXTECHNIQUE_DESC desc;
     D3DXHANDLE tech, tech2;
@@ -8143,6 +8266,16 @@ static void test_effect_find_next_valid_technique(void)
     hr = D3DXCreateEffectEx(device, test_two_techniques_blob, sizeof(test_two_techniques_blob),
             NULL, NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+
+    hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!!effect_desc.Creator, "Unexpected pointer.\n");
+    if (effect_desc.Creator)
+        ok(!strcmp(effect_desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", effect_desc.Creator);
+    ok(!effect_desc.Functions, "Unexpected value %u.\n", effect_desc.Functions);
+    ok(effect_desc.Techniques == 2, "Unexpected value %u.\n", effect_desc.Techniques);
+    ok(!effect_desc.Parameters, "Unexpected value %u.\n", effect_desc.Parameters);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, NULL, &tech);
     ok(hr == D3D_OK, "Got result %#lx.\n", hr);
