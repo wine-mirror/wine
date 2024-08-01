@@ -2099,6 +2099,50 @@ SQLRETURN WINAPI SQLGetDescRec(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber,
     return ret;
 }
 
+static SQLRETURN get_diag_field_unix_a( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT rec_num,
+                                        SQLSMALLINT diag_id, SQLPOINTER diag_info, SQLSMALLINT buflen,
+                                        SQLSMALLINT *retlen )
+{
+
+    struct SQLGetDiagField_params params = { handle_type, handle->unix_handle, rec_num, diag_id, diag_info, buflen,
+                                             retlen };
+    return ODBC_CALL( SQLGetDiagField, &params );
+}
+
+static SQLRETURN get_diag_field_win32_a( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT rec_num,
+                                         SQLSMALLINT diag_id, SQLPOINTER diag_info, SQLSMALLINT buflen,
+                                         SQLSMALLINT *retlen )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLGetDiagField)
+        return handle->win32_funcs->SQLGetDiagField( handle_type, handle->win32_handle, rec_num, diag_id, diag_info,
+                                                     buflen, retlen );
+
+    if (handle->win32_funcs->SQLGetDiagFieldW)
+    {
+        SQLWCHAR *strW;
+        SQLSMALLINT lenW;
+
+        if (buflen < 0)
+            ret = handle->win32_funcs->SQLGetDiagFieldW( handle_type, handle->win32_handle, rec_num, diag_id,
+                                                         diag_info, buflen, retlen );
+        else
+        {
+            if (!(strW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+            ret = handle->win32_funcs->SQLGetDiagFieldW( handle_type, handle->win32_handle, rec_num, diag_id, strW,
+                                                         buflen, &lenW );
+            if (SUCCESS( ret ))
+            {
+                int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, (char *)diag_info, buflen, NULL, NULL );
+                if (retlen) *retlen = len - 1;
+            }
+            free( strW );
+        }
+    }
+    return ret;
+}
+
 /*************************************************************************
  *				SQLGetDiagField           [ODBC32.035]
  */
@@ -2116,14 +2160,13 @@ SQLRETURN WINAPI SQLGetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSM
 
     if (handle->unix_handle)
     {
-        struct SQLGetDiagField_params params = { HandleType, handle->unix_handle, RecNumber, DiagIdentifier,
-                                                 DiagInfo, BufferLength, StringLength };
-        ret = ODBC_CALL( SQLGetDiagField, &params );
+        ret = get_diag_field_unix_a( HandleType, handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength,
+                                     StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetDiagField( HandleType, handle->win32_handle, RecNumber, DiagIdentifier,
-                                                    DiagInfo, BufferLength, StringLength );
+        ret = get_diag_field_win32_a( HandleType, handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength,
+                                      StringLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4640,6 +4683,26 @@ SQLRETURN WINAPI SQLGetDescRecW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber
     return ret;
 }
 
+static SQLRETURN get_diag_field_unix_w( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT rec_num,
+                                        SQLSMALLINT diag_id, SQLPOINTER diag_info, SQLSMALLINT buflen,
+                                        SQLSMALLINT *retlen )
+{
+    struct SQLGetDiagFieldW_params params = { handle_type, handle->unix_handle, rec_num, diag_id, diag_info,
+                                              buflen, retlen };
+    return ODBC_CALL( SQLGetDiagFieldW, &params );
+}
+
+static SQLRETURN get_diag_field_win32_w( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT rec_num,
+                                         SQLSMALLINT diag_id, SQLPOINTER diag_info, SQLSMALLINT buflen,
+                                         SQLSMALLINT *retlen )
+{
+    if (handle->win32_funcs->SQLGetDiagFieldW)
+        return handle->win32_funcs->SQLGetDiagFieldW( handle_type, handle->win32_handle, rec_num, diag_id, diag_info,
+                                                      buflen, retlen );
+    if (handle->win32_funcs->SQLGetDiagField) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetDiagFieldW          [ODBC32.135]
  */
@@ -4657,14 +4720,13 @@ SQLRETURN WINAPI SQLGetDiagFieldW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLS
 
     if (handle->unix_handle)
     {
-        struct SQLGetDiagFieldW_params params = { HandleType, handle->unix_handle, RecNumber, DiagIdentifier,
-                                                  DiagInfo, BufferLength, StringLength };
-        ret = ODBC_CALL( SQLGetDiagFieldW, &params );
+        ret = get_diag_field_unix_w( HandleType, handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength,
+                                     StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetDiagFieldW( HandleType, handle->win32_handle, RecNumber, DiagIdentifier,
-                                                     DiagInfo, BufferLength, StringLength );
+        ret = get_diag_field_win32_w( HandleType, handle, RecNumber, DiagIdentifier, DiagInfo, BufferLength,
+                                      StringLength );
     }
 
     TRACE("Returning %d\n", ret);
