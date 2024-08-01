@@ -51,6 +51,9 @@ void sessions_unlock(void)
 struct session_enum
 {
     IAudioSessionEnumerator IAudioSessionEnumerator_iface;
+    IMMDevice *device;
+    GUID *sessions;
+    int session_count;
     LONG ref;
 };
 
@@ -97,28 +100,46 @@ static ULONG WINAPI enumerator_Release(IAudioSessionEnumerator *iface)
     TRACE("(%p) new ref %lu\n", enumerator, ref);
 
     if (!ref)
+    {
+        IMMDevice_Release(enumerator->device);
+        free(enumerator->sessions);
         free(enumerator);
+    }
 
     return ref;
 }
 
 static HRESULT WINAPI enumerator_GetCount(IAudioSessionEnumerator *iface, int *count)
 {
-    FIXME("%p -> %p stub.\n", iface, count);
+    struct session_enum *enumerator = impl_from_IAudioSessionEnumerator(iface);
+
+    TRACE("%p -> %p.\n", iface, count);
 
     if (!count) return E_POINTER;
-
-    *count = 0;
-    return E_NOTIMPL;
+    *count = enumerator->session_count;
+    return S_OK;
 }
 
 static HRESULT WINAPI enumerator_GetSession(IAudioSessionEnumerator *iface, int index, IAudioSessionControl **session)
 {
-    FIXME("%p -> %d %p stub.\n", iface, index, session);
+    struct session_enum *enumerator = impl_from_IAudioSessionEnumerator(iface);
+    struct audio_session_wrapper *session_wrapper;
+    HRESULT hr;
+
+    TRACE("%p -> %d %p.\n", iface, index, session);
 
     if (!session) return E_POINTER;
+    if (index >= enumerator->session_count)
+        return E_FAIL;
+
     *session = NULL;
-    return E_NOTIMPL;
+    sessions_lock();
+    hr = get_audio_session_wrapper(&enumerator->sessions[index], enumerator->device, &session_wrapper);
+    sessions_unlock();
+    if (FAILED(hr))
+        return hr;
+    *session = (IAudioSessionControl *)&session_wrapper->IAudioSessionControl2_iface;
+    return S_OK;
 }
 
 static const IAudioSessionEnumeratorVtbl IAudioSessionEnumerator_vtbl =
@@ -130,14 +151,25 @@ static const IAudioSessionEnumeratorVtbl IAudioSessionEnumerator_vtbl =
     enumerator_GetSession,
 };
 
-static HRESULT create_session_enumerator(IAudioSessionEnumerator **ppv)
+static HRESULT create_session_enumerator(IMMDevice *device, IAudioSessionEnumerator **ppv)
 {
     struct session_enum *enumerator;
+    HRESULT hr;
 
     if (!(enumerator = calloc(1, sizeof(*enumerator))))
         return E_OUTOFMEMORY;
 
+    sessions_lock();
+    hr = get_audio_sessions(device, &enumerator->sessions, &enumerator->session_count);
+    sessions_lock();
+    if (FAILED(hr))
+    {
+        free(enumerator);
+        return hr;
+    }
     enumerator->IAudioSessionEnumerator_iface.lpVtbl = &IAudioSessionEnumerator_vtbl;
+    IMMDevice_AddRef(device);
+    enumerator->device = device;
     enumerator->ref = 1;
     *ppv = &enumerator->IAudioSessionEnumerator_iface;
     return S_OK;
@@ -235,7 +267,7 @@ static HRESULT WINAPI ASM_GetSessionEnumerator(IAudioSessionManager2 *iface,
 
     TRACE("(%p)->(%p).\n", This, out);
 
-    return create_session_enumerator(out);
+    return create_session_enumerator(This->device, out);
 }
 
 static HRESULT WINAPI ASM_RegisterSessionNotification(IAudioSessionManager2 *iface,

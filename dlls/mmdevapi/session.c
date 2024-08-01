@@ -728,3 +728,26 @@ HRESULT get_audio_session_wrapper(const GUID *guid, IMMDevice *device,
 
     return S_OK;
 }
+
+HRESULT get_audio_sessions(IMMDevice *device, GUID **ret, int *ret_count)
+{
+    struct audio_session *session;
+
+    *ret_count = 0;
+    *ret = NULL;
+    LIST_FOR_EACH_ENTRY(session, &sessions, struct audio_session, entry) {
+        if (session->device == device)
+            ++*ret_count;
+    }
+    if (!*ret_count)
+        return S_OK;
+
+    if (!(*ret = malloc(*ret_count * sizeof(**ret))))
+        return E_OUTOFMEMORY;
+    *ret_count = 0;
+    LIST_FOR_EACH_ENTRY(session, &sessions, struct audio_session, entry) {
+        if (session->device == device)
+            (*ret)[(*ret_count)++] = session->guid;
+    }
+    return S_OK;
+}
