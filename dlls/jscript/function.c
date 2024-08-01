@@ -195,7 +195,51 @@ static HRESULT Arguments_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op 
     return S_OK;
 }
 
+static HRESULT Arguments_get_caller(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    ArgumentsInstance *arguments = arguments_from_jsdisp(jsthis);
+    call_frame_t *frame;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    for(frame = ctx->call_ctx; frame; frame = frame->prev_frame) {
+        if(frame->arguments_obj == &arguments->jsdisp) {
+            frame = frame->prev_frame;
+            if(!frame || !frame->function_instance)
+                break;
+            if(!frame->arguments_obj) {
+                hres = setup_arguments_object(ctx, frame);
+                if(FAILED(hres))
+                    return hres;
+            }
+            *r = jsval_obj(jsdisp_addref(frame->arguments_obj));
+            return S_OK;
+        }
+    }
+
+    *r = jsval_null();
+    return S_OK;
+}
+
+static const builtin_prop_t Arguments_props[] = {
+    {L"caller",              NULL, 0,                        Arguments_get_caller},
+};
+
 static const builtin_info_t Arguments_info = {
+    .class       = JSCLASS_ARGUMENTS,
+    .call        = Arguments_value,
+    .props_cnt   = ARRAY_SIZE(Arguments_props),
+    .props       = Arguments_props,
+    .destructor  = Arguments_destructor,
+    .lookup_prop = Arguments_lookup_prop,
+    .next_prop   = Arguments_next_prop,
+    .prop_get    = Arguments_prop_get,
+    .prop_put    = Arguments_prop_put,
+    .gc_traverse = Arguments_gc_traverse
+};
+
+static const builtin_info_t Arguments_ES5_info = {
     .class       = JSCLASS_ARGUMENTS,
     .call        = Arguments_value,
     .destructor  = Arguments_destructor,
@@ -215,7 +259,7 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
     if(!args)
         return E_OUTOFMEMORY;
 
-    hres = init_dispex_from_constr(&args->jsdisp, ctx, &Arguments_info, ctx->object_constr);
+    hres = init_dispex_from_constr(&args->jsdisp, ctx, ctx->version < SCRIPTLANGUAGEVERSION_ES5 ? &Arguments_info : &Arguments_ES5_info, ctx->object_constr);
     if(FAILED(hres)) {
         free(args);
         return hres;

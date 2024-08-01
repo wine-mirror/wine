@@ -892,18 +892,33 @@ sync_test("for..in", function() {
 });
 
 sync_test("function caller", function() {
+    var v = document.documentMode;
+
     ok(Function.prototype.hasOwnProperty("caller"), "caller not prop of Function.prototype");
+    if(v < 9)
+        ok(arguments.hasOwnProperty("caller"), "caller not prop of arguments");
+    else
+        ok(!("caller" in arguments), "caller in arguments");
 
     function test_caller(expected_caller, stop) {
         ok(test_caller.caller === expected_caller, "caller = " + test_caller.caller);
+        if(v < 9)
+            ok(arguments.caller === expected_caller.arguments, "arguments.caller = " + arguments.caller);
+
         if(stop) return;
         function nested() {
             ok(nested.caller === test_caller, "nested caller = " + nested.caller);
+            if(v < 9)
+                ok(arguments.caller === test_caller.arguments, "nested arguments.caller = " + arguments.caller);
             test_caller(nested, true);
             ok(test_caller.caller === expected_caller, "caller within nested = " + test_caller.caller);
+            if(v < 9)
+                ok(test_caller.arguments.caller === expected_caller.arguments, "arguments.caller within nested = " + test_caller.arguments.caller);
         }
         nested();
         ok(test_caller.caller === expected_caller, "caller after nested = " + test_caller.caller);
+        if(v < 9)
+            ok(arguments.caller === expected_caller.arguments, "arguments.caller after nested = " + arguments.caller);
     }
     ok(test_caller.hasOwnProperty("caller"), "caller not prop of test_caller");
     ok(test_caller.caller === null, "test_caller.caller = " + test_caller.caller);

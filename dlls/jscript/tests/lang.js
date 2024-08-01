@@ -447,6 +447,9 @@ obj1.func = function () {
     ok(arguments.length === 1, "arguments.length is not 1");
     ok(arguments["0"] === true, "arguments[0] is not true");
     ok(typeof(arguments.callee) === "function", "typeof(arguments.calee) = " + typeof(arguments.calee));
+    ok(arguments.caller === null, "arguments.caller = " + arguments.caller);
+    function test_caller() { ok(arguments.caller === foobar.arguments, "nested arguments.caller = " + arguments.caller); }
+    function foobar() { test_caller(); } foobar();
 
     return "test";
 };
