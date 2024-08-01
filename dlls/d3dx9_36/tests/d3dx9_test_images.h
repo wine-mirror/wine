@@ -1,6 +1,6 @@
 /*
- * Test images and functions used across the surface, texture and volume
- * test files.
+ * Test images, functions and values used across the surface, texture and
+ * volume test files.
  *
  * Copyright 2024 Connor McAdams for CodeWeavers
  *
@@ -22,6 +22,26 @@
 #include <stdint.h>
 #define COBJMACROS
 #include "d3dx9tex.h"
+
+static const struct
+{
+    uint32_t filter;
+    HRESULT expected_hr;
+    BOOL d3dx_filter_texture_todo;
+}
+test_filter_values[] =
+{
+    { D3DX_DEFAULT,         D3D_OK },
+    /* Any combo of MIRROR/DITHER/SRGB bits are valid. */
+    { 0x007f0001,           D3D_OK },
+    { D3DX_DEFAULT_NONPOW2, D3DERR_INVALIDCALL },
+    { D3DX_FROM_FILE,       D3DERR_INVALIDCALL },
+    { 0,                    D3DERR_INVALIDCALL, .d3dx_filter_texture_todo = TRUE },
+    { D3DX_FILTER_BOX + 1,  D3DERR_INVALIDCALL },
+    { 0x0000ffff,           D3DERR_INVALIDCALL },
+    /* Any unused filter bits being set results in failure. */
+    { 0xff800001,           D3DERR_INVALIDCALL, .d3dx_filter_texture_todo = TRUE },
+};
 
 /* 1x1 bmp (1 bpp) */
 static const uint8_t bmp_1bpp[] =

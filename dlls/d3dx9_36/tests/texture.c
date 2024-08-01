@@ -1047,6 +1047,7 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
     IDirect3DCubeTexture9 *cubetex;
     IDirect3DVolumeTexture9 *voltex;
     HRESULT hr;
+    uint32_t i;
 
     hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 5, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex, NULL);
 
@@ -1057,6 +1058,17 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
 
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_NONE);
         ok(hr == D3D_OK, "D3DXFilterTexture returned %#lx, expected %#lx\n", hr, D3D_OK);
+
+        for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+        {
+            winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
+
+            hr = D3DXFilterTexture((IDirect3DBaseTexture9 *)tex, NULL, 0, test_filter_values[i].filter);
+            todo_wine_if(test_filter_values[i].d3dx_filter_texture_todo) ok(hr == test_filter_values[i].expected_hr,
+                    "Unexpected hr %#lx.\n", hr);
+
+            winetest_pop_context();
+        }
 
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_BOX + 1); /* Invalid filter */
         ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
@@ -1126,6 +1138,17 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) cubetex, NULL, 0, D3DX_FILTER_BOX + 1); /* Invalid filter */
         ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
+        for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+        {
+            winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
+
+            hr = D3DXFilterTexture((IDirect3DBaseTexture9 *)cubetex, NULL, 0, test_filter_values[i].filter);
+            todo_wine_if(test_filter_values[i].d3dx_filter_texture_todo) ok(hr == test_filter_values[i].expected_hr,
+                    "Unexpected hr %#lx.\n", hr);
+
+            winetest_pop_context();
+        }
+
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) cubetex, NULL, 5, D3DX_FILTER_NONE); /* Invalid miplevel */
         ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
         IDirect3DCubeTexture9_Release(cubetex);
@@ -1147,6 +1170,17 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
 
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) voltex, NULL, 0, D3DX_FILTER_BOX);
         ok(hr == D3D_OK, "D3DXFilterTexture returned %#lx, expected %#lx\n", hr, D3D_OK);
+
+        for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+        {
+            winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
+
+            hr = D3DXFilterTexture((IDirect3DBaseTexture9 *)voltex, NULL, 0, test_filter_values[i].filter);
+            todo_wine_if(test_filter_values[i].d3dx_filter_texture_todo) ok(hr == test_filter_values[i].expected_hr,
+                    "Unexpected hr %#lx.\n", hr);
+
+            winetest_pop_context();
+        }
 
         hr = D3DXFilterTexture((IDirect3DBaseTexture9*) voltex, NULL, level_count - 1, D3DX_DEFAULT);
         ok(hr == D3D_OK, "D3DXFilterTexture returned %#lx, expected %#lx\n", hr, D3D_OK);
@@ -2118,7 +2152,7 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
     };
     HRESULT hr;
     struct surface_readback surface_rb;
-    uint32_t miplevels, mip_level;
+    uint32_t miplevels, mip_level, i;
     IDirect3DTexture9 *texture;
     IDirect3DSurface9 *surface;
     D3DXIMAGE_INFO img_info;
@@ -2128,6 +2162,44 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
         0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
     ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#lx, expected %#lx\n", hr, D3D_OK);
     IDirect3DTexture9_Release(texture);
+
+    for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+    {
+        winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
+
+        texture = NULL;
+        hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+            0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, test_filter_values[i].filter, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+        todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
+                "Unexpected hr %#lx.\n", hr);
+        if (texture)
+            IDirect3DTexture9_Release(texture);
+
+        winetest_pop_context();
+    }
+
+    /* Mip filter argument values never cause failure. */
+    for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+    {
+        winetest_push_context("Mip filter %d (%#x)", i, test_filter_values[i].filter);
+
+        texture = NULL;
+        hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit), 32, 32, 6,
+            0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, test_filter_values[i].filter, 0, NULL, NULL, &texture);
+        todo_wine_if(FAILED(hr)) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        if (texture)
+            IDirect3DTexture9_Release(texture);
+
+        winetest_pop_context();
+    }
+
+    /* Mip skip bits are 30-26, 25-23 are unused, setting them does nothing. */
+    texture = NULL;
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit), 32, 32, 6,
+        0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, 0x03800001, 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (texture)
+        IDirect3DTexture9_Release(texture);
 
     hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
         D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
@@ -2467,6 +2539,51 @@ static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     IDirect3DCubeTexture9_Release(cube_texture);
 
+    hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map, sizeof(dds_cube_map), D3DX_DEFAULT,
+            D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &cube_texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    IDirect3DCubeTexture9_Release(cube_texture);
+    for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+    {
+        winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
+
+        cube_texture = NULL;
+        hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map, sizeof(dds_cube_map), D3DX_DEFAULT,
+                D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, test_filter_values[i].filter, D3DX_DEFAULT,
+                0, NULL, NULL, &cube_texture);
+        todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
+                "Unexpected hr %#lx.\n", hr);
+        if (cube_texture)
+            IDirect3DCubeTexture9_Release(cube_texture);
+
+        winetest_pop_context();
+    }
+
+    /* Mip filter argument values never cause failure. */
+    for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+    {
+        winetest_push_context("Mip filter %d (%#x)", i, test_filter_values[i].filter);
+
+        cube_texture = NULL;
+        hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map, sizeof(dds_cube_map), D3DX_DEFAULT,
+                D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, test_filter_values[i].filter,
+                0, NULL, NULL, &cube_texture);
+        todo_wine_if(FAILED(hr)) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        if (cube_texture)
+            IDirect3DCubeTexture9_Release(cube_texture);
+
+        winetest_pop_context();
+    }
+
+    /* Mip skip bits are 30-26, 25-23 are unused, setting them does nothing. */
+    cube_texture = NULL;
+    hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map, sizeof(dds_cube_map), D3DX_DEFAULT,
+            D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, 0x03800001,
+            0, NULL, NULL, &cube_texture);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (cube_texture)
+        IDirect3DCubeTexture9_Release(cube_texture);
+
     if (!is_autogenmipmap_supported(device, D3DRTYPE_CUBETEXTURE))
     {
         skip("No D3DUSAGE_AUTOGENMIPMAP support for cube textures\n");
@@ -2708,7 +2825,7 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
     };
     IDirect3DVolumeTexture9 *volume_texture, *texture;
     struct volume_readback volume_rb;
-    uint32_t mip_level, x, y, z;
+    uint32_t mip_level, x, y, z, i;
     D3DXIMAGE_INFO img_info;
     D3DVOLUME_DESC desc;
     HRESULT hr;
@@ -2731,6 +2848,47 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
 
     check_image_info(&img_info, 8, 8, 1, 4, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
     IDirect3DVolumeTexture9_Release(texture);
+
+    for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+    {
+        winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
+
+        texture = NULL;
+        hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
+                D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+                test_filter_values[i].filter, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+        todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
+                "Unexpected hr %#lx.\n", hr);
+        if (texture)
+            IDirect3DVolumeTexture9_Release(texture);
+
+        winetest_pop_context();
+    }
+
+    /* Mip filter argument values never cause failure. */
+    for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+    {
+        winetest_push_context("Mip filter %d (%#x)", i, test_filter_values[i].filter);
+
+        texture = NULL;
+        hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
+                D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+                D3DX_DEFAULT, test_filter_values[i].filter, 0, NULL, NULL, &texture);
+        todo_wine_if(FAILED(hr)) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        if (texture)
+            IDirect3DVolumeTexture9_Release(texture);
+
+        winetest_pop_context();
+    }
+
+    /* Mip skip bits are 30-26, 25-23 are unused, setting them does nothing. */
+    texture = NULL;
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, 0x03800001, 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (texture)
+        IDirect3DVolumeTexture9_Release(texture);
 
     hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
             D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,

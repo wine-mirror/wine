@@ -191,6 +191,18 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
     hr = D3DXLoadVolumeFromMemory(volume, NULL, &dst_box, pixels, D3DFMT_A8R8G8B8, 16, 32, NULL, &src_box, D3DX_DEFAULT, 0);
     ok(hr == D3D_OK, "D3DXLoadVolumeFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
+    for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+    {
+        winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
+
+        hr = D3DXLoadVolumeFromMemory(volume, NULL, &dst_box, pixels, D3DFMT_A8R8G8B8, 16, 32, NULL, &src_box,
+                test_filter_values[i].filter, 0);
+        todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
+                "Unexpected hr %#lx.\n", hr);
+
+        winetest_pop_context();
+    }
+
     IDirect3DVolume9_Release(volume);
     IDirect3DVolumeTexture9_Release(volume_texture);
 }
@@ -199,7 +211,7 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     D3DBOX src_box;
-    uint32_t x, y, z;
+    uint32_t x, y, z, i;
     D3DVOLUME_DESC desc;
     D3DXIMAGE_INFO img_info;
     IDirect3DVolume9 *volume;
@@ -260,6 +272,18 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
+    for (i = 0; i < ARRAY_SIZE(test_filter_values); ++i)
+    {
+        winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
+
+        hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_24bit_8_8, sizeof(dds_24bit_8_8), NULL,
+                test_filter_values[i].filter, 0, NULL);
+        todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
+                "Unexpected hr %#lx.\n", hr);
+
+        winetest_pop_context();
+    }
+
     hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_24bit_8_8, sizeof(dds_24bit_8_8), NULL,
             D3DX_FILTER_POINT, 0, &img_info);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
