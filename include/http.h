@@ -484,6 +484,7 @@ HTTPAPI_LINKAGE ULONG WINAPI HttpReceiveRequestEntityBody(HANDLE queue, HTTP_REQ
 HTTPAPI_LINKAGE ULONG WINAPI HttpRemoveUrl(HANDLE queue, const WCHAR *url);
 HTTPAPI_LINKAGE ULONG WINAPI HttpRemoveUrlFromUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url, ULONG flags);
 HTTPAPI_LINKAGE ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, HTTP_RESPONSE *response, HTTP_CACHE_POLICY *cache_policy, ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data);
+HTTPAPI_LINKAGE ULONG WINAPI HttpSendResponseEntityBody(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags, USHORT entity_chunk_count, PHTTP_DATA_CHUNK entity_chunks, ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl, HTTP_LOG_DATA *log_data);
 HTTPAPI_LINKAGE ULONG WINAPI HttpSetRequestQueueProperty(HANDLE queue, HTTP_SERVER_PROPERTY property, void *value, ULONG length, ULONG reserved1, void *reserved2);
 HTTPAPI_LINKAGE ULONG WINAPI HttpSetServerSessionProperty(HTTP_SERVER_SESSION_ID id, HTTP_SERVER_PROPERTY property, void *value, ULONG size);
 HTTPAPI_LINKAGE ULONG WINAPI HttpSetServiceConfiguration(HANDLE,HTTP_SERVICE_CONFIG_ID,PVOID,ULONG,LPOVERLAPPED);

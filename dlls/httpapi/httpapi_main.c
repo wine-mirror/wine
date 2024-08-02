@@ -515,6 +515,39 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
     return ret;
 }
 
+
+/***********************************************************************
+ *        HttpSendResponseEntityBody     (HTTPAPI.@)
+ *
+ * Sends entity-body data for a response.
+ *
+ * PARAMS
+ *   queue              [I] The request queue handle
+ *   id                 [I] The ID of the request to which this response corresponds
+ *   flags              [I] Flags to control the response
+ *   entity_chunk_count [I] The number of entities pointed to by entity_chunks
+ *   entity_chunks      [I] The entities to be sent
+ *   ret_size           [O] The number of bytes sent
+ *   reserved1          [I] Reserved, must be NULL
+ *   reserved2          [I] Reserved, must be zero
+ *   ovl                [I] Must be set to an OVERLAP pointer when making async calls
+ *   log_data           [I] Optional log data structure for logging the call
+ *
+ * RETURNS
+ *   NO_ERROR on success, or an error code on failure.
+ */
+ULONG WINAPI HttpSendResponseEntityBody(HANDLE queue, HTTP_REQUEST_ID id,
+       ULONG flags, USHORT entity_chunk_count, PHTTP_DATA_CHUNK entity_chunks,
+       ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl,
+       HTTP_LOG_DATA *log_data)
+{
+    FIXME("queue %p, id %s, flags %#lx, entity_chunk_count %u, entity_chunks %p, "
+            "ret_size %p, reserved1 %p, reserved2 %#lx, ovl %p, log_data %p: stub!\n",
+            queue, wine_dbgstr_longlong(id), flags, entity_chunk_count, entity_chunks,
+            ret_size, reserved1, reserved2, ovl, log_data);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 struct url_group
 {
     struct list entry, session_entry;

@@ -25,7 +25,7 @@
 @ stdcall HttpRemoveUrl(ptr wstr)
 @ stdcall HttpRemoveUrlFromUrlGroup(int64 wstr long)
 @ stdcall HttpSendHttpResponse(ptr int64 long ptr ptr ptr ptr long ptr ptr)
-@ stub HttpSendResponseEntityBody
+@ stdcall HttpSendResponseEntityBody(ptr int64 long long ptr ptr ptr long ptr ptr)
 @ stdcall HttpSetRequestQueueProperty(ptr long ptr long long ptr)
 @ stdcall HttpSetServerSessionProperty(int64 long ptr long)
 @ stdcall HttpSetServiceConfiguration(ptr long ptr long ptr)

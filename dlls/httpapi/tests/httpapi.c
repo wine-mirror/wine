@@ -628,7 +628,7 @@ static void test_v1_entity_body(void)
     HTTP_RESPONSE_V1 response = {};
     HTTP_DATA_CHUNK chunks[2] = {};
     unsigned short port;
-    int ret, chunk_size;
+    int ret, chunk_size, len, max_attempts;
     char req_text[200];
     unsigned int i;
     OVERLAPPED ovl;
@@ -914,6 +914,94 @@ static void test_v1_entity_body(void)
     ok(!memcmp(recv_body, req_body + chunk_size, ret_size), "Entity body didn't match.\n");
 
     send_response_v1(queue, req->RequestId, s);
+
+    /* Test HttpSendResponseEntityBody(). */
+
+    ret = HttpSendResponseEntityBody(queue, HTTP_NULL_ID, 0, ARRAY_SIZE(chunks), chunks, NULL, NULL, 0, NULL, NULL);
+    ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
+
+    sprintf(req_text, post_req, port);
+    ret = send(s, req_text, strlen(req_text) + 1, 0);
+    ok(ret == strlen(req_text) + 1, "send() returned %d.\n", ret);
+
+    Sleep(100);
+
+    memset(req_buffer, 0xcc, sizeof(req_buffer));
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+
+    memset(&response, 0, sizeof(response));
+
+    response.StatusCode = 418;
+    response.pReason = "I'm a teapot";
+    response.ReasonLength = 12;
+    response.EntityChunkCount = ARRAY_SIZE(chunks);
+    response.pEntityChunks = chunks;
+    chunks[0].DataChunkType = HttpDataChunkFromMemory;
+    chunks[0].FromMemory.pBuffer = (void *)"pong";
+    chunks[0].FromMemory.BufferLength = 4;
+    chunks[1].DataChunkType = HttpDataChunkFromMemory;
+    chunks[1].FromMemory.pBuffer = (void *)"pang";
+    chunks[1].FromMemory.BufferLength = 4;
+    ret = HttpSendHttpResponse(queue, req->RequestId, HTTP_SEND_RESPONSE_FLAG_MORE_DATA, (HTTP_RESPONSE *)&response, NULL, NULL, NULL, 0, NULL, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    ret = HttpSendResponseEntityBody(queue, req->RequestId, HTTP_SEND_RESPONSE_FLAG_MORE_DATA, 0, NULL, NULL, NULL, 0, NULL, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    ret_size = 0xdeadbeef;
+    memset(chunks, 0, sizeof(chunks));
+    chunks[0].DataChunkType = HttpDataChunkFromMemory;
+    chunks[0].FromMemory.pBuffer = (void *)"foo";
+    chunks[0].FromMemory.BufferLength = 3;
+    chunks[1].DataChunkType = HttpDataChunkFromMemory;
+    chunks[1].FromMemory.pBuffer = (void *)"bar";
+    chunks[1].FromMemory.BufferLength = 3;
+    ret = HttpSendResponseEntityBody(queue, req->RequestId, 0, ARRAY_SIZE(chunks), chunks, &ret_size, NULL, 0, NULL, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(ret_size == 6, "Got size %lu.\n", ret_size);
+
+    memset(response_buffer, 0, sizeof(response_buffer));
+
+    /*
+     * Loop on recv() for at most 1 second to ensure we get the full response
+     * while ensuring we do not block forever if the expected response is never
+     * sent.
+     */
+    len = 0;
+    max_attempts = 100;
+    for (i = 0; i < max_attempts && !strstr(response_buffer, "foobar"); ++i)
+    {
+        struct timeval tv;
+        fd_set rfds;
+
+        tv.tv_sec = 0;
+        tv.tv_usec = 10000;
+        FD_ZERO(&rfds);
+        FD_SET(s, &rfds);
+
+        ret = select(1, &rfds, NULL, NULL, &tv);
+        ok(ret >= 0, "select() failed, ret = %d.\n", ret);
+
+        if (ret > 0)
+        {
+            ret = recv(s, response_buffer + len, sizeof(response_buffer) - len, 0);
+            ok(ret > 0, "recv() failed.\n");
+            len += ret;
+        }
+    }
+    ret = len;
+
+    if (winetest_debug > 1)
+        trace("%.*s\n", ret, response_buffer);
+    ok(!strncmp(response_buffer, "HTTP/1.1 418 I'm a teapot\r\n", 27), "Got incorrect status line.\n");
+    ok(!strstr(response_buffer, "\r\nContent-Length:"), "Unexpected Content-Length header.\n");
+    ok(!!strstr(response_buffer, "\r\nDate:"), "Missing Date header.\n");
+    ok(!memcmp(response_buffer + ret - 18, "\r\n\r\npongpangfoobar", 18), "Response did not end with entity data.\n");
+
+    ret = HttpReceiveHttpRequest(queue, req->RequestId, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+    ok(ret == ERROR_CONNECTION_INVALID, "Got error %u.\n", ret);
 
     CloseHandle(ovl.hEvent);
     ret = remove_url_v1(queue, port);
