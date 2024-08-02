@@ -467,13 +467,16 @@ BOOL WCMD_get_fullpath(const WCHAR* in, SIZE_T outsize, WCHAR* out, WCHAR** star
  *  Return a pointer to the first non-whitespace character of string.
  *  Does not modify the input string.
  */
-WCHAR *WCMD_skip_leading_spaces (WCHAR *string) {
+WCHAR *WCMD_skip_leading_spaces(WCHAR *string)
+{
+    while (*string == L' ' || *string == L'\t') string++;
+    return string;
+}
 
-  WCHAR *ptr;
-
-  ptr = string;
-  while (*ptr == ' ' || *ptr == '\t') ptr++;
-  return ptr;
+static WCHAR *WCMD_strip_for_command_start(WCHAR *string)
+{
+    while (*string == L' ' || *string == L'\t' || *string == L'@') string++;
+    return string;
 }
 
 /***************************************************************************
@@ -1753,34 +1756,28 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
     RETURN_CODE return_code;
     WCHAR *cmd, *parms_start;
     int cmd_index, count;
-    WCHAR *whichcmd;
-    WCHAR *new_cmd = NULL;
     BOOL prev_echo_mode;
 
     TRACE("command on entry:%s\n", wine_dbgstr_w(command));
 
     /* Move copy of the command onto the heap so it can be expanded */
-    new_cmd = xalloc(MAXSTRING * sizeof(WCHAR));
-    lstrcpyW(new_cmd, command);
-    cmd = new_cmd;
+    cmd = xalloc(MAXSTRING * sizeof(WCHAR));
+    lstrcpyW(cmd, command);
 
-    /* Strip leading whitespaces, and a '@' if supplied */
-    whichcmd = WCMD_skip_leading_spaces(cmd);
     TRACE("Command: '%s'\n", wine_dbgstr_w(cmd));
-    if (whichcmd[0] == '@') whichcmd++;
 
     /* Check if the command entered is internal, and identify which one */
     count = 0;
-    while (IsCharAlphaNumericW(whichcmd[count])) {
+    while (IsCharAlphaNumericW(cmd[count])) {
       count++;
     }
     for (cmd_index=0; cmd_index<=WCMD_EXIT; cmd_index++) {
       if (count && CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-        whichcmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
+                                  cmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
     }
-    parms_start = WCMD_skip_leading_spaces (&whichcmd[count]);
+    parms_start = WCMD_skip_leading_spaces(&cmd[count]);
 
-    handleExpansion(new_cmd, TRUE);
+    handleExpansion(cmd, TRUE);
 
 /*
  * Changing default drive has to be handled as a special case, anything
@@ -1813,13 +1810,13 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
       goto cleanup;
     }
 
-    WCMD_parse (parms_start, quals, param1, param2);
+    WCMD_parse(parms_start, quals, param1, param2);
     TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
 
     if (cmd_index <= WCMD_EXIT && (parms_start[0] == '/') && (parms_start[1] == '?')) {
       /* this is a help request for a builtin program */
       cmd_index = WCMD_HELP;
-      memcpy(parms_start, whichcmd, count * sizeof(WCHAR));
+      memcpy(parms_start, cmd, count * sizeof(WCHAR));
       parms_start[count] = '\0';
     }
 
@@ -1849,7 +1846,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_directory(parms_start);
         break;
       case WCMD_ECHO:
-        return_code = WCMD_echo(&whichcmd[count]);
+        return_code = WCMD_echo(&cmd[count]);
         break;
       case WCMD_GOTO:
         return_code = WCMD_goto();
@@ -1949,7 +1946,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         break;
       default:
         prev_echo_mode = echo_mode;
-        return_code = WCMD_run_program(whichcmd, FALSE);
+        return_code = WCMD_run_program(cmd, FALSE);
         echo_mode = prev_echo_mode;
     }
 
@@ -2779,8 +2776,6 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
         WCMD_output_asis(L"\r\n");
     }
 
-    /* Skip repeated 'no echo' characters and whitespace */
-    while (*buffer == '@' || *buffer == L' ' || *buffer == L'\t') buffer++;
     return buffer;
 }
 
@@ -2848,6 +2843,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     lastWasRedirect = FALSE;  /* Required e.g. for spaces between > and filename */
     onlyWhiteSpace = TRUE;
 
+    curPos = WCMD_strip_for_command_start(curPos);
     /* Parse every character on the line being processed */
     while (*curPos != 0x00) {
 
@@ -2866,6 +2862,8 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
+        if (acceptCommand)
+          curPos = WCMD_strip_for_command_start(curPos);
         /* If command starts with 'rem ' or identifies a label, ignore any &&, ( etc. */
         if (WCMD_keyword_ws_found(L"rem", curPos) || *curPos == ':') {
           inOneLine = TRUE;
@@ -3187,8 +3185,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
               do {
                   curPos = fetch_next_line(TRUE, FALSE, extraSpace);
               } while (curPos && *curPos == L'\0');
-              if (!curPos)
-                  curPos = extraSpace;
+              curPos = curPos ? WCMD_strip_for_command_start(curPos) : extraSpace;
           }
       }
     }
