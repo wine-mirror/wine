@@ -140,8 +140,31 @@ static void test_iobuf_layout(void)
     unlink(tempf);
 }
 
+static void test_std_stream_open(void)
+{
+    FILE *f;
+    int fd;
+
+    fd = _dup(STDIN_FILENO);
+    ok(fd != -1, "_dup failed\n");
+
+    ok(!fclose(stdin), "fclose failed\n");
+    f = fopen("nul", "r");
+    ok(f != stdin, "f = %p, stdin =  %p\n", f, stdin);
+    ok(_fileno(f) == STDIN_FILENO, "_fileno(f) = %d\n", _fileno(f));
+    ok(!fclose(f), "fclose failed\n");
+
+    f = freopen("nul", "r", stdin);
+    ok(f == stdin, "f = %p, expected %p\n", f, stdin);
+    ok(_fileno(f) == STDIN_FILENO, "_fileno(f) = %d\n", _fileno(f));
+
+    _dup2(fd, STDIN_FILENO);
+    close(fd);
+}
+
 START_TEST(file)
 {
     test_std_stream_buffering();
     test_iobuf_layout();
+    test_std_stream_open();
 }

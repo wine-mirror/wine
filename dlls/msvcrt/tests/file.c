@@ -3123,6 +3123,23 @@ static void test_std_stream_buffering(void)
     ok(DeleteFileA("std_stream_test.tmp"), "DeleteFile failed\n");
 }
 
+static void test_std_stream_open(void)
+{
+    FILE *f;
+    int fd;
+
+    fd = _dup(STDIN_FILENO);
+    ok(fd != -1, "_dup failed\n");
+
+    ok(!fclose(stdin), "fclose failed\n");
+    f = fopen("nul", "r");
+    ok(f == stdin, "f = %p, expected %p\n", f, stdin);
+    ok(_fileno(f) == STDIN_FILENO, "_fileno(f) = %d\n", _fileno(f));
+
+    _dup2(fd, STDIN_FILENO);
+    close(fd);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -3200,6 +3217,7 @@ START_TEST(file)
     test_open_hints();
     test_ioinfo_flags();
     test_std_stream_buffering();
+    test_std_stream_open();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order

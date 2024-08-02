@@ -618,10 +618,13 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
 /* caller must hold the files lock */
 static FILE* msvcrt_alloc_fp(void)
 {
-  int i;
+  int i = 0;
   FILE *file;
 
-  for (i = 3; i < MSVCRT_max_streams; i++)
+#if _MSVCR_VER >= 140
+  i = 3;
+#endif
+  for (; i < MSVCRT_max_streams; i++)
   {
     file = msvcrt_get_file(i);
     if (!file)
