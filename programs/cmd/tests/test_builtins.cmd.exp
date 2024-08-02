@@ -1978,7 +1978,7 @@ Should expand foobaz
 batfile
 robinfile
 0
-@todo_wine@1
+1
 1
 1
 non-builtin dir

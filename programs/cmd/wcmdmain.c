@@ -2221,7 +2221,7 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
     switch (cmd_index)
     {
     case WCMD_CALL:
-        return_code = WCMD_call(parms_start);
+        return_code = WCMD_call(&cmd[count]);
         break;
     case WCMD_CD:
     case WCMD_CHDIR:
