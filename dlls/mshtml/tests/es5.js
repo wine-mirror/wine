@@ -2752,4 +2752,6 @@ sync_test("prototypes", function() {
     DOMImplementation = 1;
     ok(DOMImplementation === 1, "DOMImplementation = " + DOMImplementation + " expected 1");
     DOMImplementation = constr;
+
+    ok(document.implementation instanceof DOMImplementation, "document.implementation is not an instance of DOMImplementation");
 });

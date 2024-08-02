@@ -1789,7 +1789,8 @@ static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global,
         initialize_script_global(script_global);
     if(script_global->jscript && !dispex->jsdisp) {
         hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
-                                           prototype ? prototype->jsdisp : NULL, &dispex->jsdisp);
+                                           prototype ? prototype->jsdisp : NULL,
+                                           dispex->info->desc->js_flags, &dispex->jsdisp);
         if(FAILED(hres))
             ERR("Failed to initialize jsdisp: %08lx\n", hres);
     }
@@ -2888,8 +2889,9 @@ static const dispex_static_data_vtbl_t constructor_dispex_vtbl = {
 };
 
 static dispex_static_data_t constructor_dispex = {
-    .name = "Constructor",
-    .vtbl = &constructor_dispex_vtbl,
+    .name     = "Constructor",
+    .vtbl     = &constructor_dispex_vtbl,
+    .js_flags = HOSTOBJ_CONSTRUCTOR,
 };
 
 HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)

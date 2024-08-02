@@ -36,6 +36,8 @@ const unsigned int PROPF_CONFIGURABLE = 0x1000;
 
 const unsigned int PROPF_PUBLIC_MASK = PROPF_ENUMERABLE | PROPF_WRITABLE | PROPF_CONFIGURABLE;
 
+const unsigned int HOSTOBJ_CONSTRUCTOR = 0x0001;
+
 interface IWineJSDispatchHost;
 
 [
@@ -75,5 +77,5 @@ interface IWineJSDispatchHost : IDispatchEx
 ]
 interface IWineJScript : IUnknown
 {
-    HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch *prototype, IWineJSDispatch **ret);
+    HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch *prototype, UINT32 flags, IWineJSDispatch **ret);
 }
