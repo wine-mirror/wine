@@ -2667,14 +2667,22 @@ const void *dispex_get_vtbl(DispatchEx *dispex)
     return dispex->info->vtbl;
 }
 
-void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWindow *script_global, compat_mode_t compat_mode)
+static void init_dispatch_from_desc(DispatchEx *dispex, dispex_data_t *info, HTMLInnerWindow *script_global)
 {
-    assert(compat_mode < COMPAT_MODE_CNT);
-
     dispex->IWineJSDispatchHost_iface.lpVtbl = &JSDispatchHostVtbl;
     dispex->dynamic_data = NULL;
     dispex->jsdisp = NULL;
+    dispex->info = info;
     ccref_init(&dispex->ccref, 1);
+    if(info != info->desc->delayed_init_info)
+        init_host_object(dispex, script_global);
+}
+
+void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWindow *script_global, compat_mode_t compat_mode)
+{
+    dispex_data_t *info;
+
+    assert(compat_mode < COMPAT_MODE_CNT);
 
     if(data->vtbl->get_script_global) {
         /* delayed init */
@@ -2690,11 +2698,12 @@ void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWind
             }
             LeaveCriticalSection(&cs_dispex_static_data);
         }
-        dispex->info = data->delayed_init_info;
+        info = data->delayed_init_info;
     }else {
-        dispex->info = ensure_dispex_info(data, compat_mode);
-        init_host_object(dispex, script_global);
+        info = ensure_dispex_info(data, compat_mode);
     }
+
+    init_dispatch_from_desc(dispex, info, script_global);
 }
 
 void init_dispatch_with_owner(DispatchEx *dispex, dispex_static_data_t *desc, DispatchEx *owner)
