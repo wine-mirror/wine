@@ -1735,11 +1735,8 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
-static dispex_data_t *ensure_dispex_info(DispatchEx *dispex, dispex_static_data_t *desc,
-                                         compat_mode_t compat_mode, HTMLInnerWindow *script_global)
+static dispex_data_t *ensure_dispex_info(dispex_static_data_t *desc, compat_mode_t compat_mode)
 {
-    HRESULT hres;
-
     if(!desc->info_cache[compat_mode]) {
         EnterCriticalSection(&cs_dispex_static_data);
         if(!desc->info_cache[compat_mode])
@@ -1749,18 +1746,24 @@ static dispex_data_t *ensure_dispex_info(DispatchEx *dispex, dispex_static_data_
             return NULL;
     }
 
-    if(compat_mode >= COMPAT_MODE_IE9 && script_global) {
-        if(!script_global->jscript)
-            initialize_script_global(script_global);
-        if(script_global->jscript && !dispex->jsdisp) {
-            hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
-                                               &dispex->jsdisp);
-            if(FAILED(hres))
-                ERR("Failed to initialize jsdisp: %08lx\n", hres);
-        }
-    }
-
     return desc->info_cache[compat_mode];
+}
+
+static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global)
+{
+    HRESULT hres;
+
+    if(dispex->info->compat_mode < COMPAT_MODE_IE9 || !script_global)
+        return;
+
+    if(!script_global->jscript)
+        initialize_script_global(script_global);
+    if(script_global->jscript && !dispex->jsdisp) {
+        hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
+                                           &dispex->jsdisp);
+        if(FAILED(hres))
+            ERR("Failed to initialize jsdisp: %08lx\n", hres);
+    }
 }
 
 static BOOL ensure_real_info(DispatchEx *dispex)
@@ -1771,9 +1774,10 @@ static BOOL ensure_real_info(DispatchEx *dispex)
         return TRUE;
 
     script_global = dispex->info->vtbl->get_script_global(dispex);
-    dispex->info = ensure_dispex_info(dispex, dispex->info->desc,
-                                      script_global->doc->document_mode, script_global);
-    return dispex->info != NULL;
+    if (!(dispex->info = ensure_dispex_info(dispex->info->desc, script_global->doc->document_mode)))
+        return FALSE;
+    init_host_object(dispex, script_global);
+    return TRUE;
 }
 
 compat_mode_t dispex_compat_mode(DispatchEx *dispex)
@@ -2688,7 +2692,8 @@ void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWind
         }
         dispex->info = data->delayed_init_info;
     }else {
-        dispex->info = ensure_dispex_info(dispex, data, compat_mode, script_global);
+        dispex->info = ensure_dispex_info(data, compat_mode);
+        init_host_object(dispex, script_global);
     }
 }
 
