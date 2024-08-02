@@ -2742,7 +2742,6 @@ sync_test("prototypes", function() {
     test_own_data_prop_desc(constr, "prototype", false, false, false);
     test_own_data_prop_desc(proto, "constructor", true, false, true);
     ok(proto.hasOwnProperty("createHTMLDocument"), "prototype has no own createHTMLDocument property");
-    todo_wine.
     ok(!document.implementation.hasOwnProperty("createHTMLDocument"),
        "prototype has own createHTMLDocument property");
 

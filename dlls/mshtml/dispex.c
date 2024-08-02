@@ -72,10 +72,12 @@ struct dispex_data_t {
     const dispex_static_data_vtbl_t *vtbl;
     dispex_static_data_t *desc;
     compat_mode_t compat_mode;
+    BOOL is_prototype;
 
     DWORD func_cnt;
     DWORD func_size;
     func_info_t *funcs;
+    DWORD name_cnt;
     func_info_t **name_table;
     DWORD func_disp_cnt;
 
@@ -278,6 +280,10 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
     func_info_t *info;
     BSTR name;
     HRESULT hres;
+
+    /* FIXME: Expose non-function properties from prototypes too (requires support for accessor properties). */
+    if(data->is_prototype && !(desc->invkind & DISPATCH_METHOD))
+        return;
 
     if(name_override)
         name = SysAllocString(name_override);
@@ -488,7 +494,20 @@ static int __cdecl func_name_cmp(const void *p1, const void *p2)
     return wcsicmp((*(func_info_t* const*)p1)->name, (*(func_info_t* const*)p2)->name);
 }
 
-static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_mode_t compat_mode)
+static BOOL find_prototype_member(const dispex_data_t *info, DISPID id)
+{
+    compat_mode_t compat_mode = info->compat_mode;
+
+    if(compat_mode < COMPAT_MODE_IE9)
+        return FALSE;
+    if(!(info = info->desc->prototype_info[compat_mode - COMPAT_MODE_IE9]))
+        return FALSE;
+    if(bsearch(&id, info->funcs, info->func_cnt, sizeof(info->funcs[0]), dispid_cmp))
+        return TRUE;
+    return FALSE;
+}
+
+static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_mode_t compat_mode, BOOL is_prototype)
 {
     const tid_t *tid;
     dispex_data_t *data;
@@ -512,9 +531,11 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     data->vtbl = desc->vtbl;
     data->desc = desc;
     data->compat_mode = compat_mode;
+    data->is_prototype = is_prototype;
     data->func_cnt = 0;
     data->func_disp_cnt = 0;
     data->func_size = 16;
+    data->name_cnt = 0;
     data->funcs = calloc(data->func_size, sizeof(func_info_t));
     if (!data->funcs) {
         free(data);
@@ -547,9 +568,13 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     qsort(data->funcs, data->func_cnt, sizeof(func_info_t), dispid_cmp);
 
     data->name_table = malloc(data->func_cnt * sizeof(func_info_t*));
-    for(i=0; i < data->func_cnt; i++)
-        data->name_table[i] = data->funcs+i;
-    qsort(data->name_table, data->func_cnt, sizeof(func_info_t*), func_name_cmp);
+    for(i=0; i < data->func_cnt; i++) {
+        /* Don't expose properties that are exposed by object's prototype */
+        if(find_prototype_member(data, data->funcs[i].id))
+            continue;
+        data->name_table[data->name_cnt++] = data->funcs+i;
+    }
+    qsort(data->name_table, data->name_cnt, sizeof(func_info_t*), func_name_cmp);
     return data;
 }
 
@@ -1218,7 +1243,7 @@ static HRESULT get_builtin_id(DispatchEx *This, const WCHAR *name, DWORD grfdex,
     }
 
     min = 0;
-    max = This->info->func_cnt-1;
+    max = This->info->name_cnt-1;
 
     while(min <= max) {
         n = (min+max)/2;
@@ -1742,7 +1767,7 @@ static dispex_data_t *ensure_dispex_info(dispex_static_data_t *desc, compat_mode
     if(!desc->info_cache[compat_mode]) {
         EnterCriticalSection(&cs_dispex_static_data);
         if(!desc->info_cache[compat_mode])
-            desc->info_cache[compat_mode] = preprocess_dispex_data(desc, compat_mode);
+            desc->info_cache[compat_mode] = preprocess_dispex_data(desc, compat_mode, FALSE);
         LeaveCriticalSection(&cs_dispex_static_data);
         if(!desc->info_cache[compat_mode])
             return NULL;
@@ -2792,7 +2817,7 @@ static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, 
         EnterCriticalSection(&cs_dispex_static_data);
         info = desc->prototype_info[compat_mode - COMPAT_MODE_IE9];
         if(!info) {
-            info = preprocess_dispex_data(desc, compat_mode);
+            info = preprocess_dispex_data(desc, compat_mode, TRUE);
             if(info) {
                 info->vtbl = &prototype_dispex_vtbl;
                 desc->prototype_info[compat_mode - COMPAT_MODE_IE9] = info;
