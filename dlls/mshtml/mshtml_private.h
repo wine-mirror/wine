@@ -406,6 +406,17 @@ typedef struct {
     HRESULT (*populate_props)(DispatchEx*);
 } dispex_static_data_vtbl_t;
 
+#define ALL_PROTOTYPES                     \
+    X(DOMImplementation)
+
+typedef enum {
+    PROT_NONE,
+#define X(name) PROT_##name,
+    ALL_PROTOTYPES
+#undef X
+    PROT_LAST,
+} prototype_id_t;
+
 typedef struct {
     const char *name;
     const dispex_static_data_vtbl_t *vtbl;
@@ -518,8 +529,10 @@ HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *v, EX
 HRESULT dispex_get_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *pid);
 HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, DISPID *ret);
 HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret);
+HRESULT dispex_define_property(DispatchEx *dispex, const WCHAR *name, DWORD flags, VARIANT *v, DISPID *id);
 HRESULT dispex_index_prop_desc(DispatchEx*,DISPID,struct property_info*);
 IWineJSDispatchHost *dispex_outer_iface(DispatchEx *dispex);
+HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret);
 
 typedef enum {
     DISPEXPROP_CUSTOM,
@@ -681,6 +694,8 @@ struct HTMLInnerWindow {
 
     ULONG navigation_type;
     ULONG redirect_count;
+
+    DispatchEx *constructors[PROT_LAST];
 
     ULONGLONG navigation_start_time;
     ULONGLONG unload_event_start_time;

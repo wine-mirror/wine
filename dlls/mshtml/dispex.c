@@ -522,10 +522,12 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     if(desc->init_info)
         desc->init_info(data, compat_mode);
 
-    for(tid = desc->iface_tids; *tid; tid++) {
-        hres = process_interface(data, *tid, dti, NULL);
-        if(FAILED(hres))
-            break;
+    if(desc->iface_tids) {
+        for(tid = desc->iface_tids; *tid; tid++) {
+            hres = process_interface(data, *tid, dti, NULL);
+            if(FAILED(hres))
+                break;
+        }
     }
 
     if(!data->func_cnt) {
@@ -713,6 +715,20 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
 
     TRACE("creating dynamic prop %s\n", debugstr_w(name));
     return alloc_dynamic_prop(This, name, NULL, ret);
+}
+
+HRESULT dispex_define_property(DispatchEx *dispex, const WCHAR *name, DWORD flags, VARIANT *v, DISPID *id)
+{
+    dynamic_prop_t *prop;
+    HRESULT hres;
+
+    hres = alloc_dynamic_prop(dispex, name, NULL, &prop);
+    if(FAILED(hres))
+        return hres;
+
+    *id = DISPID_DYNPROP_0 + (prop - dispex->dynamic_data->props);
+    prop->flags = flags;
+    return VariantCopy(&prop->var, v);
 }
 
 HRESULT dispex_get_dprop_ref(DispatchEx *This, const WCHAR *name, BOOL alloc, VARIANT **ret)
@@ -2679,4 +2695,65 @@ void init_dispatch_with_owner(DispatchEx *dispex, dispex_static_data_t *desc, Di
     init_dispatch(dispex, desc, script_global, dispex_compat_mode(owner));
     if(script_global)
         IHTMLWindow2_Release(&script_global->base.IHTMLWindow2_iface);
+}
+
+struct constructor
+{
+    DispatchEx dispex;
+    prototype_id_t id;
+};
+
+static inline struct constructor *constr_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct constructor, dispex);
+}
+
+static void constructor_destructor(DispatchEx *dispex)
+{
+    struct constructor *constr = constr_from_DispatchEx(dispex);
+    free(constr);
+}
+
+static HRESULT constructor_find_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
+{
+    struct constructor *constr = constr_from_DispatchEx(dispex);
+    VARIANT v;
+
+    if(wcscmp(name, L"prototype"))
+        return DISP_E_UNKNOWNNAME;
+
+    FIXME("prototype not implemented\n");
+    V_VT(&v) = VT_EMPTY;
+    return dispex_define_property(&constr->dispex, name, 0, &v, dispid);
+}
+
+static const dispex_static_data_vtbl_t constructor_dispex_vtbl = {
+    .destructor  = constructor_destructor,
+    .find_dispid = constructor_find_dispid,
+};
+
+static dispex_static_data_t constructor_dispex = {
+    .name = "Constructor",
+    .vtbl = &constructor_dispex_vtbl,
+};
+
+HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)
+{
+    struct constructor *constr;
+
+    assert(script_global->doc->document_mode >= COMPAT_MODE_IE9);
+
+    if(script_global->constructors[id]) {
+        *ret = script_global->constructors[id];
+        return S_OK;
+    }
+
+    if(!(constr = calloc(sizeof(*constr), 1)))
+        return E_OUTOFMEMORY;
+
+    init_dispatch(&constr->dispex, &constructor_dispex, script_global,
+                  dispex_compat_mode(&script_global->event_target.dispex));
+    constr->id = id;
+    *ret = script_global->constructors[id] = &constr->dispex;
+    return S_OK;
 }

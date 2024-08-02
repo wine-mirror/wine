@@ -3678,10 +3678,15 @@ static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
     HTMLOuterWindow *child;
+    unsigned int i;
 
     traverse_event_target(&This->event_target, cb);
     LIST_FOR_EACH_ENTRY(child, &This->children, HTMLOuterWindow, sibling_entry)
         note_cc_edge((nsISupports*)&child->base.IHTMLWindow2_iface, "child", cb);
+    for(i = 0; i < ARRAYSIZE(This->constructors); i++) {
+        if(This->constructors[i])
+            note_cc_edge((nsISupports*)&This->constructors[i]->IWineJSDispatchHost_iface, "constructors", cb);
+    }
     if(This->doc)
         note_cc_edge((nsISupports*)&This->doc->node.IHTMLDOMNode_iface, "doc", cb);
     if(This->console)
@@ -3712,11 +3717,15 @@ static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
 static void HTMLWindow_unlink(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    unsigned int i;
 
     TRACE("%p\n", This);
 
     unlink_ref(&This->console);
     detach_inner_window(This);
+
+    for(i = 0; i < ARRAYSIZE(This->constructors); i++)
+        unlink_ref(&This->constructors[i]);
 
     if(This->doc) {
         HTMLDocumentNode *doc = This->doc;
@@ -3793,6 +3802,17 @@ static HRESULT HTMLWindow_lookup_dispid(DispatchEx *dispex, const WCHAR *name, D
     return search_window_props(This, name, grfdex, dispid);
 }
 
+static const WCHAR *constructor_names[] = {
+#define X(name) L ## #name,
+    ALL_PROTOTYPES
+#undef X
+};
+
+static int CDECL cmp_name(const void *x, const void *y)
+{
+    return wcscmp(*(const WCHAR **)x, *(const WCHAR **)y);
+}
+
 static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, const WCHAR *name, DWORD grfdex, DISPID *dispid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
@@ -3800,6 +3820,24 @@ static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, const WCHAR *name, DWO
     global_prop_t *prop;
     HTMLElement *elem;
     HRESULT hres;
+
+    if(dispex_compat_mode(dispex) >= COMPAT_MODE_IE9) {
+        const WCHAR **constr_name = bsearch(&name, constructor_names, ARRAYSIZE(constructor_names) ,
+                                            sizeof(constructor_names[0]), cmp_name);
+        if(constr_name) {
+            prototype_id_t id = constr_name - constructor_names + 1;
+            DispatchEx *constr;
+            VARIANT v;
+
+            hres = get_constructor(This, id, &constr);
+            if(FAILED(hres))
+                return hres;
+
+            V_VT(&v) = VT_DISPATCH;
+            V_DISPATCH(&v) = (IDispatch *)&constr->IWineJSDispatchHost_iface;
+            return dispex_define_property(&This->event_target.dispex, name, PROPF_WRITABLE | PROPF_CONFIGURABLE, &v, dispid);
+        }
+    }
 
     hres = get_frame_by_name(This->base.outer_window, name, FALSE, &frame);
     if(SUCCEEDED(hres) && frame) {
