@@ -3683,6 +3683,10 @@ static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
     traverse_event_target(&This->event_target, cb);
     LIST_FOR_EACH_ENTRY(child, &This->children, HTMLOuterWindow, sibling_entry)
         note_cc_edge((nsISupports*)&child->base.IHTMLWindow2_iface, "child", cb);
+    for(i = 0; i < ARRAYSIZE(This->prototypes); i++) {
+        if(This->prototypes[i])
+            note_cc_edge((nsISupports*)&This->prototypes[i]->IWineJSDispatchHost_iface, "prototypes", cb);
+    }
     for(i = 0; i < ARRAYSIZE(This->constructors); i++) {
         if(This->constructors[i])
             note_cc_edge((nsISupports*)&This->constructors[i]->IWineJSDispatchHost_iface, "constructors", cb);
@@ -3724,6 +3728,8 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
     unlink_ref(&This->console);
     detach_inner_window(This);
 
+    for(i = 0; i < ARRAYSIZE(This->prototypes); i++)
+        unlink_ref(&This->prototypes[i]);
     for(i = 0; i < ARRAYSIZE(This->constructors); i++)
         unlink_ref(&This->constructors[i]);
 

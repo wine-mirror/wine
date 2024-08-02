@@ -424,8 +424,16 @@ typedef struct {
     const tid_t* const iface_tids;
     void (*init_info)(dispex_data_t*,compat_mode_t);
     dispex_data_t *info_cache[COMPAT_MODE_CNT];
+    dispex_data_t *prototype_info[COMPAT_MODE_CNT - COMPAT_MODE_IE9];
     dispex_data_t *delayed_init_info;
+    prototype_id_t id;
 } dispex_static_data_t;
+
+#define X(name) extern dispex_static_data_t name ## _dispex;
+ALL_PROTOTYPES
+#undef X
+
+extern dispex_static_data_t *object_descriptors[PROT_LAST];
 
 typedef HRESULT (*dispex_hook_invoke_t)(DispatchEx*,WORD,DISPPARAMS*,VARIANT*,
                                         EXCEPINFO*,IServiceProvider*);
@@ -695,6 +703,7 @@ struct HTMLInnerWindow {
     ULONG navigation_type;
     ULONG redirect_count;
 
+    DispatchEx *prototypes[PROT_LAST];
     DispatchEx *constructors[PROT_LAST];
 
     ULONGLONG navigation_start_time;

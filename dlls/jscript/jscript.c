@@ -1452,10 +1452,10 @@ static ULONG WINAPI WineJScript_Release(IWineJScript *iface)
 }
 
 static HRESULT WINAPI WineJScript_InitHostObject(IWineJScript *iface, IWineJSDispatchHost *host_obj,
-                                                 IWineJSDispatch **ret)
+                                                 IWineJSDispatch *prototype, IWineJSDispatch **ret)
 {
     JScript *This = impl_from_IWineJScript(iface);
-    return init_host_object(This->ctx, host_obj, ret);
+    return init_host_object(This->ctx, host_obj, prototype, ret);
 }
 
 static const IWineJScriptVtbl WineJScriptVtbl = {

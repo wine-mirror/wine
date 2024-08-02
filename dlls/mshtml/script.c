@@ -209,6 +209,7 @@ static BOOL init_script_engine(ScriptHost *script_host, IActiveScript *script)
 
             hres = IWineJScript_InitHostObject(jscript,
                                                &script_host->window->event_target.dispex.IWineJSDispatchHost_iface,
+                                               NULL,
                                                &script_host->window->event_target.dispex.jsdisp);
             if(FAILED(hres))
                 ERR("Could not initialize script global: %08lx\n", hres);

@@ -202,7 +202,7 @@ static void HTMLDOMImplementation_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static const dispex_static_data_vtbl_t HTMLDOMImplementation_dispex_vtbl = {
+static const dispex_static_data_vtbl_t DOMImplementation_dispex_vtbl = {
     .query_interface  = HTMLDOMImplementation_query_interface,
     .destructor       = HTMLDOMImplementation_destructor,
     .traverse         = HTMLDOMImplementation_traverse,
@@ -219,12 +219,13 @@ static const tid_t HTMLDOMImplementation_iface_tids[] = {
     IHTMLDOMImplementation_tid,
     0
 };
-static dispex_static_data_t HTMLDOMImplementation_dispex = {
-    "DOMImplementation",
-    &HTMLDOMImplementation_dispex_vtbl,
-    DispHTMLDOMImplementation_tid,
-    HTMLDOMImplementation_iface_tids,
-    HTMLDOMImplementation_init_dispex_info
+dispex_static_data_t DOMImplementation_dispex = {
+    .name       = "DOMImplementation",
+    .id         = PROT_DOMImplementation,
+    .vtbl       = &DOMImplementation_dispex_vtbl,
+    .disp_tid   = DispHTMLDOMImplementation_tid,
+    .iface_tids = HTMLDOMImplementation_iface_tids,
+    .init_info  = HTMLDOMImplementation_init_dispex_info,
 };
 
 HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementation **ret)
@@ -243,7 +244,7 @@ HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementa
     dom_implementation->IHTMLDOMImplementation2_iface.lpVtbl = &HTMLDOMImplementation2Vtbl;
     dom_implementation->doc = doc_node;
 
-    init_dispatch(&dom_implementation->dispex, &HTMLDOMImplementation_dispex, doc_node->script_global, doc_node->document_mode);
+    init_dispatch(&dom_implementation->dispex, &DOMImplementation_dispex, doc_node->script_global, doc_node->document_mode);
 
     nsres = nsIDOMDocument_GetImplementation(doc_node->dom_document, &dom_implementation->implementation);
     if(NS_FAILED(nsres)) {

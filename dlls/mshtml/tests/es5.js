@@ -2732,7 +2732,24 @@ sync_test("prototypes", function() {
     todo_wine.
     ok(DOMImplementation == "[object DOMImplementation]", "DOMImplementation = " + DOMImplementation);
 
+    var proto = constr.prototype;
+    todo_wine.
+    ok(proto == "[object DOMImplementationPrototype]", "DOMImplementation.prototype = " + proto);
+    ok(Object.getPrototypeOf(document.implementation) === proto,
+       "Object.getPrototypeOf(document.implementation) = " + Object.getPrototypeOf(document.implementation));
+    ok(Object.getPrototypeOf(proto) === Object.prototype, "Object.getPrototypeOf(proto) = " + Object.getPrototypeOf(proto));
+
     test_own_data_prop_desc(constr, "prototype", false, false, false);
+    test_own_data_prop_desc(proto, "constructor", true, false, true);
+    ok(proto.hasOwnProperty("createHTMLDocument"), "prototype has no own createHTMLDocument property");
+    todo_wine.
+    ok(!document.implementation.hasOwnProperty("createHTMLDocument"),
+       "prototype has own createHTMLDocument property");
+
+    ok(proto.constructor === constr, "proto.constructor = " + proto.constructor);
+    proto.constructor = 1;
+    ok(proto.constructor === 1, "proto.constructor = " + proto.constructor + " expected 1");
+    proto.constructor = constr;
 
     DOMImplementation = 1;
     ok(DOMImplementation === 1, "DOMImplementation = " + DOMImplementation + " expected 1");

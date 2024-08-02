@@ -75,5 +75,5 @@ interface IWineJSDispatchHost : IDispatchEx
 ]
 interface IWineJScript : IUnknown
 {
-    HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch **ret);
+    HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch *prototype, IWineJSDispatch **ret);
 }

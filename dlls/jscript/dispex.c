@@ -3495,15 +3495,21 @@ static const builtin_info_t HostObject_info = {
     .to_string   = HostObject_to_string,
 };
 
-HRESULT init_host_object(script_ctx_t *ctx, IWineJSDispatchHost *host_iface, IWineJSDispatch **ret)
+HRESULT init_host_object(script_ctx_t *ctx, IWineJSDispatchHost *host_iface, IWineJSDispatch *prototype_iface,
+                         IWineJSDispatch **ret)
 {
     HostObject *host_obj;
+    jsdisp_t *prototype;
     HRESULT hres;
 
     if(!(host_obj = calloc(1, sizeof(*host_obj))))
         return E_OUTOFMEMORY;
 
-    hres = init_dispex(&host_obj->jsdisp, ctx, &HostObject_info, ctx->object_prototype);
+    if(prototype_iface)
+        prototype = impl_from_IWineJSDispatch(prototype_iface);
+    else
+        prototype = ctx->object_prototype;
+    hres = init_dispex(&host_obj->jsdisp, ctx, &HostObject_info, prototype);
     if(FAILED(hres)) {
         free(host_obj);
         return hres;

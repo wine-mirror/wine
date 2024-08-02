@@ -45,6 +45,8 @@ static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
 };
 static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
 
+static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret);
+
 typedef struct {
     IID iid;
     VARIANT default_value;
@@ -1749,7 +1751,7 @@ static dispex_data_t *ensure_dispex_info(dispex_static_data_t *desc, compat_mode
     return desc->info_cache[compat_mode];
 }
 
-static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global)
+static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global, DispatchEx *prototype)
 {
     HRESULT hres;
 
@@ -1760,7 +1762,7 @@ static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global)
         initialize_script_global(script_global);
     if(script_global->jscript && !dispex->jsdisp) {
         hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
-                                           &dispex->jsdisp);
+                                           prototype ? prototype->jsdisp : NULL, &dispex->jsdisp);
         if(FAILED(hres))
             ERR("Failed to initialize jsdisp: %08lx\n", hres);
     }
@@ -1769,14 +1771,24 @@ static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global)
 static BOOL ensure_real_info(DispatchEx *dispex)
 {
     HTMLInnerWindow *script_global;
+    DispatchEx *prototype = NULL;
 
     if(dispex->info != dispex->info->desc->delayed_init_info)
         return TRUE;
 
     script_global = dispex->info->vtbl->get_script_global(dispex);
+
+    if(dispex->info->compat_mode >= COMPAT_MODE_IE9 && dispex->info->desc->id) {
+        HRESULT hres = get_prototype(script_global, dispex->info->desc->id, &prototype);
+        if(FAILED(hres)) {
+            ERR("could not get prototype: %08lx\n", hres);
+            return FALSE;
+        }
+    }
+
     if (!(dispex->info = ensure_dispex_info(dispex->info->desc, script_global->doc->document_mode)))
         return FALSE;
-    init_host_object(dispex, script_global);
+    init_host_object(dispex, script_global, prototype);
     return TRUE;
 }
 
@@ -2667,7 +2679,7 @@ const void *dispex_get_vtbl(DispatchEx *dispex)
     return dispex->info->vtbl;
 }
 
-static void init_dispatch_from_desc(DispatchEx *dispex, dispex_data_t *info, HTMLInnerWindow *script_global)
+static void init_dispatch_from_desc(DispatchEx *dispex, dispex_data_t *info, HTMLInnerWindow *script_global, DispatchEx *prototype)
 {
     dispex->IWineJSDispatchHost_iface.lpVtbl = &JSDispatchHostVtbl;
     dispex->dynamic_data = NULL;
@@ -2675,11 +2687,12 @@ static void init_dispatch_from_desc(DispatchEx *dispex, dispex_data_t *info, HTM
     dispex->info = info;
     ccref_init(&dispex->ccref, 1);
     if(info != info->desc->delayed_init_info)
-        init_host_object(dispex, script_global);
+        init_host_object(dispex, script_global, prototype);
 }
 
 void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWindow *script_global, compat_mode_t compat_mode)
 {
+    DispatchEx *prototype = NULL;
     dispex_data_t *info;
 
     assert(compat_mode < COMPAT_MODE_CNT);
@@ -2700,10 +2713,16 @@ void init_dispatch(DispatchEx *dispex, dispex_static_data_t *data, HTMLInnerWind
         }
         info = data->delayed_init_info;
     }else {
+        if(compat_mode >= COMPAT_MODE_IE9 && data->id) {
+            HRESULT hres = get_prototype(script_global, data->id, &prototype);
+            if(FAILED(hres))
+                ERR("could not get prototype: %08lx\n", hres);
+        }
+
         info = ensure_dispex_info(data, compat_mode);
     }
 
-    init_dispatch_from_desc(dispex, info, script_global);
+    init_dispatch_from_desc(dispex, info, script_global, prototype);
 }
 
 void init_dispatch_with_owner(DispatchEx *dispex, dispex_static_data_t *desc, DispatchEx *owner)
@@ -2712,6 +2731,83 @@ void init_dispatch_with_owner(DispatchEx *dispex, dispex_static_data_t *desc, Di
     init_dispatch(dispex, desc, script_global, dispex_compat_mode(owner));
     if(script_global)
         IHTMLWindow2_Release(&script_global->base.IHTMLWindow2_iface);
+}
+
+dispex_static_data_t *object_descriptors[] = {
+    NULL,
+#define X(name) &name ## _dispex,
+    ALL_PROTOTYPES
+#undef X
+};
+
+static void prototype_destructor(DispatchEx *dispex)
+{
+    free(dispex);
+}
+
+static HRESULT prototype_find_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
+{
+    HTMLInnerWindow *script_global;
+    DispatchEx *constructor;
+    HRESULT hres;
+
+    if(wcscmp(name, L"constructor"))
+        return DISP_E_UNKNOWNNAME;
+
+    script_global = get_script_global(dispex);
+    if(!script_global)
+        return DISP_E_UNKNOWNNAME;
+
+    hres = get_constructor(script_global, dispex->info->desc->id, &constructor);
+    if(SUCCEEDED(hres)) {
+        VARIANT v;
+        V_VT(&v) = VT_DISPATCH;
+        V_DISPATCH(&v) = (IDispatch *)&constructor->IWineJSDispatchHost_iface;
+        hres = dispex_define_property(dispex, L"constructor", PROPF_WRITABLE | PROPF_CONFIGURABLE, &v, dispid);
+    }
+    IHTMLWindow2_Release(&script_global->base.IHTMLWindow2_iface);
+    return hres;
+}
+
+static const dispex_static_data_vtbl_t prototype_dispex_vtbl = {
+    .destructor  = prototype_destructor,
+    .find_dispid = prototype_find_dispid,
+};
+
+static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)
+{
+    compat_mode_t compat_mode = dispex_compat_mode(&script_global->event_target.dispex);
+    dispex_static_data_t *desc;
+    DispatchEx *prototype;
+    dispex_data_t *info;
+
+    if(script_global->prototypes[id]) {
+        *ret = script_global->prototypes[id];
+        return S_OK;
+    }
+
+    desc = object_descriptors[id];
+    info = desc->prototype_info[compat_mode - COMPAT_MODE_IE9];
+    if(!info) {
+        EnterCriticalSection(&cs_dispex_static_data);
+        info = desc->prototype_info[compat_mode - COMPAT_MODE_IE9];
+        if(!info) {
+            info = preprocess_dispex_data(desc, compat_mode);
+            if(info) {
+                info->vtbl = &prototype_dispex_vtbl;
+                desc->prototype_info[compat_mode - COMPAT_MODE_IE9] = info;
+            }
+        }
+        LeaveCriticalSection(&cs_dispex_static_data);
+        if(!info)
+            return E_OUTOFMEMORY;
+    }
+
+    if(!(prototype = calloc(sizeof(*prototype), 1)))
+        return E_OUTOFMEMORY;
+    init_dispatch_from_desc(prototype, info, script_global, NULL);
+    *ret = script_global->prototypes[id] = prototype;
+    return S_OK;
 }
 
 struct constructor
@@ -2734,14 +2830,26 @@ static void constructor_destructor(DispatchEx *dispex)
 static HRESULT constructor_find_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
     struct constructor *constr = constr_from_DispatchEx(dispex);
-    VARIANT v;
+    HTMLInnerWindow *script_global;
+    DispatchEx *prototype;
+    HRESULT hres;
 
     if(wcscmp(name, L"prototype"))
         return DISP_E_UNKNOWNNAME;
 
-    FIXME("prototype not implemented\n");
-    V_VT(&v) = VT_EMPTY;
-    return dispex_define_property(&constr->dispex, name, 0, &v, dispid);
+    script_global = get_script_global(&constr->dispex);
+    if(!script_global)
+        return DISP_E_UNKNOWNNAME;
+
+    hres = get_prototype(script_global, constr->id, &prototype);
+    if(SUCCEEDED(hres)) {
+        VARIANT v;
+        V_VT(&v) = VT_DISPATCH;
+        V_DISPATCH(&v) = (IDispatch *)&prototype->IWineJSDispatchHost_iface;
+        hres = dispex_define_property(&constr->dispex, name, 0, &v, dispid);
+    }
+    IHTMLWindow2_Release(&script_global->base.IHTMLWindow2_iface);
+    return hres;
 }
 
 static const dispex_static_data_vtbl_t constructor_dispex_vtbl = {
