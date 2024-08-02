@@ -321,7 +321,6 @@ WebBrowser control
 M:	Jacek Caban <jacek@codeweavers.com>
 F:	dlls/ieframe/
 F:	dlls/mshtml/
-F:	dlls/shdocvw/
 
 WIDL
 P:	Huw Davies <huw@codeweavers.com>
