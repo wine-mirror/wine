@@ -3706,7 +3706,10 @@ static void session_deliver_sample_to_node(struct media_session *session, struct
                 if (sample)
                 {
                     if (FAILED(hr = IMFStreamSink_ProcessSample(topo_node->object.sink_stream, sample)))
+                    {
                         WARN("Stream sink failed to process sample, hr %#lx.\n", hr);
+                        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEError, &GUID_NULL, hr, NULL);
+                    }
                 }
                 else if (FAILED(hr = IMFStreamSink_PlaceMarker(topo_node->object.sink_stream, MFSTREAMSINK_MARKER_ENDOFSEGMENT,
                         NULL, NULL)))
