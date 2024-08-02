@@ -2313,6 +2313,83 @@ SQLRETURN WINAPI SQLGetFunctions(SQLHDBC ConnectionHandle, SQLUSMALLINT Function
     return ret;
 }
 
+static SQLRETURN get_info_unix_a( struct handle *handle, SQLUSMALLINT type, SQLPOINTER value, SQLSMALLINT buflen,
+                                  SQLSMALLINT *retlen )
+{
+    struct SQLGetInfo_params params = { handle->unix_handle, type, value, buflen, retlen };
+    return ODBC_CALL( SQLGetInfo, &params );
+}
+
+static SQLRETURN get_info_win32_a( struct handle *handle, SQLUSMALLINT type, SQLPOINTER value, SQLSMALLINT buflen,
+                                   SQLSMALLINT *retlen )
+{
+    SQLRETURN ret = SQL_ERROR;
+    WCHAR *strW = NULL;
+    SQLPOINTER buf = value;
+
+    if (handle->win32_funcs->SQLGetInfo)
+        return handle->win32_funcs->SQLGetInfo( handle->win32_handle, type, value, buflen, retlen );
+
+    if (handle->win32_funcs->SQLGetInfoW)
+    {
+        switch (type)
+        {
+        case SQL_ACCESSIBLE_PROCEDURES:
+        case SQL_ACCESSIBLE_TABLES:
+        case SQL_CATALOG_NAME:
+        case SQL_CATALOG_NAME_SEPARATOR:
+        case SQL_CATALOG_TERM:
+        case SQL_COLLATION_SEQ:
+        case SQL_COLUMN_ALIAS:
+        case SQL_DATA_SOURCE_NAME:
+        case SQL_DATA_SOURCE_READ_ONLY:
+        case SQL_DATABASE_NAME:
+        case SQL_DBMS_NAME:
+        case SQL_DBMS_VER:
+        case SQL_DESCRIBE_PARAMETER:
+        case SQL_DM_VER:
+        case SQL_DRIVER_NAME:
+        case SQL_DRIVER_ODBC_VER:
+        case SQL_DRIVER_VER:
+        case SQL_EXPRESSIONS_IN_ORDERBY:
+        case SQL_IDENTIFIER_QUOTE_CHAR:
+        case SQL_INTEGRITY:
+        case SQL_KEYWORDS:
+        case SQL_LIKE_ESCAPE_CLAUSE:
+        case SQL_MAX_ROW_SIZE_INCLUDES_LONG:
+        case SQL_MULT_RESULT_SETS:
+        case SQL_MULTIPLE_ACTIVE_TXN:
+        case SQL_NEED_LONG_DATA_LEN:
+        case SQL_ODBC_VER:
+        case SQL_ORDER_BY_COLUMNS_IN_SELECT:
+        case SQL_PROCEDURE_TERM:
+        case SQL_PROCEDURES:
+        case SQL_ROW_UPDATES:
+        case SQL_SCHEMA_TERM:
+        case SQL_SEARCH_PATTERN_ESCAPE:
+        case SQL_SERVER_NAME:
+        case SQL_SPECIAL_CHARACTERS:
+        case SQL_TABLE_TERM:
+        case SQL_USER_NAME:
+        case SQL_XOPEN_CLI_YEAR:
+            if (!(strW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+            buf = strW;
+            break;
+
+        default: break;
+        }
+
+        ret = SQLGetInfoW( handle->win32_handle, type, buf, buflen, retlen );
+        if (SUCCESS( ret ) && strW)
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, (char *)value, buflen, NULL, NULL );
+            if (retlen) *retlen = len - 1;
+        }
+        free( strW );
+    }
+    return ret;
+}
+
 /*************************************************************************
  *				SQLGetInfo           [ODBC32.045]
  */
@@ -2348,12 +2425,11 @@ SQLRETURN WINAPI SQLGetInfo(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQL
 
     if (handle->unix_handle)
     {
-        struct SQLGetInfo_params params = { handle->unix_handle, InfoType, InfoValue, BufferLength, StringLength };
-        ret = ODBC_CALL( SQLGetInfo, &params );
+        ret = get_info_unix_a( handle, InfoType, InfoValue, BufferLength, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetInfo( handle->win32_handle, InfoType, InfoValue, BufferLength, StringLength );
+        ret = get_info_win32_a( handle, InfoType, InfoValue, BufferLength, StringLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -5038,6 +5114,22 @@ SQLRETURN WINAPI SQLGetConnectOptionW(SQLHDBC ConnectionHandle, SQLUSMALLINT Opt
     return ret;
 }
 
+static SQLRETURN get_info_unix_w( struct handle *handle, SQLUSMALLINT type, SQLPOINTER value, SQLSMALLINT buflen,
+                                  SQLSMALLINT *retlen )
+{
+    struct SQLGetInfoW_params params = { handle->unix_handle, type, value, buflen, retlen };
+    return ODBC_CALL( SQLGetInfoW, &params );
+}
+
+static SQLRETURN get_info_win32_w( struct handle *handle, SQLUSMALLINT type, SQLPOINTER value, SQLSMALLINT buflen,
+                                   SQLSMALLINT *retlen )
+{
+    if (handle->win32_funcs->SQLGetInfoW)
+        return handle->win32_funcs->SQLGetInfoW( handle->win32_handle, type, value, buflen, retlen );
+    if (handle->win32_funcs->SQLGetInfo) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetInfoW          [ODBC32.145]
  */
@@ -5073,12 +5165,11 @@ SQLRETURN WINAPI SQLGetInfoW(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQ
 
     if (handle->unix_handle)
     {
-        struct SQLGetInfoW_params params = { handle->unix_handle, InfoType, InfoValue, BufferLength, StringLength };
-        ret = ODBC_CALL( SQLGetInfoW, &params );
+        ret = get_info_unix_w( handle, InfoType, InfoValue, BufferLength, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetInfoW( handle->win32_handle, InfoType, InfoValue, BufferLength, StringLength );
+        ret = get_info_win32_w( handle, InfoType, InfoValue, BufferLength, StringLength );
     }
 
     TRACE("Returning %d\n", ret);
