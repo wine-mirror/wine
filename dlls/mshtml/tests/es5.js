@@ -2733,7 +2733,6 @@ sync_test("prototypes", function() {
     ok(DOMImplementation == "[object DOMImplementation]", "DOMImplementation = " + DOMImplementation);
 
     var proto = constr.prototype;
-    todo_wine.
     ok(proto == "[object DOMImplementationPrototype]", "DOMImplementation.prototype = " + proto);
     ok(Object.getPrototypeOf(document.implementation) === proto,
        "Object.getPrototypeOf(document.implementation) = " + Object.getPrototypeOf(document.implementation));

@@ -2821,7 +2821,10 @@ static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, 
         if(!info) {
             info = preprocess_dispex_data(desc, compat_mode, TRUE);
             if(info) {
+                if(!desc->prototype_name[0])
+                    sprintf(desc->prototype_name, "%sPrototype", desc->name);
                 info->vtbl = &prototype_dispex_vtbl;
+                info->name = desc->prototype_name;
                 desc->prototype_info[compat_mode - COMPAT_MODE_IE9] = info;
             }
         }
@@ -2908,4 +2911,5 @@ HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, Dispa
     constr->id = id;
     *ret = script_global->constructors[id] = &constr->dispex;
     return S_OK;
+
 }

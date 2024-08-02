@@ -427,6 +427,7 @@ typedef struct {
     dispex_data_t *prototype_info[COMPAT_MODE_CNT - COMPAT_MODE_IE9];
     dispex_data_t *delayed_init_info;
     prototype_id_t id;
+    char prototype_name[64];
 } dispex_static_data_t;
 
 #define X(name) extern dispex_static_data_t name ## _dispex;
