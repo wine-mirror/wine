@@ -73,6 +73,7 @@ struct dispex_data_t {
     dispex_static_data_t *desc;
     compat_mode_t compat_mode;
     BOOL is_prototype;
+    const char *name;
 
     DWORD func_cnt;
     DWORD func_size;
@@ -529,6 +530,7 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
         return NULL;
     }
     data->vtbl = desc->vtbl;
+    data->name = desc->name;
     data->desc = desc;
     data->compat_mode = compat_mode;
     data->is_prototype = is_prototype;
@@ -1742,7 +1744,7 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
     static const WCHAR suffix[] = L"]";
     WCHAR buf[ARRAY_SIZE(prefix) + 28 + ARRAY_SIZE(suffix)], *p = buf;
     compat_mode_t compat_mode = dispex_compat_mode(dispex);
-    const char *name = dispex->info->desc->name;
+    const char *name = dispex->info->name;
 
     if(!ret)
         return E_INVALIDARG;
@@ -1833,7 +1835,7 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IWineJSDispatchHost *iface, REFI
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%s %p)\n", This->info->desc->name, This, debugstr_mshtml_guid(riid), ppv);
+    TRACE("%s (%p)->(%s %p)\n", This->info->name, This, debugstr_mshtml_guid(riid), ppv);
 
     if(This->info->vtbl->query_interface) {
         *ppv = This->info->vtbl->query_interface(This, riid);
@@ -1859,7 +1861,7 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IWineJSDispatchHost *iface, REFI
         return E_NOINTERFACE;
     }else {
         *ppv = NULL;
-        WARN("%s (%p)->(%s %p)\n", This->info->desc->name, This, debugstr_mshtml_guid(riid), ppv);
+        WARN("%s (%p)->(%s %p)\n", This->info->name, This, debugstr_mshtml_guid(riid), ppv);
         return E_NOINTERFACE;
     }
 
@@ -1873,7 +1875,7 @@ static ULONG WINAPI DispatchEx_AddRef(IWineJSDispatchHost *iface)
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
     LONG ref = ccref_incr(&This->ccref, (nsISupports*)&This->IWineJSDispatchHost_iface);
 
-    TRACE("%s (%p) ref=%ld\n", This->info->desc->name, This, ref);
+    TRACE("%s (%p) ref=%ld\n", This->info->name, This, ref);
 
     return ref;
 }
@@ -1883,7 +1885,7 @@ static ULONG WINAPI DispatchEx_Release(IWineJSDispatchHost *iface)
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
     LONG ref = ccref_decr(&This->ccref, (nsISupports*)&This->IWineJSDispatchHost_iface, &dispex_ccp);
 
-    TRACE("%s (%p) ref=%ld\n", This->info->desc->name, This, ref);
+    TRACE("%s (%p) ref=%ld\n", This->info->name, This, ref);
 
     /* Gecko ccref may not free the object immediately when ref count reaches 0, so we need
      * an extra care for objects that need an immediate clean up. See Gecko's
@@ -1901,7 +1903,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfoCount(IWineJSDispatchHost *iface, UI
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%p)\n", This->info->desc->name, This, pctinfo);
+    TRACE("%s (%p)->(%p)\n", This->info->name, This, pctinfo);
 
     *pctinfo = 1;
     return S_OK;
@@ -1913,7 +1915,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IWineJSDispatchHost *iface, UINT iT
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
     HRESULT hres;
 
-    TRACE("%s (%p)->(%u %lu %p)\n", This->info->desc->name, This, iTInfo, lcid, ppTInfo);
+    TRACE("%s (%p)->(%u %lu %p)\n", This->info->name, This, iTInfo, lcid, ppTInfo);
 
     hres = get_typeinfo(This->info->desc->disp_tid, ppTInfo);
     if(FAILED(hres))
@@ -1930,7 +1932,7 @@ static HRESULT WINAPI DispatchEx_GetIDsOfNames(IWineJSDispatchHost *iface, REFII
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
     HRESULT hres = S_OK;
 
-    TRACE("%s (%p)->(%s %p %u %lu %p)\n", This->info->desc->name, This, debugstr_guid(riid), rgszNames,
+    TRACE("%s (%p)->(%s %p %u %lu %p)\n", This->info->name, This, debugstr_guid(riid), rgszNames,
           cNames, lcid, rgDispId);
 
     /* Native ignores all cNames > 1, and doesn't even fill them */
@@ -1947,7 +1949,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IWineJSDispatchHost *iface, DISPID dispI
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%ld %s %ld %d %p %p %p %p)\n", This->info->desc->name, This, dispIdMember,
+    TRACE("%s (%p)->(%ld %s %ld %d %p %p %p %p)\n", This->info->name, This, dispIdMember,
           debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
     return IWineJSDispatchHost_InvokeEx(&This->IWineJSDispatchHost_iface, dispIdMember, lcid, wFlags, pDispParams,
@@ -1984,7 +1986,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IWineJSDispatchHost *iface, BSTR bstr
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%s %lx %p)\n", This->info->desc->name, This, debugstr_w(bstrName), grfdex, pid);
+    TRACE("%s (%p)->(%s %lx %p)\n", This->info->name, This, debugstr_w(bstrName), grfdex, pid);
 
     if(grfdex & ~(fdexNameCaseSensitive|fdexNameCaseInsensitive|fdexNameEnsure|fdexNameImplicit|FDEX_VERSION_MASK))
         FIXME("Unsupported grfdex %lx\n", grfdex);
@@ -2136,7 +2138,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%lx %lx %x %p %p %p %p)\n", This->info->desc->name, This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    TRACE("%s (%p)->(%lx %lx %x %p %p %p %p)\n", This->info->name, This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
@@ -2205,7 +2207,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IWineJSDispatchHost *iface, 
     DISPID id;
     HRESULT hres;
 
-    TRACE("%s (%p)->(%s %lx)\n", This->info->desc->name, This, debugstr_w(name), grfdex);
+    TRACE("%s (%p)->(%s %lx)\n", This->info->name, This, debugstr_w(name), grfdex);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
@@ -2229,7 +2231,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IWineJSDispatchHost *iface
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+    TRACE("%s (%p)->(%lx)\n", This->info->name, This, id);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
@@ -2241,7 +2243,7 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IWineJSDispatchHost *iface
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IWineJSDispatchHost *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    FIXME("%s (%p)->(%lx %lx %p)\n", This->info->desc->name, This, id, grfdexFetch, pgrfdex);
+    FIXME("%s (%p)->(%lx %lx %p)\n", This->info->name, This, id, grfdexFetch, pgrfdex);
     return E_NOTIMPL;
 }
 
@@ -2290,7 +2292,7 @@ static HRESULT WINAPI DispatchEx_GetMemberName(IWineJSDispatchHost *iface, DISPI
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%lx %p)\n", This->info->desc->name, This, id, pbstrName);
+    TRACE("%s (%p)->(%lx %p)\n", This->info->name, This, id, pbstrName);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
@@ -2366,7 +2368,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IWineJSDispatchHost *iface, DWORD
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%lx %lx %p)\n", This->info->desc->name, This, grfdex, id, pid);
+    TRACE("%s (%p)->(%lx %lx %p)\n", This->info->name, This, grfdex, id, pid);
 
     if(!ensure_real_info(This))
         return E_OUTOFMEMORY;
@@ -2378,7 +2380,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IWineJSDispatchHost *iface, DWORD
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IWineJSDispatchHost *iface, IUnknown **ppunk)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    FIXME("%s (%p)->(%p)\n", This->info->desc->name, This, ppunk);
+    FIXME("%s (%p)->(%p)\n", This->info->name, This, ppunk);
     return E_NOTIMPL;
 }
 
@@ -2449,7 +2451,7 @@ static HRESULT WINAPI JSDispatchHost_LookupProperty(IWineJSDispatchHost *iface, 
     DISPID id;
     HRESULT hres;
 
-    TRACE("%s (%p)->(%s)\n", This->info->desc->name, This, debugstr_w(name));
+    TRACE("%s (%p)->(%s)\n", This->info->name, This, debugstr_w(name));
 
     hres = dispex_get_id(This, name, flags, &id);
     if(FAILED(hres))
@@ -2464,7 +2466,7 @@ static HRESULT WINAPI JSDispatchHost_NextProperty(IWineJSDispatchHost *iface, DI
     DISPID next;
     HRESULT hres;
 
-    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+    TRACE("%s (%p)->(%lx)\n", This->info->name, This, id);
 
     hres = dispex_next_id(This, id, &next);
     if(hres != S_OK)
@@ -2478,7 +2480,7 @@ static HRESULT WINAPI JSDispatchHost_GetProperty(IWineJSDispatchHost *iface, DIS
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+    TRACE("%s (%p)->(%lx)\n", This->info->name, This, id);
 
     return dispex_prop_get(This, id, lcid, r, ei, caller);
 }
@@ -2488,7 +2490,7 @@ static HRESULT WINAPI JSDispatchHost_SetProperty(IWineJSDispatchHost *iface, DIS
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+    TRACE("%s (%p)->(%lx)\n", This->info->name, This, id);
 
     return dispex_prop_put(This, id, lcid, v, ei, caller);
 }
@@ -2497,7 +2499,7 @@ static HRESULT WINAPI JSDispatchHost_DeleteProperty(IWineJSDispatchHost *iface, 
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%lx)\n", This->info->desc->name, This, id);
+    TRACE("%s (%p)->(%lx)\n", This->info->name, This, id);
 
     return dispex_prop_delete(This, id);
 }
@@ -2506,7 +2508,7 @@ static HRESULT WINAPI JSDispatchHost_ConfigureProperty(IWineJSDispatchHost *ifac
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)->(%lx %x)\n", This->info->desc->name, This, id, flags);
+    TRACE("%s (%p)->(%lx %x)\n", This->info->name, This, id, flags);
 
     if(is_dynamic_dispid(id)) {
         DWORD idx = id - DISPID_DYNPROP_0;
@@ -2526,7 +2528,7 @@ static HRESULT WINAPI JSDispatchHost_CallFunction(IWineJSDispatchHost *iface, DI
     func_info_t *func;
     HRESULT hres;
 
-    TRACE("%s (%p)->(%lx %x %p %p %p %p)\n", This->info->desc->name, This, id, iid, dp, ret, ei, caller);
+    TRACE("%s (%p)->(%lx %x %p %p %p %p)\n", This->info->name, This, id, iid, dp, ret, ei, caller);
 
     hres = get_builtin_func(This->info, id, &func);
     if(FAILED(hres) || func->tid != iid || func->func_disp_idx < 0)
@@ -2546,7 +2548,7 @@ static HRESULT WINAPI JSDispatchHost_ToString(IWineJSDispatchHost *iface, BSTR *
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
 
-    TRACE("%s (%p)\n", This->info->desc->name, This);
+    TRACE("%s (%p)\n", This->info->name, This);
 
     return dispex_to_string(This, str);
 }
@@ -2584,7 +2586,7 @@ static nsresult NSAPI dispex_traverse(void *ccp, void *p, nsCycleCollectionTrave
     DispatchEx *This = impl_from_IWineJSDispatchHost(p);
     dynamic_prop_t *prop;
 
-    describe_cc_node(&This->ccref, This->info->desc->name, cb);
+    describe_cc_node(&This->ccref, This->info->name, cb);
 
     if(This->info->vtbl->traverse)
         This->info->vtbl->traverse(This, cb);
