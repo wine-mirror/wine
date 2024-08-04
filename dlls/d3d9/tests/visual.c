@@ -235,6 +235,11 @@ static DWORD get_readback_color(struct surface_readback *rb, unsigned int x, uns
             ? ((DWORD *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(DWORD) + x] : 0xdeadbeef;
 }
 
+static const struct vec4 *get_readback_vec4(struct surface_readback *rb, unsigned int x, unsigned int y)
+{
+    return &((const struct vec4 *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(struct vec4) + x];
+}
+
 static void release_surface_readback(struct surface_readback *rb)
 {
     HRESULT hr;
@@ -28927,6 +28932,358 @@ static void test_ffp_w(void)
     release_test_context(&context);
 }
 
+static void test_fog(void)
+{
+    IDirect3DVertexShader9 *vs_no_fog, *vs_fog;
+    struct d3d9_test_context context;
+    struct surface_readback rb;
+    const struct vec4 *colour;
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *rt;
+    D3DMATRIX matrix;
+    HRESULT hr;
+
+    static const DWORD vs_no_fog_code[] =
+    {
+        0xfffe0101,                         /* vs_1_1          */
+        0x00000051, 0xa00f0000, 0x3e4ccccd, 0x00000000, 0x00000000, 0x3d23d70a,
+                                            /* def c0, 0.2, 0.0, 0.0, 0.04   */
+        0x0000001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
+        0x0000001f, 0x8000000a, 0x900f0001, /* dcl_color0 v1   */
+        0x00000001, 0xc00f0000, 0x90e40000, /* mov oPos, v0    */
+        0x00000001, 0xd00f0000, 0x90e40001, /* mov oD0, v1     */
+        0x00000001, 0xd00f0001, 0xa0ff0000, /* mov oD1, c0.w   */
+        0x0000ffff                          /* end             */
+    };
+
+    static const DWORD vs_fog_code[] =
+    {
+        0xfffe0101,                         /* vs_1_1          */
+        0x00000051, 0xa00f0000, 0x3e4ccccd, 0x00000000, 0x00000000, 0x3d23d70a,
+                                            /* def c0, 0.2, 0.0, 0.0, 0.04   */
+        0x0000001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
+        0x0000001f, 0x8000000a, 0x900f0001, /* dcl_color0 v1   */
+        0x00000001, 0xc00f0000, 0x90e40000, /* mov oPos, v0    */
+        0x00000001, 0xd00f0000, 0x90e40001, /* mov oD0, v1     */
+        0x00000001, 0xd00f0001, 0xa0ff0000, /* mov oD1, c0.w   */
+        0x00000001, 0xc00f0001, 0xa0000000, /* mov oFog, c0.x  */
+        0x0000ffff                          /* end             */
+    };
+
+    static const struct
+    {
+        struct vec4 position;
+        unsigned int diffuse;
+        unsigned int specular;
+    }
+    vertices[] =
+    {
+        /* We'd like to test how fog varies based on Z and W, but interpolation
+         * combined with perspective division makes some of the math more
+         * difficult. Instead use several flat triangles that all have
+         * different Z and W values. */
+
+        {{-2.0f,  0.0f, 0.2f, 0.5f}, 0xff0000ff, 0xc0000000},
+        {{ 0.0f,  2.0f, 0.2f, 0.5f}, 0xff0000ff, 0xc0000000},
+        {{ 0.0f,  0.0f, 0.2f, 0.5f}, 0xff0000ff, 0xc0000000},
+
+        {{ 0.0f,  0.0f, 0.2f, 0.9f}, 0xff0000ff, 0x40000000},
+        {{ 0.0f,  2.0f, 0.2f, 0.9f}, 0xff0000ff, 0x40000000},
+        {{ 2.0f,  0.0f, 0.2f, 0.9f}, 0xff0000ff, 0x40000000},
+
+        {{ 0.0f, -2.0f, 0.5f, 0.5f}, 0xff0000ff, 0x40000000},
+        {{-2.0f,  0.0f, 0.5f, 0.5f}, 0xff0000ff, 0x40000000},
+        {{ 0.0f,  0.0f, 0.5f, 0.5f}, 0xff0000ff, 0x40000000},
+
+        {{ 0.0f, -2.0f, 0.5f, 0.9f}, 0xff0000ff, 0x40000000},
+        {{ 0.0f,  0.0f, 0.5f, 0.9f}, 0xff0000ff, 0x40000000},
+        {{ 2.0f,  0.0f, 0.5f, 0.9f}, 0xff0000ff, 0x40000000},
+    },
+    rhw_vertices[] =
+    {
+        {{ 320.0f, -240.0f, 0.2f, 0.5f}, 0xff0000ff, 0xc0000000},
+        {{ 320.0f,  240.0f, 0.2f, 0.5f}, 0xff0000ff, 0xc0000000},
+        {{-320.0f,  240.0f, 0.2f, 0.5f}, 0xff0000ff, 0xc0000000},
+
+        {{ 320.0f,  240.0f, 0.2f, 0.9f}, 0xff0000ff, 0x40000000},
+        {{ 320.0f, -240.0f, 0.2f, 0.9f}, 0xff0000ff, 0x40000000},
+        {{ 960.0f,  240.0f, 0.2f, 0.9f}, 0xff0000ff, 0x40000000},
+
+        {{ 320.0f,  720.0f, 0.5f, 0.5f}, 0xff0000ff, 0x40000000},
+        {{-320.0f,  240.0f, 0.5f, 0.5f}, 0xff0000ff, 0x40000000},
+        {{ 320.0f,  240.0f, 0.5f, 0.5f}, 0xff0000ff, 0x40000000},
+
+        {{ 320.0f,  720.0f, 0.5f, 0.9f}, 0xff0000ff, 0x40000000},
+        {{ 320.0f,  240.0f, 0.5f, 0.9f}, 0xff0000ff, 0x40000000},
+        {{ 960.0f,  240.0f, 0.5f, 0.9f}, 0xff0000ff, 0x40000000},
+    };
+
+    static const D3DFOGMODE fog_mode_tests[] = {D3DFOG_NONE, D3DFOG_LINEAR, D3DFOG_EXP, D3DFOG_EXP2};
+
+    static const struct {unsigned int x, y;} points[] =
+    {
+        {300, 220},
+        {340, 220},
+        {300, 260},
+        {340, 260},
+    };
+
+    enum vs_mode
+    {
+        VS_MODE_RHW,
+        VS_MODE_FFP,
+        VS_MODE_VS_NO_FOG,
+        VS_MODE_VS_FOG,
+    };
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A32B32G32R32F,
+            D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_no_fog_code, &vs_no_fog);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vs_fog_code, &vs_fog);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0xff00ffff);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, float_to_int(0.0f));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGEND, float_to_int(10.0f));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DEPTHBIAS, float_to_int(0.1f));
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (unsigned int pixel_mode = 0; pixel_mode < ARRAY_SIZE(fog_mode_tests); ++pixel_mode)
+    {
+        for (unsigned int vertex_mode = 0; vertex_mode < ARRAY_SIZE(fog_mode_tests); ++vertex_mode)
+        {
+            for (enum vs_mode vs_mode = 0; vs_mode < 4; ++vs_mode)
+            {
+                for (unsigned int ortho_fog = 0; ortho_fog <= 1; ++ortho_fog)
+                {
+                    float expect_fog[4], nv_expect_fog[4];
+                    float fog_src[4], nv_fog_src[4];
+                    D3DFOGMODE mode;
+
+                    winetest_push_context("pixel mode %#x, vertex mode %#x, vs_mode %u, ortho_fog %u",
+                            fog_mode_tests[pixel_mode], fog_mode_tests[vertex_mode], vs_mode, ortho_fog);
+
+                    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, fog_mode_tests[vertex_mode]);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, fog_mode_tests[pixel_mode]);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    memset(&matrix, 0, sizeof(matrix));
+                    matrix._11 = matrix._22 = matrix._33 = matrix._44 = 1.0f;
+                    if (!ortho_fog)
+                        matrix._44 = 1.01f;
+                    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &matrix);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    matrix._33 = 3.0f;
+                    matrix._44 = 2.0f;
+                    hr = IDirect3DDevice9_SetTransform(device, D3DTS_VIEW, &matrix);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    if (vs_mode == VS_MODE_FFP)
+                        hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+                    else if (vs_mode == VS_MODE_VS_NO_FOG)
+                        hr = IDirect3DDevice9_SetVertexShader(device, vs_no_fog);
+                    else if (vs_mode == VS_MODE_VS_FOG)
+                        hr = IDirect3DDevice9_SetVertexShader(device, vs_fog);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    hr = IDirect3DDevice9_BeginScene(device);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    if (vs_mode == VS_MODE_RHW)
+                    {
+                        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+                        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                        hr = IDirect3DDevice9_DrawPrimitiveUP(device,
+                                D3DPT_TRIANGLELIST, 4, rhw_vertices, sizeof(*rhw_vertices));
+                        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    }
+                    else
+                    {
+                        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+                        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                        hr = IDirect3DDevice9_DrawPrimitiveUP(device,
+                                D3DPT_TRIANGLELIST, 4, vertices, sizeof(*vertices));
+                        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                    }
+                    hr = IDirect3DDevice9_EndScene(device);
+                    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+                    if (fog_mode_tests[pixel_mode] == D3DFOG_NONE)
+                    {
+                        /* Fog source is Z.
+                         * This only matters for FFP VS; in all other cases
+                         * the fog comes directly from oFog or specular alpha,
+                         * and the fog start, end, and vertex mode is ignored. */
+                        for (unsigned int i = 0; i < 4; ++i)
+                            fog_src[i] = vertices[i * 3].position.z * 3.0f;
+                    }
+                    else if (!ortho_fog)
+                    {
+                        if (vs_mode == VS_MODE_RHW)
+                        {
+                            /* Fog source is W, so it's the reciprocal of
+                             * the input attribute's reciprocal W. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                fog_src[i] = 1.0f / rhw_vertices[i * 3].position.w;
+                        }
+                        else if (vs_mode == VS_MODE_FFP)
+                        {
+                            /* Fog source is W. However, as test_ffp_w()
+                             * shows, the input W is ignored, and 1.0 is
+                             * used instead. W is still affected by
+                             * matrices, though. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                fog_src[i] = 1.01f * 2.0f;
+                        }
+                        else
+                        {
+                            /* Fog source is W, which our VS passes through. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                fog_src[i] = vertices[i * 3].position.w;
+                        }
+                    }
+                    else
+                    {
+                        if (vs_mode == VS_MODE_RHW)
+                        {
+                            /* Fog source is Z. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                nv_fog_src[i] = fog_src[i] = rhw_vertices[i * 3].position.z;
+                        }
+                        else if (vs_mode == VS_MODE_FFP)
+                        {
+                            /* Fog source is Z/W (i.e. pixel Z).
+                             * As above, input W is always 1.0,
+                             * but is still affected by matrices. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                fog_src[i] = vertices[i * 3].position.z * 3.0f / 2.0f;
+
+                            /* NVidia uses vertex output Z instead. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                nv_fog_src[i] = vertices[i * 3].position.z * 3.0f;
+                        }
+                        else
+                        {
+                            /* Fog source is Z/W. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                fog_src[i] = vertices[i * 3].position.z / vertices[i * 3].position.w;
+
+                            /* NVidia uses vertex output Z instead. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                nv_fog_src[i] = vertices[i * 3].position.z;
+                        }
+
+                        /* Depth bias. NVidia uses vertex output Z, so it's
+                         * not affected by depth bias. */
+                        for (unsigned int i = 0; i < 4; ++i)
+                            fog_src[i] += 0.1f;
+                    }
+
+                    if (fog_mode_tests[pixel_mode] != D3DFOG_NONE)
+                        mode = fog_mode_tests[pixel_mode];
+                    else
+                        mode = fog_mode_tests[vertex_mode];
+
+                    for (unsigned int i = 0; i < 4; ++i)
+                    {
+                        if (fog_mode_tests[pixel_mode] == D3DFOG_NONE && vs_mode == VS_MODE_VS_FOG)
+                        {
+                            /* Fog is taken from oFog if the VS writes it. */
+                            expect_fog[i] = 1.0f - 0.2f;
+                        }
+                        else if (fog_mode_tests[pixel_mode] == D3DFOG_NONE && vs_mode == VS_MODE_VS_NO_FOG)
+                        {
+                            /* Otherwise, it's the output specular alpha. */
+                            expect_fog[i] = 1.0f - 0.04f;
+                        }
+                        else if (fog_mode_tests[pixel_mode] == D3DFOG_NONE
+                                && (fog_mode_tests[vertex_mode] == D3DFOG_NONE || vs_mode == VS_MODE_RHW))
+                        {
+                            /* FFP uses Z as a source and FOGVERTEXMODE
+                             * interpolation if the latter isn't NONE.
+                             *
+                             * If FOGVERTEXMODE is none, or always in the case
+                             * of RHW, the specular alpha is used.
+                             *
+                             * TODO: Test if it should be the input or output
+                             * specular alpha. Lighting would greatly
+                             * complicate this test, unfortunately. */
+                            for (unsigned int i = 0; i < 4; ++i)
+                                expect_fog[i] = 1.0f - ((vertices[i * 3].specular >> 24) / 255.0f);
+                        }
+                        else if (mode == D3DFOG_LINEAR)
+                        {
+                            expect_fog[i] = fog_src[i] / 10.0f;
+                            nv_expect_fog[i] = nv_fog_src[i] / 10.0f;
+                        }
+                        else if (mode == D3DFOG_EXP)
+                        {
+                            expect_fog[i] = 1.0f - expf(-fog_src[i]);
+                            nv_expect_fog[i] = 1.0f - expf(-nv_fog_src[i]);
+                        }
+                        else if (mode == D3DFOG_EXP2)
+                        {
+                            expect_fog[i] = 1.0f - expf(-fog_src[i] * fog_src[i]);
+                            nv_expect_fog[i] = 1.0f - expf(-nv_fog_src[i] * nv_fog_src[i]);
+                        }
+                    }
+
+                    get_rt_readback(rt, &rb);
+
+                    for (unsigned int i = 0; i < 4; ++i)
+                    {
+                        colour = get_readback_vec4(&rb, points[i].x, points[i].y);
+
+todo_wine_if ((fog_mode_tests[pixel_mode] != D3DFOG_NONE && !ortho_fog && (vs_mode == VS_MODE_FFP || vs_mode == VS_MODE_RHW || i != 2))
+        || (fog_mode_tests[pixel_mode] == D3DFOG_NONE && fog_mode_tests[vertex_mode] != D3DFOG_NONE && vs_mode == VS_MODE_FFP)
+        || (fog_mode_tests[pixel_mode] == D3DFOG_NONE && vs_mode == VS_MODE_VS_NO_FOG))
+{
+                        if (fog_mode_tests[pixel_mode] != D3DFOG_NONE && ortho_fog)
+                            ok(compare_vec4(colour, 0.0f, expect_fog[i], 1.0f, 1.0f, 48)
+                                    || compare_vec4(colour, 0.0f, nv_expect_fog[i], 1.0f, 1.0f, 48),
+                                    "(%u, %u): Expected fog %.8e or %.8e; got colour {%.8e, %.8e, %.8e, %.8e}.\n",
+                                    points[i].x, points[i].y, expect_fog[i], nv_expect_fog[i],
+                                    colour->x, colour->y, colour->z, colour->w);
+                        else
+                            ok(compare_vec4(colour, 0.0f, expect_fog[i], 1.0f, 1.0f, 48),
+                                    "(%u, %u): Expected fog %.8e; got colour {%.8e, %.8e, %.8e, %.8e}.\n",
+                                    points[i].x, points[i].y, expect_fog[i],
+                                    colour->x, colour->y, colour->z, colour->w);
+}
+                    }
+                    release_surface_readback(&rb);
+
+                    winetest_pop_context();
+                }
+            }
+        }
+    }
+
+    IDirect3DVertexShader9_Release(vs_fog);
+    IDirect3DVertexShader9_Release(vs_no_fog);
+    IDirect3DSurface9_Release(rt);
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -29085,4 +29442,5 @@ START_TEST(visual)
     test_default_attribute_components();
     test_format_conversion();
     test_ffp_w();
+    test_fog();
 }
