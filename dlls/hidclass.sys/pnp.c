@@ -235,30 +235,37 @@ static NTSTATUS initialize_device( minidriver *minidriver, DEVICE_OBJECT *device
         return status;
     }
 
+    if (!(ext->u.fdo.child_pdos = malloc( ext->u.fdo.device_desc.CollectionDescLength * sizeof(ext->u.fdo.child_pdos) )))
+    {
+        ERR( "Cannot allocate child PDOs array\n" );
+        return STATUS_NO_MEMORY;
+    }
+
     return STATUS_SUCCESS;
 }
 
-static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
+static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device )
 {
-    BASE_DEVICE_EXTENSION *fdo_ext = fdo->DeviceExtension, *pdo_ext;
+    BASE_DEVICE_EXTENSION *fdo_ext = device->DeviceExtension, *pdo_ext;
     DEVICE_OBJECT *child_pdo;
     UNICODE_STRING string;
     WCHAR pdo_name[255];
     USAGE page, usage;
     NTSTATUS status;
 
-    swprintf(pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p", fdo->DriverObject,
-            fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject);
+    swprintf( pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p", device->DriverObject,
+              fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject );
     RtlInitUnicodeString(&string, pdo_name);
-    if ((status = IoCreateDevice(fdo->DriverObject, sizeof(*pdo_ext), &string, 0, 0, FALSE, &child_pdo)))
+    if ((status = IoCreateDevice( device->DriverObject, sizeof(*pdo_ext), &string, 0, 0, FALSE, &child_pdo )))
     {
         ERR( "Failed to create child PDO, status %#lx.\n", status );
-        return;
+        return status;
     }
-    fdo_ext->u.fdo.child_pdo = child_pdo;
+    fdo_ext->u.fdo.child_pdos[0] = child_pdo;
+    fdo_ext->u.fdo.child_count++;
 
     pdo_ext = child_pdo->DeviceExtension;
-    pdo_ext->u.pdo.parent_fdo = fdo;
+    pdo_ext->u.pdo.parent_fdo = device;
     list_init( &pdo_ext->u.pdo.queues );
     KeInitializeSpinLock( &pdo_ext->u.pdo.queues_lock );
 
@@ -285,9 +292,10 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
         pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
     pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
 
-    IoInvalidateDeviceRelations( fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations );
-
     TRACE( "created device %p, rawinput handle %#x\n", pdo_ext, pdo_ext->u.pdo.rawinput_handle );
+
+    IoInvalidateDeviceRelations( fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
@@ -304,27 +312,23 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_QUERY_DEVICE_RELATIONS:
         {
             DEVICE_RELATIONS *devices;
-            DEVICE_OBJECT *child;
+            UINT32 i;
 
             if (stack->Parameters.QueryDeviceRelations.Type != BusRelations)
                 return minidriver->PNPDispatch(device, irp);
 
-            if (!(devices = ExAllocatePool(PagedPool, offsetof(DEVICE_RELATIONS, Objects[1]))))
+            if (!(devices = ExAllocatePool(PagedPool, offsetof(DEVICE_RELATIONS, Objects[ext->u.fdo.child_count]))))
             {
                 irp->IoStatus.Status = STATUS_NO_MEMORY;
                 IoCompleteRequest(irp, IO_NO_INCREMENT);
                 return STATUS_NO_MEMORY;
             }
 
-            if ((child = ext->u.fdo.child_pdo))
+            for (i = 0, devices->Count = 0; i < ext->u.fdo.child_count; ++i)
             {
-                devices->Objects[0] = ext->u.fdo.child_pdo;
-                call_fastcall_func1(ObfReferenceObject, ext->u.fdo.child_pdo);
-                devices->Count = 1;
-            }
-            else
-            {
-                devices->Count = 0;
+                devices->Objects[i] = ext->u.fdo.child_pdos[i];
+                call_fastcall_func1(ObfReferenceObject, ext->u.fdo.child_pdos[i]);
+                devices->Count++;
             }
 
             irp->IoStatus.Information = (ULONG_PTR)devices;
@@ -336,12 +340,13 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_START_DEVICE:
             status = minidriver->PNPDispatch( device, irp );
             if (!status) status = initialize_device( minidriver, device );
-            if (!status) create_child( minidriver, device );
+            if (!status) status = create_child_pdos( minidriver, device );
             return status;
 
         case IRP_MN_REMOVE_DEVICE:
             status = minidriver->PNPDispatch( device, irp );
             HidP_FreeCollectionDescription( &ext->u.fdo.device_desc );
+            free( ext->u.fdo.child_pdos );
             IoDetachDevice( ext->u.fdo.hid_ext.NextDeviceObject );
             IoDeleteDevice( device );
             return status;

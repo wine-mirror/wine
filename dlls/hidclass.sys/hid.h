@@ -51,7 +51,8 @@ typedef struct _BASE_DEVICE_EXTENSION
             HID_DEVICE_ATTRIBUTES attrs;
             HIDP_DEVICE_DESC device_desc;
 
-            DEVICE_OBJECT *child_pdo;
+            DEVICE_OBJECT **child_pdos;
+            UINT child_count;
         } fdo;
 
         struct
