@@ -7235,12 +7235,13 @@ static const IWineHTMLElementPrivateVtbl WineHTMLElementPrivateVtbl = {
     htmlelement_private_get_classList,
 };
 
-static dispex_static_data_t HTMLElement_dispex = {
-    "HTMLElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLUnknownElement_tid,
-    HTMLElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLElement_dispex = {
+    .name         = "HTMLElement",
+    .id           = PROT_HTMLElement,
+    .vtbl         = &HTMLElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLUnknownElement_tid,
+    .iface_tids   = HTMLElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 static dispex_static_data_t HTMLUnknownElement_dispex = {

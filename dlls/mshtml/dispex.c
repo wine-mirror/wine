@@ -501,10 +501,24 @@ static BOOL find_prototype_member(const dispex_data_t *info, DISPID id)
 
     if(compat_mode < COMPAT_MODE_IE9)
         return FALSE;
-    if(!(info = info->desc->prototype_info[compat_mode - COMPAT_MODE_IE9]))
-        return FALSE;
-    if(bsearch(&id, info->funcs, info->func_cnt, sizeof(info->funcs[0]), dispid_cmp))
-        return TRUE;
+
+    if(!info->is_prototype) {
+        if(!info->desc->id)
+            return FALSE;
+        info = info->desc->prototype_info[compat_mode - COMPAT_MODE_IE9];
+    }else {
+        if(!info->desc->prototype_id)
+            return FALSE;
+        info = object_descriptors[info->desc->prototype_id]->prototype_info[compat_mode - COMPAT_MODE_IE9];
+    }
+
+    for(;;) {
+        if(bsearch(&id, info->funcs, info->func_cnt, sizeof(info->funcs[0]), dispid_cmp))
+            return TRUE;
+        if(!info->desc->prototype_id)
+            break;
+        info = object_descriptors[info->desc->prototype_id]->prototype_info[compat_mode - COMPAT_MODE_IE9];
+    }
     return FALSE;
 }
 
@@ -2805,8 +2819,8 @@ static const dispex_static_data_vtbl_t prototype_dispex_vtbl = {
 static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)
 {
     compat_mode_t compat_mode = dispex_compat_mode(&script_global->event_target.dispex);
+    DispatchEx *prototype, *prot_prototype = NULL;
     dispex_static_data_t *desc;
-    DispatchEx *prototype;
     dispex_data_t *info;
 
     if(script_global->prototypes[id]) {
@@ -2815,6 +2829,12 @@ static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, 
     }
 
     desc = object_descriptors[id];
+    if(desc->prototype_id) {
+        HRESULT hres = get_prototype(script_global, desc->prototype_id, &prot_prototype);
+        if(FAILED(hres))
+            ERR("Failed to get a prototype: %08lx\n", hres);
+    }
+
     info = desc->prototype_info[compat_mode - COMPAT_MODE_IE9];
     if(!info) {
         EnterCriticalSection(&cs_dispex_static_data);
@@ -2836,7 +2856,7 @@ static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, 
 
     if(!(prototype = calloc(sizeof(*prototype), 1)))
         return E_OUTOFMEMORY;
-    init_dispatch_from_desc(prototype, info, script_global, NULL);
+    init_dispatch_from_desc(prototype, info, script_global, prot_prototype);
     *ret = script_global->prototypes[id] = prototype;
     return S_OK;
 }
