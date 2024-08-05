@@ -34,6 +34,13 @@
 #define FOURCC_TX_1 0x54580100
 
 #define D3DX9_FILTER_INVALID_BITS 0xff80fff8
+static inline HRESULT d3dx9_validate_filter(uint32_t filter)
+{
+    if ((filter & D3DX9_FILTER_INVALID_BITS) || !(filter & 0x7) || ((filter & 0x7) > D3DX_FILTER_BOX))
+        return D3DERR_INVALIDCALL;
+
+    return D3D_OK;
+}
 
 struct vec4
 {

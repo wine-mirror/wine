@@ -1064,8 +1064,7 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
             winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
 
             hr = D3DXFilterTexture((IDirect3DBaseTexture9 *)tex, NULL, 0, test_filter_values[i].filter);
-            todo_wine_if(test_filter_values[i].d3dx_filter_texture_todo) ok(hr == test_filter_values[i].expected_hr,
-                    "Unexpected hr %#lx.\n", hr);
+            ok(hr == test_filter_values[i].expected_hr, "Unexpected hr %#lx.\n", hr);
 
             winetest_pop_context();
         }
@@ -1143,8 +1142,7 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
             winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
 
             hr = D3DXFilterTexture((IDirect3DBaseTexture9 *)cubetex, NULL, 0, test_filter_values[i].filter);
-            todo_wine_if(test_filter_values[i].d3dx_filter_texture_todo) ok(hr == test_filter_values[i].expected_hr,
-                    "Unexpected hr %#lx.\n", hr);
+            ok(hr == test_filter_values[i].expected_hr, "Unexpected hr %#lx.\n", hr);
 
             winetest_pop_context();
         }
@@ -1176,8 +1174,7 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
             winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
 
             hr = D3DXFilterTexture((IDirect3DBaseTexture9 *)voltex, NULL, 0, test_filter_values[i].filter);
-            todo_wine_if(test_filter_values[i].d3dx_filter_texture_todo) ok(hr == test_filter_values[i].expected_hr,
-                    "Unexpected hr %#lx.\n", hr);
+            ok(hr == test_filter_values[i].expected_hr, "Unexpected hr %#lx.\n", hr);
 
             winetest_pop_context();
         }
