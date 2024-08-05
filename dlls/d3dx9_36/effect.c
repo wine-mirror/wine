@@ -2007,7 +2007,7 @@ static HRESULT WINAPI d3dx_effect_GetDesc(ID3DXEffect *iface, D3DXEFFECT_DESC *d
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
 
-    FIXME("iface %p, desc %p partial stub.\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     if (!desc)
     {
@@ -2015,8 +2015,7 @@ static HRESULT WINAPI d3dx_effect_GetDesc(ID3DXEffect *iface, D3DXEFFECT_DESC *d
         return D3DERR_INVALIDCALL;
     }
 
-    /* TODO: add creator and function count. */
-    desc->Creator = NULL;
+    desc->Creator = "D3DX Effect Compiler";
     desc->Functions = 0;
     desc->Parameters = effect->params.count;
     desc->Techniques = effect->technique_count;

@@ -262,10 +262,7 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(!desc.Parameters, "Unexpected value %u.\n", desc.Parameters);
@@ -2495,10 +2492,7 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 7, "Unexpected value %u.\n", desc.Parameters);
@@ -2620,10 +2614,7 @@ static void test_effect_variable_names(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 6, "Unexpected value %u.\n", desc.Parameters);
@@ -3044,10 +3035,7 @@ static void test_effect_states(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 3, "Unexpected value %u.\n", desc.Parameters);
@@ -4624,10 +4612,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
@@ -5089,10 +5074,7 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 3, "Unexpected value %u.\n", desc.Parameters);
@@ -5219,10 +5201,7 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
@@ -5269,10 +5248,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
@@ -5497,10 +5473,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
@@ -6678,10 +6651,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
 
     hr = effect2->lpVtbl->GetDesc(effect2, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 34, "Unexpected value %u.\n", desc.Parameters);
@@ -7153,10 +7123,7 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetDesc(effect, &desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!desc.Creator, "Unexpected pointer.\n");
-    if (desc.Creator)
-        ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
+    ok(!strcmp(desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", desc.Creator);
     ok(!desc.Functions, "Unexpected value %u.\n", desc.Functions);
     ok(desc.Techniques == 1, "Unexpected value %u.\n", desc.Techniques);
     ok(desc.Parameters == 6, "Unexpected value %u.\n", desc.Parameters);
@@ -8269,10 +8236,7 @@ static void test_effect_find_next_valid_technique(void)
 
     hr = effect->lpVtbl->GetDesc(effect, &effect_desc);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(!!effect_desc.Creator, "Unexpected pointer.\n");
-    if (effect_desc.Creator)
-        ok(!strcmp(effect_desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", effect_desc.Creator);
+    ok(!strcmp(effect_desc.Creator, "D3DX Effect Compiler"), "Unexpected creator %s.\n", effect_desc.Creator);
     ok(!effect_desc.Functions, "Unexpected value %u.\n", effect_desc.Functions);
     ok(effect_desc.Techniques == 2, "Unexpected value %u.\n", effect_desc.Techniques);
     ok(!effect_desc.Parameters, "Unexpected value %u.\n", effect_desc.Parameters);
