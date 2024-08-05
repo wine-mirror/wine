@@ -3108,3 +3108,18 @@ sync_test("form", function() {
     form.innerHTML = "";
     ok(form[0] === "test", "form[0] = " + form[0]);
 });
+
+sync_test("prototypes", function() {
+    var v = document.documentMode;
+    if(v < 9)
+        return;
+
+    function check(obj, proto, name) {
+        ok(Object.getPrototypeOf(obj) === proto, "unexpected " + name + " prototype object");
+    }
+
+    check(document.implementation, DOMImplementation.prototype, "implementation");
+    check(DOMImplementation.prototype, Object.prototype, "implementation prototype");
+    check(window.navigator, Navigator.prototype, "navigator");
+    check(Navigator.prototype, Object.prototype, "navigator prototype");
+});

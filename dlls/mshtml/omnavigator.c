@@ -28,6 +28,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "mshtmdid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -1141,21 +1142,22 @@ static void OmNavigator_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static const dispex_static_data_vtbl_t OmNavigator_dispex_vtbl = {
+static const dispex_static_data_vtbl_t Navigator_dispex_vtbl = {
     .query_interface  = OmNavigator_query_interface,
     .destructor       = OmNavigator_destructor,
     .unlink           = OmNavigator_unlink
 };
 
-static const tid_t OmNavigator_iface_tids[] = {
+static const tid_t Navigator_iface_tids[] = {
     IOmNavigator_tid,
     0
 };
-static dispex_static_data_t OmNavigator_dispex = {
-    "Navigator",
-    &OmNavigator_dispex_vtbl,
-    DispHTMLNavigator_tid,
-    OmNavigator_iface_tids
+dispex_static_data_t Navigator_dispex = {
+    .name       = "Navigator",
+    .id         = PROT_Navigator,
+    .vtbl       = &Navigator_dispex_vtbl,
+    .disp_tid   = DispHTMLNavigator_tid,
+    .iface_tids = Navigator_iface_tids,
 };
 
 HRESULT create_navigator(HTMLInnerWindow *script_global, IOmNavigator **navigator)
@@ -1168,7 +1170,7 @@ HRESULT create_navigator(HTMLInnerWindow *script_global, IOmNavigator **navigato
 
     ret->IOmNavigator_iface.lpVtbl = &OmNavigatorVtbl;
 
-    init_dispatch(&ret->dispex, &OmNavigator_dispex, script_global,
+    init_dispatch(&ret->dispex, &Navigator_dispex, script_global,
                   dispex_compat_mode(&script_global->event_target.dispex));
 
     *navigator = &ret->IOmNavigator_iface;

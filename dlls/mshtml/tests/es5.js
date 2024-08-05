@@ -2754,4 +2754,6 @@ sync_test("prototypes", function() {
     DOMImplementation = constr;
 
     ok(document.implementation instanceof DOMImplementation, "document.implementation is not an instance of DOMImplementation");
+    ok(navigator instanceof Navigator, "navigator is not an instance of Navigator");
+    ok(!(navigator instanceof DOMImplementation), "navigator is an instance of DOMImplementation");
 });

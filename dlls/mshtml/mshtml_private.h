@@ -407,7 +407,8 @@ typedef struct {
 } dispex_static_data_vtbl_t;
 
 #define ALL_PROTOTYPES                     \
-    X(DOMImplementation)
+    X(DOMImplementation)                   \
+    X(Navigator)
 
 typedef enum {
     PROT_NONE,
