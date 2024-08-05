@@ -2440,50 +2440,12 @@ static void *mac_thread_gsbase(void)
 {
     struct thread_identifier_info tiinfo;
     unsigned int info_count = THREAD_IDENTIFIER_INFO_COUNT;
-    static int gsbase_offset = -1;
 
     mach_port_t self = mach_thread_self();
     kern_return_t kr = thread_info(self, THREAD_IDENTIFIER_INFO, (thread_info_t) &tiinfo, &info_count);
     mach_port_deallocate(mach_task_self(), self);
 
     if (kr == KERN_SUCCESS) return (void*)tiinfo.thread_handle;
-
-    if (gsbase_offset < 0)
-    {
-        /* Search for the array of TLS slots within the pthread data structure.
-           That's what the macOS pthread implementation uses for gsbase. */
-        const void* const sentinel1 = (const void*)0x2bffb6b4f11228ae;
-        const void* const sentinel2 = (const void*)0x0845a7ff6ab76707;
-        int rc;
-        pthread_key_t key;
-        const void** p = (const void**)pthread_self();
-        int i;
-
-        gsbase_offset = 0;
-        if ((rc = pthread_key_create(&key, NULL))) return NULL;
-
-        pthread_setspecific(key, sentinel1);
-
-        for (i = key + 1; i < 2000; i++) /* arbitrary limit */
-        {
-            if (p[i] == sentinel1)
-            {
-                pthread_setspecific(key, sentinel2);
-
-                if (p[i] == sentinel2)
-                {
-                    gsbase_offset = (i - key) * sizeof(*p);
-                    break;
-                }
-
-                pthread_setspecific(key, sentinel1);
-            }
-        }
-
-        pthread_key_delete(key);
-    }
-
-    if (gsbase_offset) return (char*)pthread_self() + gsbase_offset;
     return NULL;
 }
 #endif
