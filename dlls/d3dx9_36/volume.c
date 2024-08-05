@@ -108,8 +108,8 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
             || src_box->Front >= src_box->Back)
         return E_FAIL;
 
-    if (filter == D3DX_DEFAULT)
-        filter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
 
     src_format_desc = get_format_info(src_format);
     if (src_format_desc->type == FORMAT_UNKNOWN)
@@ -180,6 +180,9 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
     if (!dst_volume || !src_data || !src_data_size)
         return D3DERR_INVALIDCALL;
 
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
+
     hr = d3dx_image_init(src_data, src_data_size, &image, 0, 0);
     if (FAILED(hr))
         return D3DXERR_INVALIDDATA;
@@ -230,6 +233,9 @@ HRESULT WINAPI D3DXLoadVolumeFromVolume(IDirect3DVolume9 *dst_volume, const PALE
             dst_volume, dst_palette, dst_box, src_volume, src_palette, src_box, filter, color_key);
 
     if (!dst_volume || !src_volume) return D3DERR_INVALIDCALL;
+
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
 
     IDirect3DVolume9_GetDesc(src_volume, &desc);
 

@@ -42,6 +42,14 @@ static inline HRESULT d3dx9_validate_filter(uint32_t filter)
     return D3D_OK;
 }
 
+static inline HRESULT d3dx9_handle_load_filter(DWORD *filter)
+{
+    if (*filter == D3DX_DEFAULT)
+        *filter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
+
+    return d3dx9_validate_filter(*filter);
+}
+
 struct vec4
 {
     float x, y, z, w;

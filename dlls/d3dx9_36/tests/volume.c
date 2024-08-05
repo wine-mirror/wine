@@ -197,8 +197,7 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
 
         hr = D3DXLoadVolumeFromMemory(volume, NULL, &dst_box, pixels, D3DFMT_A8R8G8B8, 16, 32, NULL, &src_box,
                 test_filter_values[i].filter, 0);
-        todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
-                "Unexpected hr %#lx.\n", hr);
+        ok(hr == test_filter_values[i].expected_hr, "Unexpected hr %#lx.\n", hr);
 
         winetest_pop_context();
     }
@@ -278,8 +277,7 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
 
         hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_24bit_8_8, sizeof(dds_24bit_8_8), NULL,
                 test_filter_values[i].filter, 0, NULL);
-        todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
-                "Unexpected hr %#lx.\n", hr);
+        ok(hr == test_filter_values[i].expected_hr, "Unexpected hr %#lx.\n", hr);
 
         winetest_pop_context();
     }
