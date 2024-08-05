@@ -1870,13 +1870,17 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
         window_surface_add_ref( new_surface );
     }
 
-    if (create_layered || is_layered) needs_surface = TRUE;
-    if (!needs_surface || IsRectEmpty( visible_rect )) needs_surface = FALSE; /* use default surface */
-    else needs_surface = !user_driver->pCreateWindowSurface( hwnd, create_layered, surface_rect, &new_surface );
+    if (IsRectEmpty( surface_rect )) needs_surface = FALSE;
+    else if (create_layered || is_layered) needs_surface = TRUE;
 
-    /* create or update window surface for top-level windows if the driver doesn't implement CreateWindowSurface */
-    if (needs_surface && new_surface == &dummy_surface && (create_opaque && !create_layered))
+    if (!needs_surface && new_surface && new_surface != &dummy_surface)
     {
+        window_surface_release( new_surface );
+        window_surface_add_ref( (new_surface = &dummy_surface) );
+    }
+    else if (needs_surface && !user_driver->pCreateWindowSurface( hwnd, create_layered, surface_rect, &new_surface ))
+    {
+        /* create or update window surface for top-level windows if the driver doesn't implement CreateWindowSurface */
         window_surface_release( new_surface );
         create_offscreen_window_surface( hwnd, surface_rect, &new_surface );
     }
