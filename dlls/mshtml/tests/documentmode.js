@@ -3124,4 +3124,7 @@ sync_test("prototypes", function() {
     check(Navigator.prototype, Object.prototype, "navigator prototype");
     check(document.body, HTMLBodyElement.prototype, "body element");
     check(HTMLBodyElement.prototype, HTMLElement.prototype, "body prototype");
+    check(HTMLElement.prototype, Element.prototype, "html element prototype");
+    check(Element.prototype, Node.prototype, "element prototype");
+    check(Node.prototype, Object.prototype, "node prototype");
 });

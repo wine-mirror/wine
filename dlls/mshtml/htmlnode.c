@@ -1286,7 +1286,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     assert(nsres == NS_OK);
 }
 
-static const dispex_static_data_vtbl_t HTMLDOMNode_dispex_vtbl = {
+static const dispex_static_data_vtbl_t Node_dispex_vtbl = {
     .query_interface = HTMLDOMNode_query_interface,
     .destructor      = HTMLDOMNode_destructor,
     .traverse        = HTMLDOMNode_traverse,
@@ -1297,12 +1297,13 @@ static const tid_t HTMLDOMNode_iface_tids[] = {
     IHTMLDOMNode_tid,
     0
 };
-static dispex_static_data_t HTMLDOMNode_dispex = {
-    "Node",
-    &HTMLDOMNode_dispex_vtbl,
-    IHTMLDOMNode_tid,
-    HTMLDOMNode_iface_tids,
-    HTMLDOMNode_init_dispex_info
+dispex_static_data_t Node_dispex = {
+    .name       = "Node",
+    .id         = PROT_Node,
+    .vtbl       = &Node_dispex_vtbl,
+    .disp_tid   = IHTMLDOMNode_tid,
+    .iface_tids = HTMLDOMNode_iface_tids,
+    .init_info  = HTMLDOMNode_init_dispex_info,
 };
 
 static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **ret)
@@ -1356,7 +1357,7 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
             return E_OUTOFMEMORY;
 
         node->vtbl = &HTMLDOMNodeImplVtbl;
-        HTMLDOMNode_Init(doc, node, nsnode, &HTMLDOMNode_dispex);
+        HTMLDOMNode_Init(doc, node, nsnode, &Node_dispex);
         *ret = node;
     }
     }

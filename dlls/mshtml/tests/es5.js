@@ -2756,9 +2756,16 @@ sync_test("prototypes", function() {
     ok(!HTMLBodyElement.prototype.hasOwnProperty("click"), "HTMLBodyElement prototype has own click property");
     ok(HTMLElement.prototype.hasOwnProperty("click"), "HTMLElement prototype does not have own click property");
 
+    ok(!HTMLBodyElement.prototype.hasOwnProperty("removeChild"), "HTMLBodyElement prototype has own removeChild property");
+    ok(!HTMLElement.prototype.hasOwnProperty("removeChild"), "HTMLElement prototype has own removeChild property");
+    ok(!Element.prototype.hasOwnProperty("removeChild"), "Element prototype has own removeChild property");
+    ok(Node.prototype.hasOwnProperty("removeChild"), "Node prototype does not have own removeChild property");
+
     ok(document.implementation instanceof DOMImplementation, "document.implementation is not an instance of DOMImplementation");
     ok(navigator instanceof Navigator, "navigator is not an instance of Navigator");
     ok(!(navigator instanceof DOMImplementation), "navigator is an instance of DOMImplementation");
     ok(document.body instanceof HTMLBodyElement, "body is not an instance of HTMLBodyElement");
     ok(document.body instanceof HTMLElement, "body is not an instance of HTMLElement");
+    ok(document.body instanceof Element, "body is not an instance of Element");
+    ok(document.body instanceof Node, "body is not an instance of Node");
 });

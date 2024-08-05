@@ -408,9 +408,11 @@ typedef struct {
 
 #define ALL_PROTOTYPES                     \
     X(DOMImplementation)                   \
+    X(Element)                             \
     X(HTMLBodyElement)                     \
     X(HTMLElement)                         \
-    X(Navigator)
+    X(Navigator)                           \
+    X(Node)
 
 typedef enum {
     PROT_NONE,
