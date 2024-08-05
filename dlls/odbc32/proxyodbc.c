@@ -2527,6 +2527,21 @@ SQLRETURN WINAPI SQLGetStmtOption(SQLHSTMT StatementHandle, SQLUSMALLINT Option,
     return ret;
 }
 
+static SQLRETURN get_type_info_unix_a( struct handle *handle, SQLSMALLINT type )
+{
+    struct SQLGetTypeInfo_params params = { handle->unix_handle, type };
+    return ODBC_CALL( SQLGetTypeInfo, &params );
+}
+
+static SQLRETURN get_type_info_win32_a( struct handle *handle, SQLSMALLINT type )
+{
+    if (handle->win32_funcs->SQLGetTypeInfo)
+        return handle->win32_funcs->SQLGetTypeInfo( handle->win32_handle, type );
+    if (handle->win32_funcs->SQLGetTypeInfoW)
+        return handle->win32_funcs->SQLGetTypeInfoW( handle->win32_handle, type );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetTypeInfo           [ODBC32.047]
  */
@@ -2541,12 +2556,11 @@ SQLRETURN WINAPI SQLGetTypeInfo(SQLHSTMT StatementHandle, SQLSMALLINT DataType)
 
     if (handle->unix_handle)
     {
-        struct SQLGetTypeInfo_params params = { handle->unix_handle, DataType };
-        ret = ODBC_CALL( SQLGetTypeInfo, &params );
+        ret = get_type_info_unix_a( handle, DataType );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetTypeInfo( handle->win32_handle, DataType );
+        ret = get_type_info_win32_a( handle, DataType );
     }
 
     TRACE("Returning %d\n", ret);
@@ -5222,6 +5236,21 @@ SQLRETURN WINAPI SQLGetInfoW(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQ
     return ret;
 }
 
+static SQLRETURN get_type_info_unix_w( struct handle *handle, SQLSMALLINT type )
+{
+    struct SQLGetTypeInfoW_params params = { handle->unix_handle, type };
+    return ODBC_CALL( SQLGetTypeInfoW, &params );
+}
+
+static SQLRETURN get_type_info_win32_w( struct handle *handle, SQLSMALLINT type )
+{
+    if (handle->win32_funcs->SQLGetTypeInfoW)
+        return handle->win32_funcs->SQLGetTypeInfoW( handle->win32_handle, type );
+    if (handle->win32_funcs->SQLGetTypeInfo)
+        return handle->win32_funcs->SQLGetTypeInfo( handle->win32_handle, type );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetTypeInfoW          [ODBC32.147]
  */
@@ -5236,12 +5265,11 @@ SQLRETURN WINAPI SQLGetTypeInfoW(SQLHSTMT StatementHandle, SQLSMALLINT DataType)
 
     if (handle->unix_handle)
     {
-        struct SQLGetTypeInfoW_params params = { handle->unix_handle, DataType };
-        ret = ODBC_CALL( SQLGetTypeInfoW, &params );
+        ret = get_type_info_unix_w( handle, DataType );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetTypeInfoW( handle->win32_handle, DataType );
+        ret = get_type_info_win32_w( handle, DataType );
     }
 
     TRACE("Returning %d\n", ret);
