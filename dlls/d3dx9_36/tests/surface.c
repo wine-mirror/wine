@@ -1060,8 +1060,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         winetest_push_context("Filter %d (%#x)", i, test_filter_values[i].filter);
 
         hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, test_filter_values[i].filter, 0);
-        todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
-                "Unexpected hr %#lx.\n", hr);
+        ok(hr == test_filter_values[i].expected_hr, "Unexpected hr %#lx.\n", hr);
 
         winetest_pop_context();
     }
@@ -1233,13 +1232,11 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
             hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_24bit, sizeof(dds_24bit), NULL,
                     test_filter_values[i].filter, 0, NULL);
-            todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
-                    "Unexpected hr %#lx.\n", hr);
+            ok(hr == test_filter_values[i].expected_hr, "Unexpected hr %#lx.\n", hr);
 
             hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8b8g8r8, D3DFMT_A8B8G8R8, 8, NULL, &rect,
                     test_filter_values[i].filter, 0);
-            todo_wine_if(FAILED(test_filter_values[i].expected_hr)) ok(hr == test_filter_values[i].expected_hr,
-                    "Unexpected hr %#lx.\n", hr);
+            ok(hr == test_filter_values[i].expected_hr, "Unexpected hr %#lx.\n", hr);
 
             winetest_pop_context();
         }

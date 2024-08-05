@@ -1267,6 +1267,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     if (!pDestSurface || !pSrcData || !SrcDataSize)
         return D3DERR_INVALIDCALL;
 
+    if (FAILED(hr = d3dx9_handle_load_filter(&dwFilter)))
+        return hr;
+
     hr = d3dx_image_init(pSrcData, SrcDataSize, &image, 0, 0);
     if (FAILED(hr))
         return D3DXERR_INVALIDDATA;
@@ -2214,8 +2217,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         }
     }
 
-    if (filter == D3DX_DEFAULT)
-        filter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
 
     hr = d3dx_pixels_init(src_memory, src_pitch, 0, src_palette, srcformatdesc->format,
             src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1, &src_pixels);
@@ -2285,6 +2288,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromSurface(IDirect3DSurface9 *dst_surface,
 
     if (!dst_surface || !src_surface)
         return D3DERR_INVALIDCALL;
+
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
 
     IDirect3DSurface9_GetDesc(src_surface, &src_desc);
     src_format_desc = get_format_info(src_desc.Format);
