@@ -1233,8 +1233,8 @@
 @ stdcall QueryFullProcessImageNameA(ptr long ptr ptr)
 @ stdcall QueryFullProcessImageNameW(ptr long ptr ptr)
 @ stdcall QueryIoRingCapabilities(ptr)
-# @ stub QueryIdleProcessorCycleTime
-# @ stub QueryIdleProcessorCycleTimeEx
+@ stdcall QueryIdleProcessorCycleTime(ptr ptr)
+@ stdcall QueryIdleProcessorCycleTimeEx(long ptr ptr)
 @ stdcall QueryInterruptTime(ptr)
 @ stdcall QueryInterruptTimePrecise(ptr)
 @ stdcall QueryMemoryResourceNotification(ptr ptr)

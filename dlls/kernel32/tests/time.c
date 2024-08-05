@@ -1140,6 +1140,73 @@ static void test_QueryUnbiasedInterruptTime(void)
     else win_skip( "RtlQueryUnbiasedInterruptTime not supported\n" );
 }
 
+static void test_processor_idle_cycle_time(void)
+{
+    unsigned int cpu_count = NtCurrentTeb()->Peb->NumberOfProcessors;
+    ULONG64 buffer[64];
+    ULONG size;
+    DWORD err;
+    BOOL bret;
+
+    SetLastError( 0xdeadbeef );
+    size = 0;
+    bret = QueryIdleProcessorCycleTime( &size, NULL );
+    err = GetLastError();
+    ok( bret == TRUE && err == 0xdeadbeef, "got %d, %ld.\n", bret, err );
+    ok( size == cpu_count * sizeof(ULONG64), "got %lu.\n", size );
+
+    size = 4;
+    memset( buffer, 0xcc, sizeof(buffer) );
+    SetLastError( 0xdeadbeef );
+    bret = QueryIdleProcessorCycleTime( &size, NULL );
+    err = GetLastError();
+    ok( bret == TRUE && err == 0xdeadbeef, "got %d, %ld.\n", bret, err );
+    ok( size == 4, "got %lu.\n", size );
+    ok( buffer[0] == 0xcccccccccccccccc, "got %#I64x.\n", buffer[0] );
+
+    size = sizeof(buffer);
+    SetLastError( 0xdeadbeef );
+    bret = QueryIdleProcessorCycleTime( &size, NULL );
+    err = GetLastError();
+    ok( bret == TRUE && err == 0xdeadbeef, "got %d, %ld.\n", bret, err );
+    ok( size == sizeof(buffer), "got %lu.\n", size );
+
+    size = sizeof(buffer);
+    SetLastError( 0xdeadbeef );
+    bret = QueryIdleProcessorCycleTime( &size, buffer );
+    err = GetLastError();
+    ok( bret == TRUE && err == 0xdeadbeef, "got %d, %ld.\n", bret, err );
+    ok( size == cpu_count * sizeof(ULONG64), "got %lu.\n", size );
+
+    SetLastError( 0xdeadbeef );
+    size = 0;
+    bret = QueryIdleProcessorCycleTimeEx( 0, &size, NULL );
+    err = GetLastError();
+    ok( bret == TRUE && err == 0xdeadbeef, "got %d, %ld.\n", bret, err );
+    ok( size == cpu_count * sizeof(ULONG64), "got %lu.\n", size );
+
+    size = 4;
+    SetLastError( 0xdeadbeef );
+    bret = QueryIdleProcessorCycleTimeEx( 0, &size, NULL );
+    err = GetLastError();
+    ok( bret == TRUE && err == 0xdeadbeef, "got %d, %ld.\n", bret, err );
+    ok( size == 4, "got %lu.\n", size );
+
+    size = sizeof(buffer);
+    SetLastError( 0xdeadbeef );
+    bret = QueryIdleProcessorCycleTimeEx( 0, &size, NULL );
+    err = GetLastError();
+    ok( bret == TRUE && err == 0xdeadbeef, "got %d, %ld.\n", bret, err );
+    ok( size == sizeof(buffer), "got %lu.\n", size );
+
+    size = sizeof(buffer);
+    SetLastError( 0xdeadbeef );
+    bret = QueryIdleProcessorCycleTimeEx( 0, &size, buffer );
+    err = GetLastError();
+    ok( bret == TRUE && err == 0xdeadbeef, "got %d, %ld.\n", bret, err );
+    ok( size == cpu_count * sizeof(ULONG64), "got %lu.\n", size );
+}
+
 START_TEST(time)
 {
     HMODULE hKernel = GetModuleHandleA("kernel32");
@@ -1171,4 +1238,5 @@ START_TEST(time)
     test_GetTimeZoneInformationForYear();
     test_GetTickCount();
     test_QueryUnbiasedInterruptTime();
+    test_processor_idle_cycle_time();
 }
