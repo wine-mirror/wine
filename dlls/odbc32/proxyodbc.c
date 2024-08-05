@@ -1204,10 +1204,8 @@ static SQLRETURN describe_col_win32_a( struct handle *handle, SQLUSMALLINT col_n
     SQLRETURN ret = SQL_ERROR;
 
     if (handle->win32_funcs->SQLDescribeCol)
-    {
         return handle->win32_funcs->SQLDescribeCol( handle->win32_handle, col_number, col_name, buflen, retlen,
                                                     data_type, col_size, decimal_digits, nullable );
-    }
     if (handle->win32_funcs->SQLDescribeColW)
     {
         SQLWCHAR *nameW;
@@ -2436,6 +2434,40 @@ SQLRETURN WINAPI SQLGetInfo(SQLHDBC ConnectionHandle, SQLUSMALLINT InfoType, SQL
     return ret;
 }
 
+static SQLRETURN get_stmt_attr_unix_a( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER buflen,
+                                       SQLINTEGER *retlen )
+{
+    struct SQLGetStmtAttr_params params = { handle->unix_handle, attr, value, buflen, retlen };
+    return ODBC_CALL( SQLGetStmtAttr, &params );
+}
+
+static SQLRETURN get_stmt_attr_win32_a( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER buflen,
+                                        SQLINTEGER *retlen )
+{
+    if (handle->win32_funcs->SQLGetStmtAttr)
+        return handle->win32_funcs->SQLGetStmtAttr( handle->win32_handle, attr, value, buflen, retlen );
+
+    if (handle->win32_funcs->SQLGetStmtAttrW)
+    {
+        SQLRETURN ret;
+        WCHAR *strW;
+
+        if (buflen == SQL_IS_POINTER || buflen < SQL_LEN_BINARY_ATTR_OFFSET)
+            return handle->win32_funcs->SQLGetStmtAttrW( handle->win32_handle, attr, value, buflen, retlen );
+
+        if (!(strW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+        ret = handle->win32_funcs->SQLGetStmtAttrW( handle->win32_handle, attr, strW, buflen, retlen );
+        if (SUCCESS( ret ))
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, (char *)value, buflen, NULL, NULL );
+            if (retlen) *retlen = len - 1;
+        }
+        free( strW );
+    }
+
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetStmtAttr           [ODBC32.038]
  */
@@ -2458,12 +2490,11 @@ SQLRETURN WINAPI SQLGetStmtAttr(SQLHSTMT StatementHandle, SQLINTEGER Attribute, 
 
     if (handle->unix_handle)
     {
-        struct SQLGetStmtAttr_params params = { handle->unix_handle, Attribute, Value, BufferLength, StringLength };
-        ret = ODBC_CALL( SQLGetStmtAttr, &params );
+        ret = get_stmt_attr_unix_a( handle, Attribute, Value, BufferLength, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetStmtAttr( handle->win32_handle, Attribute, Value, BufferLength, StringLength );
+        ret = get_stmt_attr_win32_a( handle, Attribute, Value, BufferLength, StringLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4860,6 +4891,22 @@ SQLRETURN WINAPI SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMA
     return ret;
 }
 
+static SQLRETURN get_stmt_attr_unix_w( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER buflen,
+                                       SQLINTEGER *retlen )
+{
+    struct SQLGetStmtAttrW_params params = { handle->unix_handle, attr, value, buflen, retlen };
+    return ODBC_CALL( SQLGetStmtAttrW, &params );
+}
+
+static SQLRETURN get_stmt_attr_win32_w( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER buflen,
+                                        SQLINTEGER *retlen )
+{
+    if (handle->win32_funcs->SQLGetStmtAttrW)
+        return handle->win32_funcs->SQLGetStmtAttrW( handle->win32_handle, attr, value, buflen, retlen );
+    if (handle->win32_funcs->SQLGetStmtAttr) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetStmtAttrW          [ODBC32.138]
  */
@@ -4882,12 +4929,11 @@ SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
 
     if (handle->unix_handle)
     {
-        struct SQLGetStmtAttrW_params params = { handle->unix_handle, Attribute, Value, BufferLength, StringLength };
-        ret = ODBC_CALL( SQLGetStmtAttrW, &params );
+        ret = get_stmt_attr_unix_w( handle, Attribute, Value, BufferLength, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetStmtAttrW( handle->win32_handle, Attribute, Value, BufferLength, StringLength );
+        ret = get_stmt_attr_win32_w( handle, Attribute, Value, BufferLength, StringLength );
     }
 
     TRACE("Returning %d\n", ret);
