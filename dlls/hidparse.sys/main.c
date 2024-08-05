@@ -644,60 +644,116 @@ done:
     return data;
 }
 
+static BYTE **parse_top_level_collections( BYTE *descriptor, unsigned int length, ULONG *count )
+{
+    BYTE *ptr, *end, **tmp, **tlcs;
+    UINT32 size, depth = 0;
+
+    if (!(tlcs = malloc( sizeof(*tlcs) ))) return NULL;
+    tlcs[0] = descriptor;
+    *count = 0;
+
+    for (ptr = descriptor, end = descriptor + length; ptr != end; ptr += size + 1)
+    {
+        size = (*ptr & 0x03);
+        if (size == 3) size = 4;
+        if (ptr + size > end)
+        {
+            ERR( "Need %d bytes to read item value\n", size );
+            break;
+        }
+
+#define SHORT_ITEM( tag, type ) (((tag) << 4) | ((type) << 2))
+        switch (*ptr & SHORT_ITEM( 0xf, 0x3 ))
+        {
+        case SHORT_ITEM( TAG_MAIN_COLLECTION, TAG_TYPE_MAIN ):
+            if (depth++) break;
+            break;
+        case SHORT_ITEM( TAG_MAIN_END_COLLECTION, TAG_TYPE_MAIN ):
+            if (--depth) break;
+            *count = *count + 1;
+            if (!(tmp = realloc( tlcs, (*count + 1) * sizeof(*tlcs) )))
+            {
+                ERR( "Failed to allocate memory for TLCs\n" );
+                return tlcs;
+            }
+            tlcs = tmp;
+            tlcs[*count] = ptr + size + 1;
+            break;
+        }
+#undef SHORT_ITEM
+    }
+
+    TRACE( "Found %lu TLCs\n", *count );
+    return tlcs;
+}
+
 NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_desc, ULONG report_desc_len,
                                                POOL_TYPE pool_type, HIDP_DEVICE_DESC *device_desc )
 {
-    ULONG i, len, report_count = 0, input_len[256] = {0}, output_len[256] = {0}, feature_len[256] = {0};
+    ULONG i, len, tlc_count, report_count = 0, input_len[256] = {0}, output_len[256] = {0}, feature_len[256] = {0}, collection[256] = {0};
     struct hid_value_caps *caps, *caps_end;
     struct hid_preparsed_data *preparsed;
+    BYTE **tlcs;
 
     TRACE( "report_desc %p, report_desc_len %lu, pool_type %u, device_desc %p.\n",
             report_desc, report_desc_len, pool_type, device_desc );
 
     memset( device_desc, 0, sizeof(*device_desc) );
 
-    len = sizeof(*device_desc->CollectionDesc);
+    if (!(tlcs = parse_top_level_collections( report_desc, report_desc_len, &tlc_count ))) goto failed;
+
+    len = sizeof(*device_desc->CollectionDesc) * tlc_count;
     if (!(device_desc->CollectionDesc = ExAllocatePool( pool_type, len ))) goto failed;
 
-    if (!(preparsed = parse_descriptor( report_desc, report_desc_len, pool_type ))) goto failed;
-    len = preparsed->caps_size + FIELD_OFFSET(struct hid_preparsed_data, value_caps[0]) +
-          preparsed->number_link_collection_nodes * sizeof(struct hid_collection_node);
-
-    device_desc->CollectionDescLength = 1;
-    device_desc->CollectionDesc[0].UsagePage = preparsed->usage_page;
-    device_desc->CollectionDesc[0].Usage = preparsed->usage;
-    device_desc->CollectionDesc[0].CollectionNumber = 1;
-    device_desc->CollectionDesc[0].InputLength = preparsed->input_report_byte_length;
-    device_desc->CollectionDesc[0].OutputLength = preparsed->output_report_byte_length;
-    device_desc->CollectionDesc[0].FeatureLength = preparsed->feature_report_byte_length;
-    device_desc->CollectionDesc[0].PreparsedDataLength = len;
-    device_desc->CollectionDesc[0].PreparsedData = (PHIDP_PREPARSED_DATA)preparsed;
-
-    caps = HID_INPUT_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->input_caps_end - preparsed->input_caps_start;
-    for (; caps != caps_end; ++caps)
+    for (i = 0; i < tlc_count; ++i)
     {
-        len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
-        if (!input_len[caps->report_id]) report_count++;
-        input_len[caps->report_id] = max(input_len[caps->report_id], len);
-    }
+        TRACE( "parsing TLC %lu, start %p, end %p\n", i, tlcs[i], tlcs[i + 1] );
 
-    caps = HID_OUTPUT_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->output_caps_end - preparsed->output_caps_start;
-    for (; caps != caps_end; ++caps)
-    {
-        len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
-        if (!input_len[caps->report_id] && !output_len[caps->report_id]) report_count++;
-        output_len[caps->report_id] = max(output_len[caps->report_id], len);
-    }
+        if (!(preparsed = parse_descriptor( tlcs[i], tlcs[i + 1] - tlcs[i], pool_type ))) goto failed;
 
-    caps = HID_FEATURE_VALUE_CAPS( preparsed );
-    caps_end = caps + preparsed->feature_caps_end - preparsed->feature_caps_start;
-    for (; caps != caps_end; ++caps)
-    {
-        len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
-        if (!input_len[caps->report_id] && !output_len[caps->report_id] && !feature_len[caps->report_id]) report_count++;
-        feature_len[caps->report_id] = max(feature_len[caps->report_id], len);
+        len = preparsed->caps_size + FIELD_OFFSET(struct hid_preparsed_data, value_caps[0]) +
+              preparsed->number_link_collection_nodes * sizeof(struct hid_collection_node);
+
+        device_desc->CollectionDescLength++;
+        device_desc->CollectionDesc[i].UsagePage = preparsed->usage_page;
+        device_desc->CollectionDesc[i].Usage = preparsed->usage;
+        device_desc->CollectionDesc[i].CollectionNumber = i + 1;
+        device_desc->CollectionDesc[i].InputLength = preparsed->input_report_byte_length;
+        device_desc->CollectionDesc[i].OutputLength = preparsed->output_report_byte_length;
+        device_desc->CollectionDesc[i].FeatureLength = preparsed->feature_report_byte_length;
+        device_desc->CollectionDesc[i].PreparsedDataLength = len;
+        device_desc->CollectionDesc[i].PreparsedData = (PHIDP_PREPARSED_DATA)preparsed;
+
+        caps = HID_INPUT_VALUE_CAPS( preparsed );
+        caps_end = caps + preparsed->input_caps_end - preparsed->input_caps_start;
+        for (; caps != caps_end; ++caps)
+        {
+            len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
+            if (!input_len[caps->report_id]) report_count++;
+            input_len[caps->report_id] = max(input_len[caps->report_id], len);
+            collection[caps->report_id] = i;
+        }
+
+        caps = HID_OUTPUT_VALUE_CAPS( preparsed );
+        caps_end = caps + preparsed->output_caps_end - preparsed->output_caps_start;
+        for (; caps != caps_end; ++caps)
+        {
+            len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
+            if (!input_len[caps->report_id] && !output_len[caps->report_id]) report_count++;
+            output_len[caps->report_id] = max(output_len[caps->report_id], len);
+            collection[caps->report_id] = i;
+        }
+
+        caps = HID_FEATURE_VALUE_CAPS( preparsed );
+        caps_end = caps + preparsed->feature_caps_end - preparsed->feature_caps_start;
+        for (; caps != caps_end; ++caps)
+        {
+            len = caps->start_byte * 8 + caps->start_bit + caps->bit_size * caps->report_count;
+            if (!input_len[caps->report_id] && !output_len[caps->report_id] && !feature_len[caps->report_id]) report_count++;
+            feature_len[caps->report_id] = max(feature_len[caps->report_id], len);
+            collection[caps->report_id] = i;
+        }
     }
 
     len = sizeof(*device_desc->ReportIDs) * report_count;
@@ -707,7 +763,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     {
         if (!input_len[i] && !output_len[i] && !feature_len[i]) continue;
         device_desc->ReportIDs[report_count].ReportID = i;
-        device_desc->ReportIDs[report_count].CollectionNumber = 1;
+        device_desc->ReportIDs[report_count].CollectionNumber = collection[i] + 1;
         device_desc->ReportIDs[report_count].InputLength = (input_len[i] + 7) / 8;
         device_desc->ReportIDs[report_count].OutputLength = (output_len[i] + 7) / 8;
         device_desc->ReportIDs[report_count].FeatureLength = (feature_len[i] + 7) / 8;
@@ -715,6 +771,7 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     }
     device_desc->ReportIDsLength = report_count;
 
+    free( tlcs );
     return HIDP_STATUS_SUCCESS;
 
 failed:
@@ -724,6 +781,7 @@ failed:
             ExFreePool( device_desc->CollectionDesc[i].PreparsedData );
         ExFreePool( device_desc->CollectionDesc );
     }
+    free( tlcs );
     return HIDP_STATUS_INTERNAL_ERROR;
 }
 
