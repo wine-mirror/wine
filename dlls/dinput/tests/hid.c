@@ -4035,8 +4035,27 @@ static void test_hid_multiple_tlc(void)
             .usage_page = 0x01,
         },
     };
+    struct hid_expect input[] =
+    {
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_len = desc.caps.InputReportByteLength,
+            .report_buf = {1,0x01,0x02,0x03,0x04,0x05,0x06},
+            .ret_length = 6,
+            .ret_status = STATUS_SUCCESS,
+        },
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_len = desc.caps.InputReportByteLength,
+            .report_buf = {2,0x11,0x12,0x13,0x14,0x15,0x16},
+            .ret_length = 6,
+            .ret_status = STATUS_SUCCESS,
+        },
+    };
 
     WCHAR device_path[MAX_PATH];
+    char report[16];
+    ULONG value;
     HANDLE file;
     BOOL ret;
 
@@ -4058,6 +4077,17 @@ static void test_hid_multiple_tlc(void)
     ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     check_preparsed_data( file, &expect_kdr_joystick, ARRAY_SIZE(expect_caps_joystick), expect_caps_joystick,
                           ARRAY_SIZE(expect_nodes_joystick), expect_nodes_joystick );
+
+    send_hid_input( file, input, sizeof(input) );
+
+    memset( report, 0xcd, sizeof(report) );
+    SetLastError( 0xdeadbeef );
+    ret = ReadFile( file, report, desc.caps.InputReportByteLength, &value, NULL );
+    ok( ret, "ReadFile failed, last error %lu\n", GetLastError() );
+    ok( value == 6, "ReadFile returned %lx\n", value );
+    ok( report[0] == 1, "unexpected report data\n" );
+    ok( report[1] == 0x01, "unexpected report data\n" );
+
     CloseHandle( file );
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x&col02", desc.attributes.VendorID,
@@ -4070,6 +4100,17 @@ static void test_hid_multiple_tlc(void)
     ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
     check_preparsed_data( file, &expect_kdr_gamepad, ARRAY_SIZE(expect_caps_gamepad), expect_caps_gamepad,
                           ARRAY_SIZE(expect_nodes_gamepad), expect_nodes_gamepad );
+
+    send_hid_input( file, input, sizeof(input) );
+
+    memset( report, 0xcd, sizeof(report) );
+    SetLastError( 0xdeadbeef );
+    ret = ReadFile( file, report, desc.caps.InputReportByteLength, &value, NULL );
+    ok( ret, "ReadFile failed, last error %lu\n", GetLastError() );
+    ok( value == 6, "ReadFile returned %lx\n", value );
+    ok( report[0] == 2, "unexpected report data\n" );
+    ok( report[1] == 0x11, "unexpected report data\n" );
+
     CloseHandle( file );
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x&col03", desc.attributes.VendorID,
