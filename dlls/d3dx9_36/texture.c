@@ -562,6 +562,17 @@ static D3DFORMAT get_alpha_replacement_format(D3DFORMAT format)
     return format;
 }
 
+static uint32_t d3dx9_get_mip_filter_value(uint32_t mip_filter, uint32_t *skip_levels)
+{
+    uint32_t filter = (mip_filter == D3DX_DEFAULT) ? D3DX_FILTER_BOX : mip_filter & ~D3DX9_FILTER_INVALID_BITS;
+
+    *skip_levels = mip_filter != D3DX_DEFAULT ? mip_filter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
+    *skip_levels &= D3DX_SKIP_DDS_MIP_LEVELS_MASK;
+    if (!(filter & 0x7) || (filter & 0x7) > D3DX_FILTER_BOX)
+        filter = (filter & 0x007f0000) | D3DX_FILTER_BOX;
+    return filter;
+}
+
 HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *device, const void *srcdata,
         UINT srcdatasize, UINT width, UINT height, UINT miplevels, DWORD usage, D3DFORMAT format,
         D3DPOOL pool, DWORD filter, DWORD mipfilter, D3DCOLOR colorkey, D3DXIMAGE_INFO *srcinfo,
@@ -587,8 +598,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         return D3DERR_INVALIDCALL;
 
     staging_tex = tex = *texture = NULL;
-    skip_levels = mipfilter != D3DX_DEFAULT ? mipfilter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
-    skip_levels &= D3DX_SKIP_DDS_MIP_LEVELS_MASK;
+    mipfilter = d3dx9_get_mip_filter_value(mipfilter, &skip_levels);
     hr = d3dx_image_init(srcdata, srcdatasize, &image, skip_levels, 0);
     if (FAILED(hr))
     {
@@ -1115,8 +1125,7 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
         return D3DERR_INVALIDCALL;
 
     staging_tex = tex = *volume_texture = NULL;
-    skip_levels = mip_filter != D3DX_DEFAULT ? mip_filter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
-    skip_levels &= D3DX_SKIP_DDS_MIP_LEVELS_MASK;
+    mip_filter = d3dx9_get_mip_filter_value(mip_filter, &skip_levels);
     hr = d3dx_image_init(data, data_size, &image, skip_levels, 0);
     if (FAILED(hr))
     {
@@ -1397,8 +1406,7 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
         return D3DERR_INVALIDCALL;
 
     staging_tex = tex = *cube_texture = NULL;
-    skip_levels = mip_filter != D3DX_DEFAULT ? mip_filter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
-    skip_levels &= D3DX_SKIP_DDS_MIP_LEVELS_MASK;
+    mip_filter = d3dx9_get_mip_filter_value(mip_filter, &skip_levels);
     hr = d3dx_image_init(src_data, src_data_size, &image, skip_levels, 0);
     if (FAILED(hr))
     {

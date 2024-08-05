@@ -33,6 +33,8 @@
 
 #define FOURCC_TX_1 0x54580100
 
+#define D3DX9_FILTER_INVALID_BITS 0xff80fff8
+
 struct vec4
 {
     float x, y, z, w;

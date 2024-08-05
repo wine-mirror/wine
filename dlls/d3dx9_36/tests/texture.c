@@ -2186,7 +2186,7 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
         texture = NULL;
         hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit), 32, 32, 6,
             0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, test_filter_values[i].filter, 0, NULL, NULL, &texture);
-        todo_wine_if(FAILED(hr)) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         if (texture)
             IDirect3DTexture9_Release(texture);
 
@@ -2568,7 +2568,7 @@ static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
         hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map, sizeof(dds_cube_map), D3DX_DEFAULT,
                 D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, test_filter_values[i].filter,
                 0, NULL, NULL, &cube_texture);
-        todo_wine_if(FAILED(hr)) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         if (cube_texture)
             IDirect3DCubeTexture9_Release(cube_texture);
 
@@ -2874,7 +2874,7 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
         hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
                 D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
                 D3DX_DEFAULT, test_filter_values[i].filter, 0, NULL, NULL, &texture);
-        todo_wine_if(FAILED(hr)) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         if (texture)
             IDirect3DVolumeTexture9_Release(texture);
 
