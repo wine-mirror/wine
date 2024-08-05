@@ -730,7 +730,6 @@ void hid_device_stop( struct hid_device_desc *desc, UINT count )
     for (i = 0; i < count; ++i)
     {
         ret = WaitForSingleObject( device_removed, i > 0 ? 500 : 5000 );
-        todo_wine_if(i > 0)
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
 }
@@ -755,7 +754,6 @@ BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout 
     for (i = 0; i < count; ++i)
     {
         ret = WaitForSingleObject( device_added, timeout );
-        todo_wine_if(i > 0)
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
 
@@ -4068,9 +4066,7 @@ static void test_hid_multiple_tlc(void)
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x&col01", desc.attributes.VendorID,
               desc.attributes.ProductID );
     ret = find_hid_device_path( device_path );
-    todo_wine
     ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
-    if (!ret) goto done;
 
     file = CreateFileW( device_path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );

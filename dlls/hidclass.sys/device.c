@@ -303,6 +303,7 @@ static HIDP_REPORT_IDS *find_report_with_type_and_id( BASE_DEVICE_EXTENSION *ext
 
     for (report = reports; report != reports + report_count; report++)
     {
+        if (ext->u.pdo.collection_desc->CollectionNumber != report->CollectionNumber) continue;
         if (!any_id && report->ReportID && report->ReportID != id) continue;
         if (type == HidP_Input && report->InputLength) return report;
         if (type == HidP_Output && report->OutputLength) return report;

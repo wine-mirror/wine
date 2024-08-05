@@ -218,6 +218,7 @@ static NTSTATUS get_hid_device_desc( minidriver *minidriver, DEVICE_OBJECT *devi
 static NTSTATUS initialize_device( minidriver *minidriver, DEVICE_OBJECT *device )
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    ULONG index = HID_STRING_ID_ISERIALNUMBER;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
@@ -226,6 +227,14 @@ static NTSTATUS initialize_device( minidriver *minidriver, DEVICE_OBJECT *device
     if (io.Status != STATUS_SUCCESS)
     {
         ERR( "Minidriver failed to get attributes, status %#lx.\n", io.Status );
+        return io.Status;
+    }
+
+    call_minidriver( IOCTL_HID_GET_STRING, device, ULongToPtr(index), sizeof(index),
+                     &ext->u.fdo.serial, sizeof(ext->u.fdo.serial), &io );
+    if (io.Status != STATUS_SUCCESS)
+    {
+        ERR( "Minidriver failed to get serial number, status %#lx.\n", io.Status );
         return io.Status;
     }
 
@@ -252,47 +261,67 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
     WCHAR pdo_name[255];
     USAGE page, usage;
     NTSTATUS status;
+    INT i;
 
-    swprintf( pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p", device->DriverObject,
-              fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject );
-    RtlInitUnicodeString(&string, pdo_name);
-    if ((status = IoCreateDevice( device->DriverObject, sizeof(*pdo_ext), &string, 0, 0, FALSE, &child_pdo )))
+    for (i = 0; i < fdo_ext->u.fdo.device_desc.CollectionDescLength; ++i)
     {
-        ERR( "Failed to create child PDO, status %#lx.\n", status );
-        return status;
+        if (fdo_ext->u.fdo.device_desc.CollectionDescLength > 1)
+            swprintf( pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p&%d", device->DriverObject,
+                      fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, i );
+        else
+            swprintf( pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p", device->DriverObject,
+                      fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject );
+
+        RtlInitUnicodeString(&string, pdo_name);
+        if ((status = IoCreateDevice( device->DriverObject, sizeof(*pdo_ext), &string, 0, 0, FALSE, &child_pdo )))
+        {
+            ERR( "Failed to create child PDO, status %#lx.\n", status );
+            return status;
+        }
+
+        fdo_ext->u.fdo.child_pdos[i] = child_pdo;
+        fdo_ext->u.fdo.child_count++;
+
+        pdo_ext = child_pdo->DeviceExtension;
+        pdo_ext->u.pdo.parent_fdo = device;
+        list_init( &pdo_ext->u.pdo.queues );
+        KeInitializeSpinLock( &pdo_ext->u.pdo.queues_lock );
+
+        pdo_ext->u.pdo.collection_desc = fdo_ext->u.fdo.device_desc.CollectionDesc + i;
+
+        if (fdo_ext->u.fdo.device_desc.CollectionDescLength > 1)
+        {
+            swprintf( pdo_ext->device_id, ARRAY_SIZE(pdo_ext->device_id), L"%s&Col%02d",
+                      fdo_ext->device_id, pdo_ext->u.pdo.collection_desc->CollectionNumber );
+            swprintf( pdo_ext->instance_id, ARRAY_SIZE(pdo_ext->instance_id), L"%u&%s&%x&%u&%04u",
+                      fdo_ext->u.fdo.attrs.VersionNumber, fdo_ext->u.fdo.serial, 0, 0, i );
+        }
+        else
+        {
+            wcscpy( pdo_ext->device_id, fdo_ext->device_id );
+            wcscpy( pdo_ext->instance_id, fdo_ext->instance_id );
+        }
+        wcscpy(pdo_ext->container_id, fdo_ext->container_id);
+        pdo_ext->class_guid = fdo_ext->class_guid;
+
+        pdo_ext->u.pdo.information.VendorID = fdo_ext->u.fdo.attrs.VendorID;
+        pdo_ext->u.pdo.information.ProductID = fdo_ext->u.fdo.attrs.ProductID;
+        pdo_ext->u.pdo.information.VersionNumber = fdo_ext->u.fdo.attrs.VersionNumber;
+        pdo_ext->u.pdo.information.Polled = minidriver->minidriver.DevicesArePolled;
+        pdo_ext->u.pdo.information.DescriptorSize = pdo_ext->u.pdo.collection_desc->PreparsedDataLength;
+
+        page = pdo_ext->u.pdo.collection_desc->UsagePage;
+        usage = pdo_ext->u.pdo.collection_desc->Usage;
+        if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_MOUSE)
+            pdo_ext->u.pdo.rawinput_handle = WINE_MOUSE_HANDLE;
+        else if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_KEYBOARD)
+            pdo_ext->u.pdo.rawinput_handle = WINE_KEYBOARD_HANDLE;
+        else
+            pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
+        pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
+
+        TRACE( "created device %p, rawinput handle %#x\n", pdo_ext, pdo_ext->u.pdo.rawinput_handle );
     }
-    fdo_ext->u.fdo.child_pdos[0] = child_pdo;
-    fdo_ext->u.fdo.child_count++;
-
-    pdo_ext = child_pdo->DeviceExtension;
-    pdo_ext->u.pdo.parent_fdo = device;
-    list_init( &pdo_ext->u.pdo.queues );
-    KeInitializeSpinLock( &pdo_ext->u.pdo.queues_lock );
-
-    pdo_ext->u.pdo.collection_desc = fdo_ext->u.fdo.device_desc.CollectionDesc;
-
-    wcscpy(pdo_ext->device_id, fdo_ext->device_id);
-    wcscpy(pdo_ext->instance_id, fdo_ext->instance_id);
-    wcscpy(pdo_ext->container_id, fdo_ext->container_id);
-    pdo_ext->class_guid = fdo_ext->class_guid;
-
-    pdo_ext->u.pdo.information.VendorID = fdo_ext->u.fdo.attrs.VendorID;
-    pdo_ext->u.pdo.information.ProductID = fdo_ext->u.fdo.attrs.ProductID;
-    pdo_ext->u.pdo.information.VersionNumber = fdo_ext->u.fdo.attrs.VersionNumber;
-    pdo_ext->u.pdo.information.Polled = minidriver->minidriver.DevicesArePolled;
-    pdo_ext->u.pdo.information.DescriptorSize = pdo_ext->u.pdo.collection_desc->PreparsedDataLength;
-
-    page = pdo_ext->u.pdo.collection_desc->UsagePage;
-    usage = pdo_ext->u.pdo.collection_desc->Usage;
-    if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_MOUSE)
-        pdo_ext->u.pdo.rawinput_handle = WINE_MOUSE_HANDLE;
-    else if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_KEYBOARD)
-        pdo_ext->u.pdo.rawinput_handle = WINE_KEYBOARD_HANDLE;
-    else
-        pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
-    pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
-
-    TRACE( "created device %p, rawinput handle %#x\n", pdo_ext, pdo_ext->u.pdo.rawinput_handle );
 
     IoInvalidateDeviceRelations( fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations );
     return STATUS_SUCCESS;
