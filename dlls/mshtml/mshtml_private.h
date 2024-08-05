@@ -412,7 +412,8 @@ typedef struct {
     X(HTMLBodyElement)                     \
     X(HTMLElement)                         \
     X(Navigator)                           \
-    X(Node)
+    X(Node)                                \
+    X(Storage)
 
 typedef enum {
     PROT_NONE,

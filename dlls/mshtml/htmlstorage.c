@@ -1278,7 +1278,7 @@ static HRESULT HTMLStorage_get_prop_desc(DispatchEx *dispex, DISPID id, struct p
     return S_OK;
 }
 
-static const dispex_static_data_vtbl_t HTMLStorage_dispex_vtbl = {
+static const dispex_static_data_vtbl_t Storage_dispex_vtbl = {
     .query_interface  = HTMLStorage_query_interface,
     .destructor       = HTMLStorage_destructor,
     .traverse         = HTMLStorage_traverse,
@@ -1294,11 +1294,12 @@ static const tid_t HTMLStorage_iface_tids[] = {
     IHTMLStorage_tid,
     0
 };
-static dispex_static_data_t HTMLStorage_dispex = {
-    "Storage",
-    &HTMLStorage_dispex_vtbl,
-    IHTMLStorage_tid,
-    HTMLStorage_iface_tids
+dispex_static_data_t Storage_dispex = {
+    .name       = "Storage",
+    .id         = PROT_Storage,
+    .vtbl       = &Storage_dispex_vtbl,
+    .disp_tid   = IHTMLStorage_tid,
+    .iface_tids = HTMLStorage_iface_tids,
 };
 
 static HRESULT build_session_origin(IUri *uri, BSTR hostname, BSTR *ret)
@@ -1451,7 +1452,7 @@ HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **
     storage->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    init_dispatch(&storage->dispex, &HTMLStorage_dispex, window,
+    init_dispatch(&storage->dispex, &Storage_dispex, window,
                   dispex_compat_mode(&window->event_target.dispex));
 
     *p = &storage->IHTMLStorage_iface;

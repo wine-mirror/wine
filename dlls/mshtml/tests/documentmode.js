@@ -3127,4 +3127,6 @@ sync_test("prototypes", function() {
     check(HTMLElement.prototype, Element.prototype, "html element prototype");
     check(Element.prototype, Node.prototype, "element prototype");
     check(Node.prototype, Object.prototype, "node prototype");
+    check(sessionStorage, Storage.prototype, "storage");
+    check(Storage.prototype, Object.prototype, "storage prototype");
 });
