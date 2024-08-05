@@ -46,6 +46,7 @@ struct http_receive_request_params
 struct http_response
 {
     HTTP_REQUEST_ID id;
+    ULONG response_flags;
     int len;
     char buffer[1];
 };
