@@ -430,8 +430,8 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
             queue, wine_dbgstr_longlong(id), flags, response, cache_policy,
             ret_size, reserved1, reserved2, ovl, log_data);
 
-    if (flags)
-        FIXME("Unhandled flags %#lx.\n", flags);
+    if (flags & ~HTTP_SEND_RESPONSE_FLAG_MORE_DATA)
+        FIXME("Unhandled flags %#lx.\n", flags & ~HTTP_SEND_RESPONSE_FLAG_MORE_DATA);
     if (response->s.Flags)
         FIXME("Unhandled response flags %#lx.\n", response->s.Flags);
     if (cache_policy)
@@ -456,7 +456,7 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
             len += 37;
         else if (response->s.Headers.KnownHeaders[i].RawValueLength)
             len += strlen(header_names[i]) + 2 + response->s.Headers.KnownHeaders[i].RawValueLength + 2;
-        else if (i == HttpHeaderContentLength)
+        else if (i == HttpHeaderContentLength && !(flags & HTTP_SEND_RESPONSE_FLAG_MORE_DATA))
         {
             char dummy[12];
             len += strlen(header_names[i]) + 2 + sprintf(dummy, "%d", body_len) + 2;
@@ -472,6 +472,7 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
     if (!(buffer = malloc(offsetof(struct http_response, buffer[len]))))
         return ERROR_OUTOFMEMORY;
     buffer->id = id;
+    buffer->response_flags = flags;
     buffer->len = len;
     sprintf(buffer->buffer, "HTTP/1.1 %u %.*s\r\n", response->s.StatusCode,
             response->s.ReasonLength, response->s.pReason);
@@ -484,7 +485,7 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
         else if (header->RawValueLength)
             sprintf(buffer->buffer + strlen(buffer->buffer), "%s: %.*s\r\n",
                     header_names[i], header->RawValueLength, header->pRawValue);
-        else if (i == HttpHeaderContentLength)
+        else if (i == HttpHeaderContentLength && !(flags & HTTP_SEND_RESPONSE_FLAG_MORE_DATA))
             sprintf(buffer->buffer + strlen(buffer->buffer), "Content-Length: %d\r\n", body_len);
     }
     for (i = 0; i < response->s.Headers.UnknownHeaderCount; ++i)
