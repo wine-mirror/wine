@@ -326,6 +326,7 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformation( UINT *args )
     case SystemCurrentTimeZoneInformation:   /* RTL_TIME_ZONE_INFORMATION */
     case SystemRecommendedSharedDataAlignment:  /* ULONG */
     case SystemFirmwareTableInformation:  /* SYSTEM_FIRMWARE_TABLE_INFORMATION */
+    case SystemProcessorIdleCycleTimeInformation:  /* ULONG64[] */
     case SystemDynamicTimeZoneInformation:  /* RTL_DYNAMIC_TIME_ZONE_INFORMATION */
     case SystemCodeIntegrityInformation:  /* SYSTEM_CODEINTEGRITY_INFORMATION */
     case SystemKernelDebuggerInformationEx:  /* SYSTEM_KERNEL_DEBUGGER_INFORMATION_EX */
@@ -622,17 +623,19 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformationEx( UINT *args )
     HANDLE handle;
     NTSTATUS status;
 
-    if (!query || query_len < sizeof(LONG)) return STATUS_INVALID_PARAMETER;
-    handle = LongToHandle( *(LONG *)query );
-
     switch (class)
     {
+    case SystemProcessorIdleCycleTimeInformation:
+        return NtQuerySystemInformationEx( class, query, query_len, ptr, len, retlen );
+
     case SystemLogicalProcessorInformationEx:  /* SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX */
     {
         SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX32 *ex32, *info32 = ptr;
         SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *ex, *info;
         ULONG size, size32, pos = 0, pos32 = 0;
 
+        if (!query || query_len < sizeof(LONG)) return STATUS_INVALID_PARAMETER;
+        handle = LongToHandle( *(LONG *)query );
         status = NtQuerySystemInformationEx( class, &handle, sizeof(handle), NULL, 0, &size );
         if (status != STATUS_INFO_LENGTH_MISMATCH) return status;
         info = Wow64AllocateTemp( size );
@@ -676,6 +679,8 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformationEx( UINT *args )
 
     case SystemCpuSetInformation:  /* SYSTEM_CPU_SET_INFORMATION */
     case SystemSupportedProcessorArchitectures:  /* SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION */
+        if (!query || query_len < sizeof(LONG)) return STATUS_INVALID_PARAMETER;
+        handle = LongToHandle( *(LONG *)query );
         return NtQuerySystemInformationEx( class, &handle, sizeof(handle), ptr, len, retlen );
 
     default:

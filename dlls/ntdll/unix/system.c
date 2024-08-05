@@ -3258,6 +3258,13 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
+    case SystemProcessorIdleCycleTimeInformation: /* 83 */
+    {
+        ULONG group_id = 0; /* FIXME: should probably be current CPU group id. */
+
+        return NtQuerySystemInformationEx( class, &group_id, sizeof(group_id), info, size, ret_size );
+    }
+
     case SystemProcessIdInformation: /* 88 */
     {
         SYSTEM_PROCESS_ID_INFORMATION *id = info;
@@ -3407,6 +3414,19 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
 
     switch (class)
     {
+    case SystemProcessorIdleCycleTimeInformation:
+        len = peb->NumberOfProcessors * sizeof(ULONG64);
+        if (!query || query_len < sizeof(USHORT) || *(USHORT *)query) return STATUS_INVALID_PARAMETER;
+        if (size < len)
+        {
+            ret = STATUS_BUFFER_TOO_SMALL;
+            break;
+        }
+        FIXME( "SystemProcessorIdleCycleTimeInformation stub.\n" );
+        memset( info, 0, len );
+        ret = STATUS_SUCCESS;
+        break;
+
     case SystemLogicalProcessorInformationEx:
     {
         SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *p;

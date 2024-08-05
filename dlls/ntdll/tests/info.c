@@ -4019,6 +4019,51 @@ static void test_process_id(void)
     }
 }
 
+static void test_processor_idle_cycle_time(void)
+{
+    unsigned int cpu_count = NtCurrentTeb()->Peb->NumberOfProcessors;
+    ULONG64 buffer[64];
+    NTSTATUS status;
+    USHORT group_id;
+    ULONG size;
+
+    size = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessorIdleCycleTimeInformation, NULL, 0, &size );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx.\n", status );
+    ok( size == cpu_count * sizeof(*buffer), "got %#lx.\n", size );
+
+    size = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessorIdleCycleTimeInformation, buffer, 7, &size );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx.\n", status );
+    ok( size == cpu_count * sizeof(*buffer), "got %#lx.\n", size );
+
+    size = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessorIdleCycleTimeInformation, NULL, sizeof(buffer), &size );
+    ok( status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status );
+    ok( size == 0xdeadbeef, "got %#lx.\n", size );
+
+    size = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessorIdleCycleTimeInformation, buffer, sizeof(buffer), &size );
+    ok( !status, "got %#lx.\n", status );
+    ok( size == cpu_count * sizeof(*buffer), "got %#lx.\n", size );
+
+    memset( buffer, 0xcc, sizeof(buffer) );
+    size = 0xdeadbeef;
+    status = pNtQuerySystemInformationEx( SystemProcessorIdleCycleTimeInformation, NULL, 0, buffer, sizeof(buffer), &size );
+    ok( status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status );
+    ok( size == 0xdeadbeef, "got %#lx.\n", size );
+    group_id = 50;
+    size = 0xdeadbeef;
+    status = pNtQuerySystemInformationEx( SystemProcessorIdleCycleTimeInformation, &group_id, sizeof(group_id), buffer, sizeof(buffer), &size );
+    ok( status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status );
+    ok( size == 0xdeadbeef, "got %#lx.\n", size );
+    group_id = 0;
+    size = 0xdeadbeef;
+    status = pNtQuerySystemInformationEx( SystemProcessorIdleCycleTimeInformation, &group_id, sizeof(group_id), buffer, sizeof(buffer), &size );
+    ok( status == STATUS_SUCCESS, "got %#lx.\n", status );
+    ok( size == cpu_count * sizeof(*buffer), "got %#lx.\n", size );
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -4098,4 +4143,5 @@ START_TEST(info)
     test_system_debug_control();
     test_process_token(argc, argv);
     test_process_id();
+    test_processor_idle_cycle_time();
 }
