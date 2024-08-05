@@ -893,12 +893,13 @@ static const tid_t HTMLBodyElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLBodyElement_dispex = {
-    "HTMLBodyElement",
-    &HTMLBodyElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLBody_tid,
-    HTMLBodyElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLBodyElement_dispex = {
+    .name         = "HTMLBodyElement",
+    .id           = PROT_HTMLBodyElement,
+    .vtbl         = &HTMLBodyElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLBody_tid,
+    .iface_tids   = HTMLBodyElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

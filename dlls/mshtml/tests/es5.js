@@ -2756,4 +2756,5 @@ sync_test("prototypes", function() {
     ok(document.implementation instanceof DOMImplementation, "document.implementation is not an instance of DOMImplementation");
     ok(navigator instanceof Navigator, "navigator is not an instance of Navigator");
     ok(!(navigator instanceof DOMImplementation), "navigator is an instance of DOMImplementation");
+    ok(document.body instanceof HTMLBodyElement, "body is not an instance of HTMLBodyElement");
 });

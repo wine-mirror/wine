@@ -3122,4 +3122,5 @@ sync_test("prototypes", function() {
     check(DOMImplementation.prototype, Object.prototype, "implementation prototype");
     check(window.navigator, Navigator.prototype, "navigator");
     check(Navigator.prototype, Object.prototype, "navigator prototype");
+    check(document.body, HTMLBodyElement.prototype, "body element");
 });
