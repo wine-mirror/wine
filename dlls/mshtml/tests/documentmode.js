@@ -3134,4 +3134,6 @@ sync_test("prototypes", function() {
         check(HTMLDocument.prototype, Document.prototype, "html document prototype");
         check(Document.prototype, Node.prototype, "document prototype");
     }
+    check(window, Window.prototype, "window");
+    check(Window.prototype, Object.prototype, "window prototype");
 });

@@ -45,8 +45,6 @@ static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
 };
 static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
 
-static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret);
-
 typedef struct {
     IID iid;
     VARIANT default_value;
@@ -2818,9 +2816,9 @@ static const dispex_static_data_vtbl_t prototype_dispex_vtbl = {
     .find_dispid = prototype_find_dispid,
 };
 
-static HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)
+HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)
 {
-    compat_mode_t compat_mode = dispex_compat_mode(&script_global->event_target.dispex);
+    compat_mode_t compat_mode = script_global->doc->document_mode;
     DispatchEx *prototype, *prot_prototype = NULL;
     dispex_static_data_t *desc;
     dispex_data_t *info;

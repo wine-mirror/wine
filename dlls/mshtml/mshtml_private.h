@@ -415,7 +415,8 @@ typedef struct {
     X(HTMLElement)                         \
     X(Navigator)                           \
     X(Node)                                \
-    X(Storage)
+    X(Storage)                             \
+    X(Window)
 
 typedef enum {
     PROT_NONE,
@@ -552,6 +553,7 @@ HRESULT dispex_define_property(DispatchEx *dispex, const WCHAR *name, DWORD flag
 HRESULT dispex_index_prop_desc(DispatchEx*,DISPID,struct property_info*);
 IWineJSDispatchHost *dispex_outer_iface(DispatchEx *dispex);
 HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret);
+HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret);
 
 typedef enum {
     DISPEXPROP_CUSTOM,

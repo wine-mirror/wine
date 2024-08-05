@@ -4207,14 +4207,12 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
     .set_current_event       = HTMLWindow_set_current_event
 };
 
-static const tid_t HTMLWindow_iface_tids[] = { 0 };
-
-static dispex_static_data_t HTMLWindow_dispex = {
-    "Window",
-    &HTMLWindow_event_target_vtbl.dispex_vtbl,
-    DispHTMLWindow2_tid,
-    HTMLWindow_iface_tids,
-    HTMLWindow_init_dispex_info
+dispex_static_data_t Window_dispex = {
+    .name       = "Window",
+    .id         = PROT_Window,
+    .vtbl       = &HTMLWindow_event_target_vtbl.dispex_vtbl,
+    .disp_tid   = DispHTMLWindow2_tid,
+    .init_info  = HTMLWindow_init_dispex_info,
 };
 
 static nsresult NSAPI outer_window_traverse(void *ccp, void *p, nsCycleCollectionTraversalCallback *cb)
@@ -4352,7 +4350,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
     window->base.outer_window = outer_window;
     window->base.inner_window = window;
 
-    init_event_target(&window->event_target, &HTMLWindow_dispex, NULL);
+    init_event_target(&window->event_target, &Window_dispex, NULL);
 
     window->task_magic = get_task_target_magic();
 
