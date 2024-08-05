@@ -48,6 +48,9 @@ typedef struct _BASE_DEVICE_EXTENSION
             /* this must be the first member */
             HID_DEVICE_EXTENSION hid_ext;
 
+            HID_DEVICE_ATTRIBUTES attrs;
+            HIDP_DEVICE_DESC device_desc;
+
             DEVICE_OBJECT *child_pdo;
         } fdo;
 
@@ -55,8 +58,8 @@ typedef struct _BASE_DEVICE_EXTENSION
         {
             DEVICE_OBJECT *parent_fdo;
 
+            HIDP_COLLECTION_DESC *collection_desc;
             HID_COLLECTION_INFORMATION information;
-            HIDP_DEVICE_DESC device_desc;
 
             ULONG poll_interval;
             HANDLE halt_event;
