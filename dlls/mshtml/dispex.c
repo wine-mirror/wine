@@ -1812,6 +1812,7 @@ static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global,
 
 static BOOL ensure_real_info(DispatchEx *dispex)
 {
+    compat_mode_t compat_mode;
     HTMLInnerWindow *script_global;
     DispatchEx *prototype = NULL;
 
@@ -1819,8 +1820,9 @@ static BOOL ensure_real_info(DispatchEx *dispex)
         return TRUE;
 
     script_global = dispex->info->vtbl->get_script_global(dispex);
+    compat_mode = script_global->doc->document_mode;
 
-    if(dispex->info->compat_mode >= COMPAT_MODE_IE9 && dispex->info->desc->id) {
+    if(compat_mode >= COMPAT_MODE_IE9 && dispex->info->desc->id) {
         HRESULT hres = get_prototype(script_global, dispex->info->desc->id, &prototype);
         if(FAILED(hres)) {
             ERR("could not get prototype: %08lx\n", hres);
@@ -1828,7 +1830,7 @@ static BOOL ensure_real_info(DispatchEx *dispex)
         }
     }
 
-    if (!(dispex->info = ensure_dispex_info(dispex->info->desc, script_global->doc->document_mode)))
+    if (!(dispex->info = ensure_dispex_info(dispex->info->desc, compat_mode)))
         return FALSE;
     init_host_object(dispex, script_global, prototype);
     return TRUE;

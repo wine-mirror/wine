@@ -408,8 +408,10 @@ typedef struct {
 
 #define ALL_PROTOTYPES                     \
     X(DOMImplementation)                   \
+    X(Document)                            \
     X(Element)                             \
     X(HTMLBodyElement)                     \
+    X(HTMLDocument)                        \
     X(HTMLElement)                         \
     X(Navigator)                           \
     X(Node)                                \

@@ -4250,7 +4250,6 @@ static void test_doc_obj(IHTMLDocument2 *doc)
         hres = IHTMLDocument2_Invoke(doc, has_own_prop_id, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, NULL, NULL);
         ok(hres == S_OK, "Invoke(hasOwnProperty(\"createElement\")) failed: %08lx\n", hres);
         ok(V_VT(&res) == VT_BOOL, "VT = %d\n", V_VT(&res));
-        todo_wine
         ok(V_BOOL(&res) == VARIANT_FALSE, "hasOwnProperty(\"createElement\") = %d\n", V_BOOL(&res));
 
         hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &V_BSTR(&arg), 1, 0, &dispid);

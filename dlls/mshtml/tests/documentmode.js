@@ -3129,4 +3129,9 @@ sync_test("prototypes", function() {
     check(Node.prototype, Object.prototype, "node prototype");
     check(sessionStorage, Storage.prototype, "storage");
     check(Storage.prototype, Object.prototype, "storage prototype");
+    if(v >= 11) {
+        check(document, HTMLDocument.prototype, "html document");
+        check(HTMLDocument.prototype, Document.prototype, "html document prototype");
+        check(Document.prototype, Node.prototype, "document prototype");
+    }
 });

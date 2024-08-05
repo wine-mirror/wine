@@ -5625,7 +5625,7 @@ static HRESULT HTMLDocumentNode_handle_event(DispatchEx* dispex, DOMEvent *event
     return S_OK;
 }
 
-static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
+static const event_target_vtbl_t HTMLDocument_event_target_vtbl = {
     {
         .query_interface     = HTMLDocumentNode_query_interface,
         .destructor          = HTMLDocumentNode_destructor,
@@ -5707,12 +5707,20 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
     dispex_info_add_interface(info, IHTMLDocument2_tid, mode >= COMPAT_MODE_IE11 ? document2_ie11_hooks : document2_hooks);
 }
 
-static dispex_static_data_t HTMLDocumentNode_dispex = {
-    "HTMLDocument",
-    &HTMLDocumentNode_event_target_vtbl.dispex_vtbl,
-    DispHTMLDocument_tid,
-    HTMLDocumentNode_iface_tids,
-    HTMLDocumentNode_init_dispex_info
+dispex_static_data_t Document_dispex = {
+    .name         = "Document",
+    .id           = PROT_Document,
+    .prototype_id = PROT_Node,
+};
+
+dispex_static_data_t HTMLDocument_dispex = {
+    .name         = "HTMLDocument",
+    .id           = PROT_HTMLDocument,
+    .prototype_id = PROT_Document,
+    .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLDocument_tid,
+    .iface_tids   = HTMLDocumentNode_iface_tids,
+    .init_info    = HTMLDocumentNode_init_dispex_info,
 };
 
 static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindow *window, HTMLInnerWindow *script_global)
@@ -5791,7 +5799,7 @@ HRESULT create_document_node(nsIDOMDocument *nsdoc, GeckoBrowser *browser, HTMLI
         doc->html_document = NULL;
     }
 
-    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)doc->dom_document, &HTMLDocumentNode_dispex);
+    HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)doc->dom_document, &HTMLDocument_dispex);
 
     init_document_mutation(doc);
     doc_init_events(doc);
@@ -5824,7 +5832,7 @@ static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *do
     if(!doc_frag)
         return E_OUTOFMEMORY;
 
-    HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode, &HTMLDocumentNode_dispex);
+    HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode, &HTMLDocument_dispex);
     doc_frag->node.vtbl = &HTMLDocumentFragmentImplVtbl;
     doc_frag->document_mode = lock_document_mode(doc_node);
 
