@@ -8107,7 +8107,12 @@ static void shader_glsl_generate_vs_epilogue(const struct wined3d_gl_info *gl_in
     }
 
     if (args->point_size && !args->per_vertex_point_size)
-        shader_addline(buffer, "gl_PointSize = clamp(ffp_point.size, ffp_point.size_min, ffp_point.size_max);\n");
+    {
+        if (reg_maps->shader_version.major >= 4)
+            shader_addline(buffer, "gl_PointSize = 1.0;\n");
+        else
+            shader_addline(buffer, "gl_PointSize = clamp(ffp_point.size, ffp_point.size_min, ffp_point.size_max);\n");
+    }
 
     if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL && !gl_info->supported[ARB_CLIP_CONTROL])
         shader_glsl_fixup_position(buffer, FALSE);
@@ -8150,7 +8155,7 @@ static GLuint shader_glsl_generate_vertex_shader(const struct wined3d_context_gl
     for (i = 0; i < shader->input_signature.element_count; ++i)
         shader_glsl_declare_generic_vertex_attribute(buffer, gl_info, &shader->input_signature.elements[i]);
 
-    if (args->point_size && !args->per_vertex_point_size)
+    if (args->point_size && !args->per_vertex_point_size && reg_maps->shader_version.major < 4)
     {
         shader_addline(buffer, "uniform struct\n{\n");
         shader_addline(buffer, "    float size;\n");
