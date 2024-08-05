@@ -3300,13 +3300,15 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
 
         if ((source->file->flags & FLAG_ARM64EC_X64) && !strcmp( archs.str[arch], "arm64ec" ))
         {
+            char *cflags = get_expanded_make_variable( make, "x86_64_CFLAGS" );
             cmd->cmd = get_expanded_make_variable( make, "x86_64_CC" );
-            strarray_add( &cmd->args, get_expanded_make_variable( make, "x86_64_CFLAGS" ));
+            if (cflags) strarray_add( &cmd->args, cflags );
         }
         else
         {
+            char *cflags = get_expanded_arch_var( make, "CFLAGS", arch );
             cmd->cmd = get_expanded_arch_var( make, "CC", arch );
-            strarray_add( &cmd->args, get_expanded_arch_var( make, "CFLAGS", arch ));
+            if (cflags) strarray_add( &cmd->args, cflags );
         }
         list_add_tail( &compile_commands, &cmd->entry );
     }
