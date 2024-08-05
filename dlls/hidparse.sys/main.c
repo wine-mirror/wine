@@ -656,15 +656,10 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
 
     memset( device_desc, 0, sizeof(*device_desc) );
 
-    if (!(preparsed = parse_descriptor( report_desc, report_desc_len, pool_type )))
-        return HIDP_STATUS_INTERNAL_ERROR;
+    len = sizeof(*device_desc->CollectionDesc);
+    if (!(device_desc->CollectionDesc = ExAllocatePool( pool_type, len ))) goto failed;
 
-    if (!(device_desc->CollectionDesc = ExAllocatePool( pool_type, sizeof(*device_desc->CollectionDesc) )))
-    {
-        free( preparsed );
-        return STATUS_NO_MEMORY;
-    }
-
+    if (!(preparsed = parse_descriptor( report_desc, report_desc_len, pool_type ))) goto failed;
     len = preparsed->caps_size + FIELD_OFFSET(struct hid_preparsed_data, value_caps[0]) +
           preparsed->number_link_collection_nodes * sizeof(struct hid_collection_node);
 
@@ -705,12 +700,8 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
         feature_len[caps->report_id] = max(feature_len[caps->report_id], len);
     }
 
-    if (!(device_desc->ReportIDs = ExAllocatePool( pool_type, sizeof(*device_desc->ReportIDs) * report_count )))
-    {
-        free( preparsed );
-        ExFreePool( device_desc->CollectionDesc );
-        return STATUS_NO_MEMORY;
-    }
+    len = sizeof(*device_desc->ReportIDs) * report_count;
+    if (!(device_desc->ReportIDs = ExAllocatePool( pool_type, len ))) goto failed;
 
     for (i = 0, report_count = 0; i < 256; ++i)
     {
@@ -725,12 +716,25 @@ NTSTATUS WINAPI HidP_GetCollectionDescription( PHIDP_REPORT_DESCRIPTOR report_de
     device_desc->ReportIDsLength = report_count;
 
     return HIDP_STATUS_SUCCESS;
+
+failed:
+    if (device_desc->CollectionDesc)
+    {
+        for (i = 0; i < device_desc->CollectionDescLength; ++i)
+            ExFreePool( device_desc->CollectionDesc[i].PreparsedData );
+        ExFreePool( device_desc->CollectionDesc );
+    }
+    return HIDP_STATUS_INTERNAL_ERROR;
 }
 
 void WINAPI HidP_FreeCollectionDescription( HIDP_DEVICE_DESC *device_desc )
 {
+    UINT i;
+
     TRACE( "device_desc %p.\n", device_desc );
 
+    for (i = 0; i < device_desc->CollectionDescLength; ++i)
+        ExFreePool( device_desc->CollectionDesc[i].PreparsedData );
     ExFreePool( device_desc->CollectionDesc );
     ExFreePool( device_desc->ReportIDs );
 }
