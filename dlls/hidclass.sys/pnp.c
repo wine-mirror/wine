@@ -283,14 +283,9 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
         pdo_ext->u.pdo.rawinput_handle = WINE_KEYBOARD_HANDLE;
     else
         pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
-
-    IoInvalidateDeviceRelations(fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations);
-
     pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
 
-    HID_StartDeviceThread(child_pdo);
-
-    send_wm_input_device_change(pdo_ext, GIDC_ARRIVAL);
+    IoInvalidateDeviceRelations( fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations );
 
     TRACE( "created device %p, rawinput handle %#x\n", pdo_ext, pdo_ext->u.pdo.rawinput_handle );
 }
@@ -493,6 +488,9 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         }
 
         case IRP_MN_START_DEVICE:
+            HID_StartDeviceThread(device);
+            send_wm_input_device_change(ext, GIDC_ARRIVAL);
+
             if ((status = IoRegisterDeviceInterface(device, ext->class_guid, NULL, &ext->u.pdo.link_name)))
             {
                 ERR( "Failed to register interface, status %#lx.\n", status );
