@@ -203,6 +203,15 @@ void WINAPI ProcessTerm( HANDLE handle, BOOL is_post, NTSTATUS status )
 
 
 /**********************************************************************
+ *           ResetToConsistentState  (xtajit64.@)
+ */
+void WINAPI ResetToConsistentState( EXCEPTION_RECORD *rec, CONTEXT *context, ARM64_NT_CONTEXT *arm_ctx )
+{
+    TRACE( "%p %p %p\n", rec, context, arm_ctx );
+}
+
+
+/**********************************************************************
  *           ThreadInit  (xtajit64.@)
  */
 NTSTATUS WINAPI ThreadInit(void)

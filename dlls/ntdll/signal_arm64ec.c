@@ -53,6 +53,7 @@ static void     (WINAPI *pNotifyMemoryProtect)(void*,SIZE_T,ULONG,BOOL,NTSTATUS)
 static void     (WINAPI *pNotifyUnmapViewOfSection)(void*,BOOL,NTSTATUS);
 static NTSTATUS (WINAPI *pProcessInit)(void);
 static void     (WINAPI *pProcessTerm)(HANDLE,BOOL,NTSTATUS);
+static void     (WINAPI *pResetToConsistentState)(EXCEPTION_RECORD*,CONTEXT*,ARM64_NT_CONTEXT*);
 static NTSTATUS (WINAPI *pThreadInit)(void);
 static void     (WINAPI *pThreadTerm)(HANDLE,LONG);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
@@ -167,6 +168,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     GET_PTR( NotifyUnmapViewOfSection );
     GET_PTR( ProcessInit );
     GET_PTR( ProcessTerm );
+    GET_PTR( ResetToConsistentState );
     GET_PTR( ThreadInit );
     GET_PTR( ThreadTerm );
     GET_PTR( UpdateProcessorInformation );
@@ -1057,6 +1059,7 @@ static NTSTATUS __attribute__((used)) dispatch_exception_arm64ec( EXCEPTION_RECO
     ARM64EC_NT_CONTEXT context;
 
     context_arm_to_x64( &context, arm_ctx );
+    if (pResetToConsistentState) pResetToConsistentState( rec, &context.AMD64_Context, arm_ctx );
     return dispatch_exception( rec, &context.AMD64_Context );
 }
 __ASM_GLOBAL_FUNC( "#KiUserExceptionDispatcher",

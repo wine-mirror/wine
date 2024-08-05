@@ -14,7 +14,7 @@
 @ stdcall NotifyUnmapViewOfSection(ptr long long)
 @ stdcall ProcessInit()
 @ stdcall ProcessTerm(ptr long long)
-#@ stub ResetToConsistentState
+@ stdcall ResetToConsistentState(ptr ptr ptr)
 @ stdcall ThreadInit()
 @ stdcall ThreadTerm(ptr long)
 @ stdcall UpdateProcessorInformation(ptr)
