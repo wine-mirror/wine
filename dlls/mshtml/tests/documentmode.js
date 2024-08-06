@@ -3136,4 +3136,6 @@ sync_test("prototypes", function() {
     }
     check(window, Window.prototype, "window");
     check(Window.prototype, Object.prototype, "window prototype");
+    check(document.createElement("img"), HTMLImageElement.prototype, "img elem");
+    check(HTMLImageElement.prototype, HTMLElement.prototype, "img elem prototype");
 });

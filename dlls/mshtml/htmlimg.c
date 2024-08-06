@@ -683,12 +683,14 @@ static void HTMLImgElement_init_dispex_info(dispex_data_t *info, compat_mode_t m
     dispex_info_add_interface(info, IHTMLImgElement_tid, mode >= COMPAT_MODE_IE11 ? img_ie11_hooks : NULL);
 }
 
-static dispex_static_data_t HTMLImgElement_dispex = {
-    "HTMLImageElement",
-    &HTMLImgElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLImg_tid,
-    HTMLImgElement_iface_tids,
-    HTMLImgElement_init_dispex_info
+dispex_static_data_t HTMLImageElement_dispex = {
+    .name         = "HTMLImageElement",
+    .id           = PROT_HTMLImageElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLImgElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLImg_tid,
+    .iface_tids   = HTMLImgElement_iface_tids,
+    .init_info    = HTMLImgElement_init_dispex_info,
 };
 
 HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -703,7 +705,7 @@ HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTML
     ret->IHTMLImgElement_iface.lpVtbl = &HTMLImgElementVtbl;
     ret->element.node.vtbl = &HTMLImgElementImplVtbl;
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLImgElement_dispex);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLImageElement_dispex);
 
     nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLImageElement, (void**)&ret->nsimg);
     assert(nsres == NS_OK);

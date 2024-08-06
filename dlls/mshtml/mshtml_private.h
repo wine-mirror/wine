@@ -413,6 +413,7 @@ typedef struct {
     X(HTMLBodyElement)                     \
     X(HTMLDocument)                        \
     X(HTMLElement)                         \
+    X(HTMLImageElement)                    \
     X(Navigator)                           \
     X(Node)                                \
     X(Storage)                             \
