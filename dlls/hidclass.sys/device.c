@@ -295,15 +295,14 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
     hid_report_decref( last_report );
 }
 
-static HIDP_REPORT_IDS *find_report_with_type_and_id( BASE_DEVICE_EXTENSION *ext, BYTE type, BYTE id, BOOL any_id )
+static HIDP_REPORT_IDS *find_report_with_type_and_id( HIDP_DEVICE_DESC *desc, UCHAR collection, BYTE type, BYTE id, BOOL any_id )
 {
-    BASE_DEVICE_EXTENSION *fdo_ext = ext->u.pdo.parent_fdo->DeviceExtension;
-    HIDP_REPORT_IDS *report, *reports = fdo_ext->u.fdo.device_desc.ReportIDs;
-    ULONG report_count = fdo_ext->u.fdo.device_desc.ReportIDsLength;
+    HIDP_REPORT_IDS *report, *reports = desc->ReportIDs;
+    ULONG report_count = desc->ReportIDsLength;
 
     for (report = reports; report != reports + report_count; report++)
     {
-        if (ext->u.pdo.collection_desc->CollectionNumber != report->CollectionNumber) continue;
+        if (collection && collection != report->CollectionNumber) continue;
         if (!any_id && report->ReportID && report->ReportID != id) continue;
         if (type == HidP_Input && report->InputLength) return report;
         if (type == HidP_Output && report->OutputLength) return report;
@@ -317,9 +316,10 @@ static DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension, *fdo_ext;
-    ULONG i, input_length = 0, report_id = 0;
+    ULONG i, collection, input_length = 0, report_id = 0;
     HIDP_REPORT_IDS *report;
     HID_XFER_PACKET *packet;
+    HIDP_DEVICE_DESC *desc;
     IO_STATUS_BLOCK io;
     BYTE *buffer;
     DWORD res;
@@ -334,7 +334,9 @@ static DWORD CALLBACK hid_device_thread(void *args)
     packet = malloc( sizeof(*packet) + input_length );
     buffer = (BYTE *)(packet + 1);
 
-    report = find_report_with_type_and_id( ext, HidP_Input, 0, TRUE );
+    desc = &fdo_ext->u.fdo.device_desc;
+    collection = ext->u.pdo.collection_desc->CollectionNumber;
+    report = find_report_with_type_and_id( desc, collection, HidP_Input, 0, TRUE );
     if (!report) WARN("no input report found.\n");
     else report_id = report->ReportID;
 
@@ -356,7 +358,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
         if (io.Status == STATUS_SUCCESS)
         {
             if (!report_id) io.Information++;
-            if (!(report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE )))
+            if (!(report = find_report_with_type_and_id( desc, collection, HidP_Input, buffer[0], FALSE )))
                 ERR( "dropping unknown input id %u\n", buffer[0] );
             else if (!ext->u.pdo.poll_interval && io.Information < report->InputLength)
                 ERR( "dropping short report, len %Iu expected %u\n", io.Information, report->InputLength );
@@ -451,7 +453,9 @@ static NTSTATUS CALLBACK xfer_completion( DEVICE_OBJECT *device, IRP *irp, void 
 static NTSTATUS hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
-    ULONG offset, report_len = 0, buffer_len = 0;
+    ULONG offset, report_len = 0, buffer_len = 0, collection = ext->u.pdo.collection_desc->CollectionNumber;
+    BASE_DEVICE_EXTENSION *fdo_ext = ext->u.pdo.parent_fdo->DeviceExtension;
+    HIDP_DEVICE_DESC *desc = &fdo_ext->u.fdo.device_desc;
     struct completion_params *params;
     HIDP_REPORT_IDS *report = NULL;
     BYTE *buffer = NULL;
@@ -478,17 +482,17 @@ static NTSTATUS hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, 
     switch (code)
     {
     case IOCTL_HID_GET_INPUT_REPORT:
-        report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE );
+        report = find_report_with_type_and_id( desc, collection, HidP_Input, buffer[0], FALSE );
         if (report) report_len = report->InputLength;
         break;
     case IOCTL_HID_SET_OUTPUT_REPORT:
     case IOCTL_HID_WRITE_REPORT:
-        report = find_report_with_type_and_id( ext, HidP_Output, buffer[0], FALSE );
+        report = find_report_with_type_and_id( desc, collection, HidP_Output, buffer[0], FALSE );
         if (report) report_len = report->OutputLength;
         break;
     case IOCTL_HID_GET_FEATURE:
     case IOCTL_HID_SET_FEATURE:
-        report = find_report_with_type_and_id( ext, HidP_Feature, buffer[0], FALSE );
+        report = find_report_with_type_and_id( desc, collection, HidP_Feature, buffer[0], FALSE );
         if (report) report_len = report->FeatureLength;
         break;
     }
