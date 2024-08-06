@@ -216,11 +216,10 @@ static struct hid_report *hid_queue_pop_report( struct hid_queue *queue )
     return report;
 }
 
-static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *packet )
+static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *packet, BOOL polled )
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.collection_desc;
-    const BOOL polled = ext->u.pdo.information.Polled;
     ULONG size, report_len = polled ? packet->reportBufferLen : desc->InputLength;
     struct hid_report *last_report, *report;
     struct hid_queue *queue;
@@ -318,7 +317,6 @@ static DWORD CALLBACK hid_device_thread(void *args)
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.collection_desc;
-    BOOL polled = ext->u.pdo.information.Polled;
     HIDP_REPORT_IDS *report;
     HID_XFER_PACKET *packet;
     ULONG report_id = 0;
@@ -353,18 +351,18 @@ static DWORD CALLBACK hid_device_thread(void *args)
             if (!report_id) io.Information++;
             if (!(report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE )))
                 WARN( "dropping unknown input id %u\n", buffer[0] );
-            else if (!polled && io.Information < report->InputLength)
+            else if (!ext->u.pdo.poll_interval && io.Information < report->InputLength)
                 WARN( "dropping short report, len %Iu expected %u\n", io.Information, report->InputLength );
             else
             {
                 packet->reportId = buffer[0];
                 packet->reportBuffer = buffer;
                 packet->reportBufferLen = io.Information;
-                hid_device_queue_input( device, packet );
+                hid_device_queue_input( device, packet, !!ext->u.pdo.poll_interval );
             }
         }
 
-        res = WaitForSingleObject(ext->u.pdo.halt_event, polled ? ext->u.pdo.poll_interval : 0);
+        res = WaitForSingleObject( ext->u.pdo.halt_event, ext->u.pdo.poll_interval );
     } while (res == WAIT_TIMEOUT);
 
     TRACE( "device thread exiting, res %#lx\n", res );

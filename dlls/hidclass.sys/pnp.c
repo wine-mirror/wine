@@ -318,7 +318,7 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
             pdo_ext->u.pdo.rawinput_handle = WINE_KEYBOARD_HANDLE;
         else
             pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
-        pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
+        pdo_ext->u.pdo.poll_interval = minidriver->minidriver.DevicesArePolled ? DEFAULT_POLL_INTERVAL : 0;
 
         TRACE( "created device %p, rawinput handle %#x\n", pdo_ext, pdo_ext->u.pdo.rawinput_handle );
     }
