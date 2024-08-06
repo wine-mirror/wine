@@ -312,11 +312,11 @@ static HIDP_REPORT_IDS *find_report_with_type_and_id( HIDP_DEVICE_DESC *desc, UC
     return NULL;
 }
 
-static DWORD CALLBACK hid_device_thread(void *args)
+DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension, *fdo_ext;
-    ULONG i, collection, input_length = 0, report_id = 0;
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    ULONG i, input_length = 0, report_id = 0;
     HIDP_REPORT_IDS *report;
     HID_XFER_PACKET *packet;
     HIDP_DEVICE_DESC *desc;
@@ -324,19 +324,17 @@ static DWORD CALLBACK hid_device_thread(void *args)
     BYTE *buffer;
     DWORD res;
 
-    fdo_ext = ext->u.pdo.parent_fdo->DeviceExtension;
-    for (i = 0; i < fdo_ext->u.fdo.device_desc.CollectionDescLength; i++)
+    for (i = 0; i < ext->u.fdo.device_desc.CollectionDescLength; i++)
     {
-        HIDP_COLLECTION_DESC *desc = fdo_ext->u.fdo.device_desc.CollectionDesc + i;
+        HIDP_COLLECTION_DESC *desc = ext->u.fdo.device_desc.CollectionDesc + i;
         input_length = max(input_length, desc->InputLength);
     }
 
     packet = malloc( sizeof(*packet) + input_length );
     buffer = (BYTE *)(packet + 1);
 
-    desc = &fdo_ext->u.fdo.device_desc;
-    collection = ext->u.pdo.collection_desc->CollectionNumber;
-    report = find_report_with_type_and_id( desc, collection, HidP_Input, 0, TRUE );
+    desc = &ext->u.fdo.device_desc;
+    report = find_report_with_type_and_id( desc, 0, HidP_Input, 0, TRUE );
     if (!report) WARN("no input report found.\n");
     else report_id = report->ReportID;
 
@@ -352,37 +350,33 @@ static DWORD CALLBACK hid_device_thread(void *args)
             packet->reportBufferLen--;
         }
 
-        call_minidriver( IOCTL_HID_READ_REPORT, ext->u.pdo.parent_fdo, NULL, 0,
+        call_minidriver( IOCTL_HID_READ_REPORT, device, NULL, 0,
                          packet->reportBuffer, packet->reportBufferLen, &io );
 
         if (io.Status == STATUS_SUCCESS)
         {
             if (!report_id) io.Information++;
-            if (!(report = find_report_with_type_and_id( desc, collection, HidP_Input, buffer[0], FALSE )))
+            if (!(report = find_report_with_type_and_id( desc, 0, HidP_Input, buffer[0], FALSE )))
                 ERR( "dropping unknown input id %u\n", buffer[0] );
-            else if (!ext->u.pdo.poll_interval && io.Information < report->InputLength)
+            else if (!ext->u.fdo.poll_interval && io.Information < report->InputLength)
                 ERR( "dropping short report, len %Iu expected %u\n", io.Information, report->InputLength );
+            else if (!report->CollectionNumber || report->CollectionNumber > ext->u.fdo.child_count)
+                ERR( "dropping report for unknown child %u\n", report->CollectionNumber );
             else
             {
+                DEVICE_OBJECT *pdo = ext->u.fdo.child_pdos[report->CollectionNumber - 1];
                 packet->reportId = buffer[0];
                 packet->reportBuffer = buffer;
                 packet->reportBufferLen = io.Information;
-                hid_device_queue_input( device, packet, !!ext->u.pdo.poll_interval );
+                hid_device_queue_input( pdo, packet, !!ext->u.fdo.poll_interval );
             }
         }
 
-        res = WaitForSingleObject( ext->u.pdo.halt_event, ext->u.pdo.poll_interval );
+        res = WaitForSingleObject( ext->u.fdo.halt_event, ext->u.fdo.poll_interval );
     } while (res == WAIT_TIMEOUT);
 
     TRACE( "device thread exiting, res %#lx\n", res );
     return 1;
-}
-
-void HID_StartDeviceThread(DEVICE_OBJECT *device)
-{
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    ext->u.pdo.halt_event = CreateEventA(NULL, TRUE, FALSE, NULL);
-    ext->u.pdo.thread = CreateThread(NULL, 0, hid_device_thread, device, 0, NULL);
 }
 
 struct device_strings
@@ -567,7 +561,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 status = STATUS_BUFFER_OVERFLOW;
             else
             {
-                *(ULONG *)irp->AssociatedIrp.SystemBuffer = ext->u.pdo.poll_interval;
+                *(ULONG *)irp->AssociatedIrp.SystemBuffer = ext->u.fdo.poll_interval;
                 irp->IoStatus.Information = sizeof(ULONG);
                 status = STATUS_SUCCESS;
             }
@@ -580,7 +574,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             else
             {
                 poll_interval = *(ULONG *)irp->AssociatedIrp.SystemBuffer;
-                if (poll_interval) ext->u.pdo.poll_interval = min( poll_interval, MAX_POLL_INTERVAL_MSEC );
+                if (poll_interval) ext->u.fdo.poll_interval = min( poll_interval, MAX_POLL_INTERVAL_MSEC );
                 status = STATUS_SUCCESS;
             }
             break;

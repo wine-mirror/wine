@@ -250,6 +250,8 @@ static NTSTATUS initialize_device( minidriver *minidriver, DEVICE_OBJECT *device
         return STATUS_NO_MEMORY;
     }
 
+    ext->u.fdo.poll_interval = minidriver->minidriver.DevicesArePolled ? DEFAULT_POLL_INTERVAL : 0;
+    ext->u.fdo.halt_event = CreateEventA(NULL, TRUE, FALSE, NULL);
     return STATUS_SUCCESS;
 }
 
@@ -318,7 +320,6 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
             pdo_ext->u.pdo.rawinput_handle = WINE_KEYBOARD_HANDLE;
         else
             pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
-        pdo_ext->u.pdo.poll_interval = minidriver->minidriver.DevicesArePolled ? DEFAULT_POLL_INTERVAL : 0;
 
         TRACE( "created device %p, rawinput handle %#x\n", pdo_ext, pdo_ext->u.pdo.rawinput_handle );
     }
@@ -370,15 +371,27 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             status = minidriver->PNPDispatch( device, irp );
             if (!status) status = initialize_device( minidriver, device );
             if (!status) status = create_child_pdos( minidriver, device );
+            if (!status) ext->u.fdo.thread = CreateThread(NULL, 0, hid_device_thread, device, 0, NULL);
             return status;
 
         case IRP_MN_REMOVE_DEVICE:
+            if (ext->u.fdo.thread)
+            {
+                SetEvent(ext->u.fdo.halt_event);
+                WaitForSingleObject(ext->u.fdo.thread, INFINITE);
+            }
+            CloseHandle(ext->u.fdo.halt_event);
+
             status = minidriver->PNPDispatch( device, irp );
             HidP_FreeCollectionDescription( &ext->u.fdo.device_desc );
             free( ext->u.fdo.child_pdos );
             IoDetachDevice( ext->u.fdo.hid_ext.NextDeviceObject );
             IoDeleteDevice( device );
             return status;
+
+        case IRP_MN_SURPRISE_REMOVAL:
+            SetEvent(ext->u.fdo.halt_event);
+            return STATUS_SUCCESS;
 
         default:
             return minidriver->PNPDispatch(device, irp);
@@ -522,7 +535,6 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         }
 
         case IRP_MN_START_DEVICE:
-            HID_StartDeviceThread(device);
             send_wm_input_device_change(ext, GIDC_ARRIVAL);
 
             if ((status = IoRegisterDeviceInterface(device, ext->class_guid, NULL, &ext->u.pdo.link_name)))
@@ -562,13 +574,6 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             if (ext->u.pdo.is_keyboard)
                 IoSetDeviceInterfaceState(&ext->u.pdo.keyboard_link_name, FALSE);
 
-            if (ext->u.pdo.thread)
-            {
-                SetEvent(ext->u.pdo.halt_event);
-                WaitForSingleObject(ext->u.pdo.thread, INFINITE);
-            }
-            CloseHandle(ext->u.pdo.halt_event);
-
             KeAcquireSpinLock( &ext->u.pdo.lock, &irql );
             LIST_FOR_EACH_ENTRY_SAFE( queue, next, &ext->u.pdo.queues, struct hid_queue, entry )
                 hid_queue_destroy( queue );
@@ -588,7 +593,6 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
                 hid_queue_remove_pending_irps( queue );
             KeReleaseSpinLock( &ext->u.pdo.lock, irql );
 
-            SetEvent(ext->u.pdo.halt_event);
             status = STATUS_SUCCESS;
             break;
 
