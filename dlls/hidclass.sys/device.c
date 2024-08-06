@@ -264,8 +264,9 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
 
     InitializeListHead( &completed );
 
-    KeAcquireSpinLock( &ext->u.pdo.queues_lock, &irql );
-    LIST_FOR_EACH_ENTRY( queue, &ext->u.pdo.queues, struct hid_queue, entry )
+    KeAcquireSpinLock( &ext->u.pdo.lock, &irql );
+    if (ext->u.pdo.removed) WARN( "Device has been removed, dropping report\n" );
+    else LIST_FOR_EACH_ENTRY( queue, &ext->u.pdo.queues, struct hid_queue, entry )
     {
         if (!polled) hid_queue_push_report( queue, last_report );
 
@@ -283,7 +284,7 @@ static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *pack
         }
         while (polled);
     }
-    KeReleaseSpinLock( &ext->u.pdo.queues_lock, irql );
+    KeReleaseSpinLock( &ext->u.pdo.lock, irql );
 
     while ((entry = RemoveHeadList( &completed )) != &completed)
     {
@@ -356,9 +357,9 @@ static DWORD CALLBACK hid_device_thread(void *args)
         {
             if (!report_id) io.Information++;
             if (!(report = find_report_with_type_and_id( ext, HidP_Input, buffer[0], FALSE )))
-                WARN( "dropping unknown input id %u\n", buffer[0] );
+                ERR( "dropping unknown input id %u\n", buffer[0] );
             else if (!ext->u.pdo.poll_interval && io.Information < report->InputLength)
-                WARN( "dropping short report, len %Iu expected %u\n", io.Information, report->InputLength );
+                ERR( "dropping short report, len %Iu expected %u\n", io.Information, report->InputLength );
             else
             {
                 packet->reportId = buffer[0];
@@ -775,9 +776,9 @@ NTSTATUS WINAPI pdo_create(DEVICE_OBJECT *device, IRP *irp)
     if (!(queue = hid_queue_create())) irp->IoStatus.Status = STATUS_NO_MEMORY;
     else
     {
-        KeAcquireSpinLock( &ext->u.pdo.queues_lock, &irql );
+        KeAcquireSpinLock( &ext->u.pdo.lock, &irql );
         list_add_tail( &ext->u.pdo.queues, &queue->entry );
-        KeReleaseSpinLock( &ext->u.pdo.queues_lock, irql );
+        KeReleaseSpinLock( &ext->u.pdo.lock, irql );
 
         irp->Tail.Overlay.OriginalFileObject->FsContext = queue;
         irp->IoStatus.Status = STATUS_SUCCESS;
@@ -809,9 +810,9 @@ NTSTATUS WINAPI pdo_close(DEVICE_OBJECT *device, IRP *irp)
 
     if (queue)
     {
-        KeAcquireSpinLock( &ext->u.pdo.queues_lock, &irql );
+        KeAcquireSpinLock( &ext->u.pdo.lock, &irql );
         list_remove( &queue->entry );
-        KeReleaseSpinLock( &ext->u.pdo.queues_lock, irql );
+        KeReleaseSpinLock( &ext->u.pdo.lock, irql );
         hid_queue_destroy( queue );
     }
 

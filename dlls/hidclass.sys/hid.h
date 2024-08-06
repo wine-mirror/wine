@@ -67,13 +67,10 @@ typedef struct _BASE_DEVICE_EXTENSION
             HANDLE halt_event;
             HANDLE thread;
             UINT32 rawinput_handle;
-
-            KSPIN_LOCK queues_lock;
-            struct list queues;
-
             UNICODE_STRING link_name;
 
             KSPIN_LOCK lock;
+            struct list queues;
             BOOL removed;
 
             BOOL is_mouse;

@@ -285,7 +285,7 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
         pdo_ext = child_pdo->DeviceExtension;
         pdo_ext->u.pdo.parent_fdo = device;
         list_init( &pdo_ext->u.pdo.queues );
-        KeInitializeSpinLock( &pdo_ext->u.pdo.queues_lock );
+        KeInitializeSpinLock( &pdo_ext->u.pdo.lock );
 
         pdo_ext->u.pdo.collection_desc = fdo_ext->u.fdo.device_desc.CollectionDesc + i;
 
@@ -569,10 +569,10 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             }
             CloseHandle(ext->u.pdo.halt_event);
 
-            KeAcquireSpinLock( &ext->u.pdo.queues_lock, &irql );
+            KeAcquireSpinLock( &ext->u.pdo.lock, &irql );
             LIST_FOR_EACH_ENTRY_SAFE( queue, next, &ext->u.pdo.queues, struct hid_queue, entry )
                 hid_queue_destroy( queue );
-            KeReleaseSpinLock( &ext->u.pdo.queues_lock, irql );
+            KeReleaseSpinLock( &ext->u.pdo.lock, irql );
 
             RtlFreeUnicodeString(&ext->u.pdo.link_name);
 
@@ -584,12 +584,9 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_SURPRISE_REMOVAL:
             KeAcquireSpinLock(&ext->u.pdo.lock, &irql);
             ext->u.pdo.removed = TRUE;
-            KeReleaseSpinLock(&ext->u.pdo.lock, irql);
-
-            KeAcquireSpinLock( &ext->u.pdo.queues_lock, &irql );
             LIST_FOR_EACH_ENTRY_SAFE( queue, next, &ext->u.pdo.queues, struct hid_queue, entry )
                 hid_queue_remove_pending_irps( queue );
-            KeReleaseSpinLock( &ext->u.pdo.queues_lock, irql );
+            KeReleaseSpinLock( &ext->u.pdo.lock, irql );
 
             SetEvent(ext->u.pdo.halt_event);
             status = STATUS_SUCCESS;
