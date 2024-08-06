@@ -76,7 +76,7 @@ static inline BOOL is_valid_arm64ec_frame( ULONG_PTR frame )
 /**********************************************************************
  *           create_cross_process_work_list
  */
-static NTSTATUS create_cross_process_work_list( struct arm64ec_shared_info *info )
+static NTSTATUS create_cross_process_work_list( CHPEV2_PROCESS_INFO *info )
 {
     SIZE_T map_size = 0x4000;
     LARGE_INTEGER size;
@@ -147,7 +147,7 @@ static BOOL send_cross_process_notification( HANDLE process, UINT id, const void
 NTSTATUS arm64ec_process_init( HMODULE module )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    struct arm64ec_shared_info *info = (struct arm64ec_shared_info *)(RtlGetCurrentPeb() + 1);
+    CHPEV2_PROCESS_INFO *info = (CHPEV2_PROCESS_INFO *)(RtlGetCurrentPeb() + 1);
 
     __os_arm64x_dispatch_call_no_redirect = RtlFindExportedRoutineByName( module, "ExitToX64" );
     __os_arm64x_dispatch_fptr = RtlFindExportedRoutineByName( module, "DispatchJump" );
@@ -172,6 +172,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     GET_PTR( UpdateProcessorInformation );
 #undef GET_PTR
 
+    RtlGetCurrentPeb()->ChpeV2ProcessInfo = info;
     info->NativeMachineType = IMAGE_FILE_MACHINE_ARM64;
     info->EmulatedMachineType = IMAGE_FILE_MACHINE_AMD64;
 
@@ -744,7 +745,7 @@ static NTSTATUS WINAPI LdrpSetX64Information( ULONG type, ULONG_PTR input, void 
  */
 void WINAPI ProcessPendingCrossProcessEmulatorWork(void)
 {
-    struct arm64ec_shared_info *info = (struct arm64ec_shared_info *)(RtlGetCurrentPeb() + 1);
+    CHPEV2_PROCESS_INFO *info = RtlGetCurrentPeb()->ChpeV2ProcessInfo;
     CROSS_PROCESS_WORK_LIST *list = (void *)info->CrossProcessWorkList;
     CROSS_PROCESS_WORK_ENTRY *entry;
     BOOLEAN flush = FALSE;

@@ -291,6 +291,52 @@ typedef struct _TEB_FLS_DATA
     void          **fls_data_chunks[8];
 } TEB_FLS_DATA, *PTEB_FLS_DATA;
 
+/* undocumented layout of WOW64INFO.CrossProcessWorkList and CHPEV2_PROCESS_INFO.CrossProcessWorkList */
+
+typedef struct
+{
+    UINT      next;
+    UINT      id;
+    ULONGLONG addr;
+    ULONGLONG size;
+    UINT      args[4];
+} CROSS_PROCESS_WORK_ENTRY;
+
+typedef union
+{
+    struct
+    {
+        UINT first;
+        UINT counter;
+    };
+    volatile LONGLONG hdr;
+} CROSS_PROCESS_WORK_HDR;
+
+typedef struct
+{
+    CROSS_PROCESS_WORK_HDR   free_list;
+    CROSS_PROCESS_WORK_HDR   work_list;
+    ULONGLONG                unknown[4];
+    CROSS_PROCESS_WORK_ENTRY entries[1];
+} CROSS_PROCESS_WORK_LIST;
+
+typedef enum
+{
+    CrossProcessPreVirtualAlloc    = 0,
+    CrossProcessPostVirtualAlloc   = 1,
+    CrossProcessPreVirtualFree     = 2,
+    CrossProcessPostVirtualFree    = 3,
+    CrossProcessPreVirtualProtect  = 4,
+    CrossProcessPostVirtualProtect = 5,
+    CrossProcessFlushCache         = 6,
+    CrossProcessFlushCacheHeavy    = 7,
+    CrossProcessMemoryWrite        = 8,
+} CROSS_PROCESS_NOTIFICATION;
+
+#define CROSS_PROCESS_LIST_FLUSH 0x80000000
+#define CROSS_PROCESS_LIST_ENTRY(list,pos) \
+    ((CROSS_PROCESS_WORK_ENTRY *)((char *)(list) + ((pos) & ~CROSS_PROCESS_LIST_FLUSH)))
+
 typedef struct _CHPE_V2_CPU_AREA_INFO
 {
     BOOLEAN             InSimulation;         /* 000 */
@@ -303,6 +349,17 @@ typedef struct _CHPE_V2_CPU_AREA_INFO
     void               *EmulatorData[4];      /* 030 */
     ULONG64             EmulatorDataInline;   /* 050 */
 } CHPE_V2_CPU_AREA_INFO, *PCHPE_V2_CPU_AREA_INFO;
+
+/* equivalent of WOW64INFO, stored after the 64-bit PEB */
+typedef struct _CHPEV2_PROCESS_INFO
+{
+    ULONG                    Wow64ExecuteFlags;    /* 000 */
+    USHORT                   NativeMachineType;    /* 004 */
+    USHORT                   EmulatedMachineType;  /* 006 */
+    HANDLE                   SectionHandle;        /* 008 */
+    CROSS_PROCESS_WORK_LIST *CrossProcessWorkList; /* 010 */
+    void                    *unknown;              /* 018 */
+} CHPEV2_PROCESS_INFO, *PCHPEV2_PROCESS_INFO;
 
 #define TEB_ACTIVE_FRAME_CONTEXT_FLAG_EXTENDED 0x00000001
 #define TEB_ACTIVE_FRAME_FLAG_EXTENDED         0x00000001
@@ -399,7 +456,13 @@ typedef struct _PEB
     SIZE_T                       MinimumStackCommit;                /* 208/318 */
     PVOID                       *FlsCallback;                       /* 20c/320 */
     LIST_ENTRY                   FlsListHead;                       /* 210/328 */
-    PRTL_BITMAP                  FlsBitmap;                         /* 218/338 */
+    union
+    {
+        PRTL_BITMAP              FlsBitmap;                         /* 218/338 */
+#ifdef _WIN64
+        CHPEV2_PROCESS_INFO     *ChpeV2ProcessInfo;                 /*    /338 */
+#endif
+    };
     ULONG                        FlsBitmapBits[4];                  /* 21c/340 */
     ULONG                        FlsHighIndex;                      /* 22c/350 */
     PVOID                        WerRegistrationData;               /* 230/358 */
@@ -951,7 +1014,11 @@ typedef struct _PEB64
     ULONG64                      MinimumStackCommit;                /* 0318 */
     ULONG64                      FlsCallback;                       /* 0320 */
     LIST_ENTRY64                 FlsListHead;                       /* 0328 */
-    ULONG64                      FlsBitmap;                         /* 0338 */
+    union
+    {
+        ULONG64                  FlsBitmap;                         /* 0338 */
+        ULONG64                  ChpeV2ProcessInfo;                 /* 0338 */
+    };
     ULONG                        FlsBitmapBits[4];                  /* 0340 */
     ULONG                        FlsHighIndex;                      /* 0350 */
     ULONG64                      WerRegistrationData;               /* 0358 */
@@ -4212,52 +4279,6 @@ C_ASSERT( sizeof(WOW64INFO) == 40 );
 
 #define WOW64_CPUFLAGS_MSFT64   0x01
 #define WOW64_CPUFLAGS_SOFTWARE 0x02
-
-/* undocumented layout of WOW64INFO.CrossProcessWorkList */
-
-typedef struct
-{
-    UINT      next;
-    UINT      id;
-    ULONGLONG addr;
-    ULONGLONG size;
-    UINT      args[4];
-} CROSS_PROCESS_WORK_ENTRY;
-
-typedef union
-{
-    struct
-    {
-        UINT first;
-        UINT counter;
-    };
-    volatile LONGLONG hdr;
-} CROSS_PROCESS_WORK_HDR;
-
-typedef struct
-{
-    CROSS_PROCESS_WORK_HDR   free_list;
-    CROSS_PROCESS_WORK_HDR   work_list;
-    ULONGLONG                unknown[4];
-    CROSS_PROCESS_WORK_ENTRY entries[1];
-} CROSS_PROCESS_WORK_LIST;
-
-typedef enum
-{
-    CrossProcessPreVirtualAlloc    = 0,
-    CrossProcessPostVirtualAlloc   = 1,
-    CrossProcessPreVirtualFree     = 2,
-    CrossProcessPostVirtualFree    = 3,
-    CrossProcessPreVirtualProtect  = 4,
-    CrossProcessPostVirtualProtect = 5,
-    CrossProcessFlushCache         = 6,
-    CrossProcessFlushCacheHeavy    = 7,
-    CrossProcessMemoryWrite        = 8,
-} CROSS_PROCESS_NOTIFICATION;
-
-#define CROSS_PROCESS_LIST_FLUSH 0x80000000
-#define CROSS_PROCESS_LIST_ENTRY(list,pos) \
-    ((CROSS_PROCESS_WORK_ENTRY *)((char *)(list) + ((pos) & ~CROSS_PROCESS_LIST_FLUSH)))
 
 /* wow64.dll functions */
 void *    WINAPI Wow64AllocateTemp(SIZE_T);
