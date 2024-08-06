@@ -51,6 +51,7 @@ static const char *g_endedit_overwrite_contents;
 static char *g_endedit_overwrite_ptr;
 static HFONT g_customdraw_font;
 static BOOL g_v6;
+static int g_reject_tvn_itemexpanding = 0;
 
 #define NUM_MSG_SEQUENCES   3
 #define TREEVIEW_SEQ_INDEX  0
@@ -1361,7 +1362,14 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
               }
             case TVN_ITEMEXPANDINGA:
               {
-                UINT newmask = pTreeView->itemNew.mask & ~TVIF_CHILDREN;
+                UINT newmask;
+
+                if (g_reject_tvn_itemexpanding)
+                {
+                    g_reject_tvn_itemexpanding = 0;
+                    return TRUE;
+                }
+                newmask = pTreeView->itemNew.mask & ~TVIF_CHILDREN;
                 ok(newmask ==
                    (TVIF_HANDLE | TVIF_SELECTEDIMAGE | TVIF_IMAGE | TVIF_PARAM | TVIF_STATE),
                    "got wrong mask %x\n", pTreeView->itemNew.mask);
@@ -1837,6 +1845,7 @@ static void test_expandnotify(void)
     HWND hTree;
     BOOL ret;
     TVITEMA item;
+    RECT rc;
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
@@ -1895,6 +1904,88 @@ static void test_expandnotify(void)
     ret = SendMessageA(hTree, TVM_EXPAND, TVE_TOGGLE, (LPARAM)hChild);
     expect(FALSE, ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "toggle node without children", FALSE);
+
+    DestroyWindow(hTree);
+
+    /* check that expansion can be denied by parent */
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    memset(&item, 0, sizeof(item));
+    item.mask = TVIF_STATE;
+    item.hItem = hRoot;
+    item.state = TVIS_EXPANDED;
+
+    g_reject_tvn_itemexpanding = 1;
+    SendMessageA(hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)item.hItem);
+
+    /* check if it's expanded */
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    todo_wine ok(!(item.state & TVIS_EXPANDED), "expected no expansion\n");
+
+    DestroyWindow(hTree);
+
+    /* check that no itemexpanding message is sent when collapsing with TVM_EXPAND */
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    memset(&item, 0, sizeof(item));
+    item.hItem = hRoot;
+    item.mask = TVIF_STATE;
+    item.state = TVIS_EXPANDED;
+
+    SendMessageA(hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)item.hItem);
+
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    todo_wine ok(item.state & TVIS_EXPANDED, "expected expansion\n");
+
+    memset(&item, 0, sizeof(item));
+    item.hItem = hRoot;
+    item.mask = TVIF_STATE;
+    item.state = TVIS_EXPANDED;
+
+    g_reject_tvn_itemexpanding = 1;
+    SendMessageA(hTree, TVM_EXPAND, TVE_COLLAPSE | TVE_COLLAPSERESET, (LPARAM)item.hItem);
+    expect(TRUE, g_reject_tvn_itemexpanding); /* check if the message went through */
+
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    todo_wine ok(!(item.state & TVIS_EXPANDED), "expected no expansion\n");
+
+    DestroyWindow(hTree);
+
+    /* check that collapse can be denied by parent when clicking */
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    memset(&item, 0, sizeof(item));
+    item.hItem = hRoot;
+    item.mask = TVIF_STATE;
+    item.state = TVIS_EXPANDED;
+
+    g_reject_tvn_itemexpanding = 0;
+    SendMessageA(hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)item.hItem);
+
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    todo_wine ok(item.state & TVIS_EXPANDED, "expected expansion\n");
+
+    memset(&item, 0, sizeof(item));
+    item.hItem = hRoot;
+    item.mask = TVIF_STATE;
+    item.state = TVIS_EXPANDED;
+    *((HTREEITEM *)&rc) = item.hItem;
+
+    g_reject_tvn_itemexpanding = 1;
+    SendMessageA(hTree, TVM_GETITEMRECT, TRUE, (LPARAM)&rc);
+    SendMessageA(hTree, WM_LBUTTONDBLCLK, MK_LBUTTON, MAKELPARAM(rc.left + ((rc.right - rc.left) / 2), rc.top + ((rc.bottom - rc.top) / 2)));
+    expect(FALSE, g_reject_tvn_itemexpanding);
+
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    todo_wine ok(item.state & TVIS_EXPANDED, "expected expansion\n");
 
     DestroyWindow(hTree);
 
