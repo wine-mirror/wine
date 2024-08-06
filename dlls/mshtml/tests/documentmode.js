@@ -342,7 +342,7 @@ sync_test("builtin_toString", function() {
         test("mediaQueryList", window.matchMedia("(hover:hover)"), "MediaQueryList");
     }
     if(v >= 11) {
-        test("MutationObserver", new window.MutationObserver(function() {}), "MutationObserver", null, true);
+        test("MutationObserver", new window.MutationObserver(function() {}), "MutationObserver");
     }
     if(v >= 9) {
         document.body.innerHTML = "<!--...-->";
@@ -3145,4 +3145,9 @@ sync_test("prototypes", function() {
     check(document.createElement("option"), HTMLOptionElement.prototype, "option elem");
     check(HTMLOptionElement.prototype, HTMLElement.prototype, "option elem prototype");
     check(Option, Function.prototype, "Option constructor");
+    if(v >= 11) {
+        check(new MutationObserver(function() {}), MutationObserver.prototype, "mutation observer");
+        check(MutationObserver.prototype, Object.prototype, "mutation observer prototype");
+        check(MutationObserver, Function.prototype, "mutation observer constructor");
+    }
 });

@@ -415,6 +415,7 @@ typedef struct {
     X(HTMLElement)                         \
     X(HTMLImageElement)                    \
     X(HTMLOptionElement)                   \
+    X(MutationObserver)                    \
     X(Navigator)                           \
     X(Node)                                \
     X(Storage)                             \
@@ -443,6 +444,7 @@ typedef struct {
     prototype_id_t prototype_id;
     prototype_id_t constructor_id;
     UINT32 js_flags;
+    compat_mode_t min_compat_mode;
     char prototype_name[64];
 } dispex_static_data_t;
 
@@ -706,7 +708,6 @@ struct HTMLInnerWindow {
     LONG task_magic;
 
     IMoniker *mon;
-    IDispatch *mutation_observer_ctor;
     nsChannelBSC *bscallback;
     struct list bindings;
 
@@ -1606,5 +1607,3 @@ IInternetSecurityManager *get_security_manager(void);
 extern HINSTANCE hInst;
 void create_console(HTMLInnerWindow *window, IWineMSHTMLConsole **ret);
 HRESULT create_media_query_list(HTMLInnerWindow *window, BSTR media_query, IDispatch **ret);
-
-HRESULT create_mutation_observer_ctor(compat_mode_t compat_mode, IDispatch **ret);

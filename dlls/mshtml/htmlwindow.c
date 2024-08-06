@@ -3185,26 +3185,6 @@ static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, 
     return S_OK;
 }
 
-static HRESULT WINAPI window_private_get_MutationObserver(IWineHTMLWindowPrivate *iface,
-                                                          IDispatch **mutation_observer)
-{
-    HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
-    HRESULT hres;
-
-    TRACE("iface %p, mutation_observer %p.\n", iface, mutation_observer);
-
-    if (!This->inner_window->mutation_observer_ctor) {
-        hres = create_mutation_observer_ctor(dispex_compat_mode(&This->inner_window->event_target.dispex),
-                                             &This->inner_window->mutation_observer_ctor);
-        if (FAILED(hres))
-            return hres;
-    }
-
-    IDispatch_AddRef(This->inner_window->mutation_observer_ctor);
-    *mutation_observer = This->inner_window->mutation_observer_ctor;
-    return S_OK;
-}
-
 static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_QueryInterface,
     window_private_AddRef,
@@ -3217,7 +3197,6 @@ static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_cancelAnimationFrame,
     window_private_get_console,
     window_private_matchMedia,
-    window_private_get_MutationObserver
 };
 
 static inline HTMLWindow *impl_from_IWineHTMLWindowCompatPrivateVtbl(IWineHTMLWindowCompatPrivate *iface)
@@ -3708,8 +3687,6 @@ static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
         note_cc_edge((nsISupports*)&This->image_factory->IHTMLImageElementFactory_iface, "image_factory", cb);
     if(This->option_factory)
         note_cc_edge((nsISupports*)&This->option_factory->IHTMLOptionElementFactory_iface, "option_factory", cb);
-    if(This->mutation_observer_ctor)
-        note_cc_edge((nsISupports*)This->mutation_observer_ctor, "mutation_observer_ctor", cb);
     if(This->screen)
         note_cc_edge((nsISupports*)This->screen, "screen", cb);
     if(This->history)
@@ -3758,7 +3735,6 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
         This->option_factory = NULL;
         IHTMLOptionElementFactory_Release(&option_factory->IHTMLOptionElementFactory_iface);
     }
-    unlink_ref(&This->mutation_observer_ctor);
     unlink_ref(&This->screen);
     if(This->history) {
         OmHistory *history = This->history;
@@ -3837,13 +3813,15 @@ static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, const WCHAR *name, DWO
             DispatchEx *constr;
             VARIANT v;
 
-            hres = get_constructor(This, id, &constr);
-            if(FAILED(hres))
-                return hres;
+            if(dispex_compat_mode(dispex) >= object_descriptors[id]->min_compat_mode) {
+                hres = get_constructor(This, id, &constr);
+                if(FAILED(hres))
+                    return hres;
 
-            V_VT(&v) = VT_DISPATCH;
-            V_DISPATCH(&v) = (IDispatch *)&constr->IWineJSDispatchHost_iface;
-            return dispex_define_property(&This->event_target.dispex, name, PROPF_WRITABLE | PROPF_CONFIGURABLE, &v, dispid);
+                V_VT(&v) = VT_DISPATCH;
+                V_DISPATCH(&v) = (IDispatch *)&constr->IWineJSDispatchHost_iface;
+                return dispex_define_property(&This->event_target.dispex, name, PROPF_WRITABLE | PROPF_CONFIGURABLE, &v, dispid);
+            }
         }
     }
 
