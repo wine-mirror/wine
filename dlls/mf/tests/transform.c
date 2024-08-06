@@ -7680,100 +7680,116 @@ static void test_video_processor(void)
     }
     video_processor_tests[] =
     {
-        {
+        { /* Test 0 */
             .input_type_desc = nv12_default_stride, .input_bitmap = L"nv12frame.bmp",
             .output_type_desc = rgb32_default_stride, .output_bitmap = L"rgb32frame-flip.bmp",
-            .output_sample_desc = &rgb32_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .output_sample_desc = &rgb32_sample_desc,
+            .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
-        {
+        { /* Test 1 */
             .input_type_desc = nv12_default_stride, .input_bitmap = L"nv12frame.bmp",
             .output_type_desc = rgb32_negative_stride, .output_bitmap = L"rgb32frame-flip.bmp",
-            .output_sample_desc = &rgb32_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .output_sample_desc = &rgb32_sample_desc,
+            .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
-        {
+        { /* Test 2 */
             .input_type_desc = nv12_default_stride, .input_bitmap = L"nv12frame.bmp",
             .output_type_desc = rgb32_positive_stride, .output_bitmap = L"rgb32frame.bmp",
-            .output_sample_desc = &rgb32_sample_desc, .delta = 6,
+            .output_sample_desc = &rgb32_sample_desc,
+            .delta = 6,
         },
-        {
+        { /* Test 3 */
             .input_type_desc = rgb32_default_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = nv12_default_stride, .output_bitmap = L"nv12frame-flip.bmp",
-            .output_sample_desc = &nv12_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .output_sample_desc = &nv12_sample_desc,
+            .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
-        {
+        { /* Test 4 */
             .input_type_desc = rgb32_negative_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = nv12_default_stride, .output_bitmap = L"nv12frame-flip.bmp",
-            .output_sample_desc = &nv12_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .output_sample_desc = &nv12_sample_desc,
+            .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
-        {
+        { /* Test 5 */
             .input_type_desc = rgb32_positive_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = nv12_default_stride, .output_bitmap = L"nv12frame.bmp",
-            .output_sample_desc = &nv12_sample_desc, .delta = 2, /* Windows returns 1, Wine needs 2 */
+            .output_sample_desc = &nv12_sample_desc,
+            .delta = 2, /* Windows returns 1, Wine needs 2 */
         },
-        {
+        { /* Test 6 */
             .input_type_desc = rgb32_negative_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb32_negative_stride, .output_bitmap = L"rgb32frame.bmp",
             .output_sample_desc = &rgb32_sample_desc,
         },
-        {
+        { /* Test 7 */
             .input_type_desc = rgb32_negative_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb32_positive_stride, .output_bitmap = L"rgb32frame-flip.bmp",
-            .output_sample_desc = &rgb32_sample_desc, .delta = 3, /* Windows returns 3 */
+            .output_sample_desc = &rgb32_sample_desc,
+            .delta = 3, /* Windows returns 3 */
         },
-        {
+        { /* Test 8 */
             .input_type_desc = rgb32_positive_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb32_negative_stride, .output_bitmap = L"rgb32frame-flip.bmp",
-            .output_sample_desc = &rgb32_sample_desc, .delta = 3, /* Windows returns 3 */
+            .output_sample_desc = &rgb32_sample_desc,
+            .delta = 3, /* Windows returns 3 */
         },
-        {
+        { /* Test 9 */
             .input_type_desc = rgb32_positive_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb32_positive_stride, .output_bitmap = L"rgb32frame.bmp",
             .output_sample_desc = &rgb32_sample_desc,
         },
-        {
+        { /* Test 10 */
             .input_type_desc = rgb32_with_aperture, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb32_with_aperture, .output_bitmap = L"rgb32frame.bmp",
-            .output_sample_desc = &rgb32_sample_desc, .broken = TRUE /* old Windows version incorrectly rescale */
+            .output_sample_desc = &rgb32_sample_desc,
+            .broken = TRUE, /* old Windows version incorrectly rescale */
         },
-        {
+        { /* Test 11 */
             .input_type_desc = rgb32_default_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb555_default_stride, .output_bitmap = L"rgb555frame.bmp",
             .output_sample_desc = &rgb555_sample_desc,
+            .delta = 5, /* Windows returns 0, Wine needs 5 */
         },
-        {
+        { /* Test 12 */
             .input_type_desc = rgb32_default_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb555_negative_stride, .output_bitmap = L"rgb555frame.bmp",
             .output_sample_desc = &rgb555_sample_desc,
+            .delta = 5, /* Windows returns 0, Wine needs 5 */
         },
-        {
+        { /* Test 13 */
             .input_type_desc = rgb32_default_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb555_positive_stride, .output_bitmap = L"rgb555frame-flip.bmp",
-            .output_sample_desc = &rgb555_sample_desc, .delta = 3, /* Windows returns 0, Wine needs 3 */
+            .output_sample_desc = &rgb555_sample_desc,
+            .delta = 3, /* Windows returns 0, Wine needs 3 */
         },
-        {
+        { /* Test 14 */
             .input_type_desc = rgb555_default_stride, .input_bitmap = L"rgb555frame.bmp",
             .output_type_desc = rgb555_positive_stride, .output_bitmap = L"rgb555frame-flip.bmp",
-            .output_sample_desc = &rgb555_sample_desc, .delta = 4, /* Windows returns 0, Wine needs 4 */
+            .output_sample_desc = &rgb555_sample_desc,
+            .delta = 4, /* Windows returns 0, Wine needs 4 */
         },
-        {
+        { /* Test 15 */
             .input_type_desc = nv12_with_aperture, .input_bitmap = L"nv12frame.bmp",
             .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop-flip.bmp",
-            .output_sample_desc = &rgb32_crop_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .output_sample_desc = &rgb32_crop_sample_desc,
+            .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
-        {
+        { /* Test 16 */
             .input_type_desc = rgb32_no_aperture, .input_bitmap = L"rgb32frame-crop-flip.bmp",
             .output_type_desc = rgb32_with_aperture, .output_bitmap = L"rgb32frame-flip.bmp",
-            .output_sample_desc = &rgb32_sample_desc, .broken = TRUE /* old Windows version incorrectly rescale */
+            .output_sample_desc = &rgb32_sample_desc,
+            .broken = TRUE, /* old Windows version incorrectly rescale */
         },
-        {
+        { /* Test 17 */
             .input_type_desc = rgb32_with_aperture, .input_bitmap = L"rgb32frame-flip.bmp",
             .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop-flip.bmp",
             .output_sample_desc = &rgb32_crop_sample_desc,
         },
-        {
+        { /* Test 18 */
             .input_type_desc = rgb32_with_aperture_positive_stride, .input_bitmap = L"rgb32frame.bmp",
             .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop-flip.bmp",
-            .output_sample_desc = &rgb32_crop_sample_desc, .delta = 3, /* Windows returns 3 */
+            .output_sample_desc = &rgb32_crop_sample_desc,
+            .delta = 3, /* Windows returns 3 */
         },
     };
 
