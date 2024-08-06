@@ -2104,10 +2104,17 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
             mach_msg_type_number_t count;
 #ifdef HOST_VM_INFO64_COUNT
             vm_statistics64_data_t vm_stat;
+            vm_size_t mac_page_size;
+
+            if (host_page_size(host, &mac_page_size) != KERN_SUCCESS)
+            {
+                WARN("Can't get host's page size, fallback to %lx.\n", page_size);
+                mac_page_size = page_size;
+            }
 
             count = HOST_VM_INFO64_COUNT;
             if (host_statistics64(host, HOST_VM_INFO64, (host_info64_t)&vm_stat, &count) == KERN_SUCCESS)
-                freeram = (vm_stat.free_count + vm_stat.inactive_count) * (ULONGLONG)page_size;
+                freeram = (vm_stat.free_count + vm_stat.inactive_count) * (ULONGLONG)mac_page_size;
 #endif
             if (!totalram)
             {
