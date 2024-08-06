@@ -1286,6 +1286,7 @@ static BOOL wined3d_context_gl_set_gl_context(struct wined3d_context_gl *context
             return FALSE;
         }
 
+        wined3d_release_dc(context_gl->window, context_gl->dc);
         if (!(context_gl->dc = wined3d_device_gl_get_backup_dc(device_gl)))
         {
             wined3d_context_gl_set_current(NULL);
