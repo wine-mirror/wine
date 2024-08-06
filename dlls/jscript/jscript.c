@@ -1458,11 +1458,19 @@ static HRESULT WINAPI WineJScript_InitHostObject(IWineJScript *iface, IWineJSDis
     return init_host_object(This->ctx, host_obj, prototype, flags, ret);
 }
 
+static HRESULT WINAPI WineJScript_InitHostConstructor(IWineJScript *iface, IWineJSDispatchHost *constr,
+                                                      IWineJSDispatch *prototype, IWineJSDispatch **ret)
+{
+    JScript *This = impl_from_IWineJScript(iface);
+    return init_host_constructor(This->ctx, constr, prototype, ret);
+}
+
 static const IWineJScriptVtbl WineJScriptVtbl = {
     WineJScript_QueryInterface,
     WineJScript_AddRef,
     WineJScript_Release,
     WineJScript_InitHostObject,
+    WineJScript_InitHostConstructor,
 };
 
 HRESULT create_jscript_object(BOOL is_encode, REFIID riid, void **ppv)

@@ -66,6 +66,7 @@ interface IWineJSDispatchHost : IDispatchEx
     HRESULT DeleteProperty(DISPID id);
     HRESULT ConfigureProperty(DISPID id, UINT32 flags);
     HRESULT CallFunction(DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
+    HRESULT Construct(LCID lcid, DWORD flags, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
     HRESULT GetOuterDispatch(IWineJSDispatchHost **ret);
     HRESULT ToString(BSTR *str);
 }
@@ -78,4 +79,5 @@ interface IWineJSDispatchHost : IDispatchEx
 interface IWineJScript : IUnknown
 {
     HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch *prototype, UINT32 flags, IWineJSDispatch **ret);
+    HRESULT InitHostConstructor(IWineJSDispatchHost *constr, IWineJSDispatch *prototype, IWineJSDispatch **ret);
 }
