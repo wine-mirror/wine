@@ -3144,4 +3144,5 @@ sync_test("prototypes", function() {
     check(Image, Function.prototype, "Image constructor");
     check(document.createElement("option"), HTMLOptionElement.prototype, "option elem");
     check(HTMLOptionElement.prototype, HTMLElement.prototype, "option elem prototype");
+    check(Option, Function.prototype, "Option constructor");
 });

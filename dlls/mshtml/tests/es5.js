@@ -2781,6 +2781,11 @@ sync_test("prototypes", function() {
     ok(typeof(Image) === "function", "typeof(Image) = " + typeof(Image));
     ok(Image.prototype === HTMLImageElement.prototype, "Image.prototype != HTMLImageElement.prototype");
 
+    ok(Option != HTMLOptionElement, "Option == HTMLOptionElement");
+    ok(typeof(HTMLOptionElement) === "object", "typeof(HTMLOptionElement) = " + typeof(HTMLOptionElement));
+    ok(typeof(Option) === "function", "typeof(Option) = " + typeof(Option));
+    ok(Option.prototype === HTMLOptionElement.prototype, "Option.prototype != HTMLOptionElement.prototype");
+
     ok(document.implementation instanceof DOMImplementation, "document.implementation is not an instance of DOMImplementation");
     ok(navigator instanceof Navigator, "navigator is not an instance of Navigator");
     ok(!(navigator instanceof DOMImplementation), "navigator is an instance of DOMImplementation");
