@@ -2761,6 +2761,11 @@ sync_test("prototypes", function() {
     ok(!Element.prototype.hasOwnProperty("removeChild"), "Element prototype has own removeChild property");
     ok(Node.prototype.hasOwnProperty("removeChild"), "Node prototype does not have own removeChild property");
 
+    ok(Image != HTMLImageElement, "Image == HTMLImageElement");
+    ok(typeof(HTMLImageElement) === "object", "typeof(HTMLImageElement) = " + typeof(HTMLImageElement));
+    ok(typeof(Image) === "function", "typeof(Image) = " + typeof(Image));
+    ok(Image.prototype === HTMLImageElement.prototype, "Image.prototype != HTMLImageElement.prototype");
+
     ok(document.implementation instanceof DOMImplementation, "document.implementation is not an instance of DOMImplementation");
     ok(navigator instanceof Navigator, "navigator is not an instance of Navigator");
     ok(!(navigator instanceof DOMImplementation), "navigator is an instance of DOMImplementation");

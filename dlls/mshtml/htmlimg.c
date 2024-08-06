@@ -885,10 +885,11 @@ static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
 };
 
 static dispex_static_data_t HTMLImageElementFactory_dispex = {
-    "Function",
-    &HTMLImageElementFactory_dispex_vtbl,
-    IHTMLImageElementFactory_tid,
-    HTMLImageElementFactory_iface_tids
+    .name           = "Function",
+    .constructor_id = PROT_HTMLImageElement,
+    .vtbl           = &HTMLImageElementFactory_dispex_vtbl,
+    .disp_tid       = IHTMLImageElementFactory_tid,
+    .iface_tids     = HTMLImageElementFactory_iface_tids,
 };
 
 HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow *window, HTMLImageElementFactory **ret_val)
@@ -903,7 +904,7 @@ HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow *window, HTMLImageElement
     ret->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    init_dispatch(&ret->dispex, &HTMLImageElementFactory_dispex, NULL,
+    init_dispatch(&ret->dispex, &HTMLImageElementFactory_dispex, window,
                   dispex_compat_mode(&window->event_target.dispex));
 
     *ret_val = ret;

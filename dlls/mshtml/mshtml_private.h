@@ -438,6 +438,7 @@ typedef struct {
     dispex_data_t *delayed_init_info;
     prototype_id_t id;
     prototype_id_t prototype_id;
+    prototype_id_t constructor_id;
     UINT32 js_flags;
     char prototype_name[64];
 } dispex_static_data_t;

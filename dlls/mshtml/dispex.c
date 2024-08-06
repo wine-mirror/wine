@@ -1800,9 +1800,16 @@ static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global,
     if(!script_global->jscript)
         initialize_script_global(script_global);
     if(script_global->jscript && !dispex->jsdisp) {
-        hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
-                                           prototype ? prototype->jsdisp : NULL,
-                                           dispex->info->desc->js_flags, &dispex->jsdisp);
+        if(dispex->info->desc->constructor_id) {
+            DispatchEx *prototype;
+            if(FAILED(hres = get_prototype(script_global, dispex->info->desc->constructor_id, &prototype)))
+                return;
+            hres = IWineJScript_InitHostConstructor(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
+                                                    prototype->jsdisp, &dispex->jsdisp);
+        }else
+            hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
+                                               prototype ? prototype->jsdisp : NULL,
+                                               dispex->info->desc->js_flags, &dispex->jsdisp);
         if(FAILED(hres))
             ERR("Failed to initialize jsdisp: %08lx\n", hres);
     }
