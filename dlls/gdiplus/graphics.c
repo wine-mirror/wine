@@ -5912,7 +5912,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if (scaled_rect.Width >= 0.5)
     {
         scaled_rect.Width -= margin_x * 2.0 * args.rel_width;
-        if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
+        if (scaled_rect.Width < 0.5) /* doesn't fit */
+            goto end;
     }
 
     if (scaled_rect.Width >= 1 << 23) scaled_rect.Width = 1 << 23;
@@ -5943,7 +5944,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     SelectObject(hdc, oldfont);
     DeleteObject(gdifont);
-
+end:
     if (temp_hdc)
         DeleteDC(temp_hdc);
     else
@@ -6091,7 +6092,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if (scaled_rect.Width >= 0.5)
     {
         scaled_rect.Width -= margin_x * 2.0 * rel_width;
-        if (scaled_rect.Width < 0.5) return Ok; /* doesn't fit */
+        if (scaled_rect.Width < 0.5) /* doesn't fit */
+            goto end;
     }
 
     if (scaled_rect.Width >= 1 << 23) scaled_rect.Width = 1 << 23;
@@ -6129,7 +6131,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
     DeleteObject(rgn);
     DeleteObject(gdifont);
-
+end:
     RestoreDC(hdc, save_state);
 
     if (temp_hdc)
