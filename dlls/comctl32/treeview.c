@@ -3348,10 +3348,10 @@ static BOOL
 TREEVIEW_SendExpanding(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 		       UINT action)
 {
-    return !TREEVIEW_SendTreeviewNotify(infoPtr, TVN_ITEMEXPANDINGW, action,
-					TVIF_HANDLE | TVIF_STATE | TVIF_PARAM
-					| TVIF_IMAGE | TVIF_SELECTEDIMAGE,
-					0, item);
+    return TREEVIEW_SendTreeviewNotify(infoPtr, TVN_ITEMEXPANDINGW, action,
+                                       TVIF_HANDLE | TVIF_STATE | TVIF_PARAM
+                                       | TVIF_IMAGE | TVIF_SELECTEDIMAGE,
+                                       0, item);
 }
 
 static VOID
@@ -3383,8 +3383,8 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
     if (!TREEVIEW_HasChildren(infoPtr, item))
 	return FALSE;
 
-    if (bUser)
-	TREEVIEW_SendExpanding(infoPtr, item, action);
+    if (bUser && TREEVIEW_SendExpanding(infoPtr, item, action))
+        return TRUE;
 
     if (item->firstChild == NULL)
 	return FALSE;
@@ -3513,11 +3513,11 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
                                     !(item->state & TVIS_EXPANDEDONCE));
     if (sendsNotifications)
     {
-	if (!TREEVIEW_SendExpanding(infoPtr, item, TVE_EXPAND))
-	{
-	    TRACE("  TVN_ITEMEXPANDING returned TRUE, exiting...\n");
-	    return FALSE;
-	}
+        if (TREEVIEW_SendExpanding(infoPtr, item, TVE_EXPAND))
+        {
+            TRACE("  TVN_ITEMEXPANDING returned TRUE, exiting...\n");
+            return TRUE;
+        }
     }
     if (!item->firstChild)
         return FALSE;

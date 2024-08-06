@@ -1922,7 +1922,7 @@ static void test_expandnotify(void)
     /* check if it's expanded */
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    todo_wine ok(!(item.state & TVIS_EXPANDED), "expected no expansion\n");
+    ok(!(item.state & TVIS_EXPANDED), "expected no expansion\n");
 
     DestroyWindow(hTree);
 
@@ -1939,7 +1939,7 @@ static void test_expandnotify(void)
 
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    todo_wine ok(item.state & TVIS_EXPANDED, "expected expansion\n");
+    ok(item.state & TVIS_EXPANDED, "expected expansion\n");
 
     memset(&item, 0, sizeof(item));
     item.hItem = hRoot;
@@ -1952,7 +1952,7 @@ static void test_expandnotify(void)
 
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    todo_wine ok(!(item.state & TVIS_EXPANDED), "expected no expansion\n");
+    ok(!(item.state & TVIS_EXPANDED), "expected no expansion\n");
 
     DestroyWindow(hTree);
 
@@ -1970,7 +1970,7 @@ static void test_expandnotify(void)
 
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    todo_wine ok(item.state & TVIS_EXPANDED, "expected expansion\n");
+    ok(item.state & TVIS_EXPANDED, "expected expansion\n");
 
     memset(&item, 0, sizeof(item));
     item.hItem = hRoot;
@@ -1985,7 +1985,7 @@ static void test_expandnotify(void)
 
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    todo_wine ok(item.state & TVIS_EXPANDED, "expected expansion\n");
+    ok(item.state & TVIS_EXPANDED, "expected expansion\n");
 
     DestroyWindow(hTree);
 
