@@ -2934,7 +2934,7 @@ static dispex_static_data_t constructor_dispex = {
 
 HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)
 {
-    struct constructor *constr;
+    dispex_static_data_t *info;
 
     assert(script_global->doc->document_mode >= COMPAT_MODE_IE9);
 
@@ -2943,13 +2943,23 @@ HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, Dispa
         return S_OK;
     }
 
-    if(!(constr = calloc(sizeof(*constr), 1)))
-        return E_OUTOFMEMORY;
+    info = object_descriptors[id];
+    if(info->init_constructor) {
+        HRESULT hres = info->init_constructor(script_global, &script_global->constructors[id]);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        struct constructor *constr;
+        if(!(constr = calloc(sizeof(*constr), 1)))
+            return E_OUTOFMEMORY;
 
-    init_dispatch(&constr->dispex, &constructor_dispex, script_global,
-                  dispex_compat_mode(&script_global->event_target.dispex));
-    constr->id = id;
-    *ret = script_global->constructors[id] = &constr->dispex;
+        init_dispatch(&constr->dispex, &constructor_dispex, script_global,
+                      dispex_compat_mode(&script_global->event_target.dispex));
+        constr->id = id;
+        script_global->constructors[id] = &constr->dispex;
+    }
+
+    *ret = script_global->constructors[id];
     return S_OK;
 
 }

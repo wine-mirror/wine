@@ -1921,17 +1921,16 @@ static HRESULT WINAPI HTMLWindow5_get_XMLHttpRequest(IHTMLWindow5 *iface, VARIAN
         return S_OK;
     }
 
-    if(!window->xhr_factory) {
+    if(!window->constructors[PROT_XMLHttpRequest]) {
         HRESULT hres;
 
-        hres = HTMLXMLHttpRequestFactory_Create(window, &window->xhr_factory);
-        if(FAILED(hres)) {
+        hres = HTMLXMLHttpRequestFactory_Create(window, &window->constructors[PROT_XMLHttpRequest]);
+        if(FAILED(hres))
             return hres;
-        }
     }
 
     V_VT(p) = VT_DISPATCH;
-    V_DISPATCH(p) = (IDispatch*)&window->xhr_factory->IHTMLXMLHttpRequestFactory_iface;
+    V_DISPATCH(p) = (IDispatch*)&window->constructors[PROT_XMLHttpRequest]->IWineJSDispatchHost_iface;
     IDispatch_AddRef(V_DISPATCH(p));
 
     return S_OK;
@@ -3709,8 +3708,6 @@ static void HTMLWindow_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCa
         note_cc_edge((nsISupports*)&This->image_factory->IHTMLImageElementFactory_iface, "image_factory", cb);
     if(This->option_factory)
         note_cc_edge((nsISupports*)&This->option_factory->IHTMLOptionElementFactory_iface, "option_factory", cb);
-    if(This->xhr_factory)
-        note_cc_edge((nsISupports*)&This->xhr_factory->IHTMLXMLHttpRequestFactory_iface, "xhr_factory", cb);
     if(This->mutation_observer_ctor)
         note_cc_edge((nsISupports*)This->mutation_observer_ctor, "mutation_observer_ctor", cb);
     if(This->screen)
@@ -3760,11 +3757,6 @@ static void HTMLWindow_unlink(DispatchEx *dispex)
         HTMLOptionElementFactory *option_factory = This->option_factory;
         This->option_factory = NULL;
         IHTMLOptionElementFactory_Release(&option_factory->IHTMLOptionElementFactory_iface);
-    }
-    if(This->xhr_factory) {
-        HTMLXMLHttpRequestFactory *xhr_factory = This->xhr_factory;
-        This->xhr_factory = NULL;
-        IHTMLXMLHttpRequestFactory_Release(&xhr_factory->IHTMLXMLHttpRequestFactory_iface);
     }
     unlink_ref(&This->mutation_observer_ctor);
     unlink_ref(&This->screen);
@@ -4184,7 +4176,8 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
                                   compat_mode >= COMPAT_MODE_IE11 ? NULL : private_ie10_hooks);
 
     dispex_info_add_interface(info, IHTMLWindow6_tid, window6_hooks);
-    dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
+    if(compat_mode < COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
     dispex_info_add_interface(info, IHTMLWindow4_tid, compat_mode >= COMPAT_MODE_IE11 ? window4_ie11_hooks : NULL);
     dispex_info_add_interface(info, IHTMLWindow3_tid, compat_mode >= COMPAT_MODE_IE11 ? window3_ie11_hooks : window3_hooks);
     dispex_info_add_interface(info, IHTMLWindow2_tid, compat_mode >= COMPAT_MODE_IE11 ? window2_ie11_hooks : window2_hooks);

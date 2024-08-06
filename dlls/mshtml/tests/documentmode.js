@@ -3136,6 +3136,9 @@ sync_test("prototypes", function() {
     }
     check(window, Window.prototype, "window");
     check(Window.prototype, Object.prototype, "window prototype");
+    check(new XMLHttpRequest(), XMLHttpRequest.prototype, "xhr");
+    check(XMLHttpRequest.prototype, Object.prototype, "xhr prototype");
+    check(XMLHttpRequest, Function.prototype, "xhr constructor");
     check(document.createElement("img"), HTMLImageElement.prototype, "img elem");
     check(HTMLImageElement.prototype, HTMLElement.prototype, "img elem prototype");
     check(Image, Function.prototype, "Image constructor");
