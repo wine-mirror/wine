@@ -559,7 +559,7 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
         memset( &data->shared_foreground, 0, sizeof(data->shared_foreground) );
         thread_info->client_info.top_window = 0;
         thread_info->client_info.msg_window = 0;
-        if (was_virtual_desktop != is_virtual_desktop()) update_display_cache( FALSE );
+        if (was_virtual_desktop != is_virtual_desktop()) update_display_cache( TRUE );
     }
     return ret;
 }
