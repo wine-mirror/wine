@@ -315,16 +315,22 @@ static HIDP_REPORT_IDS *find_report_with_type_and_id( BASE_DEVICE_EXTENSION *ext
 static DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    HIDP_COLLECTION_DESC *desc = ext->u.pdo.collection_desc;
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension, *fdo_ext;
+    ULONG i, input_length = 0, report_id = 0;
     HIDP_REPORT_IDS *report;
     HID_XFER_PACKET *packet;
-    ULONG report_id = 0;
     IO_STATUS_BLOCK io;
     BYTE *buffer;
     DWORD res;
 
-    packet = malloc( sizeof(*packet) + desc->InputLength );
+    fdo_ext = ext->u.pdo.parent_fdo->DeviceExtension;
+    for (i = 0; i < fdo_ext->u.fdo.device_desc.CollectionDescLength; i++)
+    {
+        HIDP_COLLECTION_DESC *desc = fdo_ext->u.fdo.device_desc.CollectionDesc + i;
+        input_length = max(input_length, desc->InputLength);
+    }
+
+    packet = malloc( sizeof(*packet) + input_length );
     buffer = (BYTE *)(packet + 1);
 
     report = find_report_with_type_and_id( ext, HidP_Input, 0, TRUE );
@@ -335,7 +341,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
     {
         packet->reportId = buffer[0] = report_id;
         packet->reportBuffer = buffer;
-        packet->reportBufferLen = desc->InputLength;
+        packet->reportBufferLen = input_length;
 
         if (!report_id)
         {
