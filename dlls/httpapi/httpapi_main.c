@@ -516,7 +516,6 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
     return ret;
 }
 
-
 /***********************************************************************
  *        HttpSendResponseEntityBody     (HTTPAPI.@)
  *
@@ -542,11 +541,64 @@ ULONG WINAPI HttpSendResponseEntityBody(HANDLE queue, HTTP_REQUEST_ID id,
        ULONG *ret_size, void *reserved1, ULONG reserved2, OVERLAPPED *ovl,
        HTTP_LOG_DATA *log_data)
 {
-    FIXME("queue %p, id %s, flags %#lx, entity_chunk_count %u, entity_chunks %p, "
-            "ret_size %p, reserved1 %p, reserved2 %#lx, ovl %p, log_data %p: stub!\n",
+    struct http_response *buffer;
+    OVERLAPPED dummy_ovl = {};
+    ULONG ret = NO_ERROR;
+    int len = 0;
+    char *p;
+    USHORT i;
+
+    TRACE("queue %p, id %s, flags %#lx, entity_chunk_count %u, entity_chunks %p, "
+            "ret_size %p, reserved1 %p, reserved2 %#lx, ovl %p, log_data %p\n",
             queue, wine_dbgstr_longlong(id), flags, entity_chunk_count, entity_chunks,
             ret_size, reserved1, reserved2, ovl, log_data);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if (!id)
+        return ERROR_CONNECTION_INVALID;
+
+    if (flags & ~HTTP_SEND_RESPONSE_FLAG_MORE_DATA)
+        FIXME("Unhandled flags %#lx.\n", flags & ~HTTP_SEND_RESPONSE_FLAG_MORE_DATA);
+    if (log_data)
+        WARN("Ignoring log_data.\n");
+
+    /* Compute the length of the body. */
+    for (i = 0; i < entity_chunk_count; ++i)
+    {
+        if (entity_chunks[i].DataChunkType != HttpDataChunkFromMemory)
+        {
+            FIXME("Unhandled data chunk type %u.\n", entity_chunks[i].DataChunkType);
+            return ERROR_CALL_NOT_IMPLEMENTED;
+        }
+        len += entity_chunks[i].FromMemory.BufferLength;
+    }
+
+    if (!(buffer = malloc(offsetof(struct http_response, buffer[len]))))
+        return ERROR_OUTOFMEMORY;
+    buffer->id = id;
+    buffer->response_flags = flags;
+    buffer->len = len;
+
+    p = buffer->buffer;
+    for (i = 0; i < entity_chunk_count; ++i)
+    {
+        const HTTP_DATA_CHUNK *chunk = &entity_chunks[i];
+        memcpy(p, chunk->FromMemory.pBuffer, chunk->FromMemory.BufferLength);
+        p += chunk->FromMemory.BufferLength;
+    }
+
+    if (!ovl)
+    {
+        ovl = &dummy_ovl;
+        if (ret_size)
+            *ret_size = len;
+    }
+
+    if (!DeviceIoControl(queue, IOCTL_HTTP_SEND_RESPONSE, buffer,
+            offsetof(struct http_response, buffer[len]), NULL, 0, NULL, ovl))
+        ret = GetLastError();
+
+    free(buffer);
+    return ret;
 }
 
 struct url_group
