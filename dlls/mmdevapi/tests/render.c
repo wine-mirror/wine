@@ -2167,6 +2167,12 @@ static void check_session_ids_(unsigned int line, IMMDevice *dev, const GUID *se
     ok_(__FILE__, line)(!wcscmp(str, expected), "got %s, expected %s.\n", debugstr_w(str), debugstr_w(expected));
     CoTaskMemFree(str);
 
+    hr = IAudioSessionControl2_GetSessionInstanceIdentifier(ctl2, &str);
+    ok_(__FILE__, line)(hr == S_OK, "GetSessionInstanceIdentifier failed, hr %#lx.\n", hr);
+    wsprintfW(expected, L"%s|%s%%b%s|1%%b%lu", dev_id, exe_path, guidstr, GetCurrentProcessId());
+    ok_(__FILE__, line)(!wcscmp(str, expected), "got %s, expected %s.\n", debugstr_w(str), debugstr_w(expected));
+    CoTaskMemFree(str);
+
     CoTaskMemFree(dev_id);
     IAudioSessionControl2_Release(ctl2);
 }

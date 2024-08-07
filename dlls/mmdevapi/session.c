@@ -298,8 +298,24 @@ static HRESULT WINAPI control_GetSessionIdentifier(IAudioSessionControl2 *iface,
 static HRESULT WINAPI control_GetSessionInstanceIdentifier(IAudioSessionControl2 *iface, WCHAR **id)
 {
     struct audio_session_wrapper *This = impl_from_IAudioSessionControl2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, id);
-    return E_NOTIMPL;
+    WCHAR *session_id, pid[16];
+    HRESULT hr;
+    DWORD len;
+
+    TRACE("(%p)->(%p).\n", This, id);
+
+    if (FAILED(hr = control_GetSessionIdentifier(iface, &session_id)))
+        return hr;
+
+    swprintf(pid, ARRAY_SIZE(pid), L"%lu", GetCurrentProcessId());
+    len = wcslen(session_id) + 4 + wcslen(pid) + 1;
+    if (!(*id = CoTaskMemAlloc(len * sizeof(WCHAR)))) {
+        CoTaskMemFree(session_id);
+        return E_OUTOFMEMORY;
+    }
+    swprintf(*id, len, L"%s|1%%b%s", session_id, pid);
+    CoTaskMemFree(session_id);
+    return S_OK;
 }
 
 static HRESULT WINAPI control_GetProcessId(IAudioSessionControl2 *iface, DWORD *pid)
