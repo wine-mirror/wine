@@ -187,7 +187,10 @@ HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instan
 
 HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
+    DIDEVICEOBJECTINSTANCEW instance;
     struct keyboard *impl;
+    DWORD i, index, dik;
+    BYTE subtype;
     HRESULT hr;
 
     TRACE( "dinput %p, guid %s, out %p.\n", dinput, debugstr_guid( guid ), out );
@@ -204,8 +207,20 @@ HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirect
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;
     if (dinput->dwVersion >= 0x0800) impl->base.use_raw_input = TRUE;
+    subtype = GET_DIDEVICE_SUBTYPE( impl->base.instance.dwDevType );
 
     if (FAILED(hr = dinput_device_init_device_format( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
+
+    for (i = 0, index = 0; i < 512; ++i)
+    {
+        if (!GetKeyNameTextW( i << 16, instance.tszName, ARRAY_SIZE(instance.tszName) )) continue;
+        if (!(dik = map_dik_code( i, 0, subtype, impl->base.dinput->dwVersion ))) continue;
+
+        if (dik == DIK_NUMLOCK) impl->base.object_properties[index++].scan_code = 0x451de1;
+        else if (dik == DIK_PAUSE) impl->base.object_properties[index++].scan_code = 0x45;
+        else if (dik < 0x80) impl->base.object_properties[index++].scan_code = dik;
+        else impl->base.object_properties[index++].scan_code = (dik - 0x80) << 8 | 0x00e0;
+    }
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;

@@ -69,6 +69,7 @@ struct object_properties
     UINT_PTR app_data;
     DWORD calibration_mode;
     DWORD granularity;
+    DWORD scan_code;
 };
 
 enum device_status

@@ -1325,7 +1325,6 @@ static void test_sys_mouse( DWORD version )
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
-    todo_wine_if( version >= 0x800 )
     ok( hr == (version < 0x800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
         "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
 
@@ -2370,9 +2369,7 @@ static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwn
                 ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
             else
             {
-                todo_wine
                 ok( hr == DI_OK, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
-                todo_wine
                 ok( prop_dword.dwData == scan, "got %#lx expected %#x\n", prop_dword.dwData, scan );
             }
 
@@ -2490,9 +2487,7 @@ static void test_scan_codes( IDirectInputDevice8W *device, HANDLE event, HWND hw
                 ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
             else
             {
-                todo_wine
                 ok( hr == DI_OK, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
-                todo_wine
                 ok( prop_dword.dwData == map[j].result, "got %#lx expected %#lx\n",
                     prop_dword.dwData, map[j].result );
             }
@@ -2833,7 +2828,6 @@ static void test_sys_keyboard( DWORD version )
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
-    todo_wine_if( version >= 0x800 )
     ok( hr == (version < 0x800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
         "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
 

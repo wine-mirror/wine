@@ -812,6 +812,7 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
     case (DWORD_PTR)DIPROP_LOGICALRANGE:
     case (DWORD_PTR)DIPROP_PHYSICALRANGE:
     case (DWORD_PTR)DIPROP_APPDATA:
+    case (DWORD_PTR)DIPROP_SCANCODE:
         if (impl->dinput->dwVersion < 0x0800) return DIERR_UNSUPPORTED;
         break;
     }
@@ -885,10 +886,10 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
         break;
 
     case (DWORD_PTR)DIPROP_KEYNAME:
+    case (DWORD_PTR)DIPROP_SCANCODE:
         if (header->dwHow == DIPH_DEVICE) return DIERR_INVALIDPARAM;
         break;
 
-    case (DWORD_PTR)DIPROP_SCANCODE:
     case (DWORD_PTR)DIPROP_APPDATA:
         if (header->dwHow == DIPH_DEVICE) return DIERR_UNSUPPORTED;
         break;
@@ -1061,6 +1062,12 @@ static BOOL get_object_property( struct dinput_device *device, UINT index, struc
         value->uData = properties->app_data;
         return DIENUM_STOP;
     }
+    case (DWORD_PTR)DIPROP_SCANCODE:
+    {
+        DIPROPDWORD *value = (DIPROPDWORD *)params->header;
+        value->dwData = properties->scan_code;
+        return DI_OK;
+    }
     }
 
     return DIENUM_STOP;
@@ -1097,6 +1104,7 @@ static HRESULT dinput_device_get_property( IDirectInputDevice8W *iface, const GU
     case (DWORD_PTR)DIPROP_KEYNAME:
     case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
     case (DWORD_PTR)DIPROP_APPDATA:
+    case (DWORD_PTR)DIPROP_SCANCODE:
         hr = impl->vtbl->enum_objects( iface, &filter, object_mask, get_object_property, &params );
         if (FAILED(hr)) return hr;
         if (hr == DIENUM_CONTINUE) return DIERR_NOTFOUND;
