@@ -2763,6 +2763,12 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         return FALSE;
     }
 
+    if (!*pdwDataLen)
+    {
+        SetLastError(NTE_BAD_LEN);
+        return FALSE;
+    }
+
     dwMax=*pdwDataLen;
 
     if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_BLOCK) {
