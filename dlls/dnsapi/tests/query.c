@@ -134,7 +134,7 @@ static void test_DnsQuery(void)
     ptr = rec; /* CNAMEs come first */
     ok(!wcscmp(domain, ptr->pName), "expected record name %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->pName));
     ok(DNS_TYPE_CNAME == ptr->wType, "expected record type %d, got %d\n", DNS_TYPE_CNAME, ptr->wType);
-    wcscpy(domain, L"winehq.org");
+    wcscpy(domain, L"testbot.winehq.org");
     if (ptr->wType == DNS_TYPE_CNAME)
         ok(!wcscmp(domain, ptr->Data.CNAME.pNameHost), "expected CNAME target %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->Data.CNAME.pNameHost));
     ptr = ptr->pNext;
@@ -177,7 +177,7 @@ static void test_DnsQuery(void)
     ptr = rec;
     ok(!wcscmp(domain, ptr->pName), "expected record name %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->pName));
     ok(DNS_TYPE_CNAME == ptr->wType, "expected record type %d, got %d\n", DNS_TYPE_CNAME, ptr->wType);
-    wcscpy(domain, L"winehq.org");
+    wcscpy(domain, L"testbot.winehq.org");
     if (ptr->wType == DNS_TYPE_CNAME)
         ok(!wcscmp(domain, ptr->Data.CNAME.pNameHost), "expected CNAME target %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->Data.CNAME.pNameHost));
     DnsRecordListFree(rec, DnsFreeRecordList);
