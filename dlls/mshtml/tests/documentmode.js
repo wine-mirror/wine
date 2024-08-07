@@ -3152,4 +3152,6 @@ sync_test("prototypes", function() {
     }
     check(document.createElement("a"), HTMLAnchorElement.prototype, "anchor element");
     check(HTMLAnchorElement.prototype, HTMLElement.prototype, "anchor element prototype");
+    check(document.createElement("area"), HTMLAreaElement.prototype, "area element");
+    check(HTMLAreaElement.prototype, HTMLElement.prototype, "area element prototype");
 });

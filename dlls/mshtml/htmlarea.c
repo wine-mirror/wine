@@ -444,12 +444,14 @@ static const tid_t HTMLAreaElement_iface_tids[] = {
     IHTMLAreaElement_tid,
     0
 };
-static dispex_static_data_t HTMLAreaElement_dispex = {
-    "HTMLAreaElement",
-    &HTMLAreaElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLAreaElement_tid,
-    HTMLAreaElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLAreaElement_dispex = {
+    .name         = "HTMLAreaElement",
+    .id           = PROT_HTMLAreaElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLAreaElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLAreaElement_tid,
+    .iface_tids   = HTMLAreaElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLAreaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
