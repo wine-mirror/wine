@@ -16,9 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+var tests = [];
 var xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<a name=\"test\">wine</a>";
 
-function test_xhr() {
+async_test("async_xhr", function() {
     var xhr = new XMLHttpRequest();
     var complete_cnt = 0, loadstart = false;
 
@@ -74,9 +75,9 @@ function test_xhr() {
         xhr.withCredentials = false;
     }
     xhr.send(xml);
-}
+});
 
-function test_sync_xhr() {
+async_test("sync_xhr", function() {
     var async_xhr, async_xhr2, sync_xhr, sync_xhr_in_async, sync_xhr_nested, a = [ 0 ];
     var async_xhr_clicked = false, doc_dblclicked = false;
     function onmsg(e) { a.push("msg" + e.data); }
@@ -212,9 +213,9 @@ function test_sync_xhr() {
         iframe.src = "xhr_iframe.html";
         document.body.appendChild(iframe);
     }, 0);
-}
+});
 
-function test_content_types() {
+async_test("content_types", function() {
     var xhr = new XMLHttpRequest(), types, i = 0, override = false;
     var v = document.documentMode;
 
@@ -272,9 +273,9 @@ function test_content_types() {
     xhr.open("POST", "echo.php?content-type=" + types[i], true);
     xhr.setRequestHeader("X-Test", "True");
     xhr.send(xml);
-}
+});
 
-function test_abort() {
+async_test("abort", function() {
     var xhr = new XMLHttpRequest();
     if(!("onabort" in xhr)) { next_test(); return; }
 
@@ -291,9 +292,9 @@ function test_abort() {
     xhr.setRequestHeader("X-Test", "True");
     xhr.send("Abort Test");
     xhr.abort();
-}
+});
 
-function test_timeout() {
+async_test("timeout", function() {
     var xhr = new XMLHttpRequest();
     var v = document.documentMode;
 
@@ -331,9 +332,9 @@ function test_timeout() {
     xhr.setRequestHeader("X-Test", "True");
     xhr.timeout = 10;
     xhr.send("Timeout Test");
-}
+});
 
-function test_responseType() {
+async_test("responseType", function() {
     var i, xhr = new XMLHttpRequest();
     if(!("responseType" in xhr)) { next_test(); return; }
 
@@ -385,9 +386,9 @@ function test_responseType() {
     }
     xhr.onloadend = function() { next_test(); }
     xhr.send("responseType test");
-}
+});
 
-function test_response() {
+async_test("response", function() {
     var xhr = new XMLHttpRequest(), i = 0;
     if(!("response" in xhr)) { next_test(); return; }
 
@@ -429,14 +430,4 @@ function test_response() {
     xhr.setRequestHeader("X-Test", "True");
     xhr.responseType = types[i][0];
     xhr.send(xml);
-}
-
-var tests = [
-    test_xhr,
-    test_sync_xhr,
-    test_content_types,
-    test_abort,
-    test_timeout,
-    test_responseType,
-    test_response
-];
+});
