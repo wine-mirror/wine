@@ -1288,12 +1288,14 @@ static const tid_t HTMLInputElement_iface_tids[] = {
     IHTMLInputTextElement2_tid,
     0
 };
-static dispex_static_data_t HTMLInputElement_dispex = {
-    "HTMLInputElement",
-    &HTMLInputElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLInputElement_tid,
-    HTMLInputElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLInputElement_dispex = {
+    .name         = "HTMLInputElement",
+    .id           = PROT_HTMLInputElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLInputElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLInputElement_tid,
+    .iface_tids   = HTMLInputElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -1431,12 +1433,14 @@ static const tid_t HTMLLabelElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLLabelElement_dispex = {
-    "HTMLLabelElement",
-    &HTMLLabelElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLLabelElement_tid,
-    HTMLLabelElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLLabelElement_dispex = {
+    .name         = "HTMLLabelElement",
+    .id           = PROT_HTMLLabelElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLLabelElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLLabelElement_tid,
+    .iface_tids   = HTMLLabelElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLLabelElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -1717,12 +1721,14 @@ static const tid_t HTMLButtonElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLButtonElement_dispex = {
-    "HTMLButtonElement",
-    &HTMLButtonElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLButtonElement_tid,
-    HTMLButtonElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLButtonElement_dispex = {
+    .name         = "HTMLButtonElement",
+    .id           = PROT_HTMLButtonElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLButtonElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLButtonElement_tid,
+    .iface_tids   = HTMLButtonElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLButtonElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

@@ -3168,4 +3168,10 @@ sync_test("prototypes", function() {
     check(HTMLHeadElement.prototype, HTMLElement.prototype, "head element prototype");
     check(document.createElement("meta"), HTMLMetaElement.prototype, "meta element");
     check(HTMLMetaElement.prototype, HTMLElement.prototype, "meta element prototype");
+    check(document.createElement("input"), HTMLInputElement.prototype, "input element");
+    check(HTMLInputElement.prototype, HTMLElement.prototype, "input element prototype");
+    check(document.createElement("label"), HTMLLabelElement.prototype, "label element");
+    check(HTMLLabelElement.prototype, HTMLElement.prototype, "label element prototype");
+    check(document.createElement("button"), HTMLButtonElement.prototype, "button element");
+    check(HTMLButtonElement.prototype, HTMLElement.prototype, "button element prototype");
 });

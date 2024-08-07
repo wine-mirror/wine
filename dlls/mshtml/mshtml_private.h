@@ -413,6 +413,7 @@ typedef struct {
     X(HTMLAnchorElement)                   \
     X(HTMLAreaElement)                     \
     X(HTMLBodyElement)                     \
+    X(HTMLButtonElement)                   \
     X(HTMLDocument)                        \
     X(HTMLElement)                         \
     X(HTMLFormElement)                     \
@@ -421,6 +422,8 @@ typedef struct {
     X(HTMLHtmlElement)                     \
     X(HTMLIFrameElement)                   \
     X(HTMLImageElement)                    \
+    X(HTMLInputElement)                    \
+    X(HTMLLabelElement)                    \
     X(HTMLMetaElement)                     \
     X(HTMLOptionElement)                   \
     X(HTMLTitleElement)                    \
