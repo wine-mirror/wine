@@ -1324,6 +1324,10 @@ static void test_sys_mouse( DWORD version )
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
+    todo_wine_if( version >= 0x800 )
+    ok( hr == (version < 0x800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
+        "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYUSAGE;
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_GENERIC_X, HID_USAGE_PAGE_GENERIC );
@@ -2305,12 +2309,20 @@ static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwn
     };
     DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     const struct key2dik *map;
+    DIPROPDWORD prop_dword =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_BYOFFSET,
+        },
+    };
     BYTE key_state[256];
     HKL hkl, old_hkl;
-    WORD vkey, scan;
     HRESULT hr;
     ULONG res;
-    UINT i, j;
+    UINT vkey, scan, i, j;
 
     hr = IDirectInputDevice_SetDataFormat( device, &c_dfDIKeyboard );
     ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
@@ -2352,6 +2364,18 @@ static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwn
             todo_wine_if( map[j].todo )
             ok( scan, "MapVirtualKeyExA failed\n" );
 
+            prop_dword.diph.dwObj = map[j].dik;
+            hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
+            if (version < 0x0800)
+                ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
+            else
+            {
+                todo_wine
+                ok( hr == DI_OK, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
+                todo_wine
+                ok( prop_dword.dwData == scan, "got %#lx expected %#x\n", prop_dword.dwData, scan );
+            }
+
             keybd_event( vkey, scan, 0, 0 );
             res = WaitForSingleObject( event, 100 );
             if (i == 0 && j == 0 && res == WAIT_TIMEOUT) /* Acquire is asynchronous */
@@ -2371,6 +2395,107 @@ static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwn
             res = WaitForSingleObject( event, 5000 );
             flaky_wine_if( GetForegroundWindow() != hwnd && version == 0x800 ) /* FIXME: fvwm sometimes steals input focus */
             ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+            winetest_pop_context();
+        }
+
+    skip_key_tests:
+        ActivateKeyboardLayout( old_hkl, 0 );
+
+        winetest_pop_context();
+    }
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+}
+
+static void test_scan_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwnd, DWORD version )
+{
+    static const struct dik2scan
+    {
+        BYTE dik; BOOL found; DWORD result;
+    }
+    dik2scan_en[] =
+    {
+        { DIK_NUMLOCK, TRUE, 0x451DE1 },
+        { DIK_PAUSE, TRUE, 0x45 },
+        { DIK_CIRCUMFLEX, TRUE, 0x10E0 },
+        { DIK_KANA, FALSE, 0 },
+    },
+    dik2scan_ja[] =
+    {
+        { DIK_NUMLOCK, TRUE, 0x451DE1 },
+        { DIK_PAUSE, TRUE, 0x45 },
+        { DIK_CIRCUMFLEX, TRUE, 0x0d },
+        { DIK_KANA, TRUE, 0x70 },
+    };
+    static const struct
+    {
+        LANGID langid;
+        const struct dik2scan *map;
+        DWORD type;
+    } tests[] =
+    {
+        { MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), dik2scan_en, DIDEVTYPEKEYBOARD_PCENH },
+        { MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), dik2scan_ja, DIDEVTYPEKEYBOARD_JAPAN106 },
+    };
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    const struct dik2scan *map;
+    DIPROPDWORD prop_dword =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_BYOFFSET,
+        },
+    };
+    HKL hkl, old_hkl;
+    HRESULT hr;
+    UINT i, j;
+
+    hr = IDirectInputDevice_SetDataFormat( device, &c_dfDIKeyboard );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
+    hr = IDirectInputDevice_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+    hr = IDirectInputDevice_GetCapabilities( device, &caps );
+    ok( hr == DI_OK, "GetDeviceInstance returned %#lx\n", hr );
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (tests[i].type != GET_DIDEVICE_SUBTYPE( caps.dwDevType ))
+        {
+            skip( "keyboard type %#x doesn't match for lang %#x\n",
+                  GET_DIDEVICE_SUBTYPE( caps.dwDevType ), tests[i].langid );
+            continue;
+        }
+
+        winetest_push_context( "lang %#x", tests[i].langid );
+
+        hkl = activate_keyboard_layout( tests[i].langid, &old_hkl );
+        if (LOWORD(old_hkl) != MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) ||
+            LOWORD(hkl) != tests[i].langid) goto skip_key_tests;
+
+        map = tests[i].map;
+        for (j = 0; j < ARRAY_SIZE(dik2scan_en); j++)
+        {
+            winetest_push_context( "dik %#x", map[j].dik );
+
+            prop_dword.diph.dwObj = map[j].dik;
+            hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
+
+            if (!map[j].found)
+                todo_wine ok( hr == DIERR_NOTFOUND, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
+            else if (version < 0x0800)
+                ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
+            else
+            {
+                todo_wine
+                ok( hr == DI_OK, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
+                todo_wine
+                ok( prop_dword.dwData == map[j].result, "got %#lx expected %#lx\n",
+                    prop_dword.dwData, map[j].result );
+            }
 
             winetest_pop_context();
         }
@@ -2707,11 +2832,17 @@ static void test_sys_keyboard( DWORD version )
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_FFLOAD returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
+    todo_wine_if( version >= 0x800 )
+    ok( hr == (version < 0x800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
+        "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYUSAGE;
     prop_dword.diph.dwObj = MAKELONG( HID_USAGE_KEYBOARD_LCTRL, HID_USAGE_PAGE_KEYBOARD );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
+    ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
 
     prop_dword.diph.dwHow = DIPH_BYOFFSET;
     prop_dword.diph.dwObj = 1;
@@ -2923,6 +3054,7 @@ skip_key_tests:
     ActivateKeyboardLayout( old_hkl, 0 );
 
     test_dik_codes( device, event, hwnd, version );
+    test_scan_codes( device, event, hwnd, version );
 
     CloseHandle( event );
     DestroyWindow( hwnd );

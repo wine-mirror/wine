@@ -2109,6 +2109,9 @@ static void test_simple_joystick( DWORD version )
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_SATURATION returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_CALIBRATIONMODE, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_CALIBRATIONMODE returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_SCANCODE, &prop_dword.diph );
+    ok( hr == (version < 0x800 ? DIERR_UNSUPPORTED : DIERR_INVALIDPARAM),
+        "GetProperty DIPROP_SCANCODE returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_RANGE returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_KEYNAME, &prop_string.diph );
