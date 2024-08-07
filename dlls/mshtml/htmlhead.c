@@ -126,12 +126,14 @@ static const tid_t HTMLTitleElement_iface_tids[] = {
     IHTMLTitleElement_tid,
     0
 };
-static dispex_static_data_t HTMLTitleElement_dispex = {
-    "HTMLTitleElement",
-    &HTMLTitleElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLTitleElement_tid,
-    HTMLTitleElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLTitleElement_dispex = {
+    .name         = "HTMLTitleElement",
+    .id           = PROT_HTMLTitleElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLTitleElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLTitleElement_tid,
+    .iface_tids   = HTMLTitleElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLTitleElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -241,12 +243,14 @@ static const tid_t HTMLHtmlElement_iface_tids[] = {
     IHTMLHtmlElement_tid,
     0
 };
-static dispex_static_data_t HTMLHtmlElement_dispex = {
-    "HTMLHtmlElement",
-    &HTMLHtmlElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLHtmlElement_tid,
-    HTMLHtmlElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLHtmlElement_dispex = {
+    .name         = "HTMLHtmlElement",
+    .id           = PROT_HTMLHtmlElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLHtmlElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLHtmlElement_tid,
+    .iface_tids   = HTMLHtmlElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLHtmlElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -420,12 +424,14 @@ static const tid_t HTMLMetaElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLMetaElement_dispex = {
-    "HTMLMetaElement",
-    &HTMLMetaElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLMetaElement_tid,
-    HTMLMetaElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLMetaElement_dispex = {
+    .name         = "HTMLMetaElement",
+    .id           = PROT_HTMLMetaElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLMetaElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLMetaElement_tid,
+    .iface_tids   = HTMLMetaElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLMetaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -526,12 +532,14 @@ static const tid_t HTMLHeadElement_iface_tids[] = {
     IHTMLHeadElement_tid,
     0
 };
-static dispex_static_data_t HTMLHeadElement_dispex = {
-    "HTMLHeadElement",
-    &HTMLHeadElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLHeadElement_tid,
-    HTMLHeadElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLHeadElement_dispex = {
+    .name         = "HTMLHeadElement",
+    .id           = PROT_HTMLHeadElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLHeadElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLHeadElement_tid,
+    .iface_tids   = HTMLHeadElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLHeadElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

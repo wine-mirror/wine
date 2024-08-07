@@ -3160,4 +3160,12 @@ sync_test("prototypes", function() {
     check(HTMLFrameElement.prototype, HTMLElement.prototype, "frame element prototype");
     check(document.createElement("iframe"), HTMLIFrameElement.prototype, "iframe element");
     check(HTMLIFrameElement.prototype, HTMLElement.prototype, "iframe element prototype");
+    check(document.createElement("title"), HTMLTitleElement.prototype, "title element");
+    check(HTMLTitleElement.prototype, HTMLElement.prototype, "title element prototype");
+    check(document.documentElement, HTMLHtmlElement.prototype, "html element");
+    check(HTMLHtmlElement.prototype, HTMLElement.prototype, "html element prototype");
+    check(document.head, HTMLHeadElement.prototype, "head element");
+    check(HTMLHeadElement.prototype, HTMLElement.prototype, "head element prototype");
+    check(document.createElement("meta"), HTMLMetaElement.prototype, "meta element");
+    check(HTMLMetaElement.prototype, HTMLElement.prototype, "meta element prototype");
 });

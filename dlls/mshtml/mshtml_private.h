@@ -417,9 +417,13 @@ typedef struct {
     X(HTMLElement)                         \
     X(HTMLFormElement)                     \
     X(HTMLFrameElement)                    \
+    X(HTMLHeadElement)                     \
+    X(HTMLHtmlElement)                     \
     X(HTMLIFrameElement)                   \
     X(HTMLImageElement)                    \
+    X(HTMLMetaElement)                     \
     X(HTMLOptionElement)                   \
+    X(HTMLTitleElement)                    \
     X(MutationObserver)                    \
     X(Navigator)                           \
     X(Node)                                \
