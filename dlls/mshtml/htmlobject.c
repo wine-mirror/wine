@@ -682,12 +682,14 @@ static const tid_t HTMLObjectElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     0
 };
-static dispex_static_data_t HTMLObjectElement_dispex = {
-    "HTMLObjectElement",
-    &HTMLObjectElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLObjectElement_tid,
-    HTMLObjectElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLObjectElement_dispex = {
+    .name         = "HTMLObjectElement",
+    .id           = PROT_HTMLObjectElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLObjectElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLObjectElement_tid,
+    .iface_tids   = HTMLObjectElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -887,12 +889,14 @@ static const tid_t HTMLEmbedElement_iface_tids[] = {
     IHTMLEmbedElement_tid,
     0
 };
-static dispex_static_data_t HTMLEmbedElement_dispex = {
-    "HTMLEmbedElement",
-    &HTMLEmbedElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLEmbed_tid,
-    HTMLEmbedElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLEmbedElement_dispex = {
+    .name         = "HTMLEmbedElement",
+    .id           = PROT_HTMLEmbedElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLEmbedElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLEmbed_tid,
+    .iface_tids   = HTMLEmbedElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLEmbedElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

@@ -3176,4 +3176,8 @@ sync_test("prototypes", function() {
     check(HTMLButtonElement.prototype, HTMLElement.prototype, "button element prototype");
     check(document.createElement("link"), HTMLLinkElement.prototype, "link element");
     check(HTMLLinkElement.prototype, HTMLElement.prototype, "link element prototype");
+    check(document.createElement("object"), HTMLObjectElement.prototype, "object element");
+    check(HTMLObjectElement.prototype, HTMLElement.prototype, "object element prototype");
+    check(document.createElement("embed"), HTMLEmbedElement.prototype, "embed element");
+    check(HTMLEmbedElement.prototype, HTMLElement.prototype, "embed element prototype");
 });

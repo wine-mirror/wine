@@ -416,6 +416,7 @@ typedef struct {
     X(HTMLButtonElement)                   \
     X(HTMLDocument)                        \
     X(HTMLElement)                         \
+    X(HTMLEmbedElement)                    \
     X(HTMLFormElement)                     \
     X(HTMLFrameElement)                    \
     X(HTMLHeadElement)                     \
@@ -426,6 +427,7 @@ typedef struct {
     X(HTMLLabelElement)                    \
     X(HTMLLinkElement)                     \
     X(HTMLMetaElement)                     \
+    X(HTMLObjectElement)                   \
     X(HTMLOptionElement)                   \
     X(HTMLTitleElement)                    \
     X(MutationObserver)                    \
