@@ -3156,4 +3156,8 @@ sync_test("prototypes", function() {
     check(HTMLAreaElement.prototype, HTMLElement.prototype, "area element prototype");
     check(document.createElement("form"), HTMLFormElement.prototype, "form element");
     check(HTMLFormElement.prototype, HTMLElement.prototype, "form element prototype");
+    check(document.createElement("frame"), HTMLFrameElement.prototype, "frame element");
+    check(HTMLFrameElement.prototype, HTMLElement.prototype, "frame element prototype");
+    check(document.createElement("iframe"), HTMLIFrameElement.prototype, "iframe element");
+    check(HTMLIFrameElement.prototype, HTMLElement.prototype, "iframe element prototype");
 });

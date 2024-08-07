@@ -928,12 +928,14 @@ static const tid_t HTMLFrameElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLFrameElement_dispex = {
-    "HTMLFrameElement",
-    &HTMLFrameElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLFrameElement_tid,
-    HTMLFrameElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLFrameElement_dispex = {
+    .name         = "HTMLFrameElement",
+    .id           = PROT_HTMLFrameElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLFrameElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLFrameElement_tid,
+    .iface_tids   = HTMLFrameElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -1340,7 +1342,7 @@ static const NodeImplVtbl HTMLIFrameImplVtbl = {
     .bind_to_tree          = HTMLIFrame_bind_to_tree,
 };
 
-static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
+static const event_target_vtbl_t HTMLIFrameElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLIFrame_query_interface,
@@ -1355,7 +1357,7 @@ static const event_target_vtbl_t HTMLIFrame_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLIFrame_iface_tids[] = {
+static const tid_t HTMLIFrameElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLFrameBase_tid,
     IHTMLFrameBase2_tid,
@@ -1365,12 +1367,14 @@ static const tid_t HTMLIFrame_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLIFrame_dispex = {
-    "HTMLIFrameElement",
-    &HTMLIFrame_event_target_vtbl.dispex_vtbl,
-    DispHTMLIFrame_tid,
-    HTMLIFrame_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLIFrameElement_dispex = {
+    .name         = "HTMLIFrameElement",
+    .id           = PROT_HTMLIFrameElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLIFrameElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLIFrame_tid,
+    .iface_tids   = HTMLIFrameElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -1386,7 +1390,7 @@ HRESULT HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElem
     ret->IHTMLIFrameElement3_iface.lpVtbl = &HTMLIFrameElement3Vtbl;
     ret->framebase.element.node.vtbl = &HTMLIFrameImplVtbl;
 
-    HTMLFrameBase_Init(&ret->framebase, doc, nselem, &HTMLIFrame_dispex);
+    HTMLFrameBase_Init(&ret->framebase, doc, nselem, &HTMLIFrameElement_dispex);
 
     *elem = &ret->framebase.element;
     return S_OK;

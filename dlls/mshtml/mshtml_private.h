@@ -416,6 +416,8 @@ typedef struct {
     X(HTMLDocument)                        \
     X(HTMLElement)                         \
     X(HTMLFormElement)                     \
+    X(HTMLFrameElement)                    \
+    X(HTMLIFrameElement)                   \
     X(HTMLImageElement)                    \
     X(HTMLOptionElement)                   \
     X(MutationObserver)                    \
