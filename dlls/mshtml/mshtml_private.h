@@ -424,6 +424,7 @@ typedef struct {
     X(HTMLImageElement)                    \
     X(HTMLInputElement)                    \
     X(HTMLLabelElement)                    \
+    X(HTMLLinkElement)                     \
     X(HTMLMetaElement)                     \
     X(HTMLOptionElement)                   \
     X(HTMLTitleElement)                    \

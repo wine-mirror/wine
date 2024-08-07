@@ -387,12 +387,14 @@ static const tid_t HTMLLinkElement_iface_tids[] = {
     IHTMLLinkElement_tid,
     0
 };
-static dispex_static_data_t HTMLLinkElement_dispex = {
-    "HTMLLinkElement",
-    &HTMLLinkElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLLinkElement_tid,
-    HTMLLinkElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLLinkElement_dispex = {
+    .name         = "HTMLLinkElement",
+    .id           = PROT_HTMLLinkElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLLinkElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLLinkElement_tid,
+    .iface_tids   = HTMLLinkElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

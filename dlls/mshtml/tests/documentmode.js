@@ -3174,4 +3174,6 @@ sync_test("prototypes", function() {
     check(HTMLLabelElement.prototype, HTMLElement.prototype, "label element prototype");
     check(document.createElement("button"), HTMLButtonElement.prototype, "button element");
     check(HTMLButtonElement.prototype, HTMLElement.prototype, "button element prototype");
+    check(document.createElement("link"), HTMLLinkElement.prototype, "link element");
+    check(HTMLLinkElement.prototype, HTMLElement.prototype, "link element prototype");
 });
