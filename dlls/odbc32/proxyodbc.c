@@ -3868,6 +3868,44 @@ SQLRETURN WINAPI SQLPrimaryKeys(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, 
     return ret;
 }
 
+static SQLRETURN procedure_columns_unix_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1,
+                                           SQLCHAR *schema, SQLSMALLINT len2, SQLCHAR *proc, SQLSMALLINT len3,
+                                           SQLCHAR *column, SQLSMALLINT len4 )
+{
+    struct SQLProcedureColumns_params params = { handle->unix_handle, catalog, len1, schema, len2, proc, len3,
+                                                  column, len4 };
+    return ODBC_CALL( SQLProcedureColumns, &params );
+}
+
+static SQLRETURN procedure_columns_win32_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1,
+                                            SQLCHAR *schema, SQLSMALLINT len2, SQLCHAR *proc, SQLSMALLINT len3,
+                                            SQLCHAR *column, SQLSMALLINT len4 )
+{
+    WCHAR *catalogW = NULL, *schemaW = NULL, *procW = NULL, *columnW = NULL;
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLProcedureColumns)
+        return handle->win32_funcs->SQLProcedureColumns( handle->win32_handle, catalog, len1, schema, len2, proc,
+                                                         len3, column, len4 );
+
+    if (handle->win32_funcs->SQLProcedureColumnsW)
+    {
+        if (!(catalogW = strnAtoW( catalog, len1 ))) goto done;
+        if (!(schemaW = strnAtoW( schema, len2 ))) goto done;
+        if (!(procW = strnAtoW( proc, len3 ))) goto done;
+        if (!(columnW = strnAtoW( column, len4 ))) goto done;
+        ret = handle->win32_funcs->SQLProcedureColumnsW( handle->win32_handle, catalogW, len1, schemaW, len2, procW,
+                                                         len3, columnW, len4 );
+    }
+
+done:
+    free( catalogW );
+    free( schemaW );
+    free( procW );
+    free( columnW );
+    return ret;
+}
+
 /*************************************************************************
  *				SQLProcedureColumns           [ODBC32.066]
  */
@@ -3888,14 +3926,13 @@ SQLRETURN WINAPI SQLProcedureColumns(SQLHSTMT StatementHandle, SQLCHAR *CatalogN
 
     if (handle->unix_handle)
     {
-        struct SQLProcedureColumns_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
-                                                     NameLength2, ProcName, NameLength3, ColumnName, NameLength4 };
-        ret = ODBC_CALL( SQLProcedureColumns, &params );
+        ret = procedure_columns_unix_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, ProcName,
+                                        NameLength3, ColumnName, NameLength4 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLProcedureColumns( handle->win32_handle, CatalogName, NameLength1, SchemaName,
-                                                        NameLength2, ProcName, NameLength3, ColumnName, NameLength4 );
+        ret = procedure_columns_win32_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, ProcName,
+                                         NameLength3, ColumnName, NameLength4 );
     }
 
     TRACE("Returning %d\n", ret);
@@ -5852,6 +5889,26 @@ SQLRETURN WINAPI SQLPrimaryKeysW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName
     return ret;
 }
 
+static SQLRETURN procedure_columns_unix_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1,
+                                           SQLWCHAR *schema, SQLSMALLINT len2, SQLWCHAR *proc, SQLSMALLINT len3,
+                                           SQLWCHAR *column, SQLSMALLINT len4 )
+{
+    struct SQLProcedureColumnsW_params params = { handle->unix_handle, catalog, len1, schema, len2, proc, len3,
+                                                  column, len4 };
+    return ODBC_CALL( SQLProcedureColumnsW, &params );
+}
+
+static SQLRETURN procedure_columns_win32_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1,
+                                            SQLWCHAR *schema, SQLSMALLINT len2, SQLWCHAR *proc, SQLSMALLINT len3,
+                                            SQLWCHAR *column, SQLSMALLINT len4 )
+{
+    if (handle->win32_funcs->SQLProcedureColumnsW)
+        return handle->win32_funcs->SQLProcedureColumnsW( handle->win32_handle, catalog, len1, schema, len2, proc,
+                                                          len3, column, len4 );
+    if (handle->win32_funcs->SQLProcedureColumns) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLProcedureColumnsW          [ODBC32.166]
  */
@@ -5872,14 +5929,13 @@ SQLRETURN WINAPI SQLProcedureColumnsW(SQLHSTMT StatementHandle, SQLWCHAR *Catalo
 
     if (handle->unix_handle)
     {
-        struct SQLProcedureColumnsW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
-                                                      NameLength2, ProcName, NameLength3, ColumnName, NameLength4 };
-        ret = ODBC_CALL( SQLProcedureColumnsW, &params );
+        ret = procedure_columns_unix_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, ProcName,
+                                        NameLength3, ColumnName, NameLength4 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLProcedureColumnsW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
-                                                         NameLength2, ProcName, NameLength3, ColumnName, NameLength4 );
+        ret = procedure_columns_win32_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, ProcName,
+                                         NameLength3, ColumnName, NameLength4 );
     }
 
     TRACE("Returning %d\n", ret);
