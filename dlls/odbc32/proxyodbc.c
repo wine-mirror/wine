@@ -3438,10 +3438,9 @@ static SQLRETURN column_privs_win32_a( struct handle *handle, SQLCHAR *catalog, 
     SQLRETURN ret = SQL_ERROR;
 
     if (handle->win32_funcs->SQLColumnPrivileges)
-    {
         return handle->win32_funcs->SQLColumnPrivileges( handle->win32_handle, catalog, len1, schema, len2, table,
                                                          len3, column, len4 );
-    }
+
     if (handle->win32_funcs->SQLColumnPrivilegesW)
     {
         if (!(catalogW = strnAtoW( catalog, len1 ))) return SQL_ERROR;
@@ -3574,11 +3573,9 @@ static SQLRETURN foreign_keys_win32_a( struct handle *handle, SQLCHAR *pk_catalo
     SQLRETURN ret = SQL_ERROR;
 
     if (handle->win32_funcs->SQLForeignKeys)
-    {
         return handle->win32_funcs->SQLForeignKeys( handle->win32_handle, pk_catalog, len1, pk_schema, len2,
                                                     pk_table, len3, fk_catalog, len4, fk_schema, len5, fk_table,
                                                     len6 );
-    }
     if (handle->win32_funcs->SQLForeignKeysW)
     {
         if (!(pk_catalogW = strnAtoW( pk_catalog, len1 ))) return SQL_ERROR;
@@ -3666,6 +3663,45 @@ SQLRETURN WINAPI SQLMoreResults(SQLHSTMT StatementHandle)
     return ret;
 }
 
+static SQLRETURN native_sql_unix_a( struct handle *handle, SQLCHAR *in_statement, SQLINTEGER len,
+                                    SQLCHAR *out_statement, SQLINTEGER buflen, SQLINTEGER *retlen )
+{
+    struct SQLNativeSql_params params = { handle->unix_handle, in_statement, len, out_statement, buflen, retlen };
+    return ODBC_CALL( SQLNativeSql, &params );
+}
+
+static SQLRETURN native_sql_win32_a( struct handle *handle, SQLCHAR *in_statement, SQLINTEGER in_len,
+                                     SQLCHAR *out_statement, SQLINTEGER buflen, SQLINTEGER *retlen )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLNativeSql)
+        return handle->win32_funcs->SQLNativeSql( handle->win32_handle, in_statement, in_len, out_statement, buflen,
+                                                  retlen );
+
+    if (handle->win32_funcs->SQLNativeSqlW)
+    {
+        SQLWCHAR *inW, *outW;
+
+        if (!(inW = malloc( in_len * sizeof(WCHAR) ))) return SQL_ERROR;
+        if (!(outW = malloc( buflen * sizeof(WCHAR) )))
+        {
+            free( inW );
+            return SQL_ERROR;
+        }
+        ret = handle->win32_funcs->SQLNativeSqlW( handle->win32_handle, inW, in_len, outW, buflen, retlen );
+        if (SUCCESS( ret ))
+        {
+            int len = WideCharToMultiByte( CP_ACP, 0, outW, -1, (char *)out_statement, buflen, NULL, NULL );
+            if (retlen) *retlen = len - 1;
+        }
+        free( inW );
+        free( outW );
+    }
+
+    return ret;
+}
+
 /*************************************************************************
  *				SQLNativeSql           [ODBC32.062]
  */
@@ -3683,14 +3719,11 @@ SQLRETURN WINAPI SQLNativeSql(SQLHDBC ConnectionHandle, SQLCHAR *InStatementText
 
     if (handle->unix_handle)
     {
-        struct SQLNativeSql_params params = { handle->unix_handle, InStatementText, TextLength1, OutStatementText,
-                                              BufferLength, TextLength2 };
-        ret = ODBC_CALL( SQLNativeSql, &params );
+        ret = native_sql_unix_a( handle, InStatementText, TextLength1, OutStatementText, BufferLength, TextLength2 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLNativeSql( handle->win32_handle, InStatementText, TextLength1, OutStatementText,
-                                                 BufferLength, TextLength2 );
+        ret = native_sql_win32_a( handle, InStatementText, TextLength1, OutStatementText, BufferLength, TextLength2 );
     }
 
     TRACE("Returning %d\n", ret);
@@ -5664,6 +5697,23 @@ SQLRETURN WINAPI SQLForeignKeysW(SQLHSTMT StatementHandle, SQLWCHAR *PkCatalogNa
     return ret;
 }
 
+static SQLRETURN native_sql_unix_w( struct handle *handle, SQLWCHAR *in_statement, SQLINTEGER len,
+                                    SQLWCHAR *out_statement, SQLINTEGER buflen, SQLINTEGER *retlen )
+{
+    struct SQLNativeSqlW_params params = { handle->unix_handle, in_statement, len, out_statement, buflen, retlen };
+    return ODBC_CALL( SQLNativeSqlW, &params );
+}
+
+static SQLRETURN native_sql_win32_w( struct handle *handle, SQLWCHAR *in_statement, SQLINTEGER len,
+                                     SQLWCHAR *out_statement, SQLINTEGER buflen, SQLINTEGER *retlen )
+{
+    if (handle->win32_funcs->SQLNativeSqlW)
+        return handle->win32_funcs->SQLNativeSqlW( handle->win32_handle, in_statement, len, out_statement, buflen,
+                                                   retlen );
+    if (handle->win32_funcs->SQLNativeSql) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLNativeSqlW          [ODBC32.162]
  */
@@ -5681,14 +5731,11 @@ SQLRETURN WINAPI SQLNativeSqlW(SQLHDBC ConnectionHandle, SQLWCHAR *InStatementTe
 
     if (handle->unix_handle)
     {
-        struct SQLNativeSqlW_params params = { handle->unix_handle, InStatementText, TextLength1, OutStatementText,
-                                               BufferLength, TextLength2 };
-        ret = ODBC_CALL( SQLNativeSqlW, &params );
+        ret = native_sql_unix_w( handle, InStatementText, TextLength1, OutStatementText, BufferLength, TextLength2 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLNativeSqlW( handle->win32_handle, InStatementText, TextLength1, OutStatementText,
-                                                  BufferLength, TextLength2 );
+        ret = native_sql_win32_w( handle, InStatementText, TextLength1, OutStatementText, BufferLength, TextLength2 );
     }
 
     TRACE("Returning %d\n", ret);
