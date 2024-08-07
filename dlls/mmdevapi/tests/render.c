@@ -2134,6 +2134,43 @@ static void test_volume_dependence(void)
     IAudioClient_Release(ac);
 }
 
+#define check_session_ids(a, b, c) check_session_ids_(__LINE__, a, b, c)
+static void check_session_ids_(unsigned int line, IMMDevice *dev, const GUID *session_guid, IAudioSessionControl *ctl)
+{
+    WCHAR exe_path[MAX_PATH], expected[MAX_PATH + 512], *dev_id, *str;
+    IAudioSessionControl2 *ctl2;
+    WCHAR guidstr[39];
+    HRESULT hr;
+    DWORD size;
+    BOOL bret;
+    int ret;
+
+    if (FAILED(IAudioSessionControl_QueryInterface(ctl, &IID_IAudioSessionControl2, (void **)&ctl2)))
+    {
+        win_skip("IAudioSessionControl2 not available.\n");
+        return;
+    }
+
+    ret = StringFromGUID2(session_guid, guidstr, ARRAY_SIZE(guidstr));
+    ok(ret == 39, "got %d.\n", ret);
+
+    size = ARRAY_SIZE(exe_path);
+    bret = QueryFullProcessImageNameW(GetCurrentProcess(), PROCESS_NAME_NATIVE, exe_path, &size);
+    ok(bret, "got error %ld.\n", GetLastError());
+
+    hr = IMMDevice_GetId(dev, &dev_id);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IAudioSessionControl2_GetSessionIdentifier(ctl2, &str);
+    ok_(__FILE__, line)(hr == S_OK, "GetSessionIdentifier failed, hr %#lx.\n", hr);
+    wsprintfW(expected, L"%s|%s%%b%s", dev_id, exe_path, guidstr);
+    ok_(__FILE__, line)(!wcscmp(str, expected), "got %s, expected %s.\n", debugstr_w(str), debugstr_w(expected));
+    CoTaskMemFree(str);
+
+    CoTaskMemFree(dev_id);
+    IAudioSessionControl2_Release(ctl2);
+}
+
 static void test_session_creation(void)
 {
     IMMDevice *cap_dev;
@@ -2223,9 +2260,15 @@ static void test_session_creation(void)
         hr = IAudioSessionControl_GetDisplayName(ctl, &name);
         ok(hr == S_OK, "got %#lx.\n", hr);
         if (!wcscmp(name, L"test_session1"))
+        {
             found_first = TRUE;
+            check_session_ids(dev, &session_guid, ctl);
+        }
         if (!wcscmp(name, L"test_session2"))
+        {
             found_second = TRUE;
+            check_session_ids(dev, &session_guid2, ctl);
+        }
         CoTaskMemFree(name);
         IAudioSessionControl_Release(ctl);
     }

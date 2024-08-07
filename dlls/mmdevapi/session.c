@@ -267,8 +267,32 @@ static HRESULT WINAPI control_UnregisterAudioSessionNotification(IAudioSessionCo
 static HRESULT WINAPI control_GetSessionIdentifier(IAudioSessionControl2 *iface, WCHAR **id)
 {
     struct audio_session_wrapper *This = impl_from_IAudioSessionControl2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, id);
-    return E_NOTIMPL;
+    WCHAR exe_path[MAX_PATH], session_guid[39], *dev_id;
+    DWORD len;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p).\n", This, id);
+
+    if (!id)
+        return E_POINTER;
+    *id = NULL;
+
+    len = ARRAY_SIZE(exe_path);
+    if (!QueryFullProcessImageNameW(GetCurrentProcess(), PROCESS_NAME_NATIVE, exe_path, &len))
+        return E_FAIL;
+    if (!StringFromGUID2(&This->session->guid, session_guid, ARRAY_SIZE(session_guid)))
+        return E_FAIL;
+    if (FAILED(hr = IMMDevice_GetId(This->session->device, &dev_id)))
+        return hr;
+
+    len = wcslen(dev_id) + 1 + wcslen(exe_path) + 2 + wcslen(session_guid) + 1;
+    if (!(*id = CoTaskMemAlloc(len * sizeof(WCHAR)))) {
+        CoTaskMemFree(dev_id);
+        return E_OUTOFMEMORY;
+    }
+    swprintf(*id, len, L"%s|%s%%b%s", dev_id, exe_path, session_guid);
+    CoTaskMemFree(dev_id);
+    return S_OK;
 }
 
 static HRESULT WINAPI control_GetSessionInstanceIdentifier(IAudioSessionControl2 *iface, WCHAR **id)
