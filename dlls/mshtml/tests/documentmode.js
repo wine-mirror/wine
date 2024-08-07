@@ -3150,4 +3150,6 @@ sync_test("prototypes", function() {
         check(MutationObserver.prototype, Object.prototype, "mutation observer prototype");
         check(MutationObserver, Function.prototype, "mutation observer constructor");
     }
+    check(document.createElement("a"), HTMLAnchorElement.prototype, "anchor element");
+    check(HTMLAnchorElement.prototype, HTMLElement.prototype, "anchor element prototype");
 });

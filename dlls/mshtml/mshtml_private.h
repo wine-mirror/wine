@@ -410,6 +410,7 @@ typedef struct {
     X(DOMImplementation)                   \
     X(Document)                            \
     X(Element)                             \
+    X(HTMLAnchorElement)                   \
     X(HTMLBodyElement)                     \
     X(HTMLDocument)                        \
     X(HTMLElement)                         \

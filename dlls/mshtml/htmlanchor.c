@@ -834,12 +834,14 @@ static const tid_t HTMLAnchorElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLAnchorElement_dispex = {
-    "HTMLAnchorElement",
-    &HTMLAnchorElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLAnchorElement_tid,
-    HTMLAnchorElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLAnchorElement_dispex = {
+    .name         = "HTMLAnchorElement",
+    .id           = PROT_HTMLAnchorElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLAnchorElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLAnchorElement_tid,
+    .iface_tids   = HTMLAnchorElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLAnchorElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
