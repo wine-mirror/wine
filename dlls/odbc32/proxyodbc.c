@@ -2619,6 +2619,30 @@ SQLRETURN WINAPI SQLParamData(SQLHSTMT StatementHandle, SQLPOINTER *Value)
     return ret;
 }
 
+static SQLRETURN prepare_unix_a( struct handle *handle, SQLCHAR *statement, SQLINTEGER len )
+{
+    struct SQLPrepare_params params = { handle->unix_handle, statement, len };
+    return ODBC_CALL( SQLPrepare, &params );
+}
+
+static SQLRETURN prepare_win32_a( struct handle *handle, SQLCHAR *statement, SQLINTEGER len )
+{
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLPrepare)
+        return handle->win32_funcs->SQLPrepare( handle->win32_handle, statement, len );
+
+    if (handle->win32_funcs->SQLPrepareW)
+    {
+        WCHAR *strW;
+        if (!(strW = strnAtoW( statement, len ))) return SQL_ERROR;
+        ret = handle->win32_funcs->SQLPrepareW( handle->win32_handle, strW, len );
+        free( strW );
+    }
+
+    return ret;
+}
+
 /*************************************************************************
  *				SQLPrepare           [ODBC32.019]
  */
@@ -2634,12 +2658,11 @@ SQLRETURN WINAPI SQLPrepare(SQLHSTMT StatementHandle, SQLCHAR *StatementText, SQ
 
     if (handle->unix_handle)
     {
-        struct SQLPrepare_params params = { handle->unix_handle, StatementText, TextLength };
-        ret = ODBC_CALL( SQLPrepare, &params );
+        ret = prepare_unix_a( handle, StatementText, TextLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLPrepare( handle->win32_handle, StatementText, TextLength );
+        ret = prepare_win32_a( handle, StatementText, TextLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4562,6 +4585,20 @@ SQLRETURN WINAPI SQLGetCursorNameW(SQLHSTMT StatementHandle, SQLWCHAR *CursorNam
     return ret;
 }
 
+static SQLRETURN prepare_unix_w( struct handle *handle, SQLWCHAR *statement, SQLINTEGER len )
+{
+    struct SQLPrepareW_params params = { handle->unix_handle, statement, len };
+    return ODBC_CALL( SQLPrepareW, &params );
+}
+
+static SQLRETURN prepare_win32_w( struct handle *handle, SQLWCHAR *statement, SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLPrepareW)
+        return handle->win32_funcs->SQLPrepareW( handle->win32_handle, statement, len );
+    if (handle->win32_funcs->SQLPrepare) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLPrepareW          [ODBC32.119]
  */
@@ -4577,12 +4614,11 @@ SQLRETURN WINAPI SQLPrepareW(SQLHSTMT StatementHandle, SQLWCHAR *StatementText, 
 
     if (handle->unix_handle)
     {
-        struct SQLPrepareW_params params = { handle->unix_handle, StatementText, TextLength };
-        ret = ODBC_CALL( SQLPrepareW, &params );
+        ret = prepare_unix_w( handle, StatementText, TextLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLPrepareW( handle->win32_handle, StatementText, TextLength );
+        ret = prepare_win32_w( handle, StatementText, TextLength );
     }
 
     TRACE("Returning %d\n", ret);
