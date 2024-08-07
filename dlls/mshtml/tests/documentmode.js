@@ -3180,4 +3180,6 @@ sync_test("prototypes", function() {
     check(HTMLObjectElement.prototype, HTMLElement.prototype, "object element prototype");
     check(document.createElement("embed"), HTMLEmbedElement.prototype, "embed element");
     check(HTMLEmbedElement.prototype, HTMLElement.prototype, "embed element prototype");
+    check(document.createElement("script"), HTMLScriptElement.prototype, "script element");
+    check(HTMLScriptElement.prototype, HTMLElement.prototype, "script element prototype");
 });

@@ -414,12 +414,14 @@ static const tid_t HTMLScriptElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLScriptElement_dispex = {
-    "HTMLScriptElement",
-    &HTMLScriptElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLScriptElement_tid,
-    HTMLScriptElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLScriptElement_dispex = {
+    .name         = "HTMLScriptElement",
+    .id           = PROT_HTMLScriptElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLScriptElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLScriptElement_tid,
+    .iface_tids   = HTMLScriptElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLScriptElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
