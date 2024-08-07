@@ -934,6 +934,7 @@ struct device_manager_ctx
     struct source source;
     HKEY source_key;
     struct list vulkan_gpus;
+    BOOL has_primary;
     /* for the virtual desktop settings */
     BOOL is_primary;
     DEVMODEW primary;
@@ -1366,8 +1367,13 @@ static void add_source( const char *name, UINT state_flags, void *param )
 
     memset( &ctx->source, 0, sizeof(ctx->source) );
     ctx->source.gpu = &ctx->gpu;
-    ctx->source.id = ctx->source_count;
+    ctx->source.id = ctx->source_count + (ctx->has_primary ? 0 : 1);
     ctx->source.state_flags = state_flags;
+    if (state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+    {
+        ctx->source.id = 0;
+        ctx->has_primary = TRUE;
+    }
 
     /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
     snprintf( ctx->source.path, sizeof(ctx->source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
@@ -1941,11 +1947,17 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
     DEVMODEW current = {.dmSize = sizeof(current)}, initial = ctx->primary, maximum = ctx->primary;
     struct source virtual_source =
     {
-        .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
-        .id = ctx->source_count,
+        .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_VGA_COMPATIBLE,
         .gpu = &ctx->gpu,
     };
     struct gdi_monitor monitor = {0};
+
+    if (ctx->has_primary) ctx->source.id = ctx->source_count;
+    else
+    {
+        virtual_source.state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
+        ctx->has_primary = TRUE;
+    }
 
     /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
     snprintf( virtual_source.path, sizeof(virtual_source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
