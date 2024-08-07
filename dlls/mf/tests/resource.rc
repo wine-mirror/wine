@@ -86,12 +86,20 @@ h264data-2.bin RCDATA h264data-2.bin
 nv12frame.bmp RCDATA nv12frame.bmp
 
 /* Generated from running the tests on Windows */
+/* @makedep: nv12frame-2d.bmp */
+nv12frame-2d.bmp RCDATA nv12frame-2d.bmp
+
+/* Generated from running the tests on Windows */
 /* @makedep: nv12frame-grabber.bmp */
 nv12frame-grabber.bmp RCDATA nv12frame-grabber.bmp
 
 /* Generated from running the tests on Windows */
 /* @makedep: nv12frame-flip.bmp */
 nv12frame-flip.bmp RCDATA nv12frame-flip.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: nv12frame-flip-2d.bmp */
+nv12frame-flip-2d.bmp RCDATA nv12frame-flip-2d.bmp
 
 /* Generated from running the tests on Windows */
 /* @makedep: i420frame.bmp */
@@ -106,12 +114,20 @@ rgb32frame.bmp RCDATA rgb32frame.bmp
 rgb32frame-flip.bmp RCDATA rgb32frame-flip.bmp
 
 /* Generated from running the tests on Windows */
+/* @makedep: rgb32frame-flip-2d.bmp */
+rgb32frame-flip-2d.bmp RCDATA rgb32frame-flip-2d.bmp
+
+/* Generated from running the tests on Windows */
 /* @makedep: rgb32frame-crop.bmp */
 rgb32frame-crop.bmp RCDATA rgb32frame-crop.bmp
 
 /* Generated from running the tests on Windows */
 /* @makedep: rgb32frame-crop-flip.bmp */
 rgb32frame-crop-flip.bmp RCDATA rgb32frame-crop-flip.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: rgb32frame-crop-flip-2d.bmp */
+rgb32frame-crop-flip-2d.bmp RCDATA rgb32frame-crop-flip-2d.bmp
 
 /* Generated from running the tests on Windows */
 /* @makedep: abgr32frame-crop.bmp */
