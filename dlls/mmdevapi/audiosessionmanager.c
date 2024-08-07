@@ -161,7 +161,7 @@ static HRESULT create_session_enumerator(IMMDevice *device, IAudioSessionEnumera
 
     sessions_lock();
     hr = get_audio_sessions(device, &enumerator->sessions, &enumerator->session_count);
-    sessions_lock();
+    sessions_unlock();
     if (FAILED(hr))
     {
         free(enumerator);
