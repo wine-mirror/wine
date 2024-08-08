@@ -1993,8 +1993,13 @@ BOOL X11DRV_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_re
 
     TRACE( "hwnd %p, layered %u, surface_rect %s, surface %p\n", hwnd, layered, wine_dbgstr_rect( surface_rect ), surface );
 
-    if ((previous = *surface) && previous->funcs == &x11drv_surface_funcs) return TRUE;
     if (!(data = get_win_data( hwnd ))) return TRUE; /* use default surface */
+    if ((previous = *surface) && previous->funcs == &x11drv_surface_funcs)
+    {
+        if (data->whole_window == get_x11_surface(previous)->window) goto done; /* use default surface */
+        /* re-create window surface is window has changed, which can happen when changing visual */
+        TRACE( "re-creating hwnd %p surface with new window %lx\n", data->hwnd, data->whole_window );
+    }
     if (previous) window_surface_release( previous );
 
     if (layered)
