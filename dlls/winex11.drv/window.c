@@ -2458,6 +2458,7 @@ void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
         else escape.drawable = X11DRV_get_whole_window( top );
     }
 
+    if (!escape.drawable) return; /* don't create a GC for foreign windows */
     NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
