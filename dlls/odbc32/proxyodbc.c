@@ -314,6 +314,15 @@ static BOOL load_function_table( HMODULE module, struct win32_driver *driver )
 #undef LOAD_FUNCPTR
 }
 
+static CRITICAL_SECTION loader_cs;
+static CRITICAL_SECTION_DEBUG loader_cs_debug =
+{
+    0, 0, &loader_cs,
+    { &loader_cs_debug.ProcessLocksList, &loader_cs_debug.ProcessLocksList },
+      0, 0, { (ULONG_PTR)(__FILE__ ": loader_cs") }
+};
+static CRITICAL_SECTION loader_cs = { &loader_cs_debug, -1, 0, 0, 0, 0 };
+
 static struct
 {
     UINT32 count;
@@ -341,12 +350,21 @@ static const struct win32_funcs *load_driver( const WCHAR *filename )
     WCHAR *ptr;
     UINT32 i;
 
+    EnterCriticalSection( &loader_cs );
     for (i = 0; i < win32_drivers.count; i++)
     {
-        if (!wcsicmp( filename, win32_drivers.drivers[i]->filename )) return &win32_drivers.drivers[i]->funcs;
+        if (!wcsicmp( filename, win32_drivers.drivers[i]->filename ))
+        {
+            LeaveCriticalSection( &loader_cs );
+            return &win32_drivers.drivers[i]->funcs;
+        }
     }
 
-    if (!(driver = malloc( sizeof(*driver) + (wcslen(filename) + 1) * sizeof(WCHAR) ))) return NULL;
+    if (!(driver = malloc( sizeof(*driver) + (wcslen(filename) + 1) * sizeof(WCHAR) )))
+    {
+        LeaveCriticalSection( &loader_cs );
+        return NULL;
+    }
     ptr = (WCHAR *)(driver + 1);
     wcscpy( ptr, filename );
     driver->filename = ptr;
@@ -355,6 +373,7 @@ static const struct win32_funcs *load_driver( const WCHAR *filename )
     if (!module)
     {
         free( driver );
+        LeaveCriticalSection( &loader_cs );
         return NULL;
     }
 
@@ -362,9 +381,11 @@ static const struct win32_funcs *load_driver( const WCHAR *filename )
     {
         FreeLibrary( module );
         free( driver );
+        LeaveCriticalSection( &loader_cs );
         return NULL;
     }
 
+    LeaveCriticalSection( &loader_cs );
     return &driver->funcs;
 }
 
