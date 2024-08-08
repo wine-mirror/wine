@@ -3286,6 +3286,7 @@ static HRESULT WINAPI IDirectPlay4Impl_Initialize( IDirectPlay4 *iface, GUID *gu
 static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd, DWORD dwFlags,
         const DPSECURITYDESC *lpSecurity, const DPCREDENTIALS *lpCredentials, BOOL bAnsi )
 {
+  void *spMessageHeader = NULL;
   HRESULT hr = DP_OK;
 
   FIXME( "(%p)->(%p,0x%08lx,%p,%p): partial stub\n",
@@ -3326,6 +3327,12 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
       return hr;
     }
   }
+  else
+  {
+    spMessageHeader = NS_GetNSAddr( This->dp2->lpNameServerData );
+    if ( !spMessageHeader )
+      return DPERR_NOSESSIONS;
+  }
 
   /* Invoke the conditional callback for the service provider */
   if( This->dp2->spData.lpCB->Open )
@@ -3335,8 +3342,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
     FIXME( "Not all data fields are correct. Need new parameter\n" );
 
     data.bCreate           = (dwFlags & DPOPEN_CREATE ) != 0;
-    data.lpSPMessageHeader = (dwFlags & DPOPEN_CREATE ) ? NULL
-                                                        : NS_GetNSAddr( This->dp2->lpNameServerData );
+    data.lpSPMessageHeader = spMessageHeader;
     data.lpISP             = This->dp2->spData.lpISP;
     data.bReturnStatus     = (dwFlags & DPOPEN_RETURNSTATUS) != 0;
     data.dwOpenFlags       = dwFlags;

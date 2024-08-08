@@ -2092,9 +2092,9 @@ static void test_Open(void)
     dpsd.dwSize = sizeof( DPSESSIONDESC2 ) + 1;
     check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE );
 
-    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS, TRUE );
+    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS, FALSE );
 
-    check_Open( dp, &dpsdAppGuid, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS, TRUE );
+    check_Open( dp, &dpsdAppGuid, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS, FALSE );
 
     enumSock = bindUdp( 47624 );
 
