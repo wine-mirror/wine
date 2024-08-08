@@ -1489,8 +1489,9 @@ struct ps_compile_args
 
 enum fog_src_type
 {
-    VS_FOG_Z        = 0,
-    VS_FOG_COORD    = 1
+    VS_FOG_Z,
+    VS_FOG_COORD,
+    VS_FOG_W,
 };
 
 struct vs_compile_args

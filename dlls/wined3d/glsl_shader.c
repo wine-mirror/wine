@@ -8092,6 +8092,9 @@ static void shader_glsl_generate_vs_epilogue(const struct wined3d_gl_info *gl_in
         if (args->fog_src == VS_FOG_Z)
             shader_addline(buffer, "%s = gl_Position.z;\n",
                     legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+        else if (args->fog_src == VS_FOG_W)
+            shader_addline(buffer, "%s = gl_Position.w;\n",
+                    legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
         else if (!reg_maps->fog)
             shader_addline(buffer, "%s = 0.0;\n",
                     legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");

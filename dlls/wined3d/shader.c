@@ -2306,8 +2306,21 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     WORD swizzle_map = context->stream_info.swizzle_map;
 
-    args->fog_src = state->render_states[WINED3D_RS_FOGTABLEMODE]
-            == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
+    if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+    {
+        if (state->transforms[WINED3D_TS_PROJECTION]._14 == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION]._24 == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION]._34 == 0.0f
+                && state->transforms[WINED3D_TS_PROJECTION]._44 == 1.0f)
+            args->fog_src = VS_FOG_Z;
+        else
+            args->fog_src = VS_FOG_W;
+    }
+    else
+    {
+        args->fog_src = VS_FOG_COORD;
+    }
+
     args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     args->point_size = state->primitive_type == WINED3D_PT_POINTLIST;

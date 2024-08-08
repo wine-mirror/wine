@@ -3471,8 +3471,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                             WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
                             offsetof(struct wined3d_ffp_vs_constants, projection_matrix),
                             sizeof(state->transforms[idx]), &state->transforms[idx]);
-                    /* wined3d_ffp_vs_settings.ortho_fog still needs the
-                     * device state to be set. */
+                    /* wined3d_ffp_vs_settings.ortho_fog and vs_compile_args.ortho_fog
+                     * still need the device state to be set. */
                     wined3d_device_set_transform(device, idx, &state->transforms[idx]);
                 }
             }

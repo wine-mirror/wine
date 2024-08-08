@@ -29253,7 +29253,7 @@ static void test_fog(void)
                     {
                         colour = get_readback_vec4(&rb, points[i].x, points[i].y);
 
-todo_wine_if ((fog_mode_tests[pixel_mode] != D3DFOG_NONE && !ortho_fog && (vs_mode == VS_MODE_FFP || vs_mode == VS_MODE_RHW || i != 2))
+todo_wine_if ((fog_mode_tests[pixel_mode] != D3DFOG_NONE && !ortho_fog && (vs_mode == VS_MODE_FFP || vs_mode == VS_MODE_RHW))
         || (fog_mode_tests[pixel_mode] == D3DFOG_NONE && fog_mode_tests[vertex_mode] != D3DFOG_NONE && vs_mode == VS_MODE_FFP)
         || (fog_mode_tests[pixel_mode] == D3DFOG_NONE && vs_mode == VS_MODE_VS_NO_FOG))
 {
