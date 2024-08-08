@@ -1410,8 +1410,8 @@ static void sync_window_position( struct x11drv_win_data *data,
         mask |= CWWidth | CWHeight;
     }
 
-    /* only the size is allowed to change for the desktop window */
-    if (data->whole_window != root_window)
+    /* only the size is allowed to change for the desktop window or systray docked windows */
+    if (data->whole_window != root_window && !data->embedded)
     {
         POINT pt = virtual_screen_to_root( data->whole_rect.left, data->whole_rect.top );
         changes.x = pt.x;
