@@ -806,32 +806,6 @@ void init_load_info(const D3DX10_IMAGE_LOAD_INFO *load_info, D3DX10_IMAGE_LOAD_I
     out->pSrcInfo = NULL;
 }
 
-static HRESULT dds_get_frame_info(IWICDdsFrameDecode *frame, const D3DX10_IMAGE_INFO *img_info,
-        WICDdsFormatInfo *format_info, unsigned int *stride, unsigned int *frame_size)
-{
-    unsigned int width, height;
-    HRESULT hr;
-
-    if (FAILED(hr = IWICDdsFrameDecode_GetFormatInfo(frame, format_info)))
-        return hr;
-    if (FAILED(hr = IWICDdsFrameDecode_GetSizeInBlocks(frame, &width, &height)))
-        return hr;
-
-    if (img_info->Format == format_info->DxgiFormat)
-    {
-        *stride = width * format_info->BytesPerBlock;
-        *frame_size = *stride * height;
-    }
-    else
-    {
-        width *= format_info->BlockWidth;
-        height *= format_info->BlockHeight;
-        *stride = (width * get_bpp_from_format(img_info->Format) + 7) / 8;
-        *frame_size = *stride * height;
-    }
-    return S_OK;
-}
-
 static HRESULT convert_image(IWICImagingFactory *factory, IWICBitmapFrameDecode *frame,
         const GUID *dst_format, unsigned int stride, unsigned int frame_size, BYTE *buffer)
 {
@@ -962,12 +936,10 @@ static HRESULT d3dx_load_texture_data(struct d3dx_image *image, D3DX10_IMAGE_LOA
 HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO *load_info,
         D3D10_SUBRESOURCE_DATA **resource_data)
 {
-    unsigned int stride, frame_size, i, j;
-    IWICDdsFrameDecode *dds_frame = NULL;
     IWICBitmapFrameDecode *frame = NULL;
     IWICImagingFactory *factory = NULL;
-    IWICDdsDecoder *dds_decoder = NULL;
     IWICBitmapDecoder *decoder = NULL;
+    unsigned int stride, frame_size;
     BYTE *res_data = NULL, *buffer;
     D3DX10_IMAGE_INFO img_info;
     IWICStream *stream = NULL;
@@ -1031,6 +1003,10 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         res_data = NULL;
         goto end;
     }
+    else if (img_info.ImageFileFormat == D3DX10_IFF_DDS)
+    {
+        goto end;
+    }
 
     if (FAILED(hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory)))
         goto end;
@@ -1040,122 +1016,32 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
         goto end;
     if (FAILED(hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream *)stream, NULL, 0, &decoder)))
         goto end;
+    if (FAILED(hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame)))
+        goto end;
 
-    if (img_info.ImageFileFormat == D3DX10_IFF_DDS)
+    stride = (img_info.Width * get_bpp_from_format(img_info.Format) + 7) / 8;
+    frame_size = stride * img_info.Height;
+
+    if (!(res_data = malloc(sizeof(**resource_data) + frame_size)))
     {
-        WICDdsFormatInfo format_info;
-        size_t size = 0;
-
-        if (FAILED(hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICDdsDecoder, (void **)&dds_decoder)))
-            goto end;
-
-        for (i = 0; i < img_info.ArraySize; ++i)
-        {
-            for (j = 0; j < img_info.MipLevels; ++j)
-            {
-                if (FAILED(hr = IWICDdsDecoder_GetFrame(dds_decoder, i, j, 0, &frame)))
-                    goto end;
-                if (FAILED(hr = IWICBitmapFrameDecode_QueryInterface(frame,
-                                &IID_IWICDdsFrameDecode, (void **)&dds_frame)))
-                    goto end;
-                if (FAILED(hr = dds_get_frame_info(dds_frame, &img_info, &format_info, &stride, &frame_size)))
-                    goto end;
-
-                if (!i && !j)
-                {
-                    img_info.Width = (img_info.Width + format_info.BlockWidth - 1) & ~(format_info.BlockWidth - 1);
-                    img_info.Height = (img_info.Height + format_info.BlockHeight - 1) & ~(format_info.BlockHeight - 1);
-                }
-
-                size += sizeof(**resource_data) + frame_size;
-
-                IWICDdsFrameDecode_Release(dds_frame);
-                dds_frame = NULL;
-                IWICBitmapFrameDecode_Release(frame);
-                frame = NULL;
-            }
-        }
-
-        if (!(res_data = malloc(size)))
-        {
-            hr = E_FAIL;
-            goto end;
-        }
-        *resource_data = (D3D10_SUBRESOURCE_DATA *)res_data;
-
-        size = 0;
-        for (i = 0; i < img_info.ArraySize; ++i)
-        {
-            for (j = 0; j < img_info.MipLevels; ++j)
-            {
-                if (FAILED(hr = IWICDdsDecoder_GetFrame(dds_decoder, i, j, 0, &frame)))
-                    goto end;
-                if (FAILED(hr = IWICBitmapFrameDecode_QueryInterface(frame,
-                                &IID_IWICDdsFrameDecode, (void **)&dds_frame)))
-                    goto end;
-                if (FAILED(hr = dds_get_frame_info(dds_frame, &img_info, &format_info, &stride, &frame_size)))
-                    goto end;
-
-                buffer = res_data + sizeof(**resource_data) * img_info.ArraySize * img_info.MipLevels + size;
-                size += frame_size;
-
-                if (img_info.Format == format_info.DxgiFormat)
-                {
-                    if (FAILED(hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride, frame_size, buffer)))
-                        goto end;
-                }
-                else
-                {
-                    if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
-                    {
-                        hr = E_FAIL;
-                        FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
-                        goto end;
-                    }
-                    if (FAILED(hr = convert_image(factory, frame, dst_format, stride, frame_size, buffer)))
-                        goto end;
-                }
-
-                IWICDdsFrameDecode_Release(dds_frame);
-                dds_frame = NULL;
-                IWICBitmapFrameDecode_Release(frame);
-                frame = NULL;
-
-                (*resource_data)[i * img_info.MipLevels + j].pSysMem = buffer;
-                (*resource_data)[i * img_info.MipLevels + j].SysMemPitch = stride;
-                (*resource_data)[i * img_info.MipLevels + j].SysMemSlicePitch = frame_size;
-            }
-        }
+        hr = E_FAIL;
+        goto end;
     }
-    else
+    buffer = res_data + sizeof(**resource_data);
+
+    if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
     {
-        if (FAILED(hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame)))
-            goto end;
-
-        stride = (img_info.Width * get_bpp_from_format(img_info.Format) + 7) / 8;
-        frame_size = stride * img_info.Height;
-
-        if (!(res_data = malloc(sizeof(**resource_data) + frame_size)))
-        {
-            hr = E_FAIL;
-            goto end;
-        }
-        buffer = res_data + sizeof(**resource_data);
-
-        if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
-        {
-            hr = E_FAIL;
-            FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
-            goto end;
-        }
-        if (FAILED(hr = convert_image(factory, frame, dst_format, stride, frame_size, buffer)))
-            goto end;
-
-        *resource_data = (D3D10_SUBRESOURCE_DATA *)res_data;
-        (*resource_data)->pSysMem = buffer;
-        (*resource_data)->SysMemPitch = stride;
-        (*resource_data)->SysMemSlicePitch = frame_size;
+        hr = E_FAIL;
+        FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
+        goto end;
     }
+    if (FAILED(hr = convert_image(factory, frame, dst_format, stride, frame_size, buffer)))
+        goto end;
+
+    *resource_data = (D3D10_SUBRESOURCE_DATA *)res_data;
+    (*resource_data)->pSysMem = buffer;
+    (*resource_data)->SysMemPitch = stride;
+    (*resource_data)->SysMemSlicePitch = frame_size;
 
     load_info->Width = img_info.Width;
     load_info->Height = img_info.Height;
@@ -1169,10 +1055,6 @@ HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO 
     hr = S_OK;
 
 end:
-    if (dds_decoder)
-        IWICDdsDecoder_Release(dds_decoder);
-    if (dds_frame)
-        IWICDdsFrameDecode_Release(dds_frame);
     d3dx_image_cleanup(&image);
     free(res_data);
     if (frame)
