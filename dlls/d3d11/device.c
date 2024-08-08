@@ -4605,6 +4605,10 @@ static HRESULT STDMETHODCALLTYPE d3d_device_inner_QueryInterface(IUnknown *iface
     {
         *out = &device->IWineDXGIDeviceParent_iface;
     }
+    else if (IsEqualGUID(riid, &IID_ID3D11VideoDevice) || IsEqualGUID(riid, &IID_ID3D11VideoDevice1))
+    {
+        *out = &device->ID3D11VideoDevice1_iface;
+    }
     else
     {
         WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
@@ -6776,6 +6780,225 @@ static const struct ID3D10MultithreadVtbl d3d10_multithread_vtbl =
     d3d10_multithread_GetMultithreadProtected,
 };
 
+static struct d3d_device *impl_from_ID3D11VideoDevice1(ID3D11VideoDevice1 *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_device, ID3D11VideoDevice1_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_QueryInterface(ID3D11VideoDevice1 *iface,
+        REFIID iid, void **out)
+{
+    struct d3d_device *device = impl_from_ID3D11VideoDevice1(iface);
+    return IUnknown_QueryInterface(device->outer_unk, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_video_device_AddRef(ID3D11VideoDevice1 *iface)
+{
+    struct d3d_device *device = impl_from_ID3D11VideoDevice1(iface);
+    return IUnknown_AddRef(device->outer_unk);
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_video_device_Release(ID3D11VideoDevice1 *iface)
+{
+    struct d3d_device *device = impl_from_ID3D11VideoDevice1(iface);
+    return IUnknown_Release(device->outer_unk);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoDecoder(ID3D11VideoDevice1 *iface,
+        const D3D11_VIDEO_DECODER_DESC *desc, const D3D11_VIDEO_DECODER_CONFIG *config, ID3D11VideoDecoder **decoder)
+{
+    FIXME("iface %p, desc %p, config %p, decoder %p, stub!\n", iface, desc, config, decoder);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoProcessor(ID3D11VideoDevice1 *iface,
+        ID3D11VideoProcessorEnumerator *enumerator, UINT rate_conversion_index, ID3D11VideoProcessor **processor)
+{
+    FIXME("iface %p, enumerator %p, rate_conversion_index %u, processor %p, stub!\n",
+            iface, enumerator, rate_conversion_index, processor);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateAuthenticatedChannel(ID3D11VideoDevice1 *iface,
+        D3D11_AUTHENTICATED_CHANNEL_TYPE type, ID3D11AuthenticatedChannel **channel)
+{
+    FIXME("iface %p, type %#x, channel %p, stub!\n", iface, type, channel);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateCryptoSession(ID3D11VideoDevice1 *iface,
+        const GUID *encryption_type, const GUID *profile, const GUID *key_exchange_type,
+        ID3D11CryptoSession **session)
+{
+    FIXME("iface %p, encryption_type %s, profile %s, key_exchange_type %s, session %p, stub!\n",
+            iface, debugstr_guid(encryption_type), debugstr_guid(profile), debugstr_guid(key_exchange_type), session);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoDecoderOutputView(ID3D11VideoDevice1 *iface,
+        ID3D11Resource *resource, const D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC *desc, ID3D11VideoDecoderOutputView **view)
+{
+    FIXME("iface %p, resource %p, desc %p, view %p, stub!\n", iface, resource, desc, view);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoProcessorInputView(
+        ID3D11VideoDevice1 *iface, ID3D11Resource *resource, ID3D11VideoProcessorEnumerator *enumerator,
+        const D3D11_VIDEO_PROCESSOR_INPUT_VIEW_DESC *desc, ID3D11VideoProcessorInputView **view)
+{
+    FIXME("iface %p, resource %p, enumerator %p, desc %p, view %p, stub!\n", iface, resource, enumerator, desc, view);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoProcessorOutputView(
+        ID3D11VideoDevice1 *iface, ID3D11Resource *resource, ID3D11VideoProcessorEnumerator *enumerator,
+        const D3D11_VIDEO_PROCESSOR_OUTPUT_VIEW_DESC *desc, ID3D11VideoProcessorOutputView **view)
+{
+    FIXME("iface %p, resource %p, enumerator %p, desc %p, view %p, stub!\n", iface, resource, enumerator, desc, view);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoProcessorEnumerator(ID3D11VideoDevice1 *iface,
+        const D3D11_VIDEO_PROCESSOR_CONTENT_DESC *desc, ID3D11VideoProcessorEnumerator **enumerator)
+{
+    FIXME("iface %p, desc %p, enumerator %p, stub!\n", iface, desc, enumerator);
+    return E_NOTIMPL;
+}
+
+static UINT STDMETHODCALLTYPE d3d11_video_device_GetVideoDecoderProfileCount(ID3D11VideoDevice1 *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return 0;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_GetVideoDecoderProfile(
+        ID3D11VideoDevice1 *iface, UINT index, GUID *profile)
+{
+    FIXME("iface %p, index %u, profile %p, stub!\n", iface, index, profile);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CheckVideoDecoderFormat(
+        ID3D11VideoDevice1 *iface, const GUID *profile, DXGI_FORMAT format, BOOL *supported)
+{
+    FIXME("iface %p, profile %s, format %#x, supported %p, stub!\n", iface, debugstr_guid(profile), format, supported);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_GetVideoDecoderConfigCount(ID3D11VideoDevice1 *iface,
+        const D3D11_VIDEO_DECODER_DESC *desc, UINT *count)
+{
+    FIXME("iface %p, desc %p, count %p, stub!\n", iface, desc, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_GetVideoDecoderConfig(ID3D11VideoDevice1 *iface,
+        const D3D11_VIDEO_DECODER_DESC *desc, UINT index, D3D11_VIDEO_DECODER_CONFIG *config)
+{
+    FIXME("iface %p, desc %p, index %u, config %p, stub!\n", iface, desc, index, config);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_GetContentProtectionCaps(ID3D11VideoDevice1 *iface,
+        const GUID *encryption_type, const GUID *profile, D3D11_VIDEO_CONTENT_PROTECTION_CAPS *caps)
+{
+    FIXME("iface %p, encryption_type %s, profile %s, caps %p, stub!\n",
+            iface, debugstr_guid(encryption_type), debugstr_guid(profile), caps);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CheckCryptoKeyExchange(ID3D11VideoDevice1 *iface,
+        const GUID *encryption_type, const GUID *profile, UINT index, GUID *key_exchange_type)
+{
+    FIXME("iface %p, encryption_type %s, profile %s, index %u, key_exchange_type %p, stub!\n",
+            iface, debugstr_guid(encryption_type), debugstr_guid(profile), index, key_exchange_type);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_SetPrivateData(
+        ID3D11VideoDevice1 *iface, REFGUID guid, UINT size, const void *data)
+{
+    TRACE("iface %p, guid %s, size %u, data %p.\n", iface, debugstr_guid(guid), size, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_SetPrivateDataInterface(
+        ID3D11VideoDevice1 *iface, REFGUID guid, const IUnknown *data)
+{
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_GetCryptoSessionPrivateDataSize(
+        ID3D11VideoDevice1 *iface, const GUID *encryption_type, const GUID *profile,
+        const GUID *key_exchange_type, UINT *input_size, UINT *output_size)
+{
+    FIXME("iface %p, encryption_type %s, profile %s, key_exchange_type %s, input_size %p, output_size %p, stub!\n",
+            iface, debugstr_guid(encryption_type), debugstr_guid(profile),
+            debugstr_guid(key_exchange_type), input_size, output_size);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_GetVideoDecoderCaps(
+        ID3D11VideoDevice1 *iface, const GUID *profile, UINT width, UINT height,
+        const DXGI_RATIONAL *framerate, UINT bitrate, const GUID *encryption_type, UINT *caps)
+{
+    TRACE("iface %p, profile %s, width %u, height %u, framerate %u/%u, bitrate %u, encryption_type %s, caps %p, stub!\n",
+            iface, debugstr_guid(profile), width, height, framerate->Numerator, framerate->Denominator,
+            bitrate, debugstr_guid(encryption_type), caps);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_CheckVideoDecoderDownsampling(ID3D11VideoDevice1 *iface,
+        const D3D11_VIDEO_DECODER_DESC *input_desc, DXGI_COLOR_SPACE_TYPE input_colour_space,
+        const D3D11_VIDEO_DECODER_CONFIG *config, const DXGI_RATIONAL *framerate,
+        const D3D11_VIDEO_SAMPLE_DESC *output_desc, BOOL *supported, BOOL *real_time_hint)
+{
+    TRACE("iface %p, input_desc %p, input_colour_space %#x, config %p,"
+            " framerate %u/%u, output_desc %p, supported %p, real_time_hint %p, stub!\n",
+            iface, input_desc, input_colour_space, config,
+            framerate->Numerator, framerate->Denominator, output_desc, supported, real_time_hint);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_device_RecommendVideoDecoderDownsampleParameters(ID3D11VideoDevice1 *iface,
+        const D3D11_VIDEO_DECODER_DESC *input_desc, DXGI_COLOR_SPACE_TYPE input_colour_space,
+        const D3D11_VIDEO_DECODER_CONFIG *config, const DXGI_RATIONAL *framerate,
+        D3D11_VIDEO_SAMPLE_DESC *output_desc)
+{
+    TRACE("iface %p, input_desc %p, input_colour_space %#x, config %p, framerate %u/%u, output_desc %p, stub!\n",
+            iface, input_desc, input_colour_space, config, framerate->Numerator, framerate->Denominator, output_desc);
+    return E_NOTIMPL;
+}
+
+static const struct ID3D11VideoDevice1Vtbl d3d11_video_device1_vtbl =
+{
+    d3d11_video_device_QueryInterface,
+    d3d11_video_device_AddRef,
+    d3d11_video_device_Release,
+    d3d11_video_device_CreateVideoDecoder,
+    d3d11_video_device_CreateVideoProcessor,
+    d3d11_video_device_CreateAuthenticatedChannel,
+    d3d11_video_device_CreateCryptoSession,
+    d3d11_video_device_CreateVideoDecoderOutputView,
+    d3d11_video_device_CreateVideoProcessorInputView,
+    d3d11_video_device_CreateVideoProcessorOutputView,
+    d3d11_video_device_CreateVideoProcessorEnumerator,
+    d3d11_video_device_GetVideoDecoderProfileCount,
+    d3d11_video_device_GetVideoDecoderProfile,
+    d3d11_video_device_CheckVideoDecoderFormat,
+    d3d11_video_device_GetVideoDecoderConfigCount,
+    d3d11_video_device_GetVideoDecoderConfig,
+    d3d11_video_device_GetContentProtectionCaps,
+    d3d11_video_device_CheckCryptoKeyExchange,
+    d3d11_video_device_SetPrivateData,
+    d3d11_video_device_SetPrivateDataInterface,
+    d3d11_video_device_GetCryptoSessionPrivateDataSize,
+    d3d11_video_device_GetVideoDecoderCaps,
+    d3d11_video_device_CheckVideoDecoderDownsampling,
+    d3d11_video_device_RecommendVideoDecoderDownsampleParameters,
+};
+
 /* IWineDXGIDeviceParent IUnknown methods */
 
 static inline struct d3d_device *device_from_dxgi_device_parent(IWineDXGIDeviceParent *iface)
@@ -6969,6 +7192,7 @@ void d3d_device_init(struct d3d_device *device, void *outer_unknown)
     device->ID3D11Device2_iface.lpVtbl = &d3d11_device_vtbl;
     device->ID3D10Device1_iface.lpVtbl = &d3d10_device1_vtbl;
     device->ID3D10Multithread_iface.lpVtbl = &d3d10_multithread_vtbl;
+    device->ID3D11VideoDevice1_iface.lpVtbl = &d3d11_video_device1_vtbl;
     device->IWineDXGIDeviceParent_iface.lpVtbl = &d3d_dxgi_device_parent_vtbl;
     device->device_parent.ops = &d3d_wined3d_device_parent_ops;
     device->refcount = 1;
