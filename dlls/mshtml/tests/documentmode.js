@@ -3186,4 +3186,8 @@ sync_test("prototypes", function() {
     check(HTMLSelectElement.prototype, HTMLElement.prototype, "select element prototype");
     check(document.createElement("style"), HTMLStyleElement.prototype, "style element");
     check(HTMLStyleElement.prototype, HTMLElement.prototype, "style element prototype");
+    check(document.createElement("table"), HTMLTableElement.prototype, "table element");
+    check(HTMLTableElement.prototype, HTMLElement.prototype, "table element prototype");
+    check(document.createElement("tr"), HTMLTableRowElement.prototype, "tr element");
+    check(HTMLTableRowElement.prototype, HTMLElement.prototype, "tr element prototype");
 });
