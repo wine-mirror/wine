@@ -430,7 +430,13 @@ static const NodeImplVtbl HTMLTableCellImplVtbl = {
     .get_attr_col          = HTMLElement_get_attr_col,
 };
 
-static const event_target_vtbl_t HTMLTableCell_event_target_vtbl = {
+dispex_static_data_t HTMLTableCellElement_dispex = {
+    .name         = "HTMLTableCellElement",
+    .id           = PROT_HTMLTableCellElement,
+    .prototype_id = PROT_HTMLElement,
+};
+
+static const event_target_vtbl_t HTMLTableDataCellElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
         .query_interface= HTMLTableCell_query_interface,
@@ -442,18 +448,20 @@ static const event_target_vtbl_t HTMLTableCell_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLTableCell_iface_tids[] = {
+static const tid_t HTMLTableDataCellElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLTableCell_tid,
     0
 };
 
-static dispex_static_data_t HTMLTableCell_dispex = {
-    "HTMLTableDataCellElement",
-    &HTMLTableCell_event_target_vtbl.dispex_vtbl,
-    DispHTMLTableCell_tid,
-    HTMLTableCell_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLTableDataCellElement_dispex = {
+    .name         = "HTMLTableDataCellElement",
+    .id           = PROT_HTMLTableDataCellElement,
+    .prototype_id = PROT_HTMLTableCellElement,
+    .vtbl         = &HTMLTableDataCellElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLTableCell_tid,
+    .iface_tids   = HTMLTableDataCellElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -468,7 +476,7 @@ HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLE
     ret->IHTMLTableCell_iface.lpVtbl = &HTMLTableCellVtbl;
     ret->element.node.vtbl = &HTMLTableCellImplVtbl;
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLTableCell_dispex);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLTableDataCellElement_dispex);
 
     nsres = nsIDOMElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableCellElement, (void**)&ret->nscell);
     assert(nsres == NS_OK);

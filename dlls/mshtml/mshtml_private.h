@@ -432,6 +432,8 @@ typedef struct {
     X(HTMLScriptElement)                   \
     X(HTMLSelectElement)                   \
     X(HTMLStyleElement)                    \
+    X(HTMLTableCellElement)                \
+    X(HTMLTableDataCellElement)            \
     X(HTMLTableElement)                    \
     X(HTMLTableRowElement)                 \
     X(HTMLTitleElement)                    \

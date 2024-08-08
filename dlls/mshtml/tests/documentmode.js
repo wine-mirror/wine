@@ -3190,4 +3190,7 @@ sync_test("prototypes", function() {
     check(HTMLTableElement.prototype, HTMLElement.prototype, "table element prototype");
     check(document.createElement("tr"), HTMLTableRowElement.prototype, "tr element");
     check(HTMLTableRowElement.prototype, HTMLElement.prototype, "tr element prototype");
+    check(document.createElement("td"), HTMLTableDataCellElement.prototype, "td element");
+    check(HTMLTableDataCellElement.prototype, HTMLTableCellElement.prototype, "td element prototype");
+    check(HTMLTableCellElement.prototype, HTMLElement.prototype, "table cell prototype");
 });
