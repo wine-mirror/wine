@@ -415,12 +415,14 @@ static const tid_t HTMLTextAreaElement_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLTextAreaElement_dispex = {
-    "HTMLTextAreaElement",
-    &HTMLTextAreaElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLTextAreaElement_tid,
-    HTMLTextAreaElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLTextAreaElement_dispex = {
+    .name         = "HTMLTextAreaElement",
+    .id           = PROT_HTMLTextAreaElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLTextAreaElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLTextAreaElement_tid,
+    .iface_tids   = HTMLTextAreaElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLTextAreaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

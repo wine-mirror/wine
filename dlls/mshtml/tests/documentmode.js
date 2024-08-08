@@ -3193,4 +3193,6 @@ sync_test("prototypes", function() {
     check(document.createElement("td"), HTMLTableDataCellElement.prototype, "td element");
     check(HTMLTableDataCellElement.prototype, HTMLTableCellElement.prototype, "td element prototype");
     check(HTMLTableCellElement.prototype, HTMLElement.prototype, "table cell prototype");
+    check(document.createElement("textarea"), HTMLTextAreaElement.prototype, "textarea element");
+    check(HTMLTextAreaElement.prototype, HTMLElement.prototype, "textarea element prototype");
 });
