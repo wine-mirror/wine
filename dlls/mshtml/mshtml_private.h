@@ -441,6 +441,8 @@ typedef struct {
     X(MutationObserver)                    \
     X(Navigator)                           \
     X(Node)                                \
+    X(SVGElement)                          \
+    X(SVGSVGElement)                       \
     X(Storage)                             \
     X(Window)                              \
     X(XMLHttpRequest)

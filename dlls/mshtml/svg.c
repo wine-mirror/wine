@@ -156,12 +156,14 @@ static const event_target_vtbl_t SVGElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static dispex_static_data_t SVGElement_dispex = {
-    "HTMLUnknownElement",
-    &SVGElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLUnknownElement_tid,
-    HTMLElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t SVGElement_dispex = {
+    .name         = "SVGElement",
+    .id           = PROT_SVGElement,
+    .prototype_id = PROT_Element,
+    .vtbl         = &SVGElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLUnknownElement_tid,
+    .iface_tids   = HTMLElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 static void init_svg_element(SVGElement *svg_element, HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, dispex_static_data_t *dispex_data)
@@ -656,12 +658,14 @@ static const event_target_vtbl_t SVGSVGElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static dispex_static_data_t SVGSVGElement_dispex = {
-    "HTMLUnknownElement",
-    &SVGSVGElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLUnknownElement_tid,
-    HTMLElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t SVGSVGElement_dispex = {
+    .name         = "SVGSVGElement",
+    .id           = PROT_SVGSVGElement,
+    .prototype_id = PROT_SVGElement,
+    .vtbl         = &SVGSVGElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLUnknownElement_tid,
+    .iface_tids   = HTMLElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 static HRESULT create_viewport_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)

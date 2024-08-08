@@ -19,6 +19,8 @@
 var compat_version;
 var tests = [];
 
+var svg_ns = "http://www.w3.org/2000/svg";
+
 ok(performance.timing.navigationStart > 0, "navigationStart <= 0");
 ok(performance.timing.fetchStart == performance.timing.navigationStart, "fetchStart != navigationStart");
 ok(performance.timing.domainLookupStart >= performance.timing.fetchStart, "domainLookupStart < fetchStart");
@@ -347,6 +349,8 @@ sync_test("builtin_toString", function() {
     if(v >= 9) {
         document.body.innerHTML = "<!--...-->";
         test("comment", document.body.firstChild, "Comment");
+
+        test("SVGSVGElement", document.createElementNS(svg_ns, "svg"), "SVGSVGElement");
     }
 });
 
@@ -2228,7 +2232,6 @@ sync_test("elem_attrNS", function() {
     if(v < 9) return;  /* not available */
 
     var specialspace_ns = "http://www.mozilla.org/ns/specialspace";
-    var svg_ns = "http://www.w3.org/2000/svg";
 
     var elem = document.createElement("div"), r;
 
@@ -3195,4 +3198,7 @@ sync_test("prototypes", function() {
     check(HTMLTableCellElement.prototype, HTMLElement.prototype, "table cell prototype");
     check(document.createElement("textarea"), HTMLTextAreaElement.prototype, "textarea element");
     check(HTMLTextAreaElement.prototype, HTMLElement.prototype, "textarea element prototype");
+    check(document.createElementNS(svg_ns, "svg"), SVGSVGElement.prototype, "svg:svg element");
+    check(SVGSVGElement.prototype, SVGElement.prototype, "svg:svg element prototype");
+    check(SVGElement.prototype, Element.prototype, "svg element prototype");
 });
