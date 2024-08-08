@@ -431,6 +431,7 @@ typedef struct {
     X(HTMLOptionElement)                   \
     X(HTMLScriptElement)                   \
     X(HTMLSelectElement)                   \
+    X(HTMLStyleElement)                    \
     X(HTMLTitleElement)                    \
     X(MutationObserver)                    \
     X(Navigator)                           \

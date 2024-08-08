@@ -3184,4 +3184,6 @@ sync_test("prototypes", function() {
     check(HTMLScriptElement.prototype, HTMLElement.prototype, "script element prototype");
     check(document.createElement("select"), HTMLSelectElement.prototype, "select element");
     check(HTMLSelectElement.prototype, HTMLElement.prototype, "select element prototype");
+    check(document.createElement("style"), HTMLStyleElement.prototype, "style element");
+    check(HTMLStyleElement.prototype, HTMLElement.prototype, "style element prototype");
 });
