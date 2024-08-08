@@ -257,26 +257,34 @@ static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     .clone                 = HTMLDOMTextNode_clone
 };
 
-static const dispex_static_data_vtbl_t HTMLDOMTextNode_dispex_vtbl = {
+dispex_static_data_t CharacterData_dispex = {
+    .name         = "CharactedData",
+    .id           = PROT_CharacterData,
+    .prototype_id = PROT_Node,
+};
+
+static const dispex_static_data_vtbl_t Text_dispex_vtbl = {
     .query_interface = HTMLDOMTextNode_query_interface,
     .destructor      = HTMLDOMNode_destructor,
     .traverse        = HTMLDOMNode_traverse,
     .unlink          = HTMLDOMNode_unlink
 };
 
-static const tid_t HTMLDOMTextNode_iface_tids[] = {
+static const tid_t Text_iface_tids[] = {
     IHTMLDOMNode_tid,
     IHTMLDOMNode2_tid,
     IHTMLDOMTextNode_tid,
     IHTMLDOMTextNode2_tid,
     0
 };
-static dispex_static_data_t HTMLDOMTextNode_dispex = {
-    "Text",
-    &HTMLDOMTextNode_dispex_vtbl,
-    DispHTMLDOMTextNode_tid,
-    HTMLDOMTextNode_iface_tids,
-    HTMLDOMNode_init_dispex_info
+dispex_static_data_t Text_dispex = {
+    .name         = "Text",
+    .id           = PROT_Text,
+    .prototype_id = PROT_CharacterData,
+    .vtbl         = &Text_dispex_vtbl,
+    .disp_tid     = DispHTMLDOMTextNode_tid,
+    .iface_tids   = Text_iface_tids,
+    .init_info    = HTMLDOMNode_init_dispex_info,
 };
 
 HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **node)
@@ -292,7 +300,7 @@ HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDO
     ret->IHTMLDOMTextNode_iface.lpVtbl = &HTMLDOMTextNodeVtbl;
     ret->IHTMLDOMTextNode2_iface.lpVtbl = &HTMLDOMTextNode2Vtbl;
 
-    HTMLDOMNode_Init(doc, &ret->node, nsnode, &HTMLDOMTextNode_dispex);
+    HTMLDOMNode_Init(doc, &ret->node, nsnode, &Text_dispex);
 
     nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMText, (void**)&ret->nstext);
     assert(nsres == NS_OK && (nsIDOMNode*)ret->nstext == ret->node.nsnode);

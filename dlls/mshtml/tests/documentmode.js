@@ -3211,4 +3211,7 @@ sync_test("prototypes", function() {
     check(SVGTextContentElement.prototype, SVGElement.prototype, "SVGTextPositioningElement prototype");
     check(document.doctype, DocumentType.prototype, "doctype");
     check(DocumentType.prototype, Node.prototype, "doctype prototype");
+    check(document.createTextNode(""), Text.prototype, "text");
+    check(Text.prototype, CharacterData.prototype, "text prototype");
+    check(CharacterData.prototype, Node.prototype, "character data prototype");
 });

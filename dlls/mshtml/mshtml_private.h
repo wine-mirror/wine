@@ -407,6 +407,7 @@ typedef struct {
 } dispex_static_data_vtbl_t;
 
 #define ALL_PROTOTYPES                     \
+    X(CharacterData)                       \
     X(DOMImplementation)                   \
     X(Document)                            \
     X(DocumentType)                        \
@@ -449,6 +450,7 @@ typedef struct {
     X(SVGTextContentElement)               \
     X(SVGTextPositioningElement)           \
     X(Storage)                             \
+    X(Text)                                \
     X(Window)                              \
     X(XMLHttpRequest)
 
