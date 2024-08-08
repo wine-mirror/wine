@@ -1871,6 +1871,7 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
         new_surface = &dummy_surface;
         window_surface_add_ref( new_surface );
     }
+    else if (!create_opaque && is_layered) create_layered = TRUE;
 
     if (IsRectEmpty( surface_rect )) needs_surface = FALSE;
     else if (create_layered || is_layered) needs_surface = TRUE;
