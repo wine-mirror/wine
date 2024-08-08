@@ -790,12 +790,14 @@ static const event_target_vtbl_t SVGCircleElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static dispex_static_data_t SVGCircleElement_dispex = {
-    "HTMLUnknownElement",
-    &SVGCircleElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLUnknownElement_tid,
-    HTMLElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t SVGCircleElement_dispex = {
+    .name         = "SVGCircleElement",
+    .id           = PROT_SVGCircleElement,
+    .prototype_id = PROT_SVGElement,
+    .vtbl         = &SVGCircleElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLUnknownElement_tid,
+    .iface_tids   = HTMLElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 static HRESULT create_circle_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)

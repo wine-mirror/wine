@@ -351,6 +351,7 @@ sync_test("builtin_toString", function() {
         test("comment", document.body.firstChild, "Comment");
 
         test("SVGSVGElement", document.createElementNS(svg_ns, "svg"), "SVGSVGElement");
+        test("SVGCircleElement", document.createElementNS(svg_ns, "circle"), "SVGCircleElement");
     }
 });
 
@@ -3201,4 +3202,6 @@ sync_test("prototypes", function() {
     check(document.createElementNS(svg_ns, "svg"), SVGSVGElement.prototype, "svg:svg element");
     check(SVGSVGElement.prototype, SVGElement.prototype, "svg:svg element prototype");
     check(SVGElement.prototype, Element.prototype, "svg element prototype");
+    check(document.createElementNS(svg_ns, "circle"), SVGCircleElement.prototype, "svg:circle element");
+    check(SVGCircleElement.prototype, SVGElement.prototype, "svg:circle element prototype");
 });
