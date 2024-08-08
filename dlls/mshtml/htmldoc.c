@@ -322,11 +322,13 @@ static const tid_t DocumentType_iface_tids[] = {
     0
 };
 
-static dispex_static_data_t DocumentType_dispex = {
-    "DocumentType",
-    &DocumentType_event_target_vtbl.dispex_vtbl,
-    DispDOMDocumentType_tid,
-    DocumentType_iface_tids
+dispex_static_data_t DocumentType_dispex = {
+    .name         = "DocumentType",
+    .id           = PROT_DocumentType,
+    .prototype_id = PROT_Node,
+    .vtbl         = &DocumentType_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispDOMDocumentType_tid,
+    .iface_tids   = DocumentType_iface_tids,
 };
 
 HRESULT create_doctype_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **ret)

@@ -3209,4 +3209,6 @@ sync_test("prototypes", function() {
     check(SVGTSpanElement.prototype, SVGTextPositioningElement.prototype, "svg:tspan element prototype");
     check(SVGTextPositioningElement.prototype, SVGTextContentElement.prototype, "SVGTextPositioningElement prototype");
     check(SVGTextContentElement.prototype, SVGElement.prototype, "SVGTextPositioningElement prototype");
+    check(document.doctype, DocumentType.prototype, "doctype");
+    check(DocumentType.prototype, Node.prototype, "doctype prototype");
 });

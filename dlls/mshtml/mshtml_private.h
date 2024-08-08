@@ -409,6 +409,7 @@ typedef struct {
 #define ALL_PROTOTYPES                     \
     X(DOMImplementation)                   \
     X(Document)                            \
+    X(DocumentType)                        \
     X(Element)                             \
     X(HTMLAnchorElement)                   \
     X(HTMLAreaElement)                     \
