@@ -1300,12 +1300,14 @@ static const tid_t HTMLSelectElement_tids[] = {
     0
 };
 
-static dispex_static_data_t HTMLSelectElement_dispex = {
-    "HTMLSelectElement",
-    &HTMLSelectElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLSelectElement_tid,
-    HTMLSelectElement_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLSelectElement_dispex = {
+    .name         = "HTMLSelectElement",
+    .id           = PROT_HTMLSelectElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLSelectElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLSelectElement_tid,
+    .iface_tids   = HTMLSelectElement_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLSelectElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
