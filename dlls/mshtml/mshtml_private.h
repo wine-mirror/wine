@@ -444,6 +444,9 @@ typedef struct {
     X(SVGCircleElement)                    \
     X(SVGElement)                          \
     X(SVGSVGElement)                       \
+    X(SVGTSpanElement)                     \
+    X(SVGTextContentElement)               \
+    X(SVGTextPositioningElement)           \
     X(Storage)                             \
     X(Window)                              \
     X(XMLHttpRequest)

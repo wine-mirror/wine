@@ -979,6 +979,18 @@ static void *SVGTSpanElement_query_interface(DispatchEx *dispex, REFIID riid)
     return SVGElement_query_interface(&This->svg_element.element.node.event_target.dispex, riid);
 }
 
+dispex_static_data_t SVGTextContentElement_dispex = {
+    .name         = "SVGTextContentElement",
+    .id           = PROT_SVGTextContentElement,
+    .prototype_id = PROT_SVGElement,
+};
+
+dispex_static_data_t SVGTextPositioningElement_dispex = {
+    .name         = "SVGTextPositioningElement",
+    .id           = PROT_SVGTextPositioningElement,
+    .prototype_id = PROT_SVGTextContentElement,
+};
+
 static const NodeImplVtbl SVGTSpanElementImplVtbl = {
     .clsid                 = &CLSID_SVGTSpanElement,
     .cpc_entries           = HTMLElement_cpc,
@@ -998,12 +1010,14 @@ static const event_target_vtbl_t SVGTSpanElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static dispex_static_data_t SVGTSpanElement_dispex = {
-    "HTMLUnknownElement",
-    &SVGTSpanElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLUnknownElement_tid,
-    HTMLElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t SVGTSpanElement_dispex = {
+    .name         = "SVGTSpanElement",
+    .id           = PROT_SVGTSpanElement,
+    .prototype_id = PROT_SVGTextPositioningElement,
+    .vtbl         = &SVGTSpanElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLUnknownElement_tid,
+    .iface_tids   = HTMLElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 static HRESULT create_tspan_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nselem, HTMLElement **elem)

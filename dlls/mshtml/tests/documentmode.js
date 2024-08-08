@@ -352,6 +352,7 @@ sync_test("builtin_toString", function() {
 
         test("SVGSVGElement", document.createElementNS(svg_ns, "svg"), "SVGSVGElement");
         test("SVGCircleElement", document.createElementNS(svg_ns, "circle"), "SVGCircleElement");
+        test("SVGCircleElement", document.createElementNS(svg_ns, "tspan"), "SVGTSpanElement");
     }
 });
 
@@ -3204,4 +3205,8 @@ sync_test("prototypes", function() {
     check(SVGElement.prototype, Element.prototype, "svg element prototype");
     check(document.createElementNS(svg_ns, "circle"), SVGCircleElement.prototype, "svg:circle element");
     check(SVGCircleElement.prototype, SVGElement.prototype, "svg:circle element prototype");
+    check(document.createElementNS(svg_ns, "tspan"), SVGTSpanElement.prototype, "svg:tspan element");
+    check(SVGTSpanElement.prototype, SVGTextPositioningElement.prototype, "svg:tspan element prototype");
+    check(SVGTextPositioningElement.prototype, SVGTextContentElement.prototype, "SVGTextPositioningElement prototype");
+    check(SVGTextContentElement.prototype, SVGElement.prototype, "SVGTextPositioningElement prototype");
 });
