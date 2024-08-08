@@ -1575,6 +1575,9 @@ void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *
                     || declaration->normal != prev->normal || declaration->point_size != prev->point_size)
                 stateblock->changed.ffp_vs_settings = 1;
         }
+
+        if (declaration->position_transformed != prev->position_transformed)
+            stateblock->changed.ffp_vs_settings = 1;
     }
     else
     {
@@ -3814,7 +3817,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
      * FFP pipeline cares about. The rest should eventually be removed from
      * those structs and left only in vs_compile_args / ps_compile_args. */
 
-    if (changed->ffp_vs_settings && !state->vs)
+    if (changed->ffp_vs_settings
+            && (!state->vs || !state->vertex_declaration || state->vertex_declaration->position_transformed))
     {
         if (device->adapter->d3d_info.ffp_hlsl)
         {

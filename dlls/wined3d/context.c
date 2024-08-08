@@ -161,8 +161,8 @@ void wined3d_stream_info_from_declaration(struct wined3d_stream_info *stream_inf
         const struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
 {
     /* We need to deal with frequency data! */
+    BOOL use_vshader = use_vs(state) || (d3d_info->ffp_hlsl && state->shader[WINED3D_SHADER_TYPE_VERTEX]);
     struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
-    BOOL use_vshader = use_vs(state);
     unsigned int i;
 
     stream_info->use_map = 0;

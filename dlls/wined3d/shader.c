@@ -2701,9 +2701,27 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
                 && state->transforms[WINED3D_TS_PROJECTION]._24 == 0.0f
                 && state->transforms[WINED3D_TS_PROJECTION]._34 == 0.0f
                 && state->transforms[WINED3D_TS_PROJECTION]._44 == 1.0f)
-            args->fog_src = VS_FOG_Z;
+        {
+            /* Fog source is vertex output Z.
+             *
+             * However, if drawing RHW (which means we are using an HLSL
+             * replacement shader, since we got here), and depth testing is
+             * disabled, primitives are not supposed to be clipped by the
+             * viewport. We handle this in the vertex shader by essentially
+             * flushing output Z to zero.
+             *
+             * Fog needs to still read from the original Z, however. In this
+             * case we read from oFog, which contains the original Z. */
+
+            if (state->vertex_declaration->position_transformed)
+                args->fog_src = VS_FOG_COORD;
+            else
+                args->fog_src = VS_FOG_Z;
+        }
         else
+        {
             args->fog_src = VS_FOG_W;
+        }
     }
     else
     {

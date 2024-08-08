@@ -10425,10 +10425,10 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
         vs_id = ctx_data->glsl_program->vs.id;
         vs_list = &ctx_data->glsl_program->vs.shader_entry;
 
-        if (use_vs(state))
+        if (use_vs(state) || d3d_info->ffp_hlsl)
             vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     }
-    else if (use_vs(state))
+    else if (use_vs(state) || d3d_info->ffp_hlsl)
     {
         struct vs_compile_args vs_compile_args;
 
