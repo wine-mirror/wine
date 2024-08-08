@@ -8096,8 +8096,14 @@ static void shader_glsl_generate_vs_epilogue(const struct wined3d_gl_info *gl_in
             shader_addline(buffer, "%s = gl_Position.w;\n",
                     legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
         else if (!reg_maps->fog)
-            shader_addline(buffer, "%s = 0.0;\n",
-                    legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+        {
+            if (reg_maps->output_registers & (1u << (8 + 1)))
+                shader_addline(buffer, "%s = ffp_varying_specular.w;\n",
+                        legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+            else
+                shader_addline(buffer, "%s = 0.0;\n",
+                        legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+        }
     }
 
     /* We always store the clipplanes without y inversion. */
