@@ -565,6 +565,16 @@ static void stb__CompressAlphaBlock(unsigned char *dest,unsigned char *src, int 
    dest[1] = (unsigned char)mn;
    dest += 2;
 
+   /*
+    * Wine specific tweak to more closely match native behavior: If
+    * max is equal to minimum, just set all bits to 0 (which means the value
+    * is the value of max in this case).
+    */
+   if (mx == mn) {
+      memset(dest, 0, 6);
+      return;
+   }
+
    // determine bias and emit color indices
    // given the choice of mx/mn, these indices are optimal:
    // http://fgiesen.wordpress.com/2009/12/15/dxt5-alpha-block-index-determination/
