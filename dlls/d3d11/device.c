@@ -6847,8 +6847,23 @@ static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateCryptoSession(ID3D11Vi
 static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoDecoderOutputView(ID3D11VideoDevice1 *iface,
         ID3D11Resource *resource, const D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC *desc, ID3D11VideoDecoderOutputView **view)
 {
-    FIXME("iface %p, resource %p, desc %p, view %p, stub!\n", iface, resource, desc, view);
-    return E_NOTIMPL;
+    struct d3d_device *device = impl_from_ID3D11VideoDevice1(iface);
+    struct d3d_video_decoder_output_view *object;
+    HRESULT hr;
+
+    TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
+
+    *view = NULL;
+
+    if (!resource)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = d3d_video_decoder_output_view_create(device, resource, desc, &object)))
+        return hr;
+
+    *view = &object->ID3D11VideoDecoderOutputView_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoProcessorInputView(

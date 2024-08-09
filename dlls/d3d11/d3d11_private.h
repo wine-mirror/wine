@@ -267,6 +267,20 @@ HRESULT d3d11_unordered_access_view_create(struct d3d_device *device, ID3D11Reso
 struct d3d11_unordered_access_view *unsafe_impl_from_ID3D11UnorderedAccessView(
         ID3D11UnorderedAccessView *iface);
 
+struct d3d_video_decoder_output_view
+{
+    ID3D11VideoDecoderOutputView ID3D11VideoDecoderOutputView_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC desc;
+    ID3D11Resource *resource;
+    struct d3d_device *device;
+};
+
+HRESULT d3d_video_decoder_output_view_create(struct d3d_device *device, ID3D11Resource *resource,
+        const D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC *desc, struct d3d_video_decoder_output_view **view);
+
 /* ID3D11InputLayout, ID3D10InputLayout */
 struct d3d_input_layout
 {
