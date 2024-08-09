@@ -3637,6 +3637,41 @@ SQLRETURN WINAPI SQLSetStmtOption(SQLHSTMT StatementHandle, SQLUSMALLINT Option,
     return ret;
 }
 
+static SQLRETURN special_columns_unix_a( struct handle *handle, SQLUSMALLINT id, SQLCHAR *catalog, SQLSMALLINT len1,
+                                         SQLCHAR *schema, SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3,
+                                         SQLUSMALLINT scope, SQLUSMALLINT nullable )
+{
+    struct SQLSpecialColumns_params params = { handle->unix_handle, id, catalog, len1, schema, len2, table, len3,
+                                                scope, nullable };
+    return ODBC_CALL( SQLSpecialColumns, &params );
+}
+
+static SQLRETURN special_columns_win32_a( struct handle *handle, SQLUSMALLINT id, SQLCHAR *catalog, SQLSMALLINT len1,
+                                          SQLCHAR *schema, SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3,
+                                          SQLUSMALLINT scope, SQLUSMALLINT nullable )
+{
+    SQLWCHAR *catalogW = NULL, *schemaW = NULL, *tableW = NULL;
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLSpecialColumns)
+        return handle->win32_funcs->SQLSpecialColumns( handle->win32_handle, id, catalog, len1, schema, len2, table,
+                                                       len3, scope, nullable );
+
+    if (handle->win32_funcs->SQLSpecialColumnsW)
+    {
+        if (!(catalogW = strnAtoW( catalog, len1 ))) return SQL_ERROR;
+        if (!(schemaW = strnAtoW( schema, len2 ))) goto done;
+        if (!(tableW = strnAtoW( table, len3 ))) goto done;
+        ret = handle->win32_funcs->SQLSpecialColumnsW( handle->win32_handle, id, catalogW, len1, schemaW, len2,
+                                                       tableW, len3, scope, nullable );
+    }
+done:
+    free( catalogW );
+    free( schemaW );
+    free( tableW );
+    return ret;
+}
+
 /*************************************************************************
  *				SQLSpecialColumns           [ODBC32.052]
  */
@@ -3657,14 +3692,13 @@ SQLRETURN WINAPI SQLSpecialColumns(SQLHSTMT StatementHandle, SQLUSMALLINT Identi
 
     if (handle->unix_handle)
     {
-        struct SQLSpecialColumns_params params = { handle->unix_handle, IdentifierType, CatalogName, NameLength1,
-                                                   SchemaName, NameLength2, TableName, NameLength3, Scope, Nullable };
-        ret = ODBC_CALL( SQLSpecialColumns, &params );
+        ret = special_columns_unix_a( handle, IdentifierType, CatalogName, NameLength1, SchemaName, NameLength2,
+                                      TableName, NameLength3, Scope, Nullable );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSpecialColumns( handle->win32_handle, IdentifierType, CatalogName, NameLength1,
-                                                      SchemaName, NameLength2, TableName, NameLength3, Scope, Nullable );
+        ret = special_columns_win32_a( handle, IdentifierType, CatalogName, NameLength1, SchemaName, NameLength2,
+                                       TableName, NameLength3, Scope, Nullable );
     }
 
     TRACE("Returning %d\n", ret);
@@ -6199,6 +6233,26 @@ SQLRETURN WINAPI SQLSetConnectOptionW(SQLHDBC ConnectionHandle, SQLUSMALLINT Opt
     return ret;
 }
 
+static SQLRETURN special_columns_unix_w( struct handle *handle, SQLUSMALLINT id, SQLWCHAR *catalog, SQLSMALLINT len1,
+                                         SQLWCHAR *schema, SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3,
+                                         SQLUSMALLINT scope, SQLUSMALLINT nullable )
+{
+    struct SQLSpecialColumnsW_params params = { handle->unix_handle, id, catalog, len1, schema, len2, table, len3,
+                                                scope, nullable };
+    return ODBC_CALL( SQLSpecialColumnsW, &params );
+}
+
+static SQLRETURN special_columns_win32_w( struct handle *handle, SQLUSMALLINT id, SQLWCHAR *catalog, SQLSMALLINT len1,
+                                          SQLWCHAR *schema, SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3,
+                                          SQLUSMALLINT scope, SQLUSMALLINT nullable )
+{
+    if (handle->win32_funcs->SQLSpecialColumnsW)
+        return handle->win32_funcs->SQLSpecialColumnsW( handle->win32_handle, id, catalog, len1, schema, len2, table,
+                                                        len3, scope, nullable );
+    if (handle->win32_funcs->SQLSpecialColumns) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSpecialColumnsW          [ODBC32.152]
  */
@@ -6219,15 +6273,13 @@ SQLRETURN WINAPI SQLSpecialColumnsW(SQLHSTMT StatementHandle, SQLUSMALLINT Ident
 
     if (handle->unix_handle)
     {
-        struct SQLSpecialColumnsW_params params = { handle->unix_handle, IdentifierType, CatalogName, NameLength1,
-                                                    SchemaName, NameLength2, TableName, NameLength3, Scope, Nullable };
-        ret = ODBC_CALL( SQLSpecialColumnsW, &params );
+        ret = special_columns_unix_w( handle, IdentifierType, CatalogName, NameLength1, SchemaName, NameLength2,
+                                      TableName, NameLength3, Scope, Nullable );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSpecialColumnsW( handle->win32_handle, IdentifierType, CatalogName,
-                                                       NameLength1, SchemaName, NameLength2, TableName, NameLength3,
-                                                       Scope, Nullable );
+        ret = special_columns_win32_w( handle, IdentifierType, CatalogName, NameLength1, SchemaName, NameLength2,
+                                       TableName, NameLength3, Scope, Nullable );
     }
 
     TRACE("Returning %d\n", ret);
