@@ -3231,4 +3231,8 @@ sync_test("prototypes", function() {
     check(StyleSheetList.prototype, Object.prototype, "stylesheets list prototype");
     check(e.sheet.rules, MSCSSRuleList.prototype, "css rule list");
     check(MSCSSRuleList.prototype, Object.prototype, "css rule list prototype");
+    e.sheet.insertRule("div { border: none }", 0);
+    check(e.sheet.rules[0], CSSStyleRule.prototype, "css rule");
+    check(CSSStyleRule.prototype, CSSRule.prototype, "css rule prototype");
+    check(CSSRule.prototype, Object.prototype, "css rule prototype");
 });

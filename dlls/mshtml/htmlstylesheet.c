@@ -153,22 +153,27 @@ static void HTMLStyleSheetRule_destructor(DispatchEx *dispex)
     free(This);
 }
 
-static const dispex_static_data_vtbl_t HTMLStyleSheetRule_dispex_vtbl = {
+dispex_static_data_t CSSRule_dispex = {
+    .id = PROT_CSSRule,
+};
+
+static const dispex_static_data_vtbl_t CSSStyleRule_dispex_vtbl = {
     .query_interface  = HTMLStyleSheetRule_query_interface,
     .destructor       = HTMLStyleSheetRule_destructor,
     .traverse         = HTMLStyleSheetRule_traverse,
     .unlink           = HTMLStyleSheetRule_unlink
 };
 
-static const tid_t HTMLStyleSheetRule_iface_tids[] = {
+static const tid_t CSSStyleRule_iface_tids[] = {
     IHTMLStyleSheetRule_tid,
     0
 };
-static dispex_static_data_t HTMLStyleSheetRule_dispex = {
-    "CSSStyleRule",
-    &HTMLStyleSheetRule_dispex_vtbl,
-    DispHTMLStyleSheetRule_tid,
-    HTMLStyleSheetRule_iface_tids
+dispex_static_data_t CSSStyleRule_dispex = {
+    .id           = PROT_CSSStyleRule,
+    .prototype_id = PROT_CSSRule,
+    .vtbl         = &CSSStyleRule_dispex_vtbl,
+    .disp_tid     = DispHTMLStyleSheetRule_tid,
+    .iface_tids   = CSSStyleRule_iface_tids,
 };
 
 static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, DispatchEx *owner,
@@ -183,7 +188,7 @@ static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, Dispatch
     rule->IHTMLStyleSheetRule_iface.lpVtbl = &HTMLStyleSheetRuleVtbl;
     rule->nsstylesheetrule = NULL;
 
-    init_dispatch_with_owner(&rule->dispex, &HTMLStyleSheetRule_dispex, owner);
+    init_dispatch_with_owner(&rule->dispex, &CSSStyleRule_dispex, owner);
 
     if (nsstylesheetrule)
     {
