@@ -3235,4 +3235,6 @@ sync_test("prototypes", function() {
     check(e.sheet.rules[0], CSSStyleRule.prototype, "css rule");
     check(CSSStyleRule.prototype, CSSRule.prototype, "css rule prototype");
     check(CSSRule.prototype, Object.prototype, "css rule prototype");
+    check(document.body.getBoundingClientRect(), ClientRect.prototype, "rect");
+    check(ClientRect.prototype, Object.prototype, "rect prototype");
 });

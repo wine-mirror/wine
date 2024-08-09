@@ -750,23 +750,23 @@ void HTMLRect_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         dispex_info_add_interface(info, IHTMLRect2_tid, NULL);
 }
 
-static const dispex_static_data_vtbl_t HTMLRect_dispex_vtbl = {
+static const dispex_static_data_vtbl_t ClientRect_dispex_vtbl = {
     .query_interface  = HTMLRect_query_interface,
     .destructor       = HTMLRect_destructor,
     .traverse         = HTMLRect_traverse,
     .unlink           = HTMLRect_unlink
 };
 
-static const tid_t HTMLRect_iface_tids[] = {
+static const tid_t ClientRect_iface_tids[] = {
     IHTMLRect_tid,
     0
 };
-static dispex_static_data_t HTMLRect_dispex = {
-    "ClientRect",
-    &HTMLRect_dispex_vtbl,
-    IHTMLRect_tid,
-    HTMLRect_iface_tids,
-    HTMLRect_init_dispex_info
+dispex_static_data_t ClientRect_dispex = {
+    .id         = PROT_ClientRect,
+    .vtbl       = &ClientRect_dispex_vtbl,
+    .disp_tid   = IHTMLRect_tid,
+    .iface_tids = ClientRect_iface_tids,
+    .init_info  = HTMLRect_init_dispex_info,
 };
 
 static HRESULT create_html_rect(nsIDOMClientRect *nsrect, DispatchEx *owner, IHTMLRect **ret)
@@ -780,7 +780,7 @@ static HRESULT create_html_rect(nsIDOMClientRect *nsrect, DispatchEx *owner, IHT
     rect->IHTMLRect_iface.lpVtbl = &HTMLRectVtbl;
     rect->IHTMLRect2_iface.lpVtbl = &HTMLRect2Vtbl;
 
-    init_dispatch_with_owner(&rect->dispex, &HTMLRect_dispex, owner);
+    init_dispatch_with_owner(&rect->dispex, &ClientRect_dispex, owner);
 
     nsIDOMClientRect_AddRef(nsrect);
     rect->nsrect = nsrect;
