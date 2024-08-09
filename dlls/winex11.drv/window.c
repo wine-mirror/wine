@@ -2612,14 +2612,11 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const REC
     }
 
     X11DRV_window_to_X_rect( data, visible_rect, window_rect, client_rect );
+    TRACE( "visible_rect %s -> %s\n", wine_dbgstr_rect(window_rect), wine_dbgstr_rect(visible_rect) );
 
-    if (!data->whole_window && !data->embedded) goto done; /* use default surface */
-    if (data->use_alpha) goto done; /* use default surface */
-
-    ret = TRUE;
-
-done:
+    ret = !!data->whole_window; /* use default surface if we don't have a window */
     release_win_data( data );
+
     return ret;
 }
 
