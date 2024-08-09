@@ -484,6 +484,10 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_QueryInterface(ID3D11Devic
     {
         *out = &context->ID3D11Multithread_iface;
     }
+    else if (context->type == D3D11_DEVICE_CONTEXT_IMMEDIATE && IsEqualGUID(iid, &IID_ID3D11VideoContext))
+    {
+        *out = &context->ID3D11VideoContext_iface;
+    }
     else if (IsEqualGUID(iid, &IID_ID3DUserDefinedAnnotation))
     {
         *out = &context->ID3DUserDefinedAnnotation_iface;
@@ -3108,6 +3112,544 @@ static const struct ID3D11DeviceContext1Vtbl d3d11_device_context_vtbl =
     d3d11_device_context_DiscardView1,
 };
 
+static struct d3d11_device_context *impl_from_ID3D11VideoContext(ID3D11VideoContext *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d11_device_context, ID3D11VideoContext_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_QueryInterface(ID3D11VideoContext *iface,
+        REFIID iid, void **out)
+{
+    struct d3d11_device_context *context = impl_from_ID3D11VideoContext(iface);
+
+    return d3d11_device_context_QueryInterface(&context->ID3D11DeviceContext1_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_video_context_AddRef(ID3D11VideoContext *iface)
+{
+    struct d3d11_device_context *context = impl_from_ID3D11VideoContext(iface);
+
+    return d3d11_device_context_AddRef(&context->ID3D11DeviceContext1_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_video_context_Release(ID3D11VideoContext *iface)
+{
+    struct d3d11_device_context *context = impl_from_ID3D11VideoContext(iface);
+
+    return d3d11_device_context_Release(&context->ID3D11DeviceContext1_iface);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_GetDevice(ID3D11VideoContext *iface, ID3D11Device **device)
+{
+    struct d3d11_device_context *context = impl_from_ID3D11VideoContext(iface);
+
+    return d3d11_device_context_GetDevice(&context->ID3D11DeviceContext1_iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_GetPrivateData(
+        ID3D11VideoContext *iface, REFGUID guid, UINT *size, void *data)
+{
+    struct d3d11_device_context *context = impl_from_ID3D11VideoContext(iface);
+
+    return d3d11_device_context_GetPrivateData(&context->ID3D11DeviceContext1_iface, guid, size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_SetPrivateData(
+        ID3D11VideoContext *iface, REFGUID guid, UINT size, const void *data)
+{
+    struct d3d11_device_context *context = impl_from_ID3D11VideoContext(iface);
+
+    return d3d11_device_context_SetPrivateData(&context->ID3D11DeviceContext1_iface, guid, size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_SetPrivateDataInterface(
+        ID3D11VideoContext *iface, REFGUID guid, const IUnknown *data)
+{
+    struct d3d11_device_context *context = impl_from_ID3D11VideoContext(iface);
+
+    return d3d11_device_context_SetPrivateDataInterface(&context->ID3D11DeviceContext1_iface, guid, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_GetDecoderBuffer(ID3D11VideoContext *iface,
+        ID3D11VideoDecoder *decoder, D3D11_VIDEO_DECODER_BUFFER_TYPE type, UINT *size, void **buffer)
+{
+    FIXME("iface %p, decoder %p, type %#x, size %p, buffer %p, stub!\n", iface, decoder, type, size, buffer);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_ReleaseDecoderBuffer(ID3D11VideoContext *iface,
+        ID3D11VideoDecoder *decoder, D3D11_VIDEO_DECODER_BUFFER_TYPE type)
+{
+    FIXME("iface %p, decoder %p, type %#x, stub!\n", iface, decoder, type);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderBeginFrame(ID3D11VideoContext *iface,
+        ID3D11VideoDecoder *decoder, ID3D11VideoDecoderOutputView *view, UINT key_size, const void *key)
+{
+    FIXME("iface %p, decoder %p, view %p, key_size %u, key %p, stub!\n", iface, decoder, view, key_size, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderEndFrame(
+        ID3D11VideoContext *iface, ID3D11VideoDecoder *decoder)
+{
+    FIXME("iface %p, decoder %p, stub!\n", iface, decoder);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_SubmitDecoderBuffers(ID3D11VideoContext *iface,
+        ID3D11VideoDecoder *decoder, UINT count, const D3D11_VIDEO_DECODER_BUFFER_DESC *buffers)
+{
+    FIXME("iface %p, decoder %p, count %u, buffers %p, stub!\n", iface, decoder, count, buffers);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderExtension(ID3D11VideoContext *iface,
+        ID3D11VideoDecoder *decoder, const D3D11_VIDEO_DECODER_EXTENSION *extension)
+{
+    FIXME("iface %p, decoder %p, extension %p, stub!\n", iface, decoder, extension);
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetOutputTargetRect(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, BOOL enable, const RECT *rect)
+{
+    FIXME("iface %p, processor %p, enable %d, rect %s, stub!\n", iface, processor, enable, wine_dbgstr_rect(rect));
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetOutputBackgroundColor(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, BOOL yuv, const D3D11_VIDEO_COLOR *color)
+{
+    FIXME("iface %p, processor %p, yuv %d, color {%.8e, %.8e, %.8e, %.8e}, stub!\n",
+            iface, processor, yuv, color->u.RGBA.R, color->u.RGBA.G, color->u.RGBA.B, color->u.RGBA.A);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetOutputColorSpace(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, const D3D11_VIDEO_PROCESSOR_COLOR_SPACE *space)
+{
+    FIXME("iface %p, processor %p, space %p, stub!\n", iface, processor, space);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetOutputAlphaFillMode(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, D3D11_VIDEO_PROCESSOR_ALPHA_FILL_MODE mode, UINT stream_idx)
+{
+    FIXME("iface %p, processor %p, mode %#x, stream_idx %u, stub!\n", iface, processor, mode, stream_idx);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetOutputConstriction(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, BOOL enable, SIZE size)
+{
+    FIXME("iface %p, processor %p, enable %d, size (%lux%lu), stub!\n", iface, processor, enable, size.cx, size.cy);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetOutputStereoMode(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, BOOL enable)
+{
+    FIXME("iface %p, processor %p, enable %d, stub!\n", iface, processor, enable);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetOutputExtension(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, const GUID *guid, UINT size, void *data)
+{
+    FIXME("iface %p, processor %p, guid %s, size %u, data %p, stub!\n",
+            iface, processor, debugstr_guid(guid), size, data);
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetOutputTargetRect(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, BOOL *enabled, RECT *rect)
+{
+    FIXME("iface %p, processor %p, enabled %p, rect %p, stub!\n", iface, processor, enabled, rect);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetOutputBackgroundColor(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, BOOL *yuv, D3D11_VIDEO_COLOR *color)
+{
+    FIXME("iface %p, processor %p, yuv %p, color %p, stub!\n", iface, processor, yuv, color);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetOutputColorSpace(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, D3D11_VIDEO_PROCESSOR_COLOR_SPACE *space)
+{
+    FIXME("iface %p, processor %p, space %p, stub!\n", iface, processor, space);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetOutputAlphaFillMode(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, D3D11_VIDEO_PROCESSOR_ALPHA_FILL_MODE *mode, UINT *stream_idx)
+{
+    FIXME("iface %p, processor %p, mode %p, stream_idx %p, stub!\n", iface, processor, mode, stream_idx);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetOutputConstriction(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, BOOL *enabled, SIZE *size)
+{
+    FIXME("iface %p, processor %p, enabled %p, size %p, stub!\n", iface, processor, enabled, size);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetOutputStereoMode(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, BOOL *enabled)
+{
+    FIXME("iface %p, processor %p, enabled %p, stub!\n", iface, processor, enabled);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetOutputExtension(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, const GUID *guid, UINT size, void *data)
+{
+    FIXME("iface %p, processor %p, guid %s, size %u, data %p, stub!\n",
+            iface, processor, debugstr_guid(guid), size, data);
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamFrameFormat(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, D3D11_VIDEO_FRAME_FORMAT format)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, format %#x, stub!\n", iface, processor, stream_idx, format);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamColorSpace(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, const D3D11_VIDEO_PROCESSOR_COLOR_SPACE *space)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, space %p, stub!\n", iface, processor, stream_idx, space);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamOutputRate(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, UINT stream_idx,
+        D3D11_VIDEO_PROCESSOR_OUTPUT_RATE rate, BOOL repeat, const DXGI_RATIONAL *custom_rate)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, rate %#x, repeat %d, custom_rate %u/%u, stub!\n",
+            iface, processor, stream_idx, rate, repeat, custom_rate->Numerator, custom_rate->Denominator);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamSourceRect(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL enable, const RECT *rect)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %d, rect %s, stub!\n",
+            iface, processor, stream_idx, enable, wine_dbgstr_rect(rect));
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamDestRect(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL enable, const RECT *rect)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %d, rect %s, stub!\n",
+            iface, processor, stream_idx, enable, wine_dbgstr_rect(rect));
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamAlpha(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL enable, float alpha)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %d, alpha %.8e, stub!\n",
+            iface, processor, stream_idx, enable, alpha);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamPalette(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, UINT entry_count, const UINT *entries)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, entry_count %u, entries %p, stub!\n",
+            iface, processor, stream_idx, entry_count, entries);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamPixelAspectRatio(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, UINT stream_idx,
+        BOOL enable, const DXGI_RATIONAL *src_ratio, const DXGI_RATIONAL *dst_ratio)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %d, src_ratio %u/%u, dst_ratio %u/%u stub!\n",
+            iface, processor, stream_idx, enable, src_ratio->Numerator, src_ratio->Denominator,
+            dst_ratio->Numerator, dst_ratio->Denominator);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamLumaKey(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL enable, float lower, float upper)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %d, lower %.8e, upper %.8e, stub!\n",
+            iface, processor, stream_idx, enable, lower, upper);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamStereoFormat(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL enable, D3D11_VIDEO_PROCESSOR_STEREO_FORMAT format,
+        BOOL left_view_frame0, BOOL base_view_frame0, D3D11_VIDEO_PROCESSOR_STEREO_FLIP_MODE flip_mode, int mono_offset)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %d, format %#x,"
+            " left_view_frame0 %d, base_view_frame0 %d, flip_mode %#x, mono_offset %d, stub!\n",
+            iface, processor, stream_idx, enable, format, left_view_frame0, base_view_frame0, flip_mode, mono_offset);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamAutoProcessingMode(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, UINT stream_idx, BOOL enable)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %d, stub!\n", iface, processor, stream_idx, enable);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamFilter(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, D3D11_VIDEO_PROCESSOR_FILTER filter, BOOL enable, int level)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, filter %#x, enable %d, level %d, stub!\n",
+            iface, processor, stream_idx, filter, enable, level);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamExtension(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, const GUID *guid, UINT size, void *data)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, guid %s, size %u, data %p, stub!\n",
+            iface, processor, stream_idx, debugstr_guid(guid), size, data);
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamFrameFormat(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, D3D11_VIDEO_FRAME_FORMAT *format)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, format %p, stub!\n", iface, processor, stream_idx, format);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamColorSpace(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, D3D11_VIDEO_PROCESSOR_COLOR_SPACE *space)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, space %p, stub!\n", iface, processor, stream_idx, space);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamOutputRate(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, UINT stream_idx,
+        D3D11_VIDEO_PROCESSOR_OUTPUT_RATE *rate, BOOL *repeat, DXGI_RATIONAL *custom_rate)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, rate %p, repeat %p, custom_rate %p, stub!\n",
+            iface, processor, stream_idx, rate, repeat, custom_rate);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamSourceRect(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL *enabled, RECT *rect)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enabled %p, rect %p, stub!\n",
+            iface, processor, stream_idx, enabled, rect);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamDestRect(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL *enabled, RECT *rect)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enabled %p, rect %p, stub!\n",
+            iface, processor, stream_idx, enabled, rect);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamAlpha(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL *enabled, float *alpha)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enabled %p, alpha %p, stub!\n",
+            iface, processor, stream_idx, enabled, alpha);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamPalette(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, UINT count, UINT *entries)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, count %u, entries %p, stub!\n",
+            iface, processor, stream_idx, count, entries);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamPixelAspectRatio(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, UINT stream_idx,
+        BOOL *enabled, DXGI_RATIONAL *src_ratio, DXGI_RATIONAL *dst_ratio)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enabled %p, src_ratio %p, dst_ratio %p, stub!\n",
+            iface, processor, stream_idx, enabled, src_ratio, dst_ratio);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamLumaKey(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL *enabled, float *lower, float *upper)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enabled %p, lower %p, upper %p, stub!\n",
+            iface, processor, stream_idx, enabled, lower, upper);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamStereoFormat(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, UINT stream_idx, BOOL *enabled,
+        D3D11_VIDEO_PROCESSOR_STEREO_FORMAT *format, BOOL *left_view_frame0,
+        BOOL *base_view_frame0, D3D11_VIDEO_PROCESSOR_STEREO_FLIP_MODE *flip_mode, int *mono_offset)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enabled %p, format %p, left_view_frame0 %p,"
+            " base_view_frame0 %p flip_mode %p, mono_offset %p, stub!\n",
+            iface, processor, stream_idx, enabled, format, left_view_frame0, base_view_frame0, flip_mode, mono_offset);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamAutoProcessingMode(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, UINT stream_idx, BOOL *enabled)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enabled %p, stub!\n", iface, processor, stream_idx, enabled);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamFilter(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, UINT stream_idx,
+        D3D11_VIDEO_PROCESSOR_FILTER filter, BOOL *enabled, int *level)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, filter %#x, enabled %p, level %p, stub!\n",
+            iface, processor, stream_idx, filter, enabled, level);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamExtension(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, const GUID *guid, UINT size, void *data)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, guid %s, size %u, data %p, stub!\n",
+            iface, processor, stream_idx, debugstr_guid(guid), size, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_VideoProcessorBlt(
+        ID3D11VideoContext *iface, ID3D11VideoProcessor *processor, ID3D11VideoProcessorOutputView *view,
+        UINT frame_idx, UINT stream_count, const D3D11_VIDEO_PROCESSOR_STREAM *streams)
+{
+    FIXME("iface %p, processor %p, view %p, frame_idx %u, stream_count %u, streams %p, stub!\n",
+            iface, processor, view, frame_idx, stream_count, streams);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_NegotiateCryptoSessionKeyExchange(
+        ID3D11VideoContext *iface, ID3D11CryptoSession *session, UINT size, void *data)
+{
+    FIXME("iface %p, session %p, size %u, data %p, stub!\n", iface, session, size, data);
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_EncryptionBlt(
+        ID3D11VideoContext *iface, ID3D11CryptoSession *session,
+        ID3D11Texture2D *src_surface, ID3D11Texture2D *dst_surface, UINT iv_size, void *iv)
+{
+    FIXME("iface %p, session %p, src_surface %p, dst_surface %p, iv_size %u, iv %p, stub!\n",
+            iface, session, src_surface, dst_surface, iv_size, iv);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_DecryptionBlt(ID3D11VideoContext *iface,
+        ID3D11CryptoSession *session, ID3D11Texture2D *src_surface, ID3D11Texture2D *dst_surface,
+        D3D11_ENCRYPTED_BLOCK_INFO *block_info, UINT key_size, const void *key, UINT iv_size, void *iv)
+{
+    FIXME("iface %p, session %p, src_surface %p, dst_surface %p, block_info %p,"
+            " key_size %u, key %p, iv_size %u, iv %p, stub!\n",
+            iface, session, src_surface, dst_surface, block_info, key_size, key, iv_size, iv);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_StartSessionKeyRefresh(ID3D11VideoContext *iface,
+        ID3D11CryptoSession *session, UINT random_number_size, void *random_number)
+{
+    FIXME("iface %p, session %p, random_number_size %u, random_number %p, stub!\n",
+            iface, session, random_number_size, random_number);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_FinishSessionKeyRefresh(
+        ID3D11VideoContext *iface, ID3D11CryptoSession *session)
+{
+    FIXME("iface %p, session %p, stub!\n", iface, session);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_GetEncryptionBltKey(
+        ID3D11VideoContext *iface, ID3D11CryptoSession *session, UINT size, void *key)
+{
+    FIXME("iface %p, session %p, size %u, key %p, stub!\n", iface, session, size, key);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_NegotiateAuthenticatedChannelKeyExchange(
+        ID3D11VideoContext *iface, ID3D11AuthenticatedChannel *channel, UINT size, void *data)
+{
+    FIXME("iface %p, channel %p, size %u, data %p, stub!\n", iface, channel, size, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_QueryAuthenticatedChannel(ID3D11VideoContext *iface,
+        ID3D11AuthenticatedChannel *channel, UINT input_size, const void *input, UINT output_size, void *output)
+{
+    FIXME("iface %p, channel %p, input_size %u, input %p, output_size %u, output %p stub!\n",
+            iface, channel, input_size, input, output_size, output);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_video_context_ConfigureAuthenticatedChannel(
+        ID3D11VideoContext *iface, ID3D11AuthenticatedChannel *channel,
+        UINT input_size, const void *input, D3D11_AUTHENTICATED_CONFIGURE_OUTPUT *output)
+{
+    FIXME("iface %p, channel %p, input_size %u, input %p, output %p, stub!\n",
+            iface, channel, input_size, input, output);
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorSetStreamRotation(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL enable, D3D11_VIDEO_PROCESSOR_ROTATION rotation)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %d, rotation %#x, stub!\n",
+            iface, processor, stream_idx, enable, rotation);
+}
+
+static void STDMETHODCALLTYPE d3d11_video_context_VideoProcessorGetStreamRotation(ID3D11VideoContext *iface,
+        ID3D11VideoProcessor *processor, UINT stream_idx, BOOL *enable, D3D11_VIDEO_PROCESSOR_ROTATION *rotation)
+{
+    FIXME("iface %p, processor %p, stream_idx %u, enable %p, rotation %p, stub!\n",
+            iface, processor, stream_idx, enable, rotation);
+}
+
+static const ID3D11VideoContextVtbl d3d11_video_context_vtbl =
+{
+    d3d11_video_context_QueryInterface,
+    d3d11_video_context_AddRef,
+    d3d11_video_context_Release,
+    d3d11_video_context_GetDevice,
+    d3d11_video_context_GetPrivateData,
+    d3d11_video_context_SetPrivateData,
+    d3d11_video_context_SetPrivateDataInterface,
+    d3d11_video_context_GetDecoderBuffer,
+    d3d11_video_context_ReleaseDecoderBuffer,
+    d3d11_video_context_DecoderBeginFrame,
+    d3d11_video_context_DecoderEndFrame,
+    d3d11_video_context_SubmitDecoderBuffers,
+    d3d11_video_context_DecoderExtension,
+    d3d11_video_context_VideoProcessorSetOutputTargetRect,
+    d3d11_video_context_VideoProcessorSetOutputBackgroundColor,
+    d3d11_video_context_VideoProcessorSetOutputColorSpace,
+    d3d11_video_context_VideoProcessorSetOutputAlphaFillMode,
+    d3d11_video_context_VideoProcessorSetOutputConstriction,
+    d3d11_video_context_VideoProcessorSetOutputStereoMode,
+    d3d11_video_context_VideoProcessorSetOutputExtension,
+    d3d11_video_context_VideoProcessorGetOutputTargetRect,
+    d3d11_video_context_VideoProcessorGetOutputBackgroundColor,
+    d3d11_video_context_VideoProcessorGetOutputColorSpace,
+    d3d11_video_context_VideoProcessorGetOutputAlphaFillMode,
+    d3d11_video_context_VideoProcessorGetOutputConstriction,
+    d3d11_video_context_VideoProcessorGetOutputStereoMode,
+    d3d11_video_context_VideoProcessorGetOutputExtension,
+    d3d11_video_context_VideoProcessorSetStreamFrameFormat,
+    d3d11_video_context_VideoProcessorSetStreamColorSpace,
+    d3d11_video_context_VideoProcessorSetStreamOutputRate,
+    d3d11_video_context_VideoProcessorSetStreamSourceRect,
+    d3d11_video_context_VideoProcessorSetStreamDestRect,
+    d3d11_video_context_VideoProcessorSetStreamAlpha,
+    d3d11_video_context_VideoProcessorSetStreamPalette,
+    d3d11_video_context_VideoProcessorSetStreamPixelAspectRatio,
+    d3d11_video_context_VideoProcessorSetStreamLumaKey,
+    d3d11_video_context_VideoProcessorSetStreamStereoFormat,
+    d3d11_video_context_VideoProcessorSetStreamAutoProcessingMode,
+    d3d11_video_context_VideoProcessorSetStreamFilter,
+    d3d11_video_context_VideoProcessorSetStreamExtension,
+    d3d11_video_context_VideoProcessorGetStreamFrameFormat,
+    d3d11_video_context_VideoProcessorGetStreamColorSpace,
+    d3d11_video_context_VideoProcessorGetStreamOutputRate,
+    d3d11_video_context_VideoProcessorGetStreamSourceRect,
+    d3d11_video_context_VideoProcessorGetStreamDestRect,
+    d3d11_video_context_VideoProcessorGetStreamAlpha,
+    d3d11_video_context_VideoProcessorGetStreamPalette,
+    d3d11_video_context_VideoProcessorGetStreamPixelAspectRatio,
+    d3d11_video_context_VideoProcessorGetStreamLumaKey,
+    d3d11_video_context_VideoProcessorGetStreamStereoFormat,
+    d3d11_video_context_VideoProcessorGetStreamAutoProcessingMode,
+    d3d11_video_context_VideoProcessorGetStreamFilter,
+    d3d11_video_context_VideoProcessorGetStreamExtension,
+    d3d11_video_context_VideoProcessorBlt,
+    d3d11_video_context_NegotiateCryptoSessionKeyExchange,
+    d3d11_video_context_EncryptionBlt,
+    d3d11_video_context_DecryptionBlt,
+    d3d11_video_context_StartSessionKeyRefresh,
+    d3d11_video_context_FinishSessionKeyRefresh,
+    d3d11_video_context_GetEncryptionBltKey,
+    d3d11_video_context_NegotiateAuthenticatedChannelKeyExchange,
+    d3d11_video_context_QueryAuthenticatedChannel,
+    d3d11_video_context_ConfigureAuthenticatedChannel,
+    d3d11_video_context_VideoProcessorSetStreamRotation,
+    d3d11_video_context_VideoProcessorGetStreamRotation,
+};
+
 /* ID3D11Multithread methods */
 
 static inline struct d3d11_device_context *impl_from_ID3D11Multithread(ID3D11Multithread *iface)
@@ -3262,6 +3804,7 @@ static void d3d11_device_context_init(struct d3d11_device_context *context, stru
 {
     context->ID3D11DeviceContext1_iface.lpVtbl = &d3d11_device_context_vtbl;
     context->ID3D11Multithread_iface.lpVtbl = &d3d11_multithread_vtbl;
+    context->ID3D11VideoContext_iface.lpVtbl = &d3d11_video_context_vtbl;
     context->ID3DUserDefinedAnnotation_iface.lpVtbl = &d3d11_user_defined_annotation_vtbl;
     context->refcount = 1;
     context->type = type;
