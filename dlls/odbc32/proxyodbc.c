@@ -3201,9 +3201,19 @@ static SQLRETURN set_cursor_name_unix_a( struct handle *handle, SQLCHAR *name, S
 
 static SQLRETURN set_cursor_name_win32_a( struct handle *handle, SQLCHAR *name, SQLSMALLINT len )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (handle->win32_funcs->SQLSetCursorName)
         return handle->win32_funcs->SQLSetCursorName( handle->win32_handle, name, len );
-    return SQL_ERROR;
+
+    if (handle->win32_funcs->SQLSetCursorNameW)
+    {
+        WCHAR *strW;
+        if (!(strW = strnAtoW( name, len ))) return SQL_ERROR;
+        ret = handle->win32_funcs->SQLSetCursorNameW( handle->win32_handle, strW, len );
+        free( strW );
+    }
+    return ret;
 }
 
 /*************************************************************************
@@ -5362,6 +5372,20 @@ SQLRETURN WINAPI SQLPrepareW(SQLHSTMT StatementHandle, SQLWCHAR *StatementText, 
     return ret;
 }
 
+static SQLRETURN set_cursor_name_unix_w( struct handle *handle, SQLWCHAR *name, SQLSMALLINT len )
+{
+    struct SQLSetCursorNameW_params params = { handle->unix_handle, name, len };
+    return ODBC_CALL( SQLSetCursorNameW, &params );
+}
+
+static SQLRETURN set_cursor_name_win32_w( struct handle *handle, SQLWCHAR *name, SQLSMALLINT len )
+{
+    if (handle->win32_funcs->SQLSetCursorNameW)
+        return handle->win32_funcs->SQLSetCursorNameW( handle->win32_handle, name, len );
+    if (handle->win32_funcs->SQLSetCursorName) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetCursorNameW          [ODBC32.121]
  */
@@ -5377,12 +5401,11 @@ SQLRETURN WINAPI SQLSetCursorNameW(SQLHSTMT StatementHandle, SQLWCHAR *CursorNam
 
     if (handle->unix_handle)
     {
-        struct SQLSetCursorNameW_params params = { handle->unix_handle, CursorName, NameLength };
-        ret = ODBC_CALL( SQLSetCursorNameW, &params );
+        ret = set_cursor_name_unix_w( handle, CursorName, NameLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetCursorNameW( handle->win32_handle, CursorName, NameLength );
+        ret = set_cursor_name_win32_w( handle, CursorName, NameLength );
     }
 
     TRACE("Returning %d\n", ret);
