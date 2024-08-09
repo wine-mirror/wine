@@ -441,6 +441,8 @@ typedef struct {
     X(HTMLTableRowElement)                 \
     X(HTMLTextAreaElement)                 \
     X(HTMLTitleElement)                    \
+    X(MSCSSProperties)                     \
+    X(MSStyleCSSProperties)                \
     X(MutationObserver)                    \
     X(Navigator)                           \
     X(Node)                                \

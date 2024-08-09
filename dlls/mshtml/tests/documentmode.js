@@ -3216,4 +3216,8 @@ sync_test("prototypes", function() {
     check(CharacterData.prototype, Node.prototype, "character data prototype");
     check(window.getComputedStyle(document.body), CSSStyleDeclaration.prototype, "computed style");
     check(CSSStyleDeclaration.prototype, Object.prototype, "CSSStyleDeclaration");
+    check(document.body.style, MSStyleCSSProperties.prototype, "style");
+    check(MSStyleCSSProperties.prototype, MSCSSProperties.prototype, "MSStyleCSSProperties");
+    check(MSCSSProperties.prototype, CSSStyleDeclaration.prototype, "MSCSSProperties");
+    check(CSSStyleDeclaration.prototype, Object.prototype, "CSSStyleDeclaration");
 });
