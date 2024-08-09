@@ -336,7 +336,6 @@ static const tid_t HTMLStyleElement_iface_tids[] = {
     0
 };
 dispex_static_data_t HTMLStyleElement_dispex = {
-    .name         = "HTMLStyleElement",
     .id           = PROT_HTMLStyleElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLStyleElement_event_target_vtbl.dispex_vtbl,

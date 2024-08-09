@@ -1482,7 +1482,6 @@ static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
     0
 };
 dispex_static_data_t XMLHttpRequest_dispex = {
-    .name             = "XMLHttpRequest",
     .id               = PROT_XMLHttpRequest,
     .init_constructor = HTMLXMLHttpRequestFactory_Create,
     .vtbl             = &HTMLXMLHttpRequest_event_target_vtbl.dispex_vtbl,

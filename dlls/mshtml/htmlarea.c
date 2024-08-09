@@ -445,7 +445,6 @@ static const tid_t HTMLAreaElement_iface_tids[] = {
     0
 };
 dispex_static_data_t HTMLAreaElement_dispex = {
-    .name         = "HTMLAreaElement",
     .id           = PROT_HTMLAreaElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLAreaElement_event_target_vtbl.dispex_vtbl,

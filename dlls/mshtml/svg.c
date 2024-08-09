@@ -157,7 +157,6 @@ static const event_target_vtbl_t SVGElement_event_target_vtbl = {
 };
 
 dispex_static_data_t SVGElement_dispex = {
-    .name         = "SVGElement",
     .id           = PROT_SVGElement,
     .prototype_id = PROT_Element,
     .vtbl         = &SVGElement_event_target_vtbl.dispex_vtbl,
@@ -659,7 +658,6 @@ static const event_target_vtbl_t SVGSVGElement_event_target_vtbl = {
 };
 
 dispex_static_data_t SVGSVGElement_dispex = {
-    .name         = "SVGSVGElement",
     .id           = PROT_SVGSVGElement,
     .prototype_id = PROT_SVGElement,
     .vtbl         = &SVGSVGElement_event_target_vtbl.dispex_vtbl,
@@ -791,7 +789,6 @@ static const event_target_vtbl_t SVGCircleElement_event_target_vtbl = {
 };
 
 dispex_static_data_t SVGCircleElement_dispex = {
-    .name         = "SVGCircleElement",
     .id           = PROT_SVGCircleElement,
     .prototype_id = PROT_SVGElement,
     .vtbl         = &SVGCircleElement_event_target_vtbl.dispex_vtbl,
@@ -980,13 +977,11 @@ static void *SVGTSpanElement_query_interface(DispatchEx *dispex, REFIID riid)
 }
 
 dispex_static_data_t SVGTextContentElement_dispex = {
-    .name         = "SVGTextContentElement",
     .id           = PROT_SVGTextContentElement,
     .prototype_id = PROT_SVGElement,
 };
 
 dispex_static_data_t SVGTextPositioningElement_dispex = {
-    .name         = "SVGTextPositioningElement",
     .id           = PROT_SVGTextPositioningElement,
     .prototype_id = PROT_SVGTextContentElement,
 };
@@ -1011,7 +1006,6 @@ static const event_target_vtbl_t SVGTSpanElement_event_target_vtbl = {
 };
 
 dispex_static_data_t SVGTSpanElement_dispex = {
-    .name         = "SVGTSpanElement",
     .id           = PROT_SVGTSpanElement,
     .prototype_id = PROT_SVGTextPositioningElement,
     .vtbl         = &SVGTSpanElement_event_target_vtbl.dispex_vtbl,

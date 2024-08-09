@@ -1298,7 +1298,6 @@ static const tid_t HTMLDOMNode_iface_tids[] = {
     0
 };
 dispex_static_data_t Node_dispex = {
-    .name       = "Node",
     .id         = PROT_Node,
     .vtbl       = &Node_dispex_vtbl,
     .disp_tid   = IHTMLDOMNode_tid,

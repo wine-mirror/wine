@@ -258,7 +258,6 @@ static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
 };
 
 dispex_static_data_t CharacterData_dispex = {
-    .name         = "CharactedData",
     .id           = PROT_CharacterData,
     .prototype_id = PROT_Node,
 };
@@ -278,7 +277,6 @@ static const tid_t Text_iface_tids[] = {
     0
 };
 dispex_static_data_t Text_dispex = {
-    .name         = "Text",
     .id           = PROT_Text,
     .prototype_id = PROT_CharacterData,
     .vtbl         = &Text_dispex_vtbl,

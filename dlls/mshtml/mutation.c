@@ -1181,7 +1181,6 @@ static const tid_t mutation_observer_iface_tids[] = {
     0
 };
 dispex_static_data_t MutationObserver_dispex = {
-    .name             = "MutationObserver",
     .id               = PROT_MutationObserver,
     .init_constructor = create_mutation_observer_ctor,
     .vtbl             = &mutation_observer_dispex_vtbl,

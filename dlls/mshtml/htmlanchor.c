@@ -835,7 +835,6 @@ static const tid_t HTMLAnchorElement_iface_tids[] = {
 };
 
 dispex_static_data_t HTMLAnchorElement_dispex = {
-    .name         = "HTMLAnchorElement",
     .id           = PROT_HTMLAnchorElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLAnchorElement_event_target_vtbl.dispex_vtbl,

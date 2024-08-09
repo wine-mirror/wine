@@ -520,6 +520,12 @@ static BOOL find_prototype_member(const dispex_data_t *info, DISPID id)
     return FALSE;
 }
 
+static const char *object_names[] = {
+#define X(name) #name,
+    ALL_PROTOTYPES
+#undef X
+};
+
 static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_mode_t compat_mode, BOOL is_prototype)
 {
     const tid_t *tid;
@@ -527,6 +533,9 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     DWORD i;
     ITypeInfo *dti;
     HRESULT hres;
+
+    if(!desc->name && desc->id)
+        desc->name = object_names[desc->id - 1];
 
     if(desc->disp_tid) {
         hres = get_typeinfo(desc->disp_tid, &dti);

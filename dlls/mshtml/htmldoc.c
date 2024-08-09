@@ -323,7 +323,6 @@ static const tid_t DocumentType_iface_tids[] = {
 };
 
 dispex_static_data_t DocumentType_dispex = {
-    .name         = "DocumentType",
     .id           = PROT_DocumentType,
     .prototype_id = PROT_Node,
     .vtbl         = &DocumentType_event_target_vtbl.dispex_vtbl,
@@ -5710,13 +5709,11 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
 }
 
 dispex_static_data_t Document_dispex = {
-    .name         = "Document",
     .id           = PROT_Document,
     .prototype_id = PROT_Node,
 };
 
 dispex_static_data_t HTMLDocument_dispex = {
-    .name         = "HTMLDocument",
     .id           = PROT_HTMLDocument,
     .prototype_id = PROT_Document,
     .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,

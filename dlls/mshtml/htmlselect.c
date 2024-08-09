@@ -346,7 +346,6 @@ static const tid_t HTMLOptionElement_iface_tids[] = {
     0
 };
 dispex_static_data_t HTMLOptionElement_dispex = {
-    .name         = "HTMLOptionElement",
     .id           = PROT_HTMLOptionElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLOptionElement_event_target_vtbl.dispex_vtbl,
@@ -1301,7 +1300,6 @@ static const tid_t HTMLSelectElement_tids[] = {
 };
 
 dispex_static_data_t HTMLSelectElement_dispex = {
-    .name         = "HTMLSelectElement",
     .id           = PROT_HTMLSelectElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLSelectElement_event_target_vtbl.dispex_vtbl,

@@ -7236,13 +7236,11 @@ static const IWineHTMLElementPrivateVtbl WineHTMLElementPrivateVtbl = {
 };
 
 dispex_static_data_t Element_dispex = {
-    .name         = "Element",
     .id           = PROT_Element,
     .prototype_id = PROT_Node,
 };
 
 dispex_static_data_t HTMLElement_dispex = {
-    .name         = "HTMLElement",
     .id           = PROT_HTMLElement,
     .prototype_id = PROT_Element,
     .vtbl         = &HTMLElement_event_target_vtbl.dispex_vtbl,

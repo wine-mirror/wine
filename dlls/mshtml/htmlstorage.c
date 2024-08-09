@@ -1295,7 +1295,6 @@ static const tid_t HTMLStorage_iface_tids[] = {
     0
 };
 dispex_static_data_t Storage_dispex = {
-    .name       = "Storage",
     .id         = PROT_Storage,
     .vtbl       = &Storage_dispex_vtbl,
     .disp_tid   = IHTMLStorage_tid,

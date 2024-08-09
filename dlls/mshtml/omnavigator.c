@@ -221,7 +221,6 @@ static const tid_t HTMLDOMImplementation_iface_tids[] = {
     0
 };
 dispex_static_data_t DOMImplementation_dispex = {
-    .name       = "DOMImplementation",
     .id         = PROT_DOMImplementation,
     .vtbl       = &DOMImplementation_dispex_vtbl,
     .disp_tid   = DispHTMLDOMImplementation_tid,
@@ -1153,7 +1152,6 @@ static const tid_t Navigator_iface_tids[] = {
     0
 };
 dispex_static_data_t Navigator_dispex = {
-    .name       = "Navigator",
     .id         = PROT_Navigator,
     .vtbl       = &Navigator_dispex_vtbl,
     .disp_tid   = DispHTMLNavigator_tid,

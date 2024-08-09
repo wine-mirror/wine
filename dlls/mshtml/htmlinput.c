@@ -1289,7 +1289,6 @@ static const tid_t HTMLInputElement_iface_tids[] = {
     0
 };
 dispex_static_data_t HTMLInputElement_dispex = {
-    .name         = "HTMLInputElement",
     .id           = PROT_HTMLInputElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLInputElement_event_target_vtbl.dispex_vtbl,
@@ -1434,7 +1433,6 @@ static const tid_t HTMLLabelElement_iface_tids[] = {
 };
 
 dispex_static_data_t HTMLLabelElement_dispex = {
-    .name         = "HTMLLabelElement",
     .id           = PROT_HTMLLabelElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLLabelElement_event_target_vtbl.dispex_vtbl,
@@ -1722,7 +1720,6 @@ static const tid_t HTMLButtonElement_iface_tids[] = {
 };
 
 dispex_static_data_t HTMLButtonElement_dispex = {
-    .name         = "HTMLButtonElement",
     .id           = PROT_HTMLButtonElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLButtonElement_event_target_vtbl.dispex_vtbl,

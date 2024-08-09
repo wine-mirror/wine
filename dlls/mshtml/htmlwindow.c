@@ -4189,7 +4189,6 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
 };
 
 dispex_static_data_t Window_dispex = {
-    .name       = "Window",
     .id         = PROT_Window,
     .vtbl       = &HTMLWindow_event_target_vtbl.dispex_vtbl,
     .disp_tid   = DispHTMLWindow2_tid,

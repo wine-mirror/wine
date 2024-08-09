@@ -684,7 +684,6 @@ static void HTMLImgElement_init_dispex_info(dispex_data_t *info, compat_mode_t m
 }
 
 dispex_static_data_t HTMLImageElement_dispex = {
-    .name         = "HTMLImageElement",
     .id           = PROT_HTMLImageElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLImgElement_event_target_vtbl.dispex_vtbl,

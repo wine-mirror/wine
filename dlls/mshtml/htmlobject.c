@@ -683,7 +683,6 @@ static const tid_t HTMLObjectElement_iface_tids[] = {
     0
 };
 dispex_static_data_t HTMLObjectElement_dispex = {
-    .name         = "HTMLObjectElement",
     .id           = PROT_HTMLObjectElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLObjectElement_event_target_vtbl.dispex_vtbl,
@@ -890,7 +889,6 @@ static const tid_t HTMLEmbedElement_iface_tids[] = {
     0
 };
 dispex_static_data_t HTMLEmbedElement_dispex = {
-    .name         = "HTMLEmbedElement",
     .id           = PROT_HTMLEmbedElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLEmbedElement_event_target_vtbl.dispex_vtbl,
