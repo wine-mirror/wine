@@ -4758,6 +4758,37 @@ SQLRETURN WINAPI SQLSetPos(SQLHSTMT StatementHandle, SQLSETPOSIROW RowNumber, SQ
     return ret;
 }
 
+static SQLRETURN table_privileges_unix_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
+                                          SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3 )
+{
+    struct SQLTablePrivileges_params params = { handle->unix_handle, catalog, len1, schema, len2, table, len3 };
+    return ODBC_CALL( SQLTablePrivileges, &params );
+}
+
+static SQLRETURN table_privileges_win32_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
+                                           SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3 )
+{
+    WCHAR *catalogW = NULL, *schemaW = NULL, *tableW = NULL;
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLTablePrivileges)
+        return handle->win32_funcs->SQLTablePrivileges( handle->win32_handle, catalog, len1, schema, len2, table,
+                                                        len3 );
+    if (handle->win32_funcs->SQLTablePrivilegesW)
+    {
+        if (!(catalogW = strnAtoW( catalog, len1 ))) goto done;
+        if (!(schemaW = strnAtoW( schema, len2 ))) goto done;
+        if (!(tableW = strnAtoW( table, len3 ))) goto done;
+        ret = handle->win32_funcs->SQLTablePrivilegesW( handle->win32_handle, catalogW, len1, schemaW, len2, tableW,
+                                                        len3 );
+    }
+done:
+    free( catalogW );
+    free( schemaW );
+    free( tableW );
+    return ret;
+}
+
 /*************************************************************************
  *				SQLTablePrivileges           [ODBC32.070]
  */
@@ -4777,14 +4808,13 @@ SQLRETURN WINAPI SQLTablePrivileges(SQLHSTMT StatementHandle, SQLCHAR *CatalogNa
 
     if (handle->unix_handle)
     {
-        struct SQLTablePrivileges_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
-                                                    NameLength2, TableName, NameLength3 };
-        ret = ODBC_CALL( SQLTablePrivileges, &params );
+        ret = table_privileges_unix_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
+                                       NameLength3 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLTablePrivileges( handle->win32_handle, CatalogName, NameLength1, SchemaName,
-                                                       NameLength2, TableName, NameLength3 );
+        ret = table_privileges_win32_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
+                                        NameLength3 );
     }
 
     TRACE("Returning %d\n", ret);
@@ -6856,6 +6886,23 @@ SQLRETURN WINAPI SQLProceduresW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
     return ret;
 }
 
+static SQLRETURN table_privileges_unix_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1, SQLWCHAR *schema,
+                                          SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3 )
+{
+    struct SQLTablePrivilegesW_params params = { handle->unix_handle, catalog, len1, schema, len2, table, len3 };
+    return ODBC_CALL( SQLTablePrivilegesW, &params );
+}
+
+static SQLRETURN table_privileges_win32_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1,
+                                           SQLWCHAR *schema, SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3 )
+{
+    if (handle->win32_funcs->SQLTablePrivilegesW)
+        return handle->win32_funcs->SQLTablePrivilegesW( handle->win32_handle, catalog, len1, schema, len2, table,
+                                                         len3 );
+    if (handle->win32_funcs->SQLTablePrivileges) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLTablePrivilegesW          [ODBC32.170]
  */
@@ -6875,14 +6922,13 @@ SQLRETURN WINAPI SQLTablePrivilegesW(SQLHSTMT StatementHandle, SQLWCHAR *Catalog
 
     if (handle->unix_handle)
     {
-        struct SQLTablePrivilegesW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
-                                                     NameLength2, TableName, NameLength3 };
-        ret = ODBC_CALL( SQLTablePrivilegesW, &params );
+        ret = table_privileges_unix_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
+                                       NameLength3 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLTablePrivilegesW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
-                                                        NameLength2, TableName, NameLength3 );
+        ret = table_privileges_win32_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName,
+                                        NameLength3 );
     }
 
     TRACE("Returning %d\n", ret);
