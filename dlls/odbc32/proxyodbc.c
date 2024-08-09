@@ -3242,19 +3242,47 @@ SQLRETURN WINAPI SQLSetCursorName(SQLHSTMT StatementHandle, SQLCHAR *CursorName,
     return ret;
 }
 
-static SQLRETURN set_desc_field_unix( struct handle *handle, SQLSMALLINT record, SQLSMALLINT id, SQLPOINTER value,
-                                      SQLINTEGER len )
+static SQLRETURN set_desc_field_unix_a( struct handle *handle, SQLSMALLINT record, SQLSMALLINT id, SQLPOINTER value,
+                                        SQLINTEGER len )
 {
     struct SQLSetDescField_params params = { handle->unix_handle, record, id, value, len };
     return ODBC_CALL( SQLSetDescField, &params );
 }
 
-static SQLRETURN set_desc_field_win32( struct handle *handle, SQLSMALLINT record, SQLSMALLINT id, SQLPOINTER value,
-                                       SQLINTEGER len )
+static SQLRETURN set_desc_field_win32_a( struct handle *handle, SQLSMALLINT record, SQLSMALLINT id, SQLPOINTER value,
+                                         SQLINTEGER len )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (handle->win32_funcs->SQLSetDescField)
         return handle->win32_funcs->SQLSetDescField( handle->win32_handle, record, id, value, len );
-    return SQL_ERROR;
+
+    if (handle->win32_funcs->SQLSetDescFieldW)
+    {
+        WCHAR *strW = NULL;
+
+        switch (id)
+        {
+        case SQL_DESC_BASE_COLUMN_NAME:
+        case SQL_DESC_BASE_TABLE_NAME:
+        case SQL_DESC_CATALOG_NAME:
+        case SQL_DESC_LABEL:
+        case SQL_DESC_LITERAL_PREFIX:
+        case SQL_DESC_LITERAL_SUFFIX:
+        case SQL_DESC_LOCAL_TYPE_NAME:
+        case SQL_DESC_NAME:
+        case SQL_DESC_SCHEMA_NAME:
+        case SQL_DESC_TABLE_NAME:
+        case SQL_DESC_TYPE_NAME:
+            if (!(value = strW = strnAtoW( value, len ))) return SQL_ERROR;
+        default: break;
+        }
+
+        ret = handle->win32_funcs->SQLSetDescFieldW( handle->win32_handle, record, id, value, len );
+        free( strW );
+    }
+
+    return ret;
 }
 
 /*************************************************************************
@@ -3273,11 +3301,11 @@ SQLRETURN WINAPI SQLSetDescField(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumbe
 
     if (handle->unix_handle)
     {
-        ret = set_desc_field_unix( handle, RecNumber, FieldIdentifier, Value, BufferLength );
+        ret = set_desc_field_unix_a( handle, RecNumber, FieldIdentifier, Value, BufferLength );
     }
     else if (handle->win32_handle)
     {
-        ret = set_desc_field_win32( handle, RecNumber, FieldIdentifier, Value, BufferLength );
+        ret = set_desc_field_win32_a( handle, RecNumber, FieldIdentifier, Value, BufferLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -6801,6 +6829,22 @@ done:
     return ret;
 }
 
+static SQLRETURN set_desc_field_unix_w( struct handle *handle, SQLSMALLINT record, SQLSMALLINT id, SQLPOINTER value,
+                                        SQLINTEGER len )
+{
+    struct SQLSetDescFieldW_params params = { handle->unix_handle, record, id, value, len };
+    return ODBC_CALL( SQLSetDescFieldW, &params );
+}
+
+static SQLRETURN set_desc_field_win32_w( struct handle *handle, SQLSMALLINT record, SQLSMALLINT id, SQLPOINTER value,
+                                         SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLSetDescFieldW)
+        return handle->win32_funcs->SQLSetDescFieldW( handle->win32_handle, record, id, value, len );
+    if (handle->win32_funcs->SQLSetDescField) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetDescFieldW          [ODBC32.173]
  */
@@ -6817,14 +6861,11 @@ SQLRETURN WINAPI SQLSetDescFieldW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumb
 
     if (handle->unix_handle)
     {
-        struct SQLSetDescFieldW_params params = { handle->unix_handle, RecNumber, FieldIdentifier, Value,
-                                                  BufferLength };
-        ret = ODBC_CALL( SQLSetDescFieldW, &params );
+        ret = set_desc_field_unix_w( handle, RecNumber, FieldIdentifier, Value, BufferLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetDescFieldW( handle->win32_handle, RecNumber, FieldIdentifier, Value,
-                                                     BufferLength );
+        ret = set_desc_field_win32_w( handle, RecNumber, FieldIdentifier, Value, BufferLength );
     }
 
     TRACE("Returning %d\n", ret);
