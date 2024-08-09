@@ -2250,6 +2250,29 @@ RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to )
 }
 
 /**********************************************************************
+ *              map_dpi_region
+ */
+HRGN map_dpi_region( HRGN hrgn, UINT dpi_from, UINT dpi_to )
+{
+    RGNDATA *data;
+    UINT i, size;
+
+    if (!(size = NtGdiGetRegionData( hrgn, 0, NULL ))) return 0;
+    if (!(data = malloc( size ))) return 0;
+    NtGdiGetRegionData( hrgn, size, data );
+
+    if (dpi_from && dpi_to && dpi_from != dpi_to)
+    {
+        RECT *rects = (RECT *)data->Buffer;
+        for (i = 0; i < data->rdh.nCount; i++) rects[i] = map_dpi_rect( rects[i], dpi_from, dpi_to );
+    }
+
+    hrgn = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
+    free( data );
+    return hrgn;
+}
+
+/**********************************************************************
  *              map_dpi_point
  */
 POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )

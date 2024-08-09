@@ -183,6 +183,7 @@ extern RECT get_virtual_screen_rect( UINT dpi );
 extern BOOL is_exiting_thread( DWORD tid );
 extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to );
 extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to );
+extern HRGN map_dpi_region( HRGN region, UINT dpi_from, UINT dpi_to );
 extern BOOL message_beep( UINT i );
 extern POINT point_phys_to_win_dpi( HWND hwnd, POINT pt );
 extern POINT point_thread_to_win_dpi( HWND hwnd, POINT pt );

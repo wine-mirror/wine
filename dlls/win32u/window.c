@@ -2232,8 +2232,14 @@ int WINAPI NtUserSetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     {
         UINT swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED |
             SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE;
+        HRGN monitor_hrgn;
+
         if (!redraw) swp_flags |= SWP_NOREDRAW;
-        user_driver->pSetWindowRgn( hwnd, hrgn, redraw );
+
+        monitor_hrgn = map_dpi_region( hrgn, get_thread_dpi(), get_win_monitor_dpi( hwnd ) );
+        user_driver->pSetWindowRgn( hwnd, monitor_hrgn, redraw );
+        if (monitor_hrgn) NtGdiDeleteObjectApp( monitor_hrgn );
+
         NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, swp_flags );
         if (hrgn) NtGdiDeleteObjectApp( hrgn );
     }
