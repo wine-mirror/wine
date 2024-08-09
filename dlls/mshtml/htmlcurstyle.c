@@ -1127,26 +1127,27 @@ static void HTMLCurrentStyle_unlink(DispatchEx *dispex)
     }
 }
 
-static const dispex_static_data_vtbl_t HTMLCurrentStyle_dispex_vtbl = {
+static const dispex_static_data_vtbl_t MSCurrentStyleCSSProperties_dispex_vtbl = {
     CSSSTYLE_DISPEX_VTBL_ENTRIES,
     .query_interface   = HTMLCurrentStyle_query_interface,
     .traverse          = HTMLCurrentStyle_traverse,
     .unlink            = HTMLCurrentStyle_unlink
 };
 
-static const tid_t HTMLCurrentStyle_iface_tids[] = {
+static const tid_t MSCurrentStyleCSSProperties_iface_tids[] = {
     IHTMLCurrentStyle_tid,
     IHTMLCurrentStyle2_tid,
     IHTMLCurrentStyle3_tid,
     IHTMLCurrentStyle4_tid,
     0
 };
-static dispex_static_data_t HTMLCurrentStyle_dispex = {
-    "MSCurrentStyleCSSProperties",
-    &HTMLCurrentStyle_dispex_vtbl,
-    DispHTMLCurrentStyle_tid,
-    HTMLCurrentStyle_iface_tids,
-    CSSStyle_init_dispex_info
+dispex_static_data_t MSCurrentStyleCSSProperties_dispex = {
+    .id           = PROT_MSCurrentStyleCSSProperties,
+    .prototype_id = PROT_MSCSSProperties,
+    .vtbl         = &MSCurrentStyleCSSProperties_dispex_vtbl,
+    .disp_tid     = DispHTMLCurrentStyle_tid,
+    .iface_tids   = MSCurrentStyleCSSProperties_iface_tids,
+    .init_info    = CSSStyle_init_dispex_info,
 };
 
 HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
@@ -1198,7 +1199,7 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
     ret->IHTMLCurrentStyle3_iface.lpVtbl = &HTMLCurrentStyle3Vtbl;
     ret->IHTMLCurrentStyle4_iface.lpVtbl = &HTMLCurrentStyle4Vtbl;
 
-    init_css_style(&ret->css_style, nsstyle, &HTMLCurrentStyle_dispex, &elem->node.event_target.dispex);
+    init_css_style(&ret->css_style, nsstyle, &MSCurrentStyleCSSProperties_dispex, &elem->node.event_target.dispex);
     nsIDOMCSSStyleDeclaration_Release(nsstyle);
 
     IHTMLElement_AddRef(&elem->IHTMLElement_iface);

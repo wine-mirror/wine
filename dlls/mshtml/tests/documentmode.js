@@ -3220,4 +3220,6 @@ sync_test("prototypes", function() {
     check(MSStyleCSSProperties.prototype, MSCSSProperties.prototype, "MSStyleCSSProperties");
     check(MSCSSProperties.prototype, CSSStyleDeclaration.prototype, "MSCSSProperties");
     check(CSSStyleDeclaration.prototype, Object.prototype, "CSSStyleDeclaration");
+    check(document.body.currentStyle, MSCurrentStyleCSSProperties.prototype, "current style");
+    check(MSCurrentStyleCSSProperties.prototype, MSCSSProperties.prototype, "MSCurrentStyleCSSProperties");
 });
