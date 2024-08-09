@@ -431,6 +431,23 @@ SQLRETURN WINAPI SQLAllocEnv(SQLHENV *EnvironmentHandle)
     return ret;
 }
 
+static SQLRETURN alloc_handle_unix( SQLSMALLINT type, struct handle *input, struct handle *output )
+{
+    struct SQLAllocHandle_params params = { type, input->unix_handle, &output->unix_handle };
+    return ODBC_CALL( SQLAllocHandle, &params );
+}
+
+static SQLRETURN alloc_handle_win32( SQLSMALLINT type, struct handle *input, struct handle *output )
+{
+    if (input->win32_funcs->SQLAllocHandle)
+    {
+        SQLRETURN ret = input->win32_funcs->SQLAllocHandle( type, input->win32_handle, &output->win32_handle );
+        if (SUCCESS( ret )) output->win32_funcs = input->win32_funcs;
+        return ret;
+    }
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLAllocHandle           [ODBC32.024]
  */
@@ -454,13 +471,11 @@ SQLRETURN WINAPI SQLAllocHandle(SQLSMALLINT HandleType, SQLHANDLE InputHandle, S
 
     if (input->unix_handle)
     {
-        struct SQLAllocHandle_params params = { HandleType, input->unix_handle, &output->unix_handle };
-        ret = ODBC_CALL( SQLAllocHandle, &params );
+        ret = alloc_handle_unix( HandleType, input, output );
     }
     else if (input->win32_handle)
     {
-        ret = input->win32_funcs->SQLAllocHandle( HandleType, input->win32_handle, &output->win32_handle );
-        if (SUCCESS( ret )) output->win32_funcs = input->win32_funcs;
+        ret = alloc_handle_win32( HandleType, input, output );
     }
 
     if (SUCCESS( ret )) *OutputHandle = output;
@@ -468,6 +483,22 @@ SQLRETURN WINAPI SQLAllocHandle(SQLSMALLINT HandleType, SQLHANDLE InputHandle, S
 
     TRACE("Returning %d, OutputHandle %p\n", ret, *OutputHandle);
     return ret;
+}
+
+static SQLRETURN alloc_stmt_unix( struct handle *con, struct handle *stmt )
+{
+    struct SQLAllocStmt_params params = { con->unix_handle, &stmt->unix_handle };
+    return ODBC_CALL( SQLAllocStmt, &params );
+}
+
+static SQLRETURN alloc_stmt_win32( struct handle *con, struct handle *stmt )
+{
+    if (con->win32_funcs->SQLAllocStmt)
+    {
+        SQLRETURN ret = con->win32_funcs->SQLAllocStmt( con->win32_handle, &stmt->win32_handle );
+        if (SUCCESS( ret )) stmt->win32_funcs = con->win32_funcs;
+    }
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -485,13 +516,11 @@ SQLRETURN WINAPI SQLAllocStmt(SQLHDBC ConnectionHandle, SQLHSTMT *StatementHandl
 
     if (con->unix_handle)
     {
-        struct SQLAllocStmt_params params = { con->unix_handle, &stmt->unix_handle };
-        ret = ODBC_CALL( SQLAllocStmt, &params );
+        ret = alloc_stmt_unix( con, stmt );
     }
     else if (con->win32_handle)
     {
-        ret = con->win32_funcs->SQLAllocStmt( con->win32_handle, &stmt->win32_handle );
-        if (SUCCESS( ret )) stmt->win32_funcs = con->win32_funcs;
+        ret = alloc_stmt_win32( con, stmt );
     }
 
     if (SUCCESS( ret )) *StatementHandle = stmt;
@@ -499,6 +528,23 @@ SQLRETURN WINAPI SQLAllocStmt(SQLHDBC ConnectionHandle, SQLHSTMT *StatementHandl
 
     TRACE ("Returning %d, StatementHandle %p\n", ret, *StatementHandle);
     return ret;
+}
+
+static SQLRETURN alloc_handle_std_unix( SQLSMALLINT type, struct handle *input, struct handle *output )
+{
+    struct SQLAllocHandleStd_params params = { type, input->unix_handle, &output->unix_handle };
+    return ODBC_CALL( SQLAllocHandleStd, &params );
+}
+
+static SQLRETURN alloc_handle_std_win32( SQLSMALLINT type, struct handle *input, struct handle *output )
+{
+    if (input->win32_funcs->SQLAllocHandleStd)
+    {
+        SQLRETURN ret = input->win32_funcs->SQLAllocHandleStd( type, input->win32_handle, &output->win32_handle );
+        if (SUCCESS( ret )) output->win32_funcs = input->win32_funcs;
+        return ret;
+    }
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -524,13 +570,11 @@ SQLRETURN WINAPI SQLAllocHandleStd(SQLSMALLINT HandleType, SQLHANDLE InputHandle
 
     if (input->unix_handle)
     {
-        struct SQLAllocHandleStd_params params = { HandleType, input->unix_handle, &output->unix_handle };
-        ret = ODBC_CALL( SQLAllocHandleStd, &params );
+        ret = alloc_handle_std_unix( HandleType, input, output );
     }
     else if (input->win32_handle)
     {
-        ret = input->win32_funcs->SQLAllocHandleStd( HandleType, input->win32_handle, &output->win32_handle );
-        if (SUCCESS( ret )) output->win32_funcs = input->win32_funcs;
+        ret = alloc_handle_std_win32( HandleType, input, output );
     }
 
     if (SUCCESS( ret )) *OutputHandle = output;
@@ -565,6 +609,38 @@ static BOOL alloc_binding( struct param_binding *binding, USHORT type, UINT colu
     return TRUE;
 }
 
+static SQLRETURN bind_col_unix( struct handle *handle, SQLUSMALLINT column, SQLSMALLINT type, SQLPOINTER value,
+                                SQLLEN buflen, SQLLEN *retlen )
+{
+    struct SQLBindCol_params params = { handle->unix_handle, column, type, value, buflen };
+    UINT i = column - 1;
+    SQLRETURN ret;
+
+    if (!column)
+    {
+        FIXME( "column 0 not handled\n" );
+        return SQL_ERROR;
+    }
+
+    if (!alloc_binding( &handle->bind_col, SQL_PARAM_INPUT_OUTPUT, column, handle->row_count ))
+        return SQL_ERROR;
+    handle->bind_col.param[i].col.target_type   = type;
+    handle->bind_col.param[i].col.target_value  = value;
+    handle->bind_col.param[i].col.buffer_length = buflen;
+
+    if (retlen) params.StrLen_or_Ind = handle->bind_col.param[i].len;
+    if (SUCCESS(( ret = ODBC_CALL( SQLBindCol, &params )))) handle->bind_col.param[i].ptr = retlen;
+    return ret;
+}
+
+static SQLRETURN bind_col_win32( struct handle *handle, SQLUSMALLINT column, SQLSMALLINT type, SQLPOINTER value,
+                                 SQLLEN buflen, SQLLEN *retlen )
+{
+    if (handle->win32_funcs->SQLBindCol)
+        return SQLBindCol( handle->win32_handle, column, type, value, buflen, retlen );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLBindCol           [ODBC32.004]
  */
@@ -581,28 +657,11 @@ SQLRETURN WINAPI SQLBindCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
 
     if (handle->unix_handle)
     {
-        UINT i = ColumnNumber - 1;
-        struct SQLBindCol_params params = { handle->unix_handle, ColumnNumber, TargetType, TargetValue, BufferLength };
-
-        if (!ColumnNumber)
-        {
-            FIXME( "column 0 not handled\n" );
-            return SQL_ERROR;
-        }
-
-        if (!alloc_binding( &handle->bind_col, SQL_PARAM_INPUT_OUTPUT, ColumnNumber, handle->row_count ))
-            return SQL_ERROR;
-        handle->bind_col.param[i].col.target_type   = TargetType;
-        handle->bind_col.param[i].col.target_value  = TargetValue;
-        handle->bind_col.param[i].col.buffer_length = BufferLength;
-
-        if (StrLen_or_Ind) params.StrLen_or_Ind = handle->bind_col.param[i].len;
-        if (SUCCESS(( ret = ODBC_CALL( SQLBindCol, &params )))) handle->bind_col.param[i].ptr = StrLen_or_Ind;
+        ret = bind_col_unix( handle, ColumnNumber, TargetType, TargetValue, BufferLength, StrLen_or_Ind );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLBindCol( handle->win32_handle, ColumnNumber, TargetType, TargetValue,
-                                               BufferLength, StrLen_or_Ind );
+        ret = bind_col_win32( handle, ColumnNumber, TargetType, TargetValue, BufferLength, StrLen_or_Ind );
     }
 
     TRACE ("Returning %d\n", ret);
@@ -631,6 +690,19 @@ SQLRETURN WINAPI SQLBindParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNu
     return SQL_ERROR;
 }
 
+static SQLRETURN cancel_unix( struct handle *handle )
+{
+    struct SQLCancel_params params = { handle->unix_handle };
+    return ODBC_CALL( SQLCancel, &params );
+}
+
+static SQLRETURN cancel_win32( struct handle *handle )
+{
+    if (handle->win32_funcs->SQLCancel)
+        return handle->win32_funcs->SQLCancel( handle->win32_handle );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLCancel           [ODBC32.005]
  */
@@ -645,16 +717,28 @@ SQLRETURN WINAPI SQLCancel(SQLHSTMT StatementHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLCancel_params params = { handle->unix_handle };
-        ret = ODBC_CALL( SQLCancel, &params );
+        ret = cancel_unix( handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLCancel( handle->win32_handle );
+        ret = cancel_win32( handle );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN close_cursor_unix( struct handle *handle )
+{
+    struct SQLCloseCursor_params params = { handle->unix_handle };
+    return ODBC_CALL( SQLCloseCursor, &params );
+}
+
+static SQLRETURN close_cursor_win32( struct handle *handle )
+{
+    if (handle->win32_funcs->SQLCloseCursor)
+        return handle->win32_funcs->SQLCloseCursor( handle->win32_handle );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -671,12 +755,11 @@ SQLRETURN WINAPI SQLCloseCursor(SQLHSTMT StatementHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLCloseCursor_params params = { handle->unix_handle };
-        ret = ODBC_CALL( SQLCloseCursor, &params );
+        ret = close_cursor_unix( handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLCloseCursor( handle->win32_handle );
+        ret = close_cursor_win32( handle );
     }
 
     TRACE("Returning %d\n", ret);
@@ -1109,6 +1192,19 @@ done:
     return ret;
 }
 
+static SQLRETURN copy_desc_unix( struct handle *source, struct handle *target )
+{
+    struct SQLCopyDesc_params params = { source->unix_handle, target->unix_handle };
+    return ODBC_CALL( SQLCopyDesc, &params );
+}
+
+static SQLRETURN copy_desc_win32( struct handle *source, struct handle *target )
+{
+    if (source->win32_funcs->SQLCopyDesc)
+        return source->win32_funcs->SQLCopyDesc( source->win32_handle, target->win32_handle );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLCopyDesc           [ODBC32.028]
  */
@@ -1123,12 +1219,11 @@ SQLRETURN WINAPI SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandl
 
     if (source->unix_handle)
     {
-        struct SQLCopyDesc_params params = { source->unix_handle, target->unix_handle };
-        ret = ODBC_CALL( SQLCopyDesc, &params );
+        ret = copy_desc_unix( source, target );
     }
     else if (source->win32_handle)
     {
-        ret = source->win32_funcs->SQLCopyDesc( source->win32_handle, target->win32_handle );
+        ret = copy_desc_win32( source, target );
     }
 
     TRACE("Returning %d\n", ret);
@@ -1276,6 +1371,19 @@ SQLRETURN WINAPI SQLDescribeCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNum
     return ret;
 }
 
+static SQLRETURN disconnect_unix( struct handle *handle )
+{
+    struct SQLDisconnect_params params = { handle->unix_handle };
+    return ODBC_CALL( SQLDisconnect, &params );
+}
+
+static SQLRETURN disconnect_win32( struct handle *handle )
+{
+    if (handle->win32_funcs->SQLDisconnect)
+        return handle->win32_funcs->SQLDisconnect( handle->win32_handle );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLDisconnect           [ODBC32.009]
  */
@@ -1290,16 +1398,28 @@ SQLRETURN WINAPI SQLDisconnect(SQLHDBC ConnectionHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLDisconnect_params params = { handle->unix_handle };
-        ret = ODBC_CALL( SQLDisconnect, &params );
+        ret = disconnect_unix( handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLDisconnect( handle->win32_handle );
+        ret = disconnect_win32( handle );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN end_tran_unix( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT completion_type )
+{
+    struct SQLEndTran_params params = { handle_type, handle->unix_handle, completion_type };
+    return ODBC_CALL( SQLEndTran, &params );
+}
+
+static SQLRETURN end_tran_win32( SQLSMALLINT handle_type, struct handle *handle, SQLSMALLINT completion_type )
+{
+    if (handle->win32_funcs->SQLEndTran)
+        return handle->win32_funcs->SQLEndTran( handle_type, handle->win32_handle, completion_type );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -1316,12 +1436,11 @@ SQLRETURN WINAPI SQLEndTran(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLIN
 
     if (handle->unix_handle)
     {
-        struct SQLEndTran_params params = { HandleType, handle->unix_handle, CompletionType };
-        ret = ODBC_CALL( SQLEndTran, &params );
+        ret = end_tran_unix( HandleType, handle, CompletionType );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLEndTran( HandleType, handle->win32_handle, CompletionType );
+        ret = end_tran_win32( HandleType, handle, CompletionType );
     }
 
     TRACE("Returning %d\n", ret);
@@ -1508,6 +1627,23 @@ static void update_result_lengths( struct handle *handle, USHORT type )
     }
 }
 
+static SQLRETURN execute_unix( struct handle *handle )
+{
+    struct SQLExecute_params params = { handle->unix_handle };
+    SQLRETURN ret;
+
+    update_result_lengths( handle, SQL_PARAM_INPUT );
+    if (SUCCESS((ret = ODBC_CALL( SQLExecute, &params )))) update_result_lengths( handle, SQL_PARAM_OUTPUT );
+    return ret;
+}
+
+static SQLRETURN execute_win32( struct handle *handle )
+{
+    if (handle->win32_funcs->SQLExecute)
+        return handle->win32_funcs->SQLExecute( handle->win32_handle );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLExecute           [ODBC32.012]
  */
@@ -1522,17 +1658,31 @@ SQLRETURN WINAPI SQLExecute(SQLHSTMT StatementHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLExecute_params params = { handle->unix_handle };
-        update_result_lengths( handle, SQL_PARAM_INPUT );
-        if (SUCCESS(( ret = ODBC_CALL( SQLExecute, &params )))) update_result_lengths( handle, SQL_PARAM_OUTPUT );
+        ret = execute_unix( handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLExecute( handle->win32_handle );
+        ret = execute_win32( handle );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN fetch_unix( struct handle *handle )
+{
+    struct SQLFetch_params params = { handle->unix_handle };
+    SQLRETURN ret;
+
+    if (SUCCESS(( ret = ODBC_CALL( SQLFetch, &params )))) update_result_lengths( handle, SQL_PARAM_OUTPUT );
+    return ret;
+}
+
+static SQLRETURN fetch_win32( struct handle *handle )
+{
+    if (handle->win32_funcs->SQLFetch)
+        return handle->win32_funcs->SQLFetch( handle->win32_handle );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -1549,16 +1699,31 @@ SQLRETURN WINAPI SQLFetch(SQLHSTMT StatementHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLFetch_params params = { handle->unix_handle };
-        if (SUCCESS(( ret = ODBC_CALL( SQLFetch, &params )))) update_result_lengths( handle, SQL_PARAM_OUTPUT );
+        ret = fetch_unix( handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLFetch( handle->win32_handle );
+        ret = fetch_win32( handle );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN fetch_scroll_unix( struct handle *handle, SQLSMALLINT orientation, SQLLEN offset )
+{
+    struct SQLFetchScroll_params params = { handle->unix_handle, orientation, offset };
+    SQLRETURN ret;
+
+    if (SUCCESS((ret = ODBC_CALL( SQLFetchScroll, &params )))) update_result_lengths( handle, SQL_PARAM_OUTPUT );
+    return ret;
+}
+
+static SQLRETURN fetch_scroll_win32( struct handle *handle, SQLSMALLINT orientation, SQLLEN offset )
+{
+    if (handle->win32_funcs->SQLFetchScroll)
+        return handle->win32_funcs->SQLFetchScroll( handle->win32_handle, orientation, offset );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -1576,16 +1741,30 @@ SQLRETURN WINAPI SQLFetchScroll(SQLHSTMT StatementHandle, SQLSMALLINT FetchOrien
 
     if (handle->unix_handle)
     {
-        struct SQLFetchScroll_params params = { handle->unix_handle, FetchOrientation, FetchOffset };
-        if (SUCCESS(( ret = ODBC_CALL( SQLFetchScroll, &params )))) update_result_lengths( handle, SQL_PARAM_OUTPUT );
+        ret = fetch_scroll_unix( handle, FetchOrientation, FetchOffset );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLFetchScroll( handle->win32_handle, FetchOrientation, FetchOffset );
+        ret = fetch_scroll_win32( handle, FetchOrientation, FetchOffset );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN free_connect_unix( struct handle *handle )
+{
+    struct SQLFreeConnect_params params = { handle->unix_handle };
+    return ODBC_CALL( SQLFreeConnect, &params );
+}
+
+static SQLRETURN free_connect_win32( struct handle *handle )
+{
+    if (handle->win32_funcs->SQLFreeHandle)
+        return handle->win32_funcs->SQLFreeHandle( SQL_HANDLE_DBC, handle->win32_handle );
+    if (handle->win32_funcs->SQLFreeConnect)
+        return handle->win32_funcs->SQLFreeConnect( handle->win32_handle );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -1602,17 +1781,31 @@ SQLRETURN WINAPI SQLFreeConnect(SQLHDBC ConnectionHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLFreeHandle_params params = { SQL_HANDLE_DBC, handle->unix_handle };
-        ret = ODBC_CALL( SQLFreeHandle, &params );
+        ret = free_connect_unix( handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLFreeHandle( SQL_HANDLE_DBC, handle->win32_handle );
+        ret = free_connect_win32( handle );
     }
 
     free( handle );
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN free_env_unix( struct handle *handle )
+{
+    struct SQLFreeEnv_params params = { handle->unix_handle };
+    return ODBC_CALL( SQLFreeEnv, &params );
+}
+
+static SQLRETURN free_env_win32( struct handle *handle )
+{
+    if (handle->win32_funcs->SQLFreeHandle)
+        return handle->win32_funcs->SQLFreeHandle( SQL_HANDLE_ENV, handle->win32_handle );
+    if (handle->win32_funcs->SQLFreeEnv)
+        return handle->win32_funcs->SQLFreeEnv( handle->win32_handle );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -1629,12 +1822,11 @@ SQLRETURN WINAPI SQLFreeEnv(SQLHENV EnvironmentHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLFreeHandle_params params = { SQL_HANDLE_ENV, handle->unix_handle };
-        ret = ODBC_CALL( SQLFreeHandle, &params );
+        ret = free_env_unix( handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLFreeHandle( SQL_HANDLE_ENV, handle->win32_handle );
+        ret = free_env_win32( handle );
     }
 
     RegCloseKey( handle->drivers_key );
@@ -1665,6 +1857,19 @@ static void free_param_bindings( struct handle *handle )
     }
 }
 
+static SQLRETURN free_handle_unix( SQLSMALLINT type, struct handle *handle )
+{
+    struct SQLFreeHandle_params params = { type, handle->unix_handle };
+    return ODBC_CALL( SQLFreeHandle, &params );
+}
+
+static SQLRETURN free_handle_win32( SQLSMALLINT type, struct handle *handle )
+{
+    if (handle->win32_funcs->SQLFreeHandle)
+        return handle->win32_funcs->SQLFreeHandle( type, handle->win32_handle );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLFreeHandle           [ODBC32.031]
  */
@@ -1679,12 +1884,11 @@ SQLRETURN WINAPI SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
 
     if (handle->unix_handle)
     {
-        struct SQLFreeHandle_params params = { HandleType, handle->unix_handle };
-        ret = ODBC_CALL( SQLFreeHandle, &params );
+        ret = free_handle_unix( HandleType, handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLFreeHandle( HandleType, handle->win32_handle );
+        ret = free_handle_win32( HandleType, handle );
     }
 
     RegCloseKey( handle->drivers_key );
@@ -1695,6 +1899,19 @@ SQLRETURN WINAPI SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN free_stmt_unix( struct handle *handle, SQLUSMALLINT option )
+{
+    struct SQLFreeStmt_params params = { handle->unix_handle, option };
+    return ODBC_CALL( SQLFreeStmt, &params );
+}
+
+static SQLRETURN free_stmt_win32( struct handle *handle, SQLUSMALLINT option )
+{
+    if (handle->win32_funcs->SQLFreeStmt)
+        return handle->win32_funcs->SQLFreeStmt( handle->win32_handle, option );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -1711,12 +1928,11 @@ SQLRETURN WINAPI SQLFreeStmt(SQLHSTMT StatementHandle, SQLUSMALLINT Option)
 
     if (handle->unix_handle)
     {
-        struct SQLFreeStmt_params params = { handle->unix_handle, Option };
-        ret = ODBC_CALL( SQLFreeStmt, &params );
+        ret = free_stmt_unix( handle, Option );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLFreeStmt( handle->win32_handle, Option );
+        ret = free_stmt_win32( handle, Option );
     }
 
     switch (Option)
@@ -1942,6 +2158,25 @@ SQLRETURN WINAPI SQLGetCursorName(SQLHSTMT StatementHandle, SQLCHAR *CursorName,
     return ret;
 }
 
+static SQLRETURN get_data_unix( struct handle *handle, SQLUSMALLINT column, SQLSMALLINT type, SQLPOINTER value,
+                                SQLLEN buflen, SQLLEN *retlen )
+{
+    INT64 len;
+    SQLRETURN ret;
+    struct SQLGetData_params params = { handle->unix_handle, column, type, value, buflen, &len };
+
+    if (SUCCESS((ret = ODBC_CALL( SQLGetData, &params )))) *retlen = len;
+    return ret;
+}
+
+static SQLRETURN get_data_win32( struct handle *handle, SQLUSMALLINT column, SQLSMALLINT type, SQLPOINTER value,
+                                 SQLLEN buflen, SQLLEN *retlen )
+{
+    if (handle->win32_funcs->SQLGetData)
+        return handle->win32_funcs->SQLGetData( handle->win32_handle, column, type, value, buflen, retlen );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetData           [ODBC32.043]
  */
@@ -1958,15 +2193,11 @@ SQLRETURN WINAPI SQLGetData(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
 
     if (handle->unix_handle)
     {
-        INT64 len;
-        struct SQLGetData_params params = { handle->unix_handle, ColumnNumber, TargetType, TargetValue,
-                                            BufferLength, &len };
-        if (SUCCESS((ret = ODBC_CALL( SQLGetData, &params )))) *StrLen_or_Ind = len;
+        ret = get_data_unix( handle, ColumnNumber, TargetType, TargetValue, BufferLength, StrLen_or_Ind );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetData( handle->win32_handle, ColumnNumber, TargetType, TargetValue,
-                                               BufferLength, StrLen_or_Ind );
+        ret = get_data_win32( handle, ColumnNumber, TargetType, TargetValue, BufferLength, StrLen_or_Ind );
     }
 
     TRACE("Returning %d\n", ret);
@@ -2260,6 +2491,21 @@ SQLRETURN WINAPI SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMAL
     return ret;
 }
 
+static SQLRETURN get_env_attr_unix( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER buflen,
+                                    SQLINTEGER *retlen )
+{
+    struct SQLGetEnvAttr_params params = { handle->unix_handle, attr, value, buflen, retlen };
+    return ODBC_CALL( SQLGetEnvAttr, &params );
+}
+
+static SQLRETURN get_env_attr_win32( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER buflen,
+                                     SQLINTEGER *retlen )
+{
+    if (handle->win32_funcs->SQLGetEnvAttr)
+        return handle->win32_funcs->SQLGetEnvAttr( handle->win32_handle, attr, value, buflen, retlen );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetEnvAttr           [ODBC32.037]
  */
@@ -2276,12 +2522,11 @@ SQLRETURN WINAPI SQLGetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
 
     if (handle->unix_handle)
     {
-        struct SQLGetEnvAttr_params params = { handle->unix_handle, Attribute, Value, BufferLength, StringLength };
-        ret = ODBC_CALL( SQLGetEnvAttr, &params );
+        ret = get_env_attr_unix( handle, Attribute, Value, BufferLength, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetEnvAttr( handle->win32_handle, Attribute, Value, BufferLength, StringLength );
+        ret = get_env_attr_win32( handle, Attribute, Value, BufferLength, StringLength );
     }
     else
     {
@@ -2306,6 +2551,19 @@ SQLRETURN WINAPI SQLGetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
     return ret;
 }
 
+static SQLRETURN get_functions_unix( struct handle *handle, SQLUSMALLINT id, SQLUSMALLINT *supported )
+{
+    struct SQLGetFunctions_params params = { handle->unix_handle, id, supported };
+    return ODBC_CALL( SQLGetFunctions, &params );
+}
+
+static SQLRETURN get_functions_win32( struct handle *handle, SQLUSMALLINT id, SQLUSMALLINT *supported )
+{
+    if (handle->win32_funcs->SQLGetFunctions)
+        return handle->win32_funcs->SQLGetFunctions( handle->win32_handle, id, supported );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetFunctions           [ODBC32.044]
  */
@@ -2320,12 +2578,11 @@ SQLRETURN WINAPI SQLGetFunctions(SQLHDBC ConnectionHandle, SQLUSMALLINT Function
 
     if (handle->unix_handle)
     {
-        struct SQLGetFunctions_params params = { handle->unix_handle, FunctionId, Supported };
-        ret = ODBC_CALL( SQLGetFunctions, &params );
+        ret = get_functions_unix( handle, FunctionId, Supported );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetFunctions( handle->win32_handle, FunctionId, Supported );
+        ret = get_functions_win32( handle, FunctionId, Supported );
     }
 
     TRACE("Returning %d\n", ret);
@@ -2522,6 +2779,19 @@ SQLRETURN WINAPI SQLGetStmtAttr(SQLHSTMT StatementHandle, SQLINTEGER Attribute, 
     return ret;
 }
 
+static SQLRETURN get_stmt_option_unix( struct handle *handle, SQLUSMALLINT option, SQLPOINTER value )
+{
+    struct SQLGetStmtOption_params params = { handle->unix_handle, option, value };
+    return ODBC_CALL( SQLGetStmtOption, &params );
+}
+
+static SQLRETURN get_stmt_option_win32( struct handle *handle, SQLUSMALLINT option, SQLPOINTER value )
+{
+    if (handle->win32_funcs->SQLGetStmtOption)
+        return handle->win32_funcs->SQLGetStmtOption( handle->win32_handle, option, value );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLGetStmtOption           [ODBC32.046]
  */
@@ -2536,12 +2806,11 @@ SQLRETURN WINAPI SQLGetStmtOption(SQLHSTMT StatementHandle, SQLUSMALLINT Option,
 
     if (handle->unix_handle)
     {
-        struct SQLGetStmtOption_params params = { handle->unix_handle, Option, Value };
-        ret = ODBC_CALL( SQLGetStmtOption, &params );
+        ret = get_stmt_option_unix( handle, Option, Value );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLGetStmtOption( handle->win32_handle, Option, Value );
+        ret = get_stmt_option_win32( handle, Option, Value );
     }
 
     TRACE("Returning %d\n", ret);
@@ -2588,6 +2857,19 @@ SQLRETURN WINAPI SQLGetTypeInfo(SQLHSTMT StatementHandle, SQLSMALLINT DataType)
     return ret;
 }
 
+static SQLRETURN get_num_result_cols_unix( struct handle *handle, SQLSMALLINT *count )
+{
+    struct SQLNumResultCols_params params = { handle->unix_handle, count };
+    return ODBC_CALL( SQLNumResultCols, &params );
+}
+
+static SQLRETURN get_num_result_cols_win32( struct handle *handle, SQLSMALLINT *count )
+{
+    if (handle->win32_funcs->SQLNumResultCols)
+        return handle->win32_funcs->SQLNumResultCols( handle->win32_handle, count );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLNumResultCols           [ODBC32.018]
  */
@@ -2602,16 +2884,28 @@ SQLRETURN WINAPI SQLNumResultCols(SQLHSTMT StatementHandle, SQLSMALLINT *ColumnC
 
     if (handle->unix_handle)
     {
-        struct SQLNumResultCols_params params = { handle->unix_handle, ColumnCount };
-        ret = ODBC_CALL( SQLNumResultCols, &params );
+        ret = get_num_result_cols_unix( handle, ColumnCount );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLNumResultCols( handle->win32_handle, ColumnCount );
+        ret = get_num_result_cols_win32( handle, ColumnCount );
     }
 
     TRACE("Returning %d ColumnCount %d\n", ret, *ColumnCount);
     return ret;
+}
+
+static SQLRETURN get_param_data_unix( struct handle *handle, SQLPOINTER *value )
+{
+    struct SQLParamData_params params = { handle->unix_handle, value };
+    return ODBC_CALL( SQLParamData, &params );
+}
+
+static SQLRETURN get_param_data_win32( struct handle *handle, SQLPOINTER *value )
+{
+    if (handle->win32_funcs->SQLParamData)
+        return handle->win32_funcs->SQLParamData( handle->win32_handle, value );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -2628,12 +2922,11 @@ SQLRETURN WINAPI SQLParamData(SQLHSTMT StatementHandle, SQLPOINTER *Value)
 
     if (handle->unix_handle)
     {
-        struct SQLParamData_params params = { handle->unix_handle, Value };
-        ret = ODBC_CALL( SQLParamData, &params );
+        ret = get_param_data_unix( handle, Value );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLParamData( handle->win32_handle, Value );
+        ret = get_param_data_win32( handle, Value );
     }
 
     TRACE("Returning %d\n", ret);
@@ -2690,6 +2983,19 @@ SQLRETURN WINAPI SQLPrepare(SQLHSTMT StatementHandle, SQLCHAR *StatementText, SQ
     return ret;
 }
 
+static SQLRETURN put_data_unix( struct handle *handle, SQLPOINTER *data, SQLLEN len )
+{
+    struct SQLPutData_params params = { handle->unix_handle, data, len };
+    return ODBC_CALL( SQLPutData, &params );
+}
+
+static SQLRETURN put_data_win32( struct handle *handle, SQLPOINTER *data, SQLLEN len )
+{
+    if (handle->win32_funcs->SQLPutData)
+        return handle->win32_funcs->SQLPutData( handle->win32_handle, data, len );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLPutData           [ODBC32.049]
  */
@@ -2704,16 +3010,32 @@ SQLRETURN WINAPI SQLPutData(SQLHSTMT StatementHandle, SQLPOINTER Data, SQLLEN St
 
     if (handle->unix_handle)
     {
-        struct SQLPutData_params params = { handle->unix_handle, Data, StrLen_or_Ind };
-        ret = ODBC_CALL( SQLPutData, &params );
+        ret = put_data_unix( handle, Data, StrLen_or_Ind );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLPutData( handle->win32_handle, Data, StrLen_or_Ind );
+        ret = put_data_win32( handle, Data, StrLen_or_Ind );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN row_count_unix( struct handle *handle, SQLLEN *count )
+{
+    INT64 count64;
+    struct SQLRowCount_params params = { handle->unix_handle, &count64 };
+    SQLRETURN ret;
+
+    if (SUCCESS((ret = ODBC_CALL( SQLRowCount, &params ))) && count) *count = count64;
+    return ret;
+}
+
+static SQLRETURN row_count_win32( struct handle *handle, SQLLEN *count )
+{
+    if (handle->win32_funcs->SQLRowCount)
+        return handle->win32_funcs->SQLRowCount( handle->win32_handle, count );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -2730,21 +3052,29 @@ SQLRETURN WINAPI SQLRowCount(SQLHSTMT StatementHandle, SQLLEN *RowCount)
 
     if (handle->unix_handle)
     {
-        INT64 count;
-        struct SQLRowCount_params params = { handle->unix_handle, &count };
-        if (SUCCESS((ret = ODBC_CALL( SQLRowCount, &params ))) && RowCount)
-        {
-            *RowCount = count;
-            TRACE(" RowCount %s\n", debugstr_sqllen(*RowCount));
-        }
+        ret = row_count_unix( handle, RowCount );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLRowCount( handle->win32_handle, RowCount );
+        ret = row_count_win32( handle, RowCount );
     }
 
+    if (SUCCESS(ret) && RowCount) TRACE(" RowCount %s\n", debugstr_sqllen(*RowCount));
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN set_connect_attr_unix( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    struct SQLSetConnectAttr_params params = { handle->unix_handle, attr, value, len };
+    return ODBC_CALL( SQLSetConnectAttr, &params );
+}
+
+static SQLRETURN set_connect_attr_win32( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLSetConnectAttr)
+        return handle->win32_funcs->SQLSetConnectAttr( handle->win32_handle, attr, value, len );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -2763,12 +3093,11 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
 
     if (handle->unix_handle)
     {
-        struct SQLSetConnectAttr_params params = { handle->unix_handle, Attribute, Value, StringLength };
-        ret = ODBC_CALL( SQLSetConnectAttr, &params );
+        ret = set_connect_attr_unix( handle, Attribute, Value, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetConnectAttr( handle->win32_handle, Attribute, Value, StringLength );
+        ret = set_connect_attr_win32( handle, Attribute, Value, StringLength );
     }
     else
     {
@@ -2793,6 +3122,19 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
     return ret;
 }
 
+static SQLRETURN set_connect_option_unix( struct handle *handle, SQLUSMALLINT attr, SQLULEN value )
+{
+    struct SQLSetConnectOption_params params = { handle->unix_handle, attr, value };
+    return ODBC_CALL( SQLSetConnectOption, &params );
+}
+
+static SQLRETURN set_connect_option_win32( struct handle *handle, SQLUSMALLINT attr, SQLULEN value )
+{
+    if (handle->win32_funcs->SQLSetConnectOption)
+        return handle->win32_funcs->SQLSetConnectOption( handle->win32_handle, attr, value );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetConnectOption           [ODBC32.050]
  */
@@ -2807,16 +3149,28 @@ SQLRETURN WINAPI SQLSetConnectOption(SQLHDBC ConnectionHandle, SQLUSMALLINT Opti
 
     if (handle->unix_handle)
     {
-        struct SQLSetConnectOption_params params = { handle->unix_handle, Option, Value };
-        ret = ODBC_CALL( SQLSetConnectOption, &params );
+        ret = set_connect_option_unix( handle, Option, Value );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetConnectOption( handle->win32_handle, Option, Value );
+        ret = set_connect_option_win32( handle, Option, Value );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN set_cursor_name_unix_a( struct handle *handle, SQLCHAR *name, SQLSMALLINT len )
+{
+    struct SQLSetCursorName_params params = { handle->unix_handle, name, len };
+    return ODBC_CALL( SQLSetCursorName, &params );
+}
+
+static SQLRETURN set_cursor_name_win32_a( struct handle *handle, SQLCHAR *name, SQLSMALLINT len )
+{
+    if (handle->win32_funcs->SQLSetCursorName)
+        return handle->win32_funcs->SQLSetCursorName( handle->win32_handle, name, len );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -2834,16 +3188,30 @@ SQLRETURN WINAPI SQLSetCursorName(SQLHSTMT StatementHandle, SQLCHAR *CursorName,
 
     if (handle->unix_handle)
     {
-        struct SQLSetCursorName_params params = { handle->unix_handle, CursorName, NameLength };
-        ret = ODBC_CALL( SQLSetCursorName, &params );
+        ret = set_cursor_name_unix_a( handle, CursorName, NameLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetCursorName( handle->win32_handle, CursorName, NameLength );
+        ret = set_cursor_name_win32_a( handle, CursorName, NameLength );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN set_desc_field_unix( struct handle *handle, SQLSMALLINT record, SQLSMALLINT id, SQLPOINTER value,
+                                      SQLINTEGER len )
+{
+    struct SQLSetDescField_params params = { handle->unix_handle, record, id, value, len };
+    return ODBC_CALL( SQLSetDescField, &params );
+}
+
+static SQLRETURN set_desc_field_win32( struct handle *handle, SQLSMALLINT record, SQLSMALLINT id, SQLPOINTER value,
+                                       SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLSetDescField)
+        return handle->win32_funcs->SQLSetDescField( handle->win32_handle, record, id, value, len );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -2862,18 +3230,41 @@ SQLRETURN WINAPI SQLSetDescField(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumbe
 
     if (handle->unix_handle)
     {
-        struct SQLSetDescField_params params = { handle->unix_handle, RecNumber, FieldIdentifier, Value,
-                                                 BufferLength };
-        ret = ODBC_CALL( SQLSetDescField, &params );
+        ret = set_desc_field_unix( handle, RecNumber, FieldIdentifier, Value, BufferLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetDescField( handle->win32_handle, RecNumber, FieldIdentifier, Value,
-                                                    BufferLength );
+        ret = set_desc_field_win32( handle, RecNumber, FieldIdentifier, Value, BufferLength );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN set_desc_rec_unix( struct handle *handle, SQLSMALLINT record, SQLSMALLINT type, SQLSMALLINT subtype,
+                                    SQLLEN len, SQLSMALLINT precision, SQLSMALLINT scale, SQLPOINTER data,
+                                    SQLLEN *retlen, SQLLEN *indicator )
+{
+    SQLRETURN ret;
+    INT64 len64, ind64;
+    struct SQLSetDescRec_params params = { handle->unix_handle, record, type, subtype, len, precision, scale, data,
+                                           &len64, &ind64 };
+    if (SUCCESS((ret = ODBC_CALL( SQLSetDescRec, &params ))))
+    {
+        *retlen = len64;
+        *indicator = ind64;
+    }
+    return ret;
+}
+
+static SQLRETURN set_desc_rec_win32( struct handle *handle, SQLSMALLINT record, SQLSMALLINT type, SQLSMALLINT subtype,
+                                     SQLLEN len, SQLSMALLINT precision, SQLSMALLINT scale, SQLPOINTER data,
+                                     SQLLEN *retlen, SQLLEN *indicator )
+{
+    if (handle->win32_funcs->SQLSetDescRec)
+        return handle->win32_funcs->SQLSetDescRec( handle->win32_handle, record, type, subtype, len, precision, scale,
+                                                   data, retlen, indicator );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -2894,23 +3285,30 @@ SQLRETURN WINAPI SQLSetDescRec(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber,
 
     if (handle->unix_handle)
     {
-        INT64 stringlen, indicator;
-        struct SQLSetDescRec_params params = { handle->unix_handle, RecNumber, Type, SubType, Length, Precision,
-                                               Scale, Data, &stringlen, &indicator };
-        if (SUCCESS((ret = ODBC_CALL( SQLSetDescRec, &params ))))
-        {
-            *StringLength = stringlen;
-            *Indicator = indicator;
-        }
+        ret = set_desc_rec_unix( handle, RecNumber, Type, SubType, Length, Precision, Scale, Data, StringLength,
+                                 Indicator );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetDescRec( handle->win32_handle, RecNumber, Type, SubType, Length, Precision,
-                                                  Scale, Data, StringLength, Indicator );
+        ret = set_desc_rec_win32( handle, RecNumber, Type, SubType, Length, Precision, Scale, Data, StringLength,
+                                  Indicator );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN set_env_attr_unix( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    struct SQLSetEnvAttr_params params = { handle->unix_handle, attr, value, len };
+    return ODBC_CALL( SQLSetEnvAttr, &params );
+}
+
+static SQLRETURN set_env_attr_win32( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLSetEnvAttr)
+        return handle->win32_funcs->SQLSetEnvAttr( handle->win32_handle, attr, value, len );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -2927,12 +3325,11 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
 
     if (handle->unix_handle)
     {
-        struct SQLSetEnvAttr_params params = { handle->unix_handle, Attribute, Value, StringLength };
-        ret = ODBC_CALL( SQLSetEnvAttr, &params );
+        ret = set_env_attr_unix( handle, Attribute, Value, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetEnvAttr( handle->win32_handle, Attribute, Value, StringLength );
+        ret = set_env_attr_win32( handle, Attribute, Value, StringLength );
     }
     else
     {
@@ -2957,6 +3354,28 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
     return ret;
 }
 
+static SQLRETURN set_param_unix( struct handle *handle, SQLUSMALLINT param, SQLSMALLINT value_type,
+                                 SQLSMALLINT param_type, SQLULEN precision, SQLSMALLINT scale, SQLPOINTER value,
+                                 SQLLEN *retlen )
+{
+    INT64 len;
+    SQLRETURN ret;
+    struct SQLSetParam_params params = { handle->unix_handle, param, value_type, param_type, precision, scale,
+                                         value, &len };
+    if (SUCCESS((ret = ODBC_CALL( SQLSetParam, &params )))) *retlen = len;
+    return ret;
+}
+
+static SQLRETURN set_param_win32( struct handle *handle, SQLUSMALLINT param, SQLSMALLINT value_type,
+                                  SQLSMALLINT param_type, SQLULEN precision, SQLSMALLINT scale, SQLPOINTER value,
+                                  SQLLEN *retlen )
+{
+    if (handle->win32_funcs->SQLSetParam)
+        return handle->win32_funcs->SQLSetParam( handle->win32_handle, param, value_type, param_type, precision,
+                                                 scale, value, retlen );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetParam           [ODBC32.022]
  */
@@ -2975,15 +3394,13 @@ SQLRETURN WINAPI SQLSetParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNum
 
     if (handle->unix_handle)
     {
-        INT64 len;
-        struct SQLSetParam_params params = { handle->unix_handle, ParameterNumber, ValueType, ParameterType,
-                                             LengthPrecision, ParameterScale, ParameterValue, &len };
-        if (SUCCESS((ret = ODBC_CALL( SQLSetParam, &params )))) *StrLen_or_Ind = len;
+        ret = set_param_unix( handle, ParameterNumber, ValueType, ParameterType, LengthPrecision, ParameterScale,
+                              ParameterValue, StrLen_or_Ind );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetParam( handle->win32_handle, ParameterNumber, ValueType, ParameterType,
-                                                LengthPrecision, ParameterScale, ParameterValue, StrLen_or_Ind );
+        ret = set_param_win32( handle, ParameterNumber, ValueType, ParameterType, LengthPrecision, ParameterScale,
+                               ParameterValue, StrLen_or_Ind );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3045,6 +3462,31 @@ static BOOL resize_result_lengths( struct handle *handle, UINT size )
     return TRUE;
 }
 
+static SQLRETURN set_stmt_attr_unix( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    struct SQLSetStmtAttr_params params = { handle->unix_handle, attr, value, len };
+    SQLRETURN ret;
+
+    if (SUCCESS((ret = ODBC_CALL( SQLSetStmtAttr, &params ))))
+    {
+        SQLULEN row_count = (SQLULEN)value;
+        if (attr == SQL_ATTR_ROW_ARRAY_SIZE && row_count != handle->row_count)
+        {
+            TRACE( "resizing result length array\n" );
+            if (!resize_result_lengths( handle, row_count )) ret = SQL_ERROR;
+            else handle->row_count = row_count;
+        }
+    }
+    return ret;
+}
+
+static SQLRETURN set_stmt_attr_win32( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLSetStmtAttr)
+        return handle->win32_funcs->SQLSetStmtAttr( handle->win32_handle, attr, value, len );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetStmtAttr           [ODBC32.076]
  */
@@ -3061,25 +3503,28 @@ SQLRETURN WINAPI SQLSetStmtAttr(SQLHSTMT StatementHandle, SQLINTEGER Attribute, 
 
     if (handle->unix_handle)
     {
-        struct SQLSetStmtAttr_params params = { handle->unix_handle, Attribute, Value, StringLength };
-        if (SUCCESS((ret = ODBC_CALL( SQLSetStmtAttr, &params ))))
-        {
-            SQLULEN row_count = (SQLULEN)Value;
-            if (Attribute == SQL_ATTR_ROW_ARRAY_SIZE && row_count != handle->row_count)
-            {
-                TRACE( "resizing result length array\n" );
-                if (!resize_result_lengths( handle, row_count )) ret = SQL_ERROR;
-                else handle->row_count = row_count;
-            }
-        }
+        ret = set_stmt_attr_unix( handle, Attribute, Value, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetStmtAttr( handle->win32_handle, Attribute, Value, StringLength );
+        ret = set_stmt_attr_win32( handle, Attribute, Value, StringLength );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN set_stmt_option_unix( struct handle *handle, SQLUSMALLINT option, SQLULEN value )
+{
+    struct SQLSetStmtOption_params params = { handle->unix_handle, option, value };
+    return ODBC_CALL( SQLSetStmtOption, &params );
+}
+
+static SQLRETURN set_stmt_option_win32( struct handle *handle, SQLUSMALLINT option, SQLULEN value )
+{
+    if (handle->win32_funcs->SQLSetStmtOption)
+        return handle->win32_funcs->SQLSetStmtOption( handle->win32_handle, option, value );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -3096,12 +3541,11 @@ SQLRETURN WINAPI SQLSetStmtOption(SQLHSTMT StatementHandle, SQLUSMALLINT Option,
 
     if (handle->unix_handle)
     {
-        struct SQLSetStmtOption_params params = { handle->unix_handle, Option, Value };
-        ret = ODBC_CALL( SQLSetStmtOption, &params );
+        ret = set_stmt_option_unix( handle, Option, Value );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetStmtOption( handle->win32_handle, Option, Value );
+        ret = set_stmt_option_win32( handle, Option, Value );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3209,6 +3653,24 @@ SQLRETURN WINAPI SQLTables(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, SQLSM
     return ret;
 }
 
+static SQLRETURN transact_unix( struct handle *env, struct handle *con, SQLUSMALLINT completion )
+{
+    struct SQLTransact_params params = { env ? env->unix_handle : 0, con ? con->unix_handle : 0, completion };
+    return ODBC_CALL( SQLTransact, &params );
+}
+
+static SQLRETURN transact_win32( struct handle *env, struct handle *con, SQLUSMALLINT completion )
+{
+    const struct win32_funcs *win32_funcs;
+
+    if (env) win32_funcs = env->win32_funcs;
+    else win32_funcs = con->win32_funcs;
+
+    if (win32_funcs->SQLTransact)
+        return win32_funcs->SQLTransact( env ? env->win32_handle : NULL, con ? con->win32_handle : NULL, completion );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLTransact           [ODBC32.023]
  */
@@ -3224,17 +3686,11 @@ SQLRETURN WINAPI SQLTransact(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle
 
     if ((env && env->unix_handle) || (con && con->unix_handle))
     {
-        struct SQLTransact_params params = { env ? env->unix_handle : 0, con ? con->unix_handle : 0, CompletionType };
-        ret = ODBC_CALL( SQLTransact, &params );
+        ret = transact_unix( env, con, CompletionType );
     }
     else if ((env && env->win32_handle) || (con && con->win32_handle))
     {
-        const struct win32_funcs *win32_funcs;
-
-        if (env) win32_funcs = env->win32_funcs;
-        else win32_funcs = con->win32_funcs;
-
-        ret = win32_funcs->SQLTransact( env ? env->win32_handle : NULL, con ? con->win32_handle : NULL, CompletionType );
+        ret = transact_win32( env, con, CompletionType );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3363,6 +3819,22 @@ done:
     return ret;
 }
 
+static SQLRETURN bulk_operations_unix( struct handle *handle, SQLSMALLINT operation )
+{
+    struct SQLBulkOperations_params params = { handle->unix_handle, operation };
+    SQLRETURN ret;
+
+    if (SUCCESS((ret = ODBC_CALL( SQLBulkOperations, &params )))) update_result_lengths( handle, SQL_PARAM_OUTPUT );
+    return ret;
+}
+
+static SQLRETURN bulk_operations_win32( struct handle *handle, SQLSMALLINT operation )
+{
+    if (handle->win32_funcs->SQLBulkOperations)
+        return handle->win32_funcs->SQLBulkOperations( handle->win32_handle, operation );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLBulkOperations           [ODBC32.078]
  */
@@ -3377,12 +3849,11 @@ SQLRETURN WINAPI SQLBulkOperations(SQLHSTMT StatementHandle, SQLSMALLINT Operati
 
     if (handle->unix_handle)
     {
-        struct SQLBulkOperations_params params = { handle->unix_handle, Operation };
-        if (SUCCESS(( ret = ODBC_CALL( SQLBulkOperations, &params )))) update_result_lengths( handle, SQL_PARAM_OUTPUT );
+        ret = bulk_operations_unix( handle, Operation );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLBulkOperations( handle->win32_handle, Operation );
+        ret = bulk_operations_win32( handle, Operation );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3535,6 +4006,25 @@ SQLRETURN WINAPI SQLColumnPrivileges(SQLHSTMT StatementHandle, SQLCHAR *CatalogN
     return ret;
 }
 
+static SQLRETURN describe_param_unix( struct handle *handle, SQLUSMALLINT param, SQLSMALLINT *type, SQLULEN *size,
+                                      SQLSMALLINT *digits, SQLSMALLINT *nullable )
+{
+    UINT64 size64;
+    struct SQLDescribeParam_params params = { handle->unix_handle, param, type, &size64, digits, nullable };
+    SQLRETURN ret;
+
+    if (SUCCESS((ret = ODBC_CALL( SQLDescribeParam, &params )))) *size = size64;
+    return ret;
+}
+
+static SQLRETURN describe_param_win32( struct handle *handle, SQLUSMALLINT param, SQLSMALLINT *type, SQLULEN *size,
+                                       SQLSMALLINT *digits, SQLSMALLINT *nullable )
+{
+    if (handle->win32_funcs->SQLDescribeParam)
+        return handle->win32_funcs->SQLDescribeParam( handle->win32_handle, param, type, size, digits, nullable );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLDescribeParam          [ODBC32.058]
  */
@@ -3551,19 +4041,34 @@ SQLRETURN WINAPI SQLDescribeParam(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
 
     if (handle->unix_handle)
     {
-        UINT64 size;
-        struct SQLDescribeParam_params params = { handle->unix_handle, ParameterNumber, DataType, &size,
-                                                  DecimalDigits, Nullable };
-        if (SUCCESS((ret = ODBC_CALL( SQLDescribeParam, &params )))) *ParameterSize = size;
+        ret = describe_param_unix( handle, ParameterNumber, DataType, ParameterSize, DecimalDigits, Nullable );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLDescribeParam( handle->win32_handle, ParameterNumber, DataType, ParameterSize,
-                                                     DecimalDigits, Nullable );
+        ret = describe_param_win32( handle, ParameterNumber, DataType, ParameterSize, DecimalDigits, Nullable );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN extended_fetch_unix( struct handle *handle, SQLUSMALLINT orientation, SQLLEN offset,
+                                      SQLULEN *count, SQLUSMALLINT *status )
+{
+    UINT64 count64;
+    struct SQLExtendedFetch_params params = { handle->unix_handle, orientation, offset, &count64, status };
+    SQLRETURN ret;
+
+    if (SUCCESS((ret = ODBC_CALL( SQLExtendedFetch, &params )))) *count = count64;
+    return ret;
+}
+
+static SQLRETURN extended_fetch_win32( struct handle *handle, SQLUSMALLINT orientation, SQLLEN offset,
+                                       SQLULEN *count, SQLUSMALLINT *status )
+{
+    if (handle->win32_funcs->SQLExtendedFetch)
+        return handle->win32_funcs->SQLExtendedFetch( handle->win32_handle, orientation, offset, count, status );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -3582,15 +4087,11 @@ SQLRETURN WINAPI SQLExtendedFetch(SQLHSTMT StatementHandle, SQLUSMALLINT FetchOr
 
     if (handle->unix_handle)
     {
-        UINT64 count;
-        struct SQLExtendedFetch_params params = { handle->unix_handle, FetchOrientation, FetchOffset, &count,
-                                                  RowStatusArray };
-        if (SUCCESS((ret = ODBC_CALL( SQLExtendedFetch, &params )))) *RowCount = count;
+        ret = extended_fetch_unix( handle, FetchOrientation, FetchOffset, RowCount, RowStatusArray );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLExtendedFetch( handle->win32_handle, FetchOrientation, FetchOffset, RowCount,
-                                                     RowStatusArray );
+        ret = extended_fetch_win32( handle, FetchOrientation, FetchOffset, RowCount, RowStatusArray );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3681,6 +4182,19 @@ SQLRETURN WINAPI SQLForeignKeys(SQLHSTMT StatementHandle, SQLCHAR *PkCatalogName
     return ret;
 }
 
+static SQLRETURN more_results_unix( struct handle *handle )
+{
+    struct SQLMoreResults_params params = { handle->unix_handle };
+    return ODBC_CALL( SQLMoreResults, &params );
+}
+
+static SQLRETURN more_results_win32( struct handle *handle )
+{
+    if (handle->win32_funcs->SQLMoreResults)
+        return handle->win32_funcs->SQLMoreResults( handle->win32_handle );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLMoreResults           [ODBC32.061]
  */
@@ -3695,12 +4209,11 @@ SQLRETURN WINAPI SQLMoreResults(SQLHSTMT StatementHandle)
 
     if (handle->unix_handle)
     {
-        struct SQLMoreResults_params params = { handle->unix_handle };
-        ret = ODBC_CALL( SQLMoreResults, &params );
+        ret = more_results_unix( handle );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLMoreResults( handle->win32_handle );
+        ret = more_results_win32( handle );
     }
 
     TRACE("Returning %d\n", ret);
@@ -3774,6 +4287,19 @@ SQLRETURN WINAPI SQLNativeSql(SQLHDBC ConnectionHandle, SQLCHAR *InStatementText
     return ret;
 }
 
+static SQLRETURN num_params_unix( struct handle *handle, SQLSMALLINT *count )
+{
+    struct SQLNumParams_params params = { handle->unix_handle, count };
+    return ODBC_CALL( SQLNumParams, &params );
+}
+
+static SQLRETURN num_params_win32( struct handle *handle, SQLSMALLINT *count )
+{
+    if (handle->win32_funcs->SQLNumParams)
+        return handle->win32_funcs->SQLNumParams( handle->win32_handle, count );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLNumParams           [ODBC32.063]
  */
@@ -3788,16 +4314,32 @@ SQLRETURN WINAPI SQLNumParams(SQLHSTMT StatementHandle, SQLSMALLINT *ParameterCo
 
     if (handle->unix_handle)
     {
-        struct SQLNumParams_params params = { handle->unix_handle, ParameterCount };
-        ret = ODBC_CALL( SQLNumParams, &params );
+        ret = num_params_unix( handle, ParameterCount );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLNumParams( handle->win32_handle, ParameterCount );
+        ret = num_params_win32( handle, ParameterCount );
     }
 
     TRACE("Returning %d\n", ret);
     return ret;
+}
+
+static SQLRETURN param_options_unix( struct handle *handle, SQLULEN row_count, SQLULEN *row_number )
+{
+    UINT64 row;
+    struct SQLParamOptions_params params = { handle->unix_handle, row_count, &row };
+    SQLRETURN ret;
+
+    if (SUCCESS((ret = ODBC_CALL( SQLParamOptions, &params )))) *row_number = row;
+    return ret;
+}
+
+static SQLRETURN param_options_win32( struct handle *handle, SQLULEN row_count, SQLULEN *row_number )
+{
+    if (handle->win32_funcs->SQLParamOptions)
+        return handle->win32_funcs->SQLParamOptions( handle->win32_handle, row_count, row_number );
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -3815,13 +4357,11 @@ SQLRETURN WINAPI SQLParamOptions(SQLHSTMT StatementHandle, SQLULEN RowCount, SQL
 
     if (handle->unix_handle)
     {
-        UINT64 row;
-        struct SQLParamOptions_params params = { handle->unix_handle, RowCount, &row };
-        if (SUCCESS((ret = ODBC_CALL( SQLParamOptions, &params )))) *RowNumber = row;
+        ret = param_options_unix( handle, RowCount, RowNumber );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLParamOptions( handle->win32_handle, RowCount, RowNumber );
+        ret = param_options_win32( handle, RowCount, RowNumber );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4021,6 +4561,23 @@ SQLRETURN WINAPI SQLProcedures(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, S
     return ret;
 }
 
+static SQLRETURN set_pos_unix( struct handle *handle, SQLSETPOSIROW row, SQLUSMALLINT op, SQLUSMALLINT lock )
+{
+    struct SQLSetPos_params params = { handle->unix_handle, row, op, lock };
+    SQLRETURN ret;
+
+    if (SUCCESS(( ret = ODBC_CALL( SQLSetPos, &params ))) && op == SQL_REFRESH)
+        update_result_lengths( handle, SQL_PARAM_OUTPUT );
+    return ret;
+}
+
+static SQLRETURN set_pos_win32( struct handle *handle, SQLSETPOSIROW row, SQLUSMALLINT op, SQLUSMALLINT lock )
+{
+    if (handle->win32_funcs->SQLSetPos)
+        return handle->win32_funcs->SQLSetPos( handle->win32_handle, row, op, lock );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetPos           [ODBC32.068]
  */
@@ -4037,13 +4594,11 @@ SQLRETURN WINAPI SQLSetPos(SQLHSTMT StatementHandle, SQLSETPOSIROW RowNumber, SQ
 
     if (handle->unix_handle)
     {
-        struct SQLSetPos_params params = { handle->unix_handle, RowNumber, Operation, LockType };
-        if (SUCCESS(( ret = ODBC_CALL( SQLSetPos, &params ))) && Operation == SQL_REFRESH)
-            update_result_lengths( handle, SQL_PARAM_OUTPUT );
+        ret = set_pos_unix( handle, RowNumber, Operation, LockType );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetPos( handle->win32_handle, RowNumber, Operation, LockType );
+        ret = set_pos_win32( handle, RowNumber, Operation, LockType );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4151,6 +4706,45 @@ done:
     return ret;
 }
 
+static SQLRETURN bind_parameter_unix( struct handle *handle, SQLUSMALLINT param, SQLSMALLINT io_type,
+                                      SQLSMALLINT value_type, SQLSMALLINT param_type, SQLULEN size,
+                                      SQLSMALLINT digits, SQLPOINTER value, SQLLEN buflen, SQLLEN *len )
+{
+    struct SQLBindParameter_params params = { handle->unix_handle, param, io_type, value_type, param_type, size,
+                                              digits, value, buflen };
+    UINT i = param - 1;
+    SQLRETURN ret;
+
+    if (!param)
+    {
+        FIXME( "parameter 0 not handled\n" );
+        return SQL_ERROR;
+    }
+    if (!alloc_binding( &handle->bind_parameter, io_type, param, handle->row_count )) return SQL_ERROR;
+    handle->bind_parameter.param[i].parameter.input_output_type = io_type;
+    handle->bind_parameter.param[i].parameter.value_type        = value_type;
+    handle->bind_parameter.param[i].parameter.parameter_type    = param_type;
+    handle->bind_parameter.param[i].parameter.column_size       = size;
+    handle->bind_parameter.param[i].parameter.decimal_digits    = digits;
+    handle->bind_parameter.param[i].parameter.parameter_value   = value;
+    handle->bind_parameter.param[i].parameter.buffer_length     = buflen;
+
+    params.StrLen_or_Ind = handle->bind_parameter.param[i].len;
+    *(UINT64 *)params.StrLen_or_Ind = *len;
+    if (SUCCESS((ret = ODBC_CALL( SQLBindParameter, &params )))) handle->bind_parameter.param[i].ptr = len;
+    return ret;
+}
+
+static SQLRETURN bind_parameter_win32( struct handle *handle, SQLUSMALLINT param, SQLSMALLINT io_type,
+                                       SQLSMALLINT value_type, SQLSMALLINT param_type, SQLULEN size,
+                                       SQLSMALLINT digits, SQLPOINTER value, SQLLEN buflen, SQLLEN *len )
+{
+    if (handle->win32_funcs->SQLBindParameter)
+        return handle->win32_funcs->SQLBindParameter( handle->win32_handle, param, io_type, value_type, param_type,
+                                                      size, digits, value, buflen, len );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLBindParameter           [ODBC32.072]
  */
@@ -4160,7 +4754,6 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
                                   SQLLEN *StrLen_or_Ind)
 {
     struct handle *handle = StatementHandle;
-    UINT i = ParameterNumber - 1;
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(StatementHandle %p, ParameterNumber %d, InputOutputType %d, ValueType %d, ParameterType %d, "
@@ -4169,33 +4762,16 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
           DecimalDigits, ParameterValue, debugstr_sqllen(BufferLength), StrLen_or_Ind);
 
     if (!handle) return SQL_INVALID_HANDLE;
-    if (!ParameterNumber)
-    {
-        FIXME( "parameter 0 not handled\n" );
-        return SQL_ERROR;
-    }
-    if (!alloc_binding( &handle->bind_parameter, InputOutputType, ParameterNumber, handle->row_count )) return SQL_ERROR;
-    handle->bind_parameter.param[i].parameter.input_output_type = InputOutputType;
-    handle->bind_parameter.param[i].parameter.value_type        = ValueType;
-    handle->bind_parameter.param[i].parameter.parameter_type    = ParameterType;
-    handle->bind_parameter.param[i].parameter.column_size       = ColumnSize;
-    handle->bind_parameter.param[i].parameter.decimal_digits    = DecimalDigits;
-    handle->bind_parameter.param[i].parameter.parameter_value   = ParameterValue;
-    handle->bind_parameter.param[i].parameter.buffer_length     = BufferLength;
 
     if (handle->unix_handle)
     {
-        struct SQLBindParameter_params params = { handle->unix_handle, ParameterNumber, InputOutputType, ValueType,
-                                                  ParameterType, ColumnSize, DecimalDigits, ParameterValue,
-                                                  BufferLength, handle->bind_parameter.param[i].len };
-        *(UINT64 *)params.StrLen_or_Ind = *StrLen_or_Ind;
-        if (SUCCESS((ret = ODBC_CALL( SQLBindParameter, &params )))) handle->bind_parameter.param[i].ptr = StrLen_or_Ind;
+        ret = bind_parameter_unix( handle, ParameterNumber, InputOutputType, ValueType, ParameterType, ColumnSize,
+                                   DecimalDigits, ParameterValue, BufferLength, StrLen_or_Ind );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLBindParameter( handle->win32_handle, ParameterNumber, InputOutputType, ValueType,
-                                                     ParameterType, ColumnSize, DecimalDigits, ParameterValue,
-                                                     BufferLength, StrLen_or_Ind );
+        ret = bind_parameter_win32( handle, ParameterNumber, InputOutputType, ValueType, ParameterType, ColumnSize,
+                                    DecimalDigits, ParameterValue, BufferLength, StrLen_or_Ind );
     }
 
     TRACE("Returning %d\n", ret);
@@ -4304,6 +4880,21 @@ done:
     return ret;
 }
 
+static SQLRETURN set_scroll_options_unix( struct handle *handle, SQLUSMALLINT concurrency, SQLLEN keyset_size,
+                                          SQLUSMALLINT rowset_size )
+{
+    struct SQLSetScrollOptions_params params = { handle->unix_handle, concurrency, keyset_size, rowset_size };
+    return ODBC_CALL( SQLSetScrollOptions, &params );
+}
+
+static SQLRETURN set_scroll_options_win32( struct handle *handle, SQLUSMALLINT concurrency, SQLLEN keyset_size,
+                                           SQLUSMALLINT rowset_size )
+{
+    if (handle->win32_funcs->SQLSetScrollOptions)
+        return handle->win32_funcs->SQLSetScrollOptions( handle->win32_handle, concurrency, keyset_size, rowset_size );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetScrollOptions           [ODBC32.069]
  */
@@ -4320,12 +4911,11 @@ SQLRETURN WINAPI SQLSetScrollOptions(SQLHSTMT StatementHandle, SQLUSMALLINT Conc
 
     if (handle->unix_handle)
     {
-        struct SQLSetScrollOptions_params params = { handle->unix_handle, Concurrency, KeySetSize, RowSetSize };
-        ret = ODBC_CALL( SQLSetScrollOptions, &params );
+        ret = set_scroll_options_unix( handle, Concurrency, KeySetSize, RowSetSize );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetScrollOptions( handle->win32_handle, Concurrency, KeySetSize, RowSetSize );
+        ret = set_scroll_options_win32( handle, Concurrency, KeySetSize, RowSetSize );
     }
 
     TRACE("Returning %d\n", ret);
