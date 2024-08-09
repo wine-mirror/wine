@@ -3138,17 +3138,34 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
     return ret;
 }
 
-static SQLRETURN set_connect_option_unix( struct handle *handle, SQLUSMALLINT attr, SQLULEN value )
+static SQLRETURN set_connect_option_unix_a( struct handle *handle, SQLUSMALLINT attr, SQLULEN value )
 {
     struct SQLSetConnectOption_params params = { handle->unix_handle, attr, value };
     return ODBC_CALL( SQLSetConnectOption, &params );
 }
 
-static SQLRETURN set_connect_option_win32( struct handle *handle, SQLUSMALLINT attr, SQLULEN value )
+static SQLRETURN set_connect_option_win32_a( struct handle *handle, SQLUSMALLINT attr, SQLULEN value )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (handle->win32_funcs->SQLSetConnectOption)
         return handle->win32_funcs->SQLSetConnectOption( handle->win32_handle, attr, value );
-    return SQL_ERROR;
+
+    if (handle->win32_funcs->SQLSetConnectOptionW)
+    {
+        switch (attr)
+        {
+        case SQL_ATTR_CURRENT_CATALOG:
+        case SQL_ATTR_TRACEFILE:
+        case SQL_ATTR_TRANSLATE_LIB:
+            FIXME( "string option %u not handled\n", attr );
+            return SQL_ERROR;
+        default: break;
+        }
+
+        ret = handle->win32_funcs->SQLSetConnectOptionW( handle->win32_handle, attr, value );
+    }
+    return ret;
 }
 
 /*************************************************************************
@@ -3165,11 +3182,11 @@ SQLRETURN WINAPI SQLSetConnectOption(SQLHDBC ConnectionHandle, SQLUSMALLINT Opti
 
     if (handle->unix_handle)
     {
-        ret = set_connect_option_unix( handle, Option, Value );
+        ret = set_connect_option_unix_a( handle, Option, Value );
     }
     else if (handle->win32_handle)
     {
-        ret = set_connect_option_win32( handle, Option, Value );
+        ret = set_connect_option_win32_a( handle, Option, Value );
     }
 
     TRACE("Returning %d\n", ret);
@@ -6078,6 +6095,20 @@ SQLRETURN WINAPI SQLGetTypeInfoW(SQLHSTMT StatementHandle, SQLSMALLINT DataType)
     return ret;
 }
 
+static SQLRETURN set_connect_option_unix_w( struct handle *handle, SQLUSMALLINT option, SQLULEN value )
+{
+    struct SQLSetConnectOptionW_params params = { handle->unix_handle, option, value };
+    return ODBC_CALL( SQLSetConnectOptionW, &params );
+}
+
+static SQLRETURN set_connect_option_win32_w( struct handle *handle, SQLUSMALLINT option, SQLULEN value )
+{
+    if (handle->win32_funcs->SQLSetConnectOptionW)
+        return handle->win32_funcs->SQLSetConnectOptionW( handle->win32_handle, option, value );
+    if (handle->win32_funcs->SQLSetConnectOption) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetConnectOptionW          [ODBC32.150]
  */
@@ -6092,12 +6123,11 @@ SQLRETURN WINAPI SQLSetConnectOptionW(SQLHDBC ConnectionHandle, SQLUSMALLINT Opt
 
     if (handle->unix_handle)
     {
-        struct SQLSetConnectOptionW_params params = { handle->unix_handle, Option, Value };
-        ret = ODBC_CALL( SQLSetConnectOptionW, &params );
+        ret = set_connect_option_unix_w( handle, Option, Value );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetConnectOptionW( handle->win32_handle, Option, Value );
+        ret = set_connect_option_win32_w( handle, Option, Value );
     }
 
     TRACE("Returning %d\n", ret);
