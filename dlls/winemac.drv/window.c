@@ -625,9 +625,6 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     style = NtUserGetWindowLongW(data->hwnd, GWL_STYLE);
     ex_style = NtUserGetWindowLongW(data->hwnd, GWL_EXSTYLE);
 
-    data->whole_rect = data->window_rect;
-    macdrv_window_to_mac_rect(data, style, &data->whole_rect, &data->window_rect, &data->client_rect);
-
     get_cocoa_window_features(data, style, ex_style, &wf, &data->window_rect, &data->client_rect);
 
     frame = cgrect_from_rect(data->whole_rect);
