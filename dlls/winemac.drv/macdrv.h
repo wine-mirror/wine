@@ -145,8 +145,7 @@ extern void macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style);
 extern void macdrv_SetWindowText(HWND hwnd, LPCWSTR text);
 extern UINT macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp);
 extern LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam);
-extern void macdrv_UpdateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF color_key,
-                                       BYTE alpha, UINT flags);
+extern void macdrv_UpdateLayeredWindow(HWND hwnd, UINT flags);
 extern LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const RECT *window_rect,
                                      const RECT *client_rect, RECT *visible_rect);

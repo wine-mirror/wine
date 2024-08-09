@@ -1812,8 +1812,7 @@ done:
 /***********************************************************************
  *              UpdateLayeredWindow   (MACDRV.@)
  */
-void macdrv_UpdateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF color_key,
-                                BYTE alpha, UINT flags)
+void macdrv_UpdateLayeredWindow(HWND hwnd, UINT flags)
 {
     struct macdrv_win_data *data;
 

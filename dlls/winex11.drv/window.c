@@ -2935,8 +2935,7 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
 /***********************************************************************
  *              UpdateLayeredWindow   (X11DRV.@)
  */
-void X11DRV_UpdateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
-                                 BYTE alpha, UINT flags )
+void X11DRV_UpdateLayeredWindow( HWND hwnd, UINT flags )
 {
     struct x11drv_win_data *data;
     BOOL mapped;
@@ -2950,7 +2949,7 @@ void X11DRV_UpdateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF co
     {
         DWORD style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
 
-        if ((style & WS_VISIBLE) && ((style & WS_MINIMIZE) || is_window_rect_mapped( window_rect )))
+        if ((style & WS_VISIBLE) && ((style & WS_MINIMIZE) || is_window_rect_mapped( &data->window_rect )))
             map_window( hwnd, style );
     }
 }
