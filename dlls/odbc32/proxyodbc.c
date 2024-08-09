@@ -3705,6 +3705,41 @@ SQLRETURN WINAPI SQLSpecialColumns(SQLHSTMT StatementHandle, SQLUSMALLINT Identi
     return ret;
 }
 
+static SQLRETURN statistics_unix_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
+                                    SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3, SQLUSMALLINT unique,
+                                    SQLUSMALLINT reserved )
+{
+    struct SQLStatistics_params params = { handle->unix_handle, catalog, len1, schema, len2, table, len3, unique,
+                                           reserved };
+    return ODBC_CALL( SQLStatistics, &params );
+}
+
+static SQLRETURN statistics_win32_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
+                                     SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3, SQLUSMALLINT unique,
+                                     SQLUSMALLINT reserved )
+{
+    SQLWCHAR *catalogW = NULL, *schemaW = NULL, *tableW = NULL;
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLStatistics)
+        return handle->win32_funcs->SQLStatistics( handle->win32_handle, catalog, len1, schema, len2, table, len3,
+                                                   unique, reserved );
+
+    if (handle->win32_funcs->SQLStatisticsW)
+    {
+        if (!(catalogW = strnAtoW( catalog, len1 ))) return SQL_ERROR;
+        if (!(schemaW = strnAtoW( schema, len2 ))) goto done;
+        if (!(tableW = strnAtoW( table, len3 ))) goto done;
+        ret = handle->win32_funcs->SQLStatisticsW( handle->win32_handle, catalogW, len1, schemaW, len2, tableW,
+                                                   len3, unique, reserved );
+    }
+done:
+    free( catalogW );
+    free( schemaW );
+    free( tableW );
+    return ret;
+}
+
 /*************************************************************************
  *				SQLStatistics           [ODBC32.053]
  */
@@ -3724,14 +3759,13 @@ SQLRETURN WINAPI SQLStatistics(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, S
 
     if (handle->unix_handle)
     {
-        struct SQLStatistics_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
-                                               NameLength2, TableName, NameLength3, Unique, Reserved };
-        ret = ODBC_CALL( SQLStatistics, &params );
+        ret = statistics_unix_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                 Unique, Reserved );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLStatistics( handle->win32_handle, CatalogName, NameLength1, SchemaName,
-                                                  NameLength2, TableName, NameLength3, Unique, Reserved );
+        ret = statistics_win32_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                  Unique, Reserved );
     }
 
     TRACE("Returning %d\n", ret);
@@ -6286,6 +6320,26 @@ SQLRETURN WINAPI SQLSpecialColumnsW(SQLHSTMT StatementHandle, SQLUSMALLINT Ident
     return ret;
 }
 
+static SQLRETURN statistics_unix_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1, SQLWCHAR *schema,
+                                    SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3, SQLUSMALLINT unique,
+                                    SQLUSMALLINT reserved )
+{
+    struct SQLStatisticsW_params params = { handle->unix_handle, catalog, len1, schema, len2, table, len3, unique,
+                                            reserved };
+    return ODBC_CALL( SQLStatisticsW, &params );
+}
+
+static SQLRETURN statistics_win32_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1, SQLWCHAR *schema,
+                                     SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3, SQLUSMALLINT unique,
+                                     SQLUSMALLINT reserved )
+{
+    if (handle->win32_funcs->SQLStatisticsW)
+        return handle->win32_funcs->SQLStatisticsW( handle->win32_handle, catalog, len1, schema, len2, table, len3,
+                                                    unique, reserved );
+    if (handle->win32_funcs->SQLStatistics) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLStatisticsW          [ODBC32.153]
  */
@@ -6305,14 +6359,13 @@ SQLRETURN WINAPI SQLStatisticsW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
 
     if (handle->unix_handle)
     {
-        struct SQLStatisticsW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName,
-                                                NameLength2, TableName, NameLength3, Unique, Reserved };
-        ret = ODBC_CALL( SQLStatisticsW, &params );
+        ret = statistics_unix_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                 Unique, Reserved );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLStatisticsW( handle->win32_handle, CatalogName, NameLength1, SchemaName,
-                                                   NameLength2, TableName, NameLength3, Unique, Reserved );
+        ret = statistics_win32_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                                  Unique, Reserved );
     }
 
     TRACE("Returning %d\n", ret);
