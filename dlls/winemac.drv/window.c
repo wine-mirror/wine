@@ -1883,13 +1883,9 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const RECT
     TRACE("visible_rect %s -> %s\n", wine_dbgstr_rect(window_rect),
           wine_dbgstr_rect(visible_rect));
 
-    if (!data->cocoa_window) goto done; /* use default surface */
-    if (data->ulw_layered) goto done; /* use default surface */
-
-    ret = TRUE;
-
-done:
+    ret = !!data->cocoa_window; /* use default surface if we don't have a window */
     release_win_data(data);
+
     return ret;
 }
 
