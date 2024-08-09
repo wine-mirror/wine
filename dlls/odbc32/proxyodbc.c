@@ -3064,19 +3064,35 @@ SQLRETURN WINAPI SQLRowCount(SQLHSTMT StatementHandle, SQLLEN *RowCount)
     return ret;
 }
 
-static SQLRETURN set_connect_attr_unix( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+static SQLRETURN set_connect_attr_unix_a( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
 {
     struct SQLSetConnectAttr_params params = { handle->unix_handle, attr, value, len };
     return ODBC_CALL( SQLSetConnectAttr, &params );
 }
 
-static SQLRETURN set_connect_attr_win32( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+static SQLRETURN set_connect_attr_win32_a( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (handle->win32_funcs->SQLSetConnectAttr)
         return handle->win32_funcs->SQLSetConnectAttr( handle->win32_handle, attr, value, len );
-    return SQL_ERROR;
-}
 
+    if (handle->win32_funcs->SQLSetConnectAttrW)
+    {
+        switch (attr)
+        {
+        case SQL_ATTR_CURRENT_CATALOG:
+        case SQL_ATTR_TRACEFILE:
+        case SQL_ATTR_TRANSLATE_LIB:
+            FIXME( "string attribute %u not handled\n", attr );
+            return SQL_ERROR;
+        default: break;
+        }
+
+        ret = handle->win32_funcs->SQLSetConnectAttrW( handle->win32_handle, attr, value, len );
+    }
+    return ret;
+}
 /*************************************************************************
  *				SQLSetConnectAttr           [ODBC32.039]
  */
@@ -3093,11 +3109,11 @@ SQLRETURN WINAPI SQLSetConnectAttr(SQLHDBC ConnectionHandle, SQLINTEGER Attribut
 
     if (handle->unix_handle)
     {
-        ret = set_connect_attr_unix( handle, Attribute, Value, StringLength );
+        ret = set_connect_attr_unix_a( handle, Attribute, Value, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = set_connect_attr_win32( handle, Attribute, Value, StringLength );
+        ret = set_connect_attr_win32_a( handle, Attribute, Value, StringLength );
     }
     else
     {
@@ -5727,6 +5743,20 @@ SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
     return ret;
 }
 
+static SQLRETURN set_connect_attr_unix_w( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    struct SQLSetConnectAttrW_params params = { handle->unix_handle, attr, value, len };
+    return ODBC_CALL( SQLSetConnectAttrW, &params );
+}
+
+static SQLRETURN set_connect_attr_win32_w( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLSetConnectAttrW)
+        return handle->win32_funcs->SQLSetConnectAttrW( handle->win32_handle, attr, value, len );
+    if (handle->win32_funcs->SQLSetConnectAttr) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetConnectAttrW          [ODBC32.139]
  */
@@ -5743,12 +5773,11 @@ SQLRETURN WINAPI SQLSetConnectAttrW(SQLHDBC ConnectionHandle, SQLINTEGER Attribu
 
     if (handle->unix_handle)
     {
-        struct SQLSetConnectAttrW_params params = { handle->unix_handle, Attribute, Value, StringLength };
-        ret = ODBC_CALL( SQLSetConnectAttrW, &params );
+        ret = set_connect_attr_unix_w( handle, Attribute, Value, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetConnectAttrW( handle->win32_handle, Attribute, Value, StringLength );
+        ret = set_connect_attr_win32_w( handle, Attribute, Value, StringLength );
     }
     else
     {
