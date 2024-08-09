@@ -1273,7 +1273,7 @@ static HRESULT mutation_observer_ctor_value(DispatchEx *dispex, LCID lcid,
     return S_OK;
 }
 
-static dispex_static_data_vtbl_t mutation_observer_ctor_dispex_vtbl = {
+static const dispex_static_data_vtbl_t mutation_observer_ctor_dispex_vtbl = {
     .destructor       = mutation_observer_ctor_destructor,
     .value            = mutation_observer_ctor_value
 };
