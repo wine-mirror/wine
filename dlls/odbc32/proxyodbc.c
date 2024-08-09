@@ -3533,7 +3533,7 @@ static BOOL resize_result_lengths( struct handle *handle, UINT size )
     return TRUE;
 }
 
-static SQLRETURN set_stmt_attr_unix( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+static SQLRETURN set_stmt_attr_unix_a( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
 {
     struct SQLSetStmtAttr_params params = { handle->unix_handle, attr, value, len };
     SQLRETURN ret;
@@ -3551,11 +3551,25 @@ static SQLRETURN set_stmt_attr_unix( struct handle *handle, SQLINTEGER attr, SQL
     return ret;
 }
 
-static SQLRETURN set_stmt_attr_win32( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+static SQLRETURN set_stmt_attr_win32_a( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
 {
+    SQLRETURN ret = SQL_ERROR;
+
     if (handle->win32_funcs->SQLSetStmtAttr)
         return handle->win32_funcs->SQLSetStmtAttr( handle->win32_handle, attr, value, len );
-    return SQL_ERROR;
+
+    if (handle->win32_funcs->SQLSetStmtAttrW)
+    {
+        WCHAR *strW;
+
+        if (len == SQL_IS_POINTER || len < SQL_LEN_BINARY_ATTR_OFFSET)
+            return handle->win32_funcs->SQLSetStmtAttrW( handle->win32_handle, attr, value, len );
+
+        if (!(strW = strnAtoW( value, len ))) return SQL_ERROR;
+        ret = handle->win32_funcs->SQLSetStmtAttrW( handle->win32_handle, attr, strW, len );
+        free( strW );
+    }
+    return ret;
 }
 
 /*************************************************************************
@@ -3574,11 +3588,11 @@ SQLRETURN WINAPI SQLSetStmtAttr(SQLHSTMT StatementHandle, SQLINTEGER Attribute, 
 
     if (handle->unix_handle)
     {
-        ret = set_stmt_attr_unix( handle, Attribute, Value, StringLength );
+        ret = set_stmt_attr_unix_a( handle, Attribute, Value, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = set_stmt_attr_win32( handle, Attribute, Value, StringLength );
+        ret = set_stmt_attr_win32_a( handle, Attribute, Value, StringLength );
     }
 
     TRACE("Returning %d\n", ret);
@@ -6872,6 +6886,32 @@ SQLRETURN WINAPI SQLSetDescFieldW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumb
     return ret;
 }
 
+static SQLRETURN set_stmt_attr_unix_w( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    struct SQLSetStmtAttrW_params params = { handle->unix_handle, attr, value, len };
+    SQLRETURN ret;
+
+    if (SUCCESS((ret = ODBC_CALL( SQLSetStmtAttrW, &params ))))
+    {
+        SQLULEN row_count = (SQLULEN)value;
+        if (attr == SQL_ATTR_ROW_ARRAY_SIZE && row_count != handle->row_count)
+        {
+            TRACE( "resizing result length array\n" );
+            if (!resize_result_lengths( handle, row_count )) ret = SQL_ERROR;
+            else handle->row_count = row_count;
+        }
+    }
+    return ret;
+}
+
+static SQLRETURN set_stmt_attr_win32_w( struct handle *handle, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
+{
+    if (handle->win32_funcs->SQLSetStmtAttrW)
+        return handle->win32_funcs->SQLSetStmtAttrW( handle->win32_handle, attr, value, len );
+    if (handle->win32_funcs->SQLSetStmtAttr) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLSetStmtAttrW          [ODBC32.176]
  */
@@ -6888,21 +6928,11 @@ SQLRETURN WINAPI SQLSetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
 
     if (handle->unix_handle)
     {
-        struct SQLSetStmtAttrW_params params = { handle->unix_handle, Attribute, Value, StringLength };
-        if (SUCCESS((ret = ODBC_CALL( SQLSetStmtAttrW, &params ))))
-        {
-            SQLULEN row_count = (SQLULEN)Value;
-            if (Attribute == SQL_ATTR_ROW_ARRAY_SIZE && row_count != handle->row_count)
-            {
-                TRACE( "resizing result length array\n" );
-                if (!resize_result_lengths( handle, row_count )) ret = SQL_ERROR;
-                else handle->row_count = row_count;
-            }
-        }
+        ret = set_stmt_attr_unix_w( handle, Attribute, Value, StringLength );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLSetStmtAttrW( handle->win32_handle, Attribute, Value, StringLength );
+        ret = set_stmt_attr_win32_w( handle, Attribute, Value, StringLength );
     }
 
     TRACE("Returning %d\n", ret);
