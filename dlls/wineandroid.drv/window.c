@@ -1043,22 +1043,15 @@ BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const RE
                                 const RECT *client_rect, RECT *visible_rect )
 {
     struct android_win_data *data = get_win_data( hwnd );
-    BOOL ret = FALSE;
 
     TRACE( "hwnd %p, swp_flags %04x, shaped %u, window_rect %s, client_rect %s, visible_rect %s\n",
            hwnd, swp_flags, shaped, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
            wine_dbgstr_rect(visible_rect) );
 
     if (!data && !(data = create_win_data( hwnd, window_rect, client_rect ))) return FALSE; /* use default surface */
-
-    if (data->parent) goto done; /* use default surface */
-    if (is_argb_surface( data->surface )) goto done; /* use default surface */
-
-    ret = TRUE;
-
-done:
     release_win_data(data);
-    return ret;
+
+    return TRUE;
 }
 
 
