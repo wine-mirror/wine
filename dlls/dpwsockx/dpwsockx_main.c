@@ -517,6 +517,10 @@ static HRESULT WINAPI DPWSCB_Open( LPDPSP_OPENDATA data )
     if ( FAILED( hr ) )
         return hr;
 
+    hr = DPWS_Start( dpwsData );
+    if ( FAILED (hr) )
+        return hr;
+
     dpwsData->nameserverConnection.addr.sin_family = AF_INET;
     dpwsData->nameserverConnection.addr.sin_addr = header->SockAddr.sin_addr;
     dpwsData->nameserverConnection.addr.sin_port = header->SockAddr.sin_port;
