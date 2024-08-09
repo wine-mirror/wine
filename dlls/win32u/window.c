@@ -2193,8 +2193,9 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
                                        const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty )
 {
     DWORD swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
+    struct window_rects new_rects;
     struct window_surface *surface;
-    RECT window_rect, client_rect, visible_rect, surface_rect;
+    RECT surface_rect;
     SIZE offset;
     BOOL ret = FALSE;
 
@@ -2206,20 +2207,20 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
         return FALSE;
     }
 
-    get_window_rects( hwnd, COORDS_PARENT, &window_rect, &client_rect, get_thread_dpi() );
+    get_window_rects( hwnd, COORDS_PARENT, &new_rects.window, &new_rects.client, get_thread_dpi() );
 
     if (pts_dst)
     {
-        offset.cx = pts_dst->x - window_rect.left;
-        offset.cy = pts_dst->y - window_rect.top;
-        OffsetRect( &client_rect, offset.cx, offset.cy );
-        OffsetRect( &window_rect, offset.cx, offset.cy );
+        offset.cx = pts_dst->x - new_rects.window.left;
+        offset.cy = pts_dst->y - new_rects.window.top;
+        OffsetRect( &new_rects.client, offset.cx, offset.cy );
+        OffsetRect( &new_rects.window, offset.cx, offset.cy );
         swp_flags &= ~SWP_NOMOVE;
     }
     if (size)
     {
-        offset.cx = size->cx - (window_rect.right - window_rect.left);
-        offset.cy = size->cy - (window_rect.bottom - window_rect.top);
+        offset.cx = size->cx - (new_rects.window.right - new_rects.window.left);
+        offset.cy = size->cy - (new_rects.window.bottom - new_rects.window.top);
         if (size->cx <= 0 || size->cy <= 0)
         {
             RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
@@ -2230,25 +2231,24 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
             RtlSetLastWin32Error( ERROR_INCORRECT_SIZE );
             return FALSE;
         }
-        client_rect.right  += offset.cx;
-        client_rect.bottom += offset.cy;
-        window_rect.right  += offset.cx;
-        window_rect.bottom += offset.cy;
+        new_rects.client.right  += offset.cx;
+        new_rects.client.bottom += offset.cy;
+        new_rects.window.right  += offset.cx;
+        new_rects.window.bottom += offset.cy;
         swp_flags &= ~SWP_NOSIZE;
     }
 
-    TRACE( "window %p win %s client %s\n", hwnd,
-           wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
+    TRACE( "window %p new_rects %s\n", hwnd, debugstr_window_rects( &new_rects ) );
 
-    surface = create_window_surface( hwnd, swp_flags, TRUE, &window_rect, &client_rect, &visible_rect, &surface_rect );
-    apply_window_pos( hwnd, 0, swp_flags, surface, &window_rect, &client_rect, &visible_rect, NULL );
+    surface = create_window_surface( hwnd, swp_flags, TRUE, &new_rects.window, &new_rects.client, &new_rects.visible, &surface_rect );
+    apply_window_pos( hwnd, 0, swp_flags, surface, &new_rects.window, &new_rects.client, &new_rects.visible, NULL );
     if (!surface) return FALSE;
 
     if (!hdc_src || surface == &dummy_surface) ret = TRUE;
     else
     {
         BLENDFUNCTION src_blend = { AC_SRC_OVER, 0, 255, 0 };
-        RECT rect = window_rect, src_rect;
+        RECT rect = new_rects.window, src_rect;
         HDC hdc = NULL;
 
         OffsetRect( &rect, -rect.left, -rect.top );
