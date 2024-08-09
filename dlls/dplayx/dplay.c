@@ -3336,9 +3336,14 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
 
     LeaveCriticalSection( &This->lock );
 
-    sessionDesc = NS_WalkSessions( This->dp2->lpNameServerData, &spMessageHeader );
-    if ( !sessionDesc )
-      return DPERR_NOSESSIONS;
+    for ( ;; )
+    {
+      sessionDesc = NS_WalkSessions( This->dp2->lpNameServerData, &spMessageHeader );
+      if ( !sessionDesc )
+        return DPERR_NOSESSIONS;
+      if ( IsEqualGUID( &sessionDesc->guidInstance, &lpsd->guidInstance ) )
+        break;
+    }
 
     This->dp2->lpSessionDesc = DP_DuplicateSessionDesc( sessionDesc, bAnsi, bAnsi );
     if ( !This->dp2->lpSessionDesc )
