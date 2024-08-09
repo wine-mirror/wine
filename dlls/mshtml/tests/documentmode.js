@@ -3229,4 +3229,6 @@ sync_test("prototypes", function() {
     check(StyleSheet.prototype, Object.prototype, "stylesheet prototype");
     check(document.styleSheets, StyleSheetList.prototype, "stylesheets list");
     check(StyleSheetList.prototype, Object.prototype, "stylesheets list prototype");
+    check(e.sheet.rules, MSCSSRuleList.prototype, "css rule list");
+    check(MSCSSRuleList.prototype, Object.prototype, "css rule list prototype");
 });

@@ -353,7 +353,7 @@ static HRESULT HTMLStyleSheetRulesCollection_invoke(DispatchEx *dispex, DISPID i
     return S_OK;
 }
 
-static const dispex_static_data_vtbl_t HTMLStyleSheetRulesCollection_dispex_vtbl = {
+static const dispex_static_data_vtbl_t MSCSSRuleList_dispex_vtbl = {
     .query_interface  = HTMLStyleSheetRulesCollection_query_interface,
     .destructor       = HTMLStyleSheetRulesCollection_destructor,
     .traverse         = HTMLStyleSheetRulesCollection_traverse,
@@ -362,15 +362,15 @@ static const dispex_static_data_vtbl_t HTMLStyleSheetRulesCollection_dispex_vtbl
     .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLStyleSheetRulesCollection_invoke
 };
-static const tid_t HTMLStyleSheetRulesCollection_iface_tids[] = {
+static const tid_t MSCSSRuleList_iface_tids[] = {
     IHTMLStyleSheetRulesCollection_tid,
     0
 };
-static dispex_static_data_t HTMLStyleSheetRulesCollection_dispex = {
-    "MSCSSRuleList",
-    &HTMLStyleSheetRulesCollection_dispex_vtbl,
-    DispHTMLStyleSheetRulesCollection_tid,
-    HTMLStyleSheetRulesCollection_iface_tids
+dispex_static_data_t MSCSSRuleList_dispex = {
+    .id         = PROT_MSCSSRuleList,
+    .vtbl       = &MSCSSRuleList_dispex_vtbl,
+    .disp_tid   = DispHTMLStyleSheetRulesCollection_tid,
+    .iface_tids = MSCSSRuleList_iface_tids,
 };
 
 static HRESULT create_style_sheet_rules_collection(nsIDOMCSSRuleList *nslist, DispatchEx *owner,
@@ -384,7 +384,7 @@ static HRESULT create_style_sheet_rules_collection(nsIDOMCSSRuleList *nslist, Di
     collection->IHTMLStyleSheetRulesCollection_iface.lpVtbl = &HTMLStyleSheetRulesCollectionVtbl;
     collection->nslist = nslist;
 
-    init_dispatch_with_owner(&collection->dispex, &HTMLStyleSheetRulesCollection_dispex, owner);
+    init_dispatch_with_owner(&collection->dispex, &MSCSSRuleList_dispex, owner);
 
     if(nslist)
         nsIDOMCSSRuleList_AddRef(nslist);

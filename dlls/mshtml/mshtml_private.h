@@ -443,6 +443,7 @@ typedef struct {
     X(HTMLTextAreaElement)                 \
     X(HTMLTitleElement)                    \
     X(MSCSSProperties)                     \
+    X(MSCSSRuleList)                       \
     X(MSCurrentStyleCSSProperties)         \
     X(MSStyleCSSProperties)                \
     X(MutationObserver)                    \
