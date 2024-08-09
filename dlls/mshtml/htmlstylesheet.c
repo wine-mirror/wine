@@ -715,7 +715,7 @@ static HRESULT HTMLStyleSheetsCollection_invoke(DispatchEx *dispex, DISPID id, L
     return S_OK;
 }
 
-static const dispex_static_data_vtbl_t HTMLStyleSheetsCollection_dispex_vtbl = {
+static const dispex_static_data_vtbl_t StyleSheetList_dispex_vtbl = {
     .query_interface  = HTMLStyleSheetsCollection_query_interface,
     .destructor       = HTMLStyleSheetsCollection_destructor,
     .traverse         = HTMLStyleSheetsCollection_traverse,
@@ -724,15 +724,15 @@ static const dispex_static_data_vtbl_t HTMLStyleSheetsCollection_dispex_vtbl = {
     .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLStyleSheetsCollection_invoke
 };
-static const tid_t HTMLStyleSheetsCollection_iface_tids[] = {
+static const tid_t StyleSheetList_iface_tids[] = {
     IHTMLStyleSheetsCollection_tid,
     0
 };
-static dispex_static_data_t HTMLStyleSheetsCollection_dispex = {
-    "StyleSheetList",
-    &HTMLStyleSheetsCollection_dispex_vtbl,
-    DispHTMLStyleSheetsCollection_tid,
-    HTMLStyleSheetsCollection_iface_tids
+dispex_static_data_t StyleSheetList_dispex = {
+    .id         = PROT_StyleSheetList,
+    .vtbl       = &StyleSheetList_dispex_vtbl,
+    .disp_tid   = DispHTMLStyleSheetsCollection_tid,
+    .iface_tids = StyleSheetList_iface_tids,
 };
 
 HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, HTMLDocumentNode *doc,
@@ -749,7 +749,7 @@ HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, HTMLDocument
         nsIDOMStyleSheetList_AddRef(nslist);
     collection->nslist = nslist;
 
-    init_dispatch(&collection->dispex, &HTMLStyleSheetsCollection_dispex, doc->script_global,
+    init_dispatch(&collection->dispex, &StyleSheetList_dispex, doc->script_global,
                   dispex_compat_mode(&doc->node.event_target.dispex));
 
     *ret = &collection->IHTMLStyleSheetsCollection_iface;
