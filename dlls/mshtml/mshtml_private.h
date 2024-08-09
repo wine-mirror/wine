@@ -407,6 +407,7 @@ typedef struct {
 } dispex_static_data_vtbl_t;
 
 #define ALL_PROTOTYPES                     \
+    X(CSSStyleDeclaration)                 \
     X(CharacterData)                       \
     X(DOMImplementation)                   \
     X(Document)                            \

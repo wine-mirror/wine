@@ -3214,4 +3214,6 @@ sync_test("prototypes", function() {
     check(document.createTextNode(""), Text.prototype, "text");
     check(Text.prototype, CharacterData.prototype, "text prototype");
     check(CharacterData.prototype, Node.prototype, "character data prototype");
+    check(window.getComputedStyle(document.body), CSSStyleDeclaration.prototype, "computed style");
+    check(CSSStyleDeclaration.prototype, Object.prototype, "CSSStyleDeclaration");
 });
