@@ -3772,6 +3772,41 @@ SQLRETURN WINAPI SQLStatistics(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, S
     return ret;
 }
 
+static SQLRETURN tables_unix_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
+                                SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3, SQLCHAR *type,
+                                SQLSMALLINT len4 )
+{
+    struct SQLTables_params params = { handle->unix_handle, catalog, len1, schema, len2, table, len3, type, len4 };
+    return ODBC_CALL( SQLTables, &params );
+}
+
+static SQLRETURN tables_win32_a( struct handle *handle, SQLCHAR *catalog, SQLSMALLINT len1, SQLCHAR *schema,
+                                 SQLSMALLINT len2, SQLCHAR *table, SQLSMALLINT len3, SQLCHAR *type,
+                                 SQLSMALLINT len4 )
+{
+    SQLWCHAR *catalogW = NULL, *schemaW = NULL, *tableW = NULL, *typeW = NULL;
+    SQLRETURN ret = SQL_ERROR;
+
+    if (handle->win32_funcs->SQLTables)
+        return handle->win32_funcs->SQLTables( handle->win32_handle, catalog, len1, schema, len2, table, len3, type,
+                                               len4 );
+    if (handle->win32_funcs->SQLTablesW)
+    {
+        if (!(catalogW = strnAtoW( catalog, len1 ))) return SQL_ERROR;
+        if (!(schemaW = strnAtoW( schema, len2 ))) goto done;
+        if (!(tableW = strnAtoW( table, len3 ))) goto done;
+        if (!(typeW = strnAtoW( type, len4 ))) goto done;
+        ret = handle->win32_funcs->SQLTablesW( handle->win32_handle, catalogW, len1, schemaW, len2, tableW, len3,
+                                               typeW, len4 );
+    }
+done:
+    free( catalogW );
+    free( schemaW );
+    free( tableW );
+    free( typeW );
+    return ret;
+}
+
 /*************************************************************************
  *				SQLTables           [ODBC32.054]
  */
@@ -3792,14 +3827,13 @@ SQLRETURN WINAPI SQLTables(SQLHSTMT StatementHandle, SQLCHAR *CatalogName, SQLSM
 
     if (handle->unix_handle)
     {
-        struct SQLTables_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName, NameLength2,
-                                           TableName, NameLength3, TableType, NameLength4 };
-        ret = ODBC_CALL( SQLTables, &params );
+        ret = tables_unix_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                             TableType, NameLength4 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLTables( handle->win32_handle, CatalogName, NameLength1, SchemaName, NameLength2,
-                                              TableName, NameLength3, TableType, NameLength4 );
+        ret = tables_win32_a( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                              TableType, NameLength4 );
     }
 
     TRACE("Returning %d\n", ret);
@@ -6402,6 +6436,25 @@ SQLRETURN WINAPI SQLStatisticsW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName,
     return ret;
 }
 
+static SQLRETURN tables_unix_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1, SQLWCHAR *schema,
+                                SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3, SQLWCHAR *type,
+                                SQLSMALLINT len4 )
+{
+    struct SQLTablesW_params params = { handle->unix_handle, catalog, len1, schema, len2, table, len3, type, len4 };
+    return ODBC_CALL( SQLTablesW, &params );
+}
+
+static SQLRETURN tables_win32_w( struct handle *handle, SQLWCHAR *catalog, SQLSMALLINT len1, SQLWCHAR *schema,
+                                 SQLSMALLINT len2, SQLWCHAR *table, SQLSMALLINT len3, SQLWCHAR *type,
+                                 SQLSMALLINT len4 )
+{
+    if (handle->win32_funcs->SQLTablesW)
+        return handle->win32_funcs->SQLTablesW( handle->win32_handle, catalog, len1, schema, len2, table, len3,
+                                                type, len4 );
+    if (handle->win32_funcs->SQLTables) FIXME( "Unicode to ANSI conversion not handled\n" );
+    return SQL_ERROR;
+}
+
 /*************************************************************************
  *				SQLTablesW          [ODBC32.154]
  */
@@ -6422,14 +6475,13 @@ SQLRETURN WINAPI SQLTablesW(SQLHSTMT StatementHandle, SQLWCHAR *CatalogName, SQL
 
     if (handle->unix_handle)
     {
-        struct SQLTablesW_params params = { handle->unix_handle, CatalogName, NameLength1, SchemaName, NameLength2,
-                                            TableName, NameLength3, TableType, NameLength4 };
-        ret = ODBC_CALL( SQLTablesW, &params );
+        ret = tables_unix_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                             TableType, NameLength4 );
     }
     else if (handle->win32_handle)
     {
-        ret = handle->win32_funcs->SQLTablesW( handle->win32_handle, CatalogName, NameLength1, SchemaName, NameLength2,
-                                               TableName, NameLength3, TableType, NameLength4 );
+        ret = tables_win32_w( handle, CatalogName, NameLength1, SchemaName, NameLength2, TableName, NameLength3,
+                              TableType, NameLength4 );
     }
 
     TRACE("Returning %d\n", ret);
