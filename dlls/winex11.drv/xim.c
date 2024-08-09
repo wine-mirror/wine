@@ -488,3 +488,36 @@ void xim_set_focus( HWND hwnd, BOOL focus )
     if (focus) XSetICFocus( xic );
     else XUnsetICFocus( xic );
 }
+
+BOOL X11DRV_SetIMECompositionWindowPos( HWND hwnd, const POINT *point )
+{
+    struct x11drv_win_data *data = NULL;
+    XVaNestedList attr;
+    XPoint xpoint;
+    POINT pt;
+
+    if (!(input_style & XIMPreeditPosition))
+        return FALSE;
+
+    if (!(data = get_win_data( hwnd )) || !data->xic)
+    {
+        if (data) release_win_data( data );
+        return FALSE;
+    }
+
+    pt = *point;
+    if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
+        pt.x = data->client_rect.right - data->client_rect.left - 1 - pt.x;
+
+    xpoint.x = pt.x + data->client_rect.left - data->whole_rect.left;
+    xpoint.y = pt.y + data->client_rect.top - data->whole_rect.top;
+    attr = XVaCreateNestedList( 0, XNSpotLocation, &xpoint, NULL );
+    if (attr)
+    {
+        XSetICValues( data->xic, XNPreeditAttributes, attr, NULL );
+        XFree( attr );
+    }
+
+    release_win_data( data );
+    return TRUE;
+}

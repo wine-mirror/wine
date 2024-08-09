@@ -2351,6 +2351,21 @@ BOOL WINAPI NtUserGetCaretPos( POINT *pt )
     return ret;
 }
 
+BOOL set_ime_composition_window_pos( HWND hwnd, const POINT *point )
+{
+    HWND root_hwnd;
+    POINT pt;
+
+    if (!NtUserIsWindow( hwnd ))
+        return FALSE;
+
+    root_hwnd = NtUserGetAncestor( hwnd, GA_ROOT );
+    pt = *point;
+    NtUserMapWindowPoints( hwnd, root_hwnd, &pt, 1, 0 /* per-monitor DPI */ );
+
+    return user_driver->pSetIMECompositionWindowPos( root_hwnd, &pt );
+}
+
 /*******************************************************************
  *              set_caret_pos
  */
