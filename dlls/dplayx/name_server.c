@@ -155,31 +155,6 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
   NS_PruneSessionCache( lpNSInfo );
 }
 
-LPVOID NS_GetNSAddr( LPVOID lpNSInfo )
-{
-  lpNSCache lpCache = (lpNSCache)lpNSInfo;
-
-  FIXME( ":quick stub\n" );
-
-  /* Ok. Cheat and don't search for the correct stuff just take the first.
-   * FIXME: In the future how are we to know what is _THE_ enum we used?
-   *        This is going to have to go into dplay somehow. Perhaps it
-   *        comes back with app server id for the join command! Oh... that
-   *        must be it. That would make this method obsolete once that's
-   *        in place.
-   */
-#if 1
-  if ( lpCache->walkFirst.lpQHFirst )
-    return lpCache->walkFirst.lpQHFirst->lpNSAddrHdr;
-
-  return NULL;
-#else
-  /* FIXME: Should convert over to this */
-  return lpCache->bNsIsLocal ? lpCache->lpLocalAddrHdr
-                             : lpCache->lpRemoteAddrHdr;
-#endif
-}
-
 void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
 {
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
@@ -305,7 +280,7 @@ void NS_ResetSessionEnumeration( LPVOID lpNSInfo )
   ((lpNSCache)lpNSInfo)->present = ((lpNSCache)lpNSInfo)->walkFirst.lpQHFirst;
 }
 
-LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
+LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo, void **spMessageHeader )
 {
   LPDPSESSIONDESC2 lpSessionDesc;
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
@@ -317,6 +292,9 @@ LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
   }
 
   lpSessionDesc = lpCache->present->data;
+
+  if( spMessageHeader )
+    *spMessageHeader = lpCache->present->lpNSAddrHdr;
 
   /* Advance tracking pointer */
   lpCache->present = lpCache->present->walkNext.lpQNext;

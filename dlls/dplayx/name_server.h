@@ -34,7 +34,6 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID lpNSAddrHdr,
                                        LPCDPMSG_ENUMSESSIONSREPLY lpcMsg,
                                        DWORD msgSize,
                                        LPVOID lpNSInfo );
-LPVOID NS_GetNSAddr( LPVOID lpNSInfo );
 void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize );
 
 void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,
@@ -54,7 +53,7 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo );
 
 
 void NS_ResetSessionEnumeration( LPVOID lpNSInfo );
-LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo );
+LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo, void **spMessageHeader );
 void NS_PruneSessionCache( LPVOID lpNSInfo );
 
 #endif /* __WINE_DPLAYX_NAMESERVER */

@@ -2344,7 +2344,7 @@ static BOOL DP_InvokeEnumSessionCallbacks
 
   /* Enumerate all sessions */
   /* FIXME: Need to indicate ANSI */
-  while( (lpSessionDesc = NS_WalkSessions( lpNSInfo ) ) != NULL )
+  while( (lpSessionDesc = NS_WalkSessions( lpNSInfo, NULL ) ) != NULL )
   {
     TRACE( "EnumSessionsCallback2 invoked\n" );
     if( !lpEnumSessionsCallback2( lpSessionDesc, timeout, 0, lpContext ) )
@@ -3328,8 +3328,16 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
   }
   else
   {
-    spMessageHeader = NS_GetNSAddr( This->dp2->lpNameServerData );
-    if ( !spMessageHeader )
+    DPSESSIONDESC2 *sessionDesc;
+
+    EnterCriticalSection( &This->lock );
+
+    NS_ResetSessionEnumeration( This->dp2->lpNameServerData );
+
+    LeaveCriticalSection( &This->lock );
+
+    sessionDesc = NS_WalkSessions( This->dp2->lpNameServerData, &spMessageHeader );
+    if ( !sessionDesc )
       return DPERR_NOSESSIONS;
   }
 
