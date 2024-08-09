@@ -601,6 +601,18 @@ static inline struct d3d_device *impl_from_ID3D10Device(ID3D10Device1 *iface)
 
 void d3d_device_init(struct d3d_device *device, void *outer_unknown);
 
+struct d3d_video_decoder
+{
+    ID3D11VideoDecoder ID3D11VideoDecoder_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    struct d3d_device *device;
+};
+
+HRESULT d3d_video_decoder_create(struct d3d_device *device, const D3D11_VIDEO_DECODER_DESC *desc,
+        const D3D11_VIDEO_DECODER_CONFIG *config, struct d3d_video_decoder **decoder);
+
 /* Layered device */
 enum dxgi_device_layer_id
 {

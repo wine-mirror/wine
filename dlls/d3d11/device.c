@@ -6807,8 +6807,17 @@ static ULONG STDMETHODCALLTYPE d3d11_video_device_Release(ID3D11VideoDevice1 *if
 static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoDecoder(ID3D11VideoDevice1 *iface,
         const D3D11_VIDEO_DECODER_DESC *desc, const D3D11_VIDEO_DECODER_CONFIG *config, ID3D11VideoDecoder **decoder)
 {
+    struct d3d_device *device = impl_from_ID3D11VideoDevice1(iface);
+    struct d3d_video_decoder *object;
+    HRESULT hr;
+
     FIXME("iface %p, desc %p, config %p, decoder %p, stub!\n", iface, desc, config, decoder);
-    return E_NOTIMPL;
+
+    if (FAILED(hr = d3d_video_decoder_create(device, desc, config, &object)))
+        return hr;
+
+    *decoder = &object->ID3D11VideoDecoder_iface;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoProcessor(ID3D11VideoDevice1 *iface,
