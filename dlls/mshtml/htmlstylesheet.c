@@ -1200,23 +1200,28 @@ static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t m
         dispex_info_add_interface(info, IHTMLStyleSheet4_tid, NULL);
 }
 
-static const dispex_static_data_vtbl_t HTMLStyleSheet_dispex_vtbl = {
+dispex_static_data_t StyleSheet_dispex = {
+    .id = PROT_StyleSheet,
+};
+
+static const dispex_static_data_vtbl_t CSSStyleSheet_dispex_vtbl = {
     .query_interface  = HTMLStyleSheet_query_interface,
     .destructor       = HTMLStyleSheet_destructor,
     .traverse         = HTMLStyleSheet_traverse,
     .unlink           = HTMLStyleSheet_unlink
 };
 
-static const tid_t HTMLStyleSheet_iface_tids[] = {
+static const tid_t CSSStyleSheet_iface_tids[] = {
     IHTMLStyleSheet_tid,
     0
 };
-static dispex_static_data_t HTMLStyleSheet_dispex = {
-    "CSSStyleSheet",
-    &HTMLStyleSheet_dispex_vtbl,
-    DispHTMLStyleSheet_tid,
-    HTMLStyleSheet_iface_tids,
-    HTMLStyleSheet_init_dispex_info
+dispex_static_data_t CSSStyleSheet_dispex = {
+    .id           = PROT_CSSStyleSheet,
+    .prototype_id = PROT_StyleSheet,
+    .vtbl         = &CSSStyleSheet_dispex_vtbl,
+    .disp_tid     = DispHTMLStyleSheet_tid,
+    .iface_tids   = CSSStyleSheet_iface_tids,
+    .init_info    = HTMLStyleSheet_init_dispex_info,
 };
 
 HRESULT create_style_sheet(nsIDOMStyleSheet *nsstylesheet, DispatchEx *owner, IHTMLStyleSheet **ret)
@@ -1231,7 +1236,7 @@ HRESULT create_style_sheet(nsIDOMStyleSheet *nsstylesheet, DispatchEx *owner, IH
     style_sheet->IHTMLStyleSheet4_iface.lpVtbl = &HTMLStyleSheet4Vtbl;
     style_sheet->nsstylesheet = NULL;
 
-    init_dispatch_with_owner(&style_sheet->dispex, &HTMLStyleSheet_dispex, owner);
+    init_dispatch_with_owner(&style_sheet->dispex, &CSSStyleSheet_dispex, owner);
 
     if(nsstylesheet) {
         nsres = nsIDOMStyleSheet_QueryInterface(nsstylesheet, &IID_nsIDOMCSSStyleSheet,

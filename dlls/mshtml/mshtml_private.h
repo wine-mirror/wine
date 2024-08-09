@@ -408,6 +408,7 @@ typedef struct {
 
 #define ALL_PROTOTYPES                     \
     X(CSSStyleDeclaration)                 \
+    X(CSSStyleSheet)                       \
     X(CharacterData)                       \
     X(DOMImplementation)                   \
     X(Document)                            \
@@ -454,6 +455,7 @@ typedef struct {
     X(SVGTextContentElement)               \
     X(SVGTextPositioningElement)           \
     X(Storage)                             \
+    X(StyleSheet)                          \
     X(Text)                                \
     X(Window)                              \
     X(XMLHttpRequest)

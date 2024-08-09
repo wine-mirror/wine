@@ -3222,4 +3222,9 @@ sync_test("prototypes", function() {
     check(CSSStyleDeclaration.prototype, Object.prototype, "CSSStyleDeclaration");
     check(document.body.currentStyle, MSCurrentStyleCSSProperties.prototype, "current style");
     check(MSCurrentStyleCSSProperties.prototype, MSCSSProperties.prototype, "MSCurrentStyleCSSProperties");
+    var e = document.createElement("style");
+    document.body.appendChild(e);
+    check(e.sheet, CSSStyleSheet.prototype, "stylesheet");
+    check(CSSStyleSheet.prototype, StyleSheet.prototype, "css stylesheet prototype");
+    check(StyleSheet.prototype, Object.prototype, "stylesheet prototype");
 });
