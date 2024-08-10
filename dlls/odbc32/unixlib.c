@@ -442,18 +442,6 @@ static NTSTATUS odbc_process_attach( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS wrap_SQLAllocConnect( void *args )
-{
-    struct SQLAllocConnect_params *params = args;
-    return SQLAllocConnect( (SQLHENV)(ULONG_PTR)params->EnvironmentHandle, (SQLHDBC *)params->ConnectionHandle );
-}
-
-static NTSTATUS wrap_SQLAllocEnv( void *args )
-{
-    struct SQLAllocEnv_params *params = args;
-    return SQLAllocEnv( (SQLHENV *)params->EnvironmentHandle );
-}
-
 static NTSTATUS wrap_SQLAllocHandle( void *args )
 {
     struct SQLAllocHandle_params *params = args;
@@ -466,12 +454,6 @@ static NTSTATUS wrap_SQLAllocHandleStd( void *args )
     struct SQLAllocHandleStd_params *params = args;
     return SQLAllocHandleStd( params->HandleType, (SQLHANDLE)(ULONG_PTR)params->InputHandle,
                               (SQLHANDLE *)params->OutputHandle );
-}
-
-static NTSTATUS wrap_SQLAllocStmt( void *args )
-{
-    struct SQLAllocStmt_params *params = args;
-    return SQLAllocStmt( (SQLHDBC)(ULONG_PTR)params->ConnectionHandle, (SQLHSTMT *)params->StatementHandle );
 }
 
 static NTSTATUS wrap_SQLBindCol( void *args )
@@ -732,18 +714,6 @@ static NTSTATUS wrap_SQLForeignKeysW( void *args )
                             params->PkTableName, params->NameLength3, params->FkCatalogName,
                             params->NameLength4, params->FkSchemaName, params->NameLength5,
                             params->FkTableName, params->NameLength6 );
-}
-
-static NTSTATUS wrap_SQLFreeConnect( void *args )
-{
-    struct SQLFreeConnect_params *params = args;
-    return SQLFreeConnect( (SQLHDBC)(ULONG_PTR)params->ConnectionHandle );
-}
-
-static NTSTATUS wrap_SQLFreeEnv( void *args )
-{
-    struct SQLFreeEnv_params *params = args;
-    return SQLFreeEnv( (SQLHENV)(ULONG_PTR)params->EnvironmentHandle );
 }
 
 static NTSTATUS wrap_SQLFreeHandle( void *args )
@@ -1219,11 +1189,8 @@ static NTSTATUS wrap_SQLTransact( void *args )
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     odbc_process_attach,
-    wrap_SQLAllocConnect,
-    wrap_SQLAllocEnv,
     wrap_SQLAllocHandle,
     wrap_SQLAllocHandleStd,
-    wrap_SQLAllocStmt,
     wrap_SQLBindCol,
     wrap_SQLBindParameter,
     wrap_SQLBrowseConnect,
@@ -1259,8 +1226,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_SQLFetchScroll,
     wrap_SQLForeignKeys,
     wrap_SQLForeignKeysW,
-    wrap_SQLFreeConnect,
-    wrap_SQLFreeEnv,
     wrap_SQLFreeHandle,
     wrap_SQLFreeStmt,
     wrap_SQLGetConnectAttr,
@@ -3471,11 +3436,8 @@ static NTSTATUS wow64_SQLTablesW( void *args )
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     odbc_process_attach,
-    wrap_SQLAllocConnect,
-    wrap_SQLAllocEnv,
     wrap_SQLAllocHandle,
     wrap_SQLAllocHandleStd,
-    wrap_SQLAllocStmt,
     wow64_SQLBindCol,
     wow64_SQLBindParameter,
     wow64_SQLBrowseConnect,
@@ -3511,8 +3473,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wrap_SQLFetchScroll,
     wow64_SQLForeignKeys,
     wow64_SQLForeignKeysW,
-    wrap_SQLFreeConnect,
-    wrap_SQLFreeEnv,
     wrap_SQLFreeHandle,
     wrap_SQLFreeStmt,
     wow64_SQLGetConnectAttr,

@@ -34,11 +34,8 @@ static inline BOOL SUCCESS( SQLRETURN ret ) { return ret == SQL_SUCCESS || ret =
 enum sql_funcs
 {
     process_attach,
-    unix_SQLAllocConnect,
-    unix_SQLAllocEnv,
     unix_SQLAllocHandle,
     unix_SQLAllocHandleStd,
-    unix_SQLAllocStmt,
     unix_SQLBindCol,
     unix_SQLBindParameter,
     unix_SQLBrowseConnect,
@@ -74,8 +71,6 @@ enum sql_funcs
     unix_SQLFetchScroll,
     unix_SQLForeignKeys,
     unix_SQLForeignKeysW,
-    unix_SQLFreeConnect,
-    unix_SQLFreeEnv,
     unix_SQLFreeHandle,
     unix_SQLFreeStmt,
     unix_SQLGetConnectAttr,
@@ -229,17 +224,6 @@ struct descriptor
     struct object hdr;
 };
 
-struct SQLAllocConnect_params
-{
-    UINT64  EnvironmentHandle;
-    UINT64 *ConnectionHandle;
-};
-
-struct SQLAllocEnv_params
-{
-    UINT64 *EnvironmentHandle;
-};
-
 struct SQLAllocHandle_params
 {
     INT16   HandleType;
@@ -252,12 +236,6 @@ struct SQLAllocHandleStd_params
     INT16   HandleType;
     UINT64  InputHandle;
     UINT64 *OutputHandle;
-};
-
-struct SQLAllocStmt_params
-{
-    UINT64  ConnectionHandle;
-    UINT64 *StatementHandle;
 };
 
 struct SQLBindCol_params
@@ -612,16 +590,6 @@ struct SQLForeignKeysW_params
     INT16  NameLength5;
     WCHAR *FkTableName;
     INT16  NameLength6;
-};
-
-struct SQLFreeConnect_params
-{
-    UINT64 ConnectionHandle;
-};
-
-struct SQLFreeEnv_params
-{
-    UINT64 EnvironmentHandle;
 };
 
 struct SQLFreeHandle_params
