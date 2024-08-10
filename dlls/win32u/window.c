@@ -1880,7 +1880,7 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
         window_surface_release( new_surface );
         window_surface_add_ref( (new_surface = &dummy_surface) );
     }
-    else if (needs_surface && !user_driver->pCreateWindowSurface( hwnd, create_layered, surface_rect, &new_surface ))
+    else if (needs_surface && !user_driver->pCreateWindowSurface( hwnd, create_layered, surface_rect, &new_surface ) && new_surface)
     {
         /* create or update window surface for top-level windows if the driver doesn't implement CreateWindowSurface */
         window_surface_release( new_surface );
