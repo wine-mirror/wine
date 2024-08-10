@@ -406,6 +406,8 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         style = (style & ~BS_TYPEMASK) | btn_type;
         WIN_SetStyle( hWnd, style, BS_TYPEMASK & ~style );
 
+        NtUserNotifyWinEvent( EVENT_OBJECT_STATECHANGE, hWnd, OBJID_CLIENT, 0 );
+
         /* Only redraw if lParam flag is set.*/
         if (lParam)
             NtUserInvalidateRect( hWnd, NULL, TRUE );
