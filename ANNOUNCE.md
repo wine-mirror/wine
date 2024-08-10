@@ -1,12 +1,11 @@
-The Wine development release 9.14 is now available.
+The Wine development release 9.15 is now available.
 
 What's new in this release:
-  - Mailslots reimplemented using server-side I/O.
+  - Prototype and constructor objects in MSHTML.
   - More support for ODBC Windows drivers.
-  - Still more user32 data structures in shared memory.
   - Various bug fixes.
 
-The source is available at <https://dl.winehq.org/wine/source/9.x/wine-9.14.tar.xz>
+The source is available at <https://dl.winehq.org/wine/source/9.x/wine-9.15.tar.xz>
 
 Binary packages for various distributions will be available
 from <https://www.winehq.org/download>
@@ -16,301 +15,335 @@ You will find documentation on <https://www.winehq.org/documentation>
 Wine is available thanks to the work of many people.
 See the file [AUTHORS][1] for the complete list.
 
-[1]: https://gitlab.winehq.org/wine/wine/-/raw/wine-9.14/AUTHORS
+[1]: https://gitlab.winehq.org/wine/wine/-/raw/wine-9.15/AUTHORS
 
 ----------------------------------------------------------------
 
-### Bugs fixed in 9.14 (total 20):
+### Bugs fixed in 9.15 (total 18):
 
- - #11268  Civilization I for Windows (16-bt) incorrectly displays some dialogues
- - #32679  cmd.exe Add support for || and &&
- - #48167  1000 Mots V4.0.2 freeze when 3 words are pronounced - Underrun of data
- - #48455  Multiple .inf driver installers hang due to missing handling of architecture-specific SourceDisks{Names,Files} .inf sections (Native Instruments Native Access 1.9, WinCDEmu 4.1)
- - #49944  Multiple games fail to detect audio device (Tom Clancy's Splinter Cell: Conviction, I Am Alive)
- - #50231  Ys: Origin shows black screen during video playback
- - #54735  AOL (America Online) Desktop Beta fails when installing .net 4.8
- - #54788  AOL 5.0 Installation fails
- - #55662  Different behaviour of "set" command
- - #55798  Unreal Engine 5.2: Wine minidumps take hours to load into a debugger
- - #56751  New WoW64 compilation fails on Ubuntu Bionic
- - #56861  Background color of selected items in ListView(or ListCtrl) is white
- - #56954  Regression causes wine to generate ntlm_auth <defunct> processes
- - #56956  MSVC cl.exe 19.* fails to flush intermediate file
- - #56957  CEF application (BSG Launcher) freezes on mouse hover action
- - #56958  ChessBase 17 crashes after splash screen
- - #56969  Act of War (Direct Action, High Treason) crashes in wined3d when loading the mission
- - #56972  Warlords III: Darklords Rising shows empty screen in virtual desktop
- - #56977  accept()-ed socket fds are never marked as cacheable
- - #56994  mbstowcs for UTF8, with an exact (not overallocated) output buffer size fails
+ - #35991  WinProladder v3.x crashes during 'PLC connect check' (async event poll worker writes to user event mask buffer whose lifetime is limited)
+ - #39513  Desperados: input lag after resuming from pause
+ - #51704  Final Fantasy XI Online: Short Freezes / Stutters Every Second
+ - #53531  FTDI Vinculum II IDE gets "Out of memory" error on startup
+ - #54861  UK's Kalender: Crashes when adding or changing event category - comctl32 related
+ - #56140  ListView with a custom column sorter produces wrong results
+ - #56494  Splashtop RMM v3.6.6.0 crashes
+ - #56811  Jade Empire configuration tool fails to show up (only in virtual desktop mode)
+ - #56984  Star Wars: Knights of the Old Republic (Steam, GOG): broken rendering when soft shadows enabled
+ - #56989  Doom 3: BFG Edition fails to start in virtual desktop
+ - #56993  Can not change desktop window resolution (pixel size)
+ - #57005  Wine segfaults on macOS when run from install
+ - #57008  _fdopen(0) does not return stdin after it was closed
+ - #57012  Astra 2 needs kernel32.SetFirmwareEnvironmentVariableA
+ - #57026  compile_commands.json change causes segmentation faults when running configure.
+ - #57028  LTSpice will not print with WINE 9.xx on Ubuntu 24.04
+ - #57033  ChessBase 17 crashes after splash screen again
+ - #57042  rsaenh RSAENH_CPDecrypt crashes when an application tries to decrypt an empty string
 
-### Changes since 9.13:
+### Changes since 9.14:
 ```
-Alex Henrie (1):
-      shell32: Put temp directory in %LOCALAPPDATA%\Temp by default.
+Alex Henrie (2):
+      atl: Correct comment above AtlModuleRegisterTypeLib function.
+      atl: Only warn in AtlModuleGetClassObject if the class was not found.
 
-Alexandre Julliard (3):
-      ntdll: Implement KiUserEmulationDispatcher on ARM64EC.
-      urlmon/tests: Fix a test that fails after WineHQ updates.
-      ntdll: Always clear xstate flag on collided unwind.
+Alexandre Julliard (2):
+      makedep: Don't add empty cflags to a compile command.
+      dnsapi/tests: Update tests for winehq.org DNS changes.
 
-Alexandros Frantzis (2):
-      winex11: Query proper GLX attribute for pbuffer bit.
-      opengl32: Fix match criteria for WGL_DRAW_TO_PBUFFER_ARB.
-
-Alistair Leslie-Hughes (5):
-      odbc32: Handle NULL handles in SQLError/W.
-      odbc32: Fake success for SQL_ATTR_CONNECTION_POOLING in SQLSetEnvAttr.
-      odbc32: Handle NULL EnvironmentHandle in SQLTransact.
-      msado15: Fake success in _Recordset::CancelUpdate.
-      msado15: Report we support all options in _Recordset::Supports.
-
-Arkadiusz Hiler (1):
-      ntdll: Use the correct io callback when writing to a socket.
+Alistair Leslie-Hughes (2):
+      include: Add *_SHIFT macros.
+      include: Forward declare all gdiplus classes.
 
 Billy Laws (1):
-      ntdll: Map PSTATE.SS to the x86 trap flag on ARM64EC.
+      configure: Test PE compilers after setting their target argument.
 
-Biswapriyo Nath (1):
-      include: Fix return type of IXAudio2MasteringVoice::GetChannelMask in xaudio2.idl.
+Brendan Shanks (5):
+      include: Ensure that x86_64 syscall thunks have a consistent length when built with Clang.
+      ntdll: Use environ/_NSGetEnviron() directly rather than caching it in main_envp.
+      ntdll: Use _NSGetEnviron() instead of environ when spawning the server on macOS.
+      msv1_0: Use _NSGetEnviron() instead of environ on macOS.
+      mmdevapi: Remove unused critical section from MMDevice.
 
-Brendan Shanks (1):
-      wine.inf: Don't register wineqtdecoder.dll.
+Connor McAdams (9):
+      d3dx9/tests: Add tests for D3DXLoadSurfaceFromMemory() with a multisampled surface.
+      d3dx9: Return success in D3DXLoadSurfaceFromMemory() for multisampled destination surfaces.
+      d3dx9: Return failure from D3DXLoadSurfaceFromMemory() if d3dx_load_pixels_from_pixels() fails.
+      d3dx9/tests: Add d3dx filter argument value tests.
+      d3dx9: Introduce helper function for retrieving the mip filter value in texture from file functions.
+      d3dx9: Further validate filter argument passed to D3DXFilterTexture().
+      d3dx9: Validate filter argument in D3DXLoadVolumeFrom{Volume,FileInMemory,Memory}().
+      d3dx9: Validate filter argument in D3DXLoadSurfaceFrom{Surface,FileInMemory,Memory}().
+      d3dx9: Validate filter argument in texture from file functions.
 
-Connor McAdams (14):
-      d3d9/tests: Add tests for IDirect3DDevice9::UpdateSurface() with a multisampled surface.
-      d3d9: Return failure if a multisampled surface is passed to IDirect3DDevice9::UpdateSurface().
-      ddraw/tests: Add tests for preserving d3d scene state during primary surface creation.
-      d3d9/tests: Add a test for device reset after beginning a scene.
-      d3d8/tests: Add a test for device reset after beginning a scene.
-      wined3d: Clear scene state on device state reset.
-      d3dx9/tests: Make some test structures static const.
-      d3dx9/tests: Reorder test structure members.
-      d3dx9/tests: Add more D3DXCreateCubeTextureFromFileInMemory{Ex}() tests.
-      d3dx9: Refactor texture creation and cleanup in D3DXCreateCubeTextureFromFileInMemoryEx().
-      d3dx9: Cleanup texture value argument handling in D3DXCreateCubeTextureFromFileInMemoryEx().
-      d3dx9: Use d3dx_image structure inside of D3DXCreateCubeTextureFromFileInMemoryEx().
-      d3dx9: Add support for specifying which array layer to get pixel data from to d3dx_image_get_pixels().
-      d3dx9: Add support for loading non-square cubemap DDS files into cube textures.
+Dmitry Timoshkov (1):
+      sechost: Check both lpServiceName and lpServiceProc for NULL in StartServiceCtrlDispatcher().
 
-Daniel Lehman (3):
-      odbc32: Handle NULL attribute in SQLColAttribute[W].
-      odbc32: Return success for handled attributes in SQLSetConnectAttrW.
-      mshtml: Add application/pdf MIME type.
+Elizabeth Figura (14):
+      wined3d: Invalidate push constant flags only for the primary stateblock.
+      wined3d: Feed the material through a push constant buffer.
+      wined3d: Move get_projection_matrix() to glsl_shader.c.
+      wined3d: Feed the projection matrix through a push constant buffer.
+      wined3d: Do not use the normal or modelview matrices when drawing pretransformed vertices.
+      wined3d: Feed modelview matrices through a push constant buffer.
+      wined3d: Pass d3d_info and stream_info pointers to wined3d_ffp_get_[vf]s_settings().
+      wined3d: Feed the precomputed normal matrix through a push constant buffer.
+      wined3d: Store the normal matrix as a struct wined3d_matrix.
+      wined3d: Hardcode 1.0 point size for shader model >= 4.
+      wined3d: Feed point scale constants through a push constant buffer.
+      d3d9/tests: Test position attribute W when using the FFP.
+      wined3d: Use 1.0 for position W when using the FFP.
+      d3d9/tests: Add comprehensive fog tests.
 
-Dmitry Timoshkov (3):
-      odbc32: Correct 'WINAPI' placement for function pointers.
-      light.msstyles: Use slightly darker color for GrayText to make text more readable.
-      dwrite: Return correct rendering and gridfit modes from ::GetRecommendedRenderingMode().
+Eric Pouech (1):
+      cmd: Fix test failures for SET /P command.
 
-Elizabeth Figura (32):
-      setupapi/tests: Add more tests for SetupGetSourceFileLocation().
-      setupapi: Correctly interpret the INFCONTEXT parameter in SetupGetSourceFileLocation().
-      setupapi: Return the file's relative path from SetupGetSourceFileLocation().
-      setupapi: Use SetupGetIntField() in SetupGetSourceFileLocation().
-      ddraw: Call wined3d_stateblock_texture_changed() when the color key changes.
-      wined3d: Store all light constants in a separate structure.
-      wined3d: Store the cosines of the light angle in struct wined3d_light_constants.
-      wined3d: Feed light constants through a push constant buffer.
-      wined3d: Sort light constants by type.
-      wined3d: Transform light coordinates by the view matrix in wined3d_device_apply_stateblock().
-      setupapi: Use SetupGetSourceFileLocation() in get_source_info().
-      setupapi: Use SetupGetSourceInfo() in get_source_info().
-      setupapi/tests: Test installing an INF file with architecture-specific SourceDisks* sections.
-      setupapi: Fix testing for a non-empty string in get_source_info().
-      ntoskrnl/tests: Remove unnecessary bits from add_file_to_catalog().
-      setupapi/tests: Make function pointers static.
-      setupapi/tests: Move SetupCopyOEMInf() tests to devinst.c.
-      setupapi/tests: Use a randomly generated directory and hardcoded file paths in test_copy_oem_inf().
-      setupapi/tests: Use a signed catalog file in test_copy_oem_inf().
-      wined3d: Avoid division by zero in wined3d_format_get_float_color_key().
-      wined3d: Don't bother updating the colour key if the texture doesn't have WINED3D_CKEY_SRC_BLT.
-      wined3d: Move clip plane constant loading to shader_glsl_load_constants().
-      wined3d: Correct clip planes for the view transform in wined3d_device_apply_stateblock().
-      wined3d: Pass stream info to get_texture_matrix().
-      wined3d: Do not use the texture matrices when drawing pretransformed vertices.
-      wined3d: Feed texture matrices through a push constant buffer.
-      server: Make pipe ends FD_TYPE_DEVICE.
-      kernel32/tests: Add more mailslot tests.
-      server: Treat completion with error before async_handoff() as error.
-      ntdll: Respect the "options" argument to NtCreateMailslotFile.
-      server: Reimplement mailslots using server-side I/O.
-      ntdll: Stub NtQueryInformationToken(TokenUIAccess).
+Esme Povirk (6):
+      comctl32: Handle WM_GETOBJECT in tab control.
+      gdi32: Fix out-of-bounds write in EMR_ALPHABLEND handling.
+      win32u: Implement EVENT_SYSTEM_CAPTURESTART/END.
+      user32: Implement EVENT_OBJECT_STATECHANGE for BST_PUSHED.
+      user32: Implement EVENT_OBJECT_STATECHANGE for BM_SETCHECK.
+      gdi32: Bounds check EMF handle tables.
 
-Eric Pouech (20):
-      winedump: Protect against corrupt minidump files.
-      winedump: Dump comment streams in minidump.
-      cmd: Add success/failure tests for pipes and drive change.
-      cmd: Set success/failure for change drive command.
-      cmd: Run pipe LHS & RHS outside of any batch context.
-      cmd: Better test error handling for pipes.
-      cmd: Enhance CHOICE arguement parsing.
-      cmd: Implement timeout support in CHOICE command.
-      include/mscvpdb.h: Use flexible array members for all trailing array fields.
-      include/msvcpdb.h: Use flexible array members for codeview_fieldtype union.
-      include/mscvpdb.h: Use flexible array members for codeview_symbol union.
-      include/mscvpdb.h: Use flexible array members for codeview_type with variable.
-      include/mscvpdb.h: Use flexible array members for the rest of structures.
-      cmd: Some tests about tampering with current batch file.
-      cmd: Link env_stack to running context.
-      cmd: Split WCMD_batch() in two functions.
-      cmd: Introduce helpers to find a label.
-      cmd: No longer pass a HANDLE to WCMD_ReadAndParseLine.
-      cmd: Save and restore file position from BATCH_CONTEXT.
-      cmd: Don't keep batch file opened.
+Fabian Maurer (5):
+      kernel32: Add SetFirmwareEnvironmentVariableA stub.
+      odbc32: In get_drivers prevent memory leak in error case (coverity).
+      odbc32: In get_drivers simplify loop condition.
+      iphlpapi: Add stub for SetCurrentThreadCompartmentId.
+      win32u: Remove superflous null check (coverity).
 
-Esme Povirk (3):
-      win32u: Implement EVENT_OBJECT_DESTROY.
-      win32u: Implement EVENT_OBJECT_STATECHANGE for WS_DISABLED.
-      win32u: Implement EVENT_OBJECT_VALUECHANGE for scrollbars.
+Gabriel Ivăncescu (1):
+      jscript: Implement arguments.caller.
 
-Fabian Maurer (1):
-      ntdll: Prevent double close in error case (coverity).
+Gerald Pfeifer (1):
+      nsiproxy.sys: Fix the build on non-Apple, non-Linux systems.
 
-Fan WenJie (1):
-      win32u: Fix incorrect comparison in add_virtual_modes.
+Hans Leidekker (25):
+      odbc32: Forward SQLGetConnectAttr() to the Unicode version if needed.
+      odbc32: Forward SQLGetConnectOption() to the Unicode version if needed.
+      odbc32: Forward SQLGetCursorName() to the Unicode version if needed.
+      odbc32: Forward SQLGetDescField() to the Unicode version if needed.
+      odbc32: Forward SQLGetDescRec() to the Unicode version if needed.
+      odbc32: Forward SQLGetDescField() to the Unicode version if needed.
+      odbc32: Forward SQLGetInfo() to the Unicode version if needed.
+      odbc32: Forward SQLGetStmtAttr() to the Unicode version if needed.
+      odbc32: Forward SQLGetTypeInfo() to the Unicode version if needed.
+      odbc32: Forward SQLNativeSql() to the Unicode version if needed.
+      odbc32: Forward SQLPrepare() to the Unicode version if needed.
+      odbc32: Forward SQLPrimaryKeys() to the Unicode version if needed.
+      odbc32: Forward SQLProcedureColumns() to the Unicode version if needed.
+      odbc32: Forward SQLProcedures() to the Unicode version if needed.
+      odbc32: Make the driver loader thread-safe.
+      odbc32: Return an error when a required driver entry point is missing.
+      odbc32: Forward SQLSetConnectAttr() to the Unicode version if needed.
+      odbc32: Forward SQLSetConnectOption() to the Unicode version if needed.
+      odbc32: Forward SQLSetCursorName() to the Unicode version if needed.
+      odbc32: Forward SQLSetDescField() to the Unicode version if needed.
+      odbc32: Forward SQLSetStmtAttr() to the Unicode version if needed.
+      odbc32: Forward SQLSpecialColumns() to the Unicode version if needed.
+      odbc32: Forward SQLStatistics() to the Unicode version if needed.
+      odbc32: Forward SQLTablePrivileges() to the Unicode version if needed.
+      odbc32: Forward SQLTables() to the Unicode version if needed.
 
-Francisco Casas (2):
-      quartz: Emit FIXME when the rendering surface is smaller than the source in VMR9.
-      quartz: Properly copy data to render surfaces of planar formats in VMR9.
-
-François Gouget (1):
-      wineboot: Downgrade the wineprefix update message to a trace.
-
-Gabriel Ivăncescu (11):
-      mshtml: Make sure we aren't detached before setting interactive ready state.
-      jscript: Make JS_COUNT_OPERATION a no-op.
-      mshtml: Implement event.cancelBubble.
-      mshtml: Implement HTMLEventObj's cancelBubble on top of the underlying event's cancelBubble.
-      mshtml: Fix special case between stopImmediatePropagation and setting cancelBubble to false.
-      mshtml: Use bitfields for the event BOOL fields.
-      mshtml: Don't use -moz prefix for box-sizing CSS property.
-      mshtml/tests: Add more tests with invalid CSS props for (get|set)PropertyValue.
-      mshtml: Compactify the style_props expose tests for each style object into a single function.
-      mshtml: Implement style msTransition.
-      mshtml: Implement style msTransform.
-
-Hans Leidekker (27):
-      odbc32: Fix a couple of spec file entries.
-      odbc32: Use LoadLibraryExW() instead of LoadLibraryW().
-      odbc32: Forward SQLDriverConnect() to the Unicode version if needed.
-      odbc32: Forward SQLGetDiagRec() to the Unicode version if needed.
-      odbc32: Forward SQLBrowseConnect() to the Unicode version if needed.
-      odbc32: Forward SQLColAttributes() to the Unicode version if needed.
-      odbc32: Forward SQLColAttribute() to the Unicode version if needed.
-      odbc32: Properly handle string length in traces.
-      winhttp/tests: Mark a test as broken on old Windows versions.
-      winhttp/tests: Fix test failures introduced by the server upgrade.
-      odbc32: Forward SQLColumnPrivileges() to the Unicode version if needed.
-      odbc32: Forward SQLColumns() to the Unicode version if needed.
-      odbc32: Forward SQLConnect() to the Unicode version if needed.
-      odbc32: Forward SQLDescribeCol() to the Unicode version if needed.
-      odbc32: Forward SQLError() to the Unicode version if needed.
-      odbc32: Handle missing Unicode driver entry points.
-      odbc32: Forward SQLExecDirect() to the Unicode version if needed.
-      odbc32: Forward SQLForeignKeys() to the Unicode version if needed.
-      odbc32: Avoid a clang warning.
-      odbc32: Get rid of the wrappers for SQLGetDiagRecA() and SQLDataSourcesA().
-      odbc32/tests: Add tests for SQLTransact().
-      odbc32: Fix setting the Driver registry value.
-      odbc32: Find the driver filename through the ODBCINST.INI key.
-      secur32: Handle GNUTLS_MAC_AEAD.
-      secur32/tests: Switch to TLS 1.2 for connections to test.winehq.org.
-      winhttp/tests: Mark more test results as broken on old Windows versions.
-      secur32/tests: Mark some test results as broken on old Windows versions.
-
-Herman Semenov (3):
-      dbghelp: Fix misprint access to struct with invalid case.
-      dplayx: Fix check structure before copy.
+Herman Semenov (1):
       gdiplus: Fixed order of adding offset and result ternary operator.
 
-Jacek Caban (32):
-      mshtml: Use host object script bindings for Attr class.
-      mshtml: Use host object script bindings for event objects.
-      mshtml: Use host object script bindings for PluginArray class.
-      mshtml: Use host object script bindings for MimeTypeArray class.
-      mshtml: Use host object script bindings for MSNamespaceInfoCollection class.
-      mshtml: Use host object script bindings for MSEventObj class.
-      mshtml: Use host object script bindings for XMLHttpRequest class.
-      mshtml: Directly use dispex_prop_put and dispex_prop_get in HTMLElement implementation.
-      mshtml: Factor out dispex_next_id.
-      mshtml: Don't use BSTR in find_dispid.
-      mshtml: Don't use BSTR in lookup_dispid.
-      mshtml: Don't use BSTR in get_dispid.
-      mshtml: Factor out dispex_get_id.
-      mshtml: Use dispex_prop_put in HTMLDOMAttribute_put_nodeValue.
-      mshtml: Factor out dispex_prop_name.
-      jscript: Check if PROP_DELETED is actually an external property in find_prop_name.
-      mshtml: Use host object script bindings for DOM nodes.
-      mshtml: Use dispex_get_id in JSDispatchHost_LookupProperty.
-      mshtml: Introduce get_prop_desc call.
-      mshtml: Use host object script bindings for HTMLRectCollection.
-      jscript: Make sure to use the right name for a prototype reference in find_prop_name_prot.
-      jscript: Fixup prototype references as part of lookup.
-      jscript: Use a dedicated jsclass_t entry for host objects.
-      jscript: Improve invoke_prop_func error handling.
-      mshtml: Explicitly specify case insensitive search in GetIDsOfNames.
-      jscript: Treat external properties as volatile.
-      jscript: Suport deleting host object properties.
-      jscript: Support configuring host properties.
-      jscript: Allow host objects to implement fdexNameEnsure.
-      mshtml: Use host object script bindings for HTMLFormElement.
-      mshtml: Use ensure_real_info in dispex_compat_mode.
-      mshtml: Use host object script bindings for document nodes.
+Jacek Caban (83):
+      mshtml: Use dispex_next_id in NextProperty implementation.
+      jscript: Ensure that external property is still valid in jsdisp_next_prop.
+      mshtml: Use host object script bindings for storage objects.
+      mshtml: Use host object script bindings for frame elements.
+      mshtml: Use host object script bindings for iframe elements.
+      mshtml: Introduce get_outer_iface and use it instead of get_dispatch_this.
+      jscript: Allow host objects to specify an outer interface.
+      mshtml: Return E_UNEXPECTED for unknown ids in JSDispatchHost_CallFunction.
+      mshtml: Use get_prop_descs for window object.
+      mshtml: Use host object script bindings for Window object.
+      mshtml: Introduce get_script_global and use it instead of get_compat_mode.
+      mshtml: Use HTMLPluginContainer for DispatchEx functions in object element.
+      mshtml: Store property name in HTMLPluginContainer.
+      mshtml: Use host object script bindings for object elements.
+      mshtml: Use host object script bindings for select elements.
+      mshtml: Use host object script bindings for HTMLRect.
+      mshtml: Use host object script bindings for DOMTokenList.
+      mshtml: Use dispex_index_prop_desc for HTMLFiltersCollection.
+      mshtml: Use host object script bindings for HTMLAttributeCollection.
+      mshtml: Use dispex_index_prop_desc for HTMLElementCollection.
+      mshtml: Use host object script bindings for HTMLDOMChildrenCollection.
+      mshtml: Use host object script bindings for HTMLStyleSheetsCollection.
+      mshtml: Use host object script bindings for HTMLStyleSheet.
+      mshtml: Use host object script bindings for HTMLStyleSheetRulesCollection.
+      mshtml: Use host object script bindings for HTMLStyleSheetRule.
+      mshtml: Use get_prop_desc for legacy function object implementation.
+      mshtml: Use host object script bindings for style objects.
+      mshtml: Add initial constructor implementation.
+      mshtml: Store vtbl in dispex_data_t.
+      mshtml: Split ensure_dispex_info.
+      mshtml: Factor out init_dispatch_from_desc.
+      mshtml: Add initial support for MSHTML prototype objects.
+      mshtml: Don't expose prototype properties directly from object instances.
+      mshtml: Store name in dispex_data_t.
+      mshtml: Use proper prototype names.
+      jscript: Allow using MSHTML constructors in instanceof expressions.
+      maintainers: Remove shdocvw from WebBrowser control section.
+      mshtml: Add support for navigator prototype objects.
+      mshtml: Add support for HTMLBodyElement object.
+      mshtml: Add initial support for prototype chains.
+      mshtml: Add support for Element and Node prototype objects.
+      mshtml: Add support for Storage prototype objects.
+      mshtml: Add support for document prototype objects.
+      mshtml: Add support for window prototype objects.
+      include: Always declare _setjmp in setjmp.h on i386 targets.
+      mshtml: Add support for image element prototype objects.
+      jscript: Introduce HostConstructor function type.
+      mshtml: Use host constructor script bindings for Image constructor object.
+      mshtml: Use host constructor script bindings for XMLHttpRequest constructor object.
+      mshtml: Add support for option element prototype objects.
+      mshtml: Use host object script bindings for Option constructor object.
+      mshtml: Add support for MutationObserver consturctor and prototype objects.
+      include: Add DECLSPEC_CHPE_PATCHABLE definition.
+      mshtml/tests: Use winetest.js helpers in xhr.js.
+      mshtml: Add support for anchor element prototype objects.
+      mshtml: Add support for area element prototype objects.
+      mshtml: Add support for form element prototype objects.
+      mshtml: Add support for frame elements prototype objects.
+      mshtml: Add support for head elements prototype objects.
+      mshtml: Add support for input elements prototype objects.
+      mshtml: Add support for link element prototype objects.
+      mshtml: Add support for object and embed element prototype objects.
+      mshtml: Add support for script element prototype objects.
+      mshtml: Add support for select element prototype objects.
+      mshtml: Add support for style element prototype objects.
+      mshtml: Add support for table and tr element prototype objects.
+      mshtml: Add support for td element prototype objects.
+      mshtml: Add support for textarea element prototype objects.
+      mshtml: Add support for svg element prototype objects.
+      mshtml: Add support for circle SVG element prototype objects.
+      mshtml: Add support for tspan SVG element prototype objects.
+      mshtml: Add support for document type node prototype objects.
+      mshtml: Add support for text node prototype objects.
+      mshtml: Get object name from its ID when possible.
+      mshtml: Add support for computed style prototype objects.
+      mshtml: Add support for style prototype objects.
+      mshtml: Add support for current style prototype objects.
+      mshtml: Add support for style sheet prototype objects.
+      mshtml: Add support for style sheet list prototype objects.
+      mshtml: Add support for CSS rule list prototype objects.
+      mshtml: Add support for CSS rule prototype objects.
+      mshtml: Add support for rect prototype objects.
+      mshtml: Make mutation_observer_ctor_dispex_vtbl const.
 
-Jinoh Kang (1):
-      server: Mark the socket as cacheable when it is an accepted or accepted-into socket.
+Jacob Czekalla (6):
+      comctl32/tests: Add test for listview sorting order.
+      comctl32: Fix sorting for listview.
+      comctl32/tests: Add test for propsheet page creation when propsheet gets initialized.
+      comctl32/propsheet: Create pages with PSP_PREMATURE on initialization.
+      comctl32/tests: Add test for PSN_QUERYINITIALFOCUS for the propsheet.
+      comctl32: Add handling for PSN_QUERYINITIALFOCUS in prop.c.
 
-Nikolay Sivov (2):
-      winhttp/tests: Add some more tests for string options in WinHttpQueryOption().
-      winhttp: Handle exact buffer length match in WinHttpQueryOption().
+Jactry Zeng (1):
+      ntdll: Try to use page size from host_page_size() for macOS.
 
-Paul Gofman (2):
-      mshtml: Check get_document_node() result in get_node().
-      dxdiagn: Fill szHardwareId for sound render devices.
+Jakub Petrzilka (1):
+      rsaenh: Don't crash when decrypting empty strings.
+
+Kieran Geary (1):
+      shell32: Make SHGetStockIconInfo() attempt to set icon.
+
+Martino Fontana (2):
+      dinput/tests: Update tests for DIPROP_SCANCODE.
+      dinput: Implement DIPROP_SCANCODE.
+
+Matteo Bruni (1):
+      d3dx9: Don't silently ignore d3dx_calculate_pixel_size() errors.
+
+Matthias Gorzellik (3):
+      hidparse: Pre-process descriptor to find TLCs.
+      winebus: Store pending reads per report-id.
+      hidclass: Create a child PDO for each HID TLC.
+
+Nikolay Sivov (3):
+      d3dx9/effect: Document one remaining header field.
+      d3dx9/tests: Add some tests for D3DXEFFECT_DESC fields.
+      d3dx9/effect: Return creator string from GetDesc().
+
+Paul Gofman (11):
+      nsiproxy.sys: Only get owning pid when needed in udp_endpoint_enumerate_all().
+      mmdevapi: Return stub interface from ASM_GetSessionEnumerator().
+      mmdevapi: Add implementation for IAudioSessionEnumerator.
+      mmdevapi/tests: Add test for IAudioSessionEnumerator.
+      ntdll: Stub NtQuerySystemInformation[Ex]( SystemProcessorIdleCycleTimeInformation ).
+      kernel32: Implement QueryIdleProcessorCycleTime[Ex]().
+      ntdll: Implement NtQuerySystemInformationEx( SystemProcessorIdleCycleTimeInformation ) on Linux.
+      ntdll: Raise exception on failed CS wait.
+      mmdevapi: Unlock session in create_session_enumerator().
+      mmdevapi: Implement control_GetSessionIdentifier().
+      mmdevapi: Implement control_GetSessionInstanceIdentifier().
 
 Piotr Caban (4):
-      ucrtbase: Fix mbstowcs on UTF8 strings.
-      msvcrt: Use thread-safe functions in _ctime64_s.
-      msvcrt: Use thread-safe functions in _ctime32_s.
-      msvcrt: Don't access input string after NULL-byte in mbstowcs.
+      msvcrt: Reuse standard streams after they are closed.
+      ntdll: Optimize NtReadVirtualMemory for in-process reads.
+      kernel32/tests: Test ReadProcessMemory on PAGE_NOACCESS memory.
+      wineps.drv: Fix EMR_SETPIXELV record playback.
 
-Rémi Bernon (16):
-      ddraw/tests: Make sure the window is restored after some minimize tests.
-      winex11: Reset empty window shape even without a window surface.
-      server: Expose the thread input keystate through shared memory.
-      win32u: Introduce a new NtUserGetAsyncKeyboardState call.
-      win32u: Use the thread input shared memory in GetKeyboardState.
-      win32u: Use the desktop shared memory in get_async_keyboard_state.
-      server: Make the get_key_state request key code mandatory.
-      server: Expose the thread input keystate lock through shared memory.
-      win32u: Use the thread input shared memory for GetKeyState.
-      winemac: Use window surface shape for color key transparency.
-      winemac: Use window surface shape for window shape region.
-      winevulkan: Fix incorrect 32->64 conversion of debug callbacks.
-      winevulkan: Use integer types in debug callbacks parameter structs.
-      winevulkan: Serialize debug callbacks parameter structures.
-      opengl32: Use integer types in debug callbacks parameter structs.
-      opengl32: Serialize debug callbacks message string.
+Rémi Bernon (27):
+      win32u: Simplify offscreen surface previous surface reuse check.
+      winex11: Rely on win32u previous surface reuse.
+      wineandroid: Rely on win32u previous surface reuse.
+      winewayland: Rely on win32u previous surface reuse.
+      winemac: Remove unnecessary old window surface bounds copy.
+      winemac: Rely on win32u previous surface reuse.
+      win32u: Avoid sending WM_PAINT to layered window surfaces.
+      win32u: Merge drivers CreateLayeredWindow with CreateWindowSurface.
+      dinput/tests: Add more tests reading multiple TLCs reports.
+      hidparse: Use ExFreePool to free preparsed data.
+      hidclass: Keep HID device desc on the FDO device.
+      hidclass: Start PDO thread in IRP_MN_START_DEVICE.
+      hidclass: Allocate child PDOs array dynamically.
+      win32u: Force updating the display cache when virtual desktop state changes.
+      hidclass: Use poll_interval == 0 for non-polled devices.
+      hidclass: Read reports with the largest input report size over TLCs.
+      hidclass: Use a single lock for PDO queues and removed flag.
+      hidclass: Pass HIDP_DEVICE_DESC to find_report_with_type_and_id.
+      hidclass: Start the HID device thread with the FDO.
+      win32u: Always use the dummy surface if a surface isn't needed.
+      win32u: Fix a typo in read_source_from_registry.
+      win32u: Always enumerate the primary source first.
+      win32u: Remove unnecessary UpdateLayeredWindow driver entry args.
+      wineandroid: Remove now unnecessary WindowPosChanging checks.
+      winemac: Remove now unnecessary WindowPosChanging checks.
+      winewayland: Remove now unnecessary WindowPosChanging checks.
+      winex11: Remove now unnecessary WindowPosChanging checks.
 
-Santino Mazza (1):
-      gdiplus: Support string alignment in GdipMeasureString.
+Spencer Wallace (2):
+      shell32/tests: Add tests for moving dir(s) to destination(s) with conflicting dir.
+      shell32: Fix FO_MOVE when destination has conflicting directory.
 
-Tim Clem (2):
-      nsiproxy.sys: Use the pcblist64 sysctl to enumerate TCP connections on macOS.
-      nsiproxy.sys: Use the pcblist64 sysctl to enumerate UDP connections on macOS.
+Sven Baars (1):
+      ntdll: Use the module debug channel in virtual_map_builtin_module().
 
-Vijay Kiran Kamuju (1):
-      cmd: Do not set enviroment variable when no input is provided by set /p command.
+Vijay Kiran Kamuju (4):
+      include: Add more Task Scheduler Trigger interface definitions.
+      include: Add ISessionStateChangeTrigger declaration.
+      include: Added IEventTrigger declaration.
+      include: Add gdiplus effect parameter structs.
 
-Zhiyi Zhang (3):
-      light.msstyles: Add Explorer::ListView subclass.
-      comctl32/tests: Add more treeview background tests.
-      comctl32/treeview: Use window color to fill background.
+Ziqing Hui (14):
+      propsys: Add stubs for variant conversion functions.
+      propsys/tests: Add tests for VariantToPropVariant.
+      propsys: Initially implement VariantToPropVariant.
+      include: Fix name of CODECAPI_AVDecVideoAcceleration_H264.
+      include: Add video encoder statistical guids.
+      include: Add video encoder header guids.
+      include: Add video encoder chroma defines.
+      include: Add video encoder color defines.
+      include: Add video encode guids.
+      include: Add video encoder max guids.
+      include: Add video encoder inverse telecine guids.
+      include: Add video encoder source defines.
+      include: Add more video encoder codec api guids.
+      winegstreamer/quartz_parser: Handle 0 size in read_thread.
 
-Ziqing Hui (5):
-      include: Add encoder codec type guids.
-      include: Add encoder common format guids.
-      include: Add encoder common attribute defines.
-      include: Add H264 encoder attribute guids.
-      include: Add video encoder output frame rate defines.
+Đorđe Mančić (1):
+      kernelbase: Implement GetTempPath2A() and GetTempPath2W().
 ```
