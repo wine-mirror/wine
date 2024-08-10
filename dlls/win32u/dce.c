@@ -115,7 +115,7 @@ static const struct window_surface_funcs offscreen_window_surface_funcs =
     offscreen_window_surface_destroy
 };
 
-void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struct window_surface **window_surface )
+static void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struct window_surface **window_surface )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     struct window_surface *surface, *previous;
@@ -136,6 +136,20 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struc
     info->bmiHeader.biCompression = BI_RGB;
 
     *window_surface = window_surface_create( sizeof(*surface), &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
+}
+
+void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_rect,
+                            struct window_surface **window_surface )
+{
+    if (!user_driver->pCreateWindowSurface( hwnd, create_layered, surface_rect, window_surface ))
+    {
+        if (*window_surface)
+        {
+            window_surface_release( *window_surface );
+            /* create an offscreen window surface if the driver doesn't implement CreateWindowSurface */
+            create_offscreen_window_surface( hwnd, surface_rect, window_surface );
+        }
+    }
 }
 
 /* window surface common helpers */
