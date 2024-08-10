@@ -183,27 +183,50 @@ struct param_binding
     struct param *param;
 };
 
-struct handle
+struct object
 {
-    /* handles */
+    UINT32 type;
     UINT64 unix_handle;
     void  *win32_handle;
     const struct win32_funcs *win32_funcs;
-    struct handle *parent;
+    struct object *parent;
+    CRITICAL_SECTION cs;
+    BOOL closed;
+};
+
+struct environment
+{
+    struct object hdr;
     /* attributes */
-    UINT32 env_attr_version;
-    UINT32 con_attr_con_timeout;
-    UINT32 con_attr_login_timeout;
+    UINT32 attr_version;
     /* drivers and data sources */
     UINT32 drivers_idx;
     void  *drivers_key;
     UINT32 sources_idx;
     void  *sources_key;
     BOOL   sources_system;
+};
+
+struct connection
+{
+    struct object hdr;
+    /* attributes */
+    UINT32 attr_con_timeout;
+    UINT32 attr_login_timeout;
+};
+
+struct statement
+{
+    struct object hdr;
     /* parameter bindings */
     struct param_binding bind_col;
     struct param_binding bind_parameter;
     UINT32 row_count;   /* number of rows returned by SQLFetch() */
+};
+
+struct descriptor
+{
+    struct object hdr;
 };
 
 struct SQLAllocConnect_params
