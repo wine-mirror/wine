@@ -58,6 +58,7 @@ struct midi_dest
     BOOL                bEnabled;
     MIDIOPENDESC        midiDesc;
     BYTE                runningStatus;
+    BYTE                dev; /* OSS device */
     WORD                wFlags;
     MIDIHDR            *lpQueueHdr;
     void               *lpExtra; /* according to port type (MIDI, FM...), extra data when needed */
@@ -81,7 +82,7 @@ struct midi_src
 
 static pthread_mutex_t in_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static unsigned int num_dests, num_srcs, num_synths, seq_refs;
+static unsigned int num_dests, num_srcs, seq_refs;
 static struct midi_dest *dests;
 static struct midi_src *srcs;
 static int load_count;
@@ -338,7 +339,6 @@ static UINT oss_midi_init(void)
     }
 
     /* windows does not seem to differentiate Synth from MIDI devices */
-    num_synths = synth_devs;
     num_dests = synth_devs + midi_devs;
     num_srcs = midi_devs;
 
@@ -399,6 +399,7 @@ static UINT oss_midi_init(void)
                 dest->caps.wNotes = sinfo.nr_voices;
             }
             dest->bEnabled = TRUE;
+            dest->dev = sinfo.device;
 
             /* We also have the information sinfo.synth_subtype, not used here
              */
@@ -444,6 +445,7 @@ static UINT oss_midi_init(void)
             len = ntdll_umbstowcs(minfo.name, strlen(minfo.name) + 1, dest->caps.szPname, ARRAY_SIZE(dest->caps.szPname));
             dest->caps.szPname[len - 1] = '\0';
             dest->bEnabled = TRUE;
+            dest->dev = minfo.device;
         }
         dest->caps.wTechnology = MOD_MIDIPORT;
         dest->caps.wVoices = 0;
@@ -547,12 +549,12 @@ void seqbuf_dump(void)
 extern const unsigned char midiFMInstrumentPatches[16 * 128];
 extern const unsigned char midiFMDrumsPatches[16 * 128];
 
-static int midi_out_fm_load(WORD dev_id, int fd)
+static int midi_out_fm_load(WORD dev, int fd)
 {
     struct sbi_instrument sbi;
     int i;
 
-    sbi.device = dev_id;
+    sbi.device = dev;
     sbi.key = FM_PATCH;
 
     memset(sbi.operators + 16, 0, 16);
@@ -592,9 +594,9 @@ static void midi_out_fm_reset(WORD dev_id)
     for (i = 0; i < dest->caps.wVoices; i++)
     {
         if (voice[i].status != sVS_UNUSED)
-            SEQ_STOP_NOTE(dev_id, i, voice[i].note, 64);
-        SEQ_KEY_PRESSURE(dev_id, i, 127, 0);
-        SEQ_CONTROL(dev_id, i, SEQ_VOLMODE, VOL_METHOD_LINEAR);
+            SEQ_STOP_NOTE(dest->dev, i, voice[i].note, 64);
+        SEQ_KEY_PRESSURE(dest->dev, i, 127, 0);
+        SEQ_CONTROL(dest->dev, i, SEQ_VOLMODE, VOL_METHOD_LINEAR);
         voice[i].note = 0;
         voice[i].channel = -1;
         voice[i].cntMark = 0;
@@ -681,7 +683,7 @@ static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, stru
             free(extra);
             return MMSYSERR_ERROR;
         }
-        if (midi_out_fm_load(dev_id, fd) < 0)
+        if (midi_out_fm_load(dest->dev, fd) < 0)
         {
             seq_close(fd);
             dest->lpExtra = NULL;
@@ -797,7 +799,7 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
             if (voice[i].status == sVS_PLAYING && voice[i].channel == chn && voice[i].note == d1)
             {
                 voice[i].status = sVS_UNUSED;
-                SEQ_STOP_NOTE(dev_id, i, d1, d2);
+                SEQ_STOP_NOTE(dest->dev, i, d1, d2);
             }
         }
         break;
@@ -809,7 +811,7 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
                 if (voice[i].status == sVS_PLAYING && voice[i].channel == chn && voice[i].note == d1)
                 {
                     voice[i].status = sVS_UNUSED;
-                    SEQ_STOP_NOTE(dev_id, i, d1, 64);
+                    SEQ_STOP_NOTE(dest->dev, i, d1, 64);
                 }
             }
             break;
@@ -832,13 +834,13 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
         TRACE("playing on voice=%d, pgm=%d, pan=0x%02X, vol=0x%02X, bender=0x%02X, note=0x%02X, vel=0x%02X\n",
               nv, channel[chn].program, channel[chn].balance, channel[chn].volume, channel[chn].bender, d1, d2);
 
-        SEQ_SET_PATCH(dev_id, nv, IS_DRUM_CHANNEL(extra, chn) ?
+        SEQ_SET_PATCH(dest->dev, nv, IS_DRUM_CHANNEL(extra, chn) ?
                       (128 + d1) : channel[chn].program);
-        SEQ_BENDER_RANGE(dev_id, nv, channel[chn].benderRange * 100);
-        SEQ_BENDER(dev_id, nv, channel[chn].bender);
-        SEQ_CONTROL(dev_id, nv, CTL_PAN, channel[chn].balance);
-        SEQ_CONTROL(dev_id, nv, CTL_EXPRESSION, channel[chn].expression);
-        SEQ_START_NOTE(dev_id, nv, d1, d2);
+        SEQ_BENDER_RANGE(dest->dev, nv, channel[chn].benderRange * 100);
+        SEQ_BENDER(dest->dev, nv, channel[chn].bender);
+        SEQ_CONTROL(dest->dev, nv, CTL_PAN, channel[chn].balance);
+        SEQ_CONTROL(dest->dev, nv, CTL_EXPRESSION, channel[chn].expression);
+        SEQ_START_NOTE(dest->dev, nv, d1, d2);
         voice[nv].status = channel[chn].sustain ? sVS_SUSTAINED : sVS_PLAYING;
         voice[nv].note = d1;
         voice[nv].channel = chn;
@@ -847,7 +849,7 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
     case MIDI_KEY_PRESSURE:
         for (i = 0; i < dest->caps.wVoices; i++)
             if (voice[i].status != sVS_UNUSED && voice[i].channel == chn && voice[i].note == d1)
-                SEQ_KEY_PRESSURE(dev_id, i, d1, d2);
+                SEQ_KEY_PRESSURE(dest->dev, i, d1, d2);
         break;
     case MIDI_CTL_CHANGE:
         switch (d1)
@@ -870,7 +872,7 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
                     if (voice[i].status == sVS_SUSTAINED && voice[i].channel == chn)
                     {
                         voice[i].status = sVS_UNUSED;
-                        SEQ_STOP_NOTE(dev_id, i, voice[i].note, 64);
+                        SEQ_STOP_NOTE(dest->dev, i, voice[i].note, 64);
                     }
                 }
             }
@@ -888,7 +890,7 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
                     channel[chn].benderRange = d2;
                     for (i = 0; i < dest->caps.wVoices; i++)
                         if (voice[i].channel == chn)
-                            SEQ_BENDER_RANGE(dev_id, i, channel[chn].benderRange);
+                            SEQ_BENDER_RANGE(dest->dev, i, channel[chn].benderRange);
                 }
                 break;
 
@@ -896,7 +898,7 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
                 channel[chn].benderRange = 2;
                 for (i = 0; i < dest->caps.wVoices; i++)
                     if (voice[i].channel == chn)
-                        SEQ_BENDER_RANGE(dev_id, i, channel[chn].benderRange);
+                        SEQ_BENDER_RANGE(dest->dev, i, channel[chn].benderRange);
                 break;
             default:
                 TRACE("Data entry: regPmt=0x%02x%02x, nrgPmt=0x%02x%02x with %x\n",
@@ -913,7 +915,7 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
                 if (voice[i].status != sVS_UNUSED && voice[i].channel == chn)
                 {
                     voice[i].status = sVS_UNUSED;
-                    SEQ_STOP_NOTE(dev_id, i, voice[i].note, 64);
+                    SEQ_STOP_NOTE(dest->dev, i, voice[i].note, 64);
                 }
             }
             break;
@@ -924,7 +926,7 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
                 if (voice[i].status == sVS_PLAYING && voice[i].channel == chn)
                 {
                     voice[i].status = sVS_UNUSED;
-                    SEQ_STOP_NOTE(dev_id, i, voice[i].note, 64);
+                    SEQ_STOP_NOTE(dest->dev, i, voice[i].note, 64);
                 }
             }
             break;
@@ -939,14 +941,14 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
     case MIDI_CHN_PRESSURE:
         for (i = 0; i < dest->caps.wVoices; i++)
             if (voice[i].status != sVS_UNUSED && voice[i].channel == chn)
-                SEQ_KEY_PRESSURE(dev_id, i, voice[i].note, d1);
+                SEQ_KEY_PRESSURE(dest->dev, i, voice[i].note, d1);
 
         break;
     case MIDI_PITCH_BEND:
         channel[chn].bender = (d2 << 7) + d1;
         for (i = 0; i < dest->caps.wVoices; i++)
             if (voice[i].channel == chn)
-                SEQ_BENDER(dev_id, i, channel[chn].bender);
+                SEQ_BENDER(dest->dev, i, channel[chn].bender);
         break;
     case MIDI_SYSTEM_PREFIX:
         switch (evt & 0x0F)
@@ -974,13 +976,6 @@ static UINT midi_out_port_data(WORD dev_id, UINT data)
 {
     struct midi_dest *dest = dests + dev_id;
     BYTE evt = LOBYTE(LOWORD(data)), d1, d2;
-    int dev = dev_id - num_synths;
-
-    if (dev < 0)
-    {
-        WARN("Internal error on devID (%u) !\n", dev_id);
-        return MIDIERR_NODEVICE;
-    }
 
     if (evt & 0x80)
     {
@@ -1008,20 +1003,20 @@ static UINT midi_out_port_data(WORD dev_id, UINT data)
     case MIDI_PITCH_BEND:
         if (LOBYTE(LOWORD(data)) >= 0x80)
         {
-            SEQ_MIDIOUT(dev, evt);
+            SEQ_MIDIOUT(dest->dev, evt);
             dest->runningStatus = evt;
         }
-        SEQ_MIDIOUT(dev, d1);
-        SEQ_MIDIOUT(dev, d2);
+        SEQ_MIDIOUT(dest->dev, d1);
+        SEQ_MIDIOUT(dest->dev, d2);
         break;
     case MIDI_PGM_CHANGE:
     case MIDI_CHN_PRESSURE:
         if (LOBYTE(LOWORD(data)) >= 0x80)
         {
-            SEQ_MIDIOUT(dev, evt);
+            SEQ_MIDIOUT(dest->dev, evt);
             dest->runningStatus = evt;
         }
-        SEQ_MIDIOUT(dev, d1);
+        SEQ_MIDIOUT(dest->dev, d1);
         break;
     case MIDI_SYSTEM_PREFIX:
         switch (evt & 0x0F)
@@ -1039,26 +1034,26 @@ static UINT midi_out_port_data(WORD dev_id, UINT data)
         case 0x0B: /* Continue */
         case 0x0C: /* Stop */
         case 0x0E: /* Active Sensing. */
-            SEQ_MIDIOUT(dev, evt);
+            SEQ_MIDIOUT(dest->dev, evt);
             break;
         case 0x0F: /* Reset */
-            SEQ_MIDIOUT(dev, MIDI_SYSTEM_PREFIX);
-            SEQ_MIDIOUT(dev, 0x7e);
-            SEQ_MIDIOUT(dev, 0x7f);
-            SEQ_MIDIOUT(dev, 0x09);
-            SEQ_MIDIOUT(dev, 0x01);
-            SEQ_MIDIOUT(dev, 0xf7);
+            SEQ_MIDIOUT(dest->dev, MIDI_SYSTEM_PREFIX);
+            SEQ_MIDIOUT(dest->dev, 0x7e);
+            SEQ_MIDIOUT(dest->dev, 0x7f);
+            SEQ_MIDIOUT(dest->dev, 0x09);
+            SEQ_MIDIOUT(dest->dev, 0x01);
+            SEQ_MIDIOUT(dest->dev, 0xf7);
             dest->runningStatus = 0;
             break;
         case 0x01: /* MTC Quarter frame */
         case 0x03: /* Song Select. */
-            SEQ_MIDIOUT(dev, evt);
-            SEQ_MIDIOUT(dev, d1);
+            SEQ_MIDIOUT(dest->dev, evt);
+            SEQ_MIDIOUT(dest->dev, d1);
             break;
         case 0x02: /* Song Position Pointer. */
-            SEQ_MIDIOUT(dev, evt);
-            SEQ_MIDIOUT(dev, d1);
-            SEQ_MIDIOUT(dev, d2);
+            SEQ_MIDIOUT(dest->dev, evt);
+            SEQ_MIDIOUT(dest->dev, d1);
+            SEQ_MIDIOUT(dest->dev, d2);
         }
         if (evt <= 0xF7) /* System Exclusive, System Common Message */
             dest->runningStatus = 0;
@@ -1152,15 +1147,15 @@ static UINT midi_out_long_data(WORD dev_id, MIDIHDR *hdr, UINT hdr_size, struct 
         if (data[0] != 0xF0)
         {
             /* Send end of System Exclusive */
-            SEQ_MIDIOUT(dev_id - num_synths, 0xF0);
+            SEQ_MIDIOUT(dest->dev, 0xF0);
             WARN("Adding missing 0xF0 marker at the beginning of system exclusive byte stream\n");
         }
         for (count = 0; count < hdr->dwBufferLength; count++)
-            SEQ_MIDIOUT(dev_id - num_synths, data[count]);
+            SEQ_MIDIOUT(dest->dev, data[count]);
         if (data[count - 1] != 0xF7)
         {
             /* Send end of System Exclusive */
-            SEQ_MIDIOUT(dev_id - num_synths, 0xF7);
+            SEQ_MIDIOUT(dest->dev, 0xF7);
             WARN("Adding missing 0xF7 marker at the end of system exclusive byte stream\n");
         }
         SEQ_DUMPBUF();
