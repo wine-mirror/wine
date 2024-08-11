@@ -1107,11 +1107,31 @@ static HKEY open_odbcinst_key( void )
     return NULL;
 }
 
-static WCHAR *get_driver_filename( const SQLWCHAR *source )
+static WCHAR *get_driver_filename_from_name( const SQLWCHAR *name )
 {
-    HKEY key_sources, key_odbcinst, key_driver;
+    HKEY key_odbcinst, key_driver;
+    WCHAR *ret;
+
+    if (!name) return NULL;
+    if (!(key_odbcinst = open_odbcinst_key()) || RegOpenKeyExW( key_odbcinst, name, 0, KEY_READ, &key_driver ))
+    {
+        RegCloseKey( key_odbcinst );
+        return NULL;
+    }
+
+    ret = get_reg_value( key_driver, L"Driver" );
+
+    RegCloseKey( key_driver );
+    RegCloseKey( key_odbcinst );
+    return ret;
+}
+
+static WCHAR *get_driver_filename_from_source( const SQLWCHAR *source )
+{
+    HKEY key_sources;
     WCHAR *driver_name, *ret;
 
+    if (!source) return NULL;
     if (!(key_sources = open_sources_key( HKEY_CURRENT_USER ))) return NULL;
     if (!(driver_name = get_reg_value( key_sources, source )))
     {
@@ -1125,17 +1145,8 @@ static WCHAR *get_driver_filename( const SQLWCHAR *source )
     }
     RegCloseKey( key_sources );
 
-    if (!(key_odbcinst = open_odbcinst_key()) || RegOpenKeyExW( key_odbcinst, driver_name, 0, KEY_READ, &key_driver ))
-    {
-        RegCloseKey( key_odbcinst );
-        free( driver_name );
-        return NULL;
-    }
-
-    ret = get_reg_value( key_driver, L"Driver" );
-
-    RegCloseKey( key_driver );
-    RegCloseKey( key_odbcinst );
+    ret = get_driver_filename_from_name( driver_name );
+    free( driver_name );
     return ret;
 }
 
@@ -1289,7 +1300,7 @@ SQLRETURN WINAPI SQLConnect(SQLHDBC ConnectionHandle, SQLCHAR *ServerName, SQLSM
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    if (!servername || !(filename = get_driver_filename( servername )))
+    if (!(filename = get_driver_filename_from_source( servername )))
     {
         WARN( "can't find driver filename\n" );
         goto done;
@@ -4092,6 +4103,32 @@ static WCHAR *get_datasource( const WCHAR *connection_string )
     return ret;
 }
 
+static WCHAR *get_drivername( const WCHAR *connection_string )
+{
+    const WCHAR *p = connection_string, *q;
+    WCHAR *ret = NULL;
+    unsigned int len;
+
+    if (!p) return NULL;
+    while (*p)
+    {
+        if (!wcsnicmp( p, L"DRIVER=", 7 ))
+        {
+            p += 7;
+            q = wcschr( p, ';' );
+            len = q ? (q - p) : wcslen( p );
+            if ((ret = malloc( (len + 1) * sizeof(WCHAR) )))
+            {
+                memcpy( ret, p, len * sizeof(WCHAR) );
+                ret[len] = 0;
+                break;
+            }
+        }
+        p++;
+    }
+    return ret;
+}
+
 static SQLRETURN browse_connect_win32_a( struct connection *con, SQLCHAR *in_conn_str, SQLSMALLINT inlen,
                                          SQLCHAR *out_conn_str, SQLSMALLINT buflen, SQLSMALLINT *outlen )
 {
@@ -4133,7 +4170,8 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
                                   SQLCHAR *OutConnectionString, SQLSMALLINT BufferLength, SQLSMALLINT *StringLength2)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    WCHAR *datasource = NULL, *filename = NULL, *connection_string = strdupAW( (const char *)InConnectionString );
+    WCHAR *datasource = NULL, *drivername = NULL, *filename = NULL;
+    WCHAR *connection_string = strdupAW( (const char *)InConnectionString );
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InConnectionString %s, StringLength1 %d, OutConnectionString %p, BufferLength, %d, "
@@ -4142,13 +4180,13 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    /* FIXME: try DRIVER attribute if DSN is absent */
-    if (!connection_string || !(datasource = get_datasource( connection_string )))
+    if (!(datasource = get_datasource( connection_string )) && !(drivername = get_drivername( connection_string )))
     {
-        WARN( "can't find data source\n" );
+        WARN( "can't find data source or driver name\n" );
         goto done;
     }
-    if (!(filename = get_driver_filename( datasource )))
+    if ((datasource && !(filename = get_driver_filename_from_source( datasource ))) ||
+        (drivername && !(filename = get_driver_filename_from_name( drivername ))))
     {
         WARN( "can't find driver filename\n" );
         goto done;
@@ -4184,6 +4222,7 @@ done:
     free( connection_string );
     free( filename );
     free( datasource );
+    free( drivername );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
@@ -5250,7 +5289,8 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
                                   SQLSMALLINT *Length2, SQLUSMALLINT DriverCompletion)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    WCHAR *datasource = NULL, *filename = NULL, *connection_string = strdupAW( (const char *)InConnectionString );
+    WCHAR *datasource = NULL, *drivername = NULL, *filename = NULL;
+    WCHAR *connection_string = strdupAW( (const char *)InConnectionString );
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
@@ -5260,13 +5300,13 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    /* FIXME: try DRIVER attribute if DSN is absent */
-    if (!connection_string || !(datasource = get_datasource( connection_string )))
+    if (!(datasource = get_datasource( connection_string )) && !(drivername = get_drivername( connection_string )))
     {
-        WARN( "can't find data source\n" );
+        WARN( "can't find data source or driver name\n" );
         goto done;
     }
-    if (!(filename = get_driver_filename( datasource )))
+    if ((datasource && !(filename = get_driver_filename_from_source( datasource ))) ||
+        (drivername && !(filename = get_driver_filename_from_name( drivername ))))
     {
         WARN( "can't find driver filename\n" );
         goto done;
@@ -5301,6 +5341,7 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 done:
     free( filename );
     free( datasource );
+    free( drivername );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
@@ -5484,7 +5525,7 @@ SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *ServerName, SQL
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    if (!(filename = get_driver_filename( ServerName )))
+    if (!(filename = get_driver_filename_from_source( ServerName )))
     {
         WARN( "can't find driver filename\n" );
         goto done;
@@ -6326,7 +6367,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
                                    SQLSMALLINT *Length2, SQLUSMALLINT DriverCompletion)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    WCHAR *datasource, *filename = NULL;
+    WCHAR *datasource, *drivername = NULL, *filename = NULL;
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
@@ -6336,13 +6377,13 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    /* FIXME: try DRIVER attribute if DSN is absent */
-    if (!(datasource = get_datasource( InConnectionString )))
+    if (!(datasource = get_datasource( InConnectionString )) && !(drivername = get_drivername( InConnectionString )))
     {
-        WARN( "can't find data source\n" );
+        WARN( "can't find data source or driver name\n" );
         goto done;
     }
-    if (!(filename = get_driver_filename( datasource )))
+    if ((datasource && !(filename = get_driver_filename_from_source( datasource ))) ||
+        (drivername && !(filename = get_driver_filename_from_name( drivername ))))
     {
         WARN( "can't find driver filename\n" );
         goto done;
@@ -6377,6 +6418,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 done:
     free( filename );
     free( datasource );
+    free( drivername );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
@@ -6753,7 +6795,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
                                    SQLWCHAR *OutConnectionString, SQLSMALLINT BufferLength, SQLSMALLINT *StringLength2)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    WCHAR *datasource, *filename = NULL;
+    WCHAR *datasource, *drivername = NULL, *filename = NULL;
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InConnectionString %s, StringLength1 %d, OutConnectionString %p, BufferLength %d, "
@@ -6762,13 +6804,13 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    /* FIXME: try DRIVER attribute if DSN is absent */
-    if (!(datasource = get_datasource( InConnectionString )))
+    if (!(datasource = get_datasource( InConnectionString )) && !(drivername = get_drivername( InConnectionString )))
     {
-        WARN( "can't find data source\n" );
+        WARN( "can't find data source or driver name\n" );
         goto done;
     }
-    if (!(filename = get_driver_filename( datasource )))
+    if ((datasource && !(filename = get_driver_filename_from_source( datasource ))) ||
+        (drivername && !(filename = get_driver_filename_from_name( drivername ))))
     {
         WARN( "can't find driver filename\n" );
         goto done;
@@ -6803,6 +6845,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 done:
     free( filename );
     free( datasource );
+    free( drivername );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
