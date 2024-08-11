@@ -2575,7 +2575,7 @@ GLuint64 wined3d_device_gl_get_dummy_bindless_handle(const struct wined3d_device
         case WINED3D_SHADER_RESOURCE_TEXTURE_2DMS:
             return device_gl->dummy_textures.bindless.tex_2d_ms;
         case WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY:
-            return device_gl->dummy_textures.bindless.tex_2d_array;
+            return device_gl->dummy_textures.bindless.tex_2d_ms_array;
         default:
             FIXME("Unhandled resource type %#x.\n", type);
             return 0;
