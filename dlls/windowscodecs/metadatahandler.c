@@ -71,6 +71,8 @@ static void MetadataHandler_FreeItems(MetadataHandler *This)
     }
 
     free(This->items);
+    This->items = NULL;
+    This->item_count = 0;
 }
 
 static HRESULT MetadataHandlerEnum_Create(MetadataHandler *parent, DWORD index,
@@ -355,19 +357,22 @@ static HRESULT WINAPI MetadataHandler_GetSizeMax(IWICPersistStream *iface,
 }
 
 static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
-    IStream *pIStream, const GUID *pguidPreferredVendor, DWORD dwPersistOptions)
+    IStream *stream, const GUID *pguidPreferredVendor, DWORD dwPersistOptions)
 {
     MetadataHandler *This = impl_from_IWICPersistStream(iface);
-    HRESULT hr;
+    HRESULT hr = S_OK;
     MetadataItem *new_items=NULL;
     DWORD item_count=0;
 
-    TRACE("(%p,%p,%s,%lx)\n", iface, pIStream, debugstr_guid(pguidPreferredVendor), dwPersistOptions);
+    TRACE("(%p,%p,%s,%lx)\n", iface, stream, debugstr_guid(pguidPreferredVendor), dwPersistOptions);
 
     EnterCriticalSection(&This->lock);
 
-    hr = This->vtable->fnLoad(pIStream, pguidPreferredVendor, dwPersistOptions,
-        &new_items, &item_count);
+    if (stream)
+    {
+        hr = This->vtable->fnLoad(stream, pguidPreferredVendor, dwPersistOptions,
+                &new_items, &item_count);
+    }
 
     if (SUCCEEDED(hr))
     {
