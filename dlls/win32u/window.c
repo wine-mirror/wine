@@ -1844,6 +1844,7 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
                                                      RECT *visible_rect, RECT *surface_rect )
 {
     BOOL shaped, needs_surface, create_opaque, is_layered;
+    HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
     struct window_surface *new_surface;
     RECT dummy;
     HRGN shape;
@@ -1853,6 +1854,7 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
 
     *visible_rect = *window_rect;
     if (!user_driver->pWindowPosChanging( hwnd, swp_flags, shaped, window_rect, client_rect, visible_rect )) needs_surface = FALSE;
+    else if (parent && parent != NtUserGetDesktopWindow()) needs_surface = FALSE;
     else if (swp_flags & SWP_HIDEWINDOW) needs_surface = FALSE;
     else if (swp_flags & SWP_SHOWWINDOW) needs_surface = TRUE;
     else needs_surface = !!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE);
