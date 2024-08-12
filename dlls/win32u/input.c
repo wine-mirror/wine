@@ -2419,6 +2419,7 @@ BOOL set_caret_pos( int x, int y )
 BOOL WINAPI NtUserShowCaret( HWND hwnd )
 {
     int hidden = 0;
+    POINT pt;
     BOOL ret;
     RECT r;
 
@@ -2441,7 +2442,10 @@ BOOL WINAPI NtUserShowCaret( HWND hwnd )
 
     if (ret && hidden == 1)  /* hidden was 1 so it's now 0 */
     {
+        pt.x = r.left;
+        pt.y = r.top;
         display_caret( hwnd, &r );
+        set_ime_composition_window_pos( hwnd, &pt );
         NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, caret.timeout );
     }
     return ret;
