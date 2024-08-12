@@ -1081,8 +1081,7 @@ BOOL ANDROID_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_r
  */
 void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                const RECT *window_rect, const RECT *client_rect,
-                               const RECT *visible_rect, const RECT *valid_rects,
-                               struct window_surface *surface )
+                               const RECT *visible_rect, struct window_surface *surface )
 {
     struct android_win_data *data;
     UINT new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE );

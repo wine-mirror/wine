@@ -2007,39 +2007,38 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
                     move_window_bits_surface( hwnd, window_rect, old_surface, &old_visible_rect, valid_rects );
                 else
                     move_window_bits( hwnd, visible_rect, &old_visible_rect, window_rect, valid_rects );
-                valid_rects = NULL;  /* prevent the driver from trying to also move the bits */
             }
             window_surface_release( old_surface );
         }
-        else if (surface_win && surface_win != hwnd)
+        else if (valid_rects)
         {
-            if (valid_rects)
-            {
-                RECT rects[2];
-                int x_offset = old_visible_rect.left - visible_rect->left;
-                int y_offset = old_visible_rect.top - visible_rect->top;
+            RECT rects[2];
+            int x_offset = old_visible_rect.left - visible_rect->left;
+            int y_offset = old_visible_rect.top - visible_rect->top;
 
-                /* if all that happened is that the whole window moved, copy everything */
-                if (!(swp_flags & SWP_FRAMECHANGED) &&
-                    old_visible_rect.right  - visible_rect->right  == x_offset &&
-                    old_visible_rect.bottom - visible_rect->bottom == y_offset &&
-                    old_client_rect.left    - client_rect->left   == x_offset &&
-                    old_client_rect.right   - client_rect->right  == x_offset &&
-                    old_client_rect.top     - client_rect->top    == y_offset &&
-                    old_client_rect.bottom  - client_rect->bottom == y_offset &&
-                    EqualRect( &valid_rects[0], client_rect ))
-                {
-                    rects[0] = *visible_rect;
-                    rects[1] = old_visible_rect;
-                    valid_rects = rects;
-                }
-                move_window_bits( hwnd, visible_rect, visible_rect, window_rect, valid_rects );
-                valid_rects = NULL;  /* prevent the driver from trying to also move the bits */
+            /* if all that happened is that the whole window moved, copy everything */
+            if (!(swp_flags & SWP_FRAMECHANGED) &&
+                old_visible_rect.right  - visible_rect->right  == x_offset &&
+                old_visible_rect.bottom - visible_rect->bottom == y_offset &&
+                old_client_rect.left    - client_rect->left   == x_offset &&
+                old_client_rect.right   - client_rect->right  == x_offset &&
+                old_client_rect.top     - client_rect->top    == y_offset &&
+                old_client_rect.bottom  - client_rect->bottom == y_offset &&
+                EqualRect( &valid_rects[0], client_rect ))
+            {
+                rects[0] = *visible_rect;
+                rects[1] = old_visible_rect;
+                valid_rects = rects;
             }
+
+            if (surface_win && surface_win != hwnd)
+                move_window_bits( hwnd, visible_rect, visible_rect, window_rect, valid_rects );
+            else
+                user_driver->pMoveWindowBits( hwnd, window_rect, client_rect, visible_rect, valid_rects );
         }
 
         user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, window_rect,
-                                        client_rect, visible_rect, valid_rects, new_surface );
+                                        client_rect, visible_rect, new_surface );
     }
 
     return ret;
