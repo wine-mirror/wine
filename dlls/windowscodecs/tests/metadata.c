@@ -423,7 +423,6 @@ static void test_metadata_unknown(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_interface(reader, &IID_IWICMetadataBlockReader, FALSE);
 
@@ -517,7 +516,6 @@ static void test_metadata_tEXt(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     hr = IWICMetadataReader_GetCount(reader, NULL);
@@ -658,7 +656,6 @@ static void test_metadata_gAMA(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     load_stream((IUnknown*)reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionDefault);
@@ -739,7 +736,6 @@ static void test_metadata_cHRM(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     load_stream((IUnknown*)reader, metadata_cHRM, sizeof(metadata_cHRM), WICPersistOptionDefault);
@@ -810,7 +806,6 @@ static void test_metadata_hIST(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     load_stream((IUnknown*)reader, metadata_hIST, sizeof(metadata_hIST), WICPersistOptionDefault);
@@ -883,7 +878,6 @@ static void test_metadata_tIME(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     load_stream((IUnknown*)reader, metadata_tIME, sizeof(metadata_tIME), WICPersistOptionDefault);
@@ -1081,7 +1075,6 @@ static void test_metadata_IFD(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_interface(reader, &IID_IWICMetadataBlockReader, FALSE);
 
@@ -1296,7 +1289,6 @@ static void test_create_reader(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     if (SUCCEEDED(hr))
@@ -2112,7 +2104,6 @@ static void test_metadata_LSD(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     stream = create_stream(LSD_data, sizeof(LSD_data));
@@ -2208,7 +2199,6 @@ static void test_metadata_IMD(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     stream = create_stream(IMD_data, sizeof(IMD_data));
@@ -2301,7 +2291,6 @@ static void test_metadata_GCE(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     stream = create_stream(GCE_data, sizeof(GCE_data));
@@ -2396,7 +2385,6 @@ static void test_metadata_APE(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     stream = create_stream(APE_data, sizeof(APE_data));
@@ -2498,7 +2486,6 @@ static void test_metadata_GIF_comment(void)
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
-    todo_wine
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     stream = create_stream(GIF_comment_data, sizeof(GIF_comment_data));
