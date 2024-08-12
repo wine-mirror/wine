@@ -2158,13 +2158,15 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
 
 static HRESULT source_reader_create_decoder_for_stream(struct source_reader *reader, DWORD index, IMFMediaType *output_type)
 {
-    BOOL enable_advanced, allow_processor;
+    BOOL enable_advanced = FALSE, allow_processor = TRUE;
     struct media_stream *stream = &reader->streams[index];
     IMFMediaType *input_type;
     unsigned int i = 0;
+    GUID major;
     HRESULT hr;
 
-    allow_processor = source_reader_allow_video_processor(reader, &enable_advanced);
+    if (SUCCEEDED(IMFMediaType_GetMajorType(output_type, &major)) && IsEqualGUID(&major, &MFMediaType_Video))
+        allow_processor = source_reader_allow_video_processor(reader, &enable_advanced);
 
     while (SUCCEEDED(hr = source_reader_get_native_media_type(reader, index, i++, &input_type)))
     {
