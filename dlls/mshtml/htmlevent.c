@@ -3576,16 +3576,16 @@ static const dispex_static_data_vtbl_t DOMEvent_dispex_vtbl = {
     .unlink           = DOMEvent_unlink
 };
 
-static const tid_t DOMEvent_iface_tids[] = {
+static const tid_t Event_iface_tids[] = {
     IDOMEvent_tid,
     0
 };
 
-static dispex_static_data_t DOMEvent_dispex = {
-    "Event",
-    &DOMEvent_dispex_vtbl,
-    DispDOMEvent_tid,
-    DOMEvent_iface_tids
+dispex_static_data_t Event_dispex = {
+    .id         = PROT_Event,
+    .vtbl       = &DOMEvent_dispex_vtbl,
+    .disp_tid   = DispDOMEvent_tid,
+    .iface_tids = Event_iface_tids,
 };
 
 static const dispex_static_data_vtbl_t DOMUIEvent_dispex_vtbl = {
@@ -3667,7 +3667,7 @@ static dispex_static_data_t DOMPageTransitionEvent_dispex = {
     "PageTransitionEvent",
     &DOMPageTransitionEvent_dispex_vtbl,
     DispDOMEvent_tid,
-    DOMEvent_iface_tids,
+    Event_iface_tids,
     DOMPageTransitionEvent_init_dispex_info
 };
 
@@ -3786,7 +3786,7 @@ static void fill_parent_ui_event(nsIDOMEvent *nsevent, DOMUIEvent *ui_event)
 static DOMEvent *generic_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, HTMLInnerWindow *script_global,
                                     compat_mode_t compat_mode)
 {
-    return event_ctor(sizeof(DOMEvent), &DOMEvent_dispex, nsevent, event_id, script_global, compat_mode);
+    return event_ctor(sizeof(DOMEvent), &Event_dispex, nsevent, event_id, script_global, compat_mode);
 }
 
 static DOMEvent *ui_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, HTMLInnerWindow *script_global,

@@ -3241,4 +3241,6 @@ sync_test("prototypes", function() {
         check(document.createEventObject(), MSEventObj.prototype, "event obj");
         check(MSEventObj.prototype, Object.prototype, "event obj prototype");
     }
+    check(document.createEvent("Event"), Event.prototype, "event");
+    check(Event.prototype, Object.prototype, "event prototype");
 });

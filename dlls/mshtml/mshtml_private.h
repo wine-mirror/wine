@@ -417,6 +417,7 @@ typedef struct {
     X(Document)                            \
     X(DocumentType)                        \
     X(Element)                             \
+    X(Event)                               \
     X(HTMLAnchorElement)                   \
     X(HTMLAreaElement)                     \
     X(HTMLBodyElement)                     \
