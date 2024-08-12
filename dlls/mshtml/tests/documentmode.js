@@ -3261,4 +3261,6 @@ sync_test("prototypes", function() {
         check(document.createEvent("ProgressEvent"), ProgressEvent.prototype, "progress event");
         check(ProgressEvent.prototype, Event.prototype, "progress event prototype");
     }
+    check(document.createEvent("StorageEvent"), StorageEvent.prototype, "storage event");
+    check(StorageEvent.prototype, Event.prototype, "storage event prototype");
 });

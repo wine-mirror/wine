@@ -3740,17 +3740,18 @@ static const dispex_static_data_vtbl_t DOMStorageEvent_dispex_vtbl = {
     .unlink           = DOMEvent_unlink
 };
 
-static const tid_t DOMStorageEvent_iface_tids[] = {
+static const tid_t StorageEvent_iface_tids[] = {
     IDOMEvent_tid,
     IDOMStorageEvent_tid,
     0
 };
 
-static dispex_static_data_t DOMStorageEvent_dispex = {
-    "StorageEvent",
-    &DOMStorageEvent_dispex_vtbl,
-    DispDOMStorageEvent_tid,
-    DOMStorageEvent_iface_tids
+dispex_static_data_t StorageEvent_dispex = {
+    .id           = PROT_StorageEvent,
+    .prototype_id = PROT_Event,
+    .vtbl         = &DOMStorageEvent_dispex_vtbl,
+    .disp_tid     = DispDOMStorageEvent_tid,
+    .iface_tids   = StorageEvent_iface_tids,
 };
 
 static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, nsIDOMEvent *nsevent, eventid_t event_id,
@@ -3870,7 +3871,7 @@ static DOMEvent *message_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t
 static DOMEvent *storage_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, HTMLInnerWindow *script_global,
                                     compat_mode_t compat_mode)
 {
-    DOMStorageEvent *storage_event = event_ctor(sizeof(DOMStorageEvent), &DOMStorageEvent_dispex, nsevent, event_id, script_global,
+    DOMStorageEvent *storage_event = event_ctor(sizeof(DOMStorageEvent), &StorageEvent_dispex, nsevent, event_id, script_global,
                                                 compat_mode);
     if(!storage_event) return NULL;
     storage_event->IDOMStorageEvent_iface.lpVtbl = &DOMStorageEventVtbl;
