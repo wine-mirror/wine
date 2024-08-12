@@ -2646,8 +2646,6 @@ static char the_worst[] = "The Worst";
 
 static HRESULT WINAPI mdr_QueryInterface(IWICMetadataReader *iface, REFIID iid, void **out)
 {
-    trace("%p,%s,%p\n", iface, wine_dbgstr_guid(iid), out);
-
     if (IsEqualIID(iid, &IID_IUnknown) ||
         IsEqualIID(iid, &IID_IWICMetadataReader))
     {
@@ -2673,8 +2671,6 @@ static ULONG WINAPI mdr_Release(IWICMetadataReader *iface)
 
 static HRESULT WINAPI mdr_GetMetadataFormat(IWICMetadataReader *iface, GUID *format)
 {
-    trace("%p,%p\n", iface, format);
-
     ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
     if (!current_metadata_block) return E_POINTER;
 
@@ -2690,8 +2686,6 @@ static HRESULT WINAPI mdr_GetMetadataHandlerInfo(IWICMetadataReader *iface, IWIC
 
 static HRESULT WINAPI mdr_GetCount(IWICMetadataReader *iface, UINT *count)
 {
-    trace("%p,%p\n", iface, count);
-
     ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
     if (!current_metadata_block) return E_POINTER;
 
@@ -2703,46 +2697,6 @@ static HRESULT WINAPI mdr_GetValueByIndex(IWICMetadataReader *iface, UINT index,
 {
     ok(0, "not implemented\n");
     return E_NOTIMPL;
-}
-
-static char *get_temp_buffer(int size)
-{
-    static char buf[16][256];
-    static int idx;
-    char *p;
-
-    assert(size < 256);
-
-    p = buf[idx & 0x0f];
-    idx++;
-    return p;
-}
-
-static const char *wine_dbgstr_propvariant(const PROPVARIANT *var)
-{
-    char *ret;
-
-    if (!var) return "(null)";
-
-    switch (var->vt)
-    {
-    case VT_LPWSTR:
-        ret = get_temp_buffer(lstrlenW(var->pwszVal) + 16);
-        sprintf(ret, "(VT_LPWSTR:%s)", wine_dbgstr_w(var->pwszVal));
-        break;
-
-    case VT_LPSTR:
-        ret = get_temp_buffer(lstrlenA(var->pszVal) + 16);
-        sprintf(ret, "(VT_LPSTR:%s)", var->pszVal);
-        break;
-
-    default:
-        ret = get_temp_buffer(16);
-        sprintf(ret, "(vt:%u)", var->vt);
-        break;
-    }
-
-    return ret;
 }
 
 static int propvar_cmp(const PROPVARIANT *v1, LONGLONG value2)
@@ -2759,8 +2713,6 @@ static int propvar_cmp(const PROPVARIANT *v1, LONGLONG value2)
 static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT *schema, const PROPVARIANT *id, PROPVARIANT *value)
 {
     UINT i;
-
-    trace("%p,%s,%s,%s\n", iface, wine_dbgstr_propvariant(schema), wine_dbgstr_propvariant(id), wine_dbgstr_propvariant(value));
 
     ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
     if (!current_metadata_block) return E_POINTER;
@@ -2902,8 +2854,6 @@ static ULONG WINAPI mdbr_Release(IWICMetadataBlockReader *iface)
 
 static HRESULT WINAPI mdbr_GetContainerFormat(IWICMetadataBlockReader *iface, GUID *format)
 {
-    trace("%p,%p\n", iface, format);
-
     ok(current_metadata != NULL, "current_metadata can't be NULL\n");
     if (!current_metadata) return E_POINTER;
 
@@ -2913,8 +2863,6 @@ static HRESULT WINAPI mdbr_GetContainerFormat(IWICMetadataBlockReader *iface, GU
 
 static HRESULT WINAPI mdbr_GetCount(IWICMetadataBlockReader *iface, UINT *count)
 {
-    trace("%p,%p\n", iface, count);
-
     ok(current_metadata != NULL, "current_metadata can't be NULL\n");
     if (!current_metadata) return E_POINTER;
 
@@ -2924,8 +2872,6 @@ static HRESULT WINAPI mdbr_GetCount(IWICMetadataBlockReader *iface, UINT *count)
 
 static HRESULT WINAPI mdbr_GetReaderByIndex(IWICMetadataBlockReader *iface, UINT index, IWICMetadataReader **out)
 {
-    trace("%p,%u,%p\n", iface, index, out);
-
     *out = NULL;
 
     ok(current_metadata != NULL, "current_metadata can't be NULL\n");
