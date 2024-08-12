@@ -107,6 +107,7 @@ struct sample_desc
     LONGLONG sample_time;
     LONGLONG sample_duration;
     DWORD buffer_count;
+    DWORD total_length;
     const struct buffer_desc *buffers;
     DWORD repeat_count;
     BOOL todo_length;

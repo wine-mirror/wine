@@ -138,6 +138,18 @@ abgr32frame-crop.bmp RCDATA abgr32frame-crop.bmp
 rgb32frame-grabber.bmp RCDATA rgb32frame-grabber.bmp
 
 /* Generated from running the tests on Windows */
+/* @makedep: rgb32frame-extra-width.bmp */
+rgb32frame-extra-width.bmp RCDATA rgb32frame-extra-width.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: nv12frame-extra-width.bmp */
+nv12frame-extra-width.bmp RCDATA nv12frame-extra-width.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: nv12frame-extra-width-2d.bmp */
+nv12frame-extra-width-2d.bmp RCDATA nv12frame-extra-width-2d.bmp
+
+/* Generated from running the tests on Windows */
 /* @makedep: rgb555frame.bmp */
 rgb555frame.bmp RCDATA rgb555frame.bmp
 
