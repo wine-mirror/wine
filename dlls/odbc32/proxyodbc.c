@@ -773,7 +773,7 @@ static SQLRETURN bind_col_win32( struct statement *stmt, SQLUSMALLINT column, SQ
                                  SQLLEN buflen, SQLLEN *retlen )
 {
     if (stmt->hdr.win32_funcs->SQLBindCol)
-        return SQLBindCol( stmt->hdr.win32_handle, column, type, value, buflen, retlen );
+        return stmt->hdr.win32_funcs->SQLBindCol( stmt->hdr.win32_handle, column, type, value, buflen, retlen );
     return SQL_ERROR;
 }
 
