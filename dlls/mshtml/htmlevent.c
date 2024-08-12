@@ -3638,18 +3638,19 @@ static const dispex_static_data_vtbl_t DOMKeyboardEvent_dispex_vtbl = {
     .unlink           = DOMKeyboardEvent_unlink
 };
 
-static const tid_t DOMKeyboardEvent_iface_tids[] = {
+static const tid_t KeyboardEvent_iface_tids[] = {
     IDOMEvent_tid,
     IDOMUIEvent_tid,
     IDOMKeyboardEvent_tid,
     0
 };
 
-static dispex_static_data_t DOMKeyboardEvent_dispex = {
-    "KeyboardEvent",
-    &DOMKeyboardEvent_dispex_vtbl,
-    DispDOMKeyboardEvent_tid,
-    DOMKeyboardEvent_iface_tids
+dispex_static_data_t KeyboardEvent_dispex = {
+    .id           = PROT_KeyboardEvent,
+    .prototype_id = PROT_UIEvent,
+    .vtbl         = &DOMKeyboardEvent_dispex_vtbl,
+    .disp_tid     = DispDOMKeyboardEvent_tid,
+    .iface_tids   = KeyboardEvent_iface_tids,
 };
 
 static void DOMPageTransitionEvent_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
@@ -3815,7 +3816,7 @@ static DOMEvent *mouse_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t e
 static DOMEvent *keyboard_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, HTMLInnerWindow *script_global,
                                      compat_mode_t compat_mode)
 {
-    DOMKeyboardEvent *keyboard_event = event_ctor(sizeof(DOMKeyboardEvent), &DOMKeyboardEvent_dispex, nsevent, event_id, script_global,
+    DOMKeyboardEvent *keyboard_event = event_ctor(sizeof(DOMKeyboardEvent), &KeyboardEvent_dispex, nsevent, event_id, script_global,
                                                   compat_mode);
     if(!keyboard_event) return NULL;
     keyboard_event->IDOMKeyboardEvent_iface.lpVtbl = &DOMKeyboardEventVtbl;

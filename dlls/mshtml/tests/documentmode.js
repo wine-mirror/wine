@@ -3247,4 +3247,6 @@ sync_test("prototypes", function() {
     check(UIEvent.prototype, Event.prototype, "UI event prototype");
     check(document.createEvent("MouseEvent"), MouseEvent.prototype, "mouse event");
     check(MouseEvent.prototype, UIEvent.prototype, "mouse event prototype");
+    check(document.createEvent("KeyboardEvent"), KeyboardEvent.prototype, "keyboard event");
+    check(KeyboardEvent.prototype, UIEvent.prototype, "keyboard event prototype");
 });
