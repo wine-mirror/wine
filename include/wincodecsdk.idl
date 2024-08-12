@@ -368,6 +368,24 @@ interface IWICPersistStream : IPersistStream
 
 [
     object,
+    uuid(449494bc-b468-4927-96d7-ba90d31ab505)
+]
+interface IWICStreamProvider : IUnknown
+{
+    HRESULT GetStream(
+        [out] IStream **stream);
+
+    HRESULT GetPersistOptions(
+        [out] DWORD *options);
+
+    HRESULT GetPreferredVendorGUID(
+        [out] GUID *guid);
+
+    HRESULT RefreshStream();
+}
+
+[
+    object,
     uuid(412d0c3a-9650-44fa-af5b-dd2a06c8e8fb)
 ]
 interface IWICComponentFactory : IWICImagingFactory
