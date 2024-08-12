@@ -3703,17 +3703,13 @@ static const dispex_static_data_vtbl_t DOMMessageEvent_dispex_vtbl = {
     .unlink           = DOMMessageEvent_unlink
 };
 
-static const tid_t DOMMessageEvent_iface_tids[] = {
-    IDOMEvent_tid,
-    0
-};
-
-static dispex_static_data_t DOMMessageEvent_dispex = {
-    "MessageEvent",
-    &DOMMessageEvent_dispex_vtbl,
-    DispDOMMessageEvent_tid,
-    DOMMessageEvent_iface_tids,
-    DOMMessageEvent_init_dispex_info
+dispex_static_data_t MessageEvent_dispex = {
+    .id           = PROT_MessageEvent,
+    .prototype_id = PROT_Event,
+    .vtbl         = &DOMMessageEvent_dispex_vtbl,
+    .disp_tid     = DispDOMMessageEvent_tid,
+    .iface_tids   = Event_iface_tids,
+    .init_info    = DOMMessageEvent_init_dispex_info,
 };
 
 static const dispex_static_data_vtbl_t DOMProgressEvent_dispex_vtbl = {
@@ -3863,7 +3859,7 @@ static DOMEvent *progress_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
 static DOMEvent *message_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, HTMLInnerWindow *script_global,
                                     compat_mode_t compat_mode)
 {
-    DOMMessageEvent *message_event = event_ctor(sizeof(DOMMessageEvent), &DOMMessageEvent_dispex, nsevent, event_id, script_global,
+    DOMMessageEvent *message_event = event_ctor(sizeof(DOMMessageEvent), &MessageEvent_dispex, nsevent, event_id, script_global,
                                                 compat_mode);
     if(!message_event) return NULL;
     message_event->IDOMMessageEvent_iface.lpVtbl = &DOMMessageEventVtbl;

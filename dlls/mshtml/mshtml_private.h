@@ -453,6 +453,7 @@ typedef struct {
     X(MSCurrentStyleCSSProperties)         \
     X(MSEventObj)                          \
     X(MSStyleCSSProperties)                \
+    X(MessageEvent)                        \
     X(MouseEvent)                          \
     X(MutationObserver)                    \
     X(Navigator)                           \

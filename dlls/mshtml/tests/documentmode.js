@@ -3255,4 +3255,6 @@ sync_test("prototypes", function() {
     }
     check(document.createEvent("CustomEvent"), CustomEvent.prototype, "custom event");
     check(CustomEvent.prototype, Event.prototype, "custom event prototype");
+    check(document.createEvent("MessageEvent"), MessageEvent.prototype, "message event");
+    check(MessageEvent.prototype, Event.prototype, "message event prototype");
 });
