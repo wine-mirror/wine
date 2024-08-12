@@ -3719,17 +3719,18 @@ static const dispex_static_data_vtbl_t DOMProgressEvent_dispex_vtbl = {
     .unlink           = DOMProgressEvent_unlink
 };
 
-static const tid_t DOMProgressEvent_iface_tids[] = {
+static const tid_t ProgressEvent_iface_tids[] = {
     IDOMEvent_tid,
     IDOMProgressEvent_tid,
     0
 };
 
-static dispex_static_data_t DOMProgressEvent_dispex = {
-    "ProgressEvent",
-    &DOMProgressEvent_dispex_vtbl,
-    DispDOMProgressEvent_tid,
-    DOMProgressEvent_iface_tids
+dispex_static_data_t ProgressEvent_dispex = {
+    .id           = PROT_ProgressEvent,
+    .prototype_id = PROT_Event,
+    .vtbl         = &DOMProgressEvent_dispex_vtbl,
+    .disp_tid     = DispDOMProgressEvent_tid,
+    .iface_tids   = ProgressEvent_iface_tids,
 };
 
 static const dispex_static_data_vtbl_t DOMStorageEvent_dispex_vtbl = {
@@ -3849,7 +3850,7 @@ static DOMEvent *progress_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
 {
     DOMProgressEvent *progress_event;
 
-    if(!(progress_event = event_ctor(sizeof(DOMProgressEvent), &DOMProgressEvent_dispex, nsevent, event_id, script_global, compat_mode)))
+    if(!(progress_event = event_ctor(sizeof(DOMProgressEvent), &ProgressEvent_dispex, nsevent, event_id, script_global, compat_mode)))
         return NULL;
     progress_event->IDOMProgressEvent_iface.lpVtbl = &DOMProgressEventVtbl;
     progress_event->nsevent = iface;
