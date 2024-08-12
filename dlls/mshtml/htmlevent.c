@@ -3595,17 +3595,18 @@ static const dispex_static_data_vtbl_t DOMUIEvent_dispex_vtbl = {
     .unlink           = DOMUIEvent_unlink
 };
 
-static const tid_t DOMUIEvent_iface_tids[] = {
+static const tid_t UIEvent_iface_tids[] = {
     IDOMEvent_tid,
     IDOMUIEvent_tid,
     0
 };
 
-static dispex_static_data_t DOMUIEvent_dispex = {
-    "UIEvent",
-    &DOMUIEvent_dispex_vtbl,
-    DispDOMUIEvent_tid,
-    DOMUIEvent_iface_tids
+dispex_static_data_t UIEvent_dispex = {
+    .id           = PROT_UIEvent,
+    .prototype_id = PROT_Event,
+    .vtbl         = &DOMUIEvent_dispex_vtbl,
+    .disp_tid     = DispDOMUIEvent_tid,
+    .iface_tids   = UIEvent_iface_tids,
 };
 
 static const dispex_static_data_vtbl_t DOMMouseEvent_dispex_vtbl = {
@@ -3792,7 +3793,7 @@ static DOMEvent *generic_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t
 static DOMEvent *ui_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, HTMLInnerWindow *script_global,
                                compat_mode_t compat_mode)
 {
-    DOMUIEvent *ui_event = event_ctor(sizeof(DOMUIEvent), &DOMUIEvent_dispex, nsevent, event_id, script_global, compat_mode);
+    DOMUIEvent *ui_event = event_ctor(sizeof(DOMUIEvent), &UIEvent_dispex, nsevent, event_id, script_global, compat_mode);
     if(!ui_event) return NULL;
     ui_event->IDOMUIEvent_iface.lpVtbl = &DOMUIEventVtbl;
     ui_event->nsevent = iface;

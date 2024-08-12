@@ -3243,4 +3243,6 @@ sync_test("prototypes", function() {
     }
     check(document.createEvent("Event"), Event.prototype, "event");
     check(Event.prototype, Object.prototype, "event prototype");
+    check(document.createEvent("UIEvent"), UIEvent.prototype, "UI event");
+    check(UIEvent.prototype, Event.prototype, "UI event prototype");
 });

@@ -464,6 +464,7 @@ typedef struct {
     X(StyleSheet)                          \
     X(StyleSheetList)                      \
     X(Text)                                \
+    X(UIEvent)                             \
     X(Window)                              \
     X(XMLHttpRequest)
 
