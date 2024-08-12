@@ -1591,16 +1591,16 @@ void destroy_ioctl_window( HWND hwnd, BOOL opengl )
     android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL );
 }
 
-int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
-                              const RECT *visible_rect, UINT style, UINT flags, HWND after, HWND owner )
+int ioctl_window_pos_changed( HWND hwnd, const struct window_rects *rects,
+                              UINT style, UINT flags, HWND after, HWND owner )
 {
     struct ioctl_android_window_pos_changed req;
 
     req.hdr.hwnd     = HandleToLong( hwnd );
     req.hdr.opengl   = FALSE;
-    req.window_rect  = *window_rect;
-    req.client_rect  = *client_rect;
-    req.visible_rect = *visible_rect;
+    req.window_rect  = rects->window;
+    req.client_rect  = rects->client;
+    req.visible_rect = rects->visible;
     req.style        = style;
     req.flags        = flags;
     req.after        = HandleToLong( after );

@@ -52,9 +52,7 @@ struct android_win_data
 {
     HWND           hwnd;           /* hwnd that this private data belongs to */
     HWND           parent;         /* parent hwnd for child windows */
-    RECT           window_rect;    /* USER window rectangle relative to parent */
-    RECT           whole_rect;     /* X window rectangle for the whole window relative to parent */
-    RECT           client_rect;    /* client area relative to parent */
+    struct window_rects rects;     /* window rects in monitor DPI, relative to parent client area */
     ANativeWindow *window;         /* native window wrapper that forwards calls to the desktop process */
 };
 
@@ -1007,8 +1005,7 @@ void ANDROID_DestroyWindow( HWND hwnd )
  *
  * Create a data window structure for an existing window.
  */
-static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_rect,
-                                                 const RECT *client_rect )
+static struct android_win_data *create_win_data( HWND hwnd, const struct window_rects *rects )
 {
     struct android_win_data *data;
     HWND parent;
@@ -1018,8 +1015,7 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
     if (!(data = alloc_win_data( hwnd ))) return NULL;
 
     data->parent = (parent == NtUserGetDesktopWindow()) ? 0 : parent;
-    data->whole_rect = data->window_rect = *window_rect;
-    data->client_rect = *client_rect;
+    data->rects = *rects;
     return data;
 }
 
@@ -1033,7 +1029,7 @@ BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, struct w
 
     TRACE( "hwnd %p, swp_flags %#x, shaped %u, rects %s\n", hwnd, swp_flags, shaped, debugstr_window_rects( rects ) );
 
-    if (!data && !(data = create_win_data( hwnd, &rects->window, &rects->client ))) return FALSE; /* use default surface */
+    if (!data && !(data = create_win_data( hwnd, rects ))) return FALSE; /* use default surface */
     release_win_data(data);
 
     return TRUE;
@@ -1072,10 +1068,7 @@ void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, con
     HWND owner = 0;
 
     if (!(data = get_win_data( hwnd ))) return;
-
-    data->window_rect = new_rects->window;
-    data->whole_rect  = new_rects->visible;
-    data->client_rect = new_rects->client;
+    data->rects = *new_rects;
 
     if (!data->parent) owner = NtUserGetWindowRelative( hwnd, GW_OWNER );
     release_win_data( data );
@@ -1085,8 +1078,7 @@ void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, con
     TRACE( "win %p new_rects %s style %08x owner %p after %p flags %08x\n", hwnd,
            debugstr_window_rects(new_rects), new_style, owner, insert_after, swp_flags );
 
-    ioctl_window_pos_changed( hwnd, &new_rects->window, &new_rects->client, &new_rects->visible,
-                              new_style, swp_flags, insert_after, owner );
+    ioctl_window_pos_changed( hwnd, new_rects, new_style, swp_flags, insert_after, owner );
 }
 
 

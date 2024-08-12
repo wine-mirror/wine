@@ -69,9 +69,8 @@ extern struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl, float 
 extern struct ANativeWindow *grab_ioctl_window( struct ANativeWindow *window );
 extern void release_ioctl_window( struct ANativeWindow *window );
 extern void destroy_ioctl_window( HWND hwnd, BOOL opengl );
-extern int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
-                                     const RECT *visible_rect, UINT style, UINT flags,
-                                     HWND after, HWND owner );
+extern int ioctl_window_pos_changed( HWND hwnd, const struct window_rects *rects,
+                                     UINT style, UINT flags, HWND after, HWND owner );
 extern int ioctl_set_window_parent( HWND hwnd, HWND parent, float scale );
 extern int ioctl_set_capture( HWND hwnd );
 extern int ioctl_set_cursor( int id, int width, int height,
