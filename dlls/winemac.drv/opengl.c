@@ -1625,8 +1625,8 @@ static BOOL sync_context_rect(struct wgl_context *context)
 
         if (data && data->client_cocoa_view == context->draw_view)
         {
-            RECT rect = data->client_rect;
-            OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
+            RECT rect = data->rects.client;
+            OffsetRect(&rect, -data->rects.visible.left, -data->rects.visible.top);
             if (!EqualRect(&context->draw_rect, &rect))
             {
                 context->draw_rect = rect;
@@ -3481,8 +3481,8 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
 
         context->draw_hwnd = hwnd;
         context->draw_view = data->client_cocoa_view;
-        context->draw_rect = data->client_rect;
-        OffsetRect(&context->draw_rect, -data->whole_rect.left, -data->whole_rect.top);
+        context->draw_rect = data->rects.client;
+        OffsetRect(&context->draw_rect, -data->rects.visible.left, -data->rects.visible.top);
         context->draw_pbuffer = NULL;
         release_win_data(data);
     }
@@ -3530,8 +3530,8 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
                 if (data->client_cocoa_view != context->draw_view)
                 {
                     context->read_view = data->client_cocoa_view;
-                    context->read_rect = data->client_rect;
-                    OffsetRect(&context->read_rect, -data->whole_rect.left, -data->whole_rect.top);
+                    context->read_rect = data->rects.client;
+                    OffsetRect(&context->read_rect, -data->rects.visible.left, -data->rects.visible.top);
                 }
                 release_win_data(data);
             }
@@ -4247,14 +4247,14 @@ failed:
  * Synchronize the Mac GL view position with the Windows child window
  * position.
  */
-void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, const RECT* old_client_rect)
+void sync_gl_view(struct macdrv_win_data* data, const struct window_rects *old_rects)
 {
     if (data->client_cocoa_view && data->pixel_format)
     {
-        RECT old = *old_client_rect, new = data->client_rect;
+        RECT old = old_rects->client, new = data->rects.client;
 
-        OffsetRect(&old, -old_whole_rect->left, -old_whole_rect->top);
-        OffsetRect(&new, -data->whole_rect.left, -data->whole_rect.top);
+        OffsetRect(&old, -old_rects->visible.left, -old_rects->visible.top);
+        OffsetRect(&new, -data->rects.visible.left, -data->rects.visible.top);
         if (!EqualRect(&old, &new))
         {
             TRACE("GL view %p changed position; marking contexts\n", data->client_cocoa_view);

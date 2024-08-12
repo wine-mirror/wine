@@ -238,8 +238,8 @@ static BOOL query_drag_drop(macdrv_query *query)
 
     params.hwnd = HandleToUlong(hwnd);
     params.effect = drag_operations_to_dropeffects(query->drag_drop.op);
-    params.x = query->drag_drop.x + data->whole_rect.left;
-    params.y = query->drag_drop.y + data->whole_rect.top;
+    params.x = query->drag_drop.x + data->rects.visible.left;
+    params.y = query->drag_drop.y + data->rects.visible.top;
     params.handle = (UINT_PTR)query->drag_drop.pasteboard;
     release_win_data(data);
     if (KeUserModeCallback(client_func_dnd_query_drop, &params, sizeof(params), &ret_ptr, &ret_len))
@@ -283,8 +283,8 @@ static BOOL query_drag_operation(macdrv_query *query)
 
     params.hwnd = HandleToUlong(hwnd);
     params.effect = drag_operations_to_dropeffects(query->drag_operation.offered_ops);
-    params.x = query->drag_operation.x + data->whole_rect.left;
-    params.y = query->drag_operation.y + data->whole_rect.top;
+    params.x = query->drag_operation.x + data->rects.visible.left;
+    params.y = query->drag_operation.y + data->rects.visible.top;
     params.handle = (UINT_PTR)query->drag_operation.pasteboard;
     release_win_data(data);
 

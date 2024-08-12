@@ -180,9 +180,7 @@ struct macdrv_win_data
     macdrv_window       cocoa_window;
     macdrv_view         cocoa_view;
     macdrv_view         client_cocoa_view;
-    RECT                window_rect;            /* USER window rectangle relative to parent */
-    RECT                whole_rect;             /* Mac window rectangle for the whole window relative to parent */
-    RECT                client_rect;            /* client area relative to parent */
+    struct window_rects rects;                  /* window rects in monitor DPI, relative to parent client area */
     int                 pixel_format;           /* pixel format for GL */
     HANDLE              drag_event;             /* event to signal that Cocoa-driven window dragging has ended */
     unsigned int        on_screen : 1;          /* is window ordered in? (minimized or not) */
@@ -244,7 +242,7 @@ extern void macdrv_lost_pasteboard_ownership(HWND hwnd);
 
 extern struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version);
 extern UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs);
-extern void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, const RECT* old_client_rect);
+extern void sync_gl_view(struct macdrv_win_data* data, const struct window_rects *old_rects);
 
 extern CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmColor,
                                                    unsigned char *color_bits, int color_size, HBITMAP hbmMask,
