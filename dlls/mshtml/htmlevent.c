@@ -1802,17 +1802,17 @@ static const dispex_static_data_vtbl_t HTMLEventObj_dispex_vtbl = {
     .unlink           = HTMLEventObj_unlink
 };
 
-static const tid_t HTMLEventObj_iface_tids[] = {
+static const tid_t MSEventObj_iface_tids[] = {
     IHTMLEventObj5_tid,
     IHTMLEventObj_tid,
     0
 };
 
-static dispex_static_data_t HTMLEventObj_dispex = {
-    "MSEventObj",
-    &HTMLEventObj_dispex_vtbl,
-    DispCEventObj_tid,
-    HTMLEventObj_iface_tids
+dispex_static_data_t MSEventObj_dispex = {
+    .id         = PROT_MSEventObj,
+    .vtbl       = &HTMLEventObj_dispex_vtbl,
+    .disp_tid   = DispCEventObj_tid,
+    .iface_tids = MSEventObj_iface_tids,
 };
 
 static HTMLEventObj *alloc_event_obj(DOMEvent *event, HTMLInnerWindow *script_global)
@@ -1832,9 +1832,9 @@ static HTMLEventObj *alloc_event_obj(DOMEvent *event, HTMLInnerWindow *script_gl
     event_obj->event = event;
     if(event) {
         IDOMEvent_AddRef(&event->IDOMEvent_iface);
-        init_dispatch_with_owner(&event_obj->dispex, &HTMLEventObj_dispex, &event->dispex);
+        init_dispatch_with_owner(&event_obj->dispex, &MSEventObj_dispex, &event->dispex);
     }else {
-        init_dispatch(&event_obj->dispex, &HTMLEventObj_dispex, script_global,
+        init_dispatch(&event_obj->dispex, &MSEventObj_dispex, script_global,
                       dispex_compat_mode(&script_global->event_target.dispex));
     }
     return event_obj;
