@@ -27,6 +27,8 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+
+#include "wine/list.h"
 #include "wine/unixlib.h"
 
 static inline BOOL SUCCESS( SQLRETURN ret ) { return ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO; }
@@ -185,6 +187,8 @@ struct object
     void  *win32_handle;
     const struct win32_funcs *win32_funcs;
     struct object *parent;
+    struct list entry;
+    struct list children;
     CRITICAL_SECTION cs;
     BOOL closed;
 };

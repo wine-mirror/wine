@@ -393,12 +393,16 @@ static void init_object( struct object *obj, UINT32 type, struct object *parent 
 {
     obj->type = type;
     obj->parent = parent;
+    list_init( &obj->entry );
+    list_init( &obj->children );
+    if (parent) list_add_tail( &parent->children, &obj->entry );
     InitializeCriticalSectionEx( &obj->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     obj->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": object.cs");
 }
 
 static void destroy_object( struct object *obj )
 {
+    list_remove( &obj->entry );
     obj->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &obj->cs );
     free( obj );
@@ -1965,14 +1969,18 @@ static SQLRETURN free_handle( SQLSMALLINT type, struct object *obj )
 SQLRETURN WINAPI SQLFreeConnect(SQLHDBC ConnectionHandle)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    SQLRETURN ret = SQL_SUCCESS;
+    SQLRETURN ret;
 
     TRACE("(ConnectionHandle %p)\n", ConnectionHandle);
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    ret = free_handle( SQL_HANDLE_DBC, &con->hdr );
-    con->hdr.closed = TRUE;
+    if (!list_empty( &con->hdr.children )) ret = SQL_ERROR;
+    else
+    {
+        ret = free_handle( SQL_HANDLE_DBC, &con->hdr );
+        con->hdr.closed = TRUE;
+    }
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
@@ -1986,17 +1994,21 @@ SQLRETURN WINAPI SQLFreeConnect(SQLHDBC ConnectionHandle)
 SQLRETURN WINAPI SQLFreeEnv(SQLHENV EnvironmentHandle)
 {
     struct environment *env = (struct environment *)lock_object( EnvironmentHandle, SQL_HANDLE_ENV );
-    SQLRETURN ret = SQL_SUCCESS;
+    SQLRETURN ret;
 
     TRACE("(EnvironmentHandle %p)\n", EnvironmentHandle);
 
     if (!env) return SQL_INVALID_HANDLE;
 
-    ret = free_handle( SQL_HANDLE_ENV, &env->hdr );
+    if (!list_empty( &env->hdr.children )) ret = SQL_ERROR;
+    else
+    {
+        ret = free_handle( SQL_HANDLE_ENV, &env->hdr );
 
-    RegCloseKey( env->drivers_key );
-    RegCloseKey( env->sources_key );
-    env->hdr.closed = TRUE;
+        RegCloseKey( env->drivers_key );
+        RegCloseKey( env->sources_key );
+        env->hdr.closed = TRUE;
+    }
 
     TRACE("Returning %d\n", ret);
     unlock_object( &env->hdr );
@@ -2030,34 +2042,38 @@ static void free_param_bindings( struct statement *stmt )
 SQLRETURN WINAPI SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
 {
     struct object *obj = lock_object( Handle, HandleType );
-    SQLRETURN ret = SQL_SUCCESS;
+    SQLRETURN ret;
 
     TRACE("(HandleType %d, Handle %p)\n", HandleType, Handle);
 
     if (!obj) return SQL_INVALID_HANDLE;
 
-    ret = free_handle( HandleType, obj );
-    obj->closed = TRUE;
+    if (!list_empty( &obj->children )) ret = SQL_ERROR;
+    else
+    {
+        ret = free_handle( HandleType, obj );
+        obj->closed = TRUE;
 
-    switch (HandleType)
-    {
-    case SQL_HANDLE_ENV:
-    {
-        struct environment *env = (struct environment *)obj;
-        RegCloseKey( env->drivers_key );
-        RegCloseKey( env->sources_key );
-        env->drivers_key = env->sources_key = NULL;
-        env->drivers_idx = env->sources_idx = 0;
-        break;
-    }
-    case SQL_HANDLE_STMT:
-    {
-        struct statement *stmt = (struct statement *)obj;
-        free_col_bindings( stmt );
-        free_param_bindings( stmt );
-        break;
-    }
-    default: break;
+        switch (HandleType)
+        {
+        case SQL_HANDLE_ENV:
+        {
+            struct environment *env = (struct environment *)obj;
+            RegCloseKey( env->drivers_key );
+            RegCloseKey( env->sources_key );
+            env->drivers_key = env->sources_key = NULL;
+            env->drivers_idx = env->sources_idx = 0;
+            break;
+        }
+        case SQL_HANDLE_STMT:
+        {
+            struct statement *stmt = (struct statement *)obj;
+            free_col_bindings( stmt );
+            free_param_bindings( stmt );
+            break;
+        }
+        default: break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -2096,27 +2112,31 @@ SQLRETURN WINAPI SQLFreeStmt(SQLHSTMT StatementHandle, SQLUSMALLINT Option)
 
     if (!stmt) return SQL_INVALID_HANDLE;
 
-    ret = free_statement( stmt, Option );
-
-    switch (Option)
+    if (!list_empty( &stmt->hdr.children )) ret = SQL_ERROR;
+    else
     {
-    case SQL_CLOSE:
-        break;
+        ret = free_statement( stmt, Option );
 
-    case SQL_UNBIND:
-        free_col_bindings( stmt );
-        break;
+        switch (Option)
+        {
+        case SQL_CLOSE:
+            break;
 
-    case SQL_RESET_PARAMS:
-        free_param_bindings( stmt );
-        break;
+        case SQL_UNBIND:
+            free_col_bindings( stmt );
+            break;
 
-    case SQL_DROP:
-    default:
-        free_col_bindings( stmt );
-        free_param_bindings( stmt );
-        stmt->hdr.closed = TRUE;
-        break;
+        case SQL_RESET_PARAMS:
+            free_param_bindings( stmt );
+            break;
+
+        case SQL_DROP:
+        default:
+            free_col_bindings( stmt );
+            free_param_bindings( stmt );
+            stmt->hdr.closed = TRUE;
+            break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
