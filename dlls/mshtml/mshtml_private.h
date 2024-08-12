@@ -413,6 +413,7 @@ typedef struct {
     X(CSSStyleSheet)                       \
     X(CharacterData)                       \
     X(ClientRect)                          \
+    X(CustomEvent)                         \
     X(DOMImplementation)                   \
     X(Document)                            \
     X(DocumentType)                        \

@@ -3682,17 +3682,18 @@ static const dispex_static_data_vtbl_t DOMCustomEvent_dispex_vtbl = {
     .unlink           = DOMCustomEvent_unlink
 };
 
-static const tid_t DOMCustomEvent_iface_tids[] = {
+static const tid_t CustomEvent_iface_tids[] = {
     IDOMEvent_tid,
     IDOMCustomEvent_tid,
     0
 };
 
-static dispex_static_data_t DOMCustomEvent_dispex = {
-    "CustomEvent",
-    &DOMCustomEvent_dispex_vtbl,
-    DispDOMCustomEvent_tid,
-    DOMCustomEvent_iface_tids
+dispex_static_data_t CustomEvent_dispex = {
+    .id           = PROT_CustomEvent,
+    .prototype_id = PROT_Event,
+    .vtbl         = &DOMCustomEvent_dispex_vtbl,
+    .disp_tid     = DispDOMCustomEvent_tid,
+    .iface_tids   = CustomEvent_iface_tids,
 };
 
 static const dispex_static_data_vtbl_t DOMMessageEvent_dispex_vtbl = {
@@ -3839,7 +3840,7 @@ static DOMEvent *page_transition_event_ctor(void *iface, nsIDOMEvent *nsevent, e
 static DOMEvent *custom_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, HTMLInnerWindow *script_global,
                                    compat_mode_t compat_mode)
 {
-    DOMCustomEvent *custom_event = event_ctor(sizeof(DOMCustomEvent), &DOMCustomEvent_dispex, nsevent, event_id, script_global,
+    DOMCustomEvent *custom_event = event_ctor(sizeof(DOMCustomEvent), &CustomEvent_dispex, nsevent, event_id, script_global,
                                               compat_mode);
     if(!custom_event) return NULL;
     custom_event->IDOMCustomEvent_iface.lpVtbl = &DOMCustomEventVtbl;

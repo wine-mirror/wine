@@ -3253,4 +3253,6 @@ sync_test("prototypes", function() {
         check(document.createEvent("PageTransitionEvent"), PageTransitionEvent.prototype, "page transition event");
         check(PageTransitionEvent.prototype, Event.prototype, "page transition event prototype");
     }
+    check(document.createEvent("CustomEvent"), CustomEvent.prototype, "custom event");
+    check(CustomEvent.prototype, Event.prototype, "custom event prototype");
 });
