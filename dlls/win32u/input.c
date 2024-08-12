@@ -2374,6 +2374,7 @@ BOOL set_caret_pos( int x, int y )
     int old_state = 0;
     int hidden = 0;
     HWND hwnd = 0;
+    POINT pt;
     BOOL ret;
     RECT r;
 
@@ -2403,7 +2404,10 @@ BOOL set_caret_pos( int x, int y )
         r.bottom += y - r.top;
         r.left = x;
         r.top = y;
+        pt.x = x;
+        pt.y = y;
         display_caret( hwnd, &r );
+        set_ime_composition_window_pos( hwnd, &pt );
         NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, caret.timeout );
     }
     return ret;
