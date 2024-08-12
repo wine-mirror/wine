@@ -260,28 +260,86 @@ static IStream *create_stream(const char *data, int data_size)
     return stream;
 }
 
-static void load_stream(IUnknown *reader, const char *data, int data_size, DWORD persist_options)
+static void load_stream(IWICMetadataReader *reader, const char *data, int data_size, DWORD persist_options)
 {
+    IWICStreamProvider *stream_provider;
     HRESULT hr;
     IWICPersistStream *persist;
-    IStream *stream;
+    IStream *stream, *stream2;
     LARGE_INTEGER pos;
     ULARGE_INTEGER cur_pos;
+    DWORD flags;
+    GUID guid;
 
     stream = create_stream(data, data_size);
     if (!stream)
         return;
 
-    hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void**)&persist);
+    hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void**)&persist);
     ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
 
-    if (SUCCEEDED(hr))
-    {
-        hr = IWICPersistStream_LoadEx(persist, stream, NULL, persist_options);
-        ok(hr == S_OK, "LoadEx failed, hr=%lx\n", hr);
+    hr = IWICPersistStream_LoadEx(persist, NULL, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-        IWICPersistStream_Release(persist);
-    }
+    hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICStreamProvider, (void **)&stream_provider);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memset(&guid, 0, sizeof(guid));
+    hr = IWICStreamProvider_GetPreferredVendorGUID(stream_provider, &guid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &GUID_VendorMicrosoft), "Unexpected vendor %s.\n", wine_dbgstr_guid(&guid));
+
+    hr = IWICStreamProvider_GetPreferredVendorGUID(stream_provider, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICStreamProvider_GetPersistOptions(stream_provider, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    flags = 123;
+    hr = IWICStreamProvider_GetPersistOptions(stream_provider, &flags);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!flags, "Unexpected options %#lx.\n", flags);
+
+    stream2 = (void *)0xdeadbeef;
+    hr = IWICStreamProvider_GetStream(stream_provider, &stream2);
+    todo_wine
+    ok(hr == WINCODEC_ERR_STREAMNOTAVAILABLE, "Unexpected hr %#lx.\n", hr);
+    ok(stream2 == (void *)0xdeadbeef, "Unexpected stream pointer.\n");
+
+    hr = IWICPersistStream_LoadEx(persist, stream, NULL, persist_options);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memset(&guid, 0, sizeof(guid));
+    hr = IWICStreamProvider_GetPreferredVendorGUID(stream_provider, &guid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &GUID_VendorMicrosoft), "Unexpected vendor %s.\n", wine_dbgstr_guid(&guid));
+
+    flags = ~persist_options;
+    hr = IWICStreamProvider_GetPersistOptions(stream_provider, &flags);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(flags == persist_options, "Unexpected options %#lx.\n", flags);
+
+    stream2 = NULL;
+    hr = IWICStreamProvider_GetStream(stream_provider, &stream2);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(stream2 == stream, "Unexpected stream pointer.\n");
+    if (stream2)
+        IStream_Release(stream2);
+
+    IWICStreamProvider_Release(stream_provider);
+    IWICPersistStream_Release(persist);
 
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, SEEK_CUR, &cur_pos);
@@ -426,7 +484,7 @@ static void test_metadata_unknown(void)
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_interface(reader, &IID_IWICMetadataBlockReader, FALSE);
 
-    load_stream((IUnknown*)reader, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionDefault);
+    load_stream(reader, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
     ok(hr == S_OK, "GetEnumerator failed, hr=%lx\n", hr);
@@ -525,7 +583,7 @@ static void test_metadata_tEXt(void)
     ok(hr == S_OK, "GetCount failed, hr=%lx\n", hr);
     ok(count == 0, "unexpected count %i\n", count);
 
-    load_stream((IUnknown*)reader, metadata_tEXt, sizeof(metadata_tEXt), WICPersistOptionDefault);
+    load_stream(reader, metadata_tEXt, sizeof(metadata_tEXt), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount failed, hr=%lx\n", hr);
@@ -658,7 +716,7 @@ static void test_metadata_gAMA(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
-    load_stream((IUnknown*)reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionDefault);
+    load_stream(reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%lx\n", hr);
@@ -738,7 +796,7 @@ static void test_metadata_cHRM(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
-    load_stream((IUnknown*)reader, metadata_cHRM, sizeof(metadata_cHRM), WICPersistOptionDefault);
+    load_stream(reader, metadata_cHRM, sizeof(metadata_cHRM), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%lx\n", hr);
@@ -808,7 +866,7 @@ static void test_metadata_hIST(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
-    load_stream((IUnknown*)reader, metadata_hIST, sizeof(metadata_hIST), WICPersistOptionDefault);
+    load_stream(reader, metadata_hIST, sizeof(metadata_hIST), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%lx\n", hr);
@@ -880,7 +938,7 @@ static void test_metadata_tIME(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
-    load_stream((IUnknown*)reader, metadata_tIME, sizeof(metadata_tIME), WICPersistOptionDefault);
+    load_stream(reader, metadata_tIME, sizeof(metadata_tIME), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%lx\n", hr);
@@ -1085,7 +1143,7 @@ static void test_metadata_IFD(void)
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == 0, "unexpected count %u\n", count);
 
-    load_stream((IUnknown*)reader, (const char *)&IFD_data, sizeof(IFD_data), persist_options);
+    load_stream(reader, (const char *)&IFD_data, sizeof(IFD_data), persist_options);
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
@@ -1102,7 +1160,7 @@ static void test_metadata_IFD(void)
     IFD_data_swapped = HeapAlloc(GetProcessHeap(), 0, sizeof(IFD_data));
     memcpy(IFD_data_swapped, &IFD_data, sizeof(IFD_data));
     byte_swap_ifd_data(IFD_data_swapped);
-    load_stream((IUnknown *)reader, IFD_data_swapped, sizeof(IFD_data), persist_options);
+    load_stream(reader, IFD_data_swapped, sizeof(IFD_data), persist_options);
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);
