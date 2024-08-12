@@ -290,12 +290,19 @@ static void init_caps_from_video_cinepak(GstCaps *caps, const MFVIDEOFORMAT *for
 
 static void init_caps_from_video_h264(GstCaps *caps, const MFVIDEOFORMAT *format, UINT format_size)
 {
-    init_caps_codec_data(caps, format + 1, format_size - sizeof(*format));
+    GstBuffer *buffer;
 
     gst_structure_remove_field(gst_caps_get_structure(caps, 0), "format");
     gst_structure_set_name(gst_caps_get_structure(caps, 0), "video/x-h264");
     gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "byte-stream", NULL);
     gst_caps_set_simple(caps, "alignment", G_TYPE_STRING, "au", NULL);
+
+    if (format_size > sizeof(*format) && (buffer = gst_buffer_new_and_alloc(format_size - sizeof(*format))))
+    {
+        gst_buffer_fill(buffer, 0, format + 1, format_size - sizeof(*format));
+        gst_caps_set_simple(caps, "streamheader", GST_TYPE_BUFFER, buffer, NULL);
+        gst_buffer_unref(buffer);
+    }
 }
 
 static void init_caps_from_video_wmv(GstCaps *caps, const MFVIDEOFORMAT *format, UINT format_size,
