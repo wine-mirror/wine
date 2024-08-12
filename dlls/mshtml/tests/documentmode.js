@@ -3249,4 +3249,8 @@ sync_test("prototypes", function() {
     check(MouseEvent.prototype, UIEvent.prototype, "mouse event prototype");
     check(document.createEvent("KeyboardEvent"), KeyboardEvent.prototype, "keyboard event");
     check(KeyboardEvent.prototype, UIEvent.prototype, "keyboard event prototype");
+    if(v >= 11) {
+        check(document.createEvent("PageTransitionEvent"), PageTransitionEvent.prototype, "page transition event");
+        check(PageTransitionEvent.prototype, Event.prototype, "page transition event prototype");
+    }
 });

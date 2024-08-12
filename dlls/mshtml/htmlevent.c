@@ -3666,12 +3666,13 @@ static const dispex_static_data_vtbl_t DOMPageTransitionEvent_dispex_vtbl = {
     .unlink           = DOMEvent_unlink
 };
 
-static dispex_static_data_t DOMPageTransitionEvent_dispex = {
-    "PageTransitionEvent",
-    &DOMPageTransitionEvent_dispex_vtbl,
-    DispDOMEvent_tid,
-    Event_iface_tids,
-    DOMPageTransitionEvent_init_dispex_info
+dispex_static_data_t PageTransitionEvent_dispex = {
+    .id           = PROT_PageTransitionEvent,
+    .prototype_id = PROT_Event,
+    .vtbl         = &DOMPageTransitionEvent_dispex_vtbl,
+    .disp_tid     = DispDOMEvent_tid,
+    .iface_tids   = Event_iface_tids,
+    .init_info    = DOMPageTransitionEvent_init_dispex_info,
 };
 
 static const dispex_static_data_vtbl_t DOMCustomEvent_dispex_vtbl = {
@@ -3828,7 +3829,7 @@ static DOMEvent *keyboard_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_
 static DOMEvent *page_transition_event_ctor(void *iface, nsIDOMEvent *nsevent, eventid_t event_id, HTMLInnerWindow *script_global,
                                             compat_mode_t compat_mode)
 {
-    DOMPageTransitionEvent *page_transition_event = event_ctor(sizeof(DOMCustomEvent), &DOMPageTransitionEvent_dispex, nsevent, event_id,
+    DOMPageTransitionEvent *page_transition_event = event_ctor(sizeof(DOMCustomEvent), &PageTransitionEvent_dispex, nsevent, event_id,
                                                                script_global, compat_mode);
     if(!page_transition_event) return NULL;
     page_transition_event->IWinePageTransitionEvent_iface.lpVtbl = &DOMPageTransitionEventVtbl;
