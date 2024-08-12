@@ -896,13 +896,13 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
     rect.bottom = pos.y + event->height;
 
     if (event->window != data->client_window)
-        OffsetRect( &rect, data->whole_rect.left - data->client_rect.left,
-                    data->whole_rect.top - data->client_rect.top );
+        OffsetRect( &rect, data->rects.visible.left - data->rects.client.left,
+                    data->rects.visible.top - data->rects.client.top );
 
     if (event->window != root_window)
     {
         if (NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-            mirror_rect( &data->client_rect, &rect );
+            mirror_rect( &data->rects.client, &rect );
         abs_rect = rect;
         NtUserMapWindowPoints( hwnd, 0, (POINT *)&abs_rect, 2, 0 /* per-monitor DPI */ );
 
@@ -1091,22 +1091,22 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     if (!data->whole_window) flags |= SWP_NOCOPYBITS;  /* we can't copy bits of foreign windows */
 
-    if (data->window_rect.left == x && data->window_rect.top == y) flags |= SWP_NOMOVE;
+    if (data->rects.window.left == x && data->rects.window.top == y) flags |= SWP_NOMOVE;
     else
         TRACE( "%p moving from (%d,%d) to (%d,%d)\n",
-               hwnd, (int)data->window_rect.left, (int)data->window_rect.top, x, y );
+               hwnd, (int)data->rects.window.left, (int)data->rects.window.top, x, y );
 
-    if ((data->window_rect.right - data->window_rect.left == cx &&
-         data->window_rect.bottom - data->window_rect.top == cy) ||
-        IsRectEmpty( &data->window_rect ))
+    if ((data->rects.window.right - data->rects.window.left == cx &&
+         data->rects.window.bottom - data->rects.window.top == cy) ||
+        IsRectEmpty( &data->rects.window ))
         flags |= SWP_NOSIZE;
     else
         TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
-               hwnd, (int)(data->window_rect.right - data->window_rect.left),
-               (int)(data->window_rect.bottom - data->window_rect.top), cx, cy );
+               hwnd, (int)(data->rects.window.right - data->rects.window.left),
+               (int)(data->rects.window.bottom - data->rects.window.top), cx, cy );
 
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
-    if ((style & WS_CAPTION) == WS_CAPTION || !NtUserIsWindowRectFullScreen( &data->whole_rect, dpi ))
+    if ((style & WS_CAPTION) == WS_CAPTION || !NtUserIsWindowRectFullScreen( &data->rects.visible, dpi ))
     {
         read_net_wm_states( event->display, data );
         if ((data->net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))
@@ -1159,13 +1159,13 @@ static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
         return FALSE;
     }
 
-    x = event->x + data->window_rect.left - data->whole_rect.left;
-    y = event->y + data->window_rect.top - data->whole_rect.top;
+    x = event->x + data->rects.window.left - data->rects.visible.left;
+    y = event->y + data->rects.window.top - data->rects.visible.top;
 
     TRACE( "win %p/%lx new X pos %d,%d (event %d,%d)\n",
            hwnd, data->whole_window, x, y, event->x, event->y );
 
-    window_rect = data->window_rect;
+    window_rect = data->rects.window;
     release_win_data( data );
 
     if (window_rect.left != x || window_rect.top != y)
@@ -1448,8 +1448,8 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     Window		win, w_aux_root, w_aux_child;
 
     if (!(data = get_win_data( hWnd ))) return;
-    cx = data->whole_rect.right - data->whole_rect.left;
-    cy = data->whole_rect.bottom - data->whole_rect.top;
+    cx = data->rects.visible.right - data->rects.visible.left;
+    cy = data->rects.visible.bottom - data->rects.visible.top;
     win = data->whole_window;
     release_win_data( data );
 
@@ -1537,10 +1537,10 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
           if ((win_data = get_win_data( hWnd )))
           {
               drop->fNC =
-                  (drop->pt.x < (win_data->client_rect.left - win_data->whole_rect.left)  ||
-                   drop->pt.y < (win_data->client_rect.top - win_data->whole_rect.top)    ||
-                   drop->pt.x > (win_data->client_rect.right - win_data->whole_rect.left) ||
-                   drop->pt.y > (win_data->client_rect.bottom - win_data->whole_rect.top) );
+                  (drop->pt.x < (win_data->rects.client.left - win_data->rects.visible.left)  ||
+                   drop->pt.y < (win_data->rects.client.top - win_data->rects.visible.top)    ||
+                   drop->pt.x > (win_data->rects.client.right - win_data->rects.visible.left) ||
+                   drop->pt.y > (win_data->rects.client.bottom - win_data->rects.visible.top) );
               release_win_data( win_data );
           }
 

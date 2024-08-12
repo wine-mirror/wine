@@ -507,10 +507,10 @@ BOOL X11DRV_SetIMECompositionWindowPos( HWND hwnd, const POINT *point )
 
     pt = *point;
     if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-        pt.x = data->client_rect.right - data->client_rect.left - 1 - pt.x;
+        pt.x = data->rects.client.right - data->rects.client.left - 1 - pt.x;
 
-    xpoint.x = pt.x + data->client_rect.left - data->whole_rect.left;
-    xpoint.y = pt.y + data->client_rect.top - data->whole_rect.top;
+    xpoint.x = pt.x + data->rects.client.left - data->rects.visible.left;
+    xpoint.y = pt.y + data->rects.client.top - data->rects.visible.top;
     attr = XVaCreateNestedList( 0, XNSpotLocation, &xpoint, NULL );
     if (attr)
     {
