@@ -825,6 +825,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
         }
     }
     retval = dlgInfo->idResult;
+    NtUserNotifyWinEvent( EVENT_SYSTEM_DIALOGEND, hwnd, OBJID_WINDOW, 0 );
     NtUserDestroyWindow( hwnd );
     return retval;
 }
