@@ -1316,7 +1316,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
     {
         for (WineWindow* w in [NSApp windows])
         {
-            if ([w isKindOfClass:[WineWindow class]] && ![w isMiniaturized] && [w isVisible])
+            if ([w isKindOfClass:[WineWindow class]] && ![w isMiniaturized] && [w isVisible] && [w presentsVisibleContent])
                 return YES;
         }
 
@@ -2152,17 +2152,24 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
     - (void) unminimizeWindowIfNoneVisible
     {
-        if (![self frontWineWindow])
+        WineWindow *bestOption = nil;
+
+        if ([self isAnyWineWindowVisible])
+            return;
+
+        for (WineWindow *window in [NSApp windows])
         {
-            for (WineWindow* window in [NSApp windows])
-            {
-                if ([window isKindOfClass:[WineWindow class]] && [window isMiniaturized])
-                {
-                    [window deminiaturize:self];
-                    break;
-                }
-            }
+            if (![window isKindOfClass:[WineWindow class]] || ![window isMiniaturized])
+                continue;
+
+            bestOption = window;
+
+            /* Prefer any window that would actually show something. */
+            if ([window presentsVisibleContent])
+                break;
         }
+
+        [bestOption deminiaturize:self];
     }
 
     - (void) setRetinaMode:(int)mode

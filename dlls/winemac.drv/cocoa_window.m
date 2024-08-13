@@ -2315,6 +2315,20 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         return ([mask isEmptyShaped]);
     }
 
+    - (BOOL) presentsVisibleContent
+    {
+        if (NSWidth(self.frame) > 0 && NSHeight(self.frame) > 0 && ![self isEmptyShaped])
+            return YES;
+
+        for (WineWindow *child in self.childWindows)
+        {
+            if ([child isKindOfClass:[WineWindow class]] && [child presentsVisibleContent])
+                return YES;
+        }
+
+        return NO;
+    }
+
     - (BOOL) canProvideSnapshot
     {
         return (self.windowNumber > 0 && ![self isEmptyShaped]);
