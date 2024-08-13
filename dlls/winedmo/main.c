@@ -127,7 +127,7 @@ NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type )
 }
 
 NTSTATUS CDECL winedmo_demuxer_create( const WCHAR *url, struct winedmo_stream *stream, UINT64 *stream_size,
-                                       WCHAR *mime_type, struct winedmo_demuxer *demuxer )
+                                       UINT *stream_count, WCHAR *mime_type, struct winedmo_demuxer *demuxer )
 {
     struct demuxer_create_params params = {0};
     char *tmp = NULL;
@@ -154,10 +154,11 @@ NTSTATUS CDECL winedmo_demuxer_create( const WCHAR *url, struct winedmo_stream *
         return status;
     }
 
+    *stream_count = params.stream_count;
     MultiByteToWideChar( CP_ACP, 0, params.mime_type, -1, mime_type, 256 );
     *demuxer = params.demuxer;
-    TRACE( "created demuxer %#I64x, url %s, stream %p, stream_size %#I64x, mime_type %s\n", demuxer->handle,
-           debugstr_w(url), stream, *stream_size, debugstr_a(params.mime_type) );
+    TRACE( "created demuxer %#I64x, stream %p, stream_size %#I64x, stream_count %u, mime_type %s\n", demuxer->handle,
+           stream, *stream_size, params.stream_count, debugstr_a(params.mime_type) );
     return STATUS_SUCCESS;
 }
 

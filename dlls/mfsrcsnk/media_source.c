@@ -90,6 +90,7 @@ struct media_source
     struct winedmo_demuxer winedmo_demuxer;
     struct winedmo_stream winedmo_stream;
     UINT64 file_size;
+    UINT stream_count;
     WCHAR mime_type[256];
 
     enum
@@ -518,7 +519,7 @@ static HRESULT media_source_async_create(struct media_source *source, IMFAsyncRe
     source->winedmo_stream.p_read = media_source_read_cb;
 
     if ((status = winedmo_demuxer_create(source->url, &source->winedmo_stream, &source->file_size,
-            source->mime_type, &source->winedmo_demuxer)))
+            &source->stream_count, source->mime_type, &source->winedmo_demuxer)))
     {
         WARN("Failed to create demuxer, status %#lx\n", status);
         hr = HRESULT_FROM_NT(status);

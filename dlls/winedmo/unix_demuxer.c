@@ -83,7 +83,16 @@ NTSTATUS demuxer_create( void *arg )
         return STATUS_UNSUCCESSFUL;
     }
 
+    if (!(ctx->nb_streams && ctx->duration != AV_NOPTS_VALUE) && (ret = avformat_find_stream_info( ctx, NULL )) < 0)
+    {
+        ERR( "Failed to find stream info, ret %d (%s).\n", ret, av_err2str(ret) );
+        avio_context_free( &ctx->pb );
+        avformat_free_context( ctx );
+        return STATUS_UNSUCCESSFUL;
+    }
+
     params->demuxer.handle = (UINT_PTR)ctx;
+    params->stream_count = ctx->nb_streams;
     if (strstr( ctx->iformat->name, "mp4" )) strcpy( params->mime_type, "video/mp4" );
     else if (strstr( ctx->iformat->name, "avi" )) strcpy( params->mime_type, "video/avi" );
     else if (strstr( ctx->iformat->name, "mpeg" )) strcpy( params->mime_type, "video/mpeg" );

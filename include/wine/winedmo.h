@@ -36,7 +36,7 @@ struct winedmo_demuxer { UINT64 handle; };
 
 NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type );
 NTSTATUS CDECL winedmo_demuxer_create( const WCHAR *url, struct winedmo_stream *stream, UINT64 *stream_size,
-                                       WCHAR *mime_type, struct winedmo_demuxer *demuxer );
+                                       UINT *stream_count, WCHAR *mime_type, struct winedmo_demuxer *demuxer );
 NTSTATUS CDECL winedmo_demuxer_destroy( struct winedmo_demuxer *demuxer );
 
 #endif /* __WINE_WINEDMO_H */

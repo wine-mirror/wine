@@ -148,6 +148,7 @@ static NTSTATUS wow64_demuxer_create( void *arg )
         PTR32 context;
         struct winedmo_demuxer demuxer;
         char mime_type[256];
+        UINT32 stream_count;
     } *params32 = arg;
     struct demuxer_create_params params;
     NTSTATUS status;
@@ -157,6 +158,7 @@ static NTSTATUS wow64_demuxer_create( void *arg )
     if ((status = demuxer_create( &params ))) return status;
     params32->demuxer = params.demuxer;
     memcpy( params32->mime_type, params.mime_type, 256 );
+    params32->stream_count = params.stream_count;
 
     return status;
 }
