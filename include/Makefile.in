@@ -709,6 +709,7 @@ SOURCES = \
 	shdispid.h \
 	shellapi.h \
 	shellscalingapi.h \
+	sherrors.h \
 	shimgdata.idl \
 	shldisp.idl \
 	shlguid.h \

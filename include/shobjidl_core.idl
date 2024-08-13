@@ -16,6 +16,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+cpp_quote("#define FOFX_NOSKIPJUNCTIONS 0x00010000")
+cpp_quote("#define FOFX_PREFERHARDLINK 0x00020000")
+cpp_quote("#define FOFX_SHOWELEVATIONPROMPT 0x00040000")
+cpp_quote("#define FOFX_RECYCLEONDELETE 0x00080000")
+cpp_quote("#define FOFX_EARLYFAILURE 0x00100000")
+cpp_quote("#define FOFX_PRESERVEFILEEXTENSIONS 0x00200000")
+cpp_quote("#define FOFX_KEEPNEWERFILE 0x00400000")
+cpp_quote("#define FOFX_NOCOPYHOOKS 0x00800000")
+cpp_quote("#define FOFX_NOMINIMIZEBOX 0x01000000")
+cpp_quote("#define FOFX_MOVEACLSACROSSVOLUMES 0x02000000")
+cpp_quote("#define FOFX_DONTDISPLAYSOURCEPATH 0x04000000")
+cpp_quote("#define FOFX_DONTDISPLAYDESTPATH 0x08000000")
+cpp_quote("#define FOFX_REQUIREELEVATION 0x10000000")
+cpp_quote("#define FOFX_ADDUNDORECORD 0x20000000")
+cpp_quote("#define FOFX_COPYASDOWNLOAD 0x40000000")
+cpp_quote("#define FOFX_DONTDISPLAYLOCATIONS 0x80000000")
+
 [
     uuid(56f9f44f-f74c-4e38-99bc-9f3ebd3d696a)
 ]
