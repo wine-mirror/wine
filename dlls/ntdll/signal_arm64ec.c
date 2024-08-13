@@ -1103,6 +1103,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 void dispatch_emulation( ARM64_NT_CONTEXT *arm_ctx )
 {
     context_arm_to_x64( get_arm64ec_cpu_area()->ContextAmd64, arm_ctx );
+    get_arm64ec_cpu_area()->InSimulation = 1;
     pBeginSimulation();
 }
 __ASM_GLOBAL_FUNC( "#KiUserEmulationDispatcher",

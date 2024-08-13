@@ -2092,12 +2092,42 @@ static void test_exception_dispatcher(void)
 #endif
 }
 
+#ifdef __arm64ec__
+static DWORD CALLBACK simulation_thread( void *arg )
+{
+    BYTE code[] =
+    {
+        0x48, 0xc7, 0xc1, 0x34, 0x12, 0x00, 0x00, /* mov $0x1234,%rcx */
+        0x48, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0,       /* movabs $RtlExitUserThread,%rax */
+        0xff, 0xd0,                               /* call *%rax */
+        0xc3,                                     /* ret */
+    };
+    DWORD old_prot;
+    CONTEXT *context;
+    void (WINAPI *pBeginSimulation)(void) = arg;
+    void *addr = VirtualAlloc( NULL, 0x1000, MEM_COMMIT, PAGE_READWRITE );
+
+    *(void **)(code + 9) = GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlExitUserThread" );
+    memcpy( addr, code, sizeof(code) );
+    VirtualProtect( addr, 0x1000, PAGE_EXECUTE_READ, &old_prot );
+
+    context = &NtCurrentTeb()->ChpeV2CpuAreaInfo->ContextAmd64->AMD64_Context;
+    context->Rsp = (ULONG_PTR)&context - 0x800;
+    context->Rip = (ULONG_PTR)addr;
+
+    NtCurrentTeb()->ChpeV2CpuAreaInfo->InSimulation = 1;  /* otherwise it crashes on recent Windows */
+    pBeginSimulation();
+    return 0x5678;
+}
+#endif
+
 static void test_xtajit64(void)
 {
 #ifdef __arm64ec__
     HMODULE module = GetModuleHandleA( "xtajit64.dll" );
     BOOLEAN (WINAPI *pBTCpu64IsProcessorFeaturePresent)( UINT feature );
     void (WINAPI *pUpdateProcessorInformation)( SYSTEM_CPU_INFORMATION *info );
+    void (WINAPI *pBeginSimulation)(void);
     UINT i;
 
     if (!module)
@@ -2107,6 +2137,7 @@ static void test_xtajit64(void)
     }
 #define GET_PROC(func) p##func = pRtlFindExportedRoutineByName( module, #func )
     GET_PROC( BTCpu64IsProcessorFeaturePresent );
+    GET_PROC( BeginSimulation );
     GET_PROC( UpdateProcessorInformation );
 #undef GET_PROC
 
@@ -2152,6 +2183,20 @@ static void test_xtajit64(void)
         ok( info.ProcessorFeatureBits == 0xcccccccc, "wrong features %lx\n", info.ProcessorFeatureBits );
     }
     else win_skip( "UpdateProcessorInformation missing\n" );
+
+    if (pBeginSimulation)
+    {
+        DWORD ret, exit_code;
+        HANDLE thread = CreateThread( NULL, 0, simulation_thread, pBeginSimulation, 0, NULL );
+
+        ok( thread != 0, "thread creation failed\n" );
+        ret = WaitForSingleObject( thread, 10000 );
+        ok( !ret, "wait failed %lx\n", ret );
+        GetExitCodeThread( thread, &exit_code );
+        ok( exit_code == 0x1234, "wrong exit code %lx\n", exit_code );
+        CloseHandle( thread );
+    }
+    else win_skip( "BeginSimulation missing\n" );
 #endif
 }
 
