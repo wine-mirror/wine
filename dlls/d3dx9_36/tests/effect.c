@@ -423,8 +423,13 @@ static void test_create_effect_compiler(void)
  */
 struct test_effect_parameter_value_result
 {
-    const char *full_name;
-    D3DXPARAMETER_DESC desc;
+    const char *name;
+    D3DXPARAMETER_CLASS class;
+    D3DXPARAMETER_TYPE type;
+    UINT rows;
+    UINT columns;
+    UINT elements;
+    UINT bytes;
     union
     {
         float f[32];
@@ -617,145 +622,121 @@ static const DWORD test_effect_parameter_value_blob_float[] =
 0x00000001, 0x00000b70, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
 
-struct test_effect_parameter_value_result test_effect_parameter_value_result_float[] =
+static const struct test_effect_parameter_value_result test_effect_parameter_value_result_float[] =
 {
-    {"f",     {"f",     NULL, D3DXPC_SCALAR,      D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},
-            { .f = { 0.1f }} },
-
-    {"f1",    {"f1",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},
-            { .f = { 1.1f }} },
-
-    {"f2",    {"f2",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 2, 0, 0, 0, 0,   8},
-            { .f = { 2.1f, 2.2f }} },
-
-    {"f3",    {"f3",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},
-            { .f = { 3.1f, 3.2f, 3.3f }} },
-
-    {"f4",    {"f4",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},
-            { .f = { 4.1f, 4.2f, 4.3f, 4.4f }} },
-
-    {"f11",   {"f11",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},
-            { .f = { 11.1f }} },
-
-    {"f12",   {"f12",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 2, 0, 0, 0, 0,   8},
-            { .f = { 12.1f, 12.2f }} },
-
-    {"f13",   {"f13",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},
-            { .f = { 13.1f, 13.2f, 13.3f }} },
-
-    {"f14",   {"f14",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},
-            { .f = { 14.1f, 14.2f, 14.3f, 14.4f }} },
-
-    {"f21",   {"f21",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 1, 0, 0, 0, 0,   8},
-            { .f = { 21.11f, 21.21f }} },
-
-    {"f22",   {"f22",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 0, 0, 0, 0,  16},
+    { "f",   D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 0,  4, { .f = { 0.1f }} },
+    { "f1",  D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 1, 0,  4, { .f = { 1.1f }} },
+    { "f2",  D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 2, 0,  8, { .f = { 2.1f, 2.2f }} },
+    { "f3",  D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 12, { .f = { 3.1f, 3.2f, 3.3f }} },
+    { "f4",  D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 16, { .f = { 4.1f, 4.2f, 4.3f, 4.4f }} },
+    { "f11", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 1, 0, 4, { .f = { 11.1f }} },
+    { "f12", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 2, 0, 8, { .f = { 12.1f, 12.2f }} },
+    { "f13", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 3, 0, 12, { .f = { 13.1f, 13.2f, 13.3f }} },
+    { "f14", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 4, 0, 16, { .f = { 14.1f, 14.2f, 14.3f, 14.4f }} },
+    { "f21", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 1, 0, 8, { .f = { 21.11f, 21.21f }} },
+    { "f22", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 0, 16,
             { .f = { 22.11f, 22.21f, 22.12f, 22.22f }} },
 
-    {"f23",   {"f23",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 3, 0, 0, 0, 0,  24},
+    { "f23", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 3, 0, 24,
             { .f = { 23.11f, 23.21f, 23.12f, 23.22f, 23.13f, 23.23f }} },
 
-    {"f24",   {"f24",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 4, 0, 0, 0, 0,  32},
+    { "f24", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 4, 0, 32,
             { .f = { 24.11f, 24.21f, 24.12f, 24.22f, 24.13f, 24.23f, 24.14f, 24.24f }} },
 
-    {"f31",   {"f31",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 0, 0, 0, 0,  12},
-            { .f = { 31.11f, 31.21f, 31.31f }} },
+    { "f31", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 0, 12, { .f = { 31.11f, 31.21f, 31.31f }} },
 
-    {"f32",   {"f32",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 0, 0, 0, 0,  24},
+    { "f32", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 0, 24,
             { .f = { 32.11f, 32.21f, 32.31f, 32.12f, 32.22f, 32.32f }} },
 
-    {"f33",   {"f33",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 0, 0, 0, 0,  36},
+    { "f33", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 0, 36,
             { .f = { 33.11f, 33.21f, 33.31f, 33.12f, 33.22f, 33.32f, 33.13f, 33.23f, 33.33f }} },
 
-    {"f34",   {"f34",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 4, 0, 0, 0, 0,  48},
+    { "f34", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 4, 0, 48,
             { .f = { 34.11f, 34.21f, 34.31f, 34.12f, 34.22f, 34.32f, 34.13f, 34.23f,
                      34.33f, 34.14f, 34.24f, 34.34f }} },
 
-    {"f41",   {"f41",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 1, 0, 0, 0, 0,  16},
+    { "f41", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 1, 0, 16,
             { .f = { 41.11f, 41.21f, 41.31f, 41.41f  }} },
 
-    {"f42",   {"f42",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 2, 0, 0, 0, 0,  32},
+    { "f42", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 2, 0, 32,
             { .f = { 42.11f, 42.21f, 42.31f, 42.41f, 42.12f, 42.22f, 42.32f, 42.42f }} },
 
-    {"f43",   {"f43",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 3, 0, 0, 0, 0,  48},
+    { "f43", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 3, 0, 48,
             { .f = { 43.11f, 43.21f, 43.31f, 43.41f, 43.12f, 43.22f, 43.32f, 43.42f,
                      43.13f, 43.23f, 43.33f, 43.43f }} },
 
-    {"f44",   {"f44",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4, 0, 0, 0, 0,  64},
+    { "f44", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4, 0, 64,
             { .f = { 44.11f, 44.21f, 44.31f, 44.41f, 44.12f, 44.22f, 44.32f, 44.42f,
                      44.13f, 44.23f, 44.33f, 44.43f, 44.14f, 44.24f, 44.34f, 44.44f }} },
 
-    {"f_2",   {"f_2",   NULL, D3DXPC_SCALAR,      D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8},
-            { .f = { 0.101f, 0.102f }} },
+    { "f_2", D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 2, 8, { .f = { 0.101f, 0.102f }} },
 
-    {"f1_2",  {"f1_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8},
-            { .f = { 1.101f, 1.102f }} },
+    { "f1_2", D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 1, 2, 8, { .f = { 1.101f, 1.102f }} },
 
-    {"f2_2",  {"f2_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 2, 2, 0, 0, 0,  16},
+    { "f2_2", D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 2, 2, 16,
             { .f = { 2.101f, 2.201f, 2.102f, 2.202f }} },
 
-    {"f3_2",  {"f3_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 2, 0, 0, 0,  24},
+    { "f3_2", D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 2, 24,
             { .f = { 3.101f, 3.201f, 3.301f, 3.102f, 3.202f, 3.302f }} },
 
-    {"f4_2",  {"f4_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 2, 0, 0, 0,  32},
+    { "f4_2", D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 2, 32,
             { .f = { 4.101f, 4.201f, 4.301f, 4.401f, 4.102f, 4.202f, 4.302f, 4.402f }} },
 
-    {"f11_2", {"f11_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8},
-            { .f = { 11.101f, 11.102f }} },
+    { "f11_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 1, 2, 8, { .f = { 11.101f, 11.102f }} },
 
-    {"f12_2", {"f12_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 2, 2, 0, 0, 0,  16},
+    { "f12_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 2, 2, 16,
             { .f = { 12.101f, 12.201f, 12.102f, 12.202f }} },
 
-    {"f13_2", {"f13_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 3, 2, 0, 0, 0,  24},
+    { "f13_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 3, 2, 24,
             { .f = { 13.101f, 13.201f, 13.301f, 13.102f, 13.202f, 13.302f }} },
 
-    {"f14_2", {"f14_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 4, 2, 0, 0, 0,  32},
+    { "f14_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 4, 2, 32,
             { .f = { 14.101f, 14.201f, 14.301f, 14.401f, 14.102f, 14.202f, 14.302f, 14.402f }} },
 
-    {"f21_2", {"f21_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 1, 2, 0, 0, 0,  16},
+    { "f21_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 1, 2, 16,
             { .f = { 21.1101f, 21.2101f, 21.1102f, 21.2102f }} },
 
-    {"f22_2", {"f22_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 2, 0, 0, 0,  32},
+    { "f22_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 2, 32,
             { .f = { 22.1101f, 22.2101f, 22.1201f, 22.2201f, 22.1102f, 22.2102f, 22.1202f, 22.2202f }} },
 
-    {"f23_2", {"f23_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 3, 2, 0, 0, 0,  48},
+    { "f23_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 3, 2, 48,
             { .f = { 23.1101f, 23.2101, 23.1201f, 23.2201f, 23.1301f, 23.2301f, 23.1102f, 23.2102f,
                      23.1202f, 23.2202f, 23.1302f, 23.2302f }} },
 
-    {"f24_2", {"f24_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 4, 2, 0, 0, 0,  64},
+    { "f24_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 4, 2, 64,
             { .f = { 24.1101f, 24.2101f, 24.1201f, 24.2201f, 24.1301f, 24.2301f, 24.1401f, 24.2401f,
                      24.1102f, 24.2102f, 24.1202f, 24.2202f, 24.1302f, 24.2302f, 24.1402f, 24.2402f }} },
 
-    {"f31_2", {"f31_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 2, 0, 0, 0,  24},
+    { "f31_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 2, 24,
             { .f = { 31.1101f, 31.2101f, 31.3101f, 31.1102f, 31.2102f, 31.3102f }} },
 
-    {"f32_2", {"f32_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 2, 0, 0, 0,  48},
+    { "f32_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 2, 48,
             { .f = { 32.1101f, 32.2101f, 32.3101f, 32.1201f, 32.2201f, 32.3201f, 32.1102f, 32.2102f,
                      32.3102f, 32.1202f, 32.2202f, 32.3202f }} },
 
-    {"f33_2", {"f33_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 2, 0, 0, 0,  72},
+    { "f33_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 2, 72,
             { .f = { 33.1101f, 33.2101f, 33.3101f, 33.1201f, 33.2201f, 33.3201f, 33.1301f, 33.2301f,
                      33.3301f, 33.1102f, 33.2102f, 33.3102f, 33.1202f, 33.2202f, 33.3202f, 33.1302f,
                      33.2302f, 33.3302f }} },
 
-    {"f34_2", {"f34_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 4, 2, 0, 0, 0,  96},
+    { "f34_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 4, 2, 96,
             { .f = { 34.1101f, 34.2101f, 34.3101f, 34.1201f, 34.2201f, 34.3201f, 34.1301f, 34.2301f,
                      34.3301f, 34.1401f, 34.2401f, 34.3401f, 34.1102f, 34.2102f, 34.3102f, 34.1202f,
                      34.2202f, 34.3202f, 34.1302f, 34.2302f, 34.3302f, 34.1402f, 34.2402f, 34.3402f }} },
 
-    {"f41_2", {"f41_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 1, 2, 0, 0, 0,  32},
+    { "f41_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 1, 2, 32,
             { .f = { 41.1101f, 41.2101f, 41.3101f, 41.4101f, 41.1102f, 41.2102f, 41.3102f, 41.4102f }} },
 
-    {"f42_2", {"f42_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 2, 2, 0, 0, 0,  64},
+    { "f42_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 2, 2, 64,
             { .f = { 42.1101f, 42.2101f, 42.3101f, 42.4101f, 42.1201f, 42.2201f, 42.3201f, 42.4201f,
                      42.1102f, 42.2102f, 42.3102f, 42.4102f, 42.1202f, 42.2202f, 42.3202f, 42.4202f }} },
 
-    {"f43_2", {"f43_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 3, 2, 0, 0, 0,  96},
+    { "f43_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 3, 2, 96,
             { .f = { 43.1101f, 43.2101f, 43.3101f, 43.4101f, 43.1201f, 43.2201f, 43.3201f, 43.4201f,
                      43.1301f, 43.2301f, 43.3301f, 43.4301f, 43.1102f, 43.2102f, 43.3102f, 43.4102f,
                      43.1202f, 43.2202f, 43.3202f, 43.4202f, 43.1302f, 43.2302f, 43.3302f, 43.4302f }} },
 
-    {"f44_2", {"f44_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4, 2, 0, 0, 0, 128},
+    { "f44_2", D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4, 2, 128,
             { .f = { 44.1101f, 44.2101f, 44.3101f, 44.4101f, 44.1201f, 44.2201f, 44.3201f, 44.4201f,
                      44.1301f, 44.2301f, 44.3301f, 44.4301f, 44.1401f, 44.2401f, 44.3401f, 44.4401f,
                      44.1102f, 44.2102f, 44.3102f, 44.4102f, 44.1202f, 44.2202f, 44.3202f, 44.4202f,
@@ -946,143 +927,126 @@ static const DWORD test_effect_parameter_value_blob_int[] =
 0x00000001, 0x00000b70, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
 
-struct test_effect_parameter_value_result test_effect_parameter_value_result_int[] =
+static const struct test_effect_parameter_value_result test_effect_parameter_value_result_int[] =
 {
-    {"i",     {"i",     NULL, D3DXPC_SCALAR,      D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},
-            { .i = { 1 }} },
+    { "i", D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 0, 4, { .i = { 1 }} },
 
-    {"i1",    {"i1",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},
-            { .i = { 11 }} },
+    { "i1", D3DXPC_VECTOR, D3DXPT_INT, 1, 1, 0, 4, { .i = { 11 }} },
 
-    {"i2",    {"i2",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 2, 0, 0, 0, 0,   8},
-            { .i = { 21, 22 }} },
+    { "i2", D3DXPC_VECTOR, D3DXPT_INT, 1, 2, 0, 8, { .i = { 21, 22 }} },
 
-    {"i3",    {"i3",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 3, 0, 0, 0, 0,  12},
-            { .i = { 31, 32, 33 }} },
+    { "i3", D3DXPC_VECTOR, D3DXPT_INT, 1, 3, 0, 12, { .i = { 31, 32, 33 }} },
 
-    {"i4",    {"i4",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 4, 0, 0, 0, 0,  16},
-            { .i = { 41, 42, 43, 44 }} },
+    { "i4", D3DXPC_VECTOR, D3DXPT_INT, 1, 4, 0, 16, { .i = { 41, 42, 43, 44 }} },
 
-    {"i11",   {"i11",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},
-            { .i = { 111 }} },
+    { "i11", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 1, 0, 4, { .i = { 111 }} },
 
-    {"i12",   {"i12",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 2, 0, 0, 0, 0,   8},
-            { .i = { 121, 122 }} },
+    { "i12", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 2, 0, 8, { .i = { 121, 122 }} },
 
-    {"i13",   {"i13",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 3, 0, 0, 0, 0,  12},
-            { .i = { 131, 132, 133 }} },
+    { "i13", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 3, 0, 12, { .i = { 131, 132, 133 }} },
 
-    {"i14",   {"i14",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 4, 0, 0, 0, 0,  16},
-            { .i = { 141, 142, 143, 144 }} },
+    { "i14", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 4, 0, 16, { .i = { 141, 142, 143, 144 }} },
 
-    {"i21",   {"i21",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 1, 0, 0, 0, 0,   8},
-            { .i = { 2111, 2121 }} },
+    { "i21", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 1, 0, 8, { .i = { 2111, 2121 }} },
 
-    {"i22",   {"i22",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 2, 0, 0, 0, 0,  16},
-            { .i = { 2211, 2221, 2212, 2222 }} },
+    { "i22", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 2, 0, 16, { .i = { 2211, 2221, 2212, 2222 }} },
 
-    {"i23",   {"i23",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 3, 0, 0, 0, 0,  24},
+    { "i23", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 3, 0, 24,
             { .i = { 2311, 2321, 2312, 2322, 2313, 2323 }} },
 
-    {"i24",   {"i24",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 4, 0, 0, 0, 0,  32},
+    { "i24", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 4, 0, 32,
             { .i = { 2411, 2421, 2412, 2422, 2413, 2423, 2414, 2424 }} },
 
-    {"i31",   {"i31",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 1, 0, 0, 0, 0,  12},
-            { .i = { 3111, 3121, 3131 }} },
+    { "i31", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 1, 0, 12, { .i = { 3111, 3121, 3131 }} },
 
-    {"i32",   {"i32",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 0, 0, 0, 0,  24},
+    { "i32", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 0, 24,
             { .i = { 3211, 3221, 3231, 3212, 3222, 3232 }} },
 
-    {"i33",   {"i33",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 3, 0, 0, 0, 0,  36},
+    { "i33", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 3, 0, 36,
             { .i = { 3311, 3321, 3331, 3312, 3322, 3332, 3313, 3323, 3333 }} },
 
-    {"i34",   {"i34",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 4, 0, 0, 0, 0,  48},
+    { "i34", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 4, 0, 48,
             { .i = { 3411, 3421, 3431, 3412, 3422, 3432, 3413, 3423, 3433, 3414, 3424, 3434 }} },
 
-    {"i41",   {"i41",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 1, 0, 0, 0, 0,  16},
-            { .i = { 4111, 4121, 4131, 4141 }} },
+    { "i41", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 1, 0, 16, { .i = { 4111, 4121, 4131, 4141 }} },
 
-    {"i42",   {"i42",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 2, 0, 0, 0, 0,  32},
+    { "i42", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 2, 0, 32,
             { .i = { 4211, 4221, 4231, 4241, 4212, 4222, 4232, 4242 }} },
 
-    {"i43",   {"i43",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 3, 0, 0, 0, 0,  48},
+    { "i43", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 3, 0, 48,
             { .i = { 4311, 4321, 4331, 4341, 4312, 4322, 4332, 4342,
                      4313, 4323, 4333, 4343 }} },
 
-    {"i44",   {"i44",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 0, 0, 0, 0,  64},
+    { "i44", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 0, 64,
             { .i = { 4411, 4421, 4431, 4441, 4412, 4422, 4432, 4442,
                      4413, 4423, 4433, 4443, 4414, 4424, 4434, 4444 }} },
 
-    {"i_2",   {"i_2",   NULL, D3DXPC_SCALAR,      D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8},
-            { .i = { 0101, 0102 }} },
+    { "i_2", D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 2, 8, { .i = { 0101, 0102 }} },
 
-    {"i1_2",  {"i1_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8},
-            { .i = { 1101, 1102 }} },
+    { "i1_2", D3DXPC_VECTOR, D3DXPT_INT, 1, 1, 2, 8, { .i = { 1101, 1102 }} },
 
-    {"i2_2",  {"i2_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 2, 2, 0, 0, 0,  16},
-            { .i = { 2101, 2201, 2102, 2202 }} },
+    { "i2_2", D3DXPC_VECTOR, D3DXPT_INT, 1, 2, 2, 16, { .i = { 2101, 2201, 2102, 2202 }} },
 
-    {"i3_2",  {"i3_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 3, 2, 0, 0, 0,  24},
+    { "i3_2", D3DXPC_VECTOR, D3DXPT_INT, 1, 3, 2, 24,
             { .i = { 3101, 3201, 3301, 3102, 3202, 3302 }} },
 
-    {"i4_2",  {"i4_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 4, 2, 0, 0, 0,  32},
+    { "i4_2", D3DXPC_VECTOR, D3DXPT_INT, 1, 4, 2, 32,
             { .i = { 4101, 4201, 4301, 4401, 4102, 4202, 4302, 4402 }} },
 
-    {"i11_2", {"i11_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8},
-            { .i = { 11101, 11102 }} },
+    { "i11_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 1, 2, 8, { .i = { 11101, 11102 }} },
 
-    {"i12_2", {"i12_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 2, 2, 0, 0, 0,  16},
+    { "i12_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 2, 2, 16,
             { .i = { 12101, 12201, 12102, 12202 }} },
 
-    {"i13_2", {"i13_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 3, 2, 0, 0, 0,  24},
+    { "i13_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 3, 2, 24,
             { .i = { 13101, 13201, 13301, 13102, 13202, 13302 }} },
 
-    {"i14_2", {"i14_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 4, 2, 0, 0, 0,  32},
+    { "i14_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 4, 2, 32,
             { .i = { 14101, 14201, 14301, 14401, 14102, 14202, 14302, 14402 }} },
 
-    {"i21_2", {"i21_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 1, 2, 0, 0, 0,  16},
+    { "i21_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 1, 2, 16,
             { .i = { 211101, 212101, 211102, 212102 }} },
 
-    {"i22_2", {"i22_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 2, 2, 0, 0, 0,  32},
+    { "i22_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 2, 2, 32,
             { .i = { 221101, 222101, 221201, 222201, 221102, 222102, 221202, 222202 }} },
 
-    {"i23_2", {"i23_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 3, 2, 0, 0, 0,  48},
+    { "i23_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 3, 2, 48,
             { .i = { 231101, 232101, 231201, 232201, 231301, 232301, 231102, 232102,
                      231202, 232202, 231302, 232302 }} },
 
-    {"i24_2", {"i24_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 4, 2, 0, 0, 0,  64},
+    { "i24_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 4, 2, 64,
             { .i = { 241101, 242101, 241201, 242201, 241301, 242301, 241401, 242401,
                      241102, 242102, 241202, 242202, 241302, 242302, 241402, 242402 }} },
 
-    {"i31_2", {"i31_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 1, 2, 0, 0, 0,  24},
+    { "i31_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 1, 2, 24,
             { .i = { 311101, 312101, 313101, 311102, 312102, 313102 }} },
 
-    {"i32_2", {"i32_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 2, 0, 0, 0,  48},
+    { "i32_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 2, 48,
             { .i = { 321101, 322101, 323101, 321201, 322201, 323201, 321102, 322102,
                      323102, 321202, 322202, 323202 }} },
 
-    {"i33_2", {"i33_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 3, 2, 0, 0, 0,  72},
+    { "i33_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 3, 2, 72,
             { .i = { 331101, 332101, 333101, 331201, 332201, 333201, 331301, 332301, 333301,
                      331102, 332102, 333102, 331202, 332202, 333202, 331302, 332302, 333302 }} },
 
-    {"i34_2", {"i34_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 4, 2, 0, 0, 0,  96},
+    { "i34_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 4, 2, 96,
             { .i = { 341101, 342101, 343101, 341201, 342201, 343201, 341301, 342301, 343301,
                      341401, 342401, 343401, 341102, 342102, 343102, 341202, 342202, 343202,
                      341302, 342302, 343302, 341402, 342402, 343402 }} },
 
-    {"i41_2", {"i41_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 1, 2, 0, 0, 0,  32},
+    { "i41_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 1, 2, 32,
             { .i = { 411101, 412101, 413101, 414101, 411102, 412102, 413102, 414102 }} },
 
-    {"i42_2", {"i42_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 2, 2, 0, 0, 0,  64},
+    { "i42_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 2, 2, 64,
             { .i = { 421101, 422101, 423101, 424101, 421201, 422201, 423201, 424201,
                      421102, 422102, 423102, 424102, 421202, 422202, 423202, 424202 }} },
 
-    {"i43_2", {"i43_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 3, 2, 0, 0, 0,  96},
+    { "i43_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 3, 2, 96,
             { .i = { 431101, 432101, 433101, 434101, 431201, 432201, 433201, 434201,
                      431301, 432301, 433301, 434301, 431102, 432102, 433102, 434102,
                      431202, 432202, 433202, 434202, 431302, 432302, 433302, 434302 }} },
 
-    {"i44_2", {"i44_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 2, 0, 0, 0, 128},
+    { "i44_2", D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 2, 128,
             { .i = { 441101, 442101, 443101, 444101, 441201, 442201, 443201, 444201,
                      441301, 442301, 443301, 444301, 441401, 442401, 443401, 444401,
                      441102, 442102, 443102, 444102, 441202, 442202, 443202, 444202,
@@ -1123,15 +1087,15 @@ static const DWORD test_effect_parameter_value_blob_object[] =
 0x00000001, 0x00000005, 0x74736574, 0x00000000,
 };
 
-struct test_effect_parameter_value_result test_effect_parameter_value_result_object[] =
+static const struct test_effect_parameter_value_result test_effect_parameter_value_result_object[] =
 {
-    {"s",   {"s",   NULL, D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 0, 0, 0, 0, sizeof(void *)     }},
-    {"s_2", {"s_2", NULL, D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 2, 0, 0, 0, 2 * sizeof(void *) }},
-    {"tex", {"tex", NULL, D3DXPC_OBJECT, D3DXPT_TEXTURE2D,    0, 0, 0, 0, 0, 0, sizeof(void *)     }},
-    {"v",   {"v",   NULL, D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 0, 0, 0, 0, sizeof(void *)     }},
-    {"v_2", {"v_2", NULL, D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 2, 0, 0, 0, 2 * sizeof(void *) }},
-    {"p",   {"p",   NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 0, 0, 0, 0, sizeof(void *)     }},
-    {"p_2", {"p_2", NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 2, 0, 0, 0, 2 * sizeof(void *) }},
+    { "s",   D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 0, sizeof(void *)     },
+    { "s_2", D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 2, 2 * sizeof(void *) },
+    { "tex", D3DXPC_OBJECT, D3DXPT_TEXTURE2D,    0, 0, 0, sizeof(void *)     },
+    { "v",   D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 0, sizeof(void *)     },
+    { "v_2", D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 2, 2 * sizeof(void *) },
+    { "p",   D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 0, sizeof(void *)     },
+    { "p_2", D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 2, 2 * sizeof(void *) },
 };
 
 /*
@@ -1166,14 +1130,14 @@ static const DWORD test_effect_parameter_value_blob_special[] =
 0x00000000, 0x00000000,
 };
 
-struct test_effect_parameter_value_result test_effect_parameter_value_result_special[] =
+static const struct test_effect_parameter_value_result test_effect_parameter_value_result_special[] =
 {
-    {"f3",    {"f3",    NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12}, { .f = { -3.1f, 153.2f, 283.3f }} },
-    {"f3min", {"f3min", NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12}, { .f = { -31.1f, -31.2f, -31.3f }} },
-    {"f3max", {"f3max", NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12}, { .f = { 320.1f, 320.2f, 320.3f }} },
-    {"f4",    {"f4",    NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16}, { .f = { -4.1f, 154.2f, 284.3f, 34.4f }} },
-    {"f4min", {"f4min", NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16}, { .f = { -41.1f, -41.2f, -41.3f, -41.4f }} },
-    {"f4max", {"f4max", NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16}, { .f = { 420.1f, 42.20f, 420.3f, 420.4f }} },
+    { "f3",    D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 12, { .f = { -3.1f, 153.2f, 283.3f }} },
+    { "f3min", D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 12, { .f = { -31.1f, -31.2f, -31.3f }} },
+    { "f3max", D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 12, { .f = { 320.1f, 320.2f, 320.3f }} },
+    { "f4",    D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 16, { .f = { -4.1f, 154.2f, 284.3f, 34.4f }} },
+    { "f4min", D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 16, { .f = { -41.1f, -41.2f, -41.3f, -41.4f }} },
+    { "f4max", D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 16, { .f = { 420.1f, 42.20f, 420.3f, 420.4f }} },
 };
 
 #define ADD_PARAMETER_VALUE(x) {\
@@ -1209,40 +1173,39 @@ test_effect_parameter_value_data[] =
 static void test_effect_parameter_value_GetValue(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     DWORD value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     unsigned int l;
     HRESULT hr;
 
     memset(value, 0xab, sizeof(value));
-    hr = effect->lpVtbl->GetValue(effect, parameter, value, res_desc->Bytes);
-    if (res_desc->Class == D3DXPC_SCALAR
-            || res_desc->Class == D3DXPC_VECTOR
-            || res_desc->Class == D3DXPC_MATRIX_ROWS)
+    hr = effect->lpVtbl->GetValue(effect, parameter, value, res->bytes);
+    if (res->class == D3DXPC_SCALAR
+            || res->class == D3DXPC_VECTOR
+            || res->class == D3DXPC_MATRIX_ROWS)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-        for (l = 0; l < res_desc->Bytes / sizeof(*value); ++l)
+        for (l = 0; l < res->bytes / sizeof(*value); ++l)
         {
             ok(value[l] == res_value[l], "Unexpected value[%u] %#lx, expected %#lx.\n",
                     l, value[l], res_value[l]);
         }
 
-        for (l = res_desc->Bytes / sizeof(*value); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        for (l = res->bytes / sizeof(*value); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
             ok(value[l] == 0xabababab, "Unexpected value[%u] %#lx.\n", l, value[l]);
         }
     }
-    else if (res_desc->Class == D3DXPC_OBJECT)
+    else if (res->class == D3DXPC_OBJECT)
     {
-        switch (res_desc->Type)
+        switch (res->type)
         {
             case D3DXPT_PIXELSHADER:
             case D3DXPT_VERTEXSHADER:
             case D3DXPT_TEXTURE2D:
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-                for (l = 0; l < (res_desc->Elements ? res_desc->Elements : 1); ++l)
+                for (l = 0; l < (res->elements ? res->elements : 1); ++l)
                 {
                     IUnknown *unk = *((IUnknown **)value + l);
                     if (unk) IUnknown_Release(unk);
@@ -1254,7 +1217,7 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
                 break;
 
             default:
-                ok(0, "Type is %u, this should not happen!\n", res_desc->Type);
+                ok(0, "Type is %u, this should not happen!\n", res->type);
                 break;
         }
     }
@@ -1272,12 +1235,11 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
 static void test_effect_parameter_value_GetBool(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     BOOL bvalue = 0xabababab;
     HRESULT hr;
 
     hr = effect->lpVtbl->GetBool(effect, parameter, &bvalue);
-    if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
+    if (!res->elements && res->rows == 1 && res->columns == 1)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         ok(bvalue == get_bool(res_value), "Unexpected value %#x, expected %#x.\n",
@@ -1293,26 +1255,25 @@ static void test_effect_parameter_value_GetBool(const struct test_effect_paramet
 static void test_effect_parameter_value_GetBoolArray(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     BOOL bavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     unsigned int l, err = 0;
     HRESULT hr;
 
     memset(bavalue, 0xab, sizeof(bavalue));
-    hr = effect->lpVtbl->GetBoolArray(effect, parameter, bavalue, res_desc->Bytes / sizeof(*bavalue));
-    if (res_desc->Class == D3DXPC_SCALAR
-            || res_desc->Class == D3DXPC_VECTOR
-            || res_desc->Class == D3DXPC_MATRIX_ROWS)
+    hr = effect->lpVtbl->GetBoolArray(effect, parameter, bavalue, res->bytes / sizeof(*bavalue));
+    if (res->class == D3DXPC_SCALAR
+            || res->class == D3DXPC_VECTOR
+            || res->class == D3DXPC_MATRIX_ROWS)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-        for (l = 0; l < res_desc->Bytes / sizeof(*bavalue); ++l)
+        for (l = 0; l < res->bytes / sizeof(*bavalue); ++l)
         {
             if (bavalue[l] != get_bool(&res_value[l]))
                 ++err;
         }
 
-        for (l = res_desc->Bytes / sizeof(*bavalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        for (l = res->bytes / sizeof(*bavalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
             if (bavalue[l] != 0xabababab)
                 ++err;
@@ -1332,20 +1293,19 @@ static void test_effect_parameter_value_GetBoolArray(const struct test_effect_pa
 static void test_effect_parameter_value_GetInt(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     int ivalue = 0xabababab;
     HRESULT hr;
 
     hr = effect->lpVtbl->GetInt(effect, parameter, &ivalue);
-    if (!res_desc->Elements && res_desc->Columns == 1 && res_desc->Rows == 1)
+    if (!res->elements && res->columns == 1 && res->rows == 1)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-        ok(ivalue == get_int(res_desc->Type, res_value), "Unexpected value %d, expected %d.\n",
-                ivalue, get_int(res_desc->Type, res_value));
+        ok(ivalue == get_int(res->type, res_value), "Unexpected value %d, expected %d.\n",
+                ivalue, get_int(res->type, res_value));
     }
-    else if(!res_desc->Elements && res_desc->Type == D3DXPT_FLOAT &&
-            ((res_desc->Class == D3DXPC_VECTOR && res_desc->Columns != 2) ||
-            (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Rows != 2 && res_desc->Columns == 1)))
+    else if (!res->elements && res->type == D3DXPT_FLOAT &&
+             ((res->class == D3DXPC_VECTOR && res->columns != 2) ||
+             (res->class == D3DXPC_MATRIX_ROWS && res->rows != 2 && res->columns == 1)))
     {
         int tmp;
 
@@ -1354,7 +1314,7 @@ static void test_effect_parameter_value_GetInt(const struct test_effect_paramete
         tmp = (int)(min(max(0.0f, *((float *)res_value + 2)), 1.0f) * INT_FLOAT_MULTI);
         tmp |= ((int)(min(max(0.0f, *((float *)res_value + 1)), 1.0f) * INT_FLOAT_MULTI)) << 8;
         tmp |= ((int)(min(max(0.0f, *((float *)res_value + 0)), 1.0f) * INT_FLOAT_MULTI)) << 16;
-        if (res_desc->Columns * res_desc->Rows > 3)
+        if (res->columns * res->rows > 3)
         {
             tmp |= ((int)(min(max(0.0f, *((float *)res_value + 3)), 1.0f) * INT_FLOAT_MULTI)) << 24;
         }
@@ -1371,25 +1331,24 @@ static void test_effect_parameter_value_GetInt(const struct test_effect_paramete
 static void test_effect_parameter_value_GetIntArray(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     int iavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     unsigned int l, err = 0;
     HRESULT hr;
 
     memset(iavalue, 0xab, sizeof(iavalue));
-    hr = effect->lpVtbl->GetIntArray(effect, parameter, iavalue, res_desc->Bytes / sizeof(*iavalue));
-    if (res_desc->Class == D3DXPC_SCALAR
-            || res_desc->Class == D3DXPC_VECTOR
-            || res_desc->Class == D3DXPC_MATRIX_ROWS)
+    hr = effect->lpVtbl->GetIntArray(effect, parameter, iavalue, res->bytes / sizeof(*iavalue));
+    if (res->class == D3DXPC_SCALAR
+            || res->class == D3DXPC_VECTOR
+            || res->class == D3DXPC_MATRIX_ROWS)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-        for (l = 0; l < res_desc->Bytes / sizeof(*iavalue); ++l)
+        for (l = 0; l < res->bytes / sizeof(*iavalue); ++l)
         {
-            if (iavalue[l] != get_int(res_desc->Type, &res_value[l])) ++err;
+            if (iavalue[l] != get_int(res->type, &res_value[l])) ++err;
         }
 
-        for (l = res_desc->Bytes / sizeof(*iavalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        for (l = res->bytes / sizeof(*iavalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
             if (iavalue[l] != 0xabababab) ++err;
         }
@@ -1406,18 +1365,17 @@ static void test_effect_parameter_value_GetIntArray(const struct test_effect_par
 static void test_effect_parameter_value_GetFloat(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     DWORD cmp = 0xabababab;
     float fvalue;
     HRESULT hr;
 
     fvalue = *(float *)&cmp;
     hr = effect->lpVtbl->GetFloat(effect, parameter, &fvalue);
-    if (!res_desc->Elements && res_desc->Columns == 1 && res_desc->Rows == 1)
+    if (!res->elements && res->columns == 1 && res->rows == 1)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-        ok(compare_float(fvalue, get_float(res_desc->Type, res_value), 512), "Unexpected value %.8e, expected %.8e.\n",
-                fvalue, get_float(res_desc->Type, res_value));
+        ok(compare_float(fvalue, get_float(res->type, res_value), 512), "Unexpected value %.8e, expected %.8e.\n",
+                fvalue, get_float(res->type, res_value));
     }
     else
     {
@@ -1429,27 +1387,26 @@ static void test_effect_parameter_value_GetFloat(const struct test_effect_parame
 static void test_effect_parameter_value_GetFloatArray(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     float favalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     unsigned int l, err = 0;
     DWORD cmp = 0xabababab;
     HRESULT hr;
 
     memset(favalue, 0xab, sizeof(favalue));
-    hr = effect->lpVtbl->GetFloatArray(effect, parameter, favalue, res_desc->Bytes / sizeof(*favalue));
-    if (res_desc->Class == D3DXPC_SCALAR
-            || res_desc->Class == D3DXPC_VECTOR
-            || res_desc->Class == D3DXPC_MATRIX_ROWS)
+    hr = effect->lpVtbl->GetFloatArray(effect, parameter, favalue, res->bytes / sizeof(*favalue));
+    if (res->class == D3DXPC_SCALAR
+            || res->class == D3DXPC_VECTOR
+            || res->class == D3DXPC_MATRIX_ROWS)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-        for (l = 0; l < res_desc->Bytes / sizeof(*favalue); ++l)
+        for (l = 0; l < res->bytes / sizeof(*favalue); ++l)
         {
-            if (!compare_float(favalue[l], get_float(res_desc->Type, &res_value[l]), 512))
+            if (!compare_float(favalue[l], get_float(res->type, &res_value[l]), 512))
                 ++err;
         }
 
-        for (l = res_desc->Bytes / sizeof(*favalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        for (l = res->bytes / sizeof(*favalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
             if (favalue[l] != *(float *)&cmp)
                 ++err;
@@ -1467,7 +1424,6 @@ static void test_effect_parameter_value_GetFloatArray(const struct test_effect_p
 static void test_effect_parameter_value_GetVector(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     unsigned int l, err = 0;
     DWORD cmp = 0xabababab;
     float fvalue[4];
@@ -1475,9 +1431,9 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
 
     memset(fvalue, 0xab, sizeof(fvalue));
     hr = effect->lpVtbl->GetVector(effect, parameter, (D3DXVECTOR4 *)&fvalue);
-    if (!res_desc->Elements &&
-            (res_desc->Class == D3DXPC_SCALAR || res_desc->Class == D3DXPC_VECTOR) &&
-            res_desc->Type == D3DXPT_INT && res_desc->Bytes == 4)
+    if (!res->elements &&
+            (res->class == D3DXPC_SCALAR || res->class == D3DXPC_VECTOR) &&
+            res->type == D3DXPT_INT && res->bytes == 4)
     {
         DWORD tmp;
 
@@ -1491,15 +1447,15 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
         if (*res_value != tmp)
             ++err;
     }
-    else if (!res_desc->Elements && (res_desc->Class == D3DXPC_SCALAR || res_desc->Class == D3DXPC_VECTOR))
+    else if (!res->elements && (res->class == D3DXPC_SCALAR || res->class == D3DXPC_VECTOR))
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-        for (l = 0; l < res_desc->Columns; ++l)
-            if (!compare_float(fvalue[l], get_float(res_desc->Type, &res_value[l]), 512))
+        for (l = 0; l < res->columns; ++l)
+            if (!compare_float(fvalue[l], get_float(res->type, &res_value[l]), 512))
                 ++err;
 
-        for (l = res_desc->Columns; l < 4; ++l)
+        for (l = res->columns; l < 4; ++l)
             if (fvalue[l] != 0.0f)
                 ++err;
     }
@@ -1517,13 +1473,12 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
 static void test_effect_parameter_value_GetVectorArray(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     float fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     unsigned int l, k, element, err = 0;
     DWORD cmp = 0xabababab;
     HRESULT hr;
 
-    for (element = 0; element <= res_desc->Elements + 1; ++element)
+    for (element = 0; element <= res->elements + 1; ++element)
     {
         winetest_push_context("Element %u", element);
         memset(fvalue, 0xab, sizeof(fvalue));
@@ -1536,20 +1491,20 @@ static void test_effect_parameter_value_GetVectorArray(const struct test_effect_
                 if (fvalue[l] != *(float *)&cmp)
                     ++err;
         }
-        else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_VECTOR)
+        else if (element <= res->elements && res->class == D3DXPC_VECTOR)
         {
             ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             for (k = 0; k < element; ++k)
             {
-                for (l = 0; l < res_desc->Columns; ++l)
+                for (l = 0; l < res->columns; ++l)
                 {
-                    if (!compare_float(fvalue[l + k * 4], get_float(res_desc->Type,
-                            &res_value[l + k * res_desc->Columns]), 512))
+                    if (!compare_float(fvalue[l + k * 4], get_float(res->type,
+                            &res_value[l + k * res->columns]), 512))
                         ++err;
                 }
 
-                for (l = res_desc->Columns; l < 4; ++l)
+                for (l = res->columns; l < 4; ++l)
                     if (fvalue[l + k * 4] != 0.0f)
                         ++err;
             }
@@ -1574,7 +1529,6 @@ static void test_effect_parameter_value_GetVectorArray(const struct test_effect_
 static void test_effect_parameter_value_GetMatrix(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     unsigned int l, k, err = 0;
     float fvalue[16];
     union
@@ -1587,7 +1541,7 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
     cmp.d = 0xabababab;
     memset(fvalue, 0xab, sizeof(fvalue));
     hr = effect->lpVtbl->GetMatrix(effect, parameter, (D3DXMATRIX *)&fvalue);
-    if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+    if (!res->elements && res->class == D3DXPC_MATRIX_ROWS)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1595,10 +1549,10 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
         {
             for (l = 0; l < 4; ++l)
             {
-                if (k < res_desc->Columns && l < res_desc->Rows)
+                if (k < res->columns && l < res->rows)
                 {
-                    if (!compare_float(fvalue[l * 4 + k], get_float(res_desc->Type,
-                            &res_value[l * res_desc->Columns + k]), 512))
+                    if (!compare_float(fvalue[l * 4 + k], get_float(res->type,
+                            &res_value[l * res->columns + k]), 512))
                         ++err;
                 }
                 else if (fvalue[l * 4 + k] != 0.0f) ++err;
@@ -1619,13 +1573,12 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
 static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     float fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     unsigned int l, k, m, count, err = 0;
     DWORD cmp = 0xabababab;
     HRESULT hr;
 
-    for (count = 0; count <= res_desc->Elements + 1; ++count)
+    for (count = 0; count <= res->elements + 1; ++count)
     {
         winetest_push_context("Count %u", count);
         memset(fvalue, 0xab, sizeof(fvalue));
@@ -1638,7 +1591,7 @@ static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_
                 if (fvalue[l] != *(float *)&cmp)
                     ++err;
         }
-        else if (count <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        else if (count <= res->elements && res->class == D3DXPC_MATRIX_ROWS)
         {
             ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1648,11 +1601,11 @@ static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_
                 {
                     for (l = 0; l < 4; ++l)
                     {
-                        if (k < res_desc->Columns && l < res_desc->Rows)
+                        if (k < res->columns && l < res->rows)
                         {
-                            if (!compare_float(fvalue[m * 16 + l * 4 + k], get_float(res_desc->Type,
-                                                    &res_value[m * res_desc->Columns * res_desc->Rows
-                                                            + l * res_desc->Columns + k]), 512))
+                            if (!compare_float(fvalue[m * 16 + l * 4 + k], get_float(res->type,
+                                                    &res_value[m * res->columns * res->rows
+                                                            + l * res->columns + k]), 512))
                                 ++err;
                         }
                         else if (fvalue[m * 16 + l * 4 + k] != 0.0f)
@@ -1687,7 +1640,6 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
         D3DXMATRIX m;
     } fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE * sizeof(float) / sizeof(D3DXMATRIX)];
     D3DXMATRIX *matrix_pointer_array[ARRAY_SIZE(fvalue)];
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     unsigned int l, k, m, count, err = 0;
     union
     {
@@ -1696,7 +1648,7 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
     } cmp = {0xabababab};
     HRESULT hr;
 
-    for (count = 0; count <= res_desc->Elements + 1; ++count)
+    for (count = 0; count <= res->elements + 1; ++count)
     {
         winetest_push_context("Count %u", count);
         memset(fvalue, 0xab, sizeof(fvalue));
@@ -1714,7 +1666,7 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
         }
-        else if (count <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        else if (count <= res->elements && res->class == D3DXPC_MATRIX_ROWS)
         {
             ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1724,10 +1676,10 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
                 {
                     for (l = 0; l < 4; ++l)
                     {
-                        if (k < res_desc->Columns && l < res_desc->Rows)
+                        if (k < res->columns && l < res->rows)
                         {
-                            if (!compare_float(fvalue[m].m.m[l][k], get_float(res_desc->Type,
-                                    &res_value[m * res_desc->Columns * res_desc->Rows + l * res_desc->Columns + k]), 512))
+                            if (!compare_float(fvalue[m].m.m[l][k], get_float(res->type,
+                                    &res_value[m * res->columns * res->rows + l * res->columns + k]), 512))
                                 ++err;
                         }
                         else if (fvalue[m].m.m[l][k] != 0.0f)
@@ -1758,7 +1710,6 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
 static void test_effect_parameter_value_GetMatrixTranspose(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     unsigned int l, k, err = 0;
     HRESULT hr;
     union
@@ -1771,7 +1722,7 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     cmp.d = 0xabababab;
     memset(fvalue, 0xab, sizeof(fvalue));
     hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, (D3DXMATRIX *)&fvalue);
-    if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+    if (!res->elements && res->class == D3DXPC_MATRIX_ROWS)
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1779,17 +1730,17 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
         {
             for (l = 0; l < 4; ++l)
             {
-                if (k < res_desc->Columns && l < res_desc->Rows)
+                if (k < res->columns && l < res->rows)
                 {
-                    if (!compare_float(fvalue[l + k * 4], get_float(res_desc->Type,
-                            &res_value[l * res_desc->Columns + k]), 512))
+                    if (!compare_float(fvalue[l + k * 4], get_float(res->type,
+                            &res_value[l * res->columns + k]), 512))
                         ++err;
                 }
                 else if (fvalue[l + k * 4] != 0.0f) ++err;
             }
         }
     }
-    else if (!res_desc->Elements && (res_desc->Class == D3DXPC_VECTOR || res_desc->Class == D3DXPC_SCALAR))
+    else if (!res->elements && (res->class == D3DXPC_VECTOR || res->class == D3DXPC_SCALAR))
     {
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1797,10 +1748,10 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
         {
             for (l = 0; l < 4; ++l)
             {
-                if (k < res_desc->Columns && l < res_desc->Rows)
+                if (k < res->columns && l < res->rows)
                 {
-                    if (!compare_float(fvalue[l * 4 + k], get_float(res_desc->Type,
-                            &res_value[l * res_desc->Columns + k]), 512))
+                    if (!compare_float(fvalue[l * 4 + k], get_float(res->type,
+                            &res_value[l * res->columns + k]), 512))
                         ++err;
                 }
                 else if (fvalue[l * 4 + k] != 0.0f) ++err;
@@ -1821,13 +1772,12 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
 static void test_effect_parameter_value_GetMatrixTransposeArray(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     float fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
     unsigned int l, k, m, count, err = 0;
     DWORD cmp = 0xabababab;
     HRESULT hr;
 
-    for (count = 0; count <= res_desc->Elements + 1; ++count)
+    for (count = 0; count <= res->elements + 1; ++count)
     {
         winetest_push_context("Count %u", count);
         memset(fvalue, 0xab, sizeof(fvalue));
@@ -1838,7 +1788,7 @@ static void test_effect_parameter_value_GetMatrixTransposeArray(const struct tes
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
-        else if (count <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        else if (count <= res->elements && res->class == D3DXPC_MATRIX_ROWS)
         {
             ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1848,10 +1798,10 @@ static void test_effect_parameter_value_GetMatrixTransposeArray(const struct tes
                 {
                     for (l = 0; l < 4; ++l)
                     {
-                        if (k < res_desc->Columns && l < res_desc->Rows)
+                        if (k < res->columns && l < res->rows)
                         {
-                            if (!compare_float(fvalue[m * 16 + l + k * 4], get_float(res_desc->Type,
-                                    &res_value[m * res_desc->Columns * res_desc->Rows + l * res_desc->Columns + k]), 512))
+                            if (!compare_float(fvalue[m * 16 + l + k * 4], get_float(res->type,
+                                    &res_value[m * res->columns * res->rows + l * res->columns + k]), 512))
                                 ++err;
                         }
                         else if (fvalue[m * 16 + l + k * 4] != 0.0f) ++err;
@@ -1882,7 +1832,6 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(
         D3DXMATRIX m;
     } fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE * sizeof(float) / sizeof(D3DXMATRIX)];
     D3DXMATRIX *matrix_pointer_array[sizeof(fvalue)];
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     unsigned int l, k, m, count, err = 0;
     union
     {
@@ -1891,7 +1840,7 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(
     } cmp = {0xabababab};
     HRESULT hr;
 
-    for (count = 0; count <= res_desc->Elements + 1; ++count)
+    for (count = 0; count <= res->elements + 1; ++count)
     {
         winetest_push_context("Count %u", count);
         memset(fvalue, 0xab, sizeof(fvalue));
@@ -1909,7 +1858,7 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
         }
-        else if (count <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        else if (count <= res->elements && res->class == D3DXPC_MATRIX_ROWS)
         {
             ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1919,10 +1868,10 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(
                 {
                     for (l = 0; l < 4; ++l)
                     {
-                        if (k < res_desc->Columns && l < res_desc->Rows)
+                        if (k < res->columns && l < res->rows)
                         {
-                            if (!compare_float(fvalue[m].m.m[k][l], get_float(res_desc->Type,
-                                    &res_value[m * res_desc->Columns * res_desc->Rows + l * res_desc->Columns + k]), 512))
+                            if (!compare_float(fvalue[m].m.m[k][l], get_float(res->type,
+                                    &res_value[m * res->columns * res->rows + l * res->columns + k]), 512))
                                 ++err;
                         }
                         else if (fvalue[m].m.m[k][l] != 0.0f)
@@ -1973,20 +1922,19 @@ static void test_effect_parameter_values(const struct test_effect_parameter_valu
 static void test_effect_parameter_value_reset(const struct test_effect_parameter_value_result *res,
         ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    const D3DXPARAMETER_DESC *res_desc = &res->desc;
     HRESULT hr;
 
-    if (res_desc->Class == D3DXPC_SCALAR
-            || res_desc->Class == D3DXPC_VECTOR
-            || res_desc->Class == D3DXPC_MATRIX_ROWS)
+    if (res->class == D3DXPC_SCALAR
+            || res->class == D3DXPC_VECTOR
+            || res->class == D3DXPC_MATRIX_ROWS)
     {
-        hr = effect->lpVtbl->SetValue(effect, parameter, res_value, res_desc->Bytes);
+        hr = effect->lpVtbl->SetValue(effect, parameter, res_value, res->bytes);
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     }
     else
     {
         /* nothing to do */
-        switch (res_desc->Type)
+        switch (res->type)
         {
             case D3DXPT_PIXELSHADER:
             case D3DXPT_VERTEXSHADER:
@@ -1995,7 +1943,7 @@ static void test_effect_parameter_value_reset(const struct test_effect_parameter
                 break;
 
             default:
-                ok(0, "Type is %u, this should not happen!\n", res_desc->Type);
+                ok(0, "Type is %u, this should not happen!\n", res->type);
                 break;
         }
     }
@@ -2028,8 +1976,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
         for (k = 0; k < res_count; ++k)
         {
-            const D3DXPARAMETER_DESC *res_desc = &res[k].desc;
-            const char *res_full_name = res[k].full_name;
+            const char *name = res[k].name;
             D3DXHANDLE parameter;
             D3DXPARAMETER_DESC pdesc;
             BOOL bvalue = TRUE;
@@ -2040,37 +1987,30 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             UINT l, n, m, count;
             const D3DXMATRIX *matrix_pointer_array[sizeof(input_value)/(sizeof(D3DXMATRIX))];
 
-            winetest_push_context("Parameter %s", res_full_name);
-            parameter = effect->lpVtbl->GetParameterByName(effect, NULL, res_full_name);
+            winetest_push_context("Parameter %s", name);
+            parameter = effect->lpVtbl->GetParameterByName(effect, NULL, name);
             ok(!!parameter, "Unexpected parameter %p.\n", parameter);
 
             hr = effect->lpVtbl->GetParameterDesc(effect, parameter, &pdesc);
             ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            ok(res_desc->Name ? !strcmp(pdesc.Name, res_desc->Name) : !pdesc.Name,
-                    "Unexpected Name %s, expected %s.\n",
-                    debugstr_a(pdesc.Name), debugstr_a(res_desc->Name));
-            ok(res_desc->Semantic ? !strcmp(pdesc.Semantic, res_desc->Semantic) : !pdesc.Semantic,
-                    "Unexpected Semantic %s, expected %s.\n",
-                    debugstr_a(pdesc.Semantic), debugstr_a(res_desc->Semantic));
-            ok(res_desc->Class == pdesc.Class, "Unexpected Class %#x, expected %#x.\n",
-                    pdesc.Class, res_desc->Class);
-            ok(res_desc->Type == pdesc.Type, "Unexpected Type %#x, expected %#x.\n",
-                    pdesc.Type, res_desc->Type);
-            ok(res_desc->Rows == pdesc.Rows, "Unexpected Rows %u, expected %u.\n",
-                    pdesc.Rows, res_desc->Rows);
-            ok(res_desc->Columns == pdesc.Columns, "Unexpected Columns %u, expected %u.\n",
-                    pdesc.Columns, res_desc->Columns);
-            ok(res_desc->Elements == pdesc.Elements, "Unexpected Elements %u, expected %u.\n",
-                    pdesc.Elements, res_desc->Elements);
-            ok(res_desc->Annotations == pdesc.Annotations, "Unexpected Annotations %u, expected %u.\n",
-                    pdesc.Annotations, res_desc->Annotations);
-            ok(res_desc->StructMembers == pdesc.StructMembers, "Unexpected StructMembers %u, expected %u.\n",
-                    pdesc.StructMembers, res_desc->StructMembers);
-            ok(res_desc->Flags == pdesc.Flags, "Unexpected Flags %lu, expected %lu.\n",
-                    pdesc.Flags, res_desc->Flags);
-            ok(res_desc->Bytes == pdesc.Bytes, "Unexpected Bytes %u, expected %u.\n",
-                    pdesc.Bytes, res_desc->Bytes);
+            ok(!strcmp(pdesc.Name, name), "Unexpected Name %s, expected %s.\n", debugstr_a(pdesc.Name), debugstr_a(name));
+            ok(!pdesc.Semantic, "Unexpected Semantic %s.\n", debugstr_a(pdesc.Semantic));
+
+            ok(res[k].class == pdesc.Class, "Unexpected Class %#x, expected %#x.\n",
+                    pdesc.Class, res[k].class);
+            ok(res[k].type == pdesc.Type, "Unexpected Type %#x, expected %#x.\n", pdesc.Type, res[k].type);
+            ok(res[k].rows == pdesc.Rows, "Unexpected Rows %u, expected %u.\n",
+                    pdesc.Rows, res[k].rows);
+            ok(res[k].columns == pdesc.Columns, "Unexpected Columns %u, expected %u.\n",
+                    pdesc.Columns, res[k].columns);
+            ok(res[k].elements == pdesc.Elements, "Unexpected Elements %u, expected %u.\n",
+                    pdesc.Elements, res[k].elements);
+            ok(!pdesc.Annotations, "Unexpected Annotations %u.\n", pdesc.Annotations);
+            ok(!pdesc.StructMembers, "Unexpected StructMembers %u.\n", pdesc.StructMembers);
+            ok(!pdesc.Flags, "Unexpected Flags %lu.\n", pdesc.Flags);
+            ok(res[k].bytes == pdesc.Bytes, "Unexpected Bytes %u, expected %u.\n",
+                    pdesc.Bytes, res[k].bytes);
 
             test_effect_parameter_values(&res[k], effect, res[k].value.dword, parameter);
             test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
@@ -2103,13 +2043,13 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetBool(effect, parameter, NULL);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetBoolArray(effect, NULL, (BOOL *)input_value, res_desc->Bytes / sizeof(BOOL));
+            hr = effect->lpVtbl->SetBoolArray(effect, NULL, (BOOL *)input_value, res[k].bytes / sizeof(BOOL));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetBoolArray(effect, NULL, (BOOL *)input_value, res_desc->Bytes / sizeof(BOOL));
+            hr = effect->lpVtbl->GetBoolArray(effect, NULL, (BOOL *)input_value, res[k].bytes / sizeof(BOOL));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetBoolArray(effect, parameter, NULL, res_desc->Bytes / sizeof(BOOL));
+            hr = effect->lpVtbl->GetBoolArray(effect, parameter, NULL, res[k].bytes / sizeof(BOOL));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetInt(effect, NULL, ivalue);
@@ -2121,13 +2061,13 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetInt(effect, parameter, NULL);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetIntArray(effect, NULL, (INT *)input_value, res_desc->Bytes / sizeof(INT));
+            hr = effect->lpVtbl->SetIntArray(effect, NULL, (INT *)input_value, res[k].bytes / sizeof(INT));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetIntArray(effect, NULL, (INT *)input_value, res_desc->Bytes / sizeof(INT));
+            hr = effect->lpVtbl->GetIntArray(effect, NULL, (INT *)input_value, res[k].bytes / sizeof(INT));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetIntArray(effect, parameter, NULL, res_desc->Bytes / sizeof(INT));
+            hr = effect->lpVtbl->GetIntArray(effect, parameter, NULL, res[k].bytes / sizeof(INT));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetFloat(effect, NULL, fvalue);
@@ -2139,13 +2079,13 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetFloat(effect, parameter, NULL);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetFloatArray(effect, NULL, (FLOAT *)input_value, res_desc->Bytes / sizeof(FLOAT));
+            hr = effect->lpVtbl->SetFloatArray(effect, NULL, (FLOAT *)input_value, res[k].bytes / sizeof(FLOAT));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetFloatArray(effect, NULL, (FLOAT *)input_value, res_desc->Bytes / sizeof(FLOAT));
+            hr = effect->lpVtbl->GetFloatArray(effect, NULL, (FLOAT *)input_value, res[k].bytes / sizeof(FLOAT));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetFloatArray(effect, parameter, NULL, res_desc->Bytes / sizeof(FLOAT));
+            hr = effect->lpVtbl->GetFloatArray(effect, parameter, NULL, res[k].bytes / sizeof(FLOAT));
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetVector(effect, NULL, (D3DXVECTOR4 *)input_value);
@@ -2157,13 +2097,13 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetVector(effect, parameter, NULL);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->SetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetVectorArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetVectorArray(effect, parameter, NULL, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrix(effect, NULL, (D3DXMATRIX *)input_value);
@@ -2172,16 +2112,16 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetMatrix(effect, NULL, (D3DXMATRIX *)input_value);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->SetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetMatrixArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetMatrixArray(effect, parameter, NULL, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetMatrixPointerArray(effect, NULL, matrix_pointer_array, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->SetMatrixPointerArray(effect, NULL, matrix_pointer_array, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixPointerArray(effect, NULL, matrix_pointer_array, 0);
@@ -2190,10 +2130,10 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetMatrixPointerArray(effect, NULL, NULL, 0);
             ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetMatrixPointerArray(effect, NULL, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetMatrixPointerArray(effect, NULL, NULL, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetMatrixPointerArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetMatrixPointerArray(effect, parameter, NULL, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixTranspose(effect, NULL, (D3DXMATRIX *)input_value);
@@ -2205,16 +2145,16 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, NULL);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->SetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, NULL, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, NULL, matrix_pointer_array, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, NULL, matrix_pointer_array, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, NULL, matrix_pointer_array, 0);
@@ -2223,34 +2163,34 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, NULL, NULL, 0);
             ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, NULL, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, NULL, NULL, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
+            hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, parameter, NULL, res[k].elements ? res[k].elements : 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetValue(effect, NULL, input_value, res_desc->Bytes);
+            hr = effect->lpVtbl->SetValue(effect, NULL, input_value, res[k].bytes);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->SetValue(effect, parameter, input_value, res_desc->Bytes - 1);
+            hr = effect->lpVtbl->SetValue(effect, parameter, input_value, res[k].bytes - 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetValue(effect, NULL, input_value, res_desc->Bytes);
+            hr = effect->lpVtbl->GetValue(effect, NULL, input_value, res[k].bytes);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            hr = effect->lpVtbl->GetValue(effect, parameter, input_value, res_desc->Bytes - 1);
+            hr = effect->lpVtbl->GetValue(effect, parameter, input_value, res[k].bytes - 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             test_effect_parameter_values(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetBool */
             bvalue = 5;
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
             hr = effect->lpVtbl->SetBool(effect, parameter, bvalue);
-            if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
+            if (!res[k].elements && res[k].rows == 1 && res[k].columns == 1)
             {
                 bvalue = TRUE;
-                set_number(expected_value, res_desc->Type, &bvalue, D3DXPT_BOOL);
+                set_number(expected_value, res[k].type, &bvalue, D3DXPT_BOOL);
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
@@ -2262,19 +2202,19 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
             /* SetBoolArray */
             *input_value = 1;
-            for (l = 1; l < res_desc->Bytes / sizeof(*input_value); ++l)
+            for (l = 1; l < res[k].bytes / sizeof(*input_value); ++l)
             {
                 *(input_value + l) = *(input_value + l - 1) + 1;
             }
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
-            hr = effect->lpVtbl->SetBoolArray(effect, parameter, (BOOL *)input_value, res_desc->Bytes / sizeof(*input_value));
-            if (res_desc->Class == D3DXPC_SCALAR
-                    || res_desc->Class == D3DXPC_VECTOR
-                    || res_desc->Class == D3DXPC_MATRIX_ROWS)
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
+            hr = effect->lpVtbl->SetBoolArray(effect, parameter, (BOOL *)input_value, res[k].bytes / sizeof(*input_value));
+            if (res[k].class == D3DXPC_SCALAR
+                    || res[k].class == D3DXPC_VECTOR
+                    || res[k].class == D3DXPC_MATRIX_ROWS)
             {
-                for (l = 0; l < res_desc->Bytes / sizeof(*input_value); ++l)
+                for (l = 0; l < res[k].bytes / sizeof(*input_value); ++l)
                 {
-                    set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_BOOL);
+                    set_number(expected_value + l, res[k].type, input_value + l, D3DXPT_BOOL);
                 }
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
@@ -2287,25 +2227,25 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
             /* SetInt */
             ivalue = 0x1fbf02ff;
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
             hr = effect->lpVtbl->SetInt(effect, parameter, ivalue);
-            if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
+            if (!res[k].elements && res[k].rows == 1 && res[k].columns == 1)
             {
-                set_number(expected_value, res_desc->Type, &ivalue, D3DXPT_INT);
+                set_number(expected_value, res[k].type, &ivalue, D3DXPT_INT);
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
-            else if(!res_desc->Elements && res_desc->Type == D3DXPT_FLOAT &&
-                    ((res_desc->Class == D3DXPC_VECTOR && res_desc->Columns != 2) ||
-                    (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Rows != 2 && res_desc->Columns == 1)))
+            else if (!res[k].elements && res[k].type == D3DXPT_FLOAT &&
+                     ((res[k].class == D3DXPC_VECTOR && res[k].columns != 2) ||
+                     (res[k].class == D3DXPC_MATRIX_ROWS && res[k].rows != 2 && res[k].columns == 1)))
             {
                 FLOAT tmp = ((ivalue & 0xff0000) >> 16) * INT_FLOAT_MULTI_INVERSE;
-                set_number(expected_value, res_desc->Type, &tmp, D3DXPT_FLOAT);
+                set_number(expected_value, res[k].type, &tmp, D3DXPT_FLOAT);
                 tmp = ((ivalue & 0xff00) >> 8) * INT_FLOAT_MULTI_INVERSE;
-                set_number(expected_value + 1, res_desc->Type, &tmp, D3DXPT_FLOAT);
+                set_number(expected_value + 1, res[k].type, &tmp, D3DXPT_FLOAT);
                 tmp = (ivalue & 0xff) * INT_FLOAT_MULTI_INVERSE;
-                set_number(expected_value + 2, res_desc->Type, &tmp, D3DXPT_FLOAT);
+                set_number(expected_value + 2, res[k].type, &tmp, D3DXPT_FLOAT);
                 tmp = ((ivalue & 0xff000000) >> 24) * INT_FLOAT_MULTI_INVERSE;
-                set_number(expected_value + 3, res_desc->Type, &tmp, D3DXPT_FLOAT);
+                set_number(expected_value + 3, res[k].type, &tmp, D3DXPT_FLOAT);
 
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
@@ -2318,19 +2258,19 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
             /* SetIntArray */
             *input_value = 123456;
-            for (l = 0; l < res_desc->Bytes / sizeof(*input_value); ++l)
+            for (l = 0; l < res[k].bytes / sizeof(*input_value); ++l)
             {
                 *(input_value + l) = *(input_value + l - 1) + 23;
             }
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
-            hr = effect->lpVtbl->SetIntArray(effect, parameter, (INT *)input_value, res_desc->Bytes / sizeof(*input_value));
-            if (res_desc->Class == D3DXPC_SCALAR
-                    || res_desc->Class == D3DXPC_VECTOR
-                    || res_desc->Class == D3DXPC_MATRIX_ROWS)
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
+            hr = effect->lpVtbl->SetIntArray(effect, parameter, (INT *)input_value, res[k].bytes / sizeof(*input_value));
+            if (res[k].class == D3DXPC_SCALAR
+                    || res[k].class == D3DXPC_VECTOR
+                    || res[k].class == D3DXPC_MATRIX_ROWS)
             {
-                for (l = 0; l < res_desc->Bytes / sizeof(*input_value); ++l)
+                for (l = 0; l < res[k].bytes / sizeof(*input_value); ++l)
                 {
-                    set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_INT);
+                    set_number(expected_value + l, res[k].type, input_value + l, D3DXPT_INT);
                 }
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
@@ -2343,11 +2283,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
             /* SetFloat */
             fvalue = 1.33;
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
             hr = effect->lpVtbl->SetFloat(effect, parameter, fvalue);
-            if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
+            if (!res[k].elements && res[k].rows == 1 && res[k].columns == 1)
             {
-                set_number(expected_value, res_desc->Type, &fvalue, D3DXPT_FLOAT);
+                set_number(expected_value, res[k].type, &fvalue, D3DXPT_FLOAT);
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
@@ -2359,20 +2299,20 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
             /* SetFloatArray */
             fvalue = 1.33;
-            for (l = 0; l < res_desc->Bytes / sizeof(fvalue); ++l)
+            for (l = 0; l < res[k].bytes / sizeof(fvalue); ++l)
             {
                 *(input_value + l) = *(DWORD *)&fvalue;
                 fvalue += 1.12;
             }
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
-            hr = effect->lpVtbl->SetFloatArray(effect, parameter, (FLOAT *)input_value, res_desc->Bytes / sizeof(*input_value));
-            if (res_desc->Class == D3DXPC_SCALAR
-                    || res_desc->Class == D3DXPC_VECTOR
-                    || res_desc->Class == D3DXPC_MATRIX_ROWS)
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
+            hr = effect->lpVtbl->SetFloatArray(effect, parameter, (FLOAT *)input_value, res[k].bytes / sizeof(*input_value));
+            if (res[k].class == D3DXPC_SCALAR
+                    || res[k].class == D3DXPC_VECTOR
+                    || res[k].class == D3DXPC_MATRIX_ROWS)
             {
-                for (l = 0; l < res_desc->Bytes / sizeof(*input_value); ++l)
+                for (l = 0; l < res[k].bytes / sizeof(*input_value); ++l)
                 {
-                    set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_FLOAT);
+                    set_number(expected_value + l, res[k].type, input_value + l, D3DXPT_FLOAT);
                 }
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
@@ -2390,14 +2330,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 *(input_value + l) = *(DWORD *)&fvalue;
                 fvalue += 1.12;
             }
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
             hr = effect->lpVtbl->SetVector(effect, parameter, (D3DXVECTOR4 *)input_value);
-            if (!res_desc->Elements &&
-                    (res_desc->Class == D3DXPC_SCALAR
-                    || res_desc->Class == D3DXPC_VECTOR))
+            if (!res[k].elements &&
+                    (res[k].class == D3DXPC_SCALAR
+                    || res[k].class == D3DXPC_VECTOR))
             {
                 /* only values between 0 and INT_FLOAT_MULTI are valid */
-                if (res_desc->Type == D3DXPT_INT && res_desc->Bytes == 4)
+                if (res[k].type == D3DXPT_INT && res[k].bytes == 4)
                 {
                     *expected_value = (DWORD)(max(min(*(FLOAT *)(input_value + 2), 1.0f), 0.0f) * INT_FLOAT_MULTI);
                     *expected_value += ((DWORD)(max(min(*(FLOAT *)(input_value + 1), 1.0f), 0.0f) * INT_FLOAT_MULTI)) << 8;
@@ -2408,7 +2348,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 {
                     for (l = 0; l < 4; ++l)
                     {
-                        set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_FLOAT);
+                        set_number(expected_value + l, res[k].type, input_value + l, D3DXPT_FLOAT);
                     }
                 }
                 ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
@@ -2421,7 +2361,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetVectorArray */
-            for (count = 0; count < res_desc->Elements + 1; ++count)
+            for (count = 0; count < res[k].elements + 1; ++count)
             {
                 fvalue = 1.33;
                 for (l = 0; l < count * 4; ++l)
@@ -2429,15 +2369,15 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res[k].bytes);
                 hr = effect->lpVtbl->SetVectorArray(effect, parameter, (D3DXVECTOR4 *)input_value, count);
-                if (res_desc->Elements && res_desc->Class == D3DXPC_VECTOR && count <= res_desc->Elements)
+                if (res[k].elements && res[k].class == D3DXPC_VECTOR && count <= res[k].elements)
                 {
                     for (m = 0; m < count; ++m)
                     {
-                        for (l = 0; l < res_desc->Columns; ++l)
+                        for (l = 0; l < res[k].columns; ++l)
                         {
-                            set_number(expected_value + m * res_desc->Columns + l, res_desc->Type, input_value + m * 4 + l, D3DXPT_FLOAT);
+                            set_number(expected_value + m * res[k].columns + l, res[k].type, input_value + m * 4 + l, D3DXPT_FLOAT);
                         }
                     }
                     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
@@ -2457,16 +2397,16 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 *(input_value + l) = *(DWORD *)&fvalue;
                 fvalue += 1.12;
             }
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
             hr = effect->lpVtbl->SetMatrix(effect, parameter, (D3DXMATRIX *)input_value);
-            if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+            if (!res[k].elements && res[k].class == D3DXPC_MATRIX_ROWS)
             {
                 for (l = 0; l < 4; ++l)
                 {
                     for (m = 0; m < 4; ++m)
                     {
-                        if (m < res_desc->Rows && l < res_desc->Columns)
-                            set_number(expected_value + l + m * res_desc->Columns, res_desc->Type,
+                        if (m < res[k].rows && l < res[k].columns)
+                            set_number(expected_value + l + m * res[k].columns, res[k].type,
                                     input_value + l + m * 4, D3DXPT_FLOAT);
                     }
 
@@ -2481,7 +2421,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetMatrixArray */
-            for (count = 0; count < res_desc->Elements + 1; ++count)
+            for (count = 0; count < res[k].elements + 1; ++count)
             {
                 fvalue = 1.33;
                 for (l = 0; l < count * 16; ++l)
@@ -2489,9 +2429,9 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res[k].bytes);
                 hr = effect->lpVtbl->SetMatrixArray(effect, parameter, (D3DXMATRIX *)input_value, count);
-                if (res_desc->Class == D3DXPC_MATRIX_ROWS && count <= res_desc->Elements)
+                if (res[k].class == D3DXPC_MATRIX_ROWS && count <= res[k].elements)
                 {
                     for (n = 0; n < count; ++n)
                     {
@@ -2499,9 +2439,9 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                         {
                             for (m = 0; m < 4; ++m)
                             {
-                                if (m < res_desc->Rows && l < res_desc->Columns)
-                                    set_number(expected_value + l + m * res_desc->Columns + n * res_desc->Columns * res_desc->Rows,
-                                            res_desc->Type, input_value + l + m * 4 + n * 16, D3DXPT_FLOAT);
+                                if (m < res[k].rows && l < res[k].columns)
+                                    set_number(expected_value + l + m * res[k].columns + n * res[k].columns * res[k].rows,
+                                            res[k].type, input_value + l + m * 4 + n * 16, D3DXPT_FLOAT);
                             }
 
                         }
@@ -2517,7 +2457,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             }
 
             /* SetMatrixPointerArray */
-            for (count = 0; count < res_desc->Elements + 1; ++count)
+            for (count = 0; count < res[k].elements + 1; ++count)
             {
                 fvalue = 1.33;
                 for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
@@ -2525,13 +2465,13 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res[k].bytes);
                 for (l = 0; l < count; ++l)
                 {
                     matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(FLOAT)];
                 }
                 hr = effect->lpVtbl->SetMatrixPointerArray(effect, parameter, matrix_pointer_array, count);
-                if (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Elements >= count)
+                if (res[k].class == D3DXPC_MATRIX_ROWS && res[k].elements >= count)
                 {
                     for (n = 0; n < count; ++n)
                     {
@@ -2539,9 +2479,9 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                         {
                             for (m = 0; m < 4; ++m)
                             {
-                                if (m < res_desc->Rows && l < res_desc->Columns)
-                                    set_number(expected_value + l + m * res_desc->Columns + n * res_desc->Columns * res_desc->Rows,
-                                            res_desc->Type, input_value + l + m * 4 + n * 16, D3DXPT_FLOAT);
+                                if (m < res[k].rows && l < res[k].columns)
+                                    set_number(expected_value + l + m * res[k].columns + n * res[k].columns * res[k].rows,
+                                            res[k].type, input_value + l + m * 4 + n * 16, D3DXPT_FLOAT);
                             }
 
                         }
@@ -2563,16 +2503,16 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 *(input_value + l) = *(DWORD *)&fvalue;
                 fvalue += 1.12;
             }
-            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res[k].bytes);
             hr = effect->lpVtbl->SetMatrixTranspose(effect, parameter, (D3DXMATRIX *)input_value);
-            if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+            if (!res[k].elements && res[k].class == D3DXPC_MATRIX_ROWS)
             {
                 for (l = 0; l < 4; ++l)
                 {
                     for (m = 0; m < 4; ++m)
                     {
-                        if (m < res_desc->Rows && l < res_desc->Columns)
-                            set_number(expected_value + l + m * res_desc->Columns, res_desc->Type,
+                        if (m < res[k].rows && l < res[k].columns)
+                            set_number(expected_value + l + m * res[k].columns, res[k].type,
                                     input_value + l * 4 + m, D3DXPT_FLOAT);
                     }
 
@@ -2587,7 +2527,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetMatrixTransposeArray */
-            for (count = 0; count < res_desc->Elements + 1; ++count)
+            for (count = 0; count < res[k].elements + 1; ++count)
             {
                 fvalue = 1.33;
                 for (l = 0; l < count * 16; ++l)
@@ -2595,9 +2535,9 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res[k].bytes);
                 hr = effect->lpVtbl->SetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)input_value, count);
-                if (res_desc->Class == D3DXPC_MATRIX_ROWS && count <= res_desc->Elements)
+                if (res[k].class == D3DXPC_MATRIX_ROWS && count <= res[k].elements)
                 {
                     for (n = 0; n < count; ++n)
                     {
@@ -2605,9 +2545,9 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                         {
                             for (m = 0; m < 4; ++m)
                             {
-                                if (m < res_desc->Rows && l < res_desc->Columns)
-                                    set_number(expected_value + l + m * res_desc->Columns + n * res_desc->Columns * res_desc->Rows,
-                                            res_desc->Type, input_value + l * 4 + m + n * 16, D3DXPT_FLOAT);
+                                if (m < res[k].rows && l < res[k].columns)
+                                    set_number(expected_value + l + m * res[k].columns + n * res[k].columns * res[k].rows,
+                                            res[k].type, input_value + l * 4 + m + n * 16, D3DXPT_FLOAT);
                             }
 
                         }
@@ -2623,7 +2563,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             }
 
             /* SetMatrixTransposePointerArray */
-            for (count = 0; count < res_desc->Elements + 1; ++count)
+            for (count = 0; count < res[k].elements + 1; ++count)
             {
                 fvalue = 1.33;
                 for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
@@ -2631,13 +2571,13 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res[k].bytes);
                 for (l = 0; l < count; ++l)
                 {
                     matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(FLOAT)];
                 }
                 hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, parameter, matrix_pointer_array, count);
-                if (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Elements >= count)
+                if (res[k].class == D3DXPC_MATRIX_ROWS && res[k].elements >= count)
                 {
                     for (n = 0; n < count; ++n)
                     {
@@ -2645,9 +2585,9 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                         {
                             for (m = 0; m < 4; ++m)
                             {
-                                if (m < res_desc->Rows && l < res_desc->Columns)
-                                    set_number(expected_value + l + m * res_desc->Columns + n * res_desc->Columns * res_desc->Rows,
-                                            res_desc->Type, input_value + l * 4 + m + n * 16, D3DXPT_FLOAT);
+                                if (m < res[k].rows && l < res[k].columns)
+                                    set_number(expected_value + l + m * res[k].columns + n * res[k].columns * res[k].rows,
+                                            res[k].type, input_value + l * 4 + m + n * 16, D3DXPT_FLOAT);
                             }
 
                         }
