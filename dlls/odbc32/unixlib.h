@@ -217,6 +217,8 @@ struct connection
 struct statement
 {
     struct object hdr;
+    /* descriptors */
+    struct descriptor *desc[4];
     /* parameter bindings */
     struct param_binding bind_col;
     struct param_binding bind_parameter;

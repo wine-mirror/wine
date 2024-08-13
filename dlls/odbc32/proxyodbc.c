@@ -518,20 +518,48 @@ static SQLRETURN alloc_handle( SQLSMALLINT type, struct object *input, struct ob
     return ret;
 }
 
-static struct statement *create_statement( struct connection *con )
-{
-    struct statement *ret;
-    if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
-    init_object( &ret->hdr, SQL_HANDLE_STMT, &con->hdr );
-    ret->row_count = 1;
-    return ret;
-}
-
 static struct descriptor *create_descriptor( struct statement *stmt )
 {
     struct descriptor *ret;
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     init_object( &ret->hdr, SQL_HANDLE_DESC, &stmt->hdr );
+    return ret;
+}
+
+static void free_descriptors( struct statement *stmt )
+{
+    unsigned int i;
+    for (i = 0; i < ARRAY_SIZE(stmt->desc); i++)
+    {
+        if (stmt->desc[i]) destroy_object( &stmt->desc[i]->hdr );
+    }
+}
+
+static SQLRETURN alloc_descriptors( struct statement *stmt )
+{
+    unsigned int i;
+    for (i = 0; i < ARRAY_SIZE(stmt->desc); i++)
+    {
+        if (!(stmt->desc[i] = create_descriptor( NULL )))
+        {
+            free_descriptors( stmt );
+            return SQL_ERROR;
+        }
+    }
+    return SQL_SUCCESS;
+}
+
+static struct statement *create_statement( struct connection *con )
+{
+    struct statement *ret;
+    if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
+    init_object( &ret->hdr, SQL_HANDLE_STMT, &con->hdr );
+    if (alloc_descriptors( ret ))
+    {
+        destroy_object( &ret->hdr );
+        return NULL;
+    }
+    ret->row_count = 1;
     return ret;
 }
 
@@ -2070,6 +2098,7 @@ SQLRETURN WINAPI SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
             struct statement *stmt = (struct statement *)obj;
             free_col_bindings( stmt );
             free_param_bindings( stmt );
+            free_descriptors( stmt );
             break;
         }
         default: break;
@@ -2134,6 +2163,7 @@ SQLRETURN WINAPI SQLFreeStmt(SQLHSTMT StatementHandle, SQLUSMALLINT Option)
         default:
             free_col_bindings( stmt );
             free_param_bindings( stmt );
+            free_descriptors( stmt );
             stmt->hdr.closed = TRUE;
             break;
         }
@@ -2963,6 +2993,30 @@ SQLRETURN WINAPI SQLGetStmtAttr(SQLHSTMT StatementHandle, SQLINTEGER Attribute, 
         ret = get_stmt_attr_win32_a( stmt, Attribute, Value, BufferLength, StringLength );
     }
 
+    if (!ret)
+    {
+        switch (Attribute)
+        {
+        case SQL_ATTR_APP_ROW_DESC:
+        case SQL_ATTR_APP_PARAM_DESC:
+        case SQL_ATTR_IMP_ROW_DESC:
+        case SQL_ATTR_IMP_PARAM_DESC:
+        {
+            struct descriptor *desc = stmt->desc[Attribute - SQL_ATTR_APP_ROW_DESC];
+            if (stmt->hdr.unix_handle)
+            {
+                if (sizeof(desc->hdr.unix_handle) > sizeof(SQLHDESC))
+                    ERR( "truncating descriptor handle, consider using a Windows driver\n" );
+                desc->hdr.unix_handle = (ULONG_PTR)*(SQLHDESC *)Value;
+            }
+            else if (stmt->hdr.win32_handle) desc->hdr.win32_handle = *(SQLHDESC *)Value;
+            *(struct descriptor **)Value = desc;
+            break;
+        }
+        default: break;
+        }
+    }
+
     TRACE("Returning %d\n", ret);
     unlock_object( &stmt->hdr );
     return ret;
@@ -3789,6 +3843,28 @@ SQLRETURN WINAPI SQLSetStmtAttr(SQLHSTMT StatementHandle, SQLINTEGER Attribute, 
           StringLength);
 
     if (!stmt) return SQL_INVALID_HANDLE;
+
+    switch (Attribute)
+    {
+    case SQL_ATTR_APP_ROW_DESC:
+    case SQL_ATTR_APP_PARAM_DESC:
+    {
+        struct descriptor *desc = (struct descriptor *)lock_object( Value, SQL_HANDLE_DESC );
+        if (desc)
+        {
+            if (stmt->hdr.unix_handle)
+            {
+                if (sizeof(desc->hdr.unix_handle) > sizeof(Value))
+                    ERR( "truncating descriptor handle, consider using a Windows driver\n" );
+                Value = (SQLPOINTER)(ULONG_PTR)desc->hdr.unix_handle;
+            }
+            else Value = desc->hdr.win32_handle;
+            unlock_object( &desc->hdr );
+        }
+        break;
+    }
+    default: break;
+    }
 
     if (stmt->hdr.unix_handle)
     {
@@ -6228,7 +6304,6 @@ SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
     TRACE("(StatementHandle %p, Attribute %d, Value %p, BufferLength %d, StringLength %p)\n", StatementHandle,
           Attribute, Value, BufferLength, StringLength);
 
-    if (!Value) return SQL_ERROR;
     if (!stmt) return SQL_INVALID_HANDLE;
 
     if (stmt->hdr.unix_handle)
@@ -6238,6 +6313,28 @@ SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
     else if (stmt->hdr.win32_handle)
     {
         ret = get_stmt_attr_win32_w( stmt, Attribute, Value, BufferLength, StringLength );
+    }
+
+    if (!ret)
+    {
+        switch (Attribute)
+        {
+        case SQL_ATTR_APP_ROW_DESC:
+        case SQL_ATTR_APP_PARAM_DESC:
+        {
+            struct descriptor *desc = stmt->desc[Attribute - SQL_ATTR_APP_ROW_DESC];
+            if (stmt->hdr.unix_handle)
+            {
+                if (sizeof(desc->hdr.unix_handle) > sizeof(SQLHDESC))
+                    ERR( "truncating descriptor handle, consider using a Windows driver\n" );
+                desc->hdr.unix_handle = (ULONG_PTR)*(SQLHDESC *)Value;
+            }
+            else if (stmt->hdr.win32_handle) desc->hdr.win32_handle = *(SQLHDESC *)Value;
+            *(struct descriptor **)Value = desc;
+            break;
+        }
+        default: break;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -7449,6 +7546,30 @@ SQLRETURN WINAPI SQLSetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
           Value, StringLength);
 
     if (!stmt) return SQL_INVALID_HANDLE;
+
+    switch (Attribute)
+    {
+    case SQL_ATTR_APP_ROW_DESC:
+    case SQL_ATTR_APP_PARAM_DESC:
+    case SQL_ATTR_IMP_ROW_DESC:
+    case SQL_ATTR_IMP_PARAM_DESC:
+    {
+        struct descriptor *desc = (struct descriptor *)lock_object( Value, SQL_HANDLE_DESC );
+        if (desc)
+        {
+            if (stmt->hdr.unix_handle)
+            {
+                if (sizeof(desc->hdr.unix_handle) > sizeof(Value))
+                    ERR( "truncating descriptor handle, consider using a Windows driver\n" );
+                Value = (SQLPOINTER)(ULONG_PTR)desc->hdr.unix_handle;
+            }
+            else Value = desc->hdr.win32_handle;
+            unlock_object( &desc->hdr );
+        }
+        break;
+    }
+    default: break;
+    }
 
     if (stmt->hdr.unix_handle)
     {

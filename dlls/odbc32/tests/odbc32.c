@@ -317,11 +317,12 @@ static void test_SQLExecDirect( void )
     SQLHENV env;
     SQLHDBC con;
     SQLHSTMT stmt;
+    SQLHDESC desc;
     SQLRETURN ret;
-    SQLLEN count, len_id[2], len_name[2];
+    SQLLEN count, len_id[2], len_name[2], len_octet;
     SQLULEN rows_fetched;
-    SQLINTEGER id[2], err;
-    SQLCHAR name[32], msg[32], state[6];
+    SQLINTEGER id[2], err, size;
+    SQLCHAR name[32], msg[256], state[6];
     SQLSMALLINT len;
 
     ret = SQLAllocEnv( &env );
@@ -343,6 +344,18 @@ static void test_SQLExecDirect( void )
 
     ret = SQLAllocStmt( con, &stmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLError( NULL, NULL, NULL, state, &err, msg, sizeof(msg), &len );
+    ok( ret == SQL_INVALID_HANDLE, "got %d\n", ret );
+
+    ret = SQLError( env, NULL, NULL, state, &err, msg, sizeof(msg), &len );
+    ok( ret == SQL_NO_DATA, "got %d\n", ret );
+
+    ret = SQLError( env, con, NULL, state, &err, msg, sizeof(msg), &len );
+    ok( ret == SQL_NO_DATA, "got %d\n", ret );
+
+    ret = SQLError( env, con, stmt, state, &err, msg, sizeof(msg), &len );
+    ok( ret == SQL_NO_DATA, "got %d\n", ret );
 
     SQLExecDirect( stmt, (SQLCHAR *)"USE winetest", ARRAYSIZE("USE winetest") - 1 );
     SQLExecDirect( stmt, (SQLCHAR *)"DROP TABLE winetest", ARRAYSIZE("DROP TABLE winetest") - 1 );
@@ -471,17 +484,26 @@ static void test_SQLExecDirect( void )
     ret = SQLExecDirect( stmt, (SQLCHAR *)"DROP TABLE winetest", ARRAYSIZE("DROP TABLE winetest") - 1 );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
-    ret = SQLError( NULL, NULL, NULL, state, &err, msg, sizeof(msg), &len );
-    ok( ret == SQL_INVALID_HANDLE, "got %d\n", ret );
+    desc = (SQLHDESC)0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = SQLGetStmtAttr( stmt, SQL_ATTR_APP_ROW_DESC, &desc, sizeof(desc), &size );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( desc != (SQLHDESC)0xdeadbeef, "desc not set\n" );
+    ok( size == 0xdeadbeef, "got %d\n", size );
 
-    ret = SQLError( env, NULL, NULL, state, &err, msg, sizeof(msg), &len );
-    ok( ret == SQL_NO_DATA, "got %d\n", ret );
+    ret = SQLSetDescField( desc, 1, SQL_DESC_OCTET_LENGTH_PTR, &len_octet, 0 );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_DESC );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
-    ret = SQLError( env, con, NULL, state, &err, msg, sizeof(msg), &len );
-    ok( ret == SQL_NO_DATA, "got %d\n", ret );
+    ret = SQLSetStmtAttr( stmt, SQL_ATTR_APP_ROW_DESC, NULL, sizeof(desc) );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
-    ret = SQLError( env, con, stmt, state, &err, msg, sizeof(msg), &len );
-    ok( ret == SQL_NO_DATA, "got %d\n", ret );
+    ret = SQLSetStmtAttr( stmt, SQL_ATTR_APP_ROW_DESC, desc, 0 );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLSetStmtAttr( stmt, SQL_ATTR_IMP_ROW_DESC, NULL, sizeof(desc) );
+    ok( ret == SQL_ERROR, "got %d\n", ret );
 
     ret = SQLFreeStmt( stmt, SQL_DROP );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
