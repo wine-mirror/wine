@@ -28,6 +28,8 @@ static struct stream_context *stream_context_create(void)
     struct stream_context *context;
 
     if (!(context = malloc( sizeof(*context) ))) return NULL;
+    context->length = 0;
+    context->position = 0;
 
     return context;
 }

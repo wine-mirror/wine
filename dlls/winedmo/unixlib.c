@@ -35,23 +35,30 @@ static UINT64 read_callback;
 int64_t unix_seek_callback( void *opaque, int64_t offset, int whence )
 {
     struct seek_callback_params params = {.dispatch = {.callback = seek_callback}, .context = (UINT_PTR)opaque};
+    struct stream_context *context = opaque;
     void *ret_ptr;
     ULONG ret_len;
     int status;
 
     TRACE( "opaque %p, offset %#"PRIx64", whence %#x\n", opaque, offset, whence );
 
+    if (whence == AVSEEK_SIZE) return context->length;
+    if (whence == SEEK_END) offset += context->length;
+    if (whence == SEEK_CUR) offset += context->position;
+
     params.offset = offset;
     status = KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
     if (status || ret_len != sizeof(UINT64)) return AVERROR( EINVAL );
     offset = *(UINT64 *)ret_ptr;
 
+    context->position = offset;
     return offset;
 }
 
 int unix_read_callback( void *opaque, uint8_t *buffer, int size )
 {
     struct read_callback_params params = {.dispatch = {.callback = read_callback}, .context = (UINT_PTR)opaque};
+    struct stream_context *context = opaque;
     int status, total;
     void *ret_ptr;
     ULONG ret_len;
@@ -64,6 +71,7 @@ int unix_read_callback( void *opaque, uint8_t *buffer, int size )
     total = *(ULONG *)ret_ptr;
 
     if (!total) return AVERROR_EOF;
+    context->position += total;
     return total;
 }
 

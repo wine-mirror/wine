@@ -39,7 +39,8 @@ struct process_attach_params
 
 struct stream_context
 {
-    UINT64 placeholder;
+    UINT64 length;
+    UINT64 position;
 };
 
 struct seek_callback_params
