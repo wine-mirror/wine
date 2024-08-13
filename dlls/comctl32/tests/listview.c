@@ -7234,6 +7234,27 @@ static void test_LVM_SETBKIMAGE(BOOL is_v6)
     CoUninitialize();
 }
 
+static void test_LVM_GETNEXTITEM(void)
+{
+    HWND hwnd;
+    LRESULT lr;
+
+    hwnd = create_listview_control(LVS_REPORT);
+    insert_item(hwnd, 0);
+    insert_item(hwnd, 1);
+
+    lr = SendMessageA(hwnd, LVM_GETNEXTITEM, 0, LVNI_ABOVE);
+    expect(-1, lr);
+    lr = SendMessageA(hwnd, LVM_GETNEXTITEM, 0, LVNI_BELOW);
+    expect(1, lr);
+    lr = SendMessageA(hwnd, LVM_GETNEXTITEM, 1, LVNI_ABOVE);
+    expect(0, lr);
+    lr = SendMessageA(hwnd, LVM_GETNEXTITEM, 1, LVNI_BELOW);
+    todo_wine expect(-1, lr);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -7300,6 +7321,7 @@ START_TEST(listview)
     test_item_state_change();
     test_LVM_SETBKIMAGE(FALSE);
     test_custom_sort();
+    test_LVM_GETNEXTITEM();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -7348,6 +7370,7 @@ START_TEST(listview)
     test_item_state_change();
     test_selected_column();
     test_LVM_GETNEXTITEMINDEX();
+    test_LVM_GETNEXTITEM();
     test_LVM_SETBKIMAGE(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
