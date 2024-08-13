@@ -3265,4 +3265,6 @@ sync_test("prototypes", function() {
     check(StorageEvent.prototype, Event.prototype, "storage event prototype");
     check(screen, Screen.prototype, "screen");
     check(Screen.prototype, Object.prototype, "screen prototype");
+    check(history, History.prototype, "history");
+    check(History.prototype, Object.prototype, "history prototype");
 });

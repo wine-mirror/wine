@@ -549,15 +549,15 @@ static const dispex_static_data_vtbl_t OmHistory_dispex_vtbl = {
     .unlink           = OmHistory_unlink,
 };
 
-static const tid_t OmHistory_iface_tids[] = {
+static const tid_t History_iface_tids[] = {
     IOmHistory_tid,
     0
 };
-static dispex_static_data_t OmHistory_dispex = {
-    "History",
-    &OmHistory_dispex_vtbl,
-    DispHTMLHistory_tid,
-    OmHistory_iface_tids
+dispex_static_data_t History_dispex = {
+    .id         = PROT_History,
+    .vtbl       = &OmHistory_dispex_vtbl,
+    .disp_tid   = DispHTMLHistory_tid,
+    .iface_tids = History_iface_tids,
 };
 
 
@@ -569,7 +569,7 @@ HRESULT create_history(HTMLInnerWindow *window, OmHistory **ret)
     if(!history)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&history->dispex, &OmHistory_dispex, window,
+    init_dispatch(&history->dispex, &History_dispex, window,
                   dispex_compat_mode(&window->event_target.dispex));
     history->IOmHistory_iface.lpVtbl = &OmHistoryVtbl;
 
