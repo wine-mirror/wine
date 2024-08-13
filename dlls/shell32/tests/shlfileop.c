@@ -3212,11 +3212,11 @@ static void test_file_operation(void)
     IUnknown_Release(unk);
 
     hr = IFileOperation_Advise(operation, NULL, &cookie);
-    todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
 
     progress = create_progress_sink(0);
     hr = IFileOperation_Advise(operation, progress, &cookie);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     hr = IFileOperation_PerformOperations(operation);
     todo_wine ok(hr == E_UNEXPECTED, "got %#lx.\n", hr);
@@ -3310,9 +3310,9 @@ static void test_file_operation(void)
     todo_wine ok(refcount > 1, "got %ld.\n", refcount);
 
     hr = IFileOperation_Unadvise(operation, 0xdeadbeef);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_Unadvise(operation, cookie);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     IFileOperation_Release(operation);
     refcount = IShellItem_Release(folder);
@@ -3326,7 +3326,7 @@ static void test_file_operation(void)
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 
     hr = IFileOperation_Advise(operation, progress, &cookie);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     PathCombineW(path, dirpath, L"test_dir1");
     bret = CreateDirectoryW(path, NULL);
@@ -3366,7 +3366,7 @@ static void test_file_operation(void)
     hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER, &IID_IFileOperation, (void **)&operation);
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_Advise(operation, progress, &cookie);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 
@@ -3382,7 +3382,7 @@ static void test_file_operation(void)
     hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER, &IID_IFileOperation, (void **)&operation);
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_Advise(operation, progress, &cookie);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 

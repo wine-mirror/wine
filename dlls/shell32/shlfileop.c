@@ -42,6 +42,7 @@
 #include "shell32_main.h"
 #include "shfldr.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -1848,10 +1849,19 @@ HRESULT WINAPI SHMultiFileProperties(IDataObject *pdtobj, DWORD flags)
     return E_NOTIMPL;
 }
 
+struct file_operation_sink
+{
+    struct list entry;
+    IFileOperationProgressSink *sink;
+    DWORD cookie;
+};
+
 struct file_operation
 {
     IFileOperation IFileOperation_iface;
     LONG ref;
+    struct list sinks;
+    DWORD next_cookie;
 };
 
 static inline struct file_operation *impl_from_IFileOperation(IFileOperation *iface)
@@ -1898,6 +1908,14 @@ static ULONG WINAPI file_operation_Release(IFileOperation *iface)
 
     if (!ref)
     {
+        struct file_operation_sink *sink, *next_sink;
+
+        LIST_FOR_EACH_ENTRY_SAFE(sink, next_sink, &operation->sinks, struct file_operation_sink, entry)
+        {
+            IFileOperationProgressSink_Release(sink->sink);
+            list_remove(&sink->entry);
+            free(sink);
+        }
         free(operation);
     }
 
@@ -1906,16 +1924,40 @@ static ULONG WINAPI file_operation_Release(IFileOperation *iface)
 
 static HRESULT WINAPI file_operation_Advise(IFileOperation *iface, IFileOperationProgressSink *sink, DWORD *cookie)
 {
-    FIXME("(%p, %p, %p): stub.\n", iface, sink, cookie);
+    struct file_operation *operation = impl_from_IFileOperation(iface);
+    struct file_operation_sink *op_sink;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %p).\n", iface, sink, cookie);
+
+    if (!sink)
+        return E_INVALIDARG;
+    if (!(op_sink = calloc(1, sizeof(*op_sink))))
+        return E_OUTOFMEMORY;
+
+    op_sink->cookie = ++operation->next_cookie;
+    IFileOperationProgressSink_AddRef(sink);
+    op_sink->sink = sink;
+    list_add_tail(&operation->sinks, &op_sink->entry);
+    return S_OK;
 }
 
 static HRESULT WINAPI file_operation_Unadvise(IFileOperation *iface, DWORD cookie)
 {
-    FIXME("(%p, %lx): stub.\n", iface, cookie);
+    struct file_operation *operation = impl_from_IFileOperation(iface);
+    struct file_operation_sink *sink;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %lx).\n", iface, cookie);
+    LIST_FOR_EACH_ENTRY(sink, &operation->sinks, struct file_operation_sink, entry)
+    {
+        if (sink->cookie == cookie)
+        {
+            IFileOperationProgressSink_Release(sink->sink);
+            list_remove(&sink->entry);
+            free(sink);
+            return S_OK;
+        }
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI file_operation_SetOperationFlags(IFileOperation *iface, DWORD flags)
@@ -2087,6 +2129,7 @@ HRESULT WINAPI IFileOperation_Constructor(IUnknown *outer, REFIID riid, void **o
         return E_OUTOFMEMORY;
 
     object->IFileOperation_iface.lpVtbl = &file_operation_vtbl;
+    list_init(&object->sinks);
     object->ref = 1;
 
     hr = IFileOperation_QueryInterface(&object->IFileOperation_iface, riid, out);
