@@ -2354,7 +2354,7 @@ static inline struct media_query_list *media_query_list_from_DispatchEx(Dispatch
     return CONTAINING_RECORD(iface, struct media_query_list, dispex);
 }
 
-static void *media_query_list_query_interface(DispatchEx *dispex, REFIID riid)
+static void *MediaQueryList_query_interface(DispatchEx *dispex, REFIID riid)
 {
     struct media_query_list *media_query_list = media_query_list_from_DispatchEx(dispex);
 
@@ -2364,7 +2364,7 @@ static void *media_query_list_query_interface(DispatchEx *dispex, REFIID riid)
     return NULL;
 }
 
-static void media_query_list_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+static void MediaQueryList_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
 {
     struct media_query_list *media_query_list = media_query_list_from_DispatchEx(dispex);
     struct media_query_list_listener *listener;
@@ -2375,7 +2375,7 @@ static void media_query_list_traverse(DispatchEx *dispex, nsCycleCollectionTrave
         note_cc_edge((nsISupports*)media_query_list->nsquerylist, "nsquerylist", cb);
 }
 
-static void media_query_list_unlink(DispatchEx *dispex)
+static void MediaQueryList_unlink(DispatchEx *dispex)
 {
     struct media_query_list *media_query_list = media_query_list_from_DispatchEx(dispex);
 
@@ -2389,29 +2389,30 @@ static void media_query_list_unlink(DispatchEx *dispex)
     unlink_ref(&media_query_list->nsquerylist);
 }
 
-static void media_query_list_destructor(DispatchEx *dispex)
+static void MediaQueryList_destructor(DispatchEx *dispex)
 {
     struct media_query_list *media_query_list = media_query_list_from_DispatchEx(dispex);
     nsIDOMMediaQueryListListener_Release(&media_query_list->callback->nsIDOMMediaQueryListListener_iface);
     free(media_query_list);
 }
 
-static const dispex_static_data_vtbl_t media_query_list_dispex_vtbl = {
-    .query_interface  = media_query_list_query_interface,
-    .destructor       = media_query_list_destructor,
-    .traverse         = media_query_list_traverse,
-    .unlink           = media_query_list_unlink
+static const dispex_static_data_vtbl_t MediaQueryList_dispex_vtbl = {
+    .query_interface  = MediaQueryList_query_interface,
+    .destructor       = MediaQueryList_destructor,
+    .traverse         = MediaQueryList_traverse,
+    .unlink           = MediaQueryList_unlink
 };
 
-static const tid_t media_query_list_iface_tids[] = {
+static const tid_t MediaQueryList_iface_tids[] = {
     IWineMSHTMLMediaQueryList_tid,
     0
 };
-static dispex_static_data_t media_query_list_dispex = {
-    "MediaQueryList",
-    &media_query_list_dispex_vtbl,
-    IWineMSHTMLMediaQueryList_tid,
-    media_query_list_iface_tids
+dispex_static_data_t MediaQueryList_dispex = {
+    .id              = PROT_MediaQueryList,
+    .vtbl            = &MediaQueryList_dispex_vtbl,
+    .disp_tid        = IWineMSHTMLMediaQueryList_tid,
+    .iface_tids      = MediaQueryList_iface_tids,
+    .min_compat_mode = COMPAT_MODE_IE10,
 };
 
 HRESULT create_media_query_list(HTMLInnerWindow *window, BSTR media_query, IDispatch **ret)
@@ -2452,7 +2453,7 @@ HRESULT create_media_query_list(HTMLInnerWindow *window, BSTR media_query, IDisp
 
     media_query_list->IWineMSHTMLMediaQueryList_iface.lpVtbl = &media_query_list_vtbl;
     list_init(&media_query_list->listeners);
-    init_dispatch(&media_query_list->dispex, &media_query_list_dispex, window,
+    init_dispatch(&media_query_list->dispex, &MediaQueryList_dispex, window,
                   dispex_compat_mode(&window->event_target.dispex));
 
     *ret = (IDispatch*)&media_query_list->IWineMSHTMLMediaQueryList_iface;

@@ -456,6 +456,7 @@ typedef struct {
     X(MSEventObj)                          \
     X(MSNamespaceInfoCollection)           \
     X(MSStyleCSSProperties)                \
+    X(MediaQueryList)                      \
     X(MessageEvent)                        \
     X(MimeTypeArray)                       \
     X(MouseEvent)                          \

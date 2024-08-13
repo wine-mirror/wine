@@ -3291,4 +3291,10 @@ sync_test("prototypes", function() {
     }else {
         ok(!("Console" in window), "Console found in window");
     }
+    if(v >= 10) {
+        check(window.matchMedia("(hover:hover)"), MediaQueryList.prototype, "media query");
+        check(MediaQueryList.prototype, Object.prototype, "media query prototype");
+    }else {
+        ok(!("MediaQueryList" in window), "MediaQueryList found in window");
+    }
 });
