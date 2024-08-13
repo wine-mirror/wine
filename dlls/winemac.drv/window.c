@@ -419,26 +419,12 @@ static void sync_window_region(struct macdrv_win_data *data, HRGN win_region)
 
 
 /***********************************************************************
- *              add_bounds_rect
- */
-static inline void add_bounds_rect(RECT *bounds, const RECT *rect)
-{
-    if (rect->left >= rect->right || rect->top >= rect->bottom) return;
-    bounds->left   = min(bounds->left, rect->left);
-    bounds->top    = min(bounds->top, rect->top);
-    bounds->right  = max(bounds->right, rect->right);
-    bounds->bottom = max(bounds->bottom, rect->bottom);
-}
-
-
-/***********************************************************************
  *              sync_window_opacity
  */
 static void sync_window_opacity(struct macdrv_win_data *data, BYTE alpha,
                                 BOOL per_pixel_alpha, DWORD flags)
 {
     CGFloat opacity = 1.0;
-    BOOL needs_flush = FALSE;
 
     if (flags & LWA_ALPHA) opacity = alpha / 255.0;
 
@@ -450,18 +436,6 @@ static void sync_window_opacity(struct macdrv_win_data *data, BYTE alpha,
         TRACE("setting window %p/%p per-pixel-alpha to %d\n", data->hwnd, data->cocoa_window, per_pixel_alpha);
         macdrv_window_use_per_pixel_alpha(data->cocoa_window, per_pixel_alpha);
         data->per_pixel_alpha = per_pixel_alpha;
-        needs_flush = TRUE;
-    }
-
-    if (needs_flush && data->surface)
-    {
-        RECT rect;
-
-        rect = data->whole_rect;
-        OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
-        window_surface_lock(data->surface);
-        add_bounds_rect(&data->surface->bounds, &rect);
-        window_surface_unlock(data->surface);
     }
 }
 
