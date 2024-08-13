@@ -182,7 +182,8 @@ static void test_SQLDriverConnect( void )
 
     len = 0;
     str[0] = 0;
-    ret = SQLDriverConnect( con, NULL, (SQLCHAR *)"DSN=winetest", strlen("DSN=winetest"), str, sizeof(str), &len, 0 );
+    ret = SQLDriverConnect( con, NULL, (SQLCHAR *)"DSN=winetest;UID=winetest", strlen("DSN=winetest;UID=winetest"),
+                            str, sizeof(str), &len, 0 );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
     if (ret != SQL_SUCCESS)
     {
@@ -190,6 +191,26 @@ static void test_SQLDriverConnect( void )
         SQLFreeEnv( env );
         skip( "data source winetest not available\n" );
         return;
+    }
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    todo_wine {
+    ok( !strcmp( (const char *)str, "DSN=winetest;UID=winetest;" ), "got '%s'\n", str );
+    ok( len == 26, "got %d\n", len );
+    }
+
+    ret = SQLDisconnect( con );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    /* trailing garbage */
+    len = 0;
+    str[0] = 0;
+    ret = SQLDriverConnect( con, NULL, (SQLCHAR *)"DSN=winetest;er\\9.99", strlen("DSN=winetest;er\\9.99"),
+                            str, sizeof(str), &len, 0 );
+    if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    todo_wine {
+    ok( !strcmp( (const char *)str, "DSN=winetest;" ), "got '%s'\n", str );
+    ok( len == 13, "got %d\n", len );
     }
 
     ret = SQLDisconnect( con );
@@ -227,6 +248,9 @@ static void test_SQLBrowseConnect( void )
         skip( "data source winetest not available\n" );
         return;
     }
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( !strcmp( (const char *)str, "DSN=winetest" ), "got '%s'\n", str );
+    ok( len == 12, "got %d\n", len );
 
     ret = SQLDisconnect( con );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );

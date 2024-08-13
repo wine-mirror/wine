@@ -4173,55 +4173,133 @@ SQLRETURN WINAPI SQLTransact(SQLHENV EnvironmentHandle, SQLHDBC ConnectionHandle
     return ret;
 }
 
-static WCHAR *get_datasource( const WCHAR *connection_string )
+struct attribute
 {
-    const WCHAR *p = connection_string, *q;
-    WCHAR *ret = NULL;
-    unsigned int len;
+    WCHAR *name;
+    WCHAR *value;
+};
 
-    if (!p) return NULL;
-    while (*p)
-    {
-        if (!wcsnicmp( p, L"DSN=", 4 ))
-        {
-            p += 4;
-            q = wcschr( p, ';' );
-            len = q ? (q - p) : wcslen( p );
-            if ((ret = malloc( (len + 1) * sizeof(WCHAR) )))
-            {
-                memcpy( ret, p, len * sizeof(WCHAR) );
-                ret[len] = 0;
-                break;
-            }
-        }
-        p++;
-    }
-    return ret;
+struct attribute_list
+{
+    UINT32 count;
+    struct attribute **attrs;
+};
+
+static void free_attribute( struct attribute *attr )
+{
+    free( attr->name );
+    free( attr->value );
+    free( attr );
 }
 
-static WCHAR *get_drivername( const WCHAR *connection_string )
+static void free_attribute_list( struct attribute_list *list )
 {
-    const WCHAR *p = connection_string, *q;
-    WCHAR *ret = NULL;
-    unsigned int len;
+    UINT32 i;
+    for (i = 0; i < list->count; i++) free_attribute( list->attrs[i] );
+}
 
-    if (!p) return NULL;
-    while (*p)
+static BOOL append_attribute( struct attribute_list *list, struct attribute *attr )
+{
+    struct attribute **tmp;
+    UINT32 new_count = list->count + 1;
+
+    if (!(tmp = realloc( list->attrs, new_count * sizeof(*list->attrs) )))
+        return FALSE;
+
+    tmp[list->count] = attr;
+    list->attrs = tmp;
+    list->count = new_count;
+    return TRUE;
+}
+
+static SQLRETURN parse_connect_string( struct attribute_list *list, const WCHAR *str )
+{
+    const WCHAR *p = str, *q;
+    struct attribute *attr;
+    int len;
+
+    list->count = 0;
+    list->attrs = NULL;
+    for (;;)
     {
-        if (!wcsnicmp( p, L"DRIVER=", 7 ))
+        if (!*p) break;
+        if (!(q = wcschr( p, '=' )) || q == p) return SQL_SUCCESS;
+        len = q - p;
+
+        if (!(attr = calloc( 1, sizeof(*attr) ))) return SQL_ERROR;
+        if (!(attr->name = malloc( (len + 1) * sizeof(WCHAR) )))
         {
-            p += 7;
-            q = wcschr( p, ';' );
-            len = q ? (q - p) : wcslen( p );
-            if ((ret = malloc( (len + 1) * sizeof(WCHAR) )))
-            {
-                memcpy( ret, p, len * sizeof(WCHAR) );
-                ret[len] = 0;
-                break;
-            }
+            free_attribute( attr );
+            free_attribute_list( list );
+            return SQL_ERROR;
         }
-        p++;
+        memcpy( attr->name, p, len * sizeof(WCHAR) );
+        attr->name[len] = 0;
+
+        q++; /* skip = */
+        p = wcschr( q, ';' );
+        if (p)
+        {
+            len = p - q;
+            p++;
+        }
+        else
+        {
+            len = wcslen( q );
+            p = q + len;
+        }
+
+        if (!(attr->value = malloc( (len + 1) * sizeof(WCHAR) )))
+        {
+            free_attribute( attr );
+            free_attribute_list( list );
+            return SQL_ERROR;
+        }
+        memcpy( attr->value, q, len * sizeof(WCHAR) );
+        attr->value[len] = 0;
+
+        if (!append_attribute( list, attr ))
+        {
+            free_attribute( attr );
+            free_attribute_list( list );
+            return SQL_ERROR;
+        }
     }
+
+    return SQL_SUCCESS;
+}
+
+static const WCHAR *get_datasource( const struct attribute_list *list )
+{
+    UINT32 i;
+    for (i = 0; i < list->count; i++) if (!wcscmp( list->attrs[i]->name, L"DSN" )) return list->attrs[i]->value;
+    return NULL;
+}
+
+static WCHAR *get_drivername( const struct attribute_list *list )
+{
+    UINT32 i;
+    for (i = 0; i < list->count; i++) if (!wcscmp( list->attrs[i]->name, L"DRIVER" )) return list->attrs[i]->value;
+    return NULL;
+}
+
+static WCHAR *build_connect_string( struct attribute_list *list )
+{
+    WCHAR *ret, *ptr;
+    UINT32 i, len = 0;
+
+    for (i = 0; i < list->count; i++) len += wcslen( list->attrs[i]->name ) + wcslen( list->attrs[i]->value ) + 2;
+    if (!(ptr = ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+    for (i = 0; i < list->count; i++)
+    {
+        wcscpy( ptr, list->attrs[i]->name );
+        ptr += wcslen( ptr );
+        *ptr++ = '=';
+        wcscpy( ptr, list->attrs[i]->value );
+        ptr += wcslen( ptr );
+        if (i < list->count - 1) *ptr++ = ';';
+    }
+    *ptr = 0;
     return ret;
 }
 
@@ -4259,6 +4337,16 @@ static SQLRETURN browse_connect_unix_a( struct connection *con, SQLCHAR *in_conn
     return ODBC_CALL( SQLBrowseConnect, &params );
 }
 
+static char *strdupWA( const WCHAR *src )
+{
+    int len;
+    char *dst;
+    if (!src) return NULL;
+    len = WideCharToMultiByte( CP_ACP, 0, src, -1, NULL, 0, NULL, NULL );
+    if ((dst = malloc( len ))) WideCharToMultiByte( CP_ACP, 0, src, -1, dst, len, NULL, NULL );
+    return dst;
+}
+
 /*************************************************************************
  *				SQLBrowseConnect           [ODBC32.055]
  */
@@ -4266,8 +4354,10 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
                                   SQLCHAR *OutConnectionString, SQLSMALLINT BufferLength, SQLSMALLINT *StringLength2)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    WCHAR *datasource = NULL, *drivername = NULL, *filename = NULL;
-    WCHAR *connection_string = strdupAW( (const char *)InConnectionString );
+    const WCHAR *datasource, *drivername = NULL;
+    WCHAR *filename = NULL, *connect_string = NULL, *strW = strdupAW( (const char *)InConnectionString );
+    SQLCHAR *strA = NULL;
+    struct attribute_list attrs;
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InConnectionString %s, StringLength1 %d, OutConnectionString %p, BufferLength, %d, "
@@ -4276,7 +4366,10 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    if (!(datasource = get_datasource( connection_string )) && !(drivername = get_drivername( connection_string )))
+    if (parse_connect_string( &attrs, strW ) || !(connect_string = build_connect_string( &attrs )) ||
+        !(strA = (SQLCHAR *)strdupWA( connect_string ))) goto done;
+
+    if (!(datasource = get_datasource( &attrs )) && !(drivername = get_drivername( &attrs )))
     {
         WARN( "can't find data source or driver name\n" );
         goto done;
@@ -4300,8 +4393,7 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
         if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
-        ret = browse_connect_win32_a( con, InConnectionString, StringLength1, OutConnectionString,
-                                      BufferLength, StringLength2 );
+        ret = browse_connect_win32_a( con, strA, StringLength1, OutConnectionString, BufferLength, StringLength2 );
     }
     else
     {
@@ -4310,15 +4402,15 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
         if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
-        ret = browse_connect_unix_a( con, InConnectionString, StringLength1, OutConnectionString,
-                                     BufferLength, StringLength2 );
+        ret = browse_connect_unix_a( con, strA, StringLength1, OutConnectionString, BufferLength, StringLength2 );
     }
 
 done:
-    free( connection_string );
+    free( strA );
+    free( strW );
+    free( connect_string );
+    free_attribute_list( &attrs );
     free( filename );
-    free( datasource );
-    free( drivername );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
@@ -5385,8 +5477,10 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
                                   SQLSMALLINT *Length2, SQLUSMALLINT DriverCompletion)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    WCHAR *datasource = NULL, *drivername = NULL, *filename = NULL;
-    WCHAR *connection_string = strdupAW( (const char *)InConnectionString );
+    const WCHAR *datasource, *drivername = NULL;
+    WCHAR *filename = NULL, *connect_string = NULL, *strW = strdupAW( (const char *)InConnectionString );
+    SQLCHAR *strA = NULL;
+    struct attribute_list attrs;
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
@@ -5396,7 +5490,10 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    if (!(datasource = get_datasource( connection_string )) && !(drivername = get_drivername( connection_string )))
+    if (parse_connect_string( &attrs, strW ) || !(connect_string = build_connect_string( &attrs )) ||
+        !(strA = (SQLCHAR *)strdupWA( connect_string ))) goto done;
+
+    if (!(datasource = get_datasource( &attrs )) && !(drivername = get_drivername( &attrs )))
     {
         WARN( "can't find data source or driver name\n" );
         goto done;
@@ -5420,8 +5517,8 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
         if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
-        ret = driver_connect_win32_a( con, WindowHandle, InConnectionString, Length, OutConnectionString,
-                                      BufferLength, Length2, DriverCompletion );
+        ret = driver_connect_win32_a( con, WindowHandle, strA, Length, OutConnectionString, BufferLength, Length2,
+                                      DriverCompletion );
     }
     else
     {
@@ -5430,14 +5527,16 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
         if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
-        ret = driver_connect_unix_a( con, WindowHandle, InConnectionString, Length, OutConnectionString,
-                                     BufferLength, Length2, DriverCompletion );
+        ret = driver_connect_unix_a( con, WindowHandle, strA, Length, OutConnectionString, BufferLength, Length2,
+                                     DriverCompletion );
     }
 
 done:
+    free( strA );
+    free( strW );
+    free( connect_string );
+    free_attribute_list( &attrs );
     free( filename );
-    free( datasource );
-    free( drivername );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
@@ -6484,7 +6583,9 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
                                    SQLSMALLINT *Length2, SQLUSMALLINT DriverCompletion)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    WCHAR *datasource, *drivername = NULL, *filename = NULL;
+    const WCHAR *datasource, *drivername = NULL;
+    WCHAR *filename = NULL, *connect_string = NULL;
+    struct attribute_list attrs;
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, WindowHandle %p, InConnectionString %s, Length %d, OutConnectionString %p,"
@@ -6494,7 +6595,10 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    if (!(datasource = get_datasource( InConnectionString )) && !(drivername = get_drivername( InConnectionString )))
+    if (parse_connect_string( &attrs, InConnectionString ) || !(connect_string = build_connect_string( &attrs )))
+        goto done;
+
+    if (!(datasource = get_datasource( &attrs )) && !(drivername = get_drivername( &attrs )))
     {
         WARN( "can't find data source or driver name\n" );
         goto done;
@@ -6533,9 +6637,9 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
     }
 
 done:
+    free( connect_string );
+    free_attribute_list( &attrs );
     free( filename );
-    free( datasource );
-    free( drivername );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
@@ -6912,7 +7016,9 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
                                    SQLWCHAR *OutConnectionString, SQLSMALLINT BufferLength, SQLSMALLINT *StringLength2)
 {
     struct connection *con = (struct connection *)lock_object( ConnectionHandle, SQL_HANDLE_DBC );
-    WCHAR *datasource, *drivername = NULL, *filename = NULL;
+    const WCHAR *datasource, *drivername = NULL;
+    WCHAR *filename = NULL, *connect_string = NULL;
+    struct attribute_list attrs;
     SQLRETURN ret = SQL_ERROR;
 
     TRACE("(ConnectionHandle %p, InConnectionString %s, StringLength1 %d, OutConnectionString %p, BufferLength %d, "
@@ -6921,7 +7027,10 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
 
     if (!con) return SQL_INVALID_HANDLE;
 
-    if (!(datasource = get_datasource( InConnectionString )) && !(drivername = get_drivername( InConnectionString )))
+    if (parse_connect_string( &attrs, InConnectionString ) || !(connect_string = build_connect_string( &attrs )))
+        goto done;
+
+    if (!(datasource = get_datasource( &attrs )) && !(drivername = get_drivername( &attrs )))
     {
         WARN( "can't find data source or driver name\n" );
         goto done;
@@ -6945,7 +7054,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
         if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, FALSE )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
-        ret = browse_connect_win32_w( con, InConnectionString, StringLength1, OutConnectionString, BufferLength,
+        ret = browse_connect_win32_w( con, connect_string, StringLength1, OutConnectionString, BufferLength,
                                       StringLength2 );
     }
     else
@@ -6955,14 +7064,14 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
         if (!SUCCESS((ret = create_env( (struct environment *)con->hdr.parent, TRUE )))) goto done;
         if (!SUCCESS((ret = create_con( con )))) goto done;
 
-        ret = browse_connect_unix_w( con, InConnectionString, StringLength1, OutConnectionString, BufferLength,
+        ret = browse_connect_unix_w( con, connect_string, StringLength1, OutConnectionString, BufferLength,
                                      StringLength2 );
     }
 
 done:
+    free( connect_string );
+    free_attribute_list( &attrs );
     free( filename );
-    free( datasource );
-    free( drivername );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
