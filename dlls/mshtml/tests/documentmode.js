@@ -3267,4 +3267,8 @@ sync_test("prototypes", function() {
     check(Screen.prototype, Object.prototype, "screen prototype");
     check(history, History.prototype, "history");
     check(History.prototype, Object.prototype, "history prototype");
+    if(v >= 11 /* todo_wine */) {
+        check(navigator.plugins, PluginArray.prototype, "plugins");
+        check(PluginArray.prototype, Object.prototype, "plugins prototype");
+    }
 });

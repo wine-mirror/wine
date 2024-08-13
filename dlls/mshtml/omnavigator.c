@@ -664,15 +664,15 @@ static const dispex_static_data_vtbl_t HTMLPluginsCollection_dispex_vtbl = {
     .unlink           = HTMLPluginsCollection_unlink
 };
 
-static const tid_t HTMLPluginsCollection_iface_tids[] = {
+static const tid_t PluginArray_iface_tids[] = {
     IHTMLPluginsCollection_tid,
     0
 };
-static dispex_static_data_t HTMLPluginsCollection_dispex = {
-    "PluginArray",
-    &HTMLPluginsCollection_dispex_vtbl,
-    DispCPlugins_tid,
-    HTMLPluginsCollection_iface_tids
+dispex_static_data_t PluginArray_dispex = {
+    .id         = PROT_PluginArray,
+    .vtbl       = &HTMLPluginsCollection_dispex_vtbl,
+    .disp_tid   = DispCPlugins_tid,
+    .iface_tids = PluginArray_iface_tids,
 };
 
 static HRESULT create_plugins_collection(OmNavigator *navigator, HTMLPluginsCollection **ret)
@@ -686,7 +686,7 @@ static HRESULT create_plugins_collection(OmNavigator *navigator, HTMLPluginsColl
     col->IHTMLPluginsCollection_iface.lpVtbl = &HTMLPluginsCollectionVtbl;
     col->navigator = navigator;
 
-    init_dispatch_with_owner(&col->dispex, &HTMLPluginsCollection_dispex, &navigator->dispex);
+    init_dispatch_with_owner(&col->dispex, &PluginArray_dispex, &navigator->dispex);
 
     *ret = col;
     return S_OK;

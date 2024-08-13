@@ -460,6 +460,7 @@ typedef struct {
     X(Navigator)                           \
     X(Node)                                \
     X(PageTransitionEvent)                 \
+    X(PluginArray)                         \
     X(ProgressEvent)                       \
     X(SVGCircleElement)                    \
     X(SVGElement)                          \
