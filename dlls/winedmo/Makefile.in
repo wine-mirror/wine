@@ -1,0 +1,4 @@
+MODULE    = winedmo.dll
+
+SOURCES = \
+	main.c
