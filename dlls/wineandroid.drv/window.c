@@ -56,7 +56,6 @@ struct android_win_data
     RECT           whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT           client_rect;    /* client area relative to parent */
     ANativeWindow *window;         /* native window wrapper that forwards calls to the desktop process */
-    struct window_surface *surface;
 };
 
 #define SWP_AGG_NOPOSCHANGE (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
@@ -690,10 +689,6 @@ static const struct window_surface_funcs android_surface_funcs =
     android_surface_destroy
 };
 
-static BOOL is_argb_surface( struct window_surface *surface )
-{
-    return surface && surface->funcs == &android_surface_funcs && !!surface->alpha_mask;
-}
 
 /***********************************************************************
  *           create_surface
@@ -1007,8 +1002,6 @@ void ANDROID_DestroyWindow( HWND hwnd )
 
     if (!(data = get_win_data( hwnd ))) return;
 
-    if (data->surface) window_surface_release( data->surface );
-    data->surface = NULL;
     destroy_gl_drawable( hwnd );
     free_win_data( data );
 }
@@ -1089,12 +1082,6 @@ void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, con
     data->whole_rect  = new_rects->visible;
     data->client_rect = new_rects->client;
 
-    if (!is_argb_surface( data->surface ))
-    {
-        if (surface) window_surface_add_ref( surface );
-        if (data->surface) window_surface_release( data->surface );
-        data->surface = surface;
-    }
     if (!data->parent) owner = NtUserGetWindowRelative( hwnd, GW_OWNER );
     release_win_data( data );
 
@@ -1206,29 +1193,6 @@ void ANDROID_SetCursor( HWND hwnd, HCURSOR handle )
         NtGdiDeleteObjectApp( info.hbmMask );
     }
     else ioctl_set_cursor( 0, 0, 0, 0, 0, NULL );
-}
-
-
-/***********************************************************************
- *           ANDROID_SetWindowStyle
- */
-void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
-{
-    struct android_win_data *data;
-    DWORD changed = style->styleNew ^ style->styleOld;
-
-    if (hwnd == NtUserGetDesktopWindow()) return;
-    if (!(data = get_win_data( hwnd ))) return;
-
-    if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
-    {
-        if (is_argb_surface( data->surface ))
-        {
-            if (data->surface) window_surface_release( data->surface );
-            data->surface = NULL;
-        }
-    }
-    release_win_data( data );
 }
 
 
