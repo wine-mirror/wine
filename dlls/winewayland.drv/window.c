@@ -697,23 +697,6 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 }
 
 /**********************************************************************
- *           wayland_window_flush
- *
- *  Flush the window_surface associated with a HWND.
- */
-void wayland_window_flush(HWND hwnd)
-{
-    struct wayland_win_data *data = wayland_win_data_get(hwnd);
-
-    if (!data) return;
-
-    if (data->window_surface)
-        window_surface_flush(data->window_surface);
-
-    wayland_win_data_release(data);
-}
-
-/**********************************************************************
  *           wayland_surface_lock_hwnd
  */
 struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd)

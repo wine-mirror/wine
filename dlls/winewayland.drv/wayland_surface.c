@@ -64,7 +64,10 @@ static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_sur
 
     /* Flush the window surface in case there is content that we weren't
      * able to flush before due to the lack of the initial configure. */
-    if (initial_configure) wayland_window_flush(hwnd);
+    if (initial_configure)
+    {
+        NtUserExposeWindowSurface(hwnd, 0, NULL, 0);
+    }
 }
 
 static const struct xdg_surface_listener xdg_surface_listener =

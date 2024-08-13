@@ -876,7 +876,6 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
     RECT rect, abs_rect;
     POINT pos;
     struct x11drv_win_data *data;
-    HRGN surface_region = 0;
     UINT flags = RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN;
 
     TRACE( "win %p (%lx) %d,%d %dx%d\n",
@@ -897,20 +896,8 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
     rect.bottom = pos.y + event->height;
 
     if (event->window != data->client_window)
-    {
-        if (data->surface)
-        {
-            surface_region = expose_surface( data->surface, &rect );
-            if (!surface_region) flags = 0;
-            else NtGdiOffsetRgn( surface_region, data->whole_rect.left - data->client_rect.left,
-                                 data->whole_rect.top - data->client_rect.top );
-
-            if (data->vis.visualid != default_visual.visualid)
-                window_surface_flush( data->surface );
-        }
         OffsetRect( &rect, data->whole_rect.left - data->client_rect.left,
                     data->whole_rect.top - data->client_rect.top );
-    }
 
     if (event->window != root_window)
     {
@@ -931,8 +918,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     release_win_data( data );
 
-    if (flags) redraw_window( hwnd, &rect, surface_region, flags );
-    if (surface_region) NtGdiDeleteObjectApp( surface_region );
+    NtUserExposeWindowSurface( hwnd, flags, &rect, get_win_monitor_dpi( hwnd ) );
     return TRUE;
 }
 

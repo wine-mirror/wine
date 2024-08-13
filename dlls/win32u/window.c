@@ -2070,6 +2070,67 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     return ret;
 }
 
+static HRGN expose_window_surface_rect( struct window_surface *surface, UINT flags, RECT dirty )
+{
+    HRGN region, clipped;
+
+    intersect_rect( &dirty, &dirty, &surface->rect );
+    add_bounds_rect( &surface->bounds, &dirty );
+
+    if (!surface->clip_region || !flags) return 0;
+
+    clipped = NtGdiCreateRectRgn( surface->rect.left, surface->rect.top,
+                                  surface->rect.right, surface->rect.bottom );
+    NtGdiCombineRgn( clipped, clipped, surface->clip_region, RGN_DIFF );
+
+    region = NtGdiCreateRectRgn( dirty.left, dirty.top, dirty.right, dirty.bottom );
+    if (NtGdiCombineRgn( region, region, clipped, RGN_DIFF ) <= NULLREGION)
+    {
+        NtGdiDeleteObjectApp( region );
+        region = 0;
+    }
+
+    NtGdiDeleteObjectApp( clipped );
+    return region;
+}
+
+static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT dpi )
+{
+    struct window_surface *surface;
+    struct window_rects rects;
+    HRGN region = 0;
+    WND *win;
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
+    if ((surface = win->surface)) window_surface_add_ref( surface );
+    rects = win->rects;
+    release_win_ptr( win );
+
+    if (surface)
+    {
+        window_surface_lock( surface );
+
+        if (!rect) add_bounds_rect( &surface->bounds, rect );
+        else
+        {
+            RECT dirty = *rect;
+            OffsetRect( &dirty, rects.client.left - rects.visible.left, rects.client.top - rects.visible.top );
+            if (!(region = expose_window_surface_rect( surface, flags, dirty ))) flags = 0;
+            else NtGdiOffsetRgn( region, rects.client.left - rects.visible.left, rects.client.top - rects.visible.top );
+        }
+
+        window_surface_unlock( surface );
+        if (surface->alpha_mask) window_surface_flush( surface );
+
+        window_surface_release( surface );
+    }
+
+    if (flags) NtUserRedrawWindow( hwnd, rect, region, flags );
+    if (region) NtGdiDeleteObjectApp( region );
+    return TRUE;
+}
+
+
 /*******************************************************************
  *           NtUserGetWindowRgnEx (win32u.@)
  */
@@ -5778,6 +5839,12 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     {
         struct send_hardware_input_params *params = (void *)param;
         return send_hardware_message( hwnd, params->flags, params->input, params->lparam );
+    }
+
+    case NtUserCallHwndParam_ExposeWindowSurface:
+    {
+        struct expose_window_surface_params *params = (void *)param;
+        return expose_window_surface( hwnd, params->flags, params->whole ? NULL : &params->rect, params->dpi );
     }
 
     /* temporary exports */

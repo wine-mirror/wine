@@ -1237,8 +1237,6 @@ void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
  */
 LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
-    struct android_win_data *data;
-
     switch (msg)
     {
     case WM_ANDROID_REFRESH:
@@ -1246,17 +1244,9 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         {
             update_gl_drawable( hwnd );
         }
-        else if ((data = get_win_data( hwnd )))
+        else
         {
-            struct window_surface *surface = data->surface;
-            if (surface)
-            {
-                window_surface_lock( surface );
-                surface->bounds = surface->rect;
-                window_surface_unlock( surface );
-                if (is_argb_surface( surface )) window_surface_flush( surface );
-            }
-            release_win_data( data );
+            NtUserExposeWindowSurface( hwnd, 0, NULL, 0 );
         }
         return 0;
     default:

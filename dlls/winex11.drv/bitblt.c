@@ -1956,38 +1956,6 @@ failed:
     return NULL;
 }
 
-/***********************************************************************
- *           expose_surface
- */
-HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
-{
-    HRGN region = 0;
-    RECT rc = *rect;
-
-    if (window_surface->funcs != &x11drv_surface_funcs) return 0;  /* we may get the null surface */
-
-    window_surface_lock( window_surface );
-    OffsetRect( &rc, -window_surface->rect.left, -window_surface->rect.top );
-    add_bounds_rect( &window_surface->bounds, &rc );
-    if (window_surface->clip_region)
-    {
-        HRGN clipped = NtGdiCreateRectRgn( window_surface->rect.left, window_surface->rect.top,
-                                           window_surface->rect.right, window_surface->rect.bottom );
-        NtGdiCombineRgn( clipped, clipped, window_surface->clip_region, RGN_DIFF );
-
-        region = NtGdiCreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
-        if (NtGdiCombineRgn( region, region, clipped, RGN_DIFF ) <= NULLREGION)
-        {
-            NtGdiDeleteObjectApp( region );
-            region = 0;
-        }
-
-        NtGdiDeleteObjectApp( clipped );
-    }
-    window_surface_unlock( window_surface );
-    return region;
-}
-
 
 static BOOL enable_direct_drawing( struct x11drv_win_data *data, BOOL layered )
 {

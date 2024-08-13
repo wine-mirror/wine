@@ -274,7 +274,6 @@ void wayland_shm_buffer_unref(struct wayland_shm_buffer *shm_buffer);
 
 void wayland_window_surface_update_wayland_surface(struct window_surface *surface, const RECT *visible_rect,
                                                    struct wayland_surface *wayland_surface);
-void wayland_window_flush(HWND hwnd);
 
 /**********************************************************************
  *          Wayland Window
