@@ -3419,11 +3419,11 @@ static void test_file_operation(void)
     PathCombineW(path, dirpath, L"test_dir2");
     PathCombineW(tmpfile, dirpath, L"test_dir2\\test2\\testfile6");
     ret = GetFileAttributesW(tmpfile);
-    todo_wine ok(ret != INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
     remove_directory(path);
     PathCombineW(path, dirpath, L"test_dir3");
     ret = GetFileAttributesW(path);
-    todo_wine ok(ret == INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
+    ok(ret == INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
     remove_directory(path);
 
     IFileOperation_Release(operation);

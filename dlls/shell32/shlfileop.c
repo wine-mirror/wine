@@ -1853,6 +1853,7 @@ HRESULT WINAPI SHMultiFileProperties(IDataObject *pdtobj, DWORD flags)
 enum copy_engine_opcode
 {
     COPY_ENGINE_MOVE,
+    COPY_ENGINE_REMOVE_DIRECTORY_SILENT,
 };
 
 struct copy_engine_operation
@@ -1901,7 +1902,7 @@ static void free_file_operation_ops(struct file_operation *operation)
 }
 
 static HRESULT add_operation(struct file_operation *operation, enum copy_engine_opcode opcode, IShellItem *item,
-        IShellItem *folder, const WCHAR *name, IFileOperationProgressSink *sink)
+        IShellItem *folder, const WCHAR *name, IFileOperationProgressSink *sink, struct list *add_after)
 {
     struct copy_engine_operation *op;
     HRESULT hr;
@@ -1934,7 +1935,10 @@ static HRESULT add_operation(struct file_operation *operation, enum copy_engine_
         IFileOperationProgressSink_AddRef(sink);
         op->sink = sink;
     }
-    list_add_tail(&operation->ops, &op->entry);
+    if (add_after)
+        list_add_after(add_after, &op->entry);
+    else
+        list_add_tail(&operation->ops, &op->entry);
     return S_OK;
 
 error:
@@ -1948,11 +1952,55 @@ error:
     return hr;
 }
 
+static HRESULT copy_engine_merge_dir(struct file_operation *operation, struct copy_engine_operation *op,
+        const WCHAR *src_dir_path, IShellItem *dest_folder, struct list **add_after)
+{
+    struct list *add_files_after, *curr_add_after;
+    WIN32_FIND_DATAW wfd;
+    WCHAR path[MAX_PATH];
+    IShellItem *item;
+    HRESULT hr = S_OK;
+    HANDLE fh;
+
+    if (!PathCombineW(path, src_dir_path, L"*.*"))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    fh = FindFirstFileW(path, &wfd);
+    if (fh == INVALID_HANDLE_VALUE) return S_OK;
+    add_files_after = *add_after;
+    do
+    {
+        if (!wcscmp(wfd.cFileName, L".") || !wcscmp(wfd.cFileName, L".."))
+            continue;
+        if (!PathCombineW(path, src_dir_path, wfd.cFileName))
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+            break;
+        }
+        if (FAILED(hr = SHCreateItemFromParsingName(path, NULL, &IID_IShellItem, (void **)&item)))
+            break;
+
+        /* Queue files before directories. */
+        curr_add_after = IsAttribFile(wfd.dwFileAttributes) ? add_files_after : *add_after;
+        hr = add_operation(operation, COPY_ENGINE_MOVE, item, dest_folder, NULL, op->sink, curr_add_after);
+        IShellItem_Release(item);
+        if (FAILED(hr))
+            break;
+        if (curr_add_after == *add_after)
+            *add_after = (*add_after)->next;
+        if (IsAttribFile(wfd.dwFileAttributes))
+            add_files_after = add_files_after->next;
+    } while (FindNextFileW(fh, &wfd));
+    FindClose(fh);
+    return hr;
+}
+
 static HRESULT copy_engine_move(struct file_operation *operation, struct copy_engine_operation *op, IShellItem *src_item,
         IShellItem **dest_folder)
 {
     WCHAR path[MAX_PATH], item_path[MAX_PATH];
     DWORD src_attrs, dst_attrs;
+    struct list *add_after;
     WCHAR *str, *ptr;
     HRESULT hr;
 
@@ -1994,8 +2042,19 @@ static HRESULT copy_engine_move(struct file_operation *operation, struct copy_en
     }
 
     /* Merge directory to existing directory. */
-    FIXME("Megre directories.\n");
-    return E_FAIL;
+    if (FAILED((hr = SHCreateItemFromParsingName(path, NULL, &IID_IShellItem, (void **)dest_folder))))
+        return hr;
+
+    add_after = &op->entry;
+    if (FAILED((hr = copy_engine_merge_dir(operation, op, item_path, *dest_folder, &add_after))))
+    {
+        IShellItem_Release(*dest_folder);
+        *dest_folder = NULL;
+        return hr;
+    }
+    add_operation(operation, COPY_ENGINE_REMOVE_DIRECTORY_SILENT, src_item, NULL, NULL, NULL, add_after);
+
+    return COPYENGINE_S_NOT_HANDLED;
 }
 
 static HRESULT perform_file_operations(struct file_operation *operation)
@@ -2009,6 +2068,20 @@ static HRESULT perform_file_operations(struct file_operation *operation)
         hr = E_FAIL;
         switch (op->opcode)
         {
+            case COPY_ENGINE_REMOVE_DIRECTORY_SILENT:
+            {
+                WCHAR *path;
+                if (FAILED(SHGetNameFromIDList(op->item_pidl, SIGDN_FILESYSPATH, &path)))
+                {
+                    ERR("SHGetNameFromIDList failed.\n");
+                    break;
+                }
+                if (!RemoveDirectoryW(path))
+                    WARN("Remove directory failed, err %lu.\n", GetLastError());
+                CoTaskMemFree(path);
+                break;
+            }
+
             case COPY_ENGINE_MOVE:
                 if (FAILED(hr = SHCreateItemFromIDList(op->item_pidl, &IID_IShellItem, (void**)&item)))
                     break;
@@ -2196,7 +2269,7 @@ static HRESULT WINAPI file_operation_MoveItem(IFileOperation *iface, IShellItem 
     if (!folder || !item)
         return E_INVALIDARG;
 
-    return add_operation(impl_from_IFileOperation(iface), COPY_ENGINE_MOVE, item, folder, name, sink);
+    return add_operation(impl_from_IFileOperation(iface), COPY_ENGINE_MOVE, item, folder, name, sink, NULL);
 }
 
 static HRESULT WINAPI file_operation_MoveItems(IFileOperation *iface, IUnknown *items, IShellItem *folder)
