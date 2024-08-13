@@ -2305,9 +2305,9 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
 
         if (!(flags & ULW_COLORKEY)) key = CLR_INVALID;
         window_surface_set_layered( surface, key, -1, 0xff000000 );
-        window_surface_flush( surface );
 
         user_driver->pUpdateLayeredWindow( hwnd, flags );
+        window_surface_flush( surface );
     }
 
 done:
