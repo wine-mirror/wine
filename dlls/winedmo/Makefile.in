@@ -1,4 +1,8 @@
 MODULE    = winedmo.dll
+UNIXLIB   = winedmo.so
+UNIX_CFLAGS  = $(FFMPEG_CFLAGS)
+UNIX_LIBS    = $(FFMPEG_LIBS) $(PTHREAD_LIBS)
 
 SOURCES = \
-	main.c
+	main.c \
+	unixlib.c

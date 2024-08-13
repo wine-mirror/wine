@@ -51,6 +51,9 @@
 /* Define to 1 if you have the 'epoll_create' function. */
 #undef HAVE_EPOLL_CREATE
 
+/* Define to 1 if you have the FFmpeg libraries. */
+#undef HAVE_FFMPEG
+
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
@@ -116,6 +119,12 @@
 
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
 #undef HAVE_KRB5_KRB5_H
+
+/* Define to 1 if you have the <libavformat/avformat.h> header file. */
+#undef HAVE_LIBAVFORMAT_AVFORMAT_H
+
+/* Define to 1 if you have the <libavutil/avutil.h> header file. */
+#undef HAVE_LIBAVUTIL_AVUTIL_H
 
 /* Define to 1 if you have the 'gettextpo' library (-lgettextpo). */
 #undef HAVE_LIBGETTEXTPO

@@ -674,6 +674,8 @@ OSS4_CFLAGS
 ALSA_LIBS
 GSTREAMER_LIBS
 GSTREAMER_CFLAGS
+FFMPEG_LIBS
+FFMPEG_CFLAGS
 PULSE_LIBS
 PULSE_CFLAGS
 GETTEXTPO_LIBS
@@ -923,6 +925,7 @@ with_capi
 with_coreaudio
 with_cups
 with_dbus
+with_ffmpeg
 with_fontconfig
 with_freetype
 with_gettext
@@ -1836,6 +1839,8 @@ FREETYPE_CFLAGS
 FREETYPE_LIBS
 PULSE_CFLAGS
 PULSE_LIBS
+FFMPEG_CFLAGS
+FFMPEG_LIBS
 GSTREAMER_CFLAGS
 GSTREAMER_LIBS
 UDEV_CFLAGS
@@ -2504,6 +2509,7 @@ Optional Packages:
   --without-coreaudio     do not use the CoreAudio sound support
   --without-cups          do not use CUPS
   --without-dbus          do not use DBus (dynamic device support)
+  --without-ffmpeg        do not use the FFmpeg library
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
   --without-gettext       do not use gettext
@@ -2679,6 +2685,10 @@ Some influential environment variables:
   PULSE_CFLAGS
               C compiler flags for libpulse, overriding pkg-config
   PULSE_LIBS  Linker flags for libpulse, overriding pkg-config
+  FFMPEG_CFLAGS
+              C compiler flags for libavutil libavformat, overriding
+              pkg-config
+  FFMPEG_LIBS Linker flags for libavutil libavformat, overriding pkg-config
   GSTREAMER_CFLAGS
               C compiler flags for gstreamer-1.0 gstreamer-video-1.0
               gstreamer-audio-1.0 gstreamer-tag-1.0, overriding pkg-config
@@ -4322,6 +4332,13 @@ fi
 if test ${with_dbus+y}
 then :
   withval=$with_dbus;
+fi
+
+
+# Check whether --with-ffmpeg was given.
+if test ${with_ffmpeg+y}
+then :
+  withval=$with_ffmpeg;
 fi
 
 
@@ -18646,6 +18663,170 @@ esac
 enable_winepulse_drv=${enable_winepulse_drv:-no}
 fi
 
+if test "x$with_ffmpeg" != "xno";
+then
+    rm -f conftest.err
+if ${FFMPEG_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  FFMPEG_CFLAGS=`$PKG_CONFIG --cflags libavutil libavformat 2>conftest.err`
+fi
+fi
+
+if ${FFMPEG_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  FFMPEG_LIBS=`$PKG_CONFIG --libs libavutil libavformat 2>/dev/null`
+fi
+fi
+
+
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: libavutil libavformat cflags: $FFMPEG_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: libavutil libavformat libs: $FFMPEG_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libavutil libavformat errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $FFMPEG_CFLAGS"
+ac_fn_c_check_header_compile "$LINENO" "libavutil/avutil.h" "ac_cv_header_libavutil_avutil_h" "$ac_includes_default"
+if test "x$ac_cv_header_libavutil_avutil_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBAVUTIL_AVUTIL_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "libavformat/avformat.h" "ac_cv_header_libavformat_avformat_h" "$ac_includes_default"
+if test "x$ac_cv_header_libavformat_avformat_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBAVFORMAT_AVFORMAT_H 1" >>confdefs.h
+
+fi
+
+         if test "$ac_cv_header_libavutil_avutil_h" = "yes" -a "$ac_cv_header_libavformat_avformat_h" = "yes"
+         then
+            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for av_log_set_callback in -lavutil" >&5
+printf %s "checking for av_log_set_callback in -lavutil... " >&6; }
+if test ${ac_cv_lib_avutil_av_log_set_callback+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lavutil $FFMPEG_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char av_log_set_callback (void);
+int
+main (void)
+{
+return av_log_set_callback ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_avutil_av_log_set_callback=yes
+else case e in #(
+  e) ac_cv_lib_avutil_av_log_set_callback=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avutil_av_log_set_callback" >&5
+printf "%s\n" "$ac_cv_lib_avutil_av_log_set_callback" >&6; }
+if test "x$ac_cv_lib_avutil_av_log_set_callback" = xyes
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for av_find_input_format in -lavformat" >&5
+printf %s "checking for av_find_input_format in -lavformat... " >&6; }
+if test ${ac_cv_lib_avformat_av_find_input_format+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lavformat $FFMPEG_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char av_find_input_format (void);
+int
+main (void)
+{
+return av_find_input_format ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_avformat_av_find_input_format=yes
+else case e in #(
+  e) ac_cv_lib_avformat_av_find_input_format=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avformat_av_find_input_format" >&5
+printf "%s\n" "$ac_cv_lib_avformat_av_find_input_format" >&6; }
+if test "x$ac_cv_lib_avformat_av_find_input_format" = xyes
+then :
+
+printf "%s\n" "#define HAVE_FFMPEG 1" >>confdefs.h
+
+else case e in #(
+  e) FFMPEG_LIBS="" ;;
+esac
+fi
+
+else case e in #(
+  e) FFMPEG_LIBS="" ;;
+esac
+fi
+
+         else
+            FFMPEG_LIBS=""
+         fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
+fi
+if test "x$FFMPEG_LIBS" = x
+then :
+  case "x$with_ffmpeg" in
+  x)   as_fn_append wine_notices "|FFmpeg ${notice_platform}development files not found." ;;
+  xno) ;;
+  *)   as_fn_error $? "FFmpeg ${notice_platform}development files not found.
+This is an error since --with-ffmpeg was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
 if test "x$with_gstreamer" != "xno"
 then
     rm -f conftest.err
@@ -25372,6 +25553,8 @@ FREETYPE_LIBS = $FREETYPE_LIBS
 GETTEXTPO_LIBS = $GETTEXTPO_LIBS
 PULSE_CFLAGS = $PULSE_CFLAGS
 PULSE_LIBS = $PULSE_LIBS
+FFMPEG_CFLAGS = $FFMPEG_CFLAGS
+FFMPEG_LIBS = $FFMPEG_LIBS
 GSTREAMER_CFLAGS = $GSTREAMER_CFLAGS
 GSTREAMER_LIBS = $GSTREAMER_LIBS
 ALSA_LIBS = $ALSA_LIBS

@@ -29,6 +29,7 @@ AC_ARG_WITH(capi,      AS_HELP_STRING([--without-capi],[do not use CAPI (ISDN su
 AC_ARG_WITH(coreaudio, AS_HELP_STRING([--without-coreaudio],[do not use the CoreAudio sound support]))
 AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
 AC_ARG_WITH(dbus,      AS_HELP_STRING([--without-dbus],[do not use DBus (dynamic device support)]))
+AC_ARG_WITH(ffmpeg,    AS_HELP_STRING([--without-ffmpeg],[do not use the FFmpeg library]))
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]))
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
 AC_ARG_WITH(gettext,   AS_HELP_STRING([--without-gettext],[do not use gettext]))
@@ -1617,6 +1618,25 @@ fi
 WINE_NOTICE_WITH(pulse, [test -z "$PULSE_LIBS"],
         [libpulse ${notice_platform}development files not found or too old, Pulse won't be supported.],
         [enable_winepulse_drv])
+
+dnl **** Check for FFmpeg ****
+if test "x$with_ffmpeg" != "xno";
+then
+    WINE_PACKAGE_FLAGS(FFMPEG,[libavutil libavformat],,,,
+        [AC_CHECK_HEADERS([libavutil/avutil.h libavformat/avformat.h])
+         if test "$ac_cv_header_libavutil_avutil_h" = "yes" -a "$ac_cv_header_libavformat_avformat_h" = "yes"
+         then
+            AC_CHECK_LIB(avutil,av_log_set_callback,
+              [AC_CHECK_LIB(avformat,av_find_input_format,
+                  [AC_DEFINE(HAVE_FFMPEG, 1, [Define to 1 if you have the FFmpeg libraries.])],
+                  [FFMPEG_LIBS=""],[$FFMPEG_LIBS])],
+              [FFMPEG_LIBS=""],[$FFMPEG_LIBS])
+         else
+            FFMPEG_LIBS=""
+         fi])
+fi
+WINE_NOTICE_WITH(ffmpeg,[test "x$FFMPEG_LIBS" = x],
+        [FFmpeg ${notice_platform}development files not found.])
 
 dnl **** Check for gstreamer ****
 if test "x$with_gstreamer" != "xno"

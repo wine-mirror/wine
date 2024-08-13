@@ -16,25 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
+
+#ifdef HAVE_FFMPEG
+#include <libavutil/avutil.h>
+#endif /* HAVE_FFMPEG */
+
 #include "unixlib.h"
-
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(dmo);
-
-BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
-{
-    TRACE( "instance %p, reason %lu, reserved %p\n", instance, reason, reserved );
-
-    if (reason == DLL_PROCESS_ATTACH)
-    {
-        NTSTATUS status;
-        DisableThreadLibraryCalls( instance );
-
-        status = __wine_init_unix_call();
-        if (!status) status = UNIX_CALL( process_attach, NULL );
-        if (status) WARN( "Failed to init unixlib, status %#lx\n", status );
-    }
-
-    return TRUE;
-}
