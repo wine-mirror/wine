@@ -48,7 +48,25 @@
 __ASM_GLOBAL_FUNC( __chkstk, "ret" );
 
 
-#ifndef __arm64ec_x64__
+#ifdef __arm64ec_x64__
+
+/**************************************************************************
+ *		invoke_arm64ec_syscall
+ *
+ * Helper to call a syscall entry point from x64 code.
+ */
+__ASM_GLOBAL_FUNC( invoke_arm64ec_syscall,
+                   "movq %r10,8(%rsp)\n\t"  /* ret address to syscall thunk */
+                   "popq %r10\n\t"          /* remove ret address to thunk caller */
+                   "movq %r10,8(%rsp)\n\t"  /* and save it */
+                   "leaq arm64ec_syscalls(%rip),%r10\n\t"
+                   "callq *(%r10,%rax,8)\n\t"
+                   "movq (%rsp),%r10\n\t"
+                   "pushq 8(%rsp)\n\t"      /* restore ret to caller */
+                   "pushq %r10\n\t"         /* and return to syscall thunk */
+                   "ret" )
+
+#else  /* __arm64ec_x64__ */
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);

@@ -1114,11 +1114,31 @@ __ASM_GLOBAL_FUNC( "#KiUserEmulationDispatcher",
 
 
 /*******************************************************************
+ *		dispatch_syscall
+ */
+static void dispatch_syscall( ARM64_NT_CONTEXT *context )
+{
+    if (context->X8 < __nb_syscalls)  /* syscall number in rax */
+    {
+        context->X0 = context->X4;  /* get first param from r10 */
+        context->X4 = context->Pc;  /* and save return address to syscall thunk */
+        context->Pc = (ULONG_PTR)invoke_arm64ec_syscall;
+    }
+    else context->X8 = STATUS_INVALID_PARAMETER;  /* set return value in rax */
+
+    /* return to x64 code so that the syscall entry thunk is invoked properly */
+    dispatch_emulation( context );
+}
+
+
+/*******************************************************************
  *		KiUserExceptionDispatcher (NTDLL.@)
  */
 static NTSTATUS __attribute__((used)) dispatch_exception_arm64ec( EXCEPTION_RECORD *rec, ARM64_NT_CONTEXT *arm_ctx )
 {
     ARM64EC_NT_CONTEXT context;
+
+    if (rec->ExceptionCode == STATUS_EMULATION_SYSCALL) dispatch_syscall( arm_ctx );
 
     context_arm_to_x64( &context, arm_ctx );
     if (pResetToConsistentState) pResetToConsistentState( rec, &context.AMD64_Context, arm_ctx );
