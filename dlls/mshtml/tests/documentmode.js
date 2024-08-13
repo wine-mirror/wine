@@ -3273,4 +3273,6 @@ sync_test("prototypes", function() {
         check(navigator.mimeTypes, MimeTypeArray.prototype, "mimeTypes");
         check(MimeTypeArray.prototype, Object.prototype, "mimeTypes prototype");
     }
+    check(performance.timing, PerformanceTiming.prototype, "timing");
+    check(PerformanceTiming.prototype, Object.prototype, "timing prototype");
 });

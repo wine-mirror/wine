@@ -1521,15 +1521,15 @@ static const dispex_static_data_vtbl_t HTMLPerformanceTiming_dispex_vtbl = {
     .unlink           = HTMLPerformanceTiming_unlink
 };
 
-static const tid_t HTMLPerformanceTiming_iface_tids[] = {
+static const tid_t PerformanceTiming_iface_tids[] = {
     IHTMLPerformanceTiming_tid,
     0
 };
-static dispex_static_data_t HTMLPerformanceTiming_dispex = {
-    "PerformanceTiming",
-    &HTMLPerformanceTiming_dispex_vtbl,
-    IHTMLPerformanceTiming_tid,
-    HTMLPerformanceTiming_iface_tids
+dispex_static_data_t PerformanceTiming_dispex = {
+    .id         = PROT_PerformanceTiming,
+    .vtbl       = &HTMLPerformanceTiming_dispex_vtbl,
+    .disp_tid   = IHTMLPerformanceTiming_tid,
+    .iface_tids = PerformanceTiming_iface_tids,
 };
 
 typedef struct {
@@ -1714,7 +1714,7 @@ static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLP
         timing->window = This->window;
         IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
 
-        init_dispatch(&timing->dispex, &HTMLPerformanceTiming_dispex, This->window,
+        init_dispatch(&timing->dispex, &PerformanceTiming_dispex, This->window,
                       dispex_compat_mode(&This->dispex));
 
         This->timing = &timing->IHTMLPerformanceTiming_iface;
