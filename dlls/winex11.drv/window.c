@@ -374,7 +374,7 @@ static void sync_window_style( struct x11drv_win_data *data )
     }
 }
 
-static void sync_empty_window_shape( struct x11drv_win_data *data )
+static void sync_empty_window_shape( struct x11drv_win_data *data, struct window_surface *surface )
 {
 #ifdef HAVE_LIBXSHAPE
     if (IsRectEmpty( &data->window_rect ))  /* set an empty shape */
@@ -387,7 +387,7 @@ static void sync_empty_window_shape( struct x11drv_win_data *data )
     {
         XShapeCombineMask( gdi_display, data->whole_window, ShapeBounding, 0, 0, None, ShapeSet );
         /* invalidate surface shape to make sure it gets updated again */
-        if (data->surface) window_surface_set_shape( data->surface, 0 );
+        if (surface) window_surface_set_shape( surface, 0 );
     }
 #endif
 }
@@ -403,7 +403,7 @@ static void sync_window_region( struct x11drv_win_data *data, HRGN win_region )
     HRGN hrgn = win_region;
 
     if (!data->whole_window) return;
-    if (data->surface) return; /* use surface shape instead */
+    if (client_side_graphics) return; /* use surface shape instead */
     data->shaped = FALSE;
 
     if (hrgn == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
@@ -1437,20 +1437,6 @@ static void sync_window_position( struct x11drv_win_data *data,
     update_net_wm_states( data );
     data->configure_serial = NextRequest( data->display );
     XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
-#ifdef HAVE_LIBXSHAPE
-    if (IsRectEmpty( old_window_rect ) != IsRectEmpty( &data->window_rect ))
-        sync_empty_window_shape( data );
-    if (data->shaped)
-    {
-        int old_x_offset = old_window_rect->left - old_whole_rect->left;
-        int old_y_offset = old_window_rect->top - old_whole_rect->top;
-        int new_x_offset = data->window_rect.left - data->whole_rect.left;
-        int new_y_offset = data->window_rect.top - data->whole_rect.top;
-        if (old_x_offset != new_x_offset || old_y_offset != new_y_offset)
-            XShapeOffsetShape( data->display, data->whole_window, ShapeBounding,
-                               new_x_offset - old_x_offset, new_y_offset - old_y_offset );
-    }
-#endif
 
     TRACE( "win %p/%lx pos %d,%d,%dx%d after %lx changes=%x serial=%lu\n",
            data->hwnd, data->whole_window, (int)data->whole_rect.left, (int)data->whole_rect.top,
@@ -1794,7 +1780,7 @@ static void create_whole_window( struct x11drv_win_data *data )
     sync_window_text( data->display, data->whole_window, text );
 
     /* set the window region */
-    if (IsRectEmpty( &data->window_rect )) sync_empty_window_shape( data );
+    if (IsRectEmpty( &data->window_rect )) sync_empty_window_shape( data, NULL );
     else if (win_rgn) sync_window_region( data, win_rgn );
 
     /* set the window opacity */
@@ -1856,8 +1842,6 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     }
     /* Outlook stops processing messages after destroying a dialog, so we need an explicit flush */
     XFlush( data->display );
-    if (data->surface) window_surface_release( data->surface );
-    data->surface = NULL;
     NtUserRemoveProp( data->hwnd, whole_window_prop );
 }
 
@@ -1873,8 +1857,6 @@ void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis, BO
     Window client_window = data->client_window;
 
     if (!data->use_alpha == !use_alpha && same_visual) return;
-    if (data->surface) window_surface_release( data->surface );
-    data->surface = NULL;
     data->use_alpha = use_alpha;
 
     if (same_visual) return;
@@ -2668,12 +2650,6 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, cons
     data->window_rect = new_rects->window;
     data->whole_rect  = new_rects->visible;
     data->client_rect = new_rects->client;
-    if (data->vis.visualid == default_visual.visualid)
-    {
-        if (surface) window_surface_add_ref( surface );
-        if (data->surface) window_surface_release( data->surface );
-        data->surface = surface;
-    }
 
     TRACE( "win %p/%lx new_rects %s style %08x flags %08x\n", hwnd, data->whole_window,
            debugstr_window_rects(new_rects), new_style, swp_flags );
@@ -2723,7 +2699,23 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, cons
     /* don't change position if we are about to minimize or maximize a managed window */
     if (!event_type &&
         !(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & (WS_MINIMIZE|WS_MAXIMIZE))))
+    {
         sync_window_position( data, swp_flags, &old_window_rect, &old_whole_rect, &old_client_rect );
+#ifdef HAVE_LIBXSHAPE
+        if (IsRectEmpty( &old_window_rect ) != IsRectEmpty( &data->window_rect ))
+            sync_empty_window_shape( data, surface );
+        if (data->shaped)
+        {
+            int old_x_offset = old_window_rect.left - old_whole_rect.left;
+            int old_y_offset = old_window_rect.top - old_whole_rect.top;
+            int new_x_offset = data->window_rect.left - data->whole_rect.left;
+            int new_y_offset = data->window_rect.top - data->whole_rect.top;
+            if (old_x_offset != new_x_offset || old_y_offset != new_y_offset)
+                XShapeOffsetShape( data->display, data->whole_window, ShapeBounding,
+                                   new_x_offset - old_x_offset, new_y_offset - old_y_offset );
+        }
+#endif
+    }
 
     if ((new_style & WS_VISIBLE) &&
         ((new_style & WS_MINIMIZE) || is_window_rect_mapped( &new_rects->window )))
