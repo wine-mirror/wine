@@ -2107,20 +2107,21 @@ static void console_destructor(DispatchEx *dispex)
     free(console);
 }
 
-static const dispex_static_data_vtbl_t console_dispex_vtbl = {
+static const dispex_static_data_vtbl_t Console_dispex_vtbl = {
     .query_interface  = console_query_interface,
     .destructor       = console_destructor,
 };
 
-static const tid_t console_iface_tids[] = {
+static const tid_t Console_iface_tids[] = {
     IWineMSHTMLConsole_tid,
     0
 };
-static dispex_static_data_t console_dispex = {
-    "Console",
-    &console_dispex_vtbl,
-    IWineMSHTMLConsole_tid,
-    console_iface_tids
+dispex_static_data_t Console_dispex = {
+    .id              = PROT_Console,
+    .vtbl            = &Console_dispex_vtbl,
+    .disp_tid        = IWineMSHTMLConsole_tid,
+    .iface_tids      = Console_iface_tids,
+    .min_compat_mode = COMPAT_MODE_IE10,
 };
 
 void create_console(HTMLInnerWindow *window, IWineMSHTMLConsole **ret)
@@ -2135,7 +2136,7 @@ void create_console(HTMLInnerWindow *window, IWineMSHTMLConsole **ret)
     }
 
     obj->IWineMSHTMLConsole_iface.lpVtbl = &WineMSHTMLConsoleVtbl;
-    init_dispatch(&obj->dispex, &console_dispex, window, dispex_compat_mode(&window->event_target.dispex));
+    init_dispatch(&obj->dispex, &Console_dispex, window, dispex_compat_mode(&window->event_target.dispex));
 
     *ret = &obj->IWineMSHTMLConsole_iface;
 }

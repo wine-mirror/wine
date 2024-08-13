@@ -3285,4 +3285,10 @@ sync_test("prototypes", function() {
     }else {
         ok(!("MSNamespaceInfoCollection" in window), "MSNamespaceInfoCollection found in window");
     }
+    if(v >= 10) {
+        check(console, Console.prototype, "console");
+        check(Console.prototype, Object.prototype, "console prototype");
+    }else {
+        ok(!("Console" in window), "Console found in window");
+    }
 });
