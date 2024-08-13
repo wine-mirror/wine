@@ -674,8 +674,6 @@ static void destroy_cocoa_window(struct macdrv_win_data *data)
     macdrv_destroy_cocoa_window(data->cocoa_window);
     data->cocoa_window = 0;
     data->on_screen = FALSE;
-    if (data->surface) window_surface_release(data->surface);
-    data->surface = NULL;
 }
 
 
@@ -1908,12 +1906,6 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, const
     data->window_rect = new_rects->window;
     data->whole_rect  = new_rects->visible;
     data->client_rect = new_rects->client;
-    if (data->cocoa_window && !data->ulw_layered)
-    {
-        if (surface) window_surface_add_ref(surface);
-        if (data->surface) window_surface_release(data->surface);
-        data->surface = surface;
-    }
 
     TRACE("win %p/%p new_rects %s style %08x flags %08x surface %p\n", hwnd, data->cocoa_window,
           debugstr_window_rects(new_rects), new_style, swp_flags, surface);
