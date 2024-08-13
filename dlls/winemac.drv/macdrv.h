@@ -193,7 +193,6 @@ struct macdrv_win_data
     unsigned int        minimized : 1;          /* is window minimized? */
     unsigned int        swap_interval : 1;      /* GL swap interval for window */
     struct window_surface *surface;
-    struct window_surface *unminimized_surface;
 };
 
 extern struct macdrv_win_data *get_win_data(HWND hwnd);

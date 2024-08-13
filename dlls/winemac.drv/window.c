@@ -702,8 +702,6 @@ static void destroy_cocoa_window(struct macdrv_win_data *data)
     data->on_screen = FALSE;
     if (data->surface) window_surface_release(data->surface);
     data->surface = NULL;
-    if (data->unminimized_surface) window_surface_release(data->unminimized_surface);
-    data->unminimized_surface = NULL;
 }
 
 
@@ -1939,22 +1937,6 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, const
     if (data->cocoa_window && !data->ulw_layered)
     {
         if (surface) window_surface_add_ref(surface);
-        if (new_style & WS_MINIMIZE)
-        {
-            if (!data->unminimized_surface && data->surface)
-            {
-                data->unminimized_surface = data->surface;
-                window_surface_add_ref(data->unminimized_surface);
-            }
-        }
-        else
-        {
-            if (data->unminimized_surface)
-            {
-                window_surface_release(data->unminimized_surface);
-                data->unminimized_surface = NULL;
-            }
-        }
         if (data->surface) window_surface_release(data->surface);
         data->surface = surface;
     }

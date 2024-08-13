@@ -229,12 +229,6 @@ BOOL macdrv_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rec
     {
         data->layered = TRUE;
         data->ulw_layered = TRUE;
-
-        if (data->unminimized_surface)
-        {
-            window_surface_release(data->unminimized_surface);
-            data->unminimized_surface = NULL;
-        }
     }
 
     *surface = create_surface(hwnd, data->cocoa_window, surface_rect);
