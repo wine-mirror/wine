@@ -4241,10 +4241,22 @@ static SQLRETURN parse_connect_string( struct attribute_list *list, const WCHAR 
         attr->name[len] = 0;
 
         q++; /* skip = */
-        p = wcschr( q, ';' );
+        if (*q == '{')
+        {
+            if (!(p = wcschr( ++q, '}' )))
+            {
+                free_attribute( attr );
+                free_attribute_list( list );
+                return SQL_ERROR;
+            }
+        }
+        else
+            p = wcschr( q, ';' );
+
         if (p)
         {
             len = p - q;
+            if (*p == '}') p++;
             p++;
         }
         else
