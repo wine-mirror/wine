@@ -1491,12 +1491,21 @@ static void reset_results( ULONG64 *results )
     results[0] = (ULONG_PTR)(results + 2);
 }
 
-#define expect_notifications(results, count, expect) expect_notifications_(results, count, expect, __LINE__)
+#define expect_notifications(results, count, expect, syscall) \
+    expect_notifications_(results, count, expect, syscall, __LINE__)
 static void expect_notifications_( ULONG64 *results, UINT count, const struct expected_notification *expect,
-                                   int line )
+                                   BOOL syscall, int line )
 {
     ULONG64 *regs = results + 2;
     UINT i, j, len = (results[0] - (ULONG_PTR)regs) / 8 / sizeof(*regs);
+
+#ifdef _WIN64
+    if (syscall)
+    {
+        CHPE_V2_CPU_AREA_INFO *cpu_area = NtCurrentTeb()->ChpeV2CpuAreaInfo;
+        if (cpu_area && cpu_area->InSyscallCallback) count = 0;
+    }
+#endif
 
     ok_(__FILE__,line)( count == len, "wrong notification count %u / %u\n", len, count );
     for (i = 0; i < min( count, len ); i++, expect++, regs += 8)
@@ -1611,14 +1620,14 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         add_work_item( list, CrossProcessPostVirtualAlloc, expect_cross[1].args[0], expect_cross[1].args[1],
                        expect_cross[1].args[2], expect_cross[1].args[3], 0xdeadbeef, 0 );
         process_work_items();
-        expect_notifications( results, 2, expect_cross );
+        expect_notifications( results, 2, expect_cross, FALSE );
         ok( !list->work_list.first, "list not empty\n" );
 
         size = expect_alloc[0].args[1];
         status = NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE );
         ok( !status, "NtAllocateVirtualMemory failed %lx\n", status );
         expect_alloc[1].args[0] = (ULONG_PTR)addr;
-        expect_notifications( results, 2, expect_alloc );
+        expect_notifications( results, 2, expect_alloc, TRUE );
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
 
@@ -1641,7 +1650,7 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         add_work_item( list, CrossProcessPostVirtualProtect, expect_cross[1].args[0],
                        expect_cross[1].args[1], expect_cross[1].args[2], 0xdeadbeef, 0, 0 );
         process_work_items();
-        expect_notifications( results, 2, expect_cross );
+        expect_notifications( results, 2, expect_cross, FALSE );
         ok( !list->work_list.first, "list not empty\n" );
 
         expect_protect[1].args[0] = (ULONG_PTR)addr;
@@ -1650,7 +1659,7 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         size = expect_protect[0].args[1];
         status = NtProtectVirtualMemory( GetCurrentProcess(), &addr, &size, PAGE_EXECUTE_READ, &old_prot );
         ok( !status, "NtProtectVirtualMemory failed %lx\n", status );
-        expect_notifications( results, 2, expect_protect );
+        expect_notifications( results, 2, expect_protect, TRUE );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
         reset_results( results );
@@ -1674,7 +1683,7 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         add_work_item( list, CrossProcessPostVirtualFree, expect_cross[1].args[0],
                        expect_cross[1].args[1], expect_cross[1].args[2], 0xdeadbeef, 0, 0 );
         process_work_items();
-        expect_notifications( results, 2, expect_cross );
+        expect_notifications( results, 2, expect_cross, FALSE );
         ok( !list->work_list.first, "list not empty\n" );
 
         expect_free[0].args[0] = (ULONG_PTR)addr;
@@ -1682,7 +1691,7 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         size = expect_free[0].args[1];
         status = NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
         ok( !status, "NtFreeVirtualMemory failed %lx\n", status );
-        expect_notifications( results, 2, expect_free );
+        expect_notifications( results, 2, expect_free, TRUE );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
@@ -1693,7 +1702,7 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
 
         add_work_item( list, CrossProcessMemoryWrite, expect.args[0], expect.args[1], 0, 0, 0, 0 );
         process_work_items();
-        expect_notifications( results, 1, &expect );
+        expect_notifications( results, 1, &expect, FALSE );
         ok( !list->work_list.first, "list not empty\n" );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
@@ -1708,12 +1717,12 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         add_work_item(list, CrossProcessFlushCache, expect_cross.args[0],
                       expect_cross.args[1], 0, 0, 0, 0 );
         process_work_items();
-        expect_notifications( results, 1, &expect_cross );
+        expect_notifications( results, 1, &expect_cross, FALSE );
         ok( !list->work_list.first, "list not empty\n" );
 
         expect_flush.args[0] = (ULONG_PTR)ptr;
         NtFlushInstructionCache( GetCurrentProcess(), ptr, expect_flush.args[1] );
-        expect_notifications( results, 1, &expect_flush );
+        expect_notifications( results, 1, &expect_flush, TRUE );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
@@ -1726,12 +1735,12 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         reset_results( results );
         add_work_item( list, CrossProcessFlushCacheHeavy, expect.args[0], expect.args[1], 0, 0, 0, 0 );
         process_work_items();
-        expect_notifications( results, 1, &expect );
+        expect_notifications( results, 1, &expect, FALSE );
         ok( !list->work_list.first, "list not empty\n" );
 
         request_cross_process_flush( &list->work_list );
         process_work_items();
-        expect_notifications( results, 1, &expect2 );
+        expect_notifications( results, 1, &expect2, FALSE );
         ok( !list->work_list.first, "list not empty\n" );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
@@ -1748,7 +1757,7 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         status = NtMapViewOfSection( mapping, GetCurrentProcess(), &addr, 0, 0, &offset, &size,
                                      ViewShare, 0, PAGE_READONLY );
         ok( NT_SUCCESS(status), "NtMapViewOfSection failed %lx\n", status );
-        expect_notifications( results, 0, NULL );
+        expect_notifications( results, 0, NULL, TRUE );
         NtUnmapViewOfSection( GetCurrentProcess(), addr );
 
         /* only NtMapViewOfSection calls coming from the loader trigger a notification */
@@ -1763,19 +1772,29 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         expect.args[1] = (ULONG_PTR)addr;
         expect.args[3] = size;
         expect.args[5] = PAGE_READONLY;
-        expect_notifications( results, 1, &expect );
+        expect_notifications( results, 1, &expect, TRUE );
         NtUnmapViewOfSection( GetCurrentProcess(), addr );
 
         results[1] = 0xdeadbeef;
         status = NtMapViewOfSection( mapping, GetCurrentProcess(), &addr, 0, 0, &offset, &size,
                                      ViewShare, 0, PAGE_READONLY );
-        ok( status == 0xdeadbeef, "NtMapViewOfSection failed %lx\n", status );
-        expect.args[0] = results[2];  /* FIXME: first parameter unknown */
-        expect.args[1] = (ULONG_PTR)addr;
-        expect.args[3] = size;
-        expect.args[5] = PAGE_READONLY;
-        expect_notifications( results, 1, &expect );
-
+#ifdef _WIN64
+        if (NtCurrentTeb()->ChpeV2CpuAreaInfo->InSyscallCallback)
+        {
+            ok( status == STATUS_SUCCESS, "NtMapViewOfSection failed %lx\n", status );
+            expect_notifications( results, 0, NULL, TRUE );
+            NtUnmapViewOfSection( GetCurrentProcess(), addr );
+        }
+        else
+#endif
+        {
+            ok( status == 0xdeadbeef, "NtMapViewOfSection failed %lx\n", status );
+            expect.args[0] = results[2];  /* FIXME: first parameter unknown */
+            expect.args[1] = (ULONG_PTR)addr;
+            expect.args[3] = size;
+            expect.args[5] = PAGE_READONLY;
+            expect_notifications( results, 1, &expect, TRUE );
+        }
         NtCurrentTeb()->Tib.ArbitraryUserPointer = NULL;
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
@@ -1794,13 +1813,13 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         NtUnmapViewOfSection( GetCurrentProcess(), (char *)addr + 0x123 );
         expect[0].args[0] = expect[1].args[0] = (ULONG_PTR)addr + 0x123;
         expect[1].args[1] = 1;
-        expect_notifications( results, 2, expect );
+        expect_notifications( results, 2, expect, TRUE );
 
         NtUnmapViewOfSection( GetCurrentProcess(), (char *)0x1234 );
         expect[0].args[0] = expect[1].args[0] = 0x1234;
         expect[1].args[1] = 1;
         expect[1].args[2] = (ULONG)STATUS_NOT_MAPPED_VIEW;
-        expect_notifications( results, 2, expect );
+        expect_notifications( results, 2, expect, TRUE );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
@@ -1818,13 +1837,13 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         reset_results( results );
         status = NtReadFile( file, 0, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
         ok( !status, "NtReadFile failed %lx\n", status );
-        expect_notifications( results, 2, expect );
+        expect_notifications( results, 2, expect, TRUE );
 
         status = NtReadFile( (HANDLE)0xdead, 0, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL );
         ok( status == STATUS_INVALID_HANDLE, "NtReadFile failed %lx\n", status );
         expect[0].args[0] = expect[1].args[0] = 0xdead;
         expect[1].args[4] = (ULONG)STATUS_INVALID_HANDLE;
-        expect_notifications( results, 2, expect );
+        expect_notifications( results, 2, expect, TRUE );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
@@ -1836,7 +1855,7 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         reset_results( results );
         status = NtTerminateThread( (HANDLE)0xdead, 0xbeef );
         ok( status == STATUS_INVALID_HANDLE, "NtTerminateThread failed %lx\n", status );
-        expect_notifications( results, 1, &expect );
+        expect_notifications( results, 1, &expect, TRUE );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
@@ -1852,11 +1871,11 @@ static void test_notifications( HMODULE module, CROSS_PROCESS_WORK_LIST *list )
         reset_results( results );
         status = NtTerminateProcess( (HANDLE)0xdead, 0xbeef );
         ok( status == STATUS_INVALID_HANDLE, "NtTerminateProcess failed %lx\n", status );
-        expect_notifications( results, 0, NULL );
+        expect_notifications( results, 0, NULL, TRUE );
 
         status = NtTerminateProcess( 0, 0xbeef );
         ok( !status, "NtTerminateProcess failed %lx\n", status );
-        expect_notifications( results, 2, expect );
+        expect_notifications( results, 2, expect, TRUE );
 
         WriteProcessMemory( GetCurrentProcess(), ptr, old_code, sizeof(old_code), NULL );
     }
@@ -2140,20 +2159,19 @@ static void test_xtajit64(void)
 static void test_memory_notifications(void)
 {
     HMODULE module;
-    struct arm64ec_shared_info *info;
-    DWORD i;
+    CHPEV2_PROCESS_INFO *info;
 
     if (current_machine == IMAGE_FILE_MACHINE_ARM64) return;
     if (!(module = GetModuleHandleA( "xtajit64.dll" ))) return;
-    for (i = 0x600; i < 0xc00; i += sizeof(ULONG))
+    info = NtCurrentTeb()->Peb->ChpeV2ProcessInfo;
+    if (info->NativeMachineType == native_machine &&
+        info->EmulatedMachineType == IMAGE_FILE_MACHINE_AMD64)
     {
-        info = (struct arm64ec_shared_info *)((char *)NtCurrentTeb()->Peb + i);
-        if (info->NativeMachineType == native_machine &&
-            info->EmulatedMachineType == IMAGE_FILE_MACHINE_AMD64)
-        {
-            test_notifications( module, (CROSS_PROCESS_WORK_LIST *)info->CrossProcessWorkList );
-            return;
-        }
+        test_notifications( module, (CROSS_PROCESS_WORK_LIST *)info->CrossProcessWorkList );
+
+        NtCurrentTeb()->ChpeV2CpuAreaInfo->InSyscallCallback++;
+        test_notifications( module, (CROSS_PROCESS_WORK_LIST *)info->CrossProcessWorkList );
+        NtCurrentTeb()->ChpeV2CpuAreaInfo->InSyscallCallback--;
     }
     skip( "arm64ec shared info not found\n" );
 }
@@ -3059,7 +3077,10 @@ static void test_arm64ec(void)
     sprintf( cmdline, "%s %s", argv[0], argv[1] );
     if (create_process_machine( cmdline, 0, IMAGE_FILE_MACHINE_AMD64, &pi ))
     {
-        wait_child_process( pi.hProcess );
+        DWORD exit_code, ret = WaitForSingleObject( pi.hProcess, 10000 );
+        ok( ret == 0, "wait failed %lx\n", ret );
+        GetExitCodeProcess( pi.hProcess, &exit_code );
+        ok( exit_code == 0xbeef, "wrong exit code %lx\n", exit_code );
         CloseHandle( pi.hProcess );
         CloseHandle( pi.hThread );
     }

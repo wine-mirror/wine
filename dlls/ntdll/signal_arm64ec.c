@@ -73,6 +73,17 @@ static inline BOOL is_valid_arm64ec_frame( ULONG_PTR frame )
             frame <= get_arm64ec_cpu_area()->EmulatorStackBase);
 }
 
+static inline BOOL enter_syscall_callback(void)
+{
+    if (get_arm64ec_cpu_area()->InSyscallCallback) return FALSE;
+    get_arm64ec_cpu_area()->InSyscallCallback = 1;
+    return TRUE;
+}
+
+static inline void leave_syscall_callback(void)
+{
+    get_arm64ec_cpu_area()->InSyscallCallback = 0;
+}
 
 /**********************************************************************
  *           create_cross_process_work_list
@@ -178,6 +189,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     info->NativeMachineType = IMAGE_FILE_MACHINE_ARM64;
     info->EmulatedMachineType = IMAGE_FILE_MACHINE_AMD64;
 
+    enter_syscall_callback();
     if (pProcessInit) status = pProcessInit();
     if (!status)
     {
@@ -185,7 +197,8 @@ NTSTATUS arm64ec_process_init( HMODULE module )
             emulated_processor_features[i] = pBTCpu64IsProcessorFeaturePresent( i );
         status = create_cross_process_work_list( info );
     }
-    if (!status) status = arm64ec_thread_init();
+    if (!status && pThreadInit) status = pThreadInit();
+    leave_syscall_callback();
     return status;
 }
 
@@ -197,7 +210,9 @@ NTSTATUS arm64ec_thread_init(void)
 {
     NTSTATUS status = STATUS_SUCCESS;
 
+    enter_syscall_callback();
     if (pThreadInit) status = pThreadInit();
+    leave_syscall_callback();
     return status;
 }
 
@@ -467,6 +482,9 @@ NTSTATUS SYSCALL_API NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
 
+    if (!enter_syscall_callback())
+        return syscall_NtAllocateVirtualMemory( process, ret, zero_bits, size_ptr, type, protect );
+
     if (!*ret && (type & MEM_COMMIT)) type |= MEM_RESERVE;
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
@@ -479,6 +497,7 @@ NTSTATUS SYSCALL_API NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_
                                                       *ret, *size_ptr, 3, type, protect, status );
     else if (pNotifyMemoryAlloc) pNotifyMemoryAlloc( *ret, *size_ptr, type, protect, TRUE, status );
 
+    leave_syscall_callback();
     return status;
 }
 
@@ -487,6 +506,9 @@ NTSTATUS SYSCALL_API NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE
 {
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
+
+    if (!enter_syscall_callback())
+        return syscall_NtAllocateVirtualMemoryEx( process, ret, size_ptr, type, protect, parameters, count );
 
     if (!*ret && (type & MEM_COMMIT)) type |= MEM_RESERVE;
 
@@ -500,6 +522,7 @@ NTSTATUS SYSCALL_API NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE
                                                       *ret, *size_ptr, 3, type, protect, status );
     else if (pNotifyMemoryAlloc) pNotifyMemoryAlloc( *ret, *size_ptr, type, protect, TRUE, status );
 
+    leave_syscall_callback();
     return status;
 }
 
@@ -515,12 +538,13 @@ NTSTATUS SYSCALL_API NtFlushInstructionCache( HANDLE process, const void *addr, 
 {
     NTSTATUS status = syscall_NtFlushInstructionCache( process, addr, size );
 
-    if (!status)
+    if (!status && enter_syscall_callback())
     {
         if (!RtlIsCurrentProcess( process ))
             send_cross_process_notification( process, CrossProcessFlushCache, addr, size, 0 );
         else if (pBTCpu64FlushInstructionCache)
             pBTCpu64FlushInstructionCache( addr, size );
+        leave_syscall_callback();
     }
     return status;
 }
@@ -529,6 +553,9 @@ NTSTATUS SYSCALL_API NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_
 {
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
+
+    if (!enter_syscall_callback())
+        return syscall_NtFreeVirtualMemory( process, addr_ptr, size_ptr, type );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualFree,
                                                       *addr_ptr, *size_ptr, 2, type, 0 );
@@ -540,6 +567,7 @@ NTSTATUS SYSCALL_API NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_
                                                       *addr_ptr, *size_ptr, 2, type, status );
     else if (pNotifyMemoryFree) pNotifyMemoryFree( *addr_ptr, *size_ptr, type, TRUE, status );
 
+    leave_syscall_callback();
     return status;
 }
 
@@ -575,8 +603,11 @@ NTSTATUS SYSCALL_API NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *a
     NTSTATUS status = syscall_NtMapViewOfSection( handle, process, addr_ptr, zero_bits, commit_size,
                                                   offset, size_ptr, inherit, alloc_type, protect );
 
-    if (NT_SUCCESS(status) && RtlIsCurrentProcess( process ))
+    if (NT_SUCCESS(status) && RtlIsCurrentProcess( process ) && enter_syscall_callback())
+    {
         notify_map_view_of_section( handle, *addr_ptr, *size_ptr, alloc_type, protect, &status );
+        leave_syscall_callback();
+    }
     return status;
 }
 
@@ -587,8 +618,11 @@ NTSTATUS SYSCALL_API NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID 
     NTSTATUS status = syscall_NtMapViewOfSectionEx( handle, process, addr_ptr, offset, size_ptr,
                                                     alloc_type, protect, parameters, count );
 
-    if (NT_SUCCESS(status) && RtlIsCurrentProcess( process ))
+    if (NT_SUCCESS(status) && RtlIsCurrentProcess( process ) && enter_syscall_callback())
+    {
         notify_map_view_of_section( handle, *addr_ptr, *size_ptr, alloc_type, protect, &status );
+        leave_syscall_callback();
+    }
     return status;
 }
 
@@ -597,6 +631,9 @@ NTSTATUS SYSCALL_API NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SI
 {
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
+
+    if (!enter_syscall_callback())
+        return syscall_NtProtectVirtualMemory( process, addr_ptr, size_ptr, new_prot, old_prot );
 
     if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualProtect,
                                                       *addr_ptr, *size_ptr, 2, new_prot, 0 );
@@ -608,6 +645,7 @@ NTSTATUS SYSCALL_API NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SI
                                                       *addr_ptr, *size_ptr, 2, new_prot, status );
     else if (pNotifyMemoryProtect) pNotifyMemoryProtect( *addr_ptr, *size_ptr, new_prot, TRUE, status );
 
+    leave_syscall_callback();
     return status;
 }
 
@@ -633,10 +671,15 @@ NTSTATUS SYSCALL_API NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
 {
     NTSTATUS status;
 
-    if (pBTCpu64NotifyReadFile) pBTCpu64NotifyReadFile( handle, buffer, length, FALSE, 0 );
-    status = syscall_NtReadFile( handle, event, apc, apc_user, io, buffer, length, offset, key );
-    if (pBTCpu64NotifyReadFile) pBTCpu64NotifyReadFile( handle, buffer, length, TRUE, status );
-    return status;
+    if (pBTCpu64NotifyReadFile && enter_syscall_callback())
+    {
+        pBTCpu64NotifyReadFile( handle, buffer, length, FALSE, 0 );
+        status = syscall_NtReadFile( handle, event, apc, apc_user, io, buffer, length, offset, key );
+        if (pBTCpu64NotifyReadFile) pBTCpu64NotifyReadFile( handle, buffer, length, TRUE, status );
+        leave_syscall_callback();
+        return status;
+    }
+    return syscall_NtReadFile( handle, event, apc, apc_user, io, buffer, length, offset, key );
 }
 
 NTSTATUS SYSCALL_API NtSetContextThread( HANDLE handle, const CONTEXT *context )
@@ -651,11 +694,12 @@ NTSTATUS SYSCALL_API NtTerminateProcess( HANDLE handle, LONG exit_code )
 {
     NTSTATUS status;
 
-    if (!handle && pProcessTerm)
+    if (!handle && pProcessTerm && enter_syscall_callback())
     {
         pProcessTerm( handle, FALSE, 0 );
         status = syscall_NtTerminateProcess( handle, exit_code );
         pProcessTerm( handle, TRUE, status );
+        leave_syscall_callback();
         return status;
     }
     return syscall_NtTerminateProcess( handle, exit_code );
@@ -663,7 +707,15 @@ NTSTATUS SYSCALL_API NtTerminateProcess( HANDLE handle, LONG exit_code )
 
 NTSTATUS SYSCALL_API NtTerminateThread( HANDLE handle, LONG exit_code )
 {
-    if (pThreadTerm) pThreadTerm( handle, exit_code );
+    NTSTATUS status;
+
+    if (pThreadTerm && enter_syscall_callback())
+    {
+        pThreadTerm( handle, exit_code );
+        status = syscall_NtTerminateThread( handle, exit_code );
+        leave_syscall_callback();
+        return status;
+    }
     return syscall_NtTerminateThread( handle, exit_code );
 }
 
@@ -672,10 +724,15 @@ NTSTATUS SYSCALL_API NtUnmapViewOfSection( HANDLE process, void *addr )
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
 
-    if (is_current && pNotifyUnmapViewOfSection) pNotifyUnmapViewOfSection( addr, FALSE, 0 );
-    status = syscall_NtUnmapViewOfSection( process, addr );
-    if (is_current && pNotifyUnmapViewOfSection) pNotifyUnmapViewOfSection( addr, TRUE, status );
-    return status;
+    if (is_current && pNotifyUnmapViewOfSection && enter_syscall_callback())
+    {
+        pNotifyUnmapViewOfSection( addr, FALSE, 0 );
+        status = syscall_NtUnmapViewOfSection( process, addr );
+        pNotifyUnmapViewOfSection( addr, TRUE, status );
+        leave_syscall_callback();
+        return status;
+    }
+    return syscall_NtUnmapViewOfSection( process, addr );
 }
 
 NTSTATUS SYSCALL_API NtUnmapViewOfSectionEx( HANDLE process, void *addr, ULONG flags )
@@ -683,10 +740,15 @@ NTSTATUS SYSCALL_API NtUnmapViewOfSectionEx( HANDLE process, void *addr, ULONG f
     BOOL is_current = RtlIsCurrentProcess( process );
     NTSTATUS status;
 
-    if (is_current && pNotifyUnmapViewOfSection) pNotifyUnmapViewOfSection( addr, FALSE, 0 );
-    status = syscall_NtUnmapViewOfSectionEx( process, addr, flags );
-    if (is_current && pNotifyUnmapViewOfSection) pNotifyUnmapViewOfSection( addr, TRUE, status );
-    return status;
+    if (is_current && pNotifyUnmapViewOfSection && enter_syscall_callback())
+    {
+        pNotifyUnmapViewOfSection( addr, FALSE, 0 );
+        status = syscall_NtUnmapViewOfSectionEx( process, addr, flags );
+        pNotifyUnmapViewOfSection( addr, TRUE, status );
+        leave_syscall_callback();
+        return status;
+    }
+    return syscall_NtUnmapViewOfSectionEx( process, addr, flags );
 }
 
 
