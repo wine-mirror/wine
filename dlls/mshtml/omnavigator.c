@@ -416,15 +416,15 @@ static const dispex_static_data_vtbl_t HTMLScreen_dispex_vtbl = {
     .destructor       = HTMLScreen_destructor,
 };
 
-static const tid_t HTMLScreen_iface_tids[] = {
+static const tid_t Screen_iface_tids[] = {
     IHTMLScreen_tid,
     0
 };
-static dispex_static_data_t HTMLScreen_dispex = {
-    "Screen",
-    &HTMLScreen_dispex_vtbl,
-    DispHTMLScreen_tid,
-    HTMLScreen_iface_tids
+dispex_static_data_t Screen_dispex = {
+    .id         = PROT_Screen,
+    .vtbl       = &HTMLScreen_dispex_vtbl,
+    .disp_tid   = DispHTMLScreen_tid,
+    .iface_tids = Screen_iface_tids,
 };
 
 HRESULT create_html_screen(HTMLInnerWindow *window, IHTMLScreen **ret)
@@ -437,7 +437,7 @@ HRESULT create_html_screen(HTMLInnerWindow *window, IHTMLScreen **ret)
 
     screen->IHTMLScreen_iface.lpVtbl = &HTMLSreenVtbl;
 
-    init_dispatch(&screen->dispex, &HTMLScreen_dispex, window,
+    init_dispatch(&screen->dispex, &Screen_dispex, window,
                   dispex_compat_mode(&window->event_target.dispex));
 
     *ret = &screen->IHTMLScreen_iface;

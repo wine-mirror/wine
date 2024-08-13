@@ -466,6 +466,7 @@ typedef struct {
     X(SVGTSpanElement)                     \
     X(SVGTextContentElement)               \
     X(SVGTextPositioningElement)           \
+    X(Screen)                              \
     X(Storage)                             \
     X(StorageEvent)                        \
     X(StyleSheet)                          \
