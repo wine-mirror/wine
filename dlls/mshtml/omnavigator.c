@@ -1642,15 +1642,15 @@ static const dispex_static_data_vtbl_t HTMLPerformanceNavigation_dispex_vtbl = {
     .unlink           = HTMLPerformanceNavigation_unlink
 };
 
-static const tid_t HTMLPerformanceNavigation_iface_tids[] = {
+static const tid_t PerformanceNavigation_iface_tids[] = {
     IHTMLPerformanceNavigation_tid,
     0
 };
-static dispex_static_data_t HTMLPerformanceNavigation_dispex = {
-    "PerformanceNavigation",
-    &HTMLPerformanceNavigation_dispex_vtbl,
-    IHTMLPerformanceNavigation_tid,
-    HTMLPerformanceNavigation_iface_tids
+dispex_static_data_t PerformanceNavigation_dispex = {
+    .id         = PROT_PerformanceNavigation,
+    .vtbl       = &HTMLPerformanceNavigation_dispex_vtbl,
+    .disp_tid   = IHTMLPerformanceNavigation_tid,
+    .iface_tids = PerformanceNavigation_iface_tids,
 };
 
 typedef struct {
@@ -1687,7 +1687,7 @@ static HRESULT WINAPI HTMLPerformance_get_navigation(IHTMLPerformance *iface,
         navigation->window = This->window;
         IHTMLWindow2_AddRef(&This->window->base.IHTMLWindow2_iface);
 
-        init_dispatch(&navigation->dispex, &HTMLPerformanceNavigation_dispex, This->window,
+        init_dispatch(&navigation->dispex, &PerformanceNavigation_dispex, This->window,
                       dispex_compat_mode(&This->dispex));
 
         This->navigation = &navigation->IHTMLPerformanceNavigation_iface;

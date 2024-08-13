@@ -3275,4 +3275,6 @@ sync_test("prototypes", function() {
     }
     check(performance.timing, PerformanceTiming.prototype, "timing");
     check(PerformanceTiming.prototype, Object.prototype, "timing prototype");
+    check(performance.navigation, PerformanceNavigation.prototype, "navigation");
+    check(PerformanceNavigation.prototype, Object.prototype, "navigation prototype");
 });
