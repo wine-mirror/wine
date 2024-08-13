@@ -1805,15 +1805,15 @@ static const dispex_static_data_vtbl_t HTMLPerformance_dispex_vtbl = {
     .unlink           = HTMLPerformance_unlink
 };
 
-static const tid_t HTMLPerformance_iface_tids[] = {
+static const tid_t Performance_iface_tids[] = {
     IHTMLPerformance_tid,
     0
 };
-static dispex_static_data_t HTMLPerformance_dispex = {
-    "Performance",
-    &HTMLPerformance_dispex_vtbl,
-    IHTMLPerformance_tid,
-    HTMLPerformance_iface_tids
+dispex_static_data_t Performance_dispex = {
+    .id         = PROT_Performance,
+    .vtbl       = &HTMLPerformance_dispex_vtbl,
+    .disp_tid   = IHTMLPerformance_tid,
+    .iface_tids = Performance_iface_tids,
 };
 
 HRESULT create_performance(HTMLInnerWindow *window, IHTMLPerformance **ret)
@@ -1829,7 +1829,7 @@ HRESULT create_performance(HTMLInnerWindow *window, IHTMLPerformance **ret)
     performance->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    init_dispatch(&performance->dispex, &HTMLPerformance_dispex, window, compat_mode);
+    init_dispatch(&performance->dispex, &Performance_dispex, window, compat_mode);
 
     *ret = &performance->IHTMLPerformance_iface;
     return S_OK;

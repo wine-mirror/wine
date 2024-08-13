@@ -3277,4 +3277,6 @@ sync_test("prototypes", function() {
     check(PerformanceTiming.prototype, Object.prototype, "timing prototype");
     check(performance.navigation, PerformanceNavigation.prototype, "navigation");
     check(PerformanceNavigation.prototype, Object.prototype, "navigation prototype");
+    check(performance, Performance.prototype, "performance");
+    check(Performance.prototype, Object.prototype, "performance prototype");
 });
