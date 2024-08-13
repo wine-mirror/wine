@@ -455,6 +455,7 @@ typedef struct {
     X(MSEventObj)                          \
     X(MSStyleCSSProperties)                \
     X(MessageEvent)                        \
+    X(MimeTypeArray)                       \
     X(MouseEvent)                          \
     X(MutationObserver)                    \
     X(Navigator)                           \

@@ -3270,5 +3270,7 @@ sync_test("prototypes", function() {
     if(v >= 11 /* todo_wine */) {
         check(navigator.plugins, PluginArray.prototype, "plugins");
         check(PluginArray.prototype, Object.prototype, "plugins prototype");
+        check(navigator.mimeTypes, MimeTypeArray.prototype, "mimeTypes");
+        check(MimeTypeArray.prototype, Object.prototype, "mimeTypes prototype");
     }
 });

@@ -765,15 +765,15 @@ static const dispex_static_data_vtbl_t HTMLMimeTypesCollection_dispex_vtbl = {
     .unlink           = HTMLMimeTypesCollection_unlink
 };
 
-static const tid_t HTMLMimeTypesCollection_iface_tids[] = {
+static const tid_t MimeTypeArray_iface_tids[] = {
     IHTMLMimeTypesCollection_tid,
     0
 };
-static dispex_static_data_t HTMLMimeTypesCollection_dispex = {
-    "MimeTypeArray",
-    &HTMLMimeTypesCollection_dispex_vtbl,
-    IHTMLMimeTypesCollection_tid,
-    HTMLMimeTypesCollection_iface_tids
+dispex_static_data_t MimeTypeArray_dispex = {
+    .id         = PROT_MimeTypeArray,
+    .vtbl       = &HTMLMimeTypesCollection_dispex_vtbl,
+    .disp_tid   = IHTMLMimeTypesCollection_tid,
+    .iface_tids = MimeTypeArray_iface_tids,
 };
 
 static HRESULT create_mime_types_collection(OmNavigator *navigator, HTMLMimeTypesCollection **ret)
@@ -787,7 +787,7 @@ static HRESULT create_mime_types_collection(OmNavigator *navigator, HTMLMimeType
     col->IHTMLMimeTypesCollection_iface.lpVtbl = &HTMLMimeTypesCollectionVtbl;
     col->navigator = navigator;
 
-    init_dispatch_with_owner(&col->dispex, &HTMLMimeTypesCollection_dispex, &navigator->dispex);
+    init_dispatch_with_owner(&col->dispex, &MimeTypeArray_dispex, &navigator->dispex);
 
     *ret = col;
     return S_OK;
