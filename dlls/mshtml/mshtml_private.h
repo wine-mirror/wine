@@ -453,6 +453,7 @@ typedef struct {
     X(MSCSSRuleList)                       \
     X(MSCurrentStyleCSSProperties)         \
     X(MSEventObj)                          \
+    X(MSNamespaceInfoCollection)           \
     X(MSStyleCSSProperties)                \
     X(MessageEvent)                        \
     X(MimeTypeArray)                       \
@@ -505,6 +506,7 @@ typedef struct {
     prototype_id_t constructor_id;
     UINT32 js_flags;
     compat_mode_t min_compat_mode;
+    compat_mode_t max_compat_mode;
     char prototype_name[64];
 } dispex_static_data_t;
 

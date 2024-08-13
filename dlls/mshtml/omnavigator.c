@@ -1910,15 +1910,16 @@ static const dispex_static_data_vtbl_t HTMLNamespaceCollection_dispex_vtbl = {
     .destructor       = HTMLNamespaceCollection_destructor,
 };
 
-static const tid_t HTMLNamespaceCollection_iface_tids[] = {
+static const tid_t MSNamespaceInfoCollection_iface_tids[] = {
     IHTMLNamespaceCollection_tid,
     0
 };
-static dispex_static_data_t HTMLNamespaceCollection_dispex = {
-    "MSNamespaceInfoCollection",
-    &HTMLNamespaceCollection_dispex_vtbl,
-    DispHTMLNamespaceCollection_tid,
-    HTMLNamespaceCollection_iface_tids
+dispex_static_data_t MSNamespaceInfoCollection_dispex = {
+    .id              = PROT_MSNamespaceInfoCollection,
+    .vtbl            = &HTMLNamespaceCollection_dispex_vtbl,
+    .disp_tid        = DispHTMLNamespaceCollection_tid,
+    .iface_tids      = MSNamespaceInfoCollection_iface_tids,
+    .max_compat_mode = COMPAT_MODE_IE9,
 };
 
 HRESULT create_namespace_collection(HTMLDocumentNode *doc, IHTMLNamespaceCollection **ret)
@@ -1929,7 +1930,7 @@ HRESULT create_namespace_collection(HTMLDocumentNode *doc, IHTMLNamespaceCollect
         return E_OUTOFMEMORY;
 
     namespaces->IHTMLNamespaceCollection_iface.lpVtbl = &HTMLNamespaceCollectionVtbl;
-    init_dispatch(&namespaces->dispex, &HTMLNamespaceCollection_dispex, doc->script_global,
+    init_dispatch(&namespaces->dispex, &MSNamespaceInfoCollection_dispex, doc->script_global,
                   dispex_compat_mode(&doc->node.event_target.dispex));
     *ret = &namespaces->IHTMLNamespaceCollection_iface;
     return S_OK;

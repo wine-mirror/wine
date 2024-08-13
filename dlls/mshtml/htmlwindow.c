@@ -3810,10 +3810,12 @@ static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, const WCHAR *name, DWO
                                             sizeof(constructor_names[0]), cmp_name);
         if(constr_name) {
             prototype_id_t id = constr_name - constructor_names + 1;
+            compat_mode_t compat_mode = dispex_compat_mode(dispex);
             DispatchEx *constr;
             VARIANT v;
 
-            if(dispex_compat_mode(dispex) >= object_descriptors[id]->min_compat_mode) {
+            if(compat_mode >= object_descriptors[id]->min_compat_mode &&
+               (!object_descriptors[id]->max_compat_mode || compat_mode <= object_descriptors[id]->max_compat_mode)) {
                 hres = get_constructor(This, id, &constr);
                 if(FAILED(hres))
                     return hres;

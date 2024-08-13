@@ -3279,4 +3279,10 @@ sync_test("prototypes", function() {
     check(PerformanceNavigation.prototype, Object.prototype, "navigation prototype");
     check(performance, Performance.prototype, "performance");
     check(Performance.prototype, Object.prototype, "performance prototype");
+    if(v < 10) {
+        check(document.namespaces, MSNamespaceInfoCollection.prototype, "namespaces");
+        check(MSNamespaceInfoCollection.prototype, Object.prototype, "namespaces prototype");
+    }else {
+        ok(!("MSNamespaceInfoCollection" in window), "MSNamespaceInfoCollection found in window");
+    }
 });
