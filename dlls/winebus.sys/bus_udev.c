@@ -1192,14 +1192,17 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
         }
     }
 
-    if (!desc->manufacturer[0] && (tmp = udev_device_get_sysattr_value(dev, "manufacturer")))
-        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->manufacturer, ARRAY_SIZE(desc->manufacturer));
+    if (!strcmp(subsystem, "usb") && *bus != BUS_BLUETOOTH)
+    {
+        if ((tmp = udev_device_get_sysattr_value(parent, "manufacturer")))
+            ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->manufacturer, ARRAY_SIZE(desc->manufacturer));
 
-    if (!desc->product[0] && (tmp = udev_device_get_sysattr_value(dev, "product")))
-        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->product, ARRAY_SIZE(desc->product));
+        if ((tmp = udev_device_get_sysattr_value(parent, "product")))
+            ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->product, ARRAY_SIZE(desc->product));
 
-    if (!desc->serialnumber[0] && (tmp = udev_device_get_sysattr_value(dev, "serial")))
-        ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
+        if ((tmp = udev_device_get_sysattr_value(parent, "serial")))
+            ntdll_umbstowcs(tmp, strlen(tmp) + 1, desc->serialnumber, ARRAY_SIZE(desc->serialnumber));
+    }
 }
 
 static void udev_add_device(struct udev_device *dev, int fd)
