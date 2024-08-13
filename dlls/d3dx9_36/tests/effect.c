@@ -425,7 +425,12 @@ struct test_effect_parameter_value_result
 {
     const char *full_name;
     D3DXPARAMETER_DESC desc;
-    UINT value_offset; /* start position for the value in the blob */
+    union
+    {
+        float f[32];
+        int i[32];
+        DWORD dword[32];
+    } value;
 };
 
 /*
@@ -614,48 +619,147 @@ static const DWORD test_effect_parameter_value_blob_float[] =
 
 struct test_effect_parameter_value_result test_effect_parameter_value_result_float[] =
 {
-    {"f",     {"f",     NULL, D3DXPC_SCALAR,      D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},  10},
-    {"f1",    {"f1",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},  20},
-    {"f2",    {"f2",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 2, 0, 0, 0, 0,   8},  30},
-    {"f3",    {"f3",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},  41},
-    {"f4",    {"f4",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},  53},
-    {"f11",   {"f11",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},  66},
-    {"f12",   {"f12",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 2, 0, 0, 0, 0,   8},  76},
-    {"f13",   {"f13",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},  87},
-    {"f14",   {"f14",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},  99},
-    {"f21",   {"f21",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 1, 0, 0, 0, 0,   8}, 112},
-    {"f22",   {"f22",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 0, 0, 0, 0,  16}, 123},
-    {"f23",   {"f23",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 3, 0, 0, 0, 0,  24}, 136},
-    {"f24",   {"f24",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 4, 0, 0, 0, 0,  32}, 151},
-    {"f31",   {"f31",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 0, 0, 0, 0,  12}, 168},
-    {"f32",   {"f32",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 0, 0, 0, 0,  24}, 180},
-    {"f33",   {"f33",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 0, 0, 0, 0,  36}, 195},
-    {"f34",   {"f34",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 4, 0, 0, 0, 0,  48}, 213},
-    {"f41",   {"f41",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 1, 0, 0, 0, 0,  16}, 234},
-    {"f42",   {"f42",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 2, 0, 0, 0, 0,  32}, 247},
-    {"f43",   {"f43",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 3, 0, 0, 0, 0,  48}, 264},
-    {"f44",   {"f44",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4, 0, 0, 0, 0,  64}, 285},
-    {"f_2",   {"f_2",   NULL, D3DXPC_SCALAR,      D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8}, 310},
-    {"f1_2",  {"f1_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8}, 321},
-    {"f2_2",  {"f2_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 2, 2, 0, 0, 0,  16}, 333},
-    {"f3_2",  {"f3_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 2, 0, 0, 0,  24}, 347},
-    {"f4_2",  {"f4_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 2, 0, 0, 0,  32}, 363},
-    {"f11_2", {"f11_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8}, 381},
-    {"f12_2", {"f12_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 2, 2, 0, 0, 0,  16}, 393},
-    {"f13_2", {"f13_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 3, 2, 0, 0, 0,  24}, 407},
-    {"f14_2", {"f14_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 4, 2, 0, 0, 0,  32}, 423},
-    {"f21_2", {"f21_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 1, 2, 0, 0, 0,  16}, 441},
-    {"f22_2", {"f22_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 2, 0, 0, 0,  32}, 455},
-    {"f23_2", {"f23_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 3, 2, 0, 0, 0,  48}, 473},
-    {"f24_2", {"f24_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 4, 2, 0, 0, 0,  64}, 495},
-    {"f31_2", {"f31_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 2, 0, 0, 0,  24}, 521},
-    {"f32_2", {"f32_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 2, 0, 0, 0,  48}, 537},
-    {"f33_2", {"f33_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 2, 0, 0, 0,  72}, 559},
-    {"f34_2", {"f34_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 4, 2, 0, 0, 0,  96}, 587},
-    {"f41_2", {"f41_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 1, 2, 0, 0, 0,  32}, 621},
-    {"f42_2", {"f42_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 2, 2, 0, 0, 0,  64}, 639},
-    {"f43_2", {"f43_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 3, 2, 0, 0, 0,  96}, 665},
-    {"f44_2", {"f44_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4, 2, 0, 0, 0, 128}, 699},
+    {"f",     {"f",     NULL, D3DXPC_SCALAR,      D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},
+            { .f = { 0.1f }} },
+
+    {"f1",    {"f1",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},
+            { .f = { 1.1f }} },
+
+    {"f2",    {"f2",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 2, 0, 0, 0, 0,   8},
+            { .f = { 2.1f, 2.2f }} },
+
+    {"f3",    {"f3",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},
+            { .f = { 3.1f, 3.2f, 3.3f }} },
+
+    {"f4",    {"f4",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},
+            { .f = { 4.1f, 4.2f, 4.3f, 4.4f }} },
+
+    {"f11",   {"f11",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 1, 0, 0, 0, 0,   4},
+            { .f = { 11.1f }} },
+
+    {"f12",   {"f12",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 2, 0, 0, 0, 0,   8},
+            { .f = { 12.1f, 12.2f }} },
+
+    {"f13",   {"f13",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},
+            { .f = { 13.1f, 13.2f, 13.3f }} },
+
+    {"f14",   {"f14",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},
+            { .f = { 14.1f, 14.2f, 14.3f, 14.4f }} },
+
+    {"f21",   {"f21",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 1, 0, 0, 0, 0,   8},
+            { .f = { 21.11f, 21.21f }} },
+
+    {"f22",   {"f22",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 0, 0, 0, 0,  16},
+            { .f = { 22.11f, 22.21f, 22.12f, 22.22f }} },
+
+    {"f23",   {"f23",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 3, 0, 0, 0, 0,  24},
+            { .f = { 23.11f, 23.21f, 23.12f, 23.22f, 23.13f, 23.23f }} },
+
+    {"f24",   {"f24",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 4, 0, 0, 0, 0,  32},
+            { .f = { 24.11f, 24.21f, 24.12f, 24.22f, 24.13f, 24.23f, 24.14f, 24.24f }} },
+
+    {"f31",   {"f31",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 0, 0, 0, 0,  12},
+            { .f = { 31.11f, 31.21f, 31.31f }} },
+
+    {"f32",   {"f32",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 0, 0, 0, 0,  24},
+            { .f = { 32.11f, 32.21f, 32.31f, 32.12f, 32.22f, 32.32f }} },
+
+    {"f33",   {"f33",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 0, 0, 0, 0,  36},
+            { .f = { 33.11f, 33.21f, 33.31f, 33.12f, 33.22f, 33.32f, 33.13f, 33.23f, 33.33f }} },
+
+    {"f34",   {"f34",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 4, 0, 0, 0, 0,  48},
+            { .f = { 34.11f, 34.21f, 34.31f, 34.12f, 34.22f, 34.32f, 34.13f, 34.23f,
+                     34.33f, 34.14f, 34.24f, 34.34f }} },
+
+    {"f41",   {"f41",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 1, 0, 0, 0, 0,  16},
+            { .f = { 41.11f, 41.21f, 41.31f, 41.41f  }} },
+
+    {"f42",   {"f42",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 2, 0, 0, 0, 0,  32},
+            { .f = { 42.11f, 42.21f, 42.31f, 42.41f, 42.12f, 42.22f, 42.32f, 42.42f }} },
+
+    {"f43",   {"f43",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 3, 0, 0, 0, 0,  48},
+            { .f = { 43.11f, 43.21f, 43.31f, 43.41f, 43.12f, 43.22f, 43.32f, 43.42f,
+                     43.13f, 43.23f, 43.33f, 43.43f }} },
+
+    {"f44",   {"f44",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4, 0, 0, 0, 0,  64},
+            { .f = { 44.11f, 44.21f, 44.31f, 44.41f, 44.12f, 44.22f, 44.32f, 44.42f,
+                     44.13f, 44.23f, 44.33f, 44.43f, 44.14f, 44.24f, 44.34f, 44.44f }} },
+
+    {"f_2",   {"f_2",   NULL, D3DXPC_SCALAR,      D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8},
+            { .f = { 0.101f, 0.102f }} },
+
+    {"f1_2",  {"f1_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8},
+            { .f = { 1.101f, 1.102f }} },
+
+    {"f2_2",  {"f2_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 2, 2, 0, 0, 0,  16},
+            { .f = { 2.101f, 2.201f, 2.102f, 2.202f }} },
+
+    {"f3_2",  {"f3_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 2, 0, 0, 0,  24},
+            { .f = { 3.101f, 3.201f, 3.301f, 3.102f, 3.202f, 3.302f }} },
+
+    {"f4_2",  {"f4_2",  NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 2, 0, 0, 0,  32},
+            { .f = { 4.101f, 4.201f, 4.301f, 4.401f, 4.102f, 4.202f, 4.302f, 4.402f }} },
+
+    {"f11_2", {"f11_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 1, 2, 0, 0, 0,   8},
+            { .f = { 11.101f, 11.102f }} },
+
+    {"f12_2", {"f12_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 2, 2, 0, 0, 0,  16},
+            { .f = { 12.101f, 12.201f, 12.102f, 12.202f }} },
+
+    {"f13_2", {"f13_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 3, 2, 0, 0, 0,  24},
+            { .f = { 13.101f, 13.201f, 13.301f, 13.102f, 13.202f, 13.302f }} },
+
+    {"f14_2", {"f14_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 1, 4, 2, 0, 0, 0,  32},
+            { .f = { 14.101f, 14.201f, 14.301f, 14.401f, 14.102f, 14.202f, 14.302f, 14.402f }} },
+
+    {"f21_2", {"f21_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 1, 2, 0, 0, 0,  16},
+            { .f = { 21.1101f, 21.2101f, 21.1102f, 21.2102f }} },
+
+    {"f22_2", {"f22_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 2, 0, 0, 0,  32},
+            { .f = { 22.1101f, 22.2101f, 22.1201f, 22.2201f, 22.1102f, 22.2102f, 22.1202f, 22.2202f }} },
+
+    {"f23_2", {"f23_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 3, 2, 0, 0, 0,  48},
+            { .f = { 23.1101f, 23.2101, 23.1201f, 23.2201f, 23.1301f, 23.2301f, 23.1102f, 23.2102f,
+                     23.1202f, 23.2202f, 23.1302f, 23.2302f }} },
+
+    {"f24_2", {"f24_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 4, 2, 0, 0, 0,  64},
+            { .f = { 24.1101f, 24.2101f, 24.1201f, 24.2201f, 24.1301f, 24.2301f, 24.1401f, 24.2401f,
+                     24.1102f, 24.2102f, 24.1202f, 24.2202f, 24.1302f, 24.2302f, 24.1402f, 24.2402f }} },
+
+    {"f31_2", {"f31_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 2, 0, 0, 0,  24},
+            { .f = { 31.1101f, 31.2101f, 31.3101f, 31.1102f, 31.2102f, 31.3102f }} },
+
+    {"f32_2", {"f32_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 2, 0, 0, 0,  48},
+            { .f = { 32.1101f, 32.2101f, 32.3101f, 32.1201f, 32.2201f, 32.3201f, 32.1102f, 32.2102f,
+                     32.3102f, 32.1202f, 32.2202f, 32.3202f }} },
+
+    {"f33_2", {"f33_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 2, 0, 0, 0,  72},
+            { .f = { 33.1101f, 33.2101f, 33.3101f, 33.1201f, 33.2201f, 33.3201f, 33.1301f, 33.2301f,
+                     33.3301f, 33.1102f, 33.2102f, 33.3102f, 33.1202f, 33.2202f, 33.3202f, 33.1302f,
+                     33.2302f, 33.3302f }} },
+
+    {"f34_2", {"f34_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 4, 2, 0, 0, 0,  96},
+            { .f = { 34.1101f, 34.2101f, 34.3101f, 34.1201f, 34.2201f, 34.3201f, 34.1301f, 34.2301f,
+                     34.3301f, 34.1401f, 34.2401f, 34.3401f, 34.1102f, 34.2102f, 34.3102f, 34.1202f,
+                     34.2202f, 34.3202f, 34.1302f, 34.2302f, 34.3302f, 34.1402f, 34.2402f, 34.3402f }} },
+
+    {"f41_2", {"f41_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 1, 2, 0, 0, 0,  32},
+            { .f = { 41.1101f, 41.2101f, 41.3101f, 41.4101f, 41.1102f, 41.2102f, 41.3102f, 41.4102f }} },
+
+    {"f42_2", {"f42_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 2, 2, 0, 0, 0,  64},
+            { .f = { 42.1101f, 42.2101f, 42.3101f, 42.4101f, 42.1201f, 42.2201f, 42.3201f, 42.4201f,
+                     42.1102f, 42.2102f, 42.3102f, 42.4102f, 42.1202f, 42.2202f, 42.3202f, 42.4202f }} },
+
+    {"f43_2", {"f43_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 3, 2, 0, 0, 0,  96},
+            { .f = { 43.1101f, 43.2101f, 43.3101f, 43.4101f, 43.1201f, 43.2201f, 43.3201f, 43.4201f,
+                     43.1301f, 43.2301f, 43.3301f, 43.4301f, 43.1102f, 43.2102f, 43.3102f, 43.4102f,
+                     43.1202f, 43.2202f, 43.3202f, 43.4202f, 43.1302f, 43.2302f, 43.3302f, 43.4302f }} },
+
+    {"f44_2", {"f44_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 4, 4, 2, 0, 0, 0, 128},
+            { .f = { 44.1101f, 44.2101f, 44.3101f, 44.4101f, 44.1201f, 44.2201f, 44.3201f, 44.4201f,
+                     44.1301f, 44.2301f, 44.3301f, 44.4301f, 44.1401f, 44.2401f, 44.3401f, 44.4401f,
+                     44.1102f, 44.2102f, 44.3102f, 44.4102f, 44.1202f, 44.2202f, 44.3202f, 44.4202f,
+                     44.1302f, 44.2302f, 44.3302f, 44.4302f, 44.1402f, 44.2402f, 44.3402f, 44.4402f }} },
 };
 
 /*
@@ -844,48 +948,145 @@ static const DWORD test_effect_parameter_value_blob_int[] =
 
 struct test_effect_parameter_value_result test_effect_parameter_value_result_int[] =
 {
-    {"i",     {"i",     NULL, D3DXPC_SCALAR,      D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},  10},
-    {"i1",    {"i1",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},  20},
-    {"i2",    {"i2",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 2, 0, 0, 0, 0,   8},  30},
-    {"i3",    {"i3",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 3, 0, 0, 0, 0,  12},  41},
-    {"i4",    {"i4",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 4, 0, 0, 0, 0,  16},  53},
-    {"i11",   {"i11",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},  66},
-    {"i12",   {"i12",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 2, 0, 0, 0, 0,   8},  76},
-    {"i13",   {"i13",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 3, 0, 0, 0, 0,  12},  87},
-    {"i14",   {"i14",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 4, 0, 0, 0, 0,  16},  99},
-    {"i21",   {"i21",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 1, 0, 0, 0, 0,   8}, 112},
-    {"i22",   {"i22",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 2, 0, 0, 0, 0,  16}, 123},
-    {"i23",   {"i23",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 3, 0, 0, 0, 0,  24}, 136},
-    {"i24",   {"i24",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 4, 0, 0, 0, 0,  32}, 151},
-    {"i31",   {"i31",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 1, 0, 0, 0, 0,  12}, 168},
-    {"i32",   {"i32",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 0, 0, 0, 0,  24}, 180},
-    {"i33",   {"i33",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 3, 0, 0, 0, 0,  36}, 195},
-    {"i34",   {"i34",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 4, 0, 0, 0, 0,  48}, 213},
-    {"i41",   {"i41",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 1, 0, 0, 0, 0,  16}, 234},
-    {"i42",   {"i42",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 2, 0, 0, 0, 0,  32}, 247},
-    {"i43",   {"i43",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 3, 0, 0, 0, 0,  48}, 264},
-    {"i44",   {"i44",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 0, 0, 0, 0,  64}, 285},
-    {"i_2",   {"i_2",   NULL, D3DXPC_SCALAR,      D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8}, 310},
-    {"i1_2",  {"i1_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8}, 321},
-    {"i2_2",  {"i2_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 2, 2, 0, 0, 0,  16}, 333},
-    {"i3_2",  {"i3_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 3, 2, 0, 0, 0,  24}, 347},
-    {"i4_2",  {"i4_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 4, 2, 0, 0, 0,  32}, 363},
-    {"i11_2", {"i11_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8}, 381},
-    {"i12_2", {"i12_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 2, 2, 0, 0, 0,  16}, 393},
-    {"i13_2", {"i13_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 3, 2, 0, 0, 0,  24}, 407},
-    {"i14_2", {"i14_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 4, 2, 0, 0, 0,  32}, 423},
-    {"i21_2", {"i21_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 1, 2, 0, 0, 0,  16}, 441},
-    {"i22_2", {"i22_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 2, 2, 0, 0, 0,  32}, 455},
-    {"i23_2", {"i23_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 3, 2, 0, 0, 0,  48}, 473},
-    {"i24_2", {"i24_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 4, 2, 0, 0, 0,  64}, 495},
-    {"i31_2", {"i31_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 1, 2, 0, 0, 0,  24}, 521},
-    {"i32_2", {"i32_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 2, 0, 0, 0,  48}, 537},
-    {"i33_2", {"i33_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 3, 2, 0, 0, 0,  72}, 559},
-    {"i34_2", {"i34_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 4, 2, 0, 0, 0,  96}, 587},
-    {"i41_2", {"i41_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 1, 2, 0, 0, 0,  32}, 621},
-    {"i42_2", {"i42_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 2, 2, 0, 0, 0,  64}, 639},
-    {"i43_2", {"i43_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 3, 2, 0, 0, 0,  96}, 665},
-    {"i44_2", {"i44_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 2, 0, 0, 0, 128}, 699},
+    {"i",     {"i",     NULL, D3DXPC_SCALAR,      D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},
+            { .i = { 1 }} },
+
+    {"i1",    {"i1",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},
+            { .i = { 11 }} },
+
+    {"i2",    {"i2",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 2, 0, 0, 0, 0,   8},
+            { .i = { 21, 22 }} },
+
+    {"i3",    {"i3",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 3, 0, 0, 0, 0,  12},
+            { .i = { 31, 32, 33 }} },
+
+    {"i4",    {"i4",    NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 4, 0, 0, 0, 0,  16},
+            { .i = { 41, 42, 43, 44 }} },
+
+    {"i11",   {"i11",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 1, 0, 0, 0, 0,   4},
+            { .i = { 111 }} },
+
+    {"i12",   {"i12",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 2, 0, 0, 0, 0,   8},
+            { .i = { 121, 122 }} },
+
+    {"i13",   {"i13",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 3, 0, 0, 0, 0,  12},
+            { .i = { 131, 132, 133 }} },
+
+    {"i14",   {"i14",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 4, 0, 0, 0, 0,  16},
+            { .i = { 141, 142, 143, 144 }} },
+
+    {"i21",   {"i21",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 1, 0, 0, 0, 0,   8},
+            { .i = { 2111, 2121 }} },
+
+    {"i22",   {"i22",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 2, 0, 0, 0, 0,  16},
+            { .i = { 2211, 2221, 2212, 2222 }} },
+
+    {"i23",   {"i23",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 3, 0, 0, 0, 0,  24},
+            { .i = { 2311, 2321, 2312, 2322, 2313, 2323 }} },
+
+    {"i24",   {"i24",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 4, 0, 0, 0, 0,  32},
+            { .i = { 2411, 2421, 2412, 2422, 2413, 2423, 2414, 2424 }} },
+
+    {"i31",   {"i31",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 1, 0, 0, 0, 0,  12},
+            { .i = { 3111, 3121, 3131 }} },
+
+    {"i32",   {"i32",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 0, 0, 0, 0,  24},
+            { .i = { 3211, 3221, 3231, 3212, 3222, 3232 }} },
+
+    {"i33",   {"i33",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 3, 0, 0, 0, 0,  36},
+            { .i = { 3311, 3321, 3331, 3312, 3322, 3332, 3313, 3323, 3333 }} },
+
+    {"i34",   {"i34",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 4, 0, 0, 0, 0,  48},
+            { .i = { 3411, 3421, 3431, 3412, 3422, 3432, 3413, 3423, 3433, 3414, 3424, 3434 }} },
+
+    {"i41",   {"i41",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 1, 0, 0, 0, 0,  16},
+            { .i = { 4111, 4121, 4131, 4141 }} },
+
+    {"i42",   {"i42",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 2, 0, 0, 0, 0,  32},
+            { .i = { 4211, 4221, 4231, 4241, 4212, 4222, 4232, 4242 }} },
+
+    {"i43",   {"i43",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 3, 0, 0, 0, 0,  48},
+            { .i = { 4311, 4321, 4331, 4341, 4312, 4322, 4332, 4342,
+                     4313, 4323, 4333, 4343 }} },
+
+    {"i44",   {"i44",   NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 0, 0, 0, 0,  64},
+            { .i = { 4411, 4421, 4431, 4441, 4412, 4422, 4432, 4442,
+                     4413, 4423, 4433, 4443, 4414, 4424, 4434, 4444 }} },
+
+    {"i_2",   {"i_2",   NULL, D3DXPC_SCALAR,      D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8},
+            { .i = { 0101, 0102 }} },
+
+    {"i1_2",  {"i1_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8},
+            { .i = { 1101, 1102 }} },
+
+    {"i2_2",  {"i2_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 2, 2, 0, 0, 0,  16},
+            { .i = { 2101, 2201, 2102, 2202 }} },
+
+    {"i3_2",  {"i3_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 3, 2, 0, 0, 0,  24},
+            { .i = { 3101, 3201, 3301, 3102, 3202, 3302 }} },
+
+    {"i4_2",  {"i4_2",  NULL, D3DXPC_VECTOR,      D3DXPT_INT, 1, 4, 2, 0, 0, 0,  32},
+            { .i = { 4101, 4201, 4301, 4401, 4102, 4202, 4302, 4402 }} },
+
+    {"i11_2", {"i11_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 1, 2, 0, 0, 0,   8},
+            { .i = { 11101, 11102 }} },
+
+    {"i12_2", {"i12_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 2, 2, 0, 0, 0,  16},
+            { .i = { 12101, 12201, 12102, 12202 }} },
+
+    {"i13_2", {"i13_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 3, 2, 0, 0, 0,  24},
+            { .i = { 13101, 13201, 13301, 13102, 13202, 13302 }} },
+
+    {"i14_2", {"i14_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 1, 4, 2, 0, 0, 0,  32},
+            { .i = { 14101, 14201, 14301, 14401, 14102, 14202, 14302, 14402 }} },
+
+    {"i21_2", {"i21_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 1, 2, 0, 0, 0,  16},
+            { .i = { 211101, 212101, 211102, 212102 }} },
+
+    {"i22_2", {"i22_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 2, 2, 0, 0, 0,  32},
+            { .i = { 221101, 222101, 221201, 222201, 221102, 222102, 221202, 222202 }} },
+
+    {"i23_2", {"i23_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 3, 2, 0, 0, 0,  48},
+            { .i = { 231101, 232101, 231201, 232201, 231301, 232301, 231102, 232102,
+                     231202, 232202, 231302, 232302 }} },
+
+    {"i24_2", {"i24_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 2, 4, 2, 0, 0, 0,  64},
+            { .i = { 241101, 242101, 241201, 242201, 241301, 242301, 241401, 242401,
+                     241102, 242102, 241202, 242202, 241302, 242302, 241402, 242402 }} },
+
+    {"i31_2", {"i31_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 1, 2, 0, 0, 0,  24},
+            { .i = { 311101, 312101, 313101, 311102, 312102, 313102 }} },
+
+    {"i32_2", {"i32_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 2, 0, 0, 0,  48},
+            { .i = { 321101, 322101, 323101, 321201, 322201, 323201, 321102, 322102,
+                     323102, 321202, 322202, 323202 }} },
+
+    {"i33_2", {"i33_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 3, 2, 0, 0, 0,  72},
+            { .i = { 331101, 332101, 333101, 331201, 332201, 333201, 331301, 332301, 333301,
+                     331102, 332102, 333102, 331202, 332202, 333202, 331302, 332302, 333302 }} },
+
+    {"i34_2", {"i34_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 4, 2, 0, 0, 0,  96},
+            { .i = { 341101, 342101, 343101, 341201, 342201, 343201, 341301, 342301, 343301,
+                     341401, 342401, 343401, 341102, 342102, 343102, 341202, 342202, 343202,
+                     341302, 342302, 343302, 341402, 342402, 343402 }} },
+
+    {"i41_2", {"i41_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 1, 2, 0, 0, 0,  32},
+            { .i = { 411101, 412101, 413101, 414101, 411102, 412102, 413102, 414102 }} },
+
+    {"i42_2", {"i42_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 2, 2, 0, 0, 0,  64},
+            { .i = { 421101, 422101, 423101, 424101, 421201, 422201, 423201, 424201,
+                     421102, 422102, 423102, 424102, 421202, 422202, 423202, 424202 }} },
+
+    {"i43_2", {"i43_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 3, 2, 0, 0, 0,  96},
+            { .i = { 431101, 432101, 433101, 434101, 431201, 432201, 433201, 434201,
+                     431301, 432301, 433301, 434301, 431102, 432102, 433102, 434102,
+                     431202, 432202, 433202, 434202, 431302, 432302, 433302, 434302 }} },
+
+    {"i44_2", {"i44_2", NULL, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 4, 4, 2, 0, 0, 0, 128},
+            { .i = { 441101, 442101, 443101, 444101, 441201, 442201, 443201, 444201,
+                     441301, 442301, 443301, 444301, 441401, 442401, 443401, 444401,
+                     441102, 442102, 443102, 444102, 441202, 442202, 443202, 444202,
+                     441302, 442302, 443302, 444302, 441402, 442402, 443402, 444402 }} },
 };
 
 /*
@@ -924,13 +1125,13 @@ static const DWORD test_effect_parameter_value_blob_object[] =
 
 struct test_effect_parameter_value_result test_effect_parameter_value_result_object[] =
 {
-    {"s",   {"s",   NULL, D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 0, 0, 0, 0, sizeof(void *)},     0},
-    {"s_2", {"s_2", NULL, D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 2, 0, 0, 0, 2 * sizeof(void *)}, 0},
-    {"tex", {"tex", NULL, D3DXPC_OBJECT, D3DXPT_TEXTURE2D,    0, 0, 0, 0, 0, 0, sizeof(void *)},     0},
-    {"v",   {"v",   NULL, D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 0, 0, 0, 0, sizeof(void *)},     0},
-    {"v_2", {"v_2", NULL, D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 2, 0, 0, 0, 2 * sizeof(void *)}, 0},
-    {"p",   {"p",   NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 0, 0, 0, 0, sizeof(void *)},     0},
-    {"p_2", {"p_2", NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 2, 0, 0, 0, 2 * sizeof(void *)}, 0},
+    {"s",   {"s",   NULL, D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 0, 0, 0, 0, sizeof(void *)     }},
+    {"s_2", {"s_2", NULL, D3DXPC_OBJECT, D3DXPT_STRING,       0, 0, 2, 0, 0, 0, 2 * sizeof(void *) }},
+    {"tex", {"tex", NULL, D3DXPC_OBJECT, D3DXPT_TEXTURE2D,    0, 0, 0, 0, 0, 0, sizeof(void *)     }},
+    {"v",   {"v",   NULL, D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 0, 0, 0, 0, sizeof(void *)     }},
+    {"v_2", {"v_2", NULL, D3DXPC_OBJECT, D3DXPT_VERTEXSHADER, 0, 0, 2, 0, 0, 0, 2 * sizeof(void *) }},
+    {"p",   {"p",   NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 0, 0, 0, 0, sizeof(void *)     }},
+    {"p_2", {"p_2", NULL, D3DXPC_OBJECT, D3DXPT_PIXELSHADER,  0, 0, 2, 0, 0, 0, 2 * sizeof(void *) }},
 };
 
 /*
@@ -967,12 +1168,12 @@ static const DWORD test_effect_parameter_value_blob_special[] =
 
 struct test_effect_parameter_value_result test_effect_parameter_value_result_special[] =
 {
-    {"f3",    {"f3",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},  10},
-    {"f3min", {"f3min", NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},  22},
-    {"f3max", {"f3max", NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12},  35},
-    {"f4",    {"f4",    NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},  48},
-    {"f4min", {"f4min", NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},  61},
-    {"f4max", {"f4max", NULL, D3DXPC_VECTOR,      D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16},  75},
+    {"f3",    {"f3",    NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12}, { .f = { -3.1f, 153.2f, 283.3f }} },
+    {"f3min", {"f3min", NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12}, { .f = { -31.1f, -31.2f, -31.3f }} },
+    {"f3max", {"f3max", NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 3, 0, 0, 0, 0,  12}, { .f = { 320.1f, 320.2f, 320.3f }} },
+    {"f4",    {"f4",    NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16}, { .f = { -4.1f, 154.2f, 284.3f, 34.4f }} },
+    {"f4min", {"f4min", NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16}, { .f = { -41.1f, -41.2f, -41.3f, -41.4f }} },
+    {"f4max", {"f4max", NULL, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 0, 0, 0, 0,  16}, { .f = { 420.1f, 42.20f, 420.3f, 420.4f }} },
 };
 
 #define ADD_PARAMETER_VALUE(x) {\
@@ -1829,7 +2030,6 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
         {
             const D3DXPARAMETER_DESC *res_desc = &res[k].desc;
             const char *res_full_name = res[k].full_name;
-            UINT res_value_offset = res[k].value_offset;
             D3DXHANDLE parameter;
             D3DXPARAMETER_DESC pdesc;
             BOOL bvalue = TRUE;
@@ -1872,9 +2072,9 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             ok(res_desc->Bytes == pdesc.Bytes, "Unexpected Bytes %u, expected %u.\n",
                     pdesc.Bytes, res_desc->Bytes);
 
-            test_effect_parameter_values(&res[k], effect, &blob[res_value_offset], parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
-            test_effect_parameter_values(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_values(&res[k], effect, res[k].value.dword, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
+            test_effect_parameter_values(&res[k], effect, res[k].value.dword, parameter);
 
             /*
              * check invalid calls
@@ -2041,11 +2241,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             hr = effect->lpVtbl->GetValue(effect, parameter, input_value, res_desc->Bytes - 1);
             ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            test_effect_parameter_values(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_values(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetBool */
             bvalue = 5;
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetBool(effect, parameter, bvalue);
             if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
             {
@@ -2058,7 +2258,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetBoolArray */
             *input_value = 1;
@@ -2066,7 +2266,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             {
                 *(input_value + l) = *(input_value + l - 1) + 1;
             }
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetBoolArray(effect, parameter, (BOOL *)input_value, res_desc->Bytes / sizeof(*input_value));
             if (res_desc->Class == D3DXPC_SCALAR
                     || res_desc->Class == D3DXPC_VECTOR
@@ -2083,11 +2283,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetInt */
             ivalue = 0x1fbf02ff;
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetInt(effect, parameter, ivalue);
             if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
             {
@@ -2114,7 +2314,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetIntArray */
             *input_value = 123456;
@@ -2122,7 +2322,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             {
                 *(input_value + l) = *(input_value + l - 1) + 23;
             }
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetIntArray(effect, parameter, (INT *)input_value, res_desc->Bytes / sizeof(*input_value));
             if (res_desc->Class == D3DXPC_SCALAR
                     || res_desc->Class == D3DXPC_VECTOR
@@ -2139,11 +2339,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetFloat */
             fvalue = 1.33;
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetFloat(effect, parameter, fvalue);
             if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
             {
@@ -2155,7 +2355,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetFloatArray */
             fvalue = 1.33;
@@ -2164,7 +2364,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 *(input_value + l) = *(DWORD *)&fvalue;
                 fvalue += 1.12;
             }
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetFloatArray(effect, parameter, (FLOAT *)input_value, res_desc->Bytes / sizeof(*input_value));
             if (res_desc->Class == D3DXPC_SCALAR
                     || res_desc->Class == D3DXPC_VECTOR
@@ -2181,7 +2381,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetVector */
             fvalue = -1.33;
@@ -2190,7 +2390,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 *(input_value + l) = *(DWORD *)&fvalue;
                 fvalue += 1.12;
             }
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetVector(effect, parameter, (D3DXVECTOR4 *)input_value);
             if (!res_desc->Elements &&
                     (res_desc->Class == D3DXPC_SCALAR
@@ -2218,7 +2418,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetVectorArray */
             for (count = 0; count < res_desc->Elements + 1; ++count)
@@ -2229,7 +2429,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
                 hr = effect->lpVtbl->SetVectorArray(effect, parameter, (D3DXVECTOR4 *)input_value, count);
                 if (res_desc->Elements && res_desc->Class == D3DXPC_VECTOR && count <= res_desc->Elements)
                 {
@@ -2247,7 +2447,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
                 test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+                test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
             }
 
             /* SetMatrix */
@@ -2257,7 +2457,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 *(input_value + l) = *(DWORD *)&fvalue;
                 fvalue += 1.12;
             }
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetMatrix(effect, parameter, (D3DXMATRIX *)input_value);
             if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
             {
@@ -2278,7 +2478,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetMatrixArray */
             for (count = 0; count < res_desc->Elements + 1; ++count)
@@ -2289,7 +2489,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
                 hr = effect->lpVtbl->SetMatrixArray(effect, parameter, (D3DXMATRIX *)input_value, count);
                 if (res_desc->Class == D3DXPC_MATRIX_ROWS && count <= res_desc->Elements)
                 {
@@ -2313,7 +2513,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
                 test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+                test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
             }
 
             /* SetMatrixPointerArray */
@@ -2325,7 +2525,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
                 for (l = 0; l < count; ++l)
                 {
                     matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(FLOAT)];
@@ -2353,7 +2553,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
                 test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+                test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
             }
 
             /* SetMatrixTranspose */
@@ -2363,7 +2563,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 *(input_value + l) = *(DWORD *)&fvalue;
                 fvalue += 1.12;
             }
-            memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+            memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
             hr = effect->lpVtbl->SetMatrixTranspose(effect, parameter, (D3DXMATRIX *)input_value);
             if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
             {
@@ -2384,7 +2584,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
             test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
 
             /* SetMatrixTransposeArray */
             for (count = 0; count < res_desc->Elements + 1; ++count)
@@ -2395,7 +2595,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
                 hr = effect->lpVtbl->SetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)input_value, count);
                 if (res_desc->Class == D3DXPC_MATRIX_ROWS && count <= res_desc->Elements)
                 {
@@ -2419,7 +2619,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
                 test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+                test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
             }
 
             /* SetMatrixTransposePointerArray */
@@ -2431,7 +2631,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
-                memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
+                memcpy(expected_value, res[k].value.dword, res_desc->Bytes);
                 for (l = 0; l < count; ++l)
                 {
                     matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(FLOAT)];
@@ -2459,7 +2659,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
                 test_effect_parameter_values(&res[k], effect, expected_value, parameter);
-                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+                test_effect_parameter_value_reset(&res[k], effect, res[k].value.dword, parameter);
             }
             winetest_pop_context();
         }
