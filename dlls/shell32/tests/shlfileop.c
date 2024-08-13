@@ -26,6 +26,7 @@
 #include "shellapi.h"
 #include "shlwapi.h"
 #include "shlobj.h"
+#include "sherrors.h"
 #include "commoncontrols.h"
 
 #include "wine/test.h"
@@ -2768,6 +2769,300 @@ static BOOL is_old_shell32(void)
     return FALSE;
 }
 
+struct progress_sink
+{
+    IFileOperationProgressSink IFileOperationProgressSink_iface;
+    unsigned int instance_id;
+    LONG ref;
+    struct progress_expected_notifications *expected;
+};
+
+struct progress_expected_notification
+{
+    const char *text;
+    DWORD tsf, tsf_broken;
+    HRESULT hres, hres_broken;
+};
+struct progress_expected_notifications
+{
+    unsigned int index, count, line;
+    const WCHAR *dir_prefix;
+    const struct progress_expected_notification *expected;
+};
+
+static inline struct progress_sink *impl_from_IFileOperationProgressSink(IFileOperationProgressSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct progress_sink, IFileOperationProgressSink_iface);
+}
+
+#define progress_init_check_notifications(a, b, c, d, e) progress_init_check_notifications_(__LINE__, a, b, c, d, e)
+static void progress_init_check_notifications_(unsigned int line, IFileOperationProgressSink *iface,
+        unsigned int count, const struct progress_expected_notification *expected, const WCHAR *dir_prefix,
+        struct progress_expected_notifications *n)
+{
+    struct progress_sink *progress = impl_from_IFileOperationProgressSink(iface);
+    n->line = line;
+    n->index = 0;
+    n->count = count;
+    n->expected = expected;
+    n->dir_prefix = dir_prefix;
+    progress->expected = n;
+}
+
+static void progress_check_notification(struct progress_sink *progress, const char *text, DWORD tsf, HRESULT hres)
+{
+    struct progress_expected_notifications *e = progress->expected;
+    char str[4096];
+
+    ok(!!e, "expected notifications are not set up.\n");
+    sprintf(str, "[%u] %s", progress->instance_id, text);
+    ok_(__FILE__, e->line)(e->index < e->count, "extra notification %s.\n", debugstr_a(str));
+    if (e->index < e->count)
+    {
+        ok_(__FILE__, e->line)(!strcmp(str, e->expected[e->index].text), "got notification %s, expected %s, index %u.\n",
+                debugstr_a(str), debugstr_a(e->expected[e->index].text), e->index);
+        ok_(__FILE__, e->line)(tsf == e->expected[e->index].tsf || broken(tsf == e->expected[e->index].tsf_broken),
+                "got tsf %#lx, expected %#lx, index %u (%s).\n", tsf, e->expected[e->index].tsf, e->index, debugstr_a(text));
+        ok_(__FILE__, e->line)(hres == e->expected[e->index].hres || broken(hres == e->expected[e->index].hres_broken),
+                "got hres %#lx, expected %#lx, index %u (%s).\n", hres, e->expected[e->index].hres, e->index, debugstr_a(text));
+    }
+    ++e->index;
+}
+
+static void progress_end_check_notifications(IFileOperationProgressSink *iface)
+{
+    struct progress_sink *progress = impl_from_IFileOperationProgressSink(iface);
+    struct progress_expected_notifications *e = progress->expected;
+
+    ok(!!e, "expected notifications are not set up.\n");
+    todo_wine ok_(__FILE__, e->line)(e->index == e->count, "got notification count %u, expected %u.\n", e->index, e->count);
+    progress->expected = NULL;
+}
+
+static const char *shellitem_str(struct progress_sink *progress, IShellItem *item)
+{
+    char str[MAX_PATH];
+    unsigned int len;
+    const char *ret;
+    WCHAR *path;
+    HRESULT hr;
+
+    if (!item)
+        return "<null>";
+
+    hr = IShellItem_GetDisplayName(item, SIGDN_FILESYSPATH, &path);
+    if (FAILED(hr))
+        return "<invalid>";
+
+    len = wcslen(progress->expected->dir_prefix);
+    if (progress->expected->dir_prefix[len - 1] == '\\')
+        --len;
+    if (wcsncmp(path, progress->expected->dir_prefix, len))
+    {
+        ret = debugstr_w(path);
+    }
+    else
+    {
+        sprintf(str, "<prefix>%s", debugstr_w(path + len) + 1);
+        ret = __wine_dbg_strdup(str);
+    }
+    CoTaskMemFree(path);
+    return ret;
+}
+
+static HRESULT WINAPI progress_QueryInterface(IFileOperationProgressSink *iface, REFIID riid, void **out)
+{
+    struct progress_sink *operation = impl_from_IFileOperationProgressSink(iface);
+
+    if (IsEqualIID(&IID_IFileOperationProgressSink, riid) ||  IsEqualIID(&IID_IUnknown, riid))
+        *out = &operation->IFileOperationProgressSink_iface;
+    else
+    {
+        trace("not implemented for %s.\n", debugstr_guid(riid));
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI progress_AddRef(IFileOperationProgressSink *iface)
+{
+    struct progress_sink *progress = impl_from_IFileOperationProgressSink(iface);
+
+    return InterlockedIncrement(&progress->ref);
+}
+
+static ULONG WINAPI progress_Release(IFileOperationProgressSink *iface)
+{
+    struct progress_sink *progress = impl_from_IFileOperationProgressSink(iface);
+    LONG ref = InterlockedDecrement(&progress->ref);
+
+    if (!ref)
+        free(progress);
+
+    return ref;
+}
+
+static HRESULT WINAPI progress_StartOperations(IFileOperationProgressSink *iface)
+{
+    progress_check_notification(impl_from_IFileOperationProgressSink(iface), "StartOperations", 0, 0);
+    return S_OK;
+}
+
+static HRESULT WINAPI progress_FinishOperations(IFileOperationProgressSink *iface, HRESULT result)
+{
+    progress_check_notification(impl_from_IFileOperationProgressSink(iface), "FinishOperations", 0, result);
+    return S_OK;
+}
+
+static HRESULT WINAPI progress_PreRenameItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *item,
+        const WCHAR *new_name)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_PostRenameItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *item,
+        const WCHAR *new_name, HRESULT hrRename, IShellItem *newly_created)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_PreMoveItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *item,
+        IShellItem *dest_folder, const WCHAR *new_name)
+{
+    struct progress_sink *progress = impl_from_IFileOperationProgressSink(iface);
+    char str[1024];
+
+    sprintf(str, "PreMoveItem %s, %s, %s", shellitem_str(progress, item),
+            shellitem_str(progress, dest_folder), debugstr_w(new_name) + 1);
+    progress_check_notification(progress, str, flags, 0);
+    return S_OK;
+}
+
+static HRESULT WINAPI progress_PostMoveItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *item,
+        IShellItem *dest_folder, const WCHAR *new_name, HRESULT result, IShellItem *newly_created)
+{
+    struct progress_sink *progress = impl_from_IFileOperationProgressSink(iface);
+    char str[1024];
+
+    sprintf(str, "PostMoveItem %s, %s, %s -> %s", shellitem_str(progress, item),
+            shellitem_str(progress, dest_folder), debugstr_w(new_name) + 1, shellitem_str(progress, newly_created));
+    progress_check_notification(progress, str, flags, result);
+    return S_OK;
+}
+
+static HRESULT WINAPI progress_PreCopyItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *item,
+        IShellItem *dest_folder,LPCWSTR pszNewName)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_PostCopyItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *item,
+        IShellItem *dest_folder, const WCHAR *new_name, HRESULT result, IShellItem *newly_created)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_PreDeleteItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *item)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_PostDeleteItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *item,
+        HRESULT result, IShellItem *newly_created)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_PreNewItem(IFileOperationProgressSink *iface, DWORD flags,IShellItem *dest_folder,
+        const WCHAR *new_name)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_PostNewItem(IFileOperationProgressSink *iface, DWORD flags, IShellItem *dest_folder,
+        const WCHAR *new_name, const WCHAR *template_name, DWORD file_attrs, HRESULT result, IShellItem *newly_created)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_UpdateProgress(IFileOperationProgressSink *iface, UINT total, UINT sofar)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI progress_ResetTimer(IFileOperationProgressSink *iface)
+{
+    progress_check_notification(impl_from_IFileOperationProgressSink(iface), "ResetTimer", 0, 0);
+    return S_OK;
+}
+
+static HRESULT WINAPI progress_PauseTimer(IFileOperationProgressSink *iface)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI progress_ResumeTimer(IFileOperationProgressSink *iface)
+{
+    ok(0, ".\n");
+
+    return E_NOTIMPL;
+}
+
+static const IFileOperationProgressSinkVtbl progress_vtbl =
+{
+    progress_QueryInterface,
+    progress_AddRef,
+    progress_Release,
+    progress_StartOperations,
+    progress_FinishOperations,
+    progress_PreRenameItem,
+    progress_PostRenameItem,
+    progress_PreMoveItem,
+    progress_PostMoveItem,
+    progress_PreCopyItem,
+    progress_PostCopyItem,
+    progress_PreDeleteItem,
+    progress_PostDeleteItem,
+    progress_PreNewItem,
+    progress_PostNewItem,
+    progress_UpdateProgress,
+    progress_ResetTimer,
+    progress_PauseTimer,
+    progress_ResumeTimer,
+};
+
+static IFileOperationProgressSink *create_progress_sink(unsigned int instance_id)
+{
+    struct progress_sink *obj;
+
+    obj = calloc(1, sizeof(*obj));
+    obj->IFileOperationProgressSink_iface.lpVtbl = &progress_vtbl;
+    obj->instance_id = instance_id;
+    obj->ref = 1;
+    return &obj->IFileOperationProgressSink_iface;
+}
+
 static void set_shell_item_path(IShellItem *item, const WCHAR *path, BOOL todo)
 {
     IPersistIDList *idlist;
@@ -2788,7 +3083,109 @@ static void set_shell_item_path(IShellItem *item, const WCHAR *path, BOOL todo)
 
 static void test_file_operation(void)
 {
+#define DEFAULT_TSF_FLAGS (TSF_COPY_LOCALIZED_NAME | TSF_COPY_WRITE_TIME | TSF_COPY_CREATION_TIME | TSF_OVERWRITE_EXIST)
+#define MEGRE_TSF_FLAGS (TSF_COPY_WRITE_TIME | TSF_COPY_CREATION_TIME | TSF_OVERWRITE_EXIST)
+#define UNKNOWN_POST_MERGE_TSF_FLAG 0x1000
+    static const struct progress_expected_notification notifications1[] =
+    {
+        {"[0] StartOperations"},
+        {"[0] ResetTimer"},
+        {"[0] PreMoveItem <prefix>\"\\\\testfile1\", <prefix>\"\", \"test\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[1] PreMoveItem <prefix>\"\\\\testfile1\", <prefix>\"\", \"test\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[1] PostMoveItem <prefix>\"\\\\testfile1\", <prefix>\"\", \"test\" -> <prefix>\"\\\\test\"",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] PostMoveItem <prefix>\"\\\\testfile1\", <prefix>\"\", \"test\" -> <prefix>\"\\\\test\"",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] FinishOperations"},
+    };
+    static const struct progress_expected_notification notifications2[] =
+    {
+        {"[0] StartOperations"},
+        {"[0] ResetTimer"},
+        {"[0] PreMoveItem <prefix>\"\\\\testfile1\", <prefix>\"\", \"test2\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[0] PostMoveItem <prefix>\"\\\\testfile1\", <prefix>\"\", \"test2\" -> <null>",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                0x80070002, COPYENGINE_S_USER_IGNORED},
+        {"[0] FinishOperations"},
+    };
+    static const struct progress_expected_notification notifications3[] =
+    {
+        {"[0] StartOperations"},
+        {"[0] ResetTimer"},
+        {"[0] PreMoveItem <prefix>\"\\\\test\", <prefix>\"\", \"test2\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[0] PostMoveItem <prefix>\"\\\\test\", <prefix>\"\", \"test2\" -> <prefix>\"\\\\test2\"",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] FinishOperations"},
+    };
+    static const struct progress_expected_notification notifications4[] =
+    {
+        {"[0] StartOperations"},
+        {"[0] ResetTimer"},
+        {"[0] PreMoveItem <prefix>\"\\\\test_dir1\", <prefix>\"\\\\test_dir2\", \"test2\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[0] PostMoveItem <prefix>\"\\\\test_dir1\", <prefix>\"\\\\test_dir2\", \"test2\" -> <null>",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                COPYENGINE_E_FLD_IS_FILE_DEST, COPYENGINE_S_USER_IGNORED},
+        {"[0] FinishOperations"},
+    };
+    static const struct progress_expected_notification notifications5[] =
+    {
+        {"[0] StartOperations"},
+        {"[0] ResetTimer"},
+        {"[0] PreMoveItem <prefix>\"\\\\test_dir1\", <prefix>\"\\\\test_dir2\", \"test2\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[0] PostMoveItem <prefix>\"\\\\test_dir1\", <prefix>\"\\\\test_dir2\", \"test2\" -> <prefix>\"\\\\test_dir2\\\\test2\"",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] FinishOperations"},
+    };
+    static const struct progress_expected_notification notifications6[] =
+    {
+        {"[0] StartOperations"},
+        {"[0] ResetTimer"},
+        {"[0] PreMoveItem <prefix>\"\\\\test_dir3\", <prefix>\"\\\\test_dir2\", \"test2\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[1] PreMoveItem <prefix>\"\\\\test_dir3\", <prefix>\"\\\\test_dir2\", \"test2\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[1] PostMoveItem <prefix>\"\\\\test_dir3\", <prefix>\"\\\\test_dir2\", \"test2\" -> <prefix>\"\\\\test_dir2\\\\test2\"",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                COPYENGINE_S_NOT_HANDLED, COPYENGINE_S_MERGE},
+        {"[0] PostMoveItem <prefix>\"\\\\test_dir3\", <prefix>\"\\\\test_dir2\", \"test2\" -> <prefix>\"\\\\test_dir2\\\\test2\"",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                COPYENGINE_S_NOT_HANDLED, COPYENGINE_S_MERGE},
+        {"[0] PreMoveItem <prefix>\"\\\\test_dir3\\\\testfile5\", <prefix>\"\\\\test_dir2\\\\test2\", \"\"", MEGRE_TSF_FLAGS, MEGRE_TSF_FLAGS},
+        {"[1] PreMoveItem <prefix>\"\\\\test_dir3\\\\testfile5\", <prefix>\"\\\\test_dir2\\\\test2\", \"\"", MEGRE_TSF_FLAGS, MEGRE_TSF_FLAGS},
+        {"[1] PostMoveItem <prefix>\"\\\\test_dir3\\\\testfile5\", <prefix>\"\\\\test_dir2\\\\test2\", \"testfile5\" -> <prefix>\"\\\\test_dir2\\\\test2\\\\testfile5\"",
+                MEGRE_TSF_FLAGS | UNKNOWN_POST_MERGE_TSF_FLAG, MEGRE_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] PostMoveItem <prefix>\"\\\\test_dir3\\\\testfile5\", <prefix>\"\\\\test_dir2\\\\test2\", \"testfile5\" -> <prefix>\"\\\\test_dir2\\\\test2\\\\testfile5\"",
+                MEGRE_TSF_FLAGS | UNKNOWN_POST_MERGE_TSF_FLAG, MEGRE_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] PreMoveItem <prefix>\"\\\\test_dir3\\\\testfile6\", <prefix>\"\\\\test_dir2\\\\test2\", \"\"", MEGRE_TSF_FLAGS, MEGRE_TSF_FLAGS},
+        {"[1] PreMoveItem <prefix>\"\\\\test_dir3\\\\testfile6\", <prefix>\"\\\\test_dir2\\\\test2\", \"\"", MEGRE_TSF_FLAGS, MEGRE_TSF_FLAGS},
+        {"[1] PostMoveItem <prefix>\"\\\\test_dir3\\\\testfile6\", <prefix>\"\\\\test_dir2\\\\test2\", \"testfile6\" -> <prefix>\"\\\\test_dir2\\\\test2\\\\testfile6\"",
+                MEGRE_TSF_FLAGS | UNKNOWN_POST_MERGE_TSF_FLAG, MEGRE_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] PostMoveItem <prefix>\"\\\\test_dir3\\\\testfile6\", <prefix>\"\\\\test_dir2\\\\test2\", \"testfile6\" -> <prefix>\"\\\\test_dir2\\\\test2\\\\testfile6\"",
+                MEGRE_TSF_FLAGS | UNKNOWN_POST_MERGE_TSF_FLAG, MEGRE_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] PreMoveItem <prefix>\"\\\\test_dir3\\\\inner_dir\", <prefix>\"\\\\test_dir2\\\\test2\", \"\"", MEGRE_TSF_FLAGS, MEGRE_TSF_FLAGS},
+        {"[1] PreMoveItem <prefix>\"\\\\test_dir3\\\\inner_dir\", <prefix>\"\\\\test_dir2\\\\test2\", \"\"", MEGRE_TSF_FLAGS, MEGRE_TSF_FLAGS},
+        {"[1] PostMoveItem <prefix>\"\\\\test_dir3\\\\inner_dir\", <prefix>\"\\\\test_dir2\\\\test2\", \"inner_dir\" -> <prefix>\"\\\\test_dir2\\\\test2\\\\inner_dir\"",
+                MEGRE_TSF_FLAGS | UNKNOWN_POST_MERGE_TSF_FLAG, MEGRE_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] PostMoveItem <prefix>\"\\\\test_dir3\\\\inner_dir\", <prefix>\"\\\\test_dir2\\\\test2\", \"inner_dir\" -> <prefix>\"\\\\test_dir2\\\\test2\\\\inner_dir\"",
+                MEGRE_TSF_FLAGS | UNKNOWN_POST_MERGE_TSF_FLAG, MEGRE_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] PreMoveItem <prefix>\"\\\\testfile8\", <prefix>\"\\\\test_dir2\", \"\"", DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS},
+        {"[0] PostMoveItem <prefix>\"\\\\testfile8\", <prefix>\"\\\\test_dir2\", \"testfile8\" -> <prefix>\"\\\\test_dir2\\\\testfile8\"",
+                DEFAULT_TSF_FLAGS, DEFAULT_TSF_FLAGS,
+                COPYENGINE_S_DONT_PROCESS_CHILDREN, COPYENGINE_S_DONT_PROCESS_CHILDREN},
+        {"[0] FinishOperations"},
+    };
+
     WCHAR dirpath[MAX_PATH], tmpfile[MAX_PATH], path[MAX_PATH];
+    struct progress_expected_notifications expected_notif;
+    IFileOperationProgressSink *progress, *progress2;
     IFileOperation *operation;
     IShellItem *item, *item2;
     IShellItem *folder;
@@ -2817,6 +3214,10 @@ static void test_file_operation(void)
     hr = IFileOperation_Advise(operation, NULL, &cookie);
     todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
 
+    progress = create_progress_sink(0);
+    hr = IFileOperation_Advise(operation, progress, &cookie);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
     hr = IFileOperation_PerformOperations(operation);
     todo_wine ok(hr == E_UNEXPECTED, "got %#lx.\n", hr);
 
@@ -2838,7 +3239,10 @@ static void test_file_operation(void)
     hr = IFileOperation_SetOperationFlags(operation, 0);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 
-    hr = IFileOperation_MoveItem(operation, item, folder, L"test", NULL);
+    progress2 = create_progress_sink(1);
+    progress_init_check_notifications(progress, ARRAY_SIZE(notifications1), notifications1, dirpath, &expected_notif);
+    progress_init_check_notifications(progress2, ARRAY_SIZE(notifications1), notifications1, dirpath, &expected_notif);
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test", progress2);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
@@ -2848,6 +3252,7 @@ static void test_file_operation(void)
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
     todo_wine ok(!aborted, "got %d.\n", aborted);
+    progress_end_check_notifications(progress);
 
     hr = IFileOperation_PerformOperations(operation);
     todo_wine ok(hr == E_UNEXPECTED, "got %#lx.\n", hr);
@@ -2855,8 +3260,10 @@ static void test_file_operation(void)
     /* Input file does not exist: PerformOperations succeeds, 'aborted' is set. */
     hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    progress_init_check_notifications(progress, ARRAY_SIZE(notifications2), notifications2, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    progress_end_check_notifications(progress);
     aborted = 0;
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
@@ -2877,8 +3284,10 @@ static void test_file_operation(void)
     set_shell_item_path(item, tmpfile, FALSE);
     bret = DeleteFileW(tmpfile);
     ok(bret, "got error %ld.\n", GetLastError());
+    progress_init_check_notifications(progress, ARRAY_SIZE(notifications3), notifications3, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    progress_end_check_notifications(progress);
     aborted = 0;
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
@@ -2902,6 +3311,8 @@ static void test_file_operation(void)
 
     hr = IFileOperation_Unadvise(operation, 0xdeadbeef);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_Unadvise(operation, cookie);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 
     IFileOperation_Release(operation);
     refcount = IShellItem_Release(folder);
@@ -2912,6 +3323,9 @@ static void test_file_operation(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
 
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IFileOperation_Advise(operation, progress, &cookie);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 
     PathCombineW(path, dirpath, L"test_dir1");
@@ -2935,8 +3349,10 @@ static void test_file_operation(void)
     /* Source is directory, destination test2 is file. */
     hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    progress_init_check_notifications(progress, ARRAY_SIZE(notifications4), notifications4, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    progress_end_check_notifications(progress);
     aborted = 0;
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
@@ -2949,18 +3365,24 @@ static void test_file_operation(void)
     /* Source is directory, destination is absent (simple move). */
     hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER, &IID_IFileOperation, (void **)&operation);
     ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_Advise(operation, progress, &cookie);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 
     hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    progress_init_check_notifications(progress, ARRAY_SIZE(notifications5), notifications5, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    progress_end_check_notifications(progress);
     IFileOperation_Release(operation);
 
     /* Source and dest are directories, merge is performed. */
     hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER, &IID_IFileOperation, (void **)&operation);
     ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_Advise(operation, progress, &cookie);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
 
@@ -2983,14 +3405,16 @@ static void test_file_operation(void)
     hr = SHCreateItemFromParsingName(tmpfile, NULL, &IID_IShellItem, (void**)&item2);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
-    hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test2", progress2);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_MoveItem(operation, item2, folder, NULL, NULL);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
     refcount = IShellItem_Release(item2);
     ok(!refcount, "got %ld.\n", refcount);
+    progress_init_check_notifications(progress, ARRAY_SIZE(notifications6), notifications6, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
     todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    progress_end_check_notifications(progress);
 
     PathCombineW(path, dirpath, L"test_dir2");
     PathCombineW(tmpfile, dirpath, L"test_dir2\\test2\\testfile6");
@@ -3008,6 +3432,11 @@ static void test_file_operation(void)
     ok(!refcount, "got %ld.\n", refcount);
     refcount = IShellItem_Release(folder);
     ok(!refcount, "got %ld.\n", refcount);
+
+    refcount = IFileOperationProgressSink_Release(progress);
+    ok(!refcount, "got %ld.\n", refcount);
+    refcount = IFileOperationProgressSink_Release(progress2);
+    ok(!refcount, "got %ld.\n", refcount);
 }
 
 START_TEST(shlfileop)
@@ -3018,6 +3447,7 @@ START_TEST(shlfileop)
     old_shell32 = is_old_shell32();
     if (old_shell32)
         win_skip("Need to cater for old shell32 (4.0.x) on Win95\n");
+
     clean_after_shfo_tests();
 
     init_shfo_tests();
