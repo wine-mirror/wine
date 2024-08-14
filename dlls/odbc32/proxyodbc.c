@@ -3009,7 +3009,11 @@ SQLRETURN WINAPI SQLGetStmtAttr(SQLHSTMT StatementHandle, SQLINTEGER Attribute, 
                     ERR( "truncating descriptor handle, consider using a Windows driver\n" );
                 desc->hdr.unix_handle = (ULONG_PTR)*(SQLHDESC *)Value;
             }
-            else if (stmt->hdr.win32_handle) desc->hdr.win32_handle = *(SQLHDESC *)Value;
+            else if (stmt->hdr.win32_handle)
+            {
+                desc->hdr.win32_handle = *(SQLHDESC *)Value;
+                desc->hdr.win32_funcs = stmt->hdr.win32_funcs;
+            }
             *(struct descriptor **)Value = desc;
             break;
         }
@@ -6428,7 +6432,11 @@ SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
                     ERR( "truncating descriptor handle, consider using a Windows driver\n" );
                 desc->hdr.unix_handle = (ULONG_PTR)*(SQLHDESC *)Value;
             }
-            else if (stmt->hdr.win32_handle) desc->hdr.win32_handle = *(SQLHDESC *)Value;
+            else if (stmt->hdr.win32_handle)
+            {
+                desc->hdr.win32_handle = *(SQLHDESC *)Value;
+                desc->hdr.win32_funcs = stmt->hdr.win32_funcs;
+            }
             *(struct descriptor **)Value = desc;
             break;
         }
