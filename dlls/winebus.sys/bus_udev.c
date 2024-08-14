@@ -1177,13 +1177,17 @@ static void get_device_subsystem_info(struct udev_device *dev, const char *subsy
                 if (*bus || desc->vid || desc->pid) continue;
                 sscanf(ptr, "HID_ID=%x:%x:%x\n", bus, &desc->vid, &desc->pid);
             }
-            if (!strncmp(ptr, "PRODUCT=", 8) && *bus != BUS_BLUETOOTH)
+
+            if (!strcmp(subsystem, "input"))
             {
-                if (desc->version) continue;
-                if (!strcmp(subsystem, "usb"))
-                    sscanf(ptr, "PRODUCT=%x/%x/%x\n", &desc->vid, &desc->pid, &desc->version);
-                else
+                if (!strncmp(ptr, "PRODUCT=", 8))
                     sscanf(ptr, "PRODUCT=%x/%x/%x/%x\n", bus, &desc->vid, &desc->pid, &desc->version);
+            }
+
+            if (!strcmp(subsystem, "usb") && *bus != BUS_BLUETOOTH)
+            {
+                if (!strncmp(ptr, "PRODUCT=", 8))
+                    sscanf(ptr, "PRODUCT=%x/%x/%x\n", &desc->vid, &desc->pid, &desc->version);
             }
         }
     }
