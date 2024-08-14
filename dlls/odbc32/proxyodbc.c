@@ -4273,17 +4273,10 @@ static SQLRETURN parse_connect_string( struct attribute_list *list, const WCHAR 
     return SQL_SUCCESS;
 }
 
-static const WCHAR *get_datasource( const struct attribute_list *list )
+static const WCHAR *get_attribute( const struct attribute_list *list, const WCHAR *name )
 {
     UINT32 i;
-    for (i = 0; i < list->count; i++) if (!wcscmp( list->attrs[i]->name, L"DSN" )) return list->attrs[i]->value;
-    return NULL;
-}
-
-static WCHAR *get_drivername( const struct attribute_list *list )
-{
-    UINT32 i;
-    for (i = 0; i < list->count; i++) if (!wcscmp( list->attrs[i]->name, L"DRIVER" )) return list->attrs[i]->value;
+    for (i = 0; i < list->count; i++) if (!wcsicmp( list->attrs[i]->name, name )) return list->attrs[i]->value;
     return NULL;
 }
 
@@ -4373,7 +4366,7 @@ SQLRETURN WINAPI SQLBrowseConnect(SQLHDBC ConnectionHandle, SQLCHAR *InConnectio
     if (parse_connect_string( &attrs, strW ) || !(connect_string = build_connect_string( &attrs )) ||
         !(strA = (SQLCHAR *)strdupWA( connect_string ))) goto done;
 
-    if (!(datasource = get_datasource( &attrs )) && !(drivername = get_drivername( &attrs )))
+    if (!(datasource = get_attribute( &attrs, L"DSN" )) && !(drivername = get_attribute( &attrs, L"DRIVER" )))
     {
         WARN( "can't find data source or driver name\n" );
         goto done;
@@ -5497,7 +5490,7 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC ConnectionHandle, SQLHWND WindowHandle
     if (parse_connect_string( &attrs, strW ) || !(connect_string = build_connect_string( &attrs )) ||
         !(strA = (SQLCHAR *)strdupWA( connect_string ))) goto done;
 
-    if (!(datasource = get_datasource( &attrs )) && !(drivername = get_drivername( &attrs )))
+    if (!(datasource = get_attribute( &attrs, L"DSN" )) && !(drivername = get_attribute( &attrs, L"DRIVER" )))
     {
         WARN( "can't find data source or driver name\n" );
         goto done;
@@ -6608,7 +6601,7 @@ SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle, SQLHWND WindowHandl
     if (parse_connect_string( &attrs, InConnectionString ) || !(connect_string = build_connect_string( &attrs )))
         goto done;
 
-    if (!(datasource = get_datasource( &attrs )) && !(drivername = get_drivername( &attrs )))
+    if (!(datasource = get_attribute( &attrs, L"DSN" )) && !(drivername = get_attribute( &attrs, L"DRIVER" )))
     {
         WARN( "can't find data source or driver name\n" );
         goto done;
@@ -7040,7 +7033,7 @@ SQLRETURN WINAPI SQLBrowseConnectW(SQLHDBC ConnectionHandle, SQLWCHAR *InConnect
     if (parse_connect_string( &attrs, InConnectionString ) || !(connect_string = build_connect_string( &attrs )))
         goto done;
 
-    if (!(datasource = get_datasource( &attrs )) && !(drivername = get_drivername( &attrs )))
+    if (!(datasource = get_attribute( &attrs, L"DSN" )) && !(drivername = get_attribute( &attrs, L"DRIVER" )))
     {
         WARN( "can't find data source or driver name\n" );
         goto done;

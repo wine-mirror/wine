@@ -182,7 +182,7 @@ static void test_SQLDriverConnect( void )
 
     len = 0;
     str[0] = 0;
-    ret = SQLDriverConnect( con, NULL, (SQLCHAR *)"DSN=winetest;UID=winetest", strlen("DSN=winetest;UID=winetest"),
+    ret = SQLDriverConnect( con, NULL, (SQLCHAR *)"dsn=winetest;UID=winetest", strlen("dsn=winetest;UID=winetest"),
                             str, sizeof(str), &len, 0 );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
     if (ret != SQL_SUCCESS)
