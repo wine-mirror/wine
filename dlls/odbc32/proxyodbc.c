@@ -6424,6 +6424,8 @@ SQLRETURN WINAPI SQLGetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
         {
         case SQL_ATTR_APP_ROW_DESC:
         case SQL_ATTR_APP_PARAM_DESC:
+        case SQL_ATTR_IMP_ROW_DESC:
+        case SQL_ATTR_IMP_PARAM_DESC:
         {
             struct descriptor *desc = stmt->desc[Attribute - SQL_ATTR_APP_ROW_DESC];
             if (stmt->hdr.unix_handle)
@@ -7668,8 +7670,6 @@ SQLRETURN WINAPI SQLSetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
     {
     case SQL_ATTR_APP_ROW_DESC:
     case SQL_ATTR_APP_PARAM_DESC:
-    case SQL_ATTR_IMP_ROW_DESC:
-    case SQL_ATTR_IMP_PARAM_DESC:
     {
         struct descriptor *desc = (struct descriptor *)lock_object( Value, SQL_HANDLE_DESC );
         if (desc)
