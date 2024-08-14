@@ -1594,30 +1594,28 @@ BOOL get_window_rects( HWND hwnd, enum coords_relative relative, struct window_r
     if (win != WND_OTHER_PROCESS)
     {
         UINT window_dpi = get_dpi_for_window( hwnd );
-        RECT window = win->window_rect;
-        RECT client = win->client_rect;
-        RECT visible = win->visible_rect;
+        *rects = win->rects;
 
         switch (relative)
         {
         case COORDS_CLIENT:
-            OffsetRect( &window, -win->client_rect.left, -win->client_rect.top );
-            OffsetRect( &client, -win->client_rect.left, -win->client_rect.top );
-            OffsetRect( &visible, -win->client_rect.left, -win->client_rect.top );
+            OffsetRect( &rects->window, -win->rects.client.left, -win->rects.client.top );
+            OffsetRect( &rects->client, -win->rects.client.left, -win->rects.client.top );
+            OffsetRect( &rects->visible, -win->rects.client.left, -win->rects.client.top );
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
             {
-                mirror_rect( &win->client_rect, &window );
-                mirror_rect( &win->client_rect, &visible );
+                mirror_rect( &win->rects.client, &rects->window );
+                mirror_rect( &win->rects.client, &rects->visible );
             }
             break;
         case COORDS_WINDOW:
-            OffsetRect( &window, -win->window_rect.left, -win->window_rect.top );
-            OffsetRect( &client, -win->window_rect.left, -win->window_rect.top );
-            OffsetRect( &visible, -win->window_rect.left, -win->window_rect.top );
+            OffsetRect( &rects->window, -win->rects.window.left, -win->rects.window.top );
+            OffsetRect( &rects->client, -win->rects.window.left, -win->rects.window.top );
+            OffsetRect( &rects->visible, -win->rects.window.left, -win->rects.window.top );
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
             {
-                mirror_rect( &win->window_rect, &client );
-                mirror_rect( &win->window_rect, &visible );
+                mirror_rect( &win->rects.window, &rects->client );
+                mirror_rect( &win->rects.window, &rects->visible );
             }
             break;
         case COORDS_PARENT:
@@ -1638,9 +1636,9 @@ BOOL get_window_rects( HWND hwnd, enum coords_relative relative, struct window_r
                 }
                 if (parent->dwExStyle & WS_EX_LAYOUTRTL)
                 {
-                    mirror_rect( &parent->client_rect, &window );
-                    mirror_rect( &parent->client_rect, &client );
-                    mirror_rect( &parent->client_rect, &visible );
+                    mirror_rect( &parent->rects.client, &rects->window );
+                    mirror_rect( &parent->rects.client, &rects->client );
+                    mirror_rect( &parent->rects.client, &rects->visible );
                 }
                 release_win_ptr( parent );
             }
@@ -1664,16 +1662,16 @@ BOOL get_window_rects( HWND hwnd, enum coords_relative relative, struct window_r
                 win = parent;
                 if (win->parent)
                 {
-                    OffsetRect( &window, win->client_rect.left, win->client_rect.top );
-                    OffsetRect( &client, win->client_rect.left, win->client_rect.top );
-                    OffsetRect( &visible, win->client_rect.left, win->client_rect.top );
+                    OffsetRect( &rects->window, win->rects.client.left, win->rects.client.top );
+                    OffsetRect( &rects->client, win->rects.client.left, win->rects.client.top );
+                    OffsetRect( &rects->visible, win->rects.client.left, win->rects.client.top );
                 }
             }
             break;
         }
-        rects->window = map_dpi_rect( window, window_dpi, dpi );
-        rects->client = map_dpi_rect( client, window_dpi, dpi );
-        rects->visible = map_dpi_rect( visible, window_dpi, dpi );
+        rects->window = map_dpi_rect( rects->window, window_dpi, dpi );
+        rects->client = map_dpi_rect( rects->client, window_dpi, dpi );
+        rects->visible = map_dpi_rect( rects->visible, window_dpi, dpi );
         release_win_ptr( win );
         return TRUE;
     }
@@ -1992,9 +1990,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         {
             win->dwStyle      = reply->new_style;
             win->dwExStyle    = reply->new_ex_style;
-            win->window_rect  = new_rects->window;
-            win->client_rect  = new_rects->client;
-            win->visible_rect = new_rects->visible;
+            win->rects        = *new_rects;
             if ((win->surface = new_surface)) window_surface_add_ref( win->surface );
             surface_win       = wine_server_ptr_handle( reply->surface_win );
             needs_update      = reply->needs_update;
@@ -2002,9 +1998,9 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             {
                 RECT client = {0};
                 get_client_rect_rel( win->parent, COORDS_CLIENT, &client, get_thread_dpi() );
-                mirror_rect( &client, &win->window_rect );
-                mirror_rect( &client, &win->client_rect );
-                mirror_rect( &client, &win->visible_rect );
+                mirror_rect( &client, &win->rects.window );
+                mirror_rect( &client, &win->rects.client );
+                mirror_rect( &client, &win->rects.visible );
             }
             /* if an RTL window is resized the children have moved */
             if (win->dwExStyle & WS_EX_LAYOUTRTL &&
@@ -2524,8 +2520,8 @@ static void update_maximized_pos( WND *wnd, RECT *work_rect )
 
     if (wnd->dwStyle & WS_MAXIMIZE)
     {
-        if (wnd->window_rect.left  <= work_rect->left  && wnd->window_rect.top    <= work_rect->top &&
-            wnd->window_rect.right >= work_rect->right && wnd->window_rect.bottom >= work_rect->bottom)
+        if (wnd->rects.window.left  <= work_rect->left  && wnd->rects.window.top    <= work_rect->top &&
+            wnd->rects.window.right >= work_rect->right && wnd->rects.window.bottom >= work_rect->bottom)
             wnd->max_pos.x = wnd->max_pos.y = -1;
     }
     else
@@ -2589,17 +2585,17 @@ BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
     /* update the placement according to the current style */
     if (win->dwStyle & WS_MINIMIZE)
     {
-        win->min_pos.x = win->window_rect.left;
-        win->min_pos.y = win->window_rect.top;
+        win->min_pos.x = win->rects.window.left;
+        win->min_pos.y = win->rects.window.top;
     }
     else if (win->dwStyle & WS_MAXIMIZE)
     {
-        win->max_pos.x = win->window_rect.left;
-        win->max_pos.y = win->window_rect.top;
+        win->max_pos.x = win->rects.window.left;
+        win->max_pos.y = win->rects.window.top;
     }
     else
     {
-        win->normal_rect = win->window_rect;
+        win->normal_rect = win->rects.window;
     }
     update_maximized_pos( win, &work_rect );
 
@@ -2914,12 +2910,12 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mi
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
             {
                 mirror_from = TRUE;
-                offset.x += win->client_rect.right - win->client_rect.left;
+                offset.x += win->rects.client.right - win->rects.client.left;
             }
             while (win->parent)
             {
-                offset.x += win->client_rect.left;
-                offset.y += win->client_rect.top;
+                offset.x += win->rects.client.left;
+                offset.y += win->rects.client.top;
                 hwnd = win->parent;
                 release_win_ptr( win );
                 if (!(win = get_win_ptr( hwnd ))) break;
@@ -2952,12 +2948,12 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mi
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
             {
                 mirror_to = TRUE;
-                pt.x += win->client_rect.right - win->client_rect.left;
+                pt.x += win->rects.client.right - win->rects.client.left;
             }
             while (win->parent)
             {
-                pt.x += win->client_rect.left;
-                pt.y += win->client_rect.top;
+                pt.x += win->rects.client.left;
+                pt.y += win->rects.client.top;
                 hwnd = win->parent;
                 release_win_ptr( win );
                 if (!(win = get_win_ptr( hwnd ))) break;
@@ -3161,7 +3157,7 @@ static BOOL calc_winpos( WINDOWPOS *winpos, struct window_rects *old_rects, stru
 
     /* Calculate new position and size */
     get_window_rects( winpos->hwnd, COORDS_PARENT, old_rects, get_thread_dpi() );
-    old_rects->visible = win->visible_rect;
+    old_rects->visible = win->rects.visible;
     *new_rects = *old_rects;
 
     if (!(winpos->flags & SWP_NOSIZE))
@@ -3182,7 +3178,7 @@ static BOOL calc_winpos( WINDOWPOS *winpos, struct window_rects *old_rects, stru
     {
         /* If the window is toplevel minimized off-screen, force keep it there */
         if ((win->dwStyle & WS_MINIMIZE) &&
-             win->window_rect.left <= -32000 && win->window_rect.top <= -32000 &&
+             win->rects.window.left <= -32000 && win->rects.window.top <= -32000 &&
             (!win->parent || win->parent == get_desktop_window()))
         {
             winpos->x = -32000;
