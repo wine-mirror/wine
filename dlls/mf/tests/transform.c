@@ -2152,7 +2152,7 @@ static IMFSample *create_sample_(const BYTE *data, ULONG size, const struct attr
         hr = MFCreateMediaType(&media_type);
         ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
         init_media_type(media_type, desc, -1);
-        hr = MFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &media_buffer);
+        hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &media_buffer);
         ok(hr == S_OK, "MFCreateMediaBufferFromMediaType returned %#lx\n", hr);
         IMFMediaType_Release(media_type);
     }
@@ -8144,6 +8144,12 @@ static void test_video_processor(BOOL use_2d_buffer)
     ULONG ret;
     GUID guid;
     LONG ref;
+
+    if (use_2d_buffer && !pMFCreateMediaBufferFromMediaType)
+    {
+        win_skip("MFCreateMediaBufferFromMediaType() is unsupported.\n");
+        return;
+    }
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);

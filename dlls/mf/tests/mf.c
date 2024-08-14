@@ -82,6 +82,8 @@ HRESULT (WINAPI *pMFCreateSampleCopierMFT)(IMFTransform **copier);
 HRESULT (WINAPI *pMFGetTopoNodeCurrentType)(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);
 HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
 HRESULT (WINAPI *pMFCreateVideoSampleAllocatorEx)(REFIID riid, void **obj);
+HRESULT (WINAPI *pMFCreateMediaBufferFromMediaType)(IMFMediaType *media_type, LONGLONG duration, DWORD min_length,
+        DWORD min_alignment, IMFMediaBuffer **buffer);
 BOOL has_video_processor;
 
 static BOOL is_vista(void)
@@ -5729,6 +5731,7 @@ void init_functions(void)
     mod = GetModuleHandleA("mfplat.dll");
     X(MFCreateDXGIDeviceManager);
     X(MFCreateVideoSampleAllocatorEx);
+    X(MFCreateMediaBufferFromMediaType);
 #undef X
 
     hr = CoInitialize(NULL);
