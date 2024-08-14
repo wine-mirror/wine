@@ -23,6 +23,12 @@
 #include "wine/test.h"
 #include <stdint.h>
 
+static const D3DX10_IMAGE_LOAD_INFO d3dx10_default_load_info =
+{
+    D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT,
+    D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, NULL
+};
+
 #define D3DERR_INVALIDCALL 0x8876086c
 
 #ifndef MAKEFOURCC
@@ -732,6 +738,81 @@ static const BYTE test_dds_volume_data[] =
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x87, 0x0f, 0x78, 0x05, 0x05, 0x50, 0x50,
 };
 
+/*
+ * 8x8 24-bit dds, 4 mipmaps. Level 0 is red, level 1 is green, level 2 is
+ * blue, and level 3 is black.
+ */
+static const uint8_t dds_24bit_8_8[] =
+{
+    0x44,0x44,0x53,0x20,0x7c,0x00,0x00,0x00,0x07,0x10,0x0a,0x00,0x08,0x00,0x00,0x00,
+    0x08,0x00,0x00,0x00,0x18,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x00,0x00,0x00,
+    0x40,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x00,0x00,0x00,0x00,0x00,0xff,0x00,
+    0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x10,0x40,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,
+    0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,
+    0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,
+    0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,
+    0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,
+    0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,
+    0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,
+    0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,
+    0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,
+    0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,
+    0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,
+    0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,
+    0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,
+    0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,
+    0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,
+    0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00
+};
+
+/* 4x4 cube map DDS file with 2 mips. */
+static const uint8_t dds_cube_map_4_4[] =
+{
+    0x44,0x44,0x53,0x20,0x7c,0x00,0x00,0x00,0x0f,0x10,0x02,0x00,0x04,0x00,0x00,0x00,
+    0x04,0x00,0x00,0x00,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x00,0x00,0x00,
+    0x41,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x00,0x00,0x00,0xff,0x00,0x00,0x00,
+    0x00,0xff,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0xff,0x08,0x10,0x40,0x00,
+    0x00,0xfe,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,
+    0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,
+    0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,
+    0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,
+    0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,
+    0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,
+    0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,
+    0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,
+    0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,
+    0x00,0xff,0xff,0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0x00,
+    0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,
+    0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,
+    0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,
+    0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0xff,0x00,
+    0xff,0xff,0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0x00,0x00,0xff,0xff,0x00,0x00,
+    0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,
+    0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,
+    0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,
+    0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,
+    0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,
+    0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,
+    0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,
+    0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,
+    0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,
+    0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,
+    0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,
+    0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,0x80,0x00,0x00,0x00,
+    0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x00,0x00,0x80,0x80,0x00,
+};
+
 /* 1x1 wmp image */
 static const BYTE test_wmp[] =
 {
@@ -921,6 +1002,161 @@ test_image[] =
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_WMP}
     },
 };
+
+static const struct test_image_load_info
+{
+    const uint8_t *data;
+    uint32_t size;
+    D3DX10_IMAGE_LOAD_INFO load_info;
+    HRESULT expected_hr;
+
+    D3D10_RESOURCE_DIMENSION expected_type;
+    union
+    {
+        D3D10_TEXTURE2D_DESC desc_2d;
+        D3D10_TEXTURE3D_DESC desc_3d;
+    } expected_resource_desc;
+    BOOL todo_resource_desc;
+} test_image_load_info[] =
+{
+    /*
+     * Autogen mips misc flag specified. In the case of a cube texture image,
+     * the autogen mips flag is OR'd against D3D10_RESOURCE_MISC_TEXTURECUBE,
+     * even if it isn't specified in the load info structure.
+     */
+    {
+        dds_cube_map_4_4, sizeof(dds_cube_map_4_4),
+        {
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, (D3D10_USAGE)D3DX10_DEFAULT,
+            (D3D10_BIND_SHADER_RESOURCE | D3D10_BIND_RENDER_TARGET),        D3DX10_DEFAULT, D3D10_RESOURCE_MISC_GENERATE_MIPS,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT
+        },
+        S_OK, D3D10_RESOURCE_DIMENSION_TEXTURE2D,
+        {
+            .desc_2d =
+            {
+                4, 4, 3, 6, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT,
+                (D3D10_BIND_SHADER_RESOURCE | D3D10_BIND_RENDER_TARGET), 0,
+                (D3D10_RESOURCE_MISC_GENERATE_MIPS | D3D10_RESOURCE_MISC_TEXTURECUBE)
+            }
+        }, .todo_resource_desc = TRUE,
+    },
+    /*
+     * Pass in different dimensions and texture format than the source image.
+     */
+    {
+        test_dds_dxt1, sizeof(test_dds_dxt1),
+        {
+            8,              8,              D3DX10_DEFAULT, D3DX10_DEFAULT,             1,  (D3D10_USAGE)D3DX10_DEFAULT,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, DXGI_FORMAT_R8G8B8A8_UNORM, D3DX10_DEFAULT,
+            D3DX10_DEFAULT
+        },
+        S_OK, D3D10_RESOURCE_DIMENSION_TEXTURE2D,
+        {
+            .desc_2d =
+            {
+                8, 8, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, { 1, 0 }, D3D10_USAGE_DEFAULT, D3D10_BIND_SHADER_RESOURCE, 0, 0
+            }
+        }, .todo_resource_desc = TRUE,
+    },
+};
+
+static const struct test_invalid_image_load_info
+{
+    const uint8_t *data;
+    uint32_t size;
+    D3DX10_IMAGE_LOAD_INFO load_info;
+    HRESULT expected_hr;
+    HRESULT expected_process_hr;
+    HRESULT expected_create_device_object_hr;
+    BOOL todo_hr;
+    BOOL todo_process_hr;
+    BOOL todo_create_device_object_hr;
+} test_invalid_image_load_info[] =
+{
+    /*
+     * A depth value that isn't D3DX10_FROM_FILE/D3DX10_DEFAULT/0 on a 2D
+     * texture results in failure.
+     */
+    {
+        test_dds_32bpp, sizeof(test_dds_32bpp),
+        {
+            D3DX10_DEFAULT, D3DX10_DEFAULT, 2,              D3DX10_DEFAULT, D3DX10_DEFAULT, (D3D10_USAGE)D3DX10_DEFAULT,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT
+        },
+        E_FAIL, E_FAIL, .todo_hr = TRUE, .todo_process_hr = TRUE
+    },
+    /* Invalid filter value. */
+    {
+        test_dds_32bpp, sizeof(test_dds_32bpp),
+        {
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, (D3D10_USAGE)D3DX10_DEFAULT,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, 7,              D3DX10_DEFAULT
+        },
+        D3DERR_INVALIDCALL, D3DERR_INVALIDCALL, .todo_hr = TRUE, .todo_process_hr = TRUE
+    },
+    /* Invalid mipfilter value, only validated if mips are generated. */
+    {
+        test_dds_32bpp, sizeof(test_dds_32bpp),
+        {
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, (D3D10_USAGE)D3DX10_DEFAULT,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, 7
+        },
+        S_OK, S_OK, S_OK
+    },
+    /* Invalid mipfilter value. */
+    {
+        test_dds_32bpp, sizeof(test_dds_32bpp),
+        {
+            2,              2,              D3DX10_DEFAULT, D3DX10_DEFAULT, 2,              (D3D10_USAGE)D3DX10_DEFAULT,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, 7
+        },
+        D3DERR_INVALIDCALL, D3DERR_INVALIDCALL, .todo_hr = TRUE, .todo_process_hr = TRUE
+    },
+    /*
+     * Usage/BindFlags/CpuAccessFlags are validated in the call to
+     * CreateDeviceObject().
+     */
+    {
+        test_dds_32bpp, sizeof(test_dds_32bpp),
+        {
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3D10_CPU_ACCESS_READ, D3D10_USAGE_DYNAMIC,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT
+        },
+        E_INVALIDARG, S_OK, E_INVALIDARG, .todo_hr = TRUE, .todo_create_device_object_hr = TRUE,
+    },
+    /* 5. */
+    {
+        test_dds_32bpp, sizeof(test_dds_32bpp),
+        {
+            D3DX10_DEFAULT,           D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3D10_USAGE_DEFAULT,
+            D3D10_BIND_DEPTH_STENCIL, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT
+        },
+        E_INVALIDARG, S_OK, E_INVALIDARG, .todo_hr = TRUE, .todo_create_device_object_hr = TRUE,
+    },
+    /*
+     * D3D10_RESOURCE_MISC_GENERATE_MIPS requires binding as a shader resource
+     * and a render target.
+     */
+    {
+        test_dds_32bpp, sizeof(test_dds_32bpp),
+        {
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT,    D3DX10_DEFAULT, D3D10_USAGE_DEFAULT,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3D10_RESOURCE_MISC_GENERATE_MIPS, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT
+        },
+        E_INVALIDARG, S_OK, E_INVALIDARG, .todo_hr = TRUE, .todo_create_device_object_hr = TRUE,
+    },
+    /* Can't set the cube texture flag if the image isn't a cube texture. */
+    {
+        test_dds_32bpp, sizeof(test_dds_32bpp),
+        {
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT,  D3DX10_DEFAULT, D3D10_USAGE_DEFAULT,
+            D3DX10_DEFAULT, D3DX10_DEFAULT, D3D10_RESOURCE_MISC_TEXTURECUBE, D3DX10_DEFAULT, D3DX10_DEFAULT, D3DX10_DEFAULT
+        },
+        E_INVALIDARG, S_OK, E_INVALIDARG, .todo_hr = TRUE, .todo_create_device_object_hr = TRUE,
+    },
+};
+
 
 static WCHAR temp_dir[MAX_PATH];
 
@@ -1373,6 +1609,107 @@ static inline void check_image_info_values_(uint32_t line, const D3DX10_IMAGE_IN
             image_file_format, info->ImageFileFormat);
 }
 
+#define check_texture2d_desc(desc, expected, wine_todo) check_texture2d_desc_(__LINE__, desc, expected, wine_todo)
+static inline void check_texture2d_desc_(uint32_t line, const D3D10_TEXTURE2D_DESC *desc, const D3D10_TEXTURE2D_DESC *expected,
+        BOOL wine_todo)
+{
+    BOOL matched;
+
+    matched = !memcmp(expected, desc, sizeof(*desc));
+    todo_wine_if(wine_todo) ok_(__FILE__, line)(matched, "Got unexpected 2D texture desc values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && desc->Width != expected->Width)
+        ok_(__FILE__, line)(desc->Width == expected->Width, "Expected width %u, got %u.\n", expected->Width,
+                desc->Width);
+    todo_wine_if(wine_todo && desc->Height != expected->Height)
+        ok_(__FILE__, line)(desc->Height == expected->Height, "Expected height %u, got %u.\n", expected->Height,
+                desc->Height);
+    todo_wine_if(wine_todo && desc->ArraySize != expected->ArraySize)
+        ok_(__FILE__, line)(desc->ArraySize == expected->ArraySize, "Expected array size %u, got %u.\n",
+                expected->ArraySize, desc->ArraySize);
+    todo_wine_if(wine_todo && desc->MipLevels != expected->MipLevels)
+        ok_(__FILE__, line)(desc->MipLevels == expected->MipLevels, "Expected mip levels %u, got %u.\n",
+                expected->MipLevels, desc->MipLevels);
+    todo_wine_if(wine_todo && desc->Format != expected->Format)
+        ok_(__FILE__, line)(desc->Format == expected->Format, "Expected texture format %#x, got %#x.\n",
+                expected->Format, desc->Format);
+    todo_wine_if(wine_todo && desc->SampleDesc.Count != expected->SampleDesc.Count)
+        ok_(__FILE__, line)(desc->SampleDesc.Count == expected->SampleDesc.Count, "Expected sample count %u, got %u.\n",
+                expected->SampleDesc.Count, desc->SampleDesc.Count);
+    todo_wine_if(wine_todo && desc->SampleDesc.Quality != expected->SampleDesc.Quality)
+        ok_(__FILE__, line)(desc->SampleDesc.Quality == expected->SampleDesc.Quality,
+                "Expected sample quality %u, got %u.\n", expected->SampleDesc.Quality, desc->SampleDesc.Quality);
+    todo_wine_if(wine_todo && desc->Usage != expected->Usage)
+        ok_(__FILE__, line)(desc->Usage == expected->Usage, "Expected usage %u, got %u.\n", expected->Usage,
+                desc->Usage);
+    todo_wine_if(wine_todo && desc->BindFlags != expected->BindFlags)
+        ok_(__FILE__, line)(desc->BindFlags == expected->BindFlags, "Expected bind flags %#x, got %#x.\n",
+                expected->BindFlags, desc->BindFlags);
+    todo_wine_if(wine_todo && desc->CPUAccessFlags != expected->CPUAccessFlags)
+        ok_(__FILE__, line)(desc->CPUAccessFlags == expected->CPUAccessFlags,
+                "Expected CPU access flags %#x, got %#x.\n", expected->CPUAccessFlags, desc->CPUAccessFlags);
+    todo_wine_if(wine_todo && desc->MiscFlags != expected->MiscFlags)
+        ok_(__FILE__, line)(desc->MiscFlags == expected->MiscFlags, "Expected misc flags %#x, got %#x.\n",
+                expected->MiscFlags, desc->MiscFlags);
+}
+
+#define check_texture2d_desc_values(desc, width, height, mip_levels, array_size, format, sample_count, sample_quality, \
+                                usage, bind_flags, cpu_access_flags, misc_flags, wine_todo) \
+    check_texture2d_desc_values_(__LINE__, desc, width, height, mip_levels, array_size, format, sample_count, sample_quality, \
+                                usage, bind_flags, cpu_access_flags, misc_flags, wine_todo)
+static inline void check_texture2d_desc_values_(uint32_t line, const D3D10_TEXTURE2D_DESC *desc, uint32_t width,
+        uint32_t height, uint32_t mip_levels, uint32_t array_size, DXGI_FORMAT format, uint32_t sample_count,
+        uint32_t sample_quality, D3D10_USAGE usage, uint32_t bind_flags, uint32_t cpu_access_flags, uint32_t misc_flags,
+        BOOL wine_todo)
+{
+    const D3D10_TEXTURE2D_DESC expected_desc = { width, height, mip_levels, array_size, format, { sample_count, sample_quality },
+                                                 usage, bind_flags, cpu_access_flags, misc_flags };
+
+    check_texture2d_desc_(line, desc, &expected_desc, wine_todo);
+}
+
+#define check_texture3d_desc(desc, expected, wine_todo) check_texture3d_desc_(__LINE__, desc, expected, wine_todo)
+static inline void check_texture3d_desc_(uint32_t line, const D3D10_TEXTURE3D_DESC *desc,
+        const D3D10_TEXTURE3D_DESC *expected, BOOL wine_todo)
+{
+    BOOL matched;
+
+    matched = !memcmp(expected, desc, sizeof(*desc));
+    todo_wine_if(wine_todo) ok_(__FILE__, line)(matched, "Got unexpected 3D texture desc values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && desc->Width != expected->Width)
+        ok_(__FILE__, line)(desc->Width == expected->Width, "Expected width %u, got %u.\n", expected->Width,
+                desc->Width);
+    todo_wine_if(wine_todo && desc->Height != expected->Height)
+        ok_(__FILE__, line)(desc->Height == expected->Height, "Expected height %u, got %u.\n", expected->Height,
+                desc->Height);
+    todo_wine_if(wine_todo && desc->Depth != expected->Depth)
+        ok_(__FILE__, line)(desc->Depth == expected->Depth, "Expected depth %u, got %u.\n", expected->Depth,
+                desc->Depth);
+    todo_wine_if(wine_todo && desc->MipLevels != expected->MipLevels)
+        ok_(__FILE__, line)(desc->MipLevels == expected->MipLevels, "Expected mip levels %u, got %u.\n",
+                expected->MipLevels, desc->MipLevels);
+    todo_wine_if(wine_todo && desc->Format != expected->Format)
+        ok_(__FILE__, line)(desc->Format == expected->Format, "Expected texture format %#x, got %#x.\n",
+                expected->Format, desc->Format);
+    todo_wine_if(wine_todo && desc->Usage != expected->Usage)
+        ok_(__FILE__, line)(desc->Usage == expected->Usage, "Expected usage %u, got %u.\n", expected->Usage,
+                desc->Usage);
+    todo_wine_if(wine_todo && desc->BindFlags != expected->BindFlags)
+        ok_(__FILE__, line)(desc->BindFlags == expected->BindFlags, "Expected bind flags %#x, got %#x.\n",
+                expected->BindFlags, desc->BindFlags);
+    todo_wine_if(wine_todo && desc->CPUAccessFlags != expected->CPUAccessFlags)
+        ok_(__FILE__, line)(desc->CPUAccessFlags == expected->CPUAccessFlags,
+                "Expected CPU access flags %#x, got %#x.\n", expected->CPUAccessFlags, desc->CPUAccessFlags);
+    todo_wine_if(wine_todo && desc->MiscFlags != expected->MiscFlags)
+        ok_(__FILE__, line)(desc->MiscFlags == expected->MiscFlags, "Expected misc flags %#x, got %#x.\n",
+                expected->MiscFlags, desc->MiscFlags);
+}
+
 /*
  * Taken from the d3d10core tests. If there's a missing resource type or
  * texture format checking function, check to see if it exists there first.
@@ -1480,6 +1817,11 @@ static void *get_readback_data(struct resource_readback *rb, uint32_t x, uint32_
     return (uint8_t *)rb->map_desc.pData + z * rb->map_desc.DepthPitch + y * rb->map_desc.RowPitch + x * byte_width;
 }
 
+static uint32_t get_readback_u32(struct resource_readback *rb, uint32_t x, uint32_t y)
+{
+    return *(uint32_t *)get_readback_data(rb, x, y, 0, sizeof(uint32_t));
+}
+
 static void release_resource_readback(struct resource_readback *rb)
 {
     switch (rb->dimension)
@@ -1501,6 +1843,99 @@ static void release_resource_readback(struct resource_readback *rb)
             break;
     }
     ID3D10Resource_Release(rb->resource);
+}
+
+#define check_readback_data_u32(a, b, c) check_readback_data_u32_(__LINE__, a, b, c)
+static void check_readback_data_u32_(unsigned int line, struct resource_readback *rb,
+        const RECT *rect, uint32_t expected)
+{
+    unsigned int x = 0, y = 0;
+    BOOL all_match = FALSE;
+    RECT default_rect;
+    uint32_t got = 0;
+
+    if (!rect)
+    {
+        SetRect(&default_rect, 0, 0, rb->width, rb->height);
+        rect = &default_rect;
+    }
+
+    for (y = rect->top; y < rect->bottom; ++y)
+    {
+        for (x = rect->left; x < rect->right; ++x)
+        {
+            if ((got = get_readback_u32(rb, x, y)) != expected)
+                goto done;
+        }
+    }
+    all_match = TRUE;
+
+done:
+    ok_(__FILE__, line)(all_match,
+            "Got 0x%08x, expected 0x%08x at (%u, %u), sub-resource %u.\n",
+            got, expected, x, y, rb->sub_resource_idx);
+}
+
+#define check_texture_sub_resource_u32(a, b, c, d) check_texture_sub_resource_u32_(__LINE__, a, b, c, d)
+static void check_texture_sub_resource_u32_(uint32_t line, ID3D10Texture2D *texture,
+        uint32_t sub_resource_idx, const RECT *rect, uint32_t expected)
+{
+    struct resource_readback rb;
+
+    get_texture_readback(texture, sub_resource_idx, &rb);
+    check_readback_data_u32_(line, &rb, rect, expected);
+    release_resource_readback(&rb);
+}
+
+#define check_test_image_load_info_resource(resource, image_load_info) \
+    check_test_image_load_info_resource_(__LINE__, resource, image_load_info)
+static void check_test_image_load_info_resource_(uint32_t line, ID3D10Resource *resource,
+        const struct test_image_load_info *image_load_info)
+{
+    D3D10_RESOURCE_DIMENSION resource_dimension;
+    HRESULT hr;
+
+    ID3D10Resource_GetType(resource, &resource_dimension);
+    todo_wine_if(image_load_info->expected_type == D3D10_RESOURCE_DIMENSION_TEXTURE3D)
+        ok(resource_dimension == image_load_info->expected_type, "Got unexpected ResourceDimension %u, expected %u.\n",
+             resource_dimension, image_load_info->expected_type);
+
+    if (resource_dimension != image_load_info->expected_type)
+        return;
+
+    switch (resource_dimension)
+    {
+        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+        {
+            const D3D10_TEXTURE2D_DESC *expected_desc_2d = &image_load_info->expected_resource_desc.desc_2d;
+            D3D10_TEXTURE2D_DESC desc_2d;
+            ID3D10Texture2D *tex_2d;
+
+            hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&tex_2d);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n",  hr);
+            ID3D10Texture2D_GetDesc(tex_2d, &desc_2d);
+            check_texture2d_desc_(line, &desc_2d, expected_desc_2d, image_load_info->todo_resource_desc);
+            ID3D10Texture2D_Release(tex_2d);
+            break;
+        }
+
+        case D3D10_RESOURCE_DIMENSION_TEXTURE3D:
+        {
+            const D3D10_TEXTURE3D_DESC *expected_desc_3d = &image_load_info->expected_resource_desc.desc_3d;
+            D3D10_TEXTURE3D_DESC desc_3d;
+            ID3D10Texture3D *tex_3d;
+
+            hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&tex_3d);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n",  hr);
+            ID3D10Texture3D_GetDesc(tex_3d, &desc_3d);
+            check_texture3d_desc_(line, &desc_3d, expected_desc_3d, image_load_info->todo_resource_desc);
+            ID3D10Texture3D_Release(tex_3d);
+            break;
+        }
+
+        default:
+            break;
+    }
 }
 
 static void check_resource_info(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
@@ -2517,6 +2952,9 @@ static void test_D3DX10CreateAsyncTextureProcessor(void)
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
+        D3DX10_IMAGE_LOAD_INFO load_info;
+        D3DX10_IMAGE_INFO info;
+
         winetest_push_context("Test %u", i);
 
         hr = D3DX10CreateAsyncTextureProcessor(device, NULL, &dp);
@@ -2532,6 +2970,80 @@ static void test_D3DX10CreateAsyncTextureProcessor(void)
             check_resource_info(resource, test_image + i, __LINE__);
             check_resource_data(resource, test_image + i, __LINE__);
             ID3D10Resource_Release(resource);
+        }
+
+        hr = ID3DX10DataProcessor_Destroy(dp);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        /* Test behavior with load_info structure values set to defaults. */
+        load_info = d3dx10_default_load_info;
+
+        hr = D3DX10CreateAsyncTextureProcessor(device, &load_info, &dp);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID3DX10DataProcessor_Process(dp, (void *)test_image[i].data, test_image[i].size);
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            hr = ID3DX10DataProcessor_CreateDeviceObject(dp, (void **)&resource);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        hr = ID3DX10DataProcessor_Destroy(dp);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        /* Check that passed in D3DX10_IMAGE_INFO structure is filled. */
+        memset(&info, 0, sizeof(info));
+        load_info = d3dx10_default_load_info;
+        load_info.pSrcInfo = &info;
+
+        hr = D3DX10CreateAsyncTextureProcessor(device, &load_info, &dp);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID3DX10DataProcessor_Process(dp, (void *)test_image[i].data, test_image[i].size);
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            todo_wine ok(!memcmp(&test_image[i].expected_info, &info, sizeof(info)), "Unexpected image info.\n");
+            hr = ID3DX10DataProcessor_CreateDeviceObject(dp, (void **)&resource);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        hr = ID3DX10DataProcessor_Destroy(dp);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_invalid_image_load_info); ++i)
+    {
+        const struct test_invalid_image_load_info *test = &test_invalid_image_load_info[i];
+        D3DX10_IMAGE_LOAD_INFO load_info = test->load_info;
+
+        winetest_push_context("Test %u", i);
+
+        hr = D3DX10CreateAsyncTextureProcessor(device, &load_info, &dp);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID3DX10DataProcessor_Process(dp, (void *)test->data, test->size);
+        todo_wine_if(test->todo_process_hr)
+            ok(hr == test->expected_process_hr, "Got unexpected hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            resource = NULL;
+            hr = ID3DX10DataProcessor_CreateDeviceObject(dp, (void **)&resource);
+            todo_wine_if(test->todo_create_device_object_hr)
+                ok(hr == test->expected_create_device_object_hr, "Got unexpected hr %#lx.\n", hr);
+            if (SUCCEEDED(hr))
+                ID3D10Resource_Release(resource);
         }
 
         hr = ID3DX10DataProcessor_Destroy(dp);
@@ -3580,14 +4092,19 @@ static void test_get_image_info(void)
 
 static void test_create_texture(void)
 {
+    static const uint32_t dds_24bit_8_8_mip_level_expected[] = { 0xff0000ff, 0xff00ff00, 0xffff0000, 0xff000000 };
     static const WCHAR test_resource_name[] = L"resource.data";
     static const WCHAR test_filename[] = L"image.data";
+    D3D10_TEXTURE2D_DESC tex_2d_desc;
+    D3DX10_IMAGE_LOAD_INFO load_info;
+    D3DX10_IMAGE_INFO img_info;
+    unsigned int i, mip_level;
     ID3D10Resource *resource;
+    ID3D10Texture2D *tex_2d;
     HMODULE resource_module;
     ID3D10Device *device;
     WCHAR path[MAX_PATH];
     HRESULT hr, hr2;
-    unsigned int i;
 
     device = create_device();
     if (!device)
@@ -3651,8 +4168,176 @@ static void test_create_texture(void)
             ID3D10Resource_Release(resource);
         }
 
+        /* Test behavior with load_info structure values set to defaults. */
+        load_info = d3dx10_default_load_info;
+
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        /* Check that passed in D3DX10_IMAGE_INFO structure is filled. */
+        memset(&img_info, 0, sizeof(img_info));
+        load_info = d3dx10_default_load_info;
+        load_info.pSrcInfo = &img_info;
+
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            todo_wine ok(!memcmp(&test_image[i].expected_info, &img_info, sizeof(img_info)), "Unexpected image info.\n");
+            ID3D10Resource_Release(resource);
+        }
+
         winetest_pop_context();
     }
+
+    for (i = 0; i < ARRAY_SIZE(test_invalid_image_load_info); ++i)
+    {
+        const struct test_invalid_image_load_info *test = &test_invalid_image_load_info[i];
+
+        winetest_push_context("Test %u", i);
+
+        hr2 = 0xdeadbeef;
+        load_info = test->load_info;
+        hr = D3DX10CreateTextureFromMemory(device, test->data, test->size, &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        todo_wine_if(test->todo_hr) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D10Resource_Release(resource);
+
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_image_load_info); ++i)
+    {
+        const struct test_image_load_info *test = &test_image_load_info[i];
+
+        winetest_push_context("Test %u", i);
+
+        load_info = test->load_info;
+        resource = NULL;
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromMemory(device, test->data, test->size, &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            check_test_image_load_info_resource(resource, test);
+            ID3D10Resource_Release(resource);
+        }
+
+        winetest_pop_context();
+    }
+
+    /*
+     * Test behavior of the FirstMipLevel argument, including checks of the
+     * values loaded into each level of the created texture.
+     */
+    for (i = 0; i < 2; ++i)
+    {
+        if (i && D3DX10_SDK_VERSION == 33)
+        {
+            skip("FirstMipLevel argument is broken in version 33.\n");
+            continue;
+        }
+
+        winetest_push_context("FirstMipLevel %u", i);
+        memset(&img_info, 0, sizeof(img_info));
+        load_info = d3dx10_default_load_info;
+        load_info.FirstMipLevel = i;
+        load_info.MipLevels = D3DX10_FROM_FILE;
+        load_info.pSrcInfo = &img_info;
+
+        resource = NULL;
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromMemory(device, dds_24bit_8_8, sizeof(dds_24bit_8_8), &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&tex_2d);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        /*
+         * The FirstMipLevel behavior does not exactly match D3DX_SKIP_DDS_MIP_LEVEL
+         * from d3dx9, image info values always represent mip level 0 regardless of
+         * what FirstMipLevel is set to. Further, texture dimensions are
+         * always based on mip level 0, and the number of mip levels is always the same
+         * as the number in the image info structure.
+         */
+        ID3D10Texture2D_GetDesc(tex_2d, &tex_2d_desc);
+        check_texture2d_desc_values(&tex_2d_desc, 8, 8, 4, 1, DXGI_FORMAT_R8G8B8A8_UNORM, 1, 0, D3D10_USAGE_DEFAULT,
+                D3D10_BIND_SHADER_RESOURCE, 0, 0, FALSE);
+        if (img_info.Width)
+        {
+            check_image_info_values(&img_info, 8, 8, 1, 1, 4, 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+                    D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS, TRUE);
+        }
+
+        /*
+         * Image data is loaded starting from the mip level provided by
+         * FirstMipLevel. This behavior does match d3dx9's D3DX_SKIP_DDS_MIP_LEVEL.
+         */
+        for (mip_level = 0; mip_level < 4; ++mip_level)
+        {
+            winetest_push_context("MipLevel %u", mip_level);
+            todo_wine_if(i && mip_level != 3) check_texture_sub_resource_u32(tex_2d, mip_level, NULL,
+                    dds_24bit_8_8_mip_level_expected[min(3, mip_level + i)]);
+            winetest_pop_context();
+        }
+
+        ID3D10Texture2D_Release(tex_2d);
+        ID3D10Resource_Release(resource);
+        winetest_pop_context();
+    }
+
+    /*
+     * If FirstMipLevel is set to a value that is larger than the total number
+     * of mip levels in the image, it falls back to 0.
+     */
+    memset(&img_info, 0, sizeof(img_info));
+    load_info = d3dx10_default_load_info;
+    load_info.FirstMipLevel = 5;
+    load_info.MipLevels = D3DX10_FROM_FILE;
+    load_info.pSrcInfo = &img_info;
+
+    resource = NULL;
+    hr2 = 0xdeadbeef;
+    hr = D3DX10CreateTextureFromMemory(device, dds_24bit_8_8, sizeof(dds_24bit_8_8), &load_info, NULL, &resource, &hr2);
+    ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (img_info.Width)
+    {
+        check_image_info_values(&img_info, 8, 8, 1, 1, 4, 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+                D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS, TRUE);
+    }
+
+    hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&tex_2d);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D10Texture2D_GetDesc(tex_2d, &tex_2d_desc);
+    check_texture2d_desc_values(&tex_2d_desc, 8, 8, 4, 1, DXGI_FORMAT_R8G8B8A8_UNORM, 1, 0, D3D10_USAGE_DEFAULT,
+            D3D10_BIND_SHADER_RESOURCE, 0, 0, FALSE);
+    for (mip_level = 0; mip_level < 4; ++mip_level)
+    {
+        winetest_push_context("MipLevel %u", mip_level);
+        check_texture_sub_resource_u32(tex_2d, mip_level, NULL, dds_24bit_8_8_mip_level_expected[mip_level]);
+        winetest_pop_context();
+    }
+
+    ID3D10Texture2D_Release(tex_2d);
+    ID3D10Resource_Release(resource);
 
     hr2 = 0xdeadbeef;
     add_work_item_count = 0;
@@ -3717,6 +4402,64 @@ static void test_create_texture(void)
         winetest_pop_context();
     }
 
+    for (i = 0; i < ARRAY_SIZE(test_invalid_image_load_info); ++i)
+    {
+        const struct test_invalid_image_load_info *test = &test_invalid_image_load_info[i];
+
+        winetest_push_context("Test %u", i);
+        create_file(test_filename, test->data, test->size, path);
+        load_info = test->load_info;
+
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromFileW(device, path, &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        todo_wine_if(test->todo_hr) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D10Resource_Release(resource);
+
+        hr = D3DX10CreateTextureFromFileA(device, get_str_a(path), &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        todo_wine_if(test->todo_hr) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D10Resource_Release(resource);
+
+        delete_file(test_filename);
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_image_load_info); ++i)
+    {
+        const struct test_image_load_info *test = &test_image_load_info[i];
+
+        winetest_push_context("Test %u", i);
+        create_file(test_filename, test->data, test->size, path);
+        load_info = test->load_info;
+
+        resource = NULL;
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromFileW(device, path, &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            check_test_image_load_info_resource(resource, test);
+            ID3D10Resource_Release(resource);
+        }
+
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromFileA(device, get_str_a(path), &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            check_test_image_load_info_resource(resource, test);
+            ID3D10Resource_Release(resource);
+        }
+
+        delete_file(test_filename);
+        winetest_pop_context();
+    }
+
     /* D3DX10CreateTextureFromResource tests */
 
     hr2 = 0xdeadbeef;
@@ -3769,6 +4512,69 @@ static void test_create_texture(void)
         {
             check_resource_info(resource, test_image + i, __LINE__);
             check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        delete_resource_module(test_resource_name, resource_module);
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_invalid_image_load_info); ++i)
+    {
+        const struct test_invalid_image_load_info *test = &test_invalid_image_load_info[i];
+
+        winetest_push_context("Test %u", i);
+        resource_module = create_resource_module(test_resource_name, test->data, test->size);
+        load_info = test->load_info;
+
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromResourceW(device, resource_module,
+                test_resource_name, &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        todo_wine_if(test->todo_hr) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D10Resource_Release(resource);
+
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromResourceA(device, resource_module,
+                get_str_a(test_resource_name), &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        todo_wine_if(test->todo_hr) ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D10Resource_Release(resource);
+
+        delete_resource_module(test_resource_name, resource_module);
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_image_load_info); ++i)
+    {
+        const struct test_image_load_info *test = &test_image_load_info[i];
+
+        winetest_push_context("Test %u", i);
+        resource_module = create_resource_module(test_resource_name, test->data, test->size);
+        load_info = test->load_info;
+
+        resource = NULL;
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromResourceW(device, resource_module,
+                test_resource_name, &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            check_test_image_load_info_resource(resource, test);
+            ID3D10Resource_Release(resource);
+        }
+
+        hr2 = 0xdeadbeef;
+        hr = D3DX10CreateTextureFromResourceA(device, resource_module,
+                get_str_a(test_resource_name), &load_info, NULL, &resource, &hr2);
+        ok(hr == hr2, "Got unexpected hr2 %#lx.\n", hr2);
+        ok(hr == test->expected_hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            check_test_image_load_info_resource(resource, test);
             ID3D10Resource_Release(resource);
         }
 
