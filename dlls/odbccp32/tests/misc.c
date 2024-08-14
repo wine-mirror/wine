@@ -508,12 +508,9 @@ static void test_SQLInstallDriverEx(void)
     ok(sql_ret == SQL_NO_DATA || (sql_ret && error_code == SQL_SUCCESS), "SQLInstallDriverEx failed %d, %lu\n", sql_ret, error_code);
     ok(!strcmp(path, syspath), "invalid path %s\n", path);
 
-if (0)  /* Crashes on XP. */
-{
     sql_ret = 0;
     ret = SQLConfigDriver(NULL, ODBC_CONFIG_DRIVER, "WINE ODBC Driver", NULL, error, sizeof(error), NULL);
     ok(!ret, "SQLConfigDriver failed '%s'\n",error);
-}
 
     ret = SQLConfigDriver(NULL, ODBC_CONFIG_DRIVER, "WINE ODBC Driver", "CPTimeout=59\0NoWrite=60\0", error, sizeof(error), NULL);
     ok(ret, "SQLConfigDriver failed\n");
