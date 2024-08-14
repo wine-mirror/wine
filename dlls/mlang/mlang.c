@@ -3299,10 +3299,10 @@ static HRESULT WINAPI fnIMLangFontLink2_GetCharCodePages( IMLangFontLink2* iface
     for (i = 0; i < ARRAY_SIZE(mlang_data) - 1 /* skip unicode codepages */; i++)
     {
         BOOL used_dc;
-        CHAR buf;
+        CHAR buf[2];
 
         WideCharToMultiByte(mlang_data[i].family_codepage, WC_NO_BEST_FIT_CHARS,
-            &ch_src, 1, &buf, 1, NULL, &used_dc);
+            &ch_src, 1, buf, 2, NULL, &used_dc);
 
         /* If default char is not used, current codepage include the given symbol */
         if (!used_dc)
