@@ -30,12 +30,15 @@
 
 #include "initguid.h"
 
+#include "icodecapi.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 struct video_encoder
 {
     IMFTransform IMFTransform_iface;
+    ICodecAPI ICodecAPI_iface;
     LONG refcount;
 
     const GUID *const *input_types;
@@ -58,6 +61,11 @@ struct video_encoder
 static inline struct video_encoder *impl_from_IMFTransform(IMFTransform *iface)
 {
     return CONTAINING_RECORD(iface, struct video_encoder, IMFTransform_iface);
+}
+
+static inline struct video_encoder *impl_from_ICodecAPI(ICodecAPI *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_encoder, ICodecAPI_iface);
 }
 
 static HRESULT video_encoder_create_input_type(struct video_encoder *encoder,
@@ -120,6 +128,8 @@ static HRESULT WINAPI transform_QueryInterface(IMFTransform *iface, REFIID iid, 
 
     if (IsEqualGUID(iid, &IID_IMFTransform) || IsEqualGUID(iid, &IID_IUnknown))
         *out = &encoder->IMFTransform_iface;
+    else if (IsEqualGUID(iid, &IID_ICodecAPI))
+        *out = &encoder->ICodecAPI_iface;
     else
     {
         *out = NULL;
@@ -553,6 +563,139 @@ static const IMFTransformVtbl transform_vtbl =
     transform_ProcessOutput,
 };
 
+static HRESULT WINAPI codec_api_QueryInterface(ICodecAPI *iface, REFIID riid, void **out)
+{
+    struct video_encoder *encoder = impl_from_ICodecAPI(iface);
+    return IMFTransform_QueryInterface(&encoder->IMFTransform_iface, riid, out);
+}
+
+static ULONG WINAPI codec_api_AddRef(ICodecAPI *iface)
+{
+    struct video_encoder *encoder = impl_from_ICodecAPI(iface);
+    return IMFTransform_AddRef(&encoder->IMFTransform_iface);
+}
+
+static ULONG WINAPI codec_api_Release(ICodecAPI *iface)
+{
+    struct video_encoder *encoder = impl_from_ICodecAPI(iface);
+    return IMFTransform_Release(&encoder->IMFTransform_iface);
+}
+
+static HRESULT WINAPI codec_api_IsSupported(ICodecAPI *iface, const GUID *api)
+{
+    FIXME("iface %p, api %s.\n", iface, debugstr_guid(api));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_IsModifiable(ICodecAPI *iface, const GUID *api)
+{
+    FIXME("iface %p, api %s.\n", iface, debugstr_guid(api));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_GetParameterRange(ICodecAPI *iface,
+        const GUID *api, VARIANT *min, VARIANT *max, VARIANT *delta)
+{
+    FIXME("iface %p, api %s, min %p, max %p, delta %p.\n",
+            iface, debugstr_guid(api), min, max, delta);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_GetParameterValues(ICodecAPI *iface, const GUID *api, VARIANT **values, ULONG *count)
+{
+    FIXME("iface %p, api %s, values %p, count %p.\n", iface, debugstr_guid(api), values, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_GetDefaultValue(ICodecAPI *iface, const GUID *api, VARIANT *value)
+{
+    FIXME("iface %p, api %s, value %p.\n", iface, debugstr_guid(api), value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_GetValue(ICodecAPI *iface, const GUID *api, VARIANT *value)
+{
+    FIXME("iface %p, api %s, value %p.\n", iface, debugstr_guid(api), value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_SetValue(ICodecAPI *iface, const GUID *api, VARIANT *value)
+{
+    FIXME("iface %p, api %s, value %p.\n", iface, debugstr_guid(api), value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_RegisterForEvent(ICodecAPI *iface, const GUID *api, LONG_PTR userData)
+{
+    FIXME("iface %p, api %s, value %p.\n", iface, debugstr_guid(api), LongToPtr(userData));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_UnregisterForEvent(ICodecAPI *iface, const GUID *api)
+{
+    FIXME("iface %p, api %s.\n", iface, debugstr_guid(api));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_SetAllDefaults(ICodecAPI *iface)
+{
+    FIXME("iface %p.\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_SetValueWithNotify(ICodecAPI *iface,
+        const GUID *api, VARIANT *value, GUID **param, ULONG *count)
+{
+    FIXME("iface %p, api %s, param %p, count %p.\n", iface, debugstr_guid(api), param, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_SetAllDefaultsWithNotify(ICodecAPI *iface, GUID **param, ULONG *count)
+{
+    FIXME("iface %p, param %p, count %p.\n", iface, param, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_GetAllSettings(ICodecAPI *iface, IStream *stream)
+{
+    FIXME("iface %p, stream %p.\n", iface, stream);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_SetAllSettings(ICodecAPI *iface, IStream *stream)
+{
+    FIXME("iface %p, stream %p.\n", iface, stream);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI codec_api_SetAllSettingsWithNotify(ICodecAPI *iface, IStream *stream, GUID **param, ULONG *count)
+{
+    FIXME("iface %p, stream %p, param %p, count %p.\n", iface, stream, param, count);
+    return E_NOTIMPL;
+}
+
+static const ICodecAPIVtbl codec_api_vtbl =
+{
+    codec_api_QueryInterface,
+    codec_api_AddRef,
+    codec_api_Release,
+    codec_api_IsSupported,
+    codec_api_IsModifiable,
+    codec_api_GetParameterRange,
+    codec_api_GetParameterValues,
+    codec_api_GetDefaultValue,
+    codec_api_GetValue,
+    codec_api_SetValue,
+    codec_api_RegisterForEvent,
+    codec_api_UnregisterForEvent,
+    codec_api_SetAllDefaults,
+    codec_api_SetValueWithNotify,
+    codec_api_SetAllDefaultsWithNotify,
+    codec_api_GetAllSettings,
+    codec_api_SetAllSettings,
+    codec_api_SetAllSettingsWithNotify,
+};
+
 static HRESULT video_encoder_create(const GUID *const *input_types, UINT input_type_count,
         const GUID *const *output_types, UINT output_type_count, struct video_encoder **out)
 {
@@ -563,6 +706,7 @@ static HRESULT video_encoder_create(const GUID *const *input_types, UINT input_t
         return E_OUTOFMEMORY;
 
     encoder->IMFTransform_iface.lpVtbl = &transform_vtbl;
+    encoder->ICodecAPI_iface.lpVtbl = &codec_api_vtbl;
     encoder->refcount = 1;
 
     encoder->input_types = input_types;

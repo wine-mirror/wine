@@ -4128,7 +4128,6 @@ static void test_h264_encoder(void)
     ok(hr == S_OK, "CoCreateInstance returned %#lx.\n", hr);
 
     check_interface(transform, &IID_IMFTransform, TRUE);
-    todo_wine
     check_interface(transform, &IID_ICodecAPI, TRUE);
     check_interface(transform, &IID_IMediaObject, FALSE);
     check_interface(transform, &IID_IPropertyStore, FALSE);
@@ -4234,10 +4233,7 @@ static void test_h264_encoder(void)
     }
 
     hr = IMFTransform_QueryInterface(transform, &IID_ICodecAPI, (void **)&codec_api);
-    todo_wine
     ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
-    if (hr == S_OK)
-    {
     for (desc = &expect_codec_api_attributes[0]; desc->key; ++desc)
     {
         PROPVARIANT propvar;
@@ -4259,7 +4255,6 @@ static void test_h264_encoder(void)
         VariantClear(&var);
     }
     ICodecAPI_Release(codec_api);
-    }
 
     check_mft_set_output_type(transform, output_type_desc, S_OK);
     check_mft_set_input_type(transform, input_type_desc, S_OK);
