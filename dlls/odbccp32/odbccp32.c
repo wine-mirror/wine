@@ -710,12 +710,12 @@ BOOL WINAPI SQLGetInstalledDrivers(char *buf, WORD size, WORD *sizeout)
     return TRUE;
 }
 
-static HKEY get_privateprofile_sectionkey(LPCWSTR section, LPCWSTR filename)
+static HKEY get_privateprofile_sectionkey(HKEY root, const WCHAR *section, const WCHAR *filename)
 {
     HKEY hkey, hkeyfilename, hkeysection;
     LONG ret;
 
-    if (RegOpenKeyW(HKEY_CURRENT_USER, odbcW, &hkey))
+    if (RegOpenKeyW(root, odbcW, &hkey))
         return NULL;
 
     ret = RegOpenKeyW(hkey, filename, &hkeyfilename);
@@ -750,7 +750,16 @@ int WINAPI SQLGetPrivateProfileStringW(LPCWSTR section, LPCWSTR entry,
     if (!defvalue || !buff)
         return 0;
 
-    sectionkey = get_privateprofile_sectionkey(section, filename);
+    if (config_mode == ODBC_USER_DSN)
+        sectionkey = get_privateprofile_sectionkey(HKEY_CURRENT_USER, section, filename);
+    else if (config_mode == ODBC_SYSTEM_DSN)
+        sectionkey = get_privateprofile_sectionkey(HKEY_LOCAL_MACHINE, section, filename);
+    else
+    {
+        sectionkey = get_privateprofile_sectionkey(HKEY_CURRENT_USER, section, filename);
+        if (!sectionkey) sectionkey = get_privateprofile_sectionkey(HKEY_LOCAL_MACHINE, section, filename);
+    }
+
     if (sectionkey)
     {
         DWORD type, size;
@@ -823,10 +832,22 @@ int WINAPI SQLGetPrivateProfileString(LPCSTR section, LPCSTR entry,
     if (!section || !defvalue || !buff)
         return 0;
 
-    sectionW = strdupAtoW(section);
-    filenameW = strdupAtoW(filename);
+    if (!(sectionW = strdupAtoW(section))) return 0;
+    if (!(filenameW = strdupAtoW(filename)))
+    {
+        free(sectionW);
+        return 0;
+    }
 
-    sectionkey = get_privateprofile_sectionkey(sectionW, filenameW);
+    if (config_mode == ODBC_USER_DSN)
+        sectionkey = get_privateprofile_sectionkey(HKEY_CURRENT_USER, sectionW, filenameW);
+    else if (config_mode == ODBC_SYSTEM_DSN)
+        sectionkey = get_privateprofile_sectionkey(HKEY_LOCAL_MACHINE, sectionW, filenameW);
+    else
+    {
+        sectionkey = get_privateprofile_sectionkey(HKEY_CURRENT_USER, sectionW, filenameW);
+        if (!sectionkey) sectionkey = get_privateprofile_sectionkey(HKEY_LOCAL_MACHINE, sectionW, filenameW);
+    }
 
     free(sectionW);
     free(filenameW);
@@ -1814,7 +1835,17 @@ BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry
         return FALSE;
     }
 
-    if ((ret = RegCreateKeyW(HKEY_CURRENT_USER, odbcW, &hkey)) == ERROR_SUCCESS)
+    if (config_mode == ODBC_USER_DSN)
+        ret = RegCreateKeyW(HKEY_CURRENT_USER, odbcW, &hkey);
+    else if (config_mode == ODBC_SYSTEM_DSN)
+        ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, odbcW, &hkey);
+    else
+    {
+        ret = RegCreateKeyW(HKEY_CURRENT_USER, odbcW, &hkey);
+        if (ret) ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, odbcW, &hkey);
+    }
+
+    if (ret == ERROR_SUCCESS)
     {
          HKEY hkeyfilename;
 

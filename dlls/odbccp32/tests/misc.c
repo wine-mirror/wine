@@ -324,6 +324,7 @@ static void test_SQLGetPrivateProfileStringW(void)
     static WCHAR def[] = {'d','e','f',0};
     static WCHAR value0[] = {'v','a','l','u','e','0','1','2','3','4','5','6','7','8','9',0};
     static WCHAR testingvalue[] = {'t','e','s','t','i','n','g',0,'v','a','l','u','e',0};
+    UWORD orig_mode;
     int ret;
     WCHAR buffer[256] = {0};
     LONG reg_ret;
@@ -422,6 +423,71 @@ static void test_SQLGetPrivateProfileStringW(void)
         reg_ret = RegDeleteKeyW(HKEY_CURRENT_USER, abcdini_key);
         ok(reg_ret == ERROR_SUCCESS, "RegDeleteKeyW failed\n");
     }
+
+    ret = SQLGetConfigMode(&orig_mode);
+    ok(ret, "SQLGetConfigMode failed\n");
+
+    ret = SQLSetConfigMode(ODBC_SYSTEM_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    ret = SQLWritePrivateProfileStringW(L"wineodbc", L"testing" , L"value", L"ODBC.INI");
+    if (!ret)
+    {
+        DWORD error_code;
+        ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+        if (ret && error_code == ODBC_ERROR_WRITING_SYSINFO_FAILED)
+        {
+            win_skip("not enough privileges\n");
+            SQLSetConfigMode(orig_mode);
+            return;
+        }
+    }
+    ok(ret, "SQLWritePrivateProfileString failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
+    ok(ret, "SQLGetPrivateProfileStringW failed\n");
+
+    ret = SQLSetConfigMode(ODBC_USER_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
+    ok(!ret, "SQLGetPrivateProfileStringW succeeded\n");
+
+    ret = SQLSetConfigMode(ODBC_BOTH_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
+    ok(ret, "SQLGetPrivateProfileStringW failed\n");
+
+    reg_ret = RegDeleteKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC\\ODBC.INI\\wineodbc");
+    ok(reg_ret == ERROR_SUCCESS, "RegDeleteKeyW failed %ld\n", reg_ret);
+
+    ret = SQLSetConfigMode(ODBC_USER_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    ret = SQLWritePrivateProfileStringW(L"wineodbc", L"testing" , L"value", L"ODBC.INI");
+    ok(ret, "SQLWritePrivateProfileString failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
+    ok(ret, "SQLGetPrivateProfileStringW failed\n");
+
+    ret = SQLSetConfigMode(ODBC_SYSTEM_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
+    ok(!ret, "SQLGetPrivateProfileStringW succeeded\n");
+
+    ret = SQLSetConfigMode(ODBC_BOTH_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
+    ok(ret, "SQLGetPrivateProfileStringW failed\n");
+
+    reg_ret = RegDeleteKeyW(HKEY_CURRENT_USER, L"Software\\ODBC\\ODBC.INI\\wineodbc");
+    ok(reg_ret == ERROR_SUCCESS, "RegDeleteKeyW failed %ld\n", reg_ret);
+
+    ret = SQLSetConfigMode(orig_mode);
+    ok(ret, "SQLSetConfigMode failed\n");
 }
 
 static void test_SQLInstallDriverEx(void)
