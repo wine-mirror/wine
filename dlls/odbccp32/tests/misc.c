@@ -24,8 +24,8 @@
 #include "winreg.h"
 #include "odbcinst.h"
 
-static const WCHAR abcd_key[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','a','b','c','d','.','I','N','I','\\','w','i','n','e','o','d','b','c',0};
-static const WCHAR abcdini_key[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','a','b','c','d','.','I','N','I',0 };
+static const WCHAR abcd_key[] = L"Software\\ODBC\\abcd.INI\\wineodbc";
+static const WCHAR abcdini_key[] = L"Software\\ODBC\\abcd.INI";
 
 static void check_error_(int line, DWORD expect)
 {
@@ -150,7 +150,7 @@ static void test_SQLInstallDriverManager(void)
 
 static void test_SQLWritePrivateProfileString(void)
 {
-   static const WCHAR odbc_key[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','O','D','B','C','.','I','N','I','\\','w','i','n','e','o','d','b','c',0};
+   static const WCHAR odbc_key[] = L"Software\\ODBC\\ODBC.INI\\wineodbc";
    BOOL ret;
    LONG reg_ret;
    DWORD error_code;
@@ -312,57 +312,45 @@ static void test_SQLGetPrivateProfileString(void)
 
 static void test_SQLGetPrivateProfileStringW(void)
 {
-    static WCHAR testing[] = {'t','e','s','t','i','n','g',0};
-    static WCHAR wineodbc[] = {'w','i','n','e','o','d','b','c',0};
-    static WCHAR defaultval[] = {'d','e','f','a','u','l','t',0};
-    static WCHAR odbcini[] = {'O','D','B','C','.','I','N','I',0};
-    static WCHAR abcdini[] = {'a','b','c','d','.','I','N','I',0};
-    static WCHAR wine[] = {'w','i','n','e',0};
-    static WCHAR value[] = {'v','a','l','u','e',0};
-    static WCHAR empty[] = {0};
-    static WCHAR defaultX[] = {'d','e','f','a','u','l','t',0};
-    static WCHAR def[] = {'d','e','f',0};
-    static WCHAR value0[] = {'v','a','l','u','e','0','1','2','3','4','5','6','7','8','9',0};
-    static WCHAR testingvalue[] = {'t','e','s','t','i','n','g',0,'v','a','l','u','e',0};
     UWORD orig_mode;
     int ret;
     WCHAR buffer[256] = {0};
     LONG reg_ret;
 
-    lstrcpyW(buffer, wine);
-    ret = SQLGetPrivateProfileStringW(NULL, testing , defaultval, buffer, 256, odbcini);
+    lstrcpyW(buffer, L"wine");
+    ret = SQLGetPrivateProfileStringW(NULL, L"testing", L"default", buffer, 256, L"ODBC.INI");
     ok(ret == 0, "SQLGetPrivateProfileStringW returned %d\n", ret);
-    ok(!lstrcmpW(buffer, wine), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+    ok(!lstrcmpW(buffer, L"wine"), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
-    lstrcpyW(buffer, wine);
-    ret = SQLGetPrivateProfileStringW(wineodbc, NULL , defaultval, buffer, 256, odbcini);
+    lstrcpyW(buffer, L"wine");
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL , L"default", buffer, 256, L"ODBC.INI");
     ok(ret == 0, "SQLGetPrivateProfileStringW returned %d\n", ret);
-    ok(!lstrcmpW(buffer, empty), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+    ok(!lstrcmpW(buffer, L""), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
-    lstrcpyW(buffer, value);
-    ret = SQLGetPrivateProfileStringW(wineodbc, testing , NULL, buffer, 256, odbcini);
+    lstrcpyW(buffer, L"value");
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", NULL, buffer, 256, L"ODBC.INI");
     ok(ret == 0, "SQLGetPrivateProfileStringW returned %d\n", ret);
-    ok(!lstrcmpW(buffer, empty), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+    ok(!lstrcmpW(buffer, L""), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
-    ret = SQLGetPrivateProfileStringW(wineodbc, testing , defaultX, buffer, 256, odbcini);
-    ok(ret == lstrlenW(defaultX), "SQLGetPrivateProfileStringW returned %d\n", ret);
-    ok(!lstrcmpW(buffer, defaultX), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", L"default", buffer, 256, L"ODBC.INI");
+    ok(ret == lstrlenW(L"default"), "SQLGetPrivateProfileStringW returned %d\n", ret);
+    ok(!lstrcmpW(buffer, L"default"), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
-    ret = SQLGetPrivateProfileStringW(wineodbc, testing , defaultX, buffer, 4, odbcini);
-    ok(ret == lstrlenW(def), "SQLGetPrivateProfileStringW returned %d\n", ret);
-    ok(!lstrcmpW(buffer, def), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", L"default", buffer, 4, L"ODBC.INI");
+    ok(ret == lstrlenW(L"def"), "SQLGetPrivateProfileStringW returned %d\n", ret);
+    ok(!lstrcmpW(buffer, L"def"), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
-    ret = SQLGetPrivateProfileStringW(wineodbc, testing , defaultX, buffer, 8, odbcini);
-    ok(ret == lstrlenW(defaultX), "SQLGetPrivateProfileStringW returned %d\n", ret);
-    ok(!lstrcmpW(buffer, defaultX), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", L"default", buffer, 8, L"ODBC.INI");
+    ok(ret == lstrlenW(L"default"), "SQLGetPrivateProfileStringW returned %d\n", ret);
+    ok(!lstrcmpW(buffer, L"default"), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
-    ret = SQLGetPrivateProfileStringW(wineodbc, testing , defaultX, NULL, 256, odbcini);
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", L"default", NULL, 256, L"ODBC.INI");
     ok(ret == 0, "SQLGetPrivateProfileStringW returned %d\n", ret);
 
-    lstrcpyW(buffer, value);
-    ret = SQLGetPrivateProfileStringW(wineodbc, testing , defaultX, buffer, 0, odbcini);
+    lstrcpyW(buffer, L"value");
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", L"default", buffer, 0, L"ODBC.INI");
     ok(ret == 0, "SQLGetPrivateProfileStringW returned %d\n", ret);
-    ok(!lstrcmpW(buffer, value), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+    ok(!lstrcmpW(buffer, L"value"), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
     ret = SQLWritePrivateProfileString("wineodbc", "testing" , "value0123456789", "abcd.ini");
     ok(ret, "SQLWritePrivateProfileString failed\n");
@@ -370,43 +358,43 @@ static void test_SQLGetPrivateProfileStringW(void)
     {
         HKEY hkey;
 
-        ret = SQLGetPrivateProfileStringW(wineodbc, testing , defaultX, buffer, 256, abcdini);
-        ok(ret == lstrlenW(value0), "SQLGetPrivateProfileStringW returned %d\n", ret);
-        ok(!lstrcmpW(buffer, value0), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+        ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", L"default", buffer, 256, L"abcd.INI");
+        ok(ret == lstrlenW(L"value0123456789"), "SQLGetPrivateProfileStringW returned %d\n", ret);
+        ok(!lstrcmpW(buffer, L"value0123456789"), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
-        ret = SQLGetPrivateProfileStringW(wineodbc, testing , defaultX, NULL, 0, abcdini);
+        ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", L"default", NULL, 0, L"abcd.INI");
         ok(ret == 0, "SQLGetPrivateProfileStringW returned %d\n", ret);
 
-        ret = SQLGetPrivateProfileStringW(wineodbc, testing , defaultX, buffer, 7, abcdini);
+        ret = SQLGetPrivateProfileStringW(L"wineodbc", L"testing", L"default", buffer, 7, L"abcd.INI");
         ok(ret == 6, "SQLGetPrivateProfileStringW returned %d\n", ret);
 
-        lstrcpyW(buffer, wine);
-        ret = SQLGetPrivateProfileStringW(wineodbc, NULL , empty, buffer, 10, abcdini);
-        ok(ret == lstrlenW(testing)+1, "SQLGetPrivateProfileStringW returned %d\n", ret);
-        ok(!lstrcmpW(buffer, testing), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+        lstrcpyW(buffer, L"wine");
+        ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL , L"", buffer, 10, L"abcd.INI");
+        ok(ret == lstrlenW(L"testing") + 1, "SQLGetPrivateProfileStringW returned %d\n", ret);
+        ok(!lstrcmpW(buffer, L"testing"), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
 
         ret = SQLWritePrivateProfileString("wineodbc", "value" , "0", "abcd.ini");
         ok(ret, "SQLWritePrivateProfileString failed\n");
 
-        lstrcpyW(buffer, wine);
-        ret = SQLGetPrivateProfileStringW(wineodbc, NULL , empty, buffer, 256, abcdini);
-        ok(ret == (lstrlenW(testing) + lstrlenW(value)+2), "SQLGetPrivateProfileStringW returned %d\n", ret);
-        if(ret == (lstrlenW(testing) + lstrlenW(value)+2))
+        lstrcpyW(buffer, L"wine");
+        ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL , L"", buffer, 256, L"abcd.INI");
+        ok(ret == (lstrlenW(L"testing") + lstrlenW(L"value") + 2), "SQLGetPrivateProfileStringW returned %d\n", ret);
+        if(ret == (lstrlenW(L"testing") + lstrlenW(L"value") + 2))
         {
-            ok(!memcmp(buffer, testingvalue, sizeof(testingvalue)),
+            ok(!memcmp(buffer, L"testing\0value", sizeof(L"testing\0value")),
                       "incorrect string '%s'\n", wine_dbgstr_wn(buffer, ret));
         }
 
-        lstrcpyW(buffer, value);
-        ret = SQLGetPrivateProfileStringW(wineodbc, NULL , empty, buffer, 10, abcdini);
-        ok(ret == lstrlenW(testing)+1, "SQLGetPrivateProfileStringW returned %d\n", ret);
-        if(ret >= lstrlenW(testing)+1)
+        lstrcpyW(buffer, L"value");
+        ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL , L"", buffer, 10, L"abcd.INI");
+        ok(ret == lstrlenW(L"testing") + 1, "SQLGetPrivateProfileStringW returned %d\n", ret);
+        if(ret >= lstrlenW(L"testing") + 1)
         {
-            ok(!lstrcmpW(buffer, testing), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
+            ok(!lstrcmpW(buffer, L"testing"), "incorrect string '%s'\n", wine_dbgstr_w(buffer));
         }
 
-        lstrcpyW(buffer, value);
-        ret = SQLGetPrivateProfileStringW(wineodbc, NULL , empty, buffer, 2, abcdini);
+        lstrcpyW(buffer, L"value");
+        ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL , L"", buffer, 2, L"abcd.INI");
         ok(ret == 0, "SQLGetPrivateProfileStringW returned %d\n", ret);
 
         reg_ret = RegOpenKeyExW(HKEY_CURRENT_USER, abcd_key, 0, KEY_READ, &hkey);
@@ -783,32 +771,25 @@ static void test_SQLValidDSN(void)
 
 static void test_SQLValidDSNW(void)
 {
-    static const WCHAR invalid[] = {'[',']','{','}','(',')',',',';','?','*','=','!','@','\\',0};
-    static const WCHAR value[] = { 'w','i','n','e','1','0',0};
-    static const WCHAR too_large[] = { 'W','i','n','e','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5',
-                                   '6','7','8','9','0','1','2','3','4','5','6','7','8','9','0', 0};
-    static const WCHAR with_space[] = { 'W','i','n','e',' ','V','i','n','e','g','a','r', 0};
-    static const WCHAR max_dsn[] = { '1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0',
-                                   '1','2','3','4','5','6','7','8','9','0','1','2', 0};
     WCHAR str[10];
     int i;
     BOOL ret;
 
-    lstrcpyW(str, value);
-    for(i = 0; i < lstrlenW(invalid); i++)
+    lstrcpyW(str, L"wine10");
+    for (i = 0; i < lstrlenW(L"[]{}(),;?*=!@\\"); i++)
     {
-        str[4] = invalid[i];
+        str[4] = L"[]{}(),;?*=!@\\"[i];
         ret = SQLValidDSNW(str);
         ok(!ret, "got %d\n", ret);
     }
 
-    ret = SQLValidDSNW(too_large);
+    ret = SQLValidDSNW(L"Wine123456789012345678901234567890");
     ok(!ret, "got %d\n", ret);
 
-    ret = SQLValidDSNW(with_space);
+    ret = SQLValidDSNW(L"Wine Vinegar");
     ok(ret, "got %d\n", ret);
 
-    ret = SQLValidDSNW(max_dsn);
+    ret = SQLValidDSNW(L"12345678901234567890123456789012");
     ok(ret, "got %d\n", ret);
 }
 
