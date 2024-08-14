@@ -2835,7 +2835,7 @@ static void progress_end_check_notifications(IFileOperationProgressSink *iface)
     struct progress_expected_notifications *e = progress->expected;
 
     ok(!!e, "expected notifications are not set up.\n");
-    todo_wine ok_(__FILE__, e->line)(e->index == e->count, "got notification count %u, expected %u.\n", e->index, e->count);
+    ok_(__FILE__, e->line)(e->index == e->count, "got notification count %u, expected %u.\n", e->index, e->count);
     progress->expected = NULL;
 }
 

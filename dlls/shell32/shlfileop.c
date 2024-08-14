@@ -1856,6 +1856,8 @@ enum copy_engine_opcode
     COPY_ENGINE_REMOVE_DIRECTORY_SILENT,
 };
 
+#define TSF_UNKNOWN_MEGRE_FLAG 0x1000
+
 struct copy_engine_operation
 {
     struct list entry;
@@ -1864,6 +1866,7 @@ struct copy_engine_operation
     IShellItem *folder;
     PIDLIST_ABSOLUTE item_pidl;
     WCHAR *name;
+    DWORD tsf;
 };
 
 struct file_operation_sink
@@ -1882,6 +1885,7 @@ struct file_operation
     struct list ops;
     DWORD flags;
     BOOL aborted;
+    unsigned int progress_total, progress_sofar;
 };
 
 static void free_file_operation_ops(struct file_operation *operation)
@@ -1902,7 +1906,7 @@ static void free_file_operation_ops(struct file_operation *operation)
 }
 
 static HRESULT add_operation(struct file_operation *operation, enum copy_engine_opcode opcode, IShellItem *item,
-        IShellItem *folder, const WCHAR *name, IFileOperationProgressSink *sink, struct list *add_after)
+        IShellItem *folder, const WCHAR *name, IFileOperationProgressSink *sink, DWORD tsf, struct list *add_after)
 {
     struct copy_engine_operation *op;
     HRESULT hr;
@@ -1920,6 +1924,7 @@ static HRESULT add_operation(struct file_operation *operation, enum copy_engine_
         goto error;
     }
 
+    op->tsf = tsf;
     if (folder)
     {
         IShellItem_AddRef(folder);
@@ -1952,6 +1957,86 @@ error:
     return hr;
 }
 
+static HRESULT file_operation_notify(struct file_operation *operation, struct copy_engine_operation *op, BOOL post_notif,
+        void *context,
+        HRESULT (*callback)(IFileOperationProgressSink *, struct file_operation *, struct copy_engine_operation *op, void *))
+{
+    struct file_operation_sink *op_sink;
+    HRESULT hr = S_OK;
+
+    if (op && op->sink && post_notif)
+    {
+        if (FAILED(hr = callback(op->sink, operation, op, context)))
+            goto done;
+    }
+    LIST_FOR_EACH_ENTRY(op_sink, &operation->sinks, struct file_operation_sink, entry)
+    {
+        if (FAILED(hr = callback(op_sink->sink, operation, op, context)))
+            goto done;
+    }
+    if (op && op->sink && !post_notif)
+        hr = callback(op->sink, operation, op, context);
+
+done:
+    if (FAILED(hr))
+        WARN("sink returned %#lx.\n", hr);
+    return hr;
+}
+
+static HRESULT notify_start_operations(IFileOperationProgressSink *sink, struct file_operation *operations,
+        struct copy_engine_operation *op, void *context)
+{
+    return IFileOperationProgressSink_StartOperations(sink);
+}
+
+static HRESULT notify_reset_timer(IFileOperationProgressSink *sink, struct file_operation *operations,
+        struct copy_engine_operation *op, void *context)
+{
+    return IFileOperationProgressSink_ResetTimer(sink);
+}
+
+static HRESULT notify_finish_operations(IFileOperationProgressSink *sink, struct file_operation *operations,
+        struct copy_engine_operation *op, void *context)
+{
+    return IFileOperationProgressSink_FinishOperations(sink, S_OK);
+}
+
+static HRESULT notify_update_progress(IFileOperationProgressSink *sink, struct file_operation *operations,
+        struct copy_engine_operation *op, void *context)
+{
+    return IFileOperationProgressSink_UpdateProgress(sink, operations->progress_total, operations->progress_sofar);
+}
+
+struct notify_move_item_param
+{
+    IShellItem *item;
+    IShellItem *new_item;
+    HRESULT result;
+};
+
+static HRESULT notify_pre_move_item(IFileOperationProgressSink *sink, struct file_operation *operations,
+        struct copy_engine_operation *op, void *context)
+{
+    struct notify_move_item_param *p = context;
+
+    return IFileOperationProgressSink_PreMoveItem(sink, op->tsf & ~TSF_UNKNOWN_MEGRE_FLAG, p->item, op->folder, op->name);
+}
+
+static HRESULT notify_post_move_item(IFileOperationProgressSink *sink, struct file_operation *operations,
+        struct copy_engine_operation *op, void *context)
+{
+    struct notify_move_item_param *p = context;
+
+    return IFileOperationProgressSink_PostMoveItem(sink, op->tsf, p->item, op->folder, op->name, p->result, p->new_item);
+}
+
+static void set_file_operation_progress(struct file_operation *operation, unsigned int total, unsigned int sofar)
+{
+    operation->progress_total = total;
+    operation->progress_sofar = sofar;
+    file_operation_notify(operation, NULL, FALSE, NULL, notify_update_progress);
+}
+
 static HRESULT copy_engine_merge_dir(struct file_operation *operation, struct copy_engine_operation *op,
         const WCHAR *src_dir_path, IShellItem *dest_folder, struct list **add_after)
 {
@@ -1982,7 +2067,8 @@ static HRESULT copy_engine_merge_dir(struct file_operation *operation, struct co
 
         /* Queue files before directories. */
         curr_add_after = IsAttribFile(wfd.dwFileAttributes) ? add_files_after : *add_after;
-        hr = add_operation(operation, COPY_ENGINE_MOVE, item, dest_folder, NULL, op->sink, curr_add_after);
+        hr = add_operation(operation, COPY_ENGINE_MOVE, item, dest_folder, NULL, op->sink,
+                (op->tsf & ~TSF_COPY_LOCALIZED_NAME) | TSF_UNKNOWN_MEGRE_FLAG, curr_add_after);
         IShellItem_Release(item);
         if (FAILED(hr))
             break;
@@ -2052,7 +2138,7 @@ static HRESULT copy_engine_move(struct file_operation *operation, struct copy_en
         *dest_folder = NULL;
         return hr;
     }
-    add_operation(operation, COPY_ENGINE_REMOVE_DIRECTORY_SILENT, src_item, NULL, NULL, NULL, add_after);
+    add_operation(operation, COPY_ENGINE_REMOVE_DIRECTORY_SILENT, src_item, NULL, NULL, NULL, 0, add_after);
 
     return COPYENGINE_S_NOT_HANDLED;
 }
@@ -2060,8 +2146,12 @@ static HRESULT copy_engine_move(struct file_operation *operation, struct copy_en
 static HRESULT perform_file_operations(struct file_operation *operation)
 {
     struct copy_engine_operation *op;
-    IShellItem *item, *created;
     HRESULT hr;
+
+    file_operation_notify(operation, NULL, FALSE, NULL, notify_start_operations);
+    set_file_operation_progress(operation, 0, 0);
+    set_file_operation_progress(operation, list_count(&operation->ops), 0);
+    file_operation_notify(operation, NULL, FALSE, NULL, notify_reset_timer);
 
     LIST_FOR_EACH_ENTRY(op, &operation->ops, struct copy_engine_operation, entry)
     {
@@ -2083,17 +2173,37 @@ static HRESULT perform_file_operations(struct file_operation *operation)
             }
 
             case COPY_ENGINE_MOVE:
-                if (FAILED(hr = SHCreateItemFromIDList(op->item_pidl, &IID_IShellItem, (void**)&item)))
+            {
+                struct notify_move_item_param p;
+
+                p.new_item = NULL;
+                if (FAILED(hr = SHCreateItemFromIDList(op->item_pidl, &IID_IShellItem, (void**)&p.item)))
                     break;
-                hr = copy_engine_move(operation, op, item, &created);
-                IShellItem_Release(item);
-                if (SUCCEEDED(hr))
-                    IShellItem_Release(created);
+                if (FAILED((hr = file_operation_notify(operation, op, FALSE, &p, notify_pre_move_item))))
+                {
+                    IShellItem_Release(p.item);
+                    return hr;
+                }
+                hr = copy_engine_move(operation, op, p.item, &p.new_item);
+                p.result = hr;
+                if (FAILED(hr = file_operation_notify(operation, op, TRUE, &p, notify_post_move_item)))
+                {
+                    if (p.new_item)
+                        IShellItem_Release(p.new_item);
+                    return hr;
+                }
+                hr = p.result;
+                IShellItem_Release(p.item);
+                if (p.new_item)
+                    IShellItem_Release(p.new_item);
                 break;
+            }
         }
+        set_file_operation_progress(operation, list_count(&operation->ops), operation->progress_sofar + 1);
         TRACE("op %d, hr %#lx.\n", op->opcode, hr);
         operation->aborted = FAILED(hr) || operation->aborted;
     }
+    file_operation_notify(operation, NULL, FALSE, NULL, notify_finish_operations);
     return S_OK;
 }
 
@@ -2269,7 +2379,8 @@ static HRESULT WINAPI file_operation_MoveItem(IFileOperation *iface, IShellItem 
     if (!folder || !item)
         return E_INVALIDARG;
 
-    return add_operation(impl_from_IFileOperation(iface), COPY_ENGINE_MOVE, item, folder, name, sink, NULL);
+    return add_operation(impl_from_IFileOperation(iface), COPY_ENGINE_MOVE, item, folder, name, sink,
+            TSF_COPY_LOCALIZED_NAME | TSF_COPY_WRITE_TIME | TSF_COPY_CREATION_TIME | TSF_OVERWRITE_EXIST, NULL);
 }
 
 static HRESULT WINAPI file_operation_MoveItems(IFileOperation *iface, IUnknown *items, IShellItem *folder)
