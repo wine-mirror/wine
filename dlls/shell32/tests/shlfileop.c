@@ -24,6 +24,7 @@
 #define COBJMACROS
 #include <windows.h>
 #include "shellapi.h"
+#include "shlwapi.h"
 #include "shlobj.h"
 #include "commoncontrols.h"
 
@@ -107,6 +108,20 @@ static BOOL file_has_content(const CHAR *name, const CHAR *content)
     buf[read] = 0;
     CloseHandle(file);
     return strcmp(buf, content)==0;
+}
+
+static void remove_directory(const WCHAR *name)
+{
+    SHFILEOPSTRUCTW shfo;
+    WCHAR path[MAX_PATH];
+
+    memset(&shfo, 0, sizeof(shfo));
+    shfo.wFunc = FO_DELETE;
+    wcscpy(path, name);
+    path[wcslen(name) + 1] = 0;
+    shfo.pFrom = path;
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT;
+    SHFileOperationW(&shfo);
 }
 
 /* initializes the tests */
@@ -2753,11 +2768,37 @@ static BOOL is_old_shell32(void)
     return FALSE;
 }
 
+static void set_shell_item_path(IShellItem *item, const WCHAR *path, BOOL todo)
+{
+    IPersistIDList *idlist;
+    ITEMIDLIST *pidl;
+    HRESULT hr;
+
+    hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
+    todo_wine_if(todo) ok(hr == S_OK, "got %#lx.\n", hr);
+    if (FAILED(hr))
+        return;
+    hr = IShellItem_QueryInterface(item, &IID_IPersistIDList, (void **)&idlist);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IPersistIDList_SetIDList(idlist, pidl);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    IPersistIDList_Release(idlist);
+    ILFree(pidl);
+}
+
 static void test_file_operation(void)
 {
+    WCHAR dirpath[MAX_PATH], tmpfile[MAX_PATH], path[MAX_PATH];
     IFileOperation *operation;
+    IShellItem *item, *item2;
+    IShellItem *folder;
+    LONG refcount;
     IUnknown *unk;
+    DWORD cookie;
+    BOOL aborted;
     HRESULT hr;
+    BOOL bret;
+    DWORD ret;
 
     hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER,
             &IID_IFileOperation, (void **)&operation);
@@ -2773,7 +2814,200 @@ static void test_file_operation(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IUnknown_Release(unk);
 
+    hr = IFileOperation_Advise(operation, NULL, &cookie);
+    todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = IFileOperation_PerformOperations(operation);
+    todo_wine ok(hr == E_UNEXPECTED, "got %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_ShellItem, NULL, CLSCTX_INPROC_SERVER, &IID_IShellItem, (void **)&item);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = CoCreateInstance(&CLSID_ShellItem, NULL, CLSCTX_INPROC_SERVER, &IID_IShellItem, (void **)&folder);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test", NULL);
+    todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    GetTempPathW(ARRAY_SIZE(dirpath), dirpath);
+    PathCombineW(tmpfile, dirpath, L"testfile1");
+    createTestFileW(tmpfile);
+
+    set_shell_item_path(folder, dirpath, FALSE);
+    set_shell_item_path(item, tmpfile, FALSE);
+
+    hr = IFileOperation_SetOperationFlags(operation, 0);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test", NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_PerformOperations(operation);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    aborted = 0xdeadbeef;
+    hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(!aborted, "got %d.\n", aborted);
+
+    hr = IFileOperation_PerformOperations(operation);
+    todo_wine ok(hr == E_UNEXPECTED, "got %#lx.\n", hr);
+
+    /* Input file does not exist: PerformOperations succeeds, 'aborted' is set. */
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_PerformOperations(operation);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    aborted = 0;
+    hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(aborted == TRUE, "got %d.\n", aborted);
+    aborted = 0;
+    hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(aborted == TRUE, "got %d.\n", aborted);
+
+    /* Input file exists: PerformOperations succeeds, the item data at the moment of MoveItem is used. */
+    PathCombineW(path, dirpath, L"test");
+    set_shell_item_path(item, path, TRUE);
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    PathCombineW(tmpfile, dirpath, L"testfile2");
+    /* Actual paths are fetched at _MoveItem and not at _Perform operation: changing item after doesn't matter. */
+    createTestFileW(tmpfile);
+    set_shell_item_path(item, tmpfile, FALSE);
+    bret = DeleteFileW(tmpfile);
+    ok(bret, "got error %ld.\n", GetLastError());
+    hr = IFileOperation_PerformOperations(operation);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    aborted = 0;
+    hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(aborted == TRUE, "got %d.\n", aborted);
+    ret = GetFileAttributesW(tmpfile);
+    ok(ret == INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
+    PathCombineW(path, dirpath, L"test");
+    ret = GetFileAttributesW(path);
+    ok(ret == INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
+    PathCombineW(path, dirpath, L"test2");
+    ret = GetFileAttributesW(path);
+    todo_wine ok(ret != INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
+    bret = DeleteFileW(path);
+    todo_wine ok(bret, "got error %ld.\n", GetLastError());
+
+    refcount = IShellItem_Release(item);
+    ok(!refcount, "got %ld.\n", refcount);
+    IShellItem_AddRef(folder);
+    refcount = IShellItem_Release(folder);
+    todo_wine ok(refcount > 1, "got %ld.\n", refcount);
+
+    hr = IFileOperation_Unadvise(operation, 0xdeadbeef);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
     IFileOperation_Release(operation);
+    refcount = IShellItem_Release(folder);
+    ok(!refcount, "got %ld.\n", refcount);
+
+    /* Move directory to directory. */
+    hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER, &IID_IFileOperation, (void **)&operation);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    PathCombineW(path, dirpath, L"test_dir1");
+    bret = CreateDirectoryW(path, NULL);
+    PathCombineW(tmpfile, path, L"testfile3");
+    createTestFileW(tmpfile);
+    PathCombineW(tmpfile, path, L"testfile4");
+    createTestFileW(tmpfile);
+    hr = SHCreateItemFromParsingName(path, NULL, &IID_IShellItem, (void**)&item);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    PathCombineW(path, dirpath, L"test_dir2");
+    bret = CreateDirectoryW(path, NULL);
+    ok(bret, "got error %ld.\n", GetLastError());
+
+    hr = SHCreateItemFromParsingName(path, NULL, &IID_IShellItem, (void**)&folder);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    PathCombineW(path, path, L"test2");
+    createTestFileW(path);
+
+    /* Source is directory, destination test2 is file. */
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_PerformOperations(operation);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    aborted = 0;
+    hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(aborted, "got %d.\n", aborted);
+
+    bret = DeleteFileW(path);
+    ok(bret, "got error %ld.\n", GetLastError());
+    IFileOperation_Release(operation);
+
+    /* Source is directory, destination is absent (simple move). */
+    hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER, &IID_IFileOperation, (void **)&operation);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_PerformOperations(operation);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    IFileOperation_Release(operation);
+
+    /* Source and dest are directories, merge is performed. */
+    hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER, &IID_IFileOperation, (void **)&operation);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    PathCombineW(path, dirpath, L"test_dir3");
+    bret = CreateDirectoryW(path, NULL);
+    set_shell_item_path(item, path, FALSE);
+    ok(bret, "got error %ld.\n", GetLastError());
+    PathCombineW(tmpfile, path, L"testfile5");
+    createTestFileW(tmpfile);
+    PathCombineW(tmpfile, path, L"testfile6");
+    createTestFileW(tmpfile);
+    PathCombineW(path, path, L"inner_dir");
+    bret = CreateDirectoryW(path, NULL);
+    ok(bret, "got error %ld.\n", GetLastError());
+    PathCombineW(tmpfile, path, L"testfile7");
+    createTestFileW(tmpfile);
+    PathCombineW(tmpfile, dirpath, L"testfile8");
+    createTestFileW(tmpfile);
+
+    hr = SHCreateItemFromParsingName(tmpfile, NULL, &IID_IShellItem, (void**)&item2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IFileOperation_MoveItem(operation, item2, folder, NULL, NULL);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    refcount = IShellItem_Release(item2);
+    ok(!refcount, "got %ld.\n", refcount);
+    hr = IFileOperation_PerformOperations(operation);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    PathCombineW(path, dirpath, L"test_dir2");
+    PathCombineW(tmpfile, dirpath, L"test_dir2\\test2\\testfile6");
+    ret = GetFileAttributesW(tmpfile);
+    todo_wine ok(ret != INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
+    remove_directory(path);
+    PathCombineW(path, dirpath, L"test_dir3");
+    ret = GetFileAttributesW(path);
+    todo_wine ok(ret == INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
+    remove_directory(path);
+
+    IFileOperation_Release(operation);
+
+    refcount = IShellItem_Release(item);
+    ok(!refcount, "got %ld.\n", refcount);
+    refcount = IShellItem_Release(folder);
+    ok(!refcount, "got %ld.\n", refcount);
 }
 
 START_TEST(shlfileop)
