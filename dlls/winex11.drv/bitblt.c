@@ -1983,6 +1983,16 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
 }
 
 
+static BOOL enable_direct_drawing( struct x11drv_win_data *data, BOOL layered )
+{
+    if (layered) return FALSE;
+    if (data->embedded) return TRUE; /* draw directly to the window */
+    if (data->whole_window == root_window) return TRUE; /* draw directly to the window */
+    if (data->client_window) return TRUE; /* draw directly to the window */
+    if (!client_side_graphics) return TRUE; /* draw directly to the window */
+    return FALSE;
+}
+
 /***********************************************************************
  *      CreateWindowSurface   (X11DRV.@)
  */
@@ -1996,7 +2006,8 @@ BOOL X11DRV_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_re
     if (!(data = get_win_data( hwnd ))) return TRUE; /* use default surface */
     if ((previous = *surface) && previous->funcs == &x11drv_surface_funcs)
     {
-        if (data->whole_window == get_x11_surface(previous)->window) goto done; /* use default surface */
+        Window window = get_x11_surface(previous)->window;
+        if (data->whole_window == window && !enable_direct_drawing( data, layered )) goto done; /* use default surface */
         /* re-create window surface is window has changed, which can happen when changing visual */
         TRACE( "re-creating hwnd %p surface with new window %lx\n", data->hwnd, data->whole_window );
     }
@@ -2007,13 +2018,10 @@ BOOL X11DRV_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_re
         data->layered = TRUE;
         if (!data->embedded && argb_visual.visualid) set_window_visual( data, &argb_visual, TRUE );
     }
-    else
+    else if (enable_direct_drawing( data, layered ))
     {
         *surface = NULL;  /* indicate that we want to draw directly to the window */
-        if (data->embedded) goto done; /* draw directly to the window */
-        if (data->whole_window == root_window) goto done; /* draw directly to the window */
-        if (data->client_window) goto done; /* draw directly to the window */
-        if (!client_side_graphics) goto done; /* draw directly to the window */
+        goto done; /* draw directly to the window */
     }
 
     *surface = create_surface( data->hwnd, data->whole_window, &data->vis, surface_rect,
