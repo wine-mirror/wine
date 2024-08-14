@@ -7121,15 +7121,16 @@ static const dispex_static_data_vtbl_t token_list_dispex_vtbl = {
     .invoke           = token_list_invoke
 };
 
-static const tid_t token_list_iface_tids[] = {
+static const tid_t DOMTokenList_tids[] = {
     IWineDOMTokenList_tid,
     0
 };
-static dispex_static_data_t token_list_dispex = {
-    "DOMTokenList",
-    &token_list_dispex_vtbl,
-    IWineDOMTokenList_tid,
-    token_list_iface_tids
+dispex_static_data_t DOMTokenList_dispex = {
+    .id              = PROT_DOMTokenList,
+    .vtbl            = &token_list_dispex_vtbl,
+    .disp_tid        = IWineDOMTokenList_tid,
+    .iface_tids      = DOMTokenList_tids,
+    .min_compat_mode = COMPAT_MODE_IE10,
 };
 
 static HRESULT create_token_list(compat_mode_t compat_mode, HTMLElement *element, IWineDOMTokenList **ret)
@@ -7144,7 +7145,7 @@ static HRESULT create_token_list(compat_mode_t compat_mode, HTMLElement *element
     }
 
     obj->IWineDOMTokenList_iface.lpVtbl = &WineDOMTokenListVtbl;
-    init_dispatch_with_owner(&obj->dispex, &token_list_dispex, &element->node.event_target.dispex);
+    init_dispatch_with_owner(&obj->dispex, &DOMTokenList_dispex, &element->node.event_target.dispex);
     obj->element = &element->IHTMLElement_iface;
     IHTMLElement_AddRef(obj->element);
 

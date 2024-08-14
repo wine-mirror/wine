@@ -417,6 +417,7 @@ typedef struct {
     X(Console)                             \
     X(CustomEvent)                         \
     X(DOMImplementation)                   \
+    X(DOMTokenList)                        \
     X(Document)                            \
     X(DocumentType)                        \
     X(Element)                             \

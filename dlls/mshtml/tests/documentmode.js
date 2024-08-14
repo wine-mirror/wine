@@ -3299,4 +3299,10 @@ sync_test("prototypes", function() {
     }else {
         ok(!("MediaQueryList" in window), "MediaQueryList found in window");
     }
+    if(v >= 10) {
+        check(document.body.classList, DOMTokenList.prototype, "token list");
+        check(DOMTokenList.prototype, Object.prototype, "token list prototype");
+    }else {
+        ok(!("DOMTokenList" in window), "DOMTokenList found in window");
+    }
 });
