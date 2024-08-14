@@ -467,6 +467,7 @@ typedef struct {
     X(NamedNodeMap)                        \
     X(Navigator)                           \
     X(Node)                                \
+    X(NodeList)                            \
     X(PageTransitionEvent)                 \
     X(Performance)                         \
     X(PerformanceNavigation)               \

@@ -3309,4 +3309,6 @@ sync_test("prototypes", function() {
     check(NamedNodeMap.prototype, Object.prototype, "node map prototype");
     check(document.getElementsByTagName("body"), HTMLCollection.prototype, "elem collection");
     check(HTMLCollection.prototype, Object.prototype, "elem collection prototype");
+    check(document.body.childNodes, NodeList.prototype, "node list");
+    check(NodeList.prototype, Object.prototype, "node list prototype");
 });

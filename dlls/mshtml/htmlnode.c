@@ -378,17 +378,17 @@ static const dispex_static_data_vtbl_t HTMLDOMChildrenCollection_dispex_vtbl = {
     .invoke           = HTMLDOMChildrenCollection_invoke,
 };
 
-static const tid_t HTMLDOMChildrenCollection_iface_tids[] = {
+static const tid_t NodeList_iface_tids[] = {
     IHTMLDOMChildrenCollection_tid,
     0
 };
 
-static dispex_static_data_t HTMLDOMChildrenCollection_dispex = {
-    "NodeList",
-    &HTMLDOMChildrenCollection_dispex_vtbl,
-    DispDOMChildrenCollection_tid,
-    HTMLDOMChildrenCollection_iface_tids,
-    HTMLDOMNode_init_dispex_info
+dispex_static_data_t NodeList_dispex = {
+    .id         = PROT_NodeList,
+    .vtbl       = &HTMLDOMChildrenCollection_dispex_vtbl,
+    .disp_tid   = DispDOMChildrenCollection_tid,
+    .iface_tids = NodeList_iface_tids,
+    .init_info  = HTMLDOMNode_init_dispex_info,
 };
 
 HRESULT create_child_collection(nsIDOMNodeList *nslist, DispatchEx *owner, IHTMLDOMChildrenCollection **ret)
@@ -403,7 +403,7 @@ HRESULT create_child_collection(nsIDOMNodeList *nslist, DispatchEx *owner, IHTML
     nsIDOMNodeList_AddRef(nslist);
     collection->nslist = nslist;
 
-    init_dispatch_with_owner(&collection->dispex, &HTMLDOMChildrenCollection_dispex, owner);
+    init_dispatch_with_owner(&collection->dispex, &NodeList_dispex, owner);
 
     *ret = &collection->IHTMLDOMChildrenCollection_iface;
     return S_OK;
