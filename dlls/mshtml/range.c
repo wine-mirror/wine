@@ -1985,16 +1985,16 @@ static const dispex_static_data_vtbl_t HTMLDOMRange_dispex_vtbl = {
     .unlink           = HTMLDOMRange_unlink
 };
 
-static const tid_t HTMLDOMRange_iface_tids[] = {
+static const tid_t Range_iface_tids[] = {
     IHTMLDOMRange_tid,
     0
 };
 
-static dispex_static_data_t HTMLDOMRange_dispex = {
-    "Range",
-    &HTMLDOMRange_dispex_vtbl,
-    DispHTMLDOMRange_tid,
-    HTMLDOMRange_iface_tids
+dispex_static_data_t Range_dispex = {
+    .id         = PROT_Range,
+    .vtbl       = &HTMLDOMRange_dispex_vtbl,
+    .disp_tid   = DispHTMLDOMRange_tid,
+    .iface_tids = Range_iface_tids,
 };
 
 HRESULT create_dom_range(nsIDOMRange *nsrange, HTMLDocumentNode *doc, IHTMLDOMRange **p)
@@ -2005,7 +2005,7 @@ HRESULT create_dom_range(nsIDOMRange *nsrange, HTMLDocumentNode *doc, IHTMLDOMRa
     if(!ret)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&ret->dispex, &HTMLDOMRange_dispex, doc->script_global,
+    init_dispatch(&ret->dispex, &Range_dispex, doc->script_global,
                   dispex_compat_mode(&doc->node.event_target.dispex));
 
     ret->IHTMLDOMRange_iface.lpVtbl = &HTMLDOMRangeVtbl;

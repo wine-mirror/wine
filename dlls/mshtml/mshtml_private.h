@@ -474,6 +474,7 @@ typedef struct {
     X(PerformanceTiming)                   \
     X(PluginArray)                         \
     X(ProgressEvent)                       \
+    X(Range)                               \
     X(SVGCircleElement)                    \
     X(SVGElement)                          \
     X(SVGSVGElement)                       \
