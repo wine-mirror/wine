@@ -4148,6 +4148,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
         else
           editor->imeStartIndex = ME_GetCursorOfs(&editor->pCursors[0]);
     }
+    ITextHost_TxImmReleaseContext(editor->texthost, hIMC);
     ME_ReleaseStyle(style);
     ME_CommitUndo(editor);
     ME_UpdateRepaint(editor, FALSE);
