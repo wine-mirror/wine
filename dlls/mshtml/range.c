@@ -1680,15 +1680,15 @@ static const dispex_static_data_vtbl_t HTMLTxtRange_dispex_vtbl = {
     .unlink           = HTMLTxtRange_unlink
 };
 
-static const tid_t HTMLTxtRange_iface_tids[] = {
+static const tid_t TextRange_iface_tids[] = {
     IHTMLTxtRange_tid,
     0
 };
-static dispex_static_data_t HTMLTxtRange_dispex = {
-    "TextRange",
-    &HTMLTxtRange_dispex_vtbl,
-    IHTMLTxtRange_tid,
-    HTMLTxtRange_iface_tids
+dispex_static_data_t TextRange_dispex = {
+    .id         = PROT_TextRange,
+    .vtbl       = &HTMLTxtRange_dispex_vtbl,
+    .disp_tid   = IHTMLTxtRange_tid,
+    .iface_tids = TextRange_iface_tids,
 };
 
 HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTxtRange **p)
@@ -1699,7 +1699,7 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
     if(!ret)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&ret->dispex, &HTMLTxtRange_dispex, doc->script_global,
+    init_dispatch(&ret->dispex, &TextRange_dispex, doc->script_global,
                   dispex_compat_mode(&doc->node.event_target.dispex));
 
     ret->IHTMLTxtRange_iface.lpVtbl = &HTMLTxtRangeVtbl;

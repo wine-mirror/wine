@@ -3311,4 +3311,6 @@ sync_test("prototypes", function() {
     check(HTMLCollection.prototype, Object.prototype, "elem collection prototype");
     check(document.body.childNodes, NodeList.prototype, "node list");
     check(NodeList.prototype, Object.prototype, "node list prototype");
+    check(document.body.createTextRange(), TextRange.prototype, "text range");
+    check(TextRange.prototype, Object.prototype, "text range prototype");
 });
