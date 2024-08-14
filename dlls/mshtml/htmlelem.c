@@ -8084,18 +8084,18 @@ static const dispex_static_data_vtbl_t HTMLAttributeCollection_dispex_vtbl = {
     .invoke           = HTMLAttributeCollection_invoke,
 };
 
-static const tid_t HTMLAttributeCollection_iface_tids[] = {
+const tid_t NamedNodeMap_iface_tids[] = {
     IHTMLAttributeCollection_tid,
     IHTMLAttributeCollection2_tid,
     IHTMLAttributeCollection3_tid,
     0
 };
 
-static dispex_static_data_t HTMLAttributeCollection_dispex = {
-    "NamedNodeMap",
-    &HTMLAttributeCollection_dispex_vtbl,
-    DispHTMLAttributeCollection_tid,
-    HTMLAttributeCollection_iface_tids
+dispex_static_data_t NamedNodeMap_dispex = {
+    .id         = PROT_NamedNodeMap,
+    .vtbl       = &HTMLAttributeCollection_dispex_vtbl,
+    .disp_tid   = DispHTMLAttributeCollection_tid,
+    .iface_tids = NamedNodeMap_iface_tids,
 };
 
 HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **ac)
@@ -8119,7 +8119,7 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
     IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
     This->attrs->elem = This;
     list_init(&This->attrs->attrs);
-    init_dispatch(&This->attrs->dispex, &HTMLAttributeCollection_dispex, This->node.doc->script_global,
+    init_dispatch(&This->attrs->dispex, &NamedNodeMap_dispex, This->node.doc->script_global,
                   dispex_compat_mode(&This->node.event_target.dispex));
 
     *ac = This->attrs;

@@ -3305,4 +3305,6 @@ sync_test("prototypes", function() {
     }else {
         ok(!("DOMTokenList" in window), "DOMTokenList found in window");
     }
+    check(document.body.attributes, NamedNodeMap.prototype, "node map");
+    check(NamedNodeMap.prototype, Object.prototype, "node map prototype");
 });

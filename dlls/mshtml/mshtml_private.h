@@ -463,6 +463,7 @@ typedef struct {
     X(MimeTypeArray)                       \
     X(MouseEvent)                          \
     X(MutationObserver)                    \
+    X(NamedNodeMap)                        \
     X(Navigator)                           \
     X(Node)                                \
     X(PageTransitionEvent)                 \
