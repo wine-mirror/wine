@@ -54,8 +54,8 @@ struct window_rects
 
 static inline const char *debugstr_window_rects( const struct window_rects *rects )
 {
-    return wine_dbg_sprintf( "{ window %s, client %s }", wine_dbgstr_rect( &rects->window ),
-                             wine_dbgstr_rect( &rects->client ) );
+    return wine_dbg_sprintf( "{ window %s, client %s, visible %s }", wine_dbgstr_rect( &rects->window ),
+                             wine_dbgstr_rect( &rects->client ), wine_dbgstr_rect( &rects->visible ) );
 }
 
 typedef struct gdi_physdev
@@ -193,7 +193,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 91
+#define WINE_GDI_DRIVER_VERSION 92
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -358,7 +358,7 @@ struct user_driver_funcs
     LRESULT (*pSysCommand)(HWND,WPARAM,LPARAM);
     void    (*pUpdateLayeredWindow)(HWND,UINT);
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
-    BOOL    (*pWindowPosChanging)(HWND,UINT,BOOL,const RECT *,const RECT *,RECT *);
+    BOOL    (*pWindowPosChanging)(HWND,UINT,BOOL,struct window_rects *);
     BOOL    (*pCreateWindowSurface)(HWND,BOOL,const RECT *,struct window_surface**);
     void    (*pMoveWindowBits)(HWND,const RECT *,const RECT *,const RECT *,const RECT *);
     void    (*pWindowPosChanged)(HWND,HWND,UINT,const struct window_rects*,struct window_surface*);

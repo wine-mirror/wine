@@ -1865,23 +1865,19 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 /***********************************************************************
  *              WindowPosChanging   (MACDRV.@)
  */
-BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const RECT *window_rect,
-                              const RECT *client_rect, RECT *visible_rect)
+BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, struct window_rects *rects)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
     DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     BOOL ret = FALSE;
 
-    TRACE("hwnd %p, swp_flags %04x, shaped %u, window_rect %s, client_rect %s, visible_rect %s\n",
-          hwnd, swp_flags, shaped, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
-          wine_dbgstr_rect(visible_rect));
+    TRACE("hwnd %p, swp_flags %04x, shaped %u, rects %s\n", hwnd, swp_flags, shaped, debugstr_window_rects(rects));
 
-    if (!data && !(data = macdrv_create_win_data(hwnd, window_rect, client_rect))) return FALSE; /* use default surface */
+    if (!data && !(data = macdrv_create_win_data(hwnd, &rects->window, &rects->client))) return FALSE; /* use default surface */
     data->shaped = shaped;
 
-    macdrv_window_to_mac_rect(data, style, visible_rect, window_rect, client_rect);
-    TRACE("visible_rect %s -> %s\n", wine_dbgstr_rect(window_rect),
-          wine_dbgstr_rect(visible_rect));
+    macdrv_window_to_mac_rect(data, style, &rects->visible, &rects->window, &rects->client);
+    TRACE("-> %s\n", debugstr_window_rects(rects));
 
     ret = !!data->cocoa_window; /* use default surface if we don't have a window */
     release_win_data(data);

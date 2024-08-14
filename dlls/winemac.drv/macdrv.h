@@ -147,8 +147,7 @@ extern UINT macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp);
 extern LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam);
 extern void macdrv_UpdateLayeredWindow(HWND hwnd, UINT flags);
 extern LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
-extern BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const RECT *window_rect,
-                                     const RECT *client_rect, RECT *visible_rect);
+extern BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, struct window_rects *rects);
 extern BOOL macdrv_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface);
 extern void macdrv_MoveWindowBits(HWND hwnd, const RECT *window_rect, const RECT *client_rect,
                                   const RECT *visible_rect, const RECT *valid_rects);

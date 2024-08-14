@@ -1852,7 +1852,7 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
     else if ((shaped = !!shape)) NtGdiDeleteObjectApp( shape );
 
     rects->visible = rects->window;
-    if (!user_driver->pWindowPosChanging( hwnd, swp_flags, shaped, &rects->window, &rects->client, &rects->visible )) needs_surface = FALSE;
+    if (!user_driver->pWindowPosChanging( hwnd, swp_flags, shaped, rects )) needs_surface = FALSE;
     else if (parent && parent != NtUserGetDesktopWindow()) needs_surface = FALSE;
     else if (swp_flags & SWP_HIDEWINDOW) needs_surface = FALSE;
     else if (swp_flags & SWP_SHOWWINDOW) needs_surface = TRUE;
