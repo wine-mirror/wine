@@ -886,8 +886,7 @@ static BOOL nulldrv_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *su
     return FALSE;
 }
 
-static void nulldrv_MoveWindowBits( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
-                                    const RECT *visible_rect, const RECT *valid_rects )
+static void nulldrv_MoveWindowBits( HWND hwnd, const struct window_rects *new_rects, const RECT *valid_rects )
 {
 }
 

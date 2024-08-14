@@ -1888,8 +1888,7 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, struct win
 /***********************************************************************
  *              MoveWindowBits   (MACDRV.@)
  */
-void macdrv_MoveWindowBits(HWND hwnd, const RECT *window_rect, const RECT *client_rect,
-                           const RECT *visible_rect, const RECT *valid_rects)
+void macdrv_MoveWindowBits(HWND hwnd, const struct window_rects *new_rects, const RECT *valid_rects)
 {
     RECT old_visible_rect, old_client_rect;
     struct macdrv_win_data *data;
@@ -1902,17 +1901,17 @@ void macdrv_MoveWindowBits(HWND hwnd, const RECT *window_rect, const RECT *clien
     release_win_data(data);
 
     /* if all that happened is that the whole window moved, copy everything */
-    if (EqualRect(&valid_rects[0], visible_rect) && EqualRect(&valid_rects[1], &old_visible_rect))
+    if (EqualRect(&valid_rects[0], &new_rects->visible) && EqualRect(&valid_rects[1], &old_visible_rect))
     {
         /* A Cocoa window's bits are moved automatically */
         if (!window && (valid_rects[0].left - valid_rects[1].left || valid_rects[0].top - valid_rects[1].top))
-            move_window_bits(hwnd, 0, &old_visible_rect, visible_rect,
-                             &old_client_rect, client_rect, window_rect);
+            move_window_bits(hwnd, 0, &old_visible_rect, &new_rects->visible,
+                             &old_client_rect, &new_rects->client, &new_rects->window);
     }
     else
     {
         move_window_bits(hwnd, window, &valid_rects[1], &valid_rects[0],
-                         &old_client_rect, client_rect, window_rect);
+                         &old_client_rect, &new_rects->client, &new_rects->window);
     }
 }
 
