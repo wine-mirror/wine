@@ -569,16 +569,16 @@ static const dispex_static_data_vtbl_t HTMLElementColection_dispex_vtbl = {
     .invoke           = HTMLElementCollection_invoke,
 };
 
-static const tid_t HTMLElementCollection_iface_tids[] = {
+static const tid_t HTMLCollection_iface_tids[] = {
     IHTMLElementCollection_tid,
     0
 };
 
-static dispex_static_data_t HTMLElementCollection_dispex = {
-    "HTMLCollection",
-    &HTMLElementColection_dispex_vtbl,
-    DispHTMLElementCollection_tid,
-    HTMLElementCollection_iface_tids
+dispex_static_data_t HTMLCollection_dispex = {
+    .id         = PROT_HTMLCollection,
+    .vtbl       = &HTMLElementColection_dispex_vtbl,
+    .disp_tid   = DispHTMLElementCollection_tid,
+    .iface_tids = HTMLCollection_iface_tids,
 };
 
 static void create_all_list(HTMLDOMNode *elem, elem_vector_t *buf)
@@ -795,7 +795,7 @@ static IHTMLElementCollection *HTMLElementCollection_Create(HTMLElement **elems,
     ret->elems = elems;
     ret->len = len;
 
-    init_dispatch_with_owner(&ret->dispex, &HTMLElementCollection_dispex, owner);
+    init_dispatch_with_owner(&ret->dispex, &HTMLCollection_dispex, owner);
 
     TRACE("ret=%p len=%ld\n", ret, len);
 

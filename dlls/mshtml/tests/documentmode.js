@@ -3307,4 +3307,6 @@ sync_test("prototypes", function() {
     }
     check(document.body.attributes, NamedNodeMap.prototype, "node map");
     check(NamedNodeMap.prototype, Object.prototype, "node map prototype");
+    check(document.getElementsByTagName("body"), HTMLCollection.prototype, "elem collection");
+    check(HTMLCollection.prototype, Object.prototype, "elem collection prototype");
 });

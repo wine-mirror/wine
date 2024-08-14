@@ -426,6 +426,7 @@ typedef struct {
     X(HTMLAreaElement)                     \
     X(HTMLBodyElement)                     \
     X(HTMLButtonElement)                   \
+    X(HTMLCollection)                      \
     X(HTMLDocument)                        \
     X(HTMLElement)                         \
     X(HTMLEmbedElement)                    \
