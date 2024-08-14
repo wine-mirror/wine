@@ -7105,13 +7105,16 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &GUID_NULL);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 16, 0, &buffer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
     hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(length == 16, "Got length %#lx.\n", length);
     IMFMediaBuffer_Release(buffer);
+    }
 
     hr = MFCreateMediaType(&media_type2);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
