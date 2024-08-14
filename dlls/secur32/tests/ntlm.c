@@ -1464,10 +1464,10 @@ static void test_null_auth_data(void)
                                          NULL, 0, &ctx, &buffer_desc, &attr, &ttl);
     ok(status == SEC_I_CONTINUE_NEEDED, "InitializeSecurityContextA failed %s\n", getSecError(status));
 
-    ret = DeleteSecurityContext(&ctx);
-    ok(ret == SEC_E_OK, "DeleteSecurityContext failed with error 0x%x\n", ret);
-    ret = FreeCredentialsHandle(&cred);
-    ok(ret == SEC_E_OK, "FreeCredentialsHandle failed with error 0x%x\n", ret);
+    status = DeleteSecurityContext(&ctx);
+    ok(status == SEC_E_OK, "DeleteSecurityContext failed %s\n", getSecError(status));
+    status = FreeCredentialsHandle(&cred);
+    ok(status == SEC_E_OK, "FreeCredentialsHandle failed %s\n", getSecError(status));
 
     FreeContextBuffer(info);
     HeapFree(GetProcessHeap(), 0, buffers[0].pvBuffer);
