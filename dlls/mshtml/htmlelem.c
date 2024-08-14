@@ -1120,15 +1120,15 @@ static const dispex_static_data_vtbl_t HTMLRectCollection_dispex_vtbl = {
     .get_prop_desc    = dispex_index_prop_desc,
     .invoke           = HTMLRectCollection_invoke,
 };
-static const tid_t HTMLRectCollection_iface_tids[] = {
+static const tid_t ClientRectList_iface_tids[] = {
     IHTMLRectCollection_tid,
     0
 };
-static dispex_static_data_t HTMLRectCollection_dispex = {
-    "ClientRectList",
-    &HTMLRectCollection_dispex_vtbl,
-    IHTMLRectCollection_tid,
-    HTMLRectCollection_iface_tids
+dispex_static_data_t ClientRectList_dispex = {
+    .id         = PROT_ClientRectList,
+    .vtbl       = &HTMLRectCollection_dispex_vtbl,
+    .disp_tid   = IHTMLRectCollection_tid,
+    .iface_tids = ClientRectList_iface_tids,
 };
 
 DISPEX_IDISPATCH_IMPL(HTMLElement, IHTMLElement,
@@ -3038,7 +3038,7 @@ static HRESULT WINAPI HTMLElement2_getClientRects(IHTMLElement2 *iface, IHTMLRec
 
     rects->IHTMLRectCollection_iface.lpVtbl = &HTMLRectCollectionVtbl;
     rects->rect_list = rect_list;
-    init_dispatch(&rects->dispex, &HTMLRectCollection_dispex, This->node.doc->script_global,
+    init_dispatch(&rects->dispex, &ClientRectList_dispex, This->node.doc->script_global,
                   dispex_compat_mode(&This->node.event_target.dispex));
 
     *pRectCol = &rects->IHTMLRectCollection_iface;

@@ -3237,6 +3237,8 @@ sync_test("prototypes", function() {
     check(CSSRule.prototype, Object.prototype, "css rule prototype");
     check(document.body.getBoundingClientRect(), ClientRect.prototype, "rect");
     check(ClientRect.prototype, Object.prototype, "rect prototype");
+    check(document.body.getClientRects(), ClientRectList.prototype, "rect list");
+    check(ClientRectList.prototype, Object.prototype, "rect list prototype");
     if(v < 11) {
         check(document.createEventObject(), MSEventObj.prototype, "event obj");
         check(MSEventObj.prototype, Object.prototype, "event obj prototype");
