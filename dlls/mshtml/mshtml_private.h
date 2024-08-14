@@ -458,6 +458,7 @@ typedef struct {
     X(MSCurrentStyleCSSProperties)         \
     X(MSEventObj)                          \
     X(MSNamespaceInfoCollection)           \
+    X(MSSelection)                         \
     X(MSStyleCSSProperties)                \
     X(MediaQueryList)                      \
     X(MessageEvent)                        \

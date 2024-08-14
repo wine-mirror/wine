@@ -233,16 +233,17 @@ static const dispex_static_data_vtbl_t HTMLSelectionObject_dispex_vtbl = {
     .unlink           = HTMLSelectionObject_unlink
 };
 
-static const tid_t HTMLSelectionObject_iface_tids[] = {
+static const tid_t MSSelection_iface_tids[] = {
     IHTMLSelectionObject_tid,
     IHTMLSelectionObject2_tid,
     0
 };
-static dispex_static_data_t HTMLSelectionObject_dispex = {
-    "MSSelection",
-    &HTMLSelectionObject_dispex_vtbl,
-    IHTMLSelectionObject_tid, /* FIXME: We have a test for that, but it doesn't expose IHTMLSelectionObject2 iface. */
-    HTMLSelectionObject_iface_tids
+dispex_static_data_t MSSelection_dispex = {
+    .id              = PROT_MSSelection,
+    .vtbl            = &HTMLSelectionObject_dispex_vtbl,
+    .disp_tid        = IHTMLSelectionObject_tid,
+    .iface_tids      = MSSelection_iface_tids,
+    .max_compat_mode = COMPAT_MODE_IE10,
 };
 
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode *doc, nsISelection *nsselection, IHTMLSelectionObject **ret)
@@ -253,7 +254,7 @@ HRESULT HTMLSelectionObject_Create(HTMLDocumentNode *doc, nsISelection *nsselect
     if(!selection)
         return E_OUTOFMEMORY;
 
-    init_dispatch(&selection->dispex, &HTMLSelectionObject_dispex, doc->script_global,
+    init_dispatch(&selection->dispex, &MSSelection_dispex, doc->script_global,
                   dispex_compat_mode(&doc->node.event_target.dispex));
 
     selection->IHTMLSelectionObject_iface.lpVtbl = &HTMLSelectionObjectVtbl;

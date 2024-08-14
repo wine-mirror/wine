@@ -3314,4 +3314,10 @@ sync_test("prototypes", function() {
     check(document.body.createTextRange(), TextRange.prototype, "text range");
     check(TextRange.prototype, Object.prototype, "text range prototype");
     check(Range.prototype, Object.prototype, "range prototype");
+    if(v < 11) {
+        check(document.selection, MSSelection.prototype, "selection");
+        check(MSSelection.prototype, Object.prototype, "selection prototype");
+    }else {
+        ok(!("MSSelection" in window), "MSSelection found in window");
+    }
 });
