@@ -3258,13 +3258,12 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
             if (!unix_lib_supported && make->module && is_crt_module( make->module ))
                 strarray_add( &cflags, "-fno-builtin" );
         }
+        strarray_addall( &cflags, cpp_flags );
     }
     else
     {
         if (make->module && is_crt_module( make->module )) strarray_add( &cflags, "-fno-builtin" );
     }
-
-    strarray_addall( &cflags, cpp_flags );
 
     output( "%s: %s\n", obj_dir_path( make, obj_name ), source->filename );
     output( "\t%s%s -c -o $@ %s", cmd_prefix( "CC" ), var_cc, source->filename );

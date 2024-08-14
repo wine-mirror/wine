@@ -10354,6 +10354,7 @@ fi
 
 saved_CC=$CC
 saved_CFLAGS=$CFLAGS
+saved_CPPFLAGS=$CPPFLAGS
 saved_LDFLAGS=$LDFLAGS
 
 { extra_arch=; unset extra_arch;}
@@ -10629,6 +10630,7 @@ test -n "$x86_64_CC" || x86_64_CC="false"
 fi
 
     CFLAGS=${CROSSCFLAGS:-"-g -O2"}
+    CPPFLAGS=""
     LDFLAGS=$CROSSLDFLAGS
     eval CC=\$${wine_arch}_CC
     eval ${wine_arch}_CFLAGS=\$CFLAGS
@@ -12059,6 +12061,7 @@ done
 
 CC=$saved_CC
 CFLAGS=$saved_CFLAGS
+CPPFLAGS=$saved_CPPFLAGS
 LDFLAGS=$saved_LDFLAGS
 
 case $HOST_ARCH in
