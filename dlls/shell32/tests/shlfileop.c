@@ -3063,14 +3063,14 @@ static IFileOperationProgressSink *create_progress_sink(unsigned int instance_id
     return &obj->IFileOperationProgressSink_iface;
 }
 
-static void set_shell_item_path(IShellItem *item, const WCHAR *path, BOOL todo)
+static void set_shell_item_path(IShellItem *item, const WCHAR *path)
 {
     IPersistIDList *idlist;
     ITEMIDLIST *pidl;
     HRESULT hr;
 
     hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
-    todo_wine_if(todo) ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     if (FAILED(hr))
         return;
     hr = IShellItem_QueryInterface(item, &IID_IPersistIDList, (void **)&idlist);
@@ -3233,11 +3233,11 @@ static void test_file_operation(void)
     PathCombineW(tmpfile, dirpath, L"testfile1");
     createTestFileW(tmpfile);
 
-    set_shell_item_path(folder, dirpath, FALSE);
-    set_shell_item_path(item, tmpfile, FALSE);
+    set_shell_item_path(folder, dirpath);
+    set_shell_item_path(item, tmpfile);
 
     hr = IFileOperation_SetOperationFlags(operation, 0);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     progress2 = create_progress_sink(1);
     progress_init_check_notifications(progress, ARRAY_SIZE(notifications1), notifications1, dirpath, &expected_notif);
@@ -3245,13 +3245,13 @@ static void test_file_operation(void)
     hr = IFileOperation_MoveItem(operation, item, folder, L"test", progress2);
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_PerformOperations(operation);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     aborted = 0xdeadbeef;
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(!aborted, "got %d.\n", aborted);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(!aborted, "got %d.\n", aborted);
     progress_end_check_notifications(progress);
 
     hr = IFileOperation_PerformOperations(operation);
@@ -3262,36 +3262,36 @@ static void test_file_operation(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     progress_init_check_notifications(progress, ARRAY_SIZE(notifications2), notifications2, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     progress_end_check_notifications(progress);
     aborted = 0;
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(aborted == TRUE, "got %d.\n", aborted);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(aborted == TRUE, "got %d.\n", aborted);
     aborted = 0;
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(aborted == TRUE, "got %d.\n", aborted);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(aborted == TRUE, "got %d.\n", aborted);
 
     /* Input file exists: PerformOperations succeeds, the item data at the moment of MoveItem is used. */
     PathCombineW(path, dirpath, L"test");
-    set_shell_item_path(item, path, TRUE);
+    set_shell_item_path(item, path);
     hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
     PathCombineW(tmpfile, dirpath, L"testfile2");
     /* Actual paths are fetched at _MoveItem and not at _Perform operation: changing item after doesn't matter. */
     createTestFileW(tmpfile);
-    set_shell_item_path(item, tmpfile, FALSE);
+    set_shell_item_path(item, tmpfile);
     bret = DeleteFileW(tmpfile);
     ok(bret, "got error %ld.\n", GetLastError());
     progress_init_check_notifications(progress, ARRAY_SIZE(notifications3), notifications3, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     progress_end_check_notifications(progress);
     aborted = 0;
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(aborted == TRUE, "got %d.\n", aborted);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(aborted == TRUE, "got %d.\n", aborted);
     ret = GetFileAttributesW(tmpfile);
     ok(ret == INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
     PathCombineW(path, dirpath, L"test");
@@ -3299,9 +3299,9 @@ static void test_file_operation(void)
     ok(ret == INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
     PathCombineW(path, dirpath, L"test2");
     ret = GetFileAttributesW(path);
-    todo_wine ok(ret != INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
+    ok(ret != INVALID_FILE_ATTRIBUTES, "got %#lx.\n", ret);
     bret = DeleteFileW(path);
-    todo_wine ok(bret, "got error %ld.\n", GetLastError());
+    ok(bret, "got error %ld.\n", GetLastError());
 
     refcount = IShellItem_Release(item);
     ok(!refcount, "got %ld.\n", refcount);
@@ -3323,7 +3323,7 @@ static void test_file_operation(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
 
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     hr = IFileOperation_Advise(operation, progress, &cookie);
     ok(hr == S_OK, "got %#lx.\n", hr);
@@ -3351,12 +3351,12 @@ static void test_file_operation(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     progress_init_check_notifications(progress, ARRAY_SIZE(notifications4), notifications4, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     progress_end_check_notifications(progress);
     aborted = 0;
     hr = IFileOperation_GetAnyOperationsAborted(operation, &aborted);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(aborted, "got %d.\n", aborted);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(aborted, "got %d.\n", aborted);
 
     bret = DeleteFileW(path);
     ok(bret, "got error %ld.\n", GetLastError());
@@ -3368,13 +3368,13 @@ static void test_file_operation(void)
     hr = IFileOperation_Advise(operation, progress, &cookie);
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     hr = IFileOperation_MoveItem(operation, item, folder, L"test2", NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
     progress_init_check_notifications(progress, ARRAY_SIZE(notifications5), notifications5, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     progress_end_check_notifications(progress);
     IFileOperation_Release(operation);
 
@@ -3384,11 +3384,11 @@ static void test_file_operation(void)
     hr = IFileOperation_Advise(operation, progress, &cookie);
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IFileOperation_SetOperationFlags(operation, FOF_NO_UI);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
 
     PathCombineW(path, dirpath, L"test_dir3");
     bret = CreateDirectoryW(path, NULL);
-    set_shell_item_path(item, path, FALSE);
+    set_shell_item_path(item, path);
     ok(bret, "got error %ld.\n", GetLastError());
     PathCombineW(tmpfile, path, L"testfile5");
     createTestFileW(tmpfile);
@@ -3413,7 +3413,7 @@ static void test_file_operation(void)
     ok(!refcount, "got %ld.\n", refcount);
     progress_init_check_notifications(progress, ARRAY_SIZE(notifications6), notifications6, dirpath, &expected_notif);
     hr = IFileOperation_PerformOperations(operation);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
     progress_end_check_notifications(progress);
 
     PathCombineW(path, dirpath, L"test_dir2");

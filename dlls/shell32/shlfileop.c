@@ -41,6 +41,7 @@
 #include "shlwapi.h"
 #include "shell32_main.h"
 #include "shfldr.h"
+#include "sherrors.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 
@@ -1878,6 +1879,8 @@ struct file_operation
     struct list sinks;
     DWORD next_cookie;
     struct list ops;
+    DWORD flags;
+    BOOL aborted;
 };
 
 static void free_file_operation_ops(struct file_operation *operation)
@@ -1943,6 +1946,82 @@ error:
     CoTaskMemFree(op->name);
     free(op);
     return hr;
+}
+
+static HRESULT copy_engine_move(struct file_operation *operation, struct copy_engine_operation *op, IShellItem *src_item,
+        IShellItem **dest_folder)
+{
+    WCHAR path[MAX_PATH], item_path[MAX_PATH];
+    DWORD src_attrs, dst_attrs;
+    WCHAR *str, *ptr;
+    HRESULT hr;
+
+    *dest_folder = NULL;
+    if (FAILED(hr = IShellItem_GetDisplayName(src_item, SIGDN_FILESYSPATH, &str)))
+        return hr;
+    wcscpy_s(item_path, ARRAY_SIZE(item_path), str);
+    if (!*op->name && (ptr = StrRChrW(str, NULL, '\\')))
+    {
+        free(op->name);
+        op->name = wcsdup(ptr + 1);
+    }
+    CoTaskMemFree(str);
+
+    if (FAILED(hr = IShellItem_GetDisplayName(op->folder, SIGDN_FILESYSPATH, &str)))
+        return hr;
+    hr = PathCombineW(path, str, op->name) ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+    CoTaskMemFree(str);
+    if (FAILED(hr))
+        return hr;
+
+    if ((src_attrs = GetFileAttributesW(item_path)) == INVALID_FILE_ATTRIBUTES)
+        return HRESULT_FROM_WIN32(GetLastError());
+    dst_attrs = GetFileAttributesW(path);
+    if (IsAttribFile(src_attrs) && IsAttribDir(dst_attrs))
+        return COPYENGINE_E_FILE_IS_FLD_DEST;
+    if (IsAttribDir(src_attrs) && IsAttribFile(dst_attrs))
+        return COPYENGINE_E_FLD_IS_FILE_DEST;
+    if (dst_attrs == INVALID_FILE_ATTRIBUTES || (IsAttribFile(src_attrs) && IsAttribFile(dst_attrs)))
+    {
+        if (MoveFileExW(item_path, path, MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
+        {
+            if (FAILED((hr = SHCreateItemFromParsingName(path, NULL, &IID_IShellItem, (void **)dest_folder))))
+                return hr;
+            return COPYENGINE_S_DONT_PROCESS_CHILDREN;
+        }
+        IShellItem_Release(*dest_folder);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    /* Merge directory to existing directory. */
+    FIXME("Megre directories.\n");
+    return E_FAIL;
+}
+
+static HRESULT perform_file_operations(struct file_operation *operation)
+{
+    struct copy_engine_operation *op;
+    IShellItem *item, *created;
+    HRESULT hr;
+
+    LIST_FOR_EACH_ENTRY(op, &operation->ops, struct copy_engine_operation, entry)
+    {
+        hr = E_FAIL;
+        switch (op->opcode)
+        {
+            case COPY_ENGINE_MOVE:
+                if (FAILED(hr = SHCreateItemFromIDList(op->item_pidl, &IID_IShellItem, (void**)&item)))
+                    break;
+                hr = copy_engine_move(operation, op, item, &created);
+                IShellItem_Release(item);
+                if (SUCCEEDED(hr))
+                    IShellItem_Release(created);
+                break;
+        }
+        TRACE("op %d, hr %#lx.\n", op->opcode, hr);
+        operation->aborted = FAILED(hr) || operation->aborted;
+    }
+    return S_OK;
 }
 
 static inline struct file_operation *impl_from_IFileOperation(IFileOperation *iface)
@@ -2044,9 +2123,12 @@ static HRESULT WINAPI file_operation_Unadvise(IFileOperation *iface, DWORD cooki
 
 static HRESULT WINAPI file_operation_SetOperationFlags(IFileOperation *iface, DWORD flags)
 {
-    FIXME("(%p, %lx): stub.\n", iface, flags);
+    struct file_operation *operation = impl_from_IFileOperation(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %lx).\n", iface, flags);
+
+    operation->flags = flags;
+    return S_OK;
 }
 
 static HRESULT WINAPI file_operation_SetProgressMessage(IFileOperation *iface, LPCWSTR message)
@@ -2166,21 +2248,31 @@ static HRESULT WINAPI file_operation_NewItem(IFileOperation *iface, IShellItem *
 static HRESULT WINAPI file_operation_PerformOperations(IFileOperation *iface)
 {
     struct file_operation *operation = impl_from_IFileOperation(iface);
+    HRESULT hr;
 
-    FIXME("(%p): stub.\n", iface);
+    TRACE("(%p).\n", iface);
 
     if (list_empty(&operation->ops))
         return E_UNEXPECTED;
 
+    if (operation->flags != FOF_NO_UI)
+        FIXME("Unhandled flags %#lx.\n", operation->flags);
+    hr = perform_file_operations(operation);
     free_file_operation_ops(operation);
-    return E_NOTIMPL;
+    return hr;
 }
 
 static HRESULT WINAPI file_operation_GetAnyOperationsAborted(IFileOperation *iface, BOOL *aborted)
 {
-    FIXME("(%p, %p): stub.\n", iface, aborted);
+    struct file_operation *operation = impl_from_IFileOperation(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, aborted);
+
+    if (!aborted)
+        return E_POINTER;
+    *aborted = operation->aborted;
+    TRACE("-> aborted %d.\n", *aborted);
+    return S_OK;
 }
 
 static const IFileOperationVtbl file_operation_vtbl =
