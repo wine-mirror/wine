@@ -937,7 +937,7 @@ static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
 
     /* Verify signed hash 1 */
     result = CryptVerifySignatureA(hHash, signValue1, sizeof(signValue1), pubKey, NULL, 0);
-    todo_wine ok(result, "Failed to verify signature, got %lx\n", GetLastError());
+    ok(result, "Failed to verify signature, got %lx\n", GetLastError());
 
     result = CryptDestroyHash(hHash);
     ok(result, "Failed to destroy hash, got %lx\n", GetLastError());
@@ -951,7 +951,7 @@ static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
 
     /* Verify signed hash 2 */
     result = CryptVerifySignatureA(hHash, signValue2, sizeof(signValue2), pubKey, NULL, 0);
-    todo_wine ok(result, "Failed to verify signature, got %lx\n", GetLastError());
+    ok(result, "Failed to verify signature, got %lx\n", GetLastError());
 
     result = CryptDestroyHash(hHash);
     ok(result, "Failed to destroy hash, got %lx\n", GetLastError());

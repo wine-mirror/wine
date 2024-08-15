@@ -994,6 +994,12 @@ BOOL WINAPI CPSignHash( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD keyspec, const
     TRACE( "%p, %p, %lu, %s, %08lx, %p, %p\n", (void *)hprov, (void *)hhash, keyspec, debugstr_w(desc), flags, sig,
            siglen );
 
+    if (!hash->finished)
+    {
+        if (BCryptFinishHash( hash->handle, hash->value, hash->len, 0 )) return FALSE;
+        hash->finished = TRUE;
+    }
+
     if (container->magic != MAGIC_CONTAINER || !container->sign_key) return FALSE;
     if (hash->magic != MAGIC_HASH) return FALSE;
 
