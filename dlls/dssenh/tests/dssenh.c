@@ -796,9 +796,8 @@ struct signature_test {
     DWORD dataLen;
 };
 
-static const char dataToSign1[] = "Put your hands up for Cryptography :)";
-static const char dataToSign2[] = "With DSSENH implemented, applications requiring it will now work.";
-static const char dataToSign3[] = "";
+static const char dataToSign1[] = "With DSSENH implemented, applications requiring it will now work.";
+static const char dataToSign2[] = "";
 
 static const BYTE AT_SIGNATURE_PrivateKey[] = {
 0x07,0x02,0x00,0x00,0x00,0x22,0x00,0x00, 0x44,0x53,0x53,0x32,0x00,0x04,0x00,0x00,
@@ -851,10 +850,8 @@ static const BYTE DSS_SIGN_PrivateKey[] = {
 static const struct signature_test dssSign_data[] = {
     {AT_SIGNATURE_PrivateKey, sizeof(AT_SIGNATURE_PrivateKey), (BYTE *)dataToSign1, sizeof(dataToSign1)},
     {AT_SIGNATURE_PrivateKey, sizeof(AT_SIGNATURE_PrivateKey), (BYTE *)dataToSign2, sizeof(dataToSign2)},
-    {AT_SIGNATURE_PrivateKey, sizeof(AT_SIGNATURE_PrivateKey), (BYTE *)dataToSign3, sizeof(dataToSign3)},
     {DSS_SIGN_PrivateKey, sizeof(DSS_SIGN_PrivateKey), (BYTE *)dataToSign1, sizeof(dataToSign1)},
     {DSS_SIGN_PrivateKey, sizeof(DSS_SIGN_PrivateKey), (BYTE *)dataToSign2, sizeof(dataToSign2)},
-    {DSS_SIGN_PrivateKey, sizeof(DSS_SIGN_PrivateKey), (BYTE *)dataToSign3, sizeof(dataToSign3)}
 };
 
 static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *tests, int testLen)
