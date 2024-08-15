@@ -860,11 +860,9 @@ static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
     HCRYPTKEY privKey = 0, pubKey = 0;
     BYTE pubKeyBuffer[512];
     BYTE signValue1[40], signValue2[40];
+    DWORD signLen;
     DWORD pubKeyLen;
     BOOL result;
-
-    DWORD signLen1 = test->dataLen;
-    DWORD signLen2 = test->dataLen;
 
     /* Get a private key of array specified ALG_ID */
     result = CryptImportKey(hProv, test->privateKey, test->keyLen, 0, 0, &privKey);
@@ -874,16 +872,17 @@ static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
     result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
     ok(result, "Failed to create a hash, got %lx\n", GetLastError());
 
-    result = CryptHashData(hHash, test->signData, signLen1, 0);
+    result = CryptHashData(hHash, test->signData, test->dataLen, 0);
     ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
 
     /* Sign hash 1 */
-    signLen1 = 0;
-    result = CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, NULL, &signLen1);
+    signLen = 0;
+    result = CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, NULL, &signLen);
     ok(result, "Failed to get signature length, got %lx\n", GetLastError());
-    ok(signLen1 == 40, "Expected a 40-byte signature, got %ld\n", signLen1);
+    ok(signLen == 40, "Expected a 40-byte signature, got %ld\n", signLen);
 
-    result = CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, signValue1, &signLen1);
+    signLen = ARRAY_SIZE(signValue1);
+    result = CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, signValue1, &signLen);
     ok(result, "Failed to sign hash, got %lx\n", GetLastError());
 
     result = CryptDestroyHash(hHash);
@@ -893,16 +892,17 @@ static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
     result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
     ok(result, "Failed to create a hash, got %lx\n", GetLastError());
 
-    result = CryptHashData(hHash, test->signData, signLen2, 0);
+    result = CryptHashData(hHash, test->signData, test->dataLen, 0);
     ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
 
     /* Sign hash 2 */
-    signLen2 = 0;
-    result = CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, NULL, &signLen2);
+    signLen = 0;
+    result = CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, NULL, &signLen);
     ok(result, "Failed to get signature length, got %lx\n", GetLastError());
-    ok(signLen2 == 40, "Expected a 40-byte signature, got %ld\n", signLen2);
+    ok(signLen == 40, "Expected a 40-byte signature, got %ld\n", signLen);
 
-    result = CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, signValue2, &signLen2);
+    signLen = ARRAY_SIZE(signValue2);
+    result = CryptSignHashA(hHash, AT_SIGNATURE, NULL, 0, signValue2, &signLen);
     ok(result, "Failed to sign hash, got %lx\n", GetLastError());
 
     result = CryptDestroyHash(hHash);
@@ -910,8 +910,8 @@ static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
 
     /* Compare signatures to ensure they are both different, because every DSS signature
        should be different even if the input hash data is identical */
-    ok(memcmp(signValue1, signValue2, signLen2), "Expected two different signatures from "
-        "the same hash input.\n");
+    ok(memcmp(signValue1, signValue2, ARRAY_SIZE(signValue1)),
+        "Expected two different signatures from the same hash input.\n");
 
     result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen);
     ok(result, "Failed to acquire public key length, got %lx\n", GetLastError());
