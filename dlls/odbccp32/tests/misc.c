@@ -745,6 +745,9 @@ static void test_SQLValidDSN(void)
     int i;
     BOOL ret;
 
+    ret = SQLValidDSN(NULL);
+    ok(!ret, "got %d\n", ret);
+
     strcpy(str, "wine10");
     for(i = 0; i < strlen(invalid); i++)
     {
@@ -771,6 +774,9 @@ static void test_SQLValidDSNW(void)
     WCHAR str[10];
     int i;
     BOOL ret;
+
+    ret = SQLValidDSNW(NULL);
+    ok(!ret, "got %d\n", ret);
 
     lstrcpyW(str, L"wine10");
     for (i = 0; i < lstrlenW(L"[]{}(),;?*=!@\\"); i++)
