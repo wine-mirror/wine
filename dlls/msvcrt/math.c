@@ -1568,8 +1568,9 @@ void CDECL _fpreset(void)
  */
 int CDECL feholdexcept(fenv_t *env)
 {
-    FIXME( "(%p) stub\n", env );
-    return 0;
+    TRACE( "(%p)\n", env );
+    fegetenv(env);
+    return feclearexcept(FE_ALL_EXCEPT);
 }
 
 /*********************************************************************

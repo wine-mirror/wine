@@ -1089,11 +1089,9 @@ static void test_feenv(void)
     memset(&env, 0xfe, sizeof(env));
     ret = p_feholdexcept(&env);
     ok(!ret, "feholdexcept returned %x\n", ret);
-    todo_wine {
     ok(env._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
             "env._Fe_ctl = %lx\n", env._Fe_ctl);
     ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
-    }
     except = FE_ALL_EXCEPT;
     ret = p_fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
@@ -1104,11 +1102,9 @@ static void test_feenv(void)
     memset(&env, 0xfe, sizeof(env));
     ret = p_fegetenv(&env);
     ok(!ret, "feholdexcept returned %x\n", ret);
-    todo_wine {
     ok(env._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
             "env._Fe_ctl = %lx\n", env._Fe_ctl);
     ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
-    }
 
     except = FE_ALL_EXCEPT;
     ret = p_fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
@@ -1116,11 +1112,9 @@ static void test_feenv(void)
     memset(&env, 0xfe, sizeof(env));
     ret = p_feholdexcept(&env);
     ok(!ret, "feholdexcept returned %x\n", ret);
-    todo_wine {
     ok(env._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
             "env._Fe_ctl = %lx\n", env._Fe_ctl);
     ok(env._Fe_stat == (FE_INEXACT|FE_UNDERFLOW), "env._Fe_stat = %lx\n", env._Fe_stat);
-    }
     p__clearfp();
 }
 
