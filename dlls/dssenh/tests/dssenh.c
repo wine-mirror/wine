@@ -854,7 +854,7 @@ static const struct signature_test dssSign_data[] = {
     {DSS_SIGN_PrivateKey, sizeof(DSS_SIGN_PrivateKey), (BYTE *)dataToSign2, sizeof(dataToSign2)},
 };
 
-static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *tests, int testLen)
+static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
 {
     HCRYPTHASH hHash1, hHash2;
     HCRYPTKEY privKey = 0, pubKey = 0;
@@ -864,133 +864,130 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
     DWORD hashLen1, hashLen2, pubKeyLen;
     DWORD dataLen1, dataLen2;
     BOOL result;
-    int i;
 
-    for (i = 0; i < testLen; i++)
-    {
-        DWORD signLen1 = tests[i].dataLen;
-        DWORD signLen2 = tests[i].dataLen;
+    DWORD signLen1 = test->dataLen;
+    DWORD signLen2 = test->dataLen;
 
-        /* Get a private key of array specified ALG_ID */
-        result = CryptImportKey(hProv, tests[i].privateKey, tests[i].keyLen, 0, 0, &privKey);
-        ok(result, "Failed to imported key, got %lx\n", GetLastError());
+    /* Get a private key of array specified ALG_ID */
+    result = CryptImportKey(hProv, test->privateKey, test->keyLen, 0, 0, &privKey);
+    ok(result, "Failed to imported key, got %lx\n", GetLastError());
 
-        /* Create hash object and add data for signature 1 */
-        result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash1);
-        ok(result, "Failed to create a hash, got %lx\n", GetLastError());
+    /* Create hash object and add data for signature 1 */
+    result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash1);
+    ok(result, "Failed to create a hash, got %lx\n", GetLastError());
 
-        result = CryptHashData(hHash1, tests[i].signData, signLen1, 0);
-        ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
+    result = CryptHashData(hHash1, test->signData, signLen1, 0);
+    ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
 
-        /* Create hash object and add data for signature 2 */
-        result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
-        ok(result, "Failed to create a hash, got %lx\n", GetLastError());
+    /* Create hash object and add data for signature 2 */
+    result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
+    ok(result, "Failed to create a hash, got %lx\n", GetLastError());
 
-        result = CryptHashData(hHash2, tests[i].signData, signLen2, 0);
-        ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
+    result = CryptHashData(hHash2, test->signData, signLen2, 0);
+    ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
 
-        /* Acquire hash length and hash value */
-        dataLen1 = sizeof(DWORD);
-        result = CryptGetHashParam(hHash1, HP_HASHSIZE, (BYTE *)&hashLen1, &dataLen1, 0);
-        ok(result, "Failed to get hash length, got %lx\n", GetLastError());
+    /* Acquire hash length and hash value */
+    dataLen1 = sizeof(DWORD);
+    result = CryptGetHashParam(hHash1, HP_HASHSIZE, (BYTE *)&hashLen1, &dataLen1, 0);
+    ok(result, "Failed to get hash length, got %lx\n", GetLastError());
 
-        result = CryptGetHashParam(hHash1, HP_HASHVAL, hashValue1, &hashLen1, 0);
-        ok(result, "Failed to return hash value.\n");
+    result = CryptGetHashParam(hHash1, HP_HASHVAL, hashValue1, &hashLen1, 0);
+    ok(result, "Failed to return hash value.\n");
 
-        dataLen2 = sizeof(DWORD);
-        result = CryptGetHashParam(hHash2, HP_HASHSIZE, (BYTE *)&hashLen2, &dataLen2, 0);
-        ok(result, "Failed to get hash length, got %lx\n", GetLastError());
+    dataLen2 = sizeof(DWORD);
+    result = CryptGetHashParam(hHash2, HP_HASHSIZE, (BYTE *)&hashLen2, &dataLen2, 0);
+    ok(result, "Failed to get hash length, got %lx\n", GetLastError());
 
-        result = CryptGetHashParam(hHash2, HP_HASHVAL, hashValue2, &hashLen2, 0);
-        ok(result, "Failed to return hash value.\n");
+    result = CryptGetHashParam(hHash2, HP_HASHVAL, hashValue2, &hashLen2, 0);
+    ok(result, "Failed to return hash value.\n");
 
-        /* Compare hashes to ensure they are the same */
-        ok(hashLen1 ==  hashLen2, "Hash lengths were not the same.\n");
-        ok(!memcmp(hashValue1, hashValue2, hashLen2), "Hashes were not identical.\n");
+    /* Compare hashes to ensure they are the same */
+    ok(hashLen1 ==  hashLen2, "Hash lengths were not the same.\n");
+    ok(!memcmp(hashValue1, hashValue2, hashLen2), "Hashes were not identical.\n");
 
-        /* Sign hash 1 */
-        signLen1 = 0;
-        result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, NULL, &signLen1);
-        ok(result, "Failed to get signature length, got %lx\n", GetLastError());
-        ok(signLen1 == 40, "Expected a 40-byte signature, got %ld\n", signLen1);
+    /* Sign hash 1 */
+    signLen1 = 0;
+    result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, NULL, &signLen1);
+    ok(result, "Failed to get signature length, got %lx\n", GetLastError());
+    ok(signLen1 == 40, "Expected a 40-byte signature, got %ld\n", signLen1);
 
-        result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, signValue1, &signLen1);
-        ok(result, "Failed to sign hash, got %lx\n", GetLastError());
+    result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, signValue1, &signLen1);
+    ok(result, "Failed to sign hash, got %lx\n", GetLastError());
 
-        /* Sign hash 2 */
-        signLen2 = 0;
-        result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, NULL, &signLen2);
-        ok(result, "Failed to get signature length, got %lx\n", GetLastError());
-        ok(signLen2 == 40, "Expected a 40-byte signature, got %ld\n", signLen2);
+    /* Sign hash 2 */
+    signLen2 = 0;
+    result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, NULL, &signLen2);
+    ok(result, "Failed to get signature length, got %lx\n", GetLastError());
+    ok(signLen2 == 40, "Expected a 40-byte signature, got %ld\n", signLen2);
 
-        result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, signValue2, &signLen2);
-        ok(result, "Failed to sign hash2, got %lx\n", GetLastError());
+    result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, signValue2, &signLen2);
+    ok(result, "Failed to sign hash2, got %lx\n", GetLastError());
 
-        /* Compare signatures to ensure they are both different, because every DSS signature
-           should be different even if the input hash data is identical */
-        ok(memcmp(signValue1, signValue2, signLen2), "Expected two different signatures from "
-            "the same hash input.\n");
+    /* Compare signatures to ensure they are both different, because every DSS signature
+       should be different even if the input hash data is identical */
+    ok(memcmp(signValue1, signValue2, signLen2), "Expected two different signatures from "
+        "the same hash input.\n");
 
-        result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen);
-        ok(result, "Failed to acquire public key length, got %lx\n", GetLastError());
+    result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, NULL, &pubKeyLen);
+    ok(result, "Failed to acquire public key length, got %lx\n", GetLastError());
 
-        /* Export the public key */
-        result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, pubKeyBuffer, &pubKeyLen);
-        ok(result, "Failed to export public key, got %lx\n", GetLastError());
+    /* Export the public key */
+    result = CryptExportKey(privKey, 0, PUBLICKEYBLOB, 0, pubKeyBuffer, &pubKeyLen);
+    ok(result, "Failed to export public key, got %lx\n", GetLastError());
 
-        result = CryptDestroyHash(hHash1);
-        ok(result, "Failed to destroy hash1, got %lx\n", GetLastError());
-        result = CryptDestroyHash(hHash2);
-        ok(result, "Failed to destroy hash2, got %lx\n", GetLastError());
+    result = CryptDestroyHash(hHash1);
+    ok(result, "Failed to destroy hash1, got %lx\n", GetLastError());
+    result = CryptDestroyHash(hHash2);
+    ok(result, "Failed to destroy hash2, got %lx\n", GetLastError());
 
-        /* Destroy the private key */
-        result = CryptDestroyKey(privKey);
-        ok(result, "Failed to destroy private key, got %lx\n", GetLastError());
+    /* Destroy the private key */
+    result = CryptDestroyKey(privKey);
+    ok(result, "Failed to destroy private key, got %lx\n", GetLastError());
 
-        /* Import the public key we obtained earlier */
-        result = CryptImportKey(hProv, pubKeyBuffer, pubKeyLen, 0, 0, &pubKey);
-        ok(result, "Failed to import public key, got %lx\n", GetLastError());
+    /* Import the public key we obtained earlier */
+    result = CryptImportKey(hProv, pubKeyBuffer, pubKeyLen, 0, 0, &pubKey);
+    ok(result, "Failed to import public key, got %lx\n", GetLastError());
 
-        result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash1);
-        ok(result, "Failed to create hash, got %lx\n", GetLastError());
+    result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash1);
+    ok(result, "Failed to create hash, got %lx\n", GetLastError());
 
-        /* Hash the data to compare with the signed hash */
-        result = CryptHashData(hHash1, tests[i].signData, tests[i].dataLen, 0);
-        ok(result, "Failed to add data to hash1, got %lx\n", GetLastError());
+    /* Hash the data to compare with the signed hash */
+    result = CryptHashData(hHash1, test->signData, test->dataLen, 0);
+    ok(result, "Failed to add data to hash1, got %lx\n", GetLastError());
 
-        /* Verify signed hash 1 */
-        result = CryptVerifySignatureA(hHash1, signValue1, sizeof(signValue1), pubKey, NULL, 0);
-        ok(result, "Failed to verify signature, got %lx\n", GetLastError());
+    /* Verify signed hash 1 */
+    result = CryptVerifySignatureA(hHash1, signValue1, sizeof(signValue1), pubKey, NULL, 0);
+    ok(result, "Failed to verify signature, got %lx\n", GetLastError());
 
-        result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
-        ok(result, "Failed to create hash, got %lx\n", GetLastError());
+    result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
+    ok(result, "Failed to create hash, got %lx\n", GetLastError());
 
-        /* Hash the data to compare with the signed hash */
-        result = CryptHashData(hHash2, tests[i].signData, tests[i].dataLen, 0);
-        ok(result, "Failed to add data to hash2, got %lx\n", GetLastError());
+    /* Hash the data to compare with the signed hash */
+    result = CryptHashData(hHash2, test->signData, test->dataLen, 0);
+    ok(result, "Failed to add data to hash2, got %lx\n", GetLastError());
 
-        /* Verify signed hash 2 */
-        result = CryptVerifySignatureA(hHash2, signValue2, sizeof(signValue2), pubKey, NULL, 0);
-        ok(result, "Failed to verify signature, got %lx\n", GetLastError());
+    /* Verify signed hash 2 */
+    result = CryptVerifySignatureA(hHash2, signValue2, sizeof(signValue2), pubKey, NULL, 0);
+    ok(result, "Failed to verify signature, got %lx\n", GetLastError());
 
-        result = CryptDestroyHash(hHash1);
-        ok(result, "Failed to destroy hash1, got %lx\n", GetLastError());
-        result = CryptDestroyHash(hHash2);
-        ok(result, "Failed to destroy hash2, got %lx\n", GetLastError());
+    result = CryptDestroyHash(hHash1);
+    ok(result, "Failed to destroy hash1, got %lx\n", GetLastError());
+    result = CryptDestroyHash(hHash2);
+    ok(result, "Failed to destroy hash2, got %lx\n", GetLastError());
 
-        /* Destroy the public key */
-        result = CryptDestroyKey(pubKey);
-        ok(result, "Failed to destroy public key, got %lx\n", GetLastError());
-    }
+    /* Destroy the public key */
+    result = CryptDestroyKey(pubKey);
+    ok(result, "Failed to destroy public key, got %lx\n", GetLastError());
 }
 
 static void test_verify_signature(void)
 {
-    HCRYPTPROV hProv = 0;
+    HCRYPTPROV hProv[4];
     BOOL result;
+    int i, j;
 
     /* acquire base dss provider */
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, 0);
+    result = CryptAcquireContextA(&hProv[0], NULL, MS_DEF_DSS_PROV_A, PROV_DSS, 0);
     if(!result)
     {
         skip("DSSENH is currently not available, skipping signature verification tests.\n");
@@ -998,38 +995,29 @@ static void test_verify_signature(void)
     }
     ok(result, "Failed to acquire CSP.\n");
 
-    test_signhash_array(hProv, dssSign_data, ARRAY_SIZE(dssSign_data));
-
-    result = CryptReleaseContext(hProv, 0);
-    ok(result, "Failed to release CSP provider.\n");
-
     /* acquire diffie hellman dss provider */
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, 0);
+    result = CryptAcquireContextA(&hProv[1], NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, 0);
     ok(result, "Failed to acquire CSP.\n");
-
-    test_signhash_array(hProv, dssSign_data, ARRAY_SIZE(dssSign_data));
-
-    result = CryptReleaseContext(hProv, 0);
-    ok(result, "Failed to release CSP provider.\n");
 
     /* acquire enhanced dss provider */
     SetLastError(0xdeadbeef);
-    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, 0);
+    result = CryptAcquireContextA(&hProv[2], NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, 0);
     ok(result, "Failed to acquire CSP.\n");
-
-    test_signhash_array(hProv, dssSign_data, ARRAY_SIZE(dssSign_data));
-
-    result = CryptReleaseContext(hProv, 0);
-    ok(result, "Failed to release CSP provider.\n");
 
     /* acquire schannel dss provider */
-    result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, 0);
+    result = CryptAcquireContextA(&hProv[3], NULL, MS_DEF_DH_SCHANNEL_PROV_A, PROV_DH_SCHANNEL, 0);
     ok(result, "Failed to acquire CSP.\n");
 
-    test_signhash_array(hProv, dssSign_data, ARRAY_SIZE(dssSign_data));
+    for (i = 0; i < ARRAY_SIZE(hProv); i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(dssSign_data); j++)
+        {
+            test_signhash(hProv[i], &dssSign_data[j]);
+        }
 
-    result = CryptReleaseContext(hProv, 0);
-    ok(result, "Failed to release CSP provider.\n");
+        result = CryptReleaseContext(hProv[i], 0);
+        ok(result, "Failed to release CSP provider %d.\n", i);
+    }
 }
 
 struct keyExchange_test {
