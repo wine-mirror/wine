@@ -1564,6 +1564,15 @@ void CDECL _fpreset(void)
 
 #if _MSVCR_VER>=120
 /*********************************************************************
+ *              feholdexcept (MSVCR120.@)
+ */
+int CDECL feholdexcept(fenv_t *env)
+{
+    FIXME( "(%p) stub\n", env );
+    return 0;
+}
+
+/*********************************************************************
  *              fesetenv (MSVCR120.@)
  */
 int CDECL fesetenv(const fenv_t *env)

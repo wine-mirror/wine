@@ -2293,7 +2293,7 @@
 @ cdecl fegetenv(ptr)
 @ cdecl fegetexceptflag(ptr long)
 @ cdecl fegetround()
-@ stub feholdexcept
+@ cdecl feholdexcept(ptr)
 @ cdecl feof(ptr)
 @ cdecl ferror(ptr)
 @ cdecl fesetenv(ptr)
