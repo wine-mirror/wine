@@ -2100,6 +2100,27 @@ static HDC get_display_dc(void)
     return display_dc;
 }
 
+HBITMAP get_display_bitmap(void)
+{
+    static RECT old_virtual_rect;
+    static HBITMAP hbitmap;
+    RECT virtual_rect;
+    HBITMAP ret;
+
+    virtual_rect = get_virtual_screen_rect( 0 );
+    pthread_mutex_lock( &display_dc_lock );
+    if (!EqualRect( &old_virtual_rect, &virtual_rect ))
+    {
+        if (hbitmap) NtGdiDeleteObjectApp( hbitmap );
+        hbitmap = NtGdiCreateBitmap( virtual_rect.right - virtual_rect.left,
+                                     virtual_rect.bottom - virtual_rect.top, 1, 32, NULL );
+        old_virtual_rect = virtual_rect;
+    }
+    ret = hbitmap;
+    pthread_mutex_unlock( &display_dc_lock );
+    return ret;
+}
+
 static void release_display_dc( HDC hdc )
 {
     pthread_mutex_unlock( &display_dc_lock );

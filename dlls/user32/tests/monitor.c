@@ -2509,10 +2509,8 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
     if (ret)
     {
         ok_(__FILE__, line)(bitmap.bmType == 0, "Expected bmType %d, got %d.\n", 0, bitmap.bmType);
-        todo_wine
         ok_(__FILE__, line)(bitmap.bmWidth == GetSystemMetrics(SM_CXVIRTUALSCREEN),
                 "Expected bmWidth %d, got %d.\n", GetSystemMetrics(SM_CXVIRTUALSCREEN), bitmap.bmWidth);
-        todo_wine
         ok_(__FILE__, line)(bitmap.bmHeight == GetSystemMetrics(SM_CYVIRTUALSCREEN),
                 "Expected bmHeight %d, got %d.\n", GetSystemMetrics(SM_CYVIRTUALSCREEN), bitmap.bmHeight);
         ok_(__FILE__, line)(bitmap.bmBitsPixel == 32, "Expected bmBitsPixel %d, got %d.\n", 32,
@@ -2690,7 +2688,6 @@ static void test_display_dc(void)
     hdc2 = CreateDCA("DISPLAY", NULL, NULL, NULL);
     ok(!!hdc2, "CreateDCA failed.\n");
     hbitmap2 = GetCurrentObject(hdc2, OBJ_BITMAP);
-    todo_wine
     ok(hbitmap2 == old_hbitmap, "Expected the same bitmap handle.\n");
 
     /* Tests after mode changes to a mode with different resolution */
@@ -2713,7 +2710,6 @@ static void test_display_dc(void)
 
             /* Test that a different bitmap handle is used for the display DC after resolution changes */
             hbitmap2 = GetCurrentObject(hdc, OBJ_BITMAP);
-            todo_wine
             ok(hbitmap2 != old_hbitmap, "Expected a different bitmap handle.\n");
 
             /* Test that the old display bitmap is invalid after waiting for a bit. This suggests
@@ -2721,7 +2717,6 @@ static void test_display_dc(void)
              * has the same bitmap handle so the display bitmap is not being reference counted */
             Sleep(500);
             count = GetObjectW(old_hbitmap, sizeof(bitmap), &bitmap);
-            todo_wine
             ok(!count, "GetObject failed, count %d.\n", count);
         }
     }

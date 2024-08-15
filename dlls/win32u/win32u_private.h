@@ -161,6 +161,7 @@ extern BOOL enable_thunk_lock;
 extern HBRUSH get_55aa_brush(void);
 extern DWORD get_dialog_base_units(void);
 extern LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, int *height );
+extern HBITMAP get_display_bitmap(void);
 extern INT get_display_depth( UNICODE_STRING *name );
 extern RECT get_display_rect( const WCHAR *display );
 extern UINT get_monitor_dpi( HMONITOR monitor );

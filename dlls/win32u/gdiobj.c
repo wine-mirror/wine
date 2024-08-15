@@ -969,7 +969,10 @@ HANDLE WINAPI NtGdiGetDCObject( HDC hdc, UINT type )
     case NTGDI_OBJ_BRUSH:  ret = dc->hBrush; break;
     case NTGDI_OBJ_PAL:    ret = dc->hPalette; break;
     case NTGDI_OBJ_FONT:   ret = dc->hFont; break;
-    case NTGDI_OBJ_SURF:   ret = dc->hBitmap; break;
+    case NTGDI_OBJ_SURF:
+        /* Update bitmap for display device contexts */
+        if (dc->is_display) dc->hBitmap = get_display_bitmap();
+        ret = dc->hBitmap; break;
     default:
         FIXME( "(%p, %d): unknown type.\n", hdc, type );
         break;
