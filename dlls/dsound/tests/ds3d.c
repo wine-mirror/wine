@@ -669,6 +669,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
                     buffer_param.vPosition.x,buffer_param.vPosition.y,
                     buffer_param.vPosition.z,DS3D_IMMEDIATE);
                 ok(rc==DS_OK,"IDirectSound3dBuffer_SetPosition() failed: %08lx\n", rc);
+
             }
         }
         /* Check the sound duration was within 10% of the expected value */
@@ -1256,6 +1257,7 @@ static void check_doppler(IDirectSound *dsound, IDirectSound3DListener *listener
     IDirectSound3DBuffer *buffer_3d;
     IDirectSoundBuffer *ref_buffer;
     IDirectSoundBuffer *buffer;
+    D3DVECTOR ds_vector1 = {0};
     WAVEFORMATEX format;
     DSBUFFERDESC desc;
     DWORD locked_size;
@@ -1344,6 +1346,50 @@ static void check_doppler(IDirectSound *dsound, IDirectSound3DListener *listener
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     HeapFree(GetProcessHeap(), 0, data);
+
+    /* Test the NaN value behavior. */
+    hr = IDirectSound3DBuffer_SetPosition(buffer_3d, NAN, 0, 0, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DBuffer_SetPosition(buffer_3d, 0, NAN, 0, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DBuffer_SetPosition(buffer_3d, 0, 0, NAN, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DBuffer_SetPosition(listener, NAN, NAN, NAN, DS3D_IMMEDIATE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DBuffer_GetPosition(listener, &ds_vector1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(isnan(ds_vector1.x), "Expected NaN, got %f.\n", ds_vector1.x);
+    ok(isnan(ds_vector1.y), "Expected NaN, got %f.\n", ds_vector1.y);
+    ok(isnan(ds_vector1.z), "Expected NaN, got %f.\n", ds_vector1.z);
+    hr = IDirectSound3DListener_SetPosition(listener, NAN, 0, 0, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetPosition(listener, 0, NAN, 0, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetPosition(listener, 0, 0, NAN, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetPosition(listener, NAN, NAN, NAN, DS3D_IMMEDIATE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_GetPosition(listener, &ds_vector1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(isnan(ds_vector1.x), "Expected NaN, got %f.\n", ds_vector1.x);
+    ok(isnan(ds_vector1.y), "Expected NaN, got %f.\n", ds_vector1.y);
+    ok(isnan(ds_vector1.z), "Expected NaN, got %f.\n", ds_vector1.z);
+    hr = IDirectSound3DListener_SetOrientation(listener, NAN, 0, 0, 0, 0, 0, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, NAN, 0, 0, 0, 0, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, 0, NAN, 0, 0, 0, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, 0, 0, NAN, 0, 0, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, 0, 0, 0, NAN, 0, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, 0, 0, 0, 0, NAN, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, 0, NAN, 0, NAN, 0, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, NAN, NAN, NAN, NAN, NAN, NAN, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
 
     /* Set to different values first to test that the frequency is updated. */
     hr = IDirectSound3DListener_SetPosition(listener, 0, 0, 0, DS3D_DEFERRED);
