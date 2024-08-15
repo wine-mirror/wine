@@ -3201,6 +3201,8 @@ sync_test("prototypes", function() {
     check(HTMLTableCellElement.prototype, HTMLElement.prototype, "table cell prototype");
     check(document.createElement("textarea"), HTMLTextAreaElement.prototype, "textarea element");
     check(HTMLTextAreaElement.prototype, HTMLElement.prototype, "textarea element prototype");
+    check(document.createElement("test"), HTMLUnknownElement.prototype, "unknown element");
+    check(HTMLUnknownElement.prototype, HTMLElement.prototype, "unknown element prototype");
     check(document.createElementNS(svg_ns, "svg"), SVGSVGElement.prototype, "svg:svg element");
     check(SVGSVGElement.prototype, SVGElement.prototype, "svg:svg element prototype");
     check(SVGElement.prototype, Element.prototype, "svg element prototype");

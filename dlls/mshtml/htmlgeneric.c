@@ -108,18 +108,19 @@ static const event_target_vtbl_t HTMLGenericElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLGenericElement_iface_tids[] = {
+static const tid_t HTMLUnknownElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLGenericElement_tid,
     0
 };
 
-static dispex_static_data_t HTMLGenericElement_dispex = {
-    "HTMLUnknownElement",
-    &HTMLGenericElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLGenericElement_tid,
-    HTMLGenericElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t HTMLUnknownElement_dispex = {
+    .id           = PROT_HTMLUnknownElement,
+    .prototype_id = PROT_HTMLElement,
+    .vtbl         = &HTMLGenericElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLGenericElement_tid,
+    .iface_tids   = HTMLUnknownElement_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLGenericElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
@@ -133,7 +134,7 @@ HRESULT HTMLGenericElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, 
     ret->IHTMLGenericElement_iface.lpVtbl = &HTMLGenericElementVtbl;
     ret->element.node.vtbl = &HTMLGenericElementImplVtbl;
 
-    HTMLElement_Init(&ret->element, doc, nselem, &HTMLGenericElement_dispex);
+    HTMLElement_Init(&ret->element, doc, nselem, &HTMLUnknownElement_dispex);
 
     *elem = &ret->element;
     return S_OK;

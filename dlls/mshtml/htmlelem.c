@@ -7250,7 +7250,7 @@ dispex_static_data_t HTMLElement_dispex = {
     .init_info    = HTMLElement_init_dispex_info,
 };
 
-static dispex_static_data_t HTMLUnknownElement_dispex = {
+static dispex_static_data_t LegacyUnknownElement_dispex = {
     "HTMLUnknownElement",
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLUnknownElement_tid,
@@ -7325,13 +7325,13 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
         if(NS_SUCCEEDED(nsres)) {
             hres = create_svg_element(doc, svg_element, tag_name, &elem);
             nsIDOMSVGElement_Release(svg_element);
-        }else if(use_generic) {
+        }else if(use_generic || dispex_compat_mode(&doc->node.event_target.dispex) >= COMPAT_MODE_IE9) {
             hres = HTMLGenericElement_Create(doc, nselem, &elem);
         }else {
             elem = calloc(1, sizeof(HTMLElement));
             if(elem) {
                 elem->node.vtbl = &HTMLElementImplVtbl;
-                HTMLElement_Init(elem, doc, nselem, &HTMLUnknownElement_dispex);
+                HTMLElement_Init(elem, doc, nselem, &LegacyUnknownElement_dispex);
                 hres = S_OK;
             }else {
                 hres = E_OUTOFMEMORY;

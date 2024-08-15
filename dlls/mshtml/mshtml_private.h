@@ -451,6 +451,7 @@ typedef struct {
     X(HTMLTableRowElement)                 \
     X(HTMLTextAreaElement)                 \
     X(HTMLTitleElement)                    \
+    X(HTMLUnknownElement)                  \
     X(History)                             \
     X(KeyboardEvent)                       \
     X(MSCSSProperties)                     \
