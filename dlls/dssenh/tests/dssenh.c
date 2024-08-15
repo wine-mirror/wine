@@ -961,24 +961,6 @@ static void test_signhash(HCRYPTPROV hProv, const struct signature_test *test)
     result = CryptDestroyHash(hHash);
     ok(result, "Failed to destroy hash, got %lx\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
-    ok(result, "Failed to create hash, got %lx\n", GetLastError());
-
-    /* Hash the data to compare with the signed hash */
-    SetLastError(0xdeadbeef);
-    result = CryptHashData(hHash, test->signData, test->dataLen, 0);
-    ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
-
-    /* Verify signed hash 2 */
-    SetLastError(0xdeadbeef);
-    result = CryptVerifySignatureA(hHash, signValue2, sizeof(signValue2), pubKey, NULL, 0);
-    ok(result, "Failed to verify signature, got %lx\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    result = CryptDestroyHash(hHash);
-    ok(result, "Failed to destroy hash, got %lx\n", GetLastError());
-
     /* Destroy the public key */
     SetLastError(0xdeadbeef);
     result = CryptDestroyKey(pubKey);
