@@ -5823,6 +5823,15 @@ HRESULT create_document_node(nsIDOMDocument *nsdoc, GeckoBrowser *browser, HTMLI
     return S_OK;
 }
 
+dispex_static_data_t DocumentFragment_dispex = {
+    .id           = PROT_DocumentFragment,
+    .prototype_id = PROT_Node,
+    .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLDocument_tid,
+    .iface_tids   = HTMLDocumentNode_iface_tids,
+    .init_info    = HTMLDocumentNode_init_dispex_info,
+};
+
 static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc_frag;
@@ -5831,9 +5840,10 @@ static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *do
     if(!doc_frag)
         return E_OUTOFMEMORY;
 
-    HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode, &HTMLDocument_dispex);
+    HTMLDOMNode_Init(doc_node, &doc_frag->node, nsnode, &DocumentFragment_dispex);
     doc_frag->node.vtbl = &HTMLDocumentFragmentImplVtbl;
     doc_frag->document_mode = lock_document_mode(doc_node);
+    dispex_compat_mode(&doc_frag->node.event_target.dispex); /* make sure the object is fully initialized */
 
     *ret = doc_frag;
     return S_OK;

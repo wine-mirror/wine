@@ -3327,4 +3327,6 @@ sync_test("prototypes", function() {
     check(Comment.prototype, CharacterData.prototype, "comment prototype");
     check(document.createAttribute("test"), Attr.prototype, "attr");
     check(Attr.prototype, Node.prototype, "attr prototype");
+    check(document.createDocumentFragment(), DocumentFragment.prototype, "fragment");
+    check(DocumentFragment.prototype, Node.prototype, "fragment prototype");
 });

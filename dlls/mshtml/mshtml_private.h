@@ -421,6 +421,7 @@ typedef struct {
     X(DOMImplementation)                   \
     X(DOMTokenList)                        \
     X(Document)                            \
+    X(DocumentFragment)                    \
     X(DocumentType)                        \
     X(Element)                             \
     X(Event)                               \
