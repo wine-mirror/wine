@@ -1763,7 +1763,7 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
 {
     static const WCHAR prefix[8] = L"[object ";
     static const WCHAR suffix[] = L"]";
-    WCHAR buf[ARRAY_SIZE(prefix) + 28 + ARRAY_SIZE(suffix)], *p = buf;
+    WCHAR buf[ARRAY_SIZE(prefix) + ARRAY_SIZE(dispex->info->desc->prototype_name) + ARRAY_SIZE(suffix)], *p = buf;
     compat_mode_t compat_mode = dispex_compat_mode(dispex);
     const char *name = dispex->info->name;
 

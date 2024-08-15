@@ -3120,7 +3120,8 @@ sync_test("prototypes", function() {
         return;
 
     function check(obj, proto, name) {
-        ok(Object.getPrototypeOf(obj) === proto, "unexpected " + name + " prototype object");
+        var p = Object.getPrototypeOf(obj);
+        ok(p === proto, "unexpected " + name + " prototype object " + Object.prototype.toString.call(p));
     }
 
     check(document.implementation, DOMImplementation.prototype, "implementation");
