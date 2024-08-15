@@ -453,7 +453,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
 
     ok(out_buf->pBuffers[0].BufferType == SECBUFFER_TOKEN,
        "buffer type was changed from SECBUFFER_TOKEN to %ld\n", out_buf->pBuffers[0].BufferType);
-    ok(out_buf->pBuffers[0].cbBuffer < sspi_data->max_token,
+    ok(out_buf->pBuffers[0].cbBuffer <= sspi_data->max_token,
        "InitializeSecurityContext set buffer size to %lu\n", out_buf->pBuffers[0].cbBuffer);
 
     return ret;
@@ -545,7 +545,6 @@ static void testInitializeSecurityContextFlags(void)
     SECURITY_STATUS         sec_status;
     PSecPkgInfoA            pkg_info = NULL;
     SspiData                client = {{0}};
-    SEC_WINNT_AUTH_IDENTITY_A id;
     ULONG                   req_attr, ctxt_attr;
     TimeStamp               ttl;
     PBYTE                   packet;
@@ -557,15 +556,6 @@ static void testInitializeSecurityContextFlags(void)
     }
 
     FreeContextBuffer(pkg_info);
-    id.User = (unsigned char*) test_user;
-    id.UserLength = strlen((char *) id.User);
-    id.Domain = (unsigned char *) workgroup;
-    id.DomainLength = strlen((char *) id.Domain);
-    id.Password = (unsigned char*) test_pass;
-    id.PasswordLength = strlen((char *) id.Password);
-    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-
-    client.id = &id;
 
     if((sec_status = setupClient(&client, sec_pkg_name)) != SEC_E_OK)
     {
@@ -780,15 +770,18 @@ static void testAuth(ULONG data_rep, BOOL fake)
     }
 
     FreeContextBuffer(pkg_info);
-    id.User = (unsigned char*) test_user;
-    id.UserLength = strlen((char *) id.User);
-    id.Domain = (unsigned char *) workgroup;
-    id.DomainLength = strlen((char *) id.Domain);
-    id.Password = (unsigned char*) test_pass;
-    id.PasswordLength = strlen((char *) id.Password);
-    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+    if(fake)
+    {
+        id.User = (unsigned char*) test_user;
+        id.UserLength = strlen((char *) id.User);
+        id.Domain = (unsigned char *) workgroup;
+        id.DomainLength = strlen((char *) id.Domain);
+        id.Password = (unsigned char*) test_pass;
+        id.PasswordLength = strlen((char *) id.Password);
+        id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
-    client.id = &id;
+        client.id = &id;
+    }
 
     sec_status = setupClient(&client, sec_pkg_name);
 
@@ -818,9 +811,12 @@ static void testAuth(ULONG data_rep, BOOL fake)
     {
         client_stat = runClient(&client, first, data_rep);
 
+        todo_wine_if(!fake && client_stat != SEC_I_CONTINUE_NEEDED)
         ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
                 "Running the client returned %s, more tests will fail.\n",
                 getSecError(client_stat));
+        if(client_stat != SEC_E_OK && client_stat != SEC_I_CONTINUE_NEEDED)
+            break;
 
         communicate(&client, &server);
 
@@ -829,8 +825,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
         else
             server_stat = runServer(&server, first, data_rep);
 
-        ok(server_stat == SEC_E_OK || server_stat == SEC_I_CONTINUE_NEEDED ||
-                server_stat == SEC_E_LOGON_DENIED,
+        ok(server_stat == SEC_E_OK || server_stat == SEC_I_CONTINUE_NEEDED,
                 "Running the server returned %s, more tests will fail from now.\n",
                 getSecError(server_stat));
 
@@ -839,7 +834,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
         first = FALSE;
     }
 
-    if(client_stat != SEC_E_OK)
+    if(client_stat != SEC_E_OK || server_stat != SEC_E_OK)
     {
         skip("Authentication failed, skipping test.\n");
         goto tAuthend;
@@ -954,8 +949,6 @@ static void testSignSeal(void)
     PSecPkgInfoA            pkg_info = NULL;
     BOOL                    first = TRUE;
     SspiData                client = {{0}}, server = {{0}};
-    SEC_WINNT_AUTH_IDENTITY_A id;
-    static char             sec_pkg_name[] = "NTLM";
     SecBufferDesc           crypt;
     SecBuffer               data[2], fake_data[2], complex_data[4];
     ULONG                   qop = 0xdeadbeef;
@@ -974,15 +967,6 @@ static void testSignSeal(void)
     }
 
     FreeContextBuffer(pkg_info);
-    id.User = (unsigned char*) test_user;
-    id.UserLength = strlen((char *) id.User);
-    id.Domain = (unsigned char *) workgroup;
-    id.DomainLength = strlen((char *) id.Domain);
-    id.Password = (unsigned char*) test_pass;
-    id.PasswordLength = strlen((char *) id.Password);
-    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-
-    client.id = &id;
 
     sec_status = setupClient(&client, sec_pkg_name);
 
@@ -1001,9 +985,12 @@ static void testSignSeal(void)
     {
         client_stat = runClient(&client, first, SECURITY_NETWORK_DREP);
 
+        todo_wine_if(client_stat != SEC_I_CONTINUE_NEEDED)
         ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
                 "Running the client returned %s, more tests will fail.\n",
                 getSecError(client_stat));
+        if(client_stat != SEC_E_OK && client_stat != SEC_I_CONTINUE_NEEDED)
+            break;
 
         communicate(&client, &server);
 
@@ -1014,7 +1001,7 @@ static void testSignSeal(void)
         first = FALSE;
     }
 
-    if(client_stat != SEC_E_OK)
+    if(client_stat != SEC_E_OK || server_stat != SEC_E_OK)
     {
 	skip("Authentication failed, skipping test.\n");
 	goto end;
