@@ -734,10 +734,11 @@ int WINAPI SQLGetPrivateProfileStringW(LPCWSTR section, LPCWSTR entry,
     if (!defvalue || !buff)
         return 0;
 
-    if (config_mode == ODBC_USER_DSN)
-        sectionkey = get_privateprofile_sectionkey(HKEY_CURRENT_USER, section, filename);
-    else if (config_mode == ODBC_SYSTEM_DSN)
+    /* odbcinit.ini is only for drivers, so default to local Machine */
+    if (!wcsicmp(filename, L"ODBCINST.INI") || config_mode == ODBC_SYSTEM_DSN)
         sectionkey = get_privateprofile_sectionkey(HKEY_LOCAL_MACHINE, section, filename);
+    else if (config_mode == ODBC_USER_DSN)
+        sectionkey = get_privateprofile_sectionkey(HKEY_CURRENT_USER, section, filename);
     else
     {
         sectionkey = get_privateprofile_sectionkey(HKEY_CURRENT_USER, section, filename);
@@ -1812,10 +1813,11 @@ BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry
         return FALSE;
     }
 
-    if (config_mode == ODBC_USER_DSN)
-        ret = RegCreateKeyW(HKEY_CURRENT_USER, L"Software\\ODBC", &hkey);
-    else if (config_mode == ODBC_SYSTEM_DSN)
+    /* odbcinit.ini is only for drivers, so default to local Machine */
+    if (!wcsicmp(lpszFilename, L"ODBCINST.INI") || config_mode == ODBC_SYSTEM_DSN)
         ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC", &hkey);
+    else if (config_mode == ODBC_USER_DSN)
+        ret = RegCreateKeyW(HKEY_CURRENT_USER, L"Software\\ODBC", &hkey);
     else
     {
         ret = RegCreateKeyW(HKEY_CURRENT_USER, L"Software\\ODBC", &hkey);

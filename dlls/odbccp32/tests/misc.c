@@ -459,6 +459,15 @@ static void test_SQLGetPrivateProfileStringW(void)
     ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
     ok(ret, "SQLGetPrivateProfileStringW failed\n");
 
+    ret = SQLWritePrivateProfileStringW(L"wineodbc", L"testing" , L"value", L"ODBCINST.INI");
+    ok(ret, "SQLWritePrivateProfileString failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBCINST.INI");
+    ok(ret, "SQLGetPrivateProfileStringW failed\n");
+
+    reg_ret = RegDeleteKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC\\ODBCINST.INI\\wineodbc");
+    ok(reg_ret == ERROR_SUCCESS, "RegDeleteKeyW failed %ld\n", reg_ret);
+
     ret = SQLSetConfigMode(ODBC_SYSTEM_DSN);
     ok(ret, "SQLSetConfigMode failed\n");
 
