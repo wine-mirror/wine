@@ -405,11 +405,12 @@ static const tid_t HTMLDOMAttribute_iface_tids[] = {
     IHTMLDOMAttribute2_tid,
     0
 };
-static dispex_static_data_t HTMLDOMAttribute_dispex = {
-    "Attr",
-    &HTMLDOMAttribute_dispex_vtbl,
-    DispHTMLDOMAttribute_tid,
-    HTMLDOMAttribute_iface_tids
+dispex_static_data_t Attr_dispex = {
+    .id           = PROT_Attr,
+    .prototype_id = PROT_Node,
+    .vtbl         = &HTMLDOMAttribute_dispex_vtbl,
+    .disp_tid     = DispHTMLDOMAttribute_tid,
+    .iface_tids   = HTMLDOMAttribute_iface_tids,
 };
 
 HTMLDOMAttribute *unsafe_impl_from_IHTMLDOMAttribute(IHTMLDOMAttribute *iface)
@@ -433,7 +434,7 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
     ret->dispid = dispid;
     ret->elem = elem;
 
-    init_dispatch(&ret->dispex, &HTMLDOMAttribute_dispex, doc->script_global,
+    init_dispatch(&ret->dispex, &Attr_dispex, doc->script_global,
                   dispex_compat_mode(&doc->script_global->event_target.dispex));
 
     /* For attributes attached to an element, (elem,dispid) pair should be valid used for its operation. */
