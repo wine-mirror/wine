@@ -2529,13 +2529,13 @@ static void test_display_dc(void)
 {
     static const INT bpps[] = {1, 4, 8, 16, 24, 32};
     unsigned char buffer[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
+    HBITMAP hbitmap, hbitmap2, old_hbitmap;
     BITMAPINFO *bmi = (BITMAPINFO *)buffer;
     INT count, old_count, i, bpp, value;
-    HBITMAP hbitmap, old_hbitmap;
     DWORD device_idx, mode_idx;
     DEVMODEA dm, dm2, dm3;
+    HDC hdc, hdc2, mem_dc;
     DISPLAY_DEVICEA dd;
-    HDC hdc, mem_dc;
     DIBSECTION dib;
     BITMAP bitmap;
     BOOL ret;
@@ -2683,6 +2683,53 @@ static void test_display_dc(void)
     ok(!!old_hbitmap, "Failed to select bitmap.\n");
     SelectObject(mem_dc, old_hbitmap);
     DeleteDC(mem_dc);
+
+    /* Test that the same bitmap handle is used for different display DCs */
+    old_hbitmap = GetCurrentObject(hdc, OBJ_BITMAP);
+
+    hdc2 = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    ok(!!hdc2, "CreateDCA failed.\n");
+    hbitmap2 = GetCurrentObject(hdc2, OBJ_BITMAP);
+    todo_wine
+    ok(hbitmap2 == old_hbitmap, "Expected the same bitmap handle.\n");
+
+    /* Tests after mode changes to a mode with different resolution */
+    memset(&dm2, 0, sizeof(dm2));
+    dm2.dmSize = sizeof(dm2);
+    for (mode_idx = 0; EnumDisplaySettingsA(NULL, mode_idx, &dm2); ++mode_idx)
+    {
+        if (dm2.dmPelsWidth != dm.dmPelsWidth || dm2.dmPelsHeight != dm.dmPelsHeight)
+            break;
+    }
+    if (dm2.dmPelsWidth != dm.dmPelsWidth || dm2.dmPelsHeight != dm.dmPelsHeight)
+    {
+        res = ChangeDisplaySettingsExA(NULL, &dm2, NULL, CDS_RESET, NULL);
+        /* Win8 TestBots */
+        ok(res == DISP_CHANGE_SUCCESSFUL || broken(res == DISP_CHANGE_FAILED),
+                "ChangeDisplaySettingsExA returned unexpected %ld.\n", res);
+        if (res == DISP_CHANGE_SUCCESSFUL)
+        {
+            check_display_dc(hdc, &dm2, FALSE);
+
+            /* Test that a different bitmap handle is used for the display DC after resolution changes */
+            hbitmap2 = GetCurrentObject(hdc, OBJ_BITMAP);
+            todo_wine
+            ok(hbitmap2 != old_hbitmap, "Expected a different bitmap handle.\n");
+
+            /* Test that the old display bitmap is invalid after waiting for a bit. This suggests
+             * that the bitmap got released. And note that hdc2 has not been deleted yet and hdc2
+             * has the same bitmap handle so the display bitmap is not being reference counted */
+            Sleep(500);
+            count = GetObjectW(old_hbitmap, sizeof(bitmap), &bitmap);
+            todo_wine
+            ok(!count, "GetObject failed, count %d.\n", count);
+        }
+    }
+    else
+    {
+        win_skip("Failed to find a different resolution.\n");
+    }
+    DeleteDC(hdc2);
 
     /* Tests after mode changes to a mode with different resolution and color depth */
     memset(&dm2, 0, sizeof(dm2));
