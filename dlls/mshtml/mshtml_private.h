@@ -414,6 +414,7 @@ typedef struct {
     X(CharacterData)                       \
     X(ClientRect)                          \
     X(ClientRectList)                      \
+    X(Comment)                             \
     X(Console)                             \
     X(CustomEvent)                         \
     X(DOMImplementation)                   \

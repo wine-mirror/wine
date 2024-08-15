@@ -143,17 +143,18 @@ static const event_target_vtbl_t HTMLCommentElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLCommentElement_iface_tids[] = {
+static const tid_t Comment_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLCommentElement_tid,
     0
 };
-static dispex_static_data_t HTMLCommentElement_dispex = {
-    "Comment",
-    &HTMLCommentElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLCommentElement_tid,
-    HTMLCommentElement_iface_tids,
-    HTMLElement_init_dispex_info
+dispex_static_data_t Comment_dispex = {
+    .id           = PROT_Comment,
+    .prototype_id = PROT_CharacterData,
+    .vtbl         = &HTMLCommentElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLCommentElement_tid,
+    .iface_tids   = Comment_iface_tids,
+    .init_info    = HTMLElement_init_dispex_info,
 };
 
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLElement **elem)
@@ -167,8 +168,8 @@ HRESULT HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTM
     ret->element.node.vtbl = &HTMLCommentElementImplVtbl;
     ret->IHTMLCommentElement_iface.lpVtbl = &HTMLCommentElementVtbl;
 
-    HTMLElement_Init(&ret->element, doc, NULL, &HTMLCommentElement_dispex);
-    HTMLDOMNode_Init(doc, &ret->element.node, nsnode, &HTMLCommentElement_dispex);
+    HTMLElement_Init(&ret->element, doc, NULL, &Comment_dispex);
+    HTMLDOMNode_Init(doc, &ret->element.node, nsnode, &Comment_dispex);
 
     *elem = &ret->element;
     return S_OK;

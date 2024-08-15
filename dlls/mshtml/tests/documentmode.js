@@ -3323,4 +3323,6 @@ sync_test("prototypes", function() {
     }else {
         ok(!("MSSelection" in window), "MSSelection found in window");
     }
+    check(document.createComment(""), Comment.prototype, "comment");
+    check(Comment.prototype, CharacterData.prototype, "comment prototype");
 });
