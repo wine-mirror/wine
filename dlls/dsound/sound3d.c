@@ -65,7 +65,7 @@ static inline D3DVALUE ScalarProduct (const D3DVECTOR *a, const D3DVECTOR *b)
 	c = (a->x*b->x) + (a->y*b->y) + (a->z*b->z);
 	TRACE("(%f,%f,%f) * (%f,%f,%f) = %f)\n", a->x, a->y, a->z, b->x, b->y,
 	      b->z, c);
-	return c;
+	return !isnan(c) ? c : 0;
 }
 
 /* vector product (I believe it's called cross product in English */
@@ -77,6 +77,12 @@ static inline D3DVECTOR VectorProduct (const D3DVECTOR *a, const D3DVECTOR *b)
 	c.z = (a->x*b->y) - (a->y*b->x);
 	TRACE("(%f,%f,%f) x (%f,%f,%f) = (%f,%f,%f)\n", a->x, a->y, a->z, b->x, b->y,
 	      b->z, c.x, c.y, c.z);
+	if (isnan(c.x) || isnan(c.y) || isnan(c.z))
+	{
+		c.x = 0;
+		c.y = 0;
+		c.z = 0;
+	}
 	return c;
 }
 
@@ -136,6 +142,12 @@ static inline D3DVECTOR VectorBetweenTwoPoints (const D3DVECTOR *a, const D3DVEC
 	c.z = b->z - a->z;
 	TRACE("A (%f,%f,%f), B (%f,%f,%f), AB = (%f,%f,%f)\n", a->x, a->y, a->z, b->x, b->y,
 	      b->z, c.x, c.y, c.z);
+	if (isnan(c.x) || isnan(c.y) || isnan(c.z))
+	{
+		c.x = 0;
+		c.y = 0;
+		c.z = 0;
+	}
 	return c;
 }
 
@@ -144,7 +156,7 @@ static inline D3DVALUE ProjectVector (const D3DVECTOR *a, const D3DVECTOR *p)
 {
 	D3DVALUE prod, result;
 	prod = ScalarProduct(a, p);
-	result = prod/VectorMagnitude(p);
+	result = (VectorMagnitude(p) != 0) ? prod / VectorMagnitude(p) : 0;
 	TRACE("length projection of (%f,%f,%f) on (%f,%f,%f) = %f\n", a->x, a->y, a->z, p->x,
               p->y, p->z, result);
 	return result;
