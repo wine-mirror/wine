@@ -963,11 +963,6 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
 
         /* Verify signed hash 1 */
         result = CryptVerifySignatureA(hHash1, signValue1, sizeof(signValue1), pubKey, NULL, 0);
-        if (!result)
-        {
-            skip("skipping sign tests\n");
-            return;
-        }
         ok(result, "Failed to verify signature, got %lx\n", GetLastError());
 
         result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
