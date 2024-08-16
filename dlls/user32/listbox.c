@@ -1635,6 +1635,8 @@ static LRESULT LISTBOX_InsertItem( LB_DESCR *descr, INT index,
               descr->self, index, str ? debugstr_w(str) : "", get_item_height(descr, index));
     }
 
+    NtUserNotifyWinEvent( EVENT_OBJECT_CREATE, descr->self, OBJID_CLIENT, index + 1 );
+
     /* Repaint the items */
 
     LISTBOX_UpdateScroll( descr );

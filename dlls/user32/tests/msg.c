@@ -16885,41 +16885,41 @@ static const struct message wm_lb_deletestring_reset[] =
 static const struct message wm_lb_addstring[] =
 {
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ef },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
     /* Child ID changes each test, don't test lparam. */
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|msg_todo, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam, OBJID_CLIENT, 0 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ee },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|msg_todo, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam, OBJID_CLIENT, 0 },
     { 0 }
 };
 static const struct message wm_lb_addstring_ownerdraw[] =
 {
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf0f2, 0xf30604ed },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ee },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf1f2, 0xf30604ee },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 2 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ef },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf2f2, 0xf30604ef },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 3 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { 0 }
 };
 static const struct message wm_lb_addstring_sort_ownerdraw[] =
 {
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ed },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf0f2, 0xf30604ed },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ee },
     { WM_COMPAREITEM, sent|wparam|lparam|parent, 0xf30604ed, 0xf30604ee },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf1f2, 0xf30604ee },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 2 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { LB_ADDSTRING, sent|wparam|lparam, 0, 0xf30604ef },
     { WM_COMPAREITEM, sent|wparam|lparam|parent, 0xf30604ed, 0xf30604ef },
     { WM_COMPAREITEM, sent|wparam|lparam|parent, 0xf30604ee, 0xf30604ef },
     { WM_MEASUREITEM, sent|wparam|lparam|parent, 0xf2f2, 0xf30604ef },
-    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 3 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { 0 }
 };
 static const struct message wm_lb_dblclick_0[] =
