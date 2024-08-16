@@ -146,8 +146,7 @@ HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
 {
     FIXME("(%p): stub\n", context);
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return INVALID_HANDLE_VALUE;
+    return (HANDLE)0xcafecafe;
 }
 
 /***********************************************************************
