@@ -77,6 +77,7 @@ DECL_FUNCPTR(glClear);
 static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct list gl_drawables = LIST_INIT(gl_drawables);
 static struct list gl_contexts = LIST_INIT(gl_contexts);
+static struct list gl_pbuffer_dcs = LIST_INIT(gl_pbuffer_dcs);
 
 struct wayland_gl_drawable
 {
@@ -101,12 +102,34 @@ struct wgl_context
     BOOL sharing;
 };
 
-/* lookup the existing drawable for a window, gl_object_mutex must be held */
-static struct wayland_gl_drawable *find_drawable_for_hwnd(HWND hwnd)
+struct wgl_pbuffer
 {
     struct wayland_gl_drawable *gl;
-    LIST_FOR_EACH_ENTRY(gl, &gl_drawables, struct wayland_gl_drawable, entry)
-        if (gl->hwnd == hwnd) return gl;
+    int width, height;
+};
+
+struct wayland_pbuffer_dc
+{
+    struct list entry;
+    HDC hdc;
+    struct wayland_gl_drawable *gl;
+};
+
+/* lookup the existing drawable for a window, gl_object_mutex must be held */
+static struct wayland_gl_drawable *find_drawable(HWND hwnd, HDC hdc)
+{
+    struct wayland_gl_drawable *gl;
+    struct wayland_pbuffer_dc *pb;
+    if (hwnd)
+    {
+        LIST_FOR_EACH_ENTRY(gl, &gl_drawables, struct wayland_gl_drawable, entry)
+            if (gl->hwnd == hwnd) return gl;
+    }
+    if (hdc)
+    {
+        LIST_FOR_EACH_ENTRY(pb, &gl_pbuffer_dcs, struct wayland_pbuffer_dc, entry)
+            if (pb->hdc == hdc) return pb->gl;
+    }
     return NULL;
 }
 
@@ -116,12 +139,12 @@ static struct wayland_gl_drawable *wayland_gl_drawable_acquire(struct wayland_gl
     return gl;
 }
 
-static struct wayland_gl_drawable *wayland_gl_drawable_get(HWND hwnd)
+static struct wayland_gl_drawable *wayland_gl_drawable_get(HWND hwnd, HDC hdc)
 {
     struct wayland_gl_drawable *ret;
 
     pthread_mutex_lock(&gl_object_mutex);
-    if ((ret = find_drawable_for_hwnd(hwnd)))
+    if ((ret = find_drawable(hwnd, hdc)))
         ret = wayland_gl_drawable_acquire(ret);
     pthread_mutex_unlock(&gl_object_mutex);
 
@@ -229,7 +252,7 @@ static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *ne
 
     pthread_mutex_lock(&gl_object_mutex);
 
-    if ((old = find_drawable_for_hwnd(hwnd))) list_remove(&old->entry);
+    if ((old = find_drawable(hwnd, 0))) list_remove(&old->entry);
     if (new) list_add_head(&gl_drawables, &new->entry);
     if (old && new)
     {
@@ -284,18 +307,17 @@ static void wayland_gl_drawable_sync_surface_state(struct wayland_gl_drawable *g
     pthread_mutex_unlock(&wayland_surface->mutex);
 }
 
-static BOOL wgl_context_make_current(struct wgl_context *ctx, HWND draw_hwnd,
-                                     HWND read_hwnd)
+static BOOL wgl_context_make_current(struct wgl_context *ctx, HDC draw_hdc, HDC read_hdc)
 {
     BOOL ret;
     struct wayland_gl_drawable *draw, *read;
     struct wayland_gl_drawable *old_draw = NULL, *old_read = NULL;
 
-    draw = wayland_gl_drawable_get(draw_hwnd);
-    read = wayland_gl_drawable_get(read_hwnd);
+    draw = wayland_gl_drawable_get(NtUserWindowFromDC(draw_hdc), draw_hdc);
+    read = wayland_gl_drawable_get(NtUserWindowFromDC(read_hdc), read_hdc);
 
     TRACE("%p/%p context %p surface %p/%p\n",
-          draw_hwnd, read_hwnd, ctx->context,
+          draw_hdc, read_hdc, ctx->context,
           draw ? draw->surface : EGL_NO_SURFACE,
           read ? read->surface : EGL_NO_SURFACE);
 
@@ -466,7 +488,7 @@ static struct wgl_context *create_context(HDC hdc, struct wgl_context *share,
     struct wayland_gl_drawable *gl;
     struct wgl_context *ctx;
 
-    if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc)))) return NULL;
+    if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc), hdc))) return NULL;
 
     if (!(ctx = calloc(1, sizeof(*ctx))))
     {
@@ -501,6 +523,41 @@ static struct wgl_context *create_context(HDC hdc, struct wgl_context *share,
 out:
     wayland_gl_drawable_release(gl);
     return ctx;
+}
+
+static struct wayland_gl_drawable *clear_pbuffer_dc(HDC hdc)
+{
+    struct wayland_pbuffer_dc *pd;
+    struct wayland_gl_drawable *gl;
+
+    LIST_FOR_EACH_ENTRY(pd, &gl_pbuffer_dcs, struct wayland_pbuffer_dc, entry)
+    {
+        if (pd->hdc == hdc)
+        {
+            list_remove(&pd->entry);
+            gl = pd->gl;
+            free(pd);
+            return gl;
+        }
+    }
+
+    return NULL;
+}
+
+static BOOL set_pbuffer_dc(struct wgl_pbuffer *pbuffer, HDC hdc)
+{
+    struct wayland_pbuffer_dc *pd;
+
+    if (!(pd = calloc(1, sizeof(*pd))))
+    {
+        ERR("Failed to allocate memory for pbuffer HDC mapping\n");
+        return FALSE;
+    }
+    pd->hdc = hdc;
+    pd->gl = wayland_gl_drawable_acquire(pbuffer->gl);
+    list_add_head(&gl_pbuffer_dcs, &pd->entry);
+
+    return TRUE;
 }
 
 void wayland_glClear(GLbitfield mask)
@@ -592,7 +649,7 @@ static BOOL wayland_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc,
         return TRUE;
     }
 
-    ret = wgl_context_make_current(ctx, NtUserWindowFromDC(draw_hdc), NtUserWindowFromDC(read_hdc));
+    ret = wgl_context_make_current(ctx, draw_hdc, read_hdc);
     if (!ret) RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
 
     return ret;
@@ -660,10 +717,9 @@ static BOOL wayland_wglShareLists(struct wgl_context *orig, struct wgl_context *
 static BOOL wayland_wglSwapBuffers(HDC hdc)
 {
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
-    HWND hwnd = NtUserWindowFromDC(hdc);
     struct wayland_gl_drawable *gl;
 
-    if (!(gl = wayland_gl_drawable_get(hwnd))) return FALSE;
+    if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc), hdc))) return FALSE;
 
     if (ctx) wgl_context_refresh(ctx);
     wayland_gl_drawable_sync_surface_state(gl);
@@ -704,6 +760,94 @@ static BOOL wayland_wglSwapIntervalEXT(int interval)
     pthread_mutex_unlock(&gl_object_mutex);
 
     return ret;
+}
+
+static struct wgl_pbuffer *wayland_wglCreatePbufferARB(HDC hdc, int format,
+                                                       int width, int height,
+                                                       const int *attribs)
+{
+    struct wgl_pbuffer *pbuffer;
+
+    TRACE("(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs);
+
+    /* Use an unmapped wayland surface as our offscreen "pbuffer" surface. */
+    if (!(pbuffer = calloc(1, sizeof(*pbuffer))) ||
+        !(pbuffer->gl = wayland_gl_drawable_create(0, format)))
+    {
+        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
+        free(pbuffer);
+        return NULL;
+    }
+
+    pbuffer->width = width;
+    pbuffer->height = height;
+    wl_egl_window_resize(pbuffer->gl->wl_egl_window, width, height, 0, 0);
+
+    return pbuffer;
+}
+
+static BOOL wayland_wglDestroyPbufferARB(struct wgl_pbuffer *pbuffer)
+{
+    TRACE("(%p)\n", pbuffer);
+
+    wayland_gl_drawable_release(pbuffer->gl);
+    free(pbuffer);
+
+    return GL_TRUE;
+}
+
+static HDC wayland_wglGetPbufferDCARB(struct wgl_pbuffer *pbuffer)
+{
+    HDC hdc;
+    BOOL set;
+    struct wayland_gl_drawable *old;
+
+    if (!(hdc = NtGdiOpenDCW(NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL))) return 0;
+
+    pthread_mutex_lock(&gl_object_mutex);
+    old = clear_pbuffer_dc(hdc);
+    set = set_pbuffer_dc(pbuffer, hdc);
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    if (old) wayland_gl_drawable_release(old);
+    if (!set)
+    {
+        NtGdiDeleteObjectApp(hdc);
+        return 0;
+    }
+
+    return hdc;
+}
+
+static BOOL wayland_wglQueryPbufferARB(struct wgl_pbuffer *pbuffer, int attrib, int *value)
+{
+    TRACE("(%p, 0x%x, %p)\n", pbuffer, attrib, value);
+
+    switch (attrib)
+    {
+        case WGL_PBUFFER_WIDTH_ARB: *value = pbuffer->width; break;
+        case WGL_PBUFFER_HEIGHT_ARB: *value = pbuffer->height; break;
+        case WGL_PBUFFER_LOST_ARB: *value = GL_FALSE; break;
+        default:
+            FIXME("unexpected attribute %x\n", attrib);
+            break;
+    }
+
+    return GL_TRUE;
+}
+
+static int wayland_wglReleasePbufferDCARB(struct wgl_pbuffer *pbuffer, HDC hdc)
+{
+    struct wayland_gl_drawable *old;
+
+    pthread_mutex_lock(&gl_object_mutex);
+    old = clear_pbuffer_dc(hdc);
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    if (old) wayland_gl_drawable_release(old);
+    else hdc = 0;
+
+    return hdc && NtGdiDeleteObjectApp(hdc);
 }
 
 static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt)
@@ -919,6 +1063,13 @@ static BOOL init_opengl_funcs(void)
         register_extension("WGL_ATI_pixel_format_float");
     }
 
+    register_extension("WGL_ARB_pbuffer");
+    opengl_funcs.ext.p_wglCreatePbufferARB = wayland_wglCreatePbufferARB;
+    opengl_funcs.ext.p_wglDestroyPbufferARB = wayland_wglDestroyPbufferARB;
+    opengl_funcs.ext.p_wglGetPbufferDCARB = wayland_wglGetPbufferDCARB;
+    opengl_funcs.ext.p_wglQueryPbufferARB = wayland_wglQueryPbufferARB;
+    opengl_funcs.ext.p_wglReleasePbufferDCARB = wayland_wglReleasePbufferDCARB;
+
     return TRUE;
 }
 
@@ -1118,7 +1269,7 @@ void wayland_resize_gl_drawable(HWND hwnd)
 {
     struct wayland_gl_drawable *gl;
 
-    if (!(gl = wayland_gl_drawable_get(hwnd))) return;
+    if (!(gl = wayland_gl_drawable_get(hwnd, 0))) return;
     /* wl_egl_window_resize is not thread safe, so we just mark the
      * drawable as resized and perform the resize in the proper thread. */
     InterlockedExchange(&gl->resized, TRUE);
