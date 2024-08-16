@@ -66,7 +66,7 @@ typedef struct _SspiData {
     PSecBufferDesc in_buf;
     PSecBufferDesc out_buf;
     PSEC_WINNT_AUTH_IDENTITY_A id;
-    ULONG max_token;
+    ULONG max_token, req_attr;
 } SspiData;
 
 static BYTE network_challenge[] = 
@@ -107,10 +107,6 @@ static BYTE message_signature[] =
    {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-static BYTE message_binary[] =
-   {0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
-    0x6c, 0x64, 0x21};
-
 static const char message[] = "Hello, world!";
 
 static char message_header[] = "Header Test";
@@ -118,34 +114,6 @@ static char message_header[] = "Header Test";
 static BYTE crypt_trailer_client[] =
    {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xe8, 0xc7,
     0xaa, 0x26, 0x16, 0x39, 0x07, 0x4e};
-
-static BYTE crypt_message_client[] =
-   {0x86, 0x9c, 0x5a, 0x10, 0x78, 0xb3, 0x30, 0x98, 0x46, 0x15,
-    0xa0, 0x31, 0xd9};
-
-static BYTE crypt_trailer_client2[] =
-   {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc5, 0xa7,
-    0xf7, 0x0f, 0x5b, 0x25, 0xbe, 0xa4};
-
-static BYTE crypt_message_client2[] =
-   {0x20, 0x6c, 0x01, 0xab, 0xb0, 0x4c, 0x93, 0xe4, 0x1e, 0xfc,
-    0xe1, 0xfa, 0xfe};
-
-static BYTE crypt_trailer_server[] =
-   {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1c, 0x46,
-    0x2e, 0x77, 0xeb, 0xf0, 0xf6, 0x9e};
-
-static BYTE crypt_message_server[] =
-   {0xf6, 0xb7, 0x92, 0x0c, 0xac, 0xea, 0x98, 0xe6, 0xef, 0xa0,
-    0x29, 0x66, 0xfd};
-
-static BYTE crypt_trailer_server2[] =
-   {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb1, 0x4e,
-    0x46, 0xb7, 0xca, 0xf7, 0x7f, 0xb3};
-
-static BYTE crypt_message_server2[] =
-   {0xc8, 0xf2, 0x39, 0x7f, 0x0c, 0xaf, 0xf5, 0x5d, 0xef, 0x0c,
-    0x8b, 0x5f, 0x82};
 
 static char test_user[] = "testuser",
             workgroup[] = "WORKGROUP",
@@ -364,7 +332,6 @@ static SECURITY_STATUS setupFakeServer(SspiData *sspi_data, SEC_CHAR *provider)
 static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep)
 {
     SECURITY_STATUS ret;
-    ULONG req_attr = 0;
     ULONG ctxt_attr;
     TimeStamp ttl;
     PSecBufferDesc in_buf = sspi_data->in_buf;
@@ -394,7 +361,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
         void *old_buf;
 
         /* pass NULL as an output buffer */
-        ret = InitializeSecurityContextA(&sspi_data->cred, NULL, NULL, req_attr,
+        ret = InitializeSecurityContextA(&sspi_data->cred, NULL, NULL, sspi_data->req_attr,
             0, data_rep, NULL, 0, &sspi_data->ctxt, NULL,
             &ctxt_attr, &ttl);
 
@@ -404,7 +371,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
         old_buf = out_buf->pBuffers[0].pvBuffer;
         out_buf->pBuffers[0].pvBuffer = NULL;
 
-        ret = InitializeSecurityContextA(&sspi_data->cred, NULL, NULL, req_attr,
+        ret = InitializeSecurityContextA(&sspi_data->cred, NULL, NULL, sspi_data->req_attr,
             0, data_rep, NULL, 0, &sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
@@ -416,7 +383,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
         /* pass an output buffer of 0 size */
         out_buf->pBuffers[0].cbBuffer = 0;
 
-        ret = InitializeSecurityContextA(&sspi_data->cred, NULL, NULL, req_attr,
+        ret = InitializeSecurityContextA(&sspi_data->cred, NULL, NULL, sspi_data->req_attr,
             0, data_rep, NULL, 0, &sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
@@ -428,7 +395,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
         out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
         out_buf->pBuffers[0].BufferType = SECBUFFER_DATA;
 
-        ret = InitializeSecurityContextA(&sspi_data->cred, NULL, NULL, req_attr,
+        ret = InitializeSecurityContextA(&sspi_data->cred, NULL, NULL, sspi_data->req_attr,
             0, data_rep, NULL, 0, &sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
@@ -438,7 +405,7 @@ static SECURITY_STATUS runClient(SspiData *sspi_data, BOOL first, ULONG data_rep
 
     out_buf->pBuffers[0].cbBuffer = sspi_data->max_token;
 
-    ret = InitializeSecurityContextA(first?&sspi_data->cred:NULL, first?NULL:&sspi_data->ctxt, NULL, req_attr,
+    ret = InitializeSecurityContextA(first?&sspi_data->cred:NULL, first?NULL:&sspi_data->ctxt, NULL, sspi_data->req_attr,
             0, data_rep, first?NULL:in_buf, 0, &sspi_data->ctxt, out_buf,
             &ctxt_attr, &ttl);
 
@@ -1147,6 +1114,10 @@ static void test_Encrypt(void)
 
     FreeContextBuffer(pkg_info);
 
+    /* Starting from Vista if context doesn't require encryption or signing
+     * EncryptMessage() fails with SEC_E_UNSUPPORTED_FUNCTION.
+     */
+    client.req_attr = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY;
     sec_status = setupClient(&client, sec_pkg_name);
 
     if(sec_status != SEC_E_OK)
@@ -1157,7 +1128,7 @@ static void test_Encrypt(void)
         return;
     }
 
-    sec_status = setupFakeServer(&server, sec_pkg_name);
+    sec_status = setupServer(&server, sec_pkg_name);
     ok(sec_status == SEC_E_OK, "setupFakeServer returned %s\n", getSecError(sec_status));
 
     while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
@@ -1173,7 +1144,7 @@ static void test_Encrypt(void)
 
         communicate(&client, &server);
 
-        server_stat = runFakeServer(&server, first, SECURITY_NETWORK_DREP);
+        server_stat = runServer(&server, first, SECURITY_NETWORK_DREP);
 
         communicate(&server, &client);
         trace("Looping\n");
@@ -1211,53 +1182,15 @@ static void test_Encrypt(void)
     memcpy(data[1].pvBuffer, message, data[1].cbBuffer);
 
     sec_status = EncryptMessage(&client.ctxt, 0, &crypt, 0);
-    if (sec_status == SEC_E_UNSUPPORTED_FUNCTION)
-    {
-        skip("Encrypt message returned SEC_E_UNSUPPORTED_FUNCTION. "
-             "Expected on Vista.\n");
-        goto end;
-    }
     ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
 
-    /* first 8 bytes must always be the same */
-    ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client, 8), "Crypt trailer not as expected.\n");
+    /* first 4 bytes must always be the same */
+    ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client, 4), "Crypt trailer not as expected.\n");
 
-    /* the rest depends on the session key */
-    if (!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client, crypt.pBuffers[0].cbBuffer))
-    {
-        ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
-                   crypt.pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
-        ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
-                   crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
-        if (memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
-                   crypt.pBuffers[1].cbBuffer))
-        {
-            int i;
-            for (i = 0; i < crypt.pBuffers[1].cbBuffer; i++)
-            {
-                if (i % 8 == 0) printf("     ");
-                printf("0x%02x,", ((unsigned char *)crypt.pBuffers[1].pvBuffer)[i]);
-                if (i % 8 == 7) printf("\n");
-            }
-            printf("\n");
-        }
-
-        data[0].cbBuffer = sizeof(crypt_trailer_server);
-        data[1].cbBuffer = sizeof(crypt_message_server);
-        memcpy(data[0].pvBuffer, crypt_trailer_server, data[0].cbBuffer);
-        memcpy(data[1].pvBuffer, crypt_message_server, data[1].cbBuffer);
-
-        sec_status = DecryptMessage(&client.ctxt, &crypt, 0, &qop);
-
-        ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
-           getSecError(sec_status));
-        ok(!memcmp(crypt.pBuffers[1].pvBuffer, message_binary,
-                   crypt.pBuffers[1].cbBuffer),
-           "Failed to decrypt message correctly.\n");
-        ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
-    }
-    else trace( "A different session key is being used\n" );
+    sec_status = DecryptMessage(&server.ctxt, &crypt, 0, &qop);
+    ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n", getSecError(sec_status));
+    ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
 
     trace("Testing with more than one buffer.\n");
 
@@ -1285,30 +1218,10 @@ static void test_Encrypt(void)
     ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
 
-    ok(!memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2, 8), "Crypt trailer not as expected.\n");
+    /* first 4 bytes must always be the same */
+    ok(!memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client, 4), "Crypt trailer not as expected.\n");
 
-    if (memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2,
-               crypt.pBuffers[3].cbBuffer)) goto end;
-
-    ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
-               crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
-    if (memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
-               crypt.pBuffers[1].cbBuffer))
-    {
-        int i;
-        for (i = 0; i < crypt.pBuffers[1].cbBuffer; i++)
-        {
-            if (i % 8 == 0) printf("     ");
-            printf("0x%02x,", ((unsigned char *)crypt.pBuffers[1].pvBuffer)[i]);
-            if (i % 8 == 7) printf("\n");
-        }
-        printf("\n");
-    }
-
-    memcpy(complex_data[1].pvBuffer, crypt_message_server2, complex_data[1].cbBuffer);
-    memcpy(complex_data[3].pvBuffer, crypt_trailer_server2, complex_data[3].cbBuffer);
-
-    sec_status = DecryptMessage(&client.ctxt, &crypt, 0, &qop);
+    sec_status = DecryptMessage(&server.ctxt, &crypt, 0, &qop);
     ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
     ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
