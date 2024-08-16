@@ -599,7 +599,7 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
      *
      * The squid cache size is 2010 chars and that's what ntlm_auth uses */
 
-    if (!(buf = malloc( NTLM_MAX_BUF ))) return SEC_E_INSUFFICIENT_MEMORY;
+    if (!(buf = malloc( NTLM_MAX_BUF * 3 + 64 ))) return SEC_E_INSUFFICIENT_MEMORY;
     if (!(bin = malloc( NTLM_MAX_BUF ))) goto done;
 
     if (!ctx_handle && !input)
@@ -891,7 +891,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
            new_ctx_handle, output, ctx_attr, expiry, mapped_ctx, ctx_data );
     if (ctx_req) FIXME( "ignoring flags %#lx\n", ctx_req );
 
-    if (!(buf = malloc( NTLM_MAX_BUF ))) return SEC_E_INSUFFICIENT_MEMORY;
+    if (!(buf = malloc( NTLM_MAX_BUF * 3 + 64 ))) return SEC_E_INSUFFICIENT_MEMORY;
     if (!(bin = malloc( NTLM_MAX_BUF ))) goto done;
 
     if (!ctx_handle)
