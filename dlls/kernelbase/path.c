@@ -1025,77 +1025,22 @@ BOOL WINAPI PathIsUNCServerShareW(const WCHAR *path)
 
 BOOL WINAPI PathIsRootA(const char *path)
 {
+    WCHAR pathW[MAX_PATH];
+
     TRACE("%s\n", wine_dbgstr_a(path));
 
-    if (!path || !*path)
+    if (!MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, MAX_PATH))
         return FALSE;
+    if (is_prefixed_unc(pathW) || is_prefixed_disk(pathW) || is_prefixed_volume(pathW)) return FALSE;
 
-    if (*path == '\\')
-    {
-        if (!path[1])
-            return TRUE; /* \ */
-        else if (path[1] == '\\')
-        {
-            BOOL seen_slash = FALSE;
-            path += 2;
-
-            /* Check for UNC root path */
-            while (*path)
-            {
-                if (*path == '\\')
-                {
-                    if (seen_slash)
-                        return FALSE;
-                    seen_slash = TRUE;
-                }
-
-                path = CharNextA(path);
-            }
-
-            return TRUE;
-        }
-    }
-    else if (path[1] == ':' && path[2] == '\\' && path[3] == '\0')
-        return TRUE; /* X:\ */
-
-    return FALSE;
+    return PathIsRootW(pathW);
 }
 
 BOOL WINAPI PathIsRootW(const WCHAR *path)
 {
     TRACE("%s\n", wine_dbgstr_w(path));
 
-    if (!path || !*path)
-        return FALSE;
-
-    if (*path == '\\')
-    {
-        if (!path[1])
-            return TRUE; /* \ */
-        else if (path[1] == '\\')
-        {
-            BOOL seen_slash = FALSE;
-
-            path += 2;
-            /* Check for UNC root path */
-            while (*path)
-            {
-                if (*path == '\\')
-                {
-                    if (seen_slash)
-                        return FALSE;
-                    seen_slash = TRUE;
-                }
-                path++;
-            }
-
-            return TRUE;
-        }
-    }
-    else if (path[1] == ':' && path[2] == '\\' && path[3] == '\0')
-        return TRUE; /* X:\ */
-
-    return FALSE;
+    return PathCchIsRoot(path);
 }
 
 BOOL WINAPI PathRemoveFileSpecA(char *path)
