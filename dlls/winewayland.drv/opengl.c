@@ -482,7 +482,7 @@ static BOOL set_pixel_format(HDC hdc, int format, BOOL internal)
         WARN("not a proper window DC %p/%p\n", hdc, hwnd);
         return FALSE;
     }
-    if (format < 0 || format >= num_egl_configs)
+    if (!is_onscreen_format(format))
     {
         WARN("Invalid format %d\n", format);
         return FALSE;
