@@ -941,7 +941,7 @@ tAuthend:
             getSecError(sec_status));
 }
 
-static void testSignSeal(void)
+static void test_Signature(void)
 {
     SECURITY_STATUS         client_stat = SEC_I_CONTINUE_NEEDED;
     SECURITY_STATUS         server_stat = SEC_I_CONTINUE_NEEDED;
@@ -1073,6 +1073,143 @@ static void testSignSeal(void)
             getSecError(sec_status));
     ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
 
+    trace("Testing with more than one buffer.\n");
+
+    crypt.cBuffers = ARRAY_SIZE(complex_data);
+    crypt.pBuffers = complex_data;
+
+    complex_data[0].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
+    complex_data[0].cbBuffer = sizeof(message_header);
+    complex_data[0].pvBuffer = message_header;
+
+    complex_data[1].BufferType = SECBUFFER_DATA;
+    complex_data[1].cbBuffer = lstrlenA(message);
+    complex_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, complex_data[1].cbBuffer);
+    memcpy(complex_data[1].pvBuffer, message, complex_data[1].cbBuffer);
+
+    complex_data[2].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
+    complex_data[2].cbBuffer = sizeof(message_header);
+    complex_data[2].pvBuffer = message_header;
+
+    complex_data[3].BufferType = SECBUFFER_TOKEN;
+    complex_data[3].cbBuffer = ctxt_sizes.cbSecurityTrailer;
+    complex_data[3].pvBuffer = HeapAlloc(GetProcessHeap(), 0, complex_data[3].cbBuffer);
+
+    /* We should get a dummy signature again. */
+    sec_status = MakeSignature(&client.ctxt, 0, &crypt, 0);
+    ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
+    ok(!memcmp(crypt.pBuffers[3].pvBuffer, message_signature,
+               crypt.pBuffers[3].cbBuffer), "Signature is not as expected.\n");
+
+    /* Being a dummy signature, it will verify right away, as if the server
+     * sent it */
+    sec_status = VerifySignature(&client.ctxt, &crypt, 0, &qop);
+    ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK\n",
+            getSecError(sec_status));
+    ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
+
+end:
+    cleanupBuffers(&client);
+    cleanupBuffers(&server);
+
+    DeleteSecurityContext(&client.ctxt);
+    FreeCredentialsHandle(&client.cred);
+
+    HeapFree(GetProcessHeap(), 0, complex_data[1].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
+}
+
+static void test_Encrypt(void)
+{
+    SECURITY_STATUS         client_stat = SEC_I_CONTINUE_NEEDED;
+    SECURITY_STATUS         server_stat = SEC_I_CONTINUE_NEEDED;
+    SECURITY_STATUS         sec_status;
+    PSecPkgInfoA            pkg_info = NULL;
+    BOOL                    first = TRUE;
+    SspiData                client = {{0}}, server = {{0}};
+    SecBufferDesc           crypt;
+    SecBuffer               data[2], complex_data[4];
+    ULONG                   qop = 0xdeadbeef;
+    SecPkgContext_Sizes     ctxt_sizes;
+
+    complex_data[1].pvBuffer = complex_data[3].pvBuffer = NULL;
+
+    /****************************************************************
+     * This is basically the same as in testAuth with a fake server,
+     * as we need a valid, authenticated context.
+     */
+    if(QuerySecurityPackageInfoA( sec_pkg_name, &pkg_info) != SEC_E_OK)
+    {
+        ok(0, "NTLM package not installed, skipping test.\n");
+        return;
+    }
+
+    FreeContextBuffer(pkg_info);
+
+    sec_status = setupClient(&client, sec_pkg_name);
+
+    if(sec_status != SEC_E_OK)
+    {
+        skip("Error: Setting up the client returned %s, exiting test!\n",
+                getSecError(sec_status));
+        FreeCredentialsHandle(&client.cred);
+        return;
+    }
+
+    sec_status = setupFakeServer(&server, sec_pkg_name);
+    ok(sec_status == SEC_E_OK, "setupFakeServer returned %s\n", getSecError(sec_status));
+
+    while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
+    {
+        client_stat = runClient(&client, first, SECURITY_NETWORK_DREP);
+
+        todo_wine_if(client_stat != SEC_I_CONTINUE_NEEDED)
+        ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
+                "Running the client returned %s, more tests will fail.\n",
+                getSecError(client_stat));
+        if(client_stat != SEC_E_OK && client_stat != SEC_I_CONTINUE_NEEDED)
+            break;
+
+        communicate(&client, &server);
+
+        server_stat = runFakeServer(&server, first, SECURITY_NETWORK_DREP);
+
+        communicate(&server, &client);
+        trace("Looping\n");
+        first = FALSE;
+    }
+
+    if(client_stat != SEC_E_OK || server_stat != SEC_E_OK)
+    {
+	skip("Authentication failed, skipping test.\n");
+	goto end;
+    }
+
+    /********************************************
+     *    Now start with the actual testing     *
+     ********************************************/
+
+    if(QueryContextAttributesA(&client.ctxt, SECPKG_ATTR_SIZES,
+                &ctxt_sizes) != SEC_E_OK)
+    {
+        skip("Failed to get context sizes, aborting test.\n");
+        goto end;
+    }
+
+    crypt.ulVersion = SECBUFFER_VERSION;
+    crypt.cBuffers = 2;
+    crypt.pBuffers = data;
+
+    data[0].BufferType = SECBUFFER_TOKEN;
+    data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
+    data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[0].cbBuffer);
+
+    data[1].BufferType = SECBUFFER_DATA;
+    data[1].cbBuffer = lstrlenA(message);
+    data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
+    memcpy(data[1].pvBuffer, message, data[1].cbBuffer);
+
     sec_status = EncryptMessage(&client.ctxt, 0, &crypt, 0);
     if (sec_status == SEC_E_UNSUPPORTED_FUNCTION)
     {
@@ -1144,20 +1281,6 @@ static void testSignSeal(void)
     complex_data[3].cbBuffer = ctxt_sizes.cbSecurityTrailer;
     complex_data[3].pvBuffer = HeapAlloc(GetProcessHeap(), 0, complex_data[3].cbBuffer);
 
-    /* We should get a dummy signature again. */
-    sec_status = MakeSignature(&client.ctxt, 0, &crypt, 0);
-    ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
-            getSecError(sec_status));
-    ok(!memcmp(crypt.pBuffers[3].pvBuffer, message_signature,
-               crypt.pBuffers[3].cbBuffer), "Signature is not as expected.\n");
-
-    /* Being a dummy signature, it will verify right away, as if the server
-     * sent it */
-    sec_status = VerifySignature(&client.ctxt, &crypt, 0, &qop);
-    ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK\n",
-            getSecError(sec_status));
-    ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
-
     sec_status = EncryptMessage(&client.ctxt, 0, &crypt, 0);
     ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
@@ -1189,7 +1312,6 @@ static void testSignSeal(void)
     ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
     ok(qop == 0xdeadbeef, "qop changed to %lu\n", qop);
-
 
 end:
     cleanupBuffers(&client);
@@ -1469,7 +1591,8 @@ START_TEST(ntlm)
     testAuth(SECURITY_NETWORK_DREP, TRUE);
     testAuth(SECURITY_NATIVE_DREP, FALSE);
     testAuth(SECURITY_NETWORK_DREP, FALSE);
-    testSignSeal();
+    test_Signature();
+    test_Encrypt();
     test_cred_multiple_use();
     test_null_auth_data();
 }
