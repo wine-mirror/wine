@@ -63,6 +63,8 @@ DECL_FUNCPTR(eglCreateWindowSurface);
 DECL_FUNCPTR(eglDestroyContext);
 DECL_FUNCPTR(eglDestroySurface);
 DECL_FUNCPTR(eglGetConfigAttrib);
+DECL_FUNCPTR(eglGetCurrentContext);
+DECL_FUNCPTR(eglGetCurrentSurface);
 DECL_FUNCPTR(eglGetError);
 DECL_FUNCPTR(eglGetPlatformDisplay);
 DECL_FUNCPTR(eglGetProcAddress);
@@ -78,6 +80,7 @@ static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct list gl_drawables = LIST_INIT(gl_drawables);
 static struct list gl_contexts = LIST_INIT(gl_contexts);
 static struct list gl_pbuffer_dcs = LIST_INIT(gl_pbuffer_dcs);
+static struct list gl_pbuffers = LIST_INIT(gl_pbuffers);
 
 struct wayland_gl_drawable
 {
@@ -104,8 +107,11 @@ struct wgl_context
 
 struct wgl_pbuffer
 {
+    struct list entry;
     struct wayland_gl_drawable *gl;
     int width, height;
+    int texture_format, texture_target, texture_binding;
+    EGLContext tmp_context, prev_context;
 };
 
 struct wayland_pbuffer_dc
@@ -592,8 +598,18 @@ static struct wgl_context *wayland_wglCreateContextAttribsARB(HDC hdc,
 
 static BOOL wayland_wglDeleteContext(struct wgl_context *ctx)
 {
+    struct wgl_pbuffer *pb;
+
     pthread_mutex_lock(&gl_object_mutex);
     list_remove(&ctx->entry);
+    LIST_FOR_EACH_ENTRY(pb, &gl_pbuffers, struct wgl_pbuffer, entry)
+    {
+        if (pb->prev_context == ctx->context)
+        {
+            p_eglDestroyContext(egl_display, pb->tmp_context);
+            pb->prev_context = pb->tmp_context = NULL;
+        }
+    }
     pthread_mutex_unlock(&gl_object_mutex);
     p_eglDestroyContext(egl_display, ctx->context);
     if (ctx->draw) wayland_gl_drawable_release(ctx->draw);
@@ -783,13 +799,101 @@ static struct wgl_pbuffer *wayland_wglCreatePbufferARB(HDC hdc, int format,
     pbuffer->height = height;
     wl_egl_window_resize(pbuffer->gl->wl_egl_window, width, height, 0, 0);
 
+    for (; attribs && attribs[0]; attribs += 2)
+    {
+        switch (attribs[0])
+        {
+        case WGL_TEXTURE_FORMAT_ARB:
+            TRACE("attribs[WGL_TEXTURE_FORMAT_ARB]=0x%x\n", attribs[1]);
+            switch(attribs[1])
+            {
+            case WGL_NO_TEXTURE_ARB:
+                pbuffer->texture_format = 0;
+                break;
+            case WGL_TEXTURE_RGB_ARB:
+                pbuffer->texture_format = GL_RGB;
+                break;
+            case WGL_TEXTURE_RGBA_ARB:
+                pbuffer->texture_format = GL_RGBA;
+                break;
+            /* WGL_FLOAT_COMPONENTS_NV */
+            case WGL_TEXTURE_FLOAT_R_NV:
+                pbuffer->texture_format = GL_FLOAT_R_NV;
+                break;
+            case WGL_TEXTURE_FLOAT_RG_NV:
+                pbuffer->texture_format = GL_FLOAT_RG_NV;
+                break;
+            case WGL_TEXTURE_FLOAT_RGB_NV:
+                pbuffer->texture_format = GL_FLOAT_RGB_NV;
+                break;
+            case WGL_TEXTURE_FLOAT_RGBA_NV:
+                pbuffer->texture_format = GL_FLOAT_RGBA_NV;
+                break;
+            default:
+                ERR("Unknown texture format: %x\n", attribs[1]);
+            }
+            break;
+
+        case WGL_TEXTURE_TARGET_ARB:
+            TRACE("attribs[WGL_TEXTURE_TARGET_ARB]=0x%x\n", attribs[1]);
+            switch (attribs[1])
+            {
+            case WGL_TEXTURE_CUBE_MAP_ARB:
+                if (width != height) goto err;
+                pbuffer->texture_target = GL_TEXTURE_CUBE_MAP;
+                pbuffer->texture_binding = GL_TEXTURE_BINDING_CUBE_MAP;
+                break;
+            case WGL_TEXTURE_1D_ARB:
+                if (height != 1) goto err;
+                pbuffer->texture_target = GL_TEXTURE_1D;
+                pbuffer->texture_binding = GL_TEXTURE_BINDING_1D;
+                break;
+            case WGL_TEXTURE_2D_ARB:
+                pbuffer->texture_target = GL_TEXTURE_2D;
+                pbuffer->texture_binding = GL_TEXTURE_BINDING_2D;
+                break;
+            case WGL_TEXTURE_RECTANGLE_NV:
+                pbuffer->texture_target = GL_TEXTURE_RECTANGLE_NV;
+                pbuffer->texture_binding = GL_TEXTURE_BINDING_RECTANGLE_NV;
+                break;
+            default:
+                ERR("Unknown texture target: %x\n", attribs[1]);
+                goto err;
+            }
+            break;
+
+        case WGL_MIPMAP_TEXTURE_ARB:
+            TRACE("attribs[WGL_MIPMAP_TEXTURE_ARB]=0x%x\n", attribs[1]);
+            break;
+
+        default:
+            WARN("Unknown attribute: %x\n", attribs[0]);
+            break;
+        }
+    }
+
+    pthread_mutex_lock(&gl_object_mutex);
+    list_add_head(&gl_pbuffers, &pbuffer->entry);
+    pthread_mutex_unlock(&gl_object_mutex);
+
     return pbuffer;
+
+err:
+    RtlSetLastWin32Error(ERROR_INVALID_DATA);
+    wayland_gl_drawable_release(pbuffer->gl);
+    free(pbuffer);
+    return NULL;
 }
 
 static BOOL wayland_wglDestroyPbufferARB(struct wgl_pbuffer *pbuffer)
 {
     TRACE("(%p)\n", pbuffer);
 
+    pthread_mutex_lock(&gl_object_mutex);
+    list_remove(&pbuffer->entry);
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    if (pbuffer->tmp_context) p_eglDestroyContext(egl_display, pbuffer->tmp_context);
     wayland_gl_drawable_release(pbuffer->gl);
     free(pbuffer);
 
@@ -828,6 +932,36 @@ static BOOL wayland_wglQueryPbufferARB(struct wgl_pbuffer *pbuffer, int attrib, 
         case WGL_PBUFFER_WIDTH_ARB: *value = pbuffer->width; break;
         case WGL_PBUFFER_HEIGHT_ARB: *value = pbuffer->height; break;
         case WGL_PBUFFER_LOST_ARB: *value = GL_FALSE; break;
+        case WGL_TEXTURE_FORMAT_ARB:
+            switch(pbuffer->texture_format)
+            {
+            case GL_RGB: *value = WGL_TEXTURE_RGB_ARB; break;
+            case GL_RGBA: *value = WGL_TEXTURE_RGBA_ARB; break;
+            case GL_FLOAT_R_NV: *value = WGL_TEXTURE_FLOAT_R_NV; break;
+            case GL_FLOAT_RG_NV: *value = WGL_TEXTURE_FLOAT_RG_NV; break;
+            case GL_FLOAT_RGB_NV: *value = WGL_TEXTURE_FLOAT_RGB_NV; break;
+            case GL_FLOAT_RGBA_NV: *value = WGL_TEXTURE_FLOAT_RGBA_NV; break;
+            default:
+                ERR("Unknown texture format: %x\n", pbuffer->texture_format);
+                break;
+            }
+            break;
+        case WGL_TEXTURE_TARGET_ARB:
+            switch (pbuffer->texture_target)
+            {
+                case GL_TEXTURE_1D: *value = WGL_TEXTURE_1D_ARB; break;
+                case GL_TEXTURE_2D: *value = WGL_TEXTURE_2D_ARB; break;
+                case GL_TEXTURE_CUBE_MAP: *value = WGL_TEXTURE_CUBE_MAP_ARB; break;
+                case GL_TEXTURE_RECTANGLE_NV: *value = WGL_TEXTURE_RECTANGLE_NV; break;
+                default:
+                    ERR("Unknown texture target: %x\n", pbuffer->texture_target);
+                    break;
+            }
+            break;
+        case WGL_MIPMAP_TEXTURE_ARB:
+            *value = GL_FALSE;
+            FIXME("unsupported attribute query for 0x%x\n", attrib);
+            break;
         default:
             FIXME("unexpected attribute %x\n", attrib);
             break;
@@ -848,6 +982,66 @@ static int wayland_wglReleasePbufferDCARB(struct wgl_pbuffer *pbuffer, HDC hdc)
     else hdc = 0;
 
     return hdc && NtGdiDeleteObjectApp(hdc);
+}
+
+static BOOL wayland_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int buffer)
+{
+    EGLContext prev_context = p_eglGetCurrentContext();
+    EGLSurface prev_draw = p_eglGetCurrentSurface(EGL_DRAW);
+    EGLSurface prev_read = p_eglGetCurrentSurface(EGL_READ);
+    int prev_bound_texture = 0;
+
+    TRACE("(%p, %d)\n", pbuffer, buffer);
+
+    if (!pbuffer->tmp_context || pbuffer->prev_context != prev_context)
+    {
+        if (pbuffer->tmp_context) p_eglDestroyContext(egl_display, pbuffer->tmp_context);
+        p_eglBindAPI(EGL_OPENGL_API);
+        pbuffer->tmp_context =
+            p_eglCreateContext(egl_display, EGL_NO_CONFIG_KHR, prev_context, NULL);
+        pbuffer->prev_context = prev_context;
+    }
+
+    opengl_funcs.gl.p_glGetIntegerv(pbuffer->texture_binding, &prev_bound_texture);
+
+    p_eglMakeCurrent(egl_display, pbuffer->gl->surface, pbuffer->gl->surface,
+                     pbuffer->tmp_context);
+
+    /* Make sure that the prev_bound_texture is set as the current texture
+     * state isn't shared between contexts. After that copy the pbuffer texture
+     * data. Note that at the moment we ignore the 'buffer' argument and always
+     * copy from the pbuffer back buffer. */
+    opengl_funcs.gl.p_glBindTexture(pbuffer->texture_target, prev_bound_texture);
+    opengl_funcs.gl.p_glCopyTexImage2D(pbuffer->texture_target, 0,
+                                       pbuffer->texture_format, 0, 0,
+                                       pbuffer->width, pbuffer->height, 0);
+
+    /* Switch back to the original surface and context. */
+    p_eglMakeCurrent(egl_display, prev_draw, prev_read, prev_context);
+
+    return GL_TRUE;
+}
+
+static BOOL wayland_wglReleaseTexImageARB(struct wgl_pbuffer *pbuffer, int buffer)
+{
+    TRACE("(%p, %d)\n", pbuffer, buffer);
+
+    if (!pbuffer->texture_format)
+    {
+        RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
+        return GL_FALSE;
+    }
+    return GL_TRUE;
+}
+
+static BOOL wayland_wglSetPbufferAttribARB(struct wgl_pbuffer *pbuffer, const int *attribs)
+{
+    if (!pbuffer->texture_format)
+    {
+        RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
+        return GL_FALSE;
+    }
+    return GL_TRUE;
 }
 
 static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt)
@@ -1070,6 +1264,11 @@ static BOOL init_opengl_funcs(void)
     opengl_funcs.ext.p_wglQueryPbufferARB = wayland_wglQueryPbufferARB;
     opengl_funcs.ext.p_wglReleasePbufferDCARB = wayland_wglReleasePbufferDCARB;
 
+    register_extension("WGL_ARB_render_texture");
+    opengl_funcs.ext.p_wglBindTexImageARB = wayland_wglBindTexImageARB;
+    opengl_funcs.ext.p_wglReleaseTexImageARB = wayland_wglReleaseTexImageARB;
+    opengl_funcs.ext.p_wglSetPbufferAttribARB = wayland_wglSetPbufferAttribARB;
+
     return TRUE;
 }
 
@@ -1170,6 +1369,8 @@ static void init_opengl(void)
     LOAD_FUNCPTR_EGL(eglDestroyContext);
     LOAD_FUNCPTR_EGL(eglDestroySurface);
     LOAD_FUNCPTR_EGL(eglGetConfigAttrib);
+    LOAD_FUNCPTR_EGL(eglGetCurrentContext);
+    LOAD_FUNCPTR_EGL(eglGetCurrentSurface);
     LOAD_FUNCPTR_EGL(eglGetError);
     LOAD_FUNCPTR_EGL(eglGetPlatformDisplay);
     LOAD_FUNCPTR_EGL(eglInitialize);
