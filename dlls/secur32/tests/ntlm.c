@@ -1133,7 +1133,7 @@ static void testSignSeal(void)
 
     complex_data[1].BufferType = SECBUFFER_DATA;
     complex_data[1].cbBuffer = lstrlenA(message);
-    complex_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
+    complex_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, complex_data[1].cbBuffer);
     memcpy(complex_data[1].pvBuffer, message, complex_data[1].cbBuffer);
 
     complex_data[2].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
