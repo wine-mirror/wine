@@ -126,6 +126,11 @@ static bool is_slash( char c )
     return c == '/' || c == '\\';
 }
 
+static BOOL is_drive_specA( const char *str )
+{
+    return isalpha( str[0] ) && str[1] == ':';
+}
+
 static BOOL is_drive_spec( const WCHAR *str )
 {
     return isalpha( str[0] ) && str[1] == ':';
@@ -1045,80 +1050,75 @@ BOOL WINAPI PathIsRootW(const WCHAR *path)
 
 BOOL WINAPI PathRemoveFileSpecA(char *path)
 {
-    char *filespec = path;
-    BOOL modified = FALSE;
+    char *root_end = NULL, *ptr;
 
-    TRACE("%s\n", wine_dbgstr_a(path));
+    TRACE("%s\n", debugstr_a(path));
 
-    if (!path)
+    if (!path || !*path)
         return FALSE;
 
-    /* Skip directory or UNC path */
-    if (*path == '\\')
-        filespec = ++path;
-    if (*path == '\\')
-        filespec = ++path;
-
-    while (*path)
+    if (is_drive_specA(path))
     {
-        if (*path == '\\')
-            filespec = path; /* Skip dir */
-        else if (*path == ':')
+        root_end = path + 2;
+        if (*root_end == '\\') ++root_end;
+    }
+    else
+    {
+        root_end = path;
+        if (*root_end == '\\') ++root_end;
+        if (root_end[1] != '?')
         {
-            filespec = ++path; /* Skip drive */
-            if (*path == '\\')
-                filespec++;
+            if (*root_end == '\\') ++root_end;
+            if (root_end - path > 1 && is_drive_specA(root_end)) root_end += 2;
+            if (*root_end == '\\' && root_end[1] && root_end[1] != '\\') ++root_end;
         }
-        if (!(path = CharNextA(path)))
-            break;
     }
-
-    if (*filespec)
+    ptr = StrRChrA(root_end, NULL, '\\');
+    if (ptr && ptr != root_end)
     {
-        *filespec = '\0';
-        modified = TRUE;
+        if (ptr[-1] == '\\') --ptr;
+        *ptr = 0;
+        return TRUE;
     }
-
-    return modified;
+    if (!*root_end) return FALSE;
+    *root_end = 0;
+    return TRUE;
 }
 
 BOOL WINAPI PathRemoveFileSpecW(WCHAR *path)
 {
-    WCHAR *filespec = path;
-    BOOL modified = FALSE;
+    WCHAR *root_end = NULL, *ptr;
 
-    TRACE("%s\n", wine_dbgstr_w(path));
+    TRACE("%s\n", debugstr_w(path));
 
-    if (!path)
+    if (!path || !*path)
         return FALSE;
 
-    /* Skip directory or UNC path */
-    if (*path == '\\')
-        filespec = ++path;
-    if (*path == '\\')
-        filespec = ++path;
-
-    while (*path)
+    if (is_prefixed_volume(path))    root_end = path + 48;
+    else if (is_prefixed_disk(path)) root_end = path + 6;
+    else if (is_drive_spec(path))    root_end = path + 2;
+    if (!root_end)
     {
-        if (*path == '\\')
-            filespec = path; /* Skip dir */
-        else if (*path == ':')
+        root_end = path;
+        if (*root_end == '\\') ++root_end;
+        if (root_end[1] != '?')
         {
-            filespec = ++path; /* Skip drive */
-            if (*path == '\\')
-                filespec++;
+            if (*root_end == '\\') ++root_end;
+            if (root_end - path > 1 && is_drive_spec(root_end)) root_end += 2;
+            if (*root_end == '\\' && root_end[1] && root_end[1] != '\\') ++root_end;
         }
-
-        path++;
     }
-
-    if (*filespec)
+    else if (*root_end == '\\') ++root_end;
+    ptr = StrRChrW(root_end, NULL, '\\');
+    if (ptr && ptr != root_end)
     {
-        *filespec = '\0';
-        modified = TRUE;
+        if (ptr[-1] == '\\') --ptr;
+        *ptr = 0;
+        return TRUE;
     }
-
-    return modified;
+    if (!*root_end) return FALSE;
+    *root_end = 0;
+    return TRUE;
 }
 
 BOOL WINAPI PathStripToRootA(char *path)
