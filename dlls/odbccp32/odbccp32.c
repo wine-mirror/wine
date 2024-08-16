@@ -114,6 +114,38 @@ static LPWSTR SQLInstall_strdup_multi(LPCSTR str)
     return ret;
 }
 
+static LPSTR SQLInstall_strdup_multiWtoA(LPCWSTR str)
+{
+    LPCWSTR p;
+    LPSTR ret = NULL;
+    DWORD len;
+
+    if (!str)
+        return ret;
+
+    for (p = str; *p; p += lstrlenW(p) + 1)
+        ;
+
+    len = WideCharToMultiByte(CP_ACP, 0, str,   p - str, NULL, 0, NULL, NULL );
+    ret = malloc((len + 1));
+    WideCharToMultiByte(CP_ACP, 0, str, p - str, ret, len, NULL, NULL );
+    ret[len] = 0;
+
+    return ret;
+}
+
+static inline char *strdupWtoA( const WCHAR *str )
+{
+    char *ret = NULL;
+    if (str)
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+        if ((ret = malloc( len )))
+            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    }
+    return ret;
+}
+
 static LPWSTR SQLInstall_strdup(LPCSTR str)
 {
     DWORD len;
@@ -378,7 +410,21 @@ BOOL WINAPI SQLConfigDataSourceW(HWND hwnd, WORD request, LPCWSTR driver, LPCWST
     if(pConfigDSNW)
         ret = pConfigDSNW(hwnd, mapped_request, driver, attributes);
     else
-        ERR("Failed to find ConfigDSNW\n");
+    {
+        pConfigDSN = (void*)GetProcAddress(mod, "ConfigDSN");
+        if (pConfigDSN)
+        {
+            LPSTR attr = SQLInstall_strdup_multiWtoA(attributes);
+            char *driverA = strdupWtoA(driver);
+            TRACE("Calling ConfigDSN\n");
+
+            ret = pConfigDSN(hwnd, mapped_request, driverA, attr);
+            free(attr);
+            free(driverA);
+        }
+        else
+            ERR("Failed to find ConfigDSN/W\n");
+    }
 
     config_mode = config_mode_prev;
 
