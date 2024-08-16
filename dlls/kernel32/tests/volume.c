@@ -620,6 +620,7 @@ static void test_disk_query_property(void)
     STORAGE_PROPERTY_QUERY query = {0};
     STORAGE_DESCRIPTOR_HEADER header = {0};
     STORAGE_DEVICE_DESCRIPTOR descriptor = {0};
+    DEVICE_SEEK_PENALTY_DESCRIPTOR seek_pen = {0};
     HANDLE handle;
     DWORD error;
     DWORD size;
@@ -655,6 +656,40 @@ static void test_disk_query_property(void)
     ok(size == sizeof(descriptor), "got size %ld\n", size);
     ok(descriptor.Version == sizeof(descriptor), "got descriptor.Version %ld\n", descriptor.Version);
     ok(descriptor.Size >= sizeof(descriptor), "got descriptor.Size %ld\n", descriptor.Size);
+
+
+    query.PropertyId = StorageDeviceSeekPenaltyProperty;
+    query.QueryType = PropertyStandardQuery;
+    SetLastError(0xdeadbeef);
+    ret = DeviceIoControl(handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), &header, sizeof(header), &size,
+                          NULL);
+    error = GetLastError();
+    if (!ret && error == ERROR_INVALID_FUNCTION)
+    {
+        win_skip( "StorageDeviceSeekPenaltyProperty is not supported.\n" ); /* Win7 */
+    }
+    else
+    {
+        ok(ret, "expect ret %#x, got %#x\n", TRUE, ret);
+        ok(error == 0xdeadbeef, "expect err %#x, got err %#lx\n", 0xdeadbeef, error);
+        ok(size == sizeof(header), "got size %ld\n", size);
+        ok(header.Version == sizeof(seek_pen), "got header.Version %ld\n", header.Version);
+        ok(header.Size == sizeof(seek_pen), "got header.Size %ld\n", header.Size);
+
+        memset(&seek_pen, 0xcc, sizeof(seek_pen));
+        ret = DeviceIoControl(handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), &seek_pen, sizeof(seek_pen),
+                              &size, NULL);
+        error = GetLastError();
+        ok(ret || (error == ERROR_INVALID_FUNCTION /* Win8 VMs */ || (error == ERROR_GEN_FAILURE /* VMs */)),
+          "got ret %d, error %#lx\n", ret, error);
+        if (ret)
+        {
+            ok(size == sizeof(seek_pen), "got size %ld\n", size);
+            ok(seek_pen.Version == sizeof(seek_pen), "got %ld\n", seek_pen.Version);
+            ok(seek_pen.Size == sizeof(seek_pen), "got %ld\n", seek_pen.Size);
+            ok(seek_pen.IncursSeekPenalty == TRUE || seek_pen.IncursSeekPenalty == FALSE, "got %d.\n", seek_pen.IncursSeekPenalty);
+        }
+    }
 
     CloseHandle(handle);
 }

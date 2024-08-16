@@ -214,7 +214,44 @@ typedef enum _STORAGE_QUERY_TYPE {
 
 typedef enum _STORAGE_PROPERTY_ID {
     StorageDeviceProperty = 0,
-    StorageAdapterProperty
+    StorageAdapterProperty,
+    StorageDeviceIdProperty,
+    StorageDeviceUniqueIdProperty,
+    StorageDeviceWriteCacheProperty,
+    StorageMiniportProperty,
+    StorageAccessAlignmentProperty,
+    StorageDeviceSeekPenaltyProperty,
+    StorageDeviceTrimProperty,
+    StorageDeviceWriteAggregationProperty,
+    StorageDeviceDeviceTelemetryProperty,
+    StorageDeviceLBProvisioningProperty,
+    StorageDevicePowerProperty,
+    StorageDeviceCopyOffloadProperty,
+    StorageDeviceResiliencyProperty,
+    StorageDeviceMediumProductType,
+    StorageAdapterRpmbProperty,
+    StorageAdapterCryptoProperty,
+    StorageDeviceIoCapabilityProperty = 48,
+    StorageAdapterProtocolSpecificProperty,
+    StorageDeviceProtocolSpecificProperty,
+    StorageAdapterTemperatureProperty,
+    StorageDeviceTemperatureProperty,
+    StorageAdapterPhysicalTopologyProperty,
+    StorageDevicePhysicalTopologyProperty,
+    StorageDeviceAttributesProperty,
+    StorageDeviceManagementStatus,
+    StorageAdapterSerialNumberProperty,
+    StorageDeviceLocationProperty,
+    StorageDeviceNumaProperty,
+    StorageDeviceZonedDeviceProperty,
+    StorageDeviceUnsafeShutdownCount,
+    StorageDeviceEnduranceProperty,
+    StorageDeviceLedStateProperty,
+    StorageDeviceSelfEncryptionProperty = 64,
+    StorageFruIdProperty,
+    StorageStackProperty,
+    StorageAdapterProtocolSpecificPropertyEx,
+    StorageDeviceProtocolSpecificPropertyEx,
 } STORAGE_PROPERTY_ID, *PSTORAGE_PROPERTY_ID;
 
 typedef struct _STORAGE_PROPERTY_QUERY {
@@ -222,6 +259,12 @@ typedef struct _STORAGE_PROPERTY_QUERY {
     STORAGE_QUERY_TYPE          QueryType;
     UCHAR                       AdditionalParameters[1];
 } STORAGE_PROPERTY_QUERY, *PSTORAGE_PROPERTY_QUERY;
+
+typedef struct _DEVICE_SEEK_PENALTY_DESCRIPTOR {
+    DWORD                       Version;
+    DWORD                       Size;
+    BOOLEAN                     IncursSeekPenalty;
+} DEVICE_SEEK_PENALTY_DESCRIPTOR, *PDEVICE_SEEK_PENALTY_DESCRIPTOR;
 
 typedef struct _STORAGE_DESCRIPTOR_HEADER {
     ULONG                       Version;
