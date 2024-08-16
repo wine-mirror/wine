@@ -92,6 +92,7 @@ struct wayland_gl_drawable
     EGLSurface surface;
     LONG resized;
     int swap_interval;
+    BOOL double_buffered;
 };
 
 struct wgl_context
@@ -176,6 +177,18 @@ static void wayland_gl_drawable_release(struct wayland_gl_drawable *gl)
     free(gl);
 }
 
+static inline BOOL is_onscreen_format(int format)
+{
+    return format > 0 && format <= num_egl_configs;
+}
+
+static inline EGLConfig egl_config_for_format(int format)
+{
+    assert(format > 0 && format <= 2 * num_egl_configs);
+    if (format <= num_egl_configs) return egl_configs[format - 1];
+    return egl_configs[format - num_egl_configs - 1];
+}
+
 static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int format)
 {
     struct wayland_gl_drawable *gl;
@@ -223,13 +236,15 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
         goto err;
     }
 
-    gl->surface = p_eglCreateWindowSurface(egl_display, egl_configs[format - 1],
+    gl->surface = p_eglCreateWindowSurface(egl_display, egl_config_for_format(format),
                                            gl->wl_egl_window, NULL);
     if (!gl->surface)
     {
         ERR("Failed to create EGL surface\n");
         goto err;
     }
+
+    gl->double_buffered = is_onscreen_format(format);
 
     TRACE("hwnd=%p egl_surface=%p\n", gl->hwnd, gl->surface);
 
@@ -739,7 +754,9 @@ static BOOL wayland_wglSwapBuffers(HDC hdc)
 
     if (ctx) wgl_context_refresh(ctx);
     wayland_gl_drawable_sync_surface_state(gl);
-    p_eglSwapBuffers(egl_display, gl->surface);
+    /* Although all the EGL surfaces we create are double-buffered, we want to
+     * use some as single-buffered, so avoid swapping those. */
+    if (gl->double_buffered) p_eglSwapBuffers(egl_display, gl->surface);
     wayland_gl_drawable_sync_size(gl);
 
     wayland_gl_drawable_release(gl);
@@ -785,6 +802,13 @@ static struct wgl_pbuffer *wayland_wglCreatePbufferARB(HDC hdc, int format,
     struct wgl_pbuffer *pbuffer;
 
     TRACE("(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs);
+
+    if (format <= 0 || format > 2 * num_egl_configs)
+    {
+        RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
+        ERR("Invalid format %d\n", format);
+        return NULL;
+    }
 
     /* Use an unmapped wayland surface as our offscreen "pbuffer" surface. */
     if (!(pbuffer = calloc(1, sizeof(*pbuffer))) ||
@@ -1044,7 +1068,7 @@ static BOOL wayland_wglSetPbufferAttribARB(struct wgl_pbuffer *pbuffer, const in
     return GL_TRUE;
 }
 
-static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt)
+static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt, BOOL pbuffer_single)
 {
     EGLint value, surface_type;
     PIXELFORMATDESCRIPTOR *pfd = &fmt->pfd;
@@ -1055,8 +1079,12 @@ static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
     memset(fmt, 0, sizeof(*fmt));
     pfd->nSize = sizeof(*pfd);
     pfd->nVersion = 1;
-    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_SUPPORT_COMPOSITION;
-    if (surface_type & EGL_WINDOW_BIT) pfd->dwFlags |= PFD_DRAW_TO_WINDOW;
+    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION;
+    if (!pbuffer_single)
+    {
+        pfd->dwFlags |= PFD_DOUBLEBUFFER;
+        if (surface_type & EGL_WINDOW_BIT) pfd->dwFlags |= PFD_DRAW_TO_WINDOW;
+    }
     pfd->iPixelType = PFD_TYPE_RGBA;
     pfd->iLayerType = PFD_MAIN_PLANE;
 
@@ -1123,10 +1151,11 @@ static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
     }
     else fmt->pixel_type = -1;
 
-    fmt->draw_to_pbuffer = !!(surface_type & EGL_PBUFFER_BIT);
-    SET_ATTRIB_ARB(max_pbuffer_pixels, EGL_MAX_PBUFFER_PIXELS);
-    SET_ATTRIB_ARB(max_pbuffer_width, EGL_MAX_PBUFFER_WIDTH);
-    SET_ATTRIB_ARB(max_pbuffer_height, EGL_MAX_PBUFFER_HEIGHT);
+    fmt->draw_to_pbuffer = TRUE;
+    /* Use some arbitrary but reasonable limits (4096 is also Mesa's default) */
+    fmt->max_pbuffer_width = 4096;
+    fmt->max_pbuffer_height = 4096;
+    fmt->max_pbuffer_pixels = fmt->max_pbuffer_width * fmt->max_pbuffer_height;
 
     if (p_eglGetConfigAttrib(egl_display, config, EGL_TRANSPARENT_RED_VALUE, &value))
     {
@@ -1151,10 +1180,10 @@ static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
     SET_ATTRIB_ARB(sample_buffers, EGL_SAMPLE_BUFFERS);
     SET_ATTRIB_ARB(samples, EGL_SAMPLES);
 
-    SET_ATTRIB_ARB(bind_to_texture_rgb, EGL_BIND_TO_TEXTURE_RGB);
-    SET_ATTRIB_ARB(bind_to_texture_rgba, EGL_BIND_TO_TEXTURE_RGBA);
-    fmt->bind_to_texture_rectangle_rgb = fmt->bind_to_texture_rgb;
-    fmt->bind_to_texture_rectangle_rgba = fmt->bind_to_texture_rgba;
+    fmt->bind_to_texture_rgb = GL_TRUE;
+    fmt->bind_to_texture_rgba = GL_TRUE;
+    fmt->bind_to_texture_rectangle_rgb = GL_TRUE;
+    fmt->bind_to_texture_rectangle_rgba = GL_TRUE;
 
     /* TODO: Support SRGB surfaces and enable the attribute */
     fmt->framebuffer_srgb_capable = GL_FALSE;
@@ -1181,9 +1210,13 @@ static void wayland_get_pixel_formats(struct wgl_pixel_format *formats,
     if (formats)
     {
         for (i = 0; i < min(max_formats, num_egl_configs); ++i)
-            describe_pixel_format(egl_configs[i], &formats[i]);
+            describe_pixel_format(egl_configs[i], &formats[i], FALSE);
+        /* Add single-buffered pbuffer capable configs. */
+        for (i = num_egl_configs; i < min(max_formats, 2 * num_egl_configs); ++i)
+            describe_pixel_format(egl_configs[i - num_egl_configs], &formats[i], TRUE);
     }
-    *num_formats = *num_onscreen_formats = num_egl_configs;
+    *num_formats = 2 * num_egl_configs;
+    *num_onscreen_formats = num_egl_configs;
 }
 
 static BOOL has_extension(const char *list, const char *ext)
