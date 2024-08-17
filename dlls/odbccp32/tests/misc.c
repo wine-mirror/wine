@@ -432,6 +432,9 @@ static void test_SQLGetPrivateProfileStringW(void)
     }
     ok(ret, "SQLWritePrivateProfileString failed\n");
 
+    ret = SQLWritePrivateProfileStringW(L"wineodbc1", L"testing" , L"systemdsn", L"ODBC.INI");
+    ok(ret, "SQLWritePrivateProfileString failed\n");
+
     ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
     ok(ret, "SQLGetPrivateProfileStringW failed\n");
 
@@ -441,6 +444,9 @@ static void test_SQLGetPrivateProfileStringW(void)
     ret = SQLGetPrivateProfileStringW(L"wineodbc", NULL, L"", buffer, 256, L"ODBC.INI");
     ok(!ret, "SQLGetPrivateProfileStringW succeeded\n");
 
+    ret = SQLWritePrivateProfileStringW(L"wineodbc1", L"testing" , L"userdsn", L"ODBC.INI");
+    ok(ret, "SQLWritePrivateProfileString failed\n");
+
     ret = SQLSetConfigMode(ODBC_BOTH_DSN);
     ok(ret, "SQLSetConfigMode failed\n");
 
@@ -448,6 +454,40 @@ static void test_SQLGetPrivateProfileStringW(void)
     ok(ret, "SQLGetPrivateProfileStringW failed\n");
 
     reg_ret = RegDeleteKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC\\ODBC.INI\\wineodbc");
+    ok(reg_ret == ERROR_SUCCESS, "RegDeleteKeyW failed %ld\n", reg_ret);
+
+    /* Show existing USER DSN is checked before MACHINE */
+    ret = SQLWritePrivateProfileStringW(L"wineodbc1", L"testing" , L"bothdsn", L"ODBC.INI");
+    ok(ret, "SQLWritePrivateProfileString failed\n");
+
+    ret = SQLSetConfigMode(ODBC_SYSTEM_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc1", L"testing", L"", buffer, 256, L"ODBC.INI");
+    ok(ret, "SQLGetPrivateProfileStringW failed\n");
+    ok(!wcscmp(buffer, L"systemdsn"), "Wrong value\n");
+
+    reg_ret = RegDeleteKeyW(HKEY_CURRENT_USER, L"Software\\ODBC\\ODBC.INI\\wineodbc1");
+    ok(reg_ret == ERROR_SUCCESS, "RegDeleteKeyW failed %ld\n", reg_ret);
+
+    reg_ret = RegDeleteKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC\\ODBC.INI\\wineodbc1");
+    ok(reg_ret == ERROR_SUCCESS, "RegDeleteKeyW failed %ld\n", reg_ret);
+
+    ret = SQLSetConfigMode(ODBC_BOTH_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    /* Writes to USER if no key found */
+    ret = SQLWritePrivateProfileStringW(L"wineodbc1", L"testing" , L"userwrite", L"ODBC.INI");
+    ok(ret, "SQLWritePrivateProfileString failed\n");
+
+    ret = SQLSetConfigMode(ODBC_USER_DSN);
+    ok(ret, "SQLSetConfigMode failed\n");
+
+    ret = SQLGetPrivateProfileStringW(L"wineodbc1", L"testing", L"", buffer, 256, L"ODBC.INI");
+    ok(ret, "SQLGetPrivateProfileStringW failed\n");
+    ok(!wcscmp(buffer, L"userwrite"), "Wrong value\n");
+
+    reg_ret = RegDeleteKeyW(HKEY_CURRENT_USER, L"Software\\ODBC\\ODBC.INI\\wineodbc1");
     ok(reg_ret == ERROR_SUCCESS, "RegDeleteKeyW failed %ld\n", reg_ret);
 
     ret = SQLSetConfigMode(ODBC_USER_DSN);

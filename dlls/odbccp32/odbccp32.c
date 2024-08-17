@@ -1802,6 +1802,7 @@ BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry
 {
     LONG ret;
     HKEY hkey;
+    WCHAR *regpath;
 
     clear_errors();
     TRACE("%s %s %s %s\n", debugstr_w(lpszSection), debugstr_w(lpszEntry),
@@ -1813,37 +1814,41 @@ BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry
         return FALSE;
     }
 
+    regpath = malloc ( (wcslen(L"Software\\ODBC\\") + wcslen(lpszFilename) + wcslen(L"\\")
+                            + wcslen(lpszSection) + 1) * sizeof(WCHAR));
+    if (!regpath)
+    {
+        push_error(ODBC_ERROR_OUT_OF_MEM, L"Out of memory");
+        return FALSE;
+    }
+    wcscpy(regpath, L"Software\\ODBC\\");
+    wcscat(regpath, lpszFilename);
+    wcscat(regpath, L"\\");
+    wcscat(regpath, lpszSection);
+
     /* odbcinit.ini is only for drivers, so default to local Machine */
     if (!wcsicmp(lpszFilename, L"ODBCINST.INI") || config_mode == ODBC_SYSTEM_DSN)
-        ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC", &hkey);
+        ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, regpath, &hkey);
     else if (config_mode == ODBC_USER_DSN)
-        ret = RegCreateKeyW(HKEY_CURRENT_USER, L"Software\\ODBC", &hkey);
+        ret = RegCreateKeyW(HKEY_CURRENT_USER, regpath, &hkey);
     else
     {
-        ret = RegCreateKeyW(HKEY_CURRENT_USER, L"Software\\ODBC", &hkey);
-        if (ret) ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC", &hkey);
+        /* Check existing keys first */
+        if ((ret = RegOpenKeyW(HKEY_CURRENT_USER, regpath, &hkey)) != ERROR_SUCCESS)
+            ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, regpath, &hkey);
+
+        if (ret != ERROR_SUCCESS)
+            ret = RegCreateKeyW(HKEY_CURRENT_USER, regpath, &hkey);
     }
+
+    free(regpath);
 
     if (ret == ERROR_SUCCESS)
     {
-         HKEY hkeyfilename;
-
-         if ((ret = RegCreateKeyW(hkey, lpszFilename, &hkeyfilename)) == ERROR_SUCCESS)
-         {
-              HKEY hkey_section;
-
-              if ((ret = RegCreateKeyW(hkeyfilename, lpszSection, &hkey_section)) == ERROR_SUCCESS)
-              {
-                  if(lpszString)
-                      ret = RegSetValueExW(hkey_section, lpszEntry, 0, REG_SZ, (BYTE*)lpszString, (lstrlenW(lpszString)+1)*sizeof(WCHAR));
-                  else
-                      ret = RegSetValueExW(hkey_section, lpszEntry, 0, REG_SZ, (BYTE*)L"", sizeof(L""));
-                  RegCloseKey(hkey_section);
-              }
-
-              RegCloseKey(hkeyfilename);
-         }
-
+        if(lpszString)
+            ret = RegSetValueExW(hkey, lpszEntry, 0, REG_SZ, (BYTE*)lpszString, (lstrlenW(lpszString)+1)*sizeof(WCHAR));
+        else
+            ret = RegSetValueExW(hkey, lpszEntry, 0, REG_SZ, (BYTE*)L"", sizeof(L""));
          RegCloseKey(hkey);
     }
 
