@@ -848,10 +848,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
  */
 static void thread_init(void)
 {
-    void *cpu_area_ctx;
-
     NtCurrentTeb32()->WOW32Reserved = PtrToUlong( pBTCpuGetBopCode() );
-    RtlWow64GetCurrentCpuArea( NULL, &cpu_area_ctx, NULL );
     NtCurrentTeb()->TlsSlots[WOW64_TLS_WOW64INFO] = wow64info;
     if (pBTCpuThreadInit) pBTCpuThreadInit();
 
@@ -860,35 +857,36 @@ static void thread_init(void)
     {
     case IMAGE_FILE_MACHINE_I386:
         {
-            I386_CONTEXT *ctx_ptr, *ctx = cpu_area_ctx;
+            I386_CONTEXT *ctx_ptr, ctx = { CONTEXT_I386_FULL };
             ULONG *stack;
 
-            ctx_ptr = (I386_CONTEXT *)ULongToPtr( ctx->Esp ) - 1;
-            *ctx_ptr = *ctx;
-
+            pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
+            ctx_ptr = (I386_CONTEXT *)ULongToPtr( ctx.Esp ) - 1;
+            *ctx_ptr = ctx;
             stack = (ULONG *)ctx_ptr;
             *(--stack) = 0;
             *(--stack) = 0;
             *(--stack) = 0;
             *(--stack) = PtrToUlong( ctx_ptr );
             *(--stack) = 0xdeadbabe;
-            ctx->Esp = PtrToUlong( stack );
-            ctx->Eip = pLdrSystemDllInitBlock->pLdrInitializeThunk;
-            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, ctx );
+            ctx.Esp = PtrToUlong( stack );
+            ctx.Eip = pLdrSystemDllInitBlock->pLdrInitializeThunk;
+            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
         }
         break;
 
     case IMAGE_FILE_MACHINE_ARMNT:
         {
-            ARM_CONTEXT *ctx_ptr, *ctx = cpu_area_ctx;
+            ARM_CONTEXT *ctx_ptr, ctx = { CONTEXT_ARM_FULL };
 
-            ctx_ptr = (ARM_CONTEXT *)ULongToPtr( ctx->Sp & ~15 ) - 1;
-            *ctx_ptr = *ctx;
+            pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
+            ctx_ptr = (ARM_CONTEXT *)ULongToPtr( ctx.Sp & ~15 ) - 1;
+            *ctx_ptr = ctx;
 
-            ctx->R0 = PtrToUlong( ctx_ptr );
-            ctx->Sp = PtrToUlong( ctx_ptr );
-            ctx->Pc = pLdrSystemDllInitBlock->pLdrInitializeThunk;
-            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, ctx );
+            ctx.R0 = PtrToUlong( ctx_ptr );
+            ctx.Sp = PtrToUlong( ctx_ptr );
+            ctx.Pc = pLdrSystemDllInitBlock->pLdrInitializeThunk;
+            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
         }
         break;
 
