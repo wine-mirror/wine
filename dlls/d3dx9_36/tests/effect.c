@@ -8479,6 +8479,7 @@ static void test_effect_parameter_block(void)
     ID3DXEffect *effect, *effect2;
     D3DXMATRIX mat, mat_arr[2];
     IDirect3DDevice9 *device;
+    D3DXPARAMETER_DESC desc;
     ID3DXEffectPool *pool;
     float float_array[4];
     float float_value;
@@ -8628,12 +8629,22 @@ static void test_effect_parameter_block(void)
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2row", &mat);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &effect_orig_mat, sizeof(mat)), "Got unexpected matrix.\n");
+    handle = effect->lpVtbl->GetParameterByName(effect, NULL, "m3x2row");
+    ok(!!handle, "Failed to find a parameter.\n");
+    hr = effect->lpVtbl->GetParameterDesc(effect, handle, &desc);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(desc.Class == D3DXPC_MATRIX_ROWS, "Unexpected class %u.\n", desc.Class);
 
     hr = effect->lpVtbl->SetMatrix(effect, "m3x2column", &test_mat);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2column", &mat);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &effect_orig_mat, sizeof(mat)), "Got unexpected matrix.\n");
+    handle = effect->lpVtbl->GetParameterByName(effect, NULL, "m3x2column");
+    ok(!!handle, "Failed to find a parameter.\n");
+    hr = effect->lpVtbl->GetParameterDesc(effect, handle, &desc);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(desc.Class == D3DXPC_MATRIX_ROWS, "Unexpected class %u.\n", desc.Class);
 
     /* Setting shared parameter through effect2 is not recorded to effect
      * parameter block. */
