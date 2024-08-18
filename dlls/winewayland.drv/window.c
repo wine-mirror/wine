@@ -119,7 +119,6 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 
     pthread_mutex_unlock(&win_data_mutex);
 
-    if (data->window_surface) window_surface_release(data->window_surface);
     if (data->wayland_surface) wayland_surface_destroy(data->wayland_surface);
     if (data->window_contents) wayland_shm_buffer_unref(data->window_contents);
     free(data);
@@ -450,10 +449,6 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, cons
 
     data->rects = *new_rects;
     data->managed = managed;
-
-    if (surface) window_surface_add_ref(surface);
-    if (data->window_surface) window_surface_release(data->window_surface);
-    data->window_surface = surface;
 
     wayland_win_data_update_wayland_surface(data);
     if (data->wayland_surface) wayland_win_data_update_wayland_state(data);

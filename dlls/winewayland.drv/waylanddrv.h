@@ -281,8 +281,6 @@ struct wayland_win_data
     struct wayland_shm_buffer *window_contents;
     /* wayland surface (if any) for this window */
     struct wayland_surface *wayland_surface;
-    /* wine window_surface backing this window */
-    struct window_surface *window_surface;
     /* window rects, relative to parent client area */
     struct window_rects rects;
     BOOL managed;
