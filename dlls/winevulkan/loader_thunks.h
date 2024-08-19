@@ -1,10 +1,16 @@
-/* Automatically generated from Vulkan vk.xml; DO NOT EDIT!
+/* Automatically generated from Vulkan vk.xml and video.xml; DO NOT EDIT!
  *
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
  * Copyright 2015-2024 The Khronos Group Inc.
  *
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
+ *
+ * and from Vulkan video.xml file covered
+ * by the following copyright and permission notice:
+ *
+ * Copyright 2021-2024 The Khronos Group Inc.
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
@@ -33,6 +39,7 @@ enum unix_call
     unix_vkBindImageMemory2,
     unix_vkBindImageMemory2KHR,
     unix_vkBindOpticalFlowSessionImageNV,
+    unix_vkBindVideoSessionMemoryKHR,
     unix_vkBuildAccelerationStructuresKHR,
     unix_vkBuildMicromapsEXT,
     unix_vkCmdBeginConditionalRenderingEXT,
@@ -45,6 +52,7 @@ enum unix_call
     unix_vkCmdBeginRendering,
     unix_vkCmdBeginRenderingKHR,
     unix_vkCmdBeginTransformFeedbackEXT,
+    unix_vkCmdBeginVideoCodingKHR,
     unix_vkCmdBindDescriptorBufferEmbeddedSamplers2EXT,
     unix_vkCmdBindDescriptorBufferEmbeddedSamplersEXT,
     unix_vkCmdBindDescriptorBuffersEXT,
@@ -71,6 +79,7 @@ enum unix_call
     unix_vkCmdClearAttachments,
     unix_vkCmdClearColorImage,
     unix_vkCmdClearDepthStencilImage,
+    unix_vkCmdControlVideoCodingKHR,
     unix_vkCmdCopyAccelerationStructureKHR,
     unix_vkCmdCopyAccelerationStructureNV,
     unix_vkCmdCopyAccelerationStructureToMemoryKHR,
@@ -98,6 +107,7 @@ enum unix_call
     unix_vkCmdDebugMarkerBeginEXT,
     unix_vkCmdDebugMarkerEndEXT,
     unix_vkCmdDebugMarkerInsertEXT,
+    unix_vkCmdDecodeVideoKHR,
     unix_vkCmdDecompressMemoryIndirectCountNV,
     unix_vkCmdDecompressMemoryNV,
     unix_vkCmdDispatch,
@@ -125,6 +135,7 @@ enum unix_call
     unix_vkCmdDrawMeshTasksNV,
     unix_vkCmdDrawMultiEXT,
     unix_vkCmdDrawMultiIndexedEXT,
+    unix_vkCmdEncodeVideoKHR,
     unix_vkCmdEndConditionalRenderingEXT,
     unix_vkCmdEndDebugUtilsLabelEXT,
     unix_vkCmdEndQuery,
@@ -135,6 +146,7 @@ enum unix_call
     unix_vkCmdEndRendering,
     unix_vkCmdEndRenderingKHR,
     unix_vkCmdEndTransformFeedbackEXT,
+    unix_vkCmdEndVideoCodingKHR,
     unix_vkCmdExecuteCommands,
     unix_vkCmdExecuteGeneratedCommandsNV,
     unix_vkCmdFillBuffer,
@@ -335,6 +347,8 @@ enum unix_call
     unix_vkCreateShadersEXT,
     unix_vkCreateSwapchainKHR,
     unix_vkCreateValidationCacheEXT,
+    unix_vkCreateVideoSessionKHR,
+    unix_vkCreateVideoSessionParametersKHR,
     unix_vkCreateWin32SurfaceKHR,
     unix_vkDebugMarkerSetObjectNameEXT,
     unix_vkDebugMarkerSetObjectTagEXT,
@@ -382,6 +396,8 @@ enum unix_call
     unix_vkDestroySurfaceKHR,
     unix_vkDestroySwapchainKHR,
     unix_vkDestroyValidationCacheEXT,
+    unix_vkDestroyVideoSessionKHR,
+    unix_vkDestroyVideoSessionParametersKHR,
     unix_vkDeviceWaitIdle,
     unix_vkEndCommandBuffer,
     unix_vkEnumerateDeviceExtensionProperties,
@@ -443,6 +459,7 @@ enum unix_call
     unix_vkGetDeviceQueue2,
     unix_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI,
     unix_vkGetDynamicRenderingTilePropertiesQCOM,
+    unix_vkGetEncodedVideoSessionParametersKHR,
     unix_vkGetEventStatus,
     unix_vkGetFenceStatus,
     unix_vkGetFramebufferTilePropertiesQCOM,
@@ -509,6 +526,9 @@ enum unix_call
     unix_vkGetPhysicalDeviceSurfaceSupportKHR,
     unix_vkGetPhysicalDeviceToolProperties,
     unix_vkGetPhysicalDeviceToolPropertiesEXT,
+    unix_vkGetPhysicalDeviceVideoCapabilitiesKHR,
+    unix_vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR,
+    unix_vkGetPhysicalDeviceVideoFormatPropertiesKHR,
     unix_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     unix_vkGetPipelineCacheData,
     unix_vkGetPipelineExecutableInternalRepresentationsKHR,
@@ -537,6 +557,7 @@ enum unix_call
     unix_vkGetShaderModuleIdentifierEXT,
     unix_vkGetSwapchainImagesKHR,
     unix_vkGetValidationCacheDataEXT,
+    unix_vkGetVideoSessionMemoryRequirementsKHR,
     unix_vkInitializePerformanceApiINTEL,
     unix_vkInvalidateMappedMemoryRanges,
     unix_vkLatencySleepNV,
@@ -586,6 +607,7 @@ enum unix_call
     unix_vkUpdateDescriptorSetWithTemplate,
     unix_vkUpdateDescriptorSetWithTemplateKHR,
     unix_vkUpdateDescriptorSets,
+    unix_vkUpdateVideoSessionParametersKHR,
     unix_vkWaitForFences,
     unix_vkWaitForPresentKHR,
     unix_vkWaitSemaphores,
@@ -729,6 +751,15 @@ struct vkBindOpticalFlowSessionImageNV_params
     VkResult result;
 };
 
+struct vkBindVideoSessionMemoryKHR_params
+{
+    VkDevice device;
+    VkVideoSessionKHR DECLSPEC_ALIGN(8) videoSession;
+    uint32_t bindSessionMemoryInfoCount;
+    const VkBindVideoSessionMemoryInfoKHR *pBindSessionMemoryInfos;
+    VkResult result;
+};
+
 struct vkBuildAccelerationStructuresKHR_params
 {
     VkDevice device;
@@ -817,6 +848,12 @@ struct vkCmdBeginTransformFeedbackEXT_params
     uint32_t counterBufferCount;
     const VkBuffer *pCounterBuffers;
     const VkDeviceSize *pCounterBufferOffsets;
+};
+
+struct vkCmdBeginVideoCodingKHR_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkVideoBeginCodingInfoKHR *pBeginInfo;
 };
 
 struct vkCmdBindDescriptorBufferEmbeddedSamplers2EXT_params
@@ -1044,6 +1081,12 @@ struct vkCmdClearDepthStencilImage_params
     const VkImageSubresourceRange *pRanges;
 };
 
+struct vkCmdControlVideoCodingKHR_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkVideoCodingControlInfoKHR *pCodingControlInfo;
+};
+
 struct vkCmdCopyAccelerationStructureKHR_params
 {
     VkCommandBuffer commandBuffer;
@@ -1234,6 +1277,12 @@ struct vkCmdDebugMarkerInsertEXT_params
 {
     VkCommandBuffer commandBuffer;
     const VkDebugMarkerMarkerInfoEXT *pMarkerInfo;
+};
+
+struct vkCmdDecodeVideoKHR_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkVideoDecodeInfoKHR *pDecodeInfo;
 };
 
 struct vkCmdDecompressMemoryIndirectCountNV_params
@@ -1493,6 +1542,12 @@ struct vkCmdDrawMultiIndexedEXT_params
     const int32_t *pVertexOffset;
 };
 
+struct vkCmdEncodeVideoKHR_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkVideoEncodeInfoKHR *pEncodeInfo;
+};
+
 struct vkCmdEndConditionalRenderingEXT_params
 {
     VkCommandBuffer commandBuffer;
@@ -1552,6 +1607,12 @@ struct vkCmdEndTransformFeedbackEXT_params
     uint32_t counterBufferCount;
     const VkBuffer *pCounterBuffers;
     const VkDeviceSize *pCounterBufferOffsets;
+};
+
+struct vkCmdEndVideoCodingKHR_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkVideoEndCodingInfoKHR *pEndCodingInfo;
 };
 
 struct vkCmdExecuteCommands_params
@@ -3085,6 +3146,24 @@ struct vkCreateValidationCacheEXT_params
     VkResult result;
 };
 
+struct vkCreateVideoSessionKHR_params
+{
+    VkDevice device;
+    const VkVideoSessionCreateInfoKHR *pCreateInfo;
+    const VkAllocationCallbacks *pAllocator;
+    VkVideoSessionKHR *pVideoSession;
+    VkResult result;
+};
+
+struct vkCreateVideoSessionParametersKHR_params
+{
+    VkDevice device;
+    const VkVideoSessionParametersCreateInfoKHR *pCreateInfo;
+    const VkAllocationCallbacks *pAllocator;
+    VkVideoSessionParametersKHR *pVideoSessionParameters;
+    VkResult result;
+};
+
 struct vkCreateWin32SurfaceKHR_params
 {
     VkInstance instance;
@@ -3416,6 +3495,20 @@ struct vkDestroyValidationCacheEXT_params
 {
     VkDevice device;
     VkValidationCacheEXT DECLSPEC_ALIGN(8) validationCache;
+    const VkAllocationCallbacks *pAllocator;
+};
+
+struct vkDestroyVideoSessionKHR_params
+{
+    VkDevice device;
+    VkVideoSessionKHR DECLSPEC_ALIGN(8) videoSession;
+    const VkAllocationCallbacks *pAllocator;
+};
+
+struct vkDestroyVideoSessionParametersKHR_params
+{
+    VkDevice device;
+    VkVideoSessionParametersKHR DECLSPEC_ALIGN(8) videoSessionParameters;
     const VkAllocationCallbacks *pAllocator;
 };
 
@@ -3881,6 +3974,16 @@ struct vkGetDynamicRenderingTilePropertiesQCOM_params
     VkDevice device;
     const VkRenderingInfo *pRenderingInfo;
     VkTilePropertiesQCOM *pProperties;
+    VkResult result;
+};
+
+struct vkGetEncodedVideoSessionParametersKHR_params
+{
+    VkDevice device;
+    const VkVideoEncodeSessionParametersGetInfoKHR *pVideoSessionParametersInfo;
+    VkVideoEncodeSessionParametersFeedbackInfoKHR *pFeedbackInfo;
+    size_t *pDataSize;
+    void *pData;
     VkResult result;
 };
 
@@ -4388,6 +4491,31 @@ struct vkGetPhysicalDeviceToolPropertiesEXT_params
     VkResult result;
 };
 
+struct vkGetPhysicalDeviceVideoCapabilitiesKHR_params
+{
+    VkPhysicalDevice physicalDevice;
+    const VkVideoProfileInfoKHR *pVideoProfile;
+    VkVideoCapabilitiesKHR *pCapabilities;
+    VkResult result;
+};
+
+struct vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR_params
+{
+    VkPhysicalDevice physicalDevice;
+    const VkPhysicalDeviceVideoEncodeQualityLevelInfoKHR *pQualityLevelInfo;
+    VkVideoEncodeQualityLevelPropertiesKHR *pQualityLevelProperties;
+    VkResult result;
+};
+
+struct vkGetPhysicalDeviceVideoFormatPropertiesKHR_params
+{
+    VkPhysicalDevice physicalDevice;
+    const VkPhysicalDeviceVideoFormatInfoKHR *pVideoFormatInfo;
+    uint32_t *pVideoFormatPropertyCount;
+    VkVideoFormatPropertiesKHR *pVideoFormatProperties;
+    VkResult result;
+};
+
 struct vkGetPhysicalDeviceWin32PresentationSupportKHR_params
 {
     VkPhysicalDevice physicalDevice;
@@ -4627,6 +4755,15 @@ struct vkGetValidationCacheDataEXT_params
     VkValidationCacheEXT DECLSPEC_ALIGN(8) validationCache;
     size_t *pDataSize;
     void *pData;
+    VkResult result;
+};
+
+struct vkGetVideoSessionMemoryRequirementsKHR_params
+{
+    VkDevice device;
+    VkVideoSessionKHR DECLSPEC_ALIGN(8) videoSession;
+    uint32_t *pMemoryRequirementsCount;
+    VkVideoSessionMemoryRequirementsKHR *pMemoryRequirements;
     VkResult result;
 };
 
@@ -4998,6 +5135,14 @@ struct vkUpdateDescriptorSets_params
     const VkWriteDescriptorSet *pDescriptorWrites;
     uint32_t descriptorCopyCount;
     const VkCopyDescriptorSet *pDescriptorCopies;
+};
+
+struct vkUpdateVideoSessionParametersKHR_params
+{
+    VkDevice device;
+    VkVideoSessionParametersKHR DECLSPEC_ALIGN(8) videoSessionParameters;
+    const VkVideoSessionParametersUpdateInfoKHR *pUpdateInfo;
+    VkResult result;
 };
 
 struct vkWaitForFences_params
