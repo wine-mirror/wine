@@ -170,3 +170,12 @@ IDI_TT_WARN_SM ICON idi_tt_warn_sm.ico
 
 /* @makedep: idi_tt_error_sm.ico */
 IDI_TT_ERROR_SM ICON idi_tt_error_sm.ico
+
+/* @makedep: idi_tt_info_md.ico */
+IDI_TT_INFO_MD ICON idi_tt_info_md.ico
+
+/* @makedep: idi_tt_warn_md.ico */
+IDI_TT_WARN_MD ICON idi_tt_warn_md.ico
+
+/* @makedep: idi_tt_error_md.ico */
+IDI_TT_ERROR_MD ICON idi_tt_error_md.ico
