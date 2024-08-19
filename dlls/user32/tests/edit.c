@@ -3467,9 +3467,9 @@ static void test_format_rect(void)
         SendMessageA(edit, EM_GETRECT, 0, (LPARAM)&rect);
 
         if (tests[i].expected_equal)
-            todo_wine ok(EqualRect(&old_rect, &rect), "Expected format rectangle to be equal to client rectangle.\n");
+            ok(EqualRect(&old_rect, &rect), "Expected format rectangle to be equal to client rectangle.\n");
         else
-            todo_wine ok((rect.right - rect.left) > (old_rect.right - old_rect.left), "Expected format rect to be larger than client rectangle.\n");
+            ok((rect.right - rect.left) > (old_rect.right - old_rect.left), "Expected format rect to be larger than client rectangle.\n");
         DestroyWindow(edit);
     }
 }
