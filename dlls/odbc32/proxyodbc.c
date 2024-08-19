@@ -1199,7 +1199,8 @@ static SQLRETURN set_env_attr( struct environment *env, SQLINTEGER attr, SQLPOIN
     }
     else if (env->hdr.win32_handle)
     {
-        ret = env->hdr.win32_funcs->SQLSetEnvAttr( env->hdr.win32_handle, attr, value, len );
+        if (env->hdr.win32_funcs->SQLSetEnvAttr)
+            ret = env->hdr.win32_funcs->SQLSetEnvAttr( env->hdr.win32_handle, attr, value, len );
     }
 
     return ret;
@@ -1226,16 +1227,18 @@ static SQLRETURN alloc_env_handle( struct environment *env, BOOL is_unix )
 }
 
 #define INT_PTR(val) (SQLPOINTER)(ULONG_PTR)val
-static SQLRETURN prepare_env( struct environment *env )
+static void prepare_env( struct environment *env )
 {
-    return set_env_attr( env, SQL_ATTR_ODBC_VERSION, INT_PTR(env->attr_version), 0 );
+    if (set_env_attr( env, SQL_ATTR_ODBC_VERSION, INT_PTR(env->attr_version), 0 ))
+        WARN( "failed to set ODBC version\n" );
 }
 
 static SQLRETURN create_env( struct environment *env, BOOL is_unix )
 {
     SQLRETURN ret;
     if ((ret = alloc_env_handle( env, is_unix ))) return ret;
-    return prepare_env( env );
+    prepare_env( env );
+    return SQL_SUCCESS;
 }
 
 static SQLRETURN set_con_attr( struct connection *con, SQLINTEGER attr, SQLPOINTER value, SQLINTEGER len )
@@ -1268,20 +1271,20 @@ static SQLRETURN set_con_attr( struct connection *con, SQLINTEGER attr, SQLPOINT
     return ret;
 }
 
-static SQLRETURN prepare_con( struct connection *con )
+static void prepare_con( struct connection *con )
 {
-    SQLRETURN ret;
-
-    if ((ret = set_con_attr( con, SQL_ATTR_CONNECTION_TIMEOUT, INT_PTR(con->attr_con_timeout), 0 ))) return ret;
-    if ((ret = set_con_attr( con, SQL_ATTR_LOGIN_TIMEOUT, INT_PTR(con->attr_login_timeout), 0 ))) return ret;
-    return SQL_SUCCESS;
+    if (set_con_attr( con, SQL_ATTR_CONNECTION_TIMEOUT, INT_PTR(con->attr_con_timeout), 0 ))
+        WARN( "failed to set connection timeout\n" );
+    if (set_con_attr( con, SQL_ATTR_LOGIN_TIMEOUT, INT_PTR(con->attr_login_timeout), 0 ))
+        WARN( "failed to set login timeout\n" );
 }
 
 static SQLRETURN create_con( struct connection *con )
 {
     SQLRETURN ret;
     if ((ret = alloc_handle( SQL_HANDLE_DBC, con->hdr.parent, &con->hdr ))) return ret;
-    return prepare_con( con );
+    prepare_con( con );
+    return SQL_SUCCESS;
 }
 
 static SQLRETURN connect_win32_a( struct connection *con, SQLCHAR *servername, SQLSMALLINT len1, SQLCHAR *username,
