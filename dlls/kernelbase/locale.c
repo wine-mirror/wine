@@ -4345,13 +4345,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
         return FALSE;
     }
 
+    type &= ~CAL_RETURN_NUMBER;
+
     for (i = 0; i < count; i++)
     {
         id = calendars[i];
-        if (type & CAL_RETURN_NUMBER)
-            ret = get_calendar_info( locale, id, type, NULL, 0, (LPDWORD)buffer );
-        else if (unicode)
+        if (unicode)
+        {
             ret = get_calendar_info( locale, id, type, buffer, ARRAY_SIZE(buffer), NULL );
+        }
         else
         {
             WCHAR bufW[256];
