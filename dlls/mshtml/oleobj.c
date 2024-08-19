@@ -3441,8 +3441,6 @@ static void set_window_uninitialized(HTMLOuterWindow *window)
         if(SUCCEEDED(hres)) {
             channelbsc->bsc.bindf = 0;  /* synchronous binding */
 
-            if(window->base.inner_window->doc)
-                remove_target_tasks(window->base.inner_window->task_magic);
             abort_window_bindings(window->base.inner_window);
             window->base.inner_window->doc->unload_sent = TRUE;
 

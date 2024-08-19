@@ -135,7 +135,6 @@ static void detach_inner_window(HTMLInnerWindow *window)
         dispex_props_unlink(&outer_window->location->dispex);
 
     abort_window_bindings(window);
-    remove_target_tasks(window->task_magic);
     release_script_hosts(window);
     unlink_ref(&window->jscript);
     window->base.outer_window = NULL;
