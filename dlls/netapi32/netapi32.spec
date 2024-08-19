@@ -66,10 +66,10 @@
 @ stub I_NetServerSetServiceBitsEx
 @ stub NetAlertRaise
 @ stub NetAlertRaiseEx
-@ stdcall NetApiBufferAllocate(long ptr)
-@ stdcall NetApiBufferFree(ptr)
-@ stdcall NetApiBufferReallocate(ptr long ptr)
-@ stdcall NetApiBufferSize(ptr ptr)
+@ stdcall NetApiBufferAllocate(long ptr) netutils.NetApiBufferAllocate
+@ stdcall NetApiBufferFree(ptr) netutils.NetApiBufferFree
+@ stdcall NetApiBufferReallocate(ptr long ptr) netutils.NetApiBufferReallocate
+@ stdcall NetApiBufferSize(ptr ptr) netutils.NetApiBufferSize
 @ stub NetAuditClear
 @ stub NetAuditRead
 @ stub NetAuditWrite
@@ -224,7 +224,7 @@
 @ stdcall NetWkstaUserEnum(wstr long ptr long ptr ptr ptr)
 @ stdcall NetWkstaUserGetInfo(wstr long ptr)
 @ stub NetWkstaUserSetInfo
-@ stdcall NetapipBufferAllocate(long ptr) NetApiBufferAllocate
+@ stdcall NetapipBufferAllocate(long ptr) netutils.NetapipBufferAllocate
 @ stdcall Netbios(ptr)
 @ stub NetpAccessCheck
 @ stub NetpAccessCheckAndAudit

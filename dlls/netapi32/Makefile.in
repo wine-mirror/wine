@@ -1,7 +1,7 @@
 MODULE    = netapi32.dll
 UNIXLIB   = netapi32.so
 IMPORTLIB = netapi32
-IMPORTS   = rpcrt4 iphlpapi ws2_32 advapi32 dnsapi
+IMPORTS   = rpcrt4 iphlpapi ws2_32 advapi32 dnsapi netutils
 
 SOURCES = \
 	atsvc.idl \
