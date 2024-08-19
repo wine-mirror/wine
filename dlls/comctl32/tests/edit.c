@@ -3791,6 +3791,54 @@ static void test_ime(void)
     DestroyWindow(hwnd);
 }
 
+static void test_format_rect(void)
+{
+    HWND edit;
+    RECT rect, old_rect;
+
+    static const struct
+    {
+        int style_ex;
+        RECT input;
+        int expected_equal;
+    }
+    tests[] =
+    {
+        {0, {0, 0, 0, 0}, 1},
+        {0, {0, 0, 10, 10}, 1},
+        {0, {1, 1, 10, 10}, 1},
+        {0, {1, 1, 10, 250}, 1},
+        {0, {1, 1, 250, 10}, 1},
+        {0, {1, 1, 10, 1000}, 1},
+        {0, {1, 1, 1000, 10}, 1},
+        {0, {1, 1, 1000, 1000}, 0},
+        {WS_EX_CLIENTEDGE, {0, 0, 0, 0}, 1},
+        {WS_EX_CLIENTEDGE, {0, 0, 10, 10}, 1},
+        {WS_EX_CLIENTEDGE, {1, 1, 10, 10}, 1},
+        {WS_EX_CLIENTEDGE, {1, 1, 10, 250}, 1},
+        {WS_EX_CLIENTEDGE, {1, 1, 250, 10}, 1},
+        {WS_EX_CLIENTEDGE, {1, 1, 10, 1000}, 1},
+        {WS_EX_CLIENTEDGE, {1, 1, 1000, 10}, 1},
+        {WS_EX_CLIENTEDGE, {1, 1, 1000, 1000}, 0}
+    };
+
+    for (int i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        edit = create_editcontrol(ES_MULTILINE | WS_VISIBLE, tests[i].style_ex);
+
+        SendMessageA(edit, EM_GETRECT, 0, (LPARAM)&old_rect);
+        SetWindowTextA(edit, "Test Test Test\r\n\r\nTest Test Test Test Test Test Test Test Test Test Test Test\r\n\r\nTest Test Test");
+        SendMessageA(edit, EM_SETRECT, 0, (LPARAM)&tests[i].input);
+        SendMessageA(edit, EM_GETRECT, 0, (LPARAM)&rect);
+
+        if (tests[i].expected_equal)
+            todo_wine ok(EqualRect(&old_rect, &rect), "Expected format rectangle to be equal to client rectangle.\n");
+        else
+            todo_wine ok((rect.right - rect.left) > (old_rect.right - old_rect.left), "Expected format rect to be larger than client rectangle.\n");
+        DestroyWindow(edit);
+    }
+}
+
 START_TEST(edit)
 {
     ULONG_PTR ctx_cookie;
@@ -3838,6 +3886,7 @@ START_TEST(edit)
     test_change_focus();
     test_cue_banner();
     test_ime();
+    test_format_rect();
 
     UnregisterWindowClasses();
 
