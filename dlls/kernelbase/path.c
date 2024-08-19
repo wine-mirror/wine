@@ -915,29 +915,16 @@ HRESULT WINAPI PathCchStripToRoot(WCHAR *path, SIZE_T size)
 {
     const WCHAR *root_end;
     WCHAR *segment_end;
-    BOOL is_unc;
 
     TRACE("%s %Iu\n", wine_dbgstr_w(path), size);
 
     if (!path || !*path || !size || size > PATHCCH_MAX_CCH) return E_INVALIDARG;
 
-    /* \\\\?\\UNC\\* and \\\\* have to have at least two extra segments to be striped,
-     * e.g. \\\\?\\UNC\\a\\b\\c -> \\\\?\\UNC\\a\\b
-     *      \\\\a\\b\\c         -> \\\\a\\b         */
-    if ((is_unc = is_prefixed_unc(path)) || (path[0] == '\\' && path[1] == '\\' && path[2] != '?'))
+    if (PathCchSkipRoot(path, &root_end) == S_OK)
     {
-        root_end = is_unc ? path + 8 : path + 3;
-        if (!get_next_segment(root_end, &root_end)) return S_FALSE;
-        if (!get_next_segment(root_end, &root_end)) return S_FALSE;
-
-        if (root_end - path >= size) return E_INVALIDARG;
-
-        segment_end = path + (root_end - path) - 1;
-        *segment_end = 0;
-        return S_OK;
-    }
-    else if (PathCchSkipRoot(path, &root_end) == S_OK)
-    {
+        if (root_end && root_end > path && root_end[-1] == '\\'
+            && ((is_prefixed_unc(path) && path[8]) || (path[0] == '\\' && path[1] == '\\' && path[2] && path[2] != '?')))
+            root_end--;
         if (root_end - path >= size) return E_INVALIDARG;
 
         segment_end = path + (root_end - path);
@@ -947,7 +934,10 @@ HRESULT WINAPI PathCchStripToRoot(WCHAR *path, SIZE_T size)
         return S_OK;
     }
     else
+    {
+        *path = 0;
         return E_INVALIDARG;
+    }
 }
 
 BOOL WINAPI PathIsUNCEx(const WCHAR *path, const WCHAR **server)

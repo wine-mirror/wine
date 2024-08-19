@@ -2200,6 +2200,7 @@ static const struct striptoroot_test striptoroot_tests[] =
     {"\\\\a", "\\\\a", S_FALSE},
     {"\\\\a\\b", "\\\\a\\b", S_FALSE},
     {"\\\\a\\b\\c", "\\\\a\\b", S_OK},
+    {"\\\\\\", "\\\\", S_OK},
 
     /* UNC */
     {"\\\\?\\UNC\\", "\\\\?\\UNC\\", S_FALSE},
