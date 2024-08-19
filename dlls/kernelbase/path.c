@@ -809,39 +809,26 @@ HRESULT WINAPI PathCchRemoveExtension(WCHAR *path, SIZE_T size)
 
 HRESULT WINAPI PathCchRemoveFileSpec(WCHAR *path, SIZE_T size)
 {
-    const WCHAR *root_end = NULL;
-    SIZE_T length;
-    WCHAR *last;
+    WCHAR *last, *root_end;
 
     TRACE("%s %Iu\n", wine_dbgstr_w(path), size);
 
     if (!path || !size || size > PATHCCH_MAX_CCH) return E_INVALIDARG;
 
-    if (PathCchIsRoot(path)) return S_FALSE;
-
-    PathCchSkipRoot(path, &root_end);
+    if (FAILED(PathCchSkipRoot(path, (const WCHAR **)&root_end)))
+        root_end = path;
 
     /* The backslash at the end of UNC and \\* are not considered part of root in this case */
-    if (root_end && root_end > path && root_end[-1] == '\\'
-        && (is_prefixed_unc(path) || (path[0] == '\\' && path[1] == '\\' && path[2] != '?')))
+    if (root_end > path && root_end[-1] == '\\' && ((is_prefixed_unc(path) && path[8])
+        || (path[0] == '\\' && path[1] == '\\' && path[2] && path[2] != '?')))
         root_end--;
 
-    length = lstrlenW(path);
-    last = path + length - 1;
-    while (last >= path && (!root_end || last >= root_end))
-    {
-        if (last - path >= size) return E_INVALIDARG;
-
-        if (*last == '\\')
-        {
-            *last-- = 0;
-            break;
-        }
-
-        *last-- = 0;
-    }
-
-    return last != path + length - 1 ? S_OK : S_FALSE;
+    if (!(last = StrRChrW(root_end, NULL, '\\'))) last = root_end;
+    if (last > root_end && last[-1] == '\\' && last[1] != '?') --last;
+    if (last - path >= size) return E_INVALIDARG;
+    if (!*last) return S_FALSE;
+    *last = 0;
+    return S_OK;
 }
 
 HRESULT WINAPI PathCchRenameExtension(WCHAR *path, SIZE_T size, const WCHAR *extension)

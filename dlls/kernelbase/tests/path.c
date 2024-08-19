@@ -1779,11 +1779,13 @@ static const struct removefilespec_test removefilespec_tests[] =
     {"\\\\a\\b", "\\\\a\\b", S_FALSE},
     {"\\\\a\\b\\", "\\\\a\\b", S_OK},
     {"\\\\a\\b\\c", "\\\\a\\b", S_OK},
+    {"\\\\\\\\\\\\", "\\\\\\\\", S_OK},
 
     {"C:", "C:", S_FALSE},
     {"C:a", "C:", S_OK},
     {"C:a\\", "C:a", S_OK},
     {"C:a\\b", "C:a", S_OK},
+    {"C:\\a\\\\b", "C:\\a", S_OK},
 
     {"C:\\", "C:\\", S_FALSE},
     {"C:\\a", "C:\\", S_OK},
