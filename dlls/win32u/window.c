@@ -1897,9 +1897,14 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
     BOOL shaped, needs_surface, create_opaque, is_layered, is_child;
     HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
     struct window_surface *new_surface;
-    UINT style, ex_style;
+    struct window_rects monitor_rects;
+    UINT monitor_dpi, style, ex_style;
+    HMONITOR monitor;
     RECT dummy;
     HRGN shape;
+
+    monitor = monitor_from_rect( &rects->window, MONITOR_DEFAULTTONEAREST, get_thread_dpi() );
+    monitor_dpi = get_monitor_dpi( monitor );
 
     style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE );
@@ -1909,7 +1914,8 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
     else if ((shaped = !!shape)) NtGdiDeleteObjectApp( shape );
 
     rects->visible = rects->window;
-    if (!user_driver->pWindowPosChanging( hwnd, swp_flags, shaped, rects )) needs_surface = FALSE;
+    monitor_rects = map_dpi_window_rects( *rects, get_thread_dpi(), monitor_dpi );
+    if (!user_driver->pWindowPosChanging( hwnd, swp_flags, shaped, &monitor_rects )) needs_surface = FALSE;
     else if (is_child) needs_surface = FALSE;
     else if (swp_flags & SWP_HIDEWINDOW) needs_surface = FALSE;
     else if (swp_flags & SWP_SHOWWINDOW) needs_surface = TRUE;
@@ -1968,12 +1974,15 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
 static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, struct window_surface *new_surface,
                               const struct window_rects *new_rects, const RECT *valid_rects )
 {
+    struct window_rects monitor_rects;
     WND *win;
     HWND surface_win = 0;
     BOOL ret, is_layered, needs_update = FALSE;
     struct window_rects old_rects;
     RECT extra_rects[3];
     struct window_surface *old_surface;
+    HMONITOR monitor;
+    UINT monitor_dpi;
 
     is_layered = new_surface && new_surface->alpha_mask;
 
@@ -1992,6 +2001,11 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         swp_flags |= SWP_NOCOPYBITS;
         valid_rects = NULL;
     }
+
+    monitor = monitor_from_rect( &new_rects->window, MONITOR_DEFAULTTONEAREST, get_thread_dpi() );
+    monitor_dpi = get_monitor_dpi( monitor );
+
+    monitor_rects = map_dpi_window_rects( *new_rects, get_thread_dpi(), monitor_dpi );
 
     SERVER_START_REQ( set_window_pos )
     {
@@ -2090,10 +2104,14 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             if (surface_win && surface_win != hwnd)
                 move_window_bits( hwnd, &new_rects->visible, &new_rects->visible, &new_rects->window, valid_rects );
             else
-                user_driver->pMoveWindowBits( hwnd, new_rects, valid_rects );
+            {
+                rects[0] = map_dpi_rect( valid_rects[0], get_thread_dpi(), monitor_dpi );
+                rects[1] = map_dpi_rect( valid_rects[1], get_thread_dpi(), monitor_dpi );
+                user_driver->pMoveWindowBits( hwnd, &monitor_rects, rects );
+            }
         }
 
-        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, new_rects, new_surface );
+        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, &monitor_rects, new_surface );
     }
 
     return ret;
