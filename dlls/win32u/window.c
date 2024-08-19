@@ -4201,7 +4201,7 @@ static void get_next_minimized_child_pos( const RECT *parent, const MINIMIZEDMET
 
 static POINT get_minimized_pos( HWND hwnd, POINT pt )
 {
-    RECT rect, parent_rect;
+    RECT rect, parent_rect = {0};
     HWND parent, child;
     HRGN hrgn, tmp;
     MINIMIZEDMETRICS metrics;
@@ -4383,7 +4383,7 @@ static UINT arrange_iconic_windows( HWND parent )
 {
     int width, height, count = 0;
     MINIMIZEDMETRICS metrics;
-    RECT parent_rect;
+    RECT parent_rect = {0};
     HWND child;
     POINT pt;
 
