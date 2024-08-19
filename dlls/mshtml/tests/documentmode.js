@@ -1184,7 +1184,10 @@ async_test("script_load", function() {
 });
 
 sync_test("location", function() {
+    var v = document.documentMode;
     document.body.innerHTML = '<a name="testanchor">test</a>';
+
+    ok(location.host === "winetest.example.org" + (v < 10 ? ":80" : ""), "location.host = " + location.host);
 
     ok(location.hash === "", "initial location.hash = " + location.hash);
     location.hash = "TestAnchor";
