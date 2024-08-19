@@ -34,13 +34,13 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
 #include "winternl.h"
 #include "winreg.h"
+#include "wine/test.h"
 
 static const WCHAR upper_case[] = {'\t','J','U','S','T','!',' ','A',',',' ','T','E','S','T',';',' ','S','T','R','I','N','G',' ','1','/','*','+','-','.','\r','\n',0};
 static const WCHAR lower_case[] = {'\t','j','u','s','t','!',' ','a',',',' ','t','e','s','t',';',' ','s','t','r','i','n','g',' ','1','/','*','+','-','.','\r','\n',0};
