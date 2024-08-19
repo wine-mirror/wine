@@ -1112,7 +1112,7 @@ static void test_verifysignature(HCRYPTPROV hProv, const struct signature_test *
     /* Verify signed hash */
     SetLastError(0xdeadbeef);
     result = CryptVerifySignatureA(hHash, test->signature, test->signatureLen, pubKey, NULL, 0);
-    todo_wine ok(result, "Failed to verify signature, got %lx\n", GetLastError());
+    ok(result, "Failed to verify signature, got %lx\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     result = CryptDestroyHash(hHash);

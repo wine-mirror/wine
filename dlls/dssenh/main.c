@@ -989,7 +989,8 @@ BOOL WINAPI CPSignHash( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD keyspec, const
 {
     struct container *container = (struct container *)hprov;
     struct hash *hash = (struct hash *)hhash;
-    ULONG len;
+    ULONG len, i;
+    BYTE temp;
 
     TRACE( "%p, %p, %lu, %s, %08lx, %p, %p\n", (void *)hprov, (void *)hhash, keyspec, debugstr_w(desc), flags, sig,
            siglen );
@@ -1010,12 +1011,31 @@ BOOL WINAPI CPSignHash( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD keyspec, const
         return TRUE;
     }
 
-    return !BCryptSignHash( container->sign_key->handle, NULL, hash->value, hash->len, sig, *siglen, siglen, 0 );
+    if (BCryptSignHash( container->sign_key->handle, NULL, hash->value, hash->len, sig, *siglen, siglen, 0 ))
+    {
+        return FALSE;
+    }
+
+    /* Swap the r and s integers in the signature from big-endian to little-endian */
+    for (i = 0; i < len / 4; i++) {
+        /* r */
+        temp = sig[i];
+        sig[i] = sig[len / 2 - 1 - i];
+        sig[len / 2 - 1 - i] = temp;
+        /* s */
+        temp = sig[len / 2 + i];
+        sig[len / 2 + i] = sig[len - 1 - i];
+        sig[len - 1 - i] = temp;
+    }
+
+    return TRUE;
 }
 
 BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *sig, DWORD siglen, HCRYPTKEY hpubkey,
                                const WCHAR *desc, DWORD flags )
 {
+    UCHAR signature[40];
+    DWORD i;
     struct hash *hash = (struct hash *)hhash;
     struct key *key = (struct key *)hpubkey;
 
@@ -1029,11 +1049,24 @@ BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *s
         return FALSE;
     }
 
+    if (siglen > sizeof(signature))
+    {
+        FIXME( "signature longer than 40 bytes is not supported\n");
+        return FALSE;
+    }
+
+    /* Swap the r and s integers in the signature from little-endian to big-endian */
+    for (i = 0; i < siglen / 2; i++)
+    {
+        signature[i] = sig[siglen / 2 - 1 - i]; /* r */
+        signature[siglen / 2 + i] = sig[siglen - 1 - i]; /* s */
+    }
+
     if (!hash->finished)
     {
         if (BCryptFinishHash( hash->handle, hash->value, hash->len, 0 )) return FALSE;
         hash->finished = TRUE;
     }
 
-    return !BCryptVerifySignature( key->handle, NULL, hash->value, hash->len, (UCHAR *)sig, siglen, 0 );
+    return !BCryptVerifySignature( key->handle, NULL, hash->value, hash->len, signature, siglen, 0 );
 }
