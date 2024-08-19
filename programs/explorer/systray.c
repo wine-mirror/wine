@@ -239,9 +239,17 @@ static void balloon_create_timer( struct icon *icon )
     ti.lpszText = icon->info_text;
     SendMessageW( balloon_window, TTM_ADDTOOLW, 0, (LPARAM)&ti );
     if ((icon->info_flags & NIIF_ICONMASK) == NIIF_USER)
+    {
         SendMessageW( balloon_window, TTM_SETTITLEW, (WPARAM)icon->info_icon, (LPARAM)icon->info_title );
+    }
     else
-        SendMessageW( balloon_window, TTM_SETTITLEW, icon->info_flags, (LPARAM)icon->info_title );
+    {
+        UINT info_flags_wparam = icon->info_flags & NIIF_ERROR;
+
+        if (icon->info_flags & NIIF_LARGEICON)
+            info_flags_wparam += TTI_ERROR;
+        SendMessageW( balloon_window, TTM_SETTITLEW, info_flags_wparam, (LPARAM)icon->info_title );
+    }
     balloon_icon = icon;
     balloon_pos.x = balloon_pos.y = MAXLONG;
     update_systray_balloon_position();
