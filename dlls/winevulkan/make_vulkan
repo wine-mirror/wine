@@ -1495,6 +1495,10 @@ class VkMember(VkVariable):
             if type_elem.tail is not None:
                 pointer = type_elem.tail.strip() if type_elem.tail.strip() != "" else None
 
+        name_tail = None
+        if name_elem.tail and name_elem.tail.strip() != "":
+            name_tail = name_elem.tail.strip()
+
         # Name of other member within, which stores the number of
         # elements pointed to be by this member.
         dyn_array_len = member.get("len")
@@ -1511,22 +1515,22 @@ class VkMember(VkVariable):
         # Some members are arrays, attempt to parse these. Formats include:
         # <member><type>char</type><name>extensionName</name>[<enum>VK_MAX_EXTENSION_NAME_SIZE</enum>]</member>
         # <member><type>uint32_t</type><name>foo</name>[4]</member>
-        if name_elem.tail and name_elem.tail[0] == '[':
+        if name_tail and name_tail[0] == '[':
             LOGGER.debug("Found array type")
             enum_elem = member.find("enum")
             if enum_elem is not None:
                 array_len = enum_elem.text
             else:
                 # Remove brackets around length
-                array_len = name_elem.tail.strip("[]")
+                array_len = name_tail.strip("[]")
 
         object_type = member.get("objecttype", None)
 
         # Some members are bit field values:
         # <member><type>uint32_t</type> <name>mask</name>:8</member>
-        if name_elem.tail and name_elem.tail[0] == ':':
+        if name_tail and name_tail[0] == ':':
             LOGGER.debug("Found bit field")
-            bit_width = int(name_elem.tail[1:])
+            bit_width = int(name_tail[1:])
 
         selection = member.get("selection").split(',') if member.get("selection") else None
         selector = member.get("selector", None)
