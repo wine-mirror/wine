@@ -2219,12 +2219,14 @@ static void EDIT_AdjustFormatRect(EDITSTATE *es)
 	    EDIT_UpdateScrollInfo(es);
 	}
 	else
-	/* Windows doesn't care to fix text placement for SL controls */
-		es->format_rect.bottom = es->format_rect.top + es->line_height;
+        {
+            /* Windows doesn't care to fix text placement for SL controls */
+            es->format_rect.bottom = es->format_rect.top + es->line_height;
 
-	/* Always stay within the client area */
-	GetClientRect(es->hwndSelf, &ClientRect);
-	es->format_rect.bottom = min(es->format_rect.bottom, ClientRect.bottom);
+            /* Always stay within the client area */
+            GetClientRect(es->hwndSelf, &ClientRect);
+            es->format_rect.bottom = min(es->format_rect.bottom, ClientRect.bottom);
+        }
 
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL))
 		EDIT_BuildLineDefs_ML(es, 0, get_text_length(es), 0, NULL);
@@ -2232,6 +2234,14 @@ static void EDIT_AdjustFormatRect(EDITSTATE *es)
 	EDIT_SetCaretPos(es, es->selection_end, es->flags & EF_AFTER_WRAP);
 }
 
+static int EDIT_is_valid_format_rect(const EDITSTATE *es, const RECT *rc)
+{
+    if (IsRectEmpty(rc))
+        return 0;
+    if (es->text_width > (rc->right - rc->left) || (es->line_height * es->line_count) > (rc->bottom - rc->top))
+        return 0;
+    return 1;
+}
 
 /*********************************************************************
  *
@@ -2245,11 +2255,23 @@ static void EDIT_SetRectNP(EDITSTATE *es, const RECT *rc)
 {
 	LONG_PTR ExStyle;
 	INT bw, bh;
+        BOOL too_large = FALSE;
+        RECT edit_rect;
+
 	ExStyle = GetWindowLongPtrW(es->hwndSelf, GWL_EXSTYLE);
 
-	CopyRect(&es->format_rect, rc);
+        if (EDIT_is_valid_format_rect(es, rc))
+        {
+            CopyRect(&es->format_rect, rc);
+            GetClientRect(es->hwndSelf, &edit_rect);
+            too_large = (rc->bottom - rc->top) > (edit_rect.bottom - edit_rect.top);
+        }
+        else
+        {
+            GetClientRect(es->hwndSelf, &es->format_rect);
+        }
 
-	if (ExStyle & WS_EX_CLIENTEDGE) {
+        if (ExStyle & WS_EX_CLIENTEDGE && !too_large) {
 		es->format_rect.left++;
 		es->format_rect.right--;
 
