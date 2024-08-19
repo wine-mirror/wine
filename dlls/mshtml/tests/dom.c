@@ -11836,6 +11836,10 @@ static void test_quirks_mode(void)
                      " <meta http-equiv=\"x-ua-compatible\" content=\"IE=%s\" />"
                      "</head><body></body></html>", tests[i].str);
         run_domtest(buf, test_document_mode);
+        sprintf(buf, "<html><head>"
+                     " <meta http-equiv=\"x-ua-compatible\" content=\"IE=%s\" />"
+                     "</head><body></body></html>", tests[i].str);
+        run_domtest(buf, test_document_mode);
     }
 
     expected_document_mode = 8;
@@ -11848,6 +11852,24 @@ static void test_quirks_mode(void)
                 " <body>"
                 " </body>"
                 "</html>", test_document_mode);
+
+    for(i = 7; i <= 11; i++) {
+        char buf[128];
+        expected_document_mode = i;
+        sprintf(buf, "<!DOCTYPE html>\n<html><head>"
+                     " <meta http-equiv=\"x-ua-compatible\" content=\"IE=EmulateIE%u\" />"
+                     "</head><body></body></html>", i);
+        run_domtest(buf, test_document_mode);
+        expected_document_mode = i < 10 ? 5 : i;
+        sprintf(buf, "<html><head>"
+                     " <meta http-equiv=\"x-ua-compatible\" content=\"IE=EmulateIE%u\" />"
+                     "</head><body></body></html>", i);
+        run_domtest(buf, test_document_mode);
+        sprintf(buf, "<html><head>"
+                     " <meta http-equiv=\"x-ua-compatible\" content=\"IE=eMulaTeie%u\" />"
+                     "</head><body></body></html>", i);
+        run_domtest(buf, test_document_mode);
+    }
 }
 
 static void test_document_mode_lock(void)

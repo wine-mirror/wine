@@ -414,19 +414,28 @@ DWORD get_compat_mode_version(compat_mode_t compat_mode)
  */
 compat_mode_t lock_document_mode(HTMLDocumentNode *doc)
 {
-    TRACE("%p: %d\n", doc, doc->document_mode);
-
     if(!doc->document_mode_locked) {
         doc->document_mode_locked = TRUE;
+
+        if(doc->emulate_mode && doc->document_mode < COMPAT_MODE_IE10) {
+            nsIDOMDocumentType *nsdoctype;
+
+            if(NS_SUCCEEDED(nsIDOMDocument_GetDoctype(doc->dom_document, &nsdoctype)) && nsdoctype)
+                nsIDOMDocumentType_Release(nsdoctype);
+            else
+                doc->document_mode = COMPAT_MODE_QUIRKS;
+        }
 
         if(doc->html_document)
             nsIDOMHTMLDocument_SetIECompatMode(doc->html_document, get_compat_mode_version(doc->document_mode));
     }
 
+    TRACE("%p: %d\n", doc, doc->document_mode);
+
     return doc->document_mode;
 }
 
-static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode, BOOL lock)
+static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode, BOOL emulate_mode, BOOL lock)
 {
     compat_mode_t max_compat_mode;
 
@@ -447,6 +456,7 @@ static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode
     }
 
     doc->document_mode = document_mode;
+    doc->emulate_mode = emulate_mode;
     if(lock)
         lock_document_mode(doc);
 }
@@ -489,34 +499,44 @@ const WCHAR *parse_compat_version(const WCHAR *version_string, compat_mode_t *r)
     return p;
 }
 
-static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
+static compat_mode_t parse_ua_compatible(const WCHAR *p, BOOL *emulate_mode)
 {
+    static const WCHAR emulateIEW[] = {'E','m','u','l','a','t','e','I','E'};
     static const WCHAR ie_eqW[] = {'I','E','='};
     static const WCHAR edgeW[] = {'e','d','g','e'};
-    compat_mode_t mode = COMPAT_MODE_INVALID;
+    compat_mode_t parsed_mode, mode = COMPAT_MODE_INVALID;
+    *emulate_mode = FALSE;
 
     TRACE("%s\n", debugstr_w(p));
 
     if(wcsnicmp(ie_eqW, p, ARRAY_SIZE(ie_eqW)))
-        return FALSE;
+        return mode;
     p += 3;
 
     do {
+        BOOL is_emulate = FALSE;
+
         while(iswspace(*p)) p++;
         if(!wcsnicmp(p, edgeW, ARRAY_SIZE(edgeW))) {
             p += ARRAY_SIZE(edgeW);
             if(is_ua_compatible_delimiter(*p))
                 mode = COMPAT_MODE_IE11;
             break;
-        }else if(!(p = parse_compat_version(p, r)))
+        }
+        if(!wcsnicmp(p, emulateIEW, ARRAY_SIZE(emulateIEW))) {
+            p += ARRAY_SIZE(emulateIEW);
+            is_emulate = TRUE;
+        }
+        if(!(p = parse_compat_version(p, &parsed_mode)))
             break;
-        if(mode < *r)
-            mode = *r;
+        if(mode < parsed_mode) {
+            mode = parsed_mode;
+            *emulate_mode = is_emulate;
+        }
         while(iswspace(*p)) p++;
     } while(*p++ == ',');
 
-    *r = mode;
-    return mode != COMPAT_MODE_INVALID;
+    return mode;
 }
 
 void process_document_response_headers(HTMLDocumentNode *doc, IBinding *binding)
@@ -537,14 +557,19 @@ void process_document_response_headers(HTMLDocumentNode *doc, IBinding *binding)
     hres = IWinInetHttpInfo_QueryInfo(http_info, HTTP_QUERY_CUSTOM, buf, &size, NULL, NULL);
     if(hres == S_OK && size) {
         compat_mode_t document_mode;
+        BOOL emulate_mode;
         WCHAR *header;
 
         TRACE("size %lu\n", size);
 
         header = strdupAtoW(buf);
-        if(header && parse_ua_compatible(header, &document_mode)) {
-            TRACE("setting document mode %d\n", document_mode);
-            set_document_mode(doc, document_mode, FALSE);
+        if(header) {
+            document_mode = parse_ua_compatible(header, &emulate_mode);
+
+            if(document_mode != COMPAT_MODE_INVALID) {
+                TRACE("setting document mode %d\n", document_mode);
+                set_document_mode(doc, document_mode, emulate_mode, FALSE);
+            }
         }
         free(header);
     }
@@ -572,9 +597,11 @@ static void process_meta_element(HTMLDocumentNode *doc, nsIDOMHTMLMetaElement *m
         TRACE("%s: %s\n", debugstr_w(http_equiv), debugstr_w(content));
 
         if(!wcsicmp(http_equiv, L"x-ua-compatible")) {
-            compat_mode_t document_mode;
-            if(parse_ua_compatible(content, &document_mode))
-                set_document_mode(doc, document_mode, TRUE);
+            BOOL emulate_mode;
+            compat_mode_t document_mode = parse_ua_compatible(content, &emulate_mode);
+
+            if(document_mode != COMPAT_MODE_INVALID)
+                set_document_mode(doc, document_mode, emulate_mode, TRUE);
             else
                 FIXME("Unsupported document mode %s\n", debugstr_w(content));
         }
@@ -907,7 +934,7 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
                     mode = COMPAT_MODE_IE11;
             }
 
-            set_document_mode(This, mode, FALSE);
+            set_document_mode(This, mode, FALSE, FALSE);
             nsIDOMDocumentType_Release(nsdoctype);
         }
     }

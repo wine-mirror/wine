@@ -1128,6 +1128,7 @@ struct HTMLDocumentNode {
 
     nsIDOMDocument *dom_document;
     nsIDOMHTMLDocument *html_document;
+    unsigned int emulate_mode : 1;
     unsigned int content_ready : 1;
     unsigned int unload_sent : 1;
 
