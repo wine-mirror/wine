@@ -137,7 +137,7 @@ static void adapter_vk_destroy(struct wined3d_adapter *adapter)
 }
 
 static HRESULT wined3d_select_vulkan_queue_family(const struct wined3d_adapter_vk *adapter_vk,
-        uint32_t *queue_family_index, uint32_t *timestamp_bits)
+        VkQueueFlags flags, struct wined3d_queue_vk *queue)
 {
     VkPhysicalDevice physical_device = adapter_vk->physical_device;
     const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
@@ -153,17 +153,17 @@ static HRESULT wined3d_select_vulkan_queue_family(const struct wined3d_adapter_v
 
     for (i = 0; i < count; ++i)
     {
-        if (queue_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if ((queue_properties[i].queueFlags & flags) == flags)
         {
-            *queue_family_index = i;
-            *timestamp_bits = queue_properties[i].timestampValidBits;
+            queue->vk_queue_family_index = i;
+            queue->timestamp_bits = queue_properties[i].timestampValidBits;
             free(queue_properties);
             return WINED3D_OK;
         }
     }
     free(queue_properties);
 
-    WARN("Failed to find graphics queue.\n");
+    WARN("Failed to find queue supporting %#x.\n", flags);
     return E_FAIL;
 }
 
@@ -361,39 +361,52 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
     struct wined3d_physical_device_info physical_device_info;
     static const float priorities[] = {1.0f};
+    VkDeviceQueueCreateInfo queue_info[2];
     struct wined3d_device_vk *device_vk;
     VkDevice vk_device = VK_NULL_HANDLE;
-    VkDeviceQueueCreateInfo queue_info;
     VkPhysicalDevice physical_device;
     VkDeviceCreateInfo device_info;
-    uint32_t queue_family_index;
-    uint32_t timestamp_bits;
+    HRESULT hr, decode_hr;
     VkResult vr;
-    HRESULT hr;
 
     if (!(device_vk = calloc(1, sizeof(*device_vk))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = wined3d_select_vulkan_queue_family(adapter_vk, &queue_family_index, &timestamp_bits)))
+    if (FAILED(hr = wined3d_select_vulkan_queue_family(adapter_vk,
+            VK_QUEUE_GRAPHICS_BIT, &device_vk->graphics_queue)))
         goto fail;
+
+    decode_hr = wined3d_select_vulkan_queue_family(adapter_vk,
+            VK_QUEUE_VIDEO_DECODE_BIT_KHR, &device_vk->decode_queue);
 
     physical_device = adapter_vk->physical_device;
 
     get_physical_device_info(adapter_vk, &physical_device_info);
     wined3d_disable_vulkan_features(&physical_device_info);
 
-    queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queue_info.pNext = NULL;
-    queue_info.flags = 0;
-    queue_info.queueFamilyIndex = queue_family_index;
-    queue_info.queueCount = ARRAY_SIZE(priorities);
-    queue_info.pQueuePriorities = priorities;
+    queue_info[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queue_info[0].pNext = NULL;
+    queue_info[0].flags = 0;
+    queue_info[0].queueFamilyIndex = device_vk->graphics_queue.vk_queue_family_index;
+    queue_info[0].queueCount = ARRAY_SIZE(priorities);
+    queue_info[0].pQueuePriorities = priorities;
+    device_info.queueCreateInfoCount = 1;
+
+    if (decode_hr == S_OK)
+    {
+        queue_info[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queue_info[1].pNext = NULL;
+        queue_info[1].flags = 0;
+        queue_info[1].queueFamilyIndex = device_vk->decode_queue.vk_queue_family_index;
+        queue_info[1].queueCount = ARRAY_SIZE(priorities);
+        queue_info[1].pQueuePriorities = priorities;
+        ++device_info.queueCreateInfoCount;
+    }
 
     device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_info.pNext = physical_device_info.features2.pNext;
     device_info.flags = 0;
-    device_info.queueCreateInfoCount = 1;
-    device_info.pQueueCreateInfos = &queue_info;
+    device_info.pQueueCreateInfos = queue_info;
     device_info.enabledLayerCount = 0;
     device_info.ppEnabledLayerNames = NULL;
     device_info.enabledExtensionCount = adapter_vk->device_extension_count;
@@ -409,9 +422,11 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     }
 
     device_vk->vk_device = vk_device;
-    VK_CALL(vkGetDeviceQueue(vk_device, queue_family_index, 0, &device_vk->vk_queue));
-    device_vk->vk_queue_family_index = queue_family_index;
-    device_vk->timestamp_bits = timestamp_bits;
+    VK_CALL(vkGetDeviceQueue(vk_device, device_vk->graphics_queue.vk_queue_family_index,
+            0, &device_vk->graphics_queue.vk_queue));
+    if (decode_hr == S_OK)
+        VK_CALL(vkGetDeviceQueue(vk_device, device_vk->decode_queue.vk_queue_family_index,
+                0, &device_vk->decode_queue.vk_queue));
 
     device_vk->vk_info = *vk_info;
 #define VK_DEVICE_PFN(name) \

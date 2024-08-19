@@ -104,7 +104,7 @@ static void wined3d_swapchain_vk_destroy_vulkan_swapchain(struct wined3d_swapcha
 
     vk_info = &wined3d_adapter_vk(device_vk->d.adapter)->vk_info;
 
-    if ((vr = VK_CALL(vkQueueWaitIdle(device_vk->vk_queue))) < 0)
+    if ((vr = VK_CALL(vkQueueWaitIdle(device_vk->graphics_queue.vk_queue))) < 0)
         ERR("Failed to wait on queue, vr %s.\n", wined3d_debug_vkresult(vr));
     free(swapchain_vk->vk_images);
     for (i = 0; i < swapchain_vk->image_count; ++i)
@@ -898,7 +898,7 @@ static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapc
     swapchain_vk->vk_surface = vk_surface;
 
     if ((vr = VK_CALL(vkGetPhysicalDeviceSurfaceSupportKHR(adapter_vk->physical_device,
-            device_vk->vk_queue_family_index, vk_surface, &supported))) < 0 || !supported)
+            device_vk->graphics_queue.vk_queue_family_index, vk_surface, &supported))) < 0 || !supported)
     {
         ERR("Queue family does not support presentation on this surface, vr %s.\n", wined3d_debug_vkresult(vr));
         goto fail;
@@ -1160,7 +1160,7 @@ static VkResult wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain
     present_desc.pSwapchains = &swapchain_vk->vk_swapchain;
     present_desc.pImageIndices = &image_idx;
     present_desc.pResults = NULL;
-    if ((vr = VK_CALL(vkQueuePresentKHR(device_vk->vk_queue, &present_desc))))
+    if ((vr = VK_CALL(vkQueuePresentKHR(device_vk->graphics_queue.vk_queue, &present_desc))))
         WARN("Present returned vr %s.\n", wined3d_debug_vkresult(vr));
     return vr;
 }

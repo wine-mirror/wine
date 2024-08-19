@@ -828,9 +828,13 @@ struct wined3d_device_vk
     struct wined3d_context_vk context_vk;
 
     VkDevice vk_device;
-    VkQueue vk_queue;
-    uint32_t vk_queue_family_index;
-    uint32_t timestamp_bits;
+
+    struct wined3d_queue_vk
+    {
+        VkQueue vk_queue;
+        uint32_t vk_queue_family_index;
+        int32_t timestamp_bits;
+    } graphics_queue, decode_queue;
 
     struct wined3d_vk_info vk_info;
 

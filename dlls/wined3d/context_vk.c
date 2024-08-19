@@ -1965,7 +1965,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     submit_info.signalSemaphoreCount = signal_semaphore_count;
     submit_info.pSignalSemaphores = signal_semaphores;
 
-    if ((vr = VK_CALL(vkQueueSubmit(device_vk->vk_queue, 1, &submit_info, buffer->vk_fence))) < 0)
+    if ((vr = VK_CALL(vkQueueSubmit(device_vk->graphics_queue.vk_queue, 1, &submit_info, buffer->vk_fence))) < 0)
         ERR("Failed to submit command buffer %p, vr %s.\n",
                 buffer->vk_command_buffer, wined3d_debug_vkresult(vr));
 
@@ -4167,7 +4167,7 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
     command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     command_pool_info.pNext = NULL;
     command_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    command_pool_info.queueFamilyIndex = device_vk->vk_queue_family_index;
+    command_pool_info.queueFamilyIndex = device_vk->graphics_queue.vk_queue_family_index;
     if ((vr = VK_CALL(vkCreateCommandPool(device_vk->vk_device,
             &command_pool_info, NULL, &context_vk->vk_command_pool))) < 0)
     {
