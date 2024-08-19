@@ -126,6 +126,11 @@ static void test_SQLConnect( void )
     ok( len == strlen(str), "got %d\n", len );
     trace( "version %s\n", str );
 
+    timeout = 0xdeadbeef;
+    ret = SQLGetConnectAttr( con, SQL_ATTR_LOGIN_TIMEOUT, &timeout, sizeof(timeout), NULL );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( timeout == 15, "wrong timeout %d\n", timeout );
+
     ret = SQLConnect( con, (SQLCHAR *)"winetest", SQL_NTS, (SQLCHAR *)"winetest", SQL_NTS, (SQLCHAR *)"winetest",
                       SQL_NTS );
     if (ret == SQL_ERROR) diag( con, SQL_HANDLE_DBC );
@@ -136,6 +141,11 @@ static void test_SQLConnect( void )
         skip( "data source winetest not available\n" );
         return;
     }
+
+    timeout = 0xdeadbeef;
+    ret = SQLGetConnectAttr( con, SQL_ATTR_LOGIN_TIMEOUT, &timeout, sizeof(timeout), NULL );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    todo_wine ok( !timeout, "wrong timeout %d\n", timeout );
 
     timeout = 0xdeadbeef;
     size = -1;

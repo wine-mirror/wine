@@ -432,6 +432,7 @@ static struct connection *create_connection( struct environment *env )
     struct connection *ret;
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     init_object( &ret->hdr, SQL_HANDLE_DBC, &env->hdr );
+    ret->attr_login_timeout = 15;
     return ret;
 }
 
