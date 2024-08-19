@@ -796,6 +796,8 @@ struct signature_test {
     DWORD publicKeyLen;
     BYTE* signData;
     DWORD dataLen;
+    const BYTE* signature;
+    DWORD signatureLen;
 };
 
 static const char dataToSign1[] = "With DSSENH implemented, applications requiring it will now work.";
@@ -911,26 +913,54 @@ static const BYTE DSS_SIGN_PublicKey[] = {
 0xad,0xf7,0xb9,0xca,0x0d,0xca,0x27,0xef, 0x76,0xda,0xe5,0xcb
 };
 
+static const BYTE AT_Signature1[] = {
+0x43,0x6d,0x82,0xf9,0xc1,0x9d,0x46,0x36, 0x25,0x87,0x6f,0x3c,0xd5,0x1e,0xd2,0xc9,
+0xb1,0x7e,0x08,0x4e,0x98,0x8b,0x3c,0x2e, 0x39,0x13,0xa2,0xf0,0xab,0x1d,0x78,0x99,
+0xa8,0x2a,0x0e,0x3b,0x83,0x15,0xf5,0x3c
+};
+
+static const BYTE AT_Signature2[] = {
+0xd8,0x65,0x67,0xf8,0x3b,0x67,0x4c,0xb6, 0x2f,0x54,0x1f,0x27,0xf1,0xbe,0xb6,0x88,
+0xf1,0x49,0xd3,0x2a,0x6b,0xf6,0x9b,0x91, 0x58,0x07,0x5e,0x42,0xe2,0x95,0x07,0x55,
+0xfb,0x60,0xe9,0x00,0x90,0x99,0x8f,0x5d
+};
+
+static const BYTE DSS_Signature1[] = {
+0xdb,0x43,0x66,0xa8,0x66,0x1e,0xc1,0xaf, 0x07,0xaf,0x25,0x86,0x3f,0x1d,0x06,0x6e,
+0xf3,0x68,0x66,0x61,0xaf,0x68,0x43,0x7a, 0xe3,0x63,0xc8,0x0f,0x38,0x38,0xe9,0x60,
+0x1f,0x9c,0x51,0x53,0xdd,0x3f,0x05,0x35
+};
+
+static const BYTE DSS_Signature2[] = {
+0xb6,0x9c,0x92,0x71,0x2b,0x6d,0x91,0x1e, 0x17,0xa3,0x2a,0x67,0x15,0x87,0x4c,0xd4,
+0x65,0x88,0x7f,0x99,0x2f,0x61,0x02,0x87, 0xcd,0x8e,0x63,0x81,0x2f,0xcb,0x2a,0x82,
+0x07,0x97,0xf4,0xf3,0xfe,0x42,0x66,0x0a
+};
+
 static const struct signature_test dssSign_data[] = {
     {
         .privateKey = AT_SIGNATURE_PrivateKey, .privateKeyLen = sizeof(AT_SIGNATURE_PrivateKey),
         .publicKey = AT_SIGNATURE_PublicKey, .publicKeyLen = sizeof(AT_SIGNATURE_PublicKey),
         .signData = (BYTE *)dataToSign1, .dataLen = sizeof(dataToSign1),
+        .signature = AT_Signature1, .signatureLen = sizeof(AT_Signature1),
     },
     {
         .privateKey = AT_SIGNATURE_PrivateKey, .privateKeyLen = sizeof(AT_SIGNATURE_PrivateKey),
         .publicKey = AT_SIGNATURE_PublicKey, .publicKeyLen = sizeof(AT_SIGNATURE_PublicKey),
         .signData = (BYTE *)dataToSign2, .dataLen = sizeof(dataToSign2),
+        .signature = AT_Signature2, .signatureLen = sizeof(AT_Signature2),
     },
     {
         .privateKey = DSS_SIGN_PrivateKey, .privateKeyLen = sizeof(DSS_SIGN_PrivateKey),
         .publicKey = DSS_SIGN_PublicKey, .publicKeyLen = sizeof(DSS_SIGN_PublicKey),
         .signData = (BYTE *)dataToSign1, .dataLen = sizeof(dataToSign1),
+        .signature = DSS_Signature1, .signatureLen = sizeof(DSS_Signature1),
     },
     {
         .privateKey = DSS_SIGN_PrivateKey, .privateKeyLen = sizeof(DSS_SIGN_PrivateKey),
         .publicKey = DSS_SIGN_PublicKey, .publicKeyLen = sizeof(DSS_SIGN_PublicKey),
         .signData = (BYTE *)dataToSign2, .dataLen = sizeof(dataToSign2),
+        .signature = DSS_Signature2, .signatureLen = sizeof(DSS_Signature2),
     },
 };
 
@@ -1059,6 +1089,41 @@ static void test_exportkey(HCRYPTPROV hProv, const struct signature_test *test)
     ok(result, "Failed to destroy private key, got %lx\n", GetLastError());
 }
 
+static void test_verifysignature(HCRYPTPROV hProv, const struct signature_test *test)
+{
+    HCRYPTKEY pubKey = 0;
+    HCRYPTHASH hHash;
+    BOOL result;
+
+    /* Get a public key of array specified ALG_ID */
+    SetLastError(0xdeadbeef);
+    result = CryptImportKey(hProv, test->publicKey, test->publicKeyLen, 0, 0, &pubKey);
+    ok(result, "Failed to imported key, got %lx\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
+    ok(result, "Failed to create hash, got %lx\n", GetLastError());
+
+    /* Hash the data to compare with the signed hash */
+    SetLastError(0xdeadbeef);
+    result = CryptHashData(hHash, test->signData, test->dataLen, 0);
+    ok(result, "Failed to add data to hash, got %lx\n", GetLastError());
+
+    /* Verify signed hash */
+    SetLastError(0xdeadbeef);
+    result = CryptVerifySignatureA(hHash, test->signature, test->signatureLen, pubKey, NULL, 0);
+    todo_wine ok(result, "Failed to verify signature, got %lx\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    result = CryptDestroyHash(hHash);
+    ok(result, "Failed to destroy hash, got %lx\n", GetLastError());
+
+    /* Destroy the public key */
+    SetLastError(0xdeadbeef);
+    result = CryptDestroyKey(pubKey);
+    ok(result, "Failed to destroy public key, got %lx\n", GetLastError());
+}
+
 static void test_signature(void)
 {
     HCRYPTPROV hProv[4];
@@ -1096,6 +1161,7 @@ static void test_signature(void)
         {
             test_signhash(hProv[i], &dssSign_data[j]);
             test_exportkey(hProv[i], &dssSign_data[j]);
+            test_verifysignature(hProv[i], &dssSign_data[j]);
         }
 
         SetLastError(0xdeadbeef);
