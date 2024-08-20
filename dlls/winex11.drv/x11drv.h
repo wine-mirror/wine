@@ -205,6 +205,7 @@ extern INT X11DRV_ToUnicodeEx( UINT virtKey, UINT scanCode, const BYTE *lpKeySta
                                LPWSTR bufW, int bufW_size, UINT flags, HKL hkl );
 extern SHORT X11DRV_VkKeyScanEx( WCHAR wChar, HKL hkl );
 extern void X11DRV_NotifyIMEStatus( HWND hwnd, UINT status );
+extern BOOL X11DRV_SetIMECompositionWindowPos( HWND hwnd, const POINT *point );
 extern void X11DRV_DestroyCursorIcon( HCURSOR handle );
 extern void X11DRV_SetCursor( HWND hwnd, HCURSOR handle );
 extern BOOL X11DRV_SetCursorPos( INT x, INT y );
@@ -250,7 +251,6 @@ extern void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
 extern BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param,
                                          UINT flags );
 extern void X11DRV_ThreadDetach(void);
-extern BOOL X11DRV_SetIMECompositionWindowPos( HWND hwnd, const POINT *point );
 
 /* X11 driver internal functions */
 
