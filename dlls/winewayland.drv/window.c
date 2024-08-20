@@ -216,8 +216,6 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
     xdg_visible = surface->xdg_toplevel != NULL;
 
-    pthread_mutex_lock(&surface->mutex);
-
     if (visible != xdg_visible)
     {
         /* If we have a pre-existing surface ensure it has no role. */
@@ -239,8 +237,6 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
 
     wayland_win_data_get_config(data, &surface->window);
 
-    pthread_mutex_unlock(&surface->mutex);
-
     /* Size/position changes affect the effective pointer constraint, so update
      * it as needed. */
     if (data->hwnd == NtUserGetForegroundWindow()) reapply_cursor_clipping();
@@ -254,8 +250,6 @@ static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
 {
     struct wayland_surface *surface = data->wayland_surface;
     BOOL processing_config;
-
-    pthread_mutex_lock(&surface->mutex);
 
     if (!surface->xdg_toplevel) goto out;
 
@@ -301,7 +295,6 @@ static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
     }
 
 out:
-    pthread_mutex_unlock(&surface->mutex);
     wl_display_flush(process_wayland.wl_display);
 }
 
@@ -466,20 +459,26 @@ static void wayland_configure_window(HWND hwnd)
     DWORD style;
     BOOL needs_enter_size_move = FALSE;
     BOOL needs_exit_size_move = FALSE;
+    struct wayland_win_data *data;
 
-    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
+    if (!(data = wayland_win_data_get(hwnd))) return;
+    if (!(surface = data->wayland_surface))
+    {
+        wayland_win_data_release(data);
+        return;
+    }
 
     if (!surface->xdg_toplevel)
     {
         TRACE("missing xdg_toplevel, returning\n");
-        pthread_mutex_unlock(&surface->mutex);
+        wayland_win_data_release(data);
         return;
     }
 
     if (!surface->requested.serial)
     {
         TRACE("requested configure event already handled, returning\n");
-        pthread_mutex_unlock(&surface->mutex);
+        wayland_win_data_release(data);
         return;
     }
 
@@ -541,7 +540,7 @@ static void wayland_configure_window(HWND hwnd)
     wayland_surface_coords_to_window(surface, width, height,
                                      &window_width, &window_height);
 
-    pthread_mutex_unlock(&surface->mutex);
+    wayland_win_data_release(data);
 
     TRACE("processing=%dx%d,%#x\n", width, height, state);
 
@@ -620,14 +619,16 @@ static enum xdg_toplevel_resize_edge hittest_to_resize_edge(WPARAM hittest)
  */
 void WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text)
 {
-    struct wayland_surface *surface = wayland_surface_lock_hwnd(hwnd);
+    struct wayland_surface *surface;
+    struct wayland_win_data *data;
 
     TRACE("hwnd=%p text=%s\n", hwnd, wine_dbgstr_w(text));
 
-    if (surface)
+    if ((data = wayland_win_data_get(hwnd)))
     {
-        if (surface->xdg_toplevel) wayland_surface_set_title(surface, text);
-        pthread_mutex_unlock(&surface->mutex);
+        if ((surface = data->wayland_surface) && surface->xdg_toplevel)
+            wayland_surface_set_title(surface, text);
+        wayland_win_data_release(data);
     }
 }
 
@@ -641,6 +642,7 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
     uint32_t button_serial;
     struct wl_seat *wl_seat;
     struct wayland_surface *surface;
+    struct wayland_win_data *data;
 
     TRACE("cmd=%lx hwnd=%p, %lx, %lx\n",
           (long)command, hwnd, (long)wparam, lparam);
@@ -654,11 +656,11 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 
     if (command == SC_MOVE || command == SC_SIZE)
     {
-        if ((surface = wayland_surface_lock_hwnd(hwnd)))
+        if ((data = wayland_win_data_get(hwnd)))
         {
             pthread_mutex_lock(&process_wayland.seat.mutex);
             wl_seat = process_wayland.seat.wl_seat;
-            if (wl_seat && surface->xdg_toplevel && button_serial)
+            if (wl_seat && (surface = data->wayland_surface) && surface->xdg_toplevel && button_serial)
             {
                 if (command == SC_MOVE)
                 {
@@ -671,30 +673,13 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
                 }
             }
             pthread_mutex_unlock(&process_wayland.seat.mutex);
-            pthread_mutex_unlock(&surface->mutex);
+            wayland_win_data_release(data);
             ret = 0;
         }
     }
 
     wl_display_flush(process_wayland.wl_display);
     return ret;
-}
-
-/**********************************************************************
- *           wayland_surface_lock_hwnd
- */
-struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd)
-{
-    struct wayland_win_data *data = wayland_win_data_get(hwnd);
-    struct wayland_surface *surface;
-
-    if (!data) return NULL;
-
-    if ((surface = data->wayland_surface)) pthread_mutex_lock(&surface->mutex);
-
-    wayland_win_data_release(data);
-
-    return surface;
 }
 
 BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffer, HRGN damage_region)
@@ -707,8 +692,6 @@ BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffe
 
     if ((wayland_surface = data->wayland_surface))
     {
-        pthread_mutex_lock(&wayland_surface->mutex);
-
         if (wayland_surface_reconfigure(wayland_surface))
         {
             wayland_surface_attach_shm(wayland_surface, shm_buffer, damage_region);
@@ -719,8 +702,6 @@ BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffe
         {
             TRACE("Wayland surface not configured yet, not flushing\n");
         }
-
-        pthread_mutex_unlock(&wayland_surface->mutex);
     }
 
     /* Update the latest window buffer for the wayland surface. Note that we
@@ -750,8 +731,11 @@ struct wayland_shm_buffer *get_window_surface_contents(HWND hwnd)
 void ensure_window_surface_contents(HWND hwnd)
 {
     struct wayland_surface *wayland_surface;
+    struct wayland_win_data *data;
 
-    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
+    if (!(data = wayland_win_data_get(hwnd))) return;
+
+    if ((wayland_surface = data->wayland_surface))
     {
         wayland_surface_ensure_contents(wayland_surface);
 
@@ -763,7 +747,7 @@ void ensure_window_surface_contents(HWND hwnd)
         {
             wl_surface_commit(wayland_surface->wl_surface);
         }
-
-        pthread_mutex_unlock(&wayland_surface->mutex);
     }
+
+    wayland_win_data_release(data);
 }

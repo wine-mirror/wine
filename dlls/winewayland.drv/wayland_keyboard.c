@@ -736,12 +736,13 @@ static void keyboard_handle_keymap(void *data, struct wl_keyboard *wl_keyboard,
     xkb_keymap_unref(xkb_keymap);
 }
 
-static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
+static void keyboard_handle_enter(void *private, struct wl_keyboard *wl_keyboard,
                                   uint32_t serial, struct wl_surface *wl_surface,
                                   struct wl_array *keys)
 {
     struct wayland_keyboard *keyboard = &process_wayland.keyboard;
     struct wayland_surface *surface;
+    struct wayland_win_data *data;
     HWND hwnd;
 
     if (!wl_surface) return;
@@ -758,7 +759,9 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
     NtUserPostMessage(keyboard->focused_hwnd, WM_INPUTLANGCHANGEREQUEST, 0 /*FIXME*/,
                       (LPARAM)keyboard_hkl);
 
-    if ((surface = wayland_surface_lock_hwnd(hwnd)))
+    if (!(data = wayland_win_data_get(hwnd))) return;
+
+    if ((surface = data->wayland_surface))
     {
         /* TODO: Drop the internal message and call NtUserSetForegroundWindow
          * directly once it's updated to not explicitly deactivate the old
@@ -766,8 +769,9 @@ static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
          * are in the same non-current thread. */
         if (surface->window.managed)
             NtUserPostMessage(hwnd, WM_WAYLAND_SET_FOREGROUND, 0, 0);
-        pthread_mutex_unlock(&surface->mutex);
     }
+
+    wayland_win_data_release(data);
 }
 
 static void keyboard_handle_leave(void *data, struct wl_keyboard *wl_keyboard,

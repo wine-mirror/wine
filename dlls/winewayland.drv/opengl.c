@@ -166,12 +166,12 @@ static void wayland_gl_drawable_release(struct wayland_gl_drawable *gl)
     if (gl->client)
     {
         HWND hwnd = wl_surface_get_user_data(gl->client->wl_surface);
-        struct wayland_surface *wayland_surface = wayland_surface_lock_hwnd(hwnd);
+        struct wayland_win_data *data = wayland_win_data_get(hwnd);
 
-        if (wayland_client_surface_release(gl->client) && wayland_surface)
-            wayland_surface->client = NULL;
+        if (wayland_client_surface_release(gl->client) && data && data->wayland_surface)
+            data->wayland_surface->client = NULL;
 
-        if (wayland_surface) pthread_mutex_unlock(&wayland_surface->mutex);
+        if (data) wayland_win_data_release(data);
     }
 
     free(gl);
@@ -194,6 +194,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
     struct wayland_gl_drawable *gl;
     struct wayland_surface *wayland_surface;
     int client_width = 0, client_height = 0;
+    struct wayland_win_data *data;
 
     TRACE("hwnd=%p format=%d\n", hwnd, format);
 
@@ -207,16 +208,24 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
     /* Get the client surface for the HWND. If don't have a wayland surface
      * (e.g., HWND_MESSAGE windows) just create a dummy surface to act as the
      * target render surface. */
-    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
+    if ((data = wayland_win_data_get(hwnd)))
     {
-        gl->client = wayland_surface_get_client(wayland_surface);
-        client_width = wayland_surface->window.client_rect.right -
-                       wayland_surface->window.client_rect.left;
-        client_height = wayland_surface->window.client_rect.bottom -
-                        wayland_surface->window.client_rect.top;
-        if (client_width == 0 || client_height == 0)
+        if (!(wayland_surface = data->wayland_surface))
+        {
+            gl->client = wayland_client_surface_create(hwnd);
             client_width = client_height = 1;
-        pthread_mutex_unlock(&wayland_surface->mutex);
+        }
+        else
+        {
+            gl->client = wayland_surface_get_client(wayland_surface);
+            client_width = wayland_surface->window.client_rect.right -
+                           wayland_surface->window.client_rect.left;
+            client_height = wayland_surface->window.client_rect.bottom -
+                            wayland_surface->window.client_rect.top;
+            if (client_width == 0 || client_height == 0)
+                client_width = client_height = 1;
+        }
+        wayland_win_data_release(data);
     }
     else
     {
@@ -285,23 +294,27 @@ static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *ne
 
 static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
 {
-    int client_width, client_height;
+    int client_width = 0, client_height = 0;
     struct wayland_surface *wayland_surface;
+    struct wayland_win_data *data;
 
     if (InterlockedCompareExchange(&gl->resized, FALSE, TRUE))
     {
-        if (!(wayland_surface = wayland_surface_lock_hwnd(gl->hwnd))) return;
+        if (!(data = wayland_win_data_get(gl->hwnd))) return;
 
-        client_width = wayland_surface->window.client_rect.right -
-                       wayland_surface->window.client_rect.left;
-        client_height = wayland_surface->window.client_rect.bottom -
-                        wayland_surface->window.client_rect.top;
+        if ((wayland_surface = data->wayland_surface))
+        {
+            client_width = wayland_surface->window.client_rect.right -
+                           wayland_surface->window.client_rect.left;
+            client_height = wayland_surface->window.client_rect.bottom -
+                            wayland_surface->window.client_rect.top;
+        }
+
         if (client_width == 0 || client_height == 0)
             client_width = client_height = 1;
+        wayland_win_data_release(data);
 
         wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
-
-        pthread_mutex_unlock(&wayland_surface->mutex);
     }
 }
 

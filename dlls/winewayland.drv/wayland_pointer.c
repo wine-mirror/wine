@@ -53,9 +53,15 @@ static void pointer_handle_motion_internal(wl_fixed_t sx, wl_fixed_t sy)
     HWND hwnd;
     POINT screen;
     struct wayland_surface *surface;
+    struct wayland_win_data *data;
 
     if (!(hwnd = wayland_pointer_get_focused_hwnd())) return;
-    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
+    if (!(data = wayland_win_data_get(hwnd))) return;
+    if (!(surface = data->wayland_surface))
+    {
+        wayland_win_data_release(data);
+        return;
+    }
 
     window_rect = &surface->window.rect;
 
@@ -72,7 +78,7 @@ static void pointer_handle_motion_internal(wl_fixed_t sx, wl_fixed_t sy)
     if (screen.y >= window_rect->bottom) screen.y = window_rect->bottom - 1;
     else if (screen.y < window_rect->top) screen.y = window_rect->top;
 
-    pthread_mutex_unlock(&surface->mutex);
+    wayland_win_data_release(data);
 
     input.type = INPUT_MOUSE;
     input.mi.dx = screen.x;
@@ -245,7 +251,7 @@ static const struct wl_pointer_listener pointer_listener =
     pointer_handle_axis_discrete
 };
 
-static void relative_pointer_v1_relative_motion(void *data,
+static void relative_pointer_v1_relative_motion(void *private,
                                                 struct zwp_relative_pointer_v1 *zwp_relative_pointer_v1,
                                                 uint32_t utime_hi, uint32_t utime_lo,
                                                 wl_fixed_t dx, wl_fixed_t dy,
@@ -254,17 +260,18 @@ static void relative_pointer_v1_relative_motion(void *data,
     INPUT input = {0};
     HWND hwnd;
     POINT screen;
-    struct wayland_surface *surface;
+    struct wayland_win_data *data;
 
     if (!(hwnd = wayland_pointer_get_focused_hwnd())) return;
-    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
+    if (!(data = wayland_win_data_get(hwnd))) return;
 
-    wayland_surface_coords_to_window(surface,
+    wayland_surface_coords_to_window(data->wayland_surface,
                                      wl_fixed_to_double(dx),
                                      wl_fixed_to_double(dy),
                                      (int *)&screen.x, (int *)&screen.y);
 
-    pthread_mutex_unlock(&surface->mutex);
+    wayland_win_data_release(data);
+
 
     input.type = INPUT_MOUSE;
     input.mi.dx = screen.x;
@@ -629,16 +636,22 @@ static void wayland_set_cursor(HWND hwnd, HCURSOR hcursor, BOOL use_hcursor)
 {
     struct wayland_pointer *pointer = &process_wayland.pointer;
     struct wayland_surface *surface;
+    struct wayland_win_data *data;
     double scale;
     BOOL reapply_clip = FALSE;
 
-    if ((surface = wayland_surface_lock_hwnd(hwnd)))
+    if ((data = wayland_win_data_get(hwnd)))
     {
+        if (!(surface = data->wayland_surface))
+        {
+            wayland_win_data_release(data);
+            return;
+        }
         scale = surface->window.scale;
         if (use_hcursor) surface->hcursor = hcursor;
         else hcursor = surface->hcursor;
         use_hcursor = TRUE;
-        pthread_mutex_unlock(&surface->mutex);
+        wayland_win_data_release(data);
     }
     else
     {
@@ -859,22 +872,24 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
     struct wayland_pointer *pointer = &process_wayland.pointer;
     struct wl_surface *wl_surface = NULL;
     struct wayland_surface *surface = NULL;
+    struct wayland_win_data *data;
     BOOL covers_vscreen = FALSE;
     RECT confine_rect;
 
     TRACE("clip=%s reset=%d\n", wine_dbgstr_rect(clip), reset);
 
-    if ((surface = wayland_surface_lock_hwnd(NtUserGetForegroundWindow())))
+    if (!(data = wayland_win_data_get(NtUserGetForegroundWindow()))) return FALSE;
+    if ((surface = data->wayland_surface))
     {
         wl_surface = surface->wl_surface;
         if (clip) wayland_surface_calc_confine(surface, clip, &confine_rect);
         covers_vscreen = wayland_surface_client_covers_vscreen(surface);
-        pthread_mutex_unlock(&surface->mutex);
     }
+    wayland_win_data_release(data);
 
    /* Since we are running in the context of the foreground thread we know
     * that the wl_surface of the foreground HWND will not be invalidated,
-    * so we can access it without having the surface lock. */
+    * so we can access it without having the win data lock. */
     pthread_mutex_lock(&pointer->mutex);
     wayland_pointer_update_constraint(wl_surface,
                                       (clip && wl_surface) ? &confine_rect : NULL,

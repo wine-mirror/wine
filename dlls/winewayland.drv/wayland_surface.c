@@ -34,20 +34,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
-static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_surface,
+static void xdg_surface_handle_configure(void *private, struct xdg_surface *xdg_surface,
                                          uint32_t serial)
 {
     struct wayland_surface *surface;
     BOOL should_post = FALSE, initial_configure = FALSE;
-    HWND hwnd = data;
+    struct wayland_win_data *data;
+    HWND hwnd = private;
 
     TRACE("serial=%u\n", serial);
 
-    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
+    if (!(data = wayland_win_data_get(hwnd))) return;
 
     /* Handle this event only if wayland_surface is still associated with
      * the target xdg_surface. */
-    if (surface->xdg_surface == xdg_surface)
+    if ((surface = data->wayland_surface) && surface->xdg_surface == xdg_surface)
     {
         /* If we have a previously requested config, we have already sent a
          * WM_WAYLAND_CONFIGURE which hasn't been handled yet. In that case,
@@ -59,7 +60,7 @@ static void xdg_surface_handle_configure(void *data, struct xdg_surface *xdg_sur
         memset(&surface->pending, 0, sizeof(surface->pending));
     }
 
-    pthread_mutex_unlock(&surface->mutex);
+    wayland_win_data_release(data);
 
     if (should_post) NtUserPostMessage(hwnd, WM_WAYLAND_CONFIGURE, 0, 0);
 
@@ -76,15 +77,16 @@ static const struct xdg_surface_listener xdg_surface_listener =
     xdg_surface_handle_configure
 };
 
-static void xdg_toplevel_handle_configure(void *data,
+static void xdg_toplevel_handle_configure(void *private,
                                           struct xdg_toplevel *xdg_toplevel,
                                           int32_t width, int32_t height,
                                           struct wl_array *states)
 {
     struct wayland_surface *surface;
-    HWND hwnd = data;
+    HWND hwnd = private;
     uint32_t *state;
     enum wayland_surface_config_state config_state = 0;
+    struct wayland_win_data *data;
 
     wl_array_for_each(state, states)
     {
@@ -112,16 +114,16 @@ static void xdg_toplevel_handle_configure(void *data,
 
     TRACE("hwnd=%p %dx%d,%#x\n", hwnd, width, height, config_state);
 
-    if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
+    if (!(data = wayland_win_data_get(hwnd))) return;
 
-    if (surface->xdg_toplevel == xdg_toplevel)
+    if ((surface = data->wayland_surface) && surface->xdg_toplevel == xdg_toplevel)
     {
         surface->pending.width = width;
         surface->pending.height = height;
         surface->pending.state = config_state;
     }
 
-    pthread_mutex_unlock(&surface->mutex);
+    wayland_win_data_release(data);
 }
 
 static void xdg_toplevel_handle_close(void *data, struct xdg_toplevel *xdg_toplevel)
@@ -152,8 +154,6 @@ struct wayland_surface *wayland_surface_create(HWND hwnd)
     }
 
     TRACE("surface=%p\n", surface);
-
-    pthread_mutex_init(&surface->mutex, NULL);
 
     surface->hwnd = hwnd;
     surface->wl_surface = wl_compositor_create_surface(process_wayland.wl_compositor);
@@ -204,8 +204,6 @@ void wayland_surface_destroy(struct wayland_surface *surface)
         process_wayland.keyboard.focused_hwnd = NULL;
     pthread_mutex_unlock(&process_wayland.keyboard.mutex);
 
-    pthread_mutex_lock(&surface->mutex);
-
     if (surface->wp_viewport)
     {
         wp_viewport_destroy(surface->wp_viewport);
@@ -230,11 +228,7 @@ void wayland_surface_destroy(struct wayland_surface *surface)
         surface->wl_surface = NULL;
     }
 
-    pthread_mutex_unlock(&surface->mutex);
-
     wl_display_flush(process_wayland.wl_display);
-
-    pthread_mutex_destroy(&surface->mutex);
 
     free(surface);
 }
