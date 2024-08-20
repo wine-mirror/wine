@@ -297,6 +297,7 @@ struct wayland_win_data
 struct wayland_win_data *wayland_win_data_get(HWND hwnd);
 void wayland_win_data_release(struct wayland_win_data *data);
 
+BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffer, HRGN damage_region);
 void ensure_window_surface_contents(HWND hwnd);
 
 /**********************************************************************

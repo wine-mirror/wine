@@ -711,6 +711,29 @@ struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd)
     return surface;
 }
 
+BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffer, HRGN damage_region)
+{
+    struct wayland_surface *wayland_surface;
+    BOOL committed = FALSE;
+
+    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
+    {
+        if (wayland_surface_reconfigure(wayland_surface))
+        {
+            wayland_surface_attach_shm(wayland_surface, shm_buffer, damage_region);
+            wl_surface_commit(wayland_surface->wl_surface);
+            committed = TRUE;
+        }
+        else
+        {
+            TRACE("Wayland surface not configured yet, not flushing\n");
+        }
+        pthread_mutex_unlock(&wayland_surface->mutex);
+    }
+
+    return committed;
+}
+
 void ensure_window_surface_contents(HWND hwnd)
 {
     struct wayland_surface *wayland_surface;

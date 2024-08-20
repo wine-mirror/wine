@@ -385,19 +385,7 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
 
     wayland_shm_buffer_copy_data(shm_buffer, color_bits, &surface_rect, copy_from_window_region);
 
-    pthread_mutex_lock(&wws->wayland_surface->mutex);
-    if (wayland_surface_reconfigure(wws->wayland_surface))
-    {
-        wayland_surface_attach_shm(wws->wayland_surface, shm_buffer,
-                                   surface_damage_region);
-        wl_surface_commit(wws->wayland_surface->wl_surface);
-        flushed = TRUE;
-    }
-    else
-    {
-        TRACE("Wayland surface not configured yet, not flushing\n");
-    }
-    pthread_mutex_unlock(&wws->wayland_surface->mutex);
+    flushed = set_window_surface_contents(window_surface->hwnd, shm_buffer, surface_damage_region);
     wl_display_flush(process_wayland.wl_display);
 
     NtGdiSetRectRgn(shm_buffer->damage_region, 0, 0, 0, 0);
