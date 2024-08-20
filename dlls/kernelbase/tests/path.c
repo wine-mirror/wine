@@ -1481,6 +1481,8 @@ static const struct isroot_test isroot_tests[] =
     {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\", TRUE},
     {"\\\\?\\Volume{e51a1864-6f2d-4019-b73d-f4e60e600c26}\\a", FALSE},
     {"..\\a", FALSE},
+    {"\\\\\\\\", FALSE},
+    {"\\\\a\\\\b", FALSE},
 
     /* Wrong MSDN examples */
     {"\\a", FALSE},

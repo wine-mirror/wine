@@ -728,7 +728,6 @@ BOOL WINAPI PathCchIsRoot(const WCHAR *path)
         /* Has first segment with an ending backslash and has remaining characters*/
         else
         {
-            next++;
             /* Second segment must have no backslash and no remaining characters */
             return !get_next_segment(next, &next) && !*next;
         }
