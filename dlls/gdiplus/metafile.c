@@ -5083,6 +5083,7 @@ GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
 GpStatus METAFILE_DrawEllipse(GpMetafile *metafile, GpPen *pen, GpRectF *rect)
 {
     EmfPlusDrawEllipse *record;
+    BOOL is_int_rect;
     GpStatus stat;
     DWORD pen_id;
 
@@ -5095,12 +5096,15 @@ GpStatus METAFILE_DrawEllipse(GpMetafile *metafile, GpPen *pen, GpRectF *rect)
     stat = METAFILE_AddPenObject(metafile, pen, &pen_id);
     if (stat != Ok) return stat;
 
+    is_int_rect = is_integer_rect(rect);
+
     stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeDrawEllipse,
-        sizeof(EmfPlusDrawEllipse), (void **)&record);
+            FIELD_OFFSET(EmfPlusDrawEllipse, RectData) + (is_int_rect ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF)),
+            (void **)&record);
     if (stat != Ok) return stat;
     record->Header.Type = EmfPlusRecordTypeDrawEllipse;
     record->Header.Flags = pen_id;
-    if (is_integer_rect(rect))
+    if (is_int_rect)
     {
         record->Header.Flags |= 0x4000;
         record->RectData.rect.X = (SHORT)rect->X;
