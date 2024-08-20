@@ -1123,30 +1123,23 @@ BOOL WINAPI PathRemoveFileSpecW(WCHAR *path)
 
 BOOL WINAPI PathStripToRootA(char *path)
 {
+    WCHAR pathW[MAX_PATH];
+
     TRACE("%s\n", wine_dbgstr_a(path));
 
-    if (!path)
-        return FALSE;
+    if (!MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, MAX_PATH)) return FALSE;
 
-    while (!PathIsRootA(path))
-        if (!PathRemoveFileSpecA(path))
-            return FALSE;
-
-    return TRUE;
+    *path = 0;
+    if (is_prefixed_unc(pathW) || is_prefixed_disk(pathW) || is_prefixed_volume(pathW)) return FALSE;
+    if (!PathStripToRootW(pathW)) return FALSE;
+    return !!WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, MAX_PATH, 0, 0);
 }
 
 BOOL WINAPI PathStripToRootW(WCHAR *path)
 {
     TRACE("%s\n", wine_dbgstr_w(path));
 
-    if (!path)
-        return FALSE;
-
-    while (!PathIsRootW(path))
-        if (!PathRemoveFileSpecW(path))
-            return FALSE;
-
-    return TRUE;
+    return SUCCEEDED(PathCchStripToRoot(path, PATHCCH_MAX_CCH));
 }
 
 LPSTR WINAPI PathAddBackslashA(char *path)
