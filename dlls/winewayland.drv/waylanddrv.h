@@ -253,6 +253,7 @@ void wayland_surface_coords_from_window(struct wayland_surface *surface,
 void wayland_surface_coords_to_window(struct wayland_surface *surface,
                                       double surface_x, double surface_y,
                                       int *window_x, int *window_y);
+struct wayland_client_surface *wayland_client_surface_create(HWND hwnd);
 struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface);
 BOOL wayland_client_surface_release(struct wayland_client_surface *client);
 void wayland_surface_ensure_contents(struct wayland_surface *surface);

@@ -218,13 +218,10 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
             client_width = client_height = 1;
         pthread_mutex_unlock(&wayland_surface->mutex);
     }
-    else if ((wayland_surface = wayland_surface_create(0)))
+    else
     {
-        gl->client = wayland_surface_get_client(wayland_surface);
+        gl->client = wayland_client_surface_create(hwnd);
         client_width = client_height = 1;
-        /* It's fine to destroy the wayland surface, the client surface
-         * can safely outlive it. */
-        wayland_surface_destroy(wayland_surface);
     }
     if (!gl->client) goto err;
 

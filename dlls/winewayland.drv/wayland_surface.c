@@ -774,36 +774,26 @@ BOOL wayland_client_surface_release(struct wayland_client_surface *client)
     return TRUE;
 }
 
-/**********************************************************************
- *          wayland_surface_get_client
- */
-struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface)
+struct wayland_client_surface *wayland_client_surface_create(HWND hwnd)
 {
+    struct wayland_client_surface *client;
     struct wl_region *empty_region;
 
-    if (surface->client)
-    {
-        InterlockedIncrement(&surface->client->ref);
-        return surface->client;
-    }
-
-    surface->client = calloc(1, sizeof(*surface->client));
-    if (!surface->client)
+    if (!(client = calloc(1, sizeof(*client))))
     {
         ERR("Failed to allocate space for client surface\n");
-        goto err;
+        return NULL;
     }
+    client->ref = 1;
 
-    surface->client->ref = 1;
-
-    surface->client->wl_surface =
+    client->wl_surface =
         wl_compositor_create_surface(process_wayland.wl_compositor);
-    if (!surface->client->wl_surface)
+    if (!client->wl_surface)
     {
         ERR("Failed to create client wl_surface\n");
         goto err;
     }
-    wl_surface_set_user_data(surface->client->wl_surface, surface->hwnd);
+    wl_surface_set_user_data(client->wl_surface, hwnd);
 
     /* Let parent handle all pointer events. */
     empty_region = wl_compositor_create_region(process_wayland.wl_compositor);
@@ -812,42 +802,62 @@ struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface
         ERR("Failed to create wl_region\n");
         goto err;
     }
-    wl_surface_set_input_region(surface->client->wl_surface, empty_region);
+    wl_surface_set_input_region(client->wl_surface, empty_region);
     wl_region_destroy(empty_region);
 
-    surface->client->wl_subsurface =
-        wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
-                                        surface->client->wl_surface,
-                                        surface->wl_surface);
-    if (!surface->client->wl_subsurface)
-    {
-        ERR("Failed to create client wl_subsurface\n");
-        goto err;
-    }
-    /* Present contents independently of the parent surface. */
-    wl_subsurface_set_desync(surface->client->wl_subsurface);
-
-    surface->client->wp_viewport =
+    client->wp_viewport =
         wp_viewporter_get_viewport(process_wayland.wp_viewporter,
-                                    surface->client->wl_surface);
-    if (!surface->client->wp_viewport)
+                                    client->wl_surface);
+    if (!client->wp_viewport)
     {
         ERR("Failed to create client wp_viewport\n");
         goto err;
     }
 
+    return client;
+
+err:
+    wayland_client_surface_release(client);
+    return NULL;
+}
+
+/**********************************************************************
+ *          wayland_surface_get_client
+ */
+struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface)
+{
+    struct wayland_client_surface *client;
+
+    if ((client = surface->client))
+    {
+        InterlockedIncrement(&client->ref);
+        return client;
+    }
+
+    if (!(client = wayland_client_surface_create(surface->hwnd)))
+        return NULL;
+
+    client->wl_subsurface =
+        wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
+                                        client->wl_surface,
+                                        surface->wl_surface);
+    if (!client->wl_subsurface)
+    {
+        ERR("Failed to create client wl_subsurface\n");
+        goto err;
+    }
+    /* Present contents independently of the parent surface. */
+    wl_subsurface_set_desync(client->wl_subsurface);
+
     wayland_surface_reconfigure_client(surface);
     /* Commit to apply subsurface positioning. */
     wl_surface_commit(surface->wl_surface);
 
-    return surface->client;
+    surface->client = client;
+    return client;
 
 err:
-    if (surface->client)
-    {
-        wayland_client_surface_release(surface->client);
-        surface->client = NULL;
-    }
+    wayland_client_surface_release(client);
     return NULL;
 }
 
