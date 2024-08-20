@@ -2696,7 +2696,7 @@ static SQLRETURN get_diag_rec_unix_a( SQLSMALLINT type, struct object *obj, SQLS
 static SQLRETURN get_diag_rec_win32_a( SQLSMALLINT type, struct object *obj, SQLSMALLINT rec_num, SQLCHAR *state,
                                        SQLINTEGER *native_err, SQLCHAR *msg, SQLSMALLINT buflen, SQLSMALLINT *retlen )
 {
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret;
     SQLWCHAR stateW[6], *msgW;
     SQLSMALLINT lenW;
 
@@ -2716,8 +2716,39 @@ static SQLRETURN get_diag_rec_win32_a( SQLSMALLINT type, struct object *obj, SQL
             WideCharToMultiByte( CP_ACP, 0, stateW, -1, (char *)state, 6, NULL, NULL );
         }
         free( msgW );
+        return ret;
     }
-    return ret;
+
+    if (obj->win32_funcs->SQLError)
+    {
+        SQLHENV env = NULL;
+        SQLHDBC con = NULL;
+        SQLHSTMT stmt = NULL;
+
+        if (rec_num > 1) return SQL_NO_DATA;
+
+        switch (type)
+        {
+        case SQL_HANDLE_ENV:
+            env = obj->win32_handle;
+            break;
+
+        case SQL_HANDLE_DBC:
+            con = obj->win32_handle;
+            break;
+
+        case SQL_HANDLE_STMT:
+            stmt = obj->win32_handle;
+            break;
+
+        default:
+            return SQL_ERROR;
+        }
+
+        return obj->win32_funcs->SQLError( env, con, stmt, state, native_err, msg, buflen, retlen );
+    }
+
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -6432,7 +6463,41 @@ static SQLRETURN get_diag_rec_win32_w( SQLSMALLINT type, struct object *obj, SQL
     if (obj->win32_funcs->SQLGetDiagRecW)
         return obj->win32_funcs->SQLGetDiagRecW( type, obj->win32_handle, rec_num, state, native_err, msg, buflen,
                                                  retlen );
-    if (obj->win32_funcs->SQLGetDiagRec) FIXME( "Unicode to ANSI conversion not handled\n" );
+    if (obj->win32_funcs->SQLGetDiagRec)
+    {
+        FIXME( "Unicode to ANSI conversion not handled\n" );
+        return SQL_ERROR;
+    }
+
+    if (obj->win32_funcs->SQLErrorW)
+    {
+        SQLHENV env = NULL;
+        SQLHDBC con = NULL;
+        SQLHSTMT stmt = NULL;
+
+        if (rec_num > 1) return SQL_NO_DATA;
+
+        switch (type)
+        {
+        case SQL_HANDLE_ENV:
+            env = obj->win32_handle;
+            break;
+
+        case SQL_HANDLE_DBC:
+            con = obj->win32_handle;
+            break;
+
+        case SQL_HANDLE_STMT:
+            stmt = obj->win32_handle;
+            break;
+
+        default:
+            return SQL_ERROR;
+        }
+
+        return obj->win32_funcs->SQLErrorW( env, con, stmt, state, native_err, msg, buflen, retlen );
+    }
+
     return SQL_ERROR;
 }
 
