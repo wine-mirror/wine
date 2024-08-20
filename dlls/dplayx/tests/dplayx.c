@@ -2072,7 +2072,7 @@ static void test_Open(void)
 
     dpsd = dpsdZero;
     dpsd.dwSize = 0;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, TRUE );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE );
 
     check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_UNINITIALIZED, FALSE );
 

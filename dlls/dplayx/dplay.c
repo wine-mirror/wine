@@ -3291,15 +3291,15 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
   FIXME( "(%p)->(%p,0x%08lx,%p,%p): partial stub\n",
          This, lpsd, dwFlags, lpSecurity, lpCredentials );
 
-  if( This->dp2->connectionInitialized == NO_PROVIDER )
-  {
-    return DPERR_UNINITIALIZED;
-  }
-
   if( lpsd->dwSize != sizeof(DPSESSIONDESC2) )
   {
     TRACE( ": rejecting invalid dpsd size (%ld).\n", lpsd->dwSize );
     return DPERR_INVALIDPARAMS;
+  }
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
   }
 
   if( This->dp2->bConnectionOpen )
