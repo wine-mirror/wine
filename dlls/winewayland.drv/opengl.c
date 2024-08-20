@@ -708,12 +708,13 @@ static BOOL wayland_wglShareLists(struct wgl_context *orig, struct wgl_context *
 static BOOL wayland_wglSwapBuffers(HDC hdc)
 {
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    HWND hwnd = NtUserWindowFromDC(hdc), toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct wayland_gl_drawable *gl;
 
     if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc), hdc))) return FALSE;
 
     if (ctx) wgl_context_refresh(ctx);
-    ensure_window_surface_contents(gl->hwnd);
+    ensure_window_surface_contents(toplevel);
     /* Although all the EGL surfaces we create are double-buffered, we want to
      * use some as single-buffered, so avoid swapping those. */
     if (gl->double_buffered) p_eglSwapBuffers(egl_display, gl->surface);

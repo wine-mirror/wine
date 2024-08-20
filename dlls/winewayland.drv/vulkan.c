@@ -120,7 +120,8 @@ static void wayland_vulkan_surface_detach(HWND hwnd, void *private)
 
 static void wayland_vulkan_surface_presented(HWND hwnd, void *private, VkResult result)
 {
-    ensure_window_surface_contents(hwnd);
+    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
+    ensure_window_surface_contents(toplevel);
 }
 
 static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
