@@ -125,6 +125,7 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
         window_surface_release(data->window_surface);
     }
     if (data->wayland_surface) wayland_surface_destroy(data->wayland_surface);
+    if (data->window_contents) wayland_shm_buffer_unref(data->window_contents);
     free(data);
 }
 
@@ -714,10 +715,15 @@ struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd)
 BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffer, HRGN damage_region)
 {
     struct wayland_surface *wayland_surface;
+    struct wayland_win_data *data;
     BOOL committed = FALSE;
 
-    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
+    if (!(data = wayland_win_data_get(hwnd))) return FALSE;
+
+    if ((wayland_surface = data->wayland_surface))
     {
+        pthread_mutex_lock(&wayland_surface->mutex);
+
         if (wayland_surface_reconfigure(wayland_surface))
         {
             wayland_surface_attach_shm(wayland_surface, shm_buffer, damage_region);
@@ -729,27 +735,29 @@ BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffe
             TRACE("Wayland surface not configured yet, not flushing\n");
         }
 
-        /* Update the latest window buffer for the wayland surface. Note that we
-         * only care whether the buffer contains the latest window contents,
-         * it's irrelevant if it was actually committed or not. */
-        if (wayland_surface->latest_window_buffer)
-            wayland_shm_buffer_unref(wayland_surface->latest_window_buffer);
-        wayland_shm_buffer_ref((wayland_surface->latest_window_buffer = shm_buffer));
-
         pthread_mutex_unlock(&wayland_surface->mutex);
     }
+
+    /* Update the latest window buffer for the wayland surface. Note that we
+     * only care whether the buffer contains the latest window contents,
+     * it's irrelevant if it was actually committed or not. */
+    if (data->window_contents)
+        wayland_shm_buffer_unref(data->window_contents);
+    wayland_shm_buffer_ref((data->window_contents = shm_buffer));
+
+    wayland_win_data_release(data);
 
     return committed;
 }
 
 struct wayland_shm_buffer *get_window_surface_contents(HWND hwnd)
 {
-    struct wayland_surface *wayland_surface;
     struct wayland_shm_buffer *shm_buffer;
+    struct wayland_win_data *data;
 
-    if (!(wayland_surface = wayland_surface_lock_hwnd(hwnd))) return NULL;
-    if ((shm_buffer = wayland_surface->latest_window_buffer)) wayland_shm_buffer_ref(shm_buffer);
-    pthread_mutex_unlock(&wayland_surface->mutex);
+    if (!(data = wayland_win_data_get(hwnd))) return NULL;
+    if ((shm_buffer = data->window_contents)) wayland_shm_buffer_ref(shm_buffer);
+    wayland_win_data_release(data);
 
     return shm_buffer;
 }

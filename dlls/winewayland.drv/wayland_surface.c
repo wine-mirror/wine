@@ -232,9 +232,6 @@ void wayland_surface_destroy(struct wayland_surface *surface)
 
     pthread_mutex_unlock(&surface->mutex);
 
-    if (surface->latest_window_buffer)
-        wayland_shm_buffer_unref(surface->latest_window_buffer);
-
     wl_display_flush(process_wayland.wl_display);
 
     pthread_mutex_destroy(&surface->mutex);

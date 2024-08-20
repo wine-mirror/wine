@@ -198,7 +198,6 @@ struct wayland_surface
     struct wp_viewport *wp_viewport;
     pthread_mutex_t mutex;
     struct wayland_surface_config pending, requested, processing, current;
-    struct wayland_shm_buffer *latest_window_buffer;
     BOOL resizing;
     struct wayland_window_config window;
     struct wayland_client_surface *client;
@@ -285,6 +284,8 @@ struct wayland_win_data
     struct rb_entry entry;
     /* hwnd that this private data belongs to */
     HWND hwnd;
+    /* last buffer that was set as window contents */
+    struct wayland_shm_buffer *window_contents;
     /* wayland surface (if any) for this window */
     struct wayland_surface *wayland_surface;
     /* wine window_surface backing this window */
