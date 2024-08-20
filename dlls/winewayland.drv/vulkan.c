@@ -138,23 +138,7 @@ static void wayland_vulkan_surface_detach(HWND hwnd, void *private)
 
 static void wayland_vulkan_surface_presented(HWND hwnd, VkResult result)
 {
-    struct wayland_surface *wayland_surface;
-
-    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
-    {
-        wayland_surface_ensure_contents(wayland_surface);
-
-        /* Handle any processed configure request, to ensure the related
-         * surface state is applied by the compositor. */
-        if (wayland_surface->processing.serial &&
-            wayland_surface->processing.processed &&
-            wayland_surface_reconfigure(wayland_surface))
-        {
-            wl_surface_commit(wayland_surface->wl_surface);
-        }
-
-        pthread_mutex_unlock(&wayland_surface->mutex);
-    }
+    ensure_window_surface_contents(hwnd);
 }
 
 static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,

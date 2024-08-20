@@ -308,26 +308,6 @@ static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
     }
 }
 
-static void wayland_gl_drawable_sync_surface_state(struct wayland_gl_drawable *gl)
-{
-    struct wayland_surface *wayland_surface;
-
-    if (!(wayland_surface = wayland_surface_lock_hwnd(gl->hwnd))) return;
-
-    wayland_surface_ensure_contents(wayland_surface);
-
-    /* Handle any processed configure request, to ensure the related
-     * surface state is applied by the compositor. */
-    if (wayland_surface->processing.serial &&
-        wayland_surface->processing.processed &&
-        wayland_surface_reconfigure(wayland_surface))
-    {
-        wl_surface_commit(wayland_surface->wl_surface);
-    }
-
-    pthread_mutex_unlock(&wayland_surface->mutex);
-}
-
 static BOOL wgl_context_make_current(struct wgl_context *ctx, HDC draw_hdc, HDC read_hdc)
 {
     BOOL ret;
@@ -753,7 +733,7 @@ static BOOL wayland_wglSwapBuffers(HDC hdc)
     if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc), hdc))) return FALSE;
 
     if (ctx) wgl_context_refresh(ctx);
-    wayland_gl_drawable_sync_surface_state(gl);
+    ensure_window_surface_contents(gl->hwnd);
     /* Although all the EGL surfaces we create are double-buffered, we want to
      * use some as single-buffered, so avoid swapping those. */
     if (gl->double_buffered) p_eglSwapBuffers(egl_display, gl->surface);

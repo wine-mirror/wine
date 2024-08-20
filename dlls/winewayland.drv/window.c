@@ -710,3 +710,24 @@ struct wayland_surface *wayland_surface_lock_hwnd(HWND hwnd)
 
     return surface;
 }
+
+void ensure_window_surface_contents(HWND hwnd)
+{
+    struct wayland_surface *wayland_surface;
+
+    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
+    {
+        wayland_surface_ensure_contents(wayland_surface);
+
+        /* Handle any processed configure request, to ensure the related
+         * surface state is applied by the compositor. */
+        if (wayland_surface->processing.serial &&
+            wayland_surface->processing.processed &&
+            wayland_surface_reconfigure(wayland_surface))
+        {
+            wl_surface_commit(wayland_surface->wl_surface);
+        }
+
+        pthread_mutex_unlock(&wayland_surface->mutex);
+    }
+}

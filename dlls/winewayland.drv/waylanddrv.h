@@ -297,6 +297,8 @@ struct wayland_win_data
 struct wayland_win_data *wayland_win_data_get(HWND hwnd);
 void wayland_win_data_release(struct wayland_win_data *data);
 
+void ensure_window_surface_contents(HWND hwnd);
+
 /**********************************************************************
  *          Wayland Keyboard
  */
