@@ -786,7 +786,7 @@ extern UINT msi_commit_streams( MSIDATABASE *db );
 
 
 /* string table functions */
-extern BOOL msi_add_string( string_table *st, const WCHAR *data, int len, BOOL persistent );
+extern int msi_add_string( string_table *st, const WCHAR *data, int len, BOOL persistent );
 extern UINT msi_string2id( const string_table *st, const WCHAR *data, int len, UINT *id );
 extern VOID msi_destroy_stringtable( string_table *st );
 extern const WCHAR *msi_string_lookup( const string_table *st, UINT id, int *len );
