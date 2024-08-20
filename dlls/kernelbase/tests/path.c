@@ -53,6 +53,13 @@ HRESULT (WINAPI *pPathCchStripPrefix)(WCHAR *path, SIZE_T size);
 HRESULT (WINAPI *pPathCchStripToRoot)(WCHAR *path, SIZE_T size);
 BOOL    (WINAPI *pPathIsUNCEx)(const WCHAR *path, const WCHAR **server);
 
+BOOL (WINAPI *pPathIsRootA)(const char *path);
+BOOL (WINAPI *pPathIsRootW)(const WCHAR *path);
+BOOL (WINAPI *pPathStripToRootA)(char *path);
+BOOL (WINAPI *pPathStripToRootW)(WCHAR *path);
+BOOL (WINAPI *pPathRemoveFileSpecA)(char *path);
+BOOL (WINAPI *pPathRemoveFileSpecW)(WCHAR *path);
+
 struct alloccanonicalize_test
 {
     const CHAR *path_in;
@@ -2352,6 +2359,228 @@ static void test_PathIsUNCEx(void)
     }
 }
 
+static void test_path_manipulation(void)
+{
+    static const struct
+    {
+        const char *path;
+        BOOL is_root;
+        BOOL stript_to_root_ret;
+        HRESULT cch_strip_to_root_hr;
+        const char *strip_to_root;
+        BOOL remove_file_ret;
+        const char *remove_file;
+        BOOL aw_differ, w_version;
+    }
+    tests[] =
+    {
+        {"Q:\\", TRUE, TRUE, S_FALSE, "Q:\\", FALSE, "Q:\\"},
+        {"Q:/", FALSE, TRUE, S_OK,  "Q:", TRUE, "Q:"},
+        {"Q:", FALSE, TRUE, S_FALSE, "Q:", FALSE, "Q:"},
+        {"|:", FALSE, FALSE, E_INVALIDARG, "", TRUE, ""},
+        {"Q:\\\\", FALSE, TRUE, S_OK,  "Q:\\", TRUE, "Q:\\"},
+        {"Q:\\\\test1", FALSE, TRUE, S_OK, "Q:\\", TRUE, "Q:\\"},
+        {"Q:\\test1\\test2", FALSE, TRUE, S_OK, "Q:\\", TRUE, "Q:\\test1"},
+        {"Q:\\test1\\\\test2", FALSE, TRUE, S_OK, "Q:\\", TRUE, "Q:\\test1"},
+        {"Q:\\test1\\\\\\test2", FALSE, TRUE, S_OK, "Q:\\", TRUE, "Q:\\test1\\"},
+        {"Q:\\test1\\test2\\", FALSE, TRUE, S_OK, "Q:\\", TRUE, "Q:\\test1\\test2"},
+        {"Q:\\test1\\\\test2\\", FALSE, TRUE, S_OK, "Q:\\", TRUE, "Q:\\test1\\\\test2"},
+        {"Q:\\test1\\test2\\\\", FALSE, TRUE, S_OK, "Q:\\", TRUE, "Q:\\test1\\test2"},
+        {"Q:/test1/test2", FALSE, TRUE, S_OK, "Q:", TRUE, "Q:"},
+        {"Q:/test1\\test2", FALSE, TRUE, S_OK, "Q:", TRUE, "Q:/test1"},
+        {"0:/test1/test2", FALSE, FALSE, E_INVALIDARG, "", TRUE, ""},
+        {"test", FALSE, FALSE, E_INVALIDARG, "", TRUE, ""},
+        {"\\\\?\\Q:\\", FALSE, FALSE, S_OK, "", TRUE, "\\\\?\\Q:", TRUE, FALSE},
+        {"\\\\?\\Q:\\", TRUE, TRUE, S_FALSE, "\\\\?\\Q:\\", FALSE, "\\\\?\\Q:\\", TRUE, TRUE},
+        {"\\\\?\\Q:\\a", FALSE, TRUE, S_OK, "\\\\?\\Q:\\", TRUE, "\\\\?\\Q:\\", TRUE, TRUE},
+        {"\\\\?\\Q:\\\\", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?\\Q:", TRUE, FALSE},
+        {"\\\\?\\Q:\\\\", FALSE, TRUE, S_OK, "\\\\?\\Q:\\", TRUE, "\\\\?\\Q:\\", TRUE, TRUE},
+        {"\\\\?\\Q:", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?", TRUE, FALSE},
+        {"\\\\?\\Q:", FALSE, TRUE, S_FALSE, "\\\\?\\Q:", FALSE, "\\\\?\\Q:", TRUE, TRUE},
+        {"\\\\?\\aa\\", FALSE, FALSE, E_INVALIDARG, "", TRUE, "\\\\?\\aa"},
+        {"\\\\?\\aa", FALSE, FALSE, E_INVALIDARG, "", TRUE, "\\\\?"},
+        {"\\\\.\\Q:\\", FALSE, TRUE, S_OK, "\\\\.\\Q:", TRUE, "\\\\.\\Q:"},
+        {"\\\\.\\Q:", TRUE, TRUE, S_FALSE, "\\\\.\\Q:", TRUE, "\\\\."},
+        {"\\\\.\\", FALSE, TRUE, S_OK, "\\\\.", TRUE, "\\\\."},
+        {"\\\\?\\", FALSE, FALSE, E_INVALIDARG, "", TRUE, "\\\\?"},
+        {"\\\\?\\\\", FALSE, FALSE, E_INVALIDARG, "", TRUE, "\\\\?"},
+        {"?", FALSE, FALSE, E_INVALIDARG, "", TRUE, ""},
+        {"\\?", FALSE, TRUE, S_OK, "\\", TRUE, "\\"},
+        {"\\\\?", FALSE, FALSE, E_INVALIDARG, "", TRUE, "\\"},
+        {"\\\\*", TRUE, TRUE, S_FALSE, "\\\\*", TRUE, "\\\\"},
+        {"\\\\.", TRUE, TRUE, S_FALSE, "\\\\.", TRUE, "\\\\"},
+        {"\\\\\\.", TRUE, TRUE, S_FALSE, "\\\\\\.", TRUE, "\\\\\\"},
+        {"\\\\\\a", TRUE, TRUE, S_FALSE, "\\\\\\a", TRUE, "\\\\\\"},
+        {"\\\\\\\\.", FALSE, TRUE, S_OK, "\\\\", TRUE, "\\\\"},
+        {"\\\\!", TRUE, TRUE, S_FALSE, "\\\\!", TRUE, "\\\\"},
+        {"\\\\|", TRUE, TRUE, S_FALSE, "\\\\|", TRUE, "\\\\"},
+        {"\\\\a", TRUE, TRUE, S_FALSE, "\\\\a", TRUE, "\\\\"},
+        {"\\\\a\\", FALSE, TRUE, S_OK, "\\\\a", TRUE, "\\\\a"},
+        {"\\\\a\\Q:\\", FALSE, TRUE, S_OK, "\\\\a\\Q:", TRUE, "\\\\a\\Q:"},
+        {"\\\\a\\Q:", TRUE, TRUE, S_FALSE, "\\\\a\\Q:", TRUE, "\\\\a"},
+        {"\\\\aa\\Q:\\", FALSE, TRUE, S_OK, "\\\\aa\\Q:", TRUE, "\\\\aa\\Q:"},
+        {"\\\\aa\\Q:", TRUE, TRUE, S_FALSE, "\\\\aa\\Q:", TRUE, "\\\\aa"},
+        {"\\\\aa", TRUE, TRUE, S_FALSE, "\\\\aa", TRUE, "\\\\"},
+        {"\\\\aa\\", FALSE, TRUE, S_OK, "\\\\aa", TRUE, "\\\\aa"},
+        {"\\\\aa\\b", TRUE, TRUE, S_FALSE, "\\\\aa\\b", TRUE, "\\\\aa"},
+        {"\\\\aa\\|", TRUE, TRUE, S_FALSE, "\\\\aa\\|", TRUE, "\\\\aa"},
+        {"\\\\aa\\b\\c", FALSE, TRUE, S_OK, "\\\\aa\\b", TRUE, "\\\\aa\\b"},
+        {"\\\\Q:", TRUE, TRUE, S_FALSE, "\\\\Q:", FALSE, "\\\\Q:"},
+        {"\\\\\\Q:", TRUE, TRUE, S_FALSE, "\\\\\\Q:", TRUE, "\\\\\\"},
+        {"\\\\Q:\\", FALSE, TRUE, S_OK, "\\\\Q:", TRUE, "\\\\Q:"},
+        {"\\\\?Q:\\", FALSE, FALSE, E_INVALIDARG, "", TRUE, "\\\\?Q:"},
+        {"\\??\\Q:\\", FALSE, TRUE, S_OK, "\\", TRUE, "\\??\\Q:"},
+        {"\\??\\", FALSE, TRUE, S_OK, "\\", TRUE, "\\??"},
+        {"\\\\o\\Q:\\aaa", FALSE, TRUE, S_OK, "\\\\o\\Q:", TRUE, "\\\\o\\Q:"},
+        {"||||Q:\\aaa", FALSE, FALSE, E_INVALIDARG, "", TRUE, "||||Q:"},
+        {"\\\\\\\\Q:\\", FALSE, TRUE, S_OK, "\\\\", TRUE, "\\\\\\\\Q:"},
+        {"\\\\\\\\Q:", FALSE, TRUE, S_OK, "\\\\", TRUE, "\\\\"},
+        {"\\\\", TRUE, TRUE, S_FALSE, "\\\\", FALSE, "\\\\"},
+        {"\\\\\\", FALSE, TRUE, S_OK, "\\\\", TRUE, "\\\\"},
+        {"\\\\\\\\", FALSE, TRUE, S_OK, "\\\\", TRUE, "\\\\"},
+        {"\\\\\\\\\\", FALSE, TRUE, S_OK, "\\\\", TRUE, "\\\\\\"},
+        {"\\\\\\\\\\\\", FALSE, TRUE, S_OK, "\\\\", TRUE, "\\\\\\\\"},
+        {"\\", TRUE, TRUE, S_FALSE, "\\", FALSE, "\\"},
+        {"\\a", FALSE, TRUE, S_OK, "\\", TRUE, "\\"},
+        {"\\a\\b", FALSE, TRUE, S_OK, "\\", TRUE, "\\a"},
+        {"\\\\a", TRUE, TRUE, S_FALSE, "\\\\a", TRUE, "\\\\"},
+        {"\\\\a\\b", TRUE, TRUE, S_FALSE, "\\\\a\\b", TRUE, "\\\\a"},
+        {"\\\\a\\\\b", FALSE, TRUE, S_OK, "\\\\a", TRUE, "\\\\a"},
+        {"\\\\a\\b\\", FALSE, TRUE, S_OK, "\\\\a\\b", TRUE, "\\\\a\\b"},
+        {"\\\\a\\b\\c", FALSE, TRUE, S_OK, "\\\\a\\b", TRUE, "\\\\a\\b"},
+        {"", FALSE, FALSE, E_INVALIDARG, "", FALSE, ""},
+        {"\\\\Q:\\", FALSE, TRUE, S_OK, "\\\\Q:", TRUE, "\\\\Q:"},
+        {"\\Q:\\", FALSE, TRUE, S_OK, "\\", TRUE, "\\Q:"},
+        {"\\Q:", FALSE, TRUE, S_OK, "\\", TRUE, "\\"},
+        {"\\\\?\\UNC\\", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?\\UNC", TRUE, FALSE},
+        {"\\\\?\\UNC\\", TRUE, TRUE, S_FALSE, "\\\\?\\UNC\\", TRUE, "\\\\?\\UNC", TRUE, TRUE},
+        {"\\\\?\\UNC\\a", FALSE, FALSE, S_OK, "", TRUE, "\\\\?\\UNC", TRUE, FALSE},
+        {"\\\\?\\UNC\\a", TRUE, TRUE, S_FALSE, "\\\\?\\UNC\\a", TRUE, "\\\\?\\UNC", TRUE, TRUE},
+        {"\\\\?\\UNC\\a\\", FALSE, FALSE, S_OK, "", TRUE, "\\\\?\\UNC\\a", TRUE, FALSE},
+        {"\\\\?\\UNC\\a\\", FALSE, TRUE, S_OK, "\\\\?\\UNC\\a", TRUE, "\\\\?\\UNC\\a", TRUE, TRUE},
+        {"\\\\?\\UNC\\a\\b", FALSE, FALSE, S_OK, "", TRUE, "\\\\?\\UNC\\a", TRUE, FALSE},
+        {"\\\\?\\UNC\\a\\b", TRUE, TRUE, S_FALSE, "\\\\?\\UNC\\a\\b", TRUE, "\\\\?\\UNC\\a", TRUE, TRUE},
+        {"\\\\?\\UNC\\a\\b\\c", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?\\UNC\\a\\b", TRUE, FALSE},
+        {"\\\\?\\UNC\\a\\b\\c", FALSE, TRUE, S_OK, "\\\\?\\UNC\\a\\b", TRUE, "\\\\?\\UNC\\a\\b", TRUE, TRUE},
+        {"\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?", TRUE, FALSE},
+        {"\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}", FALSE, TRUE, S_FALSE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}", FALSE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}", TRUE, TRUE},
+        {"\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}", TRUE, FALSE},
+        {"\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", TRUE, TRUE, S_FALSE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", FALSE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", TRUE, TRUE},
+        {"\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\\\", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}", TRUE, FALSE},
+        {"\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\\\", FALSE, TRUE, S_OK, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", TRUE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", TRUE, TRUE},
+        {"\\\\?\\Volume{zaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", FALSE, FALSE, E_INVALIDARG, "", TRUE, "\\\\?\\Volume{zaaaaaaa-bbbb-cccc-dddd-ffffffffffff}"},
+        {"\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\a", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}", TRUE, FALSE},
+        {"\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\a", FALSE, TRUE, S_OK, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", TRUE, "\\\\?\\Volume{aaaaaaaa-bbbb-cccc-dddd-ffffffffffff}\\", TRUE, TRUE},
+        {"\\\\?\\TST\\", FALSE, FALSE, E_INVALIDARG, "", TRUE, "\\\\?\\TST"},
+        {"\\\\?\\UNC\\Q:\\", FALSE, FALSE, S_FALSE, "", TRUE, "\\\\?\\UNC\\Q:", TRUE, FALSE},
+        {"\\\\?\\UNC\\Q:\\", FALSE, TRUE, S_OK, "\\\\?\\UNC\\Q:", TRUE, "\\\\?\\UNC\\Q:", TRUE, TRUE},
+        {"\\Device\\Harddiskvolume1", FALSE, TRUE, S_OK, "\\", TRUE, "\\Device"},
+        {"\\Device\\Harddiskvolume1\\", FALSE, TRUE, S_OK, "\\", TRUE, "\\Device\\Harddiskvolume1"},
+    };
+
+    WCHAR pathW[MAX_PATH], expectedW[MAX_PATH];
+    unsigned int i, expected_len;
+    const WCHAR *end_pfx, *ptr;
+    HRESULT hr, expected_hr;
+    char path[MAX_PATH];
+    BOOL ret;
+
+    if (!pPathCchStripToRoot || !pPathCchSkipRoot || !pPathCchRemoveFileSpec || !pPathCchIsRoot)
+    {
+        win_skip("Functions are not available.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("%u (%s)", i, debugstr_a(tests[i].path));
+
+        strcpy(path, tests[i].path);
+
+        if (!tests[i].aw_differ || !tests[i].w_version)
+        {
+            ret = pPathIsRootA(path);
+            ok(ret == tests[i].is_root, "PathIsRootA got %d, expected %d.\n", ret, tests[i].is_root);
+            ret = pPathStripToRootA(path);
+            ok(ret == tests[i].stript_to_root_ret, "PathStripToRootA got %d, expected %d.\n", ret, tests[i].stript_to_root_ret);
+            ok(!strcmp(path, tests[i].strip_to_root), "PathStripToRootA got %s, expected %s.\n", debugstr_a(path), debugstr_a(tests[i].strip_to_root));
+            strcpy(path, tests[i].path);
+            ret = pPathRemoveFileSpecA(path);
+            ok(ret == tests[i].remove_file_ret, "PathRemoveFileSpecA got %d, expected %d.\n", ret, tests[i].remove_file_ret);
+            ok(!strcmp(path, tests[i].remove_file), "PathRemoveFileSpecA got %s, expected %s.\n", debugstr_a(path), debugstr_a(tests[i].remove_file));
+        }
+
+        if (!tests[i].aw_differ || tests[i].w_version)
+        {
+            MultiByteToWideChar(CP_ACP, 0, tests[i].path, -1, pathW, MAX_PATH);
+            ret = pPathIsRootW(pathW);
+            ok(ret == tests[i].is_root, "PathIsRootW got %d, expected %d.\n", ret, tests[i].is_root);
+            ret = pPathCchIsRoot(pathW);
+            ok(ret == tests[i].is_root, "pPathCchIsRoot got %d, expected %d.\n", ret, tests[i].is_root);
+
+            ret = pPathStripToRootW(pathW);
+            MultiByteToWideChar(CP_ACP, 0, tests[i].strip_to_root, -1, expectedW, MAX_PATH);
+            ok(ret == tests[i].stript_to_root_ret, "PathStripToRootW got %d, expected %d.\n", ret, tests[i].stript_to_root_ret);
+            ok(!wcscmp(pathW, expectedW), "PathStripToRootW got %s, expected %s.\n", debugstr_w(pathW), debugstr_w(expectedW));
+
+            MultiByteToWideChar(CP_ACP, 0, tests[i].path, -1, pathW, MAX_PATH);
+            hr = pPathCchStripToRoot(pathW, ARRAY_SIZE(pathW));
+            ok(hr == tests[i].cch_strip_to_root_hr, "PathCchStripToRoot got hr %#lx, expected %#lx.\n", hr, tests[i].cch_strip_to_root_hr);
+            ok(!wcscmp(pathW, expectedW), "PathCchStripToRoot got %s, expected %s.\n", debugstr_w(pathW), debugstr_w(expectedW));
+
+            MultiByteToWideChar(CP_ACP, 0, tests[i].path, -1, pathW, MAX_PATH);
+            end_pfx = NULL;
+            hr = pPathCchSkipRoot(pathW, &end_pfx);
+            expected_hr = SUCCEEDED(tests[i].cch_strip_to_root_hr) ? S_OK : tests[i].cch_strip_to_root_hr;
+            ok(hr == expected_hr, "PathCchSkipRoot got hr %#lx, expected %#lx.\n", hr, expected_hr);
+            if (SUCCEEDED(hr))
+            {
+                expected_len = wcslen(expectedW);
+                if (end_pfx && end_pfx > pathW/* && end_pfx[-1] == '\\'*/ && pathW[expected_len] == '\\'
+                    && (!wcsnicmp(pathW, L"\\\\?\\UNC\\", 8 ) || (pathW[0] == '\\' && pathW[1] == '\\' && pathW[2] && pathW[2] != '?')))
+                {
+                    ok(end_pfx[-1] == '\\', "PathCchSkipRoot missing trailing backslash (end_pfx %s).\n", debugstr_w(end_pfx));
+                    end_pfx--;
+                }
+                ok(expected_len == end_pfx - pathW, "PathCchSkipRoot got %s, expected %s.\n",
+                        debugstr_wn(pathW, end_pfx - pathW), debugstr_wn(pathW, expected_len));
+            }
+            MultiByteToWideChar(CP_ACP, 0, tests[i].path, -1, pathW, MAX_PATH);
+            if (FAILED(hr))
+                expected_hr = *pathW ? S_OK : S_FALSE;
+            else
+                expected_hr = *end_pfx ? S_OK : S_FALSE;
+            wcscpy(expectedW, pathW);
+            if (expected_hr != S_FALSE)
+            {
+                if (!end_pfx)
+                    end_pfx = pathW;
+                if ((ptr = wcsrchr(end_pfx, '\\')))
+                {
+                    if (ptr > end_pfx && ptr[-1] == '\\' && ptr[1] != '?')
+                        --ptr;
+                    expectedW[ptr - pathW] = 0;
+                }
+                else
+                {
+                    expectedW[end_pfx - pathW] = 0;
+                }
+            }
+            hr = pPathCchRemoveFileSpec(pathW, ARRAY_SIZE(pathW));
+            ok(hr == expected_hr, "PathCchRemoveFileSpec got hr %#lx, expected %#lx.\n", hr, expected_hr);
+            ok(!wcscmp(pathW, expectedW), "PathCchRemoveFileSpec got %s, expected %s, end_pfx %s.\n", debugstr_w(pathW), debugstr_w(expectedW), debugstr_w(end_pfx));
+
+            MultiByteToWideChar(CP_ACP, 0, tests[i].path, -1, pathW, MAX_PATH);
+            ret = pPathRemoveFileSpecW(pathW);
+            MultiByteToWideChar(CP_ACP, 0, tests[i].remove_file, -1, expectedW, MAX_PATH);
+            ok(ret == tests[i].remove_file_ret, "PathRemoveFileSpecW got %d, expected %d.\n", ret, tests[i].remove_file_ret);
+            ok(!wcscmp(pathW, expectedW), "PathRemoveFileSpecW got %s, expected %s.\n", debugstr_w(pathW), debugstr_w(expectedW));
+        }
+
+        winetest_pop_context();
+    }
+}
+
 static void test_actctx(void)
 {
     ACTCTX_SECTION_KEYED_DATA data = { sizeof(data) };
@@ -2399,6 +2628,13 @@ START_TEST(path)
     pPathCchStripToRoot = (void *)GetProcAddress(hmod, "PathCchStripToRoot");
     pPathIsUNCEx = (void *)GetProcAddress(hmod, "PathIsUNCEx");
 
+    pPathIsRootA = (void *)GetProcAddress(hmod, "PathIsRootA");
+    pPathIsRootW = (void *)GetProcAddress(hmod, "PathIsRootW");
+    pPathStripToRootA = (void *)GetProcAddress(hmod, "PathStripToRootA");
+    pPathStripToRootW = (void *)GetProcAddress(hmod, "PathStripToRootW");
+    pPathRemoveFileSpecA = (void *)GetProcAddress(hmod, "PathRemoveFileSpecA");
+    pPathRemoveFileSpecW = (void *)GetProcAddress(hmod, "PathRemoveFileSpecW");
+
     test_PathAllocCanonicalize();
     test_PathAllocCombine();
     test_PathCchAddBackslash();
@@ -2421,5 +2657,6 @@ START_TEST(path)
     test_PathCchStripPrefix();
     test_PathCchStripToRoot();
     test_PathIsUNCEx();
+    test_path_manipulation();
     test_actctx();
 }
