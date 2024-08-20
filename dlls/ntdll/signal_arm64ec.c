@@ -1132,26 +1132,33 @@ static void dispatch_syscall( ARM64_NT_CONTEXT *context )
 }
 
 
+static void __attribute__((used)) prepare_exception_arm64ec( EXCEPTION_RECORD *rec, ARM64EC_NT_CONTEXT *context, ARM64_NT_CONTEXT *arm_ctx )
+{
+    if (rec->ExceptionCode == STATUS_EMULATION_SYSCALL) dispatch_syscall( arm_ctx );
+    context_arm_to_x64( context, arm_ctx );
+    if (pResetToConsistentState) pResetToConsistentState( rec, &context->AMD64_Context, arm_ctx );
+}
+
 /*******************************************************************
  *		KiUserExceptionDispatcher (NTDLL.@)
  */
-static NTSTATUS __attribute__((used)) dispatch_exception_arm64ec( EXCEPTION_RECORD *rec, ARM64_NT_CONTEXT *arm_ctx )
+void __attribute__((naked)) KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    ARM64EC_NT_CONTEXT context;
-
-    if (rec->ExceptionCode == STATUS_EMULATION_SYSCALL) dispatch_syscall( arm_ctx );
-
-    context_arm_to_x64( &context, arm_ctx );
-    if (pResetToConsistentState) pResetToConsistentState( rec, &context.AMD64_Context, arm_ctx );
-    return dispatch_exception( rec, &context.AMD64_Context );
+    asm( ".seh_proc \"#KiUserExceptionDispatcher\"\n\t"
+         ".seh_context\n\t"
+         "sub sp, sp, #0x4d0\n\t"       /* sizeof(ARM64EC_NT_CONTEXT) */
+         ".seh_stackalloc 0x4d0\n\t"
+         ".seh_endprologue\n\t"
+         "add x0, sp, #0x390+0x4d0\n\t" /* rec (arm_ctx + 1) */
+         "mov x1, sp\n\t"               /* context */
+         "add x2, sp, #0x4d0\n\t"       /* arm_ctx (context + 1) */
+         "bl \"#prepare_exception_arm64ec\"\n\t"
+         "add x0, sp, #0x390+0x4d0\n\t" /* rec */
+         "mov x1, sp\n\t"               /* context */
+         "bl #dispatch_exception\n\t"
+         "brk #1\n\t"
+         ".seh_endproc" );
 }
-__ASM_GLOBAL_FUNC( "#KiUserExceptionDispatcher",
-                   ".seh_context\n\t"
-                   ".seh_endprologue\n\t"
-                   "add x0, sp, #0x390\n\t"       /* rec (context + 1) */
-                   "mov x1, sp\n\t"               /* context */
-                   "bl \"#dispatch_exception_arm64ec\"\n\t"
-                   "brk #1" )
 
 
 /*******************************************************************
