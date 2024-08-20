@@ -949,7 +949,7 @@ static SQLRETURN col_attribute_win32_a( struct statement *stmt, SQLUSMALLINT col
                                         SQLPOINTER char_attr, SQLSMALLINT buflen, SQLSMALLINT *retlen,
                                         SQLLEN *num_attr )
 {
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret;
 
     if (stmt->hdr.win32_funcs->SQLColAttribute)
         return stmt->hdr.win32_funcs->SQLColAttribute( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
@@ -975,8 +975,46 @@ static SQLRETURN col_attribute_win32_a( struct statement *stmt, SQLUSMALLINT col
             }
             free( strW );
         }
+        return ret;
     }
-    return ret;
+
+    if (stmt->hdr.win32_funcs->SQLColAttributes)
+    {
+        if (buflen < 0) return SQL_ERROR;
+        if (!col)
+        {
+            FIXME( "column 0 not handled\n" );
+            return SQL_ERROR;
+        }
+
+        switch (field_id)
+        {
+        case SQL_COLUMN_COUNT:
+            field_id = SQL_DESC_COUNT;
+            break;
+
+        case SQL_COLUMN_NAME:
+            field_id = SQL_DESC_NAME;
+            break;
+
+        case SQL_COLUMN_NULLABLE:
+            field_id = SQL_DESC_NULLABLE;
+            break;
+
+        case SQL_COLUMN_TYPE:
+        case SQL_COLUMN_DISPLAY_SIZE:
+            break;
+
+        default:
+            FIXME( "field id %u not handled\n", field_id );
+            return SQL_ERROR;
+        }
+
+        return stmt->hdr.win32_funcs->SQLColAttributes( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
+                                                        retlen, num_attr );
+    }
+
+    return SQL_ERROR;
 }
 
 /*************************************************************************
@@ -6087,7 +6125,49 @@ static SQLRETURN col_attribute_win32_w( struct statement *stmt, SQLUSMALLINT col
     if (stmt->hdr.win32_funcs->SQLColAttributeW)
         return stmt->hdr.win32_funcs->SQLColAttributeW( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
                                                        retlen, num_attr );
-    if (stmt->hdr.win32_funcs->SQLColAttribute) FIXME( "Unicode to ANSI conversion not handled\n" );
+
+    if (stmt->hdr.win32_funcs->SQLColAttribute)
+    {
+        FIXME( "Unicode to ANSI conversion not handled\n" );
+        return SQL_ERROR;
+    }
+
+    if (stmt->hdr.win32_funcs->SQLColAttributesW)
+    {
+        if (buflen < 0) return SQL_ERROR;
+        if (!col)
+        {
+            FIXME( "column 0 not handled\n" );
+            return SQL_ERROR;
+        }
+
+        switch (field_id)
+        {
+        case SQL_COLUMN_COUNT:
+            field_id = SQL_DESC_COUNT;
+            break;
+
+        case SQL_COLUMN_NAME:
+            field_id = SQL_DESC_NAME;
+            break;
+
+        case SQL_COLUMN_NULLABLE:
+            field_id = SQL_DESC_NULLABLE;
+            break;
+
+        case SQL_COLUMN_TYPE:
+        case SQL_COLUMN_DISPLAY_SIZE:
+            break;
+
+        default:
+            FIXME( "field id %u not handled\n", field_id );
+            return SQL_ERROR;
+        }
+
+        return stmt->hdr.win32_funcs->SQLColAttributesW( stmt->hdr.win32_handle, col, field_id, char_attr, buflen,
+                                                         retlen, num_attr );
+    }
+
     return SQL_ERROR;
 }
 
