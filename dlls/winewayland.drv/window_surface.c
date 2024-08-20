@@ -43,7 +43,6 @@ struct wayland_buffer_queue
 struct wayland_window_surface
 {
     struct window_surface header;
-    struct wayland_surface *wayland_surface;
     struct wayland_buffer_queue *wayland_buffer_queue;
 };
 
@@ -329,12 +328,6 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
     HRGN surface_damage_region = NULL;
     HRGN copy_from_window_region;
 
-    if (!wws->wayland_surface)
-    {
-        ERR("missing wayland surface=%p, returning\n", wws->wayland_surface);
-        goto done;
-    }
-
     surface_damage_region = NtGdiCreateRectRgn(rect->left + dirty->left, rect->top + dirty->top,
                                                rect->left + dirty->right, rect->top + dirty->bottom);
     if (!surface_damage_region)
@@ -445,28 +438,6 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
 
     return window_surface;
 }
-
-/***********************************************************************
- *           wayland_window_surface_update_wayland_surface
- */
-void wayland_window_surface_update_wayland_surface(struct window_surface *window_surface, const RECT *visible_rect,
-                                                   struct wayland_surface *wayland_surface)
-{
-    struct wayland_window_surface *wws;
-
-    /* ignore calls with the dummy surface */
-    if (window_surface->funcs != &wayland_window_surface_funcs) return;
-
-    wws = wayland_window_surface_cast(window_surface);
-    window_surface_lock(window_surface);
-
-    TRACE("surface=%p hwnd=%p visible_rect=%s wayland_surface=%p\n", wws, window_surface->hwnd,
-          wine_dbgstr_rect(visible_rect), wayland_surface);
-
-    wws->wayland_surface = wayland_surface;
-    window_surface_unlock(window_surface);
-}
-
 
 /***********************************************************************
  *           WAYLAND_CreateWindowSurface

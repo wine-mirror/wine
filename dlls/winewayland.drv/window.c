@@ -119,11 +119,7 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 
     pthread_mutex_unlock(&win_data_mutex);
 
-    if (data->window_surface)
-    {
-        wayland_window_surface_update_wayland_surface(data->window_surface, NULL, NULL);
-        window_surface_release(data->window_surface);
-    }
+    if (data->window_surface) window_surface_release(data->window_surface);
     if (data->wayland_surface) wayland_surface_destroy(data->wayland_surface);
     if (data->window_contents) wayland_shm_buffer_unref(data->window_contents);
     free(data);
@@ -210,8 +206,6 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     /* We don't want wayland surfaces for child windows. */
     if (parent != NtUserGetDesktopWindow() && parent != 0)
     {
-        if (data->window_surface)
-            wayland_window_surface_update_wayland_surface(data->window_surface, NULL, NULL);
         if (surface) wayland_surface_destroy(surface);
         surface = NULL;
         goto out;
@@ -247,10 +241,6 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     wayland_win_data_get_config(data, &surface->window);
 
     pthread_mutex_unlock(&surface->mutex);
-
-    if (data->window_surface)
-        wayland_window_surface_update_wayland_surface(data->window_surface,
-                                                      &data->rects.visible, surface);
 
     /* Size/position changes affect the effective pointer constraint, so update
      * it as needed. */
