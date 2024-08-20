@@ -206,33 +206,19 @@ static void reapply_cursor_clipping(void)
     NtUserSetThreadDpiAwarenessContext(context);
 }
 
-static void wayland_win_data_update_wayland_surface(struct wayland_win_data *data)
+static BOOL wayland_win_data_update_wayland_surface(struct wayland_win_data *data)
 {
     struct wayland_client_surface *client = data->client_surface;
-    struct wayland_surface *surface = data->wayland_surface;
-    HWND parent = NtUserGetAncestor(data->hwnd, GA_PARENT);
+    struct wayland_surface *surface;
     BOOL visible, xdg_visible;
     WCHAR text[1024];
 
     TRACE("hwnd=%p\n", data->hwnd);
 
-    /* We don't want wayland surfaces for child windows. */
-    if (parent != NtUserGetDesktopWindow() && parent != 0)
-    {
-        if (surface)
-        {
-            if (client) wayland_client_surface_detach(client);
-            wayland_surface_destroy(surface);
-        }
-        surface = NULL;
-        goto out;
-    }
-
     visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
     if (!visible && client) wayland_client_surface_detach(client);
 
-    /* Otherwise ensure that we have a wayland surface. */
-    if (!surface && !(surface = wayland_surface_create(data->hwnd))) return;
+    if (!(surface = data->wayland_surface) && !(surface = wayland_surface_create(data->hwnd))) return FALSE;
     xdg_visible = surface->xdg_toplevel != NULL;
 
     if (visible != xdg_visible)
@@ -261,9 +247,9 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
      * it as needed. */
     if (data->hwnd == NtUserGetForegroundWindow()) reapply_cursor_clipping();
 
-out:
     TRACE("hwnd=%p surface=%p=>%p\n", data->hwnd, data->wayland_surface, surface);
     data->wayland_surface = surface;
+    return TRUE;
 }
 
 static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
@@ -448,6 +434,7 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const str
 void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, BOOL fullscreen,
                               const struct window_rects *new_rects, struct window_surface *surface)
 {
+    struct wayland_client_surface *client;
     struct wayland_win_data *data;
     BOOL managed;
 
@@ -464,8 +451,23 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, BOOL
     data->is_fullscreen = fullscreen;
     data->managed = managed;
 
-    wayland_win_data_update_wayland_surface(data);
-    if (data->wayland_surface) wayland_win_data_update_wayland_state(data);
+    if (!surface)
+    {
+        if ((client = data->client_surface))
+        {
+            wayland_client_surface_detach(client);
+        }
+
+        if (data->wayland_surface)
+        {
+            wayland_surface_destroy(data->wayland_surface);
+            data->wayland_surface = NULL;
+        }
+    }
+    else if (wayland_win_data_update_wayland_surface(data))
+    {
+        wayland_win_data_update_wayland_state(data);
+    }
 
     wayland_win_data_release(data);
 }
