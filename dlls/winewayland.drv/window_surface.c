@@ -385,11 +385,10 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
     }
 
     wayland_shm_buffer_copy_data(shm_buffer, color_bits, &surface_rect, copy_from_window_region);
+    NtGdiSetRectRgn(shm_buffer->damage_region, 0, 0, 0, 0);
 
     flushed = set_window_surface_contents(window_surface->hwnd, shm_buffer, surface_damage_region);
     wl_display_flush(process_wayland.wl_display);
-
-    NtGdiSetRectRgn(shm_buffer->damage_region, 0, 0, 0, 0);
 
 done:
     if (surface_damage_region) NtGdiDeleteObjectApp(surface_damage_region);
