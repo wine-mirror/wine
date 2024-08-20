@@ -728,10 +728,30 @@ BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffe
         {
             TRACE("Wayland surface not configured yet, not flushing\n");
         }
+
+        /* Update the latest window buffer for the wayland surface. Note that we
+         * only care whether the buffer contains the latest window contents,
+         * it's irrelevant if it was actually committed or not. */
+        if (wayland_surface->latest_window_buffer)
+            wayland_shm_buffer_unref(wayland_surface->latest_window_buffer);
+        wayland_shm_buffer_ref((wayland_surface->latest_window_buffer = shm_buffer));
+
         pthread_mutex_unlock(&wayland_surface->mutex);
     }
 
     return committed;
+}
+
+struct wayland_shm_buffer *get_window_surface_contents(HWND hwnd)
+{
+    struct wayland_surface *wayland_surface;
+    struct wayland_shm_buffer *shm_buffer;
+
+    if (!(wayland_surface = wayland_surface_lock_hwnd(hwnd))) return NULL;
+    if ((shm_buffer = wayland_surface->latest_window_buffer)) wayland_shm_buffer_ref(shm_buffer);
+    pthread_mutex_unlock(&wayland_surface->mutex);
+
+    return shm_buffer;
 }
 
 void ensure_window_surface_contents(HWND hwnd)
