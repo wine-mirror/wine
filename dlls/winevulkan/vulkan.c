@@ -238,11 +238,11 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 
     size = sizeof(*params);
     size += sizeof(*labels) * (callback_data->queueLabelCount + callback_data->cmdBufLabelCount);
-    size += sizeof(*object) * callback_data->objectCount;
+    size += sizeof(*objects) * callback_data->objectCount;
 
     if (!(params = malloc(size + strings_len))) return VK_FALSE;
     ptr = (char *)(params + 1);
-    strings = (char *)(params + size);
+    strings = (char *)params + size;
 
     params->user_callback = object->user_callback;
     params->user_data = object->user_data;

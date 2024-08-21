@@ -280,7 +280,7 @@ static NTSTATUS WINAPI call_vulkan_debug_utils_callback(void *args, ULONG size)
     size += sizeof(struct debug_utils_object) * data.objectCount;
 
     ptr = (char *)(params + 1);
-    strings = (char *)(params + size);
+    strings = (char *)params + size;
 
     if (params->has_address_binding) data.pNext = &address_binding;
     if (params->message_id_name_len) data.pMessageIdName = strings;
