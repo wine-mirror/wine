@@ -1073,7 +1073,8 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     }
     else pos = root_to_virtual_screen( x, y );
 
-    X11DRV_X_to_window_rect( data, &rect, pos.x, pos.y, event->width, event->height );
+    SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
+    rect = window_rect_from_visible( &data->rects, rect );
     if (root_coords) NtUserMapWindowPoints( 0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */ );
 
     TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",

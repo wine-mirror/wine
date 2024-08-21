@@ -1360,27 +1360,6 @@ static void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect,
 
 
 /***********************************************************************
- *		X11DRV_X_to_window_rect
- *
- * Opposite of X11DRV_window_to_X_rect
- */
-void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect, int x, int y, int cx, int cy )
-{
-    RECT rc;
-
-    get_decoration_rect( data, &rc, &data->rects.window, &data->rects.client );
-
-    x += min( data->rects.window.left - data->rects.visible.left, rc.left );
-    y += min( data->rects.window.top - data->rects.visible.top, rc.top );
-    cx += max( (data->rects.window.right - data->rects.window.left) -
-               (data->rects.visible.right - data->rects.visible.left), rc.right - rc.left );
-    cy += max( (data->rects.window.bottom - data->rects.window.top) -
-               (data->rects.visible.bottom - data->rects.visible.top), rc.bottom - rc.top );
-    SetRect( rect, x, y, x + cx, y + cy );
-}
-
-
-/***********************************************************************
  *		sync_window_position
  *
  * Synchronize the X window position with the Windows one
@@ -2799,7 +2778,8 @@ UINT X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
                   &root, &x, &y, &width, &height, &border, &depth );
     XTranslateCoordinates( thread_data->display, data->whole_window, root, 0, 0, &x, &y, &top );
     pos = root_to_virtual_screen( x, y );
-    X11DRV_X_to_window_rect( data, rect, pos.x, pos.y, width, height );
+    SetRect( rect, pos.x, pos.y, pos.x + width, pos.y + height );
+    *rect = window_rect_from_visible( &data->rects, *rect );
     swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE | SWP_NOSIZE | SWP_NOCLIENTSIZE);
 
 done:

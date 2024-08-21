@@ -677,7 +677,6 @@ typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void
 
 extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
 extern int X11DRV_check_error(void);
-extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect, int x, int y, int cx, int cy );
 extern POINT virtual_screen_to_root( INT x, INT y );
 extern POINT root_to_virtual_screen( INT x, INT y );
 extern RECT get_host_primary_monitor_rect(void);
