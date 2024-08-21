@@ -529,8 +529,22 @@ static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFS
 static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
-    FIXME("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
-    return E_NOTIMPL;
+    struct video_encoder *encoder = impl_from_IMFTransform(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
+
+    if (count != 1)
+        return E_INVALIDARG;
+    if (!encoder->wg_transform)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    if (!samples->pSample)
+        return E_INVALIDARG;
+
+    if (SUCCEEDED(hr = wg_transform_read_mf(encoder->wg_transform, samples->pSample, 0, &samples->dwStatus)))
+        wg_sample_queue_flush(encoder->wg_sample_queue, false);
+
+    return hr;
 }
 
 static const IMFTransformVtbl transform_vtbl =
