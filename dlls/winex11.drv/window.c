@@ -2557,8 +2557,6 @@ BOOL X11DRV_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *sty
     unsigned long decor = get_mwm_decorations_for_style( style, ex_style );
     struct x11drv_win_data *data;
 
-    if (!decorated_mode) return FALSE;
-
     if ((data = get_win_data( hwnd )))
     {
         if (!data->managed) decor = 0;

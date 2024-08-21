@@ -52,7 +52,6 @@ int right_option_is_alt = 0;
 int left_command_is_ctrl = 0;
 int right_command_is_ctrl = 0;
 BOOL allow_software_rendering = FALSE;
-BOOL disable_window_decorations = FALSE;
 int allow_immovable_windows = TRUE;
 int use_confinement_cursor_clipping = TRUE;
 int cursor_clipping_locks_windows = TRUE;
@@ -346,10 +345,6 @@ static void setup_options(void)
 
     if (!get_config_key(hkey, appkey, "AllowSoftwareRendering", buffer, sizeof(buffer)))
         allow_software_rendering = IS_OPTION_TRUE(buffer[0]);
-
-    /* Value name chosen to match what's used in the X11 driver. */
-    if (!get_config_key(hkey, appkey, "Decorated", buffer, sizeof(buffer)))
-        disable_window_decorations = !IS_OPTION_TRUE(buffer[0]);
 
     if (!get_config_key(hkey, appkey, "AllowImmovableWindows", buffer, sizeof(buffer)))
         allow_immovable_windows = IS_OPTION_TRUE(buffer[0]);

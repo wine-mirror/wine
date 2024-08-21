@@ -1798,8 +1798,6 @@ BOOL macdrv_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *styl
 {
     struct macdrv_window_features wf = get_window_features_for_style(style, ex_style, FALSE);
 
-    if (disable_window_decorations) return FALSE;
-
     *style_mask = ex_style = 0;
     if (wf.title_bar)
     {

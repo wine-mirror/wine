@@ -147,6 +147,7 @@ static struct list monitors = LIST_INIT(monitors);
 static INT64 last_query_display_time;
 static pthread_mutex_t display_lock = PTHREAD_MUTEX_INITIALIZER;
 
+BOOL decorated_mode = TRUE;
 BOOL enable_thunk_lock = FALSE;
 
 #define VIRTUAL_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
@@ -4933,6 +4934,8 @@ void sysparams_init(void)
         grab_pointer = IS_OPTION_TRUE( buffer[0] );
     if (!get_config_key( hkey, appkey, "GrabFullscreen", buffer, sizeof(buffer) ))
         grab_fullscreen = IS_OPTION_TRUE( buffer[0] );
+    if (!get_config_key( hkey, appkey, "Decorated", buffer, sizeof(buffer) ))
+        decorated_mode = IS_OPTION_TRUE( buffer[0] );
 
 #undef IS_OPTION_TRUE
 }
