@@ -1725,7 +1725,7 @@ BOOL WINAPI SQLValidDSNW(LPCWSTR lpszDSN)
     clear_errors();
     TRACE("%s\n", debugstr_w(lpszDSN));
 
-    if (!lpszDSN || lstrlenW(lpszDSN) > SQL_MAX_DSN_LENGTH || wcspbrk(lpszDSN, L"[]{}(),;?*=!@\\"))
+    if (!lpszDSN || !*lpszDSN || lstrlenW(lpszDSN) > SQL_MAX_DSN_LENGTH || wcspbrk(lpszDSN, L"[]{}(),;?*=!@\\"))
     {
         return FALSE;
     }
@@ -1739,7 +1739,7 @@ BOOL WINAPI SQLValidDSN(LPCSTR lpszDSN)
     clear_errors();
     TRACE("%s\n", debugstr_a(lpszDSN));
 
-    if (!lpszDSN || strlen(lpszDSN) > SQL_MAX_DSN_LENGTH || strpbrk(lpszDSN, invalid))
+    if (!lpszDSN || !*lpszDSN || strlen(lpszDSN) > SQL_MAX_DSN_LENGTH || strpbrk(lpszDSN, invalid))
     {
         return FALSE;
     }

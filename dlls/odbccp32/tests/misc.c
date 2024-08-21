@@ -816,6 +816,9 @@ static void test_SQLValidDSN(void)
     /* Max DSN name value */
     ret = SQLValidDSN("12345678901234567890123456789012");
     ok(ret, "got %d\n", ret);
+
+    ret = SQLValidDSN("");
+    ok(!ret, "got %d\n", ret);
 }
 
 static void test_SQLValidDSNW(void)
@@ -843,6 +846,9 @@ static void test_SQLValidDSNW(void)
 
     ret = SQLValidDSNW(L"12345678901234567890123456789012");
     ok(ret, "got %d\n", ret);
+
+    ret = SQLValidDSNW(L"");
+    ok(!ret, "got %d\n", ret);
 }
 
 static void test_SQLConfigDataSource(void)
