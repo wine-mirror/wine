@@ -1818,6 +1818,29 @@ done:
 }
 
 
+static RECT get_visible_rect( HWND hwnd, BOOL shaped, UINT style, UINT ex_style, const struct window_rects *rects )
+{
+    UINT dpi = get_dpi_for_window( hwnd ), style_mask, ex_style_mask;
+    RECT visible_rect, rect = {0};
+
+    if (IsRectEmpty( &rects->window ) || EqualRect( &rects->window, &rects->client ) || shaped) return rects->window;
+    if (!user_driver->pGetWindowStyleMasks( hwnd, style, ex_style, &style_mask, &ex_style_mask )) return rects->window;
+    if (!NtUserAdjustWindowRect( &rect, style & style_mask, FALSE, ex_style & ex_style_mask, dpi )) return rects->window;
+
+    visible_rect = rects->window;
+    visible_rect.left   -= rect.left;
+    visible_rect.right  -= rect.right;
+    visible_rect.top    -= rect.top;
+    visible_rect.bottom -= rect.bottom;
+    if (visible_rect.top >= visible_rect.bottom) visible_rect.bottom = visible_rect.top + 1;
+    if (visible_rect.left >= visible_rect.right) visible_rect.right = visible_rect.left + 1;
+
+    TRACE( "hwnd %p, rects %s, style %#x, ex_style %#x -> visible_rect %s\n", hwnd,
+           debugstr_window_rects( rects ), style, ex_style, wine_dbgstr_rect( &visible_rect ) );
+    return visible_rect;
+}
+
+
 static BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
     RECT virtual_rect = NtUserGetVirtualScreenRect();
@@ -1874,8 +1897,12 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
     BOOL shaped, needs_surface, create_opaque, is_layered;
     HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
     struct window_surface *new_surface;
+    UINT style, ex_style;
     RECT dummy;
     HRGN shape;
+
+    style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
+    ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE );
 
     if (get_window_region( hwnd, FALSE, &shape, &dummy )) shaped = FALSE;
     else if ((shaped = !!shape)) NtGdiDeleteObjectApp( shape );
@@ -1885,8 +1912,9 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
     else if (parent && parent != NtUserGetDesktopWindow()) needs_surface = FALSE;
     else if (swp_flags & SWP_HIDEWINDOW) needs_surface = FALSE;
     else if (swp_flags & SWP_SHOWWINDOW) needs_surface = TRUE;
-    else needs_surface = !!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE);
+    else needs_surface = !!(style & WS_VISIBLE);
 
+    rects->visible = get_visible_rect( hwnd, shaped, style, ex_style, rects );
     if (!get_surface_rect( &rects->visible, surface_rect )) needs_surface = FALSE;
     if (!get_default_window_surface( hwnd, surface_rect, &new_surface )) return NULL;
 

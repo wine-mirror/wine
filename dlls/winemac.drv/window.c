@@ -74,24 +74,16 @@ static void set_internal_window_pos(HWND hwnd, UINT cmd, RECT *rect, POINT *pt)
 }
 
 
-/***********************************************************************
- *              get_cocoa_window_features
- */
-static struct macdrv_window_features get_cocoa_window_features(struct macdrv_win_data *data, DWORD style, DWORD ex_style,
-                                                               const RECT *window_rect, const RECT *client_rect)
+static struct macdrv_window_features get_window_features_for_style(DWORD style, DWORD ex_style, BOOL shaped)
 {
     struct macdrv_window_features wf = {0};
 
     if (ex_style & WS_EX_NOACTIVATE) wf.prevents_app_activation = TRUE;
 
-    if (disable_window_decorations) return wf;
-    if (IsRectEmpty(window_rect)) return wf;
-    if (EqualRect(window_rect, client_rect)) return wf;
-
     if ((style & WS_CAPTION) == WS_CAPTION && !(ex_style & WS_EX_LAYERED))
     {
         wf.shadow = TRUE;
-        if (!data->shaped)
+        if (!shaped)
         {
             wf.title_bar = TRUE;
             if (style & WS_SYSMENU) wf.close_button = TRUE;
@@ -103,12 +95,25 @@ static struct macdrv_window_features get_cocoa_window_features(struct macdrv_win
     if (style & WS_THICKFRAME)
     {
         wf.shadow = TRUE;
-        if (!data->shaped) wf.resizable = TRUE;
+        if (!shaped) wf.resizable = TRUE;
     }
     else if (ex_style & WS_EX_DLGMODALFRAME) wf.shadow = TRUE;
     else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) wf.shadow = TRUE;
 
     return wf;
+}
+
+/***********************************************************************
+ *              get_cocoa_window_features
+ */
+static struct macdrv_window_features get_cocoa_window_features(struct macdrv_win_data *data, DWORD style, DWORD ex_style)
+{
+    struct macdrv_window_features wf = {0};
+
+    if (ex_style & WS_EX_NOACTIVATE) wf.prevents_app_activation = TRUE;
+    if (EqualRect(&data->rects.window, &data->rects.visible)) return wf;
+
+    return get_window_features_for_style(style, ex_style, data->shaped);
 }
 
 
@@ -148,69 +153,6 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
     state->minimized = (style & WS_MINIMIZE) != 0;
     state->minimized_valid = state->minimized != data->minimized;
     state->maximized = (style & WS_MAXIMIZE) != 0;
-}
-
-
-/***********************************************************************
- *              get_mac_rect_offset
- *
- * Helper for macdrv_window_to_mac_rect.
- */
-static void get_mac_rect_offset(struct macdrv_win_data *data, unsigned int style, RECT *rect,
-                                const RECT *window_rect, const RECT *client_rect)
-{
-    unsigned int ex_style, style_mask = 0, ex_style_mask = 0;
-    UINT dpi = get_win_monitor_dpi(data->hwnd);
-
-    rect->top = rect->bottom = rect->left = rect->right = 0;
-
-    ex_style = NtUserGetWindowLongW(data->hwnd, GWL_EXSTYLE);
-
-    if (!data->shaped)
-    {
-        struct macdrv_window_features wf;
-        wf = get_cocoa_window_features(data, style, ex_style, window_rect, client_rect);
-
-        if (wf.title_bar)
-        {
-            style_mask |= WS_CAPTION;
-            ex_style_mask |= WS_EX_TOOLWINDOW;
-        }
-        if (wf.shadow)
-        {
-            style_mask |= WS_DLGFRAME | WS_THICKFRAME;
-            ex_style_mask |= WS_EX_DLGMODALFRAME;
-        }
-    }
-
-    NtUserAdjustWindowRect(rect, style & style_mask, FALSE, ex_style & ex_style_mask, dpi);
-
-    TRACE("%p/%p style %08x ex_style %08x shaped %d -> %s\n", data->hwnd, data->cocoa_window,
-          style, ex_style, data->shaped, wine_dbgstr_rect(rect));
-}
-
-
-/***********************************************************************
- *              macdrv_window_to_mac_rect
- *
- * Convert a rect from client to Mac window coordinates
- */
-static void macdrv_window_to_mac_rect(struct macdrv_win_data *data, DWORD style, RECT *rect,
-                                      const RECT *window_rect, const RECT *client_rect)
-{
-    RECT rc;
-
-    if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return;
-    if (IsRectEmpty(rect)) return;
-
-    get_mac_rect_offset(data, style, &rc, window_rect, client_rect);
-
-    rect->left   -= rc.left;
-    rect->right  -= rc.right;
-    rect->top    -= rc.top;
-    rect->bottom -= rc.bottom;
-    if (rect->top >= rect->bottom) rect->bottom = rect->top + 1;
-    if (rect->left >= rect->right) rect->right = rect->left + 1;
 }
 
 
@@ -361,7 +303,7 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
     owner_win = macdrv_get_cocoa_window(owner, TRUE);
     macdrv_set_cocoa_parent_window(data->cocoa_window, owner_win);
 
-    wf = get_cocoa_window_features(data, style, ex_style, &data->rects.window, &data->rects.client);
+    wf = get_cocoa_window_features(data, style, ex_style);
     macdrv_set_cocoa_window_features(data->cocoa_window, &wf);
 
     get_cocoa_window_state(data, style, ex_style, &state);
@@ -600,7 +542,7 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     style = NtUserGetWindowLongW(data->hwnd, GWL_STYLE);
     ex_style = NtUserGetWindowLongW(data->hwnd, GWL_EXSTYLE);
 
-    wf = get_cocoa_window_features(data, style, ex_style, &data->rects.window, &data->rects.client);
+    wf = get_cocoa_window_features(data, style, ex_style);
 
     frame = cgrect_from_rect(data->rects.visible);
     constrain_window_frame(&frame.origin, &frame.size);
@@ -1803,19 +1745,15 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 /***********************************************************************
  *              WindowPosChanging   (MACDRV.@)
  */
-BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, struct window_rects *rects)
+BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
-    DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     BOOL ret = FALSE;
 
     TRACE("hwnd %p, swp_flags %04x, shaped %u, rects %s\n", hwnd, swp_flags, shaped, debugstr_window_rects(rects));
 
     if (!data && !(data = macdrv_create_win_data(hwnd, rects))) return FALSE; /* use default surface */
     data->shaped = shaped;
-
-    macdrv_window_to_mac_rect(data, style, &rects->visible, &rects->window, &rects->client);
-    TRACE("-> %s\n", debugstr_window_rects(rects));
 
     ret = !!data->cocoa_window; /* use default surface if we don't have a window */
     release_win_data(data);
@@ -1852,6 +1790,31 @@ void macdrv_MoveWindowBits(HWND hwnd, const struct window_rects *new_rects, cons
                          &old_client_rect, &new_rects->client, &new_rects->window);
     }
 }
+
+/***********************************************************************
+ *      GetWindowStyleMasks   (X11DRV.@)
+ */
+BOOL macdrv_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask)
+{
+    struct macdrv_window_features wf = get_window_features_for_style(style, ex_style, FALSE);
+
+    if (disable_window_decorations) return FALSE;
+
+    *style_mask = ex_style = 0;
+    if (wf.title_bar)
+    {
+        *style_mask |= WS_CAPTION;
+        *ex_style_mask |= WS_EX_TOOLWINDOW;
+    }
+    if (wf.shadow)
+    {
+        *style_mask |= WS_DLGFRAME | WS_THICKFRAME;
+        *ex_style_mask |= WS_EX_DLGMODALFRAME;
+    }
+
+    return TRUE;
+}
+
 
 /***********************************************************************
  *              WindowPosChanged   (MACDRV.@)

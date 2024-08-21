@@ -881,9 +881,14 @@ static LRESULT nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
     return 0;
 }
 
-static BOOL nulldrv_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, struct window_rects *rects )
+static BOOL nulldrv_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects )
 {
     return TRUE;
+}
+
+extern BOOL nulldrv_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask )
+{
+    return FALSE;
 }
 
 static BOOL nulldrv_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface )
@@ -1294,6 +1299,7 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_UpdateLayeredWindow,
     nulldrv_WindowMessage,
     nulldrv_WindowPosChanging,
+    nulldrv_GetWindowStyleMasks,
     nulldrv_CreateWindowSurface,
     nulldrv_MoveWindowBits,
     nulldrv_WindowPosChanged,
@@ -1383,6 +1389,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(UpdateLayeredWindow);
     SET_USER_FUNC(WindowMessage);
     SET_USER_FUNC(WindowPosChanging);
+    SET_USER_FUNC(GetWindowStyleMasks);
     SET_USER_FUNC(CreateWindowSurface);
     SET_USER_FUNC(MoveWindowBits);
     SET_USER_FUNC(WindowPosChanged);

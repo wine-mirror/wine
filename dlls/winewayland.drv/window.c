@@ -425,7 +425,7 @@ void WAYLAND_DestroyWindow(HWND hwnd)
 /***********************************************************************
  *           WAYLAND_WindowPosChanging
  */
-BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, struct window_rects *rects)
+BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects)
 {
     struct wayland_win_data *data = wayland_win_data_get(hwnd);
 

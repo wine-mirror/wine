@@ -303,18 +303,9 @@ static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD styl
 /***********************************************************************
  *              get_mwm_decorations
  */
-static unsigned long get_mwm_decorations( struct x11drv_win_data *data,
-                                          DWORD style, DWORD ex_style,
-                                          const RECT *window_rect,
-                                          const RECT *client_rect )
+static unsigned long get_mwm_decorations_for_style( DWORD style, DWORD ex_style )
 {
     unsigned long ret = 0;
-
-    if (!decorated_mode) return 0;
-
-    if (EqualRect( window_rect, client_rect )) return 0;
-    if (IsRectEmpty( window_rect )) return 0;
-    if (data->shaped) return 0;
 
     if (ex_style & WS_EX_TOOLWINDOW) return 0;
     if (ex_style & WS_EX_LAYERED) return 0;
@@ -330,6 +321,16 @@ static unsigned long get_mwm_decorations( struct x11drv_win_data *data,
     else if (style & WS_THICKFRAME) ret |= MWM_DECOR_BORDER | MWM_DECOR_RESIZEH;
     else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) ret |= MWM_DECOR_BORDER;
     return ret;
+}
+
+
+/***********************************************************************
+ *              get_mwm_decorations
+ */
+static unsigned long get_mwm_decorations( struct x11drv_win_data *data, DWORD style, DWORD ex_style )
+{
+    if (EqualRect( &data->rects.window, &data->rects.visible )) return 0;
+    return get_mwm_decorations_for_style( style, ex_style );
 }
 
 
@@ -776,7 +777,7 @@ static void set_mwm_hints( struct x11drv_win_data *data, UINT style, UINT ex_sty
     }
     else
     {
-        mwm_hints.decorations = get_mwm_decorations( data, style, ex_style, &data->rects.window, &data->rects.client );
+        mwm_hints.decorations = get_mwm_decorations( data, style, ex_style );
         mwm_hints.functions = MWM_FUNC_MOVE;
         if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
         if (!(style & WS_DISABLED))
@@ -1305,57 +1306,6 @@ void make_window_embedded( struct x11drv_win_data *data )
     data->managed = TRUE;
     sync_window_style( data );
     set_xembed_flags( data, (data->mapped || data->embedder) ? XEMBED_MAPPED : 0 );
-}
-
-
-/***********************************************************************
- *     get_decoration_rect
- */
-static void get_decoration_rect( struct x11drv_win_data *data, RECT *rect,
-                                 const RECT *window_rect, const RECT *client_rect )
-{
-    DWORD style, ex_style, style_mask = 0, ex_style_mask = 0;
-    unsigned long decor;
-    UINT dpi;
-
-    SetRectEmpty( rect );
-    if (!data->managed) return;
-
-    dpi = get_win_monitor_dpi( data->hwnd );
-    style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
-    ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
-    decor = get_mwm_decorations( data, style, ex_style, window_rect, client_rect );
-
-    if (decor & MWM_DECOR_TITLE) style_mask |= WS_CAPTION;
-    if (decor & MWM_DECOR_BORDER)
-    {
-        style_mask |= WS_DLGFRAME | WS_THICKFRAME;
-        ex_style_mask |= WS_EX_DLGMODALFRAME;
-    }
-
-    NtUserAdjustWindowRect( rect, style & style_mask, FALSE, ex_style & ex_style_mask, dpi );
-}
-
-
-/***********************************************************************
- *		X11DRV_window_to_X_rect
- *
- * Convert a rect from client to X window coordinates
- */
-static void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect,
-                                     const RECT *window_rect, const RECT *client_rect )
-{
-    RECT rc;
-
-    if (IsRectEmpty( rect )) return;
-
-    get_decoration_rect( data, &rc, window_rect, client_rect );
-    rect->left   -= rc.left;
-    rect->right  -= rc.right;
-    rect->top    -= rc.top;
-    rect->bottom -= rc.bottom;
-    if (rect->top >= rect->bottom) rect->bottom = rect->top + 1;
-    if (rect->left >= rect->right) rect->right = rect->left + 1;
 }
 
 
@@ -2543,7 +2493,7 @@ done:
 /***********************************************************************
  *		WindowPosChanging   (X11DRV.@)
  */
-BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, struct window_rects *rects )
+BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects )
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
     BOOL ret = FALSE;
@@ -2562,9 +2512,6 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, struct wi
         if (!(data = get_win_data( hwnd ))) return FALSE; /* use default surface */
         data->managed = TRUE;
     }
-
-    X11DRV_window_to_X_rect( data, &rects->visible, &rects->window, &rects->client );
-    TRACE( "-> %s\n", debugstr_window_rects(rects) );
 
     ret = !!data->whole_window; /* use default surface if we don't have a window */
     release_win_data( data );
@@ -2601,6 +2548,34 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *new_rects, con
                           &old_client_rect, &new_rects->client, &new_rects->window );
     }
 }
+
+/***********************************************************************
+ *      GetWindowStyleMasks   (X11DRV.@)
+ */
+BOOL X11DRV_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask )
+{
+    unsigned long decor = get_mwm_decorations_for_style( style, ex_style );
+    struct x11drv_win_data *data;
+
+    if (!decorated_mode) return FALSE;
+
+    if ((data = get_win_data( hwnd )))
+    {
+        if (!data->managed) decor = 0;
+        release_win_data( data );
+    }
+
+    *style_mask = ex_style = 0;
+    if (decor & MWM_DECOR_TITLE) *style_mask |= WS_CAPTION;
+    if (decor & MWM_DECOR_BORDER)
+    {
+        *style_mask |= WS_DLGFRAME | WS_THICKFRAME;
+        *ex_style_mask |= WS_EX_DLGMODALFRAME;
+    }
+
+    return TRUE;
+}
+
 
 /***********************************************************************
  *		WindowPosChanged   (X11DRV.@)

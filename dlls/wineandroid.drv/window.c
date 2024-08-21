@@ -1023,7 +1023,7 @@ static struct android_win_data *create_win_data( HWND hwnd, const struct window_
 /***********************************************************************
  *           ANDROID_WindowPosChanging
  */
-BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, struct window_rects *rects )
+BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects )
 {
     struct android_win_data *data = get_win_data( hwnd );
 
