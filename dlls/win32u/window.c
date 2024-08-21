@@ -1940,7 +1940,7 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
     else if (create_layered || is_layered) needs_surface = TRUE;
 
     if (needs_surface)
-        create_window_surface( hwnd, create_layered, surface_rect, &new_surface );
+        create_window_surface( hwnd, create_layered, surface_rect, monitor_dpi, &new_surface );
     else if (new_surface && new_surface != &dummy_surface)
     {
         window_surface_release( new_surface );
@@ -2107,7 +2107,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             }
         }
 
-        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, &monitor_rects, new_surface );
+        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, &monitor_rects, get_driver_window_surface( new_surface, monitor_dpi ) );
     }
 
     return ret;
