@@ -204,22 +204,12 @@ void wayland_surface_destroy(struct wayland_surface *surface)
         process_wayland.keyboard.focused_hwnd = NULL;
     pthread_mutex_unlock(&process_wayland.keyboard.mutex);
 
+    wayland_surface_clear_role(surface);
+
     if (surface->wp_viewport)
     {
         wp_viewport_destroy(surface->wp_viewport);
         surface->wp_viewport = NULL;
-    }
-
-    if (surface->xdg_toplevel)
-    {
-        xdg_toplevel_destroy(surface->xdg_toplevel);
-        surface->xdg_toplevel = NULL;
-    }
-
-    if (surface->xdg_surface)
-    {
-        xdg_surface_destroy(surface->xdg_surface);
-        surface->xdg_surface = NULL;
     }
 
     if (surface->wl_surface)
