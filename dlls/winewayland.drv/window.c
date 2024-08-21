@@ -245,18 +245,13 @@ static BOOL wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     return TRUE;
 }
 
-static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
+static void wayland_surface_update_state_toplevel(struct wayland_surface *surface)
 {
-    struct wayland_surface *surface = data->wayland_surface;
-    BOOL processing_config;
-
-    if (!surface->xdg_toplevel) goto out;
-
-    processing_config = surface->processing.serial &&
-                        !surface->processing.processed;
+    BOOL processing_config = surface->processing.serial &&
+                             !surface->processing.processed;
 
     TRACE("hwnd=%p window_state=%#x %s->state=%#x\n",
-          data->hwnd, surface->window.state,
+          surface->hwnd, surface->window.state,
           processing_config ? "processing" : "current",
           processing_config ? surface->processing.state : surface->current.state);
 
@@ -292,8 +287,22 @@ static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
     {
         surface->processing.processed = TRUE;
     }
+}
 
-out:
+static void wayland_win_data_update_wayland_state(struct wayland_win_data *data)
+{
+    struct wayland_surface *surface = data->wayland_surface;
+
+    switch (surface->role)
+    {
+    case WAYLAND_SURFACE_ROLE_NONE:
+        break;
+    case WAYLAND_SURFACE_ROLE_TOPLEVEL:
+        if (!surface->xdg_surface) break; /* surface role has been cleared */
+        wayland_surface_update_state_toplevel(surface);
+        break;
+    }
+
     wl_display_flush(process_wayland.wl_display);
 }
 
