@@ -77,6 +77,7 @@ enum wayland_surface_role
 {
     WAYLAND_SURFACE_ROLE_NONE,
     WAYLAND_SURFACE_ROLE_TOPLEVEL,
+    WAYLAND_SURFACE_ROLE_SUBSURFACE,
 };
 
 struct wayland_keyboard
@@ -212,6 +213,11 @@ struct wayland_surface
             struct xdg_surface *xdg_surface;
             struct xdg_toplevel *xdg_toplevel;
         };
+        struct
+        {
+            struct wl_subsurface *wl_subsurface;
+            HWND toplevel_hwnd;
+        };
     };
 
     struct wayland_surface_config pending, requested, processing, current;
@@ -254,6 +260,8 @@ void wayland_output_use_xdg_extension(struct wayland_output *output);
 struct wayland_surface *wayland_surface_create(HWND hwnd);
 void wayland_surface_destroy(struct wayland_surface *surface);
 void wayland_surface_make_toplevel(struct wayland_surface *surface);
+void wayland_surface_make_subsurface(struct wayland_surface *surface,
+                                     struct wayland_surface *parent);
 void wayland_surface_clear_role(struct wayland_surface *surface);
 void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 struct wayland_shm_buffer *shm_buffer,

@@ -267,6 +267,47 @@ err:
 }
 
 /**********************************************************************
+ *          wayland_surface_make_subsurface
+ *
+ * Gives the subsurface role to a plain wayland surface.
+ */
+void wayland_surface_make_subsurface(struct wayland_surface *surface,
+                                     struct wayland_surface *parent)
+{
+    assert(!surface->role || surface->role == WAYLAND_SURFACE_ROLE_SUBSURFACE);
+    if (surface->wl_subsurface && surface->toplevel_hwnd == parent->hwnd) return;
+
+    wayland_surface_clear_role(surface);
+    surface->role = WAYLAND_SURFACE_ROLE_SUBSURFACE;
+
+    TRACE("surface=%p parent=%p\n", surface, parent);
+
+    surface->wl_subsurface =
+        wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
+                                        surface->wl_surface,
+                                        parent->wl_surface);
+    if (!surface->wl_subsurface)
+    {
+        ERR("Failed to create client wl_subsurface\n");
+        goto err;
+    }
+
+    surface->role = WAYLAND_SURFACE_ROLE_SUBSURFACE;
+    surface->toplevel_hwnd = parent->hwnd;
+
+    /* Present contents independently of the parent surface. */
+    wl_subsurface_set_desync(surface->wl_subsurface);
+
+    wl_display_flush(process_wayland.wl_display);
+
+    return;
+
+err:
+    wayland_surface_clear_role(surface);
+    ERR("Failed to assign subsurface role to wayland surface\n");
+}
+
+/**********************************************************************
  *          wayland_surface_clear_role
  *
  * Clears the role related Wayland objects of a Wayland surface, making it a
@@ -295,12 +336,23 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
             surface->xdg_surface = NULL;
         }
         break;
+
+    case WAYLAND_SURFACE_ROLE_SUBSURFACE:
+        if (surface->wl_subsurface)
+        {
+            wl_subsurface_destroy(surface->wl_subsurface);
+            surface->wl_subsurface = NULL;
+        }
+
+        surface->toplevel_hwnd = 0;
+        break;
     }
 
     memset(&surface->pending, 0, sizeof(surface->pending));
     memset(&surface->requested, 0, sizeof(surface->requested));
     memset(&surface->processing, 0, sizeof(surface->processing));
     memset(&surface->current, 0, sizeof(surface->current));
+    surface->toplevel_hwnd = 0;
 
     /* Ensure no buffer is attached, otherwise future role assignments may fail. */
     wl_surface_attach(surface->wl_surface, NULL, 0, 0);
@@ -586,6 +638,40 @@ static BOOL wayland_surface_reconfigure_xdg(struct wayland_surface *surface,
 }
 
 /**********************************************************************
+ *          wayland_surface_reconfigure_subsurface
+ *
+ * Reconfigures the subsurface as needed to match the latest requested
+ * state.
+ */
+static void wayland_surface_reconfigure_subsurface(struct wayland_surface *surface)
+{
+    struct wayland_win_data *toplevel_data;
+    struct wayland_surface *toplevel_surface;
+    int local_x, local_y, x, y;
+
+    if (surface->processing.serial && surface->processing.processed &&
+        (toplevel_data = wayland_win_data_get_nolock(surface->toplevel_hwnd)) &&
+        (toplevel_surface = toplevel_data->wayland_surface))
+    {
+        local_x = surface->window.rect.left - toplevel_surface->window.rect.left;
+        local_y = surface->window.rect.top - toplevel_surface->window.rect.top;
+
+        wayland_surface_coords_from_window(surface, local_x, local_y, &x, &y);
+
+        TRACE("hwnd=%p pos=%d,%d\n", surface->hwnd, x, y);
+
+        wl_subsurface_set_position(surface->wl_subsurface, x, y);
+        if (toplevel_data->client_surface)
+            wl_subsurface_place_above(surface->wl_subsurface, toplevel_data->client_surface->wl_surface);
+        else
+            wl_subsurface_place_above(surface->wl_subsurface, toplevel_surface->wl_surface);
+        wl_surface_commit(toplevel_surface->wl_surface);
+
+        memset(&surface->processing, 0, sizeof(surface->processing));
+    }
+}
+
+/**********************************************************************
  *          wayland_surface_reconfigure
  *
  * Reconfigures the wayland surface as needed to match the latest requested
@@ -615,6 +701,10 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
     case WAYLAND_SURFACE_ROLE_TOPLEVEL:
         if (!surface->xdg_surface) break; /* surface role has been cleared */
         if (!wayland_surface_reconfigure_xdg(surface, width, height)) return FALSE;
+        break;
+    case WAYLAND_SURFACE_ROLE_SUBSURFACE:
+        if (!surface->wl_subsurface) break; /* surface role has been cleared */
+        wayland_surface_reconfigure_subsurface(surface);
         break;
     }
 
