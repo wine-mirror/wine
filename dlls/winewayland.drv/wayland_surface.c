@@ -540,29 +540,15 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface,
 }
 
 /**********************************************************************
- *          wayland_surface_reconfigure
+ *          wayland_surface_reconfigure_xdg
  *
- * Reconfigures the wayland surface as needed to match the latest requested
+ * Reconfigures the xdg surface as needed to match the latest requested
  * state.
  */
-BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
+static BOOL wayland_surface_reconfigure_xdg(struct wayland_surface *surface,
+                                            int width, int height)
 {
     struct wayland_window_config *window = &surface->window;
-    int win_width, win_height, width, height;
-
-    if (!surface->xdg_toplevel) return TRUE;
-
-    win_width = surface->window.rect.right - surface->window.rect.left;
-    win_height = surface->window.rect.bottom - surface->window.rect.top;
-
-    wayland_surface_coords_from_window(surface, win_width, win_height,
-                                       &width, &height);
-
-    TRACE("hwnd=%p window=%dx%d,%#x processing=%dx%d,%#x current=%dx%d,%#x\n",
-          surface->hwnd, win_width, win_height, window->state,
-          surface->processing.width, surface->processing.height,
-          surface->processing.state, surface->current.width,
-          surface->current.height, surface->current.state);
 
     /* Acknowledge any compatible processed config. */
     if (surface->processing.serial && surface->processing.processed &&
@@ -595,6 +581,43 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
     }
 
     wayland_surface_reconfigure_geometry(surface, width, height);
+
+    return TRUE;
+}
+
+/**********************************************************************
+ *          wayland_surface_reconfigure
+ *
+ * Reconfigures the wayland surface as needed to match the latest requested
+ * state.
+ */
+BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
+{
+    struct wayland_window_config *window = &surface->window;
+    int win_width, win_height, width, height;
+
+    win_width = surface->window.rect.right - surface->window.rect.left;
+    win_height = surface->window.rect.bottom - surface->window.rect.top;
+
+    wayland_surface_coords_from_window(surface, win_width, win_height,
+                                       &width, &height);
+
+    TRACE("hwnd=%p window=%dx%d,%#x processing=%dx%d,%#x current=%dx%d,%#x\n",
+          surface->hwnd, win_width, win_height, window->state,
+          surface->processing.width, surface->processing.height,
+          surface->processing.state, surface->current.width,
+          surface->current.height, surface->current.state);
+
+    switch (surface->role)
+    {
+    case WAYLAND_SURFACE_ROLE_NONE:
+        break;
+    case WAYLAND_SURFACE_ROLE_TOPLEVEL:
+        if (!surface->xdg_surface) break; /* surface role has been cleared */
+        if (!wayland_surface_reconfigure_xdg(surface, width, height)) return FALSE;
+        break;
+    }
+
     wayland_surface_reconfigure_size(surface, width, height);
 
     return TRUE;
