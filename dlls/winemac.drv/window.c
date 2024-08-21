@@ -77,39 +77,38 @@ static void set_internal_window_pos(HWND hwnd, UINT cmd, RECT *rect, POINT *pt)
 /***********************************************************************
  *              get_cocoa_window_features
  */
-static void get_cocoa_window_features(struct macdrv_win_data *data,
-                                      DWORD style, DWORD ex_style,
-                                      struct macdrv_window_features* wf,
-                                      const RECT *window_rect,
-                                      const RECT *client_rect)
+static struct macdrv_window_features get_cocoa_window_features(struct macdrv_win_data *data, DWORD style, DWORD ex_style,
+                                                               const RECT *window_rect, const RECT *client_rect)
 {
-    memset(wf, 0, sizeof(*wf));
+    struct macdrv_window_features wf = {0};
 
-    if (ex_style & WS_EX_NOACTIVATE) wf->prevents_app_activation = TRUE;
+    if (ex_style & WS_EX_NOACTIVATE) wf.prevents_app_activation = TRUE;
 
-    if (disable_window_decorations) return;
-    if (IsRectEmpty(window_rect)) return;
-    if (EqualRect(window_rect, client_rect)) return;
+    if (disable_window_decorations) return wf;
+    if (IsRectEmpty(window_rect)) return wf;
+    if (EqualRect(window_rect, client_rect)) return wf;
 
     if ((style & WS_CAPTION) == WS_CAPTION && !(ex_style & WS_EX_LAYERED))
     {
-        wf->shadow = TRUE;
+        wf.shadow = TRUE;
         if (!data->shaped)
         {
-            wf->title_bar = TRUE;
-            if (style & WS_SYSMENU) wf->close_button = TRUE;
-            if (style & WS_MINIMIZEBOX) wf->minimize_button = TRUE;
-            if (style & WS_MAXIMIZEBOX) wf->maximize_button = TRUE;
-            if (ex_style & WS_EX_TOOLWINDOW) wf->utility = TRUE;
+            wf.title_bar = TRUE;
+            if (style & WS_SYSMENU) wf.close_button = TRUE;
+            if (style & WS_MINIMIZEBOX) wf.minimize_button = TRUE;
+            if (style & WS_MAXIMIZEBOX) wf.maximize_button = TRUE;
+            if (ex_style & WS_EX_TOOLWINDOW) wf.utility = TRUE;
         }
     }
     if (style & WS_THICKFRAME)
     {
-        wf->shadow = TRUE;
-        if (!data->shaped) wf->resizable = TRUE;
+        wf.shadow = TRUE;
+        if (!data->shaped) wf.resizable = TRUE;
     }
-    else if (ex_style & WS_EX_DLGMODALFRAME) wf->shadow = TRUE;
-    else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) wf->shadow = TRUE;
+    else if (ex_style & WS_EX_DLGMODALFRAME) wf.shadow = TRUE;
+    else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) wf.shadow = TRUE;
+
+    return wf;
 }
 
 
@@ -170,7 +169,7 @@ static void get_mac_rect_offset(struct macdrv_win_data *data, unsigned int style
     if (!data->shaped)
     {
         struct macdrv_window_features wf;
-        get_cocoa_window_features(data, style, ex_style, &wf, window_rect, client_rect);
+        wf = get_cocoa_window_features(data, style, ex_style, window_rect, client_rect);
 
         if (wf.title_bar)
         {
@@ -362,7 +361,7 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
     owner_win = macdrv_get_cocoa_window(owner, TRUE);
     macdrv_set_cocoa_parent_window(data->cocoa_window, owner_win);
 
-    get_cocoa_window_features(data, style, ex_style, &wf, &data->rects.window, &data->rects.client);
+    wf = get_cocoa_window_features(data, style, ex_style, &data->rects.window, &data->rects.client);
     macdrv_set_cocoa_window_features(data->cocoa_window, &wf);
 
     get_cocoa_window_state(data, style, ex_style, &state);
@@ -601,7 +600,7 @@ static void create_cocoa_window(struct macdrv_win_data *data)
     style = NtUserGetWindowLongW(data->hwnd, GWL_STYLE);
     ex_style = NtUserGetWindowLongW(data->hwnd, GWL_EXSTYLE);
 
-    get_cocoa_window_features(data, style, ex_style, &wf, &data->rects.window, &data->rects.client);
+    wf = get_cocoa_window_features(data, style, ex_style, &data->rects.window, &data->rects.client);
 
     frame = cgrect_from_rect(data->rects.visible);
     constrain_window_frame(&frame.origin, &frame.size);
