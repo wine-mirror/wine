@@ -876,6 +876,22 @@ static void test_SQLConfigDataSource(void)
     check_error(ODBC_ERROR_COMPONENT_NOT_FOUND);
 }
 
+static BOOL check_dsn_exists(HKEY key, const WCHAR *dsn)
+{
+    HKEY hkey;
+    WCHAR buffer[256];
+    LONG res;
+
+    wcscpy(buffer, L"Software\\ODBC\\ODBC.INI\\");
+    wcscat(buffer, dsn);
+
+    res = RegOpenKeyExW(key, buffer, 0, KEY_READ, &hkey);
+    if (!res)
+        RegCloseKey(hkey);
+
+    return res == ERROR_SUCCESS;
+}
+
 static void test_SQLWriteDSNToIni(void)
 {
     BOOL ret;
@@ -891,12 +907,27 @@ static void test_SQLWriteDSNToIni(void)
     ret = SQLRemoveDSNFromIniW(L"");
     ok(!ret, "got %d\n", ret);
 
+    ret = check_dsn_exists(HKEY_LOCAL_MACHINE, L"wine_dbs");
+    ok(!ret, "Found registry key\n");
+
     ret = SQLWriteDSNToIni("wine_dbs", "SQL Server");
     if (!ret)
     {
         win_skip("Doesn't have permission to write a System DSN\n");
         return;
     }
+
+    ret = check_dsn_exists(HKEY_LOCAL_MACHINE, L"wine_dbs");
+    ok(ret, "Failed to find registry key\n");
+
+    SQLSetConfigMode(ODBC_USER_DSN);
+    ret = SQLWriteDSNToIni("wine_dbs", "SQL Server");
+    ok(ret, "got %d\n", ret);
+
+    ret = check_dsn_exists(HKEY_CURRENT_USER, L"wine_dbs");
+    ok(ret, "Failed to find registry key\n");
+
+    SQLSetConfigMode(ODBC_SYSTEM_DSN);
 
     if(ret)
     {
@@ -920,6 +951,18 @@ static void test_SQLWriteDSNToIni(void)
             RegCloseKey(hkey);
         }
 
+        SQLSetConfigMode(ODBC_BOTH_DSN);
+
+        /* ODBC_BOTH_DSN set and has both System/User DSN but only removes USER. */
+        ret = SQLRemoveDSNFromIni("wine_dbs");
+        ok(ret, "got %d\n", ret);
+
+        ret = check_dsn_exists(HKEY_CURRENT_USER, L"wine_dbs");
+        ok(!ret, "Found registry key\n");
+
+        ret = check_dsn_exists(HKEY_LOCAL_MACHINE, L"wine_dbs");
+        ok(ret, "Failed to find registry key\n");
+
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\ODBC\\ODBC.INI\\wine_dbs", 0,
                             KEY_READ, &hkey);
         ok(res == ERROR_SUCCESS, "RegOpenKeyExW failed\n");
@@ -937,6 +980,8 @@ static void test_SQLWriteDSNToIni(void)
 
             RegCloseKey(hkey);
         }
+
+        SQLSetConfigMode(ODBC_SYSTEM_DSN);
 
         ret = SQLRemoveDSNFromIni("wine_dbs");
         ok(ret, "got %d\n", ret);
