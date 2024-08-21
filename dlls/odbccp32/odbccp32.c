@@ -1586,6 +1586,12 @@ BOOL WINAPI SQLRemoveDSNFromIniW(LPCWSTR lpszDSN)
 
     TRACE("%s\n", debugstr_w(lpszDSN));
 
+    if (!SQLValidDSNW(lpszDSN))
+    {
+        push_error(ODBC_ERROR_INVALID_DSN, L"Invalid DSN");
+        return FALSE;
+    }
+
     clear_errors();
 
     if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC\\ODBC.INI\\ODBC Data Sources", &hkey) == ERROR_SUCCESS)

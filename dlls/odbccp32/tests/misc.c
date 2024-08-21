@@ -885,6 +885,12 @@ static void test_SQLWriteDSNToIni(void)
 
     SQLSetConfigMode(ODBC_SYSTEM_DSN);
 
+    ret = SQLRemoveDSNFromIni("");
+    ok(!ret, "got %d\n", ret);
+
+    ret = SQLRemoveDSNFromIniW(L"");
+    ok(!ret, "got %d\n", ret);
+
     ret = SQLWriteDSNToIni("wine_dbs", "SQL Server");
     if (!ret)
     {
