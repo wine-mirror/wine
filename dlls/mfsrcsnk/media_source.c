@@ -35,6 +35,7 @@ struct media_source
     CRITICAL_SECTION cs;
     IMFMediaEventQueue *queue;
     IMFByteStream *stream;
+    WCHAR *url;
     float rate;
 
     enum
@@ -286,6 +287,7 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
 
         IMFMediaEventQueue_Release(source->queue);
         IMFByteStream_Release(source->stream);
+        free(source->url);
 
         source->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&source->cs);
@@ -417,6 +419,28 @@ static const IMFMediaSourceVtbl media_source_vtbl =
     media_source_Shutdown,
 };
 
+static WCHAR *get_byte_stream_url(IMFByteStream *stream, const WCHAR *url)
+{
+    IMFAttributes *attributes;
+    WCHAR buffer[MAX_PATH];
+    UINT32 size;
+    HRESULT hr;
+
+    TRACE("stream %p, url %s\n", stream, debugstr_w(url));
+
+    if (SUCCEEDED(hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes)))
+    {
+        if (FAILED(hr = IMFAttributes_GetString(attributes, &MF_BYTESTREAM_ORIGIN_NAME,
+                buffer, ARRAY_SIZE(buffer), &size)))
+            WARN("Failed to get MF_BYTESTREAM_ORIGIN_NAME got size %#x, hr %#lx\n", size, hr);
+        else
+            url = buffer;
+        IMFAttributes_Release(attributes);
+    }
+
+    return url ? wcsdup(url) : NULL;
+}
+
 static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFMediaSource **out)
 {
     struct media_source *source;
@@ -438,6 +462,7 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
         return hr;
     }
 
+    source->url = get_byte_stream_url(stream, url);
     IMFByteStream_AddRef((source->stream = stream));
 
     source->rate = 1.0f;
