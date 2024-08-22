@@ -65,6 +65,7 @@ static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
     return heap_pool_alloc(&ctx->script->tmp_heap, size);
 }
 
+int hex_to_int(WCHAR);
 BOOL is_identifier_char(WCHAR);
 BOOL unescape(WCHAR*,size_t*);
 HRESULT parse_decimal(const WCHAR**,const WCHAR*,double*);

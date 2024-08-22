@@ -1676,6 +1676,26 @@ sync_test("isFrozen", function() {
     }
 });
 
+sync_test("JSON.parse escapes", function() {
+    var i, valid = [ "b", "t", "n", "f", "r", "u1111", '"', "/" ];
+
+    for(i = 0; i < valid.length; i++) {
+        var a = JSON.parse('"\\' + valid[i] + '"'), b = eval('"\\' + valid[i] + '"');
+        ok(a === b, "JSON.parse with \\" + valid[i] + " returned " + a);
+    }
+
+    var invalid = [ "0", "00", "05", "x20", "i", "'" ];
+
+    for(i = 0; i < invalid.length; i++) {
+        try {
+            JSON.parse('"\\' + invalid[i] + '"');
+            ok(false, "expected exception calling JSON.parse with \\" + invalid[i]);
+        } catch(e) {
+            ok(e.number === 0xa03f6 - 0x80000000, "calling JSON.parse with \\" + invalid[i] + " threw " + e.number);
+        }
+    }
+});
+
 sync_test("RegExp", function() {
     var r;
 

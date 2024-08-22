@@ -57,6 +57,77 @@ static BOOL is_keyword(json_parse_ctx_t *ctx, const WCHAR *keyword)
     return TRUE;
 }
 
+static BOOL unescape_json_string(WCHAR *str, size_t *len)
+{
+    WCHAR *pd, *p, c, *end = str + *len;
+    int i;
+
+    pd = p = str;
+    while(p < end) {
+        if(*p != '\\') {
+            *pd++ = *p++;
+            continue;
+        }
+
+        if(++p == end)
+            return FALSE;
+
+        switch(*p) {
+        case '\"':
+        case '\\':
+        case '/':
+            c = *p;
+            break;
+        case 'b':
+            c = '\b';
+            break;
+        case 't':
+            c = '\t';
+            break;
+        case 'n':
+            c = '\n';
+            break;
+        case 'f':
+            c = '\f';
+            break;
+        case 'r':
+            c = '\r';
+            break;
+        case 'u':
+            if(p + 4 >= end)
+                return FALSE;
+            i = hex_to_int(*++p);
+            if(i == -1)
+                return FALSE;
+            c = i << 12;
+
+            i = hex_to_int(*++p);
+            if(i == -1)
+                return FALSE;
+            c += i << 8;
+
+            i = hex_to_int(*++p);
+            if(i == -1)
+                return FALSE;
+            c += i << 4;
+
+            i = hex_to_int(*++p);
+            if(i == -1)
+                return FALSE;
+            c += i;
+            break;
+        default:
+            return FALSE;
+        }
+
+        *pd++ = c;
+        p++;
+    }
+
+    *len = pd - str;
+    return TRUE;
+}
+
 /* ECMA-262 5.1 Edition    15.12.1.1 */
 static HRESULT parse_json_string(json_parse_ctx_t *ctx, WCHAR **r)
 {
@@ -80,10 +151,10 @@ static HRESULT parse_json_string(json_parse_ctx_t *ctx, WCHAR **r)
     if(len)
         memcpy(buf, ptr, len*sizeof(WCHAR));
 
-    if(!unescape(buf, &len)) {
-        FIXME("unescape failed\n");
+    if(!(ctx->ctx->html_mode ? unescape_json_string(buf, &len) : unescape(buf, &len))) {
+        WARN("unescape failed\n");
         free(buf);
-        return E_FAIL;
+        return JS_E_INVALID_CHAR;
     }
 
     buf[len] = 0;

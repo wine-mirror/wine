@@ -117,7 +117,7 @@ static BOOL is_endline(WCHAR c)
     return c == '\n' || c == '\r' || c == 0x2028 || c == 0x2029;
 }
 
-static int hex_to_int(WCHAR c)
+int hex_to_int(WCHAR c)
 {
     if('0' <= c && c <= '9')
         return c-'0';

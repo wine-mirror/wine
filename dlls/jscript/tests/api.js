@@ -2010,7 +2010,7 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         ["true", true],
         ["   \nnull  ", null],
         ["{}", {}],
-        ["\"\\r\\n test\\u1111\"", "\r\n test\u1111"],
+        ["\"\\r\\n test\\u1111\\/\\x20\\45\\'\"", "\r\n test\u1111/ %'"],
         ["{\"x\" :\n true}", {x:true}],
         ["{\"x y\": {}, \"z\": {\"x\":null}}", {"x y":{}, z:{x:null}}],
         ["[]", []],
