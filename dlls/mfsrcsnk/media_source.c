@@ -815,6 +815,24 @@ static void media_source_init_stream_map(struct media_source *source, UINT strea
     }
 }
 
+static void media_source_init_descriptors(struct media_source *source)
+{
+    UINT i;
+
+    TRACE("source %p\n", source);
+
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+        WCHAR buffer[512];
+        NTSTATUS status;
+
+        if (FAILED(status = winedmo_demuxer_stream_name(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
+                || FAILED(IMFStreamDescriptor_SetString(stream->descriptor, &MF_SD_STREAM_NAME, buffer)))
+            WARN("Failed to set stream descriptor name, status %#lx\n", status);
+    }
+}
+
 static HRESULT stream_descriptor_create(UINT32 id, IMFMediaType *media_type, IMFStreamDescriptor **out)
 {
     IMFStreamDescriptor *descriptor;
@@ -915,6 +933,8 @@ static HRESULT media_source_async_create(struct media_source *source, IMFAsyncRe
         }
         IMFMediaType_Release(media_type);
     }
+
+    media_source_init_descriptors(source);
 
 done:
     IMFAsyncResult_SetStatus(result, hr);
