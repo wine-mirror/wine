@@ -3145,7 +3145,6 @@ static void test_WSAProviderConfigChange(void)
 
     change = 0;
     ret = WSAProviderConfigChange(&change, NULL, NULL);
-    todo_wine
     ok(ret != SOCKET_ERROR, "WSAProviderConfigChange() error %u\n", WSAGetLastError());
 
     port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
@@ -3155,7 +3154,6 @@ static void test_WSAProviderConfigChange(void)
     port2 = CreateIoCompletionPort((HANDLE)sock, port, 123, 0);
     ok(port2 == port, "got %p/%p\n", port, port2);
     port2 = CreateIoCompletionPort(change, port, 456, 0);
-    todo_wine
     ok(port2 == port, "got %p/%p\n", port, port2);
     ret = WSAIoctl(sock, SIO_ADDRESS_LIST_CHANGE, NULL, 0, NULL, 0, &bytes, &ov, NULL);
     ok(ret, "WSAIoctl() error %u\n", WSAGetLastError());

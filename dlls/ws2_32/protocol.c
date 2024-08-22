@@ -2174,8 +2174,26 @@ int WINAPI WSAEnumNameSpaceProvidersW( DWORD *len, WSANAMESPACE_INFOW *buffer )
 int WINAPI WSAProviderConfigChange( HANDLE *handle, OVERLAPPED *overlapped,
                                     LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
 {
+    SOCKET s;
+
     FIXME( "(%p %p %p) Stub!\n", handle, overlapped, completion );
-    return -1;
+
+    if (!handle)
+    {
+        SetLastError( WSAEFAULT );
+        return SOCKET_ERROR;
+    }
+
+    if (*handle != NULL) return 0;
+
+    s = WSASocketW( AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED );
+    if (s != INVALID_SOCKET)
+    {
+        *handle = (HANDLE)s;
+        return 0;
+    }
+
+    return SOCKET_ERROR;
 }
 
 
