@@ -7456,15 +7456,21 @@ static HRESULT STDMETHODCALLTYPE d3d11_video_device_CreateVideoProcessorEnumerat
 
 static UINT STDMETHODCALLTYPE d3d11_video_device_GetVideoDecoderProfileCount(ID3D11VideoDevice1 *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
-    return 0;
+    struct d3d_device *device = impl_from_ID3D11VideoDevice1(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return wined3d_device_get_video_decode_profile_count(device->wined3d_device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_device_GetVideoDecoderProfile(
         ID3D11VideoDevice1 *iface, UINT index, GUID *profile)
 {
-    FIXME("iface %p, index %u, profile %p, stub!\n", iface, index, profile);
-    return E_NOTIMPL;
+    struct d3d_device *device = impl_from_ID3D11VideoDevice1(iface);
+
+    TRACE("iface %p, index %u, profile %p.\n", iface, index, profile);
+
+    return wined3d_device_get_video_decode_profile(device->wined3d_device, index, profile);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_device_CheckVideoDecoderFormat(

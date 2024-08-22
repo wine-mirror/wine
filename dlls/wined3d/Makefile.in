@@ -11,6 +11,7 @@ SOURCES = \
 	context_gl.c \
 	context_vk.c \
 	cs.c \
+	decoder.c \
 	device.c \
 	directx.c \
 	ffp_gl.c \

@@ -3353,6 +3353,7 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
     adapter->fragment_pipe = &none_fragment_pipe;
     adapter->misc_state_template = misc_state_template_no3d;
     adapter->shader_backend = &none_shader_backend;
+    adapter->decoder_ops = &wined3d_null_decoder_ops;
 
     wined3d_adapter_no3d_init_d3d_info(adapter, wined3d_creation_flags);
 

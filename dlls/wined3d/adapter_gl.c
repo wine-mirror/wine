@@ -3693,6 +3693,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter_gl *adapter_gl,
     adapter->shader_backend = &glsl_shader_backend;
     adapter->vertex_pipe = &glsl_vertex_pipe;
     adapter->fragment_pipe = &glsl_fragment_pipe;
+    adapter->decoder_ops = &wined3d_null_decoder_ops;
 
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
     {

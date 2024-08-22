@@ -2528,6 +2528,7 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     adapter->fragment_pipe = wined3d_spirv_fragment_pipe_init_vk();
     adapter->misc_state_template = misc_state_template_vk;
     adapter->shader_backend = wined3d_spirv_shader_backend_init_vk();
+    adapter->decoder_ops = &wined3d_null_decoder_ops;
 
     wined3d_adapter_vk_init_d3d_info(adapter_vk, wined3d_creation_flags);
 

@@ -5636,3 +5636,30 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
     else
         return CallWindowProcA(proc, window, message, wparam, lparam);
 }
+
+unsigned int CDECL wined3d_device_get_video_decode_profile_count(struct wined3d_device *device)
+{
+    GUID profiles[WINED3D_DECODER_MAX_PROFILE_COUNT];
+    unsigned int count;
+
+    TRACE("device %p.\n", device);
+
+    device->adapter->decoder_ops->get_profiles(device->adapter, &count, profiles);
+    return count;
+}
+
+HRESULT CDECL wined3d_device_get_video_decode_profile(struct wined3d_device *device, unsigned int idx, GUID *profile)
+{
+    GUID profiles[WINED3D_DECODER_MAX_PROFILE_COUNT];
+    unsigned int count;
+
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    device->adapter->decoder_ops->get_profiles(device->adapter, &count, profiles);
+
+    if (idx >= count)
+        return E_INVALIDARG;
+
+    *profile = profiles[idx];
+    return S_OK;
+}
