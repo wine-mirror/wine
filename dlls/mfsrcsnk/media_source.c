@@ -80,6 +80,8 @@ struct media_stream
     IMFMediaSource *source;
     IMFMediaEventQueue *queue;
     IMFStreamDescriptor *descriptor;
+
+    BOOL active;
 };
 
 struct media_source
@@ -161,6 +163,7 @@ static ULONG WINAPI media_stream_Release(IMFMediaStream *iface)
 
     if (!refcount)
     {
+        stream->active = FALSE;
         IMFMediaSource_Release(stream->source);
         IMFStreamDescriptor_Release(stream->descriptor);
         IMFMediaEventQueue_Release(stream->queue);
@@ -636,6 +639,8 @@ static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *
 
         for (i = 0; i < source->stream_count; ++i)
         {
+            if (!source->streams[i]->active)
+                continue;
             if (FAILED(hr = IMFPresentationDescriptor_SelectStream(*descriptor, i)))
                 WARN("Failed to select stream %u, hr %#lx\n", i, hr);
         }
@@ -858,15 +863,17 @@ static HRESULT normalize_mp4_language_code(struct media_source *source, WCHAR *b
 
 static void media_source_init_descriptors(struct media_source *source)
 {
-    UINT i;
+    UINT i, last_audio = -1, last_video = -1, first_audio = -1, first_video = -1;
 
     TRACE("source %p\n", source);
 
     for (i = 0; i < source->stream_count; i++)
     {
         struct media_stream *stream = source->streams[i];
+        UINT exclude = -1;
         WCHAR buffer[512];
         NTSTATUS status;
+        GUID major;
 
         if (FAILED(status = winedmo_demuxer_stream_lang(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
                 || (!wcscmp(source->mime_type, L"video/mp4") && FAILED(normalize_mp4_language_code(source, buffer)))
@@ -875,6 +882,47 @@ static void media_source_init_descriptors(struct media_source *source)
         if (FAILED(status = winedmo_demuxer_stream_name(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
                 || FAILED(IMFStreamDescriptor_SetString(stream->descriptor, &MF_SD_STREAM_NAME, buffer)))
             WARN("Failed to set stream descriptor name, status %#lx\n", status);
+
+        if (FAILED(get_stream_media_type(source->winedmo_demuxer, source->stream_map[i], &major, NULL)))
+            continue;
+
+        if (IsEqualGUID(&major, &MFMediaType_Audio))
+        {
+            if (first_audio == -1)
+                first_audio = i;
+            exclude = last_audio;
+            last_audio = i;
+        }
+        else if (IsEqualGUID(&major, &MFMediaType_Video))
+        {
+            if (first_video == -1)
+                first_video = i;
+            exclude = last_video;
+            last_video = i;
+        }
+
+        if (exclude != -1)
+        {
+            if (FAILED(IMFStreamDescriptor_SetUINT32(source->streams[exclude]->descriptor, &MF_SD_MUTUALLY_EXCLUSIVE, 1)))
+                WARN("Failed to set stream %u MF_SD_MUTUALLY_EXCLUSIVE\n", exclude);
+            else if (FAILED(IMFStreamDescriptor_SetUINT32(stream->descriptor, &MF_SD_MUTUALLY_EXCLUSIVE, 1)))
+                WARN("Failed to set stream %u MF_SD_MUTUALLY_EXCLUSIVE\n", i);
+        }
+    }
+
+    if (!wcscmp(source->mime_type, L"video/mp4"))
+    {
+        if (last_audio != -1)
+            source->streams[last_audio]->active = TRUE;
+        if (last_video != -1)
+            source->streams[last_video]->active = TRUE;
+    }
+    else
+    {
+        if (first_audio != -1)
+            source->streams[first_audio]->active = TRUE;
+        if (first_video != -1)
+            source->streams[first_video]->active = TRUE;
     }
 }
 
