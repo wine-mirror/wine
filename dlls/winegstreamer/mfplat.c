@@ -177,19 +177,6 @@ HRESULT mfplat_DllRegisterServer(void)
         {MFMediaType_Audio, MFAudioFormat_PCM},
     };
 
-    MFT_REGISTER_TYPE_INFO wma_decoder_input_types[] =
-    {
-        {MFMediaType_Audio, MEDIASUBTYPE_MSAUDIO1},
-        {MFMediaType_Audio, MFAudioFormat_WMAudioV8},
-        {MFMediaType_Audio, MFAudioFormat_WMAudioV9},
-        {MFMediaType_Audio, MFAudioFormat_WMAudio_Lossless},
-    };
-    MFT_REGISTER_TYPE_INFO wma_decoder_output_types[] =
-    {
-        {MFMediaType_Audio, MFAudioFormat_PCM},
-        {MFMediaType_Audio, MFAudioFormat_Float},
-    };
-
     MFT_REGISTER_TYPE_INFO h264_decoder_input_types[] =
     {
         {MFMediaType_Video, MFVideoFormat_H264},
@@ -265,16 +252,6 @@ HRESULT mfplat_DllRegisterServer(void)
             aac_decoder_input_types,
             ARRAY_SIZE(aac_decoder_output_types),
             aac_decoder_output_types,
-        },
-        {
-            CLSID_WMADecMediaObject,
-            MFT_CATEGORY_AUDIO_DECODER,
-            L"WMAudio Decoder MFT",
-            MFT_ENUM_FLAG_SYNCMFT,
-            ARRAY_SIZE(wma_decoder_input_types),
-            wma_decoder_input_types,
-            ARRAY_SIZE(wma_decoder_output_types),
-            wma_decoder_output_types,
         },
         {
             CLSID_MSH264DecoderMFT,

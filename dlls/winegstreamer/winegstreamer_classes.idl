@@ -85,9 +85,9 @@ coclass GStreamerByteStreamHandler {}
 
 [
     threading(both),
-    uuid(2eeb4adf-4578-4d10-bca7-bb955f56320a)
+    uuid(5b4d4e54-0620-4cf9-94ae-7823965c28b6)
 ]
-coclass CWMADecMediaObject {};
+coclass wg_wma_decoder {};
 
 [
     threading(both),
