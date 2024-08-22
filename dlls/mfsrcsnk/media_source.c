@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 struct media_source
 {
     IMFMediaSource IMFMediaSource_iface;
+    IMFGetService IMFGetService_iface;
     LONG refcount;
 
     CRITICAL_SECTION cs;
@@ -45,6 +46,49 @@ static struct media_source *media_source_from_IMFMediaSource(IMFMediaSource *ifa
     return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
 }
 
+static struct media_source *media_source_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_source, IMFGetService_iface);
+}
+
+static HRESULT WINAPI media_source_IMFGetService_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct media_source *source = media_source_from_IMFGetService(iface);
+    return IMFMediaSource_QueryInterface(&source->IMFMediaSource_iface, riid, obj);
+}
+
+static ULONG WINAPI media_source_IMFGetService_AddRef(IMFGetService *iface)
+{
+    struct media_source *source = media_source_from_IMFGetService(iface);
+    return IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
+}
+
+static ULONG WINAPI media_source_IMFGetService_Release(IMFGetService *iface)
+{
+    struct media_source *source = media_source_from_IMFGetService(iface);
+    return IMFMediaSource_Release(&source->IMFMediaSource_iface);
+}
+
+static HRESULT WINAPI media_source_IMFGetService_GetService(IMFGetService *iface, REFGUID service,
+        REFIID riid, void **obj)
+{
+    struct media_source *source = media_source_from_IMFGetService(iface);
+
+    TRACE("source %p, service %s, riid %s, obj %p\n", source, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    FIXME("Unsupported service %s / riid %s\n", debugstr_guid(service), debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static const IMFGetServiceVtbl media_source_IMFGetService_vtbl =
+{
+    media_source_IMFGetService_QueryInterface,
+    media_source_IMFGetService_AddRef,
+    media_source_IMFGetService_Release,
+    media_source_IMFGetService_GetService,
+};
+
 static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
 {
     struct media_source *source = media_source_from_IMFMediaSource(iface);
@@ -57,6 +101,13 @@ static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID 
     {
         IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
         *out = &source->IMFMediaSource_iface;
+        return S_OK;
+    }
+
+    if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        IMFGetService_AddRef(&source->IMFGetService_iface);
+        *out = &source->IMFGetService_iface;
         return S_OK;
     }
 
@@ -227,6 +278,7 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
     if (!(source = calloc(1, sizeof(*source))))
         return E_OUTOFMEMORY;
     source->IMFMediaSource_iface.lpVtbl = &media_source_vtbl;
+    source->IMFGetService_iface.lpVtbl = &media_source_IMFGetService_vtbl;
     source->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&source->queue)))
