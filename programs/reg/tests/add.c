@@ -37,7 +37,10 @@ BOOL run_reg_exe_(const char *file, unsigned line, const char *cmd, DWORD *rc)
 
     ret = WaitForSingleObject(pi.hProcess, 10000);
     if (ret == WAIT_TIMEOUT)
+    {
         TerminateProcess(pi.hProcess, 1);
+        WaitForSingleObject(pi.hProcess, 3000);
+    }
 
     bret = GetExitCodeProcess(pi.hProcess, rc);
     lok(bret, "GetExitCodeProcess failed: %ld\n", GetLastError());
