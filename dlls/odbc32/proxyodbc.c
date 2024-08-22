@@ -4290,6 +4290,9 @@ static void free_attribute_list( struct attribute_list *list )
 {
     UINT32 i;
     for (i = 0; i < list->count; i++) free_attribute( list->attrs[i] );
+    free( list->attrs );
+    list->count = 0;
+    list->attrs = NULL;
 }
 
 static BOOL append_attribute( struct attribute_list *list, struct attribute *attr )
