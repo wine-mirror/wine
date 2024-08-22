@@ -862,6 +862,16 @@ sync_test("eval", function() {
     context = {};
     (function(eval) { eval(code); })(function() { context.barfoo = 4321; });
     ok(context.barfoo === 4321, "context.barfoo = " + context.barfoo);
+
+    (0,eval)("var foobar = 'wine';");
+    if(v < 9) {
+        ok(!("foobar" in window), "foobar in window");
+        ok(foobar === "wine", "foobar = " + foobar);
+    }else {
+        ok("foobar" in window, "foobar not in window");
+        ok(window.foobar === "wine", "foobar = " + window.foobar);
+    }
+    delete foobar;
 });
 
 sync_test("for..in", function() {
