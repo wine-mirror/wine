@@ -1760,3 +1760,9 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
     FIXME("Major type %s is not supported.\n", debugstr_guid(&major));
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI MFCreateLegacyMediaBufferOnMFMediaBuffer(IMFSample *sample, IMFMediaBuffer *media_buffer, DWORD offset, IMediaBuffer **obj)
+{
+    FIXME("stub!\n");
+    return E_NOTIMPL;
+}

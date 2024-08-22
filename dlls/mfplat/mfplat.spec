@@ -50,7 +50,7 @@
 @ stdcall MFCreateDXSurfaceBuffer(ptr ptr long ptr)
 @ stdcall MFCreateEventQueue(ptr)
 @ stdcall MFCreateFile(long long long wstr ptr)
-@ stub MFCreateLegacyMediaBufferOnMFMediaBuffer
+@ stdcall MFCreateLegacyMediaBufferOnMFMediaBuffer(ptr ptr long ptr)
 @ stdcall MFCreateMFByteStreamOnStream(ptr ptr)
 @ stdcall MFCreateMFByteStreamOnStreamEx(ptr ptr)
 @ stdcall MFCreateMFByteStreamWrapper(ptr ptr)
