@@ -16,12 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-
-#include "mfapi.h"
-#include "mfidl.h"
-#include "mferror.h"
-
 #include "mfsrcsnk_private.h"
 
 #include "wine/debug.h"
@@ -1000,30 +994,6 @@ failed:
     return hr;
 }
 
-static HRESULT WINAPI sink_class_factory_QueryInterface(IMFSinkClassFactory *iface, REFIID riid, void **out)
-{
-    if (IsEqualIID(riid, &IID_IMFSinkClassFactory)
-            || IsEqualIID(riid, &IID_IUnknown))
-    {
-        *out = iface;
-        IMFSinkClassFactory_AddRef(iface);
-        return S_OK;
-    }
-
-    *out = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI sink_class_factory_AddRef(IMFSinkClassFactory *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI sink_class_factory_Release(IMFSinkClassFactory *iface)
-{
-    return 1;
-}
-
 static HRESULT WINAPI sink_class_factory_CreateMediaSink(IMFSinkClassFactory *iface, IMFByteStream *stream,
         IMFMediaType *video_type, IMFMediaType *audio_type, IMFMediaSink **sink)
 {
@@ -1040,9 +1010,32 @@ static const IMFSinkClassFactoryVtbl wave_sink_factory_vtbl =
     sink_class_factory_CreateMediaSink,
 };
 
-static IMFSinkClassFactory wave_sink_factory = { &wave_sink_factory_vtbl };
-
-HRESULT wave_sink_factory_create(REFIID riid, void **out)
+static HRESULT WINAPI class_factory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **out)
 {
-    return IMFSinkClassFactory_QueryInterface(&wave_sink_factory, riid, out);
+    struct sink_class_factory *factory = sink_class_factory_from_IClassFactory(iface);
+
+    TRACE("iface %p, outer %p, riid %s, out %p stub!.\n", iface, outer, debugstr_guid(riid), out);
+
+    *out = NULL;
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    return IMFSinkClassFactory_QueryInterface(&factory->IMFSinkClassFactory_iface, riid, out);
 }
+
+static const IClassFactoryVtbl wave_sink_class_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    class_factory_CreateInstance,
+    class_factory_LockServer,
+};
+
+struct sink_class_factory wave_sink_factory =
+{
+    { &wave_sink_class_factory_vtbl },
+    { &wave_sink_factory_vtbl },
+};
+
+IClassFactory *wave_sink_class_factory = &wave_sink_factory.IClassFactory_iface;
