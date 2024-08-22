@@ -2116,6 +2116,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msvproc.dll,1
 11,,qcap.dll,1
 11,,qedit.dll,1
+11,,resampledmo.dll,1
 11,,urlmon.dll,1
 11,,windowscodecs.dll,1
 11,,winegstreamer.dll,1

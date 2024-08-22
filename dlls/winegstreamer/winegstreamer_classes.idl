@@ -115,9 +115,9 @@ coclass CMSH264EncoderMFT {}
 
 [
     threading(both),
-    uuid(f447b69e-1884-4a7e-8055-346f74d6edb3)
+    uuid(92f35e78-15a5-486b-888e-575f99651ce2)
 ]
-coclass CResamplerMediaObject {}
+coclass wg_resampler {}
 
 [
     threading(both),
