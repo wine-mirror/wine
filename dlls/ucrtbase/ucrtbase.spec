@@ -1737,7 +1737,7 @@
 @ cdecl _o_nexttowardf(float double) __nexttowardf
 @ cdecl _o_nexttowardl(double double) __nexttoward
 @ cdecl _o_pow(double double) pow
-@ cdecl -arch=!i386 _o_powf(float float) powf
+@ cdecl _o_powf(float float) powf
 @ cdecl _o_putc(long ptr) putc
 @ cdecl _o_putchar(long) putchar
 @ cdecl _o_puts(str) puts
@@ -2449,7 +2449,7 @@
 @ stub norml
 @ cdecl perror(str)
 @ cdecl pow(double double)
-@ cdecl -arch=!i386 powf(float float)
+@ cdecl powf(float float)
 @ cdecl putc(long ptr)
 @ cdecl putchar(long)
 @ cdecl puts(str)

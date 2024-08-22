@@ -45,7 +45,6 @@ float tanf(float x) { return tan(x); }
 float atan2f(float x, float y) { return atan2(x, y); }
 float expf(float x) { return exp(x); }
 float logf(float x) { return log(x); }
-float powf(float x, float y) { return pow(x, y); }
 float sqrtf(float x) { return sqrt(x); }
 float floorf(float x) { return floor(x); }
 float ceilf(float x) { return ceil(x); }
@@ -55,10 +54,14 @@ __ASM_GLOBAL_IMPORT(tanf)
 __ASM_GLOBAL_IMPORT(atan2f)
 __ASM_GLOBAL_IMPORT(expf)
 __ASM_GLOBAL_IMPORT(logf)
-__ASM_GLOBAL_IMPORT(powf)
 __ASM_GLOBAL_IMPORT(sqrtf)
 __ASM_GLOBAL_IMPORT(floorf)
 __ASM_GLOBAL_IMPORT(ceilf)
+
+#if _MSVCR_VER < 140
+float powf(float x, float y) { return pow(x, y); }
+__ASM_GLOBAL_IMPORT(powf)
+#endif
 #endif
 
 #if _MSVCR_VER < 120
