@@ -180,6 +180,25 @@ NTSTATUS CDECL winedmo_demuxer_destroy( struct winedmo_demuxer *demuxer )
     return status;
 }
 
+NTSTATUS CDECL winedmo_demuxer_stream_name( struct winedmo_demuxer demuxer, UINT stream, WCHAR *buffer, UINT len )
+{
+    struct demuxer_stream_name_params params = {.demuxer = demuxer, .stream = stream};
+    NTSTATUS status;
+
+    TRACE( "demuxer %#I64x, stream %u\n", demuxer.handle, stream );
+
+    if ((status = UNIX_CALL( demuxer_stream_name, &params )))
+    {
+        WARN( "Failed to get stream name, status %#lx\n", status );
+        return status;
+    }
+
+    len = MultiByteToWideChar( CP_UTF8, 0, params.buffer, -1, buffer, len );
+    buffer[len - 1] = 0;
+    return STATUS_SUCCESS;
+}
+
+
 static HRESULT get_media_type( UINT code, void *params, struct media_type *media_type,
                                GUID *major, union winedmo_format **format )
 {

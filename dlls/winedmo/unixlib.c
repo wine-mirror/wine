@@ -132,6 +132,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X( demuxer_check ),
     X( demuxer_create ),
     X( demuxer_destroy ),
+    X( demuxer_stream_name ),
     X( demuxer_stream_type ),
 };
 
@@ -191,6 +192,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     X( demuxer_check ),
     X64( demuxer_create ),
     X64( demuxer_destroy ),
+    X( demuxer_stream_name ),
     X( demuxer_stream_type ),
 };
 
