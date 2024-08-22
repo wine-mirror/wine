@@ -2705,6 +2705,280 @@ static void test_query_image_information(void)
     NtClose( file );
 }
 
+static int *write_addr;
+static int got_exception;
+
+static LONG CALLBACK exec_write_handler( EXCEPTION_POINTERS *ptrs )
+{
+    MANAGE_WRITES_TO_EXECUTABLE_MEMORY mem = { .Version = 2, .ThreadAllowWrites = 1 };
+    EXCEPTION_RECORD *rec = ptrs->ExceptionRecord;
+    NTSTATUS status;
+
+    got_exception++;
+    ok( rec->ExceptionCode == STATUS_IN_PAGE_ERROR, "wrong exception %lx\n", rec->ExceptionCode );
+    ok( rec->NumberParameters == 3, "wrong params %lx\n", rec->NumberParameters );
+    ok( rec->ExceptionInformation[0] == 1, "not write access %Ix\n", rec->ExceptionInformation[0] );
+    ok( (int *)rec->ExceptionInformation[1] == write_addr,
+        "wrong address %p / %p\n", (void *)rec->ExceptionInformation[1], write_addr );
+    ok( rec->ExceptionInformation[2] == STATUS_EXECUTABLE_MEMORY_WRITE, "wrong status %Ix\n",
+        rec->ExceptionInformation[2] );
+
+    status = NtSetInformationThread( GetCurrentThread(), ThreadManageWritesToExecutableMemory,
+                                     &mem, sizeof(mem) );
+    ok( !status, "NtSetInformationThread failed %lx\n", status );
+    *write_addr = 0;  /* make the page dirty to prevent further exceptions */
+    mem.ThreadAllowWrites = 0;
+    status = NtSetInformationThread( GetCurrentThread(), ThreadManageWritesToExecutableMemory,
+                                     &mem, sizeof(mem) );
+    ok( !status, "NtSetInformationThread failed %lx\n", status );
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static void test_exec_memory_writes(void)
+{
+    NTSTATUS status;
+    void *ptr, *handler;
+    MANAGE_WRITES_TO_EXECUTABLE_MEMORY mem = { .Version = 2 };
+    MEMORY_RANGE_ENTRY range;
+    ULONG flag, len, granularity;
+    ULONG_PTR count;
+    void *addresses[4];
+    DWORD old_prot;
+    WCHAR path[MAX_PATH];
+    HANDLE file;
+    IO_STATUS_BLOCK io;
+
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                                      &mem, sizeof(mem) );
+#ifdef __aarch64__
+    ok( !status, "NtSetInformationProcess failed %lx\n", status );
+#else
+    if (!status)
+    {
+        SYSTEM_CPU_INFORMATION info;
+        ULONG len;
+
+        RtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len );
+        ok (info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64, "succeeded on non-ARM64\n" );
+        mem.ProcessEnableWriteExceptions = 1;
+        NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                                 &mem, sizeof(mem) );
+        skip( "skipping test on ARM64EC\n" );
+        return;
+    }
+    ok( status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_SUPPORTED,
+        "NtSetInformationProcess failed %lx\n", status );
+#endif
+    if (status) return;
+    handler = RtlAddVectoredExceptionHandler( TRUE, exec_write_handler );
+
+    /* test anon mapping */
+
+    ptr = VirtualAlloc( NULL, page_size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
+    write_addr = (int *)ptr + 3;
+
+    mem.ProcessEnableWriteExceptions = 1;
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                                      &mem, sizeof(mem) );
+    ok( !status, "NtSetInformationProcess failed %lx\n", status );
+
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 0, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    VirtualProtect( ptr, page_size, PAGE_EXECUTE_READWRITE, &old_prot );
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    /* no longer failing on dirty page */
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 0, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    /* setting permissions resets protection */
+    VirtualProtect( ptr, page_size, PAGE_EXECUTE_READWRITE, &old_prot );
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    /* clearing dirty state also resets protection */
+    range.VirtualAddress = ptr;
+    range.NumberOfBytes = 1;
+    flag = 0;
+    status = pNtSetInformationVirtualMemory( GetCurrentProcess(), VmPageDirtyStateInformation,
+                                             1, &range, &flag, sizeof(flag) );
+    ok( !status, "NtSetInformationVirtualMemory failed %lx\n", status );
+
+    /* making page dirty is not allowed */
+    flag = 1;
+    status = pNtSetInformationVirtualMemory( GetCurrentProcess(), VmPageDirtyStateInformation,
+                                             1, &range, &flag, sizeof(flag) );
+    ok( status == STATUS_INVALID_PARAMETER_5, "NtSetInformationVirtualMemory failed %lx\n", status );
+
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    GetModuleFileNameW( 0, path, MAX_PATH );
+    file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "can't open %s: %lu\n", debugstr_w(path), GetLastError() );
+    /* reading into protected page crashes on Windows */
+    if (0) VirtualProtect( ptr, page_size, PAGE_EXECUTE_READWRITE, &old_prot );
+    status = NtReadFile( file, 0, NULL, NULL, &io, write_addr, 8, NULL, NULL );
+    ok( !status, "NtReadFile failed %lx\n", status );
+    CloseHandle( file );
+
+    VirtualFree( ptr, 0, MEM_RELEASE );
+
+    /* test PE mapping */
+
+    ptr = GetModuleHandleA( NULL );
+    write_addr = (int *)ptr + 3;
+    VirtualProtect( ptr, page_size, PAGE_EXECUTE_WRITECOPY, &old_prot );
+
+    got_exception = 0;
+    *write_addr = 0;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    got_exception = 0;
+    *write_addr = 0;
+    ok( got_exception == 0, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    VirtualProtect( ptr, page_size, PAGE_EXECUTE_WRITECOPY, &old_prot );
+    got_exception = 0;
+    *write_addr = 0;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    range.VirtualAddress = write_addr;
+    range.NumberOfBytes = 1;
+    flag = 0;
+    status = pNtSetInformationVirtualMemory( GetCurrentProcess(), VmPageDirtyStateInformation,
+                                             1, &range, &flag, sizeof(flag) );
+    ok( !status, "NtSetInformationVirtualMemory failed %lx\n", status );
+    got_exception = 0;
+    *write_addr = 0;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    /* test interactions with write watches */
+
+    ptr = VirtualAlloc( NULL, page_size, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE );
+    write_addr = (int *)ptr + 3;
+
+    VirtualProtect( ptr, page_size, PAGE_EXECUTE_READWRITE, &old_prot );
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    count = ARRAY_SIZE(addresses);
+    status = NtGetWriteWatch( GetCurrentProcess(), 0, ptr, page_size, addresses, &count, &granularity );
+    ok( !status, "NtGetWriteWatch failed %lx\n", status );
+    ok( count == 1, "got count %Iu\n", count );
+    ok( addresses[0] == ptr, "wrong ptr %p / %p\n", addresses[0], ptr );
+
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 0, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    count = ARRAY_SIZE(addresses);
+    status = NtGetWriteWatch( GetCurrentProcess(), WRITE_WATCH_FLAG_RESET,
+                              ptr, page_size, addresses, &count, &granularity );
+    ok( !status, "NtGetWriteWatch failed %lx\n", status );
+    ok( count == 1, "got count %Iu\n", count );
+    ok( addresses[0] == ptr, "wrong ptr %p / %p\n", addresses[0], ptr );
+
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    count = ARRAY_SIZE(addresses);
+    status = NtGetWriteWatch( GetCurrentProcess(), 0, ptr, page_size, addresses, &count, &granularity );
+    ok( !status, "NtGetWriteWatch failed %lx\n", status );
+    ok( count == 1, "got count %Iu\n", count );
+    ok( addresses[0] == ptr, "wrong ptr %p / %p\n", addresses[0], ptr );
+
+    range.VirtualAddress = ptr;
+    range.NumberOfBytes = 1;
+    flag = 0;
+    status = pNtSetInformationVirtualMemory( GetCurrentProcess(), VmPageDirtyStateInformation,
+                                             1, &range, &flag, sizeof(flag) );
+    ok( !status, "NtSetInformationVirtualMemory failed %lx\n", status );
+
+    count = ARRAY_SIZE(addresses);
+    status = NtGetWriteWatch( GetCurrentProcess(), 0, ptr, page_size, addresses, &count, &granularity );
+    ok( !status, "NtGetWriteWatch failed %lx\n", status );
+    ok( count == 0, "got count %Iu\n", count );
+
+    got_exception = 0;
+    *write_addr = 0x123456;
+    ok( got_exception == 1, "wrong number of exceptions %u\n", got_exception );
+    write_addr++;
+
+    /* test some invalid calls */
+
+    VirtualFree( ptr, 0, MEM_RELEASE );
+    flag = 0;
+    status = pNtSetInformationVirtualMemory( GetCurrentProcess(), VmPageDirtyStateInformation,
+                                             1, &range, &flag, sizeof(flag) );
+    ok( status == STATUS_MEMORY_NOT_ALLOCATED, "NtSetInformationVirtualMemory failed %lx\n", status );
+
+    mem.ProcessEnableWriteExceptions = 0;
+    NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                             &mem, sizeof(mem) );
+
+    status = pNtSetInformationVirtualMemory( GetCurrentProcess(), VmPageDirtyStateInformation,
+                                             1, &range, &flag, sizeof(flag) );
+    ok( status == STATUS_NOT_SUPPORTED, "NtSetInformationVirtualMemory failed %lx\n", status );
+    status = NtQueryInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                                        &mem, sizeof(mem), &len );
+    ok( status == STATUS_INVALID_INFO_CLASS, "NtQueryInformationProcess failed %lx\n", status );
+
+    mem.ProcessEnableWriteExceptions = 1;
+    mem.ThreadAllowWrites = 1;
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                                      &mem, sizeof(mem) );
+    ok( status == STATUS_INVALID_PARAMETER, "NtSetInformationProcess failed %lx\n", status );
+    status = NtSetInformationThread( GetCurrentThread(), ThreadManageWritesToExecutableMemory,
+                                     &mem, sizeof(mem) );
+    ok( status == STATUS_INVALID_PARAMETER, "NtSetInformationThread failed %lx\n", status );
+    mem.ProcessEnableWriteExceptions = 0;
+    mem.ThreadAllowWrites = 0;
+    mem.Version = 3;
+    status = NtSetInformationThread( GetCurrentThread(), ThreadManageWritesToExecutableMemory,
+                                     &mem, sizeof(mem) );
+    ok( status == STATUS_REVISION_MISMATCH, "NtSetInformationThread failed %lx\n", status );
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                                      &mem, sizeof(mem) );
+    ok( status == STATUS_REVISION_MISMATCH, "NtSetInformationProcess failed %lx\n", status );
+    mem.Version = 2;
+    status = NtSetInformationThread( GetCurrentThread(), ThreadManageWritesToExecutableMemory,
+                                     &mem, sizeof(mem) - 1 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationThread failed %lx\n", status );
+    status = NtSetInformationThread( GetCurrentThread(), ThreadManageWritesToExecutableMemory,
+                                     &mem, sizeof(mem) + 1 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationThread failed %lx\n", status );
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                                      &mem, sizeof(mem) - 1 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationProcess failed %lx\n", status );
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessManageWritesToExecutableMemory,
+                                      &mem, sizeof(mem) + 1 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationProcess failed %lx\n", status );
+
+    RtlRemoveVectoredExceptionHandler( handler );
+}
+
 START_TEST(virtual)
 {
     HMODULE mod;
@@ -2755,4 +3029,5 @@ START_TEST(virtual)
     test_syscalls();
     test_query_region_information();
     test_query_image_information();
+    test_exec_memory_writes();
 }
