@@ -72,6 +72,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 #define DEFINE_MF_ASYNC_CALLBACK(type, name, base_iface)                                           \
     DEFINE_MF_ASYNC_CALLBACK_(type, name, type##_from_##name, type##_##name, name##_iface, &object->base_iface)
 
+struct media_stream
+{
+    IMFMediaStream IMFMediaStream_iface;
+    LONG refcount;
+
+    IMFMediaSource *source;
+    IMFMediaEventQueue *queue;
+};
+
 struct media_source
 {
     IMFMediaSource IMFMediaSource_iface;
@@ -95,6 +104,7 @@ struct media_source
     WCHAR mime_type[256];
 
     UINT *stream_map;
+    struct media_stream **streams;
 
     enum
     {
@@ -106,6 +116,162 @@ struct media_source
 static struct media_source *media_source_from_IMFMediaSource(IMFMediaSource *iface)
 {
     return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
+}
+
+static struct media_stream *media_stream_from_IMFMediaStream(IMFMediaStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_stream, IMFMediaStream_iface);
+}
+
+static HRESULT WINAPI media_stream_QueryInterface(IMFMediaStream *iface, REFIID riid, void **out)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+
+    TRACE("stream %p, riid %s, out %p\n", stream, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IUnknown)
+            || IsEqualIID(riid, &IID_IMFMediaEventGenerator)
+            || IsEqualIID(riid, &IID_IMFMediaStream))
+    {
+        IMFMediaStream_AddRef(&stream->IMFMediaStream_iface);
+        *out = &stream->IMFMediaStream_iface;
+        return S_OK;
+    }
+
+    FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI media_stream_AddRef(IMFMediaStream *iface)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    ULONG refcount = InterlockedIncrement(&stream->refcount);
+    TRACE("stream %p, refcount %ld\n", stream, refcount);
+    return refcount;
+}
+
+static ULONG WINAPI media_stream_Release(IMFMediaStream *iface)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    ULONG refcount = InterlockedDecrement(&stream->refcount);
+
+    TRACE("stream %p, refcount %ld\n", stream, refcount);
+
+    if (!refcount)
+    {
+        IMFMediaSource_Release(stream->source);
+        IMFMediaEventQueue_Release(stream->queue);
+        free(stream);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI media_stream_GetEvent(IMFMediaStream *iface, DWORD flags, IMFMediaEvent **event)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    TRACE("stream %p, flags %#lx, event %p\n", stream, flags, event);
+    return IMFMediaEventQueue_GetEvent(stream->queue, flags, event);
+}
+
+static HRESULT WINAPI media_stream_BeginGetEvent(IMFMediaStream *iface, IMFAsyncCallback *callback, IUnknown *state)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    TRACE("stream %p, callback %p, state %p\n", stream, callback, state);
+    return IMFMediaEventQueue_BeginGetEvent(stream->queue, callback, state);
+}
+
+static HRESULT WINAPI media_stream_EndGetEvent(IMFMediaStream *iface, IMFAsyncResult *result, IMFMediaEvent **event)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    TRACE("stream %p, result %p, event %p\n", stream, result, event);
+    return IMFMediaEventQueue_EndGetEvent(stream->queue, result, event);
+}
+
+static HRESULT WINAPI media_stream_QueueEvent(IMFMediaStream *iface, MediaEventType event_type, REFGUID ext_type,
+        HRESULT hr, const PROPVARIANT *value)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    TRACE("stream %p, event_type %#lx, ext_type %s, hr %#lx, value %p\n", stream, event_type, debugstr_guid(ext_type), hr, value);
+    return IMFMediaEventQueue_QueueEventParamVar(stream->queue, event_type, ext_type, hr, value);
+}
+
+static HRESULT WINAPI media_stream_GetMediaSource(IMFMediaStream *iface, IMFMediaSource **out)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    struct media_source *source = media_source_from_IMFMediaSource(stream->source);
+    HRESULT hr = S_OK;
+
+    TRACE("stream %p, out %p\n", stream, out);
+
+    EnterCriticalSection(&source->cs);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
+        *out = &source->IMFMediaSource_iface;
+    }
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IMFStreamDescriptor **descriptor)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    FIXME("stream %p, descriptor %p, stub!\n", stream, descriptor);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
+{
+    struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
+    FIXME("stream %p, token %p, stub!\n", stream, token);
+    return E_NOTIMPL;
+}
+
+static const IMFMediaStreamVtbl media_stream_vtbl =
+{
+    media_stream_QueryInterface,
+    media_stream_AddRef,
+    media_stream_Release,
+    media_stream_GetEvent,
+    media_stream_BeginGetEvent,
+    media_stream_EndGetEvent,
+    media_stream_QueueEvent,
+    media_stream_GetMediaSource,
+    media_stream_GetStreamDescriptor,
+    media_stream_RequestSample,
+};
+
+static HRESULT media_stream_create(IMFMediaSource *source, struct media_stream **out)
+{
+    struct media_stream *object;
+    HRESULT hr;
+
+    TRACE("source %p, out %p\n", source, out);
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IMFMediaStream_iface.lpVtbl = &media_stream_vtbl;
+    object->refcount = 1;
+
+    if (FAILED(hr = MFCreateEventQueue(&object->queue)))
+    {
+        free(object);
+        return hr;
+    }
+
+    IMFMediaSource_AddRef((object->source = source));
+    TRACE("Created stream object %p\n", object);
+
+    *out = object;
+    return S_OK;
 }
 
 static struct media_source *media_source_from_IMFGetService(IMFGetService *iface)
@@ -345,6 +511,7 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
 
         winedmo_demuxer_destroy(&source->winedmo_demuxer);
         free(source->stream_map);
+        free(source->streams);
 
         IMFMediaEventQueue_Release(source->queue);
         IMFByteStream_Release(source->stream);
@@ -458,6 +625,13 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     IMFMediaEventQueue_Shutdown(source->queue);
     IMFByteStream_Close(source->stream);
 
+    while (source->stream_count--)
+    {
+        struct media_stream *stream = source->streams[source->stream_count];
+        IMFMediaEventQueue_Shutdown(stream->queue);
+        IMFMediaStream_Release(&stream->IMFMediaStream_iface);
+    }
+
     LeaveCriticalSection(&source->cs);
 
     return S_OK;
@@ -569,6 +743,7 @@ static NTSTATUS CDECL media_source_read_cb(struct winedmo_stream *stream, BYTE *
 static HRESULT media_source_async_create(struct media_source *source, IMFAsyncResult *result)
 {
     IUnknown *state = IMFAsyncResult_GetStateNoAddRef(result);
+    UINT i, stream_count;
     NTSTATUS status;
     HRESULT hr;
 
@@ -589,20 +764,27 @@ static HRESULT media_source_async_create(struct media_source *source, IMFAsyncRe
     source->winedmo_stream.p_read = media_source_read_cb;
 
     if ((status = winedmo_demuxer_create(source->url, &source->winedmo_stream, source->file_size, &source->duration,
-            &source->stream_count, source->mime_type, &source->winedmo_demuxer)))
+            &stream_count, source->mime_type, &source->winedmo_demuxer)))
     {
         WARN("Failed to create demuxer, status %#lx\n", status);
         hr = HRESULT_FROM_NT(status);
         goto done;
     }
 
-    if (!(source->stream_map = calloc(source->stream_count, sizeof(*source->stream_map))))
+    if (!(source->stream_map = calloc(stream_count, sizeof(*source->stream_map)))
+            || !(source->streams = calloc(stream_count, sizeof(*source->streams))))
     {
         hr = E_OUTOFMEMORY;
         goto done;
     }
 
-    media_source_init_stream_map(source, source->stream_count);
+    media_source_init_stream_map(source, stream_count);
+
+    for (i = 0; SUCCEEDED(hr) && i < stream_count; ++i)
+    {
+        if (SUCCEEDED(hr = media_stream_create(&source->IMFMediaSource_iface, &source->streams[i])))
+            source->stream_count++;
+    }
 
 done:
     IMFAsyncResult_SetStatus(result, hr);
