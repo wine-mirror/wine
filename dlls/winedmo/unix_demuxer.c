@@ -159,6 +159,22 @@ NTSTATUS demuxer_destroy( void *arg )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS demuxer_stream_lang( void *arg )
+{
+    struct demuxer_stream_lang_params *params = arg;
+    AVFormatContext *ctx = get_demuxer( params->demuxer );
+    AVStream *stream = ctx->streams[params->stream];
+    AVDictionaryEntry *tag;
+
+    TRACE( "context %p, stream %u\n", ctx, params->stream );
+
+    if (!(tag = av_dict_get( stream->metadata, "language", NULL, AV_DICT_IGNORE_SUFFIX )))
+        return STATUS_NOT_FOUND;
+
+    lstrcpynA( params->buffer, tag->value, ARRAY_SIZE( params->buffer ) );
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS demuxer_stream_name( void *arg )
 {
     struct demuxer_stream_name_params *params = arg;
