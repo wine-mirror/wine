@@ -3172,7 +3172,7 @@ static HRESULT WINAPI test_buffer_Lock(IMFMediaBuffer *iface, BYTE **data, DWORD
 {
     ok(expect_locks--, "Unexpected call\n");
     ok(!maxlength, "got maxlength\n");
-    ok(!length, "got length\n");
+    todo_wine ok(!length, "got length\n");
     *data = (BYTE *)0xdeadbeef;
     return S_OK;
 }
@@ -3231,7 +3231,7 @@ static void test_MFCreateLegacyMediaBufferOnMFMediaBuffer(void)
     }
 
     hr = pMFCreateLegacyMediaBufferOnMFMediaBuffer(NULL, NULL, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     if (0) /* crashes */
     {
@@ -3243,9 +3243,7 @@ static void test_MFCreateLegacyMediaBufferOnMFMediaBuffer(void)
     }
 
     hr = pMFCreateLegacyMediaBufferOnMFMediaBuffer(NULL, &test_buffer, 0, &media_buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     expect_locks = 1;
     hr = IMediaBuffer_GetBufferAndLength(media_buffer, &data, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3259,35 +3257,28 @@ static void test_MFCreateLegacyMediaBufferOnMFMediaBuffer(void)
     expect_unlocks = 1;
     IMediaBuffer_Release(media_buffer);
     ok(expect_unlocks == 0, "Unexpected Unlock calls\n");
-    }
 
     hr = MFCreateMemoryBuffer(0, &buffer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = pMFCreateLegacyMediaBufferOnMFMediaBuffer(NULL, buffer, 0, &media_buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFMediaBuffer_Release(buffer);
-    if (hr == S_OK)
-    {
     check_interface(media_buffer, &IID_IMFMediaBuffer, FALSE);
     check_interface(media_buffer, &IID_IMFGetService, FALSE);
     check_interface(media_buffer, &IID_IMF2DBuffer, FALSE);
     check_interface(media_buffer, &IID_IMFSample, FALSE);
     IMediaBuffer_Release(media_buffer);
-    }
 
     hr = MFCreateSample(&sample);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = MFCreateMemoryBuffer(0, &buffer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = pMFCreateLegacyMediaBufferOnMFMediaBuffer(sample, buffer, 0, &media_buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFMediaBuffer_Release(buffer);
     IMFSample_Release(sample);
-    if (hr == S_OK)
-    {
     check_interface(media_buffer, &IID_IMFSample, TRUE);
     IMediaBuffer_Release(media_buffer);
-    }
 
     if (pMFCreate2DMediaBuffer)
     {
@@ -3296,17 +3287,14 @@ static void test_MFCreateLegacyMediaBufferOnMFMediaBuffer(void)
         hr = pMFCreate2DMediaBuffer(1, 1, MAKEFOURCC('N','V','1','2'), FALSE, &buffer);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = pMFCreateLegacyMediaBufferOnMFMediaBuffer(sample, buffer, 0, &media_buffer);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         IMFMediaBuffer_Release(buffer);
         IMFSample_Release(sample);
-        if (hr == S_OK)
-        {
         check_interface(media_buffer, &IID_IMFMediaBuffer, FALSE);
         check_interface(media_buffer, &IID_IMF2DBuffer, TRUE);
         check_interface(media_buffer, &IID_IMF2DBuffer2, TRUE);
         check_interface(media_buffer, &IID_IMFSample, TRUE);
         IMediaBuffer_Release(media_buffer);
-        }
     }
 }
 

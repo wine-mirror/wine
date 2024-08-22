@@ -1,6 +1,6 @@
 MODULE    = mfplat.dll
 IMPORTLIB = mfplat
-IMPORTS   = advapi32 ole32 mfuuid propsys rtworkq kernelbase
+IMPORTS   = advapi32 ole32 dmoguids mfuuid propsys rtworkq kernelbase
 DELAYIMPORTS = bcrypt
 
 EXTRADLLFLAGS = -Wb,--prefer-native
