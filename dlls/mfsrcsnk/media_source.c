@@ -24,12 +24,59 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+#define DEFINE_MF_ASYNC_CALLBACK_(type, name, impl_from, pfx, mem, expr)                           \
+    static struct type *impl_from(IMFAsyncCallback *iface)                                         \
+    {                                                                                              \
+        return CONTAINING_RECORD(iface, struct type, mem);                                         \
+    }                                                                                              \
+    static HRESULT WINAPI pfx##_QueryInterface(IMFAsyncCallback *iface, REFIID iid, void **out)    \
+    {                                                                                              \
+        if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IMFAsyncCallback))              \
+        {                                                                                          \
+            IMFAsyncCallback_AddRef((*out = iface));                                               \
+            return S_OK;                                                                           \
+        }                                                                                          \
+        *out = NULL;                                                                               \
+        return E_NOINTERFACE;                                                                      \
+    }                                                                                              \
+    static ULONG WINAPI pfx##_AddRef(IMFAsyncCallback *iface)                                      \
+    {                                                                                              \
+        struct type *object = impl_from(iface);                                                    \
+        return IUnknown_AddRef((IUnknown *)(expr));                                                \
+    }                                                                                              \
+    static ULONG WINAPI pfx##_Release(IMFAsyncCallback *iface)                                     \
+    {                                                                                              \
+        struct type *object = impl_from(iface);                                                    \
+        return IUnknown_Release((IUnknown *)(expr));                                               \
+    }                                                                                              \
+    static HRESULT WINAPI pfx##_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue) \
+    {                                                                                              \
+        return E_NOTIMPL;                                                                          \
+    }                                                                                              \
+    static HRESULT WINAPI pfx##_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)            \
+    {                                                                                              \
+        struct type *object = impl_from(iface);                                                    \
+        return type##_##name(object, result);                                                      \
+    }                                                                                              \
+    static const IMFAsyncCallbackVtbl pfx##_vtbl =                                                 \
+    {                                                                                              \
+            pfx##_QueryInterface,                                                                  \
+            pfx##_AddRef,                                                                          \
+            pfx##_Release,                                                                         \
+            pfx##_GetParameters,                                                                   \
+            pfx##_Invoke,                                                                          \
+    };
+
+#define DEFINE_MF_ASYNC_CALLBACK(type, name, base_iface)                                           \
+    DEFINE_MF_ASYNC_CALLBACK_(type, name, type##_from_##name, type##_##name, name##_iface, &object->base_iface)
+
 struct media_source
 {
     IMFMediaSource IMFMediaSource_iface;
     IMFGetService IMFGetService_iface;
     IMFRateSupport IMFRateSupport_iface;
     IMFRateControl IMFRateControl_iface;
+    IMFAsyncCallback async_create_iface;
     LONG refcount;
 
     CRITICAL_SECTION cs;
@@ -37,6 +84,8 @@ struct media_source
     IMFByteStream *stream;
     WCHAR *url;
     float rate;
+
+    UINT64 file_size;
 
     enum
     {
@@ -419,6 +468,30 @@ static const IMFMediaSourceVtbl media_source_vtbl =
     media_source_Shutdown,
 };
 
+static HRESULT media_source_async_create(struct media_source *source, IMFAsyncResult *result)
+{
+    IUnknown *state = IMFAsyncResult_GetStateNoAddRef(result);
+    HRESULT hr;
+
+    TRACE("source %p, result %p\n", source, result);
+
+    if (FAILED(hr = IMFByteStream_GetLength(source->stream, &source->file_size)))
+    {
+        WARN("Failed to get byte stream length, hr %#lx\n", hr);
+        source->file_size = -1;
+    }
+    if (FAILED(hr = IMFByteStream_SetCurrentPosition(source->stream, 0)))
+    {
+        WARN("Failed to set byte stream position, hr %#lx\n", hr);
+        hr = S_OK;
+    }
+
+    IMFAsyncResult_SetStatus(result, hr);
+    return MFInvokeCallback((IMFAsyncResult *)state);
+}
+
+DEFINE_MF_ASYNC_CALLBACK(media_source, async_create, IMFMediaSource_iface)
+
 static WCHAR *get_byte_stream_url(IMFByteStream *stream, const WCHAR *url)
 {
     IMFAttributes *attributes;
@@ -454,6 +527,7 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
     source->IMFGetService_iface.lpVtbl = &media_source_IMFGetService_vtbl;
     source->IMFRateSupport_iface.lpVtbl = &media_source_IMFRateSupport_vtbl;
     source->IMFRateControl_iface.lpVtbl = &media_source_IMFRateControl_vtbl;
+    source->async_create_iface.lpVtbl = &media_source_async_create_vtbl;
     source->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&source->queue)))
@@ -553,7 +627,8 @@ static HRESULT WINAPI byte_stream_handler_BeginCreateObject(IMFByteStreamHandler
         return hr;
     if (SUCCEEDED(hr = MFCreateAsyncResult((IUnknown *)source, callback, state, &result)))
     {
-        hr = MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_IO, result);
+        struct media_source *media_source = media_source_from_IMFMediaSource(source);
+        hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_IO, &media_source->async_create_iface, (IUnknown *)result);
         IMFAsyncResult_Release(result);
     }
     IMFMediaSource_Release(source);
