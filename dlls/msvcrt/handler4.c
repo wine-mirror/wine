@@ -287,7 +287,7 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DIS
             TRACE("        %d: header 0x%x offset %d handler 0x%x "
                     "ret addr[0] %#x ret_addr[1] %#x type %#x %s\n", j, ci.header, ci.offset,
                     ci.handler, ci.ret_addr[0], ci.ret_addr[1], ci.type_info,
-                    dbgstr_type_info(rtti_rva(ci.type_info, image_base)));
+                    dbgstr_type_info(ci.type_info ? rtti_rva(ci.type_info, image_base) : NULL));
         }
     }
 
