@@ -2668,6 +2668,25 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             ret = connect( unix_fd, &unix_addr.addr, unix_len );
         }
 
+        if (ret < 0 && errno == EACCES && sock->state == SOCK_CONNECTIONLESS && unix_addr.addr.sa_family == AF_INET)
+        {
+            int broadcast, saved_errno;
+            socklen_t len = sizeof(broadcast);
+
+            broadcast = 1;
+            getsockopt( unix_fd, SOL_SOCKET, SO_BROADCAST, &broadcast, &len );
+            if (!broadcast)
+            {
+                broadcast = 1;
+                setsockopt( unix_fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast) );
+                ret = connect( unix_fd, &unix_addr.addr, unix_len );
+                saved_errno = errno;
+                broadcast = 0;
+                setsockopt( unix_fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast) );
+                errno = saved_errno;
+            }
+        }
+
         if (ret < 0 && errno != EINPROGRESS)
         {
             set_error( sock_get_ntstatus( errno ) );

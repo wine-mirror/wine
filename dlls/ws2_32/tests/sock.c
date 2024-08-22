@@ -14218,7 +14218,7 @@ static void test_broadcast(void)
     ok(ret == -1, "got %d, error %u.\n", ret, WSAGetLastError());
 
     ret = connect(s, (struct sockaddr *)&bcast, sizeof(bcast));
-    todo_wine ok(!ret, "got error %u.\n", WSAGetLastError());
+    ok(!ret, "got error %u.\n", WSAGetLastError());
     val = 1;
     len = sizeof(val);
     ret = getsockopt(s, SOL_SOCKET, SO_BROADCAST, (char*)&val, &len);
@@ -14227,7 +14227,7 @@ static void test_broadcast(void)
     ret = sendto(s, "test", 4, 0, (struct sockaddr *)&bcast, sizeof(bcast));
     ok(ret == -1, "got %d, error %u.\n", ret, WSAGetLastError());
     ret = send(s, "test", 4, 0);
-    todo_wine ok(ret == 4, "got %d, error %u.\n", ret, WSAGetLastError());
+    ok(ret == 4, "got %d, error %u.\n", ret, WSAGetLastError());
     closesocket(s);
 
     s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
