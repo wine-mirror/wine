@@ -94,6 +94,8 @@ struct media_source
     UINT stream_count;
     WCHAR mime_type[256];
 
+    UINT *stream_map;
+
     enum
     {
         SOURCE_STOPPED,
@@ -342,6 +344,7 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
         IMFMediaSource_Shutdown(iface);
 
         winedmo_demuxer_destroy(&source->winedmo_demuxer);
+        free(source->stream_map);
 
         IMFMediaEventQueue_Release(source->queue);
         IMFByteStream_Release(source->stream);
@@ -477,7 +480,73 @@ static const IMFMediaSourceVtbl media_source_vtbl =
     media_source_Shutdown,
 };
 
-static NTSTATUS CDECL media_source_seek_cb(struct winedmo_stream *stream, UINT64 *pos)
+static HRESULT get_stream_media_type(struct winedmo_demuxer demuxer, UINT index, GUID *major)
+{
+    union winedmo_format *format;
+    NTSTATUS status;
+
+    TRACE("demuxer %p, index %u\n", &demuxer, index);
+
+    if ((status = winedmo_demuxer_stream_type(demuxer, index, major, &format)))
+    {
+        WARN("Failed to get stream %u type, status %#lx\n", index, status);
+        return HRESULT_FROM_NT(status);
+    }
+
+    free(format);
+    return S_OK;
+}
+
+static void media_source_init_stream_map(struct media_source *source, UINT stream_count)
+{
+    int i, n = 0;
+    GUID major;
+
+    TRACE("source %p, stream_count %d\n", source, stream_count);
+
+    if (wcscmp(source->mime_type, L"video/mp4"))
+    {
+        for (i = stream_count - 1; i >= 0; i--)
+        {
+            TRACE("mapping source %p stream %u to demuxer stream %u\n", source, i, i);
+            source->stream_map[i] = i;
+        }
+        return;
+    }
+
+    for (i = stream_count - 1; i >= 0; i--)
+    {
+        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major)))
+            continue;
+        if (IsEqualGUID(&major, &MFMediaType_Audio))
+        {
+            TRACE("mapping source %p stream %u to demuxer stream %u\n", source, n, i);
+            source->stream_map[n++] = i;
+        }
+    }
+    for (i = stream_count - 1; i >= 0; i--)
+    {
+        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major)))
+            continue;
+        if (IsEqualGUID(&major, &MFMediaType_Video))
+        {
+            TRACE("mapping source %p stream %u to demuxer stream %u\n", source, n, i);
+            source->stream_map[n++] = i;
+        }
+    }
+    for (i = stream_count - 1; i >= 0; i--)
+    {
+        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major)))
+            continue;
+        if (!IsEqualGUID(&major, &MFMediaType_Audio) && !IsEqualGUID(&major, &MFMediaType_Video))
+        {
+            TRACE("mapping source %p stream %u to demuxer stream %u\n", source, n, i);
+            source->stream_map[n++] = i;
+        }
+    }
+}
+
+static NTSTATUS CDECL media_source_seek_cb( struct winedmo_stream *stream, UINT64 *pos )
 {
     struct media_source *source = CONTAINING_RECORD(stream, struct media_source, winedmo_stream);
     TRACE("stream %p, pos %p\n", stream, pos);
@@ -524,8 +593,18 @@ static HRESULT media_source_async_create(struct media_source *source, IMFAsyncRe
     {
         WARN("Failed to create demuxer, status %#lx\n", status);
         hr = HRESULT_FROM_NT(status);
+        goto done;
     }
 
+    if (!(source->stream_map = calloc(source->stream_count, sizeof(*source->stream_map))))
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    media_source_init_stream_map(source, source->stream_count);
+
+done:
     IMFAsyncResult_SetStatus(result, hr);
     return MFInvokeCallback((IMFAsyncResult *)state);
 }
