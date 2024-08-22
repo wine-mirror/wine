@@ -406,6 +406,7 @@
 @ stdcall IoGetDeviceInterfaces(ptr ptr long ptr)
 @ stdcall IoGetDeviceObjectPointer(ptr long ptr ptr)
 @ stdcall IoGetDeviceProperty(ptr long long ptr ptr)
+@ stdcall IoGetDevicePropertyData(ptr ptr long long long ptr ptr ptr)
 @ stub IoGetDeviceToVerify
 @ stub IoGetDiskDeviceObject
 @ stub IoGetDmaAdapter

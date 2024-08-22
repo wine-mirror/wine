@@ -504,6 +504,55 @@ void WINAPI IoInvalidateDeviceRelations( DEVICE_OBJECT *device_object, DEVICE_RE
 }
 
 /***********************************************************************
+ *           IoGetDevicePropertyData   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoGetDevicePropertyData( DEVICE_OBJECT *device, const DEVPROPKEY *property_key,
+                                         LCID lcid, ULONG flags, ULONG size, void *data,
+                                         ULONG *required_size, DEVPROPTYPE *property_type )
+{
+    SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    HDEVINFO set;
+    NTSTATUS status;
+
+    TRACE( "device %p, property_key %s, lcid %#lx, flags %#lx, size %lu, data %p, required_size %p, property_type %p\n",
+           device, debugstr_propkey( property_key ), lcid, flags, size, data, required_size,
+           property_type );
+
+    if (lcid == LOCALE_SYSTEM_DEFAULT || lcid == LOCALE_USER_DEFAULT) return STATUS_INVALID_PARAMETER;
+    if (lcid != LOCALE_NEUTRAL) FIXME( "Only LOCALE_NEUTRAL is supported\n" );
+
+    status = get_device_instance_id( device, device_instance_id );
+    if (status != STATUS_SUCCESS) return status;
+
+    set = SetupDiCreateDeviceInfoList( &GUID_NULL, NULL );
+    if (set == INVALID_HANDLE_VALUE)
+    {
+        ERR( "Failed to create device list, error %#lx.\n", GetLastError() );
+        return GetLastError();
+    }
+
+    if (!SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device ))
+    {
+        ERR( "Failed to open device, error %#lx.\n", GetLastError() );
+        SetupDiDestroyDeviceInfoList( set );
+        return GetLastError();
+    }
+
+    if (!SetupDiGetDevicePropertyW( set, &sp_device, property_key, property_type, data, size, required_size, flags ))
+    {
+        DWORD err = GetLastError();
+        if (err != ERROR_INSUFFICIENT_BUFFER)
+            ERR( "Failed to get device property, error %#lx.\n", err);
+        SetupDiDestroyDeviceInfoList( set );
+        return err == ERROR_INSUFFICIENT_BUFFER ? STATUS_BUFFER_TOO_SMALL : err;
+    }
+
+    SetupDiDestroyDeviceInfoList( set );
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
  *           IoGetDeviceProperty   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROPERTY property,
