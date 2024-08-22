@@ -20,6 +20,7 @@
 
 #include "mfapi.h"
 #include "mfidl.h"
+#include "mfapi.h"
 #include "mferror.h"
 
 #include "wine/mfinternal.h"
@@ -90,4 +91,38 @@ static inline const char *debugstr_time(LONGLONG time)
     rev[j] = 0;
 
     return wine_dbg_sprintf("%s", rev);
+}
+
+static inline const char *debugstr_propvar(const PROPVARIANT *v)
+{
+    if (!v)
+        return "(null)";
+
+    switch (v->vt)
+    {
+        case VT_EMPTY:
+            return wine_dbg_sprintf("%p {VT_EMPTY}", v);
+        case VT_NULL:
+            return wine_dbg_sprintf("%p {VT_NULL}", v);
+        case VT_UI4:
+            return wine_dbg_sprintf("%p {VT_UI4: %ld}", v, v->ulVal);
+        case VT_UI8:
+            return wine_dbg_sprintf("%p {VT_UI8: %s}", v, wine_dbgstr_longlong(v->uhVal.QuadPart));
+        case VT_I8:
+            return wine_dbg_sprintf("%p {VT_I8: %s}", v, wine_dbgstr_longlong(v->hVal.QuadPart));
+        case VT_R4:
+            return wine_dbg_sprintf("%p {VT_R4: %.8e}", v, v->fltVal);
+        case VT_R8:
+            return wine_dbg_sprintf("%p {VT_R8: %lf}", v, v->dblVal);
+        case VT_CLSID:
+            return wine_dbg_sprintf("%p {VT_CLSID: %s}", v, debugstr_guid(v->puuid));
+        case VT_LPWSTR:
+            return wine_dbg_sprintf("%p {VT_LPWSTR: %s}", v, wine_dbgstr_w(v->pwszVal));
+        case VT_VECTOR | VT_UI1:
+            return wine_dbg_sprintf("%p {VT_VECTOR|VT_UI1: %p}", v, v->caub.pElems);
+        case VT_UNKNOWN:
+            return wine_dbg_sprintf("%p {VT_UNKNOWN: %p}", v, v->punkVal);
+        default:
+            return wine_dbg_sprintf("%p {vt %#x}", v, v->vt);
+    }
 }
