@@ -29,8 +29,15 @@ struct media_source
     IMFMediaSource IMFMediaSource_iface;
     LONG refcount;
 
+    CRITICAL_SECTION cs;
     IMFMediaEventQueue *queue;
     IMFByteStream *stream;
+
+    enum
+    {
+        SOURCE_STOPPED,
+        SOURCE_SHUTDOWN,
+    } state;
 };
 
 static struct media_source *media_source_from_IMFMediaSource(IMFMediaSource *iface)
@@ -75,7 +82,14 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
 
     if (!refcount)
     {
+        IMFMediaSource_Shutdown(iface);
+
         IMFMediaEventQueue_Release(source->queue);
+        IMFByteStream_Release(source->stream);
+
+        source->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&source->cs);
+
         free(source);
     }
 
@@ -153,8 +167,24 @@ static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
 static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 {
     struct media_source *source = media_source_from_IMFMediaSource(iface);
-    FIXME("source %p\n", source);
-    return E_NOTIMPL;
+
+    TRACE("source %p\n", source);
+
+    EnterCriticalSection(&source->cs);
+
+    if (source->state == SOURCE_SHUTDOWN)
+    {
+        LeaveCriticalSection(&source->cs);
+        return MF_E_SHUTDOWN;
+    }
+    source->state = SOURCE_SHUTDOWN;
+
+    IMFMediaEventQueue_Shutdown(source->queue);
+    IMFByteStream_Close(source->stream);
+
+    LeaveCriticalSection(&source->cs);
+
+    return S_OK;
 }
 
 static const IMFMediaSourceVtbl media_source_vtbl =
@@ -191,6 +221,11 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
         free(source);
         return hr;
     }
+
+    IMFByteStream_AddRef((source->stream = stream));
+
+    InitializeCriticalSectionEx(&source->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
+    source->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
     *out = &source->IMFMediaSource_iface;
     TRACE("created source %p\n", source);
