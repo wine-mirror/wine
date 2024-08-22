@@ -121,9 +121,9 @@ coclass CResamplerMediaObject {}
 
 [
     threading(both),
-    uuid(98230571-0087-4204-b020-3282538e57d3)
+    uuid(f47e2da5-e370-47b7-903a-078ddd45a5cc)
 ]
-coclass CColorConvertDMO {}
+coclass wg_color_converter {}
 
 [
     threading(both),

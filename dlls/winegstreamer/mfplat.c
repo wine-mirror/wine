@@ -298,49 +298,6 @@ HRESULT mfplat_DllRegisterServer(void)
         {MFMediaType_Video, DMOVideoFormat_RGB8},
     };
 
-    MFT_REGISTER_TYPE_INFO color_convert_input_types[] =
-    {
-        {MFMediaType_Video, MFVideoFormat_YV12},
-        {MFMediaType_Video, MFVideoFormat_YUY2},
-        {MFMediaType_Video, MFVideoFormat_UYVY},
-        {MFMediaType_Video, MFVideoFormat_AYUV},
-        {MFMediaType_Video, MFVideoFormat_NV12},
-        {MFMediaType_Video, DMOVideoFormat_RGB32},
-        {MFMediaType_Video, DMOVideoFormat_RGB565},
-        {MFMediaType_Video, MFVideoFormat_I420},
-        {MFMediaType_Video, MFVideoFormat_IYUV},
-        {MFMediaType_Video, MFVideoFormat_YVYU},
-        {MFMediaType_Video, DMOVideoFormat_RGB24},
-        {MFMediaType_Video, DMOVideoFormat_RGB555},
-        {MFMediaType_Video, DMOVideoFormat_RGB8},
-        {MFMediaType_Video, MEDIASUBTYPE_V216},
-        {MFMediaType_Video, MEDIASUBTYPE_V410},
-        {MFMediaType_Video, MFVideoFormat_NV11},
-        {MFMediaType_Video, MFVideoFormat_Y41P},
-        {MFMediaType_Video, MFVideoFormat_Y41T},
-        {MFMediaType_Video, MFVideoFormat_Y42T},
-        {MFMediaType_Video, MFVideoFormat_YVU9},
-    };
-    MFT_REGISTER_TYPE_INFO color_convert_output_types[] =
-    {
-        {MFMediaType_Video, MFVideoFormat_YV12},
-        {MFMediaType_Video, MFVideoFormat_YUY2},
-        {MFMediaType_Video, MFVideoFormat_UYVY},
-        {MFMediaType_Video, MFVideoFormat_AYUV},
-        {MFMediaType_Video, MFVideoFormat_NV12},
-        {MFMediaType_Video, DMOVideoFormat_RGB32},
-        {MFMediaType_Video, DMOVideoFormat_RGB565},
-        {MFMediaType_Video, MFVideoFormat_I420},
-        {MFMediaType_Video, MFVideoFormat_IYUV},
-        {MFMediaType_Video, MFVideoFormat_YVYU},
-        {MFMediaType_Video, DMOVideoFormat_RGB24},
-        {MFMediaType_Video, DMOVideoFormat_RGB555},
-        {MFMediaType_Video, DMOVideoFormat_RGB8},
-        {MFMediaType_Video, MEDIASUBTYPE_V216},
-        {MFMediaType_Video, MEDIASUBTYPE_V410},
-        {MFMediaType_Video, MFVideoFormat_NV11},
-    };
-
     struct mft
     {
         GUID clsid;
@@ -423,16 +380,6 @@ HRESULT mfplat_DllRegisterServer(void)
             resampler_types,
             ARRAY_SIZE(resampler_types),
             resampler_types,
-        },
-        {
-            CLSID_CColorConvertDMO,
-            MFT_CATEGORY_VIDEO_EFFECT,
-            L"Color Converter MFT",
-            MFT_ENUM_FLAG_SYNCMFT,
-            ARRAY_SIZE(color_convert_input_types),
-            color_convert_input_types,
-            ARRAY_SIZE(color_convert_output_types),
-            color_convert_output_types,
         },
     };
 

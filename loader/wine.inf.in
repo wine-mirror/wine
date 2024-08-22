@@ -2103,6 +2103,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,shell32.dll,1
 11,,quartz.dll,1
 
+11,,colorcnv.dll,1
 11,,cryptdlg.dll,1
 11,,cryptnet.dll,1
 11,,devenum.dll,1
