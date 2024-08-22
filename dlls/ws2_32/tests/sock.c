@@ -14194,6 +14194,54 @@ static void test_select_after_WSAEventSelect(void)
     closesocket(client);
 }
 
+static void test_broadcast(void)
+{
+    struct sockaddr_in bcast = {.sin_family = AF_INET, .sin_port = htons(12345), .sin_addr.s_addr = htonl(INADDR_BROADCAST)};
+    struct sockaddr_in6 mcast6;
+    int val, ret, len;
+    SOCKET s;
+
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ok(s != INVALID_SOCKET, "got error %u.\n", WSAGetLastError());
+    ret = sendto(s, "test", 4, 0, (struct sockaddr *)&bcast, sizeof(bcast));
+    ok(ret == -1, "got %d, error %u.\n", ret, WSAGetLastError());
+    val = 1;
+    ret = setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char*)&val, sizeof(val));
+    ok(!ret, "got %d, error %u.\n", ret, WSAGetLastError());
+    ret = sendto(s, "test", 4, 0, (struct sockaddr *)&bcast, sizeof(bcast));
+    ok(ret == 4, "got %d, error %u.\n", ret, WSAGetLastError());
+
+    val = 0;
+    ret = setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char*)&val, sizeof(val));
+    ok(!ret, "got %d, error %u.\n", ret, WSAGetLastError());
+    ret = sendto(s, "test", 4, 0, (struct sockaddr *)&bcast, sizeof(bcast));
+    ok(ret == -1, "got %d, error %u.\n", ret, WSAGetLastError());
+
+    ret = connect(s, (struct sockaddr *)&bcast, sizeof(bcast));
+    todo_wine ok(!ret, "got error %u.\n", WSAGetLastError());
+    val = 1;
+    len = sizeof(val);
+    ret = getsockopt(s, SOL_SOCKET, SO_BROADCAST, (char*)&val, &len);
+    ok(!ret, "got %d, error %u.\n", ret, WSAGetLastError());
+    ok(!val, "got %d.\n", val);
+    ret = sendto(s, "test", 4, 0, (struct sockaddr *)&bcast, sizeof(bcast));
+    ok(ret == -1, "got %d, error %u.\n", ret, WSAGetLastError());
+    ret = send(s, "test", 4, 0);
+    todo_wine ok(ret == 4, "got %d, error %u.\n", ret, WSAGetLastError());
+    closesocket(s);
+
+    s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    ok(s != INVALID_SOCKET, "got error %u.\n", WSAGetLastError());
+    memset(&mcast6, 0, sizeof(mcast6));
+    ret = inet_pton(AF_INET6, "ff01::1", &mcast6.sin6_addr);
+    ok(ret, "got error %u.\n", WSAGetLastError());
+    mcast6.sin6_family = AF_INET6;
+    mcast6.sin6_port = htons(12345);
+    ret = sendto(s, "test", 4, 0, (struct sockaddr *)&mcast6, sizeof(mcast6));
+    ok(ret == 4, "got %d, error %u.\n", ret, WSAGetLastError());
+    closesocket(s);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -14276,6 +14324,7 @@ START_TEST( sock )
     test_icmp();
     test_connect_udp();
     test_tcp_sendto_recvfrom();
+    test_broadcast();
 
     /* There is apparently an obscure interaction between this test and
      * test_WSAGetOverlappedResult().
