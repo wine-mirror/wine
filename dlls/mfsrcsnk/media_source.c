@@ -170,6 +170,7 @@ struct media_source
     IMFRateControl IMFRateControl_iface;
     IMFAsyncCallback async_create_iface;
     IMFAsyncCallback async_start_iface;
+    IMFAsyncCallback async_stop_iface;
     LONG refcount;
 
     CRITICAL_SECTION cs;
@@ -317,6 +318,51 @@ static HRESULT media_source_async_start(struct media_source *source, IMFAsyncRes
 
 DEFINE_MF_ASYNC_CALLBACK(media_source, async_start, IMFMediaSource_iface)
 
+static void media_stream_stop(struct media_stream *stream)
+{
+    TRACE("stream %p\n", stream);
+
+    if (stream->active)
+        queue_media_event_value(stream->queue, MEStreamStopped, NULL);
+}
+
+static HRESULT media_source_stop(struct media_source *source)
+{
+    unsigned int i;
+
+    TRACE("source %p\n", source);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        return MF_E_SHUTDOWN;
+
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+        media_stream_stop(stream);
+    }
+
+    source->state = SOURCE_STOPPED;
+    queue_media_event_value(source->queue, MESourceStopped, NULL);
+    return S_OK;
+}
+
+static HRESULT media_source_async_stop(struct media_source *source, IMFAsyncResult *result)
+{
+    HRESULT hr;
+
+    EnterCriticalSection(&source->cs);
+    source->pending_state--;
+
+    if (FAILED(hr = media_source_stop(source)))
+        WARN("Failed to stop source %p, hr %#lx\n", source, hr);
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
+}
+
+DEFINE_MF_ASYNC_CALLBACK(media_source, async_stop, IMFMediaSource_iface)
+
 static struct media_stream *media_stream_from_IMFMediaStream(IMFMediaStream *iface)
 {
     return CONTAINING_RECORD(iface, struct media_stream, IMFMediaStream_iface);
@@ -360,6 +406,7 @@ static ULONG WINAPI media_stream_Release(IMFMediaStream *iface)
     if (!refcount)
     {
         stream->active = FALSE;
+        media_stream_stop(stream);
         IMFMediaSource_Release(stream->source);
         IMFStreamDescriptor_Release(stream->descriptor);
         IMFMediaEventQueue_Release(stream->queue);
@@ -880,8 +927,20 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
 static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
 {
     struct media_source *source = media_source_from_IMFMediaSource(iface);
-    FIXME("source %p, stub!\n", source);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("source %p\n", source);
+
+    EnterCriticalSection(&source->cs);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (SUCCEEDED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_stop_iface, NULL)))
+        source->pending_state++;
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
@@ -1288,6 +1347,7 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
     source->IMFRateControl_iface.lpVtbl = &media_source_IMFRateControl_vtbl;
     source->async_create_iface.lpVtbl = &media_source_async_create_vtbl;
     source->async_start_iface.lpVtbl = &media_source_async_start_vtbl;
+    source->async_stop_iface.lpVtbl = &media_source_async_stop_vtbl;
     source->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&source->queue)))
