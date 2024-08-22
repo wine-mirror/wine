@@ -79,6 +79,7 @@ struct media_stream
 
     IMFMediaSource *source;
     IMFMediaEventQueue *queue;
+    IMFStreamDescriptor *descriptor;
 };
 
 struct media_source
@@ -161,6 +162,7 @@ static ULONG WINAPI media_stream_Release(IMFMediaStream *iface)
     if (!refcount)
     {
         IMFMediaSource_Release(stream->source);
+        IMFStreamDescriptor_Release(stream->descriptor);
         IMFMediaEventQueue_Release(stream->queue);
         free(stream);
     }
@@ -223,8 +225,24 @@ static HRESULT WINAPI media_stream_GetMediaSource(IMFMediaStream *iface, IMFMedi
 static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IMFStreamDescriptor **descriptor)
 {
     struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
-    FIXME("stream %p, descriptor %p, stub!\n", stream, descriptor);
-    return E_NOTIMPL;
+    struct media_source *source = media_source_from_IMFMediaSource(stream->source);
+    HRESULT hr = S_OK;
+
+    TRACE("stream %p, descriptor %p\n", stream, descriptor);
+
+    EnterCriticalSection(&source->cs);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        IMFStreamDescriptor_AddRef(stream->descriptor);
+        *descriptor = stream->descriptor;
+    }
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
@@ -248,12 +266,12 @@ static const IMFMediaStreamVtbl media_stream_vtbl =
     media_stream_RequestSample,
 };
 
-static HRESULT media_stream_create(IMFMediaSource *source, struct media_stream **out)
+static HRESULT media_stream_create(IMFMediaSource *source, IMFStreamDescriptor *descriptor, struct media_stream **out)
 {
     struct media_stream *object;
     HRESULT hr;
 
-    TRACE("source %p, out %p\n", source, out);
+    TRACE("source %p, descriptor %p, out %p\n", source, descriptor, out);
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -268,6 +286,8 @@ static HRESULT media_stream_create(IMFMediaSource *source, struct media_stream *
     }
 
     IMFMediaSource_AddRef((object->source = source));
+    IMFStreamDescriptor_AddRef((object->descriptor = descriptor));
+
     TRACE("Created stream object %p\n", object);
 
     *out = object;
@@ -577,11 +597,55 @@ static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWO
     return hr;
 }
 
+static HRESULT media_source_create_presentation_descriptor(struct media_source *source, IMFPresentationDescriptor **descriptor)
+{
+    IMFStreamDescriptor **descriptors;
+    HRESULT hr;
+    UINT i;
+
+    if (!(descriptors = malloc(source->stream_count * sizeof(*descriptors))))
+        return E_OUTOFMEMORY;
+    for (i = 0; i < source->stream_count; ++i)
+        descriptors[i] = source->streams[i]->descriptor;
+    hr = MFCreatePresentationDescriptor(source->stream_count, descriptors, descriptor);
+    free(descriptors);
+
+    return hr;
+}
+
 static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **descriptor)
 {
     struct media_source *source = media_source_from_IMFMediaSource(iface);
-    FIXME("source %p, descriptor %p, stub!\n", source, descriptor);
-    return E_NOTIMPL;
+    HRESULT hr;
+    UINT i;
+
+    TRACE("source %p, descriptor %p\n", source, descriptor);
+
+    EnterCriticalSection(&source->cs);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (SUCCEEDED(hr = media_source_create_presentation_descriptor(source, descriptor)))
+    {
+        if (FAILED(hr = IMFPresentationDescriptor_SetString(*descriptor, &MF_PD_MIME_TYPE, source->mime_type)))
+            WARN("Failed to set presentation descriptor MF_PD_MIME_TYPE, hr %#lx\n", hr);
+        if (FAILED(hr = IMFPresentationDescriptor_SetUINT64(*descriptor, &MF_PD_TOTAL_FILE_SIZE, source->file_size)))
+            WARN("Failed to set presentation descriptor MF_PD_TOTAL_FILE_SIZE, hr %#lx\n", hr);
+        if (FAILED(hr = IMFPresentationDescriptor_SetUINT64(*descriptor, &MF_PD_DURATION, source->duration)))
+            WARN("Failed to set presentation descriptor MF_PD_DURATION, hr %#lx\n", hr);
+
+        for (i = 0; i < source->stream_count; ++i)
+        {
+            if (FAILED(hr = IMFPresentationDescriptor_SelectStream(*descriptor, i)))
+                WARN("Failed to select stream %u, hr %#lx\n", i, hr);
+        }
+
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *descriptor, const GUID *format,
@@ -654,12 +718,42 @@ static const IMFMediaSourceVtbl media_source_vtbl =
     media_source_Shutdown,
 };
 
-static HRESULT get_stream_media_type(struct winedmo_demuxer demuxer, UINT index, GUID *major)
+static HRESULT media_type_from_mf_video_format( const MFVIDEOFORMAT *format, IMFMediaType **media_type )
+{
+    HRESULT hr;
+
+    TRACE("format %p, media_type %p\n", format, media_type);
+
+    if (FAILED(hr = MFCreateVideoMediaType( format, (IMFVideoMediaType **)media_type )) ||
+        format->dwSize <= sizeof(*format))
+        return hr;
+
+    if (FAILED(IMFMediaType_GetItem(*media_type, &MF_MT_VIDEO_ROTATION, NULL)))
+        IMFMediaType_SetUINT32(*media_type, &MF_MT_VIDEO_ROTATION, MFVideoRotationFormat_0);
+
+    return hr;
+}
+
+static HRESULT media_type_from_winedmo_format( GUID major, union winedmo_format *format, IMFMediaType **media_type )
+{
+    TRACE("major %p, format %p, media_type %p\n", &major, format, media_type);
+
+    if (IsEqualGUID( &major, &MFMediaType_Video ))
+        return media_type_from_mf_video_format( &format->video, media_type );
+    if (IsEqualGUID( &major, &MFMediaType_Audio ))
+        return MFCreateAudioMediaType( &format->audio, (IMFAudioMediaType **)media_type );
+
+    FIXME( "Unsupported major type %s\n", debugstr_guid( &major ) );
+    return E_NOTIMPL;
+}
+
+static HRESULT get_stream_media_type(struct winedmo_demuxer demuxer, UINT index, GUID *major, IMFMediaType **media_type)
 {
     union winedmo_format *format;
     NTSTATUS status;
+    HRESULT hr;
 
-    TRACE("demuxer %p, index %u\n", &demuxer, index);
+    TRACE("demuxer %p, index %u, media_type %p\n", &demuxer, index, media_type);
 
     if ((status = winedmo_demuxer_stream_type(demuxer, index, major, &format)))
     {
@@ -667,8 +761,9 @@ static HRESULT get_stream_media_type(struct winedmo_demuxer demuxer, UINT index,
         return HRESULT_FROM_NT(status);
     }
 
+    hr = media_type ? media_type_from_winedmo_format(*major, format, media_type) : S_OK;
     free(format);
-    return S_OK;
+    return hr;
 }
 
 static void media_source_init_stream_map(struct media_source *source, UINT stream_count)
@@ -690,7 +785,7 @@ static void media_source_init_stream_map(struct media_source *source, UINT strea
 
     for (i = stream_count - 1; i >= 0; i--)
     {
-        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major)))
+        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major, NULL)))
             continue;
         if (IsEqualGUID(&major, &MFMediaType_Audio))
         {
@@ -700,7 +795,7 @@ static void media_source_init_stream_map(struct media_source *source, UINT strea
     }
     for (i = stream_count - 1; i >= 0; i--)
     {
-        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major)))
+        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major, NULL)))
             continue;
         if (IsEqualGUID(&major, &MFMediaType_Video))
         {
@@ -710,7 +805,7 @@ static void media_source_init_stream_map(struct media_source *source, UINT strea
     }
     for (i = stream_count - 1; i >= 0; i--)
     {
-        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major)))
+        if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major, NULL)))
             continue;
         if (!IsEqualGUID(&major, &MFMediaType_Audio) && !IsEqualGUID(&major, &MFMediaType_Video))
         {
@@ -718,6 +813,30 @@ static void media_source_init_stream_map(struct media_source *source, UINT strea
             source->stream_map[n++] = i;
         }
     }
+}
+
+static HRESULT stream_descriptor_create(UINT32 id, IMFMediaType *media_type, IMFStreamDescriptor **out)
+{
+    IMFStreamDescriptor *descriptor;
+    IMFMediaTypeHandler *handler;
+    HRESULT hr;
+
+    TRACE("id %d, media_type %p, out %p\n", id, media_type, out);
+
+    *out = NULL;
+    if (FAILED(hr = MFCreateStreamDescriptor(id, 1, &media_type, &descriptor)))
+        return hr;
+
+    if (FAILED(hr = IMFStreamDescriptor_GetMediaTypeHandler(descriptor, &handler)))
+        IMFStreamDescriptor_Release(descriptor);
+    else
+    {
+        if (SUCCEEDED(hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type)))
+            *out = descriptor;
+        IMFMediaTypeHandler_Release(handler);
+    }
+
+    return hr;
 }
 
 static NTSTATUS CDECL media_source_seek_cb( struct winedmo_stream *stream, UINT64 *pos )
@@ -782,8 +901,19 @@ static HRESULT media_source_async_create(struct media_source *source, IMFAsyncRe
 
     for (i = 0; SUCCEEDED(hr) && i < stream_count; ++i)
     {
-        if (SUCCEEDED(hr = media_stream_create(&source->IMFMediaSource_iface, &source->streams[i])))
-            source->stream_count++;
+        IMFStreamDescriptor *descriptor;
+        IMFMediaType *media_type;
+        GUID major;
+
+        if (FAILED(hr = get_stream_media_type(source->winedmo_demuxer, source->stream_map[i], &major, &media_type)))
+            goto done;
+        if (SUCCEEDED(hr = stream_descriptor_create(i + 1, media_type, &descriptor)))
+        {
+            if (SUCCEEDED(hr = media_stream_create(&source->IMFMediaSource_iface, descriptor, &source->streams[i])))
+                source->stream_count++;
+            IMFStreamDescriptor_Release(descriptor);
+        }
+        IMFMediaType_Release(media_type);
     }
 
 done:
