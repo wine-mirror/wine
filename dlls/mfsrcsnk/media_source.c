@@ -130,8 +130,21 @@ static HRESULT WINAPI media_source_QueueEvent(IMFMediaSource *iface, MediaEventT
 static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWORD *characteristics)
 {
     struct media_source *source = media_source_from_IMFMediaSource(iface);
-    FIXME("source %p, characteristics %p\n", source, characteristics);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("source %p, characteristics %p\n", source, characteristics);
+
+    EnterCriticalSection(&source->cs);
+    if (source->state == SOURCE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        *characteristics = MFMEDIASOURCE_CAN_SEEK | MFMEDIASOURCE_CAN_PAUSE;
+        hr = S_OK;
+    }
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **descriptor)
@@ -287,6 +300,7 @@ static HRESULT WINAPI byte_stream_handler_BeginCreateObject(IMFByteStreamHandler
     IMFAsyncResult *result;
     IMFMediaSource *source;
     HRESULT hr;
+    DWORD caps;
 
     TRACE("handler %p, stream %p, url %s, flags %#lx, props %p, cookie %p, callback %p, state %p\n",
             handler, stream, debugstr_w(url), flags, props, cookie, callback, state);
@@ -297,6 +311,14 @@ static HRESULT WINAPI byte_stream_handler_BeginCreateObject(IMFByteStreamHandler
         return E_INVALIDARG;
     if (flags != MF_RESOLUTION_MEDIASOURCE)
         FIXME("Unimplemented flags %#lx\n", flags);
+
+    if (FAILED(hr = IMFByteStream_GetCapabilities(stream, &caps)))
+        return hr;
+    if (!(caps & MFBYTESTREAM_IS_SEEKABLE))
+    {
+        FIXME("Non-seekable bytestreams not supported\n");
+        return MF_E_BYTESTREAM_NOT_SEEKABLE;
+    }
 
     if (FAILED(hr = media_source_create(url, stream, &source)))
         return hr;
