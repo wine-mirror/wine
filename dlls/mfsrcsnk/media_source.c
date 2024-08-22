@@ -29,11 +29,13 @@ struct media_source
     IMFMediaSource IMFMediaSource_iface;
     IMFGetService IMFGetService_iface;
     IMFRateSupport IMFRateSupport_iface;
+    IMFRateControl IMFRateControl_iface;
     LONG refcount;
 
     CRITICAL_SECTION cs;
     IMFMediaEventQueue *queue;
     IMFByteStream *stream;
+    float rate;
 
     enum
     {
@@ -83,6 +85,12 @@ static HRESULT WINAPI media_source_IMFGetService_GetService(IMFGetService *iface
         {
             IMFRateSupport_AddRef(&source->IMFRateSupport_iface);
             *obj = &source->IMFRateSupport_iface;
+            return S_OK;
+        }
+        if (IsEqualIID(riid, &IID_IMFRateControl))
+        {
+            IMFRateControl_AddRef(&source->IMFRateControl_iface);
+            *obj = &source->IMFRateControl_iface;
             return S_OK;
         }
     }
@@ -158,6 +166,76 @@ static const IMFRateSupportVtbl media_source_IMFRateSupport_vtbl =
     media_source_IMFRateSupport_GetSlowestRate,
     media_source_IMFRateSupport_GetFastestRate,
     media_source_IMFRateSupport_IsRateSupported,
+};
+
+static struct media_source *media_source_from_IMFRateControl(IMFRateControl *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_source, IMFRateControl_iface);
+}
+
+static HRESULT WINAPI media_source_IMFRateControl_QueryInterface(IMFRateControl *iface, REFIID riid, void **obj)
+{
+    struct media_source *source = media_source_from_IMFRateControl(iface);
+    return IMFMediaSource_QueryInterface(&source->IMFMediaSource_iface, riid, obj);
+}
+
+static ULONG WINAPI media_source_IMFRateControl_AddRef(IMFRateControl *iface)
+{
+    struct media_source *source = media_source_from_IMFRateControl(iface);
+    return IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
+}
+
+static ULONG WINAPI media_source_IMFRateControl_Release(IMFRateControl *iface)
+{
+    struct media_source *source = media_source_from_IMFRateControl(iface);
+    return IMFMediaSource_Release(&source->IMFMediaSource_iface);
+}
+
+static HRESULT WINAPI media_source_IMFRateControl_SetRate(IMFRateControl *iface, BOOL thin, float rate)
+{
+    struct media_source *source = media_source_from_IMFRateControl(iface);
+    HRESULT hr;
+
+    FIXME("source %p, thin %d, rate %f, stub!\n", source, thin, rate);
+
+    if (rate < 0.0f)
+        return MF_E_REVERSE_UNSUPPORTED;
+    if (thin)
+        return MF_E_THINNING_UNSUPPORTED;
+
+    if (FAILED(hr = IMFRateSupport_IsRateSupported(&source->IMFRateSupport_iface, thin, rate, NULL)))
+        return hr;
+
+    EnterCriticalSection(&source->cs);
+    source->rate = rate;
+    LeaveCriticalSection(&source->cs);
+
+    return IMFMediaEventQueue_QueueEventParamVar(source->queue, MESourceRateChanged, &GUID_NULL, S_OK, NULL);
+}
+
+static HRESULT WINAPI media_source_IMFRateControl_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
+{
+    struct media_source *source = media_source_from_IMFRateControl(iface);
+
+    TRACE("source %p, thin %p, rate %p\n", source, thin, rate);
+
+    if (thin)
+        *thin = FALSE;
+
+    EnterCriticalSection(&source->cs);
+    *rate = source->rate;
+    LeaveCriticalSection(&source->cs);
+
+    return S_OK;
+}
+
+static const IMFRateControlVtbl media_source_IMFRateControl_vtbl =
+{
+    media_source_IMFRateControl_QueryInterface,
+    media_source_IMFRateControl_AddRef,
+    media_source_IMFRateControl_Release,
+    media_source_IMFRateControl_SetRate,
+    media_source_IMFRateControl_GetRate,
 };
 
 static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
@@ -351,6 +429,7 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
     source->IMFMediaSource_iface.lpVtbl = &media_source_vtbl;
     source->IMFGetService_iface.lpVtbl = &media_source_IMFGetService_vtbl;
     source->IMFRateSupport_iface.lpVtbl = &media_source_IMFRateSupport_vtbl;
+    source->IMFRateControl_iface.lpVtbl = &media_source_IMFRateControl_vtbl;
     source->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&source->queue)))
@@ -361,6 +440,7 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
 
     IMFByteStream_AddRef((source->stream = stream));
 
+    source->rate = 1.0f;
     InitializeCriticalSectionEx(&source->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     source->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
