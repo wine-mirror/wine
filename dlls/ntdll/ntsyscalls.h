@@ -236,14 +236,15 @@
     SYSCALL_ENTRY( 0x00e8, NtWow64AllocateVirtualMemory64, 28 ) \
     SYSCALL_ENTRY( 0x00e9, NtWow64GetNativeSystemInformation, 16 ) \
     SYSCALL_ENTRY( 0x00ea, NtWow64IsProcessorFeaturePresent, 4 ) \
-    SYSCALL_ENTRY( 0x00eb, NtWow64ReadVirtualMemory64, 28 ) \
-    SYSCALL_ENTRY( 0x00ec, NtWow64WriteVirtualMemory64, 28 ) \
-    SYSCALL_ENTRY( 0x00ed, NtWriteFile, 36 ) \
-    SYSCALL_ENTRY( 0x00ee, NtWriteFileGather, 36 ) \
-    SYSCALL_ENTRY( 0x00ef, NtWriteVirtualMemory, 20 ) \
-    SYSCALL_ENTRY( 0x00f0, NtYieldExecution, 0 ) \
-    SYSCALL_ENTRY( 0x00f1, wine_nt_to_unix_file_name, 16 ) \
-    SYSCALL_ENTRY( 0x00f2, wine_unix_to_nt_file_name, 12 )
+    SYSCALL_ENTRY( 0x00eb, NtWow64QueryInformationProcess64, 20 ) \
+    SYSCALL_ENTRY( 0x00ec, NtWow64ReadVirtualMemory64, 28 ) \
+    SYSCALL_ENTRY( 0x00ed, NtWow64WriteVirtualMemory64, 28 ) \
+    SYSCALL_ENTRY( 0x00ee, NtWriteFile, 36 ) \
+    SYSCALL_ENTRY( 0x00ef, NtWriteFileGather, 36 ) \
+    SYSCALL_ENTRY( 0x00f0, NtWriteVirtualMemory, 20 ) \
+    SYSCALL_ENTRY( 0x00f1, NtYieldExecution, 0 ) \
+    SYSCALL_ENTRY( 0x00f2, wine_nt_to_unix_file_name, 16 ) \
+    SYSCALL_ENTRY( 0x00f3, wine_unix_to_nt_file_name, 12 )
 
 #define ALL_SYSCALLS64 \
     SYSCALL_ENTRY( 0x0000, NtAcceptConnectPort, 48 ) \

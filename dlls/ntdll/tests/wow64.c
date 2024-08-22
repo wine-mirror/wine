@@ -56,6 +56,7 @@ static void (WINAPI *pProcessPendingCrossProcessEmulatorWork)(void);
 static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtWow64GetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtWow64IsProcessorFeaturePresent)(ULONG);
+static NTSTATUS (WINAPI *pNtWow64QueryInformationProcess64)(HANDLE,PROCESSINFOCLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG64,ULONG64*);
 static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
 #endif
@@ -140,6 +141,7 @@ static void init(void)
     GET_PROC( NtWow64AllocateVirtualMemory64 );
     GET_PROC( NtWow64GetNativeSystemInformation );
     GET_PROC( NtWow64IsProcessorFeaturePresent );
+    GET_PROC( NtWow64QueryInformationProcess64 );
     GET_PROC( NtWow64ReadVirtualMemory64 );
     GET_PROC( NtWow64WriteVirtualMemory64 );
 #endif
@@ -2594,6 +2596,52 @@ static void test_nt_wow64(void)
         }
     }
     else win_skip( "NtWow64IsProcessorFeaturePresent not supported\n" );
+
+    if (pNtWow64QueryInformationProcess64)
+    {
+        PROCESS_BASIC_INFORMATION pbi32;
+        PROCESS_BASIC_INFORMATION64 pbi64;
+        ULONG expected_peb;
+        ULONG class;
+
+        for (class = 0; class <= MaxProcessInfoClass; class++)
+        {
+            winetest_push_context( "Process information class %lu", class );
+
+            switch (class)
+            {
+            case ProcessBasicInformation:
+                status = NtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi32, sizeof(pbi32), NULL );
+                ok( !status, "NtQueryInformationProcess returned 0x%08lx\n", status );
+
+                status = NtWow64QueryInformationProcess64( GetCurrentProcess(), ProcessBasicInformation, &pbi64, sizeof(pbi64), NULL );
+                ok( !status, "NtWow64QueryInformationProcess64 returned 0x%08lx\n", status );
+
+                expected_peb = (ULONG)pbi32.PebBaseAddress;
+                if (is_wow64) expected_peb -= 0x1000;
+
+                ok( pbi64.ExitStatus == pbi32.ExitStatus,
+                    "expected %lu got %lu\n", pbi32.ExitStatus, pbi64.ExitStatus );
+                ok( pbi64.PebBaseAddress == expected_peb ||
+                    /* The 64-bit PEB is usually, but not always, 4096 bytes below the 32-bit PEB */
+                    broken( is_wow64 && llabs( (INT64)pbi64.PebBaseAddress - (INT64)expected_peb ) < 0x10000 ),
+                    "expected 0x%lx got 0x%I64x\n", expected_peb, pbi64.PebBaseAddress );
+                ok( pbi64.AffinityMask == pbi32.AffinityMask,
+                    "expected 0x%Ix got 0x%I64x\n", pbi32.AffinityMask, pbi64.AffinityMask );
+                ok( pbi64.UniqueProcessId == pbi32.UniqueProcessId,
+                    "expected %Ix got %I64x\n", pbi32.UniqueProcessId, pbi64.UniqueProcessId );
+                ok( pbi64.InheritedFromUniqueProcessId == pbi32.InheritedFromUniqueProcessId,
+                    "expected %Ix got %I64x\n", pbi32.UniqueProcessId, pbi64.UniqueProcessId );
+                break;
+            default:
+                status = NtWow64QueryInformationProcess64( GetCurrentProcess(), class, NULL, 0, NULL );
+                ok( status == STATUS_NOT_IMPLEMENTED, "NtWow64QueryInformationProcess64 returned 0x%08lx\n", status );
+            }
+
+            winetest_pop_context();
+        }
+    }
+    else win_skip( "NtWow64QueryInformationProcess64 not supported\n" );
 
     NtClose( process );
 }

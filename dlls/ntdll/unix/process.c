@@ -1617,6 +1617,68 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
     return ret;
 }
 
+#ifndef _WIN64
+
+/**********************************************************************
+ *           NtWow64QueryInformationProcess64  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWow64QueryInformationProcess64( HANDLE handle, PROCESSINFOCLASS class, void *info,
+                                                  ULONG size, ULONG *ret_len )
+{
+    NTSTATUS ret;
+    ULONG len = 0;
+
+    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, class, info, (int)size, ret_len );
+
+    switch (class)
+    {
+    case ProcessBasicInformation:
+        {
+            PROCESS_BASIC_INFORMATION64 pbi;
+            const ULONG_PTR affinity_mask = get_system_affinity_mask();
+
+            if (size >= sizeof(PROCESS_BASIC_INFORMATION64))
+            {
+                if (!info) ret = STATUS_ACCESS_VIOLATION;
+                else
+                {
+                    SERVER_START_REQ(get_process_info)
+                    {
+                        req->handle = wine_server_obj_handle( handle );
+                        if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                        {
+                            pbi.ExitStatus = reply->exit_code;
+                            pbi.PebBaseAddress = (ULONG)wine_server_get_ptr( reply->peb );
+                            pbi.AffinityMask = reply->affinity & affinity_mask;
+                            pbi.BasePriority = reply->priority;
+                            pbi.UniqueProcessId = reply->pid;
+                            pbi.InheritedFromUniqueProcessId = reply->ppid;
+                        }
+                    }
+                    SERVER_END_REQ;
+
+                    memcpy( info, &pbi, sizeof(PROCESS_BASIC_INFORMATION64) );
+                    len = sizeof(PROCESS_BASIC_INFORMATION64);
+                }
+                if (size > sizeof(PROCESS_BASIC_INFORMATION64)) ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+            else
+            {
+                len = sizeof(PROCESS_BASIC_INFORMATION64);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+        }
+        break;
+
+    default:
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (ret_len) *ret_len = len;
+    return ret;
+}
+
+#endif
 
 /**********************************************************************
  *           NtSetInformationProcess  (NTDLL.@)
