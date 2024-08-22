@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "mfsrcsnk_private.h"
 
 #include "wine/list.h"
@@ -85,6 +87,7 @@ struct media_source
     WCHAR *url;
     float rate;
 
+    struct winedmo_demuxer winedmo_demuxer;
     UINT64 file_size;
 
     enum
@@ -334,6 +337,8 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
     {
         IMFMediaSource_Shutdown(iface);
 
+        winedmo_demuxer_destroy(&source->winedmo_demuxer);
+
         IMFMediaEventQueue_Release(source->queue);
         IMFByteStream_Release(source->stream);
         free(source->url);
@@ -471,6 +476,7 @@ static const IMFMediaSourceVtbl media_source_vtbl =
 static HRESULT media_source_async_create(struct media_source *source, IMFAsyncResult *result)
 {
     IUnknown *state = IMFAsyncResult_GetStateNoAddRef(result);
+    NTSTATUS status;
     HRESULT hr;
 
     TRACE("source %p, result %p\n", source, result);
@@ -484,6 +490,12 @@ static HRESULT media_source_async_create(struct media_source *source, IMFAsyncRe
     {
         WARN("Failed to set byte stream position, hr %#lx\n", hr);
         hr = S_OK;
+    }
+
+    if ((status = winedmo_demuxer_create(&source->winedmo_demuxer)))
+    {
+        WARN("Failed to create demuxer, status %#lx\n", status);
+        hr = HRESULT_FROM_NT(status);
     }
 
     IMFAsyncResult_SetStatus(result, hr);
