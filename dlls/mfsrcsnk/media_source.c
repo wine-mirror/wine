@@ -815,6 +815,47 @@ static void media_source_init_stream_map(struct media_source *source, UINT strea
     }
 }
 
+static HRESULT normalize_mp4_language_code(struct media_source *source, WCHAR *buffer)
+{
+    static const WCHAR mapping[] = L"aar:aa,abk:ab,ave:ae,afr:af,aka:ak,amh:am,arg:an,"
+                                    "ara:ar,asm:as,ava:av,aym:ay,aze:az,bak:ba,bel:be,"
+                                    "bul:bg,bih:bh,bis:bi,bam:bm,ben:bn,bod:bo,tib:bo,"
+                                    "bre:br,bos:bs,cat:ca,che:ce,cha:ch,cos:co,cre:cr,"
+                                    "ces:cs,cze:cs,chu:cu,chv:cv,cym:cy,wel:cy,dan:da,"
+                                    "deu:de,ger:de,div:dv,dzo:dz,ewe:ee,ell:el,gre:el,"
+                                    "eng:en,epo:eo,spa:es,est:et,eus:eu,baq:eu,fas:fa,"
+                                    "per:fa,ful:ff,fin:fi,fij:fj,fao:fo,fra:fr,fre:fr,"
+                                    "fry:fy,gle:ga,gla:gd,glg:gl,grn:gn,guj:gu,glv:gv,"
+                                    "hau:ha,heb:he,hin:hi,hmo:ho,hrv:hr,hat:ht,hun:hu,"
+                                    "hye:hy,arm:hy,her:hz,ina:ia,ind:id,ile:ie,ibo:ig,"
+                                    "iii:ii,ipk:ik,ido:io,isl:is,ice:is,ita:it,iku:iu,"
+                                    "jpn:ja,jav:jv,kat:ka,geo:ka,kon:kg,kik:ki,kua:kj,"
+                                    "kaz:kk,kal:kl,khm:km,kan:kn,kor:ko,kau:kr,kas:ks,"
+                                    "kur:ku,kom:kv,cor:kw,kir:ky,lat:la,ltz:lb,lug:lg,"
+                                    "lim:li,lin:ln,lao:lo,lit:lt,lub:lu,lav:lv,mlg:mg,"
+                                    "mah:mh,mri:mi,mao:mi,mkd:mk,mac:mk,mal:ml,mon:mn,"
+                                    "mar:mr,msa:ms,may:ms,mlt:mt,mya:my,bur:my,nau:na,"
+                                    "nob:nb,nde:nd,nep:ne,ndo:ng,nld:nl,dut:nl,nno:nn,"
+                                    "nor:no,nbl:nr,nav:nv,nya:ny,oci:oc,oji:oj,orm:om,"
+                                    "ori:or,oss:os,pan:pa,pli:pi,pol:pl,pus:ps,por:pt,"
+                                    "que:qu,roh:rm,run:rn,ron:ro,rum:ro,rus:ru,kin:rw,"
+                                    "san:sa,srd:sc,snd:sd,sme:se,sag:sg,sin:si,slk:sk,"
+                                    "slo:sk,slv:sl,smo:sm,sna:sn,som:so,sqi:sq,alb:sq,"
+                                    "srp:sr,ssw:ss,sot:st,sun:su,swe:sv,swa:sw,tam:ta,"
+                                    "tel:te,tgk:tg,tha:th,tir:ti,tuk:tk,tgl:tl,tsn:tn,"
+                                    "ton:to,tur:tr,tso:ts,tat:tt,twi:tw,tah:ty,uig:ug,"
+                                    "ukr:uk,urd:ur,uzb:uz,ven:ve,vie:vi,vol:vo,wln:wa,"
+                                    "wol:wo,xho:xh,yid:yi,yor:yo,zha:za,zho:zh,chi:zh,"
+                                    "zul:zu";
+    const WCHAR *tmp;
+    TRACE("source %p, buffer %s\n", source, debugstr_w(buffer));
+
+    if (wcslen(buffer) != 3) return S_OK;
+    if ((tmp = wcsstr(mapping, buffer)) && tmp[3] == ':') lstrcpynW(buffer, tmp + 4, 3);
+    if (!tmp) return E_UNEXPECTED;
+    return S_OK;
+}
+
 static void media_source_init_descriptors(struct media_source *source)
 {
     UINT i;
@@ -827,6 +868,10 @@ static void media_source_init_descriptors(struct media_source *source)
         WCHAR buffer[512];
         NTSTATUS status;
 
+        if (FAILED(status = winedmo_demuxer_stream_lang(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
+                || (!wcscmp(source->mime_type, L"video/mp4") && FAILED(normalize_mp4_language_code(source, buffer)))
+                || FAILED(IMFStreamDescriptor_SetString(stream->descriptor, &MF_SD_LANGUAGE, buffer)))
+            WARN("Failed to set stream descriptor language, status %#lx\n", status);
         if (FAILED(status = winedmo_demuxer_stream_name(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
                 || FAILED(IMFStreamDescriptor_SetString(stream->descriptor, &MF_SD_STREAM_NAME, buffer)))
             WARN("Failed to set stream descriptor name, status %#lx\n", status);
