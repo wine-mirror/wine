@@ -1319,6 +1319,7 @@ enable_msvcrt40
 enable_msvcrtd
 enable_msvfw32
 enable_msvidc32
+enable_msvproc
 enable_mswsock
 enable_msxml
 enable_msxml2
@@ -22470,6 +22471,7 @@ wine_fn_config_makefile dlls/msvfw32 enable_msvfw32
 wine_fn_config_makefile dlls/msvfw32/tests enable_tests
 wine_fn_config_makefile dlls/msvidc32 enable_msvidc32
 wine_fn_config_makefile dlls/msvideo.dll16 enable_win16
+wine_fn_config_makefile dlls/msvproc enable_msvproc
 wine_fn_config_makefile dlls/mswsock enable_mswsock
 wine_fn_config_makefile dlls/msxml enable_msxml
 wine_fn_config_makefile dlls/msxml2 enable_msxml2

@@ -2113,6 +2113,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,mscoree.dll,1
 11,,mshtml.dll,1
 11,,msisip.dll,1
+11,,msvproc.dll,1
 11,,qcap.dll,1
 11,,qedit.dll,1
 11,,urlmon.dll,1
