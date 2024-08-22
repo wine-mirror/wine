@@ -6224,6 +6224,34 @@ static NTSTATUS prefetch_memory( HANDLE process, ULONG_PTR count,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS set_dirty_state_information( ULONG_PTR count, MEMORY_RANGE_ENTRY *addresses )
+{
+    ULONG_PTR i;
+    sigset_t sigset;
+    NTSTATUS ret = STATUS_SUCCESS;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    for (i = 0; i < count; i++)
+    {
+        void *base = ROUND_ADDR( addresses[i].VirtualAddress, page_mask );
+        SIZE_T size = ROUND_SIZE( addresses[i].VirtualAddress, addresses[i].NumberOfBytes );
+        struct file_view *view = find_view( base, size );
+
+        if (view)
+        {
+            if (set_page_vprot_exec_write_protect( base, size ))
+                mprotect_range( base, size, 0, 0 );
+        }
+        else
+        {
+            ret = STATUS_MEMORY_NOT_ALLOCATED;
+            break;
+        }
+    }
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    return ret;
+}
+
 /***********************************************************************
  *           NtSetInformationVirtualMemory   (NTDLL.@)
  *           ZwSetInformationVirtualMemory   (NTDLL.@)
@@ -6243,6 +6271,15 @@ NTSTATUS WINAPI NtSetInformationVirtualMemory( HANDLE process,
         if (size != sizeof(ULONG)) return STATUS_INVALID_PARAMETER_6;
         if (!count) return STATUS_INVALID_PARAMETER_3;
         return prefetch_memory( process, count, addresses, *(ULONG *)ptr );
+
+    case VmPageDirtyStateInformation:
+        if (process != GetCurrentProcess()) return STATUS_NOT_SUPPORTED;
+        if (!enable_write_exceptions) return STATUS_NOT_SUPPORTED;
+        if (!ptr) return STATUS_INVALID_PARAMETER_5;
+        if (size != sizeof(ULONG)) return STATUS_INVALID_PARAMETER_6;
+        if (*(ULONG *)ptr) return STATUS_INVALID_PARAMETER_5;
+        if (!count) return STATUS_INVALID_PARAMETER_3;
+        return set_dirty_state_information( count, addresses );
 
     default:
         FIXME("(%p,info_class=%d,%lu,%p,%p,%u) Unknown information class\n",
