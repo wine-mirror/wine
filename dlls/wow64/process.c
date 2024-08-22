@@ -930,6 +930,9 @@ NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
         }
         else return STATUS_INFO_LENGTH_MISMATCH;
 
+    case ProcessManageWritesToExecutableMemory: /* MANAGE_WRITES_TO_EXECUTABLE_MEMORY */
+        return STATUS_INVALID_INFO_CLASS;
+
     case ProcessWineMakeProcessSystem:   /* HANDLE* */
         if (len == sizeof(ULONG))
         {
@@ -986,6 +989,7 @@ NTSTATUS WINAPI wow64_NtSetInformationThread( UINT *args )
         else return STATUS_INVALID_PARAMETER;
 
     case ThreadWow64Context:  /* WOW64_CONTEXT* */
+    case ThreadManageWritesToExecutableMemory: /* MANAGE_WRITES_TO_EXECUTABLE_MEMORY */
         return STATUS_INVALID_INFO_CLASS;
 
     case ThreadGroupInformation:   /* GROUP_AFFINITY */

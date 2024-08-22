@@ -2510,6 +2510,22 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         WARN("Unimplemented class ThreadPriorityBoost.\n");
         return STATUS_SUCCESS;
 
+    case ThreadManageWritesToExecutableMemory:
+    {
+#ifdef __aarch64__
+        const MANAGE_WRITES_TO_EXECUTABLE_MEMORY *mem = data;
+
+        if (length != sizeof(*mem)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (handle != GetCurrentThread()) return STATUS_NOT_SUPPORTED;
+        if (mem->Version != 2) return STATUS_REVISION_MISMATCH;
+        if (mem->ProcessEnableWriteExceptions) return STATUS_INVALID_PARAMETER;
+        ntdll_get_thread_data()->allow_writes = mem->ThreadAllowWrites;
+        return STATUS_SUCCESS;
+#else
+        return STATUS_NOT_SUPPORTED;
+#endif
+    }
+
     case ThreadBasicInformation:
     case ThreadTimes:
     case ThreadPriority:

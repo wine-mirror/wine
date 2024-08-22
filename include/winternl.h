@@ -2262,6 +2262,15 @@ typedef struct _THREAD_NAME_INFORMATION
     UNICODE_STRING ThreadName;
 } THREAD_NAME_INFORMATION, *PTHREAD_NAME_INFORMATION;
 
+typedef struct _MANAGE_WRITES_TO_EXECUTABLE_MEMORY
+{
+    ULONG Version : 8;
+    ULONG ProcessEnableWriteExceptions : 1;
+    ULONG ThreadAllowWrites : 1;
+    ULONG Spare : 22;
+    PVOID KernelWriteToExecutableSignal;
+} MANAGE_WRITES_TO_EXECUTABLE_MEMORY, *PMANAGE_WRITES_TO_EXECUTABLE_MEMORY;
+
 typedef struct _KERNEL_USER_TIMES {
     LARGE_INTEGER  CreateTime;
     LARGE_INTEGER  ExitTime;
