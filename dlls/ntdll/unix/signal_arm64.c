@@ -1050,9 +1050,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     rec.NumberParameters = 2;
     rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
     rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-    rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, rec.ExceptionInformation[0],
-                                              (void *)SP_sig(context) );
-    if (!rec.ExceptionCode) return;
+    if (!virtual_handle_fault( &rec, (void *)SP_sig(context) )) return;
     if (handle_syscall_fault( context, &rec )) return;
     setup_exception( context, &rec );
 }

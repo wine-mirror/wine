@@ -855,9 +855,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = (get_error_code(context) & 0x800) != 0;
         rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-        rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, rec.ExceptionInformation[0],
-                                                  (void *)SP_sig(context) );
-        if (!rec.ExceptionCode) return;
+        if (!virtual_handle_fault( &rec, (void *)SP_sig(context) )) return;
         break;
     case TRAP_ARM_ALIGNFLT:  /* Alignment check exception */
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
