@@ -35,6 +35,8 @@
 
 #include "wine/list.h"
 
+#include "initguid.h"
+#include "devpkey.h"
 #include "driver.h"
 #include "utils.h"
 
@@ -610,12 +612,87 @@ static void test_bus_query(void)
     ObDereferenceObject(top_device);
 }
 
+struct winetest_deviceprop
+{
+    const DEVPROPKEY *key;
+    DEVPROPTYPE type;
+    union {
+        BYTE byte;
+        INT16 int16;
+        UINT16 uint16;
+        INT32 int32;
+        UINT32 uint32;
+        INT64 int64;
+        UINT64 uint64;
+        GUID guid;
+    } value;
+    SIZE_T size;
+};
+
+#define WINETEST_DRIVER_DEVPROP(i, typ, val, size) {&DEVPKEY_Winetest_##i, (typ), val, (size)},
+static struct winetest_deviceprop deviceprops[] = {
+    WINETEST_DEFINE_DEVPROPS
+    {&DEVPKEY_Winetest_8, DEVPROP_TYPE_GUID,
+    {.guid = {0xdeadbeef, 0xdead, 0xbeef, {0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef}}}, sizeof(GUID)}
+};
+#undef WINETEST_DRIVER_DEVPROP
+
+static void test_device_properties( DEVICE_OBJECT *device )
+{
+    SIZE_T i;
+
+    for (i = 0; i < ARRAY_SIZE( deviceprops ); i++)
+    {
+        NTSTATUS status;
+        ULONG size = deviceprops[i].size;
+        DEVPROPTYPE type = deviceprops[i].type;
+        const DEVPROPKEY *key = deviceprops[i].key;
+        void *value = &deviceprops[i].value;
+
+        status = IoSetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, type, size, value );
+        ok( status == STATUS_SUCCESS, "Failed to set device property, status %#lx.\n", status );
+        if (status == STATUS_SUCCESS)
+        {
+            void *buf;
+            ULONG req_size;
+            DEVPROPTYPE stored_type;
+
+            status = IoGetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, 0, NULL, &req_size,
+                                              &stored_type );
+            ok( status == STATUS_BUFFER_TOO_SMALL, "Expected status %#lx, got %#lx.\n",
+                STATUS_BUFFER_TOO_SMALL, status );
+            ok( req_size == size, "Expected required size %lu, got %lu.\n", req_size, size );
+            ok( stored_type == type, "Expected DEVPROPTYPE value %#lx, got %#lx.\n", type,
+                stored_type );
+
+            buf = ExAllocatePool( PagedPool, size );
+            ok( buf != NULL, "Failed to allocate buffer.\n" );
+            if (buf != NULL)
+            {
+                memset( buf, 0, size );
+                status = IoGetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, size, buf, NULL,
+                                                  &stored_type );
+                ok( status == STATUS_SUCCESS, "Failed to get device property, status %#lx.\n",
+                    status );
+                if (status == STATUS_SUCCESS)
+                    ok( memcmp( buf, value, size ) == 0,
+                        "Got unexpected device property value.\n" );
+                ExFreePool( buf );
+            }
+        }
+        status = IoSetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, type, 0, NULL );
+        ok( status == STATUS_SUCCESS, "Failed to delete device property, status %#lx.\n", status );
+    }
+    return;
+}
+
 static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
 {
     switch (code)
     {
         case IOCTL_WINETEST_BUS_MAIN:
             test_bus_query();
+            test_device_properties( bus_pdo );
             return STATUS_SUCCESS;
 
         case IOCTL_WINETEST_BUS_REGISTER_IFACE:
