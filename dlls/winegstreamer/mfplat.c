@@ -192,33 +192,6 @@ HRESULT mfplat_DllRegisterServer(void)
         {MFMediaType_Video, MFVideoFormat_H264},
     };
 
-    MFT_REGISTER_TYPE_INFO wmv_decoder_input_types[] =
-    {
-        {MFMediaType_Video, MFVideoFormat_WMV1},
-        {MFMediaType_Video, MFVideoFormat_WMV2},
-        {MFMediaType_Video, MFVideoFormat_WMV3},
-        {MFMediaType_Video, MEDIASUBTYPE_WMVP},
-        {MFMediaType_Video, MEDIASUBTYPE_WVP2},
-        {MFMediaType_Video, MEDIASUBTYPE_WMVR},
-        {MFMediaType_Video, MEDIASUBTYPE_WMVA},
-        {MFMediaType_Video, MFVideoFormat_WVC1},
-        {MFMediaType_Video, MFVideoFormat_VC1S},
-    };
-    MFT_REGISTER_TYPE_INFO wmv_decoder_output_types[] =
-    {
-        {MFMediaType_Video, MFVideoFormat_YV12},
-        {MFMediaType_Video, MFVideoFormat_YUY2},
-        {MFMediaType_Video, MFVideoFormat_UYVY},
-        {MFMediaType_Video, MFVideoFormat_YVYU},
-        {MFMediaType_Video, MFVideoFormat_NV11},
-        {MFMediaType_Video, MFVideoFormat_NV12},
-        {MFMediaType_Video, DMOVideoFormat_RGB32},
-        {MFMediaType_Video, DMOVideoFormat_RGB24},
-        {MFMediaType_Video, DMOVideoFormat_RGB565},
-        {MFMediaType_Video, DMOVideoFormat_RGB555},
-        {MFMediaType_Video, DMOVideoFormat_RGB8},
-    };
-
     struct mft
     {
         GUID clsid;
@@ -251,16 +224,6 @@ HRESULT mfplat_DllRegisterServer(void)
             h264_encoder_input_types,
             ARRAY_SIZE(h264_encoder_output_types),
             h264_encoder_output_types,
-        },
-        {
-            CLSID_WMVDecoderMFT,
-            MFT_CATEGORY_VIDEO_DECODER,
-            L"WMVideo Decoder MFT",
-            MFT_ENUM_FLAG_SYNCMFT,
-            ARRAY_SIZE(wmv_decoder_input_types),
-            wmv_decoder_input_types,
-            ARRAY_SIZE(wmv_decoder_output_types),
-            wmv_decoder_output_types,
         },
     };
 

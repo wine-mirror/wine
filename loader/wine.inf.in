@@ -2126,6 +2126,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 55,,winprint.dll,1
 11,,wintrust.dll,1
 11,,wmadmod.dll,1
+11,,wmvdecod.dll,1
 11,,iexplore.exe,1
 
 ; 32bit-only fake dlls

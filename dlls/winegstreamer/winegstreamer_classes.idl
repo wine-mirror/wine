@@ -97,9 +97,9 @@ coclass wg_aac_decoder {}
 
 [
     threading(both),
-    uuid(82d353df-90bd-4382-8bc2-3f6192b76e34)
+    uuid(62ee5ddb-4f52-48e2-8928-787b0253a0bc)
 ]
-coclass CWMVDecMediaObject {}
+coclass wg_wmv_decoder {}
 
 [
     threading(both),
