@@ -98,6 +98,12 @@ struct demuxer_destroy_params
     struct stream_context *context;
 };
 
+struct demuxer_seek_params
+{
+    struct winedmo_demuxer demuxer;
+    INT64 timestamp;
+};
+
 struct demuxer_stream_lang_params
 {
     struct winedmo_demuxer demuxer;
@@ -127,6 +133,7 @@ enum unix_funcs
     unix_demuxer_check,
     unix_demuxer_create,
     unix_demuxer_destroy,
+    unix_demuxer_seek,
     unix_demuxer_stream_lang,
     unix_demuxer_stream_name,
     unix_demuxer_stream_type,

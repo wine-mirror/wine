@@ -43,6 +43,7 @@ extern int unix_read_callback( void *opaque, uint8_t *buffer, int size );
 extern NTSTATUS demuxer_check( void * );
 extern NTSTATUS demuxer_create( void * );
 extern NTSTATUS demuxer_destroy( void * );
+extern NTSTATUS demuxer_seek( void * );
 extern NTSTATUS demuxer_stream_lang( void * );
 extern NTSTATUS demuxer_stream_name( void * );
 extern NTSTATUS demuxer_stream_type( void * );

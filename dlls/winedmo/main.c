@@ -180,6 +180,22 @@ NTSTATUS CDECL winedmo_demuxer_destroy( struct winedmo_demuxer *demuxer )
     return status;
 }
 
+NTSTATUS CDECL winedmo_demuxer_seek( struct winedmo_demuxer demuxer, INT64 timestamp )
+{
+    struct demuxer_seek_params params = {.demuxer = demuxer, .timestamp = timestamp};
+    NTSTATUS status;
+
+    TRACE( "demuxer %#I64x, timestamp %I64d\n", demuxer.handle, timestamp );
+
+    if ((status = UNIX_CALL( demuxer_seek, &params )))
+    {
+        WARN( "Failed to set position, status %#lx\n", status );
+        return status;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS CDECL winedmo_demuxer_stream_lang( struct winedmo_demuxer demuxer, UINT stream, WCHAR *buffer, UINT len )
 {
     struct demuxer_stream_lang_params params = {.demuxer = demuxer, .stream = stream};

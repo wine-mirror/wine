@@ -159,6 +159,24 @@ NTSTATUS demuxer_destroy( void *arg )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS demuxer_seek( void *arg )
+{
+    struct demuxer_seek_params *params = arg;
+    AVFormatContext *ctx = get_demuxer( params->demuxer );
+    int64_t timestamp = params->timestamp * AV_TIME_BASE / 10000000;
+    int ret;
+
+    TRACE( "context %p, timestamp 0x%s\n", ctx, wine_dbgstr_longlong( params->timestamp ) );
+
+    if ((ret = av_seek_frame( ctx, -1, timestamp, AVSEEK_FLAG_ANY )) < 0)
+    {
+        ERR( "Failed to seek context %p, error %s.\n", ctx, debugstr_averr(ret) );
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS demuxer_stream_lang( void *arg )
 {
     struct demuxer_stream_lang_params *params = arg;
