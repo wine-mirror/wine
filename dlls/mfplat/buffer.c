@@ -1870,7 +1870,7 @@ static HRESULT WINAPI legacy_buffer_GetBufferAndLength(IMediaBuffer *iface, BYTE
         return IMFMediaBuffer_GetCurrentLength(buffer->media_buffer, len);
 
     if (SUCCEEDED(hr = IMFMediaBuffer_Lock(buffer->media_buffer, data, NULL, len)))
-        InterlockedExchangePointer(&buffer->locked_data, data);
+        InterlockedExchangePointer(&buffer->locked_data, *data);
 
     return hr;
 }
