@@ -2583,14 +2583,6 @@ HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, 
 }
 
 
-static NTSTATUS WINAPI User16CallFreeIcon( void *args, ULONG size )
-{
-    const struct free_icon_params *params = args;
-    GlobalFree16( LOWORD(params->param) );
-    return STATUS_SUCCESS;
-}
-
-
 static NTSTATUS WINAPI User16ThunkLock( void *args, ULONG size )
 {
     const struct thunk_lock_params *params = args;
@@ -2618,7 +2610,6 @@ void register_wow_handlers(void)
         call_dialog_proc_Ato16,
     };
 
-    callback_table[NtUserCallFreeIcon] = User16CallFreeIcon;
     callback_table[NtUserThunkLock]    = User16ThunkLock;
 
     NtUserEnableThunkLock( TRUE );

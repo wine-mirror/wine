@@ -1445,9 +1445,9 @@ static NTSTATUS WINAPI wow64_NtUserUnpackDDEMessage( void *arg, ULONG size )
     return status;
 }
 
-static NTSTATUS WINAPI wow64_NtUserCallFreeIcon( void *arg, ULONG size )
+static NTSTATUS WINAPI wow64_NtUserCallDispatchCallback( void *arg, ULONG size )
 {
-    return dispatch_callback( NtUserCallFreeIcon, arg, size );
+    return dispatch_callback( NtUserCallDispatchCallback, arg, size );
 }
 
 static NTSTATUS WINAPI wow64_NtUserThunkLock( void *arg, ULONG size )
@@ -1520,9 +1520,10 @@ static NTSTATUS WINAPI wow64_NtUserDriverCallbackFirst9( void *arg, ULONG size )
     return dispatch_callback( NtUserDriverCallbackFirst + 9, arg, size );
 }
 
-user_callback user_callbacks[] =
+ntuser_callback user_callbacks[] =
 {
     /* user32 callbacks */
+    wow64_NtUserCallDispatchCallback,
     wow64_NtUserCallEnumDisplayMonitor,
     wow64_NtUserCallSendAsyncCallback,
     wow64_NtUserCallWinEventHook,
@@ -1543,7 +1544,6 @@ user_callback user_callbacks[] =
     wow64_NtUserRenderSynthesizedFormat,
     wow64_NtUserUnpackDDEMessage,
     /* win16 hooks */
-    wow64_NtUserCallFreeIcon,
     wow64_NtUserThunkLock,
     /* Vulkan support */
     wow64_NtUserCallVulkanDebugReportCallback,

@@ -72,7 +72,6 @@ NTSYSAPI void ntdll_set_exception_jmp_buf( jmp_buf jmp );
 
 NTSYSAPI BOOLEAN KeAddSystemServiceTable( ULONG_PTR *funcs, ULONG_PTR *counters, ULONG limit,
                                           BYTE *arguments, ULONG index );
-NTSYSAPI NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len );
 
 /* wide char string functions */
 

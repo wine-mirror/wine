@@ -213,7 +213,7 @@ static BOOL free_icon_handle( HICON handle )
         }
         if (!IS_INTRESOURCE( obj->resname )) free( obj->resname );
         free( obj );
-        if (params.param) KeUserModeCallback( NtUserCallFreeIcon, &params, sizeof(params), &ret_ptr, &ret_len );
+        KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
         user_driver->pDestroyCursorIcon( handle );
         return TRUE;
     }
