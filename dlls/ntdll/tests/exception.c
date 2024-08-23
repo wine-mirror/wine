@@ -7128,16 +7128,35 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
 
 static void * WINAPI hook_KiUserExceptionDispatcher(void *stack)
 {
-    CONTEXT *context = stack;
-    EXCEPTION_RECORD *rec = (EXCEPTION_RECORD *)(context + 1);
+    struct
+    {
+        CONTEXT              context;    /* 000 */
+        CONTEXT_EX           context_ex; /* 390 */
+        EXCEPTION_RECORD     rec;        /* 3b0 */
+        ULONG64              align;      /* 448 */
+        ULONG64              sp;         /* 450 */
+        ULONG64              pc;         /* 458 */
+    } *args = stack;
+    EXCEPTION_RECORD *old_rec = (EXCEPTION_RECORD *)&args->context_ex;
 
-    trace( "rec %p context %p pc %#Ix sp %#Ix flags %#lx\n",
-           rec, context, context->Pc, context->Sp, context->ContextFlags );
-
-    ok( !((ULONG_PTR)stack & 15), "unaligned stack %p\n", stack );
-    ok( rec->ExceptionCode == 0x80000003, "Got unexpected ExceptionCode %#lx.\n", rec->ExceptionCode );
+    trace("stack %p context->Pc %#Ix, context->Sp %#Ix, ContextFlags %#lx.\n",
+          stack, args->context.Pc, args->context.Sp, args->context.ContextFlags);
 
     hook_called = TRUE;
+    ok( !((ULONG_PTR)stack & 15), "unaligned stack %p\n", stack );
+
+    if (!broken( old_rec->ExceptionCode == 0x80000003 )) /* Windows 11 versions prior to 27686 */
+    {
+        ok( args->rec.ExceptionCode == 0x80000003, "Got unexpected ExceptionCode %#lx.\n", args->rec.ExceptionCode );
+
+        ok( args->context_ex.All.Offset == -sizeof(CONTEXT), "wrong All.Offset %lx\n", args->context_ex.All.Offset );
+        ok( args->context_ex.All.Length >= sizeof(CONTEXT) + offsetof(CONTEXT_EX, align), "wrong All.Length %lx\n", args->context_ex.All.Length );
+        ok( args->context_ex.Legacy.Offset == -sizeof(CONTEXT), "wrong Legacy.Offset %lx\n", args->context_ex.All.Offset );
+        ok( args->context_ex.Legacy.Length == sizeof(CONTEXT), "wrong Legacy.Length %lx\n", args->context_ex.All.Length );
+        ok( args->sp == args->context.Sp, "wrong sp %Ix / %Ix\n", args->sp, args->context.Sp );
+        ok( args->pc == args->context.Pc, "wrong pc %Ix / %Ix\n", args->pc, args->context.Pc );
+    }
+
     memcpy(pKiUserExceptionDispatcher, saved_code, sizeof(saved_code));
     FlushInstructionCache( GetCurrentProcess(), pKiUserExceptionDispatcher, sizeof(saved_code));
     return pKiUserExceptionDispatcher;

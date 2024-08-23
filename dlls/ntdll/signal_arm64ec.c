@@ -1159,7 +1159,7 @@ void __attribute__((naked)) KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CO
          "sub sp, sp, #0x4d0\n\t"       /* sizeof(ARM64EC_NT_CONTEXT) */
          ".seh_stackalloc 0x4d0\n\t"
          ".seh_endprologue\n\t"
-         "add x0, sp, #0x390+0x4d0\n\t" /* rec (arm_ctx + 1) */
+         "add x0, sp, #0x3b0+0x4d0\n\t" /* rec */
          "mov x1, sp\n\t"               /* context */
          "add x2, sp, #0x4d0\n\t"       /* arm_ctx (context + 1) */
          "bl \"#prepare_exception_arm64ec\"\n\t"
@@ -1169,7 +1169,7 @@ void __attribute__((naked)) KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CO
          "ldr x16, [x16, #:lo12:__os_arm64x_dispatch_call_no_redirect]\n\t"
          "mov x9, x0\n\t"
          "blr x16\n"
-         "1:\tadd x0, sp, #0x390+0x4d0\n\t" /* rec */
+         "1:\tadd x0, sp, #0x3b0+0x4d0\n\t" /* rec */
          "mov x1, sp\n\t"                   /* context */
          "bl #dispatch_exception\n\t"
          "brk #1\n\t"

@@ -128,12 +128,15 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 struct exc_stack_layout
 {
     CONTEXT              context;        /* 000 */
-    EXCEPTION_RECORD     rec;            /* 390 */
-    ULONG64              align;          /* 428 */
-    ULONG64              redzone[2];     /* 430 */
+    CONTEXT_EX           context_ex;     /* 390 */
+    EXCEPTION_RECORD     rec;            /* 3b0 */
+    ULONG64              align;          /* 448 */
+    ULONG64              sp;             /* 450 */
+    ULONG64              pc;             /* 458 */
+    ULONG64              redzone[2];     /* 460 */
 };
-C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x390 );
-C_ASSERT( sizeof(struct exc_stack_layout) == 0x440 );
+C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x3b0 );
+C_ASSERT( sizeof(struct exc_stack_layout) == 0x470 );
 
 /* stack layout when calling KiUserApcDispatcher */
 struct apc_stack_layout
@@ -203,6 +206,23 @@ static BOOL is_inside_syscall( ucontext_t *sigcontext )
             (char *)SP_sig(sigcontext) <= (char *)arm64_thread_data()->syscall_frame);
 }
 
+/***********************************************************************
+ *           context_init_empty_xstate
+ *
+ * Initializes a context's CONTEXT_EX structure to point to an empty xstate buffer
+ */
+static inline void context_init_empty_xstate( CONTEXT *context, void *xstate_buffer )
+{
+    CONTEXT_EX *xctx;
+
+    xctx = (CONTEXT_EX *)(context + 1);
+    xctx->Legacy.Length = sizeof(CONTEXT);
+    xctx->Legacy.Offset = -(LONG)sizeof(CONTEXT);
+    xctx->XState.Length = 0;
+    xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
+    xctx->All.Length = sizeof(CONTEXT) + xctx->XState.Offset + xctx->XState.Length;
+    xctx->All.Offset = -(LONG)sizeof(CONTEXT);
+}
 
 /***********************************************************************
  *           unwind_builtin_dll
@@ -723,6 +743,9 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
     stack->rec = *rec;
     stack->context = *context;
+    context_init_empty_xstate( &stack->context, stack->redzone );
+    stack->sp = stack->context.Sp;
+    stack->pc = stack->context.Pc;
 
     SP_sig(sigcontext) = (ULONG_PTR)stack;
     PC_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
@@ -804,6 +827,10 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     stack = (struct exc_stack_layout *)(context->Sp & ~15) - 1;
     memmove( &stack->context, context, sizeof(*context) );
     memmove( &stack->rec, rec, sizeof(*rec) );
+    context_init_empty_xstate( &stack->context, stack->redzone );
+    stack->sp = stack->context.Sp;
+    stack->pc = stack->context.Pc;
+
     frame->pc = (ULONG64)pKiUserExceptionDispatcher;
     frame->sp = (ULONG64)stack;
     frame->restore_flags |= CONTEXT_CONTROL;
