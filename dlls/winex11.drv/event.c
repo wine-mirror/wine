@@ -1637,6 +1637,7 @@ static void handle_dnd_protocol( HWND hwnd, XClientMessageEvent *event )
  */
 static void handle_xdnd_enter_event( HWND hWnd, XClientMessageEvent *event )
 {
+    struct dnd_enter_event_params *params;
     struct format_entry *data;
     unsigned long count = 0;
     Atom *xdndtypes;
@@ -1692,11 +1693,13 @@ static void handle_xdnd_enter_event( HWND hWnd, XClientMessageEvent *event )
 
     data = import_xdnd_selection( event->display, event->window, x11drv_atom(XdndSelection),
                                   xdndtypes, count, &size );
-    if (data)
+    if (data && (params = malloc( sizeof(*params) + size )))
     {
-        x11drv_client_func( client_func_dnd_enter_event, data, size );
-        free( data );
+        memcpy( params->entries, data, size );
+        x11drv_client_func( client_func_dnd_enter_event, params, sizeof(*params) + size );
+        free( params );
     }
+    free( data );
 
     if (event->data.l[1] & 1)
         XFree(xdndtypes);

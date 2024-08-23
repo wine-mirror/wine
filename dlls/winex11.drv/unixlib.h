@@ -65,13 +65,22 @@ enum x11drv_client_funcs
 
 C_ASSERT( client_func_last <= NtUserDriverCallbackLast + 1 );
 
-/* x11drv_dnd_enter_event and x11drv_dnd_post_drop params */
+/* x11drv_dnd_enter_event params */
 struct format_entry
 {
     UINT format;
     UINT size;
     char data[1];
 };
+
+/* x11drv_dnd_enter_event params */
+struct dnd_enter_event_params
+{
+    int placeholder;
+    struct format_entry entries[];
+};
+
+C_ASSERT(sizeof(struct dnd_enter_event_params) == offsetof(struct dnd_enter_event_params, entries[0]));
 
 /* x11drv_dnd_position_event params */
 struct dnd_position_event_params
