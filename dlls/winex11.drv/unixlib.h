@@ -17,6 +17,7 @@
  */
 
 #include "ntuser.h"
+#include "shlobj.h"
 #include "wine/unixlib.h"
 
 enum x11drv_funcs
@@ -95,3 +96,12 @@ struct dnd_drop_event_params
 {
     ULONG hwnd;
 };
+
+/* x11drv_dnd_post_drop params */
+struct dnd_post_drop_params
+{
+    DROPFILES drop;
+    char data[];
+};
+
+C_ASSERT(sizeof(struct dnd_post_drop_params) == offsetof(struct dnd_post_drop_params, data[0]));

@@ -645,8 +645,8 @@ extern void change_systray_owner( Display *display, Window systray_window );
 extern HWND create_foreign_window( Display *display, Window window );
 extern BOOL update_clipboard( HWND hwnd );
 extern void init_win_context(void);
-extern void *file_list_to_drop_files( const void *data, size_t size, size_t *ret_size );
-extern void *uri_list_to_drop_files( const void *data, size_t size, size_t *ret_size );
+extern DROPFILES *file_list_to_drop_files( const void *data, size_t size, size_t *ret_size );
+extern DROPFILES *uri_list_to_drop_files( const void *data, size_t size, size_t *ret_size );
 
 static inline void mirror_rect( const RECT *window_rect, RECT *rect )
 {

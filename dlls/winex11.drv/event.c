@@ -40,7 +40,6 @@
 #include <string.h>
 
 #include "x11drv.h"
-#include "shlobj.h"  /* DROPFILES */
 #include "shellapi.h"
 
 #include "wine/server.h"
@@ -1428,8 +1427,12 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 
 static void post_drop( HWND hwnd, DROPFILES *drop, ULONG size )
 {
-    drop->fWide = HandleToUlong( hwnd ); /* abuse fWide to pass window handle */
-    x11drv_client_func( client_func_dnd_post_drop, drop, size );
+    struct dnd_post_drop_params *params;
+    if (!(params = malloc( sizeof(*params) + size - sizeof(*drop) ))) return;
+    memcpy( &params->drop, drop, size );
+    params->drop.fWide = HandleToUlong( hwnd ); /* abuse fWide to pass window handle */
+    x11drv_client_func( client_func_dnd_post_drop, params, size );
+    free( params );
 }
 
 /**********************************************************************
@@ -1476,11 +1479,10 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
     if (!aux_long && p_data)  /* don't bother if > 64K */
     {
-        DROPFILES *drop;
         size_t drop_size;
+        DROPFILES *drop;
 
-        drop = file_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size );
-        if (drop)
+        if ((drop = file_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size )))
         {
             post_drop( hWnd, drop, drop_size );
             free( drop );
@@ -1505,7 +1507,6 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
   unsigned long	aux_long;
   unsigned char	*p_data = NULL; /* property data */
   int		x, y;
-  DROPFILES *drop;
   int format;
   union {
     Atom	atom_aux;
@@ -1527,9 +1528,9 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
   if (!aux_long && p_data) /* don't bother if > 64K */
   {
       size_t drop_size;
-      drop = uri_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size );
+      DROPFILES *drop;
 
-      if (drop)
+      if ((drop = uri_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size )))
       {
           XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
                          &x, &y, &u.i, &u.i, &u.u);
@@ -1548,6 +1549,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
           post_drop( hWnd, drop, drop_size );
           free( drop );
       }
+
+      free( drop );
   }
   if (p_data) XFree( p_data );
 }

@@ -723,15 +723,17 @@ static IDataObjectVtbl xdndDataObjectVtbl =
 
 static IDataObject XDNDDataObject = { &xdndDataObjectVtbl };
 
-NTSTATUS WINAPI x11drv_dnd_post_drop( void *data, ULONG size )
+NTSTATUS WINAPI x11drv_dnd_post_drop( void *args, ULONG size )
 {
+    UINT drop_size = size - offsetof(struct dnd_post_drop_params, drop);
+    struct dnd_post_drop_params *params = args;
     HDROP handle;
 
-    if ((handle = GlobalAlloc( GMEM_SHARE, size )))
+    if ((handle = GlobalAlloc( GMEM_SHARE, drop_size )))
     {
         DROPFILES *ptr = GlobalLock( handle );
         HWND hwnd;
-        memcpy( ptr, data, size );
+        memcpy( ptr, &params->drop, drop_size );
         hwnd = UlongToHandle( ptr->fWide );
         ptr->fWide = TRUE;
         GlobalUnlock( handle );
