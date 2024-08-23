@@ -5,5 +5,4 @@ EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
 	main.c \
-	mediaengine.idl \
 	mediaengine_classes.idl
