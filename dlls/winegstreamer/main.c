@@ -1327,7 +1327,7 @@ HRESULT WINAPI DllRegisterServer(void)
 
     IFilterMapper2_Release(mapper);
 
-    return mfplat_DllRegisterServer();
+    return S_OK;
 }
 
 HRESULT WINAPI DllUnregisterServer(void)

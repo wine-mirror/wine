@@ -109,9 +109,9 @@ coclass wg_h264_decoder {}
 
 [
     threading(both),
-    uuid(6ca50344-051a-4ded-9779-a43305165e35)
+    uuid(6c34de69-4670-46cd-8cb4-1f2fa1dffb65)
 ]
-coclass CMSH264EncoderMFT {}
+coclass wg_h264_encoder {}
 
 [
     threading(both),
