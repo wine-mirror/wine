@@ -6257,10 +6257,9 @@ static HRESULT resolver_get_bytestream_url_hint(IMFByteStream *stream, WCHAR con
 
     if (FAILED(hr = IMFByteStream_GetCurrentPosition(stream, &position)))
         return hr;
-
-    hr = IMFByteStream_Read(stream, buffer, sizeof(buffer), &length);
-    IMFByteStream_SetCurrentPosition(stream, position);
-    if (FAILED(hr))
+    if (position && FAILED(hr = IMFByteStream_SetCurrentPosition(stream, 0)))
+        return hr;
+    if (FAILED(hr = IMFByteStream_Read(stream, buffer, sizeof(buffer), &length)))
         return hr;
 
     if (length < sizeof(buffer))
