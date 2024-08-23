@@ -189,6 +189,7 @@ static void clean_after_shfo_tests(void)
     DeleteFileA("testdir6\\nested\\subnested\\3.txt");
     DeleteFileA("testdir6\\nested\\two.txt");
     DeleteFileA("testdir6\\nested\\2.txt");
+    DeleteFileA("testdir6\\one.txt");
     DeleteFileA("testdir6\\two.txt");
     RemoveDirectoryA("testdir6\\nested\\subnested");
     RemoveDirectoryA("testdir6\\subnested");
