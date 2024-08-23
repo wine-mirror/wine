@@ -1450,11 +1450,6 @@ static NTSTATUS WINAPI wow64_NtUserCallDispatchCallback( void *arg, ULONG size )
     return dispatch_callback( NtUserCallDispatchCallback, arg, size );
 }
 
-static NTSTATUS WINAPI wow64_NtUserThunkLock( void *arg, ULONG size )
-{
-    return dispatch_callback( NtUserThunkLock, arg, size );
-}
-
 static NTSTATUS WINAPI wow64_NtUserCallVulkanDebugReportCallback( void *arg, ULONG size )
 {
     return dispatch_callback( NtUserCallVulkanDebugReportCallback, arg, size );
@@ -1543,8 +1538,6 @@ ntuser_callback user_callbacks[] =
     wow64_NtUserPostDDEMessage,
     wow64_NtUserRenderSynthesizedFormat,
     wow64_NtUserUnpackDDEMessage,
-    /* win16 hooks */
-    wow64_NtUserThunkLock,
     /* Vulkan support */
     wow64_NtUserCallVulkanDebugReportCallback,
     wow64_NtUserCallVulkanDebugUtilsCallback,

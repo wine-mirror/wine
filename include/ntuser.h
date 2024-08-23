@@ -61,8 +61,6 @@ enum
     NtUserPostDDEMessage,
     NtUserRenderSynthesizedFormat,
     NtUserUnpackDDEMessage,
-    /* win16 hooks */
-    NtUserThunkLock,
     /* Vulkan support */
     NtUserCallVulkanDebugReportCallback,
     NtUserCallVulkanDebugUtilsCallback,
@@ -955,13 +953,14 @@ static inline WORD NtUserEnableDC( HDC hdc )
 
 struct thunk_lock_params
 {
+    struct dispatch_callback_params dispatch;
     BOOL restore;
     DWORD locks;
 };
 
-static inline void NtUserEnableThunkLock( BOOL enable )
+static inline void NtUserEnableThunkLock( ntuser_callback thunk_lock_callback )
 {
-    NtUserCallOneParam( enable, NtUserCallOneParam_EnableThunkLock );
+    NtUserCallOneParam( (UINT_PTR)thunk_lock_callback, NtUserCallOneParam_EnableThunkLock );
 }
 
 static inline UINT NtUserEnumClipboardFormats( UINT format )

@@ -148,7 +148,7 @@ static INT64 last_query_display_time;
 static pthread_mutex_t display_lock = PTHREAD_MUTEX_INITIALIZER;
 
 BOOL decorated_mode = TRUE;
-BOOL enable_thunk_lock = FALSE;
+UINT64 thunk_lock_callback = 0;
 
 #define VIRTUAL_HMONITOR ((HMONITOR)(UINT_PTR)(0x10000 + 1))
 static struct monitor virtual_monitor =
@@ -6461,7 +6461,7 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return set_dce_flags( UlongToHandle(arg), DCHF_ENABLEDC );
 
     case NtUserCallOneParam_EnableThunkLock:
-        enable_thunk_lock = arg;
+        thunk_lock_callback = arg;
         return 0;
 
     case NtUserCallOneParam_EnumClipboardFormats:

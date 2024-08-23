@@ -3055,14 +3055,11 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
     void *ret_ptr;
     ULONG ret_len;
 
-    if (enable_thunk_lock)
+    if (!KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len ) &&
+        ret_len == sizeof(params.locks))
     {
-        if (!KeUserModeCallback( NtUserThunkLock, &params, sizeof(params), &ret_ptr, &ret_len ) &&
-            ret_len == sizeof(params.locks))
-        {
-            params.locks = *(DWORD *)ret_ptr;
-            params.restore = TRUE;
-        }
+        params.locks = *(DWORD *)ret_ptr;
+        params.restore = TRUE;
     }
 
     if (user_driver->pProcessEvents( mask )) ret = count - 1;
@@ -3081,8 +3078,7 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
     if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
     if (ret == count - 1) get_user_thread_info()->last_driver_time = NtGetTickCount();
 
-    if (enable_thunk_lock)
-        KeUserModeCallback( NtUserThunkLock, &params, sizeof(params), &ret_ptr, &ret_len );
+    KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
 
     return ret;
 }

@@ -2583,7 +2583,7 @@ HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, 
 }
 
 
-static NTSTATUS WINAPI User16ThunkLock( void *args, ULONG size )
+static NTSTATUS WINAPI thunk_lock_callback( void *args, ULONG size )
 {
     const struct thunk_lock_params *params = args;
     DWORD locks = params->locks;
@@ -2595,7 +2595,6 @@ static NTSTATUS WINAPI User16ThunkLock( void *args, ULONG size )
 
 void register_wow_handlers(void)
 {
-    KERNEL_CALLBACK_PROC *callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
     static const struct wow_handlers16 handlers16 =
     {
         button_proc16,
@@ -2610,9 +2609,7 @@ void register_wow_handlers(void)
         call_dialog_proc_Ato16,
     };
 
-    callback_table[NtUserThunkLock]    = User16ThunkLock;
-
-    NtUserEnableThunkLock( TRUE );
+    NtUserEnableThunkLock( thunk_lock_callback );
 
     UserRegisterWowHandlers( &handlers16, &wow_handlers32 );
 }
