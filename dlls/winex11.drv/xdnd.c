@@ -254,7 +254,8 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
 
 NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
 {
-    HWND hwnd = UlongToHandle( *(ULONG *)args );
+    struct dnd_drop_event_params *params = args;
+    HWND hwnd = UlongToHandle( params->hwnd );
     IDropTarget *dropTarget;
     DWORD effect = XDNDDropEffect;
     int accept = 0; /* Assume we're not accepting */

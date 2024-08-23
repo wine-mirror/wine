@@ -80,3 +80,9 @@ struct dnd_position_event_params
     POINT point;
     DWORD effect;
 };
+
+/* x11drv_dnd_drop_event params */
+struct dnd_drop_event_params
+{
+    ULONG hwnd;
+};
