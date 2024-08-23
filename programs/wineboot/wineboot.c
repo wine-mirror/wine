@@ -542,6 +542,7 @@ enum smbios_type
     SMBIOS_TYPE_CHASSIS = 3,
     SMBIOS_TYPE_PROCESSOR = 4,
     SMBIOS_TYPE_BOOTINFO = 32,
+    SMBIOS_TYPE_PROCESSOR_ADDITIONAL_INFO = 44,
     SMBIOS_TYPE_END = 127
 };
 
@@ -620,6 +621,31 @@ struct smbios_processor
     WORD                 core_enabled2;
     WORD                 thread_count2;
 };
+
+struct smbios_processor_specific_block
+{
+    BYTE length;
+    BYTE processor_type;
+    BYTE data[];
+};
+
+struct smbios_processor_additional_info
+{
+    struct smbios_header hdr;
+    WORD ref_handle;
+    struct smbios_processor_specific_block info_block;
+};
+
+struct smbios_wine_core_id_regs_arm64
+{
+    WORD num_regs;
+    struct smbios_wine_id_reg_value_arm64
+    {
+        WORD reg;
+        UINT64 value;
+    } regs[];
+};
+
 #include "poppack.h"
 
 #define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
@@ -766,6 +792,32 @@ static void create_bios_system_values( HKEY bios_key, const char *buf, UINT len 
     }
 }
 
+#ifdef __aarch64__
+
+static void create_id_reg_keys_arm64( HKEY core_key, UINT core, const char *buf, UINT len )
+{
+    const struct smbios_header *hdr;
+    const struct smbios_processor_additional_info *additional_info;
+    const struct smbios_wine_core_id_regs_arm64 *core_id_regs;
+    static const char *reg_value_name = "CP %04X";
+    char buffer[9];
+    UINT i;
+
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_PROCESSOR_ADDITIONAL_INFO, core, buf, len ))) return;
+
+    additional_info = (const struct smbios_processor_additional_info *)hdr;
+    core_id_regs = (const struct smbios_wine_core_id_regs_arm64 *)additional_info->info_block.data;
+
+    for (i = 0; i < core_id_regs->num_regs; i++)
+    {
+        snprintf( buffer, sizeof(buffer), reg_value_name, core_id_regs->regs[i].reg );
+        RegSetValueExA( core_key, buffer, 0, REG_QWORD,
+                        (const BYTE *)&core_id_regs->regs[i].value, sizeof(UINT64) );
+    }
+}
+
+#endif
+
 static void create_bios_processor_values( HKEY system_key, const char *buf, UINT len )
 {
     const struct smbios_header *hdr;
@@ -857,6 +909,9 @@ static void create_bios_processor_values( HKEY system_key, const char *buf, UINT
                 if (vendorid) set_reg_value( hkey, L"VendorIdentifier", vendorid );
                 if (version) set_reg_value( hkey, L"ProcessorNameString", version );
                 RegSetValueExW( hkey, L"~MHz", 0, REG_DWORD, (BYTE *)&tsc_freq_mhz, sizeof(DWORD) );
+#ifdef __aarch64__
+                create_id_reg_keys_arm64( hkey, core, buf, len );
+#endif
                 RegCloseKey( hkey );
             }
             if (fpu_key && !RegCreateKeyExW( fpu_key, buffer, 0, NULL, REG_OPTION_VOLATILE,
