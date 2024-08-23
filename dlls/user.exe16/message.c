@@ -2593,15 +2593,11 @@ static NTSTATUS WINAPI User16CallFreeIcon( void *args, ULONG size )
 
 static NTSTATUS WINAPI User16ThunkLock( void *args, ULONG size )
 {
-    DWORD *param = args;
-    if (size != sizeof(DWORD))
-    {
-        DWORD lock;
-        ReleaseThunkLock( &lock );
-        return NtCallbackReturn( &lock, sizeof(lock), STATUS_SUCCESS );
-    }
-    RestoreThunkLock( *param );
-    return STATUS_SUCCESS;
+    const struct thunk_lock_params *params = args;
+    DWORD locks = params->locks;
+    if (params->restore) RestoreThunkLock( locks );
+    else ReleaseThunkLock( &locks );
+    return NtCallbackReturn( &locks, sizeof(locks), STATUS_SUCCESS );
 }
 
 

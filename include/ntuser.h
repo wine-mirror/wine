@@ -937,6 +937,12 @@ static inline WORD NtUserEnableDC( HDC hdc )
     return NtUserCallOneParam( HandleToUlong(hdc), NtUserCallOneParam_EnableDC );
 }
 
+struct thunk_lock_params
+{
+    BOOL restore;
+    DWORD locks;
+};
+
 static inline void NtUserEnableThunkLock( BOOL enable )
 {
     NtUserCallOneParam( enable, NtUserCallOneParam_EnableThunkLock );
