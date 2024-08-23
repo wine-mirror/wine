@@ -146,7 +146,7 @@ HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
 {
     FIXME("(%p): stub\n", context);
 
-    return (HANDLE)0xcafecafe;
+    return CreateEventW(NULL, TRUE, FALSE, NULL);
 }
 
 /***********************************************************************
