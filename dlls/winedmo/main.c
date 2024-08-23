@@ -27,9 +27,10 @@ static struct stream_context *stream_context_create(void)
 {
     struct stream_context *context;
 
-    if (!(context = malloc( sizeof(*context) ))) return NULL;
+    if (!(context = malloc( 0x10000 ))) return NULL;
     context->length = 0;
     context->position = 0;
+    context->buffer_size = 0x10000 - offsetof(struct stream_context, buffer);
 
     return context;
 }

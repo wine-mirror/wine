@@ -41,7 +41,11 @@ struct stream_context
 {
     UINT64 length;
     UINT64 position;
+    UINT64 buffer_size;
+    BYTE buffer[];
 };
+
+C_ASSERT( sizeof(struct stream_context) == offsetof( struct stream_context, buffer[0] ) );
 
 struct seek_callback_params
 {
