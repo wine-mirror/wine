@@ -328,10 +328,12 @@ void WINAPI RtlOpenCrossProcessEmulatorWorkConnection( HANDLE process, HANDLE *s
     else
     {
         PROCESS_BASIC_INFORMATION basic;
-        CHPEV2_PROCESS_INFO info;
+        CHPEV2_PROCESS_INFO info, *info_ptr;
 
         if (!NtQueryInformationProcess( process, ProcessBasicInformation, &basic, sizeof(basic), NULL ) &&
-            !NtReadVirtualMemory( process, ((PEB *)basic.PebBaseAddress)->ChpeV2ProcessInfo, &info, sizeof(info), NULL ))
+            !NtReadVirtualMemory( process, (char *)basic.PebBaseAddress + offsetof(PEB, ChpeV2ProcessInfo),
+                                  &info_ptr, sizeof(info_ptr), NULL ) &&
+            !NtReadVirtualMemory( process, info_ptr, &info, sizeof(info), NULL ))
             handle = info.SectionHandle;
     }
 #endif
