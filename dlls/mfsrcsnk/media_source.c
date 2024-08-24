@@ -37,3 +37,21 @@ static const IClassFactoryVtbl avi_byte_stream_plugin_factory_vtbl =
 };
 
 IClassFactory avi_byte_stream_plugin_factory = {&avi_byte_stream_plugin_factory_vtbl};
+
+static HRESULT WINAPI wav_byte_stream_plugin_factory_CreateInstance(IClassFactory *iface,
+        IUnknown *outer, REFIID riid, void **out)
+{
+    static const GUID CLSID_GStreamerByteStreamHandler = {0x317df618,0x5e5a,0x468a,{0x9f,0x15,0xd8,0x27,0xa9,0xa0,0x81,0x62}};
+    return CoCreateInstance(&CLSID_GStreamerByteStreamHandler, outer, CLSCTX_INPROC_SERVER, riid, out);
+}
+
+static const IClassFactoryVtbl wav_byte_stream_plugin_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    wav_byte_stream_plugin_factory_CreateInstance,
+    class_factory_LockServer,
+};
+
+IClassFactory wav_byte_stream_plugin_factory = {&wav_byte_stream_plugin_factory_vtbl};

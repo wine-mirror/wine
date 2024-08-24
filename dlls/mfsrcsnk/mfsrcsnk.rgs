@@ -24,6 +24,19 @@ HKLM
                     {
                         val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
                     }
+
+                    '.wav'
+                    {
+                        val '{42c9b9f5-16fc-47ef-af22-da05f7c842e3}' = s 'WAV Byte Stream Handler'
+                    }
+                    'audio/wav'
+                    {
+                        val '{42c9b9f5-16fc-47ef-af22-da05f7c842e3}' = s 'WAV Byte Stream Handler'
+                    }
+                    'audio/x-wav'
+                    {
+                        val '{42c9b9f5-16fc-47ef-af22-da05f7c842e3}' = s 'WAV Byte Stream Handler'
+                    }
                 }
             }
         }

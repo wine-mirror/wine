@@ -21,3 +21,4 @@
 #include "wine/debug.h"
 
 extern IClassFactory avi_byte_stream_plugin_factory;
+extern IClassFactory wav_byte_stream_plugin_factory;
