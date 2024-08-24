@@ -23,11 +23,114 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+struct byte_stream_handler
+{
+    IMFByteStreamHandler IMFByteStreamHandler_iface;
+    LONG refcount;
+};
+
+static struct byte_stream_handler *byte_stream_handler_from_IMFByteStreamHandler(IMFByteStreamHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct byte_stream_handler, IMFByteStreamHandler_iface);
+}
+
+static HRESULT WINAPI byte_stream_handler_QueryInterface(IMFByteStreamHandler *iface, REFIID riid, void **out)
+{
+    struct byte_stream_handler *handler = byte_stream_handler_from_IMFByteStreamHandler(iface);
+
+    TRACE("handler %p, riid %s, out %p\n", handler, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IUnknown)
+            || IsEqualIID(riid, &IID_IMFByteStreamHandler))
+    {
+        IMFByteStreamHandler_AddRef(&handler->IMFByteStreamHandler_iface);
+        *out = &handler->IMFByteStreamHandler_iface;
+        return S_OK;
+    }
+
+    WARN("Unsupported %s\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI byte_stream_handler_AddRef(IMFByteStreamHandler *iface)
+{
+    struct byte_stream_handler *handler = byte_stream_handler_from_IMFByteStreamHandler(iface);
+    ULONG refcount = InterlockedIncrement(&handler->refcount);
+    TRACE("handler %p, refcount %ld\n", handler, refcount);
+    return refcount;
+}
+
+static ULONG WINAPI byte_stream_handler_Release(IMFByteStreamHandler *iface)
+{
+    struct byte_stream_handler *handler = byte_stream_handler_from_IMFByteStreamHandler(iface);
+    ULONG refcount = InterlockedDecrement(&handler->refcount);
+    TRACE("handler %p, refcount %ld\n", handler, refcount);
+    if (!refcount)
+        free(handler);
+    return refcount;
+}
+
+static HRESULT WINAPI byte_stream_handler_BeginCreateObject(IMFByteStreamHandler *iface, IMFByteStream *stream, const WCHAR *url, DWORD flags,
+        IPropertyStore *props, IUnknown **cookie, IMFAsyncCallback *callback, IUnknown *state)
+{
+    struct byte_stream_handler *handler = byte_stream_handler_from_IMFByteStreamHandler(iface);
+    FIXME("handler %p, stream %p, url %s, flags %#lx, props %p, cookie %p, callback %p, state %p stub!\n", handler, stream, debugstr_w(url),
+            flags, props, cookie, callback, state);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI byte_stream_handler_EndCreateObject(IMFByteStreamHandler *iface, IMFAsyncResult *result,
+        MF_OBJECT_TYPE *type, IUnknown **object)
+{
+    struct byte_stream_handler *handler = byte_stream_handler_from_IMFByteStreamHandler(iface);
+    FIXME("handler %p, result %p, type %p, object %p stub!\n", handler, result, type, object);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI byte_stream_handler_CancelObjectCreation(IMFByteStreamHandler *iface, IUnknown *cookie)
+{
+    struct byte_stream_handler *handler = byte_stream_handler_from_IMFByteStreamHandler(iface);
+    FIXME("handler %p, cookie %p, stub!\n", handler, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI byte_stream_handler_GetMaxNumberOfBytesRequiredForResolution(IMFByteStreamHandler *iface, QWORD *bytes)
+{
+    struct byte_stream_handler *handler = byte_stream_handler_from_IMFByteStreamHandler(iface);
+    FIXME("handler %p, bytes %p, stub!\n", handler, bytes);
+    return E_NOTIMPL;
+}
+
+static const IMFByteStreamHandlerVtbl byte_stream_handler_vtbl =
+{
+    byte_stream_handler_QueryInterface,
+    byte_stream_handler_AddRef,
+    byte_stream_handler_Release,
+    byte_stream_handler_BeginCreateObject,
+    byte_stream_handler_EndCreateObject,
+    byte_stream_handler_CancelObjectCreation,
+    byte_stream_handler_GetMaxNumberOfBytesRequiredForResolution,
+};
+
 static HRESULT byte_stream_plugin_create(IUnknown *outer, REFIID riid, void **out)
 {
-    FIXME("outer %p, riid %s, out %p stub!.\n", outer, debugstr_guid(riid), out);
-    *out = NULL;
-    return E_NOTIMPL;
+    struct byte_stream_handler *handler;
+    HRESULT hr;
+
+    TRACE("outer %p, riid %s, out %p\n", outer, debugstr_guid(riid), out);
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+    if (!(handler = calloc(1, sizeof(*handler))))
+        return E_OUTOFMEMORY;
+    handler->IMFByteStreamHandler_iface.lpVtbl = &byte_stream_handler_vtbl;
+    handler->refcount = 1;
+    TRACE("created %p\n", handler);
+
+    hr = IMFByteStreamHandler_QueryInterface(&handler->IMFByteStreamHandler_iface, riid, out);
+    IMFByteStreamHandler_Release(&handler->IMFByteStreamHandler_iface);
+    return hr;
 }
 
 static BOOL use_gst_byte_stream_handler(void)
