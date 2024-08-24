@@ -1,0 +1,11 @@
+MODULE    = mfmp4srcsnk.dll
+IMPORTS   = ole32 mfplat mfuuid uuid
+PARENTSRC = ../mfsrcsnk
+
+EXTRADLLFLAGS = -Wb,--prefer-native
+
+SOURCES = \
+	media_source.c \
+	mfmp4srcsnk.c \
+	mfmp4srcsnk.idl \
+	mfmp4srcsnk.rc
