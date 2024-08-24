@@ -37,226 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-/*
- * Near the bottom of this file are the exported DllRegisterServer and
- * DllUnregisterServer, which make all this worthwhile.
- */
-
-struct mediatype
-{
-    CLSID const *majortype;	/* NULL for end of list */
-    CLSID const *subtype;
-    DWORD fourcc;
-};
-
-struct pin
-{
-    DWORD flags;		/* 0xFFFFFFFF for end of list */
-    struct mediatype mediatypes[11];
-};
-
-struct regsvr_filter
-{
-    CLSID const *clsid;		/* NULL for end of list */
-    CLSID const *category;
-    WCHAR name[50];
-    DWORD merit;
-    struct pin pins[11];
-};
-
-/***********************************************************************
- *		register_filters
- */
-static HRESULT register_filters(struct regsvr_filter const *list)
-{
-    HRESULT hr;
-    IFilterMapper2* pFM2 = NULL;
-
-    CoInitialize(NULL);
-    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pFM2);
-
-    if (SUCCEEDED(hr)) {
-	for (; SUCCEEDED(hr) && list->clsid; ++list) {
-	    REGFILTER2 rf2;
-	    REGFILTERPINS2* prfp2;
-	    int i;
-
-	    for (i = 0; list->pins[i].flags != 0xFFFFFFFF; i++) ;
-	    rf2.dwVersion = 2;
-	    rf2.dwMerit = list->merit;
-	    rf2.cPins2 = i;
-	    rf2.rgPins2 = prfp2 = CoTaskMemAlloc(i*sizeof(REGFILTERPINS2));
-	    if (!prfp2) {
-		hr = E_OUTOFMEMORY;
-		break;
-	    }
-	    for (i = 0; list->pins[i].flags != 0xFFFFFFFF; i++) {
-		REGPINTYPES* lpMediatype;
-		CLSID* lpClsid;
-		int j, nbmt;
-                
-		for (nbmt = 0; list->pins[i].mediatypes[nbmt].majortype; nbmt++) ;
-		/* Allocate a single buffer for regpintypes struct and clsids */
-		lpMediatype = CoTaskMemAlloc(nbmt*(sizeof(REGPINTYPES) + 2*sizeof(CLSID)));
-		if (!lpMediatype) {
-		    hr = E_OUTOFMEMORY;
-		    break;
-		}
-		lpClsid = (CLSID*) (lpMediatype + nbmt);
-		for (j = 0; j < nbmt; j++) {
-		    (lpMediatype + j)->clsMajorType = lpClsid + j*2;
-		    memcpy(lpClsid + j*2, list->pins[i].mediatypes[j].majortype, sizeof(CLSID));
-		    (lpMediatype + j)->clsMinorType = lpClsid + j*2 + 1;
-		    if (list->pins[i].mediatypes[j].subtype)
-			memcpy(lpClsid + j*2 + 1, list->pins[i].mediatypes[j].subtype, sizeof(CLSID));
-		    else {
-                        /* Subtypes are often a combination of major type + fourcc/tag */
-			memcpy(lpClsid + j*2 + 1, list->pins[i].mediatypes[j].majortype, sizeof(CLSID));
-			*(DWORD*)(lpClsid + j*2 + 1) = list->pins[i].mediatypes[j].fourcc;
-		    }
-		}
-		prfp2[i].dwFlags = list->pins[i].flags;
-		prfp2[i].cInstances = 0;
-		prfp2[i].nMediaTypes = j;
-		prfp2[i].lpMediaType = lpMediatype;
-		prfp2[i].nMediums = 0;
-		prfp2[i].lpMedium = NULL;
-		prfp2[i].clsPinCategory = NULL;
-	    }
-
-	    if (FAILED(hr)) {
-		ERR("failed to register with hresult %#lx\n", hr);
-		CoTaskMemFree(prfp2);
-		break;
-	    }
-
-	    hr = IFilterMapper2_RegisterFilter(pFM2, list->clsid, list->name, NULL, list->category, NULL, &rf2);
-
-	    while (i) {
-		CoTaskMemFree((REGPINTYPES*)prfp2[i-1].lpMediaType);
-		i--;
-	    }
-	    CoTaskMemFree(prfp2);
-	}
-    }
-
-    if (pFM2)
-	IFilterMapper2_Release(pFM2);
-
-    CoUninitialize();
-
-    return hr;
-}
-
-/***********************************************************************
- *		unregister_filters
- */
-static HRESULT unregister_filters(struct regsvr_filter const *list)
-{
-    HRESULT hr;
-    IFilterMapper2* pFM2;
-
-    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pFM2);
-
-    if (SUCCEEDED(hr)) {
-	for (; SUCCEEDED(hr) && list->clsid; ++list)
-	    hr = IFilterMapper2_UnregisterFilter(pFM2, list->category, NULL, list->clsid);
-	IFilterMapper2_Release(pFM2);
-    }
-
-    return hr;
-}
-
-/***********************************************************************
- *		filter list
- */
-
-static struct regsvr_filter const filter_list[] = {
-    {   &CLSID_VideoRenderer,
-	&CLSID_LegacyAmFilterCategory,
-	L"Video Renderer",
-	0x800000,
-	{   {   REG_PINFLAG_B_RENDERER,
-		{   { &MEDIATYPE_Video, &GUID_NULL },
-		    { NULL }
-		},
-	    },
-	    { 0xFFFFFFFF },
-	}
-    },
-    {   &CLSID_VideoRendererDefault,
-        &CLSID_LegacyAmFilterCategory,
-        L"Video Renderer",
-        0x800001,
-        {   {   REG_PINFLAG_B_RENDERER,
-                {   { &MEDIATYPE_Video, &GUID_NULL },
-                    { NULL }
-                },
-            },
-            { 0xFFFFFFFF },
-        }
-    },
-    {   &CLSID_VideoMixingRenderer9,
-        &CLSID_LegacyAmFilterCategory,
-        L"Video Mixing Renderer 9",
-        0x200000,
-        {   {   REG_PINFLAG_B_RENDERER,
-                {   { &MEDIATYPE_Video, &GUID_NULL },
-                    { NULL }
-                },
-            },
-            { 0xFFFFFFFF },
-        }
-    },
-    {   &CLSID_AVIDec,
-	&CLSID_LegacyAmFilterCategory,
-	L"AVI Decompressor",
-	0x5ffff0,
-	{   {   0,
-		{   { &MEDIATYPE_Video, &GUID_NULL },
-		    { NULL }
-		},
-	    },
-	    {   REG_PINFLAG_B_OUTPUT,
-		{   { &MEDIATYPE_Video, &GUID_NULL },
-		    { NULL }
-		},
-	    },
-	    { 0xFFFFFFFF },
-	}
-    },
-    {   &CLSID_AsyncReader,
-	&CLSID_LegacyAmFilterCategory,
-	L"File Source (Async.)",
-	0x400000,
-	{   {   REG_PINFLAG_B_OUTPUT,
-		{   { &MEDIATYPE_Stream, &GUID_NULL },
-		    { NULL }
-		},
-	    },
-	    { 0xFFFFFFFF },
-	}
-    },
-    {   &CLSID_ACMWrapper,
-	&CLSID_LegacyAmFilterCategory,
-	L"ACM Wrapper",
-	0x5ffff0,
-	{   {   0,
-		{   { &MEDIATYPE_Audio, &GUID_NULL },
-		    { NULL }
-		},
-	    },
-	    {   REG_PINFLAG_B_OUTPUT,
-		{   { &MEDIATYPE_Audio, &GUID_NULL },
-		    { NULL }
-		},
-	    },
-	    { 0xFFFFFFFF },
-	}
-    },
-    { NULL }		/* list terminator */
-};
-
 extern HRESULT WINAPI QUARTZ_DllRegisterServer(void);
 extern HRESULT WINAPI QUARTZ_DllUnregisterServer(void);
 
@@ -265,13 +45,162 @@ extern HRESULT WINAPI QUARTZ_DllUnregisterServer(void);
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    static const REGPINTYPES video_renderer_inputs[] =
+    {
+        {&MEDIATYPE_Video, &GUID_NULL},
+    };
+    static const REGFILTERPINS2 video_renderer_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(video_renderer_inputs),
+            .lpMediaType = video_renderer_inputs,
+            .dwFlags = REG_PINFLAG_B_RENDERER,
+        },
+    };
+    static const REGFILTER2 video_renderer_default_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_PREFERRED + 1,
+        .cPins2 = ARRAY_SIZE(video_renderer_pins),
+        .rgPins2 = video_renderer_pins,
+    };
+    static const REGFILTER2 video_renderer_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_PREFERRED,
+        .cPins2 = ARRAY_SIZE(video_renderer_pins),
+        .rgPins2 = video_renderer_pins,
+    };
+
+    static const REGPINTYPES vmr9_filter_inputs[] =
+    {
+        {&MEDIATYPE_Video, &GUID_NULL},
+    };
+    static const REGFILTERPINS2 vmr9_filter_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(vmr9_filter_inputs),
+            .lpMediaType = vmr9_filter_inputs,
+            .dwFlags = REG_PINFLAG_B_RENDERER,
+        },
+    };
+    static const REGFILTER2 vmr9_filter_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_DO_NOT_USE,
+        .cPins2 = ARRAY_SIZE(vmr9_filter_pins),
+        .rgPins2 = vmr9_filter_pins,
+    };
+
+    static const REGPINTYPES avi_decompressor_inputs[] =
+    {
+        {&MEDIATYPE_Video, &GUID_NULL},
+    };
+    static const REGPINTYPES avi_decompressor_outputs[] =
+    {
+        {&MEDIATYPE_Video, &GUID_NULL},
+    };
+    static const REGFILTERPINS2 avi_decompressor_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(avi_decompressor_inputs),
+            .lpMediaType = avi_decompressor_inputs,
+        },
+        {
+            .nMediaTypes = ARRAY_SIZE(avi_decompressor_outputs),
+            .lpMediaType = avi_decompressor_outputs,
+            .dwFlags = REG_PINFLAG_B_OUTPUT,
+        },
+    };
+    static const REGFILTER2 avi_decompressor_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_NORMAL - 16,
+        .cPins2 = ARRAY_SIZE(avi_decompressor_pins),
+        .rgPins2 = avi_decompressor_pins,
+    };
+
+    static const REGPINTYPES async_reader_outputs[] =
+    {
+        {&MEDIATYPE_Stream, &GUID_NULL},
+    };
+    static const REGFILTERPINS2 async_reader_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(async_reader_outputs),
+            .lpMediaType = async_reader_outputs,
+            .dwFlags = REG_PINFLAG_B_OUTPUT,
+        },
+    };
+    static const REGFILTER2 async_reader_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_UNLIKELY,
+        .cPins2 = ARRAY_SIZE(async_reader_pins),
+        .rgPins2 = async_reader_pins,
+    };
+
+    static const REGPINTYPES acm_wrapper_inputs[] =
+    {
+        {&MEDIATYPE_Audio, &GUID_NULL},
+    };
+    static const REGPINTYPES acm_wrapper_outputs[] =
+    {
+        {&MEDIATYPE_Audio, &GUID_NULL},
+    };
+    static const REGFILTERPINS2 acm_wrapper_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(acm_wrapper_inputs),
+            .lpMediaType = acm_wrapper_inputs,
+        },
+        {
+            .nMediaTypes = ARRAY_SIZE(acm_wrapper_outputs),
+            .lpMediaType = acm_wrapper_outputs,
+            .dwFlags = REG_PINFLAG_B_OUTPUT,
+        },
+    };
+    static const REGFILTER2 acm_wrapper_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_NORMAL - 16,
+        .cPins2 = ARRAY_SIZE(acm_wrapper_pins),
+        .rgPins2 = acm_wrapper_pins,
+    };
+
+    IFilterMapper2 *mapper;
     HRESULT hr;
 
     TRACE("\n");
 
-    hr = QUARTZ_DllRegisterServer();
-    if (SUCCEEDED(hr))
-        hr = register_filters(filter_list);
+    if (FAILED(hr = QUARTZ_DllRegisterServer()))
+        return hr;
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterMapper2, (void **)&mapper)))
+        return hr;
+
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_VideoRenderer, L"Video Renderer", NULL,
+            &CLSID_LegacyAmFilterCategory, NULL, &video_renderer_reg)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_VideoRendererDefault, L"Video Renderer", NULL,
+            &CLSID_LegacyAmFilterCategory, NULL, &video_renderer_default_reg)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_VideoMixingRenderer9, L"Video Mixing Renderer 9", NULL,
+            &CLSID_LegacyAmFilterCategory, NULL, &vmr9_filter_reg)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_AVIDec, L"AVI Decompressor", NULL,
+            &CLSID_LegacyAmFilterCategory, NULL, &avi_decompressor_reg)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_AsyncReader, L"File Source (Async.)", NULL,
+            &CLSID_LegacyAmFilterCategory, NULL, &async_reader_reg)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_ACMWrapper, L"ACM Wrapper", NULL,
+            &CLSID_LegacyAmFilterCategory, NULL, &acm_wrapper_reg)))
+        goto done;
+
+done:
+    IFilterMapper2_Release(mapper);
     return hr;
 }
 
@@ -280,12 +209,32 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
+    IFilterMapper2 *mapper;
     HRESULT hr;
 
     TRACE("\n");
 
-    hr = unregister_filters(filter_list);
+    if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterMapper2, (void **)&mapper)))
+        return hr;
+
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_VideoRenderer)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_VideoRendererDefault)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_VideoMixingRenderer9)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_AVIDec)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_AsyncReader)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_ACMWrapper)))
+        goto done;
+
+done:
+    IFilterMapper2_Release(mapper);
     if (SUCCEEDED(hr))
         hr = QUARTZ_DllUnregisterServer();
+
     return hr;
 }
