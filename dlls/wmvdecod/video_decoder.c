@@ -23,6 +23,24 @@
 DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_VC1S,MAKEFOURCC('V','C','1','S'));
 DEFINE_GUID(MEDIASUBTYPE_WMV_Unknown, 0x7ce12ca9,0xbfbf,0x43d9,0x9d,0x00,0x82,0xb8,0xed,0x54,0x31,0x6b);
 
+static HRESULT WINAPI h264_decoder_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **out)
+{
+    static const GUID CLSID_wg_h264_decoder = {0x1f1e273d,0x12c0,0x4b3a,{0x8e,0x9b,0x19,0x33,0xc2,0x49,0x8a,0xea}};
+    return CoCreateInstance(&CLSID_wg_h264_decoder, outer, CLSCTX_INPROC_SERVER, riid, out);
+}
+
+static const IClassFactoryVtbl h264_decoder_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    h264_decoder_factory_CreateInstance,
+    class_factory_LockServer,
+};
+
+IClassFactory h264_decoder_factory = {&h264_decoder_factory_vtbl};
+
 static HRESULT WINAPI wmv_decoder_factory_CreateInstance(IClassFactory *iface, IUnknown *outer,
         REFIID riid, void **out)
 {

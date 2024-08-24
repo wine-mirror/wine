@@ -123,6 +123,7 @@ static const IClassFactoryVtbl class_factory_vtbl =
 static const GUID CLSID_GStreamerByteStreamHandler = {0x317df618, 0x5e5a, 0x468a, {0x9f, 0x15, 0xd8, 0x27, 0xa9, 0xa0, 0x81, 0x62}};
 static const GUID CLSID_wg_video_processor = {0xd527607f,0x89cb,0x4e94,{0x95,0x71,0xbc,0xfe,0x62,0x17,0x56,0x13}};
 static const GUID CLSID_wg_aac_decoder = {0xe7889a8a,0x2083,0x4844,{0x83,0x70,0x5e,0xe3,0x49,0xb1,0x45,0x03}};
+static const GUID CLSID_wg_h264_decoder = {0x1f1e273d,0x12c0,0x4b3a,{0x8e,0x9b,0x19,0x33,0xc2,0x49,0x8a,0xea}};
 
 static const struct class_object
 {
@@ -134,7 +135,7 @@ class_objects[] =
     { &CLSID_wg_video_processor, &video_processor_create },
     { &CLSID_GStreamerByteStreamHandler, &gstreamer_byte_stream_handler_create },
     { &CLSID_wg_aac_decoder, &aac_decoder_create },
-    { &CLSID_MSH264DecoderMFT, &h264_decoder_create },
+    { &CLSID_wg_h264_decoder, &h264_decoder_create },
     { &CLSID_MSH264EncoderMFT, &h264_encoder_create },
 };
 
@@ -166,20 +167,6 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
 
 HRESULT mfplat_DllRegisterServer(void)
 {
-    MFT_REGISTER_TYPE_INFO h264_decoder_input_types[] =
-    {
-        {MFMediaType_Video, MFVideoFormat_H264},
-        {MFMediaType_Video, MFVideoFormat_H264_ES},
-    };
-    MFT_REGISTER_TYPE_INFO h264_decoder_output_types[] =
-    {
-        {MFMediaType_Video, MFVideoFormat_NV12},
-        {MFMediaType_Video, MFVideoFormat_YV12},
-        {MFMediaType_Video, MFVideoFormat_IYUV},
-        {MFMediaType_Video, MFVideoFormat_I420},
-        {MFMediaType_Video, MFVideoFormat_YUY2},
-    };
-
     MFT_REGISTER_TYPE_INFO h264_encoder_input_types[] =
     {
         {MFMediaType_Video, MFVideoFormat_IYUV},
@@ -205,16 +192,6 @@ HRESULT mfplat_DllRegisterServer(void)
     }
     mfts[] =
     {
-        {
-            CLSID_MSH264DecoderMFT,
-            MFT_CATEGORY_VIDEO_DECODER,
-            L"Microsoft H264 Video Decoder MFT",
-            MFT_ENUM_FLAG_SYNCMFT,
-            ARRAY_SIZE(h264_decoder_input_types),
-            h264_decoder_input_types,
-            ARRAY_SIZE(h264_decoder_output_types),
-            h264_decoder_output_types,
-        },
         {
             CLSID_MSH264EncoderMFT,
             MFT_CATEGORY_VIDEO_ENCODER,

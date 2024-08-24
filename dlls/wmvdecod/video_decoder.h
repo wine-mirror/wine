@@ -29,6 +29,7 @@
 #include "mfidl.h"
 #include "wmcodecdsp.h"
 
+extern IClassFactory h264_decoder_factory;
 extern IClassFactory wmv_decoder_factory;
 
 static inline HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)

@@ -103,9 +103,9 @@ coclass wg_wmv_decoder {}
 
 [
     threading(both),
-    uuid(62ce7e72-4c71-4d20-b15d-452831a87d9d)
+    uuid(1f1e273d-12c0-4b3a-8e9b-1933c2498aea)
 ]
-coclass CMSH264DecoderMFT {}
+coclass wg_h264_decoder {}
 
 [
     threading(both),
