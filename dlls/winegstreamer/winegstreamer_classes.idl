@@ -127,13 +127,12 @@ coclass CColorConvertDMO {}
 
 [
     threading(both),
-    uuid(11275a82-5e5a-47fd-a01c-3683c12fb196)
+    uuid(1f302877-aaab-40a3-b9e0-9f48daf35bc8)
 ]
-coclass MFMP3SinkClassFactory {}
+coclass wg_mp3_sink_factory {}
 
 [
-    helpstring("MF MPEG4 Sink Class Factory"),
     threading(both),
-    uuid(a22c4fc7-6e91-4e1d-89e9-53b2667b72ba)
+    uuid(5d5407d9-c6ca-4770-a7cc-27c0cb8a7627)
 ]
-coclass MFMPEG4SinkClassFactory {}
+coclass wg_mpeg4_sink_factory {}

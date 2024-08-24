@@ -32,6 +32,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
     if (IsEqualGUID(clsid, &CLSID_MPEG4ByteStreamHandlerPlugin))
         return IClassFactory_QueryInterface(&mpeg4_byte_stream_plugin_factory, riid, out);
 
+    if (IsEqualGUID(clsid, &CLSID_MFMP3SinkClassFactory))
+        return IClassFactory_QueryInterface(mp3_sink_class_factory, riid, out);
+    if (IsEqualGUID(clsid, &CLSID_MFMPEG4SinkClassFactory))
+        return IClassFactory_QueryInterface(mpeg4_sink_class_factory, riid, out);
+
     FIXME("Unknown clsid %s.\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }

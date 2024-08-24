@@ -991,6 +991,8 @@ static struct class_factory mpeg4_sink_class_factory_cf = {{&class_factory_vtbl}
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
+    static const GUID CLSID_wg_mp3_sink_factory = {0x1f302877,0xaaab,0x40a3,{0xb9,0xe0,0x9f,0x48,0xda,0xf3,0x5b,0xc8}};
+    static const GUID CLSID_wg_mpeg4_sink_factory = {0x5d5407d9,0xc6ca,0x4770,{0xa7,0xcc,0x27,0xc0,0xcb,0x8a,0x76,0x27}};
     struct class_factory *factory;
     HRESULT hr;
 
@@ -1024,9 +1026,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
         factory = &resampler_cf;
     else if (IsEqualGUID(clsid, &CLSID_CColorConvertDMO))
         factory = &color_convert_cf;
-    else if (IsEqualGUID(clsid, &CLSID_MFMP3SinkClassFactory))
+    else if (IsEqualGUID(clsid, &CLSID_wg_mp3_sink_factory))
         factory = &mp3_sink_class_factory_cf;
-    else if (IsEqualGUID(clsid, &CLSID_MFMPEG4SinkClassFactory))
+    else if (IsEqualGUID(clsid, &CLSID_wg_mpeg4_sink_factory))
         factory = &mpeg4_sink_class_factory_cf;
     else
     {

@@ -6,6 +6,7 @@ EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
 	factory.c \
+	media_sink.c \
 	media_source.c \
 	mfsrcsnk.idl \
 	mfsrcsnk.rc \

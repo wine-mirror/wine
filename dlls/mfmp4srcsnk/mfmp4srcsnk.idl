@@ -24,3 +24,16 @@
     uuid(271c3902-6095-4c45-a22f-20091816ee9e)
 ]
 coclass MPEG4ByteStreamHandlerPlugin {}
+
+[
+    threading(both),
+    uuid(11275a82-5e5a-47fd-a01c-3683c12fb196)
+]
+coclass MFMP3SinkClassFactory {}
+
+[
+    helpstring("MF MPEG4 Sink Class Factory"),
+    threading(both),
+    uuid(a22c4fc7-6e91-4e1d-89e9-53b2667b72ba)
+]
+coclass MFMPEG4SinkClassFactory {}

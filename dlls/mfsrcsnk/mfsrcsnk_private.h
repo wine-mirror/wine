@@ -23,8 +23,11 @@
 #include "mferror.h"
 
 #include "wine/mfinternal.h"
+#include "wine/debug.h"
 
 extern IClassFactory *wave_sink_class_factory;
+extern IClassFactory *mp3_sink_class_factory;
+extern IClassFactory *mpeg4_sink_class_factory;
 
 static inline HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **out)
 {
@@ -66,4 +69,25 @@ static inline ULONG WINAPI sink_class_factory_AddRef(IMFSinkClassFactory *iface)
 static inline ULONG WINAPI sink_class_factory_Release(IMFSinkClassFactory *iface)
 {
     return 1;
+}
+
+static inline const char *debugstr_time(LONGLONG time)
+{
+    ULONGLONG abstime = time >= 0 ? time : -time;
+    unsigned int i = 0, j = 0;
+    char buffer[23], rev[23];
+
+    while (abstime || i <= 8)
+    {
+        buffer[i++] = '0' + (abstime % 10);
+        abstime /= 10;
+        if (i == 7) buffer[i++] = '.';
+    }
+    if (time < 0) buffer[i++] = '-';
+
+    while (i--) rev[j++] = buffer[i];
+    while (rev[j-1] == '0' && rev[j-2] != '.') --j;
+    rev[j] = 0;
+
+    return wine_dbg_sprintf("%s", rev);
 }
