@@ -1,5 +1,5 @@
 MODULE    = mfmp4srcsnk.dll
-IMPORTS   = ole32 mfplat mfuuid uuid
+IMPORTS   = advapi32 ole32 mfplat mfuuid uuid winedmo
 PARENTSRC = ../mfsrcsnk
 
 EXTRADLLFLAGS = -Wb,--prefer-native
