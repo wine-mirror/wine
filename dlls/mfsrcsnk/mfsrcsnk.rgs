@@ -1,0 +1,31 @@
+HKLM
+{
+    NoRemove 'Software'
+    {
+        NoRemove 'Microsoft'
+        {
+            NoRemove 'Windows Media Foundation'
+            {
+                NoRemove 'ByteStreamHandlers'
+                {
+                    '.avi'
+                    {
+                        val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
+                    }
+                    'video/avi'
+                    {
+                        val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
+                    }
+                    'video/msvideo'
+                    {
+                        val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
+                    }
+                    'video/x-msvideo'
+                    {
+                        val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
+                    }
+                }
+            }
+        }
+    }
+}

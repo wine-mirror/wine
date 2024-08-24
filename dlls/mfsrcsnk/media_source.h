@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Nikolay Sivov for CodeWeavers
+ * Copyright 2024 Rémi Bernon for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,18 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep register
+#include "mfsrcsnk_private.h"
 
-[
-    helpstring("AVI Byte Stream Handler"),
-    threading(both),
-    uuid(7afa253e-f823-42f6-a5d9-714bde467412)
-]
-coclass AVIByteStreamPlugin { }
+#include "wine/debug.h"
 
-[
-    helpstring("MF WAVE Sink Factory"),
-    threading(both),
-    uuid(36f99745-23c9-4c9c-8dd5-cc31ce964390)
-]
-coclass MFWAVESinkClassFactory { }
+extern IClassFactory avi_byte_stream_plugin_factory;

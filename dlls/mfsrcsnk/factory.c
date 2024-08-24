@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "mfsrcsnk_private.h"
+#include "media_source.h"
 
 #include "wine/debug.h"
 
@@ -29,6 +29,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 {
     *out = NULL;
 
+    if (IsEqualGUID(clsid, &CLSID_AVIByteStreamPlugin))
+        return IClassFactory_QueryInterface(&avi_byte_stream_plugin_factory, riid, out);
     if (IsEqualGUID(clsid, &CLSID_MFWAVESinkClassFactory))
         return IClassFactory_QueryInterface(wave_sink_class_factory, riid, out);
 
