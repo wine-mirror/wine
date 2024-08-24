@@ -1226,6 +1226,7 @@ enable_mciseq
 enable_mciwave
 enable_mf
 enable_mf3216
+enable_mfasfsrcsnk
 enable_mferror
 enable_mfmediaengine
 enable_mfmp4srcsnk
@@ -22324,6 +22325,7 @@ wine_fn_config_makefile dlls/mciwave enable_mciwave
 wine_fn_config_makefile dlls/mf enable_mf
 wine_fn_config_makefile dlls/mf/tests enable_tests
 wine_fn_config_makefile dlls/mf3216 enable_mf3216
+wine_fn_config_makefile dlls/mfasfsrcsnk enable_mfasfsrcsnk
 wine_fn_config_makefile dlls/mferror enable_mferror
 wine_fn_config_makefile dlls/mfmediaengine enable_mfmediaengine
 wine_fn_config_makefile dlls/mfmediaengine/tests enable_tests

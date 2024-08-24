@@ -16,11 +16,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "mfsrcsnk_private.h"
+#include "media_source.h"
 
 #include "wine/debug.h"
 
-extern IClassFactory asf_byte_stream_plugin_factory;
-extern IClassFactory avi_byte_stream_plugin_factory;
-extern IClassFactory mpeg4_byte_stream_plugin_factory;
-extern IClassFactory wav_byte_stream_plugin_factory;
+WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+
+/***********************************************************************
+ *              DllGetClassObject (mfsrcsnk.@)
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
+{
+    if (IsEqualGUID(clsid, &CLSID_AsfByteStreamPlugin))
+        return IClassFactory_QueryInterface(&asf_byte_stream_plugin_factory, riid, out);
+
+    *out = NULL;
+    FIXME("Unknown clsid %s.\n", debugstr_guid(clsid));
+    return CLASS_E_CLASSNOTAVAILABLE;
+}

@@ -16,11 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "mfsrcsnk_private.h"
+#pragma makedep register
 
-#include "wine/debug.h"
-
-extern IClassFactory asf_byte_stream_plugin_factory;
-extern IClassFactory avi_byte_stream_plugin_factory;
-extern IClassFactory mpeg4_byte_stream_plugin_factory;
-extern IClassFactory wav_byte_stream_plugin_factory;
+[
+    helpstring("ASF Byte Stream Handler"),
+    threading(both),
+    uuid(41457294-644c-4298-a28a-bd69f2c0cf3b)
+]
+coclass AsfByteStreamPlugin {}
