@@ -541,6 +541,25 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 
 #elif defined(__arm__) || defined(__aarch64__)
 
+static int has_feature( const char *line, const char *feat )
+{
+    const char *linepos = line;
+    size_t featlen = strlen(feat);
+    while (1)
+    {
+        const char *ptr = strstr(linepos, feat);
+        if (!ptr)
+             return 0;
+        /* Check that the match is surrounded by whitespace, or at the
+           start/end of the string. */
+        if ((ptr == line || isspace(ptr[-1])) &&
+            (isspace(linepos[featlen]) || !linepos[featlen]))
+            return 1;
+        linepos += featlen;
+    }
+    return 0;
+}
+
 static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 {
     ULONGLONG features = 0;
@@ -570,15 +589,15 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             else if (!strcmp( line, "Features" ))
             {
 #ifdef __arm__
-                if (strstr(value, "vfpv3"))   features |= CPU_FEATURE_ARM_VFP_32;
-                if (strstr(value, "neon"))    features |= CPU_FEATURE_ARM_NEON;
+                if (has_feature(value, "vfpv3"))   features |= CPU_FEATURE_ARM_VFP_32;
+                if (has_feature(value, "neon"))    features |= CPU_FEATURE_ARM_NEON;
 #else
-                if (strstr(value, "crc32"))   features |= CPU_FEATURE_ARM_V8_CRC32;
-                if (strstr(value, "aes"))     features |= CPU_FEATURE_ARM_V8_CRYPTO;
-                if (strstr(value, "atomics")) features |= CPU_FEATURE_ARM_V81_ATOMIC;
-                if (strstr(value, "asimddp")) features |= CPU_FEATURE_ARM_V82_DP;
-                if (strstr(value, "jscvt"))   features |= CPU_FEATURE_ARM_V83_JSCVT;
-                if (strstr(value, "lrcpc"))   features |= CPU_FEATURE_ARM_V83_LRCPC;
+                if (has_feature(value, "crc32"))   features |= CPU_FEATURE_ARM_V8_CRC32;
+                if (has_feature(value, "aes"))     features |= CPU_FEATURE_ARM_V8_CRYPTO;
+                if (has_feature(value, "atomics")) features |= CPU_FEATURE_ARM_V81_ATOMIC;
+                if (has_feature(value, "asimddp")) features |= CPU_FEATURE_ARM_V82_DP;
+                if (has_feature(value, "jscvt"))   features |= CPU_FEATURE_ARM_V83_JSCVT;
+                if (has_feature(value, "lrcpc"))   features |= CPU_FEATURE_ARM_V83_LRCPC;
 #endif
                 continue;
             }
