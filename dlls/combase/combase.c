@@ -2051,11 +2051,11 @@ static BOOL com_peek_message(struct apartment *apt, MSG *msg)
 HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle_count, HANDLE *handles,
         DWORD *index)
 {
-    BOOL check_apc = !!(flags & COWAIT_ALERTABLE), post_quit = FALSE, message_loop;
+    BOOL check_apc = !!(flags & COWAIT_ALERTABLE), message_loop;
+    struct { BOOL post; UINT code; } quit = { .post = FALSE };
     DWORD start_time, wait_flags = 0;
     struct tlsdata *tlsdata;
     struct apartment *apt;
-    UINT exit_code;
     HRESULT hr;
 
     TRACE("%#lx, %#lx, %lu, %p, %p\n", flags, timeout, handle_count, handles, index);
@@ -2156,8 +2156,8 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle
                     if (msg.message == WM_QUIT)
                     {
                         TRACE("Received WM_QUIT message\n");
-                        post_quit = TRUE;
-                        exit_code = msg.wParam;
+                        quit.post = TRUE;
+                        quit.code = msg.wParam;
                     }
                     else
                     {
@@ -2191,7 +2191,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle
         }
         break;
     }
-    if (post_quit) PostQuitMessage(exit_code);
+    if (quit.post) PostQuitMessage(quit.code);
 
     TRACE("-- %#lx\n", hr);
 
