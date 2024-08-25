@@ -3049,7 +3049,7 @@ static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout 
 /* wait for message or signaled handle */
 static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
 {
-    struct thunk_lock_params params = {0};
+    struct thunk_lock_params params = {.dispatch.callback = thunk_lock_callback};
     LARGE_INTEGER time;
     DWORD ret;
     void *ret_ptr;
