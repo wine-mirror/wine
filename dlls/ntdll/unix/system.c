@@ -589,15 +589,29 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             else if (!strcmp( line, "Features" ))
             {
 #ifdef __arm__
-                if (has_feature(value, "vfpv3"))   features |= CPU_FEATURE_ARM_VFP_32;
-                if (has_feature(value, "neon"))    features |= CPU_FEATURE_ARM_NEON;
+                if (has_feature(value, "vfpv3"))      features |= CPU_FEATURE_ARM_VFP_32;
+                if (has_feature(value, "neon"))       features |= CPU_FEATURE_ARM_NEON;
 #else
-                if (has_feature(value, "crc32"))   features |= CPU_FEATURE_ARM_V8_CRC32;
-                if (has_feature(value, "aes"))     features |= CPU_FEATURE_ARM_V8_CRYPTO;
-                if (has_feature(value, "atomics")) features |= CPU_FEATURE_ARM_V81_ATOMIC;
-                if (has_feature(value, "asimddp")) features |= CPU_FEATURE_ARM_V82_DP;
-                if (has_feature(value, "jscvt"))   features |= CPU_FEATURE_ARM_V83_JSCVT;
-                if (has_feature(value, "lrcpc"))   features |= CPU_FEATURE_ARM_V83_LRCPC;
+                if (has_feature(value, "crc32"))      features |= CPU_FEATURE_ARM_V8_CRC32;
+                if (has_feature(value, "aes"))        features |= CPU_FEATURE_ARM_V8_CRYPTO;
+                if (has_feature(value, "atomics"))    features |= CPU_FEATURE_ARM_V81_ATOMIC;
+                if (has_feature(value, "asimddp"))    features |= CPU_FEATURE_ARM_V82_DP;
+                if (has_feature(value, "jscvt"))      features |= CPU_FEATURE_ARM_V83_JSCVT;
+                if (has_feature(value, "lrcpc"))      features |= CPU_FEATURE_ARM_V83_LRCPC;
+                if (has_feature(value, "sve"))        features |= CPU_FEATURE_ARM_SVE;
+                if (has_feature(value, "sve2"))       features |= CPU_FEATURE_ARM_SVE2;
+                if (has_feature(value, "sve2p1"))     features |= CPU_FEATURE_ARM_SVE2_1;
+                if (has_feature(value, "sveaes"))     features |= CPU_FEATURE_ARM_SVE_AES;
+                if (has_feature(value, "svepmull"))   features |= CPU_FEATURE_ARM_SVE_PMULL128;
+                if (has_feature(value, "svebitperm")) features |= CPU_FEATURE_ARM_SVE_BITPERM;
+                if (has_feature(value, "svebf16"))    features |= CPU_FEATURE_ARM_SVE_BF16;
+                if (has_feature(value, "sveebf16"))   features |= CPU_FEATURE_ARM_SVE_EBF16;
+                if (has_feature(value, "sveb16b16"))  features |= CPU_FEATURE_ARM_SVE_B16B16;
+                if (has_feature(value, "svesha3"))    features |= CPU_FEATURE_ARM_SVE_SHA3;
+                if (has_feature(value, "svesm4"))     features |= CPU_FEATURE_ARM_SVE_SM4;
+                if (has_feature(value, "svei8mm"))    features |= CPU_FEATURE_ARM_SVE_I8MM;
+                if (has_feature(value, "svef32mm"))   features |= CPU_FEATURE_ARM_SVE_F32MM;
+                if (has_feature(value, "svef64mm"))   features |= CPU_FEATURE_ARM_SVE_F64MM;
 #endif
                 continue;
             }
