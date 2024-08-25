@@ -1155,7 +1155,7 @@ static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, v
                          int idx, int dispid, short base_offset, struct sltg_hrefmap *hrefmap)
 {
     struct sltg_data ret_data, *arg_data;
-    int arg_count = 0, arg_data_size, optional = 0, defaults = 0, old_size;
+    int arg_count = 0, arg_data_size, optional = 0, old_size;
     int funcflags = 0, invokekind = 1 /* INVOKE_FUNC */, helpcontext;
     const char *helpstring;
     const var_t *arg;
@@ -1218,9 +1218,7 @@ static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, v
 
             LIST_FOR_EACH_ENTRY(attr, arg->attrs, const attr_t, entry)
             {
-                if (attr->type == ATTR_DEFAULTVALUE)
-                    defaults++;
-                else if(attr->type == ATTR_OPTIONAL)
+                if (attr->type == ATTR_OPTIONAL)
                     optional++;
             }
         }
