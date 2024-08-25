@@ -1305,6 +1305,7 @@ foreach (sort keys %ext_functions)
 
 print OUT "\nconst unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n";
 print OUT "{\n";
+print OUT "    process_attach,\n";
 print OUT "    wow64_thread_attach,\n";
 print OUT "    wow64_process_detach,\n";
 print OUT "    wow64_get_pixel_formats,\n";

@@ -92294,6 +92294,7 @@ extern NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args );
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
+    process_attach,
     wow64_thread_attach,
     wow64_process_detach,
     wow64_get_pixel_formats,
