@@ -1237,24 +1237,24 @@ foreach (sort keys %ext_functions)
 
 print OUT "const unixlib_entry_t __wine_unix_call_funcs[] =\n";
 print OUT "{\n";
-print OUT "    &process_attach,\n";
-print OUT "    &thread_attach,\n";
-print OUT "    &process_detach,\n";
-print OUT "    &get_pixel_formats,\n";
+print OUT "    process_attach,\n";
+print OUT "    thread_attach,\n";
+print OUT "    process_detach,\n";
+print OUT "    get_pixel_formats,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    printf OUT "    &wgl_%s,\n", $_;
+    printf OUT "    wgl_%s,\n", $_;
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    printf OUT "    &gl_%s,\n", $_;
+    printf OUT "    gl_%s,\n", $_;
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
-    printf OUT "    &ext_%s,\n", $_;
+    printf OUT "    ext_%s,\n", $_;
 }
 print OUT "};\n";
 print OUT "\n";
