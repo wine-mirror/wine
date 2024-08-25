@@ -58,9 +58,9 @@ typedef struct tagDC
     DC_ATTR     *attr;             /* DC attributes accessible by client */
     struct tagDC *saved_dc;
     struct dce  *dce;              /* associated dce, if any */
-    BOOL         bounds_enabled:1; /* bounds tracking is enabled */
-    BOOL         path_open:1;      /* path is currently open (only for saved DCs) */
-    BOOL         is_display:1;     /* DC is for display device */
+    UINT         bounds_enabled:1; /* bounds tracking is enabled */
+    UINT         path_open:1;      /* path is currently open (only for saved DCs) */
+    UINT         is_display:1;     /* DC is for display device */
 
     RECT         device_rect;      /* rectangle for the whole device */
     int          pixel_format;     /* pixel format (for memory DCs) */
@@ -280,11 +280,11 @@ struct gdi_font
     UINT                   ntmAvgWidth;
     UINT                   aa_flags;
     ULONG                  ttc_item_offset;    /* 0 if font is not a part of TrueType collection */
-    BOOL                   can_use_bitmap : 1;
-    BOOL                   fake_italic : 1;
-    BOOL                   fake_bold : 1;
-    BOOL                   scalable : 1;
-    BOOL                   use_logfont_name : 1;
+    UINT                   can_use_bitmap : 1;
+    UINT                   fake_italic : 1;
+    UINT                   fake_bold : 1;
+    UINT                   scalable : 1;
+    UINT                   use_logfont_name : 1;
     struct gdi_font       *base_font;
     void                  *gsub_table;
     void                  *vert_feature;
