@@ -1385,6 +1385,8 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
     WCHAR exe_path[MAX_PATH];
     PROCESS_INFORMATION pi;
     SHFILEINFOW psfi;
+    HANDLE handle;
+    BOOL ret;
 
     TRACE("%s\n", debugstr_w(file));
 
@@ -1412,21 +1414,42 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
         console = SHGetFileInfoW(exe_path, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
 
     init_msvcrt_io_block(&si);
-    if (!CreateProcessW(file, full_cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
-    {
-        errorlevel = GetLastError();
-        free(si.lpReserved2);
-        return errorlevel;
-    }
+    ret = CreateProcessW(file, full_cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
     free(si.lpReserved2);
 
+    if (ret)
+    {
+        CloseHandle(pi.hThread);
+        handle = pi.hProcess;
+    }
+    else
+    {
+        SHELLEXECUTEINFOW sei = {.cbSize = sizeof(sei)};
+        WCHAR *args;
+
+        WCMD_parameter(full_cmdline, 1, &args, FALSE, TRUE);
+        sei.fMask = SEE_MASK_NO_CONSOLE | SEE_MASK_NOCLOSEPROCESS;
+        sei.lpFile = file;
+        sei.lpParameters = args;
+        sei.nShow = SW_SHOWNORMAL;
+
+        if (ShellExecuteExW(&sei) && (INT_PTR)sei.hInstApp >= 32)
+        {
+            handle = sei.hProcess;
+        }
+        else
+        {
+            errorlevel = GetLastError();
+            return errorlevel;
+        }
+    }
+
     if (!interactive || (console && !HIWORD(console)))
-        WaitForSingleObject(pi.hProcess, INFINITE);
-    GetExitCodeProcess(pi.hProcess, &exit_code);
+        WaitForSingleObject(handle, INFINITE);
+    GetExitCodeProcess(handle, &exit_code);
     errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
 
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    CloseHandle(handle);
     return errorlevel;
 }
 
