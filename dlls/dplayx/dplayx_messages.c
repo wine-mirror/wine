@@ -170,6 +170,14 @@ static HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlayImpl *This,
 }
 
 static
+void DP_MSG_UnlinkReplyStruct( IDirectPlayImpl *This, DP_MSG_REPLY_STRUCT_LIST *lpReplyStructList )
+{
+  EnterCriticalSection( &This->lock );
+    DPQ_REMOVE( This->dp2->repliesExpected, lpReplyStructList, repliesExpected );
+  LeaveCriticalSection( &This->lock );
+}
+
+static
 LPVOID DP_MSG_CleanReplyStruct( LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
                                 LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize  )
 {
@@ -384,6 +392,8 @@ static void *DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, D
   if( FAILED(hr) )
   {
     ERR( "Send failed: %s\n", DPLAYX_HresultToString( hr ) );
+    DP_MSG_UnlinkReplyStruct( This, &replyStructList );
+    DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
     return NULL;
   }
 
@@ -394,6 +404,8 @@ static void *DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, D
   if( dwWaitReturn != WAIT_OBJECT_0 )
   {
     ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
+    DP_MSG_UnlinkReplyStruct( This, &replyStructList );
+    DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
     return NULL;
   }
 
