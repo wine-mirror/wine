@@ -1611,14 +1611,6 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
         status = CreateProcessW(thisDir,
                                 command, NULL, NULL, TRUE, 0, NULL, NULL, &st, &pe);
         free(st.lpReserved2);
-        if ((opt_c || opt_k) && !opt_s && !status
-            && GetLastError()==ERROR_FILE_NOT_FOUND && command[0]=='\"') {
-          /* strip first and last quote WCHARacters and try again */
-          WCMD_strip_quotes(command);
-          opt_s = TRUE;
-          return WCMD_run_program(command, called);
-        }
-
         if (!status)
           break;
 
