@@ -371,22 +371,27 @@ static void get_physical_device_info(const struct wined3d_adapter_vk *adapter_vk
         draw_parameters_features->shaderDrawParameters = vk_info->supported[WINED3D_VK_KHR_SHADER_DRAW_PARAMETERS];
 
     xfb_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT;
-    add_structure(features2, xfb_features);
+    if (vk_info->supported[WINED3D_VK_EXT_TRANSFORM_FEEDBACK])
+        add_structure(features2, xfb_features);
 
     vertex_divisor_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
     add_structure(features2, vertex_divisor_features);
 
     host_query_reset_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
-    add_structure(features2, host_query_reset_features);
+    if (vk_info->supported[WINED3D_VK_EXT_HOST_QUERY_RESET])
+        add_structure(features2, host_query_reset_features);
 
     dynamic_state3_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
-    add_structure(features2, dynamic_state3_features);
+    if (vk_info->supported[WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE3])
+        add_structure(features2, dynamic_state3_features);
 
     dynamic_state2_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
-    add_structure(features2, dynamic_state2_features);
+    if (vk_info->supported[WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE2])
+        add_structure(features2, dynamic_state2_features);
 
     dynamic_state_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
-    add_structure(features2, dynamic_state_features);
+    if (vk_info->supported[WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE])
+        add_structure(features2, dynamic_state_features);
 
     features2->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
@@ -2422,6 +2427,8 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
     map[] =
     {
         {VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME,       WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE},
+        {VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME,     WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE2},
+        {VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME,     WINED3D_VK_EXT_EXTENDED_DYNAMIC_STATE3},
         {VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,             WINED3D_VK_EXT_HOST_QUERY_RESET},
         {VK_EXT_SHADER_STENCIL_EXPORT_EXTENSION_NAME,        WINED3D_VK_EXT_SHADER_STENCIL_EXPORT},
         {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,           WINED3D_VK_EXT_TRANSFORM_FEEDBACK},
