@@ -3874,12 +3874,11 @@ static void test_admin(void)
     ok(!RemoveDirectoryA("c:\\msitest"), "File installed\n");
 
     r = MsiInstallProductA(msifile, "ACTION=ADMIN");
-    todo_wine
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
-    ok(!delete_pf("msitest", FALSE), "Directory created\n");
     todo_wine
     {
+        ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
+        ok(!delete_pf("msitest", FALSE), "Directory created\n");
         ok(DeleteFileA("c:\\msitest\\augustus"), "File not installed\n");
         ok(RemoveDirectoryA("c:\\msitest"), "File not installed\n");
     }

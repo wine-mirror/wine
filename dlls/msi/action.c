@@ -329,12 +329,15 @@ WCHAR **msi_split_string( const WCHAR *str, WCHAR sep )
     return ret;
 }
 
-static BOOL ui_sequence_exists( MSIPACKAGE *package )
+static BOOL ui_sequence_exists( MSIPACKAGE *package, const WCHAR *ui_table )
 {
+    WCHAR query[128];
     MSIQUERY *view;
     DWORD count = 0;
 
-    if (!(MSI_DatabaseOpenViewW( package->db, L"SELECT * FROM `InstallUISequence` WHERE `Sequence` > 0", &view )))
+    swprintf( query, ARRAY_SIZE(query), L"SELECT * FROM `%s` WHERE `Sequence` > 0", ui_table );
+
+    if (!(MSI_DatabaseOpenViewW( package->db, query, &view )))
     {
         MSI_IterateRecords( view, &count, NULL, package );
         msiobj_release( &view->hdr );
@@ -456,8 +459,9 @@ UINT MSI_Sequence( MSIPACKAGE *package, LPCWSTR table )
     return r;
 }
 
-static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package)
+static UINT ACTION_ProcessExecSequence( MSIPACKAGE *package, const WCHAR *exec_table )
 {
+    WCHAR query[128];
     MSIQUERY *view;
     UINT rc;
 
@@ -469,11 +473,12 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package)
 
     package->ExecuteSequenceRun = TRUE;
 
-    rc = MSI_OpenQuery(package->db, &view,
-                       L"SELECT * FROM `InstallExecuteSequence` WHERE `Sequence` > 0 ORDER BY `Sequence`");
+    swprintf( query, ARRAY_SIZE(query), L"SELECT * FROM `%s` WHERE `Sequence` > 0 ORDER BY `Sequence`", exec_table );
+
+    rc = MSI_OpenQuery( package->db, &view, query );
     if (rc == ERROR_SUCCESS)
     {
-        TRACE("Running the actions\n");
+        TRACE( "Running the actions from %s\n", debugstr_w(exec_table) );
 
         msi_set_property( package->db, L"SourceDir", NULL, -1 );
         rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
@@ -482,17 +487,18 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package)
     return rc;
 }
 
-static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
+static UINT ACTION_ProcessUISequence( MSIPACKAGE *package, const WCHAR *ui_table )
 {
+    WCHAR query[128];
     MSIQUERY *view;
     UINT rc;
 
-    rc = MSI_DatabaseOpenViewW(package->db,
-                               L"SELECT * FROM `InstallUISequence` WHERE `Sequence` > 0 ORDER BY `Sequence`",
-                               &view);
+    swprintf( query, ARRAY_SIZE(query), L"SELECT * FROM `%s` WHERE `Sequence` > 0 ORDER BY `Sequence`", ui_table );
+
+    rc = MSI_DatabaseOpenViewW( package->db, query, &view );
     if (rc == ERROR_SUCCESS)
     {
-        TRACE("Running the actions\n");
+        TRACE( "Running the actions from %s\n", debugstr_w(ui_table) );
         rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
         msiobj_release(&view->hdr);
     }
@@ -5348,20 +5354,35 @@ static UINT iterate_properties(MSIRECORD *record, void *param)
     return ERROR_SUCCESS;
 }
 
-
 static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 {
-    WCHAR *productname;
-    WCHAR *action;
-    WCHAR *info_template;
+    WCHAR *productname, *action, *info_template;
+    const WCHAR *ui_sequence, *exec_sequence;
     MSIQUERY *view;
     MSIRECORD *uirow, *uirow_info;
     UINT rc;
 
+    action = msi_dup_property( package->db, L"EXECUTEACTION" );
+    if (!action && !(action = msi_strdupW( L"INSTALL", ARRAY_SIZE(L"INSTALL") - 1 ))) return ERROR_OUTOFMEMORY;
+    if (!wcscmp( action, L"ADMIN" ))
+    {
+        ui_sequence = L"AdminUISequence";
+        exec_sequence = L"AdminExecuteSequence";
+    }
+    else
+    {
+        ui_sequence = L"InstallUISequence";
+        exec_sequence = L"InstallExecuteSequence";
+    }
+
     /* Send COMMONDATA and INFO messages. */
     /* FIXME: when should these messages be sent? [see also MsiOpenPackage()] */
     uirow = MSI_CreateRecord(3);
-    if (!uirow) return ERROR_OUTOFMEMORY;
+    if (!uirow)
+    {
+        free(action);
+        return ERROR_OUTOFMEMORY;
+    }
     MSI_RecordSetStringW(uirow, 0, NULL);
     MSI_RecordSetInteger(uirow, 1, 0);
     MSI_RecordSetInteger(uirow, 2, package->num_langids ? package->langids[0] : 0);
@@ -5370,12 +5391,13 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
     /* FIXME: send INSTALLMESSAGE_PROGRESS */
     MSI_ProcessMessageVerbatim(package, INSTALLMESSAGE_COMMONDATA, uirow);
 
-    if (!(needs_ui_sequence(package) && ui_sequence_exists(package)))
+    if (!(needs_ui_sequence(package) && ui_sequence_exists(package, ui_sequence)))
     {
         uirow_info = MSI_CreateRecord(0);
         if (!uirow_info)
         {
             msiobj_release(&uirow->hdr);
+            free(action);
             return ERROR_OUTOFMEMORY;
         }
         info_template = msi_get_error_message(package->db, MSIERR_INFO_LOGGINGSTART);
@@ -5396,15 +5418,12 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 
     package->LastActionResult = MSI_NULL_INTEGER;
 
-    action = msi_dup_property(package->db, L"EXECUTEACTION");
-    if (!action) action = msi_strdupW(L"INSTALL", ARRAY_SIZE(L"INSTALL") - 1);
-
     /* Perform the action. Top-level actions trigger a sequence. */
-    if (!wcscmp(action, L"INSTALL"))
+    if (!wcscmp(action, L"INSTALL") || !wcscmp(action, L"ADMIN"))
     {
         /* Send ACTIONSTART/INFO and INSTALLSTART. */
-        ui_actionstart(package, L"INSTALL", NULL, NULL);
-        ui_actioninfo(package, L"INSTALL", TRUE, 0);
+        ui_actionstart(package, action, NULL, NULL);
+        ui_actioninfo(package, action, TRUE, 0);
         uirow = MSI_CreateRecord(2);
         if (!uirow)
         {
@@ -5419,10 +5438,10 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 
         /* Perform the installation. Always use the ExecuteSequence. */
         package->InWhatSequence |= SEQUENCE_EXEC;
-        rc = ACTION_ProcessExecSequence(package);
+        rc = ACTION_ProcessExecSequence(package, exec_sequence);
 
         /* Send return value and INSTALLEND. */
-        ui_actioninfo(package, L"INSTALL", FALSE, !rc);
+        ui_actioninfo(package, action, FALSE, !rc);
         uirow = MSI_CreateRecord(3);
         if (!uirow)
         {
@@ -5470,10 +5489,22 @@ end:
 static UINT ACTION_INSTALL(MSIPACKAGE *package)
 {
     msi_set_property(package->db, L"EXECUTEACTION", L"INSTALL", -1);
-    if (needs_ui_sequence(package) && ui_sequence_exists(package))
+    if (needs_ui_sequence(package) && ui_sequence_exists(package, L"InstallUISequence"))
     {
         package->InWhatSequence |= SEQUENCE_UI;
-        return ACTION_ProcessUISequence(package);
+        return ACTION_ProcessUISequence(package, L"InstallUISequence");
+    }
+    else
+        return ACTION_ExecuteAction(package);
+}
+
+static UINT ACTION_ADMIN(MSIPACKAGE *package)
+{
+    msi_set_property(package->db, L"EXECUTEACTION", L"ADMIN", -1);
+    if (needs_ui_sequence(package) && ui_sequence_exists(package, L"AdminUISequence"))
+    {
+        package->InWhatSequence |= SEQUENCE_UI;
+        return ACTION_ProcessUISequence(package, L"AdminUISequence");
     }
     else
         return ACTION_ExecuteAction(package);
@@ -7564,6 +7595,7 @@ StandardActions[] =
     { L"WriteIniValues", IDS_DESC_WRITEINIVALUES, IDS_TEMP_WRITEINIVALUES, ACTION_WriteIniValues, L"RemoveIniValues" },
     { L"WriteRegistryValues", IDS_DESC_WRITEREGISTRYVALUES, IDS_TEMP_WRITEREGISTRYVALUES, ACTION_WriteRegistryValues, L"RemoveRegistryValues" },
     { L"INSTALL", 0, 0, ACTION_INSTALL, NULL },
+    { L"ADMIN", 0, 0, ACTION_ADMIN, NULL },
     { 0 }
 };
 
@@ -7628,21 +7660,37 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
     return rc;
 }
 
-static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
+static UINT ACTION_PerformEndAction( MSIPACKAGE *package, const WCHAR *action, UINT sequence )
 {
+    WCHAR query[128];
+    const WCHAR *table;
     UINT rc = ERROR_SUCCESS;
     MSIRECORD *row;
+    BOOL needs_ui = needs_ui_sequence( package );
 
-    if (needs_ui_sequence(package))
-        row = MSI_QueryGetRecord(package->db, L"SELECT * FROM `InstallUISequence` WHERE `Sequence` = %d", seq);
+    if (!wcscmp( action, L"INSTALL" ))
+    {
+        if (needs_ui) table = L"InstallUISequence";
+        else table = L"InstallExecuteSequence";
+    }
+    else if (!wcscmp( action, L"ADMIN" ))
+    {
+        if (needs_ui) table = L"AdminUISequence";
+        else table = L"AdminExecuteSequence";
+    }
     else
-        row = MSI_QueryGetRecord(package->db, L"SELECT * FROM `InstallExecuteSequence` WHERE `Sequence` = %d", seq);
+    {
+        FIXME( "action %s not supported\n", debugstr_w(action) );
+        return ERROR_FUNCTION_FAILED;
+    }
 
-    if (row)
+    swprintf( query, ARRAY_SIZE(query), L"SELECT * FROM `%s` WHERE `Sequence` = %d", table, sequence );
+
+    if ((row = MSI_QueryGetRecord( package->db, query )))
     {
         LPCWSTR action, cond;
 
-        TRACE("Running the actions\n");
+        TRACE( "Running action from %s\n", debugstr_w(table) );
 
         /* check conditions */
         cond = MSI_RecordGetString(row, 2);
@@ -7753,14 +7801,14 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     /* process the ending type action */
     if (rc == ERROR_SUCCESS)
-        ACTION_PerformActionSequence(package, -1);
+        ACTION_PerformEndAction(package, action, -1);
     else if (rc == ERROR_INSTALL_USEREXIT)
-        ACTION_PerformActionSequence(package, -2);
+        ACTION_PerformEndAction(package, action, -2);
     else if (rc == ERROR_INSTALL_SUSPEND)
-        ACTION_PerformActionSequence(package, -4);
+        ACTION_PerformEndAction(package, action, -4);
     else  /* failed */
     {
-        ACTION_PerformActionSequence(package, -3);
+        ACTION_PerformEndAction(package, action, -3);
         if (!msi_get_property_int( package->db, L"RollbackDisabled", 0 ))
         {
             package->need_rollback = TRUE;
