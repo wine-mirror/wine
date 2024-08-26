@@ -2336,7 +2336,7 @@ static void test_GdipDrawString(void)
     GpStringFormat *format;
     GpBrush *brush;
     LOGFONTA logfont;
-    HDC hdc = GetDC( hwnd );
+    HDC hdc = GetDC( hwnd ), temp_hdc;
     static const WCHAR string[] = L"Test";
     static const PointF positions[4] = {{0,0}, {1,1}, {2,2}, {3,3}};
     GpMatrix *matrix;
@@ -2388,6 +2388,16 @@ static void test_GdipDrawString(void)
     rect.Height = 12;
 
     status = GdipDrawString(graphics, string, 4, fnt, &rect, format, brush);
+    expect(Ok, status);
+
+    status = GdipGetDC(graphics, &temp_hdc);
+    expect(Ok, status);
+    ok(temp_hdc != NULL, "got NULL temp_hdc\n");
+
+    status = GdipDrawString(graphics, string, 4, fnt, &rect, format, brush);
+    expect(ObjectBusy, status);
+
+    status = GdipReleaseDC(graphics, temp_hdc);
     expect(Ok, status);
 
     status = GdipCreateMatrix(&matrix);

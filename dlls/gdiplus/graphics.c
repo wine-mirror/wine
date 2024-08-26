@@ -6039,6 +6039,9 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if(!graphics || !string || !font || !brush || !rect)
         return InvalidParameter;
 
+    if(graphics->busy)
+        return ObjectBusy;
+
     if(has_gdi_dc(graphics))
     {
         status = gdi_dc_acquire(graphics, &hdc);
