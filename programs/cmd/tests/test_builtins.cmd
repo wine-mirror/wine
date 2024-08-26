@@ -581,10 +581,12 @@ call :setError 666 & (erase file* i\dont\exist\at\all.txt &&echo SUCCESS !errorl
 cd .. && rd /q /s foo
 
 echo --- success/failure for change drive command
+pushd C:\
 call :setError 666 & (c: &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (1: &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call c: &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call 1: &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+popd
 
 echo --- success/failure for MKDIR,MD command
 mkdir foo & cd foo
