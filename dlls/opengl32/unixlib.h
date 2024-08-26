@@ -28382,6 +28382,7 @@ enum unix_funcs
     unix_wglSetPbufferAttribARB,
     unix_wglSetPixelFormatWINE,
     unix_wglSwapIntervalEXT,
+    funcs_count
 };
 
 struct gl_debug_message_callback_params

@@ -27242,6 +27242,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ext_wglSwapIntervalEXT,
 };
 
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);
+
 #ifdef _WIN64
 
 typedef ULONG PTR32;
@@ -95338,6 +95340,8 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ext_wglSetPixelFormatWINE,
     wow64_ext_wglSwapIntervalEXT,
 };
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);
 
 #endif
 

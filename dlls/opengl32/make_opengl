@@ -1084,6 +1084,7 @@ foreach (sort keys %ext_functions)
     next if defined $manual_win_functions{$_};
     printf OUT "    unix_%s,\n", $_;
 }
+print OUT "    funcs_count\n";
 print OUT "};\n\n";
 
 print OUT "struct gl_debug_message_callback_params\n";
@@ -1256,8 +1257,8 @@ foreach (sort keys %ext_functions)
     next if defined $manual_win_functions{$_};
     printf OUT "    ext_%s,\n", $_;
 }
-print OUT "};\n";
-print OUT "\n";
+print OUT "};\n\n";
+print OUT "C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == funcs_count);\n\n";
 
 print OUT "#ifdef _WIN64\n\n";
 print OUT "typedef ULONG PTR32;\n\n";
@@ -1325,6 +1326,7 @@ foreach (sort keys %ext_functions)
     printf OUT "    wow64_ext_%s,\n", $_;
 }
 print OUT "};\n\n";
+print OUT "C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);\n\n";
 
 print OUT "#endif\n\n";
 
