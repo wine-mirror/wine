@@ -45,7 +45,7 @@ typedef struct tagMSGTHREADINFO
 } MSGTHREADINFO, *LPMSGTHREADINFO;
 
 static DWORD CALLBACK DPL_MSG_ThreadMain( LPVOID lpContext );
-static void *DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *data, DWORD dwWaitTime,
+static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *data, DWORD dwWaitTime,
         WORD wReplyCommandId, void **lplpReplyMsg, DWORD *lpdwMsgBodySize );
 
 
@@ -178,15 +178,13 @@ void DP_MSG_UnlinkReplyStruct( IDirectPlayImpl *This, DP_MSG_REPLY_STRUCT_LIST *
 }
 
 static
-LPVOID DP_MSG_CleanReplyStruct( LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
-                                LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize  )
+void DP_MSG_CleanReplyStruct( LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
+                              LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize )
 {
   CloseHandle( lpReplyStructList->replyExpected.hReceipt );
 
   *lplpReplyMsg    = lpReplyStructList->replyExpected.lpReplyMsg;
   *lpdwMsgBodySize = lpReplyStructList->replyExpected.dwMsgBodySize;
-
-  return lpReplyStructList->replyExpected.lpReplyMsg;
 }
 
 HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *lpdpidAllocatedId )
@@ -226,8 +224,8 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
     TRACE( "Asking for player id w/ dwFlags 0x%08lx\n",
            lpMsgBody->dwFlags );
 
-    DP_MSG_ExpectReply( This, &data, DPMSG_DEFAULT_WAIT_TIME, DPMSGCMD_NEWPLAYERIDREPLY,
-                        &lpMsg, &dwMsgSize );
+    hr = DP_MSG_ExpectReply( This, &data, DPMSG_DEFAULT_WAIT_TIME, DPMSGCMD_NEWPLAYERIDREPLY,
+                             &lpMsg, &dwMsgSize );
   }
 
   /* Need to examine the data and extract the new player id */
@@ -352,10 +350,10 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
 
     TRACE( "Sending forward player request with 0x%08lx\n", dpidServer );
 
-    lpMsg = DP_MSG_ExpectReply( This, &data,
-                                DPMSG_WAIT_60_SECS,
-                                DPMSGCMD_GETNAMETABLEREPLY,
-                                &lpMsg, &dwMsgSize );
+    hr = DP_MSG_ExpectReply( This, &data,
+                             DPMSG_WAIT_60_SECS,
+                             DPMSGCMD_GETNAMETABLEREPLY,
+                             &lpMsg, &dwMsgSize );
   }
 
   /* Need to examine the data and extract the new player id */
@@ -373,7 +371,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
  * ordering issues on sends and receives from the opposite machine. No wonder MS is not
  * a networking company.
  */
-static void *DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, DWORD dwWaitTime,
+static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, DWORD dwWaitTime,
         WORD wReplyCommandId, void **lplpReplyMsg, DWORD *lpdwMsgBodySize )
 {
   HRESULT                  hr;
@@ -394,7 +392,7 @@ static void *DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, D
     ERR( "Send failed: %s\n", DPLAYX_HresultToString( hr ) );
     DP_MSG_UnlinkReplyStruct( This, &replyStructList );
     DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
-    return NULL;
+    return hr;
   }
 
   /* The reply message will trigger the hMsgReceipt event effectively switching
@@ -406,11 +404,12 @@ static void *DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, D
     ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
     DP_MSG_UnlinkReplyStruct( This, &replyStructList );
     DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
-    return NULL;
+    return DPERR_TIMEOUT;
   }
 
   /* Clean Up */
-  return DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
+  DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
+  return DP_OK;
 }
 
 /* Determine if there is a matching request for this incoming message and then copy
@@ -484,10 +483,10 @@ void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf )
     data.bSystemMessage = TRUE; /* Allow reply to be sent */
     data.lpISP          = This->dp2->spData.lpISP;
 
-    lpMsg = DP_MSG_ExpectReply( This, &data,
-                                DPMSG_WAIT_5_SECS,
-                                DPMSGCMD_JUSTENVELOPE,
-                                &lpMsg, &dwMsgSize );
+    DP_MSG_ExpectReply( This, &data,
+                        DPMSG_WAIT_5_SECS,
+                        DPMSGCMD_JUSTENVELOPE,
+                        &lpMsg, &dwMsgSize );
   }
 }
 
