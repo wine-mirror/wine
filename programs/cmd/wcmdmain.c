@@ -1376,6 +1376,60 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
 
 static RETURN_CODE execute_single_command(const WCHAR *command);
 
+/* Attempt to open a file at a known path. */
+static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL called)
+{
+    const WCHAR *ext = wcsrchr(file, '.');
+    STARTUPINFOW si = {.cb = sizeof(si)};
+    DWORD console, exit_code;
+    WCHAR exe_path[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    SHFILEINFOW psfi;
+
+    TRACE("%s\n", debugstr_w(file));
+
+    if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd")))
+    {
+        RETURN_CODE return_code;
+        BOOL oldinteractive = interactive;
+
+        interactive = FALSE;
+        return_code = WCMD_call_batch(file, full_cmdline);
+        interactive = oldinteractive;
+        if (context && !called)
+        {
+            TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
+            context->skip_rest = TRUE;
+        }
+        if (return_code != RETURN_CODE_ABORTED)
+            errorlevel = return_code;
+        return return_code;
+    }
+
+    if ((INT_PTR)FindExecutableW(file, NULL, exe_path) < 32)
+        console = 0;
+    else
+        console = SHGetFileInfoW(exe_path, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
+
+    init_msvcrt_io_block(&si);
+    if (!CreateProcessW(file, full_cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+    {
+        errorlevel = GetLastError();
+        free(si.lpReserved2);
+        return errorlevel;
+    }
+    free(si.lpReserved2);
+
+    if (!interactive || (console && !HIWORD(console)))
+        WaitForSingleObject(pi.hProcess, INFINITE);
+    GetExitCodeProcess(pi.hProcess, &exit_code);
+    errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return errorlevel;
+}
+
 /******************************************************************************
  * WCMD_run_program
  *
@@ -1414,7 +1468,6 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
   WCHAR *firstParam;
   BOOL  extensionsupplied = FALSE;
   BOOL  explicit_path = FALSE;
-  BOOL  status;
   DWORD len;
 
   /* Quick way to get the filename is to extract the first argument. */
@@ -1566,66 +1619,8 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
       }
     }
 
-    /* Once found, launch it */
-    if (found) {
-      STARTUPINFOW st;
-      PROCESS_INFORMATION pe;
-      SHFILEINFOW psfi;
-      DWORD console;
-      HINSTANCE hinst;
-      WCHAR *ext = wcsrchr( thisDir, '.' );
-
-      WINE_TRACE("Found as %s\n", wine_dbgstr_w(thisDir));
-
-      /* Special case BAT and CMD */
-      if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd"))) {
-        RETURN_CODE return_code;
-        BOOL oldinteractive = interactive;
-
-        interactive = FALSE;
-        return_code = WCMD_call_batch(thisDir, command);
-        interactive = oldinteractive;
-        if (context && !called) {
-          TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
-          context->skip_rest = TRUE;
-        }
-        if (return_code != RETURN_CODE_ABORTED)
-            errorlevel = return_code;
-        return return_code;
-      } else {
-        DWORD exit_code;
-        /* thisDir contains the file to be launched, but with what?
-           eg. a.exe will require a.exe to be launched, a.html may be iexplore */
-        hinst = FindExecutableW (thisDir, NULL, temp);
-        if ((INT_PTR)hinst < 32)
-          console = 0;
-        else
-          console = SHGetFileInfoW(temp, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
-
-        ZeroMemory (&st, sizeof(STARTUPINFOW));
-        st.cb = sizeof(STARTUPINFOW);
-        init_msvcrt_io_block(&st);
-
-        /* Launch the process and if a CUI wait on it to complete
-           Note: Launching internal wine processes cannot specify a full path to exe */
-        status = CreateProcessW(thisDir,
-                                command, NULL, NULL, TRUE, 0, NULL, NULL, &st, &pe);
-        free(st.lpReserved2);
-        if (!status)
-          break;
-
-        /* Always wait when non-interactive (cmd /c or in batch program),
-           or for console applications                                    */
-        if (!interactive || (console && !HIWORD(console)))
-            WaitForSingleObject (pe.hProcess, INFINITE);
-        GetExitCodeProcess (pe.hProcess, &exit_code);
-        errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
-
-        CloseHandle(pe.hProcess);
-        CloseHandle(pe.hThread);
-        return errorlevel;
-      }
-    }
+    if (found)
+      return run_full_path(thisDir, command, called);
   }
 
   /* Not found anywhere - were we called? */
