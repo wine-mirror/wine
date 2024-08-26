@@ -52,6 +52,11 @@ echo No prompts or I would not get here1
 rem - Try cmd.exe /k as well
 cmd.exe /k "copy file1 file2 >nul && exit"
 echo No prompts or I would not get here2
+rem Directories are ignored when searching for executable files
+mkdir cmd.exe
+cmd.exe /c echo alabaster
+cmd /c echo chrome
+rmdir cmd.exe
 
 rem Nonexistent variable expansion is as per command line, i.e. left as-is
 cmd.exe /c echo %%hello1%%

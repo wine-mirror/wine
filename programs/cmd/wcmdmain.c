@@ -1546,6 +1546,7 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
     WCHAR *pos               = NULL;
     BOOL  found             = FALSE;
     BOOL inside_quotes      = FALSE;
+    DWORD attribs;
 
     if (explicit_path)
     {
@@ -1604,7 +1605,8 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
 
     /* 1. If extension supplied, see if that file exists */
     if (extensionsupplied) {
-      if (GetFileAttributesW(thisDir) != INVALID_FILE_ATTRIBUTES) {
+      attribs = GetFileAttributesW(thisDir);
+      if (attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY)) {
         found = TRUE;
       }
     }
@@ -1634,7 +1636,8 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
             thisExt = NULL;
           }
 
-          if (GetFileAttributesW(thisDir) != INVALID_FILE_ATTRIBUTES) {
+          attribs = GetFileAttributesW(thisDir);
+          if (attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY)) {
             found = TRUE;
             thisExt = NULL;
           }
