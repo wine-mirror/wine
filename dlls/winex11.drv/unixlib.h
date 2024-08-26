@@ -35,7 +35,7 @@ enum x11drv_funcs
 /* x11drv_init params */
 struct init_params
 {
-    WNDPROC foreign_window_proc;
+    UINT64 foreign_window_proc;
 };
 
 /* x11drv_tablet_info params */

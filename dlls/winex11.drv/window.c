@@ -2105,7 +2105,7 @@ HWND create_foreign_window( Display *display, Window xwin )
 
         memset( &class, 0, sizeof(class) );
         class.cbSize        = sizeof(class);
-        class.lpfnWndProc   = client_foreign_window_proc;
+        class.lpfnWndProc   = (WNDPROC)(UINT_PTR)client_foreign_window_proc;
         class.lpszClassName = foreign_window_prop;
         if (!NtUserRegisterClassExWOW( &class, &class_name, &version, NULL, 0, 0, NULL ) &&
             RtlGetLastWin32Error() != ERROR_CLASS_ALREADY_EXISTS)

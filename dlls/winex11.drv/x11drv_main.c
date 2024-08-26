@@ -85,7 +85,7 @@ int copy_default_colors = 128;
 int alloc_system_colors = 256;
 int xrender_error_base = 0;
 char *process_name = NULL;
-WNDPROC client_foreign_window_proc = NULL;
+UINT64 client_foreign_window_proc = 0;
 
 static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
@@ -824,18 +824,6 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 
 #ifdef _WIN64
 
-static NTSTATUS x11drv_wow64_init( void *arg )
-{
-    struct
-    {
-        ULONG foreign_window_proc;
-    } *params32 = arg;
-    struct init_params params;
-
-    params.foreign_window_proc = UlongToPtr( params32->foreign_window_proc );
-    return x11drv_init( &params );
-}
-
 static NTSTATUS x11drv_wow64_tablet_get_packet( void *arg )
 {
     FIXME( "%p\n", arg );
@@ -860,7 +848,7 @@ static NTSTATUS x11drv_wow64_tablet_info( void *arg )
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
-    x11drv_wow64_init,
+    x11drv_init,
     x11drv_tablet_attach_queue,
     x11drv_wow64_tablet_get_packet,
     x11drv_wow64_tablet_info,

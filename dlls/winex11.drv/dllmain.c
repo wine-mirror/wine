@@ -42,7 +42,7 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     KERNEL_CALLBACK_PROC *callback_table;
     struct init_params params =
     {
-        foreign_window_proc,
+        .foreign_window_proc = (UINT_PTR)foreign_window_proc,
     };
 
     if (reason != DLL_PROCESS_ATTACH) return TRUE;

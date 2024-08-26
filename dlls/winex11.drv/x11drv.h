@@ -438,7 +438,7 @@ extern int alloc_system_colors;
 extern int xrender_error_base;
 extern char *process_name;
 extern Display *clipboard_display;
-extern WNDPROC client_foreign_window_proc;
+extern UINT64 client_foreign_window_proc;
 
 /* atoms */
 
