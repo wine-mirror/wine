@@ -237,7 +237,6 @@ static BOOL symbol_from_prototype (parsed_symbol *sym, const char *proto)
 static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
 {
   BOOL is_const, is_volatile, is_struct, is_signed, is_unsigned;
-  int ptrs = 0;
   const char *iter, *base_type, *catch_unsigned, *proto_str;
   char dest_type, *type_str;
 
@@ -284,9 +283,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
 
   /* FIXME: skip const/volatile here too */
   for (proto_str = iter; *proto_str; proto_str++)
-    if (*proto_str == '*')
-      ptrs++;
-    else if (*proto_str != ' ')
+    if (*proto_str != '*' && *proto_str != ' ')
       break;
 
   if (!*proto_str)
