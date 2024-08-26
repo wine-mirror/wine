@@ -1894,7 +1894,7 @@ static BOOL get_default_window_surface( HWND hwnd, const RECT *surface_rect, str
 static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, BOOL create_layered,
                                                      struct window_rects *rects, RECT *surface_rect )
 {
-    BOOL shaped, needs_surface, create_opaque, is_layered;
+    BOOL shaped, needs_surface, create_opaque, is_layered, is_child;
     HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
     struct window_surface *new_surface;
     UINT style, ex_style;
@@ -1903,18 +1903,19 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
 
     style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE );
+    is_child = parent && parent != NtUserGetDesktopWindow();
 
     if (get_window_region( hwnd, FALSE, &shape, &dummy )) shaped = FALSE;
     else if ((shaped = !!shape)) NtGdiDeleteObjectApp( shape );
 
     rects->visible = rects->window;
     if (!user_driver->pWindowPosChanging( hwnd, swp_flags, shaped, rects )) needs_surface = FALSE;
-    else if (parent && parent != NtUserGetDesktopWindow()) needs_surface = FALSE;
+    else if (is_child) needs_surface = FALSE;
     else if (swp_flags & SWP_HIDEWINDOW) needs_surface = FALSE;
     else if (swp_flags & SWP_SHOWWINDOW) needs_surface = TRUE;
     else needs_surface = !!(style & WS_VISIBLE);
 
-    rects->visible = get_visible_rect( hwnd, shaped, style, ex_style, rects );
+    if (!is_child) rects->visible = get_visible_rect( hwnd, shaped, style, ex_style, rects );
     if (!get_surface_rect( &rects->visible, surface_rect )) needs_surface = FALSE;
     if (!get_default_window_surface( hwnd, surface_rect, &new_surface )) return NULL;
 
