@@ -1428,10 +1428,13 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 static void post_drop( HWND hwnd, DROPFILES *drop, ULONG size )
 {
     struct dnd_post_drop_params *params;
+    void *ret_ptr;
+    ULONG ret_len;
     if (!(params = malloc( sizeof(*params) + size - sizeof(*drop) ))) return;
     memcpy( &params->drop, drop, size );
     params->drop.fWide = HandleToUlong( hwnd ); /* abuse fWide to pass window handle */
-    x11drv_client_func( client_func_dnd_post_drop, params, size );
+    params->dispatch.callback = dnd_post_drop_callback;
+    KeUserDispatchCallback( &params->dispatch, size, &ret_ptr, &ret_len );
     free( params );
 }
 
@@ -1698,8 +1701,11 @@ static void handle_xdnd_enter_event( HWND hWnd, XClientMessageEvent *event )
                                   xdndtypes, count, &size );
     if (data && (params = malloc( sizeof(*params) + size )))
     {
+        void *ret_ptr;
+        ULONG ret_len;
         memcpy( params->entries, data, size );
-        x11drv_client_func( client_func_dnd_enter_event, params, sizeof(*params) + size );
+        params->dispatch.callback = dnd_enter_event_callback;
+        KeUserDispatchCallback( &params->dispatch, sizeof(*params) + size, &ret_ptr, &ret_len );
         free( params );
     }
     free( data );
@@ -1753,12 +1759,12 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
     ULONG ret_len;
     UINT effect;
 
+    params.dispatch.callback = dnd_position_event_callback;
     params.hwnd = HandleToUlong( hwnd );
     params.point = root_to_virtual_screen( event->data.l[2] >> 16, event->data.l[2] & 0xFFFF );
     params.effect = effect = xdnd_action_to_drop_effect( event->data.l[4] );
 
-    if (KeUserModeCallback( client_func_dnd_position_event, &params, sizeof(params),
-                            &ret_ptr, &ret_len ) || ret_len != sizeof(effect))
+    if (KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(effect))
         return;
     effect = *(UINT *)ret_ptr;
 
@@ -1785,14 +1791,13 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
 
 static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
 {
-    struct dnd_drop_event_params params = {.hwnd = HandleToULong(hwnd)};
+    struct dnd_drop_event_params params = {.dispatch.callback = dnd_leave_event_callback, .hwnd = HandleToULong(hwnd)};
     XClientMessageEvent e;
     void *ret_ptr;
     ULONG ret_len;
     UINT effect;
 
-    if (KeUserModeCallback( client_func_dnd_drop_event, &params, sizeof(params),
-                            &ret_ptr, &ret_len ) || ret_len != sizeof(effect))
+    if (KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(effect))
         return;
     effect = *(UINT *)ret_ptr;
 
@@ -1812,7 +1817,10 @@ static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
 
 static void handle_xdnd_leave_event( HWND hwnd, XClientMessageEvent *event )
 {
-    x11drv_client_func( client_func_dnd_leave_event, NULL, 0 );
+    struct dispatch_callback_params params = {.callback = dnd_leave_event_callback};
+    void *ret_ptr;
+    ULONG ret_len;
+    KeUserDispatchCallback( &params, sizeof(params), &ret_ptr, &ret_len );
 }
 
 

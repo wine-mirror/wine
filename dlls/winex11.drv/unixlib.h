@@ -35,6 +35,11 @@ enum x11drv_funcs
 /* x11drv_init params */
 struct init_params
 {
+    UINT64 dnd_enter_event_callback;
+    UINT64 dnd_position_event_callback;
+    UINT64 dnd_post_drop_callback;
+    UINT64 dnd_drop_event_callback;
+    UINT64 dnd_leave_event_callback;
     UINT64 foreign_window_proc;
 };
 
@@ -53,20 +58,6 @@ struct xim_preedit_state_params
     BOOL open;
 };
 
-/* driver client callbacks exposed with KernelCallbackTable interface */
-enum x11drv_client_funcs
-{
-    client_func_dnd_enter_event = NtUserDriverCallbackFirst,
-    client_func_dnd_position_event,
-    client_func_dnd_post_drop,
-    client_func_dnd_drop_event,
-    client_func_dnd_leave_event,
-    client_func_last
-};
-
-C_ASSERT( client_func_last <= NtUserDriverCallbackLast + 1 );
-
-/* x11drv_dnd_enter_event params */
 struct format_entry
 {
     UINT format;
@@ -77,7 +68,7 @@ struct format_entry
 /* x11drv_dnd_enter_event params */
 struct dnd_enter_event_params
 {
-    int placeholder;
+    struct dispatch_callback_params dispatch;
     struct format_entry entries[];
 };
 
@@ -86,6 +77,7 @@ C_ASSERT(sizeof(struct dnd_enter_event_params) == offsetof(struct dnd_enter_even
 /* x11drv_dnd_position_event params */
 struct dnd_position_event_params
 {
+    struct dispatch_callback_params dispatch;
     ULONG hwnd;
     POINT point;
     DWORD effect;
@@ -94,12 +86,15 @@ struct dnd_position_event_params
 /* x11drv_dnd_drop_event params */
 struct dnd_drop_event_params
 {
+    struct dispatch_callback_params dispatch;
     ULONG hwnd;
 };
 
 /* x11drv_dnd_post_drop params */
 struct dnd_post_drop_params
 {
+    struct dispatch_callback_params dispatch;
+    UINT32 __pad;
     DROPFILES drop;
     char data[];
 };
