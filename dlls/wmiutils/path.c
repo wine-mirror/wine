@@ -472,7 +472,7 @@ static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
     }
     if (*q == ':') q++;
     p = q;
-    while (*q && *q != '.') q++;
+    while (*q && *q != '.' && *q != '=') q++;
     len = q - p;
     if (!(path->class = malloc( (len + 1) * sizeof(WCHAR) ))) goto done;
     memcpy( path->class, p, len * sizeof(WCHAR) );
@@ -499,6 +499,13 @@ static HRESULT parse_text( struct path *path, ULONG mode, const WCHAR *text )
             q += len;
             i++;
         }
+    }
+    else if (*q == '=')
+    {
+        path->num_keys = 1;
+        if (!(path->keys = calloc( path->num_keys, sizeof(struct key) ))) goto done;
+        hr = parse_key( &path->keys[0], q, &len );
+        if (hr != S_OK) goto done;
     }
     hr = S_OK;
 
@@ -643,12 +650,14 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
         lstrcpyW( ret, namespace );
         if (path->len_class)
         {
+            unsigned int offset = len_namespace + path->len_class + 1;
+
             ret[len_namespace] = ':';
             lstrcpyW( ret + len_namespace + 1, path->class );
             if (path->num_keys)
             {
-                ret[len_namespace + path->len_class + 1] = '.';
-                lstrcpyW( ret + len_namespace + path->len_class + 2, keylist );
+                if (*keylist != '=') ret[offset++] = '.';
+                lstrcpyW( ret + offset, keylist );
             }
         }
         free( namespace );
@@ -674,8 +683,10 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
         lstrcpyW( ret, path->class );
         if (path->num_keys)
         {
-            ret[path->len_class] = '.';
-            lstrcpyW( ret + path->len_class + 1, keylist );
+            unsigned int offset = path->len_class;
+
+            if (*keylist != '=') ret[offset++] = '.';
+            lstrcpyW( ret + offset, keylist );
         }
         free( keylist );
         return ret;
@@ -717,8 +728,10 @@ static WCHAR *build_path( struct path *path, LONG flags, int *len )
             lstrcpyW( p, path->class );
             if (path->num_keys)
             {
-                p[path->len_class] = '.';
-                lstrcpyW( p + path->len_class + 1, keylist );
+                unsigned int offset = path->len_class;
+
+                if (*keylist != '=') p[offset++] = '.';
+                lstrcpyW( p + offset, keylist );
             }
         }
         free( namespace );
@@ -833,7 +846,12 @@ static HRESULT WINAPI path_GetInfo(
     {
         *response |= WBEMPATH_INFO_HAS_SUBSCOPES;
         if (path->num_keys)
+        {
+            unsigned int i;
+            for (i = 0; i < path->num_keys; i++)
+                if (!path->keys[i].name[0]) *response |= WBEMPATH_INFO_HAS_IMPLIED_KEY;
             *response |= WBEMPATH_INFO_IS_INST_REF;
+        }
         else
             *response |= WBEMPATH_INFO_IS_CLASS_REF;
     }
