@@ -317,6 +317,10 @@ static void test_incorrect_api_usage(void)
 
     dwLen = 0;
     SetLastError(0xdeadbeef);
+    result = CryptDecrypt(hKey, 0, FALSE, 0, &temp, &dwLen);
+    ok (result, "%lx\n", GetLastError());
+    dwLen = 0;
+    SetLastError(0xdeadbeef);
     result = CryptDecrypt(hKey, 0, TRUE, 0, &temp, &dwLen);
     ok (!result && GetLastError() == NTE_BAD_LEN, "%lx\n", GetLastError());
     dwLen = 1;

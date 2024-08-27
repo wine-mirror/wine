@@ -2763,7 +2763,7 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         return FALSE;
     }
 
-    if (!*pdwDataLen)
+    if (Final && !*pdwDataLen)
     {
         SetLastError(NTE_BAD_LEN);
         return FALSE;
