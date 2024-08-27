@@ -989,16 +989,32 @@ static SQLRETURN col_attribute_win32_a( struct statement *stmt, SQLUSMALLINT col
 
         switch (field_id)
         {
-        case SQL_COLUMN_COUNT:
-            field_id = SQL_DESC_COUNT;
+        case SQL_DESC_COUNT:
+            field_id = SQL_COLUMN_COUNT;
             break;
 
-        case SQL_COLUMN_NAME:
-            field_id = SQL_DESC_NAME;
+        case SQL_DESC_TYPE:
+            field_id = SQL_COLUMN_TYPE;
             break;
 
-        case SQL_COLUMN_NULLABLE:
-            field_id = SQL_DESC_NULLABLE;
+        case SQL_DESC_LENGTH:
+            field_id = SQL_COLUMN_LENGTH;
+            break;
+
+        case SQL_DESC_PRECISION:
+            field_id = SQL_COLUMN_PRECISION;
+            break;
+
+        case SQL_DESC_SCALE:
+            field_id = SQL_COLUMN_SCALE;
+            break;
+
+        case SQL_DESC_NULLABLE:
+            field_id = SQL_COLUMN_NULLABLE;
+            break;
+
+        case SQL_DESC_NAME:
+            field_id = SQL_COLUMN_NAME;
             break;
 
         case SQL_COLUMN_TYPE:
@@ -6175,16 +6191,32 @@ static SQLRETURN col_attribute_win32_w( struct statement *stmt, SQLUSMALLINT col
 
         switch (field_id)
         {
-        case SQL_COLUMN_COUNT:
-            field_id = SQL_DESC_COUNT;
+        case SQL_DESC_COUNT:
+            field_id = SQL_COLUMN_COUNT;
             break;
 
-        case SQL_COLUMN_NAME:
-            field_id = SQL_DESC_NAME;
+        case SQL_DESC_TYPE:
+            field_id = SQL_COLUMN_TYPE;
             break;
 
-        case SQL_COLUMN_NULLABLE:
-            field_id = SQL_DESC_NULLABLE;
+        case SQL_DESC_LENGTH:
+            field_id = SQL_COLUMN_LENGTH;
+            break;
+
+        case SQL_DESC_PRECISION:
+            field_id = SQL_COLUMN_PRECISION;
+            break;
+
+        case SQL_DESC_SCALE:
+            field_id = SQL_COLUMN_SCALE;
+            break;
+
+        case SQL_DESC_NULLABLE:
+            field_id = SQL_COLUMN_NULLABLE;
+            break;
+
+        case SQL_DESC_NAME:
+            field_id = SQL_COLUMN_NAME;
             break;
 
         case SQL_COLUMN_TYPE:
