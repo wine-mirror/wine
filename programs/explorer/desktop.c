@@ -1007,7 +1007,7 @@ static void load_graphics_driver( const WCHAR *driver, GUID *guid )
             strcpy( error, "The graphics driver is missing. Check your build!" );
             break;
         case ERROR_DLL_INIT_FAILED:
-            strcpy( error, "Make sure that your X server is running and that $DISPLAY is set correctly." );
+            strcpy( error, "Make sure that your display server is running and that its variables are set." );
             break;
         default:
             sprintf( error, "Unknown error (%lu).", GetLastError() );
