@@ -1294,6 +1294,7 @@ static BOOL alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
     ULONG i, size;
     void *new_ptr;
     LIST_ENTRY *entry;
+    UINT old_module_count = tls_module_count;
 
     if (!(dir = RtlImageDirectoryEntryToData( mod->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &size )))
         return FALSE;
@@ -1319,24 +1320,6 @@ static BOOL alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
         new_ptr = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, tls_dirs,
                                      new_count * sizeof(*tls_dirs) );
         if (!new_ptr) return FALSE;
-
-        /* resize the pointer block in all running threads */
-        for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
-        {
-            TEB *teb = CONTAINING_RECORD( entry, TEB, TlsLinks );
-            void **old = teb->ThreadLocalStoragePointer;
-            void **new = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*new));
-
-            if (!new) return FALSE;
-            if (old) memcpy( new, old, tls_module_count * sizeof(*new) );
-            teb->ThreadLocalStoragePointer = new;
-#ifdef __x86_64__  /* macOS-specific hack */
-            if (teb->Instrumentation[0]) ((TEB *)teb->Instrumentation[0])->ThreadLocalStoragePointer = new;
-#endif
-            TRACE( "thread %04lx tls block %p -> %p\n", HandleToULong(teb->ClientId.UniqueThread), old, new );
-            /* FIXME: can't free old block here, should be freed at thread exit */
-        }
-
         tls_dirs = new_ptr;
         tls_module_count = new_count;
     }
@@ -1345,6 +1328,21 @@ static BOOL alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
     for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
     {
         TEB *teb = CONTAINING_RECORD( entry, TEB, TlsLinks );
+
+        if (old_module_count < tls_module_count)
+        {
+            void **old = teb->ThreadLocalStoragePointer;
+            void **new = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, tls_module_count * sizeof(*new));
+
+            if (!new) return FALSE;
+            if (old) memcpy( new, old, old_module_count * sizeof(*new) );
+            teb->ThreadLocalStoragePointer = new;
+#ifdef __x86_64__  /* macOS-specific hack */
+            if (teb->Instrumentation[0]) ((TEB *)teb->Instrumentation[0])->ThreadLocalStoragePointer = new;
+#endif
+            TRACE( "thread %04lx tls block %p -> %p\n", HandleToULong(teb->ClientId.UniqueThread), old, new );
+            /* FIXME: can't free old block here, should be freed at thread exit */
+        }
 
         if (!(new_ptr = RtlAllocateHeap( GetProcessHeap(), 0, size + dir->SizeOfZeroFill ))) return -1;
         memcpy( new_ptr, (void *)dir->StartAddressOfRawData, size );
