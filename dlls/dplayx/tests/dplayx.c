@@ -1950,8 +1950,8 @@ static BOOL CALLBACK EnumSessions_cb2( LPCDPSESSIONDESC2 lpThisSD,
     return TRUE;
 }
 
-#define check_Open( dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr ) check_Open_( __LINE__, dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr )
-static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, const DPSESSIONDESC2 *serverDpsd, BOOL requestExpected, unsigned short port, const WCHAR *expectedPassword, HRESULT expectedHr )
+#define check_Open( dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr, hrTodo, requestTodo ) check_Open_( __LINE__, dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr, hrTodo, requestTodo )
+static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, const DPSESSIONDESC2 *serverDpsd, BOOL requestExpected, unsigned short port, const WCHAR *expectedPassword, HRESULT expectedHr, BOOL hrTodo, BOOL requestTodo )
 {
     SOCKET listenSock;
     OpenParam *param;
@@ -1973,7 +1973,17 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
         unsigned short port;
 
         recvSock = acceptTcp_( line, listenSock );
-        ok_( __FILE__, line )( recvSock != INVALID_SOCKET, "accept() returned %#Ix.\n", recvSock );
+        todo_wine_if( requestTodo ) ok_( __FILE__, line )( recvSock != INVALID_SOCKET, "accept() returned %#Ix.\n",
+                                                           recvSock );
+        if ( recvSock == INVALID_SOCKET )
+        {
+            hr = openAsyncWait( param, 2000 );
+            todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
+
+            closesocket( listenSock );
+            WSACleanup();
+            return;
+        }
 
         port = receiveRequestPlayerId_( line, recvSock, 0x9 );
 
@@ -1988,7 +1998,7 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
         checkNoMoreMessages_( line, recvSock );
 
         hr = openAsyncWait( param, 2000 );
-        ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
+        todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
 
         hr = IDirectPlayX_Close( dp );
         checkHR( DP_OK, hr );
@@ -1999,7 +2009,7 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
     else
     {
         hr = openAsyncWait( param, 2000 );
-        ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
+        todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
     }
 
     checkNoMoreAccepts_( line, listenSock );
@@ -2056,6 +2066,7 @@ static void test_Open(void)
         .dwReserved1 = 0xaabbccdd,
     };
     EnumSessionsParam *enumSessionsParam;
+    DPSESSIONDESC2 replyDpsd;
     DPSESSIONDESC2 dpsd;
     unsigned short port;
     IDirectPlay4 *dp;
@@ -2069,9 +2080,9 @@ static void test_Open(void)
 
     dpsd = dpsdZero;
     dpsd.dwSize = 0;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE, FALSE );
 
-    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_UNINITIALIZED );
+    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_UNINITIALIZED, FALSE, FALSE );
 
     init_TCPIP_provider( dp, "127.0.0.1", 0 );
 
@@ -2079,19 +2090,19 @@ static void test_Open(void)
     /* - Checking how strict dplay is with sizes */
     dpsd = dpsdZero;
     dpsd.dwSize = 0;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE, FALSE );
 
     dpsd = dpsdZero;
     dpsd.dwSize = sizeof( DPSESSIONDESC2 ) - 1;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE, FALSE );
 
     dpsd = dpsdZero;
     dpsd.dwSize = sizeof( DPSESSIONDESC2 ) + 1;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE, FALSE );
 
-    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS );
+    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS, FALSE, FALSE );
 
-    check_Open( dp, &dpsdAppGuid, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS );
+    check_Open( dp, &dpsdAppGuid, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS, FALSE, FALSE );
 
     enumSock = bindUdp( 47624 );
 
@@ -2108,20 +2119,30 @@ static void test_Open(void)
 
         sendEnumSessionsReply( sock, 2349, &normalDpsd );
 
+        replyDpsd = normalDpsd;
+        replyDpsd.guidInstance = appGuid2;
+        sendEnumSessionsReply( sock, 2348, &replyDpsd );
+
         hr = enumSessionsAsyncWait( enumSessionsParam, 2000 );
         checkHR( DP_OK, hr );
 
         closesocket( sock );
 
-        if ( tryIndex < 19 && count < 1 )
+        if ( tryIndex < 19 && count < 2 )
             continue;
 
-        ok( count == 1, "got session count %d.\n", count );
+        ok( count == 2, "got session count %d.\n", count );
 
         break;
     }
 
-    check_Open( dp, &dpsdAppGuid, &normalDpsd, TRUE, 2349, L"", DP_OK );
+    check_Open( dp, &dpsdAppGuid, &normalDpsd, TRUE, 2349, L"", DP_OK, FALSE, FALSE );
+
+    dpsd = dpsdAppGuid;
+    dpsd.guidInstance = appGuid2;
+    replyDpsd = normalDpsd;
+    replyDpsd.guidInstance = appGuid2;
+    check_Open( dp, &dpsd, &replyDpsd, TRUE, 2348, L"", DP_OK, TRUE, TRUE );
 
     /* Join to protected session */
     for ( tryIndex = 0; ; ++tryIndex )
@@ -2152,7 +2173,7 @@ static void test_Open(void)
 
     dpsd = dpsdAppGuid;
     dpsd.lpszPasswordA = (char *) "hadouken";
-    check_Open( dp, &dpsd, &protectedDpsd, TRUE, 2349, L"hadouken", DP_OK );
+    check_Open( dp, &dpsd, &protectedDpsd, TRUE, 2349, L"hadouken", DP_OK, FALSE, FALSE );
 
     closesocket( enumSock );
 
