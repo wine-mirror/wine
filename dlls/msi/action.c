@@ -2172,6 +2172,14 @@ static WCHAR *get_install_location( MSIPACKAGE *package )
     return path;
 }
 
+static BOOL is_admin_install( MSIPACKAGE *package )
+{
+    WCHAR *action = msi_dup_property( package->db, L"ACTION" );
+    BOOL ret = (action && !wcscmp( action, L"ADMIN" ));
+    free( action );
+    return ret;
+}
+
 void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL load_prop )
 {
     FolderList *fl;
@@ -2189,6 +2197,7 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
         {
             path = msi_dup_property( package->db, L"ROOTDRIVE" );
         }
+        if (is_admin_install( package )) load_prop = FALSE;
     }
     else if (!load_prop || !(path = msi_dup_property( package->db, folder->Directory )))
     {
@@ -7251,10 +7260,173 @@ static UINT ACTION_DisableRollback( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
+static UINT admin_remove_cabinet_streams( MSIPACKAGE *package )
+{
+    WCHAR decoded[MAX_STREAM_NAME_LEN + 1];
+    IEnumSTATSTG *iter = NULL;
+    STATSTG stat;
+    ULONG count;
+    UINT r = ERROR_SUCCESS;
+    HRESULT hr;
+
+    hr = IStorage_EnumElements( package->db->storage, 0, NULL, 0, &iter );
+    if (FAILED( hr )) return ERROR_FUNCTION_FAILED;
+
+    for (;;)
+    {
+        count = 0;
+        hr = IEnumSTATSTG_Next( iter, 1, &stat, &count );
+        if (FAILED( hr ) || !count) break;
+
+        if (stat.type != STGTY_STREAM || *stat.pwcsName != 0x4176)
+        {
+            CoTaskMemFree( stat.pwcsName );
+            continue;
+        }
+
+        decode_streamname( stat.pwcsName, decoded );
+        TRACE( "removing cabinet stream %s\n", debugstr_w(decoded) );
+
+        hr = IStorage_DestroyElement( package->db->storage, stat.pwcsName );
+        if (FAILED( hr )) WARN( "failed to remove stream %08lx\n", hr );
+        CoTaskMemFree( stat.pwcsName );
+    }
+
+    IEnumSTATSTG_Release( iter );
+    return r;
+}
+
+static UINT admin_update_package_info( MSIPACKAGE *package )
+{
+    MSISUMMARYINFO *info = NULL;
+    UINT r, type;
+    int flags;
+
+    if ((r = msi_get_suminfo( package->db->storage, 0, &info ))) return r;
+    if ((r = msi_suminfo_get_prop( info, PID_WORDCOUNT, &type, &flags, NULL, NULL, NULL ))) goto done;
+
+    flags &= ~msidbSumInfoSourceTypeCompressed;
+    flags |= msidbSumInfoSourceTypeAdminImage;
+
+    if ((r = msi_suminfo_set_prop( info, PID_WORDCOUNT, type, flags, NULL, NULL ))) goto done;
+    if ((r = msi_suminfo_persist( info ))) goto done;
+
+done:
+    msiobj_release( &info->hdr );
+    return r;
+}
+
+static BOOL remove_path( MSIPACKAGE *package, const WCHAR *path )
+{
+    WCHAR *p, *copy = wcsdup( path );
+    BOOL ret = FALSE;
+
+    if (!copy) return FALSE;
+    for (p = copy + wcslen( copy ); p >= copy; p--)
+    {
+        if (*p != '\\') continue;
+        *p = 0;
+        if (!(ret = msi_remove_directory( package, copy ))) break;
+    }
+    free( copy );
+    return ret;
+}
+
+static UINT admin_create_dest_file( MSIPACKAGE *package, WCHAR **ret_filename )
+{
+    WCHAR *filename, *path;
+    const WCHAR *ptr;
+    HANDLE handle;
+
+    if (!(path = msi_dup_property( package->db, L"TARGETDIR" ))) return ERROR_FUNCTION_FAILED;
+    if (!msi_create_full_path( package, path ))
+    {
+        free( path );
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    if (!(ptr = wcsrchr( package->PackagePath, '\\' )) && !(ptr = wcsrchr( package->PackagePath, '/' )))
+    {
+        remove_path( package, path );
+        free( path );
+        return ERROR_FUNCTION_FAILED;
+    }
+    ptr++;
+
+    if (!(filename = malloc( (wcslen(path) + wcslen(ptr) + 1) * sizeof(WCHAR) )))
+    {
+        remove_path( package, path );
+        free( path );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    wcscpy( filename, path );
+    wcscat( filename, ptr );
+    handle = msi_create_file( package, filename, GENERIC_READ|GENERIC_WRITE, 0, CREATE_NEW, 0 );
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        WARN( "failed to create file %lu\n", GetLastError() );
+        remove_path( package, path );
+        free( path );
+        free( filename );
+        return ERROR_FUNCTION_FAILED;
+    }
+    CloseHandle( handle );
+
+    free( path );
+    *ret_filename = filename;
+    return ERROR_SUCCESS;
+}
+
+static UINT admin_copy_package( MSIPACKAGE *package, const WCHAR *filename )
+{
+    UINT r = ERROR_FUNCTION_FAILED;
+    IStorage *storage = NULL;
+    HRESULT hr;
+
+    hr = IStorage_Commit( package->db->storage, 0 );
+    if (FAILED( hr )) return ERROR_FUNCTION_FAILED;
+
+    hr = StgCreateDocfile( filename, STGM_CREATE|STGM_TRANSACTED|STGM_WRITE|STGM_SHARE_EXCLUSIVE, 0, &storage );
+    if (FAILED( hr )) return ERROR_FUNCTION_FAILED;
+
+    hr = IStorage_CopyTo( package->db->storage, 0, NULL, NULL, storage );
+    if (FAILED( hr )) goto done;
+
+    hr = IStorage_Commit( storage, 0 );
+    if (FAILED( hr )) goto done;
+
+    r = ERROR_SUCCESS;
+
+done:
+    IStorage_Release( storage );
+    return r;
+}
+
 static UINT ACTION_InstallAdminPackage( MSIPACKAGE *package )
 {
-    FIXME("%p\n", package);
-    return ERROR_SUCCESS;
+    WCHAR temppath[MAX_PATH], tempfile[MAX_PATH], *filename = NULL;
+    MSIPACKAGE *admin = NULL;
+    UINT r = ERROR_FUNCTION_FAILED;
+
+    TRACE("%p\n", package);
+
+    GetTempPathW( ARRAY_SIZE(temppath), temppath );
+    if (!msi_get_temp_file_name( package, temppath, L"msi", tempfile )) return ERROR_FUNCTION_FAILED;
+    if (!msi_copy_file( package, package->localfile, tempfile, FALSE )) goto done;
+    if ((r = MSI_OpenPackageW( tempfile, 0, &admin ))) goto done;
+    if ((r = admin_remove_cabinet_streams( admin ))) goto done;
+    if ((r = admin_update_package_info( admin ))) goto done;
+    if ((r = admin_create_dest_file( package, &filename ))) goto done;
+    if ((r = admin_copy_package( admin, filename ))) goto done;
+
+    r = ERROR_SUCCESS;
+
+done:
+    if (admin) msiobj_release( &admin->hdr );
+    DeleteFileW( tempfile );
+    free( filename );
+    return r;
 }
 
 static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )

@@ -628,8 +628,8 @@ UINT WINAPI MsiSummaryInfoGetPropertyCount( MSIHANDLE hSummaryInfo, UINT *pCount
     return ERROR_SUCCESS;
 }
 
-static UINT get_prop( MSISUMMARYINFO *si, UINT uiProperty, UINT *puiDataType, INT *piValue,
-                      FILETIME *pftValue, awstring *str, DWORD *pcchValueBuf)
+UINT msi_suminfo_get_prop( MSISUMMARYINFO *si, UINT uiProperty, UINT *puiDataType, INT *piValue,
+                           FILETIME *pftValue, awstring *str, DWORD *pcchValueBuf)
 {
     PROPVARIANT *prop;
     UINT ret = ERROR_SUCCESS;
@@ -770,7 +770,7 @@ UINT WINAPI MsiSummaryInfoGetPropertyA( MSIHANDLE handle, UINT uiProperty, UINT 
     str.unicode = FALSE;
     str.str.a = szValueBuf;
 
-    r = get_prop( si, uiProperty, puiDataType, piValue, pftValue, &str, pcchValueBuf );
+    r = msi_suminfo_get_prop( si, uiProperty, puiDataType, piValue, pftValue, &str, pcchValueBuf );
     msiobj_release( &si->hdr );
     return r;
 }
@@ -819,7 +819,7 @@ UINT WINAPI MsiSummaryInfoGetPropertyW( MSIHANDLE handle, UINT uiProperty, UINT 
     str.unicode = TRUE;
     str.str.w = szValueBuf;
 
-    r = get_prop( si, uiProperty, puiDataType, piValue, pftValue, &str, pcchValueBuf );
+    r = msi_suminfo_get_prop( si, uiProperty, puiDataType, piValue, pftValue, &str, pcchValueBuf );
     msiobj_release( &si->hdr );
     return r;
 }
@@ -878,17 +878,17 @@ static UINT set_prop( MSISUMMARYINFO *si, UINT uiProperty, UINT type,
     return ERROR_SUCCESS;
 }
 
-static UINT suminfo_set_prop( MSISUMMARYINFO *si, UINT uiProperty, UINT uiDataType, INT iValue, FILETIME *pftValue,
-                              awcstring *str )
+UINT msi_suminfo_set_prop( MSISUMMARYINFO *si, UINT uiProperty, UINT uiDataType, INT iValue, FILETIME *pftValue,
+                           awcstring *str )
 {
     UINT type = get_type( uiProperty );
-    if( type == VT_EMPTY || type != uiDataType )
+    if (type == VT_EMPTY || type != uiDataType)
         return ERROR_DATATYPE_MISMATCH;
 
-    if( uiDataType == VT_LPSTR && !str->str.a )
+    if (uiDataType == VT_LPSTR && !str->str.a)
         return ERROR_INVALID_PARAMETER;
 
-    if( uiDataType == VT_FILETIME && !pftValue )
+    if (uiDataType == VT_FILETIME && !pftValue)
         return ERROR_INVALID_PARAMETER;
 
     return set_prop( si, uiProperty, type, iValue, pftValue, str );
@@ -919,7 +919,7 @@ UINT WINAPI MsiSummaryInfoSetPropertyW( MSIHANDLE handle, UINT uiProperty, UINT 
     str.unicode = TRUE;
     str.str.w = szValue;
 
-    ret = suminfo_set_prop( si, uiProperty, uiDataType, iValue, pftValue, &str );
+    ret = msi_suminfo_set_prop( si, uiProperty, uiDataType, iValue, pftValue, &str );
     msiobj_release( &si->hdr );
     return ret;
 }
@@ -949,12 +949,12 @@ UINT WINAPI MsiSummaryInfoSetPropertyA( MSIHANDLE handle, UINT uiProperty, UINT 
     str.unicode = FALSE;
     str.str.a = szValue;
 
-    ret = suminfo_set_prop( si, uiProperty, uiDataType, iValue, pftValue, &str );
+    ret = msi_suminfo_set_prop( si, uiProperty, uiDataType, iValue, pftValue, &str );
     msiobj_release( &si->hdr );
     return ret;
 }
 
-static UINT suminfo_persist( MSISUMMARYINFO *si )
+UINT msi_suminfo_persist( MSISUMMARYINFO *si )
 {
     UINT ret = ERROR_FUNCTION_FAILED;
     IStream *stm = NULL;
@@ -1087,7 +1087,7 @@ UINT msi_add_suminfo( MSIDATABASE *db, LPWSTR **records, int num_records, int nu
 
 end:
     if (r == ERROR_SUCCESS)
-        r = suminfo_persist( si );
+        r = msi_suminfo_persist( si );
 
     msiobj_release( &si->hdr );
     return r;
@@ -1110,7 +1110,7 @@ static UINT save_prop( MSISUMMARYINFO *si, HANDLE handle, UINT row )
     str.unicode = FALSE;
     str.str.a = NULL;
     len = 0;
-    r = get_prop( si, row, &data_type, &int_value, &file_time, &str, &len );
+    r = msi_suminfo_get_prop( si, row, &data_type, &int_value, &file_time, &str, &len );
     if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
         return r;
     if (data_type == VT_EMPTY)
@@ -1131,7 +1131,7 @@ static UINT save_prop( MSISUMMARYINFO *si, HANDLE handle, UINT row )
         len++;
         if (!(str.str.a = malloc( len )))
             return ERROR_OUTOFMEMORY;
-        r = get_prop( si, row, NULL, NULL, NULL, &str, &len );
+        r = msi_suminfo_get_prop( si, row, NULL, NULL, NULL, &str, &len );
         if (r != ERROR_SUCCESS)
         {
             free( str.str.a );
@@ -1212,7 +1212,7 @@ UINT WINAPI MsiSummaryInfoPersist( MSIHANDLE handle )
     if( !si )
         return ERROR_INVALID_HANDLE;
 
-    ret = suminfo_persist( si );
+    ret = msi_suminfo_persist( si );
 
     msiobj_release( &si->hdr );
     return ret;
@@ -1264,7 +1264,7 @@ UINT msi_load_suminfo_properties( MSIPACKAGE *package )
     str.unicode = TRUE;
     str.str.w = NULL;
     len = 0;
-    r = get_prop( si, PID_REVNUMBER, NULL, NULL, NULL, &str, &len );
+    r = msi_suminfo_get_prop( si, PID_REVNUMBER, NULL, NULL, NULL, &str, &len );
     if (r != ERROR_MORE_DATA)
     {
         WARN("Unable to query revision number %u\n", r);
@@ -1276,7 +1276,7 @@ UINT msi_load_suminfo_properties( MSIPACKAGE *package )
     if (!(package_code = malloc( len * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
     str.str.w = package_code;
 
-    r = get_prop( si, PID_REVNUMBER, NULL, NULL, NULL, &str, &len );
+    r = msi_suminfo_get_prop( si, PID_REVNUMBER, NULL, NULL, NULL, &str, &len );
     if (r != ERROR_SUCCESS)
     {
         free( package_code );
@@ -1288,7 +1288,7 @@ UINT msi_load_suminfo_properties( MSIPACKAGE *package )
     free( package_code );
 
     count = 0;
-    get_prop( si, PID_WORDCOUNT, NULL, &count, NULL, NULL, NULL );
+    msi_suminfo_get_prop( si, PID_WORDCOUNT, NULL, &count, NULL, NULL, NULL );
     package->WordCount = count;
 
     msiobj_release( &si->hdr );
