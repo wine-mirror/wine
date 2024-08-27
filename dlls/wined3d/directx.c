@@ -3210,6 +3210,21 @@ static void adapter_no3d_destroy_unordered_access_view(struct wined3d_unordered_
     TRACE("view %p.\n", view);
 }
 
+static HRESULT adapter_no3d_create_video_decoder_output_view(const struct wined3d_view_desc *desc,
+        struct wined3d_texture *texture, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_decoder_output_view **view)
+{
+    TRACE("desc %s, texture %p, parent %p, parent_ops %p, view %p.\n",
+            wined3d_debug_view_desc(desc, &texture->resource), texture, parent, parent_ops, view);
+
+    return E_NOTIMPL;
+}
+
+static void adapter_no3d_destroy_video_decoder_output_view(struct wined3d_decoder_output_view *view)
+{
+    TRACE("view %p.\n", view);
+}
+
 static HRESULT adapter_no3d_create_sampler(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_sampler **sampler)
 {
@@ -3290,6 +3305,8 @@ static const struct wined3d_adapter_ops wined3d_adapter_no3d_ops =
     .adapter_destroy_shader_resource_view = adapter_no3d_destroy_shader_resource_view,
     .adapter_create_unordered_access_view = adapter_no3d_create_unordered_access_view,
     .adapter_destroy_unordered_access_view = adapter_no3d_destroy_unordered_access_view,
+    .adapter_create_video_decoder_output_view = adapter_no3d_create_video_decoder_output_view,
+    .adapter_destroy_video_decoder_output_view = adapter_no3d_destroy_video_decoder_output_view,
     .adapter_create_sampler = adapter_no3d_create_sampler,
     .adapter_destroy_sampler = adapter_no3d_destroy_sampler,
     .adapter_create_query = adapter_no3d_create_query,

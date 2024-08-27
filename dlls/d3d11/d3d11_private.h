@@ -40,6 +40,8 @@
 
 struct d3d_device;
 
+extern const struct wined3d_parent_ops d3d_null_wined3d_parent_ops;
+
 /* TRACE helper functions */
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology);
 const char *debug_dxgi_format(DXGI_FORMAT format);
@@ -91,6 +93,7 @@ static inline unsigned int wined3d_bind_flags_from_d3d11(UINT bind_flags, UINT m
             | D3D11_BIND_STREAM_OUTPUT
             | D3D11_BIND_RENDER_TARGET
             | D3D11_BIND_DEPTH_STENCIL
+            | D3D11_BIND_DECODER
             | D3D11_BIND_UNORDERED_ACCESS);
 
     if (misc_flags & D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS)
@@ -273,6 +276,7 @@ struct d3d_video_decoder_output_view
     LONG refcount;
 
     struct wined3d_private_store private_store;
+    struct wined3d_decoder_output_view *wined3d_view;
     D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC desc;
     ID3D11Resource *resource;
     struct d3d_device *device;

@@ -1614,6 +1614,32 @@ static void adapter_vk_destroy_unordered_access_view(struct wined3d_unordered_ac
             &uav_vk->counter_bo, &uav_vk->vk_counter_view, &view_vk->command_buffer_id, uav_vk);
 }
 
+static HRESULT adapter_vk_create_video_decoder_output_view(const struct wined3d_view_desc *desc,
+        struct wined3d_texture *texture, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_decoder_output_view **view)
+{
+    struct wined3d_decoder_output_view_vk *view_vk;
+    HRESULT hr;
+
+    TRACE("desc %s, texture %p, parent %p, parent_ops %p, view %p.\n",
+            wined3d_debug_view_desc(desc, &texture->resource), texture, parent, parent_ops, view);
+
+    if (!(view_vk = calloc(1, sizeof(*view_vk))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = wined3d_decoder_output_view_vk_init(view_vk, desc, texture, parent, parent_ops)))
+    {
+        WARN("Failed to initialise view, hr %#lx.\n", hr);
+        free(view_vk);
+        return hr;
+    }
+
+    TRACE("Created video decoder output view %p.\n", view_vk);
+    *view = &view_vk->v;
+
+    return hr;
+}
+
 static HRESULT adapter_vk_create_sampler(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_sampler **sampler)
 {
@@ -1860,6 +1886,8 @@ static const struct wined3d_adapter_ops wined3d_adapter_vk_ops =
     .adapter_destroy_shader_resource_view = adapter_vk_destroy_shader_resource_view,
     .adapter_create_unordered_access_view = adapter_vk_create_unordered_access_view,
     .adapter_destroy_unordered_access_view = adapter_vk_destroy_unordered_access_view,
+    .adapter_create_video_decoder_output_view = adapter_vk_create_video_decoder_output_view,
+    .adapter_destroy_video_decoder_output_view = wined3d_decoder_output_view_cleanup,
     .adapter_create_sampler = adapter_vk_create_sampler,
     .adapter_destroy_sampler = adapter_vk_destroy_sampler,
     .adapter_create_query = adapter_vk_create_query,

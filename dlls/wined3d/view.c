@@ -2599,3 +2599,96 @@ HRESULT CDECL wined3d_unordered_access_view_create(const struct wined3d_view_des
     adapter_ops = resource->device->adapter->adapter_ops;
     return adapter_ops->adapter_create_unordered_access_view(desc, resource, parent, parent_ops, view);
 }
+
+ULONG CDECL wined3d_decoder_output_view_incref(struct wined3d_decoder_output_view *view)
+{
+    unsigned int refcount;
+
+    if (view->desc.flags & WINED3D_VIEW_FORWARD_REFERENCE)
+        return wined3d_texture_incref(view->texture);
+
+    refcount = InterlockedIncrement(&view->refcount);
+    TRACE("%p increasing refcount to %u.\n", view, refcount);
+
+    return refcount;
+}
+
+void wined3d_decoder_output_view_cleanup(struct wined3d_decoder_output_view *view)
+{
+    view->parent_ops->wined3d_object_destroyed(view->parent);
+}
+
+ULONG CDECL wined3d_decoder_output_view_decref(struct wined3d_decoder_output_view *view)
+{
+    unsigned int refcount;
+
+    if (view->desc.flags & WINED3D_VIEW_FORWARD_REFERENCE)
+        return wined3d_texture_decref(view->texture);
+
+    refcount = InterlockedDecrement(&view->refcount);
+    TRACE("%p decreasing refcount to %u.\n", view, refcount);
+
+    if (!refcount)
+    {
+        struct wined3d_texture *texture = view->texture;
+
+        /* Release the resource after destroying the view.
+         * See wined3d_shader_resource_view_decref(). */
+        wined3d_mutex_lock();
+        texture->resource.device->adapter->adapter_ops->adapter_destroy_video_decoder_output_view(view);
+        wined3d_mutex_unlock();
+        wined3d_texture_decref(texture);
+    }
+
+    return refcount;
+}
+
+static HRESULT wined3d_decoder_output_view_init(struct wined3d_decoder_output_view *view,
+        const struct wined3d_view_desc *desc, struct wined3d_texture *texture,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    view->refcount = 1;
+    view->parent = parent;
+    view->parent_ops = parent_ops;
+
+    if (!(texture->resource.bind_flags & WINED3D_BIND_DECODER_OUTPUT))
+        return E_INVALIDARG;
+    /* validate_resource_view() checks that we are creating a view of a plane,
+     * which is required for all other types of views.
+     * At the same time, the only parameter that Direct3D 11 passes, and
+     * therefore the only parameter to validate, is the layer index. */
+    if (desc->u.texture.layer_idx >= texture->layer_count)
+        return E_INVALIDARG;
+    view->desc = *desc;
+
+    /* If WINED3D_VIEW_FORWARD_REFERENCE, the view shouldn't take a reference
+     * to the resource. However, the reference to the view returned by this
+     * function should translate to a resource reference, so we increment the
+     * resource's reference count anyway. */
+    wined3d_texture_incref(view->texture = texture);
+
+    return WINED3D_OK;
+}
+
+HRESULT wined3d_decoder_output_view_vk_init(struct wined3d_decoder_output_view_vk *view_vk,
+        const struct wined3d_view_desc *desc, struct wined3d_texture *texture,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
+{
+    TRACE("view_vk %p, desc %s, texture %p, parent %p, parent_ops %p.\n",
+            view_vk, wined3d_debug_view_desc(desc, &texture->resource), texture, parent, parent_ops);
+
+    return wined3d_decoder_output_view_init(&view_vk->v, desc, texture, parent, parent_ops);
+}
+
+HRESULT CDECL wined3d_decoder_output_view_create(const struct wined3d_view_desc *desc,
+        struct wined3d_texture *texture, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_decoder_output_view **view)
+{
+    const struct wined3d_adapter_ops *adapter_ops;
+
+    TRACE("desc %s, texture %p, parent %p, parent_ops %p, view %p.\n",
+            wined3d_debug_view_desc(desc, &texture->resource), texture, parent, parent_ops, view);
+
+    adapter_ops = texture->resource.device->adapter->adapter_ops;
+    return adapter_ops->adapter_create_video_decoder_output_view(desc, texture, parent, parent_ops, view);
+}

@@ -51,7 +51,7 @@ static BOOL d3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, S
 
 static void STDMETHODCALLTYPE d3d_null_wined3d_object_destroyed(void *parent) {}
 
-static const struct wined3d_parent_ops d3d_null_wined3d_parent_ops =
+const struct wined3d_parent_ops d3d_null_wined3d_parent_ops =
 {
     d3d_null_wined3d_object_destroyed,
 };

@@ -44,6 +44,10 @@
 @ cdecl wined3d_decoder_decref(ptr)
 @ cdecl wined3d_decoder_get_buffer(ptr long)
 
+@ cdecl wined3d_decoder_output_view_create(ptr ptr ptr ptr ptr)
+@ cdecl wined3d_decoder_output_view_decref(ptr)
+@ cdecl wined3d_decoder_output_view_incref(ptr)
+
 @ cdecl wined3d_deferred_context_create(ptr ptr)
 @ cdecl wined3d_deferred_context_destroy(ptr)
 @ cdecl wined3d_deferred_context_record_command_list(ptr long ptr)

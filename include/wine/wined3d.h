@@ -924,6 +924,7 @@ enum wined3d_memory_segment_group
 #define WINED3D_BIND_DEPTH_STENCIL                              0x00000040
 #define WINED3D_BIND_UNORDERED_ACCESS                           0x00000080
 #define WINED3D_BIND_INDIRECT_BUFFER                            0x00000100
+#define WINED3D_BIND_DECODER_OUTPUT                             0x00000200
 /* Used internally. */
 #define WINED3D_BIND_DECODER_SRC                                0x80000000
 
@@ -2242,6 +2243,7 @@ struct wined3d_blend_state;
 struct wined3d_buffer;
 struct wined3d_command_list;
 struct wined3d_decoder;
+struct wined3d_decoder_output_view;
 struct wined3d_depth_stencil_state;
 struct wined3d_device;
 struct wined3d_device_context;
@@ -2381,6 +2383,12 @@ HRESULT __cdecl wined3d_decoder_create(struct wined3d_device *device,
 ULONG __cdecl wined3d_decoder_decref(struct wined3d_decoder *decoder);
 struct wined3d_resource * __cdecl wined3d_decoder_get_buffer(
         struct wined3d_decoder *decoder, enum wined3d_decoder_buffer_type type);
+
+HRESULT __cdecl wined3d_decoder_output_view_create(const struct wined3d_view_desc *desc,
+        struct wined3d_texture *texture, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_decoder_output_view **view);
+ULONG __cdecl wined3d_decoder_output_view_decref(struct wined3d_decoder_output_view *view);
+ULONG __cdecl wined3d_decoder_output_view_incref(struct wined3d_decoder_output_view *view);
 
 HRESULT __cdecl wined3d_deferred_context_create(struct wined3d_device *device, struct wined3d_device_context **context);
 void __cdecl wined3d_deferred_context_destroy(struct wined3d_device_context *context);

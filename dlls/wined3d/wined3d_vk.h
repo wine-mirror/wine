@@ -1069,6 +1069,21 @@ HRESULT wined3d_unordered_access_view_vk_init(struct wined3d_unordered_access_vi
 void wined3d_unordered_access_view_vk_update(struct wined3d_unordered_access_view_vk *view_vk,
         struct wined3d_context_vk *context_vk);
 
+struct wined3d_decoder_output_view_vk
+{
+    struct wined3d_decoder_output_view v;
+};
+
+static inline struct wined3d_decoder_output_view_vk *wined3d_decoder_output_view_vk(
+        struct wined3d_decoder_output_view *view)
+{
+    return CONTAINING_RECORD(view, struct wined3d_decoder_output_view_vk, v);
+}
+
+HRESULT wined3d_decoder_output_view_vk_init(struct wined3d_decoder_output_view_vk *view_vk,
+        const struct wined3d_view_desc *desc, struct wined3d_texture *texture,
+        void *parent, const struct wined3d_parent_ops *parent_ops);
+
 struct wined3d_swapchain_vk
 {
     struct wined3d_swapchain s;

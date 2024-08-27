@@ -2625,6 +2625,7 @@ static ULONG STDMETHODCALLTYPE d3d11_video_decoder_output_view_Release(ID3D11Vid
 
     if (!refcount)
     {
+        wined3d_decoder_output_view_decref(view->wined3d_view);
         ID3D11Device2_Release(&view->device->ID3D11Device2_iface);
         wined3d_private_store_cleanup(&view->private_store);
         free(view);
@@ -2710,13 +2711,60 @@ static const struct ID3D11VideoDecoderOutputViewVtbl d3d11_video_decoder_output_
     d3d11_video_decoder_output_view_GetDesc,
 };
 
+static void wined3d_vdov_desc_from_d3d11(struct wined3d_view_desc *wined3d_desc,
+        const D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC *desc, DXGI_FORMAT format)
+{
+    wined3d_desc->format_id = wined3dformat_from_dxgi_format(format);
+
+    wined3d_desc->flags = 0;
+    wined3d_desc->u.texture.level_idx = 0;
+    wined3d_desc->u.texture.level_count = 1;
+    wined3d_desc->u.texture.layer_idx = desc->u.Texture2D.ArraySlice;
+    wined3d_desc->u.texture.layer_count = 1;
+}
+
 static HRESULT d3d_video_decoder_output_view_init(struct d3d_video_decoder_output_view *view,
         struct d3d_device *device, ID3D11Resource *resource, const D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC *desc)
 {
+    struct wined3d_view_desc wined3d_desc;
+    D3D11_RESOURCE_DIMENSION dimension;
+    struct d3d_texture2d *texture;
+    HRESULT hr;
+
     view->ID3D11VideoDecoderOutputView_iface.lpVtbl = &d3d11_video_decoder_output_view_vtbl;
     view->refcount = 1;
+    view->desc = *desc;
+
+    if (desc->ViewDimension != D3D11_VDOV_DIMENSION_TEXTURE2D)
+    {
+        WARN("Invalid view dimension %#x.\n", desc->ViewDimension);
+        return E_INVALIDARG;
+    }
+
+    ID3D11Resource_GetType(resource, &dimension);
+    if (dimension != D3D11_RESOURCE_DIMENSION_TEXTURE2D)
+    {
+        WARN("Invalid resource dimension %#x.\n", dimension);
+        return E_INVALIDARG;
+    }
+
+    if (!(texture = unsafe_impl_from_ID3D11Texture2D((ID3D11Texture2D *)resource)))
+    {
+        ERR("Cannot get implementation from ID3D11Texture2D.\n");
+        return E_FAIL;
+    }
+
+    wined3d_vdov_desc_from_d3d11(&wined3d_desc, &view->desc, texture->desc.Format);
 
     wined3d_mutex_lock();
+    if (FAILED(hr = wined3d_decoder_output_view_create(&wined3d_desc,
+            texture->wined3d_texture, NULL, &d3d_null_wined3d_parent_ops, &view->wined3d_view)))
+    {
+        wined3d_mutex_unlock();
+        WARN("Failed to create a wined3d video decoder output view, hr %#lx.\n", hr);
+        return hr;
+    }
+
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;

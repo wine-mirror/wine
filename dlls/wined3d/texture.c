@@ -5427,6 +5427,8 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
         texture_vk->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     else if (resource->bind_flags & WINED3D_BIND_SHADER_RESOURCE)
         texture_vk->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    else if (resource->bind_flags & WINED3D_BIND_DECODER_OUTPUT)
+        texture_vk->layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     else
     {
         FIXME("unexpected bind flags %s, using VK_IMAGE_LAYOUT_GENERAL\n", wined3d_debug_bind_flags(resource->bind_flags));

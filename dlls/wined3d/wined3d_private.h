@@ -2560,6 +2560,10 @@ struct wined3d_adapter_ops
             struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
             struct wined3d_unordered_access_view **view);
     void (*adapter_destroy_unordered_access_view)(struct wined3d_unordered_access_view *view);
+    HRESULT (*adapter_create_video_decoder_output_view)(const struct wined3d_view_desc *desc,
+            struct wined3d_texture *texture, void *parent, const struct wined3d_parent_ops *parent_ops,
+            struct wined3d_decoder_output_view **view);
+    void (*adapter_destroy_video_decoder_output_view)(struct wined3d_decoder_output_view *view);
     HRESULT (*adapter_create_sampler)(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
             void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_sampler **sampler);
     void (*adapter_destroy_sampler)(struct wined3d_sampler *sampler);
@@ -4016,6 +4020,19 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
         uint32_t location);
 void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_view *view,
         unsigned int value);
+
+struct wined3d_decoder_output_view
+{
+    LONG refcount;
+
+    struct wined3d_texture *texture;
+    void *parent;
+    const struct wined3d_parent_ops *parent_ops;
+
+    struct wined3d_view_desc desc;
+};
+
+void wined3d_decoder_output_view_cleanup(struct wined3d_decoder_output_view *view);
 
 struct wined3d_swapchain_state
 {
