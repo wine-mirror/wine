@@ -102,7 +102,10 @@ static HWND tray_window;
 
 static unsigned int nb_displayed;
 
-static BOOL show_systray = TRUE, enable_shell, enable_taskbar;
+static BOOL enable_taskbar; /* show full taskbar, with dedicated systray area */
+static BOOL show_systray; /* show a standalone systray window */
+static BOOL enable_dock; /* allow systray icons to be docked in the host systray */
+
 static int icon_cx, icon_cy, tray_width, tray_height;
 static int start_button_width, taskbar_button_width;
 static WCHAR start_label[50];
@@ -612,7 +615,7 @@ static void systray_remove_icon( struct icon *icon )
         SetWindowPos( ptr->window, 0, pos.x, pos.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER );
     }
 
-    if (!--nb_displayed && !enable_shell) do_hide_systray();
+    if (!--nb_displayed && !enable_taskbar) do_hide_systray();
     TRACE( "removed %u now %d icons\n", icon->id, nb_displayed );
 
     icon->display = ICON_DISPLAY_HIDDEN;
@@ -627,7 +630,7 @@ static BOOL show_icon(struct icon *icon)
 
     if (icon->display != ICON_DISPLAY_HIDDEN) return TRUE;  /* already displayed */
 
-    if (!enable_taskbar)
+    if (enable_dock)
     {
         DWORD old_exstyle = GetWindowLongW( icon->window, GWL_EXSTYLE );
 
@@ -659,8 +662,8 @@ static BOOL hide_icon(struct icon *icon)
 
     if (icon->display == ICON_DISPLAY_HIDDEN) return TRUE;  /* already hidden */
 
-    if (!enable_taskbar && NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_REMOVE, 0, 0,
-                                              NULL, NtUserSystemTrayCall, FALSE ))
+    if (enable_dock && NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_REMOVE, 0, 0,
+                                          NULL, NtUserSystemTrayCall, FALSE ))
     {
         icon->display = ICON_DISPLAY_HIDDEN;
         icon->layered = FALSE;
@@ -700,7 +703,7 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
             InvalidateRect( icon->window, NULL, TRUE );
         else if (icon->layered)
             paint_layered_icon( icon );
-        else if (!enable_taskbar)
+        else if (enable_dock)
             NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_CLEAR, 0, 0,
                                NULL, NtUserSystemTrayCall, FALSE );
     }
@@ -917,7 +920,7 @@ static void add_taskbar_button( HWND hwnd )
 {
     struct taskbar_button *win;
 
-    if (!enable_taskbar || !show_systray) return;
+    if (!enable_taskbar) return;
 
     /* ignore our own windows */
     if (hwnd)
@@ -1072,7 +1075,7 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
 
     case WM_DISPLAYCHANGE:
         if (!show_systray) do_hide_systray();
-        else if (!nb_displayed && !enable_shell) do_hide_systray();
+        else if (!nb_displayed && !enable_taskbar) do_hide_systray();
         else do_show_systray();
         break;
 
@@ -1155,7 +1158,7 @@ void handle_parent_notify( HWND hwnd, WPARAM wp )
 }
 
 /* this function creates the listener window */
-void initialize_systray( BOOL using_root, BOOL arg_enable_shell, BOOL arg_show_systray )
+void initialize_systray( BOOL arg_using_root, BOOL arg_enable_shell, BOOL arg_show_systray )
 {
     RECT work_rect, primary_rect, taskbar_rect;
 
@@ -1166,9 +1169,19 @@ void initialize_systray( BOOL using_root, BOOL arg_enable_shell, BOOL arg_show_s
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2*ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2*ICON_BORDER;
-    show_systray = arg_show_systray;
-    enable_shell = arg_enable_shell;
-    enable_taskbar = enable_shell || !using_root;
+
+    if (arg_using_root)
+    {
+        show_systray = arg_show_systray;
+        enable_taskbar = FALSE;
+        enable_dock = TRUE;
+    }
+    else
+    {
+        show_systray = arg_show_systray && !arg_enable_shell;
+        enable_taskbar = arg_enable_shell;
+        enable_dock = FALSE;
+    }
 
     /* register the systray listener window class */
     if (!RegisterClassExW( &shell_traywnd_class ))
