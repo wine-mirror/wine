@@ -1643,7 +1643,7 @@ static void test_tls_links(void)
     NTSTATUS status;
     HANDLE thread;
 
-    todo_wine ok(!!teb->ThreadLocalStoragePointer, "got NULL.\n");
+    ok(!!teb->ThreadLocalStoragePointer, "got NULL.\n");
 
     test_tls_links_started = CreateEventW(NULL, FALSE, FALSE, NULL);
     test_tls_links_done = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -1661,7 +1661,7 @@ static void test_tls_links(void)
     ResumeThread(thread);
     WaitForSingleObject(test_tls_links_started, INFINITE);
 
-    todo_wine ok(!!thread_teb->ThreadLocalStoragePointer, "got NULL.\n");
+    ok(!!thread_teb->ThreadLocalStoragePointer, "got NULL.\n");
     todo_wine ok(!teb->TlsLinks.Flink, "got %p.\n", teb->TlsLinks.Flink);
     todo_wine ok(!teb->TlsLinks.Blink, "got %p.\n", teb->TlsLinks.Blink);
     todo_wine ok(!thread_teb->TlsLinks.Flink, "got %p.\n", thread_teb->TlsLinks.Flink);
