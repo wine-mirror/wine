@@ -1045,7 +1045,8 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
                     {
                         if(GetFileAttributesW(divider) == INVALID_FILE_ATTRIBUTES)
                         {
-                            len = lstrlenW(path) + lstrlenW(L"\\") + lstrlenW(divider) + 1;
+                            int pathlen = lstrlenW(path);
+                            len = pathlen + 1 + lstrlenW(divider) + 1;
                             value = malloc(len * sizeof(WCHAR));
                             if(!value)
                             {
@@ -1055,7 +1056,8 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
                             }
 
                             lstrcpyW(value, path);
-                            lstrcatW(value, L"\\");
+                            if (pathlen && path[pathlen - 1] != '\\')
+                                lstrcatW(value, L"\\");
                         }
                         else
                         {
