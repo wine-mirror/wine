@@ -69,6 +69,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     X( process_attach ),
 
     X( demuxer_check ),
+    X( demuxer_create ),
+    X( demuxer_destroy ),
 };
 
 C_ASSERT(ARRAY_SIZE(__wine_unix_call_funcs) == unix_funcs_count);
@@ -81,6 +83,8 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     X( process_attach ),
 
     X( demuxer_check ),
+    X( demuxer_create ),
+    X( demuxer_destroy ),
 };
 
 C_ASSERT(ARRAY_SIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count);

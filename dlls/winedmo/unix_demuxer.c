@@ -29,6 +29,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
+static AVFormatContext *get_demuxer( struct winedmo_demuxer demuxer )
+{
+    return (AVFormatContext *)(UINT_PTR)demuxer.handle;
+}
+
 NTSTATUS demuxer_check( void *arg )
 {
     struct demuxer_check_params *params = arg;
@@ -47,6 +52,37 @@ NTSTATUS demuxer_check( void *arg )
     else FIXME( "Unsupported MIME type %s\n", debugstr_a(params->mime_type) );
 
     return format ? STATUS_SUCCESS : STATUS_NOT_SUPPORTED;
+}
+
+NTSTATUS demuxer_create( void *arg )
+{
+    struct demuxer_create_params *params = arg;
+    AVFormatContext *ctx;
+
+    TRACE( "params %p\n", params );
+
+    if (!(ctx = avformat_alloc_context())) return STATUS_NO_MEMORY;
+    if (!(ctx->pb = avio_alloc_context( NULL, 0, 0, NULL, NULL, NULL, NULL )))
+    {
+        avformat_free_context( ctx );
+        return STATUS_NO_MEMORY;
+    }
+
+    params->demuxer.handle = (UINT_PTR)ctx;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS demuxer_destroy( void *arg )
+{
+    struct demuxer_destroy_params *params = arg;
+    AVFormatContext *ctx = get_demuxer( params->demuxer );
+
+    TRACE( "context %p\n", ctx );
+
+    avio_context_free( &ctx->pb );
+    avformat_free_context( ctx );
+
+    return STATUS_SUCCESS;
 }
 
 #endif /* HAVE_FFMPEG */

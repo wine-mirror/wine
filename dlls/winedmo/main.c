@@ -51,3 +51,37 @@ NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type )
     if ((status = UNIX_CALL( demuxer_check, &params ))) WARN( "returning %#lx\n", status );
     return status;
 }
+
+NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_demuxer *demuxer )
+{
+    struct demuxer_create_params params = {0};
+    NTSTATUS status;
+
+    TRACE( "demuxer %p\n", demuxer );
+
+    if ((status = UNIX_CALL( demuxer_create, &params )))
+    {
+        WARN( "demuxer_create failed, status %#lx\n", status );
+        return status;
+    }
+
+    *demuxer = params.demuxer;
+    TRACE( "created %#I64x\n", demuxer->handle );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS CDECL winedmo_demuxer_destroy( struct winedmo_demuxer *demuxer )
+{
+    struct demuxer_destroy_params params = {.demuxer = *demuxer};
+    NTSTATUS status;
+
+    if (!demuxer->handle) return STATUS_SUCCESS;
+
+    TRACE( "demuxer %#I64x\n", demuxer->handle );
+
+    demuxer->handle = 0;
+    status = UNIX_CALL( demuxer_destroy, &params );
+    if (status) WARN( "demuxer_destroy failed, status %#lx\n", status );
+
+    return status;
+}
