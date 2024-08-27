@@ -1627,6 +1627,53 @@ static void test_ddag_node(void)
     ok( se == node->Dependencies.Tail, "Expected end of the list.\n" );
 }
 
+static HANDLE test_tls_links_started, test_tls_links_done;
+
+static DWORD WINAPI test_tls_links_thread(void* tlsidx_v)
+{
+    SetEvent(test_tls_links_started);
+    WaitForSingleObject(test_tls_links_done, INFINITE);
+    return 0;
+}
+
+static void test_tls_links(void)
+{
+    TEB *teb = NtCurrentTeb(), *thread_teb;
+    THREAD_BASIC_INFORMATION tbi;
+    NTSTATUS status;
+    HANDLE thread;
+
+    todo_wine ok(!!teb->ThreadLocalStoragePointer, "got NULL.\n");
+
+    test_tls_links_started = CreateEventW(NULL, FALSE, FALSE, NULL);
+    test_tls_links_done = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    thread = CreateThread(NULL, 0, test_tls_links_thread, NULL, CREATE_SUSPENDED, NULL);
+    do
+    {
+        /* workaround currently present Wine bug when thread teb may be not available immediately
+         * after creating a thread before it is initialized on the Unix side. */
+        Sleep(1);
+        status = NtQueryInformationThread(thread, ThreadBasicInformation, &tbi, sizeof(tbi), NULL);
+        ok(!status, "got %#lx.\n", status );
+    } while (!(thread_teb = tbi.TebBaseAddress));
+    ok(!thread_teb->ThreadLocalStoragePointer, "got %p.\n", thread_teb->ThreadLocalStoragePointer);
+    ResumeThread(thread);
+    WaitForSingleObject(test_tls_links_started, INFINITE);
+
+    todo_wine ok(!!thread_teb->ThreadLocalStoragePointer, "got NULL.\n");
+    todo_wine ok(!teb->TlsLinks.Flink, "got %p.\n", teb->TlsLinks.Flink);
+    todo_wine ok(!teb->TlsLinks.Blink, "got %p.\n", teb->TlsLinks.Blink);
+    todo_wine ok(!thread_teb->TlsLinks.Flink, "got %p.\n", thread_teb->TlsLinks.Flink);
+    todo_wine ok(!thread_teb->TlsLinks.Blink, "got %p.\n", thread_teb->TlsLinks.Blink);
+    SetEvent(test_tls_links_done);
+    WaitForSingleObject(thread, INFINITE);
+
+    CloseHandle(thread);
+    CloseHandle(test_tls_links_started);
+    CloseHandle(test_tls_links_done);
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -1663,4 +1710,5 @@ START_TEST(module)
     test_LdrGetDllFullName();
     test_apisets();
     test_ddag_node();
+    test_tls_links();
 }
