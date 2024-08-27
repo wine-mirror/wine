@@ -1662,10 +1662,10 @@ static void test_tls_links(void)
     WaitForSingleObject(test_tls_links_started, INFINITE);
 
     ok(!!thread_teb->ThreadLocalStoragePointer, "got NULL.\n");
-    todo_wine ok(!teb->TlsLinks.Flink, "got %p.\n", teb->TlsLinks.Flink);
-    todo_wine ok(!teb->TlsLinks.Blink, "got %p.\n", teb->TlsLinks.Blink);
-    todo_wine ok(!thread_teb->TlsLinks.Flink, "got %p.\n", thread_teb->TlsLinks.Flink);
-    todo_wine ok(!thread_teb->TlsLinks.Blink, "got %p.\n", thread_teb->TlsLinks.Blink);
+    ok(!teb->TlsLinks.Flink, "got %p.\n", teb->TlsLinks.Flink);
+    ok(!teb->TlsLinks.Blink, "got %p.\n", teb->TlsLinks.Blink);
+    ok(!thread_teb->TlsLinks.Flink, "got %p.\n", thread_teb->TlsLinks.Flink);
+    ok(!thread_teb->TlsLinks.Blink, "got %p.\n", thread_teb->TlsLinks.Blink);
     SetEvent(test_tls_links_done);
     WaitForSingleObject(thread, INFINITE);
 

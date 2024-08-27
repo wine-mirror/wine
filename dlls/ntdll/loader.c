@@ -139,7 +139,6 @@ typedef struct _wine_modref
 
 static UINT tls_module_count = 32;     /* number of modules with TLS directory */
 static IMAGE_TLS_DIRECTORY *tls_dirs;  /* array of TLS directories */
-static LIST_ENTRY tls_links = { &tls_links, &tls_links };
 
 static RTL_CRITICAL_SECTION loader_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -1293,8 +1292,8 @@ static BOOL alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
     const IMAGE_TLS_DIRECTORY *dir;
     ULONG i, size;
     void *new_ptr;
-    LIST_ENTRY *entry;
     UINT old_module_count = tls_module_count;
+    HANDLE thread = NULL, next;
 
     if (!(dir = RtlImageDirectoryEntryToData( mod->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &size )))
         return FALSE;
@@ -1325,9 +1324,25 @@ static BOOL alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
     }
 
     /* allocate the data block in all running threads */
-    for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
+    while (!NtGetNextThread( GetCurrentProcess(), thread, THREAD_QUERY_LIMITED_INFORMATION, 0, 0, &next ))
     {
-        TEB *teb = CONTAINING_RECORD( entry, TEB, TlsLinks );
+        THREAD_BASIC_INFORMATION tbi;
+        TEB *teb;
+
+        if (thread) NtClose( thread );
+        thread = next;
+        if (NtQueryInformationThread( thread, ThreadBasicInformation, &tbi, sizeof(tbi), NULL ) || !tbi.TebBaseAddress)
+        {
+            ERR( "NtQueryInformationThread failed.\n" );
+            continue;
+        }
+        teb = tbi.TebBaseAddress;
+        if (!teb->ThreadLocalStoragePointer)
+        {
+            /* Thread is not initialized by loader yet or already teared down. */
+            TRACE( "thread %04lx NULL tls block.\n", HandleToULong(tbi.ClientId.UniqueThread) );
+            continue;
+        }
 
         if (old_module_count < tls_module_count)
         {
@@ -1354,6 +1369,7 @@ static BOOL alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
         RtlFreeHeap( GetProcessHeap(), 0,
                      InterlockedExchangePointer( (void **)teb->ThreadLocalStoragePointer + i, new_ptr ));
     }
+    if (thread) NtClose( thread );
 
     *(DWORD *)dir->AddressOfIndex = i;
     tls_dirs[i] = *dir;
@@ -3864,9 +3880,13 @@ void WINAPI LdrShutdownThread(void)
     if (wm->ldr.TlsIndex == -1) call_tls_callbacks( wm->ldr.DllBase, DLL_THREAD_DETACH );
 
     RtlAcquirePebLock();
-    if (NtCurrentTeb()->TlsLinks.Flink) RemoveEntryList( &NtCurrentTeb()->TlsLinks );
     if ((pointers = NtCurrentTeb()->ThreadLocalStoragePointer))
     {
+        NtCurrentTeb()->ThreadLocalStoragePointer = NULL;
+#ifdef __x86_64__  /* macOS-specific hack */
+        if (NtCurrentTeb()->Instrumentation[0])
+            ((TEB *)NtCurrentTeb()->Instrumentation[0])->ThreadLocalStoragePointer = NULL;
+#endif
         for (i = 0; i < tls_module_count; i++) RtlFreeHeap( GetProcessHeap(), 0, pointers[i] );
         RtlFreeHeap( GetProcessHeap(), 0, pointers );
     }
@@ -4218,10 +4238,6 @@ static void init_wow64( CONTEXT *context )
         imports_fixup_done = TRUE;
     }
 
-    RtlAcquirePebLock();
-    InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
-    RtlReleasePebLock();
-
     RtlLeaveCriticalSection( &loader_section );
     pWow64LdrpInitialize( context );
 }
@@ -4392,10 +4408,6 @@ void loader_init( CONTEXT *context, void **entry )
 #endif
         wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
     }
-
-    RtlAcquirePebLock();
-    InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
-    RtlReleasePebLock();
 
     NtCurrentTeb()->FlsSlots = fls_alloc_data();
 
