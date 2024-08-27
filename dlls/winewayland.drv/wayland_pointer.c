@@ -749,6 +749,14 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
 {
     struct wayland_pointer *pointer = &process_wayland.pointer;
     BOOL needs_relative, needs_lock, needs_confine;
+    static unsigned int once;
+
+    if (!process_wayland.zwp_pointer_constraints_v1)
+    {
+        if (!once++)
+            ERR("This function requires zwp_pointer_constraints_v1\n");
+        return;
+    }
 
     needs_lock = wl_surface && (confine_rect || covers_vscreen) &&
                  !pointer->cursor.wl_surface;
@@ -825,6 +833,13 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
             pointer->constraint_hwnd = hwnd;
             TRACE("Locking to hwnd=%p\n", pointer->constraint_hwnd);
         }
+    }
+
+    if (!process_wayland.zwp_relative_pointer_manager_v1)
+    {
+        if (!once++)
+            ERR("zwp_relative_pointer_manager_v1 isn't supported, skipping relative motion\n");
+        return;
     }
 
     needs_relative = !pointer->cursor.wl_surface &&
