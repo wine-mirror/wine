@@ -329,10 +329,9 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
     HRGN surface_damage_region = NULL;
     HRGN copy_from_window_region;
 
-    if (!wws->wayland_surface || !wws->wayland_buffer_queue)
+    if (!wws->wayland_surface)
     {
-        ERR("missing wayland surface=%p or buffer_queue=%p, returning\n",
-            wws->wayland_surface, wws->wayland_buffer_queue);
+        ERR("missing wayland surface=%p, returning\n", wws->wayland_surface);
         goto done;
     }
 
@@ -423,8 +422,7 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 
     TRACE("surface=%p\n", wws);
 
-    if (wws->wayland_buffer_queue)
-        wayland_buffer_queue_destroy(wws->wayland_buffer_queue);
+    wayland_buffer_queue_destroy(wws->wayland_buffer_queue);
 }
 
 static const struct window_surface_funcs wayland_window_surface_funcs =
@@ -444,6 +442,7 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
     struct wayland_window_surface *wws;
     int width = rect->right - rect->left;
     int height = rect->bottom - rect->top;
+    struct window_surface *window_surface;
 
     TRACE("hwnd %p rect %s\n", hwnd, wine_dbgstr_rect(rect));
 
@@ -456,7 +455,13 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
     info->bmiHeader.biSizeImage   = width * height * 4;
     info->bmiHeader.biCompression = BI_RGB;
 
-    return window_surface_create(sizeof(*wws), &wayland_window_surface_funcs, hwnd, rect, info, 0);
+    if ((window_surface = window_surface_create(sizeof(*wws), &wayland_window_surface_funcs, hwnd, rect, info, 0)))
+    {
+        struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
+        wws->wayland_buffer_queue = wayland_buffer_queue_create(width, height);
+    }
+
+    return window_surface;
 }
 
 /***********************************************************************
