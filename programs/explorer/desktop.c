@@ -1105,7 +1105,7 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
 
     LoadStringW( NULL, IDS_DESKTOP_TITLE, desktop_titleW, ARRAY_SIZE(desktop_titleW) );
 
-    if (!name[0])
+    if (!name[0] || !wcscmp( name, L"Default" ))
     {
         SetWindowTextW( hwnd, desktop_titleW );
         return;
