@@ -601,14 +601,13 @@ WINCOMMCTRLAPI BOOL       WINAPI ImageList_SetIconSize(HIMAGELIST,INT,INT);
 WINCOMMCTRLAPI BOOL       WINAPI ImageList_SetImageCount(HIMAGELIST,UINT);
 WINCOMMCTRLAPI BOOL       WINAPI ImageList_SetOverlayImage(HIMAGELIST,INT,INT);
 
-#ifdef __IStream_INTERFACE_DEFINED__
-WINCOMMCTRLAPI HIMAGELIST WINAPI ImageList_Read(LPSTREAM);
-WINCOMMCTRLAPI BOOL       WINAPI ImageList_Write(HIMAGELIST,IStream*);
-WINCOMMCTRLAPI HRESULT    WINAPI ImageList_WriteEx(HIMAGELIST,DWORD,IStream*);
+struct IStream;
+WINCOMMCTRLAPI HIMAGELIST WINAPI ImageList_Read(struct IStream*);
+WINCOMMCTRLAPI BOOL       WINAPI ImageList_Write(HIMAGELIST,struct IStream*);
+WINCOMMCTRLAPI HRESULT    WINAPI ImageList_WriteEx(HIMAGELIST,DWORD,struct IStream*);
 
 #define ILP_NORMAL    0
 #define ILP_DOWNLEVEL 1
-#endif
 
 #define ImageList_AddIcon(himl,hicon) ImageList_ReplaceIcon(himl,-1,hicon)
 #define ImageList_ExtractIcon(hi,himl,i) ImageList_GetIcon(himl,i,0)
