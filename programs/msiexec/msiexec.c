@@ -729,7 +729,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
 			PackageName = argvW[i];
 			StringListAppend(&property_list, L"ACTION=ADMIN");
-			WINE_FIXME("Administrative installs are not currently supported\n");
 		}
 		else if(msi_option_prefix(argvW[i], "f"))
 		{
