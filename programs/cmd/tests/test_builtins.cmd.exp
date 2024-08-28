@@ -1764,6 +1764,12 @@ footype=foo_opencmd
 footype=foo_opencmd
 +++
 footype=foo_opencmd
+--- testing association
+footype=cmd.exe /c "echo '%1'"
+'@drive@@path@foobar\test.foo'@or_broken@Skipped as not enough permissions
+footype=cmd.exe /c "echo '%*'"
+@todo_wine@' one two three'@or_broken@Skipped as not enough permissions
+foobar@or_broken@Skipped as not enough permissions
 --- resetting association
 @todo_wine@original value@or_broken@buggyXP@or_broken@!WINE_FOO!
 ------------ Testing CALL ------------

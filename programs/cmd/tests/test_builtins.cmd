@@ -2985,6 +2985,17 @@ echo echo +++>> tmp.cmd
 echo ftype footype>> tmp.cmd
 cmd /c tmp.cmd
 
+echo --- testing association
+echo dummy>test.foo
+ftype footype=cmd.exe /c "echo '%%1'"
+test.foo
+ftype footype=cmd.exe /c "echo '%%*'"
+test.foo one two three
+del test.foo
+copy C:\windows\system32\cmd.exe test.foo >nul 2>&1
+test.foo /c "echo foobar"
+del test.foo
+
 echo --- resetting association
 assoc .foo=
 
@@ -3016,6 +3027,12 @@ echo .foo=footype
 echo footype=foo_opencmd
 echo +++
 echo footype=foo_opencmd
+echo --- testing association
+echo footype=cmd.exe /c "echo '%%1'"
+echo Skipped as not enough permissions
+echo footype=cmd.exe /c "echo '%%*'"
+echo Skipped as not enough permissions
+echo Skipped as not enough permissions
 echo --- resetting association
 echo original value
 
