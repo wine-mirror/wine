@@ -1771,7 +1771,7 @@ footype=cmd.exe /c "echo '%*'"
 @todo_wine@' one two three'@or_broken@Skipped as not enough permissions
 foobar@or_broken@Skipped as not enough permissions
 --- resetting association
-@todo_wine@original value@or_broken@buggyXP@or_broken@!WINE_FOO!
+original value@or_broken@buggyXP@or_broken@!WINE_FOO!
 ------------ Testing CALL ------------
 --- external script
 foo@space@
