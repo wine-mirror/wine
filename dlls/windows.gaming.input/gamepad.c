@@ -67,6 +67,9 @@ struct gamepad
 
     IGameControllerProvider *provider;
     IWineGameControllerProvider *wine_provider;
+
+    struct WineGameControllerState initial_state;
+    BOOL state_changed;
 };
 
 static inline struct gamepad *impl_from_IGameControllerImpl( IGameControllerImpl *iface )
@@ -169,6 +172,10 @@ static HRESULT WINAPI controller_Initialize( IGameControllerImpl *iface, IGameCo
 
     hr = IGameControllerProvider_QueryInterface( provider, &IID_IWineGameControllerProvider,
                                                  (void **)&impl->wine_provider );
+
+    if (SUCCEEDED(hr))
+        hr = IWineGameControllerProvider_get_State( impl->wine_provider, &impl->initial_state );
+
     if (FAILED(hr)) return hr;
 
     EnterCriticalSection( &gamepad_cs );
@@ -266,58 +273,63 @@ static HRESULT WINAPI gamepad_GetCurrentReading( IGamepad *iface, struct Gamepad
 
     if (FAILED(hr = IWineGameControllerProvider_get_State( impl->wine_provider, &state ))) return hr;
 
-    value->Buttons = 0;
-    if (state.buttons[0]) value->Buttons |= GamepadButtons_A;
-    if (state.buttons[1]) value->Buttons |= GamepadButtons_B;
-    if (state.buttons[2]) value->Buttons |= GamepadButtons_X;
-    if (state.buttons[3]) value->Buttons |= GamepadButtons_Y;
-    if (state.buttons[4]) value->Buttons |= GamepadButtons_LeftShoulder;
-    if (state.buttons[5]) value->Buttons |= GamepadButtons_RightShoulder;
-    if (state.buttons[6]) value->Buttons |= GamepadButtons_View;
-    if (state.buttons[7]) value->Buttons |= GamepadButtons_Menu;
-    if (state.buttons[8]) value->Buttons |= GamepadButtons_LeftThumbstick;
-    if (state.buttons[9]) value->Buttons |= GamepadButtons_RightThumbstick;
-
-    switch (state.switches[0])
+    memset(value, 0, sizeof(*value));
+    if (impl->state_changed ||
+        memcmp( impl->initial_state.axes, state.axes, sizeof(state) - offsetof(struct WineGameControllerState, axes)) )
     {
-    case GameControllerSwitchPosition_Up:
-    case GameControllerSwitchPosition_UpRight:
-    case GameControllerSwitchPosition_UpLeft:
-        value->Buttons |= GamepadButtons_DPadUp;
-        break;
-    case GameControllerSwitchPosition_Down:
-    case GameControllerSwitchPosition_DownRight:
-    case GameControllerSwitchPosition_DownLeft:
-        value->Buttons |= GamepadButtons_DPadDown;
-        break;
-    default:
-        break;
+        impl->state_changed = TRUE;
+        if (state.buttons[0]) value->Buttons |= GamepadButtons_A;
+        if (state.buttons[1]) value->Buttons |= GamepadButtons_B;
+        if (state.buttons[2]) value->Buttons |= GamepadButtons_X;
+        if (state.buttons[3]) value->Buttons |= GamepadButtons_Y;
+        if (state.buttons[4]) value->Buttons |= GamepadButtons_LeftShoulder;
+        if (state.buttons[5]) value->Buttons |= GamepadButtons_RightShoulder;
+        if (state.buttons[6]) value->Buttons |= GamepadButtons_View;
+        if (state.buttons[7]) value->Buttons |= GamepadButtons_Menu;
+        if (state.buttons[8]) value->Buttons |= GamepadButtons_LeftThumbstick;
+        if (state.buttons[9]) value->Buttons |= GamepadButtons_RightThumbstick;
+
+        switch (state.switches[0])
+        {
+        case GameControllerSwitchPosition_Up:
+        case GameControllerSwitchPosition_UpRight:
+        case GameControllerSwitchPosition_UpLeft:
+            value->Buttons |= GamepadButtons_DPadUp;
+            break;
+        case GameControllerSwitchPosition_Down:
+        case GameControllerSwitchPosition_DownRight:
+        case GameControllerSwitchPosition_DownLeft:
+            value->Buttons |= GamepadButtons_DPadDown;
+            break;
+        default:
+            break;
+        }
+
+        switch (state.switches[0])
+        {
+        case GameControllerSwitchPosition_Right:
+        case GameControllerSwitchPosition_UpRight:
+        case GameControllerSwitchPosition_DownRight:
+            value->Buttons |= GamepadButtons_DPadRight;
+            break;
+        case GameControllerSwitchPosition_Left:
+        case GameControllerSwitchPosition_UpLeft:
+        case GameControllerSwitchPosition_DownLeft:
+            value->Buttons |= GamepadButtons_DPadLeft;
+            break;
+        default:
+            break;
+        }
+
+        value->LeftThumbstickX = 2. * state.axes[0] - 1.;
+        value->LeftThumbstickY = 1. - 2. * state.axes[1];
+        value->LeftTrigger = state.axes[2];
+        value->RightThumbstickX = 2. * state.axes[3] - 1.;
+        value->RightThumbstickY = 1. - 2. * state.axes[4];
+        value->RightTrigger = state.axes[5];
+
+        value->Timestamp = state.timestamp;
     }
-
-    switch (state.switches[0])
-    {
-    case GameControllerSwitchPosition_Right:
-    case GameControllerSwitchPosition_UpRight:
-    case GameControllerSwitchPosition_DownRight:
-        value->Buttons |= GamepadButtons_DPadRight;
-        break;
-    case GameControllerSwitchPosition_Left:
-    case GameControllerSwitchPosition_UpLeft:
-    case GameControllerSwitchPosition_DownLeft:
-        value->Buttons |= GamepadButtons_DPadLeft;
-        break;
-    default:
-        break;
-    }
-
-    value->LeftThumbstickX = 2. * state.axes[0] - 1.;
-    value->LeftThumbstickY = 1. - 2. * state.axes[1];
-    value->LeftTrigger = state.axes[2];
-    value->RightThumbstickX = 2. * state.axes[3] - 1.;
-    value->RightThumbstickY = 1. - 2. * state.axes[4];
-    value->RightTrigger = state.axes[5];
-
-    value->Timestamp = state.timestamp;
 
     return hr;
 }
