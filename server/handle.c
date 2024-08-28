@@ -885,6 +885,43 @@ DECL_HANDLER(get_system_handles)
     }
 }
 
+struct enum_process_handles_info
+{
+    const struct object_ops *ops;
+    int (*cb)(struct process*, struct object*, void*);
+    void *user;
+};
+
+static int enum_process_handles_cb( struct process *process, void *user )
+{
+    struct enum_process_handles_info *info = user;
+    struct handle_table *table = process->handles;
+    struct handle_entry *entry;
+    unsigned int i;
+
+    if (!table)
+        return 0;
+
+    for (i = 0, entry = table->entries; i <= table->last; i++, entry++)
+    {
+        if (!entry->ptr || entry->ptr->ops != info->ops) continue;
+        if ((info->cb)( process, entry->ptr, info->user )) return 1;
+    }
+
+    return 0;
+}
+
+void enum_handles_of_type( const struct object_ops *ops,
+                           int (*cb)(struct process*, struct object*, void*), void *user )
+{
+    struct enum_process_handles_info info;
+    info.ops = ops;
+    info.cb = cb;
+    info.user = user;
+
+    enum_processes( enum_process_handles_cb, &info );
+}
+
 DECL_HANDLER(set_object_permanence)
 {
     const unsigned int access = req->permanent ? 0 : DELETE;

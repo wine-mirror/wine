@@ -42,6 +42,9 @@
 #ifdef HAVE_NETINET_TCP_H
 # include <netinet/tcp.h>
 #endif
+#ifdef HAVE_NETINET_TCP_FSM_H
+#include <netinet/tcp_fsm.h>
+#endif
 #include <poll.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -92,6 +95,7 @@
 #define USE_WS_PREFIX
 #include "winsock2.h"
 #include "ws2tcpip.h"
+#include "tcpmib.h"
 #include "wsipx.h"
 #include "af_irda.h"
 #include "wine/afd.h"
@@ -106,6 +110,20 @@
 
 #if defined(linux) && !defined(IP_UNICAST_IF)
 #define IP_UNICAST_IF 50
+#endif
+
+#ifndef HAVE_NETINET_TCP_FSM_H
+#define TCPS_ESTABLISHED  1
+#define TCPS_SYN_SENT     2
+#define TCPS_SYN_RECEIVED 3
+#define TCPS_FIN_WAIT_1   4
+#define TCPS_FIN_WAIT_2   5
+#define TCPS_TIME_WAIT    6
+#define TCPS_CLOSED       7
+#define TCPS_CLOSE_WAIT   8
+#define TCPS_LAST_ACK     9
+#define TCPS_LISTEN      10
+#define TCPS_CLOSING     11
 #endif
 
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
@@ -4125,4 +4143,129 @@ DECL_HANDLER(socket_get_icmp_id)
 
     set_error( STATUS_NOT_FOUND );
     release_object( sock );
+}
+
+static inline MIB_TCP_STATE tcp_state_to_mib_state( int state )
+{
+   switch (state)
+   {
+      case TCPS_ESTABLISHED: return MIB_TCP_STATE_ESTAB;
+      case TCPS_SYN_SENT: return MIB_TCP_STATE_SYN_SENT;
+      case TCPS_SYN_RECEIVED: return MIB_TCP_STATE_SYN_RCVD;
+      case TCPS_FIN_WAIT_1: return MIB_TCP_STATE_FIN_WAIT1;
+      case TCPS_FIN_WAIT_2: return MIB_TCP_STATE_FIN_WAIT2;
+      case TCPS_TIME_WAIT: return MIB_TCP_STATE_TIME_WAIT;
+      case TCPS_CLOSE_WAIT: return MIB_TCP_STATE_CLOSE_WAIT;
+      case TCPS_LAST_ACK: return MIB_TCP_STATE_LAST_ACK;
+      case TCPS_LISTEN: return MIB_TCP_STATE_LISTEN;
+      case TCPS_CLOSING: return MIB_TCP_STATE_CLOSING;
+      default:
+      case TCPS_CLOSED: return MIB_TCP_STATE_CLOSED;
+   }
+}
+
+static MIB_TCP_STATE get_tcp_socket_state( int fd )
+{
+#ifdef __APPLE__
+    /* The macOS getsockopt name and struct are compatible with those on Linux
+       and FreeBSD, just named differently. */
+    #define TCP_INFO TCP_CONNECTION_INFO
+    #define tcp_info tcp_connection_info
+#endif
+
+    struct tcp_info info;
+    socklen_t info_len = sizeof(info);
+    if (getsockopt( fd, IPPROTO_TCP, TCP_INFO, &info, &info_len ) == 0)
+        return tcp_state_to_mib_state( info.tcpi_state );
+
+    if (debug_level)
+        fprintf( stderr, "getsockopt TCP_INFO failed: %s\n", strerror( errno ) );
+
+    return MIB_TCP_STATE_ESTAB;
+}
+
+struct enum_tcp_connection_info
+{
+    MIB_TCP_STATE state_filter;
+    unsigned int count;
+    tcp_connection *conn;
+};
+
+static int enum_tcp_connections( struct process *process, struct object *obj, void *user )
+{
+    struct sock *sock = (struct sock *)obj;
+    struct enum_tcp_connection_info *info = user;
+    MIB_TCP_STATE socket_state;
+    tcp_connection *conn;
+
+    assert( obj->ops == &sock_ops );
+
+    if (sock->type != WS_SOCK_STREAM || !(sock->family == WS_AF_INET || sock->family == WS_AF_INET6))
+        return 0;
+
+    socket_state = get_tcp_socket_state( get_unix_fd(sock->fd) );
+    if (info->state_filter && socket_state != info->state_filter)
+        return 0;
+
+    if (!info->conn)
+    {
+        info->count++;
+        return 0;
+    }
+
+    assert( info->count );
+    conn = info->conn++;
+    memset( conn, 0, sizeof(*conn) );
+
+    conn->common.family = sock->family;
+    conn->common.state = socket_state;
+    conn->common.owner = process->id;
+
+    if (sock->family == WS_AF_INET)
+    {
+        conn->ipv4.local_addr = sock->addr.in.sin_addr.WS_s_addr;
+        conn->ipv4.local_port = sock->addr.in.sin_port;
+        if (sock->peer_addr_len)
+        {
+            conn->ipv4.remote_addr = sock->peer_addr.in.sin_addr.WS_s_addr;
+            conn->ipv4.remote_port = sock->peer_addr.in.sin_port;
+        }
+    }
+    else
+    {
+        memcpy( &conn->ipv6.local_addr, &sock->addr.in6.sin6_addr, 16 );
+        conn->ipv6.local_scope_id = sock->addr.in6.sin6_scope_id;
+        conn->ipv6.local_port = sock->addr.in6.sin6_port;
+        if (sock->peer_addr_len)
+        {
+            memcpy( &conn->ipv6.remote_addr, &sock->peer_addr.in6.sin6_addr, 16 );
+            conn->ipv6.remote_scope_id = sock->peer_addr.in6.sin6_scope_id;
+            conn->ipv6.remote_port = sock->peer_addr.in6.sin6_port;
+        }
+    }
+
+    info->count--;
+
+    return 0;
+}
+
+DECL_HANDLER(get_tcp_connections)
+{
+    struct enum_tcp_connection_info info;
+    tcp_connection *conn;
+    data_size_t max_conns = get_reply_max_size() / sizeof(*conn);
+
+    info.state_filter = req->state_filter;
+    info.conn = NULL;
+    info.count = 0;
+    enum_handles_of_type( &sock_ops, enum_tcp_connections, &info );
+    reply->count = info.count;
+
+    if (max_conns < info.count)
+        set_error( STATUS_BUFFER_TOO_SMALL );
+    else if ((conn = set_reply_data_size( info.count * sizeof(*conn) )))
+    {
+        info.conn = conn;
+        enum_handles_of_type( &sock_ops, enum_tcp_connections, &info );
+    }
 }

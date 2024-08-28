@@ -43,10 +43,6 @@
 #include <netinet/in.h>
 #endif
 
-#ifdef HAVE_NETINET_IN_PCB_H
-#include <netinet/in_pcb.h>
-#endif
-
 #ifdef HAVE_NETINET_IP_VAR_H
 #include <netinet/ip_var.h>
 #endif
@@ -57,10 +53,6 @@
 
 #ifdef HAVE_NETINET_TCP_VAR_H
 #include <netinet/tcp_var.h>
-#endif
-
-#ifdef HAVE_NETINET_TCP_FSM_H
-#include <netinet/tcp_fsm.h>
 #endif
 
 #ifdef HAVE_SYS_SYSCTL_H
@@ -95,20 +87,6 @@
 #include "wine/server.h"
 
 #include "unix_private.h"
-
-#ifndef HAVE_NETINET_TCP_FSM_H
-#define TCPS_ESTABLISHED  1
-#define TCPS_SYN_SENT     2
-#define TCPS_SYN_RECEIVED 3
-#define TCPS_FIN_WAIT_1   4
-#define TCPS_FIN_WAIT_2   5
-#define TCPS_TIME_WAIT    6
-#define TCPS_CLOSED       7
-#define TCPS_CLOSE_WAIT   8
-#define TCPS_LAST_ACK     9
-#define TCPS_LISTEN      10
-#define TCPS_CLOSING     11
-#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 
@@ -213,25 +191,6 @@ static NTSTATUS tcp_stats_get_all_parameters( const void *key, UINT key_size, vo
     FIXME( "not implemented\n" );
     return STATUS_NOT_IMPLEMENTED;
 #endif
-}
-
-static inline MIB_TCP_STATE tcp_state_to_mib_state( int state )
-{
-   switch (state)
-   {
-      case TCPS_ESTABLISHED: return MIB_TCP_STATE_ESTAB;
-      case TCPS_SYN_SENT: return MIB_TCP_STATE_SYN_SENT;
-      case TCPS_SYN_RECEIVED: return MIB_TCP_STATE_SYN_RCVD;
-      case TCPS_FIN_WAIT_1: return MIB_TCP_STATE_FIN_WAIT1;
-      case TCPS_FIN_WAIT_2: return MIB_TCP_STATE_FIN_WAIT2;
-      case TCPS_TIME_WAIT: return MIB_TCP_STATE_TIME_WAIT;
-      case TCPS_CLOSE_WAIT: return MIB_TCP_STATE_CLOSE_WAIT;
-      case TCPS_LAST_ACK: return MIB_TCP_STATE_LAST_ACK;
-      case TCPS_LISTEN: return MIB_TCP_STATE_LISTEN;
-      case TCPS_CLOSING: return MIB_TCP_STATE_CLOSING;
-      default:
-      case TCPS_CLOSED: return MIB_TCP_STATE_CLOSED;
-   }
 }
 
 struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size )
@@ -515,255 +474,96 @@ unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UIN
 #endif
 }
 
-#ifdef __APPLE__
-static int pcblist_mib[CTL_MAXNAME];
-static size_t pcblist_mib_len = CTL_MAXNAME;
-
-static void init_pcblist64_mib( void )
-{
-    sysctlnametomib( "net.inet.tcp.pcblist64", pcblist_mib, &pcblist_mib_len );
-}
-#endif
-
 static NTSTATUS tcp_conns_enumerate_all( UINT filter, struct nsi_tcp_conn_key *key_data, UINT key_size,
                                          void *rw, UINT rw_size,
                                          struct nsi_tcp_conn_dynamic *dynamic_data, UINT dynamic_size,
                                          struct nsi_tcp_conn_static *static_data, UINT static_size, UINT_PTR *count )
 {
-    UINT num = 0;
-    NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
     struct nsi_tcp_conn_key key;
     struct nsi_tcp_conn_dynamic dyn;
     struct nsi_tcp_conn_static stat;
     struct ipv6_addr_scope *addr_scopes = NULL;
-    unsigned int addr_scopes_size = 0, pid_map_size = 0;
-    struct pid_map *pid_map = NULL;
+    unsigned int addr_scopes_size = 0;
+    NTSTATUS ret = STATUS_SUCCESS;
+    tcp_connection *connections = NULL;
 
-#ifdef __linux__
+    if (want_data)
     {
-        FILE *fp;
-        char buf[512], *ptr;
-        int inode;
-        UINT laddr, raddr;
+        connections = malloc( sizeof(*connections) * (*count) );
+        if (!connections) return STATUS_NO_MEMORY;
+    }
 
-        if (!(fp = fopen( "/proc/net/tcp", "r" ))) return ERROR_NOT_SUPPORTED;
-
-        memset( &key, 0, sizeof(key) );
-        memset( &dyn, 0, sizeof(dyn) );
-        memset( &stat, 0, sizeof(stat) );
-        if (static_data) pid_map = get_pid_map( &pid_map_size );
-
-        /* skip header line */
-        ptr = fgets( buf, sizeof(buf), fp );
-        while ((ptr = fgets( buf, sizeof(buf), fp )))
+    SERVER_START_REQ( get_tcp_connections )
+    {
+        req->state_filter = filter;
+        wine_server_set_reply( req, connections, want_data ? (sizeof(*connections) * (*count)) : 0 );
+        if (!(ret = wine_server_call( req )))
+            *count = reply->count;
+        else if (ret == STATUS_BUFFER_TOO_SMALL)
         {
-            if (sscanf( ptr, "%*x: %x:%hx %x:%hx %x %*s %*s %*s %*s %*s %d",
-                        &laddr, &key.local.Ipv4.sin_port,
-                        &raddr, &key.remote.Ipv4.sin_port,
-                        &dyn.state, &inode ) != 6)
-                continue;
-            dyn.state = tcp_state_to_mib_state( dyn.state );
-            if (filter && filter != dyn.state ) continue;
-
-            key.local.Ipv4.sin_family = key.remote.Ipv4.sin_family = WS_AF_INET;
-            key.local.Ipv4.sin_addr.WS_s_addr = laddr;
-            key.local.Ipv4.sin_port = htons( key.local.Ipv4.sin_port );
-            key.remote.Ipv4.sin_addr.WS_s_addr = raddr;
-            key.remote.Ipv4.sin_port = htons( key.remote.Ipv4.sin_port );
-
-            if (num < *count)
+            *count = reply->count;
+            if (want_data)
             {
-                if (key_data) *key_data++ = key;
-                if (dynamic_data) *dynamic_data++ = dyn;
-                if (static_data)
-                {
-                    stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
-                    stat.create_time = 0; /* FIXME */
-                    stat.mod_info = 0; /* FIXME */
-                    *static_data++ = stat;
-                }
+                free( connections );
+                return STATUS_BUFFER_OVERFLOW;
             }
-            num++;
-        }
-        fclose( fp );
-
-        if ((fp = fopen( "/proc/net/tcp6", "r" )))
-        {
-            memset( &key, 0, sizeof(key) );
-            memset( &dyn, 0, sizeof(dyn) );
-            memset( &stat, 0, sizeof(stat) );
-
-            addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
-
-            /* skip header line */
-            ptr = fgets( buf, sizeof(buf), fp );
-            while ((ptr = fgets( buf, sizeof(buf), fp )))
-            {
-                UINT *local_addr = (UINT *)&key.local.Ipv6.sin6_addr;
-                UINT *remote_addr = (UINT *)&key.remote.Ipv6.sin6_addr;
-
-                if (sscanf( ptr, "%*u: %8x%8x%8x%8x:%hx %8x%8x%8x%8x:%hx %x %*s %*s %*s %*s %*s %*s %*s %d",
-                            local_addr, local_addr + 1, local_addr + 2, local_addr + 3, &key.local.Ipv6.sin6_port,
-                            remote_addr, remote_addr + 1, remote_addr + 2, remote_addr + 3, &key.remote.Ipv6.sin6_port,
-                            &dyn.state, &inode ) != 12)
-                    continue;
-                dyn.state = tcp_state_to_mib_state( dyn.state );
-                if (filter && filter != dyn.state ) continue;
-                key.local.Ipv6.sin6_family = key.remote.Ipv6.sin6_family = WS_AF_INET6;
-                key.local.Ipv6.sin6_port = htons( key.local.Ipv6.sin6_port );
-                key.remote.Ipv6.sin6_port = htons( key.remote.Ipv6.sin6_port );
-                key.local.Ipv6.sin6_scope_id = find_ipv6_addr_scope( &key.local.Ipv6.sin6_addr, addr_scopes,
-                                                                     addr_scopes_size );
-                key.remote.Ipv6.sin6_scope_id = find_ipv6_addr_scope( &key.remote.Ipv6.sin6_addr, addr_scopes,
-                                                                      addr_scopes_size );
-                if (num < *count)
-                {
-                    if (key_data) *key_data++ = key;
-                    if (dynamic_data) *dynamic_data++ = dyn;
-                    if (static_data)
-                    {
-                        stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
-                        stat.create_time = 0; /* FIXME */
-                        stat.mod_info = 0; /* FIXME */
-                        *static_data++ = stat;
-                    }
-                }
-                num++;
-            }
-            fclose( fp );
+            return STATUS_SUCCESS;
         }
     }
-#elif defined(HAVE_SYS_SYSCTL_H) && defined(TCPCTL_PCBLIST) && defined(HAVE_STRUCT_XINPGEN)
+    SERVER_END_REQ;
+
+    addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
+
+    for (unsigned int i = 0; i < *count; i++)
     {
-        size_t len = 0;
-        char *buf = NULL;
-        struct xinpgen *xig, *orig_xig;
+        tcp_connection *conn = &connections[i];
 
-#ifdef __APPLE__
-        static pthread_once_t mib_init_once = PTHREAD_ONCE_INIT;
-        pthread_once( &mib_init_once, init_pcblist64_mib );
-#else
-        int pcblist_mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_PCBLIST };
-        size_t pcblist_mib_len = ARRAY_SIZE(pcblist_mib);
-#endif
-
-        if (sysctl( pcblist_mib, pcblist_mib_len, NULL, &len, NULL, 0 ) < 0)
+        if (key_data)
         {
-            ERR( "Failure to read net.inet.tcp.pcblist via sysctl\n" );
-            status = STATUS_NOT_SUPPORTED;
-            goto err;
-        }
-
-        buf = malloc( len );
-        if (!buf)
-        {
-            status = STATUS_NO_MEMORY;
-            goto err;
-        }
-
-        if (sysctl( pcblist_mib, pcblist_mib_len, buf, &len, NULL, 0 ) < 0)
-        {
-            ERR( "Failure to read net.inet.tcp.pcblist via sysctl\n" );
-            status = STATUS_NOT_SUPPORTED;
-            goto err;
-        }
-
-        /* Might be nothing here; first entry is just a header it seems */
-        if (len <= sizeof(struct xinpgen)) goto err;
-
-        addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
-        if (static_data) pid_map = get_pid_map( &pid_map_size );
-
-        orig_xig = (struct xinpgen *)buf;
-        xig = orig_xig;
-
-        for (xig = (struct xinpgen *)((char *)xig + xig->xig_len);
-             xig->xig_len > sizeof(struct xinpgen);
-             xig = (struct xinpgen *)((char *)xig + xig->xig_len))
-        {
-#ifdef __APPLE__
-            struct xtcpcb64 *tcp = (struct xtcpcb64 *)xig;
-            struct xinpcb64 *in = &tcp->xt_inpcb;
-            struct xsocket64 *sock = &in->xi_socket;
-#elif __FreeBSD_version >= 1200026
-            struct xtcpcb *tcp = (struct xtcpcb *)xig;
-            struct xinpcb *in = &tcp->xt_inp;
-            struct xsocket *sock = &in->xi_socket;
-#else
-            struct tcpcb *tcp = &((struct xtcpcb *)xig)->xt_tp;
-            struct inpcb *in = &((struct xtcpcb *)xig)->xt_inp;
-            struct xsocket *sock = &((struct xtcpcb *)xig)->xt_socket;
-#endif
-            static const struct in6_addr zero;
-
-            /* Ignore sockets for other protocols */
-            if (sock->xso_protocol != IPPROTO_TCP) continue;
-
-            /* Ignore PCBs that were freed while generating the data */
-            if (in->inp_gencnt > orig_xig->xig_gen) continue;
-
-            /* we're only interested in IPv4 and IPV6 addresses */
-            if (!(in->inp_vflag & (INP_IPV4 | INP_IPV6))) continue;
-
-            /* If all 0's, skip it */
-            if (in->inp_vflag & INP_IPV4 && !in->inp_laddr.s_addr && !in->inp_lport &&
-                !in->inp_faddr.s_addr && !in->inp_fport) continue;
-            if (in->inp_vflag & INP_IPV6 && !memcmp( &in->in6p_laddr, &zero, sizeof(zero) ) && !in->inp_lport &&
-                !memcmp( &in->in6p_faddr, &zero, sizeof(zero) ) && !in->inp_fport) continue;
-
-            dyn.state = tcp_state_to_mib_state( tcp->t_state );
-            if (filter && filter != dyn.state ) continue;
-
-            if (in->inp_vflag & INP_IPV4)
+            memset( &key, 0, sizeof(key) );
+            if (conn->common.family == WS_AF_INET)
             {
                 key.local.Ipv4.sin_family = key.remote.Ipv4.sin_family = WS_AF_INET;
-                key.local.Ipv4.sin_addr.WS_s_addr = in->inp_laddr.s_addr;
-                key.local.Ipv4.sin_port = in->inp_lport;
-                key.remote.Ipv4.sin_addr.WS_s_addr = in->inp_faddr.s_addr;
-                key.remote.Ipv4.sin_port = in->inp_fport;
+                key.local.Ipv4.sin_addr.WS_s_addr = conn->ipv4.local_addr;
+                key.local.Ipv4.sin_port = conn->ipv4.local_port;
+                key.remote.Ipv4.sin_addr.WS_s_addr = conn->ipv4.remote_addr;
+                key.remote.Ipv4.sin_port = conn->ipv4.remote_port;
             }
             else
             {
                 key.local.Ipv6.sin6_family = key.remote.Ipv6.sin6_family = WS_AF_INET6;
-                memcpy( &key.local.Ipv6.sin6_addr, &in->in6p_laddr, sizeof(in->in6p_laddr) );
-                key.local.Ipv6.sin6_port = in->inp_lport;
+                memcpy( &key.local.Ipv6.sin6_addr, &conn->ipv6.local_addr, 16 );
+                key.local.Ipv6.sin6_port = conn->ipv6.local_port;
                 key.local.Ipv6.sin6_scope_id = find_ipv6_addr_scope( &key.local.Ipv6.sin6_addr, addr_scopes,
                                                                      addr_scopes_size );
-                memcpy( &key.remote.Ipv6.sin6_addr, &in->in6p_faddr, sizeof(in->in6p_faddr) );
-                key.remote.Ipv6.sin6_port = in->inp_fport;
+                memcpy( &key.remote.Ipv6.sin6_addr, &conn->ipv6.remote_addr, 16 );
+                key.remote.Ipv6.sin6_port = conn->ipv6.remote_port;
                 key.remote.Ipv6.sin6_scope_id = find_ipv6_addr_scope( &key.remote.Ipv6.sin6_addr, addr_scopes,
                                                                       addr_scopes_size );
             }
-
-            if (num < *count)
-            {
-                if (key_data) *key_data++ = key;
-                if (dynamic_data) *dynamic_data++ = dyn;
-                if (static_data)
-                {
-                    stat.pid = find_owning_pid( pid_map, pid_map_size, (UINT_PTR)sock->so_pcb );
-                    stat.create_time = 0; /* FIXME */
-                    stat.mod_info = 0; /* FIXME */
-                    *static_data++ = stat;
-                }
-            }
-            num++;
+            *key_data++ = key;
         }
-    err:
-        free( buf );
+
+        if (dynamic_data)
+        {
+            memset( &dyn, 0, sizeof(dyn) );
+            dyn.state = conn->common.state;
+            *dynamic_data++ = dyn;
+        }
+
+        if (static_data)
+        {
+            memset( &stat, 0, sizeof(stat) );
+            stat.pid = conn->common.owner;
+            stat.create_time = 0; /* FIXME */
+            stat.mod_info = 0; /* FIXME */
+            *static_data++ = stat;
+        }
     }
-#else
-    FIXME( "not implemented\n" );
-    status = STATUS_NOT_IMPLEMENTED;
-#endif
 
-    if (!want_data || num <= *count) *count = num;
-    else status = STATUS_BUFFER_OVERFLOW;
-
-    free( pid_map );
-    free( addr_scopes );
-    return status;
+    free( connections );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS tcp_all_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
