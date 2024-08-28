@@ -126,9 +126,6 @@
 /* Define to 1 if you have the <libprocstat.h> header file. */
 #undef HAVE_LIBPROCSTAT_H
 
-/* Define to 1 if you have the <libproc.h> header file. */
-#undef HAVE_LIBPROC_H
-
 /* Define to 1 if you have the <libudev.h> header file. */
 #undef HAVE_LIBUDEV_H
 
@@ -318,9 +315,6 @@
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL
 
-/* Define to 1 if you have the `proc_pidinfo' function. */
-#undef HAVE_PROC_PIDINFO
-
 /* Define to 1 if you have the `pthread_getthreadid_np' function. */
 #undef HAVE_PTHREAD_GETTHREADID_NP
 
@@ -479,9 +473,6 @@
 
 /* Define to 1 if `udps_ipackets' is a member of `struct udpstat'. */
 #undef HAVE_STRUCT_UDPSTAT_UDPS_IPACKETS
-
-/* Define to 1 if the system has the type `struct xinpgen'. */
-#undef HAVE_STRUCT_XINPGEN
 
 /* Define to 1 if `_u._ext.nscount6' is a member of `struct __res_state'. */
 #undef HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6

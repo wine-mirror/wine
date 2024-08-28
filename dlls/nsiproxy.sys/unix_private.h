@@ -107,15 +107,6 @@ struct ipv6_addr_scope
 struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size );
 UINT find_ipv6_addr_scope( const IN6_ADDR *addr, const struct ipv6_addr_scope *table, unsigned int size );
 
-struct pid_map
-{
-    unsigned int pid;
-    unsigned int unix_pid;
-};
-
-struct pid_map *get_pid_map( unsigned int *num_entries );
-unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UINT_PTR inode );
-
 struct module_table
 {
     UINT table;

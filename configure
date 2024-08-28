@@ -7943,12 +7943,6 @@ then :
   printf "%s\n" "#define HAVE_GETTEXT_PO_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "libproc.h" "ac_cv_header_libproc_h" "$ac_includes_default"
-if test "x$ac_cv_header_libproc_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_LIBPROC_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "link.h" "ac_cv_header_link_h" "$ac_includes_default"
 if test "x$ac_cv_header_link_h" = xyes
 then :
@@ -20854,12 +20848,6 @@ then :
   printf "%s\n" "#define HAVE_PRCTL 1" >>confdefs.h
 
 fi
-ac_fn_c_check_func "$LINENO" "proc_pidinfo" "ac_cv_func_proc_pidinfo"
-if test "x$ac_cv_func_proc_pidinfo" = xyes
-then :
-  printf "%s\n" "#define HAVE_PROC_PIDINFO 1" >>confdefs.h
-
-fi
 ac_fn_c_check_func "$LINENO" "sched_yield" "ac_cv_func_sched_yield"
 if test "x$ac_cv_func_sched_yield" = xyes
 then :
@@ -21061,36 +21049,6 @@ if test "x$ac_cv_type_request_sense" = xyes
 then :
 
 printf "%s\n" "#define HAVE_REQUEST_SENSE 1" >>confdefs.h
-
-
-fi
-
-
-ac_fn_c_check_type "$LINENO" "struct xinpgen" "ac_cv_type_struct_xinpgen" "#include <sys/types.h>
-#include <sys/socket.h>
-#ifdef HAVE_SYS_SOCKETVAR_H
-#include <sys/socketvar.h>
-#endif
-#ifdef HAVE_NET_ROUTE_H
-#include <net/route.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN_SYSTM_H
-#include <netinet/in_systm.h>
-#endif
-#ifdef HAVE_NETINET_IP_H
-#include <netinet/ip.h>
-#endif
-#ifdef HAVE_NETINET_IN_PCB_H
-#include <netinet/in_pcb.h>
-#endif
-"
-if test "x$ac_cv_type_struct_xinpgen" = xyes
-then :
-
-printf "%s\n" "#define HAVE_STRUCT_XINPGEN 1" >>confdefs.h
 
 
 fi
