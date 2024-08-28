@@ -482,21 +482,6 @@ void wayland_window_surface_update_wayland_surface(struct window_surface *window
           wine_dbgstr_rect(visible_rect), wayland_surface);
 
     wws->wayland_surface = wayland_surface;
-
-    if (wws->wayland_buffer_queue)
-    {
-        wayland_buffer_queue_destroy(wws->wayland_buffer_queue);
-        wws->wayland_buffer_queue = NULL;
-    }
-
-    /* We only need a buffer queue if we have a surface to commit to. */
-    if (wws->wayland_surface)
-    {
-        wws->wayland_buffer_queue =
-            wayland_buffer_queue_create(visible_rect->right - visible_rect->left,
-                                        visible_rect->bottom - visible_rect->top);
-    }
-
     window_surface_unlock(window_surface);
 }
 
