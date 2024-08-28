@@ -3990,14 +3990,22 @@ RETURN_CODE WCMD_assoc(const WCHAR *args, BOOL assoc)
         lstrcpyW(subkey, args);
         if (!assoc) lstrcatW(subkey, L"\\Shell\\Open\\Command");
 
-        /* If nothing after '=' then clear value - only valid for ASSOC */
         if (*newValue == 0x00) {
 
-          if (assoc) rc = RegDeleteKeyW(key, args);
-          if (assoc && rc == ERROR_SUCCESS) {
+          if (assoc)
+            rc = RegDeleteKeyW(key, args);
+          else {
+            rc = RegCreateKeyExW(key, subkey, 0, NULL, REG_OPTION_NON_VOLATILE,
+                                accessOptions, NULL, &readKey, NULL);
+            if (rc == ERROR_SUCCESS) {
+              rc = RegDeleteValueW(readKey, NULL);
+              RegCloseKey(readKey);
+            }
+          }
+          if (rc == ERROR_SUCCESS) {
             WINE_TRACE("HKCR Key '%s' deleted\n", wine_dbgstr_w(args));
 
-          } else if (assoc && rc != ERROR_FILE_NOT_FOUND) {
+          } else if (rc != ERROR_FILE_NOT_FOUND) {
             WCMD_print_error();
             errorlevel = ERROR_FILE_NOT_FOUND;
 
