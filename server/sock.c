@@ -4269,3 +4269,70 @@ DECL_HANDLER(get_tcp_connections)
         enum_handles_of_type( &sock_ops, enum_tcp_connections, &info );
     }
 }
+
+struct enum_udp_endpoint_info
+{
+    unsigned int count;
+    udp_endpoint *endpt;
+};
+
+static int enum_udp_endpoints( struct process *process, struct object *obj, void *user )
+{
+    struct sock *sock = (struct sock *)obj;
+    struct enum_udp_endpoint_info *info = user;
+    udp_endpoint *endpt;
+
+    assert( obj->ops == &sock_ops );
+
+    if (sock->type != WS_SOCK_DGRAM || !(sock->family == WS_AF_INET || sock->family == WS_AF_INET6))
+        return 0;
+
+    if (!info->endpt)
+    {
+        info->count++;
+        return 0;
+    }
+
+    assert( info->count );
+    endpt = info->endpt++;
+    memset( endpt, 0, sizeof(*endpt) );
+
+    endpt->common.family = sock->family;
+    endpt->common.owner = process->id;
+
+    if (sock->family == WS_AF_INET)
+    {
+        endpt->ipv4.addr = sock->addr.in.sin_addr.WS_s_addr;
+        endpt->ipv4.port = sock->addr.in.sin_port;
+    }
+    else
+    {
+        memcpy( &endpt->ipv6.addr, &sock->addr.in6.sin6_addr, 16 );
+        endpt->ipv6.scope_id = sock->addr.in6.sin6_scope_id;
+        endpt->ipv6.port = sock->addr.in6.sin6_port;
+    }
+
+    info->count--;
+
+    return 0;
+}
+
+DECL_HANDLER(get_udp_endpoints)
+{
+    struct enum_udp_endpoint_info info;
+    udp_endpoint *endpt;
+    data_size_t max_endpts = get_reply_max_size() / sizeof(*endpt);
+
+    info.endpt = NULL;
+    info.count = 0;
+    enum_handles_of_type( &sock_ops, enum_udp_endpoints, &info );
+    reply->count = info.count;
+
+    if (max_endpts < info.count)
+        set_error( STATUS_BUFFER_TOO_SMALL );
+    else if ((endpt = set_reply_data_size( info.count * sizeof(*endpt) )))
+    {
+        info.endpt = endpt;
+        enum_handles_of_type( &sock_ops, enum_udp_endpoints, &info );
+    }
+}

@@ -1447,6 +1447,37 @@ static void dump_varargs_tcp_connections( const char *prefix, data_size_t size )
     fputc( '}', stderr );
 }
 
+static void dump_varargs_udp_endpoints( const char *prefix, data_size_t size )
+{
+    const udp_endpoint *endpt;
+
+    fprintf( stderr, "%s{", prefix );
+    while (size >= sizeof(*endpt))
+    {
+        endpt = cur_data;
+
+        if (endpt->common.family == WS_AF_INET)
+        {
+            char addr_str[INET_ADDRSTRLEN] = { 0 };
+            inet_ntop( AF_INET, (struct in_addr *)&endpt->ipv4.addr, addr_str, INET_ADDRSTRLEN );
+            fprintf( stderr, "{family=AF_INET,owner=%04x,addr=%s:%d}",
+                     endpt->ipv4.owner, addr_str, endpt->ipv4.port );
+        }
+        else
+        {
+            char addr_str[INET6_ADDRSTRLEN];
+            inet_ntop( AF_INET6, (struct in6_addr *)&endpt->ipv6.addr, addr_str, INET6_ADDRSTRLEN );
+            fprintf( stderr, "{family=AF_INET6,owner=%04x,addr=[%s%%%d]:%d}",
+                     endpt->ipv6.owner, addr_str, endpt->ipv6.scope_id, endpt->ipv6.port );
+        }
+
+        size -= sizeof(*endpt);
+        remove_data( sizeof(*endpt) );
+        if (size) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
 static void dump_varargs_directory_entries( const char *prefix, data_size_t size )
 {
     fprintf( stderr, "%s{", prefix );
@@ -4152,6 +4183,16 @@ static void dump_get_tcp_connections_reply( const struct get_tcp_connections_rep
     dump_varargs_tcp_connections( ", connections=", cur_size );
 }
 
+static void dump_get_udp_endpoints_request( const struct get_udp_endpoints_request *req )
+{
+}
+
+static void dump_get_udp_endpoints_reply( const struct get_udp_endpoints_reply *req )
+{
+    fprintf( stderr, " count=%08x", req->count );
+    dump_varargs_udp_endpoints( ", endpoints=", cur_size );
+}
+
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -4952,6 +4993,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_security_object_request,
     (dump_func)dump_get_system_handles_request,
     (dump_func)dump_get_tcp_connections_request,
+    (dump_func)dump_get_udp_endpoints_request,
     (dump_func)dump_create_mailslot_request,
     (dump_func)dump_set_mailslot_info_request,
     (dump_func)dump_create_directory_request,
@@ -5242,6 +5284,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_security_object_reply,
     (dump_func)dump_get_system_handles_reply,
     (dump_func)dump_get_tcp_connections_reply,
+    (dump_func)dump_get_udp_endpoints_reply,
     (dump_func)dump_create_mailslot_reply,
     (dump_func)dump_set_mailslot_info_reply,
     (dump_func)dump_create_directory_reply,
@@ -5532,6 +5575,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_security_object",
     "get_system_handles",
     "get_tcp_connections",
+    "get_udp_endpoints",
     "create_mailslot",
     "set_mailslot_info",
     "create_directory",

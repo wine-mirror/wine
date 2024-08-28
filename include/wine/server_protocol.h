@@ -4891,6 +4891,45 @@ struct get_tcp_connections_reply
 };
 
 
+typedef union
+{
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+    } common;
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned int addr;
+        unsigned int port;
+    } ipv4;
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned char addr[16];
+        unsigned int scope_id;
+        unsigned int port;
+    } ipv6;
+} udp_endpoint;
+
+
+struct get_udp_endpoints_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+};
+struct get_udp_endpoints_reply
+{
+    struct reply_header __header;
+    unsigned int    count;
+    /* VARARG(endpoints,udp_endpoints); */
+    char __pad_12[4];
+};
+
+
 
 struct create_mailslot_request
 {
@@ -6005,6 +6044,7 @@ enum request
     REQ_get_security_object,
     REQ_get_system_handles,
     REQ_get_tcp_connections,
+    REQ_get_udp_endpoints,
     REQ_create_mailslot,
     REQ_set_mailslot_info,
     REQ_create_directory,
@@ -6299,6 +6339,7 @@ union generic_request
     struct get_security_object_request get_security_object_request;
     struct get_system_handles_request get_system_handles_request;
     struct get_tcp_connections_request get_tcp_connections_request;
+    struct get_udp_endpoints_request get_udp_endpoints_request;
     struct create_mailslot_request create_mailslot_request;
     struct set_mailslot_info_request set_mailslot_info_request;
     struct create_directory_request create_directory_request;
@@ -6591,6 +6632,7 @@ union generic_reply
     struct get_security_object_reply get_security_object_reply;
     struct get_system_handles_reply get_system_handles_reply;
     struct get_tcp_connections_reply get_tcp_connections_reply;
+    struct get_udp_endpoints_reply get_udp_endpoints_reply;
     struct create_mailslot_reply create_mailslot_reply;
     struct set_mailslot_info_reply set_mailslot_info_reply;
     struct create_directory_reply create_directory_reply;
@@ -6651,7 +6693,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 839
+#define SERVER_PROTOCOL_VERSION 840
 
 /* ### protocol_version end ### */
 

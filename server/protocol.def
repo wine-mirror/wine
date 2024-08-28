@@ -3471,6 +3471,38 @@ typedef union
 @END
 
 
+typedef union
+{
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+    } common;
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned int addr;
+        unsigned int port;
+    } ipv4;
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned char addr[16];
+        unsigned int scope_id;
+        unsigned int port;
+    } ipv6;
+} udp_endpoint;
+
+/* Retrieve a list of all processes' UDP endpoints. */
+@REQ(get_udp_endpoints)
+@REPLY
+    unsigned int    count;
+    VARARG(endpoints,udp_endpoints);
+@END
+
+
 /* Create a mailslot */
 @REQ(create_mailslot)
     unsigned int   access;        /* wanted access rights */

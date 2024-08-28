@@ -203,231 +203,83 @@ static NTSTATUS udp_stats_get_all_parameters( const void *key, UINT key_size, vo
     return STATUS_NOT_SUPPORTED;
 }
 
-#ifdef __APPLE__
-static int pcblist_mib[CTL_MAXNAME];
-static size_t pcblist_mib_len = CTL_MAXNAME;
-
-static void init_pcblist64_mib( void )
-{
-    sysctlnametomib( "net.inet.udp.pcblist64", pcblist_mib, &pcblist_mib_len );
-}
-#endif
-
 static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
                                             void *dynamic_data, UINT dynamic_size,
                                             void *static_data, UINT static_size, UINT_PTR *count )
 {
-    UINT num = 0;
-    NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
     struct nsi_udp_endpoint_key key, *key_out = key_data;
     struct nsi_udp_endpoint_static stat, *stat_out = static_data;
     struct ipv6_addr_scope *addr_scopes = NULL;
-    unsigned int addr_scopes_size = 0, pid_map_size = 0;
-    struct pid_map *pid_map = NULL;
+    unsigned int addr_scopes_size = 0;
+    NTSTATUS ret = STATUS_SUCCESS;
+    udp_endpoint *endpoints = NULL;
 
     TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size, count );
 
-#ifdef __linux__
+    if (want_data)
     {
-        FILE *fp;
-        char buf[512], *ptr;
-        int inode;
-        UINT addr;
+        endpoints = malloc( sizeof(*endpoints) * (*count) );
+        if (!endpoints) return STATUS_NO_MEMORY;
+    }
 
-        if (!(fp = fopen( "/proc/net/udp", "r" ))) return ERROR_NOT_SUPPORTED;
-
-        memset( &key, 0, sizeof(key) );
-        memset( &stat, 0, sizeof(stat) );
-        if (stat_out) pid_map = get_pid_map( &pid_map_size );
-
-        /* skip header line */
-        ptr = fgets( buf, sizeof(buf), fp );
-        while ((ptr = fgets( buf, sizeof(buf), fp )))
+    SERVER_START_REQ( get_udp_endpoints )
+    {
+        wine_server_set_reply( req, endpoints, want_data ? (sizeof(*endpoints) * (*count)) : 0 );
+        if (!(ret = wine_server_call( req )))
+            *count = reply->count;
+        else if (ret == STATUS_BUFFER_TOO_SMALL)
         {
-            if (sscanf( ptr, "%*u: %x:%hx %*s %*s %*s %*s %*s %*s %*s %d",
-                        &addr, &key.local.Ipv4.sin_port, &inode ) != 3)
-                continue;
-
-            key.local.Ipv4.sin_family = WS_AF_INET;
-            key.local.Ipv4.sin_addr.WS_s_addr = addr;
-            key.local.Ipv4.sin_port = htons( key.local.Ipv4.sin_port );
-
-            if (stat_out)
+            *count = reply->count;
+            if (want_data)
             {
-                stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
-                stat.create_time = 0; /* FIXME */
-                stat.flags = 0; /* FIXME */
-                stat.mod_info = 0; /* FIXME */
+                free( endpoints );
+                return STATUS_BUFFER_OVERFLOW;
             }
-
-            if (num < *count)
-            {
-                if (key_out) *key_out++ = key;
-                if (stat_out) *stat_out++ = stat;
-            }
-            num++;
-        }
-        fclose( fp );
-
-        if ((fp = fopen( "/proc/net/udp6", "r" )))
-        {
-            memset( &key, 0, sizeof(key) );
-            memset( &stat, 0, sizeof(stat) );
-
-            addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
-
-            /* skip header line */
-            ptr = fgets( buf, sizeof(buf), fp );
-            while ((ptr = fgets( buf, sizeof(buf), fp )))
-            {
-                UINT *local_addr = (UINT *)&key.local.Ipv6.sin6_addr;
-
-                if (sscanf( ptr, "%*u: %8x%8x%8x%8x:%hx %*s %*s %*s %*s %*s %*s %*s %d",
-                            local_addr, local_addr + 1, local_addr + 2, local_addr + 3,
-                            &key.local.Ipv6.sin6_port, &inode ) != 6)
-                    continue;
-                key.local.Ipv6.sin6_family = WS_AF_INET6;
-                key.local.Ipv6.sin6_port = htons( key.local.Ipv6.sin6_port );
-                key.local.Ipv6.sin6_scope_id = find_ipv6_addr_scope( &key.local.Ipv6.sin6_addr, addr_scopes,
-                                                                     addr_scopes_size );
-
-                if (stat_out)
-                {
-                    stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
-                    stat.create_time = 0; /* FIXME */
-                    stat.flags = 0; /* FIXME */
-                    stat.mod_info = 0; /* FIXME */
-                }
-
-                if (num < *count)
-                {
-                    if (key_out) *key_out++ = key;
-                    if (stat_out) *stat_out++ = stat;
-                }
-                num++;
-            }
-            fclose( fp );
+            else return STATUS_SUCCESS;
         }
     }
-#elif defined(HAVE_SYS_SYSCTL_H) && defined(UDPCTL_PCBLIST) && defined(HAVE_STRUCT_XINPGEN)
+    SERVER_END_REQ;
+
+    addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
+
+    for (unsigned int i = 0; i < *count; i++)
     {
-        size_t len = 0;
-        char *buf = NULL;
-        struct xinpgen *xig, *orig_xig;
+        udp_endpoint *endpt = &endpoints[i];
 
-#ifdef __APPLE__
-        static pthread_once_t mib_init_once = PTHREAD_ONCE_INIT;
-        pthread_once( &mib_init_once, init_pcblist64_mib );
-#else
-        int pcblist_mib[] = { CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_PCBLIST };
-        size_t pcblist_mib_len = ARRAY_SIZE(pcblist_mib);
-#endif
-
-        if (sysctl( pcblist_mib, pcblist_mib_len, NULL, &len, NULL, 0 ) < 0)
+        if (key_out)
         {
-            ERR( "Failure to read net.inet.udp.pcblist via sysctl!\n" );
-            status = STATUS_NOT_SUPPORTED;
-            goto err;
-        }
-
-        buf = malloc( len );
-        if (!buf)
-        {
-            status = STATUS_NO_MEMORY;
-            goto err;
-        }
-
-        if (sysctl( pcblist_mib, pcblist_mib_len, buf, &len, NULL, 0 ) < 0)
-        {
-            ERR( "Failure to read net.inet.udp.pcblist via sysctl!\n" );
-            status = STATUS_NOT_SUPPORTED;
-            goto err;
-        }
-
-        /* Might be nothing here; first entry is just a header it seems */
-        if (len <= sizeof(struct xinpgen)) goto err;
-
-        addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
-        if (stat_out) pid_map = get_pid_map( &pid_map_size );
-
-        orig_xig = (struct xinpgen *)buf;
-        xig = orig_xig;
-
-        for (xig = (struct xinpgen *)((char *)xig + xig->xig_len);
-             xig->xig_len > sizeof (struct xinpgen);
-             xig = (struct xinpgen *)((char *)xig + xig->xig_len))
-        {
-#ifdef __APPLE__
-            struct xinpcb64 *in = (struct xinpcb64 *)xig;
-            struct xsocket64 *sock = &in->xi_socket;
-#elif __FreeBSD_version >= 1200026
-            struct xinpcb *in = (struct xinpcb *)xig;
-            struct xsocket *sock = &in->xi_socket;
-#else
-            struct inpcb *in = &((struct xinpcb *)xig)->xi_inp;
-            struct xsocket *sock = &((struct xinpcb *)xig)->xi_socket;
-#endif
-            static const struct in6_addr zero;
-
-            /* Ignore sockets for other protocols */
-            if (sock->xso_protocol != IPPROTO_UDP) continue;
-
-            /* Ignore PCBs that were freed while generating the data */
-            if (in->inp_gencnt > orig_xig->xig_gen) continue;
-
-            /* we're only interested in IPv4 and IPv6 addresses */
-            if (!(in->inp_vflag & (INP_IPV4 | INP_IPV6))) continue;
-
-            /* If all 0's, skip it */
-            if (in->inp_vflag & INP_IPV4 && !in->inp_laddr.s_addr) continue;
-            if (in->inp_vflag & INP_IPV6 && !memcmp( &in->in6p_laddr, &zero, sizeof(zero) ) && !in->inp_lport) continue;
-
-            if (in->inp_vflag & INP_IPV4)
+            memset( &key, 0, sizeof(key) );
+            if (endpt->common.family == WS_AF_INET)
             {
                 key.local.Ipv4.sin_family = WS_AF_INET;
-                key.local.Ipv4.sin_addr.WS_s_addr = in->inp_laddr.s_addr;
-                key.local.Ipv4.sin_port = in->inp_lport;
+                key.local.Ipv4.sin_addr.WS_s_addr = endpt->ipv4.addr;
+                key.local.Ipv4.sin_port = endpt->ipv4.port;
             }
             else
             {
                 key.local.Ipv6.sin6_family = WS_AF_INET6;
-                memcpy( &key.local.Ipv6.sin6_addr, &in->in6p_laddr, sizeof(in->in6p_laddr) );
-                key.local.Ipv6.sin6_port = in->inp_lport;
+                memcpy( &key.local.Ipv6.sin6_addr, &endpt->ipv6.addr, 16 );
+                key.local.Ipv6.sin6_port = endpt->ipv6.port;
                 key.local.Ipv6.sin6_scope_id = find_ipv6_addr_scope( &key.local.Ipv6.sin6_addr, addr_scopes,
                                                                      addr_scopes_size );
             }
-
-            if (stat_out)
-            {
-                stat.pid = find_owning_pid( pid_map, pid_map_size, (UINT_PTR)sock->so_pcb );
-                stat.create_time = 0; /* FIXME */
-                stat.flags = !(in->inp_flags & INP_ANONPORT);
-                stat.mod_info = 0; /* FIXME */
-            }
-
-            if (num < *count)
-            {
-                if (key_out) *key_out++ = key;
-                if (stat_out) *stat_out++ = stat;
-            }
-            num++;
+            *key_out++ = key;
         }
-    err:
-        free( buf );
+
+        if (stat_out)
+        {
+            memset( &stat, 0, sizeof(stat) );
+            stat.pid = endpt->common.owner;
+            stat.create_time = 0; /* FIXME */
+            stat.mod_info = 0; /* FIXME */
+            *stat_out++ = stat;
+        }
     }
-#else
-    FIXME( "not implemented\n" );
-    return STATUS_NOT_IMPLEMENTED;
-#endif
 
-    if (!want_data || num <= *count) *count = num;
-    else status = STATUS_BUFFER_OVERFLOW;
-
-    free( pid_map );
-    free( addr_scopes );
-    return status;
+    free( endpoints );
+    return STATUS_SUCCESS;
 }
 
 static struct module_table udp_tables[] =
