@@ -21,6 +21,7 @@
 #include "d3d11.h"
 #include "d3dx11.h"
 #include "wine/test.h"
+#include <stdint.h>
 
 #ifndef MAKEFOURCC
 #define MAKEFOURCC(ch0, ch1, ch2, ch3)  \
@@ -248,6 +249,47 @@ static const unsigned char noimage[4] =
 {
     0x11,0x22,0x33,0x44
 };
+
+#define check_image_info_values(info, width, height, depth, array_size, mip_levels, misc_flags, format, resource_dimension, \
+                                image_file_format, wine_todo) \
+    check_image_info_values_(__LINE__, info, width, height, depth, array_size, mip_levels, misc_flags, format, resource_dimension, \
+            image_file_format, wine_todo)
+static inline void check_image_info_values_(unsigned int line, const D3DX11_IMAGE_INFO *info, uint32_t width,
+        uint32_t height, uint32_t depth, uint32_t array_size, uint32_t mip_levels, uint32_t misc_flags,
+        DXGI_FORMAT format, D3D11_RESOURCE_DIMENSION resource_dimension, D3DX11_IMAGE_FILE_FORMAT image_file_format,
+        BOOL wine_todo)
+{
+    const D3DX11_IMAGE_INFO expected_info = { width, height, depth, array_size, mip_levels, misc_flags, format,
+                                              resource_dimension, image_file_format };
+    BOOL matched;
+
+    matched = !memcmp(&expected_info, info, sizeof(*info));
+    todo_wine_if(wine_todo) ok_(__FILE__, line)(matched, "Got unexpected image info values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && info->Width != width)
+        ok_(__FILE__, line)(info->Width == width, "Expected width %u, got %u.\n", width, info->Width);
+    todo_wine_if(wine_todo && info->Height != height)
+        ok_(__FILE__, line)(info->Height == height, "Expected height %u, got %u.\n", height, info->Height);
+    todo_wine_if(wine_todo && info->Depth != depth)
+        ok_(__FILE__, line)(info->Depth == depth, "Expected depth %u, got %u.\n", depth, info->Depth);
+    todo_wine_if(wine_todo && info->ArraySize != array_size)
+        ok_(__FILE__, line)(info->ArraySize == array_size, "Expected array_size %u, got %u.\n", array_size,
+                info->ArraySize);
+    todo_wine_if(wine_todo && info->MipLevels != mip_levels)
+        ok_(__FILE__, line)(info->MipLevels == mip_levels, "Expected mip_levels %u, got %u.\n", mip_levels,
+                info->MipLevels);
+    todo_wine_if(wine_todo && info->MiscFlags != misc_flags)
+        ok_(__FILE__, line)(info->MiscFlags == misc_flags, "Expected misc_flags %u, got %u.\n", misc_flags,
+                info->MiscFlags);
+    ok_(__FILE__, line)(info->Format == format, "Expected texture format %d, got %d.\n", format, info->Format);
+    todo_wine_if(wine_todo && info->ResourceDimension != resource_dimension)
+        ok_(__FILE__, line)(info->ResourceDimension == resource_dimension, "Expected resource_dimension %d, got %d.\n",
+                resource_dimension, info->ResourceDimension);
+    ok_(__FILE__, line)(info->ImageFileFormat == image_file_format, "Expected image_file_format %d, got %d.\n",
+            image_file_format, info->ImageFileFormat);
+}
 
 static WCHAR temp_dir[MAX_PATH];
 
@@ -779,183 +821,99 @@ static void test_D3DX11GetImageInfoFromMemory(void)
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
     /* test BMP support */
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(bmp_1bpp, sizeof(bmp_1bpp), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.MiscFlags == 0, "Unexpected misc flags %#x\n", info.MiscFlags);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 1, 1, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_BMP, FALSE);
 
     hr = D3DX11GetImageInfoFromMemory(bmp_2bpp, sizeof(bmp_2bpp), NULL, &info, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(bmp_4bpp, sizeof(bmp_4bpp), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.MiscFlags == 0, "Unexpected misc flags %#x\n", info.MiscFlags);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 1, 1, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_BMP, FALSE);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(bmp_8bpp, sizeof(bmp_8bpp), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.MiscFlags == 0, "Unexpected misc flags %#x\n", info.MiscFlags);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 1, 1, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_BMP, FALSE);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(bmp_32bpp_xrgb, sizeof(bmp_32bpp_xrgb), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.MiscFlags == 0, "Unexpected misc flags %#x\n", info.MiscFlags);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 2, 2, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_BMP, FALSE);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(bmp_32bpp_argb, sizeof(bmp_32bpp_argb), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.MiscFlags == 0, "Unexpected misc flags %#x\n", info.MiscFlags);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_BMP, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 2, 2, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_BMP, FALSE);
 
     /* Grayscale PNG */
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(png_grayscale, sizeof(png_grayscale), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 1, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 1, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.MiscFlags == 0, "Unexpected misc flags %#x\n", info.MiscFlags);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_PNG, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 1, 1, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_PNG, FALSE);
 
     /* test DDS support */
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_24bit, sizeof(dds_24bit), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 2, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 2, 2, 1, 1, 2, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_DDS, FALSE);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_24bit, sizeof(dds_24bit) - 1, NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 2, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 2, 2, 1, 1, 2, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_DDS, FALSE);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_16bit, sizeof(dds_16bit), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 2, 2, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_DDS, FALSE);
 
     memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_16bit, sizeof(dds_16bit) - 1, NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 2, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 2, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 2, 2, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_DDS, FALSE);
 
     memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_8bit, sizeof(dds_8bit), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 16, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 16, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE2D,
+            D3DX11_IFF_DDS, FALSE);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_cube_map, sizeof(dds_cube_map), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 4, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 6, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_BC3_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 4, 4, 1, 6, 1, D3D11_RESOURCE_MISC_TEXTURECUBE, DXGI_FORMAT_BC3_UNORM,
+            D3D11_RESOURCE_DIMENSION_TEXTURE2D, D3DX11_IFF_DDS, FALSE);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_cube_map, sizeof(dds_cube_map) - 1, NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 4, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 1, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 6, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 1, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_BC3_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 4, 4, 1, 6, 1, D3D11_RESOURCE_MISC_TEXTURECUBE, DXGI_FORMAT_BC3_UNORM,
+            D3D11_RESOURCE_DIMENSION_TEXTURE2D, D3DX11_IFF_DDS, FALSE);
 
+    memset(&info, 0, sizeof(info));
     hr = D3DX11GetImageInfoFromMemory(dds_volume_map, sizeof(dds_volume_map), NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 4, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 2, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 3, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_BC2_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE3D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 4, 4, 2, 1, 3, 0, DXGI_FORMAT_BC2_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE3D,
+            D3DX11_IFF_DDS, FALSE);
 
     hr = D3DX11GetImageInfoFromMemory(dds_volume_map, sizeof(dds_volume_map) - 1, NULL, &info, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(info.Width == 4, "Unexpected width %u.\n", info.Width);
-    ok(info.Height == 4, "Unexpected height %u.\n", info.Height);
-    ok(info.Depth == 2, "Unexpected depth %u.\n", info.Depth);
-    ok(info.ArraySize == 1, "Unexpected array size %u.\n", info.ArraySize);
-    ok(info.MipLevels == 3, "Unexpected miplevels %u\n", info.MipLevels);
-    ok(info.Format == DXGI_FORMAT_BC2_UNORM, "Unexpected format %#x.\n", info.Format);
-    ok(info.ResourceDimension == D3D11_RESOURCE_DIMENSION_TEXTURE3D, "Unexpected resource type %#x.\n", info.ResourceDimension);
-    ok(info.ImageFileFormat == D3DX11_IFF_DDS, "Unexpected image file format %#x.\n", info.ImageFileFormat);
+    check_image_info_values(&info, 4, 4, 2, 1, 3, 0, DXGI_FORMAT_BC2_UNORM, D3D11_RESOURCE_DIMENSION_TEXTURE3D,
+            D3DX11_IFF_DDS, FALSE);
 
     check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC1_UNORM);
     check_dds_pixel_format(DDS_PF_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0, DXGI_FORMAT_BC2_UNORM);
