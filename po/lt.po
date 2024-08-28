@@ -14769,6 +14769,13 @@ msgstr ""
 "Ar tikrai norite uždaryti visas programas ir išeiti iš virtualaus "
 "darbalaukio?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Darbalaukis"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Naudojimas: findstr /parinktys eilutė\n"

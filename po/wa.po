@@ -14701,6 +14701,12 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "Fitchîs tekse (*.txt).\n"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgid "Wine Help"
+msgid "Wine Desktop"
+msgstr "Aidance di Wine"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "Direction"

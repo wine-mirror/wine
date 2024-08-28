@@ -14859,6 +14859,13 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "Möchten Sie diese Werte wirklich löschen?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Desktop"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Aufruf: findstr /Optionen String\n"

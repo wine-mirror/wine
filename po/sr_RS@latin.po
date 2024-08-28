@@ -15491,6 +15491,11 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "Želite li da izbrišete ovih %1 stavki?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+msgid "Wine Desktop"
+msgstr "Radna površina"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "LAN Connection"

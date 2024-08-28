@@ -14872,6 +14872,13 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "ඔබට විශ්වාසයි ද මේ අයිතම %1 මකන්න ඕනේ කියලා?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "වැඩතලය"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "Connection is being made"

@@ -14804,6 +14804,11 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "แฟ้มตํารา (*.txt).\n"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+msgid "Wine Desktop"
+msgstr "พื้นที่ทำงาน"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 msgid "Usage: findstr /options string\n"

@@ -14826,6 +14826,13 @@ msgstr ""
 "Alle programma's en het virtuele bureaublad worden afgesloten.\n"
 "Doorgaan?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Bureaublad"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Gebruik: findstr /opties string\n"

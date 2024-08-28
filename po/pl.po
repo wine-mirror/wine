@@ -14809,6 +14809,13 @@ msgstr ""
 "Czy jesteś pewien, że chcesz zamknąć wszystkie programy i opuścić wirtualny "
 "pulpit?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Pulpit"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Użycie: findstr /opcje tekst\n"

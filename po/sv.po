@@ -15706,6 +15706,13 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "Vill du verkligen ta bort dessa värden?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Skrivbord"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "Reset Connections"

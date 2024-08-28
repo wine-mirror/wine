@@ -14877,6 +14877,13 @@ msgstr ""
 "Esteu segur que voleu tancar tots els programes i sortir de l'escriptori "
 "virtual?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Escriptori"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Ús: findstr /opcions cadena\n"

@@ -15070,6 +15070,13 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "Ви впевнені, що хочете видалити ці значення?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Стільниця"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "Use c&onnection string"

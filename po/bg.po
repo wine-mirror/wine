@@ -14780,6 +14780,11 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "Наистина ли искате да изтриете тези %1 елемента?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+msgid "Wine Desktop"
+msgstr "Работен плот"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "LAN Connection"

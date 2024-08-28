@@ -14671,6 +14671,13 @@ msgid ""
 msgstr ""
 "¿De xuru que quies zarrar tolos programes y colar del escritoriu virtual?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Escritoriu"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Usu: findstr /opciones cadena\n"

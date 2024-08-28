@@ -32,6 +32,7 @@
 
 #include "wine/debug.h"
 #include "explorer_private.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
@@ -1097,30 +1098,31 @@ static void initialize_display_settings( unsigned int width, unsigned int height
 
 static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
 {
-    static const WCHAR desktop_nameW[] = L"Wine desktop";
     static const WCHAR desktop_name_separatorW[] = L" - ";
+    WCHAR desktop_titleW[64];
     WCHAR *window_titleW = NULL;
     int window_title_len;
 
+    LoadStringW( NULL, IDS_DESKTOP_TITLE, desktop_titleW, ARRAY_SIZE(desktop_titleW) );
+
     if (!name[0])
     {
-        SetWindowTextW( hwnd, desktop_nameW );
+        SetWindowTextW( hwnd, desktop_titleW );
         return;
     }
 
-    window_title_len = lstrlenW(name) * sizeof(WCHAR)
-                     + sizeof(desktop_name_separatorW)
-                     + sizeof(desktop_nameW);
+    window_title_len = (wcslen(name) + wcslen(desktop_titleW)) * sizeof(WCHAR)
+                     + sizeof(desktop_name_separatorW);
     window_titleW = malloc( window_title_len );
     if (!window_titleW)
     {
-        SetWindowTextW( hwnd, desktop_nameW );
+        SetWindowTextW( hwnd, desktop_titleW );
         return;
     }
 
     lstrcpyW( window_titleW, name );
     lstrcatW( window_titleW, desktop_name_separatorW );
-    lstrcatW( window_titleW, desktop_nameW );
+    lstrcatW( window_titleW, desktop_titleW );
 
     SetWindowTextW( hwnd, window_titleW );
     free( window_titleW );

@@ -14723,6 +14723,13 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "모든 프로그램을 닫고 가상 데스크톱을 종료하시겠습니까?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "바탕 화면"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "사용법: findstr /옵션 문자열\n"

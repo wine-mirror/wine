@@ -14763,6 +14763,10 @@ msgid ""
 msgstr ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 
+#: programs/explorer/explorer.rc:38
+msgid "Wine Desktop"
+msgstr "Wine Desktop"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "Usage: findstr /options string\n"

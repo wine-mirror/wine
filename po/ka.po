@@ -14374,6 +14374,13 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "დარწმუნებული ბრძანდებით, რომ გნებავთ, წაშალოთ ეს მნიშვნელობები?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "სამუშაო მაგიდა"
+
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
 msgstr "გამოყენება: findstr /პარამეტრების სტრიქონი\n"

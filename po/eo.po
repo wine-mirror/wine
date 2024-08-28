@@ -15148,6 +15148,13 @@ msgid ""
 "Are you sure you want to close all programs and exit the virtual desktop?"
 msgstr "Ĉu vi certas pri forigo de ĉi tiuj valoroj?"
 
+#: programs/explorer/explorer.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Wine Desktop"
+msgstr "Labortablo"
+
 #: programs/findstr/findstr.rc:28
 #, fuzzy
 #| msgid "LAN Connection"
