@@ -336,7 +336,6 @@ enum x11drv_escape_codes
     X11DRV_GET_DRAWABLE,     /* get current drawable for a DC */
     X11DRV_START_EXPOSURES,  /* start graphics exposures */
     X11DRV_END_EXPOSURES,    /* end graphics exposures */
-    X11DRV_FLUSH_GL_DRAWABLE /* flush changes made to the gl drawable */
 };
 
 struct x11drv_escape_set_drawable
@@ -352,13 +351,6 @@ struct x11drv_escape_get_drawable
     enum x11drv_escape_codes code;         /* escape code (X11DRV_GET_DRAWABLE) */
     Drawable                 drawable;     /* X drawable */
     RECT                     dc_rect;      /* DC rectangle relative to drawable */
-};
-
-struct x11drv_escape_flush_gl_drawable
-{
-    enum x11drv_escape_codes code;         /* escape code (X11DRV_FLUSH_GL_DRAWABLE) */
-    Drawable                 gl_drawable;  /* GL drawable */
-    BOOL                     flush;        /* flush X11 before copying */
 };
 
 /**************************************************************************

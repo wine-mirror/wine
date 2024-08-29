@@ -244,22 +244,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     return TRUE;
                 }
                 break;
-            case X11DRV_FLUSH_GL_DRAWABLE:
-                if (in_count >= sizeof(struct x11drv_escape_flush_gl_drawable))
-                {
-                    const struct x11drv_escape_flush_gl_drawable *data = in_data;
-                    RECT rect = physDev->dc_rect;
-
-                    OffsetRect( &rect, -physDev->dc_rect.left, -physDev->dc_rect.top );
-                    if (data->flush) XFlush( gdi_display );
-                    XSetFunction( gdi_display, physDev->gc, GXcopy );
-                    XCopyArea( gdi_display, data->gl_drawable, physDev->drawable, physDev->gc,
-                               0, 0, rect.right, rect.bottom,
-                               physDev->dc_rect.left, physDev->dc_rect.top );
-                    add_device_bounds( physDev, &rect );
-                    return TRUE;
-                }
-                break;
             case X11DRV_START_EXPOSURES:
                 XSetGraphicsExposures( gdi_display, physDev->gc, True );
                 physDev->exposures = 0;
