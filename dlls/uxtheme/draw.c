@@ -502,7 +502,7 @@ static inline void get_transparency (HTHEME hTheme, int iPartId, int iStateId,
     if (hasImageAlpha)
     {
         *transparent = ALPHABLEND_FULL;
-        *transparentcolor = RGB (255, 0, 255);
+        *transparentcolor = DEFAULT_TRANSPARENT_COLOR;
     }
     else
     {
@@ -514,8 +514,7 @@ static inline void get_transparency (HTHEME hTheme, int iPartId, int iStateId,
             if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, 
                 glyph ? TMT_GLYPHTRANSPARENTCOLOR : TMT_TRANSPARENTCOLOR, 
                 transparentcolor))) {
-                /* If image is transparent, but no color was specified, use magenta */
-                *transparentcolor = RGB(255, 0, 255);
+                *transparentcolor = DEFAULT_TRANSPARENT_COLOR;
             }
         }
         else
@@ -1968,7 +1967,7 @@ static HRESULT create_image_bg_region(HTHEME theme, int part, int state, const R
     OffsetRect(&r, -r.left, -r.top);
 
     if (FAILED(GetThemeColor(theme, part, state, TMT_TRANSPARENTCOLOR, &transcolour)))
-        transcolour = RGB(255, 0, 255); /* defaults to magenta */
+        transcolour = DEFAULT_TRANSPARENT_COLOR;
 
     dc = CreateCompatibleDC(NULL);
     if (!dc) {

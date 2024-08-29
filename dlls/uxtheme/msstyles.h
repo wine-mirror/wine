@@ -27,6 +27,8 @@
 #define MAX_THEME_CLASS_NAME 60
 #define MAX_THEME_VALUE_NAME 60
 
+#define DEFAULT_TRANSPARENT_COLOR RGB(255, 0, 255)
+
 typedef struct _THEME_PROPERTY {
     int iPrimitiveType;
     int iPropertyId;
