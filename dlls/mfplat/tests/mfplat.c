@@ -1198,13 +1198,16 @@ static void test_source_resolver(void)
     MF_OBJECT_TYPE obj_type;
     IMFStreamDescriptor *sd;
     IUnknown *cancel_cookie;
-    IMFByteStream *stream;
+    IMFByteStream *stream, *tmp_stream;
     IMFGetService *get_service;
     IMFRateSupport *rate_support;
     WCHAR pathW[MAX_PATH];
     int i, sample_count;
+    DWORD size, flags;
+    BYTE buffer[1024];
     WCHAR *filename;
     PROPVARIANT var;
+    QWORD length;
     HRESULT hr;
     GUID guid;
     float rate;
@@ -1319,6 +1322,67 @@ static void test_source_resolver(void)
     refcount = IMFMediaSource_Release(mediasource);
     todo_wine
     ok(!refcount, "Unexpected refcount %ld\n", refcount);
+    IMFByteStream_Release(stream);
+
+    /* test that bytestream position doesn't matter */
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFByteStream_SetCurrentPosition(stream, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
+            &obj_type, (IUnknown **)&mediasource);
+    ok(hr == S_OK || broken(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE) /* w7 || w8 */, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK) IMFMediaSource_Release(mediasource);
+    IMFByteStream_Release(stream);
+
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFByteStream_GetLength(stream, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFByteStream_SetCurrentPosition(stream, length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
+            &obj_type, (IUnknown **)&mediasource);
+    ok(hr == S_OK || broken(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE) /* w7 || w8 */, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK) IMFMediaSource_Release(mediasource);
+    IMFByteStream_Release(stream);
+
+    /* stream must have a valid header, media cannot start in the middle of a stream */
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &tmp_stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateTempFile(MF_ACCESSMODE_READ | MF_ACCESSMODE_WRITE, MF_OPENMODE_FAIL_IF_EXIST, MF_FILEFLAGS_NONE, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(buffer, 0xcd, sizeof(buffer));
+    hr = IMFByteStream_Write(stream, buffer, sizeof(buffer), &size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    do
+    {
+        hr = IMFByteStream_Read(tmp_stream, buffer, sizeof(buffer), &size);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFByteStream_Write(stream, buffer, size, &size);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
+    while (size >= sizeof(buffer));
+    IMFByteStream_Release(tmp_stream);
+    hr = IMFByteStream_SetCurrentPosition(stream, sizeof(buffer));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    flags = MF_RESOLUTION_MEDIASOURCE;
+    flags |= MF_RESOLUTION_KEEP_BYTE_STREAM_ALIVE_ON_FAIL;
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, flags, NULL,
+            &obj_type, (IUnknown **)&mediasource);
+    todo_wine ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "Unexpected hr %#lx.\n", hr);
+
+    flags |= MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE;
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, flags, NULL,
+            &obj_type, (IUnknown **)&mediasource);
+    todo_wine ok(hr == MF_E_SOURCERESOLVER_MUTUALLY_EXCLUSIVE_FLAGS, "Unexpected hr %#lx.\n", hr);
+
+    flags = MF_RESOLUTION_MEDIASOURCE;
+    flags |= MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE;
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, flags, NULL,
+            &obj_type, (IUnknown **)&mediasource);
+    todo_wine ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "Unexpected hr %#lx.\n", hr);
     IMFByteStream_Release(stream);
 
     /* We have to create a new bytestream here, because all following
