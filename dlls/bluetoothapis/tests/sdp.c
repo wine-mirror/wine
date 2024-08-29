@@ -376,6 +376,73 @@ static void test_BluetoothSdpGetContainerElementData( void )
     }
 }
 
+struct attr_callback_data
+{
+    const ULONG *attrs_id;
+    const SDP_ELEMENT_DATA *attrs;
+    const SIZE_T attrs_n;
+    SIZE_T i;
+};
+
+static BYTE sdp_record_bytes[] = {
+    0x35, 0x48, 0x09, 0x00, 0x00, 0x0a, 0x00, 0x01, 0x00, 0x00, 0x09, 0x00, 0x01, 0x35, 0x03,
+    0x19, 0x12, 0x00, 0x09, 0x00, 0x05, 0x35, 0x03, 0x19, 0x10, 0x02, 0x09, 0x00, 0x09, 0x35,
+    0x08, 0x35, 0x06, 0x19, 0x12, 0x00, 0x09, 0x01, 0x03, 0x09, 0x02, 0x00, 0x09, 0x01, 0x03,
+    0x09, 0x02, 0x01, 0x09, 0x1d, 0x6b, 0x09, 0x02, 0x02, 0x09, 0x02, 0x46, 0x09, 0x02, 0x03,
+    0x09, 0x05, 0x4d, 0x09, 0x02, 0x04, 0x28, 0x01, 0x09, 0x02, 0x05, 0x09, 0x00, 0x02 };
+
+static BOOL WINAPI enum_attr_callback( ULONG attr_id, BYTE *stream, ULONG stream_size, void *param )
+{
+    struct attr_callback_data *params = param;
+    winetest_push_context( "attributes %d", (int)params->i );
+    if (params->i < params->attrs_n)
+    {
+        SDP_ELEMENT_DATA data = {0};
+        DWORD result;
+
+        todo_wine ok( attr_id == params->attrs_id[params->i],
+                      "Expected attribute id %lu, got %lu.\n", params->attrs_id[params->i],
+                      attr_id );
+        result = BluetoothSdpGetElementData( stream, stream_size, &data );
+        todo_wine ok( result == ERROR_SUCCESS, "BluetoothSdpGetElementData failed: %ld.\n",
+                      result );
+        todo_wine ok( !memcmp( &params->attrs[params->i], &data, sizeof( data ) ),
+                      "Expected %s, got %s.\n",
+                      debugstr_SDP_ELEMENT_DATA( &params->attrs[params->i] ),
+                      debugstr_SDP_ELEMENT_DATA( &data ) );
+
+        params->i++;
+    }
+    winetest_pop_context();
+    return TRUE;
+}
+
+static void test_BluetoothSdpEnumAttributes( void )
+{
+    static SDP_ELEMENT_DATA attributes[] = {
+        {SDP_TYPE_UINT, SDP_ST_UINT32, {.uint32 = 0x10000}},
+        {SDP_TYPE_SEQUENCE, SDP_ST_NONE, {.sequence = {&sdp_record_bytes[13], 5}}},
+        {SDP_TYPE_SEQUENCE, SDP_ST_NONE, {.sequence = {&sdp_record_bytes[21], 5}}},
+        {SDP_TYPE_SEQUENCE, SDP_ST_NONE, {.sequence = {&sdp_record_bytes[29], 10}}},
+        {SDP_TYPE_UINT, SDP_ST_UINT16, {.uint16 = 0x0103}},
+        {SDP_TYPE_UINT, SDP_ST_UINT16, {.uint16 = 0x1d6b}},
+        {SDP_TYPE_UINT, SDP_ST_UINT16, {.uint16 = 0x0246}},
+        {SDP_TYPE_UINT, SDP_ST_UINT16, {.uint16 = 0x054d}},
+        {SDP_TYPE_BOOLEAN, SDP_ST_NONE, {.booleanVal = 1}},
+        {SDP_TYPE_UINT, SDP_ST_UINT16, {.uint16 = 0x02}},
+    };
+    const ULONG attrs_id[] = {0x0, 0x1, 0x5, 0x9, 0x200, 0x201, 0x202, 0x203, 0x204, 0x205};
+    struct attr_callback_data data = {attrs_id, attributes, ARRAY_SIZE( attributes ), 0};
+
+    BOOL ret;
+
+    SetLastError( 0xdeadbeef );
+    ret = BluetoothSdpEnumAttributes( sdp_record_bytes, ARRAY_SIZE( sdp_record_bytes ), enum_attr_callback,
+                                      &data );
+    todo_wine ok( ret, "BluetoothSdpEnumAttributes failed with %ld.\n", GetLastError() );
+    todo_wine ok( data.i == data.attrs_n, "%d != %d\n", (int)data.i, (int)data.attrs_n );
+}
+
 START_TEST( sdp )
 {
     test_BluetoothSdpGetElementData_nil();
@@ -383,4 +450,5 @@ START_TEST( sdp )
     test_BluetoothSdpGetElementData_invalid();
     test_BluetoothSdpGetElementData_str();
     test_BluetoothSdpGetContainerElementData();
+    test_BluetoothSdpEnumAttributes();
 }
