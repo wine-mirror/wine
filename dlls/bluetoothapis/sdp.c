@@ -313,3 +313,14 @@ DWORD WINAPI BluetoothSdpGetContainerElementData( BYTE *stream, ULONG stream_siz
     *handle = stream;
     return ERROR_SUCCESS;
 }
+
+/*********************************************************************
+ *  BluetoothSdpEnumAttributes
+ */
+BOOL WINAPI BluetoothSdpEnumAttributes( BYTE *stream, ULONG stream_size,
+                                        PFN_BLUETOOTH_ENUM_ATTRIBUTES_CALLBACK callback, void *param )
+{
+    FIXME( "(%p, %ld, %p, %p) stub!\n", stream, stream_size, callback, param );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
