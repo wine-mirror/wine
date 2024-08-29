@@ -25,6 +25,7 @@
 #import <CoreVideo/CoreVideo.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/QuartzCore.h>
+#include <dlfcn.h>
 
 #import "cocoa_window.h"
 
@@ -2369,9 +2370,20 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 return;
         }
 
+        static CGImageRef __nullable (*pCGWindowListCreateImageFromArray)(CGRect, CFArrayRef, CGWindowImageOption);
+        static dispatch_once_t once;
+        dispatch_once(&once, ^{
+            void *h = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_LAZY | RTLD_LOCAL);
+            if (h)
+                pCGWindowListCreateImageFromArray = dlsym(h, "CGWindowListCreateImageFromArray");
+        });
+
+        if (!pCGWindowListCreateImageFromArray)
+            return;
+
         const void* windowID = (const void*)(uintptr_t)(CGWindowID)window.windowNumber;
         CFArrayRef windowIDs = CFArrayCreate(NULL, &windowID, 1, NULL);
-        CGImageRef windowImage = CGWindowListCreateImageFromArray(CGRectNull, windowIDs, kCGWindowImageBoundsIgnoreFraming);
+        CGImageRef windowImage = pCGWindowListCreateImageFromArray(CGRectNull, windowIDs, kCGWindowImageBoundsIgnoreFraming);
         CFRelease(windowIDs);
         if (!windowImage)
             return;
