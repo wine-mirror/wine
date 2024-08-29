@@ -611,13 +611,16 @@ static void wayland_pointer_update_cursor_surface(double scale)
         }
     }
 
-    if (!cursor->wp_viewport && process_wayland.wp_viewporter)
+    if (!cursor->wp_viewport)
     {
         cursor->wp_viewport =
             wp_viewporter_get_viewport(process_wayland.wp_viewporter,
                                        cursor->wl_surface);
         if (!cursor->wp_viewport)
-            WARN("Failed to create wp_viewport for cursor\n");
+        {
+            ERR("Failed to create wp_viewport for cursor\n");
+            goto clear_cursor;
+        }
     }
 
     /* Commit the cursor buffer to the cursor surface. */
@@ -631,12 +634,9 @@ static void wayland_pointer_update_cursor_surface(double scale)
      * scale. Note that setting the viewport destination overrides
      * the buffer scale, so it's fine to set both. */
     wl_surface_set_buffer_scale(cursor->wl_surface, round(scale));
-    if (cursor->wp_viewport)
-    {
-        wp_viewport_set_destination(cursor->wp_viewport,
-                                    round(cursor->shm_buffer->width / scale),
-                                    round(cursor->shm_buffer->height / scale));
-    }
+    wp_viewport_set_destination(cursor->wp_viewport,
+                                round(cursor->shm_buffer->width / scale),
+                                round(cursor->shm_buffer->height / scale));
     wl_surface_commit(cursor->wl_surface);
 
     return;

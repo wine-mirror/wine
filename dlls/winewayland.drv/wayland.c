@@ -269,6 +269,11 @@ BOOL wayland_process_init(void)
         ERR("Wayland compositor doesn't support wl_subcompositor\n");
         return FALSE;
     }
+    if (!process_wayland.wp_viewporter)
+    {
+        ERR("Wayland compositor doesn't support wp_viewporter\n");
+        return FALSE;
+    }
     if (!process_wayland.zwp_pointer_constraints_v1)
     {
         ERR("Wayland compositor doesn't support zwp_pointer_constraints_v1\n");
