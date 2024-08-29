@@ -60,16 +60,16 @@ static void test_BluetoothSdpGetElementData_invalid( void )
     DWORD ret;
 
     ret = BluetoothSdpGetElementData( NULL, 10, &data );
-    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "%d != %ld.\n", ERROR_INVALID_PARAMETER, ret );
+    ok( ret == ERROR_INVALID_PARAMETER, "%d != %ld.\n", ERROR_INVALID_PARAMETER, ret );
 
     ret = BluetoothSdpGetElementData( stream, 1, NULL );
-    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "%d != %ld.\n", ERROR_INVALID_PARAMETER, ret );
+    ok( ret == ERROR_INVALID_PARAMETER, "%d != %ld.\n", ERROR_INVALID_PARAMETER, ret );
 
     ret = BluetoothSdpGetElementData( stream, 0, &data );
-    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "%d != %ld.\n", ERROR_INVALID_PARAMETER, ret );
+    ok( ret == ERROR_INVALID_PARAMETER, "%d != %ld.\n", ERROR_INVALID_PARAMETER, ret );
 
     ret = BluetoothSdpGetElementData( NULL, 0, NULL );
-    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "%d != %ld.\n", ERROR_INVALID_PARAMETER, ret );
+    ok( ret == ERROR_INVALID_PARAMETER, "%d != %ld.\n", ERROR_INVALID_PARAMETER, ret );
 }
 
 static void test_BluetoothSdpGetElementData_nil( void )
@@ -90,8 +90,8 @@ static void test_BluetoothSdpGetElementData_nil( void )
     for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
     {
         winetest_push_context( "test_cases nil %d", (int)i );
-        todo_wine test_BluetoothSdpGetElementData( &test_cases[i].data_elem, 1, test_cases[i].error,
-                                                   &test_cases[i].data );
+        test_BluetoothSdpGetElementData( &test_cases[i].data_elem, 1, test_cases[i].error,
+                                         &test_cases[i].data );
         winetest_pop_context();
     }
 }
@@ -209,8 +209,8 @@ static void test_BluetoothSdpGetElementData_ints( void )
     for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
     {
         winetest_push_context( "test_cases int %d", (int)i );
-        todo_wine test_BluetoothSdpGetElementData( test_cases[i].data_elem, test_cases[i].size,
-                                                   test_cases[i].error, &test_cases[i].data );
+        test_BluetoothSdpGetElementData( test_cases[i].data_elem, test_cases[i].size,
+                                         test_cases[i].error, &test_cases[i].data );
         winetest_pop_context();
     }
 }
@@ -251,22 +251,22 @@ static void test_BluetoothSdpGetElementData_str( void )
     for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
     {
         winetest_push_context( "test_cases str %d", (int)i );
-        todo_wine test_BluetoothSdpGetElementData( test_cases[i].stream, test_cases[i].size,
-                                                   test_cases[i].error, &test_cases[i].data );
+        test_BluetoothSdpGetElementData( test_cases[i].stream, test_cases[i].size,
+                                         test_cases[i].error, &test_cases[i].data );
         if (test_cases[i].error == ERROR_SUCCESS)
         {
             SDP_ELEMENT_DATA result = {0};
             if (!BluetoothSdpGetElementData( test_cases[i].stream, test_cases[i].size, &result ))
             {
-                todo_wine ok( strlen( test_cases[i].string ) == result.data.string.length,
-                              "%s != %s.\n", debugstr_a( test_cases[i].string ),
-                              debugstr_an( (const char *)result.data.string.value,
-                                           result.data.string.length ) );
-                todo_wine ok( !memcmp( result.data.string.value, test_cases[i].string,
-                                       result.data.string.length ),
-                              "%s != %s.\n", debugstr_a( test_cases[i].string ),
-                              debugstr_an( (const char *)result.data.string.value,
-                                           result.data.string.length ) );
+                ok( strlen( test_cases[i].string ) == result.data.string.length, "%s != %s.\n",
+                    debugstr_a( test_cases[i].string ),
+                    debugstr_an( (const char *)result.data.string.value,
+                                 result.data.string.length ) );
+                ok( !memcmp( result.data.string.value, test_cases[i].string,
+                             result.data.string.length ),
+                    "%s != %s.\n", debugstr_a( test_cases[i].string ),
+                    debugstr_an( (const char *)result.data.string.value,
+                                 result.data.string.length ) );
             }
         }
         winetest_pop_context();
