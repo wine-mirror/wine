@@ -323,6 +323,7 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 HRGN surface_damage_region)
 {
     RGNDATA *surface_damage;
+    int win_width, win_height;
 
     TRACE("surface=%p shm_buffer=%p (%dx%d)\n",
           surface, shm_buffer, shm_buffer->width, shm_buffer->height);
@@ -351,8 +352,22 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
         free(surface_damage);
     }
 
-    surface->content_width = shm_buffer->width;
-    surface->content_height = shm_buffer->height;
+    win_width = surface->window.rect.right - surface->window.rect.left;
+    win_height = surface->window.rect.bottom - surface->window.rect.top;
+
+    /* It is an error to specify a wp_viewporter source rectangle that
+     * is partially or completely outside of the wl_buffe.
+     * 0 is also an invalid width / height value so use 1x1 instead.
+     */
+    win_width = max(1, min(win_width, shm_buffer->width));
+    win_height = max(1, min(win_height, shm_buffer->height));
+
+    wp_viewport_set_source(surface->wp_viewport, 0, 0,
+                           wl_fixed_from_int(win_width),
+                           wl_fixed_from_int(win_height));
+
+    surface->content_width = win_width;
+    surface->content_height = win_height;
 }
 
 /**********************************************************************
