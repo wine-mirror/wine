@@ -222,12 +222,12 @@ struct gl_drawable
     LONG                           ref;          /* reference count */
     enum dc_gl_type                type;         /* type of GL surface */
     HWND                           hwnd;
+    RECT                           rect;         /* current size of the GL drawable */
     GLXDrawable                    drawable;     /* drawable for rendering with GL */
     Window                         window;       /* window if drawable is a GLXWindow */
     Colormap                       colormap;     /* colormap for the client window */
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
     const struct glx_pixel_format *format;       /* pixel format for the drawable */
-    SIZE                           pixmap_size;  /* pixmap size for GLXPixmap drawables */
     int                            swap_interval;
     BOOL                           refresh_swap_interval;
     BOOL                           mutable_pf;
@@ -1112,6 +1112,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
     gl->format = format;
     gl->ref = 1;
     gl->hwnd = hwnd;
+    gl->rect = rect;
     gl->mutable_pf = mutable_pf;
 
     if (!known_child && !NtUserGetWindowRelative( hwnd, GW_CHILD ) &&
@@ -1156,8 +1157,6 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
         {
             gl->drawable = pglXCreatePixmap( gdi_display, gl->format->fbconfig, gl->pixmap, NULL );
             if (!gl->drawable) XFreePixmap( gdi_display, gl->pixmap );
-            gl->pixmap_size.cx = width;
-            gl->pixmap_size.cy = height;
         }
     }
 
@@ -2723,6 +2722,31 @@ static void X11DRV_WineGL_LoadExtensions(void)
     }
 }
 
+static void update_gl_drawable_size( struct gl_drawable *gl )
+{
+    struct gl_drawable *new_gl;
+    XWindowChanges changes;
+    RECT rect;
+
+    NtUserGetClientRect( gl->hwnd, &rect, get_win_monitor_dpi( gl->hwnd ) );
+    if (EqualRect( &rect, &gl->rect )) return;
+
+    changes.width  = min( max( 1, rect.right ), 65535 );
+    changes.height = min( max( 1, rect.bottom ), 65535 );
+
+    switch (gl->type)
+    {
+    case DC_GL_CHILD_WIN:
+        XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
+        break;
+    case DC_GL_PIXMAP_WIN:
+        new_gl = create_gl_drawable( gl->hwnd, gl->format, TRUE, gl->mutable_pf );
+        mark_drawable_dirty( gl, new_gl );
+        release_gl_drawable( new_gl );
+    default:
+        break;
+    }
+}
 
 /**
  * glxdrv_SwapBuffers
@@ -2767,7 +2791,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
              * copying */
             pglFlush();
             pglXCopySubBufferMESA( gdi_display, gl->drawable, 0, 0,
-                                   gl->pixmap_size.cx, gl->pixmap_size.cy );
+                                   gl->rect.right, gl->rect.bottom );
             break;
         }
         if (ctx && pglXSwapBuffersMscOML)
@@ -2797,10 +2821,11 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     if (ctx && escape.gl_drawable && pglXWaitForSbcOML)
         pglXWaitForSbcOML( gdi_display, gl->drawable, target_sbc, &ust, &msc, &sbc );
 
-    release_gl_drawable( gl );
-
     if (escape.gl_drawable)
         NtGdiExtEscape( ctx ? ctx->hdc : hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+
+    update_gl_drawable_size( gl );
+    release_gl_drawable( gl );
     return TRUE;
 }
 
