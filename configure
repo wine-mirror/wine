@@ -21763,6 +21763,7 @@ wine_fn_config_makefile dlls/bcrypt enable_bcrypt
 wine_fn_config_makefile dlls/bcrypt/tests enable_tests
 wine_fn_config_makefile dlls/bcryptprimitives enable_bcryptprimitives
 wine_fn_config_makefile dlls/bluetoothapis enable_bluetoothapis
+wine_fn_config_makefile dlls/bluetoothapis/tests enable_tests
 wine_fn_config_makefile dlls/browseui enable_browseui
 wine_fn_config_makefile dlls/browseui/tests enable_tests
 wine_fn_config_makefile dlls/bthprops.cpl enable_bthprops_cpl
