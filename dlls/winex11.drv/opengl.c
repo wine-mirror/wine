@@ -1098,7 +1098,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
     RECT rect;
     int width, height;
 
-    NtUserGetClientRect( hwnd, &rect, get_win_monitor_dpi( hwnd ) );
+    NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
     width  = min( max( 1, rect.right ), 65535 );
     height = min( max( 1, rect.bottom ), 65535 );
 
@@ -2728,7 +2728,7 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
     XWindowChanges changes;
     RECT rect;
 
-    NtUserGetClientRect( gl->hwnd, &rect, get_win_monitor_dpi( gl->hwnd ) );
+    NtUserGetClientRect( gl->hwnd, &rect, NtUserGetDpiForWindow( gl->hwnd ) );
     if (EqualRect( &rect, &gl->rect )) return;
 
     changes.width  = min( max( 1, rect.right ), 65535 );
