@@ -1464,6 +1464,170 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
     return errorlevel;
 }
 
+struct search_command
+{
+    WCHAR path[MAX_PATH];
+    BOOL has_path; /* if input has path part (ie cannot be a builtin command) */
+    BOOL has_extension; /* if extension was given to input */
+};
+
+static RETURN_CODE search_command(WCHAR *command, struct search_command *sc)
+{
+    WCHAR  temp[MAX_PATH];
+    WCHAR  pathtosearch[MAXSTRING];
+    WCHAR *pathposn;
+    WCHAR  stemofsearch[MAX_PATH];    /* maximum allowed executable name is
+                                         MAX_PATH, including null character */
+    WCHAR *lastSlash;
+    WCHAR  pathext[MAXSTRING];
+    WCHAR *firstParam;
+    DWORD len;
+
+    /* Quick way to get the filename is to extract the first argument. */
+    firstParam = WCMD_parameter(command, 0, NULL, FALSE, TRUE);
+
+    if (!firstParam[0])
+    {
+        sc->path[0] = L'\0';
+        return NO_ERROR;
+    }
+
+    /* Calculate the search path and stem to search for */
+    if (wcspbrk(firstParam, L"/\\:") == NULL)
+    {  /* No explicit path given, search path */
+        wcscpy(pathtosearch, L".;");
+        len = GetEnvironmentVariableW(L"PATH", &pathtosearch[2], ARRAY_SIZE(pathtosearch)-2);
+        if (len == 0 || len >= ARRAY_SIZE(pathtosearch) - 2)
+            wcscpy(pathtosearch, L".");
+        sc->has_extension = wcschr(firstParam, L'.') != NULL;
+        if (wcslen(firstParam) >= MAX_PATH)
+        {
+            WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_LINETOOLONG));
+            return ERROR_INVALID_FUNCTION;
+        }
+
+        wcscpy(stemofsearch, firstParam);
+        sc->has_path = FALSE;
+    }
+    else
+    {
+        /* Convert eg. ..\fred to include a directory by removing file part */
+        if (!WCMD_get_fullpath(firstParam, ARRAY_SIZE(pathtosearch), pathtosearch, NULL))
+            return ERROR_INVALID_FUNCTION;
+        lastSlash = wcsrchr(pathtosearch, L'\\');
+        sc->has_extension = wcschr(lastSlash ? lastSlash + 1 : firstParam, L'.') != NULL;
+        wcscpy(stemofsearch, lastSlash ? lastSlash + 1 : firstParam);
+
+        /* Reduce pathtosearch to a path with trailing '\' to support c:\a.bat and
+           c:\windows\a.bat syntax                                                 */
+        if (lastSlash) *(lastSlash + 1) = L'\0';
+        sc->has_path = TRUE;
+    }
+
+    /* Loop through the search path, dir by dir */
+    pathposn = pathtosearch;
+    WINE_TRACE("Searching in '%s' for '%s'\n", wine_dbgstr_w(pathtosearch),
+               wine_dbgstr_w(stemofsearch));
+    while (pathposn)
+    {
+        int    length            = 0;
+        WCHAR *pos               = NULL;
+        BOOL   found             = FALSE;
+        BOOL   inside_quotes     = FALSE;
+        DWORD  attribs;
+
+        sc->path[0] = L'\0';
+
+        if (sc->has_path)
+        {
+            wcscpy(sc->path, pathposn);
+            pathposn = NULL;
+        }
+        else
+        {
+            /* Work on the next directory on the search path */
+            pos = pathposn;
+            while ((inside_quotes || *pos != ';') && *pos != 0)
+            {
+                if (*pos == '"')
+                    inside_quotes = !inside_quotes;
+                pos++;
+            }
+
+            if (*pos)  /* Reached semicolon */
+            {
+                memcpy(sc->path, pathposn, (pos-pathposn) * sizeof(WCHAR));
+                sc->path[(pos-pathposn)] = 0x00;
+                pathposn = pos+1;
+            }
+            else       /* Reached string end */
+            {
+                wcscpy(sc->path, pathposn);
+                pathposn = NULL;
+            }
+
+            /* Remove quotes */
+            length = wcslen(sc->path);
+            if (sc->path[length - 1] == L'"')
+                sc->path[length - 1] = 0;
+
+            if (*sc->path != L'"')
+                wcscpy(temp, sc->path);
+            else
+                wcscpy(temp, sc->path + 1);
+
+            /* When temp is an empty string, skip over it. This needs
+               to be done before the expansion, because WCMD_get_fullpath
+               fails when given an empty string                         */
+            if (*temp == L'\0')
+                continue;
+
+            /* Since you can have eg. ..\.. on the path, need to expand
+               to full information                                      */
+            if (!WCMD_get_fullpath(temp, ARRAY_SIZE(sc->path), sc->path, NULL))
+                return ERROR_INVALID_FUNCTION;
+        }
+
+        if (wcslen(sc->path) + 1 + wcslen(stemofsearch) >= ARRAY_SIZE(sc->path))
+            return ERROR_INVALID_FUNCTION;
+
+        /* 1. If extension supplied, see if that file exists */
+        wcscat(sc->path, L"\\");
+        wcscat(sc->path, stemofsearch);
+
+        if (sc->has_extension)
+        {
+            attribs = GetFileAttributesW(sc->path);
+            found = attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY);
+        }
+        else
+        {
+            WCHAR *thisExt = pathext;
+            pos = &sc->path[wcslen(sc->path)]; /* Pos = end of name */
+            len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
+            if (len == 0 || len >= ARRAY_SIZE(pathext))
+                wcscpy(pathext, L".bat;.com;.cmd;.exe");
+
+            while (!found && thisExt)
+            {
+                WCHAR *nextExt = wcschr(thisExt, L';');
+
+                len = nextExt ? nextExt - thisExt : wcslen(thisExt);
+                if (pos - sc->path + len >= ARRAY_SIZE(sc->path))
+                    return ERROR_INVALID_FUNCTION;
+                memcpy(pos, thisExt, len * sizeof(WCHAR));
+                pos[len] = L'\0';
+                thisExt = nextExt ? nextExt + 1 : NULL;
+
+                attribs = GetFileAttributesW(sc->path);
+                found = attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY);
+            }
+        }
+        if (found) return NO_ERROR;
+    }
+    return RETURN_CODE_CANT_LAUNCH;
+}
+
 /******************************************************************************
  * WCMD_run_program
  *
@@ -1492,172 +1656,14 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
 
 RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
 {
-  WCHAR  temp[MAX_PATH];
-  WCHAR  pathtosearch[MAXSTRING];
-  WCHAR *pathposn;
-  WCHAR  stemofsearch[MAX_PATH];    /* maximum allowed executable name is
-                                       MAX_PATH, including null character */
-  WCHAR *lastSlash;
-  WCHAR  pathext[MAXSTRING];
-  WCHAR *firstParam;
-  BOOL  extensionsupplied = FALSE;
-  BOOL  explicit_path = FALSE;
-  DWORD len;
+  struct search_command sc;
+  RETURN_CODE return_code;
 
-  /* Quick way to get the filename is to extract the first argument. */
-  WINE_TRACE("Running '%s' (%d)\n", wine_dbgstr_w(command), called);
-  firstParam = WCMD_parameter(command, 0, NULL, FALSE, TRUE);
-
-  if (!firstParam[0]) return NO_ERROR;
-
-  /* Calculate the search path and stem to search for */
-  if (wcspbrk(firstParam, L"/\\:") == NULL) {  /* No explicit path given, search path */
-    lstrcpyW(pathtosearch, L".;");
-    len = GetEnvironmentVariableW(L"PATH", &pathtosearch[2], ARRAY_SIZE(pathtosearch)-2);
-    if ((len == 0) || (len >= ARRAY_SIZE(pathtosearch) - 2)) {
-      lstrcpyW(pathtosearch, L".");
-    }
-    if (wcschr(firstParam, '.') != NULL) extensionsupplied = TRUE;
-    if (lstrlenW(firstParam) >= MAX_PATH)
-    {
-        WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_LINETOOLONG));
-        return ERROR_INVALID_FUNCTION;
-    }
-
-    lstrcpyW(stemofsearch, firstParam);
-
-  } else {
-
-    /* Convert eg. ..\fred to include a directory by removing file part */
-    if (!WCMD_get_fullpath(firstParam, ARRAY_SIZE(pathtosearch), pathtosearch, NULL))
-        return ERROR_INVALID_FUNCTION;
-    lastSlash = wcsrchr(pathtosearch, '\\');
-    if (lastSlash && wcschr(lastSlash, '.') != NULL) extensionsupplied = TRUE;
-    lstrcpyW(stemofsearch, lastSlash+1);
-
-    /* Reduce pathtosearch to a path with trailing '\' to support c:\a.bat and
-       c:\windows\a.bat syntax                                                 */
-    if (lastSlash) *(lastSlash + 1) = 0x00;
-    explicit_path = TRUE;
-  }
-
-  /* Now extract PATHEXT */
-  len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
-  if ((len == 0) || (len >= ARRAY_SIZE(pathext))) {
-    lstrcpyW(pathext, L".bat;.com;.cmd;.exe");
-  }
-
-  /* Loop through the search path, dir by dir */
-  pathposn = pathtosearch;
-  WINE_TRACE("Searching in '%s' for '%s'\n", wine_dbgstr_w(pathtosearch),
-             wine_dbgstr_w(stemofsearch));
-  while (pathposn) {
-    WCHAR  thisDir[MAX_PATH] = {'\0'};
-    int    length            = 0;
-    WCHAR *pos               = NULL;
-    BOOL  found             = FALSE;
-    BOOL inside_quotes      = FALSE;
-    DWORD attribs;
-
-    if (explicit_path)
-    {
-        lstrcpyW(thisDir, pathposn);
-        pathposn = NULL;
-    }
-    else
-    {
-        /* Work on the next directory on the search path */
-        pos = pathposn;
-        while ((inside_quotes || *pos != ';') && *pos != 0)
-        {
-            if (*pos == '"')
-                inside_quotes = !inside_quotes;
-            pos++;
-        }
-
-        if (*pos)  /* Reached semicolon */
-        {
-            memcpy(thisDir, pathposn, (pos-pathposn) * sizeof(WCHAR));
-            thisDir[(pos-pathposn)] = 0x00;
-            pathposn = pos+1;
-        }
-        else       /* Reached string end */
-        {
-            lstrcpyW(thisDir, pathposn);
-            pathposn = NULL;
-        }
-
-        /* Remove quotes */
-        length = lstrlenW(thisDir);
-        if (thisDir[length - 1] == '"')
-            thisDir[length - 1] = 0;
-
-        if (*thisDir != '"')
-            lstrcpyW(temp, thisDir);
-        else
-            lstrcpyW(temp, thisDir + 1);
-
-        /* When temp is an empty string, skip over it. This needs
-           to be done before the expansion, because WCMD_get_fullpath
-           fails when given an empty string                         */
-        if (*temp == '\0')
-            continue;
-
-        /* Since you can have eg. ..\.. on the path, need to expand
-           to full information                                      */
-        if (!WCMD_get_fullpath(temp, ARRAY_SIZE(thisDir), thisDir, NULL))
-            return ERROR_INVALID_FUNCTION;
-    }
-
-    /* 1. If extension supplied, see if that file exists */
-    lstrcatW(thisDir, L"\\");
-    lstrcatW(thisDir, stemofsearch);
-    pos = &thisDir[lstrlenW(thisDir)]; /* Pos = end of name */
-
-    /* 1. If extension supplied, see if that file exists */
-    if (extensionsupplied) {
-      attribs = GetFileAttributesW(thisDir);
-      if (attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY)) {
-        found = TRUE;
-      }
-    }
-
-    /* 2. Any .* matches? */
-    if (!found) {
-      HANDLE          h;
-      WIN32_FIND_DATAW finddata;
-
-      lstrcatW(thisDir, L".*");
-      h = FindFirstFileW(thisDir, &finddata);
-      FindClose(h);
-      if (h != INVALID_HANDLE_VALUE) {
-
-        WCHAR *thisExt = pathext;
-
-        /* 3. Yes - Try each path ext */
-        while (thisExt) {
-          WCHAR *nextExt = wcschr(thisExt, ';');
-
-          if (nextExt) {
-            memcpy(pos, thisExt, (nextExt-thisExt) * sizeof(WCHAR));
-            pos[(nextExt-thisExt)] = 0x00;
-            thisExt = nextExt+1;
-          } else {
-            lstrcpyW(pos, thisExt);
-            thisExt = NULL;
-          }
-
-          attribs = GetFileAttributesW(thisDir);
-          if (attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY)) {
-            found = TRUE;
-            thisExt = NULL;
-          }
-        }
-      }
-    }
-
-    if (found)
-      return run_full_path(thisDir, command, called);
+  return_code = search_command(command, &sc);
+  if (return_code == NO_ERROR)
+  {
+      if (!*sc.path) return NO_ERROR;
+      return run_full_path(sc.path, command, called);
   }
 
   /* Not found anywhere - were we called? */
