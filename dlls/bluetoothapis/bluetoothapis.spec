@@ -55,7 +55,7 @@
 @ stub BluetoothRemoveDevice
 @ stub BluetoothSdpEnumAttributes
 @ stub BluetoothSdpGetAttributeValue
-@ stub BluetoothSdpGetContainerElementData
+@ stdcall BluetoothSdpGetContainerElementData(ptr long ptr ptr)
 @ stdcall BluetoothSdpGetElementData(ptr long ptr)
 @ stub BluetoothSdpGetString
 @ stub BluetoothSendAuthenticationResponse

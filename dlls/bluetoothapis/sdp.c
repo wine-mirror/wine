@@ -256,3 +256,14 @@ DWORD WINAPI BluetoothSdpGetElementData( BYTE *stream, ULONG stream_size, SDP_EL
 
     return sdp_read_element_data( stream, stream_size, data, &read );
 }
+
+/*********************************************************************
+ *  BluetoothSdpGetContainerElementData
+ */
+DWORD WINAPI BluetoothSdpGetContainerElementData( BYTE *stream, ULONG stream_size,
+                                                  HBLUETOOTH_CONTAINER_ELEMENT *handle,
+                                                  SDP_ELEMENT_DATA *data )
+{
+    FIXME( "(%p, %lu, %p, %p) stub!\n", stream, stream_size, handle, data );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
