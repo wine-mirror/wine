@@ -202,7 +202,7 @@ struct wayland_surface
     BOOL resizing;
     struct wayland_window_config window;
     struct wayland_client_surface *client;
-    int buffer_width, buffer_height;
+    int content_width, content_height;
     HCURSOR hcursor;
 };
 

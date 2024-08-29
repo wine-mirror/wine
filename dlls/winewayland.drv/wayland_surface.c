@@ -304,8 +304,8 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
     wl_surface_attach(surface->wl_surface, NULL, 0, 0);
     wl_surface_commit(surface->wl_surface);
 
-    surface->buffer_width = 0;
-    surface->buffer_height = 0;
+    surface->content_width = 0;
+    surface->content_height = 0;
 
     wl_display_flush(process_wayland.wl_display);
 }
@@ -351,8 +351,8 @@ void wayland_surface_attach_shm(struct wayland_surface *surface,
         free(surface_damage);
     }
 
-    surface->buffer_width = shm_buffer->width;
-    surface->buffer_height = shm_buffer->height;
+    surface->content_width = shm_buffer->width;
+    surface->content_height = shm_buffer->height;
 }
 
 /**********************************************************************
@@ -866,8 +866,8 @@ void wayland_surface_ensure_contents(struct wayland_surface *surface)
     width = surface->window.rect.right - surface->window.rect.left;
     height = surface->window.rect.bottom - surface->window.rect.top;
     needs_contents = surface->window.visible &&
-                     (surface->buffer_width != width ||
-                      surface->buffer_height != height);
+                     (surface->content_width != width ||
+                      surface->content_height != height);
 
     TRACE("surface=%p hwnd=%p needs_contents=%d\n",
           surface, surface->hwnd, needs_contents);
