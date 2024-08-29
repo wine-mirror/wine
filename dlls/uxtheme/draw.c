@@ -250,7 +250,7 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, int iPartId, int iStat
                 BOOL hasAlpha;
 
                 lstrcpynW(szPath, fileProp->lpValue, min(fileProp->dwValueLen+1, ARRAY_SIZE(szPath)));
-                hBmp = MSSTYLES_LoadBitmap(hTheme, szPath, &hasAlpha);
+                hBmp = MSSTYLES_LoadBitmap(hTheme, szPath, &hasAlpha, NULL);
                 if(!hBmp) continue;
 
                 GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_IMAGELAYOUT, &imagelayout);
@@ -289,7 +289,7 @@ static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, int iPartId, int iStat
  */
 static HRESULT UXTHEME_LoadImage(HTHEME hTheme, int iPartId, int iStateId, const RECT *pRect,
                                  BOOL glyph, HBITMAP *hBmp, RECT *bmpRect, BOOL *hasImageAlpha,
-                                 int *imageDpi)
+                                 BOOL *hasDefaultTransparentColour, int *imageDpi)
 {
     int imagelayout = IL_HORIZONTAL;
     int imagecount = 1;
@@ -304,7 +304,7 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, int iPartId, int iStateId, const
         return E_PROP_ID_UNSUPPORTED;
     }
     lstrcpynW(szPath, tp->lpValue, min(tp->dwValueLen+1, ARRAY_SIZE(szPath)));
-    *hBmp = MSSTYLES_LoadBitmap(hTheme, szPath, hasImageAlpha);
+    *hBmp = MSSTYLES_LoadBitmap(hTheme, szPath, hasImageAlpha, hasDefaultTransparentColour);
     if(!*hBmp) {
         TRACE("Failed to load bitmap %s\n", debugstr_w(szPath));
         return HRESULT_FROM_WIN32(GetLastError());
@@ -496,7 +496,7 @@ static inline BOOL UXTHEME_SizedBlt (HDC hdcDst, int nXOriginDst, int nYOriginDs
  * depend on whether the image has full alpha  or whether it is 
  * color-transparent or just opaque. */
 static inline void get_transparency (HTHEME hTheme, int iPartId, int iStateId, 
-                                     BOOL hasImageAlpha, INT* transparent,
+                                     BOOL hasImageAlpha, BOOL hasDefaultTransparentColour, INT* transparent,
                                      COLORREF* transparentcolor, BOOL glyph)
 {
     if (hasImageAlpha)
@@ -516,6 +516,8 @@ static inline void get_transparency (HTHEME hTheme, int iPartId, int iStateId,
                 transparentcolor))) {
                 *transparentcolor = DEFAULT_TRANSPARENT_COLOR;
             }
+            if (!hasDefaultTransparentColour && *transparentcolor == DEFAULT_TRANSPARENT_COLOR)
+                *transparent = ALPHABLEND_NONE;
         }
         else
             *transparent = ALPHABLEND_NONE;
@@ -541,7 +543,7 @@ static void reset_dc_alpha_values(HTHEME htheme, HDC hdc, int part_id, int state
         return;
 
     if (FAILED(UXTHEME_LoadImage(htheme, part_id, state_id, rect, FALSE, &hbmp, &image_rect,
-                                 &has_alpha, NULL)) || has_alpha)
+                                 &has_alpha, NULL, NULL)) || has_alpha)
         return;
 
     bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -576,10 +578,10 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
     POINT dstSize;
     POINT srcSize;
     POINT topleft;
-    BOOL hasAlpha;
+    BOOL hasAlpha, hasDefaultTransparentColour;
 
     hr = UXTHEME_LoadImage(hTheme, iPartId, iStateId, pRect, TRUE, &bmpSrc, &rcSrc, &hasAlpha,
-                           NULL);
+                           &hasDefaultTransparentColour, NULL);
     if(FAILED(hr)) return hr;
     hdcSrc = CreateCompatibleDC(hdc);
     if(!hdcSrc) {
@@ -593,8 +595,8 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
     srcSize.x = rcSrc.right-rcSrc.left;
     srcSize.y = rcSrc.bottom-rcSrc.top;
 
-    get_transparency (hTheme, iPartId, iStateId, hasAlpha, &transparent,
-        &transparentcolor, TRUE);
+    get_transparency (hTheme, iPartId, iStateId, hasAlpha, hasDefaultTransparentColour, &transparent,
+                      &transparentcolor, TRUE);
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_VALIGN, &valign);
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_HALIGN, &halign);
 
@@ -659,7 +661,7 @@ static HRESULT get_image_part_size(HTHEME hTheme, int iPartId, int iStateId, REC
     BOOL hasAlpha;
 
     hr = UXTHEME_LoadImage(hTheme, iPartId, iStateId, prc, FALSE, &bmpSrc, &rcSrc, &hasAlpha,
-                           &imageDpi);
+                           NULL, &imageDpi);
     if (FAILED(hr)) return hr;
 
     switch (eSize)
@@ -760,10 +762,10 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     int sizingtype = ST_STRETCH;
     INT transparent;
     COLORREF transparentcolor = 0;
-    BOOL hasAlpha;
+    BOOL hasAlpha, hasDefaultTransparentColour;
 
     hr = UXTHEME_LoadImage(hTheme, iPartId, iStateId, pRect, FALSE, &bmpSrc, &rcSrc, &hasAlpha,
-                           NULL);
+                           &hasDefaultTransparentColour, NULL);
     if(FAILED(hr)) return hr;
     hdcSrc = CreateCompatibleDC(hdc);
     if(!hdcSrc) {
@@ -774,7 +776,7 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
 
     rcDst = *pRect;
     
-    get_transparency (hTheme, iPartId, iStateId, hasAlpha, &transparent,
+    get_transparency (hTheme, iPartId, iStateId, hasAlpha, hasDefaultTransparentColour, &transparent,
         &transparentcolor, FALSE);
 
     dstSize.x = rcDst.right-rcDst.left;
@@ -2224,10 +2226,10 @@ BOOL WINAPI IsThemeBackgroundPartiallyTransparent(HTHEME hTheme, int iPartId,
     if (bgtype != BT_IMAGEFILE) return FALSE;
 
     if (FAILED(UXTHEME_LoadImage(hTheme, iPartId, iStateId, &rect, FALSE, &bmpSrc, &rcSrc,
-                                 &hasAlpha, NULL)))
+                                 &hasAlpha, NULL, NULL)))
         return FALSE;
 
-    get_transparency (hTheme, iPartId, iStateId, hasAlpha, &transparent,
+    get_transparency (hTheme, iPartId, iStateId, hasAlpha, TRUE, &transparent,
         &transparentcolor, FALSE);
     return (transparent != ALPHABLEND_NONE);
 }

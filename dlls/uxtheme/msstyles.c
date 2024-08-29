@@ -1181,19 +1181,43 @@ PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId
 }
 
 /* Prepare a bitmap to be used for alpha blending */
-static BOOL prepare_alpha (HBITMAP bmp, BOOL* hasAlpha)
+static BOOL prepare_alpha (HBITMAP bmp, BOOL* hasAlpha, BOOL *hasDefaultTransparentColour)
 {
     DIBSECTION dib;
-    int n;
+    int n, stride;
     BYTE* p;
 
     *hasAlpha = FALSE;
+    *hasDefaultTransparentColour = FALSE;
 
     if (!bmp || GetObjectW( bmp, sizeof(dib), &dib ) != sizeof(dib))
         return FALSE;
 
-    if (dib.dsBm.bmBitsPixel != 32 || dib.dsBmih.biCompression != BI_RGB)
-        /* nothing to do */
+    if (dib.dsBmih.biCompression != BI_RGB)
+        return TRUE;
+
+    if (dib.dsBm.bmBitsPixel == 24)
+    {
+        int y;
+
+        stride = (dib.dsBmih.biWidth * 3 + 3) & ~3;
+        p = dib.dsBm.bmBits;
+        for (y = 0; y < dib.dsBmih.biHeight; ++y)
+        {
+            p = (BYTE *)dib.dsBm.bmBits + stride * y;
+            for (n = 0; n < dib.dsBmih.biWidth; ++n, p += 3)
+            {
+                if (RGB(p[0], p[1], p[2]) == DEFAULT_TRANSPARENT_COLOR)
+                {
+                    *hasDefaultTransparentColour = TRUE;
+                    return TRUE;
+                }
+            }
+        }
+        return TRUE;
+    }
+
+    if (dib.dsBm.bmBitsPixel != 32)
         return TRUE;
 
     /* If all alpha values are 0xff, don't use alpha blending */
@@ -1219,11 +1243,13 @@ static BOOL prepare_alpha (HBITMAP bmp, BOOL* hasAlpha)
     return TRUE;
 }
 
-HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha)
+HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha, BOOL *hasDefaultTransparentColour)
 {
     WCHAR szFile[MAX_PATH];
     LPWSTR tmp;
     PTHEME_IMAGE img;
+    BOOL has_default;
+
     lstrcpynW(szFile, lpFilename, ARRAY_SIZE(szFile));
     tmp = szFile;
     do {
@@ -1240,6 +1266,8 @@ HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha
         {
             TRACE ("found %p %s: %p\n", img, debugstr_w (img->name), img->image);
             *hasAlpha = img->hasAlpha;
+            if (hasDefaultTransparentColour)
+                *hasDefaultTransparentColour = img->hasDefaultTransparentColour;
             return img->image;
         }
         img = img->next;
@@ -1247,8 +1275,11 @@ HBITMAP MSSTYLES_LoadBitmap (PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha
     /* Not found? Load from resources */
     img = malloc(sizeof(*img));
     img->image = LoadImageW(tc->hTheme, szFile, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-    prepare_alpha (img->image, hasAlpha);
+    prepare_alpha (img->image, hasAlpha, &has_default);
     img->hasAlpha = *hasAlpha;
+    img->hasDefaultTransparentColour = has_default;
+    if (hasDefaultTransparentColour)
+        *hasDefaultTransparentColour = has_default;
     /* ...and stow away for later reuse. */
     lstrcpyW (img->name, szFile);
     img->next = tc->tf->images;
