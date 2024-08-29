@@ -373,3 +373,13 @@ BOOL WINAPI BluetoothSdpEnumAttributes( BYTE *stream, ULONG stream_size,
             return TRUE;
     }
 }
+
+/*********************************************************************
+ *  BluetoothSdpGetAttributeValue
+ */
+DWORD WINAPI BluetoothSdpGetAttributeValue( BYTE *stream, ULONG stream_size, USHORT attr_id,
+                                            SDP_ELEMENT_DATA *data )
+{
+    FIXME( "(%p %lu %u %p) stub!\n", stream, stream_size, attr_id, data );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

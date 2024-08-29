@@ -39,7 +39,7 @@
 @ stub BluetoothRegisterForAuthentication
 @ stub BluetoothRemoveDevice
 @ stdcall -import BluetoothSdpEnumAttributes(ptr long ptr ptr)
-@ stub BluetoothSdpGetAttributeValue
+@ stdcall -import BluetoothSdpGetAttributeValue(ptr long long ptr)
 @ stdcall -import BluetoothSdpGetContainerElementData(ptr long ptr ptr)
 @ stdcall -import BluetoothSdpGetElementData(ptr long ptr)
 @ stub BluetoothSdpGetString
