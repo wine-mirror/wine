@@ -494,6 +494,7 @@ static int chomp( const WCHAR *in, WCHAR *out )
             case '"':
                 state = CS_QUOTE;
                 count++;
+                ignore = FALSE;
                 break;
             default:
                 count++;
@@ -507,6 +508,7 @@ static int chomp( const WCHAR *in, WCHAR *out )
             {
             case '"':
                 state = CS_QUOTE;
+                ignore = FALSE;
                 break;
             case ' ':
                 state = CS_WHITESPACE;
@@ -527,6 +529,7 @@ static int chomp( const WCHAR *in, WCHAR *out )
             {
             case '"':
                 state = CS_TOKEN;
+                ignore = FALSE;
                 break;
             default:
                 ignore = FALSE;
@@ -628,6 +631,23 @@ static WCHAR *get_path_with_extension(const WCHAR *package_name)
     return path;
 }
 
+static WCHAR *remove_quotes( const WCHAR *filename )
+{
+    const WCHAR *ptr = filename;
+    int len = wcslen( filename );
+    WCHAR *ret;
+
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+    if (*ptr == '"')
+    {
+        ptr++;
+        len--;
+    }
+    wcscpy( ret, ptr );
+    if (len && ret[len - 1] == '"') ret[len - 1] = 0;
+    return ret;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	int i;
@@ -666,7 +686,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DWORD ReturnCode;
 	int argc;
 	LPWSTR *argvW = NULL;
-	WCHAR *path;
+	WCHAR *path, *package_unquoted;
 
         InitCommonControls();
 
@@ -1075,15 +1095,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if(FunctionInstallAdmin && FunctionPatch)
 		FunctionInstall = FALSE;
 
+    if (!(package_unquoted = remove_quotes( PackageName))) return ERROR_OUTOFMEMORY;
+
 	ReturnCode = 1;
 	if(FunctionInstall)
 	{
-		if(IsProductCode(PackageName))
-			ReturnCode = MsiConfigureProductExW(PackageName, 0, INSTALLSTATE_DEFAULT, Properties);
+		if(IsProductCode(package_unquoted))
+			ReturnCode = MsiConfigureProductExW(package_unquoted, 0, INSTALLSTATE_DEFAULT, Properties);
 		else
 		{
-			if ((ReturnCode = MsiInstallProductW(PackageName, Properties)) == ERROR_FILE_NOT_FOUND
-					&& (path = get_path_with_extension(PackageName)))
+			if ((ReturnCode = MsiInstallProductW(package_unquoted, Properties)) == ERROR_FILE_NOT_FOUND
+					&& (path = get_path_with_extension(package_unquoted)))
 			{
 				ReturnCode = MsiInstallProductW(path, Properties);
 				free(path);
@@ -1092,12 +1114,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	else if(FunctionRepair)
 	{
-		if(IsProductCode(PackageName))
+		if(IsProductCode(package_unquoted))
 			WINE_FIXME("Product code treatment not implemented yet\n");
 		else
 		{
-			if ((ReturnCode = MsiReinstallProductW(PackageName, RepairMode)) == ERROR_FILE_NOT_FOUND
-					&& (path = get_path_with_extension(PackageName)))
+			if ((ReturnCode = MsiReinstallProductW(package_unquoted, RepairMode)) == ERROR_FILE_NOT_FOUND
+					&& (path = get_path_with_extension(package_unquoted)))
 			{
 				ReturnCode = MsiReinstallProductW(path, RepairMode);
 				free(path);
@@ -1107,11 +1129,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	else if(FunctionAdvertise)
 	{
 		LPWSTR Transforms = build_transforms( property_list );
-		ReturnCode = MsiAdvertiseProductW(PackageName, (LPWSTR) AdvertiseMode, Transforms, Language);
+		ReturnCode = MsiAdvertiseProductW(package_unquoted, (LPWSTR) AdvertiseMode, Transforms, Language);
 	}
 	else if(FunctionPatch)
 	{
-		ReturnCode = MsiApplyPatchW(PatchFileName, PackageName, InstallType, Properties);
+		ReturnCode = MsiApplyPatchW(PatchFileName, package_unquoted, InstallType, Properties);
 	}
 	else if(FunctionDllRegisterServer)
 	{
@@ -1140,5 +1162,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	else
 		ShowUsage(1);
 
+    free( package_unquoted );
 	return ReturnCode;
 }
