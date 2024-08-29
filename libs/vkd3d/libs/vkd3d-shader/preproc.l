@@ -408,7 +408,7 @@ int yylex(YYSTYPE *lval, YYLTYPE *lloc, yyscan_t scanner)
             }
             ctx->last_was_eof = false;
 
-            assert(ctx->file_count);
+            VKD3D_ASSERT(ctx->file_count);
             if (!(token = preproc_lexer_lex(lval, lloc, scanner)))
             {
                 ctx->last_was_eof = true;
@@ -646,7 +646,7 @@ int yylex(YYSTYPE *lval, YYLTYPE *lloc, yyscan_t scanner)
             {
                 struct preproc_text *current_arg = NULL;
 
-                assert(func_state->macro->arg_count);
+                VKD3D_ASSERT(func_state->macro->arg_count);
 
                 if (func_state->arg_count < func_state->macro->arg_count)
                     current_arg = &func_state->macro->arg_values[func_state->arg_count];

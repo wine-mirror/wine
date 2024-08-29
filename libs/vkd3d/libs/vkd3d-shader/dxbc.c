@@ -29,7 +29,7 @@ void dxbc_writer_add_section(struct dxbc_writer *dxbc, uint32_t tag, const void 
 {
     struct vkd3d_shader_dxbc_section_desc *section;
 
-    assert(dxbc->section_count < ARRAY_SIZE(dxbc->sections));
+    VKD3D_ASSERT(dxbc->section_count < ARRAY_SIZE(dxbc->sections));
 
     section = &dxbc->sections[dxbc->section_count++];
     section->tag = tag;
@@ -983,7 +983,7 @@ static int shader_parse_root_signature(const struct vkd3d_shader_code *data,
     {
         struct vkd3d_shader_root_signature_desc1 *v_1_1 = &desc->u.v_1_1;
 
-        assert(version == VKD3D_SHADER_ROOT_SIGNATURE_VERSION_1_1);
+        VKD3D_ASSERT(version == VKD3D_SHADER_ROOT_SIGNATURE_VERSION_1_1);
 
         v_1_1->parameter_count = count;
         if (v_1_1->parameter_count)
@@ -1777,7 +1777,7 @@ int vkd3d_shader_convert_root_signature(struct vkd3d_shader_versioned_root_signa
     }
     else
     {
-        assert(version == VKD3D_SHADER_ROOT_SIGNATURE_VERSION_1_1);
+        VKD3D_ASSERT(version == VKD3D_SHADER_ROOT_SIGNATURE_VERSION_1_1);
         ret = convert_root_signature_to_v1_1(dst, src);
     }
 

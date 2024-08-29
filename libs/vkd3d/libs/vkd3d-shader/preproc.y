@@ -119,7 +119,7 @@ bool preproc_add_macro(struct preproc_ctx *ctx, const struct vkd3d_shader_locati
     macro->body.text = *body;
     macro->body.location = *body_loc;
     ret = rb_put(&ctx->macros, name, &macro->entry);
-    assert(!ret);
+    VKD3D_ASSERT(!ret);
     return true;
 }
 

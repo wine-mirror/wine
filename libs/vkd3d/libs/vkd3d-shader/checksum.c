@@ -288,7 +288,7 @@ void vkd3d_compute_dxbc_checksum(const void *dxbc, size_t size, uint32_t checksu
     const uint8_t *ptr = dxbc;
     struct md5_ctx ctx;
 
-    assert(size > DXBC_CHECKSUM_SKIP_BYTE_COUNT);
+    VKD3D_ASSERT(size > DXBC_CHECKSUM_SKIP_BYTE_COUNT);
     ptr += DXBC_CHECKSUM_SKIP_BYTE_COUNT;
     size -= DXBC_CHECKSUM_SKIP_BYTE_COUNT;
 

@@ -22,7 +22,6 @@
 
 #include "vkd3d_common.h"
 
-#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -45,11 +44,12 @@ extern const char *const vkd3d_dbg_env_name;
 
 static const char *const debug_level_names[] =
 {
-    [VKD3D_DBG_LEVEL_NONE ] = "none",
-    [VKD3D_DBG_LEVEL_ERR  ] = "err",
-    [VKD3D_DBG_LEVEL_FIXME] = "fixme",
-    [VKD3D_DBG_LEVEL_WARN ] = "warn",
-    [VKD3D_DBG_LEVEL_TRACE] = "trace",
+    [VKD3D_DBG_LEVEL_NONE ] =   "none",
+    [VKD3D_DBG_LEVEL_MESSAGE] = "message",
+    [VKD3D_DBG_LEVEL_ERR  ] =   "err",
+    [VKD3D_DBG_LEVEL_FIXME] =   "fixme",
+    [VKD3D_DBG_LEVEL_WARN ] =   "warn",
+    [VKD3D_DBG_LEVEL_TRACE] =   "trace",
 };
 
 enum vkd3d_dbg_level vkd3d_dbg_get_level(void)
@@ -103,8 +103,6 @@ void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const ch
 
     if (vkd3d_dbg_get_level() < level)
         return;
-
-    assert(level < ARRAY_SIZE(debug_level_names));
 
 #ifdef _WIN32
     vkd3d_dbg_output("vkd3d:%04lx:%s:%s ", GetCurrentThreadId(), debug_level_names[level], function);

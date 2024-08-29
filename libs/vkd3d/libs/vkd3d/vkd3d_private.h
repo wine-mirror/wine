@@ -37,7 +37,6 @@
 #include "vkd3d.h"
 #include "vkd3d_shader.h"
 
-#include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -123,6 +122,7 @@ struct vkd3d_vulkan_info
     bool KHR_image_format_list;
     bool KHR_maintenance2;
     bool KHR_maintenance3;
+    bool KHR_portability_subset;
     bool KHR_push_descriptor;
     bool KHR_sampler_mirror_clamp_to_edge;
     bool KHR_timeline_semaphore;
@@ -145,6 +145,8 @@ struct vkd3d_vulkan_info
 
     bool rasterization_stream;
     bool transform_feedback_queries;
+    bool geometry_shaders;
+    bool tessellation_shaders;
 
     bool uav_read_without_format;
 
@@ -676,7 +678,7 @@ static inline void *d3d12_desc_get_object_ref(const volatile struct d3d12_desc *
     void *view;
 
     /* Some games, e.g. Shadow of the Tomb Raider, GRID 2019, and Horizon Zero Dawn, write descriptors
-     * from multiple threads without syncronisation. This is apparently valid in Windows. */
+     * from multiple threads without synchronisation. This is apparently valid in Windows. */
     for (;;)
     {
         do
@@ -784,8 +786,8 @@ extern const enum vkd3d_vk_descriptor_set_index vk_descriptor_set_index_table[];
 static inline enum vkd3d_vk_descriptor_set_index vkd3d_vk_descriptor_set_index_from_vk_descriptor_type(
         VkDescriptorType type)
 {
-    assert(type <= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    assert(vk_descriptor_set_index_table[type] < VKD3D_SET_INDEX_COUNT);
+    VKD3D_ASSERT(type <= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    VKD3D_ASSERT(vk_descriptor_set_index_table[type] < VKD3D_SET_INDEX_COUNT);
 
     return vk_descriptor_set_index_table[type];
 }
@@ -1229,7 +1231,7 @@ enum vkd3d_pipeline_bind_point
 /* ID3D12CommandList */
 struct d3d12_command_list
 {
-    ID3D12GraphicsCommandList5 ID3D12GraphicsCommandList5_iface;
+    ID3D12GraphicsCommandList6 ID3D12GraphicsCommandList6_iface;
     unsigned int refcount;
 
     D3D12_COMMAND_LIST_TYPE type;
@@ -1753,7 +1755,6 @@ static inline void vk_prepend_struct(void *header, void *structure)
 {
     VkBaseOutStructure *vk_header = header, *vk_structure = structure;
 
-    assert(!vk_structure->pNext);
     vk_structure->pNext = vk_header->pNext;
     vk_header->pNext = vk_structure;
 }
@@ -1766,7 +1767,7 @@ static inline void vkd3d_prepend_struct(void *header, void *structure)
         const void *next;
     } *vkd3d_header = header, *vkd3d_structure = structure;
 
-    assert(!vkd3d_structure->next);
+    VKD3D_ASSERT(!vkd3d_structure->next);
     vkd3d_structure->next = vkd3d_header->next;
     vkd3d_header->next = vkd3d_structure;
 }

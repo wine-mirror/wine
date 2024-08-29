@@ -51,7 +51,6 @@
 #include "vkd3d_shader.h"
 #include "wine/list.h"
 
-#include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -151,6 +150,8 @@ enum vkd3d_shader_error
     VKD3D_SHADER_ERROR_HLSL_DUPLICATE_SWITCH_CASE       = 5028,
     VKD3D_SHADER_ERROR_HLSL_MISSING_TECHNIQUE           = 5029,
     VKD3D_SHADER_ERROR_HLSL_UNKNOWN_MODIFIER            = 5030,
+    VKD3D_SHADER_ERROR_HLSL_INVALID_STATE_BLOCK_ENTRY   = 5031,
+    VKD3D_SHADER_ERROR_HLSL_FAILED_FORCED_UNROLL        = 5032,
 
     VKD3D_SHADER_WARNING_HLSL_IMPLICIT_TRUNCATION       = 5300,
     VKD3D_SHADER_WARNING_HLSL_DIVISION_BY_ZERO          = 5301,
@@ -455,6 +456,10 @@ enum vkd3d_shader_opcode
     VKD3DSIH_PHASE,
     VKD3DSIH_PHI,
     VKD3DSIH_POW,
+    VKD3DSIH_QUAD_READ_ACROSS_D,
+    VKD3DSIH_QUAD_READ_ACROSS_X,
+    VKD3DSIH_QUAD_READ_ACROSS_Y,
+    VKD3DSIH_QUAD_READ_LANE_AT,
     VKD3DSIH_RCP,
     VKD3DSIH_REP,
     VKD3DSIH_RESINFO,
@@ -613,6 +618,7 @@ enum vkd3d_shader_register_type
     VKD3DSPR_SSA,
     VKD3DSPR_WAVELANECOUNT,
     VKD3DSPR_WAVELANEINDEX,
+    VKD3DSPR_PARAMETER,
 
     VKD3DSPR_COUNT,
 
@@ -805,6 +811,7 @@ enum vkd3d_tessellator_domain
 
 #define VKD3DSI_NONE                    0x0
 #define VKD3DSI_TEXLD_PROJECT           0x1
+#define VKD3DSI_TEXLD_BIAS              0x2
 #define VKD3DSI_INDEXED_DYNAMIC         0x4
 #define VKD3DSI_RESINFO_RCP_FLOAT       0x1
 #define VKD3DSI_RESINFO_UINT            0x2
@@ -1189,7 +1196,7 @@ struct vkd3d_shader_location
 struct vkd3d_shader_instruction
 {
     struct vkd3d_shader_location location;
-    enum vkd3d_shader_opcode handler_idx;
+    enum vkd3d_shader_opcode opcode;
     uint32_t flags;
     unsigned int dst_count;
     unsigned int src_count;
@@ -1238,8 +1245,8 @@ static inline bool vkd3d_shader_ver_le(const struct vkd3d_shader_version *v, uns
     return v->major < major || (v->major == major && v->minor <= minor);
 }
 
-void vsir_instruction_init(struct vkd3d_shader_instruction *ins, const struct vkd3d_shader_location *location,
-        enum vkd3d_shader_opcode handler_idx);
+void vsir_instruction_init(struct vkd3d_shader_instruction *ins,
+        const struct vkd3d_shader_location *location, enum vkd3d_shader_opcode opcode);
 
 static inline bool vkd3d_shader_instruction_has_texel_offset(const struct vkd3d_shader_instruction *ins)
 {
@@ -1303,14 +1310,14 @@ void *shader_param_allocator_get(struct vkd3d_shader_param_allocator *allocator,
 static inline struct vkd3d_shader_src_param *shader_src_param_allocator_get(
         struct vkd3d_shader_param_allocator *allocator, unsigned int count)
 {
-    assert(allocator->stride == sizeof(struct vkd3d_shader_src_param));
+    VKD3D_ASSERT(allocator->stride == sizeof(struct vkd3d_shader_src_param));
     return shader_param_allocator_get(allocator, count);
 }
 
 static inline struct vkd3d_shader_dst_param *shader_dst_param_allocator_get(
         struct vkd3d_shader_param_allocator *allocator, unsigned int count)
 {
-    assert(allocator->stride == sizeof(struct vkd3d_shader_dst_param));
+    VKD3D_ASSERT(allocator->stride == sizeof(struct vkd3d_shader_dst_param));
     return shader_param_allocator_get(allocator, count);
 }
 
@@ -1355,6 +1362,10 @@ struct vsir_program
     struct shader_signature output_signature;
     struct shader_signature patch_constant_signature;
 
+    unsigned int parameter_count;
+    const struct vkd3d_shader_parameter1 *parameters;
+    bool free_parameters;
+
     unsigned int input_control_point_count, output_control_point_count;
     unsigned int flat_constant_count[3];
     unsigned int block_count;
@@ -1370,7 +1381,10 @@ void vsir_program_cleanup(struct vsir_program *program);
 int vsir_program_compile(struct vsir_program *program, uint64_t config_flags,
         const struct vkd3d_shader_compile_info *compile_info, struct vkd3d_shader_code *out,
         struct vkd3d_shader_message_context *message_context);
-bool vsir_program_init(struct vsir_program *program, const struct vkd3d_shader_version *version, unsigned int reserve);
+const struct vkd3d_shader_parameter1 *vsir_program_get_parameter(
+        const struct vsir_program *program, enum vkd3d_shader_parameter_name name);
+bool vsir_program_init(struct vsir_program *program, const struct vkd3d_shader_compile_info *compile_info,
+        const struct vkd3d_shader_version *version, unsigned int reserve);
 enum vkd3d_result vsir_program_normalise(struct vsir_program *program, uint64_t config_flags,
         const struct vkd3d_shader_compile_info *compile_info, struct vkd3d_shader_message_context *message_context);
 enum vkd3d_result vsir_program_validate(struct vsir_program *program, uint64_t config_flags,
@@ -1663,7 +1677,7 @@ static inline unsigned int vsir_write_mask_get_component_idx(uint32_t write_mask
 {
     unsigned int i;
 
-    assert(write_mask);
+    VKD3D_ASSERT(write_mask);
     for (i = 0; i < VKD3D_VEC4_SIZE; ++i)
     {
         if (write_mask & (VKD3DSP_WRITEMASK_0 << i))
@@ -1677,13 +1691,13 @@ static inline unsigned int vsir_write_mask_get_component_idx(uint32_t write_mask
 static inline unsigned int vsir_write_mask_component_count(uint32_t write_mask)
 {
     unsigned int count = vkd3d_popcount(write_mask & VKD3DSP_WRITEMASK_ALL);
-    assert(1 <= count && count <= VKD3D_VEC4_SIZE);
+    VKD3D_ASSERT(1 <= count && count <= VKD3D_VEC4_SIZE);
     return count;
 }
 
 static inline unsigned int vkd3d_write_mask_from_component_count(unsigned int component_count)
 {
-    assert(component_count <= VKD3D_VEC4_SIZE);
+    VKD3D_ASSERT(component_count <= VKD3D_VEC4_SIZE);
     return (VKD3DSP_WRITEMASK_0 << component_count) - 1;
 }
 

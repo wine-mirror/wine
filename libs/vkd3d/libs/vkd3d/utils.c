@@ -331,7 +331,7 @@ static HRESULT vkd3d_init_format_compatibility_lists(struct d3d12_device *device
 
         if (j >= current_list->format_count)
         {
-            assert(current_list->format_count < VKD3D_MAX_COMPATIBLE_FORMAT_COUNT);
+            VKD3D_ASSERT(current_list->format_count < VKD3D_MAX_COMPATIBLE_FORMAT_COUNT);
             current_list->vk_formats[current_list->format_count++] = vk_format;
         }
     }
@@ -427,7 +427,7 @@ static const struct vkd3d_format *vkd3d_get_depth_stencil_format(const struct d3
     const struct vkd3d_format *formats;
     unsigned int i;
 
-    assert(device);
+    VKD3D_ASSERT(device);
     formats = device->depth_stencil_formats;
 
     for (i = 0; i < ARRAY_SIZE(vkd3d_depth_stencil_formats); ++i)

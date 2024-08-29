@@ -46,11 +46,21 @@
 
 #define STATIC_ASSERT(e) extern void __VKD3D_STATIC_ASSERT__(int [(e) ? 1 : -1])
 
+#define VKD3D_ASSERT(cond) \
+        do { \
+            if (!(cond)) \
+                ERR("Failed assertion: %s\n", #cond); \
+        } while (0)
+
 #define MEMBER_SIZE(t, m) sizeof(((t *)0)->m)
 
 #define VKD3D_MAKE_TAG(ch0, ch1, ch2, ch3) \
         ((uint32_t)(ch0) | ((uint32_t)(ch1) << 8) \
         | ((uint32_t)(ch2) << 16) | ((uint32_t)(ch3) << 24))
+
+#define VKD3D_EXPAND(x) x
+#define VKD3D_STRINGIFY(x) #x
+#define VKD3D_EXPAND_AND_STRINGIFY(x) VKD3D_EXPAND(VKD3D_STRINGIFY(x))
 
 #define TAG_AON9 VKD3D_MAKE_TAG('A', 'o', 'n', '9')
 #define TAG_DXBC VKD3D_MAKE_TAG('D', 'X', 'B', 'C')
@@ -98,17 +108,11 @@ static inline uint64_t align(uint64_t addr, size_t alignment)
 # define VKD3D_UNREACHABLE (void)0
 #endif  /* __GNUC__ */
 
-VKD3D_NORETURN static inline void vkd3d_unreachable_(const char *filename, unsigned int line)
-{
-    fprintf(stderr, "%s:%u: Aborting, reached unreachable code.\n", filename, line);
-    abort();
-}
-
-#ifdef NDEBUG
-#define vkd3d_unreachable() VKD3D_UNREACHABLE
-#else
-#define vkd3d_unreachable() vkd3d_unreachable_(__FILE__, __LINE__)
-#endif
+#define vkd3d_unreachable() \
+        do { \
+            ERR("%s:%u: Unreachable code reached.\n", __FILE__, __LINE__); \
+            VKD3D_UNREACHABLE; \
+        } while (0)
 
 #ifdef VKD3D_NO_TRACE_MESSAGES
 #define TRACE(args...) do { } while (0)
@@ -118,11 +122,19 @@ VKD3D_NORETURN static inline void vkd3d_unreachable_(const char *filename, unsig
 #ifdef VKD3D_NO_DEBUG_MESSAGES
 #define WARN(args...) do { } while (0)
 #define FIXME(args...) do { } while (0)
+#define WARN_ON() (false)
+#define FIXME_ONCE(args...) do { } while (0)
+#endif
+
+#ifdef VKD3D_NO_ERROR_MESSAGES
+#define ERR(args...) do { } while (0)
+#define MESSAGE(args...) do { } while (0)
 #endif
 
 enum vkd3d_dbg_level
 {
     VKD3D_DBG_LEVEL_NONE,
+    VKD3D_DBG_LEVEL_MESSAGE,
     VKD3D_DBG_LEVEL_ERR,
     VKD3D_DBG_LEVEL_FIXME,
     VKD3D_DBG_LEVEL_WARN,
@@ -143,7 +155,7 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
 #define VKD3D_DBG_LOG(level) \
         do { \
         const enum vkd3d_dbg_level vkd3d_dbg_level = VKD3D_DBG_LEVEL_##level; \
-        VKD3D_DBG_PRINTF
+        VKD3D_DBG_PRINTF_##level
 
 #define VKD3D_DBG_LOG_ONCE(first_time_level, level) \
         do { \
@@ -151,24 +163,50 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
         const enum vkd3d_dbg_level vkd3d_dbg_level = vkd3d_dbg_next_time \
         ? VKD3D_DBG_LEVEL_##level : VKD3D_DBG_LEVEL_##first_time_level; \
         vkd3d_dbg_next_time = true; \
-        VKD3D_DBG_PRINTF
+        VKD3D_DBG_PRINTF_##level
 
 #define VKD3D_DBG_PRINTF(...) \
         vkd3d_dbg_printf(vkd3d_dbg_level, __FUNCTION__, __VA_ARGS__); } while (0)
 
+#define VKD3D_DBG_PRINTF_TRACE(...) VKD3D_DBG_PRINTF(__VA_ARGS__)
+#define VKD3D_DBG_PRINTF_WARN(...) VKD3D_DBG_PRINTF(__VA_ARGS__)
+#define VKD3D_DBG_PRINTF_FIXME(...) VKD3D_DBG_PRINTF(__VA_ARGS__)
+#define VKD3D_DBG_PRINTF_MESSAGE(...) VKD3D_DBG_PRINTF(__VA_ARGS__)
+
+#ifdef VKD3D_ABORT_ON_ERR
+#define VKD3D_DBG_PRINTF_ERR(...) \
+        vkd3d_dbg_printf(vkd3d_dbg_level, __FUNCTION__, __VA_ARGS__); \
+        abort(); \
+        } while (0)
+#else
+#define VKD3D_DBG_PRINTF_ERR(...) VKD3D_DBG_PRINTF(__VA_ARGS__)
+#endif
+
+/* Used by vkd3d_unreachable(). */
+#ifdef VKD3D_CROSSTEST
+#undef ERR
+#define ERR(...) do { fprintf(stderr, __VA_ARGS__); abort(); } while (0)
+#endif
+
 #ifndef TRACE
-#define TRACE VKD3D_DBG_LOG(TRACE)
+#define TRACE   VKD3D_DBG_LOG(TRACE)
 #endif
 
 #ifndef WARN
-#define WARN  VKD3D_DBG_LOG(WARN)
+#define WARN    VKD3D_DBG_LOG(WARN)
 #endif
 
 #ifndef FIXME
-#define FIXME VKD3D_DBG_LOG(FIXME)
+#define FIXME   VKD3D_DBG_LOG(FIXME)
 #endif
 
-#define ERR   VKD3D_DBG_LOG(ERR)
+#ifndef ERR
+#define ERR     VKD3D_DBG_LOG(ERR)
+#endif
+
+#ifndef MESSAGE
+#define MESSAGE VKD3D_DBG_LOG(MESSAGE)
+#endif
 
 #ifndef TRACE_ON
 #define TRACE_ON() (vkd3d_dbg_get_level() == VKD3D_DBG_LEVEL_TRACE)
@@ -178,7 +216,9 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
 #define WARN_ON() (vkd3d_dbg_get_level() >= VKD3D_DBG_LEVEL_WARN)
 #endif
 
+#ifndef FIXME_ONCE
 #define FIXME_ONCE VKD3D_DBG_LOG_ONCE(FIXME, WARN)
+#endif
 
 #define VKD3D_DEBUG_ENV_NAME(name) const char *const vkd3d_dbg_env_name = name
 

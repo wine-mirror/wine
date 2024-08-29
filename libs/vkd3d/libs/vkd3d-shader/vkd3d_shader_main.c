@@ -60,7 +60,7 @@ void vkd3d_string_buffer_init(struct vkd3d_string_buffer *buffer)
     buffer->buffer_size = 16;
     buffer->content_size = 0;
     buffer->buffer = vkd3d_malloc(buffer->buffer_size);
-    assert(buffer->buffer);
+    VKD3D_ASSERT(buffer->buffer);
     memset(buffer->buffer, 0, buffer->buffer_size);
 }
 
@@ -228,7 +228,7 @@ void vkd3d_string_buffer_release(struct vkd3d_string_buffer_cache *cache, struct
 {
     if (!buffer)
         return;
-    assert(cache->count + 1 <= cache->max_count);
+    VKD3D_ASSERT(cache->count + 1 <= cache->max_count);
     cache->buffers[cache->count++] = buffer;
 }
 
@@ -429,7 +429,7 @@ static void bytecode_set_bytes(struct vkd3d_bytecode_buffer *buffer, size_t offs
     if (buffer->status)
         return;
 
-    assert(vkd3d_bound_range(offset, size, buffer->size));
+    VKD3D_ASSERT(vkd3d_bound_range(offset, size, buffer->size));
     memcpy(buffer->data + offset, value, size);
 }
 
@@ -642,7 +642,7 @@ static bool vkd3d_shader_signature_from_shader_signature(struct vkd3d_shader_sig
     signature->element_count = src->element_count;
     if (!src->elements)
     {
-        assert(!signature->element_count);
+        VKD3D_ASSERT(!signature->element_count);
         signature->elements = NULL;
         return true;
     }
@@ -787,7 +787,7 @@ static struct vkd3d_shader_cf_info *vkd3d_shader_scan_push_cf_info(struct vkd3d_
 
 static void vkd3d_shader_scan_pop_cf_info(struct vkd3d_shader_scan_context *context)
 {
-    assert(context->cf_info_count);
+    VKD3D_ASSERT(context->cf_info_count);
 
     --context->cf_info_count;
 }
@@ -847,12 +847,13 @@ static void vkd3d_shader_scan_add_uav_flag(const struct vkd3d_shader_scan_contex
 
 static bool vkd3d_shader_instruction_is_uav_read(const struct vkd3d_shader_instruction *instruction)
 {
-    enum vkd3d_shader_opcode handler_idx = instruction->handler_idx;
-    return (VKD3DSIH_ATOMIC_AND <= handler_idx && handler_idx <= VKD3DSIH_ATOMIC_XOR)
-            || (VKD3DSIH_IMM_ATOMIC_ALLOC <= handler_idx && handler_idx <= VKD3DSIH_IMM_ATOMIC_XOR)
-            || handler_idx == VKD3DSIH_LD_UAV_TYPED
-            || (handler_idx == VKD3DSIH_LD_RAW && instruction->src[1].reg.type == VKD3DSPR_UAV)
-            || (handler_idx == VKD3DSIH_LD_STRUCTURED && instruction->src[2].reg.type == VKD3DSPR_UAV);
+    enum vkd3d_shader_opcode opcode = instruction->opcode;
+
+    return (VKD3DSIH_ATOMIC_AND <= opcode && opcode <= VKD3DSIH_ATOMIC_XOR)
+            || (VKD3DSIH_IMM_ATOMIC_ALLOC <= opcode && opcode <= VKD3DSIH_IMM_ATOMIC_XOR)
+            || opcode == VKD3DSIH_LD_UAV_TYPED
+            || (opcode == VKD3DSIH_LD_RAW && instruction->src[1].reg.type == VKD3DSPR_UAV)
+            || (opcode == VKD3DSIH_LD_STRUCTURED && instruction->src[2].reg.type == VKD3DSPR_UAV);
 }
 
 static void vkd3d_shader_scan_record_uav_read(struct vkd3d_shader_scan_context *context,
@@ -863,9 +864,9 @@ static void vkd3d_shader_scan_record_uav_read(struct vkd3d_shader_scan_context *
 
 static bool vkd3d_shader_instruction_is_uav_counter(const struct vkd3d_shader_instruction *instruction)
 {
-    enum vkd3d_shader_opcode handler_idx = instruction->handler_idx;
-    return handler_idx == VKD3DSIH_IMM_ATOMIC_ALLOC
-            || handler_idx == VKD3DSIH_IMM_ATOMIC_CONSUME;
+    enum vkd3d_shader_opcode opcode = instruction->opcode;
+
+    return opcode == VKD3DSIH_IMM_ATOMIC_ALLOC || opcode == VKD3DSIH_IMM_ATOMIC_CONSUME;
 }
 
 static void vkd3d_shader_scan_record_uav_counter(struct vkd3d_shader_scan_context *context,
@@ -876,9 +877,10 @@ static void vkd3d_shader_scan_record_uav_counter(struct vkd3d_shader_scan_contex
 
 static bool vkd3d_shader_instruction_is_uav_atomic_op(const struct vkd3d_shader_instruction *instruction)
 {
-    enum vkd3d_shader_opcode handler_idx = instruction->handler_idx;
-    return (VKD3DSIH_ATOMIC_AND <= handler_idx && handler_idx <= VKD3DSIH_ATOMIC_XOR)
-            || (VKD3DSIH_IMM_ATOMIC_ALLOC <= handler_idx && handler_idx <= VKD3DSIH_IMM_ATOMIC_XOR);
+    enum vkd3d_shader_opcode opcode = instruction->opcode;
+
+    return (VKD3DSIH_ATOMIC_AND <= opcode && opcode <= VKD3DSIH_ATOMIC_XOR)
+            || (VKD3DSIH_IMM_ATOMIC_ALLOC <= opcode && opcode <= VKD3DSIH_IMM_ATOMIC_XOR);
 }
 
 static void vkd3d_shader_scan_record_uav_atomic_op(struct vkd3d_shader_scan_context *context,
@@ -1130,7 +1132,7 @@ static int vkd3d_shader_scan_instruction(struct vkd3d_shader_scan_context *conte
 
     context->location = instruction->location;
 
-    switch (instruction->handler_idx)
+    switch (instruction->opcode)
     {
         case VKD3DSIH_DCL_CONSTANT_BUFFER:
             vkd3d_shader_scan_constant_buffer_declaration(context, instruction);
@@ -2063,7 +2065,7 @@ bool shader_instruction_array_reserve(struct vkd3d_shader_instruction_array *ins
 bool shader_instruction_array_insert_at(struct vkd3d_shader_instruction_array *instructions,
         unsigned int idx, unsigned int count)
 {
-    assert(idx <= instructions->count);
+    VKD3D_ASSERT(idx <= instructions->count);
 
     if (!shader_instruction_array_reserve(instructions, instructions->count + count))
         return false;

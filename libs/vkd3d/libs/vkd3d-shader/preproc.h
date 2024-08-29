@@ -141,7 +141,7 @@ void preproc_warning(struct preproc_ctx *ctx, const struct vkd3d_shader_location
 
 static inline struct preproc_file *preproc_get_top_file(struct preproc_ctx *ctx)
 {
-    assert(ctx->file_count);
+    VKD3D_ASSERT(ctx->file_count);
     return &ctx->file_stack[ctx->file_count - 1];
 }
 

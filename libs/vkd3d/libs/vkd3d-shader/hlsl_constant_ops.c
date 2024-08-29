@@ -28,7 +28,7 @@ static bool fold_abs(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -119,7 +119,7 @@ static bool fold_bit_not(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -234,7 +234,7 @@ static bool fold_ceil(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -260,7 +260,7 @@ static bool fold_exp2(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -286,7 +286,7 @@ static bool fold_floor(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -313,7 +313,7 @@ static bool fold_fract(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
     unsigned int k;
     float i;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -339,7 +339,7 @@ static bool fold_log2(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, con
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -384,7 +384,7 @@ static bool fold_neg(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -418,7 +418,7 @@ static bool fold_not(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -442,7 +442,7 @@ static bool fold_rcp(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -487,7 +487,7 @@ static bool fold_rsq(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -527,7 +527,7 @@ static bool fold_sat(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -553,7 +553,7 @@ static bool fold_sqrt(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, con
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -598,8 +598,8 @@ static bool fold_add(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -635,8 +635,8 @@ static bool fold_and(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -662,8 +662,8 @@ static bool fold_or(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -689,8 +689,8 @@ static bool fold_bit_xor(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, 
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -715,9 +715,9 @@ static bool fold_dot(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
-    assert(src1->node.data_type->dimx == src2->node.data_type->dimx);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(src1->node.data_type->dimx == src2->node.data_type->dimx);
 
     dst->u[0].f = 0.0f;
     for (k = 0; k < src1->node.data_type->dimx; ++k)
@@ -743,11 +743,11 @@ static bool fold_dp2add(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
-    assert(type == src3->node.data_type->e.numeric.type);
-    assert(src1->node.data_type->dimx == src2->node.data_type->dimx);
-    assert(src3->node.data_type->dimx == 1);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src3->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(src1->node.data_type->dimx == src2->node.data_type->dimx);
+    VKD3D_ASSERT(src3->node.data_type->dimx == 1);
 
     dst->u[0].f = src3->value.u[0].f;
     for (k = 0; k < src1->node.data_type->dimx; ++k)
@@ -774,8 +774,8 @@ static bool fold_div(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -841,8 +841,8 @@ static bool fold_equal(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, co
 {
     unsigned int k;
 
-    assert(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
-    assert(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
+    VKD3D_ASSERT(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -877,8 +877,8 @@ static bool fold_gequal(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 {
     unsigned int k;
 
-    assert(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
-    assert(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
+    VKD3D_ASSERT(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -916,8 +916,8 @@ static bool fold_less(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, con
 {
     unsigned int k;
 
-    assert(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
-    assert(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
+    VKD3D_ASSERT(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -955,8 +955,8 @@ static bool fold_lshift(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 {
     unsigned int k;
 
-    assert(dst_type->e.numeric.type == src1->node.data_type->e.numeric.type);
-    assert(src2->node.data_type->e.numeric.type == HLSL_TYPE_INT);
+    VKD3D_ASSERT(dst_type->e.numeric.type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(src2->node.data_type->e.numeric.type == HLSL_TYPE_INT);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -986,8 +986,8 @@ static bool fold_max(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1024,8 +1024,8 @@ static bool fold_min(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1063,8 +1063,8 @@ static bool fold_mod(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1105,8 +1105,8 @@ static bool fold_mul(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
     enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->e.numeric.type);
-    assert(type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1139,8 +1139,8 @@ static bool fold_nequal(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 {
     unsigned int k;
 
-    assert(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
-    assert(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
+    VKD3D_ASSERT(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1175,9 +1175,9 @@ static bool fold_ternary(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, 
 {
     unsigned int k;
 
-    assert(dst_type->e.numeric.type == src2->node.data_type->e.numeric.type);
-    assert(dst_type->e.numeric.type == src3->node.data_type->e.numeric.type);
-    assert(src1->node.data_type->e.numeric.type == HLSL_TYPE_BOOL);
+    VKD3D_ASSERT(dst_type->e.numeric.type == src2->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(dst_type->e.numeric.type == src3->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(src1->node.data_type->e.numeric.type == HLSL_TYPE_BOOL);
 
     for (k = 0; k < dst_type->dimx; ++k)
         dst->u[k] = src1->value.u[k].u ? src2->value.u[k] : src3->value.u[k];
@@ -1190,8 +1190,8 @@ static bool fold_rshift(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 {
     unsigned int k;
 
-    assert(dst_type->e.numeric.type == src1->node.data_type->e.numeric.type);
-    assert(src2->node.data_type->e.numeric.type == HLSL_TYPE_INT);
+    VKD3D_ASSERT(dst_type->e.numeric.type == src1->node.data_type->e.numeric.type);
+    VKD3D_ASSERT(src2->node.data_type->e.numeric.type == HLSL_TYPE_INT);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1239,7 +1239,7 @@ bool hlsl_fold_constant_exprs(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, 
         {
             if (expr->operands[i].node->type != HLSL_IR_CONSTANT)
                 return false;
-            assert(expr->operands[i].node->data_type->class <= HLSL_CLASS_VECTOR);
+            VKD3D_ASSERT(expr->operands[i].node->data_type->class <= HLSL_CLASS_VECTOR);
         }
     }
     arg1 = hlsl_ir_constant(expr->operands[0].node);

@@ -1066,7 +1066,6 @@ static void test_compile_effect(void)
 
     hr = D3D10CompileEffectFromMemory(default_bs_source, strlen(default_bs_source),
             NULL, NULL, NULL, 0, 0, &blob, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Blob_Release(blob);

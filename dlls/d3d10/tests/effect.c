@@ -9907,7 +9907,6 @@ static void test_effect_compiler(void)
     hr = ID3D10Effect_GetDesc(effect, &desc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(desc.Techniques == 1, "Unexpected technique count %u.\n", desc.Techniques);
-    todo_wine
     ok(desc.ConstantBuffers == 1, "Unexpected buffer count %u.\n", desc.ConstantBuffers);
 
     cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
@@ -9928,7 +9927,6 @@ static void test_effect_compiler(void)
     hr = ID3D10Effect_GetDesc(effect, &desc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(desc.Techniques == 1, "Unexpected technique count %u.\n", desc.Techniques);
-    todo_wine
     ok(desc.ConstantBuffers == 3, "Unexpected buffer count %u.\n", desc.ConstantBuffers);
 
     cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);

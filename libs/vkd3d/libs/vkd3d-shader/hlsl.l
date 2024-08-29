@@ -29,6 +29,8 @@
 
 static void update_location(struct hlsl_ctx *ctx, YYLTYPE *loc);
 
+static void apply_escape_sequences(char *str);
+
 #define YY_USER_ACTION update_location(yyget_extra(yyscanner), yyget_lloc(yyscanner));
 
 %}
@@ -49,11 +51,11 @@ static void update_location(struct hlsl_ctx *ctx, YYLTYPE *loc);
 RESERVED1               auto|catch|char|class|const_cast|delete|dynamic_cast|enum
 RESERVED2               explicit|friend|goto|long|mutable|new|operator|private|protected|public
 RESERVED3               reinterpret_cast|short|signed|sizeof|static_cast|template|this|throw|try
-RESERVED4               typename|union|unsigned|using|virtual
+RESERVED4               typename|union|using|virtual
 
 WS                      [ \t]
 NEWLINE                 (\n)|(\r\n)
-STRING                  \"[^\"]*\"
+STRING                  \"([^\"\\]|\\.)*\"
 IDENTIFIER              [A-Za-z_][A-Za-z0-9_]*
 
 ANY                     (.)
@@ -105,6 +107,7 @@ matrix                  {return KW_MATRIX;              }
 namespace               {return KW_NAMESPACE;           }
 nointerpolation         {return KW_NOINTERPOLATION;     }
 noperspective           {return KW_NOPERSPECTIVE;       }
+NULL                    {return KW_NULL;                }
 out                     {return KW_OUT;                 }
 packoffset              {return KW_PACKOFFSET;          }
 pass                    {return KW_PASS;                }
@@ -142,6 +145,7 @@ stateblock              {return KW_STATEBLOCK;          }
 stateblock_state        {return KW_STATEBLOCK_STATE;    }
 static                  {return KW_STATIC;              }
 string                  {return KW_STRING;              }
+String                  {return KW_STRING;              }
 struct                  {return KW_STRUCT;              }
 switch                  {return KW_SWITCH;              }
 tbuffer                 {return KW_TBUFFER;             }
@@ -164,6 +168,7 @@ textureCUBE             {return KW_TEXTURECUBE;         }
 TextureCubeArray        {return KW_TEXTURECUBEARRAY;    }
 true                    {return KW_TRUE;                }
 typedef                 {return KW_TYPEDEF;             }
+unsigned                {return KW_UNSIGNED;            }
 uniform                 {return KW_UNIFORM;             }
 vector                  {return KW_VECTOR;              }
 VertexShader            {return KW_VERTEXSHADER;        }
@@ -197,12 +202,24 @@ while                   {return KW_WHILE;               }
                             struct hlsl_ctx *ctx = yyget_extra(yyscanner);
 
                             yylval->name = hlsl_strdup(ctx, yytext);
-                            if (hlsl_get_var(ctx->cur_scope, yytext) || hlsl_get_function(ctx, yytext))
+                            if (hlsl_version_ge(ctx, 5, 1) && !strcmp(yytext, "ConstantBuffer"))
+                                return KW_CONSTANTBUFFER;
+                            else if (hlsl_get_var(ctx->cur_scope, yytext) || hlsl_get_function(ctx, yytext))
                                 return VAR_IDENTIFIER;
                             else if (hlsl_get_type(ctx->cur_scope, yytext, true, true))
                                 return TYPE_IDENTIFIER;
                             else
                                 return NEW_IDENTIFIER;
+                        }
+
+{STRING}                {
+                            struct hlsl_ctx *ctx = yyget_extra(yyscanner);
+                            char *string = hlsl_strdup(ctx, yytext + 1);
+
+                            string[strlen(string) - 1] = 0;
+                            apply_escape_sequences(string);
+                            yylval->name = string;
+                            return STRING;
                         }
 
 [0-9]*\.[0-9]+([eE][+-]?[0-9]+)?[h|H|f|F]? {
@@ -289,6 +306,7 @@ while                   {return KW_WHILE;               }
 
                             BEGIN(pp_ignore);
                             string[strlen(string) - 1] = 0;
+                            apply_escape_sequences(string);
                             yylval->name = string;
                             return STRING;
                         }
@@ -337,4 +355,116 @@ int hlsl_lexer_compile(struct hlsl_ctx *ctx, const struct vkd3d_shader_code *hls
     yy_delete_buffer(buffer, ctx->scanner);
     yylex_destroy(ctx->scanner);
     return ret;
+}
+
+static void apply_escape_sequences(char *str)
+{
+    unsigned int i = 0, k = 0, r;
+
+    while (str[i])
+    {
+        unsigned char v = 0;
+
+        if (str[i] != '\\')
+        {
+            str[k++] = str[i];
+            ++i;
+            continue;
+        }
+
+        ++i;
+        VKD3D_ASSERT(str[i]);
+
+        if ('0' <= str[i] && str[i] <= '7')
+        {
+            /* octal, up to 3 digits. */
+            for (r = 0; r < 3; ++r)
+            {
+                char c = str[i];
+
+                if ('0' <= c && c <= '7')
+                {
+                    v = v << 3;
+                    v += c - '0';
+                    ++i;
+                }
+                else
+                    break;
+            }
+            str[k++] = v;
+            continue;
+        }
+
+        if (str[i] == 'x')
+        {
+            bool number = false;
+
+            /* hexadecimal */
+            ++i;
+            while (1)
+            {
+                char c = str[i];
+
+                if ('0' <= c && c <= '9')
+                {
+                    v = v << 4;
+                    v += c - '0';
+                    number = true;
+                    ++i;
+                }
+                else if ('a' <= c && c <= 'f')
+                {
+                    v = v << 4;
+                    v += c - 'a' + 10;
+                    number = true;
+                    ++i;
+                }
+                else if ('A' <= c && c <= 'F')
+                {
+                    v = v << 4;
+                    v += c - 'A' + 10;
+                    number = true;
+                    ++i;
+                }
+                else
+                    break;
+            }
+            if (number)
+                str[k++] = v;
+            else
+                str[k++] = 'x';
+            continue;
+        }
+
+        switch (str[i])
+        {
+            case 'a':
+                str[k++] = '\a';
+                break;
+            case 'b':
+                str[k++] = '\b';
+                break;
+            case 'f':
+                str[k++] = '\f';
+                break;
+            case 'n':
+                str[k++] = '\n';
+                break;
+            case 'r':
+                str[k++] = '\r';
+                break;
+            case 't':
+                str[k++] = '\t';
+                break;
+            case 'v':
+                str[k++] = '\v';
+                break;
+
+            default:
+                str[k++] = str[i];
+                break;
+        }
+        ++i;
+    }
+    str[k++] = '\0';
 }
