@@ -543,9 +543,9 @@
 @ stub -arch=arm ?_IsCanceling@_TaskCollection@details@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?_IsCanceling@_TaskCollection@details@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?_IsCanceling@_TaskCollection@details@Concurrency@@QEAA_NXZ
-@ cdecl -arch=arm ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBA_NXZ(ptr) msvcr120.?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBA_NXZ
-@ thiscall -arch=i386 ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBE_NXZ(ptr) msvcr120.?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBE_NXZ
-@ cdecl -arch=win64 ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QEBA_NXZ(ptr) msvcr120.?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QEBA_NXZ
+@ cdecl -arch=arm ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBA_NXZ(ptr) _Context_IsSynchronouslyBlocked
+@ thiscall -arch=i386 ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QBE_NXZ(ptr) _Context_IsSynchronouslyBlocked
+@ cdecl -arch=win64 ?_IsSynchronouslyBlocked@_Context@details@Concurrency@@QEBA_NXZ(ptr) _Context_IsSynchronouslyBlocked
 @ stub -arch=win32 ?_NewCollection@_AsyncTaskCollection@details@Concurrency@@SAPAV123@PAV_CancellationTokenState@23@@Z
 @ stub -arch=win64 ?_NewCollection@_AsyncTaskCollection@details@Concurrency@@SAPEAV123@PEAV_CancellationTokenState@23@@Z
 @ cdecl -arch=arm ?_NumberOfSpins@?$_SpinWait@$00@details@Concurrency@@IAAKXZ(ptr) SpinWait__NumberOfSpins
