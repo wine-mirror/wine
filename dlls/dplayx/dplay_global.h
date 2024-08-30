@@ -63,6 +63,7 @@ struct PlayerData
   DPID dpid;
 
   DPNAME *name;
+  DPNAME *nameA;
   HANDLE hEvent;
 
   ULONG  uRef;  /* What is the reference count on this data? */
@@ -106,6 +107,7 @@ struct GroupData
 
   DPID   dpid;
   DPNAME *name;
+  DPNAME *nameA;
 
   /* View of local data */
   LPVOID lpLocalData;
