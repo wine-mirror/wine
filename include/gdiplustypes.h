@@ -190,6 +190,18 @@ public:
     REAL Y;
     REAL Width;
     REAL Height;
+
+    RectF()
+       : X(0), Y(0), Width(0), Height(0)
+    {
+    }
+
+    RectF(REAL x, REAL y, REAL width, REAL height)
+       : X(x), Y(y), Width(width), Height(height)
+
+    {
+    }
+
 };
 
 /* FIXME: missing the methods. */
@@ -200,6 +212,16 @@ public:
     INT Y;
     INT Width;
     INT Height;
+
+    Rect()
+       : X(0), Y(0), Width(0), Height(0)
+    {
+    }
+
+    Rect(INT x, INT y, INT width, INT height)
+       : X(x), Y(y), Width(width), Height(height)
+    {
+    }
 };
 
 class CharacterRange
