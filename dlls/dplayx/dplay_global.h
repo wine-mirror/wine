@@ -201,6 +201,9 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpMessageBody,
         DWORD  dwMessageBodySize, const void *lpMessageHeader, WORD wCommandId, WORD wVersion,
         void **lplpReply, DWORD *lpdwMsgSize );
 DPSESSIONDESC2 *DP_DuplicateSessionDesc( const DPSESSIONDESC2 *src, BOOL dstAnsi, BOOL srcAnsi );
+HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPNAME *lpName,
+                         void *data, DWORD dataSize, void *spData, DWORD spDataSize, DWORD dwFlags,
+                         HANDLE hEvent, BOOL bAnsi );
 
 /* DP SP external interfaces into DirectPlay */
 extern HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData );

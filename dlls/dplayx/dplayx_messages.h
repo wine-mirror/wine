@@ -28,6 +28,23 @@
 
 #include "dplay_global.h"
 
+typedef struct
+{
+  DWORD flags;
+  DPID id;
+  DWORD versionOrSystemPlayerId;
+  DPNAME name;
+  DWORD playerDataLength;
+  void *playerData;
+  DWORD spDataLength;
+  void *spData;
+  DWORD playerCount;
+  DPID *playerIds;
+  DPID parentId;
+  DWORD shortcutCount;
+  DPID *shortcutIds;
+} DPPLAYERINFO;
+
 DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
                                          HANDLE hDeath, HANDLE hConnRead );
 
@@ -220,6 +237,35 @@ typedef struct tagDPMSG_FORWARDADDPLAYERNACK
   HRESULT errorCode;
 } DPMSG_FORWARDADDPLAYERNACK, *LPDPMSG_FORWARDADDPLAYERNACK;
 typedef const DPMSG_FORWARDADDPLAYERNACK* LPCDPMSG_FORWARDADDPLAYERNACK;
+
+typedef struct
+{
+  DWORD size;
+  DWORD flags;
+  DPID id;
+  DWORD infoMask;
+  DWORD versionOrSystemPlayerId;
+} DPLAYI_SUPERPACKEDPLAYER;
+
+#define DPLAYI_SUPERPACKEDPLAYER_SHORT_NAME_PRESENT              0x001
+#define DPLAYI_SUPERPACKEDPLAYER_LONG_NAME_PRESENT               0x002
+#define DPLAYI_SUPERPACKEDPLAYER_SP_DATA_LENGTH_SIZE( mask )     (((mask) >> 2) & 0x3)
+#define DPLAYI_SUPERPACKEDPLAYER_PLAYER_DATA_LENGTH_SIZE( mask ) (((mask) >> 4) & 0x3)
+#define DPLAYI_SUPERPACKEDPLAYER_PLAYER_COUNT_SIZE( mask )       (((mask) >> 6) & 0x3)
+#define DPLAYI_SUPERPACKEDPLAYER_PARENT_ID_PRESENT               0x100
+#define DPLAYI_SUPERPACKEDPLAYER_SHORTCUT_COUNT_SIZE( mask )     (((mask) >> 9) & 0x3)
+
+typedef struct
+{
+  DPMSG_SENDENVELOPE envelope;
+  DWORD playerCount;
+  DWORD groupCount;
+  DWORD packedOffset;
+  DWORD shortcutCount;
+  DWORD descriptionOffset;
+  DWORD nameOffset;
+  DWORD passwordOffset;
+} DPSP_MSG_SUPERENUMPLAYERSREPLY;
 
 #include "poppack.h"
 
