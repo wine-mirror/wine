@@ -30,6 +30,7 @@ enum unix_call
     unix_vkAllocateCommandBuffers,
     unix_vkAllocateDescriptorSets,
     unix_vkAllocateMemory,
+    unix_vkAntiLagUpdateAMD,
     unix_vkBeginCommandBuffer,
     unix_vkBindAccelerationStructureMemoryNV,
     unix_vkBindBufferMemory,
@@ -329,6 +330,7 @@ enum unix_call
     unix_vkCreateInstance,
     unix_vkCreateMicromapEXT,
     unix_vkCreateOpticalFlowSessionNV,
+    unix_vkCreatePipelineBinariesKHR,
     unix_vkCreatePipelineCache,
     unix_vkCreatePipelineLayout,
     unix_vkCreatePrivateDataSlot,
@@ -381,6 +383,7 @@ enum unix_call
     unix_vkDestroyMicromapEXT,
     unix_vkDestroyOpticalFlowSessionNV,
     unix_vkDestroyPipeline,
+    unix_vkDestroyPipelineBinaryKHR,
     unix_vkDestroyPipelineCache,
     unix_vkDestroyPipelineLayout,
     unix_vkDestroyPrivateDataSlot,
@@ -530,12 +533,14 @@ enum unix_call
     unix_vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR,
     unix_vkGetPhysicalDeviceVideoFormatPropertiesKHR,
     unix_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    unix_vkGetPipelineBinaryDataKHR,
     unix_vkGetPipelineCacheData,
     unix_vkGetPipelineExecutableInternalRepresentationsKHR,
     unix_vkGetPipelineExecutablePropertiesKHR,
     unix_vkGetPipelineExecutableStatisticsKHR,
     unix_vkGetPipelineIndirectDeviceAddressNV,
     unix_vkGetPipelineIndirectMemoryRequirementsNV,
+    unix_vkGetPipelineKeyKHR,
     unix_vkGetPipelinePropertiesEXT,
     unix_vkGetPrivateData,
     unix_vkGetPrivateDataEXT,
@@ -576,6 +581,7 @@ enum unix_call
     unix_vkQueueSubmit2,
     unix_vkQueueSubmit2KHR,
     unix_vkQueueWaitIdle,
+    unix_vkReleaseCapturedPipelineDataKHR,
     unix_vkReleasePerformanceConfigurationINTEL,
     unix_vkReleaseProfilingLockKHR,
     unix_vkReleaseSwapchainImagesEXT,
@@ -674,6 +680,12 @@ struct vkAllocateMemory_params
     const VkAllocationCallbacks *pAllocator;
     VkDeviceMemory *pMemory;
     VkResult result;
+};
+
+struct vkAntiLagUpdateAMD_params
+{
+    VkDevice device;
+    const VkAntiLagDataAMD *pData;
 };
 
 struct vkBeginCommandBuffer_params
@@ -2297,7 +2309,7 @@ struct vkCmdSetRenderingAttachmentLocationsKHR_params
 struct vkCmdSetRenderingInputAttachmentIndicesKHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkRenderingInputAttachmentIndexInfoKHR *pLocationInfo;
+    const VkRenderingInputAttachmentIndexInfoKHR *pInputAttachmentIndexInfo;
 };
 
 struct vkCmdSetRepresentativeFragmentTestEnableNV_params
@@ -2978,6 +2990,15 @@ struct vkCreateOpticalFlowSessionNV_params
     VkResult result;
 };
 
+struct vkCreatePipelineBinariesKHR_params
+{
+    VkDevice device;
+    const VkPipelineBinaryCreateInfoKHR *pCreateInfo;
+    const VkAllocationCallbacks *pAllocator;
+    VkPipelineBinaryHandlesInfoKHR *pBinaries;
+    VkResult result;
+};
+
 struct vkCreatePipelineCache_params
 {
     VkDevice device;
@@ -3390,6 +3411,13 @@ struct vkDestroyPipeline_params
 {
     VkDevice device;
     VkPipeline DECLSPEC_ALIGN(8) pipeline;
+    const VkAllocationCallbacks *pAllocator;
+};
+
+struct vkDestroyPipelineBinaryKHR_params
+{
+    VkDevice device;
+    VkPipelineBinaryKHR DECLSPEC_ALIGN(8) pipelineBinary;
     const VkAllocationCallbacks *pAllocator;
 };
 
@@ -4523,6 +4551,16 @@ struct vkGetPhysicalDeviceWin32PresentationSupportKHR_params
     VkBool32 result;
 };
 
+struct vkGetPipelineBinaryDataKHR_params
+{
+    VkDevice device;
+    const VkPipelineBinaryDataInfoKHR *pInfo;
+    VkPipelineBinaryKeyKHR *pPipelineBinaryKey;
+    size_t *pPipelineBinaryDataSize;
+    void *pPipelineBinaryData;
+    VkResult result;
+};
+
 struct vkGetPipelineCacheData_params
 {
     VkDevice device;
@@ -4571,6 +4609,14 @@ struct vkGetPipelineIndirectMemoryRequirementsNV_params
     VkDevice device;
     const VkComputePipelineCreateInfo *pCreateInfo;
     VkMemoryRequirements2 *pMemoryRequirements;
+};
+
+struct vkGetPipelineKeyKHR_params
+{
+    VkDevice device;
+    const VkPipelineCreateInfoKHR *pPipelineCreateInfo;
+    VkPipelineBinaryKeyKHR *pPipelineKey;
+    VkResult result;
 };
 
 struct vkGetPipelinePropertiesEXT_params
@@ -4903,6 +4949,14 @@ struct vkQueueSubmit2KHR_params
 struct vkQueueWaitIdle_params
 {
     VkQueue queue;
+    VkResult result;
+};
+
+struct vkReleaseCapturedPipelineDataKHR_params
+{
+    VkDevice device;
+    const VkReleaseCapturedPipelineDataInfoKHR *pInfo;
+    const VkAllocationCallbacks *pAllocator;
     VkResult result;
 };
 

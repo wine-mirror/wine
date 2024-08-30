@@ -94,6 +94,16 @@ VkResult WINAPI vkAllocateMemory(VkDevice device, const VkMemoryAllocateInfo *pA
     return params.result;
 }
 
+void WINAPI vkAntiLagUpdateAMD(VkDevice device, const VkAntiLagDataAMD *pData)
+{
+    struct vkAntiLagUpdateAMD_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pData = pData;
+    status = UNIX_CALL(vkAntiLagUpdateAMD, &params);
+    assert(!status && "vkAntiLagUpdateAMD");
+}
+
 VkResult WINAPI vkBeginCommandBuffer(VkCommandBuffer commandBuffer, const VkCommandBufferBeginInfo *pBeginInfo)
 {
     struct vkBeginCommandBuffer_params params;
@@ -2178,11 +2188,11 @@ void WINAPI vkCmdSetRenderingAttachmentLocationsKHR(VkCommandBuffer commandBuffe
     UNIX_CALL(vkCmdSetRenderingAttachmentLocationsKHR, &params);
 }
 
-void WINAPI vkCmdSetRenderingInputAttachmentIndicesKHR(VkCommandBuffer commandBuffer, const VkRenderingInputAttachmentIndexInfoKHR *pLocationInfo)
+void WINAPI vkCmdSetRenderingInputAttachmentIndicesKHR(VkCommandBuffer commandBuffer, const VkRenderingInputAttachmentIndexInfoKHR *pInputAttachmentIndexInfo)
 {
     struct vkCmdSetRenderingInputAttachmentIndicesKHR_params params;
     params.commandBuffer = commandBuffer;
-    params.pLocationInfo = pLocationInfo;
+    params.pInputAttachmentIndexInfo = pInputAttachmentIndexInfo;
     UNIX_CALL(vkCmdSetRenderingInputAttachmentIndicesKHR, &params);
 }
 
@@ -3059,6 +3069,19 @@ VkResult WINAPI vkCreateOpticalFlowSessionNV(VkDevice device, const VkOpticalFlo
     return params.result;
 }
 
+VkResult WINAPI vkCreatePipelineBinariesKHR(VkDevice device, const VkPipelineBinaryCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPipelineBinaryHandlesInfoKHR *pBinaries)
+{
+    struct vkCreatePipelineBinariesKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pCreateInfo = pCreateInfo;
+    params.pAllocator = pAllocator;
+    params.pBinaries = pBinaries;
+    status = UNIX_CALL(vkCreatePipelineBinariesKHR, &params);
+    assert(!status && "vkCreatePipelineBinariesKHR");
+    return params.result;
+}
+
 VkResult WINAPI vkCreatePipelineCache(VkDevice device, const VkPipelineCacheCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPipelineCache *pPipelineCache)
 {
     struct vkCreatePipelineCache_params params;
@@ -3649,6 +3672,17 @@ void WINAPI vkDestroyPipeline(VkDevice device, VkPipeline pipeline, const VkAllo
     params.pAllocator = pAllocator;
     status = UNIX_CALL(vkDestroyPipeline, &params);
     assert(!status && "vkDestroyPipeline");
+}
+
+void WINAPI vkDestroyPipelineBinaryKHR(VkDevice device, VkPipelineBinaryKHR pipelineBinary, const VkAllocationCallbacks *pAllocator)
+{
+    struct vkDestroyPipelineBinaryKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pipelineBinary = pipelineBinary;
+    params.pAllocator = pAllocator;
+    status = UNIX_CALL(vkDestroyPipelineBinaryKHR, &params);
+    assert(!status && "vkDestroyPipelineBinaryKHR");
 }
 
 void WINAPI vkDestroyPipelineCache(VkDevice device, VkPipelineCache pipelineCache, const VkAllocationCallbacks *pAllocator)
@@ -5321,6 +5355,20 @@ VkBool32 WINAPI vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice 
     return params.result;
 }
 
+VkResult WINAPI vkGetPipelineBinaryDataKHR(VkDevice device, const VkPipelineBinaryDataInfoKHR *pInfo, VkPipelineBinaryKeyKHR *pPipelineBinaryKey, size_t *pPipelineBinaryDataSize, void *pPipelineBinaryData)
+{
+    struct vkGetPipelineBinaryDataKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pInfo = pInfo;
+    params.pPipelineBinaryKey = pPipelineBinaryKey;
+    params.pPipelineBinaryDataSize = pPipelineBinaryDataSize;
+    params.pPipelineBinaryData = pPipelineBinaryData;
+    status = UNIX_CALL(vkGetPipelineBinaryDataKHR, &params);
+    assert(!status && "vkGetPipelineBinaryDataKHR");
+    return params.result;
+}
+
 VkResult WINAPI vkGetPipelineCacheData(VkDevice device, VkPipelineCache pipelineCache, size_t *pDataSize, void *pData)
 {
     struct vkGetPipelineCacheData_params params;
@@ -5393,6 +5441,18 @@ void WINAPI vkGetPipelineIndirectMemoryRequirementsNV(VkDevice device, const VkC
     params.pMemoryRequirements = pMemoryRequirements;
     status = UNIX_CALL(vkGetPipelineIndirectMemoryRequirementsNV, &params);
     assert(!status && "vkGetPipelineIndirectMemoryRequirementsNV");
+}
+
+VkResult WINAPI vkGetPipelineKeyKHR(VkDevice device, const VkPipelineCreateInfoKHR *pPipelineCreateInfo, VkPipelineBinaryKeyKHR *pPipelineKey)
+{
+    struct vkGetPipelineKeyKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pPipelineCreateInfo = pPipelineCreateInfo;
+    params.pPipelineKey = pPipelineKey;
+    status = UNIX_CALL(vkGetPipelineKeyKHR, &params);
+    assert(!status && "vkGetPipelineKeyKHR");
+    return params.result;
 }
 
 VkResult WINAPI vkGetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfoEXT *pPipelineInfo, VkBaseOutStructure *pPipelineProperties)
@@ -5888,6 +5948,18 @@ VkResult WINAPI vkQueueWaitIdle(VkQueue queue)
     return params.result;
 }
 
+VkResult WINAPI vkReleaseCapturedPipelineDataKHR(VkDevice device, const VkReleaseCapturedPipelineDataInfoKHR *pInfo, const VkAllocationCallbacks *pAllocator)
+{
+    struct vkReleaseCapturedPipelineDataKHR_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pInfo = pInfo;
+    params.pAllocator = pAllocator;
+    status = UNIX_CALL(vkReleaseCapturedPipelineDataKHR, &params);
+    assert(!status && "vkReleaseCapturedPipelineDataKHR");
+    return params.result;
+}
+
 VkResult WINAPI vkReleasePerformanceConfigurationINTEL(VkDevice device, VkPerformanceConfigurationINTEL configuration)
 {
     struct vkReleasePerformanceConfigurationINTEL_params params;
@@ -6343,6 +6415,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkAllocateCommandBuffers", vkAllocateCommandBuffers},
     {"vkAllocateDescriptorSets", vkAllocateDescriptorSets},
     {"vkAllocateMemory", vkAllocateMemory},
+    {"vkAntiLagUpdateAMD", vkAntiLagUpdateAMD},
     {"vkBeginCommandBuffer", vkBeginCommandBuffer},
     {"vkBindAccelerationStructureMemoryNV", vkBindAccelerationStructureMemoryNV},
     {"vkBindBufferMemory", vkBindBufferMemory},
@@ -6638,6 +6711,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateIndirectCommandsLayoutNV", vkCreateIndirectCommandsLayoutNV},
     {"vkCreateMicromapEXT", vkCreateMicromapEXT},
     {"vkCreateOpticalFlowSessionNV", vkCreateOpticalFlowSessionNV},
+    {"vkCreatePipelineBinariesKHR", vkCreatePipelineBinariesKHR},
     {"vkCreatePipelineCache", vkCreatePipelineCache},
     {"vkCreatePipelineLayout", vkCreatePipelineLayout},
     {"vkCreatePrivateDataSlot", vkCreatePrivateDataSlot},
@@ -6685,6 +6759,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkDestroyMicromapEXT", vkDestroyMicromapEXT},
     {"vkDestroyOpticalFlowSessionNV", vkDestroyOpticalFlowSessionNV},
     {"vkDestroyPipeline", vkDestroyPipeline},
+    {"vkDestroyPipelineBinaryKHR", vkDestroyPipelineBinaryKHR},
     {"vkDestroyPipelineCache", vkDestroyPipelineCache},
     {"vkDestroyPipelineLayout", vkDestroyPipelineLayout},
     {"vkDestroyPrivateDataSlot", vkDestroyPrivateDataSlot},
@@ -6777,12 +6852,14 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetMemoryHostPointerPropertiesEXT", vkGetMemoryHostPointerPropertiesEXT},
     {"vkGetMicromapBuildSizesEXT", vkGetMicromapBuildSizesEXT},
     {"vkGetPerformanceParameterINTEL", vkGetPerformanceParameterINTEL},
+    {"vkGetPipelineBinaryDataKHR", vkGetPipelineBinaryDataKHR},
     {"vkGetPipelineCacheData", vkGetPipelineCacheData},
     {"vkGetPipelineExecutableInternalRepresentationsKHR", vkGetPipelineExecutableInternalRepresentationsKHR},
     {"vkGetPipelineExecutablePropertiesKHR", vkGetPipelineExecutablePropertiesKHR},
     {"vkGetPipelineExecutableStatisticsKHR", vkGetPipelineExecutableStatisticsKHR},
     {"vkGetPipelineIndirectDeviceAddressNV", vkGetPipelineIndirectDeviceAddressNV},
     {"vkGetPipelineIndirectMemoryRequirementsNV", vkGetPipelineIndirectMemoryRequirementsNV},
+    {"vkGetPipelineKeyKHR", vkGetPipelineKeyKHR},
     {"vkGetPipelinePropertiesEXT", vkGetPipelinePropertiesEXT},
     {"vkGetPrivateData", vkGetPrivateData},
     {"vkGetPrivateDataEXT", vkGetPrivateDataEXT},
@@ -6823,6 +6900,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkQueueSubmit2", vkQueueSubmit2},
     {"vkQueueSubmit2KHR", vkQueueSubmit2KHR},
     {"vkQueueWaitIdle", vkQueueWaitIdle},
+    {"vkReleaseCapturedPipelineDataKHR", vkReleaseCapturedPipelineDataKHR},
     {"vkReleasePerformanceConfigurationINTEL", vkReleasePerformanceConfigurationINTEL},
     {"vkReleaseProfilingLockKHR", vkReleaseProfilingLockKHR},
     {"vkReleaseSwapchainImagesEXT", vkReleaseSwapchainImagesEXT},
