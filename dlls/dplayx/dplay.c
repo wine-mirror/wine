@@ -1414,7 +1414,8 @@ static HRESULT DP_CreateSPPlayer( IDirectPlayImpl *This, DPID dpid, DWORD flags,
 }
 
 static HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPNAME *lpName,
-        void *data, DWORD dataSize, DWORD dwFlags, HANDLE hEvent, BOOL bAnsi )
+        void *data, DWORD dataSize, void *spData, DWORD spDataSize, DWORD dwFlags, HANDLE hEvent,
+        BOOL bAnsi )
 {
   lpPlayerData lpPData;
   lpPlayerList lpPList;
@@ -1468,6 +1469,20 @@ static HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lp
   DPQ_INSERT( This->dp2->lpSysGroup->players, lpPList, players );
 
   DP_SetPlayerData( lpPData, DPSET_REMOTE, data, dataSize );
+
+  hr = IDirectPlaySP_SetSPPlayerData( This->dp2->spData.lpISP, *lpid, spData, spDataSize,
+                                      DPSET_REMOTE );
+  if ( FAILED( hr ) )
+  {
+    free( lpPData->lpRemoteData );
+    DPQ_REMOVE( This->dp2->lpSysGroup->players, lpPList, players );
+    free( lpPList );
+    free( lpPData->lpSPPlayerData );
+    CloseHandle( lpPData->hEvent );
+    DP_DeleteDPNameStruct( &lpPData->name );
+    free( lpPData );
+    return hr;
+  }
 
   hr = DP_CreateSPPlayer( This, *lpid, dwFlags, msgHeader );
   if ( FAILED( hr ) )
@@ -1716,8 +1731,8 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
 
   /* We pass creation flags, so we can distinguish sysplayers and not count them in the current
      player total */
-  hr = DP_CreatePlayer( This, NULL, lpidPlayer, lpPlayerName, lpData, dwDataSize, dwCreateFlags,
-                        hEvent, bAnsi );
+  hr = DP_CreatePlayer( This, NULL, lpidPlayer, lpPlayerName, lpData, dwDataSize, NULL, 0,
+                        dwCreateFlags, hEvent, bAnsi );
   if( FAILED( hr ) )
     return hr;
 
