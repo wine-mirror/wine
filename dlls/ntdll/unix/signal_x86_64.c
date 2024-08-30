@@ -1894,7 +1894,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
  *
  * Handle a trap exception during a system call.
  */
-static BOOL handle_syscall_trap( ucontext_t *sigcontext )
+static BOOL handle_syscall_trap( ucontext_t *sigcontext, siginfo_t *siginfo )
 {
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
 
@@ -1912,6 +1912,11 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 
         RIP_sig( sigcontext ) = (ULONG64)__wine_unix_call_dispatcher_prolog_end_ptr;
         R10_sig( sigcontext ) = RCX_sig( sigcontext );
+    }
+    else if (siginfo->si_code == 4 /* TRAP_HWBKPT */ && is_inside_syscall( sigcontext ))
+    {
+        TRACE_(seh)( "ignoring HWBKPT in syscall rip=%p\n", (void *)RIP_sig(sigcontext) );
+        return TRUE;
     }
     else return FALSE;
 
@@ -2025,7 +2030,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     struct xcontext context;
     ucontext_t *ucontext = init_handler( sigcontext );
 
-    if (handle_syscall_trap( ucontext )) return;
+    if (handle_syscall_trap( ucontext, siginfo )) return;
 
     rec.ExceptionAddress = (void *)RIP_sig(ucontext);
     save_context( &context, ucontext );

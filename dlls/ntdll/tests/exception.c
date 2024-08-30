@@ -250,6 +250,51 @@ static void check_context_exception_request_( DWORD flags, BOOL hardware_excepti
     ok_(__FILE__, line)( (flags & exception_reporting_flags) == expected_flags, "got %#lx, expected %#lx.\n",
                          flags, expected_flags );
 }
+
+static BOOL test_hwbpt_in_syscall_trap;
+
+static LONG WINAPI test_hwbpt_in_syscall_handler( EXCEPTION_POINTERS *eptr )
+{
+    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+
+    test_hwbpt_in_syscall_trap = TRUE;
+    ok(rec->ExceptionCode == EXCEPTION_SINGLE_STEP, "got %#lx.\n", rec->ExceptionCode);
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static void test_hwbpt_in_syscall(void)
+{
+    TEB *teb = NtCurrentTeb();
+    NTSTATUS status;
+    void *handler;
+    CONTEXT c;
+    DWORD ind;
+    BOOL bret;
+
+    ind = TlsAlloc();
+    ok(ind < ARRAY_SIZE(teb->TlsSlots), "got %lu.\n", ind);
+    handler = AddVectoredExceptionHandler(TRUE, test_hwbpt_in_syscall_handler);
+    memset(&c, 0, sizeof(c));
+    c.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    c.Dr0 = (ULONG_PTR)&teb->TlsSlots[ind];
+    c.Dr7 = 3 | (3 << 16) | (3 << 18); /* read / write 4 byte breakpoint. */
+    bret = SetThreadContext(GetCurrentThread(), &c);
+    ok(bret, "got error %lu.\n", GetLastError());
+    test_hwbpt_in_syscall_trap = FALSE;
+    teb->TlsSlots[ind] = (void *)0xdeadbeef;
+    ok(test_hwbpt_in_syscall_trap, "expected trap.\n");
+
+    test_hwbpt_in_syscall_trap = FALSE;
+    status = NtSetInformationThread(GetCurrentThread(), ThreadZeroTlsCell, &ind, sizeof(ind));
+    ok(!status, "got %#lx.\n", status);
+    ok(!test_hwbpt_in_syscall_trap, "got trap.\n");
+    c.Dr7 = 0;
+    bret = SetThreadContext(GetCurrentThread(), &c);
+    ok(bret, "got error %lu.\n", GetLastError());
+    ok(!teb->TlsSlots[ind], "got %p.\n", teb->TlsSlots[ind]);
+    RemoveVectoredExceptionHandler(handler);
+    TlsFree(ind);
+}
 #endif
 
 #ifdef __i386__
@@ -11498,6 +11543,7 @@ START_TEST(exception)
     test_extended_context();
     test_copy_context();
     test_set_live_context();
+    test_hwbpt_in_syscall();
 
 #elif defined(__x86_64__)
 
@@ -11527,6 +11573,7 @@ START_TEST(exception)
     test_unwind_from_apc();
     test_syscall_clobbered_regs();
     test_raiseexception_regs();
+    test_hwbpt_in_syscall();
 
 #elif defined(__aarch64__)
 
