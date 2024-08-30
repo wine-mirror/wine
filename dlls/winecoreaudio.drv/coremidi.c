@@ -857,7 +857,8 @@ static UINT midi_out_set_volume(WORD dev_id, UINT volume)
         left  = LOWORD(volume) / 65535.0f;
         right = HIWORD(volume) / 65535.0f;
 
-        AudioUnitSetParameter(dests[dev_id].synth, kHALOutputParam_Volume, kAudioUnitParameterFlag_Output, 0, left, 0);
+        AudioUnitSetParameter(dests[dev_id].synth, kHALOutputParam_Volume, kAudioUnitParameterFlag_Output,
+                              0, fmaxf(left, right), 0);
         return MMSYSERR_NOERROR;
     }
 
