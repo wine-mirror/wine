@@ -565,7 +565,7 @@ static SECURITY_STATUS acquire_credentials_handle(ULONG fCredentialUse,
  const SCHANNEL_CRED *schanCred, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     struct schan_credentials *creds;
-    DWORD enabled_protocols, cred_enabled_protocols;
+    DWORD enabled_protocols, cred_enabled_protocols = 0;
     ULONG_PTR handle;
     SECURITY_STATUS status = SEC_E_OK;
     const CERT_CONTEXT *cert = NULL;
@@ -596,7 +596,7 @@ static SECURITY_STATUS acquire_credentials_handle(ULONG fCredentialUse,
     }
 
     read_config();
-    if(schanCred && cred_enabled_protocols)
+    if (cred_enabled_protocols)
         enabled_protocols = cred_enabled_protocols & config_enabled_protocols;
     else
         enabled_protocols = config_enabled_protocols & ~config_default_disabled_protocols;
@@ -604,7 +604,8 @@ static SECURITY_STATUS acquire_credentials_handle(ULONG fCredentialUse,
         enabled_protocols &= ~SP_PROT_X_CLIENTS;
     if (!(fCredentialUse & SECPKG_CRED_INBOUND))
         enabled_protocols &= ~SP_PROT_X_SERVERS;
-    if(!enabled_protocols) {
+    if (!enabled_protocols)
+    {
         ERR("Could not find matching protocol\n");
         return SEC_E_ALGORITHM_MISMATCH;
     }
