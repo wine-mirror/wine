@@ -239,6 +239,7 @@ enum schan_funcs
     unix_set_dtls_mtu,
     unix_set_session_target,
     unix_set_dtls_timeouts,
+    unix_funcs_count,
 };
 
 #endif /* __SECUR32_PRIV_H__ */
