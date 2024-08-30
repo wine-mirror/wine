@@ -224,6 +224,24 @@ public:
     }
 };
 
+/* FIXME: missing the methods. */
+class SizeF
+{
+public:
+    REAL Width;
+    REAL Height;
+
+    SizeF()
+      : Width(0.0f), Height(0.0f)
+    {
+    }
+
+    SizeF(REAL width, REAL height)
+      : Width(width), Height(height)
+    {
+    }
+};
+
 class CharacterRange
 {
 public:
