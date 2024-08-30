@@ -2065,7 +2065,7 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
         }
     }
 
-    todo_wine ok_( __FILE__, data->line )( 0, "unexpected player dpid %#lx.\n", dpid );
+    ok_( __FILE__, data->line )( 0, "unexpected player dpid %#lx.\n", dpid );
 
     ++data->actualPlayerCount;
 
@@ -2085,8 +2085,8 @@ static void checkPlayerList_( int line, IDirectPlay4 *dp, ExpectedPlayer *expect
 
     hr = IDirectPlayX_EnumPlayers( dp, NULL, checkPlayerListCallback, &data, 0 );
     ok_( __FILE__, line )( hr == DP_OK, "EnumPlayers() returned %#lx.\n", hr );
-    ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
-                           data.actualPlayerCount );
+    todo_wine ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
+                                     data.actualPlayerCount );
 }
 
 #define check_Open( dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr ) check_Open_( __LINE__, dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr )
