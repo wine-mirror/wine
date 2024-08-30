@@ -60,7 +60,7 @@ static void add_argument(struct args *args, const char *arg)
 {
     args->argv = realloc(args->argv, (args->count + 2) * sizeof(char *));
     args->argv[args->count++] = strdup(arg);
-    args->argv[args->count + 1] = NULL;
+    args->argv[args->count] = NULL;
 }
 
 static void add_target(struct args *args, ULONG class, const char *address)
