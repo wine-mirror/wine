@@ -619,9 +619,10 @@ static void diagnostic( const struct location *where, const char *type, const ch
     fprintf( stderr, "%s", line );
 
     line = buffer;
-    for (i = 0; i < where->first_column - 1; i++) line += sprintf( line, " " );
-    line += sprintf( line, "^" );
-    for (i = where->first_column + 1; i < where->last_column; i++) line += sprintf( line, "~" );
+    for (i = 0; i < where->first_column - 1; i++) *line++ = ' ';
+    *line++ = '^';
+    for (i = where->first_column + 1; i < where->last_column; i++) *line++ = '~';
+    *line = '\0';
     fprintf( stderr, "%s\n", buffer );
 }
 
