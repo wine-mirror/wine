@@ -1428,7 +1428,14 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
         WCHAR *args;
 
         WCMD_parameter(full_cmdline, 1, &args, FALSE, TRUE);
-        sei.fMask = SEE_MASK_NO_CONSOLE | SEE_MASK_NOCLOSEPROCESS;
+        /* FIXME: when the file extension is not registered,
+         * native cmd does popup a dialog box to register an app for this extension.
+         * Also, ShellExecuteW returns before the dialog box is closed.
+         * Moreover, on Wine, displaying a dialog box without a message loop
+         * (in cmd.exe) blocks the dialog.
+         * So, until the above bits are solved, don't display any dialog box.
+         */
+        sei.fMask = SEE_MASK_NO_CONSOLE | SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
         sei.lpFile = file;
         sei.lpParameters = args;
         sei.nShow = SW_SHOWNORMAL;
