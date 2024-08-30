@@ -47,7 +47,7 @@ typedef struct tagMSGTHREADINFO
 static DWORD CALLBACK DPL_MSG_ThreadMain( LPVOID lpContext );
 static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDEXDATA *data, DWORD dwWaitTime,
         WORD *replyCommandIds, DWORD replyCommandIdCount, void **lplpReplyMsg,
-        DWORD *lpdwMsgBodySize );
+        DWORD *lpdwMsgBodySize, void **replyMsgHeader );
 
 
 /* Create the message reception thread to allow the application to receive
@@ -209,12 +209,13 @@ void DP_MSG_UnlinkReplyStruct( IDirectPlayImpl *This, DP_MSG_REPLY_STRUCT_LIST *
 
 static
 void DP_MSG_CleanReplyStruct( LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
-                              LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize )
+                              LPVOID* lplpReplyMsg, LPDWORD lpdwMsgBodySize, void **replyMsgHeader )
 {
   CloseHandle( lpReplyStructList->replyExpected.hReceipt );
 
   *lplpReplyMsg    = lpReplyStructList->replyExpected.lpReplyMsg;
   *lpdwMsgBodySize = lpReplyStructList->replyExpected.dwMsgBodySize;
+  *replyMsgHeader  = lpReplyStructList->replyExpected.replyMsgHeader;
 }
 
 DWORD DP_MSG_ComputeMessageSize( SGBUFFER *buffers, DWORD bufferCount )
@@ -229,6 +230,7 @@ DWORD DP_MSG_ComputeMessageSize( SGBUFFER *buffers, DWORD bufferCount )
 HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *lpdpidAllocatedId )
 {
   LPVOID                     lpMsg;
+  void                      *msgHeader;
   DPMSG_REQUESTNEWPLAYERID   msgBody;
   DWORD                      dwMsgSize;
   HRESULT                    hr = DP_OK;
@@ -264,7 +266,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
            msgBody.dwFlags );
 
     hr = DP_MSG_ExpectReply( This, &data, DPMSG_DEFAULT_WAIT_TIME, &replyCommand, 1,
-                             &lpMsg, &dwMsgSize );
+                             &lpMsg, &dwMsgSize, &msgHeader );
   }
 
   /* Need to examine the data and extract the new player id */
@@ -286,6 +288,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
      *        for several different messages?
      */
 
+    free( msgHeader );
     free( lpMsg );
   }
 
@@ -301,6 +304,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
   void                    *spPlayerData;
   DWORD                    spPlayerDataSize;
   const WCHAR             *password = L"";
+  void                    *msgHeader;
   HRESULT                  hr;
 
   hr = IDirectPlaySP_GetSPPlayerData( This->dp2->spData.lpISP, dpidServer,
@@ -362,7 +366,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
     hr = DP_MSG_ExpectReply( This, &data,
                              DPMSG_WAIT_60_SECS,
                              replyCommands, ARRAYSIZE( replyCommands ),
-                             &lpMsg, &dwMsgSize );
+                             &lpMsg, &dwMsgSize, &msgHeader );
   }
 
   /* Need to examine the data and extract the new player id */
@@ -382,7 +386,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
  */
 static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDEXDATA *lpData, DWORD dwWaitTime,
         WORD *replyCommandIds, DWORD replyCommandIdCount, void **lplpReplyMsg,
-        DWORD *lpdwMsgBodySize )
+        DWORD *lpdwMsgBodySize, void **replyMsgHeader )
 {
   HRESULT                  hr;
   HANDLE                   hMsgReceipt;
@@ -400,7 +404,7 @@ static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDEXDATA *lpDat
   {
     ERR( "Send failed: %s\n", DPLAYX_HresultToString( hr ) );
     DP_MSG_UnlinkReplyStruct( This, &replyStructList );
-    DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
+    DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize, replyMsgHeader );
     return hr;
   }
 
@@ -412,12 +416,12 @@ static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDEXDATA *lpDat
   {
     ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
     DP_MSG_UnlinkReplyStruct( This, &replyStructList );
-    DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
+    DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize, replyMsgHeader );
     return DPERR_TIMEOUT;
   }
 
   /* Clean Up */
-  DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize );
+  DP_MSG_CleanReplyStruct( &replyStructList, lplpReplyMsg, lpdwMsgBodySize, replyMsgHeader );
   return DP_OK;
 }
 
@@ -426,7 +430,7 @@ static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDEXDATA *lpDat
  * indicate that a copy is taken. Silly really.
  */
 void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId, const void *lpcMsgBody,
-        DWORD dwMsgBodySize )
+        DWORD dwMsgBodySize, const void *msgHeader )
 {
   LPDP_MSG_REPLY_STRUCT_LIST lpReplyList;
 
@@ -446,8 +450,11 @@ void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId, const void *l
   {
     lpReplyList->replyExpected.dwMsgBodySize = dwMsgBodySize;
     lpReplyList->replyExpected.lpReplyMsg = malloc( dwMsgBodySize );
+    lpReplyList->replyExpected.replyMsgHeader = malloc( This->dp2->spData.dwSPHeaderSize );
     CopyMemory( lpReplyList->replyExpected.lpReplyMsg,
                 lpcMsgBody, dwMsgBodySize );
+    CopyMemory( lpReplyList->replyExpected.replyMsgHeader,
+                msgHeader, This->dp2->spData.dwSPHeaderSize );
 
     /* Signal the thread which sent the message that it has a reply */
     SetEvent( lpReplyList->replyExpected.hReceipt );
@@ -462,6 +469,7 @@ void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId, const void *l
 void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf )
 {
   LPVOID                   lpMsg;
+  void                    *msgHeader;
   DPMSG_SENDENVELOPE       msgBody;
   DWORD                    dwMsgSize;
 
@@ -492,7 +500,7 @@ void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf )
     DP_MSG_ExpectReply( This, &data,
                         DPMSG_WAIT_5_SECS,
                         &replyCommand, 1,
-                        &lpMsg, &dwMsgSize );
+                        &lpMsg, &dwMsgSize, &msgHeader );
   }
 }
 

@@ -48,7 +48,7 @@ typedef struct tagDP_MSG_REPLY_STRUCT
   DWORD  expectedReplyCount;
   LPVOID lpReplyMsg;
   DWORD  dwMsgBodySize;
-  /* FIXME: Is the message header required as well? */
+  void  *replyMsgHeader;
 } DP_MSG_REPLY_STRUCT, *LPDP_MSG_REPLY_STRUCT;
 
 typedef struct tagDP_MSG_REPLY_STRUCT_LIST

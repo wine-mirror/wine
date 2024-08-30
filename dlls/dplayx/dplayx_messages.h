@@ -36,7 +36,8 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags,
 HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer );
 
 void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId,
-                           LPCVOID lpMsgBody, DWORD dwMsgBodySize );
+                           LPCVOID lpMsgBody, DWORD dwMsgBodySize,
+                           const void *msgHeader );
 void DP_MSG_ErrorReceived( IDirectPlayImpl *This, WORD wCommandId,
                            LPCVOID lpMsgBody, DWORD dwMsgBodySize );
 void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf );
