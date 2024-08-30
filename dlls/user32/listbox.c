@@ -3092,6 +3092,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         if (descr->focus_item != -1)
             LISTBOX_DrawFocusRect( descr, TRUE );
         SEND_NOTIFICATION( descr, LBN_SETFOCUS );
+        NtUserNotifyWinEvent( EVENT_OBJECT_FOCUS, descr->self, OBJID_CLIENT, descr->focus_item + 1 );
         return 0;
     case WM_KILLFOCUS:
         LISTBOX_HandleLButtonUp( descr ); /* Release capture if we have it */
