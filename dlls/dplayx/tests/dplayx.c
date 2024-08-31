@@ -2190,6 +2190,7 @@ typedef struct
     DWORD expectedFlags;
     BYTE *expectedPlayerData;
     DWORD expectedPlayerDataSize;
+    BOOL flagsTodo;
     int actualCount;
 } ExpectedPlayer;
 
@@ -2222,7 +2223,7 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
             HRESULT hr;
 
             if ( player->actualCount )
-                ok_( __FILE__, data->line )( 0, "duplicate player dpid %#lx.\n", dpid );
+                todo_wine ok_( __FILE__, data->line )( 0, "duplicate player dpid %#lx.\n", dpid );
             ok_( __FILE__, data->line )( playerType == player->expectedPlayerType, "got player type %lu.\n",
                                          playerType );
             if ( player->expectedShortName )
@@ -2245,7 +2246,8 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
                 ok_( __FILE__, data->line )( !name->lpszLongNameA, "got long name %s.\n",
                                              wine_dbgstr_a( name->lpszLongNameA ) );
             }
-            ok_( __FILE__, data->line )( flags == player->expectedFlags, "got flags %#lx.\n", flags );
+            todo_wine_if( player->flagsTodo ) ok_( __FILE__, data->line )( flags == player->expectedFlags,
+                                                                           "got flags %#lx.\n", flags );
 
             memset( &playerData, 0xcc, sizeof( playerData ) );
             playerDataSize = sizeof( playerData );
@@ -2324,10 +2326,14 @@ static void checkPlayerList_( int line, IDirectPlay4 *dp, ExpectedPlayer *expect
     };
     HRESULT hr;
 
-    hr = IDirectPlayX_EnumPlayers( dp, NULL, checkPlayerListCallback, &data, 0 );
+    hr = IDirectPlayX_EnumPlayers( dp, NULL, checkPlayerListCallback, &data, DPENUMPLAYERS_LOCAL );
     ok_( __FILE__, line )( hr == DP_OK, "EnumPlayers() returned %#lx.\n", hr );
-    ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
-                           data.actualPlayerCount );
+
+    hr = IDirectPlayX_EnumPlayers( dp, NULL, checkPlayerListCallback, &data, DPENUMPLAYERS_REMOTE );
+    ok_( __FILE__, line )( hr == DP_OK, "EnumPlayers() returned %#lx.\n", hr );
+
+    todo_wine ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
+                                     data.actualPlayerCount );
 }
 
 #define check_Open( dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, listenPort, expectedPassword, \
@@ -2390,9 +2396,10 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
                         .expectedPlayerType = DPPLAYERTYPE_PLAYER,
                         .expectedShortName = "short name",
                         .expectedLongName = "long name",
-                        .expectedFlags = 0,
+                        .expectedFlags = DPENUMPLAYERS_REMOTE,
                         .expectedPlayerData = expectedPlayerData,
                         .expectedPlayerDataSize = sizeof( expectedPlayerData ),
+                        .flagsTodo = TRUE,
                     },
                 };
 
