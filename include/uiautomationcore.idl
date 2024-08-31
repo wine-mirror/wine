@@ -613,6 +613,20 @@ library UIA
 
     [
         object,
+        uuid(14f68475-ee1c-44f6-a869-d239381f0fe7),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface ISelectionProvider2 : ISelectionProvider
+    {
+        [propget] HRESULT FirstSelectedItem([out, retval] IRawElementProviderSimple **val);
+        [propget] HRESULT LastSelectedItem([out, retval] IRawElementProviderSimple **val);
+        [propget] HRESULT CurrentSelectedItem([out, retval] IRawElementProviderSimple **val);
+        [propget] HRESULT ItemCount([out, retval] int *val);
+    }
+
+    [
+        object,
         uuid(b38b8077-1fc3-42a5-8cae-d40c2215055a),
         pointer_default(unique),
         oleautomation
