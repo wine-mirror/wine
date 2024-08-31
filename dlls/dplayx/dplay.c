@@ -1758,28 +1758,10 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
    * to the name server if requesting a player id and to the SP when
    * informing it of the player creation
    */
-  {
-    if( dwFlags & DPPLAYER_SERVERPLAYER )
-    {
-      if( *lpidPlayer == DPID_SERVERPLAYER )
-      {
-        /* Server player for the host interface */
-        dwCreateFlags |= DPLAYI_PLAYER_APPSERVER;
-      }
-      else if( *lpidPlayer == DPID_NAME_SERVER )
-      {
-        /* Name server - master of everything */
-        dwCreateFlags |= (DPLAYI_PLAYER_NAMESRVR|DPLAYI_PLAYER_SYSPLAYER);
-      }
-      else
-      {
-        /* Server player for a non host interface */
-        dwCreateFlags |= DPLAYI_PLAYER_SYSPLAYER;
-      }
-    }
+  if( dwFlags & DPPLAYER_SERVERPLAYER )
+    dwCreateFlags |= DPLAYI_PLAYER_APPSERVER;
 
-    dwCreateFlags |= DPLAYI_PLAYER_PLAYERLOCAL;
-  }
+  dwCreateFlags |= DPLAYI_PLAYER_PLAYERLOCAL;
 
   /* Verify we know how to handle all the flags */
   if( !( ( dwFlags & DPPLAYER_SERVERPLAYER ) ||
@@ -1792,7 +1774,7 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
   }
 
   /* If the name is not specified, we must provide one */
-  if( *lpidPlayer == DPID_UNKNOWN )
+  if( !(dwFlags & DPPLAYER_SERVERPLAYER) )
   {
     /* If we are the session master, we dish out the group/player ids */
     if( This->dp2->bHostInterface )
@@ -1815,6 +1797,7 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
     /* FIXME: Would be nice to perhaps verify that we don't already have
      *        this player.
      */
+    *lpidPlayer = DPID_SERVERPLAYER;
   }
 
   EnterCriticalSection( &This->lock );
@@ -1912,21 +1895,6 @@ static HRESULT WINAPI IDirectPlay4AImpl_CreatePlayer( IDirectPlay4A *iface, DPID
         DPNAME *lpPlayerName, HANDLE hEvent, void *lpData, DWORD dwDataSize, DWORD dwFlags )
 {
   IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-
-  if( lpidPlayer == NULL )
-  {
-    return DPERR_INVALIDPARAMS;
-  }
-
-  if( dwFlags & DPPLAYER_SERVERPLAYER )
-  {
-    *lpidPlayer = DPID_SERVERPLAYER;
-  }
-  else
-  {
-    *lpidPlayer = DPID_UNKNOWN;
-  }
-
   return DP_IF_CreatePlayer( This, lpidPlayer, lpPlayerName, hEvent,
                            lpData, dwDataSize, dwFlags, TRUE );
 }
@@ -1935,21 +1903,6 @@ static HRESULT WINAPI IDirectPlay4Impl_CreatePlayer( IDirectPlay4 *iface, DPID *
         DPNAME *lpPlayerName, HANDLE hEvent, void *lpData, DWORD dwDataSize, DWORD dwFlags )
 {
   IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
-
-  if( lpidPlayer == NULL )
-  {
-    return DPERR_INVALIDPARAMS;
-  }
-
-  if( dwFlags & DPPLAYER_SERVERPLAYER )
-  {
-    *lpidPlayer = DPID_SERVERPLAYER;
-  }
-  else
-  {
-    *lpidPlayer = DPID_UNKNOWN;
-  }
-
   return DP_IF_CreatePlayer( This, lpidPlayer, lpPlayerName, hEvent,
                            lpData, dwDataSize, dwFlags, FALSE );
 }

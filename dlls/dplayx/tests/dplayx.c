@@ -4214,16 +4214,15 @@ static void checkCreatePlayerOrGroupMessages_( int line, IDirectPlay4 *dp, DWORD
 
 #define check_CreatePlayer( dp, dpid, name, flags, expectedHr, expectedDpid, recvSock, requestExpected, \
                             expectedFlags, expectedShortName, expectedShortNameA, expectedLongName, expectedLongNameA, \
-                            expectedCurrentPlayers, hrTodo, dpidTodo, flagsTodo, nameTodo ) \
+                            expectedCurrentPlayers, flagsTodo, nameTodo ) \
         check_CreatePlayer_( __LINE__, dp, dpid, name, flags, expectedHr, expectedDpid, recvSock, requestExpected, \
                              expectedFlags, expectedShortName, expectedShortNameA, expectedLongName, expectedLongNameA, \
-                             expectedCurrentPlayers, hrTodo, dpidTodo, flagsTodo, nameTodo )
+                             expectedCurrentPlayers, flagsTodo, nameTodo )
 static void check_CreatePlayer_( int line, IDirectPlay4 *dp, DPID *dpid, DPNAME *name, DWORD flags, HRESULT expectedHr,
                                  DPID expectedDpid, SOCKET recvSock, BOOL requestExpected, DWORD expectedFlags,
                                  const WCHAR *expectedShortName, const char *expectedShortNameA,
                                  const WCHAR *expectedLongName, const char *expectedLongNameA,
-                                 DWORD expectedCurrentPlayers, BOOL hrTodo, BOOL dpidTodo, BOOL flagsTodo,
-                                 BOOL nameTodo )
+                                 DWORD expectedCurrentPlayers, BOOL flagsTodo, BOOL nameTodo )
 {
     BYTE playerData[] = { 1, 2, 3, 4, 5, 6, 7, 8, };
     CreatePlayerParam *param;
@@ -4250,9 +4249,9 @@ static void check_CreatePlayer_( int line, IDirectPlay4 *dp, DPID *dpid, DPNAME 
         sendSuperEnumPlayersReply_( line, sendSock, 2349, 2399, &dpsd, L"" );
 
         hr = createPlayerAsyncWait( param, 2000 );
-        todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "CreatePlayer() returned %#lx.\n", hr );
+        ok_( __FILE__, line )( hr == expectedHr, "CreatePlayer() returned %#lx.\n", hr );
         if ( dpid )
-            todo_wine_if( dpidTodo ) ok_( __FILE__, line )( *dpid == expectedDpid, "got dpid %#lx.\n", *dpid );
+            ok_( __FILE__, line )( *dpid == expectedDpid, "got dpid %#lx.\n", *dpid );
 
         checkPlayerExists_( line, dp, expectedDpid, DPPLAYERTYPE_PLAYER, expectedShortNameA, expectedLongNameA,
                             expectedFlags, playerData, sizeof( playerData ), flagsTodo );
@@ -4269,9 +4268,9 @@ static void check_CreatePlayer_( int line, IDirectPlay4 *dp, DPID *dpid, DPNAME 
     else
     {
         hr = createPlayerAsyncWait( param, 2000 );
-        todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "CreatePlayer() returned %#lx.\n", hr );
+        ok_( __FILE__, line )( hr == expectedHr, "CreatePlayer() returned %#lx.\n", hr );
         if ( dpid )
-            todo_wine_if( dpidTodo ) ok_( __FILE__, line )( *dpid == expectedDpid, "got dpid %#lx.\n", *dpid );
+            ok_( __FILE__, line )( *dpid == expectedDpid, "got dpid %#lx.\n", *dpid );
     }
 
     if ( recvSock != INVALID_SOCKET )
@@ -4317,50 +4316,47 @@ static void test_CreatePlayer(void)
     /* Connection not initialized */
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, NULL, 0, DPERR_UNINITIALIZED, 0xdeadbeef, INVALID_SOCKET, FALSE, 0, NULL, NULL,
-                        NULL, NULL, 0, FALSE, TRUE, FALSE, FALSE );
+                        NULL, NULL, 0, FALSE, FALSE );
 
     init_TCPIP_provider( dp, "127.0.0.1", 0 );
 
     /* Session not open */
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, NULL, 0, DPERR_INVALIDPARAMS, 0xdeadbeef, INVALID_SOCKET, FALSE, 0, NULL, NULL,
-                        NULL, NULL, 0, FALSE, TRUE, FALSE, FALSE );
+                        NULL, NULL, 0, FALSE, FALSE );
 
     /* Join to normal session */
     joinSession( dp, &appGuidDpsd, &serverDpsd, &sendSock, &recvSock );
 
     /* Player name */
     dpid = 0xdeadbeef;
-    check_CreatePlayer( dp, &dpid, NULL, 0, DP_OK, 2, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 1, FALSE, FALSE,
-                        FALSE, FALSE );
+    check_CreatePlayer( dp, &dpid, NULL, 0, DP_OK, 2, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 1, FALSE, FALSE );
 
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, &fullName, 0, DP_OK, 3, recvSock, TRUE, 0x8, L"short player name",
-                        "short player name", L"long player name", "long player name", 2, FALSE, FALSE, FALSE, TRUE );
+                        "short player name", L"long player name", "long player name", 2, FALSE, TRUE );
 
     name = fullName;
     name.dwSize = 1;
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, &name, 0, DP_OK, 4, recvSock, TRUE, 0x8, L"short player name", "short player name",
-                        L"long player name", "long player name", 3, FALSE, FALSE, FALSE, TRUE );
+                        L"long player name", "long player name", 3, FALSE, TRUE );
 
     dpid = 0xdeadbeef;
-    check_CreatePlayer( dp, &dpid, &nullName, 0, DP_OK, 5, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 4, FALSE, FALSE,
-                        FALSE, FALSE );
+    check_CreatePlayer( dp, &dpid, &nullName, 0, DP_OK, 5, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 4, FALSE, FALSE );
 
     /* Null dpid */
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, NULL, NULL, 0, DPERR_INVALIDPARAMS, 0, recvSock, FALSE, 0, NULL, NULL, NULL, NULL, 0, FALSE,
-                        FALSE, FALSE, FALSE );
+                        FALSE );
 
     /* Flags */
     dpid = 0xdeadbeef;
-    check_CreatePlayer( dp, &dpid, NULL, 0, DP_OK, 6, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 5, FALSE, FALSE,
-                        FALSE, FALSE );
+    check_CreatePlayer( dp, &dpid, NULL, 0, DP_OK, 6, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 5, FALSE, FALSE );
 
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, NULL, DPPLAYER_SPECTATOR, DP_OK, 7, recvSock, TRUE, 0x208, NULL, NULL, NULL, NULL, 6,
-                        FALSE, FALSE, TRUE, FALSE );
+                        TRUE, FALSE );
 
     closesocket( recvSock );
     closesocket( sendSock );
