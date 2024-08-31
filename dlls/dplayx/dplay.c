@@ -323,12 +323,12 @@ static void *DP_DuplicateString( void *src, BOOL dstAnsi, BOOL srcAnsi )
 }
 
 /* *lplpReply will be non NULL iff there is something to reply */
-HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
-        DWORD dwMessageBodySize, const void *lpcMessageHeader, WORD wCommandId, WORD wVersion,
+HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
+        DWORD dwMessageBodySize, void *messageHeader, WORD wCommandId, WORD wVersion,
         void **lplpReply, DWORD *lpdwMsgSize )
 {
   TRACE( "(%p)->(%p,0x%08lx,%p,%u,%u)\n",
-         This, lpcMessageBody, dwMessageBodySize, lpcMessageHeader, wCommandId,
+         This, messageBody, dwMessageBodySize, messageHeader, wCommandId,
          wVersion );
 
   switch( wCommandId )
@@ -336,7 +336,7 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
     /* Name server needs to handle this request */
     case DPMSGCMD_ENUMSESSIONSREQUEST:
       /* Reply expected */
-      NS_ReplyToEnumSessionsRequest( lpcMessageBody, lplpReply, lpdwMsgSize, This );
+      NS_ReplyToEnumSessionsRequest( messageBody, lplpReply, lpdwMsgSize, This );
       break;
 
     /* Name server needs to handle this request */
@@ -344,9 +344,9 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
       EnterCriticalSection( &This->lock );
 
       /* No reply expected */
-      NS_AddRemoteComputerAsNameServer( lpcMessageHeader,
+      NS_AddRemoteComputerAsNameServer( messageHeader,
                                         This->dp2->spData.dwSPHeaderSize,
-                                        lpcMessageBody,
+                                        messageBody,
                                         dwMessageBodySize,
                                         This->dp2->lpNameServerData );
 
@@ -355,7 +355,7 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
 
     case DPMSGCMD_REQUESTNEWPLAYERID:
     {
-      LPCDPMSG_REQUESTNEWPLAYERID lpcMsg = lpcMessageBody;
+      LPCDPMSG_REQUESTNEWPLAYERID lpcMsg = messageBody;
 
       LPDPMSG_NEWPLAYERIDREPLY lpReply;
 
@@ -385,13 +385,13 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
     case DPMSGCMD_NEWPLAYERIDREPLY:
     case DPMSGCMD_FORWARDADDPLAYERNACK:
     case DPMSGCMD_SUPERENUMPLAYERSREPLY:
-      DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize, lpcMessageHeader );
+      DP_MSG_ReplyReceived( This, wCommandId, messageBody, dwMessageBodySize, messageHeader );
       break;
 
     case DPMSGCMD_JUSTENVELOPE:
-      TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08lx\n", lpcMessageHeader, ((const DWORD *)lpcMessageHeader)[1] );
-      NS_SetLocalAddr( This->dp2->lpNameServerData, lpcMessageHeader, 20 );
-      DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize, lpcMessageHeader );
+      TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08lx\n", messageHeader, ((const DWORD *)messageHeader)[1] );
+      NS_SetLocalAddr( This->dp2->lpNameServerData, messageHeader, 20 );
+      DP_MSG_ReplyReceived( This, wCommandId, messageBody, dwMessageBodySize, messageHeader );
 
     case DPMSGCMD_FORWARDADDPLAYER:
       TRACE( "Sending message to self to get my addr\n" );
