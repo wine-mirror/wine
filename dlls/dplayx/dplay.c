@@ -398,6 +398,46 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
       DP_MSG_ToSelf( This, 1 ); /* This is a hack right now */
       break;
 
+    case DPMSGCMD_ADDFORWARD: {
+      DPSP_MSG_ADDFORWARD *msg;
+      DPPLAYERINFO playerInfo;
+      DWORD offset = 0;
+      HRESULT hr;
+
+      if( dwMessageBodySize < sizeof( DPSP_MSG_ADDFORWARD ) )
+        return DPERR_GENERIC;
+      msg = (DPSP_MSG_ADDFORWARD *) messageBody;
+      offset += sizeof( DPSP_MSG_ADDFORWARD );
+
+      hr = DP_MSG_ReadPackedPlayer( (char *) messageBody, &offset, dwMessageBodySize, &playerInfo );
+      if ( FAILED( hr ) )
+        return hr;
+
+      EnterCriticalSection( &This->lock );
+
+      if ( !This->dp2->bConnectionOpen )
+      {
+        LeaveCriticalSection( &This->lock );
+        return DP_OK;
+      }
+
+      hr = DP_CreatePlayer( This, messageHeader, &msg->playerId, &playerInfo.name,
+                            playerInfo.playerData, playerInfo.playerDataLength, playerInfo.spData,
+                            playerInfo.spDataLength, playerInfo.flags & ~DPLAYI_PLAYER_PLAYERLOCAL,
+                            NULL, FALSE );
+      if ( FAILED( hr ) )
+      {
+        LeaveCriticalSection( &This->lock );
+        return hr;
+      }
+
+      LeaveCriticalSection( &This->lock );
+
+      DP_MSG_SendAddForwardAck( This, msg->playerId );
+
+      break;
+    }
+
     default:
       FIXME( "Unknown wCommandId %u. Ignoring message\n", wCommandId );
       break;
@@ -3470,7 +3510,6 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
   if( dwFlags & DPOPEN_JOIN )
   {
     DWORD createFlags = DPLAYI_PLAYER_SYSPLAYER | DPLAYI_PLAYER_PLAYERLOCAL;
-    DPID dpidServerId = DPID_UNKNOWN;
     WCHAR *password;
 
     password = DP_DuplicateString( lpsd->lpszPassword, FALSE, bAnsi );
@@ -3494,7 +3533,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
      *        up. DPlay would then trigger the hEvent for the player the
      *        message is directed to.
      */
-    hr = DP_MSG_SendRequestPlayerId( This, createFlags, &dpidServerId );
+    hr = DP_MSG_SendRequestPlayerId( This, createFlags, &This->dp2->systemPlayerId );
     if( FAILED( hr ) )
     {
       ERR( "Request for ID failed: %s\n", DPLAYX_HresultToString( hr ) );
@@ -3512,8 +3551,8 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
     /* No need to enter the critical section here as the messaging thread won't access the data
      * while bConnectionOpen is FALSE. */
 
-    hr = DP_CreatePlayer( This, NULL, &dpidServerId, NULL, NULL, 0, NULL, 0, createFlags, NULL,
-                          bAnsi );
+    hr = DP_CreatePlayer( This, NULL, &This->dp2->systemPlayerId, NULL, NULL, 0, NULL, 0,
+                          createFlags, NULL, bAnsi );
     if( FAILED( hr ) )
     {
       free( password );
@@ -3527,11 +3566,11 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
       return hr;
     }
 
-    hr = DP_MSG_ForwardPlayerCreation( This, dpidServerId, password );
+    hr = DP_MSG_ForwardPlayerCreation( This, This->dp2->systemPlayerId, password );
     free( password );
     if( FAILED( hr ) )
     {
-      DP_DeletePlayer( This, dpidServerId );
+      DP_DeletePlayer( This, This->dp2->systemPlayerId );
       DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );
       if( This->dp2->spData.lpCB->CloseEx )
       {
@@ -3545,10 +3584,11 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
   else if( dwFlags & DPOPEN_CREATE )
   {
     DWORD createFlags = DPLAYI_PLAYER_APPSERVER | DPLAYI_PLAYER_PLAYERLOCAL;
-    DPID dpidNameServerId = DP_NextObjectId();
 
-    hr = DP_CreatePlayer( This, NULL, &dpidNameServerId, NULL, NULL, 0, NULL, 0, createFlags, NULL,
-                          bAnsi );
+    This->dp2->systemPlayerId = DP_NextObjectId();
+
+    hr = DP_CreatePlayer( This, NULL, &This->dp2->systemPlayerId, NULL, NULL, 0, NULL, 0,
+                          createFlags, NULL, bAnsi );
     if( FAILED( hr ) )
     {
       DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );

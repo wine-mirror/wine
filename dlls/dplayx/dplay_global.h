@@ -158,6 +158,8 @@ typedef struct tagDirectPlay2Data
 
   lpGroupData lpSysGroup; /* System group with _everything_ in it */
 
+  DPID systemPlayerId;
+
   LPDPSESSIONDESC2 lpSessionDesc;
 
   /* I/O Msg queues */

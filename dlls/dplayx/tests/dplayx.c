@@ -1553,9 +1553,7 @@ static unsigned short receiveAddForwardAck_( int line, SOCKET sock, DPID expecte
     int wsResult;
 
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
-    todo_wine ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
-    if ( wsResult == SOCKET_ERROR )
-        return 0;
+    ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
     port = checkSpHeader_( line, &request.spHeader, sizeof( request ), FALSE );
     checkMessageHeader_( line, &request.request.header, 47 );

@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <limits.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -321,6 +322,24 @@ static HRESULT DP_MSG_ReadString( char *data, DWORD *inoutOffset, DWORD maxSize,
     return DP_OK;
 }
 
+static HRESULT DP_MSG_ReadSizedString( char *data, DWORD *inoutOffset, DWORD maxSize, DWORD size,
+                                       WCHAR **string )
+{
+  DWORD length = size / sizeof( WCHAR ) - 1;
+  DWORD offset = *inoutOffset;
+
+  if( maxSize - offset < size )
+    return DPERR_GENERIC;
+
+  if ( ((WCHAR *) &data[ offset ])[ length ] != L'\0' )
+    return DPERR_GENERIC;
+
+  *string = (WCHAR *) &data[ offset ];
+  *inoutOffset = offset + size;
+
+  return DP_OK;
+}
+
 static HRESULT DP_MSG_ReadInteger( char *data, DWORD *inoutOffset, DWORD maxSize, DWORD size,
                                    DWORD *value )
 {
@@ -352,6 +371,75 @@ static HRESULT DP_MSG_ReadInteger( char *data, DWORD *inoutOffset, DWORD maxSize
   }
 
   return DP_OK;
+}
+
+HRESULT DP_MSG_ReadPackedPlayer( char *data, DWORD *inoutOffset, DWORD maxSize,
+                                 DPPLAYERINFO *playerInfo )
+{
+  DPLAYI_PACKEDPLAYER *packedPlayer;
+  DWORD offset = *inoutOffset;
+  HRESULT hr;
+
+  memset( playerInfo, 0, sizeof( DPPLAYERINFO ) );
+
+  if( maxSize - offset < sizeof( DPLAYI_PACKEDPLAYER ) )
+    return DPERR_GENERIC;
+  packedPlayer = (DPLAYI_PACKEDPLAYER *) &data[ offset ];
+  offset += sizeof( DPLAYI_PACKEDPLAYER );
+
+  playerInfo->flags = packedPlayer->flags;
+  playerInfo->id = packedPlayer->id;
+  playerInfo->versionOrSystemPlayerId = packedPlayer->version;
+  playerInfo->playerDataLength = packedPlayer->playerDataLength;
+  playerInfo->spDataLength = packedPlayer->spDataLength;
+  playerInfo->playerCount = packedPlayer->playerCount;
+  playerInfo->parentId = packedPlayer->parentId;
+
+  if( packedPlayer->shortNameLength )
+  {
+    hr = DP_MSG_ReadSizedString( data, &offset, maxSize, packedPlayer->shortNameLength,
+                                 &playerInfo->name.lpszShortName );
+    if( FAILED( hr ) )
+      return hr;
+  }
+
+  if( packedPlayer->longNameLength )
+  {
+    hr = DP_MSG_ReadSizedString( data, &offset, maxSize, packedPlayer->longNameLength,
+                                 &playerInfo->name.lpszLongName );
+    if( FAILED( hr ) )
+      return hr;
+  }
+
+  if( playerInfo->spDataLength )
+  {
+    if( maxSize - offset < playerInfo->spDataLength )
+      return DPERR_GENERIC;
+    playerInfo->spData = &data[ offset ];
+    offset += playerInfo->spDataLength;
+  }
+
+  if( playerInfo->playerDataLength )
+  {
+    if( maxSize - offset < playerInfo->playerDataLength )
+      return DPERR_GENERIC;
+    playerInfo->playerData = &data[ offset ];
+    offset += playerInfo->playerDataLength;
+  }
+
+  if( playerInfo->playerCount )
+  {
+    if( UINT_MAX / sizeof( DPID ) < playerInfo->playerCount )
+      return DPERR_GENERIC;
+    if( maxSize - offset < playerInfo->playerCount * sizeof( DPID ) )
+      return DPERR_GENERIC;
+    playerInfo->playerIds = (DPID *) &data[ offset ];
+    offset += playerInfo->playerCount * sizeof( DPID );
+  }
+
+  *inoutOffset = offset;
+
+  return S_OK;
 }
 
 static HRESULT DP_MSG_ReadSuperPackedPlayer( char *data, DWORD *inoutOffset, DWORD maxSize,
@@ -613,6 +701,46 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
   }
 
   return hr;
+}
+
+HRESULT DP_MSG_SendAddForwardAck( IDirectPlayImpl *This, DPID id )
+{
+  SGBUFFER buffers[ 2 ] = { 0 };
+  DPSP_MSG_ADDFORWARDACK msg;
+  DPSP_SENDEXDATA sendData;
+  HRESULT hr;
+
+  msg.envelope.dwMagic = DPMSGMAGIC_DPLAYMSG;
+  msg.envelope.wCommandId = DPMSGCMD_ADDFORWARDACK;
+  msg.envelope.wVersion = DPMSGVER_DP6;
+  msg.id = id;
+
+  buffers[ 0 ].len = This->dp2->spData.dwSPHeaderSize;
+  buffers[ 0 ].pData = NULL;
+  buffers[ 1 ].len = sizeof( msg );
+  buffers[ 1 ].pData = (UCHAR *)&msg;
+
+  sendData.lpISP = This->dp2->spData.lpISP;
+  sendData.dwFlags = DPSEND_GUARANTEED;
+  sendData.idPlayerTo = 0;
+  sendData.idPlayerFrom = This->dp2->systemPlayerId;
+  sendData.lpSendBuffers = buffers;
+  sendData.cBuffers = ARRAYSIZE( buffers );
+  sendData.dwMessageSize = DP_MSG_ComputeMessageSize( sendData.lpSendBuffers, sendData.cBuffers );
+  sendData.dwPriority = 0;
+  sendData.dwTimeout = 0;
+  sendData.lpDPContext = NULL;
+  sendData.lpdwSPMsgID = NULL;
+  sendData.bSystemMessage = TRUE;
+
+  hr = (*This->dp2->spData.lpCB->SendEx)( &sendData );
+  if( FAILED( hr ) )
+  {
+    ERR( "Send failed: %s\n", DPLAYX_HresultToString( hr ) );
+    return hr;
+  }
+
+  return DP_OK;
 }
 
 /* Queue up a structure indicating that we want a reply of type wReplyCommandId. DPlay does
