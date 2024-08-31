@@ -4656,16 +4656,10 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDevice(ID3D10Effect *iface, ID3
 
 static void d3d10_effect_get_desc(const struct d3d10_effect *effect, D3D10_EFFECT_DESC *desc)
 {
-    unsigned int i;
-
     desc->IsChildEffect = !!effect->pool;
     desc->ConstantBuffers = effect->local_buffer_count;
     desc->SharedConstantBuffers = 0;
-    desc->GlobalVariables = effect->object_count;
-    for (i = 0; i < effect->local_buffer_count; ++i)
-    {
-        desc->GlobalVariables += effect->local_buffers[i].type->member_count;
-    }
+    desc->GlobalVariables = effect->object_count + effect->numeric_variable_count;
     desc->SharedGlobalVariables = 0;
     desc->Techniques = effect->technique_count;
 }
