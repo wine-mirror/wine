@@ -2141,6 +2141,7 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT
 {
     struct window_surface *surface;
     struct window_rects rects;
+    RECT window_rect;
     HRGN region = 0;
     WND *win;
 
@@ -2149,14 +2150,20 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT
     rects = win->rects;
     release_win_ptr( win );
 
+    if (rect)
+    {
+        window_rect = map_dpi_rect( *rect, dpi, get_dpi_for_window( hwnd ) );
+        InflateRect( &window_rect, 1, 1 ); /* compensate rounding errors */
+    }
+
     if (surface)
     {
         window_surface_lock( surface );
 
-        if (!rect) add_bounds_rect( &surface->bounds, rect );
+        if (!rect) add_bounds_rect( &surface->bounds, &surface->rect );
         else
         {
-            RECT dirty = *rect;
+            RECT dirty = window_rect;
             OffsetRect( &dirty, rects.client.left - rects.visible.left, rects.client.top - rects.visible.top );
             if (!(region = expose_window_surface_rect( surface, flags, dirty ))) flags = 0;
             else NtGdiOffsetRgn( region, rects.client.left - rects.visible.left, rects.client.top - rects.visible.top );
@@ -2168,7 +2175,7 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT
         window_surface_release( surface );
     }
 
-    if (flags) NtUserRedrawWindow( hwnd, rect, region, flags );
+    if (flags) NtUserRedrawWindow( hwnd, rect ? &window_rect : NULL, region, flags );
     if (region) NtGdiDeleteObjectApp( region );
     return TRUE;
 }
