@@ -2604,12 +2604,12 @@ static void checkPlayerList_( int line, IDirectPlay4 *dp, ExpectedPlayer *expect
 }
 
 #define checkPlayerExists( dp, expectedDpid, expectedPlayerType, expectedShortName, expectedLongName, expectedFlags, \
-                           expectedPlayerData, expectedPlayerDataSize, playerCountTodo ) \
+                           expectedPlayerData, expectedPlayerDataSize ) \
         checkPlayerExists_( __LINE__, dp, expectedDpid, expectedPlayerType, expectedShortName, expectedLongName, \
-                            expectedFlags, expectedPlayerData, expectedPlayerDataSize, playerCountTodo )
+                            expectedFlags, expectedPlayerData, expectedPlayerDataSize )
 static void checkPlayerExists_( int line, IDirectPlay4 *dp, DPID expectedDpid, DWORD expectedPlayerType,
                                const char *expectedShortName, const char *expectedLongName, DWORD expectedFlags,
-                               BYTE *expectedPlayerData, DWORD expectedPlayerDataSize, BOOL playerCountTodo )
+                               BYTE *expectedPlayerData, DWORD expectedPlayerDataSize )
 {
     ExpectedPlayer expectedPlayer =
     {
@@ -2637,8 +2637,7 @@ static void checkPlayerExists_( int line, IDirectPlay4 *dp, DPID expectedDpid, D
     hr = IDirectPlayX_EnumPlayers( dp, NULL, checkPlayerListCallback, &data, DPENUMPLAYERS_REMOTE );
     ok_( __FILE__, line )( hr == DP_OK, "EnumPlayers() returned %#lx.\n", hr );
 
-    todo_wine_if( playerCountTodo ) ok_( __FILE__, line )( expectedPlayer.actualCount == 1, "got player count %d.\n",
-                                                           expectedPlayer.actualCount );
+    ok_( __FILE__, line )( expectedPlayer.actualCount == 1, "got player count %d.\n", expectedPlayer.actualCount );
 }
 
 #define check_Open( dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, listenPort, expectedPassword, \
@@ -4151,15 +4150,14 @@ if(0)
 
 #define checkCreatePlayerOrGroupMessage( dp, expectedType, expectedDpid, expectedCurrentPlayers, expectedPlayerData, \
                                          expectedPlayerDataSize, expectedShortName, expectedLongName, expectedParent, \
-                                         expectedFlags, hrTodo ) \
+                                         expectedFlags ) \
         checkCreatePlayerOrGroupMessage_( __LINE__, dp, expectedType, expectedDpid, expectedCurrentPlayers, \
                                           expectedPlayerData, expectedPlayerDataSize, expectedShortName, \
-                                          expectedLongName, expectedParent, expectedFlags, hrTodo )
+                                          expectedLongName, expectedParent, expectedFlags )
 static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD expectedType, DPID expectedDpid,
                                               DWORD expectedCurrentPlayers, void *expectedPlayerData,
                                               DWORD expectedPlayerDataSize, const char *expectedShortName,
-                                              const char *expectedLongName, DPID expectedParent, DWORD expectedFlags,
-                                              BOOL hrTodo )
+                                              const char *expectedLongName, DPID expectedParent, DWORD expectedFlags )
 {
     DPMSG_CREATEPLAYERORGROUP *msg;
     DWORD expectedShortNameSize;
@@ -4175,9 +4173,7 @@ static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD 
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
-    todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
-    if ( FAILED( hr ) )
-        return TRUE;
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
     ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
 
     msg = (DPMSG_CREATEPLAYERORGROUP *) msgData;
@@ -4266,15 +4262,14 @@ static BOOL CALLBACK getPlayerIdsCallback( DPID dpid, DWORD playerType, const DP
 
 #define checkCreatePlayerOrGroupMessages( dp, expectedType, expectedDpid, expectedCurrentPlayers, expectedPlayerData, \
                                           expectedPlayerDataSize, expectedShortName, expectedLongName, expectedParent, \
-                                          expectedFlags, hrTodo ) \
+                                          expectedFlags ) \
         checkCreatePlayerOrGroupMessages_( __LINE__, dp, expectedType, expectedDpid, expectedCurrentPlayers, \
                                            expectedPlayerData, expectedPlayerDataSize, expectedShortName, \
-                                           expectedLongName, expectedParent, expectedFlags, hrTodo )
+                                           expectedLongName, expectedParent, expectedFlags )
 static void checkCreatePlayerOrGroupMessages_( int line, IDirectPlay4 *dp, DWORD expectedType, DPID expectedDpid,
                                                DWORD expectedCurrentPlayers, void *expectedPlayerData,
                                                DWORD expectedPlayerDataSize, const char *expectedShortName,
-                                               const char *expectedLongName, DPID expectedParent, DWORD expectedFlags,
-                                               BOOL hrTodo )
+                                               const char *expectedLongName, DPID expectedParent, DWORD expectedFlags )
 {
     GetPlayerIdsCallbackData data = { 0 };
     HRESULT hr;
@@ -4289,7 +4284,7 @@ static void checkCreatePlayerOrGroupMessages_( int line, IDirectPlay4 *dp, DWORD
     {
         dpid = checkCreatePlayerOrGroupMessage_( line, dp, expectedType, expectedDpid, expectedCurrentPlayers,
                                                  expectedPlayerData, expectedPlayerDataSize, expectedShortName,
-                                                 expectedLongName, expectedParent, expectedFlags, hrTodo );
+                                                 expectedLongName, expectedParent, expectedFlags );
         for ( j = 0; j < data.idCount; ++j )
         {
             if ( data.ids[ j ] == dpid )
@@ -4339,12 +4334,12 @@ static void check_CreatePlayer_( int line, IDirectPlay4 *dp, DPID *dpid, DPNAME 
             ok_( __FILE__, line )( *dpid == expectedDpid, "got dpid %#lx.\n", *dpid );
 
         checkPlayerExists_( line, dp, expectedDpid, DPPLAYERTYPE_PLAYER, expectedShortNameA, expectedLongNameA,
-                            expectedFlags, playerData, sizeof( playerData ), FALSE );
+                            expectedFlags, playerData, sizeof( playerData ) );
 
         if ( hr == DP_OK )
             checkCreatePlayerOrGroupMessages_( line, dp, DPPLAYERTYPE_PLAYER, expectedDpid, expectedCurrentPlayers,
                                                playerData, sizeof( playerData ), expectedShortNameA, expectedLongNameA,
-                                               0, expectedFlags, FALSE );
+                                               0, expectedFlags );
 
         checkNoMorePlayerMessages_( line, dp );
 
@@ -4682,14 +4677,14 @@ static void test_CREATEPLAYER(void)
                       sizeof( playerData ) );
 
     waitResult = WaitForSingleObject( event, 2000 );
-    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
 
     checkPlayerExists( dp, 0x07734, DPPLAYERTYPE_PLAYER, "new player short name", "new player long name",
-                       DPENUMPLAYERS_REMOTE, playerData, sizeof( playerData ), TRUE );
+                       DPENUMPLAYERS_REMOTE, playerData, sizeof( playerData ) );
 
     dpid = checkCreatePlayerOrGroupMessage( dp, DPPLAYERTYPE_PLAYER, 0x07734, 3, playerData, sizeof( playerData ),
-                                            "new player short name", "new player long name", 0, 0, TRUE );
-    todo_wine ok( dpid == 0x11223344, "got destination id %#lx.\n", dpid );
+                                            "new player short name", "new player long name", 0, 0 );
+    ok( dpid == 0x11223344, "got destination id %#lx.\n", dpid );
 
     checkNoMorePlayerMessages( dp );
 
