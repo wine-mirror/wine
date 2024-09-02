@@ -894,6 +894,8 @@ static void test_storage_suminfo(void)
     IStorage *stg = NULL;
     IPropertySetStorage *propset = NULL;
     IPropertyStorage *ps = NULL;
+    IStream *stm;
+    WCHAR name[CCH_MAX_PROPSTG_NAME + 1];
     HRESULT r;
 
     DeleteFileA(filenameA);
@@ -949,11 +951,28 @@ static void test_storage_suminfo(void)
         IPropertyStorage_Release(ps);
 
     /* should be able to open it */
-    r = IPropertySetStorage_Open( propset, &FMTID_SummaryInformation, 
+    r = IPropertySetStorage_Open( propset, &FMTID_SummaryInformation,
             STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps);
     ok(r == S_OK, "open failed\n");
     if(r == S_OK)
         IPropertyStorage_Release(ps);
+
+    r = IPropertySetStorage_Open(propset, &FMTID_SummaryInformation,
+            STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, &ps);
+    todo_wine
+    ok(r == S_OK, "Open failed: 0x%08lx\n", r);
+    if (r == S_OK)
+    IPropertyStorage_Release(ps);
+
+    r = FmtIdToPropStgName(&FMTID_SummaryInformation, name);
+    ok(r == S_OK, "FmtIdToPropStgName failed: 0x%08lx\n", r);
+
+    r = IStorage_OpenStream(stg, name, NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stm);
+    ok(r == S_OK, "OpenStream failed: 0x%08lx\n", r);
+    IStream_Release(stm);
+
+    r = IStorage_OpenStream(stg, name, NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, 0, &stm);
+    ok(r == STG_E_INVALIDFUNCTION, "OpenStream should fail: 0x%08lx\n", r);
 
     /* delete it */
     r = IPropertySetStorage_Delete( propset, &FMTID_SummaryInformation );
