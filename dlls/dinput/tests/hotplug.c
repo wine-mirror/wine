@@ -291,11 +291,10 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
 
         if (device_change_expect_custom)
         {
-            todo_wine
+            todo_wine_if( device_change_expect_custom == 1 )
             ok( header->dbch_devicetype == DBT_DEVTYP_HANDLE ||
                 broken( device_change_expect_custom == 1 && header->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE ), /* w8 32bit */
                 "got type %#lx\n", header->dbch_devicetype);
-            todo_wine_if( device_change_expect_custom > 1 )
             ok( wparam == (device_change_expect_custom > 1 ? DBT_CUSTOMEVENT : DBT_DEVICEREMOVECOMPLETE),
                 "got wparam %#Ix\n", wparam );
         }
@@ -611,13 +610,12 @@ static void test_RegisterDeviceNotification(void)
             {
                 ret = sync_ioctl( file, IOCTL_WINETEST_DEVICE_CHANGE, (BYTE *)&device_change_events[i].notif,
                                   device_change_events[i].notif.Size, NULL, 0, 5000 );
-                todo_wine ok( ret, "IOCTL_WINETEST_DEVICE_CHANGE failed, last error %lu\n", GetLastError() );
+                ok( ret, "IOCTL_WINETEST_DEVICE_CHANGE failed, last error %lu\n", GetLastError() );
                 device_change_expect_custom++;
             }
             device_change_expect_custom++; /* extra DBT_DEVICEREMOVECOMPLETE event that is sent when device is removed */
 
             CloseHandle( file );
-            if (!ret) SetEvent( stop_event );
         }
         if (device_change_count == 1 && device_change_expect_custom == 1) SetEvent( stop_event );
     }
