@@ -72,6 +72,84 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 #define DEFINE_MF_ASYNC_CALLBACK(type, name, base_iface)                                           \
     DEFINE_MF_ASYNC_CALLBACK_(type, name, type##_from_##name, type##_##name, name##_iface, &object->base_iface)
 
+struct async_start_params
+{
+    IUnknown IUnknown_iface;
+    LONG refcount;
+    IMFPresentationDescriptor *descriptor;
+    GUID format;
+    PROPVARIANT position;
+};
+
+static struct async_start_params *async_start_params_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct async_start_params, IUnknown_iface);
+}
+
+static HRESULT WINAPI async_start_params_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    struct async_start_params *params = async_start_params_from_IUnknown(iface);
+
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(&params->IUnknown_iface);
+        *obj = &params->IUnknown_iface;
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI async_start_params_AddRef(IUnknown *iface)
+{
+    struct async_start_params *params = async_start_params_from_IUnknown(iface);
+    return InterlockedIncrement(&params->refcount);
+}
+
+static ULONG WINAPI async_start_params_Release(IUnknown *iface)
+{
+    struct async_start_params *params = async_start_params_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&params->refcount);
+
+    if (!refcount)
+    {
+        IMFPresentationDescriptor_Release(params->descriptor);
+        PropVariantClear(&params->position);
+        free(params);
+    }
+
+    return refcount;
+}
+
+static const IUnknownVtbl async_start_params_vtbl =
+{
+    async_start_params_QueryInterface,
+    async_start_params_AddRef,
+    async_start_params_Release,
+};
+
+static HRESULT async_start_params_create(IMFPresentationDescriptor *descriptor, const GUID *time_format,
+        const PROPVARIANT *position, IUnknown **out)
+{
+    struct async_start_params *params;
+
+    if (!(params = calloc(1, sizeof(*params))))
+        return E_OUTOFMEMORY;
+
+    params->IUnknown_iface.lpVtbl = &async_start_params_vtbl;
+    params->refcount = 1;
+
+    params->descriptor = descriptor;
+    IMFPresentationDescriptor_AddRef(descriptor);
+    params->format = *time_format;
+    PropVariantCopy(&params->position, position);
+
+    *out = &params->IUnknown_iface;
+    return S_OK;
+}
+
 struct media_stream
 {
     IMFMediaStream IMFMediaStream_iface;
@@ -91,6 +169,7 @@ struct media_source
     IMFRateSupport IMFRateSupport_iface;
     IMFRateControl IMFRateControl_iface;
     IMFAsyncCallback async_create_iface;
+    IMFAsyncCallback async_start_iface;
     LONG refcount;
 
     CRITICAL_SECTION cs;
@@ -112,14 +191,131 @@ struct media_source
     enum
     {
         SOURCE_STOPPED,
+        SOURCE_RUNNING,
         SOURCE_SHUTDOWN,
     } state;
+    UINT pending_state;
 };
 
 static struct media_source *media_source_from_IMFMediaSource(IMFMediaSource *iface)
 {
     return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
 }
+
+static void queue_media_event_object(IMFMediaEventQueue *queue, MediaEventType type, IUnknown *object)
+{
+    HRESULT hr;
+    if (FAILED(hr = IMFMediaEventQueue_QueueEventParamUnk(queue, type, &GUID_NULL, S_OK, object)))
+        ERR("Failed to queue event of type %#lx to queue %p, hr %#lx\n", type, queue, hr);
+}
+
+static void queue_media_event_value(IMFMediaEventQueue *queue, MediaEventType type, const PROPVARIANT *value)
+{
+    HRESULT hr;
+    if (FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(queue, type, &GUID_NULL, S_OK, value)))
+        ERR("Failed to queue event of type %#lx to queue %p, hr %#lx\n", type, queue, hr);
+}
+
+static void media_stream_start(struct media_stream *stream, UINT index, const PROPVARIANT *position)
+{
+    struct media_source *source = media_source_from_IMFMediaSource(stream->source);
+    BOOL starting = source->state == SOURCE_STOPPED, seeking = !starting && position->vt != VT_EMPTY;
+    BOOL was_active = !starting && stream->active;
+
+    TRACE("stream %p, index %u, position %s\n", stream, index, debugstr_propvar(position));
+
+    if (stream->active)
+    {
+        queue_media_event_object(source->queue, was_active ? MEUpdatedStream : MENewStream,
+                (IUnknown *)&stream->IMFMediaStream_iface);
+        queue_media_event_value(stream->queue, seeking ? MEStreamSeeked : MEStreamStarted, position);
+    }
+}
+
+static HRESULT media_source_start(struct media_source *source, IMFPresentationDescriptor *descriptor,
+        GUID *format, PROPVARIANT *position)
+{
+    BOOL starting = source->state == SOURCE_STOPPED, seeking = !starting && position->vt != VT_EMPTY;
+    DWORD i, count;
+    HRESULT hr;
+
+    TRACE("source %p, descriptor %p, format %s, position %s\n", source, descriptor,
+            debugstr_guid(format), debugstr_propvar(position));
+
+    if (source->state == SOURCE_SHUTDOWN)
+        return MF_E_SHUTDOWN;
+
+    if (source->state == SOURCE_STOPPED && position->vt == VT_EMPTY)
+    {
+        position->vt = VT_I8;
+        position->hVal.QuadPart = 0;
+    }
+
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+        stream->active = FALSE;
+    }
+
+    if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorCount(descriptor, &count)))
+        WARN("Failed to get presentation descriptor stream count, hr %#lx\n", hr);
+
+    for (i = 0; i < count; i++)
+    {
+        IMFStreamDescriptor *stream_descriptor;
+        BOOL selected;
+        DWORD id;
+
+        if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(descriptor, i,
+                &selected, &stream_descriptor)))
+            break;
+
+        if (FAILED(hr = IMFStreamDescriptor_GetStreamIdentifier(stream_descriptor, &id)))
+            WARN("Failed to get stream descriptor id, hr %#lx\n", hr);
+        else if (id > source->stream_count)
+            WARN("Invalid stream descriptor id %lu, hr %#lx\n", id, hr);
+        else
+        {
+            struct media_stream *stream = source->streams[id - 1];
+            stream->active = selected;
+        }
+
+        IMFStreamDescriptor_Release(stream_descriptor);
+    }
+
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+        media_stream_start(stream, i, position);
+    }
+
+    source->state = SOURCE_RUNNING;
+
+    queue_media_event_value(source->queue, seeking ? MESourceSeeked : MESourceStarted, position);
+    return hr;
+}
+
+static HRESULT media_source_async_start(struct media_source *source, IMFAsyncResult *result)
+{
+    struct async_start_params *params;
+    IUnknown *state;
+    HRESULT hr;
+
+    if (!(state = IMFAsyncResult_GetStateNoAddRef(result))) return E_INVALIDARG;
+    params = async_start_params_from_IUnknown(state);
+
+    EnterCriticalSection(&source->cs);
+    source->pending_state--;
+
+    if (FAILED(hr = media_source_start(source, params->descriptor, &params->format, &params->position)))
+        WARN("Failed to start source %p, hr %#lx\n", source, hr);
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
+}
+
+DEFINE_MF_ASYNC_CALLBACK(media_source, async_start, IMFMediaSource_iface)
 
 static struct media_stream *media_stream_from_IMFMediaStream(IMFMediaStream *iface)
 {
@@ -657,9 +853,28 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
         const PROPVARIANT *position)
 {
     struct media_source *source = media_source_from_IMFMediaSource(iface);
-    FIXME("source %p, descriptor %p, format %s, position %s, stub!\n", source, descriptor,
+    IUnknown *op;
+    HRESULT hr;
+
+    TRACE("source %p, descriptor %p, format %s, position %s\n", source, descriptor,
             debugstr_guid(format), debugstr_propvar(position));
-    return E_NOTIMPL;
+
+    EnterCriticalSection(&source->cs);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!IsEqualIID(format, &GUID_NULL))
+        hr = MF_E_UNSUPPORTED_TIME_FORMAT;
+    else if (SUCCEEDED(hr = async_start_params_create(descriptor, format, position, &op)))
+    {
+        if (SUCCEEDED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_start_iface, op)))
+            source->pending_state++;
+        IUnknown_Release(op);
+    }
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
@@ -1072,6 +1287,7 @@ static HRESULT media_source_create(const WCHAR *url, IMFByteStream *stream, IMFM
     source->IMFRateSupport_iface.lpVtbl = &media_source_IMFRateSupport_vtbl;
     source->IMFRateControl_iface.lpVtbl = &media_source_IMFRateControl_vtbl;
     source->async_create_iface.lpVtbl = &media_source_async_create_vtbl;
+    source->async_start_iface.lpVtbl = &media_source_async_start_vtbl;
     source->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&source->queue)))
