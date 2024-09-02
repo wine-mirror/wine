@@ -29,6 +29,44 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
+static UINT64 seek_callback;
+static UINT64 read_callback;
+
+int64_t unix_seek_callback( void *opaque, int64_t offset, int whence )
+{
+    struct seek_callback_params params = {.dispatch = {.callback = seek_callback}, .context = (UINT_PTR)opaque};
+    void *ret_ptr;
+    ULONG ret_len;
+    int status;
+
+    TRACE( "opaque %p, offset %#"PRIx64", whence %#x\n", opaque, offset, whence );
+
+    params.offset = offset;
+    status = KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
+    if (status || ret_len != sizeof(UINT64)) return AVERROR( EINVAL );
+    offset = *(UINT64 *)ret_ptr;
+
+    return offset;
+}
+
+int unix_read_callback( void *opaque, uint8_t *buffer, int size )
+{
+    struct read_callback_params params = {.dispatch = {.callback = read_callback}, .context = (UINT_PTR)opaque};
+    int status, total;
+    void *ret_ptr;
+    ULONG ret_len;
+
+    TRACE( "opaque %p, buffer %p, size %#x\n", opaque, buffer, size );
+
+    params.size = size;
+    status = KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
+    if (status || ret_len != sizeof(ULONG)) return AVERROR( EINVAL );
+    total = *(ULONG *)ret_ptr;
+
+    if (!total) return AVERROR_EOF;
+    return total;
+}
+
 static void vlog( void *ctx, int level, const char *fmt, va_list va_args )
 {
     enum __wine_debug_class dbcl = __WINE_DBCL_TRACE;
@@ -44,6 +82,7 @@ static const char *debugstr_version( UINT version )
 
 static NTSTATUS process_attach( void *arg )
 {
+    struct process_attach_params *params = arg;
     const AVInputFormat *demuxer;
     void *opaque;
 
@@ -60,6 +99,10 @@ static NTSTATUS process_attach( void *arg )
     }
 
     av_log_set_callback( vlog );
+
+    seek_callback = params->seek_callback;
+    read_callback = params->read_callback;
+
     return STATUS_SUCCESS;
 }
 

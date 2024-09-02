@@ -22,17 +22,39 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
+
+static NTSTATUS WINAPI seek_callback( void *args, ULONG size )
+{
+    struct seek_callback_params *params = args;
+    FIXME( "context %#I64x, offset %#I64x, stub!\n", params->context, params->offset );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI read_callback( void *args, ULONG size )
+{
+    struct read_callback_params *params = args;
+    FIXME( "context %#I64x, size %#x, stub!\n", params->context, params->size );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
     TRACE( "instance %p, reason %lu, reserved %p\n", instance, reason, reserved );
 
     if (reason == DLL_PROCESS_ATTACH)
     {
+        struct process_attach_params params =
+        {
+            .seek_callback = (UINT_PTR)seek_callback,
+            .read_callback = (UINT_PTR)read_callback,
+        };
         NTSTATUS status;
+
         DisableThreadLibraryCalls( instance );
 
         status = __wine_init_unix_call();
-        if (!status) status = UNIX_CALL( process_attach, NULL );
+        if (!status) status = UNIX_CALL( process_attach, &params );
         if (status) WARN( "Failed to init unixlib, status %#lx\n", status );
     }
 

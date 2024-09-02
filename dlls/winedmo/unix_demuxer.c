@@ -29,6 +29,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
+static inline const char *debugstr_averr( int err )
+{
+    return wine_dbg_sprintf( "%d (%s)", err, av_err2str(err) );
+}
+
 static AVFormatContext *get_demuxer( struct winedmo_demuxer demuxer )
 {
     return (AVFormatContext *)(UINT_PTR)demuxer.handle;
@@ -58,14 +63,23 @@ NTSTATUS demuxer_create( void *arg )
 {
     struct demuxer_create_params *params = arg;
     AVFormatContext *ctx;
+    int ret;
 
     TRACE( "params %p\n", params );
 
     if (!(ctx = avformat_alloc_context())) return STATUS_NO_MEMORY;
-    if (!(ctx->pb = avio_alloc_context( NULL, 0, 0, NULL, NULL, NULL, NULL )))
+    if (!(ctx->pb = avio_alloc_context( NULL, 0, 0, NULL, unix_read_callback, NULL, unix_seek_callback )))
     {
         avformat_free_context( ctx );
         return STATUS_NO_MEMORY;
+    }
+
+    if ((ret = avformat_open_input( &ctx, NULL, NULL, NULL )) < 0)
+    {
+        ERR( "Failed to open input, error %s.\n", debugstr_averr(ret) );
+        avio_context_free( &ctx->pb );
+        avformat_free_context( ctx );
+        return STATUS_UNSUCCESSFUL;
     }
 
     params->demuxer.handle = (UINT_PTR)ctx;

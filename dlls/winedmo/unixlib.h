@@ -26,9 +26,30 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "ntuser.h"
 
 #include "wine/unixlib.h"
 #include "wine/winedmo.h"
+
+struct process_attach_params
+{
+    UINT64 seek_callback;
+    UINT64 read_callback;
+};
+
+struct seek_callback_params
+{
+    struct dispatch_callback_params dispatch;
+    UINT64 context;
+    INT64 offset;
+};
+
+struct read_callback_params
+{
+    struct dispatch_callback_params dispatch;
+    UINT64 context;
+    INT32 size;
+};
 
 
 struct demuxer_check_params
