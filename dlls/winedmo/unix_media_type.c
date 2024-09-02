@@ -137,11 +137,43 @@ static NTSTATUS wave_format_ex_from_codec_params( const AVCodecParameters *param
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS heaac_wave_format_from_codec_params( const AVCodecParameters *params, HEAACWAVEINFO *format, UINT32 *format_size )
+{
+    UINT32 capacity = *format_size;
+
+    *format_size = sizeof(*format) + params->extradata_size;
+    if (*format_size > capacity) return STATUS_BUFFER_TOO_SMALL;
+
+    wave_format_ex_init( params, &format->wfx, *format_size, WAVE_FORMAT_MPEG_HEAAC );
+    if (params->extradata_size && params->extradata) memcpy( format + 1, params->extradata, params->extradata_size );
+    format->wPayloadType = 0;
+    format->wAudioProfileLevelIndication = 0;
+    format->wStructType = 0;
+
+    TRACE( "tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample, payload %#x, "
+           "level %#x, struct %#x.\n", format->wfx.wFormatTag, format->wfx.nChannels, (int)format->wfx.nSamplesPerSec,
+           (int)format->wfx.nAvgBytesPerSec, format->wfx.nBlockAlign, format->wfx.wBitsPerSample, format->wPayloadType,
+           format->wAudioProfileLevelIndication, format->wStructType );
+    if (format->wfx.cbSize) TRACE_HEXDUMP( format + 1, sizeof(WAVEFORMATEX) + format->wfx.cbSize - sizeof(*format) );
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS audio_format_from_codec_params( const AVCodecParameters *params, void *format, UINT32 *format_size )
 {
+    UINT wave_format_size = sizeof(WAVEFORMATEX);
     UINT64 channel_mask;
     WORD format_tag;
     int channels;
+
+    if (params->codec_id == AV_CODEC_ID_AAC) return heaac_wave_format_from_codec_params( params, format, format_size );
+    if (params->codec_id == AV_CODEC_ID_MP1) wave_format_size = sizeof(MPEG1WAVEFORMAT);
+    if (params->codec_id == AV_CODEC_ID_MP3) wave_format_size = sizeof(MPEGLAYER3WAVEFORMAT);
+    if (params->codec_id == AV_CODEC_ID_WMAV1) wave_format_size = sizeof(MSAUDIO1WAVEFORMAT);
+    if (params->codec_id == AV_CODEC_ID_WMAV2) wave_format_size = sizeof(WMAUDIO2WAVEFORMAT);
+    if (params->codec_id == AV_CODEC_ID_WMAPRO) wave_format_size = sizeof(WMAUDIO3WAVEFORMAT);
+    if (params->codec_id == AV_CODEC_ID_WMAVOICE) wave_format_size = sizeof(WMAUDIO3WAVEFORMAT);
+    if (params->codec_id == AV_CODEC_ID_WMALOSSLESS) wave_format_size = sizeof(WMAUDIO3WAVEFORMAT);
 
 #if LIBAVUTIL_VERSION_MAJOR >= 58
     if (!(channels = params->ch_layout.nb_channels)) channels = 1;
@@ -157,11 +189,12 @@ static NTSTATUS audio_format_from_codec_params( const AVCodecParameters *params,
     {
         GUID subtype = MFAudioFormat_Base;
         subtype.Data1 = format_tag;
-        return wave_format_extensible_from_codec_params( params, format, format_size, sizeof(WAVEFORMATEXTENSIBLE),
+        wave_format_size += sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+        return wave_format_extensible_from_codec_params( params, format, format_size, wave_format_size,
                                                          &subtype, channel_mask );
     }
 
-    return wave_format_ex_from_codec_params( params, format, format_size, sizeof(WAVEFORMATEX), format_tag );
+    return wave_format_ex_from_codec_params( params, format, format_size, wave_format_size, format_tag );
 }
 
 static GUID subtype_from_pixel_format( enum AVPixelFormat fmt )
@@ -205,7 +238,9 @@ static void mf_video_format_init( const AVCodecParameters *params, MFVIDEOFORMAT
     else
     {
         format->guidFormat = MFVideoFormat_Base;
-        if (params->codec_tag) format->guidFormat.Data1 = params->codec_tag;
+        if (params->codec_id == AV_CODEC_ID_MPEG1VIDEO) format->guidFormat = MEDIASUBTYPE_MPEG1Payload;
+        else if (params->codec_id == AV_CODEC_ID_H264) format->guidFormat.Data1 = MFVideoFormat_H264.Data1;
+        else if (params->codec_tag) format->guidFormat.Data1 = params->codec_tag;
         else format->guidFormat.Data1 = video_format_tag_from_codec_id( params->codec_id );
     }
 
