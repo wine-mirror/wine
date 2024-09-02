@@ -1815,7 +1815,7 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This, const 
         }
 
         TRACE("Reading entry with ID %#lx, %ld chars, name %s.\n", propid, cbEntry, This->codePage == CP_UNICODE ?
-                debugstr_wn((WCHAR *)buffer->data, cbEntry) : debugstr_an((char *)buffer->data, cbEntry));
+                debugstr_wn((WCHAR *)(buffer->data + offset), cbEntry) : debugstr_an((char *)buffer->data + offset, cbEntry));
 
         hr = PropertyStorage_StoreNameWithId(This, (char *)buffer->data + offset, This->codePage, propid);
         /* Unicode entries are padded to DWORD boundaries */
