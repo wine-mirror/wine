@@ -370,6 +370,19 @@ enum platform
     PLATFORM_ARM64
 };
 
+static inline BOOL is_platform_64bit(enum platform platform)
+{
+    switch (platform)
+    {
+    case PLATFORM_INTEL64:
+    case PLATFORM_X64:
+    case PLATFORM_ARM64:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 enum clr_version
 {
     CLR_VERSION_V10,
@@ -1085,11 +1098,11 @@ extern WCHAR *msi_get_package_code(MSIDATABASE *db) __WINE_DEALLOC(free) __WINE_
 /* wrappers for filesystem functions */
 static inline void msi_disable_fs_redirection( MSIPACKAGE *package )
 {
-    if (is_wow64 && package->platform == PLATFORM_X64) Wow64DisableWow64FsRedirection( &package->cookie );
+    if (is_wow64 && is_platform_64bit( package->platform )) Wow64DisableWow64FsRedirection( &package->cookie );
 }
 static inline void msi_revert_fs_redirection( MSIPACKAGE *package )
 {
-    if (is_wow64 && package->platform == PLATFORM_X64) Wow64RevertWow64FsRedirection( package->cookie );
+    if (is_wow64 && is_platform_64bit( package->platform )) Wow64RevertWow64FsRedirection( package->cookie );
 }
 extern BOOL msi_get_temp_file_name( MSIPACKAGE *, const WCHAR *, const WCHAR *, WCHAR * );
 extern HANDLE msi_create_file( MSIPACKAGE *, const WCHAR *, DWORD, DWORD, DWORD, DWORD );
