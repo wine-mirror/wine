@@ -179,3 +179,35 @@ NTSTATUS CDECL winedmo_demuxer_destroy( struct winedmo_demuxer *demuxer )
 
     return status;
 }
+
+static HRESULT get_media_type( UINT code, void *params, struct media_type *media_type,
+                               GUID *major, union winedmo_format **format )
+{
+    NTSTATUS status;
+
+    media_type->format = NULL;
+    if ((status = WINE_UNIX_CALL( code, params )) && status == STATUS_BUFFER_TOO_SMALL)
+    {
+        if (!(media_type->format = malloc( media_type->format_size ))) return STATUS_NO_MEMORY;
+        status = WINE_UNIX_CALL( code, params );
+    }
+
+    if (!status)
+    {
+        *major = media_type->major;
+        *format = media_type->format;
+        return STATUS_SUCCESS;
+    }
+
+    WARN( "Failed to get media type, code %#x, status %#lx\n", code, status );
+    free( media_type->format );
+    return status;
+}
+
+NTSTATUS CDECL winedmo_demuxer_stream_type( struct winedmo_demuxer demuxer, UINT stream,
+                                            GUID *major, union winedmo_format **format )
+{
+    struct demuxer_stream_type_params params = {.demuxer = demuxer, .stream = stream};
+    TRACE( "demuxer %#I64x, stream %u, major %p, format %p\n", demuxer.handle, stream, major, format );
+    return get_media_type( unix_demuxer_stream_type, &params, &params.media_type, major, format );
+}

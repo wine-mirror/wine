@@ -63,6 +63,20 @@ struct read_callback_params
 };
 
 
+struct media_type
+{
+    GUID major;
+    UINT32 format_size;
+    union
+    {
+        void *format;
+        WAVEFORMATEX *audio;
+        MFVIDEOFORMAT *video;
+        UINT64 __pad;
+    };
+};
+
+
 struct demuxer_check_params
 {
     char mime_type[256];
@@ -84,6 +98,13 @@ struct demuxer_destroy_params
     struct stream_context *context;
 };
 
+struct demuxer_stream_type_params
+{
+    struct winedmo_demuxer demuxer;
+    UINT32 stream;
+    struct media_type media_type;
+};
+
 
 enum unix_funcs
 {
@@ -92,6 +113,7 @@ enum unix_funcs
     unix_demuxer_check,
     unix_demuxer_create,
     unix_demuxer_destroy,
+    unix_demuxer_stream_type,
 
     unix_funcs_count,
 };

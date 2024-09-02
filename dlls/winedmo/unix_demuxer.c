@@ -159,4 +159,16 @@ NTSTATUS demuxer_destroy( void *arg )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS demuxer_stream_type( void *arg )
+{
+    struct demuxer_stream_type_params *params = arg;
+    AVFormatContext *ctx = get_demuxer( params->demuxer );
+    AVStream *stream = ctx->streams[params->stream];
+
+    TRACE( "context %p, stream %u, stream %p, index %u\n", ctx, params->stream, stream, stream->index );
+
+    return media_type_from_codec_params( stream->codecpar, &stream->sample_aspect_ratio,
+                                         &stream->avg_frame_rate, 0, &params->media_type );
+}
+
 #endif /* HAVE_FFMPEG */

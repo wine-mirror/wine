@@ -26,6 +26,10 @@
 #include <libavutil/avutil.h>
 #include <libavutil/imgutils.h>
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#else
+typedef struct AVCodecParameters AVCodecParameters;
+typedef struct AVRational AVRational;
 #endif /* HAVE_FFMPEG */
 
 #include "unixlib.h"
@@ -39,3 +43,8 @@ extern int unix_read_callback( void *opaque, uint8_t *buffer, int size );
 extern NTSTATUS demuxer_check( void * );
 extern NTSTATUS demuxer_create( void * );
 extern NTSTATUS demuxer_destroy( void * );
+extern NTSTATUS demuxer_stream_type( void * );
+
+/* unix_media_type.c */
+extern NTSTATUS media_type_from_codec_params( const AVCodecParameters *params, const AVRational *sar, const AVRational *fps,
+                                              UINT32 align, struct media_type *media_type );

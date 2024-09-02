@@ -1622,14 +1622,16 @@ WINE_NOTICE_WITH(pulse, [test -z "$PULSE_LIBS"],
 dnl **** Check for FFmpeg ****
 if test "x$with_ffmpeg" != "xno";
 then
-    WINE_PACKAGE_FLAGS(FFMPEG,[libavutil libavformat],,,,
-        [AC_CHECK_HEADERS([libavutil/avutil.h libavformat/avformat.h])
-         if test "$ac_cv_header_libavutil_avutil_h" = "yes" -a "$ac_cv_header_libavformat_avformat_h" = "yes"
+    WINE_PACKAGE_FLAGS(FFMPEG,[libavutil libavformat libavcodec],,,,
+        [AC_CHECK_HEADERS([libavutil/avutil.h libavformat/avformat.h libavcodec/avcodec.h])
+         if test "$ac_cv_header_libavutil_avutil_h" = "yes" -a "$ac_cv_header_libavformat_avformat_h" = "yes" -a "$ac_cv_header_libavcodec_avcodec_h" = "yes"
          then
             AC_CHECK_LIB(avutil,av_log_set_callback,
               [AC_CHECK_LIB(avformat,av_find_input_format,
+                [AC_CHECK_LIB(avcodec,avcodec_get_name,
                   [AC_DEFINE(HAVE_FFMPEG, 1, [Define to 1 if you have the FFmpeg libraries.])],
                   [FFMPEG_LIBS=""],[$FFMPEG_LIBS])],
+                [FFMPEG_LIBS=""],[$FFMPEG_LIBS])],
               [FFMPEG_LIBS=""],[$FFMPEG_LIBS])
          else
             FFMPEG_LIBS=""

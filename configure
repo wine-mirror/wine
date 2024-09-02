@@ -2682,9 +2682,10 @@ Some influential environment variables:
               C compiler flags for libpulse, overriding pkg-config
   PULSE_LIBS  Linker flags for libpulse, overriding pkg-config
   FFMPEG_CFLAGS
-              C compiler flags for libavutil libavformat, overriding
+              C compiler flags for libavutil libavformat libavcodec,
+              overriding pkg-config
+  FFMPEG_LIBS Linker flags for libavutil libavformat libavcodec, overriding
               pkg-config
-  FFMPEG_LIBS Linker flags for libavutil libavformat, overriding pkg-config
   GSTREAMER_CFLAGS
               C compiler flags for gstreamer-1.0 gstreamer-video-1.0
               gstreamer-audio-1.0 gstreamer-tag-1.0, overriding pkg-config
@@ -18488,7 +18489,7 @@ if ${FFMPEG_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  FFMPEG_CFLAGS=`$PKG_CONFIG --cflags libavutil libavformat 2>conftest.err`
+  FFMPEG_CFLAGS=`$PKG_CONFIG --cflags libavutil libavformat libavcodec 2>conftest.err`
 fi
 fi
 
@@ -18496,15 +18497,15 @@ if ${FFMPEG_LIBS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  FFMPEG_LIBS=`$PKG_CONFIG --libs libavutil libavformat 2>/dev/null`
+  FFMPEG_LIBS=`$PKG_CONFIG --libs libavutil libavformat libavcodec 2>/dev/null`
 fi
 fi
 
 
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libavutil libavformat cflags: $FFMPEG_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: libavutil libavformat libs: $FFMPEG_LIBS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: libavutil libavformat libavcodec cflags: $FFMPEG_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: libavutil libavformat libavcodec libs: $FFMPEG_LIBS" >&5
 if test -s conftest.err; then
-     printf %s "$as_me:${as_lineno-$LINENO}: libavutil libavformat errors: " >&5
+     printf %s "$as_me:${as_lineno-$LINENO}: libavutil libavformat libavcodec errors: " >&5
      cat conftest.err >&5
 fi
 rm -f conftest.err
@@ -18522,8 +18523,14 @@ then :
   printf "%s\n" "#define HAVE_LIBAVFORMAT_AVFORMAT_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "libavcodec/avcodec.h" "ac_cv_header_libavcodec_avcodec_h" "$ac_includes_default"
+if test "x$ac_cv_header_libavcodec_avcodec_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBAVCODEC_AVCODEC_H 1" >>confdefs.h
 
-         if test "$ac_cv_header_libavutil_avutil_h" = "yes" -a "$ac_cv_header_libavformat_avformat_h" = "yes"
+fi
+
+         if test "$ac_cv_header_libavutil_avutil_h" = "yes" -a "$ac_cv_header_libavformat_avformat_h" = "yes" -a "$ac_cv_header_libavcodec_avcodec_h" = "yes"
          then
             { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for av_log_set_callback in -lavutil" >&5
 printf %s "checking for av_log_set_callback in -lavutil... " >&6; }
@@ -18615,8 +18622,58 @@ fi
 printf "%s\n" "$ac_cv_lib_avformat_av_find_input_format" >&6; }
 if test "x$ac_cv_lib_avformat_av_find_input_format" = xyes
 then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for avcodec_get_name in -lavcodec" >&5
+printf %s "checking for avcodec_get_name in -lavcodec... " >&6; }
+if test ${ac_cv_lib_avcodec_avcodec_get_name+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lavcodec $FFMPEG_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char avcodec_get_name (void);
+int
+main (void)
+{
+return avcodec_get_name ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_avcodec_avcodec_get_name=yes
+else case e in #(
+  e) ac_cv_lib_avcodec_avcodec_get_name=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_avcodec_avcodec_get_name" >&5
+printf "%s\n" "$ac_cv_lib_avcodec_avcodec_get_name" >&6; }
+if test "x$ac_cv_lib_avcodec_avcodec_get_name" = xyes
+then :
 
 printf "%s\n" "#define HAVE_FFMPEG 1" >>confdefs.h
+
+else case e in #(
+  e) FFMPEG_LIBS="" ;;
+esac
+fi
 
 else case e in #(
   e) FFMPEG_LIBS="" ;;
