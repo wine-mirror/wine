@@ -16,6 +16,9 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        llvm clang lld \
                        git autoconf flex bison perl gettext \
                        libasound2-dev:amd64 libasound2-dev:i386 \
+                       libavutil-dev:amd64 libavutil-dev:i386 \
+                       libavformat-dev:amd64 libavformat-dev:i386 \
+                       libavcodec-dev:amd64 libavcodec-dev:i386 \
                        libcapi20-dev:amd64 libcapi20-dev:i386 \
                        libcups2-dev:amd64 libcups2-dev:i386 \
                        libdbus-1-dev:amd64 libdbus-1-dev:i386 \
@@ -32,6 +35,8 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        libpulse-dev:amd64 libpulse-dev:i386 \
                        libsane-dev:amd64 libsane-dev:i386 \
                        libsdl2-dev:amd64 libsdl2-dev:i386 \
+                       libswresample-dev:amd64 libswresample-dev:i386 \
+                       libswscale-dev:amd64 libswscale-dev:i386 \
                        libudev-dev:amd64 libudev-dev:i386 \
                        libusb-1.0-0-dev:amd64 libusb-1.0-0-dev:i386 \
                        libv4l-dev:amd64 libv4l-dev:i386 \
