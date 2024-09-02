@@ -152,6 +152,12 @@ static void test_capture( void )
     ok( !ret, "got %d\n", ret );
 
     ret = ppcap_can_set_rfmon( pcap );
+    if (ret == PCAP_ERROR_PERM_DENIED)
+    {
+        skip( "no permission\n" );
+        ppcap_close( pcap );
+        return;
+    }
     ok( ret == 0 || ret == 1, "got %d\n", ret );
 
     ret = ppcap_getnonblock( pcap, errbuf );
