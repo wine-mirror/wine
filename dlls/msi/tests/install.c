@@ -5551,12 +5551,9 @@ static void test_package_validation(void)
     create_database_template(msifile, pv_tables, ARRAY_SIZE(pv_tables), 100, "");
 
     r = MsiInstallProductA(msifile, NULL);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
-        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+    ok(delete_pf("msitest", FALSE), "directory does not exist\n");
 
     DeleteFileA(msifile);
     create_database_template(msifile, pv_tables, ARRAY_SIZE(pv_tables), 100, ";");
@@ -5570,12 +5567,9 @@ static void test_package_validation(void)
     create_database_template(msifile, pv_tables, ARRAY_SIZE(pv_tables), 100, "Intel");
 
     r = MsiInstallProductA(msifile, NULL);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
-        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+    ok(delete_pf("msitest", FALSE), "directory does not exist\n");
 
     DeleteFileA(msifile);
     create_database_template(msifile, pv_tables, ARRAY_SIZE(pv_tables), 100, "Intel;");
@@ -5611,7 +5605,6 @@ static void test_package_validation(void)
     create_database_template(msifile, pv_tables, ARRAY_SIZE(pv_tables), 200, "0");
 
     r = MsiInstallProductA(msifile, NULL);
-    todo_wine
     ok(r == ERROR_INSTALL_PLATFORM_UNSUPPORTED, "Expected ERROR_INSTALL_PLATFORM_UNSUPPORTED, got %u\n", r);
 
     DeleteFileA(msifile);
@@ -5723,12 +5716,9 @@ static void test_package_validation(void)
         create_database_template(msifile, pv_tables, ARRAY_SIZE(pv_tables), 200, "x64");
 
         r = MsiInstallProductA(msifile, NULL);
-        todo_wine
-        {
-            ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-            ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
-            ok(delete_pf("msitest", FALSE), "directory does not exist\n");
-        }
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
     }
     else if (is_wow64)
     {
@@ -5768,12 +5758,9 @@ static void test_package_validation(void)
         create_database_template(msifile, pv_tables, ARRAY_SIZE(pv_tables), 200, "x64");
 
         r = MsiInstallProductA(msifile, NULL);
-        todo_wine
-        {
-            ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-            ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
-            ok(delete_pf("msitest", FALSE), "directory does not exist\n");
-        }
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
     }
     else
     {
