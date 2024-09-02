@@ -89,14 +89,14 @@ static void d3dkmt_init_vulkan(void)
         return;
     }
 
-    p_vkCreateInstance = p_vkGetInstanceProcAddr( NULL, "vkCreateInstance" );
+    p_vkCreateInstance = (PFN_vkCreateInstance)p_vkGetInstanceProcAddr( NULL, "vkCreateInstance" );
     if ((vr = p_vkCreateInstance( &create_info, NULL, &d3dkmt_vk_instance )))
     {
         WARN( "Failed to create a Vulkan instance, vr %d.\n", vr );
         return;
     }
 
-    p_vkDestroyInstance = p_vkGetInstanceProcAddr( d3dkmt_vk_instance, "vkDestroyInstance" );
+    p_vkDestroyInstance = (PFN_vkDestroyInstance)p_vkGetInstanceProcAddr( d3dkmt_vk_instance, "vkDestroyInstance" );
 #define LOAD_VK_FUNC( f )                                                                      \
     if (!(p##f = (void *)p_vkGetInstanceProcAddr( d3dkmt_vk_instance, #f )))                   \
     {                                                                                          \

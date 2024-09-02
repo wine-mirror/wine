@@ -39,8 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
-void *(*p_vkGetDeviceProcAddr)(VkDevice, const char *) = NULL;
-void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *) = NULL;
+PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr = NULL;
+PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr = NULL;
 
 static void *vulkan_handle;
 static struct vulkan_funcs vulkan_funcs;
@@ -139,30 +139,30 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue queue, const VkPresentInfoKHR 
     return res;
 }
 
-static void *win32u_vkGetDeviceProcAddr( VkDevice device, const char *name )
+static PFN_vkVoidFunction win32u_vkGetDeviceProcAddr( VkDevice device, const char *name )
 {
     TRACE( "device %p, name %s\n", device, debugstr_a(name) );
 
-    if (!strcmp( name, "vkGetDeviceProcAddr" )) return vulkan_funcs.p_vkGetDeviceProcAddr;
-    if (!strcmp( name, "vkQueuePresentKHR" )) return vulkan_funcs.p_vkQueuePresentKHR;
+    if (!strcmp( name, "vkGetDeviceProcAddr" )) return (PFN_vkVoidFunction)vulkan_funcs.p_vkGetDeviceProcAddr;
+    if (!strcmp( name, "vkQueuePresentKHR" )) return (PFN_vkVoidFunction)vulkan_funcs.p_vkQueuePresentKHR;
 
     return p_vkGetDeviceProcAddr( device, name );
 }
 
-static void *win32u_vkGetInstanceProcAddr( VkInstance instance, const char *name )
+static PFN_vkVoidFunction win32u_vkGetInstanceProcAddr( VkInstance instance, const char *name )
 {
     TRACE( "instance %p, name %s\n", instance, debugstr_a(name) );
 
     if (!instance) return p_vkGetInstanceProcAddr( instance, name );
 
-    if (!strcmp( name, "vkCreateWin32SurfaceKHR" )) return vulkan_funcs.p_vkCreateWin32SurfaceKHR;
-    if (!strcmp( name, "vkDestroySurfaceKHR" )) return vulkan_funcs.p_vkDestroySurfaceKHR;
-    if (!strcmp( name, "vkGetInstanceProcAddr" )) return vulkan_funcs.p_vkGetInstanceProcAddr;
-    if (!strcmp( name, "vkGetPhysicalDeviceWin32PresentationSupportKHR" )) return vulkan_funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
+    if (!strcmp( name, "vkCreateWin32SurfaceKHR" )) return (PFN_vkVoidFunction)vulkan_funcs.p_vkCreateWin32SurfaceKHR;
+    if (!strcmp( name, "vkDestroySurfaceKHR" )) return (PFN_vkVoidFunction)vulkan_funcs.p_vkDestroySurfaceKHR;
+    if (!strcmp( name, "vkGetInstanceProcAddr" )) return (PFN_vkVoidFunction)vulkan_funcs.p_vkGetInstanceProcAddr;
+    if (!strcmp( name, "vkGetPhysicalDeviceWin32PresentationSupportKHR" )) return (PFN_vkVoidFunction)vulkan_funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
 
     /* vkGetInstanceProcAddr also loads any children of instance, so device functions as well. */
-    if (!strcmp( name, "vkGetDeviceProcAddr" )) return vulkan_funcs.p_vkGetDeviceProcAddr;
-    if (!strcmp( name, "vkQueuePresentKHR" )) return vulkan_funcs.p_vkQueuePresentKHR;
+    if (!strcmp( name, "vkGetDeviceProcAddr" )) return (PFN_vkVoidFunction)vulkan_funcs.p_vkGetDeviceProcAddr;
+    if (!strcmp( name, "vkQueuePresentKHR" )) return (PFN_vkVoidFunction)vulkan_funcs.p_vkQueuePresentKHR;
 
     return p_vkGetInstanceProcAddr( instance, name );
 }

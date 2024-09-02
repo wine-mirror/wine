@@ -20,6 +20,15 @@
 #ifndef __WINE_VULKAN_DRIVER_H
 #define __WINE_VULKAN_DRIVER_H
 
+#include <stdarg.h>
+#include <stddef.h>
+
+#include <windef.h>
+#include <winbase.h>
+
+#define WINE_VK_HOST
+#include "wine/vulkan.h"
+
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
 #define WINE_VULKAN_DRIVER_VERSION 35
 
@@ -29,11 +38,11 @@ struct vulkan_funcs
      * needs to provide. Other function calls will be provided indirectly by dispatch
      * tables part of dispatchable Vulkan objects such as VkInstance or vkDevice.
      */
-    VkResult (*p_vkCreateWin32SurfaceKHR)(VkInstance, const VkWin32SurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
-    void (*p_vkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
-    void * (*p_vkGetDeviceProcAddr)(VkDevice, const char *);
-    void * (*p_vkGetInstanceProcAddr)(VkInstance, const char *);
-    VkBool32 (*p_vkGetPhysicalDeviceWin32PresentationSupportKHR)(VkPhysicalDevice, uint32_t);
+    PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
+    PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
+    PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
+    PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
+    PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
     VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *, VkSurfaceKHR *surfaces);
 
     /* winevulkan specific functions */
