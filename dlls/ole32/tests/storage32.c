@@ -959,9 +959,7 @@ static void test_storage_suminfo(void)
 
     r = IPropertySetStorage_Open(propset, &FMTID_SummaryInformation,
             STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, &ps);
-    todo_wine
     ok(r == S_OK, "Open failed: 0x%08lx\n", r);
-    if (r == S_OK)
     IPropertyStorage_Release(ps);
 
     r = FmtIdToPropStgName(&FMTID_SummaryInformation, name);

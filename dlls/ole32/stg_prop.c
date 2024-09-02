@@ -3009,6 +3009,8 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
 
     TRACE("%p, %s, %#lx, %p.\n", This, debugstr_guid(rfmtid), grfMode, ppprstg);
 
+    grfMode &= ~STGM_TRANSACTED;
+
     /* be picky */
     if (grfMode != (STGM_READWRITE|STGM_SHARE_EXCLUSIVE) &&
         grfMode != (STGM_READ|STGM_SHARE_EXCLUSIVE))
