@@ -74,9 +74,6 @@ static void pointer_handle_motion_internal(wl_fixed_t sx, wl_fixed_t sy)
 
     pthread_mutex_unlock(&surface->mutex);
 
-    /* Hardware input events are in physical coordinates. */
-    if (!NtUserLogicalToPerMonitorDPIPhysicalPoint(hwnd, &screen)) return;
-
     input.type = INPUT_MOUSE;
     input.mi.dx = screen.x;
     input.mi.dy = screen.y;
@@ -249,21 +246,18 @@ static const struct wl_pointer_listener pointer_listener =
 };
 
 static void relative_pointer_v1_relative_motion(void *data,
-			                        struct zwp_relative_pointer_v1 *zwp_relative_pointer_v1,
+                                                struct zwp_relative_pointer_v1 *zwp_relative_pointer_v1,
                                                 uint32_t utime_hi, uint32_t utime_lo,
                                                 wl_fixed_t dx, wl_fixed_t dy,
                                                 wl_fixed_t dx_unaccel, wl_fixed_t dy_unaccel)
 {
     INPUT input = {0};
     HWND hwnd;
-    POINT screen, origin;
+    POINT screen;
     struct wayland_surface *surface;
-    RECT window_rect;
 
     if (!(hwnd = wayland_pointer_get_focused_hwnd())) return;
     if (!(surface = wayland_surface_lock_hwnd(hwnd))) return;
-
-    window_rect = surface->window.rect;
 
     wayland_surface_coords_to_window(surface,
                                      wl_fixed_to_double(dx),
@@ -271,42 +265,6 @@ static void relative_pointer_v1_relative_motion(void *data,
                                      (int *)&screen.x, (int *)&screen.y);
 
     pthread_mutex_unlock(&surface->mutex);
-
-    /* We clip the relative motion within the window rectangle so that
-     * the NtUserLogicalToPerMonitorDPIPhysicalPoint calls later succeed.
-     * TODO: Avoid clipping by using a more versatile dpi mapping function. */
-    if (screen.x >= 0)
-    {
-        origin.x = window_rect.left;
-        screen.x += origin.x;
-        if (screen.x >= window_rect.right) screen.x = window_rect.right - 1;
-    }
-    else
-    {
-        origin.x = window_rect.right;
-        screen.x += origin.x;
-        if (screen.x < window_rect.left) screen.x = window_rect.left;
-    }
-
-    if (screen.y >= 0)
-    {
-        origin.y = window_rect.top;
-        screen.y += origin.y;
-        if (screen.y >= window_rect.bottom) screen.y = window_rect.bottom - 1;
-    }
-    else
-    {
-        origin.y = window_rect.bottom;
-        screen.y += origin.y;
-        if (screen.y < window_rect.top) screen.y = window_rect.top;
-    }
-
-    /* Transform the relative motion from window coordinates to physical
-     * coordinates required for the input event. */
-    if (!NtUserLogicalToPerMonitorDPIPhysicalPoint(hwnd, &screen)) return;
-    if (!NtUserLogicalToPerMonitorDPIPhysicalPoint(hwnd, &origin)) return;
-    screen.x -= origin.x;
-    screen.y -= origin.y;
 
     input.type = INPUT_MOUSE;
     input.mi.dx = screen.x;
