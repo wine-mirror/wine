@@ -940,6 +940,7 @@ SOURCES = \
 	wine/windef16.h \
 	wine/wine_common_ver.rc \
 	wine/wined3d.h \
+	wine/winedmo.h \
 	wine/winedxgi.idl \
 	wine/wingdi16.h \
 	wine/winnet16.h \

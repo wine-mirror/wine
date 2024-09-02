@@ -38,3 +38,16 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 
     return TRUE;
 }
+
+
+NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type )
+{
+    struct demuxer_check_params params = {0};
+    NTSTATUS status;
+
+    TRACE( "mime_type %s\n", debugstr_a(mime_type) );
+    lstrcpynA( params.mime_type, mime_type, sizeof(params.mime_type) );
+
+    if ((status = UNIX_CALL( demuxer_check, &params ))) WARN( "returning %#lx\n", status );
+    return status;
+}

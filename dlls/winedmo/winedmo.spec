@@ -1,1 +1,1 @@
-# nothing to export
+@ cdecl winedmo_demuxer_check(str)

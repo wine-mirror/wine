@@ -16,35 +16,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_WINEDMO_UNIXLIB_H
-#define __WINE_WINEDMO_UNIXLIB_H
+#ifndef __WINE_WINEDMO_H
+#define __WINE_WINEDMO_H
 
 #include <stddef.h>
 #include <stdarg.h>
 
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 
-#include "wine/unixlib.h"
+NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type );
 
-
-struct demuxer_check_params
-{
-    char mime_type[256];
-};
-
-
-enum unix_funcs
-{
-    unix_process_attach,
-
-    unix_demuxer_check,
-
-    unix_funcs_count,
-};
-
-#define UNIX_CALL( func, params ) (__wine_unixlib_handle ? WINE_UNIX_CALL( unix_##func, params ) : STATUS_PROCEDURE_NOT_FOUND)
-
-#endif /* __WINE_WINEDMO_UNIXLIB_H */
+#endif /* __WINE_WINEDMO_H */

@@ -1,8 +1,10 @@
 MODULE    = winedmo.dll
 UNIXLIB   = winedmo.so
+IMPORTLIB = winedmo
 UNIX_CFLAGS  = $(FFMPEG_CFLAGS)
 UNIX_LIBS    = $(FFMPEG_LIBS) $(PTHREAD_LIBS)
 
 SOURCES = \
 	main.c \
+	unix_demuxer.c \
 	unixlib.c

@@ -44,8 +44,20 @@ static const char *debugstr_version( UINT version )
 
 static NTSTATUS process_attach( void *arg )
 {
+    const AVInputFormat *demuxer;
+    void *opaque;
+
     TRACE( "FFmpeg support:\n" );
     TRACE( "  avutil version %s\n", debugstr_version( avutil_version() ) );
+    TRACE( "  avformat version %s\n", debugstr_version( avformat_version() ) );
+
+    TRACE( "available demuxers:\n" );
+    for (opaque = NULL; (demuxer = av_demuxer_iterate( &opaque ));)
+    {
+        TRACE( "  %s (%s)\n", demuxer->name, demuxer->long_name );
+        if (demuxer->extensions) TRACE( "    extensions: %s\n", demuxer->extensions );
+        if (demuxer->mime_type) TRACE( "    mime_types: %s\n", demuxer->mime_type );
+    }
 
     av_log_set_callback( vlog );
     return STATUS_SUCCESS;
@@ -55,6 +67,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
 #define X( name ) [unix_##name] = name
     X( process_attach ),
+
+    X( demuxer_check ),
 };
 
 C_ASSERT(ARRAY_SIZE(__wine_unix_call_funcs) == unix_funcs_count);
@@ -65,6 +79,8 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
 #define X64( name ) [unix_##name] = wow64_##name
     X( process_attach ),
+
+    X( demuxer_check ),
 };
 
 C_ASSERT(ARRAY_SIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count);

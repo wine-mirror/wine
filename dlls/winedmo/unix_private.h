@@ -22,6 +22,11 @@
 
 #ifdef HAVE_FFMPEG
 #include <libavutil/avutil.h>
+#include <libavutil/imgutils.h>
+#include <libavformat/avformat.h>
 #endif /* HAVE_FFMPEG */
 
 #include "unixlib.h"
+
+/* unix_demuxer.c */
+extern NTSTATUS demuxer_check( void * );
