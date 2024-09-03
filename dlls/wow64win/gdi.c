@@ -507,6 +507,13 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyDevice( UINT *args )
     return NtGdiDdDDIDestroyDevice( desc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDIEnumAdapters( UINT *args )
+{
+    D3DKMT_ENUMADAPTERS *desc = get_ptr( &args );
+
+    return NtGdiDdDDIEnumAdapters( desc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDIEnumAdapters2( UINT *args )
 {
     struct

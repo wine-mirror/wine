@@ -236,6 +236,11 @@ NTSTATUS SYSCALL_API NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
     SYSCALL_FUNC( NtGdiDdDDIDestroyDevice );
 }
 
+NTSTATUS SYSCALL_API NtGdiDdDDIEnumAdapters( D3DKMT_ENUMADAPTERS *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDIEnumAdapters );
+}
+
 NTSTATUS SYSCALL_API NtGdiDdDDIEnumAdapters2( D3DKMT_ENUMADAPTERS2 *desc )
 {
     SYSCALL_FUNC( NtGdiDdDDIEnumAdapters2 );

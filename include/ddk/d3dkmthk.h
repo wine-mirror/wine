@@ -767,6 +767,14 @@ typedef struct _D3DKMT_ADAPTERINFO
   BOOL          bPrecisePresentRegionsPreferred;
 } D3DKMT_ADAPTERINFO;
 
+#define MAX_ENUM_ADAPTERS 16
+
+typedef struct _D3DKMT_ENUMADAPTERS
+{
+    ULONG              NumAdapters;
+    D3DKMT_ADAPTERINFO Adapters[MAX_ENUM_ADAPTERS];
+} D3DKMT_ENUMADAPTERS;
+
 typedef struct _D3DKMT_ENUMADAPTERS2
 {
   ULONG               NumAdapters;

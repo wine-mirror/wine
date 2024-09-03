@@ -222,7 +222,7 @@
 @ stub NtGdiDdDDIDispMgrCreate
 @ stub NtGdiDdDDIDispMgrSourceOperation
 @ stub NtGdiDdDDIDispMgrTargetOperation
-@ stub NtGdiDdDDIEnumAdapters
+@ stdcall -syscall NtGdiDdDDIEnumAdapters(ptr)
 @ stdcall -syscall NtGdiDdDDIEnumAdapters2(ptr)
 @ stdcall -syscall NtGdiDdDDIEscape(ptr)
 @ stub NtGdiDdDDIEvict

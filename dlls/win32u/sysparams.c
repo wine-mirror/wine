@@ -6893,6 +6893,31 @@ done:
     return status;
 }
 
+/******************************************************************************
+ *           NtGdiDdDDIEnumAdapters    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIEnumAdapters( D3DKMT_ENUMADAPTERS *desc )
+{
+    NTSTATUS status;
+    D3DKMT_ENUMADAPTERS2 desc2 = {0};
+
+    if (!desc) return STATUS_INVALID_PARAMETER;
+
+    if ((status = NtGdiDdDDIEnumAdapters2( &desc2 ))) return status;
+
+    if (!(desc2.pAdapters = calloc( desc2.NumAdapters, sizeof(D3DKMT_ADAPTERINFO) ))) return STATUS_NO_MEMORY;
+
+    if (!(status = NtGdiDdDDIEnumAdapters2( &desc2 )))
+    {
+        desc->NumAdapters = min( MAX_ENUM_ADAPTERS, desc2.NumAdapters );
+        memcpy( desc->Adapters, desc2.pAdapters, desc->NumAdapters * sizeof(D3DKMT_ADAPTERINFO) );
+    }
+
+    free( desc2.pAdapters );
+
+    return status;
+}
+
 /* Find the Vulkan device UUID corresponding to a LUID */
 BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
 {
