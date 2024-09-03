@@ -1512,6 +1512,7 @@ enable_windowscodecs
 enable_windowscodecsext
 enable_winealsa_drv
 enable_wineandroid_drv
+enable_winebth_sys
 enable_winebus_sys
 enable_winecoreaudio_drv
 enable_winecrt0
@@ -22857,6 +22858,7 @@ wine_fn_config_makefile dlls/windowscodecsext enable_windowscodecsext
 wine_fn_config_makefile dlls/windowscodecsext/tests enable_tests
 wine_fn_config_makefile dlls/winealsa.drv enable_winealsa_drv
 wine_fn_config_makefile dlls/wineandroid.drv enable_wineandroid_drv
+wine_fn_config_makefile dlls/winebth.sys enable_winebth_sys
 wine_fn_config_makefile dlls/winebus.sys enable_winebus_sys
 wine_fn_config_makefile dlls/winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_makefile dlls/winecrt0 enable_winecrt0

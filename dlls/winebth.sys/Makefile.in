@@ -1,0 +1,8 @@
+MODULE  = winebth.sys
+IMPORTS = ntoskrnl
+
+EXTRADLLFLAGS = -Wl,--subsystem,native
+
+SOURCES = \
+	winebth.c \
+	winebth.rc
