@@ -417,6 +417,217 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICloseAdapter( UINT *args )
     return NtGdiDdDDICloseAdapter( desc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hAllocation;
+        ULONG pSystemMem;
+        ULONG pPrivateDriverData;
+        UINT PrivateDriverDataSize;
+        D3DDDI_VIDEO_PRESENT_SOURCE_ID VidPnSourceId;
+        union
+        {
+            struct
+            {
+                UINT Primary : 1;
+                UINT Stereo : 1;
+                UINT Reserved : 30;
+            };
+            UINT Value;
+        } Flags;
+    } *allocs32;
+    typedef struct
+    {
+        ULONG Size;
+    } D3DKMT_STANDARDALLOCATION_EXISTINGHEAP32;
+    struct
+    {
+        D3DKMT_STANDARDALLOCATIONTYPE Type;
+        union
+        {
+            D3DKMT_STANDARDALLOCATION_EXISTINGHEAP32 ExistingHeapData;
+        };
+        D3DKMT_CREATESTANDARDALLOCATIONFLAGS Flags;
+    } *standard32;
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        D3DKMT_HANDLE hResource;
+        D3DKMT_HANDLE hGlobalShare;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+        union
+        {
+            ULONG pStandardAllocation;
+            ULONG pPrivateDriverData;
+        };
+        UINT PrivateDriverDataSize;
+        UINT NumAllocations;
+        ULONG pAllocationInfo;
+        D3DKMT_CREATEALLOCATIONFLAGS Flags;
+        HANDLE hPrivateRuntimeResourceHandle;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_CREATESTANDARDALLOCATION standard;
+    D3DKMT_CREATEALLOCATION desc;
+    NTSTATUS status;
+    UINT i;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hResource = desc32->hResource;
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    if (!desc32->Flags.StandardAllocation)
+    {
+        desc.pPrivateDriverData = UlongToPtr( desc32->pPrivateDriverData );
+        desc.PrivateDriverDataSize = desc32->PrivateDriverDataSize;
+    }
+    else
+    {
+        standard32 = UlongToPtr( desc32->pStandardAllocation );
+        standard.Type = standard32->Type;
+        standard.ExistingHeapData.Size = standard32->ExistingHeapData.Size;
+        standard.Flags = standard32->Flags;
+
+        desc.pStandardAllocation = &standard;
+        desc.PrivateDriverDataSize = sizeof(standard);
+    }
+    desc.NumAllocations = desc32->NumAllocations;
+    desc.pAllocationInfo = NULL;
+    if (desc32->pAllocationInfo && desc32->NumAllocations)
+    {
+        if (!(desc.pAllocationInfo = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pAllocationInfo) )))
+            return STATUS_NO_MEMORY;
+
+        allocs32 = UlongToPtr( desc32->pAllocationInfo );
+        for (i = 0; i < desc32->NumAllocations; i++)
+        {
+            desc.pAllocationInfo[i].hAllocation = allocs32->hAllocation;
+            desc.pAllocationInfo[i].pSystemMem = UlongToPtr( allocs32->pSystemMem );
+            desc.pAllocationInfo[i].pPrivateDriverData = UlongToPtr( allocs32->pPrivateDriverData );
+            desc.pAllocationInfo[i].PrivateDriverDataSize = allocs32->PrivateDriverDataSize;
+            desc.pAllocationInfo[i].VidPnSourceId = allocs32->VidPnSourceId;
+            desc.pAllocationInfo[i].Flags.Value = allocs32->Flags.Value;
+        }
+    }
+    desc.Flags = desc32->Flags;
+    desc.hPrivateRuntimeResourceHandle = desc32->hPrivateRuntimeResourceHandle;
+
+    status = NtGdiDdDDICreateAllocation( &desc );
+    desc.hResource = desc32->hResource;
+    desc.hGlobalShare = desc32->hGlobalShare;
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDICreateAllocation2( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hAllocation;
+        ULONG pSystemMem;
+        ULONG pPrivateDriverData;
+        UINT PrivateDriverDataSize;
+        D3DDDI_VIDEO_PRESENT_SOURCE_ID VidPnSourceId;
+        union
+        {
+            struct
+            {
+                UINT Primary : 1;
+                UINT Stereo : 1;
+                UINT OverridePriority : 1;
+                UINT Reserved : 29;
+            };
+            UINT Value;
+        } Flags;
+        D3DGPU_VIRTUAL_ADDRESS GpuVirtualAddress;
+        ULONG Priority;
+        ULONG Reserved[5];
+    } *allocs32 = NULL;
+    typedef struct
+    {
+        ULONG Size;
+    } D3DKMT_STANDARDALLOCATION_EXISTINGHEAP32;
+    struct
+    {
+        D3DKMT_STANDARDALLOCATIONTYPE Type;
+        union
+        {
+            D3DKMT_STANDARDALLOCATION_EXISTINGHEAP32 ExistingHeapData;
+        };
+        D3DKMT_CREATESTANDARDALLOCATIONFLAGS Flags;
+    } *standard32;
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        D3DKMT_HANDLE hResource;
+        D3DKMT_HANDLE hGlobalShare;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+        union
+        {
+            ULONG pStandardAllocation;
+            ULONG pPrivateDriverData;
+        };
+        UINT PrivateDriverDataSize;
+        UINT NumAllocations;
+        ULONG pAllocationInfo2;
+        D3DKMT_CREATEALLOCATIONFLAGS Flags;
+        HANDLE hPrivateRuntimeResourceHandle;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_CREATESTANDARDALLOCATION standard;
+    D3DKMT_CREATEALLOCATION desc;
+    NTSTATUS status;
+    UINT i;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hResource = desc32->hResource;
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    if (!desc32->Flags.StandardAllocation)
+    {
+        desc.pPrivateDriverData = UlongToPtr( desc32->pPrivateDriverData );
+        desc.PrivateDriverDataSize = desc32->PrivateDriverDataSize;
+    }
+    else
+    {
+        standard32 = UlongToPtr( desc32->pStandardAllocation );
+        standard.Type = standard32->Type;
+        standard.ExistingHeapData.Size = standard32->ExistingHeapData.Size;
+        standard.Flags = standard32->Flags;
+
+        desc.pStandardAllocation = &standard;
+        desc.PrivateDriverDataSize = sizeof(standard);
+    }
+    desc.NumAllocations = desc32->NumAllocations;
+    desc.pAllocationInfo2 = NULL;
+    if (desc32->pAllocationInfo2 && desc32->NumAllocations)
+    {
+        if (!(desc.pAllocationInfo2 = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pAllocationInfo2) )))
+            return STATUS_NO_MEMORY;
+
+        allocs32 = UlongToPtr( desc32->pAllocationInfo2 );
+        for (i = 0; i < desc32->NumAllocations; i++)
+        {
+            desc.pAllocationInfo2[i].hAllocation = allocs32->hAllocation;
+            desc.pAllocationInfo2[i].pSystemMem = UlongToPtr( allocs32->pSystemMem );
+            desc.pAllocationInfo2[i].pPrivateDriverData = UlongToPtr( allocs32->pPrivateDriverData );
+            desc.pAllocationInfo2[i].PrivateDriverDataSize = allocs32->PrivateDriverDataSize;
+            desc.pAllocationInfo2[i].VidPnSourceId = allocs32->VidPnSourceId;
+            desc.pAllocationInfo2[i].Flags.Value = allocs32->Flags.Value;
+            desc.pAllocationInfo2[i].Priority = allocs32->Priority;
+        }
+    }
+    desc.Flags = desc32->Flags;
+    desc.hPrivateRuntimeResourceHandle = desc32->hPrivateRuntimeResourceHandle;
+
+    status = NtGdiDdDDICreateAllocation( &desc );
+    desc.hResource = desc32->hResource;
+    desc.hGlobalShare = desc32->hGlobalShare;
+    for (i = 0; desc32->pAllocationInfo2 && i < desc32->NumAllocations; i++)
+        allocs32->GpuVirtualAddress = desc.pAllocationInfo2[i].GpuVirtualAddress;
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDICreateDCFromMemory( UINT *args )
 {
     struct _D3DKMT_CREATEDCFROMMEMORY
@@ -482,6 +693,44 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
     if (!(status = NtGdiDdDDICreateDevice( &desc )))
         desc32->hDevice = desc.hDevice;
     return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyAllocation( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        D3DKMT_HANDLE hResource;
+        ULONG phAllocationList;
+        UINT AllocationCount;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_DESTROYALLOCATION desc;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hResource = desc32->hResource;
+    desc.phAllocationList = ULongToPtr( desc32->phAllocationList );
+    desc.AllocationCount = desc32->AllocationCount;
+    return NtGdiDdDDIDestroyAllocation( &desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyAllocation2( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        D3DKMT_HANDLE hResource;
+        ULONG phAllocationList;
+        UINT AllocationCount;
+        D3DDDICB_DESTROYALLOCATION2FLAGS Flags;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_DESTROYALLOCATION2 desc;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hResource = desc32->hResource;
+    desc.phAllocationList = ULongToPtr( desc32->phAllocationList );
+    desc.AllocationCount = desc32->AllocationCount;
+    desc.Flags = desc32->Flags;
+    return NtGdiDdDDIDestroyAllocation2( &desc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyDCFromMemory( UINT *args )
@@ -615,6 +864,190 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromLuid( UINT *args )
     return NtGdiDdDDIOpenAdapterFromLuid( desc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResource( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hAllocation;
+        ULONG pPrivateDriverData;
+        UINT PrivateDriverDataSize;
+    } *allocs32;
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        D3DKMT_HANDLE hGlobalShare;
+        UINT NumAllocations;
+        ULONG pOpenAllocationInfo;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+        ULONG pResourcePrivateDriverData;
+        UINT ResourcePrivateDriverDataSize;
+        ULONG pTotalPrivateDriverDataBuffer;
+        UINT TotalPrivateDriverDataBufferSize;
+        D3DKMT_HANDLE hResource;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENRESOURCE desc;
+    NTSTATUS status;
+    UINT i;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hGlobalShare = desc32->hGlobalShare;
+    desc.NumAllocations = desc32->NumAllocations;
+    desc.pOpenAllocationInfo = NULL;
+    if (desc32->pOpenAllocationInfo && desc32->NumAllocations)
+    {
+        if (!(desc.pOpenAllocationInfo = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pOpenAllocationInfo) )))
+            return STATUS_NO_MEMORY;
+
+        allocs32 = UlongToPtr( desc32->pOpenAllocationInfo );
+        for (i = 0; i < desc32->NumAllocations; i++)
+        {
+            desc.pOpenAllocationInfo[i].hAllocation = allocs32->hAllocation;
+            desc.pOpenAllocationInfo[i].pPrivateDriverData = UlongToPtr( allocs32->pPrivateDriverData );
+            desc.pOpenAllocationInfo[i].PrivateDriverDataSize = allocs32->PrivateDriverDataSize;
+        }
+    }
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.ResourcePrivateDriverDataSize = desc32->ResourcePrivateDriverDataSize;
+    desc.pResourcePrivateDriverData = UlongToPtr( desc32->pResourcePrivateDriverData );
+    desc.TotalPrivateDriverDataBufferSize = desc32->TotalPrivateDriverDataBufferSize;
+    desc.pTotalPrivateDriverDataBuffer = UlongToPtr( desc32->pTotalPrivateDriverDataBuffer );
+
+    status = NtGdiDdDDIOpenResource( &desc );
+    desc32->TotalPrivateDriverDataBufferSize = desc.TotalPrivateDriverDataBufferSize;
+    desc32->hResource = desc.hResource;
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResource2( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hAllocation;
+        ULONG pPrivateDriverData;
+        UINT PrivateDriverDataSize;
+        D3DGPU_VIRTUAL_ADDRESS GpuVirtualAddress;
+        ULONG Reserved[6];
+    } *allocs32 = NULL;
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        D3DKMT_HANDLE hGlobalShare;
+        UINT NumAllocations;
+        ULONG pOpenAllocationInfo2;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+        ULONG pResourcePrivateDriverData;
+        UINT ResourcePrivateDriverDataSize;
+        ULONG pTotalPrivateDriverDataBuffer;
+        UINT TotalPrivateDriverDataBufferSize;
+        D3DKMT_HANDLE hResource;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENRESOURCE desc;
+    NTSTATUS status;
+    UINT i;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hGlobalShare = desc32->hGlobalShare;
+    desc.NumAllocations = desc32->NumAllocations;
+    desc.pOpenAllocationInfo2 = NULL;
+    if (desc32->pOpenAllocationInfo2 && desc32->NumAllocations)
+    {
+        if (!(desc.pOpenAllocationInfo2 = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pOpenAllocationInfo2) )))
+            return STATUS_NO_MEMORY;
+
+        allocs32 = UlongToPtr( desc32->pOpenAllocationInfo2 );
+        for (i = 0; i < desc32->NumAllocations; i++)
+        {
+            desc.pOpenAllocationInfo2[i].hAllocation = allocs32->hAllocation;
+            desc.pOpenAllocationInfo2[i].pPrivateDriverData = UlongToPtr( allocs32->pPrivateDriverData );
+            desc.pOpenAllocationInfo2[i].PrivateDriverDataSize = allocs32->PrivateDriverDataSize;
+        }
+    }
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.ResourcePrivateDriverDataSize = desc32->ResourcePrivateDriverDataSize;
+    desc.pResourcePrivateDriverData = UlongToPtr( desc32->pResourcePrivateDriverData );
+    desc.TotalPrivateDriverDataBufferSize = desc32->TotalPrivateDriverDataBufferSize;
+    desc.pTotalPrivateDriverDataBuffer = UlongToPtr( desc32->pTotalPrivateDriverDataBuffer );
+
+    status = NtGdiDdDDIOpenResource2( &desc );
+    desc32->TotalPrivateDriverDataBufferSize = desc.TotalPrivateDriverDataBufferSize;
+    desc32->hResource = desc.hResource;
+    for (i = 0; desc32->pOpenAllocationInfo2 && i < desc32->NumAllocations; i++)
+        allocs32->GpuVirtualAddress = desc.pOpenAllocationInfo2[i].GpuVirtualAddress;
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResourceFromNtHandle( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hAllocation;
+        ULONG pPrivateDriverData;
+        UINT PrivateDriverDataSize;
+        D3DGPU_VIRTUAL_ADDRESS GpuVirtualAddress;
+        ULONG Reserved[6];
+    } *allocs32 = NULL;
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        ULONG hNtHandle;
+        UINT NumAllocations;
+        ULONG pOpenAllocationInfo2;
+        UINT PrivateRuntimeDataSize;
+        ULONG pPrivateRuntimeData;
+        UINT ResourcePrivateDriverDataSize;
+        ULONG pResourcePrivateDriverData;
+        UINT TotalPrivateDriverDataBufferSize;
+        ULONG pTotalPrivateDriverDataBuffer;
+        D3DKMT_HANDLE hResource;
+        D3DKMT_HANDLE hKeyedMutex;
+        ULONG pKeyedMutexPrivateRuntimeData;
+        UINT KeyedMutexPrivateRuntimeDataSize;
+        D3DKMT_HANDLE hSyncObject;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENRESOURCEFROMNTHANDLE desc;
+    NTSTATUS status;
+    UINT i;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
+    desc.NumAllocations = desc32->NumAllocations;
+    desc.pOpenAllocationInfo2 = NULL;
+    if (desc32->pOpenAllocationInfo2 && desc32->NumAllocations)
+    {
+        if (!(desc.pOpenAllocationInfo2 = Wow64AllocateTemp( desc32->NumAllocations + sizeof(*desc.pOpenAllocationInfo2) )))
+            return STATUS_NO_MEMORY;
+
+        allocs32 = UlongToPtr( desc32->pOpenAllocationInfo2 );
+        for (i = 0; i < desc32->NumAllocations; i++)
+        {
+            desc.pOpenAllocationInfo2[i].hAllocation = allocs32->hAllocation;
+            desc.pOpenAllocationInfo2[i].pPrivateDriverData = UlongToPtr( allocs32->pPrivateDriverData );
+            desc.pOpenAllocationInfo2[i].PrivateDriverDataSize = allocs32->PrivateDriverDataSize;
+        }
+    }
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.ResourcePrivateDriverDataSize = desc32->ResourcePrivateDriverDataSize;
+    desc.pResourcePrivateDriverData = UlongToPtr( desc32->pResourcePrivateDriverData );
+    desc.TotalPrivateDriverDataBufferSize = desc32->TotalPrivateDriverDataBufferSize;
+    desc.pTotalPrivateDriverDataBuffer = UlongToPtr( desc32->pTotalPrivateDriverDataBuffer );
+    desc.pKeyedMutexPrivateRuntimeData = UlongToPtr( desc32->pKeyedMutexPrivateRuntimeData );
+    desc.KeyedMutexPrivateRuntimeDataSize = desc32->KeyedMutexPrivateRuntimeDataSize;
+
+    status = NtGdiDdDDIOpenResourceFromNtHandle( &desc );
+    desc32->TotalPrivateDriverDataBufferSize = desc.TotalPrivateDriverDataBufferSize;
+    desc32->hResource = desc.hResource;
+    desc32->hKeyedMutex = desc.hKeyedMutex;
+    desc32->hSyncObject = desc.hSyncObject;
+    for (i = 0; desc32->pOpenAllocationInfo2 && i < desc32->NumAllocations; i++)
+        allocs32->GpuVirtualAddress = desc.pOpenAllocationInfo2[i].GpuVirtualAddress;
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDIQueryAdapterInfo( UINT *args )
 {
     struct _D3DKMT_QUERYADAPTERINFO
@@ -634,6 +1067,60 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIQueryAdapterInfo( UINT *args )
     desc.PrivateDriverDataSize = desc32->PrivateDriverDataSize;
 
     return NtGdiDdDDIQueryAdapterInfo( &desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIQueryResourceInfo( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        D3DKMT_HANDLE hGlobalShare;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+        UINT TotalPrivateDriverDataSize;
+        UINT ResourcePrivateDriverDataSize;
+        UINT NumAllocations;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_QUERYRESOURCEINFO desc;
+    NTSTATUS status;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hGlobalShare = desc32->hGlobalShare;
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    status = NtGdiDdDDIQueryResourceInfo( &desc );
+    desc32->PrivateRuntimeDataSize = desc.PrivateRuntimeDataSize;
+    desc32->TotalPrivateDriverDataSize = desc.TotalPrivateDriverDataSize;
+    desc32->ResourcePrivateDriverDataSize = desc.ResourcePrivateDriverDataSize;
+    desc32->NumAllocations = desc.NumAllocations;
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIQueryResourceInfoFromNtHandle( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hDevice;
+        ULONG hNtHandle;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+        UINT TotalPrivateDriverDataSize;
+        UINT ResourcePrivateDriverDataSize;
+        UINT NumAllocations;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE desc;
+    NTSTATUS status;
+
+    desc.hDevice = desc32->hDevice;
+    desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    status = NtGdiDdDDIQueryResourceInfoFromNtHandle( &desc );
+    desc32->PrivateRuntimeDataSize = desc.PrivateRuntimeDataSize;
+    desc32->TotalPrivateDriverDataSize = desc.TotalPrivateDriverDataSize;
+    desc32->ResourcePrivateDriverDataSize = desc.ResourcePrivateDriverDataSize;
+    desc32->NumAllocations = desc.NumAllocations;
+    return status;
 }
 
 NTSTATUS WINAPI wow64_NtGdiDdDDIQueryStatistics( UINT *args )

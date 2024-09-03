@@ -216,9 +216,29 @@ NTSTATUS SYSCALL_API NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
     SYSCALL_FUNC( NtGdiDdDDICloseAdapter );
 }
 
+NTSTATUS SYSCALL_API NtGdiDdDDICreateAllocation( D3DKMT_CREATEALLOCATION *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDICreateAllocation );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDICreateAllocation2 );
+}
+
 NTSTATUS SYSCALL_API NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
 {
     SYSCALL_FUNC( NtGdiDdDDICreateDCFromMemory );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDIDestroyAllocation( const D3DKMT_DESTROYALLOCATION *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDIDestroyAllocation );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDIDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDIDestroyAllocation2 );
 }
 
 NTSTATUS SYSCALL_API NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
@@ -266,9 +286,34 @@ NTSTATUS SYSCALL_API NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *
     SYSCALL_FUNC( NtGdiDdDDIOpenAdapterFromLuid );
 }
 
+NTSTATUS SYSCALL_API NtGdiDdDDIOpenResource( D3DKMT_OPENRESOURCE *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDIOpenResource );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDIOpenResource2( D3DKMT_OPENRESOURCE *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDIOpenResource2 );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDIOpenResourceFromNtHandle( D3DKMT_OPENRESOURCEFROMNTHANDLE *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDIOpenResourceFromNtHandle );
+}
+
 NTSTATUS SYSCALL_API NtGdiDdDDIQueryAdapterInfo( D3DKMT_QUERYADAPTERINFO *desc )
 {
     SYSCALL_FUNC( NtGdiDdDDIQueryAdapterInfo );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDIQueryResourceInfo );
+}
+
+NTSTATUS SYSCALL_API NtGdiDdDDIQueryResourceInfoFromNtHandle( D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *desc )
+{
+    SYSCALL_FUNC( NtGdiDdDDIQueryResourceInfoFromNtHandle );
 }
 
 NTSTATUS SYSCALL_API NtGdiDdDDIQueryStatistics( D3DKMT_QUERYSTATISTICS *stats )

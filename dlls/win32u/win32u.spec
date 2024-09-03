@@ -189,7 +189,8 @@
 @ stdcall -syscall NtGdiDdDDICheckVidPnExclusiveOwnership(ptr)
 @ stdcall -syscall NtGdiDdDDICloseAdapter(ptr)
 @ stub NtGdiDdDDIConfigureSharedResource
-@ stub NtGdiDdDDICreateAllocation
+@ stdcall -syscall NtGdiDdDDICreateAllocation(ptr)
+@ stdcall -syscall NtGdiDdDDICreateAllocation2(ptr)
 @ stub NtGdiDdDDICreateBundleObject
 @ stub NtGdiDdDDICreateContext
 @ stub NtGdiDdDDICreateContextVirtual
@@ -206,8 +207,8 @@
 @ stub NtGdiDdDDICreateSwapChain
 @ stub NtGdiDdDDICreateSynchronizationObject
 @ stub NtGdiDdDDIDDisplayEnum
-@ stub NtGdiDdDDIDestroyAllocation
-@ stub NtGdiDdDDIDestroyAllocation2
+@ stdcall -syscall NtGdiDdDDIDestroyAllocation(ptr)
+@ stdcall -syscall NtGdiDdDDIDestroyAllocation2(ptr)
 @ stub NtGdiDdDDIDestroyContext
 @ stdcall -syscall NtGdiDdDDIDestroyDCFromMemory(ptr)
 @ stdcall -syscall NtGdiDdDDIDestroyDevice(ptr)
@@ -277,8 +278,9 @@
 @ stub NtGdiDdDDIOpenKeyedMutexFromNtHandle
 @ stub NtGdiDdDDIOpenNtHandleFromName
 @ stub NtGdiDdDDIOpenProtectedSessionFromNtHandle
-@ stub NtGdiDdDDIOpenResource
-@ stub NtGdiDdDDIOpenResourceFromNtHandle
+@ stdcall -syscall NtGdiDdDDIOpenResource(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenResource2(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenResourceFromNtHandle(ptr)
 @ stub NtGdiDdDDIOpenSwapChain
 @ stub NtGdiDdDDIOpenSyncObjectFromNtHandle
 @ stub NtGdiDdDDIOpenSyncObjectFromNtHandle2
@@ -303,8 +305,8 @@
 @ stub NtGdiDdDDIQueryProtectedSessionInfoFromNtHandle
 @ stub NtGdiDdDDIQueryProtectedSessionStatus
 @ stub NtGdiDdDDIQueryRemoteVidPnSourceFromGdiDisplayName
-@ stub NtGdiDdDDIQueryResourceInfo
-@ stub NtGdiDdDDIQueryResourceInfoFromNtHandle
+@ stdcall -syscall NtGdiDdDDIQueryResourceInfo(ptr)
+@ stdcall -syscall NtGdiDdDDIQueryResourceInfoFromNtHandle(ptr)
 @ stdcall -syscall NtGdiDdDDIQueryStatistics(ptr)
 @ stub NtGdiDdDDIQueryVidPnExclusiveOwnership
 @ stdcall -syscall NtGdiDdDDIQueryVideoMemoryInfo(ptr)
