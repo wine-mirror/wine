@@ -6029,18 +6029,15 @@ static void test_effect_matrix_variable(void)
     static const struct
     {
         const char *name;
-        D3D_SHADER_VARIABLE_TYPE type;
-        unsigned int rows;
-        unsigned int columns;
-        unsigned int elements;
+        D3D10_EFFECT_TYPE_DESC type;
     }
     tests[] =
     {
-        {"m_f0", D3D10_SVT_FLOAT, 4, 4, 1},
-        {"m_i0", D3D10_SVT_INT, 2, 3, 1},
-        {"m_b0", D3D10_SVT_BOOL, 3, 2, 1},
-        {"m_f_a", D3D10_SVT_FLOAT, 4, 4, 2},
-        {"m_b_a", D3D10_SVT_BOOL, 3, 2, 2},
+        { "m_f0",  { "float4x4", D3D10_SVC_MATRIX_COLUMNS, D3D10_SVT_FLOAT, 0, 0, 4, 4,  64,  64, 64 } },
+        { "m_i0",  { "int2x3",   D3D10_SVC_MATRIX_ROWS,    D3D10_SVT_INT,   0, 0, 2, 3,  24,  28, 32 } },
+        { "m_b0",  { "bool3x2",  D3D10_SVC_MATRIX_COLUMNS, D3D10_SVT_BOOL,  0, 0, 3, 2,  24,  28, 32 } },
+        { "m_f_a", { "float4x4", D3D10_SVC_MATRIX_COLUMNS, D3D10_SVT_FLOAT, 2, 0, 4, 4, 128, 128, 64 } },
+        { "m_b_a", { "bool3x2",  D3D10_SVC_MATRIX_COLUMNS, D3D10_SVT_BOOL,  2, 0, 3, 2,  48,  60, 32 } },
     };
     ID3D10EffectMatrixVariable *m_var;
     D3D10_EFFECT_TYPE_DESC type_desc;
@@ -6077,17 +6074,32 @@ static void test_effect_matrix_variable(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        const D3D10_EFFECT_TYPE_DESC *t = &tests[i].type;
+
+        winetest_push_context("Variable %s", tests[i].name);
+
         var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
         type = var->lpVtbl->GetType(var);
         hr = type->lpVtbl->GetDesc(type, &type_desc);
-        ok(hr == S_OK, "Variable %s, got unexpected hr %#lx.\n", tests[i].name, hr);
-        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
-                tests[i].name, type_desc.Type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        ok(!strcmp(type_desc.TypeName, t->TypeName), "Unexpected type name %s.\n", type_desc.TypeName);
+        ok(type_desc.Class == t->Class, "Unexpected type class %u.\n", type_desc.Class);
+        ok(type_desc.Type == t->Type, "Unexpected type %u.\n", type_desc.Type);
+        ok(type_desc.Elements == t->Elements, "Unexpected elements count %u.\n", type_desc.Elements);
+        ok(type_desc.Members == t->Members, "Unexpected members count %u.\n", type_desc.Members);
+        ok(type_desc.Rows == t->Rows, "Unexpected rows count %u.\n", type_desc.Rows);
+        ok(type_desc.Columns == t->Columns, "Unexpected columns count %u.\n", type_desc.Columns);
+        ok(type_desc.PackedSize == t->PackedSize, "Unexpected packed size %u.\n", type_desc.PackedSize);
+        ok(type_desc.UnpackedSize == t->UnpackedSize, "Unexpected unpacked size %u.\n", type_desc.UnpackedSize);
+        ok(type_desc.Stride == t->Stride, "Unexpected stride %u.\n", type_desc.Stride);
+
         m_var = var->lpVtbl->AsMatrix(var);
-        test_matrix_methods(m_var, tests[i].type, tests[i].name, tests[i].rows, tests[i].columns);
-        if (tests[i].elements > 1)
-            test_matrix_array_methods(m_var, tests[i].type, tests[i].name, tests[i].rows, tests[i].columns,
-                    tests[i].elements);
+        test_matrix_methods(m_var, t->Type, tests[i].name, t->Rows, t->Columns);
+        if (t->Elements)
+            test_matrix_array_methods(m_var, t->Type, tests[i].name, t->Rows, t->Columns, t->Elements);
+
+        winetest_pop_context();
     }
 
     effect->lpVtbl->Release(effect);
