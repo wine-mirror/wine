@@ -166,7 +166,7 @@ static LPWSTR build_properties(struct string_list *property_list)
 
 		/* check if the value contains spaces and maybe quote it */
 		value++;
-		needs_quote = wcschr(value,' ') ? 1 : 0;
+		needs_quote = *value != '"' && wcschr(value, ' ');
 		if(needs_quote)
 			*p++ = '"';
 		len = lstrlenW(value);
