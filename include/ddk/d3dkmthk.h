@@ -857,6 +857,171 @@ typedef struct _D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE
 
 typedef ULONGLONG D3DGPU_VIRTUAL_ADDRESS;
 
+#ifndef D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_EXT
+#define D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_EXT
+#define D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_RESERVED0 Reserved0
+#endif
+
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS
+{
+    union
+    {
+        struct
+        {
+            UINT Shared : 1;
+            UINT NtSecuritySharing : 1;
+            UINT CrossAdapter : 1;
+            UINT TopOfPipeline : 1;
+            UINT NoSignal : 1;
+            UINT NoWait : 1;
+            UINT NoSignalMaxValueOnTdr : 1;
+            UINT NoGPUAccess : 1;
+            UINT Reserved : 23;
+            UINT D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS_RESERVED0 : 1;
+        };
+        UINT Value;
+    };
+} D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS;
+
+typedef UINT D3DDDI_VIDEO_PRESENT_TARGET_ID;
+
+typedef enum _D3DDDI_SYNCHRONIZATIONOBJECT_TYPE
+{
+    D3DDDI_SYNCHRONIZATION_MUTEX = 1,
+    D3DDDI_SEMAPHORE = 2,
+    D3DDDI_FENCE = 3,
+    D3DDDI_CPU_NOTIFICATION = 4,
+    D3DDDI_MONITORED_FENCE = 5,
+    D3DDDI_PERIODIC_MONITORED_FENCE = 6,
+    D3DDDI_SYNCHRONIZATION_TYPE_LIMIT
+} D3DDDI_SYNCHRONIZATIONOBJECT_TYPE;
+
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECTINFO
+{
+    D3DDDI_SYNCHRONIZATIONOBJECT_TYPE Type;
+    union
+    {
+        struct
+        {
+            BOOL InitialState;
+        } SynchronizationMutex;
+        struct
+        {
+            UINT MaxCount;
+            UINT InitialCount;
+        } Semaphore;
+        struct
+        {
+            UINT Reserved[16];
+        } Reserved;
+    };
+} D3DDDI_SYNCHRONIZATIONOBJECTINFO;
+
+typedef struct _D3DKMT_CREATESYNCHRONIZATIONOBJECT
+{
+    D3DKMT_HANDLE hDevice;
+    D3DDDI_SYNCHRONIZATIONOBJECTINFO Info;
+    D3DKMT_HANDLE hSyncObject;
+} D3DKMT_CREATESYNCHRONIZATIONOBJECT;
+
+typedef struct _D3DDDI_SYNCHRONIZATIONOBJECTINFO2
+{
+    D3DDDI_SYNCHRONIZATIONOBJECT_TYPE Type;
+    D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS Flags;
+    union
+    {
+        struct
+        {
+            BOOL InitialState;
+        } SynchronizationMutex;
+        struct
+        {
+            UINT MaxCount;
+            UINT InitialCount;
+        } Semaphore;
+        struct
+        {
+            UINT64 FenceValue;
+        } Fence;
+        struct
+        {
+            HANDLE Event;
+        } CPUNotification;
+        struct
+        {
+            UINT64 InitialFenceValue;
+            void *FenceValueCPUVirtualAddress;
+            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
+            UINT EngineAffinity;
+        } MonitoredFence;
+        struct
+        {
+            D3DKMT_HANDLE hAdapter;
+            D3DDDI_VIDEO_PRESENT_TARGET_ID VidPnTargetId;
+            UINT64 Time;
+            void *FenceValueCPUVirtualAddress;
+            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
+            UINT EngineAffinity;
+        } PeriodicMonitoredFence;
+        struct
+        {
+            UINT64 Reserved[8];
+        } Reserved;
+    };
+    D3DKMT_HANDLE SharedHandle;
+} D3DDDI_SYNCHRONIZATIONOBJECTINFO2;
+
+typedef struct _D3DKMT_CREATESYNCHRONIZATIONOBJECT2
+{
+    D3DKMT_HANDLE hDevice;
+    D3DDDI_SYNCHRONIZATIONOBJECTINFO2 Info;
+    D3DKMT_HANDLE hSyncObject;
+} D3DKMT_CREATESYNCHRONIZATIONOBJECT2;
+
+typedef struct _D3DKMT_OPENSYNCOBJECTFROMNTHANDLE
+{
+    HANDLE hNtHandle;
+    D3DKMT_HANDLE hSyncObject;
+} D3DKMT_OPENSYNCOBJECTFROMNTHANDLE;
+
+typedef struct _D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2
+{
+    HANDLE hNtHandle;
+    D3DKMT_HANDLE hDevice;
+    D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS Flags;
+    D3DKMT_HANDLE hSyncObject;
+    union
+    {
+
+        struct
+        {
+            void *FenceValueCPUVirtualAddress;
+            D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
+            UINT EngineAffinity;
+        } MonitoredFence;
+        UINT64 Reserved[8];
+    };
+} D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2;
+
+typedef struct _D3DKMT_OPENSYNCHRONIZATIONOBJECT
+{
+    D3DKMT_HANDLE hSharedHandle;
+    D3DKMT_HANDLE hSyncObject;
+    UINT64 Reserved[8];
+} D3DKMT_OPENSYNCHRONIZATIONOBJECT;
+
+typedef struct _D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME
+{
+    DWORD dwDesiredAccess;
+    OBJECT_ATTRIBUTES *pObjAttrib;
+    HANDLE hNtHandle;
+} D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME;
+
+typedef struct _D3DKMT_DESTROYSYNCHRONIZATIONOBJECT
+{
+    D3DKMT_HANDLE hSyncObject;
+} D3DKMT_DESTROYSYNCHRONIZATIONOBJECT;
+
 typedef struct _D3DKMT_CREATESTANDARDALLOCATIONFLAGS
 {
     union
@@ -1108,11 +1273,14 @@ NTSTATUS WINAPI D3DKMTCreateDCFromMemory(D3DKMT_CREATEDCFROMMEMORY *desc);
 NTSTATUS WINAPI D3DKMTCreateDevice(D3DKMT_CREATEDEVICE *desc);
 NTSTATUS WINAPI D3DKMTCreateKeyedMutex( D3DKMT_CREATEKEYEDMUTEX *params );
 NTSTATUS WINAPI D3DKMTCreateKeyedMutex2( D3DKMT_CREATEKEYEDMUTEX2 *params );
+NTSTATUS WINAPI D3DKMTCreateSynchronizationObject( D3DKMT_CREATESYNCHRONIZATIONOBJECT *params );
+NTSTATUS WINAPI D3DKMTCreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *params );
 NTSTATUS WINAPI D3DKMTDestroyAllocation( const D3DKMT_DESTROYALLOCATION *params );
 NTSTATUS WINAPI D3DKMTDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *params );
 NTSTATUS WINAPI D3DKMTDestroyDCFromMemory(const D3DKMT_DESTROYDCFROMMEMORY *desc);
 NTSTATUS WINAPI D3DKMTDestroyDevice(const D3DKMT_DESTROYDEVICE *desc);
 NTSTATUS WINAPI D3DKMTDestroyKeyedMutex( const D3DKMT_DESTROYKEYEDMUTEX *params );
+NTSTATUS WINAPI D3DKMTDestroySynchronizationObject( const D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *params );
 NTSTATUS WINAPI D3DKMTEnumAdapters2(D3DKMT_ENUMADAPTERS2 *desc);
 NTSTATUS WINAPI D3DKMTEscape( const D3DKMT_ESCAPE *desc );
 NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc);
@@ -1124,6 +1292,10 @@ NTSTATUS WINAPI D3DKMTOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMNTHAN
 NTSTATUS WINAPI D3DKMTOpenResource( D3DKMT_OPENRESOURCE *params );
 NTSTATUS WINAPI D3DKMTOpenResource2( D3DKMT_OPENRESOURCE *params );
 NTSTATUS WINAPI D3DKMTOpenResourceFromNtHandle( D3DKMT_OPENRESOURCEFROMNTHANDLE *params );
+NTSTATUS WINAPI D3DKMTOpenSynchronizationObject( D3DKMT_OPENSYNCHRONIZATIONOBJECT *params );
+NTSTATUS WINAPI D3DKMTOpenSyncObjectFromNtHandle( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE *params );
+NTSTATUS WINAPI D3DKMTOpenSyncObjectFromNtHandle2( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *params );
+NTSTATUS WINAPI D3DKMTOpenSyncObjectNtHandleFromName( D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *params );
 NTSTATUS WINAPI D3DKMTQueryAdapterInfo(D3DKMT_QUERYADAPTERINFO *desc);
 NTSTATUS WINAPI D3DKMTQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params );
 NTSTATUS WINAPI D3DKMTQueryResourceInfoFromNtHandle( D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *params );
