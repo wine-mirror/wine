@@ -1976,32 +1976,27 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceCtrlDispatcherW( const SERVICE_TABLE_E
     return service_run_main_thread();
 }
 
-struct device_notification_details
-{
-    HANDLE handle;
-    device_notify_callback callback;
-    union
-    {
-        DEV_BROADCAST_HDR header;
-        DEV_BROADCAST_DEVICEINTERFACE_W iface;
-    } filter;
-};
-
 static HANDLE device_notify_thread;
 static struct list device_notify_list = LIST_INIT(device_notify_list);
 
-struct device_notify_registration
+struct device_notify
 {
     struct list entry;
-    struct device_notification_details details;
+    HANDLE handle;
+    device_notify_callback callback;
+    DEV_BROADCAST_HDR header[]; /* variable size */
 };
 
-static struct device_notify_registration *device_notify_copy( struct device_notify_registration *notify )
-{
-    struct device_notify_registration *event;
+C_ASSERT( sizeof(struct device_notify) == offsetof(struct device_notify, header[0]) );
 
-    if (!(event = calloc( 1, sizeof(*event) ))) return NULL;
-    event->details = notify->details;
+static struct device_notify *device_notify_copy( struct device_notify *notify, DEV_BROADCAST_HDR *header )
+{
+    struct device_notify *event;
+
+    if (!(event = calloc( 1, sizeof(*event) + header->dbch_size ))) return NULL;
+    event->handle = notify->handle;
+    event->callback = notify->callback;
+    memcpy( event->header, header, header->dbch_size );
 
     return event;
 }
@@ -2029,7 +2024,7 @@ static DWORD WINAPI device_notify_proc( void *arg )
     WCHAR protseq[] = L"ncacn_np";
     RPC_WSTR binding_str;
     DWORD err = ERROR_SUCCESS;
-    struct device_notify_registration *registration, *event, *next;
+    struct device_notify *notify, *event, *next;
     struct list events = LIST_INIT(events);
     plugplay_rpc_handle handle = NULL;
     DWORD code = 0;
@@ -2089,17 +2084,17 @@ static DWORD WINAPI device_notify_proc( void *arg )
 
         /* Make a copy to avoid a hang if a callback tries to register or unregister for notifications. */
         EnterCriticalSection( &service_cs );
-        LIST_FOR_EACH_ENTRY(registration, &device_notify_list, struct device_notify_registration, entry)
+        LIST_FOR_EACH_ENTRY( notify, &device_notify_list, struct device_notify, entry )
         {
-            if (!notification_filter_matches( &registration->details.filter.header, (DEV_BROADCAST_HDR *)buf )) continue;
-            if (!(event = device_notify_copy( registration ))) break;
+            if (!notification_filter_matches( notify->header, (DEV_BROADCAST_HDR *)buf )) continue;
+            if (!(event = device_notify_copy( notify, (DEV_BROADCAST_HDR *)buf ))) break;
             list_add_tail( &events, &event->entry );
         }
         LeaveCriticalSection(&service_cs);
 
-        LIST_FOR_EACH_ENTRY_SAFE( event, next, &events, struct device_notify_registration, entry )
+        LIST_FOR_EACH_ENTRY_SAFE( event, next, &events, struct device_notify, entry )
         {
-            event->details.callback( event->details.handle, code, (DEV_BROADCAST_HDR *)buf );
+            event->callback( event->handle, code, event->header );
             list_remove( &event->entry );
             free( event );
         }
@@ -2124,29 +2119,28 @@ static DWORD WINAPI device_notify_proc( void *arg )
  */
 HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( HANDLE handle, DEV_BROADCAST_HDR *filter, device_notify_callback callback )
 {
-    struct device_notify_registration *registration;
+    struct device_notify *notify;
 
     TRACE( "handle %p, filter %p, callback %p\n", handle, filter, callback );
 
-    if (!(registration = malloc( sizeof(struct device_notify_registration) )))
+    if (!(notify = calloc( 1, sizeof(*notify) + filter->dbch_size )))
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return NULL;
     }
-
-    registration->details.handle = handle;
-    registration->details.callback = callback;
-    memcpy( &registration->details.filter, filter, filter->dbch_size );
+    notify->handle = handle;
+    notify->callback = callback;
+    memcpy( notify->header, filter, filter->dbch_size );
 
     EnterCriticalSection( &service_cs );
-    list_add_tail( &device_notify_list, &registration->entry );
+    list_add_tail( &device_notify_list, &notify->entry );
 
     if (!device_notify_thread)
         device_notify_thread = CreateThread( NULL, 0, device_notify_proc, NULL, 0, NULL );
 
     LeaveCriticalSection( &service_cs );
 
-    return registration;
+    return notify;
 }
 
 /******************************************************************************
@@ -2154,7 +2148,7 @@ HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( HANDLE handle, DEV_BROADCAST_H
  */
 BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle )
 {
-    struct device_notify_registration *registration = handle;
+    struct device_notify *notify = handle;
 
     TRACE("%p\n", handle);
 
@@ -2162,8 +2156,8 @@ BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle )
         return FALSE;
 
     EnterCriticalSection( &service_cs );
-    list_remove( &registration->entry );
+    list_remove( &notify->entry );
     LeaveCriticalSection(&service_cs);
-    free( registration );
+    free( notify );
     return TRUE;
 }
