@@ -1,7 +1,7 @@
 /*
- * Runtime Classes for wintypes.dll
+ * Runtime Classes for iertutil.dll
  *
- * Copyright 2022 Zhiyi Zhang for CodeWeavers
+ * Copyright 2024 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,4 @@
 #endif
 
 #define DO_NO_IMPORTS
-#define _WINTYPES
 #include "windows.foundation.idl"
-#include "windows.foundation.metadata.idl"

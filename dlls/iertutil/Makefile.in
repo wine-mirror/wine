@@ -1,0 +1,6 @@
+MODULE = iertutil.dll
+IMPORTS = combase
+
+SOURCES = \
+	classes.idl \
+	main.c
