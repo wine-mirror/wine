@@ -27,6 +27,8 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winternl.h>
+#include <initguid.h>
+#include <devpkey.h>
 #include <winioctl.h>
 #include <ddk/wdm.h>
 
@@ -58,6 +60,7 @@ static NTSTATUS WINAPI fdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
         case IRP_MN_REMOVE_DEVICE:
         {
             NTSTATUS ret;
+            winebluetooth_shutdown();
             IoSkipCurrentIrpStackLocation( irp );
             ret = IoCallDriver( bus_pdo, irp );
             IoDetachDevice( bus_pdo );
@@ -137,13 +140,17 @@ static void WINAPI driver_unload( DRIVER_OBJECT *driver ) {}
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
+    NTSTATUS status;
     TRACE( "(%p, %s)\n", driver, debugstr_w( path->Buffer ) );
 
-    driver->DriverExtension->AddDevice = driver_add_device;
+    status = winebluetooth_init();
+    if (status != STATUS_SUCCESS)
+        return status;
+
     driver_obj = driver;
 
-    driver->MajorFunction[IRP_MJ_PNP] = bluetooth_pnp;
+    driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
-
+    driver->MajorFunction[IRP_MJ_PNP] = bluetooth_pnp;
     return STATUS_SUCCESS;
 }

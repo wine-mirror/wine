@@ -21,6 +21,10 @@
 #ifndef __WINE_WINEBTH_WINEBTH_H_
 #define __WINE_WINEBTH_WINEBTH_H_
 
+#include <ddk/wdm.h>
+
+#include <wine/debug.h>
+
 #ifdef __ASM_USE_FASTCALL_WRAPPER
 extern void * WINAPI wrap_fastcall_func1(void *func, const void *a);
 __ASM_STDCALL_FUNC(wrap_fastcall_func1, 8,
@@ -32,6 +36,11 @@ __ASM_STDCALL_FUNC(wrap_fastcall_func1, 8,
 #else
 #define call_fastcall_func1(func,a) func(a)
 #endif
+struct string_buffer
+{
+    WCHAR *string;
+    size_t len;
+};
 
 #define XX(i) case (i): return #i
 
@@ -70,5 +79,7 @@ static inline const char *debugstr_minor_function_code( UCHAR code )
 }
 #undef XX
 
+NTSTATUS winebluetooth_init( void );
+NTSTATUS winebluetooth_shutdown( void );
 
 #endif /* __WINE_WINEBTH_WINEBTH_H_ */
