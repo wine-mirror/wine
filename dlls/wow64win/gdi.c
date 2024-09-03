@@ -725,6 +725,25 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateKeyedMutex2( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDICreateSynchronizationObject( UINT *args )
+{
+    D3DKMT_CREATESYNCHRONIZATIONOBJECT *desc = get_ptr( &args );
+    return NtGdiDdDDICreateSynchronizationObject( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDICreateSynchronizationObject2( UINT *args )
+{
+    D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *desc = get_ptr( &args );
+
+    if (desc->Info.Type == D3DDDI_CPU_NOTIFICATION)
+    {
+        ULONG event = HandleToUlong( desc->Info.CPUNotification.Event );
+        desc->Info.CPUNotification.Event = UlongToHandle( event );
+    }
+
+    return NtGdiDdDDICreateSynchronizationObject2( desc );
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyAllocation( UINT *args )
 {
     struct
@@ -790,6 +809,12 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyKeyedMutex( UINT *args )
 {
     D3DKMT_DESTROYKEYEDMUTEX *desc = get_ptr( &args );
     return NtGdiDdDDIDestroyKeyedMutex( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIDestroySynchronizationObject( UINT *args )
+{
+    D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *desc = get_ptr( &args );
+    return NtGdiDdDDIDestroySynchronizationObject( desc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiDdDDIEnumAdapters( UINT *args )
@@ -1128,6 +1153,81 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResourceFromNtHandle( UINT *args )
     for (i = 0; desc32->pOpenAllocationInfo2 && i < desc32->NumAllocations; i++)
         allocs32->GpuVirtualAddress = desc.pOpenAllocationInfo2[i].GpuVirtualAddress;
     return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenSyncObjectFromNtHandle( UINT *args )
+{
+    struct
+    {
+        ULONG hNtHandle;
+        D3DKMT_HANDLE hSyncObject;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENSYNCOBJECTFROMNTHANDLE desc;
+    NTSTATUS status;
+
+    desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
+    status = NtGdiDdDDIOpenSyncObjectFromNtHandle( &desc );
+    desc32->hSyncObject = desc.hSyncObject;
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenSyncObjectFromNtHandle2( UINT *args )
+{
+    struct
+    {
+        ULONG hNtHandle;
+        D3DKMT_HANDLE hDevice;
+        D3DDDI_SYNCHRONIZATIONOBJECT_FLAGS Flags;
+        D3DKMT_HANDLE hSyncObject;
+        union
+        {
+            struct
+            {
+                ULONG FenceValueCPUVirtualAddress;
+                D3DGPU_VIRTUAL_ADDRESS FenceValueGPUVirtualAddress;
+                UINT EngineAffinity;
+            } MonitoredFence;
+            UINT64 Reserved[8];
+        };
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 desc;
+    NTSTATUS status;
+
+    desc.hNtHandle = ULongToHandle( desc32->hNtHandle );
+    desc.hDevice = desc32->hDevice;
+    desc.Flags = desc32->Flags;
+    desc.MonitoredFence.EngineAffinity = desc32->MonitoredFence.EngineAffinity;
+
+    status = NtGdiDdDDIOpenSyncObjectFromNtHandle2( &desc );
+    desc32->MonitoredFence.FenceValueCPUVirtualAddress = PtrToUlong( desc.MonitoredFence.FenceValueCPUVirtualAddress );
+    desc32->MonitoredFence.FenceValueGPUVirtualAddress = desc.MonitoredFence.FenceValueGPUVirtualAddress;
+    desc32->hSyncObject = desc.hSyncObject;
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenSyncObjectNtHandleFromName( UINT *args )
+{
+    struct
+    {
+        DWORD dwDesiredAccess;
+        ULONG pObjAttrib;
+        ULONG hNtHandle;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME desc;
+    struct object_attr64 attr;
+    NTSTATUS status;
+
+    desc.dwDesiredAccess = desc32->dwDesiredAccess;
+    desc.pObjAttrib = objattr_32to64( &attr, UlongToPtr( desc32->pObjAttrib ) );
+    status = NtGdiDdDDIOpenSyncObjectNtHandleFromName( &desc );
+    desc32->hNtHandle = HandleToUlong( desc.hNtHandle );
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenSynchronizationObject( UINT *args )
+{
+    D3DKMT_OPENSYNCHRONIZATIONOBJECT *desc = get_ptr( &args );
+    return NtGdiDdDDIOpenSynchronizationObject( desc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiDdDDIQueryAdapterInfo( UINT *args )

@@ -746,3 +746,67 @@ NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMN
     FIXME( "params %p stub!\n", params );
     return STATUS_NOT_IMPLEMENTED;
 }
+
+
+/******************************************************************************
+ *           NtGdiDdDDICreateSynchronizationObject2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDICreateSynchronizationObject    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject( D3DKMT_CREATESYNCHRONIZATIONOBJECT *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenSyncObjectFromNtHandle2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle2( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenSyncObjectFromNtHandle    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenSyncObjectNtHandleFromName    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectNtHandleFromName( D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenSynchronizationObject    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenSynchronizationObject( D3DKMT_OPENSYNCHRONIZATIONOBJECT *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIDestroySynchronizationObject    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}

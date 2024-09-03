@@ -205,7 +205,8 @@
 @ stub NtGdiDdDDICreatePagingQueue
 @ stub NtGdiDdDDICreateProtectedSession
 @ stub NtGdiDdDDICreateSwapChain
-@ stub NtGdiDdDDICreateSynchronizationObject
+@ stdcall -syscall NtGdiDdDDICreateSynchronizationObject(ptr)
+@ stdcall -syscall NtGdiDdDDICreateSynchronizationObject2(ptr)
 @ stub NtGdiDdDDIDDisplayEnum
 @ stdcall -syscall NtGdiDdDDIDestroyAllocation(ptr)
 @ stdcall -syscall NtGdiDdDDIDestroyAllocation2(ptr)
@@ -219,7 +220,7 @@
 @ stub NtGdiDdDDIDestroyOverlay
 @ stub NtGdiDdDDIDestroyPagingQueue
 @ stub NtGdiDdDDIDestroyProtectedSession
-@ stub NtGdiDdDDIDestroySynchronizationObject
+@ stdcall -syscall NtGdiDdDDIDestroySynchronizationObject(ptr)
 @ stub NtGdiDdDDIDispMgrCreate
 @ stub NtGdiDdDDIDispMgrSourceOperation
 @ stub NtGdiDdDDIDispMgrTargetOperation
@@ -282,10 +283,10 @@
 @ stdcall -syscall NtGdiDdDDIOpenResource2(ptr)
 @ stdcall -syscall NtGdiDdDDIOpenResourceFromNtHandle(ptr)
 @ stub NtGdiDdDDIOpenSwapChain
-@ stub NtGdiDdDDIOpenSyncObjectFromNtHandle
-@ stub NtGdiDdDDIOpenSyncObjectFromNtHandle2
-@ stub NtGdiDdDDIOpenSyncObjectNtHandleFromName
-@ stub NtGdiDdDDIOpenSynchronizationObject
+@ stdcall -syscall NtGdiDdDDIOpenSyncObjectFromNtHandle(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenSyncObjectFromNtHandle2(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenSyncObjectNtHandleFromName(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenSynchronizationObject(ptr)
 @ stub NtGdiDdDDIOutputDuplGetFrameInfo
 @ stub NtGdiDdDDIOutputDuplGetMetaData
 @ stub NtGdiDdDDIOutputDuplGetPointerShapeData
