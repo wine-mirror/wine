@@ -2248,6 +2248,46 @@ static void test_KiUserCallbackDispatcher(void)
     VirtualProtect( pKiUserCallbackDispatcher, sizeof(saved_code), old_protect, &old_protect );
 }
 
+static void test_instrumentation_callback(void)
+{
+    static const BYTE instrumentation_callback[] =
+    {
+        0xff, 0x05, /* inc instrumentation_call_count */
+                /* &instrumentation_call_count, offset 2 */ 0x00, 0x00, 0x00, 0x00,
+        0xff, 0xe1, /* jmp *ecx */
+    };
+
+    unsigned int instrumentation_call_count;
+    NTSTATUS status;
+
+    PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION info;
+
+    memcpy( code_mem, instrumentation_callback, sizeof(instrumentation_callback) );
+    *(volatile void **)((char *)code_mem + 2) = &instrumentation_call_count;
+
+    memset(&info, 0, sizeof(info));
+    /* On 32 bit the structure is never used and just a callback pointer is expected. */
+    info.Version = (ULONG_PTR)code_mem;
+    instrumentation_call_count = 0;
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, &info, sizeof(info) );
+    ok( status == STATUS_SUCCESS || status == STATUS_INFO_LENGTH_MISMATCH || status == STATUS_NOT_SUPPORTED
+            || broken( status == STATUS_PRIVILEGE_NOT_HELD ) /* some versions and machines before Win10 */,
+            "got %#lx.\n", status );
+    if (status)
+    {
+        win_skip( "Failed setting instrumenation callback.\n" );
+        return;
+    }
+    DestroyWindow( CreateWindowA( "Static", "test", 0, 0, 0, 0, 0, 0, 0, 0, 0 ));
+    todo_wine ok( instrumentation_call_count, "got %u.\n", instrumentation_call_count );
+
+    memset(&info, 0, sizeof(info));
+    instrumentation_call_count = 0;
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, &info, sizeof(info) );
+    ok( status == STATUS_SUCCESS, "got %#lx.\n", status );
+    ok( !instrumentation_call_count, "got %u.\n", instrumentation_call_count );
+}
+
 #elif defined(__x86_64__)
 
 static LONG consolidate_dummy_called;
@@ -5264,6 +5304,7 @@ static void test_syscall_clobbered_regs(void)
     struct regs
     {
         UINT64 rcx;
+        UINT64 r10;
         UINT64 r11;
         UINT32 eflags;
     };
@@ -5281,16 +5322,19 @@ static void test_syscall_clobbered_regs(void)
         0x41, 0x50,                 /* push %r8 */
         0x53, 0x55, 0x57, 0x56, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57,
                                     /* push %rbx, %rbp, %rdi, %rsi, %r12, %r13, %r14, %r15 */
+        0x49, 0xba, 0xef, 0xbe, 0xad, 0xde, 0x00, 0x00, 0x00, 0x00,
+                                    /* movabs $0xdeadbeef,%r10 */
         0x41, 0xff, 0xd1,           /* callq *r9 */
         0x41, 0x5f, 0x41, 0x5e, 0x41, 0x5d, 0x41, 0x5c, 0x5e, 0x5f, 0x5d, 0x5b,
                                     /* pop %r15, %r14, %r13, %r12, %rsi, %rdi, %rbp, %rbx */
         0x41, 0x58,                 /* pop %r8 */
         0x49, 0x89, 0x48, 0x00,     /* mov %rcx,(%r8) */
-        0x4d, 0x89, 0x58, 0x08,     /* mov %r11,0x8(%r8) */
+        0x4d, 0x89, 0x50, 0x08,     /* mov %r10,0x8(%r8) */
+        0x4d, 0x89, 0x58, 0x10,     /* mov %r11,0x10(%r8) */
         0x9c,                       /* pushfq */
         0x59,                       /* pop %rcx */
         0xfc,                       /* cld */
-        0x41, 0x89, 0x48, 0x10,     /* mov %ecx,0x10(%r8) */
+        0x41, 0x89, 0x48, 0x18,     /* mov %ecx,0x18(%r8) */
         0x5c,                       /* pop %rsp */
         0xc3,                       /* ret */
     };
@@ -5311,6 +5355,7 @@ static void test_syscall_clobbered_regs(void)
     status = func((HANDLE)0xdeadbeef, NULL, &regs, pNtCancelTimer);
     ok(status == STATUS_INVALID_HANDLE, "Got unexpected status %#lx.\n", status);
     ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
+    ok(regs.r10 != regs.rcx, "got %#I64x.\n", regs.r10);
 
     /* After the syscall instruction rcx contains the address of the instruction next after syscall. */
     ok((BYTE *)regs.rcx > (BYTE *)pNtCancelTimer && (BYTE *)regs.rcx < (BYTE *)pNtCancelTimer + 0x20,
@@ -5321,6 +5366,7 @@ static void test_syscall_clobbered_regs(void)
     ok((BYTE *)regs.rcx > (BYTE *)pNtCancelTimer && (BYTE *)regs.rcx < (BYTE *)pNtCancelTimer + 0x20,
             "Got unexpected rcx %s, pNtCancelTimer %p.\n", wine_dbgstr_longlong(regs.rcx), pNtCancelTimer);
     ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
+    ok(regs.r10 != regs.rcx, "got %#I64x.\n", regs.r10);
 
     context.ContextFlags = CONTEXT_CONTROL;
     status = func(GetCurrentThread(), &context, &regs, pNtGetContextThread);
@@ -5328,12 +5374,14 @@ static void test_syscall_clobbered_regs(void)
     ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
             "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
     ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
+    ok(regs.r10 != regs.rcx, "got %#I64x.\n", regs.r10);
 
     status = func(GetCurrentThread(), &context, &regs, pNtSetContextThread);
     ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
     ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
             "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
     ok((regs.r11 | 0x2) == regs.eflags, "Expected r11 (%#I64x) | 0x2 to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
+    ok(regs.r10 != regs.rcx, "got %#I64x.\n", regs.r10);
 
     context.ContextFlags = CONTEXT_INTEGER;
     status = func(GetCurrentThread(), &context, &regs, pNtGetContextThread);
@@ -5341,13 +5389,14 @@ static void test_syscall_clobbered_regs(void)
     ok((BYTE *)regs.rcx > (BYTE *)pNtGetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtGetContextThread + 0x20,
             "Got unexpected rcx %s, pNtGetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtGetContextThread);
     ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
+    ok(regs.r10 != regs.rcx, "got %#I64x.\n", regs.r10);
 
     status = func(GetCurrentThread(), &context, &regs, pNtSetContextThread);
     ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
     ok((BYTE *)regs.rcx > (BYTE *)pNtSetContextThread && (BYTE *)regs.rcx < (BYTE *)pNtSetContextThread + 0x20,
             "Got unexpected rcx %s, pNtSetContextThread %p.\n", wine_dbgstr_longlong(regs.rcx), pNtSetContextThread);
     ok(regs.r11 == regs.eflags, "Expected r11 (%#I64x) to equal EFLAGS (%#x).\n", regs.r11, regs.eflags);
-
+    ok(regs.r10 != regs.rcx, "got %#I64x.\n", regs.r10);
 }
 
 static CONTEXT test_raiseexception_regs_context;
@@ -5447,6 +5496,232 @@ static void test_raiseexception_regs(void)
     ok(test_raiseexception_regs_context.R15 == expected, "got %#I64x.\n", test_raiseexception_regs_context.R15);
 
     RemoveVectoredExceptionHandler(vectored_handler);
+}
+
+static LONG CALLBACK test_instrumentation_callback_handler( EXCEPTION_POINTERS *exception_info )
+{
+    EXCEPTION_RECORD *rec = exception_info->ExceptionRecord;
+    CONTEXT *c = exception_info->ContextRecord;
+
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) ++c->Rip;
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static HANDLE instrumentation_callback_thread_ready, instrumentation_callback_thread_wait;
+
+static DWORD WINAPI test_instrumentation_callback_thread( void *arg )
+{
+    SetEvent( instrumentation_callback_thread_ready );
+    NtWaitForSingleObject( instrumentation_callback_thread_wait, FALSE, NULL );
+
+    SetEvent( instrumentation_callback_thread_ready );
+    NtWaitForSingleObject( instrumentation_callback_thread_wait, FALSE, NULL );
+    return 0;
+}
+
+struct instrumentation_callback_data
+{
+    unsigned int call_count;
+    struct
+    {
+        char *r10;
+        char *rcx;
+    }
+    call_data[256];
+};
+
+static void init_instrumentation_data(struct instrumentation_callback_data *d)
+{
+    memset( d, 0xcc, sizeof(*d) );
+    d->call_count = 0;
+}
+
+static void test_instrumentation_callback(void)
+{
+    static const BYTE instrumentation_callback[] =
+    {
+        0x50, 0x52,                         /* push %rax, %rdx */
+
+        0x48, 0xba,                         /* movabs instrumentation_call_count, %rdx */
+                /* &instrumentation_call_count, offset 4 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xb8, 0x01, 0x00, 0x00, 0x00,       /* mov $0x1,%eax */
+        0xf0, 0x0f, 0xc1, 0x02,             /* lock xadd %eax,(%rdx) */
+        0x0f, 0xb6, 0xc0,                   /* movzx %al,%eax */
+        0x48, 0xba,                         /* movabs instrumentation_call_data, %rdx */
+                /* instrumentation_call_data, offset 26 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x48, 0x01, 0xc0,                   /* add %rax,%rax */
+        0x48, 0x8d, 0x14, 0xc2,             /* lea (%rdx,%rax,8),%rdx */
+        0x4c, 0x89, 0x12,                   /* mov %r10,(%rdx) */
+        0x48, 0x89, 0x4a, 0x08,             /* mov %rcx,0x8(%rdx) */
+
+        0x5a, 0x58,                         /* pop %rdx, %rax */
+        0x41, 0xff, 0xe2,                   /* jmp *r10 */
+    };
+
+    struct instrumentation_callback_data curr_data, data;
+    PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION info;
+    HMODULE ntdll = GetModuleHandleA( "ntdll.dll" );
+    void *pLdrInitializeThunk;
+    EXCEPTION_RECORD record;
+    void *vectored_handler;
+    unsigned int i, count;
+    NTSTATUS status;
+    HANDLE thread;
+    CONTEXT ctx;
+    HWND hwnd;
+    LONG pass;
+
+    if (is_arm64ec) return;
+
+    memcpy( code_mem, instrumentation_callback, sizeof(instrumentation_callback) );
+    *(void **)((char *)code_mem + 4) = &curr_data.call_count;
+    *(void **)((char *)code_mem + 26) = curr_data.call_data;
+
+    memset(&info, 0, sizeof(info));
+    info.Callback = code_mem;
+    init_instrumentation_data( &curr_data );
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, &info, sizeof(info) );
+    data = curr_data;
+    ok( status == STATUS_SUCCESS || status == STATUS_INFO_LENGTH_MISMATCH
+            || broken( status == STATUS_PRIVILEGE_NOT_HELD ) /* some versions and machines before Win10 */,
+            "got %#lx.\n", status );
+    /* If instrumentation callback is not yet set during syscall entry it won't be called on exit. */
+    ok( !data.call_count, "got %u.\n", data.call_count );
+    if (status)
+    {
+        win_skip( "Failed setting instrumenation callback.\n" );
+        return;
+    }
+
+    init_instrumentation_data( &curr_data );
+    memset( &info, 0xcc, sizeof(info) );
+    status = NtQueryInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, &info, sizeof(info), NULL );
+    data = curr_data;
+    ok( status == STATUS_INVALID_INFO_CLASS, "got %#lx.\n", status );
+    todo_wine ok( data.call_count == 1, "got %u.\n", data.call_count );
+    todo_wine ok( data.call_data[0].r10 >= (char *)NtQueryInformationProcess
+        && data.call_data[0].r10 < (char *)NtQueryInformationProcess + 0x20,
+        "got %p, NtQueryInformationProcess %p.\n", data.call_data[0].r10, NtQueryInformationProcess );
+    todo_wine ok( data.call_data[0].rcx != data.call_data[0].r10, "got %p.\n", data.call_data[0].rcx );
+
+    memset(&info, 0, sizeof(info));
+    info.Callback = code_mem;
+    init_instrumentation_data( &curr_data );
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, &info, sizeof(info) );
+    data = curr_data;
+    ok( status == STATUS_SUCCESS, "got %#lx.\n", status );
+    todo_wine ok( data.call_count == 1, "got %u.\n", data.call_count );
+
+    vectored_handler = AddVectoredExceptionHandler( TRUE, test_instrumentation_callback_handler );
+    ok( !!vectored_handler, "failed.\n" );
+    init_instrumentation_data( &curr_data );
+    DbgBreakPoint();
+    data = curr_data;
+    todo_wine ok( data.call_count == 1 || broken( data.call_count == 2 ) /* before Win10 1809 */, "got %u.\n", data.call_count );
+    todo_wine ok( data.call_data[0].r10 == pKiUserExceptionDispatcher, "got %p, expected %p.\n", data.call_data[0].r10,
+        pKiUserExceptionDispatcher );
+
+    pass = 0;
+    InterlockedIncrement( &pass );
+    pRtlCaptureContext( &ctx );
+    if (InterlockedIncrement( &pass ) == 2) /* interlocked to prevent compiler from moving before capture */
+    {
+        record.ExceptionCode = 0xceadbeef;
+        record.NumberParameters = 0;
+        init_instrumentation_data( &curr_data );
+        status = pNtRaiseException( &record, &ctx, TRUE );
+        ok( 0, "Shouldn't be reached.\n" );
+    }
+    else if (pass == 3)
+    {
+        data = curr_data;
+        todo_wine ok( data.call_count == 1 || broken( data.call_count == 2 ) /* before Win10 1809 */, "got %u.\n", data.call_count );
+        todo_wine ok( data.call_data[0].r10 == pKiUserExceptionDispatcher, "got %p, expected %p.\n", data.call_data[0].r10,
+            pKiUserExceptionDispatcher );
+        init_instrumentation_data( &curr_data );
+        NtContinue( &ctx, FALSE );
+        ok( 0, "Shouldn't be reached.\n" );
+    }
+    else if (pass == 4)
+    {
+        data = curr_data;
+        /* Not called for NtContinue. */
+        ok( !data.call_count, "got %u.\n", data.call_count );
+        init_instrumentation_data( &curr_data );
+        NtSetContextThread( GetCurrentThread(), &ctx );
+        ok( 0, "Shouldn't be reached.\n" );
+    }
+    else if (pass == 5)
+    {
+        data = curr_data;
+        todo_wine ok( data.call_count == 1, "got %u.\n", data.call_count );
+        todo_wine ok( data.call_data[0].r10 == (void *)ctx.Rip, "got %p, expected %p.\n", data.call_data[0].r10, (void *)ctx.Rip );
+        init_instrumentation_data( &curr_data );
+    }
+    ok( pass == 5, "got %ld.\n", pass );
+    RemoveVectoredExceptionHandler( vectored_handler );
+
+    status = pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
+    ok( !status, "got %#lx.\n", status );
+    init_instrumentation_data( &curr_data );
+    apc_called = FALSE;
+    SleepEx( 0, TRUE );
+    data = curr_data;
+    ok( apc_called, "APC was not called.\n" );
+    todo_wine ok( data.call_count == 1, "got %u.\n", data.call_count );
+    todo_wine ok( data.call_data[0].r10 == pKiUserApcDispatcher, "got %p, expected %p.\n", data.call_data[0].r10, pKiUserApcDispatcher );
+
+    instrumentation_callback_thread_ready = CreateEventW( NULL, FALSE, FALSE, NULL );
+    instrumentation_callback_thread_wait = CreateEventW( NULL, FALSE, FALSE, NULL );
+    init_instrumentation_data( &curr_data );
+    thread = CreateThread( NULL, 0, test_instrumentation_callback_thread, 0, 0, NULL );
+    NtWaitForSingleObject( instrumentation_callback_thread_ready, FALSE, NULL );
+    data = curr_data;
+    todo_wine ok( data.call_count && data.call_count <= 256, "got %u.\n", data.call_count );
+    pLdrInitializeThunk = GetProcAddress( ntdll, "LdrInitializeThunk" );
+    for (i = 0; i < data.call_count; ++i)
+    {
+        if (data.call_data[i].r10 == pLdrInitializeThunk) break;
+    }
+    todo_wine ok( i < data.call_count, "LdrInitializeThunk not found.\n" );
+
+    init_instrumentation_data( &curr_data );
+    SetEvent( instrumentation_callback_thread_wait );
+    NtWaitForSingleObject( instrumentation_callback_thread_ready, FALSE, NULL );
+    data = curr_data;
+    todo_wine ok( data.call_count && data.call_count <= 256, "got %u.\n", data.call_count );
+    count = 0;
+    for (i = 0; i < data.call_count; ++i)
+    {
+        if (data.call_data[i].r10 >= (char *)NtWaitForSingleObject && data.call_data[i].r10 < (char *)NtWaitForSingleObject + 0x20)
+            ++count;
+    }
+    todo_wine ok( count == 2, "got %u.\n", count );
+
+    SetEvent( instrumentation_callback_thread_wait );
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
+    CloseHandle( instrumentation_callback_thread_ready );
+    CloseHandle( instrumentation_callback_thread_wait );
+
+    hwnd = CreateWindowA( "Static", "test", 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+    init_instrumentation_data( &curr_data );
+    DestroyWindow( hwnd );
+    data = curr_data;
+    todo_wine ok( data.call_count && data.call_count <= 256, "got %u.\n", data.call_count );
+    for (i = 0; i < data.call_count; ++i)
+    {
+        if (data.call_data[i].r10 == pKiUserCallbackDispatcher)
+            break;
+    }
+    todo_wine ok( i < data.call_count, "KiUserCallbackDispatcher not found.\n" );
+
+    init_instrumentation_data( &curr_data );
+    memset(&info, 0, sizeof(info));
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, &info, sizeof(info) );
+    data = curr_data;
+    ok( !status, "got %#lx.\n", status );
+    ok( !data.call_count, "got %u.\n", data.call_count );
 }
 
 #elif defined(__arm__)
@@ -11563,6 +11838,7 @@ START_TEST(exception)
     test_copy_context();
     test_set_live_context();
     test_hwbpt_in_syscall();
+    test_instrumentation_callback();
 
 #elif defined(__x86_64__)
 
@@ -11593,6 +11869,7 @@ START_TEST(exception)
     test_syscall_clobbered_regs();
     test_raiseexception_regs();
     test_hwbpt_in_syscall();
+    test_instrumentation_callback();
 
 #elif defined(__aarch64__)
 
