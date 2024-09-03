@@ -600,3 +600,13 @@ void free_vulkan_gpu( struct vulkan_gpu *gpu )
     free( gpu->name );
     free( gpu );
 }
+
+/******************************************************************************
+ *           NtGdiDdDDIShareObjects    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr,
+                                        UINT access, HANDLE *handle )
+{
+    FIXME( "count %u, handles %p, attr %p, access %#x, handle %p stub!\n", count, handles, attr, access, handle );
+    return STATUS_NOT_IMPLEMENTED;
+}

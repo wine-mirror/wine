@@ -291,6 +291,11 @@ NTSTATUS SYSCALL_API NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEO
     SYSCALL_FUNC( NtGdiDdDDISetVidPnSourceOwner );
 }
 
+NTSTATUS SYSCALL_API NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr, UINT access, HANDLE *handle )
+{
+    SYSCALL_FUNC( NtGdiDdDDIShareObjects );
+}
+
 BOOL SYSCALL_API NtGdiDeleteClientObj( HGDIOBJ handle )
 {
     SYSCALL_FUNC( NtGdiDeleteClientObj );

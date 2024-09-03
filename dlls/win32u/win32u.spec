@@ -337,7 +337,7 @@
 @ stub NtGdiDdDDISetVidPnSourceHwProtection
 @ stdcall -syscall NtGdiDdDDISetVidPnSourceOwner(ptr)
 @ stub NtGdiDdDDISetYieldPercentage
-@ stub NtGdiDdDDIShareObjects
+@ stdcall -syscall NtGdiDdDDIShareObjects(long ptr ptr long ptr)
 @ stub NtGdiDdDDISharedPrimaryLockNotification
 @ stub NtGdiDdDDISharedPrimaryUnLockNotification
 @ stub NtGdiDdDDISignalSynchronizationObject

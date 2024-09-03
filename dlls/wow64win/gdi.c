@@ -702,6 +702,24 @@ NTSTATUS WINAPI wow64_NtGdiDdDDISetVidPnSourceOwner( UINT *args )
     return NtGdiDdDDISetVidPnSourceOwner( &desc );
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDIShareObjects( UINT *args )
+{
+    UINT count = get_ulong( &args );
+    D3DKMT_HANDLE *handles = get_ptr( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    UINT access = get_ulong( &args );
+    ULONG *handle_ptr = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtGdiDdDDIShareObjects( count, handles, objattr_32to64( &attr, attr32 ), access, &handle );
+    *handle_ptr = HandleToULong( handle );
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtGdiDeleteClientObj( UINT *args )
 {
     HGDIOBJ obj = get_handle( &args );
