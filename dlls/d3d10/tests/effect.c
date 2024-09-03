@@ -19,6 +19,7 @@
 
 #define COBJMACROS
 #include "d3d10.h"
+#include "d3dcompiler.h"
 #include "wine/test.h"
 
 #include <float.h>
@@ -9794,25 +9795,16 @@ static void test_effect_value_expression(void)
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
-#if 0
-technique10 tech0
-{
-    pass pass0 {}
-};
-#endif
-static DWORD fx_test_fx_4_1[] =
-{
-    0x43425844, 0x228fcf4d, 0x9396b2f5, 0xd817b31f, 0xab6dd460, 0x00000001, 0x000000a0, 0x00000001,
-    0x00000024, 0x30315846, 0x00000074, 0xfeff1011, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000001, 0x00000010, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x68636574,
-    0x61700030, 0x00307373, 0x00000004, 0x00000001, 0x00000000, 0x0000000a, 0x00000000, 0x00000000,
-};
-
 static void test_effect_fx_4_1(void)
 {
+    static const char source[] =
+        "technique10 tech0\n"
+        "{\n"
+        "   pass pass0 {}\n"
+        "};";
     ID3D10Effect *effect;
     ID3D10Device *device;
+    ID3D10Blob *blob;
     ULONG refcount;
     HRESULT hr;
 
@@ -9822,10 +9814,15 @@ static void test_effect_fx_4_1(void)
         return;
     }
 
-    hr = create_effect(fx_test_fx_4_1, 0, device, NULL, &effect);
+    hr = D3DCompile(source, sizeof(source), NULL, NULL, NULL, "main", "fx_4_1", 0, 0, &blob, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = create_effect(ID3D10Blob_GetBufferPointer(blob), 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
+
+    ID3D10Blob_Release(blob);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
