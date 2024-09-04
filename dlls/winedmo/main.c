@@ -126,16 +126,28 @@ NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type )
     return status;
 }
 
-NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_stream *stream, UINT64 *stream_size,
+NTSTATUS CDECL winedmo_demuxer_create( const WCHAR *url, struct winedmo_stream *stream, UINT64 *stream_size,
                                        WCHAR *mime_type, struct winedmo_demuxer *demuxer )
 {
     struct demuxer_create_params params = {0};
+    char *tmp = NULL;
     NTSTATUS status;
+    UINT len;
 
-    TRACE( "stream %p, stream_size %#I64x, mime_type %p, demuxer %p\n", stream, *stream_size, mime_type, demuxer );
+    TRACE( "url %s, stream %p, stream_size %#I64x, mime_type %p, demuxer %p\n", debugstr_w(url),
+           stream, *stream_size, mime_type, demuxer );
 
     if (!(params.context = stream_context_create( stream, stream_size ))) return STATUS_NO_MEMORY;
-    if ((status = UNIX_CALL( demuxer_create, &params )))
+
+    if (url && (len = WideCharToMultiByte( CP_ACP, 0, url, -1, NULL, 0, NULL, NULL )) && (tmp = malloc( len )))
+    {
+        WideCharToMultiByte( CP_ACP, 0, url, -1, tmp, len, NULL, NULL );
+        params.url = tmp;
+    }
+    status = UNIX_CALL( demuxer_create, &params );
+    free( tmp );
+
+    if (status)
     {
         WARN( "demuxer_create failed, status %#lx\n", status );
         stream_context_destroy( params.context );
@@ -144,8 +156,8 @@ NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_stream *stream, UINT64 *st
 
     MultiByteToWideChar( CP_ACP, 0, params.mime_type, -1, mime_type, 256 );
     *demuxer = params.demuxer;
-    TRACE( "created demuxer %#I64x, stream %p, stream_size %#I64x, mime_type %s\n", demuxer->handle,
-           stream, *stream_size, debugstr_a(params.mime_type) );
+    TRACE( "created demuxer %#I64x, url %s, stream %p, stream_size %#I64x, mime_type %s\n", demuxer->handle,
+           debugstr_w(url), stream, *stream_size, debugstr_a(params.mime_type) );
     return STATUS_SUCCESS;
 }
 

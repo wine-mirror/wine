@@ -62,10 +62,11 @@ NTSTATUS demuxer_check( void *arg )
 NTSTATUS demuxer_create( void *arg )
 {
     struct demuxer_create_params *params = arg;
+    const char *ext = params->url ? strrchr( params->url, '.' ) : "";
     AVFormatContext *ctx;
     int ret;
 
-    TRACE( "context %p\n", params->context );
+    TRACE( "context %p, url %s, mime %s\n", params->context, debugstr_a(params->url), debugstr_a(params->mime_type) );
 
     if (!(ctx = avformat_alloc_context())) return STATUS_NO_MEMORY;
     if (!(ctx->pb = avio_alloc_context( NULL, 0, 0, params->context, unix_read_callback, NULL, unix_seek_callback )))
@@ -88,10 +89,15 @@ NTSTATUS demuxer_create( void *arg )
     else if (strstr( ctx->iformat->name, "mpeg" )) strcpy( params->mime_type, "video/mpeg" );
     else if (strstr( ctx->iformat->name, "mp3" )) strcpy( params->mime_type, "audio/mp3" );
     else if (strstr( ctx->iformat->name, "wav" )) strcpy( params->mime_type, "audio/wav" );
-    else if (strstr( ctx->iformat->name, "asf" )) strcpy( params->mime_type, "video/x-ms-asf" );
+    else if (strstr( ctx->iformat->name, "asf" ))
+    {
+        if (!strcmp( ext, ".wma" )) strcpy( params->mime_type, "audio/x-ms-wma" );
+        else if (!strcmp( ext, ".wmv" )) strcpy( params->mime_type, "video/x-ms-wmv" );
+        else strcpy( params->mime_type, "video/x-ms-asf" );
+    }
     else
     {
-        FIXME( "Unknown MIME type for format %s\n", debugstr_a(ctx->iformat->name) );
+        FIXME( "Unknown MIME type for format %s, url %s\n", debugstr_a(ctx->iformat->name), debugstr_a(params->url) );
         strcpy( params->mime_type, "video/x-application" );
     }
 

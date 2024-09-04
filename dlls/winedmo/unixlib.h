@@ -70,6 +70,7 @@ struct demuxer_check_params
 
 struct demuxer_create_params
 {
+    const char *url;
     struct stream_context *context;
     struct winedmo_demuxer demuxer;
     char mime_type[256];

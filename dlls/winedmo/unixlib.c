@@ -144,6 +144,7 @@ static NTSTATUS wow64_demuxer_create( void *arg )
 {
     struct
     {
+        PTR32 url;
         PTR32 context;
         struct winedmo_demuxer demuxer;
         char mime_type[256];
@@ -151,6 +152,7 @@ static NTSTATUS wow64_demuxer_create( void *arg )
     struct demuxer_create_params params;
     NTSTATUS status;
 
+    params.url = UintToPtr( params32->url );
     params.context = UintToPtr( params32->context );
     if ((status = demuxer_create( &params ))) return status;
     params32->demuxer = params.demuxer;
