@@ -14548,22 +14548,16 @@ msgstr ""
 " heksadesimaaliluku (0x34) tai oktaaliluku (056).\n"
 
 #: programs/cmd/cmd.rc:407
-#, fuzzy
-#| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
-msgstr "Syntaksivirhe\n"
+msgstr "Syntaksivirhe: odottamaton %1\n"
 
 #: programs/cmd/cmd.rc:408
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of line"
-msgstr "Tiedoston loppu.\n"
+msgstr "Rivin loppu"
 
 #: programs/cmd/cmd.rc:409
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of file"
-msgstr "Tiedoston loppu.\n"
+msgstr "Tiedoston loppu"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -14747,11 +14741,8 @@ msgid ""
 msgstr "Haluatko varmasti lopettaa kaikki ohjelmat ja sulkea työpöydän?"
 
 #: programs/explorer/explorer.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Wine Desktop"
-msgstr "Työpöytä"
+msgstr "Winen Työpöytä"
 
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
@@ -19331,10 +19322,8 @@ msgid "Help topics: "
 msgstr "Ohjeen otsikot: "
 
 #: programs/wmic/wmic.rc:28
-#, fuzzy
-#| msgid "Error: Command line not supported\n"
 msgid "Error: Command not supported\n"
-msgstr "Virhe: Komentoriviä ei tueta\n"
+msgstr "Virhe: Komentoa ei tueta\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
@@ -19349,10 +19338,8 @@ msgid "Error: Invalid syntax for PATH\n"
 msgstr "Virhe: Virheellinen syntaksi komennolle PATH\n"
 
 #: programs/wmic/wmic.rc:32
-#, fuzzy
-#| msgid "Bad command.\n"
 msgid "Supply a command\n"
-msgstr "Komento ei kelpaa.\n"
+msgstr "Syötä komento\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
