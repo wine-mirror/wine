@@ -5620,7 +5620,8 @@ static void test_installprops(void)
     sprintf(buf, "%d", LOBYTE(LOWORD(GetVersion())) * 100 + HIBYTE(LOWORD(GetVersion())));
     check_prop(hpkg, "VersionNT", buf, 1, 1);
 
-    if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+    if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
+        si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
     {
         sprintf(buf, "%d", si.wProcessorLevel);
         check_prop(hpkg, "Intel", buf, 1, 0);

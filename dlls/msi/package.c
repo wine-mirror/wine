@@ -791,7 +791,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         PathAddBackslashW( pth );
         msi_set_property( package->db, L"CommonFilesFolder", pth, -1 );
     }
-    else if (sys_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+    else if (sys_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
+             sys_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
     {
         msi_set_property( package->db, L"MsiAMD64", bufstr, -1 );
         msi_set_property( package->db, L"Msix64", bufstr, -1 );
