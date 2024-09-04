@@ -595,6 +595,26 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
   return DP_OK;
 }
 
+HRESULT DP_HandleGameMessage( IDirectPlayImpl *This, void *messageBody, DWORD messageBodySize,
+                              DPID fromId, DPID toId )
+{
+  DPMSG_GENERIC *msg;
+  DWORD msgSize;
+  HRESULT hr;
+
+  TRACE( "(%p)->(%p,0x%08lx,0x%08lx,0x%08lx)\n", This, messageBody, messageBodySize, fromId, toId );
+
+  msg = (DPMSG_GENERIC *) ((char *) messageBody + sizeof( DPMSG_SYSMSGENVELOPE ));
+  msgSize = messageBodySize - sizeof( DPMSG_SYSMSGENVELOPE );
+
+  EnterCriticalSection( &This->lock );
+
+  hr = DP_QueueMessage( This, fromId, toId, 0, msg, DP_CopyGeneric, msgSize );
+
+  LeaveCriticalSection( &This->lock );
+
+  return hr;
+}
 
 static HRESULT WINAPI IDirectPlayImpl_QueryInterface( IDirectPlay *iface, REFIID riid, void **ppv )
 {

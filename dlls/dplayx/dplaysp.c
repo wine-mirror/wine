@@ -216,11 +216,18 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage( IDirectPlaySP *iface, voi
   WORD wVersion;
   DPSP_REPLYDATA data;
 
-  FIXME( "(%p)->(%p,0x%08lx,%p): mostly stub\n",
+  TRACE( "(%p)->(%p,0x%08lx,%p)\n",
          This, lpMessageBody, dwMessageBodySize, lpMessageHeader );
 
   if ( dwMessageBodySize < sizeof( DPMSG_SENDENVELOPE ) )
     return DPERR_GENERIC;
+
+  if ( lpMsg->dwMagic != DPMSGMAGIC_DPLAYMSG )
+  {
+    LPDPMSG_SYSMSGENVELOPE gameMsg = lpMessageBody;
+    return DP_HandleGameMessage( This->dplay, lpMessageBody, dwMessageBodySize,
+                                 gameMsg->dwPlayerFrom, gameMsg->dwPlayerTo );
+  }
 
   wCommandId = lpMsg->wCommandId;
   wVersion   = lpMsg->wVersion;

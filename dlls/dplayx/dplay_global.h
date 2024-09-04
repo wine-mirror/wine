@@ -213,6 +213,8 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
         DWORD  dwMessageBodySize, void *messageHeader, WORD wCommandId, WORD wVersion,
         void **lplpReply, DWORD *lpdwMsgSize );
 DPSESSIONDESC2 *DP_DuplicateSessionDesc( const DPSESSIONDESC2 *src, BOOL dstAnsi, BOOL srcAnsi );
+HRESULT DP_HandleGameMessage( IDirectPlayImpl *This, void *messageBody, DWORD messageBodySize,
+                              DPID fromId, DPID toId );
 HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPNAME *lpName,
                          void *data, DWORD dataSize, void *spData, DWORD spDataSize, DWORD dwFlags,
                          HANDLE hEvent, struct PlayerData **playerData, BOOL bAnsi );

@@ -8144,18 +8144,18 @@ static void test_Receive(void)
     sendGuaranteedGameMessage( sendSock, 2349, 0x1337, 0x14, data1, sizeof( data1 ) );
 
     waitResult = WaitForSingleObject( event0, 2000 );
-    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
     waitResult = WaitForSingleObject( event1, 2000 );
-    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
 
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
     msgDataSize = sizeof( data0 ) - 1;
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_ALL | DPRECEIVE_PEEK, msgData, &msgDataSize );
     todo_wine ok( hr == DPERR_BUFFERTOOSMALL, "got hr %#lx.\n", hr );
-    ok( fromId == 0xdeadbeef, "got source id %#lx.\n", fromId );
-    ok( toId == 0xdeadbeef, "got destination id %#lx.\n", toId );
-    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+    todo_wine ok( fromId == 0xdeadbeef, "got source id %#lx.\n", fromId );
+    todo_wine ok( toId == 0xdeadbeef, "got destination id %#lx.\n", toId );
+    ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
 
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
@@ -8171,11 +8171,11 @@ static void test_Receive(void)
     memset( msgData, 0xcc, sizeof( msgData ) );
     msgDataSize = sizeof( msgData );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_ALL | DPRECEIVE_PEEK, msgData, &msgDataSize );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
-    todo_wine ok( toId == 0x07734, "got destination id %#lx.\n", toId );
-    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
-    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
 
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
@@ -8193,22 +8193,22 @@ static void test_Receive(void)
     memset( msgData, 0xcc, sizeof( msgData ) );
     msgDataSize = sizeof( msgData );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
-    todo_wine ok( toId == 0x07734, "got destination id %#lx.\n", toId );
-    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
-    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
 
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
     memset( msgData, 0xcc, sizeof( msgData ) );
     msgDataSize = sizeof( msgData );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
-    todo_wine ok( toId == 0x14, "got destination id %#lx.\n", toId );
-    todo_wine ok( !memcmp( msgData, data1, sizeof( data1 ) ), "message data didn't match.\n" );
-    todo_wine ok( msgDataSize == sizeof( data1 ), "got message size %lu.\n", msgDataSize );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    ok( toId == 0x14, "got destination id %#lx.\n", toId );
+    ok( !memcmp( msgData, data1, sizeof( data1 ) ), "message data didn't match.\n" );
+    ok( msgDataSize == sizeof( data1 ), "got message size %lu.\n", msgDataSize );
 
     msgDataSize = sizeof( msgData );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
@@ -8217,7 +8217,7 @@ static void test_Receive(void)
     sendGuaranteedGameMessage( sendSock, 2349, 0x1337, 0x07734, data0, sizeof( data0 ) );
 
     waitResult = WaitForSingleObject( event0, 2000 );
-    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
 
     fromId = 0x14;
     toId = 0xdeadbeef;
@@ -8245,9 +8245,9 @@ static void test_Receive(void)
     sendGuaranteedGameMessage( sendSock, 2349, 0x1337, DPID_ALLPLAYERS, data0, sizeof( data0 ) );
 
     waitResult = WaitForSingleObject( event0, 2000 );
-    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
     waitResult = WaitForSingleObject( event1, 2000 );
-    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
 
     fromId = 0xdeadbeef;
     toId = 0x07734;
