@@ -1067,8 +1067,7 @@ static void test_compile_effect(void)
     hr = D3D10CompileEffectFromMemory(default_bs_source, strlen(default_bs_source),
             NULL, NULL, NULL, 0, 0, &blob, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ID3D10Blob_Release(blob);
+    ID3D10Blob_Release(blob);
 
     /* Compilation fails due to 10.1 feature incompatibility with fx_4_0 profile. */
     hr = D3D10CompileEffectFromMemory(bs_source2, strlen(bs_source2), NULL, NULL, NULL,
