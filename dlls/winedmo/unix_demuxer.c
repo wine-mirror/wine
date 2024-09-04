@@ -65,10 +65,10 @@ NTSTATUS demuxer_create( void *arg )
     AVFormatContext *ctx;
     int ret;
 
-    TRACE( "params %p\n", params );
+    TRACE( "context %p\n", params->context );
 
     if (!(ctx = avformat_alloc_context())) return STATUS_NO_MEMORY;
-    if (!(ctx->pb = avio_alloc_context( NULL, 0, 0, NULL, unix_read_callback, NULL, unix_seek_callback )))
+    if (!(ctx->pb = avio_alloc_context( NULL, 0, 0, params->context, unix_read_callback, NULL, unix_seek_callback )))
     {
         avformat_free_context( ctx );
         return STATUS_NO_MEMORY;
@@ -93,6 +93,7 @@ NTSTATUS demuxer_destroy( void *arg )
 
     TRACE( "context %p\n", ctx );
 
+    params->context = ctx->pb->opaque;
     avio_context_free( &ctx->pb );
     avformat_free_context( ctx );
 

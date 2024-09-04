@@ -37,6 +37,11 @@ struct process_attach_params
     UINT64 read_callback;
 };
 
+struct stream_context
+{
+    UINT64 placeholder;
+};
+
 struct seek_callback_params
 {
     struct dispatch_callback_params dispatch;
@@ -59,12 +64,14 @@ struct demuxer_check_params
 
 struct demuxer_create_params
 {
+    struct stream_context *context;
     struct winedmo_demuxer demuxer;
 };
 
 struct demuxer_destroy_params
 {
     struct winedmo_demuxer demuxer;
+    struct stream_context *context;
 };
 
 

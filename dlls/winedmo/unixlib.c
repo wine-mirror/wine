@@ -120,14 +120,50 @@ C_ASSERT(ARRAY_SIZE(__wine_unix_call_funcs) == unix_funcs_count);
 
 #ifdef _WIN64
 
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_demuxer_create( void *arg )
+{
+    struct
+    {
+        PTR32 context;
+        struct winedmo_demuxer demuxer;
+    } *params32 = arg;
+    struct demuxer_create_params params;
+    NTSTATUS status;
+
+    params.context = UintToPtr( params32->context );
+    if ((status = demuxer_create( &params ))) return status;
+    params32->demuxer = params.demuxer;
+
+    return status;
+}
+
+static NTSTATUS wow64_demuxer_destroy( void *arg )
+{
+    struct
+    {
+        struct winedmo_demuxer demuxer;
+        PTR32 context;
+    } *params32 = arg;
+    struct demuxer_create_params params;
+    NTSTATUS status;
+
+    params.demuxer = params32->demuxer;
+    if ((status = demuxer_destroy( &params ))) return status;
+    params32->context = PtrToUint( params.context );
+
+    return status;
+}
+
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
 #define X64( name ) [unix_##name] = wow64_##name
     X( process_attach ),
 
     X( demuxer_check ),
-    X( demuxer_create ),
-    X( demuxer_destroy ),
+    X64( demuxer_create ),
+    X64( demuxer_destroy ),
 };
 
 C_ASSERT(ARRAY_SIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count);

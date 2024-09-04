@@ -23,6 +23,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
 
+static struct stream_context *stream_context_create(void)
+{
+    struct stream_context *context;
+
+    if (!(context = malloc( sizeof(*context) ))) return NULL;
+
+    return context;
+}
+
+static void stream_context_destroy( struct stream_context *context )
+{
+    free( context );
+}
+
+
 static NTSTATUS WINAPI seek_callback( void *args, ULONG size )
 {
     struct seek_callback_params *params = args;
@@ -81,9 +96,11 @@ NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_demuxer *demuxer )
 
     TRACE( "demuxer %p\n", demuxer );
 
+    if (!(params.context = stream_context_create())) return STATUS_NO_MEMORY;
     if ((status = UNIX_CALL( demuxer_create, &params )))
     {
         WARN( "demuxer_create failed, status %#lx\n", status );
+        stream_context_destroy( params.context );
         return status;
     }
 
@@ -104,6 +121,7 @@ NTSTATUS CDECL winedmo_demuxer_destroy( struct winedmo_demuxer *demuxer )
     demuxer->handle = 0;
     status = UNIX_CALL( demuxer_destroy, &params );
     if (status) WARN( "demuxer_destroy failed, status %#lx\n", status );
+    else stream_context_destroy( params.context );
 
     return status;
 }
