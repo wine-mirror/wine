@@ -795,6 +795,47 @@ HRESULT DP_MSG_SendCreatePlayer( IDirectPlayImpl *This, DPID toId, DPID id, DWOR
   return DP_OK;
 }
 
+HRESULT DP_MSG_SendPingReply( IDirectPlayImpl *This, DPID toId, DPID fromId, DWORD tickCount )
+{
+  SGBUFFER buffers[ 2 ] = { 0 };
+  DPSP_SENDEXDATA sendData;
+  DPSP_MSG_PING msg;
+  HRESULT hr;
+
+  msg.envelope.dwMagic = DPMSGMAGIC_DPLAYMSG;
+  msg.envelope.wCommandId = DPMSGCMD_PINGREPLY;
+  msg.envelope.wVersion = DPMSGVER_DP6;
+  msg.fromId = fromId;
+  msg.tickCount = tickCount;
+
+  buffers[ 0 ].len = This->dp2->spData.dwSPHeaderSize;
+  buffers[ 0 ].pData = NULL;
+  buffers[ 1 ].len = sizeof( msg );
+  buffers[ 1 ].pData = (UCHAR *)&msg;
+
+  sendData.lpISP = This->dp2->spData.lpISP;
+  sendData.dwFlags = 0;
+  sendData.idPlayerTo = toId;
+  sendData.idPlayerFrom = This->dp2->systemPlayerId;
+  sendData.lpSendBuffers = buffers;
+  sendData.cBuffers = ARRAYSIZE( buffers );
+  sendData.dwMessageSize = DP_MSG_ComputeMessageSize( sendData.lpSendBuffers, sendData.cBuffers );
+  sendData.dwPriority = 0;
+  sendData.dwTimeout = 0;
+  sendData.lpDPContext = NULL;
+  sendData.lpdwSPMsgID = NULL;
+  sendData.bSystemMessage = TRUE;
+
+  hr = (*This->dp2->spData.lpCB->SendEx)( &sendData );
+  if( FAILED( hr ) )
+  {
+    ERR( "Send failed: %s\n", DPLAYX_HresultToString( hr ) );
+    return hr;
+  }
+
+  return DP_OK;
+}
+
 HRESULT DP_MSG_SendAddForwardAck( IDirectPlayImpl *This, DPID id )
 {
   SGBUFFER buffers[ 2 ] = { 0 };

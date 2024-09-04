@@ -57,6 +57,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
 HRESULT DP_MSG_SendCreatePlayer( IDirectPlayImpl *This, DPID toId, DPID id, DWORD flags,
                                  DPNAME *name, void *playerData, DWORD playerDataSize,
                                  DPID systemPlayerId );
+HRESULT DP_MSG_SendPingReply( IDirectPlayImpl *This, DPID toId, DPID fromId, DWORD tickCount );
 HRESULT DP_MSG_SendAddForwardAck( IDirectPlayImpl *This, DPID id );
 
 void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId,
@@ -107,7 +108,8 @@ typedef struct
 
 #define DPMSGCMD_FORWARDADDPLAYER     19
 
-#define DPMSGCMD_PLAYERCHAT           22
+#define DPMSGCMD_PING                 22
+#define DPMSGCMD_PINGREPLY            23
 
 #define DPMSGCMD_FORWARDADDPLAYERNACK 36
 
@@ -267,6 +269,13 @@ typedef struct
 #define DPLAYI_SUPERPACKEDPLAYER_PLAYER_COUNT_SIZE( mask )       (((mask) >> 6) & 0x3)
 #define DPLAYI_SUPERPACKEDPLAYER_PARENT_ID_PRESENT               0x100
 #define DPLAYI_SUPERPACKEDPLAYER_SHORTCUT_COUNT_SIZE( mask )     (((mask) >> 9) & 0x3)
+
+typedef struct
+{
+  DPMSG_SENDENVELOPE envelope;
+  DPID fromId;
+  DWORD tickCount;
+} DPSP_MSG_PING;
 
 typedef struct
 {

@@ -545,6 +545,28 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
       DP_MSG_ToSelf( This, 1 ); /* This is a hack right now */
       break;
 
+    case DPMSGCMD_PING: {
+      const DPSP_MSG_PING *msg;
+
+      if( dwMessageBodySize < sizeof( DPSP_MSG_PING ) )
+        return DPERR_GENERIC;
+      msg = (const DPSP_MSG_PING *)messageBody;
+
+      EnterCriticalSection( &This->lock );
+
+      if ( !This->dp2->bConnectionOpen )
+      {
+        LeaveCriticalSection( &This->lock );
+        return DP_OK;
+      }
+
+      LeaveCriticalSection( &This->lock );
+
+      DP_MSG_SendPingReply( This, msg->fromId, This->dp2->systemPlayerId, msg->tickCount );
+
+      break;
+    }
+
     case DPMSGCMD_ADDFORWARD: {
       DPSP_MSG_ADDFORWARD *msg;
       DPPLAYERINFO playerInfo;
