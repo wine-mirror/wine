@@ -1674,11 +1674,17 @@ static void test_D3DXFillCubeTexture(IDirect3DDevice9 *device)
     /* A1R5G5B5 */
     hr = IDirect3DDevice9_CreateCubeTexture(device, 4, 1, 0, D3DFMT_A1R5G5B5,
             D3DPOOL_MANAGED, &tex, NULL);
-    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    hr = D3DXFillCubeTexture(tex, fillfunc_cube, NULL);
-    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    compare_cube_texture(tex, fillfunc_cube, 2);
-    IDirect3DCubeTexture9_Release(tex);
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFillCubeTexture(tex, fillfunc_cube, NULL);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        compare_cube_texture(tex, fillfunc_cube, 2);
+        IDirect3DCubeTexture9_Release(tex);
+    }
+    else
+    {
+        skip("Texture format D3DFMT_A1R5G5B5 unsupported.\n");
+    }
 }
 
 static void WINAPI fillfunc_volume(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord,
