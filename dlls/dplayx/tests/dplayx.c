@@ -4126,7 +4126,7 @@ static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD 
     expectedMsgDataSize = sizeof( DPMSG_CREATEPLAYERORGROUP ) + expectedShortNameSize + expectedLongNameSize
                         + expectedPlayerDataSize;
 
-    todo_wine ok_( __FILE__, line )( msgDataSize == expectedMsgDataSize, "got message size %lu.\n", msgDataSize );
+    ok_( __FILE__, line )( msgDataSize == expectedMsgDataSize, "got message size %lu.\n", msgDataSize );
 
     return toId;
 }

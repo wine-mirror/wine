@@ -3750,6 +3750,7 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
         void *lpData, DWORD *lpdwDataSize, BOOL bAnsi )
 {
   LPDPMSG lpMsg = NULL;
+  DWORD msgSize;
 
   FIXME( "(%p)->(%p,%p,0x%08lx,%p,%p,%u): stub\n",
          This, lpidFrom, lpidTo, dwFlags, lpData, lpdwDataSize, bAnsi );
@@ -3792,8 +3793,11 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
     return DPERR_NOMESSAGES;
   }
 
+  msgSize = lpMsg->copyMessage( NULL, lpMsg->msg, bAnsi );
+
   *lpidFrom = lpMsg->fromId;
   *lpidTo = lpMsg->toId;
+  *lpdwDataSize = msgSize;
 
   /* Copy into the provided buffer */
   if (lpData) lpMsg->copyMessage( lpData, lpMsg->msg, bAnsi );
