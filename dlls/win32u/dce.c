@@ -276,10 +276,15 @@ void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_
     UINT dpi = get_dpi_for_window( hwnd );
     RECT monitor_rect;
 
-    if ((driver_surface = get_driver_window_surface( *window_surface, monitor_dpi )))
-        window_surface_add_ref( driver_surface );
 
     monitor_rect = get_surface_rect( map_dpi_rect( *surface_rect, dpi, monitor_dpi ) );
+    if ((driver_surface = get_driver_window_surface( *window_surface, monitor_dpi )))
+    {
+        /* reuse the underlying driver surface only if it also matches the target monitor rect */
+        if (EqualRect( &driver_surface->rect, &monitor_rect )) window_surface_add_ref( driver_surface );
+        else window_surface_add_ref( (driver_surface = &dummy_surface) );
+    }
+
     if (!user_driver->pCreateWindowSurface( hwnd, create_layered, &monitor_rect, &driver_surface ))
     {
         if (driver_surface) window_surface_release( driver_surface );
