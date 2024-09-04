@@ -3811,14 +3811,6 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
     dwFlags = DPRECEIVE_ALL;
   }
 
-  /* If the lpData is NULL, we must be peeking the message */
-  if(  ( lpData == NULL ) &&
-      !( dwFlags & DPRECEIVE_PEEK )
-    )
-  {
-    return DPERR_INVALIDPARAMS;
-  }
-
   if( dwFlags & DPRECEIVE_ALL )
   {
     lpMsg = This->dp2->receiveMsgs.lpQHFirst;
@@ -3841,7 +3833,7 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
 
   msgSize = lpMsg->copyMessage( NULL, lpMsg->msg, lpMsg->genericSize, bAnsi );
 
-  if( *lpdwDataSize < msgSize )
+  if( *lpdwDataSize < msgSize || !lpData )
   {
     *lpdwDataSize = msgSize;
     return DPERR_BUFFERTOOSMALL;
@@ -3852,7 +3844,7 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
   *lpdwDataSize = msgSize;
 
   /* Copy into the provided buffer */
-  if (lpData) lpMsg->copyMessage( lpData, lpMsg->msg, lpMsg->genericSize, bAnsi );
+  lpMsg->copyMessage( lpData, lpMsg->msg, lpMsg->genericSize, bAnsi );
 
   if( !( dwFlags & DPRECEIVE_PEEK ) )
   {
