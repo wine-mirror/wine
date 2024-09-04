@@ -205,6 +205,7 @@ static void wg_format_from_caps_audio_mpeg1(struct wg_format *format, const GstC
 
 static void wg_format_from_caps_audio_mpeg4(struct wg_format *format, const GstCaps *caps)
 {
+    static const size_t waveinfo_size = sizeof(HEAACWAVEINFO) - sizeof(WAVEFORMATEX);
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
     const GValue *codec_data_value;
     const gchar *stream_format;
@@ -247,10 +248,16 @@ static void wg_format_from_caps_audio_mpeg4(struct wg_format *format, const GstC
         format->u.audio.payload_type = 3;
 
     gst_buffer_map(codec_data, &map, GST_MAP_READ);
-    if (map.size <= sizeof(format->u.audio.codec_data))
+    if ((map.size + waveinfo_size) <= sizeof(format->u.audio.codec_data))
     {
-        format->u.audio.codec_data_len = map.size;
-        memcpy(format->u.audio.codec_data, map.data, map.size);
+        HEAACWAVEINFO wave_info = {0};
+
+        wave_info.wPayloadType = format->u.audio.payload_type;
+        /* Native apparently sets wAudioProfileLevelIndication to zero. */
+
+        format->u.audio.codec_data_len = map.size + waveinfo_size;
+        memcpy(format->u.audio.codec_data, &wave_info.wPayloadType, waveinfo_size);
+        memcpy(format->u.audio.codec_data + waveinfo_size, map.data, map.size);
     }
     else
         GST_WARNING("Too big codec_data value (%u) in %" GST_PTR_FORMAT ".", (UINT)map.size, caps);
@@ -702,6 +709,7 @@ static GstCaps *wg_format_to_caps_audio_mpeg1(const struct wg_format *format)
 
 static GstCaps *wg_format_to_caps_audio_mpeg4(const struct wg_format *format)
 {
+    static const size_t waveinfo_size = sizeof(HEAACWAVEINFO) - sizeof(WAVEFORMATEX);
     GstBuffer *buffer;
     GstCaps *caps;
 
@@ -720,10 +728,11 @@ static GstCaps *wg_format_to_caps_audio_mpeg4(const struct wg_format *format)
 
     /* FIXME: Use gst_codec_utils_aac_caps_set_level_and_profile from GStreamer pbutils library */
 
-    if (format->u.audio.codec_data_len)
+    if (format->u.audio.codec_data_len > waveinfo_size)
     {
-        buffer = gst_buffer_new_and_alloc(format->u.audio.codec_data_len);
-        gst_buffer_fill(buffer, 0, format->u.audio.codec_data, format->u.audio.codec_data_len);
+        buffer = gst_buffer_new_and_alloc(format->u.audio.codec_data_len - waveinfo_size);
+        gst_buffer_fill(buffer, 0, format->u.audio.codec_data + waveinfo_size,
+                format->u.audio.codec_data_len - waveinfo_size);
         gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
         gst_buffer_unref(buffer);
     }
