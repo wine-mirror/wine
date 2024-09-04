@@ -3841,6 +3841,12 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
 
   msgSize = lpMsg->copyMessage( NULL, lpMsg->msg, lpMsg->genericSize, bAnsi );
 
+  if( *lpdwDataSize < msgSize )
+  {
+    *lpdwDataSize = msgSize;
+    return DPERR_BUFFERTOOSMALL;
+  }
+
   *lpidFrom = lpMsg->fromId;
   *lpidTo = lpMsg->toId;
   *lpdwDataSize = msgSize;

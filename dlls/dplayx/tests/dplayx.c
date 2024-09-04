@@ -8152,9 +8152,9 @@ static void test_Receive(void)
     toId = 0xdeadbeef;
     msgDataSize = sizeof( data0 ) - 1;
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_ALL | DPRECEIVE_PEEK, msgData, &msgDataSize );
-    todo_wine ok( hr == DPERR_BUFFERTOOSMALL, "got hr %#lx.\n", hr );
-    todo_wine ok( fromId == 0xdeadbeef, "got source id %#lx.\n", fromId );
-    todo_wine ok( toId == 0xdeadbeef, "got destination id %#lx.\n", toId );
+    ok( hr == DPERR_BUFFERTOOSMALL, "got hr %#lx.\n", hr );
+    ok( fromId == 0xdeadbeef, "got source id %#lx.\n", fromId );
+    ok( toId == 0xdeadbeef, "got destination id %#lx.\n", toId );
     ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
 
     fromId = 0xdeadbeef;
