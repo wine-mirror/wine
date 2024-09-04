@@ -75,6 +75,7 @@ struct demuxer_create_params
     struct winedmo_demuxer demuxer;
     char mime_type[256];
     UINT32 stream_count;
+    INT64 duration;
 };
 
 struct demuxer_destroy_params

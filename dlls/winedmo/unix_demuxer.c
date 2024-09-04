@@ -39,6 +39,34 @@ static AVFormatContext *get_demuxer( struct winedmo_demuxer demuxer )
     return (AVFormatContext *)(UINT_PTR)demuxer.handle;
 }
 
+static INT64 get_user_time( INT64 time, AVRational time_base )
+{
+    static const AVRational USER_TIME_BASE_Q = {1, 10000000};
+    return av_rescale_q_rnd( time, time_base, USER_TIME_BASE_Q, AV_ROUND_PASS_MINMAX );
+}
+
+static INT64 get_stream_time( const AVStream *stream, INT64 time )
+{
+    if (stream->time_base.num && stream->time_base.den) return get_user_time( time, stream->time_base );
+    return get_user_time( time, AV_TIME_BASE_Q );
+}
+
+static INT64 get_context_duration( const AVFormatContext *ctx )
+{
+    INT64 i, max_duration = AV_NOPTS_VALUE;
+
+    for (i = 0; i < ctx->nb_streams; i++)
+    {
+        const AVStream *stream = ctx->streams[i];
+        INT64 duration = get_stream_time( stream, stream->duration );
+        if (duration == AV_NOPTS_VALUE) continue;
+        if (duration >= max_duration) max_duration = duration;
+        if (max_duration == AV_NOPTS_VALUE) max_duration = duration;
+    }
+
+    return max_duration;
+}
+
 NTSTATUS demuxer_check( void *arg )
 {
     struct demuxer_check_params *params = arg;
@@ -83,12 +111,16 @@ NTSTATUS demuxer_create( void *arg )
         return STATUS_UNSUCCESSFUL;
     }
 
-    if (!(ctx->nb_streams && ctx->duration != AV_NOPTS_VALUE) && (ret = avformat_find_stream_info( ctx, NULL )) < 0)
+    if ((params->duration = get_context_duration( ctx )) == AV_NOPTS_VALUE)
     {
-        ERR( "Failed to find stream info, ret %d (%s).\n", ret, av_err2str(ret) );
-        avio_context_free( &ctx->pb );
-        avformat_free_context( ctx );
-        return STATUS_UNSUCCESSFUL;
+        if ((ret = avformat_find_stream_info( ctx, NULL )) < 0)
+        {
+            ERR( "Failed to find stream info, ret %d (%s).\n", ret, av_err2str(ret) );
+            avio_context_free( &ctx->pb );
+            avformat_free_context( ctx );
+            return STATUS_UNSUCCESSFUL;
+        }
+        params->duration = get_context_duration( ctx );
     }
 
     params->demuxer.handle = (UINT_PTR)ctx;
