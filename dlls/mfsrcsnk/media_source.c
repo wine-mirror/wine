@@ -88,6 +88,7 @@ struct media_source
     float rate;
 
     struct winedmo_demuxer winedmo_demuxer;
+    struct winedmo_stream winedmo_stream;
     UINT64 file_size;
 
     enum
@@ -473,6 +474,26 @@ static const IMFMediaSourceVtbl media_source_vtbl =
     media_source_Shutdown,
 };
 
+static NTSTATUS CDECL media_source_seek_cb(struct winedmo_stream *stream, UINT64 *pos)
+{
+    struct media_source *source = CONTAINING_RECORD(stream, struct media_source, winedmo_stream);
+    TRACE("stream %p, pos %p\n", stream, pos);
+
+    if (FAILED(IMFByteStream_Seek(source->stream, msoBegin, *pos, 0, pos)))
+        return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS CDECL media_source_read_cb(struct winedmo_stream *stream, BYTE *buffer, ULONG *size)
+{
+    struct media_source *source = CONTAINING_RECORD(stream, struct media_source, winedmo_stream);
+    TRACE("stream %p, buffer %p, size %p\n", stream, buffer, size);
+
+    if (FAILED(IMFByteStream_Read(source->stream, buffer, *size, size)))
+        return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
+}
+
 static HRESULT media_source_async_create(struct media_source *source, IMFAsyncResult *result)
 {
     IUnknown *state = IMFAsyncResult_GetStateNoAddRef(result);
@@ -492,7 +513,10 @@ static HRESULT media_source_async_create(struct media_source *source, IMFAsyncRe
         hr = S_OK;
     }
 
-    if ((status = winedmo_demuxer_create(&source->winedmo_demuxer)))
+    source->winedmo_stream.p_seek = media_source_seek_cb;
+    source->winedmo_stream.p_read = media_source_read_cb;
+
+    if ((status = winedmo_demuxer_create(&source->winedmo_stream, &source->file_size, &source->winedmo_demuxer)))
     {
         WARN("Failed to create demuxer, status %#lx\n", status);
         hr = HRESULT_FROM_NT(status);

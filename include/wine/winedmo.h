@@ -26,10 +26,16 @@
 #include "winbase.h"
 #include "winternl.h"
 
+struct winedmo_stream
+{
+    NTSTATUS (CDECL *p_seek)( struct winedmo_stream *stream, UINT64 *pos );
+    NTSTATUS (CDECL *p_read)( struct winedmo_stream *stream, BYTE *buffer, ULONG *size );
+};
+
 struct winedmo_demuxer { UINT64 handle; };
 
 NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type );
-NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_demuxer *demuxer );
+NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_stream *stream, UINT64 *stream_size, struct winedmo_demuxer *demuxer );
 NTSTATUS CDECL winedmo_demuxer_destroy( struct winedmo_demuxer *demuxer );
 
 #endif /* __WINE_WINEDMO_H */

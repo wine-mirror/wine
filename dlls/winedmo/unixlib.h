@@ -39,6 +39,7 @@ struct process_attach_params
 
 struct stream_context
 {
+    UINT64 stream;
     UINT64 length;
     UINT64 position;
     UINT64 buffer_size;

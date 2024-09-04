@@ -23,12 +23,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
 
-static struct stream_context *stream_context_create(void)
+static struct stream_context *stream_context_create( struct winedmo_stream *stream, UINT64 *stream_size )
 {
     struct stream_context *context;
 
     if (!(context = malloc( 0x10000 ))) return NULL;
-    context->length = 0;
+    context->stream = (UINT_PTR)stream;
+    context->length = *stream_size;
     context->position = 0;
     context->buffer_size = 0x10000 - offsetof(struct stream_context, buffer);
 
@@ -41,18 +42,50 @@ static void stream_context_destroy( struct stream_context *context )
 }
 
 
+static struct stream_context *get_stream_context( UINT64 handle )
+{
+    return (struct stream_context *)(UINT_PTR)handle;
+}
+
+static struct winedmo_stream *get_stream( UINT64 handle )
+{
+    return (struct winedmo_stream *)(UINT_PTR)handle;
+}
+
 static NTSTATUS WINAPI seek_callback( void *args, ULONG size )
 {
     struct seek_callback_params *params = args;
-    FIXME( "context %#I64x, offset %#I64x, stub!\n", params->context, params->offset );
-    return STATUS_NOT_IMPLEMENTED;
+    struct stream_context *context = get_stream_context( params->context );
+    struct winedmo_stream *stream = get_stream( context->stream );
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    UINT64 pos = params->offset;
+
+    TRACE( "stream %p, offset %#I64x\n", stream, params->offset );
+
+    if (!stream->p_seek || (status = stream->p_seek( stream, &pos )))
+        WARN( "Failed to seek stream %p, status %#lx\n", stream, status );
+    else
+        TRACE( "Seeked stream %p to %#I64x\n", stream, pos );
+
+    return NtCallbackReturn( &pos, sizeof(pos), status );
 }
 
 static NTSTATUS WINAPI read_callback( void *args, ULONG size )
 {
     struct read_callback_params *params = args;
-    FIXME( "context %#I64x, size %#x, stub!\n", params->context, params->size );
-    return STATUS_NOT_IMPLEMENTED;
+    struct stream_context *context = get_stream_context( params->context );
+    struct winedmo_stream *stream = get_stream( context->stream );
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    ULONG ret = params->size;
+
+    TRACE( "stream %p, size %#x\n", stream, params->size );
+
+    if (!stream->p_read || (status = stream->p_read( stream, context->buffer, &ret )))
+        WARN( "Failed to read from stream %p, status %#lx\n", stream, status );
+    else
+        TRACE( "Read %#lx bytes from stream %p\n", ret, stream );
+
+    return NtCallbackReturn( &ret, sizeof(ret), status );
 }
 
 
@@ -92,14 +125,14 @@ NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type )
     return status;
 }
 
-NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_demuxer *demuxer )
+NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_stream *stream, UINT64 *stream_size, struct winedmo_demuxer *demuxer )
 {
     struct demuxer_create_params params = {0};
     NTSTATUS status;
 
-    TRACE( "demuxer %p\n", demuxer );
+    TRACE( "stream %p, stream_size %I64x, demuxer %p\n", stream, *stream_size, demuxer );
 
-    if (!(params.context = stream_context_create())) return STATUS_NO_MEMORY;
+    if (!(params.context = stream_context_create( stream, stream_size ))) return STATUS_NO_MEMORY;
     if ((status = UNIX_CALL( demuxer_create, &params )))
     {
         WARN( "demuxer_create failed, status %#lx\n", status );
@@ -108,7 +141,7 @@ NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_demuxer *demuxer )
     }
 
     *demuxer = params.demuxer;
-    TRACE( "created %#I64x\n", demuxer->handle );
+    TRACE( "created demuxer %#I64x, stream %p, stream_size %#I64x\n", demuxer->handle, stream, *stream_size );
     return STATUS_SUCCESS;
 }
 
