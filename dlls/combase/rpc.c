@@ -1344,15 +1344,6 @@ static DWORD WINAPI rpc_sendreceive_thread(LPVOID param)
     return 0;
 }
 
-static inline HRESULT ClientRpcChannelBuffer_IsCorrectApartment(ClientRpcChannelBuffer *This, const struct apartment *apt)
-{
-    if (!apt)
-        return S_FALSE;
-    if (This->oxid != apartment_getoxid(apt))
-        return S_FALSE;
-    return S_OK;
-}
-
 static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE *olemsg, ULONG *pstatus)
 {
     ClientRpcChannelBuffer *This = (ClientRpcChannelBuffer *)iface;
@@ -1365,17 +1356,15 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     ORPC_EXTENT_ARRAY orpc_ext_array;
     WIRE_ORPC_EXTENT *first_wire_orpc_extent = NULL;
     HRESULT hrFault = S_OK;
-    struct apartment *apt = apartment_get_current_or_mta();
+    struct apartment *apt = apartment_findfromoxid(This->oxid);
     struct tlsdata *tlsdata;
 
     TRACE("%p, iMethod %ld\n", olemsg, olemsg->iMethod);
 
-    hr = ClientRpcChannelBuffer_IsCorrectApartment(This, apt);
-    if (hr != S_OK)
+    if (!apt)
     {
         ERR("called from wrong apartment, should have been 0x%s\n",
             wine_dbgstr_longlong(This->oxid));
-        if (apt) apartment_release(apt);
         return RPC_E_WRONG_THREAD;
     }
 
