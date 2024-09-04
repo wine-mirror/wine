@@ -17,6 +17,7 @@
  */
 
 #include "unixlib.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
 
@@ -125,12 +126,13 @@ NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type )
     return status;
 }
 
-NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_stream *stream, UINT64 *stream_size, struct winedmo_demuxer *demuxer )
+NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_stream *stream, UINT64 *stream_size,
+                                       WCHAR *mime_type, struct winedmo_demuxer *demuxer )
 {
     struct demuxer_create_params params = {0};
     NTSTATUS status;
 
-    TRACE( "stream %p, stream_size %I64x, demuxer %p\n", stream, *stream_size, demuxer );
+    TRACE( "stream %p, stream_size %#I64x, mime_type %p, demuxer %p\n", stream, *stream_size, mime_type, demuxer );
 
     if (!(params.context = stream_context_create( stream, stream_size ))) return STATUS_NO_MEMORY;
     if ((status = UNIX_CALL( demuxer_create, &params )))
@@ -140,8 +142,10 @@ NTSTATUS CDECL winedmo_demuxer_create( struct winedmo_stream *stream, UINT64 *st
         return status;
     }
 
+    MultiByteToWideChar( CP_ACP, 0, params.mime_type, -1, mime_type, 256 );
     *demuxer = params.demuxer;
-    TRACE( "created demuxer %#I64x, stream %p, stream_size %#I64x\n", demuxer->handle, stream, *stream_size );
+    TRACE( "created demuxer %#I64x, stream %p, stream_size %#I64x, mime_type %s\n", demuxer->handle,
+           stream, *stream_size, debugstr_a(params.mime_type) );
     return STATUS_SUCCESS;
 }
 

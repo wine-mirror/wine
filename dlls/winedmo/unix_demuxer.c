@@ -83,6 +83,18 @@ NTSTATUS demuxer_create( void *arg )
     }
 
     params->demuxer.handle = (UINT_PTR)ctx;
+    if (strstr( ctx->iformat->name, "mp4" )) strcpy( params->mime_type, "video/mp4" );
+    else if (strstr( ctx->iformat->name, "avi" )) strcpy( params->mime_type, "video/avi" );
+    else if (strstr( ctx->iformat->name, "mpeg" )) strcpy( params->mime_type, "video/mpeg" );
+    else if (strstr( ctx->iformat->name, "mp3" )) strcpy( params->mime_type, "audio/mp3" );
+    else if (strstr( ctx->iformat->name, "wav" )) strcpy( params->mime_type, "audio/wav" );
+    else if (strstr( ctx->iformat->name, "asf" )) strcpy( params->mime_type, "video/x-ms-asf" );
+    else
+    {
+        FIXME( "Unknown MIME type for format %s\n", debugstr_a(ctx->iformat->name) );
+        strcpy( params->mime_type, "video/x-application" );
+    }
+
     return STATUS_SUCCESS;
 }
 

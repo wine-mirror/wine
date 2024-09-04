@@ -72,6 +72,7 @@ struct demuxer_create_params
 {
     struct stream_context *context;
     struct winedmo_demuxer demuxer;
+    char mime_type[256];
 };
 
 struct demuxer_destroy_params
