@@ -1639,7 +1639,12 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movw 0x338(%r8),%fs\n"     /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
-                   "jmpq *%rcx" )              /* func */
+                   "movq 0x348(%r8),%r10\n\t"    /* amd64_thread_data()->instrumentation_callback */
+                   "movq (%r10),%r10\n\t"
+                   "test %r10,%r10\n\t"
+                   "jz 1f\n\t"
+                   "xchgq %rcx,%r10\n\t"
+                   "1\t:jmpq *%rcx" )          /* func */
 
 
 /***********************************************************************

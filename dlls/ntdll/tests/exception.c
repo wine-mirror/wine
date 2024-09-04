@@ -5714,7 +5714,7 @@ static void test_instrumentation_callback(void)
         if (data.call_data[i].r10 == pKiUserCallbackDispatcher)
             break;
     }
-    todo_wine ok( i < data.call_count, "KiUserCallbackDispatcher not found.\n" );
+    ok( i < data.call_count, "KiUserCallbackDispatcher not found.\n" );
 
     init_instrumentation_data( &curr_data );
     memset(&info, 0, sizeof(info));
