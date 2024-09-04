@@ -1712,10 +1712,14 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
     {
         PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION *instr = info;
 
-        FIXME( "ProcessInstrumentationCallback stub.\n" );
-
         if (size < sizeof(*instr)) return STATUS_INFO_LENGTH_MISMATCH;
         ret = STATUS_SUCCESS;
+        if (handle != GetCurrentProcess())
+        {
+            FIXME( "Setting ProcessInstrumentationCallback is not yet supported for other process.\n" );
+            break;
+        }
+        set_process_instrumentation_callback( instr->Callback );
         break;
     }
 

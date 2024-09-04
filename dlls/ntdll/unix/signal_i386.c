@@ -603,6 +603,12 @@ static BOOL is_inside_syscall( ucontext_t *sigcontext )
 }
 
 
+void set_process_instrumentation_callback( void *callback )
+{
+    if (callback) FIXME( "Not supported.\n" );
+}
+
+
 struct xcontext
 {
     CONTEXT c;

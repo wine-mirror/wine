@@ -224,6 +224,12 @@ static inline void context_init_empty_xstate( CONTEXT *context, void *xstate_buf
     xctx->All.Offset = -(LONG)sizeof(CONTEXT);
 }
 
+void set_process_instrumentation_callback( void *callback )
+{
+    if (callback) FIXME( "Not supported.\n" );
+}
+
+
 /***********************************************************************
  *           unwind_builtin_dll
  *

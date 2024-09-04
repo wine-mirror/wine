@@ -248,6 +248,8 @@ static inline UINT64 xstate_extended_features(void)
     return xstate_supported_features_mask & ~(UINT64)3;
 }
 
+extern void set_process_instrumentation_callback( void *callback );
+
 extern void *get_cpu_area( USHORT machine );
 extern void set_thread_id( TEB *teb, DWORD pid, DWORD tid );
 extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR limit, SIZE_T reserve_size, SIZE_T commit_size );

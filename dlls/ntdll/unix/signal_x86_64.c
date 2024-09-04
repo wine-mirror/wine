@@ -395,6 +395,8 @@ C_ASSERT( sizeof(struct callback_stack_layout) == 0x58 );
 
 static unsigned int syscall_flags;
 
+#define RESTORE_FLAGS_INSTRUMENTATION CONTEXT_i386
+
 struct syscall_frame
 {
     ULONG64               rax;           /* 0000 */
@@ -444,6 +446,7 @@ struct amd64_thread_data
     DWORD                 fs;            /* 0338 WOW TEB selector */
     DWORD                 xstate_features_size;  /* 033c */
     UINT64                xstate_features_mask;  /* 0340 */
+    void                **instrumentation_callback; /* 0348 */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
@@ -474,6 +477,23 @@ static BOOL is_inside_syscall( const ucontext_t *sigcontext )
             (char *)RSP_sig(sigcontext) <= (char *)amd64_thread_data()->syscall_frame);
 }
 
+
+extern void __wine_syscall_dispatcher_instrumentation(void);
+static void *instrumentation_callback;
+static pthread_mutex_t instrumentation_callback_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void set_process_instrumentation_callback( void *callback )
+{
+    void *ptr = (char *)user_shared_data + page_size;
+    sigset_t sigset;
+    void *old;
+
+    server_enter_uninterrupted_section( &instrumentation_callback_mutex, &sigset );
+    old = InterlockedExchangePointer( &instrumentation_callback, callback );
+    if (!old && callback)      InterlockedExchangePointer( ptr, __wine_syscall_dispatcher_instrumentation );
+    else if (old && !callback) InterlockedExchangePointer( ptr, __wine_syscall_dispatcher );
+    server_leave_uninterrupted_section( &instrumentation_callback_mutex, &sigset );
+}
 
 struct xcontext
 {
@@ -1900,7 +1920,8 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext, siginfo_t *siginfo )
 
     /* disallow single-stepping through a syscall */
 
-    if ((void *)RIP_sig( sigcontext ) == __wine_syscall_dispatcher)
+    if ((void *)RIP_sig( sigcontext ) == __wine_syscall_dispatcher
+        || (void *)RIP_sig( sigcontext ) == __wine_syscall_dispatcher_instrumentation)
     {
         extern const void *__wine_syscall_dispatcher_prolog_end_ptr;
 
@@ -1926,6 +1947,7 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext, siginfo_t *siginfo )
     frame->rip = *(ULONG64 *)RSP_sig( sigcontext );
     frame->eflags = EFL_sig(sigcontext);
     frame->restore_flags = CONTEXT_CONTROL;
+    if (instrumentation_callback) frame->restore_flags |= RESTORE_FLAGS_INSTRUMENTATION;
 
     RCX_sig( sigcontext ) = (ULONG64)frame;
     RSP_sig( sigcontext ) += sizeof(ULONG64);
@@ -2520,6 +2542,7 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     thread_data->syscall_table = KeServiceDescriptorTable;
     thread_data->xstate_features_mask = xstate_supported_features_mask;
     assert( thread_data->xstate_features_size == xstate_features_size );
+    thread_data->instrumentation_callback = &instrumentation_callback;
 
 #if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
@@ -2832,8 +2855,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
 #endif
+                   "testl $0x10000,%edx\n\t"       /* RESTORE_FLAGS_INSTRUMENTATION */
                    "movq 0x60(%rcx),%r14\n\t"
-                   "testl $0x3,%edx\n\t"           /* CONTEXT_CONTROL | CONTEXT_INTEGER */
+                   "jnz 2f\n\t"
+                   "3:\ttestl $0x3,%edx\n\t"       /* CONTEXT_CONTROL | CONTEXT_INTEGER */
                    "jnz 1f\n\t"
 
                    /* switch to user stack */
@@ -2864,8 +2889,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 
                    "1:\ttestl $0x2,%edx\n\t"       /* CONTEXT_INTEGER */
                    "jnz 1f\n\t"
+                   /* CONTEXT_CONTROL */
                    "movq (%rsp),%rcx\n\t"          /* frame->rip */
                    "iretq\n"
+                   /* CONTEXT_INTEGER */
                    "1:\tmovq 0x00(%rcx),%rax\n\t"
                    "movq 0x18(%rcx),%rdx\n\t"
                    "movq 0x30(%rcx),%r8\n\t"
@@ -2874,6 +2901,20 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x48(%rcx),%r11\n\t"
                    "movq 0x10(%rcx),%rcx\n\t"
                    "iretq\n"
+                   /* RESTORE_FLAGS_INSTRUMENTATION */
+#ifdef __APPLE__
+                   "2:\tmovq %gs:0x30,%r10\n\t"
+                   "movq 0x348(%r10),%r10\n\t"
+#else
+                   "2:\tmovq %gs:0x348,%r10\n\t"  /* amd64_thread_data()->instrumentation_callback */
+#endif
+                   "movq (%r10),%r10\n\t"
+                   "test %r10,%r10\n\t"
+                   "jz 3b\n\t"
+                   "testl $0x2,%edx\n\t"          /* CONTEXT_INTEGER */
+                   "jnz 1b\n\t"
+                   "xchgq %r10,(%rsp)\n\t"
+                   "iretq\n\t"
 
                    /* pop rbp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_restore_state\n")
@@ -2886,6 +2927,24 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
                    "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    "movq %rsi,%rax\n\t"
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+
+
+__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_instrumentation,
+#ifdef __APPLE__
+                   "movq %gs:0x30,%rcx\n\t"
+                   "movq 0x328(%rcx),%rcx\n\t"
+#else
+                   "movq %gs:0x328,%rcx\n\t"       /* amd64_thread_data()->syscall_frame */
+#endif
+                   "popq 0x70(%rcx)\n\t"           /* frame->rip */
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI_REG_IS_AT2(rip, rcx, 0xf0,0x00)
+                   "pushfq\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   "popq 0x80(%rcx)\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   "movl $0x10000,0xb4(%rcx)\n\t"    /* frame->restore_flags <- RESTORE_FLAGS_INSTRUMENTATION */
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_prolog_end") )
 
 
 /***********************************************************************
