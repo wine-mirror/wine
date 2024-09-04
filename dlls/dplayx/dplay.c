@@ -3740,11 +3740,6 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
   if( dwFlags & DPRECEIVE_ALL )
   {
     lpMsg = This->dp2->receiveMsgs.lpQHFirst;
-
-    if( !( dwFlags & DPRECEIVE_PEEK ) )
-    {
-      FIXME( "Remove from queue\n" );
-    }
   }
   else if( ( dwFlags & DPRECEIVE_TOPLAYER ) ||
            ( dwFlags & DPRECEIVE_FROMPLAYER )
@@ -3764,6 +3759,13 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
 
   /* Copy into the provided buffer */
   if (lpData) CopyMemory( lpData, lpMsg->msg, *lpdwDataSize );
+
+  if( !( dwFlags & DPRECEIVE_PEEK ) )
+  {
+    DPQ_REMOVE( This->dp2->receiveMsgs, lpMsg, msgs );
+    free( lpMsg->msg );
+    free( lpMsg );
+  }
 
   return DP_OK;
 }
