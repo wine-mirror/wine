@@ -5683,7 +5683,7 @@ static void test_instrumentation_callback(void)
     {
         if (data.call_data[i].r10 == pLdrInitializeThunk) break;
     }
-    todo_wine ok( i < data.call_count, "LdrInitializeThunk not found.\n" );
+    ok( i < data.call_count, "LdrInitializeThunk not found.\n" );
 
     init_instrumentation_data( &curr_data );
     SetEvent( instrumentation_callback_thread_wait );
