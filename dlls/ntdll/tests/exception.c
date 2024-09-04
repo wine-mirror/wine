@@ -5617,8 +5617,8 @@ static void test_instrumentation_callback(void)
     init_instrumentation_data( &curr_data );
     DbgBreakPoint();
     data = curr_data;
-    todo_wine ok( data.call_count == 1 || broken( data.call_count == 2 ) /* before Win10 1809 */, "got %u.\n", data.call_count );
-    todo_wine ok( data.call_data[0].r10 == pKiUserExceptionDispatcher, "got %p, expected %p.\n", data.call_data[0].r10,
+    ok( data.call_count == 1 || broken( data.call_count == 2 ) /* before Win10 1809 */, "got %u.\n", data.call_count );
+    ok( data.call_data[0].r10 == pKiUserExceptionDispatcher, "got %p, expected %p.\n", data.call_data[0].r10,
         pKiUserExceptionDispatcher );
 
     pass = 0;
