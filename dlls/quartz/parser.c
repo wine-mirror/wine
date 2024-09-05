@@ -18,6 +18,12 @@
 
 #include "quartz_private.h"
 
+HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
+{
+    static const GUID CLSID_wg_avi_splitter = {0x272bfbfb,0x50d0,0x4078,{0xb6,0x00,0x1e,0x95,0x9c,0x30,0x13,0x37}};
+    return CoCreateInstance(&CLSID_wg_avi_splitter, outer, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)out);
+}
+
 HRESULT mpeg1_splitter_create(IUnknown *outer, IUnknown **out)
 {
     static const GUID CLSID_wg_mpeg1_splitter = {0xa8edbf98,0x2442,0x42c5,{0x85,0xa1,0xab,0x05,0xa5,0x80,0xdf,0x53}};

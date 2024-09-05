@@ -65,6 +65,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_AsyncReader, async_reader_create },
     { &CLSID_AudioRender, dsound_render_create },
     { &CLSID_AVIDec, avi_dec_create },
+    { &CLSID_AviSplitter, avi_splitter_create },
     { &CLSID_DSoundRender, dsound_render_create },
     { &CLSID_FilterGraph, filter_graph_create },
     { &CLSID_FilterGraphNoThread, filter_graph_no_thread_create },
@@ -364,6 +365,34 @@ HRESULT WINAPI DllRegisterServer(void)
         .rgPins2 = mpeg_splitter_pins,
     };
 
+    static const REGPINTYPES avi_splitter_inputs[] =
+    {
+        {&MEDIATYPE_Stream, &MEDIASUBTYPE_Avi},
+    };
+    static const REGPINTYPES avi_splitter_outputs[] =
+    {
+        {&MEDIATYPE_Video, &GUID_NULL},
+    };
+    static const REGFILTERPINS2 avi_splitter_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(avi_splitter_inputs),
+            .lpMediaType = avi_splitter_inputs,
+        },
+        {
+            .dwFlags = REG_PINFLAG_B_OUTPUT,
+            .nMediaTypes = ARRAY_SIZE(avi_splitter_outputs),
+            .lpMediaType = avi_splitter_outputs,
+        },
+    };
+    static const REGFILTER2 avi_splitter_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_NORMAL,
+        .cPins2 = ARRAY_SIZE(avi_splitter_pins),
+        .rgPins2 = avi_splitter_pins,
+    };
+
     IFilterMapper2 *mapper;
     HRESULT hr;
 
@@ -393,6 +422,9 @@ HRESULT WINAPI DllRegisterServer(void)
         goto done;
     if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_ACMWrapper, L"ACM Wrapper", NULL,
             &CLSID_LegacyAmFilterCategory, NULL, &acm_wrapper_reg)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_AviSplitter, L"AVI Splitter", NULL,
+            NULL, NULL, &avi_splitter_reg)))
         goto done;
     if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_MPEG1Splitter, L"MPEG-I Stream Splitter", NULL,
             NULL, NULL, &mpeg_splitter_reg)))
@@ -428,6 +460,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_AsyncReader)))
         goto done;
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_ACMWrapper)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_AviSplitter)))
         goto done;
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_MPEG1Splitter)))
         goto done;

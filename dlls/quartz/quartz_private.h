@@ -49,8 +49,9 @@
 #define BYTES_FROM_MEDIATIME(time) ((time) / 10000000)
 
 HRESULT acm_wrapper_create(IUnknown *outer, IUnknown **out);
-HRESULT avi_dec_create(IUnknown *outer, IUnknown **out);
 HRESULT async_reader_create(IUnknown *outer, IUnknown **out);
+HRESULT avi_dec_create(IUnknown *outer, IUnknown **out);
+HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out);
 HRESULT dsound_render_create(IUnknown *outer, IUnknown **out);
 HRESULT filter_graph_create(IUnknown *outer, IUnknown **out);
 HRESULT filter_graph_no_thread_create(IUnknown *outer, IUnknown **out);

@@ -991,6 +991,7 @@ static struct class_factory mpeg4_sink_class_factory_cf = {{&class_factory_vtbl}
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
+    static const GUID CLSID_wg_avi_splitter = {0x272bfbfb,0x50d0,0x4078,{0xb6,0x00,0x1e,0x95,0x9c,0x30,0x13,0x37}};
     static const GUID CLSID_wg_color_converter = {0xf47e2da5,0xe370,0x47b7,{0x90,0x3a,0x07,0x8d,0xdd,0x45,0xa5,0xcc}};
     static const GUID CLSID_wg_mp3_sink_factory = {0x1f302877,0xaaab,0x40a3,{0xb9,0xe0,0x9f,0x48,0xda,0xf3,0x5b,0xc8}};
     static const GUID CLSID_wg_mpeg4_sink_factory = {0x5d5407d9,0xc6ca,0x4770,{0xa7,0xcc,0x27,0xc0,0xcb,0x8a,0x76,0x27}};
@@ -1009,7 +1010,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
     if (SUCCEEDED(hr = mfplat_get_class_object(clsid, iid, out)))
         return hr;
 
-    if (IsEqualGUID(clsid, &CLSID_AviSplitter))
+    if (IsEqualGUID(clsid, &CLSID_wg_avi_splitter))
         factory = &avi_splitter_cf;
     else if (IsEqualGUID(clsid, &CLSID_decodebin_parser))
         factory = &decodebin_parser_cf;
@@ -1079,29 +1080,6 @@ BOOL init_gstreamer(void)
 static const REGPINTYPES reg_audio_mt = {&MEDIATYPE_Audio, &GUID_NULL};
 static const REGPINTYPES reg_stream_mt = {&MEDIATYPE_Stream, &GUID_NULL};
 static const REGPINTYPES reg_video_mt = {&MEDIATYPE_Video, &GUID_NULL};
-
-static const REGPINTYPES reg_avi_splitter_sink_mt = {&MEDIATYPE_Stream, &MEDIASUBTYPE_Avi};
-
-static const REGFILTERPINS2 reg_avi_splitter_pins[2] =
-{
-    {
-        .nMediaTypes = 1,
-        .lpMediaType = &reg_avi_splitter_sink_mt,
-    },
-    {
-        .dwFlags = REG_PINFLAG_B_OUTPUT,
-        .nMediaTypes = 1,
-        .lpMediaType = &reg_video_mt,
-    },
-};
-
-static const REGFILTER2 reg_avi_splitter =
-{
-    .dwVersion = 2,
-    .dwMerit = MERIT_NORMAL,
-    .u.s2.cPins2 = 2,
-    .u.s2.rgPins2 = reg_avi_splitter_pins,
-};
 
 static const REGPINTYPES reg_mpeg_audio_codec_sink_mts[3] =
 {
@@ -1267,7 +1245,6 @@ HRESULT WINAPI DllRegisterServer(void)
             &IID_IFilterMapper2, (void **)&mapper)))
         return hr;
 
-    IFilterMapper2_RegisterFilter(mapper, &CLSID_AviSplitter, L"AVI Splitter", NULL, NULL, NULL, &reg_avi_splitter);
     IFilterMapper2_RegisterFilter(mapper, &CLSID_decodebin_parser,
             L"GStreamer splitter filter", NULL, NULL, NULL, &reg_decodebin_parser);
     IFilterMapper2_RegisterFilter(mapper, &CLSID_CMpegAudioCodec,
@@ -1297,7 +1274,6 @@ HRESULT WINAPI DllUnregisterServer(void)
             &IID_IFilterMapper2, (void **)&mapper)))
         return hr;
 
-    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_AviSplitter);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_decodebin_parser);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_CMpegAudioCodec);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_CMpegVideoCodec);

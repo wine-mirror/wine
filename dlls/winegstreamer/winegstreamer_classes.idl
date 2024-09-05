@@ -22,11 +22,10 @@
 #pragma makedep register
 
 [
-    helpstring("AVI Splitter"),
     threading(both),
-    uuid(1b544c20-fd0b-11ce-8c63-00aa0044b51e)
+    uuid(272bfbfb-50d0-4078-b600-1e959c301337)
 ]
-coclass AviSplitter {}
+coclass wg_avi_splitter {}
 
 [
     helpstring("MPEG Audio Decoder"),
