@@ -3723,6 +3723,22 @@ static void test_process_instrumentation_callback(void)
     ok( status == STATUS_SUCCESS || status == STATUS_INFO_LENGTH_MISMATCH
             || broken( status == STATUS_PRIVILEGE_NOT_HELD ) /* some versions and machines before Win10 */,
             "Got unexpected status %#lx.\n", status );
+
+    if (status)
+    {
+        win_skip( "NtSetInformationProcess failed, skipping further tests.\n" );
+        return;
+    }
+
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback,
+                                      &info.Callback, sizeof(info.Callback) );
+    ok( status == STATUS_SUCCESS, "got %#lx.\n", status );
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback,
+                                      &info.Callback, sizeof(info.Callback) + 4 );
+    ok( status == STATUS_SUCCESS, "got %#lx.\n", status );
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback,
+                                      &info.Callback, sizeof(info.Callback) / 2 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx.\n", status );
 }
 
 static void test_debuggee_dbgport(int argc, char **argv)

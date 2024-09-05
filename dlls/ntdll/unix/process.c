@@ -1711,15 +1711,18 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
     case ProcessInstrumentationCallback:
     {
         PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION *instr = info;
+        void *callback;
 
-        if (size < sizeof(*instr)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (size < sizeof(callback)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (size >= sizeof(PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION)) callback = instr->Callback;
+        else                                                              callback = *(void **)info;
         ret = STATUS_SUCCESS;
         if (handle != GetCurrentProcess())
         {
             FIXME( "Setting ProcessInstrumentationCallback is not yet supported for other process.\n" );
             break;
         }
-        set_process_instrumentation_callback( instr->Callback );
+        set_process_instrumentation_callback( callback );
         break;
     }
 
