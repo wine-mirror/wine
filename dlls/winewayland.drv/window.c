@@ -688,38 +688,21 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface)
 {
     struct wayland_client_surface *client;
+    HWND hwnd = surface->hwnd;
 
-    if ((client = surface->client))
+    /* ownership is shared with one of the callers, the last caller to release
+     * its reference will also destroy it and clear our pointer. */
+    if ((client = surface->client)) InterlockedIncrement(&client->ref);
+
+    if (!client && !(client = wayland_client_surface_create(hwnd))) return NULL;
+
+    if (!surface->client)
     {
-        InterlockedIncrement(&client->ref);
-        return client;
+        wayland_client_surface_attach(client, surface);
+        surface->client = client;
     }
 
-    if (!(client = wayland_client_surface_create(surface->hwnd)))
-        return NULL;
-
-    client->wl_subsurface =
-        wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
-                                        client->wl_surface,
-                                        surface->wl_surface);
-    if (!client->wl_subsurface)
-    {
-        ERR("Failed to create client wl_subsurface\n");
-        goto err;
-    }
-    /* Present contents independently of the parent surface. */
-    wl_subsurface_set_desync(client->wl_subsurface);
-
-    wayland_surface_reconfigure_client(surface);
-    /* Commit to apply subsurface positioning. */
-    wl_surface_commit(surface->wl_surface);
-
-    surface->client = client;
     return client;
-
-err:
-    wayland_client_surface_release(client);
-    return NULL;
 }
 
 BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffer, HRGN damage_region)
