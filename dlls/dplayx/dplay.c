@@ -3806,6 +3806,8 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
     return DPERR_UNINITIALIZED;
   }
 
+  EnterCriticalSection( &This->lock );
+
   for( lpMsg = DPQ_FIRST( This->dp2->receiveMsgs ); lpMsg; lpMsg = DPQ_NEXT( lpMsg->msgs ) )
   {
     if( ( dwFlags & DPRECEIVE_TOPLAYER ) && ( lpMsg->toId != *lpidTo ) )
@@ -3817,6 +3819,7 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
 
   if( lpMsg == NULL )
   {
+    LeaveCriticalSection( &This->lock );
     return DPERR_NOMESSAGES;
   }
 
@@ -3825,6 +3828,7 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
   if( *lpdwDataSize < msgSize || !lpData )
   {
     *lpdwDataSize = msgSize;
+    LeaveCriticalSection( &This->lock );
     return DPERR_BUFFERTOOSMALL;
   }
 
@@ -3841,6 +3845,8 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
     free( lpMsg->msg );
     free( lpMsg );
   }
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
