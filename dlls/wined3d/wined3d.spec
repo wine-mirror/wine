@@ -40,8 +40,10 @@
 @ cdecl wined3d_command_list_decref(ptr)
 @ cdecl wined3d_command_list_incref(ptr)
 
+@ cdecl wined3d_decoder_begin_frame(ptr ptr)
 @ cdecl wined3d_decoder_create(ptr ptr ptr)
 @ cdecl wined3d_decoder_decref(ptr)
+@ cdecl wined3d_decoder_end_frame(ptr)
 @ cdecl wined3d_decoder_get_buffer(ptr long)
 
 @ cdecl wined3d_decoder_output_view_create(ptr ptr ptr ptr ptr)

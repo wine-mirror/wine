@@ -3208,15 +3208,25 @@ static HRESULT STDMETHODCALLTYPE d3d11_video_context_ReleaseDecoderBuffer(ID3D11
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderBeginFrame(ID3D11VideoContext *iface,
         ID3D11VideoDecoder *decoder, ID3D11VideoDecoderOutputView *view, UINT key_size, const void *key)
 {
-    FIXME("iface %p, decoder %p, view %p, key_size %u, key %p, stub!\n", iface, decoder, view, key_size, key);
-    return E_NOTIMPL;
+    struct d3d_video_decoder_output_view *view_impl = unsafe_impl_from_ID3D11VideoDecoderOutputView(view);
+    struct d3d_video_decoder *decoder_impl = unsafe_impl_from_ID3D11VideoDecoder(decoder);
+
+    TRACE("iface %p, decoder %p, view %p, key_size %u, key %p.\n", iface, decoder, view, key_size, key);
+
+    if (key_size)
+        FIXME("Ignoring encryption key.\n");
+
+    return wined3d_decoder_begin_frame(decoder_impl->wined3d_decoder, view_impl->wined3d_view);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderEndFrame(
         ID3D11VideoContext *iface, ID3D11VideoDecoder *decoder)
 {
-    FIXME("iface %p, decoder %p, stub!\n", iface, decoder);
-    return E_NOTIMPL;
+    struct d3d_video_decoder *decoder_impl = unsafe_impl_from_ID3D11VideoDecoder(decoder);
+
+    TRACE("iface %p, decoder %p.\n", iface, decoder);
+
+    return wined3d_decoder_end_frame(decoder_impl->wined3d_decoder);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_SubmitDecoderBuffers(ID3D11VideoContext *iface,

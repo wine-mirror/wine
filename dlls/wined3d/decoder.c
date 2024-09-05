@@ -27,6 +27,7 @@ struct wined3d_decoder
     struct wined3d_device *device;
     struct wined3d_decoder_desc desc;
     struct wined3d_buffer *bitstream, *parameters, *matrix, *slice_control;
+    struct wined3d_decoder_output_view *output_view;
 };
 
 static void wined3d_decoder_cleanup(struct wined3d_decoder *decoder)
@@ -466,4 +467,37 @@ struct wined3d_resource * CDECL wined3d_decoder_get_buffer(
 
     FIXME("Unhandled buffer type %#x.\n", type);
     return NULL;
+}
+
+HRESULT CDECL wined3d_decoder_begin_frame(struct wined3d_decoder *decoder,
+        struct wined3d_decoder_output_view *view)
+{
+    TRACE("decoder %p, view %p.\n", decoder, view);
+
+    if (decoder->output_view)
+    {
+        ERR("Already in frame.\n");
+        return E_INVALIDARG;
+    }
+
+    wined3d_decoder_output_view_incref(view);
+    decoder->output_view = view;
+
+    return S_OK;
+}
+
+HRESULT CDECL wined3d_decoder_end_frame(struct wined3d_decoder *decoder)
+{
+    TRACE("decoder %p.\n", decoder);
+
+    if (!decoder->output_view)
+    {
+        ERR("Not in frame.\n");
+        return E_INVALIDARG;
+    }
+
+    wined3d_decoder_output_view_decref(decoder->output_view);
+    decoder->output_view = NULL;
+
+    return S_OK;
 }

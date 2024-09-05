@@ -2797,3 +2797,12 @@ HRESULT d3d_video_decoder_output_view_create(struct d3d_device *device, ID3D11Re
 
     return S_OK;
 }
+
+struct d3d_video_decoder_output_view *unsafe_impl_from_ID3D11VideoDecoderOutputView(ID3D11VideoDecoderOutputView *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_video_decoder_output_view_vtbl);
+
+    return impl_from_ID3D11VideoDecoderOutputView(iface);
+}
