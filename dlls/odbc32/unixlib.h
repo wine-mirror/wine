@@ -36,6 +36,7 @@ static inline BOOL SUCCESS( SQLRETURN ret ) { return ret == SQL_SUCCESS || ret =
 enum sql_funcs
 {
     process_attach,
+    process_detach,
     unix_SQLAllocHandle,
     unix_SQLAllocHandleStd,
     unix_SQLBindCol,

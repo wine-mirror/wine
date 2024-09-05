@@ -700,8 +700,6 @@ DBUS_LIBS
 DBUS_CFLAGS
 INOTIFY_LIBS
 INOTIFY_CFLAGS
-ODBC_LIBS
-ODBC_CFLAGS
 PCSCLITE_LIBS
 PCAP_LIBS
 WAYLAND_EGL_LIBS
@@ -943,7 +941,6 @@ with_inotify
 with_krb5
 with_mingw
 with_netapi
-with_odbc
 with_opencl
 with_opengl
 with_osmesa
@@ -1824,8 +1821,6 @@ EGL_CFLAGS
 EGL_LIBS
 WAYLAND_EGL_CFLAGS
 WAYLAND_EGL_LIBS
-ODBC_CFLAGS
-ODBC_LIBS
 INOTIFY_CFLAGS
 INOTIFY_LIBS
 DBUS_CFLAGS
@@ -2523,7 +2518,6 @@ Optional Packages:
   --without-krb5          do not use krb5 (Kerberos)
   --without-mingw         do not use the MinGW cross-compiler
   --without-netapi        do not use the Samba NetAPI library
-  --without-odbc          do not use the ODBC library
   --without-opencl        do not use OpenCL
   --without-opengl        do not use OpenGL
   --without-osmesa        do not use the OSMesa library
@@ -2659,8 +2653,6 @@ Some influential environment variables:
               C compiler flags for wayland-egl, overriding pkg-config
   WAYLAND_EGL_LIBS
               Linker flags for wayland-egl, overriding pkg-config
-  ODBC_CFLAGS C compiler flags for odbc, overriding pkg-config
-  ODBC_LIBS   Linker flags for odbc, overriding pkg-config
   INOTIFY_CFLAGS
               C compiler flags for libinotify, overriding pkg-config
   INOTIFY_LIBS
@@ -4384,13 +4376,6 @@ fi
 if test ${with_netapi+y}
 then :
   withval=$with_netapi;
-fi
-
-
-# Check whether --with-odbc was given.
-if test ${with_odbc+y}
-then :
-  withval=$with_odbc;
 fi
 
 
@@ -16642,91 +16627,6 @@ esac
 enable_winscard=${enable_winscard:-no}
 fi
 
-if test "x$with_odbc" != "xno"
-then
-    rm -f conftest.err
-if ${ODBC_CFLAGS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  ODBC_CFLAGS=`$PKG_CONFIG --cflags odbc 2>conftest.err`
-fi
-fi
-
-if ${ODBC_LIBS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  ODBC_LIBS=`$PKG_CONFIG --libs odbc 2>/dev/null`
-fi
-fi
-
-ODBC_LIBS=${ODBC_LIBS:-"-lodbc"}
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: odbc cflags: $ODBC_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: odbc libs: $ODBC_LIBS" >&5
-if test -s conftest.err; then
-     printf %s "$as_me:${as_lineno-$LINENO}: odbc errors: " >&5
-     cat conftest.err >&5
-fi
-rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $ODBC_CFLAGS"
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SQLConnect in -lodbc" >&5
-printf %s "checking for SQLConnect in -lodbc... " >&6; }
-if test ${ac_cv_lib_odbc_SQLConnect+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lodbc $ODBC_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char SQLConnect ();
-int
-main (void)
-{
-return SQLConnect ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_odbc_SQLConnect=yes
-else $as_nop
-  ac_cv_lib_odbc_SQLConnect=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_odbc_SQLConnect" >&5
-printf "%s\n" "$ac_cv_lib_odbc_SQLConnect" >&6; }
-if test "x$ac_cv_lib_odbc_SQLConnect" = xyes
-then :
-  :
-else $as_nop
-  ODBC_LIBS=""
-fi
-
-CPPFLAGS=$ac_save_CPPFLAGS
-
-fi
-if test "x$ODBC_LIBS" = x
-then :
-  case "x$with_odbc" in
-  x)   as_fn_append wine_notices "|libodbc not found, ODBC won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libodbc not found, ODBC won't be supported.
-This is an error since --with-odbc was requested." "$LINENO" 5 ;;
-esac
-enable_odbc32=${enable_odbc32:-no}
-fi
-
 if test "x$with_inotify" != "xno"
 then
     rm -f conftest.err
@@ -19053,6 +18953,62 @@ printf "%s\n" "#define HAVE_LIBPROCSTAT 1" >>confdefs.h
                   PROCSTAT_LIBS="-lprocstat"
 
 fi
+
+fi
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lodbc" >&5
+printf %s "checking for -lodbc... " >&6; }
+if test ${ac_cv_lib_soname_odbc+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lodbc  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char SQLConnect ();
+int
+main (void)
+{
+return SQLConnect ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_odbc=`$ac_cv_path_LDD conftest.exe | grep "odbc" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_odbc=`$OTOOL -L conftest$ac_exeext | grep "libodbc\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libodbc\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_odbc=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libodbc\\.$LIBEXT" | sed -e "s/^.*\\[\\(libodbc\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_odbc:+false} :
+then :
+  ac_cv_lib_soname_odbc=`$LDD conftest$ac_exeext | grep "libodbc\\.$LIBEXT" | sed -e "s/^.*\(libodbc\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else $as_nop
+  ac_cv_lib_soname_odbc=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_odbc:+false} :
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+printf "%s\n" "not found" >&6; }
+       printf "%s\n" "#define SONAME_LIBODBC \"libodbc.$LIBEXT\"" >>confdefs.h
+
+else $as_nop
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_odbc" >&5
+printf "%s\n" "$ac_cv_lib_soname_odbc" >&6; }
+
+printf "%s\n" "#define SONAME_LIBODBC \"$ac_cv_lib_soname_odbc\"" >>confdefs.h
+
 
 fi
 
@@ -24103,8 +24059,6 @@ WAYLAND_EGL_CFLAGS = $WAYLAND_EGL_CFLAGS
 WAYLAND_EGL_LIBS = $WAYLAND_EGL_LIBS
 PCAP_LIBS = $PCAP_LIBS
 PCSCLITE_LIBS = $PCSCLITE_LIBS
-ODBC_CFLAGS = $ODBC_CFLAGS
-ODBC_LIBS = $ODBC_LIBS
 INOTIFY_CFLAGS = $INOTIFY_CFLAGS
 INOTIFY_LIBS = $INOTIFY_LIBS
 DBUS_CFLAGS = $DBUS_CFLAGS

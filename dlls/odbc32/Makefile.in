@@ -2,7 +2,6 @@ MODULE    = odbc32.dll
 UNIXLIB   = odbc32.so
 IMPORTLIB = odbc32
 IMPORTS   = advapi32
-UNIX_LIBS = $(ODBC_LIBS)
 
 SOURCES = \
 	proxyodbc.c \
