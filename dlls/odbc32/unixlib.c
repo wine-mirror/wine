@@ -311,7 +311,7 @@ static WCHAR *get_driver_name( const WCHAR *filename )
     key_odbcinst = open_odbcinst_key();
     for (i = 0; i < drivers.count; i++)
     {
-        static const WCHAR driverW[] = {'D','r','i','v','e','r',0};
+        static const WCHAR driverW[] = {'D','r','i','v','e','r'};
         WCHAR buffer[1024];
         KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
 
