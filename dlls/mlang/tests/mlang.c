@@ -2720,6 +2720,8 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     HRESULT ret;
     HDC hdc;
     WCHAR ch;
+    UINT charset;
+    FONTSIGNATURE fs;
 
     hdc = GetDC(NULL);
     codepages = FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC | FS_GREEK | FS_TURKISH |
@@ -2780,6 +2782,13 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     last_font = new_font;
     ret = IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, &new_font);
     ok(ret == S_OK && new_font == last_font, "IMLangFontLink2_MapFont: expected S_OK/%p, got %08lx/%p\n", last_font, ret, new_font);
+
+    /* check that the returned font can directly handle the codepage (instead of relying on a child font) */
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, FS_JISJAPAN, 0, &new_font);
+    old_font = SelectObject(hdc, new_font);
+    charset = GetTextCharsetInfo(hdc, &fs, 0);
+    SelectObject(hdc, old_font);
+    ok(ret == S_OK && charset == SHIFTJIS_CHARSET && !!(fs.fsCsb[0] & FS_JISJAPAN), "IMLangFontLink2_MapFont: expected S_OK/%u/1, got %08lx/%u/0\n", SHIFTJIS_CHARSET, ret, charset);
 
     ret = IMLangFontLink2_ReleaseFont(font_link2, NULL);
     ok(ret == E_FAIL, "IMLangFontLink2_ReleaseFont: expected E_FAIL, got %08lx\n", ret);

@@ -1311,19 +1311,60 @@ HRESULT WINAPI Rfc1766ToLcidA(LCID *lcid, LPCSTR rfc1766A)
     return Rfc1766ToLcidW(lcid, rfc1766W);
 }
 
+struct map_font_enum_data
+{
+    HDC hdc;
+    LOGFONTW src_lf;
+    HFONT font;
+    UINT charset;
+    DWORD mask;
+};
+
+static INT CALLBACK map_font_enum_proc(const LOGFONTW *lf, const TEXTMETRICW *ntm, DWORD type, LPARAM lParam)
+{
+    HFONT new_font, old_font;
+    FONTSIGNATURE fs;
+    UINT charset;
+    struct map_font_enum_data *data = (struct map_font_enum_data *)lParam;
+
+    data->src_lf.lfCharSet = lf->lfCharSet;
+    wcscpy(data->src_lf.lfFaceName, lf->lfFaceName);
+
+    new_font = CreateFontIndirectW(&data->src_lf);
+    if (new_font == NULL) return 1;
+
+    old_font = SelectObject(data->hdc, new_font);
+    charset = GetTextCharsetInfo(data->hdc, &fs, 0);
+    SelectObject(data->hdc, old_font);
+
+    /* check that the font directly supports the codepage as well (not just through a child font) */
+    if (charset == data->charset && fs.fsCsb[0] & data->mask)
+    {
+        data->font = new_font;
+        return 0;
+    }
+    DeleteObject(new_font);
+    return 1;
+}
+
 static HRESULT map_font(HDC hdc, DWORD codepages, HFONT src_font, HFONT *dst_font)
 {
     struct font_list *font_list_entry;
     CHARSETINFO charset_info;
-    HFONT new_font, old_font;
     LOGFONTW font_attr;
     DWORD mask, Csb[2];
     BOOL found_cached;
-    UINT charset;
     BOOL ret;
     UINT i;
+    struct map_font_enum_data enum_data;
 
     if (hdc == NULL || src_font == NULL) return E_FAIL;
+
+    enum_data.hdc = hdc;
+    enum_data.font = NULL;
+
+    GetObjectW(src_font, sizeof(enum_data.src_lf), &enum_data.src_lf);
+    enum_data.src_lf.lfWidth = 0;
 
     for (i = 0; i < 32; i++)
     {
@@ -1351,36 +1392,33 @@ static HRESULT map_font(HDC hdc, DWORD codepages, HFONT src_font, HFONT *dst_fon
             LeaveCriticalSection(&font_cache_critical);
             if (found_cached) return S_OK;
 
-            GetObjectW(src_font, sizeof(font_attr), &font_attr);
             font_attr.lfCharSet = (BYTE)charset_info.ciCharset;
-            font_attr.lfWidth = 0;
             font_attr.lfFaceName[0] = 0;
-            new_font = CreateFontIndirectW(&font_attr);
-            if (new_font == NULL) continue;
+            font_attr.lfPitchAndFamily = 0;
 
-            old_font = SelectObject(hdc, new_font);
-            charset = GetTextCharset(hdc);
-            SelectObject(hdc, old_font);
-            if (charset == charset_info.ciCharset)
+            enum_data.charset = charset_info.ciCharset;
+            enum_data.mask = mask;
+
+            if (!EnumFontFamiliesExW(hdc, &font_attr, map_font_enum_proc, (LPARAM)&enum_data, 0))
             {
                 font_list_entry = malloc(sizeof(*font_list_entry));
                 if (font_list_entry == NULL) return E_OUTOFMEMORY;
 
                 font_list_entry->base_font = src_font;
-                font_list_entry->font = new_font;
-                font_list_entry->charset = charset;
+                font_list_entry->font = enum_data.font;
+                font_list_entry->charset = enum_data.charset;
 
                 EnterCriticalSection(&font_cache_critical);
                 list_add_tail(&font_cache, &font_list_entry->list_entry);
                 LeaveCriticalSection(&font_cache_critical);
 
                 if (dst_font != NULL)
-                    *dst_font = new_font;
+                    *dst_font = enum_data.font;
                 return S_OK;
             }
         }
     }
-
+    WARN("couldn't create an appropriate mapped font...\n");
     return E_FAIL;
 }
 
