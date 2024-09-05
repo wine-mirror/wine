@@ -216,8 +216,10 @@ struct wined3d_device_vk;
     VK_DEVICE_PFN(vkGetSwapchainImagesKHR) \
     VK_DEVICE_PFN(vkQueuePresentKHR) \
     /* VK_KHR_video_queue */ \
+    VK_DEVICE_EXT_PFN(vkBindVideoSessionMemoryKHR) \
     VK_DEVICE_EXT_PFN(vkCreateVideoSessionKHR) \
-    VK_DEVICE_EXT_PFN(vkDestroyVideoSessionKHR)
+    VK_DEVICE_EXT_PFN(vkDestroyVideoSessionKHR) \
+    VK_DEVICE_EXT_PFN(vkGetVideoSessionMemoryRequirementsKHR)
 
 #define DECLARE_VK_PFN(name) PFN_##name name;
 
@@ -674,6 +676,8 @@ static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_conte
     return CONTAINING_RECORD(context, struct wined3d_context_vk, c);
 }
 
+struct wined3d_allocator_block *wined3d_context_vk_allocate_memory(struct wined3d_context_vk *context_vk,
+        unsigned int memory_type, VkDeviceSize size, VkDeviceMemory *vk_memory);
 bool wined3d_context_vk_allocate_query(struct wined3d_context_vk *context_vk,
         enum wined3d_query_type type, struct wined3d_query_pool_idx_vk *pool_idx);
 VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_context_vk *context_vk,
@@ -714,6 +718,7 @@ void wined3d_context_vk_destroy_vk_pipeline(struct wined3d_context_vk *context_v
 void wined3d_context_vk_destroy_vk_video_session(struct wined3d_context_vk *context_vk,
         VkPipeline vk_video_session, uint64_t command_buffer_id);
 void wined3d_context_vk_end_current_render_pass(struct wined3d_context_vk *context_vk);
+void wined3d_context_vk_free_memory(struct wined3d_context_vk *context_vk, struct wined3d_allocator_block *block);
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk);
 struct wined3d_pipeline_layout_vk *wined3d_context_vk_get_pipeline_layout(struct wined3d_context_vk *context_vk,
         VkDescriptorSetLayoutBinding *bindings, SIZE_T binding_count);
