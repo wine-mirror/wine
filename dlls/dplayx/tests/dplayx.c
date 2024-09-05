@@ -8182,11 +8182,11 @@ static void test_Receive(void)
     memset( msgData, 0xcc, sizeof( msgData ) );
     msgDataSize = sizeof( msgData );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_PEEK, msgData, &msgDataSize );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
-    todo_wine ok( toId == 0x07734, "got destination id %#lx.\n", toId );
-    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
-    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
 
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
@@ -8230,11 +8230,11 @@ static void test_Receive(void)
     memset( msgData, 0xcc, sizeof( msgData ) );
     msgDataSize = sizeof( msgData );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_FROMPLAYER, msgData, &msgDataSize );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
     ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
-    todo_wine ok( toId == 0x07734, "got destination id %#lx.\n", toId );
-    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
-    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+    ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
 
     fromId = 0x1337;
     toId = 0xdeadbeef;
@@ -8254,11 +8254,11 @@ static void test_Receive(void)
     memset( msgData, 0xcc, sizeof( msgData ) );
     msgDataSize = sizeof( msgData );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_TOPLAYER, msgData, &msgDataSize );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
     ok( toId == 0x07734, "got destination id %#lx.\n", toId );
-    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
-    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+    ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
 
     toId = 0x07734;
     msgDataSize = sizeof( msgData );
@@ -8270,11 +8270,11 @@ static void test_Receive(void)
     memset( msgData, 0xcc, sizeof( msgData ) );
     msgDataSize = sizeof( msgData );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_TOPLAYER, msgData, &msgDataSize );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
     ok( toId == 0x14, "got destination id %#lx.\n", toId );
-    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
-    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+    ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
 
     toId = 0x14;
     msgDataSize = sizeof( msgData );

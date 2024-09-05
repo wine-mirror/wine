@@ -3798,7 +3798,7 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
   LPDPMSG lpMsg = NULL;
   DWORD msgSize;
 
-  FIXME( "(%p)->(%p,%p,0x%08lx,%p,%p,%u): stub\n",
+  TRACE( "(%p)->(%p,%p,0x%08lx,%p,%p,%u)\n",
          This, lpidFrom, lpidTo, dwFlags, lpData, lpdwDataSize, bAnsi );
 
   if( This->dp2->connectionInitialized == NO_PROVIDER )
@@ -3806,24 +3806,13 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
     return DPERR_UNINITIALIZED;
   }
 
-  if( dwFlags == 0 )
+  for( lpMsg = DPQ_FIRST( This->dp2->receiveMsgs ); lpMsg; lpMsg = DPQ_NEXT( lpMsg->msgs ) )
   {
-    dwFlags = DPRECEIVE_ALL;
-  }
-
-  if( dwFlags & DPRECEIVE_ALL )
-  {
-    lpMsg = This->dp2->receiveMsgs.lpQHFirst;
-  }
-  else if( ( dwFlags & DPRECEIVE_TOPLAYER ) ||
-           ( dwFlags & DPRECEIVE_FROMPLAYER )
-         )
-  {
-    FIXME( "Find matching message 0x%08lx\n", dwFlags );
-  }
-  else
-  {
-    ERR( "Hmmm..dwFlags 0x%08lx\n", dwFlags );
+    if( ( dwFlags & DPRECEIVE_TOPLAYER ) && ( lpMsg->toId != *lpidTo ) )
+      continue;
+    if( ( dwFlags & DPRECEIVE_FROMPLAYER ) && ( lpMsg->fromId != *lpidFrom ) )
+      continue;
+    break;
   }
 
   if( lpMsg == NULL )
