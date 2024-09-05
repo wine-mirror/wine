@@ -931,6 +931,22 @@ static BOOL get_default_enable_shell( const WCHAR *name )
     return result;
 }
 
+static BOOL get_default_enable_launchers(void)
+{
+    BOOL result;
+    DWORD size = sizeof(result);
+
+    if (!RegGetValueW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+                       L"NoDesktop", RRF_RT_REG_DWORD, NULL, &result, &size ))
+        return !result;
+
+    if (!RegGetValueW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+                       L"NoDesktop", RRF_RT_REG_DWORD, NULL, &result, &size ))
+        return !result;
+
+    return TRUE;
+}
+
 static BOOL get_default_show_systray( const WCHAR *name )
 {
     HKEY hkey;
@@ -1187,7 +1203,7 @@ void manage_desktop( WCHAR *arg )
     WCHAR *cmdline = NULL, *driver = NULL;
     WCHAR *p = arg;
     const WCHAR *name = NULL;
-    BOOL enable_shell, show_systray, no_tray_items;
+    BOOL enable_shell, enable_launchers, show_systray, no_tray_items;
     void (WINAPI *pShellDDEInit)( BOOL ) = NULL;
     HMODULE shell32;
     HANDLE thread;
@@ -1222,6 +1238,7 @@ void manage_desktop( WCHAR *arg )
     }
 
     enable_shell = name ? get_default_enable_shell( name ) : FALSE;
+    enable_launchers = get_default_enable_launchers();
     show_systray = get_default_show_systray( name );
     no_tray_items = get_no_tray_items_display();
 
@@ -1268,7 +1285,7 @@ void manage_desktop( WCHAR *arg )
         initialize_appbar();
 
         initialize_systray( using_root, enable_shell, show_systray, no_tray_items );
-        if (!using_root) initialize_launchers( hwnd );
+        if (!using_root && enable_launchers) initialize_launchers( hwnd );
 
         if ((shell32 = LoadLibraryW( L"shell32.dll" )) &&
             (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))
