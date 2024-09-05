@@ -71,6 +71,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_FilterMapper, filter_mapper_create },
     { &CLSID_FilterMapper2, filter_mapper_create },
     { &CLSID_MemoryAllocator, mem_allocator_create },
+    { &CLSID_MPEG1Splitter, mpeg1_splitter_create },
     { &CLSID_SeekingPassThru, seeking_passthrough_create },
     { &CLSID_SystemClock, system_clock_create },
     { &CLSID_VideoRenderer, video_renderer_create },
@@ -321,6 +322,48 @@ HRESULT WINAPI DllRegisterServer(void)
         .rgPins2 = acm_wrapper_pins,
     };
 
+    static const REGPINTYPES mpeg_splitter_inputs[] =
+    {
+        {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Audio},
+        {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1Video},
+        {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1System},
+        {&MEDIATYPE_Stream, &MEDIASUBTYPE_MPEG1VideoCD},
+    };
+    static const REGPINTYPES mpeg_splitter_audio_outputs[] =
+    {
+        {&MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1Packet},
+        {&MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1AudioPayload},
+    };
+    static const REGPINTYPES mpeg_splitter_video_outputs[] =
+    {
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Packet},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Payload},
+    };
+    static const REGFILTERPINS2 mpeg_splitter_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(mpeg_splitter_inputs),
+            .lpMediaType = mpeg_splitter_inputs,
+        },
+        {
+            .dwFlags = REG_PINFLAG_B_ZERO | REG_PINFLAG_B_OUTPUT,
+            .nMediaTypes = ARRAY_SIZE(mpeg_splitter_audio_outputs),
+            .lpMediaType = mpeg_splitter_audio_outputs,
+        },
+        {
+            .dwFlags = REG_PINFLAG_B_ZERO | REG_PINFLAG_B_OUTPUT,
+            .nMediaTypes = ARRAY_SIZE(mpeg_splitter_video_outputs),
+            .lpMediaType = mpeg_splitter_video_outputs,
+        },
+    };
+    static const REGFILTER2 mpeg_splitter_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_NORMAL,
+        .cPins2 = ARRAY_SIZE(mpeg_splitter_pins),
+        .rgPins2 = mpeg_splitter_pins,
+    };
+
     IFilterMapper2 *mapper;
     HRESULT hr;
 
@@ -350,6 +393,9 @@ HRESULT WINAPI DllRegisterServer(void)
         goto done;
     if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_ACMWrapper, L"ACM Wrapper", NULL,
             &CLSID_LegacyAmFilterCategory, NULL, &acm_wrapper_reg)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_MPEG1Splitter, L"MPEG-I Stream Splitter", NULL,
+            NULL, NULL, &mpeg_splitter_reg)))
         goto done;
 
 done:
@@ -382,6 +428,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_AsyncReader)))
         goto done;
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, &CLSID_LegacyAmFilterCategory, NULL, &CLSID_ACMWrapper)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_MPEG1Splitter)))
         goto done;
 
 done:

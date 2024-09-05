@@ -145,3 +145,10 @@ coclass VideoMixingRenderer9 { interface IBaseFilter; }
     uuid(99d54f63-1a69-41ae-aa4d-c976eb3f0713)
 ]
 coclass AllocPresenter {}
+
+[
+    helpstring("MPEG-I Stream Splitter"),
+    threading(both),
+    uuid(336475d0-942a-11ce-a870-00aa002feab5)
+]
+coclass MPEG1Splitter {}

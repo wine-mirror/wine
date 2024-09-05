@@ -50,11 +50,10 @@ coclass CMpegVideoCodec {}
 coclass mpeg_layer3_decoder {}
 
 [
-    helpstring("MPEG-I Stream Splitter"),
     threading(both),
-    uuid(336475d0-942a-11ce-a870-00aa002feab5)
+    uuid(a8edbf98-2442-42c5-85a1-ab05a580df53)
 ]
-coclass MPEG1Splitter {}
+coclass wg_mpeg1_splitter {}
 
 [
     helpstring("Wave Parser"),

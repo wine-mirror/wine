@@ -56,6 +56,7 @@ HRESULT filter_graph_create(IUnknown *outer, IUnknown **out);
 HRESULT filter_graph_no_thread_create(IUnknown *outer, IUnknown **out);
 HRESULT filter_mapper_create(IUnknown *outer, IUnknown **out);
 HRESULT mem_allocator_create(IUnknown *outer, IUnknown **out);
+HRESULT mpeg1_splitter_create(IUnknown *outer, IUnknown **out);
 HRESULT system_clock_create(IUnknown *outer, IUnknown **out);
 HRESULT seeking_passthrough_create(IUnknown *outer, IUnknown **out);
 HRESULT video_renderer_create(IUnknown *outer, IUnknown **out);
