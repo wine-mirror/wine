@@ -5252,19 +5252,18 @@ static void test_effect_scalar_variable(void)
     static const struct
     {
         const char *name;
-        D3D_SHADER_VARIABLE_TYPE type;
-        BOOL array;
+        D3D10_EFFECT_TYPE_DESC type;
     }
     tests[] =
     {
-        {"f0", D3D10_SVT_FLOAT},
-        {"i0", D3D10_SVT_INT},
-        {"i1", D3D10_SVT_UINT},
-        {"b0", D3D10_SVT_BOOL},
-        {"f_a", D3D10_SVT_FLOAT, TRUE},
-        {"i_a", D3D10_SVT_INT, TRUE},
-        {"i1_a", D3D10_SVT_UINT, TRUE},
-        {"b_a", D3D10_SVT_BOOL, TRUE},
+        { "f0",   { "float", D3D10_SVC_SCALAR, D3D10_SVT_FLOAT, 0, 0, 1, 1, 4,  4, 16 } },
+        { "f_a",  { "float", D3D10_SVC_SCALAR, D3D10_SVT_FLOAT, 2, 0, 1, 1, 8, 20, 16 } },
+        { "i0",   { "int",   D3D10_SVC_SCALAR, D3D10_SVT_INT,   0, 0, 1, 1, 4,  4, 16 } },
+        { "i_a",  { "int",   D3D10_SVC_SCALAR, D3D10_SVT_INT,   2, 0, 1, 1, 8, 20, 16 } },
+        { "b0",   { "bool",  D3D10_SVC_SCALAR, D3D10_SVT_BOOL,  0, 0, 1, 1, 4,  4, 16 } },
+        { "b_a",  { "bool",  D3D10_SVC_SCALAR, D3D10_SVT_BOOL,  2, 0, 1, 1, 8, 20, 16 } },
+        { "i1",   { "uint",  D3D10_SVC_SCALAR, D3D10_SVT_UINT,  0, 0, 1, 1, 4,  4, 16 } },
+        { "i1_a", { "uint",  D3D10_SVC_SCALAR, D3D10_SVT_UINT,  2, 0, 1, 1, 8, 20, 16 } },
     };
     ID3D10EffectScalarVariable *s_v, *s_v2;
     ID3D10EffectVariable *var, *var2;
@@ -5305,16 +5304,32 @@ static void test_effect_scalar_variable(void)
      * as what we set it to. */
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        const D3D10_EFFECT_TYPE_DESC *t = &tests[i].type;
+
+        winetest_push_context("Variable %s", tests[i].name);
+
         var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
         type = var->lpVtbl->GetType(var);
         hr = type->lpVtbl->GetDesc(type, &type_desc);
-        ok(hr == S_OK, "Variable %s, got unexpected hr %#lx.\n", tests[i].name, hr);
-        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
-                tests[i].name, type_desc.Type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        ok(!strcmp(type_desc.TypeName, t->TypeName), "Unexpected type name %s.\n", type_desc.TypeName);
+        ok(type_desc.Class == t->Class, "Unexpected type class %u.\n", type_desc.Class);
+        ok(type_desc.Type == t->Type, "Unexpected type %u.\n", type_desc.Type);
+        ok(type_desc.Elements == t->Elements, "Unexpected elements count %u.\n", type_desc.Elements);
+        ok(type_desc.Members == t->Members, "Unexpected members count %u.\n", type_desc.Members);
+        ok(type_desc.Rows == t->Rows, "Unexpected rows count %u.\n", type_desc.Rows);
+        ok(type_desc.Columns == t->Columns, "Unexpected columns count %u.\n", type_desc.Columns);
+        ok(type_desc.PackedSize == t->PackedSize, "Unexpected packed size %u.\n", type_desc.PackedSize);
+        ok(type_desc.UnpackedSize == t->UnpackedSize, "Unexpected unpacked size %u.\n", type_desc.UnpackedSize);
+        ok(type_desc.Stride == t->Stride, "Unexpected stride %u.\n", type_desc.Stride);
+
         s_v = var->lpVtbl->AsScalar(var);
-        test_scalar_methods(s_v, tests[i].type, tests[i].name);
-        if (tests[i].array)
-            test_scalar_array_methods(s_v, tests[i].type, tests[i].name);
+        test_scalar_methods(s_v, t->Type, tests[i].name);
+        if (t->Elements)
+            test_scalar_array_methods(s_v, t->Type, tests[i].name);
+
+        winetest_pop_context();
     }
 
     /* Verify that offsets are working correctly between array elements and adjacent data. */
@@ -5683,18 +5698,16 @@ static void test_effect_vector_variable(void)
     static const struct
     {
         const char *name;
-        D3D_SHADER_VARIABLE_TYPE type;
-        unsigned int components;
-        unsigned int elements;
+        D3D10_EFFECT_TYPE_DESC type;
     }
     tests[] =
     {
-        {"v_f0", D3D10_SVT_FLOAT, 4, 1},
-        {"v_i0", D3D10_SVT_INT, 3, 1},
-        {"v_b0", D3D10_SVT_BOOL, 2, 1},
-        {"v_f_a", D3D10_SVT_FLOAT, 4, 2},
-        {"v_i_a", D3D10_SVT_INT, 3, 3},
-        {"v_b_a", D3D10_SVT_BOOL, 2, 4},
+        { "v_f0",  { "float4", D3D10_SVC_VECTOR, D3D10_SVT_FLOAT, 0, 0, 1, 4, 16, 16, 16 } },
+        { "v_f_a", { "float4", D3D10_SVC_VECTOR, D3D10_SVT_FLOAT, 2, 0, 1, 4, 32, 32, 16 } },
+        { "v_i0",  { "int3",   D3D10_SVC_VECTOR, D3D10_SVT_INT,   0, 0, 1, 3, 12, 12, 16 } },
+        { "v_i_a", { "int3",   D3D10_SVC_VECTOR, D3D10_SVT_INT,   3, 0, 1, 3, 36, 44, 16 } },
+        { "v_b0",  { "bool2",  D3D10_SVC_VECTOR, D3D10_SVT_BOOL,  0, 0, 1, 2,  8,  8, 16 } },
+        { "v_b_a", { "bool2",  D3D10_SVC_VECTOR, D3D10_SVT_BOOL,  4, 0, 1, 2, 32, 56, 16 } },
     };
     ID3D10EffectVectorVariable *v_var;
     D3D10_EFFECT_TYPE_DESC type_desc;
@@ -5731,16 +5744,32 @@ static void test_effect_vector_variable(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        const D3D10_EFFECT_TYPE_DESC *t = &tests[i].type;
+
+        winetest_push_context("Variable %s", tests[i].name);
+
         var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
         type = var->lpVtbl->GetType(var);
         hr = type->lpVtbl->GetDesc(type, &type_desc);
-        ok(hr == S_OK, "Variable %s, got unexpected hr %#lx.\n", tests[i].name, hr);
-        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
-                tests[i].name, type_desc.Type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        ok(!strcmp(type_desc.TypeName, t->TypeName), "Unexpected type name %s.\n", type_desc.TypeName);
+        ok(type_desc.Class == t->Class, "Unexpected type class %u.\n", type_desc.Class);
+        ok(type_desc.Type == t->Type, "Unexpected type %u.\n", type_desc.Type);
+        ok(type_desc.Elements == t->Elements, "Unexpected elements count %u.\n", type_desc.Elements);
+        ok(type_desc.Members == t->Members, "Unexpected members count %u.\n", type_desc.Members);
+        ok(type_desc.Rows == t->Rows, "Unexpected rows count %u.\n", type_desc.Rows);
+        ok(type_desc.Columns == t->Columns, "Unexpected columns count %u.\n", type_desc.Columns);
+        ok(type_desc.PackedSize == t->PackedSize, "Unexpected packed size %u.\n", type_desc.PackedSize);
+        ok(type_desc.UnpackedSize == t->UnpackedSize, "Unexpected unpacked size %u.\n", type_desc.UnpackedSize);
+        ok(type_desc.Stride == t->Stride, "Unexpected stride %u.\n", type_desc.Stride);
+
         v_var = var->lpVtbl->AsVector(var);
-        test_vector_methods(v_var, tests[i].type, tests[i].name, tests[i].components);
-        if (tests[i].elements > 1)
-            test_vector_array_methods(v_var, tests[i].type, tests[i].name, tests[i].components, tests[i].elements);
+        test_vector_methods(v_var, t->Type, tests[i].name, t->Rows);
+        if (t->Elements)
+            test_vector_array_methods(v_var, t->Type, tests[i].name, t->Rows, t->Elements);
+
+        winetest_pop_context();
     }
 
     effect->lpVtbl->Release(effect);
