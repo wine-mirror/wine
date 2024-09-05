@@ -55,6 +55,17 @@ struct vec4
     float x, y, z, w;
 };
 
+enum range {
+    RANGE_FULL  = 0,
+    RANGE_UNORM = 1,
+};
+
+struct d3dx_color
+{
+    struct vec4 value;
+    enum range range;
+};
+
 struct volume
 {
     UINT width;
@@ -178,7 +189,7 @@ HRESULT write_buffer_to_file(const WCHAR *filename, ID3DXBuffer *buffer);
 const struct pixel_format_desc *get_format_info(D3DFORMAT format);
 const struct pixel_format_desc *get_format_info_idx(int idx);
 
-void format_to_vec4(const struct pixel_format_desc *format, const BYTE *src, struct vec4 *dst);
+void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *src, struct d3dx_color *dst);
 
 void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
     BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, const struct volume *size,

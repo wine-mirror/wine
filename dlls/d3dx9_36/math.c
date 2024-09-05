@@ -3052,7 +3052,7 @@ HRESULT WINAPI D3DXSHProjectCubeMap(unsigned int order, IDirect3DCubeTexture9 *t
                 float diff_solid, x_3d, y_3d;
                 const float u = x * S + B;
                 const float v = y * S + B;
-                struct vec4 colour;
+                struct d3dx_color colour;
                 D3DXVECTOR3 dir;
 
                 x_3d = (x * 2.0f + 1.0f) / desc.Width - 1.0f;
@@ -3093,15 +3093,15 @@ HRESULT WINAPI D3DXSHProjectCubeMap(unsigned int order, IDirect3DCubeTexture9 *t
                 D3DXVec3Normalize(&dir, &dir);
                 D3DXSHEvalDirection(temp, order, &dir);
 
-                format_to_vec4(format, &row[x * format->block_byte_count], &colour);
+                format_to_d3dx_color(format, &row[x * format->block_byte_count], &colour);
 
                 for (i = 0; i < order_square; ++i)
                 {
-                    red[i] += temp[i] * colour.x * diff_solid;
+                    red[i] += temp[i] * colour.value.x * diff_solid;
                     if (green)
-                        green[i] += temp[i] * colour.y * diff_solid;
+                        green[i] += temp[i] * colour.value.y * diff_solid;
                     if (blue)
-                        blue[i] += temp[i] * colour.z * diff_solid;
+                        blue[i] += temp[i] * colour.value.z * diff_solid;
                 }
             }
         }
