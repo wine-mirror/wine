@@ -3187,6 +3187,7 @@ static void test_UDP(void)
     struct sock_info peer[NUM_UDP_PEERS];
     char buf[16], sockaddr_buf[1024];
     int ss, i, n_recv, n_sent, ret;
+    struct sockaddr_in6 addr6;
     struct sockaddr_in addr;
     int sock;
     struct send_udp_thread_param udp_thread_param;
@@ -3297,6 +3298,26 @@ static void test_UDP(void)
     CloseHandle( thread );
     CloseHandle( udp_thread_param.start_event );
 
+    closesocket(sock);
+
+    /* Test sending to port 0. */
+    sock = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    ok( sock != INVALID_SOCKET, "got error %u.\n", WSAGetLastError() );
+    memset( &addr, 0, sizeof(addr) );
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+    ret = sendto( sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr, sizeof(addr) );
+    ok( ret == sizeof(buf), "got ret %d, error %u.\n", ret, WSAGetLastError() );
+    closesocket(sock);
+
+    sock = socket( AF_INET6, SOCK_DGRAM, 0 );
+    ok( sock != INVALID_SOCKET, "got error %u.\n", WSAGetLastError() );
+    memset( &addr6, 0, sizeof(addr6) );
+    addr6.sin6_family = AF_INET6;
+    ret = inet_pton( AF_INET6, "::1", &addr6.sin6_addr );
+    ok( ret, "got error %u.\n", WSAGetLastError() );
+    ret = sendto( sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr6, sizeof(addr6) );
+    ok( ret == sizeof(buf), "got ret %d, error %u.\n", ret, WSAGetLastError() );
     closesocket(sock);
 }
 

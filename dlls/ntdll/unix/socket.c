@@ -983,6 +983,14 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
             ERR( "failed to convert address\n" );
             return STATUS_ACCESS_VIOLATION;
         }
+        if (sock_type == SOCK_DGRAM && ((unix_addr.addr.sa_family == AF_INET && !unix_addr.in.sin_port)
+            || (unix_addr.addr.sa_family == AF_INET6 && !unix_addr.in6.sin6_port)))
+        {
+            /* Sending to port 0 succeeds on Windows. Use 'discard' service instead so sendmsg() works on Unix
+             * while still goes through other parameters validation. */
+            WARN( "Trying to use destination port 0, substituing 9.\n" );
+            unix_addr.in.sin_port = htons( 9 );
+        }
 
 #if defined(HAS_IPX) && defined(SOL_IPX)
         if (async->addr->sa_family == WS_AF_IPX)
