@@ -198,8 +198,8 @@
 @ stdcall -syscall NtGdiDdDDICreateDevice(ptr)
 @ stub NtGdiDdDDICreateHwContext
 @ stub NtGdiDdDDICreateHwQueue
-@ stub NtGdiDdDDICreateKeyedMutex
-@ stub NtGdiDdDDICreateKeyedMutex2
+@ stdcall -syscall NtGdiDdDDICreateKeyedMutex(ptr)
+@ stdcall -syscall NtGdiDdDDICreateKeyedMutex2(ptr)
 @ stub NtGdiDdDDICreateOutputDupl
 @ stub NtGdiDdDDICreateOverlay
 @ stub NtGdiDdDDICreatePagingQueue
@@ -214,7 +214,7 @@
 @ stdcall -syscall NtGdiDdDDIDestroyDevice(ptr)
 @ stub NtGdiDdDDIDestroyHwContext
 @ stub NtGdiDdDDIDestroyHwQueue
-@ stub NtGdiDdDDIDestroyKeyedMutex
+@ stdcall -syscall NtGdiDdDDIDestroyKeyedMutex(ptr)
 @ stub NtGdiDdDDIDestroyOutputDupl
 @ stub NtGdiDdDDIDestroyOverlay
 @ stub NtGdiDdDDIDestroyPagingQueue
@@ -273,9 +273,9 @@
 @ stdcall -syscall NtGdiDdDDIOpenAdapterFromHdc(ptr)
 @ stdcall -syscall NtGdiDdDDIOpenAdapterFromLuid(ptr)
 @ stub NtGdiDdDDIOpenBundleObjectNtHandleFromName
-@ stub NtGdiDdDDIOpenKeyedMutex
-@ stub NtGdiDdDDIOpenKeyedMutex2
-@ stub NtGdiDdDDIOpenKeyedMutexFromNtHandle
+@ stdcall -syscall NtGdiDdDDIOpenKeyedMutex(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenKeyedMutex2(ptr)
+@ stdcall -syscall NtGdiDdDDIOpenKeyedMutexFromNtHandle(ptr)
 @ stub NtGdiDdDDIOpenNtHandleFromName
 @ stub NtGdiDdDDIOpenProtectedSessionFromNtHandle
 @ stdcall -syscall NtGdiDdDDIOpenResource(ptr)

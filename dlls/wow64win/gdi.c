@@ -695,6 +695,36 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtGdiDdDDICreateKeyedMutex( UINT *args )
+{
+    D3DKMT_CREATEKEYEDMUTEX *desc = get_ptr( &args );
+    return NtGdiDdDDICreateKeyedMutex( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDICreateKeyedMutex2( UINT *args )
+{
+    struct
+    {
+        UINT64 InitialValue;
+        D3DKMT_HANDLE hSharedHandle;
+        D3DKMT_HANDLE hKeyedMutex;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+        D3DKMT_CREATEKEYEDMUTEX2_FLAGS Flags;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_CREATEKEYEDMUTEX2 desc;
+    NTSTATUS status;
+
+    desc.InitialValue = desc32->InitialValue;
+    desc.hSharedHandle = desc32->hSharedHandle;
+    desc.pPrivateRuntimeData = ULongToPtr( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    desc.Flags = desc32->Flags;
+    status = NtGdiDdDDICreateKeyedMutex2( &desc );
+    desc32->hKeyedMutex = desc.hKeyedMutex;
+    return status;
+}
+
 NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyAllocation( UINT *args )
 {
     struct
@@ -754,6 +784,12 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyDevice( UINT *args )
     const D3DKMT_DESTROYDEVICE *desc = get_ptr( &args );
 
     return NtGdiDdDDIDestroyDevice( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIDestroyKeyedMutex( UINT *args )
+{
+    D3DKMT_DESTROYKEYEDMUTEX *desc = get_ptr( &args );
+    return NtGdiDdDDIDestroyKeyedMutex( desc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiDdDDIEnumAdapters( UINT *args )
@@ -862,6 +898,52 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromLuid( UINT *args )
     D3DKMT_OPENADAPTERFROMLUID *desc = get_ptr( &args );
 
     return NtGdiDdDDIOpenAdapterFromLuid( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenKeyedMutex( UINT *args )
+{
+    D3DKMT_OPENKEYEDMUTEX *desc = get_ptr( &args );
+    return NtGdiDdDDIOpenKeyedMutex( desc );
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenKeyedMutex2( UINT *args )
+{
+    struct
+    {
+        D3DKMT_HANDLE hSharedHandle;
+        D3DKMT_HANDLE hKeyedMutex;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENKEYEDMUTEX2 desc;
+    NTSTATUS status;
+
+    desc.hSharedHandle = desc32->hSharedHandle;
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    status = NtGdiDdDDIOpenKeyedMutex2( &desc );
+    desc32->hKeyedMutex = desc.hKeyedMutex;
+    return status;
+}
+
+NTSTATUS WINAPI wow64_NtGdiDdDDIOpenKeyedMutexFromNtHandle( UINT *args )
+{
+    struct
+    {
+        ULONG hNtHandle;
+        D3DKMT_HANDLE hKeyedMutex;
+        ULONG pPrivateRuntimeData;
+        UINT PrivateRuntimeDataSize;
+    } *desc32 = get_ptr( &args );
+    D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE desc;
+    NTSTATUS status;
+
+    desc.hNtHandle = UlongToHandle( desc32->hNtHandle );
+    desc.pPrivateRuntimeData = UlongToPtr( desc32->pPrivateRuntimeData );
+    desc.PrivateRuntimeDataSize = desc32->PrivateRuntimeDataSize;
+    status = NtGdiDdDDIOpenKeyedMutexFromNtHandle( &desc );
+    desc32->hKeyedMutex = desc.hKeyedMutex;
+    return status;
 }
 
 NTSTATUS WINAPI wow64_NtGdiDdDDIOpenResource( UINT *args )
