@@ -173,3 +173,10 @@ coclass WAVEParser {}
     uuid(4a2286e0-7bef-11ce-9bd9-0000e202599c)
 ]
 coclass CMpegAudioCodec {}
+
+[
+    helpstring("MPEG Video Decoder"),
+    threading(both),
+    uuid(feb50740-7bef-11ce-9bd9-0000e202599c)
+]
+coclass CMpegVideoCodec {}

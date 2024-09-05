@@ -34,11 +34,10 @@ coclass wg_avi_splitter {}
 coclass wg_mpeg_audio_decoder {}
 
 [
-    helpstring("MPEG Video Decoder"),
     threading(both),
-    uuid(feb50740-7bef-11ce-9bd9-0000e202599c)
+    uuid(5ed2e5f6-bf3e-4180-83a4-4847cc5b4ea3)
 ]
-coclass CMpegVideoCodec {}
+coclass wg_mpeg_video_decoder {}
 
 [
     helpstring("MPEG Layer-3 Decoder"),

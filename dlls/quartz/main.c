@@ -67,6 +67,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_AVIDec, avi_dec_create },
     { &CLSID_AviSplitter, avi_splitter_create },
     { &CLSID_CMpegAudioCodec, mpeg_audio_codec_create },
+    { &CLSID_CMpegVideoCodec, mpeg_video_codec_create },
     { &CLSID_DSoundRender, dsound_render_create },
     { &CLSID_FilterGraph, filter_graph_create },
     { &CLSID_FilterGraphNoThread, filter_graph_no_thread_create },
@@ -455,6 +456,35 @@ HRESULT WINAPI DllRegisterServer(void)
         .rgPins2 = mpeg_audio_codec_pins,
     };
 
+    static const REGPINTYPES mpeg_video_codec_inputs[] =
+    {
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Packet},
+        {&MEDIATYPE_Video, &MEDIASUBTYPE_MPEG1Payload},
+    };
+    static const REGPINTYPES mpeg_video_codec_outputs[] =
+    {
+        {&MEDIATYPE_Video, &GUID_NULL},
+    };
+    static const REGFILTERPINS2 mpeg_video_codec_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(mpeg_video_codec_inputs),
+            .lpMediaType = mpeg_video_codec_inputs,
+        },
+        {
+            .dwFlags = REG_PINFLAG_B_OUTPUT,
+            .nMediaTypes = ARRAY_SIZE(mpeg_video_codec_outputs),
+            .lpMediaType = mpeg_video_codec_outputs,
+        },
+    };
+    static const REGFILTER2 mpeg_video_codec_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = 0x40000001,
+        .cPins2 = ARRAY_SIZE(mpeg_video_codec_pins),
+        .rgPins2 = mpeg_video_codec_pins,
+    };
+
     IFilterMapper2 *mapper;
     HRESULT hr;
 
@@ -497,6 +527,9 @@ HRESULT WINAPI DllRegisterServer(void)
     if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_CMpegAudioCodec, L"MPEG Audio Decoder", NULL,
             NULL, NULL, &mpeg_audio_codec_reg)))
         goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_CMpegVideoCodec, L"MPEG Video Decoder", NULL,
+            NULL, NULL, &mpeg_video_codec_reg)))
+        goto done;
 
 done:
     IFilterMapper2_Release(mapper);
@@ -536,6 +569,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_WAVEParser)))
         goto done;
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_CMpegAudioCodec)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_CMpegVideoCodec)))
         goto done;
 
 done:
