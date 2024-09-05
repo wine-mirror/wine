@@ -40,11 +40,10 @@ coclass wg_mpeg_audio_decoder {}
 coclass wg_mpeg_video_decoder {}
 
 [
-    helpstring("MPEG Layer-3 Decoder"),
     threading(both),
-    uuid(38be3000-dbf4-11d0-860e-00a024cfef6d)
+    uuid(84cd8e3e-b221-434a-8882-9d6c8df490e1)
 ]
-coclass mpeg_layer3_decoder {}
+coclass wg_mp3_decoder {}
 
 [
     threading(both),

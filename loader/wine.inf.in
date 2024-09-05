@@ -2107,6 +2107,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,cryptdlg.dll,1
 11,,cryptnet.dll,1
 11,,devenum.dll,1
+11,,l3codecx.ax,1
 11,,mfasfsrcsnk.dll,1
 11,,mfh264enc.dll,1
 11,,mfmp4srcsnk.dll,1
