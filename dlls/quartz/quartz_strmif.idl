@@ -166,3 +166,10 @@ coclass AviSplitter {}
     uuid(d51bd5a1-7548-11cf-a520-0080c77ef58a)
 ]
 coclass WAVEParser {}
+
+[
+    helpstring("MPEG Audio Decoder"),
+    threading(both),
+    uuid(4a2286e0-7bef-11ce-9bd9-0000e202599c)
+]
+coclass CMpegAudioCodec {}

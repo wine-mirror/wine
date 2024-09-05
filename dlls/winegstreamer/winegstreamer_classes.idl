@@ -28,11 +28,10 @@
 coclass wg_avi_splitter {}
 
 [
-    helpstring("MPEG Audio Decoder"),
     threading(both),
-    uuid(4a2286e0-7bef-11ce-9bd9-0000e202599c)
+    uuid(c9f285f8-4380-4121-971f-49a95316c27b)
 ]
-coclass CMpegAudioCodec {}
+coclass wg_mpeg_audio_decoder {}
 
 [
     helpstring("MPEG Video Decoder"),

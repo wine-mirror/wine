@@ -995,6 +995,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
     static const GUID CLSID_wg_color_converter = {0xf47e2da5,0xe370,0x47b7,{0x90,0x3a,0x07,0x8d,0xdd,0x45,0xa5,0xcc}};
     static const GUID CLSID_wg_mp3_sink_factory = {0x1f302877,0xaaab,0x40a3,{0xb9,0xe0,0x9f,0x48,0xda,0xf3,0x5b,0xc8}};
     static const GUID CLSID_wg_mpeg4_sink_factory = {0x5d5407d9,0xc6ca,0x4770,{0xa7,0xcc,0x27,0xc0,0xcb,0x8a,0x76,0x27}};
+    static const GUID CLSID_wg_mpeg_audio_decoder = {0xc9f285f8,0x4380,0x4121,{0x97,0x1f,0x49,0xa9,0x53,0x16,0xc2,0x7b}};
     static const GUID CLSID_wg_resampler = {0x92f35e78,0x15a5,0x486b,{0x88,0x8e,0x57,0x5f,0x99,0x65,0x1c,0xe2}};
     static const GUID CLSID_wg_wma_decoder = {0x5b4d4e54,0x0620,0x4cf9,{0x94,0xae,0x78,0x23,0x96,0x5c,0x28,0xb6}};
     static const GUID CLSID_wg_wmv_decoder = {0x62ee5ddb,0x4f52,0x48e2,{0x89,0x28,0x78,0x7b,0x02,0x53,0xa0,0xbc}};
@@ -1015,7 +1016,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
         factory = &avi_splitter_cf;
     else if (IsEqualGUID(clsid, &CLSID_decodebin_parser))
         factory = &decodebin_parser_cf;
-    else if (IsEqualGUID(clsid, &CLSID_CMpegAudioCodec))
+    else if (IsEqualGUID(clsid, &CLSID_wg_mpeg_audio_decoder))
         factory = &mpeg_audio_codec_cf;
     else if (IsEqualGUID(clsid, &CLSID_CMpegVideoCodec))
         factory = &mpeg_video_codec_cf;
@@ -1081,39 +1082,6 @@ BOOL init_gstreamer(void)
 static const REGPINTYPES reg_audio_mt = {&MEDIATYPE_Audio, &GUID_NULL};
 static const REGPINTYPES reg_stream_mt = {&MEDIATYPE_Stream, &GUID_NULL};
 static const REGPINTYPES reg_video_mt = {&MEDIATYPE_Video, &GUID_NULL};
-
-static const REGPINTYPES reg_mpeg_audio_codec_sink_mts[3] =
-{
-    {&MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1Packet},
-    {&MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1Payload},
-    {&MEDIATYPE_Audio, &MEDIASUBTYPE_MPEG1AudioPayload},
-};
-
-static const REGPINTYPES reg_mpeg_audio_codec_source_mts[1] =
-{
-    {&MEDIATYPE_Audio, &MEDIASUBTYPE_PCM},
-};
-
-static const REGFILTERPINS2 reg_mpeg_audio_codec_pins[2] =
-{
-    {
-        .nMediaTypes = 3,
-        .lpMediaType = reg_mpeg_audio_codec_sink_mts,
-    },
-    {
-        .dwFlags = REG_PINFLAG_B_OUTPUT,
-        .nMediaTypes = 1,
-        .lpMediaType = reg_mpeg_audio_codec_source_mts,
-    },
-};
-
-static const REGFILTER2 reg_mpeg_audio_codec =
-{
-    .dwVersion = 2,
-    .dwMerit = 0x03680001,
-    .u.s2.cPins2 = 2,
-    .u.s2.rgPins2 = reg_mpeg_audio_codec_pins,
-};
 
 static const REGPINTYPES reg_mpeg_video_codec_sink_mts[2] =
 {
@@ -1221,8 +1189,6 @@ HRESULT WINAPI DllRegisterServer(void)
 
     IFilterMapper2_RegisterFilter(mapper, &CLSID_decodebin_parser,
             L"GStreamer splitter filter", NULL, NULL, NULL, &reg_decodebin_parser);
-    IFilterMapper2_RegisterFilter(mapper, &CLSID_CMpegAudioCodec,
-            L"MPEG Audio Decoder", NULL, NULL, NULL, &reg_mpeg_audio_codec);
     IFilterMapper2_RegisterFilter(mapper, &CLSID_CMpegVideoCodec,
             L"MPEG Video Decoder", NULL, NULL, NULL, &reg_mpeg_video_codec);
     IFilterMapper2_RegisterFilter(mapper, &CLSID_mpeg_layer3_decoder,
@@ -1248,7 +1214,6 @@ HRESULT WINAPI DllUnregisterServer(void)
         return hr;
 
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_decodebin_parser);
-    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_CMpegAudioCodec);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_CMpegVideoCodec);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_mpeg_layer3_decoder);
 
