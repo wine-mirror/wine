@@ -1261,62 +1261,6 @@ err:
     return hr;
 }
 
-static inline void fill_texture(const struct pixel_format_desc *format, BYTE *pos, const D3DXVECTOR4 *value)
-{
-    DWORD c;
-
-    for (c = 0; c < format->bytes_per_pixel; c++)
-        pos[c] = 0;
-
-    for (c = 0; c < 4; c++)
-    {
-        float comp_value;
-        DWORD i, v = 0, mask32 = format->bits[c] == 32 ? ~0U : ((1 << format->bits[c]) - 1);
-
-        switch (c)
-        {
-            case 0: /* Alpha */
-                comp_value = value->w;
-                break;
-            case 1: /* Red */
-                comp_value = value->x;
-                break;
-            case 2: /* Green */
-                comp_value = value->y;
-                break;
-            case 3: /* Blue */
-                comp_value = value->z;
-                break;
-        }
-
-        if (format->type == FORMAT_ARGBF16)
-            v = float_32_to_16(comp_value);
-        else if (format->type == FORMAT_ARGBF)
-            v = *(DWORD *)&comp_value;
-        else if (format->type == FORMAT_ARGB)
-            v = max(comp_value * ((1 << format->bits[c]) - 1) + 0.5f, 0);
-        else
-            FIXME("Unhandled format type %#x\n", format->type);
-
-        for (i = 0; i < format->bits[c] + format->shift[c]; i += 8)
-        {
-            BYTE byte, mask;
-
-            if (format->shift[c] > i)
-            {
-                mask = mask32 << (format->shift[c] - i);
-                byte = (v << (format->shift[c] - i)) & mask;
-            }
-            else
-            {
-                mask = mask32 >> (i - format->shift[c]);
-                byte = (v >> (i - format->shift[c])) & mask;
-            }
-            pos[i / 8] |= byte;
-        }
-    }
-}
-
 HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D function, void *funcdata)
 {
     IDirect3DSurface9 *surface, *temp_surface;
@@ -1370,11 +1314,15 @@ HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D f
 
             for (x = 0; x < desc.Width; x++)
             {
+                BYTE *dst = data + y * lock_rect.Pitch + x * format->bytes_per_pixel;
+                struct d3dx_color color;
+
                 coord.x = (x + 0.5f) / desc.Width;
 
                 function(&value, &coord, &size, funcdata);
 
-                fill_texture(format, data + y * lock_rect.Pitch + x * format->bytes_per_pixel, &value);
+                set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL);
+                format_from_d3dx_color(format, &color, dst);
             }
         }
         if (FAILED(hr = unlock_surface(surface, NULL, temp_surface, TRUE)))
@@ -1757,13 +1705,17 @@ HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DX
             {
                 for (x = 0; x < desc.Width; x++)
                 {
+                    BYTE *dst = data + y * lock_rect.Pitch + x * format->bytes_per_pixel;
+                    struct d3dx_color color;
+
                     coord.x = get_cube_coord(coordmap[f][0], x, y, desc.Width) / desc.Width * 2.0f - 1.0f;
                     coord.y = get_cube_coord(coordmap[f][1], x, y, desc.Width) / desc.Width * 2.0f - 1.0f;
                     coord.z = get_cube_coord(coordmap[f][2], x, y, desc.Width) / desc.Width * 2.0f - 1.0f;
 
                     function(&value, &coord, &size, funcdata);
 
-                    fill_texture(format, data + y * lock_rect.Pitch + x * format->bytes_per_pixel, &value);
+                    set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL);
+                    format_from_d3dx_color(format, &color, dst);
                 }
             }
             IDirect3DCubeTexture9_UnlockRect(texture, f, m);
@@ -1824,12 +1776,15 @@ HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LP
 
                 for (x = 0; x < desc.Width; x++)
                 {
+                    BYTE *dst = data + z * lock_box.SlicePitch + y * lock_box.RowPitch + x * format->bytes_per_pixel;
+                    struct d3dx_color color;
+
                     coord.x = (x + 0.5f) / desc.Width;
 
                     function(&value, &coord, &size, funcdata);
 
-                    fill_texture(format, data + z * lock_box.SlicePitch + y * lock_box.RowPitch
-                            + x * format->bytes_per_pixel, &value);
+                    set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL);
+                    format_from_d3dx_color(format, &color, dst);
                 }
             }
         }

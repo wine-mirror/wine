@@ -1574,7 +1574,7 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
 }
 
 /* It doesn't work for components bigger than 32 bits. */
-static void format_from_d3dx_color(const struct pixel_format_desc *format, const struct d3dx_color *src, BYTE *dst)
+void format_from_d3dx_color(const struct pixel_format_desc *format, const struct d3dx_color *src, BYTE *dst)
 {
     DWORD v, mask32;
     unsigned int c, i;

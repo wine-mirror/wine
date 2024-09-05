@@ -67,6 +67,12 @@ struct d3dx_color
     enum range range;
 };
 
+static inline void set_d3dx_color(struct d3dx_color *color, const struct vec4 *value, enum range range)
+{
+    color->value = *value;
+    color->range = range;
+}
+
 struct volume
 {
     UINT width;
@@ -192,6 +198,7 @@ const struct pixel_format_desc *get_format_info(D3DFORMAT format);
 const struct pixel_format_desc *get_format_info_idx(int idx);
 
 void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *src, struct d3dx_color *dst);
+void format_from_d3dx_color(const struct pixel_format_desc *format, const struct d3dx_color *src, BYTE *dst);
 
 void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
     BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, const struct volume *size,
