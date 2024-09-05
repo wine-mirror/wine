@@ -1521,6 +1521,9 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
     case FORMAT_INDEX:
         dst->range = RANGE_UNORM;
         break;
+    case FORMAT_ARGB_SNORM:
+        dst->range = RANGE_SNORM;
+        break;
     default: /* Shouldn't pass FORMAT_DXT/FORMAT_UNKNOWN into here. */
         assert(0);
         break;
@@ -1542,6 +1545,26 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
                 *dst_component = float_16_to_32(tmp);
             else if (format->type == FORMAT_ARGBF)
                 *dst_component = *(float *)&tmp;
+            else if (format->type == FORMAT_ARGB_SNORM)
+            {
+                const uint32_t sign_bit = (1u << (format->bits[c] - 1));
+                uint32_t tmp_extended, tmp_masked = (tmp >> format->shift[c] % 8) & mask;
+
+                tmp_extended = tmp_masked;
+                if (tmp_masked & sign_bit)
+                {
+                    tmp_extended |= ~(sign_bit - 1);
+
+                    /*
+                     * In order to clamp to an even range, we need to ignore
+                     * the maximum negative value.
+                     */
+                    if (tmp_masked == sign_bit)
+                        tmp_extended |= 1;
+                }
+
+                *dst_component = (float)(((int32_t)tmp_extended)) / (sign_bit - 1);
+            }
             else
                 *dst_component = (float)((tmp >> format->shift[c] % 8) & mask) / mask;
         }
@@ -1572,11 +1595,24 @@ static void format_from_d3dx_color(const struct pixel_format_desc *format, const
             v = float_32_to_16(src_component);
         else if (format->type == FORMAT_ARGBF)
             v = *(DWORD *)&src_component;
+        else if (format->type == FORMAT_ARGB_SNORM)
+        {
+            const uint32_t max_value = (1u << (format->bits[c] - 1)) - 1;
+            float val = src_component;
+
+            if (src->range == RANGE_UNORM)
+                val = (val * 2.0f) - 1.0f;
+
+            v = d3dx_clamp(val, -1.0f, 1.0f) * max_value + 0.5f;
+        }
         else
         {
-            float val = d3dx_clamp(src_component, 0.0f, 1.0f);
+            float val = src_component;
 
-            v = val * ((1u << format->bits[c]) - 1) + 0.5f;
+            if (src->range == RANGE_SNORM)
+                val = (val + 1.0f) / 2.0f;
+
+            v = d3dx_clamp(val, 0.0f, 1.0f) * ((1u << format->bits[c]) - 1) + 0.5f;
         }
 
         for (i = format->shift[c] / 8 * 8; i < format->shift[c] + format->bits[c]; i += 8)

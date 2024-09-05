@@ -58,6 +58,7 @@ struct vec4
 enum range {
     RANGE_FULL  = 0,
     RANGE_UNORM = 1,
+    RANGE_SNORM = 2,
 };
 
 struct d3dx_color
@@ -85,6 +86,7 @@ enum format_type {
     FORMAT_ARGB,   /* unsigned */
     FORMAT_ARGBF16,/* float 16 */
     FORMAT_ARGBF,  /* float */
+    FORMAT_ARGB_SNORM,
     FORMAT_DXT,
     FORMAT_INDEX,
     FORMAT_UNKNOWN
@@ -168,7 +170,7 @@ extern const struct ID3DXIncludeVtbl d3dx_include_from_file_vtbl;
 static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)
 {
     if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
-            || format->type == FORMAT_ARGBF || format->type == FORMAT_DXT)
+            || format->type == FORMAT_ARGBF || format->type == FORMAT_DXT || format->type == FORMAT_ARGB_SNORM)
         return TRUE;
     return !!format->to_rgba;
 }
@@ -176,7 +178,7 @@ static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *
 static inline BOOL is_conversion_to_supported(const struct pixel_format_desc *format)
 {
     if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
-            || format->type == FORMAT_ARGBF || format->type == FORMAT_DXT)
+            || format->type == FORMAT_ARGBF || format->type == FORMAT_DXT || format->type == FORMAT_ARGB_SNORM)
         return TRUE;
     return !!format->from_rgba;
 }
