@@ -29,3 +29,9 @@ HRESULT mpeg1_splitter_create(IUnknown *outer, IUnknown **out)
     static const GUID CLSID_wg_mpeg1_splitter = {0xa8edbf98,0x2442,0x42c5,{0x85,0xa1,0xab,0x05,0xa5,0x80,0xdf,0x53}};
     return CoCreateInstance(&CLSID_wg_mpeg1_splitter, outer, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)out);
 }
+
+HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
+{
+    static const GUID CLSID_wg_wave_parser = {0x3f839ec7,0x5ea6,0x49e1,{0x80,0xc2,0x1e,0xa3,0x00,0xf8,0xb0,0xe0}};
+    return CoCreateInstance(&CLSID_wg_wave_parser, outer, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)out);
+}

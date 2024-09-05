@@ -159,3 +159,10 @@ coclass MPEG1Splitter {}
     uuid(1b544c20-fd0b-11ce-8c63-00aa0044b51e)
 ]
 coclass AviSplitter {}
+
+[
+    helpstring("Wave Parser"),
+    threading(both),
+    uuid(d51bd5a1-7548-11cf-a520-0080c77ef58a)
+]
+coclass WAVEParser {}

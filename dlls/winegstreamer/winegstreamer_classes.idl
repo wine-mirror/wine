@@ -55,11 +55,10 @@ coclass mpeg_layer3_decoder {}
 coclass wg_mpeg1_splitter {}
 
 [
-    helpstring("Wave Parser"),
     threading(both),
-    uuid(d51bd5a1-7548-11cf-a520-0080c77ef58a)
+    uuid(3f839ec7-5ea6-49e1-80c2-1ea300f8b0e0)
 ]
-coclass WAVEParser {}
+coclass wg_wave_parser {}
 
 [
     helpstring("GStreamer parser using decodebin"),

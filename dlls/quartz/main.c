@@ -79,6 +79,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_VideoMixingRenderer, vmr7_create },
     { &CLSID_VideoMixingRenderer9, vmr9_create },
     { &CLSID_VideoRendererDefault, video_renderer_default_create },
+    { &CLSID_WAVEParser, wave_parser_create },
 };
 
 static HRESULT WINAPI DSCF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
@@ -393,6 +394,36 @@ HRESULT WINAPI DllRegisterServer(void)
         .rgPins2 = avi_splitter_pins,
     };
 
+    static const REGPINTYPES wave_parser_inputs[] =
+    {
+        {&MEDIATYPE_Stream, &MEDIASUBTYPE_WAVE},
+        {&MEDIATYPE_Stream, &MEDIASUBTYPE_AU},
+        {&MEDIATYPE_Stream, &MEDIASUBTYPE_AIFF},
+    };
+    static const REGPINTYPES wave_parser_outputs[] =
+    {
+        {&MEDIATYPE_Audio, &GUID_NULL},
+    };
+    static const REGFILTERPINS2 wave_parser_pins[] =
+    {
+        {
+            .nMediaTypes = ARRAY_SIZE(wave_parser_inputs),
+            .lpMediaType = wave_parser_inputs,
+        },
+        {
+            .dwFlags = REG_PINFLAG_B_OUTPUT,
+            .nMediaTypes = ARRAY_SIZE(wave_parser_outputs),
+            .lpMediaType = wave_parser_outputs,
+        },
+    };
+    static const REGFILTER2 wave_parser_reg =
+    {
+        .dwVersion = 2,
+        .dwMerit = MERIT_UNLIKELY,
+        .cPins2 = ARRAY_SIZE(wave_parser_pins),
+        .rgPins2 = wave_parser_pins,
+    };
+
     IFilterMapper2 *mapper;
     HRESULT hr;
 
@@ -429,6 +460,9 @@ HRESULT WINAPI DllRegisterServer(void)
     if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_MPEG1Splitter, L"MPEG-I Stream Splitter", NULL,
             NULL, NULL, &mpeg_splitter_reg)))
         goto done;
+    if (FAILED(hr = IFilterMapper2_RegisterFilter(mapper, &CLSID_WAVEParser, L"Wave Parser", NULL,
+            NULL, NULL, &wave_parser_reg)))
+        goto done;
 
 done:
     IFilterMapper2_Release(mapper);
@@ -464,6 +498,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_AviSplitter)))
         goto done;
     if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_MPEG1Splitter)))
+        goto done;
+    if (FAILED(hr = IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_WAVEParser)))
         goto done;
 
 done:

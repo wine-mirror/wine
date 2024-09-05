@@ -65,6 +65,7 @@ HRESULT video_renderer_default_create(IUnknown *outer, IUnknown **out);
 HRESULT vmr7_presenter_create(IUnknown *outer, IUnknown **out);
 HRESULT vmr7_create(IUnknown *outer, IUnknown **out);
 HRESULT vmr9_create(IUnknown *outer, IUnknown **out);
+HRESULT wave_parser_create(IUnknown *outer, IUnknown **out);
 
 extern const char * qzdebugstr_guid(const GUID * id);
 extern void video_unregister_windowclass(void);
