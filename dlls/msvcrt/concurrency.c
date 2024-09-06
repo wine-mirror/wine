@@ -2096,7 +2096,8 @@ _StructuredTaskCollection* __thiscall _StructuredTaskCollection_ctor(
 DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection_dtor, 4)
 void __thiscall _StructuredTaskCollection_dtor(_StructuredTaskCollection *this)
 {
-    FIXME("(%p): stub!\n", this);
+    TRACE("(%p)\n", this);
+
     if (this->count && !__uncaught_exception()) {
         missing_wait e;
         missing_wait_ctor_str(&e, "Missing call to _RunAndWait");
