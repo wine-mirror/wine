@@ -156,8 +156,8 @@ extern BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, con
 extern BOOL macdrv_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask);
 extern BOOL macdrv_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface);
 extern void macdrv_MoveWindowBits(HWND hwnd, const struct window_rects *new_rects, const RECT *valid_rects);
-extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, const struct window_rects *new_rects,
-                                    struct window_surface *surface);
+extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, BOOL fullscreen,
+                                    const struct window_rects *new_rects, struct window_surface *surface);
 extern void macdrv_DestroyCursorIcon(HCURSOR cursor);
 extern BOOL macdrv_GetCursorPos(LPPOINT pos);
 extern void macdrv_SetCapture(HWND hwnd, UINT flags);

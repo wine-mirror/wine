@@ -1971,13 +1971,14 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     struct window_rects monitor_rects;
     WND *win;
     HWND surface_win = 0;
-    BOOL ret, is_layered, needs_update = FALSE;
+    BOOL ret, is_fullscreen, is_layered, needs_update = FALSE;
     struct window_rects old_rects;
     RECT extra_rects[3];
     struct window_surface *old_surface;
     UINT monitor_dpi;
 
     is_layered = new_surface && new_surface->alpha_mask;
+    is_fullscreen = is_window_rect_full_screen( &new_rects->visible, get_thread_dpi() );
 
     get_window_rects( hwnd, COORDS_SCREEN, &old_rects, get_thread_dpi() );
     if (IsRectEmpty( &valid_rects[0] ) || is_layered) valid_rects = NULL;
@@ -2103,7 +2104,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             }
         }
 
-        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, &monitor_rects, get_driver_window_surface( new_surface, monitor_dpi ) );
+        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, is_fullscreen, &monitor_rects, get_driver_window_surface( new_surface, monitor_dpi ) );
     }
 
     return ret;
