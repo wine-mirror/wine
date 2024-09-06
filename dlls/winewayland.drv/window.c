@@ -167,7 +167,7 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
     TRACE("window=%s style=%#lx\n", wine_dbgstr_rect(&conf->rect), (long)style);
 
     /* The fullscreen state is implied by the window position and style. */
-    if (NtUserIsWindowRectFullScreen(&conf->rect, get_win_monitor_dpi(data->hwnd)))
+    if (data->is_fullscreen)
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
             window_state |= WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;
@@ -451,6 +451,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, BOOL
     if (!(data = wayland_win_data_get(hwnd))) return;
 
     data->rects = *new_rects;
+    data->is_fullscreen = fullscreen;
     data->managed = managed;
 
     wayland_win_data_update_wayland_surface(data);

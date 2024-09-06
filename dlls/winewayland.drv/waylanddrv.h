@@ -286,6 +286,7 @@ struct wayland_win_data
     struct wayland_client_surface *client_surface;
     /* window rects, relative to parent client area */
     struct window_rects rects;
+    BOOL is_fullscreen;
     BOOL managed;
 };
 
