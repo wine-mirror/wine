@@ -240,6 +240,8 @@ void wayland_surface_destroy(struct wayland_surface *surface)
  */
 void wayland_surface_make_toplevel(struct wayland_surface *surface)
 {
+    WCHAR text[1024];
+
     TRACE("surface=%p\n", surface);
 
     surface->xdg_surface =
@@ -256,6 +258,10 @@ void wayland_surface_make_toplevel(struct wayland_surface *surface)
 
     wl_surface_commit(surface->wl_surface);
     wl_display_flush(process_wayland.wl_display);
+
+    if (!NtUserInternalGetWindowText(surface->hwnd, text, ARRAY_SIZE(text)))
+        text[0] = 0;
+    wayland_surface_set_title(surface, text);
 
     return;
 

@@ -202,7 +202,6 @@ static BOOL wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     struct wayland_client_surface *client = data->client_surface;
     struct wayland_surface *surface;
     BOOL visible, xdg_visible;
-    WCHAR text[1024];
 
     TRACE("hwnd=%p\n", data->hwnd);
 
@@ -219,16 +218,7 @@ static BOOL wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
         /* If the window is a visible toplevel make it a wayland
          * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
          * compositor with empty xdg_toplevels. */
-        if (visible)
-        {
-            wayland_surface_make_toplevel(surface);
-            if (surface->xdg_toplevel)
-            {
-                if (!NtUserInternalGetWindowText(data->hwnd, text, ARRAY_SIZE(text)))
-                    text[0] = 0;
-                wayland_surface_set_title(surface, text);
-            }
-        }
+        if (visible) wayland_surface_make_toplevel(surface);
     }
 
     if (visible && client) wayland_client_surface_attach(client, data->hwnd);
