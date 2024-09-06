@@ -59,6 +59,8 @@ static INT (WINAPI *pGetDateFormatEx)(LPCWSTR, DWORD, const SYSTEMTIME *, LPCWST
 static BOOL (WINAPI *pEnumSystemLanguageGroupsA)(LANGUAGEGROUP_ENUMPROCA, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumLanguageGroupLocalesA)(LANGGROUPLOCALE_ENUMPROCA, LGRPID, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumUILanguagesA)(UILANGUAGE_ENUMPROCA, DWORD, LONG_PTR);
+static BOOL (WINAPI *pEnumSystemLocalesA)(LOCALE_ENUMPROCA, DWORD);
+static BOOL (WINAPI *pEnumSystemLocalesW)(LOCALE_ENUMPROCW, DWORD);
 static BOOL (WINAPI *pEnumSystemLocalesEx)(LOCALE_ENUMPROCEX, DWORD, LPARAM, LPVOID);
 static INT (WINAPI *pLCMapStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPWSTR, INT, LPNLSVERSIONINFO, LPVOID, LPARAM);
 static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
@@ -122,6 +124,8 @@ static void InitFunctionPointers(void)
   X(LCMapStringEx);
   X(IsValidLanguageGroup);
   X(EnumUILanguagesA);
+  X(EnumSystemLocalesA);
+  X(EnumSystemLocalesW);
   X(EnumSystemLocalesEx);
   X(IdnToNameprepUnicode);
   X(IdnToAscii);
@@ -4463,6 +4467,183 @@ static void test_EnumSystemLanguageGroupsA(void)
   pEnumSystemLanguageGroupsA(langgrp_procA, LGRPID_SUPPORTED, 0);
 }
 
+static LONG default_seen;
+static LONG alternate_seen;
+
+static BOOL CALLBACK test_EnumSystemLocalesA_callback(LPSTR str)
+{
+    LCID lcid;
+    WORD sortid;
+
+    if (sscanf(str, "%lx", &lcid) != 1)
+    {
+        ok(FALSE, "EnumSystemLocalesA callback received unparsable LCID string \"%s\"\n", str);
+        return FALSE;
+    }
+
+    sortid = SORTIDFROMLCID(lcid);
+    if (sortid == SORT_DEFAULT)
+    {
+        default_seen++;
+    }
+    else
+    {
+        alternate_seen++;
+    }
+
+    return TRUE;
+}
+
+static BOOL CALLBACK test_EnumSystemLocalesW_callback(LPWSTR str)
+{
+    LCID lcid;
+    WORD sortid;
+
+    if (swscanf(str, L"%lx", &lcid) != 1)
+    {
+        ok(FALSE, "EnumSystemLocalesW callback received unparsable LCID string \"%hs\"\n", str);
+        return FALSE;
+    }
+
+    sortid = SORTIDFROMLCID(lcid);
+    if (sortid == SORT_DEFAULT)
+    {
+        default_seen++;
+    }
+    else
+    {
+        alternate_seen++;
+    }
+
+    return TRUE;
+}
+
+static void test_EnumSystemLocalesA(void)
+{
+    if (!pEnumSystemLocalesA)
+    {
+        win_skip("EnumSystemLocalesA not available");
+        return;
+    }
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, 0);
+    ok(default_seen, "EnumSystemLocalesA(..., 0) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesA(..., 0) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_INSTALLED);
+    ok(default_seen, "EnumSystemLocalesA(..., LCID_INSTALLED) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesA(..., LCID_INSTALLED) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_SUPPORTED);
+    ok(default_seen, "EnumSystemLocalesA(..., LCID_SUPPORTED) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesA(..., LCID_SUPPORTED) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_ALTERNATE_SORTS);
+    ok(alternate_seen, "EnumSystemLocalesA(..., LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+    ok(!default_seen, "EnumSystemLocalesA(..., LCID_ALTERNATE_SORTS) returned %ld locales "
+            "with default sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_INSTALLED | LCID_ALTERNATE_SORTS);
+    ok(default_seen, "EnumSystemLocalesA(..., LCID_INSTALLED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(alternate_seen, "EnumSystemLocalesA(..., LCID_INSTALLED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_SUPPORTED | LCID_ALTERNATE_SORTS);
+    ok(default_seen, "EnumSystemLocalesA(..., LCID_SUPPORTED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(alternate_seen, "EnumSystemLocalesA(..., LCID_SUPPORTED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+}
+
+static void test_EnumSystemLocalesW(void)
+{
+    if (!pEnumSystemLocalesW)
+    {
+        win_skip("EnumSystemLocalesW not available");
+        return;
+    }
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, 0);
+    ok(default_seen, "EnumSystemLocalesW(..., 0) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesW(..., 0) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_INSTALLED);
+    ok(default_seen, "EnumSystemLocalesW(..., LCID_INSTALLED) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesW(..., LCID_INSTALLED) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_SUPPORTED);
+    ok(default_seen, "EnumSystemLocalesW(..., LCID_SUPPORTED) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesW(..., LCID_SUPPORTED) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_ALTERNATE_SORTS);
+    ok(alternate_seen, "EnumSystemLocalesW(..., LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+    ok(!default_seen, "EnumSystemLocalesW(..., LCID_ALTERNATE_SORTS) returned %ld locales "
+            "with default sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_INSTALLED | LCID_ALTERNATE_SORTS);
+    ok(default_seen, "EnumSystemLocalesW(..., LCID_INSTALLED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(alternate_seen, "EnumSystemLocalesW(..., LCID_INSTALLED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_SUPPORTED | LCID_ALTERNATE_SORTS);
+    ok(default_seen, "EnumSystemLocalesW(..., LCID_SUPPORTED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(alternate_seen, "EnumSystemLocalesW(..., LCID_SUPPORTED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+}
+
 static BOOL CALLBACK enum_func( LPWSTR name, DWORD flags, LPARAM lparam )
 {
     if (winetest_debug > 1)
@@ -8503,6 +8684,8 @@ START_TEST(locale)
   test_FoldStringW();
   test_ConvertDefaultLocale();
   test_EnumSystemLanguageGroupsA();
+  test_EnumSystemLocalesA();
+  test_EnumSystemLocalesW();
   test_EnumSystemLocalesEx();
   test_EnumLanguageGroupLocalesA();
   test_SetLocaleInfo();
