@@ -297,7 +297,7 @@ static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD styl
 {
     if (style & WS_THICKFRAME) return TRUE;
     /* Metacity needs the window to be resizable to make it fullscreen */
-    return NtUserIsWindowRectFullScreen( &data->rects.visible, get_win_monitor_dpi( data->hwnd ) );
+    return data->is_fullscreen;
 }
 
 /***********************************************************************
@@ -1103,7 +1103,7 @@ void update_net_wm_states( struct x11drv_win_data *data )
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
     if (style & WS_MINIMIZE)
         new_state |= data->net_wm_state & ((1 << NET_WM_STATE_FULLSCREEN)|(1 << NET_WM_STATE_MAXIMIZED));
-    if (NtUserIsWindowRectFullScreen( &data->rects.visible, get_win_monitor_dpi( data->hwnd ) ))
+    if (data->is_fullscreen)
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
             new_state |= (1 << NET_WM_STATE_MAXIMIZED);
@@ -2587,6 +2587,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, BOOL
     struct x11drv_win_data *data;
     UINT new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     struct window_rects old_rects;
+    BOOL was_fullscreen;
     int event_type;
 
     if (!(data = get_win_data( hwnd ))) return;
@@ -2594,7 +2595,9 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, BOOL
     thread_data = x11drv_thread_data();
 
     old_rects = data->rects;
+    was_fullscreen = data->is_fullscreen;
     data->rects = *new_rects;
+    data->is_fullscreen = fullscreen;
 
     TRACE( "win %p/%lx new_rects %s style %08x flags %08x\n", hwnd, data->whole_window,
            debugstr_window_rects(new_rects), new_style, swp_flags );
@@ -2633,8 +2636,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, BOOL
         {
             release_win_data( data );
             unmap_window( hwnd );
-            if (NtUserIsWindowRectFullScreen( &old_rects.window, get_win_monitor_dpi( hwnd ) ))
-                NtUserClipCursor( NULL );
+            if (was_fullscreen) NtUserClipCursor( NULL );
             if (!(data = get_win_data( hwnd ))) return;
         }
     }

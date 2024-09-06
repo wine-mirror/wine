@@ -612,6 +612,7 @@ struct x11drv_win_data
     UINT        skip_taskbar : 1; /* does window should be deleted from taskbar */
     UINT        add_taskbar : 1; /* does window should be added to taskbar regardless of style */
     UINT        net_wm_fullscreen_monitors_set : 1; /* is _NET_WM_FULLSCREEN_MONITORS set */
+    UINT        is_fullscreen : 1; /* is the window visible rect fullscreen */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */
