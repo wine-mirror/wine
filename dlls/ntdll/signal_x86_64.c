@@ -40,6 +40,14 @@
 #include "ntsyscalls.h"
 
 
+/*******************************************************************
+ *         syscalls
+ */
+#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
+ALL_SYSCALLS64
+#undef SYSCALL_ENTRY
+
+
 /**************************************************************************
  *		__chkstk (NTDLL.@)
  *
@@ -70,14 +78,6 @@ __ASM_GLOBAL_FUNC( invoke_arm64ec_syscall,
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-
-/*******************************************************************
- *         syscalls
- */
-#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
-ALL_SYSCALLS64
-#undef SYSCALL_ENTRY
 
 
 /***********************************************************************

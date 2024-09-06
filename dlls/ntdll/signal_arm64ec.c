@@ -229,14 +229,14 @@ ALL_SYSCALLS64
 };
 
 #define DEFINE_SYSCALL_(ret,name,args) \
-    ret __attribute__((naked)) name args { __ASM_SYSCALL_FUNC( __id_##name, name ); }
+    ret __attribute__((naked, hybrid_patchable)) name args { __ASM_SYSCALL_FUNC( __id_##name, name ); }
 
 #define DEFINE_SYSCALL(name,args) DEFINE_SYSCALL_(NTSTATUS,name,args)
 
 #define DEFINE_WRAPPED_SYSCALL(name,args) \
     static NTSTATUS __attribute__((naked)) syscall_##name args { __ASM_SYSCALL_FUNC( __id_##name, syscall_##name ); }
 
-#define SYSCALL_API WINAPI
+#define SYSCALL_API __attribute__((hybrid_patchable))
 
 DEFINE_SYSCALL(NtAcceptConnectPort, (HANDLE *handle, ULONG id, LPC_MESSAGE *msg, BOOLEAN accept, LPC_SECTION_WRITE *write, LPC_SECTION_READ *read))
 DEFINE_SYSCALL(NtAccessCheck, (PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_MASK access, GENERIC_MAPPING *mapping, PRIVILEGE_SET *privs, ULONG *retlen, ULONG *access_granted, NTSTATUS *access_status))
@@ -752,12 +752,14 @@ NTSTATUS SYSCALL_API NtUnmapViewOfSectionEx( HANDLE process, void *addr, ULONG f
 }
 
 
-void * const arm64ec_syscalls[] =
-{
-#define SYSCALL_ENTRY(id,name,args) name,
-    ALL_SYSCALLS64
+asm( ".section .rdata, \"dr\"\n\t"
+     ".balign 8\n\t"
+     ".globl arm64ec_syscalls\n"
+     "arm64ec_syscalls:\n\t"
+#define SYSCALL_ENTRY(id,name,args) ".quad \"#" #name "$hp_target\"\n\t"
+     ALL_SYSCALLS64
 #undef SYSCALL_ENTRY
-};
+     ".text" );
 
 
 /***********************************************************************

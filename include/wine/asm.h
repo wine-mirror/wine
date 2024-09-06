@@ -71,6 +71,14 @@
 # define __ASM_FUNC_SIZE(name) ".size " name ",.-" name
 #endif
 
+#ifdef __arm64ec_x64__
+# define __ASM_FUNC_SECTION(name) ".section .text,\"xr\",discard," name
+# define __ASM_FUNC_ALIGN ".balign 16"
+#else
+# define __ASM_FUNC_SECTION(name) ".text"
+# define __ASM_FUNC_ALIGN ".align 4"
+#endif
+
 #if !defined(__GNUC__) && !defined(__clang__)
 # define __ASM_BLOCK_BEGIN(name) void __asm_dummy_##name(void) {
 # define __ASM_BLOCK_END         }
@@ -81,8 +89,8 @@
 
 #define __ASM_DEFINE_FUNC(name,code)  \
     __ASM_BLOCK_BEGIN(__LINE__) \
-    asm( ".text\n\t" \
-         ".align 4\n\t" \
+    asm( __ASM_FUNC_SECTION(name) "\n\t" \
+         __ASM_FUNC_ALIGN "\n\t" \
          ".globl " name "\n\t" \
          __ASM_FUNC_TYPE(name) "\n" \
          name ":\n\t" \
@@ -240,7 +248,7 @@
                        "1:\t.quad " __ASM_NAME("__wine_syscall_dispatcher") )
 #elif defined __arm64ec__
 # define __ASM_SYSCALL_FUNC(id,name) \
-    asm( ".seh_proc " #name "\n\t" \
+    asm( ".seh_proc \"#" #name "$hp_target\"\n\t" \
          ".seh_endprologue\n\t" \
          "mov x8, #%0\n\t" \
          "mov x9, x30\n\t" \
@@ -249,6 +257,19 @@
          "blr x16\n\t" \
          "ret\n\t" \
          ".seh_endproc" :: "i" (id) )
+#elif defined __arm64ec_x64__
+# define __ASM_SYSCALL_FUNC(id,name) \
+    __ASM_DEFINE_FUNC( "\"EXP+#" #name "\"", \
+                       ".seh_endprologue\n\t" \
+                       ".byte 0x4c,0x8b,0xd1\n\t" /* 00: movq %rcx,%r10 */ \
+                       ".byte 0xb8\n\t"           /* 03: movl $i,%eax */ \
+                       ".long (" #id ")\n\t"                            \
+                       ".byte 0xf6,0x04,0x25,0x08,0x03,0xfe,0x7f,0x01\n\t" /* 08: testb $1,0x7ffe0308 */ \
+                       ".byte 0x75,0x03\n\t"      /* 10: jne 15 */ \
+                       ".byte 0x0f,0x05\n\t"      /* 12: syscall */ \
+                       ".byte 0xc3\n\t"           /* 14: ret */ \
+                       ".byte 0xcd,0x2e\n\t"      /* 15: int $0x2e */ \
+                       ".byte 0xc3" )             /* 17: ret */
 #elif defined __x86_64__
 /* Chromium depends on syscall thunks having the same form as on
  * Windows. For 64-bit systems the only viable form we can emulate is
