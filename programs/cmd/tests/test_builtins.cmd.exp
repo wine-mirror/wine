@@ -1817,6 +1817,15 @@ abc
 abc
 abc %WINE_BAR% %WINE_BAR%
 abc def def
+--- builtin in expansions
+bar p1 echo
+bar cp1 echo
+bar cp2 echo
+@todo_wine@cp3
+@todo_wine@bar b1 echo
+@todo_wine@bar b2 echo
+@todo_wine@bar b3 echo
+@todo_wine@bar cb1 echo
 --- mixing batch and builtins
 bar@space@
 @todo_wine@foo

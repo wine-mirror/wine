@@ -3159,6 +3159,32 @@ exit /b 0
 
 cd .. & rd /s/q foobar
 
+echo --- builtin in expansions
+
+mkdir foobar & cd foobar
+
+set foobar=echo
+
+echo echo %%*>bar.bat
+%foobar% bar p1 %foobar%
+%%foobar%% bar p2 %%foobar%%
+%%%foobar%%% bar p3 %%%foobar%%%
+call %foobar% bar cp1 %foobar%
+call %%foobar%% bar cp2 %%foobar%%
+call %%%foobar%%% bar cp3 %%%foobar%%%
+setlocal EnableDelayedExpansion
+!foobar! bar b1 !foobar!
+!!foobar!! bar b2 !!foobar!!
+!!!foobar!!! bar b3 !!!foobar!!!
+call !foobar! bar cb1 !foobar!
+call !!foobar!! bar cb2 !!foobar!!
+call !!!foobar!!! bar cb3 !!!foobar!!!
+call !!!!foobar!!!! bar cb4 !!!!foobar!!!!
+setlocal DisableDelayedExpansion
+set foobar=
+
+cd .. & rd /s/q foobar
+
 echo --- mixing batch and builtins
 erase /q echo.bat test.bat 2> NUL
 echo @echo foo> echo.bat
