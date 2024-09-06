@@ -2565,7 +2565,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 
     dpi = get_dpi_for_window( hwnd );
     if (!NtUserGetWindowRect( hwnd, &rect, dpi )) return FALSE;
-    if (!NtUserIsWindowRectFullScreen( &rect, dpi )) return FALSE;
+    if (!is_window_rect_full_screen( &rect, dpi )) return FALSE;
     if (is_captured_by_system()) return FALSE;
     if (NtGetTickCount() - thread_info->clipping_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_info->clipping_cursor) return FALSE;  /* already clipping */
