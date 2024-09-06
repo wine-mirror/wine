@@ -16,7 +16,6 @@ SOURCES = \
 	passthrough.c \
 	quartz.rc \
 	quartz_strmif.idl \
-	regsvr.c \
 	systemclock.c \
 	videorenderer.c \
 	vmr7.c \
