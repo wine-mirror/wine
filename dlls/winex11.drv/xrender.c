@@ -177,6 +177,7 @@ MAKE_FUNCPTR(XRenderComposite)
 MAKE_FUNCPTR(XRenderCompositeText16)
 MAKE_FUNCPTR(XRenderCreateGlyphSet)
 MAKE_FUNCPTR(XRenderCreatePicture)
+MAKE_FUNCPTR(XRenderSetPictureFilter)
 MAKE_FUNCPTR(XRenderFillRectangle)
 MAKE_FUNCPTR(XRenderFindFormat)
 MAKE_FUNCPTR(XRenderFindVisualFormat)
@@ -332,6 +333,7 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
     LOAD_FUNCPTR(XRenderCompositeText16);
     LOAD_FUNCPTR(XRenderCreateGlyphSet);
     LOAD_FUNCPTR(XRenderCreatePicture);
+    LOAD_FUNCPTR(XRenderSetPictureFilter);
     LOAD_FUNCPTR(XRenderFillRectangle);
     LOAD_FUNCPTR(XRenderFindFormat);
     LOAD_FUNCPTR(XRenderFindVisualFormat);
@@ -1493,6 +1495,7 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
         y_offset = y_src;
         set_xrender_transformation(src_pict, 1, 1, 0, 0);
     }
+    pXRenderSetPictureFilter( gdi_display, src_pict, FilterBilinear, 0, 0 );
     pXRenderComposite( gdi_display, op, src_pict, mask_pict, dst_pict,
                        x_offset, y_offset, 0, 0, x_dst, y_dst, width_dst, height_dst );
 }
