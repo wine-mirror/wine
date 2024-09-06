@@ -2151,11 +2151,16 @@ static void release_display_dc( HDC hdc )
 }
 
 /* display_lock must be held */
-static UINT monitor_get_dpi( struct monitor *monitor )
+static UINT monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE type, UINT *dpi_x, UINT *dpi_y )
 {
+    struct source *source = monitor->source;
+    float scale_x = 1.0, scale_y = 1.0;
     UINT dpi;
-    if (!monitor->source || !(dpi = monitor->source->dpi)) dpi = system_dpi;
-    return dpi;
+
+    if (!source || !(dpi = source->dpi)) dpi = system_dpi;
+    *dpi_x = round( dpi * scale_x );
+    *dpi_y = round( dpi * scale_y );
+    return min( *dpi_x, *dpi_y );
 }
 
 /* display_lock must be held */
@@ -2164,6 +2169,7 @@ static RECT monitor_get_rect( struct monitor *monitor, UINT dpi )
     DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
     RECT rect = {0, 0, 1024, 768};
     struct source *source;
+    UINT dpi_from, x, y;
 
     /* services do not have any adapters, only a virtual monitor */
     if (!(source = monitor->source)) return rect;
@@ -2176,13 +2182,16 @@ static RECT monitor_get_rect( struct monitor *monitor, UINT dpi )
              current_mode.dmPosition.x + current_mode.dmPelsWidth,
              current_mode.dmPosition.y + current_mode.dmPelsHeight );
 
-    return map_dpi_rect( rect, monitor_get_dpi( monitor ), dpi );
+    dpi_from = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
+    return map_dpi_rect( rect, dpi_from, dpi );
 }
 
 static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT dpi )
 {
+    UINT x, y;
+
     info->rcMonitor = monitor_get_rect( monitor, dpi );
-    info->rcWork = map_dpi_rect( monitor->rc_work, monitor_get_dpi( monitor ), dpi );
+    info->rcWork = map_dpi_rect( monitor->rc_work, monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y ), dpi );
     info->dwFlags = is_monitor_primary( monitor ) ? MONITORINFOF_PRIMARY : 0;
 
     if (info->cbSize >= sizeof(MONITORINFOEXW))
@@ -2269,13 +2278,13 @@ static struct monitor *get_monitor_from_handle( HMONITOR handle )
     return NULL;
 }
 
-static UINT get_monitor_dpi( HMONITOR handle )
+static UINT get_monitor_dpi( HMONITOR handle, UINT type, UINT *x, UINT *y )
 {
     struct monitor *monitor;
     UINT dpi = system_dpi;
 
     if (!lock_display_devices()) return 0;
-    if ((monitor = get_monitor_from_handle( handle ))) dpi = monitor_get_dpi( monitor );
+    if ((monitor = get_monitor_from_handle( handle ))) dpi = monitor_get_dpi( monitor, type, x, y );
     unlock_display_devices();
 
     return dpi;
@@ -3832,10 +3841,11 @@ MONITORINFO monitor_info_from_rect( RECT rect, UINT dpi )
 UINT monitor_dpi_from_rect( RECT rect, UINT dpi )
 {
     struct monitor *monitor;
-    UINT ret = system_dpi;
+    UINT ret = system_dpi, x, y;
 
     if (!lock_display_devices()) return 0;
-    if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi ))) ret = monitor_get_dpi( monitor );
+    if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi )))
+        ret = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
     unlock_display_devices();
 
     return ret;
@@ -3903,7 +3913,7 @@ BOOL WINAPI NtUserGetDpiForMonitor( HMONITOR monitor, UINT type, UINT *x, UINT *
     {
     case DPI_AWARENESS_UNAWARE:      *x = *y = USER_DEFAULT_SCREEN_DPI; break;
     case DPI_AWARENESS_SYSTEM_AWARE: *x = *y = system_dpi; break;
-    default:                         *x = *y = get_monitor_dpi( monitor ); break;
+    default:                         get_monitor_dpi( monitor, type, x, y ); break;
     }
     return TRUE;
 }
