@@ -73,6 +73,12 @@ enum wayland_surface_config_state
     WAYLAND_SURFACE_CONFIG_STATE_FULLSCREEN = (1 << 3)
 };
 
+enum wayland_surface_role
+{
+    WAYLAND_SURFACE_ROLE_NONE,
+    WAYLAND_SURFACE_ROLE_TOPLEVEL,
+};
+
 struct wayland_keyboard
 {
     struct wl_keyboard *wl_keyboard;
@@ -194,10 +200,20 @@ struct wayland_client_surface
 struct wayland_surface
 {
     HWND hwnd;
+
     struct wl_surface *wl_surface;
-    struct xdg_surface *xdg_surface;
-    struct xdg_toplevel *xdg_toplevel;
     struct wp_viewport *wp_viewport;
+
+    enum wayland_surface_role role;
+    union
+    {
+        struct
+        {
+            struct xdg_surface *xdg_surface;
+            struct xdg_toplevel *xdg_toplevel;
+        };
+    };
+
     struct wayland_surface_config pending, requested, processing, current;
     BOOL resizing;
     struct wayland_window_config window;

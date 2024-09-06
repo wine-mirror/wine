@@ -201,24 +201,36 @@ static BOOL wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
 {
     struct wayland_client_surface *client = data->client_surface;
     struct wayland_surface *surface;
-    BOOL visible, xdg_visible;
+    enum wayland_surface_role role;
+    BOOL visible;
 
     TRACE("hwnd=%p\n", data->hwnd);
 
     visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
-    if (!visible && client) wayland_client_surface_detach(client);
+    if (!visible) role = WAYLAND_SURFACE_ROLE_NONE;
+    else role = WAYLAND_SURFACE_ROLE_TOPLEVEL;
+
+    /* we can temporarily clear the role of a surface but cannot assign a different one after it's set */
+    if ((surface = data->wayland_surface) && role && surface->role && surface->role != role)
+    {
+        if (client) wayland_client_surface_detach(client);
+        wayland_surface_destroy(data->wayland_surface);
+        data->wayland_surface = NULL;
+    }
 
     if (!(surface = data->wayland_surface) && !(surface = wayland_surface_create(data->hwnd))) return FALSE;
-    xdg_visible = surface->xdg_toplevel != NULL;
 
-    if (visible != xdg_visible)
+    /* If the window is a visible toplevel make it a wayland
+     * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
+     * compositor with empty xdg_toplevels. */
+    switch (role)
     {
-        /* If we have a pre-existing surface ensure it has no role. */
-        if (data->wayland_surface) wayland_surface_clear_role(surface);
-        /* If the window is a visible toplevel make it a wayland
-         * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
-         * compositor with empty xdg_toplevels. */
-        if (visible) wayland_surface_make_toplevel(surface);
+    case WAYLAND_SURFACE_ROLE_NONE:
+        wayland_surface_clear_role(surface);
+        break;
+    case WAYLAND_SURFACE_ROLE_TOPLEVEL:
+        wayland_surface_make_toplevel(surface);
+        break;
     }
 
     if (visible && client) wayland_client_surface_attach(client, data->hwnd);

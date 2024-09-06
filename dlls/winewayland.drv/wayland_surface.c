@@ -234,6 +234,12 @@ void wayland_surface_make_toplevel(struct wayland_surface *surface)
 
     TRACE("surface=%p\n", surface);
 
+    assert(!surface->role || surface->role == WAYLAND_SURFACE_ROLE_TOPLEVEL);
+    if (surface->xdg_surface && surface->xdg_toplevel) return;
+
+    wayland_surface_clear_role(surface);
+    surface->role = WAYLAND_SURFACE_ROLE_TOPLEVEL;
+
     surface->xdg_surface =
         xdg_wm_base_get_xdg_surface(process_wayland.xdg_wm_base, surface->wl_surface);
     if (!surface->xdg_surface) goto err;
@@ -271,16 +277,24 @@ void wayland_surface_clear_role(struct wayland_surface *surface)
 {
     TRACE("surface=%p\n", surface);
 
-    if (surface->xdg_toplevel)
+    switch (surface->role)
     {
-        xdg_toplevel_destroy(surface->xdg_toplevel);
-        surface->xdg_toplevel = NULL;
-    }
+    case WAYLAND_SURFACE_ROLE_NONE:
+        break;
 
-    if (surface->xdg_surface)
-    {
-        xdg_surface_destroy(surface->xdg_surface);
-        surface->xdg_surface = NULL;
+    case WAYLAND_SURFACE_ROLE_TOPLEVEL:
+        if (surface->xdg_toplevel)
+        {
+            xdg_toplevel_destroy(surface->xdg_toplevel);
+            surface->xdg_toplevel = NULL;
+        }
+
+        if (surface->xdg_surface)
+        {
+            xdg_surface_destroy(surface->xdg_surface);
+            surface->xdg_surface = NULL;
+        }
+        break;
     }
 
     memset(&surface->pending, 0, sizeof(surface->pending));
