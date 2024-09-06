@@ -1763,6 +1763,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
     /* Move copy of the command onto the heap so it can be expanded */
     cmd = xalloc(MAXSTRING * sizeof(WCHAR));
     lstrcpyW(cmd, command);
+    handleExpansion(cmd, TRUE);
 
     TRACE("Command: '%s'\n", wine_dbgstr_w(cmd));
 
@@ -1776,8 +1777,6 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
                                   cmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
     }
     parms_start = WCMD_skip_leading_spaces(&cmd[count]);
-
-    handleExpansion(cmd, TRUE);
 
 /*
  * Changing default drive has to be handled as a special case, anything

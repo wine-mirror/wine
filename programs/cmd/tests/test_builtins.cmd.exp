@@ -1822,7 +1822,7 @@ bar p1 echo
 bar cp1 echo
 bar cp2 echo
 @todo_wine@cp3
-@todo_wine@bar b1 echo
+bar b1 echo
 @todo_wine@bar b2 echo
 @todo_wine@bar b3 echo
 @todo_wine@bar cb1 echo
