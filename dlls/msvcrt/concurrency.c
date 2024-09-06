@@ -861,7 +861,10 @@ void __cdecl Context_Block(void)
 /* ?_Yield@_Context@details@Concurrency@@SAXXZ */
 void __cdecl Context_Yield(void)
 {
-    FIXME("()\n");
+    static unsigned int once;
+
+    if (!once++)
+        FIXME("()\n");
 }
 
 /* ?_SpinYield@Context@Concurrency@@SAXXZ */
