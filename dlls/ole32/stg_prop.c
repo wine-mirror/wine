@@ -1063,7 +1063,10 @@ static HRESULT WINAPI IPropertyStorage_fnCommit(
         return STG_E_ACCESSDENIED;
     EnterCriticalSection(&This->cs);
     if (This->dirty)
+    {
         hr = PropertyStorage_WriteToStream(This);
+        if (hr == S_OK) This->dirty = FALSE;
+    }
     else
         hr = S_OK;
     LeaveCriticalSection(&This->cs);
