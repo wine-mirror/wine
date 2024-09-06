@@ -513,7 +513,11 @@ void wayland_surface_reconfigure_client(struct wayland_surface *surface, struct 
 
     TRACE("hwnd=%p subsurface=%d,%d+%dx%d\n", surface->hwnd, x, y, width, height);
 
-    wl_subsurface_set_position(client->wl_subsurface, x, y);
+    if (client->wl_subsurface)
+    {
+        wl_subsurface_set_position(client->wl_subsurface, x, y);
+        wl_subsurface_place_above(client->wl_subsurface, surface->wl_surface);
+    }
 
     if (width != 0 && height != 0)
         wp_viewport_set_destination(client->wp_viewport, width, height);
@@ -815,6 +819,8 @@ err:
 
 void wayland_client_surface_attach(struct wayland_client_surface *client, struct wayland_surface *surface)
 {
+    wayland_client_surface_detach(client);
+
     client->wl_subsurface =
         wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
                                         client->wl_surface,
@@ -830,6 +836,15 @@ void wayland_client_surface_attach(struct wayland_client_surface *client, struct
     wayland_surface_reconfigure_client(surface, client);
     /* Commit to apply subsurface positioning. */
     wl_surface_commit(surface->wl_surface);
+}
+
+void wayland_client_surface_detach(struct wayland_client_surface *client)
+{
+    if (client->wl_subsurface)
+    {
+        wl_subsurface_destroy(client->wl_subsurface);
+        client->wl_subsurface = NULL;
+    }
 }
 
 static void dummy_buffer_release(void *data, struct wl_buffer *buffer)
