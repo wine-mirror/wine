@@ -1557,10 +1557,14 @@ DEFINE_THISCALL_WRAPPER(ThreadScheduler_ScheduleTask_loc, 16)
 void __thiscall ThreadScheduler_ScheduleTask_loc(ThreadScheduler *this,
         void (__cdecl *proc)(void*), void* data, /*location*/void *placement)
 {
+    static unsigned int once;
     schedule_task_arg *arg;
     TP_WORK *work;
 
-    FIXME("(%p %p %p %p) stub\n", this, proc, data, placement);
+    if(!once++)
+        FIXME("(%p %p %p %p) semi-stub\n", this, proc, data, placement);
+    else
+        TRACE("(%p %p %p %p) semi-stub\n", this, proc, data, placement);
 
     arg = operator_new(sizeof(*arg));
     arg->proc = proc;
@@ -1586,7 +1590,7 @@ DEFINE_THISCALL_WRAPPER(ThreadScheduler_ScheduleTask, 12)
 void __thiscall ThreadScheduler_ScheduleTask(ThreadScheduler *this,
         void (__cdecl *proc)(void*), void* data)
 {
-    FIXME("(%p %p %p) stub\n", this, proc, data);
+    TRACE("(%p %p %p)\n", this, proc, data);
     ThreadScheduler_ScheduleTask_loc(this, proc, data, NULL);
 }
 
