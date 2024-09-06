@@ -59,6 +59,8 @@ static void     (WINAPI *pThreadTerm)(HANDLE,LONG);
 static void     (WINAPI *pUpdateProcessorInformation)(SYSTEM_CPU_INFORMATION*);
 
 static BOOLEAN emulated_processor_features[PROCESSOR_FEATURE_MAX];
+static BYTE KiUserExceptionDispatcher_orig[16]; /* to detect patching */
+extern void KiUserExceptionDispatcher_thunk(void) asm("EXP+#KiUserExceptionDispatcher");
 
 static inline CHPE_V2_CPU_AREA_INFO *get_arm64ec_cpu_area(void)
 {
@@ -188,6 +190,7 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     RtlGetCurrentPeb()->ChpeV2ProcessInfo = info;
     info->NativeMachineType = IMAGE_FILE_MACHINE_ARM64;
     info->EmulatedMachineType = IMAGE_FILE_MACHINE_AMD64;
+    memcpy( KiUserExceptionDispatcher_orig, KiUserExceptionDispatcher_thunk, sizeof(KiUserExceptionDispatcher_orig) );
 
     enter_syscall_callback();
     if (pProcessInit) status = pProcessInit();
@@ -1134,11 +1137,16 @@ static void dispatch_syscall( ARM64_NT_CONTEXT *context )
 }
 
 
-static void __attribute__((used)) prepare_exception_arm64ec( EXCEPTION_RECORD *rec, ARM64EC_NT_CONTEXT *context, ARM64_NT_CONTEXT *arm_ctx )
+static void * __attribute__((used)) prepare_exception_arm64ec( EXCEPTION_RECORD *rec, ARM64EC_NT_CONTEXT *context, ARM64_NT_CONTEXT *arm_ctx )
 {
     if (rec->ExceptionCode == STATUS_EMULATION_SYSCALL) dispatch_syscall( arm_ctx );
     context_arm_to_x64( context, arm_ctx );
     if (pResetToConsistentState) pResetToConsistentState( rec, &context->AMD64_Context, arm_ctx );
+    /* call x64 dispatcher if the thunk or the function pointer was modified */
+    if (pWow64PrepareForException || memcmp( KiUserExceptionDispatcher_thunk, KiUserExceptionDispatcher_orig,
+                                             sizeof(KiUserExceptionDispatcher_orig) ))
+        return KiUserExceptionDispatcher_thunk;
+    return NULL;
 }
 
 /*******************************************************************
@@ -1155,8 +1163,14 @@ void __attribute__((naked)) KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CO
          "mov x1, sp\n\t"               /* context */
          "add x2, sp, #0x4d0\n\t"       /* arm_ctx (context + 1) */
          "bl \"#prepare_exception_arm64ec\"\n\t"
-         "add x0, sp, #0x390+0x4d0\n\t" /* rec */
-         "mov x1, sp\n\t"               /* context */
+         "cbz x0, 1f\n\t"
+         /* bypass exit thunk to avoid messing up the stack */
+         "adrp x16, __os_arm64x_dispatch_call_no_redirect\n\t"
+         "ldr x16, [x16, #:lo12:__os_arm64x_dispatch_call_no_redirect]\n\t"
+         "mov x9, x0\n\t"
+         "blr x16\n"
+         "1:\tadd x0, sp, #0x390+0x4d0\n\t" /* rec */
+         "mov x1, sp\n\t"                   /* context */
          "bl #dispatch_exception\n\t"
          "brk #1\n\t"
          ".seh_endproc" );
