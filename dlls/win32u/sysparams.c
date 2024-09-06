@@ -6673,9 +6673,6 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return adjust_window_rect( (RECT *)arg1, params->style, params->menu, params->ex_style, params->dpi );
     }
 
-    case NtUserCallTwoParam_IsWindowRectFullScreen:
-        return is_window_rect_full_screen( (const RECT *)arg1, arg2 );
-
     /* temporary exports */
     case NtUserAllocWinProc:
         return (UINT_PTR)alloc_winproc( (WNDPROC)arg1, arg2 );

@@ -1072,7 +1072,6 @@ enum
     NtUserCallTwoParam_SetIMECompositionWindowPos,
     NtUserCallTwoParam_UnhookWindowsHook,
     NtUserCallTwoParam_AdjustWindowRect,
-    NtUserCallTwoParam_IsWindowRectFullScreen,
     /* temporary exports */
     NtUserAllocWinProc,
 };
@@ -1145,11 +1144,6 @@ static inline BOOL NtUserAdjustWindowRect( RECT *rect, DWORD style, BOOL menu, D
         .dpi = dpi,
     };
     return NtUserCallTwoParam( (ULONG_PTR)rect, (ULONG_PTR)&params, NtUserCallTwoParam_AdjustWindowRect );
-}
-
-static inline BOOL NtUserIsWindowRectFullScreen( const RECT *rect, UINT dpi )
-{
-    return NtUserCallTwoParam( (UINT_PTR)rect, dpi, NtUserCallTwoParam_IsWindowRectFullScreen );
 }
 
 /* NtUserCallHwnd codes, not compatible with Windows */
