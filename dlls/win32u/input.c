@@ -2572,7 +2572,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 
     ctx = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
     monitor_info = monitor_info_from_window( hwnd, MONITOR_DEFAULTTONEAREST );
-    virtual_rect = NtUserGetVirtualScreenRect();
+    virtual_rect = get_virtual_screen_rect( 0 );
     set_thread_dpi_awareness_context( ctx );
 
     if (!grab_fullscreen)
@@ -2630,7 +2630,7 @@ BOOL get_clip_cursor( RECT *rect, UINT dpi )
 BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
-    RECT rect, virtual_rect = NtUserGetVirtualScreenRect();
+    RECT rect, virtual_rect = get_virtual_screen_rect( 0 );
     BOOL was_clipping, empty = !!(flags & SET_CURSOR_NOCLIP);
 
     TRACE( "hwnd %p, flags %#x, reset %u\n", hwnd, flags, reset );

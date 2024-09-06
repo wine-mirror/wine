@@ -1843,7 +1843,7 @@ static RECT get_visible_rect( HWND hwnd, BOOL shaped, UINT style, UINT ex_style,
 
 static BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-    RECT virtual_rect = NtUserGetVirtualScreenRect();
+    RECT virtual_rect = get_virtual_screen_rect( 0 );
 
     *surface_rect = *visible_rect;
 
