@@ -201,6 +201,7 @@ RETURN_CODE WCMD_verify(void);
 RETURN_CODE WCMD_version(void);
 RETURN_CODE WCMD_volume(void);
 RETURN_CODE WCMD_mklink(WCHAR *args);
+RETURN_CODE WCMD_change_drive(WCHAR drive);
 
 WCHAR *WCMD_fgets (WCHAR *buf, DWORD n, HANDLE stream);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw, BOOL wholecmdline);
@@ -395,9 +396,10 @@ extern BOOL delayedsubst;
 #define WCMD_MORE     43
 #define WCMD_CHOICE   44
 #define WCMD_MKLINK   45
+#define WCMD_CHGDRIVE 46
 
 /* Must be last in list */
-#define WCMD_EXIT     46
+#define WCMD_EXIT     47
 
 /* Some standard messages */
 extern WCHAR anykey[];

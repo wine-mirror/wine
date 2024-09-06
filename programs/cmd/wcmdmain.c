@@ -644,7 +644,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
       }
 
       /* Command line - just ignore this */
-      if (context == NULL) return endOfVar+1;
+      if (context == NULL || startchar == L'!') return endOfVar+1;
 
       /* Batch - replace unknown env var with nothing */
       if (colonpos == NULL)
@@ -829,7 +829,8 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
         p++;
       }
       else p+=2;
-
+    } else if (*(p+1) == startchar && startchar == L'!') {
+        p++;
     /* Replace %~ modifications if in batch program */
     } else if (*(p+1) == '~') {
       WCMD_HandleTildeModifiers(&p, atExecute);
@@ -1767,47 +1768,26 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
 
     TRACE("Command: '%s'\n", wine_dbgstr_w(cmd));
 
-    /* Check if the command entered is internal, and identify which one */
-    count = 0;
-    while (IsCharAlphaNumericW(cmd[count])) {
-      count++;
+    /* Changing default drive has to be handled as a special case, anything
+     * else if it exists after whitespace is ignored
+     */
+    if (cmd[1] == L':' && (!cmd[2] || iswspace(cmd[2]))) {
+      cmd_index = WCMD_CHGDRIVE;
+      count = 0;
     }
-    for (cmd_index=0; cmd_index<=WCMD_EXIT; cmd_index++) {
-      if (count && CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                                  cmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
+    else
+    {
+        /* Check if the command entered is internal, and identify which one */
+        count = 0;
+        while (IsCharAlphaNumericW(cmd[count])) {
+            count++;
+        }
+        for (cmd_index=0; cmd_index<=WCMD_EXIT; cmd_index++) {
+            if (count && CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                                        cmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
+        }
     }
     parms_start = WCMD_skip_leading_spaces(&cmd[count]);
-
-/*
- * Changing default drive has to be handled as a special case, anything
- * else if it exists after whitespace is ignored
- */
-
-    if (cmd[1] == L':' && (!cmd[2] || iswspace(cmd[2]))) {
-      WCHAR envvar[5];
-      WCHAR dir[MAX_PATH];
-
-      /* Ignore potential garbage on the same line */
-      cmd[2] = L'\0';
-
-      /* According to MSDN CreateProcess docs, special env vars record
-         the current directory on each drive, in the form =C:
-         so see if one specified, and if so go back to it             */
-      lstrcpyW(envvar, L"=");
-      lstrcatW(envvar, cmd);
-      if (GetEnvironmentVariableW(envvar, dir, ARRAY_SIZE(dir)) == 0) {
-        wsprintfW(cmd, L"%s\\", cmd);
-        WINE_TRACE("No special directory settings, using dir of %s\n", wine_dbgstr_w(cmd));
-      }
-      WINE_TRACE("Got directory %s as %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(cmd));
-      if (!SetCurrentDirectoryW(cmd))
-      {
-          WCMD_print_error();
-          return_code = errorlevel = ERROR_INVALID_FUNCTION;
-      }
-      else return_code = NO_ERROR;
-      goto cleanup;
-    }
 
     WCMD_parse(parms_start, quals, param1, param2);
     TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
@@ -1940,6 +1920,9 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
       case WCMD_MKLINK:
         return_code = WCMD_mklink(parms_start);
         break;
+    case WCMD_CHGDRIVE:
+        return_code = WCMD_change_drive(cmd[0]);
+        break;
       case WCMD_EXIT:
         return_code = WCMD_exit();
         break;
@@ -1949,7 +1932,6 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         echo_mode = prev_echo_mode;
     }
 
-cleanup:
     free(cmd);
     return return_code;
 }
