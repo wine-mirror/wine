@@ -2114,9 +2114,9 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
         c->bytesWritten += keyLen;
 
         /* Align to 4 bytes. */
-        pad_len = sizeof(DWORD) - keyLen % sizeof(DWORD);
-        if (pad_len)
+        if (keyLen & 3)
         {
+            pad_len = sizeof(DWORD) - (keyLen & 3);
             c->hr = IStream_Write(This->stm, &pad, pad_len, &count);
             if (FAILED(c->hr))
                 goto end;
