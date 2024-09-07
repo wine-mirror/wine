@@ -514,157 +514,78 @@ WCHAR *WCMD_strip_quotes(WCHAR *cmd) {
   return lastquote;
 }
 
-
-/*************************************************************************
- * WCMD_is_magic_envvar
- * Return TRUE if s is '%'magicvar'%'
- * and is not masked by a real environment variable.
- */
-
-static inline BOOL WCMD_is_magic_envvar(const WCHAR *s, const WCHAR *magicvar)
-{
-    int len;
-
-    if (s[0] != '%')
-        return FALSE;         /* Didn't begin with % */
-    len = lstrlenW(s);
-    if (len < 2 || s[len-1] != '%')
-        return FALSE;         /* Didn't end with another % */
-
-    if (CompareStringW(LOCALE_USER_DEFAULT,
-                       NORM_IGNORECASE | SORT_STRINGSORT,
-                       s+1, len-2, magicvar, -1) != CSTR_EQUAL) {
-        /* Name doesn't match. */
-        return FALSE;
-    }
-
-    if (GetEnvironmentVariableW(magicvar, NULL, 0) > 0) {
-        /* Masked by real environment variable. */
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 /*************************************************************************
  * WCMD_expand_envvar
  *
  *	Expands environment variables, allowing for WCHARacter substitution
  */
-static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
+static WCHAR *WCMD_expand_envvar(WCHAR *start)
 {
     WCHAR *endOfVar = NULL, *s;
     WCHAR *colonpos = NULL;
     WCHAR thisVar[MAXSTRING];
     WCHAR thisVarContents[MAXSTRING];
-    WCHAR savedchar = 0x00;
     int len;
-    WCHAR Delims[] = L"%:"; /* First char gets replaced appropriately */
 
-    WINE_TRACE("Expanding: %s (%c)\n", wine_dbgstr_w(start), startchar);
+    WINE_TRACE("Expanding: %s\n", wine_dbgstr_w(start));
 
-    /* Find the end of the environment variable, and extract name */
-    Delims[0] = startchar;
-    endOfVar = wcspbrk(start+1, Delims);
+    endOfVar = wcschr(start + 1, *start);
+    if (!endOfVar)
+        /* no corresponding closing char... either skip startchar in batch, or leave untouched otherwise */
+        return context ? WCMD_strsubstW(start, start + 1, NULL, 0) : start + 1;
 
-    if (endOfVar == NULL || *endOfVar==' ') {
-
-      /* In batch program, missing terminator for % and no following
-         ':' just removes the '%'                                   */
-      if (context) {
-        return WCMD_strsubstW(start, start + 1, NULL, 0);
-      } else {
-
-        /* In command processing, just ignore it - allows command line
-           syntax like: for %i in (a.a) do echo %i                     */
-        return start+1;
-      }
-    }
-
-    /* If ':' found, process remaining up until '%' (or stop at ':' if
-       a missing '%' */
-    if (*endOfVar==':') {
-        WCHAR *endOfVar2 = wcschr(endOfVar+1, startchar);
-        if (endOfVar2 != NULL) endOfVar = endOfVar2;
-    }
-
-    memcpy(thisVar, start, ((endOfVar - start) + 1) * sizeof(WCHAR));
-    thisVar[(endOfVar - start)+1] = 0x00;
-    colonpos = wcschr(thisVar+1, ':');
+    memcpy(thisVar, start + 1, (endOfVar - start - 1) * sizeof(WCHAR));
+    thisVar[endOfVar - start - 1] = L'\0';
+    colonpos = wcschr(thisVar, L':');
 
     /* If there's complex substitution, just need %var% for now
-       to get the expanded data to play with                    */
-    if (colonpos) {
-        *colonpos = '%';
-        savedchar = *(colonpos+1);
-        *(colonpos+1) = 0x00;
-    }
+     * to get the expanded data to play with
+     */
+    if (colonpos) colonpos[0] = L'\0';
 
-    /* By now, we know the variable we want to expand but it may be
-       surrounded by '!' if we are in delayed expansion - if so convert
-       to % signs.                                                      */
-    if (startchar=='!') {
-      thisVar[0]                  = '%';
-      thisVar[(endOfVar - start)] = '%';
-    }
-    WINE_TRACE("Retrieving contents of %s\n", wine_dbgstr_w(thisVar));
+    TRACE("Retrieving contents of %s\n", wine_dbgstr_w(thisVar));
 
-    /* Expand to contents, if unchanged, return */
-    /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
-    /* override if existing env var called that name              */
-    if (WCMD_is_magic_envvar(thisVar, L"ERRORLEVEL")) {
-      len = wsprintfW(thisVarContents, L"%d", errorlevel);
-    } else if (WCMD_is_magic_envvar(thisVar, L"DATE")) {
-      len = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
-                           NULL, thisVarContents, ARRAY_SIZE(thisVarContents));
-    } else if (WCMD_is_magic_envvar(thisVar, L"TIME")) {
-      len = GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
-                           NULL, thisVarContents, ARRAY_SIZE(thisVarContents));
-    } else if (WCMD_is_magic_envvar(thisVar, L"CD")) {
-      len = GetCurrentDirectoryW(ARRAY_SIZE(thisVarContents), thisVarContents);
-    } else if (WCMD_is_magic_envvar(thisVar, L"RANDOM")) {
-      len = wsprintfW(thisVarContents, L"%d", rand() % 32768);
-    } else {
-      if ((len = ExpandEnvironmentStringsW(thisVar, thisVarContents, ARRAY_SIZE(thisVarContents)))) len--;
+    /* env variables (when set) have priority over magic env variables */
+    len = GetEnvironmentVariableW(thisVar, thisVarContents, ARRAY_SIZE(thisVarContents));
+    if (!len)
+    {
+        if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT, thisVar, -1, L"ERRORLEVEL", -1) == CSTR_EQUAL)
+            len = wsprintfW(thisVarContents, L"%d", errorlevel);
+        else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT, thisVar, -1, L"DATE", -1) == CSTR_EQUAL)
+            len = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
+                                 NULL, thisVarContents, ARRAY_SIZE(thisVarContents));
+        else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT, thisVar, -1, L"TIME", -1) == CSTR_EQUAL)
+            len = GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
+                                 NULL, thisVarContents, ARRAY_SIZE(thisVarContents));
+        else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT, thisVar, -1, L"CD", -1) == CSTR_EQUAL)
+            len = GetCurrentDirectoryW(ARRAY_SIZE(thisVarContents), thisVarContents);
+        else if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT, thisVar, -1, L"RANDOM", -1) == CSTR_EQUAL)
+            len = wsprintfW(thisVarContents, L"%d", rand() % 32768);
     }
-
-    if (len == 0)
-      return endOfVar+1;
+    /* Restore complex bit */
+    if (colonpos) colonpos[0] = L':';
 
     /* In a batch program, unknown env vars are replaced with nothing,
-         note syntax %garbage:1,3% results in anything after the ':'
-         except the %
-       From the command line, you just get back what you entered      */
-    if (lstrcmpiW(thisVar, thisVarContents) == 0) {
+     * note syntax %garbage:1,3% results in anything after the ':'
+     * except the %
+     * From the command line, you just get back what you entered
+     */
+    if (!len)
+    {
+        /* Command line - just ignore this */
+        if (context == NULL) return endOfVar + 1;
 
-      /* Restore the complex part after the compare */
-      if (colonpos) {
-        *colonpos = ':';
-        *(colonpos+1) = savedchar;
-      }
-
-      /* Command line - just ignore this */
-      if (context == NULL || startchar == L'!') return endOfVar+1;
-
-      /* Batch - replace unknown env var with nothing */
-      if (colonpos == NULL)
-        return WCMD_strsubstW(start, endOfVar + 1, NULL, 0);
-      len = lstrlenW(thisVar);
-      thisVar[len-1] = 0x00;
-      /* If %:...% supplied, : is retained */
-      if (colonpos == thisVar+1)
-          return WCMD_strsubstW(start, endOfVar + 1, colonpos, -1);
-      return WCMD_strsubstW(start, endOfVar + 1, colonpos + 1, -1);
+        /* Batch - replace unknown env var with nothing */
+        if (colonpos == NULL)
+            return WCMD_strsubstW(start, endOfVar + 1, NULL, 0);
+        if (colonpos == thisVar)
+            return WCMD_strsubstW(start, endOfVar + 1, colonpos, -1);
+        return WCMD_strsubstW(start, endOfVar + 1, colonpos + 1, -1);
     }
 
-    /* See if we need to do complex substitution (any ':'s), if not
-       then our work here is done                                  */
+    /* See if we need to do complex substitution (any ':'s) */
     if (colonpos == NULL)
       return WCMD_strsubstW(start, endOfVar + 1, thisVarContents, -1);
-
-    /* Restore complex bit */
-    *colonpos = ':';
-    *(colonpos+1) = savedchar;
 
     /*
         Handle complex substitutions:
@@ -677,10 +598,10 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
      */
 
     /* ~ is substring manipulation */
-    if (savedchar == '~') {
+    if (colonpos[1] == L'~') {
 
       int   substrposition, substrlength = 0;
-      WCHAR *commapos = wcschr(colonpos+2, ',');
+      WCHAR *commapos = wcschr(colonpos+2, L',');
       WCHAR *startCopy;
 
       substrposition = wcstol(colonpos+2, NULL, 10);
@@ -707,7 +628,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
       return WCMD_strsubstW(start, endOfVar + 1, startCopy, substrlength);
     /* search and replace manipulation */
     } else {
-      WCHAR *equalspos = wcsstr(colonpos, L"=");
+      WCHAR *equalspos = wcschr(colonpos, L'=');
       WCHAR *replacewith = equalspos+1;
       WCHAR *found       = NULL;
       WCHAR *searchIn;
@@ -859,7 +780,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
         /* Replace the 2 characters, % and for variable character */
         p = WCMD_strsubstW(p, p + 2, forloopcontext->variable[forvaridx], -1);
       } else if (!atExecute || startchar == '!') {
-        p = WCMD_expand_envvar(p, startchar);
+        p = WCMD_expand_envvar(p);
 
       /* In a FOR loop, see if this is the variable to replace */
       } else { /* Ignore %'s on second pass of batch program */
