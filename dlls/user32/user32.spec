@@ -104,6 +104,7 @@
 @ stdcall CreateMDIWindowW(wstr wstr long long long long long long long long)
 @ stdcall CreateMenu()
 @ stdcall CreatePopupMenu()
+@ stdcall CreateSyntheticPointerDevice(long long long)
 # @ stub CreateSystemThreads
 @ stdcall CreateWindowExA(long str str long long long long long long long long ptr)
 @ stdcall CreateWindowExW(long wstr wstr long long long long long long long long ptr)
