@@ -186,7 +186,11 @@ extern "C" {
 
 #undef NULL
 #ifdef __cplusplus
-#define NULL  0
+#ifndef _WIN64
+#define NULL 0
+#else
+#define NULL 0LL
+#endif
 #else
 #define NULL  ((void*)0)
 #endif
