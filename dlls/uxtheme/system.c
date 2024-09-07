@@ -1317,6 +1317,15 @@ int WINAPI SetPreferredAppMode(int app_mode)
 }
 
 /**********************************************************************
+ *      FlushMenuThemes                                 (UXTHEME.136)
+ *
+ */
+void WINAPI FlushMenuThemes(void)
+{
+    FIXME("stub\n");
+}
+
+/**********************************************************************
  *      IsDarkModeAllowedForWindow                        (UXTHEME.137)
  *
  */
