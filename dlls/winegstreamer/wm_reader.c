@@ -32,6 +32,9 @@ struct wm_stream
     bool eos;
     bool read_compressed;
 
+    struct wg_parser_buffer current_buffer;
+    DWORD current_buffer_offset;
+
     IWMReaderAllocatorEx *output_allocator;
     IWMReaderAllocatorEx *stream_allocator;
 };
@@ -1447,6 +1450,23 @@ static const IWMReaderTimecodeVtbl timecode_vtbl =
     timecode_GetTimecodeRangeBounds,
 };
 
+static void destroy_stream(struct wm_reader *reader)
+{
+    unsigned int i;
+
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        struct wm_stream *stream = &reader->streams[i];
+
+        if (stream->current_buffer.size)
+        {
+            wg_parser_stream_release_buffer(stream->wg_stream);
+            stream->current_buffer.size = 0;
+            stream->current_buffer_offset = 0;
+        }
+    }
+}
+
 static HRESULT init_stream(struct wm_reader *reader)
 {
     wg_parser_t wg_parser;
@@ -1555,6 +1575,7 @@ static HRESULT reinit_stream(struct wm_reader *reader, bool read_compressed)
     CloseHandle(reader->read_thread);
     reader->read_thread = NULL;
 
+    destroy_stream(reader);
     wg_parser_destroy(reader->wg_parser);
     reader->wg_parser = 0;
 
@@ -1606,6 +1627,7 @@ out_shutdown_thread:
     reader->read_thread = NULL;
 
 out_destroy_parser:
+    destroy_stream(reader);
     wg_parser_destroy(reader->wg_parser);
     reader->wg_parser = 0;
 
@@ -1704,21 +1726,22 @@ static HRESULT wm_reader_read_stream_sample(struct wm_reader *reader, struct wg_
 
     TRACE("Got buffer for '%s' stream %p.\n", get_major_type_string(stream->format.major_type), stream);
 
-    if (FAILED(hr = wm_stream_allocate_sample(stream, buffer->size, sample)))
+    capacity = buffer->size - stream->current_buffer_offset;
+    if (stream->format.major_type == WG_MAJOR_TYPE_AUDIO)
+        capacity = min(capacity, 16384);
+
+    if (FAILED(hr = wm_stream_allocate_sample(stream, capacity, sample)))
     {
-        ERR("Failed to allocate sample of %u bytes, hr %#lx.\n", buffer->size, hr);
+        ERR("Failed to allocate sample of %lu bytes, hr %#lx.\n", capacity, hr);
         wg_parser_stream_release_buffer(stream->wg_stream);
         return hr;
     }
 
     if (FAILED(hr = INSSBuffer_GetBufferAndLength(*sample, &data, &size)))
         ERR("Failed to get data pointer, hr %#lx.\n", hr);
-    if (FAILED(hr = INSSBuffer_GetMaxLength(*sample, &capacity)))
-        ERR("Failed to get capacity, hr %#lx.\n", hr);
-    if (buffer->size > capacity)
-        ERR("Returned capacity %lu is less than requested capacity %u.\n", capacity, buffer->size);
 
-    if (!wg_parser_stream_copy_buffer(stream->wg_stream, data, 0, buffer->size))
+    size = min(buffer->size - stream->current_buffer_offset, capacity);
+    if (!wg_parser_stream_copy_buffer(stream->wg_stream, data, stream->current_buffer_offset, size))
     {
         /* The GStreamer pin has been flushed. */
         INSSBuffer_Release(*sample);
@@ -1726,13 +1749,11 @@ static HRESULT wm_reader_read_stream_sample(struct wm_reader *reader, struct wg_
         return S_FALSE;
     }
 
-    if (FAILED(hr = INSSBuffer_SetLength(*sample, buffer->size)))
-        ERR("Failed to set size %u, hr %#lx.\n", buffer->size, hr);
+    if (FAILED(hr = INSSBuffer_SetLength(*sample, size)))
+        ERR("Failed to set size %lu, hr %#lx.\n", size, hr);
 
-    wg_parser_stream_release_buffer(stream->wg_stream);
-
-    *pts = buffer->pts;
-    *duration = buffer->duration;
+    *pts = buffer->pts + buffer->duration * (uint64_t)stream->current_buffer_offset / buffer->size;
+    *duration = buffer->duration * (uint64_t)size / buffer->size;
 
     if (!buffer->has_pts)
     {
@@ -1750,6 +1771,20 @@ static HRESULT wm_reader_read_stream_sample(struct wm_reader *reader, struct wg_
         *flags |= WM_SF_DISCONTINUITY;
     if (!buffer->delta)
         *flags |= WM_SF_CLEANPOINT;
+
+    stream->current_buffer_offset += size;
+    if (stream->current_buffer_offset == buffer->size)
+    {
+        TRACE("Current buffer exhausted, releasing.\n");
+        stream->current_buffer.size = 0;
+        stream->current_buffer_offset = 0;
+        wg_parser_stream_release_buffer(stream->wg_stream);
+    }
+    else
+    {
+        TRACE("Keeping buffer around, %lu bytes still available.\n", buffer->size - stream->current_buffer_offset);
+        stream->current_buffer = *buffer;
+    }
 
     return S_OK;
 }
@@ -1880,6 +1915,7 @@ static HRESULT WINAPI reader_Close(IWMSyncReader2 *iface)
     CloseHandle(reader->read_thread);
     reader->read_thread = NULL;
 
+    destroy_stream(reader);
     wg_parser_destroy(reader->wg_parser);
     reader->wg_parser = 0;
 
@@ -1953,9 +1989,19 @@ static HRESULT WINAPI reader_GetNextSample(IWMSyncReader2 *iface,
     while (hr == S_FALSE)
     {
         struct wg_parser_buffer wg_buffer;
-        if (!wg_parser_stream_get_buffer(reader->wg_parser, stream ? stream->wg_stream : 0, &wg_buffer))
+
+        if (stream && stream->current_buffer.size)
+        {
+            TRACE("Reusing buffer for stream %p.\n", stream);
+            wg_buffer = stream->current_buffer;
+            hr = S_OK;
+        }
+        else if (!wg_parser_stream_get_buffer(reader->wg_parser, stream ? stream->wg_stream : 0, &wg_buffer))
+        {
             hr = NS_E_NO_MORE_SAMPLES;
-        else if (SUCCEEDED(hr = wm_reader_read_stream_sample(reader, &wg_buffer, sample, pts, duration, flags)))
+        }
+
+        if (SUCCEEDED(hr) && SUCCEEDED(hr = wm_reader_read_stream_sample(reader, &wg_buffer, sample, pts, duration, flags)))
             stream_number = wg_buffer.stream + 1;
     }
 
