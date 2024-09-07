@@ -452,9 +452,52 @@ static HRESULT WINAPI DPWSCB_Send( LPDPSP_SENDDATA data )
 
 static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
 {
-    FIXME( "(%ld,0x%08lx,%p,%p) stub\n",
+    DPWS_PLAYERDATA *playerData;
+    DWORD playerDataSize;
+    DPWS_DATA *dpwsData;
+    DWORD dpwsDataSize;
+    HRESULT hr;
+
+    TRACE( "(%ld,0x%08lx,%p,%p)\n",
            data->idPlayer, data->dwFlags,
            data->lpSPMessageHeader, data->lpISP );
+
+    hr = IDirectPlaySP_GetSPData( data->lpISP, (void **) &dpwsData, &dpwsDataSize, DPSET_LOCAL );
+    if ( FAILED( hr ) )
+        return hr;
+
+    if ( !data->lpSPMessageHeader )
+    {
+        DPWS_PLAYERDATA playerDataPlaceholder = { 0 };
+        hr = IDirectPlaySP_SetSPPlayerData( data->lpISP, data->idPlayer,
+                                            (void *) &playerDataPlaceholder,
+                                            sizeof( playerDataPlaceholder ), DPSET_REMOTE );
+        if ( FAILED( hr ) )
+            return hr;
+    }
+
+    hr = IDirectPlaySP_GetSPPlayerData( data->lpISP, data->idPlayer, (void **) &playerData,
+                                        &playerDataSize, DPSET_REMOTE );
+    if ( FAILED( hr ) )
+        return hr;
+    if ( playerDataSize != sizeof( DPWS_PLAYERDATA ) )
+        return DPERR_GENERIC;
+
+    if ( data->lpSPMessageHeader )
+    {
+        DPSP_MSG_HEADER *header = data->lpSPMessageHeader;
+        if ( !playerData->tcpAddr.sin_addr.s_addr )
+            playerData->tcpAddr.sin_addr = header->SockAddr.sin_addr;
+        if ( !playerData->udpAddr.sin_addr.s_addr )
+            playerData->udpAddr.sin_addr = header->SockAddr.sin_addr;
+    }
+    else
+    {
+        playerData->tcpAddr.sin_family = AF_INET;
+        playerData->tcpAddr.sin_port = dpwsData->tcpAddr.sin_port;
+        playerData->udpAddr.sin_family = AF_INET;
+    }
+
     return DP_OK;
 }
 

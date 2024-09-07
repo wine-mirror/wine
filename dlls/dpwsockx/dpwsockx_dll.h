@@ -45,6 +45,12 @@ typedef struct tagDPSP_MSG_HEADER
 } DPSP_MSG_HEADER, *LPDPSP_MSG_HEADER;
 typedef const DPSP_MSG_HEADER* LPCDPSP_MSG_HEADER;
 
+typedef struct
+{
+    SOCKADDR_IN tcpAddr;
+    SOCKADDR_IN udpAddr;
+} DPWS_PLAYERDATA;
+
 #include "poppack.h"
 
 typedef struct tagDPWS_IN_CONNECTION DPWS_IN_CONNECTION;
