@@ -114,6 +114,9 @@ typedef struct tagDPWS_DATA
 
     SOCKET                udpSock;
     SOCKADDR_IN           udpAddr;
+    WSAOVERLAPPED         overlapped;
+    WSABUF                wsaBuffer;
+    char                  buffer[ 65536 ];
 
     CRITICAL_SECTION      sendCs;
     DPWS_PLAYER           nameserver;

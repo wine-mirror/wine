@@ -231,11 +231,80 @@ static void DPWS_MessageBodyReceiveCompleted( DPWS_IN_CONNECTION *connection )
     }
 }
 
+static void WINAPI DPWS_UdpReceiveCompleted( DWORD error, DWORD transferred,
+                                             WSAOVERLAPPED *overlapped, DWORD flags )
+{
+    DPWS_DATA *dpwsData = (DPWS_DATA *)overlapped->hEvent;
+    DPSP_MSG_HEADER *header;
+    int messageBodySize;
+    char *messageBody;
+
+    if ( error != ERROR_SUCCESS )
+    {
+        ERR( "WSARecv() failed\n" );
+        return;
+    }
+
+    messageBody = dpwsData->buffer;
+    messageBodySize = transferred;
+    header = NULL;
+
+    if ( transferred >= sizeof( DPSP_MSG_HEADER ) + sizeof( DWORD ) )
+    {
+        DWORD signature = *(DWORD *)&dpwsData->buffer[ sizeof( DPSP_MSG_HEADER ) ];
+        if ( signature == 0x79616c70 )
+        {
+            int messageSize;
+
+            header = (DPSP_MSG_HEADER *)dpwsData->buffer;
+            messageSize = DPSP_MSG_SIZE( header->mixed );
+
+            if ( messageSize < sizeof( DPSP_MSG_HEADER ))
+            {
+                ERR( "message is too short: %d\n", messageSize );
+                return;
+            }
+            if ( messageSize > transferred )
+            {
+                ERR( "truncated message\n" );
+                return;
+            }
+
+            messageBody = dpwsData->buffer + sizeof( DPSP_MSG_HEADER );
+            messageBodySize = messageSize - sizeof( DPSP_MSG_HEADER );
+        }
+    }
+
+    IDirectPlaySP_HandleMessage( dpwsData->lpISP, messageBody, messageBodySize, header );
+
+    if ( SOCKET_ERROR == WSARecv( dpwsData->udpSock, &dpwsData->wsaBuffer, 1, &transferred, &flags,
+                                  &dpwsData->overlapped, DPWS_UdpReceiveCompleted ) )
+    {
+        if ( WSAGetLastError() != WSA_IO_PENDING )
+        {
+            ERR( "WSARecv() failed\n" );
+            return;
+        }
+    }
+}
+
 static DWORD WINAPI DPWS_ThreadProc( void *param )
 {
     DPWS_DATA *dpwsData = (DPWS_DATA *)param;
+    DWORD transferred;
+    DWORD flags = 0;
 
     SetThreadDescription( GetCurrentThread(), L"dpwsockx" );
+
+    if ( SOCKET_ERROR == WSARecv( dpwsData->udpSock, &dpwsData->wsaBuffer, 1, &transferred, &flags,
+                                  &dpwsData->overlapped, DPWS_UdpReceiveCompleted ) )
+    {
+        if ( WSAGetLastError() != WSA_IO_PENDING )
+        {
+            ERR( "WSARecv() failed\n" );
+            return 0;
+        }
+    }
 
     for ( ;; )
     {
@@ -370,12 +439,17 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
         return hr;
     }
 
+    dpwsData->overlapped.hEvent = (HANDLE)dpwsData;
+    dpwsData->wsaBuffer.len = sizeof( dpwsData->buffer );
+    dpwsData->wsaBuffer.buf = dpwsData->buffer;
+
     rb_init( &dpwsData->connections, DPWS_CompareConnections );
 
     dpwsData->stopEvent = WSACreateEvent();
     if ( !dpwsData->stopEvent )
     {
         ERR( "WSACreateEvent() failed\n" );
+        closesocket( dpwsData->udpSock );
         WSACloseEvent( dpwsData->acceptEvent );
         closesocket( dpwsData->tcpSock );
         return DPERR_UNAVAILABLE;
@@ -389,6 +463,7 @@ static HRESULT DPWS_Start( DPWS_DATA *dpwsData )
         ERR( "CreateThread() failed\n" );
         DeleteCriticalSection( &dpwsData->sendCs );
         WSACloseEvent( dpwsData->stopEvent );
+        closesocket( dpwsData->udpSock );
         WSACloseEvent( dpwsData->acceptEvent );
         closesocket( dpwsData->tcpSock );
         return DPERR_UNAVAILABLE;
@@ -430,6 +505,7 @@ static void DPWS_Stop( DPWS_DATA *dpwsData )
 
     DeleteCriticalSection( &dpwsData->sendCs );
     WSACloseEvent( dpwsData->stopEvent );
+    closesocket( dpwsData->udpSock );
     WSACloseEvent( dpwsData->acceptEvent );
     closesocket( dpwsData->tcpSock );
 }
