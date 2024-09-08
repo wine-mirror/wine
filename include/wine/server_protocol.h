@@ -995,7 +995,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    int placeholder;
+    unsigned int         dpi_context;
 } window_shm_t;
 
 typedef volatile union
@@ -6812,6 +6812,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 872
+#define SERVER_PROTOCOL_VERSION 873
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

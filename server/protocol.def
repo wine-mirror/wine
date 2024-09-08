@@ -1011,7 +1011,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    int placeholder;
+    unsigned int         dpi_context;      /* DPI awareness context */
 } window_shm_t;
 
 typedef volatile union
