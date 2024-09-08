@@ -1829,58 +1829,57 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
     return TRUE;
 }
 
+static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOOL flush )
+{
+    struct x11drv_escape_flush_gl_drawable escape =
+    {
+        .code = X11DRV_FLUSH_GL_DRAWABLE,
+        .flush = flush,
+    };
+    Drawable drawable;
+
+    if (!gl) return;
+    switch (gl->type)
+    {
+    case DC_GL_PIXMAP_WIN: drawable = gl->pixmap; break;
+    case DC_GL_CHILD_WIN: drawable = gl->window; break;
+    default: drawable = 0; break;
+    }
+    if (!(escape.gl_drawable = drawable)) return;
+
+    NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+}
+
 static void wglFinish(void)
 {
-    struct x11drv_escape_flush_gl_drawable escape;
     struct gl_drawable *gl;
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    HWND hwnd = NtUserWindowFromDC( ctx->hdc );
 
-    escape.code = X11DRV_FLUSH_GL_DRAWABLE;
-    escape.gl_drawable = 0;
-    escape.flush = FALSE;
-
-    if ((gl = get_gl_drawable( NtUserWindowFromDC( ctx->hdc ), 0 )))
+    if (!(gl = get_gl_drawable( hwnd, 0 ))) pglFinish();
+    else
     {
-        switch (gl->type)
-        {
-        case DC_GL_PIXMAP_WIN: escape.gl_drawable = gl->pixmap; break;
-        case DC_GL_CHILD_WIN:  escape.gl_drawable = gl->window; break;
-        default: break;
-        }
         sync_context(ctx);
+        pglFinish();
+        present_gl_drawable( hwnd, ctx->hdc, gl, FALSE );
         release_gl_drawable( gl );
     }
-
-    pglFinish();
-    if (escape.gl_drawable)
-        NtGdiExtEscape( ctx->hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 static void wglFlush(void)
 {
-    struct x11drv_escape_flush_gl_drawable escape;
     struct gl_drawable *gl;
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    HWND hwnd = NtUserWindowFromDC( ctx->hdc );
 
-    escape.code = X11DRV_FLUSH_GL_DRAWABLE;
-    escape.gl_drawable = 0;
-    escape.flush = FALSE;
-
-    if ((gl = get_gl_drawable( NtUserWindowFromDC( ctx->hdc ), 0 )))
+    if (!(gl = get_gl_drawable( hwnd, 0 ))) pglFlush();
+    else
     {
-        switch (gl->type)
-        {
-        case DC_GL_PIXMAP_WIN: escape.gl_drawable = gl->pixmap; break;
-        case DC_GL_CHILD_WIN:  escape.gl_drawable = gl->window; break;
-        default: break;
-        }
         sync_context(ctx);
+        pglFlush();
+        present_gl_drawable( hwnd, ctx->hdc, gl, FALSE );
         release_gl_drawable( gl );
     }
-
-    pglFlush();
-    if (escape.gl_drawable)
-        NtGdiExtEscape( ctx->hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 static const GLubyte *wglGetString(GLenum name)
@@ -2763,18 +2762,15 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
  */
 static BOOL glxdrv_wglSwapBuffers( HDC hdc )
 {
-    struct x11drv_escape_flush_gl_drawable escape;
     struct gl_drawable *gl;
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
     INT64 ust, msc, sbc, target_sbc = 0;
+    HWND hwnd = NtUserWindowFromDC( hdc );
+    Drawable drawable = 0;
 
     TRACE("(%p)\n", hdc);
 
-    escape.code = X11DRV_FLUSH_GL_DRAWABLE;
-    escape.gl_drawable = 0;
-    escape.flush = !pglXWaitForSbcOML;
-
-    if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
+    if (!(gl = get_gl_drawable( hwnd, hdc )))
     {
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return FALSE;
@@ -2792,7 +2788,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     {
     case DC_GL_PIXMAP_WIN:
         if (ctx) sync_context( ctx );
-        escape.gl_drawable = gl->pixmap;
+        drawable = gl->pixmap;
         if (ctx && pglXCopySubBufferMESA) {
             /* (glX)SwapBuffers has an implicit glFlush effect, however
              * GLX_MESA_copy_sub_buffer doesn't. Make sure GL is flushed before
@@ -2813,10 +2809,10 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     case DC_GL_WINDOW:
     case DC_GL_CHILD_WIN:
         if (ctx) sync_context( ctx );
-        if (gl->type == DC_GL_CHILD_WIN) escape.gl_drawable = gl->window;
+        if (gl->type == DC_GL_CHILD_WIN) drawable = gl->window;
         /* fall through */
     default:
-        if (ctx && escape.gl_drawable && pglXSwapBuffersMscOML)
+        if (ctx && drawable && pglXSwapBuffersMscOML)
         {
             pglFlush();
             target_sbc = pglXSwapBuffersMscOML( gdi_display, gl->drawable, 0, 0, 0 );
@@ -2826,12 +2822,10 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
         break;
     }
 
-    if (ctx && escape.gl_drawable && pglXWaitForSbcOML)
+    if (ctx && drawable && pglXWaitForSbcOML)
         pglXWaitForSbcOML( gdi_display, gl->drawable, target_sbc, &ust, &msc, &sbc );
 
-    if (escape.gl_drawable)
-        NtGdiExtEscape( ctx ? ctx->hdc : hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
-
+    present_gl_drawable( hwnd, ctx ? ctx->hdc : hdc, gl, !pglXWaitForSbcOML );
     update_gl_drawable_size( gl );
     release_gl_drawable( gl );
     return TRUE;
