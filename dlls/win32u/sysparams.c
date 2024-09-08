@@ -58,7 +58,6 @@ static const char devpkey_device_removal_policy[] = "Properties\\{A45C254E-DF1C-
 static const char devpropkey_device_ispresentA[] = "Properties\\{540B947E-8B40-45BC-A8A2-6A0B894CBDA2}\\0005";
 static const char devpropkey_monitor_gpu_luidA[] = "Properties\\{CA085853-16CE-48AA-B114-DE9C72334223}\\0001";
 static const char devpropkey_monitor_output_idA[] = "Properties\\{CA085853-16CE-48AA-B114-DE9C72334223}\\0002";
-static const char wine_devpropkey_monitor_rcmonitorA[] = "Properties\\{233a9ef3-afc4-4abd-b564-c32f21f1535b}\\0003";
 static const char wine_devpropkey_monitor_rcworkA[] = "Properties\\{233a9ef3-afc4-4abd-b564-c32f21f1535b}\\0004";
 
 static const WCHAR linkedW[] = {'L','i','n','k','e','d',0};
@@ -144,7 +143,6 @@ struct monitor
     HANDLE handle;
     unsigned int id;
     unsigned int output_id;
-    RECT rc_monitor;
     RECT rc_work;
     BOOL is_clone;
     struct edid_monitor_info edid_info;
@@ -163,8 +161,6 @@ UINT64 thunk_lock_callback = 0;
 static struct monitor virtual_monitor =
 {
     .handle = VIRTUAL_HMONITOR,
-    .rc_monitor.right = 1024,
-    .rc_monitor.bottom = 768,
     .rc_work.right = 1024,
     .rc_work.bottom = 768,
 };
@@ -688,16 +684,6 @@ static BOOL read_monitor_from_registry( struct monitor *monitor )
         return FALSE;
     }
     monitor->output_id = *(const unsigned int *)value->Data;
-
-    /* rc_monitor, WINE_DEVPROPKEY_MONITOR_RCMONITOR */
-    size = query_reg_subkey_value( hkey, wine_devpropkey_monitor_rcmonitorA,
-                                   value, sizeof(buffer) );
-    if (size != sizeof(monitor->rc_monitor))
-    {
-        NtClose( hkey );
-        return FALSE;
-    }
-    monitor->rc_monitor = *(const RECT *)value->Data;
 
     /* rc_work, WINE_DEVPROPKEY_MONITOR_RCWORK */
     size = query_reg_subkey_value( hkey, wine_devpropkey_monitor_rcworkA,
@@ -1426,14 +1412,6 @@ static BOOL write_monitor_to_registry( struct monitor *monitor, const BYTE *edid
         NtClose( subkey );
     }
 
-    /* WINE_DEVPROPKEY_MONITOR_RCMONITOR */
-    if ((subkey = reg_create_ascii_key( hkey, wine_devpropkey_monitor_rcmonitorA, 0, NULL )))
-    {
-        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_BINARY, &monitor->rc_monitor,
-                       sizeof(monitor->rc_monitor) );
-        NtClose( subkey );
-    }
-
     /* WINE_DEVPROPKEY_MONITOR_RCWORK */
     if ((subkey = reg_create_ascii_key( hkey, wine_devpropkey_monitor_rcworkA, 0, NULL )))
     {
@@ -1481,7 +1459,6 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
     monitor.source = &ctx->source;
     monitor.id = ctx->source.monitor_count;
     monitor.output_id = ctx->monitor_count;
-    monitor.rc_monitor = gdi_monitor->rc_monitor;
     monitor.rc_work = gdi_monitor->rc_work;
 
     TRACE( "%u %s %s\n", monitor.id, wine_dbgstr_rect(&gdi_monitor->rc_monitor), wine_dbgstr_rect(&gdi_monitor->rc_work) );
@@ -1703,13 +1680,24 @@ static void clear_display_devices(void)
     }
 }
 
+static BOOL is_detached_mode( const DEVMODEW *mode )
+{
+    return mode->dmFields & DM_POSITION &&
+           mode->dmFields & DM_PELSWIDTH &&
+           mode->dmFields & DM_PELSHEIGHT &&
+           mode->dmPelsWidth == 0 &&
+           mode->dmPelsHeight == 0;
+}
+
 static BOOL is_monitor_active( struct monitor *monitor )
 {
+    DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
     struct source *source;
     /* services do not have any adapters, only a virtual monitor */
     if (!(source = monitor->source)) return TRUE;
     if (!(source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) return FALSE;
-    return !IsRectEmpty( &monitor->rc_monitor );
+    source_get_current_settings( source, &current_mode );
+    return !is_detached_mode( &current_mode );
 }
 
 static BOOL is_monitor_primary( struct monitor *monitor )
@@ -2171,16 +2159,30 @@ static UINT monitor_get_dpi( struct monitor *monitor )
 }
 
 /* display_lock must be held */
-static RECT monitor_get_rect( struct monitor *monitor, BOOL work, UINT dpi )
+static RECT monitor_get_rect( struct monitor *monitor, UINT dpi )
 {
-    RECT rect = work ? monitor->rc_work : monitor->rc_monitor;
+    DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
+    RECT rect = {0, 0, 1024, 768};
+    struct source *source;
+
+    /* services do not have any adapters, only a virtual monitor */
+    if (!(source = monitor->source)) return rect;
+
+    SetRectEmpty( &rect );
+    if (!(source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) return rect;
+    source_get_current_settings( source, &current_mode );
+
+    SetRect( &rect, current_mode.dmPosition.x, current_mode.dmPosition.y,
+             current_mode.dmPosition.x + current_mode.dmPelsWidth,
+             current_mode.dmPosition.y + current_mode.dmPelsHeight );
+
     return map_dpi_rect( rect, monitor_get_dpi( monitor ), dpi );
 }
 
 static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT dpi )
 {
-    info->rcMonitor = monitor_get_rect( monitor, FALSE, dpi );
-    info->rcWork = monitor_get_rect( monitor, TRUE, dpi );
+    info->rcMonitor = monitor_get_rect( monitor, dpi );
+    info->rcWork = map_dpi_rect( monitor->rc_work, monitor_get_dpi( monitor ), dpi );
     info->dwFlags = is_monitor_primary( monitor ) ? MONITORINFOF_PRIMARY : 0;
 
     if (info->cbSize >= sizeof(MONITORINFOEXW))
@@ -2210,7 +2212,7 @@ static struct monitor *get_monitor_from_rect( RECT rect, UINT flags, UINT dpi )
 
         if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
 
-        monitor_rect = monitor_get_rect( monitor, FALSE, dpi );
+        monitor_rect = monitor_get_rect( monitor, dpi );
         if (intersect_rect( &intersect, &monitor_rect, &rect ))
         {
             /* check for larger intersecting area */
@@ -2493,7 +2495,7 @@ RECT get_virtual_screen_rect( UINT dpi )
     {
         RECT monitor_rect;
         if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
-        monitor_rect = monitor_get_rect( monitor, FALSE, dpi );
+        monitor_rect = monitor_get_rect( monitor, dpi );
         union_rect( &rect, &rect, &monitor_rect );
     }
 
@@ -2515,7 +2517,7 @@ BOOL is_window_rect_full_screen( const RECT *rect, UINT dpi )
 
         if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
 
-        monrect = monitor_get_rect( monitor, FALSE, dpi );
+        monrect = monitor_get_rect( monitor, dpi );
         if (rect->left <= monrect.left && rect->right >= monrect.right &&
             rect->top <= monrect.top && rect->bottom >= monrect.bottom)
         {
@@ -2554,7 +2556,7 @@ RECT get_display_rect( const WCHAR *display )
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
         if (!monitor->source || monitor->source->id + 1 != index) continue;
-        rect = monitor_get_rect( monitor, FALSE, dpi );
+        rect = monitor_get_rect( monitor, dpi );
         break;
     }
 
@@ -2572,7 +2574,7 @@ RECT get_primary_monitor_rect( UINT dpi )
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
         if (!is_monitor_primary( monitor )) continue;
-        rect = monitor_get_rect( monitor, FALSE, dpi );
+        rect = monitor_get_rect( monitor, dpi );
         break;
     }
 
@@ -3118,15 +3120,6 @@ static void trace_devmode( const DEVMODEW *devmode )
     if (devmode->dmFields & DM_DISPLAYORIENTATION)
         TRACE( "dmDisplayOrientation=%u ", (int)devmode->dmDisplayOrientation );
     TRACE("\n");
-}
-
-static BOOL is_detached_mode( const DEVMODEW *mode )
-{
-    return mode->dmFields & DM_POSITION &&
-           mode->dmFields & DM_PELSWIDTH &&
-           mode->dmFields & DM_PELSHEIGHT &&
-           mode->dmPelsWidth == 0 &&
-           mode->dmPelsHeight == 0;
 }
 
 static const DEVMODEW *find_display_mode( const DEVMODEW *modes, DEVMODEW *devmode )
@@ -3697,7 +3690,7 @@ static BOOL should_enumerate_monitor( struct monitor *monitor, const POINT *orig
     if (!is_monitor_active( monitor )) return FALSE;
     if (monitor->is_clone) return FALSE;
 
-    *rect = monitor_get_rect( monitor, FALSE, get_thread_dpi() );
+    *rect = monitor_get_rect( monitor, get_thread_dpi() );
     OffsetRect( rect, -origin->x, -origin->y );
     return intersect_rect( rect, rect, limit );
 }
@@ -5412,6 +5405,7 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
     }
     case SPI_GETWORKAREA:
     {
+        MONITORINFO info = {.cbSize = sizeof(info)};
         UINT dpi = get_thread_dpi();
 
         if (!ptr) return FALSE;
@@ -5426,7 +5420,8 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
             LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
             {
                 if (!is_monitor_primary( monitor )) continue;
-                work_area = monitor_get_rect( monitor, TRUE, dpi );
+                monitor_get_info( monitor, &info, dpi );
+                work_area = info.rcWork;
                 break;
             }
 
