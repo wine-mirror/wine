@@ -5347,9 +5347,11 @@ static void fix_cs_coordinates( CREATESTRUCTW *cs, INT *sw )
 /***********************************************************************
  *           map_dpi_create_struct
  */
-static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_from, UINT dpi_to )
+static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_to )
 {
-    if (!dpi_from && !dpi_to) return;
+    RECT rect = {cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy};
+    UINT dpi_from = get_thread_dpi();
+
     if (!dpi_from || !dpi_to)
     {
         POINT pt = { cs->x, cs->y };
@@ -5357,11 +5359,12 @@ static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_from, UINT dpi_to
         if (!dpi_from) dpi_from = mon_dpi;
         else dpi_to = mon_dpi;
     }
-    if (dpi_from == dpi_to) return;
-    cs->x = muldiv( cs->x, dpi_to, dpi_from );
-    cs->y = muldiv( cs->y, dpi_to, dpi_from );
-    cs->cx = muldiv( cs->cx, dpi_to, dpi_from );
-    cs->cy = muldiv( cs->cy, dpi_to, dpi_from );
+
+    rect = map_dpi_rect( rect, dpi_from, dpi_to );
+    cs->x = rect.left;
+    cs->y = rect.top;
+    cs->cx = rect.right - rect.left;
+    cs->cy = rect.bottom - rect.top;
 }
 
 /***********************************************************************
@@ -5373,7 +5376,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   HWND parent, HMENU menu, HINSTANCE instance, void *params,
                                   DWORD flags, HINSTANCE client_instance, DWORD unk, BOOL ansi )
 {
-    UINT win_dpi, thread_dpi = get_thread_dpi(), context;
+    UINT win_dpi, context;
     struct window_surface *surface;
     struct window_rects new_rects;
     CBT_CREATEWNDW cbtc;
@@ -5532,7 +5535,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     win_dpi = NTUSER_DPI_CONTEXT_GET_DPI( win->dpi_context );
     release_win_ptr( win );
 
-    if (parent) map_dpi_create_struct( &cs, thread_dpi, win_dpi );
+    if (parent) map_dpi_create_struct( &cs, win_dpi );
 
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
 
