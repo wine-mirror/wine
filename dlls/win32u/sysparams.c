@@ -2136,10 +2136,71 @@ UINT get_monitor_dpi( HMONITOR monitor )
     return system_dpi;
 }
 
+/* display_lock must be held */
 static RECT get_monitor_rect( struct monitor *monitor, BOOL work, UINT dpi )
 {
     RECT rect = work ? monitor->rc_work : monitor->rc_monitor;
     return map_dpi_rect( rect, get_monitor_dpi( monitor->handle ), dpi );
+}
+
+/* display_lock must be held */
+static struct monitor *get_monitor_from_rect( RECT rect, UINT flags, UINT dpi )
+{
+    struct monitor *monitor, *primary = NULL, *nearest = NULL, *found = NULL;
+    UINT max_area = 0, min_distance = -1;
+
+    if (IsRectEmpty( &rect ))
+    {
+        rect.right = rect.left + 1;
+        rect.bottom = rect.top + 1;
+    }
+
+    LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+    {
+        RECT intersect, monitor_rect;
+
+        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
+
+        monitor_rect = get_monitor_rect( monitor, FALSE, dpi );
+        if (intersect_rect( &intersect, &monitor_rect, &rect ))
+        {
+            /* check for larger intersecting area */
+            UINT area = (intersect.right - intersect.left) * (intersect.bottom - intersect.top);
+            if (area > max_area)
+            {
+                max_area = area;
+                found = monitor;
+            }
+        }
+
+        if (!found && (flags & MONITOR_DEFAULTTONEAREST))  /* if not intersecting, check for min distance */
+        {
+            UINT distance;
+            UINT x, y;
+
+            if (rect.right <= monitor_rect.left) x = monitor_rect.left - rect.right;
+            else if (monitor_rect.right <= rect.left) x = rect.left - monitor_rect.right;
+            else x = 0;
+            if (rect.bottom <= monitor_rect.top) y = monitor_rect.top - rect.bottom;
+            else if (monitor_rect.bottom <= rect.top) y = rect.top - monitor_rect.bottom;
+            else y = 0;
+            distance = x * x + y * y;
+            if (distance < min_distance)
+            {
+                min_distance = distance;
+                nearest = monitor;
+            }
+        }
+
+        if (!found && (flags & MONITOR_DEFAULTTOPRIMARY))
+        {
+            if (is_monitor_primary( monitor )) primary = monitor;
+        }
+    }
+
+    if (found) return found;
+    if (primary) return primary;
+    return nearest;
 }
 
 /**********************************************************************
@@ -3700,66 +3761,15 @@ BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info, UINT dpi )
 
 HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
 {
-    HMONITOR primary = 0, nearest = 0, ret = 0;
-    UINT max_area = 0, min_distance = ~0u;
     struct monitor *monitor;
+    HMONITOR ret = 0;
     RECT r;
 
     r = map_dpi_rect( *rect, dpi, system_dpi );
-    if (IsRectEmpty( &r ))
-    {
-        r.right = r.left + 1;
-        r.bottom = r.top + 1;
-    }
 
     if (!lock_display_devices()) return 0;
-
-    LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
-    {
-        RECT intersect, monitor_rect;
-
-        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
-
-        monitor_rect = get_monitor_rect( monitor, FALSE, system_dpi );
-        if (intersect_rect( &intersect, &monitor_rect, &r ))
-        {
-            /* check for larger intersecting area */
-            UINT area = (intersect.right - intersect.left) * (intersect.bottom - intersect.top);
-            if (area > max_area)
-            {
-                max_area = area;
-                ret = monitor->handle;
-            }
-        }
-        else if (!max_area)  /* if not intersecting, check for min distance */
-        {
-            UINT distance;
-            UINT x, y;
-
-            if (r.right <= monitor_rect.left) x = monitor_rect.left - r.right;
-            else if (monitor_rect.right <= r.left) x = r.left - monitor_rect.right;
-            else x = 0;
-            if (r.bottom <= monitor_rect.top) y = monitor_rect.top - r.bottom;
-            else if (monitor_rect.bottom <= r.top) y = r.top - monitor_rect.bottom;
-            else y = 0;
-            distance = x * x + y * y;
-            if (distance < min_distance)
-            {
-                min_distance = distance;
-                nearest = monitor->handle;
-            }
-        }
-
-        if (is_monitor_primary( monitor )) primary = monitor->handle;
-    }
-
+    if ((monitor = get_monitor_from_rect( r, flags, system_dpi ))) ret = monitor->handle;
     unlock_display_devices();
-
-    if (!ret)
-    {
-        if (flags & MONITOR_DEFAULTTOPRIMARY) ret = primary;
-        else if (flags & MONITOR_DEFAULTTONEAREST) ret = nearest;
-    }
 
     TRACE( "%s flags %x returning %p\n", wine_dbgstr_rect(rect), flags, ret );
     return ret;
