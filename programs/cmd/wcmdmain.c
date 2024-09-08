@@ -743,15 +743,10 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
                    wine_dbgstr_w(cmd), atExecute, wine_dbgstr_w(p));
     i = *(p+1) - '0';
 
-    /* Don't touch %% unless it's in Batch */
-    if (!atExecute && *(p+1) == startchar) {
-      if (context) {
-        WCMD_strsubstW(p, p+1, NULL, 0);
-        p++;
-      }
-      else p+=2;
-    } else if (*(p+1) == startchar && startchar == L'!') {
-        p++;
+    /* handle consecutive % or ! */
+    if ((!atExecute || startchar == L'!') && p[1] == startchar) {
+        if (context) WCMD_strsubstW(p, p + 1, NULL, 0);
+        if (!context || startchar == L'%') p++;
     /* Replace %~ modifications if in batch program */
     } else if (*(p+1) == '~') {
       WCMD_HandleTildeModifiers(&p, atExecute);
@@ -776,12 +771,19 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
 
     } else {
       int forvaridx = for_var_char_to_index(*(p+1));
-      if (startchar == '%' && forvaridx != -1 && forloopcontext->variable[forvaridx]) {
+      if (startchar == L'%' && forvaridx != -1 && forloopcontext->variable[forvaridx]) {
         /* Replace the 2 characters, % and for variable character */
         p = WCMD_strsubstW(p, p + 2, forloopcontext->variable[forvaridx], -1);
-      } else if (!atExecute || startchar == '!') {
+      } else if (!atExecute || startchar == L'!') {
+        BOOL first = p == cmd;
         p = WCMD_expand_envvar(p);
-
+        /* FIXME: maybe this more likely calls for a specific handling of first arg? */
+        if (context && startchar == L'!' && first)
+        {
+            WCHAR *last;
+            for (last = p; *last == startchar; last++) {}
+            p = WCMD_strsubstW(p, last, NULL, 0);
+        }
       /* In a FOR loop, see if this is the variable to replace */
       } else { /* Ignore %'s on second pass of batch program */
         p++;

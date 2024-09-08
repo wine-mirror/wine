@@ -1822,9 +1822,9 @@ bar cp1 echo
 bar cp2 echo
 @todo_wine@cp3
 bar b1 echo
-@todo_wine@bar b2 echo
-@todo_wine@bar b3 echo
-@todo_wine@bar cb1 echo
+bar b2 echo
+bar b3 echo
+bar cb1 echo
 --- mixing batch and builtins
 bar@space@
 foo
