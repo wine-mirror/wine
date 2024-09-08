@@ -3046,10 +3046,9 @@ static BOOL show_popup( HWND owner, HMENU hmenu, UINT id, UINT flags,
                         int x, int y, INT xanchor, INT yanchor )
 {
     struct menu *menu;
-    HMONITOR monitor;
     MONITORINFO info;
     UINT max_height;
-    POINT pt;
+    RECT rect;
 
     TRACE( "owner=%p hmenu=%p id=0x%04x x=0x%04x y=0x%04x xa=0x%04x ya=0x%04x\n",
            owner, hmenu, id, x, y, xanchor, yanchor );
@@ -3064,11 +3063,8 @@ static BOOL show_popup( HWND owner, HMENU hmenu, UINT id, UINT flags,
     menu->nScrollPos = 0;
 
     /* FIXME: should use item rect */
-    pt.x = x;
-    pt.y = y;
-    monitor = monitor_from_point( pt, MONITOR_DEFAULTTONEAREST, get_thread_dpi() );
-    info.cbSize = sizeof(info);
-    get_monitor_info( monitor, &info, get_thread_dpi() );
+    SetRect( &rect, x, y, x, y );
+    info = monitor_info_from_rect( rect, get_thread_dpi() );
 
     max_height = info.rcWork.bottom - info.rcWork.top;
     if (menu->cyMax) max_height = min( max_height, menu->cyMax );

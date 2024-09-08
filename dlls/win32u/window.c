@@ -2741,11 +2741,8 @@ BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
 /* make sure the specified rect is visible on screen */
 static void make_rect_onscreen( RECT *rect )
 {
-    MONITORINFO info;
-    HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, get_thread_dpi() );
+    MONITORINFO info = monitor_info_from_rect( *rect, get_thread_dpi() );
 
-    info.cbSize = sizeof(info);
-    if (!monitor || !get_monitor_info( monitor, &info, get_thread_dpi() )) return;
     /* FIXME: map coordinates from rcWork to rcMonitor */
     if (rect->right <= info.rcWork.left)
     {

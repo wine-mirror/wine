@@ -3787,7 +3787,7 @@ BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info, UINT dpi )
     return FALSE;
 }
 
-HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
+static HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
 {
     struct monitor *monitor;
     HMONITOR ret = 0;
@@ -3803,11 +3803,16 @@ HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
     return ret;
 }
 
-HMONITOR monitor_from_point( POINT pt, UINT flags, UINT dpi )
+MONITORINFO monitor_info_from_rect( RECT rect, UINT dpi )
 {
-    RECT rect;
-    SetRect( &rect, pt.x, pt.y, pt.x + 1, pt.y + 1 );
-    return monitor_from_rect( &rect, flags, dpi );
+    MONITORINFO info = {.cbSize = sizeof(info)};
+    struct monitor *monitor;
+
+    if (!lock_display_devices()) return info;
+    if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi ))) monitor_get_info( monitor, &info, dpi );
+    unlock_display_devices();
+
+    return info;
 }
 
 UINT monitor_dpi_from_rect( RECT rect, UINT dpi )

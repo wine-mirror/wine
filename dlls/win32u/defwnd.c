@@ -670,7 +670,6 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     UINT style = get_window_long( hwnd, GWL_STYLE );
     POINT capture_point, pt;
     MINMAXINFO minmax;
-    HMONITOR mon = 0;
     HWND parent;
     UINT dpi;
     HDC hdc;
@@ -724,7 +723,6 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     {
         parent = 0;
         mouse_rect = get_virtual_screen_rect( get_thread_dpi() );
-        mon = monitor_from_point( pt, MONITOR_DEFAULTTONEAREST, dpi );
     }
 
     if (on_left_border( hittest ))
@@ -819,20 +817,15 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
 
         if (!parent)
         {
-            HMONITOR newmon;
             MONITORINFO info;
+            RECT rect;
 
-            if ((newmon = monitor_from_point( pt, MONITOR_DEFAULTTONULL, get_thread_dpi() )))
-                mon = newmon;
-
-            info.cbSize = sizeof(info);
-            if (mon && get_monitor_info( mon, &info, get_thread_dpi() ))
-            {
-                pt.x = max( pt.x, info.rcWork.left );
-                pt.x = min( pt.x, info.rcWork.right - 1 );
-                pt.y = max( pt.y, info.rcWork.top );
-                pt.y = min( pt.y, info.rcWork.bottom - 1 );
-            }
+            SetRect( &rect, pt.x, pt.y, pt.x, pt.y );
+            info = monitor_info_from_rect( rect, get_thread_dpi() );
+            pt.x = max( pt.x, info.rcWork.left );
+            pt.x = min( pt.x, info.rcWork.right - 1 );
+            pt.y = max( pt.y, info.rcWork.top );
+            pt.y = min( pt.y, info.rcWork.bottom - 1 );
         }
 
         dx = pt.x - capture_point.x;
