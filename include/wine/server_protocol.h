@@ -3470,10 +3470,8 @@ struct get_window_info_reply
     user_handle_t  last_active;
     process_id_t   pid;
     thread_id_t    tid;
-    atom_t         atom;
     int            is_unicode;
     unsigned int   dpi_context;
-    char __pad_36[4];
 };
 
 
@@ -6810,6 +6808,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 868
+#define SERVER_PROTOCOL_VERSION 869
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2331,7 +2331,6 @@ DECL_HANDLER(get_window_info)
     {
         reply->tid  = get_thread_id( win->thread );
         reply->pid  = get_process_id( win->thread->process );
-        reply->atom = win->class ? get_class_atom( win->class ) : DESKTOP_ATOM;
     }
 }
 

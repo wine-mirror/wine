@@ -1712,7 +1712,6 @@ static void dump_get_window_info_reply( const struct get_window_info_reply *req 
     fprintf( stderr, ", last_active=%08x", req->last_active );
     fprintf( stderr, ", pid=%04x", req->pid );
     fprintf( stderr, ", tid=%04x", req->tid );
-    fprintf( stderr, ", atom=%04x", req->atom );
     fprintf( stderr, ", is_unicode=%d", req->is_unicode );
     fprintf( stderr, ", dpi_context=%08x", req->dpi_context );
 }
