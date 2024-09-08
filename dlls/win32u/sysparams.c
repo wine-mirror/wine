@@ -2127,10 +2127,8 @@ static void release_display_dc( HDC hdc )
     pthread_mutex_unlock( &display_dc_lock );
 }
 
-/**********************************************************************
- *           get_monitor_dpi
- */
-UINT get_monitor_dpi( HMONITOR monitor )
+/* display_lock must be held */
+static UINT monitor_get_dpi( struct monitor *monitor )
 {
     /* FIXME: use the monitor DPI instead */
     return system_dpi;
@@ -2140,7 +2138,7 @@ UINT get_monitor_dpi( HMONITOR monitor )
 static RECT monitor_get_rect( struct monitor *monitor, BOOL work, UINT dpi )
 {
     RECT rect = work ? monitor->rc_work : monitor->rc_monitor;
-    return map_dpi_rect( rect, get_monitor_dpi( monitor->handle ), dpi );
+    return map_dpi_rect( rect, monitor_get_dpi( monitor ), dpi );
 }
 
 static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT dpi )
@@ -2231,6 +2229,21 @@ static struct monitor *get_monitor_from_handle( HMONITOR handle )
     }
 
     return NULL;
+}
+
+/**********************************************************************
+ *           get_monitor_dpi
+ */
+UINT get_monitor_dpi( HMONITOR handle )
+{
+    struct monitor *monitor;
+    UINT dpi = system_dpi;
+
+    if (!lock_display_devices()) return 0;
+    if ((monitor = get_monitor_from_handle( handle ))) dpi = monitor_get_dpi( monitor );
+    unlock_display_devices();
+
+    return dpi;
 }
 
 /**********************************************************************
