@@ -89,13 +89,24 @@ static DPQ_DECL_COMPARECB( cbUglyPig, GUID )
 void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr,
                                        DWORD                        dwHdrSize,
                                        LPCDPMSG_ENUMSESSIONSREPLY   lpcMsg,
+                                       DWORD                        msgSize,
                                        LPVOID                       lpNSInfo )
 {
   DWORD len;
   lpNSCache     lpCache = (lpNSCache)lpNSInfo;
   lpNSCacheData lpCacheNode;
+  DWORD maxNameLength;
+  DWORD nameLength;
 
   TRACE( "%p, %p, %p\n", lpcNSAddrHdr, lpcMsg, lpNSInfo );
+
+  if ( msgSize < sizeof( DPMSG_ENUMSESSIONSREPLY ) + sizeof( WCHAR ) )
+    return;
+
+  maxNameLength = (msgSize - sizeof( DPMSG_ENUMSESSIONSREPLY )) / sizeof( WCHAR );
+  nameLength = wcsnlen( (WCHAR *) (lpcMsg + 1), maxNameLength );
+  if ( nameLength == maxNameLength )
+    return;
 
   /* See if we can find this session. If we can, remove it as it's a dup */
   DPQ_REMOVE_ENTRY_CB( lpCache->first, next, data->guidInstance, cbUglyPig,

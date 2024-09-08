@@ -347,6 +347,7 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
       NS_AddRemoteComputerAsNameServer( lpcMessageHeader,
                                         This->dp2->spData.dwSPHeaderSize,
                                         lpcMessageBody,
+                                        dwMessageBodySize,
                                         This->dp2->lpNameServerData );
 
       LeaveCriticalSection( &This->lock );
