@@ -231,6 +231,7 @@ struct gl_drawable
     int                            swap_interval;
     BOOL                           refresh_swap_interval;
     BOOL                           mutable_pf;
+    HDC                            hdc_src;
 };
 
 struct wgl_pbuffer
@@ -956,6 +957,7 @@ static void release_gl_drawable( struct gl_drawable *gl )
     default:
         break;
     }
+    if (gl->hdc_src) NtGdiDeleteObjectApp( gl->hdc_src );
     free( gl );
 }
 
@@ -1086,6 +1088,17 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
     return ctx;
 }
 
+static void set_dc_drawable( HDC hdc, Drawable drawable, const RECT *rect, int mode )
+{
+    struct x11drv_escape_set_drawable escape =
+    {
+        .code = X11DRV_SET_DRAWABLE,
+        .drawable = drawable,
+        .dc_rect = *rect,
+        .mode = mode,
+    };
+    NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+}
 
 /***********************************************************************
  *              create_gl_drawable
@@ -1093,6 +1106,8 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
 static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel_format *format, BOOL known_child,
                                                BOOL mutable_pf )
 {
+    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y'};
+    UNICODE_STRING device_str = RTL_CONSTANT_STRING(displayW);
     struct gl_drawable *gl, *prev;
     XVisualInfo *visual = format->visual;
     RECT rect;
@@ -1147,7 +1162,11 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
                 detach_client_window( data, gl->window );
                 release_win_data( data );
             }
+
+            gl->hdc_src = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
+            set_dc_drawable( gl->hdc_src, gl->window, &gl->rect, IncludeInferiors );
         }
+
         TRACE( "%p created child %lx drawable %lx\n", hwnd, gl->window, gl->drawable );
     }
 #endif
@@ -1165,6 +1184,9 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
         {
             gl->drawable = pglXCreatePixmap( gdi_display, gl->format->fbconfig, gl->pixmap, NULL );
             if (!gl->drawable) XFreePixmap( gdi_display, gl->pixmap );
+
+            gl->hdc_src = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
+            set_dc_drawable( gl->hdc_src, gl->pixmap, &gl->rect, IncludeInferiors );
         }
     }
 
@@ -1831,12 +1853,9 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
 
 static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOOL flush )
 {
-    struct x11drv_escape_flush_gl_drawable escape =
-    {
-        .code = X11DRV_FLUSH_GL_DRAWABLE,
-        .flush = flush,
-    };
+    HWND toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
     Drawable drawable;
+    RECT rect_dst;
 
     if (!gl) return;
     switch (gl->type)
@@ -1845,9 +1864,15 @@ static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOO
     case DC_GL_CHILD_WIN: drawable = gl->window; break;
     default: drawable = 0; break;
     }
-    if (!(escape.gl_drawable = drawable)) return;
+    if (!drawable) return;
 
-    NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+    if (flush) XFlush( gdi_display );
+
+    NtUserGetClientRect( hwnd, &rect_dst, get_win_monitor_dpi( hwnd ) );
+    NtUserMapWindowPoints( hwnd, toplevel, (POINT *)&rect_dst, 2, get_win_monitor_dpi( hwnd ) );
+
+    NtGdiStretchBlt( hdc, 0, 0, rect_dst.right - rect_dst.left, rect_dst.bottom - rect_dst.top,
+                     gl->hdc_src, 0, 0, gl->rect.right, gl->rect.bottom, SRCCOPY, 0 );
 }
 
 static void wglFinish(void)
@@ -2744,7 +2769,9 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
     switch (gl->type)
     {
     case DC_GL_CHILD_WIN:
+        gl->rect = rect;
         XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
+        set_dc_drawable( gl->hdc_src, gl->window, &gl->rect, IncludeInferiors );
         break;
     case DC_GL_PIXMAP_WIN:
         new_gl = create_gl_drawable( gl->hwnd, gl->format, TRUE, gl->mutable_pf );

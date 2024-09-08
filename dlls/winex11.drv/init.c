@@ -240,6 +240,7 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                 {
                     struct x11drv_escape_get_drawable *data = out_data;
                     data->drawable = physDev->drawable;
+                    data->dc_rect = physDev->dc_rect;
                     return TRUE;
                 }
                 break;
