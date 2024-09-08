@@ -2131,7 +2131,7 @@ HBITMAP get_display_bitmap(void)
     RECT virtual_rect;
     HBITMAP ret;
 
-    virtual_rect = get_virtual_screen_rect( 0 );
+    virtual_rect = get_virtual_screen_rect( 0, MDT_DEFAULT );
     pthread_mutex_lock( &display_dc_lock );
     if (!EqualRect( &old_virtual_rect, &virtual_rect ))
     {
@@ -2276,6 +2276,23 @@ static struct monitor *get_monitor_from_handle( HMONITOR handle )
     }
 
     return NULL;
+}
+
+/* display_lock must be held */
+static RECT monitors_get_union_rect( UINT dpi, MONITOR_DPI_TYPE type )
+{
+    struct monitor *monitor;
+    RECT rect = {0};
+
+    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+    {
+        RECT monitor_rect;
+        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
+        monitor_rect = monitor_get_rect( monitor, dpi, type );
+        union_rect( &rect, &rect, &monitor_rect );
+    }
+
+    return rect;
 }
 
 static UINT get_monitor_dpi( HMONITOR handle, UINT type, UINT *x, UINT *y )
@@ -2493,21 +2510,12 @@ static int map_to_dpi( int val, UINT dpi )
     return muldiv( val, dpi, USER_DEFAULT_SCREEN_DPI );
 }
 
-RECT get_virtual_screen_rect( UINT dpi )
+RECT get_virtual_screen_rect( UINT dpi, MONITOR_DPI_TYPE type )
 {
-    struct monitor *monitor;
     RECT rect = {0};
 
     if (!lock_display_devices()) return rect;
-
-    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
-    {
-        RECT monitor_rect;
-        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
-        monitor_rect = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
-        union_rect( &rect, &rect, &monitor_rect );
-    }
-
+    rect = monitors_get_union_rect( dpi, type );
     unlock_display_devices();
 
     return rect;
@@ -6201,16 +6209,16 @@ int get_system_metrics( int index )
         rect = get_primary_monitor_rect( get_thread_dpi() );
         return rect.bottom - rect.top;
     case SM_XVIRTUALSCREEN:
-        rect = get_virtual_screen_rect( get_thread_dpi() );
+        rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
         return rect.left;
     case SM_YVIRTUALSCREEN:
-        rect = get_virtual_screen_rect( get_thread_dpi() );
+        rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
         return rect.top;
     case SM_CXVIRTUALSCREEN:
-        rect = get_virtual_screen_rect( get_thread_dpi() );
+        rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
         return rect.right - rect.left;
     case SM_CYVIRTUALSCREEN:
-        rect = get_virtual_screen_rect( get_thread_dpi() );
+        rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
         return rect.bottom - rect.top;
     case SM_CMONITORS:
         if (!lock_display_devices()) return FALSE;
@@ -6620,10 +6628,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_GetSystemMetrics:
         return get_system_metrics( arg );
 
-    case NtUserCallOneParam_GetVirtualScreenRect:
-        *(RECT *)arg = get_virtual_screen_rect( 0 );
-        return 1;
-
     case NtUserCallOneParam_MessageBeep:
         return message_beep( arg );
 
@@ -6698,6 +6702,10 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         struct adjust_window_rect_params *params = (void *)arg2;
         return adjust_window_rect( (RECT *)arg1, params->style, params->menu, params->ex_style, params->dpi );
     }
+
+    case NtUserCallTwoParam_GetVirtualScreenRect:
+        *(RECT *)arg1 = get_virtual_screen_rect( 0, arg2 );
+        return 1;
 
     /* temporary exports */
     case NtUserAllocWinProc:

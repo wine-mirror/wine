@@ -722,7 +722,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     else
     {
         parent = 0;
-        mouse_rect = get_virtual_screen_rect( get_thread_dpi() );
+        mouse_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
     }
 
     if (on_left_border( hittest ))
@@ -2982,7 +2982,7 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     {
         static RECT virtual_rect = {INT_MIN,INT_MIN,INT_MAX,INT_MAX};
 
-        RECT new_rect = get_virtual_screen_rect( 0 ), old_rect = virtual_rect;
+        RECT new_rect = get_virtual_screen_rect( 0, MDT_DEFAULT ), old_rect = virtual_rect;
         UINT context, flags = 0;
 
         if (EqualRect( &new_rect, &old_rect )) return TRUE;

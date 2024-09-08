@@ -1911,7 +1911,7 @@ void X11DRV_SetDesktopWindow( HWND hwnd )
 
     if (!width && !height)  /* not initialized yet */
     {
-        RECT rect = NtUserGetVirtualScreenRect();
+        RECT rect = NtUserGetVirtualScreenRect( MDT_DEFAULT );
 
         SERVER_START_REQ( set_window_pos )
         {
@@ -2370,7 +2370,7 @@ void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
     escape.code = X11DRV_SET_DRAWABLE;
     escape.drawable = root_window;
     escape.mode = IncludeInferiors;
-    escape.dc_rect = NtUserGetVirtualScreenRect();
+    escape.dc_rect = NtUserGetVirtualScreenRect( MDT_DEFAULT );
     OffsetRect( &escape.dc_rect, -2 * escape.dc_rect.left, -2 * escape.dc_rect.top );
     NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }

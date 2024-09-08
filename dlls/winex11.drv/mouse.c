@@ -1679,7 +1679,7 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
     if (!xinput2_available) return FALSE;
     if (event->deviceid != thread_data->xinput2_pointer) return FALSE;
 
-    virtual_rect = NtUserGetVirtualScreenRect();
+    virtual_rect = NtUserGetVirtualScreenRect( MDT_DEFAULT );
 
     if (x->max <= x->min) x_scale = 1;
     else x_scale = (virtual_rect.right - virtual_rect.left) / (x->max - x->min);
@@ -1749,7 +1749,7 @@ static BOOL X11DRV_RawMotion( XGenericEventCookie *xev )
 
 static BOOL X11DRV_TouchEvent( HWND hwnd, XGenericEventCookie *xev )
 {
-    RECT virtual = NtUserGetVirtualScreenRect();
+    RECT virtual = NtUserGetVirtualScreenRect( MDT_DEFAULT );
     INPUT input = {.type = INPUT_HARDWARE};
     XIDeviceEvent *event = xev->data;
     int flags = 0;

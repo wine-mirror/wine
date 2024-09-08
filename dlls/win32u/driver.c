@@ -253,14 +253,14 @@ static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case DESKTOPHORZRES:
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
-            RECT rect = get_virtual_screen_rect( 0 );
+            RECT rect = get_virtual_screen_rect( 0, MDT_DEFAULT );
             return rect.right - rect.left;
         }
         return NtGdiGetDeviceCaps( dev->hdc, HORZRES );
     case DESKTOPVERTRES:
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
-            RECT rect = get_virtual_screen_rect( 0 );
+            RECT rect = get_virtual_screen_rect( 0, MDT_DEFAULT );
             return rect.bottom - rect.top;
         }
         return NtGdiGetDeviceCaps( dev->hdc, VERTRES );

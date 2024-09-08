@@ -1024,13 +1024,6 @@ static inline INT NtUserGetSystemMetrics( INT index )
     return NtUserCallOneParam( index, NtUserCallOneParam_GetSystemMetrics );
 }
 
-static inline RECT NtUserGetVirtualScreenRect(void)
-{
-    RECT virtual;
-    NtUserCallOneParam( (UINT_PTR)&virtual, NtUserCallOneParam_GetVirtualScreenRect );
-    return virtual;
-}
-
 static inline BOOL NtUserMessageBeep( UINT i )
 {
     return NtUserCallOneParam( i, NtUserCallOneParam_MessageBeep );
@@ -1081,6 +1074,7 @@ enum
     NtUserCallTwoParam_SetIMECompositionWindowPos,
     NtUserCallTwoParam_UnhookWindowsHook,
     NtUserCallTwoParam_AdjustWindowRect,
+    NtUserCallTwoParam_GetVirtualScreenRect,
     /* temporary exports */
     NtUserAllocWinProc,
 };
@@ -1153,6 +1147,13 @@ static inline BOOL NtUserAdjustWindowRect( RECT *rect, DWORD style, BOOL menu, D
         .dpi = dpi,
     };
     return NtUserCallTwoParam( (ULONG_PTR)rect, (ULONG_PTR)&params, NtUserCallTwoParam_AdjustWindowRect );
+}
+
+static inline RECT NtUserGetVirtualScreenRect( MONITOR_DPI_TYPE type )
+{
+    RECT virtual;
+    NtUserCallTwoParam( (UINT_PTR)&virtual, type, NtUserCallTwoParam_GetVirtualScreenRect );
+    return virtual;
 }
 
 /* NtUserCallHwnd codes, not compatible with Windows */
