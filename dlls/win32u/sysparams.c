@@ -3763,7 +3763,7 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     return ret;
 }
 
-BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info, UINT dpi )
+static BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info, UINT dpi )
 {
     struct monitor *monitor;
 
@@ -3846,6 +3846,14 @@ HMONITOR monitor_from_window( HWND hwnd, UINT flags, UINT dpi )
     /* retrieve the primary */
     SetRect( &rect, 0, 0, 1, 1 );
     return monitor_from_rect( &rect, flags, dpi );
+}
+
+MONITORINFO monitor_info_from_window( HWND hwnd, UINT flags )
+{
+    MONITORINFO info = {.cbSize = sizeof(info)};
+    HMONITOR monitor = monitor_from_window( hwnd, flags, get_thread_dpi() );
+    get_monitor_info( monitor, &info, get_thread_dpi() );
+    return info;
 }
 
 /***********************************************************************

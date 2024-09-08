@@ -2585,14 +2585,10 @@ HWND WINAPI NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG y )
  */
 static BOOL get_work_rect( HWND hwnd, RECT *rect )
 {
-    HMONITOR monitor = monitor_from_window( hwnd, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
     MONITORINFO mon_info;
     DWORD style;
 
-    if (!monitor) return FALSE;
-
-    mon_info.cbSize = sizeof(mon_info);
-    get_monitor_info( monitor, &mon_info, get_thread_dpi() );
+    mon_info = monitor_info_from_window( hwnd, MONITOR_DEFAULTTOPRIMARY );
     *rect = mon_info.rcMonitor;
 
     style = get_window_long( hwnd, GWL_STYLE );
@@ -4259,11 +4255,7 @@ static POINT get_minimized_pos( HWND hwnd, POINT pt )
     parent = NtUserGetAncestor( hwnd, GA_PARENT );
     if (parent == get_desktop_window())
     {
-        MONITORINFO mon_info;
-        HMONITOR monitor = monitor_from_window( hwnd, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
-
-        mon_info.cbSize = sizeof( mon_info );
-        get_monitor_info( monitor, &mon_info, get_thread_dpi() );
+        MONITORINFO mon_info = monitor_info_from_window( hwnd, MONITOR_DEFAULTTOPRIMARY );
         parent_rect = mon_info.rcWork;
     }
     else get_client_rect( parent, &parent_rect, get_thread_dpi() );
@@ -4443,11 +4435,7 @@ static UINT arrange_iconic_windows( HWND parent )
 
     if (parent == get_desktop_window())
     {
-        MONITORINFO mon_info;
-        HMONITOR monitor = monitor_from_window( 0, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
-
-        mon_info.cbSize = sizeof( mon_info );
-        get_monitor_info( monitor, &mon_info, get_thread_dpi() );
+        MONITORINFO mon_info = monitor_info_from_window( 0, MONITOR_DEFAULTTOPRIMARY );
         parent_rect = mon_info.rcWork;
     }
     else get_client_rect( parent, &parent_rect, get_thread_dpi() );
@@ -5294,15 +5282,12 @@ static void fix_cs_coordinates( CREATESTRUCTW *cs, INT *sw )
     else  /* overlapped window */
     {
         RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
-        HMONITOR monitor;
         MONITORINFO mon_info;
 
         if (!is_default_coord( cs->x ) && !is_default_coord( cs->cx ) && !is_default_coord( cs->cy ))
             return;
 
-        monitor = monitor_from_window( cs->hwndParent, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
-        mon_info.cbSize = sizeof(mon_info);
-        get_monitor_info( monitor, &mon_info, get_thread_dpi() );
+        mon_info = monitor_info_from_window( cs->hwndParent, MONITOR_DEFAULTTOPRIMARY );
 
         if (is_default_coord( cs->x ))
         {
