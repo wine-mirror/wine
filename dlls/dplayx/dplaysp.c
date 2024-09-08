@@ -219,6 +219,9 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage( IDirectPlaySP *iface, voi
   FIXME( "(%p)->(%p,0x%08lx,%p): mostly stub\n",
          This, lpMessageBody, dwMessageBodySize, lpMessageHeader );
 
+  if ( dwMessageBodySize < sizeof( DPMSG_SENDENVELOPE ) )
+    return DPERR_GENERIC;
+
   wCommandId = lpMsg->wCommandId;
   wVersion   = lpMsg->wVersion;
 
