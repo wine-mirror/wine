@@ -32,6 +32,9 @@ namespace Windows {
     namespace Globalization {
         typedef enum DayOfWeek DayOfWeek;
         typedef enum LanguageLayoutDirection LanguageLayoutDirection;
+        interface ICalendar;
+        interface ICalendarFactory;
+        interface ICalendarFactory2;
         interface ILanguage;
         interface ILanguage2;
         interface ILanguage3;
@@ -43,6 +46,8 @@ namespace Windows {
         interface IGeographicRegion;
         interface IGeographicRegionFactory;
         interface IGeographicRegionStatics;
+        interface ITimeZoneOnCalendar;
+        runtimeclass Calendar;
         runtimeclass Language;
         runtimeclass GeographicRegion;
     }
@@ -82,6 +87,145 @@ namespace Windows {
             TtbLtr = 2,
             TtbRtl = 3,
         };
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Calendar),
+            uuid(ca30221d-86d9-40fb-a26b-d44eb7cf08ea)
+        ]
+        interface ICalendar : IInspectable
+        {
+            HRESULT Clone([out, retval] Windows.Globalization.Calendar **value);
+            HRESULT SetToMin();
+            HRESULT SetToMax();
+            [propget] HRESULT Languages([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+            [propget] HRESULT NumeralSystem([out, retval] HSTRING *value);
+            [propput] HRESULT NumeralSystem([in] HSTRING value);
+            HRESULT GetCalendarSystem([out, retval] HSTRING *value);
+            HRESULT ChangeCalendarSystem([in] HSTRING value);
+            HRESULT GetClock([out, retval] HSTRING *value);
+            HRESULT ChangeClock([in] HSTRING value);
+            HRESULT GetDateTime([out, retval] Windows.Foundation.DateTime *result);
+            HRESULT SetDateTime([in] Windows.Foundation.DateTime value);
+            HRESULT SetToNow();
+            [propget] HRESULT FirstEra([out, retval] INT32 *value);
+            [propget] HRESULT LastEra([out, retval] INT32 *value);
+            [propget] HRESULT NumberOfEras([out, retval] INT32 *value);
+            [propget] HRESULT Era([out, retval] INT32 *value);
+            [propput] HRESULT Era([in] INT32 value);
+            HRESULT AddEras([in] INT32 eras);
+            [overload("EraAsString")] HRESULT EraAsFullString([out, retval] HSTRING *result);
+            [overload("EraAsString")] HRESULT EraAsString([in] INT32 ideal_length, [out, retval] HSTRING *result);
+            [propget] HRESULT FirstYearInThisEra([out, retval] INT32 *value);
+            [propget] HRESULT LastYearInThisEra([out, retval] INT32 *value);
+            [propget] HRESULT NumberOfYearsInThisEra([out, retval] INT32 *value);
+            [propget] HRESULT Year([out, retval] INT32 *value);
+            [propput] HRESULT Year([in] INT32 value);
+            HRESULT AddYears([in] INT32 years);
+            HRESULT YearAsString([out, retval] HSTRING *result);
+            HRESULT YearAsTruncatedString([in] INT32 remaining_digits, [out, retval] HSTRING *result);
+            HRESULT YearAsPaddedString([in] INT32 min_digits, [out, retval] HSTRING *result);
+            [propget] HRESULT FirstMonthInThisYear([out, retval] INT32 *value);
+            [propget] HRESULT LastMonthInThisYear([out, retval] INT32 *value);
+            [propget] HRESULT NumberOfMonthsInThisYear([out, retval] INT32 *value);
+            [propget] HRESULT Month([out, retval] INT32 *value);
+            [propput] HRESULT Month([in] INT32 value);
+            HRESULT AddMonths([in] INT32 months);
+            [overload("MonthAsString")] HRESULT MonthAsFullString([out, retval] HSTRING *result);
+            [overload("MonthAsString")] HRESULT MonthAsString([in] INT32 ideal_length, [out, retval] HSTRING *result);
+            [overload("MonthAsSoloString")] HRESULT MonthAsFullSoloString([out, retval] HSTRING *result);
+            [overload("MonthAsSoloString")] HRESULT MonthAsSoloString([in] INT32 ideal_length, [out, retval] HSTRING *result);
+            HRESULT MonthAsNumericString([out, retval] HSTRING *result);
+            HRESULT MonthAsPaddedNumericString([in] INT32 min_digits, [out, retval] HSTRING *result);
+            HRESULT AddWeeks([in] INT32 weeks);
+            [propget] HRESULT FirstDayInThisMonth([out, retval] INT32 *value);
+            [propget] HRESULT LastDayInThisMonth([out, retval] INT32 *value);
+            [propget] HRESULT NumberOfDaysInThisMonth([out, retval] INT32 *value);
+            [propget] HRESULT Day([out, retval] INT32 *value);
+            [propput] HRESULT Day([in] INT32 value);
+            HRESULT AddDays([in] INT32 days);
+            HRESULT DayAsString([out, retval] HSTRING *result);
+            HRESULT DayAsPaddedString([in] INT32 min_digits, [out, retval] HSTRING *result);
+            [propget] HRESULT DayOfWeek([out, retval] Windows.Globalization.DayOfWeek *value);
+            [overload("DayOfWeekAsString")] HRESULT DayOfWeekAsFullString([out, retval] HSTRING *result);
+            [overload("DayOfWeekAsString")] HRESULT DayOfWeekAsString([in] INT32 ideal_length, [out, retval] HSTRING *result);
+            [overload("DayOfWeekAsSoloString")] HRESULT DayOfWeekAsFullSoloString([out, retval] HSTRING *result);
+            [overload("DayOfWeekAsSoloString")] HRESULT DayOfWeekAsSoloString([in] INT32 ideal_length, [out, retval] HSTRING *result);
+            [propget] HRESULT FirstPeriodInThisDay([out, retval] INT32 *value);
+            [propget] HRESULT LastPeriodInThisDay([out, retval] INT32 *value);
+            [propget] HRESULT NumberOfPeriodsInThisDay([out, retval] INT32 *value);
+            [propget] HRESULT Period([out, retval] INT32 *value);
+            [propput] HRESULT Period([in] INT32 value);
+            HRESULT AddPeriods([in] INT32 periods);
+            [overload("PeriodAsString")] HRESULT PeriodAsFullString([out, retval] HSTRING *result);
+            [overload("PeriodAsString")] HRESULT PeriodAsString([in] INT32 ideal_length, [out, retval] HSTRING *result);
+            [propget] HRESULT FirstHourInThisPeriod([out, retval] INT32 *value);
+            [propget] HRESULT LastHourInThisPeriod([out, retval] INT32 *value);
+            [propget] HRESULT NumberOfHoursInThisPeriod([out, retval] INT32 *value);
+            [propget] HRESULT Hour([out, retval] INT32 *value);
+            [propput] HRESULT Hour([in] INT32 value);
+            HRESULT AddHours([in] INT32 hours);
+            HRESULT HourAsString([out, retval] HSTRING *result);
+            HRESULT HourAsPaddedString([in] INT32 min_digits, [out, retval] HSTRING *result);
+            [propget] HRESULT Minute([out, retval] INT32 *value);
+            [propput] HRESULT Minute([in] INT32 value);
+            HRESULT AddMinutes([in] INT32 minutes);
+            HRESULT MinuteAsString([out, retval] HSTRING *result);
+            HRESULT MinuteAsPaddedString([in] INT32 min_digits, [out, retval] HSTRING *result);
+            [propget] HRESULT Second([out, retval] INT32 *value);
+            [propput] HRESULT Second([in] INT32 value);
+            HRESULT AddSeconds([in] INT32 seconds);
+            HRESULT SecondAsString([out, retval] HSTRING *result);
+            HRESULT SecondAsPaddedString([in] INT32 min_digits, [out, retval] HSTRING *result);
+            [propget] HRESULT Nanosecond([out, retval] INT32 *value);
+            [propput] HRESULT Nanosecond([in] INT32 value);
+            HRESULT AddNanoseconds([in] INT32 nanoseconds);
+            HRESULT NanosecondAsString([out, retval] HSTRING *result);
+            HRESULT NanosecondAsPaddedString([in] INT32 min_digits, [out, retval] HSTRING *result);
+            HRESULT Compare([in] Windows.Globalization.Calendar *other, [out, retval] INT32 *result);
+            HRESULT CompareDateTime([in] Windows.Foundation.DateTime other, [out, retval] INT32 *result);
+            HRESULT CopyTo([in] Windows.Globalization.Calendar *other);
+            [propget] HRESULT FirstMinuteInThisHour([out, retval] INT32 *value);
+            [propget] HRESULT LastMinuteInThisHour([out, retval] INT32 *value);
+            [propget] HRESULT NumberOfMinutesInThisHour([out, retval] INT32 *value);
+            [propget] HRESULT FirstSecondInThisMinute([out, retval] INT32 *value);
+            [propget] HRESULT LastSecondInThisMinute([out, retval] INT32 *value);
+            [propget] HRESULT NumberOfSecondsInThisMinute([out, retval] INT32 *value);
+            [propget] HRESULT ResolvedLanguage([out, retval] HSTRING *value);
+            [propget] HRESULT IsDaylightSavingTime([out, retval] boolean *value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Calendar),
+            uuid(83f58412-e56b-4c75-a66e-0f63d57758a6)
+        ]
+        interface ICalendarFactory : IInspectable
+        {
+            HRESULT CreateCalendarDefaultCalendarAndClock(
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *languages,
+                [out, retval] Windows.Globalization.Calendar **result);
+            HRESULT CreateCalendar(
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *languages,
+                [in] HSTRING calendar,
+                [in] HSTRING clock,
+                [out, retval] Windows.Globalization.Calendar **result);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Calendar),
+            uuid(b44b378c-ca7e-4590-9e72-ea2bec1a5115)
+        ]
+        interface ICalendarFactory2 : IInspectable
+        {
+            HRESULT CreateCalendarWithTimeZone(
+                [in] Windows.Foundation.Collections.IIterable<HSTRING> *languages,
+                [in] HSTRING calendar,
+                [in] HSTRING clock,
+                [in] HSTRING time_zone_id,
+                [out, retval] Windows.Globalization.Calendar **result);
+        }
 
         [
             contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -201,6 +345,33 @@ namespace Windows {
         interface IGeographicRegionStatics : IInspectable
         {
             HRESULT IsSupported([in] HSTRING region_code, [out, retval] boolean *result);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.Calendar),
+            uuid(bb3c25e5-46cf-4317-a3f5-02621ad54478)
+        ]
+        interface ITimeZoneOnCalendar : IInspectable
+        {
+            HRESULT GetTimeZone([out, retval] HSTRING *value);
+            HRESULT ChangeTimeZone([in] HSTRING time_zone_id);
+            [overload("TimeZoneAsString")] HRESULT TimeZoneAsFullString([out, retval] HSTRING *result);
+            [overload("TimeZoneAsString")] HRESULT TimeZoneAsString([in] INT32 ideal_length, [out, retval] HSTRING *result);
+        }
+
+        [
+            activatable(Windows.Foundation.UniversalApiContract, 1.0),
+            activatable(Windows.Globalization.ICalendarFactory, Windows.Foundation.UniversalApiContract, 1.0),
+            activatable(Windows.Globalization.ICalendarFactory2, Windows.Foundation.UniversalApiContract, 1.0),
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            marshaling_behavior(agile),
+            threading(both)
+        ]
+        runtimeclass Calendar
+        {
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)] [default] interface Windows.Globalization.ICalendar;
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Globalization.ITimeZoneOnCalendar;
         }
 
         [
