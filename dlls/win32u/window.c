@@ -3249,15 +3249,15 @@ static void dump_winpos_flags( UINT flags )
  */
 static void map_dpi_winpos( WINDOWPOS *winpos )
 {
-    UINT dpi_from = get_thread_dpi();
-    UINT dpi_to = get_dpi_for_window( winpos->hwnd );
+    RECT rect = {winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy};
+    UINT dpi_from = get_thread_dpi(), dpi_to = get_dpi_for_window( winpos->hwnd );
 
     if (!dpi_from) dpi_from = get_win_monitor_dpi( winpos->hwnd );
-    if (dpi_from == dpi_to) return;
-    winpos->x  = muldiv( winpos->x, dpi_to, dpi_from );
-    winpos->y  = muldiv( winpos->y, dpi_to, dpi_from );
-    winpos->cx = muldiv( winpos->cx, dpi_to, dpi_from );
-    winpos->cy = muldiv( winpos->cy, dpi_to, dpi_from );
+    rect = map_dpi_rect( rect, dpi_from, dpi_to );
+    winpos->x = rect.left;
+    winpos->y = rect.top;
+    winpos->cx = rect.right - rect.left;
+    winpos->cy = rect.bottom - rect.top;
 }
 
 /***********************************************************************
