@@ -637,7 +637,7 @@ static WCHAR *remove_quotes( const WCHAR *filename )
     int len = wcslen( filename );
     WCHAR *ret;
 
-    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
     if (*ptr == '"')
     {
         ptr++;
