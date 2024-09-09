@@ -267,7 +267,7 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
     depth = bitmap_header->biBitCount;
     if (bitmap_header->biCompression == mmioFOURCC('N','V','1','2')
             || bitmap_header->biCompression == mmioFOURCC('Y','V','1','2'))
-        src_pitch = width;
+        src_pitch = (width + 3) & ~3;
     else /* packed YUV (UYVY or YUY2) or RGB */
         src_pitch = ((width * depth / 8) + 3) & ~3;
 
