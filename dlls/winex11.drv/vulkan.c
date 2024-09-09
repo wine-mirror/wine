@@ -123,7 +123,7 @@ static void X11DRV_vulkan_surface_detach( HWND hwnd, void *private )
     }
 }
 
-static void X11DRV_vulkan_surface_presented(HWND hwnd, VkResult result)
+static void X11DRV_vulkan_surface_presented( HWND hwnd, void *private, VkResult result )
 {
 }
 

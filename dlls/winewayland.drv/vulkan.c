@@ -119,7 +119,7 @@ static void wayland_vulkan_surface_detach(HWND hwnd, void *private)
 {
 }
 
-static void wayland_vulkan_surface_presented(HWND hwnd, VkResult result)
+static void wayland_vulkan_surface_presented(HWND hwnd, void *private, VkResult result)
 {
     ensure_window_surface_contents(hwnd);
 }
