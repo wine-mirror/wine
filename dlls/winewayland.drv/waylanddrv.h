@@ -253,7 +253,6 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
                                       double surface_x, double surface_y,
                                       int *window_x, int *window_y);
 struct wayland_client_surface *wayland_client_surface_create(HWND hwnd);
-struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface);
 BOOL wayland_client_surface_release(struct wayland_client_surface *client);
 void wayland_client_surface_attach(struct wayland_client_surface *client, struct wayland_surface *surface);
 void wayland_surface_ensure_contents(struct wayland_surface *surface);
@@ -290,6 +289,7 @@ struct wayland_win_data
 struct wayland_win_data *wayland_win_data_get(HWND hwnd);
 void wayland_win_data_release(struct wayland_win_data *data);
 
+struct wayland_client_surface *get_client_surface(HWND hwnd, RECT *client_rect);
 BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffer, HRGN damage_region);
 struct wayland_shm_buffer *get_window_surface_contents(HWND hwnd);
 void ensure_window_surface_contents(HWND hwnd);

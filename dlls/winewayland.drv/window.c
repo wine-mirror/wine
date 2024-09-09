@@ -683,25 +683,45 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 }
 
 /**********************************************************************
- *          wayland_surface_get_client
+ *          get_client_surface
  */
-struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface)
+struct wayland_client_surface *get_client_surface(HWND hwnd, RECT *client_rect)
 {
     struct wayland_client_surface *client;
-    HWND hwnd = surface->hwnd;
+    struct wayland_surface *surface;
+    struct wayland_win_data *data;
 
-    /* ownership is shared with one of the callers, the last caller to release
-     * its reference will also destroy it and clear our pointer. */
-    if ((client = surface->client)) InterlockedIncrement(&client->ref);
+    if (!(data = wayland_win_data_get(hwnd))) surface = NULL;
+    else surface = data->wayland_surface;
 
-    if (!client && !(client = wayland_client_surface_create(hwnd))) return NULL;
+    if (surface)
+    {
+        /* ownership is shared with one of the callers, the last caller to release
+         * its reference will also destroy it and clear our pointer. */
+        if ((client = surface->client)) InterlockedIncrement(&client->ref);
 
-    if (!surface->client)
+        *client_rect = surface->window.client_rect;
+    }
+    else
+    {
+        client = NULL;
+        SetRectEmpty(client_rect);
+    }
+
+    if (!client && !(client = wayland_client_surface_create(hwnd)))
+    {
+        if (data) wayland_win_data_release(data);
+        return NULL;
+    }
+    if (!data) return client;
+
+    if (surface && !surface->client)
     {
         wayland_client_surface_attach(client, surface);
         surface->client = client;
     }
 
+    wayland_win_data_release(data);
     return client;
 }
 

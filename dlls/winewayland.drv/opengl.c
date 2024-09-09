@@ -192,9 +192,8 @@ static inline EGLConfig egl_config_for_format(int format)
 static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int format)
 {
     struct wayland_gl_drawable *gl;
-    struct wayland_surface *wayland_surface;
     int client_width = 0, client_height = 0;
-    struct wayland_win_data *data;
+    RECT client_rect;
 
     TRACE("hwnd=%p format=%d\n", hwnd, format);
 
@@ -208,31 +207,11 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
     /* Get the client surface for the HWND. If don't have a wayland surface
      * (e.g., HWND_MESSAGE windows) just create a dummy surface to act as the
      * target render surface. */
-    if ((data = wayland_win_data_get(hwnd)))
-    {
-        if (!(wayland_surface = data->wayland_surface))
-        {
-            gl->client = wayland_client_surface_create(hwnd);
-            client_width = client_height = 1;
-        }
-        else
-        {
-            gl->client = wayland_surface_get_client(wayland_surface);
-            client_width = wayland_surface->window.client_rect.right -
-                           wayland_surface->window.client_rect.left;
-            client_height = wayland_surface->window.client_rect.bottom -
-                            wayland_surface->window.client_rect.top;
-            if (client_width == 0 || client_height == 0)
-                client_width = client_height = 1;
-        }
-        wayland_win_data_release(data);
-    }
-    else
-    {
-        gl->client = wayland_client_surface_create(hwnd);
+    if (!(gl->client = get_client_surface(hwnd, &client_rect))) goto err;
+    client_width = client_rect.right - client_rect.left;
+    client_height = client_rect.bottom - client_rect.top;
+    if (client_width == 0 || client_height == 0)
         client_width = client_height = 1;
-    }
-    if (!gl->client) goto err;
 
     gl->wl_egl_window = wl_egl_window_create(gl->client->wl_surface,
                                              client_width, client_height);
