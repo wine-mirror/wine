@@ -441,7 +441,7 @@ static BOOL pe_locate_with_coff_symbol_table(struct module* module)
                     !strcmp(sym->hash_elt.name, name))
                 {
                     TRACE("Changing absolute address for %d.%s: %Ix -> %I64x\n",
-                          isym->SectionNumber, name, sym->u.var.offset,
+                          isym->SectionNumber, debugstr_a(name), sym->u.var.offset,
                           module->module.BaseOfImage +
                           fmap->u.pe.sect[isym->SectionNumber - 1].shdr.VirtualAddress +
                           isym->Value);

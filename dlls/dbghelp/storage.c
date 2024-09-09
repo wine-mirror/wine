@@ -292,7 +292,7 @@ void hash_table_destroy(struct hash_table* ht)
         {
             FIXME("Longest bucket:\n");
             for (elt = ht->buckets[i]; elt; elt = elt->next)
-                FIXME("\t%s\n", elt->name);
+                FIXME("\t%s\n", debugstr_a(elt->name));
             break;
         }
 

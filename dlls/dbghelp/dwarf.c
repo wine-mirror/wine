@@ -1197,7 +1197,7 @@ static const char* dwarf2_get_cpp_name(dwarf2_debug_info_t* di, const char* name
                 last -= 2 + len;
                 if (last < di->unit_ctx->cpp_name)
                 {
-                    WARN("Too long C++ qualified identifier for %s... using unqualified identifier\n", name);
+                    WARN("Too long C++ qualified identifier for %s... using unqualified identifier\n", debugstr_a(name));
                     return name;
                 }
                 memcpy(last, diname.u.string, len);
@@ -1533,7 +1533,7 @@ static struct symt* dwarf2_parse_subrange_type(dwarf2_debug_info_t* di)
 
     TRACE("%s\n", dwarf2_debug_di(di));
 
-    if (dwarf2_find_attribute(di, DW_AT_name, &name)) FIXME("Found name for subrange %s\n", name.u.string);
+    if (dwarf2_find_attribute(di, DW_AT_name, &name)) FIXME("Found name for subrange %s\n", debugstr_a(name.u.string));
     if (dwarf2_find_attribute(di, DW_AT_byte_size, &dummy)) FIXME("Found byte_size %Iu\n", dummy.u.uvalue);
     if (dwarf2_find_attribute(di, DW_AT_bit_size, &dummy)) FIXME("Found bit_size %Iu\n", dummy.u.uvalue);
     /* for now, we don't support the byte_size nor bit_size about the subrange, and pretend the two
@@ -1719,7 +1719,7 @@ static void dwarf2_parse_udt_member(dwarf2_debug_info_t* di,
         if (loc.kind != loc_absolute)
         {
             FIXME("Unexpected offset computation for member %s in %ls!%s\n",
-                  name.u.string, di->unit_ctx->module_ctx->module->modulename, parent->hash_elt.name);
+                  debugstr_a(name.u.string), di->unit_ctx->module_ctx->module->modulename, debugstr_a(parent->hash_elt.name));
             loc.offset = 0;
         }
         else
@@ -2047,7 +2047,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
         if (subpgm->current_func)
         {
             if (is_pmt) WARN("Constant parameter %s reported as local variable in function '%s'\n",
-                             debugstr_a(name.u.string), subpgm->current_func->hash_elt.name);
+                             debugstr_a(name.u.string), debugstr_a(subpgm->current_func->hash_elt.name));
             di->symt = &symt_add_func_constant(subpgm->ctx->module_ctx->module,
                                                subpgm->current_func, subpgm->current_block,
                                                param_type, name.u.string, &v)->symt;
@@ -2104,7 +2104,7 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
     }
     else
         WARN("Label %s inside function %s doesn't have an address... don't register it\n",
-             name.u.string, subpgm->top_func->hash_elt.name);
+             debugstr_a(name.u.string), debugstr_a(subpgm->top_func->hash_elt.name));
 }
 
 static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
@@ -2360,7 +2360,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
                                         dwarf2_get_cpp_name(di, name.u.string),
                                         addr_ranges[0].low, addr_ranges[0].high - addr_ranges[0].low, &sig_type->symt);
     if (num_addr_ranges > 1)
-        WARN("Function %s has multiple address ranges, only using the first one\n", name.u.string);
+        WARN("Function %s has multiple address ranges, only using the first one\n", debugstr_a(name.u.string));
     free(addr_ranges);
 
     subpgm.current_func = subpgm.top_func;

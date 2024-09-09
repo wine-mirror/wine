@@ -679,7 +679,7 @@ static int macho_load_section_info(struct image_file_map* ifm, const struct mach
     else if (!strncmp(segname, "__PAGEZERO", 10))
         TRACE("Ignoring __PAGEZERO segment\n");
     else if (ignore)
-        TRACE("Ignoring %s segment because image has split segments\n", segname);
+        TRACE("Ignoring %s segment because image has split segments\n", debugstr_a(segname));
     else
     {
         /* If this segment starts before previously-known earliest, record new earliest. */
@@ -1082,7 +1082,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 if (func->ranges[0].low == module->format_info[DFI_MACHO]->u.macho_info->load_addr)
                 {
                     TRACE("Adjusting function %p/%s!%s from %#I64x to %#Ix\n", func,
-                          debugstr_w(module->modulename), sym->hash_elt.name,
+                          debugstr_w(module->modulename), debugstr_a(sym->hash_elt.name),
                           func->ranges[0].low, ste->addr);
                     func->ranges[0].high += ste->addr - func->ranges[0].low;
                     func->ranges[0].low = ste->addr;
@@ -1100,7 +1100,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                     if (data->u.var.offset == module->format_info[DFI_MACHO]->u.macho_info->load_addr)
                     {
                         TRACE("Adjusting data symbol %p/%s!%s from 0x%08Ix to 0x%08Ix\n",
-                              data, debugstr_w(module->modulename), sym->hash_elt.name,
+                              data, debugstr_w(module->modulename), debugstr_a(sym->hash_elt.name),
                               data->u.var.offset, ste->addr);
                         data->u.var.offset = ste->addr;
                         adjusted = TRUE;
@@ -1113,7 +1113,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                         if (data->kind != new_kind)
                         {
                             WARN("Changing kind for %p/%s!%s from %d to %d\n", sym,
-                                 debugstr_w(module->modulename), sym->hash_elt.name,
+                                 debugstr_w(module->modulename), debugstr_a(sym->hash_elt.name),
                                  (int)data->kind, (int)new_kind);
                             data->kind = new_kind;
                             adjusted = TRUE;
@@ -1173,8 +1173,8 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 if (size && kind == (ste->is_global ? DataIsGlobal : DataIsFileStatic))
                     FIXME("Duplicate in %s: %s<%08Ix> %s<%I64x-%I64x>\n",
                           debugstr_w(module->modulename),
-                          ste->ht_elt.name, ste->addr,
-                          sym->hash_elt.name,
+                          debugstr_a(ste->ht_elt.name), ste->addr,
+                          debugstr_a(sym->hash_elt.name),
                           addr, size);
             }
         }

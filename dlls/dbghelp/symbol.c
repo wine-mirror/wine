@@ -237,7 +237,7 @@ struct symt_compiland* symt_new_compiland(struct module* module, unsigned src_id
     struct symt_compiland**   p;
 
     TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n",
-                         debugstr_w(module->modulename), source_get(module, src_idx));
+                         debugstr_w(module->modulename), debugstr_a(source_get(module, src_idx)));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag  = SymTagCompiland;
@@ -262,7 +262,7 @@ struct symt_public* symt_new_public(struct module* module,
     struct symt**       p;
 
     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%Ix\n",
-                         debugstr_w(module->modulename), name, address);
+                         debugstr_w(module->modulename), debugstr_a(name), address);
     if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
         symt_find_nearest(module, address) != NULL)
         return NULL;
@@ -295,7 +295,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
     DWORD64             tsz;
 
     TRACE_(dbghelp_symt)("Adding global symbol %s:%s %d@%Ix %p\n",
-                         debugstr_w(module->modulename), name, loc.kind, loc.offset, type);
+                         debugstr_w(module->modulename), debugstr_a(name), loc.kind, loc.offset, type);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag      = SymTagData;
@@ -308,7 +308,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         {
             if (tsz != size)
                 FIXME("Size mismatch for %s.%s between type (%I64u) and src (%Iu)\n",
-                      debugstr_w(module->modulename), name, tsz, size);
+                      debugstr_w(module->modulename), debugstr_a(name), tsz, size);
         }
         symt_add_module_ht(module, (struct symt_ht*)sym);
         p = vector_add(compiland ? &compiland->vchildren : &module->top->vchildren, &module->pool);
@@ -349,7 +349,7 @@ struct symt_function* symt_new_function(struct module* module,
     struct symt_function* sym;
 
     TRACE_(dbghelp_symt)("Adding global function %s:%s @%Ix-%Ix\n",
-                         debugstr_w(module->modulename), name, addr, addr + size - 1);
+                         debugstr_w(module->modulename), debugstr_a(name), addr, addr + size - 1);
     if ((sym = init_function_or_inlinesite(module, SymTagFunction, &compiland->symt, name, sig_type, 1)))
     {
         struct symt** p;
@@ -375,7 +375,7 @@ struct symt_function* symt_new_inlinesite(struct module* module,
 {
     struct symt_function* sym;
 
-    TRACE_(dbghelp_symt)("Adding inline site %s\n", name);
+    TRACE_(dbghelp_symt)("Adding inline site %s\n", debugstr_a(name));
     if ((sym = init_function_or_inlinesite(module, SymTagInlineSite, container, name, sig_type, num_ranges)))
     {
         struct symt** p;
@@ -408,8 +408,8 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
     if (func == NULL || !(dbghelp_options & SYMOPT_LOAD_LINES)) return;
 
     TRACE_(dbghelp_symt)("(%p)%s:%Ix %s:%u\n",
-                         func, func->hash_elt.name, addr,
-                         source_get(module, source_idx), line_num);
+                         func, debugstr_a(func->hash_elt.name), addr,
+                         debugstr_a(source_get(module, source_idx)), line_num);
 
     assert(func->symt.tag == SymTagFunction || func->symt.tag == SymTagInlineSite);
 
@@ -426,7 +426,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
     prev = vlen ? vector_at(&func->vlines, vlen - 1) : NULL;
     if (last_matches && prev && addr == prev->u.address)
     {
-        WARN("Duplicate addition of line number in %s\n", func->hash_elt.name);
+        WARN("Duplicate addition of line number in %s\n", debugstr_a(func->hash_elt.name));
         return;
     }
     if (!last_matches)
@@ -472,8 +472,8 @@ struct symt_data* symt_add_func_local(struct module* module,
     struct symt**       p;
 
     TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %p\n",
-                         debugstr_w(module->modulename), func->hash_elt.name,
-                         name, type);
+                         debugstr_w(module->modulename), debugstr_a(func->hash_elt.name),
+                         debugstr_a(name), type);
 
     assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
     assert(dt == DataIsParam || dt == DataIsLocal || dt == DataIsStaticLocal);
@@ -511,8 +511,8 @@ struct symt_data* symt_add_func_constant(struct module* module,
     struct symt**       p;
 
     TRACE_(dbghelp_symt)("Adding local constant (%s:%s): %s %p\n",
-                         debugstr_w(module->modulename), func->hash_elt.name,
-                         name, type);
+                         debugstr_w(module->modulename), debugstr_a(func->hash_elt.name),
+                         debugstr_a(name), type);
 
     assert(symt_check_tag(&func->symt, SymTagFunction) || symt_check_tag(&func->symt, SymTagInlineSite));
 
@@ -597,7 +597,7 @@ struct symt_thunk* symt_new_thunk(struct module* module,
     struct symt_thunk*  sym;
 
     TRACE_(dbghelp_symt)("Adding global thunk %s:%s @%Ix-%Ix\n",
-                         debugstr_w(module->modulename), name, addr, addr + size - 1);
+                         debugstr_w(module->modulename), debugstr_a(name), addr, addr + size - 1);
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -626,7 +626,7 @@ struct symt_data* symt_new_constant(struct module* module,
     struct symt_data*  sym;
 
     TRACE_(dbghelp_symt)("Adding constant value %s:%s\n",
-                         debugstr_w(module->modulename), name);
+                         debugstr_w(module->modulename), debugstr_a(name));
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -654,7 +654,7 @@ struct symt_hierarchy_point* symt_new_label(struct module* module,
     struct symt_hierarchy_point*        sym;
 
     TRACE_(dbghelp_symt)("Adding global label value %s:%s\n",
-                         debugstr_w(module->modulename), name);
+                         debugstr_w(module->modulename), debugstr_a(name));
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -680,7 +680,7 @@ struct symt_custom* symt_new_custom(struct module* module, const char* name,
     struct symt_custom*        sym;
 
     TRACE_(dbghelp_symt)("Adding custom symbol %s:%s\n",
-                         debugstr_w(module->modulename), name);
+                         debugstr_w(module->modulename), debugstr_a(name));
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -860,7 +860,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
         symbol_setname(sym_info, name);
 
     TRACE_(dbghelp_symt)("%p => %s %lu %I64x\n",
-                         sym, sym_info->Name, sym_info->Size, sym_info->Address);
+                         sym, debugstr_a(sym_info->Name), sym_info->Size, sym_info->Address);
 }
 
 struct sym_enum
@@ -1608,7 +1608,7 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
     struct module*              module;
     const char*                 name;
 
-    TRACE("(%p, %s, %p)\n", hProcess, Name, Symbol);
+    TRACE("(%p, %s, %p)\n", hProcess, debugstr_a(Name), Symbol);
     if (!pcs) return FALSE;
     if (Symbol->SizeOfStruct < sizeof(*Symbol)) return FALSE;
     name = strchr(Name, '!');
@@ -2375,7 +2375,7 @@ BOOL WINAPI SymMatchStringA(PCSTR string, PCSTR re, BOOL _case)
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    TRACE("%s %s %c\n", string, re, _case ? 'Y' : 'N');
+    TRACE("%s %s %c\n", debugstr_a(string), debugstr_a(re), _case ? 'Y' : 'N');
 
     sz = MultiByteToWideChar(CP_ACP, 0, string, -1, NULL, 0);
     if ((strW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
@@ -2443,7 +2443,7 @@ BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
     BOOLEAN     ret;
 
     TRACE("(%p %I64x %lu %lu %s %I64x %p %p %lx)\n",
-          hProcess, BaseOfDll, Index, SymTag, Mask,
+          hProcess, BaseOfDll, Index, SymTag, debugstr_a(Mask),
           Address, EnumSymbolsCallback, UserContext, Options);
 
     if (Mask)
@@ -2491,7 +2491,7 @@ BOOL WINAPI SymAddSymbol(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR name,
 {
     struct module_pair  pair;
 
-    TRACE("(%p %s %I64x %lu)\n", hProcess, wine_dbgstr_a(name), addr, size);
+    TRACE("(%p %s %I64x %lu)\n", hProcess, debugstr_a(name), addr, size);
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
 
@@ -2507,7 +2507,7 @@ BOOL WINAPI SymAddSymbolW(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR nameW,
 {
     char       name[MAX_SYM_NAME];
 
-    TRACE("(%p %s %I64x %lu)\n", hProcess, wine_dbgstr_w(nameW), addr, size);
+    TRACE("(%p %s %I64x %lu)\n", hProcess, debugstr_w(nameW), addr, size);
 
     WideCharToMultiByte(CP_ACP, 0, nameW, -1, name, ARRAY_SIZE(name), NULL, NULL);
 
@@ -2534,7 +2534,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     if (!(dbghelp_options & SYMOPT_LOAD_LINES)) return TRUE;
 
     if (!module_init_pair(&pair, hProcess, base)) return FALSE;
-    if (compiland) FIXME("Unsupported yet (filtering on compiland %s)\n", compiland);
+    if (compiland) FIXME("Unsupported yet (filtering on compiland %s)\n", debugstr_a(compiland));
     if (!(srcmask = file_regex(srcfile))) return FALSE;
 
     sci.SizeOfStruct = sizeof(sci);
@@ -2587,7 +2587,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
 BOOL WINAPI SymGetLineFromName(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName,
                 DWORD dwLineNumber, PLONG plDisplacement, PIMAGEHLP_LINE Line)
 {
-    FIXME("(%p) (%s, %s, %ld %p %p): stub\n", hProcess, ModuleName, FileName,
+    FIXME("(%p) (%s, %s, %ld %p %p): stub\n", hProcess, debugstr_a(ModuleName), debugstr_a(FileName),
                 dwLineNumber, plDisplacement, Line);
     return FALSE;
 }
@@ -2595,7 +2595,7 @@ BOOL WINAPI SymGetLineFromName(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName
 BOOL WINAPI SymGetLineFromName64(HANDLE hProcess, PCSTR ModuleName, PCSTR FileName,
                 DWORD dwLineNumber, PLONG lpDisplacement, PIMAGEHLP_LINE64 Line)
 {
-    FIXME("(%p) (%s, %s, %ld %p %p): stub\n", hProcess, ModuleName, FileName,
+    FIXME("(%p) (%s, %s, %ld %p %p): stub\n", hProcess, debugstr_a(ModuleName), debugstr_a(FileName),
                 dwLineNumber, lpDisplacement, Line);
     return FALSE;
 }
@@ -2655,7 +2655,7 @@ BOOL WINAPI SymFromIndexW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMB
  */
 PCHAR WINAPI SymSetHomeDirectory(HANDLE hProcess, PCSTR dir)
 {
-    FIXME("(%p, %s): stub\n", hProcess, dir);
+    FIXME("(%p, %s): stub\n", hProcess, debugstr_a(dir));
 
     return NULL;
 }

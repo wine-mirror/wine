@@ -859,7 +859,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
                     if (udt->symt.tag != SymTagUDT)
                     {
                         ERR("Forward declaration (%p/%s) is not an aggregate (%u)\n",
-                            udt, symt_get_name(&udt->symt), udt->symt.tag);
+                            udt, debugstr_a(symt_get_name(&udt->symt)), udt->symt.tag);
                         return -1;
                     }
                     /* FIXME: we currently don't correctly construct nested C++
@@ -876,7 +876,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
                     l2 = strlen(typename);
                     if (l1 > l2 || strcmp(udt->hash_elt.name, typename + l2 - l1))
                         ERR("Forward declaration name mismatch %s <> %s\n",
-                            udt->hash_elt.name, typename);
+                            debugstr_a(udt->hash_elt.name), debugstr_a(typename));
                     new_dt = &udt->symt;
                 }
                 PTS_ABORTIF(ptd, stabs_pts_read_aggregate(ptd, udt) == -1);
@@ -1597,7 +1597,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             /* I'm not sure this is needed, so trace it before we obsolete it */
             if (curr_func)
             {
-                FIXME("UNDF: curr_func %s\n", curr_func->hash_elt.name);
+                FIXME("UNDF: curr_func %s\n", debugstr_a(curr_func->hash_elt.name));
                 stabs_finalize_function(module, curr_func, 0); /* FIXME */
                 curr_func = NULL;
             }
@@ -1618,7 +1618,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
 	case N_EXCL:
             if (stabs_add_include(stabs_find_include(ptr, n_value)) < 0)
             {
-                ERR("Excluded header not found (%s,%Id)\n", ptr, (ULONG_PTR)n_value);
+                ERR("Excluded header not found (%s,%Id)\n", debugstr_a(ptr), (ULONG_PTR)n_value);
                 module_reset_debug_info(module);
                 ret = FALSE;
                 goto done;

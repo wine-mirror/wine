@@ -823,12 +823,13 @@ static BOOL codeview_resolve_forward_type(struct codeview_type_parse* ctp, const
                 ((decoratedref && decorateddecl && !strcmp(decoratedref, decorateddecl)) ||
                  (!decoratedref && !decorateddecl && lenref == lendecl && !memcmp(nameref, namedecl, lenref))))
             {
-                TRACE("mapping forward type %.*s (%s) %x into %x\n", lenref, nameref, debugstr_a(decoratedref), reftype, hl->id);
+                TRACE("mapping forward type %s (%s) %x into %x\n", debugstr_an(nameref, lenref), debugstr_a(decoratedref), reftype, hl->id);
                 *impl_type = hl->id;
                 return TRUE;
             }
         }
     }
+    WARN("Couldn't resolve forward declaration for %s\n", debugstr_an(nameref, lenref));
     return FALSE;
 }
 
@@ -2242,8 +2243,8 @@ static struct symt_function* codeview_create_inline_site(const struct msc_debug_
     {
         struct addr_range* range = &inlined->ranges[inlined->num_ranges - 1];
         if (range->low == range->high) WARN("pending empty range at end of %s inside %s\n",
-                                             inlined->hash_elt.name,
-                                             top_func->hash_elt.name);
+                                            debugstr_a(inlined->hash_elt.name),
+                                            debugstr_a(top_func->hash_elt.name));
     }
     return inlined;
 }
@@ -2532,18 +2533,20 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             break;
 
         case S_COMPILE2:
-            TRACE("S-Compile-V3 machine:%x language:%x %s\n", sym->compile2_v3.machine, sym->compile2_v3.flags.iLanguage, sym->compile2_v3.name);
+            TRACE("S-Compile-V3 machine:%x language:%x %s\n",
+                  sym->compile2_v3.machine, sym->compile2_v3.flags.iLanguage, debugstr_a(sym->compile2_v3.name));
             break;
 
         case S_COMPILE3:
-            TRACE("S-Compile3-V3 machine:%x language:%x %s\n", sym->compile3_v3.machine, sym->compile3_v3.flags.iLanguage, sym->compile3_v3.name);
+            TRACE("S-Compile3-V3 machine:%x language:%x %s\n",
+                  sym->compile3_v3.machine, sym->compile3_v3.flags.iLanguage, debugstr_a(sym->compile3_v3.name));
             break;
 
         case S_ENVBLOCK:
             break;
 
         case S_OBJNAME:
-            TRACE("S-ObjName-V3 %s\n", sym->objname_v3.name);
+            TRACE("S-ObjName-V3 %s\n", debugstr_a(sym->objname_v3.name));
             if (!compiland)
                 compiland = codeview_new_compiland(msc_dbg, sym->objname_v3.name);
             break;
@@ -2621,7 +2624,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 name = (const char*)&sym->constant_v3.data[vlen];
                 se = codeview_get_type(sym->constant_v3.type, FALSE);
 
-                TRACE("S-Constant-V3 %u %s %x\n", V_INT(&v), name, sym->constant_v3.type);
+                TRACE("S-Constant-V3 %u %s %x\n", V_INT(&v), debugstr_a(name), sym->constant_v3.type);
                 /* FIXME: we should add this as a constant value */
                 symt_new_constant(msc_dbg->module, compiland, name, se, &v);
             }
@@ -2656,7 +2659,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                     symt_new_typedef(msc_dbg->module, symt, sym->udt_v3.name);
                 else
                     FIXME("S-Udt %s: couldn't find type 0x%x\n",
-                          sym->udt_v3.name, sym->udt_v3.type);
+                          debugstr_a(sym->udt_v3.name), sym->udt_v3.type);
             }
             break;
         case S_LOCAL:
@@ -2773,7 +2776,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                          sym->sepcode_v3.sectParent, sym->sepcode_v3.offParent);
             }
             else
-                FIXME("S_SEPCODE inside top-level function %s\n", top_func->hash_elt.name);
+                FIXME("S_SEPCODE inside top-level function %s\n", debugstr_a(top_func->hash_elt.name));
             break;
 
         case S_FRAMEPROC:
@@ -2957,7 +2960,7 @@ static BOOL pdb_global_feed_types(const struct msc_debug_info* msc_dbg, const un
                 symt_new_typedef(msc_dbg->module, symt, sym->udt_v3.name);
             else
                 FIXME("S-Udt %s: couldn't find type 0x%x\n",
-                      sym->udt_v3.name, sym->udt_v3.type);
+                      debugstr_a(sym->udt_v3.name), sym->udt_v3.type);
         }
         break;
     default: return FALSE;
@@ -3713,7 +3716,7 @@ static void pdb_process_symbol_imports(const struct process *pcs,
             ptr = (const char*)imp + sizeof(*imp) + strlen(imp->filename);
             if (i >= CV_MAX_MODULES) FIXME("Out of bounds!!!\n");
             TRACE("got for %s: age=%u ts=%x\n",
-                  imp->filename, imp->Age, imp->TimeDateStamp);
+                  debugstr_a(imp->filename), imp->Age, imp->TimeDateStamp);
             if (path_find_symbol_file(pcs, msc_dbg->module, imp->filename, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
                                       &msc_dbg->module->module.PdbUnmatched))
                 pdb_process_internal(pcs, msc_dbg, info.pdbfile, pdb_module_info, i);
@@ -4214,7 +4217,7 @@ static BOOL  pdb_parse_cmd_string(struct cpu_stack_walk* csw, PDB_FPO_DATA* fpoe
     pev_free(&pev, cpair);
     return TRUE;
 done:
-    FIXME("Couldn't evaluate %s => %s\n", wine_dbgstr_a(cmd), pev.error);
+    FIXME("Couldn't evaluate %s => %s\n", debugstr_a(cmd), pev.error);
     pev_free(&pev, NULL);
     return FALSE;
 }
@@ -4250,7 +4253,7 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
                       fpoext[i].start, fpoext[i].func_size, fpoext[i].locals_size,
                       fpoext[i].params_size, fpoext[i].maxstack_size, fpoext[i].prolog_size,
                       fpoext[i].savedregs_size, fpoext[i].flags,
-                      wine_dbgstr_a(pdb_get_string_table_entry(strbase, fpoext[i].str_offset)));
+                      debugstr_a(pdb_get_string_table_entry(strbase, fpoext[i].str_offset)));
                 ret = pdb_parse_cmd_string(csw, &fpoext[i],
                                            pdb_get_string_table_entry(strbase, fpoext[i].str_offset),
                                            cpair);
@@ -4375,7 +4378,7 @@ static BOOL codeview_process_info(const struct process *pcs,
         const OMFSignatureRSDS* rsds = (const OMFSignatureRSDS*)msc_dbg->root;
 
         TRACE("Got RSDS type of PDB file: guid=%s age=%08x name=%s\n",
-              wine_dbgstr_guid(&rsds->guid), rsds->age, rsds->name);
+              wine_dbgstr_guid(&rsds->guid), rsds->age, debugstr_a(rsds->name));
         ret = pdb_process_file(pcs, msc_dbg, rsds->name, &rsds->guid, 0, rsds->age);
         break;
     }

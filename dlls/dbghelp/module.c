@@ -555,7 +555,7 @@ static BOOL image_check_debug_link_gnu_id(const WCHAR* file, struct image_file_m
             {
                 if (note[1] == idlen && !memcmp(note + 3 + ((note[0] + 3) >> 2), id, idlen))
                     return TRUE;
-                WARN("mismatch in buildid information for %s\n", wine_dbgstr_w(file));
+                WARN("mismatch in buildid information for %s\n", debugstr_w(file));
             }
         }
         image_unmap_section(&buildid_sect);
@@ -640,13 +640,13 @@ static struct image_file_map* image_locate_debug_link(const struct module* modul
     if (image_check_debug_link_crc(slash, fmap_link, crc)) goto found;
 
 
-    WARN("Couldn't locate or map %s\n", filename);
+    WARN("Couldn't locate or map %s\n", debugstr_a(filename));
     HeapFree(GetProcessHeap(), 0, p);
     HeapFree(GetProcessHeap(), 0, fmap_link);
     return NULL;
 
 found:
-    TRACE("Located debug information file %s at %s\n", filename, debugstr_w(p));
+    TRACE("Located debug information file %s at %s\n", debugstr_a(filename), debugstr_w(p));
     HeapFree(GetProcessHeap(), 0, p);
     return fmap_link;
 }
@@ -692,7 +692,7 @@ static struct image_file_map* image_locate_build_id_target(const BYTE* id, unsig
         }
     }
     wcscpy(z, L".debug");
-    TRACE("checking %s\n", wine_dbgstr_w(p));
+    TRACE("checking %s\n", debugstr_w(p));
 
     if (image_check_debug_link_gnu_id(p, fmap_link, id, idlen))
     {
@@ -813,7 +813,8 @@ struct image_file_map* image_load_debugaltlink(struct image_file_map* fmap, stru
                     HeapFree(GetProcessHeap(), 0, fmap_link);
                     /* didn't work out with filename, try file lookup based on build-id */
                     if (!(fmap_link = image_locate_build_id_target(id, idlen)))
-                        WARN("Couldn't find a match for .gnu_debugaltlink section %s for %s\n", data, debugstr_w(module->modulename));
+                        WARN("Couldn't find a match for .gnu_debugaltlink section %s for %s\n",
+                             debugstr_a(data), debugstr_w(module->modulename));
                 }
             }
         }

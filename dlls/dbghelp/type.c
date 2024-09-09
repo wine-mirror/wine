@@ -249,7 +249,7 @@ struct symt_udt* symt_new_udt(struct module* module, const char* typename,
     struct symt_udt*            sym;
 
     TRACE_(dbghelp_symt)("Adding udt %s:%s\n",
-                         debugstr_w(module->modulename), typename);
+                         debugstr_w(module->modulename), debugstr_a(typename));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagUDT;
@@ -272,8 +272,8 @@ BOOL symt_set_udt_size(struct module* module, struct symt_udt* udt, unsigned siz
     if (vector_length(&udt->vchildren) != 0)
     {
         if (udt->size != size)
-            FIXME_(dbghelp_symt)("Changing size for %s from %u to %u\n", 
-                                 udt->hash_elt.name, udt->size, size);
+            FIXME_(dbghelp_symt)("Changing size for %s from %u to %u\n",
+                                 debugstr_a(udt->hash_elt.name), udt->size, size);
         return TRUE;
     }
     udt->size = size;
@@ -297,7 +297,7 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
 
     assert(udt_type->symt.tag == SymTagUDT);
 
-    TRACE_(dbghelp_symt)("Adding %s to UDT %s\n", name, udt_type->hash_elt.name);
+    TRACE_(dbghelp_symt)("Adding %s to UDT %s\n", debugstr_a(name), debugstr_a(udt_type->hash_elt.name));
     if (name)
     {
         unsigned int    i;
@@ -335,7 +335,7 @@ struct symt_enum* symt_new_enum(struct module* module, const char* typename,
     struct symt_enum*   sym;
 
     TRACE_(dbghelp_symt)("Adding enum %s:%s\n",
-                         debugstr_w(module->modulename), typename);
+                         debugstr_w(module->modulename), debugstr_a(typename));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag            = SymTagEnum;
@@ -595,7 +595,7 @@ BOOL WINAPI SymEnumTypesByName(HANDLE proc, ULONG64 base, PCSTR name, PSYM_ENUME
     struct module_pair  pair;
     const char*         bang;
 
-    TRACE("(%p %I64x %s %p %p)\n", proc, base, wine_dbgstr_a(name), cb, user);
+    TRACE("(%p %I64x %s %p %p)\n", proc, base, debugstr_a(name), cb, user);
 
     if (!name) return SymEnumTypes(proc, base, cb, user);
     bang = strchr(name, '!');
@@ -633,7 +633,7 @@ BOOL WINAPI SymEnumTypesByNameW(HANDLE proc, ULONG64 base, PCWSTR nameW, PSYM_EN
     char* name;
     BOOL ret;
 
-    TRACE("(%p %I64x %s %p %p)\n", proc, base, wine_dbgstr_w(nameW), cb, user);
+    TRACE("(%p %I64x %s %p %p)\n", proc, base, debugstr_w(nameW), cb, user);
 
     if (len)
     {
