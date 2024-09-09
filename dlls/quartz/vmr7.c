@@ -196,6 +196,12 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
         return hr;
     }
 
+    if (width > surface_desc.dwWidth || abs(height)  > surface_desc.dwHeight)
+    {
+        FIXME("src surface (%ux%u) larger than rendering surface (%lux%lu).\n", width, height,
+                surface_desc.dwWidth, surface_desc.dwHeight);
+    }
+
     if (height > 0 && bitmap_header->biCompression == BI_RGB)
     {
         BYTE *dst = (BYTE *)surface_desc.lpSurface + (height * surface_desc.lPitch);
