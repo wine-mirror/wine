@@ -124,7 +124,6 @@ extern HWND get_capture_window(void);
 extern void init_monitors( int width, int height );
 extern void set_screen_dpi( DWORD dpi );
 extern void update_keyboard_lock_state( WORD vkey, UINT state );
-extern UINT get_win_monitor_dpi( HWND hwnd );
 
 /* JNI entry points */
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height );

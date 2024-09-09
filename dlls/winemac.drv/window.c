@@ -46,15 +46,6 @@ static CFMutableDictionaryRef win_datas;
 static unsigned int activate_on_focus_time;
 
 
-/**********************************************************************
- *       get_win_monitor_dpi
- */
-static UINT get_win_monitor_dpi(HWND hwnd)
-{
-    return NtUserGetSystemDpiForProcess(NULL);  /* FIXME: get monitor dpi */
-}
-
-
 /* per-monitor DPI aware NtUserSetWindowPos call */
 static BOOL set_window_pos(HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags)
 {
@@ -364,7 +355,7 @@ static void sync_window_min_max_info(HWND hwnd)
 {
     LONG style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     LONG exstyle = NtUserGetWindowLongW(hwnd, GWL_EXSTYLE);
-    UINT dpi = get_win_monitor_dpi(hwnd);
+    UINT dpi = NtUserGetWinMonitorDpi(hwnd);
     RECT win_rect, primary_monitor_rect;
     MINMAXINFO minmax;
     LONG adjustedStyle;
@@ -378,7 +369,7 @@ static void sync_window_min_max_info(HWND hwnd)
 
     if (!macdrv_get_cocoa_window(hwnd, FALSE)) return;
 
-    NtUserGetWindowRect(hwnd, &win_rect, get_win_monitor_dpi(hwnd));
+    NtUserGetWindowRect(hwnd, &win_rect, dpi);
     minmax.ptReserved.x = win_rect.left;
     minmax.ptReserved.y = win_rect.top;
 
@@ -1143,7 +1134,7 @@ static HMONITOR monitor_from_point(POINT pt, UINT flags)
  */
 static LRESULT move_window(HWND hwnd, WPARAM wparam)
 {
-    UINT dpi = get_win_monitor_dpi(hwnd);
+    UINT dpi = NtUserGetWinMonitorDpi(hwnd);
     MSG msg;
     RECT origRect, movedRect, desktopRect;
     int hittest = (int)(wparam & 0x0f);
@@ -1170,7 +1161,7 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
     else
         captionHeight = 0;
 
-    NtUserGetWindowRect(hwnd, &origRect, get_win_monitor_dpi(hwnd));
+    NtUserGetWindowRect(hwnd, &origRect, NtUserGetWinMonitorDpi(hwnd));
     movedRect = origRect;
 
     if (!hittest)

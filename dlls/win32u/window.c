@@ -5914,6 +5914,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return expose_window_surface( hwnd, params->flags, params->whole ? NULL : &params->rect, params->dpi );
     }
 
+    case NtUserCallHwndParam_GetWinMonitorDpi:
+        return get_win_monitor_dpi( hwnd );
+
     /* temporary exports */
     case NtUserSetWindowStyle:
         {

@@ -847,8 +847,8 @@ void wayland_client_surface_attach(struct wayland_client_surface *client, HWND t
         client->toplevel = toplevel;
     }
 
-    NtUserGetClientRect(client->hwnd, &client_rect, get_win_monitor_dpi(client->hwnd));
-    NtUserMapWindowPoints(client->hwnd, toplevel, (POINT *)&client_rect, 2, get_win_monitor_dpi(client->hwnd));
+    NtUserGetClientRect(client->hwnd, &client_rect, NtUserGetWinMonitorDpi(client->hwnd));
+    NtUserMapWindowPoints(client->hwnd, toplevel, (POINT *)&client_rect, 2, NtUserGetWinMonitorDpi(client->hwnd));
 
     wayland_surface_reconfigure_client(surface, client, &client_rect);
     /* Commit to apply subsurface positioning. */

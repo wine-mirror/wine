@@ -290,7 +290,6 @@ struct wayland_win_data
     BOOL managed;
 };
 
-UINT get_win_monitor_dpi(HWND hwnd);
 struct wayland_win_data *wayland_win_data_get(HWND hwnd);
 struct wayland_win_data *wayland_win_data_get_nolock(HWND hwnd);
 void wayland_win_data_release(struct wayland_win_data *data);

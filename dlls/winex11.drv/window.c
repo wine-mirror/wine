@@ -113,15 +113,6 @@ static const WCHAR clip_window_prop[] =
 static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-/**********************************************************************
- *       get_win_monitor_dpi
- */
-UINT get_win_monitor_dpi( HWND hwnd )
-{
-    return NtUserGetSystemDpiForProcess( NULL );  /* FIXME: get monitor dpi */
-}
-
-
 /***********************************************************************
  * http://standards.freedesktop.org/startup-notification-spec
  */
@@ -1610,7 +1601,7 @@ Window create_client_window( HWND hwnd, const XVisualInfo *visual, Colormap colo
         HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
         if (parent == NtUserGetDesktopWindow() || NtUserGetAncestor( parent, GA_PARENT )) return 0;
         if (!(data = alloc_win_data( thread_init_display(), hwnd ))) return 0;
-        NtUserGetClientRect( hwnd, &data->rects.client, get_win_monitor_dpi( hwnd ) );
+        NtUserGetClientRect( hwnd, &data->rects.client, NtUserGetWinMonitorDpi( hwnd ) );
         data->rects.window = data->rects.visible = data->rects.client;
     }
 

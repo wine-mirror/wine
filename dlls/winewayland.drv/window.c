@@ -37,15 +37,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 
-/**********************************************************************
- *       get_win_monitor_dpi
- */
-UINT get_win_monitor_dpi(HWND hwnd)
-{
-    return NtUserGetSystemDpiForProcess(NULL);  /* FIXME: get monitor dpi */
-}
-
-
 /* per-monitor DPI aware NtUserSetWindowPos call */
 static BOOL set_window_pos(HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags)
 {
@@ -193,7 +184,7 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
     }
 
     conf->state = window_state;
-    conf->scale = get_win_monitor_dpi(data->hwnd) / 96.0;
+    conf->scale = NtUserGetWinMonitorDpi(data->hwnd) / 96.0;
     conf->visible = (style & WS_VISIBLE) == WS_VISIBLE;
     conf->managed = data->managed;
 }

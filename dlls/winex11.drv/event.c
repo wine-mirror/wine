@@ -917,7 +917,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     release_win_data( data );
 
-    NtUserExposeWindowSurface( hwnd, flags, &rect, get_win_monitor_dpi( hwnd ) );
+    NtUserExposeWindowSurface( hwnd, flags, &rect, NtUserGetWinMonitorDpi( hwnd ) );
     return TRUE;
 }
 
@@ -1391,7 +1391,7 @@ void X11DRV_SetFocus( HWND hwnd )
 
 static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 {
-    UINT dpi = get_win_monitor_dpi( hQueryWnd );
+    UINT dpi = NtUserGetWinMonitorDpi( hQueryWnd );
     RECT tempRect;
 
     if (!NtUserIsWindowEnabled(hQueryWnd)) return 0;

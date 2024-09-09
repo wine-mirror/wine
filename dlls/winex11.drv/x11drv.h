@@ -664,7 +664,6 @@ extern XContext winContext;
 /* X context to associate an X cursor to a Win32 cursor handle */
 extern XContext cursor_context;
 
-extern UINT get_win_monitor_dpi( HWND hwnd );
 extern BOOL is_current_process_focused(void);
 extern void X11DRV_SetFocus( HWND hwnd );
 extern void set_window_cursor( Window window, HCURSOR handle );
