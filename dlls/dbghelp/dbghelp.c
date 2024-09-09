@@ -556,6 +556,8 @@ BOOL WINAPI SymCleanup(HANDLE hProcess)
     struct process**    ppcs;
     struct process*     next;
 
+    TRACE("(%p)\n", hProcess);
+
     for (ppcs = &process_first; *ppcs; ppcs = &(*ppcs)->next)
     {
         if ((*ppcs)->handle == hProcess)
