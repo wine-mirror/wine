@@ -159,6 +159,9 @@ struct wined3d_decoder_vk
     uint64_t command_buffer_id;
     struct wined3d_allocator_block *session_memory;
     VkDeviceMemory vk_session_memory;
+
+    bool needs_wait_semaphore;
+    struct wined3d_aux_command_buffer_vk command_buffer;
 };
 
 static struct wined3d_decoder_vk *wined3d_decoder_vk(struct wined3d_decoder *decoder)
@@ -440,11 +443,103 @@ static HRESULT wined3d_decoder_vk_create(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
+static bool get_decode_command_buffer(struct wined3d_decoder_vk *decoder_vk,
+        struct wined3d_context_vk *context_vk, struct wined3d_decoder_output_view *view)
+{
+    const struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(view->texture);
+
+    if (!wined3d_aux_command_pool_vk_get_buffer(context_vk, &context_vk->decode_pool, &decoder_vk->command_buffer))
+        return false;
+
+    /* If the output texture in question is in use by the current main CB,
+     * we will need this ACB to wait for the main CB to complete.
+     *
+     * We check this by comparing IDs.
+     * Note that if view_vk->command_buffer_id == current_command_buffer.id
+     * then the current CB must be active, otherwise the view should not have
+     * been referenced to it. */
+    if (texture_vk->image.command_buffer_id == context_vk->current_command_buffer.id)
+    {
+        wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL,
+                1, &decoder_vk->command_buffer.wait_semaphore);
+        decoder_vk->needs_wait_semaphore = true;
+    }
+    else
+    {
+        /* Submit the main CB anyway. We don't strictly need to do this
+         * immediately, but we need to do it before the resource will be used.
+         * We also need to do this because resources we're tracking (session,
+         * session parameters, reference frames) need to be tied to the next
+         * main CB rather than the current one.
+         * Submitting now saves us the work of tracking that information,
+         * and the resource will probably be used almost immediately anyway. */
+        wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
+        decoder_vk->needs_wait_semaphore = false;
+    }
+
+    return true;
+}
+
+static void submit_decode_command_buffer(struct wined3d_decoder_vk *decoder_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    static const VkPipelineStageFlags stage_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    VkSubmitInfo submit_info = {.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO};
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    VkResult vr;
+
+    /* We don't strictly need to submit the ACB here. But ffmpeg and gstreamer
+     * do, so it's probably the right thing to do.
+     *
+     * We don't strictly need to submit the main CB here either; we could delay
+     * until we use the output resource. However that's a bit more complex to
+     * track, and I'm not sure that there's a performance reason *not* to
+     * submit early? */
+
+    VK_CALL(vkEndCommandBuffer(decoder_vk->command_buffer.vk_command_buffer));
+
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &decoder_vk->command_buffer.vk_command_buffer;
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &decoder_vk->command_buffer.signal_semaphore;
+    if (decoder_vk->needs_wait_semaphore)
+    {
+        submit_info.waitSemaphoreCount = 1;
+        submit_info.pWaitSemaphores = &decoder_vk->command_buffer.wait_semaphore;
+        submit_info.pWaitDstStageMask = &stage_mask;
+    }
+
+    if ((vr = VK_CALL(vkQueueSubmit(device_vk->decode_queue.vk_queue, 1, &submit_info, VK_NULL_HANDLE))) < 0)
+        ERR("Failed to submit, vr %d.\n", vr);
+
+    /* Mark that the next CB needs to wait on our semaphore. */
+    wined3d_array_reserve((void **)&context_vk->wait_semaphores, &context_vk->wait_semaphores_size,
+            context_vk->wait_semaphore_count + 1, sizeof(*context_vk->wait_semaphores));
+    context_vk->wait_semaphores[context_vk->wait_semaphore_count] = decoder_vk->command_buffer.signal_semaphore;
+    wined3d_array_reserve((void **)&context_vk->wait_stages, &context_vk->wait_stages_size,
+            context_vk->wait_semaphore_count + 1, sizeof(*context_vk->wait_stages));
+    context_vk->wait_stages[context_vk->wait_semaphore_count] = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    ++context_vk->wait_semaphore_count;
+
+    /* Retire this buffer. */
+    wined3d_aux_command_pool_vk_retire_buffer(context_vk, &context_vk->decode_pool,
+            &decoder_vk->command_buffer, context_vk->current_command_buffer.id);
+}
+
 static void wined3d_decoder_vk_decode(struct wined3d_context *context, struct wined3d_decoder *decoder,
         struct wined3d_decoder_output_view *output_view,
         unsigned int bitstream_size, unsigned int slice_control_size)
 {
+    struct wined3d_decoder_vk *decoder_vk = wined3d_decoder_vk(decoder);
+    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
+
+    if (!get_decode_command_buffer(decoder_vk, context_vk, output_view))
+        return;
+
     FIXME("Not implemented.\n");
+
+    submit_decode_command_buffer(decoder_vk, context_vk);
 }
 
 const struct wined3d_decoder_ops wined3d_decoder_vk_ops =

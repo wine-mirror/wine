@@ -433,6 +433,17 @@ struct wined3d_command_buffer_vk
     VkFence vk_fence;
 };
 
+struct wined3d_aux_command_buffer_vk
+{
+    VkCommandBuffer vk_command_buffer;
+    /* Semaphore that the auxiliary CB signals and the main CB will wait on. */
+    VkSemaphore signal_semaphore;
+    /* Semaphore that the main CB signals and the auxiliary CB will wait on.
+     * This is necessary for when the main CB uses resources that the auxiliary
+     * CB needs to use. */
+    VkSemaphore wait_semaphore;
+};
+
 enum wined3d_retired_object_type_vk
 {
     WINED3D_RETIRED_FREE_VK,
@@ -450,6 +461,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_EVENT_VK,
     WINED3D_RETIRED_PIPELINE_VK,
     WINED3D_RETIRED_VIDEO_SESSION_VK,
+    WINED3D_RETIRED_AUX_COMMAND_BUFFER_VK,
 };
 
 struct wined3d_retired_object_vk
@@ -481,6 +493,11 @@ struct wined3d_retired_object_vk
             uint32_t start;
             uint32_t count;
         } queries;
+        struct
+        {
+            struct wined3d_aux_command_pool_vk *pool;
+            struct wined3d_aux_command_buffer_vk buffer;
+        } aux_command_buffer;
     } u;
     uint64_t command_buffer_id;
 };
@@ -595,6 +612,28 @@ struct wined3d_shader_descriptor_writes_vk
     SIZE_T size, count;
 };
 
+/* In order to track whether resources can be destroyed or reused, we use
+ * the sequence ID of a command buffer submitted to the graphics queue.
+ *
+ * In order to extend this system to command buffers submitted to different
+ * queues, we use a semaphore to associate these "auxiliary" command buffers
+ * with the next graphics queue submission. These command buffers then get
+ * an associated command_buffer_id and are freed back to the auxiliary
+ * command pool via wined3d_retired_object_vk, just like any other resource.
+ */
+struct wined3d_aux_command_pool_vk
+{
+    VkCommandPool vk_pool;
+    struct wined3d_aux_command_buffer_vk *buffers;
+    SIZE_T buffers_size, buffer_count;
+};
+
+bool wined3d_aux_command_pool_vk_get_buffer(struct wined3d_context_vk *context_vk,
+        struct wined3d_aux_command_pool_vk *pool, struct wined3d_aux_command_buffer_vk *buffer);
+void wined3d_aux_command_pool_vk_retire_buffer(
+        struct wined3d_context_vk *context_vk, struct wined3d_aux_command_pool_vk *pool,
+        const struct wined3d_aux_command_buffer_vk *buffer, uint64_t command_buffer_id);
+
 struct wined3d_context_vk
 {
     struct wined3d_context c;
@@ -632,6 +671,10 @@ struct wined3d_context_vk
     /* Number of draw or dispatch calls that have been recorded into the
      * current command buffer. */
     unsigned int command_buffer_work_count;
+    /* Semaphores that the current command buffer must wait on. */
+    VkSemaphore *wait_semaphores;
+    VkPipelineStageFlags *wait_stages;
+    SIZE_T wait_semaphore_count, wait_semaphores_size, wait_stages_size;
 
     struct
     {
@@ -639,6 +682,8 @@ struct wined3d_context_vk
         SIZE_T buffers_size;
         SIZE_T buffer_count;
     } submitted, completed;
+
+    struct wined3d_aux_command_pool_vk decode_pool;
 
     struct wined3d_shader_descriptor_writes_vk descriptor_writes;
 

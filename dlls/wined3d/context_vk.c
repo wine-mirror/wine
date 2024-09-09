@@ -1200,6 +1200,116 @@ static void wined3d_context_vk_remove_command_buffer(struct wined3d_context_vk *
     *buffer = context_vk->submitted.buffers[--context_vk->submitted.buffer_count];
 }
 
+bool wined3d_aux_command_pool_vk_get_buffer(struct wined3d_context_vk *context_vk,
+        struct wined3d_aux_command_pool_vk *pool, struct wined3d_aux_command_buffer_vk *buffer)
+{
+    VkCommandBufferBeginInfo begin_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    VkResult vr;
+
+    if (pool->buffer_count)
+    {
+        *buffer = pool->buffers[--pool->buffer_count];
+    }
+    else
+    {
+        VkCommandBufferAllocateInfo command_buffer_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+        VkSemaphoreCreateInfo semaphore_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+
+        if ((vr = VK_CALL(vkCreateSemaphore(device_vk->vk_device, &semaphore_info, NULL, &buffer->signal_semaphore))) < 0)
+        {
+            ERR("Failed to create signal_semaphore, vr %s.\n", wined3d_debug_vkresult(vr));
+            return false;
+        }
+
+        if ((vr = VK_CALL(vkCreateSemaphore(device_vk->vk_device, &semaphore_info, NULL, &buffer->wait_semaphore))) < 0)
+        {
+            ERR("Failed to create wait_semaphore, vr %s.\n", wined3d_debug_vkresult(vr));
+            VK_CALL(vkDestroySemaphore(device_vk->vk_device, buffer->signal_semaphore, NULL));
+            return false;
+        }
+
+        command_buffer_info.commandPool = pool->vk_pool;
+        command_buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        command_buffer_info.commandBufferCount = 1;
+        if ((vr = VK_CALL(vkAllocateCommandBuffers(device_vk->vk_device,
+                &command_buffer_info, &buffer->vk_command_buffer))) < 0)
+        {
+            WARN("Failed to allocate Vulkan command buffer, vr %s.\n", wined3d_debug_vkresult(vr));
+            VK_CALL(vkDestroySemaphore(device_vk->vk_device, buffer->signal_semaphore, NULL));
+            VK_CALL(vkDestroySemaphore(device_vk->vk_device, buffer->wait_semaphore, NULL));
+            return false;
+        }
+    }
+
+    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    if ((vr = VK_CALL(vkBeginCommandBuffer(buffer->vk_command_buffer, &begin_info))) < 0)
+    {
+        WARN("Failed to begin command buffer, vr %s.\n", wined3d_debug_vkresult(vr));
+        VK_CALL(vkFreeCommandBuffers(device_vk->vk_device, pool->vk_pool, 1, &buffer->vk_command_buffer));
+        return false;
+    }
+
+    return true;
+}
+
+void wined3d_aux_command_pool_vk_retire_buffer(
+        struct wined3d_context_vk *context_vk, struct wined3d_aux_command_pool_vk *pool,
+        const struct wined3d_aux_command_buffer_vk *buffer, uint64_t command_buffer_id)
+{
+    struct wined3d_retired_object_vk *o;
+
+    /* No point checking if it's complete. Auxiliary command buffers are
+     * always submitted before the main command buffer that depends on them. */
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking auxiliary command buffer %p.\n", buffer->vk_command_buffer);
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_AUX_COMMAND_BUFFER_VK;
+    o->u.aux_command_buffer.buffer = *buffer;
+    o->u.aux_command_buffer.pool = pool;
+    o->command_buffer_id = command_buffer_id;
+}
+
+static void wined3d_aux_command_pool_vk_complete_buffer(struct wined3d_context_vk *context_vk,
+        struct wined3d_aux_command_pool_vk *pool, const struct wined3d_aux_command_buffer_vk *buffer)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+
+    if (!wined3d_array_reserve((void **)&pool->buffers, &pool->buffers_size,
+            pool->buffer_count + 1, sizeof(*pool->buffers)))
+    {
+        VK_CALL(vkFreeCommandBuffers(device_vk->vk_device, pool->vk_pool, 1, &buffer->vk_command_buffer));
+        return;
+    }
+
+    pool->buffers[pool->buffer_count++] = *buffer;
+}
+
+static void wined3d_aux_command_pool_vk_cleanup(struct wined3d_context_vk *context_vk,
+        struct wined3d_aux_command_pool_vk *pool)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+
+    for (unsigned int i = 0; i < pool->buffer_count; ++i)
+    {
+        struct wined3d_aux_command_buffer_vk *buffer = &pool->buffers[i];
+
+        VK_CALL(vkDestroySemaphore(device_vk->vk_device, buffer->wait_semaphore, NULL));
+        VK_CALL(vkDestroySemaphore(device_vk->vk_device, buffer->signal_semaphore, NULL));
+        VK_CALL(vkFreeCommandBuffers(device_vk->vk_device,
+                pool->vk_pool, 1, &buffer->vk_command_buffer));
+    }
+    VK_CALL(vkDestroyCommandPool(device_vk->vk_device, pool->vk_pool, NULL));
+    free(pool->buffers);
+}
+
 static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *context_vk, VkFence vk_fence)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -1309,6 +1419,11 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
             case WINED3D_RETIRED_VIDEO_SESSION_VK:
                 VK_CALL(vkDestroyVideoSessionKHR(device_vk->vk_device, o->u.vk_video_session, NULL));
                 TRACE("Destroyed video session 0x%s.\n", wine_dbgstr_longlong(o->u.vk_video_session));
+                break;
+
+            case WINED3D_RETIRED_AUX_COMMAND_BUFFER_VK:
+                wined3d_aux_command_pool_vk_complete_buffer(context_vk,
+                        o->u.aux_command_buffer.pool, &o->u.aux_command_buffer.buffer);
                 break;
 
             default:
@@ -1788,6 +1903,7 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
      * this needs to happen after all command buffers are freed, because
      * vkFreeCommandBuffers() requires a valid pool handle. */
     VK_CALL(vkDestroyCommandPool(device_vk->vk_device, context_vk->vk_command_pool, NULL));
+    wined3d_aux_command_pool_vk_cleanup(context_vk, &context_vk->decode_pool);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_occlusion_query_pools);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_timestamp_query_pools);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_pipeline_statistics_query_pools);
@@ -1989,11 +2105,26 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
 
     VK_CALL(vkResetFences(device_vk->vk_device, 1, &buffer->vk_fence));
 
+    if (wait_semaphore_count)
+    {
+        wined3d_array_reserve((void **)&context_vk->wait_semaphores, &context_vk->wait_semaphores_size,
+                context_vk->wait_semaphore_count + wait_semaphore_count, sizeof(*context_vk->wait_semaphores));
+        memcpy(context_vk->wait_semaphores + context_vk->wait_semaphore_count,
+                wait_semaphores, wait_semaphore_count * sizeof(VkSemaphore));
+
+        wined3d_array_reserve((void **)&context_vk->wait_stages, &context_vk->wait_stages_size,
+                context_vk->wait_semaphore_count + wait_semaphore_count, sizeof(*context_vk->wait_stages));
+        memcpy(context_vk->wait_stages + context_vk->wait_semaphore_count,
+                wait_stages, wait_semaphore_count * sizeof(VkPipelineStageFlags));
+
+        context_vk->wait_semaphore_count += wait_semaphore_count;
+    }
+
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.pNext = NULL;
-    submit_info.waitSemaphoreCount = wait_semaphore_count;
-    submit_info.pWaitSemaphores = wait_semaphores;
-    submit_info.pWaitDstStageMask = wait_stages;
+    submit_info.waitSemaphoreCount = context_vk->wait_semaphore_count;
+    submit_info.pWaitSemaphores = context_vk->wait_semaphores;
+    submit_info.pWaitDstStageMask = context_vk->wait_stages;
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &buffer->vk_command_buffer;
     submit_info.signalSemaphoreCount = signal_semaphore_count;
@@ -2006,6 +2137,8 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     if (!wined3d_array_reserve((void **)&context_vk->submitted.buffers, &context_vk->submitted.buffers_size,
             context_vk->submitted.buffer_count + 1, sizeof(*context_vk->submitted.buffers)))
         ERR("Failed to grow submitted command buffer array.\n");
+
+    context_vk->wait_semaphore_count = 0;
 
     context_vk->submitted.buffers[context_vk->submitted.buffer_count++] = *buffer;
 
@@ -4182,13 +4315,26 @@ VkCommandBuffer wined3d_context_vk_apply_compute_state(struct wined3d_context_vk
     return vk_command_buffer;
 }
 
+static VkCommandPool create_command_pool(struct wined3d_device_vk *device_vk,
+        const struct wined3d_vk_info *vk_info, uint32_t queue_family_index)
+{
+    VkCommandPoolCreateInfo command_pool_info = {.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+    VkCommandPool pool;
+    VkResult vr;
+
+    command_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    command_pool_info.queueFamilyIndex = queue_family_index;
+    if ((vr = VK_CALL(vkCreateCommandPool(device_vk->vk_device, &command_pool_info, NULL, &pool))) == VK_SUCCESS)
+        return pool;
+    ERR("Failed to create Vulkan command pool, vr %s.\n", wined3d_debug_vkresult(vr));
+    return VK_NULL_HANDLE;
+}
+
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wined3d_swapchain *swapchain)
 {
-    VkCommandPoolCreateInfo command_pool_info;
     const struct wined3d_vk_info *vk_info;
     struct wined3d_adapter_vk *adapter_vk;
     struct wined3d_device_vk *device_vk;
-    VkResult vr;
 
     TRACE("context_vk %p, swapchain %p.\n", context_vk, swapchain);
 
@@ -4198,18 +4344,22 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
     adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
     context_vk->vk_info = vk_info = &adapter_vk->vk_info;
 
-    command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    command_pool_info.pNext = NULL;
-    command_pool_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    command_pool_info.queueFamilyIndex = device_vk->graphics_queue.vk_queue_family_index;
-    if ((vr = VK_CALL(vkCreateCommandPool(device_vk->vk_device,
-            &command_pool_info, NULL, &context_vk->vk_command_pool))) < 0)
+    if (!(context_vk->vk_command_pool = create_command_pool(device_vk,
+            vk_info, device_vk->graphics_queue.vk_queue_family_index)))
     {
-        ERR("Failed to create Vulkan command pool, vr %s.\n", wined3d_debug_vkresult(vr));
         wined3d_context_cleanup(&context_vk->c);
         return E_FAIL;
     }
     context_vk->current_command_buffer.id = 1;
+
+    if (device_vk->decode_queue.vk_queue
+            && !(context_vk->decode_pool.vk_pool = create_command_pool(device_vk,
+                    vk_info, device_vk->decode_queue.vk_queue_family_index)))
+    {
+        VK_CALL(vkDestroyCommandPool(device_vk->vk_device, context_vk->vk_command_pool, NULL));
+        wined3d_context_cleanup(&context_vk->c);
+        return E_FAIL;
+    }
 
     wined3d_context_vk_init_graphics_pipeline_key(context_vk);
 
