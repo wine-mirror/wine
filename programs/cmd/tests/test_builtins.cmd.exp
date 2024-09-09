@@ -1828,7 +1828,7 @@ bar b1 echo
 @todo_wine@bar cb1 echo
 --- mixing batch and builtins
 bar@space@
-@todo_wine@foo
+foo
 foo
 foo
 bar@space@

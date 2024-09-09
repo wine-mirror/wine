@@ -1469,9 +1469,10 @@ struct search_command
     WCHAR path[MAX_PATH];
     BOOL has_path; /* if input has path part (ie cannot be a builtin command) */
     BOOL has_extension; /* if extension was given to input */
+    int cmd_index; /* potential index to builtin command */
 };
 
-static RETURN_CODE search_command(WCHAR *command, struct search_command *sc)
+static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOOL fast)
 {
     WCHAR  temp[MAX_PATH];
     WCHAR  pathtosearch[MAXSTRING];
@@ -1481,20 +1482,44 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc)
     WCHAR *lastSlash;
     WCHAR  pathext[MAXSTRING];
     WCHAR *firstParam;
-    DWORD len;
+    DWORD  len;
+    WCHAR *p;
 
     /* Quick way to get the filename is to extract the first argument. */
     firstParam = WCMD_parameter(command, 0, NULL, FALSE, TRUE);
+
+    sc->cmd_index = WCMD_EXIT + 1;
 
     if (!firstParam[0])
     {
         sc->path[0] = L'\0';
         return NO_ERROR;
     }
+    for (p = firstParam; *p && IsCharAlphaW(*p); p++) {}
+    if (p > firstParam && (!*p || wcschr(L" \t+./(;=:", *p)))
+    {
+        for (sc->cmd_index = 0; sc->cmd_index <= WCMD_EXIT; sc->cmd_index++)
+            if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                               firstParam, p - firstParam, inbuilt[sc->cmd_index], -1) == CSTR_EQUAL)
+                break;
+    }
+    if (firstParam[1] == L':' && (!firstParam[2] || iswspace(firstParam[2])))
+    {
+        sc->cmd_index = WCMD_CHGDRIVE;
+        fast = TRUE;
+    }
+
+    if (fast && sc->cmd_index <= WCMD_EXIT && firstParam[wcslen(inbuilt[sc->cmd_index])] != L'.')
+    {
+        sc->path[0] = L'\0';
+        sc->has_path = sc->has_extension = FALSE;
+        return RETURN_CODE_CANT_LAUNCH;
+    }
 
     /* Calculate the search path and stem to search for */
     if (wcspbrk(firstParam, L"/\\:") == NULL)
-    {  /* No explicit path given, search path */
+    {
+        /* No explicit path given, search path */
         wcscpy(pathtosearch, L".;");
         len = GetEnvironmentVariableW(L"PATH", &pathtosearch[2], ARRAY_SIZE(pathtosearch)-2);
         if (len == 0 || len >= ARRAY_SIZE(pathtosearch) - 2)
@@ -1659,7 +1684,7 @@ RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
   struct search_command sc;
   RETURN_CODE return_code;
 
-  return_code = search_command(command, &sc);
+  return_code = search_command(command, &sc, FALSE);
   if (return_code == NO_ERROR)
   {
       if (!*sc.path) return NO_ERROR;
@@ -1895,8 +1920,11 @@ static RETURN_CODE run_builtin_command(int cmd_index, WCHAR *cmd)
         return_code = WCMD_exit();
         break;
     default:
-        FIXME("Shouldn't happen\n");
+        FIXME("Shouldn't happen %d\n", cmd_index);
+    case WCMD_FOR: /* can happen in 'call for...' and should fail */
+    case WCMD_IF:
         return_code = RETURN_CODE_CANT_LAUNCH;
+        break;
     }
     return return_code;
 }
@@ -1910,9 +1938,9 @@ static RETURN_CODE run_builtin_command(int cmd_index, WCHAR *cmd)
  */
 static RETURN_CODE execute_single_command(const WCHAR *command)
 {
+    struct search_command sc;
     RETURN_CODE return_code;
     WCHAR *cmd;
-    int cmd_index, count;
 
     TRACE("command on entry:%s\n", wine_dbgstr_w(command));
 
@@ -1923,32 +1951,25 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
 
     TRACE("Command: '%s'\n", wine_dbgstr_w(cmd));
 
-    /* Changing default drive has to be handled as a special case, anything
-     * else if it exists after whitespace is ignored
-     */
-    if (cmd[1] == L':' && (!cmd[2] || iswspace(cmd[2]))) {
-      cmd_index = WCMD_CHGDRIVE;
-      count = 0;
-    }
-    else
+    return_code = search_command(cmd, &sc, TRUE);
+    if (return_code != NO_ERROR && sc.cmd_index == WCMD_EXIT + 1)
     {
-        /* Check if the command entered is internal, and identify which one */
-        count = 0;
-        while (IsCharAlphaNumericW(cmd[count])) {
-            count++;
-        }
-        for (cmd_index=0; cmd_index<=WCMD_EXIT; cmd_index++) {
-            if (count && CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-                                        cmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
-        }
-    }
+        /* Not found anywhere - give up */
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NO_COMMAND_FOUND), cmd);
 
-    if (cmd_index <= WCMD_EXIT)
-        return_code = run_builtin_command(cmd_index, cmd);
+        /* If a command fails to launch, it sets errorlevel 9009 - which
+         * does not seem to have any associated constant definition
+         */
+        errorlevel = RETURN_CODE_CANT_LAUNCH;
+        return_code = ERROR_INVALID_FUNCTION;
+    }
+    else if (sc.cmd_index <= WCMD_EXIT && (return_code != NO_ERROR || (!sc.has_path && !sc.has_extension)))
+        return_code = run_builtin_command(sc.cmd_index, cmd);
     else
     {
         BOOL prev_echo_mode = echo_mode;
-        return_code = WCMD_run_program(cmd, FALSE);
+        if (*sc.path)
+            return_code = run_full_path(sc.path, cmd, FALSE);
         echo_mode = prev_echo_mode;
     }
     free(cmd);
