@@ -1137,8 +1137,16 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
         gl->window = create_client_window( hwnd, visual, gl->colormap );
         if (gl->window)
         {
+            struct x11drv_win_data *data;
+
             gl->drawable = pglXCreateWindow( gdi_display, gl->format->fbconfig, gl->window, NULL );
             pXCompositeRedirectWindow( gdi_display, gl->window, CompositeRedirectManual );
+
+            if ((data = get_win_data( hwnd )))
+            {
+                detach_client_window( data, gl->window );
+                release_win_data( data );
+            }
         }
         TRACE( "%p created child %lx drawable %lx\n", hwnd, gl->window, gl->drawable );
     }
