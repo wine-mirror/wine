@@ -2164,7 +2164,7 @@ static UINT monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE type, UIN
 }
 
 /* display_lock must be held */
-static RECT monitor_get_rect( struct monitor *monitor, UINT dpi )
+static RECT monitor_get_rect( struct monitor *monitor, UINT dpi, MONITOR_DPI_TYPE type )
 {
     DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
     RECT rect = {0, 0, 1024, 768};
@@ -2182,7 +2182,7 @@ static RECT monitor_get_rect( struct monitor *monitor, UINT dpi )
              current_mode.dmPosition.x + current_mode.dmPelsWidth,
              current_mode.dmPosition.y + current_mode.dmPelsHeight );
 
-    dpi_from = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
+    dpi_from = monitor_get_dpi( monitor, type, &x, &y );
     return map_dpi_rect( rect, dpi_from, dpi );
 }
 
@@ -2190,7 +2190,7 @@ static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT d
 {
     UINT x, y;
 
-    info->rcMonitor = monitor_get_rect( monitor, dpi );
+    info->rcMonitor = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
     info->rcWork = map_dpi_rect( monitor->rc_work, monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y ), dpi );
     info->dwFlags = is_monitor_primary( monitor ) ? MONITORINFOF_PRIMARY : 0;
 
@@ -2221,7 +2221,7 @@ static struct monitor *get_monitor_from_rect( RECT rect, UINT flags, UINT dpi )
 
         if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
 
-        monitor_rect = monitor_get_rect( monitor, dpi );
+        monitor_rect = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
         if (intersect_rect( &intersect, &monitor_rect, &rect ))
         {
             /* check for larger intersecting area */
@@ -2504,7 +2504,7 @@ RECT get_virtual_screen_rect( UINT dpi )
     {
         RECT monitor_rect;
         if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
-        monitor_rect = monitor_get_rect( monitor, dpi );
+        monitor_rect = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
         union_rect( &rect, &rect, &monitor_rect );
     }
 
@@ -2526,7 +2526,7 @@ BOOL is_window_rect_full_screen( const RECT *rect, UINT dpi )
 
         if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
 
-        monrect = monitor_get_rect( monitor, dpi );
+        monrect = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
         if (rect->left <= monrect.left && rect->right >= monrect.right &&
             rect->top <= monrect.top && rect->bottom >= monrect.bottom)
         {
@@ -2565,7 +2565,7 @@ RECT get_display_rect( const WCHAR *display )
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
         if (!monitor->source || monitor->source->id + 1 != index) continue;
-        rect = monitor_get_rect( monitor, dpi );
+        rect = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
         break;
     }
 
@@ -2583,7 +2583,7 @@ RECT get_primary_monitor_rect( UINT dpi )
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
         if (!is_monitor_primary( monitor )) continue;
-        rect = monitor_get_rect( monitor, dpi );
+        rect = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
         break;
     }
 
@@ -3699,7 +3699,7 @@ static BOOL should_enumerate_monitor( struct monitor *monitor, const POINT *orig
     if (!is_monitor_active( monitor )) return FALSE;
     if (monitor->is_clone) return FALSE;
 
-    *rect = monitor_get_rect( monitor, get_thread_dpi() );
+    *rect = monitor_get_rect( monitor, get_thread_dpi(), MDT_DEFAULT );
     OffsetRect( rect, -origin->x, -origin->y );
     return intersect_rect( rect, rect, limit );
 }
