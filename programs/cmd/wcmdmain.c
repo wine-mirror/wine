@@ -1751,6 +1751,156 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir)
     return TRUE;
 }
 
+static RETURN_CODE run_builtin_command(int cmd_index, WCHAR *cmd)
+{
+    size_t count = wcslen(inbuilt[cmd_index]);
+    WCHAR *parms_start = WCMD_skip_leading_spaces(&cmd[count]);
+    RETURN_CODE return_code;
+
+    WCMD_parse(parms_start, quals, param1, param2);
+    TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
+
+    if (cmd_index <= WCMD_EXIT && (parms_start[0] == '/') && (parms_start[1] == '?'))
+    {
+        /* this is a help request for a builtin program */
+        cmd_index = WCMD_HELP;
+        wcscpy(parms_start, inbuilt[cmd_index]);
+    }
+
+    switch (cmd_index)
+    {
+    case WCMD_CALL:
+        return_code = WCMD_call(parms_start);
+        break;
+    case WCMD_CD:
+    case WCMD_CHDIR:
+        return_code = WCMD_setshow_default(parms_start);
+        break;
+    case WCMD_CLS:
+        return_code = WCMD_clear_screen();
+        break;
+    case WCMD_COPY:
+        return_code = WCMD_copy(parms_start);
+        break;
+    case WCMD_DATE:
+        return_code = WCMD_setshow_date();
+	break;
+    case WCMD_DEL:
+    case WCMD_ERASE:
+        return_code = WCMD_delete(parms_start);
+        break;
+    case WCMD_DIR:
+        return_code = WCMD_directory(parms_start);
+        break;
+    case WCMD_ECHO:
+        return_code = WCMD_echo(&cmd[count]);
+        break;
+    case WCMD_GOTO:
+        return_code = WCMD_goto();
+        break;
+    case WCMD_HELP:
+        return_code = WCMD_give_help(parms_start);
+        break;
+    case WCMD_LABEL:
+        return_code = WCMD_label();
+        break;
+    case WCMD_MD:
+    case WCMD_MKDIR:
+        return_code = WCMD_create_dir(parms_start);
+        break;
+    case WCMD_MOVE:
+        return_code = WCMD_move();
+        break;
+    case WCMD_PATH:
+        return_code = WCMD_setshow_path(parms_start);
+        break;
+    case WCMD_PAUSE:
+        return_code = WCMD_pause();
+        break;
+    case WCMD_PROMPT:
+        return_code = WCMD_setshow_prompt();
+        break;
+    case WCMD_REM:
+        return_code = NO_ERROR;
+        break;
+    case WCMD_REN:
+    case WCMD_RENAME:
+        return_code = WCMD_rename();
+	break;
+    case WCMD_RD:
+    case WCMD_RMDIR:
+        return_code = WCMD_remove_dir(parms_start);
+        break;
+    case WCMD_SETLOCAL:
+        return_code = WCMD_setlocal(parms_start);
+        break;
+    case WCMD_ENDLOCAL:
+        return_code = WCMD_endlocal();
+        break;
+    case WCMD_SET:
+        return_code = WCMD_setshow_env(parms_start);
+        break;
+    case WCMD_SHIFT:
+        return_code = WCMD_shift(parms_start);
+        break;
+    case WCMD_START:
+        return_code = WCMD_start(parms_start);
+        break;
+    case WCMD_TIME:
+        return_code = WCMD_setshow_time();
+        break;
+    case WCMD_TITLE:
+        return_code = WCMD_title(parms_start);
+        break;
+    case WCMD_TYPE:
+        return_code = WCMD_type(parms_start);
+        break;
+    case WCMD_VER:
+        return_code = WCMD_version();
+        break;
+    case WCMD_VERIFY:
+        return_code = WCMD_verify();
+        break;
+    case WCMD_VOL:
+        return_code = WCMD_volume();
+        break;
+    case WCMD_PUSHD:
+        return_code = WCMD_pushd(parms_start);
+        break;
+    case WCMD_POPD:
+        return_code = WCMD_popd();
+        break;
+    case WCMD_ASSOC:
+        return_code = WCMD_assoc(parms_start, TRUE);
+        break;
+    case WCMD_COLOR:
+        return_code = WCMD_color();
+        break;
+    case WCMD_FTYPE:
+        return_code = WCMD_assoc(parms_start, FALSE);
+        break;
+    case WCMD_MORE:
+        return_code = WCMD_more(parms_start);
+        break;
+    case WCMD_CHOICE:
+        return_code = WCMD_choice(parms_start);
+        break;
+    case WCMD_MKLINK:
+        return_code = WCMD_mklink(parms_start);
+        break;
+    case WCMD_CHGDRIVE:
+        return_code = WCMD_change_drive(cmd[0]);
+        break;
+    case WCMD_EXIT:
+        return_code = WCMD_exit();
+        break;
+    default:
+        FIXME("Shouldn't happen\n");
+        return_code = RETURN_CODE_CANT_LAUNCH;
+    }
+    return return_code;
+}
+
 /*****************************************************************************
  * Process one command. If the command is EXIT this routine does not return.
  * We will recurse through here executing batch files.
@@ -1761,9 +1911,8 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir)
 static RETURN_CODE execute_single_command(const WCHAR *command)
 {
     RETURN_CODE return_code;
-    WCHAR *cmd, *parms_start;
+    WCHAR *cmd;
     int cmd_index, count;
-    BOOL prev_echo_mode;
 
     TRACE("command on entry:%s\n", wine_dbgstr_w(command));
 
@@ -1793,151 +1942,15 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
                                         cmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
         }
     }
-    parms_start = WCMD_skip_leading_spaces(&cmd[count]);
 
-    WCMD_parse(parms_start, quals, param1, param2);
-    TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
-
-    if (cmd_index <= WCMD_EXIT && (parms_start[0] == '/') && (parms_start[1] == '?')) {
-      /* this is a help request for a builtin program */
-      cmd_index = WCMD_HELP;
-      memcpy(parms_start, cmd, count * sizeof(WCHAR));
-      parms_start[count] = '\0';
-    }
-
-    switch (cmd_index) {
-
-      case WCMD_CALL:
-        return_code = WCMD_call(parms_start);
-        break;
-      case WCMD_CD:
-      case WCMD_CHDIR:
-        return_code = WCMD_setshow_default(parms_start);
-        break;
-      case WCMD_CLS:
-        return_code = WCMD_clear_screen();
-        break;
-      case WCMD_COPY:
-        return_code = WCMD_copy(parms_start);
-        break;
-      case WCMD_DATE:
-        return_code = WCMD_setshow_date();
-	break;
-      case WCMD_DEL:
-      case WCMD_ERASE:
-        return_code = WCMD_delete(parms_start);
-        break;
-      case WCMD_DIR:
-        return_code = WCMD_directory(parms_start);
-        break;
-      case WCMD_ECHO:
-        return_code = WCMD_echo(&cmd[count]);
-        break;
-      case WCMD_GOTO:
-        return_code = WCMD_goto();
-        break;
-      case WCMD_HELP:
-        return_code = WCMD_give_help(parms_start);
-        break;
-      case WCMD_LABEL:
-        return_code = WCMD_label();
-        break;
-      case WCMD_MD:
-      case WCMD_MKDIR:
-        return_code = WCMD_create_dir(parms_start);
-        break;
-      case WCMD_MOVE:
-        return_code = WCMD_move();
-        break;
-      case WCMD_PATH:
-        return_code = WCMD_setshow_path(parms_start);
-        break;
-      case WCMD_PAUSE:
-        return_code = WCMD_pause();
-        break;
-      case WCMD_PROMPT:
-        return_code = WCMD_setshow_prompt();
-        break;
-      case WCMD_REM:
-        return_code = NO_ERROR;
-        break;
-      case WCMD_REN:
-      case WCMD_RENAME:
-        return_code = WCMD_rename();
-	break;
-      case WCMD_RD:
-      case WCMD_RMDIR:
-        return_code = WCMD_remove_dir(parms_start);
-        break;
-      case WCMD_SETLOCAL:
-        return_code = WCMD_setlocal(parms_start);
-        break;
-      case WCMD_ENDLOCAL:
-        return_code = WCMD_endlocal();
-        break;
-      case WCMD_SET:
-        return_code = WCMD_setshow_env(parms_start);
-        break;
-      case WCMD_SHIFT:
-        return_code = WCMD_shift(parms_start);
-        break;
-      case WCMD_START:
-        return_code = WCMD_start(parms_start);
-        break;
-      case WCMD_TIME:
-        return_code = WCMD_setshow_time();
-        break;
-      case WCMD_TITLE:
-        return_code = WCMD_title(parms_start);
-        break;
-      case WCMD_TYPE:
-        return_code = WCMD_type(parms_start);
-        break;
-      case WCMD_VER:
-        return_code = WCMD_version();
-        break;
-      case WCMD_VERIFY:
-        return_code = WCMD_verify();
-        break;
-      case WCMD_VOL:
-        return_code = WCMD_volume();
-        break;
-      case WCMD_PUSHD:
-        return_code = WCMD_pushd(parms_start);
-        break;
-      case WCMD_POPD:
-        return_code = WCMD_popd();
-        break;
-      case WCMD_ASSOC:
-        return_code = WCMD_assoc(parms_start, TRUE);
-        break;
-      case WCMD_COLOR:
-        return_code = WCMD_color();
-        break;
-      case WCMD_FTYPE:
-        return_code = WCMD_assoc(parms_start, FALSE);
-        break;
-      case WCMD_MORE:
-        return_code = WCMD_more(parms_start);
-        break;
-      case WCMD_CHOICE:
-        return_code = WCMD_choice(parms_start);
-        break;
-      case WCMD_MKLINK:
-        return_code = WCMD_mklink(parms_start);
-        break;
-    case WCMD_CHGDRIVE:
-        return_code = WCMD_change_drive(cmd[0]);
-        break;
-      case WCMD_EXIT:
-        return_code = WCMD_exit();
-        break;
-      default:
-        prev_echo_mode = echo_mode;
+    if (cmd_index <= WCMD_EXIT)
+        return_code = run_builtin_command(cmd_index, cmd);
+    else
+    {
+        BOOL prev_echo_mode = echo_mode;
         return_code = WCMD_run_program(cmd, FALSE);
         echo_mode = prev_echo_mode;
     }
-
     free(cmd);
     return return_code;
 }
