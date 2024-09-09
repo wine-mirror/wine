@@ -691,19 +691,20 @@ struct wayland_client_surface *get_client_surface(HWND hwnd, RECT *client_rect)
     struct wayland_surface *surface;
     struct wayland_win_data *data;
 
-    if (!(data = wayland_win_data_get(hwnd))) surface = NULL;
-    else surface = data->wayland_surface;
-
-    if (surface)
+    if ((data = wayland_win_data_get(hwnd)))
     {
+        surface = data->wayland_surface;
+
         /* ownership is shared with one of the callers, the last caller to release
          * its reference will also destroy it and clear our pointer. */
-        if ((client = surface->client)) InterlockedIncrement(&client->ref);
+        if ((client = data->client_surface)) InterlockedIncrement(&client->ref);
 
-        *client_rect = surface->window.client_rect;
+        if (!data->wayland_surface) *client_rect = data->rects.client;
+        else *client_rect = data->wayland_surface->window.client_rect;
     }
     else
     {
+        surface = NULL;
         client = NULL;
         SetRectEmpty(client_rect);
     }
@@ -715,10 +716,10 @@ struct wayland_client_surface *get_client_surface(HWND hwnd, RECT *client_rect)
     }
     if (!data) return client;
 
-    if (surface && !surface->client)
+    if (!data->client_surface)
     {
-        wayland_client_surface_attach(client, surface);
-        surface->client = client;
+        if (surface) wayland_client_surface_attach(client, surface);
+        data->client_surface = client;
     }
 
     wayland_win_data_release(data);
@@ -735,7 +736,7 @@ BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffe
 
     if ((wayland_surface = data->wayland_surface))
     {
-        if (wayland_surface_reconfigure(wayland_surface))
+        if (wayland_surface_reconfigure(wayland_surface, data->client_surface))
         {
             wayland_surface_attach_shm(wayland_surface, shm_buffer, damage_region);
             wl_surface_commit(wayland_surface->wl_surface);
@@ -780,13 +781,13 @@ void ensure_window_surface_contents(HWND hwnd)
 
     if ((wayland_surface = data->wayland_surface))
     {
-        wayland_surface_ensure_contents(wayland_surface);
+        wayland_surface_ensure_contents(wayland_surface, data->client_surface);
 
         /* Handle any processed configure request, to ensure the related
          * surface state is applied by the compositor. */
         if (wayland_surface->processing.serial &&
             wayland_surface->processing.processed &&
-            wayland_surface_reconfigure(wayland_surface))
+            wayland_surface_reconfigure(wayland_surface, data->client_surface))
         {
             wl_surface_commit(wayland_surface->wl_surface);
         }

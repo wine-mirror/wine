@@ -63,8 +63,8 @@ static void wine_vk_surface_destroy(struct wayland_client_surface *client)
     HWND hwnd = wl_surface_get_user_data(client->wl_surface);
     struct wayland_win_data *data = wayland_win_data_get(hwnd);
 
-    if (wayland_client_surface_release(client) && data && data->wayland_surface)
-        data->wayland_surface->client = NULL;
+    if (wayland_client_surface_release(client) && data)
+        data->client_surface = NULL;
 
     if (data) wayland_win_data_release(data);
 }

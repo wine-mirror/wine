@@ -184,6 +184,7 @@ struct wayland_window_config
 struct wayland_client_surface
 {
     LONG ref;
+    HWND hwnd;
     struct wl_surface *wl_surface;
     struct wl_subsurface *wl_subsurface;
     struct wp_viewport *wp_viewport;
@@ -199,7 +200,6 @@ struct wayland_surface
     struct wayland_surface_config pending, requested, processing, current;
     BOOL resizing;
     struct wayland_window_config window;
-    struct wayland_client_surface *client;
     int content_width, content_height;
     HCURSOR hcursor;
 };
@@ -241,8 +241,8 @@ void wayland_surface_clear_role(struct wayland_surface *surface);
 void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 struct wayland_shm_buffer *shm_buffer,
                                 HRGN surface_damage_region);
-void wayland_surface_reconfigure_client(struct wayland_surface *surface);
-BOOL wayland_surface_reconfigure(struct wayland_surface *surface);
+BOOL wayland_surface_reconfigure(struct wayland_surface *surface, struct wayland_client_surface *client);
+void wayland_surface_reconfigure_client(struct wayland_surface *surface, struct wayland_client_surface *client);
 BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
                                           int width, int height,
                                           enum wayland_surface_config_state state);
@@ -255,7 +255,7 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
 struct wayland_client_surface *wayland_client_surface_create(HWND hwnd);
 BOOL wayland_client_surface_release(struct wayland_client_surface *client);
 void wayland_client_surface_attach(struct wayland_client_surface *client, struct wayland_surface *surface);
-void wayland_surface_ensure_contents(struct wayland_surface *surface);
+void wayland_surface_ensure_contents(struct wayland_surface *surface, struct wayland_client_surface *client);
 void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);
 
 /**********************************************************************
@@ -281,6 +281,8 @@ struct wayland_win_data
     struct wayland_shm_buffer *window_contents;
     /* wayland surface (if any) for this window */
     struct wayland_surface *wayland_surface;
+    /* wayland client surface (if any) for this window */
+    struct wayland_client_surface *client_surface;
     /* window rects, relative to parent client area */
     struct window_rects rects;
     BOOL managed;

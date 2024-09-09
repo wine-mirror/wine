@@ -494,13 +494,11 @@ static void wayland_surface_reconfigure_size(struct wayland_surface *surface,
  *
  * Reconfigures the subsurface covering the client area.
  */
-void wayland_surface_reconfigure_client(struct wayland_surface *surface)
+void wayland_surface_reconfigure_client(struct wayland_surface *surface, struct wayland_client_surface *client)
 {
     struct wayland_window_config *window = &surface->window;
     int client_x, client_y, x, y;
     int client_width, client_height, width, height;
-
-    if (!surface->client) return;
 
     /* The offset of the client area origin relatively to the window origin. */
     client_x = window->client_rect.left - window->rect.left;
@@ -515,17 +513,16 @@ void wayland_surface_reconfigure_client(struct wayland_surface *surface)
 
     TRACE("hwnd=%p subsurface=%d,%d+%dx%d\n", surface->hwnd, x, y, width, height);
 
-    wl_subsurface_set_position(surface->client->wl_subsurface, x, y);
+    wl_subsurface_set_position(client->wl_subsurface, x, y);
 
     if (width != 0 && height != 0)
-        wp_viewport_set_destination(surface->client->wp_viewport,
-                                    width, height);
+        wp_viewport_set_destination(client->wp_viewport, width, height);
     else /* We can't have a 0x0 destination, use 1x1 instead. */
-        wp_viewport_set_destination(surface->client->wp_viewport, 1, 1);
+        wp_viewport_set_destination(client->wp_viewport, 1, 1);
 
-    wl_surface_commit(surface->client->wl_surface);
+    wl_surface_commit(client->wl_surface);
 
-    wayland_resize_gl_drawable(surface->hwnd);
+    wayland_resize_gl_drawable(client->hwnd);
 }
 
 /**********************************************************************
@@ -534,7 +531,7 @@ void wayland_surface_reconfigure_client(struct wayland_surface *surface)
  * Reconfigures the wayland surface as needed to match the latest requested
  * state.
  */
-BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
+BOOL wayland_surface_reconfigure(struct wayland_surface *surface, struct wayland_client_surface *client)
 {
     struct wayland_window_config *window = &surface->window;
     int win_width, win_height, width, height;
@@ -585,7 +582,7 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
 
     wayland_surface_reconfigure_geometry(surface, width, height);
     wayland_surface_reconfigure_size(surface, width, height);
-    wayland_surface_reconfigure_client(surface);
+    if (client) wayland_surface_reconfigure_client(surface, client);
 
     return TRUE;
 }
@@ -779,6 +776,7 @@ struct wayland_client_surface *wayland_client_surface_create(HWND hwnd)
         return NULL;
     }
     client->ref = 1;
+    client->hwnd = hwnd;
 
     client->wl_surface =
         wl_compositor_create_surface(process_wayland.wl_compositor);
@@ -829,7 +827,7 @@ void wayland_client_surface_attach(struct wayland_client_surface *client, struct
     /* Present contents independently of the parent surface. */
     wl_subsurface_set_desync(client->wl_subsurface);
 
-    wayland_surface_reconfigure_client(surface);
+    wayland_surface_reconfigure_client(surface, client);
     /* Commit to apply subsurface positioning. */
     wl_surface_commit(surface->wl_surface);
 }
@@ -852,7 +850,7 @@ static const struct wl_buffer_listener dummy_buffer_listener =
  * Ensure that the wayland surface has up-to-date contents, by committing
  * a dummy buffer if necessary.
  */
-void wayland_surface_ensure_contents(struct wayland_surface *surface)
+void wayland_surface_ensure_contents(struct wayland_surface *surface, struct wayland_client_surface *client)
 {
     struct wayland_shm_buffer *dummy_shm_buffer;
     HRGN damage;
@@ -883,7 +881,7 @@ void wayland_surface_ensure_contents(struct wayland_surface *surface)
     if (!(damage = NtGdiCreateRectRgn(0, 0, width, height)))
         WARN("Failed to create damage region for dummy buffer\n");
 
-    if (wayland_surface_reconfigure(surface))
+    if (wayland_surface_reconfigure(surface, client))
     {
         wayland_surface_attach_shm(surface, dummy_shm_buffer, damage);
         wl_surface_commit(surface->wl_surface);
