@@ -37,6 +37,7 @@
 
 #include "wine/debug.h"
 #include "x11drv.h"
+#include "xcomposite.h"
 
 #define VK_NO_PROTOTYPES
 #define WINE_VK_HOST
@@ -68,11 +69,17 @@ struct vulkan_surface
 {
     Window window;
     RECT rect;
+
+    BOOL offscreen;
+    HDC hdc_src;
+    HDC hdc_dst;
 };
 
 static void vulkan_surface_destroy( HWND hwnd, struct vulkan_surface *surface )
 {
     destroy_client_window( hwnd, surface->window );
+    if (surface->hdc_dst) NtGdiDeleteObjectApp( surface->hdc_dst );
+    if (surface->hdc_src) NtGdiDeleteObjectApp( surface->hdc_src );
     free( surface );
 }
 
@@ -86,13 +93,6 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
     struct vulkan_surface *surface;
 
     TRACE( "%p %p %p %p\n", hwnd, instance, handle, private );
-
-    /* TODO: support child window rendering. */
-    if (NtUserGetAncestor( hwnd, GA_PARENT ) != NtUserGetDesktopWindow())
-    {
-        FIXME("Application requires child window rendering, which is not implemented yet!\n");
-        return VK_ERROR_INCOMPATIBLE_DRIVER;
-    }
 
     if (!(surface = calloc(1, sizeof(*surface))))
     {
@@ -159,10 +159,87 @@ static void vulkan_surface_update_size( HWND hwnd, struct vulkan_surface *surfac
     surface->rect = rect;
 }
 
+static void vulkan_surface_update_offscreen( HWND hwnd, struct vulkan_surface *surface )
+{
+    BOOL offscreen = needs_offscreen_rendering( hwnd, FALSE );
+    struct x11drv_win_data *data;
+
+    if (offscreen == surface->offscreen) return;
+    surface->offscreen = offscreen;
+
+    if (!surface->offscreen)
+    {
+#ifdef SONAME_LIBXCOMPOSITE
+        if (usexcomposite) pXCompositeUnredirectWindow( gdi_display, surface->window, CompositeRedirectManual );
+#endif
+        if (surface->hdc_dst)
+        {
+            NtGdiDeleteObjectApp( surface->hdc_dst );
+            surface->hdc_dst = NULL;
+        }
+        if (surface->hdc_src)
+        {
+            NtGdiDeleteObjectApp( surface->hdc_src );
+            surface->hdc_src = NULL;
+        }
+    }
+    else
+    {
+        static const WCHAR displayW[] = {'D','I','S','P','L','A','Y'};
+        UNICODE_STRING device_str = RTL_CONSTANT_STRING(displayW);
+        surface->hdc_dst = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
+        surface->hdc_src = NtGdiOpenDCW( &device_str, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
+        set_dc_drawable( surface->hdc_src, surface->window, &surface->rect, IncludeInferiors );
+#ifdef SONAME_LIBXCOMPOSITE
+        if (usexcomposite) pXCompositeRedirectWindow( gdi_display, surface->window, CompositeRedirectManual );
+#endif
+    }
+
+    if ((data = get_win_data( hwnd )))
+    {
+        if (surface->offscreen) detach_client_window( data, surface->window );
+        else attach_client_window( data, surface->window );
+        release_win_data( data );
+    }
+}
+
 static void X11DRV_vulkan_surface_presented( HWND hwnd, void *private, VkResult result )
 {
     struct vulkan_surface *surface = private;
+    HWND toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
+    struct x11drv_win_data *data;
+    RECT rect_dst, rect;
+    Drawable window;
+    HRGN region;
+    HDC hdc;
+
     vulkan_surface_update_size( hwnd, surface );
+    vulkan_surface_update_offscreen( hwnd, surface );
+
+    if (!surface->offscreen) return;
+    if (!(hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_CLIPCHILDREN ))) return;
+    window = X11DRV_get_whole_window( toplevel );
+    region = get_dc_monitor_region( hwnd, hdc );
+
+    NtUserGetClientRect( hwnd, &rect_dst, get_win_monitor_dpi( hwnd ) );
+    NtUserMapWindowPoints( hwnd, toplevel, (POINT *)&rect_dst, 2, get_win_monitor_dpi( hwnd ) );
+
+    if ((data = get_win_data( toplevel )))
+    {
+        OffsetRect( &rect_dst, data->rects.client.left - data->rects.visible.left,
+                    data->rects.client.top - data->rects.visible.top );
+        release_win_data( data );
+    }
+
+    if (get_dc_drawable( surface->hdc_dst, &rect ) != window || !EqualRect( &rect, &rect_dst ))
+        set_dc_drawable( surface->hdc_dst, window, &rect_dst, ClipByChildren );
+    if (region) NtGdiExtSelectClipRgn( surface->hdc_dst, region, RGN_COPY );
+
+    NtGdiStretchBlt( surface->hdc_dst, 0, 0, rect_dst.right - rect_dst.left, rect_dst.bottom - rect_dst.top,
+                     surface->hdc_src, 0, 0, surface->rect.right, surface->rect.bottom, SRCCOPY, 0 );
+
+    if (region) NtGdiDeleteObjectApp( region );
+    if (hdc) NtGdiDeleteObjectApp( hdc );
 }
 
 static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
