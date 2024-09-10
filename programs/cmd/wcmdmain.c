@@ -1472,6 +1472,84 @@ struct search_command
     int cmd_index; /* potential index to builtin command */
 };
 
+static BOOL search_in_pathext(WCHAR *path)
+{
+    static struct
+    {
+        unsigned short offset; /* into cached_data */
+        unsigned short length;
+    } *cached_pathext;
+    static WCHAR *cached_data;
+    static unsigned cached_count;
+    WCHAR pathext[MAX_PATH];
+    WIN32_FIND_DATAW find;
+    WCHAR *pos;
+    HANDLE h;
+    unsigned efound;
+    DWORD len;
+
+    len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
+    if (len == 0 || len >= ARRAY_SIZE(pathext))
+        wcscpy(pathext, L".bat;.com;.cmd;.exe");
+    /* erase cache if PATHEXT has changed */
+    if (cached_data && wcscmp(cached_data, pathext))
+    {
+        free(cached_pathext);
+        cached_pathext = NULL;
+        free(cached_data);
+        cached_data = NULL;
+        cached_count = 0;
+    }
+    /* (re)create cache if needed */
+    if (!cached_pathext)
+    {
+        size_t c;
+        WCHAR *p, *n;
+
+        cached_data = xstrdupW(pathext);
+        for (p = cached_data, c = 1; (p = wcschr(p, L';')) != NULL; c++, p++) {}
+        cached_pathext = xalloc(sizeof(cached_pathext[0]) * c);
+        cached_count = c;
+        for (c = 0, p = cached_data; (n = wcschr(p, L';')) != NULL; c++, p = n + 1)
+        {
+            cached_pathext[c].offset = p - cached_data;
+            cached_pathext[c].length = n - p;
+        }
+        cached_pathext[c].offset = p - cached_data;
+        cached_pathext[c].length = wcslen(p);
+    }
+
+    pos = &path[wcslen(path)]; /* Pos = end of name */
+    wcscpy(pos, L".*");
+    efound = cached_count;
+    if ((h = FindFirstFileW(path, &find)) != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            WCHAR *last;
+            size_t basefound_len;
+            unsigned i;
+
+            if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+            if (!(last = wcsrchr(find.cFileName, L'.'))) continue;
+            basefound_len = last - find.cFileName;
+            /* skip foo.bar.exe when looking for foo.exe */
+            if (pos < path + basefound_len || wcsnicmp(pos - basefound_len, find.cFileName, basefound_len))
+                continue;
+            for (i = 0; i < efound; i++)
+                if (!wcsnicmp(last, cached_data + cached_pathext[i].offset, cached_pathext[i].length) &&
+                    !last[cached_pathext[i].length])
+                    efound = i;
+        } while (FindNextFileW(h, &find));
+        CloseHandle(h);
+    }
+    if (efound == cached_count) return FALSE;
+
+    memcpy(pos, cached_data + cached_pathext[efound].offset, cached_pathext[efound].length * sizeof(WCHAR));
+    pos[cached_pathext[efound].length] = L'\0';
+    return TRUE;
+}
+
 static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOOL fast)
 {
     WCHAR  temp[MAX_PATH];
@@ -1480,7 +1558,6 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     WCHAR  stemofsearch[MAX_PATH];    /* maximum allowed executable name is
                                          MAX_PATH, including null character */
     WCHAR *lastSlash;
-    WCHAR  pathext[MAXSTRING];
     WCHAR *firstParam;
     DWORD  len;
     WCHAR *p;
@@ -1559,7 +1636,6 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
         WCHAR *pos               = NULL;
         BOOL   found             = FALSE;
         BOOL   inside_quotes     = FALSE;
-        DWORD  attribs;
 
         sc->path[0] = L'\0';
 
@@ -1622,32 +1698,11 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
 
         if (sc->has_extension)
         {
-            attribs = GetFileAttributesW(sc->path);
+            DWORD attribs = GetFileAttributesW(sc->path);
             found = attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY);
         }
         else
-        {
-            WCHAR *thisExt = pathext;
-            pos = &sc->path[wcslen(sc->path)]; /* Pos = end of name */
-            len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
-            if (len == 0 || len >= ARRAY_SIZE(pathext))
-                wcscpy(pathext, L".bat;.com;.cmd;.exe");
-
-            while (!found && thisExt)
-            {
-                WCHAR *nextExt = wcschr(thisExt, L';');
-
-                len = nextExt ? nextExt - thisExt : wcslen(thisExt);
-                if (pos - sc->path + len >= ARRAY_SIZE(sc->path))
-                    return ERROR_INVALID_FUNCTION;
-                memcpy(pos, thisExt, len * sizeof(WCHAR));
-                pos[len] = L'\0';
-                thisExt = nextExt ? nextExt + 1 : NULL;
-
-                attribs = GetFileAttributesW(sc->path);
-                found = attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY);
-            }
-        }
+            found = search_in_pathext(sc->path);
         if (found) return NO_ERROR;
     }
     return RETURN_CODE_CANT_LAUNCH;
