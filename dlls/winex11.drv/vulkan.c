@@ -64,15 +64,27 @@ static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevi
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs;
 
-static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private )
+struct vulkan_surface
+{
+    Window window;
+};
+
+static void vulkan_surface_destroy( HWND hwnd, struct vulkan_surface *surface )
+{
+    destroy_client_window( hwnd, surface->window );
+    free( surface );
+}
+
+static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *handle, void **private )
 {
     VkXlibSurfaceCreateInfoKHR info =
     {
         .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
         .dpy = gdi_display,
     };
+    struct vulkan_surface *surface;
 
-    TRACE( "%p %p %p %p\n", hwnd, instance, surface, private );
+    TRACE( "%p %p %p %p\n", hwnd, instance, handle, private );
 
     /* TODO: support child window rendering. */
     if (NtUserGetAncestor( hwnd, GA_PARENT ) != NtUserGetDesktopWindow())
@@ -81,37 +93,45 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
         return VK_ERROR_INCOMPATIBLE_DRIVER;
     }
 
-    if (!(info.window = create_client_window( hwnd, &default_visual, default_colormap )))
+    if (!(surface = calloc(1, sizeof(*surface))))
+    {
+        ERR("Failed to allocate vulkan surface for hwnd=%p\n", hwnd);
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+    if (!(surface->window = create_client_window( hwnd, &default_visual, default_colormap )))
     {
         ERR("Failed to allocate client window for hwnd=%p\n", hwnd);
+        free( surface );
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
-    if (pvkCreateXlibSurfaceKHR( instance, &info, NULL /* allocator */, surface ))
+    info.window = surface->window;
+    if (pvkCreateXlibSurfaceKHR( instance, &info, NULL /* allocator */, handle ))
     {
         ERR("Failed to create Xlib surface\n");
-        destroy_client_window( hwnd, info.window );
+        vulkan_surface_destroy( hwnd, surface );
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
-    *private = (void *)info.window;
+    *private = (void *)surface;
 
-    TRACE("Created surface 0x%s, private %p\n", wine_dbgstr_longlong(*surface), *private);
+    TRACE("Created surface 0x%s, private %p\n", wine_dbgstr_longlong(*handle), *private);
     return VK_SUCCESS;
 }
 
 static void X11DRV_vulkan_surface_destroy( HWND hwnd, void *private )
 {
-    Window client_window = (Window)private;
+    struct vulkan_surface *surface = private;
 
     TRACE( "%p %p\n", hwnd, private );
 
-    destroy_client_window( hwnd, client_window );
+    vulkan_surface_destroy( hwnd, surface );
 }
 
 static void X11DRV_vulkan_surface_detach( HWND hwnd, void *private )
 {
-    Window client_window = (Window)private;
+    struct vulkan_surface *surface = private;
+    Window client_window = surface->window;
     struct x11drv_win_data *data;
 
     TRACE( "%p %p\n", hwnd, private );
