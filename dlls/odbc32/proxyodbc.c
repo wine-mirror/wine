@@ -7912,7 +7912,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         break;
 
     case DLL_PROCESS_DETACH:
-        WINE_UNIX_CALL( process_detach, NULL );
+        if (__wine_unixlib_handle) WINE_UNIX_CALL( process_detach, NULL );
         if (reserved) break;
     }
 
