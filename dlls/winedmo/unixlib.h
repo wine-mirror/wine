@@ -21,6 +21,7 @@
 
 #include <stddef.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -63,6 +64,13 @@ struct read_callback_params
 };
 
 
+struct sample
+{
+    UINT64 size;
+    UINT64 data; /* pointer to user memory */
+};
+
+
 struct media_type
 {
     GUID major;
@@ -96,6 +104,13 @@ struct demuxer_destroy_params
 {
     struct winedmo_demuxer demuxer;
     struct stream_context *context;
+};
+
+struct demuxer_read_params
+{
+    struct winedmo_demuxer demuxer;
+    UINT32 stream;
+    struct sample sample;
 };
 
 struct demuxer_seek_params
@@ -133,6 +148,7 @@ enum unix_funcs
     unix_demuxer_check,
     unix_demuxer_create,
     unix_demuxer_destroy,
+    unix_demuxer_read,
     unix_demuxer_seek,
     unix_demuxer_stream_lang,
     unix_demuxer_stream_name,

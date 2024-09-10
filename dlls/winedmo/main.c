@@ -16,8 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include "unixlib.h"
 #include "winnls.h"
+#include "mfidl.h"
 
 #include "wine/debug.h"
 
@@ -114,6 +116,32 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 }
 
 
+static void buffer_lock( DMO_OUTPUT_DATA_BUFFER *buffer, struct sample *sample )
+{
+    BYTE *data;
+    HRESULT hr;
+    DWORD size;
+
+    if (FAILED(hr = IMediaBuffer_GetBufferAndLength( buffer->pBuffer, &data, &size )))
+        ERR( "Failed to get media buffer data %p, hr %#lx\n", buffer, hr );
+    if (FAILED(hr = IMediaBuffer_GetMaxLength( buffer->pBuffer, &size )))
+        ERR( "Failed to get media buffer max length %p, hr %#lx\n", buffer, hr );
+
+    sample->data = (UINT_PTR)data;
+    sample->size = size;
+}
+
+static void buffer_unlock( DMO_OUTPUT_DATA_BUFFER *buffer, struct sample *sample )
+{
+    HRESULT hr;
+
+    if (FAILED(hr = IMediaBuffer_SetLength( buffer->pBuffer, sample->size )))
+        ERR( "Failed to update buffer length, hr %#lx\n", hr );
+
+    buffer->dwStatus = 0;
+}
+
+
 NTSTATUS CDECL winedmo_demuxer_check( const char *mime_type )
 {
     struct demuxer_check_params params = {0};
@@ -177,6 +205,29 @@ NTSTATUS CDECL winedmo_demuxer_destroy( struct winedmo_demuxer *demuxer )
     if (status) WARN( "demuxer_destroy failed, status %#lx\n", status );
     else stream_context_destroy( params.context );
 
+    return status;
+}
+
+NTSTATUS CDECL winedmo_demuxer_read( struct winedmo_demuxer demuxer, UINT *stream, DMO_OUTPUT_DATA_BUFFER *buffer, UINT *buffer_size )
+{
+    struct demuxer_read_params params = {.demuxer = demuxer};
+    NTSTATUS status;
+
+    TRACE( "demuxer %#I64x, stream %p, buffer %p, buffer_size %p\n", demuxer.handle, stream, buffer, buffer_size );
+
+    buffer_lock( buffer, &params.sample );
+    status = UNIX_CALL( demuxer_read, &params );
+    buffer_unlock( buffer, &params.sample );
+    *buffer_size = params.sample.size;
+    *stream = params.stream;
+
+    if (status)
+    {
+        ERR( "Failed to read sample, status %#lx\n", status );
+        return status;
+    }
+
+    TRACE( "Got buffer %p, buffer_size %#x on stream %u\n", buffer->pBuffer, *buffer_size, *stream );
     return status;
 }
 

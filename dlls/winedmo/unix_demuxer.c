@@ -159,6 +159,44 @@ NTSTATUS demuxer_destroy( void *arg )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS demuxer_read( void *arg )
+{
+    struct demuxer_read_params *params = arg;
+    AVFormatContext *ctx = get_demuxer( params->demuxer );
+    struct sample *sample = &params->sample;
+    UINT capacity = params->sample.size;
+    AVPacket *packet;
+    int ret;
+
+    TRACE( "context %p, capacity %#x\n", ctx, capacity );
+
+    if (!(packet = ctx->opaque))
+    {
+        if (!(packet = av_packet_alloc())) return STATUS_NO_MEMORY;
+        if ((ret = av_read_frame( ctx, packet )) < 0)
+        {
+            TRACE( "Failed to read context %p, error %s.\n", ctx, debugstr_averr( ret ) );
+            av_packet_free( &packet );
+            if (ret == AVERROR_EOF) return STATUS_END_OF_FILE;
+            return STATUS_UNSUCCESSFUL;
+        }
+    }
+
+    params->sample.size = packet->size;
+    if ((capacity < packet->size))
+    {
+        ctx->opaque = packet;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    memcpy( (void *)(UINT_PTR)sample->data, packet->data, packet->size );
+    params->stream = packet->stream_index;
+    av_packet_free( &packet );
+    ctx->opaque = NULL;
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS demuxer_seek( void *arg )
 {
     struct demuxer_seek_params *params = arg;

@@ -1,6 +1,7 @@
 MODULE    = winedmo.dll
 UNIXLIB   = winedmo.so
 IMPORTLIB = winedmo
+IMPORTS   = mfuuid
 UNIX_CFLAGS  = $(FFMPEG_CFLAGS)
 UNIX_LIBS    = $(FFMPEG_LIBS) $(PTHREAD_LIBS)
 
