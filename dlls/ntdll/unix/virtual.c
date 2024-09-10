@@ -339,7 +339,6 @@ static void mmap_remove_reserved_area( void *addr, SIZE_T size )
                         new_area->size = (char *)area->base + area->size - (char *)new_area->base;
                         list_add_after( ptr, &new_area->entry );
                     }
-                    else size = (char *)area->base + area->size - (char *)addr;
                     area->size = (char *)addr - (char *)area->base;
                     break;
                 }
@@ -487,12 +486,11 @@ static void reserve_area( void *addr, void *end )
         address += size;
     }
 #else
-    void *ptr;
     size_t size = (char *)end - (char *)addr;
 
     if (!size) return;
 
-    if ((ptr = anon_mmap_tryfixed( addr, size, PROT_NONE, MAP_NORESERVE )) != MAP_FAILED)
+    if (anon_mmap_tryfixed( addr, size, PROT_NONE, MAP_NORESERVE ) != MAP_FAILED)
     {
         mmap_add_reserved_area( addr, size );
         return;
@@ -1314,11 +1312,9 @@ static struct wine_rb_entry *find_view_inside_range( void **base_ptr, void **end
 static void* try_map_free_area( void *base, void *end, ptrdiff_t step,
                                 void *start, size_t size, int unix_prot )
 {
-    void *ptr;
-
     while (start && base <= start && (char*)start + size <= (char*)end)
     {
-        if ((ptr = anon_mmap_tryfixed( start, size, unix_prot, 0 )) != MAP_FAILED) return start;
+        if (anon_mmap_tryfixed( start, size, unix_prot, 0 ) != MAP_FAILED) return start;
         TRACE( "Found free area is already mapped, start %p.\n", start );
         if (errno != EEXIST)
         {
@@ -1903,7 +1899,7 @@ static void *map_reserved_area( void *limit_low, void *limit_high, size_t size, 
                                 int unix_prot, size_t align_mask )
 {
     void *ptr = NULL;
-    struct reserved_area *area = LIST_ENTRY( ptr, struct reserved_area, entry );
+    struct reserved_area *area;
 
     if (top_down)
     {
@@ -3318,7 +3314,7 @@ static void *alloc_virtual_heap( SIZE_T size )
 void virtual_init(void)
 {
     const struct preload_info **preload_info = dlsym( RTLD_DEFAULT, "wine_main_preload_info" );
-    const char *preload = getenv( "WINEPRELOADRESERVE" );
+    const char *preload;
     size_t size;
     int i;
     pthread_mutexattr_t attr;

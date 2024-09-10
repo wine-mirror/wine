@@ -1795,8 +1795,8 @@ static void create_smbios_processors( struct smbios_buffer *buf )
     UINT i, family = 0, core_count = 0, thread_count = 0, pkg_count = 0;
 #ifdef __aarch64__
     UINT logical_thread_id = 0;
-#endif
     WORD proc_handle;
+#endif
 
     strcpy( name, cpu_name );
     for (i = strlen(name); i > 0 && name[i - 1] == ' '; i--) name[i - 1] = 0;
@@ -1808,11 +1808,14 @@ static void create_smbios_processors( struct smbios_buffer *buf )
         case RelationProcessorPackage:
             if (!pkg_count++) break;
             snprintf( socket, sizeof(socket), "Socket #%u", pkg_count - 1 );
+#ifdef __aarch64__
             proc_handle = append_smbios_processor( buf, core_count, thread_count, family,
                                                    socket, cpu_vendor, name, "", "" );
-#ifdef __aarch64__
             for (i = 0; i < thread_count; logical_thread_id++, i++)
                 append_smbios_wine_core_id_regs_arm64( buf, proc_handle, logical_thread_id );
+#else
+            append_smbios_processor( buf, core_count, thread_count, family,
+                                     socket, cpu_vendor, name, "", "" );
 #endif
             core_count = thread_count = 0;
             break;
@@ -1827,15 +1830,15 @@ static void create_smbios_processors( struct smbios_buffer *buf )
         p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)p + p->Size);
     }
     snprintf( socket, sizeof(socket), "Socket #%u", pkg_count - 1 );
+#ifdef __aarch64__
     proc_handle = append_smbios_processor( buf, core_count, thread_count, family,
                                            socket, cpu_vendor, name, "", "" );
-#ifdef __aarch64__
     /* Create these in order so they can be looked up by indexing all additional processor
      * info structures by the logical thread id. */
     for (i = 0; i < thread_count; logical_thread_id++, i++)
         append_smbios_wine_core_id_regs_arm64( buf, proc_handle, logical_thread_id );
 #else
-    (void)proc_handle;
+    append_smbios_processor( buf, core_count, thread_count, family, socket, cpu_vendor, name, "", "" );
 #endif
 }
 

@@ -519,10 +519,8 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, 
 {
     unsigned int chunk_index, index, i;
     FLS_INFO_CHUNK *chunk;
-    TEB_FLS_DATA *fls;
 
-    if (!(fls = NtCurrentTeb()->FlsSlots)
-            && !(NtCurrentTeb()->FlsSlots = fls = fls_alloc_data()))
+    if (!NtCurrentTeb()->FlsSlots && !(NtCurrentTeb()->FlsSlots = fls_alloc_data()))
         return STATUS_NO_MEMORY;
 
     lock_fls_data();

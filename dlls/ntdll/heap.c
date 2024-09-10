@@ -1146,10 +1146,9 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
 
 static BOOL is_valid_free_block( const struct heap *heap, const struct block *block )
 {
-    const SUBHEAP *subheap;
     unsigned int i;
 
-    if ((subheap = find_subheap( heap, block, FALSE ))) return TRUE;
+    if (find_subheap( heap, block, FALSE )) return TRUE;
     for (i = 0; i < FREE_LIST_COUNT; i++) if (block == &heap->free_lists[i].block) return TRUE;
     return FALSE;
 }

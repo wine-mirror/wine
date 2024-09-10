@@ -1705,7 +1705,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_FIONREAD:
         {
-            int value, ret;
+            int value;
 
             if (out_size < sizeof(int))
             {
@@ -1731,7 +1731,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
 #endif
 
-            if ((ret = ioctl( fd, FIONREAD, &value )) < 0)
+            if (ioctl( fd, FIONREAD, &value ) < 0)
             {
                 status = sock_errno_to_status( errno );
                 break;
@@ -1744,7 +1744,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_SIOCATMARK:
         {
-            int value, ret;
+            int value
+                ;
             socklen_t len = sizeof(value);
 
             if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
@@ -1768,7 +1769,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
             else
             {
-                if ((ret = ioctl( fd, SIOCATMARK, &value )) < 0)
+                if (ioctl( fd, SIOCATMARK, &value ) < 0)
                 {
                     status = sock_errno_to_status( errno );
                     break;
