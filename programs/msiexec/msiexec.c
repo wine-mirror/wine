@@ -686,7 +686,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DWORD ReturnCode;
 	int argc;
 	LPWSTR *argvW = NULL;
-	WCHAR *path, *package_unquoted;
+	WCHAR *path, *package_unquoted = NULL;
 
         InitCommonControls();
 
@@ -1095,7 +1095,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if(FunctionInstallAdmin && FunctionPatch)
 		FunctionInstall = FALSE;
 
-    if (!(package_unquoted = remove_quotes( PackageName))) return ERROR_OUTOFMEMORY;
+    if (PackageName && !(package_unquoted = remove_quotes(PackageName))) return ERROR_OUTOFMEMORY;
 
 	ReturnCode = 1;
 	if(FunctionInstall)
