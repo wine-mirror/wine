@@ -1798,7 +1798,7 @@ RETURN_CODE WCMD_give_help(WCHAR *args)
             WCHAR cmd[128];
             lstrcpyW(cmd, help_on);
             lstrcatW(cmd, L" /?");
-            WCMD_run_program(cmd, FALSE);
+            WCMD_run_builtin_command(WCMD_HELP, cmd);
         }
         else
         {

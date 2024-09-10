@@ -639,7 +639,7 @@ RETURN_CODE WCMD_call(WCHAR *command)
             return_code = errorlevel = NO_ERROR;
         else
         {
-            WCMD_run_program(buffer, TRUE);
+            WCMD_call_command(buffer);
             /* If the thing we try to run does not exist, call returns 1 */
             if (errorlevel == RETURN_CODE_CANT_LAUNCH)
                 errorlevel = ERROR_INVALID_FUNCTION;

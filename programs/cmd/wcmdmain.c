@@ -1378,8 +1378,6 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
     }
 }
 
-static RETURN_CODE execute_single_command(const WCHAR *command);
-
 /* Attempt to open a file at a known path. */
 static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL called)
 {
@@ -1708,57 +1706,6 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
     return RETURN_CODE_CANT_LAUNCH;
 }
 
-/******************************************************************************
- * WCMD_run_program
- *
- *	Execute a command line as an external program. Must allow recursion.
- *
- *      Precedence:
- *        Manual testing under windows shows PATHEXT plays a key part in this,
- *      and the search algorithm and precedence appears to be as follows.
- *
- *      Search locations:
- *        If directory supplied on command, just use that directory
- *        If extension supplied on command, look for that explicit name first
- *        Otherwise, search in each directory on the path
- *      Precedence:
- *        If extension supplied on command, look for that explicit name first
- *        Then look for supplied name .* (even if extension supplied, so
- *          'garbage.exe' will match 'garbage.exe.cmd')
- *        If any found, cycle through PATHEXT looking for name.exe one by one
- *      Launching
- *        Once a match has been found, it is launched - Code currently uses
- *          findexecutable to achieve this which is left untouched.
- *        If an executable has not been found, and we were launched through
- *          a call, we need to check if the command is an internal command,
- *          so go back through wcmd_execute.
- */
-
-RETURN_CODE WCMD_run_program(WCHAR *command, BOOL called)
-{
-  struct search_command sc;
-  RETURN_CODE return_code;
-
-  return_code = search_command(command, &sc, FALSE);
-  if (return_code == NO_ERROR)
-  {
-      if (!*sc.path) return NO_ERROR;
-      return run_full_path(sc.path, command, called);
-  }
-
-  /* Not found anywhere - were we called? */
-  if (called)
-      return errorlevel = execute_single_command(command);
-
-  /* Not found anywhere - give up */
-  WCMD_output_stderr(WCMD_LoadMessage(WCMD_NO_COMMAND_FOUND), command);
-
-  /* If a command fails to launch, it sets errorlevel 9009 - which
-     does not seem to have any associated constant definition     */
-  errorlevel = RETURN_CODE_CANT_LAUNCH;
-  return ERROR_INVALID_FUNCTION;
-}
-
 static BOOL set_std_redirections(CMD_REDIRECTION *redir)
 {
     static DWORD std_index[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
@@ -1831,7 +1778,7 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir)
     return TRUE;
 }
 
-static RETURN_CODE run_builtin_command(int cmd_index, WCHAR *cmd)
+RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd)
 {
     size_t count = wcslen(inbuilt[cmd_index]);
     WCHAR *parms_start = WCMD_skip_leading_spaces(&cmd[count]);
@@ -2019,7 +1966,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = ERROR_INVALID_FUNCTION;
     }
     else if (sc.cmd_index <= WCMD_EXIT && (return_code != NO_ERROR || (!sc.has_path && !sc.has_extension)))
-        return_code = run_builtin_command(sc.cmd_index, cmd);
+        return_code = WCMD_run_builtin_command(sc.cmd_index, cmd);
     else
     {
         BOOL prev_echo_mode = echo_mode;
@@ -2029,6 +1976,31 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
     }
     free(cmd);
     return return_code;
+}
+
+RETURN_CODE WCMD_call_command(WCHAR *command)
+{
+  struct search_command sc;
+  RETURN_CODE return_code;
+
+  return_code = search_command(command, &sc, FALSE);
+  if (return_code == NO_ERROR)
+  {
+      if (!*sc.path) return NO_ERROR;
+      return run_full_path(sc.path, command, TRUE);
+  }
+
+  if (sc.cmd_index <= WCMD_EXIT)
+      return errorlevel = WCMD_run_builtin_command(sc.cmd_index, command);
+
+  /* Not found anywhere - give up */
+  WCMD_output_stderr(WCMD_LoadMessage(WCMD_NO_COMMAND_FOUND), command);
+
+  /* If a command fails to launch, it sets errorlevel 9009 - which
+   * does not seem to have any associated constant definition
+   */
+  errorlevel = RETURN_CODE_CANT_LAUNCH;
+  return ERROR_INVALID_FUNCTION;
 }
 
 /*************************************************************************

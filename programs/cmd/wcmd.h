@@ -185,7 +185,6 @@ void WCMD_print_error (void);
 RETURN_CODE WCMD_pushd(const WCHAR *args);
 RETURN_CODE WCMD_remove_dir(WCHAR *command);
 RETURN_CODE WCMD_rename(void);
-RETURN_CODE WCMD_run_program (WCHAR *command, BOOL called);
 RETURN_CODE WCMD_setlocal(WCHAR *args);
 RETURN_CODE WCMD_setshow_date(void);
 RETURN_CODE WCMD_setshow_default(const WCHAR *args);
@@ -222,6 +221,9 @@ void      node_dispose_tree(CMD_NODE *cmds);
 RETURN_CODE node_execute(CMD_NODE *node);
 
 RETURN_CODE WCMD_call_batch(const WCHAR *, WCHAR *);
+RETURN_CODE WCMD_call_command(WCHAR *command);
+RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd);
+
 BOOL WCMD_find_label(HANDLE h, const WCHAR*, LARGE_INTEGER *pos);
 void WCMD_set_label_end(WCHAR *string);
 
