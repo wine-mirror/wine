@@ -353,6 +353,11 @@ struct x11drv_escape_get_drawable
     RECT                     dc_rect;      /* DC rectangle relative to drawable */
 };
 
+extern BOOL needs_offscreen_rendering( HWND hwnd, BOOL known_child );
+extern void set_dc_drawable( HDC hdc, Drawable drawable, const RECT *rect, int mode );
+extern Drawable get_dc_drawable( HDC hdc, RECT *rect );
+extern HRGN get_dc_monitor_region( HWND hwnd, HDC hdc );
+
 /**************************************************************************
  * X11 USER driver
  */
