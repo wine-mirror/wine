@@ -74,11 +74,10 @@ static VkResult wayland_vulkan_surface_create(HWND hwnd, VkInstance instance, Vk
     VkResult res;
     VkWaylandSurfaceCreateInfoKHR create_info_host;
     struct wayland_client_surface *client;
-    RECT client_rect;
 
     TRACE("%p %p %p %p\n", hwnd, instance, surface, private);
 
-    if (!(client = get_client_surface(hwnd, &client_rect)))
+    if (!(client = get_client_surface(hwnd)))
     {
         ERR("Failed to create client surface for hwnd=%p\n", hwnd);
         return VK_ERROR_OUT_OF_HOST_MEMORY;

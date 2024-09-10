@@ -696,7 +696,7 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 /**********************************************************************
  *          get_client_surface
  */
-struct wayland_client_surface *get_client_surface(HWND hwnd, RECT *client_rect)
+struct wayland_client_surface *get_client_surface(HWND hwnd)
 {
     struct wayland_client_surface *client;
     struct wayland_surface *surface;
@@ -709,15 +709,11 @@ struct wayland_client_surface *get_client_surface(HWND hwnd, RECT *client_rect)
         /* ownership is shared with one of the callers, the last caller to release
          * its reference will also destroy it and clear our pointer. */
         if ((client = data->client_surface)) InterlockedIncrement(&client->ref);
-
-        if (!data->wayland_surface) *client_rect = data->rects.client;
-        else *client_rect = data->wayland_surface->window.client_rect;
     }
     else
     {
         surface = NULL;
         client = NULL;
-        SetRectEmpty(client_rect);
     }
 
     if (!client && !(client = wayland_client_surface_create(hwnd)))

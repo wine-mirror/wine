@@ -192,8 +192,8 @@ static inline EGLConfig egl_config_for_format(int format)
 static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int format)
 {
     struct wayland_gl_drawable *gl;
-    int client_width = 0, client_height = 0;
-    RECT client_rect;
+    int client_width, client_height;
+    RECT client_rect = {0};
 
     TRACE("hwnd=%p format=%d\n", hwnd, format);
 
@@ -204,14 +204,15 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
     gl->hwnd = hwnd;
     gl->swap_interval = 1;
 
+    NtUserGetClientRect(gl->hwnd, &client_rect, NtUserGetDpiForWindow(gl->hwnd));
+    client_width = client_rect.right - client_rect.left;
+    client_height = client_rect.bottom - client_rect.top;
+    if (client_width == 0 || client_height == 0) client_width = client_height = 1;
+
     /* Get the client surface for the HWND. If don't have a wayland surface
      * (e.g., HWND_MESSAGE windows) just create a dummy surface to act as the
      * target render surface. */
-    if (!(gl->client = get_client_surface(hwnd, &client_rect))) goto err;
-    client_width = client_rect.right - client_rect.left;
-    client_height = client_rect.bottom - client_rect.top;
-    if (client_width == 0 || client_height == 0)
-        client_width = client_height = 1;
+    if (!(gl->client = get_client_surface(hwnd))) goto err;
 
     gl->wl_egl_window = wl_egl_window_create(gl->client->wl_surface,
                                              client_width, client_height);
@@ -273,25 +274,15 @@ static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *ne
 
 static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
 {
-    int client_width = 0, client_height = 0;
-    struct wayland_surface *wayland_surface;
-    struct wayland_win_data *data;
+    int client_width, client_height;
+    RECT client_rect = {0};
 
     if (InterlockedCompareExchange(&gl->resized, FALSE, TRUE))
     {
-        if (!(data = wayland_win_data_get(gl->hwnd))) return;
-
-        if ((wayland_surface = data->wayland_surface))
-        {
-            client_width = wayland_surface->window.client_rect.right -
-                           wayland_surface->window.client_rect.left;
-            client_height = wayland_surface->window.client_rect.bottom -
-                            wayland_surface->window.client_rect.top;
-        }
-
-        if (client_width == 0 || client_height == 0)
-            client_width = client_height = 1;
-        wayland_win_data_release(data);
+        NtUserGetClientRect(gl->hwnd, &client_rect, NtUserGetDpiForWindow(gl->hwnd));
+        client_width = client_rect.right - client_rect.left;
+        client_height = client_rect.bottom - client_rect.top;
+        if (client_width == 0 || client_height == 0) client_width = client_height = 1;
 
         wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
     }
