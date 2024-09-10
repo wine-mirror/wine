@@ -2840,6 +2840,7 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
 
     switch (gl->type)
     {
+    case DC_GL_WINDOW:
     case DC_GL_CHILD_WIN:
         gl->rect = rect;
         XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
