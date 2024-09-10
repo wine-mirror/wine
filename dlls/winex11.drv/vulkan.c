@@ -67,6 +67,7 @@ static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs;
 struct vulkan_surface
 {
     Window window;
+    RECT rect;
 };
 
 static void vulkan_surface_destroy( HWND hwnd, struct vulkan_surface *surface )
@@ -104,6 +105,7 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
         free( surface );
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
+    NtUserGetClientRect( hwnd, &surface->rect, NtUserGetDpiForWindow( hwnd ) );
 
     info.window = surface->window;
     if (pvkCreateXlibSurfaceKHR( instance, &info, NULL /* allocator */, handle ))
@@ -143,8 +145,24 @@ static void X11DRV_vulkan_surface_detach( HWND hwnd, void *private )
     }
 }
 
+static void vulkan_surface_update_size( HWND hwnd, struct vulkan_surface *surface )
+{
+    XWindowChanges changes;
+    RECT rect;
+
+    NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
+    if (EqualRect( &surface->rect, &rect )) return;
+
+    changes.width  = min( max( 1, rect.right ), 65535 );
+    changes.height = min( max( 1, rect.bottom ), 65535 );
+    XConfigureWindow( gdi_display, surface->window, CWWidth | CWHeight, &changes );
+    surface->rect = rect;
+}
+
 static void X11DRV_vulkan_surface_presented( HWND hwnd, void *private, VkResult result )
 {
+    struct vulkan_surface *surface = private;
+    vulkan_surface_update_size( hwnd, surface );
 }
 
 static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
