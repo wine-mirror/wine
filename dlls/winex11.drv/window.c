@@ -1391,18 +1391,13 @@ static void sync_client_position( struct x11drv_win_data *data, const struct win
 
     changes.x      = data->rects.client.left - data->rects.visible.left;
     changes.y      = data->rects.client.top - data->rects.visible.top;
-    changes.width  = min( max( 1, data->rects.client.right - data->rects.client.left ), 65535 );
-    changes.height = min( max( 1, data->rects.client.bottom - data->rects.client.top ), 65535 );
-
     if (changes.x != old_rects->client.left - old_rects->visible.left) mask |= CWX;
     if (changes.y != old_rects->client.top  - old_rects->visible.top)  mask |= CWY;
-    if (changes.width  != old_rects->client.right - old_rects->client.left) mask |= CWWidth;
-    if (changes.height != old_rects->client.bottom - old_rects->client.top) mask |= CWHeight;
 
     if (mask)
     {
-        TRACE( "setting client win %lx pos %d,%d,%dx%d changes=%x\n",
-               data->client_window, changes.x, changes.y, changes.width, changes.height, mask );
+        TRACE( "setting client win %lx pos %d,%d changes=%x\n",
+               data->client_window, changes.x, changes.y, mask );
         XConfigureWindow( gdi_display, data->client_window, mask, &changes );
     }
 }
