@@ -42,12 +42,12 @@ dnl
 AC_DEFUN([WINE_HEADER_MAJOR],
 [AC_CHECK_HEADER(sys/mkdev.h,
 		[AC_DEFINE(MAJOR_IN_MKDEV, 1,
-			   [Define to 1 if `major', `minor', and `makedev' are
+			   [Define to 1 if 'major', 'minor', and 'makedev' are
 			    declared in <mkdev.h>.])])
 if test $ac_cv_header_sys_mkdev_h = no; then
   AC_CHECK_HEADER(sys/sysmacros.h,
 		  [AC_DEFINE(MAJOR_IN_SYSMACROS, 1,
-			     [Define to 1 if `major', `minor', and `makedev'
+			     [Define to 1 if 'major', 'minor', and 'makedev'
 			      are declared in <sysmacros.h>.])])
 fi])
 

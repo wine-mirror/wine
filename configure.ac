@@ -1558,7 +1558,7 @@ then
 	                 LIBS="$ac_save_LIBS"])
         if test "$ac_cv_have_res_getservers" = "yes"
         then
-          AC_DEFINE(HAVE_RES_GETSERVERS, 1, [Define to 1 if you have the `res_getservers' function.])
+          AC_DEFINE(HAVE_RES_GETSERVERS, 1, [Define to 1 if you have the 'res_getservers' function.])
         fi
     fi
 fi
@@ -1597,7 +1597,7 @@ then
     if test "$ac_cv_header_gettext_po_h" = "yes"
     then
         AC_CHECK_LIB(gettextpo,po_message_msgctxt,
-                     [AC_DEFINE(HAVE_LIBGETTEXTPO,1,[Define to 1 if you have the `gettextpo' library (-lgettextpo).])
+                     [AC_DEFINE(HAVE_LIBGETTEXTPO,1,[Define to 1 if you have the 'gettextpo' library (-lgettextpo).])
                       AC_SUBST(GETTEXTPO_LIBS,"-lgettextpo")])
     fi
     WINE_NOTICE_WITH(gettextpo,[test "x$GETTEXTPO_LIBS" = "x"],
@@ -1675,7 +1675,7 @@ then
     WINE_PACKAGE_FLAGS(UDEV,[libudev],[-ludev],,,
         [AC_CHECK_HEADERS(libudev.h,
             [AC_CHECK_LIB(udev,udev_new,
-                AC_DEFINE(HAVE_UDEV,1,[Define to 1 if you have the `udev' library (-ludev).]),
+                AC_DEFINE(HAVE_UDEV,1,[Define to 1 if you have the 'udev' library (-ludev).]),
                 [UDEV_LIBS=""],[$UDEV_LIBS])],
             [UDEV_LIBS=""])])
 fi
@@ -1710,7 +1710,7 @@ then
         test "$wine_cv_have_libunwind_unw_step" = yes || UNWIND_LIBS=""
         if test "x$wine_cv_have_unw_step$wine_cv_have_libunwind_unw_step" != xnono
         then
-            AC_DEFINE(HAVE_LIBUNWIND,1,[Define to 1 if you have the `unwind' library (-lunwind).])
+            AC_DEFINE(HAVE_LIBUNWIND,1,[Define to 1 if you have the 'unwind' library (-lunwind).])
         fi])
   fi
   case $host in
@@ -1813,7 +1813,7 @@ dnl **** Check for libprocstat ****
 if test "$ac_cv_header_libprocstat_h" = "yes"
 then
     AC_CHECK_LIB(procstat,procstat_open_sysctl,
-                 [AC_DEFINE(HAVE_LIBPROCSTAT, 1, [Define to 1 if you have the `procstat' library (-lprocstat).])
+                 [AC_DEFINE(HAVE_LIBPROCSTAT, 1, [Define to 1 if you have the 'procstat' library (-lprocstat).])
                   AC_SUBST(PROCSTAT_LIBS,"-lprocstat")])
 fi
 
@@ -2092,7 +2092,7 @@ case $host_os in
     darwin*|macosx*) ;;
     *) ac_save_LIBS=$LIBS
         AC_SEARCH_LIBS(clock_gettime, rt,
-            [AC_DEFINE(HAVE_CLOCK_GETTIME, 1, [Define to 1 if you have the `clock_gettime' function.])
+            [AC_DEFINE(HAVE_CLOCK_GETTIME, 1, [Define to 1 if you have the 'clock_gettime' function.])
                 test "$ac_res" = "none required" || AC_SUBST(RT_LIBS,"$ac_res")])
     LIBS=$ac_save_LIBS
     ;;
@@ -2103,7 +2103,7 @@ AC_CACHE_CHECK([for sched_setaffinity],wine_cv_have_sched_setaffinity,
 [[#include <sched.h>]], [[sched_setaffinity(0, 0, 0);]])],[wine_cv_have_sched_setaffinity=yes],[wine_cv_have_sched_setaffinity=no]))
 if test "$wine_cv_have_sched_setaffinity" = "yes"
 then
-  AC_DEFINE(HAVE_SCHED_SETAFFINITY, 1, [Define to 1 if you have the `sched_setaffinity' function.])
+  AC_DEFINE(HAVE_SCHED_SETAFFINITY, 1, [Define to 1 if you have the 'sched_setaffinity' function.])
 fi
 
 dnl **** Check for types ****
@@ -2315,7 +2315,7 @@ AC_CACHE_CHECK([for __builtin_popcount], ac_cv_have___builtin_popcount,
                [ac_cv_have___builtin_popcount="yes"], [ac_cv_have___builtin_popcount="no"]))
 if test "$ac_cv_have___builtin_popcount" = "yes"
 then
-    AC_DEFINE(HAVE___BUILTIN_POPCOUNT, 1, [Define to 1 if you have the `__builtin_popcount' built-in function.])
+    AC_DEFINE(HAVE___BUILTIN_POPCOUNT, 1, [Define to 1 if you have the '__builtin_popcount' built-in function.])
 fi
 
 AC_CACHE_CHECK([for __clear_cache], ac_cv_have___clear_cache,
@@ -2323,7 +2323,7 @@ AC_CACHE_CHECK([for __clear_cache], ac_cv_have___clear_cache,
                [ac_cv_have___clear_cache="yes"], [ac_cv_have___clear_cache="no"]))
 if test "$ac_cv_have___clear_cache" = "yes"
 then
-    AC_DEFINE(HAVE___CLEAR_CACHE, 1, [Define to 1 if you have the `__clear_cache' (potentially built-in) function.])
+    AC_DEFINE(HAVE___CLEAR_CACHE, 1, [Define to 1 if you have the '__clear_cache' (potentially built-in) function.])
 fi
 
 dnl *** check for the need to define platform-specific symbols
