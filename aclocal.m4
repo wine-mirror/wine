@@ -266,13 +266,10 @@ dnl
 AC_DEFUN([WINE_CHECK_DEFINE],
 [AS_VAR_PUSHDEF([ac_var],[ac_cv_cpp_def_$1])dnl
 AC_CACHE_CHECK([whether we need to define $1],ac_var,
-    AC_EGREP_CPP(yes,[#ifndef $1
-yes
-#endif],
-    [AS_VAR_SET(ac_var,yes)],[AS_VAR_SET(ac_var,no)]))
-AS_VAR_IF([ac_var],[yes],
-      [CFLAGS="$CFLAGS -D$1"
-  LINTFLAGS="$LINTFLAGS -D$1"])dnl
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#ifdef $1
+#error no
+#endif])],[AS_VAR_SET([ac_var],[yes])],[AS_VAR_SET([ac_var],[no])]))
+AS_VAR_IF([ac_var],[yes],[EXTRACFLAGS="$EXTRACFLAGS -D$1"])dnl
 AS_VAR_POPDEF([ac_var])])
 
 dnl **** Check for functions with some extra libraries ****

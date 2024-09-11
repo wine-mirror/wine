@@ -22869,164 +22869,34 @@ if test ${ac_cv_cpp_def___i386__+y}
 then :
   printf %s "(cached) " >&6
 else case e in #(
-  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for egrep -e" >&5
-printf %s "checking for egrep -e... " >&6; }
-if test ${ac_cv_path_EGREP_TRADITIONAL+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test -z "$EGREP_TRADITIONAL"; then
-  ac_path_EGREP_TRADITIONAL_found=false
-  # Loop through the user's path and test for each of PROGNAME-LIST
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_prog in grep ggrep
-   do
-    for ac_exec_ext in '' $ac_executable_extensions; do
-      ac_path_EGREP_TRADITIONAL="$as_dir$ac_prog$ac_exec_ext"
-      as_fn_executable_p "$ac_path_EGREP_TRADITIONAL" || continue
-# Check for GNU ac_path_EGREP_TRADITIONAL and select it if it is found.
-  # Check for GNU $ac_path_EGREP_TRADITIONAL
-case `"$ac_path_EGREP_TRADITIONAL" --version 2>&1` in #(
-*GNU*)
-  ac_cv_path_EGREP_TRADITIONAL="$ac_path_EGREP_TRADITIONAL" ac_path_EGREP_TRADITIONAL_found=:;;
-#(
-*)
-  ac_count=0
-  printf %s 0123456789 >"conftest.in"
-  while :
-  do
-    cat "conftest.in" "conftest.in" >"conftest.tmp"
-    mv "conftest.tmp" "conftest.in"
-    cp "conftest.in" "conftest.nl"
-    printf "%s\n" 'EGREP_TRADITIONAL' >> "conftest.nl"
-    "$ac_path_EGREP_TRADITIONAL" -E 'EGR(EP|AC)_TRADITIONAL$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
-    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
-    as_fn_arith $ac_count + 1 && ac_count=$as_val
-    if test $ac_count -gt ${ac_path_EGREP_TRADITIONAL_max-0}; then
-      # Best one so far, save it but keep looking for a better one
-      ac_cv_path_EGREP_TRADITIONAL="$ac_path_EGREP_TRADITIONAL"
-      ac_path_EGREP_TRADITIONAL_max=$ac_count
-    fi
-    # 10*(2^10) chars as input seems more than enough
-    test $ac_count -gt 10 && break
-  done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
-esac
-
-      $ac_path_EGREP_TRADITIONAL_found && break 3
-    done
-  done
-  done
-IFS=$as_save_IFS
-  if test -z "$ac_cv_path_EGREP_TRADITIONAL"; then
-    :
-  fi
-else
-  ac_cv_path_EGREP_TRADITIONAL=$EGREP_TRADITIONAL
-fi
-
-    if test "$ac_cv_path_EGREP_TRADITIONAL"
-then :
-  ac_cv_path_EGREP_TRADITIONAL="$ac_cv_path_EGREP_TRADITIONAL -E"
-else case e in #(
-  e) if test -z "$EGREP_TRADITIONAL"; then
-  ac_path_EGREP_TRADITIONAL_found=false
-  # Loop through the user's path and test for each of PROGNAME-LIST
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_prog in egrep
-   do
-    for ac_exec_ext in '' $ac_executable_extensions; do
-      ac_path_EGREP_TRADITIONAL="$as_dir$ac_prog$ac_exec_ext"
-      as_fn_executable_p "$ac_path_EGREP_TRADITIONAL" || continue
-# Check for GNU ac_path_EGREP_TRADITIONAL and select it if it is found.
-  # Check for GNU $ac_path_EGREP_TRADITIONAL
-case `"$ac_path_EGREP_TRADITIONAL" --version 2>&1` in #(
-*GNU*)
-  ac_cv_path_EGREP_TRADITIONAL="$ac_path_EGREP_TRADITIONAL" ac_path_EGREP_TRADITIONAL_found=:;;
-#(
-*)
-  ac_count=0
-  printf %s 0123456789 >"conftest.in"
-  while :
-  do
-    cat "conftest.in" "conftest.in" >"conftest.tmp"
-    mv "conftest.tmp" "conftest.in"
-    cp "conftest.in" "conftest.nl"
-    printf "%s\n" 'EGREP_TRADITIONAL' >> "conftest.nl"
-    "$ac_path_EGREP_TRADITIONAL" 'EGR(EP|AC)_TRADITIONAL$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
-    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
-    as_fn_arith $ac_count + 1 && ac_count=$as_val
-    if test $ac_count -gt ${ac_path_EGREP_TRADITIONAL_max-0}; then
-      # Best one so far, save it but keep looking for a better one
-      ac_cv_path_EGREP_TRADITIONAL="$ac_path_EGREP_TRADITIONAL"
-      ac_path_EGREP_TRADITIONAL_max=$ac_count
-    fi
-    # 10*(2^10) chars as input seems more than enough
-    test $ac_count -gt 10 && break
-  done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
-esac
-
-      $ac_path_EGREP_TRADITIONAL_found && break 3
-    done
-  done
-  done
-IFS=$as_save_IFS
-  if test -z "$ac_cv_path_EGREP_TRADITIONAL"; then
-    as_fn_error $? "no acceptable egrep could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" "$LINENO" 5
-  fi
-else
-  ac_cv_path_EGREP_TRADITIONAL=$EGREP_TRADITIONAL
-fi
- ;;
-esac
-fi ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_EGREP_TRADITIONAL" >&5
-printf "%s\n" "$ac_cv_path_EGREP_TRADITIONAL" >&6; }
- EGREP_TRADITIONAL=$ac_cv_path_EGREP_TRADITIONAL
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __i386__
-yes
+#ifdef __i386__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___i386__=yes
 else case e in #(
   e) ac_cv_cpp_def___i386__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___i386__" >&5
 printf "%s\n" "$ac_cv_cpp_def___i386__" >&6; }
 if test "x$ac_cv_cpp_def___i386__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__i386__"
-  LINTFLAGS="$LINTFLAGS -D__i386__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__i386__"
 fi ;;
   *x86_64*)         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __x86_64__" >&5
 printf %s "checking whether we need to define __x86_64__... " >&6; }
@@ -23036,28 +22906,32 @@ then :
 else case e in #(
   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __x86_64__
-yes
+#ifdef __x86_64__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___x86_64__=yes
 else case e in #(
   e) ac_cv_cpp_def___x86_64__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___x86_64__" >&5
 printf "%s\n" "$ac_cv_cpp_def___x86_64__" >&6; }
 if test "x$ac_cv_cpp_def___x86_64__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__x86_64__"
-  LINTFLAGS="$LINTFLAGS -D__x86_64__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__x86_64__"
 fi ;;
   *sparc64*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sparc64__" >&5
 printf %s "checking whether we need to define __sparc64__... " >&6; }
@@ -23067,28 +22941,32 @@ then :
 else case e in #(
   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __sparc64__
-yes
+#ifdef __sparc64__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___sparc64__=yes
 else case e in #(
   e) ac_cv_cpp_def___sparc64__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___sparc64__" >&5
 printf "%s\n" "$ac_cv_cpp_def___sparc64__" >&6; }
 if test "x$ac_cv_cpp_def___sparc64__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__sparc64__"
-  LINTFLAGS="$LINTFLAGS -D__sparc64__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__sparc64__"
 fi ;;
   *sparc*)          { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sparc__" >&5
 printf %s "checking whether we need to define __sparc__... " >&6; }
@@ -23098,28 +22976,32 @@ then :
 else case e in #(
   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __sparc__
-yes
+#ifdef __sparc__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___sparc__=yes
 else case e in #(
   e) ac_cv_cpp_def___sparc__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___sparc__" >&5
 printf "%s\n" "$ac_cv_cpp_def___sparc__" >&6; }
 if test "x$ac_cv_cpp_def___sparc__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__sparc__"
-  LINTFLAGS="$LINTFLAGS -D__sparc__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__sparc__"
 fi ;;
   *powerpc64*)      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __powerpc64__" >&5
 printf %s "checking whether we need to define __powerpc64__... " >&6; }
@@ -23129,28 +23011,32 @@ then :
 else case e in #(
   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __powerpc64__
-yes
+#ifdef __powerpc64__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___powerpc64__=yes
 else case e in #(
   e) ac_cv_cpp_def___powerpc64__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___powerpc64__" >&5
 printf "%s\n" "$ac_cv_cpp_def___powerpc64__" >&6; }
 if test "x$ac_cv_cpp_def___powerpc64__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__powerpc64__"
-  LINTFLAGS="$LINTFLAGS -D__powerpc64__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__powerpc64__"
 fi ;;
   *powerpc*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __powerpc__" >&5
 printf %s "checking whether we need to define __powerpc__... " >&6; }
@@ -23160,28 +23046,32 @@ then :
 else case e in #(
   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __powerpc__
-yes
+#ifdef __powerpc__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___powerpc__=yes
 else case e in #(
   e) ac_cv_cpp_def___powerpc__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___powerpc__" >&5
 printf "%s\n" "$ac_cv_cpp_def___powerpc__" >&6; }
 if test "x$ac_cv_cpp_def___powerpc__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__powerpc__"
-  LINTFLAGS="$LINTFLAGS -D__powerpc__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__powerpc__"
 fi ;;
   *aarch64*)        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __aarch64__" >&5
 printf %s "checking whether we need to define __aarch64__... " >&6; }
@@ -23191,28 +23081,32 @@ then :
 else case e in #(
   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __aarch64__
-yes
+#ifdef __aarch64__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___aarch64__=yes
 else case e in #(
   e) ac_cv_cpp_def___aarch64__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___aarch64__" >&5
 printf "%s\n" "$ac_cv_cpp_def___aarch64__" >&6; }
 if test "x$ac_cv_cpp_def___aarch64__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__aarch64__"
-  LINTFLAGS="$LINTFLAGS -D__aarch64__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__aarch64__"
 fi ;;
   *arm*)            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether we need to define __arm__" >&5
 printf %s "checking whether we need to define __arm__... " >&6; }
@@ -23222,28 +23116,32 @@ then :
 else case e in #(
   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __arm__
-yes
+#ifdef __arm__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___arm__=yes
 else case e in #(
   e) ac_cv_cpp_def___arm__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___arm__" >&5
 printf "%s\n" "$ac_cv_cpp_def___arm__" >&6; }
 if test "x$ac_cv_cpp_def___arm__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__arm__"
-  LINTFLAGS="$LINTFLAGS -D__arm__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__arm__"
 fi ;;
 esac
 
@@ -23256,28 +23154,32 @@ then :
 else case e in #(
   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __sun__
-yes
+#ifdef __sun__
+#error no
 #endif
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP_TRADITIONAL "yes" >/dev/null 2>&1
+if ac_fn_c_try_compile "$LINENO"
 then :
   ac_cv_cpp_def___sun__=yes
 else case e in #(
   e) ac_cv_cpp_def___sun__=no ;;
 esac
 fi
-rm -rf conftest*
- ;;
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
 esac
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___sun__" >&5
 printf "%s\n" "$ac_cv_cpp_def___sun__" >&6; }
 if test "x$ac_cv_cpp_def___sun__" = xyes
 then :
-  CFLAGS="$CFLAGS -D__sun__"
-  LINTFLAGS="$LINTFLAGS -D__sun__"
+  EXTRACFLAGS="$EXTRACFLAGS -D__sun__"
 fi ;;
 esac
 
