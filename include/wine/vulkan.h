@@ -6171,7 +6171,7 @@ typedef struct StdVideoAV1FilmGrainFlags
 typedef struct StdVideoAV1GlobalMotion
 {
     uint8_t GmType[STD_VIDEO_AV1_NUM_REF_FRAMES];
-    int32_t gm_params[STD_VIDEO_AV1_NUM_REF_FRAMES];
+    int32_t gm_params[STD_VIDEO_AV1_NUM_REF_FRAMES][STD_VIDEO_AV1_GLOBAL_MOTION_PARAMS];
 } StdVideoAV1GlobalMotion;
 
 typedef struct StdVideoAV1LoopFilterFlags
@@ -6197,7 +6197,7 @@ typedef struct StdVideoAV1QuantizationFlags
 typedef struct StdVideoAV1Segmentation
 {
     uint8_t FeatureEnabled[STD_VIDEO_AV1_MAX_SEGMENTS];
-    int16_t FeatureData[STD_VIDEO_AV1_MAX_SEGMENTS];
+    int16_t FeatureData[STD_VIDEO_AV1_MAX_SEGMENTS][STD_VIDEO_AV1_SEG_LVL_MAX];
 } StdVideoAV1Segmentation;
 
 typedef struct StdVideoAV1SequenceHeaderFlags
@@ -6458,8 +6458,8 @@ typedef struct StdVideoH264ScalingLists
 {
     uint16_t scaling_list_present_mask;
     uint16_t use_default_scaling_matrix_mask;
-    uint8_t ScalingList4x4[STD_VIDEO_H264_SCALING_LIST_4X4_NUM_LISTS];
-    uint8_t ScalingList8x8[STD_VIDEO_H264_SCALING_LIST_8X8_NUM_LISTS];
+    uint8_t ScalingList4x4[STD_VIDEO_H264_SCALING_LIST_4X4_NUM_LISTS][STD_VIDEO_H264_SCALING_LIST_4X4_NUM_ELEMENTS];
+    uint8_t ScalingList8x8[STD_VIDEO_H264_SCALING_LIST_8X8_NUM_LISTS][STD_VIDEO_H264_SCALING_LIST_8X8_NUM_ELEMENTS];
 } StdVideoH264ScalingLists;
 
 typedef struct StdVideoH264SpsFlags
@@ -6559,7 +6559,7 @@ typedef struct StdVideoH265PpsFlags
 
 typedef struct StdVideoH265PredictorPaletteEntries
 {
-    uint16_t PredictorPaletteEntries[STD_VIDEO_H265_PREDICTOR_PALETTE_COMPONENTS_LIST_SIZE];
+    uint16_t PredictorPaletteEntries[STD_VIDEO_H265_PREDICTOR_PALETTE_COMPONENTS_LIST_SIZE][STD_VIDEO_H265_PREDICTOR_PALETTE_COMP_ENTRIES_LIST_SIZE];
 } StdVideoH265PredictorPaletteEntries;
 
 typedef struct StdVideoH265ProfileTierLevelFlags
@@ -6573,10 +6573,10 @@ typedef struct StdVideoH265ProfileTierLevelFlags
 
 typedef struct StdVideoH265ScalingLists
 {
-    uint8_t ScalingList4x4[STD_VIDEO_H265_SCALING_LIST_4X4_NUM_LISTS];
-    uint8_t ScalingList8x8[STD_VIDEO_H265_SCALING_LIST_8X8_NUM_LISTS];
-    uint8_t ScalingList16x16[STD_VIDEO_H265_SCALING_LIST_16X16_NUM_LISTS];
-    uint8_t ScalingList32x32[STD_VIDEO_H265_SCALING_LIST_32X32_NUM_LISTS];
+    uint8_t ScalingList4x4[STD_VIDEO_H265_SCALING_LIST_4X4_NUM_LISTS][STD_VIDEO_H265_SCALING_LIST_4X4_NUM_ELEMENTS];
+    uint8_t ScalingList8x8[STD_VIDEO_H265_SCALING_LIST_8X8_NUM_LISTS][STD_VIDEO_H265_SCALING_LIST_8X8_NUM_ELEMENTS];
+    uint8_t ScalingList16x16[STD_VIDEO_H265_SCALING_LIST_16X16_NUM_LISTS][STD_VIDEO_H265_SCALING_LIST_16X16_NUM_ELEMENTS];
+    uint8_t ScalingList32x32[STD_VIDEO_H265_SCALING_LIST_32X32_NUM_LISTS][STD_VIDEO_H265_SCALING_LIST_32X32_NUM_ELEMENTS];
     uint8_t ScalingListDCCoef16x16[STD_VIDEO_H265_SCALING_LIST_16X16_NUM_LISTS];
     uint8_t ScalingListDCCoef32x32[STD_VIDEO_H265_SCALING_LIST_32X32_NUM_LISTS];
 } StdVideoH265ScalingLists;
@@ -14238,12 +14238,12 @@ typedef struct StdVideoEncodeH264WeightTable
     uint8_t chroma_log2_weight_denom;
     int8_t luma_weight_l0[STD_VIDEO_H264_MAX_NUM_LIST_REF];
     int8_t luma_offset_l0[STD_VIDEO_H264_MAX_NUM_LIST_REF];
-    int8_t chroma_weight_l0[STD_VIDEO_H264_MAX_NUM_LIST_REF];
-    int8_t chroma_offset_l0[STD_VIDEO_H264_MAX_NUM_LIST_REF];
+    int8_t chroma_weight_l0[STD_VIDEO_H264_MAX_NUM_LIST_REF][STD_VIDEO_H264_MAX_CHROMA_PLANES];
+    int8_t chroma_offset_l0[STD_VIDEO_H264_MAX_NUM_LIST_REF][STD_VIDEO_H264_MAX_CHROMA_PLANES];
     int8_t luma_weight_l1[STD_VIDEO_H264_MAX_NUM_LIST_REF];
     int8_t luma_offset_l1[STD_VIDEO_H264_MAX_NUM_LIST_REF];
-    int8_t chroma_weight_l1[STD_VIDEO_H264_MAX_NUM_LIST_REF];
-    int8_t chroma_offset_l1[STD_VIDEO_H264_MAX_NUM_LIST_REF];
+    int8_t chroma_weight_l1[STD_VIDEO_H264_MAX_NUM_LIST_REF][STD_VIDEO_H264_MAX_CHROMA_PLANES];
+    int8_t chroma_offset_l1[STD_VIDEO_H264_MAX_NUM_LIST_REF][STD_VIDEO_H264_MAX_CHROMA_PLANES];
 } StdVideoEncodeH264WeightTable;
 
 typedef struct StdVideoEncodeH265ReferenceInfo
@@ -14272,12 +14272,12 @@ typedef struct StdVideoEncodeH265WeightTable
     int8_t delta_chroma_log2_weight_denom;
     int8_t delta_luma_weight_l0[STD_VIDEO_H265_MAX_NUM_LIST_REF];
     int8_t luma_offset_l0[STD_VIDEO_H265_MAX_NUM_LIST_REF];
-    int8_t delta_chroma_weight_l0[STD_VIDEO_H265_MAX_NUM_LIST_REF];
-    int8_t delta_chroma_offset_l0[STD_VIDEO_H265_MAX_NUM_LIST_REF];
+    int8_t delta_chroma_weight_l0[STD_VIDEO_H265_MAX_NUM_LIST_REF][STD_VIDEO_H265_MAX_CHROMA_PLANES];
+    int8_t delta_chroma_offset_l0[STD_VIDEO_H265_MAX_NUM_LIST_REF][STD_VIDEO_H265_MAX_CHROMA_PLANES];
     int8_t delta_luma_weight_l1[STD_VIDEO_H265_MAX_NUM_LIST_REF];
     int8_t luma_offset_l1[STD_VIDEO_H265_MAX_NUM_LIST_REF];
-    int8_t delta_chroma_weight_l1[STD_VIDEO_H265_MAX_NUM_LIST_REF];
-    int8_t delta_chroma_offset_l1[STD_VIDEO_H265_MAX_NUM_LIST_REF];
+    int8_t delta_chroma_weight_l1[STD_VIDEO_H265_MAX_NUM_LIST_REF][STD_VIDEO_H265_MAX_CHROMA_PLANES];
+    int8_t delta_chroma_offset_l1[STD_VIDEO_H265_MAX_NUM_LIST_REF][STD_VIDEO_H265_MAX_CHROMA_PLANES];
 } StdVideoEncodeH265WeightTable;
 
 typedef struct StdVideoH264PictureParameterSet

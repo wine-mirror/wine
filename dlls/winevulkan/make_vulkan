@@ -349,20 +349,20 @@ def convert_suffix(direction, win_type, unwrap, is_wrapped):
 
 # Arrays come in multiple formats. Known formats are:
 #
-# <member><type>uint32_t</type> <name>foo</name>[<enum>VK_FOO_SIZE</enum>]</member>
-# <member><type>uint32_t</type> <name>foo</name>[4]</member>
-def parse_array_len(element):
-    name_elem = element.find("name")
-    if name_elem.tail:
-        name_tail = name_elem.tail.strip()
-        if name_tail and name_tail != "" and name_tail[0] == "[":
-            enum_elem = element.find("enum")
-            if enum_elem is not None:
-                return enum_elem.text
-            else:
-                return name_tail.strip("[]")
-    return None
+# <member><type>uint32_t</type> <name>foo</name>[<enum>VK_FOO_SIZE</enum>][<enum>VK_FOO_COUNT</enum>]</member>
+# <member><type>uint32_t</type> <name>foo</name>[3][4]</member>
+def parse_array_lens(element):
+    text = ''
 
+    for e in element:
+        if e.tag == 'name':
+            if e.tail:
+                text += e.tail
+        elif e.tag == 'enum':
+            text += e.text + e.tail
+        elif e.tag != 'comment' and e.tag != 'type':
+            LOGGER.warning("Ignoring tag <{0}> while trying to parse array sizes".format(e.tag))
+    return [i.strip('[]') for i in re.findall(r'\[\w+\]', text)]
 
 class VkBaseType(object):
     def __init__(self, name, _type, alias=None, requires=None):
@@ -784,8 +784,8 @@ class VkFunction(object):
             if param.is_pointer():
                 pfn += " " + param.pointer
 
-            if param.array_len is not None:
-                pfn += "[{0}]".format(param.array_len)
+            for l in param.array_lens:
+                pfn += "[{0}]".format(l)
 
             if i < len(self.params) - 1:
                 pfn += ", "
@@ -1228,7 +1228,7 @@ class VkHandle(object):
 
 
 class VkVariable(object):
-    def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_len=None,
+    def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_lens=[],
                  dyn_array_len=None, object_type=None, optional=False, returnedonly=False, parent=None,
                  selection=None, selector=None):
         self.const = const
@@ -1243,7 +1243,7 @@ class VkVariable(object):
         self.selector = selector
 
         self.pointer = pointer
-        self.array_len = array_len
+        self.array_lens = array_lens
         self.dyn_array_len = dyn_array_len
         self.pointer_array = False
         if isinstance(dyn_array_len, str):
@@ -1335,14 +1335,14 @@ class VkVariable(object):
         Vulkan uses this for dynamically sized arrays for which
         there is a 'count' parameter.
         """
-        return self.dyn_array_len is not None and self.array_len is None
+        return self.dyn_array_len is not None and len(self.array_lens) == 0
 
     def is_static_array(self):
         """ Returns if the member is an array.
         Vulkan uses this often for fixed size arrays in which the
         length is part of the member.
         """
-        return self.array_len is not None
+        return len(self.array_lens) > 0
 
     def is_generic_handle(self):
         """ Returns True if the member is a unit64_t containing
@@ -1463,10 +1463,10 @@ class VkVariable(object):
 
 
 class VkMember(VkVariable):
-    def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
+    def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_lens=[],
                  dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None,
                  returnedonly=False, parent=None, selection=None, selector=None):
-        VkVariable.__init__(self, const=const, type=_type, name=name, pointer=pointer, array_len=array_len,
+        VkVariable.__init__(self, const=const, type=_type, name=name, pointer=pointer, array_lens=array_lens,
                             dyn_array_len=dyn_array_len, object_type=object_type, optional=optional,
                             returnedonly=returnedonly, parent=parent, selection=selection, selector=selector)
         self.struct_fwd_decl = struct_fwd_decl
@@ -1475,7 +1475,7 @@ class VkMember(VkVariable):
 
     def __repr__(self):
         return "{0} {1} {2} {3} {4} {5} {6}".format(self.const, self.struct_fwd_decl, self.type, self.pointer,
-                self.name, self.array_len, self.dyn_array_len)
+                self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
     def from_xml(member, returnedonly, parent):
@@ -1527,7 +1527,7 @@ class VkMember(VkVariable):
         if dyn_array_len is None and pointer is not None:
             dyn_array_len = 1
 
-        array_len = parse_array_len(member)
+        array_lens = parse_array_lens(member)
 
         object_type = member.get("objecttype", None)
 
@@ -1541,7 +1541,7 @@ class VkMember(VkVariable):
         selector = member.get("selector", None)
 
         return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer,
-                        name=name_elem.text, array_len=array_len, dyn_array_len=dyn_array_len, optional=optional,
+                        name=name_elem.text, array_lens=array_lens, dyn_array_len=dyn_array_len, optional=optional,
                         values=values, object_type=object_type, bit_width=bit_width, returnedonly=returnedonly,
                         parent=parent, selection=selection, selector=selector)
 
@@ -1564,8 +1564,10 @@ class VkMember(VkVariable):
                     return "{0}{1} = convert_{2}_{6}array_{5}(ctx, {3}, {4});\n".format(output,
                         self.name, self.type, self.value(input, conv), count, suffix, pointer_part)
             elif self.is_static_array():
-                count = self.array_len
-                if direction == Direction.OUTPUT:
+                count = self.array_lens[0]
+                if len(self.array_lens) > 1:
+                    LOGGER.warn("TODO: implement conversion of multidimensional static array for {0}.{1}".format(self.type, self.name))
+                elif direction == Direction.OUTPUT:
                     # Needed by VkMemoryHeap.memoryHeaps
                     return "convert_{0}_array_{5}({2}{1}, {3}{1}, {4});\n".format(self.type,
                         self.name, input, output, count, suffix)
@@ -1598,7 +1600,9 @@ class VkMember(VkVariable):
                     return "convert_{0}_{4}({5}&{2}{1}, &{3}{1}{6});\n".format(self.type,
                         self.name, input, output, suffix, ctx_param, selector_part)
         elif self.is_static_array():
-            bytes_count = "{0} * sizeof({1})".format(self.array_len, self.type)
+            bytes_count = "sizeof({0})".format(self.type)
+            for l in self.array_lens:
+                bytes_count = "{0} * ".format(l) + bytes_count
             return "memcpy({0}{1}, {2}{1}, {3});\n".format(output, self.name, input, bytes_count)
         elif conv and direction == Direction.OUTPUT and self.is_pointer():
             return "{0}{1} = PtrToUlong({2}{1});\n".format(output, self.name, input)
@@ -1619,8 +1623,8 @@ class VkMember(VkVariable):
 
         if conv and (self.is_pointer() or self.is_pointer_size()):
             text = "PTR32 " + self.name
-            if self.is_static_array():
-                text += "[{0}]".format(self.array_len)
+            for l in self.array_lens:
+                text += "[{0}]".format(l)
             return text
 
         text = ""
@@ -1645,8 +1649,8 @@ class VkMember(VkVariable):
             else:
                 text += " " + self.name
 
-        if self.is_static_array():
-            text += "[{0}]".format(self.array_len)
+        for l in self.array_lens:
+            text += "[{0}]".format(l)
 
         if self.is_bit_field():
             text += ":{}".format(self.bit_width)
@@ -1703,16 +1707,16 @@ class VkMember(VkVariable):
 class VkParam(VkVariable):
     """ Helper class which describes a parameter to a function call. """
 
-    def __init__(self, type_info, const=None, pointer=None, name=None, parent=None, array_len=None,
+    def __init__(self, type_info, const=None, pointer=None, name=None, parent=None, array_lens=None,
                  dyn_array_len=None, object_type=None, optional=False):
         VkVariable.__init__(self, const=const, type_info=type_info, type=type_info["name"], name=name,
-                            pointer=pointer, array_len=array_len, dyn_array_len=dyn_array_len,
+                            pointer=pointer, array_lens=array_lens, dyn_array_len=dyn_array_len,
                             object_type=object_type, optional=optional, parent=parent)
 
         self._set_format_string()
 
     def __repr__(self):
-        return "{0} {1} {2} {3} {4} {5}".format(self.const, self.type, self.pointer, self.name, self.array_len, self.dyn_array_len)
+        return "{0} {1} {2} {3} {4} {5}".format(self.const, self.type, self.pointer, self.name, self.array_lens, self.dyn_array_len)
 
     @staticmethod
     def from_xml(param, types, parent):
@@ -1730,7 +1734,7 @@ class VkParam(VkVariable):
         name_elem = param.find("name")
         name = name_elem.text
         # E.g. vkCmdSetBlendConstants().
-        array_len = parse_array_len(param)
+        array_lens = parse_array_lens(param)
 
         # Name of other parameter in function prototype, which stores the number of
         # elements pointed to be by this parameter.
@@ -1752,7 +1756,7 @@ class VkParam(VkVariable):
         if type_info is None:
             LOGGER.err("type info not found for: {0}".format(type_elem.text))
 
-        return VkParam(type_info, const=const, pointer=pointer, name=name, array_len=array_len,
+        return VkParam(type_info, const=const, pointer=pointer, name=name, array_lens=array_lens,
                        dyn_array_len=dyn_array_len, object_type=object_type, optional=optional,
                        parent=parent)
 
@@ -1872,8 +1876,9 @@ class VkParam(VkVariable):
         if postfix is not None:
             proto += postfix
 
-        if not is_member and self.is_static_array():
-            proto += "[{0}]".format(self.array_len)
+        if not is_member:
+            for l in self.array_lens:
+                proto += "[{0}]".format(l)
 
         return proto
 
