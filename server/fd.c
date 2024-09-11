@@ -1831,8 +1831,7 @@ char *dup_fd_name( struct fd *root, const char *name )
 
 static WCHAR *dup_nt_name( struct fd *root, struct unicode_str name, data_size_t *len )
 {
-    WCHAR *ret;
-    data_size_t retlen;
+    WCHAR *ptr, *ret;
 
     if (!root)
     {
@@ -1841,7 +1840,6 @@ static WCHAR *dup_nt_name( struct fd *root, struct unicode_str name, data_size_t
         return memdup( name.str, name.len );
     }
     if (!root->nt_namelen) return NULL;
-    retlen = root->nt_namelen;
 
     /* skip . prefix */
     if (name.len && name.str[0] == '.' && (name.len == sizeof(WCHAR) || name.str[1] == '\\'))
@@ -1849,17 +1847,12 @@ static WCHAR *dup_nt_name( struct fd *root, struct unicode_str name, data_size_t
         name.str++;
         name.len -= sizeof(WCHAR);
     }
-    if ((ret = malloc( retlen + name.len + sizeof(WCHAR) )))
+    if ((ret = malloc( root->nt_namelen + name.len + sizeof(WCHAR) )))
     {
-        memcpy( ret, root->nt_name, root->nt_namelen );
-        if (name.len && name.str[0] != '\\' &&
-            root->nt_namelen && root->nt_name[root->nt_namelen / sizeof(WCHAR) - 1] != '\\')
-        {
-            ret[retlen / sizeof(WCHAR)] = '\\';
-            retlen += sizeof(WCHAR);
-        }
-        memcpy( ret + retlen / sizeof(WCHAR), name.str, name.len );
-        *len = retlen + name.len;
+        ptr = mem_append( ret, root->nt_name, root->nt_namelen );
+        if (name.len && name.str[0] != '\\' && ptr[-1] != '\\') *ptr++ = '\\';
+        ptr = mem_append( ptr, name.str, name.len );
+        *len = (ptr - ret) * sizeof(WCHAR);
     }
     return ret;
 }

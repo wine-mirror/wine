@@ -805,16 +805,14 @@ DECL_HANDLER(get_security_object)
         if (reply->sd_len <= get_reply_max_size())
         {
             char *ptr = set_reply_data_size(reply->sd_len);
-
-            memcpy( ptr, &req_sd, sizeof(req_sd) );
-            ptr += sizeof(req_sd);
-            memcpy( ptr, owner, req_sd.owner_len );
-            ptr += req_sd.owner_len;
-            memcpy( ptr, group, req_sd.group_len );
-            ptr += req_sd.group_len;
-            memcpy( ptr, sacl, req_sd.sacl_len );
-            ptr += req_sd.sacl_len;
-            memcpy( ptr, dacl, req_sd.dacl_len );
+            if (ptr)
+            {
+                ptr = mem_append( ptr, &req_sd, sizeof(req_sd) );
+                ptr = mem_append( ptr, owner, req_sd.owner_len );
+                ptr = mem_append( ptr, group, req_sd.group_len );
+                ptr = mem_append( ptr, sacl, req_sd.sacl_len );
+                mem_append( ptr, dacl, req_sd.dacl_len );
+            }
         }
         else
             set_error(STATUS_BUFFER_TOO_SMALL);

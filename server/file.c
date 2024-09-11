@@ -332,11 +332,8 @@ struct security_descriptor *mode_to_sd( mode_t mode, const struct sid *user, con
     sd->sacl_len = 0;
     sd->dacl_len = dacl_size;
 
-    ptr = (char *)(sd + 1);
-    memcpy( ptr, user, sd->owner_len );
-    ptr += sd->owner_len;
-    memcpy( ptr, group, sd->group_len );
-    ptr += sd->group_len;
+    ptr = mem_append( sd + 1, user, sd->owner_len );
+    ptr = mem_append( ptr, group, sd->group_len );
 
     dacl = (struct acl *)ptr;
     dacl->revision = ACL_REVISION;

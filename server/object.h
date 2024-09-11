@@ -202,6 +202,13 @@ static inline unsigned int map_access( unsigned int access, const generic_map_t 
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
+static inline void *mem_append( void *ptr, const void *src, data_size_t len )
+{
+    if (!len) return ptr;
+    memcpy( ptr, src, len );
+    return (char *)ptr + len;
+}
+
 /* event functions */
 
 struct event;

@@ -319,13 +319,9 @@ struct acl *extract_security_labels( const struct acl *sacl )
 
     label_ace = ace_first( label_acl );
     for (i = 0, ace = ace_first( sacl ); i < sacl->count; i++, ace = ace_next( ace ))
-    {
         if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
-        {
-            memcpy( label_ace, ace, ace->size );
-            label_ace = ace_next( label_ace );
-        }
-    }
+            label_ace = mem_append( label_ace, ace, ace->size );
+
     return label_acl;
 }
 
@@ -379,21 +375,15 @@ struct acl *replace_security_labels( const struct acl *old_sacl, const struct ac
     if (old_sacl)
     {
         for (i = 0, ace = ace_first( old_sacl ); i < old_sacl->count; i++, ace = ace_next( ace ))
-        {
-            if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-            memcpy( replaced_ace, ace, ace->size );
-            replaced_ace = ace_next( replaced_ace );
-        }
+            if (ace->type != SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+                replaced_ace = mem_append( replaced_ace, ace, ace->size );
     }
 
     if (new_sacl)
     {
         for (i = 0, ace = ace_first( new_sacl ); i < new_sacl->count; i++, ace = ace_next( ace ))
-        {
-            if (ace->type != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-            memcpy( replaced_ace, ace, ace->size );
-            replaced_ace = ace_next( replaced_ace );
-        }
+            if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+                replaced_ace = mem_append( replaced_ace, ace, ace->size );
     }
 
     return replaced_acl;

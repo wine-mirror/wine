@@ -2135,6 +2135,7 @@ static void queue_rawinput_message( struct desktop *desktop, struct process *pro
     data_size_t report_size = 0, data_size = 0;
     int wparam = RIM_INPUT;
     lparam_t info = 0;
+    char *ptr;
 
     if (raw_msg->rawinput.type == RIM_TYPEMOUSE)
     {
@@ -2172,8 +2173,8 @@ static void queue_rawinput_message( struct desktop *desktop, struct process *pro
     msg_data = msg->data;
     msg_data->flags = raw_msg->flags;
     msg_data->rawinput = raw_msg->rawinput;
-    memcpy( msg_data + 1, &raw_msg->data, data_size );
-    if (report_size) memcpy( (char *)(msg_data + 1) + data_size, raw_msg->hid_report, report_size );
+    ptr = mem_append( msg_data + 1, &raw_msg->data, data_size );
+    mem_append( ptr, raw_msg->hid_report, report_size );
 
     if (raw_msg->message == WM_INPUT_DEVICE_CHANGE && raw_msg->rawinput.type == RIM_TYPEHID)
     {

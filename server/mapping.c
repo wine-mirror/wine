@@ -1497,9 +1497,8 @@ DECL_HANDLER(get_mapping_info)
         size = min( sizeof(pe_image_info_t) + name.len, get_reply_max_size() );
         if ((data = set_reply_data_size( size )))
         {
-            memcpy( data, &mapping->image, min( sizeof(pe_image_info_t), size ));
-            if (size > sizeof(pe_image_info_t))
-                memcpy( (pe_image_info_t *)data + 1, name.str, size - sizeof(pe_image_info_t) );
+            data = mem_append( data, &mapping->image, min( sizeof(pe_image_info_t), size ));
+            if (size > sizeof(pe_image_info_t)) memcpy( data, name.str, size - sizeof(pe_image_info_t) );
         }
         reply->total = sizeof(pe_image_info_t) + name.len;
     }

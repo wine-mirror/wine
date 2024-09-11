@@ -382,8 +382,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         if (len > 1)
         {
             if (read_thread_long( thread, addr++, &data ) == -1) goto done;
-            memcpy( dest, (char *)&data + first_offset, sizeof(long) - first_offset );
-            dest += sizeof(long) - first_offset;
+            dest = mem_append( dest, (char *)&data + first_offset, sizeof(long) - first_offset );
             first_offset = 0;
             len--;
         }
@@ -391,8 +390,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         while (len > 1)
         {
             if (read_thread_long( thread, addr++, &data ) == -1) goto done;
-            memcpy( dest, &data, sizeof(long) );
-            dest += sizeof(long);
+            dest = mem_append( dest, &data, sizeof(long) );
             len--;
         }
 

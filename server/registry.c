@@ -979,8 +979,8 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
         if (len > namelen)
         {
             reply->namelen = namelen;
-            memcpy( data, key->obj.name->name, namelen );
-            memcpy( data + namelen, key->class, len - namelen );
+            data = mem_append( data, key->obj.name->name, namelen );
+            memcpy( data, key->class, len - namelen );
         }
         else if (info_class == KeyNameInformation)
         {
@@ -1292,8 +1292,8 @@ static void enum_value( struct key *key, int i, int info_class, struct enum_key_
             if (maxlen > namelen)
             {
                 reply->namelen = namelen;
-                memcpy( data, value->name, namelen );
-                memcpy( (char *)data + namelen, value->data, maxlen - namelen );
+                data = mem_append( data, value->name, namelen );
+                memcpy( data, value->data, maxlen - namelen );
             }
             else
             {
