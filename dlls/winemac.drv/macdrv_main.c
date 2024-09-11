@@ -651,10 +651,20 @@ static NTSTATUS wow64_init(void *arg)
     struct
     {
         ULONG strings;
+        UINT64 app_icon_callback;
+        UINT64 app_quit_request_callback;
+        UINT64 dnd_query_drag_callback;
+        UINT64 dnd_query_drop_callback;
+        UINT64 dnd_query_exited_callback;
     } *params32 = arg;
     struct init_params params;
 
     params.strings = UlongToPtr(params32->strings);
+    params.app_icon_callback = params32->app_icon_callback;
+    params.app_quit_request_callback = params32->app_quit_request_callback;
+    params.dnd_query_drag_callback = params32->dnd_query_drag_callback;
+    params.dnd_query_drop_callback = params32->dnd_query_drop_callback;
+    params.dnd_query_exited_callback = params32->dnd_query_exited_callback;
     return macdrv_init(&params);
 }
 
