@@ -347,6 +347,23 @@ def convert_suffix(direction, win_type, unwrap, is_wrapped):
         return "{0}_to_host".format(win_type)
 
 
+# Arrays come in multiple formats. Known formats are:
+#
+# <member><type>uint32_t</type> <name>foo</name>[<enum>VK_FOO_SIZE</enum>]</member>
+# <member><type>uint32_t</type> <name>foo</name>[4]</member>
+def parse_array_len(element):
+    name_elem = element.find("name")
+    if name_elem.tail:
+        name_tail = name_elem.tail.strip()
+        if name_tail and name_tail != "" and name_tail[0] == "[":
+            enum_elem = element.find("enum")
+            if enum_elem is not None:
+                return enum_elem.text
+            else:
+                return name_tail.strip("[]")
+    return None
+
+
 class VkBaseType(object):
     def __init__(self, name, _type, alias=None, requires=None):
         """ Vulkan base type class.
@@ -1474,7 +1491,6 @@ class VkMember(VkVariable):
         struct_fwd_decl = False
         member_type = None
         pointer = None
-        array_len = None
         bit_width = None
 
         values = member.get("values")
@@ -1511,17 +1527,7 @@ class VkMember(VkVariable):
         if dyn_array_len is None and pointer is not None:
             dyn_array_len = 1
 
-        # Some members are arrays, attempt to parse these. Formats include:
-        # <member><type>char</type><name>extensionName</name>[<enum>VK_MAX_EXTENSION_NAME_SIZE</enum>]</member>
-        # <member><type>uint32_t</type><name>foo</name>[4]</member>
-        if name_tail and name_tail[0] == '[':
-            LOGGER.debug("Found array type")
-            enum_elem = member.find("enum")
-            if enum_elem is not None:
-                array_len = enum_elem.text
-            else:
-                # Remove brackets around length
-                array_len = name_tail.strip("[]")
+        array_len = parse_array_len(member)
 
         object_type = member.get("objecttype", None)
 
@@ -1722,11 +1728,9 @@ class VkParam(VkVariable):
         # <param>const <type>char</type>* <name>pLayerName</name></param>
 
         name_elem = param.find("name")
-        array_len = None
         name = name_elem.text
-        # Tail contains array length e.g. for blendConstants param of vkSetBlendConstants
-        if name_elem.tail is not None:
-            array_len = name_elem.tail.strip("[]")
+        # E.g. vkCmdSetBlendConstants().
+        array_len = parse_array_len(param)
 
         # Name of other parameter in function prototype, which stores the number of
         # elements pointed to be by this parameter.
