@@ -2495,7 +2495,6 @@ static void test_queryconfig2(void)
     auto_start_info.fDelayedAutostart = 1;
     ret = pChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
             (LPBYTE)&auto_start_info);
-    todo_wine
     ok(ret, "expected ChangeServiceConfig2A to succeed (%ld)\n", GetLastError());
 
     SetLastError(0xdeadbeef);

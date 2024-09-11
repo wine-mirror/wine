@@ -275,6 +275,14 @@ DWORD save_service_config(struct service_entry *entry)
         goto cleanup;
     if ((err = RegSetValueExW(hKey, SZ_PRESHUTDOWN, 0, REG_DWORD, (LPBYTE)&entry->preshutdown_timeout, sizeof(DWORD))) != 0)
         goto cleanup;
+
+    if (entry->delayed_autostart)
+        err = RegSetValueExW(hKey, SZ_DELAYED_AUTOSTART, 0, REG_DWORD, (LPBYTE)&entry->delayed_autostart, sizeof(DWORD));
+    else
+        err = RegDeleteValueW(hKey, SZ_DELAYED_AUTOSTART);
+    if (err != 0 && err != ERROR_FILE_NOT_FOUND)
+        goto cleanup;
+
     if (entry->is_wow64)
     {
         const DWORD is_wow64 = 1;

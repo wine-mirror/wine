@@ -500,7 +500,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ChangeServiceConfig2A( SC_HANDLE service, DWORD le
         free( faw.lpRebootMsg );
         free( faw.lpCommand );
     }
-    else if (level == SERVICE_CONFIG_PRESHUTDOWN_INFO)
+    else if (level == SERVICE_CONFIG_PRESHUTDOWN_INFO || level == SERVICE_CONFIG_DELAYED_AUTO_START_INFO)
     {
         r = ChangeServiceConfig2W( service, level, info );
     }

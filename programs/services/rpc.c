@@ -975,6 +975,18 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, SC_RPC_CONFI
         save_service_config( service->service_entry );
         service_unlock( service->service_entry );
         break;
+    case SERVICE_CONFIG_DELAYED_AUTO_START_INFO:
+        WINE_TRACE( "SERVICE_CONFIG_DELAYED_AUTO_START_INFO: fDelayedAutostart %d\n",
+                    config.delayedstart->fDelayedAutostart);
+
+        if (config.delayedstart->fDelayedAutostart && config.delayedstart->fDelayedAutostart != 1)
+            return ERROR_INVALID_PARAMETER;
+
+        service_lock( service->service_entry );
+        service->service_entry->delayed_autostart = config.delayedstart->fDelayedAutostart;
+        save_service_config( service->service_entry );
+        service_unlock( service->service_entry );
+        break;
     default:
         WINE_FIXME("level %lu not implemented\n", config.dwInfoLevel);
         err = ERROR_INVALID_LEVEL;
