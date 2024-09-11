@@ -1549,25 +1549,21 @@ DECL_HANDLER(get_token_default_dacl)
 {
     struct token *token;
 
-    reply->acl_len = 0;
+    if (!(token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                  TOKEN_QUERY, &token_ops )))
+        return;
 
-    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
-                                                 TOKEN_QUERY,
-                                                 &token_ops )))
+    if (token->default_dacl)
     {
-        if (token->default_dacl)
-            reply->acl_len = token->default_dacl->size;
-
+        reply->acl_len = token->default_dacl->size;
         if (reply->acl_len <= get_reply_max_size())
         {
             struct acl *acl_reply = set_reply_data_size( reply->acl_len );
-            if (acl_reply)
-                memcpy( acl_reply, token->default_dacl, reply->acl_len );
+            if (acl_reply) memcpy( acl_reply, token->default_dacl, reply->acl_len );
         }
         else set_error( STATUS_BUFFER_TOO_SMALL );
-
-        release_object( token );
     }
+    release_object( token );
 }
 
 DECL_HANDLER(set_token_default_dacl)
