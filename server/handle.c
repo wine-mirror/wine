@@ -537,7 +537,8 @@ unsigned int get_obj_handle_count( struct process *process, const struct object 
 
 /* get/set the handle reserved flags */
 /* return the old flags (or -1 on error) */
-static int set_handle_flags( struct process *process, obj_handle_t handle, int mask, int flags )
+static int set_handle_flags( struct process *process, obj_handle_t handle,
+                             unsigned int mask, unsigned int flags )
 {
     struct handle_entry *entry;
     unsigned int old_access;
