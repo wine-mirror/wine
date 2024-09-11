@@ -271,10 +271,8 @@ static const struct fd_ops mailslot_device_fd_ops =
 
 static struct mailslot_message *get_first_message( struct mailslot *mailslot )
 {
-    if (list_empty( &mailslot->messages ))
-        return NULL;
-
-    return LIST_ENTRY( list_head( &mailslot->messages ), struct mailslot_message, entry );
+    struct list *ptr = list_head( &mailslot->messages );
+    return ptr ? LIST_ENTRY( ptr, struct mailslot_message, entry ) : NULL;
 }
 
 static void mailslot_destroy( struct object *obj)
