@@ -2164,6 +2164,8 @@ static LRESULT LISTBOX_HandleLButtonDown( LB_DESCR *descr, DWORD keys, INT x, IN
         LISTBOX_MoveCaret( descr, index, FALSE );
         LISTBOX_SetSelection( descr, index,
                               TRUE, (descr->style & LBS_NOTIFY) != 0 );
+        NtUserNotifyWinEvent( EVENT_OBJECT_FOCUS, descr->self, OBJID_CLIENT, index + 1 );
+        NtUserNotifyWinEvent( EVENT_OBJECT_SELECTION, descr->self, OBJID_CLIENT, index + 1 );
     }
 
     if (!descr->lphc)

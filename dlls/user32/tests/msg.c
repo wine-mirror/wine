@@ -16854,8 +16854,8 @@ static const struct message wm_lb_click_0[] =
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x000120f2 },
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_LISTBOX, 0x001140f2 },
 
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 1 },
-    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam|msg_todo, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_SELECTION, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
 
     { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0 },
