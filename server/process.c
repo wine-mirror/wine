@@ -838,7 +838,7 @@ static struct security_descriptor *process_get_sd( struct object *obj )
         process_default_sd->dacl_len  = dacl_len;
         sid = (struct sid *)(process_default_sd + 1);
         sid = copy_sid( sid, &builtin_admins_sid );
-        sid = copy_sid( sid, &domain_users_sid );
+        copy_sid( sid, &domain_users_sid );
 
         dacl = (struct acl *)((char *)(process_default_sd + 1) + admins_sid_len + users_sid_len);
         dacl->revision = ACL_REVISION;

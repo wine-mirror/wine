@@ -1071,7 +1071,7 @@ static void dir_add_to_existing_notify( struct dir *dir )
 
     /* check if it's in the list of inodes we want to watch */
     if (fstat( unix_fd, &st_new )) return;
-    if ((inode = find_inode( st_new.st_dev, st_new.st_ino ))) return;
+    if (find_inode( st_new.st_dev, st_new.st_ino )) return;
 
     /* lookup the parent */
     if (!(link = get_path_from_fd( unix_fd, 3 ))) return;

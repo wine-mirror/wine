@@ -982,7 +982,7 @@ static void dump_varargs_startup_info( const char *prefix, data_size_t size )
     pos = dump_inline_unicode_string( "\",title=L\"", pos, info.title_len, size );
     pos = dump_inline_unicode_string( "\",desktop=L\"", pos, info.desktop_len, size );
     pos = dump_inline_unicode_string( "\",shellinfo=L\"", pos, info.shellinfo_len, size );
-    pos = dump_inline_unicode_string( "\",runtime=L\"", pos, info.runtime_len, size );
+    dump_inline_unicode_string( "\",runtime=L\"", pos, info.runtime_len, size );
     fprintf( stderr, "\"}" );
     remove_data( size );
 }
@@ -1185,7 +1185,6 @@ static void dump_inline_security_descriptor( const char *prefix, const struct se
         if ((sd->dacl_len >= MAX_ACL_LEN) || (offset + sd->dacl_len > size))
             return;
         dump_inline_acl( ",dacl=", (const struct acl *)((const char *)sd + offset), sd->dacl_len );
-        offset += sd->dacl_len;
     }
     fputc( '}', stderr );
 }

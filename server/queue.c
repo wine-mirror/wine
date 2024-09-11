@@ -360,10 +360,9 @@ static void sync_input_keystate( struct thread_input *input )
 {
     const input_shm_t *input_shm = input->shared;
     const desktop_shm_t *desktop_shm;
-    struct desktop *desktop;
     int i;
 
-    if (!(desktop = input->desktop) || input_shm->keystate_lock) return;
+    if (!input->desktop || input_shm->keystate_lock) return;
     desktop_shm = input->desktop->shared;
 
     SHARED_WRITE_BEGIN( input_shm, input_shm_t )

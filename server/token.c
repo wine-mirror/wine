@@ -285,7 +285,6 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     dacl = sd_get_dacl( sd, &dummy );
     if (dacl && !acl_is_valid( dacl, sd->dacl_len ))
         return FALSE;
-    offset += sd->dacl_len;
 
     return TRUE;
 }

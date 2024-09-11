@@ -446,7 +446,7 @@ static struct security_descriptor *key_get_sd( struct object *obj )
         key_default_sd->dacl_len  = dacl_len;
         sid = (struct sid *)(key_default_sd + 1);
         sid = copy_sid( sid, &builtin_admins_sid );
-        sid = copy_sid( sid, &builtin_admins_sid );
+        copy_sid( sid, &builtin_admins_sid );
 
         dacl = (struct acl *)((char *)(key_default_sd + 1) + 2 * admins_sid_len);
         dacl->revision = ACL_REVISION;
@@ -1001,7 +1001,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
 static void rename_key( struct key *key, const struct unicode_str *new_name )
 {
     struct object_name *new_name_ptr;
-    struct key *subkey, *parent = get_parent( key );
+    struct key *parent = get_parent( key );
     data_size_t len;
     int i, index, cur_index;
 
@@ -1014,7 +1014,7 @@ static void rename_key( struct key *key, const struct unicode_str *new_name )
     }
 
     /* check for existing subkey with the same name */
-    if (!parent || (subkey = find_subkey( parent, new_name, &index )))
+    if (!parent || find_subkey( parent, new_name, &index ))
     {
         set_error( STATUS_CANNOT_DELETE );
         return;
@@ -1635,7 +1635,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     case REG_SZ:
         if (!get_file_tmp_space( info, strlen(buffer) * sizeof(WCHAR) )) return 0;
         len = info->tmplen;
-        if ((res = parse_strW( info->tmp, &len, buffer, '\"' )) == -1) goto error;
+        if (parse_strW( info->tmp, &len, buffer, '\"' ) == -1) goto error;
         ptr = info->tmp;
         break;
     case REG_DWORD:
@@ -1696,7 +1696,7 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
     if (!get_file_tmp_space( info, strlen(name) * sizeof(WCHAR) )) return 0;
 
     len = info->tmplen;
-    if ((res = parse_strW( info->tmp, &len, name, ']' )) == -1)
+    if (parse_strW( info->tmp, &len, name, ']' ) == -1)
     {
         file_read_error( "Malformed key", info );
         return 0;
