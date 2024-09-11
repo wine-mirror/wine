@@ -68,7 +68,7 @@ typedef struct IDirectPlayLobbyImpl
     IDirectPlayLobby3 IDirectPlayLobby3_iface;
     IDirectPlayLobby3A IDirectPlayLobby3A_iface;
     LONG numIfaces; /* "in use interfaces" refcount */
-    LONG ref,  ref2, ref3, ref3A;
+    LONG ref;
     CRITICAL_SECTION lock;
     HKEY cbkeyhack;
     DWORD msgtid;
@@ -186,7 +186,7 @@ static ULONG WINAPI IDirectPlayLobbyImpl_AddRef( IDirectPlayLobby *iface )
 static ULONG WINAPI IDirectPlayLobby2Impl_AddRef(IDirectPlayLobby2 *iface)
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby2( iface );
-    ULONG ref = InterlockedIncrement( &This->ref2 );
+    ULONG ref = InterlockedIncrement( &This->ref );
 
     TRACE( "(%p) ref2=%ld\n", This, ref );
 
@@ -199,9 +199,9 @@ static ULONG WINAPI IDirectPlayLobby2Impl_AddRef(IDirectPlayLobby2 *iface)
 static ULONG WINAPI IDirectPlayLobby3AImpl_AddRef(IDirectPlayLobby3A *iface)
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
-    ULONG ref = InterlockedIncrement( &This->ref3A );
+    ULONG ref = InterlockedIncrement( &This->ref );
 
-    TRACE( "(%p) ref3A=%ld\n", This, ref );
+    TRACE( "(%p) ref3=%ld\n", This, ref );
 
     if ( ref == 1 )
         InterlockedIncrement( &This->numIfaces );
@@ -212,7 +212,7 @@ static ULONG WINAPI IDirectPlayLobby3AImpl_AddRef(IDirectPlayLobby3A *iface)
 static ULONG WINAPI IDirectPlayLobby3Impl_AddRef(IDirectPlayLobby3 *iface)
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
-    ULONG ref = InterlockedIncrement( &This->ref3 );
+    ULONG ref = InterlockedIncrement( &This->ref );
 
     TRACE( "(%p) ref3=%ld\n", This, ref );
 
@@ -238,9 +238,9 @@ static ULONG WINAPI IDirectPlayLobbyImpl_Release( IDirectPlayLobby *iface )
 static ULONG WINAPI IDirectPlayLobby2Impl_Release(IDirectPlayLobby2 *iface)
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby2( iface );
-    ULONG ref = InterlockedDecrement( &This->ref2 );
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE( "(%p) ref2=%ld\n", This, ref );
+    TRACE( "(%p) ref=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -251,9 +251,9 @@ static ULONG WINAPI IDirectPlayLobby2Impl_Release(IDirectPlayLobby2 *iface)
 static ULONG WINAPI IDirectPlayLobby3AImpl_Release(IDirectPlayLobby3A *iface)
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3A( iface );
-    ULONG ref = InterlockedDecrement( &This->ref3A );
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE( "(%p) ref3A=%ld\n", This, ref );
+    TRACE( "(%p) ref=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -264,9 +264,9 @@ static ULONG WINAPI IDirectPlayLobby3AImpl_Release(IDirectPlayLobby3A *iface)
 static ULONG WINAPI IDirectPlayLobby3Impl_Release(IDirectPlayLobby3 *iface)
 {
     IDirectPlayLobbyImpl *This = impl_from_IDirectPlayLobby3( iface );
-    ULONG ref = InterlockedDecrement( &This->ref3 );
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE( "(%p) ref3=%ld\n", This, ref );
+    TRACE( "(%p) ref=%ld\n", This, ref );
 
     if ( !ref && !InterlockedDecrement( &This->numIfaces ) )
         dplobby_destroy( This );
@@ -1732,10 +1732,7 @@ HRESULT dplobby_create( REFIID riid, void **ppv )
     obj->IDirectPlayLobby3A_iface.lpVtbl = &dpl3A_vt;
     obj->numIfaces = 1;
     obj->msgtid = 0;
-    obj->ref = 0;
-    obj->ref2 = 0;
-    obj->ref3 = 1;
-    obj->ref3A = 0;
+    obj->ref = 1;
 
     InitializeCriticalSectionEx( &obj->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     obj->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectPlayLobbyImpl.lock");
