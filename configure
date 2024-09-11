@@ -7939,7 +7939,9 @@ esac
 fi
 
 fi
-if test "$enable_year2038,$ac_have_year2038,$cross_compiling" = yes,no,no
+if false
+then :
+  if test "$enable_year2038,$ac_have_year2038,$cross_compiling" = yes,no,no
 then :
   # If we're not cross compiling and 'touch' works with a large
   # timestamp, then we can presume the system supports wider time_t
@@ -7964,6 +7966,7 @@ See 'config.log' for more details" "$LINENO" 5; } ;; #(
   *) :
      ;;
 esac
+fi
 fi
 fi
 
