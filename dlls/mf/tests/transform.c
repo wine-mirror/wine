@@ -1655,8 +1655,7 @@ static void check_dmo_get_output_size_info_video_(int line, IMediaObject *dmo,
 
     init_dmo_media_type_video(type, output_subtype, width, height, 0);
     hr = IMediaObject_SetOutputType(dmo, 0, type, 0);
-    todo_wine_if(IsEqualGUID(output_subtype, &MEDIASUBTYPE_NV11)
-            || IsEqualGUID(output_subtype, &MEDIASUBTYPE_IYUV))
+    todo_wine_if(IsEqualGUID(output_subtype, &MEDIASUBTYPE_NV11))
     ok_(__FILE__, line)(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     if (hr != S_OK)
         return;
