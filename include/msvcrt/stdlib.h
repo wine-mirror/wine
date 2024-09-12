@@ -273,6 +273,9 @@ inline errno_t getenv_s(size_t *ret, char (&buf)[size], const char *var)
     return getenv_s(ret, buf, size, var);
 }
 
+inline long abs(long const x) throw() { return labs(x); }
+inline long long abs(long long const x) throw() { return llabs(x); }
+
 } /* extern "C++" */
 
 }
