@@ -37,6 +37,24 @@ typedef __msvcrt_long clock_t;
 extern "C" {
 #endif
 
+struct _timespec32
+{
+    __time32_t tv_sec;
+    __msvcrt_long tv_nsec;
+};
+
+struct _timespec64
+{
+    __time64_t tv_sec;
+    __msvcrt_long tv_nsec;
+};
+
+struct timespec
+{
+    time_t tv_sec;
+    __msvcrt_long tv_nsec;
+};
+
 #ifdef __i386__
 #define _daylight (*__p__daylight())
 #define _dstbias (*__p__dstbias())

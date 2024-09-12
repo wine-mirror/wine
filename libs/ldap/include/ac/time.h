@@ -29,11 +29,4 @@
 # include <time.h>
 #endif
 
-#if defined(_WIN32) && !defined(HAVE_CLOCK_GETTIME)
-	struct timespec {
-		time_t	tv_sec;
-		int 	tv_nsec;
-	};
-#endif
-
 #endif /* _AC_TIME_H */
