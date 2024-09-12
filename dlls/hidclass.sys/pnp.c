@@ -244,7 +244,7 @@ static NTSTATUS initialize_device( minidriver *minidriver, DEVICE_OBJECT *device
         return status;
     }
 
-    if (!(ext->u.fdo.child_pdos = malloc( ext->u.fdo.device_desc.CollectionDescLength * sizeof(ext->u.fdo.child_pdos) )))
+    if (!(ext->u.fdo.child_pdos = malloc( ext->u.fdo.device_desc.CollectionDescLength * sizeof(*ext->u.fdo.child_pdos) )))
     {
         ERR( "Cannot allocate child PDOs array\n" );
         return STATUS_NO_MEMORY;
