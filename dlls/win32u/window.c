@@ -1949,14 +1949,14 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
 
     if (new_surface && !is_layered)
     {
-        DWORD lwa_flags = 0;
+        DWORD lwa_flags = 0, alpha_bits = -1;
         COLORREF key;
         BYTE alpha;
 
         if (!NtUserGetLayeredWindowAttributes( hwnd, &key, &alpha, &lwa_flags )) lwa_flags = 0;
-        if (!(lwa_flags & LWA_ALPHA)) alpha = 255;
+        if (lwa_flags & LWA_ALPHA) alpha_bits = alpha << 24;
         if (!(lwa_flags & LWA_COLORKEY)) key = CLR_INVALID;
-        window_surface_set_layered( new_surface, key, alpha << 24, 0 );
+        window_surface_set_layered( new_surface, key, alpha_bits, 0 );
     }
 
     return new_surface;
