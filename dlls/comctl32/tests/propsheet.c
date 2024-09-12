@@ -1643,10 +1643,14 @@ static void test_hotkey_navigation(void)
 
     thread = CreateThread(NULL, 0, hotkey_dialog_thread, NULL, 0, NULL);
 
-    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+    WaitForSingleObject(hotkey_dialog_idle, 10000);
     ResetEvent(active_page_changed);
     success = SetForegroundWindow(hotkey_dialog);
-    ok(success, "SetForegroundWindow failed\n");
+    if (!success)
+    {
+        skip( "Window not in foreground\n" );
+        goto done;
+    }
     SetFocus(hotkey_dialog);
 
     control = (HWND)SendMessageA(hotkey_dialog, PSM_GETCURRENTPAGEHWND, 0, 0);
@@ -1665,7 +1669,7 @@ static void test_hotkey_navigation(void)
     WaitForSingleObject(active_page_changed, 1000);
     ok(active_page == 1, "Got %ld\n", active_page);
     PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
-    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+    WaitForSingleObject(hotkey_dialog_idle, 10000);
 
     inputs[0].ki.wVk = VK_CONTROL;
     inputs[0].ki.dwFlags = 0;
@@ -1679,7 +1683,7 @@ static void test_hotkey_navigation(void)
     WaitForSingleObject(active_page_changed, 1000);
     ok(active_page == 0, "Got %ld\n", active_page);
     PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
-    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+    WaitForSingleObject(hotkey_dialog_idle, 10000);
 
     inputs[0].ki.wVk = VK_CONTROL;
     inputs[0].ki.dwFlags = 0;
@@ -1693,7 +1697,7 @@ static void test_hotkey_navigation(void)
     WaitForSingleObject(active_page_changed, 1000);
     ok(active_page == 1, "Got %ld\n", active_page);
     PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
-    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+    WaitForSingleObject(hotkey_dialog_idle, 10000);
 
     inputs[0].ki.wVk = VK_CONTROL;
     inputs[0].ki.dwFlags = 0;
@@ -1711,10 +1715,11 @@ static void test_hotkey_navigation(void)
     WaitForSingleObject(active_page_changed, 1000);
     ok(active_page == 0, "Got %ld\n", active_page);
     PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
-    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+    WaitForSingleObject(hotkey_dialog_idle, 10000);
 
+done:
     PostMessageA(hotkey_dialog, WM_CLOSE, 0, 0);
-    WaitForSingleObject(thread, INFINITE);
+    WaitForSingleObject(thread, 10000);
     CloseHandle(thread);
     CloseHandle(hotkey_dialog_idle);
     CloseHandle(active_page_changed);
