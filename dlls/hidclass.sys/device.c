@@ -321,8 +321,9 @@ DWORD CALLBACK hid_device_thread(void *args)
     HID_XFER_PACKET *packet;
     HIDP_DEVICE_DESC *desc;
     IO_STATUS_BLOCK io;
+    NTSTATUS status;
     BYTE *buffer;
-    DWORD res;
+    IRP *irp;
 
     for (i = 0; i < ext->u.fdo.device_desc.CollectionDescLength; i++)
     {
@@ -340,6 +341,9 @@ DWORD CALLBACK hid_device_thread(void *args)
 
     do
     {
+        LARGE_INTEGER delay = {.QuadPart = (LONGLONG)ext->u.fdo.poll_interval * -10000};
+        KEVENT irp_event;
+
         packet->reportId = buffer[0] = report_id;
         packet->reportBuffer = buffer;
         packet->reportBufferLen = input_length;
@@ -350,8 +354,15 @@ DWORD CALLBACK hid_device_thread(void *args)
             packet->reportBufferLen--;
         }
 
-        call_minidriver( IOCTL_HID_READ_REPORT, device, NULL, 0,
-                         packet->reportBuffer, packet->reportBufferLen, &io );
+        KeInitializeEvent( &irp_event, NotificationEvent, FALSE );
+        irp = IoBuildDeviceIoControlRequest( IOCTL_HID_READ_REPORT, device, NULL, 0, packet->reportBuffer,
+                                             packet->reportBufferLen, TRUE, &irp_event, &io );
+        if (IoCallDriver( device, irp ) == STATUS_PENDING)
+        {
+            void *events[2] = {&irp_event, &ext->u.fdo.halt_event};
+            status = KeWaitForMultipleObjects( 2, events, WaitAny, Executive, KernelMode, FALSE, NULL, NULL );
+            if (status) break;
+        }
 
         if (io.Status == STATUS_SUCCESS)
         {
@@ -372,10 +383,11 @@ DWORD CALLBACK hid_device_thread(void *args)
             }
         }
 
-        res = WaitForSingleObject( ext->u.fdo.halt_event, ext->u.fdo.poll_interval );
-    } while (res == WAIT_TIMEOUT);
+        status = KeWaitForSingleObject( &ext->u.fdo.halt_event, Executive, KernelMode, FALSE, &delay );
+    } while (status == STATUS_TIMEOUT);
 
-    TRACE( "device thread exiting, res %#lx\n", res );
+    if (status) WARN( "device thread exiting with status %#lx\n", status );
+    else TRACE( "device thread exiting\n" );
     return 1;
 }
 

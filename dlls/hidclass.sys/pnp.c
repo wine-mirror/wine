@@ -251,7 +251,7 @@ static NTSTATUS initialize_device( minidriver *minidriver, DEVICE_OBJECT *device
     }
 
     ext->u.fdo.poll_interval = minidriver->minidriver.DevicesArePolled ? DEFAULT_POLL_INTERVAL : 0;
-    ext->u.fdo.halt_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    KeInitializeEvent( &ext->u.fdo.halt_event, NotificationEvent, FALSE );
     return STATUS_SUCCESS;
 }
 
@@ -377,10 +377,9 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_REMOVE_DEVICE:
             if (ext->u.fdo.thread)
             {
-                SetEvent(ext->u.fdo.halt_event);
+                KeSetEvent( &ext->u.fdo.halt_event, IO_NO_INCREMENT, FALSE );
                 WaitForSingleObject(ext->u.fdo.thread, INFINITE);
             }
-            CloseHandle(ext->u.fdo.halt_event);
 
             status = minidriver->PNPDispatch( device, irp );
             HidP_FreeCollectionDescription( &ext->u.fdo.device_desc );
@@ -390,7 +389,7 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             return status;
 
         case IRP_MN_SURPRISE_REMOVAL:
-            SetEvent(ext->u.fdo.halt_event);
+            KeSetEvent( &ext->u.fdo.halt_event, IO_NO_INCREMENT, FALSE );
             return STATUS_SUCCESS;
 
         default:

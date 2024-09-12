@@ -53,7 +53,7 @@ typedef struct _BASE_DEVICE_EXTENSION
             WCHAR serial[256];
 
             ULONG poll_interval;
-            HANDLE halt_event;
+            KEVENT halt_event;
             HANDLE thread;
 
             DEVICE_OBJECT **child_pdos;
