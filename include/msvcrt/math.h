@@ -426,5 +426,6 @@ static inline double y1( double x ) { return _y1( x ); }
 static inline double yn( int n, double x ) { return _yn( n, x ); }
 
 static inline float hypotf( float x, float y ) { return _hypotf( x, y ); }
+static inline long double atan2l( long double x, long double y ) { return atan2( (double)y, (double)x ); }
 
 #endif /* __WINE_MATH_H */
