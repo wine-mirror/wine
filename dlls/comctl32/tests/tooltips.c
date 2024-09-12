@@ -238,7 +238,13 @@ static void test_customdraw(void) {
        /* Put cursor inside window, tooltip will appear immediately */
        GetWindowRect( parent, &rect );
        SetCursorPos( (rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2 );
-       flush_events(200);
+       for (int i = 0; i < 10; i++)
+       {
+           flush_events(100);
+           ret = SendMessageA(hwndTip, TTM_GETCURRENTTOOLA, 0, 0);
+           if (ret) break;
+       }
+       ok(ret, "Failed to get current tool %#Ix.\n", ret);
 
        if (CD_Stages)
        {
@@ -247,9 +253,6 @@ static void test_customdraw(void) {
               "CustomDraw stages %x, expected %x\n", CD_Stages,
               expectedResults[iterationNumber].ExpectedCalls);
        }
-
-       ret = SendMessageA(hwndTip, TTM_GETCURRENTTOOLA, 0, 0);
-       ok(ret, "Failed to get current tool %#Ix.\n", ret);
 
        memset(&toolInfo, 0xcc, sizeof(toolInfo));
        toolInfo.cbSize = sizeof(toolInfo);
