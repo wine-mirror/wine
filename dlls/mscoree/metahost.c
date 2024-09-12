@@ -1632,7 +1632,7 @@ static DWORD get_assembly_search_flags(MonoAssemblyName *aname)
         return result;
     }
 
-    name_copy = malloc((strlen(name) + 3) * sizeof(WCHAR));
+    name_copy = malloc(strlen(name) + 3);
     if (!name_copy)
     {
         ERR("out of memory\n");
