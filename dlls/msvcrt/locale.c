@@ -1503,9 +1503,9 @@ static pthreadlocinfo create_locinfo(int category,
         }
         *locinfo->ctype1_refcount = 1;
 
-        locinfo->ctype1 = malloc(sizeof(short[257]));
-        locinfo->pclmap = malloc(sizeof(char[256]));
-        locinfo->pcumap = malloc(sizeof(char[256]));
+        locinfo->ctype1 = malloc(257 * sizeof(*locinfo->ctype1));
+        locinfo->pclmap = malloc(256 * sizeof(*locinfo->pclmap));
+        locinfo->pcumap = malloc(256 * sizeof(*locinfo->pcumap));
         if(!locinfo->ctype1 || !locinfo->pclmap || !locinfo->pcumap) {
             goto fail;
         }
