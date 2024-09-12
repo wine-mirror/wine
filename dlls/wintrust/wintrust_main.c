@@ -1088,7 +1088,7 @@ BOOL WINAPI WINTRUST_AddPrivData(CRYPT_PROVIDER_DATA *data,
         return FALSE;
     }
     data->pasProvPrivData = realloc(data->pasProvPrivData,
-     (data->csProvPrivData + 1) * sizeof(CRYPT_PROVIDER_SGNR));
+     (data->csProvPrivData + 1) * sizeof(*data->pasProvPrivData));
     if (data->pasProvPrivData)
     {
         DWORD i;
