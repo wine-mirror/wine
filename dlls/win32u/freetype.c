@@ -2159,7 +2159,7 @@ static int load_VDMX(struct gdi_font *font, int height)
     if(freetype_get_font_data(font, MS_VDMX_TAG, offset, &group, sizeof(group)) != GDI_ERROR) {
 	USHORT recs;
 	BYTE startsz, endsz;
-	WORD *vTable;
+	VDMX_vTable *vTable;
 
 	recs = GET_BE_WORD(group.recs);
 	startsz = group.startsz;
@@ -2167,8 +2167,8 @@ static int load_VDMX(struct gdi_font *font, int height)
 
 	TRACE("recs=%d  startsz=%d  endsz=%d\n", recs, startsz, endsz);
 
-	vTable = malloc( recs * sizeof(VDMX_vTable) );
-	result = freetype_get_font_data(font, MS_VDMX_TAG, offset + sizeof(group), vTable, recs * sizeof(VDMX_vTable));
+	vTable = malloc( recs * sizeof(*vTable) );
+	result = freetype_get_font_data(font, MS_VDMX_TAG, offset + sizeof(group), vTable, recs * sizeof(*vTable));
 	if(result == GDI_ERROR) {
 	    FIXME("Failed to retrieve vTable\n");
 	    goto end;
@@ -2176,9 +2176,9 @@ static int load_VDMX(struct gdi_font *font, int height)
 
 	if(height > 0) {
 	    for(i = 0; i < recs; i++) {
-                SHORT yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
-                SHORT yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
-                ppem = GET_BE_WORD(vTable[i * 3]);
+                SHORT yMax = GET_BE_WORD(vTable[i].yMax);
+                SHORT yMin = GET_BE_WORD(vTable[i].yMin);
+                ppem = GET_BE_WORD(vTable[i].yPelHeight);
 
 		if(yMax + -yMin == height) {
 		    font->yMax = yMax;
@@ -2191,9 +2191,9 @@ static int load_VDMX(struct gdi_font *font, int height)
 			ppem = 0;
 			goto end; /* failed */
 		    }
-		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
-		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
-                    ppem = GET_BE_WORD(vTable[i * 3]);
+		    font->yMax = GET_BE_WORD(vTable[i].yMax);
+		    font->yMin = GET_BE_WORD(vTable[i].yMin);
+                    ppem = GET_BE_WORD(vTable[i].yPelHeight);
                     TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
 		    break;
 		}
@@ -2212,7 +2212,7 @@ static int load_VDMX(struct gdi_font *font, int height)
 
 	    for(i = 0; i < recs; i++) {
 		USHORT yPelHeight;
-		yPelHeight = GET_BE_WORD(vTable[i * 3]);
+		yPelHeight = GET_BE_WORD(vTable[i].yPelHeight);
 
 		if(yPelHeight > ppem)
                 {
@@ -2221,8 +2221,8 @@ static int load_VDMX(struct gdi_font *font, int height)
                 }
 
 		if(yPelHeight == ppem) {
-		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
-		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
+		    font->yMax = GET_BE_WORD(vTable[i].yMax);
+		    font->yMin = GET_BE_WORD(vTable[i].yMin);
                     TRACE("ppem %d found; yMax=%d  yMin=%d\n", ppem, font->yMax, font->yMin);
 		    break;
 		}
