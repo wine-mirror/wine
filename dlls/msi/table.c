@@ -416,7 +416,7 @@ static UINT read_table_from_storage( MSIDATABASE *db, MSITABLE *t, IStorage *stg
 
     if ((t->row_count = rawsize / row_size))
     {
-        if (!(t->data = calloc( t->row_count, sizeof(USHORT *) ))) goto err;
+        if (!(t->data = calloc( t->row_count, sizeof(*t->data) ))) goto err;
         if (!(t->data_persistent = calloc( t->row_count, sizeof(BOOL) ))) goto err;
     }
 
