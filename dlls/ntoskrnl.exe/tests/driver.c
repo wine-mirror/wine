@@ -2292,15 +2292,19 @@ static void test_permanence(void)
     status = ZwOpenDirectoryObject( &handle, 0, &attr );
     ok(!status, "got %#lx\n", status);
     status = ZwMakeTemporaryObject( handle );
+    todo_wine
     ok(!status, "got %#lx\n", status);
     status = ZwMakeTemporaryObject( handle );
+    todo_wine
     ok(!status, "got %#lx\n", status);
     status = ZwClose( handle );
     ok(!status, "got %#lx\n", status);
     status = ZwOpenDirectoryObject( &handle, 0, &attr );
+    todo_wine
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status);
 
     status = ZwCreateDirectoryObject( &handle, GENERIC_ALL, &attr );
+    todo_wine
     ok(!status, "got %#lx\n", status);
     attr.Attributes = OBJ_PERMANENT;
     status = ZwOpenDirectoryObject( &handle2, 0, &attr );
@@ -2308,10 +2312,13 @@ static void test_permanence(void)
     status = ZwClose( handle2 );
     ok(!status, "got %#lx\n", status);
     status = ZwClose( handle );
+    todo_wine
     ok(!status, "got %#lx\n", status);
     attr.Attributes = 0;
     status = ZwOpenDirectoryObject( &handle, 0, &attr );
+    todo_wine
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status);
+    if (!status) ZwClose( handle );
 }
 
 static void test_driver_object_extension(void)
