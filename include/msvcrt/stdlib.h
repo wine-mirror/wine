@@ -129,6 +129,8 @@ _ACRTIMP __msvcrt_ulong* __cdecl __doserrno(void);
 #define _doserrno              (*__doserrno())
 _ACRTIMP int*            __cdecl _errno(void);
 #define errno                  (*_errno())
+_ACRTIMP int*            __cdecl __sys_nerr(void);
+#define _sys_nerr              (*__sys_nerr())
 
 /* FIXME: We need functions to access these:
  * int _sys_nerr;
