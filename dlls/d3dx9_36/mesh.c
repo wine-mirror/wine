@@ -2967,7 +2967,7 @@ static HRESULT parse_vertex_colors(ID3DXFileData *filedata, struct mesh_data *me
         goto end;
     }
 
-    mesh->vertex_colors = malloc(mesh->num_vertices * sizeof(uint32_t));
+    mesh->vertex_colors = malloc(mesh->num_vertices * sizeof(*mesh->vertex_colors));
     if (!mesh->vertex_colors) {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -3060,7 +3060,7 @@ static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh, DW
     }
 
     mesh->normals = malloc(mesh->num_normals * sizeof(D3DXVECTOR3));
-    mesh->normal_indices = malloc(num_face_indices * sizeof(uint32_t));
+    mesh->normal_indices = malloc(num_face_indices * sizeof(*mesh->normal_indices));
     if (!mesh->normals || !mesh->normal_indices) {
         hr = E_OUTOFMEMORY;
         goto end;
