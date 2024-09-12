@@ -2978,6 +2978,7 @@ WINBASEAPI UINT        WINAPI _lwrite(HFILE,LPCSTR,UINT);
 #define     ZeroMemory RtlZeroMemory
 #define     CopyMemory RtlCopyMemory
 #define     SecureZeroMemory RtlSecureZeroMemory
+#define     CaptureStackBackTrace RtlCaptureStackBackTrace
 
 /* Wine internal functions */
 
