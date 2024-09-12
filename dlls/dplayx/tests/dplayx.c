@@ -2043,7 +2043,22 @@ static void test_GetCaps(void)
     IDirectPlayX_Release( pDP );
 }
 
-static void test_EnumAddressTypes(void)
+static int enum_addresses_cb_count = 0;
+static BOOL CALLBACK EnumAddressesCallback(REFGUID guidDataType, DWORD size, const void *data, void *context)
+{
+    if (IsEqualGUID(guidDataType, &DPAID_TotalSize))
+        enum_addresses_cb_count++;
+    else if (IsEqualGUID(guidDataType, &DPAID_ServiceProvider))
+        enum_addresses_cb_count++;
+    else if(IsEqualGUID(guidDataType, &invalid_guid))
+        enum_addresses_cb_count++;
+    else
+        ok(0, "guidDataType %s\n", wine_dbgstr_guid(guidDataType));
+
+    return TRUE;
+}
+
+static void test_EnumAddresses(void)
 {
     IDirectPlay4 *pDP;
     HRESULT hr;
@@ -2083,11 +2098,45 @@ static void test_EnumAddressTypes(void)
         checkHR( DP_OK, hr );
     }
 
+    enum_addresses_cb_count = 0;
+    hr = IDirectPlayLobby_EnumAddress(pDPL, EnumAddressesCallback, pAddress, dwAddressSize, NULL);
+    ok (SUCCEEDED (hr), "IDirectPlayLobby3A_EnumAddress %lx\n", hr);
+    todo_wine ok (enum_addresses_cb_count == 3, "wrong count %d\n", enum_addresses_cb_count);
+
     IDirectPlayX_Close(pDP);
     IDirectPlayX_Release(pDP);
     IDirectPlayLobby_Release(pDPL);
 
     free( pAddress );
+}
+
+static int enum_address_cb_count = 0;
+static BOOL CALLBACK EnumAddressTypeCallback(REFGUID guidDataType, LPVOID lpContext, DWORD flags)
+{
+    if (IsEqualGUID(guidDataType, &DPAID_INet))
+        enum_address_cb_count++;
+    else
+        ok(0, "guidDataType %s\n", wine_dbgstr_guid(guidDataType));
+
+    return TRUE;
+}
+
+static void test_EnumAddressTypes(void)
+{
+    HRESULT hr;
+    IDirectPlayLobby3 *pDPL;
+
+    hr = CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+    ok (SUCCEEDED (hr), "CCI of CLSID_DirectPlayLobby / IID_IDirectPlayLobby3A failed\n");
+    if (FAILED (hr)) return;
+
+    enum_address_cb_count = 0;
+    hr = IDirectPlayLobby_EnumAddressTypes(pDPL, EnumAddressTypeCallback, &DPSPGUID_TCPIP, NULL, 0);
+    ok (SUCCEEDED (hr), "IDirectPlayLobby3A_EnumAddress %lx\n", hr);
+    todo_wine ok (enum_address_cb_count == 1, "IDirectPlayLobby3A_EnumAddress %lx\n", hr);
+
+    IDirectPlayLobby_Release(pDPL);
 }
 
 /* Open */
@@ -8730,6 +8779,7 @@ START_TEST(dplayx)
     test_InitializeConnection();
     test_GetCaps();
     test_EnumAddressTypes();
+    test_EnumAddresses();
     test_EnumSessions();
     test_Open();
     test_ADDFORWARD();
