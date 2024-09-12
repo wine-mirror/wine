@@ -109,7 +109,18 @@
 /* import variables */
 
 #ifdef __WINE_PE_BUILD
-# ifdef _WIN64
+# ifdef __arm64ec__
+#  define __ASM_DEFINE_IMPORT(name) \
+    asm( ".data\n\t" \
+         ".balign 8\n\t" \
+         ".globl __imp_" name "\n" \
+         "__imp_" name ":\n\t" \
+         ".quad \"#" name "\"\n\t" \
+         ".globl __imp_aux_" name "\n" \
+         "__imp_aux_" name ":\n\t" \
+         ".quad " name "\n\t" \
+         ".text" );
+# elif defined(_WIN64)
 #  define __ASM_DEFINE_IMPORT(name) \
     __ASM_BLOCK_BEGIN(__LINE__) \
     asm( ".data\n\t" \
