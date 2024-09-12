@@ -48,9 +48,10 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
     switch(brush->bt){
         case BrushTypeSolidColor:
         {
-            *clone = malloc(sizeof(GpSolidFill));
-            if (!*clone) return OutOfMemory;
-            memcpy(*clone, brush, sizeof(GpSolidFill));
+            GpSolidFill *dest = malloc(sizeof(*dest));
+            if (!dest) return OutOfMemory;
+            memcpy(dest, brush, sizeof(*dest));
+            *clone = &dest->brush;
             break;
         }
         case BrushTypeHatchFill:
@@ -64,11 +65,10 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
             INT count, pcount;
             GpStatus stat;
 
-            *clone = malloc(sizeof(GpPathGradient));
-            if (!*clone) return OutOfMemory;
+            dest = malloc(sizeof(*dest));
+            if (!dest) return OutOfMemory;
 
             src = (GpPathGradient*) brush;
-            dest = (GpPathGradient*) *clone;
 
             memcpy(dest, src, sizeof(GpPathGradient));
 

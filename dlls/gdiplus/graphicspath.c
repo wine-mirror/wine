@@ -2269,7 +2269,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
 
         if (!custom->fill)
         {
-            tmp_points = malloc(custom->pathdata.Count * sizeof(GpPoint));
+            tmp_points = malloc(custom->pathdata.Count * sizeof(*tmp_points));
             if (!tmp_points) {
                 ERR("Out of memory\n");
                 return;
@@ -2433,7 +2433,7 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
     for (i = 0; i < dash_count; i++)
         dash_pattern_scaled[i] = dash_pattern_scaling * dash_pattern[i];
 
-    tmp_points = calloc(end - start + 2, sizeof(GpPoint));
+    tmp_points = calloc(end - start + 2, sizeof(*tmp_points));
     if (!tmp_points) {
         free(dash_pattern_scaled);
         return; /* FIXME */
