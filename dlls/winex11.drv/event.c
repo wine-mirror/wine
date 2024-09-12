@@ -1791,7 +1791,7 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
 
 static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
 {
-    struct dnd_drop_event_params params = {.dispatch.callback = dnd_leave_event_callback, .hwnd = HandleToULong(hwnd)};
+    struct dnd_drop_event_params params = {.dispatch.callback = dnd_drop_event_callback, .hwnd = HandleToULong(hwnd)};
     XClientMessageEvent e;
     void *ret_ptr;
     ULONG ret_len;
