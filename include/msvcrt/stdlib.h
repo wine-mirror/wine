@@ -122,7 +122,9 @@ extern unsigned int _fmode;
 #endif  /* __i386__ */
 
 _ACRTIMP int             __cdecl ___mb_cur_max_func(void);
+_ACRTIMP int             __cdecl ___mb_cur_max_l_func(_locale_t);
 #define __mb_cur_max             ___mb_cur_max_func()
+#define MB_CUR_MAX               ___mb_cur_max_func()
 _ACRTIMP __msvcrt_ulong* __cdecl __doserrno(void);
 #define _doserrno              (*__doserrno())
 _ACRTIMP int*            __cdecl _errno(void);
