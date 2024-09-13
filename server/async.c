@@ -819,7 +819,7 @@ DECL_HANDLER(cancel_async)
     if (obj)
     {
         int count = cancel_async( current->process, obj, thread, req->iosb );
-        if (!count && req->iosb) set_error( STATUS_NOT_FOUND );
+        if (!count && !thread) set_error( STATUS_NOT_FOUND );
         release_object( obj );
     }
 }

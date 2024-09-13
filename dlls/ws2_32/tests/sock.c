@@ -14286,7 +14286,7 @@ static DWORD WINAPI test_send_buffering_thread(void *arg)
     ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u.\n", WSAGetLastError());
     ok(d->sent_size, "got 0.\n");
     ret = CancelIoEx((HANDLE)d->server, NULL);
-    todo_wine ok(!ret && GetLastError() == ERROR_NOT_FOUND, "got ret %d, error %lu.\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_NOT_FOUND, "got ret %d, error %lu.\n", ret, GetLastError());
     ret = CancelIo((HANDLE)d->server);
     ok(ret, "got error %lu.\n", GetLastError());
     shutdown(d->server, SD_BOTH);

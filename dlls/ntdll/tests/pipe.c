@@ -614,6 +614,10 @@ static void test_cancelio(void)
 
     ok(ioapc_called, "IOAPC didn't run\n");
 
+    res = pNtCancelIoFile(hPipe, &cancel_sb);
+    ok(!res, "NtCancelIoFile returned %lx\n", res);
+    ok(iosb.Status == STATUS_CANCELLED, "Wrong iostatus %lx\n", iosb.Status);
+
     CloseHandle(hPipe);
 
     if (pNtCancelIoFileEx)
@@ -630,6 +634,11 @@ static void test_cancelio(void)
 
         ok(iosb.Status == STATUS_CANCELLED, "Wrong iostatus %lx\n", iosb.Status);
         ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
+
+        iosb.Status = 0xdeadbeef;
+        res = pNtCancelIoFileEx(hPipe, NULL, &cancel_sb);
+        ok(res == STATUS_NOT_FOUND, "NtCancelIoFileEx returned %lx\n", res);
+        ok(iosb.Status == 0xdeadbeef, "Wrong iostatus %lx\n", iosb.Status);
 
         CloseHandle(hPipe);
     }
