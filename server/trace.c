@@ -2209,8 +2209,8 @@ static void dump_recv_socket_reply( const struct recv_socket_reply *req )
 
 static void dump_send_socket_request( const struct send_socket_request *req )
 {
-    dump_async_data( " async=", &req->async );
-    fprintf( stderr, ", force_async=%d", req->force_async );
+    fprintf( stderr, " flags=%08x", req->flags );
+    dump_async_data( ", async=", &req->async );
 }
 
 static void dump_send_socket_reply( const struct send_socket_reply *req )

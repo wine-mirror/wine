@@ -1577,14 +1577,16 @@ enum server_fd_type
 
 /* Perform a send on a socket */
 @REQ(send_socket)
+    unsigned int flags;         /* SERVER_SOCKET_IO_* flags */
     async_data_t async;         /* async I/O parameters */
-    int          force_async;   /* Force asynchronous mode? */
 @REPLY
     obj_handle_t wait;          /* handle to wait on for blocking send */
     unsigned int options;       /* device open options */
     int          nonblocking;   /* is socket non-blocking? */
 @END
 
+#define SERVER_SOCKET_IO_FORCE_ASYNC 0x01
+#define SERVER_SOCKET_IO_SYSTEM      0x02
 
 /* Get socket event flags */
 @REQ(socket_get_events)

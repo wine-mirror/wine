@@ -57,6 +57,7 @@ struct async
     unsigned int         canceled :1;     /* have we already queued cancellation for this async? */
     unsigned int         unknown_status :1; /* initial status is not known yet */
     unsigned int         blocking :1;     /* async is blocking */
+    unsigned int         is_system :1;    /* background system operation not affecting userspace visible state. */
     struct completion   *completion;      /* completion associated with fd */
     apc_param_t          comp_key;        /* completion key associated with fd */
     unsigned int         comp_flags;      /* completion flags */
@@ -243,7 +244,7 @@ void queue_async( struct async_queue *queue, struct async *async )
     grab_object( async );
     list_add_tail( &queue->queue, &async->queue_entry );
 
-    set_fd_signaled( async->fd, 0 );
+    if (!async->is_system) set_fd_signaled( async->fd, 0 );
 }
 
 /* create an async on a given queue of a fd */
@@ -277,6 +278,7 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
     async->canceled      = 0;
     async->unknown_status = 0;
     async->blocking      = !is_fd_overlapped( fd );
+    async->is_system     = 0;
     async->completion    = fd_get_completion( fd, &async->comp_key );
     async->comp_flags    = 0;
     async->completion_callback = NULL;
@@ -529,7 +531,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             }
 
             if (async->event) set_event( async->event );
-            else if (async->fd) set_fd_signaled( async->fd, 1 );
+            else if (async->fd && !async->is_system) set_fd_signaled( async->fd, 1 );
         }
 
         if (!async->signaled)
@@ -584,7 +586,7 @@ static int cancel_async( struct process *process, struct object *obj, struct thr
 restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
-        if (async->terminated || async->canceled) continue;
+        if (async->terminated || async->canceled || async->is_system) continue;
         if ((!obj || (get_fd_user( async->fd ) == obj)) &&
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
@@ -621,7 +623,16 @@ restart:
 
 void cancel_process_asyncs( struct process *process )
 {
-    cancel_async( process, NULL, NULL, 0 );
+    struct async *async;
+
+restart:
+    LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
+    {
+        if (async->terminated || async->canceled) continue;
+        async->canceled = 1;
+        fd_cancel_async( async->fd, async );
+        goto restart;
+    }
 }
 
 int async_close_obj_handle( struct object *obj, struct process *process, obj_handle_t handle )
@@ -655,6 +666,7 @@ restart:
     {
         if (async->thread != thread || async->terminated || async->canceled) continue;
         if (async->completion && async->data.apc_context && !async->event) continue;
+        if (async->is_system) continue;
 
         async->canceled = 1;
         fd_cancel_async( async->fd, async );
@@ -741,7 +753,7 @@ static struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_
 
 /* create an async associated with iosb for async-based requests
  * returned async must be passed to async_handoff */
-struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data )
+struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data, int is_system )
 {
     struct async *async;
     struct iosb *iosb;
@@ -760,6 +772,7 @@ struct async *create_request_async( struct fd *fd, unsigned int comp_flags, cons
         }
         async->pending       = 0;
         async->direct_result = 1;
+        async->is_system     = !!is_system;
         async->comp_flags    = comp_flags;
     }
     return async;
