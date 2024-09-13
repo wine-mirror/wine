@@ -116,6 +116,7 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
                 memcpy(dest->pblendpos, src->pblendpos, pcount * sizeof(REAL));
             }
 
+            *clone = &dest->brush;
             break;
         }
         case BrushTypeLinearGradient:{
