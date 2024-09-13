@@ -158,7 +158,9 @@ static nsresult NSAPI nsDOMEventListener_HandleEvent(nsIDOMEventListener *iface,
     if(window)
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
+    block_task_processing();
     nsres = This->handler(doc, event);
+    unblock_task_processing();
 
     if(window)
         IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);

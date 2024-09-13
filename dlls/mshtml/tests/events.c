@@ -31,6 +31,7 @@
 #include "mshtmdid.h"
 #include "mshtmhst.h"
 #include "docobj.h"
+#include "docobjectservice.h"
 #include "hlink.h"
 #include "wininet.h"
 #include "shdeprecated.h"
@@ -5260,6 +5261,59 @@ static const IOleDocumentSiteVtbl DocumentSiteVtbl = {
 
 static IOleDocumentSite DocumentSite = { &DocumentSiteVtbl };
 
+static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI OleCommandTarget_AddRef(IOleCommandTarget *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI OleCommandTarget_Release(IOleCommandTarget *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    ok(!pguidCmdGroup, "pguidCmdGroup != MULL\n");
+    ok(cCmds == 1, "cCmds=%ld, expected 1\n", cCmds);
+    ok(!pCmdText, "pCmdText != NULL\n");
+
+    switch(prgCmds[0].cmdID) {
+    case OLECMDID_SETPROGRESSTEXT:
+        prgCmds[0].cmdf = OLECMDF_ENABLED;
+        return S_OK;
+    case OLECMDID_OPEN:
+    case OLECMDID_NEW:
+        prgCmds[0].cmdf = 0;
+        return S_OK;
+    default:
+        ok(0, "unexpected command %ld\n", prgCmds[0].cmdID);
+    };
+
+    return E_FAIL;
+}
+
+static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup, DWORD nCmdID,
+        DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    return E_FAIL;
+}
+
+static IOleCommandTargetVtbl OleCommandTargetVtbl = {
+    OleCommandTarget_QueryInterface,
+    OleCommandTarget_AddRef,
+    OleCommandTarget_Release,
+    OleCommandTarget_QueryStatus,
+    OleCommandTarget_Exec
+};
+
+static IOleCommandTarget OleCommandTarget = { &OleCommandTargetVtbl };
+
 static HRESULT WINAPI TravelLog_QueryInterface(ITravelLog *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITravelLog, riid))
@@ -5672,12 +5726,104 @@ static const IShellBrowserVtbl ShellBrowserVtbl = {
 
 static IShellBrowser ShellBrowser = { &ShellBrowserVtbl };
 
+static HRESULT WINAPI DocObjectService_QueryInterface(IDocObjectService *iface, REFIID riid, void **ppv)
+{
+    return browserservice_qi(riid, ppv);
+}
+
+static ULONG WINAPI DocObjectService_AddRef(IDocObjectService *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DocObjectService_Release(IDocObjectService *iface)
+{
+    return 1;
+}
+
+static HRESULT  WINAPI DocObjectService_FireBeforeNavigate2(IDocObjectService *iface, IDispatch *pDispatch, LPCWSTR lpszUrl, DWORD dwFlags,
+        LPCWSTR lpszFrameName, BYTE *pPostData, DWORD cbPostData, LPCWSTR lpszHeaders, BOOL fPlayNavSound, BOOL *pfCancel)
+{
+    return S_OK;
+}
+
+static HRESULT  WINAPI DocObjectService_FireNavigateComplete2(IDocObjectService *iface, IHTMLWindow2 *pHTMLWindow2, DWORD dwFlags)
+{
+    return S_OK;
+}
+
+static HRESULT  WINAPI DocObjectService_FireDownloadBegin(IDocObjectService *iface)
+{
+    return S_OK;
+}
+
+static HRESULT  WINAPI DocObjectService_FireDownloadComplete(IDocObjectService *iface)
+{
+    return S_OK;
+}
+
+static HRESULT  WINAPI DocObjectService_FireDocumentComplete(IDocObjectService *iface, IHTMLWindow2 *pHTMLWindow, DWORD dwFlags)
+{
+    ok(!nav_notif_test_depth, "nav_notif_test_depth = %u\n", nav_notif_test_depth);
+    if(in_nav_notif_test == 21)
+        nav_notif_test();
+    return S_OK;
+}
+
+static HRESULT  WINAPI DocObjectService_UpdateDesktopComponent(IDocObjectService *iface, IHTMLWindow2 *pHTMLWindow)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_GetPendingUrl(IDocObjectService *iface, BSTR *pbstrPendingUrl)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_ActiveElementChanged(IDocObjectService *iface, IHTMLElement *pHTMLElement)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_GetUrlSearchComponent(IDocObjectService *iface, BSTR *pbstrSearch)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_IsErrorUrl(IDocObjectService *iface, LPCWSTR lpszUrl, BOOL *pfIsError)
+{
+    *pfIsError = FALSE;
+    return S_OK;
+}
+
+static IDocObjectServiceVtbl DocObjectServiceVtbl = {
+    DocObjectService_QueryInterface,
+    DocObjectService_AddRef,
+    DocObjectService_Release,
+    DocObjectService_FireBeforeNavigate2,
+    DocObjectService_FireNavigateComplete2,
+    DocObjectService_FireDownloadBegin,
+    DocObjectService_FireDownloadComplete,
+    DocObjectService_FireDocumentComplete,
+    DocObjectService_UpdateDesktopComponent,
+    DocObjectService_GetPendingUrl,
+    DocObjectService_ActiveElementChanged,
+    DocObjectService_GetUrlSearchComponent,
+    DocObjectService_IsErrorUrl
+};
+
+static IDocObjectService DocObjectService = { &DocObjectServiceVtbl };
+
 static HRESULT browserservice_qi(REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IShellBrowser, riid))
         *ppv = &ShellBrowser;
     else if(IsEqualGUID(&IID_IBrowserService, riid))
         *ppv = &BrowserService;
+    else if(IsEqualGUID(&IID_IDocObjectService, riid))
+        *ppv = &DocObjectService;
     else {
         *ppv = NULL;
         return E_NOINTERFACE;
@@ -6228,6 +6374,8 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &DocumentSite;
     else if(IsEqualGUID(&IID_IOleWindow, riid) || IsEqualGUID(&IID_IOleInPlaceSite, riid))
         *ppv = &InPlaceSite;
+    else if(IsEqualGUID(&IID_IOleCommandTarget , riid))
+        *ppv = &OleCommandTarget;
     else if(IsEqualGUID(&IID_IServiceProvider, riid))
         *ppv = &ServiceProvider;
 
@@ -6266,6 +6414,8 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
 
         if(in_nav_notif_test == 11)
             nav_notif_test();
+        else if(in_nav_notif_test == 21)
+            return S_OK;
 
         ok(nav_notif_test_depth < 2, "nav_notif_test_depth = %u\n", nav_notif_test_depth);
 
@@ -7505,7 +7655,7 @@ static void test_navigation_during_notif(void)
     BSTR url;
     MSG msg;
 
-    for(i = 0; i < 2; i++) {
+    for(i = 0; i < 3; i++) {
         if(!(doc = create_document()))
             return;
 
