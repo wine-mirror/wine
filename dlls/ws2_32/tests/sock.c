@@ -6883,9 +6883,9 @@ static void test_write_events(struct event_test_ctx *ctx)
 
     if (!broken(1))
     {
-        /* Windows will never send less than buffer_size bytes here, but Linux
-         * may do a short write. */
-        while ((ret = send(server, buffer, buffer_size, 0)) > 0);
+        /* Windows will never send less than buffer_size bytes here. */
+        while ((ret = send(server, buffer, buffer_size, 0)) > 0)
+            ok(ret == buffer_size, "got %d.\n", ret);
         ok(ret == -1, "got %d\n", ret);
         ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
@@ -14263,6 +14263,116 @@ static void test_broadcast(void)
     closesocket(s);
 }
 
+struct test_send_buffering_data
+{
+    int buffer_size;
+    int sent_size;
+    SOCKET server;
+    char *buffer;
+};
+
+static DWORD WINAPI test_send_buffering_thread(void *arg)
+{
+    struct test_send_buffering_data *d = arg;
+    int ret;
+
+    d->sent_size = 0;
+    while ((ret = send(d->server, d->buffer, d->buffer_size, 0)) > 0)
+    {
+        todo_wine ok(ret == d->buffer_size, "got %d.\n", ret);
+        d->sent_size += ret;
+    }
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u.\n", WSAGetLastError());
+    ok(d->sent_size, "got 0.\n");
+    ret = CancelIoEx((HANDLE)d->server, NULL);
+    todo_wine ok(!ret && GetLastError() == ERROR_NOT_FOUND, "got ret %d, error %lu.\n", ret, GetLastError());
+    ret = CancelIo((HANDLE)d->server);
+    ok(ret, "got error %lu.\n", GetLastError());
+    shutdown(d->server, SD_BOTH);
+    closesocket(d->server);
+    return 0;
+}
+
+static void test_send_buffering(void)
+{
+    static const char test_data[] = "abcdefg01234567";
+
+    struct test_send_buffering_data d;
+    int ret, recv_size, i;
+    SOCKET client;
+    HANDLE thread;
+
+    d.buffer_size = 1024 * 1024 * 50;
+    d.buffer = malloc(d.buffer_size);
+
+    for (i = 0; i < d.buffer_size; ++i)
+        d.buffer[i] = test_data[i % sizeof(test_data)];
+
+    tcp_socketpair(&client, &d.server);
+    set_blocking(client, FALSE);
+    set_blocking(d.server, FALSE);
+
+    d.sent_size = 0;
+    while ((ret = send(d.server, d.buffer, d.buffer_size, 0)) > 0)
+    {
+        todo_wine ok(ret == d.buffer_size, "got %d.\n", ret);
+        d.sent_size += ret;
+    }
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u.\n", WSAGetLastError());
+    ok(d.sent_size, "got 0.\n");
+    closesocket(d.server);
+
+    recv_size = 0;
+    while ((ret = recv(client, d.buffer, d.buffer_size, 0)) > 0 || WSAGetLastError() == WSAEWOULDBLOCK)
+    {
+        if (ret < 0)
+            continue;
+        for (i = 0; i < ret; ++i)
+        {
+            if (d.buffer[i] != test_data[(recv_size + i) % sizeof(test_data)])
+                break;
+        }
+        ok(i == ret, "data mismatch.\n");
+        recv_size += ret;
+        ok(recv_size <= d.sent_size, "got ret %d, recv_size %d, sent_size %d.\n", ret, recv_size, d.sent_size);
+    }
+    ok(!ret && !WSAGetLastError(), "got ret %d, error %u.\n", ret, WSAGetLastError());
+    ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
+    closesocket(client);
+
+    /* Test with the other thread which terminates before the data is actually sent. */
+    for (i = 0; i < d.buffer_size; ++i)
+        d.buffer[i] = test_data[i % sizeof(test_data)];
+
+    tcp_socketpair(&client, &d.server);
+    set_blocking(client, FALSE);
+    set_blocking(d.server, FALSE);
+
+    thread = CreateThread(NULL, 0, test_send_buffering_thread, &d, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    recv_size = 0;
+    while ((ret = recv(client, d.buffer, d.buffer_size, 0)) > 0 || WSAGetLastError() == WSAEWOULDBLOCK)
+    {
+        if (ret < 0)
+            continue;
+        for (i = 0; i < ret; ++i)
+        {
+            if (d.buffer[i] != test_data[(recv_size + i) % sizeof(test_data)])
+                break;
+        }
+        ok(i == ret, "data mismatch.\n");
+        recv_size += ret;
+        ok(recv_size <= d.sent_size, "got ret %d, recv_size %d, sent_size %d.\n", ret, recv_size, d.sent_size);
+    }
+    ok(!ret && !WSAGetLastError(), "got ret %d, error %u.\n", ret, WSAGetLastError());
+    ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
+    closesocket(client);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -14346,6 +14456,7 @@ START_TEST( sock )
     test_connect_udp();
     test_tcp_sendto_recvfrom();
     test_broadcast();
+    test_send_buffering();
 
     /* There is apparently an obscure interaction between this test and
      * test_WSAGetOverlappedResult().
