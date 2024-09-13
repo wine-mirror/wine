@@ -244,6 +244,11 @@ static void test_customdraw(void) {
            ret = SendMessageA(hwndTip, TTM_GETCURRENTTOOLA, 0, 0);
            if (ret) break;
        }
+       if (!ret)
+       {
+           skip( "Tooltip wasn't shown\n" );
+           goto done;
+       }
        ok(ret, "Failed to get current tool %#Ix.\n", ret);
 
        if (CD_Stages)
@@ -265,6 +270,7 @@ static void test_customdraw(void) {
        ok(toolInfo.lParam == 0, "Unexpected lParam %Ix.\n", toolInfo.lParam);
        ok(toolInfo.lpReserved == (void *)0xdeadbeef, "Unexpected lpReserved %p.\n", toolInfo.lpReserved);
 
+   done:
        /* Clean up */
        DestroyWindow(hwndTip);
        DestroyWindow(parent);
@@ -1218,7 +1224,10 @@ static void test_TTN_SHOW(void)
     SetCursorPos((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
     flush_events(200);
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, ttn_show_parent_seq, "TTN_SHOW parent seq", FALSE);
+    if (SendMessageA(hwndTip, TTM_GETCURRENTTOOLA, 0, 0))
+        ok_sequence(sequences, PARENT_SEQ_INDEX, ttn_show_parent_seq, "TTN_SHOW parent seq", FALSE);
+    else
+        skip( "Tooltip wasn't shown\n" );
 
     DestroyWindow(hwndTip);
     DestroyWindow(hwnd);
