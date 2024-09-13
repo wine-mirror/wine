@@ -3425,8 +3425,415 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
 }
 
+#define check_dds_pixel_format_struct(pixel_format, expected_pixel_format, wine_todo) \
+    check_dds_pixel_format_struct_(__FILE__, __LINE__, pixel_format, expected_pixel_format, wine_todo)
+static void check_dds_pixel_format_struct_(const char *file, uint32_t line, const struct dds_pixel_format *pixel_format,
+        const struct dds_pixel_format *expected_pixel_format, BOOL wine_todo)
+{
+    BOOL matched;
+
+    matched = !memcmp(expected_pixel_format, pixel_format, sizeof(*pixel_format));
+    todo_wine_if(wine_todo) ok_(file, line)(matched, "Got unexpected dds pixel format values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && pixel_format->flags != expected_pixel_format->flags)
+        ok_(file, line)(pixel_format->flags == expected_pixel_format->flags, "Unexpected DDS pixel format flags %#lx.\n",
+                pixel_format->flags);
+    todo_wine_if(wine_todo && pixel_format->fourcc != expected_pixel_format->fourcc)
+        ok_(file, line)(pixel_format->fourcc == expected_pixel_format->fourcc, "Unexpected DDS pixel format fourcc %#lx.\n",
+                pixel_format->fourcc);
+    todo_wine_if(wine_todo && pixel_format->bpp != expected_pixel_format->bpp)
+        ok_(file, line)(pixel_format->bpp == expected_pixel_format->bpp, "Unexpected DDS pixel format bpp %#lx.\n",
+                pixel_format->bpp);
+    todo_wine_if(wine_todo && pixel_format->rmask != expected_pixel_format->rmask)
+        ok_(file, line)(pixel_format->rmask == expected_pixel_format->rmask, "Unexpected DDS pixel format rmask %#lx.\n",
+                pixel_format->rmask);
+    todo_wine_if(wine_todo && pixel_format->gmask != expected_pixel_format->gmask)
+        ok_(file, line)(pixel_format->gmask == expected_pixel_format->gmask, "Unexpected DDS pixel format gmask %#lx.\n",
+                pixel_format->gmask);
+    todo_wine_if(wine_todo && pixel_format->bmask != expected_pixel_format->bmask)
+        ok_(file, line)(pixel_format->bmask == expected_pixel_format->bmask, "Unexpected DDS pixel format bmask %#lx.\n",
+                pixel_format->bmask);
+    todo_wine_if(wine_todo && pixel_format->amask != expected_pixel_format->amask)
+        ok_(file, line)(pixel_format->amask == expected_pixel_format->amask, "Unexpected DDS pixel format amask %#lx.\n",
+                pixel_format->amask);
+}
+
+#define check_dds_header(header, flags, height, width, pitch, depth, mip_levels, pixel_format, caps, caps2, wine_todo) \
+    check_dds_header_(__FILE__, __LINE__, header, flags, height, width, pitch, depth, mip_levels, pixel_format, \
+                      caps, caps2, wine_todo)
+static void check_dds_header_(const char *file, uint32_t line, const struct dds_header *header, uint32_t flags,
+        uint32_t height, uint32_t width, uint32_t pitch, uint32_t depth, uint32_t mip_levels,
+        const struct dds_pixel_format *pixel_format, uint32_t caps, uint32_t caps2, BOOL wine_todo)
+{
+    const struct dds_header expected_header = { sizeof(*header), flags, height, width, pitch, depth, mip_levels, { 0 },
+                                                *pixel_format, caps, caps2, 0, 0, 0 };
+    BOOL matched;
+
+    matched = !memcmp(&expected_header, header, sizeof(*header));
+    todo_wine_if(wine_todo) ok_(file, line)(matched, "Got unexpected dds header values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && header->flags != flags)
+        ok_(file, line)(header->flags == flags, "Unexpected DDS header flags %#lx.\n", header->flags);
+    todo_wine_if(wine_todo && header->width != width)
+        ok_(file, line)(header->width == width, "Unexpected DDS header width %#lx.\n", header->width);
+    todo_wine_if(wine_todo && header->height != height)
+        ok_(file, line)(header->height == height, "Unexpected DDS header height %#lx.\n", header->height);
+    todo_wine_if(wine_todo && header->pitch_or_linear_size != pitch)
+        ok_(file, line)(header->pitch_or_linear_size == pitch, "Unexpected DDS header pitch %#lx.\n",
+                header->pitch_or_linear_size);
+    todo_wine_if(wine_todo && header->depth != depth)
+        ok_(file, line)(header->depth == depth, "Unexpected DDS header depth %#lx.\n", header->depth);
+    todo_wine_if(wine_todo && header->miplevels != mip_levels)
+        ok_(file, line)(header->miplevels == mip_levels, "Unexpected DDS header mip levels %#lx.\n", header->miplevels);
+    ok_(file, line)(!memcmp(header->reserved, expected_header.reserved, sizeof(header->reserved)),
+            "Unexpected values in DDS header reserved field.");
+    check_dds_pixel_format_struct(&header->pixel_format, pixel_format, FALSE);
+    todo_wine_if(wine_todo && header->caps != caps)
+        ok_(file, line)(header->caps == caps, "Unexpected DDS header caps %#lx.\n", header->caps);
+    todo_wine_if(wine_todo && header->caps2 != caps2)
+        ok_(file, line)(header->caps2 == caps2, "Unexpected DDS header caps2 %#lx.\n", header->caps2);
+    ok_(file, line)(!header->caps3, "Unexpected DDS header caps3 %#lx.\n", header->caps3);
+    ok_(file, line)(!header->caps4, "Unexpected DDS header caps4 %#lx.\n", header->caps4);
+    ok_(file, line)(!header->reserved2, "Unexpected DDS header reserved2 %#lx.\n", header->reserved2);
+}
+
+#define DDS_FILE_HEADER_SIZE (sizeof(uint32_t) + sizeof(struct dds_header))
+#define PALETTED_DDS_FILE_HEADER_SIZE (DDS_FILE_HEADER_SIZE + (sizeof(PALETTEENTRY) * 256))
+static void test_save_surface_to_dds(IDirect3DDevice9 *device)
+{
+    struct expected
+    {
+        HRESULT hr;
+        struct dds_pixel_format pixel_format;
+        uint32_t flags;
+        uint32_t width;
+        uint32_t height;
+        uint32_t pitch;
+        uint32_t depth;
+        uint32_t mip_levels;
+        uint32_t caps;
+        uint32_t caps2;
+        uint32_t buffer_size;
+    };
+    static const struct
+    {
+        D3DFORMAT format;
+        uint32_t width;
+        uint32_t height;
+        const PALETTEENTRY *palette;
+        struct expected expected_vals;
+        BOOL todo_hr;
+        BOOL todo_expected;
+    } dds_tests[] =
+    {
+        { D3DFMT_P8, 4, 4, test_palette,
+          { D3D_OK, { 32, DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_PALETTE, 0,
+            PALETTED_DDS_FILE_HEADER_SIZE + (4 * 4)
+          }, .todo_hr = TRUE
+        },
+        { D3DFMT_A8P8, 4, 4, test_palette,
+          { D3D_OK, { 32, DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0,
+            DDSCAPS_TEXTURE | DDSCAPS_PALETTE | DDSCAPS_ALPHA, 0,
+            PALETTED_DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }, .todo_hr = TRUE
+        },
+        /* If a palette isn't provided, d3dx converts to D3DFMT_A8R8G8B8. */
+        { D3DFMT_P8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }, .todo_hr = TRUE
+        },
+        { D3DFMT_A8P8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }, .todo_hr = TRUE
+        },
+        { D3DFMT_V8U8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_BUMPDUDV, 0, 16, 0x000000ff, 0x0000ff00, 0x00000000, 0x00000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }
+        },
+        { D3DFMT_V16U16, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }
+        },
+        { D3DFMT_Q8W8V8U8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_BUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }
+        },
+        { D3DFMT_A2W10V10U10, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_BUMPDUDV | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_X8L8V8U8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_BUMPLUMINANCE, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }
+        },
+        { D3DFMT_R5G6B5, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB, 0, 16, 0xf800, 0x07e0, 0x001f, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }
+        },
+        /* 10. */
+        { D3DFMT_A1R5G5B5, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_A4R4G4B4, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x0f00, 0x00f0, 0x000f, 0xf000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_R3G3B2, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB, 0, 8, 0xe0, 0x1c, 0x03, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4)
+          }
+        },
+        { D3DFMT_A8R3G3B2, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x00e0, 0x001c, 0x0003, 0xff00 },
+              DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+              DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_X4R4G4B4, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB, 0, 16, 0xf00, 0x0f0, 0x00f, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }
+        },
+        { D3DFMT_A2B10G10R10, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_A2R10G10B10, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_A8R8G8B8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_A8B8G8R8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_X8R8G8B8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }
+        },
+        /* 20. */
+        { D3DFMT_X8B8G8R8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB, 0, 32, 0x0000ff, 0x00ff00, 0xff0000, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }
+        },
+        { D3DFMT_R8G8B8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 3 * 4)
+          }
+        },
+        { D3DFMT_G16R16, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_RGB, 0, 32, 0x0000ffff, 0xffff0000, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }
+        },
+        { D3DFMT_A8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_ALPHA_ONLY, 0, 8, 0, 0, 0, 0xff },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4)
+          }, .todo_expected = TRUE
+        },
+        { D3DFMT_DXT1, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (8)
+          }
+        },
+        { D3DFMT_DXT2, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_DXT2, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (16)
+          }
+        },
+        { D3DFMT_DXT3, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_DXT3, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (16)
+          }
+        },
+        { D3DFMT_DXT4, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (16)
+          }
+        },
+        { D3DFMT_DXT5, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_DXT5, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (16)
+          }
+        },
+        { D3DFMT_A16B16G16R16, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_A16B16G16R16, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 8 * 4)
+          }
+        },
+        /* 30. */
+        { D3DFMT_Q16W16V16U16, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_Q16W16V16U16, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 8 * 4)
+          }
+        },
+        { D3DFMT_R16F, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_R16F, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }
+        },
+        { D3DFMT_G16R16F, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_G16R16F, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }
+        },
+        { D3DFMT_A16B16G16R16F, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_A16B16G16R16F, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 8 * 4)
+          }
+        },
+        { D3DFMT_R32F, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_R32F, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
+          }
+        },
+        { D3DFMT_G32R32F, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_G32R32F, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 8 * 4)
+          }
+        },
+        { D3DFMT_A32B32G32R32F, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_A32B32G32R32F, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 16 * 4)
+          }
+        },
+        { D3DFMT_G8R8_G8B8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_G8R8_G8B8, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }
+        },
+        { D3DFMT_R8G8_B8G8, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_R8G8_B8G8, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }
+        },
+        { D3DFMT_UYVY, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_UYVY, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }
+        },
+        /* 40. */
+        { D3DFMT_YUY2, 4, 4, NULL,
+          { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_YUY2, 0, 0, 0, 0, 0 },
+            DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE, 0,
+            DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
+          }
+        },
+    };
+    struct
+    {
+         DWORD magic;
+         struct dds_header header;
+         BYTE *data;
+    } *dds;
+    IDirect3DSurface9 *surface;
+    ID3DXBuffer *buffer;
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(dds_tests); ++i)
+    {
+        const struct expected *expected = &dds_tests[i].expected_vals;
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, dds_tests[i].width, dds_tests[i].height, dds_tests[i].format,
+                D3DPOOL_SCRATCH, &surface, NULL);
+        if (FAILED(hr))
+        {
+            skip("Couldn't create surface for format %#x.\n", dds_tests[i].format);
+            continue;
+        }
+
+        winetest_push_context("Test %u", i);
+        hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, dds_tests[i].palette, NULL);
+        todo_wine_if(dds_tests[i].todo_hr) ok(hr == expected->hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(ID3DXBuffer_GetBufferSize(buffer) == expected->buffer_size, "Unexpected buffer size %lu.\n",
+                    ID3DXBuffer_GetBufferSize(buffer));
+
+            dds = ID3DXBuffer_GetBufferPointer(buffer);
+            check_dds_header(&dds->header, expected->flags, expected->height, expected->width, expected->pitch,
+                    expected->depth, expected->mip_levels, &expected->pixel_format, expected->caps, expected->caps2,
+                    dds_tests[i].todo_expected);
+            ID3DXBuffer_Release(buffer);
+        }
+
+        IDirect3DSurface9_Release(surface);
+        winetest_pop_context();
+    }
+}
+
 static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
 {
+    static const struct dds_pixel_format d3dfmt_a8r8g8b8_pf = { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32,
+                                                                0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
+    static const uint32_t tmp_pixdata_4_4[] = { 0xff000000, 0xff000000, 0xff000000, 0xff000000,
+                                                0x00ff0040, 0x00ff0040, 0x00ff0040, 0x00ff0040,
+                                                0x0000ff80, 0x0000ff80, 0x0000ff80, 0x0000ff80,
+                                                0x000000c0, 0x000000c0, 0x000000c0, 0x000000c0 };
     static const struct
     {
         DWORD usage;
@@ -3447,8 +3854,8 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
     } *dds;
     IDirect3DSurface9 *surface;
     IDirect3DTexture9 *texture;
+    unsigned int i, x, y;
     ID3DXBuffer *buffer;
-    unsigned int i;
     HRESULT hr;
     RECT rect;
 
@@ -3457,6 +3864,10 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
        skip("Couldn't create surface\n");
        return;
     }
+
+    SetRect(&rect, 0, 0, 4, 4);
+    hr = D3DXLoadSurfaceFromMemory(surface, NULL, NULL, tmp_pixdata_4_4, D3DFMT_A8R8G8B8, 16, NULL, &rect, D3DX_FILTER_NONE, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     SetRectEmpty(&rect);
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_BMP, surface, NULL, &rect);
@@ -3474,17 +3885,52 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
     if (SUCCEEDED(hr))
     {
         dds = ID3DXBuffer_GetBufferPointer(buffer);
+        check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 0, 0, 0, 0, 0,
+                &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, FALSE);
+        ID3DXBuffer_Release(buffer);
+    }
 
-        ok(dds->magic == MAKEFOURCC('D','D','S',' '), "Got unexpected DDS signature %#lx.\n", dds->magic);
-        ok(dds->header.size == sizeof(dds->header), "Got unexpected DDS size %lu.\n", dds->header.size);
-        ok(!dds->header.height, "Got unexpected height %lu.\n", dds->header.height);
-        ok(!dds->header.width, "Got unexpected width %lu.\n", dds->header.width);
-        ok(!dds->header.depth, "Got unexpected depth %lu.\n", dds->header.depth);
-        ok(!dds->header.miplevels, "Got unexpected miplevels %lu.\n", dds->header.miplevels);
-        ok(!dds->header.pitch_or_linear_size, "Got unexpected pitch_or_linear_size %lu.\n", dds->header.pitch_or_linear_size);
-        ok(dds->header.caps == (DDSCAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %#lx.\n", dds->header.caps);
-        ok(dds->header.flags == (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT),
-                "Got unexpected flags %#lx.\n", dds->header.flags);
+    /* Test rectangle argument for D3DXIFF_DDS. */
+    SetRect(&rect, 0, 0, 0, 2);
+    hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, &rect);
+    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        dds = ID3DXBuffer_GetBufferPointer(buffer);
+        check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 2, 0, 0, 0, 0,
+                &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+        ID3DXBuffer_Release(buffer);
+    }
+
+    SetRect(&rect, 0, 0, 2, 0);
+    hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, &rect);
+    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        dds = ID3DXBuffer_GetBufferPointer(buffer);
+        check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 0, 2, 0, 0, 0,
+                &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+        ID3DXBuffer_Release(buffer);
+    }
+
+    SetRect(&rect, 2, 2, 4, 4);
+    hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, &rect);
+    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        dds = ID3DXBuffer_GetBufferPointer(buffer);
+        check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 2, 2, 0, 0, 0,
+                &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+        for (y = 0; y < 2; ++y)
+        {
+            for (x = 0; x < 2; ++x)
+            {
+                const uint32_t expected_pixel = tmp_pixdata_4_4[((2 + y) * 4) + (x + 2)];
+                const uint32_t saved_pixel = ((uint32_t *)&dds->data)[(y * 2) + x];
+
+                ok(expected_pixel == saved_pixel, "Unexpected pixel value %#x.\n", saved_pixel);
+            }
+        }
         ID3DXBuffer_Release(buffer);
     }
 
@@ -3492,16 +3938,8 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     dds = ID3DXBuffer_GetBufferPointer(buffer);
-    ok(dds->magic == MAKEFOURCC('D','D','S',' '), "Got unexpected DDS signature %#lx.\n", dds->magic);
-    ok(dds->header.size == sizeof(dds->header), "Got unexpected DDS size %lu.\n", dds->header.size);
-    ok(dds->header.height == 4, "Got unexpected height %lu.\n", dds->header.height);
-    ok(dds->header.width == 4, "Got unexpected width %lu.\n", dds->header.width);
-    ok(!dds->header.depth, "Got unexpected depth %lu.\n", dds->header.depth);
-    ok(!dds->header.miplevels, "Got unexpected miplevels %lu.\n", dds->header.miplevels);
-    ok(!dds->header.pitch_or_linear_size, "Got unexpected pitch_or_linear_size %lu.\n", dds->header.pitch_or_linear_size);
-    todo_wine ok(dds->header.caps == (DDSCAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %#lx.\n", dds->header.caps);
-    ok(dds->header.flags == (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT),
-            "Got unexpected flags %#lx.\n", dds->header.flags);
+    check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0,
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
     ID3DXBuffer_Release(buffer);
 
     IDirect3DSurface9_Release(surface);
@@ -3526,6 +3964,8 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
         IDirect3DSurface9_Release(surface);
         IDirect3DTexture9_Release(texture);
     }
+
+    test_save_surface_to_dds(device);
 }
 
 static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
