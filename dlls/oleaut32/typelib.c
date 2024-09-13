@@ -9080,6 +9080,7 @@ static HRESULT WMSFT_compile_strings(ITypeLibImpl *This,
                 data + sizeof(INT16), file->string_seg.len - last_offs - sizeof(INT16), NULL, NULL);
         if (size == 0) {
             free(file->string_seg.data);
+            file->string_seg.data = NULL;
             return E_UNEXPECTED;
         }
 
