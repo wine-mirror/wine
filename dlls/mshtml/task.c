@@ -132,7 +132,7 @@ void remove_target_tasks(LONG target)
         DWORD tc = GetTickCount();
 
         timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
-        SetTimer(thread_data->thread_hwnd, TIMER_ID, max( (int)(timer->time - tc), 0 ), NULL);
+        SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time > tc ? timer->time - tc : 0, NULL);
     }
 
     LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->task_list) {
