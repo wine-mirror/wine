@@ -165,8 +165,8 @@ static UINT get_bitmap_info( HDC *hdc, HBITMAP *bitmap, BITMAPINFO *info )
 
     if (info_size == sizeof(dib))
     {
-        blit_dc = *hdc;
-        blit_bitmap = *bitmap;
+        if (!GetDIBits( *hdc, *bitmap, 0, INT_MAX, NULL, info, DIB_RGB_COLORS ))
+            return 0;
     }
     else
     {
@@ -214,9 +214,11 @@ static UINT get_bitmap_info( HDC *hdc, HBITMAP *bitmap, BITMAPINFO *info )
         if (!SelectObject( blit_dc, blit_bitmap )) goto err;
         if (!BitBlt( blit_dc, 0, 0, bmp.bmWidth, bmp.bmHeight, *hdc, 0, 0, SRCCOPY ))
             goto err;
+        if (!GetDIBits( blit_dc, blit_bitmap, 0, INT_MAX, NULL, info, DIB_RGB_COLORS ))
+            goto err;
+        *hdc = blit_dc;
+        *bitmap = blit_bitmap;
     }
-    if (!GetDIBits( blit_dc, blit_bitmap, 0, INT_MAX, NULL, info, DIB_RGB_COLORS ))
-        goto err;
 
     bpp = info->bmiHeader.biBitCount;
     if (bpp <= 8)
@@ -227,8 +229,8 @@ static UINT get_bitmap_info( HDC *hdc, HBITMAP *bitmap, BITMAPINFO *info )
     return sizeof(BITMAPINFOHEADER);
 
 err:
-    if (blit_dc && blit_dc != *hdc) DeleteDC( blit_dc );
-    if (blit_bitmap && blit_bitmap != *bitmap) DeleteObject( blit_bitmap );
+    DeleteDC( blit_dc );
+    if (blit_bitmap) DeleteObject( blit_bitmap );
     return 0;
 }
 
