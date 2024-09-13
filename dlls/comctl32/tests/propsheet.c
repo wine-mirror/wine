@@ -672,20 +672,20 @@ static const struct message property_sheet_seq[] = {
     { WM_NCCALCSIZE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
     { DM_REPOSITION, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
     { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
-    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_WINDOWPOSCHANGING, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_WINDOWPOSCHANGED, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
-    { WM_ACTIVATEAPP, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ACTIVATEAPP, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
     /*{ WM_NCACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_GETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_GETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
-    { WM_ACTIVATE, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ACTIVATE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
     /*{ WM_IME_SETCONTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_IME_NOTIFY, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
-    { WM_SETFOCUS, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
-    { WM_KILLFOCUS, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_SETFOCUS, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_KILLFOCUS, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
     /*{ WM_IME_SETCONTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
     { WM_PARENTNOTIFY, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_INITDIALOG, sent|id, 0, 0, RECEIVER_PAGE },
@@ -704,6 +704,8 @@ static const struct message property_sheet_seq[] = {
     { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
     { WM_SETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_SHOWWINDOW, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_ACTIVATEAPP, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ACTIVATE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
     /*{ 0x00000401, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { 0x00000400, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
     { WM_CHANGEUISTATE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
