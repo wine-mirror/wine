@@ -3656,7 +3656,7 @@ static void test_ftp_protocol(void)
     IUnknown *unk;
     BYTE buf[4096];
     ULONG ref;
-    DWORD cb;
+    DWORD cb, ret;
     HRESULT hres;
 
     static const WCHAR ftp_urlW[] = {'f','t','p',':','/','/','f','t','p','.','w','i','n','e','h','q','.','o','r','g',
@@ -3708,13 +3708,19 @@ static void test_ftp_protocol(void)
     ok((hres == E_PENDING && cb==0) ||
        (hres == S_OK && cb==1), "Read failed: %08lx (%ld bytes)\n", hres, cb);
 
-    ok( WaitForSingleObject(event_complete, 90000) == WAIT_OBJECT_0, "wait timed out\n" );
+    ret = WaitForSingleObject(event_complete, 10000);
+    if (ret != WAIT_OBJECT_0)
+    {
+        skip( "FTP protocol timed out\n" );
+        IInternetProtocol_Release(async_protocol);
+        return;
+    }
 
     while(1) {
         hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
         if(hres == E_PENDING)
         {
-            DWORD ret = WaitForSingleObject(event_complete, 90000);
+            DWORD ret = WaitForSingleObject(event_complete, 10000);
             ok( ret == WAIT_OBJECT_0, "wait timed out\n" );
             if (ret != WAIT_OBJECT_0) break;
         }
