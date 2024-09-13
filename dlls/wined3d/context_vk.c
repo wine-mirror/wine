@@ -2048,11 +2048,11 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
         unsigned int signal_semaphore_count, const VkSemaphore *signal_semaphores)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    VkSubmitInfo submit_info = {.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO};
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_query_pool_vk *pool_vk, *pool_vk_next;
     struct wined3d_command_buffer_vk *buffer;
     struct wined3d_query_vk *query_vk;
-    VkSubmitInfo submit_info;
     VkResult vr;
 
     TRACE("context_vk %p, wait_semaphore_count %u, wait_semaphores %p, wait_stages %p,"
@@ -2061,49 +2061,53 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
             signal_semaphore_count, signal_semaphores);
 
     buffer = &context_vk->current_command_buffer;
-    if (!buffer->vk_command_buffer)
+    if (!buffer->vk_command_buffer && !signal_semaphore_count
+            && !wait_semaphore_count && !context_vk->wait_semaphore_count)
         return;
 
-    TRACE("Submitting command buffer %p with id 0x%s.\n",
-            buffer->vk_command_buffer, wine_dbgstr_longlong(buffer->id));
-
-    wined3d_context_vk_end_current_render_pass(context_vk);
-
-    LIST_FOR_EACH_ENTRY_SAFE(pool_vk, pool_vk_next, &context_vk->completed_query_pools,
-            struct wined3d_query_pool_vk, completed_entry)
+    if (buffer->vk_command_buffer)
     {
-        list_remove(&pool_vk->completed_entry);
-        list_init(&pool_vk->completed_entry);
+        TRACE("Submitting command buffer %p with id 0x%s.\n",
+                buffer->vk_command_buffer, wine_dbgstr_longlong(buffer->id));
 
-        wined3d_context_vk_reset_completed_queries(context_vk, pool_vk, buffer);
+        wined3d_context_vk_end_current_render_pass(context_vk);
+
+        LIST_FOR_EACH_ENTRY_SAFE(pool_vk, pool_vk_next, &context_vk->completed_query_pools,
+                struct wined3d_query_pool_vk, completed_entry)
+        {
+            list_remove(&pool_vk->completed_entry);
+            list_init(&pool_vk->completed_entry);
+
+            wined3d_context_vk_reset_completed_queries(context_vk, pool_vk, buffer);
+        }
+
+        LIST_FOR_EACH_ENTRY(query_vk, &context_vk->active_queries, struct wined3d_query_vk, entry)
+            wined3d_query_vk_suspend(query_vk, context_vk);
+
+        context_vk->graphics.vk_pipeline = VK_NULL_HANDLE;
+        context_vk->update_compute_pipeline = 1;
+        context_vk->update_stream_output = 1;
+        context_vk->c.update_shader_resource_bindings = 1;
+        context_vk->c.update_compute_shader_resource_bindings = 1;
+        context_vk->c.update_unordered_access_view_bindings = 1;
+        context_vk->c.update_compute_unordered_access_view_bindings = 1;
+        context_vk->c.update_primitive_type = 1;
+        context_vk->c.update_patch_vertex_count = 1;
+        context_vk->c.update_multisample_state = 1;
+        context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
+        context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
+        context_invalidate_state(&context_vk->c, STATE_BLEND);
+        context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
+        context_invalidate_state(&context_vk->c, STATE_DEPTH_STENCIL);
+        context_invalidate_state(&context_vk->c, STATE_RASTERIZER);
+        context_invalidate_state(&context_vk->c, STATE_STENCIL_REF);
+        context_invalidate_state(&context_vk->c, STATE_VIEWPORT);
+        context_invalidate_state(&context_vk->c, STATE_SCISSORRECT);
+
+        VK_CALL(vkEndCommandBuffer(buffer->vk_command_buffer));
+
+        VK_CALL(vkResetFences(device_vk->vk_device, 1, &buffer->vk_fence));
     }
-
-    LIST_FOR_EACH_ENTRY(query_vk, &context_vk->active_queries, struct wined3d_query_vk, entry)
-        wined3d_query_vk_suspend(query_vk, context_vk);
-
-    context_vk->graphics.vk_pipeline = VK_NULL_HANDLE;
-    context_vk->update_compute_pipeline = 1;
-    context_vk->update_stream_output = 1;
-    context_vk->c.update_shader_resource_bindings = 1;
-    context_vk->c.update_compute_shader_resource_bindings = 1;
-    context_vk->c.update_unordered_access_view_bindings = 1;
-    context_vk->c.update_compute_unordered_access_view_bindings = 1;
-    context_vk->c.update_primitive_type = 1;
-    context_vk->c.update_patch_vertex_count = 1;
-    context_vk->c.update_multisample_state = 1;
-    context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
-    context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
-    context_invalidate_state(&context_vk->c, STATE_BLEND);
-    context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
-    context_invalidate_state(&context_vk->c, STATE_DEPTH_STENCIL);
-    context_invalidate_state(&context_vk->c, STATE_RASTERIZER);
-    context_invalidate_state(&context_vk->c, STATE_STENCIL_REF);
-    context_invalidate_state(&context_vk->c, STATE_VIEWPORT);
-    context_invalidate_state(&context_vk->c, STATE_SCISSORRECT);
-
-    VK_CALL(vkEndCommandBuffer(buffer->vk_command_buffer));
-
-    VK_CALL(vkResetFences(device_vk->vk_device, 1, &buffer->vk_fence));
 
     if (wait_semaphore_count)
     {
@@ -2120,25 +2124,30 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
         context_vk->wait_semaphore_count += wait_semaphore_count;
     }
 
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.pNext = NULL;
     submit_info.waitSemaphoreCount = context_vk->wait_semaphore_count;
     submit_info.pWaitSemaphores = context_vk->wait_semaphores;
     submit_info.pWaitDstStageMask = context_vk->wait_stages;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &buffer->vk_command_buffer;
+    if (buffer->vk_command_buffer)
+    {
+        submit_info.commandBufferCount = 1;
+        submit_info.pCommandBuffers = &buffer->vk_command_buffer;
+    }
     submit_info.signalSemaphoreCount = signal_semaphore_count;
     submit_info.pSignalSemaphores = signal_semaphores;
 
-    if ((vr = VK_CALL(vkQueueSubmit(device_vk->graphics_queue.vk_queue, 1, &submit_info, buffer->vk_fence))) < 0)
+    if ((vr = VK_CALL(vkQueueSubmit(device_vk->graphics_queue.vk_queue, 1, &submit_info,
+            buffer->vk_command_buffer ? buffer->vk_fence : VK_NULL_HANDLE))) < 0)
         ERR("Failed to submit command buffer %p, vr %s.\n",
                 buffer->vk_command_buffer, wined3d_debug_vkresult(vr));
+
+    context_vk->wait_semaphore_count = 0;
+
+    if (!buffer->vk_command_buffer)
+        return;
 
     if (!wined3d_array_reserve((void **)&context_vk->submitted.buffers, &context_vk->submitted.buffers_size,
             context_vk->submitted.buffer_count + 1, sizeof(*context_vk->submitted.buffers)))
         ERR("Failed to grow submitted command buffer array.\n");
-
-    context_vk->wait_semaphore_count = 0;
 
     context_vk->submitted.buffers[context_vk->submitted.buffer_count++] = *buffer;
 
