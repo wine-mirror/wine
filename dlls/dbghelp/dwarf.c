@@ -712,28 +712,48 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
     return TRUE;
 }
 
-static BOOL dwarf2_fill_in_variant(struct module *module, VARIANT *v, const struct attribute *attr)
+static struct symt *symt_get_real_type(struct symt *symt)
 {
+    while (symt && symt->tag == SymTagTypedef)
+        symt = ((struct symt_typedef*)symt)->type;
+    return symt;
+}
+
+static BOOL dwarf2_fill_in_variant(struct module *module, VARIANT *v, const struct attribute *attr, struct symt *type)
+{
+    ULONG64 uinteger;
+    LONG64 sinteger;
+    enum BasicType bt = btInt;
+
+    type = symt_get_real_type(type);
+    if (symt_check_tag(type, SymTagBaseType))
+        bt = ((struct symt_basic*)type)->bt;
+
+    /* data1, data2, data4 can hold either signed or unsigned values...
+     * so ensure proper extension of signed types...
+     */
     switch (attr->form)
     {
     case DW_FORM_data1:
+        uinteger = attr->u.uvalue;
+        sinteger = (char)(unsigned char)attr->u.uvalue;
+        break;
     case DW_FORM_data2:
+        uinteger = attr->u.uvalue;
+        sinteger = (short)(unsigned short)attr->u.uvalue;
+        break;
     case DW_FORM_data4:
-    case DW_FORM_addr:
-        V_VT(v) = VT_UI4;
-        V_UI4(v) = attr->u.uvalue;
+        uinteger = attr->u.uvalue;
+        sinteger = (int)(unsigned int)attr->u.uvalue;
         break;
 
     case DW_FORM_udata:
     case DW_FORM_data8:
-    case DW_FORM_sec_offset:
-        V_VT(v) = VT_UI8;
-        V_UI8(v) = attr->u.lluvalue;
+        sinteger = uinteger = attr->u.lluvalue;
         break;
 
     case DW_FORM_sdata:
-        V_VT(v) = VT_I8;
-        V_I8(v) = attr->u.llsvalue;
+        uinteger = sinteger = attr->u.llsvalue;
         break;
 
     case DW_FORM_strp:
@@ -743,6 +763,7 @@ static BOOL dwarf2_fill_in_variant(struct module *module, VARIANT *v, const stru
          */
         V_VT(v) = VT_BYREF;
         V_BYREF(v) = pool_strdup(&module->pool, attr->u.string);
+        return TRUE;
         break;
 
     case DW_FORM_block:
@@ -761,11 +782,68 @@ static BOOL dwarf2_fill_in_variant(struct module *module, VARIANT *v, const stru
             V_BYREF(v) = pool_alloc(&module->pool, attr->u.block.size);
             memcpy(V_BYREF(v), attr->u.block.ptr, attr->u.block.size);
         }
+        return TRUE;
         break;
+    case DW_FORM_sec_offset:
+    case DW_FORM_addr:
+        FIXME("Unexpected form %Ix\n", attr->form);
     default:
         V_VT(v) = VT_EMPTY;
         return FALSE;
     }
+    /* native always stores in the shortest format in variant */
+    if (bt == btChar || bt == btInt || bt == btLong)
+    {
+        if (sinteger == (signed char)sinteger)
+        {
+            V_VT(v) = VT_I1;
+            V_I1(v) = sinteger;
+        }
+        if (sinteger == (short int)sinteger)
+        {
+            V_VT(v) = VT_I2;
+            V_I2(v) = sinteger;
+        }
+        else if (sinteger == (int)sinteger)
+        {
+            V_VT(v) = VT_I4;
+            V_I4(v) = sinteger;
+        }
+        else
+        {
+            V_VT(v) = VT_I8;
+            V_I8(v) = sinteger;
+        }
+    }
+    else if (bt == btUInt || bt == btULong || bt == btWChar)
+    {
+        if (uinteger == (unsigned char)uinteger)
+        {
+            V_VT(v) = VT_UI1;
+            V_UI1(v) = uinteger;
+        }
+        else if (uinteger == (unsigned short int)uinteger)
+        {
+            V_VT(v) = VT_UI2;
+            V_UI2(v) = uinteger;
+        }
+        else if (uinteger == (unsigned int)uinteger)
+        {
+            V_VT(v) = VT_UI4;
+            V_UI4(v) = uinteger;
+        }
+        else
+        {
+            V_VT(v) = VT_UI8;
+            V_UI8(v) = uinteger;
+        }
+    }
+    else
+    {
+        FIXME("Unexpected base type bt=%x for form=%Ix\n", bt, attr->form);
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -1915,11 +1993,15 @@ static void dwarf2_parse_enumerator(dwarf2_debug_info_t* di,
 
     TRACE("%s\n", dwarf2_debug_di(di));
 
-    if (!dwarf2_find_attribute(di, DW_AT_name, &name)) return;
-    if (!dwarf2_find_attribute(di, DW_AT_const_value, &value)) value.u.svalue = 0;
-    V_VT(&v) = VT_I4;
-    V_I4(&v) = value.u.svalue;
+    V_VT(&v) = VT_EMPTY;
 
+    if (!dwarf2_find_attribute(di, DW_AT_name, &name)) return;
+    if (dwarf2_find_attribute(di, DW_AT_const_value, &value) &&
+        symt_check_tag(parent->base_type, SymTagBaseType))
+    {
+        if (!dwarf2_fill_in_variant(di->unit_ctx->module_ctx->module, &v, &value, parent->base_type))
+            TRACE("Failed to get variant\n");
+    }
     symt_add_enum_element(di->unit_ctx->module_ctx->module, parent, name.u.string, &v);
 
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
@@ -1930,7 +2012,7 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_debug_info_t* di)
     struct attribute    name;
     struct attribute    attrtype;
     dwarf2_debug_info_t*ditype;
-    struct symt*        type;
+    struct symt*        type = NULL;
     struct vector*      children;
     dwarf2_debug_info_t*child;
     unsigned int        i;
@@ -1941,20 +2023,20 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_debug_info_t* di)
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name)) name.u.string = NULL;
     if (dwarf2_find_attribute(di, DW_AT_type, &attrtype) && (ditype = dwarf2_jump_to_debug_info(&attrtype)) != NULL)
-         type = ditype->symt;
-    else /* no type found for this enumeration, construct it from size */
+        type = symt_get_real_type(ditype->symt);
+    if (!type || type->tag != SymTagBaseType) /* no type found for this enumeration, construct it from size */
     {
         struct attribute    size;
         struct symt_basic*  basetype;
 
         if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 4;
-
-        switch (size.u.uvalue) /* FIXME: that's wrong */
+        switch (size.u.uvalue)
         {
         case 1: basetype = symt_get_basic(btInt, 1); break;
         case 2: basetype = symt_get_basic(btInt, 2); break;
         default:
         case 4: basetype = symt_get_basic(btInt, 4); break;
+        case 8: basetype = symt_get_basic(btInt, 8); break;
         }
         type = &basetype->symt;
     }
@@ -2065,9 +2147,10 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     {
         VARIANT v;
 
-        if (!dwarf2_fill_in_variant(subpgm->ctx->module_ctx->module, &v, &value))
+        if (!dwarf2_fill_in_variant(subpgm->ctx->module_ctx->module, &v, &value, param_type))
             FIXME("Unsupported form for const value %s (%Ix)\n",
                   debugstr_a(name.u.string), value.form);
+
         if (subpgm->current_func)
         {
             if (is_pmt) WARN("Constant parameter %s reported as local variable in function '%s'\n",
