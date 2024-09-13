@@ -112,6 +112,20 @@ static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
     free(timer);
 }
 
+static void unblock_timers(thread_data_t *thread_data)
+{
+    if(!thread_data->timer_blocked)
+        return;
+    thread_data->timer_blocked = FALSE;
+
+    if(!list_empty(&thread_data->timer_list)) {
+        task_timer_t *timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
+        DWORD tc = GetTickCount();
+
+        SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time > tc ? timer->time - tc : 0, NULL);
+    }
+}
+
 void remove_target_tasks(LONG target)
 {
     thread_data_t *thread_data = get_thread_data(FALSE);
@@ -212,8 +226,12 @@ HRESULT set_task_timer(HTMLInnerWindow *window, LONG msec, enum timer_type timer
     IDispatch_AddRef(disp);
     timer->disp = disp;
 
-    if(queue_timer(thread_data, timer))
-        SetTimer(thread_data->thread_hwnd, TIMER_ID, msec, NULL);
+    if(queue_timer(thread_data, timer)) {
+        if(thread_data->blocking_xhr)
+            thread_data->timer_blocked = TRUE;
+        else
+            SetTimer(thread_data->thread_hwnd, TIMER_ID, msec, NULL);
+    }
 
     *id = timer->id;
     return S_OK;
@@ -311,6 +329,8 @@ static LRESULT process_timer(void)
     assert(thread_data != NULL);
 
     if(list_empty(&thread_data->timer_list) || thread_data->blocking_xhr) {
+        if(!list_empty(&thread_data->timer_list))
+            thread_data->timer_blocked = TRUE;
         KillTimer(thread_data->thread_hwnd, TIMER_ID);
         return 0;
     }
@@ -347,6 +367,8 @@ static LRESULT process_timer(void)
         IDispatch_Release(disp);
     }while(!list_empty(&thread_data->timer_list) && !thread_data->blocking_xhr);
 
+    if(!list_empty(&thread_data->timer_list))
+        thread_data->timer_blocked = TRUE;
     KillTimer(thread_data->thread_hwnd, TIMER_ID);
     return 0;
 }
@@ -484,10 +506,5 @@ void unblock_tasks_and_timers(thread_data_t *thread_data)
     if(!list_empty(&thread_data->event_task_list))
         PostMessageW(thread_data->thread_hwnd, WM_PROCESSTASK, 0, 0);
 
-    if(!thread_data->blocking_xhr && !list_empty(&thread_data->timer_list)) {
-        task_timer_t *timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
-        DWORD tc = GetTickCount();
-
-        SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time > tc ? timer->time - tc : 0, NULL);
-    }
+    unblock_timers(thread_data);
 }
