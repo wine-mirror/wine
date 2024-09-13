@@ -685,8 +685,12 @@ static nsrefcnt NSAPI nsRunnable_Release(nsIRunnable *iface)
 static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
 {
     nsRunnable *This = impl_from_nsIRunnable(iface);
+    nsresult nsres;
 
-    return This->proc(This->doc, This->arg1, This->arg2);
+    block_task_processing();
+    nsres = This->proc(This->doc, This->arg1, This->arg2);
+    unblock_task_processing();
+    return nsres;
 }
 
 static const nsIRunnableVtbl nsRunnableVtbl = {

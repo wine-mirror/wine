@@ -1671,6 +1671,19 @@ static inline void traverse_variant(VARIANT *v, const char *name, nsCycleCollect
         note_cc_edge((nsISupports*)V_UNKNOWN(v), name, cb);
 }
 
+static inline void block_task_processing(void)
+{
+    thread_data_t *thread_data = get_thread_data(FALSE);
+    thread_data->tasks_locked++;
+}
+
+static inline void unblock_task_processing(void)
+{
+    thread_data_t *thread_data = get_thread_data(FALSE);
+    if(!--thread_data->tasks_locked)
+        unblock_tasks_and_timers(thread_data);
+}
+
 #ifdef __i386__
 extern void *call_thiscall_func;
 #endif

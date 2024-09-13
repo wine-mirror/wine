@@ -133,6 +133,7 @@ static IOleDocumentView *view;
 static BOOL is_ie9plus;
 static int document_mode;
 static unsigned in_fire_event;
+static DWORD main_thread_id;
 
 typedef struct {
     LONG x;
@@ -4863,6 +4864,44 @@ static HRESULT WINAPI sync_xhr(IDispatchEx *iface, DISPID id, LCID lcid, WORD wF
 
 EVENT_HANDLER_FUNC_OBJ(sync_xhr);
 
+static IHTMLDocument2 *notif_doc;
+static unsigned in_nav_notif_test, nav_notif_test_depth;
+static BOOL doc_complete;
+
+static void nav_notif_test(void)
+{
+    IHTMLPrivateWindow *priv_window;
+    IHTMLWindow2 *window;
+    BSTR bstr, bstr2;
+    HRESULT hres;
+    VARIANT v;
+
+    in_nav_notif_test++;
+    nav_notif_test_depth++;
+
+    hres = IHTMLDocument2_get_parentWindow(notif_doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    ok(window != NULL, "window == NULL\n");
+
+    V_VT(&v) = VT_EMPTY;
+    bstr = SysAllocString(L"about:blank");
+    bstr2 = SysAllocString(L"");
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLPrivateWindow, (void**)&priv_window);
+    ok(hres == S_OK, "Could not get IHTMLPrivateWindow) interface: %08lx\n", hres);
+    hres = IHTMLPrivateWindow_SuperNavigate(priv_window, bstr, bstr2, NULL, NULL, &v, &v, 0);
+    ok(hres == S_OK, "SuperNavigate failed: %08lx\n", hres);
+    IHTMLPrivateWindow_Release(priv_window);
+    IHTMLWindow2_Release(window);
+    SysFreeString(bstr2);
+    SysFreeString(bstr);
+
+    ok(nav_notif_test_depth == 1, "nav_notif_test_depth = %u\n", nav_notif_test_depth);
+    pump_msgs(NULL);
+    ok(nav_notif_test_depth == 1, "nav_notif_test_depth = %u\n", nav_notif_test_depth);
+    ok(!doc_complete, "doc_complete = TRUE\n");
+    nav_notif_test_depth--;
+}
+
 static HRESULT QueryInterface(REFIID,void**);
 static HRESULT browserservice_qi(REFIID,void**);
 static HRESULT wb_qi(REFIID,void**);
@@ -6195,9 +6234,6 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     return *ppv ? S_OK : E_NOINTERFACE;
 }
 
-static IHTMLDocument2 *notif_doc;
-static BOOL doc_complete;
-
 static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *iface,
         REFIID riid, void**ppv)
 {
@@ -6222,9 +6258,16 @@ static ULONG WINAPI PropertyNotifySink_Release(IPropertyNotifySink *iface)
 
 static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
 {
-    if(dispID == DISPID_READYSTATE){
-        BSTR state;
+    ok(GetCurrentThreadId() == main_thread_id, "OnChanged called on different thread\n");
+
+    if(dispID == DISPID_READYSTATE) {
         HRESULT hres;
+        BSTR state;
+
+        if(in_nav_notif_test == 11)
+            nav_notif_test();
+
+        ok(nav_notif_test_depth < 2, "nav_notif_test_depth = %u\n", nav_notif_test_depth);
 
         hres = IHTMLDocument2_get_readyState(notif_doc, &state);
         ok(hres == S_OK, "get_readyState failed: %08lx\n", hres);
@@ -6233,6 +6276,13 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
             doc_complete = TRUE;
 
         SysFreeString(state);
+    }
+
+    if(dispID == 1005) {
+        ok(!nav_notif_test_depth, "nav_notif_test_depth = %u\n", nav_notif_test_depth);
+
+        if(in_nav_notif_test == 1)
+            nav_notif_test();
     }
 
     return S_OK;
@@ -7445,6 +7495,51 @@ static void test_sync_xhr_events(const char *doc_str)
     IHTMLDocument2_Release(doc[1]);
 }
 
+static void test_navigation_during_notif(void)
+{
+    IPersistMoniker *persist;
+    IHTMLDocument2 *doc;
+    IMoniker *mon;
+    HRESULT hres;
+    unsigned i;
+    BSTR url;
+    MSG msg;
+
+    for(i = 0; i < 2; i++) {
+        if(!(doc = create_document()))
+            return;
+
+        notif_doc = doc;
+        doc_complete = FALSE;
+        set_client_site(doc, TRUE);
+        do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
+
+        url = SysAllocString(L"about:setting");
+        hres = CreateURLMoniker(NULL, url, &mon);
+        SysFreeString(url);
+        ok(hres == S_OK, "CreateUrlMoniker failed: %08lx\n", hres);
+
+        hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistMoniker, (void**)&persist);
+        ok(hres == S_OK, "Could not get IPersistMoniker iface: %08lx\n", hres);
+
+        hres = IPersistMoniker_Load(persist, FALSE, mon, NULL, 0);
+        ok(hres == S_OK, "Load failed: %08lx\n", hres);
+        IPersistMoniker_Release(persist);
+        IMoniker_Release(mon);
+
+        in_nav_notif_test = i*10 + 1;
+        while(in_nav_notif_test != i*10 + 2 && !doc_complete && GetMessageA(&msg, NULL, 0, 0)) {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+        ok(!nav_notif_test_depth, "nav_notif_test_depth = %u\n", nav_notif_test_depth);
+        in_nav_notif_test = 0;
+
+        set_client_site(doc, FALSE);
+        IHTMLDocument2_Release(doc);
+    }
+}
+
 static BOOL check_ie(void)
 {
     IHTMLDocument2 *doc;
@@ -7475,6 +7570,7 @@ static BOOL check_ie(void)
 START_TEST(events)
 {
     CoInitialize(NULL);
+    main_thread_id = GetCurrentThreadId();
 
     if(check_ie()) {
         container_hwnd = create_container_window();
@@ -7516,6 +7612,7 @@ START_TEST(events)
             test_storage_events(empty_doc_ie9_str);
             test_sync_xhr_events(empty_doc_ie9_str);
         }
+        test_navigation_during_notif();
 
         /* Test this last since it doesn't close the view properly. */
         test_document_close();
