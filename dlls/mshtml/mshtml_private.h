@@ -1493,6 +1493,7 @@ typedef struct {
     struct list *pending_xhr_events_tail;
     struct wine_rb_tree session_storage_map;
     void *blocking_xhr;
+    unsigned tasks_locked;
     BOOL timer_blocked;
 } thread_data_t;
 

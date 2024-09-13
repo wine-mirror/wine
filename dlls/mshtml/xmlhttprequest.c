@@ -269,10 +269,12 @@ static nsresult sync_xhr_send(HTMLXMLHttpRequest *xhr, nsIVariant *nsbody)
     thread_data_t *thread_data = get_thread_data(TRUE);
     HTMLXMLHttpRequest *prev_blocking_xhr;
     HTMLInnerWindow *window = xhr->window;
+    unsigned prev_tasks_locked;
     nsresult nsres;
 
     if(!thread_data)
         return NS_ERROR_OUT_OF_MEMORY;
+    prev_tasks_locked = thread_data->tasks_locked;
     prev_blocking_xhr = thread_data->blocking_xhr;
 
     /* Note: Starting with Gecko 30.0 (Firefox 30.0 / Thunderbird 30.0 / SeaMonkey 2.27),
@@ -297,15 +299,25 @@ static nsresult sync_xhr_send(HTMLXMLHttpRequest *xhr, nsIVariant *nsbody)
      * to figure out a way to handle it...
      *
      * For details (and bunch of problems to consider) see: https://bugzil.la/697151
+     *
+     * FIXME: Since Gecko uses a message loop to implement sync XHR, and it requires that
+     * all the async tasks are executed (or else it hangs indefinitely waiting for them),
+     * we have to enable processing of all tasks, even if we're coming from a nested loop
+     * that wouldn't otherwise process tasks. This isn't correct but it's niche enough.
      */
+    if(thread_data->tasks_locked) {
+        thread_data->tasks_locked = 0;
+        unblock_tasks_and_timers(thread_data);
+    }
     window->base.outer_window->readystate_locked++;
     window->blocking_depth++;
     thread_data->blocking_xhr = xhr;
     nsres = nsIXMLHttpRequest_Send(xhr->nsxhr, nsbody);
     thread_data->blocking_xhr = prev_blocking_xhr;
+    thread_data->tasks_locked = prev_tasks_locked;
     window->base.outer_window->readystate_locked--;
 
-    if(!--window->blocking_depth)
+    if(!--window->blocking_depth && !thread_data->tasks_locked)
         unblock_tasks_and_timers(thread_data);
 
     /* Process any pending events now since they were part of the blocked send() above */
