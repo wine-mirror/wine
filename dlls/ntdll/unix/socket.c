@@ -1134,10 +1134,64 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 
         /* If we had a short write and the socket is nonblocking (and we are
          * not trying to force the operation to be asynchronous), return
-         * success.  Windows actually refuses to send any data in this case,
-         * and returns EWOULDBLOCK, but we have no way of doing that. */
-        if (status == STATUS_DEVICE_NOT_READY && async->sent_len)
-            status = STATUS_SUCCESS;
+         * success, pretened we've written everything to the socket and queue writing
+         * remaining data. Windows never reports partial write in this case and queues
+         * virtually unlimited amount of data for background write in this case. */
+        if (status == STATUS_DEVICE_NOT_READY && async->sent_len && async->iov_cursor < async->count)
+        {
+            struct iovec *iov = async->iov + async->iov_cursor;
+            SIZE_T data_size, async_size, addr_size;
+            struct async_send_ioctl *rem_async;
+            unsigned int i, iov_count;
+            IO_STATUS_BLOCK *rem_io;
+            char *p;
+
+            TRACE( "Short write, queueing remaining data.\n" );
+            data_size = 0;
+            iov_count = async->count - async->iov_cursor;
+            for (i = 0; i < iov_count; ++i)
+                data_size += iov[i].iov_len;
+
+            addr_size = max( 0, async->addr_len );
+            async_size = offsetof( struct async_send_ioctl, iov[1] ) + data_size + addr_size
+                         + sizeof(IO_STATUS_BLOCK) + sizeof(IO_STATUS_BLOCK32);
+            if (!(rem_async = (struct async_send_ioctl *)alloc_fileio( async_size, async_send_proc, handle )))
+            {
+                status = STATUS_NO_MEMORY;
+            }
+            else
+            {
+                /* Use a local copy of socket fd so the async send works after socket handle is closed. */
+                rem_async->count = 1;
+                p = (char *)rem_async + offsetof( struct async_send_ioctl, iov[1] );
+                rem_async->iov[0].iov_base = p;
+                rem_async->iov[0].iov_len = data_size;
+                for (i = 0; i < iov_count; ++i)
+                {
+                    memcpy( p, iov[i].iov_base, iov[i].iov_len );
+                    p += iov[i].iov_len;
+                }
+                rem_async->unix_flags = async->unix_flags;
+                memcpy( p, async->addr, addr_size );
+                rem_async->addr = (const struct WS_sockaddr *)p;
+                p += addr_size;
+                rem_async->addr_len = async->addr_len;
+                rem_async->iov_cursor = 0;
+                rem_async->sent_len = 0;
+                rem_io = (IO_STATUS_BLOCK *)p;
+                p += sizeof(IO_STATUS_BLOCK);
+                rem_io->Pointer = p;
+                p += sizeof(IO_STATUS_BLOCK32);
+                status = sock_send( handle, NULL, NULL, NULL, rem_io, fd, rem_async, TRUE );
+                if (status == STATUS_PENDING) status = STATUS_SUCCESS;
+                if (!status)
+                {
+                    async->sent_len += data_size;
+                    async->iov_cursor = async->count;
+                }
+                else ERR( "Remaining write queue failed, status %#x.\n", status );
+            }
+        }
 
         set_async_direct_result( &wait_handle, options, io, status, async->sent_len, FALSE );
     }

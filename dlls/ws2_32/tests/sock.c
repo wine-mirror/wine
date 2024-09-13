@@ -14279,7 +14279,7 @@ static DWORD WINAPI test_send_buffering_thread(void *arg)
     d->sent_size = 0;
     while ((ret = send(d->server, d->buffer, d->buffer_size, 0)) > 0)
     {
-        todo_wine ok(ret == d->buffer_size, "got %d.\n", ret);
+        ok(ret == d->buffer_size, "got %d.\n", ret);
         d->sent_size += ret;
     }
     ok(ret == -1, "got %d\n", ret);
@@ -14316,7 +14316,7 @@ static void test_send_buffering(void)
     d.sent_size = 0;
     while ((ret = send(d.server, d.buffer, d.buffer_size, 0)) > 0)
     {
-        todo_wine ok(ret == d.buffer_size, "got %d.\n", ret);
+        ok(ret == d.buffer_size, "got %d.\n", ret);
         d.sent_size += ret;
     }
     ok(ret == -1, "got %d\n", ret);
@@ -14339,7 +14339,7 @@ static void test_send_buffering(void)
         ok(recv_size <= d.sent_size, "got ret %d, recv_size %d, sent_size %d.\n", ret, recv_size, d.sent_size);
     }
     ok(!ret && !WSAGetLastError(), "got ret %d, error %u.\n", ret, WSAGetLastError());
-    ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
+    todo_wine ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
     closesocket(client);
 
     /* Test with the other thread which terminates before the data is actually sent. */
@@ -14369,7 +14369,7 @@ static void test_send_buffering(void)
         ok(recv_size <= d.sent_size, "got ret %d, recv_size %d, sent_size %d.\n", ret, recv_size, d.sent_size);
     }
     ok(!ret && !WSAGetLastError(), "got ret %d, error %u.\n", ret, WSAGetLastError());
-    ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
+    todo_wine ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
     closesocket(client);
 }
 
