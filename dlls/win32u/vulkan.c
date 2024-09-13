@@ -103,11 +103,17 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance instance, const VkWin
 static void win32u_vkDestroySurfaceKHR( VkInstance instance, VkSurfaceKHR handle, const VkAllocationCallbacks *allocator )
 {
     struct surface *surface = surface_from_handle( handle );
+    WND *win;
 
     TRACE( "instance %p, handle 0x%s, allocator %p\n", instance, wine_dbgstr_longlong(handle), allocator );
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
 
-    list_remove( &surface->entry );
+    if ((win = get_win_ptr( surface->hwnd )) && win != WND_DESKTOP && win != WND_OTHER_PROCESS)
+    {
+        list_remove( &surface->entry );
+        release_win_ptr( win );
+    }
+
     p_vkDestroySurfaceKHR( instance, surface->host_surface, NULL /* allocator */ );
     driver_funcs->p_vulkan_surface_destroy( surface->hwnd, surface->driver_private );
     free( surface );
