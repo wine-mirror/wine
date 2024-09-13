@@ -121,7 +121,7 @@ static BOOL update_registry_value(HWND hwndDlg, struct edit_params *params)
         {
             if (buf[i] == '\r' && buf[i + 1] == '\n')
             {
-                if (tmp[j - 1]) tmp[j++] = 0;
+                if (j && tmp[j - 1]) tmp[j++] = 0;
                 i++;
             }
             else tmp[j++] = buf[i];
