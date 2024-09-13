@@ -14339,7 +14339,7 @@ static void test_send_buffering(void)
         ok(recv_size <= d.sent_size, "got ret %d, recv_size %d, sent_size %d.\n", ret, recv_size, d.sent_size);
     }
     ok(!ret && !WSAGetLastError(), "got ret %d, error %u.\n", ret, WSAGetLastError());
-    todo_wine ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
+    ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
     closesocket(client);
 
     /* Test with the other thread which terminates before the data is actually sent. */

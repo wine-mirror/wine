@@ -130,6 +130,7 @@ struct async_send_ioctl
     unsigned int sent_len;
     unsigned int count;
     unsigned int iov_cursor;
+    int fd;
     struct iovec iov[1];
 };
 
@@ -1060,7 +1061,8 @@ static BOOL async_send_proc( void *user, ULONG_PTR *info, unsigned int *status )
 
     if (*status == STATUS_ALERTED)
     {
-        if ((*status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
+        needs_close = FALSE;
+        if ((fd = async->fd) == -1 && (*status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
             return TRUE;
 
         *status = try_send( fd, async );
@@ -1072,6 +1074,7 @@ static BOOL async_send_proc( void *user, ULONG_PTR *info, unsigned int *status )
             return FALSE;
     }
     *info = async->sent_len;
+    if (async->fd != -1) close( async->fd );
     release_fileio( &async->io );
     return TRUE;
 }
@@ -1162,6 +1165,7 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
             else
             {
                 /* Use a local copy of socket fd so the async send works after socket handle is closed. */
+                rem_async->fd = dup( fd );
                 rem_async->count = 1;
                 p = (char *)rem_async + offsetof( struct async_send_ioctl, iov[1] );
                 rem_async->iov[0].iov_base = p;
@@ -1197,7 +1201,10 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     }
 
     if (status != STATUS_PENDING)
+    {
+        if (async->fd != -1) close( async->fd );
         release_fileio( &async->io );
+    }
 
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
@@ -1237,6 +1244,7 @@ static NTSTATUS sock_ioctl_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
             async->iov[i].iov_len = buffers[i].len;
         }
     }
+    async->fd = -1;
     async->unix_flags = unix_flags;
     async->addr = addr;
     async->addr_len = addr_len;
@@ -1256,6 +1264,7 @@ NTSTATUS sock_write( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc,
     if (!(async = (struct async_send_ioctl *)alloc_fileio( async_size, async_send_proc, handle )))
         return STATUS_NO_MEMORY;
 
+    async->fd = -1;
     async->count = 1;
     async->iov[0].iov_base = (void *)buffer;
     async->iov[0].iov_len = length;
