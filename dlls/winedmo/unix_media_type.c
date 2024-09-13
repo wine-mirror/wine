@@ -67,6 +67,103 @@ static inline const char *debugstr_area( const MFVideoArea *area )
         }                                                                                         \
     } while (0)
 
+static WORD wave_format_tag_from_codec_id( enum AVCodecID id )
+{
+    const struct AVCodecTag *table[] = {avformat_get_riff_audio_tags(), avformat_get_mov_audio_tags(), 0};
+    return av_codec_get_tag( table, id );
+}
+
+static void wave_format_ex_init( const AVCodecParameters *params, WAVEFORMATEX *format, UINT32 format_size, WORD format_tag )
+{
+    memset( format, 0, format_size );
+    format->cbSize = format_size - sizeof(*format);
+    format->wFormatTag = format_tag;
+#if LIBAVUTIL_VERSION_MAJOR >= 58
+    format->nChannels = params->ch_layout.nb_channels;
+#else
+    format->nChannels = params->channels;
+#endif
+    format->nSamplesPerSec = params->sample_rate;
+    format->wBitsPerSample = av_get_bits_per_sample( params->codec_id );
+    if (!format->wBitsPerSample) format->wBitsPerSample = params->bits_per_coded_sample;
+    if (!(format->nBlockAlign = params->block_align)) format->nBlockAlign = format->wBitsPerSample * format->nChannels / 8;
+    if (!(format->nAvgBytesPerSec = params->bit_rate / 8)) format->nAvgBytesPerSec = format->nSamplesPerSec * format->nBlockAlign;
+}
+
+static NTSTATUS wave_format_extensible_from_codec_params( const AVCodecParameters *params, WAVEFORMATEXTENSIBLE *format, UINT32 *format_size,
+                                                          UINT wave_format_size, const GUID *subtype, UINT64 channel_mask )
+{
+    UINT32 capacity = *format_size;
+
+    *format_size = max( wave_format_size, sizeof(*format) + params->extradata_size );
+    if (*format_size > capacity) return STATUS_BUFFER_TOO_SMALL;
+
+    wave_format_ex_init( params, &format->Format, *format_size, WAVE_FORMAT_EXTENSIBLE );
+    if (params->extradata_size && params->extradata) memcpy( format + 1, params->extradata, params->extradata_size );
+    format->Samples.wValidBitsPerSample = 0;
+    format->dwChannelMask = channel_mask;
+    format->SubFormat = *subtype;
+
+    TRACE( "tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample, %u valid bps,"
+           " channel mask %#x, subtype %s (%s).\n", format->Format.wFormatTag, format->Format.nChannels,
+           (int)format->Format.nSamplesPerSec, (int)format->Format.nAvgBytesPerSec, format->Format.nBlockAlign,
+           format->Format.wBitsPerSample, format->Samples.wValidBitsPerSample, (int)format->dwChannelMask,
+           debugstr_guid(&format->SubFormat), debugstr_fourcc(format->SubFormat.Data1) );
+    if (format->Format.cbSize)
+    {
+        UINT extra_size = sizeof(WAVEFORMATEX) + format->Format.cbSize - sizeof(WAVEFORMATEXTENSIBLE);
+        TRACE_HEXDUMP( format + 1, extra_size );
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wave_format_ex_from_codec_params( const AVCodecParameters *params, WAVEFORMATEX *format, UINT32 *format_size,
+                                                  UINT32 wave_format_size, WORD format_tag )
+{
+    UINT32 capacity = *format_size;
+
+    *format_size = max( wave_format_size, sizeof(*format) + params->extradata_size );
+    if (*format_size > capacity) return STATUS_BUFFER_TOO_SMALL;
+
+    wave_format_ex_init( params, format, *format_size, format_tag );
+    if (params->extradata_size && params->extradata) memcpy( format + 1, params->extradata, params->extradata_size );
+
+    TRACE( "tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample.\n",
+           format->wFormatTag, format->nChannels, (int)format->nSamplesPerSec, (int)format->nAvgBytesPerSec,
+           format->nBlockAlign, format->wBitsPerSample );
+    if (format->cbSize) TRACE_HEXDUMP( format + 1, format->cbSize );
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS audio_format_from_codec_params( const AVCodecParameters *params, void *format, UINT32 *format_size )
+{
+    UINT64 channel_mask;
+    WORD format_tag;
+    int channels;
+
+#if LIBAVUTIL_VERSION_MAJOR >= 58
+    if (!(channels = params->ch_layout.nb_channels)) channels = 1;
+    if (params->ch_layout.order != AV_CHANNEL_ORDER_NATIVE) channel_mask = 0;
+    else channel_mask = params->ch_layout.u.mask;
+#else
+    if (!(channels = params->channels)) channels = 1;
+    channel_mask = params->channel_layout;
+#endif
+
+    format_tag = wave_format_tag_from_codec_id( params->codec_id );
+    if (format_tag == WAVE_FORMAT_EXTENSIBLE || format_tag >> 16 || (channels > 2 && channel_mask != 0))
+    {
+        GUID subtype = MFAudioFormat_Base;
+        subtype.Data1 = format_tag;
+        return wave_format_extensible_from_codec_params( params, format, format_size, sizeof(WAVEFORMATEXTENSIBLE),
+                                                         &subtype, channel_mask );
+    }
+
+    return wave_format_ex_from_codec_params( params, format, format_size, sizeof(WAVEFORMATEX), format_tag );
+}
+
 static GUID subtype_from_pixel_format( enum AVPixelFormat fmt )
 {
     switch (fmt)
@@ -170,7 +267,7 @@ NTSTATUS media_type_from_codec_params( const AVCodecParameters *params, const AV
     if (params->codec_type == AVMEDIA_TYPE_AUDIO)
     {
         media_type->major = MFMediaType_Audio;
-        return STATUS_SUCCESS;
+        return audio_format_from_codec_params( params, media_type->audio, &media_type->format_size );
     }
 
     if (params->codec_type == AVMEDIA_TYPE_VIDEO)
