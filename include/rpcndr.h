@@ -136,7 +136,7 @@ typedef void (__RPC_USER *NDR_NOTIFY2_ROUTINE)(boolean flag);
 # endif
 #endif
 
-#define MIDL_INTERFACE(x)   struct
+#define MIDL_INTERFACE(x)   struct DECLSPEC_UUID(x) DECLSPEC_NOVTABLE
 
 struct _MIDL_STUB_MESSAGE;
 struct _MIDL_STUB_DESC;
