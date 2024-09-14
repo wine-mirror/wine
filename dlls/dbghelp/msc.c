@@ -273,15 +273,15 @@ static int leaf_as_variant(VARIANT *v, const unsigned char *leaf)
 {
     unsigned short int type = *(const unsigned short *)leaf;
     int length = 2;
-    leaf += length;
 
     if (type < LF_NUMERIC)
     {
-        V_VT(v) = VT_UINT;
-        V_UINT(v) = type;
+        V_VT(v) = VT_I2;
+        V_I2(v) = type;
     }
     else
     {
+        leaf += length;
         switch (type)
         {
         case LF_CHAR:
@@ -892,10 +892,8 @@ static BOOL codeview_add_type_enum_field_list(struct codeview_type_parse* ctp,
         case LF_ENUMERATE_V1:
         {
             VARIANT v;
-            int value, vlen = numeric_leaf(&value, type->enumerate_v1.data);
+            int vlen = leaf_as_variant(&v, type->enumerate_v1.data);
             const struct p_string* p_name = (const struct p_string*)&type->enumerate_v1.data[vlen];
-            V_VT(&v) = VT_I4;
-            V_I4(&v) = value;
 
             symt_add_enum_element(ctp->module, symt, terminate_string(p_name), &v);
             ptr += 2 + 2 + vlen + (1 + p_name->namelen);
@@ -904,10 +902,8 @@ static BOOL codeview_add_type_enum_field_list(struct codeview_type_parse* ctp,
         case LF_ENUMERATE_V3:
         {
             VARIANT v;
-            int value, vlen = numeric_leaf(&value, type->enumerate_v3.data);
+            int vlen = leaf_as_variant(&v, type->enumerate_v3.data);
             const char* name = (const char*)&type->enumerate_v3.data[vlen];
-            V_VT(&v) = VT_I4;
-            V_I4(&v) = value;
 
             symt_add_enum_element(ctp->module, symt, name, &v);
             ptr += 2 + 2 + vlen + (1 + strlen(name));
