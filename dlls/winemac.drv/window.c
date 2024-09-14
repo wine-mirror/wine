@@ -1014,53 +1014,6 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
 }
 
 
-/***********************************************************************
- *              move_window_bits
- *
- * Move the window bits when a window is moved.
- */
-static void move_window_bits(HWND hwnd, macdrv_window window, const RECT *old_rect, const RECT *new_rect,
-                             const RECT *old_client_rect, const RECT *new_client_rect,
-                             const RECT *new_window_rect)
-{
-    RECT src_rect = *old_rect;
-    RECT dst_rect = *new_rect;
-    HDC hdc_src, hdc_dst;
-    HRGN rgn;
-    HWND parent = 0;
-
-    if (!window)
-    {
-        OffsetRect(&dst_rect, -new_window_rect->left, -new_window_rect->top);
-        parent = NtUserGetAncestor(hwnd, GA_PARENT);
-        hdc_src = NtUserGetDCEx(parent, 0, DCX_CACHE);
-        hdc_dst = NtUserGetDCEx(hwnd, 0, DCX_CACHE | DCX_WINDOW);
-    }
-    else
-    {
-        OffsetRect(&dst_rect, -new_client_rect->left, -new_client_rect->top);
-        /* make src rect relative to the old position of the window */
-        OffsetRect(&src_rect, -old_client_rect->left, -old_client_rect->top);
-        if (dst_rect.left == src_rect.left && dst_rect.top == src_rect.top) return;
-        hdc_src = hdc_dst = NtUserGetDCEx(hwnd, 0, DCX_CACHE);
-    }
-
-    rgn = NtGdiCreateRectRgn(dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom);
-    NtGdiExtSelectClipRgn(hdc_dst, rgn, RGN_COPY);
-    NtGdiDeleteObjectApp(rgn);
-    NtUserExcludeUpdateRgn(hdc_dst, hwnd);
-
-    TRACE("copying bits for win %p/%p %s -> %s\n", hwnd, window,
-          wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect));
-    NtGdiBitBlt(hdc_dst, dst_rect.left, dst_rect.top,
-                dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
-                hdc_src, src_rect.left, src_rect.top, SRCCOPY, 0, 0);
-
-    NtUserReleaseDC(hwnd, hdc_dst);
-    if (hdc_src != hdc_dst) NtUserReleaseDC(parent, hdc_src);
-}
-
-
 /**********************************************************************
  *              activate_on_following_focus
  */
@@ -1752,35 +1705,6 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const stru
     return ret;
 }
 
-/***********************************************************************
- *              MoveWindowBits   (MACDRV.@)
- */
-void macdrv_MoveWindowBits(HWND hwnd, const struct window_rects *new_rects, const RECT *valid_rects)
-{
-    RECT old_visible_rect, old_client_rect;
-    struct macdrv_win_data *data;
-    macdrv_window window;
-
-    if (!(data = get_win_data(hwnd))) return;
-    old_visible_rect = data->rects.visible;
-    old_client_rect = data->rects.client;
-    window = data->cocoa_window;
-    release_win_data(data);
-
-    /* if all that happened is that the whole window moved, copy everything */
-    if (EqualRect(&valid_rects[0], &new_rects->visible) && EqualRect(&valid_rects[1], &old_visible_rect))
-    {
-        /* A Cocoa window's bits are moved automatically */
-        if (!window && (valid_rects[0].left - valid_rects[1].left || valid_rects[0].top - valid_rects[1].top))
-            move_window_bits(hwnd, 0, &old_visible_rect, &new_rects->visible,
-                             &old_client_rect, &new_rects->client, &new_rects->window);
-    }
-    else
-    {
-        move_window_bits(hwnd, window, &valid_rects[1], &valid_rects[0],
-                         &old_client_rect, &new_rects->client, &new_rects->window);
-    }
-}
 
 /***********************************************************************
  *      GetWindowStyleMasks   (X11DRV.@)

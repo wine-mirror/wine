@@ -304,7 +304,6 @@ static const struct user_driver_funcs macdrv_funcs =
     .pImeProcessKey = macdrv_ImeProcessKey,
     .pNotifyIMEStatus = macdrv_NotifyIMEStatus,
     .pWindowMessage = macdrv_WindowMessage,
-    .pMoveWindowBits = macdrv_MoveWindowBits,
     .pWindowPosChanged = macdrv_WindowPosChanged,
     .pWindowPosChanging = macdrv_WindowPosChanging,
     .pGetWindowStyleMasks = macdrv_GetWindowStyleMasks,
