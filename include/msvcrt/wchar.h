@@ -45,13 +45,21 @@ int     __cdecl wctob(wint_t);
 
 _ACRTIMP errno_t __cdecl wmemcpy_s(wchar_t *, size_t, const wchar_t *, size_t);
 
-static inline wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t n)
+static inline _CONST_RETURN wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t n)
 {
     const wchar_t *end;
     for (end = s + n; s < end; s++)
-        if (*s == c) return (wchar_t*)s;
+        if (*s == c) return (_CONST_RETURN wchar_t *)s;
     return NULL;
 }
+
+#ifdef __cplusplus
+extern "C++" inline wchar_t *wmemchr(wchar_t *s, wchar_t c, size_t n)
+{
+    wchar_t const* s_const = s;
+    return const_cast<wchar_t *>(wmemchr(s_const, c, n));
+}
+#endif
 
 static inline int wmemcmp(const wchar_t *s1, const wchar_t *s2, size_t n)
 {

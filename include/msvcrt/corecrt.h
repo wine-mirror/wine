@@ -250,6 +250,15 @@ typedef int errno_t;
 #define _ERRNO_T_DEFINED
 #endif
 
+#ifndef _CONST_RETURN
+# ifdef __cplusplus
+#  define _CONST_RETURN const
+#  define _CRT_CONST_CORRECT_OVERLOADS
+# else
+#  define _CONST_RETURN
+# endif
+#endif
+
 struct threadlocaleinfostruct;
 struct threadmbcinfostruct;
 typedef struct threadlocaleinfostruct *pthreadlocinfo;
