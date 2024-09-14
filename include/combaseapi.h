@@ -54,6 +54,15 @@ HRESULT WINAPI CoDecodeProxy(DWORD client_pid, UINT64 proxy_addr, ServerInformat
 HRESULT WINAPI RoGetAgileReference(enum AgileReferenceOptions options, REFIID riid, IUnknown *obj, IAgileReference **agile_reference);
 
 #ifdef __cplusplus
+extern "C++" template<typename T> void **IID_PPV_ARGS_Helper(T **obj)
+{
+    (void)static_cast<IUnknown *>(*obj);
+    return reinterpret_cast<void **>(obj);
+}
+#define IID_PPV_ARGS(obj) __uuidof(**(obj)), IID_PPV_ARGS_Helper(obj)
+#endif /* __cplusplus */
+
+#ifdef __cplusplus
 }
 #endif
 
