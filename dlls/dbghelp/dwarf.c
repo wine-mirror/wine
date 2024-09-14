@@ -1838,6 +1838,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_debug_info_t* di,
 static void dwarf2_parse_enumerator(dwarf2_debug_info_t* di,
                                     struct symt_enum* parent)
 {
+    VARIANT             v;
     struct attribute    name;
     struct attribute    value;
 
@@ -1845,7 +1846,10 @@ static void dwarf2_parse_enumerator(dwarf2_debug_info_t* di,
 
     if (!dwarf2_find_attribute(di, DW_AT_name, &name)) return;
     if (!dwarf2_find_attribute(di, DW_AT_const_value, &value)) value.u.svalue = 0;
-    symt_add_enum_element(di->unit_ctx->module_ctx->module, parent, name.u.string, value.u.svalue);
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = value.u.svalue;
+
+    symt_add_enum_element(di->unit_ctx->module_ctx->module, parent, name.u.string, &v);
 
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
 }

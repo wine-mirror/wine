@@ -930,9 +930,9 @@ extern BOOL         symt_add_udt_element(struct module* module,
 extern struct symt_enum*
                     symt_new_enum(struct module* module, const char* typename,
                                   struct symt* basetype);
-extern BOOL         symt_add_enum_element(struct module* module, 
-                                          struct symt_enum* enum_type, 
-                                          const char* name, int value);
+extern BOOL         symt_add_enum_element(struct module* module,
+                                          struct symt_enum* enum_type,
+                                          const char* name, const VARIANT *value);
 extern struct symt_array*
                     symt_new_array(struct module* module, int min, DWORD count,
                                    struct symt* base, struct symt* index);

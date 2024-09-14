@@ -342,7 +342,7 @@ struct symt_enum* symt_new_enum(struct module* module, const char* typename,
 }
 
 BOOL symt_add_enum_element(struct module* module, struct symt_enum* enum_type,
-                           const char* name, int value)
+                           const char* name, const VARIANT *variant)
 {
     struct symt_data*   e;
     struct symt**       p;
@@ -357,8 +357,7 @@ BOOL symt_add_enum_element(struct module* module, struct symt_enum* enum_type,
     e->kind = DataIsConstant;
     e->container = &enum_type->symt;
     e->type = enum_type->base_type;
-    V_VT(&e->u.value) = VT_I4;
-    V_I4(&e->u.value) = value;
+    e->u.value = *variant;
 
     p = vector_add(&enum_type->vchildren, &module->pool);
     if (!p) return FALSE; /* FIXME we leak e */

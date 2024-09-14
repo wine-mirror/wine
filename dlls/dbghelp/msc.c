@@ -891,19 +891,25 @@ static BOOL codeview_add_type_enum_field_list(struct codeview_type_parse* ctp,
         {
         case LF_ENUMERATE_V1:
         {
+            VARIANT v;
             int value, vlen = numeric_leaf(&value, type->enumerate_v1.data);
             const struct p_string* p_name = (const struct p_string*)&type->enumerate_v1.data[vlen];
+            V_VT(&v) = VT_I4;
+            V_I4(&v) = value;
 
-            symt_add_enum_element(ctp->module, symt, terminate_string(p_name), value);
+            symt_add_enum_element(ctp->module, symt, terminate_string(p_name), &v);
             ptr += 2 + 2 + vlen + (1 + p_name->namelen);
             break;
         }
         case LF_ENUMERATE_V3:
         {
+            VARIANT v;
             int value, vlen = numeric_leaf(&value, type->enumerate_v3.data);
             const char* name = (const char*)&type->enumerate_v3.data[vlen];
+            V_VT(&v) = VT_I4;
+            V_I4(&v) = value;
 
-            symt_add_enum_element(ctp->module, symt, name, value);
+            symt_add_enum_element(ctp->module, symt, name, &v);
             ptr += 2 + 2 + vlen + (1 + strlen(name));
             break;
         }
