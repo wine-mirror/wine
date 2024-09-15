@@ -35,7 +35,7 @@
 #define IMAGE_FILE_MACHINE_I386    0x014c
 #define IMAGE_FILE_MACHINE_POWERPC 0x01f0
 #define IMAGE_FILE_MACHINE_AMD64   0x8664
-#define IMAGE_FILE_MACHINE_ARMNT   0x01C4
+#define IMAGE_FILE_MACHINE_ARMNT   0x01c4
 #define IMAGE_FILE_MACHINE_ARM64   0xaa64
 
 #define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER 224
@@ -942,7 +942,8 @@ static unsigned int flush_output_to_section( const char *name, int dir_idx, unsi
 
     if (!output_buffer_pos) return 0;
 
-    strncpy( sec->name, name, sizeof(sec->name) );
+    memset( sec->name, 0, sizeof(sec->name) );
+    memcpy( sec->name, name, min( strlen(name), sizeof(sec->name) ));
     sec->ptr       = output_buffer;
     sec->size      = output_buffer_pos;
     sec->flags     = flags;

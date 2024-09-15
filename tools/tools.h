@@ -56,6 +56,8 @@
 #  define strncasecmp _strnicmp
 #  define strcasecmp _stricmp
 # endif
+# include <windef.h>
+# include <winbase.h>
 #else
 extern char **environ;
 # include <spawn.h>
@@ -706,7 +708,10 @@ static inline char *get_bindir( const char *argv0 )
     if (!dir && !(dir = realpath( argv0, NULL ))) return NULL;
     return get_dirname( dir );
 #else
-    return get_dirname( argv0 );
+    char path[MAX_PATH], *p;
+    GetModuleFileNameA( NULL, path, ARRAYSIZE(path) );
+    for (p = path; *p; p++) if (*p == '\\') *p = '/';
+    return get_dirname( path );
 #endif
 }
 
