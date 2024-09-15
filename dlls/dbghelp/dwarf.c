@@ -712,6 +712,63 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
     return TRUE;
 }
 
+static BOOL dwarf2_fill_in_variant(struct module *module, VARIANT *v, const struct attribute *attr)
+{
+    switch (attr->form)
+    {
+    case DW_FORM_data1:
+    case DW_FORM_data2:
+    case DW_FORM_data4:
+    case DW_FORM_addr:
+        V_VT(v) = VT_UI4;
+        V_UI4(v) = attr->u.uvalue;
+        break;
+
+    case DW_FORM_udata:
+    case DW_FORM_data8:
+    case DW_FORM_sec_offset:
+        V_VT(v) = VT_UI8;
+        V_UI8(v) = attr->u.lluvalue;
+        break;
+
+    case DW_FORM_sdata:
+        V_VT(v) = VT_I8;
+        V_I8(v) = attr->u.llsvalue;
+        break;
+
+    case DW_FORM_strp:
+    case DW_FORM_string:
+        /* FIXME: native doesn't report const strings from here !!
+         * however, the value of the string is in the code somewhere
+         */
+        V_VT(v) = VT_BYREF;
+        V_BYREF(v) = pool_strdup(&module->pool, attr->u.string);
+        break;
+
+    case DW_FORM_block:
+    case DW_FORM_block1:
+    case DW_FORM_block2:
+    case DW_FORM_block4:
+    case DW_FORM_exprloc:
+        V_VT(v) = VT_I4;
+        switch (attr->u.block.size)
+        {
+        case 1:     V_I4(v) = *(BYTE*)attr->u.block.ptr;    break;
+        case 2:     V_I4(v) = *(USHORT*)attr->u.block.ptr;  break;
+        case 4:     V_I4(v) = *(DWORD*)attr->u.block.ptr;   break;
+        default:
+            V_VT(v) = VT_BYREF;
+            V_BYREF(v) = pool_alloc(&module->pool, attr->u.block.size);
+            memcpy(V_BYREF(v), attr->u.block.ptr, attr->u.block.size);
+        }
+        break;
+    default:
+        V_VT(v) = VT_EMPTY;
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static dwarf2_debug_info_t* dwarf2_jump_to_debug_info(struct attribute* attr);
 
 static BOOL dwarf2_find_attribute(const dwarf2_debug_info_t* di,
@@ -2008,60 +2065,9 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     {
         VARIANT v;
 
-        switch (value.form)
-        {
-        case DW_FORM_data1:
-        case DW_FORM_data2:
-        case DW_FORM_data4:
-        case DW_FORM_addr:
-            V_VT(&v) = VT_UI4;
-            V_UI4(&v) = value.u.uvalue;
-            break;
-
-        case DW_FORM_udata:
-        case DW_FORM_data8:
-        case DW_FORM_sec_offset:
-            V_VT(&v) = VT_UI8;
-            V_UI8(&v) = value.u.lluvalue;
-            break;
-
-        case DW_FORM_sdata:
-            V_VT(&v) = VT_I8;
-            V_I8(&v) = value.u.llsvalue;
-            break;
-
-        case DW_FORM_strp:
-        case DW_FORM_string:
-            /* FIXME: native doesn't report const strings from here !!
-             * however, the value of the string is in the code somewhere
-             */
-            V_VT(&v) = VT_BYREF;
-            V_BYREF(&v) = pool_strdup(&subpgm->ctx->module_ctx->module->pool, value.u.string);
-            break;
-
-        case DW_FORM_block:
-        case DW_FORM_block1:
-        case DW_FORM_block2:
-        case DW_FORM_block4:
-        case DW_FORM_exprloc:
-            V_VT(&v) = VT_I4;
-            switch (value.u.block.size)
-            {
-            case 1:     V_I4(&v) = *(BYTE*)value.u.block.ptr;    break;
-            case 2:     V_I4(&v) = *(USHORT*)value.u.block.ptr;  break;
-            case 4:     V_I4(&v) = *(DWORD*)value.u.block.ptr;   break;
-            default:
-                V_VT(&v) = VT_BYREF;
-                V_BYREF(&v) = pool_alloc(&subpgm->ctx->module_ctx->module->pool, value.u.block.size);
-                memcpy(V_BYREF(&v), value.u.block.ptr, value.u.block.size);
-            }
-            break;
-
-        default:
+        if (!dwarf2_fill_in_variant(subpgm->ctx->module_ctx->module, &v, &value))
             FIXME("Unsupported form for const value %s (%Ix)\n",
                   debugstr_a(name.u.string), value.form);
-            V_VT(&v) = VT_EMPTY;
-        }
         if (subpgm->current_func)
         {
             if (is_pmt) WARN("Constant parameter %s reported as local variable in function '%s'\n",
