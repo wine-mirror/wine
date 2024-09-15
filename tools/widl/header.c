@@ -296,7 +296,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
   if ((ds->qualifier & TYPE_QUALIFIER_CONST) && (type_is_alias(t) || !is_ptr(t)))
     fprintf(h, "const ");
 
-  if (!winrt_mode && type_is_alias(t)) fprintf(h, "%s", t->name);
+  if (type_is_alias(t)) fprintf(h, "%s", name);
   else {
     switch (type_get_type_detect_alias(t)) {
       case TYPE_ENUM:
@@ -450,13 +450,9 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
         break;
       }
       case TYPE_ALIAS:
-      {
-        const decl_spec_t *ds = type_alias_get_aliasee(t);
-        int in_namespace = ds && ds->type && ds->type->namespace && !is_global_namespace(ds->type->namespace);
-        if (!in_namespace) fprintf(h, "%s", t->name);
-        else write_type_left(h, ds, name_type, define, write_callconv);
+        /* handled elsewhere */
+        assert(0);
         break;
-      }
       case TYPE_PARAMETERIZED_TYPE:
       {
         type_t *iface = type_parameterized_type_get_real_type(t);
