@@ -128,6 +128,7 @@ struct attribute
         ULONG_PTR                       uvalue;
         ULONGLONG                       lluvalue;
         LONG_PTR                        svalue;
+        LONGLONG                        llsvalue;
         const char*                     string;
         struct dwarf2_block             block;
     } u;
@@ -282,18 +283,19 @@ static DWORD64 dwarf2_parse_u8(dwarf2_traverse_context_t* ctx)
     return uvalue;
 }
 
-static ULONG_PTR dwarf2_get_leb128_as_unsigned(const unsigned char* ptr, const unsigned char** end)
+static ULONG64 dwarf2_get_leb128_as_unsigned(const unsigned char* ptr, const unsigned char** end)
 {
-    ULONG_PTR ret = 0;
+    ULONG64 ret = 0;
     unsigned char byte;
     unsigned shift = 0;
 
     do
     {
         byte = dwarf2_get_byte(ptr++);
-        ret |= (byte & 0x7f) << shift;
+        ret |= (ULONG64)(byte & 0x7f) << shift;
         shift += 7;
     } while (byte & 0x80);
+    if ((ret >> (shift - 7)) != (byte & 0x7F)) FIXME("Overflow in LEB128 encoding\n");
 
     if (end) *end = ptr;
     return ret;
@@ -301,47 +303,45 @@ static ULONG_PTR dwarf2_get_leb128_as_unsigned(const unsigned char* ptr, const u
 
 static ULONG_PTR dwarf2_leb128_as_unsigned(dwarf2_traverse_context_t* ctx)
 {
-    ULONG_PTR ret;
+    ULONG64 ret;
 
     assert(ctx);
 
     ret = dwarf2_get_leb128_as_unsigned(ctx->data, &ctx->data);
-
+    if (ret != (ULONG_PTR)ret) WARN("Dropping bits from LEB128 value\n");
     return ret;
 }
 
-static LONG_PTR dwarf2_get_leb128_as_signed(const unsigned char* ptr, const unsigned char** end)
+static LONG64 dwarf2_get_leb128_as_signed(const unsigned char* ptr, const unsigned char** end)
 {
-    LONG_PTR ret = 0;
+    ULONG64 ret = 0;
     unsigned char byte;
     unsigned shift = 0;
-    const unsigned size = sizeof(int) * 8;
 
     do
     {
         byte = dwarf2_get_byte(ptr++);
-        ret |= (byte & 0x7f) << shift;
+        ret |= (ULONG64)(byte & 0x7f) << shift;
         shift += 7;
     } while (byte & 0x80);
-    if (end) *end = ptr;
 
-    /* as spec: sign bit of byte is 2nd high order bit (80x40)
-     *  -> 0x80 is used as flag.
-     */
-    if ((shift < size) && (byte & 0x40))
-    {
-        ret |= - (1 << shift);
-    }
+    if (end) *end = ptr;
+    if ((shift < sizeof(ULONG64) * 8) && (byte & 0x40))
+        /* as spec: sign bit of byte is 2nd high order bit (80x40)
+         *  -> 0x80 is used as flag.
+         */
+        ret |= ~(ULONG64)0 << shift;
     return ret;
 }
 
 static LONG_PTR dwarf2_leb128_as_signed(dwarf2_traverse_context_t* ctx)
 {
-    LONG_PTR ret = 0;
+    LONG64 ret = 0;
 
     assert(ctx);
 
     ret = dwarf2_get_leb128_as_signed(ctx->data, &ctx->data);
+    if (ret != (LONG_PTR)ret) WARN("Dropping bits from LEB128 value\n");
     return ret;
 }
 
@@ -609,16 +609,16 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
 
     case DW_FORM_sdata:
-        attr->u.svalue = dwarf2_get_leb128_as_signed(data, NULL);
+        attr->u.llsvalue = dwarf2_get_leb128_as_signed(data, NULL);
         break;
 
     case DW_FORM_ref_udata:
-        attr->u.uvalue = ctx->ref_offset + dwarf2_get_leb128_as_unsigned(data, NULL);
+        attr->u.lluvalue = ctx->ref_offset + dwarf2_get_leb128_as_unsigned(data, NULL);
         TRACE("ref_udata<0x%Ix>\n", attr->u.uvalue);
         break;
 
     case DW_FORM_udata:
-        attr->u.uvalue = dwarf2_get_leb128_as_unsigned(data, NULL);
+        attr->u.lluvalue = dwarf2_get_leb128_as_unsigned(data, NULL);
         TRACE("udata<0x%Ix>\n", attr->u.uvalue);
         break;
 
@@ -1061,11 +1061,23 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
             return TRUE;
         }
         /* fall through */
-    case DW_FORM_data1: case DW_FORM_data2:
-    case DW_FORM_udata: case DW_FORM_sdata:
+    case DW_FORM_data1:
+    case DW_FORM_data2:
         loc->kind = loc_absolute;
         loc->reg = 0;
         loc->offset = xloc.u.uvalue;
+        return TRUE;
+    case DW_FORM_udata:
+        loc->kind = loc_absolute;
+        loc->reg = 0;
+        if (xloc.u.uvalue != xloc.u.lluvalue) WARN("Cropping integral value\n");
+        loc->offset = xloc.u.uvalue;
+        return TRUE;
+    case DW_FORM_sdata:
+        loc->kind = loc_absolute;
+        loc->reg = 0;
+        if (xloc.u.svalue != xloc.u.llsvalue) WARN("Cropping integral value\n");
+        loc->offset = xloc.u.svalue;
         return TRUE;
     case DW_FORM_data8:
         if (ctx->head.version >= 4)
@@ -1285,12 +1297,14 @@ static BOOL dwarf2_fill_ranges(const dwarf2_debug_info_t* di, struct addr_range*
             {
             case DW_FORM_addr:
                 break;
+            case DW_FORM_sdata:
+            case DW_FORM_udata:
+                if (high_pc.u.uvalue != high_pc.u.lluvalue) WARN("Cropping integral value\n");
+                /* fall through */
             case DW_FORM_data1:
             case DW_FORM_data2:
             case DW_FORM_data4:
             case DW_FORM_data8:
-            case DW_FORM_sdata:
-            case DW_FORM_udata:
                 /* From dwarf4 on, when FORM's class is constant, high_pc is an offset from low_pc */
                 high_pc.u.uvalue += low_pc.u.uvalue;
                 break;
@@ -1999,12 +2013,12 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
         case DW_FORM_data1:
         case DW_FORM_data2:
         case DW_FORM_data4:
-        case DW_FORM_udata:
         case DW_FORM_addr:
             V_VT(&v) = VT_UI4;
             V_UI4(&v) = value.u.uvalue;
             break;
 
+        case DW_FORM_udata:
         case DW_FORM_data8:
         case DW_FORM_sec_offset:
             V_VT(&v) = VT_UI8;
@@ -2012,8 +2026,8 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             break;
 
         case DW_FORM_sdata:
-            V_VT(&v) = VT_I4;
-            V_I4(&v) = value.u.svalue;
+            V_VT(&v) = VT_I8;
+            V_I8(&v) = value.u.llsvalue;
             break;
 
         case DW_FORM_strp:

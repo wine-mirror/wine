@@ -395,7 +395,8 @@ static int leaf_as_variant(VARIANT *v, const unsigned char *leaf)
     return length;
 }
 
-static int numeric_leaf(int *value, const unsigned char *leaf)
+#define numeric_leaf(v,l) _numeric_leaf(__LINE__,v,l)
+static int _numeric_leaf(unsigned line, int *value, const unsigned char *leaf)
 {
     unsigned short int type = *(const unsigned short int *)leaf;
     int length = 2;
@@ -436,7 +437,7 @@ static int numeric_leaf(int *value, const unsigned char *leaf)
 
         case LF_QUADWORD:
         case LF_UQUADWORD:
-	    FIXME("Unsupported numeric leaf type %04x\n", type);
+	    FIXME("Unsupported numeric leaf type %04x from %u (%I64x)\n", type, line, *(ULONG64*)leaf);
             length += 8;
             *value = 0;    /* FIXME */
             break;
@@ -2786,7 +2787,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             if (top_frame_size == -1 && curr_func && curr_func == top_func)
                 top_frame_size = sym->frame_info_v2.sz_frame;
             else
-                FIXME("Unexpected S_FRAMEPROC %d (%p %p)\n", top_frame_size, top_func, curr_func);
+                FIXME("Unexpected S_FRAMEPROC %d (%p %p) %x\n", top_frame_size, top_func, curr_func, i);
             break;
 
         /* the symbols we can safely ignore for now */
