@@ -2272,7 +2272,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumPlayers( IDirectPlay4 *iface, GUID *i
 static BOOL DP_InvokeEnumSessionCallbacks
        ( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
          LPVOID lpNSInfo,
-         DWORD dwTimeout,
+         DWORD *timeout,
          LPVOID lpContext )
 {
   LPDPSESSIONDESC2 lpSessionDesc;
@@ -2284,12 +2284,12 @@ static BOOL DP_InvokeEnumSessionCallbacks
   while( (lpSessionDesc = NS_WalkSessions( lpNSInfo ) ) != NULL )
   {
     TRACE( "EnumSessionsCallback2 invoked\n" );
-    if( !lpEnumSessionsCallback2( lpSessionDesc, &dwTimeout, 0, lpContext ) )
+    if( !lpEnumSessionsCallback2( lpSessionDesc, timeout, 0, lpContext ) )
       return FALSE;
   }
 
   /* Invoke one last time to indicate that there is no more to come */
-  return lpEnumSessionsCallback2( NULL, &dwTimeout, DPESC_TIMEDOUT, lpContext );
+  return lpEnumSessionsCallback2( NULL, timeout, DPESC_TIMEDOUT, lpContext );
 }
 
 static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
@@ -2403,7 +2403,9 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    DWORD defaultTimeout;
     void *connection;
+    DPCAPS caps;
     DWORD  size;
     HRESULT hr = DP_OK;
 
@@ -2452,18 +2454,11 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         This->dp2->bSPInitialized = TRUE;
     }
 
-
-    /* Use the service provider default? */
-    if ( !timeout )
-    {
-        DPCAPS caps;
-        caps.dwSize = sizeof( caps );
-
-        IDirectPlayX_GetCaps( &This->IDirectPlay4_iface, &caps, 0 );
-        timeout = caps.dwTimeout;
-        if ( !timeout )
-            timeout = DPMSG_WAIT_5_SECS; /* Provide the TCP/IP default */
-    }
+    caps.dwSize = sizeof( caps );
+    IDirectPlayX_GetCaps( &This->IDirectPlay4_iface, &caps, 0 );
+    defaultTimeout = caps.dwTimeout;
+    if ( !defaultTimeout )
+        defaultTimeout = DPMSG_WAIT_5_SECS; /* Provide the TCP/IP default */
 
     if ( flags & DPENUMSESSIONS_STOPASYNC )
     {
@@ -2487,7 +2482,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
                                                  &This->dp2->spData );
             if ( FAILED( hr ) )
                 return hr;
-            SleepEx( timeout, FALSE );
+            SleepEx( timeout ? timeout : defaultTimeout, FALSE );
         }
 
         EnterCriticalSection( &This->lock );
@@ -2497,7 +2492,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
 
         LeaveCriticalSection( &This->lock );
 
-        if ( !DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout,
+        if ( !DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, &timeout,
                                              context ) )
             break;
     }
@@ -2526,7 +2521,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
                 data->lpSpData  = &This->dp2->spData;
                 data->requestGuid = sdesc->guidApplication;
                 data->dwEnumSessionFlags = flags;
-                data->dwTimeout = timeout;
+                data->dwTimeout = timeout ? timeout : defaultTimeout;
 
                 This->dp2->hKillEnumSessionThreadEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
                 if ( !DuplicateHandle( GetCurrentProcess(), This->dp2->hKillEnumSessionThreadEvent,
