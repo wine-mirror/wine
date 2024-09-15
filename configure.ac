@@ -3741,7 +3741,7 @@ fi
 WINE_PRINT_MESSAGES
 
 AS_ECHO("
-$as_me: Finished.  Do '${ac_make}' to compile Wine.
+$as_me: Finished.  Do '${MAKE-make}' to compile Wine.
 ") >&AS_MESSAGE_FD
 
 dnl Local Variables:

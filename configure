@@ -25661,7 +25661,7 @@ done
 IFS="$ac_save_IFS"
 
 printf "%s\n" "
-$as_me: Finished.  Do '${ac_make}' to compile Wine.
+$as_me: Finished.  Do '${MAKE-make}' to compile Wine.
 " >&6
 
 
