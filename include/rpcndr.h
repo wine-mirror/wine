@@ -120,6 +120,14 @@ typedef void (__RPC_USER *NDR_RUNDOWN)(void *context);
 typedef void (__RPC_USER *NDR_NOTIFY_ROUTINE)(void);
 typedef void (__RPC_USER *NDR_NOTIFY2_ROUTINE)(boolean flag);
 
+#ifndef DECLSPEC_NOVTABLE
+# if __has_declspec_attribute(novtable) && defined(__cplusplus)
+#  define DECLSPEC_NOVTABLE __declspec(novtable)
+# else
+#  define DECLSPEC_NOVTABLE
+# endif
+#endif
+
 #ifndef DECLSPEC_UUID
 # if __has_declspec_attribute(uuid) && defined (__cplusplus)
 #  define DECLSPEC_UUID(x) __declspec(uuid(x))
