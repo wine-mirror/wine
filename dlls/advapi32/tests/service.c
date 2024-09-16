@@ -2213,6 +2213,7 @@ static void test_queryconfig2(void)
     LPSERVICE_DESCRIPTIONA pConfig = (LPSERVICE_DESCRIPTIONA)buffer;
     LPSERVICE_DESCRIPTIONW pConfigW = (LPSERVICE_DESCRIPTIONW)buffer;
     SERVICE_PRESHUTDOWN_INFO preshutdown_info;
+    SERVICE_DELAYED_AUTO_START_INFO auto_start_info;
     static const CHAR servicename [] = "winetest_query_config2";
     static const CHAR displayname [] = "Winetest dummy service";
     static const CHAR pathname    [] = "we_dont_care.exe";
@@ -2443,6 +2444,7 @@ static void test_queryconfig2(void)
         "expected lpDescription to be null, got %s\n", wine_dbgstr_w(pConfigW->lpDescription));
 
     SetLastError(0xdeadbeef);
+    needed = 0;
     ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_PRESHUTDOWN_INFO,
             (LPBYTE)&preshutdown_info, sizeof(preshutdown_info), &needed);
     if(!ret && GetLastError()==ERROR_INVALID_LEVEL)
@@ -2469,6 +2471,44 @@ static void test_queryconfig2(void)
     ok(needed == sizeof(preshutdown_info), "needed = %ld\n", needed);
     ok(preshutdown_info.dwPreshutdownTimeout == -1, "New PreshutdownTimeout = %ld\n",
             preshutdown_info.dwPreshutdownTimeout);
+
+    SetLastError(0xdeadbeef);
+    needed = 0;
+    auto_start_info.fDelayedAutostart = 0xdeadbeef;
+    ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
+            (LPBYTE)&auto_start_info, sizeof(auto_start_info), &needed);
+    todo_wine
+    ok(ret, "expected QueryServiceConfig2W to succeed (%ld)\n", GetLastError());
+    todo_wine
+    ok(needed == sizeof(auto_start_info), "needed = %ld\n", needed);
+    todo_wine
+    ok(auto_start_info.fDelayedAutostart == 0, "fDelayedAutostart = %d\n", auto_start_info.fDelayedAutostart);
+
+    SetLastError(0xdeadbeef);
+    auto_start_info.fDelayedAutostart = 3;
+    ret = pChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
+            (LPBYTE)&auto_start_info);
+    ok(!ret, "expected ChangeServiceConfig2A to fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    auto_start_info.fDelayedAutostart = 1;
+    ret = pChangeServiceConfig2A(svc_handle, SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
+            (LPBYTE)&auto_start_info);
+    todo_wine
+    ok(ret, "expected ChangeServiceConfig2A to succeed (%ld)\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    needed = 0;
+    auto_start_info.fDelayedAutostart = 0xdeadbeef;
+    ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
+            (LPBYTE)&auto_start_info, sizeof(auto_start_info), &needed);
+    todo_wine
+    ok(ret, "expected QueryServiceConfig2W to succeed (%ld)\n", GetLastError());
+    todo_wine
+    ok(needed == sizeof(auto_start_info), "needed = %ld\n", needed);
+    todo_wine
+    ok(auto_start_info.fDelayedAutostart == 1, "fDelayedAutostart = %d\n", auto_start_info.fDelayedAutostart);
 
 cleanup:
     DeleteService(svc_handle);
