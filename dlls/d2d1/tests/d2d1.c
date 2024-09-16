@@ -15103,6 +15103,97 @@ static void test_effect_vertex_buffer(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_compute_geometry_area(BOOL d3d11)
+{
+    ID2D1RectangleGeometry *rectangle_geometry;
+    ID2D1EllipseGeometry *ellipse_geometry;
+    struct d2d1_test_context ctx;
+    D2D1_MATRIX_3X2_F matrix;
+    D2D1_ELLIPSE ellipse;
+    D2D1_RECT_F rect;
+    HRESULT hr;
+    float area;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    /* Ellipse */
+    set_ellipse(&ellipse, 0.0f, 0.0f, 10.0f, 5.0f);
+    hr = ID2D1Factory_CreateEllipseGeometry(ctx.factory, &ellipse, &ellipse_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1EllipseGeometry_ComputeArea(ellipse_geometry, NULL, 0.01f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 156.9767f, 0), "Unexpected value %.8e.\n", area);
+
+    hr = ID2D1EllipseGeometry_ComputeArea(ellipse_geometry, NULL, 200.0f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 100.0f, 0), "Unexpected value %.8e.\n", area);
+
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 1.0f, 2.0f);
+    hr = ID2D1EllipseGeometry_ComputeArea(ellipse_geometry, &matrix, 0.01f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 314.12088f, 0), "Unexpected value %.8e.\n", area);
+
+    hr = ID2D1EllipseGeometry_ComputeArea(ellipse_geometry, &matrix, 200.0f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 200.0f, 0), "Unexpected value %.8e.\n", area);
+
+    ID2D1EllipseGeometry_Release(ellipse_geometry);
+
+    /* Rectangle */
+    set_rect(&rect, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(ctx.factory, &rect, &rectangle_geometry);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, NULL, 0.01f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 4.0f, 0), "Unexpected value %.8e.\n", area);
+
+    hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, NULL, 200.0f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 4.0f, 0), "Unexpected value %.8e.\n", area);
+
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 1.0f, 2.0f);
+    hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, &matrix, 0.01f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 8.0f, 0), "Unexpected value %.8e.\n", area);
+
+    rotate_matrix(&matrix, 0.5f);
+    hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, &matrix, 200.0f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 8.0f, 0), "Unexpected value %.8e.\n", area);
+
+    skew_matrix(&matrix, 0.1f, 1.5f);
+    hr = ID2D1RectangleGeometry_ComputeArea(rectangle_geometry, &matrix, 200.0f, &area);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(compare_float(area, 6.8f, 0), "Unexpected value %.8e.\n", area);
+
+    ID2D1RectangleGeometry_Release(rectangle_geometry);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -15197,6 +15288,7 @@ START_TEST(d2d1)
     queue_test(test_get_effect_properties);
     queue_test(test_effect_custom_pixel_shader);
     queue_test(test_effect_vertex_buffer);
+    queue_test(test_compute_geometry_area);
 
     run_queued_tests();
 }
