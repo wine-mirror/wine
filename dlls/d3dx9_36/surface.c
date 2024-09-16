@@ -1678,7 +1678,7 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
         const PALETTEENTRY *palette)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
-    const struct pixel_format_desc *ck_format = NULL;
+    const struct pixel_format_desc *ck_format;
     DWORD channels[4];
     UINT min_width, min_height, min_depth;
     UINT x, y, z;
@@ -1740,7 +1740,7 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
                     if (src_format->to_rgba)
                         src_format->to_rgba(&color.value, &tmp.value, palette);
 
-                    if (ck_format)
+                    if (color_key)
                     {
                         DWORD ck_pixel;
 
@@ -1784,7 +1784,7 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
         const PALETTEENTRY *palette)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
-    const struct pixel_format_desc *ck_format = NULL;
+    const struct pixel_format_desc *ck_format;
     DWORD channels[4];
     UINT x, y, z;
 
@@ -1846,7 +1846,7 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
                     if (src_format->to_rgba)
                         src_format->to_rgba(&color.value, &tmp.value, palette);
 
-                    if (ck_format)
+                    if (color_key)
                     {
                         DWORD ck_pixel;
 
