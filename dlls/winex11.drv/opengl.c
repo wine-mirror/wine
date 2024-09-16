@@ -1270,6 +1270,34 @@ static BOOL set_pixel_format( HDC hdc, int format, BOOL internal )
     return set_win_format( hwnd, fmt, internal );
 }
 
+static void update_gl_drawable_size( struct gl_drawable *gl )
+{
+    struct gl_drawable *new_gl;
+    XWindowChanges changes;
+    RECT rect;
+
+    NtUserGetClientRect( gl->hwnd, &rect, NtUserGetDpiForWindow( gl->hwnd ) );
+    if (EqualRect( &rect, &gl->rect )) return;
+
+    changes.width  = min( max( 1, rect.right ), 65535 );
+    changes.height = min( max( 1, rect.bottom ), 65535 );
+
+    switch (gl->type)
+    {
+    case DC_GL_WINDOW:
+    case DC_GL_CHILD_WIN:
+        gl->rect = rect;
+        XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
+        set_dc_drawable( gl->hdc_src, gl->window, &gl->rect, IncludeInferiors );
+        break;
+    case DC_GL_PIXMAP_WIN:
+        new_gl = create_gl_drawable( gl->hwnd, gl->format, TRUE, gl->mutable_pf );
+        mark_drawable_dirty( gl, new_gl );
+        release_gl_drawable( new_gl );
+    default:
+        break;
+    }
+}
 
 /***********************************************************************
  *              sync_gl_drawable
@@ -2759,35 +2787,6 @@ static void X11DRV_WineGL_LoadExtensions(void)
         opengl_funcs.ext.p_wglQueryCurrentRendererStringWINE = X11DRV_wglQueryCurrentRendererStringWINE;
         opengl_funcs.ext.p_wglQueryRendererIntegerWINE = X11DRV_wglQueryRendererIntegerWINE;
         opengl_funcs.ext.p_wglQueryRendererStringWINE = X11DRV_wglQueryRendererStringWINE;
-    }
-}
-
-static void update_gl_drawable_size( struct gl_drawable *gl )
-{
-    struct gl_drawable *new_gl;
-    XWindowChanges changes;
-    RECT rect;
-
-    NtUserGetClientRect( gl->hwnd, &rect, NtUserGetDpiForWindow( gl->hwnd ) );
-    if (EqualRect( &rect, &gl->rect )) return;
-
-    changes.width  = min( max( 1, rect.right ), 65535 );
-    changes.height = min( max( 1, rect.bottom ), 65535 );
-
-    switch (gl->type)
-    {
-    case DC_GL_WINDOW:
-    case DC_GL_CHILD_WIN:
-        gl->rect = rect;
-        XConfigureWindow( gdi_display, gl->window, CWWidth | CWHeight, &changes );
-        set_dc_drawable( gl->hdc_src, gl->window, &gl->rect, IncludeInferiors );
-        break;
-    case DC_GL_PIXMAP_WIN:
-        new_gl = create_gl_drawable( gl->hwnd, gl->format, TRUE, gl->mutable_pf );
-        mark_drawable_dirty( gl, new_gl );
-        release_gl_drawable( new_gl );
-    default:
-        break;
     }
 }
 
