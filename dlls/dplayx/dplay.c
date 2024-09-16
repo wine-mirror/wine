@@ -2269,7 +2269,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumPlayers( IDirectPlay4 *iface, GUID *i
 /* This function should call the registered callback function that the user
    passed into EnumSessions for each entry available.
  */
-static void DP_InvokeEnumSessionCallbacks
+static BOOL DP_InvokeEnumSessionCallbacks
        ( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
          LPVOID lpNSInfo,
          DWORD dwTimeout,
@@ -2285,13 +2285,11 @@ static void DP_InvokeEnumSessionCallbacks
   {
     TRACE( "EnumSessionsCallback2 invoked\n" );
     if( !lpEnumSessionsCallback2( lpSessionDesc, &dwTimeout, 0, lpContext ) )
-    {
-      return;
-    }
+      return FALSE;
   }
 
   /* Invoke one last time to indicate that there is no more to come */
-  lpEnumSessionsCallback2( NULL, &dwTimeout, DPESC_TIMEDOUT, lpContext );
+  return lpEnumSessionsCallback2( NULL, &dwTimeout, DPESC_TIMEDOUT, lpContext );
 }
 
 static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
@@ -2473,30 +2471,36 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         return hr;
     }
 
-    if ( !(flags & DPENUMSESSIONS_ASYNC) )
+    for ( ;; )
     {
+        if ( !(flags & DPENUMSESSIONS_ASYNC) )
+        {
+            EnterCriticalSection( &This->lock );
+
+            /* Invalidate the session cache for the interface */
+            NS_InvalidateSessionCache( This->dp2->lpNameServerData );
+
+            LeaveCriticalSection( &This->lock );
+
+            /* Send the broadcast for session enumeration */
+            hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags,
+                                                 &This->dp2->spData );
+            if ( FAILED( hr ) )
+                return hr;
+            SleepEx( timeout, FALSE );
+        }
+
         EnterCriticalSection( &This->lock );
 
-        /* Invalidate the session cache for the interface */
-        NS_InvalidateSessionCache( This->dp2->lpNameServerData );
+        NS_PruneSessionCache( This->dp2->lpNameServerData );
+        NS_ResetSessionEnumeration( This->dp2->lpNameServerData );
 
         LeaveCriticalSection( &This->lock );
 
-        /* Send the broadcast for session enumeration */
-        hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, &This->dp2->spData );
-        if ( FAILED( hr ) )
-            return hr;
-        SleepEx( timeout, FALSE );
+        if ( !DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout,
+                                             context ) )
+            break;
     }
-
-    EnterCriticalSection( &This->lock );
-
-    NS_PruneSessionCache( This->dp2->lpNameServerData );
-    NS_ResetSessionEnumeration( This->dp2->lpNameServerData );
-
-    LeaveCriticalSection( &This->lock );
-
-    DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout, context );
 
     if ( flags & DPENUMSESSIONS_ASYNC )
     {
