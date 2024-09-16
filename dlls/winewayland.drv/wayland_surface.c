@@ -817,21 +817,35 @@ err:
     return NULL;
 }
 
-void wayland_client_surface_attach(struct wayland_client_surface *client, struct wayland_surface *surface)
+void wayland_client_surface_attach(struct wayland_client_surface *client, HWND toplevel)
 {
-    wayland_client_surface_detach(client);
+    struct wayland_win_data *toplevel_data = wayland_win_data_get_nolock(toplevel);
+    struct wayland_surface *surface;
 
-    client->wl_subsurface =
-        wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
-                                        client->wl_surface,
-                                        surface->wl_surface);
-    if (!client->wl_subsurface)
+    if (!toplevel_data || !(surface = toplevel_data->wayland_surface))
     {
-        ERR("Failed to create client wl_subsurface\n");
+        wayland_client_surface_detach(client);
         return;
     }
-    /* Present contents independently of the parent surface. */
-    wl_subsurface_set_desync(client->wl_subsurface);
+
+    if (client->toplevel != toplevel)
+    {
+        wayland_client_surface_detach(client);
+
+        client->wl_subsurface =
+            wl_subcompositor_get_subsurface(process_wayland.wl_subcompositor,
+                                            client->wl_surface,
+                                            surface->wl_surface);
+        if (!client->wl_subsurface)
+        {
+            ERR("Failed to create client wl_subsurface\n");
+            return;
+        }
+        /* Present contents independently of the parent surface. */
+        wl_subsurface_set_desync(client->wl_subsurface);
+
+        client->toplevel = toplevel;
+    }
 
     wayland_surface_reconfigure_client(surface, client);
     /* Commit to apply subsurface positioning. */
@@ -845,6 +859,8 @@ void wayland_client_surface_detach(struct wayland_client_surface *client)
         wl_subsurface_destroy(client->wl_subsurface);
         client->wl_subsurface = NULL;
     }
+
+    client->toplevel = 0;
 }
 
 static void dummy_buffer_release(void *data, struct wl_buffer *buffer)

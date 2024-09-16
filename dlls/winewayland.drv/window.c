@@ -125,19 +125,32 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 }
 
 /***********************************************************************
+ *           wayland_win_data_get_nolock
+ *
+ * Return the data structure associated with a window. This function does
+ * not lock the win_data_mutex, so it must be externally synchronized.
+ */
+struct wayland_win_data *wayland_win_data_get_nolock(HWND hwnd)
+{
+    struct rb_entry *rb_entry;
+
+    if ((rb_entry = rb_get(&win_data_rb, hwnd)))
+        return RB_ENTRY_VALUE(rb_entry, struct wayland_win_data, entry);
+
+    return NULL;
+}
+
+/***********************************************************************
  *           wayland_win_data_get
  *
  * Lock and return the data structure associated with a window.
  */
 struct wayland_win_data *wayland_win_data_get(HWND hwnd)
 {
-    struct rb_entry *rb_entry;
+    struct wayland_win_data *data;
 
     pthread_mutex_lock(&win_data_mutex);
-
-    if ((rb_entry = rb_get(&win_data_rb, hwnd)))
-        return RB_ENTRY_VALUE(rb_entry, struct wayland_win_data, entry);
-
+    if ((data = wayland_win_data_get_nolock(hwnd))) return data;
     pthread_mutex_unlock(&win_data_mutex);
 
     return NULL;
@@ -208,7 +221,7 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     {
         if (surface)
         {
-            if (client) wayland_client_surface_attach(client, surface);
+            if (client) wayland_client_surface_detach(client);
             wayland_surface_destroy(surface);
         }
         surface = NULL;
@@ -235,7 +248,7 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
         if (visible)
         {
             wayland_surface_make_toplevel(surface);
-            if (client) wayland_client_surface_attach(client, surface);
+            if (client) wayland_client_surface_attach(client, data->hwnd);
             if (surface->xdg_toplevel)
             {
                 if (!NtUserInternalGetWindowText(data->hwnd, text, ARRAY_SIZE(text)))
@@ -724,7 +737,7 @@ struct wayland_client_surface *get_client_surface(HWND hwnd)
     if (!data) return client;
 
     if (surface && NtUserIsWindowVisible(hwnd))
-        wayland_client_surface_attach(client, surface);
+        wayland_client_surface_attach(client, data->hwnd);
     else
         wayland_client_surface_detach(client);
 

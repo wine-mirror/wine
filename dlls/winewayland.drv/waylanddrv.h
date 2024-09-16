@@ -185,6 +185,7 @@ struct wayland_client_surface
 {
     LONG ref;
     HWND hwnd;
+    HWND toplevel;
     struct wl_surface *wl_surface;
     struct wl_subsurface *wl_subsurface;
     struct wp_viewport *wp_viewport;
@@ -254,7 +255,7 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
                                       int *window_x, int *window_y);
 struct wayland_client_surface *wayland_client_surface_create(HWND hwnd);
 BOOL wayland_client_surface_release(struct wayland_client_surface *client);
-void wayland_client_surface_attach(struct wayland_client_surface *client, struct wayland_surface *surface);
+void wayland_client_surface_attach(struct wayland_client_surface *client, HWND toplevel);
 void wayland_client_surface_detach(struct wayland_client_surface *client);
 void wayland_surface_ensure_contents(struct wayland_surface *surface, struct wayland_client_surface *client);
 void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);
@@ -291,6 +292,7 @@ struct wayland_win_data
 };
 
 struct wayland_win_data *wayland_win_data_get(HWND hwnd);
+struct wayland_win_data *wayland_win_data_get_nolock(HWND hwnd);
 void wayland_win_data_release(struct wayland_win_data *data);
 
 struct wayland_client_surface *get_client_surface(HWND hwnd);
