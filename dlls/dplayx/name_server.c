@@ -41,7 +41,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 /* NS specific structures */
 struct NSCacheData
 {
+  DPQ_ENTRY(NSCacheData) walkNext;
   DPQ_ENTRY(NSCacheData) next;
+
+  LONG ref;
 
   DWORD dwTime; /* Time at which data was last known valid */
   LPDPSESSIONDESC2 data;
@@ -55,6 +58,7 @@ struct NSCache
 {
   lpNSCacheData present; /* keep track of what is to be looked at when walking */
 
+  DPQ_HEAD(NSCacheData) walkFirst;
   DPQ_HEAD(NSCacheData) first;
 
   BOOL bNsIsLocal;
@@ -64,7 +68,7 @@ struct NSCache
 typedef struct NSCache NSCache, *lpNSCache;
 
 /* Function prototypes */
-static DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData );
+static DPQ_DECL_DELETECB( cbReleaseNSNode, lpNSCacheData );
 
 /* Name Server functions
  * ---------------------
@@ -101,7 +105,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
   {
     TRACE( "Duplicate session entry for %s removed - updated version kept\n",
            debugstr_guid( &lpCacheNode->data->guidInstance ) );
-    cbDeleteNSNodeFromHeap( lpCacheNode );
+    cbReleaseNSNode( lpCacheNode );
   }
 
   /* Add this to the list */
@@ -133,11 +137,10 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
                            lpCacheNode->data->lpszSessionNameA, len, NULL, NULL );
   }
 
+  lpCacheNode->ref = 1;
   lpCacheNode->dwTime = timeGetTime();
 
   DPQ_INSERT(lpCache->first, lpCacheNode, next );
-
-  lpCache->present = lpCacheNode;
 
   /* Use this message as an opportunity to weed out any old sessions so
    * that we don't enum them again
@@ -159,8 +162,8 @@ LPVOID NS_GetNSAddr( LPVOID lpNSInfo )
    *        in place.
    */
 #if 1
-  if ( lpCache->first.lpQHFirst )
-    return lpCache->first.lpQHFirst->lpNSAddrHdr;
+  if ( lpCache->walkFirst.lpQHFirst )
+    return lpCache->walkFirst.lpQHFirst->lpNSAddrHdr;
 
   return NULL;
 #else
@@ -225,9 +228,12 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
 }
 
 /* Delete a name server node which has been allocated on the heap */
-static DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData )
+static DPQ_DECL_DELETECB( cbReleaseNSNode, lpNSCacheData )
 {
-  /* NOTE: This proc doesn't deal with the walking pointer */
+  LONG ref = InterlockedDecrement( &elem->ref );
+
+  if ( ref )
+    return;
 
   /* FIXME: Memory leak on data (contained ptrs) */
   free( elem->data );
@@ -246,10 +252,7 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo )
     return;
   }
 
-  DPQ_DELETEQ( lpCache->first, next, lpNSCacheData, cbDeleteNSNodeFromHeap );
-
-  /* NULL out the walking pointer */
-  lpCache->present = NULL;
+  DPQ_DELETEQ( lpCache->first, next, lpNSCacheData, cbReleaseNSNode );
 
   lpCache->bNsIsLocal = FALSE;
 
@@ -267,6 +270,7 @@ BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo )
     return FALSE;
   }
 
+  DPQ_INIT(lpCache->walkFirst);
   DPQ_INIT(lpCache->first);
   lpCache->present = NULL;
 
@@ -279,20 +283,30 @@ BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo )
 void NS_DeleteSessionCache( LPVOID lpNSInfo )
 {
   NS_InvalidateSessionCache( (lpNSCache)lpNSInfo );
+  NS_ResetSessionEnumeration( (lpNSCache)lpNSInfo );
 }
 
 /* Reinitialize the present pointer for this cache */
 void NS_ResetSessionEnumeration( LPVOID lpNSInfo )
 {
-  ((lpNSCache)lpNSInfo)->present = ((lpNSCache)lpNSInfo)->first.lpQHFirst;
+  NSCache *cache = (NSCache *) lpNSInfo;
+  NSCacheData *data;
+
+  DPQ_DELETEQ( cache->walkFirst, walkNext, lpNSCacheData, cbReleaseNSNode );
+
+  for( data = DPQ_FIRST( cache->first ); data; data = DPQ_NEXT( data->next ) )
+  {
+    InterlockedIncrement( &data->ref );
+    DPQ_INSERT( cache->walkFirst, data, walkNext );
+  }
+
+  ((lpNSCache)lpNSInfo)->present = ((lpNSCache)lpNSInfo)->walkFirst.lpQHFirst;
 }
 
 LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
 {
   LPDPSESSIONDESC2 lpSessionDesc;
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
-
-  /* FIXME: The pointers could disappear when walking if a prune happens */
 
   /* Test for end of the list */
   if( lpCache->present == NULL )
@@ -303,7 +317,7 @@ LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
   lpSessionDesc = lpCache->present->data;
 
   /* Advance tracking pointer */
-  lpCache->present = lpCache->present->next.lpQNext;
+  lpCache->present = lpCache->present->walkNext.lpQNext;
 
   return lpSessionDesc;
 }
@@ -345,7 +359,7 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
 
     lpFirstData = DPQ_FIRST(lpCache->first);
     DPQ_REMOVE( lpCache->first, DPQ_FIRST(lpCache->first), next );
-    cbDeleteNSNodeFromHeap( lpFirstData );
+    cbReleaseNSNode( lpFirstData );
   }
 
 }
