@@ -535,7 +535,7 @@ void wayland_surface_reconfigure_client(struct wayland_surface *surface, struct 
  * Reconfigures the wayland surface as needed to match the latest requested
  * state.
  */
-BOOL wayland_surface_reconfigure(struct wayland_surface *surface, struct wayland_client_surface *client)
+BOOL wayland_surface_reconfigure(struct wayland_surface *surface)
 {
     struct wayland_window_config *window = &surface->window;
     int win_width, win_height, width, height;
@@ -586,7 +586,6 @@ BOOL wayland_surface_reconfigure(struct wayland_surface *surface, struct wayland
 
     wayland_surface_reconfigure_geometry(surface, width, height);
     wayland_surface_reconfigure_size(surface, width, height);
-    if (client) wayland_surface_reconfigure_client(surface, client);
 
     return TRUE;
 }
@@ -881,7 +880,7 @@ static const struct wl_buffer_listener dummy_buffer_listener =
  * Ensure that the wayland surface has up-to-date contents, by committing
  * a dummy buffer if necessary.
  */
-void wayland_surface_ensure_contents(struct wayland_surface *surface, struct wayland_client_surface *client)
+void wayland_surface_ensure_contents(struct wayland_surface *surface)
 {
     struct wayland_shm_buffer *dummy_shm_buffer;
     HRGN damage;
@@ -912,7 +911,7 @@ void wayland_surface_ensure_contents(struct wayland_surface *surface, struct way
     if (!(damage = NtGdiCreateRectRgn(0, 0, width, height)))
         WARN("Failed to create damage region for dummy buffer\n");
 
-    if (wayland_surface_reconfigure(surface, client))
+    if (wayland_surface_reconfigure(surface))
     {
         wayland_surface_attach_shm(surface, dummy_shm_buffer, damage);
         wl_surface_commit(surface->wl_surface);

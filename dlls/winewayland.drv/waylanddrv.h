@@ -242,7 +242,7 @@ void wayland_surface_clear_role(struct wayland_surface *surface);
 void wayland_surface_attach_shm(struct wayland_surface *surface,
                                 struct wayland_shm_buffer *shm_buffer,
                                 HRGN surface_damage_region);
-BOOL wayland_surface_reconfigure(struct wayland_surface *surface, struct wayland_client_surface *client);
+BOOL wayland_surface_reconfigure(struct wayland_surface *surface);
 void wayland_surface_reconfigure_client(struct wayland_surface *surface, struct wayland_client_surface *client);
 BOOL wayland_surface_config_is_compatible(struct wayland_surface_config *conf,
                                           int width, int height,
@@ -257,7 +257,7 @@ struct wayland_client_surface *wayland_client_surface_create(HWND hwnd);
 BOOL wayland_client_surface_release(struct wayland_client_surface *client);
 void wayland_client_surface_attach(struct wayland_client_surface *client, HWND toplevel);
 void wayland_client_surface_detach(struct wayland_client_surface *client);
-void wayland_surface_ensure_contents(struct wayland_surface *surface, struct wayland_client_surface *client);
+void wayland_surface_ensure_contents(struct wayland_surface *surface);
 void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);
 
 /**********************************************************************

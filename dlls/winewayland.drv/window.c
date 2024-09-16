@@ -228,27 +228,23 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
         goto out;
     }
 
+    visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
+    if (!visible && client) wayland_client_surface_detach(client);
+
     /* Otherwise ensure that we have a wayland surface. */
     if (!surface && !(surface = wayland_surface_create(data->hwnd))) return;
-
-    visible = (NtUserGetWindowLongW(data->hwnd, GWL_STYLE) & WS_VISIBLE) == WS_VISIBLE;
     xdg_visible = surface->xdg_toplevel != NULL;
 
     if (visible != xdg_visible)
     {
         /* If we have a pre-existing surface ensure it has no role. */
-        if (data->wayland_surface)
-        {
-            if (client) wayland_client_surface_detach(client);
-            wayland_surface_clear_role(surface);
-        }
+        if (data->wayland_surface) wayland_surface_clear_role(surface);
         /* If the window is a visible toplevel make it a wayland
          * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
          * compositor with empty xdg_toplevels. */
         if (visible)
         {
             wayland_surface_make_toplevel(surface);
-            if (client) wayland_client_surface_attach(client, data->hwnd);
             if (surface->xdg_toplevel)
             {
                 if (!NtUserInternalGetWindowText(data->hwnd, text, ARRAY_SIZE(text)))
@@ -258,6 +254,7 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
         }
     }
 
+    if (visible && client) wayland_client_surface_attach(client, data->hwnd);
     wayland_win_data_get_config(data, &surface->window);
 
     /* Size/position changes affect the effective pointer constraint, so update
@@ -757,7 +754,7 @@ BOOL set_window_surface_contents(HWND hwnd, struct wayland_shm_buffer *shm_buffe
 
     if ((wayland_surface = data->wayland_surface))
     {
-        if (wayland_surface_reconfigure(wayland_surface, data->client_surface))
+        if (wayland_surface_reconfigure(wayland_surface))
         {
             wayland_surface_attach_shm(wayland_surface, shm_buffer, damage_region);
             wl_surface_commit(wayland_surface->wl_surface);
@@ -802,13 +799,13 @@ void ensure_window_surface_contents(HWND hwnd)
 
     if ((wayland_surface = data->wayland_surface))
     {
-        wayland_surface_ensure_contents(wayland_surface, data->client_surface);
+        wayland_surface_ensure_contents(wayland_surface);
 
         /* Handle any processed configure request, to ensure the related
          * surface state is applied by the compositor. */
         if (wayland_surface->processing.serial &&
             wayland_surface->processing.processed &&
-            wayland_surface_reconfigure(wayland_surface, data->client_surface))
+            wayland_surface_reconfigure(wayland_surface))
         {
             wl_surface_commit(wayland_surface->wl_surface);
         }
