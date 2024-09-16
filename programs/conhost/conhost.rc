@@ -124,3 +124,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #define WINE_PRODUCTVERSION_STR "6.1.7601.22045"
 
 #include "wine/wine_common_ver.rc"
+
+/* @makedep: conhost.manifest */
+1 RT_MANIFEST conhost.manifest
