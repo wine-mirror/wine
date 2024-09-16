@@ -434,6 +434,7 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const str
 void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, BOOL fullscreen,
                               const struct window_rects *new_rects, struct window_surface *surface)
 {
+    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct wayland_client_surface *client;
     struct wayland_win_data *data;
     BOOL managed;
@@ -455,7 +456,10 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, BOOL
     {
         if ((client = data->client_surface))
         {
-            wayland_client_surface_detach(client);
+            if (toplevel && NtUserIsWindowVisible(hwnd))
+                wayland_client_surface_attach(client, toplevel);
+            else
+                wayland_client_surface_detach(client);
         }
 
         if (data->wayland_surface)
@@ -710,21 +714,18 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
  */
 struct wayland_client_surface *get_client_surface(HWND hwnd)
 {
+    HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct wayland_client_surface *client;
-    struct wayland_surface *surface;
     struct wayland_win_data *data;
 
     if ((data = wayland_win_data_get(hwnd)))
     {
-        surface = data->wayland_surface;
-
         /* ownership is shared with one of the callers, the last caller to release
          * its reference will also destroy it and clear our pointer. */
         if ((client = data->client_surface)) InterlockedIncrement(&client->ref);
     }
     else
     {
-        surface = NULL;
         client = NULL;
     }
 
@@ -735,8 +736,8 @@ struct wayland_client_surface *get_client_surface(HWND hwnd)
     }
     if (!data) return client;
 
-    if (surface && NtUserIsWindowVisible(hwnd))
-        wayland_client_surface_attach(client, data->hwnd);
+    if (toplevel && NtUserIsWindowVisible(hwnd))
+        wayland_client_surface_attach(client, toplevel);
     else
         wayland_client_surface_detach(client);
 
