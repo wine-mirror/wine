@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 /**********************************************************************
  *       get_win_monitor_dpi
  */
-static UINT get_win_monitor_dpi(HWND hwnd)
+UINT get_win_monitor_dpi(HWND hwnd)
 {
     return NtUserGetSystemDpiForProcess(NULL);  /* FIXME: get monitor dpi */
 }

@@ -494,18 +494,20 @@ static void wayland_surface_reconfigure_size(struct wayland_surface *surface,
  *
  * Reconfigures the subsurface covering the client area.
  */
-void wayland_surface_reconfigure_client(struct wayland_surface *surface, struct wayland_client_surface *client)
+static void wayland_surface_reconfigure_client(struct wayland_surface *surface,
+                                               struct wayland_client_surface *client,
+                                               const RECT *client_rect)
 {
     struct wayland_window_config *window = &surface->window;
     int client_x, client_y, x, y;
     int client_width, client_height, width, height;
 
     /* The offset of the client area origin relatively to the window origin. */
-    client_x = window->client_rect.left - window->rect.left;
-    client_y = window->client_rect.top - window->rect.top;
+    client_x = client_rect->left + window->client_rect.left - window->rect.left;
+    client_y = client_rect->top + window->client_rect.top - window->rect.top;
 
-    client_width = window->client_rect.right - window->client_rect.left;
-    client_height = window->client_rect.bottom - window->client_rect.top;
+    client_width = client_rect->right - client_rect->left;
+    client_height = client_rect->bottom - client_rect->top;
 
     wayland_surface_coords_from_window(surface, client_x, client_y, &x, &y);
     wayland_surface_coords_from_window(surface, client_width, client_height,
@@ -820,6 +822,7 @@ void wayland_client_surface_attach(struct wayland_client_surface *client, HWND t
 {
     struct wayland_win_data *toplevel_data = wayland_win_data_get_nolock(toplevel);
     struct wayland_surface *surface;
+    RECT client_rect;
 
     if (!toplevel_data || !(surface = toplevel_data->wayland_surface))
     {
@@ -846,7 +849,9 @@ void wayland_client_surface_attach(struct wayland_client_surface *client, HWND t
         client->toplevel = toplevel;
     }
 
-    wayland_surface_reconfigure_client(surface, client);
+    NtUserGetClientRect(client->hwnd, &client_rect, get_win_monitor_dpi(client->hwnd));
+
+    wayland_surface_reconfigure_client(surface, client, &client_rect);
     /* Commit to apply subsurface positioning. */
     wl_surface_commit(surface->wl_surface);
 }
