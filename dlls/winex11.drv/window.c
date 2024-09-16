@@ -2603,15 +2603,13 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, cons
 
     sync_client_position( data, &old_rects );
 
+    if (data->rects.client.right - data->rects.client.left != old_rects.client.right - old_rects.client.left ||
+        data->rects.client.bottom - data->rects.client.top != old_rects.client.bottom - old_rects.client.top)
+        sync_gl_drawable( hwnd, FALSE );
+
     if (!data->whole_window)
     {
-        BOOL needs_resize = (!data->client_window &&
-                             (data->rects.client.right - data->rects.client.left !=
-                              old_rects.client.right - old_rects.client.left ||
-                              data->rects.client.bottom - data->rects.client.top !=
-                              old_rects.client.bottom - old_rects.client.top));
         release_win_data( data );
-        if (needs_resize) sync_gl_drawable( hwnd, FALSE );
         return;
     }
 

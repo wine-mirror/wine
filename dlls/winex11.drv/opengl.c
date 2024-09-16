@@ -1311,7 +1311,12 @@ void sync_gl_drawable( HWND hwnd, BOOL known_child )
     switch (old->type)
     {
     case DC_GL_WINDOW:
-        if (!known_child) break; /* Still a childless top-level window */
+        if (!known_child)
+        {
+            /* Still a childless top-level window */
+            update_gl_drawable_size( old );
+            break;
+        }
         /* fall through */
     case DC_GL_PIXMAP_WIN:
         if (!(new = create_gl_drawable( hwnd, old->format, known_child, old->mutable_pf ))) break;
