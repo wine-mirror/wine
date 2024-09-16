@@ -704,8 +704,11 @@ static const struct message property_sheet_seq[] = {
     { WM_GETICON, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
     { WM_SETTEXT, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { WM_SHOWWINDOW, sent|id, 0, 0, RECEIVER_PAGE },
+    { WM_WINDOWPOSCHANGING, sent|id|optional, 0, 0, RECEIVER_PAGE },
     { WM_ACTIVATEAPP, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ACTIVATEAPP, sent|id|optional, 0, 0, RECEIVER_PAGE },
     { WM_ACTIVATE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
+    { WM_ACTIVATE, sent|id|optional, 0, 0, RECEIVER_PAGE },
     /*{ 0x00000401, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },
     { 0x00000400, sent|id, 0, 0, RECEIVER_SHEET_WINPROC },*/
     { WM_CHANGEUISTATE, sent|id|optional, 0, 0, RECEIVER_SHEET_WINPROC },
