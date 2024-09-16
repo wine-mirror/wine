@@ -2474,12 +2474,21 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         return hr;
     }
 
+    if ( !(flags & DPENUMSESSIONS_ASYNC) )
+    {
+        /* Invalidate the session cache for the interface */
+        NS_InvalidateSessionCache( This->dp2->lpNameServerData );
+        /* Send the broadcast for session enumeration */
+        hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, &This->dp2->spData );
+        if ( FAILED( hr ) )
+            return hr;
+        SleepEx( timeout, FALSE );
+    }
+
+    DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout, context );
+
     if ( flags & DPENUMSESSIONS_ASYNC )
     {
-        /* Enumerate everything presently in the local session cache */
-        DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout,
-                context );
-
         if ( This->dp2->dwEnumSessionLock )
             return DPERR_CONNECTING;
 
@@ -2516,16 +2525,6 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
             }
             This->dp2->dwEnumSessionLock--;
         }
-    }
-    else
-    {
-        /* Invalidate the session cache for the interface */
-        NS_InvalidateSessionCache( This->dp2->lpNameServerData );
-        /* Send the broadcast for session enumeration */
-        hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, &This->dp2->spData );
-        SleepEx( timeout, FALSE );
-        DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout,
-                context );
     }
 
     return hr;
