@@ -22,6 +22,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include <uiautomationclient.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -46,6 +47,47 @@ static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
 #define NUM_MSG_SEQUENCES   2
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from a tab control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, WC_BUTTONA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, COMBINED_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
 
 struct wndclass_redirect_data
 {
@@ -315,6 +357,7 @@ static const struct message setfocus_seq[] =
 {
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { BM_GETSTATE, sent|optional }, /* when touchscreen is present */
     { WM_SETFOCUS, sent|wparam },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_SETFOCUS) },
@@ -338,6 +381,7 @@ static const struct message setfocus_static_seq[] =
 {
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { BM_GETSTATE, sent|optional }, /* when touchscreen is present */
     { WM_SETFOCUS, sent|wparam, 0 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_SETFOCUS) },
@@ -351,6 +395,7 @@ static const struct message setfocus_groupbox_seq[] =
 {
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { BM_GETSTATE, sent|optional }, /* when touchscreen is present */
     { WM_SETFOCUS, sent|wparam, 0 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_SETFOCUS) },
@@ -375,6 +420,7 @@ static const struct message setfocus_ownerdraw_seq[] =
 {
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { BM_GETSTATE, sent|optional }, /* when touchscreen is present */
     { WM_SETFOCUS, sent|wparam, 0 },
     { WM_DRAWITEM, sent|wparam|parent, ID_BUTTON },
@@ -401,9 +447,11 @@ static const struct message lbuttondown_seq[] =
     { WM_LBUTTONDOWN, sent|wparam|lparam, 0, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { BM_GETSTATE, sent|defwinproc|optional }, /* when touchscreen is present */
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { BM_SETSTATE, sent|wparam|defwinproc, TRUE },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { 0 }
 };
 
@@ -411,7 +459,9 @@ static const struct message lbuttonup_seq[] =
 {
     { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
     { BM_SETSTATE, sent|wparam|defwinproc, FALSE },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_CAPTURECHANGED, sent|wparam|defwinproc, 0 },
+    { EVENT_OBJECT_INVOKED, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_COMMAND, sent|wparam|defwinproc, 0 },
     { 0 }
 };
@@ -427,6 +477,7 @@ static const struct message setstyle_seq[] =
     { BM_SETSTYLE, sent },
     { WM_STYLECHANGING, sent|wparam|defwinproc, GWL_STYLE },
     { WM_STYLECHANGED, sent|wparam|defwinproc, GWL_STYLE },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
@@ -440,6 +491,7 @@ static const struct message setstyle_static_seq[] =
     { BM_SETSTYLE, sent },
     { WM_STYLECHANGING, sent|wparam|defwinproc, GWL_STYLE },
     { WM_STYLECHANGED, sent|wparam|defwinproc, GWL_STYLE },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
@@ -452,6 +504,7 @@ static const struct message setstyle_user_seq[] =
     { BM_SETSTYLE, sent },
     { WM_STYLECHANGING, sent|wparam|defwinproc, GWL_STYLE },
     { WM_STYLECHANGED, sent|wparam|defwinproc, GWL_STYLE },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
@@ -464,6 +517,7 @@ static const struct message setstyle_ownerdraw_seq[] =
     { BM_SETSTYLE, sent },
     { WM_STYLECHANGING, sent|wparam|defwinproc, GWL_STYLE },
     { WM_STYLECHANGED, sent|wparam|defwinproc, GWL_STYLE },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
@@ -475,6 +529,7 @@ static const struct message setstyle_ownerdraw_seq[] =
 static const struct message setstate_seq[] =
 {
     { BM_SETSTATE, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_PAINT, sent|optional },
@@ -484,6 +539,7 @@ static const struct message setstate_seq[] =
 static const struct message setstate_static_seq[] =
 {
     { BM_SETSTATE, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
@@ -495,6 +551,7 @@ static const struct message setstate_user_seq[] =
 {
     { BM_SETSTATE, sent },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_HILITE) },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { 0 }
@@ -503,6 +560,7 @@ static const struct message setstate_user_seq[] =
 static const struct message setstate_ownerdraw_seq[] =
 {
     { BM_SETSTATE, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
@@ -515,6 +573,7 @@ static const struct message clearstate_seq[] =
 {
     { BM_SETSTATE, sent },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_UNHILITE) },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
@@ -525,6 +584,7 @@ static const struct message clearstate_seq[] =
 static const struct message clearstate_ownerdraw_seq[] =
 {
     { BM_SETSTATE, sent },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
@@ -544,6 +604,8 @@ static const struct message setcheck_ignored_seq[] =
 static const struct message setcheck_static_seq[] =
 {
     { BM_SETCHECK, sent },
+    { UIA_ToggleToggleStatePropertyId, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
@@ -565,6 +627,8 @@ static const struct message setcheck_radio_redraw_seq[] =
     { BM_SETCHECK, sent },
     { WM_STYLECHANGING, sent|wparam|defwinproc, GWL_STYLE },
     { WM_STYLECHANGED, sent|wparam|defwinproc, GWL_STYLE },
+    { UIA_ToggleToggleStatePropertyId, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
@@ -615,8 +679,16 @@ static const struct message bcn_dropdown_seq[] =
 {
     { WM_KEYDOWN, sent|wparam|lparam, VK_DOWN, 0 },
     { BCM_SETDROPDOWNSTATE, sent|wparam|lparam|defwinproc, 1, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { UIA_ExpandCollapseExpandCollapseStatePropertyId, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 }, /* win8+ */
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { UIA_ExpandCollapseExpandCollapseStatePropertyId, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { WM_NOTIFY, sent|parent|id, 0, 0, BCN_DROPDOWN },
     { BCM_SETDROPDOWNSTATE, sent|wparam|lparam|defwinproc, 0, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { UIA_ExpandCollapseExpandCollapseStatePropertyId, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { UIA_ExpandCollapseExpandCollapseStatePropertyId, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { WM_KEYUP, sent|wparam|lparam, VK_DOWN, 0xc0000000 },
     { WM_PAINT, sent },
     { WM_DRAWITEM, sent|parent|optional },  /* for owner draw button */
@@ -2397,6 +2469,8 @@ START_TEST(button)
     init_functions();
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    init_winevent_hook();
+
     test_button_class();
     test_button_messages();
     test_note();
@@ -2408,6 +2482,8 @@ START_TEST(button)
     test_bcm_get_ideal_size();
     test_style();
     test_visual();
+
+    uninit_winevent_hook();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
