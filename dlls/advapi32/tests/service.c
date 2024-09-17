@@ -2477,11 +2477,8 @@ static void test_queryconfig2(void)
     auto_start_info.fDelayedAutostart = 0xdeadbeef;
     ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
             (LPBYTE)&auto_start_info, sizeof(auto_start_info), &needed);
-    todo_wine
     ok(ret, "expected QueryServiceConfig2W to succeed (%ld)\n", GetLastError());
-    todo_wine
     ok(needed == sizeof(auto_start_info), "needed = %ld\n", needed);
-    todo_wine
     ok(auto_start_info.fDelayedAutostart == 0, "fDelayedAutostart = %d\n", auto_start_info.fDelayedAutostart);
 
     SetLastError(0xdeadbeef);
@@ -2502,11 +2499,8 @@ static void test_queryconfig2(void)
     auto_start_info.fDelayedAutostart = 0xdeadbeef;
     ret = pQueryServiceConfig2W(svc_handle, SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
             (LPBYTE)&auto_start_info, sizeof(auto_start_info), &needed);
-    todo_wine
     ok(ret, "expected QueryServiceConfig2W to succeed (%ld)\n", GetLastError());
-    todo_wine
     ok(needed == sizeof(auto_start_info), "needed = %ld\n", needed);
-    todo_wine
     ok(auto_start_info.fDelayedAutostart == 1, "fDelayedAutostart = %d\n", auto_start_info.fDelayedAutostart);
 
 cleanup:

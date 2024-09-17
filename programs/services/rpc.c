@@ -1048,6 +1048,18 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
         service_unlock(service->service_entry);
         break;
 
+    case SERVICE_CONFIG_DELAYED_AUTO_START_INFO:
+        service_lock(service->service_entry);
+
+        *needed = sizeof(SERVICE_DELAYED_AUTO_START_INFO);
+        if (size >= *needed)
+            ((SERVICE_DELAYED_AUTO_START_INFO *)buffer)->fDelayedAutostart =
+                service->service_entry->delayed_autostart;
+        else err = ERROR_INSUFFICIENT_BUFFER;
+
+        service_unlock(service->service_entry);
+        break;
+
     default:
         WINE_FIXME("level %lu not implemented\n", level);
         err = ERROR_INVALID_LEVEL;
