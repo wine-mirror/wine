@@ -3726,15 +3726,15 @@ msgstr "Vynulovať"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-#| msgid "&Disable"
-msgid "&Enable"
-msgstr "&Zakázať"
-
-#: dlls/joy.cpl/joy.rc:43
-#, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Upraviť prepísanie"
+
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "&Disable"
+msgid "&Enable"
+msgstr "&Zakázať"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

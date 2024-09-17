@@ -3744,12 +3744,12 @@ msgid "&Reset"
 msgstr "&Скинути"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Увімкнути"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "&Змінити заміщення"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Увімкнути"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

@@ -3753,12 +3753,12 @@ msgid "&Reset"
 msgstr "&Reinicia"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Habilita"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "Fes-ho &directe"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Habilita"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

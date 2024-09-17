@@ -3815,15 +3815,15 @@ msgstr "Ponastavi"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-#| msgid "&enable"
-msgid "&Enable"
-msgstr "&omogoči"
-
-#: dlls/joy.cpl/joy.rc:43
-#, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Uredi prepis"
+
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "&omogoči"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

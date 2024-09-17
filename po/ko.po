@@ -3716,12 +3716,12 @@ msgid "&Reset"
 msgstr "초기화(&R)"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "사용(&E)"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "재정의(&O)"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "사용(&E)"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

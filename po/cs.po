@@ -3714,14 +3714,14 @@ msgid "&Reset"
 msgstr "Restart"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "P&ovolit"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Úprava nastavení knihovny"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "P&ovolit"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

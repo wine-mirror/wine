@@ -3681,15 +3681,15 @@ msgstr "R&estarigi"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-#| msgid "&enable"
-msgid "&Enable"
-msgstr "&aktivigi"
-
-#: dlls/joy.cpl/joy.rc:43
-#, fuzzy
 #| msgid "DLL overrides"
 msgid "&Override"
 msgstr "DLL superregoj"
+
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "&aktivigi"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected (DirectInput devices)"

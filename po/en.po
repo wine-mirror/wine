@@ -3734,12 +3734,12 @@ msgid "&Reset"
 msgstr "&Reset"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Enable"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "&Override"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Enable"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected (DirectInput devices)"

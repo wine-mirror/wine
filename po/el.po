@@ -3690,11 +3690,11 @@ msgid "&Reset"
 msgstr "Ε&παναφορά"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
+msgid "&Override"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:43
-msgid "&Override"
+msgid "&Enable"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:44

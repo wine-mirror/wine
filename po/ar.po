@@ -3765,14 +3765,14 @@ msgid "&Reset"
 msgstr "إعادة الضبط"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "م&فعل"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "تحرير السيطرة"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "م&فعل"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

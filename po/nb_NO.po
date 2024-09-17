@@ -3748,14 +3748,14 @@ msgid "&Reset"
 msgstr "Tilbakestill"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "Sl&å på"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Rediger overstyring"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "Sl&å på"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

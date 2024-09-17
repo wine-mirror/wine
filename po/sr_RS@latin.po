@@ -3880,14 +3880,14 @@ msgstr "&Poništi"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-msgid "&Enable"
-msgstr "&Tabela"
-
-#: dlls/joy.cpl/joy.rc:43
-#, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Izmeni podešavanje"
+
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+msgid "&Enable"
+msgstr "&Tabela"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected (DirectInput devices)"

@@ -3737,12 +3737,12 @@ msgid "&Reset"
 msgstr "&Atkurti"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "Įj&ungti"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "&Nustelbti"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "Įj&ungti"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

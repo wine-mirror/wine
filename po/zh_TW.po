@@ -3694,12 +3694,12 @@ msgid "&Reset"
 msgstr "重設(&R)"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "啟用(&E)"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "覆寫(&O)"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "啟用(&E)"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

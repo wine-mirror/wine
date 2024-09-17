@@ -3796,14 +3796,14 @@ msgid "&Reset"
 msgstr "Reinicializar"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Activar"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Editar Substituição"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Activar"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

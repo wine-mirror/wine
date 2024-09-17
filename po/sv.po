@@ -3775,14 +3775,14 @@ msgid "&Reset"
 msgstr "Återställa"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Aktivera"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Redigera åsidosättning"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Aktivera"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

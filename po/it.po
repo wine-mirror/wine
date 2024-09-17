@@ -3821,15 +3821,15 @@ msgstr "Resetta"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-#| msgid "&enable"
-msgid "&Enable"
-msgstr "&abilita"
-
-#: dlls/joy.cpl/joy.rc:43
-#, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Modifica sostituzione"
+
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "&abilita"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

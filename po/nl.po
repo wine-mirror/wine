@@ -3747,12 +3747,12 @@ msgid "&Reset"
 msgstr "&Terugzetten"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Activeren"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "&Overschrijven"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Activeren"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

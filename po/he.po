@@ -3762,14 +3762,14 @@ msgstr "&איפוס"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-#| msgid "&enable"
-msgid "&Enable"
-msgstr "ה&פעלה"
+msgid "&Override"
+msgstr "תצוגת ע&ריכה"
 
 #: dlls/joy.cpl/joy.rc:43
 #, fuzzy
-msgid "&Override"
-msgstr "תצוגת ע&ריכה"
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "ה&פעלה"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected (DirectInput devices)"

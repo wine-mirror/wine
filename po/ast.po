@@ -3730,12 +3730,12 @@ msgid "&Reset"
 msgstr "&Reafitar"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Habilitar"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "&Anular"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Habilitar"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

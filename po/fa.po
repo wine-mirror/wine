@@ -3719,13 +3719,13 @@ msgid "&Reset"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr ""
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 msgid "&Override"
 msgstr "&ویرایش"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected (DirectInput devices)"

@@ -3685,14 +3685,14 @@ msgid "&Reset"
 msgstr "නැවත සකසන්න"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "සබල කරන්න (&E)"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Override එක වෙනස් කරන්න"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "සබල කරන්න (&E)"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

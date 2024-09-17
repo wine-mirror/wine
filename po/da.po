@@ -3797,15 +3797,15 @@ msgstr "Nulstil"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-#| msgid "&enable"
-msgid "&Enable"
-msgstr "&Aktiver"
-
-#: dlls/joy.cpl/joy.rc:43
-#, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Rediger overstyring"
+
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "&Aktiver"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

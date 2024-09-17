@@ -3735,12 +3735,12 @@ msgid "&Reset"
 msgstr "&Sıfırla"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Etkinleştir"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "&Geçersiz kıl"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Etkinleştir"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

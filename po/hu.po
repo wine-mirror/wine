@@ -3813,15 +3813,15 @@ msgstr "Újraindítás"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-#| msgid "&enable"
-msgid "&Enable"
-msgstr "&engedélyez"
-
-#: dlls/joy.cpl/joy.rc:43
-#, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Felülbírálás szerkesztése"
+
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+#| msgid "&enable"
+msgid "&Enable"
+msgstr "&engedélyez"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

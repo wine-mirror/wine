@@ -3776,14 +3776,14 @@ msgstr "&Възстанови"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy
-msgid "&Enable"
-msgstr "&Таблица"
-
-#: dlls/joy.cpl/joy.rc:43
-#, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Редактиране на замяна"
+
+#: dlls/joy.cpl/joy.rc:43
+#, fuzzy
+msgid "&Enable"
+msgstr "&Таблица"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected (DirectInput devices)"

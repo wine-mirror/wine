@@ -3753,14 +3753,14 @@ msgid "&Reset"
 msgstr "Resetează"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "Activ&ează"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Editează suprascrierea"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "Activ&ează"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

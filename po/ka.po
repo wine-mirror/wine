@@ -3724,12 +3724,12 @@ msgid "&Reset"
 msgstr "&საწყისი მნიშვნელობებზე დაბრუნება"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "ჩარ&თვა"
-
-#: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
 msgstr "&გადაფარვა"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "ჩარ&თვა"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

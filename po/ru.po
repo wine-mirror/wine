@@ -3758,14 +3758,14 @@ msgid "&Reset"
 msgstr "Сброс"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Включить"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Изменить замещение"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Включить"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy

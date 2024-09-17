@@ -3770,14 +3770,14 @@ msgid "&Reset"
 msgstr "Poništi"
 
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Uključi"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Izmjeni podešavanje"
+
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Uključi"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy
