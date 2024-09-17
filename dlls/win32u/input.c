@@ -757,7 +757,7 @@ BOOL get_cursor_pos( POINT *pt )
 
     /* query new position from graphics driver if we haven't updated recently */
     if (NtGetTickCount() - last_change > 100) ret = user_driver->pGetCursorPos( pt );
-    if (ret) return FALSE;
+    if (!ret) return FALSE;
 
     SetRect( &rect, pt->x, pt->y, pt->x, pt->y );
     dpi = monitor_dpi_from_rect( rect, get_thread_dpi() );
