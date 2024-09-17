@@ -478,7 +478,6 @@ SUCCESS 0
 foo@space@
 FAILURE 1024
 FAILURE 1
-@todo_wine@SUCCESS 666@or_broken@Skipping on Win7
 --- success/failure for CALL command
 FAILURE 1
 SUCCESS 0
