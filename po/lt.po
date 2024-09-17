@@ -3756,35 +3756,27 @@ msgstr "Prijungta (xinput įrenginys)"
 msgid "Disabled"
 msgstr "Išjungta"
 
-#: dlls/joy.cpl/joy.rc:50
-msgid ""
-"After disabling or enabling a device, the connected joysticks won't be "
-"updated here until you restart this applet."
-msgstr ""
-"Po įtaiso išjungimo ar įjungimo, prijungtos vairasvirtės nebus automatiškai "
-"čia atnaujintos, kol nepaleisite šios programėlės iš naujo."
-
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:54
 msgid "DInput"
 msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:59
+#: dlls/joy.cpl/joy.rc:58
 msgid "Axes"
 msgstr "Ašys"
 
-#: dlls/joy.cpl/joy.rc:60
+#: dlls/joy.cpl/joy.rc:59
 msgid "POVs"
 msgstr "POV"
 
-#: dlls/joy.cpl/joy.rc:61
+#: dlls/joy.cpl/joy.rc:60
 msgid "Buttons"
 msgstr "Mygtukai"
 
-#: dlls/joy.cpl/joy.rc:62
+#: dlls/joy.cpl/joy.rc:61
 msgid "Force Feedback Effect"
 msgstr "„Force Feedback“ efektas"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:63
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3792,27 +3784,27 @@ msgstr ""
 "Spauskite bet kurį valdiklio mygtuką pasirinktam efektui aktyvuoti. Efekto "
 "kryptis gali būti pakeista valdiklio ašimi."
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:69
 msgid "XInput"
 msgstr "XInput"
 
-#: dlls/joy.cpl/joy.rc:73
+#: dlls/joy.cpl/joy.rc:72
 msgid "User #0"
 msgstr "Naudotojas #0"
 
-#: dlls/joy.cpl/joy.rc:74
+#: dlls/joy.cpl/joy.rc:73
 msgid "User #1"
 msgstr "Naudotojas #1"
 
-#: dlls/joy.cpl/joy.rc:75
+#: dlls/joy.cpl/joy.rc:74
 msgid "User #2"
 msgstr "Naudotojas #2"
 
-#: dlls/joy.cpl/joy.rc:76
+#: dlls/joy.cpl/joy.rc:75
 msgid "User #3"
 msgstr "Naudotojas #3"
 
-#: dlls/joy.cpl/joy.rc:78
+#: dlls/joy.cpl/joy.rc:77
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3820,7 +3812,7 @@ msgstr ""
 "Nerastas naudotojas lizde #0, įsitikinkite, kad žaidimų pultas prijungtas ir "
 "nenustelbtas dėl DInput Vairasvirčių kortelėje."
 
-#: dlls/joy.cpl/joy.rc:82
+#: dlls/joy.cpl/joy.rc:81
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3828,7 +3820,7 @@ msgstr ""
 "Nerastas naudotojas lizde #1, įsitikinkite, kad žaidimų pultas prijungtas ir "
 "nenustelbtas dėl DInput Vairasvirčių kortelėje."
 
-#: dlls/joy.cpl/joy.rc:86
+#: dlls/joy.cpl/joy.rc:85
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3836,7 +3828,7 @@ msgstr ""
 "Nerastas naudotojas lizde #2, įsitikinkite, kad žaidimų pultas prijungtas ir "
 "nenustelbtas dėl DInput Vairasvirčių kortelėje."
 
-#: dlls/joy.cpl/joy.rc:90
+#: dlls/joy.cpl/joy.rc:89
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3844,8 +3836,8 @@ msgstr ""
 "Nerastas naudotojas lizde #3, įsitikinkite, kad žaidimų pultas prijungtas ir "
 "nenustelbtas dėl DInput Vairasvirčių kortelėje."
 
-#: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
-#: dlls/joy.cpl/joy.rc:98
+#: dlls/joy.cpl/joy.rc:94 dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96
+#: dlls/joy.cpl/joy.rc:97
 msgid "Rumble"
 msgstr "Vibravimas"
 

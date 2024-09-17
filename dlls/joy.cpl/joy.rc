@@ -46,7 +46,6 @@ FONT 8, "Ms Shell Dlg"
     LISTBOX         IDC_XINPUTLIST, 10, 100, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
     LTEXT           "Disabled", IDC_STATIC, 10, 180, 180, 10
     LISTBOX         IDC_DISABLEDLIST, 10, 190, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "After disabling or enabling a device, the connected joysticks won't be updated here until you restart this applet.", IDC_STATIC, 10, 270, 200, 25
 }
 
 IDD_TEST_DI DIALOG 0, 0, 320, 300

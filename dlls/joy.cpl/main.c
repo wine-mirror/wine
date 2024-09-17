@@ -30,6 +30,10 @@
 #include <dinput.h>
 #include <cpl.h>
 #include "ole2.h"
+#include "dbt.h"
+
+#include "initguid.h"
+#include "ddk/hidclass.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -56,6 +60,7 @@ static CRITICAL_SECTION_DEBUG joy_cs_debug =
 static CRITICAL_SECTION joy_cs = { &joy_cs_debug, -1, 0, 0, 0, 0 };
 
 static struct list devices = LIST_INIT( devices );
+static HDEVNOTIFY devnotify;
 
 /*********************************************************************
  *  DllMain
@@ -247,6 +252,12 @@ static void override_joystick(WCHAR *joy_name, BOOL override)
 static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     WCHAR instance_name[MAX_PATH] = {0};
+    DEV_BROADCAST_DEVICEINTERFACE_W filter =
+    {
+        .dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE_W),
+        .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
+        .dbcc_classguid = GUID_DEVINTERFACE_HID,
+    };
     int sel;
 
     TRACE("(%p, 0x%08x/%d, 0x%Ix)\n", hwnd, msg, msg, lparam);
@@ -261,8 +272,13 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), FALSE);
             EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), FALSE);
 
+            devnotify = RegisterDeviceNotificationW( hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE );
             return TRUE;
         }
+
+        case WM_DEVICECHANGE:
+            refresh_joystick_list( hwnd );
+            return TRUE;
 
         case WM_COMMAND:
 

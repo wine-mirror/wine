@@ -3773,35 +3773,27 @@ msgstr "Podłączony (urządzenie xinput)"
 msgid "Disabled"
 msgstr "Wyłączone"
 
-#: dlls/joy.cpl/joy.rc:50
-msgid ""
-"After disabling or enabling a device, the connected joysticks won't be "
-"updated here until you restart this applet."
-msgstr ""
-"Po wyłączeniu lub włączeniu urządzenia, podłączone joysticki nie będą tutaj "
-"uaktualnione do momentu ponownego uruchomienia tego apletu."
-
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:54
 msgid "DInput"
 msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:59
+#: dlls/joy.cpl/joy.rc:58
 msgid "Axes"
 msgstr "Osie"
 
-#: dlls/joy.cpl/joy.rc:60
+#: dlls/joy.cpl/joy.rc:59
 msgid "POVs"
 msgstr "POVs"
 
-#: dlls/joy.cpl/joy.rc:61
+#: dlls/joy.cpl/joy.rc:60
 msgid "Buttons"
 msgstr "Przyciski"
 
-#: dlls/joy.cpl/joy.rc:62
+#: dlls/joy.cpl/joy.rc:61
 msgid "Force Feedback Effect"
 msgstr "Efekt sprzężenia zwrotnego"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:63
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3809,27 +3801,27 @@ msgstr ""
 "Naciśnij jakikolwiek klawisz na kontrolerze, aby aktywować wybrany efekt. "
 "Kierunek efektu może być zmieniony przy użyciu osi kontrolera."
 
-#: dlls/joy.cpl/joy.rc:70
+#: dlls/joy.cpl/joy.rc:69
 msgid "XInput"
 msgstr "XInput"
 
-#: dlls/joy.cpl/joy.rc:73
+#: dlls/joy.cpl/joy.rc:72
 msgid "User #0"
 msgstr "Użytkownik #0"
 
-#: dlls/joy.cpl/joy.rc:74
+#: dlls/joy.cpl/joy.rc:73
 msgid "User #1"
 msgstr "Użytkownik #1"
 
-#: dlls/joy.cpl/joy.rc:75
+#: dlls/joy.cpl/joy.rc:74
 msgid "User #2"
 msgstr "Użytkownik #2"
 
-#: dlls/joy.cpl/joy.rc:76
+#: dlls/joy.cpl/joy.rc:75
 msgid "User #3"
 msgstr "Użytkownik #3"
 
-#: dlls/joy.cpl/joy.rc:78
+#: dlls/joy.cpl/joy.rc:77
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3837,7 +3829,7 @@ msgstr ""
 "Nie wykryto użytkownika na slocie #0. Upewnij się że twój pad jest "
 "podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
 
-#: dlls/joy.cpl/joy.rc:82
+#: dlls/joy.cpl/joy.rc:81
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3845,7 +3837,7 @@ msgstr ""
 "Nie wykryto użytkownika na slocie #1. Upewnij się że twój pad jest "
 "podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
 
-#: dlls/joy.cpl/joy.rc:86
+#: dlls/joy.cpl/joy.rc:85
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3853,7 +3845,7 @@ msgstr ""
 "Nie wykryto użytkownika na slocie #2. Upewnij się że twój pad jest "
 "podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
 
-#: dlls/joy.cpl/joy.rc:90
+#: dlls/joy.cpl/joy.rc:89
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3861,8 +3853,8 @@ msgstr ""
 "Nie wykryto użytkownika na slocie #3. Upewnij się że twój pad jest "
 "podłączony i nie nadpisany dla DInput, w zakładce Dżojstiki."
 
-#: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
-#: dlls/joy.cpl/joy.rc:98
+#: dlls/joy.cpl/joy.rc:94 dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96
+#: dlls/joy.cpl/joy.rc:97
 msgid "Rumble"
 msgstr "Rumble"
 

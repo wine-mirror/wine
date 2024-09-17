@@ -27,6 +27,8 @@
 #include "wingdi.h"
 
 #include "dinput.h"
+#include "dbt.h"
+#include "ddk/hidclass.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -64,6 +66,7 @@ static IDirectInputDevice8W *device_selected;
 
 static HWND dialog_hwnd;
 static HANDLE state_event;
+static HDEVNOTIFY devnotify;
 
 static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
 {
@@ -748,6 +751,12 @@ static void update_device_views( HWND hwnd )
 INT_PTR CALLBACK test_di_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     static HANDLE thread, thread_stop;
+    DEV_BROADCAST_DEVICEINTERFACE_W filter =
+    {
+        .dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE_W),
+        .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
+        .dbcc_classguid = GUID_DEVINTERFACE_HID,
+    };
 
     TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
 
@@ -783,6 +792,7 @@ INT_PTR CALLBACK test_di_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             state_event = CreateEventW( NULL, FALSE, FALSE, NULL );
             thread_stop = CreateEventW( NULL, FALSE, FALSE, NULL );
 
+            devnotify = RegisterDeviceNotificationW( hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE );
             update_di_devices( hwnd );
 
             SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_SETCURSEL, 0, 0 );
@@ -796,6 +806,7 @@ INT_PTR CALLBACK test_di_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
 
         case PSN_RESET:
         case PSN_KILLACTIVE:
+            UnregisterDeviceNotification( devnotify );
             SetEvent( thread_stop );
             /* wait for the input thread to stop, processing any WM_USER message from it */
             while (MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, QS_ALLINPUT ) == 1)
@@ -815,6 +826,18 @@ INT_PTR CALLBACK test_di_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             clear_devices();
             break;
         }
+        return TRUE;
+
+    case WM_DEVICECHANGE:
+        update_di_devices( hwnd );
+
+        if (SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_GETCURSEL, 0, 0 ) >= 0) return TRUE;
+
+        SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_SETCURSEL, 0, 0 );
+        handle_di_devices_change( hwnd );
+
+        SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_SETCURSEL, 0, 0 );
+        handle_di_effects_change( hwnd );
         return TRUE;
 
     case WM_USER:
