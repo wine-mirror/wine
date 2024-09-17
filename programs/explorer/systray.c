@@ -36,12 +36,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(systray);
 #define TRAY_MINIMIZE_ALL 419
 #define TRAY_MINIMIZE_ALL_UNDO 416
 
+struct notify_data_icon
+{
+    /* data for the icon bitmap */
+    UINT width;
+    UINT height;
+    UINT planes;
+    UINT bpp;
+};
+
 struct notify_data  /* platform-independent format for NOTIFYICONDATA */
 {
     LONG  hWnd;
     UINT  uID;
     UINT  uFlags;
     UINT  uCallbackMessage;
+    struct notify_data_icon icon_info; /* systray icon bitmap info */
     WCHAR szTip[128];
     DWORD dwState;
     DWORD dwStateMask;
@@ -53,11 +63,7 @@ struct notify_data  /* platform-independent format for NOTIFYICONDATA */
     WCHAR szInfoTitle[64];
     DWORD dwInfoFlags;
     GUID  guidItem;
-    /* data for the icon bitmap */
-    UINT width;
-    UINT height;
-    UINT planes;
-    UINT bpp;
+    BYTE icon_data[];
 };
 
 #define ICON_DISPLAY_HIDDEN -1
@@ -837,11 +843,13 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
 {
     struct icon *icon = NULL;
     const struct notify_data *data;
+    const BYTE *icon_data;
     NOTIFYICONDATAW nid;
     int ret = FALSE;
 
     if (cds->cbData < sizeof(*data)) return FALSE;
     data = cds->lpData;
+    icon_data = data->icon_data;
 
     nid.cbSize           = sizeof(nid);
     nid.hWnd             = LongToHandle( data->hWnd );
@@ -861,22 +869,21 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
 
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
-    if ((nid.uFlags & NIF_ICON) && cds->cbData > sizeof(*data))
+    if (nid.uFlags & NIF_ICON)
     {
         LONG cbMaskBits;
         LONG cbColourBits;
-        const char *buffer = (const char *)(data + 1);
 
-        cbMaskBits = (data->width * data->height + 15) / 16 * 2;
-        cbColourBits = (data->planes * data->width * data->height * data->bpp + 15) / 16 * 2;
+        cbMaskBits = (data->icon_info.width * data->icon_info.height + 15) / 16 * 2;
+        cbColourBits = (data->icon_info.planes * data->icon_info.width * data->icon_info.height * data->icon_info.bpp + 15) / 16 * 2;
 
         if (cds->cbData < sizeof(*data) + cbMaskBits + cbColourBits)
         {
             ERR( "buffer underflow\n" );
             return FALSE;
         }
-        nid.hIcon = CreateIcon(NULL, data->width, data->height, data->planes, data->bpp,
-                               buffer, buffer + cbMaskBits);
+        nid.hIcon = CreateIcon(NULL, data->icon_info.width, data->icon_info.height, data->icon_info.planes, data->icon_info.bpp,
+                               icon_data, icon_data + cbMaskBits);
     }
 
     /* try forwarding to the display driver first */

@@ -34,12 +34,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
+struct notify_data_icon
+{
+    /* data for the icon bitmap */
+    UINT width;
+    UINT height;
+    UINT planes;
+    UINT bpp;
+};
+
 struct notify_data  /* platform-independent format for NOTIFYICONDATA */
 {
     LONG  hWnd;
     UINT  uID;
     UINT  uFlags;
     UINT  uCallbackMessage;
+    struct notify_data_icon icon_info; /* systray icon bitmap info */
     WCHAR szTip[128];
     DWORD dwState;
     DWORD dwStateMask;
@@ -51,12 +61,9 @@ struct notify_data  /* platform-independent format for NOTIFYICONDATA */
     WCHAR szInfoTitle[64];
     DWORD dwInfoFlags;
     GUID  guidItem;
-    /* data for the icon bitmap */
-    UINT width;
-    UINT height;
-    UINT planes;
-    UINT bpp;
+    BYTE icon_data[];
 };
+
 
 /*************************************************************************
  * Shell_NotifyIcon			[SHELL32.296]
@@ -164,7 +171,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         BITMAP bmColour;
         LONG cbMaskBits;
         LONG cbColourBits = 0;
-        char *buffer;
+        BYTE *buffer;
 
         if (!GetIconInfo(nid->hIcon, &iconinfo))
             goto noicon;
@@ -192,21 +199,21 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
 
         data = (struct notify_data *)buffer;
         memset( data, 0, sizeof(*data) );
-        buffer += sizeof(*data);
+        buffer = data->icon_data;
         GetBitmapBits(iconinfo.hbmMask, cbMaskBits, buffer);
         if (!iconinfo.hbmColor)
         {
-            data->width  = bmMask.bmWidth;
-            data->height = bmMask.bmHeight / 2;
-            data->planes = 1;
-            data->bpp    = 1;
+            data->icon_info.width  = bmMask.bmWidth;
+            data->icon_info.height = bmMask.bmHeight / 2;
+            data->icon_info.planes = 1;
+            data->icon_info.bpp    = 1;
         }
         else
         {
-            data->width  = bmColour.bmWidth;
-            data->height = bmColour.bmHeight;
-            data->planes = bmColour.bmPlanes;
-            data->bpp    = bmColour.bmBitsPixel;
+            data->icon_info.width  = bmColour.bmWidth;
+            data->icon_info.height = bmColour.bmHeight;
+            data->icon_info.planes = bmColour.bmPlanes;
+            data->icon_info.bpp    = bmColour.bmBitsPixel;
             buffer += cbMaskBits;
             GetBitmapBits(iconinfo.hbmColor, cbColourBits, buffer);
             DeleteObject(iconinfo.hbmColor);
