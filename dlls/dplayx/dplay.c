@@ -279,11 +279,15 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
 
     /* Name server needs to handle this request */
     case DPMSGCMD_ENUMSESSIONSREPLY:
+      EnterCriticalSection( &This->lock );
+
       /* No reply expected */
       NS_AddRemoteComputerAsNameServer( lpcMessageHeader,
                                         This->dp2->spData.dwSPHeaderSize,
                                         lpcMessageBody,
                                         This->dp2->lpNameServerData );
+
+      LeaveCriticalSection( &This->lock );
       break;
 
     case DPMSGCMD_REQUESTNEWPLAYERID:
@@ -2471,8 +2475,13 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
 
     if ( !(flags & DPENUMSESSIONS_ASYNC) )
     {
+        EnterCriticalSection( &This->lock );
+
         /* Invalidate the session cache for the interface */
         NS_InvalidateSessionCache( This->dp2->lpNameServerData );
+
+        LeaveCriticalSection( &This->lock );
+
         /* Send the broadcast for session enumeration */
         hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, &This->dp2->spData );
         if ( FAILED( hr ) )
@@ -2480,8 +2489,12 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         SleepEx( timeout, FALSE );
     }
 
+    EnterCriticalSection( &This->lock );
+
     NS_PruneSessionCache( This->dp2->lpNameServerData );
     NS_ResetSessionEnumeration( This->dp2->lpNameServerData );
+
+    LeaveCriticalSection( &This->lock );
 
     DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout, context );
 
