@@ -2275,11 +2275,6 @@ static void DP_InvokeEnumSessionCallbacks
 
   FIXME( ": not checking for conditions\n" );
 
-  /* Not sure if this should be pruning but it's convenient */
-  NS_PruneSessionCache( lpNSInfo );
-
-  NS_ResetSessionEnumeration( lpNSInfo );
-
   /* Enumerate all sessions */
   /* FIXME: Need to indicate ANSI */
   while( (lpSessionDesc = NS_WalkSessions( lpNSInfo ) ) != NULL )
@@ -2484,6 +2479,9 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
             return hr;
         SleepEx( timeout, FALSE );
     }
+
+    NS_PruneSessionCache( This->dp2->lpNameServerData );
+    NS_ResetSessionEnumeration( This->dp2->lpNameServerData );
 
     DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, timeout, context );
 
