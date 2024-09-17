@@ -302,11 +302,13 @@ void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_
     {
         struct scaled_surface *surface = get_scaled_surface( previous );
         scaled_surface_set_target( surface, driver_surface, monitor_dpi );
+        window_surface_release( driver_surface );
         return;
     }
     if (previous) window_surface_release( previous );
 
     *window_surface = scaled_surface_create( hwnd, surface_rect, dpi, monitor_dpi, driver_surface );
+    window_surface_release( driver_surface );
 }
 
 struct window_surface *get_driver_window_surface( struct window_surface *surface, UINT monitor_dpi )
