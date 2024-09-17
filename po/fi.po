@@ -3736,11 +3736,15 @@ msgid "&Override"
 msgstr "&Ohita"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Yhdistetty"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (DirectInput devices)"
+msgstr "Liitetty (xinput-laite)"
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Liitetty (xinput-laite)"
 
 #: dlls/joy.cpl/joy.rc:48

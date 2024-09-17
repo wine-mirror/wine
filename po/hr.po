@@ -3780,13 +3780,15 @@ msgid "&Override"
 msgstr "Izmjeni podešavanje"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Povezan"
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (DirectInput devices)"
+msgstr "Ulazni uređdaj za glas:"
 
 #: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Ulazni uređdaj za glas:"
 
 #: dlls/joy.cpl/joy.rc:48

@@ -3738,13 +3738,14 @@ msgstr "Upraviť prepísanie"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy
-msgid "Connected"
-msgstr "Súbor nenájdený"
+#| msgid "Voice input device:"
+msgid "Connected (DirectInput devices)"
+msgstr "Hlasové vstupné zariadenie:"
 
 #: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Hlasové vstupné zariadenie:"
 
 #: dlls/joy.cpl/joy.rc:48

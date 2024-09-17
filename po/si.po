@@ -3695,13 +3695,15 @@ msgid "&Override"
 msgstr "Override එක වෙනස් කරන්න"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "සබඳිලා"
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (DirectInput devices)"
+msgstr "හඬ ආදාන ආම්පන්නය:"
 
 #: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "හඬ ආදාන ආම්පන්නය:"
 
 #: dlls/joy.cpl/joy.rc:48

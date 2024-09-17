@@ -3692,14 +3692,14 @@ msgid "&Override"
 msgstr "DLL superregoj"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-#| msgid "Disconnected"
-msgid "Connected"
-msgstr "Malkonektita"
+msgid "Connected (DirectInput devices)"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
-msgstr ""
+#, fuzzy
+#| msgid "Input device:"
+msgid "Connected (XInput devices)"
+msgstr "Ena aparato:"
 
 #: dlls/joy.cpl/joy.rc:48
 #, fuzzy

@@ -3772,13 +3772,11 @@ msgid "&Override"
 msgstr "תצוגת ע&ריכה"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-#| msgid "Disconnected"
-msgid "Connected"
-msgstr "Disconnected"
+msgid "Connected (DirectInput devices)"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:48

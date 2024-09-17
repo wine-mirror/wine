@@ -3785,13 +3785,15 @@ msgid "&Override"
 msgstr "Redigera åsidosättning"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Ansluten"
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (DirectInput devices)"
+msgstr "Ingångsenhet för röster:"
 
 #: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Ingångsenhet för röster:"
 
 #: dlls/joy.cpl/joy.rc:48

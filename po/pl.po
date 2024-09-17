@@ -3762,11 +3762,15 @@ msgid "&Override"
 msgstr "&Zastąp"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Podłączony"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (DirectInput devices)"
+msgstr "Podłączony (urządzenie xinput)"
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Podłączony (urządzenie xinput)"
 
 #: dlls/joy.cpl/joy.rc:48

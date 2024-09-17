@@ -3805,12 +3805,11 @@ msgid "&Override"
 msgstr "&Уређивање"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-msgid "Connected"
-msgstr "Датотека није пронађена"
+msgid "Connected (DirectInput devices)"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:48

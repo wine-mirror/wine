@@ -3825,14 +3825,14 @@ msgstr "Felülbírálás szerkesztése"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy
-#| msgid "Disconnected"
-msgid "Connected"
-msgstr "Lecsatlakozott"
+#| msgid "Voice input device:"
+msgid "Connected (DirectInput devices)"
+msgstr "Hang bemeneti eszköz:"
 
 #: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Hang bemeneti eszköz:"
 
 #: dlls/joy.cpl/joy.rc:48

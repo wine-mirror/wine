@@ -3833,14 +3833,14 @@ msgstr "Modifica sostituzione"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy
-#| msgid "Disconnected"
-msgid "Connected"
-msgstr "Disconnesso"
+#| msgid "Voice input device:"
+msgid "Connected (DirectInput devices)"
+msgstr "Unità input voce:"
 
 #: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Unità input voce:"
 
 #: dlls/joy.cpl/joy.rc:48

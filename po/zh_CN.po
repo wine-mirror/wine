@@ -3692,11 +3692,15 @@ msgid "&Override"
 msgstr "重写(&O)"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "已连接"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (DirectInput devices)"
+msgstr "已连接 (xinput 设备)"
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "已连接 (xinput 设备)"
 
 #: dlls/joy.cpl/joy.rc:48

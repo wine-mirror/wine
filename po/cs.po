@@ -3724,13 +3724,15 @@ msgid "&Override"
 msgstr "Úprava nastavení knihovny"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Připojeno"
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (DirectInput devices)"
+msgstr "Zařízení hlasového vstupu:"
 
 #: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Zařízení hlasového vstupu:"
 
 #: dlls/joy.cpl/joy.rc:48

@@ -3806,13 +3806,15 @@ msgid "&Override"
 msgstr "Editar Substituição"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Conectado"
+#, fuzzy
+#| msgid "Voice input device:"
+msgid "Connected (DirectInput devices)"
+msgstr "Dispositivo de entrada de voz:"
 
 #: dlls/joy.cpl/joy.rc:46
 #, fuzzy
 #| msgid "Voice input device:"
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Dispositivo de entrada de voz:"
 
 #: dlls/joy.cpl/joy.rc:48

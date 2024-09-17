@@ -3768,11 +3768,15 @@ msgid "&Override"
 msgstr "Изменить замещение"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Подключено"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (DirectInput devices)"
+msgstr "Подключено (устройство xinput)"
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Подключено (устройство xinput)"
 
 #: dlls/joy.cpl/joy.rc:48

@@ -3742,12 +3742,12 @@ msgid "&Override"
 msgstr "&Override"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Connected"
+msgid "Connected (DirectInput devices)"
+msgstr "Connected (DirectInput devices)"
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
-msgstr "Connected (xinput device)"
+msgid "Connected (XInput devices)"
+msgstr "Connected (XInput devices)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"

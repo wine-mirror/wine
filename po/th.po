@@ -3717,12 +3717,11 @@ msgid "&Override"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-msgid "Connected"
-msgstr "ไม่พบแฟ้ม"
+msgid "Connected (DirectInput devices)"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:48

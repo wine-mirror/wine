@@ -3745,11 +3745,15 @@ msgid "&Override"
 msgstr "&Nustelbti"
 
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Prijungta"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (DirectInput devices)"
+msgstr "Prijungta (xinput įrenginys)"
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
+#, fuzzy
+#| msgid "Connected (xinput device)"
+msgid "Connected (XInput devices)"
 msgstr "Prijungta (xinput įrenginys)"
 
 #: dlls/joy.cpl/joy.rc:48
