@@ -1716,7 +1716,6 @@ typedef struct
     int expectedCount;
     int actualCount;
     int timeoutCount;
-    DWORD startTickCount;
 } CheckSessionListCallbackData;
 
 static BOOL CALLBACK checkSessionListCallback( const DPSESSIONDESC2 *thisSd, DWORD *timeout, DWORD flags, void *context )
@@ -1729,15 +1728,7 @@ static BOOL CALLBACK checkSessionListCallback( const DPSESSIONDESC2 *thisSd, DWO
     {
         ++data->timeoutCount;
 
-        if ( data->actualCount >= data->expectedCount )
-            return FALSE;
-
-        if ( GetTickCount() - data->startTickCount >= 2000 )
-            return FALSE;
-
-        *timeout = 100;
-
-        return TRUE;
+        return FALSE;
     }
 
     ++data->actualCount;
@@ -1835,6 +1826,7 @@ static void check_EnumSessions_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dps
     unsigned short port = 0;
     WSADATA wsaData;
     SOCKET enumSock;
+    int tryIndex;
     int wsResult;
     SOCKET sock;
     HRESULT hr;
@@ -1845,43 +1837,50 @@ static void check_EnumSessions_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dps
 
     enumSock = bindUdp_( line, 47624 );
 
-    memset( &expectedSessions, 0, sizeof( expectedSessions ) );
-    expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
-    expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
-    expectedSessions[ 1 ].dpsd = replyDpsds [ 1 ];
-    expectedSessions[ 1 ].dpsd.lpszSessionNameA = (char *) "private";
-
-    memset( &callbackData, 0, sizeof( callbackData ) );
-    callbackData.line = line;
-    callbackData.startTickCount = GetTickCount();
-    callbackData.expectedSessions = expectedSessions;
-    callbackData.expectedCount = expectedSessionCount;
-
-    param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, flags );
-
-    if ( requestExpected )
-        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, expectedPassword, flags );
-
-    for ( i = 0; i < replyCount; ++i )
+    for ( tryIndex = 0; ; ++tryIndex )
     {
-        sock = connectTcp_( line, port );
-        if ( sock == INVALID_SOCKET )
+        memset( &expectedSessions, 0, sizeof( expectedSessions ) );
+        expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
+        expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
+        expectedSessions[ 1 ].dpsd = replyDpsds [ 1 ];
+        expectedSessions[ 1 ].dpsd.lpszSessionNameA = (char *) "private";
+
+        memset( &callbackData, 0, sizeof( callbackData ) );
+        callbackData.line = line;
+        callbackData.expectedSessions = expectedSessions;
+        callbackData.expectedCount = expectedSessionCount;
+
+        param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, flags );
+
+        if ( requestExpected )
+            port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, expectedPassword, flags );
+
+        for ( i = 0; i < replyCount; ++i )
+        {
+            sock = connectTcp_( line, port );
+            if ( sock == INVALID_SOCKET )
+                continue;
+
+            sendEnumSessionsReply_( line, sock, 2349 - i, &replyDpsds[ i ] );
+
+            closesocket( sock );
+        }
+
+        checkNoMoreMessages_( line, enumSock );
+
+        hr = enumSessionsAsyncWait( param, 2000 );
+        todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "got hr %#lx.\n", hr );
+
+        if ( tryIndex < 19 && callbackData.actualCount < callbackData.expectedCount )
             continue;
 
-        sendEnumSessionsReply_( line, sock, 2349 - i, &replyDpsds[ i ] );
+        todo_wine_if( expectedSessionCount ) ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
+                                                                    "got session count %d.\n", callbackData.actualCount );
+        ok_( __FILE__, line )( !!callbackData.timeoutCount == timeoutExpected, "got timeout count %d.\n",
+                               callbackData.timeoutCount );
 
-        closesocket( sock );
+        break;
     }
-
-    checkNoMoreMessages_( line, enumSock );
-
-    hr = enumSessionsAsyncWait( param, 2000 );
-    todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "got hr %#lx.\n", hr );
-
-    todo_wine_if( expectedSessionCount ) ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
-                                                                "got session count %d.\n", callbackData.actualCount );
-    ok_( __FILE__, line )( !!callbackData.timeoutCount == timeoutExpected, "got timeout count %d.\n",
-                           callbackData.timeoutCount );
 
     closesocket( enumSock );
     WSACleanup();
@@ -1928,45 +1927,53 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     EnumSessionsParam *param;
     unsigned short port;
     SOCKET enumSock;
+    int tryIndex;
     SOCKET sock;
     HRESULT hr;
     int i;
 
     enumSock = bindUdp_( line, 47624 );
 
-    memset( expectedSessions, 0, sizeof( expectedSessions ) );
-    expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
-    expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
-
-    memset( &callbackData, 0, sizeof( callbackData ) );
-    callbackData.line = line;
-    callbackData.expectedSessions = expectedSessions;
-    callbackData.expectedCount = 1;
-    callbackData.startTickCount = GetTickCount();
-
-    /* Do a sync enumeration first to fill the cache */
-    param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, 0 );
-
-    port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, 0 );
-
-    sock = connectTcp_( line, port );
-
-    if ( sock != INVALID_SOCKET )
+    for ( tryIndex = 0; ; ++tryIndex )
     {
-        sendEnumSessionsReply_( line, sock, 2349, &replyDpsds[ 0 ] );
+        memset( expectedSessions, 0, sizeof( expectedSessions ) );
+        expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
+        expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
 
-        closesocket( sock );
+        memset( &callbackData, 0, sizeof( callbackData ) );
+        callbackData.line = line;
+        callbackData.expectedSessions = expectedSessions;
+        callbackData.expectedCount = 1;
+
+        /* Do a sync enumeration first to fill the cache */
+        param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, 0 );
+
+        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, 0 );
+
+        sock = connectTcp_( line, port );
+
+        if ( sock != INVALID_SOCKET )
+        {
+            sendEnumSessionsReply_( line, sock, 2349, &replyDpsds[ 0 ] );
+
+            closesocket( sock );
+        }
+
+        checkNoMoreMessages_( line, enumSock );
+
+        hr = enumSessionsAsyncWait( param, 2000 );
+        ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+
+        if ( tryIndex < 19 && callbackData.actualCount < callbackData.expectedCount )
+            continue;
+
+        todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
+                                         "got session count %d.\n", callbackData.actualCount );
+        ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
+
+        break;
     }
 
-    checkNoMoreMessages_( line, enumSock );
-
-    hr = enumSessionsAsyncWait( param, 2000 );
-    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
-
-    todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
-                                     callbackData.actualCount );
-    ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
-
     memset( expectedSessions, 0, sizeof( expectedSessions ) );
     expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
     expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
@@ -1975,7 +1982,6 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     callbackData.line = line;
     callbackData.expectedSessions = expectedSessions;
     callbackData.expectedCount = 1;
-    callbackData.startTickCount = GetTickCount();
 
     /* Read cache of last sync enumeration */
     param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_ASYNC );
@@ -2004,32 +2010,38 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
         closesocket( sock );
     }
 
-    memset( expectedSessions, 0, sizeof( expectedSessions ) );
-    expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
-    expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
-    expectedSessions[ 1 ].dpsd = replyDpsds [ 1 ];
-    expectedSessions[ 1 ].dpsd.lpszSessionNameA = (char *) "private";
+    for ( tryIndex = 0; ; ++tryIndex )
+    {
+        memset( expectedSessions, 0, sizeof( expectedSessions ) );
+        expectedSessions[ 0 ].dpsd = replyDpsds [ 0 ];
+        expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
+        expectedSessions[ 1 ].dpsd = replyDpsds [ 1 ];
+        expectedSessions[ 1 ].dpsd.lpszSessionNameA = (char *) "private";
 
-    memset( &callbackData, 0, sizeof( callbackData ) );
-    callbackData.line = line;
-    callbackData.expectedSessions = expectedSessions;
-    callbackData.expectedCount = ARRAYSIZE( expectedSessions );
-    callbackData.startTickCount = GetTickCount();
+        memset( &callbackData, 0, sizeof( callbackData ) );
+        callbackData.line = line;
+        callbackData.expectedSessions = expectedSessions;
+        callbackData.expectedCount = ARRAYSIZE( expectedSessions );
 
-    /* Retrieve results */
-    param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_ASYNC );
-    hr = enumSessionsAsyncWait( param, 2000 );
-    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+        /* Retrieve results */
+        param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_ASYNC );
+        hr = enumSessionsAsyncWait( param, 2000 );
+        ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
 
-    todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount, "got session count %d.\n",
-                                     callbackData.actualCount );
-    ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
+        if ( tryIndex < 19 && callbackData.actualCount < callbackData.expectedCount )
+            continue;
+
+        todo_wine ok_( __FILE__, line )( callbackData.actualCount == callbackData.expectedCount,
+                                         "got session count %d.\n", callbackData.actualCount );
+        ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
+
+        break;
+    }
 
     memset( &callbackData, 0, sizeof( callbackData ) );
     callbackData.line = line;
     callbackData.expectedSessions = NULL;
     callbackData.expectedCount = 0;
-    callbackData.startTickCount = GetTickCount();
 
     /* Stop enumeration */
     param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_STOPASYNC );
