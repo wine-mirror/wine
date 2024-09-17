@@ -46,6 +46,10 @@ FONT 8, "Ms Shell Dlg"
     LISTBOX         IDC_XI_ENABLED_LIST, 10, 90, 180, 60, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
     LTEXT           "Disabled", IDC_STATIC, 10, 150, 180, 10
     LISTBOX         IDC_DISABLED_LIST, 10, 160, 180, 60, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
+
+    GROUPBOX        "Advanced settings (restart prefix required to take effect)", IDC_ADVANCED, 10, 220, 300, 70
+    AUTOCHECKBOX    "Enable SDL", IDC_ENABLE_SDL, 20, 235, 100, 10
+    AUTOCHECKBOX    "Disable hidraw", IDC_DISABLE_HIDRAW, 20, 245, 100, 10
 }
 
 IDD_TEST_DI DIALOG 0, 0, 320, 300

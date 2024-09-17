@@ -41,6 +41,9 @@
 #define IDC_DI_ENABLED_LIST    2000
 #define IDC_XI_ENABLED_LIST    2001
 #define IDC_DISABLED_LIST      2002
+#define IDC_ADVANCED           2003
+#define IDC_DISABLE_HIDRAW     2004
+#define IDC_ENABLE_SDL         2005
 
 #define IDC_BUTTON_DI_DISABLE   2010
 #define IDC_BUTTON_DI_RESET     2011

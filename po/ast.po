@@ -3753,27 +3753,43 @@ msgstr "Preseos conectaos (XInput)"
 msgid "Disabled"
 msgstr "Preseos desactivaos"
 
-#: dlls/joy.cpl/joy.rc:54
+#: dlls/joy.cpl/joy.rc:51
+msgid "Advanced settings (restart prefix required to take effect)"
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:52
+#, fuzzy
+#| msgid "&Enable"
+msgid "Enable SDL"
+msgstr "&Habilitar"
+
+#: dlls/joy.cpl/joy.rc:53
+#, fuzzy
+#| msgid "Disabled"
+msgid "Disable hidraw"
+msgstr "Preseos desactivaos"
+
+#: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
 msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:58
+#: dlls/joy.cpl/joy.rc:62
 msgid "Axes"
 msgstr "Exes"
 
-#: dlls/joy.cpl/joy.rc:59
+#: dlls/joy.cpl/joy.rc:63
 msgid "POVs"
 msgstr "Puntos de vista"
 
-#: dlls/joy.cpl/joy.rc:60
+#: dlls/joy.cpl/joy.rc:64
 msgid "Buttons"
 msgstr "Botones"
 
-#: dlls/joy.cpl/joy.rc:61
+#: dlls/joy.cpl/joy.rc:65
 msgid "Force Feedback Effect"
 msgstr "Efeutu de la rempuesta de fuercia"
 
-#: dlls/joy.cpl/joy.rc:63
+#: dlls/joy.cpl/joy.rc:67
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3781,27 +3797,27 @@ msgstr ""
 "Primi cualesquier botón del mandu p'activar l'efeutu escoyíu. Pues camudar "
 "la direición del efeutu cola exa del mandu."
 
-#: dlls/joy.cpl/joy.rc:69
+#: dlls/joy.cpl/joy.rc:73
 msgid "XInput"
 msgstr "XInput"
 
-#: dlls/joy.cpl/joy.rc:72
+#: dlls/joy.cpl/joy.rc:76
 msgid "User #0"
 msgstr "Usuariu #0"
 
-#: dlls/joy.cpl/joy.rc:73
+#: dlls/joy.cpl/joy.rc:77
 msgid "User #1"
 msgstr "Usuariu #1"
 
-#: dlls/joy.cpl/joy.rc:74
+#: dlls/joy.cpl/joy.rc:78
 msgid "User #2"
 msgstr "Usuariu #2"
 
-#: dlls/joy.cpl/joy.rc:75
+#: dlls/joy.cpl/joy.rc:79
 msgid "User #3"
 msgstr "Usuariu #3"
 
-#: dlls/joy.cpl/joy.rc:77
+#: dlls/joy.cpl/joy.rc:81
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3809,7 +3825,7 @@ msgstr ""
 "Nun se detectó nengún usuariu na ralura #0. Asegúrate de que'l mandu ta "
 "conectáu y de que nun ta anuláu pa DInput na llingüeta Joysticks."
 
-#: dlls/joy.cpl/joy.rc:81
+#: dlls/joy.cpl/joy.rc:85
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3817,7 +3833,7 @@ msgstr ""
 "Nun se detectó nengún usuariu na ralura #1. Asegúrate de que'l mandu ta "
 "conectáu y de que nun ta anuláu pa DInput na llingüeta Joysticks."
 
-#: dlls/joy.cpl/joy.rc:85
+#: dlls/joy.cpl/joy.rc:89
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3825,7 +3841,7 @@ msgstr ""
 "Nun se detectó nengún usuariu na ralura #2. Asegúrate de que'l mandu ta "
 "conectáu y de que nun ta anuláu pa DInput na llingüeta Joysticks."
 
-#: dlls/joy.cpl/joy.rc:89
+#: dlls/joy.cpl/joy.rc:93
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3833,8 +3849,8 @@ msgstr ""
 "Nun se detectó nengún usuariu na ralura #3. Asegúrate de que'l mandu ta "
 "conectáu y de que nun ta anuláu pa DInput na llingüeta Joysticks."
 
-#: dlls/joy.cpl/joy.rc:94 dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96
-#: dlls/joy.cpl/joy.rc:97
+#: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
+#: dlls/joy.cpl/joy.rc:101
 msgid "Rumble"
 msgstr "Vibrador"
 

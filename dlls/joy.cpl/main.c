@@ -124,6 +124,13 @@ static BOOL get_app_key(HKEY *defkey, HKEY *appkey)
     return *defkey || *appkey;
 }
 
+static BOOL get_advanced_key(HKEY *key)
+{
+    /* Registry key can be found in HKLM\System\CurrentControlSet\Services\WineBus */
+    return !RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\WineBus", 0, NULL, 0,
+                KEY_SET_VALUE | KEY_READ, NULL, key, NULL);
+}
+
 /******************************************************************************
  * set_config_key [internal]
  * Writes a string value to a registry key, deletes the key if value == NULL
@@ -170,6 +177,25 @@ static void enable_joystick(WCHAR *joy_name, BOOL enable)
 
     if (hkey) RegCloseKey(hkey);
     if (appkey) RegCloseKey(appkey);
+}
+
+static void set_advanced_option( const WCHAR *option, DWORD value )
+{
+    HKEY hkey;
+    if (!get_advanced_key( &hkey )) return;
+    RegSetValueExW( hkey, option, 0, REG_DWORD, (BYTE *)&value, sizeof(value) );
+    RegCloseKey( hkey );
+}
+
+static DWORD get_advanced_option( const WCHAR *option, DWORD default_value )
+{
+    DWORD value, size;
+    HKEY hkey;
+    if (!get_advanced_key( &hkey )) return default_value;
+    if (RegGetValueW( hkey, NULL, option, RRF_RT_REG_DWORD, NULL, (BYTE *)&value, &size ))
+        value = default_value;
+    RegCloseKey( hkey );
+    return value;
 }
 
 static void refresh_joystick_list( HWND hwnd )
@@ -265,12 +291,19 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     {
     case WM_INITDIALOG:
     {
+        BOOL enable_sdl, disable_hidraw;
+
         refresh_joystick_list( hwnd );
 
         EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_ENABLE ), FALSE );
         EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_DISABLE ), FALSE );
         EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_RESET ), FALSE );
         EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_XI_OVERRIDE ), FALSE );
+
+        enable_sdl = get_advanced_option( L"Enable SDL", TRUE );
+        SendMessageW( GetDlgItem( hwnd, IDC_ENABLE_SDL ), BM_SETCHECK, enable_sdl, 0 );
+        disable_hidraw = get_advanced_option( L"DisableHidraw", FALSE );
+        SendMessageW( GetDlgItem( hwnd, IDC_DISABLE_HIDRAW ), BM_SETCHECK, disable_hidraw, 0 );
 
         devnotify = RegisterDeviceNotificationW( hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE );
         return TRUE;
@@ -350,6 +383,16 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_DISABLE ), FALSE );
             EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_RESET ), FALSE );
             EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_XI_OVERRIDE ), FALSE );
+            break;
+
+        case IDC_ENABLE_SDL:
+            sel = SendMessageW( GetDlgItem( hwnd, IDC_ENABLE_SDL ), BM_GETCHECK, 0, 0 );
+            set_advanced_option( L"Enable SDL", sel );
+            break;
+
+        case IDC_DISABLE_HIDRAW:
+            sel = SendMessageW( GetDlgItem( hwnd, IDC_DISABLE_HIDRAW ), BM_GETCHECK, 0, 0 );
+            set_advanced_option( L"DisableHidraw", sel );
             break;
         }
 

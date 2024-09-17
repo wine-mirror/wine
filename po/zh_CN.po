@@ -3707,53 +3707,69 @@ msgstr "已连接 (xinput 设备)"
 msgid "Disabled"
 msgstr "停用"
 
-#: dlls/joy.cpl/joy.rc:54
+#: dlls/joy.cpl/joy.rc:51
+msgid "Advanced settings (restart prefix required to take effect)"
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:52
+#, fuzzy
+#| msgid "&Enable"
+msgid "Enable SDL"
+msgstr "启用(&E)"
+
+#: dlls/joy.cpl/joy.rc:53
+#, fuzzy
+#| msgid "Disabled"
+msgid "Disable hidraw"
+msgstr "停用"
+
+#: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
 msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:58
+#: dlls/joy.cpl/joy.rc:62
 msgid "Axes"
 msgstr "坐标轴"
 
-#: dlls/joy.cpl/joy.rc:59
+#: dlls/joy.cpl/joy.rc:63
 msgid "POVs"
 msgstr "帽子开关"
 
-#: dlls/joy.cpl/joy.rc:60
+#: dlls/joy.cpl/joy.rc:64
 msgid "Buttons"
 msgstr "按钮"
 
-#: dlls/joy.cpl/joy.rc:61
+#: dlls/joy.cpl/joy.rc:65
 msgid "Force Feedback Effect"
 msgstr "力反馈效果"
 
-#: dlls/joy.cpl/joy.rc:63
+#: dlls/joy.cpl/joy.rc:67
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 msgstr "在控制器上按任意键以激活选中的效果。可根据控制器轴改变效果的方向。"
 
-#: dlls/joy.cpl/joy.rc:69
+#: dlls/joy.cpl/joy.rc:73
 msgid "XInput"
 msgstr "XInput"
 
-#: dlls/joy.cpl/joy.rc:72
+#: dlls/joy.cpl/joy.rc:76
 msgid "User #0"
 msgstr "用户 #0"
 
-#: dlls/joy.cpl/joy.rc:73
+#: dlls/joy.cpl/joy.rc:77
 msgid "User #1"
 msgstr "用户 #1"
 
-#: dlls/joy.cpl/joy.rc:74
+#: dlls/joy.cpl/joy.rc:78
 msgid "User #2"
 msgstr "用户 #2"
 
-#: dlls/joy.cpl/joy.rc:75
+#: dlls/joy.cpl/joy.rc:79
 msgid "User #3"
 msgstr "用户 #3"
 
-#: dlls/joy.cpl/joy.rc:77
+#: dlls/joy.cpl/joy.rc:81
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3761,7 +3777,7 @@ msgstr ""
 "插槽 #0 未检测到用户，请确认您的游戏手柄已插入，并且没有覆盖“操纵杆”选项卡中"
 "的 DInput。"
 
-#: dlls/joy.cpl/joy.rc:81
+#: dlls/joy.cpl/joy.rc:85
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3769,7 +3785,7 @@ msgstr ""
 "插槽 #1 未检测到用户，请确认您的游戏手柄已插入，并且没有覆盖“操纵杆”选项卡中"
 "的 DInput。"
 
-#: dlls/joy.cpl/joy.rc:85
+#: dlls/joy.cpl/joy.rc:89
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3777,7 +3793,7 @@ msgstr ""
 "插槽 #2 未检测到用户，请确认您的游戏手柄已插入，并且没有覆盖“操纵杆”选项卡中"
 "的 DInput。"
 
-#: dlls/joy.cpl/joy.rc:89
+#: dlls/joy.cpl/joy.rc:93
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
@@ -3785,8 +3801,8 @@ msgstr ""
 "插槽 #3 未检测到用户，请确认您的游戏手柄已插入，并且没有覆盖“操纵杆”选项卡中"
 "的 DInput。"
 
-#: dlls/joy.cpl/joy.rc:94 dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96
-#: dlls/joy.cpl/joy.rc:97
+#: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
+#: dlls/joy.cpl/joy.rc:101
 msgid "Rumble"
 msgstr "震动"
 
