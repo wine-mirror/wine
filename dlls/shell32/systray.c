@@ -123,6 +123,27 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
     return Shell_NotifyIconW(dwMessage, &nidW);
 }
 
+
+/*************************************************************************
+ * get_bitmap_info Helper function for filling BITMAP structs and calculating buffer size in bits
+ */
+static void get_bitmap_info( ICONINFO *icon_info, BITMAP *mask, BITMAP *color, LONG *mask_bits, LONG *color_bits )
+{
+    if ((icon_info->hbmMask && !GetObjectW( icon_info->hbmMask, sizeof(*mask), mask )) ||
+        (icon_info->hbmColor && !GetObjectW( icon_info->hbmColor, sizeof(*color), color )))
+    {
+        if (icon_info->hbmMask) DeleteObject( icon_info->hbmMask );
+        if (icon_info->hbmColor) DeleteObject( icon_info->hbmColor );
+        memset( icon_info, 0, sizeof(*icon_info) );
+        return;
+    }
+
+    if (icon_info->hbmMask)
+        *mask_bits = (mask->bmPlanes * mask->bmWidth * mask->bmHeight * mask->bmBitsPixel + 15) / 16 * 2;
+    if (icon_info->hbmColor)
+        *color_bits = (color->bmPlanes * color->bmWidth * color->bmHeight * color->bmBitsPixel + 15) / 16 * 2;
+}
+
 /*************************************************************************
  * Shell_NotifyIconW			[SHELL32.298]
  */
@@ -132,6 +153,9 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     COPYDATASTRUCT cds;
     struct notify_data data_buffer;
     struct notify_data *data = &data_buffer;
+    ICONINFO iconinfo = { 0 };
+    BITMAP bmMask, bmColour;
+    LONG cbMaskBits = 0, cbColourBits = 0;
     BOOL ret;
 
     TRACE("dwMessage = %ld, nid->cbSize=%ld\n", dwMessage, nid->cbSize);
@@ -165,34 +189,19 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
     if (nid->uFlags & NIF_ICON)
+        GetIconInfo( nid->hIcon, &iconinfo );
+
+    get_bitmap_info( &iconinfo, &bmMask, &bmColour, &cbMaskBits, &cbColourBits );
+    cds.cbData += cbMaskBits + cbColourBits;
+
+    if (cds.cbData > sizeof(*data))
     {
-        ICONINFO iconinfo;
-        BITMAP bmMask;
-        BITMAP bmColour;
-        LONG cbMaskBits;
-        LONG cbColourBits = 0;
         BYTE *buffer;
-
-        if (!GetIconInfo(nid->hIcon, &iconinfo))
-            goto noicon;
-
-        if (!GetObjectW(iconinfo.hbmMask, sizeof(bmMask), &bmMask) ||
-            (iconinfo.hbmColor && !GetObjectW(iconinfo.hbmColor, sizeof(bmColour), &bmColour)))
-        {
-            DeleteObject(iconinfo.hbmMask);
-            if (iconinfo.hbmColor) DeleteObject(iconinfo.hbmColor);
-            goto noicon;
-        }
-
-        cbMaskBits = (bmMask.bmPlanes * bmMask.bmWidth * bmMask.bmHeight * bmMask.bmBitsPixel + 15) / 16 * 2;
-        if (iconinfo.hbmColor)
-            cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel + 15) / 16 * 2;
-        cds.cbData = sizeof(*data) + cbMaskBits + cbColourBits;
         buffer = malloc(cds.cbData);
         if (!buffer)
         {
-            DeleteObject(iconinfo.hbmMask);
-            if (iconinfo.hbmColor) DeleteObject(iconinfo.hbmColor);
+            if (iconinfo.hbmMask) DeleteObject( iconinfo.hbmMask );
+            if (iconinfo.hbmColor) DeleteObject( iconinfo.hbmColor );
             SetLastError(E_OUTOFMEMORY);
             return FALSE;
         }
@@ -221,7 +230,6 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         DeleteObject(iconinfo.hbmMask);
     }
 
-noicon:
     data->hWnd   = HandleToLong( nid->hWnd );
     data->uID    = nid->uID;
     data->uFlags = nid->uFlags;
