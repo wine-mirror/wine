@@ -1852,6 +1852,7 @@ static void check_EnumSessions_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dps
     expectedSessions[ 1 ].dpsd.lpszSessionNameA = (char *) "private";
 
     memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.line = line;
     callbackData.startTickCount = GetTickCount();
     callbackData.expectedSessions = expectedSessions;
     callbackData.expectedCount = expectedSessionCount;
@@ -1938,6 +1939,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
 
     memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.line = line;
     callbackData.expectedSessions = expectedSessions;
     callbackData.expectedCount = 1;
     callbackData.startTickCount = GetTickCount();
@@ -1970,6 +1972,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     expectedSessions[ 0 ].dpsd.lpszSessionNameA = (char *) "normal";
 
     memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.line = line;
     callbackData.expectedSessions = expectedSessions;
     callbackData.expectedCount = 1;
     callbackData.startTickCount = GetTickCount();
@@ -2008,6 +2011,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     expectedSessions[ 1 ].dpsd.lpszSessionNameA = (char *) "private";
 
     memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.line = line;
     callbackData.expectedSessions = expectedSessions;
     callbackData.expectedCount = ARRAYSIZE( expectedSessions );
     callbackData.startTickCount = GetTickCount();
@@ -2022,6 +2026,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     ok_( __FILE__, line )( callbackData.timeoutCount, "got timeout count %d.\n", callbackData.timeoutCount );
 
     memset( &callbackData, 0, sizeof( callbackData ) );
+    callbackData.line = line;
     callbackData.expectedSessions = NULL;
     callbackData.expectedCount = 0;
     callbackData.startTickCount = GetTickCount();
