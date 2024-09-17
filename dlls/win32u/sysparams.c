@@ -2231,10 +2231,7 @@ static struct monitor *get_monitor_from_handle( HMONITOR handle )
     return NULL;
 }
 
-/**********************************************************************
- *           get_monitor_dpi
- */
-UINT get_monitor_dpi( HMONITOR handle )
+static UINT get_monitor_dpi( HMONITOR handle )
 {
     struct monitor *monitor;
     UINT dpi = system_dpi;
@@ -3811,6 +3808,18 @@ HMONITOR monitor_from_point( POINT pt, UINT flags, UINT dpi )
     RECT rect;
     SetRect( &rect, pt.x, pt.y, pt.x + 1, pt.y + 1 );
     return monitor_from_rect( &rect, flags, dpi );
+}
+
+UINT monitor_dpi_from_rect( RECT rect, UINT dpi )
+{
+    struct monitor *monitor;
+    UINT ret = system_dpi;
+
+    if (!lock_display_devices()) return 0;
+    if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi ))) ret = monitor_get_dpi( monitor );
+    unlock_display_devices();
+
+    return ret;
 }
 
 /* see MonitorFromWindow */

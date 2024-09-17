@@ -706,22 +706,19 @@ UINT WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size )
  */
 BOOL WINAPI NtUserSetCursorPos( INT x, INT y )
 {
-    POINT pt = { x, y };
+    RECT rect = {x, y, x, y};
     BOOL ret;
     INT prev_x, prev_y, new_x, new_y;
     UINT dpi;
 
-    if ((dpi = get_thread_dpi()))
-    {
-        HMONITOR monitor = monitor_from_point( pt, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
-        pt = map_dpi_point( pt, dpi, get_monitor_dpi( monitor ));
-    }
+    dpi = monitor_dpi_from_rect( rect, get_thread_dpi() );
+    rect = map_dpi_rect( rect, get_thread_dpi(), dpi );
 
     SERVER_START_REQ( set_cursor )
     {
         req->flags = SET_CURSOR_POS;
-        req->x     = pt.x;
-        req->y     = pt.y;
+        req->x     = rect.left;
+        req->y     = rect.top;
         if ((ret = !wine_server_call( req )))
         {
             prev_x = reply->prev_x;
@@ -742,9 +739,10 @@ BOOL get_cursor_pos( POINT *pt )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const desktop_shm_t *desktop_shm;
-    BOOL ret;
+    BOOL ret = TRUE;
     DWORD last_change = 0;
     NTSTATUS status;
+    RECT rect;
     UINT dpi;
 
     if (!pt) return FALSE;
@@ -755,15 +753,16 @@ BOOL get_cursor_pos( POINT *pt )
         pt->y = desktop_shm->cursor.y;
         last_change = desktop_shm->cursor.last_change;
     }
-    ret = !status;
+    if (status) return FALSE;
 
     /* query new position from graphics driver if we haven't updated recently */
-    if (ret && NtGetTickCount() - last_change > 100) ret = user_driver->pGetCursorPos( pt );
-    if (ret && (dpi = get_thread_dpi()))
-    {
-        HMONITOR monitor = monitor_from_point( *pt, MONITOR_DEFAULTTOPRIMARY, 0 );
-        *pt = map_dpi_point( *pt, get_monitor_dpi( monitor ), dpi );
-    }
+    if (NtGetTickCount() - last_change > 100) ret = user_driver->pGetCursorPos( pt );
+    if (ret) return FALSE;
+
+    SetRect( &rect, pt->x, pt->y, pt->x, pt->y );
+    dpi = monitor_dpi_from_rect( rect, get_thread_dpi() );
+    rect = map_dpi_rect( rect, dpi, get_thread_dpi() );
+    *pt = *(POINT *)&rect.left;
     return ret;
 }
 
@@ -2619,8 +2618,10 @@ BOOL get_clip_cursor( RECT *rect, UINT dpi )
 
     if (!status)
     {
-        HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTOPRIMARY, 0 );
-        *rect = map_dpi_rect( *rect, get_monitor_dpi( monitor ), dpi );
+        UINT ctx = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
+        UINT dpi_from = monitor_dpi_from_rect( *rect, get_thread_dpi() );
+        *rect = map_dpi_rect( *rect, dpi_from, dpi );
+        set_thread_dpi_awareness_context( ctx );
     }
     return !status;
 }
@@ -2666,7 +2667,7 @@ BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
  */
 BOOL WINAPI NtUserClipCursor( const RECT *rect )
 {
-    UINT dpi;
+    UINT dpi_from = get_thread_dpi(), dpi_to;
     BOOL ret;
     RECT new_rect;
 
@@ -2675,12 +2676,9 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
     if (rect)
     {
         if (rect->left > rect->right || rect->top > rect->bottom) return FALSE;
-        if ((dpi = get_thread_dpi()))
-        {
-            HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTOPRIMARY, dpi );
-            new_rect = map_dpi_rect( *rect, dpi, get_monitor_dpi( monitor ));
-            rect = &new_rect;
-        }
+        dpi_to = monitor_dpi_from_rect( *rect, dpi_from );
+        new_rect = map_dpi_rect( *rect, dpi_from, dpi_to );
+        rect = &new_rect;
     }
 
     SERVER_START_REQ( set_cursor )

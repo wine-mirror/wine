@@ -903,8 +903,8 @@ UINT get_dpi_for_window( HWND hwnd )
     }
     if (win == WND_DESKTOP)
     {
-        POINT pt = { 0, 0 };
-        return get_monitor_dpi( monitor_from_point( pt, MONITOR_DEFAULTTOPRIMARY, 0 ));
+        RECT rect = {0};
+        return monitor_dpi_from_rect( rect, get_thread_dpi() );
     }
     if (win != WND_OTHER_PROCESS)
     {
@@ -1899,12 +1899,10 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
     struct window_surface *new_surface;
     struct window_rects monitor_rects;
     UINT monitor_dpi, style, ex_style;
-    HMONITOR monitor;
     RECT dummy;
     HRGN shape;
 
-    monitor = monitor_from_rect( &rects->window, MONITOR_DEFAULTTONEAREST, get_thread_dpi() );
-    monitor_dpi = get_monitor_dpi( monitor );
+    monitor_dpi = monitor_dpi_from_rect( rects->window, get_thread_dpi() );
 
     style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE );
@@ -1977,7 +1975,6 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     struct window_rects old_rects;
     RECT extra_rects[3];
     struct window_surface *old_surface;
-    HMONITOR monitor;
     UINT monitor_dpi;
 
     is_layered = new_surface && new_surface->alpha_mask;
@@ -1998,9 +1995,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         valid_rects = NULL;
     }
 
-    monitor = monitor_from_rect( &new_rects->window, MONITOR_DEFAULTTONEAREST, get_thread_dpi() );
-    monitor_dpi = get_monitor_dpi( monitor );
-
+    monitor_dpi = monitor_dpi_from_rect( new_rects->window, get_thread_dpi() );
     monitor_rects = map_dpi_window_rects( *new_rects, get_thread_dpi(), monitor_dpi );
 
     SERVER_START_REQ( set_window_pos )
@@ -5354,8 +5349,7 @@ static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_to )
 
     if (!dpi_from || !dpi_to)
     {
-        POINT pt = { cs->x, cs->y };
-        UINT mon_dpi = get_monitor_dpi( monitor_from_point( pt, MONITOR_DEFAULTTONEAREST, dpi_from ));
+        UINT mon_dpi = monitor_dpi_from_rect( rect, get_thread_dpi() );
         if (!dpi_from) dpi_from = mon_dpi;
         else dpi_to = mon_dpi;
     }
