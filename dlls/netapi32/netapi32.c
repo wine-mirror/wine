@@ -2755,3 +2755,8 @@ HRESULT WINAPI NetGetAadJoinInformation(LPCWSTR tenant_id, PDSREG_JOIN_INFO *joi
     FIXME("(%s, %p): stub\n", debugstr_w(tenant_id), join_info);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+void NET_API_FUNCTION NetFreeAadJoinInformation(DSREG_JOIN_INFO *join_info)
+{
+    FIXME("%p): stub\n", join_info);
+}

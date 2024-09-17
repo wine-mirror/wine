@@ -74,6 +74,9 @@ HRESULT NET_API_FUNCTION NetGetAadJoinInformation(
     LPCWSTR pcszTenantId,
     PDSREG_JOIN_INFO *ppJoinInfo);
 
+void NET_API_FUNCTION NetFreeAadJoinInformation(
+    DSREG_JOIN_INFO *join_info);
+
 #ifdef __cplusplus
 }
 #endif
