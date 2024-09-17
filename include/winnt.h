@@ -42,6 +42,14 @@
 extern "C" {
 #endif
 
+#ifndef __has_declspec_attribute
+# if defined(_MSC_VER)
+#  define __has_declspec_attribute(x) 1
+# else
+#  define __has_declspec_attribute(x) 0
+# endif
+#endif
+
 #if defined(_NTSYSTEM_) || defined(WINE_UNIX_LIB)
 #define NTSYSAPI DECLSPEC_EXPORT
 #else
@@ -52,7 +60,7 @@ extern "C" {
 #define FASTCALL __fastcall
 
 #ifndef DECLSPEC_IMPORT
-# if defined(_MSC_VER)
+# if __has_declspec_attribute(dllimport)
 #  define DECLSPEC_IMPORT __declspec(dllimport)
 # elif defined(__MINGW32__) || defined(__CYGWIN__)
 #  define DECLSPEC_IMPORT __attribute__((dllimport))
@@ -64,7 +72,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_NORETURN
-# if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
+# if __has_declspec_attribute(noreturn) && !defined(MIDL_PASS)
 #  define DECLSPEC_NORETURN __declspec(noreturn)
 # elif defined(__GNUC__)
 #  define DECLSPEC_NORETURN __attribute__((noreturn))
@@ -74,7 +82,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_ALIGN
-# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+# if __has_declspec_attribute(align) && !defined(MIDL_PASS)
 #  define DECLSPEC_ALIGN(x) __declspec(align(x))
 # elif defined(__GNUC__)
 #  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
@@ -84,7 +92,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_NOTHROW
-# if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
+# if __has_declspec_attribute(nothrow) && !defined(MIDL_PASS)
 #  define DECLSPEC_NOTHROW __declspec(nothrow)
 # elif defined(__GNUC__)
 #  define DECLSPEC_NOTHROW __attribute__((nothrow))
@@ -98,7 +106,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_UUID
-# if defined(_MSC_VER) && (_MSC_VER >= 1100) && defined (__cplusplus)
+# if __has_declspec_attribute(uuid) && defined (__cplusplus)
 #  define DECLSPEC_UUID(x) __declspec(uuid(x))
 # else
 #  define DECLSPEC_UUID(x)
@@ -106,7 +114,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_NOVTABLE
-# if defined(_MSC_VER) && (_MSC_VER >= 1100) && defined(__cplusplus)
+# if __has_declspec_attribute(novtable) && defined(__cplusplus)
 #  define DECLSPEC_NOVTABLE __declspec(novtable)
 # else
 #  define DECLSPEC_NOVTABLE
@@ -114,7 +122,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_SELECTANY
-#if defined(_MSC_VER) && (_MSC_VER >= 1100)
+# if __has_declspec_attribute(selectany)
 #define DECLSPEC_SELECTANY __declspec(selectany)
 #elif defined(__MINGW32__)
 #define DECLSPEC_SELECTANY __attribute__((selectany))
@@ -138,7 +146,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_ADDRSAFE
-# if defined(_MSC_VER) && (_MSC_VER >= 1200) && (defined(_M_ALPHA) || defined(_M_AXP64))
+# if __has_declspec_attribute(address_safe) && (defined(_M_ALPHA) || defined(_M_AXP64))
 #  define DECLSPEC_ADDRSAFE __declspec(address_safe)
 # else
 #  define DECLSPEC_ADDRSAFE
@@ -156,7 +164,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_NOINLINE
-# if defined(_MSC_VER) && (_MSC_VER >= 1300)
+# if __has_declspec_attribute(noinline)
 #  define DECLSPEC_NOINLINE  __declspec(noinline)
 # elif defined(__GNUC__)
 #  define DECLSPEC_NOINLINE __attribute__((noinline))
@@ -166,7 +174,7 @@ extern "C" {
 #endif
 
 #ifndef DECLSPEC_DEPRECATED
-# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+# if __has_declspec_attribute(deprecated) && !defined(MIDL_PASS)
 #  define DECLSPEC_DEPRECATED __declspec(deprecated)
 #  define DEPRECATE_SUPPORTED
 # elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
@@ -183,7 +191,7 @@ extern "C" {
 #if defined(__WINESRC__) && !defined(WINE_UNIX_LIB)
 /* Wine uses .spec file for PE exports */
 # define DECLSPEC_EXPORT
-#elif defined(_MSC_VER)
+#elif __has_declspec_attribute(dllexport)
 # define DECLSPEC_EXPORT __declspec(dllexport)
 #elif defined(__MINGW32__)
 # define DECLSPEC_EXPORT __attribute__((dllexport))
@@ -206,7 +214,7 @@ extern "C" {
 #ifndef DECLSPEC_CHPE_PATCHABLE
 # ifndef __arm64ec__
 #  define DECLSPEC_CHPE_PATCHABLE
-# elif defined(_MSC_VER)
+# elif __has_declspec_attribute(hybrid_patchable)
 #  define DECLSPEC_CHPE_PATCHABLE __declspec(hybrid_patchable)
 # else
 #  define DECLSPEC_CHPE_PATCHABLE __attribute__((hybrid_patchable))
