@@ -64,8 +64,18 @@ struct read_callback_params
 };
 
 
+enum sample_flag
+{
+    SAMPLE_FLAG_SYNC_POINT = 1,
+    SAMPLE_FLAG_INCOMPLETE = 2,
+};
+
 struct sample
 {
+    UINT32 flags;
+    INT64 dts;
+    INT64 pts;
+    UINT64 duration;
     UINT64 size;
     UINT64 data; /* pointer to user memory */
 };

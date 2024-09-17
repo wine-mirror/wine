@@ -165,6 +165,7 @@ NTSTATUS demuxer_read( void *arg )
     AVFormatContext *ctx = get_demuxer( params->demuxer );
     struct sample *sample = &params->sample;
     UINT capacity = params->sample.size;
+    AVStream *stream;
     AVPacket *packet;
     int ret;
 
@@ -189,6 +190,11 @@ NTSTATUS demuxer_read( void *arg )
         return STATUS_BUFFER_TOO_SMALL;
     }
 
+    stream = ctx->streams[packet->stream_index];
+    sample->pts = get_stream_time( stream, packet->pts );
+    sample->dts = get_stream_time( stream, packet->dts );
+    sample->duration = get_stream_time( stream, packet->duration );
+    if (packet->flags & AV_PKT_FLAG_KEY) sample->flags |= SAMPLE_FLAG_SYNC_POINT;
     memcpy( (void *)(UINT_PTR)sample->data, packet->data, packet->size );
     params->stream = packet->stream_index;
     av_packet_free( &packet );

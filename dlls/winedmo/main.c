@@ -133,12 +133,26 @@ static void buffer_lock( DMO_OUTPUT_DATA_BUFFER *buffer, struct sample *sample )
 
 static void buffer_unlock( DMO_OUTPUT_DATA_BUFFER *buffer, struct sample *sample )
 {
+    IMFSample *object;
     HRESULT hr;
 
     if (FAILED(hr = IMediaBuffer_SetLength( buffer->pBuffer, sample->size )))
         ERR( "Failed to update buffer length, hr %#lx\n", hr );
 
     buffer->dwStatus = 0;
+    if (SUCCEEDED(hr = IMediaBuffer_QueryInterface( buffer->pBuffer, &IID_IMFSample, (void **)&object )))
+    {
+        if (sample->dts != INT64_MIN) IMFSample_SetUINT64( object, &MFSampleExtension_DecodeTimestamp, sample->dts );
+        if (sample->pts != INT64_MIN) IMFSample_SetSampleTime( object, sample->pts );
+        if (sample->duration != INT64_MIN) IMFSample_SetSampleDuration( object, sample->duration );
+        if (sample->flags & SAMPLE_FLAG_SYNC_POINT) IMFSample_SetUINT32( object, &MFSampleExtension_CleanPoint, 1 );
+        IMFSample_Release( object );
+    }
+
+    if ((buffer->rtTimestamp = sample->pts) != INT64_MIN) buffer->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_TIME;
+    if ((buffer->rtTimelength = sample->duration) != INT64_MIN) buffer->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH;
+    if (sample->flags & SAMPLE_FLAG_SYNC_POINT) buffer->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT;
+    if (sample->flags & SAMPLE_FLAG_INCOMPLETE) buffer->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
 }
 
 
