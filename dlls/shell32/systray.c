@@ -61,6 +61,7 @@ struct notify_data  /* platform-independent format for NOTIFYICONDATA */
     WCHAR szInfoTitle[64];
     DWORD dwInfoFlags;
     GUID  guidItem;
+    struct notify_data_icon balloon_icon_info; /* balloon icon bitmap info */
     BYTE icon_data[];
 };
 
@@ -181,9 +182,9 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     COPYDATASTRUCT cds;
     struct notify_data data_buffer;
     struct notify_data *data = &data_buffer;
-    ICONINFO icon_info = { 0 };
-    BITMAP mask, color;
-    LONG mask_size = 0, color_size = 0;
+    ICONINFO icon_info = { 0 }, balloon_icon_info = { 0 };
+    BITMAP mask, color, balloon_mask, balloon_color;
+    LONG mask_size = 0, color_size = 0, balloon_mask_size = 0, balloon_color_size = 0;
     BOOL ret;
 
     TRACE("dwMessage = %ld, nid->cbSize=%ld\n", dwMessage, nid->cbSize);
@@ -219,8 +220,14 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     if (nid->uFlags & NIF_ICON)
         GetIconInfo( nid->hIcon, &icon_info );
 
+    if ((nid->uFlags & NIF_INFO) && (nid->dwInfoFlags & NIIF_ICONMASK) == NIIF_USER)
+        GetIconInfo( nid->hBalloonIcon, &balloon_icon_info );
+
     get_bitmap_info( &icon_info, &mask, &color, &mask_size, &color_size );
     cds.cbData += mask_size + color_size;
+
+    get_bitmap_info( &balloon_icon_info, &balloon_mask, &balloon_color, &balloon_mask_size, &balloon_color_size );
+    cds.cbData += balloon_mask_size + balloon_color_size;
 
     if (cds.cbData > sizeof(*data))
     {
@@ -230,6 +237,8 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         {
             if (icon_info.hbmMask) DeleteObject( icon_info.hbmMask );
             if (icon_info.hbmColor) DeleteObject( icon_info.hbmColor );
+            if (balloon_icon_info.hbmMask) DeleteObject( balloon_icon_info.hbmMask );
+            if (balloon_icon_info.hbmColor) DeleteObject( balloon_icon_info.hbmColor );
             SetLastError(E_OUTOFMEMORY);
             return FALSE;
         }
@@ -241,6 +250,13 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         if (icon_info.hbmMask)
         {
             fill_icon_info( &mask, &color, mask_size, color_size, &icon_info, &data->icon_info, buffer );
+            buffer += mask_size + color_size;
+        }
+
+        if (balloon_icon_info.hbmMask)
+        {
+            fill_icon_info( &balloon_mask, &balloon_color, balloon_mask_size, balloon_color_size,
+                            &balloon_icon_info, &data->balloon_icon_info, buffer );
             buffer += mask_size + color_size;
         }
     }

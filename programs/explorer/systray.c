@@ -63,6 +63,7 @@ struct notify_data  /* platform-independent format for NOTIFYICONDATA */
     WCHAR szInfoTitle[64];
     DWORD dwInfoFlags;
     GUID  guidItem;
+    struct notify_data_icon balloon_icon_info; /* balloon icon bitmap info */
     BYTE icon_data[];
 };
 
@@ -730,7 +731,10 @@ static BOOL modify_icon( struct icon *icon, NOTIFYICONDATAW *nid )
         lstrcpynW( icon->info_title, nid->szInfoTitle, ARRAY_SIZE( icon->info_title ));
         icon->info_flags = nid->dwInfoFlags;
         icon->info_timeout = max(min(nid->uTimeout, BALLOON_SHOW_MAX_TIMEOUT), BALLOON_SHOW_MIN_TIMEOUT);
-        icon->info_icon = nid->hBalloonIcon;
+
+        if (icon->info_icon) DestroyIcon( icon->info_icon );
+        icon->info_icon = CopyIcon( nid->hBalloonIcon );
+
         update_balloon( icon );
     }
     if (icon->state & NIS_HIDDEN) hide_icon( icon );
@@ -884,8 +888,26 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
         }
         nid.hIcon = CreateIcon(NULL, data->icon_info.width, data->icon_info.height, data->icon_info.planes, data->icon_info.bpp,
                                icon_data, icon_data + cbMaskBits);
+        icon_data += cbMaskBits + cbColourBits;
     }
 
+    if ((nid.uFlags & NIF_INFO) && (nid.dwInfoFlags & NIIF_ICONMASK) == NIIF_USER)
+    {
+        /* Balloon icon */
+        LONG cbMaskBits;
+        LONG cbColourBits;
+
+        cbMaskBits = (data->balloon_icon_info.width * data->balloon_icon_info.height + 15) / 16 * 2;
+        cbColourBits = (data->balloon_icon_info.planes * data->balloon_icon_info.width * data->balloon_icon_info.height * data->balloon_icon_info.bpp + 15) / 16 * 2;
+
+        if (cds->cbData < ((char*)icon_data - (char*)data) + cbMaskBits + cbColourBits)
+        {
+            ERR( "buffer underflow\n" );
+            return FALSE;
+        }
+        nid.hBalloonIcon = CreateIcon(NULL, data->balloon_icon_info.width, data->balloon_icon_info.height, data->balloon_icon_info.planes, data->balloon_icon_info.bpp,
+                                      icon_data, icon_data + cbMaskBits);
+    }
     /* try forwarding to the display driver first */
     if (cds->dwData == NIM_ADD || !(icon = get_icon( nid.hWnd, nid.uID )))
     {
@@ -920,6 +942,7 @@ static BOOL handle_incoming(HWND hwndSource, COPYDATASTRUCT *cds)
 
 done:
     if (nid.hIcon) DestroyIcon( nid.hIcon );
+    if (nid.hBalloonIcon) DestroyIcon( nid.hBalloonIcon );
     sync_taskbar_buttons();
     return ret;
 }
