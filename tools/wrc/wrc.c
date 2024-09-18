@@ -209,11 +209,11 @@ static void set_version_defines(void)
         major = NULL;
         patchlevel = version;
     }
-    sprintf( buffer, "__WRC__=%s", major ? major : "0" );
+    snprintf( buffer, sizeof(buffer), "__WRC__=%s", major ? major : "0" );
     wpp_add_cmdline_define(buffer);
-    sprintf( buffer, "__WRC_MINOR__=%s", minor ? minor : "0" );
+    snprintf( buffer, sizeof(buffer), "__WRC_MINOR__=%s", minor ? minor : "0" );
     wpp_add_cmdline_define(buffer);
-    sprintf( buffer, "__WRC_PATCHLEVEL__=%s", patchlevel ? patchlevel : "0" );
+    snprintf( buffer, sizeof(buffer), "__WRC_PATCHLEVEL__=%s", patchlevel ? patchlevel : "0" );
     wpp_add_cmdline_define(buffer);
     free( version );
 }
