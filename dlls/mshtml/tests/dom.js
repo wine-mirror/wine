@@ -572,6 +572,7 @@ sync_test("storage", function() {
 
     sessionStorage.setItem("foobar", 42);
     ok("foobar" in sessionStorage, "foobar not in sessionStorage");
+    ok(sessionStorage.hasOwnProperty("foobar"), "foobar not prop of sessionStorage");
     item = sessionStorage.getItem("foobar");
     ok(item === "42", "'foobar' item = " + item);
     item = sessionStorage["foobar"];
@@ -582,6 +583,7 @@ sync_test("storage", function() {
 
     sessionStorage["barfoo"] = true;
     ok("barfoo" in sessionStorage, "barfoo not in sessionStorage");
+    ok(sessionStorage.hasOwnProperty("barfoo"), "barfoo not prop of sessionStorage");
     item = sessionStorage["barfoo"];
     ok(item === "true", "[barfoo] item = " + item);
     item = sessionStorage.getItem("barfoo");

@@ -1602,8 +1602,10 @@ EVENT_HANDLER_FUNC_OBJ(onmessage);
 static HRESULT WINAPI onvisibilitychange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
+    DISPPARAMS dp = {0};
     IDispatchEx *dispex;
     HRESULT hres;
+    VARIANT res;
     BSTR bstr;
 
     CHECK_EXPECT(visibilitychange);
@@ -1614,9 +1616,14 @@ static HRESULT WINAPI onvisibilitychange(IDispatchEx *iface, DISPID id, LCID lci
 
     bstr = SysAllocString(L"toString");
     hres = IDispatchEx_GetDispID(dispex, bstr, 0, &id);
-    todo_wine
     ok(hres == S_OK, "GetDispID(\"toString\") failed: %08lx\n", hres);
     SysFreeString(bstr);
+
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_FUNC, &dp, &res, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx(\"toString\") failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_BSTR, "V_VT(\"toString\") = %d\n", V_VT(&res));
+    ok(!wcscmp(V_BSTR(&res), L"[object Event]"), "toString = %s\n", wine_dbgstr_w(V_BSTR(&res)));
+    VariantClear(&res);
 
     return S_OK;
 }
@@ -4652,8 +4659,10 @@ static void test_storage_event(DISPPARAMS *params, BOOL doc_onstorage)
     IHTMLEventObj *event_obj;
     IDOMStorageEvent *event;
     IDispatchEx *dispex;
+    DISPPARAMS dp = {0};
     IDispatch *disp;
     HRESULT hres;
+    VARIANT res;
     unsigned i;
     DISPID id;
     BSTR bstr;
@@ -4668,6 +4677,18 @@ static void test_storage_event(DISPPARAMS *params, BOOL doc_onstorage)
     ok_(__FILE__,line)(V_VT(&params->rgvarg[1]) == VT_DISPATCH, "V_VT(event) = %d\n", V_VT(&params->rgvarg[1]));
     hres = IDispatch_QueryInterface(V_DISPATCH(&params->rgvarg[1]), &IID_IDispatchEx, (void**)&dispex);
     ok_(__FILE__,line)(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+
+    bstr = SysAllocString(L"toString");
+    hres = IDispatchEx_GetDispID(dispex, bstr, 0, &id);
+    ok_(__FILE__,line)(hres == S_OK, "GetDispID(\"toString\") failed: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_FUNC, &dp, &res, NULL, NULL);
+    ok_(__FILE__,line)(hres == S_OK, "InvokeEx(\"toString\") failed: %08lx\n", hres);
+    ok_(__FILE__,line)(V_VT(&res) == VT_BSTR, "V_VT(\"toString\") = %d\n", V_VT(&res));
+    ok_(__FILE__,line)(!wcscmp(V_BSTR(&res), doc_onstorage ? L"[object MSEventObj]" : L"[object StorageEvent]"),
+                       "toString = %s\n", wine_dbgstr_w(V_BSTR(&res)));
+    VariantClear(&res);
 
     hres = IDispatchEx_QueryInterface(dispex, &IID_IDOMStorageEvent, (void**)&event);
     if(doc_onstorage) {

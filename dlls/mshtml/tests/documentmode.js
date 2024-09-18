@@ -379,6 +379,12 @@ sync_test("builtin_obj", function() {
             window.toString.call(null);
             ok(false, "expected exception calling window.toString with null context");
         }catch(ex) {}
+    }else {
+        ok(Object.getPrototypeOf(f) === Function.prototype, "unexpected document.createElement prototype");
+        e = window.toString.call(null);
+        ok(e === "[object Window]", "window.toString with null context = " + e);
+        e = window.toString.call(external.nullDisp);
+        ok(e === "[object Window]", "window.toString with nullDisp context = " + e);
     }
 
     e = 0;
@@ -422,6 +428,15 @@ sync_test("builtin_obj", function() {
         ok(false, "exception expected");
     }catch(ex) {}
 
+    e = 0;
+    try {
+        new f();
+    }catch(ex) {
+        e = ex.number;
+    }
+    todo_wine_if(v < 9).
+    ok(e === (v < 9 ? 0xa01b6 : 0x0ffff) - 0x80000000, "[new f()] e = " + e);
+
     if(v < 9) {
         ok(!("call" in f.call), "call in f.call");
         ok(!("apply" in f.call), "apply in f.call");
@@ -459,6 +474,24 @@ sync_test("builtin_obj", function() {
         ok(enum_elem === elem2, "enum_elem = " + enum_elem);
         enumerator.moveNext();
         ok(enumerator.atEnd(), "enumerator not at end");
+    }else {
+        elem = f.call.call(f, document, "div");
+        f = f.bind(document);
+        elem = f.apply(null, ["style"]);
+        document.body.appendChild(elem);
+
+        try {
+            var enumerator = new Enumerator(document.getElementsByTagName("style"));
+        }catch(ex) {
+            e = ex.number;
+        }
+        todo_wine.
+        ok(e === 0xa01c3 - 0x80000000, "[style Enumerator] e = " + e);
+
+        f.apply = 0;
+        f.call = function() { };
+        ok(f.apply === 0, "changed f.apply = ", f.apply);
+        ok(f.call instanceof Function, "changed f.call not instance of Function");
     }
 });
 
@@ -2175,11 +2208,10 @@ sync_test("elem_attr", function() {
     var func = elem.setAttribute;
     try {
         func("testattr", arr);
-        todo_wine_if(v >= 9).
         ok(v < 9, "expected exception setting testattr via func");
     }catch(ex) {
         ok(v >= 9, "did not expect exception setting testattr via func");
-        elem.setAttribute("testattr", arr);
+        func.call(elem, "testattr", arr);
     }
     r = elem.getAttribute("testattr");
     ok(r === (v < 8 ? arr : (v < 10 ? "arrval" : "42")), "testattr after setAttribute (as func) = " + r);
