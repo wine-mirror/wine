@@ -2063,7 +2063,6 @@ AC_CHECK_FUNCS(\
 	getifaddrs \
 	getrandom \
 	kqueue \
-	mach_continuous_time \
 	pipe2 \
 	port_create \
 	posix_fadvise \
