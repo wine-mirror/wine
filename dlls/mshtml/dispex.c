@@ -1134,13 +1134,9 @@ static const dispex_static_data_vtbl_t function_dispex_vtbl = {
     .invoke           = function_invoke
 };
 
-static const tid_t function_iface_tids[] = {0};
-
 static dispex_static_data_t function_dispex = {
-    "Function",
-    &function_dispex_vtbl,
-    NULL_tid,
-    function_iface_tids
+    .name           = "Function",
+    .vtbl           = &function_dispex_vtbl,
 };
 
 static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
