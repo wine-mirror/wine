@@ -144,6 +144,34 @@ static void get_bitmap_info( ICONINFO *icon_info, BITMAP *mask, BITMAP *color, L
         *color_bits = (color->bmPlanes * color->bmWidth * color->bmHeight * color->bmBitsPixel + 15) / 16 * 2;
 }
 
+
+/*************************************************************************
+ * fill_icon_info Helper function for filling struct image metadata and buffer with bitmap data
+ */
+static void fill_icon_info( const BITMAP *mask, const BITMAP *color, LONG mask_bits, LONG color_bits,
+                            ICONINFO *icon_info, struct notify_data_icon *msg_icon_info, BYTE *image_data_buffer )
+{
+    if (icon_info->hbmColor)
+    {
+        msg_icon_info->width  = color->bmWidth;
+        msg_icon_info->height = color->bmHeight;
+        msg_icon_info->planes = color->bmPlanes;
+        msg_icon_info->bpp    = color->bmBitsPixel;
+        GetBitmapBits( icon_info->hbmColor, color_bits, image_data_buffer + mask_bits );
+        DeleteObject( icon_info->hbmColor );
+    }
+    else
+    {
+        msg_icon_info->width  = mask->bmWidth;
+        msg_icon_info->height = mask->bmHeight / 2;
+        msg_icon_info->planes = 1;
+        msg_icon_info->bpp    = 1;
+    }
+
+    GetBitmapBits( icon_info->hbmMask, mask_bits, image_data_buffer );
+    DeleteObject( icon_info->hbmMask );
+}
+
 /*************************************************************************
  * Shell_NotifyIconW			[SHELL32.298]
  */
@@ -207,27 +235,14 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         }
 
         data = (struct notify_data *)buffer;
-        memset( data, 0, sizeof(*data) );
         buffer = data->icon_data;
-        GetBitmapBits(icon_info.hbmMask, mask_size, buffer);
-        if (!icon_info.hbmColor)
+        memset( data, 0, sizeof(*data) );
+
+        if (icon_info.hbmMask)
         {
-            data->icon_info.width  = mask.bmWidth;
-            data->icon_info.height = mask.bmHeight / 2;
-            data->icon_info.planes = 1;
-            data->icon_info.bpp    = 1;
+            fill_icon_info( &mask, &color, mask_size, color_size, &icon_info, &data->icon_info, buffer );
+            buffer += mask_size + color_size;
         }
-        else
-        {
-            data->icon_info.width  = color.bmWidth;
-            data->icon_info.height = color.bmHeight;
-            data->icon_info.planes = color.bmPlanes;
-            data->icon_info.bpp    = color.bmBitsPixel;
-            buffer += mask_size;
-            GetBitmapBits(icon_info.hbmColor, color_size, buffer);
-            DeleteObject(icon_info.hbmColor);
-        }
-        DeleteObject(icon_info.hbmMask);
     }
 
     data->hWnd   = HandleToLong( nid->hWnd );
