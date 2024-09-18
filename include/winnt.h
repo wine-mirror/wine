@@ -42,14 +42,6 @@
 extern "C" {
 #endif
 
-#ifndef __has_declspec_attribute
-# if defined(_MSC_VER)
-#  define __has_declspec_attribute(x) 1
-# else
-#  define __has_declspec_attribute(x) 0
-# endif
-#endif
-
 #if defined(_NTSYSTEM_) || defined(WINE_UNIX_LIB)
 #define NTSYSAPI DECLSPEC_EXPORT
 #else
