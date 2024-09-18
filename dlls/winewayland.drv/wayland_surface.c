@@ -526,8 +526,6 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface,
     else /* We can't have a 0x0 destination, use 1x1 instead. */
         wp_viewport_set_destination(client->wp_viewport, 1, 1);
 
-    wl_surface_commit(client->wl_surface);
-
     wayland_resize_gl_drawable(client->hwnd);
 }
 
