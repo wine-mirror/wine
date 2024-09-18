@@ -243,7 +243,7 @@ static void add_widl_version_define(void)
     if (p)
         version += atoi(p + 1);
 
-    sprintf(version_str, "__WIDL__=0x%x", version);
+    snprintf(version_str, sizeof(version_str), "__WIDL__=0x%x", version);
     wpp_add_cmdline_define(version_str);
 }
 

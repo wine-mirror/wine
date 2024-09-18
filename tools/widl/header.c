@@ -109,7 +109,7 @@ static const char *uuid_string(const struct uuid *uuid)
 {
   static char buf[37];
 
-  sprintf(buf, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+  snprintf(buf, sizeof(buf), "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0], uuid->Data4[1], uuid->Data4[2],
         uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
 
@@ -199,7 +199,7 @@ static void write_fields(FILE *h, var_list_t *fields, enum name_type name_type)
                 if(nameless_struct_cnt == 1) {
                     name = "__C89_NAMELESSSTRUCTNAME";
                 }else if(nameless_struct_i < 5 /* # of supporting macros */) {
-                    sprintf(buf, "__C89_NAMELESSSTRUCTNAME%d", ++nameless_struct_i);
+                    snprintf(buf, sizeof(buf), "__C89_NAMELESSSTRUCTNAME%d", ++nameless_struct_i);
                     name = buf;
                 }
             }
@@ -210,7 +210,7 @@ static void write_fields(FILE *h, var_list_t *fields, enum name_type name_type)
                 if(nameless_union_cnt == 1) {
                     name = "__C89_NAMELESSUNIONNAME";
                 }else if(nameless_union_i < 8 /* # of supporting macros */ ) {
-                    sprintf(buf, "__C89_NAMELESSUNIONNAME%d", ++nameless_union_i);
+                    snprintf(buf, sizeof(buf), "__C89_NAMELESSUNIONNAME%d", ++nameless_union_i);
                     name = buf;
                 }
             }
@@ -1049,9 +1049,9 @@ static char *get_vtbl_entry_name(const type_t *iface, const var_t *func)
 {
   static char buff[255];
   if (is_inherited_method(iface, func))
-    sprintf(buff, "%s_%s", iface->name, get_name(func));
+    snprintf(buff, sizeof(buff), "%s_%s", iface->name, get_name(func));
   else
-    sprintf(buff, "%s", get_name(func));
+    snprintf(buff, sizeof(buff), "%s", get_name(func));
   return buff;
 }
 
