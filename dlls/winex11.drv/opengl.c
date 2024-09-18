@@ -1311,6 +1311,7 @@ void sync_gl_drawable( HWND hwnd, BOOL known_child )
     switch (old->type)
     {
     case DC_GL_WINDOW:
+    case DC_GL_CHILD_WIN:
         if (!known_child)
         {
             /* Still a childless top-level window */
