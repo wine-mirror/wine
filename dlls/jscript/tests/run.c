@@ -964,6 +964,26 @@ static IDispatchExVtbl bindEventHandlerDispVtbl = {
 
 static IDispatchEx bindEventHandlerDisp = { &bindEventHandlerDispVtbl };
 
+static HRESULT CALLBACK test_deferred_fill_in(struct tagEXCEPINFO *ei)
+{
+    ok(ei->pfnDeferredFillIn == test_deferred_fill_in, "pfnDeferredFillIn != test_deferred_fill_in\n");
+    ok(!wcscmp(ei->bstrSource, L"source before defer"), "bstrSource = %s\n", wine_dbgstr_w(ei->bstrSource));
+    ok(!wcscmp(ei->bstrDescription, L"desc before defer"), "bstrDescription = %s\n", wine_dbgstr_w(ei->bstrDescription));
+    ok(!wcscmp(ei->bstrHelpFile, L"help before defer"), "bstrHelpFile = %s\n", wine_dbgstr_w(ei->bstrHelpFile));
+    ok(ei->dwHelpContext == 1337, "dwHelpContext = %lu\n", ei->dwHelpContext);
+
+    SysFreeString(ei->bstrSource);
+    SysFreeString(ei->bstrDescription);
+    SysFreeString(ei->bstrHelpFile);
+    ei->pfnDeferredFillIn = NULL;
+    ei->bstrSource = SysAllocString(L"source after defer");
+    ei->bstrDescription = SysAllocString(L"desc after defer");
+    ei->bstrHelpFile = SysAllocString(L"help after defer");
+    ei->dwHelpContext = 1234567890;
+
+    return E_FAIL;  /* return code ignored */
+}
+
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!lstrcmpW(bstrName, L"ok")) {
@@ -1940,6 +1960,12 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         if(pdp->cArgs == 1) {
             pei->bstrSource = SysAllocString(L"test source");
             pei->bstrDescription = SysAllocString(L"test description");
+        }else if(V_VT(pdp->rgvarg) == VT_BOOL && V_BOOL(pdp->rgvarg)) {
+            pei->pfnDeferredFillIn = test_deferred_fill_in;
+            pei->bstrSource = SysAllocString(L"source before defer");
+            pei->bstrDescription = SysAllocString(L"desc before defer");
+            pei->bstrHelpFile = SysAllocString(L"help before defer");
+            pei->dwHelpContext = 1337;
         }
         return DISP_E_EXCEPTION;
     }
@@ -2283,6 +2309,7 @@ static HRESULT parse_htmlscript(const WCHAR *script_str)
 #define ERROR_TODO_PARSE        0x0001
 #define ERROR_TODO_SCODE        0x0002
 #define ERROR_TODO_DESCRIPTION  0x0004
+#define ERROR_TODO_HELPFILE     0x0008
 
 static void test_error_reports(void)
 {
@@ -2298,6 +2325,8 @@ static void test_error_reports(void)
         unsigned character;
         const WCHAR *error_source;
         const WCHAR *description;
+        const WCHAR *help_file;
+        DWORD help_context;
         const WCHAR *line_text;
         BOOL todo_flags;
         BOOL reserved_lcid;
@@ -2307,6 +2336,7 @@ static void test_error_reports(void)
             JS_E_SYNTAX, 0, 0,
             L"Microsoft JScript compilation error",
             L"Syntax error",
+            NULL, 0,
             L"?"
         },
         {
@@ -2314,6 +2344,7 @@ static void test_error_reports(void)
             JS_E_MISSING_RBRACKET, 2, 0,
             L"Microsoft JScript compilation error",
             L"Expected ')'",
+            NULL, 0,
             L"-->0) a=5;",
             ERROR_TODO_PARSE
         },
@@ -2406,6 +2437,7 @@ static void test_error_reports(void)
             E_FAIL, 0, 1,
             NULL,
             NULL,
+            NULL, 0,
             NULL,
             FALSE,
             0x409
@@ -2415,6 +2447,15 @@ static void test_error_reports(void)
             E_FAIL, 0, 1,
             L"test source",
             L"test description"
+        },
+        {
+            L" throwEI(-2147467259 /* E_FAIL */, true);",
+            E_FAIL, 0, 1,
+            L"source after defer",
+            L"desc after defer",
+            L"help after defer", 1234567890,
+            NULL,
+            ERROR_TODO_HELPFILE
         },
         {
             L"switch(2) {\n"
@@ -2461,6 +2502,7 @@ static void test_error_reports(void)
             JS_E_SUBSCRIPT_OUT_OF_RANGE, 3, 0,
             L"Microsoft JScript runtime error",
             L"test",
+            NULL, 0,
             NULL,
             FALSE,
             TRUE
@@ -2473,6 +2515,7 @@ static void test_error_reports(void)
             JS_E_SUBSCRIPT_OUT_OF_RANGE, 3, 0,
             L"Microsoft JScript runtime error",
             L"",
+            NULL, 0,
             NULL,
             FALSE,
             TRUE
@@ -2483,6 +2526,7 @@ static void test_error_reports(void)
             E_FAIL, 1, 0,
             NULL,
             L"",
+            NULL, 0,
             NULL,
             FALSE,
             TRUE
@@ -2495,6 +2539,7 @@ static void test_error_reports(void)
             JS_E_EXCEPTION_THROWN, 3, 0,
             L"Microsoft JScript runtime error",
             L"Exception thrown and not caught",
+            NULL, 0,
             NULL,
             ERROR_TODO_SCODE | ERROR_TODO_DESCRIPTION
         },
@@ -2503,6 +2548,7 @@ static void test_error_reports(void)
             JS_E_SYNTAX, 3, 1,
             L"Microsoft JScript compilation error",
             L"Syntax error",
+            NULL, 0,
             L" ,,3"
         },
     };
@@ -2624,8 +2670,14 @@ static void test_error_reports(void)
                 else
                     ok(!ei.bstrDescription, "[%u] bstrDescription = %s expected NULL\n", i, wine_dbgstr_w(ei.bstrDescription));
             }
-            ok(!ei.bstrHelpFile, "bstrHelpFile = %s\n", wine_dbgstr_w(ei.bstrHelpFile));
-            ok(!ei.dwHelpContext, "dwHelpContext = %ld\n", ei.dwHelpContext);
+            if(tests[i].help_file)
+                todo_wine_if(tests[i].todo_flags & ERROR_TODO_HELPFILE)
+                ok(ei.bstrHelpFile && !lstrcmpW(ei.bstrHelpFile, tests[i].help_file),
+                   "[%u] bstrHelpFile = %s expected %s\n", i, wine_dbgstr_w(ei.bstrHelpFile), wine_dbgstr_w(tests[i].help_file));
+            else
+                ok(!ei.bstrHelpFile, "[%u] bstrHelpFile = %s expected NULL\n", i, wine_dbgstr_w(ei.bstrHelpFile));
+            todo_wine_if(tests[i].todo_flags & ERROR_TODO_HELPFILE)
+            ok(ei.dwHelpContext == tests[i].help_context, "dwHelpContext = %lu, expected %lu\n", ei.dwHelpContext, tests[i].help_context);
             ok(!ei.pvReserved, "pvReserved = %p\n", ei.pvReserved);
             ok(!ei.pfnDeferredFillIn, "pfnDeferredFillIn = %p\n", ei.pfnDeferredFillIn);
 
