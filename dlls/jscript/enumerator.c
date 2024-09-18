@@ -240,7 +240,7 @@ static HRESULT create_enumerator(script_ctx_t *ctx, jsval_t *argv, jsdisp_t **re
         /* Try to get a IEnumVARIANT by _NewEnum */
         VariantInit(&varresult);
         hres = IDispatch_Invoke(obj, DISPID_NEWENUM, &IID_NULL, LOCALE_NEUTRAL,
-                DISPATCH_METHOD, &dispparams, &varresult, NULL, NULL);
+                DISPATCH_METHOD | DISPATCH_PROPERTYGET, &dispparams, &varresult, NULL, NULL);
         if (FAILED(hres))
         {
             WARN("Enumerator: no DISPID_NEWENUM.\n");

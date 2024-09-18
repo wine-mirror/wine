@@ -452,6 +452,13 @@ sync_test("builtin_obj", function() {
             e = ex.number;
         }
         ok(e === 0xa01b6 - 0x80000000, "[f.apply() indirect] e = " + e);
+
+        var enumerator = new Enumerator(document.getElementsByTagName("br"));
+        enumerator.moveNext();
+        var enum_elem = enumerator.item();
+        ok(enum_elem === elem2, "enum_elem = " + enum_elem);
+        enumerator.moveNext();
+        ok(enumerator.atEnd(), "enumerator not at end");
     }
 });
 

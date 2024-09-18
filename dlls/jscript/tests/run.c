@@ -482,6 +482,7 @@ static HRESULT WINAPI testObj_Invoke(IDispatchEx *iface, DISPID id,
 {
     switch(id) {
     case DISPID_NEWENUM:
+        ok(wFlags == (DISPATCH_METHOD | DISPATCH_PROPERTYGET), "wFlags = %x\n", wFlags);
         ok(pdp != NULL, "pdp == NULL\n");
         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
