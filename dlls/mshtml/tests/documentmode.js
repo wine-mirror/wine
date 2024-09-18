@@ -484,7 +484,6 @@ sync_test("builtin_obj", function() {
         }catch(ex) {
             e = ex.number;
         }
-        todo_wine.
         ok(e === 0xa01c3 - 0x80000000, "[style Enumerator] e = " + e);
 
         f.apply = 0;

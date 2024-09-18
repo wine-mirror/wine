@@ -244,7 +244,7 @@ static HRESULT create_enumerator(script_ctx_t *ctx, jsval_t *argv, jsdisp_t **re
         if (FAILED(hres))
         {
             WARN("Enumerator: no DISPID_NEWENUM.\n");
-            return E_INVALIDARG;
+            return JS_E_OBJECT_NOT_COLLECTION;
         }
 
         if ((V_VT(&varresult) == VT_DISPATCH) || (V_VT(&varresult) == VT_UNKNOWN))
@@ -255,7 +255,7 @@ static HRESULT create_enumerator(script_ctx_t *ctx, jsval_t *argv, jsdisp_t **re
         else
         {
             FIXME("Enumerator: NewEnum unexpected type of varresult (%d).\n", V_VT(&varresult));
-            hres = E_INVALIDARG;
+            hres = JS_E_OBJECT_NOT_COLLECTION;
         }
         VariantClear(&varresult);
         if (FAILED(hres))
