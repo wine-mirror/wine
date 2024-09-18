@@ -950,6 +950,8 @@ static HRESULT stub_function_value(DispatchEx *dispex, LCID lcid, WORD flags, DI
     HRESULT hres;
 
     switch(flags) {
+    case DISPATCH_CONSTRUCT:
+        return MSHTML_E_INVALID_PROPERTY;
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
         if(!res)
             return E_INVALIDARG;
@@ -1111,6 +1113,8 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     HRESULT hres;
 
     switch(flags) {
+    case DISPATCH_CONSTRUCT:
+        return MSHTML_E_INVALID_PROPERTY;
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
         if(!res)
             return E_INVALIDARG;

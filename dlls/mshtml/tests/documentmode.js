@@ -434,7 +434,6 @@ sync_test("builtin_obj", function() {
     }catch(ex) {
         e = ex.number;
     }
-    todo_wine_if(v < 9).
     ok(e === (v < 9 ? 0xa01b6 : 0x0ffff) - 0x80000000, "[new f()] e = " + e);
 
     if(v < 9) {
