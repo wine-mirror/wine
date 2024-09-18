@@ -364,6 +364,8 @@ sync_test("builtin_obj", function() {
     if(v < 9) {
         ok(!(window instanceof Object), "window instance of Object");
         ok(!(document instanceof Object), "document instance of Object");
+        ok(!(f.apply instanceof Function), "f.apply instance of Function");
+        ok(!(f.call instanceof Function), "f.call instance of Function");
         ok(!("arguments" in f), "arguments in f");
         ok(!("length" in f), "length in f");
         e = 0;
@@ -419,6 +421,38 @@ sync_test("builtin_obj", function() {
         elem1.click.apply(elem2, { length: -1 });
         ok(false, "exception expected");
     }catch(ex) {}
+
+    if(v < 9) {
+        ok(!("call" in f.call), "call in f.call");
+        ok(!("apply" in f.call), "apply in f.call");
+        ok(!("call" in f.apply), "call in f.apply");
+        ok(!("apply" in f.apply), "apply in f.apply");
+        ok(f.call+"" === "\nfunction call() {\n    [native code]\n}\n", "f.call = " + f.call);
+        ok(f.apply+"" === "\nfunction apply() {\n    [native code]\n}\n", "f.apply = " + f.apply);
+        ok(external.getVT(f.call) === "VT_DISPATCH", "f.call not VT_DISPATCH");
+        ok(external.getVT(f.apply) === "VT_DISPATCH", "f.apply not VT_DISPATCH");
+
+        ok(f.apply !== f.apply, "f.apply == f.apply");
+        f = f.apply;
+        ok(!("arguments" in f), "arguments in f.apply");
+        ok(!("length" in f), "length in f.apply");
+        ok(!("call" in f), "call in f.apply");
+        ok(!("apply" in f), "apply in f.apply");
+        e = 0;
+        try {
+            f.toString();
+        }catch(ex) {
+            e = ex.number;
+        }
+        ok(e === 0xa01b6 - 0x80000000, "[f.apply.toString] e = " + e);
+        e = 0;
+        try {
+            f(document, ["style"]);
+        }catch(ex) {
+            e = ex.number;
+        }
+        ok(e === 0xa01b6 - 0x80000000, "[f.apply() indirect] e = " + e);
+    }
 });
 
 sync_test("elem_props", function() {

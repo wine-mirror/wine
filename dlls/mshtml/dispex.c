@@ -99,6 +99,11 @@ typedef struct {
 } func_disp_t;
 
 typedef struct {
+    DispatchEx dispex;
+    const WCHAR *name;
+} stub_func_disp_t;
+
+typedef struct {
     func_disp_t *func_obj;
     VARIANT val;
 } func_obj_entry_t;
@@ -927,6 +932,51 @@ static HRESULT format_func_disp_string(const WCHAR *name, IServiceProvider *call
     return S_OK;
 }
 
+static inline stub_func_disp_t *stub_func_disp_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, stub_func_disp_t, dispex);
+}
+
+static void stub_function_destructor(DispatchEx *dispex)
+{
+    stub_func_disp_t *This = stub_func_disp_from_DispatchEx(dispex);
+    free(This);
+}
+
+static HRESULT stub_function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    stub_func_disp_t *This = stub_func_disp_from_DispatchEx(dispex);
+    HRESULT hres;
+
+    switch(flags) {
+    case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+        if(!res)
+            return E_INVALIDARG;
+        /* fall through */
+    case DISPATCH_METHOD:
+        return MSHTML_E_INVALID_PROPERTY;
+    case DISPATCH_PROPERTYGET:
+        hres = format_func_disp_string(This->name, caller, res);
+        break;
+    default:
+        FIXME("Unimplemented flags %x\n", flags);
+        hres = E_NOTIMPL;
+    }
+
+    return hres;
+}
+
+static const dispex_static_data_vtbl_t stub_function_dispex_vtbl = {
+    .destructor       = stub_function_destructor,
+    .value            = stub_function_value
+};
+
+static dispex_static_data_t stub_function_dispex = {
+    .name           = "Function",
+    .vtbl           = &stub_function_dispex_vtbl,
+};
+
 static HRESULT function_apply(func_disp_t *func, DISPPARAMS *dp, LCID lcid, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     IWineJSDispatchHost *this_iface;
@@ -1124,6 +1174,18 @@ static HRESULT function_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD fl
         /* fall through */
     case DISPATCH_METHOD:
         return function_props[idx].invoke(This, params, lcid, res, ei, caller);
+    case DISPATCH_PROPERTYGET: {
+        stub_func_disp_t *disp = calloc(1, sizeof(stub_func_disp_t));
+
+        if(!disp)
+            return E_OUTOFMEMORY;
+        disp->name = function_props[idx].name;
+        init_dispatch_with_owner(&disp->dispex, &stub_function_dispex, This->obj);
+
+        V_VT(res) = VT_DISPATCH;
+        V_DISPATCH(res) = (IDispatch*)&disp->dispex.IWineJSDispatchHost_iface;
+        break;
+    }
     default:
         return MSHTML_E_INVALID_PROPERTY;
     }
