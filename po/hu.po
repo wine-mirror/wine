@@ -3204,6 +3204,23 @@ msgstr "Jelölje meg a tanúsítvány tárat"
 msgid "Not yet implemented"
 msgstr "Nincs implementálva"
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Desktop"
+msgstr "Asztal"
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+#| msgid "Default Settings"
+msgid "Display Settings"
+msgstr "Alapértelmezett beállítások"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr "Eszközbeállí&tás"

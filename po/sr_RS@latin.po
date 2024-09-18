@@ -3242,6 +3242,21 @@ msgstr "Izaberite temu"
 msgid "Not yet implemented"
 msgstr "Nije jos u programu"
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+msgid "Desktop"
+msgstr "Radna površina"
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+#| msgid "Default Settings"
+msgid "Display Settings"
+msgstr "Osnovno podešavanje"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 #, fuzzy
 msgid "Configure Devices"

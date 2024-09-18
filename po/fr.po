@@ -3169,6 +3169,23 @@ msgstr "Sélectionnez un certificat"
 msgid "Not yet implemented"
 msgstr "Pas encore implémenté"
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Desktop"
+msgstr "Bureau"
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+#| msgid "Default Settings"
+msgid "Display Settings"
+msgstr "Paramètres par défaut"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr "Configurer les périphériques"

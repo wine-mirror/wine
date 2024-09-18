@@ -3162,6 +3162,23 @@ msgstr "Выберите сертификат"
 msgid "Not yet implemented"
 msgstr "Ещё не реализовано"
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Desktop"
+msgstr "Рабочий стол"
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+#| msgid "Default Settings"
+msgid "Display Settings"
+msgstr "Установки по умолчанию"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr "Настроить устройства"

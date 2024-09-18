@@ -1,0 +1,7 @@
+MODULE    = desk.cpl
+IMPORTS   = ole32 comctl32
+
+SOURCES = \
+	desk.rc \
+	desk.svg \
+	main.c

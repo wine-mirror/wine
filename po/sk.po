@@ -3120,6 +3120,21 @@ msgstr "Nemôžem vytvoriť alebo použiť okno."
 msgid "Not yet implemented"
 msgstr "Neimplementované"
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+msgid "Desktop"
+msgstr "Pracovná plocha"
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+#| msgid "System Settings"
+msgid "Display Settings"
+msgstr "Systémové nastavenia"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr "Nastaviť zariadenia"

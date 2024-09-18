@@ -3089,6 +3089,20 @@ msgstr "Δημιουργία νέου καταλόγου"
 msgid "Not yet implemented"
 msgstr ""
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+msgid "Desktop"
+msgstr "Επιφάνεια Εργασίας"
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+msgid "Display Settings"
+msgstr "Κατάλογοι Συστήματος"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr ""

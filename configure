@@ -1089,6 +1089,7 @@ enable_dciman32
 enable_dcomp
 enable_ddraw
 enable_ddrawex
+enable_desk_cpl
 enable_devenum
 enable_dhcpcsvc
 enable_dhcpcsvc6
@@ -21912,6 +21913,7 @@ wine_fn_config_makefile dlls/ddraw enable_ddraw
 wine_fn_config_makefile dlls/ddraw/tests enable_tests
 wine_fn_config_makefile dlls/ddrawex enable_ddrawex
 wine_fn_config_makefile dlls/ddrawex/tests enable_tests
+wine_fn_config_makefile dlls/desk.cpl enable_desk_cpl
 wine_fn_config_makefile dlls/devenum enable_devenum
 wine_fn_config_makefile dlls/devenum/tests enable_tests
 wine_fn_config_makefile dlls/dhcpcsvc enable_dhcpcsvc

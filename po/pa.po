@@ -3066,6 +3066,18 @@ msgstr "ਜਾਣਕਾਰੀ(&o)"
 msgid "Not yet implemented"
 msgstr ""
 
+#: dlls/desk.cpl/desk.rc:35
+msgid "Desktop"
+msgstr ""
+
+#: dlls/desk.cpl/desk.rc:29
+msgid "Display Settings"
+msgstr ""
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr ""

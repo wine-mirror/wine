@@ -3145,6 +3145,20 @@ msgstr "Изберете файл с тема"
 msgid "Not yet implemented"
 msgstr "Не е реализирано"
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+msgid "Desktop"
+msgstr "Работен плот"
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+msgid "Display Settings"
+msgstr "Системни папки"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 #, fuzzy
 msgid "Configure Devices"

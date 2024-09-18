@@ -3115,6 +3115,20 @@ msgstr "&Tchwezi totafwait"
 msgid "Not yet implemented"
 msgstr "Nén co possibe"
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+#| msgid "Wine Help"
+msgid "Desktop"
+msgstr "Aidance di Wine"
+
+#: dlls/desk.cpl/desk.rc:29
+msgid "Display Settings"
+msgstr ""
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 #, fuzzy
 msgid "Configure Devices"

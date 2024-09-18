@@ -3146,6 +3146,18 @@ msgstr "Select a certificate"
 msgid "Not yet implemented"
 msgstr "Not yet implemented"
 
+#: dlls/desk.cpl/desk.rc:35
+msgid "Desktop"
+msgstr "Desktop"
+
+#: dlls/desk.cpl/desk.rc:29
+msgid "Display Settings"
+msgstr "Display Settings"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr "Configure monitors and display devices."
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr "Configure Devices"

@@ -3138,6 +3138,23 @@ msgstr "აირჩეთ სერტიფიკატი"
 msgid "Not yet implemented"
 msgstr "განხორციელებული არაა"
 
+#: dlls/desk.cpl/desk.rc:35
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Desktop"
+msgstr "სამუშაო მაგიდა"
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+#| msgid "Default Settings"
+msgid "Display Settings"
+msgstr "ნაგულისხმები პარამეტრები"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr "მოწყობილობების გამართვა"
