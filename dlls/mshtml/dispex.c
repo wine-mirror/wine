@@ -894,6 +894,39 @@ static HRESULT get_disp_prop(IDispatchEx *dispex, const WCHAR *name, LCID lcid, 
     return hres;
 }
 
+static HRESULT format_func_disp_string(const WCHAR *name, IServiceProvider *caller, VARIANT *res)
+{
+    unsigned name_len;
+    WCHAR *ptr;
+    BSTR str;
+
+    static const WCHAR func_prefixW[] =
+        {'\n','f','u','n','c','t','i','o','n',' '};
+    static const WCHAR func_suffixW[] =
+        {'(',')',' ','{','\n',' ',' ',' ',' ','[','n','a','t','i','v','e',' ','c','o','d','e',']','\n','}','\n'};
+
+    /* FIXME: This probably should be more generic. Also we should try to get IID_IActiveScriptSite and SID_GetCaller. */
+    if(!caller)
+        return E_ACCESSDENIED;
+
+    name_len = wcslen(name);
+    ptr = str = SysAllocStringLen(NULL, name_len + ARRAY_SIZE(func_prefixW) + ARRAY_SIZE(func_suffixW));
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    memcpy(ptr, func_prefixW, sizeof(func_prefixW));
+    ptr += ARRAY_SIZE(func_prefixW);
+
+    memcpy(ptr, name, name_len * sizeof(WCHAR));
+    ptr += name_len;
+
+    memcpy(ptr, func_suffixW, sizeof(func_suffixW));
+
+    V_VT(res) = VT_BSTR;
+    V_BSTR(res) = str;
+    return S_OK;
+}
+
 static HRESULT function_apply(func_disp_t *func, DISPPARAMS *dp, LCID lcid, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     IWineJSDispatchHost *this_iface;
@@ -1037,37 +1070,9 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
             return E_UNEXPECTED;
         hres = dispex_call_builtin(This->obj, This->info->id, params, res, ei, caller);
         break;
-    case DISPATCH_PROPERTYGET: {
-        unsigned name_len;
-        WCHAR *ptr;
-        BSTR str;
-
-        static const WCHAR func_prefixW[] =
-            {'\n','f','u','n','c','t','i','o','n',' '};
-        static const WCHAR func_suffixW[] =
-            {'(',')',' ','{','\n',' ',' ',' ',' ','[','n','a','t','i','v','e',' ','c','o','d','e',']','\n','}','\n'};
-
-        /* FIXME: This probably should be more generic. Also we should try to get IID_IActiveScriptSite and SID_GetCaller. */
-        if(!caller)
-            return E_ACCESSDENIED;
-
-        name_len = SysStringLen(This->info->name);
-        ptr = str = SysAllocStringLen(NULL, name_len + ARRAY_SIZE(func_prefixW) + ARRAY_SIZE(func_suffixW));
-        if(!str)
-            return E_OUTOFMEMORY;
-
-        memcpy(ptr, func_prefixW, sizeof(func_prefixW));
-        ptr += ARRAY_SIZE(func_prefixW);
-
-        memcpy(ptr, This->info->name, name_len*sizeof(WCHAR));
-        ptr += name_len;
-
-        memcpy(ptr, func_suffixW, sizeof(func_suffixW));
-
-        V_VT(res) = VT_BSTR;
-        V_BSTR(res) = str;
-        return S_OK;
-    }
+    case DISPATCH_PROPERTYGET:
+        hres = format_func_disp_string(This->info->name, caller, res);
+        break;
     default:
         FIXME("Unimplemented flags %x\n", flags);
         hres = E_NOTIMPL;
