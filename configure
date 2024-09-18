@@ -20830,10 +20830,8 @@ fi
 
 CFLAGS="$ac_save_CFLAGS"
 
-case $host_os in
-    darwin*|macosx*) ;;
-    *) ac_save_LIBS=$LIBS
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
+ac_save_LIBS=$LIBS
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
 printf %s "checking for library containing clock_gettime... " >&6; }
 if test ${ac_cv_search_clock_gettime+y}
 then :
@@ -20904,9 +20902,7 @@ printf "%s\n" "#define HAVE_CLOCK_GETTIME 1" >>confdefs.h
 
 fi
 
-    LIBS=$ac_save_LIBS
-    ;;
-esac
+LIBS=$ac_save_LIBS
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for sched_setaffinity" >&5
 printf %s "checking for sched_setaffinity... " >&6; }
