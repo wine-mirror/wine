@@ -153,9 +153,9 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     COPYDATASTRUCT cds;
     struct notify_data data_buffer;
     struct notify_data *data = &data_buffer;
-    ICONINFO iconinfo = { 0 };
-    BITMAP bmMask, bmColour;
-    LONG cbMaskBits = 0, cbColourBits = 0;
+    ICONINFO icon_info = { 0 };
+    BITMAP mask, color;
+    LONG mask_size = 0, color_size = 0;
     BOOL ret;
 
     TRACE("dwMessage = %ld, nid->cbSize=%ld\n", dwMessage, nid->cbSize);
@@ -189,10 +189,10 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
     if (nid->uFlags & NIF_ICON)
-        GetIconInfo( nid->hIcon, &iconinfo );
+        GetIconInfo( nid->hIcon, &icon_info );
 
-    get_bitmap_info( &iconinfo, &bmMask, &bmColour, &cbMaskBits, &cbColourBits );
-    cds.cbData += cbMaskBits + cbColourBits;
+    get_bitmap_info( &icon_info, &mask, &color, &mask_size, &color_size );
+    cds.cbData += mask_size + color_size;
 
     if (cds.cbData > sizeof(*data))
     {
@@ -200,8 +200,8 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         buffer = malloc(cds.cbData);
         if (!buffer)
         {
-            if (iconinfo.hbmMask) DeleteObject( iconinfo.hbmMask );
-            if (iconinfo.hbmColor) DeleteObject( iconinfo.hbmColor );
+            if (icon_info.hbmMask) DeleteObject( icon_info.hbmMask );
+            if (icon_info.hbmColor) DeleteObject( icon_info.hbmColor );
             SetLastError(E_OUTOFMEMORY);
             return FALSE;
         }
@@ -209,25 +209,25 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
         data = (struct notify_data *)buffer;
         memset( data, 0, sizeof(*data) );
         buffer = data->icon_data;
-        GetBitmapBits(iconinfo.hbmMask, cbMaskBits, buffer);
-        if (!iconinfo.hbmColor)
+        GetBitmapBits(icon_info.hbmMask, mask_size, buffer);
+        if (!icon_info.hbmColor)
         {
-            data->icon_info.width  = bmMask.bmWidth;
-            data->icon_info.height = bmMask.bmHeight / 2;
+            data->icon_info.width  = mask.bmWidth;
+            data->icon_info.height = mask.bmHeight / 2;
             data->icon_info.planes = 1;
             data->icon_info.bpp    = 1;
         }
         else
         {
-            data->icon_info.width  = bmColour.bmWidth;
-            data->icon_info.height = bmColour.bmHeight;
-            data->icon_info.planes = bmColour.bmPlanes;
-            data->icon_info.bpp    = bmColour.bmBitsPixel;
-            buffer += cbMaskBits;
-            GetBitmapBits(iconinfo.hbmColor, cbColourBits, buffer);
-            DeleteObject(iconinfo.hbmColor);
+            data->icon_info.width  = color.bmWidth;
+            data->icon_info.height = color.bmHeight;
+            data->icon_info.planes = color.bmPlanes;
+            data->icon_info.bpp    = color.bmBitsPixel;
+            buffer += mask_size;
+            GetBitmapBits(icon_info.hbmColor, color_size, buffer);
+            DeleteObject(icon_info.hbmColor);
         }
-        DeleteObject(iconinfo.hbmMask);
+        DeleteObject(icon_info.hbmMask);
     }
 
     data->hWnd   = HandleToLong( nid->hWnd );
