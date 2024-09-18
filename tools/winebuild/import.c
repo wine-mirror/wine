@@ -208,16 +208,18 @@ static const char valid_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS
 /* encode a dll name into a linker-compatible name */
 static char *encode_dll_name( const char *name )
 {
-    char *p, *ret;
+    char *p, *ret, *ret_end;
     int len = strlen(name);
 
     if (strendswith( name, ".dll" )) len -= 4;
     if (strspn( name, valid_chars ) >= len) return strmake( "%.*s", len, name );
 
     ret = p = xmalloc( len * 4 + 1 );
+    ret_end = ret + (len * 4 + 1);
     for ( ; len > 0; len--, name++)
     {
-        if (!strchr( valid_chars, *name )) p += sprintf( p, "$x%02x", *name );
+        if (!strchr( valid_chars, *name ))
+            p += snprintf( p, ret_end - p, "$x%02x", *name );
         else *p++ = *name;
     }
     *p = 0;
