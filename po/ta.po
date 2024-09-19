@@ -410,6 +410,7 @@ msgid "Properties for %s"
 msgstr "%sக்கான பண்புகள்"
 
 #: dlls/comctl32/comctl32.rc:73 dlls/comdlg32/comdlg32.rc:265
+#: dlls/desk.cpl/desk.rc:41
 msgid "&Apply"
 msgstr "விண்ணப்பிக்கவும் (&A)"
 

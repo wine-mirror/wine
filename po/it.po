@@ -434,6 +434,7 @@ msgid "Properties for %s"
 msgstr "Proprietà di %s"
 
 #: dlls/comctl32/comctl32.rc:73 dlls/comdlg32/comdlg32.rc:265
+#: dlls/desk.cpl/desk.rc:41
 msgid "&Apply"
 msgstr "&Applica"
 
