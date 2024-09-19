@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <limits.h>
 
 #include "windef.h"
 #include "winerror.h"
@@ -258,6 +259,48 @@ static void dplay_destroy(IDirectPlayImpl *obj)
 static inline DPID DP_NextObjectId(void)
 {
   return (DPID)InterlockedIncrement( &kludgePlayerGroupId );
+}
+
+static DWORD DP_CopyString( char **dst, const void *src, BOOL dstAnsi, BOOL srcAnsi, void *buffer, DWORD offset )
+{
+    void *dstPtr = NULL;
+    DWORD dstSize = 0;
+    DWORD size;
+
+    if ( !src )
+    {
+        if ( buffer )
+            *dst = NULL;
+
+        return 0;
+    }
+
+    if ( buffer )
+    {
+        dstPtr = (char *) buffer + offset;
+        dstSize = INT_MAX;
+        *dst = dstPtr;
+    }
+
+    if ( dstAnsi == srcAnsi )
+    {
+        if ( srcAnsi )
+            size = strlen( src ) + 1;
+        else
+            size = (wcslen( src ) + 1) * sizeof( WCHAR );
+
+        if ( dstPtr )
+            memcpy( dstPtr, src, size );
+    }
+    else
+    {
+        if ( srcAnsi )
+            size = MultiByteToWideChar( CP_ACP, 0, src, -1, dstPtr, dstSize ) * sizeof( WCHAR );
+        else
+            size = WideCharToMultiByte( CP_ACP, 0, src, -1, dstPtr, dstSize, NULL, NULL );
+    }
+
+    return size;
 }
 
 /* *lplpReply will be non NULL iff there is something to reply */
@@ -3863,33 +3906,8 @@ static DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi )
   }
 
   dwSize += sizeof( *lpSessDesc );
-
-  if( bAnsi )
-  {
-    if( lpSessDesc->lpszSessionNameA )
-    {
-      dwSize += lstrlenA( lpSessDesc->lpszSessionNameA ) + 1;
-    }
-
-    if( lpSessDesc->lpszPasswordA )
-    {
-      dwSize += lstrlenA( lpSessDesc->lpszPasswordA ) + 1;
-    }
-  }
-  else /* UNICODE */
-  {
-    if( lpSessDesc->lpszSessionName )
-    {
-      dwSize += sizeof( WCHAR ) *
-        ( lstrlenW( lpSessDesc->lpszSessionName ) + 1 );
-    }
-
-    if( lpSessDesc->lpszPassword )
-    {
-      dwSize += sizeof( WCHAR ) *
-        ( lstrlenW( lpSessDesc->lpszPassword ) + 1 );
-    }
-  }
+  dwSize += DP_CopyString( NULL, lpSessDesc->lpszSessionNameA, bAnsi, bAnsi, NULL, 0 );
+  dwSize += DP_CopyString( NULL, lpSessDesc->lpszPasswordA, bAnsi, bAnsi, NULL, 0 );
 
   return dwSize;
 }
@@ -3898,7 +3916,7 @@ static DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi )
 static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
                                 LPCDPSESSIONDESC2 lpSessionSrc, BOOL bAnsi )
 {
-  BYTE* lpStartOfFreeSpace;
+  DWORD offset = sizeof( DPSESSIONDESC2 );
 
   if( lpSessionDest == NULL )
   {
@@ -3908,44 +3926,10 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
 
   CopyMemory( lpSessionDest, lpSessionSrc, sizeof( *lpSessionSrc ) );
 
-  lpStartOfFreeSpace = ((BYTE*)lpSessionDest) + sizeof( *lpSessionSrc );
-
-  if( bAnsi )
-  {
-    if( lpSessionSrc->lpszSessionNameA )
-    {
-      lstrcpyA( (LPSTR)lpStartOfFreeSpace,
-                lpSessionDest->lpszSessionNameA );
-      lpSessionDest->lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
-      lpStartOfFreeSpace +=
-        lstrlenA( lpSessionDest->lpszSessionNameA ) + 1;
-    }
-
-    if( lpSessionSrc->lpszPasswordA )
-    {
-      lstrcpyA( (LPSTR)lpStartOfFreeSpace,
-                lpSessionDest->lpszPasswordA );
-      lpSessionDest->lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
-    }
-  }
-  else /* UNICODE */
-  {
-    if( lpSessionSrc->lpszSessionName )
-    {
-      lstrcpyW( (LPWSTR)lpStartOfFreeSpace,
-                lpSessionDest->lpszSessionName );
-      lpSessionDest->lpszSessionName = (LPWSTR)lpStartOfFreeSpace;
-      lpStartOfFreeSpace += sizeof(WCHAR) *
-        ( lstrlenW( lpSessionDest->lpszSessionName ) + 1 );
-    }
-
-    if( lpSessionSrc->lpszPassword )
-    {
-      lstrcpyW( (LPWSTR)lpStartOfFreeSpace,
-                lpSessionDest->lpszPassword );
-      lpSessionDest->lpszPassword = (LPWSTR)lpStartOfFreeSpace;
-    }
-  }
+  offset += DP_CopyString( &lpSessionDest->lpszSessionNameA, lpSessionSrc->lpszSessionNameA, bAnsi,
+                           bAnsi, lpSessionDest, offset );
+  offset += DP_CopyString( &lpSessionDest->lpszPasswordA, lpSessionSrc->lpszPasswordA, bAnsi,
+                           bAnsi, lpSessionDest, offset );
 }
 
 static HRESULT WINAPI IDirectPlay3AImpl_AddGroupToGroup( IDirectPlay3A *iface, DPID parent,
