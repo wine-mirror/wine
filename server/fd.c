@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <poll.h>
 #ifdef HAVE_LINUX_MAJOR_H
 #include <linux/major.h>
@@ -72,9 +73,6 @@
 #include <sys/event.h>
 #undef LIST_INIT
 #undef LIST_ENTRY
-#endif
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>

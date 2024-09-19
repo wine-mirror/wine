@@ -54,9 +54,6 @@
 /* Define to 1 if you have the FFmpeg libraries. */
 #undef HAVE_FFMPEG
 
-/* Define to 1 if you have the <float.h> header file. */
-#undef HAVE_FLOAT_H
-
 /* Define if FreeType 2 is installed */
 #undef HAVE_FREETYPE
 

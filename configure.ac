@@ -370,7 +370,6 @@ AC_CHECK_HEADERS(\
 	asm/types.h \
 	asm/user.h \
 	elf.h \
-	float.h \
 	gettext-po.h \
 	link.h \
 	linux/cdrom.h \
@@ -403,7 +402,6 @@ AC_CHECK_HEADERS(\
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
 	scsi/sg.h \
-	stdint.h \
 	sys/attr.h \
 	sys/auxv.h \
 	sys/cdio.h \

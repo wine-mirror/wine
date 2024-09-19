@@ -32,9 +32,7 @@
 
 #include <stdarg.h>
 #include <math.h>
-#ifdef HAVE_FLOAT_H
-# include <float.h>
-#endif
+#include <float.h>
 #include <stdlib.h>
 #ifndef PI
 #define PI M_PI

@@ -7604,12 +7604,6 @@ then :
   printf "%s\n" "#define HAVE_ELF_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "float.h" "ac_cv_header_float_h" "$ac_includes_default"
-if test "x$ac_cv_header_float_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_FLOAT_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "gettext-po.h" "ac_cv_header_gettext_po_h" "$ac_includes_default"
 if test "x$ac_cv_header_gettext_po_h" = xyes
 then :
@@ -7800,12 +7794,6 @@ ac_fn_c_check_header_compile "$LINENO" "scsi/sg.h" "ac_cv_header_scsi_sg_h" "$ac
 if test "x$ac_cv_header_scsi_sg_h" = xyes
 then :
   printf "%s\n" "#define HAVE_SCSI_SG_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "stdint.h" "ac_cv_header_stdint_h" "$ac_includes_default"
-if test "x$ac_cv_header_stdint_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_STDINT_H 1" >>confdefs.h
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "sys/attr.h" "ac_cv_header_sys_attr_h" "$ac_includes_default"
