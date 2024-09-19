@@ -36,6 +36,7 @@
 #include "ddk/ntifs.h"
 #include "wine/test.h"
 #include "wine/asm.h"
+#include "wine/rbtree.h"
 
 #ifndef __WINE_WINTERNL_H
 
@@ -107,6 +108,9 @@ static NTSTATUS  (WINAPI *pLdrEnumerateLoadedModules)(void *, void *, void *);
 static NTSTATUS  (WINAPI *pLdrRegisterDllNotification)(ULONG, PLDR_DLL_NOTIFICATION_FUNCTION, void *, void **);
 static NTSTATUS  (WINAPI *pLdrUnregisterDllNotification)(void *);
 static VOID      (WINAPI *pRtlGetDeviceFamilyInfoEnum)(ULONGLONG *,DWORD *,DWORD *);
+static void      (WINAPI *pRtlRbInsertNodeEx)(RTL_RB_TREE *, RTL_BALANCED_NODE *, BOOLEAN, RTL_BALANCED_NODE *);
+static void      (WINAPI *pRtlRbRemoveNode)(RTL_RB_TREE *, RTL_BALANCED_NODE *);
+
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -151,6 +155,8 @@ static void InitFunctionPtrs(void)
         pLdrRegisterDllNotification = (void *)GetProcAddress(hntdll, "LdrRegisterDllNotification");
         pLdrUnregisterDllNotification = (void *)GetProcAddress(hntdll, "LdrUnregisterDllNotification");
         pRtlGetDeviceFamilyInfoEnum = (void *)GetProcAddress(hntdll, "RtlGetDeviceFamilyInfoEnum");
+        pRtlRbInsertNodeEx = (void *)GetProcAddress(hntdll, "RtlRbInsertNodeEx");
+        pRtlRbRemoveNode = (void *)GetProcAddress(hntdll, "RtlRbRemoveNode");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -3784,6 +3790,147 @@ static void test_RtlGetDeviceFamilyInfoEnum(void)
     trace( "UAP version is %#I64x, device family is %lu, form factor is %lu\n", version, family, form );
 }
 
+struct test_rb_tree_entry
+{
+    int value;
+    struct rb_entry wine_rb_entry;
+    RTL_BALANCED_NODE rtl_entry;
+};
+
+static int test_rb_tree_entry_compare( const void *key, const struct wine_rb_entry *entry )
+{
+    const struct test_rb_tree_entry *t = WINE_RB_ENTRY_VALUE(entry, struct test_rb_tree_entry, wine_rb_entry);
+    const int *value = key;
+
+    return *value - t->value;
+}
+
+static int test_rtl_rb_tree_entry_compare( const void *key, const RTL_BALANCED_NODE *entry )
+{
+    const struct test_rb_tree_entry *t = CONTAINING_RECORD(entry, struct test_rb_tree_entry, rtl_entry);
+    const int *value = key;
+
+    return *value - t->value;
+}
+
+static int rtl_rb_tree_put( RTL_RB_TREE *tree, const void *key, RTL_BALANCED_NODE *entry,
+                            int (*compare_func)( const void *key, const RTL_BALANCED_NODE *entry ))
+{
+    RTL_BALANCED_NODE *parent = tree->root;
+    BOOLEAN right = 0;
+    int c;
+
+    while (parent)
+    {
+        if (!(c = compare_func( key, parent ))) return -1;
+        right = c > 0;
+        if (!parent->Children[right]) break;
+        parent = parent->Children[right];
+    }
+    pRtlRbInsertNodeEx( tree, parent, right, entry );
+    return 0;
+}
+
+static struct test_rb_tree_entry *test_rb_tree_entry_from_wine_rb( struct rb_entry *entry )
+{
+    if (!entry) return NULL;
+    return CONTAINING_RECORD(entry, struct test_rb_tree_entry, wine_rb_entry);
+}
+
+static struct test_rb_tree_entry *test_rb_tree_entry_from_rtl_rb( RTL_BALANCED_NODE *entry )
+{
+    if (!entry) return NULL;
+    return CONTAINING_RECORD(entry, struct test_rb_tree_entry, rtl_entry);
+}
+
+static struct test_rb_tree_entry *test_rb_tree_entry_rtl_parent( struct test_rb_tree_entry *node )
+{
+    return test_rb_tree_entry_from_rtl_rb( (void *)(node->rtl_entry.ParentValue
+                                           & ~(ULONG_PTR)RTL_BALANCED_NODE_RESERVED_PARENT_MASK) );
+}
+
+static void test_rb_tree(void)
+{
+    static int test_values[] = { 44, 51, 6, 66, 69, 20, 87, 80, 72, 86, 90, 16, 54, 61, 62, 14, 27, 39, 42, 41 };
+    static const unsigned int count = ARRAY_SIZE(test_values);
+
+    struct test_rb_tree_entry *nodes, *parent, *parent2;
+    RTL_BALANCED_NODE *prev_min_entry = NULL;
+    int ret, is_red, min_val;
+    struct rb_tree wine_tree;
+    RTL_RB_TREE rtl_tree;
+    unsigned int i;
+
+    if (!pRtlRbInsertNodeEx)
+    {
+        win_skip( "RtlRbInsertNodeEx is not present.\n" );
+        return;
+    }
+
+    memset( &rtl_tree, 0, sizeof(rtl_tree) );
+    nodes = malloc( count * sizeof(*nodes) );
+    memset( nodes, 0xcc, count * sizeof(*nodes) );
+
+    min_val = test_values[0];
+    rb_init( &wine_tree, test_rb_tree_entry_compare );
+    for (i = 0; i < count; ++i)
+    {
+        winetest_push_context( "i %u", i );
+        nodes[i].value = test_values[i];
+        ret = rb_put( &wine_tree, &nodes[i].value, &nodes[i].wine_rb_entry );
+        ok( !ret, "got %d.\n", ret );
+        parent = test_rb_tree_entry_from_wine_rb( nodes[i].wine_rb_entry.parent );
+        ret = rtl_rb_tree_put( &rtl_tree, &nodes[i].value, &nodes[i].rtl_entry, test_rtl_rb_tree_entry_compare );
+        ok( !ret, "got %d.\n", ret );
+        parent2 = test_rb_tree_entry_rtl_parent( &nodes[i] );
+        ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+        is_red = nodes[i].rtl_entry.ParentValue & RTL_BALANCED_NODE_RESERVED_PARENT_MASK;
+        ok( is_red == rb_is_red( &nodes[i].wine_rb_entry ), "got %d, expected %d.\n", is_red,
+            rb_is_red( &nodes[i].wine_rb_entry ));
+
+        parent = test_rb_tree_entry_from_wine_rb( wine_tree.root );
+        parent2 = test_rb_tree_entry_from_rtl_rb( rtl_tree.root );
+        ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+        if (nodes[i].value <= min_val)
+        {
+            min_val = nodes[i].value;
+            prev_min_entry = &nodes[i].rtl_entry;
+        }
+        ok( rtl_tree.min == prev_min_entry, "unexpected min tree entry.\n" );
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        struct test_rb_tree_entry *node;
+
+        winetest_push_context( "i %u", i );
+        rb_remove( &wine_tree, &nodes[i].wine_rb_entry );
+        pRtlRbRemoveNode( &rtl_tree, &nodes[i].rtl_entry );
+
+        parent = test_rb_tree_entry_from_wine_rb( wine_tree.root );
+        parent2 = test_rb_tree_entry_from_rtl_rb( rtl_tree.root );
+        ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+
+        parent = test_rb_tree_entry_from_wine_rb( rb_head( wine_tree.root ));
+        parent2 = test_rb_tree_entry_from_rtl_rb( rtl_tree.min );
+        ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+
+        RB_FOR_EACH_ENTRY(node, &wine_tree, struct test_rb_tree_entry, wine_rb_entry)
+        {
+            is_red = node->rtl_entry.ParentValue & RTL_BALANCED_NODE_RESERVED_PARENT_MASK;
+            ok( is_red == rb_is_red( &node->wine_rb_entry ), "got %d, expected %d.\n", is_red, rb_is_red( &node->wine_rb_entry ));
+            parent = test_rb_tree_entry_from_wine_rb( node->wine_rb_entry.parent );
+            parent2 = test_rb_tree_entry_rtl_parent( node );
+            ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+        }
+        winetest_pop_context();
+    }
+    ok( !rtl_tree.root, "got %p.\n", rtl_tree.root );
+    ok( !rtl_tree.min, "got %p.\n", rtl_tree.min );
+    free(nodes);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -3833,4 +3980,5 @@ START_TEST(rtl)
     test_RtlValidSecurityDescriptor();
     test_RtlFindExportedRoutineByName();
     test_RtlGetDeviceFamilyInfoEnum();
+    test_rb_tree();
 }
