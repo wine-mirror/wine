@@ -35,12 +35,18 @@ struct device_entry
     struct list entry;
     DISPLAY_DEVICEW adapter;
     DEVMODEW current;
+
+    RECT draw_rect;
+    BOOL mouse_over;
 };
 static struct list devices = LIST_INIT( devices );
+static struct device_entry *selected;
 
 static void clear_devices( HWND hwnd )
 {
     struct device_entry *entry, *next;
+
+    selected = NULL;
 
     LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device_entry, entry )
     {
@@ -94,8 +100,8 @@ static void draw_monitor_rect( HDC hdc, struct device_entry *entry, RECT rect )
     HFONT font = SelectObject( hdc, GetStockObject( ANSI_VAR_FONT ) );
 
     SelectObject( hdc, GetStockObject( DC_BRUSH ) );
-    SetDCBrushColor( hdc, GetSysColor( COLOR_WINDOW ) );
-    SetDCPenColor( hdc, GetSysColor( COLOR_WINDOWFRAME ) );
+    SetDCBrushColor( hdc, GetSysColor( entry == selected ? COLOR_HIGHLIGHT : COLOR_WINDOW ) );
+    SetDCPenColor( hdc, GetSysColor( entry->mouse_over ? COLOR_HIGHLIGHT : COLOR_WINDOWFRAME ) );
     Rectangle( hdc, rect.left, rect.top, rect.right, rect.bottom );
 
     DrawTextW( hdc, entry->adapter.DeviceName, -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP );
@@ -142,9 +148,46 @@ static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, L
             rect = rect_from_devmode( &entry->current );
             rect = map_virtual_client_rect( rect, client_rect, virtual_rect, scale );
             draw_monitor_rect( hdc, entry, rect );
+            entry->draw_rect = rect;
         }
 
         EndPaint( hwnd, &paint );
+        return 0;
+    }
+
+    if (msg == WM_MOUSEMOVE)
+    {
+        POINT pt = {(short)LOWORD(lparam), (short)HIWORD(lparam)};
+        struct device_entry *entry;
+        BOOL changed = FALSE;
+
+        LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+        {
+            BOOL mouse_over = PtInRect( &entry->draw_rect, pt );
+            if (entry->mouse_over != mouse_over) changed = TRUE;
+            entry->mouse_over = mouse_over;
+        }
+
+        if (changed) InvalidateRect( hwnd, NULL, TRUE );
+        return 0;
+    }
+
+    if (msg == WM_LBUTTONDOWN)
+    {
+        POINT pt = {(short)LOWORD(lparam), (short)HIWORD(lparam)};
+        struct device_entry *entry;
+        BOOL changed = FALSE;
+
+        selected = NULL;
+
+        LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+        {
+            BOOL mouse_over = PtInRect( &entry->draw_rect, pt );
+            if ((entry == selected) != mouse_over) changed = TRUE;
+            if (mouse_over) selected = entry;
+        }
+
+        if (changed) InvalidateRect( hwnd, NULL, TRUE );
         return 0;
     }
 
