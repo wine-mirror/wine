@@ -474,7 +474,7 @@ static void test_InitPropVariantFromGUIDAsString(void)
         const WCHAR *str;
     } testcases[] = {
         {&IID_NULL,             L"{00000000-0000-0000-0000-000000000000}" },
-        {&dummy_guid,           L"{DEADBEEF-DEAD-BEEF-DEAD-BEEFCAFEBABE}" },
+        {&dummy_guid,           dummy_guid_str },
     };
 
     hres = InitPropVariantFromGUIDAsString(NULL, &propvar);
@@ -662,6 +662,15 @@ static void test_PropVariantToStringAlloc(void)
     hres = PropVariantToStringAlloc(&prop, &str);
     ok(hres == S_OK, "returned %lx\n", hres);
     ok(!lstrcmpW(str, emptyW), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    prop.vt = VT_CLSID;
+    prop.puuid = (CLSID *)&dummy_guid;
+    hres = PropVariantToStringAlloc(&prop, &str);
+    todo_wine
+    ok(hres == S_OK, "PropVariantToStringAlloc returned %#lx.\n", hres);
+    if (hres == S_OK)
+    ok(!wcscmp(str, dummy_guid_str), "Unexpected str %s.\n", debugstr_w(str));
     CoTaskMemFree(str);
 }
 
@@ -1303,6 +1312,11 @@ static void test_PropVariantToStringWithDefault(void)
     result = PropVariantToStringWithDefault(&propvar, default_value);
     ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
 
+    propvar.vt = VT_CLSID;
+    propvar.puuid = (CLSID *)&dummy_guid;
+    result = PropVariantToStringWithDefault(&propvar, default_value);
+    ok(result == default_value, "Unexpected value %s.\n", debugstr_w(result));
+
     /* VT_LPWSTR */
 
     propvar.vt = VT_LPWSTR;
@@ -1599,6 +1613,16 @@ static void test_PropVariantToString(void)
     ok(!lstrcmpW(bufferW, stringW), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
     SysFreeString(propvar.bstrVal);
+
+    PropVariantInit(&propvar);
+    propvar.vt = VT_CLSID;
+    propvar.puuid = (CLSID *)&dummy_guid;
+    hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
+    todo_wine
+    ok(hr == S_OK, "PropVariantToString returned %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(bufferW, dummy_guid_str), "Unexpected string %s.\n", debugstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
 }
 
 static void test_PropVariantToBuffer(void)
