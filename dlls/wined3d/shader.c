@@ -2274,6 +2274,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader,
     const struct wined3d_d3d_info *d3d_info = &shader->device->adapter->d3d_info;
     struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     const struct wined3d_shader_version *version = &reg_maps->shader_version;
+    unsigned int highest_reg_used = 0, num_regs_used = 0;
     const struct wined3d_shader_frontend *fe;
     unsigned int backend_version;
     HRESULT hr;
@@ -2343,6 +2344,46 @@ static HRESULT shader_set_function(struct wined3d_shader *shader,
             backend_version = d3d_info->limits.gs_version;
             break;
         case WINED3D_SHADER_TYPE_PIXEL:
+            for (unsigned int i = 0; i < MAX_REG_INPUT; ++i)
+            {
+                if (shader->u.ps.input_reg_used & (1u << i))
+                {
+                    ++num_regs_used;
+                    highest_reg_used = i;
+                }
+            }
+
+            /* Don't do any register mapping magic if it is not needed,
+             * or if we can't achieve anything anyway. */
+            if (highest_reg_used < (d3d_info->limits.varying_count / 4)
+                    || num_regs_used > (d3d_info->limits.varying_count / 4)
+                    || shader->reg_maps.shader_version.major >= 4)
+            {
+                if (num_regs_used > (d3d_info->limits.varying_count / 4))
+                {
+                    /* This happens with relative addressing. The input mapper
+                     * function warns about this if the higher registers are
+                     * declared too, so don't write a FIXME here. */
+                    WARN("More varying registers used than supported.\n");
+                }
+
+                for (unsigned int i = 0; i < MAX_REG_INPUT; ++i)
+                    shader->u.ps.input_reg_map[i] = i;
+
+                shader->u.ps.declared_in_count = highest_reg_used + 1;
+            }
+            else
+            {
+                shader->u.ps.declared_in_count = 0;
+                for (unsigned int i = 0; i < MAX_REG_INPUT; ++i)
+                {
+                    if (shader->u.ps.input_reg_used & (1u << i))
+                        shader->u.ps.input_reg_map[i] = shader->u.ps.declared_in_count++;
+                    else
+                        shader->u.ps.input_reg_map[i] = ~0u;
+                }
+            }
+
             backend_version = d3d_info->limits.ps_version;
             break;
         case WINED3D_SHADER_TYPE_COMPUTE:
@@ -3084,7 +3125,6 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
-    unsigned int i, highest_reg_used = 0, num_regs_used = 0;
     HRESULT hr;
 
     if (FAILED(hr = shader_init(shader, device, desc, parent, parent_ops)))
@@ -3095,47 +3135,6 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
     {
         shader_cleanup(shader);
         return hr;
-    }
-
-    for (i = 0; i < MAX_REG_INPUT; ++i)
-    {
-        if (shader->u.ps.input_reg_used & (1u << i))
-        {
-            ++num_regs_used;
-            highest_reg_used = i;
-        }
-    }
-
-    /* Don't do any register mapping magic if it is not needed, or if we can't
-     * achieve anything anyway */
-    if (highest_reg_used < (d3d_info->limits.varying_count / 4)
-            || num_regs_used > (d3d_info->limits.varying_count / 4)
-            || shader->reg_maps.shader_version.major >= 4)
-    {
-        if (num_regs_used > (d3d_info->limits.varying_count / 4))
-        {
-            /* This happens with relative addressing. The input mapper function
-             * warns about this if the higher registers are declared too, so
-             * don't write a FIXME here */
-            WARN("More varying registers used than supported\n");
-        }
-
-        for (i = 0; i < MAX_REG_INPUT; ++i)
-        {
-            shader->u.ps.input_reg_map[i] = i;
-        }
-
-        shader->u.ps.declared_in_count = highest_reg_used + 1;
-    }
-    else
-    {
-        shader->u.ps.declared_in_count = 0;
-        for (i = 0; i < MAX_REG_INPUT; ++i)
-        {
-            if (shader->u.ps.input_reg_used & (1u << i))
-                shader->u.ps.input_reg_map[i] = shader->u.ps.declared_in_count++;
-            else shader->u.ps.input_reg_map[i] = ~0U;
-        }
     }
 
     return WINED3D_OK;
