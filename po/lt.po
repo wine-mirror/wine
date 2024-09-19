@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-09-03 00:39+0300\n"
+"PO-Revision-Date: 2024-09-20 00:23+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3151,31 +3151,24 @@ msgid "Not yet implemented"
 msgstr "Dar nerealizuota"
 
 #: dlls/desk.cpl/desk.rc:35
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Desktop"
 msgstr "Darbalaukis"
 
 #: dlls/desk.cpl/desk.rc:38
-#, fuzzy
-#| msgid "Wine Desktop"
 msgid "Virtual Desktop"
-msgstr "„Wine“ darbalaukis"
+msgstr "Virtualus darbalaukis"
 
 #: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
 msgid "&Reset"
 msgstr "&Atkurti"
 
 #: dlls/desk.cpl/desk.rc:29
-#, fuzzy
-#| msgid "Default Settings"
 msgid "Display Settings"
-msgstr "Numatytosios nuostatos"
+msgstr "Rodymo nuostatos"
 
 #: dlls/desk.cpl/desk.rc:30
 msgid "Configure monitors and display devices."
-msgstr ""
+msgstr "Konfigūruoti monitorius ir rodymo įrenginius."
 
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
@@ -3769,16 +3762,12 @@ msgid "&Enable"
 msgstr "Įj&ungti"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (DirectInput devices)"
-msgstr "Prijungta (xinput įrenginys)"
+msgstr "Prijungta (DirectInput įrenginiai)"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (XInput devices)"
-msgstr "Prijungta (xinput įrenginys)"
+msgstr "Prijungta (XInput įrenginiai)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3786,19 +3775,15 @@ msgstr "Išjungta"
 
 #: dlls/joy.cpl/joy.rc:51
 msgid "Advanced settings (restart prefix required to take effect)"
-msgstr ""
+msgstr "Išsamios nuostatos (reikia perleisti prefiksą, kad įsigaliotų)"
 
 #: dlls/joy.cpl/joy.rc:52
-#, fuzzy
-#| msgid "&Enable"
 msgid "Enable SDL"
-msgstr "Įj&ungti"
+msgstr "Įjungti SDL"
 
 #: dlls/joy.cpl/joy.rc:53
-#, fuzzy
-#| msgid "Disabled"
 msgid "Disable hidraw"
-msgstr "Išjungta"
+msgstr "Išjungti „hidraw“"
 
 #: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
