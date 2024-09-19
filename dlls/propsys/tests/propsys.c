@@ -667,9 +667,7 @@ static void test_PropVariantToStringAlloc(void)
     prop.vt = VT_CLSID;
     prop.puuid = (CLSID *)&dummy_guid;
     hres = PropVariantToStringAlloc(&prop, &str);
-    todo_wine
     ok(hres == S_OK, "PropVariantToStringAlloc returned %#lx.\n", hres);
-    if (hres == S_OK)
     ok(!wcscmp(str, dummy_guid_str), "Unexpected str %s.\n", debugstr_w(str));
     CoTaskMemFree(str);
 }
@@ -1618,9 +1616,7 @@ static void test_PropVariantToString(void)
     propvar.vt = VT_CLSID;
     propvar.puuid = (CLSID *)&dummy_guid;
     hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
-    todo_wine
     ok(hr == S_OK, "PropVariantToString returned %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(bufferW, dummy_guid_str), "Unexpected string %s.\n", debugstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
 }
