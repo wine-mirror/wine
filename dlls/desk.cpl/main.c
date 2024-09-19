@@ -149,9 +149,65 @@ static void device_entry_move_rect( struct device_entry *device, DEVMODEW mode )
     device->pending = mode;
 }
 
+static void device_entry_snap_rect( struct device_entry *device )
+{
+    POINT offset = {LONG_MAX, LONG_MAX}, nearest = {LONG_MAX, LONG_MAX};
+    DEVMODEW mode = device->pending;
+    struct device_entry *entry;
+    RECT new_rect, tmp;
+
+    new_rect = rect_from_devmode( &mode );
+
+    /* snap the position to the nearest rectangles */
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+    {
+        RECT other = rect_from_devmode( &entry->current );
+        POINT diff = {LONG_MAX, LONG_MAX};
+
+        if (entry == device) continue;
+
+        if (new_rect.left >= other.right) diff.x = other.right - new_rect.left;
+        if (new_rect.right <= other.left) diff.x = other.left - new_rect.right;
+        if (new_rect.top >= other.bottom) diff.y = other.bottom - new_rect.top;
+        if (new_rect.bottom <= other.top) diff.y = other.top - new_rect.bottom;
+        if (abs( nearest.x ) > abs( diff.x ) && abs( nearest.y ) > abs( diff.y )) nearest = diff;
+
+        SetRect( &tmp, LONG_MIN, new_rect.top, LONG_MAX, new_rect.bottom );
+        if (IntersectRect( &tmp, &tmp, &other ))
+        {
+            diff.y = LONG_MAX;
+            if (abs( offset.x ) > abs( diff.x ) && abs( offset.y ) > abs( diff.x )) offset = diff;
+        }
+
+        SetRect( &tmp, new_rect.left, LONG_MIN, new_rect.right, LONG_MAX );
+        if (IntersectRect( &tmp, &tmp, &other ))
+        {
+            diff.x = LONG_MAX;
+            if (abs( offset.y ) > abs( diff.y ) && abs( offset.x ) > abs( diff.y )) offset = diff;
+        }
+    }
+
+    if (offset.x == LONG_MAX && offset.y == LONG_MAX) offset = nearest;
+    if (offset.x != LONG_MAX) mode.dmPosition.x += offset.x;
+    if (offset.y != LONG_MAX) mode.dmPosition.y += offset.y;
+
+    /* if our adjustments caused more intersection, keep the original position */
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+    {
+        RECT other = rect_from_devmode( &entry->current );
+        if (entry == device) continue;
+        if (!IntersectRect( &tmp, &other, &new_rect )) continue;
+        mode = device->pending;
+    }
+
+    device->current = mode;
+    device->pending = mode;
+}
+
 static void handle_display_settings_change( HWND hwnd )
 {
     DEVMODEW mode = {.dmSize = sizeof(mode)};
+    struct device_entry *entry;
     int i;
 
     if (!selected) return;
@@ -164,8 +220,11 @@ static void handle_display_settings_change( HWND hwnd )
         mode.dmPosition = selected->current.dmPosition;
         mode.dmFields |= DM_POSITION;
         device_entry_move_rect( selected, mode );
-        selected->current = selected->pending;
+        device_entry_snap_rect( selected );
     }
+
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+        device_entry_snap_rect( entry );
 
     InvalidateRect( GetDlgItem( hwnd, IDC_VIRTUAL_DESKTOP ), NULL, TRUE );
 }
