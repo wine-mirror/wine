@@ -921,15 +921,17 @@ static void sendEnumSessionsReply_( int line, SOCKET sock, unsigned short port, 
             .nameOffset = sizeof( reply.reply ),
         },
     };
+    DWORD passwordSize;
     int wsResult;
     DWORD size;
 
-    size = sizeof( reply ) + (lstrlenW( dpsd->lpszSessionName ) + 1) * sizeof( WCHAR );
+    passwordSize = (lstrlenW( dpsd->lpszSessionName ) + 1) * sizeof( WCHAR );
+    size = sizeof( reply.spHeader ) + sizeof( reply.reply ) + passwordSize;
 
     reply.spHeader.mixed += size;
     reply.reply.dpsd.lpszSessionName = NULL;
     reply.reply.dpsd.lpszPassword = NULL;
-    lstrcpyW( reply.name, dpsd->lpszSessionName );
+    memcpy( reply.name, dpsd->lpszSessionName, passwordSize );
 
     wsResult = send( sock, (char *) &reply, size, 0 );
     ok_( __FILE__, line )( wsResult == size, "send() returned %d.\n", wsResult );
