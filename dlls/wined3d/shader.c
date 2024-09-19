@@ -2300,6 +2300,8 @@ static HRESULT shader_set_function(struct wined3d_shader *shader,
     if (FAILED(hr = shader_get_registers_used(shader, float_const_count)))
         return hr;
 
+    shader->load_local_constsF = shader->lconst_inf_or_nan;
+
     if (version->type != type)
     {
         WARN("Wrong shader type %s.\n", debug_shader_type(reg_maps->shader_version.type));
@@ -2313,8 +2315,24 @@ static HRESULT shader_set_function(struct wined3d_shader *shader,
     switch (type)
     {
         case WINED3D_SHADER_TYPE_VERTEX:
+            for (unsigned int i = 0; i < shader->input_signature.element_count; ++i)
+            {
+                const struct wined3d_shader_signature_element *input = &shader->input_signature.elements[i];
+
+                if (!(reg_maps->input_registers & (1u << input->register_idx)) || !input->semantic_name)
+                    continue;
+
+                shader->u.vs.attributes[input->register_idx].usage =
+                        shader_usage_from_semantic_name(input->semantic_name);
+                shader->u.vs.attributes[input->register_idx].usage_idx = input->semantic_idx;
+            }
+
+            if (reg_maps->usesrelconstF && !list_empty(&shader->constantsF))
+                shader->load_local_constsF = TRUE;
+
             backend_version = d3d_info->limits.vs_version;
             break;
+
         case WINED3D_SHADER_TYPE_HULL:
             backend_version = d3d_info->limits.hs_version;
             break;
@@ -2340,8 +2358,6 @@ static HRESULT shader_set_function(struct wined3d_shader *shader,
                 version->major, version->minor);
         return WINED3DERR_INVALIDCALL;
     }
-
-    shader->load_local_constsF = shader->lconst_inf_or_nan;
 
     return WINED3D_OK;
 }
@@ -2719,8 +2735,6 @@ fail:
 static HRESULT vertex_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
-    unsigned int i;
     HRESULT hr;
 
     if (FAILED(hr = shader_init(shader, device, desc, parent, parent_ops)))
@@ -2732,21 +2746,6 @@ static HRESULT vertex_shader_init(struct wined3d_shader *shader, struct wined3d_
         shader_cleanup(shader);
         return hr;
     }
-
-    for (i = 0; i < shader->input_signature.element_count; ++i)
-    {
-        const struct wined3d_shader_signature_element *input = &shader->input_signature.elements[i];
-
-        if (!(reg_maps->input_registers & (1u << input->register_idx)) || !input->semantic_name)
-            continue;
-
-        shader->u.vs.attributes[input->register_idx].usage =
-                shader_usage_from_semantic_name(input->semantic_name);
-        shader->u.vs.attributes[input->register_idx].usage_idx = input->semantic_idx;
-    }
-
-    if (reg_maps->usesrelconstF && !list_empty(&shader->constantsF))
-        shader->load_local_constsF = TRUE;
 
     return WINED3D_OK;
 }
