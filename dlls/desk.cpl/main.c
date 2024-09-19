@@ -24,10 +24,47 @@
 #include "ole2.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(deskcpl);
 
 static HMODULE module;
+
+struct device_entry
+{
+    struct list entry;
+    DISPLAY_DEVICEW adapter;
+};
+static struct list devices = LIST_INIT( devices );
+
+static void clear_devices( HWND hwnd )
+{
+    struct device_entry *entry, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device_entry, entry )
+    {
+        list_remove( &entry->entry );
+        free( entry );
+    }
+}
+
+static void refresh_device_list( HWND hwnd )
+{
+    DISPLAY_DEVICEW adapter = {.cb = sizeof(adapter)};
+    struct device_entry *entry;
+    UINT i;
+
+    clear_devices( hwnd );
+
+    for (i = 0; EnumDisplayDevicesW( NULL, i, &adapter, 0 ); ++i)
+    {
+        /* FIXME: Implement detached adapters */
+        if (!(adapter.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) continue;
+        if (!(entry = calloc( 1, sizeof(*entry) ))) return;
+        entry->adapter = adapter;
+        list_add_tail( &devices, &entry->entry );
+    }
+}
 
 static INT_PTR CALLBACK desktop_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
@@ -36,6 +73,7 @@ static INT_PTR CALLBACK desktop_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam,
     switch (msg)
     {
     case WM_INITDIALOG:
+        refresh_device_list( hwnd );
         return TRUE;
 
     case WM_COMMAND:
