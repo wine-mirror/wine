@@ -2439,10 +2439,8 @@ static void test_PropVariantToVariant(void)
     PropVariantInit(&propvar);
 
     hr = PropVariantToVariant(NULL, &var);
-    todo_wine
     ok(hr == E_INVALIDARG, "PropVariantToVariant returned %#lx.\n", hr);
     hr = PropVariantToVariant(&propvar, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "PropVariantToVariant returned %#lx.\n", hr);
 
     propvar.vt = 0xdead;
@@ -2456,19 +2454,14 @@ static void test_PropVariantToVariant(void)
 
     propvar.vt = VT_EMPTY;
     hr = PropVariantToVariant(&propvar, &var);
-    todo_wine
     ok(hr == S_OK, "PropVariantToVariant returned %#lx.\n", hr);
     ok(V_VT(&var) == VT_EMPTY, "Unexpected V_VT(&var) %d.\n", V_VT(&var));
 
     propvar.vt = VT_NULL;
     hr = PropVariantToVariant(&propvar, &var);
-    todo_wine
     ok(hr == S_OK, "PropVariantToVariant returned %#lx.\n", hr);
-    todo_wine
     ok(V_VT(&var) == VT_NULL, "Unexpected V_VT(&var) %d.\n", V_VT(&var));
 
-    todo_wine
-    {
     check_PropVariantToVariant(propvar, var, I1,  cVal,          'X',     "%c");
     check_PropVariantToVariant(propvar, var, I2,  iVal,          -456,    "%d");
     check_PropVariantToVariant(propvar, var, I4,  lVal,          -789,    "%ld");
@@ -2483,7 +2476,6 @@ static void test_PropVariantToVariant(void)
 
     check_PropVariantToVariant(propvar, var, R4, fltVal, 0.123f, "%f");
     check_PropVariantToVariant(propvar, var, R8, dblVal, 0.456f, "%f");
-    }
 
     propvar.vt = VT_BSTR;
     propvar.bstrVal = SysAllocString(L"test");

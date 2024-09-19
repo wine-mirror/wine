@@ -1049,7 +1049,58 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
 
 HRESULT WINAPI PropVariantToVariant(const PROPVARIANT *propvar, VARIANT *var)
 {
-    return E_NOTIMPL;
+    TRACE("propvar %p, var %p, propvar->vt %#x.\n", propvar, var, propvar ? propvar->vt : 0);
+
+    if (!var || !propvar)
+        return E_INVALIDARG;
+
+    VariantInit(var);
+    var->vt = propvar->vt;
+
+    switch (propvar->vt)
+    {
+        case VT_EMPTY:
+        case VT_NULL:
+            break;
+        case VT_I1:
+            V_I1(var) = propvar->cVal;
+            break;
+        case VT_I2:
+            V_I2(var) = propvar->iVal;
+            break;
+        case VT_I4:
+            V_I4(var) = propvar->lVal;
+            break;
+        case VT_I8:
+            V_I8(var) = propvar->hVal.QuadPart;
+            break;
+        case VT_UI1:
+            V_UI1(var) = propvar->bVal;
+            break;
+        case VT_UI2:
+            V_UI2(var) = propvar->uiVal;
+            break;
+        case VT_UI4:
+            V_UI4(var) = propvar->ulVal;
+            break;
+        case VT_UI8:
+            V_UI8(var) = propvar->uhVal.QuadPart;
+            break;
+        case VT_BOOL:
+            V_BOOL(var) = propvar->boolVal;
+            break;
+        case VT_R4:
+            V_R4(var) = propvar->fltVal;
+            break;
+        case VT_R8:
+            V_R8(var) = propvar->dblVal;
+            break;
+        default:
+            FIXME("Unsupported type %d.\n", propvar->vt);
+            return E_INVALIDARG;
+    }
+
+    return S_OK;
 }
 
 HRESULT WINAPI VariantToPropVariant(const VARIANT *var, PROPVARIANT *propvar)
