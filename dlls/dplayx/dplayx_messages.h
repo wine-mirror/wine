@@ -142,9 +142,7 @@ typedef struct tagDPMSG_ENUMSESSIONSREQUEST
 
   GUID  guidApplication;
 
-  DWORD dwPasswordSize; /* A Guess. This is 0x00000000. */
-                        /* This might be the name server DPID which
-                           is needed for the reply */
+  DWORD passwordOffset;
 
   DWORD dwFlags; /* dwFlags from EnumSessions */
 

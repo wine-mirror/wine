@@ -195,18 +195,20 @@ void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
  */
 HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
                                         DWORD dwFlags,
+                                        WCHAR *password,
                                         const SPINITDATA *lpSpData )
 
 {
   DPSP_ENUMSESSIONSDATA data;
   LPDPMSG_ENUMSESSIONSREQUEST lpMsg;
+  DWORD passwordSize = 0;
 
   TRACE( "enumerating for guid %s\n", debugstr_guid( lpcGuid ) );
 
-  /* Get the SP to deal with sending the EnumSessions request */
-  FIXME( ": not all data fields are correct\n" );
+  if ( password )
+    passwordSize = (wcslen( password ) + 1) * sizeof( WCHAR );
 
-  data.dwMessageSize = lpSpData->dwSPHeaderSize + sizeof( *lpMsg ); /*FIXME!*/
+  data.dwMessageSize = lpSpData->dwSPHeaderSize + sizeof( *lpMsg ) + passwordSize;
   data.lpMessage = calloc( 1, data.dwMessageSize );
   data.lpISP = lpSpData->lpISP;
   data.bReturnStatus = (dwFlags & DPENUMSESSIONS_RETURNSTATUS) != 0;
@@ -219,10 +221,12 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
   lpMsg->envelope.wCommandId = DPMSGCMD_ENUMSESSIONSREQUEST;
   lpMsg->envelope.wVersion   = DPMSGVER_DP6;
 
-  lpMsg->dwPasswordSize = 0; /* FIXME: If enumerating passwords..? */
+  lpMsg->passwordOffset = password ? sizeof( DPMSG_ENUMSESSIONSREQUEST ) : 0;
   lpMsg->dwFlags        = dwFlags;
 
   lpMsg->guidApplication = *lpcGuid;
+
+  memcpy( lpMsg + 1, password, passwordSize );
 
   return (lpSpData->lpCB->EnumSessions)( &data );
 }

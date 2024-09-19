@@ -865,21 +865,20 @@ static unsigned short receiveEnumSessionsRequest_( int line, SOCKET sock, const 
     expectedSize = sizeof( request.spHeader ) + sizeof( request.request ) + expectedPasswordSize;
 
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
-    todo_wine_if( expectedPassword ) ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n",
-                                                            wsResult );
+    ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
     if ( wsResult == SOCKET_ERROR )
         return 0;
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, expectedPassword != NULL );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize, FALSE );
     checkMessageHeader_( line, &request.request.header, 2 );
     ok_( __FILE__, line )( IsEqualGUID( &request.request.appGuid, expectedAppGuid ), "got app guid %s.\n",
                            wine_dbgstr_guid( &request.request.appGuid ) );
     if ( expectedPassword )
     {
-        todo_wine ok_( __FILE__, line )( request.request.passwordOffset == 32, "got password offset %lu.\n",
-                                         request.request.passwordOffset );
-        todo_wine ok_( __FILE__, line )( !lstrcmpW( request.password, expectedPassword ), "got password %s.\n",
-                                         wine_dbgstr_w( request.password ) );
+        ok_( __FILE__, line )( request.request.passwordOffset == 32, "got password offset %lu.\n",
+                               request.request.passwordOffset );
+        ok_( __FILE__, line )( !lstrcmpW( request.password, expectedPassword ), "got password %s.\n",
+                               wine_dbgstr_w( request.password ) );
     }
     else
     {

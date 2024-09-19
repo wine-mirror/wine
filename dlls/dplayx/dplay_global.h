@@ -37,6 +37,7 @@ typedef struct tagEnumSessionAsyncCallbackData
   GUID         requestGuid;
   DWORD        dwEnumSessionFlags;
   DWORD        dwTimeout;
+  WCHAR       *password;
   HANDLE       hSuicideRequest;
 } EnumSessionAsyncCallbackData;
 

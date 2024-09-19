@@ -44,6 +44,7 @@ void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,
 
 HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
                                         DWORD dwFlags,
+                                        WCHAR *password,
                                         const SPINITDATA *lpSpData );
 
 

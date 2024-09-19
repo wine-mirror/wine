@@ -303,6 +303,25 @@ static DWORD DP_CopyString( char **dst, const void *src, BOOL dstAnsi, BOOL srcA
     return size;
 }
 
+static void *DP_DuplicateString( void *src, BOOL dstAnsi, BOOL srcAnsi )
+{
+    DWORD size;
+    char *dst;
+
+    if ( !src )
+        return NULL;
+
+    size = DP_CopyString( NULL, src, dstAnsi, srcAnsi, NULL, 0 );
+
+    dst = malloc( size );
+    if ( !dst )
+        return NULL;
+
+    DP_CopyString( &dst, src, dstAnsi, srcAnsi, dst, 0 );
+
+    return dst;
+}
+
 /* *lplpReply will be non NULL iff there is something to reply */
 HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
         DWORD dwMessageBodySize, const void *lpcMessageHeader, WORD wCommandId, WORD wVersion,
@@ -2357,6 +2376,7 @@ static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
     /* Now resend the enum request */
     hr = NS_SendSessionRequestBroadcast( &data->requestGuid,
                                          data->dwEnumSessionFlags,
+                                         data->password,
                                          data->lpSpData );
 
     if( FAILED(hr) )
@@ -2371,6 +2391,7 @@ static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
 
   /* Clean up the thread data */
   CloseHandle( hSuicideRequest );
+  free( data->password );
   free( lpContext );
 
   /* FIXME: Need to have some notification to main app thread that this is
@@ -2447,6 +2468,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     EnumSessionAsyncCallbackData *data;
+    WCHAR *password = NULL;
     DWORD defaultTimeout;
     void *connection;
     DPCAPS caps;
@@ -2511,6 +2533,10 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         return DP_OK;
     }
 
+    password = DP_DuplicateString( sdesc->lpszPassword, FALSE, TRUE );
+    if ( !password && sdesc->lpszPassword )
+        return DPERR_OUTOFMEMORY;
+
     for ( ;; )
     {
         if ( !(flags & DPENUMSESSIONS_ASYNC) )
@@ -2523,10 +2549,13 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
             LeaveCriticalSection( &This->lock );
 
             /* Send the broadcast for session enumeration */
-            hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags,
+            hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, password,
                                                  &This->dp2->spData );
             if ( FAILED( hr ) )
+            {
+                free( password );
                 return hr;
+            }
             SleepEx( timeout ? timeout : defaultTimeout, FALSE );
         }
 
@@ -2543,26 +2572,37 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
     }
 
     if ( !(flags & DPENUMSESSIONS_ASYNC) )
+    {
+        free( password );
         return DP_OK;
+    }
 
     /* Async enumeration */
 
     if ( This->dp2->dwEnumSessionLock )
+    {
+        free( password );
         return DPERR_CONNECTING;
+    }
 
     /* See if we've already created a thread to service this interface */
     if ( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
+    {
+        free( password );
         return DP_OK;
+    }
 
     This->dp2->dwEnumSessionLock++;
 
     /* Send the first enum request inline since the user may cancel a dialog
      * if one is presented. Also, may also have a connecting return code.
      */
-    hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, &This->dp2->spData );
+    hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, password,
+                                         &This->dp2->spData );
     if ( FAILED( hr ) )
     {
         This->dp2->dwEnumSessionLock--;
+        free( password );
         return hr;
     }
 
@@ -2572,6 +2612,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
     data->requestGuid = sdesc->guidApplication;
     data->dwEnumSessionFlags = flags;
     data->dwTimeout = timeout ? timeout : defaultTimeout;
+    data->password = password;
 
     This->dp2->hKillEnumSessionThreadEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
     if ( !DuplicateHandle( GetCurrentProcess(), This->dp2->hKillEnumSessionThreadEvent,
@@ -2582,6 +2623,8 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
     TRACE( ": creating EnumSessionsRequest thread\n" );
     This->dp2->hEnumSessionThread = CreateThread( NULL, 0, DP_EnumSessionsSendAsyncRequestThread,
                                                   data, 0, &tid );
+    if ( !This->dp2->hEnumSessionThread )
+        free( password );
 
     This->dp2->dwEnumSessionLock--;
 
