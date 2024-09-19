@@ -3150,6 +3150,11 @@ msgstr "Не е реализирано"
 msgid "Desktop"
 msgstr "Работен плот"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+msgid "Virtual Desktop"
+msgstr "Работен плот"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 msgid "Display Settings"

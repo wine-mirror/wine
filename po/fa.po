@@ -3128,6 +3128,11 @@ msgstr ""
 msgid "Desktop"
 msgstr "ذخیره &به نام..."
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+msgid "Virtual Desktop"
+msgstr "ذخیره &به نام..."
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""

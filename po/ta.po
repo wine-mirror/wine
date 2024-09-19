@@ -3095,6 +3095,12 @@ msgstr ""
 msgid "Desktop"
 msgstr "Wine உதவி"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgid "Wine Help"
+msgid "Virtual Desktop"
+msgstr "Wine உதவி"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""

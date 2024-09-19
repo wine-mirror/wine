@@ -3159,6 +3159,13 @@ msgstr "Ще не реалізовано"
 msgid "Desktop"
 msgstr "Стільниця"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "Стільниця"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

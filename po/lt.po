@@ -3156,6 +3156,12 @@ msgstr "Dar nerealizuota"
 msgid "Desktop"
 msgstr "Darbalaukis"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgid "Wine Desktop"
+msgid "Virtual Desktop"
+msgstr "„Wine“ darbalaukis"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

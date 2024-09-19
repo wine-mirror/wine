@@ -3150,6 +3150,10 @@ msgstr "Not yet implemented"
 msgid "Desktop"
 msgstr "Desktop"
 
+#: dlls/desk.cpl/desk.rc:38
+msgid "Virtual Desktop"
+msgstr "Virtual Desktop"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr "Display Settings"

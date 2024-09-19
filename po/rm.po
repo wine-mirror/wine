@@ -3094,6 +3094,12 @@ msgstr "Na implementa"
 msgid "Desktop"
 msgstr "Wine ag�d"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgid "Wine Help"
+msgid "Virtual Desktop"
+msgstr "Wine ag�d"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""

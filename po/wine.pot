@@ -3036,6 +3036,10 @@ msgstr ""
 msgid "Desktop"
 msgstr ""
 
+#: dlls/desk.cpl/desk.rc:38
+msgid "Virtual Desktop"
+msgstr ""
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""

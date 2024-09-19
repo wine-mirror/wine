@@ -3137,6 +3137,13 @@ msgstr "구현되지 않음"
 msgid "Desktop"
 msgstr "바탕 화면"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "바탕 화면"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

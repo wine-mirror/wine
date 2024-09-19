@@ -3171,6 +3171,13 @@ msgstr "Nije još implementirano"
 msgid "Desktop"
 msgstr "Radna površina"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "Radna površina"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

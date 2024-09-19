@@ -3147,6 +3147,12 @@ msgstr "Ei vielä toteutettu"
 msgid "Desktop"
 msgstr "Työpöytä"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgid "Wine Desktop"
+msgid "Virtual Desktop"
+msgstr "Winen Työpöytä"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

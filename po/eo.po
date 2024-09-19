@@ -3096,6 +3096,13 @@ msgstr "Ne jam funkcias"
 msgid "Desktop"
 msgstr "Labortablo"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "Labortablo"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

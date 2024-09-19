@@ -3247,6 +3247,11 @@ msgstr "Nije jos u programu"
 msgid "Desktop"
 msgstr "Radna površina"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+msgid "Virtual Desktop"
+msgstr "Radna površina"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

@@ -3112,6 +3112,13 @@ msgstr "尚未實作"
 msgid "Desktop"
 msgstr "桌面"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "桌面"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

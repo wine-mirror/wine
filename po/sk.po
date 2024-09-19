@@ -3125,6 +3125,11 @@ msgstr "Neimplementované"
 msgid "Desktop"
 msgstr "Pracovná plocha"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+msgid "Virtual Desktop"
+msgstr "Pracovná plocha"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "System Settings"

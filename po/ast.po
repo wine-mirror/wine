@@ -3148,6 +3148,13 @@ msgstr "Entá nun s'implementó"
 msgid "Desktop"
 msgstr "Escritoriu"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "Escritoriu"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

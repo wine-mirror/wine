@@ -3197,6 +3197,13 @@ msgstr "Ikke implementeret endnu"
 msgid "Desktop"
 msgstr "Skrivebord"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "Skrivebord"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

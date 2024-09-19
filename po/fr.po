@@ -3176,6 +3176,13 @@ msgstr "Pas encore implémenté"
 msgid "Desktop"
 msgstr "Bureau"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "Bureau"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

@@ -3113,6 +3113,11 @@ msgstr ""
 msgid "Desktop"
 msgstr "พื้นที่ทำงาน"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+msgid "Virtual Desktop"
+msgstr "พื้นที่ทำงาน"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""

@@ -36,4 +36,6 @@
 /* controls */
 #define IDC_STATIC          -1
 
+#define IDC_VIRTUAL_DESKTOP         2000
+
 #define ICO_MAIN            100

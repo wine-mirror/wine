@@ -3145,6 +3145,13 @@ msgstr "განხორციელებული არაა"
 msgid "Desktop"
 msgstr "სამუშაო მაგიდა"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgctxt "display name"
+#| msgid "Desktop"
+msgid "Virtual Desktop"
+msgstr "სამუშაო მაგიდა"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

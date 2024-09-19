@@ -3121,6 +3121,12 @@ msgstr "Nén co possibe"
 msgid "Desktop"
 msgstr "Aidance di Wine"
 
+#: dlls/desk.cpl/desk.rc:38
+#, fuzzy
+#| msgid "Wine Help"
+msgid "Virtual Desktop"
+msgstr "Aidance di Wine"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""

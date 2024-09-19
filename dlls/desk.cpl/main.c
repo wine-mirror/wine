@@ -34,6 +34,7 @@ struct device_entry
 {
     struct list entry;
     DISPLAY_DEVICEW adapter;
+    DEVMODEW current;
 };
 static struct list devices = LIST_INIT( devices );
 
@@ -62,8 +63,111 @@ static void refresh_device_list( HWND hwnd )
         if (!(adapter.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) continue;
         if (!(entry = calloc( 1, sizeof(*entry) ))) return;
         entry->adapter = adapter;
+        entry->current.dmSize = sizeof(entry->current);
+        EnumDisplaySettingsW( adapter.DeviceName, ENUM_CURRENT_SETTINGS, &entry->current );
         list_add_tail( &devices, &entry->entry );
     }
+}
+
+static RECT rect_from_devmode( const DEVMODEW *mode )
+{
+    RECT rect = {0};
+    if (mode->dmFields & DM_POSITION) SetRect( &rect, mode->dmPosition.x, mode->dmPosition.y, mode->dmPosition.x, mode->dmPosition.y );
+    if (mode->dmFields & DM_PELSWIDTH) rect.right += mode->dmPelsWidth;
+    if (mode->dmFields & DM_PELSHEIGHT) rect.bottom += mode->dmPelsHeight;
+    return rect;
+}
+
+static RECT map_virtual_client_rect( RECT rect, RECT client_rect, RECT virtual_rect, float scale )
+{
+    OffsetRect( &rect, -(virtual_rect.left + virtual_rect.right) / 2, -(virtual_rect.top + virtual_rect.bottom) / 2 );
+    rect.left *= scale;
+    rect.right *= scale;
+    rect.top *= scale;
+    rect.bottom *= scale;
+    OffsetRect( &rect, (client_rect.left + client_rect.right) / 2, (client_rect.top + client_rect.bottom) / 2 );
+    return rect;
+}
+
+static void draw_monitor_rect( HDC hdc, struct device_entry *entry, RECT rect )
+{
+    HFONT font = SelectObject( hdc, GetStockObject( ANSI_VAR_FONT ) );
+
+    SelectObject( hdc, GetStockObject( DC_BRUSH ) );
+    SetDCBrushColor( hdc, GetSysColor( COLOR_WINDOW ) );
+    SetDCPenColor( hdc, GetSysColor( COLOR_WINDOWFRAME ) );
+    Rectangle( hdc, rect.left, rect.top, rect.right, rect.bottom );
+
+    DrawTextW( hdc, entry->adapter.DeviceName, -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP );
+    SelectObject( hdc, font );
+}
+
+static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    if (msg == WM_PAINT)
+    {
+        RECT rect, client_rect, virtual_rect = {0};
+        struct device_entry *entry;
+        PAINTSTRUCT paint;
+        float scale;
+        HDC hdc;
+
+        GetClientRect( hwnd, &client_rect );
+
+        hdc = BeginPaint( hwnd, &paint );
+        FillRect( hdc, &client_rect, (HBRUSH)(COLOR_WINDOW + 1) );
+        SetDCPenColor( hdc, GetSysColor( COLOR_WINDOWFRAME ) );
+        SelectObject( hdc, GetStockObject( GRAY_BRUSH ) );
+        SelectObject( hdc, GetStockObject( DC_PEN ) );
+        RoundRect( hdc, client_rect.left, client_rect.top, client_rect.right, client_rect.bottom, 5, 5 );
+
+        LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+        {
+            rect = rect_from_devmode( &entry->current );
+            UnionRect( &virtual_rect, &virtual_rect, &rect );
+        }
+        scale = min( (client_rect.right - client_rect.left) / (float)(virtual_rect.right - virtual_rect.left),
+                     (client_rect.bottom - client_rect.top) / (float)(virtual_rect.bottom - virtual_rect.top) );
+        scale *= 0.95;
+
+        rect = map_virtual_client_rect( virtual_rect, client_rect, virtual_rect, scale );
+        SelectObject( hdc, GetStockObject( LTGRAY_BRUSH ) );
+        Rectangle( hdc, rect.left, rect.top, rect.right, rect.bottom );
+        scale *= 0.95;
+
+        LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+        {
+            rect = rect_from_devmode( &entry->current );
+            rect = map_virtual_client_rect( rect, client_rect, virtual_rect, scale );
+            draw_monitor_rect( hdc, entry, rect );
+        }
+
+        EndPaint( hwnd, &paint );
+        return 0;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void create_desktop_view( HWND hwnd )
+{
+    HWND parent, view;
+    LONG margin;
+    RECT rect;
+
+    parent = GetDlgItem( hwnd, IDC_VIRTUAL_DESKTOP );
+    GetClientRect( parent, &rect );
+    rect.top += 6;
+
+    margin = (rect.bottom - rect.top) * 5 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    view = CreateWindowW( L"DeskCplDesktop", NULL, WS_CHILD, rect.left, rect.top, rect.right - rect.left,
+                          rect.bottom - rect.top, parent, NULL, NULL, module );
+    SetWindowLongPtrW( view, GWLP_USERDATA, (UINT_PTR)hwnd );
+    ShowWindow( view, SW_SHOW );
 }
 
 static INT_PTR CALLBACK desktop_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -74,6 +178,7 @@ static INT_PTR CALLBACK desktop_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam,
     {
     case WM_INITDIALOG:
         refresh_device_list( hwnd );
+        create_desktop_view( hwnd );
         return TRUE;
 
     case WM_COMMAND:
@@ -144,6 +249,22 @@ static void create_property_sheets( HWND parent )
     OleUninitialize();
 }
 
+static void register_window_class(void)
+{
+    WNDCLASSW desktop_class =
+    {
+        .hInstance = module,
+        .lpfnWndProc = desktop_view_proc,
+        .lpszClassName = L"DeskCplDesktop",
+    };
+    RegisterClassW( &desktop_class );
+}
+
+static void unregister_window_class(void)
+{
+    UnregisterClassW( L"DeskCplDesktop", module );
+}
+
 /*********************************************************************
  * CPlApplet (desk.cpl.@)
  */
@@ -154,6 +275,7 @@ LONG CALLBACK CPlApplet( HWND hwnd, UINT command, LPARAM param1, LPARAM param2 )
     switch (command)
     {
     case CPL_INIT:
+        register_window_class();
         return TRUE;
 
     case CPL_GETCOUNT:
@@ -174,6 +296,7 @@ LONG CALLBACK CPlApplet( HWND hwnd, UINT command, LPARAM param1, LPARAM param2 )
         break;
 
     case CPL_STOP:
+        unregister_window_class();
         break;
     }
 
