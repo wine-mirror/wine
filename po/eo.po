@@ -3103,6 +3103,12 @@ msgstr "Labortablo"
 msgid "Virtual Desktop"
 msgstr "Labortablo"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "R&eset"
+msgid "&Reset"
+msgstr "R&estarigi"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3696,12 +3702,6 @@ msgstr ""
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Malaktivigi"
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "R&eset"
-msgid "&Reset"
-msgstr "R&estarigi"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy

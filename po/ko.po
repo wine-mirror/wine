@@ -3144,6 +3144,10 @@ msgstr "바탕 화면"
 msgid "Virtual Desktop"
 msgstr "바탕 화면"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "초기화(&R)"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3734,10 +3738,6 @@ msgstr "조이스틱"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "사용 중지(&D)"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "초기화(&R)"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

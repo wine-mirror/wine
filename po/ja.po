@@ -3154,6 +3154,10 @@ msgstr "デスクトップ"
 msgid "Virtual Desktop"
 msgstr "デスクトップ"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "リセット(&R)"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3744,10 +3748,6 @@ msgstr "ジョイスティック"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "無効化(&D)"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "リセット(&R)"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

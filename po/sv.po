@@ -3185,6 +3185,12 @@ msgstr "Skrivbord"
 msgid "Virtual Desktop"
 msgstr "Skrivbord"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Återställa"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3791,12 +3797,6 @@ msgstr "Joysticks"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Inaktivera"
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
-msgid "&Reset"
-msgstr "Återställa"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy

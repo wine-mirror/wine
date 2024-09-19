@@ -3161,6 +3161,10 @@ msgstr "Masaüstü"
 msgid "Virtual Desktop"
 msgstr "Masaüstü"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Sıfırla"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3753,10 +3757,6 @@ msgstr "Oyun Kolları"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Devre Dışı Bırak"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Sıfırla"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

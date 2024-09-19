@@ -3118,6 +3118,12 @@ msgstr "พื้นที่ทำงาน"
 msgid "Virtual Desktop"
 msgstr "พื้นที่ทำงาน"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "R&eset"
+msgid "&Reset"
+msgstr "แก้ออก"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""
@@ -3719,12 +3725,6 @@ msgstr ""
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr ""
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "R&eset"
-msgid "&Reset"
-msgstr "แก้ออก"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

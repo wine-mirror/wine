@@ -3130,6 +3130,12 @@ msgstr "Pracovná plocha"
 msgid "Virtual Desktop"
 msgstr "Pracovná plocha"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Vynulovať"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "System Settings"
@@ -3737,12 +3743,6 @@ msgstr ""
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Zakázať"
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
-msgid "&Reset"
-msgstr "Vynulovať"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy

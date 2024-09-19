@@ -3176,6 +3176,12 @@ msgstr "Рабочий стол"
 msgid "Virtual Desktop"
 msgstr "Рабочий стол"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Сброс"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3774,12 +3780,6 @@ msgstr "Джойстики"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Отключить"
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
-msgid "&Reset"
-msgstr "Сброс"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy

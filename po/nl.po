@@ -3173,6 +3173,10 @@ msgstr "Bureaublad"
 msgid "Virtual Desktop"
 msgstr "Bureaublad"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Terugzetten"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3765,10 +3769,6 @@ msgstr "Joysticks"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Uitzetten"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Terugzetten"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

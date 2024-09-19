@@ -3178,6 +3178,12 @@ msgstr "Radna površina"
 msgid "Virtual Desktop"
 msgstr "Radna površina"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Poništi"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3786,12 +3792,6 @@ msgstr "Joystici"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Isključi"
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
-msgid "&Reset"
-msgstr "Poništi"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy

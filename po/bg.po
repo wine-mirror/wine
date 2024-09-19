@@ -3155,6 +3155,12 @@ msgstr "Работен плот"
 msgid "Virtual Desktop"
 msgstr "Работен плот"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "R&eset"
+msgid "&Reset"
+msgstr "&Възстанови"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 msgid "Display Settings"
@@ -3786,12 +3792,6 @@ msgstr ""
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Забрани"
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "R&eset"
-msgid "&Reset"
-msgstr "&Възстанови"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy

@@ -3179,6 +3179,10 @@ msgstr "Pulpit"
 msgid "Virtual Desktop"
 msgstr "Pulpit"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "Wyze&ruj"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3772,10 +3776,6 @@ msgstr "Dżojstiki"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "Wyłą&cz"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "Wyze&ruj"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

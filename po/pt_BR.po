@@ -3174,6 +3174,10 @@ msgstr "Área de Trabalho"
 msgid "Virtual Desktop"
 msgstr "Área de Trabalho"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Reiniciar"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3771,10 +3775,6 @@ msgstr "Controles"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Desativar"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Reiniciar"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

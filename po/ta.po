@@ -3101,6 +3101,12 @@ msgstr "Wine உதவி"
 msgid "Virtual Desktop"
 msgstr "Wine உதவி"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "R&eset"
+msgid "&Reset"
+msgstr "மீட்டமை (&E)"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""
@@ -3680,12 +3686,6 @@ msgstr ""
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr ""
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "R&eset"
-msgid "&Reset"
-msgstr "மீட்டமை (&E)"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

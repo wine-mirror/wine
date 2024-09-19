@@ -3168,6 +3168,12 @@ msgstr "Радна површина"
 msgid "Virtual Desktop"
 msgstr "Радна површина"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "R&eset"
+msgid "&Reset"
+msgstr "&Поништи"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 msgid "Display Settings"
@@ -3806,12 +3812,6 @@ msgstr ""
 #, fuzzy
 msgid "&Disable"
 msgstr "табела"
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "R&eset"
-msgid "&Reset"
-msgstr "&Поништи"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy

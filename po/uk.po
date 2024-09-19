@@ -3166,6 +3166,10 @@ msgstr "Стільниця"
 msgid "Virtual Desktop"
 msgstr "Стільниця"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Скинути"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3762,10 +3766,6 @@ msgstr "Джойстик"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "Вим&кнути"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Скинути"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

@@ -3153,6 +3153,10 @@ msgstr "Työpöytä"
 msgid "Virtual Desktop"
 msgstr "Winen Työpöytä"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Nollaa"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3745,10 +3749,6 @@ msgstr "Joystickit"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Poista käytöstä"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Nollaa"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

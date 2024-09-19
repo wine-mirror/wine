@@ -38,5 +38,6 @@
 
 #define IDC_VIRTUAL_DESKTOP         2000
 #define IDC_DISPLAY_SETTINGS_LIST   2001
+#define IDC_DISPLAY_SETTINGS_RESET  2002
 
 #define ICO_MAIN            100

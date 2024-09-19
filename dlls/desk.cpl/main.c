@@ -276,6 +276,10 @@ static INT_PTR CALLBACK desktop_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam,
         case MAKEWPARAM( IDC_DISPLAY_SETTINGS_LIST, CBN_SELCHANGE ):
             handle_display_settings_change( hwnd );
             break;
+        case IDC_DISPLAY_SETTINGS_RESET:
+            refresh_device_list( hwnd );
+            InvalidateRect( hwnd, NULL, TRUE );
+            break;
         }
         return TRUE;
 

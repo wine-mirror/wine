@@ -3180,6 +3180,10 @@ msgstr "Escritorio"
 msgid "Virtual Desktop"
 msgstr "Escritorio"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Resetear"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3776,10 +3780,6 @@ msgstr "Comando de juego"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Deshabilitar"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Resetear"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

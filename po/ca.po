@@ -3179,6 +3179,10 @@ msgstr "Escriptori"
 msgid "Virtual Desktop"
 msgstr "Escriptori"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Reinicia"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3771,10 +3775,6 @@ msgstr "Palanques de control"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Inhabilita"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Reinicia"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

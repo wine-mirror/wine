@@ -3119,6 +3119,10 @@ msgstr "桌面"
 msgid "Virtual Desktop"
 msgstr "桌面"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "重設(&R)"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3712,10 +3716,6 @@ msgstr "搖桿"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "停用(&D)"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "重設(&R)"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

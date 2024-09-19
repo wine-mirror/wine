@@ -3162,6 +3162,10 @@ msgstr "Darbalaukis"
 msgid "Virtual Desktop"
 msgstr "„Wine“ darbalaukis"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Atkurti"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"
@@ -3754,10 +3758,6 @@ msgstr "Vairasvirtės"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Išjungti"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Atkurti"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

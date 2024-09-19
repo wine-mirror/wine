@@ -3127,6 +3127,11 @@ msgstr "Aidance di Wine"
 msgid "Virtual Desktop"
 msgstr "Aidance di Wine"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+msgid "&Reset"
+msgstr "&Rifé"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""
@@ -3730,11 +3735,6 @@ msgstr ""
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr ""
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-msgid "&Reset"
-msgstr "&Rifé"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"

@@ -3170,6 +3170,12 @@ msgstr "שולחן העבודה"
 msgid "Virtual Desktop"
 msgstr "שולחן העבודה"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "R&eset"
+msgid "&Reset"
+msgstr "&איפוס"
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 msgid "Display Settings"
@@ -3776,12 +3782,6 @@ msgstr ""
 #, fuzzy
 msgid "&Disable"
 msgstr "Table"
-
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "R&eset"
-msgid "&Reset"
-msgstr "&איפוס"
 
 #: dlls/joy.cpl/joy.rc:42
 #, fuzzy

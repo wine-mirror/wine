@@ -3154,6 +3154,10 @@ msgstr "Desktop"
 msgid "Virtual Desktop"
 msgstr "Virtual Desktop"
 
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+msgid "&Reset"
+msgstr "&Reset"
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr "Display Settings"
@@ -3744,10 +3748,6 @@ msgstr "Joysticks"
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Disable"
-
-#: dlls/joy.cpl/joy.rc:41
-msgid "&Reset"
-msgstr "&Reset"
 
 #: dlls/joy.cpl/joy.rc:42
 msgid "&Override"
