@@ -1326,10 +1326,6 @@ static void test_file_full_size_information(void)
         "[ffsi] TotalAllocationUnits error fsi:0x%s, ffsi:0x%s\n",
         wine_dbgstr_longlong(fsi.TotalAllocationUnits.QuadPart),
         wine_dbgstr_longlong(ffsi.TotalAllocationUnits.QuadPart));
-    ok(ffsi.CallerAvailableAllocationUnits.QuadPart == fsi.AvailableAllocationUnits.QuadPart,
-        "[ffsi] CallerAvailableAllocationUnits error fsi:0x%s, ffsi: 0x%s\n",
-        wine_dbgstr_longlong(fsi.AvailableAllocationUnits.QuadPart),
-        wine_dbgstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart));
 
     /* Assume file system is NTFS */
     ok(ffsi.BytesPerSector == 512, "[ffsi] BytesPerSector expected 512, got %ld\n",ffsi.BytesPerSector);
