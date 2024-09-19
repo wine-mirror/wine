@@ -2316,7 +2316,7 @@ static void shader_trace(const void *code, size_t size, enum vkd3d_shader_source
     vkd3d_shader_free_shader_code(&d3d_asm);
 }
 
-static HRESULT shader_set_function(struct wined3d_shader *shader,
+static HRESULT shader_set_function(struct wined3d_shader *shader, const struct wined3d_shader_desc *desc,
         enum wined3d_shader_type type, const struct wined3d_stream_output_desc *so_desc, unsigned int float_const_count)
 {
     const struct wined3d_d3d_info *d3d_info = &shader->device->adapter->d3d_info;
@@ -2327,8 +2327,88 @@ static HRESULT shader_set_function(struct wined3d_shader *shader,
     unsigned int backend_version;
     HRESULT hr;
 
-    TRACE("shader %p, type %s, float_const_count %u.\n",
-            shader, debug_shader_type(type), float_const_count);
+    TRACE("shader %p, byte_code %p, size %#Ix, type %s, float_const_count %u.\n",
+            shader, desc->byte_code, desc->byte_code_size, debug_shader_type(type), float_const_count);
+
+    if (!desc->byte_code)
+        return WINED3DERR_INVALIDCALL;
+
+    if (desc->byte_code_size == ~(size_t)0)
+    {
+        struct wined3d_shader_version shader_version;
+        const struct wined3d_shader_frontend *fe;
+        struct wined3d_shader_instruction ins;
+        const DWORD *ptr;
+        void *fe_data;
+
+        shader->source_type = VKD3D_SHADER_SOURCE_D3D_BYTECODE;
+        if (!(shader->frontend = shader_select_frontend(shader->source_type)))
+        {
+            FIXME("Unable to find frontend for shader.\n");
+            shader_cleanup(shader);
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        fe = shader->frontend;
+        if (!(fe_data = fe->shader_init(desc->byte_code, desc->byte_code_size, &shader->output_signature)))
+        {
+            WARN("Failed to initialise frontend data.\n");
+            shader_cleanup(shader);
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        fe->shader_read_header(fe_data, &ptr, &shader_version);
+        while (!fe->shader_is_end(fe_data, &ptr))
+            fe->shader_read_instruction(fe_data, &ptr, &ins);
+
+        fe->shader_free(fe_data);
+
+        shader->byte_code_size = (ptr - desc->byte_code) * sizeof(*ptr);
+
+        if (!(shader->byte_code = malloc(shader->byte_code_size)))
+        {
+            shader_cleanup(shader);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(shader->byte_code, desc->byte_code, shader->byte_code_size);
+
+        shader->function = shader->byte_code;
+        shader->functionLength = shader->byte_code_size;
+    }
+    else
+    {
+        unsigned int max_version;
+
+        if (!(shader->byte_code = malloc(desc->byte_code_size)))
+        {
+            shader_cleanup(shader);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(shader->byte_code, desc->byte_code, desc->byte_code_size);
+        shader->byte_code_size = desc->byte_code_size;
+
+        max_version = shader_max_version_from_feature_level(shader->device->cs->c.state->feature_level);
+        if (FAILED(hr = wined3d_shader_extract_from_dxbc(shader, max_version, &shader->source_type)))
+        {
+            shader_cleanup(shader);
+            return hr;
+        }
+
+        if (!(shader->frontend = shader_select_frontend(shader->source_type)))
+        {
+            FIXME("Unable to find frontend for shader.\n");
+            shader_cleanup(shader);
+            return WINED3DERR_INVALIDCALL;
+        }
+    }
+
+    if (TRACE_ON(d3d_shader))
+    {
+        if (shader->source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
+            shader_trace(shader->function, shader->functionLength, shader->source_type);
+        else
+            shader_trace(shader->byte_code, shader->byte_code_size, shader->source_type);
+    }
 
     if (type == WINED3D_SHADER_TYPE_GEOMETRY)
     {
@@ -2661,16 +2741,9 @@ bool vshader_get_input(const struct wined3d_shader *shader,
     return false;
 }
 
-static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
-        const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
+static void shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    HRESULT hr;
-
-    TRACE("byte_code %p, byte_code_size %#lx.\n", desc->byte_code, (long)desc->byte_code_size);
-
-    if (!desc->byte_code)
-        return WINED3DERR_INVALIDCALL;
-
     shader->ref = 1;
     shader->device = device;
     shader->parent = parent;
@@ -2683,87 +2756,6 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     shader->lconst_inf_or_nan = FALSE;
     list_init(&shader->reg_maps.indexable_temps);
     list_init(&shader->shader_list_entry);
-
-    if (desc->byte_code_size == ~(size_t)0)
-    {
-        struct wined3d_shader_version shader_version;
-        const struct wined3d_shader_frontend *fe;
-        struct wined3d_shader_instruction ins;
-        const DWORD *ptr;
-        void *fe_data;
-
-        shader->source_type = VKD3D_SHADER_SOURCE_D3D_BYTECODE;
-        if (!(shader->frontend = shader_select_frontend(shader->source_type)))
-        {
-            FIXME("Unable to find frontend for shader.\n");
-            hr = WINED3DERR_INVALIDCALL;
-            goto fail;
-        }
-
-        fe = shader->frontend;
-        if (!(fe_data = fe->shader_init(desc->byte_code, desc->byte_code_size, &shader->output_signature)))
-        {
-            WARN("Failed to initialise frontend data.\n");
-            hr = WINED3DERR_INVALIDCALL;
-            goto fail;
-        }
-
-        fe->shader_read_header(fe_data, &ptr, &shader_version);
-        while (!fe->shader_is_end(fe_data, &ptr))
-            fe->shader_read_instruction(fe_data, &ptr, &ins);
-
-        fe->shader_free(fe_data);
-
-        shader->byte_code_size = (ptr - desc->byte_code) * sizeof(*ptr);
-
-        if (!(shader->byte_code = malloc(shader->byte_code_size)))
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-        memcpy(shader->byte_code, desc->byte_code, shader->byte_code_size);
-
-        shader->function = shader->byte_code;
-        shader->functionLength = shader->byte_code_size;
-    }
-    else
-    {
-        unsigned int max_version;
-
-        if (!(shader->byte_code = malloc(desc->byte_code_size)))
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-        memcpy(shader->byte_code, desc->byte_code, desc->byte_code_size);
-        shader->byte_code_size = desc->byte_code_size;
-
-        max_version = shader_max_version_from_feature_level(device->cs->c.state->feature_level);
-        if (FAILED(hr = wined3d_shader_extract_from_dxbc(shader, max_version, &shader->source_type)))
-            goto fail;
-
-        if (!(shader->frontend = shader_select_frontend(shader->source_type)))
-        {
-            FIXME("Unable to find frontend for shader.\n");
-            hr = WINED3DERR_INVALIDCALL;
-            goto fail;
-        }
-    }
-
-    if (TRACE_ON(d3d_shader))
-    {
-        if (shader->source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
-            shader_trace(shader->function, shader->functionLength, shader->source_type);
-        else
-            shader_trace(shader->byte_code, shader->byte_code_size, shader->source_type);
-    }
-
-
-    return WINED3D_OK;
-
-fail:
-    shader_cleanup(shader);
-    return hr;
 }
 
 static HRESULT vertex_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
@@ -2771,10 +2763,9 @@ static HRESULT vertex_shader_init(struct wined3d_shader *shader, struct wined3d_
 {
     HRESULT hr;
 
-    if (FAILED(hr = shader_init(shader, device, desc, parent, parent_ops)))
-        return hr;
+    shader_init(shader, device, parent, parent_ops);
 
-    if (FAILED(hr = shader_set_function(shader,
+    if (FAILED(hr = shader_set_function(shader, desc,
             WINED3D_SHADER_TYPE_VERTEX, NULL, device->adapter->d3d_info.limits.vs_uniform_count)))
     {
         shader_cleanup(shader);
@@ -2790,10 +2781,9 @@ static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3
 {
     HRESULT hr;
 
-    if (FAILED(hr = shader_init(shader, device, desc, parent, parent_ops)))
-        return hr;
+    shader_init(shader, device, parent, parent_ops);
 
-    if (FAILED(hr = shader_set_function(shader, WINED3D_SHADER_TYPE_GEOMETRY, so_desc, 0)))
+    if (FAILED(hr = shader_set_function(shader, desc, WINED3D_SHADER_TYPE_GEOMETRY, so_desc, 0)))
         goto fail;
 
     return WINED3D_OK;
@@ -3120,10 +3110,9 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     HRESULT hr;
 
-    if (FAILED(hr = shader_init(shader, device, desc, parent, parent_ops)))
-        return hr;
+    shader_init(shader, device, parent, parent_ops);
 
-    if (FAILED(hr = shader_set_function(shader,
+    if (FAILED(hr = shader_set_function(shader, desc,
             WINED3D_SHADER_TYPE_PIXEL, NULL, d3d_info->limits.ps_uniform_count)))
     {
         shader_cleanup(shader);
@@ -3168,14 +3157,9 @@ HRESULT CDECL wined3d_shader_create_cs(struct wined3d_device *device, const stru
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = shader_init(object, device, desc, parent, parent_ops)))
-    {
-        WARN("Failed to initialize compute shader, hr %#lx.\n", hr);
-        free(object);
-        return hr;
-    }
+    shader_init(object, device, parent, parent_ops);
 
-    if (FAILED(hr = shader_set_function(object, WINED3D_SHADER_TYPE_COMPUTE, NULL, 0)))
+    if (FAILED(hr = shader_set_function(object, desc, WINED3D_SHADER_TYPE_COMPUTE, NULL, 0)))
     {
         shader_cleanup(object);
         free(object);
@@ -3202,14 +3186,9 @@ HRESULT CDECL wined3d_shader_create_ds(struct wined3d_device *device, const stru
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = shader_init(object, device, desc, parent, parent_ops)))
-    {
-        WARN("Failed to initialize domain shader, hr %#lx.\n", hr);
-        free(object);
-        return hr;
-    }
+    shader_init(object, device, parent, parent_ops);
 
-    if (FAILED(hr = shader_set_function(object, WINED3D_SHADER_TYPE_DOMAIN, NULL, 0)))
+    if (FAILED(hr = shader_set_function(object, desc, WINED3D_SHADER_TYPE_DOMAIN, NULL, 0)))
     {
         shader_cleanup(object);
         free(object);
@@ -3264,14 +3243,9 @@ HRESULT CDECL wined3d_shader_create_hs(struct wined3d_device *device, const stru
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = shader_init(object, device, desc, parent, parent_ops)))
-    {
-        WARN("Failed to initialize hull shader, hr %#lx.\n", hr);
-        free(object);
-        return hr;
-    }
+    shader_init(object, device, parent, parent_ops);
 
-    if (FAILED(hr = shader_set_function(object, WINED3D_SHADER_TYPE_HULL, NULL, 0)))
+    if (FAILED(hr = shader_set_function(object, desc, WINED3D_SHADER_TYPE_HULL, NULL, 0)))
     {
         shader_cleanup(object);
         free(object);
