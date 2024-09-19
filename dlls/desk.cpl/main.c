@@ -34,7 +34,8 @@ struct device_entry
 {
     struct list entry;
     DISPLAY_DEVICEW adapter;
-    DEVMODEW current;
+    DEVMODEW current; /* device mode to be applied */
+    DEVMODEW pending; /* pending mode when moving */
 
     RECT draw_rect;
     BOOL mouse_over;
@@ -72,6 +73,7 @@ static void refresh_device_list( HWND hwnd )
         entry->adapter = adapter;
         entry->current.dmSize = sizeof(entry->current);
         EnumDisplaySettingsW( adapter.DeviceName, ENUM_CURRENT_SETTINGS, &entry->current );
+        entry->pending = entry->current;
         list_add_tail( &devices, &entry->entry );
     }
 }
@@ -114,6 +116,39 @@ static RECT rect_from_devmode( const DEVMODEW *mode )
     return rect;
 }
 
+static void device_entry_move_rect( struct device_entry *device, DEVMODEW mode )
+{
+    RECT new_rect, old_rect, tmp;
+    struct device_entry *entry;
+
+    old_rect = rect_from_devmode( &device->pending );
+    new_rect = rect_from_devmode( &mode );
+
+    /* adjust the position to avoid any overlapping */
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+    {
+        RECT other = rect_from_devmode( &entry->current );
+        if (entry == device) continue;
+        if (!IntersectRect( &tmp, &other, &new_rect )) continue;
+        if (old_rect.left >= other.right) mode.dmPosition.x = other.right;
+        if (old_rect.right <= other.left) mode.dmPosition.x = other.left - mode.dmPelsWidth;
+        if (old_rect.top >= other.bottom) mode.dmPosition.y = other.bottom;
+        if (old_rect.bottom <= other.top) mode.dmPosition.y = other.top - mode.dmPelsHeight;
+        new_rect = rect_from_devmode( &mode );
+    }
+
+    /* if our adjustments caused more intersection, keep the original position */
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+    {
+        RECT other = rect_from_devmode( &entry->current );
+        if (entry == device) continue;
+        if (!IntersectRect( &tmp, &other, &new_rect )) continue;
+        mode = device->pending;
+    }
+
+    device->pending = mode;
+}
+
 static void handle_display_settings_change( HWND hwnd )
 {
     DEVMODEW mode = {.dmSize = sizeof(mode)};
@@ -123,6 +158,14 @@ static void handle_display_settings_change( HWND hwnd )
 
     i = SendDlgItemMessageW( hwnd, IDC_DISPLAY_SETTINGS_LIST, CB_GETCURSEL, 0, 0 );
     if (i < 0) return;
+
+    if (EnumDisplaySettingsExW( selected->adapter.DeviceName, i, &mode, 0 ))
+    {
+        mode.dmPosition = selected->current.dmPosition;
+        mode.dmFields |= DM_POSITION;
+        device_entry_move_rect( selected, mode );
+        selected->current = selected->pending;
+    }
 
     InvalidateRect( GetDlgItem( hwnd, IDC_VIRTUAL_DESKTOP ), NULL, TRUE );
 }
@@ -176,7 +219,7 @@ static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, L
 
         LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
         {
-            rect = rect_from_devmode( &entry->current );
+            rect = rect_from_devmode( &entry->pending );
             UnionRect( &virtual_rect, &virtual_rect, &rect );
         }
         scale = min( (client_rect.right - client_rect.left) / (float)(virtual_rect.right - virtual_rect.left),
@@ -190,7 +233,7 @@ static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, L
 
         LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
         {
-            rect = rect_from_devmode( &entry->current );
+            rect = rect_from_devmode( &entry->pending );
             rect = map_virtual_client_rect( rect, client_rect, virtual_rect, scale );
             draw_monitor_rect( hdc, entry, rect );
             entry->draw_rect = rect;
