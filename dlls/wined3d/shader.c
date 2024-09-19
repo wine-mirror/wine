@@ -2268,7 +2268,7 @@ static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
     return WINED3D_OK;
 }
 
-static HRESULT shader_set_function(struct wined3d_shader *shader, struct wined3d_device *device,
+static HRESULT shader_set_function(struct wined3d_shader *shader,
         enum wined3d_shader_type type, const struct wined3d_stream_output_desc *so_desc, unsigned int float_const_count)
 {
     const struct wined3d_d3d_info *d3d_info = &shader->device->adapter->d3d_info;
@@ -2278,8 +2278,8 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, struct wined3d
     unsigned int backend_version;
     HRESULT hr;
 
-    TRACE("shader %p, device %p, type %s, float_const_count %u.\n",
-            shader, device, debug_shader_type(type), float_const_count);
+    TRACE("shader %p, type %s, float_const_count %u.\n",
+            shader, debug_shader_type(type), float_const_count);
 
     if (type == WINED3D_SHADER_TYPE_GEOMETRY)
     {
@@ -2305,7 +2305,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, struct wined3d
         WARN("Wrong shader type %s.\n", debug_shader_type(reg_maps->shader_version.type));
         return WINED3DERR_INVALIDCALL;
     }
-    if (version->major > shader_max_version_from_feature_level(device->cs->c.state->feature_level))
+    if (version->major > shader_max_version_from_feature_level(shader->device->cs->c.state->feature_level))
     {
         WARN("Shader version %u not supported by this device.\n", version->major);
         return WINED3DERR_INVALIDCALL;
@@ -2726,7 +2726,7 @@ static HRESULT vertex_shader_init(struct wined3d_shader *shader, struct wined3d_
     if (FAILED(hr = shader_init(shader, device, desc, parent, parent_ops)))
         return hr;
 
-    if (FAILED(hr = shader_set_function(shader, device,
+    if (FAILED(hr = shader_set_function(shader,
             WINED3D_SHADER_TYPE_VERTEX, NULL, device->adapter->d3d_info.limits.vs_uniform_count)))
     {
         shader_cleanup(shader);
@@ -2760,7 +2760,7 @@ static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3
     if (FAILED(hr = shader_init(shader, device, desc, parent, parent_ops)))
         return hr;
 
-    if (FAILED(hr = shader_set_function(shader, device, WINED3D_SHADER_TYPE_GEOMETRY, so_desc, 0)))
+    if (FAILED(hr = shader_set_function(shader, WINED3D_SHADER_TYPE_GEOMETRY, so_desc, 0)))
         goto fail;
 
     return WINED3D_OK;
@@ -3091,7 +3091,7 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
     if (FAILED(hr = shader_init(shader, device, desc, parent, parent_ops)))
         return hr;
 
-    if (FAILED(hr = shader_set_function(shader, device,
+    if (FAILED(hr = shader_set_function(shader,
             WINED3D_SHADER_TYPE_PIXEL, NULL, d3d_info->limits.ps_uniform_count)))
     {
         shader_cleanup(shader);
@@ -3184,7 +3184,7 @@ HRESULT CDECL wined3d_shader_create_cs(struct wined3d_device *device, const stru
         return hr;
     }
 
-    if (FAILED(hr = shader_set_function(object, device, WINED3D_SHADER_TYPE_COMPUTE, NULL, 0)))
+    if (FAILED(hr = shader_set_function(object, WINED3D_SHADER_TYPE_COMPUTE, NULL, 0)))
     {
         shader_cleanup(object);
         free(object);
@@ -3218,7 +3218,7 @@ HRESULT CDECL wined3d_shader_create_ds(struct wined3d_device *device, const stru
         return hr;
     }
 
-    if (FAILED(hr = shader_set_function(object, device, WINED3D_SHADER_TYPE_DOMAIN, NULL, 0)))
+    if (FAILED(hr = shader_set_function(object, WINED3D_SHADER_TYPE_DOMAIN, NULL, 0)))
     {
         shader_cleanup(object);
         free(object);
@@ -3280,7 +3280,7 @@ HRESULT CDECL wined3d_shader_create_hs(struct wined3d_device *device, const stru
         return hr;
     }
 
-    if (FAILED(hr = shader_set_function(object, device, WINED3D_SHADER_TYPE_HULL, NULL, 0)))
+    if (FAILED(hr = shader_set_function(object, WINED3D_SHADER_TYPE_HULL, NULL, 0)))
     {
         shader_cleanup(object);
         free(object);
