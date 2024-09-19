@@ -53,6 +53,9 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags,
 HRESULT DP_MSG_ReadPackedPlayer( char *data, DWORD *offset, DWORD maxSize,
                                  DPPLAYERINFO *playerInfo );
 HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WCHAR *password );
+HRESULT DP_MSG_SendCreatePlayer( IDirectPlayImpl *This, DPID toId, DPID id, DWORD flags,
+                                 DPNAME *name, void *playerData, DWORD playerDataSize,
+                                 DPID systemPlayerId );
 HRESULT DP_MSG_SendAddForwardAck( IDirectPlayImpl *This, DPID id );
 
 void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId,
@@ -193,6 +196,11 @@ typedef const DPMSG_ENUMSESSIONSREQUEST* LPCDPMSG_ENUMSESSIONSREQUEST;
 typedef struct tagDPMSG_CREATESESSION
 {
   DPMSG_SENDENVELOPE envelope;
+  DPID toId;
+  DPID playerId;
+  DPID groupId;
+  DWORD createOffset;
+  DWORD passwordOffset;
 } DPMSG_CREATESESSION, *LPDPMSG_CREATESESSION;
 typedef const DPMSG_CREATESESSION* LPCDPMSG_CREATESESSION;
 

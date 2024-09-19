@@ -424,7 +424,7 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
       hr = DP_CreatePlayer( This, messageHeader, &msg->playerId, &playerInfo.name,
                             playerInfo.playerData, playerInfo.playerDataLength, playerInfo.spData,
                             playerInfo.spDataLength, playerInfo.flags & ~DPLAYI_PLAYER_PLAYERLOCAL,
-                            NULL, FALSE );
+                            NULL, NULL, FALSE );
       if ( FAILED( hr ) )
       {
         LeaveCriticalSection( &This->lock );
@@ -1494,7 +1494,7 @@ static HRESULT DP_CreateSPPlayer( IDirectPlayImpl *This, DPID dpid, DWORD flags,
 
 HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPNAME *lpName,
         void *data, DWORD dataSize, void *spData, DWORD spDataSize, DWORD dwFlags, HANDLE hEvent,
-        BOOL bAnsi )
+        struct PlayerData **playerData, BOOL bAnsi )
 {
   lpPlayerData lpPData;
   lpPlayerList lpPList;
@@ -1596,6 +1596,9 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
 
   if( ~dwFlags & DPLAYI_PLAYER_SYSPLAYER )
     This->dp2->lpSessionDesc->dwCurrentPlayers++;
+
+  if( playerData )
+    *playerData = lpPData;
 
   return DP_OK;
 }
@@ -1738,6 +1741,7 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
         DPNAME *lpPlayerName, HANDLE hEvent, void *lpData, DWORD dwDataSize, DWORD dwFlags,
         BOOL bAnsi )
 {
+  struct PlayerData *player;
   HRESULT hr = DP_OK;
   DWORD dwCreateFlags = 0;
 
@@ -1816,27 +1820,20 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
   /* We pass creation flags, so we can distinguish sysplayers and not count them in the current
      player total */
   hr = DP_CreatePlayer( This, NULL, lpidPlayer, lpPlayerName, lpData, dwDataSize, NULL, 0,
-                        dwCreateFlags, hEvent, bAnsi );
-
-  LeaveCriticalSection( &This->lock );
-
+                        dwCreateFlags, hEvent, &player, bAnsi );
   if( FAILED( hr ) )
+  {
+    LeaveCriticalSection( &This->lock );
     return hr;
+  }
 
 #if 1
-  if( !This->dp2->bHostInterface )
+  hr = DP_MSG_SendCreatePlayer( This, DPID_ALLPLAYERS, *lpidPlayer, dwCreateFlags, player->name,
+                                lpData, dwDataSize, This->dp2->systemPlayerId );
+  if( FAILED( hr ) )
   {
-    /* Let the name server know about the creation of this player */
-    /* FIXME: Is this only to be done for the creation of a server player or
-     *        is this used for regular players? If only for server players, move
-     *        this call to DP_SecureOpen(...);
-     */
-#if 0
-    TRACE( "Sending message to self to get my addr\n" );
-    DP_MSG_ToSelf( This, *lpidPlayer ); /* This is a hack right now */
-#endif
-
-    hr = DP_MSG_ForwardPlayerCreation( This, *lpidPlayer, NULL );
+    LeaveCriticalSection( &This->lock );
+    return hr;
   }
 #else
   /* Inform all other peers of the creation of a new player. If there are
@@ -1866,6 +1863,8 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
             &msg, sizeof( msg ), 0, 0, NULL, NULL );
   }
 #endif
+
+  LeaveCriticalSection( &This->lock );
 
   return hr;
 }
@@ -3529,7 +3528,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
      * while bConnectionOpen is FALSE. */
 
     hr = DP_CreatePlayer( This, NULL, &This->dp2->systemPlayerId, NULL, NULL, 0, NULL, 0,
-                          createFlags, NULL, bAnsi );
+                          createFlags, NULL, NULL, bAnsi );
     if( FAILED( hr ) )
     {
       free( password );
@@ -3565,7 +3564,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
     This->dp2->systemPlayerId = DP_NextObjectId();
 
     hr = DP_CreatePlayer( This, NULL, &This->dp2->systemPlayerId, NULL, NULL, 0, NULL, 0,
-                          createFlags, NULL, bAnsi );
+                          createFlags, NULL, NULL, bAnsi );
     if( FAILED( hr ) )
     {
       DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );

@@ -1114,11 +1114,10 @@ static void checkNoMoreMessages_( int line, SOCKET sock )
     ok_( __FILE__, line )( !wsResult || wsResult == SOCKET_ERROR, "recv() returned %d.\n", wsResult );
 }
 
-#define checkSpHeader( header, expectedSize, sizeTodo ) checkSpHeader_( __LINE__, header, expectedSize, sizeTodo )
-static unsigned short checkSpHeader_( int line, SpHeader *header, DWORD expectedSize, BOOL sizeTodo )
+#define checkSpHeader( header, expectedSize ) checkSpHeader_( __LINE__, header, expectedSize )
+static unsigned short checkSpHeader_( int line, SpHeader *header, DWORD expectedSize )
 {
-    todo_wine_if( sizeTodo ) ok_( __FILE__, line )( header->mixed == 0xfab00000 + expectedSize, "got mixed %#lx.\n",
-                                                    header->mixed );
+    ok_( __FILE__, line )( header->mixed == 0xfab00000 + expectedSize, "got mixed %#lx.\n", header->mixed );
     ok_( __FILE__, line )( header->addr.sin_family == AF_INET, "got family %d.\n", header->addr.sin_family );
     ok_( __FILE__, line )( 2300 <= ntohs( header->addr.sin_port ) && ntohs( header->addr.sin_port ) < 2350,
                            "got port %d.\n", ntohs( header->addr.sin_port ) );
@@ -1127,12 +1126,11 @@ static unsigned short checkSpHeader_( int line, SpHeader *header, DWORD expected
     return ntohs( header->addr.sin_port );
 }
 
-#define checkMessageHeader( header, expectedCommand, commandTodo ) checkMessageHeader_( __LINE__, header, expectedCommand, commandTodo )
-static void checkMessageHeader_( int line, MessageHeader *header, WORD expectedCommand, BOOL commandTodo )
+#define checkMessageHeader( header, expectedCommand ) checkMessageHeader_( __LINE__, header, expectedCommand )
+static void checkMessageHeader_( int line, MessageHeader *header, WORD expectedCommand )
 {
     ok_( __FILE__, line )( header->magic == 0x79616c70, "got magic %#lx.\n", header->magic );
-    todo_wine_if( commandTodo ) ok_( __FILE__, line )( header->command == expectedCommand, "got command %d.\n",
-                                                       header->command );
+    ok_( __FILE__, line )( header->command == expectedCommand, "got command %d.\n", header->command );
 }
 
 #define checkSpData( spData ) checkSpData_( __LINE__, spData )
@@ -1151,34 +1149,30 @@ static void checkSpData_( int line, SpData *spData )
 }
 
 #define checkPackedPlayer( player, expectedFlags, expectedId, expectedShortNameLength, expectedLongNameLength, \
-                           expectedPlayerDataSize, expectedSystemPlayerId, flagsTodo, nameTodo, playerDataTodo, \
-                           systemPlayerIdTodo ) \
+                           expectedPlayerDataSize, expectedSystemPlayerId, flagsTodo ) \
         checkPackedPlayer_( __LINE__, player, expectedFlags, expectedId, expectedShortNameLength, expectedLongNameLength, \
-                            expectedPlayerDataSize, expectedSystemPlayerId, flagsTodo, nameTodo, playerDataTodo, \
-                            systemPlayerIdTodo )
+                            expectedPlayerDataSize, expectedSystemPlayerId, flagsTodo )
 static void checkPackedPlayer_( int line, PackedPlayer *player, DWORD expectedFlags, DPID expectedId,
                                 DWORD expectedShortNameLength, DWORD expectedLongNameLength,
-                                DWORD expectedPlayerDataSize, DPID expectedSystemPlayerId, BOOL flagsTodo,
-                                BOOL nameTodo, BOOL playerDataTodo, BOOL systemPlayerIdTodo )
+                                DWORD expectedPlayerDataSize, DPID expectedSystemPlayerId, BOOL flagsTodo )
 {
     DWORD expectedSize = sizeof( PackedPlayer ) + expectedShortNameLength + expectedLongNameLength + sizeof( SpData )
                        + expectedPlayerDataSize;
 
-    todo_wine_if( nameTodo || playerDataTodo ) ok_( __FILE__, line )( player->size == expectedSize,
-                                                                      "got player info size %lu.\n", player->size );
+    ok_( __FILE__, line )( player->size == expectedSize, "got player info size %lu.\n", player->size );
     todo_wine_if( flagsTodo ) ok_( __FILE__, line )( player->flags == expectedFlags, "got flags %#lx.\n",
                                                      player->flags );
     ok_( __FILE__, line )( player->id == expectedId, "got player info player id %#lx.\n", player->id );
-    todo_wine_if( nameTodo ) ok_( __FILE__, line )( player->shortNameLength == expectedShortNameLength,
-                                                    "got short name length %lu.\n", player->shortNameLength );
-    todo_wine_if( nameTodo ) ok_( __FILE__, line )( player->longNameLength == expectedLongNameLength,
-                                                    "got long name length %lu.\n", player->longNameLength );
+    ok_( __FILE__, line )( player->shortNameLength == expectedShortNameLength, "got short name length %lu.\n",
+                           player->shortNameLength );
+    ok_( __FILE__, line )( player->longNameLength == expectedLongNameLength, "got long name length %lu.\n",
+                           player->longNameLength );
     ok_( __FILE__, line )( player->spDataSize == sizeof( SpData ), "got SP data size %lu.\n", player->spDataSize );
-    todo_wine_if( playerDataTodo ) ok_( __FILE__, line )( player->playerDataSize == expectedPlayerDataSize,
-                                                          "got player data size %lu.\n", player->playerDataSize );
+    ok_( __FILE__, line )( player->playerDataSize == expectedPlayerDataSize, "got player data size %lu.\n",
+                           player->playerDataSize );
     ok_( __FILE__, line )( !player->playerCount, "got player count %lu.\n", player->playerCount );
-    todo_wine_if( systemPlayerIdTodo ) ok_( __FILE__, line )( player->systemPlayerId == expectedSystemPlayerId,
-                                                              "got system player id %#lx.\n", player->systemPlayerId );
+    ok_( __FILE__, line )( player->systemPlayerId == expectedSystemPlayerId, "got system player id %#lx.\n",
+                           player->systemPlayerId );
     ok_( __FILE__, line )( player->fixedSize == sizeof( PackedPlayer ), "got fixed size %lu.\n", player->fixedSize );
     ok_( __FILE__, line )( !player->parentId, "got parent id %#lx.\n", player->parentId );
 }
@@ -1207,8 +1201,8 @@ static unsigned short receiveEnumSessionsRequest_( int line, SOCKET sock, const 
     if ( wsResult == SOCKET_ERROR )
         return 0;
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, FALSE );
-    checkMessageHeader_( line, &request.request.header, 2, FALSE );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize );
+    checkMessageHeader_( line, &request.request.header, 2 );
     ok_( __FILE__, line )( IsEqualGUID( &request.request.appGuid, expectedAppGuid ), "got app guid %s.\n",
                            wine_dbgstr_guid( &request.request.appGuid ) );
     if ( expectedPassword )
@@ -1289,8 +1283,8 @@ static unsigned short receiveRequestPlayerId_( int line, SOCKET sock, DWORD expe
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, sizeof( request ), FALSE );
-    checkMessageHeader_( line, &request.request.header, 5, FALSE );
+    port = checkSpHeader_( line, &request.spHeader, sizeof( request ) );
+    checkMessageHeader_( line, &request.request.header, 5 );
     todo_wine_if( flagsTodo ) ok_( __FILE__, line )( request.request.flags == expectedFlags, "got flags %#lx.\n",
                                                      request.request.flags );
 
@@ -1358,8 +1352,8 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
     if ( wsResult == SOCKET_ERROR )
         return 0;
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, FALSE );
-    checkMessageHeader_( line, &request.request.header, 19, FALSE );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize );
+    checkMessageHeader_( line, &request.request.header, 19 );
     ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
     ok_( __FILE__, line )( request.request.playerId == expectedPlayerId, "got player id %#lx.\n",
                            request.request.playerId );
@@ -1368,8 +1362,7 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
                            request.request.createOffset );
     ok_( __FILE__, line )( request.request.passwordOffset == 108, "got password offset %lu.\n",
                            request.request.passwordOffset );
-    checkPackedPlayer_( line, &request.request.playerInfo, 0x9, expectedPlayerId, 0, 0, 0, expectedPlayerId, FALSE,
-                        FALSE, FALSE, FALSE );
+    checkPackedPlayer_( line, &request.request.playerInfo, 0x9, expectedPlayerId, 0, 0, 0, expectedPlayerId, FALSE );
     checkSpData_( line, &request.request.spData );
 
     wsResult = receiveMessage_( line, sock, password, expectedPasswordSize );
@@ -1639,20 +1632,19 @@ static unsigned short receiveAddForwardAck_( int line, SOCKET sock, DPID expecte
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, sizeof( request ), FALSE );
-    checkMessageHeader_( line, &request.request.header, 47, FALSE );
+    port = checkSpHeader_( line, &request.spHeader, sizeof( request ) );
+    checkMessageHeader_( line, &request.request.header, 47 );
 
     return port;
 }
 
 #define receiveCreatePlayer( sock, expectedPlayerId, expectedFlags, expectedShortName, expectedLongName, \
-                             expectedPlayerData, expectedPlayerDataSize, flagsTodo, nameTodo ) \
+                             expectedPlayerData, expectedPlayerDataSize, flagsTodo ) \
         receiveCreatePlayer_( __LINE__, sock, expectedPlayerId, expectedFlags, expectedShortName, expectedLongName, \
-                              expectedPlayerData, expectedPlayerDataSize, flagsTodo, nameTodo )
+                              expectedPlayerData, expectedPlayerDataSize, flagsTodo )
 static unsigned short receiveCreatePlayer_( int line, SOCKET sock, DPID expectedPlayerId, DWORD expectedFlags,
                                             const WCHAR *expectedShortName, const WCHAR *expectedLongName,
-                                            void *expectedPlayerData, DWORD expectedPlayerDataSize, BOOL flagsTodo,
-                                            BOOL nameTodo )
+                                            void *expectedPlayerData, DWORD expectedPlayerDataSize, BOOL flagsTodo )
 {
     struct
     {
@@ -1679,60 +1671,59 @@ static unsigned short receiveCreatePlayer_( int line, SOCKET sock, DPID expected
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, TRUE );
-    checkMessageHeader_( line, &request.request.header, 8, TRUE );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize );
+    checkMessageHeader_( line, &request.request.header, 8 );
     ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
     ok_( __FILE__, line )( request.request.playerId == expectedPlayerId, "got player id %#lx.\n",
                            request.request.playerId );
     ok_( __FILE__, line )( !request.request.groupId, "got group id %#lx.\n", request.request.groupId );
     ok_( __FILE__, line )( request.request.createOffset == 28, "got create offset %lu.\n",
                            request.request.createOffset );
-    todo_wine ok_( __FILE__, line )( !request.request.passwordOffset, "got password offset %lu.\n",
-                                     request.request.passwordOffset );
+    ok_( __FILE__, line )( !request.request.passwordOffset, "got password offset %lu.\n",
+                           request.request.passwordOffset );
     checkPackedPlayer_( line, &request.request.playerInfo, expectedFlags, expectedPlayerId, expectedShortNameSize,
-                        expectedLongNameSize, expectedPlayerDataSize, 0x12345678, flagsTodo, nameTodo, TRUE, TRUE );
+                        expectedLongNameSize, expectedPlayerDataSize, 0x12345678, flagsTodo );
 
     if ( expectedShortName )
     {
         wsResult = receiveMessage_( line, sock, shortName, expectedShortNameSize );
 
         ok_( __FILE__, line )( wsResult == expectedShortNameSize, "recv() returned %d.\n", wsResult );
-        todo_wine_if( nameTodo ) ok_( __FILE__, line )( !lstrcmpW( shortName, expectedShortName ),
-                                                        "got short name %s.\n", wine_dbgstr_w( shortName ) );
+        ok_( __FILE__, line )( !lstrcmpW( shortName, expectedShortName ), "got short name %s.\n",
+                               wine_dbgstr_w( shortName ) );
     }
 
     if ( expectedLongName )
     {
         wsResult = receiveMessage_( line, sock, longName, expectedLongNameSize );
 
-        todo_wine_if( nameTodo ) ok_( __FILE__, line )( wsResult == expectedLongNameSize, "recv() returned %d.\n",
-                                                        wsResult );
-        todo_wine_if( nameTodo ) ok_( __FILE__, line )( !lstrcmpW( longName, expectedLongName ),
-                                                        "got long name %s.\n", wine_dbgstr_w( longName ) );
+        ok_( __FILE__, line )( wsResult == expectedLongNameSize, "recv() returned %d.\n", wsResult );
+        ok_( __FILE__, line )( !lstrcmpW( longName, expectedLongName ), "got long name %s.\n",
+                               wine_dbgstr_w( longName ) );
     }
 
     wsResult = receiveMessage_( line, sock, &spData, sizeof( spData ) );
-    todo_wine_if( nameTodo ) ok_( __FILE__, line )( wsResult == sizeof( spData ), "recv() returned %d.\n", wsResult );
-    todo_wine_if( nameTodo ) checkSpData_( line, &spData );
+    ok_( __FILE__, line )( wsResult == sizeof( spData ), "recv() returned %d.\n", wsResult );
+    checkSpData_( line, &spData );
 
     if ( expectedPlayerDataSize )
     {
         wsResult = receiveMessage_( line, sock, playerData, expectedPlayerDataSize );
 
-        todo_wine ok_( __FILE__, line )( wsResult == expectedPlayerDataSize, "recv() returned %d.\n", wsResult );
-        todo_wine ok_( __FILE__, line )( !memcmp( playerData, expectedPlayerData, expectedPlayerDataSize ),
-                                         "player data didn't match.\n" );
+        ok_( __FILE__, line )( wsResult == expectedPlayerDataSize, "recv() returned %d.\n", wsResult );
+        ok_( __FILE__, line )( !memcmp( playerData, expectedPlayerData, expectedPlayerDataSize ),
+                               "player data didn't match.\n" );
     }
 
     wsResult = receiveMessage_( line, sock, &reserved1, sizeof( reserved1 ) );
 
-    todo_wine ok_( __FILE__, line )( wsResult == sizeof( reserved1 ), "recv() returned %d.\n", wsResult );
-    todo_wine ok_( __FILE__, line )( !reserved1, "got reserved1 %d.\n", reserved1 );
+    ok_( __FILE__, line )( wsResult == sizeof( reserved1 ), "recv() returned %d.\n", wsResult );
+    ok_( __FILE__, line )( !reserved1, "got reserved1 %d.\n", reserved1 );
 
     wsResult = receiveMessage_( line, sock, &reserved2, sizeof( reserved2 ) );
 
-    todo_wine ok_( __FILE__, line )( wsResult == sizeof( reserved2 ), "recv() returned %d.\n", wsResult );
-    todo_wine ok_( __FILE__, line )( !reserved2, "got reserved2 %lu.\n", reserved2 );
+    ok_( __FILE__, line )( wsResult == sizeof( reserved2 ), "recv() returned %d.\n", wsResult );
+    ok_( __FILE__, line )( !reserved2, "got reserved2 %lu.\n", reserved2 );
 
     return port;
 }
@@ -4214,15 +4205,15 @@ static void checkCreatePlayerOrGroupMessages_( int line, IDirectPlay4 *dp, DWORD
 
 #define check_CreatePlayer( dp, dpid, name, flags, expectedHr, expectedDpid, recvSock, requestExpected, \
                             expectedFlags, expectedShortName, expectedShortNameA, expectedLongName, expectedLongNameA, \
-                            expectedCurrentPlayers, flagsTodo, nameTodo ) \
+                            expectedCurrentPlayers, flagsTodo ) \
         check_CreatePlayer_( __LINE__, dp, dpid, name, flags, expectedHr, expectedDpid, recvSock, requestExpected, \
                              expectedFlags, expectedShortName, expectedShortNameA, expectedLongName, expectedLongNameA, \
-                             expectedCurrentPlayers, flagsTodo, nameTodo )
+                             expectedCurrentPlayers, flagsTodo )
 static void check_CreatePlayer_( int line, IDirectPlay4 *dp, DPID *dpid, DPNAME *name, DWORD flags, HRESULT expectedHr,
                                  DPID expectedDpid, SOCKET recvSock, BOOL requestExpected, DWORD expectedFlags,
                                  const WCHAR *expectedShortName, const char *expectedShortNameA,
                                  const WCHAR *expectedLongName, const char *expectedLongNameA,
-                                 DWORD expectedCurrentPlayers, BOOL flagsTodo, BOOL nameTodo )
+                                 DWORD expectedCurrentPlayers, BOOL flagsTodo )
 {
     BYTE playerData[] = { 1, 2, 3, 4, 5, 6, 7, 8, };
     CreatePlayerParam *param;
@@ -4233,7 +4224,6 @@ static void check_CreatePlayer_( int line, IDirectPlay4 *dp, DPID *dpid, DPNAME 
 
     if ( requestExpected )
     {
-        DPSESSIONDESC2 dpsd;
         unsigned short port;
 
         port = receiveRequestPlayerId_( line, recvSock, expectedFlags, flagsTodo );
@@ -4242,11 +4232,7 @@ static void check_CreatePlayer_( int line, IDirectPlay4 *dp, DPID *dpid, DPNAME 
 
         sendRequestPlayerReply_( line, sendSock, 2349, expectedDpid, DP_OK );
         receiveCreatePlayer_( line, recvSock, expectedDpid, expectedFlags, expectedShortName, expectedLongName,
-                              playerData, sizeof( playerData ), TRUE, nameTodo );
-
-        /* Wine incorrectly expects SUPERENUMPLAYERSREPLY to be sent, so send it to prevent timeout */
-        memset( &dpsd, 0, sizeof( dpsd ) );
-        sendSuperEnumPlayersReply_( line, sendSock, 2349, 2399, &dpsd, L"" );
+                              playerData, sizeof( playerData ), flagsTodo );
 
         hr = createPlayerAsyncWait( param, 2000 );
         ok_( __FILE__, line )( hr == expectedHr, "CreatePlayer() returned %#lx.\n", hr );
@@ -4316,47 +4302,47 @@ static void test_CreatePlayer(void)
     /* Connection not initialized */
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, NULL, 0, DPERR_UNINITIALIZED, 0xdeadbeef, INVALID_SOCKET, FALSE, 0, NULL, NULL,
-                        NULL, NULL, 0, FALSE, FALSE );
+                        NULL, NULL, 0, FALSE );
 
     init_TCPIP_provider( dp, "127.0.0.1", 0 );
 
     /* Session not open */
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, NULL, 0, DPERR_INVALIDPARAMS, 0xdeadbeef, INVALID_SOCKET, FALSE, 0, NULL, NULL,
-                        NULL, NULL, 0, FALSE, FALSE );
+                        NULL, NULL, 0, FALSE );
 
     /* Join to normal session */
     joinSession( dp, &appGuidDpsd, &serverDpsd, &sendSock, &recvSock );
 
     /* Player name */
     dpid = 0xdeadbeef;
-    check_CreatePlayer( dp, &dpid, NULL, 0, DP_OK, 2, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 1, FALSE, FALSE );
+    check_CreatePlayer( dp, &dpid, NULL, 0, DP_OK, 2, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 1, FALSE );
 
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, &fullName, 0, DP_OK, 3, recvSock, TRUE, 0x8, L"short player name",
-                        "short player name", L"long player name", "long player name", 2, FALSE, TRUE );
+                        "short player name", L"long player name", "long player name", 2, FALSE );
 
     name = fullName;
     name.dwSize = 1;
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, &name, 0, DP_OK, 4, recvSock, TRUE, 0x8, L"short player name", "short player name",
-                        L"long player name", "long player name", 3, FALSE, TRUE );
+                        L"long player name", "long player name", 3, FALSE );
 
     dpid = 0xdeadbeef;
-    check_CreatePlayer( dp, &dpid, &nullName, 0, DP_OK, 5, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 4, FALSE, FALSE );
+    check_CreatePlayer( dp, &dpid, &nullName, 0, DP_OK, 5, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 4, FALSE );
 
     /* Null dpid */
     dpid = 0xdeadbeef;
-    check_CreatePlayer( dp, NULL, NULL, 0, DPERR_INVALIDPARAMS, 0, recvSock, FALSE, 0, NULL, NULL, NULL, NULL, 0, FALSE,
+    check_CreatePlayer( dp, NULL, NULL, 0, DPERR_INVALIDPARAMS, 0, recvSock, FALSE, 0, NULL, NULL, NULL, NULL, 0,
                         FALSE );
 
     /* Flags */
     dpid = 0xdeadbeef;
-    check_CreatePlayer( dp, &dpid, NULL, 0, DP_OK, 6, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 5, FALSE, FALSE );
+    check_CreatePlayer( dp, &dpid, NULL, 0, DP_OK, 6, recvSock, TRUE, 0x8, NULL, NULL, NULL, NULL, 5, FALSE );
 
     dpid = 0xdeadbeef;
     check_CreatePlayer( dp, &dpid, NULL, DPPLAYER_SPECTATOR, DP_OK, 7, recvSock, TRUE, 0x208, NULL, NULL, NULL, NULL, 6,
-                        TRUE, FALSE );
+                        TRUE );
 
     closesocket( recvSock );
     closesocket( sendSock );

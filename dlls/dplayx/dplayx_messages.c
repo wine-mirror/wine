@@ -668,7 +668,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
         hr = DP_CreatePlayer( This, msgHeader, &playerInfo.id, &playerInfo.name,
             playerInfo.playerData, playerInfo.playerDataLength, playerInfo.spData,
             playerInfo.spDataLength, playerInfo.flags & ~DPLAYI_PLAYER_PLAYERLOCAL, NULL,
-            FALSE );
+            NULL, FALSE );
         if( FAILED( hr ) )
         {
           free( msgHeader );
@@ -705,6 +705,94 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
   }
 
   return hr;
+}
+
+HRESULT DP_MSG_SendCreatePlayer( IDirectPlayImpl *This, DPID toId, DPID id, DWORD flags,
+                                 DPNAME *name, void *playerData, DWORD playerDataSize,
+                                 DPID systemPlayerId )
+{
+  DPSP_SENDTOGROUPEXDATA sendData;
+  DPLAYI_PACKEDPLAYER playerInfo;
+  SGBUFFER buffers[ 8 ] = { 0 };
+  UCHAR reserved[ 6 ] = { 0 };
+  DWORD shortNameLength = 0;
+  DWORD longNameLength = 0;
+  DPMSG_CREATESESSION msg;
+  DWORD spPlayerDataSize;
+  void *spPlayerData;
+  HRESULT hr;
+
+  hr = IDirectPlaySP_GetSPPlayerData( This->dp2->spData.lpISP, id, &spPlayerData, &spPlayerDataSize,
+                                      DPSET_REMOTE );
+  if( FAILED( hr ) )
+    return hr;
+
+  if ( name->lpszShortName )
+    shortNameLength = ( lstrlenW( name->lpszShortName ) + 1 ) * sizeof( WCHAR );
+
+  if ( name->lpszLongName )
+    longNameLength = ( lstrlenW( name->lpszLongName ) + 1 ) * sizeof( WCHAR );
+
+  msg.envelope.dwMagic = DPMSGMAGIC_DPLAYMSG;
+  msg.envelope.wCommandId = DPMSGCMD_CREATESESSION;
+  msg.envelope.wVersion = DPMSGVER_DP6;
+  msg.toId = 0;
+  msg.playerId = id;
+  msg.groupId = 0;
+  msg.createOffset = sizeof( DPMSG_CREATESESSION );
+  msg.passwordOffset = 0;
+
+  playerInfo.size = sizeof( DPLAYI_PACKEDPLAYER ) + shortNameLength + longNameLength
+                  + spPlayerDataSize + playerDataSize;
+  playerInfo.flags = flags;
+  playerInfo.id = id;
+  playerInfo.shortNameLength = shortNameLength;
+  playerInfo.longNameLength = longNameLength;
+  playerInfo.spDataLength = spPlayerDataSize;
+  playerInfo.playerDataLength = playerDataSize;
+  playerInfo.playerCount = 0;
+  playerInfo.systemPlayerId = systemPlayerId;
+  playerInfo.fixedSize = sizeof( DPLAYI_PACKEDPLAYER );
+  playerInfo.version = DPMSGVER_DP6;
+  playerInfo.parentId = 0;
+
+  buffers[ 0 ].len = This->dp2->spData.dwSPHeaderSize;
+  buffers[ 0 ].pData = NULL;
+  buffers[ 1 ].len = sizeof( msg );
+  buffers[ 1 ].pData = (UCHAR *)&msg;
+  buffers[ 2 ].len = sizeof( playerInfo );
+  buffers[ 2 ].pData = (UCHAR *)&playerInfo;
+  buffers[ 3 ].len = shortNameLength;
+  buffers[ 3 ].pData = (UCHAR *)name->lpszShortName;
+  buffers[ 4 ].len = longNameLength;
+  buffers[ 4 ].pData = (UCHAR *)name->lpszLongName;
+  buffers[ 5 ].len = spPlayerDataSize;
+  buffers[ 5 ].pData = spPlayerData;
+  buffers[ 6 ].len = playerDataSize;
+  buffers[ 6 ].pData = playerData;
+  buffers[ 7 ].len = sizeof( reserved );
+  buffers[ 7 ].pData = reserved;
+
+  sendData.lpISP = This->dp2->spData.lpISP;
+  sendData.dwFlags = DPSEND_GUARANTEED;
+  sendData.idGroupTo = toId;
+  sendData.idPlayerFrom = This->dp2->systemPlayerId;
+  sendData.lpSendBuffers = buffers;
+  sendData.cBuffers = ARRAYSIZE( buffers );
+  sendData.dwMessageSize = DP_MSG_ComputeMessageSize( sendData.lpSendBuffers, sendData.cBuffers );
+  sendData.dwPriority = 0;
+  sendData.dwTimeout = 0;
+  sendData.lpDPContext = NULL;
+  sendData.lpdwSPMsgID = NULL;
+
+  hr = (*This->dp2->spData.lpCB->SendToGroupEx)( &sendData );
+  if( FAILED( hr ) )
+  {
+    ERR( "SendToGroupEx failed: %s\n", DPLAYX_HresultToString( hr ) );
+    return hr;
+  }
+
+  return DP_OK;
 }
 
 HRESULT DP_MSG_SendAddForwardAck( IDirectPlayImpl *This, DPID id )
