@@ -116,8 +116,7 @@ static void check_service_definition_(const char *file, unsigned line, char cons
 
     ret = QueryServiceConfig2A(svc, SERVICE_CONFIG_DELAYED_AUTO_START_INFO, (LPBYTE)&delayed_auto_info,
                                sizeof(delayed_auto_info), &needed);
-    todo_wine lok(!!ret, "QueryServiceConfig2A(SERVICE_CONFIG_DELAYED_AUTO_START_INFO) failed: %ld\n",
-                  GetLastError());
+    lok(!!ret, "QueryServiceConfig2A(SERVICE_CONFIG_DELAYED_AUTO_START_INFO) failed: %ld\n", GetLastError());
 
 #define check_str(a, b, msg) lok((a) && (b) && (a) != (b) && !strcmp((a), (b)), msg ": %s != %s\n", \
                                  debugstr_a((a)), debugstr_a((b)))
