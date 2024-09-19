@@ -35,22 +35,6 @@ AS_VAR_IF([ac_cv_prog_$1],[],
      AC_CHECK_PROG([$1],[$2],[$2],[$3],[$4])])],
 [AS_VAR_COPY([$1],[ac_cv_prog_$1])])])
 
-dnl WINE_HEADER_MAJOR()
-dnl
-dnl Same as AC_HEADER_MAJOR but fixed to handle the glibc 2.25 sys/types.h breakage
-dnl
-AC_DEFUN([WINE_HEADER_MAJOR],
-[AC_CHECK_HEADER(sys/mkdev.h,
-		[AC_DEFINE(MAJOR_IN_MKDEV, 1,
-			   [Define to 1 if 'major', 'minor', and 'makedev' are
-			    declared in <mkdev.h>.])])
-if test $ac_cv_header_sys_mkdev_h = no; then
-  AC_CHECK_HEADER(sys/sysmacros.h,
-		  [AC_DEFINE(MAJOR_IN_SYSMACROS, 1,
-			     [Define to 1 if 'major', 'minor', and 'makedev'
-			      are declared in <sysmacros.h>.])])
-fi])
-
 dnl **** Initialize the programs used by other checks ****
 dnl
 dnl Usage: WINE_PATH_SONAME_TOOLS

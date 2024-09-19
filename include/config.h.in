@@ -810,9 +810,6 @@
 /* Define to the soname of the libXxf86vm library. */
 #undef SONAME_LIBXXF86VM
 
-/* Define to 1 if the 'S_IS*' macros in <sys/stat.h> do not work properly. */
-#undef STAT_MACROS_BROKEN
-
 /* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
@@ -820,9 +817,6 @@
 
 /* Define if xattr functions take additional arguments (macOS) */
 #undef XATTR_ADDITIONAL_OPTIONS
-
-/* Define to 1 if the X Window System is missing or not being used. */
-#undef X_DISPLAY_MISSING
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
@@ -838,11 +832,5 @@
 
 /* Define to 1 on platforms where this makes time_t a 64-bit type. */
 #undef __MINGW_USE_VC2005_COMPAT
-
-/* Define to '__inline__' or '__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
-#ifndef __cplusplus
-#undef inline
-#endif
 
 #endif /* __WINE_CONFIG_H */
