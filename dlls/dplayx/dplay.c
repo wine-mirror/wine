@@ -2446,11 +2446,13 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    EnumSessionAsyncCallbackData *data;
     DWORD defaultTimeout;
     void *connection;
     DPCAPS caps;
     DWORD  size;
-    HRESULT hr = DP_OK;
+    HRESULT hr;
+    DWORD tid;
 
     TRACE( "(%p)->(%p,0x%08lx,%p,%p,0x%08lx)\n", This, sdesc, timeout, enumsessioncb,
             context, flags );
@@ -2506,7 +2508,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
     if ( flags & DPENUMSESSIONS_STOPASYNC )
     {
         DP_KillEnumSessionThread( This );
-        return hr;
+        return DP_OK;
     }
 
     for ( ;; )
@@ -2540,47 +2542,50 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
             break;
     }
 
-    if ( flags & DPENUMSESSIONS_ASYNC )
+    if ( !(flags & DPENUMSESSIONS_ASYNC) )
+        return DP_OK;
+
+    /* Async enumeration */
+
+    if ( This->dp2->dwEnumSessionLock )
+        return DPERR_CONNECTING;
+
+    /* See if we've already created a thread to service this interface */
+    if ( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
+        return DP_OK;
+
+    This->dp2->dwEnumSessionLock++;
+
+    /* Send the first enum request inline since the user may cancel a dialog
+     * if one is presented. Also, may also have a connecting return code.
+     */
+    hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags, &This->dp2->spData );
+    if ( FAILED( hr ) )
     {
-        if ( This->dp2->dwEnumSessionLock )
-            return DPERR_CONNECTING;
-
-        /* See if we've already created a thread to service this interface */
-        if ( This->dp2->hEnumSessionThread == INVALID_HANDLE_VALUE )
-        {
-            DWORD tid;
-            This->dp2->dwEnumSessionLock++;
-
-            /* Send the first enum request inline since the user may cancel a dialog
-             * if one is presented. Also, may also have a connecting return code.
-             */
-            hr = NS_SendSessionRequestBroadcast( &sdesc->guidApplication, flags,
-                    &This->dp2->spData );
-
-            if ( SUCCEEDED(hr) )
-            {
-                EnumSessionAsyncCallbackData* data = calloc( 1, sizeof( *data ) );
-                /* FIXME: need to kill the thread on object deletion */
-                data->lpSpData  = &This->dp2->spData;
-                data->requestGuid = sdesc->guidApplication;
-                data->dwEnumSessionFlags = flags;
-                data->dwTimeout = timeout ? timeout : defaultTimeout;
-
-                This->dp2->hKillEnumSessionThreadEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
-                if ( !DuplicateHandle( GetCurrentProcess(), This->dp2->hKillEnumSessionThreadEvent,
-                            GetCurrentProcess(), &data->hSuicideRequest, 0, FALSE,
-                            DUPLICATE_SAME_ACCESS ) )
-                    ERR( "Can't duplicate thread killing handle\n" );
-
-                TRACE( ": creating EnumSessionsRequest thread\n" );
-                This->dp2->hEnumSessionThread = CreateThread( NULL, 0,
-                        DP_EnumSessionsSendAsyncRequestThread, data, 0, &tid );
-            }
-            This->dp2->dwEnumSessionLock--;
-        }
+        This->dp2->dwEnumSessionLock--;
+        return hr;
     }
 
-    return hr;
+    data = calloc( 1, sizeof( *data ) );
+    /* FIXME: need to kill the thread on object deletion */
+    data->lpSpData  = &This->dp2->spData;
+    data->requestGuid = sdesc->guidApplication;
+    data->dwEnumSessionFlags = flags;
+    data->dwTimeout = timeout ? timeout : defaultTimeout;
+
+    This->dp2->hKillEnumSessionThreadEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
+    if ( !DuplicateHandle( GetCurrentProcess(), This->dp2->hKillEnumSessionThreadEvent,
+                           GetCurrentProcess(), &data->hSuicideRequest, 0, FALSE,
+                           DUPLICATE_SAME_ACCESS ) )
+        ERR( "Can't duplicate thread killing handle\n" );
+
+    TRACE( ": creating EnumSessionsRequest thread\n" );
+    This->dp2->hEnumSessionThread = CreateThread( NULL, 0, DP_EnumSessionsSendAsyncRequestThread,
+                                                  data, 0, &tid );
+
+    This->dp2->dwEnumSessionLock--;
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI IDirectPlay2AImpl_GetCaps( IDirectPlay2A *iface, DPCAPS *caps, DWORD flags )
