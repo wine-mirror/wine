@@ -38,16 +38,20 @@ struct device_entry
     DEVMODEW pending; /* pending mode when moving */
 
     RECT draw_rect;
+    float draw_scale;
     BOOL mouse_over;
+    POINT move_point;
 };
 static struct list devices = LIST_INIT( devices );
 static struct device_entry *selected;
+static BOOL dragging;
 
 static void clear_devices( HWND hwnd )
 {
     struct device_entry *entry, *next;
 
     selected = NULL;
+    dragging = FALSE;
     SendDlgItemMessageW( hwnd, IDC_DISPLAY_SETTINGS_LIST, CB_RESETCONTENT, 0, 0 );
 
     LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device_entry, entry )
@@ -296,6 +300,7 @@ static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, L
             rect = map_virtual_client_rect( rect, client_rect, virtual_rect, scale );
             draw_monitor_rect( hdc, entry, rect );
             entry->draw_rect = rect;
+            entry->draw_scale = scale;
         }
 
         EndPaint( hwnd, &paint );
@@ -310,9 +315,25 @@ static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, L
 
         LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
         {
+            POINT rel = {pt.x - entry->move_point.x, pt.y - entry->move_point.y};
             BOOL mouse_over = PtInRect( &entry->draw_rect, pt );
+
             if (entry->mouse_over != mouse_over) changed = TRUE;
             entry->mouse_over = mouse_over;
+
+            if (!dragging && entry == selected && (wparam & MK_LBUTTON) &&
+                max( abs( rel.x ), abs( rel.y ) ) >= 5)
+                dragging = TRUE;
+
+            if (entry == selected && dragging)
+            {
+                DEVMODEW mode = entry->current;
+                mode.dmPosition.x += rel.x / entry->draw_scale;
+                mode.dmPosition.y += rel.y / entry->draw_scale;
+                device_entry_move_rect( entry, mode );
+                SetCapture( hwnd );
+                changed = TRUE;
+            }
         }
 
         if (changed) InvalidateRect( hwnd, NULL, TRUE );
@@ -326,16 +347,40 @@ static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, L
         BOOL changed = FALSE;
 
         selected = NULL;
+        dragging = FALSE;
 
         LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
         {
             BOOL mouse_over = PtInRect( &entry->draw_rect, pt );
             if ((entry == selected) != mouse_over) changed = TRUE;
             if (mouse_over) selected = entry;
+            entry->move_point = pt;
         }
 
         update_display_settings_list( dialog );
         if (changed) InvalidateRect( hwnd, NULL, TRUE );
+        return 0;
+    }
+
+    if (msg == WM_LBUTTONUP)
+    {
+        struct device_entry *entry;
+        SetCapture( 0 );
+
+        if (selected) device_entry_snap_rect( selected );
+        LIST_FOR_EACH_ENTRY( entry, &devices, struct device_entry, entry )
+            device_entry_snap_rect( entry );
+
+        dragging = FALSE;
+        InvalidateRect( hwnd, NULL, TRUE );
+        return 0;
+    }
+
+    if (msg == WM_RBUTTONDOWN)
+    {
+        SetCapture( 0 );
+        refresh_device_list( hwnd );
+        InvalidateRect( hwnd, NULL, TRUE );
         return 0;
     }
 
