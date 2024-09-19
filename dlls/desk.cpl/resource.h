@@ -37,5 +37,6 @@
 #define IDC_STATIC          -1
 
 #define IDC_VIRTUAL_DESKTOP         2000
+#define IDC_DISPLAY_SETTINGS_LIST   2001
 
 #define ICO_MAIN            100

@@ -47,6 +47,7 @@ static void clear_devices( HWND hwnd )
     struct device_entry *entry, *next;
 
     selected = NULL;
+    SendDlgItemMessageW( hwnd, IDC_DISPLAY_SETTINGS_LIST, CB_RESETCONTENT, 0, 0 );
 
     LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device_entry, entry )
     {
@@ -75,6 +76,35 @@ static void refresh_device_list( HWND hwnd )
     }
 }
 
+static BOOL is_same_devmode( const DEVMODEW *a, const DEVMODEW *b )
+{
+    return a->dmDisplayOrientation == b->dmDisplayOrientation &&
+           a->dmBitsPerPel == b->dmBitsPerPel &&
+           a->dmPelsWidth == b->dmPelsWidth &&
+           a->dmPelsHeight == b->dmPelsHeight &&
+           a->dmDisplayFrequency == b->dmDisplayFrequency;
+}
+
+static void update_display_settings_list( HWND hwnd )
+{
+    DEVMODEW mode = {.dmSize = sizeof(mode)};
+    UINT i, sel = -1;
+
+    SendDlgItemMessageW( hwnd, IDC_DISPLAY_SETTINGS_LIST, CB_RESETCONTENT, 0, 0 );
+    if (!selected) return;
+
+    for (i = 0; EnumDisplaySettingsExW( selected->adapter.DeviceName, i, &mode, 0 ); ++i)
+    {
+        WCHAR buffer[1024];
+        swprintf( buffer, ARRAY_SIZE(buffer), L"%ux%u (%uHz %ubpp)",
+                  mode.dmPelsWidth, mode.dmPelsHeight, mode.dmDisplayFrequency, mode.dmBitsPerPel );
+        SendDlgItemMessageW( hwnd, IDC_DISPLAY_SETTINGS_LIST, CB_ADDSTRING, 0, (LPARAM)buffer );
+        if (is_same_devmode( &mode, &selected->current )) sel = i;
+    }
+
+    if (sel != -1) SendDlgItemMessageW( hwnd, IDC_DISPLAY_SETTINGS_LIST, CB_SETCURSEL, sel, 0 );
+}
+
 static RECT rect_from_devmode( const DEVMODEW *mode )
 {
     RECT rect = {0};
@@ -82,6 +112,19 @@ static RECT rect_from_devmode( const DEVMODEW *mode )
     if (mode->dmFields & DM_PELSWIDTH) rect.right += mode->dmPelsWidth;
     if (mode->dmFields & DM_PELSHEIGHT) rect.bottom += mode->dmPelsHeight;
     return rect;
+}
+
+static void handle_display_settings_change( HWND hwnd )
+{
+    DEVMODEW mode = {.dmSize = sizeof(mode)};
+    int i;
+
+    if (!selected) return;
+
+    i = SendDlgItemMessageW( hwnd, IDC_DISPLAY_SETTINGS_LIST, CB_GETCURSEL, 0, 0 );
+    if (i < 0) return;
+
+    InvalidateRect( GetDlgItem( hwnd, IDC_VIRTUAL_DESKTOP ), NULL, TRUE );
 }
 
 static RECT map_virtual_client_rect( RECT rect, RECT client_rect, RECT virtual_rect, float scale )
@@ -110,6 +153,8 @@ static void draw_monitor_rect( HDC hdc, struct device_entry *entry, RECT rect )
 
 static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
+    HWND dialog = (HWND)GetWindowLongPtrW( hwnd, GWLP_USERDATA );
+
     TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
 
     if (msg == WM_PAINT)
@@ -187,6 +232,7 @@ static LRESULT CALLBACK desktop_view_proc( HWND hwnd, UINT msg, WPARAM wparam, L
             if (mouse_over) selected = entry;
         }
 
+        update_display_settings_list( dialog );
         if (changed) InvalidateRect( hwnd, NULL, TRUE );
         return 0;
     }
@@ -225,6 +271,12 @@ static INT_PTR CALLBACK desktop_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam,
         return TRUE;
 
     case WM_COMMAND:
+        switch (wparam)
+        {
+        case MAKEWPARAM( IDC_DISPLAY_SETTINGS_LIST, CBN_SELCHANGE ):
+            handle_display_settings_change( hwnd );
+            break;
+        }
         return TRUE;
 
     case WM_NOTIFY:
