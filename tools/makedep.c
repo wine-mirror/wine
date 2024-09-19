@@ -151,8 +151,6 @@ static const char *fontforge;
 static const char *convert;
 static const char *flex;
 static const char *bison;
-static const char *ar;
-static const char *ranlib;
 static const char *rsvg;
 static const char *icotool;
 static const char *msgfmt;
@@ -4570,8 +4568,6 @@ int main( int argc, char *argv[] )
     convert            = get_expanded_make_variable( top_makefile, "CONVERT" );
     flex               = get_expanded_make_variable( top_makefile, "FLEX" );
     bison              = get_expanded_make_variable( top_makefile, "BISON" );
-    ar                 = get_expanded_make_variable( top_makefile, "AR" );
-    ranlib             = get_expanded_make_variable( top_makefile, "RANLIB" );
     rsvg               = get_expanded_make_variable( top_makefile, "RSVG" );
     icotool            = get_expanded_make_variable( top_makefile, "ICOTOOL" );
     msgfmt             = get_expanded_make_variable( top_makefile, "MSGFMT" );

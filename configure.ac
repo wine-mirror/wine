@@ -241,12 +241,8 @@ EOF
     fi])
 test $wine_cv_recent_bison != no || AC_MSG_ERROR([Your bison version is too old. Please install bison version 3.0 or newer.])
 
-AC_CHECK_TOOLS(AR,[ar gar],ar)
 AC_CHECK_TOOL(STRIP,strip,strip)
-AC_PROG_RANLIB
 AC_PROG_LN_S
-AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
-AC_CHECK_PROGS(MSGFMT, msgfmt, false)
 WINE_PATH_PKG_CONFIG
 
 if test "x$enable_maintainer_mode" != "xyes"
@@ -323,23 +319,28 @@ else
   enable_werror=yes
 fi
 
-test "x$with_gettext" != xno || MSGFMT=false
-if test "$MSGFMT" != "false"
+if test "x$with_gettext" != xno
 then
-  AC_CACHE_CHECK([whether msgfmt supports contexts],wine_cv_msgfmt_contexts,
-  [cat >conftest.po <<EOF
+  AC_CHECK_PROGS(MSGFMT, msgfmt, false)
+  if test "$MSGFMT" != "false"
+  then
+    AC_CACHE_CHECK([whether msgfmt supports contexts],wine_cv_msgfmt_contexts,
+    [cat >conftest.po <<EOF
 # comment
 msgctxt "ctxt"
 msgid "id"
 msgstr "str"
 EOF
-  if $MSGFMT -o /dev/null conftest.po 2>&AS_MESSAGE_LOG_FD
-  then
-    wine_cv_msgfmt_contexts=yes
-  else
-    wine_cv_msgfmt_contexts=no
-  fi])
-  test $wine_cv_msgfmt_contexts != no || MSGFMT=false
+    if $MSGFMT -o /dev/null conftest.po 2>&AS_MESSAGE_LOG_FD
+    then
+      wine_cv_msgfmt_contexts=yes
+    else
+      wine_cv_msgfmt_contexts=no
+    fi])
+    test $wine_cv_msgfmt_contexts != no || MSGFMT=false
+  fi
+else
+  MSGFMT=false
 fi
 WINE_WARNING_WITH(gettext,[test "$MSGFMT" = false],
                   [gettext tools not found (or too old), translations won't be built.],
