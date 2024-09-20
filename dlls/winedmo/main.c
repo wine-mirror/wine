@@ -131,12 +131,12 @@ static void buffer_lock( DMO_OUTPUT_DATA_BUFFER *buffer, struct sample *sample )
     sample->size = size;
 }
 
-static void buffer_unlock( DMO_OUTPUT_DATA_BUFFER *buffer, struct sample *sample )
+static void buffer_unlock( DMO_OUTPUT_DATA_BUFFER *buffer, struct sample *sample, NTSTATUS status )
 {
     IMFSample *object;
     HRESULT hr;
 
-    if (FAILED(hr = IMediaBuffer_SetLength( buffer->pBuffer, sample->size )))
+    if (FAILED(hr = IMediaBuffer_SetLength( buffer->pBuffer, status ? 0 : sample->size )))
         ERR( "Failed to update buffer length, hr %#lx\n", hr );
 
     buffer->dwStatus = 0;
@@ -231,7 +231,7 @@ NTSTATUS CDECL winedmo_demuxer_read( struct winedmo_demuxer demuxer, UINT *strea
 
     buffer_lock( buffer, &params.sample );
     status = UNIX_CALL( demuxer_read, &params );
-    buffer_unlock( buffer, &params.sample );
+    buffer_unlock( buffer, &params.sample, status );
     *buffer_size = params.sample.size;
     *stream = params.stream;
 
