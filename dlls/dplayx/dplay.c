@@ -47,10 +47,9 @@ extern HRESULT DPL_CreateCompoundAddress
 
 /* Local function prototypes */
 static lpPlayerList DP_FindPlayer( IDirectPlayImpl *This, DPID dpid );
-static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi );
+static DPNAME *DP_DuplicateName( const DPNAME *src, BOOL dstAnsi, BOOL srcAnsi );
 static void DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
                              LPVOID lpData, DWORD dwDataSize );
-static void DP_DeleteDPNameStruct( LPDPNAME lpDPName );
 static BOOL CALLBACK cbDeletePlayerFromAllGroups( DPID dpId,
                                                   DWORD dwPlayerType,
                                                   LPCDPNAME lpName,
@@ -1078,7 +1077,12 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
   /* Set the desired player ID - no sanity checking to see if it exists */
   lpGData->dpid = *lpid;
 
-  DP_CopyDPNAMEStruct( &lpGData->name, lpName, bAnsi );
+  lpGData->name = DP_DuplicateName( lpName, bAnsi, bAnsi );
+  if ( !lpGData->name )
+  {
+    free( lpGData );
+    return NULL;
+  }
 
   /* FIXME: Should we check that the parent exists? */
   lpGData->parent  = idParent;
@@ -1113,7 +1117,7 @@ static void DP_DeleteGroup( IDirectPlayImpl *This, DPID dpid )
   }
 
   /* Delete player */
-  DP_DeleteDPNameStruct( &lpGList->lpGData->name );
+  free( lpGList->lpGData->name );
   free( lpGList->lpGData );
 
   /* Remove and Delete Player List object */
@@ -1431,7 +1435,12 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
   /* Set the desired player ID */
   lpPData->dpid = *lpid;
 
-  DP_CopyDPNAMEStruct( &lpPData->name, lpName, bAnsi );
+  lpPData->name = DP_DuplicateName( lpName, bAnsi, bAnsi );
+  if ( !lpPData->name )
+  {
+    free( lpPData );
+    return DPERR_OUTOFMEMORY;
+  }
 
   lpPData->dwFlags = dwFlags;
 
@@ -1457,7 +1466,7 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
   {
     free( lpPData->lpSPPlayerData );
     CloseHandle( lpPData->hEvent );
-    DP_DeleteDPNameStruct( &lpPData->name );
+    free( lpPData->name );
     free( lpPData );
     return DPERR_OUTOFMEMORY;
   }
@@ -1479,7 +1488,7 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
     free( lpPList );
     free( lpPData->lpSPPlayerData );
     CloseHandle( lpPData->hEvent );
-    DP_DeleteDPNameStruct( &lpPData->name );
+    free( lpPData->name );
     free( lpPData );
     return hr;
   }
@@ -1492,7 +1501,7 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
     free( lpPList );
     free( lpPData->lpSPPlayerData );
     CloseHandle( lpPData->hEvent );
-    DP_DeleteDPNameStruct( &lpPData->name );
+    free( lpPData->name );
     free( lpPData );
     return hr;
   }
@@ -1503,14 +1512,6 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
     This->dp2->lpSessionDesc->dwCurrentPlayers++;
 
   return DP_OK;
-}
-
-/* Delete the contents of the DPNAME struct */
-static void
-DP_DeleteDPNameStruct( LPDPNAME lpDPName )
-{
-  free( lpDPName->lpszShortNameA );
-  free( lpDPName->lpszLongNameA );
 }
 
 /* This method assumes that all links to it are already deleted */
@@ -1536,7 +1537,7 @@ static void DP_DeletePlayer( IDirectPlayImpl *This, DPID dpid )
   }
 
   /* Delete player */
-  DP_DeleteDPNameStruct( &lpPList->lpPData->name );
+  free( lpPList->lpPData->name );
 
   CloseHandle( lpPList->lpPData->hEvent );
   free( lpPList->lpPData );
@@ -1557,37 +1558,6 @@ static lpPlayerList DP_FindPlayer( IDirectPlayImpl *This, DPID dpid )
   DPQ_FIND_ENTRY( This->dp2->lpSysGroup->players, players, lpPData->dpid, ==, dpid, lpPlayers );
 
   return lpPlayers;
-}
-
-/* Basic area for Dst must already be allocated */
-static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi )
-{
-  if( lpSrc == NULL )
-  {
-    ZeroMemory( lpDst, sizeof( *lpDst ) );
-    lpDst->dwSize = sizeof( *lpDst );
-    return TRUE;
-  }
-
-  /* Delete any existing pointers */
-  free( lpDst->lpszShortNameA );
-  free( lpDst->lpszLongNameA );
-
-  /* Copy as required */
-  CopyMemory( lpDst, lpSrc, lpSrc->dwSize );
-
-  if( bAnsi )
-  {
-    lpDst->lpszShortNameA = strdup( lpSrc->lpszShortNameA );
-    lpDst->lpszLongNameA = strdup( lpSrc->lpszLongNameA );
-  }
-  else
-  {
-    lpDst->lpszShortName = wcsdup( lpSrc->lpszShortName );
-    lpDst->lpszLongName = wcsdup( lpSrc->lpszLongName );
-  }
-
-  return TRUE;
 }
 
 static DWORD DP_CopyName( DPNAME *dst, const DPNAME *src, BOOL dstAnsi, BOOL srcAnsi )
@@ -1616,6 +1586,22 @@ static DWORD DP_CopyName( DPNAME *dst, const DPNAME *src, BOOL dstAnsi, BOOL src
                              offset );
 
     return offset;
+}
+
+static DPNAME *DP_DuplicateName( const DPNAME *src, BOOL dstAnsi, BOOL srcAnsi )
+{
+    DPNAME *dst;
+    DWORD size;
+
+    size = DP_CopyName( NULL, src, dstAnsi, srcAnsi );
+
+    dst = malloc( size );
+    if ( !dst )
+        return NULL;
+
+    DP_CopyName( dst, src, dstAnsi, srcAnsi );
+
+    return dst;
 }
 
 static void
@@ -2290,7 +2276,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumGroupPlayers( IDirectPlay4 *iface, DP
         {
             /* FIXME: Need to add stuff for flags checking */
             if ( !enumplayercb( plist->lpPData->dpid, DPPLAYERTYPE_PLAYER,
-                        &plist->lpPData->name, plist->lpPData->dwFlags, context ) )
+                        plist->lpPData->name, plist->lpPData->dwFlags, context ) )
               /* User requested break */
               return DP_OK;
         }
@@ -2817,7 +2803,7 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
     return DPERR_INVALIDGROUP;
   }
 
-  dwRequiredDataSize = DP_CopyName( NULL, &lpGData->name, bAnsi, bAnsi );
+  dwRequiredDataSize = DP_CopyName( NULL, lpGData->name, bAnsi, bAnsi );
 
   if( ( lpData == NULL ) ||
       ( *lpdwDataSize < dwRequiredDataSize )
@@ -2827,7 +2813,7 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
     return DPERR_BUFFERTOOSMALL;
   }
 
-  DP_CopyName( lpData, &lpGData->name, bAnsi, bAnsi );
+  DP_CopyName( lpData, lpGData->name, bAnsi, bAnsi );
 
   return DP_OK;
 }
@@ -3112,7 +3098,7 @@ static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *
     return DPERR_INVALIDPLAYER;
   }
 
-  dwRequiredDataSize = DP_CopyName( NULL, &lpPList->lpPData->name, bAnsi, bAnsi );
+  dwRequiredDataSize = DP_CopyName( NULL, lpPList->lpPData->name, bAnsi, bAnsi );
 
   if( ( lpData == NULL ) ||
       ( *lpdwDataSize < dwRequiredDataSize )
@@ -3122,7 +3108,7 @@ static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *
     return DPERR_BUFFERTOOSMALL;
   }
 
-  DP_CopyName( lpData, &lpPList->lpPData->name, bAnsi, bAnsi );
+  DP_CopyName( lpData, lpPList->lpPData->name, bAnsi, bAnsi );
 
   return DP_OK;
 }
@@ -3669,6 +3655,7 @@ static HRESULT DP_IF_SetGroupName( IDirectPlayImpl *This, DPID idGroup, DPNAME *
         DWORD dwFlags, BOOL bAnsi )
 {
   lpGroupData lpGData;
+  DPNAME *name;
 
   TRACE( "(%p)->(0x%08lx,%p,0x%08lx,%u)\n", This, idGroup,
          lpGroupName, dwFlags, bAnsi );
@@ -3678,7 +3665,11 @@ static HRESULT DP_IF_SetGroupName( IDirectPlayImpl *This, DPID idGroup, DPNAME *
     return DPERR_INVALIDGROUP;
   }
 
-  DP_CopyDPNAMEStruct( &lpGData->name, lpGroupName, bAnsi );
+  name = DP_DuplicateName( lpGroupName, bAnsi, bAnsi );
+  if ( !name )
+    return DPERR_OUTOFMEMORY;
+
+  lpGData->name = name;
 
   /* Should send a DPMSG_SETPLAYERORGROUPNAME message */
   FIXME( "Message not sent and dwFlags ignored\n" );
@@ -3802,6 +3793,7 @@ static HRESULT DP_IF_SetPlayerName( IDirectPlayImpl *This, DPID idPlayer, DPNAME
         DWORD dwFlags, BOOL bAnsi )
 {
   lpPlayerList lpPList;
+  DPNAME *name;
 
   TRACE( "(%p)->(0x%08lx,%p,0x%08lx,%u)\n",
          This, idPlayer, lpPlayerName, dwFlags, bAnsi );
@@ -3816,7 +3808,11 @@ static HRESULT DP_IF_SetPlayerName( IDirectPlayImpl *This, DPID idPlayer, DPNAME
     return DPERR_INVALIDGROUP;
   }
 
-  DP_CopyDPNAMEStruct( &lpPList->lpPData->name, lpPlayerName, bAnsi );
+  name = DP_DuplicateName( lpPlayerName, bAnsi, bAnsi );
+  if ( !name )
+    return DPERR_OUTOFMEMORY;
+
+  lpPList->lpPData->name = name;
 
   /* Should send a DPMSG_SETPLAYERORGROUPNAME message */
   FIXME( "Message not sent and dwFlags ignored\n" );
@@ -4566,7 +4562,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumGroupsInGroup( IDirectPlay4 *iface, D
     for( glist = DPQ_FIRST( gdata->groups ); ; glist = DPQ_NEXT( glist->groups ) )
     {
         /* FIXME: Should check flags for match here */
-        if ( !(*enumplayercb)( glist->lpGData->dpid, DPPLAYERTYPE_GROUP, &glist->lpGData->name,
+        if ( !(*enumplayercb)( glist->lpGData->dpid, DPPLAYERTYPE_GROUP, glist->lpGData->name,
                     flags, context ) )
             return DP_OK; /* User requested break */
 

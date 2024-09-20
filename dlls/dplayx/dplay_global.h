@@ -62,7 +62,7 @@ struct PlayerData
   /* Individual player information */
   DPID dpid;
 
-  DPNAME name;
+  DPNAME *name;
   HANDLE hEvent;
 
   ULONG  uRef;  /* What is the reference count on this data? */
@@ -105,7 +105,7 @@ struct GroupData
   DWORD dwFlags; /* Flags describing anything special about the group */
 
   DPID   dpid;
-  DPNAME name;
+  DPNAME *name;
 
   /* View of local data */
   LPVOID lpLocalData;
