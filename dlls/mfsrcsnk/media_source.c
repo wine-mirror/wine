@@ -1432,7 +1432,7 @@ static void media_source_init_stream_map(struct media_source *source, UINT strea
     for (i = stream_count - 1; i >= 0; i--)
     {
         if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major, NULL)))
-            continue;
+            major = GUID_NULL;
         if (!IsEqualGUID(&major, &MFMediaType_Audio) && !IsEqualGUID(&major, &MFMediaType_Video))
         {
             TRACE("mapping source %p stream %u to demuxer stream %u\n", source, n, i);
