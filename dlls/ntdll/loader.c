@@ -257,6 +257,20 @@ static int rtl_rb_tree_put( RTL_RB_TREE *tree, const void *key, RTL_BALANCED_NOD
     return 0;
 }
 
+static RTL_BALANCED_NODE *rtl_rb_tree_get( RTL_RB_TREE *tree, const void *key,
+                                           int (*compare_func)( const void *key, const RTL_BALANCED_NODE *entry ))
+{
+    RTL_BALANCED_NODE *parent = tree->root;
+    int c;
+
+    while (parent)
+    {
+        if (!(c = compare_func( key, parent ))) return parent;
+        parent = parent->Children[c > 0];
+    }
+    return NULL;
+}
+
 #ifdef __arm64ec__
 
 static void update_hybrid_pointer( void *module, const IMAGE_SECTION_HEADER *sec, UINT rva, void *ptr )
@@ -597,19 +611,14 @@ static int base_address_compare( const void *key, const RTL_BALANCED_NODE *entry
  */
 static WINE_MODREF *get_modref( HMODULE hmod )
 {
-    PLIST_ENTRY mark, entry;
     PLDR_DATA_TABLE_ENTRY mod;
+    RTL_BALANCED_NODE *node;
 
     if (cached_modref && cached_modref->ldr.DllBase == hmod) return cached_modref;
 
-    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
-    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-    {
-        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-        if (mod->DllBase == hmod)
-            return cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
-    }
-    return NULL;
+    if (!(node = rtl_rb_tree_get( &base_address_index_tree, hmod, base_address_compare ))) return NULL;
+    mod = CONTAINING_RECORD(node, LDR_DATA_TABLE_ENTRY, BaseAddressIndexNode);
+    return cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
 }
 
 
