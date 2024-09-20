@@ -1338,7 +1338,7 @@ d4
 --- EXIT /B inside FOR loops
 1
 2
-@todo_wine@--- set /a
+--- set /a
 ------ individual operations
 WINE_foo correctly 3
 WINE_foo correctly -1
