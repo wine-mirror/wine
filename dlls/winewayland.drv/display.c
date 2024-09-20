@@ -199,9 +199,10 @@ static void wayland_add_device_gpu(const struct gdi_device_manager *device_manag
 static void wayland_add_device_source(const struct gdi_device_manager *device_manager,
                                        void *param, UINT state_flags, struct output_info *output_info)
 {
+    UINT dpi = NtUserGetSystemDpiForProcess( NULL );
     TRACE("name=%s state_flags=0x%x\n",
           output_info->output->name, state_flags);
-    device_manager->add_source(output_info->output->name, state_flags, param);
+    device_manager->add_source(output_info->output->name, state_flags, dpi, param);
 }
 
 static void wayland_add_device_monitor(const struct gdi_device_manager *device_manager,

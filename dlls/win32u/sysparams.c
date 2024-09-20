@@ -70,6 +70,7 @@ static const WCHAR yesW[] = {'Y','e','s',0};
 static const WCHAR noW[] = {'N','o',0};
 static const WCHAR modesW[] = {'M','o','d','e','s',0};
 static const WCHAR mode_countW[] = {'M','o','d','e','C','o','u','n','t',0};
+static const WCHAR dpiW[] = {'D','p','i',0};
 
 static const char  guid_devclass_displayA[] = "{4D36E968-E325-11CE-BFC1-08002BE10318}";
 static const WCHAR guid_devclass_displayW[] =
@@ -106,6 +107,7 @@ struct source
     char path[MAX_PATH];
     unsigned int id;
     struct gpu *gpu;
+    UINT dpi;
     UINT state_flags;
     UINT monitor_count;
     UINT mode_count;
@@ -642,6 +644,10 @@ static BOOL read_source_from_registry( unsigned int index, struct source *source
     /* StateFlags */
     if (query_reg_ascii_value( hkey, "StateFlags", value, sizeof(buffer) ) && value->Type == REG_DWORD)
         source->state_flags = *(const DWORD *)value->Data;
+
+    /* Dpi */
+    if (query_reg_ascii_value( hkey, "Dpi", value, sizeof(buffer) ) && value->Type == REG_DWORD)
+        source->dpi = *(DWORD *)value->Data;
 
     /* ModeCount */
     if (query_reg_ascii_value( hkey, "ModeCount", value, sizeof(buffer) ) && value->Type == REG_DWORD)
@@ -1344,6 +1350,7 @@ static BOOL write_source_to_registry( const struct source *source, HKEY *source_
     set_reg_ascii_value( *source_key, "GPUID", gpu->path );
     set_reg_value( *source_key, state_flagsW, REG_DWORD, &source->state_flags,
                    sizeof(source->state_flags) );
+    set_reg_value( *source_key, dpiW, REG_DWORD, &source->dpi, sizeof(source->dpi) );
 
     snprintf( buffer, sizeof(buffer), "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", gpu->guid, source_index );
     hkey = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
@@ -1356,7 +1363,7 @@ static BOOL write_source_to_registry( const struct source *source, HKEY *source_
     return TRUE;
 }
 
-static void add_source( const char *name, UINT state_flags, void *param )
+static void add_source( const char *name, UINT state_flags, UINT dpi, void *param )
 {
     struct device_manager_ctx *ctx = param;
 
@@ -1375,6 +1382,7 @@ static void add_source( const char *name, UINT state_flags, void *param )
         ctx->source.id = 0;
         ctx->has_primary = TRUE;
     }
+    ctx->source.dpi = dpi;
 
     /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
     snprintf( ctx->source.path, sizeof(ctx->source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
@@ -1811,7 +1819,7 @@ static NTSTATUS default_update_display_devices( struct device_manager_ctx *ctx )
     DEVMODEW mode = {.dmSize = sizeof(mode)};
 
     add_gpu( "Wine GPU", &pci_id, NULL, ctx );
-    add_source( "Default", source_flags, ctx );
+    add_source( "Default", source_flags, system_dpi, ctx );
 
     if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &mode ))
     {
@@ -2130,8 +2138,9 @@ static void release_display_dc( HDC hdc )
 /* display_lock must be held */
 static UINT monitor_get_dpi( struct monitor *monitor )
 {
-    /* FIXME: use the monitor DPI instead */
-    return system_dpi;
+    UINT dpi;
+    if (!monitor->source || !(dpi = monitor->source->dpi)) dpi = system_dpi;
+    return dpi;
 }
 
 /* display_lock must be held */

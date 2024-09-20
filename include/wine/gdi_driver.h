@@ -219,7 +219,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 96
+#define WINE_GDI_DRIVER_VERSION 97
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -312,7 +312,7 @@ struct gdi_monitor
 struct gdi_device_manager
 {
     void (*add_gpu)( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid, void *param );
-    void (*add_source)( const char *name, UINT state_flags, void *param );
+    void (*add_source)( const char *name, UINT state_flags, UINT dpi, void *param );
     void (*add_monitor)( const struct gdi_monitor *monitor, void *param );
     void (*add_modes)( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param );
 };

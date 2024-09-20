@@ -280,10 +280,11 @@ UINT ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
                     DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
         .dmBitsPerPel = screen_bpp, .dmPelsWidth = screen_width, .dmPelsHeight = screen_height, .dmDisplayFrequency = 60,
     };
+    UINT dpi = NtUserGetSystemDpiForProcess( NULL );
     DEVMODEW current = mode;
 
     device_manager->add_gpu( "Wine GPU", &pci_id, NULL, param );
-    device_manager->add_source( "Default", source_flags, param );
+    device_manager->add_source( "Default", source_flags, dpi, param );
     device_manager->add_monitor( &gdi_monitor, param );
 
     current.dmFields |= DM_POSITION;
