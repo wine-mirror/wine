@@ -69,7 +69,7 @@ static BOOL DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
 static DPID DP_GetRemoteNextObjectId(void);
 
 static DWORD DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc,
-                                 LPCDPSESSIONDESC2 srcSessDesc, BOOL bAnsi );
+                                 LPCDPSESSIONDESC2 srcSessDesc, BOOL dstAnsi, BOOL srcAnsi );
 
 
 #define DPID_NOPARENT_GROUP 0 /* Magic number to indicate no parent of group */
@@ -3185,7 +3185,7 @@ static HRESULT DP_GetSessionDesc( IDirectPlayImpl *This, void *lpData, DWORD *lp
     return DPERR_INVALIDPARAMS;
   }
 
-  dwRequiredSize = DP_CopySessionDesc( NULL, This->dp2->lpSessionDesc, bAnsi );
+  dwRequiredSize = DP_CopySessionDesc( NULL, This->dp2->lpSessionDesc, bAnsi, bAnsi );
 
   if ( ( lpData == NULL ) ||
        ( *lpdwDataSize < dwRequiredSize )
@@ -3195,7 +3195,7 @@ static HRESULT DP_GetSessionDesc( IDirectPlayImpl *This, void *lpData, DWORD *lp
     return DPERR_BUFFERTOOSMALL;
   }
 
-  DP_CopySessionDesc( lpData, This->dp2->lpSessionDesc, bAnsi );
+  DP_CopySessionDesc( lpData, This->dp2->lpSessionDesc, bAnsi, bAnsi );
 
   return DP_OK;
 }
@@ -3851,7 +3851,6 @@ static HRESULT WINAPI IDirectPlay4Impl_SetPlayerName( IDirectPlay4 *iface, DPID 
 static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpSessDesc,
         DWORD dwFlags, BOOL bInitial, BOOL bAnsi  )
 {
-  DWORD            dwRequiredSize;
   LPDPSESSIONDESC2 lpTempSessDesc;
 
   TRACE( "(%p)->(%p,0x%08lx,%u,%u)\n",
@@ -3873,9 +3872,7 @@ static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *l
     return DPERR_ACCESSDENIED;
   }
 
-  /* FIXME: Copy into This->dp2->lpSessionDesc */
-  dwRequiredSize = DP_CopySessionDesc( NULL, lpSessDesc, bAnsi );
-  lpTempSessDesc = calloc( 1, dwRequiredSize );
+  lpTempSessDesc = DP_DuplicateSessionDesc( lpSessDesc, bAnsi, bAnsi );
 
   if( lpTempSessDesc == NULL )
   {
@@ -3886,13 +3883,7 @@ static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *l
   free( This->dp2->lpSessionDesc );
 
   This->dp2->lpSessionDesc = lpTempSessDesc;
-  /* Set the new */
-  DP_CopySessionDesc( This->dp2->lpSessionDesc, lpSessDesc, bAnsi );
-  if( bInitial )
-  {
-    /*Initializing session GUID*/
-    CoCreateGuid( &(This->dp2->lpSessionDesc->guidInstance) );
-  }
+
   /* If this is an external invocation of the interface, we should be
    * letting everyone know that things have changed. Otherwise this is
    * just an initialization and it doesn't need to be propagated.
@@ -3948,19 +3939,35 @@ static HRESULT WINAPI IDirectPlay4Impl_SetSessionDesc( IDirectPlay4 *iface,
 }
 
 static DWORD DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
-                                 LPCDPSESSIONDESC2 lpSessionSrc, BOOL bAnsi )
+                                 LPCDPSESSIONDESC2 lpSessionSrc, BOOL dstAnsi, BOOL srcAnsi )
 {
   DWORD offset = sizeof( DPSESSIONDESC2 );
 
   if( lpSessionDest )
     CopyMemory( lpSessionDest, lpSessionSrc, sizeof( *lpSessionSrc ) );
 
-  offset += DP_CopyString( &lpSessionDest->lpszSessionNameA, lpSessionSrc->lpszSessionNameA, bAnsi,
-                           bAnsi, lpSessionDest, offset );
-  offset += DP_CopyString( &lpSessionDest->lpszPasswordA, lpSessionSrc->lpszPasswordA, bAnsi,
-                           bAnsi, lpSessionDest, offset );
+  offset += DP_CopyString( &lpSessionDest->lpszSessionNameA, lpSessionSrc->lpszSessionNameA,
+                           dstAnsi, srcAnsi, lpSessionDest, offset );
+  offset += DP_CopyString( &lpSessionDest->lpszPasswordA, lpSessionSrc->lpszPasswordA,
+                           dstAnsi, srcAnsi, lpSessionDest, offset );
 
   return offset;
+}
+
+DPSESSIONDESC2 *DP_DuplicateSessionDesc( const DPSESSIONDESC2 *src, BOOL dstAnsi, BOOL srcAnsi )
+{
+    DPSESSIONDESC2 *dst;
+    DWORD size;
+
+    size = DP_CopySessionDesc( NULL, src, dstAnsi, srcAnsi );
+
+    dst = malloc( size );
+    if ( !dst )
+        return NULL;
+
+    DP_CopySessionDesc( dst, src, dstAnsi, srcAnsi );
+
+    return dst;
 }
 
 static HRESULT WINAPI IDirectPlay3AImpl_AddGroupToGroup( IDirectPlay3A *iface, DPID parent,

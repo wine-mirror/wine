@@ -92,9 +92,9 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
                                        DWORD                        msgSize,
                                        LPVOID                       lpNSInfo )
 {
-  DWORD len;
   lpNSCache     lpCache = (lpNSCache)lpNSInfo;
   lpNSCacheData lpCacheNode;
+  DPSESSIONDESC2 dpsd;
   DWORD maxNameLength;
   DWORD nameLength;
 
@@ -131,21 +131,17 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
   lpCacheNode->lpNSAddrHdr = malloc( dwHdrSize );
   CopyMemory( lpCacheNode->lpNSAddrHdr, lpcNSAddrHdr, dwHdrSize );
 
-  lpCacheNode->data = calloc( 1, sizeof( *(lpCacheNode->data) ) );
+  dpsd = lpcMsg->sd;
+  dpsd.lpszSessionName = (WCHAR *) (lpcMsg + 1);
+  dpsd.lpszPassword = NULL;
+
+  lpCacheNode->data = DP_DuplicateSessionDesc( &dpsd, TRUE, FALSE );
 
   if( lpCacheNode->data == NULL )
   {
     ERR( "no memory for SESSIONDESC2\n" );
     free( lpCacheNode );
     return;
-  }
-
-  *lpCacheNode->data = lpcMsg->sd;
-  len = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1, NULL, 0, NULL, NULL );
-  if ((lpCacheNode->data->lpszSessionNameA = malloc( len )))
-  {
-      WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1,
-                           lpCacheNode->data->lpszSessionNameA, len, NULL, NULL );
   }
 
   lpCacheNode->ref = 1;
@@ -242,7 +238,6 @@ static DPQ_DECL_DELETECB( cbReleaseNSNode, lpNSCacheData )
   if ( ref )
     return;
 
-  /* FIXME: Memory leak on data (contained ptrs) */
   free( elem->data );
   free( elem->lpNSAddrHdr );
   free( elem );
