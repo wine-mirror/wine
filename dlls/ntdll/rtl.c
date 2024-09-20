@@ -870,6 +870,89 @@ void WINAPI RtlRbInsertNodeEx( RTL_RB_TREE *tree, RTL_BALANCED_NODE *parent, BOO
     tree->root->Red = 0;
 }
 
+/*********************************************************************
+ *           RtlRbRemoveNode [NTDLL.@]
+ */
+void WINAPI RtlRbRemoveNode( RTL_RB_TREE *tree, RTL_BALANCED_NODE *node )
+{
+    RTL_BALANCED_NODE *iter = NULL, *child, *parent, *w;
+    BOOL need_fixup;
+    int right;
+
+    TRACE( "tree %p, node %p.\n", tree, node );
+
+    if (node->Right && (node->Left || tree->min == node))
+    {
+        for (iter = node->Right; iter->Left; iter = iter->Left)
+            ;
+        if (tree->min == node) tree->min = iter;
+    }
+    else if (tree->min == node) tree->min = rtl_node_parent( node );
+    if (!iter || !node->Left) iter = node;
+
+    child = iter->Left ? iter->Left : iter->Right;
+
+    if (!(parent = rtl_node_parent( iter ))) tree->root = child;
+    else if (iter == parent->Left)           parent->Left = child;
+    else                                     parent->Right = child;
+
+    if (child) rtl_set_node_parent( child, parent );
+
+    need_fixup = !iter->Red;
+
+    if (node != iter)
+    {
+        *iter = *node;
+        if (!(w = rtl_node_parent( iter ))) tree->root = iter;
+        else if (node == w->Left)           w->Left = iter;
+        else                                w->Right = iter;
+
+        if (iter->Right) rtl_set_node_parent( iter->Right, iter );
+        if (iter->Left)  rtl_set_node_parent( iter->Left, iter );
+        if (parent == node) parent = iter;
+    }
+
+    if (!need_fixup)
+    {
+        if (tree->root) tree->root->Red = 0;
+        return;
+    }
+
+    while (parent && !(child && child->Red))
+    {
+        right = (child == parent->Right);
+        w = parent->Children[!right];
+        if (w->Red)
+        {
+            w->Red = 0;
+            parent->Red = 1;
+            rtl_rotate( tree, parent, right );
+            w = parent->Children[!right];
+        }
+        if ((w->Left && w->Left->Red) || (w->Right && w->Right->Red))
+        {
+            if (!(w->Children[!right] && w->Children[!right]->Red))
+            {
+                w->Children[right]->Red = 0;
+                w->Red = 1;
+                rtl_rotate( tree, w, !right );
+                w = parent->Children[!right];
+            }
+            w->Red = parent->Red;
+            parent->Red = 0;
+            if (w->Children[!right]) w->Children[!right]->Red = 0;
+            rtl_rotate( tree, parent, right );
+            child = NULL;
+            break;
+        }
+        w->Red = 1;
+        child = parent;
+        parent = rtl_node_parent( child );
+    }
+    if (child) child->Red = 0;
+    if (tree->root) tree->root->Red = 0;
+}
+
 /***********************************************************************
  *           RtlInitializeGenericTableAvl  (NTDLL.@)
  */
