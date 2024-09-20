@@ -166,26 +166,26 @@ FAILURE 1
 --- success/failure for LABEL command
 FAILURE 1
 --- success/failure for PATH command
-@todo_wine@SUCCESS 666
-@todo_wine@SUCCESS 666
+SUCCESS 666
+SUCCESS 666
 PATH=@:\I\dont\Exist@space@
-@todo_wine@SUCCESS 666
+SUCCESS 666
 PATH=(null)
-@todo_wine@SUCCESS 666
+SUCCESS 666
 --- success/failure for SET command
-@todo_wine@SUCCESS 666
-@todo_wine@SUCCESS 666
+SUCCESS 666
+SUCCESS 666
 FAILURE 1
-@todo_wine@SUCCESS 666
-@todo_wine@SUCCESS 666
+SUCCESS 666
+SUCCESS 666
 FAILURE 1
 FAILURE 1
 --- success/failure for ASSOC command
-@todo_wine@SUCCESS 666
+SUCCESS 666
 FAILURE 1
 FAILURE 1
 --- success/failure for FTYPE command
-@todo_wine@SUCCESS 666
+SUCCESS 666
 FAILURE 2
 FAILURE 2
 --- success/failure for SHIFT command
@@ -197,7 +197,7 @@ FAILURE 1
 FAILURE 1
 SUCCESS 0
 --- success/failure for PROMPT command
-@todo_wine@SUCCESS 666
+SUCCESS 666
 --- success/failure for CLS command
 @todo_wine@@formfeed@SUCCESS 666
 @todo_wine@@formfeed@SUCCESS 666

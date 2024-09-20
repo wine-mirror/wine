@@ -340,7 +340,17 @@ extern BATCH_CONTEXT *context;
 extern FOR_CONTEXT *forloopcontext;
 extern BOOL delayedsubst;
 
-#endif /* !RC_INVOKED */
+static inline BOOL WCMD_is_in_context(const WCHAR *ext)
+{
+    size_t c_len, e_len;
+    if (!context) return FALSE;
+    if (!ext) return TRUE;
+    c_len = wcslen(context->batchfileW);
+    e_len = wcslen(ext);
+    return (c_len > e_len) && !wcsicmp(&context->batchfileW[c_len - e_len], ext);
+}
+
+ #endif /* !RC_INVOKED */
 
 /*
  *	Serial nos of builtin commands. These constants must be in step with
