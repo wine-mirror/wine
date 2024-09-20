@@ -779,6 +779,97 @@ void WINAPI RtlGetCurrentProcessorNumberEx(PROCESSOR_NUMBER *processor)
     processor->Reserved = 0;
 }
 
+static RTL_BALANCED_NODE *rtl_node_parent( RTL_BALANCED_NODE *node )
+{
+    return (RTL_BALANCED_NODE *)(node->ParentValue & ~(ULONG_PTR)RTL_BALANCED_NODE_RESERVED_PARENT_MASK);
+}
+
+static void rtl_set_node_parent( RTL_BALANCED_NODE *node, RTL_BALANCED_NODE *parent )
+{
+    node->ParentValue = (ULONG_PTR)parent | (node->ParentValue & RTL_BALANCED_NODE_RESERVED_PARENT_MASK);
+}
+
+static void rtl_rotate( RTL_RB_TREE *tree, RTL_BALANCED_NODE *n, int right )
+{
+    RTL_BALANCED_NODE *child = n->Children[!right];
+    RTL_BALANCED_NODE *parent = rtl_node_parent( n );
+
+    if (!parent)                tree->root = child;
+    else if (parent->Left == n) parent->Left = child;
+    else                        parent->Right = child;
+
+    n->Children[!right] = child->Children[right];
+    if (n->Children[!right]) rtl_set_node_parent( n->Children[!right], n );
+    child->Children[right] = n;
+    rtl_set_node_parent( child, parent );
+    rtl_set_node_parent( n, child );
+}
+
+static void rtl_flip_color( RTL_BALANCED_NODE *node )
+{
+    node->Red = !node->Red;
+    node->Left->Red = !node->Left->Red;
+    node->Right->Red = !node->Right->Red;
+}
+
+/*********************************************************************
+ *           RtlRbInsertNodeEx [NTDLL.@]
+ */
+void WINAPI RtlRbInsertNodeEx( RTL_RB_TREE *tree, RTL_BALANCED_NODE *parent, BOOLEAN right, RTL_BALANCED_NODE *node )
+{
+    RTL_BALANCED_NODE *grandparent;
+
+    TRACE( "tree %p, parent %p, right %d, node %p.\n", tree, parent, right, node );
+
+    node->ParentValue = (ULONG_PTR)parent;
+    node->Left = NULL;
+    node->Right = NULL;
+
+    if (!parent)
+    {
+        tree->root = tree->min = node;
+        return;
+    }
+    if (right > 1)
+    {
+        ERR( "right %d.\n", right );
+        return;
+    }
+    if (parent->Children[right])
+    {
+        ERR( "parent %p, right %d, child %p.\n", parent, right, parent->Children[right] );
+        return;
+    }
+
+    node->Red = 1;
+    parent->Children[right] = node;
+    if (tree->min == parent && parent->Left == node) tree->min = node;
+    grandparent = rtl_node_parent( parent );
+    while (parent->Red)
+    {
+        right = (parent == grandparent->Right);
+        if (grandparent->Children[!right] && grandparent->Children[!right]->Red)
+        {
+            node = grandparent;
+            rtl_flip_color( node );
+            if (!(parent = rtl_node_parent( node ))) break;
+            grandparent = rtl_node_parent( parent );
+            continue;
+        }
+        if (node == parent->Children[!right])
+        {
+            node = parent;
+            rtl_rotate( tree, node, right );
+            parent = rtl_node_parent( node );
+            grandparent = rtl_node_parent( parent );
+        }
+        parent->Red = 0;
+        grandparent->Red = 1;
+        rtl_rotate( tree, grandparent, !right );
+    }
+    tree->root->Red = 0;
+}
+
 /***********************************************************************
  *           RtlInitializeGenericTableAvl  (NTDLL.@)
  */
