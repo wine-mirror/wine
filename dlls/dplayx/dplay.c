@@ -68,9 +68,8 @@ static BOOL DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
 
 static DPID DP_GetRemoteNextObjectId(void);
 
-static DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi );
-static void DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc,
-                                LPCDPSESSIONDESC2 srcSessDesc, BOOL bAnsi );
+static DWORD DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc,
+                                 LPCDPSESSIONDESC2 srcSessDesc, BOOL bAnsi );
 
 
 #define DPID_NOPARENT_GROUP 0 /* Magic number to indicate no parent of group */
@@ -3186,8 +3185,7 @@ static HRESULT DP_GetSessionDesc( IDirectPlayImpl *This, void *lpData, DWORD *lp
     return DPERR_INVALIDPARAMS;
   }
 
-  /* FIXME: Get from This->dp2->lpSessionDesc */
-  dwRequiredSize = DP_CalcSessionDescSize( This->dp2->lpSessionDesc, bAnsi );
+  dwRequiredSize = DP_CopySessionDesc( NULL, This->dp2->lpSessionDesc, bAnsi );
 
   if ( ( lpData == NULL ) ||
        ( *lpdwDataSize < dwRequiredSize )
@@ -3876,7 +3874,7 @@ static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *l
   }
 
   /* FIXME: Copy into This->dp2->lpSessionDesc */
-  dwRequiredSize = DP_CalcSessionDescSize( lpSessDesc, bAnsi );
+  dwRequiredSize = DP_CopySessionDesc( NULL, lpSessDesc, bAnsi );
   lpTempSessDesc = calloc( 1, dwRequiredSize );
 
   if( lpTempSessDesc == NULL )
@@ -3949,43 +3947,20 @@ static HRESULT WINAPI IDirectPlay4Impl_SetSessionDesc( IDirectPlay4 *iface,
     return DP_SetSessionDesc( This, lpSessDesc, dwFlags, FALSE, TRUE );
 }
 
-/* FIXME: See about merging some of this stuff with dplayx_global.c stuff */
-static DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi )
-{
-  DWORD dwSize = 0;
-
-  if( lpSessDesc == NULL )
-  {
-    /* Hmmm..don't need any size? */
-    ERR( "NULL lpSessDesc\n" );
-    return dwSize;
-  }
-
-  dwSize += sizeof( *lpSessDesc );
-  dwSize += DP_CopyString( NULL, lpSessDesc->lpszSessionNameA, bAnsi, bAnsi, NULL, 0 );
-  dwSize += DP_CopyString( NULL, lpSessDesc->lpszPasswordA, bAnsi, bAnsi, NULL, 0 );
-
-  return dwSize;
-}
-
-/* Assumes that contiguous buffers are already allocated. */
-static void DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
-                                LPCDPSESSIONDESC2 lpSessionSrc, BOOL bAnsi )
+static DWORD DP_CopySessionDesc( LPDPSESSIONDESC2 lpSessionDest,
+                                 LPCDPSESSIONDESC2 lpSessionSrc, BOOL bAnsi )
 {
   DWORD offset = sizeof( DPSESSIONDESC2 );
 
-  if( lpSessionDest == NULL )
-  {
-    ERR( "NULL lpSessionDest\n" );
-    return;
-  }
-
-  CopyMemory( lpSessionDest, lpSessionSrc, sizeof( *lpSessionSrc ) );
+  if( lpSessionDest )
+    CopyMemory( lpSessionDest, lpSessionSrc, sizeof( *lpSessionSrc ) );
 
   offset += DP_CopyString( &lpSessionDest->lpszSessionNameA, lpSessionSrc->lpszSessionNameA, bAnsi,
                            bAnsi, lpSessionDest, offset );
   offset += DP_CopyString( &lpSessionDest->lpszPasswordA, lpSessionSrc->lpszPasswordA, bAnsi,
                            bAnsi, lpSessionDest, offset );
+
+  return offset;
 }
 
 static HRESULT WINAPI IDirectPlay3AImpl_AddGroupToGroup( IDirectPlay3A *iface, DPID parent,
