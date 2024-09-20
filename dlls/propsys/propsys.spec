@@ -106,7 +106,7 @@
 @ stub PropVariantGetUInt16Elem
 @ stub PropVariantGetUInt32Elem
 @ stub PropVariantGetUInt64Elem
-@ stub PropVariantToBSTR
+@ stdcall PropVariantToBSTR(ptr ptr)
 @ stdcall PropVariantToBoolean(ptr ptr)
 @ stub PropVariantToBooleanVector
 @ stub PropVariantToBooleanVectorAlloc

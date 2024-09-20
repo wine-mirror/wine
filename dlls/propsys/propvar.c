@@ -332,6 +332,13 @@ HRESULT WINAPI PropVariantToBoolean(REFPROPVARIANT propvarIn, BOOL *ret)
     return hr;
 }
 
+HRESULT WINAPI PropVariantToBSTR(REFPROPVARIANT propvar, BSTR *bstr)
+{
+    FIXME("propvar %p, bstr %p.\n", propvar, bstr);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI PropVariantToBuffer(REFPROPVARIANT propvarIn, void *ret, UINT cb)
 {
     HRESULT hr = S_OK;
