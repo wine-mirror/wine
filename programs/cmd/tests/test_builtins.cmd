@@ -2044,6 +2044,15 @@ for %%i in (test) do (
     )
     echo d4
 )
+echo --- EXIT /B inside FOR loops
+goto :after_exitBinsideForLoop
+:exitBinsideForLoop
+for /l %%i in (1,1,3) do (
+  echo %%i
+  if %%i==2 exit /b 0
+)
+:after_exitBinsideForLoop
+call :exitBinsideForLoop
 echo --- set /a
 goto :testseta
 

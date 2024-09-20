@@ -1335,7 +1335,10 @@ d3
 a4
 c4
 d4
---- set /a
+--- EXIT /B inside FOR loops
+1
+2
+@todo_wine@--- set /a
 ------ individual operations
 WINE_foo correctly 3
 WINE_foo correctly -1
