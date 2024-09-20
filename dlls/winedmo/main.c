@@ -237,7 +237,8 @@ NTSTATUS CDECL winedmo_demuxer_read( struct winedmo_demuxer demuxer, UINT *strea
 
     if (status)
     {
-        ERR( "Failed to read sample, status %#lx\n", status );
+        if (status == STATUS_END_OF_FILE) WARN( "Reached end of media file.\n" );
+        else if (status != STATUS_BUFFER_TOO_SMALL) ERR( "Failed to read sample, status %#lx\n", status );
         return status;
     }
 
