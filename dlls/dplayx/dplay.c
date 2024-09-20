@@ -1590,6 +1590,34 @@ static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi
   return TRUE;
 }
 
+static DWORD DP_CopyName( DPNAME *dst, const DPNAME *src, BOOL dstAnsi, BOOL srcAnsi )
+{
+    DWORD offset = sizeof( DPNAME );
+
+    if ( !src )
+    {
+        if ( dst )
+        {
+            memset( dst, 0, sizeof( DPNAME ) );
+            dst->dwSize = sizeof( DPNAME );
+        }
+        return offset;
+    }
+
+    if ( dst )
+    {
+        *dst = *src;
+        dst->dwSize = sizeof( DPNAME );
+    }
+
+    offset += DP_CopyString( &dst->lpszShortNameA, src->lpszShortNameA, dstAnsi, srcAnsi, dst,
+                             offset );
+    offset += DP_CopyString( &dst->lpszLongNameA, src->lpszLongNameA, dstAnsi, srcAnsi, dst,
+                             offset );
+
+    return offset;
+}
+
 static void
 DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
                   LPVOID lpData, DWORD dwDataSize )
@@ -2779,7 +2807,6 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
         DWORD *lpdwDataSize, BOOL bAnsi )
 {
   lpGroupData lpGData;
-  LPDPNAME    lpName = lpData;
   DWORD       dwRequiredDataSize;
 
   FIXME("(%p)->(0x%08lx,%p,%p,%u) ANSI ignored\n",
@@ -2790,17 +2817,7 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
     return DPERR_INVALIDGROUP;
   }
 
-  dwRequiredDataSize = lpGData->name.dwSize;
-
-  if( lpGData->name.lpszShortNameA )
-  {
-    dwRequiredDataSize += strlen( lpGData->name.lpszShortNameA ) + 1;
-  }
-
-  if( lpGData->name.lpszLongNameA )
-  {
-    dwRequiredDataSize += strlen( lpGData->name.lpszLongNameA ) + 1;
-  }
+  dwRequiredDataSize = DP_CopyName( NULL, &lpGData->name, bAnsi, bAnsi );
 
   if( ( lpData == NULL ) ||
       ( *lpdwDataSize < dwRequiredDataSize )
@@ -2810,28 +2827,7 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
     return DPERR_BUFFERTOOSMALL;
   }
 
-  /* Copy the structure */
-  CopyMemory( lpName, &lpGData->name, lpGData->name.dwSize );
-
-  if( lpGData->name.lpszShortNameA )
-  {
-    strcpy( ((char*)lpName)+lpGData->name.dwSize,
-            lpGData->name.lpszShortNameA );
-  }
-  else
-  {
-    lpName->lpszShortNameA = NULL;
-  }
-
-  if( lpGData->name.lpszShortNameA )
-  {
-    strcpy( ((char*)lpName)+lpGData->name.dwSize,
-            lpGData->name.lpszShortNameA );
-  }
-  else
-  {
-    lpName->lpszLongNameA = NULL;
-  }
+  DP_CopyName( lpData, &lpGData->name, bAnsi, bAnsi );
 
   return DP_OK;
 }
@@ -3101,7 +3097,6 @@ static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *
         DWORD *lpdwDataSize, BOOL bAnsi )
 {
   lpPlayerList lpPList;
-  LPDPNAME    lpName = lpData;
   DWORD       dwRequiredDataSize;
 
   FIXME( "(%p)->(0x%08lx,%p,%p,%u): ANSI\n",
@@ -3117,17 +3112,7 @@ static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *
     return DPERR_INVALIDPLAYER;
   }
 
-  dwRequiredDataSize = lpPList->lpPData->name.dwSize;
-
-  if( lpPList->lpPData->name.lpszShortNameA )
-  {
-    dwRequiredDataSize += strlen( lpPList->lpPData->name.lpszShortNameA ) + 1;
-  }
-
-  if( lpPList->lpPData->name.lpszLongNameA )
-  {
-    dwRequiredDataSize += strlen( lpPList->lpPData->name.lpszLongNameA ) + 1;
-  }
+  dwRequiredDataSize = DP_CopyName( NULL, &lpPList->lpPData->name, bAnsi, bAnsi );
 
   if( ( lpData == NULL ) ||
       ( *lpdwDataSize < dwRequiredDataSize )
@@ -3137,28 +3122,7 @@ static HRESULT DP_IF_GetPlayerName( IDirectPlayImpl *This, DPID idPlayer, void *
     return DPERR_BUFFERTOOSMALL;
   }
 
-  /* Copy the structure */
-  CopyMemory( lpName, &lpPList->lpPData->name, lpPList->lpPData->name.dwSize );
-
-  if( lpPList->lpPData->name.lpszShortNameA )
-  {
-    strcpy( ((char*)lpName)+lpPList->lpPData->name.dwSize,
-            lpPList->lpPData->name.lpszShortNameA );
-  }
-  else
-  {
-    lpName->lpszShortNameA = NULL;
-  }
-
-  if( lpPList->lpPData->name.lpszLongNameA )
-  {
-    strcpy( ((char*)lpName)+lpPList->lpPData->name.dwSize,
-            lpPList->lpPData->name.lpszLongNameA );
-  }
-  else
-  {
-    lpName->lpszLongNameA = NULL;
-  }
+  DP_CopyName( lpData, &lpPList->lpPData->name, bAnsi, bAnsi );
 
   return DP_OK;
 }
