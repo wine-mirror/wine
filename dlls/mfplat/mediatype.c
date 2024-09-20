@@ -3992,6 +3992,7 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, con
     else
         FIXME("dwInterlaceFlags %#lx not implemented\n", vih->dwInterlaceFlags);
 
+    if (size > sizeof(*vih)) mediatype_set_blob(media_type, &MF_MT_USER_DATA, (BYTE *)(vih + 1), size - sizeof(*vih), &hr);
     return hr;
 }
 
@@ -4010,10 +4011,13 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
         .AvgTimePerFrame = vih->AvgTimePerFrame,
         .bmiHeader = vih->bmiHeader,
     };
+    HRESULT hr;
 
     TRACE("%p, %p, %u, %s.\n", media_type, vih, size, debugstr_guid(subtype));
 
-    return MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih2, sizeof(vih2), subtype);
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih2, sizeof(vih2), subtype);
+    if (size > sizeof(*vih)) mediatype_set_blob(media_type, &MF_MT_USER_DATA, (BYTE *)(vih + 1), size - sizeof(*vih), &hr);
+    return hr;
 }
 
 /***********************************************************************
