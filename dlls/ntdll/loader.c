@@ -1922,6 +1922,17 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
     return ret;
 }
 
+/* compare base address */
+static int module_address_search_compare( const void *key, const RTL_BALANCED_NODE *entry )
+{
+    const LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, BaseAddressIndexNode);
+    const char *addr = key;
+
+    if (addr < (char *)mod->DllBase) return -1;
+    if (addr >= (char *)mod->DllBase + mod->SizeOfImage) return 1;
+    return 0;
+}
+
 /******************************************************************
  *              LdrFindEntryForAddress (NTDLL.@)
  *
@@ -1929,21 +1940,12 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
  */
 NTSTATUS WINAPI LdrFindEntryForAddress( const void *addr, PLDR_DATA_TABLE_ENTRY *pmod )
 {
-    PLIST_ENTRY mark, entry;
-    PLDR_DATA_TABLE_ENTRY mod;
+    RTL_BALANCED_NODE *node;
 
-    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
-    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-    {
-        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-        if (mod->DllBase <= addr &&
-            (const char *)addr < (char*)mod->DllBase + mod->SizeOfImage)
-        {
-            *pmod = mod;
-            return STATUS_SUCCESS;
-        }
-    }
-    return STATUS_NO_MORE_ENTRIES;
+    if (!(node = rtl_rb_tree_get( &base_address_index_tree, addr, module_address_search_compare )))
+        return STATUS_NO_MORE_ENTRIES;
+    *pmod = CONTAINING_RECORD(node, LDR_DATA_TABLE_ENTRY, BaseAddressIndexNode);
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
