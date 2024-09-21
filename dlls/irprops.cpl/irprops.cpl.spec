@@ -41,7 +41,7 @@
 @ stub BluetoothSdpEnumAttributes
 @ stub BluetoothSdpGetAttributeValue
 @ stub BluetoothSdpGetContainerElementData
-@ stub BluetoothSdpGetElementData
+@ stdcall -import BluetoothSdpGetElementData(ptr long ptr)
 @ stub BluetoothSdpGetString
 @ stub BluetoothSelectDevices
 @ stub BluetoothSelectDevicesFree
