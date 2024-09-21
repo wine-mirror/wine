@@ -320,7 +320,56 @@ DWORD WINAPI BluetoothSdpGetContainerElementData( BYTE *stream, ULONG stream_siz
 BOOL WINAPI BluetoothSdpEnumAttributes( BYTE *stream, ULONG stream_size,
                                         PFN_BLUETOOTH_ENUM_ATTRIBUTES_CALLBACK callback, void *param )
 {
-    FIXME( "(%p, %ld, %p, %p) stub!\n", stream, stream_size, callback, param );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    SDP_ELEMENT_DATA data = {0};
+    DWORD result;
+    HBLUETOOTH_CONTAINER_ELEMENT cursor = NULL;
+
+    TRACE( "(%p, %ld, %p, %p)\n", stream, stream_size, callback, param );
+
+    if (stream == NULL || callback == NULL) return ERROR_INVALID_PARAMETER;
+
+    result = BluetoothSdpGetElementData( stream, stream_size, &data );
+    if (result != ERROR_SUCCESS)
+    {
+        SetLastError( ERROR_INVALID_DATA );
+        return FALSE;
+    }
+
+    switch (data.type)
+    {
+    case SDP_TYPE_SEQUENCE:
+    case SDP_TYPE_ALTERNATIVE:
+        break;
+    default:
+        SetLastError( ERROR_INVALID_DATA );
+        return FALSE;
+    }
+
+    for (;;)
+    {
+        SDP_ELEMENT_DATA attrid = {0};
+        SDP_ELEMENT_DATA attr = {0};
+        BYTE *raw_attr_stream;
+
+        result = BluetoothSdpGetContainerElementData( data.data.sequence.value,
+                                                      data.data.sequence.length, &cursor, &attrid );
+        if (result == ERROR_NO_MORE_ITEMS) return TRUE;
+        if (result || !SDP_ELEMENT_IS_ATTRID( &attrid ))
+        {
+            SetLastError( ERROR_INVALID_DATA );
+            return FALSE;
+        }
+
+        raw_attr_stream = cursor;
+        result = BluetoothSdpGetContainerElementData( data.data.sequence.value,
+                                                      data.data.sequence.length, &cursor, &attr );
+        if (result != ERROR_SUCCESS)
+        {
+            SetLastError( ERROR_INVALID_DATA );
+            return FALSE;
+        }
+        if (!callback( attrid.data.uint16, raw_attr_stream, ((BYTE *)cursor - raw_attr_stream),
+                       param ))
+            return TRUE;
+    }
 }

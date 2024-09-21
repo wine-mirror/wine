@@ -400,16 +400,13 @@ static BOOL WINAPI enum_attr_callback( ULONG attr_id, BYTE *stream, ULONG stream
         SDP_ELEMENT_DATA data = {0};
         DWORD result;
 
-        todo_wine ok( attr_id == params->attrs_id[params->i],
-                      "Expected attribute id %lu, got %lu.\n", params->attrs_id[params->i],
-                      attr_id );
+        ok( attr_id == params->attrs_id[params->i], "Expected attribute id %lu, got %lu.\n",
+            params->attrs_id[params->i], attr_id );
         result = BluetoothSdpGetElementData( stream, stream_size, &data );
-        todo_wine ok( result == ERROR_SUCCESS, "BluetoothSdpGetElementData failed: %ld.\n",
-                      result );
-        todo_wine ok( !memcmp( &params->attrs[params->i], &data, sizeof( data ) ),
-                      "Expected %s, got %s.\n",
-                      debugstr_SDP_ELEMENT_DATA( &params->attrs[params->i] ),
-                      debugstr_SDP_ELEMENT_DATA( &data ) );
+        ok( result == ERROR_SUCCESS, "BluetoothSdpGetElementData failed: %ld.\n", result );
+        ok( !memcmp( &params->attrs[params->i], &data, sizeof( data ) ), "Expected %s, got %s.\n",
+            debugstr_SDP_ELEMENT_DATA( &params->attrs[params->i] ),
+            debugstr_SDP_ELEMENT_DATA( &data ) );
 
         params->i++;
     }
@@ -439,8 +436,8 @@ static void test_BluetoothSdpEnumAttributes( void )
     SetLastError( 0xdeadbeef );
     ret = BluetoothSdpEnumAttributes( sdp_record_bytes, ARRAY_SIZE( sdp_record_bytes ), enum_attr_callback,
                                       &data );
-    todo_wine ok( ret, "BluetoothSdpEnumAttributes failed with %ld.\n", GetLastError() );
-    todo_wine ok( data.i == data.attrs_n, "%d != %d\n", (int)data.i, (int)data.attrs_n );
+    ok( ret, "BluetoothSdpEnumAttributes failed with %ld.\n", GetLastError() );
+    ok( data.i == data.attrs_n, "%d != %d\n", (int)data.i, (int)data.attrs_n );
 }
 
 START_TEST( sdp )
