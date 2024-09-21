@@ -356,20 +356,18 @@ static void test_BluetoothSdpGetContainerElementData( void )
                                                        &handle, &container_elem );
             if (ret == ERROR_NO_MORE_ITEMS)
             {
-                todo_wine ok( n == test_cases[i].container_size, "%d != %d.\n",
-                              (int)test_cases[i].container_size, (int)n );
+                ok( n == test_cases[i].container_size, "%d != %d.\n",
+                    (int)test_cases[i].container_size, (int)n );
                 winetest_pop_context();
                 break;
             }
-            todo_wine ok( ret == ERROR_SUCCESS,
-                          "BluetoothSdpGetContainerElementData failed: %ld.\n", ret );
+            ok( ret == ERROR_SUCCESS, "BluetoothSdpGetContainerElementData failed: %ld.\n", ret );
             if (ret == ERROR_SUCCESS)
             {
-                todo_wine ok( !memcmp( &test_cases[i].sequence[n], &container_elem,
-                                       sizeof( container_elem ) ),
-                              "%s != %s.\n",
-                              debugstr_SDP_ELEMENT_DATA( &test_cases[i].sequence[n] ),
-                              debugstr_SDP_ELEMENT_DATA( &container_elem ) );
+                ok( !memcmp( &test_cases[i].sequence[n], &container_elem,
+                             sizeof( container_elem ) ),
+                    "%s != %s.\n", debugstr_SDP_ELEMENT_DATA( &test_cases[i].sequence[n] ),
+                    debugstr_SDP_ELEMENT_DATA( &container_elem ) );
             }
             n++;
             winetest_pop_context();

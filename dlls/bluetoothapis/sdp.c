@@ -264,6 +264,52 @@ DWORD WINAPI BluetoothSdpGetContainerElementData( BYTE *stream, ULONG stream_siz
                                                   HBLUETOOTH_CONTAINER_ELEMENT *handle,
                                                   SDP_ELEMENT_DATA *data )
 {
-    FIXME( "(%p, %lu, %p, %p) stub!\n", stream, stream_size, handle, data );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    BYTE *cursor;
+    DWORD result;
+    SIZE_T read = 0;
+
+    TRACE( "(%p, %lu, %p, %p)\n", stream, stream_size, handle, data );
+
+    if (stream == NULL || stream_size < sizeof( BYTE ) || handle == NULL || data == NULL)
+        return ERROR_INVALID_PARAMETER;
+
+    cursor = (BYTE *)(*handle);
+
+    if (cursor == NULL)
+    {
+        BYTE header, type, size_desc;
+        UINT32 elems_size = 0;
+        SIZE_T read = 0;
+
+        header = *stream;
+        type = data_elem_type( header );
+        size_desc = data_elem_size_desc( header );
+
+        if (type != SDP_TYPE_SEQUENCE && type != SDP_TYPE_ALTERNATIVE)
+            return ERROR_INVALID_PARAMETER;
+        if (!(size_desc >= SDP_SIZE_DESC_NEXT_UINT8 && size_desc <= SDP_SIZE_DESC_NEXT_UINT32))
+            return ERROR_INVALID_PARAMETER;
+
+        stream++;
+        if (!sdp_elem_read_var_size( stream, stream_size, &read, size_desc, &elems_size ))
+            return ERROR_INVALID_PARAMETER;
+
+        stream += read;
+        stream_size -= read;
+    }
+    else
+    {
+        if (cursor < stream) return ERROR_INVALID_PARAMETER;
+        if (cursor == (stream + stream_size)) return ERROR_NO_MORE_ITEMS;
+
+        stream = cursor;
+        stream_size = stream_size - (cursor - stream);
+    }
+    result = sdp_read_element_data( stream, stream_size, data, &read );
+    if (result != ERROR_SUCCESS) return result;
+
+    stream += read;
+    TRACE( "handle=%p\n", stream );
+    *handle = stream;
+    return ERROR_SUCCESS;
 }
