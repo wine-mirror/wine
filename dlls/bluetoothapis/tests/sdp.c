@@ -122,6 +122,10 @@ SDP_DEF_TYPE( STR8, STRING, NEXT_UINT8 );
 SDP_DEF_TYPE( STR16, STRING, NEXT_UINT16 );
 SDP_DEF_TYPE( STR32, STRING, NEXT_UINT32 );
 
+SDP_DEF_TYPE( SEQ8, SEQUENCE, NEXT_UINT8 );
+SDP_DEF_TYPE( SEQ16, SEQUENCE, NEXT_UINT16 );
+SDP_DEF_TYPE( SEQ32, SEQUENCE, NEXT_UINT32 );
+
 static void test_BluetoothSdpGetElementData_ints( void )
 {
     static struct
@@ -273,10 +277,112 @@ static void test_BluetoothSdpGetElementData_str( void )
     }
 }
 
+static void test_BluetoothSdpGetContainerElementData( void )
+{
+    static struct {
+        BYTE stream[11];
+        SIZE_T size;
+        DWORD error;
+        SDP_ELEMENT_DATA data;
+        SDP_ELEMENT_DATA sequence[6];
+        SIZE_T container_size;
+    } test_cases[] = {
+        {
+            {SDP_TYPE_DESC_SEQ8, 0x06, SDP_TYPE_DESC_UINT8, 0xde, SDP_TYPE_DESC_UINT8, 0xad, SDP_TYPE_DESC_UINT8, 0xbe},
+            8,
+            ERROR_SUCCESS,
+            {SDP_TYPE_SEQUENCE, SDP_ST_NONE, {.sequence = {&test_cases[0].stream[0], 8}}},
+            {
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xde}},
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xad}},
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xbe}}
+            },
+            3
+        },
+        {
+            {SDP_TYPE_DESC_SEQ16, 0x00, 0x06, SDP_TYPE_DESC_UINT8, 0xde, SDP_TYPE_DESC_UINT8, 0xad, SDP_TYPE_DESC_UINT8, 0xbe},
+            9,
+            ERROR_SUCCESS,
+            {SDP_TYPE_SEQUENCE, SDP_ST_NONE, {.sequence = {&test_cases[1].stream[0], 9}}},
+            {
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xde}},
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xad}},
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xbe}}
+            },
+            3
+        },
+        {
+            {SDP_TYPE_DESC_SEQ32, 0x00, 0x00, 0x00, 0x06, SDP_TYPE_DESC_UINT8, 0xde, SDP_TYPE_DESC_UINT8, 0xad, SDP_TYPE_DESC_UINT8, 0xbe},
+            11,
+            ERROR_SUCCESS,
+            {SDP_TYPE_SEQUENCE, SDP_ST_NONE, {.sequence = {&test_cases[2].stream[0], 11}}},
+            {
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xde}},
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xad}},
+                {SDP_TYPE_UINT, SDP_ST_UINT8, {.uint8 = 0xbe}}
+            },
+            3
+        },
+        {
+            {SDP_TYPE_DESC_SEQ8, SDP_TYPE_DESC_UINT8, 0xde, SDP_TYPE_DESC_UINT8, 0xad, SDP_TYPE_DESC_UINT8, 0xbe},
+            1,
+            ERROR_INVALID_PARAMETER,
+        },
+    };
+    SIZE_T i;
+
+    for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
+    {
+        SIZE_T n = 0;
+        HBLUETOOTH_CONTAINER_ELEMENT handle = NULL;
+        DWORD ret;
+
+        winetest_push_context( "test_cases seq-like %d", (int)i );
+        test_BluetoothSdpGetElementData( test_cases[i].stream, test_cases[i].size,
+                                         test_cases[i].error, &test_cases[i].data );
+        if (test_cases[i].error != ERROR_SUCCESS)
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        while (n < test_cases[i].container_size)
+        {
+            SDP_ELEMENT_DATA container_elem = {0};
+
+            winetest_push_context( "test_cases[%d].sequence[%d]", (int)i, (int)n );
+            ret = BluetoothSdpGetContainerElementData( test_cases[i].data.data.sequence.value,
+                                                       test_cases[i].data.data.sequence.length,
+                                                       &handle, &container_elem );
+            if (ret == ERROR_NO_MORE_ITEMS)
+            {
+                todo_wine ok( n == test_cases[i].container_size, "%d != %d.\n",
+                              (int)test_cases[i].container_size, (int)n );
+                winetest_pop_context();
+                break;
+            }
+            todo_wine ok( ret == ERROR_SUCCESS,
+                          "BluetoothSdpGetContainerElementData failed: %ld.\n", ret );
+            if (ret == ERROR_SUCCESS)
+            {
+                todo_wine ok( !memcmp( &test_cases[i].sequence[n], &container_elem,
+                                       sizeof( container_elem ) ),
+                              "%s != %s.\n",
+                              debugstr_SDP_ELEMENT_DATA( &test_cases[i].sequence[n] ),
+                              debugstr_SDP_ELEMENT_DATA( &container_elem ) );
+            }
+            n++;
+            winetest_pop_context();
+        }
+        winetest_pop_context();
+    }
+}
+
 START_TEST( sdp )
 {
     test_BluetoothSdpGetElementData_nil();
     test_BluetoothSdpGetElementData_ints();
     test_BluetoothSdpGetElementData_invalid();
     test_BluetoothSdpGetElementData_str();
+    test_BluetoothSdpGetContainerElementData();
 }
