@@ -116,6 +116,9 @@ struct GroupData
   /* View of remote data */
   LPVOID lpRemoteData;
   DWORD  dwRemoteDataSize;
+
+  /* SP data on a per player basis */
+  LPVOID lpSPPlayerData;
 };
 typedef struct GroupData  GroupData;
 typedef struct GroupData* lpGroupData;

@@ -1153,6 +1153,16 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
   /* FIXME: Should we validate the dwFlags? */
   lpGData->dwFlags = dwFlags;
 
+  /* Initialize the SP data section */
+  lpGData->lpSPPlayerData = DPSP_CreateSPPlayerData();
+  if ( !lpGData->lpSPPlayerData )
+  {
+    free( lpGData->nameA );
+    free( lpGData->name );
+    free( lpGData );
+    return NULL;
+  }
+
   TRACE( "Created group id 0x%08lx\n", *lpid );
 
   return lpGData;
@@ -1180,6 +1190,7 @@ static void DP_DeleteGroup( IDirectPlayImpl *This, DPID dpid )
   }
 
   /* Delete player */
+  free( lpGList->lpGData->lpSPPlayerData );
   free( lpGList->lpGData->nameA );
   free( lpGList->lpGData->name );
   free( lpGList->lpGData );
@@ -5971,42 +5982,58 @@ HRESULT dplay_create( REFIID riid, void **ppv )
 
 HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData )
 {
+  struct GroupData *group;
   lpPlayerList lpPlayer;
 
   EnterCriticalSection( &lpDP->lock );
 
   lpPlayer = DP_FindPlayer( lpDP, idPlayer );
-  if( lpPlayer == NULL )
+  if( lpPlayer )
   {
+    *lplpData = lpPlayer->lpPData->lpSPPlayerData;
     LeaveCriticalSection( &lpDP->lock );
-    return DPERR_INVALIDPLAYER;
+    return DP_OK;
   }
 
-  *lplpData = lpPlayer->lpPData->lpSPPlayerData;
+  group = DP_FindAnyGroup( lpDP, idPlayer );
+  if( group )
+  {
+    *lplpData = group->lpSPPlayerData;
+    LeaveCriticalSection( &lpDP->lock );
+    return DP_OK;
+  }
 
   LeaveCriticalSection( &lpDP->lock );
 
-  return DP_OK;
+  return DPERR_INVALIDPLAYER;
 }
 
 HRESULT DP_SetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void *lpData )
 {
+  struct GroupData *group;
   lpPlayerList lpPlayer;
 
   EnterCriticalSection( &lpDP->lock );
 
   lpPlayer = DP_FindPlayer( lpDP, idPlayer );
-  if( lpPlayer == NULL )
+  if( lpPlayer )
   {
+    lpPlayer->lpPData->lpSPPlayerData = lpData;
     LeaveCriticalSection( &lpDP->lock );
-    return DPERR_INVALIDPLAYER;
+    return DP_OK;
   }
 
-  lpPlayer->lpPData->lpSPPlayerData = lpData;
+  group = DP_FindAnyGroup( lpDP, idPlayer );
+  if( group )
+  {
+    group->lpSPPlayerData = lpData;
+    LeaveCriticalSection( &lpDP->lock );
+    return DP_OK;
+  }
 
   LeaveCriticalSection( &lpDP->lock );
 
-  return DP_OK;
+  return DPERR_INVALIDPLAYER;
 }
 
 /***************************************************************************
