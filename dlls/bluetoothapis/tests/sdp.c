@@ -397,7 +397,7 @@ static BOOL WINAPI enum_attr_callback( ULONG attr_id, BYTE *stream, ULONG stream
     winetest_push_context( "attributes %d", (int)params->i );
     if (params->i < params->attrs_n)
     {
-        SDP_ELEMENT_DATA data = {0};
+        SDP_ELEMENT_DATA data = {0}, data2 = {0};
         DWORD result;
 
         ok( attr_id == params->attrs_id[params->i], "Expected attribute id %lu, got %lu.\n",
@@ -407,6 +407,15 @@ static BOOL WINAPI enum_attr_callback( ULONG attr_id, BYTE *stream, ULONG stream
         ok( !memcmp( &params->attrs[params->i], &data, sizeof( data ) ), "Expected %s, got %s.\n",
             debugstr_SDP_ELEMENT_DATA( &params->attrs[params->i] ),
             debugstr_SDP_ELEMENT_DATA( &data ) );
+
+        result = BluetoothSdpGetAttributeValue( sdp_record_bytes, ARRAY_SIZE( sdp_record_bytes ),
+                                               params->attrs_id[params->i], &data2 );
+        todo_wine ok( result == ERROR_SUCCESS, "BluetoothSdpGetAttributeValue failed: %ld.\n",
+                      result );
+        todo_wine ok( !memcmp( &params->attrs[params->i], &data2, sizeof( data2 ) ),
+                      "Expected %s, got %s.\n",
+                      debugstr_SDP_ELEMENT_DATA( &params->attrs[params->i] ),
+                      debugstr_SDP_ELEMENT_DATA( &data2 ) );
 
         params->i++;
     }
@@ -430,6 +439,8 @@ static void test_BluetoothSdpEnumAttributes( void )
     };
     const ULONG attrs_id[] = {0x0, 0x1, 0x5, 0x9, 0x200, 0x201, 0x202, 0x203, 0x204, 0x205};
     struct attr_callback_data data = {attrs_id, attributes, ARRAY_SIZE( attributes ), 0};
+    SDP_ELEMENT_DATA elem_data = {0};
+    DWORD result;
 
     BOOL ret;
 
@@ -438,6 +449,10 @@ static void test_BluetoothSdpEnumAttributes( void )
                                       &data );
     ok( ret, "BluetoothSdpEnumAttributes failed with %ld.\n", GetLastError() );
     ok( data.i == data.attrs_n, "%d != %d\n", (int)data.i, (int)data.attrs_n );
+
+    result = BluetoothSdpGetAttributeValue( sdp_record_bytes, ARRAY_SIZE( sdp_record_bytes ), 0xff,
+                                            &elem_data );
+    todo_wine ok( result == ERROR_FILE_NOT_FOUND, "%d != %ld.\n", ERROR_FILE_NOT_FOUND, result );
 }
 
 START_TEST( sdp )
