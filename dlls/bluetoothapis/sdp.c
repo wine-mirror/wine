@@ -374,12 +374,42 @@ BOOL WINAPI BluetoothSdpEnumAttributes( BYTE *stream, ULONG stream_size,
     }
 }
 
+struct get_attr_value_data
+{
+    USHORT attr_id;
+    BYTE *attr_stream;
+    ULONG stream_size;
+};
+
+static BOOL WINAPI get_attr_value_callback( ULONG attr_id, BYTE *stream, ULONG stream_size,
+                                            void *params )
+{
+    struct get_attr_value_data *args = params;
+    if (attr_id == args->attr_id)
+    {
+        args->attr_stream = stream;
+        args->stream_size = stream_size;
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /*********************************************************************
  *  BluetoothSdpGetAttributeValue
  */
 DWORD WINAPI BluetoothSdpGetAttributeValue( BYTE *stream, ULONG stream_size, USHORT attr_id,
                                             SDP_ELEMENT_DATA *data )
 {
-    FIXME( "(%p %lu %u %p) stub!\n", stream, stream_size, attr_id, data );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct get_attr_value_data args = {0};
+
+    TRACE( "(%p %lu %u %p)\n", stream, stream_size, attr_id, data );
+
+    if (stream == NULL || data == NULL) return ERROR_INVALID_PARAMETER;
+
+    args.attr_id = attr_id;
+    if (!BluetoothSdpEnumAttributes( stream, stream_size, get_attr_value_callback, &args ))
+        return ERROR_INVALID_PARAMETER;
+    if (!args.attr_stream) return ERROR_FILE_NOT_FOUND;
+
+    return BluetoothSdpGetElementData( args.attr_stream, args.stream_size, data );
 }
