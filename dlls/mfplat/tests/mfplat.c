@@ -11608,9 +11608,14 @@ static void test_MFInitMediaTypeFromVideoInfoHeader(void)
 {
     static const MFVideoArea expect_aperture = {.OffsetX = {.value = 1}, .OffsetY = {.value = 2}, .Area = {.cx = 3, .cy = 5}};
     static const RECT source = {1, 2, 4, 7}, target = {3, 2, 12, 9};
+    static const PALETTEENTRY expect_palette[] = {{1},{2},{3},{4},{5},{6},{7},{8}};
+    static const BYTE expect_user_data[] = {6,5,4,3,2,1};
+    PALETTEENTRY palette[ARRAY_SIZE(expect_palette)];
+    BYTE user_data[sizeof(expect_user_data)];
+    char buffer[sizeof(VIDEOINFOHEADER2) + sizeof(user_data) + sizeof(palette)];
     IMFMediaType *media_type;
     MFVideoArea aperture;
-    VIDEOINFOHEADER vih;
+    VIDEOINFOHEADER vih, *vih_buf = (VIDEOINFOHEADER *)buffer;
     UINT32 value32;
     UINT64 value64;
     HRESULT hr;
@@ -11625,6 +11630,25 @@ static void test_MFInitMediaTypeFromVideoInfoHeader(void)
     hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih), NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    /* bmiHeader.biSize and the size parameter are checked together */
+    vih.bmiHeader.biSize = 1;
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih), &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    vih.bmiHeader.biSize = sizeof(vih.bmiHeader) - 1;
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih), &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    vih.bmiHeader.biSize = sizeof(vih.bmiHeader);
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih), &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    vih.bmiHeader.biSize = sizeof(vih.bmiHeader) - 1;
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih) - 1, &GUID_NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    *vih_buf = vih;
+    vih_buf->bmiHeader.biSize = sizeof(vih.bmiHeader) + 1;
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, vih_buf, sizeof(*vih_buf) + 1, &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    vih.bmiHeader.biSize = 0;
     hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih, sizeof(vih), &GUID_NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
@@ -11852,6 +11876,76 @@ static void test_MFInitMediaTypeFromVideoInfoHeader(void)
         winetest_pop_context();
     }
 
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_USER_DATA, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_PALETTE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    *vih_buf = vih;
+    vih_buf->bmiHeader.biCompression = BI_RGB;
+    vih_buf->bmiHeader.biBitCount = 24;
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, vih_buf, sizeof(*vih_buf), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memcpy( vih_buf + 1, expect_palette, sizeof(expect_palette) );
+    vih_buf->bmiHeader.biClrUsed = ARRAY_SIZE(expect_palette);
+
+    /* palette only works with 8bit RGB format */
+    vih_buf->bmiHeader.biSize = sizeof(vih_buf->bmiHeader) + sizeof(expect_palette);
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_palette), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_PALETTE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)palette, sizeof(palette), &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine ok(!memcmp(palette, expect_palette, value32), "Unexpected user data.\n");
+
+    vih_buf->bmiHeader.biBitCount = 16;
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_palette), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_PALETTE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)palette, sizeof(palette), &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine ok(!memcmp(palette, expect_palette, value32), "Unexpected user data.\n");
+
+    /* palette shouldn't be accounted for in the header size */
+    vih_buf->bmiHeader.biBitCount = 8;
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_palette), NULL);
+    todo_wine ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
+    vih_buf->bmiHeader.biSize = sizeof(vih_buf->bmiHeader);
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_palette), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_USER_DATA, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PALETTE, (BYTE *)palette, sizeof(palette), &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine ok(!memcmp(palette, expect_palette, value32), "Unexpected palette.\n");
+
+    /* cannot have both user data and palette */
+    memcpy( vih_buf + 1, expect_user_data, sizeof(expect_user_data) );
+    memcpy( (BYTE *)(vih_buf + 1) + sizeof(expect_user_data), expect_palette, sizeof(expect_palette) );
+    vih_buf->bmiHeader.biSize = sizeof(vih_buf->bmiHeader) + sizeof(expect_user_data);
+    hr = MFInitMediaTypeFromVideoInfoHeader(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_user_data) + sizeof(expect_palette), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_USER_DATA, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PALETTE, (BYTE *)palette, sizeof(palette), &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine ok(!memcmp(palette, expect_palette, value32), "Unexpected palette.\n");
+
     IMFMediaType_Release(media_type);
 }
 
@@ -11859,8 +11953,13 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
 {
     static const MFVideoArea expect_aperture = {.OffsetX = {.value = 1}, .OffsetY = {.value = 2}, .Area = {.cx = 3, .cy = 5}};
     static const RECT source = {1, 2, 4, 7}, target = {3, 2, 12, 9};
+    static const RGBQUAD expect_palette[] = {{1},{2},{3},{4},{5},{6},{7},{8}};
+    static const BYTE expect_user_data[] = {6,5,4,3,2,1};
+    RGBQUAD palette[ARRAY_SIZE(expect_palette)];
+    BYTE user_data[sizeof(expect_user_data)];
+    char buffer[sizeof(VIDEOINFOHEADER2) + sizeof(palette) + sizeof(user_data)];
     IMFMediaType *media_type;
-    VIDEOINFOHEADER2 vih;
+    VIDEOINFOHEADER2 vih, *vih_buf = (VIDEOINFOHEADER2 *)buffer;
     MFVideoArea aperture;
     UINT32 value32;
     UINT64 value64;
@@ -11876,6 +11975,25 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
     hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    /* bmiHeader.biSize and the size parameter are checked together */
+    vih.bmiHeader.biSize = 1;
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    vih.bmiHeader.biSize = sizeof(vih.bmiHeader) - 1;
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    vih.bmiHeader.biSize = sizeof(vih.bmiHeader);
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    vih.bmiHeader.biSize = sizeof(vih.bmiHeader) - 1;
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih) - 1, &GUID_NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    *vih_buf = vih;
+    vih_buf->bmiHeader.biSize = sizeof(vih.bmiHeader) + 1;
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, vih_buf, sizeof(*vih_buf) + 1, &GUID_NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    vih.bmiHeader.biSize = 0;
     hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), &GUID_NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
@@ -12151,6 +12269,76 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
 
         winetest_pop_context();
     }
+
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_USER_DATA, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_PALETTE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    *vih_buf = vih;
+    vih_buf->bmiHeader.biCompression = BI_RGB;
+    vih_buf->bmiHeader.biBitCount = 24;
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, vih_buf, sizeof(*vih_buf), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memcpy( vih_buf + 1, expect_palette, sizeof(expect_palette) );
+    vih_buf->bmiHeader.biClrUsed = ARRAY_SIZE(expect_palette);
+
+    /* palette only works with 8bit RGB format */
+    vih_buf->bmiHeader.biSize = sizeof(vih_buf->bmiHeader) + sizeof(expect_palette);
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_palette), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_PALETTE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)palette, sizeof(palette), &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine ok(!memcmp(palette, expect_palette, value32), "Unexpected user data.\n");
+
+    vih_buf->bmiHeader.biBitCount = 16;
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_palette), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_PALETTE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)palette, sizeof(palette), &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine ok(!memcmp(palette, expect_palette, value32), "Unexpected user data.\n");
+
+    /* palette shouldn't be accounted for in the header size */
+    vih_buf->bmiHeader.biBitCount = 8;
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_palette), NULL);
+    todo_wine ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
+    vih_buf->bmiHeader.biSize = sizeof(vih_buf->bmiHeader);
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_palette), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_USER_DATA, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PALETTE, (BYTE *)palette, sizeof(palette), &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine ok(!memcmp(palette, expect_palette, value32), "Unexpected palette.\n");
+
+    /* cannot have both user data and palette */
+    memcpy( vih_buf + 1, expect_user_data, sizeof(expect_user_data) );
+    memcpy( (BYTE *)(vih_buf + 1) + sizeof(expect_user_data), expect_palette, sizeof(expect_palette) );
+    vih_buf->bmiHeader.biSize = sizeof(vih_buf->bmiHeader) + sizeof(expect_user_data);
+    hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, vih_buf, sizeof(*vih_buf) + sizeof(expect_user_data) + sizeof(expect_palette), NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetItem(media_type, &MF_MT_USER_DATA, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PALETTE, (BYTE *)palette, sizeof(palette), &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine ok(!memcmp(palette, expect_palette, value32), "Unexpected palette.\n");
 
     IMFMediaType_Release(media_type);
 }
