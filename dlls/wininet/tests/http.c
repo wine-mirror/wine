@@ -7523,35 +7523,150 @@ static void test_user_agent_header(void)
     char buffer[64];
     BOOL ret;
 
-    ses = InternetOpenA("Gizmo5", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    ses = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
     con = InternetConnectA(ses, "test.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(con != NULL, "InternetConnect failed\n");
 
+    /* If the user agent string provided by the session handle is empty and none
+     * is explicitly set for the request handle, then there should be no user
+     * agent header present in the request when it is sent. */
     req = HttpOpenRequestA(con, "GET", "/tests/hello.html", "HTTP/1.0", NULL, NULL, 0, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
     ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
     err = GetLastError();
     ok(!ret, "HttpQueryInfo succeeded\n");
     ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %lu\n", err);
 
-    ret = HttpAddRequestHeadersA(req, "User-Agent: Gizmo Project\r\n", ~0u, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
-    ok(ret, "HttpAddRequestHeaders succeeded\n");
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed\n");
 
     size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
     ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
     err = GetLastError();
-    ok(ret, "HttpQueryInfo failed\n");
+    todo_wine
+    ok(!ret, "HttpQueryInfo succeeded\n");
+    todo_wine
+    ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %lu\n", err);
 
     InternetCloseHandle(req);
 
+    /* Set the user agent string in the session handle to something non-empty. */
+    strcpy(buffer, "Gizmo5");
+    ret = InternetSetOptionA(ses, INTERNET_OPTION_USER_AGENT, buffer, sizeof("Gizmo5") - 1);
+    ok(ret, "InternetSetOptionA failed to set user agent for session\n");
+
+    /* The connection handle still retains the previous user agent string, so
+     * the change to the user agent string in the session handle will not be
+     * visible in requests created from the existing connection. */
+    req = HttpOpenRequestA(con, "GET", "/tests/hello.html", "HTTP/1.0", NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    err = GetLastError();
+    ok(!ret, "HttpQueryInfo succeeded\n");
+    ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %lu\n", err);
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %lu\n", GetLastError());
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    err = GetLastError();
+    todo_wine
+    ok(!ret, "HttpQueryInfo succeeded\n");
+    todo_wine
+    ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %lu\n", err);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+
+    /* Recreate the connection so the updated user agent string from the session
+     * handle is picked up by new requests for subsequent tests. */
+    con = InternetConnectA(ses, "test.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    /* If a user agent string is not explicitly set for the request handle, then
+     * the user agent string from the session handle will be used for the header
+     * when the request is sent. */
+    req = HttpOpenRequestA(con, "GET", "/tests/hello.html", "HTTP/1.0", NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    err = GetLastError();
+    ok(!ret, "HttpQueryInfo succeeded\n");
+    ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %lu\n", err);
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %lu\n", GetLastError());
+
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "Gizmo5"), "got %s\n", buffer);
+    ok(size == strlen("Gizmo5"), "got %lu\n", size);
+
+    InternetCloseHandle(req);
+
+    /* Adding a User-Agent header with an empty value is not permitted. */
+    req = HttpOpenRequestA(con, "GET", "/tests/hello.html", "HTTP/1.0", NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    SetLastError(0xdeadbeef);
+    ret = HttpAddRequestHeadersA(req, "User-Agent: \r\n", ~0u, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    err = GetLastError();
+    todo_wine
+    ok(!ret, "HttpAddRequestHeaders succeeded\n");
+    todo_wine
+    ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %lu\n", err);
+
+    InternetCloseHandle(req);
+
+    /* A User-Agent header explicitly added to a request overrides the user
+     * agent string from the session handle. */
+    req = HttpOpenRequestA(con, "GET", "/tests/hello.html", "HTTP/1.0", NULL, NULL, 0, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpAddRequestHeadersA(req, "User-Agent: Gizmo Project\r\n", ~0u, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    ok(ret, "HttpAddRequestHeaders failed\n");
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "Gizmo Project"), "got %s\n", buffer);
+    ok(size == strlen("Gizmo Project"), "got %lu\n", size);
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %lu\n", GetLastError());
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(!strcmp(buffer, "Gizmo Project"), "got %s\n", buffer);
+    ok(size == strlen("Gizmo Project"), "got %lu\n", size);
+
+    InternetCloseHandle(req);
+
+    /* Explicitly adding both Accept and User-Agent headers at once is permitted. */
     req = HttpOpenRequestA(con, "GET", "/", "HTTP/1.0", NULL, NULL, 0, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
     ret = HttpQueryInfoA(req, HTTP_QUERY_ACCEPT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
     err = GetLastError();
     ok(!ret, "HttpQueryInfo succeeded\n");
@@ -7565,6 +7680,13 @@ static void test_user_agent_header(void)
     ret = HttpQueryInfoA(req, HTTP_QUERY_ACCEPT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
     ok(ret, "HttpQueryInfo failed: %lu\n", GetLastError());
     ok(!strcmp(buffer, "audio/*, image/*, text/*"), "got '%s' expected 'audio/*, image/*, text/*'\n", buffer);
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
+    ok(ret, "HttpQueryInfo failed: %lu\n", GetLastError());
+    ok(!strcmp(buffer, "Gizmo Project"), "got %s\n", buffer);
+    ok(size == strlen("Gizmo Project"), "got %lu\n", size);
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
