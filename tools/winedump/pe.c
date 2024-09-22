@@ -2741,7 +2741,7 @@ static void	dump_dir_debug(void)
     printf("\n");
 }
 
-static inline void print_clrflags(const char *title, UINT value)
+static void print_clr_flags( const char *title, UINT value )
 {
     printf("  %-34s 0x%X\n", title, value);
 #define X(f,s) if (value & f) printf("    %s\n", s)
@@ -2753,9 +2753,1021 @@ static inline void print_clrflags(const char *title, UINT value)
 #undef X
 }
 
-static inline void print_clrdirectory(const char *title, const IMAGE_DATA_DIRECTORY *dir)
+static void print_clr_directory( const char *title, const IMAGE_DATA_DIRECTORY *dir )
 {
     printf("  %-23s rva: 0x%-8x  size: 0x%-8x\n", title, (UINT)dir->VirtualAddress, (UINT)dir->Size);
+}
+
+static void print_clr_strings( const BYTE *strings, UINT size )
+{
+    const char *beg = (const char *)strings, *end;
+    UINT count = 0;
+
+    for (;;)
+    {
+        if (!(end = memchr( beg, '\0', size - (beg - (const char *)strings) ))) break;
+        printf( "           %-10u\"%s\"\n", count, beg );
+        beg = end + 1;
+        count++;
+    }
+}
+
+static UINT clr_blob_size( const BYTE *data, UINT data_size, UINT *skip )
+{
+    if (!data_size) return 0;
+    if (!(data[0] & 0x80))
+    {
+        *skip = 1;
+        return data[0];
+    }
+    if (data_size < 2) return 0;
+    if (!(data[0] & 0x40))
+    {
+        *skip = 2;
+        return ((data[0] & ~0xc0) << 8) + data[1];
+    }
+    if (data_size < 3) return 0;
+    if (!(data[0] & 0x20))
+    {
+        *skip = 4;
+        return ((data[0] & ~0xe0) << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
+    }
+    return 0;
+}
+
+static void print_clr_blobs( const BYTE *data, UINT data_size )
+{
+    const BYTE *blob = data + 1;
+    UINT i, size, skip, count = 1;
+
+    if (!data_size) return;
+    printf( "            0         %02x\n", data[0] );
+    data_size--;
+    for (;;)
+    {
+        if (!(size = clr_blob_size( blob, data_size, &skip ))) break;
+        printf( "            %-10u", count++ );
+        for (i = 0; i < size; i++)
+        {
+            printf( "%02x ",  blob[i + skip] );
+            if (i && i < size - 1 && !((i + 1) % 30)) printf( "\n                      " );
+        }
+        printf( "\n" );
+        data_size -= size - skip;
+        blob += size + skip;
+    }
+}
+
+static void print_clr_guids( const BYTE *data, UINT data_size )
+{
+    const BYTE *guid = data;
+    UINT i, j, count = data_size / 16;
+
+    for (i = 0; i < count; i++)
+    {
+        printf( "            %-10u", count );
+        printf( "%08x", *(UINT *)guid );
+        printf( " %04x", *(UINT *)guid + 4 );
+        printf( " %04x", *(USHORT *)guid + 6 );
+        for (j = 0; j < 8; j++) printf( " %02x", guid[j + 8] );
+        printf( "\n" );
+        guid += 16;
+    }
+}
+
+static UINT str_idx_size = 2;
+static UINT guid_idx_size = 2;
+static UINT blob_idx_size = 2;
+
+static void print_clr_byte( const char *prefix, const BYTE **ptr, UINT *size, BOOL flags )
+{
+    if (*size < 1) return;
+    printf( flags ? "%s0x%02x" : "%s%-3u", prefix, **ptr );
+    (*ptr)++; (*size)--;
+}
+
+static void print_clr_ushort( const char *prefix, const BYTE **ptr, UINT *size, BOOL flags )
+{
+    if (*size < sizeof(USHORT)) return;
+    printf( flags ? "%s0x%04x" : "%s%-5u", prefix, *(const USHORT *)*ptr );
+    *ptr += sizeof(USHORT); *size -= sizeof(USHORT);
+}
+
+static void print_clr_uint( const char *prefix, const BYTE **ptr, UINT *size, BOOL flags )
+{
+    if (*size < sizeof(UINT)) return;
+    printf( flags ? "%s0x%08x" : "%s%-10u", prefix, *(const UINT *)*ptr );
+    *ptr += sizeof(UINT); *size -= sizeof(UINT);
+}
+
+static void print_clr_uint64( const char *prefix, const BYTE **ptr, UINT *size )
+{
+    if (*size < sizeof(UINT64)) return;
+    printf( "%s0x%08x%08x", prefix, (UINT)(*(const UINT64 *)*ptr >> 32), (UINT)*(const UINT64 *)*ptr );
+    *ptr += sizeof(UINT64); *size -= sizeof(UINT64);
+}
+
+static void print_clr_string_idx( const char *prefix, const BYTE **ptr, UINT *size )
+{
+    if (*size < str_idx_size) return;
+    if (str_idx_size == 2) printf( "%s%-5u", prefix, *(const USHORT *)*ptr );
+    else printf( "%s%-10u", prefix, *(const UINT *)*ptr );
+    *ptr += str_idx_size; *size -= str_idx_size;
+}
+
+static void print_clr_blob_idx( const char *prefix, const BYTE **ptr, UINT *size )
+{
+    if (*size < blob_idx_size) return;
+    if (blob_idx_size == 2) printf( "%s%-5u", prefix, *(const USHORT *)*ptr );
+    else printf( "%s%-10u", prefix, *(const UINT *)*ptr );
+    *ptr += blob_idx_size; *size -= blob_idx_size;
+}
+
+static void print_clr_guid_idx( const char *prefix, const BYTE **ptr, UINT *size )
+{
+    if (*size < guid_idx_size) return;
+    if (guid_idx_size == 2) printf( "%s%-5u", prefix, *(const USHORT *)*ptr );
+    else printf( "%s%-10u", prefix, *(const UINT *)*ptr );
+    *ptr += guid_idx_size; *size -= guid_idx_size;
+}
+
+enum
+{
+    CLR_TABLE_MODULE                    = 0x00,
+    CLR_TABLE_TYPEREF                   = 0x01,
+    CLR_TABLE_TYPEDEF                   = 0x02,
+    CLR_TABLE_FIELD                     = 0x04,
+    CLR_TABLE_METHODDEF                 = 0x06,
+    CLR_TABLE_PARAM                     = 0x08,
+    CLR_TABLE_INTERFACEIMPL             = 0x09,
+    CLR_TABLE_MEMBERREF                 = 0x0a,
+    CLR_TABLE_CONSTANT                  = 0x0b,
+    CLR_TABLE_CUSTOMATTRIBUTE           = 0x0c,
+    CLR_TABLE_FIELDMARSHAL              = 0x0d,
+    CLR_TABLE_DECLSECURITY              = 0x0e,
+    CLR_TABLE_CLASSLAYOUT               = 0x0f,
+    CLR_TABLE_FIELDLAYOUT               = 0x10,
+    CLR_TABLE_STANDALONESIG             = 0x11,
+    CLR_TABLE_EVENTMAP                  = 0x12,
+    CLR_TABLE_EVENT                     = 0x14,
+    CLR_TABLE_PROPERTYMAP               = 0x15,
+    CLR_TABLE_PROPERTY                  = 0x17,
+    CLR_TABLE_METHODSEMANTICS           = 0x18,
+    CLR_TABLE_METHODIMPL                = 0x19,
+    CLR_TABLE_MODULEREF                 = 0x1a,
+    CLR_TABLE_TYPESPEC                  = 0x1b,
+    CLR_TABLE_IMPLMAP                   = 0x1c,
+    CLR_TABLE_FIELDRVA                  = 0x1d,
+    CLR_TABLE_ASSEMBLY                  = 0x20,
+    CLR_TABLE_ASSEMBLYPROCESSOR         = 0x21,
+    CLR_TABLE_ASSEMBLYOS                = 0x22,
+    CLR_TABLE_ASSEMBLYREF               = 0x23,
+    CLR_TABLE_ASSEMBLYREFPROCESSOR      = 0x24,
+    CLR_TABLE_ASSEMBLYREFOS             = 0x25,
+    CLR_TABLE_FILE                      = 0x26,
+    CLR_TABLE_EXPORTEDTYPE              = 0x27,
+    CLR_TABLE_MANIFESTRESOURCE          = 0x28,
+    CLR_TABLE_NESTEDCLASS               = 0x29,
+    CLR_TABLE_GENERICPARAM              = 0x2a,
+    CLR_TABLE_METHODSPEC                = 0x2b,
+    CLR_TABLE_GENERICPARAMCONSTRAINT    = 0x2c,
+    CLR_TABLE_MAX                       = 0x2d,
+};
+
+static void print_clr_table_idx( const char *prefix, const BYTE **ptr, UINT *size )
+{
+    if (*size < sizeof(USHORT)) return; /* FIXME should be 4 bytes if the number of rows exceeds 2^16 */
+    printf( "%s0x%04x", prefix, *(const USHORT *)*ptr );
+    *ptr += sizeof(USHORT); *size -= sizeof(USHORT);
+}
+
+static void print_clr_table_module( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                Module table\n" );
+    printf( "                   Generation  Name   Mvid   EncId  EncBaseId\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, FALSE );
+        print_clr_string_idx( "       ", ptr, size );
+        print_clr_guid_idx( "  ", ptr, size );
+        print_clr_guid_idx( "  ", ptr, size );
+        print_clr_guid_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_typeref( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                TypeRef table\n" );
+    printf( "                   ResolutionScope  TypeName   TypeNamsespace\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_string_idx( "           ", ptr, size );
+        print_clr_string_idx( "      ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_typedef( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                TypeDef table\n" );
+    printf( "                   Flags       TypeName TypeNamsespace Extends   FieldList MethodList\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_string_idx( "  ", ptr, size );
+        print_clr_string_idx( "    ", ptr, size );
+        print_clr_table_idx( "          ", ptr, size );
+        print_clr_table_idx( "    ", ptr, size );
+        print_clr_table_idx( "    ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_field( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                Field table\n" );
+    printf( "                   Flags    Name   Signature\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, TRUE );
+        print_clr_string_idx( "   ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_methoddef( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                MethodDef table\n" );
+    printf( "                   RVA          ImplFlags   Flags   Name   Signature ParamList\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_ushort( "   ", ptr, size, TRUE );
+        print_clr_ushort( "      ", ptr, size, TRUE );
+        print_clr_string_idx( "  ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_table_idx( "     ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_param( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                Param table\n" );
+    printf( "                   Flags    Sequence Name\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, TRUE );
+        print_clr_ushort( "   ", ptr, size, FALSE );
+        print_clr_string_idx( "    ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_interfaceimpl( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                InterfaceImpl table\n" );
+    printf( "                   Class    Interface\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_table_idx( "   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_memberref( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                MemberRef table\n" );
+    printf( "                   Class    Name    Signature\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_string_idx( "   ", ptr, size );
+        print_clr_blob_idx( "   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_constant( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                Constant table\n" );
+    printf( "                   Type  Padding  Parent  Value\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_byte( "                   ", ptr, size, FALSE );
+        print_clr_byte( "   ", ptr, size, FALSE );
+        print_clr_table_idx( "      ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_customattribute( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                CustomAttribute table\n" );
+    printf( "                   Parent  Type    Value\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_table_idx( "  ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_fieldmarshal( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                FieldMarshal table\n" );
+    printf( "                   Parent  NativeType\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_declsecurity( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                DeclSecurity table\n" );
+    printf( "                   Action  Parent  PermissionSet\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, TRUE );
+        print_clr_table_idx( "  ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_classlayout( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                ClassLayout table\n" );
+    printf( "                   PackingSize  ClassSize  Parent\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, FALSE );
+        print_clr_uint( "        ", ptr, size, FALSE );
+        print_clr_table_idx( " ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_fieldlayout( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                FieldLayout table\n" );
+    printf( "                   Offset   Field\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, FALSE );
+        print_clr_table_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_standalonesig( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                StandAloneSig table\n" );
+    printf( "                   Signature\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_blob_idx( "                   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_eventmap( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                EventMap table\n" );
+    printf( "                   Parent  EvenList\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_blob_idx( "                   ", ptr, size );
+        print_clr_blob_idx( "   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_event( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                Event table\n" );
+    printf( "                   EventFlags  Name    EventType\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, TRUE );
+        print_clr_string_idx( "      ", ptr, size );
+        print_clr_table_idx( "   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_propertymap( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                PropertyMap table\n" );
+    printf( "                   Parent  PropertyList\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_table_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_property( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                Property table\n" );
+    printf( "                   Flags   Name   Type\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, TRUE );
+        print_clr_string_idx( "  ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_methodsemantics( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                MethodSemantics table\n" );
+    printf( "                   Semantics   Method   Association\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, TRUE );
+        print_clr_table_idx( "      ", ptr, size );
+        print_clr_table_idx( "   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_methodimpl( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                MethodImpl table\n" );
+    printf( "                   Class   MethodBody  MethodDeclaration\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_table_idx( "  ", ptr, size );
+        print_clr_table_idx( "      ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_moduleref( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                ModuleRef table\n" );
+    printf( "                   Name\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_string_idx( "                   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_typespec( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                TypeSpec table\n" );
+    printf( "                   Signature\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_blob_idx( "                   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_implmap( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                ImplMap table\n" );
+    printf( "                   MappingFlags  MemberForwarded  ImportName  ImportScope\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, TRUE );
+        print_clr_table_idx( "        ", ptr, size );
+        print_clr_string_idx( "           ", ptr, size );
+        print_clr_table_idx( "       ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_fieldrva( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                FieldRVA table\n" );
+    printf( "                   RVA         Field\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_table_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_assembly( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                Assembly table\n" );
+    printf( "                   HashAlgId  MajorVersion  MinorVersion  BuildNumber  RevisionNumber  Flags       "
+            "PublicKey  Name\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, TRUE );
+        print_clr_ushort( "     ", ptr, size, FALSE );
+        print_clr_ushort( "         ", ptr, size, FALSE );
+        print_clr_ushort( "         ", ptr, size, FALSE );
+        print_clr_ushort( "        ", ptr, size, FALSE );
+        print_clr_uint( "           ", ptr, size, TRUE );
+        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_string_idx( "      ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_assemblyprocessor( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                AssemblyProcessor table\n" );
+    printf( "                   Processor\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_assemblyos( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                AssemblyOS table\n" );
+    printf( "                   OSPlatformID  OSMajorVersion  OSMinorVersion\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_uint( "    ", ptr, size, FALSE );
+        print_clr_uint( "      ", ptr, size, FALSE );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_assemblyref( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                AssemblyRef table\n" );
+    printf( "                   MajorVersion  MinorVersion  BuildNumber  RevisionNumber PublicKeyOrToken  "
+            "Name   Culture  HashValue\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, FALSE );
+        print_clr_ushort( "         ", ptr, size, FALSE );
+        print_clr_ushort( "         ", ptr, size, FALSE );
+        print_clr_ushort( "        ", ptr, size, FALSE );
+        print_clr_blob_idx( "          ", ptr, size );
+        print_clr_string_idx( "             ", ptr, size );
+        print_clr_string_idx( "  ", ptr, size );
+        print_clr_blob_idx( "    ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_assemblyrefprocessor( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                AssemblyRefProcessor table\n" );
+    printf( "                   Processor  AssemblyRef\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_table_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_assemblyrefos( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                AssemblyRefOS table\n" );
+    printf( "                   OSPlatformId  OSMajorVersion  OSMinorVersion  AssemblyRef\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_uint( "    ", ptr, size, FALSE );
+        print_clr_uint( "      ", ptr, size, FALSE );
+        print_clr_table_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_file( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                File table\n" );
+    printf( "                   Flags       Name    HashValue\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_string_idx( "  ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_exportedtype( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                ExportedType table\n" );
+    printf( "                   Flags       TypeDefId   TypeName  TypeNamespace  Implementation\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_uint( "  ", ptr, size, TRUE );
+        print_clr_string_idx( "  ", ptr, size );
+        print_clr_string_idx( "    ", ptr, size );
+        print_clr_table_idx( "         ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_manifestresource( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                ManifestResource table\n" );
+    printf( "                   Offset      Flags       Name    Implementation\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_uint( "                   ", ptr, size, FALSE );
+        print_clr_uint( "  ", ptr, size, TRUE );
+        print_clr_string_idx( "  ", ptr, size );
+        print_clr_table_idx( "   ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_nestedclass( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                NestedClass table\n" );
+    printf( "                   NestedClass  EnclosingClass\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_table_idx( "       ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_genericparam( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                GenericParam table\n" );
+    printf( "                   Number  Flags   Owner   Name\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_ushort( "                   ", ptr, size, FALSE );
+        print_clr_ushort( "   ", ptr, size, TRUE );
+        print_clr_table_idx( "  ", ptr, size );
+        print_clr_string_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_methodspec( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                MethodSpec table\n" );
+    printf( "                   Method  Instantiation\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+static void print_clr_table_genericparamconstraint( const BYTE **ptr, UINT *size, UINT row_count )
+{
+    UINT i;
+
+    printf( "                GenericParamConstraint table\n" );
+    printf( "                   Owner   Constraint\n" );
+    for (i = 0; i < row_count; i++)
+    {
+        print_clr_table_idx( "                   ", ptr, size );
+        print_clr_blob_idx( "  ", ptr, size );
+        printf( "\n" );
+    }
+}
+
+enum
+{
+    HEAP_SIZE_FLAG_STRING = 0x01,
+    HEAP_SIZE_FLAG_GUID   = 0x02,
+    HEAP_SIZE_FLAG_BLOB   = 0x04,
+};
+
+static void print_clr_tables( const BYTE *data, UINT data_size )
+{
+    const BYTE *ptr = data;
+    BYTE heap_sizes;
+    UINT i, size = data_size, count = 0;
+    const UINT *row_count;
+    UINT64 valid, j;
+
+    print_clr_uint( "            Reserved        ", &ptr, &size, FALSE );
+    printf( "\n" );
+    print_clr_byte( "            MajorVersion    ", &ptr, &size, FALSE );
+    printf( "\n" );
+    print_clr_byte( "            MinorVersion    ", &ptr, &size, FALSE );
+    printf( "\n" );
+
+    if (size < 1) return;
+    heap_sizes = *ptr;
+    print_clr_byte( "            HeapSizes       ", &ptr, &size, TRUE );
+    printf( "\n" );
+    if (heap_sizes & HEAP_SIZE_FLAG_STRING) str_idx_size = 4;
+    if (heap_sizes & HEAP_SIZE_FLAG_GUID) guid_idx_size = 4;
+    if (heap_sizes & HEAP_SIZE_FLAG_BLOB) blob_idx_size = 4;
+
+    print_clr_byte( "            Reserved        ", &ptr, &size, FALSE );
+    printf( "\n" );
+
+    if (size < sizeof(UINT64)) return;
+    valid = *(UINT64 *)ptr;
+    print_clr_uint64( "            Valid           ", &ptr, &size );
+    printf( "\n" );
+    for (j = 0; j < sizeof(valid) * 8; j++) if (valid & (1ul << j)) count++;
+
+    print_clr_uint64( "            Sorted          ", &ptr, &size );
+    printf( "\n" );
+
+    row_count = (const UINT *)ptr;
+    if (count) printf( "                Row counts\n" );
+    for (i = 0; i < count; i++)
+    {
+        printf( "                %-10u", i );
+        print_clr_uint( "   ", &ptr, &size, FALSE );
+        printf( "\n" );
+    }
+
+    for (i = 0, j = 0; j < sizeof(valid) * 8; j++)
+    {
+        if (!(valid & (1ul << j))) continue;
+
+        if (row_count[i] > 65536)
+        {
+            printf( "can't handle number of rows > 65536\n" );
+            break;
+        }
+
+        switch (j)
+        {
+        case CLR_TABLE_MODULE:
+            print_clr_table_module( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_TYPEREF:
+            print_clr_table_typeref( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_TYPEDEF:
+            print_clr_table_typedef( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_FIELD:
+            print_clr_table_field( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_METHODDEF:
+            print_clr_table_methoddef( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_PARAM:
+            print_clr_table_param( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_INTERFACEIMPL:
+            print_clr_table_interfaceimpl( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_MEMBERREF:
+            print_clr_table_memberref( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_CONSTANT:
+            print_clr_table_constant( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_CUSTOMATTRIBUTE:
+            print_clr_table_customattribute( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_FIELDMARSHAL:
+            print_clr_table_fieldmarshal( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_DECLSECURITY:
+            print_clr_table_declsecurity( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_CLASSLAYOUT:
+            print_clr_table_classlayout( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_FIELDLAYOUT:
+            print_clr_table_fieldlayout( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_STANDALONESIG:
+            print_clr_table_standalonesig( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_EVENTMAP:
+            print_clr_table_eventmap( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_EVENT:
+            print_clr_table_event( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_PROPERTYMAP:
+            print_clr_table_propertymap( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_PROPERTY:
+            print_clr_table_property( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_METHODSEMANTICS:
+            print_clr_table_methodsemantics( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_METHODIMPL:
+            print_clr_table_methodimpl( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_MODULEREF:
+            print_clr_table_moduleref( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_TYPESPEC:
+            print_clr_table_typespec( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_IMPLMAP:
+            print_clr_table_implmap( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_FIELDRVA:
+            print_clr_table_fieldrva( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_ASSEMBLY:
+            print_clr_table_assembly( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_ASSEMBLYPROCESSOR:
+            print_clr_table_assemblyprocessor( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_ASSEMBLYOS:
+            print_clr_table_assemblyos( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_ASSEMBLYREF:
+            print_clr_table_assemblyref( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_ASSEMBLYREFPROCESSOR:
+            print_clr_table_assemblyrefprocessor( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_ASSEMBLYREFOS:
+            print_clr_table_assemblyrefos( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_FILE:
+            print_clr_table_file( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_EXPORTEDTYPE:
+            print_clr_table_exportedtype( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_MANIFESTRESOURCE:
+            print_clr_table_manifestresource( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_NESTEDCLASS:
+            print_clr_table_nestedclass( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_GENERICPARAM:
+            print_clr_table_genericparam( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_METHODSPEC:
+            print_clr_table_methodspec( &ptr, &size, row_count[i++] );
+            break;
+        case CLR_TABLE_GENERICPARAMCONSTRAINT:
+            print_clr_table_genericparamconstraint( &ptr, &size, row_count[i++] );
+            break;
+        default:
+            printf( "unknown table 0x%02x\n", (BYTE)j );
+            break;
+        }
+    }
+}
+
+static void print_clr_stream( const BYTE *base, const BYTE **ptr, UINT *size )
+{
+    const char *name;
+    UINT len, stream_offset, stream_size;
+
+    if (*size < sizeof(UINT)) return;
+    stream_offset = *(const UINT *)*ptr;
+    print_clr_uint( "        Offset    ", ptr, size, FALSE );
+    printf( "\n" );
+
+    if (*size < sizeof(UINT)) return;
+    stream_size = *(const UINT *)*ptr;
+    print_clr_uint( "        Size      ", ptr, size, FALSE );
+    printf( "\n" );
+
+    if (!memchr( *ptr, '\0', *size )) return;
+    name = (const char *)*ptr;
+    printf( "        Name      %s\n", name );
+    len = ((strlen( name ) + 1) + 3) & ~3;
+    if (*size < len) return;
+    *ptr += len; *size -= len;
+
+    if (!strcmp( name, "#Strings" )) print_clr_strings( base + stream_offset, stream_size );
+    else if (!strcmp( name, "#US" ) || !strcmp( name, "#Blob" )) print_clr_blobs( base + stream_offset, stream_size );
+    else if (!strcmp( name, "#GUID" )) print_clr_guids( base + stream_offset, stream_size );
+    else if (!strcmp( name, "#~" )) print_clr_tables( base + stream_offset, stream_size );
+}
+
+static void print_clr_metadata( const BYTE *data, UINT data_size )
+{
+    const BYTE *ptr = data;
+    UINT size = data_size, len, nb_streams, i;
+    const char *version;
+
+    print_clr_uint( "    Signature    ", &ptr, &size, TRUE );
+    printf( "\n" );
+    print_clr_ushort( "    MajorVersion ", &ptr, &size, FALSE );
+    printf( "\n" );
+    print_clr_ushort( "    MinorVersion ", &ptr, &size, FALSE );
+    printf( "\n" );
+    print_clr_uint( "    Reserved     ", &ptr, &size, FALSE );
+    printf( "\n" );
+
+    if (size < sizeof(UINT)) return;
+    len = *(const UINT *)ptr;
+    print_clr_uint( "    Length       ", &ptr, &size, FALSE );
+    printf( "\n" );
+
+    if (size < len || !memchr( ptr, '\0', len )) return;
+    version = (const char *)ptr;
+    printf( "    Version      %s\n", version );
+    len = ((strlen( version ) + 1) + 3) & ~3;
+    if (size < len) return;
+    ptr += len; size -= len;
+
+    print_clr_ushort( "    Flags        ", &ptr, &size, TRUE );
+    printf( "\n" );
+
+    if (size < sizeof(USHORT)) return;
+    nb_streams = *(const USHORT *)ptr;
+    print_clr_ushort( "    Streams      ", &ptr, &size, FALSE );
+    printf( "\n" );
+
+    for (i = 0; i < nb_streams; i++) print_clr_stream( data, &ptr, &size );
 }
 
 static void dump_dir_clr_header(void)
@@ -2768,17 +3780,18 @@ static void dump_dir_clr_header(void)
     printf( "CLR Header\n" );
     print_dword( "Header Size", dir->cb );
     print_ver( "Required runtime version", dir->MajorRuntimeVersion, dir->MinorRuntimeVersion );
-    print_clrflags( "Flags", dir->Flags );
+    print_clr_flags( "Flags", dir->Flags );
     print_dword( "EntryPointToken", dir->EntryPointToken );
     printf("\n");
     printf( "CLR Data Directory\n" );
-    print_clrdirectory( "MetaData", &dir->MetaData );
-    print_clrdirectory( "Resources", &dir->Resources );
-    print_clrdirectory( "StrongNameSignature", &dir->StrongNameSignature );
-    print_clrdirectory( "CodeManagerTable", &dir->CodeManagerTable );
-    print_clrdirectory( "VTableFixups", &dir->VTableFixups );
-    print_clrdirectory( "ExportAddressTableJumps", &dir->ExportAddressTableJumps );
-    print_clrdirectory( "ManagedNativeHeader", &dir->ManagedNativeHeader );
+    print_clr_directory( "MetaData", &dir->MetaData );
+    print_clr_metadata( RVA(dir->MetaData.VirtualAddress, dir->MetaData.Size), dir->MetaData.Size );
+    print_clr_directory( "Resources", &dir->Resources );
+    print_clr_directory( "StrongNameSignature", &dir->StrongNameSignature );
+    print_clr_directory( "CodeManagerTable", &dir->CodeManagerTable );
+    print_clr_directory( "VTableFixups", &dir->VTableFixups );
+    print_clr_directory( "ExportAddressTableJumps", &dir->ExportAddressTableJumps );
+    print_clr_directory( "ManagedNativeHeader", &dir->ManagedNativeHeader );
     printf("\n");
 }
 
