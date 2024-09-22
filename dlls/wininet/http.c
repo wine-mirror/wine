@@ -4988,6 +4988,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     WCHAR *request_header = NULL;
     INT responseLen, cnt;
     DWORD res;
+    const WCHAR *appinfo_agent;
 
     TRACE("--> %p\n", request);
 
@@ -5005,14 +5006,17 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         set_content_length_header(request, dwContentLength, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
         request->bytesToWrite = dwContentLength;
     }
-    if (request->session->appInfo->agent)
+
+    appinfo_agent = request->session->appInfo->agent;
+
+    if (appinfo_agent && *appinfo_agent)
     {
         WCHAR *agent_header;
         int len;
 
-        len = lstrlenW(request->session->appInfo->agent) + lstrlenW(L"User-Agent: %s\r\n");
+        len = lstrlenW(appinfo_agent) + lstrlenW(L"User-Agent: %s\r\n");
         agent_header = malloc(len * sizeof(WCHAR));
-        swprintf(agent_header, len, L"User-Agent: %s\r\n", request->session->appInfo->agent);
+        swprintf(agent_header, len, L"User-Agent: %s\r\n", appinfo_agent);
 
         HTTP_HttpAddRequestHeadersW(request, agent_header, lstrlenW(agent_header), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
         free(agent_header);

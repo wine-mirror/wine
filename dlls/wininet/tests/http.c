@@ -7549,9 +7549,7 @@ static void test_user_agent_header(void)
     SetLastError(0xdeadbeef);
     ret = HttpQueryInfoA(req, HTTP_QUERY_USER_AGENT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
     err = GetLastError();
-    todo_wine
     ok(!ret, "HttpQueryInfo succeeded\n");
-    todo_wine
     ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %lu\n", err);
 
     InternetCloseHandle(req);
