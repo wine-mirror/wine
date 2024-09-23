@@ -23,6 +23,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
+static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings *settings,
+        struct wined3d_string_buffer *string)
+{
+    FIXME("Not yet implemented.\n");
+    return false;
+}
+
 static bool ffp_hlsl_generate_pixel_shader(const struct ffp_frag_settings *settings,
         struct wined3d_string_buffer *string)
 {
@@ -67,6 +74,32 @@ static bool compile_hlsl_shader(const struct wined3d_string_buffer *hlsl,
         return false;
     }
 
+    return true;
+}
+
+bool ffp_hlsl_compile_vs(const struct wined3d_ffp_vs_settings *settings, struct wined3d_shader_desc *shader_desc)
+{
+    struct wined3d_string_buffer string;
+    struct vkd3d_shader_code sm1;
+
+    if (!string_buffer_init(&string))
+        return false;
+
+    if (!ffp_hlsl_generate_vertex_shader(settings, &string))
+    {
+        string_buffer_free(&string);
+        return false;
+    }
+
+    if (!compile_hlsl_shader(&string, &sm1, "vs_2_0"))
+    {
+        string_buffer_free(&string);
+        return false;
+    }
+    string_buffer_free(&string);
+
+    shader_desc->byte_code = sm1.code;
+    shader_desc->byte_code_size = ~(size_t)0;
     return true;
 }
 

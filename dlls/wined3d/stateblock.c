@@ -1299,6 +1299,7 @@ void CDECL wined3d_stateblock_set_vertex_shader(struct wined3d_stateblock *state
         wined3d_shader_decref(stateblock->stateblock_state.vs);
     stateblock->stateblock_state.vs = shader;
     stateblock->changed.vertexShader = TRUE;
+    stateblock->changed.ffp_vs_settings = 1;
 }
 
 static void wined3d_bitmap_set_bits(uint32_t *bitmap, unsigned int start, unsigned int count)
@@ -2393,6 +2394,7 @@ static void wined3d_stateblock_invalidate_initial_states(struct wined3d_stateblo
     memset(stateblock->changed.transform, 0xff, sizeof(stateblock->changed.transform));
     stateblock->changed.modelview_matrices = 1;
     stateblock->changed.point_scale = 1;
+    stateblock->changed.ffp_vs_settings = 1;
     stateblock->changed.ffp_ps_settings = 1;
 }
 
@@ -2909,6 +2911,40 @@ void CDECL wined3d_stateblock_apply_clear_state(struct wined3d_stateblock *state
 
     if (wined3d_bitmap_is_set(stateblock->changed.renderState, WINED3D_RS_SRGBWRITEENABLE))
         wined3d_device_set_render_state(device, WINED3D_RS_SRGBWRITEENABLE, state->rs[WINED3D_RS_SRGBWRITEENABLE]);
+}
+
+static struct wined3d_shader *get_ffp_vertex_shader(struct wined3d_device *device, const struct wined3d_state *state)
+{
+    static const struct wined3d_stream_info dummy_stream_info;
+    struct wined3d_ffp_vs_settings settings;
+    const struct wine_rb_entry *entry;
+    struct wined3d_ffp_vs *vs;
+
+    /* XXX: wined3d_ffp_get_vs_settings() only needs the stream info for the
+     * swizzle map, which the HLSL pipeline doesn't use (it will be computed and
+     * used later as part of struct vs_compile_args).
+     *
+     * This is nevertheless janky, and we'd like to get rid of it. Eventually
+     * once the HLSL backend is used everywhere, we can get rid of the swizzle
+     * map from wined3d_ffp_vs_settings. */
+    wined3d_ffp_get_vs_settings(state, &dummy_stream_info, &device->adapter->d3d_info, &settings);
+
+    if ((entry = wine_rb_get(&device->ffp_vertex_shaders, &settings)))
+        return WINE_RB_ENTRY_VALUE(entry, struct wined3d_ffp_vs, entry.entry)->shader;
+
+    if (!(vs = malloc(sizeof(*vs))))
+        return NULL;
+
+    vs->entry.settings = settings;
+    if (FAILED(wined3d_shader_create_ffp_vs(device, &settings, &vs->shader)))
+    {
+        free(vs);
+        return NULL;
+    }
+    if (wine_rb_put(&device->ffp_vertex_shaders, &vs->entry.settings, &vs->entry.entry) == -1)
+        ERR("Failed to insert FFP vertex shader.\n");
+
+    return vs->shader;
 }
 
 static struct wined3d_shader *get_ffp_pixel_shader(struct wined3d_device *device, const struct wined3d_state *state)
@@ -3780,8 +3816,17 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     if (changed->ffp_vs_settings && !state->vs)
     {
-        /* Force invalidation of the vertex shader. */
-        wined3d_device_context_emit_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, NULL);
+        if (device->adapter->d3d_info.ffp_hlsl)
+        {
+            struct wined3d_shader *shader = get_ffp_vertex_shader(device, device->cs->c.state);
+
+            wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, shader);
+        }
+        else
+        {
+            /* Force invalidation of the vertex shader. */
+            wined3d_device_context_emit_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, NULL);
+        }
     }
 
     if (changed->ffp_ps_settings && !state->ps)

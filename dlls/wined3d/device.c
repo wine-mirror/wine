@@ -1667,6 +1667,14 @@ static void device_free_depth_stencil_state(struct wine_rb_entry *entry, void *c
     wined3d_depth_stencil_state_decref(state);
 }
 
+static void device_free_ffp_vertex_shader(struct wine_rb_entry *entry, void *context)
+{
+    struct wined3d_ffp_vs *vs = WINE_RB_ENTRY_VALUE(entry, struct wined3d_ffp_vs, entry);
+
+    wined3d_shader_decref(vs->shader);
+    free(vs);
+}
+
 static void device_free_ffp_pixel_shader(struct wine_rb_entry *entry, void *context)
 {
     struct wined3d_ffp_ps *ps = WINE_RB_ENTRY_VALUE(entry, struct wined3d_ffp_ps, entry);
@@ -1722,6 +1730,7 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     wine_rb_destroy(&device->rasterizer_states, device_free_rasterizer_state, NULL);
     wine_rb_destroy(&device->blend_states, device_free_blend_state, NULL);
     wine_rb_destroy(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
+    wine_rb_destroy(&device->ffp_vertex_shaders, device_free_ffp_vertex_shader, NULL);
     wine_rb_destroy(&device->ffp_pixel_shaders, device_free_ffp_pixel_shader, NULL);
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
@@ -5524,6 +5533,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     wine_rb_init(&device->rasterizer_states, wined3d_rasterizer_state_compare);
     wine_rb_init(&device->blend_states, wined3d_blend_state_compare);
     wine_rb_init(&device->depth_stencil_states, wined3d_depth_stencil_state_compare);
+    wine_rb_init(&device->ffp_vertex_shaders, wined3d_ffp_vertex_program_key_compare);
     wine_rb_init(&device->ffp_pixel_shaders, wined3d_ffp_frag_program_key_compare);
 
     if (vertex_pipeline->vp_states && fragment_pipeline->states
@@ -5537,6 +5547,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         wine_rb_destroy(&device->blend_states, NULL, NULL);
         wine_rb_destroy(&device->depth_stencil_states, NULL, NULL);
         wine_rb_destroy(&device->so_descs, NULL, NULL);
+        wine_rb_destroy(&device->ffp_vertex_shaders, NULL, NULL);
         wine_rb_destroy(&device->ffp_pixel_shaders, NULL, NULL);
         wined3d_decref(device->wined3d);
         return hr;
@@ -5565,6 +5576,7 @@ err:
     wine_rb_destroy(&device->blend_states, NULL, NULL);
     wine_rb_destroy(&device->depth_stencil_states, NULL, NULL);
     wine_rb_destroy(&device->so_descs, NULL, NULL);
+    wine_rb_destroy(&device->ffp_vertex_shaders, NULL, NULL);
     wine_rb_destroy(&device->ffp_pixel_shaders, NULL, NULL);
     wined3d_decref(device->wined3d);
     return hr;

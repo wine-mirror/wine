@@ -6448,7 +6448,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
 
     memset(settings, 0, sizeof(*settings));
 
-    if (si->position_transformed)
+    if (vdecl->position_transformed)
     {
         settings->transformed = 1;
         settings->point_size = state->primitive_type == WINED3D_PT_POINTLIST;

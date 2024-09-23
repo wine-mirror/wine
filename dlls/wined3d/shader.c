@@ -2436,7 +2436,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const struct w
         WARN("Wrong shader type %s.\n", debug_shader_type(reg_maps->shader_version.type));
         return WINED3DERR_INVALIDCALL;
     }
-    if (!shader->is_ffp_ps
+    if (!shader->is_ffp_vs && !shader->is_ffp_ps
             && version->major > shader_max_version_from_feature_level(shader->device->cs->c.state->feature_level))
     {
         WARN("Shader version %u not supported by this device.\n", version->major);
@@ -2549,6 +2549,18 @@ static void wined3d_shader_init_object(void *object)
     TRACE("shader %p.\n", shader);
 
     list_add_head(&device->shaders, &shader->shader_list_entry);
+
+    if (shader->is_ffp_vs)
+    {
+        struct wined3d_ffp_vs_settings *settings = shader->byte_code;
+        struct wined3d_shader_desc desc;
+
+        if (!ffp_hlsl_compile_vs(settings, &desc))
+            return;
+        free(settings);
+        shader_set_function(shader, &desc, WINED3D_SHADER_TYPE_VERTEX, NULL,
+                device->adapter->d3d_info.limits.vs_uniform_count);
+    }
 
     if (shader->is_ffp_ps)
     {
@@ -3322,6 +3334,31 @@ HRESULT CDECL wined3d_shader_create_vs(struct wined3d_device *device, const stru
     wined3d_cs_init_object(device->cs, wined3d_shader_init_object, object);
 
     TRACE("Created vertex shader %p.\n", object);
+    *shader = object;
+
+    return WINED3D_OK;
+}
+
+HRESULT wined3d_shader_create_ffp_vs(struct wined3d_device *device,
+        const struct wined3d_ffp_vs_settings *settings, struct wined3d_shader **shader)
+{
+    struct wined3d_shader *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    shader_init(object, device, NULL, &wined3d_null_parent_ops);
+    object->is_ffp_vs = true;
+    if (!(object->byte_code = malloc(sizeof(*settings))))
+    {
+        free(object);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(object->byte_code, settings, sizeof(*settings));
+
+    wined3d_cs_init_object(device->cs, wined3d_shader_init_object, object);
+
+    TRACE("Created FFP vertex shader %p.\n", object);
     *shader = object;
 
     return WINED3D_OK;

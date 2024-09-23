@@ -2731,6 +2731,12 @@ struct wined3d_ffp_vs_desc
     struct wined3d_ffp_vs_settings settings;
 };
 
+struct wined3d_ffp_vs
+{
+    struct wined3d_ffp_vs_desc entry;
+    struct wined3d_shader *shader;
+};
+
 void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct wined3d_stream_info *si,
         const struct wined3d_d3d_info *d3d_info, struct wined3d_ffp_vs_settings *settings);
 
@@ -2990,7 +2996,7 @@ struct wined3d_device
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
     struct wine_rb_tree so_descs;
     struct wine_rb_tree samplers, rasterizer_states, blend_states, depth_stencil_states;
-    struct wine_rb_tree ffp_pixel_shaders;
+    struct wine_rb_tree ffp_vertex_shaders, ffp_pixel_shaders;
 
     /* Render Target Support */
     struct wined3d_rendertarget_view *auto_depth_stencil_view;
@@ -4215,6 +4221,7 @@ struct wined3d_shader
     void *byte_code;
     unsigned int byte_code_size;
     bool load_local_constsF;
+    bool is_ffp_vs;
     bool is_ffp_ps;
     enum vkd3d_shader_source_type source_type;
     const struct wined3d_shader_frontend *frontend;
@@ -4253,6 +4260,8 @@ struct wined3d_shader
     } u;
 };
 
+HRESULT wined3d_shader_create_ffp_vs(struct wined3d_device *device,
+        const struct wined3d_ffp_vs_settings *settings, struct wined3d_shader **shader);
 HRESULT wined3d_shader_create_ffp_ps(struct wined3d_device *device,
         const struct ffp_frag_settings *settings, struct wined3d_shader **shader);
 
@@ -4285,6 +4294,7 @@ BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage us
 
 enum vkd3d_shader_visibility vkd3d_shader_visibility_from_wined3d(enum wined3d_shader_type shader_type);
 
+bool ffp_hlsl_compile_vs(const struct wined3d_ffp_vs_settings *settings, struct wined3d_shader_desc *shader_desc);
 bool ffp_hlsl_compile_ps(const struct ffp_frag_settings *settings, struct wined3d_shader_desc *shader_desc);
 
 static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
