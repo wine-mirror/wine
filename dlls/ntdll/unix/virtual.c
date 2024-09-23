@@ -651,7 +651,11 @@ static NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, const void **fun
     {
         if (builtin->module != module) continue;
         if (builtin->unix_path && !builtin->unix_handle)
+        {
             builtin->unix_handle = dlopen( builtin->unix_path, RTLD_NOW );
+            if (!builtin->unix_handle)
+                WARN_(module)( "failed to load %s: %s\n", debugstr_a(builtin->unix_path), dlerror() );
+        }
         if (builtin->unix_handle)
         {
             *funcs = dlsym( builtin->unix_handle, ptr_name );
