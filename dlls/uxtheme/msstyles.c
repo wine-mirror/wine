@@ -1193,8 +1193,67 @@ static BOOL prepare_alpha (HBITMAP bmp, BOOL* hasAlpha, BOOL *hasDefaultTranspar
     if (!bmp || GetObjectW( bmp, sizeof(dib), &dib ) != sizeof(dib))
         return FALSE;
 
-    if (dib.dsBmih.biCompression != BI_RGB)
+    if (dib.dsBm.bmBitsPixel <= 8)
+    {
+        RGBQUAD p[256];
+        HDC hdc = CreateCompatibleDC(NULL);
+        HBITMAP prev = SelectObject(hdc, bmp);
+        UINT count = GetDIBColorTable(hdc, 0, 256, p);
+
+        SelectObject(hdc, prev);
+        DeleteDC(hdc);
+
+        for (n = 0; n < count; ++n)
+        {
+            if (RGB(p[n].rgbRed, p[n].rgbGreen, p[n].rgbBlue) == DEFAULT_TRANSPARENT_COLOR)
+            {
+                *hasDefaultTransparentColour = TRUE;
+                return TRUE;
+            }
+        }
         return TRUE;
+    }
+
+    if (dib.dsBm.bmBitsPixel == 16)
+    {
+        unsigned short transparent_color;
+        int y;
+
+        if (dib.dsBmih.biCompression == BI_RGB)
+        {
+            transparent_color = 0x7c00 | 0x001f;
+        }
+        else if (dib.dsBmih.biCompression == BI_BITFIELDS && dib.dsBitfields[0])
+        {
+            transparent_color = dib.dsBitfields[0] | dib.dsBitfields[2];
+        }
+        else
+        {
+            WARN("biCompression %ld, bpp %d not checked for default transparent colour.\n", dib.dsBmih.biCompression, dib.dsBm.bmBitsPixel);
+            return TRUE;
+        }
+        stride = (dib.dsBmih.biWidth * 2 + 3) & ~3;
+        p = dib.dsBm.bmBits;
+        for (y = 0; y < dib.dsBmih.biHeight; ++y)
+        {
+            p = (BYTE *)dib.dsBm.bmBits + stride * y;
+            for (n = 0; n < dib.dsBmih.biWidth; ++n, p += 2)
+            {
+                if ((p[0] | (p[1] << 8)) == transparent_color)
+                {
+                    *hasDefaultTransparentColour = TRUE;
+                    return TRUE;
+                }
+            }
+        }
+        return TRUE;
+    }
+
+    if (dib.dsBmih.biCompression != BI_RGB)
+    {
+        WARN("biCompression %ld, bpp %d not checked for default transparent colour.\n", dib.dsBmih.biCompression, dib.dsBm.bmBitsPixel);
+        return TRUE;
+    }
 
     if (dib.dsBm.bmBitsPixel == 24)
     {
@@ -1222,8 +1281,12 @@ static BOOL prepare_alpha (HBITMAP bmp, BOOL* hasAlpha, BOOL *hasDefaultTranspar
 
     /* If all alpha values are 0xff, don't use alpha blending */
     for (n = 0, p = dib.dsBm.bmBits; n < dib.dsBmih.biWidth * dib.dsBmih.biHeight; n++, p += 4)
+    {
         if ((*hasAlpha = (p[3] != 0xff)))
             break;
+        if (RGB(p[0], p[1], p[2]) == DEFAULT_TRANSPARENT_COLOR)
+            *hasDefaultTransparentColour = TRUE;
+    }
 
     if (!*hasAlpha)
         return TRUE;
