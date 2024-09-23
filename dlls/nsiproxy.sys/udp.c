@@ -231,13 +231,17 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
             *count = reply->count;
         else if (ret == STATUS_BUFFER_TOO_SMALL)
         {
-            *count = reply->count;
-            if (want_data)
+            if (!want_data)
             {
-                free( endpoints );
-                return STATUS_BUFFER_OVERFLOW;
+                /* If we were given buffers, the outgoing count must never be
+                   greater than the incoming one. If we weren't, the count
+                   should be set to the actual count. */
+                *count = reply->count;
+                return STATUS_SUCCESS;
             }
-            else return STATUS_SUCCESS;
+
+            free( endpoints );
+            return STATUS_BUFFER_OVERFLOW;
         }
     }
     SERVER_END_REQ;
