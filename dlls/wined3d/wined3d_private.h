@@ -242,6 +242,7 @@ struct wined3d_d3d_info
     uint32_t fences : 1;
     uint32_t persistent_map : 1;
     uint32_t gpu_push_constants : 1;
+    uint32_t ffp_hlsl : 1;
     enum wined3d_feature_level feature_level;
 
     DWORD multisample_draw_location;
@@ -2662,6 +2663,12 @@ struct ffp_frag_desc
 int wined3d_ffp_frag_program_key_compare(const void *key, const struct wine_rb_entry *entry);
 int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb_entry *entry);
 
+struct wined3d_ffp_ps
+{
+    struct ffp_frag_desc entry;
+    struct wined3d_shader *shader;
+};
+
 extern const struct wined3d_parent_ops wined3d_null_parent_ops;
 
 void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
@@ -2983,6 +2990,7 @@ struct wined3d_device
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
     struct wine_rb_tree so_descs;
     struct wine_rb_tree samplers, rasterizer_states, blend_states, depth_stencil_states;
+    struct wine_rb_tree ffp_pixel_shaders;
 
     /* Render Target Support */
     struct wined3d_rendertarget_view *auto_depth_stencil_view;
@@ -4206,7 +4214,8 @@ struct wined3d_shader
     unsigned int functionLength;
     void *byte_code;
     unsigned int byte_code_size;
-    BOOL load_local_constsF;
+    bool load_local_constsF;
+    bool is_ffp_ps;
     enum vkd3d_shader_source_type source_type;
     const struct wined3d_shader_frontend *frontend;
     void *frontend_data;
@@ -4244,6 +4253,9 @@ struct wined3d_shader
     } u;
 };
 
+HRESULT wined3d_shader_create_ffp_ps(struct wined3d_device *device,
+        const struct ffp_frag_settings *settings, struct wined3d_shader **shader);
+
 enum wined3d_shader_resource_type pixelshader_get_resource_type(const struct wined3d_shader_reg_maps *reg_maps,
         unsigned int resource_idx, DWORD tex_types);
 void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
@@ -4272,6 +4284,8 @@ HRESULT shader_generate_code(const struct wined3d_shader *shader, struct wined3d
 BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage usage);
 
 enum vkd3d_shader_visibility vkd3d_shader_visibility_from_wined3d(enum wined3d_shader_type shader_type);
+
+bool ffp_hlsl_compile_ps(const struct ffp_frag_settings *settings, struct wined3d_shader_desc *shader_desc);
 
 static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
 {
