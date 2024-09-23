@@ -1305,6 +1305,7 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
 void sync_gl_drawable( HWND hwnd, BOOL known_child )
 {
     struct gl_drawable *old, *new;
+    BOOL is_offscreen;
 
     if (!(old = get_gl_drawable( hwnd, 0 ))) return;
 
@@ -1312,9 +1313,9 @@ void sync_gl_drawable( HWND hwnd, BOOL known_child )
     {
     case DC_GL_WINDOW:
     case DC_GL_CHILD_WIN:
-        if (!known_child)
+        is_offscreen = old->type == DC_GL_CHILD_WIN;
+        if (is_offscreen == needs_offscreen_rendering( hwnd, known_child ))
         {
-            /* Still a childless top-level window */
             update_gl_drawable_size( old );
             break;
         }
