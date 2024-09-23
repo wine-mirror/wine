@@ -179,6 +179,11 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
         load_driver_devices(eCapture);
     }
 
+    if (drvs.module == 0)
+        ERR("No driver from %s could be initialized. "
+            "Maybe check dependencies with WINEDEBUG=warn+module.\n",
+            wine_dbgstr_w(driver_list));
+
     return drvs.module != 0;
 }
 
