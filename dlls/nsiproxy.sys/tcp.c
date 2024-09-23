@@ -322,13 +322,17 @@ static NTSTATUS tcp_conns_enumerate_all( UINT filter, struct nsi_tcp_conn_key *k
             *count = reply->count;
         else if (ret == STATUS_BUFFER_TOO_SMALL)
         {
-            *count = reply->count;
-            if (want_data)
+            if (!want_data)
             {
-                free( connections );
-                return STATUS_BUFFER_OVERFLOW;
+                /* If we were given buffers, the outgoing count must never be
+                   greater than the incoming one. If we weren't, the count
+                   should be set to the actual count. */
+                *count = reply->count;
+                return STATUS_SUCCESS;
             }
-            return STATUS_SUCCESS;
+
+            free( connections );
+            return STATUS_BUFFER_OVERFLOW;
         }
     }
     SERVER_END_REQ;
