@@ -77,6 +77,30 @@ static void diag( SQLHANDLE handle, SQLSMALLINT type )
     if (ret == SQL_SUCCESS) trace( "state '%s' err %d msg '%s' len %d\n", state, err, msg, len );
 }
 
+static void test_SQLGetDiagRec( void )
+{
+    SQLHANDLE handle;
+    SQLINTEGER err;
+    SQLSMALLINT len;
+    SQLCHAR state[6], msg[256];
+    SQLRETURN ret;
+
+    handle = (void *)0xdeadbeef;
+    ret = SQLAllocHandle( SQL_HANDLE_ENV, SQL_NULL_HANDLE, &handle );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    ok( handle != (void *)0xdeadbeef, "handle not set\n" );
+
+    state[0] = 0;
+    msg[0] = 0;
+    err = -1;
+    len = 0;
+    ret = SQLGetDiagRec( SQL_HANDLE_ENV, handle, 1, state, &err, msg, sizeof(msg), &len );
+    ok( ret == SQL_NO_DATA, "got %d\n", ret );
+
+    ret = SQLFreeHandle( SQL_HANDLE_ENV, handle );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+}
+
 static void test_SQLConnect( void )
 {
     SQLHENV env;
@@ -608,6 +632,7 @@ static void test_SQLSetConnectAttr(void)
 START_TEST(odbc32)
 {
     test_SQLAllocHandle();
+    test_SQLGetDiagRec();
     test_SQLConnect();
     test_SQLDriverConnect();
     test_SQLBrowseConnect();

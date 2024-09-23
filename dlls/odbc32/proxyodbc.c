@@ -2776,7 +2776,7 @@ SQLRETURN WINAPI SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMAL
                                SQLSMALLINT BufferLength, SQLSMALLINT *TextLength)
 {
     struct object *obj = lock_object( Handle, HandleType );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_NO_DATA;
 
     TRACE("(HandleType %d, Handle %p, RecNumber %d, SqlState %p, NativeError %p, MessageText %p, BufferLength %d,"
           " TextLength %p)\n", HandleType, Handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
@@ -6546,7 +6546,7 @@ SQLRETURN WINAPI SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMA
                                 SQLSMALLINT *TextLength)
 {
     struct object *obj = lock_object( Handle, HandleType );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_NO_DATA;
 
     TRACE("(HandleType %d, Handle %p, RecNumber %d, SqlState %p, NativeError %p, MessageText %p, BufferLength %d,"
           " TextLength %p)\n", HandleType, Handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
