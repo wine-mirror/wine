@@ -168,7 +168,7 @@ static NTSTATUS load_odbc(void)
    if (!s || !s[0]) s = SONAME_LIBODBC;
    if (!(libodbc = dlopen( s, RTLD_NOW )))
    {
-       ERR_(winediag)( "failed to open library %s: %s\n", debugstr_a(s), dlerror() );
+       ERR_(winediag)( "failed to open library %s: %s\n", debugstr_a(s), debugstr_a(dlerror()) );
        return STATUS_DLL_NOT_FOUND;
    }
 #define LOAD_FUNC(name) \
