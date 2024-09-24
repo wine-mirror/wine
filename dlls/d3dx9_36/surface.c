@@ -1528,7 +1528,8 @@ static enum range get_range_for_component_type(enum component_type type)
 }
 
 /* It doesn't work for components bigger than 32 bits (or somewhat smaller but unaligned). */
-void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *src, struct d3dx_color *dst)
+void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *src, const PALETTEENTRY *palette,
+        struct d3dx_color *dst)
 {
     DWORD mask, tmp;
     unsigned int c;
@@ -1558,8 +1559,11 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
                     *dst_component = *(float *)&tmp;
                 break;
 
-            case CTYPE_LUMA:
             case CTYPE_INDEX:
+                *dst_component = (&palette[tmp].peRed)[component_offsets[c]] / 255.0f;
+                break;
+
+            case CTYPE_LUMA:
             case CTYPE_UNORM:
                 *dst_component = (float)tmp / mask;
                 break;
@@ -1765,8 +1769,7 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
             BYTE *dst_ptr = dst_slice_ptr + y * dst_row_pitch;
 
             for (x = 0; x < min_width; x++) {
-                if (!src_format->to_rgba && !dst_format->from_rgba
-                        && format_types_match(src_format, dst_format)
+                if (format_types_match(src_format, dst_format)
                         && src_format->bytes_per_pixel <= 4 && dst_format->bytes_per_pixel <= 4)
                 {
                     DWORD val;
@@ -1789,10 +1792,8 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
                 {
                     struct d3dx_color color, tmp;
 
-                    format_to_d3dx_color(src_format, src_ptr, &color);
+                    format_to_d3dx_color(src_format, src_ptr, palette, &color);
                     tmp = color;
-                    if (src_format->to_rgba)
-                        src_format->to_rgba(&color.value, &tmp.value, palette);
 
                     if (color_key)
                     {
@@ -1804,9 +1805,6 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
                     }
 
                     color = tmp;
-                    if (dst_format->from_rgba)
-                        dst_format->from_rgba(&tmp.value, &color.value);
-
                     format_from_d3dx_color(dst_format, &color, dst_ptr);
                 }
 
@@ -1871,8 +1869,7 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
             {
                 const BYTE *src_ptr = src_row_ptr + (x * src_size->width / dst_size->width) * src_format->bytes_per_pixel;
 
-                if (!src_format->to_rgba && !dst_format->from_rgba
-                        && format_types_match(src_format, dst_format)
+                if (format_types_match(src_format, dst_format)
                         && src_format->bytes_per_pixel <= 4 && dst_format->bytes_per_pixel <= 4)
                 {
                     DWORD val;
@@ -1895,10 +1892,8 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
                 {
                     struct d3dx_color color, tmp;
 
-                    format_to_d3dx_color(src_format, src_ptr, &color);
+                    format_to_d3dx_color(src_format, src_ptr, palette, &color);
                     tmp = color;
-                    if (src_format->to_rgba)
-                        src_format->to_rgba(&color.value, &tmp.value, palette);
 
                     if (color_key)
                     {
@@ -1910,9 +1905,6 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
                     }
 
                     color = tmp;
-                    if (dst_format->from_rgba)
-                        dst_format->from_rgba(&tmp.value, &color.value);
-
                     format_from_d3dx_color(dst_format, &color, dst_ptr);
                 }
 

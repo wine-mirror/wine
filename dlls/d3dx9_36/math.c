@@ -3093,7 +3093,7 @@ HRESULT WINAPI D3DXSHProjectCubeMap(unsigned int order, IDirect3DCubeTexture9 *t
                 D3DXVec3Normalize(&dir, &dir);
                 D3DXSHEvalDirection(temp, order, &dir);
 
-                format_to_d3dx_color(format, &row[x * format->block_byte_count], &colour);
+                format_to_d3dx_color(format, &row[x * format->block_byte_count], NULL, &colour);
 
                 for (i = 0; i < order_square; ++i)
                 {

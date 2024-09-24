@@ -117,8 +117,6 @@ struct pixel_format_desc {
     enum component_type a_type;
     enum component_type rgb_type;
     uint32_t flags;
-    void (*from_rgba)(const struct vec4 *src, struct vec4 *dst);
-    void (*to_rgba)(const struct vec4 *src, struct vec4 *dst, const PALETTEENTRY *palette);
 };
 
 struct d3dx_pixels
@@ -230,7 +228,8 @@ HRESULT write_buffer_to_file(const WCHAR *filename, ID3DXBuffer *buffer);
 const struct pixel_format_desc *get_format_info(D3DFORMAT format);
 const struct pixel_format_desc *get_format_info_idx(int idx);
 
-void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *src, struct d3dx_color *dst);
+void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *src, const PALETTEENTRY *palette,
+        struct d3dx_color *dst);
 void format_from_d3dx_color(const struct pixel_format_desc *format, const struct d3dx_color *src, BYTE *dst);
 
 void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
