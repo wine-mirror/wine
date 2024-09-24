@@ -1547,6 +1547,7 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
 
             memcpy(&tmp, src + format->shift[c] / 8,
                     min(sizeof(DWORD), (format->shift[c] % 8 + format->bits[c] + 7) / 8));
+            tmp = (tmp >> (format->shift[c] % 8)) & mask;
 
             switch (dst_ctype)
             {
@@ -1560,26 +1561,20 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
             case CTYPE_LUMA:
             case CTYPE_INDEX:
             case CTYPE_UNORM:
-                *dst_component = (float)((tmp >> format->shift[c] % 8) & mask) / mask;
+                *dst_component = (float)tmp / mask;
                 break;
 
             case CTYPE_SNORM:
             {
                 const uint32_t sign_bit = (1u << (format->bits[c] - 1));
-                uint32_t tmp_extended, tmp_masked = (tmp >> format->shift[c] % 8) & mask;
+                uint32_t tmp_extended = (tmp & sign_bit) ? (tmp | ~(sign_bit - 1)) : tmp;
 
-                tmp_extended = tmp_masked;
-                if (tmp_masked & sign_bit)
-                {
-                    tmp_extended |= ~(sign_bit - 1);
-
-                    /*
-                     * In order to clamp to an even range, we need to ignore
-                     * the maximum negative value.
-                     */
-                    if (tmp_masked == sign_bit)
-                        tmp_extended |= 1;
-                }
+                /*
+                 * In order to clamp to an even range, we need to ignore
+                 * the maximum negative value.
+                 */
+                if (tmp == sign_bit)
+                    tmp_extended |= 1;
 
                 *dst_component = (float)(((int32_t)tmp_extended)) / (sign_bit - 1);
                 break;
