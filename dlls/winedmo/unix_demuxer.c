@@ -37,6 +37,8 @@ static inline const char *debugstr_averr( int err )
 struct demuxer
 {
     AVFormatContext *ctx;
+
+    AVPacket *last_packet; /* last read packet */
 };
 
 static struct demuxer *get_demuxer( struct winedmo_demuxer demuxer )
@@ -181,7 +183,7 @@ NTSTATUS demuxer_read( void *arg )
 
     TRACE( "demuxer %p, capacity %#x\n", demuxer, capacity );
 
-    if (!(packet = demuxer->ctx->opaque))
+    if (!(packet = demuxer->last_packet))
     {
         if (!(packet = av_packet_alloc())) return STATUS_NO_MEMORY;
         if ((ret = av_read_frame( demuxer->ctx, packet )) < 0)
@@ -196,7 +198,7 @@ NTSTATUS demuxer_read( void *arg )
     params->sample.size = packet->size;
     if ((capacity < packet->size))
     {
-        demuxer->ctx->opaque = packet;
+        demuxer->last_packet = packet;
         return STATUS_BUFFER_TOO_SMALL;
     }
 
@@ -208,7 +210,7 @@ NTSTATUS demuxer_read( void *arg )
     memcpy( (void *)(UINT_PTR)sample->data, packet->data, packet->size );
     params->stream = packet->stream_index;
     av_packet_free( &packet );
-    demuxer->ctx->opaque = NULL;
+    demuxer->last_packet = NULL;
 
     return STATUS_SUCCESS;
 }
