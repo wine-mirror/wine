@@ -108,7 +108,22 @@ static NTSTATUS demuxer_create_streams( struct demuxer *demuxer )
 
     for (i = 0; i < demuxer->ctx->nb_streams; i++)
     {
+        AVCodecParameters *par = demuxer->ctx->streams[i]->codecpar;
         struct stream *stream = demuxer->streams + i;
+        const AVBitStreamFilter *filter;
+
+        if (par->codec_id == AV_CODEC_ID_H264)
+        {
+            if (!(filter = av_bsf_get_by_name( "h264_mp4toannexb" )))
+                ERR( "Failed to find H264 bitstream filter\n" );
+            else
+            {
+                if (av_bsf_alloc( filter, &stream->filter ) < 0) return STATUS_UNSUCCESSFUL;
+                avcodec_parameters_copy( stream->filter->par_in, par );
+                av_bsf_init( stream->filter );
+                continue;
+            }
+        }
 
         av_bsf_get_null_filter( &stream->filter );
         avcodec_parameters_copy( stream->filter->par_in, demuxer->ctx->streams[i]->codecpar );
