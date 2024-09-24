@@ -228,6 +228,7 @@
 @ cdecl wined3d_state_get_feature_level(ptr)
 
 @ cdecl wined3d_stateblock_apply(ptr ptr)
+@ cdecl wined3d_stateblock_apply_clear_state(ptr ptr)
 @ cdecl wined3d_stateblock_capture(ptr ptr)
 @ cdecl wined3d_stateblock_create(ptr ptr long ptr)
 @ cdecl wined3d_stateblock_decref(ptr)

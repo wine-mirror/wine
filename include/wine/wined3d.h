@@ -2754,6 +2754,7 @@ enum wined3d_feature_level __cdecl wined3d_state_get_feature_level(const struct 
 
 void __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         struct wined3d_stateblock *device_state);
+void __cdecl wined3d_stateblock_apply_clear_state(struct wined3d_stateblock *stateblock, struct wined3d_device *device);
 void __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
         const struct wined3d_stateblock *device_state);
 HRESULT __cdecl wined3d_stateblock_create(struct wined3d_device *device, const struct wined3d_stateblock *device_state,

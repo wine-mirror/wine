@@ -5173,7 +5173,7 @@ static HRESULT d3d_device7_Clear(IDirect3DDevice7 *iface, DWORD count,
     }
 
     wined3d_mutex_lock();
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    wined3d_stateblock_apply_clear_state(device->state, device->wined3d_device);
     d3d_device_sync_rendertarget(device);
     hr = wined3d_device_clear(device->wined3d_device, count, (RECT *)rects, flags, &c, z, stencil);
     wined3d_mutex_unlock();
