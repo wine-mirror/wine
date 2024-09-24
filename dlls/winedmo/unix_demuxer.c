@@ -34,9 +34,15 @@ static inline const char *debugstr_averr( int err )
     return wine_dbg_sprintf( "%d (%s)", err, av_err2str(err) );
 }
 
+struct stream
+{
+    AVBSFContext *filter;
+};
+
 struct demuxer
 {
     AVFormatContext *ctx;
+    struct stream *streams;
 
     AVPacket *last_packet; /* last read packet */
 };
@@ -94,13 +100,29 @@ NTSTATUS demuxer_check( void *arg )
     return format ? STATUS_SUCCESS : STATUS_NOT_SUPPORTED;
 }
 
+static NTSTATUS demuxer_create_streams( struct demuxer *demuxer )
+{
+    UINT i;
+
+    for (i = 0; i < demuxer->ctx->nb_streams; i++)
+    {
+        struct stream *stream = demuxer->streams + i;
+
+        av_bsf_get_null_filter( &stream->filter );
+        avcodec_parameters_copy( stream->filter->par_in, demuxer->ctx->streams[i]->codecpar );
+        avcodec_parameters_copy( stream->filter->par_out, demuxer->ctx->streams[i]->codecpar );
+    }
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS demuxer_create( void *arg )
 {
     struct demuxer_create_params *params = arg;
     const char *ext = params->url ? strrchr( params->url, '.' ) : "";
     const AVInputFormat *format;
     struct demuxer *demuxer;
-    int ret;
+    int i, ret;
 
     TRACE( "context %p, url %s, mime %s\n", params->context, debugstr_a(params->url), debugstr_a(params->mime_type) );
 
@@ -124,6 +146,8 @@ NTSTATUS demuxer_create( void *arg )
         }
         params->duration = get_context_duration( demuxer->ctx );
     }
+    if (!(demuxer->streams = calloc( demuxer->ctx->nb_streams, sizeof(*demuxer->streams) ))) goto failed;
+    if (demuxer_create_streams( demuxer )) goto failed;
 
     params->demuxer.handle = (UINT_PTR)demuxer;
     params->stream_count = demuxer->ctx->nb_streams;
@@ -152,6 +176,9 @@ failed:
         avio_context_free( &demuxer->ctx->pb );
         avformat_free_context( demuxer->ctx );
     }
+    for (i = 0; demuxer->streams && i < demuxer->ctx->nb_streams; i++)
+        av_bsf_free( &demuxer->streams[i].filter );
+    free( demuxer->streams );
     free( demuxer );
     return STATUS_UNSUCCESSFUL;
 }
@@ -160,12 +187,16 @@ NTSTATUS demuxer_destroy( void *arg )
 {
     struct demuxer_destroy_params *params = arg;
     struct demuxer *demuxer = get_demuxer( params->demuxer );
+    int i;
 
     TRACE( "demuxer %p\n", demuxer );
 
     params->context = demuxer->ctx->pb->opaque;
     avio_context_free( &demuxer->ctx->pb );
     avformat_free_context( demuxer->ctx );
+    for (i = 0; i < demuxer->ctx->nb_streams; i++)
+        av_bsf_free( &demuxer->streams[i].filter );
+    free( demuxer->streams );
     free( demuxer );
 
     return STATUS_SUCCESS;
@@ -270,10 +301,11 @@ NTSTATUS demuxer_stream_type( void *arg )
     struct demuxer_stream_type_params *params = arg;
     struct demuxer *demuxer = get_demuxer( params->demuxer );
     AVStream *stream = demuxer->ctx->streams[params->stream];
+    AVCodecParameters *par = demuxer->streams[params->stream].filter->par_out;
 
     TRACE( "demuxer %p, stream %u, stream %p, index %u\n", demuxer, params->stream, stream, stream->index );
 
-    return media_type_from_codec_params( stream->codecpar, &stream->sample_aspect_ratio,
+    return media_type_from_codec_params( par, &stream->sample_aspect_ratio,
                                          &stream->avg_frame_rate, 0, &params->media_type );
 }
 

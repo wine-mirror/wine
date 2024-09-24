@@ -27,6 +27,7 @@
 #include <libavutil/imgutils.h>
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavcodec/bsf.h>
 #else
 typedef struct AVCodecParameters AVCodecParameters;
 typedef struct AVRational AVRational;
