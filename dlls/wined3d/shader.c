@@ -2854,6 +2854,7 @@ void find_gs_compile_args(const struct wined3d_state *state, const struct wined3
 void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         BOOL position_transformed, struct ps_compile_args *args, const struct wined3d_context *context)
 {
+    const struct wined3d_shader *vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     struct wined3d_shader_resource_view *view;
     struct wined3d_texture *texture;
@@ -2881,7 +2882,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             {
                 uint32_t tex_transform = flags & ~WINED3D_TTFF_PROJECTED;
 
-                if (!state->shader[WINED3D_SHADER_TYPE_VERTEX])
+                if (!vs || vs->is_ffp_vs)
                 {
                     enum wined3d_shader_resource_type resource_type = shader->reg_maps.resource_info[i].type;
                     unsigned int j;
@@ -3051,7 +3052,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
             {
                 case WINED3D_FOG_NONE:
-                    if (position_transformed || use_vs(state))
+                    if (position_transformed || (vs && !vs->is_ffp_vs))
                     {
                         args->fog = WINED3D_FFP_PS_FOG_LINEAR;
                         break;
