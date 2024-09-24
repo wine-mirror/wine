@@ -209,6 +209,7 @@ static HRESULT async_start_params_create(IMFPresentationDescriptor *descriptor, 
 struct media_stream
 {
     IMFMediaStream IMFMediaStream_iface;
+    IMFAsyncCallback async_request_iface;
     LONG refcount;
 
     IMFMediaSource *source;
@@ -257,7 +258,7 @@ struct media_source
         SOURCE_RUNNING,
         SOURCE_SHUTDOWN,
     } state;
-    UINT pending_state;
+    UINT pending_reads;
 };
 
 static struct media_source *media_source_from_IMFMediaSource(IMFMediaSource *iface)
@@ -265,7 +266,7 @@ static struct media_source *media_source_from_IMFMediaSource(IMFMediaSource *ifa
     return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
 }
 
-static HRESULT media_stream_send_sample(struct media_stream *stream, IMFSample *sample, IUnknown *token)
+static void media_stream_send_sample(struct media_stream *stream, IMFSample *sample, IUnknown *token)
 {
     HRESULT hr = S_OK;
 
@@ -273,7 +274,7 @@ static HRESULT media_stream_send_sample(struct media_stream *stream, IMFSample *
         hr = IMFMediaEventQueue_QueueEventParamUnk(stream->queue, MEMediaSample,
                 &GUID_NULL, S_OK, (IUnknown *)sample);
 
-    return hr;
+    if (FAILED(hr)) ERR("Failed to send stream %p sample, hr %#lx\n", stream, hr);
 }
 
 static struct media_stream *media_stream_from_index(struct media_source *source, UINT index)
@@ -299,9 +300,9 @@ static HRESULT media_source_send_sample(struct media_source *source, UINT index,
 
     if (SUCCEEDED(hr = object_queue_pop(&stream->tokens, &token)))
     {
-        hr = media_stream_send_sample(stream, sample, token);
+        media_stream_send_sample(stream, sample, token);
         if (token) IUnknown_Release(token);
-        return hr;
+        return S_OK;
     }
 
     if (FAILED(hr = object_queue_push(&stream->samples, (IUnknown *)sample)))
@@ -328,10 +329,9 @@ static void queue_media_source_read(struct media_source *source)
 {
     HRESULT hr;
 
-    if (source->pending_state)
-        return;
     if (FAILED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_read_iface, NULL)))
         ERR("Failed to queue async read for source %p, hr %#lx\n", source, hr);
+    source->pending_reads++;
 }
 
 static void media_stream_start(struct media_stream *stream, UINT index, const PROPVARIANT *position)
@@ -358,8 +358,8 @@ static void media_stream_start(struct media_stream *stream, UINT index, const PR
     if (position->vt == VT_EMPTY && stream->active)
     {
         struct list samples = LIST_INIT(samples);
-        struct object_entry *object, *next;
         IMFSample *sample;
+        UINT token_count;
 
         list_move_head(&samples, &stream->samples);
         while (object_queue_pop(&samples, (IUnknown **)&sample) != E_PENDING)
@@ -368,7 +368,8 @@ static void media_stream_start(struct media_stream *stream, UINT index, const PR
             IMFSample_Release(sample);
         }
 
-        LIST_FOR_EACH_ENTRY_SAFE(object, next, &stream->tokens, struct object_entry, entry)
+        token_count = list_count(&stream->tokens);
+        while (source->pending_reads < token_count)
             queue_media_source_read(source);
     }
 }
@@ -451,7 +452,6 @@ static HRESULT media_source_async_start(struct media_source *source, IMFAsyncRes
     params = async_start_params_from_IUnknown(state);
 
     EnterCriticalSection(&source->cs);
-    source->pending_state--;
 
     if (FAILED(hr = media_source_start(source, params->descriptor, &params->format, &params->position)))
         WARN("Failed to start source %p, hr %#lx\n", source, hr);
@@ -499,7 +499,6 @@ static HRESULT media_source_async_stop(struct media_source *source, IMFAsyncResu
     HRESULT hr;
 
     EnterCriticalSection(&source->cs);
-    source->pending_state--;
 
     if (FAILED(hr = media_source_stop(source)))
         WARN("Failed to stop source %p, hr %#lx\n", source, hr);
@@ -544,7 +543,6 @@ static HRESULT media_source_async_pause(struct media_source *source, IMFAsyncRes
     HRESULT hr;
 
     EnterCriticalSection(&source->cs);
-    source->pending_state--;
 
     if (FAILED(hr = media_source_pause(source)))
         WARN("Failed to pause source %p, hr %#lx\n", source, hr);
@@ -662,6 +660,7 @@ static HRESULT media_source_async_read(struct media_source *source, IMFAsyncResu
     HRESULT hr;
 
     EnterCriticalSection(&source->cs);
+    source->pending_reads--;
 
     if (FAILED(hr = media_source_read(source)))
         WARN("Failed to request sample, hr %#lx\n", hr);
@@ -801,11 +800,33 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
     return hr;
 }
 
+static HRESULT media_stream_async_request(struct media_stream *stream, IMFAsyncResult *result)
+{
+    struct media_source *source = media_source_from_IMFMediaSource(stream->source);
+    IUnknown *token = IMFAsyncResult_GetStateNoAddRef(result);
+    IMFSample *sample;
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&source->cs);
+
+    if (source->state == SOURCE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (source->state == SOURCE_RUNNING && SUCCEEDED(hr = object_queue_pop(&stream->samples, (IUnknown **)&sample)))
+        media_stream_send_sample(stream, sample, token);
+    else if (SUCCEEDED(hr = object_queue_push(&stream->tokens, token)) && source->state == SOURCE_RUNNING)
+        queue_media_source_read(source);
+
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
+}
+
+DEFINE_MF_ASYNC_CALLBACK(media_stream, async_request, IMFMediaStream_iface)
+
 static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
 {
     struct media_stream *stream = media_stream_from_IMFMediaStream(iface);
     struct media_source *source = media_source_from_IMFMediaSource(stream->source);
-    IMFSample *sample;
     HRESULT hr;
 
     TRACE("stream %p, token %p\n", stream, token);
@@ -818,10 +839,8 @@ static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown
         hr = MF_E_MEDIA_SOURCE_WRONGSTATE;
     else if (stream->eos)
         hr = MF_E_END_OF_STREAM;
-    else if (source->state == SOURCE_RUNNING && SUCCEEDED(hr = object_queue_pop(&stream->samples, (IUnknown **)&sample)))
-        hr = media_stream_send_sample(stream, sample, token);
-    else if (SUCCEEDED(hr = object_queue_push(&stream->tokens, token)))
-        queue_media_source_read(source);
+    else
+        hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &stream->async_request_iface, token);
 
     LeaveCriticalSection(&source->cs);
 
@@ -853,6 +872,7 @@ static HRESULT media_stream_create(IMFMediaSource *source, IMFStreamDescriptor *
         return E_OUTOFMEMORY;
 
     object->IMFMediaStream_iface.lpVtbl = &media_stream_vtbl;
+    object->async_request_iface.lpVtbl = &media_stream_async_request_vtbl;
     object->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&object->queue)))
@@ -1247,8 +1267,7 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
         hr = MF_E_UNSUPPORTED_TIME_FORMAT;
     else if (SUCCEEDED(hr = async_start_params_create(descriptor, format, position, &op)))
     {
-        if (SUCCEEDED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_start_iface, op)))
-            source->pending_state++;
+        hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_start_iface, op);
         IUnknown_Release(op);
     }
 
@@ -1268,8 +1287,8 @@ static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
 
     if (source->state == SOURCE_SHUTDOWN)
         hr = MF_E_SHUTDOWN;
-    else if (SUCCEEDED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_stop_iface, NULL)))
-        source->pending_state++;
+    else
+        hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_stop_iface, NULL);
 
     LeaveCriticalSection(&source->cs);
 
@@ -1289,8 +1308,8 @@ static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
         hr = MF_E_SHUTDOWN;
     else if (source->state != SOURCE_RUNNING)
         hr = MF_E_INVALID_STATE_TRANSITION;
-    else if (SUCCEEDED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_pause_iface, NULL)))
-        source->pending_state++;
+    else
+        hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &source->async_pause_iface, NULL);
 
     LeaveCriticalSection(&source->cs);
 
