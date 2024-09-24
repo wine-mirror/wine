@@ -1723,7 +1723,7 @@ static HRESULT WINAPI d3d8_device_Clear(IDirect3DDevice8 *iface, DWORD rect_coun
     }
 
     wined3d_mutex_lock();
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    wined3d_stateblock_apply_clear_state(device->state, device->wined3d_device);
     hr = wined3d_device_clear(device->wined3d_device, rect_count, (const RECT *)rects, flags, &c, z, stencil);
     wined3d_mutex_unlock();
 
