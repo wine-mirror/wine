@@ -1584,8 +1584,15 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
                 break;
             }
         }
+        else if (dst_ctype == CTYPE_LUMA)
+        {
+            assert(format->bits[1]);
+            *dst_component = dst->value.x;
+        }
         else
+        {
             *dst_component = 1.0f;
+        }
     }
 }
 
@@ -1619,6 +1626,16 @@ void format_from_d3dx_color(const struct pixel_format_desc *format, const struct
             break;
 
         case CTYPE_LUMA:
+        {
+            float val = src->value.x * 0.2125f + src->value.y * 0.7154f + src->value.z * 0.0721f;
+
+            if (src_range == RANGE_SNORM)
+                val = (val + 1.0f) / 2.0f;
+
+            v = d3dx_clamp(val, 0.0f, 1.0f) * ((1u << format->bits[c]) - 1) + 0.5f;
+            break;
+        }
+
         case CTYPE_UNORM:
         {
             float val = src_component;
