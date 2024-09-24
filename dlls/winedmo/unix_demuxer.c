@@ -91,6 +91,7 @@ NTSTATUS demuxer_create( void *arg )
 {
     struct demuxer_create_params *params = arg;
     const char *ext = params->url ? strrchr( params->url, '.' ) : "";
+    const AVInputFormat *format;
     AVFormatContext *ctx;
     int ret;
 
@@ -110,6 +111,7 @@ NTSTATUS demuxer_create( void *arg )
         avformat_free_context( ctx );
         return STATUS_UNSUCCESSFUL;
     }
+    format = ctx->iformat;
 
     if ((params->duration = get_context_duration( ctx )) == AV_NOPTS_VALUE)
     {
@@ -125,12 +127,12 @@ NTSTATUS demuxer_create( void *arg )
 
     params->demuxer.handle = (UINT_PTR)ctx;
     params->stream_count = ctx->nb_streams;
-    if (strstr( ctx->iformat->name, "mp4" )) strcpy( params->mime_type, "video/mp4" );
-    else if (strstr( ctx->iformat->name, "avi" )) strcpy( params->mime_type, "video/avi" );
-    else if (strstr( ctx->iformat->name, "mpeg" )) strcpy( params->mime_type, "video/mpeg" );
-    else if (strstr( ctx->iformat->name, "mp3" )) strcpy( params->mime_type, "audio/mp3" );
-    else if (strstr( ctx->iformat->name, "wav" )) strcpy( params->mime_type, "audio/wav" );
-    else if (strstr( ctx->iformat->name, "asf" ))
+    if (strstr( format->name, "mp4" )) strcpy( params->mime_type, "video/mp4" );
+    else if (strstr( format->name, "avi" )) strcpy( params->mime_type, "video/avi" );
+    else if (strstr( format->name, "mpeg" )) strcpy( params->mime_type, "video/mpeg" );
+    else if (strstr( format->name, "mp3" )) strcpy( params->mime_type, "audio/mp3" );
+    else if (strstr( format->name, "wav" )) strcpy( params->mime_type, "audio/wav" );
+    else if (strstr( format->name, "asf" ))
     {
         if (!strcmp( ext, ".wma" )) strcpy( params->mime_type, "audio/x-ms-wma" );
         else if (!strcmp( ext, ".wmv" )) strcpy( params->mime_type, "video/x-ms-wmv" );
@@ -138,7 +140,7 @@ NTSTATUS demuxer_create( void *arg )
     }
     else
     {
-        FIXME( "Unknown MIME type for format %s, url %s\n", debugstr_a(ctx->iformat->name), debugstr_a(params->url) );
+        FIXME( "Unknown MIME type for format %s, url %s\n", debugstr_a(format->name), debugstr_a(params->url) );
         strcpy( params->mime_type, "video/x-application" );
     }
 
