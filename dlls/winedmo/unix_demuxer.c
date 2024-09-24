@@ -34,9 +34,14 @@ static inline const char *debugstr_averr( int err )
     return wine_dbg_sprintf( "%d (%s)", err, av_err2str(err) );
 }
 
-static AVFormatContext *get_demuxer( struct winedmo_demuxer demuxer )
+struct demuxer
 {
-    return (AVFormatContext *)(UINT_PTR)demuxer.handle;
+    AVFormatContext *ctx;
+};
+
+static struct demuxer *get_demuxer( struct winedmo_demuxer demuxer )
+{
+    return (struct demuxer *)(UINT_PTR)demuxer.handle;
 }
 
 static INT64 get_user_time( INT64 time, AVRational time_base )
@@ -92,33 +97,34 @@ NTSTATUS demuxer_create( void *arg )
     struct demuxer_create_params *params = arg;
     const char *ext = params->url ? strrchr( params->url, '.' ) : "";
     const AVInputFormat *format;
-    AVFormatContext *ctx;
+    struct demuxer *demuxer;
     int ret;
 
     TRACE( "context %p, url %s, mime %s\n", params->context, debugstr_a(params->url), debugstr_a(params->mime_type) );
 
-    if (!(ctx = avformat_alloc_context())) return STATUS_NO_MEMORY;
-    if (!(ctx->pb = avio_alloc_context( NULL, 0, 0, params->context, unix_read_callback, NULL, unix_seek_callback ))) goto failed;
+    if (!(demuxer = calloc( 1, sizeof(*demuxer) ))) return STATUS_NO_MEMORY;
+    if (!(demuxer->ctx = avformat_alloc_context())) goto failed;
+    if (!(demuxer->ctx->pb = avio_alloc_context( NULL, 0, 0, params->context, unix_read_callback, NULL, unix_seek_callback ))) goto failed;
 
-    if ((ret = avformat_open_input( &ctx, NULL, NULL, NULL )) < 0)
+    if ((ret = avformat_open_input( &demuxer->ctx, NULL, NULL, NULL )) < 0)
     {
         ERR( "Failed to open input, error %s.\n", debugstr_averr(ret) );
         goto failed;
     }
-    format = ctx->iformat;
+    format = demuxer->ctx->iformat;
 
-    if ((params->duration = get_context_duration( ctx )) == AV_NOPTS_VALUE)
+    if ((params->duration = get_context_duration( demuxer->ctx )) == AV_NOPTS_VALUE)
     {
-        if ((ret = avformat_find_stream_info( ctx, NULL )) < 0)
+        if ((ret = avformat_find_stream_info( demuxer->ctx, NULL )) < 0)
         {
             ERR( "Failed to find stream info, error %s.\n", debugstr_averr(ret) );
             goto failed;
         }
-        params->duration = get_context_duration( ctx );
+        params->duration = get_context_duration( demuxer->ctx );
     }
 
-    params->demuxer.handle = (UINT_PTR)ctx;
-    params->stream_count = ctx->nb_streams;
+    params->demuxer.handle = (UINT_PTR)demuxer;
+    params->stream_count = demuxer->ctx->nb_streams;
     if (strstr( format->name, "mp4" )) strcpy( params->mime_type, "video/mp4" );
     else if (strstr( format->name, "avi" )) strcpy( params->mime_type, "video/avi" );
     else if (strstr( format->name, "mpeg" )) strcpy( params->mime_type, "video/mpeg" );
@@ -139,24 +145,26 @@ NTSTATUS demuxer_create( void *arg )
     return STATUS_SUCCESS;
 
 failed:
-    if (ctx)
+    if (demuxer->ctx)
     {
-        avio_context_free( &ctx->pb );
-        avformat_free_context( ctx );
+        avio_context_free( &demuxer->ctx->pb );
+        avformat_free_context( demuxer->ctx );
     }
+    free( demuxer );
     return STATUS_UNSUCCESSFUL;
 }
 
 NTSTATUS demuxer_destroy( void *arg )
 {
     struct demuxer_destroy_params *params = arg;
-    AVFormatContext *ctx = get_demuxer( params->demuxer );
+    struct demuxer *demuxer = get_demuxer( params->demuxer );
 
-    TRACE( "context %p\n", ctx );
+    TRACE( "demuxer %p\n", demuxer );
 
-    params->context = ctx->pb->opaque;
-    avio_context_free( &ctx->pb );
-    avformat_free_context( ctx );
+    params->context = demuxer->ctx->pb->opaque;
+    avio_context_free( &demuxer->ctx->pb );
+    avformat_free_context( demuxer->ctx );
+    free( demuxer );
 
     return STATUS_SUCCESS;
 }
@@ -164,21 +172,21 @@ NTSTATUS demuxer_destroy( void *arg )
 NTSTATUS demuxer_read( void *arg )
 {
     struct demuxer_read_params *params = arg;
-    AVFormatContext *ctx = get_demuxer( params->demuxer );
+    struct demuxer *demuxer = get_demuxer( params->demuxer );
     struct sample *sample = &params->sample;
     UINT capacity = params->sample.size;
     AVStream *stream;
     AVPacket *packet;
     int ret;
 
-    TRACE( "context %p, capacity %#x\n", ctx, capacity );
+    TRACE( "demuxer %p, capacity %#x\n", demuxer, capacity );
 
-    if (!(packet = ctx->opaque))
+    if (!(packet = demuxer->ctx->opaque))
     {
         if (!(packet = av_packet_alloc())) return STATUS_NO_MEMORY;
-        if ((ret = av_read_frame( ctx, packet )) < 0)
+        if ((ret = av_read_frame( demuxer->ctx, packet )) < 0)
         {
-            TRACE( "Failed to read context %p, error %s.\n", ctx, debugstr_averr( ret ) );
+            TRACE( "Failed to read demuxer %p, error %s.\n", demuxer, debugstr_averr( ret ) );
             av_packet_free( &packet );
             if (ret == AVERROR_EOF) return STATUS_END_OF_FILE;
             return STATUS_UNSUCCESSFUL;
@@ -188,11 +196,11 @@ NTSTATUS demuxer_read( void *arg )
     params->sample.size = packet->size;
     if ((capacity < packet->size))
     {
-        ctx->opaque = packet;
+        demuxer->ctx->opaque = packet;
         return STATUS_BUFFER_TOO_SMALL;
     }
 
-    stream = ctx->streams[packet->stream_index];
+    stream = demuxer->ctx->streams[packet->stream_index];
     sample->pts = get_stream_time( stream, packet->pts );
     sample->dts = get_stream_time( stream, packet->dts );
     sample->duration = get_stream_time( stream, packet->duration );
@@ -200,7 +208,7 @@ NTSTATUS demuxer_read( void *arg )
     memcpy( (void *)(UINT_PTR)sample->data, packet->data, packet->size );
     params->stream = packet->stream_index;
     av_packet_free( &packet );
-    ctx->opaque = NULL;
+    demuxer->ctx->opaque = NULL;
 
     return STATUS_SUCCESS;
 }
@@ -208,15 +216,15 @@ NTSTATUS demuxer_read( void *arg )
 NTSTATUS demuxer_seek( void *arg )
 {
     struct demuxer_seek_params *params = arg;
-    AVFormatContext *ctx = get_demuxer( params->demuxer );
+    struct demuxer *demuxer = get_demuxer( params->demuxer );
     int64_t timestamp = params->timestamp * AV_TIME_BASE / 10000000;
     int ret;
 
-    TRACE( "context %p, timestamp 0x%s\n", ctx, wine_dbgstr_longlong( params->timestamp ) );
+    TRACE( "demuxer %p, timestamp 0x%s\n", demuxer, wine_dbgstr_longlong( params->timestamp ) );
 
-    if ((ret = av_seek_frame( ctx, -1, timestamp, AVSEEK_FLAG_ANY )) < 0)
+    if ((ret = av_seek_frame( demuxer->ctx, -1, timestamp, AVSEEK_FLAG_ANY )) < 0)
     {
-        ERR( "Failed to seek context %p, error %s.\n", ctx, debugstr_averr(ret) );
+        ERR( "Failed to seek demuxer %p, error %s.\n", demuxer, debugstr_averr(ret) );
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -226,11 +234,11 @@ NTSTATUS demuxer_seek( void *arg )
 NTSTATUS demuxer_stream_lang( void *arg )
 {
     struct demuxer_stream_lang_params *params = arg;
-    AVFormatContext *ctx = get_demuxer( params->demuxer );
-    AVStream *stream = ctx->streams[params->stream];
+    struct demuxer *demuxer = get_demuxer( params->demuxer );
+    AVStream *stream = demuxer->ctx->streams[params->stream];
     AVDictionaryEntry *tag;
 
-    TRACE( "context %p, stream %u\n", ctx, params->stream );
+    TRACE( "demuxer %p, stream %u\n", demuxer, params->stream );
 
     if (!(tag = av_dict_get( stream->metadata, "language", NULL, AV_DICT_IGNORE_SUFFIX )))
         return STATUS_NOT_FOUND;
@@ -242,11 +250,11 @@ NTSTATUS demuxer_stream_lang( void *arg )
 NTSTATUS demuxer_stream_name( void *arg )
 {
     struct demuxer_stream_name_params *params = arg;
-    AVFormatContext *ctx = get_demuxer( params->demuxer );
-    AVStream *stream = ctx->streams[params->stream];
+    struct demuxer *demuxer = get_demuxer( params->demuxer );
+    AVStream *stream = demuxer->ctx->streams[params->stream];
     AVDictionaryEntry *tag;
 
-    TRACE( "context %p, stream %u\n", ctx, params->stream );
+    TRACE( "demuxer %p, stream %u\n", demuxer, params->stream );
 
     if (!(tag = av_dict_get( stream->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX )))
         return STATUS_NOT_FOUND;
@@ -258,10 +266,10 @@ NTSTATUS demuxer_stream_name( void *arg )
 NTSTATUS demuxer_stream_type( void *arg )
 {
     struct demuxer_stream_type_params *params = arg;
-    AVFormatContext *ctx = get_demuxer( params->demuxer );
-    AVStream *stream = ctx->streams[params->stream];
+    struct demuxer *demuxer = get_demuxer( params->demuxer );
+    AVStream *stream = demuxer->ctx->streams[params->stream];
 
-    TRACE( "context %p, stream %u, stream %p, index %u\n", ctx, params->stream, stream, stream->index );
+    TRACE( "demuxer %p, stream %u, stream %p, index %u\n", demuxer, params->stream, stream, stream->index );
 
     return media_type_from_codec_params( stream->codecpar, &stream->sample_aspect_ratio,
                                          &stream->avg_frame_rate, 0, &params->media_type );
