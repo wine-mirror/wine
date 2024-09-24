@@ -37,6 +37,7 @@ static inline const char *debugstr_averr( int err )
 struct stream
 {
     AVBSFContext *filter;
+    BOOL eos;
 };
 
 struct demuxer
@@ -45,6 +46,7 @@ struct demuxer
     struct stream *streams;
 
     AVPacket *last_packet; /* last read packet */
+    struct stream *last_stream; /* last read packet stream */
 };
 
 static struct demuxer *get_demuxer( struct winedmo_demuxer demuxer )
@@ -202,6 +204,54 @@ NTSTATUS demuxer_destroy( void *arg )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS demuxer_filter_packet( struct demuxer *demuxer, AVPacket **packet )
+{
+    struct stream *stream;
+    int i, ret;
+
+    do
+    {
+        if ((*packet = demuxer->last_packet)) return STATUS_SUCCESS;
+        if (!(*packet = av_packet_alloc())) return STATUS_NO_MEMORY;
+
+        if (!(stream = demuxer->last_stream)) ret = 0;
+        else
+        {
+            if (!(ret = av_bsf_receive_packet( stream->filter, *packet ))) return STATUS_SUCCESS;
+            if (ret == AVERROR_EOF) stream->eos = TRUE;
+            if (!ret || ret == AVERROR_EOF || ret == AVERROR(EAGAIN)) ret = 0;
+            else WARN( "Failed to read packet from filter, error %s.\n", debugstr_averr( ret ) );
+            stream = demuxer->last_stream = NULL;
+        }
+
+        if (!ret && !(ret = av_read_frame( demuxer->ctx, *packet )))
+        {
+            stream = demuxer->streams + (*packet)->stream_index;
+            ret = av_bsf_send_packet( stream->filter, (*packet) );
+            if (ret < 0) WARN( "Failed to send packet to filter, error %s.\n", debugstr_averr( ret ) );
+            else demuxer->last_stream = stream;
+        }
+        av_packet_free( packet );
+
+        if (ret == AVERROR_EOF)
+        {
+            for (i = 0; ret == AVERROR_EOF && i < demuxer->ctx->nb_streams; i++)
+            {
+                if (demuxer->streams[i].eos) continue;
+                stream = demuxer->streams + i;
+                ret = av_bsf_send_packet( stream->filter, NULL );
+                if (ret < 0) WARN( "Failed to send packet to filter, error %s.\n", debugstr_averr( ret ) );
+                else demuxer->last_stream = stream;
+            }
+
+            if (ret == AVERROR_EOF) return STATUS_END_OF_FILE;
+        }
+    } while (!ret || ret == AVERROR(EAGAIN));
+
+    ERR( "Failed to read packet from demuxer %p, error %s.\n", demuxer, debugstr_averr( ret ) );
+    return STATUS_UNSUCCESSFUL;
+}
+
 NTSTATUS demuxer_read( void *arg )
 {
     struct demuxer_read_params *params = arg;
@@ -210,21 +260,11 @@ NTSTATUS demuxer_read( void *arg )
     UINT capacity = params->sample.size;
     AVStream *stream;
     AVPacket *packet;
-    int ret;
+    NTSTATUS status;
 
     TRACE( "demuxer %p, capacity %#x\n", demuxer, capacity );
 
-    if (!(packet = demuxer->last_packet))
-    {
-        if (!(packet = av_packet_alloc())) return STATUS_NO_MEMORY;
-        if ((ret = av_read_frame( demuxer->ctx, packet )) < 0)
-        {
-            TRACE( "Failed to read demuxer %p, error %s.\n", demuxer, debugstr_averr( ret ) );
-            av_packet_free( &packet );
-            if (ret == AVERROR_EOF) return STATUS_END_OF_FILE;
-            return STATUS_UNSUCCESSFUL;
-        }
-    }
+    if ((status = demuxer_filter_packet( demuxer, &packet ))) return status;
 
     params->sample.size = packet->size;
     if ((capacity < packet->size))
@@ -251,7 +291,7 @@ NTSTATUS demuxer_seek( void *arg )
     struct demuxer_seek_params *params = arg;
     struct demuxer *demuxer = get_demuxer( params->demuxer );
     int64_t timestamp = params->timestamp * AV_TIME_BASE / 10000000;
-    int ret;
+    int i, ret;
 
     TRACE( "demuxer %p, timestamp 0x%s\n", demuxer, wine_dbgstr_longlong( params->timestamp ) );
 
@@ -260,6 +300,14 @@ NTSTATUS demuxer_seek( void *arg )
         ERR( "Failed to seek demuxer %p, error %s.\n", demuxer, debugstr_averr(ret) );
         return STATUS_UNSUCCESSFUL;
     }
+
+    for (i = 0; i < demuxer->ctx->nb_streams; i++)
+    {
+        av_bsf_flush( demuxer->streams[i].filter );
+        demuxer->streams[i].eos = FALSE;
+    }
+    av_packet_free( &demuxer->last_packet );
+    demuxer->last_stream = NULL;
 
     return STATUS_SUCCESS;
 }
