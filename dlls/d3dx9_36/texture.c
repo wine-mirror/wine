@@ -1321,7 +1321,7 @@ HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D f
 
                 function(&value, &coord, &size, funcdata);
 
-                set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL);
+                set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL, RANGE_FULL);
                 format_from_d3dx_color(format, &color, dst);
             }
         }
@@ -1714,7 +1714,7 @@ HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DX
 
                     function(&value, &coord, &size, funcdata);
 
-                    set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL);
+                    set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL, RANGE_FULL);
                     format_from_d3dx_color(format, &color, dst);
                 }
             }
@@ -1783,7 +1783,7 @@ HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LP
 
                     function(&value, &coord, &size, funcdata);
 
-                    set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL);
+                    set_d3dx_color(&color, (const struct vec4 *)&value, RANGE_FULL, RANGE_FULL);
                     format_from_d3dx_color(format, &color, dst);
                 }
             }

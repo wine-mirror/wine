@@ -64,13 +64,16 @@ enum range {
 struct d3dx_color
 {
     struct vec4 value;
-    enum range range;
+    enum range rgb_range;
+    enum range a_range;
 };
 
-static inline void set_d3dx_color(struct d3dx_color *color, const struct vec4 *value, enum range range)
+static inline void set_d3dx_color(struct d3dx_color *color, const struct vec4 *value, enum range rgb_range,
+        enum range a_range)
 {
     color->value = *value;
-    color->range = range;
+    color->rgb_range = rgb_range;
+    color->a_range = a_range;
 }
 
 struct volume
@@ -88,14 +91,19 @@ static inline void set_volume_struct(struct volume *volume, uint32_t width, uint
 }
 
 /* for internal use */
-enum format_type {
-    FORMAT_ARGB,   /* unsigned */
-    FORMAT_ARGBF16,/* float 16 */
-    FORMAT_ARGBF,  /* float */
-    FORMAT_ARGB_SNORM,
-    FORMAT_DXT,
-    FORMAT_INDEX,
-    FORMAT_UNKNOWN
+enum component_type
+{
+    CTYPE_EMPTY,
+    CTYPE_UNORM,
+    CTYPE_SNORM,
+    CTYPE_FLOAT,
+    CTYPE_LUMA,
+    CTYPE_INDEX,
+};
+
+enum format_flag
+{
+    FMT_FLAG_DXT  = 0x01,
 };
 
 struct pixel_format_desc {
@@ -106,7 +114,9 @@ struct pixel_format_desc {
     UINT block_width;
     UINT block_height;
     UINT block_byte_count;
-    enum format_type type;
+    enum component_type a_type;
+    enum component_type rgb_type;
+    uint32_t flags;
     void (*from_rgba)(const struct vec4 *src, struct vec4 *dst);
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst, const PALETTEENTRY *palette);
 };
@@ -180,17 +190,26 @@ static inline BOOL is_unknown_format(const struct pixel_format_desc *format)
 
 static inline BOOL is_index_format(const struct pixel_format_desc *format)
 {
-    return (format->type == FORMAT_INDEX);
+    return (format->a_type == CTYPE_INDEX || format->rgb_type == CTYPE_INDEX);
 }
 
 static inline BOOL is_compressed_format(const struct pixel_format_desc *format)
 {
-    return (format->type == FORMAT_DXT);
+    return !!(format->flags & FMT_FLAG_DXT);
 }
 
 static inline BOOL format_types_match(const struct pixel_format_desc *src, const struct pixel_format_desc *dst)
 {
-    return (src->type == dst->type);
+    if ((src->a_type && dst->a_type) && (src->a_type != dst->a_type))
+        return FALSE;
+
+    if ((src->rgb_type && dst->rgb_type) && (src->rgb_type != dst->rgb_type))
+        return FALSE;
+
+    if (src->flags != dst->flags)
+        return FALSE;
+
+    return (src->rgb_type == dst->rgb_type || src->a_type == dst->a_type);
 }
 
 static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)

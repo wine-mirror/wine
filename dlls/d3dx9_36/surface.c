@@ -1505,32 +1505,39 @@ static DWORD make_argb_color(const struct argb_conversion_info *info, const DWOR
     return val;
 }
 
+static enum range get_range_for_component_type(enum component_type type)
+{
+    switch (type)
+    {
+        case CTYPE_SNORM:
+            return RANGE_SNORM;
+
+        case CTYPE_LUMA:
+        case CTYPE_INDEX:
+        case CTYPE_UNORM:
+            return RANGE_UNORM;
+
+        case CTYPE_EMPTY:
+        case CTYPE_FLOAT:
+            return RANGE_FULL;
+
+        default:
+            assert(0);
+            return RANGE_FULL;
+    }
+}
+
 /* It doesn't work for components bigger than 32 bits (or somewhat smaller but unaligned). */
 void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *src, struct d3dx_color *dst)
 {
     DWORD mask, tmp;
     unsigned int c;
 
-    switch (format->type)
-    {
-    case FORMAT_ARGBF16:
-    case FORMAT_ARGBF:
-        dst->range = RANGE_FULL;
-        break;
-    case FORMAT_ARGB:
-    case FORMAT_INDEX:
-        dst->range = RANGE_UNORM;
-        break;
-    case FORMAT_ARGB_SNORM:
-        dst->range = RANGE_SNORM;
-        break;
-    default: /* Shouldn't pass FORMAT_DXT/FORMAT_UNKNOWN into here. */
-        assert(0);
-        break;
-    }
-
+    dst->rgb_range = get_range_for_component_type(format->rgb_type);
+    dst->a_range = get_range_for_component_type(format->a_type);
     for (c = 0; c < 4; ++c)
     {
+        const enum component_type dst_ctype = !c ? format->a_type : format->rgb_type;
         static const unsigned int component_offsets[4] = {3, 0, 1, 2};
         float *dst_component = &dst->value.x + component_offsets[c];
 
@@ -1541,11 +1548,22 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
             memcpy(&tmp, src + format->shift[c] / 8,
                     min(sizeof(DWORD), (format->shift[c] % 8 + format->bits[c] + 7) / 8));
 
-            if (format->type == FORMAT_ARGBF16)
-                *dst_component = float_16_to_32(tmp);
-            else if (format->type == FORMAT_ARGBF)
-                *dst_component = *(float *)&tmp;
-            else if (format->type == FORMAT_ARGB_SNORM)
+            switch (dst_ctype)
+            {
+            case CTYPE_FLOAT:
+                if (format->bits[c] == 16)
+                    *dst_component = float_16_to_32(tmp);
+                else
+                    *dst_component = *(float *)&tmp;
+                break;
+
+            case CTYPE_LUMA:
+            case CTYPE_INDEX:
+            case CTYPE_UNORM:
+                *dst_component = (float)((tmp >> format->shift[c] % 8) & mask) / mask;
+                break;
+
+            case CTYPE_SNORM:
             {
                 const uint32_t sign_bit = (1u << (format->bits[c] - 1));
                 uint32_t tmp_extended, tmp_masked = (tmp >> format->shift[c] % 8) & mask;
@@ -1564,9 +1582,12 @@ void format_to_d3dx_color(const struct pixel_format_desc *format, const BYTE *sr
                 }
 
                 *dst_component = (float)(((int32_t)tmp_extended)) / (sign_bit - 1);
+                break;
             }
-            else
-                *dst_component = (float)((tmp >> format->shift[c] % 8) & mask) / mask;
+
+            default:
+                break;
+            }
         }
         else
             *dst_component = 1.0f;
@@ -1583,36 +1604,57 @@ void format_from_d3dx_color(const struct pixel_format_desc *format, const struct
 
     for (c = 0; c < 4; ++c)
     {
+        const enum component_type dst_ctype = !c ? format->a_type : format->rgb_type;
         static const unsigned int component_offsets[4] = {3, 0, 1, 2};
-        const float src_component = *((const float *)src + component_offsets[c]);
+        const float src_component = *(&src->value.x + component_offsets[c]);
+        const enum range src_range = !c ? src->a_range : src->rgb_range;
 
         if (!format->bits[c])
             continue;
 
         mask32 = ~0u >> (32 - format->bits[c]);
 
-        if (format->type == FORMAT_ARGBF16)
-            v = float_32_to_16(src_component);
-        else if (format->type == FORMAT_ARGBF)
-            v = *(DWORD *)&src_component;
-        else if (format->type == FORMAT_ARGB_SNORM)
+        switch (dst_ctype)
+        {
+        case CTYPE_FLOAT:
+            if (format->bits[c] == 16)
+                v = float_32_to_16(src_component);
+            else
+                v = *(DWORD *)&src_component;
+            break;
+
+        case CTYPE_LUMA:
+        case CTYPE_UNORM:
+        {
+            float val = src_component;
+
+            if (src_range == RANGE_SNORM)
+                val = (val + 1.0f) / 2.0f;
+
+            v = d3dx_clamp(val, 0.0f, 1.0f) * ((1u << format->bits[c]) - 1) + 0.5f;
+            break;
+        }
+
+        case CTYPE_SNORM:
         {
             const uint32_t max_value = (1u << (format->bits[c] - 1)) - 1;
             float val = src_component;
 
-            if (src->range == RANGE_UNORM)
+            if (src_range == RANGE_UNORM)
                 val = (val * 2.0f) - 1.0f;
 
             v = d3dx_clamp(val, -1.0f, 1.0f) * max_value + 0.5f;
+            break;
         }
-        else
-        {
-            float val = src_component;
 
-            if (src->range == RANGE_SNORM)
-                val = (val + 1.0f) / 2.0f;
+        /* We shouldn't be trying to output to CTYPE_INDEX. */
+        case CTYPE_INDEX:
+            assert(0);
+            break;
 
-            v = d3dx_clamp(val, 0.0f, 1.0f) * ((1u << format->bits[c]) - 1) + 0.5f;
+        default:
+            v = 0;
+            break;
         }
 
         for (i = format->shift[c] / 8 * 8; i < format->shift[c] + format->bits[c]; i += 8)
