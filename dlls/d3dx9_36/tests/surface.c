@@ -1001,7 +1001,6 @@ static void test_format_conversion(IDirect3DDevice9 *device)
 
         D3DFORMAT dst_format;
         const void *expected_dst_data;
-        BOOL partial_todo;
         BOOL todo;
     } tests[] = {
         { D3DFMT_P8,            test_palette, { 0, 0, 2, 2 }, p8_2_2,           D3DFMT_A8R8G8B8,      p8_2_2_expected },
@@ -1010,7 +1009,7 @@ static void test_format_conversion(IDirect3DDevice9 *device)
         { D3DFMT_V16U16,        NULL,         { 0, 0, 2, 2 }, v16u16_2_2,       D3DFMT_A32B32G32R32F, v16u16_2_2_expected2,      .todo = TRUE },
         { D3DFMT_V8U8,          NULL,         { 0, 0, 2, 2 }, v8u8_2_2,         D3DFMT_A32B32G32R32F, v8u8_2_2_expected },
         { D3DFMT_Q16W16V16U16,  NULL,         { 0, 0, 2, 2 }, q16w16v16u16_2_2, D3DFMT_A32B32G32R32F, q16w16v16u16_2_2_expected, .todo = TRUE },
-        { D3DFMT_A8P8,          test_palette, { 0, 0, 2, 2 }, a8p8_2_2,         D3DFMT_A8R8G8B8,      a8p8_2_2_expected,         .todo = TRUE },
+        { D3DFMT_A8P8,          test_palette, { 0, 0, 2, 2 }, a8p8_2_2,         D3DFMT_A8R8G8B8,      a8p8_2_2_expected },
     };
     uint32_t i;
 
@@ -1037,11 +1036,9 @@ static void test_format_conversion(IDirect3DDevice9 *device)
             if (SUCCEEDED(hr))
             {
                 const uint32_t dst_fmt_bpp = get_bpp_for_d3dformat(tests[i].dst_format);
-                uint32_t mismatch_count;
                 D3DLOCKED_RECT lock_rect;
                 uint32_t x, y;
 
-                mismatch_count = 0;
                 IDirect3DSurface9_LockRect(surf, &lock_rect, NULL, D3DLOCK_READONLY);
                 for (y = 0; y < tests[i].src_rect.bottom; ++y)
                 {
@@ -1054,16 +1051,10 @@ static void test_format_conversion(IDirect3DDevice9 *device)
                         const uint8_t *dst_pixel = dst_row + (dst_fmt_bpp * x);
                         BOOL pixel_match = !memcmp(dst_pixel, dst_expected_pixel, dst_fmt_bpp);
 
-                        if (!pixel_match)
-                            mismatch_count++;
-
-                        if (!pixel_match && tests[i].partial_todo)
-                            continue;
                         todo_wine_if(tests[i].todo) ok(pixel_match, "Pixel mismatch at (%u,%u).\n", x, y);
                     }
                 }
 
-                todo_wine_if(tests[i].partial_todo || tests[i].todo) ok(!mismatch_count, "%u mismatched pixels.\n", mismatch_count);
                 IDirect3DSurface9_UnlockRect(surf);
             }
 
