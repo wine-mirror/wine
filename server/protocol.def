@@ -896,6 +896,17 @@ struct directory_entry
     /* VARARG(type,unicode_str,type_len); */
 };
 
+struct monitor_info
+{
+    rectangle_t raw;     /* host / physical position of the monitor rect */
+    rectangle_t virt;    /* client / virtual position of the monitor rect */
+    unsigned int flags;  /* MONITOR_FLAG_* flags for the monitor */
+    unsigned int dpi;    /* physical DPI for the monitor */
+};
+#define MONITOR_FLAG_PRIMARY  0x01
+#define MONITOR_FLAG_CLONE    0x02
+#define MONITOR_FLAG_INACTIVE 0x04
+
 /****************************************************************/
 /* shared session mapping structures */
 
@@ -2799,6 +2810,12 @@ enum coords_relative
 /* Close a window station */
 @REQ(close_winstation)
     obj_handle_t handle;          /* handle to the window station */
+@END
+
+
+/* Update the process current window station monitors */
+@REQ(set_winstation_monitors)
+    VARARG(infos,monitor_infos);  /* window station monitors */
 @END
 
 

@@ -880,6 +880,17 @@ struct directory_entry
 
 };
 
+struct monitor_info
+{
+    rectangle_t raw;
+    rectangle_t virt;
+    unsigned int flags;
+    unsigned int dpi;
+};
+#define MONITOR_FLAG_PRIMARY  0x01
+#define MONITOR_FLAG_CLONE    0x02
+#define MONITOR_FLAG_INACTIVE 0x04
+
 
 
 
@@ -3842,6 +3853,19 @@ struct close_winstation_reply
 
 
 
+struct set_winstation_monitors_request
+{
+    struct request_header __header;
+    /* VARARG(infos,monitor_infos); */
+    char __pad_12[4];
+};
+struct set_winstation_monitors_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct get_process_winstation_request
 {
     struct request_header __header;
@@ -6017,6 +6041,7 @@ enum request
     REQ_create_winstation,
     REQ_open_winstation,
     REQ_close_winstation,
+    REQ_set_winstation_monitors,
     REQ_get_process_winstation,
     REQ_set_process_winstation,
     REQ_enum_winstation,
@@ -6314,6 +6339,7 @@ union generic_request
     struct create_winstation_request create_winstation_request;
     struct open_winstation_request open_winstation_request;
     struct close_winstation_request close_winstation_request;
+    struct set_winstation_monitors_request set_winstation_monitors_request;
     struct get_process_winstation_request get_process_winstation_request;
     struct set_process_winstation_request set_process_winstation_request;
     struct enum_winstation_request enum_winstation_request;
@@ -6609,6 +6635,7 @@ union generic_reply
     struct create_winstation_reply create_winstation_reply;
     struct open_winstation_reply open_winstation_reply;
     struct close_winstation_reply close_winstation_reply;
+    struct set_winstation_monitors_reply set_winstation_monitors_reply;
     struct get_process_winstation_reply get_process_winstation_reply;
     struct set_process_winstation_reply set_process_winstation_reply;
     struct enum_winstation_reply enum_winstation_reply;
@@ -6733,7 +6760,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 846
+#define SERVER_PROTOCOL_VERSION 847
 
 /* ### protocol_version end ### */
 

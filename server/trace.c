@@ -1511,6 +1511,24 @@ static void dump_varargs_directory_entries( const char *prefix, data_size_t size
     fputc( '}', stderr );
 }
 
+static void dump_varargs_monitor_infos( const char *prefix, data_size_t size )
+{
+    const struct monitor_info *monitor = cur_data;
+    data_size_t len = size / sizeof(*monitor);
+
+    fprintf( stderr,"%s{", prefix );
+    while (len > 0)
+    {
+        dump_rectangle( "{raw:", &monitor->virt );
+        dump_rectangle( ",virt:", &monitor->virt );
+        fprintf( stderr, ",flags:%#x,dpi:%u", monitor->flags, monitor->dpi );
+        fputc( '}', stderr );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -3470,6 +3488,11 @@ static void dump_close_winstation_request( const struct close_winstation_request
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
+static void dump_set_winstation_monitors_request( const struct set_winstation_monitors_request *req )
+{
+    dump_varargs_monitor_infos( " infos=", cur_size );
+}
+
 static void dump_get_process_winstation_request( const struct get_process_winstation_request *req )
 {
 }
@@ -4956,6 +4979,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_winstation_request,
     (dump_func)dump_open_winstation_request,
     (dump_func)dump_close_winstation_request,
+    (dump_func)dump_set_winstation_monitors_request,
     (dump_func)dump_get_process_winstation_request,
     (dump_func)dump_set_process_winstation_request,
     (dump_func)dump_enum_winstation_request,
@@ -5248,6 +5272,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_properties_reply,
     (dump_func)dump_create_winstation_reply,
     (dump_func)dump_open_winstation_reply,
+    NULL,
     NULL,
     (dump_func)dump_get_process_winstation_reply,
     NULL,
@@ -5542,6 +5567,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_winstation",
     "open_winstation",
     "close_winstation",
+    "set_winstation_monitors",
     "get_process_winstation",
     "set_process_winstation",
     "enum_winstation",

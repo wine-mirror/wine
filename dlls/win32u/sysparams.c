@@ -1699,6 +1699,8 @@ static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW
     set_reg_value( source->key, modesW, REG_BINARY, modes, modes_count * sizeof(*modes) );
     set_reg_value( source->key, mode_countW, REG_DWORD, &modes_count, sizeof(modes_count) );
     source->mode_count = modes_count;
+    source->current = *current;
+    source->physical = physical;
 
     free( virtual_modes );
 }
@@ -1811,6 +1813,37 @@ static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT d
         else strcpy( buffer, "WinDisc" );
         asciiz_to_unicode( ((MONITORINFOEXW *)info)->szDevice, buffer );
     }
+}
+
+/* display_lock must be held */
+static void set_winstation_monitors(void)
+{
+    struct monitor_info *infos, *info;
+    struct monitor *monitor;
+    UINT count, x, y;
+
+    if (!(count = list_count( &monitors ))) return;
+    if (!(info = infos = calloc( count, sizeof(*infos) ))) return;
+
+    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+    {
+        if (is_monitor_primary( monitor )) info->flags |= MONITOR_FLAG_PRIMARY;
+        if (!is_monitor_active( monitor )) info->flags |= MONITOR_FLAG_INACTIVE;
+        if (monitor->is_clone) info->flags |= MONITOR_FLAG_CLONE;
+        info->dpi = monitor_get_dpi( monitor, MDT_EFFECTIVE_DPI, &x, &y );
+        info->virt = wine_server_rectangle( monitor_get_rect( monitor, 0, MDT_EFFECTIVE_DPI ) );
+        info->raw = wine_server_rectangle( monitor_get_rect( monitor, 0, MDT_RAW_DPI ) );
+        info++;
+    }
+
+    SERVER_START_REQ( set_winstation_monitors )
+    {
+        wine_server_add_data( req, infos, count * sizeof(*infos) );
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    free( infos );
 }
 
 static void enum_device_keys( const char *root, const WCHAR *classW, UINT class_size, void (*callback)(const char *) )
@@ -1979,6 +2012,8 @@ static BOOL update_display_cache_from_registry(void)
 
     if ((ret = !list_empty( &sources ) && !list_empty( &monitors )))
         last_query_display_time = key.LastWriteTime.QuadPart;
+
+    set_winstation_monitors();
     pthread_mutex_unlock( &display_lock );
     release_display_device_init_mutex( mutex );
     return ret;
@@ -2153,7 +2188,7 @@ static UINT update_display_devices( struct device_manager_ctx *ctx )
     return status;
 }
 
-static void add_vulkan_only_gpus( struct device_manager_ctx *ctx )
+static void commit_display_devices( struct device_manager_ctx *ctx )
 {
     struct vulkan_gpu *gpu, *next;
 
@@ -2162,6 +2197,8 @@ static void add_vulkan_only_gpus( struct device_manager_ctx *ctx )
         TRACE( "adding vulkan-only gpu uuid %s, name %s\n", debugstr_guid(&gpu->uuid), debugstr_a(gpu->name));
         add_gpu( gpu->name, &gpu->pci_id, &gpu->uuid, ctx );
     }
+
+    set_winstation_monitors();
 }
 
 BOOL update_display_cache( BOOL force )
@@ -2180,6 +2217,7 @@ BOOL update_display_cache( BOOL force )
         pthread_mutex_lock( &display_lock );
         clear_display_devices();
         list_add_tail( &monitors, &virtual_monitor.entry );
+        set_winstation_monitors();
         pthread_mutex_unlock( &display_lock );
         return TRUE;
     }
@@ -2188,7 +2226,7 @@ BOOL update_display_cache( BOOL force )
     else
     {
         if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any vulkan GPU\n" );
-        if (!(status = update_display_devices( &ctx ))) add_vulkan_only_gpus( &ctx );
+        if (!(status = update_display_devices( &ctx ))) commit_display_devices( &ctx );
         else WARN( "Failed to update display devices, status %#x\n", status );
         release_display_manager_ctx( &ctx );
     }

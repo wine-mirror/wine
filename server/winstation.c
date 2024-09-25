@@ -147,6 +147,8 @@ static struct winstation *create_winstation( struct object *root, const struct u
             winstation->input_desktop = NULL;
             winstation->clipboard = NULL;
             winstation->atom_table = NULL;
+            winstation->monitors = NULL;
+            winstation->monitor_count = 0;
             list_add_tail( &winstation_list, &winstation->entry );
             list_init( &winstation->desktops );
             if (!(winstation->desktop_names = create_namespace( 7 )))
@@ -203,6 +205,7 @@ static void winstation_destroy( struct object *obj )
     if (winstation->clipboard) release_object( winstation->clipboard );
     if (winstation->atom_table) release_object( winstation->atom_table );
     free( winstation->desktop_names );
+    free( winstation->monitors );
 }
 
 /* retrieve the process window station, checking the handle access rights */
@@ -633,6 +636,27 @@ DECL_HANDLER(close_winstation)
         if (close_handle( current->process, req->handle )) set_error( STATUS_ACCESS_DENIED );
         release_object( winstation );
     }
+}
+
+
+/* set the process current window station monitors */
+DECL_HANDLER(set_winstation_monitors)
+{
+    struct winstation *winstation;
+    unsigned int size;
+
+    if (!(winstation = (struct winstation *)get_handle_obj( current->process, current->process->winstation,
+                                                           0, &winstation_ops )))
+        return;
+
+    free( winstation->monitors );
+    winstation->monitors = NULL;
+    winstation->monitor_count = 0;
+
+    if ((size = get_req_data_size()) && (winstation->monitors = memdup( get_req_data(), size )))
+        winstation->monitor_count = size / sizeof(*winstation->monitors);
+
+    release_object( winstation );
 }
 
 

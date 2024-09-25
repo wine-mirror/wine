@@ -289,6 +289,7 @@ DECL_HANDLER(get_window_properties);
 DECL_HANDLER(create_winstation);
 DECL_HANDLER(open_winstation);
 DECL_HANDLER(close_winstation);
+DECL_HANDLER(set_winstation_monitors);
 DECL_HANDLER(get_process_winstation);
 DECL_HANDLER(set_process_winstation);
 DECL_HANDLER(enum_winstation);
@@ -585,6 +586,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_winstation,
     (req_handler)req_open_winstation,
     (req_handler)req_close_winstation,
+    (req_handler)req_set_winstation_monitors,
     (req_handler)req_get_process_winstation,
     (req_handler)req_set_process_winstation,
     (req_handler)req_enum_winstation,
@@ -1731,6 +1733,7 @@ C_ASSERT( FIELD_OFFSET(struct open_winstation_reply, handle) == 8 );
 C_ASSERT( sizeof(struct open_winstation_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct close_winstation_request, handle) == 12 );
 C_ASSERT( sizeof(struct close_winstation_request) == 16 );
+C_ASSERT( sizeof(struct set_winstation_monitors_request) == 16 );
 C_ASSERT( sizeof(struct get_process_winstation_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_process_winstation_reply, handle) == 8 );
 C_ASSERT( sizeof(struct get_process_winstation_reply) == 16 );

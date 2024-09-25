@@ -52,6 +52,8 @@ struct winstation
     struct clipboard  *clipboard;          /* clipboard information */
     struct atom_table *atom_table;         /* global atom table */
     struct namespace  *desktop_names;      /* namespace for desktops of this winstation */
+    unsigned int       monitor_count;      /* number of monitors */
+    struct monitor_info *monitors;         /* window station monitors */
 };
 
 struct key_repeat
