@@ -448,7 +448,7 @@ static HRESULT WINAPI DPWSCB_CreatePlayer( LPDPSP_CREATEPLAYERDATA data )
     FIXME( "(%ld,0x%08lx,%p,%p) stub\n",
            data->idPlayer, data->dwFlags,
            data->lpSPMessageHeader, data->lpISP );
-    return DPERR_UNSUPPORTED;
+    return DP_OK;
 }
 
 static HRESULT WINAPI DPWSCB_DeletePlayer( LPDPSP_DELETEPLAYERDATA data )
