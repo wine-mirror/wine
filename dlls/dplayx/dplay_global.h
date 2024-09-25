@@ -44,7 +44,8 @@ typedef struct tagEnumSessionAsyncCallbackData
 typedef struct tagDP_MSG_REPLY_STRUCT
 {
   HANDLE hReceipt;
-  WORD   wExpectedReply;
+  WORD  *expectedReplies;
+  DWORD  expectedReplyCount;
   LPVOID lpReplyMsg;
   DWORD  dwMsgBodySize;
   /* FIXME: Is the message header required as well? */

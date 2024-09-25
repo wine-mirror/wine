@@ -46,7 +46,8 @@ typedef struct tagMSGTHREADINFO
 
 static DWORD CALLBACK DPL_MSG_ThreadMain( LPVOID lpContext );
 static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *data, DWORD dwWaitTime,
-        WORD wReplyCommandId, void **lplpReplyMsg, DWORD *lpdwMsgBodySize );
+        WORD *replyCommandIds, DWORD replyCommandIdCount, void **lplpReplyMsg,
+        DWORD *lpdwMsgBodySize );
 
 
 /* Create the message reception thread to allow the application to receive
@@ -154,12 +155,14 @@ end_of_thread:
 
 /* DP messaging stuff */
 static HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlayImpl *This,
-        DP_MSG_REPLY_STRUCT_LIST *lpReplyStructList, WORD wReplyCommandId )
+        DP_MSG_REPLY_STRUCT_LIST *lpReplyStructList, WORD *replyCommandIds,
+        DWORD replyCommandIdCount )
 {
-  lpReplyStructList->replyExpected.hReceipt       = CreateEventW( NULL, FALSE, FALSE, NULL );
-  lpReplyStructList->replyExpected.wExpectedReply = wReplyCommandId;
-  lpReplyStructList->replyExpected.lpReplyMsg     = NULL;
-  lpReplyStructList->replyExpected.dwMsgBodySize  = 0;
+  lpReplyStructList->replyExpected.hReceipt           = CreateEventW( NULL, FALSE, FALSE, NULL );
+  lpReplyStructList->replyExpected.expectedReplies    = replyCommandIds;
+  lpReplyStructList->replyExpected.expectedReplyCount = replyCommandIdCount;
+  lpReplyStructList->replyExpected.lpReplyMsg         = NULL;
+  lpReplyStructList->replyExpected.dwMsgBodySize      = 0;
 
   /* Insert into the message queue while locked */
   EnterCriticalSection( &This->lock );
@@ -167,6 +170,33 @@ static HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlayImpl *This,
   LeaveCriticalSection( &This->lock );
 
   return lpReplyStructList->replyExpected.hReceipt;
+}
+
+static DP_MSG_REPLY_STRUCT_LIST *DP_MSG_FindAndUnlinkReplyStruct( IDirectPlayImpl *This,
+                                                                  WORD commandId )
+{
+    DP_MSG_REPLY_STRUCT_LIST *reply;
+    DWORD i;
+
+    EnterCriticalSection( &This->lock );
+
+    for( reply = DPQ_FIRST( This->dp2->repliesExpected ); reply;
+         reply = DPQ_NEXT( reply->repliesExpected ) )
+    {
+        for( i = 0; i < reply->replyExpected.expectedReplyCount; ++i )
+        {
+            if( reply->replyExpected.expectedReplies[ i ] == commandId )
+            {
+                DPQ_REMOVE( This->dp2->repliesExpected, reply, repliesExpected );
+                LeaveCriticalSection( &This->lock );
+                return reply;
+            }
+        }
+    }
+
+    LeaveCriticalSection( &This->lock );
+
+    return NULL;
 }
 
 static
@@ -211,6 +241,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
 
   /* Send the message */
   {
+    WORD replyCommand = DPMSGCMD_NEWPLAYERIDREPLY;
     DPSP_SENDDATA data;
 
     data.dwFlags        = DPSEND_GUARANTEED;
@@ -224,7 +255,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
     TRACE( "Asking for player id w/ dwFlags 0x%08lx\n",
            lpMsgBody->dwFlags );
 
-    hr = DP_MSG_ExpectReply( This, &data, DPMSG_DEFAULT_WAIT_TIME, DPMSGCMD_NEWPLAYERIDREPLY,
+    hr = DP_MSG_ExpectReply( This, &data, DPMSG_DEFAULT_WAIT_TIME, &replyCommand, 1,
                              &lpMsg, &dwMsgSize );
   }
 
@@ -338,6 +369,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
 
   /* Send the message */
   {
+    WORD replyCommand = DPMSGCMD_GETNAMETABLEREPLY;
     DPSP_SENDDATA data;
 
     data.dwFlags        = DPSEND_GUARANTEED;
@@ -352,7 +384,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
 
     hr = DP_MSG_ExpectReply( This, &data,
                              DPMSG_WAIT_60_SECS,
-                             DPMSGCMD_GETNAMETABLEREPLY,
+                             &replyCommand, 1,
                              &lpMsg, &dwMsgSize );
   }
 
@@ -372,7 +404,8 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
  * a networking company.
  */
 static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData, DWORD dwWaitTime,
-        WORD wReplyCommandId, void **lplpReplyMsg, DWORD *lpdwMsgBodySize )
+        WORD *replyCommandIds, DWORD replyCommandIdCount, void **lplpReplyMsg,
+        DWORD *lpdwMsgBodySize )
 {
   HRESULT                  hr;
   HANDLE                   hMsgReceipt;
@@ -381,10 +414,9 @@ static HRESULT DP_MSG_ExpectReply( IDirectPlayImpl *This, DPSP_SENDDATA *lpData,
 
   /* Setup for receipt */
   hMsgReceipt = DP_MSG_BuildAndLinkReplyStruct( This, &replyStructList,
-                                                wReplyCommandId );
+                                                replyCommandIds, replyCommandIdCount );
 
-  TRACE( "Sending msg and expecting cmd %u in reply within %lu ticks\n",
-         wReplyCommandId, dwWaitTime );
+  TRACE( "Sending msg and expecting reply within %lu ticks\n", dwWaitTime );
   hr = (*This->dp2->spData.lpCB->Send)( lpData );
 
   if( FAILED(hr) )
@@ -431,10 +463,7 @@ void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId, const void *l
   /* Find, and immediately remove (to avoid double triggering), the appropriate entry. Call locked to
    * avoid problems.
    */
-  EnterCriticalSection( &This->lock );
-    DPQ_REMOVE_ENTRY( This->dp2->repliesExpected, repliesExpected, replyExpected.wExpectedReply,
-                     ==, wCommandId, lpReplyList );
-  LeaveCriticalSection( &This->lock );
+  lpReplyList = DP_MSG_FindAndUnlinkReplyStruct( This, wCommandId );
 
   if( lpReplyList != NULL )
   {
@@ -473,6 +502,7 @@ void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf )
 
   /* Send the message to ourselves */
   {
+    WORD replyCommand = DPMSGCMD_JUSTENVELOPE;
     DPSP_SENDDATA data;
 
     data.dwFlags        = 0;
@@ -485,7 +515,7 @@ void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf )
 
     DP_MSG_ExpectReply( This, &data,
                         DPMSG_WAIT_5_SECS,
-                        DPMSGCMD_JUSTENVELOPE,
+                        &replyCommand, 1,
                         &lpMsg, &dwMsgSize );
   }
 }
