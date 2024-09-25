@@ -369,7 +369,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
 
   /* Send the message */
   {
-    WORD replyCommand = DPMSGCMD_GETNAMETABLEREPLY;
+    WORD replyCommands[] = { DPMSGCMD_GETNAMETABLEREPLY, DPMSGCMD_SUPERENUMPLAYERSREPLY };
     DPSP_SENDDATA data;
 
     data.dwFlags        = DPSEND_GUARANTEED;
@@ -384,7 +384,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
 
     hr = DP_MSG_ExpectReply( This, &data,
                              DPMSG_WAIT_60_SECS,
-                             &replyCommand, 1,
+                             replyCommands, ARRAYSIZE( replyCommands ),
                              &lpMsg, &dwMsgSize );
   }
 

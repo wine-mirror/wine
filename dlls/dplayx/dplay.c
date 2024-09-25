@@ -383,6 +383,7 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
 
     case DPMSGCMD_GETNAMETABLEREPLY:
     case DPMSGCMD_NEWPLAYERIDREPLY:
+    case DPMSGCMD_SUPERENUMPLAYERSREPLY:
       DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
       break;
 
