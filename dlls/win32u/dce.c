@@ -136,6 +136,8 @@ static void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect
     info->bmiHeader.biCompression = BI_RGB;
 
     *window_surface = window_surface_create( sizeof(*surface), &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
+
+    if (previous) window_surface_release( previous );
 }
 
 struct scaled_surface
@@ -283,7 +285,6 @@ void create_window_surface( HWND hwnd, BOOL create_layered, const RECT *surface_
         if (driver_surface) window_surface_release( driver_surface );
         if (*window_surface)
         {
-            window_surface_release( *window_surface );
             /* create an offscreen window surface if the driver doesn't implement CreateWindowSurface */
             create_offscreen_window_surface( hwnd, surface_rect, window_surface );
         }
