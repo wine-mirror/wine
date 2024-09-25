@@ -1567,9 +1567,8 @@ void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *
              * Likewise, we have to invalidate the shader when using per-vertex
              * colours and diffuse/specular attribute presence changes, or when
              * normal presence changes. */
-            if (!stateblock->device->adapter->d3d_info.full_ffp_varyings
-                    || (stateblock->stateblock_state.rs[WINED3D_RS_COLORVERTEX]
-                            && (declaration->diffuse != prev->diffuse || declaration->specular != prev->specular))
+            if (!stateblock->device->adapter->d3d_info.full_ffp_varyings || declaration->diffuse != prev->diffuse
+                    || (stateblock->stateblock_state.rs[WINED3D_RS_COLORVERTEX] && declaration->specular != prev->specular)
                     || declaration->normal != prev->normal || declaration->point_size != prev->point_size)
                 stateblock->changed.ffp_vs_settings = 1;
         }
