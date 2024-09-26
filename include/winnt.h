@@ -126,12 +126,8 @@ extern "C" {
 #endif
 
 #ifndef NOP_FUNCTION
-# if defined(_MSC_VER)
-#  if (_MSC_VER >= 1210)
-#   define NOP_FUNCTION __noop
-#  else
-#   define NOP_FUNCTION (void)0
-#  endif
+# ifdef _MSC_VER
+#  define NOP_FUNCTION __noop
 # else
 #  define NOP_FUNCTION(...)
 # endif
@@ -146,7 +142,7 @@ extern "C" {
 #endif
 
 #ifndef FORCEINLINE
-# if defined(_MSC_VER) && (_MSC_VER >= 1200)
+# ifdef _MSC_VER
 #  define FORCEINLINE __forceinline
 # elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
 #  define FORCEINLINE inline __attribute__((always_inline))
@@ -411,7 +407,7 @@ extern "C" {
 #define MEMORY_ALLOCATION_ALIGNMENT 8
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)
+#if defined(_MSC_VER) && defined(__cplusplus)
 # define TYPE_ALIGNMENT(t) __alignof(t)
 #elif defined(__GNUC__)
 # define TYPE_ALIGNMENT(t) __alignof__(t)
@@ -437,7 +433,7 @@ extern "C" {
 #endif
 
 /* Eliminate Microsoft C/C++ compiler warning 4715 */
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
+#ifdef _MSC_VER
 # define DEFAULT_UNREACHABLE default: __assume(0)
 #elif defined(__clang__) || (defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 5))))
 # define DEFAULT_UNREACHABLE default: __builtin_unreachable()

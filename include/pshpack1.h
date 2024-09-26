@@ -98,7 +98,7 @@
 #    include <poppack.h>
 #  endif
 
-#  if defined(_MSC_VER) && (_MSC_VER >= 800)
+#  ifdef _MSC_VER
 #   pragma warning(disable:4103)
 #  endif
 
