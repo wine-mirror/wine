@@ -1812,7 +1812,12 @@ static DWORD WINAPI test_shell_window_thread(LPVOID param)
 static void test_shell_window(void)
 {
     HDESK hdesk;
+    HWND orig_shell_window;
     HANDLE hthread;
+
+    orig_shell_window = GetShellWindow();
+    todo_wine
+    ok(orig_shell_window != NULL, "default desktop doesn't have a shell window\n");
 
     hdesk = CreateDesktopA("winetest", NULL, NULL, 0, GENERIC_ALL, NULL);
 
@@ -1823,6 +1828,11 @@ static void test_shell_window(void)
     CloseHandle(hthread);
 
     CloseDesktop(hdesk);
+
+    if (!orig_shell_window)
+        skip("no shell window on default desktop\n");
+    else
+        ok(GetShellWindow() == orig_shell_window, "changing shell window on another desktop effected the default\n");
 }
 
 /************** MDI test ****************/
