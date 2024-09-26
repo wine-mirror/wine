@@ -194,6 +194,13 @@ static void test_basic(void)
     run_find_stdin("/C:abc", "cba", 1);
     ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+
+    /* find string in file, case insensitive */
+    run_find_file("/I aBc", "abc", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "abc");
+    ok(!ret, "Got the wrong result.\n");
 }
 
 START_TEST(findstr)

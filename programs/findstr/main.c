@@ -97,12 +97,32 @@ static void add_string(struct findstr_string **head, const WCHAR *string)
     *ptr = new_string;
 }
 
+static const WCHAR *substring(const WCHAR *str, const WCHAR *substr, BOOL case_sensitive)
+{
+    if (case_sensitive) return wcsstr(str, substr);
+
+    while (*str)
+    {
+        const WCHAR *p1 = str, *p2 = substr;
+
+        while (*p1 && *p2 && towlower(*p1) == towlower(*p2))
+        {
+            p1++;
+            p2++;
+        }
+        if (!*p2) return str;
+        str++;
+    }
+
+    return NULL;
+}
+
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
     struct findstr_string *string_head = NULL, *current_string, *next_string;
     struct findstr_file *file_head = NULL, *current_file, *next_file;
     WCHAR *string, *ptr, *buffer, line[MAXSTRING];
-    BOOL has_string = FALSE, has_file = FALSE;
+    BOOL has_string = FALSE, has_file = FALSE, case_sensitive = TRUE;
     int ret = 1, i, j;
 
     for (i = 0; i < argc; i++)
@@ -151,6 +171,10 @@ int __cdecl wmain(int argc, WCHAR *argv[])
                         has_string = TRUE;
                     }
                     break;
+                case 'I':
+                case 'i':
+                    case_sensitive = FALSE;
+                    break;
                 default:
                     findstr_error_wprintf(STRING_IGNORED, argv[i][j]);
                     break;
@@ -196,7 +220,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
             current_string = string_head;
             while (current_string)
             {
-                if (wcsstr(line, current_string->string))
+                if (substring(line, current_string->string, case_sensitive))
                 {
                     wprintf(line);
                     if (current_file->file == stdin)
