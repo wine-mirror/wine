@@ -1595,14 +1595,14 @@ h=%h i=f j=i k=j k l m  n;;==  o p q r s t u v w x y z l=%l m=%m o=%o
 h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o
 h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o
 h=%h i=a j=b k= l= m=%m n=%n o=%o
-@todo_wine@failure %i
+failure %i
 h=%h i=a j=e k=y l=z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z m=%m n=%n o=%o
 h=%h i=a j=b k= l= m= n=%n o=%o
 h=%h i=a j=b k= l= m= n= o=%o
 u=a v=b w=c x=d y=e z=f A=%A a=%a
 U=a V=b W=c X=d Y=e Z=f [=g \=h ]=i ^=j _=k `=l A=%A a=m
 U=u V=v W=w X=x Y=y Z=z [=A \=B ]=C ^=D _=E `=%` A=a a=%a
-@todo_wine@failure %A
+failure %A
 }=a ~=b
 h=%h i=a j=b k=c l=e m=%m o=%o@or_broken@h=%h i=a j=b k=c l=e m= o=%o
 h=%h i=e j=%j k=%k l=%l m=%m o=%o

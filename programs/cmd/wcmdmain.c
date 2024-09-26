@@ -3260,82 +3260,131 @@ static BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
     return TRUE;
 }
 
+struct for_loop_variables
+{
+    unsigned char table[32];
+    unsigned last, num_duplicates;
+    unsigned has_star;
+};
+
+static void for_loop_variables_init(struct for_loop_variables *flv)
+{
+    flv->last = flv->num_duplicates = 0;
+    flv->has_star = FALSE;
+}
+
+static BOOL for_loop_variables_push(struct for_loop_variables *flv, unsigned char o)
+{
+    unsigned i;
+    for (i = 0; i < flv->last; i++)
+         if (flv->table[i] == o)
+         {
+             flv->num_duplicates++;
+             return TRUE;
+         }
+    if (flv->last >= ARRAY_SIZE(flv->table)) return FALSE;
+    flv->table[flv->last] = o;
+    flv->last++;
+    return TRUE;
+}
+
+static int my_flv_compare(const void *a1, const void *a2)
+{
+    return *(const char*)a1 - *(const char*)a2;
+}
+
+static unsigned for_loop_variables_max(const struct for_loop_variables *flv)
+{
+    return flv->last == 0 ? -1 : flv->table[flv->last - 1];
+}
+
+static BOOL for_loop_fill_variables(const WCHAR *forf_tokens, struct for_loop_variables *flv)
+{
+    const WCHAR *pos = forf_tokens;
+
+    /* Loop through the token string, parsing it.
+     * Valid syntax is: token=m or x-y with comma delimiter and optionally * to finish
+     */
+    while (*pos)
+    {
+        unsigned num;
+        WCHAR *nextchar;
+
+        if (*pos == L'*')
+        {
+            if (pos[1] != L'\0') return FALSE;
+            qsort(flv->table, flv->last, sizeof(flv->table[0]), my_flv_compare);
+            if (flv->num_duplicates)
+            {
+                flv->num_duplicates++;
+                return TRUE;
+            }
+            flv->has_star = TRUE;
+            return for_loop_variables_push(flv, for_loop_variables_max(flv) + 1);
+        }
+
+        /* Get the next number */
+        num = wcstoul(pos, &nextchar, 10);
+        if (!num || num >= 32) return FALSE;
+        num--;
+        /* range x-y */
+        if (*nextchar == L'-')
+        {
+            unsigned int end = wcstoul(nextchar + 1, &nextchar, 10);
+            if (!end || end >= 32) return FALSE;
+            end--;
+            while (num <= end)
+                if (!for_loop_variables_push(flv, num++)) return FALSE;
+        }
+        else if (!for_loop_variables_push(flv, num)) return FALSE;
+
+        pos = nextchar;
+        if (*pos == L',') pos++;
+    }
+    if (flv->last)
+        qsort(flv->table, flv->last, sizeof(flv->table[0]), my_flv_compare);
+    else
+        for_loop_variables_push(flv, 0);
+    return TRUE;
+}
+
 static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, unsigned varidx, WCHAR *buffer,
                                                WCHAR forf_eol, const WCHAR *forf_delims, const WCHAR *forf_tokens)
 {
     RETURN_CODE return_code = NO_ERROR;
+    struct for_loop_variables flv;
     WCHAR *parm;
-    int varoffset;
-    int nexttoken, lasttoken = -1;
-    BOOL starfound = FALSE;
-    BOOL thisduplicate = FALSE;
-    BOOL anyduplicates = FALSE;
-    int  totalfound;
-    static WCHAR emptyW[] = L"";
+    unsigned i;
 
-    /* Extract the parameters based on the tokens= value (There will always
-       be some value, as if it is not supplied, it defaults to tokens=1).
-       Rough logic:
-       Count how many tokens are named in the line, identify the lowest
-       Empty (set to null terminated string) that number of named variables
-       While lasttoken != nextlowest
-       %letter = parameter number 'nextlowest'
-       letter++ (if >26 or >52 abort)
-       Go through token= string finding next lowest number
-       If token ends in * set %letter = raw position of token(nextnumber+1)
-    */
-    lasttoken = -1;
-    nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, &totalfound,
-                                   &starfound, &thisduplicate);
-
-    TRACE("Using var=%s on %d max\n", debugstr_for_var(varidx), totalfound);
-    /* Empty out variables */
-    for (varoffset = 0;
-         varoffset < totalfound && for_var_is_valid(varidx + varoffset);
-         varoffset++)
-        WCMD_set_for_loop_variable(varidx + varoffset, emptyW);
-
-    /* Loop extracting the tokens
-     * Note: nexttoken of 0 means there were no tokens requested, to handle
-     * the special case of tokens=*
-     */
-    varoffset = 0;
-    TRACE("Parsing buffer into tokens: '%s'\n", wine_dbgstr_w(buffer));
-    while (nexttoken > 0 && (nexttoken > lasttoken))
+    for_loop_variables_init(&flv);
+    if (!for_loop_fill_variables(forf_tokens, &flv))
     {
-        anyduplicates |= thisduplicate;
+        TRACE("Error while parsing tokens=%ls\n", forf_tokens);
+        return ERROR_INVALID_FUNCTION;
+    }
 
-        if (!for_var_is_valid(varidx + varoffset))
+    TRACE("Using var=%s on %u max%s\n", debugstr_for_var(varidx), flv.last, flv.has_star ? " with star" : "");
+    /* Empty out variables */
+    for (i = 0; i < flv.last + flv.num_duplicates; i++)
+        WCMD_set_for_loop_variable(varidx + i, L"");
+
+    for (i = 0; i < flv.last; i++)
+    {
+        if (flv.has_star && i + 1 == flv.last)
         {
-            WARN("Out of range offset\n");
+            WCMD_parameter_with_delims(buffer, flv.table[i], &parm, FALSE, FALSE, forf_delims);
+            TRACE("Parsed all remaining tokens %d(%s) as parameter %s\n",
+                  flv.table[i], debugstr_for_var(varidx + i), wine_dbgstr_w(parm));
+            if (parm)
+                WCMD_set_for_loop_variable(varidx + i, parm);
             break;
         }
         /* Extract the token number requested and set into the next variable context */
-        parm = WCMD_parameter_with_delims(buffer, (nexttoken-1), NULL, TRUE, FALSE, forf_delims);
-        TRACE("Parsed token %d(%d) as parameter %s\n", nexttoken,
-              varidx + varoffset, wine_dbgstr_w(parm));
+        parm = WCMD_parameter_with_delims(buffer, flv.table[i], NULL, TRUE, FALSE, forf_delims);
+        TRACE("Parsed token %d(%s) as parameter %s\n",
+              flv.table[i], debugstr_for_var(varidx + i), wine_dbgstr_w(parm));
         if (parm)
-        {
-            WCMD_set_for_loop_variable(varidx + varoffset, parm);
-            varoffset++;
-        }
-
-        /* Find the next token */
-        lasttoken = nexttoken;
-        nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, NULL,
-                                       &starfound, &thisduplicate);
-    }
-    /* If all the rest of the tokens were requested, and there is still space in
-     * the variable range, write them now
-     */
-    if (!anyduplicates && starfound && for_var_is_valid(varidx + varoffset))
-    {
-        nexttoken++;
-        WCMD_parameter_with_delims(buffer, (nexttoken-1), &parm, FALSE, FALSE, forf_delims);
-        TRACE("Parsed all remaining tokens (%d) as parameter %s\n",
-              varidx + varoffset, wine_dbgstr_w(parm));
-        if (parm)
-            WCMD_set_for_loop_variable(varidx + varoffset, parm);
+            WCMD_set_for_loop_variable(varidx + i, parm);
     }
 
     /* Execute the body of the for loop with these values */

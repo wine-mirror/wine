@@ -133,9 +133,6 @@ typedef struct _CMD_NODE
         };
     };
 } CMD_NODE;
-int WCMD_for_nexttoken(int lasttoken, const WCHAR *tokenstr,
-                       int *totalfound, BOOL *doall,
-                       BOOL *duplicates);
 
 struct _DIRECTORY_STACK;
 void WCMD_add_dirstowalk(struct _DIRECTORY_STACK *dirsToWalk);
