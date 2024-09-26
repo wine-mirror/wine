@@ -201,6 +201,70 @@ static void test_basic(void)
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "abc");
     ok(!ret, "Got the wrong result.\n");
+
+    /* find string in file, regular expression */
+    run_find_file("/R abc", "abc", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "abc");
+    ok(!ret, "Got the wrong result.\n");
+
+    /* find string in file with /C:, regular expression */
+    run_find_file("/R /C:^abc", "abc", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "abc");
+    ok(!ret, "Got the wrong result.\n");
+
+    /* find string in file, regular expression, case insensitive */
+    run_find_file("/I /R /C:.Bc", "abc", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "abc");
+    ok(!ret, "Got the wrong result.\n");
+
+    /* find string in file, regular expression, escape */
+    run_find_file("/R /C:\\.bc", "abc", 1);
+    ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+
+    /* $ doesn't match if there's no newline */
+    run_find_file("/R /C:abc$", "abc", 1);
+    ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+
+    run_find_file("/R /C:abc$", "abc\r\n", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "abc\r\n");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
+
+    /* escaped . before * */
+    run_find_file("/R /C:\\.*", "...", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "...");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
+
+    run_find_file("/R /C:\\.*", "abc", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "abc");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
+
+    /* ^ after first character */
+    run_find_file("/R /C:a^bc", "a^bc", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "a^bc");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
+
+    /* $ before last character */
+    run_find_file("/R /C:ab$c", "ab$c", 0);
+    ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
+    ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
+    ret = strcmp(stdout_buffer, "ab$c");
+    ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
 }
 
 START_TEST(findstr)
