@@ -73,6 +73,10 @@ struct desktop
     struct list          threads;          /* list of threads connected to this desktop */
     struct window       *top_window;       /* desktop window for this desktop */
     struct window       *msg_window;       /* HWND_MESSAGE top window */
+    struct window       *shell_window;     /* shell window for this desktop */
+    struct window       *shell_listview;   /* shell list view window for this desktop */
+    struct window       *progman_window;   /* progman window for this desktop */
+    struct window       *taskman_window;   /* taskman window for this desktop */
     struct hook_table   *global_hooks;     /* table of global hooks on this desktop */
     struct list          hotkeys;          /* list of registered hotkeys */
     struct list          pointers;         /* list of active pointers */

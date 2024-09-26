@@ -5993,7 +5993,7 @@ HWND get_shell_window(void)
 {
     HWND hwnd = 0;
 
-    SERVER_START_REQ(set_global_windows)
+    SERVER_START_REQ(set_desktop_shell_windows)
     {
         req->flags = 0;
         if (!wine_server_call_err(req))
@@ -6035,9 +6035,9 @@ BOOL WINAPI NtUserSetShellWindowEx( HWND shell, HWND list_view )
 
     NtUserSetWindowPos( shell, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE );
 
-    SERVER_START_REQ(set_global_windows)
+    SERVER_START_REQ(set_desktop_shell_windows)
     {
-        req->flags          = SET_GLOBAL_SHELL_WINDOWS;
+        req->flags          = SET_DESKTOP_SHELL_WINDOWS;
         req->shell_window   = wine_server_user_handle( shell );
         req->shell_listview = wine_server_user_handle( list_view );
         ret = !wine_server_call_err(req);
@@ -6050,7 +6050,7 @@ HWND get_progman_window(void)
 {
     HWND ret = 0;
 
-    SERVER_START_REQ(set_global_windows)
+    SERVER_START_REQ(set_desktop_shell_windows)
     {
         req->flags = 0;
         if (!wine_server_call_err(req))
@@ -6062,9 +6062,9 @@ HWND get_progman_window(void)
 
 HWND set_progman_window( HWND hwnd )
 {
-    SERVER_START_REQ(set_global_windows)
+    SERVER_START_REQ(set_desktop_shell_windows)
     {
-        req->flags          = SET_GLOBAL_PROGMAN_WINDOW;
+        req->flags          = SET_DESKTOP_PROGMAN_WINDOW;
         req->progman_window = wine_server_user_handle( hwnd );
         if (wine_server_call_err( req )) hwnd = 0;
     }
@@ -6076,7 +6076,7 @@ HWND get_taskman_window(void)
 {
     HWND ret = 0;
 
-    SERVER_START_REQ(set_global_windows)
+    SERVER_START_REQ(set_desktop_shell_windows)
     {
         req->flags = 0;
         if (!wine_server_call_err(req))
@@ -6091,9 +6091,9 @@ HWND set_taskman_window( HWND hwnd )
     /* hwnd = MSTaskSwWClass
      *        |-> SysTabControl32
      */
-    SERVER_START_REQ(set_global_windows)
+    SERVER_START_REQ(set_desktop_shell_windows)
     {
-        req->flags          = SET_GLOBAL_TASKMAN_WINDOW;
+        req->flags          = SET_DESKTOP_TASKMAN_WINDOW;
         req->taskman_window = wine_server_user_handle( hwnd );
         if (wine_server_call_err( req )) hwnd = 0;
     }

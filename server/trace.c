@@ -4000,7 +4000,7 @@ static void dump_open_token_reply( const struct open_token_reply *req )
     fprintf( stderr, " token=%04x", req->token );
 }
 
-static void dump_set_global_windows_request( const struct set_global_windows_request *req )
+static void dump_set_desktop_shell_windows_request( const struct set_desktop_shell_windows_request *req )
 {
     fprintf( stderr, " flags=%08x", req->flags );
     fprintf( stderr, ", shell_window=%08x", req->shell_window );
@@ -4009,7 +4009,7 @@ static void dump_set_global_windows_request( const struct set_global_windows_req
     fprintf( stderr, ", taskman_window=%08x", req->taskman_window );
 }
 
-static void dump_set_global_windows_reply( const struct set_global_windows_reply *req )
+static void dump_set_desktop_shell_windows_reply( const struct set_desktop_shell_windows_reply *req )
 {
     fprintf( stderr, " old_shell_window=%08x", req->old_shell_window );
     fprintf( stderr, ", old_shell_listview=%08x", req->old_shell_listview );
@@ -4977,7 +4977,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_remove_clipboard_listener_request,
     (dump_func)dump_create_token_request,
     (dump_func)dump_open_token_request,
-    (dump_func)dump_set_global_windows_request,
+    (dump_func)dump_set_desktop_shell_windows_request,
     (dump_func)dump_adjust_token_privileges_request,
     (dump_func)dump_get_token_privileges_request,
     (dump_func)dump_check_token_privileges_request,
@@ -5268,7 +5268,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_create_token_reply,
     (dump_func)dump_open_token_reply,
-    (dump_func)dump_set_global_windows_reply,
+    (dump_func)dump_set_desktop_shell_windows_reply,
     (dump_func)dump_adjust_token_privileges_reply,
     (dump_func)dump_get_token_privileges_reply,
     (dump_func)dump_check_token_privileges_reply,
@@ -5559,7 +5559,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "remove_clipboard_listener",
     "create_token",
     "open_token",
-    "set_global_windows",
+    "set_desktop_shell_windows",
     "adjust_token_privileges",
     "get_token_privileges",
     "check_token_privileges",

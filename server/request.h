@@ -335,7 +335,7 @@ DECL_HANDLER(add_clipboard_listener);
 DECL_HANDLER(remove_clipboard_listener);
 DECL_HANDLER(create_token);
 DECL_HANDLER(open_token);
-DECL_HANDLER(set_global_windows);
+DECL_HANDLER(set_desktop_shell_windows);
 DECL_HANDLER(adjust_token_privileges);
 DECL_HANDLER(get_token_privileges);
 DECL_HANDLER(check_token_privileges);
@@ -629,7 +629,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_remove_clipboard_listener,
     (req_handler)req_create_token,
     (req_handler)req_open_token,
-    (req_handler)req_set_global_windows,
+    (req_handler)req_set_desktop_shell_windows,
     (req_handler)req_adjust_token_privileges,
     (req_handler)req_get_token_privileges,
     (req_handler)req_check_token_privileges,
@@ -1999,17 +1999,17 @@ C_ASSERT( FIELD_OFFSET(struct open_token_request, flags) == 24 );
 C_ASSERT( sizeof(struct open_token_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct open_token_reply, token) == 8 );
 C_ASSERT( sizeof(struct open_token_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_request, flags) == 12 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_request, shell_window) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_request, shell_listview) == 20 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_request, progman_window) == 24 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_request, taskman_window) == 28 );
-C_ASSERT( sizeof(struct set_global_windows_request) == 32 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_reply, old_shell_window) == 8 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_reply, old_shell_listview) == 12 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_reply, old_progman_window) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_global_windows_reply, old_taskman_window) == 20 );
-C_ASSERT( sizeof(struct set_global_windows_reply) == 24 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_request, flags) == 12 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_request, shell_window) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_request, shell_listview) == 20 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_request, progman_window) == 24 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_request, taskman_window) == 28 );
+C_ASSERT( sizeof(struct set_desktop_shell_windows_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_reply, old_shell_window) == 8 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_reply, old_shell_listview) == 12 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_reply, old_progman_window) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_desktop_shell_windows_reply, old_taskman_window) == 20 );
+C_ASSERT( sizeof(struct set_desktop_shell_windows_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct adjust_token_privileges_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct adjust_token_privileges_request, disable_all) == 16 );
 C_ASSERT( FIELD_OFFSET(struct adjust_token_privileges_request, get_modified_state) == 20 );

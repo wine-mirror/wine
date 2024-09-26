@@ -145,12 +145,6 @@ struct user_handle_array
 
 static const rectangle_t empty_rect;
 
-/* global window pointers */
-static struct window *shell_window;
-static struct window *shell_listview;
-static struct window *progman_window;
-static struct window *taskman_window;
-
 /* magic HWND_TOP etc. pointers */
 #define WINPTR_TOP       ((struct window *)1L)
 #define WINPTR_BOTTOM    ((struct window *)2L)
@@ -2022,10 +2016,10 @@ void free_window_handle( struct window *win )
     }
 
     /* reset global window pointers, if the corresponding window is destroyed */
-    if (win == shell_window) shell_window = NULL;
-    if (win == shell_listview) shell_listview = NULL;
-    if (win == progman_window) progman_window = NULL;
-    if (win == taskman_window) taskman_window = NULL;
+    if (win == win->desktop->shell_window) win->desktop->shell_window = NULL;
+    if (win == win->desktop->shell_listview) win->desktop->shell_listview = NULL;
+    if (win == win->desktop->progman_window) win->desktop->progman_window = NULL;
+    if (win == win->desktop->taskman_window) win->desktop->taskman_window = NULL;
     free_hotkeys( win->desktop, win->handle );
     cleanup_clipboard_window( win->desktop, win->handle );
     destroy_properties( win );
@@ -2918,9 +2912,9 @@ DECL_HANDLER(get_window_properties)
 }
 
 
-/* get the new window pointer for a global window, checking permissions */
-/* helper for set_global_windows request */
-static int get_new_global_window( struct window **win, user_handle_t handle )
+/* get the new window pointer for a desktop shell window, checking permissions */
+/* helper for set_desktop_shell_windows request */
+static int get_new_shell_window( struct window **win, user_handle_t handle )
 {
     if (!handle)
     {
@@ -2936,36 +2930,44 @@ static int get_new_global_window( struct window **win, user_handle_t handle )
     return (*win != NULL);
 }
 
-/* Set/get the global windows */
-DECL_HANDLER(set_global_windows)
+/* Set/get the desktop shell windows */
+DECL_HANDLER(set_desktop_shell_windows)
 {
-    struct window *new_shell_window   = shell_window;
-    struct window *new_shell_listview = shell_listview;
-    struct window *new_progman_window = progman_window;
-    struct window *new_taskman_window = taskman_window;
+    struct desktop *desktop;
+    struct window *new_shell_window, *new_shell_listview, *new_progman_window, *new_taskman_window;
 
-    reply->old_shell_window   = shell_window ? shell_window->handle : 0;
-    reply->old_shell_listview = shell_listview ? shell_listview->handle : 0;
-    reply->old_progman_window = progman_window ? progman_window->handle : 0;
-    reply->old_taskman_window = taskman_window ? taskman_window->handle : 0;
+    if (!(desktop = get_desktop_obj( current->process, current->desktop, 0 ))) return;
 
-    if (req->flags & SET_GLOBAL_SHELL_WINDOWS)
+    new_shell_window   = desktop->shell_window;
+    new_shell_listview = desktop->shell_listview;
+    new_progman_window = desktop->progman_window;
+    new_taskman_window = desktop->taskman_window;
+
+    reply->old_shell_window   = new_shell_window ? new_shell_window->handle : 0;
+    reply->old_shell_listview = new_shell_listview ? new_shell_listview->handle : 0;
+    reply->old_progman_window = new_progman_window ? new_progman_window->handle : 0;
+    reply->old_taskman_window = new_taskman_window ? new_taskman_window->handle : 0;
+
+    if (req->flags & SET_DESKTOP_SHELL_WINDOWS)
     {
-        if (!get_new_global_window( &new_shell_window, req->shell_window )) return;
-        if (!get_new_global_window( &new_shell_listview, req->shell_listview )) return;
+        if (!get_new_shell_window( &new_shell_window, req->shell_window )) goto done;
+        if (!get_new_shell_window( &new_shell_listview, req->shell_listview )) goto done;
     }
-    if (req->flags & SET_GLOBAL_PROGMAN_WINDOW)
+    if (req->flags & SET_DESKTOP_PROGMAN_WINDOW)
     {
-        if (!get_new_global_window( &new_progman_window, req->progman_window )) return;
+        if (!get_new_shell_window( &new_progman_window, req->progman_window )) goto done;
     }
-    if (req->flags & SET_GLOBAL_TASKMAN_WINDOW)
+    if (req->flags & SET_DESKTOP_TASKMAN_WINDOW)
     {
-        if (!get_new_global_window( &new_taskman_window, req->taskman_window )) return;
+        if (!get_new_shell_window( &new_taskman_window, req->taskman_window )) goto done;
     }
-    shell_window   = new_shell_window;
-    shell_listview = new_shell_listview;
-    progman_window = new_progman_window;
-    taskman_window = new_taskman_window;
+    desktop->shell_window   = new_shell_window;
+    desktop->shell_listview = new_shell_listview;
+    desktop->progman_window = new_progman_window;
+    desktop->taskman_window = new_taskman_window;
+
+done:
+    release_object( desktop );
 }
 
 /* retrieve layered info for a window */

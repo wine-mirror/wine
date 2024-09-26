@@ -3292,8 +3292,8 @@ enum caret_state
 #define OPEN_TOKEN_AS_SELF  2
 
 
-/* Set/get the global windows */
-@REQ(set_global_windows)
+/* Set/get the desktop shell windows */
+@REQ(set_desktop_shell_windows)
     unsigned int   flags;               /* flags for fields to set (see below) */
     user_handle_t  shell_window;        /* handle to the new shell window */
     user_handle_t  shell_listview;      /* handle to the new shell listview window */
@@ -3305,9 +3305,9 @@ enum caret_state
     user_handle_t  old_progman_window;  /* handle to the new program manager window */
     user_handle_t  old_taskman_window;  /* handle to the new task manager window */
 @END
-#define SET_GLOBAL_SHELL_WINDOWS   0x01  /* set both main shell and listview windows */
-#define SET_GLOBAL_PROGMAN_WINDOW  0x02
-#define SET_GLOBAL_TASKMAN_WINDOW  0x04
+#define SET_DESKTOP_SHELL_WINDOWS   0x01  /* set both main shell and listview windows */
+#define SET_DESKTOP_PROGMAN_WINDOW  0x02
+#define SET_DESKTOP_TASKMAN_WINDOW  0x04
 
 /* Adjust the privileges held by a token */
 @REQ(adjust_token_privileges)

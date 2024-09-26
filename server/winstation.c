@@ -285,6 +285,10 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             desktop->winstation = (struct winstation *)grab_object( winstation );
             desktop->top_window = NULL;
             desktop->msg_window = NULL;
+            desktop->shell_window = NULL;
+            desktop->shell_listview = NULL;
+            desktop->progman_window = NULL;
+            desktop->taskman_window = NULL;
             desktop->global_hooks = NULL;
             desktop->close_timeout = NULL;
             desktop->foreground_input = NULL;
