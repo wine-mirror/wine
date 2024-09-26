@@ -720,11 +720,10 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
   WCHAR *normalp;
 
   /* Display the FOR variables in effect */
-  for (i=0;i<MAX_FOR_VARIABLES;i++) {
+  for (i=0;i<ARRAY_SIZE(forloopcontext->variable);i++) {
     if (forloopcontext->variable[i]) {
-      WINE_TRACE("FOR variable context: %c = '%s'\n",
-                 for_var_index_to_char(i),
-                 wine_dbgstr_w(forloopcontext->variable[i]));
+      TRACE("FOR variable context: %s = '%s'\n",
+            debugstr_for_var((WCHAR)i), wine_dbgstr_w(forloopcontext->variable[i]));
     }
   }
 
@@ -770,10 +769,9 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
         p = WCMD_strsubstW(p, p+2, NULL, 0);
 
     } else {
-      int forvaridx = for_var_char_to_index(*(p+1));
-      if (startchar == L'%' && forvaridx != -1 && forloopcontext->variable[forvaridx]) {
+      if (startchar == L'%' && for_var_is_valid(p[1]) && forloopcontext->variable[p[1]]) {
         /* Replace the 2 characters, % and for variable character */
-        p = WCMD_strsubstW(p, p + 2, forloopcontext->variable[forvaridx], -1);
+        p = WCMD_strsubstW(p, p + 2, forloopcontext->variable[p[1]], -1);
       } else if (!atExecute || startchar == L'!') {
         BOOL first = p == cmd;
         p = WCMD_expand_envvar(p);
@@ -974,16 +972,16 @@ const char *debugstr_for_control(const CMD_FOR_CONTROL *for_ctrl)
         options = "";
         break;
     }
-    return wine_dbg_sprintf("[FOR] %s %s%s%%%c (%ls)",
+    return wine_dbg_sprintf("[FOR] %s %s%s%s (%ls)",
                             for_ctrl_strings[for_ctrl->operator], flags, options,
-                            for_var_index_to_char(for_ctrl->variable_index), for_ctrl->set);
+                            debugstr_for_var(for_ctrl->variable_index), for_ctrl->set);
 }
 
-static void for_control_create(enum for_control_operator for_op, unsigned flags, const WCHAR *options, int var_idx, CMD_FOR_CONTROL *for_ctrl)
+static void for_control_create(enum for_control_operator for_op, unsigned flags, const WCHAR *options, unsigned varidx, CMD_FOR_CONTROL *for_ctrl)
 {
     for_ctrl->operator = for_op;
     for_ctrl->flags = flags;
-    for_ctrl->variable_index = var_idx;
+    for_ctrl->variable_index = varidx;
     for_ctrl->set = NULL;
     switch (for_ctrl->operator)
     {
@@ -995,13 +993,13 @@ static void for_control_create(enum for_control_operator for_op, unsigned flags,
     }
 }
 
-static void for_control_create_fileset(unsigned flags, int var_idx, WCHAR eol, int num_lines_to_skip, BOOL use_backq,
+static void for_control_create_fileset(unsigned flags, unsigned varidx, WCHAR eol, int num_lines_to_skip, BOOL use_backq,
                                        const WCHAR *delims, const WCHAR *tokens,
                                        CMD_FOR_CONTROL *for_ctrl)
 {
     for_ctrl->operator = CMD_FOR_FILE_SET;
     for_ctrl->flags = flags;
-    for_ctrl->variable_index = var_idx;
+    for_ctrl->variable_index = varidx;
     for_ctrl->set = NULL;
 
     for_ctrl->eol = eol;
@@ -2024,7 +2022,7 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
     WCHAR *arg;
     unsigned flags = 0;
     int arg_index;
-    int var_idx;
+    unsigned varidx;
 
     options[0] = L'\0';
     /* native allows two options only in the /D /R case, a repetition of the option
@@ -2106,8 +2104,9 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
 
     /* Ensure line continues with variable */
     arg = WCMD_parameter(opts_var, arg_index++, NULL, FALSE, FALSE);
-    if (!arg || *arg != L'%' || (var_idx = for_var_char_to_index(arg[1])) == -1)
+    if (!arg || *arg != L'%' || !for_var_is_valid(arg[1]))
         goto syntax_error; /* FIXME native prints the offending token "%<whatever>" was unexpected at this time */
+    varidx = arg[1];
     for_ctrl = xalloc(sizeof(*for_ctrl));
     if (for_op == CMD_FOR_FILE_SET)
     {
@@ -2171,12 +2170,12 @@ static CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
                 goto syntax_error;
             }
         }
-        for_control_create_fileset(flags, var_idx, eol, num_lines_to_skip, use_backq,
+        for_control_create_fileset(flags, varidx, eol, num_lines_to_skip, use_backq,
                                    delims ? delims : xstrdupW(L" \t"),
                                    tokens ? tokens : xstrdupW(L"1"), for_ctrl);
     }
     else
-        for_control_create(for_op, flags, options, var_idx, for_ctrl);
+        for_control_create(for_op, flags, options, varidx, for_ctrl);
     return for_ctrl;
 syntax_error:
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
@@ -3261,7 +3260,7 @@ static BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
     return TRUE;
 }
 
-static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, int varidx, WCHAR *buffer,
+static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, unsigned varidx, WCHAR *buffer,
                                                WCHAR forf_eol, const WCHAR *forf_delims, const WCHAR *forf_tokens)
 {
     RETURN_CODE return_code = NO_ERROR;
@@ -3289,10 +3288,10 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, int varidx, WCHAR
     nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, &totalfound,
                                    &starfound, &thisduplicate);
 
-    TRACE("Using var=%lc on %d max\n", for_var_index_to_char(varidx), totalfound);
+    TRACE("Using var=%s on %d max\n", debugstr_for_var(varidx), totalfound);
     /* Empty out variables */
     for (varoffset = 0;
-         varoffset < totalfound && for_var_index_in_range(varidx, varoffset);
+         varoffset < totalfound && for_var_is_valid(varidx + varoffset);
          varoffset++)
         WCMD_set_for_loop_variable(varidx + varoffset, emptyW);
 
@@ -3306,7 +3305,7 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, int varidx, WCHAR
     {
         anyduplicates |= thisduplicate;
 
-        if (!for_var_index_in_range(varidx, varoffset))
+        if (!for_var_is_valid(varidx + varoffset))
         {
             WARN("Out of range offset\n");
             break;
@@ -3329,7 +3328,7 @@ static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, int varidx, WCHAR
     /* If all the rest of the tokens were requested, and there is still space in
      * the variable range, write them now
      */
-    if (!anyduplicates && starfound && for_var_index_in_range(varidx, varoffset))
+    if (!anyduplicates && starfound && for_var_is_valid(varidx + varoffset))
     {
         nexttoken++;
         WCMD_parameter_with_delims(buffer, (nexttoken-1), &parm, FALSE, FALSE, forf_delims);
@@ -3365,13 +3364,13 @@ void WCMD_save_for_loop_context(BOOL reset)
 void WCMD_restore_for_loop_context(void)
 {
     FOR_CONTEXT *old = forloopcontext->previous;
-    int varidx;
+    unsigned varidx;
     if (!old)
     {
         FIXME("Unexpected situation\n");
         return;
     }
-    for (varidx = 0; varidx < MAX_FOR_VARIABLES; varidx++)
+    for (varidx = 0; varidx < ARRAY_SIZE(forloopcontext->variable); varidx++)
     {
         if (forloopcontext->variable[varidx] != old->variable[varidx])
             free(forloopcontext->variable[varidx]);
@@ -3380,13 +3379,13 @@ void WCMD_restore_for_loop_context(void)
     forloopcontext = old;
 }
 
-void WCMD_set_for_loop_variable(int var_idx, const WCHAR *value)
+void WCMD_set_for_loop_variable(unsigned varidx, const WCHAR *value)
 {
-    if (var_idx < 0 || var_idx >= MAX_FOR_VARIABLES) return;
+    if (!for_var_is_valid(varidx)) return;
     if (forloopcontext->previous &&
-        forloopcontext->previous->variable[var_idx] != forloopcontext->variable[var_idx])
-        free(forloopcontext->variable[var_idx]);
-    forloopcontext->variable[var_idx] = xstrdupW(value);
+        forloopcontext->previous->variable[varidx] != forloopcontext->variable[varidx])
+        free(forloopcontext->variable[varidx]);
+    forloopcontext->variable[varidx] = xstrdupW(value);
 }
 
 static BOOL match_ending_delim(WCHAR *string)

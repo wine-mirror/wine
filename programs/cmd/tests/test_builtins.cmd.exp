@@ -1600,8 +1600,8 @@ h=%h i=a j=e k=y l=z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z m=%m n=
 h=%h i=a j=b k= l= m= n=%n o=%o
 h=%h i=a j=b k= l= m= n= o=%o
 u=a v=b w=c x=d y=e z=f A=%A a=%a
-@todo_wine@U=a V=b W=c X=d Y=e Z=f [=g \=h ]=i ^=j _=k `=l A=%A a=m
-@todo_wine@U=u V=v W=w X=x Y=y Z=z [=A \=B ]=C ^=D _=E `=%` A=a a=%a
+U=a V=b W=c X=d Y=e Z=f [=g \=h ]=i ^=j _=k `=l A=%A a=m
+U=u V=v W=w X=x Y=y Z=z [=A \=B ]=C ^=D _=E `=%` A=a a=%a
 @todo_wine@failure %A
 @todo_wine@}=a ~=b
 ---- temp
