@@ -2479,12 +2479,11 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
     return teb;
 }
 #elif defined(__i386__) && defined(_MSC_VER)
+DWORD __readfsdword(DWORD);
+#pragma intrinsic(__readfsdword)
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
-  struct _TEB *teb;
-  __asm mov eax, fs:[0x18];
-  __asm mov teb, eax;
-  return teb;
+    return (struct _TEB *)__readfsdword( 0x18 );
 }
 #elif (defined(__aarch64__) || defined(__arm64ec__)) && defined(__GNUC__)
 register struct _TEB *__wine_current_teb __asm__("x18");
