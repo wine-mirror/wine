@@ -1149,6 +1149,33 @@ static inline BOOL is_whitespace(WCHAR c)
     return c == ' ' || c == '\t';
 }
 
+/* Set the shell window if appropriate for the current desktop. We should set
+   the shell window on the "Default" desktop on a visible window station, but
+   not for other desktops. */
+static void set_shell_window( HWND hwnd )
+{
+    HWINSTA winsta;
+    USEROBJECTFLAGS flags;
+    HDESK desk;
+    WCHAR desk_name[MAX_PATH];
+
+    if (!(winsta = GetProcessWindowStation()) ||
+        !GetUserObjectInformationW( winsta, UOI_FLAGS, &flags, sizeof(flags), NULL ) ||
+        !(flags.dwFlags & WSF_VISIBLE))
+    {
+        return;
+    }
+
+    if (!(desk = GetThreadDesktop( GetCurrentThreadId() )) ||
+        !GetUserObjectInformationW( desk, UOI_NAME, desk_name, ARRAY_SIZE( desk_name ), NULL ) ||
+        wcscmp( desk_name, L"Default" ))
+    {
+        return;
+    }
+
+    SetShellWindow( hwnd );
+}
+
 /* main desktop management function */
 void manage_desktop( WCHAR *arg )
 {
@@ -1268,6 +1295,10 @@ void manage_desktop( WCHAR *arg )
 
     desktopshellbrowserwindow_init();
     shellwindows_init();
+
+    /* Ideally we would set the window of an IShellView here, but we never
+       actually create one, so the desktop window itself will have to do. */
+    set_shell_window( hwnd );
 
     /* run the desktop message loop */
     if (hwnd)

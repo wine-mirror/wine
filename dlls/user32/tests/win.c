@@ -1816,7 +1816,6 @@ static void test_shell_window(void)
     HANDLE hthread;
 
     orig_shell_window = GetShellWindow();
-    todo_wine
     ok(orig_shell_window != NULL, "default desktop doesn't have a shell window\n");
 
     hdesk = CreateDesktopA("winetest", NULL, NULL, 0, GENERIC_ALL, NULL);
