@@ -66,6 +66,7 @@ struct wined3d_saved_states
     uint32_t point_scale : 1;
     uint32_t ffp_vs_settings : 1;
     uint32_t ffp_ps_settings : 1;
+    uint32_t rasterizer_state : 1;
 };
 
 struct stage_state
@@ -1643,6 +1644,15 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
             stateblock->changed.ffp_ps_constants = 1;
             break;
 
+        case WINED3D_RS_FILLMODE:
+        case WINED3D_RS_CULLMODE:
+        case WINED3D_RS_SLOPESCALEDEPTHBIAS:
+        case WINED3D_RS_DEPTHBIAS:
+        case WINED3D_RS_SCISSORTESTENABLE:
+        case WINED3D_RS_ANTIALIASEDLINEENABLE:
+            stateblock->changed.rasterizer_state = 1;
+            break;
+
         default:
             break;
     }
@@ -2854,7 +2864,7 @@ static void sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
 void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_stateblock *stateblock)
 {
-    bool set_blend_state = false, set_depth_stencil_state = false, set_rasterizer_state = false;
+    bool set_blend_state = false, set_depth_stencil_state = false;
 
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     const unsigned int word_bit_count = sizeof(DWORD) * CHAR_BIT;
@@ -2975,15 +2985,6 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     set_depth_stencil_state = true;
                     break;
 
-                case WINED3D_RS_FILLMODE:
-                case WINED3D_RS_CULLMODE:
-                case WINED3D_RS_SLOPESCALEDEPTHBIAS:
-                case WINED3D_RS_DEPTHBIAS:
-                case WINED3D_RS_SCISSORTESTENABLE:
-                case WINED3D_RS_ANTIALIASEDLINEENABLE:
-                    set_rasterizer_state = true;
-                    break;
-
                 case WINED3D_RS_ADAPTIVETESS_X:
                 case WINED3D_RS_ADAPTIVETESS_Z:
                 case WINED3D_RS_ADAPTIVETESS_W:
@@ -2994,6 +2995,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     changed->lights = 1;
                     break;
 
+                case WINED3D_RS_FILLMODE:
+                case WINED3D_RS_CULLMODE:
+                case WINED3D_RS_SLOPESCALEDEPTHBIAS:
+                case WINED3D_RS_DEPTHBIAS:
+                case WINED3D_RS_SCISSORTESTENABLE:
+                case WINED3D_RS_ANTIALIASEDLINEENABLE:
                 case WINED3D_RS_ADAPTIVETESS_Y:
                 case WINED3D_RS_POINTSCALEENABLE:
                 case WINED3D_RS_POINTSCALE_A:
@@ -3204,7 +3211,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
-    if (set_rasterizer_state)
+    if (changed->rasterizer_state)
     {
         struct wined3d_rasterizer_state *rasterizer_state;
         struct wined3d_rasterizer_state_desc desc;
