@@ -1310,6 +1310,15 @@ void WINAPI vkCmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t command
     UNIX_CALL(vkCmdExecuteCommands, &params);
 }
 
+void WINAPI vkCmdExecuteGeneratedCommandsEXT(VkCommandBuffer commandBuffer, VkBool32 isPreprocessed, const VkGeneratedCommandsInfoEXT *pGeneratedCommandsInfo)
+{
+    struct vkCmdExecuteGeneratedCommandsEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.isPreprocessed = isPreprocessed;
+    params.pGeneratedCommandsInfo = pGeneratedCommandsInfo;
+    UNIX_CALL(vkCmdExecuteGeneratedCommandsEXT, &params);
+}
+
 void WINAPI vkCmdExecuteGeneratedCommandsNV(VkCommandBuffer commandBuffer, VkBool32 isPreprocessed, const VkGeneratedCommandsInfoNV *pGeneratedCommandsInfo)
 {
     struct vkCmdExecuteGeneratedCommandsNV_params params;
@@ -1403,6 +1412,15 @@ void WINAPI vkCmdPipelineBarrier2KHR(VkCommandBuffer commandBuffer, const VkDepe
     params.commandBuffer = commandBuffer;
     params.pDependencyInfo = pDependencyInfo;
     UNIX_CALL(vkCmdPipelineBarrier2KHR, &params);
+}
+
+void WINAPI vkCmdPreprocessGeneratedCommandsEXT(VkCommandBuffer commandBuffer, const VkGeneratedCommandsInfoEXT *pGeneratedCommandsInfo, VkCommandBuffer stateCommandBuffer)
+{
+    struct vkCmdPreprocessGeneratedCommandsEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.pGeneratedCommandsInfo = pGeneratedCommandsInfo;
+    params.stateCommandBuffer = stateCommandBuffer;
+    UNIX_CALL(vkCmdPreprocessGeneratedCommandsEXT, &params);
 }
 
 void WINAPI vkCmdPreprocessGeneratedCommandsNV(VkCommandBuffer commandBuffer, const VkGeneratedCommandsInfoNV *pGeneratedCommandsInfo)
@@ -1775,6 +1793,15 @@ void WINAPI vkCmdSetDepthClampEnableEXT(VkCommandBuffer commandBuffer, VkBool32 
     params.commandBuffer = commandBuffer;
     params.depthClampEnable = depthClampEnable;
     UNIX_CALL(vkCmdSetDepthClampEnableEXT, &params);
+}
+
+void WINAPI vkCmdSetDepthClampRangeEXT(VkCommandBuffer commandBuffer, VkDepthClampModeEXT depthClampMode, const VkDepthClampRangeEXT *pDepthClampRange)
+{
+    struct vkCmdSetDepthClampRangeEXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.depthClampMode = depthClampMode;
+    params.pDepthClampRange = pDepthClampRange;
+    UNIX_CALL(vkCmdSetDepthClampRangeEXT, &params);
 }
 
 void WINAPI vkCmdSetDepthClipEnableEXT(VkCommandBuffer commandBuffer, VkBool32 depthClipEnable)
@@ -3030,6 +3057,19 @@ VkResult WINAPI vkCreateImageView(VkDevice device, const VkImageViewCreateInfo *
     return params.result;
 }
 
+VkResult WINAPI vkCreateIndirectCommandsLayoutEXT(VkDevice device, const VkIndirectCommandsLayoutCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkIndirectCommandsLayoutEXT *pIndirectCommandsLayout)
+{
+    struct vkCreateIndirectCommandsLayoutEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pCreateInfo = pCreateInfo;
+    params.pAllocator = pAllocator;
+    params.pIndirectCommandsLayout = pIndirectCommandsLayout;
+    status = UNIX_CALL(vkCreateIndirectCommandsLayoutEXT, &params);
+    assert(!status && "vkCreateIndirectCommandsLayoutEXT");
+    return params.result;
+}
+
 VkResult WINAPI vkCreateIndirectCommandsLayoutNV(VkDevice device, const VkIndirectCommandsLayoutCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkIndirectCommandsLayoutNV *pIndirectCommandsLayout)
 {
     struct vkCreateIndirectCommandsLayoutNV_params params;
@@ -3040,6 +3080,19 @@ VkResult WINAPI vkCreateIndirectCommandsLayoutNV(VkDevice device, const VkIndire
     params.pIndirectCommandsLayout = pIndirectCommandsLayout;
     status = UNIX_CALL(vkCreateIndirectCommandsLayoutNV, &params);
     assert(!status && "vkCreateIndirectCommandsLayoutNV");
+    return params.result;
+}
+
+VkResult WINAPI vkCreateIndirectExecutionSetEXT(VkDevice device, const VkIndirectExecutionSetCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkIndirectExecutionSetEXT *pIndirectExecutionSet)
+{
+    struct vkCreateIndirectExecutionSetEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pCreateInfo = pCreateInfo;
+    params.pAllocator = pAllocator;
+    params.pIndirectExecutionSet = pIndirectExecutionSet;
+    status = UNIX_CALL(vkCreateIndirectExecutionSetEXT, &params);
+    assert(!status && "vkCreateIndirectExecutionSetEXT");
     return params.result;
 }
 
@@ -3630,6 +3683,17 @@ void WINAPI vkDestroyImageView(VkDevice device, VkImageView imageView, const VkA
     assert(!status && "vkDestroyImageView");
 }
 
+void WINAPI vkDestroyIndirectCommandsLayoutEXT(VkDevice device, VkIndirectCommandsLayoutEXT indirectCommandsLayout, const VkAllocationCallbacks *pAllocator)
+{
+    struct vkDestroyIndirectCommandsLayoutEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.indirectCommandsLayout = indirectCommandsLayout;
+    params.pAllocator = pAllocator;
+    status = UNIX_CALL(vkDestroyIndirectCommandsLayoutEXT, &params);
+    assert(!status && "vkDestroyIndirectCommandsLayoutEXT");
+}
+
 void WINAPI vkDestroyIndirectCommandsLayoutNV(VkDevice device, VkIndirectCommandsLayoutNV indirectCommandsLayout, const VkAllocationCallbacks *pAllocator)
 {
     struct vkDestroyIndirectCommandsLayoutNV_params params;
@@ -3639,6 +3703,17 @@ void WINAPI vkDestroyIndirectCommandsLayoutNV(VkDevice device, VkIndirectCommand
     params.pAllocator = pAllocator;
     status = UNIX_CALL(vkDestroyIndirectCommandsLayoutNV, &params);
     assert(!status && "vkDestroyIndirectCommandsLayoutNV");
+}
+
+void WINAPI vkDestroyIndirectExecutionSetEXT(VkDevice device, VkIndirectExecutionSetEXT indirectExecutionSet, const VkAllocationCallbacks *pAllocator)
+{
+    struct vkDestroyIndirectExecutionSetEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.indirectExecutionSet = indirectExecutionSet;
+    params.pAllocator = pAllocator;
+    status = UNIX_CALL(vkDestroyIndirectExecutionSetEXT, &params);
+    assert(!status && "vkDestroyIndirectExecutionSetEXT");
 }
 
 void WINAPI vkDestroyMicromapEXT(VkDevice device, VkMicromapEXT micromap, const VkAllocationCallbacks *pAllocator)
@@ -4592,6 +4667,17 @@ VkResult WINAPI vkGetFramebufferTilePropertiesQCOM(VkDevice device, VkFramebuffe
     status = UNIX_CALL(vkGetFramebufferTilePropertiesQCOM, &params);
     assert(!status && "vkGetFramebufferTilePropertiesQCOM");
     return params.result;
+}
+
+void WINAPI vkGetGeneratedCommandsMemoryRequirementsEXT(VkDevice device, const VkGeneratedCommandsMemoryRequirementsInfoEXT *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
+{
+    struct vkGetGeneratedCommandsMemoryRequirementsEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pInfo = pInfo;
+    params.pMemoryRequirements = pMemoryRequirements;
+    status = UNIX_CALL(vkGetGeneratedCommandsMemoryRequirementsEXT, &params);
+    assert(!status && "vkGetGeneratedCommandsMemoryRequirementsEXT");
 }
 
 void WINAPI vkGetGeneratedCommandsMemoryRequirementsNV(VkDevice device, const VkGeneratedCommandsMemoryRequirementsInfoNV *pInfo, VkMemoryRequirements2 *pMemoryRequirements)
@@ -6311,6 +6397,30 @@ void WINAPI vkUpdateDescriptorSets(VkDevice device, uint32_t descriptorWriteCoun
     UNIX_CALL(vkUpdateDescriptorSets, &params);
 }
 
+void WINAPI vkUpdateIndirectExecutionSetPipelineEXT(VkDevice device, VkIndirectExecutionSetEXT indirectExecutionSet, uint32_t executionSetWriteCount, const VkWriteIndirectExecutionSetPipelineEXT *pExecutionSetWrites)
+{
+    struct vkUpdateIndirectExecutionSetPipelineEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.indirectExecutionSet = indirectExecutionSet;
+    params.executionSetWriteCount = executionSetWriteCount;
+    params.pExecutionSetWrites = pExecutionSetWrites;
+    status = UNIX_CALL(vkUpdateIndirectExecutionSetPipelineEXT, &params);
+    assert(!status && "vkUpdateIndirectExecutionSetPipelineEXT");
+}
+
+void WINAPI vkUpdateIndirectExecutionSetShaderEXT(VkDevice device, VkIndirectExecutionSetEXT indirectExecutionSet, uint32_t executionSetWriteCount, const VkWriteIndirectExecutionSetShaderEXT *pExecutionSetWrites)
+{
+    struct vkUpdateIndirectExecutionSetShaderEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.indirectExecutionSet = indirectExecutionSet;
+    params.executionSetWriteCount = executionSetWriteCount;
+    params.pExecutionSetWrites = pExecutionSetWrites;
+    status = UNIX_CALL(vkUpdateIndirectExecutionSetShaderEXT, &params);
+    assert(!status && "vkUpdateIndirectExecutionSetShaderEXT");
+}
+
 VkResult WINAPI vkUpdateVideoSessionParametersKHR(VkDevice device, VkVideoSessionParametersKHR videoSessionParameters, const VkVideoSessionParametersUpdateInfoKHR *pUpdateInfo)
 {
     struct vkUpdateVideoSessionParametersKHR_params params;
@@ -6534,6 +6644,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdEndTransformFeedbackEXT", vkCmdEndTransformFeedbackEXT},
     {"vkCmdEndVideoCodingKHR", vkCmdEndVideoCodingKHR},
     {"vkCmdExecuteCommands", vkCmdExecuteCommands},
+    {"vkCmdExecuteGeneratedCommandsEXT", vkCmdExecuteGeneratedCommandsEXT},
     {"vkCmdExecuteGeneratedCommandsNV", vkCmdExecuteGeneratedCommandsNV},
     {"vkCmdFillBuffer", vkCmdFillBuffer},
     {"vkCmdInsertDebugUtilsLabelEXT", vkCmdInsertDebugUtilsLabelEXT},
@@ -6544,6 +6655,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdPipelineBarrier", vkCmdPipelineBarrier},
     {"vkCmdPipelineBarrier2", vkCmdPipelineBarrier2},
     {"vkCmdPipelineBarrier2KHR", vkCmdPipelineBarrier2KHR},
+    {"vkCmdPreprocessGeneratedCommandsEXT", vkCmdPreprocessGeneratedCommandsEXT},
     {"vkCmdPreprocessGeneratedCommandsNV", vkCmdPreprocessGeneratedCommandsNV},
     {"vkCmdPushConstants", vkCmdPushConstants},
     {"vkCmdPushConstants2KHR", vkCmdPushConstants2KHR},
@@ -6586,6 +6698,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetDepthBoundsTestEnable", vkCmdSetDepthBoundsTestEnable},
     {"vkCmdSetDepthBoundsTestEnableEXT", vkCmdSetDepthBoundsTestEnableEXT},
     {"vkCmdSetDepthClampEnableEXT", vkCmdSetDepthClampEnableEXT},
+    {"vkCmdSetDepthClampRangeEXT", vkCmdSetDepthClampRangeEXT},
     {"vkCmdSetDepthClipEnableEXT", vkCmdSetDepthClipEnableEXT},
     {"vkCmdSetDepthClipNegativeOneToOneEXT", vkCmdSetDepthClipNegativeOneToOneEXT},
     {"vkCmdSetDepthCompareOp", vkCmdSetDepthCompareOp},
@@ -6708,7 +6821,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateGraphicsPipelines", vkCreateGraphicsPipelines},
     {"vkCreateImage", vkCreateImage},
     {"vkCreateImageView", vkCreateImageView},
+    {"vkCreateIndirectCommandsLayoutEXT", vkCreateIndirectCommandsLayoutEXT},
     {"vkCreateIndirectCommandsLayoutNV", vkCreateIndirectCommandsLayoutNV},
+    {"vkCreateIndirectExecutionSetEXT", vkCreateIndirectExecutionSetEXT},
     {"vkCreateMicromapEXT", vkCreateMicromapEXT},
     {"vkCreateOpticalFlowSessionNV", vkCreateOpticalFlowSessionNV},
     {"vkCreatePipelineBinariesKHR", vkCreatePipelineBinariesKHR},
@@ -6755,7 +6870,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkDestroyFramebuffer", vkDestroyFramebuffer},
     {"vkDestroyImage", vkDestroyImage},
     {"vkDestroyImageView", vkDestroyImageView},
+    {"vkDestroyIndirectCommandsLayoutEXT", vkDestroyIndirectCommandsLayoutEXT},
     {"vkDestroyIndirectCommandsLayoutNV", vkDestroyIndirectCommandsLayoutNV},
+    {"vkDestroyIndirectExecutionSetEXT", vkDestroyIndirectExecutionSetEXT},
     {"vkDestroyMicromapEXT", vkDestroyMicromapEXT},
     {"vkDestroyOpticalFlowSessionNV", vkDestroyOpticalFlowSessionNV},
     {"vkDestroyPipeline", vkDestroyPipeline},
@@ -6834,6 +6951,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetEventStatus", vkGetEventStatus},
     {"vkGetFenceStatus", vkGetFenceStatus},
     {"vkGetFramebufferTilePropertiesQCOM", vkGetFramebufferTilePropertiesQCOM},
+    {"vkGetGeneratedCommandsMemoryRequirementsEXT", vkGetGeneratedCommandsMemoryRequirementsEXT},
     {"vkGetGeneratedCommandsMemoryRequirementsNV", vkGetGeneratedCommandsMemoryRequirementsNV},
     {"vkGetImageMemoryRequirements", vkGetImageMemoryRequirements},
     {"vkGetImageMemoryRequirements2", vkGetImageMemoryRequirements2},
@@ -6931,6 +7049,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkUpdateDescriptorSetWithTemplate", vkUpdateDescriptorSetWithTemplate},
     {"vkUpdateDescriptorSetWithTemplateKHR", vkUpdateDescriptorSetWithTemplateKHR},
     {"vkUpdateDescriptorSets", vkUpdateDescriptorSets},
+    {"vkUpdateIndirectExecutionSetPipelineEXT", vkUpdateIndirectExecutionSetPipelineEXT},
+    {"vkUpdateIndirectExecutionSetShaderEXT", vkUpdateIndirectExecutionSetShaderEXT},
     {"vkUpdateVideoSessionParametersKHR", vkUpdateVideoSessionParametersKHR},
     {"vkWaitForFences", vkWaitForFences},
     {"vkWaitForPresentKHR", vkWaitForPresentKHR},
