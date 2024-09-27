@@ -155,6 +155,25 @@ static BOOL send_cross_process_notification( HANDLE process, UINT id, const void
 }
 
 
+static void *arm64ec_redirect_ptr( HMODULE module, void *ptr, const IMAGE_ARM64EC_METADATA *metadata )
+{
+    const IMAGE_ARM64EC_REDIRECTION_ENTRY *map = get_rva( module, metadata->RedirectionMetadata );
+    int min = 0, max = metadata->RedirectionMetadataCount - 1;
+    ULONG_PTR rva = (ULONG_PTR)ptr - (ULONG_PTR)module;
+
+    if (!ptr) return NULL;
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (map[pos].Source == rva) return get_rva( module, map[pos].Destination );
+        if (map[pos].Source < rva) min = pos + 1;
+        else max = pos - 1;
+    }
+    return ptr;
+}
+
+static void arm64x_check_call(void);
+
 /*******************************************************************
  *         arm64ec_process_init
  */
@@ -162,12 +181,14 @@ NTSTATUS arm64ec_process_init( HMODULE module )
 {
     NTSTATUS status = STATUS_SUCCESS;
     CHPEV2_PROCESS_INFO *info = (CHPEV2_PROCESS_INFO *)(RtlGetCurrentPeb() + 1);
+    const IMAGE_ARM64EC_METADATA *metadata = arm64ec_get_module_metadata( module );
 
     __os_arm64x_dispatch_call_no_redirect = RtlFindExportedRoutineByName( module, "ExitToX64" );
     __os_arm64x_dispatch_fptr = RtlFindExportedRoutineByName( module, "DispatchJump" );
     __os_arm64x_dispatch_ret = RtlFindExportedRoutineByName( module, "RetToEntryThunk" );
 
-#define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
+#define GET_PTR(name) p ## name = arm64ec_redirect_ptr( module, \
+                                      RtlFindExportedRoutineByName( module, #name ), metadata )
     GET_PTR( BTCpu64FlushInstructionCache );
     GET_PTR( BTCpu64IsProcessorFeaturePresent );
     GET_PTR( BTCpu64NotifyMemoryDirty );
@@ -202,6 +223,9 @@ NTSTATUS arm64ec_process_init( HMODULE module )
     }
     if (!status && pThreadInit) status = pThreadInit();
     leave_syscall_callback();
+    __os_arm64x_check_call = arm64x_check_call;
+    __os_arm64x_check_icall = arm64x_check_call;
+    __os_arm64x_check_icall_cfg = arm64x_check_call;
     return status;
 }
 
@@ -271,11 +295,11 @@ void arm64ec_update_hybrid_metadata( void *module, IMAGE_NT_HEADERS *nt,
             NtProtectVirtualMemory( NtCurrentProcess(), &base, &size, PAGE_READWRITE, &protect_old );
 
 #define SET_FUNC(func,val) update_hybrid_pointer( module, sec, metadata->func, val )
-            SET_FUNC( __os_arm64x_dispatch_call, __os_arm64x_check_call );
+            SET_FUNC( __os_arm64x_dispatch_call, arm64x_check_call );
             SET_FUNC( __os_arm64x_dispatch_call_no_redirect, __os_arm64x_dispatch_call_no_redirect );
             SET_FUNC( __os_arm64x_dispatch_fptr, __os_arm64x_dispatch_fptr );
-            SET_FUNC( __os_arm64x_dispatch_icall, __os_arm64x_check_icall );
-            SET_FUNC( __os_arm64x_dispatch_icall_cfg, __os_arm64x_check_icall_cfg );
+            SET_FUNC( __os_arm64x_dispatch_icall, arm64x_check_call );
+            SET_FUNC( __os_arm64x_dispatch_icall_cfg, arm64x_check_call );
             SET_FUNC( __os_arm64x_dispatch_ret, __os_arm64x_dispatch_ret );
             SET_FUNC( __os_arm64x_helper3, __os_arm64x_helper3 );
             SET_FUNC( __os_arm64x_helper4, __os_arm64x_helper4 );
@@ -1790,6 +1814,16 @@ NTSTATUS __attribute__((naked)) __wine_unix_call_arm64ec( unixlib_handle_t handl
 
 NTSTATUS (WINAPI *__wine_unix_call_dispatcher_arm64ec)( unixlib_handle_t, unsigned int, void * ) = __wine_unix_call_arm64ec;
 
+static void __attribute__((naked)) arm64x_check_call_early(void)
+{
+    asm( "mov x11, x9\n\t"
+         "ret" );
+}
+
+static void __attribute__((naked)) arm64x_check_icall_early(void)
+{
+    asm( "ret" );
+}
 
 /**************************************************************************
  *		arm64x_check_call
@@ -2017,9 +2051,9 @@ void WINAPI LdrInitializeThunk( CONTEXT *arm_context, ULONG_PTR unk2, ULONG_PTR 
 
     if (!__os_arm64x_check_call)
     {
-        __os_arm64x_check_call = arm64x_check_call;
-        __os_arm64x_check_icall = arm64x_check_call;
-        __os_arm64x_check_icall_cfg = arm64x_check_call;
+        __os_arm64x_check_call = arm64x_check_call_early;
+        __os_arm64x_check_icall = arm64x_check_icall_early;
+        __os_arm64x_check_icall_cfg = arm64x_check_icall_early;
         __os_arm64x_get_x64_information = LdrpGetX64Information;
         __os_arm64x_set_x64_information = LdrpSetX64Information;
     }
