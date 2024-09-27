@@ -3497,12 +3497,11 @@ static LONG apply_display_settings( struct source *target, const DEVMODEW *devmo
     }
 
     /* use the default implementation in virtual desktop mode */
-    if (is_virtual_desktop()) ret = E_NOTIMPL;
+    if (is_virtual_desktop()) ret = DISP_CHANGE_SUCCESSFUL;
     else ret = user_driver->pChangeDisplaySettings( displays, primary_name, hwnd, flags, lparam );
 
-    if (ret == E_NOTIMPL)
+    if (ret == DISP_CHANGE_SUCCESSFUL)
     {
-        /* default implementation: write current display settings to the registry. */
         mode = displays;
         LIST_FOR_EACH_ENTRY( source, &sources, struct source, entry )
         {
@@ -3510,7 +3509,6 @@ static LONG apply_display_settings( struct source *target, const DEVMODEW *devmo
                 WARN( "Failed to write source %u current mode.\n", source->id );
             mode = NEXT_DEVMODEW(mode);
         }
-        ret = DISP_CHANGE_SUCCESSFUL;
     }
     unlock_display_devices();
 
