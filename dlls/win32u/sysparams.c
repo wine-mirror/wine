@@ -71,6 +71,7 @@ static const WCHAR noW[] = {'N','o',0};
 static const WCHAR modesW[] = {'M','o','d','e','s',0};
 static const WCHAR mode_countW[] = {'M','o','d','e','C','o','u','n','t',0};
 static const WCHAR dpiW[] = {'D','p','i',0};
+static const WCHAR depthW[] = {'D','e','p','t','h',0};
 
 static const char  guid_devclass_displayA[] = "{4D36E968-E325-11CE-BFC1-08002BE10318}";
 static const WCHAR guid_devclass_displayW[] =
@@ -108,6 +109,7 @@ struct source
     unsigned int id;
     struct gpu *gpu;
     UINT dpi;
+    UINT depth; /* emulated depth */
     UINT state_flags;
     UINT monitor_count;
     UINT mode_count;
@@ -509,20 +511,20 @@ static BOOL source_get_current_settings( const struct source *source, DEVMODEW *
     if (is_virtual_desktop()) ret = FALSE;
     else ret = user_driver->pGetCurrentDisplaySettings( device_nameW, is_primary, mode );
 
-    if (ret) return TRUE;
-
-    /* default implementation: read current display settings from the registry. */
-
-    mutex = get_display_device_init_mutex();
-
-    if (!(hkey = reg_open_ascii_key( config_key, source->path ))) ret = FALSE;
-    else
+    if (!ret)
     {
-        ret = read_source_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
-        NtClose( hkey );
+        /* default implementation: read current display settings from the registry. */
+        mutex = get_display_device_init_mutex();
+        if (!(hkey = reg_open_ascii_key( config_key, source->path ))) ret = FALSE;
+        else
+        {
+            ret = read_source_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
+            NtClose( hkey );
+        }
+        release_display_device_init_mutex( mutex );
     }
 
-    release_display_device_init_mutex( mutex );
+    if (ret && source->depth) mode->dmBitsPerPel = source->depth;
     return ret;
 }
 
@@ -538,6 +540,7 @@ static BOOL source_set_current_settings( const struct source *source, const DEVM
     else
     {
         ret = write_source_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
+        if (ret) set_reg_value( hkey, depthW, REG_DWORD, &mode->dmBitsPerPel, sizeof(mode->dmBitsPerPel) );
         NtClose( hkey );
     }
 
@@ -648,6 +651,10 @@ static BOOL read_source_from_registry( unsigned int index, struct source *source
     /* Dpi */
     if (query_reg_ascii_value( hkey, "Dpi", value, sizeof(buffer) ) && value->Type == REG_DWORD)
         source->dpi = *(DWORD *)value->Data;
+
+    /* Depth */
+    if (query_reg_ascii_value( hkey, "Depth", value, sizeof(buffer) ) && value->Type == REG_DWORD)
+        source->depth = *(const DWORD *)value->Data;
 
     /* ModeCount */
     if (query_reg_ascii_value( hkey, "ModeCount", value, sizeof(buffer) ) && value->Type == REG_DWORD)
@@ -3641,10 +3648,8 @@ static unsigned int active_unique_monitor_count(void)
 
 INT get_display_depth( UNICODE_STRING *name )
 {
-    WCHAR device_nameW[CCHDEVICENAME];
-    char device_name[CCHDEVICENAME];
+    DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
     struct source *source;
-    BOOL is_primary;
     INT depth;
 
     if (!lock_display_devices())
@@ -3659,20 +3664,8 @@ INT get_display_depth( UNICODE_STRING *name )
         return 32;
     }
 
-    is_primary = !!(source->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
-    snprintf( device_name, sizeof(device_name), "\\\\.\\DISPLAY%d", source->id + 1 );
-    asciiz_to_unicode( device_nameW, device_name );
-
-    /* use the default implementation in virtual desktop mode */
-    if (is_virtual_desktop()) depth = -1;
-    else depth = user_driver->pGetDisplayDepth( device_nameW, is_primary );
-
-    if (depth < 0)
-    {
-        DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
-        if (!source_get_current_settings( source, &current_mode )) depth = 32;
-        else depth = current_mode.dmBitsPerPel;
-    }
+    if (!source_get_current_settings( source, &current_mode )) depth = 32;
+    else depth = current_mode.dmBitsPerPel;
 
     unlock_display_devices();
     return depth;
