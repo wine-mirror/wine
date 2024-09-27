@@ -1982,6 +1982,7 @@ static struct list device_notify_list = LIST_INIT(device_notify_list);
 struct device_notify
 {
     struct list entry;
+    WCHAR *path;
     HANDLE handle;
     device_notify_callback callback;
     DEV_BROADCAST_HDR header[]; /* variable size */
@@ -1998,10 +1999,18 @@ static struct device_notify *device_notify_copy( struct device_notify *notify, D
     event->callback = notify->callback;
     memcpy( event->header, header, header->dbch_size );
 
+    if (header->dbch_devicetype == DBT_DEVTYP_HANDLE)
+    {
+        DEV_BROADCAST_HANDLE *notify_handle = (DEV_BROADCAST_HANDLE *)notify->header;
+        DEV_BROADCAST_HANDLE *event_handle = (DEV_BROADCAST_HANDLE *)event->header;
+        event_handle->dbch_handle = notify_handle->dbch_handle;
+        event_handle->dbch_hdevnotify = notify;
+    }
+
     return event;
 }
 
-static BOOL notification_filter_matches( DEV_BROADCAST_HDR *filter, DEV_BROADCAST_HDR *event )
+static BOOL notification_filter_matches( DEV_BROADCAST_HDR *filter, const WCHAR *path, DEV_BROADCAST_HDR *event, const WCHAR *event_path )
 {
     if (!filter->dbch_devicetype) return TRUE;
     if (filter->dbch_devicetype != event->dbch_devicetype) return FALSE;
@@ -2013,6 +2022,8 @@ static BOOL notification_filter_matches( DEV_BROADCAST_HDR *filter, DEV_BROADCAS
         if (filter_iface->dbcc_size == offsetof(DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_classguid)) return TRUE;
         return IsEqualGUID( &filter_iface->dbcc_classguid, &event_iface->dbcc_classguid );
     }
+
+    if (filter->dbch_devicetype == DBT_DEVTYP_HANDLE) return !wcscmp(path, event_path);
 
     FIXME( "Filter dbch_devicetype %lu not implemented\n", filter->dbch_devicetype );
     return TRUE;
@@ -2088,7 +2099,7 @@ static DWORD WINAPI device_notify_proc( void *arg )
         EnterCriticalSection( &service_cs );
         LIST_FOR_EACH_ENTRY( notify, &device_notify_list, struct device_notify, entry )
         {
-            if (!notification_filter_matches( notify->header, (DEV_BROADCAST_HDR *)buf )) continue;
+            if (!notification_filter_matches( notify->header, notify->path, (DEV_BROADCAST_HDR *)buf, path )) continue;
             if (!(event = device_notify_copy( notify, (DEV_BROADCAST_HDR *)buf ))) break;
             list_add_tail( &events, &event->entry );
         }
@@ -2136,6 +2147,25 @@ HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( HANDLE handle, DEV_BROADCAST_H
     notify->callback = callback;
     memcpy( notify->header, filter, filter->dbch_size );
 
+    if (filter->dbch_devicetype == DBT_DEVTYP_HANDLE)
+    {
+        WCHAR buffer[sizeof(OBJECT_NAME_INFORMATION) + MAX_PATH + 1];
+        OBJECT_NAME_INFORMATION *info = (OBJECT_NAME_INFORMATION*)&buffer;
+        DEV_BROADCAST_HANDLE *handle = (DEV_BROADCAST_HANDLE *)filter;
+        NTSTATUS status;
+        ULONG dummy;
+
+        status = NtQueryObject( handle->dbch_handle, ObjectNameInformation, &buffer, sizeof(buffer) - sizeof(WCHAR), &dummy );
+        if (status || !(notify->path = calloc( 1, info->Name.Length + sizeof(WCHAR) )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            free( notify );
+            return NULL;
+        }
+
+        memcpy( notify->path, info->Name.Buffer, info->Name.Length );
+    }
+
     EnterCriticalSection( &service_cs );
     list_add_tail( &device_notify_list, &notify->entry );
 
@@ -2162,6 +2192,7 @@ BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle )
     EnterCriticalSection( &service_cs );
     list_remove( &notify->entry );
     LeaveCriticalSection(&service_cs);
+    free( notify->path );
     free( notify );
     return TRUE;
 }
