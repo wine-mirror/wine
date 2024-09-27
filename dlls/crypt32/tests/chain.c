@@ -4566,12 +4566,9 @@ static void testGetCertChain(void)
     for(i=0; i < simple_chain->cElement; i++) {
         chain_elem = simple_chain->rgpElement[i];
         ok(chain_elem->cbSize == sizeof(*chain_elem), "chain_elem->cbSize = %lu\n", chain_elem->cbSize);
-        if (!i)
+        if (!i || i == 1)
             ok(chain_elem->TrustStatus.dwErrorStatus == CERT_TRUST_HAS_EXACT_MATCH_ISSUER,
                "chain_elem->TrustStatus.dwErrorStatus = %lx\n", chain_elem->TrustStatus.dwErrorStatus);
-        else if (i == 1)
-            todo_wine ok(!chain_elem->TrustStatus.dwErrorStatus, "chain_elem->TrustStatus.dwErrorStatus = %lx\n",
-                         chain_elem->TrustStatus.dwErrorStatus);
         else
             ok(!chain_elem->TrustStatus.dwErrorStatus, "chain_elem->TrustStatus.dwErrorStatus = %lx\n",
                chain_elem->TrustStatus.dwErrorStatus);
