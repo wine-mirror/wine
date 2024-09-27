@@ -3260,8 +3260,8 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         }
         else if (monitor_aware)
         {
-            ok( fabs( x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", x );
-            ok( fabs( y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", y );
+            todo_wine ok( fabs( x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", x );
+            todo_wine ok( fabs( y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", y );
         }
         else if (!is_virtual)
         {
@@ -3270,8 +3270,8 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         }
         else
         {
-            ok( fabs( x - system_dpi * scale_x * 100 / scale ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %d\n", x );
-            ok( fabs( y - system_dpi * scale_y * 100 / scale ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %d\n", y );
+            todo_wine ok( fabs( x - system_dpi * scale_x * 100 / scale ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %d\n", x );
+            todo_wine ok( fabs( y - system_dpi * scale_y * 100 / scale ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %d\n", y );
         }
 
         ret = pGetDpiForMonitorInternal( info->handle, MDT_RAW_DPI, &x, &y );
@@ -3288,8 +3288,8 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         }
         else if (monitor_aware)
         {
-            ok( fabs( x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", x );
-            ok( fabs( y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", y );
+            todo_wine ok( fabs( x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", x );
+            todo_wine ok( fabs( y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", y );
         }
         else if (!is_virtual)
         {
@@ -3298,8 +3298,8 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         }
         else
         {
-            ok( fabs( x - system_dpi * scale_x * 100 / scale ) < system_dpi * 0.05, "got MDT_RAW_DPI x %d\n", x );
-            ok( fabs( y - system_dpi * scale_y * 100 / scale ) < system_dpi * 0.05, "got MDT_RAW_DPI y %d\n", y );
+            todo_wine ok( fabs( x - system_dpi * scale_x * 100 / scale ) < system_dpi * 0.05, "got MDT_RAW_DPI x %d\n", x );
+            todo_wine ok( fabs( y - system_dpi * scale_y * 100 / scale ) < system_dpi * 0.05, "got MDT_RAW_DPI y %d\n", y );
         }
 
 
@@ -3486,7 +3486,7 @@ static void get_monitor_infos( struct monitor_info *infos )
     ok( ret, "EnumDisplayMonitors failed\n" );
 }
 
-static void set_display_settings( HMONITOR monitor, UINT width, UINT height )
+static BOOL set_display_settings( HMONITOR monitor, UINT width, UINT height )
 {
     MONITORINFOEXW info = {.cbSize = sizeof(MONITORINFOEXW)};
     DEVMODEW mode = {.dmSize = sizeof(DEVMODEW)};
@@ -3500,13 +3500,21 @@ static void set_display_settings( HMONITOR monitor, UINT width, UINT height )
     mode.dmPelsWidth = width;
     mode.dmPelsHeight = height;
 
-    ChangeDisplaySettingsExW( NULL, &mode, 0, CDS_FULLSCREEN, NULL );
+    ret = ChangeDisplaySettingsExW( info.szDevice, &mode, 0, CDS_FULLSCREEN, NULL );
+    return !ret;
 }
 
 static void test_monitor_dpi(void)
 {
     struct monitor_info infos[64] = {{0}}, phys_infos[ARRAY_SIZE(infos)] = {{0}};
-    UINT i, count, system_dpi, dpi_x, dpi_y;
+    struct { UINT width; UINT height; } tests[] =
+    {
+        {0, 0},
+        {940, 560},
+        {1600, 900},
+        {1024, 768},
+    };
+    UINT i, j, count, system_dpi, dpi_x, dpi_y;
     DPI_AWARENESS_CONTEXT old_ctx;
     float scale_x, scale_y;
     BOOL ret, is_virtual;
@@ -3535,121 +3543,93 @@ static void test_monitor_dpi(void)
 
     for (i = 0; i < count; i++)
     {
-        scale_x = scale_y = 1.0;
+        for (j = 0; j < ARRAY_SIZE(tests); j++)
+        {
+            if (tests[j].width && tests[j].height && !set_display_settings( infos[i].handle, tests[j].width, tests[j].height )) continue;
 
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
-        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
-        ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
-        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        if (!is_virtual)
-        {
-            ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
-            ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
-        }
-        else
-        {
-            ok( abs( (int)dpi_x - (int)system_dpi ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
-            ok( abs( (int)dpi_y - (int)system_dpi ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
-        }
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
-        ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        if (!ret)
-        {
-            ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
-        }
-        else if (!is_virtual)
-        {
-            ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
-        }
-        else
-        {
-            ok( abs( (int)dpi_x - (int)system_dpi ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( abs( (int)dpi_y - (int)system_dpi ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
-        }
+            get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
+            scale_x = (infos[i].rect.right - infos[i].rect.left) / (float)(phys_infos[i].rect.right - phys_infos[i].rect.left);
+            scale_y = (infos[i].rect.bottom - infos[i].rect.top) / (float)(phys_infos[i].rect.bottom - phys_infos[i].rect.top);
 
-        set_display_settings( infos[i].handle, 1600, 900 );
-        get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
-        scale_x = (infos[i].rect.right - infos[i].rect.left) / (float)(phys_infos[i].rect.right - phys_infos[i].rect.left);
-        scale_y = (infos[i].rect.bottom - infos[i].rect.top) / (float)(phys_infos[i].rect.bottom - phys_infos[i].rect.top);
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+            ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
+            ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+            ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            if (!is_virtual)
+            {
+                ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+                ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+            }
+            else
+            {
+                todo_wine_if(scale_x != 1.0)
+                ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+                todo_wine_if(scale_y != 1.0)
+                ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+            }
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+            ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            if (!ret)
+            {
+                ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
+                ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+            else if (!is_virtual)
+            {
+                ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
+                ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+            else
+            {
+                todo_wine_if(scale_x != 1.0)
+                ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
+                todo_wine_if(scale_y != 1.0)
+                ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
 
-        pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+            pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
 
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
-        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
-        ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
-        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        if (!is_virtual)
-        {
-            ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
-            ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
-        }
-        else
-        {
-            ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
-            ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
-        }
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
-        ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        if (!ret)
-        {
-            ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
-        }
-        else if (!is_virtual)
-        {
-            ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
-        }
-        else
-        {
-            ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
-        }
-        set_display_settings( infos[i].handle, 1024, 768 );
-        get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
-        scale_x = (infos[i].rect.right - infos[i].rect.left) / (float)(phys_infos[i].rect.right - phys_infos[i].rect.left);
-        scale_y = (infos[i].rect.bottom - infos[i].rect.top) / (float)(phys_infos[i].rect.bottom - phys_infos[i].rect.top);
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+            ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
+            ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+            ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            if (!is_virtual)
+            {
+                ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+                ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+            }
+            else
+            {
+                todo_wine_if(scale_x != 1.0)
+                ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+                todo_wine_if(scale_y != 1.0)
+                ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+            }
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+            ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            if (!ret)
+            {
+                ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
+                ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+            else if (!is_virtual)
+            {
+                ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
+                ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+            else
+            {
+                todo_wine_if(scale_x != 1.0)
+                ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
+                todo_wine_if(scale_y != 1.0)
+                ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
 
-        pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
-
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
-        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
-        ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
-        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        if (!is_virtual)
-        {
-            ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
-            ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
-        }
-        else
-        {
-            ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
-            ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
-        }
-        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
-        ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
-        if (!ret)
-        {
-            ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
-        }
-        else if (!is_virtual)
-        {
-            ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
-        }
-        else
-        {
-            ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
-            ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
+            pSetThreadDpiAwarenessContext( old_ctx );
         }
     }
 
@@ -3660,7 +3640,7 @@ static void test_monitor_dpi(void)
     {
         int min = 0, max = 0, cur = 0;
 
-        set_display_settings( infos[i].handle, 1024, 768 );
+        set_display_settings( infos[i].handle, 800, 600 );
         get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
 
         get_monitor_dpi_scale( infos[i].handle, &min, &cur, &max );
