@@ -48,7 +48,12 @@ static LONG (WINAPI *pQueryDisplayConfig)(UINT32,UINT32*,DISPLAYCONFIG_PATH_INFO
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+static DPI_AWARENESS_CONTEXT (WINAPI *pGetThreadDpiAwarenessContext)(void);
+static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
 static UINT (WINAPI *pGetDpiForSystem)(void);
+static UINT (WINAPI *pGetDpiForWindow)(HWND);
+static BOOL (WINAPI *pLogicalToPhysicalPointForPerMonitorDPI)(HWND,POINT*);
+static BOOL (WINAPI *pPhysicalToLogicalPointForPerMonitorDPI)(HWND,POINT*);
 
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER*);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME*);
@@ -69,7 +74,12 @@ static void init_function_pointers(void)
     GET_PROC(user32, DisplayConfigGetDeviceInfo)
     GET_PROC(user32, DisplayConfigSetDeviceInfo)
     GET_PROC(user32, SetThreadDpiAwarenessContext)
+    GET_PROC(user32, GetThreadDpiAwarenessContext)
+    GET_PROC(user32, GetWindowDpiAwarenessContext)
     GET_PROC(user32, GetDpiForSystem)
+    GET_PROC(user32, GetDpiForWindow)
+    GET_PROC(user32, LogicalToPhysicalPointForPerMonitorDPI)
+    GET_PROC(user32, PhysicalToLogicalPointForPerMonitorDPI)
 
     GET_PROC(gdi32, D3DKMTCloseAdapter)
     GET_PROC(gdi32, D3DKMTOpenAdapterFromGdiDisplayName)
@@ -3052,7 +3062,7 @@ static void check_physical_dpi_( int line, HWND hwnd, UINT log_x, UINT log_y, UI
     UINT ret;
 
     pt = log;
-    ret = LogicalToPhysicalPointForPerMonitorDPI( hwnd, &pt );
+    ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &pt );
     todo_wine_if(todo_ret)
     ok_(__FILE__, line)( ret == expect_ret, "LogicalToPhysicalPointForPerMonitorDPI returned %u\n", ret );
     ok_(__FILE__, line)( pt.x == phy.x && pt.y == phy.y, "got physical %s\n", wine_dbgstr_point(&pt) );
@@ -3065,7 +3075,7 @@ static void check_logical_dpi_( int line, HWND hwnd, UINT phy_x, UINT phy_y, UIN
     UINT ret;
 
     pt = phy;
-    ret = PhysicalToLogicalPointForPerMonitorDPI( hwnd, &pt );
+    ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &pt );
     todo_wine_if(todo_ret)
     ok_(__FILE__, line)( ret == expect_ret, "PhysicalToLogicalPointForPerMonitorDPI returned %u\n", ret );
     ok_(__FILE__, line)( pt.x == log.x && pt.y == log.y, "got logical %s\n", wine_dbgstr_point(&pt) );
@@ -3123,9 +3133,9 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
     unaware_hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, monitor.left + 100,
                                   monitor.top + 100, 100, 100, NULL, NULL, NULL, NULL );
     ok( unaware_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
-    ctx = GetWindowDpiAwarenessContext( unaware_hwnd );
+    ctx = pGetWindowDpiAwarenessContext( unaware_hwnd );
     ok( ctx == (DPI_AWARENESS_CONTEXT)0x6010, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
-    ret = GetDpiForWindow( unaware_hwnd );
+    ret = pGetDpiForWindow( unaware_hwnd );
     ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
 
     SetRect( &expect_rect, 0, 0, 100, 100 );
@@ -3158,8 +3168,8 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
     {
         BOOL monitor_aware = tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE ||
                              tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2;
-        if (tests[i]) old_ctx = SetThreadDpiAwarenessContext( tests[i] );
-        cur_ctx = GetThreadDpiAwarenessContext();
+        if (tests[i]) old_ctx = pSetThreadDpiAwarenessContext( tests[i] );
+        cur_ctx = pGetThreadDpiAwarenessContext();
 
         winetest_push_context( "ctx %p", tests[i] );
 
@@ -3293,9 +3303,9 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         }
 
 
-        ctx = GetWindowDpiAwarenessContext( unaware_hwnd );
+        ctx = pGetWindowDpiAwarenessContext( unaware_hwnd );
         ok( ctx == (DPI_AWARENESS_CONTEXT)0x6010, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
-        ret = GetDpiForWindow( unaware_hwnd );
+        ret = pGetDpiForWindow( unaware_hwnd );
         ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
 
         if (monitor_aware) SetRect( &expect_rect, 0, 0, scale, scale );
@@ -3315,10 +3325,10 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
                                     mi.rcWork.top + 200, 100, 100, NULL, NULL, NULL, NULL );
         ok( aware_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
 
-        ctx = GetWindowDpiAwarenessContext( aware_hwnd );
+        ctx = pGetWindowDpiAwarenessContext( aware_hwnd );
         todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
         ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
-        ret = GetDpiForWindow( aware_hwnd );
+        ret = pGetDpiForWindow( aware_hwnd );
         if (monitor_aware) ok( ret == MulDiv( 96, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
         else ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
 
@@ -3337,10 +3347,10 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
                                       primary.top + 300, 100, 100, NULL, NULL, NULL, NULL );
         ok( primary_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
 
-        ctx = GetWindowDpiAwarenessContext( primary_hwnd );
+        ctx = pGetWindowDpiAwarenessContext( primary_hwnd );
         todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
         ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
-        ret = GetDpiForWindow( primary_hwnd );
+        ret = pGetDpiForWindow( primary_hwnd );
         if (!monitor_aware) ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
         else if (EqualRect( &primary, &monitor )) ok( ret == MulDiv( 96, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
         else ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
@@ -3443,7 +3453,7 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
         DestroyWindow( primary_hwnd );
         DestroyWindow( aware_hwnd );
 
-        if (tests[i]) SetThreadDpiAwarenessContext( old_ctx );
+        if (tests[i]) pSetThreadDpiAwarenessContext( old_ctx );
 
         winetest_pop_context();
     }
@@ -3459,9 +3469,9 @@ static BOOL CALLBACK enum_monitor_infos( HMONITOR handle, HDC hdc, RECT *rect, L
     info = *iter;
     info->handle = handle;
     info->rect = *rect;
-    GetDpiForMonitorInternal( handle, MDT_EFFECTIVE_DPI, &info->eff_x, &info->eff_y );
-    GetDpiForMonitorInternal( handle, MDT_ANGULAR_DPI, &info->ang_x, &info->ang_y );
-    GetDpiForMonitorInternal( handle, MDT_RAW_DPI, &info->raw_x, &info->raw_y );
+    pGetDpiForMonitorInternal( handle, MDT_EFFECTIVE_DPI, &info->eff_x, &info->eff_y );
+    pGetDpiForMonitorInternal( handle, MDT_ANGULAR_DPI, &info->ang_x, &info->ang_y );
+    pGetDpiForMonitorInternal( handle, MDT_RAW_DPI, &info->raw_x, &info->raw_y );
 
     *iter = info + 1;
 
@@ -3527,11 +3537,11 @@ static void test_monitor_dpi(void)
     {
         scale_x = scale_y = 1.0;
 
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
         ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
         ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
         ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         if (!is_virtual)
         {
@@ -3543,7 +3553,7 @@ static void test_monitor_dpi(void)
             ok( abs( (int)dpi_x - (int)system_dpi ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
             ok( abs( (int)dpi_y - (int)system_dpi ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
         }
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
         ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         if (!ret)
         {
@@ -3568,11 +3578,11 @@ static void test_monitor_dpi(void)
 
         pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
 
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
         ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
         ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
         ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         if (!is_virtual)
         {
@@ -3584,7 +3594,7 @@ static void test_monitor_dpi(void)
             ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
             ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
         }
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
         ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         if (!ret)
         {
@@ -3608,11 +3618,11 @@ static void test_monitor_dpi(void)
 
         pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
 
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
         ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
         ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
         ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         if (!is_virtual)
         {
@@ -3624,7 +3634,7 @@ static void test_monitor_dpi(void)
             ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
             ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
         }
-        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+        ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
         ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
         if (!ret)
         {
