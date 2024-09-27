@@ -532,12 +532,30 @@ static DWORD CALLBACK devnotify_window_callbackA(HANDLE handle, DWORD flags, DEV
             return 0;
         }
 
-        default:
-            FIXME( "unimplemented W to A mapping for %#lx\n", header->dbch_devicetype );
-            /* fall through */
         case DBT_DEVTYP_HANDLE:
+        {
+            const DEV_BROADCAST_HANDLE *handleW = (const DEV_BROADCAST_HANDLE *)header;
+            UINT sizeW = handleW->dbch_size - offsetof(DEV_BROADCAST_HANDLE, dbch_data[0]), len, offset;
+            DEV_BROADCAST_HANDLE *handleA;
+
+            if (!(handleA = malloc( offsetof(DEV_BROADCAST_HANDLE, dbch_data[sizeW * 3 + 1]) ))) return 0;
+            memcpy( handleA, handleW, offsetof(DEV_BROADCAST_HANDLE, dbch_data[0]) );
+            offset = min( sizeW, handleW->dbch_nameoffset );
+
+            memcpy( handleA->dbch_data, handleW->dbch_data, offset );
+            len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(handleW->dbch_data + offset), (sizeW - offset) / sizeof(WCHAR),
+                                       (char *)handleA->dbch_data + offset, sizeW * 3 + 1 - offset, NULL, NULL );
+            handleA->dbch_size = offsetof(DEV_BROADCAST_HANDLE, dbch_data[offset + len + 1]);
+
+            SendMessageTimeoutA( handle, WM_DEVICECHANGE, flags, (LPARAM)handleA, SMTO_ABORTIFHUNG, 2000, NULL );
+            free( handleA );
+            return 0;
+        }
+
         case DBT_DEVTYP_OEM:
             break;
+        default:
+            FIXME( "unimplemented W to A mapping for %#lx\n", header->dbch_devicetype );
         }
     }
 
