@@ -100,6 +100,14 @@ typedef struct D2D_VECTOR_4F
     float w;
 } D2D_VECTOR_4F;
 
+typedef struct D2D_RECT_F
+{
+    float left;
+    float top;
+    float right;
+    float bottom;
+} D2D_RECT_F;
+
 typedef RECT D2D_RECT_L, D2D1_RECT_L;
 
 typedef struct D2D_SIZE_U

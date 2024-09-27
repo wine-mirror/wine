@@ -31,6 +31,41 @@ cpp_quote("#ifndef _WINGDI_")
 typedef struct FONTSIGNATURE FONTSIGNATURE;
 cpp_quote("#endif /* _WINGDI_ */")
 
+/* already defined in d2d1.idl */
+typedef struct D2D1_GRADIENT_STOP D2D1_GRADIENT_STOP;
+
+typedef enum DWRITE_COLOR_COMPOSITE_MODE
+{
+    DWRITE_COLOR_COMPOSITE_CLEAR,
+    DWRITE_COLOR_COMPOSITE_SRC,
+    DWRITE_COLOR_COMPOSITE_DEST,
+    DWRITE_COLOR_COMPOSITE_SRC_OVER,
+    DWRITE_COLOR_COMPOSITE_DEST_OVER,
+    DWRITE_COLOR_COMPOSITE_SRC_IN,
+    DWRITE_COLOR_COMPOSITE_DEST_IN,
+    DWRITE_COLOR_COMPOSITE_SRC_OUT,
+    DWRITE_COLOR_COMPOSITE_DEST_OUT,
+    DWRITE_COLOR_COMPOSITE_SRC_ATOP,
+    DWRITE_COLOR_COMPOSITE_DEST_ATOP,
+    DWRITE_COLOR_COMPOSITE_XOR,
+    DWRITE_COLOR_COMPOSITE_PLUS,
+    DWRITE_COLOR_COMPOSITE_SCREEN,
+    DWRITE_COLOR_COMPOSITE_OVERLAY,
+    DWRITE_COLOR_COMPOSITE_DARKEN,
+    DWRITE_COLOR_COMPOSITE_LIGHTEN,
+    DWRITE_COLOR_COMPOSITE_COLOR_DODGE,
+    DWRITE_COLOR_COMPOSITE_COLOR_BURN,
+    DWRITE_COLOR_COMPOSITE_HARD_LIGHT,
+    DWRITE_COLOR_COMPOSITE_SOFT_LIGHT,
+    DWRITE_COLOR_COMPOSITE_DIFFERENCE,
+    DWRITE_COLOR_COMPOSITE_EXCLUSION,
+    DWRITE_COLOR_COMPOSITE_MULTIPLY,
+    DWRITE_COLOR_COMPOSITE_HSL_HUE,
+    DWRITE_COLOR_COMPOSITE_HSL_SATURATION,
+    DWRITE_COLOR_COMPOSITE_HSL_COLOR,
+    DWRITE_COLOR_COMPOSITE_HSL_LUMINOSITY,
+} DWRITE_COLOR_COMPOSITE_MODE;
+
 typedef enum DWRITE_LOCALITY
 {
     DWRITE_LOCALITY_REMOTE,
@@ -135,6 +170,108 @@ typedef enum DWRITE_FONT_FAMILY_MODEL
     DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC,
     DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE,
 } DWRITE_FONT_FAMILY_MODEL;
+
+typedef enum DWRITE_PAINT_TYPE
+{
+    DWRITE_PAINT_TYPE_NONE,
+    DWRITE_PAINT_TYPE_LAYERS,
+    DWRITE_PAINT_TYPE_SOLID_GLYPH,
+    DWRITE_PAINT_TYPE_SOLID,
+    DWRITE_PAINT_TYPE_LINEAR_GRADIENT,
+    DWRITE_PAINT_TYPE_RADIAL_GRADIENT,
+    DWRITE_PAINT_TYPE_SWEEP_GRADIENT,
+    DWRITE_PAINT_TYPE_GLYPH,
+    DWRITE_PAINT_TYPE_COLOR_GLYPH,
+    DWRITE_PAINT_TYPE_TRANSFORM,
+    DWRITE_PAINT_TYPE_COMPOSITE,
+} DWRITE_PAINT_TYPE;
+
+typedef enum DWRITE_PAINT_FEATURE_LEVEL
+{
+    DWRITE_PAINT_FEATURE_LEVEL_NONE = 0,
+    DWRITE_PAINT_FEATURE_LEVEL_COLR_V0 = 1,
+    DWRITE_PAINT_FEATURE_LEVEL_COLR_V1 = 2,
+} DWRITE_PAINT_FEATURE_LEVEL;
+
+typedef enum DWRITE_PAINT_ATTRIBUTES
+{
+    DWRITE_PAINT_ATTRIBUTES_NONE = 0,
+    DWRITE_PAINT_ATTRIBUTES_USES_PALETTE = 0x01,
+    DWRITE_PAINT_ATTRIBUTES_USES_TEXT_COLOR = 0x02,
+} DWRITE_PAINT_ATTRIBUTES;
+
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(DWRITE_PAINT_ATTRIBUTES)")
+
+typedef struct DWRITE_PAINT_COLOR
+{
+    DWRITE_COLOR_F value;
+    UINT16 paletteEntryIndex;
+    float alphaMultiplier;
+    DWRITE_PAINT_ATTRIBUTES colorAttributes;
+} DWRITE_PAINT_COLOR;
+
+typedef struct DWRITE_PAINT_ELEMENT
+{
+    DWRITE_PAINT_TYPE paintType;
+    union PAINT_UNION
+    {
+        struct PAINT_LAYERS
+        {
+            UINT32 childCount;
+        } layers;
+        struct PAINT_SOLID_GLYPH
+        {
+            UINT32 glyphIndex;
+            DWRITE_PAINT_COLOR color;
+        } solidGlyph;
+        DWRITE_PAINT_COLOR solid;
+        struct PAINT_LINEAR_GRADIENT
+        {
+            UINT32 extendMode;
+            UINT32 gradientStopCount;
+            float x0;
+            float y0;
+            float x1;
+            float y1;
+            float x2;
+            float y2;
+        } linearGradient;
+        struct PAINT_RADIAL_GRADIENT
+        {
+            UINT32 extendMode;
+            UINT32 gradientStopCount;
+            float x0;
+            float y0;
+            float radius0;
+            float x1;
+            float y1;
+            float radius1;
+        } radialGradient;
+        struct PAINT_SWEEP_GRADIENT
+        {
+            UINT32 extendMode;
+            UINT32 gradientStopCount;
+            float centerX;
+            float centerY;
+            float startAngle;
+            float endAngle;
+        } sweepGradient;
+        struct PAINT_GLYPH
+        {
+            UINT32 glyphIndex;
+        } glyph;
+        struct PAINT_COLOR_GLYPH
+        {
+            UINT32 glyphIndex;
+            D2D_RECT_F clipBox;
+        } colorGlyph;
+        DWRITE_MATRIX transform;
+        struct PAINT_COMPOSITE
+        {
+            DWRITE_COLOR_COMPOSITE_MODE mode;
+        } composite;
+    } paint;
+} DWRITE_PAINT_ELEMENT;
 
 [
     local,
@@ -831,6 +968,67 @@ interface IDWriteFontFace6 : IDWriteFontFace5
     HRESULT GetFaceNames(
         DWRITE_FONT_FAMILY_MODEL font_family_model,
         IDWriteLocalizedStrings **names);
+}
+
+[
+    local,
+    object,
+    uuid(8128e912-3b97-42a5-ab6c-24aad3a86e54)
+]
+interface IDWritePaintReader : IUnknown
+{
+    HRESULT SetCurrentGlyph(
+        UINT32 glyph_index,
+        DWRITE_PAINT_ELEMENT *paint_element,
+        UINT32 struct_size,
+        D2D_RECT_F *clip_box,
+        [defaultvalue(NULL)] DWRITE_PAINT_ATTRIBUTES *glyph_attributes);
+
+    HRESULT SetTextColor(
+        DWRITE_COLOR_F const *text_color);
+
+    HRESULT SetColorPaletteIndex(
+        UINT32 color_palette_index);
+
+    HRESULT SetCustomColorPalette(
+        DWRITE_COLOR_F const *palette_entries,
+        UINT32 palette_entry_count);
+
+    HRESULT MoveToFirstChild(
+        DWRITE_PAINT_ELEMENT *paint_element,
+        UINT32 struct_size);
+
+    HRESULT MoveToNextSibling(
+        DWRITE_PAINT_ELEMENT *paint_element,
+        UINT32 struct_size);
+
+    HRESULT MoveToParent(void);
+
+    HRESULT GetGradientStops(
+        UINT32 first_gradient_stop_index,
+        UINT32 gradient_stop_count,
+        D2D1_GRADIENT_STOP *gradient_stops);
+
+    HRESULT GetGradientStopColors(
+        UINT32 first_gradient_stop_index,
+        UINT32 gradient_stop_count,
+        DWRITE_PAINT_COLOR *gradient_stop_colors);
+}
+
+[
+    local,
+    object,
+    uuid(3945b85b-bc95-40f7-b72c-8b73bfc7e13b)
+]
+interface IDWriteFontFace7 : IDWriteFontFace6
+{
+    DWRITE_PAINT_FEATURE_LEVEL GetPaintFeatureLevel(
+        DWRITE_GLYPH_IMAGE_FORMATS glyph_image_format);
+
+    HRESULT CreatePaintReader(
+        DWRITE_GLYPH_IMAGE_FORMATS glyph_image_format,
+        DWRITE_PAINT_FEATURE_LEVEL paint_feature_level,
+        IDWritePaintReader **paint_reader);
 }
 
 typedef struct DWRITE_COLOR_GLYPH_RUN1 DWRITE_COLOR_GLYPH_RUN1;
