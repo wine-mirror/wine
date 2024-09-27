@@ -208,106 +208,208 @@ static int ellipse_first_quadrant( int width, int height, POINT *data )
     return pos;
 }
 
+/* Draw the "top half" of the ellipse, viz. the half that doesn't have any
+ * points in the lower-right quadrant.
+ *
+ * We draw as many as eight arcs; in each we always increment one of X or Y
+ * (depending on whether the absolute value of the slope is less than
+ * or greater than 1) and possibly increment the other.
+ *
+ * Loosely based on an algorithm by David Eberly.
+ */
+static unsigned int generate_ellipse_top_half( const DC *dc, double width, double height, POINT *points )
+{
+    /* A general ellipse centered at (0, 0) can be defined by
+     *   ax² + 2bxy + cy² - d = 0.
+     * The transformation of an ellipse can be obtained by inverting the
+     * transformation matrix and substituting the transformed x and y, which
+     * yields an ellipse in the same form.
+     * Precompute the transformed coefficients. */
+    const XFORM *xform = &dc->xformVport2World;
+    double wsq = (width / 2) * (width / 2);
+    double hsq = (height / 2) * (height / 2);
+    const double a = (hsq * xform->eM11 * xform->eM11) + (wsq * xform->eM12 * xform->eM12);
+    const double b = (hsq * xform->eM11 * xform->eM21) + (wsq * xform->eM12 * xform->eM22);
+    const double c = (hsq * xform->eM21 * xform->eM21) + (wsq * xform->eM22 * xform->eM22);
+    const double d = (hsq * wsq);
+    unsigned int pos = 0;
+    int start_x;
+    POINT pt;
+
+    /* We start from the point that satisfies y = 0, i.e. ax² = d.
+     * Note that a must be nonzero if the transformation matrix was singular.
+     *
+     * d/a must be positive, since both a and d are comprised of squares.
+     *
+     * This point is not on the ellipse axis, but that doesn't matter for our
+     * algorithm. We will take this set of points and rotate it 180 degrees
+     * to get the opposite side. */
+    pt.x = -sqrt(d / a);
+    pt.y = 0;
+    start_x = pt.x;
+
+    while (pt.y > 0 || (pt.y == 0 && pt.x != -start_x))
+    {
+        double dx =  (b * pt.x + c * pt.y);
+        double dy = -(a * pt.x + b * pt.y);
+        int x_inc = (dx > 0 ? 1 : -1);
+        int y_inc = (dy > 0 ? 1 : -1);
+        double sigma;
+
+        points[pos++] = pt;
+
+        if (fabs(dy) > fabs(dx))
+        {
+            /* Increment y, maybe increment x. */
+            pt.y += y_inc;
+
+            sigma = (a * pt.x * pt.x) + (2 * b * pt.x * pt.y) + (c * pt.y * pt.y) - d;
+            /* σ < 0 if the next point would be inside the ellipse.
+             * If we are moving towards a vertical or horizontal tangent point,
+             * and (x, y+1) is outside the ellipse, then it's certainly
+             * closer to the ellipse than (x-1, y+1). [Same for the 180°
+             * rotation.] Hence we want to increment x if σ < 0.
+             * If we are moving away from a tangent point, the opposite applies,
+             * and we want to increment x if σ > 0.
+             * We are moving towards a tangent point if (dx > 0 XOR dy > 0),
+             * so want to increment x if (dx > 0 XOR dy > 0 XOR σ > 0). */
+            if (sigma != 0.0 && (dx > 0) ^ (dy > 0) ^ (sigma > 0))
+                pt.x += x_inc;
+        }
+        else
+        {
+            /* Increment x, maybe increment y. */
+            pt.x += x_inc;
+
+            sigma = (a * pt.x * pt.x) + (2 * b * pt.x * pt.y) + (c * pt.y * pt.y) - d;
+            /* As above, but we are moving towards a tangent point if the
+             * opposite condition is true, i.e. (dx < 0 XOR dy > 0). */
+            if (sigma != 0.0 && (dx < 0) ^ (dy > 0) ^ (sigma > 0))
+                pt.y += y_inc;
+        }
+    }
+    return pos;
+}
+
 static int find_intersection( const POINT *points, int x, int y, int count )
 {
     int i;
 
-    if (y >= 0)
+    /* First point is always x <= 0, y == 0, so if y >= 0 we are in the
+     * top half. */
+
+    if (!y)
+        return (x < 0) ? 0 : count;
+
+    if (y > 0)
     {
-        if (x >= 0)  /* first quadrant */
+        /* top half */
+        for (i = 0; i < count; i++)
         {
-            for (i = 0; i < count; i++) if (points[i].x * y <= points[i].y * x) break;
-            return i;
+            if (points[i].x * y >= points[i].y * x)
+                break;
         }
-        /* second quadrant */
-        for (i = 0; i < count; i++) if (points[i].x * y < points[i].y * -x) break;
-        return 2 * count - i;
+        return i;
     }
-    if (x >= 0)  /* fourth quadrant */
+    else
     {
-        for (i = 0; i < count; i++) if (points[i].x * -y <= points[i].y * x) break;
-        return 4 * count - i;
+        /* bottom half */
+        for (i = 0; i < count; i++)
+        {
+            if (points[i].x * -y >= points[i].y * -x)
+                break;
+        }
+        return count + i;
     }
-    /* third quadrant */
-    for (i = 0; i < count; i++) if (points[i].x * -y < points[i].y * -x) break;
-    return 2 * count + i;
 }
 
-static int get_arc_points( int arc_dir, const RECT *rect, POINT start, POINT end, POINT *points )
+static void lp_to_dp_no_translate( DC *dc, POINT *point )
+{
+    double x = point->x;
+    double y = point->y;
+    point->x = GDI_ROUND( x * dc->xformWorld2Vport.eM11 + y * dc->xformWorld2Vport.eM21 );
+    point->y = GDI_ROUND( x * dc->xformWorld2Vport.eM12 + y * dc->xformWorld2Vport.eM22 );
+}
+
+static int get_arc_points( DC *dc, int arc_dir, const RECT *rect, POINT start, POINT end, POINT *points )
 {
     int i, pos, count, start_pos, end_pos;
     int width = rect->right - rect->left;
     int height = rect->bottom - rect->top;
+    POINT center = {rect->left + width / 2, rect->top + height / 2};
 
-    count = ellipse_first_quadrant( width, height, points );
-    for (i = 0; i < count; i++)
-    {
-        points[i].x -= width / 2;
-        points[i].y -= height / 2;
-    }
-    if (arc_dir != AD_CLOCKWISE)
-    {
-        start.y = -start.y;
-        end.y = -end.y;
-    }
+    count = generate_ellipse_top_half( dc, width, height, points );
+
+    /* Transform the start and end, but do not translate them, so that they
+     * remain relative to the ellipse center. */
+    lp_to_dp_no_translate( dc, &start );
+    lp_to_dp_no_translate( dc, &end );
+
     start_pos = find_intersection( points, start.x, start.y, count );
     end_pos = find_intersection( points, end.x, end.y, count );
-    if (end_pos <= start_pos) end_pos += 4 * count;
+    if (arc_dir == AD_CLOCKWISE)
+    {
+        int tmp = start_pos;
+        start_pos = end_pos;
+        end_pos = tmp;
+    }
+    if (end_pos <= start_pos) end_pos += 2 * count;
+
+    lp_to_dp( dc, &center, 1 );
 
     pos = count;
-    if (arc_dir == AD_CLOCKWISE)
+    if (arc_dir == AD_COUNTERCLOCKWISE)
     {
         for (i = start_pos; i < end_pos; i++, pos++)
         {
-            switch ((i / count) % 4)
+            if ((i / count) % 2 == 0)
             {
-            case 0:
-                points[pos].x = rect->left + width/2 + points[i % count].x;
-                points[pos].y = rect->top + height/2 + points[i % count].y;
-                break;
-            case 1:
-                points[pos].x = rect->right-1 - width/2 - points[count - 1 - i % count].x;
-                points[pos].y = rect->top + height/2 + points[count - 1 - i % count].y;
-                break;
-            case 2:
-                points[pos].x = rect->right-1 - width/2 - points[i % count].x;
-                points[pos].y = rect->bottom-1 - height/2 - points[i % count].y;
-                break;
-            case 3:
-                points[pos].x = rect->left + width/2 + points[count - 1 - i % count].x;
-                points[pos].y = rect->bottom-1 - height/2 - points[count - 1 - i % count].y;
-                break;
+                points[pos].x = center.x + points[i % count].x;
+                points[pos].y = center.y + points[i % count].y;
+            }
+            else
+            {
+                points[pos].x = center.x - points[i % count].x;
+                points[pos].y = center.y - points[i % count].y;
             }
         }
     }
     else
     {
-        for (i = start_pos; i < end_pos; i++, pos++)
+        for (i = end_pos - 1; i >= start_pos; i--, pos++)
         {
-            switch ((i / count) % 4)
+            if ((i / count) % 2 == 0)
             {
-            case 0:
-                points[pos].x = rect->left + width/2 + points[i % count].x;
-                points[pos].y = rect->bottom-1 - height/2 - points[i % count].y;
-                break;
-            case 1:
-                points[pos].x = rect->right-1 - width/2 - points[count - 1 - i % count].x;
-                points[pos].y = rect->bottom-1 - height/2 - points[count - 1 - i % count].y;
-                break;
-            case 2:
-                points[pos].x = rect->right-1 - width/2 - points[i % count].x;
-                points[pos].y = rect->top + height/2 + points[i % count].y;
-                break;
-            case 3:
-                points[pos].x = rect->left + width/2 + points[count - 1 - i % count].x;
-                points[pos].y = rect->top + height/2 + points[count - 1 - i % count].y;
-                break;
+                points[pos].x = center.x + points[i % count].x;
+                points[pos].y = center.y + points[i % count].y;
+            }
+            else
+            {
+                points[pos].x = center.x - points[i % count].x;
+                points[pos].y = center.y - points[i % count].y;
             }
         }
     }
 
     memmove( points, points + count, (pos - count) * sizeof(POINT) );
     return pos - count;
+}
+
+static unsigned int get_arc_max_points( DC *dc, const RECT *rect )
+{
+    POINT pts[4] =
+    {
+        {rect->left, rect->top},
+        {rect->left, rect->bottom},
+        {rect->right, rect->bottom},
+        {rect->right, rect->top}
+    };
+    unsigned int width, height;
+
+    lp_to_dp( dc, pts, 4 );
+    width = max( abs( pts[2].x - pts[0].x ), abs( pts[3].x - pts[1].x ));
+    height = max( abs( pts[2].y - pts[0].y ), abs( pts[3].y - pts[1].y ));
+    return (width + height) * 3;
 }
 
 /* backend for arc functions; extra_lines is -1 for ArcTo, 0 for Arc, 1 for Chord, 2 for Pie */
@@ -318,11 +420,11 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     DC *dc = get_physdev_dc( dev );
     RECT rect, rc;
     POINT pt[2], *points;
-    int width, height, count;
+    int width, height, count, max_points;
     BOOL ret = TRUE;
     HRGN outline = 0, interior = 0;
 
-    if (!get_pen_device_rect( dc, pdev, &rect, left, top, right, bottom )) return TRUE;
+    SetRect( &rect, left, top, right, bottom );
 
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
@@ -331,28 +433,32 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     pt[0].y = start_y;
     pt[1].x = end_x;
     pt[1].y = end_y;
-    lp_to_dp( dc, pt, 2 );
     /* make them relative to the ellipse center */
     pt[0].x -= rect.left + width / 2;
     pt[0].y -= rect.top + height / 2;
     pt[1].x -= rect.left + width / 2;
     pt[1].y -= rect.top + height / 2;
 
-    points = malloc( (width + height) * 3 * sizeof(*points) );
+    max_points = get_arc_max_points( dc, &rect );
+    points = malloc( max_points * sizeof(*points) );
     if (!points) return FALSE;
 
     if (extra_lines == -1)
     {
         points[0] = dc->attr->cur_pos;
         lp_to_dp( dc, points, 1 );
-        count = 1 + get_arc_points( dc->attr->arc_direction, &rect, pt[0], pt[1], points + 1 );
+        count = 1 + get_arc_points( dc, dc->attr->arc_direction, &rect, pt[0], pt[1], points + 1 );
     }
-    else count = get_arc_points( dc->attr->arc_direction, &rect, pt[0], pt[1], points );
+    else count = get_arc_points( dc, dc->attr->arc_direction, &rect, pt[0], pt[1], points );
+
+    if (count > max_points)
+        ERR( "point count %u exceeds max points %u\n", count, max_points );
 
     if (extra_lines == 2)
     {
         points[count].x = rect.left + width / 2;
         points[count].y = rect.top + height / 2;
+        lp_to_dp( dc, &points[count], 1 );
         count++;
     }
     if (count < 2)
