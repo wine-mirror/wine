@@ -129,6 +129,7 @@ MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 void (CDECL *mono_thread_manage)(void);
 void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
 void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
+void (CDECL *mono_trace_set_log_handler)(MonoLogCallback callback, void *user_data);
 static MonoAssembly* (CDECL *wine_mono_assembly_load_from_gac)(MonoAssemblyName *aname, MonoImageOpenStatus *status, int refonly);
 static void (CDECL *wine_mono_install_assembly_preload_hook)(WineMonoAssemblyPreLoadFunc func, void *user_data);
 static void (CDECL *wine_mono_install_assembly_preload_hook_v2)(WineMonoAssemblyPreLoadFunc func, void *user_data);
@@ -152,6 +153,10 @@ static void CDECL set_crash_chaining_dummy(BOOL crash_chaining)
 }
 
 static void CDECL set_print_handler_dummy(MonoPrintCallback callback)
+{
+}
+
+static void CDECL set_log_handler_dummy (MonoLogCallback callback, void *user_data)
 {
 }
 
@@ -253,6 +258,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_OPT_MONO_FUNCTION(mono_set_crash_chaining, set_crash_chaining_dummy);
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_print_handler, set_print_handler_dummy);
         LOAD_OPT_MONO_FUNCTION(mono_trace_set_printerr_handler, set_print_handler_dummy);
+        LOAD_OPT_MONO_FUNCTION(mono_trace_set_log_handler, set_log_handler_dummy);
         LOAD_OPT_MONO_FUNCTION(wine_mono_assembly_load_from_gac, NULL);
         LOAD_OPT_MONO_FUNCTION(wine_mono_install_assembly_preload_hook, NULL);
         LOAD_OPT_MONO_FUNCTION(wine_mono_install_assembly_preload_hook_v2, NULL);
@@ -281,6 +287,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
 
         mono_trace_set_print_handler(mono_print_handler_fn);
         mono_trace_set_printerr_handler(mono_print_handler_fn);
+        mono_trace_set_log_handler(mono_log_handler_fn, NULL);
 
         mono_set_dirs(mono_lib_path_a, mono_etc_path_a);
 

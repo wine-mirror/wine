@@ -153,6 +153,7 @@ typedef MonoAssembly* (CDECL *WineMonoAssemblyPreLoadFunc)(MonoAssemblyName *ana
 typedef void (CDECL *MonoProfileFunc)(MonoProfiler *prof);
 
 typedef void (CDECL *MonoPrintCallback) (const char *string, INT is_stdout);
+typedef void (*MonoLogCallback) (const char *log_domain, const char *log_level, const char *message, INT fatal, void *user_data);
 
 typedef enum {
     MONO_AOT_MODE_NONE,
@@ -227,5 +228,6 @@ extern void runtimehost_init(void);
 extern void runtimehost_uninit(void);
 
 extern void CDECL mono_print_handler_fn(const char *string, INT is_stdout);
+extern void CDECL mono_log_handler_fn(const char *log_domain, const char *log_level, const char *message, INT fatal, void *user_data);
 
 #endif   /* __MSCOREE_PRIVATE__ */

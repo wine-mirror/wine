@@ -262,6 +262,20 @@ void CDECL mono_print_handler_fn(const char *string, INT is_stdout)
     }
 }
 
+void CDECL mono_log_handler_fn(const char *log_domain, const char *log_level, const char *message, INT fatal, void *user_data)
+{
+    SIZE_T len = (log_domain ? strlen(log_domain) + 2 : 0) + strlen(message) + strlen("\n") + 1;
+    char *msg = calloc(len, sizeof(char));
+
+    if (msg)
+    {
+        sprintf(msg, "%s%s%s\n", log_domain ? log_domain : "", log_domain ? ": " : "", message);
+        mono_print_handler_fn(msg, 0);
+    }
+
+    free(msg);
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
