@@ -113,6 +113,7 @@ struct source
     UINT state_flags;
     UINT monitor_count;
     UINT mode_count;
+    DEVMODEW current;
     DEVMODEW *modes;
 };
 
@@ -497,35 +498,9 @@ static BOOL source_set_registry_settings( const struct source *source, const DEV
 
 static BOOL source_get_current_settings( const struct source *source, DEVMODEW *mode )
 {
-    BOOL is_primary = !!(source->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
-    WCHAR device_nameW[CCHDEVICENAME];
-    char device_name[CCHDEVICENAME];
-    HANDLE mutex;
-    HKEY hkey;
-    BOOL ret;
-
-    snprintf( device_name, sizeof(device_name), "\\\\.\\DISPLAY%d", source->id + 1 );
-    asciiz_to_unicode( device_nameW, device_name );
-
-    /* use the default implementation in virtual desktop mode */
-    if (is_virtual_desktop()) ret = FALSE;
-    else ret = user_driver->pGetCurrentDisplaySettings( device_nameW, is_primary, mode );
-
-    if (!ret)
-    {
-        /* default implementation: read current display settings from the registry. */
-        mutex = get_display_device_init_mutex();
-        if (!(hkey = reg_open_ascii_key( config_key, source->path ))) ret = FALSE;
-        else
-        {
-            ret = read_source_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
-            NtClose( hkey );
-        }
-        release_display_device_init_mutex( mutex );
-    }
-
-    if (ret && source->depth) mode->dmBitsPerPel = source->depth;
-    return ret;
+    memcpy( &mode->dmFields, &source->current.dmFields, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
+    if (source->depth) mode->dmBitsPerPel = source->depth;
+    return TRUE;
 }
 
 static BOOL source_set_current_settings( const struct source *source, const DEVMODEW *mode )
@@ -672,6 +647,10 @@ static BOOL read_source_from_registry( unsigned int index, struct source *source
         qsort( source->modes, source->mode_count, sizeof(*source->modes), mode_compare );
     }
     value = (void *)buffer;
+
+    /* Cache current display mode */
+    if (read_source_mode( hkey, ENUM_CURRENT_SETTINGS, &source->current ))
+        source->current.dmSize = sizeof(source->current);
 
     /* DeviceID */
     size = query_reg_ascii_value( hkey, "GPUID", value, sizeof(buffer) );
