@@ -75,11 +75,9 @@ typedef void * UIA_HWND;
 library UIAutomationClient {
     importlib ("stdole2.tlb");
 
-    /* FIXME: Uncomment when properly supported in widl
     [dllname("<no entry points>")]
     module UIA_PatternIds
     {
-    */
         const long UIA_InvokePatternId         = 10000;
         const long UIA_SelectionPatternId      = 10001;
         const long UIA_ValuePatternId          = 10002;
@@ -114,15 +112,11 @@ library UIAutomationClient {
         const long UIA_DropTargetPatternId       = 10031;
         const long UIA_TextEditPatternId         = 10032;
         const long UIA_CustomNavigationPatternId = 10033;
-    /*
     }
-    */
 
-    /* FIXME: Uncomment when properly supported in widl
     [dllname("<no entry points>")]
     module UIA_EventIds
     {
-    */
         const long UIA_ToolTipOpenedEventId = 20000;
         const long UIA_ToolTipClosedEventId = 20001;
         const long UIA_StructureChangedEventId = 20002;
@@ -159,15 +153,11 @@ library UIAutomationClient {
         const long UIA_TextEdit_ConversionTargetChangedEventId = 20033;
         const long UIA_ChangesEventId = 20034;
         const long UIA_NotificationEventId = 20035;
-    /*
-    };
-    */
+    }
 
-    /* FIXME: Uncomment when properly supported in widl
     [dllname("<no entry points>")]
     module UIA_PropertyIds
     {
-    */
         const long UIA_RuntimeIdPropertyId              = 30000;
         const long UIA_BoundingRectanglePropertyId      = 30001;
         const long UIA_ProcessIdPropertyId              = 30002;
@@ -343,14 +333,11 @@ library UIAutomationClient {
         const long UIA_Selection2ItemCountPropertyId           = 30172;
         const long UIA_HeadingLevelPropertyId                  = 30173;
         const long UIA_IsDialogPropertyId                      = 30174;
-    /*
     }
-    */
-    /* FIXME: Uncomment when properly supported in widl
+
     [dllname("<no entry points>")]
     module UIA_ControlTypeIds
     {
-    */
         const long UIA_ButtonControlTypeId = 50000;
         const long UIA_CalendarControlTypeId = 50001;
         const long UIA_CheckBoxControlTypeId = 50002;
@@ -392,9 +379,7 @@ library UIAutomationClient {
         const long UIA_SeparatorControlTypeId = 50038;
         const long UIA_SemanticZoomControlTypeId = 50039;
         const long UIA_AppBarControlTypeId = 50040;
-    /*
-    };
-    */
+    }
 
     interface IUIAutomationElement;
     interface IUIAutomationElementArray;

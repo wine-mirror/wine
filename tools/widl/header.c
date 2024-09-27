@@ -2017,7 +2017,6 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
           write_forward(header, stmt->u.type);
         break;
       case STMT_IMPORTLIB:
-      case STMT_MODULE:
       case STMT_PRAGMA:
         /* not included in header */
         break;
@@ -2037,6 +2036,12 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
         write_library(header, stmt->u.lib);
         write_header_stmts(header, stmt->u.lib->stmts, NULL, FALSE);
         fprintf(header, "#endif /* __%s_LIBRARY_DEFINED__ */\n", stmt->u.lib->name);
+        break;
+      case STMT_MODULE:
+        fprintf(header, "#ifndef __%s_MODULE_DEFINED__\n", stmt->u.type->name);
+        fprintf(header, "#define __%s_MODULE_DEFINED__\n", stmt->u.type->name);
+        write_header_stmts(header, stmt->u.type->details.module->stmts, stmt->u.type, FALSE);
+        fprintf(header, "#endif /* __%s_MODULE_DEFINED__ */\n", stmt->u.type->name);
         break;
       case STMT_CPPQUOTE:
         fprintf(header, "%s\n", stmt->u.str);
