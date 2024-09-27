@@ -443,7 +443,6 @@ static const struct user_driver_funcs x11drv_funcs =
     .pSystrayDockClear = X11DRV_SystrayDockClear,
     .pSystrayDockRemove = X11DRV_SystrayDockRemove,
     .pChangeDisplaySettings = X11DRV_ChangeDisplaySettings,
-    .pGetCurrentDisplaySettings = X11DRV_GetCurrentDisplaySettings,
     .pUpdateDisplayDevices = X11DRV_UpdateDisplayDevices,
     .pCreateDesktop = X11DRV_CreateDesktop,
     .pCreateWindow = X11DRV_CreateWindow,

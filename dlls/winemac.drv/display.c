@@ -912,48 +912,6 @@ static void display_get_current_mode(struct macdrv_display *display, DEVMODEW *d
 }
 
 /***********************************************************************
- *              GetCurrentDisplaySettings  (MACDRV.@)
- *
- */
-BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, BOOL is_primary, LPDEVMODEW devmode)
-{
-    struct macdrv_display *displays = NULL;
-    int num_displays, display_idx;
-    WCHAR *end;
-
-    TRACE("%s, %u, %p + %hu\n", debugstr_w(devname), is_primary, devmode, devmode->dmSize);
-
-    init_original_display_mode();
-
-    if (macdrv_get_displays(&displays, &num_displays))
-        return FALSE;
-
-    display_idx = wcstol(devname + 11, &end, 10) - 1;
-    if (display_idx >= num_displays)
-    {
-        macdrv_free_displays(displays);
-        return FALSE;
-    }
-
-    display_get_current_mode(&displays[display_idx], devmode);
-    macdrv_free_displays(displays);
-
-    TRACE("current mode -- %dx%d-%dx%dx%dbpp @%d Hz",
-          (int)devmode->dmPosition.x, (int)devmode->dmPosition.y,
-          (int)devmode->dmPelsWidth, (int)devmode->dmPelsHeight, (int)devmode->dmBitsPerPel,
-          (int)devmode->dmDisplayFrequency);
-    if (devmode->dmDisplayOrientation)
-        TRACE(" rotated %u degrees", (unsigned int)devmode->dmDisplayOrientation * 90);
-    if (devmode->dmDisplayFixedOutput == DMDFO_STRETCH)
-        TRACE(" stretched");
-    if (devmode->dmDisplayFlags & DM_INTERLACED)
-        TRACE(" interlaced");
-    TRACE("\n");
-
-    return TRUE;
-}
-
-/***********************************************************************
  *              GetDeviceGammaRamp (MACDRV.@)
  */
 BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)

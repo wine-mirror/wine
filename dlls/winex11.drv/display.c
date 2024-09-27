@@ -146,25 +146,6 @@ void X11DRV_Settings_Init(void)
     X11DRV_Settings_SetHandler(&nores_handler);
 }
 
-/***********************************************************************
- *      GetCurrentDisplaySettings  (X11DRV.@)
- *
- */
-BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode )
-{
-    DEVMODEW mode;
-    x11drv_settings_id id;
-
-    if (!settings_handler.get_id( name, is_primary, &id ) || !settings_handler.get_current_mode( id, &mode ))
-    {
-        ERR("Failed to get %s current display settings.\n", wine_dbgstr_w(name));
-        return FALSE;
-    }
-
-    memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
-    return TRUE;
-}
-
 BOOL is_detached_mode(const DEVMODEW *mode)
 {
     return mode->dmFields & DM_POSITION &&
