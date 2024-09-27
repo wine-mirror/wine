@@ -747,7 +747,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
         if (context) WCMD_strsubstW(p, p + 1, NULL, 0);
         if (!context || startchar == L'%') p++;
     /* Replace %~ modifications if in batch program */
-    } else if (*(p+1) == '~') {
+    } else if (p[1] == L'~' && p[2] && !iswspace(p[2])) {
       WCMD_HandleTildeModifiers(&p, atExecute);
       p++;
 
