@@ -63,6 +63,7 @@ typedef NTSTATUS (WINAPI *PDRIVER_DISPATCH)(struct _DEVICE_OBJECT *, struct _IRP
 typedef void (WINAPI *PDRIVER_STARTIO)(struct _DEVICE_OBJECT *, struct _IRP *);
 typedef void (WINAPI *PDRIVER_UNLOAD)(struct _DRIVER_OBJECT *);
 typedef NTSTATUS (WINAPI *PDRIVER_ADD_DEVICE)(struct _DRIVER_OBJECT *, struct _DEVICE_OBJECT *);
+typedef void (WINAPI *PDEVICE_CHANGE_COMPLETE_CALLBACK)(void*);
 
 typedef struct _DISPATCHER_HEADER {
   UCHAR  Type;
@@ -1613,6 +1614,16 @@ typedef enum _DIRECTORY_NOTIFY_INFORMATION_CLASS {
     DirectoryNotifyExtendedInformation
 } DIRECTORY_NOTIFY_INFORMATION_CLASS, *PDIRECTORY_NOTIFY_INFORMATION_CLASS;
 
+typedef struct _TARGET_DEVICE_CUSTOM_NOTIFICATION
+{
+    USHORT Version;
+    USHORT Size;
+    GUID Event;
+    FILE_OBJECT *FileObject;
+    LONG NameBufferOffset;
+    UCHAR CustomDataBuffer[1];
+} TARGET_DEVICE_CUSTOM_NOTIFICATION, *PTARGET_DEVICE_CUSTOM_NOTIFICATION;
+
 typedef enum _WORK_QUEUE_TYPE {
     CriticalWorkQueue,
     DelayedWorkQueue,
@@ -1781,6 +1792,8 @@ NTSTATUS  WINAPI IoRegisterDeviceInterface(PDEVICE_OBJECT,const GUID*,PUNICODE_S
 void      WINAPI IoReleaseCancelSpinLock(KIRQL);
 void      WINAPI IoReleaseRemoveLockAndWaitEx(IO_REMOVE_LOCK*,void*,ULONG);
 void      WINAPI IoReleaseRemoveLockEx(IO_REMOVE_LOCK*,void*,ULONG);
+NTSTATUS  WINAPI IoReportTargetDeviceChange(DEVICE_OBJECT*,void*);
+NTSTATUS  WINAPI IoReportTargetDeviceChangeAsynchronous(DEVICE_OBJECT*,void*,PDEVICE_CHANGE_COMPLETE_CALLBACK,void*);
 void      WINAPI IoReuseIrp(IRP*,NTSTATUS);
 NTSTATUS  WINAPI IoSetDeviceInterfaceState(UNICODE_STRING*,BOOLEAN);
 NTSTATUS  WINAPI IoSetDevicePropertyData(DEVICE_OBJECT*,const DEVPROPKEY*,LCID,ULONG,DEVPROPTYPE,ULONG,void*);

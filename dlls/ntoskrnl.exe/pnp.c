@@ -1002,6 +1002,25 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
 }
 
 /***********************************************************************
+ *           IoReportTargetDeviceChange   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoReportTargetDeviceChange( DEVICE_OBJECT *device, void *data )
+{
+    FIXME( "(%p, %p) stub!\n", device, data );
+    return STATUS_NOT_SUPPORTED;
+}
+
+/***********************************************************************
+ *           IoReportTargetDeviceChangeAsynchronous   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoReportTargetDeviceChangeAsynchronous( DEVICE_OBJECT *device, void *data, PDEVICE_CHANGE_COMPLETE_CALLBACK callback,
+                                                        void *context )
+{
+    FIXME( "(%p, %p, %p, %p) stub!\n", device, data, callback, context );
+    return STATUS_NOT_SUPPORTED;
+}
+
+/***********************************************************************
  *           IoOpenDeviceRegistryKey   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoOpenDeviceRegistryKey( DEVICE_OBJECT *device, ULONG type, ACCESS_MASK access, HANDLE *key )
