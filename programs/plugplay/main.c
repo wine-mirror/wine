@@ -143,9 +143,13 @@ void __cdecl plugplay_send_event( const WCHAR *path, DWORD code, const BYTE *dat
 {
     struct listener *listener;
     struct event *event;
+    const DEV_BROADCAST_HDR *header = (const DEV_BROADCAST_HDR *)data;
 
-    BroadcastSystemMessageW( 0, NULL, WM_DEVICECHANGE, code, (LPARAM)data );
-    BroadcastSystemMessageW( 0, NULL, WM_DEVICECHANGE, DBT_DEVNODES_CHANGED, 0 );
+    if (header->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE)
+    {
+        BroadcastSystemMessageW( 0, NULL, WM_DEVICECHANGE, code, (LPARAM)data );
+        BroadcastSystemMessageW( 0, NULL, WM_DEVICECHANGE, DBT_DEVNODES_CHANGED, 0 );
+    }
 
     EnterCriticalSection( &plugplay_cs );
 
