@@ -2125,11 +2125,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             if (surface_win && surface_win != hwnd)
                 move_window_bits( hwnd, &new_rects->visible, &new_rects->visible, &new_rects->window, valid_rects );
             else
-            {
-                rects[0] = map_dpi_rect( valid_rects[0], get_thread_dpi(), monitor_dpi );
-                rects[1] = map_dpi_rect( valid_rects[1], get_thread_dpi(), monitor_dpi );
-                user_driver->pMoveWindowBits( hwnd, &monitor_rects, rects );
-            }
+                user_driver->pMoveWindowBits( hwnd, &old_rects, new_rects, valid_rects );
         }
 
         user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, is_fullscreen, &monitor_rects, get_driver_window_surface( new_surface, monitor_dpi ) );
