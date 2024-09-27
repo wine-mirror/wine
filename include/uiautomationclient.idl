@@ -430,6 +430,16 @@ library UIAutomationClient {
         const long UIA_AppBarControlTypeId = 50040;
     }
 
+    [dllname("<no entry points>")]
+    module UIA_LandmarkTypeIds
+    {
+        const long UIA_CustomLandmarkTypeId = 80000;
+        const long UIA_FormLandmarkTypeId = 80001;
+        const long UIA_MainLandmarkTypeId = 80002;
+        const long UIA_NavigationLandmarkTypeId = 80003;
+        const long UIA_SearchLandmarkTypeId = 80004;
+    }
+
     interface IUIAutomationElement;
     interface IUIAutomationElementArray;
 
