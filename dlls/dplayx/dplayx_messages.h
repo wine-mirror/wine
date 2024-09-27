@@ -50,7 +50,7 @@ DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
 
 HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags,
                                     LPDPID lpdipidAllocatedId );
-HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer );
+HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WCHAR *password );
 
 void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId,
                            LPCVOID lpMsgBody, DWORD dwMsgBodySize,

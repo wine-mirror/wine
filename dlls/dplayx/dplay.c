@@ -1779,7 +1779,7 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
     DP_MSG_ToSelf( This, *lpidPlayer ); /* This is a hack right now */
 #endif
 
-    hr = DP_MSG_ForwardPlayerCreation( This, *lpidPlayer);
+    hr = DP_MSG_ForwardPlayerCreation( This, *lpidPlayer, NULL );
   }
 #else
   /* Inform all other peers of the creation of a new player. If there are
@@ -3409,6 +3409,20 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
   {
     DWORD createFlags = DPLAYI_PLAYER_SYSPLAYER | DPLAYI_PLAYER_PLAYERLOCAL;
     DPID dpidServerId = DPID_UNKNOWN;
+    WCHAR *password;
+
+    password = DP_DuplicateString( lpsd->lpszPassword, FALSE, bAnsi );
+    if ( !password && lpsd->lpszPassword )
+    {
+      DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );
+      if( This->dp2->spData.lpCB->CloseEx )
+      {
+        DPSP_CLOSEDATA data;
+        data.lpISP = This->dp2->spData.lpISP;
+        (*This->dp2->spData.lpCB->CloseEx)( &data );
+      }
+      return DPERR_OUTOFMEMORY;
+    }
 
     /* Create the server player for this interface. This way we can receive
      * messages for this session.
@@ -3422,6 +3436,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
     if( FAILED( hr ) )
     {
       ERR( "Request for ID failed: %s\n", DPLAYX_HresultToString( hr ) );
+      free( password );
       DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );
       if( This->dp2->spData.lpCB->CloseEx )
       {
@@ -3436,6 +3451,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
                           bAnsi );
     if( FAILED( hr ) )
     {
+      free( password );
       DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );
       if( This->dp2->spData.lpCB->CloseEx )
       {
@@ -3446,7 +3462,8 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
       return hr;
     }
 
-    hr = DP_MSG_ForwardPlayerCreation( This, dpidServerId );
+    hr = DP_MSG_ForwardPlayerCreation( This, dpidServerId, password );
+    free( password );
     if( FAILED( hr ) )
     {
       DP_DeletePlayer( This, dpidServerId );

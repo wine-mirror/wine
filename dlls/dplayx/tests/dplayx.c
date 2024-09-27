@@ -1247,7 +1247,7 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
     if ( wsResult == SOCKET_ERROR )
         return 0;
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, expectedPasswordSize != 2 );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize, FALSE );
     checkMessageHeader_( line, &request.request.header, 19 );
     ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
     ok_( __FILE__, line )( request.request.playerId == expectedPlayerId, "got player id %#lx.\n",
@@ -1263,17 +1263,13 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
 
     wsResult = receiveMessage_( line, sock, password, expectedPasswordSize );
 
-    todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( wsResult == expectedPasswordSize,
-                                                                     "recv() returned %d.\n", wsResult );
-    todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( !lstrcmpW( password, expectedPassword ),
-                                                                     "got password %s.\n", wine_dbgstr_w( password ) );
+    ok_( __FILE__, line )( wsResult == expectedPasswordSize, "recv() returned %d.\n", wsResult );
+    ok_( __FILE__, line )( !lstrcmpW( password, expectedPassword ), "got password %s.\n", wine_dbgstr_w( password ) );
 
     wsResult = receiveMessage_( line, sock, &tickCount, sizeof( DWORD ) );
 
-    todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( wsResult == sizeof( DWORD ),
-                                                                     "recv() returned %d.\n", wsResult );
-    todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( tickCount == expectedTickCount,
-                                                                     "got tick count %#lx.\n", tickCount );
+    ok_( __FILE__, line )( wsResult == sizeof( DWORD ), "recv() returned %d.\n", wsResult );
+    ok_( __FILE__, line )( tickCount == expectedTickCount, "got tick count %#lx.\n", tickCount );
 
     return port;
 }

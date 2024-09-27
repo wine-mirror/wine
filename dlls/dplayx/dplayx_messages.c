@@ -449,7 +449,7 @@ static HRESULT DP_MSG_ReadSuperPackedPlayer( char *data, DWORD *inoutOffset, DWO
   return S_OK;
 }
 
-HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
+HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WCHAR *password )
 {
   LPVOID                   lpMsg;
   DPMSG_FORWARDADDPLAYER   msgBody;
@@ -457,7 +457,6 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
   DPLAYI_PACKEDPLAYER      playerInfo;
   void                    *spPlayerData;
   DWORD                    spPlayerDataSize;
-  const WCHAR             *password = L"";
   void                    *msgHeader;
   HRESULT                  hr;
 
@@ -501,8 +500,8 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
     buffers[ 2 ].pData = (UCHAR *) &playerInfo;
     buffers[ 3 ].len = spPlayerDataSize;
     buffers[ 3 ].pData = (UCHAR *) spPlayerData;
-    buffers[ 4 ].len = (lstrlenW( password ) + 1) * sizeof( WCHAR );
-    buffers[ 4 ].pData = (UCHAR *) password;
+    buffers[ 4 ].len = (password ? (lstrlenW( password ) + 1) : 1) * sizeof( WCHAR );
+    buffers[ 4 ].pData = (UCHAR *) (password ? password : L"");
     buffers[ 5 ].len = sizeof( This->dp2->lpSessionDesc->dwReserved1 );
     buffers[ 5 ].pData = (UCHAR *) &This->dp2->lpSessionDesc->dwReserved1;
 
