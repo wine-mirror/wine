@@ -2051,7 +2051,8 @@ BOOL update_display_cache( BOOL force )
         return TRUE;
     }
 
-    if (force)
+    if (!force) get_display_driver(); /* make sure at least to load the user driver */
+    else
     {
         if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any vulkan GPU\n" );
         if (!(status = update_display_devices( &ctx ))) add_vulkan_only_gpus( &ctx );
