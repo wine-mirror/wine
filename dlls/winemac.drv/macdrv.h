@@ -130,7 +130,6 @@ extern BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags);
 extern void macdrv_Beep(void);
 extern LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid);
 extern BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode);
-extern INT macdrv_GetDisplayDepth(LPCWSTR name, BOOL is_primary);
 extern LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager, void *param);
 extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);

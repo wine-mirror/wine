@@ -36,24 +36,12 @@ static struct x11drv_settings_handler settings_handler;
 
 #define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))
 
-struct x11drv_display_depth
-{
-    struct list entry;
-    x11drv_settings_id display_id;
-    DWORD depth;
-};
-
-/* Display device emulated depth list, protected by modes_section */
-static struct list x11drv_display_depth_list = LIST_INIT(x11drv_display_depth_list);
-
 /* All Windows drivers seen so far either support 32 bit depths, or 24 bit depths, but never both. So if we have
  * a 32 bit framebuffer, report 32 bit bpps, otherwise 24 bit ones.
  */
 static const unsigned int depths_24[]  = {8, 16, 24};
 static const unsigned int depths_32[]  = {8, 16, 32};
 const unsigned int *depths;
-
-static pthread_mutex_t settings_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handler)
 {
@@ -158,64 +146,6 @@ void X11DRV_Settings_Init(void)
     X11DRV_Settings_SetHandler(&nores_handler);
 }
 
-static void set_display_depth(x11drv_settings_id display_id, DWORD depth)
-{
-    struct x11drv_display_depth *display_depth;
-
-    pthread_mutex_lock( &settings_mutex );
-    LIST_FOR_EACH_ENTRY(display_depth, &x11drv_display_depth_list, struct x11drv_display_depth, entry)
-    {
-        if (display_depth->display_id.id == display_id.id)
-        {
-            display_depth->depth = depth;
-            pthread_mutex_unlock( &settings_mutex );
-            return;
-        }
-    }
-
-    display_depth = malloc(sizeof(*display_depth));
-    if (!display_depth)
-    {
-        ERR("Failed to allocate memory.\n");
-        pthread_mutex_unlock( &settings_mutex );
-        return;
-    }
-
-    display_depth->display_id = display_id;
-    display_depth->depth = depth;
-    list_add_head(&x11drv_display_depth_list, &display_depth->entry);
-    pthread_mutex_unlock( &settings_mutex );
-}
-
-static DWORD get_display_depth(x11drv_settings_id display_id)
-{
-    struct x11drv_display_depth *display_depth;
-    DWORD depth;
-
-    pthread_mutex_lock( &settings_mutex );
-    LIST_FOR_EACH_ENTRY(display_depth, &x11drv_display_depth_list, struct x11drv_display_depth, entry)
-    {
-        if (display_depth->display_id.id == display_id.id)
-        {
-            depth = display_depth->depth;
-            pthread_mutex_unlock( &settings_mutex );
-            return depth;
-        }
-    }
-    pthread_mutex_unlock( &settings_mutex );
-    return screen_bpp;
-}
-
-INT X11DRV_GetDisplayDepth(LPCWSTR name, BOOL is_primary)
-{
-    x11drv_settings_id id;
-
-    if (settings_handler.get_id( name, is_primary, &id ))
-        return get_display_depth( id );
-
-    return screen_bpp;
-}
-
 /***********************************************************************
  *      GetCurrentDisplaySettings  (X11DRV.@)
  *
@@ -232,7 +162,6 @@ BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW
     }
 
     memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
-    if (!is_detached_mode( devmode )) devmode->dmBitsPerPel = get_display_depth( id );
     return TRUE;
 }
 
@@ -326,8 +255,6 @@ static LONG apply_display_settings( DEVMODEW *displays, x11drv_settings_id *ids,
               (int)full_mode->dmBitsPerPel, (int)full_mode->dmDisplayOrientation);
 
         ret = settings_handler.set_current_mode(*id, full_mode);
-        if (attached_mode && ret == DISP_CHANGE_SUCCESSFUL)
-            set_display_depth(*id, full_mode->dmBitsPerPel);
         free_full_mode(full_mode);
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return ret;

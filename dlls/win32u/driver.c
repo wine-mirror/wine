@@ -761,11 +761,6 @@ static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LP
     return FALSE; /* use default implementation */
 }
 
-static INT nulldrv_GetDisplayDepth( LPCWSTR name, BOOL is_primary )
-{
-    return -1; /* use default implementation */
-}
-
 static UINT nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager, void *param )
 {
     return STATUS_NOT_IMPLEMENTED;
@@ -1120,11 +1115,6 @@ static BOOL loaderdrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, 
     return load_driver()->pGetCurrentDisplaySettings( name, is_primary, mode );
 }
 
-static INT loaderdrv_GetDisplayDepth( LPCWSTR name, BOOL is_primary )
-{
-    return load_driver()->pGetDisplayDepth( name, is_primary );
-}
-
 static void loaderdrv_SetCursor( HWND hwnd, HCURSOR cursor )
 {
     load_driver()->pSetCursor( hwnd, cursor );
@@ -1273,7 +1263,6 @@ static const struct user_driver_funcs lazy_load_driver =
     /* display modes */
     loaderdrv_ChangeDisplaySettings,
     loaderdrv_GetCurrentDisplaySettings,
-    loaderdrv_GetDisplayDepth,
     loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
     loaderdrv_CreateDesktop,
@@ -1364,7 +1353,6 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(ChangeDisplaySettings);
     SET_USER_FUNC(GetCurrentDisplaySettings);
-    SET_USER_FUNC(GetDisplayDepth);
     SET_USER_FUNC(UpdateDisplayDevices);
     SET_USER_FUNC(CreateDesktop);
     SET_USER_FUNC(CreateWindow);
