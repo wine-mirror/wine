@@ -3700,11 +3700,11 @@ START_TEST(monitor)
         }
     }
 
-    test_monitor_dpi();
     test_enumdisplaydevices();
     test_ChangeDisplaySettingsEx(myARGC, myARGV);
     test_DisplayConfigSetDeviceInfo();
     test_EnumDisplayMonitors();
+    test_monitor_dpi();
     test_monitors();
     test_work_area();
     test_display_config();
