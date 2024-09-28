@@ -171,43 +171,6 @@ static void add_pen_lines_bounds( dibdrv_physdev *dev, int count, const POINT *p
     add_clipped_bounds( dev, &bounds, dev->clip );
 }
 
-/* compute the points for the first quadrant of an ellipse, counterclockwise from the x axis */
-/* 'data' must contain enough space, (width+height)/2 is a reasonable upper bound */
-static int ellipse_first_quadrant( int width, int height, POINT *data )
-{
-    const int a = width - 1;
-    const int b = height - 1;
-    const INT64 asq = (INT64)8 * a * a;
-    const INT64 bsq = (INT64)8 * b * b;
-    INT64 dx  = (INT64)4 * b * b * (1 - a);
-    INT64 dy  = (INT64)4 * a * a * (1 + (b % 2));
-    INT64 err = dx + dy + a * a * (b % 2);
-    int pos = 0;
-    POINT pt;
-
-    pt.x = a;
-    pt.y = height / 2;
-
-    /* based on an algorithm by Alois Zingl */
-
-    while (pt.x >= width / 2)
-    {
-        INT64 e2 = 2 * err;
-        data[pos++] = pt;
-        if (e2 >= dx)
-        {
-            pt.x--;
-            err += dx += bsq;
-        }
-        if (e2 <= dy)
-        {
-            pt.y++;
-            err += dy += asq;
-        }
-    }
-    return pos;
-}
-
 /* Draw the "top half" of the ellipse, viz. the half that doesn't have any
  * points in the lower-right quadrant.
  *
@@ -1556,24 +1519,23 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
     RECT rect;
-    POINT pt[2], *points;
-    int i, end, count;
+    POINT start, end, rect_center, *points, *top_points;
+    int count, max_points;
     BOOL ret = TRUE;
     HRGN outline = 0, interior = 0;
 
-    if (!get_pen_device_rect( dc, pdev, &rect, left, top, right, bottom )) return TRUE;
-
-    pt[0].x = pt[0].y = 0;
-    pt[1].x = ellipse_width;
-    pt[1].y = ellipse_height;
-    lp_to_dp( dc, pt, 2 );
-    ellipse_width = min( rect.right - rect.left, abs( pt[1].x - pt[0].x ));
-    ellipse_height = min( rect.bottom - rect.top, abs( pt[1].y - pt[0].y ));
-    if (ellipse_width <= 2|| ellipse_height <= 2)
-        return dibdrv_Rectangle( dev, left, top, right, bottom );
-
-    points = malloc( (ellipse_width + ellipse_height) * 2 * sizeof(*points) );
-    if (!points) return FALSE;
+    SetRect( &rect, 0, 0, ellipse_width, ellipse_height );
+    /* We are drawing four arcs, but the number of points we will actually use
+     * is exactly as many as in one ellipse arc. */
+    max_points = get_arc_max_points( dc, &rect );
+    points = malloc( max_points * sizeof(*points) );
+    top_points = malloc( max_points / 2 * sizeof(*points) );
+    if (!points || !top_points)
+    {
+        free( points );
+        free( top_points );
+        return FALSE;
+    }
 
     if (pdev->pen_uses_region && !(outline = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
     {
@@ -1581,9 +1543,57 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         return FALSE;
     }
 
+    SetRect( &rect, left, top, left + ellipse_width, top + ellipse_height );
+    /* Points are relative to the arc center.
+     * We just need to specify any point on the vector. */
+    start.x = -1;
+    start.y = 0;
+    end.x = 0;
+    end.y = -1;
+    count = get_arc_points( dc, AD_CLOCKWISE, &rect, start, end, top_points );
+
+    SetRect( &rect, right - ellipse_width, top, right, top + ellipse_height );
+    start.x = 0;
+    start.y = -1;
+    end.x = 1;
+    end.y = 0;
+    count += get_arc_points( dc, AD_CLOCKWISE, &rect, start, end, top_points + count );
+
+    if (count * 2 > max_points)
+        ERR( "point count %u * 2 exceeds max points %u\n", count, max_points );
+
+    rect_center.x = (left + right) / 2;
+    rect_center.y = (top + bottom) / 2;
+    lp_to_dp( dc, &rect_center, 1 );
+
+    if (dc->attr->arc_direction == AD_CLOCKWISE)
+    {
+        for (unsigned int i = 0; i < count; ++i)
+        {
+            points[i].x = top_points[i].x;
+            points[i].y = top_points[i].y;
+            points[count + i].x = rect_center.x * 2 - points[i].x;
+            points[count + i].y = rect_center.y * 2 - points[i].y;
+        }
+    }
+    else
+    {
+        for (unsigned int i = 0; i < count; ++i)
+        {
+            points[i].x = top_points[count - 1 - i].x;
+            points[i].y = top_points[count - 1 - i].y;
+            points[count + i].x = rect_center.x * 2 - points[i].x;
+            points[count + i].y = rect_center.y * 2 - points[i].y;
+        }
+    }
+
+    free( top_points );
+
+    count *= 2;
+
     if (pdev->brush.style != BS_NULL &&
-        !(interior = NtGdiCreateRoundRectRgn( rect.left, rect.top, rect.right + 1, rect.bottom + 1,
-                                              ellipse_width, ellipse_height )))
+        get_dib_rect( &pdev->dib, &rect ) &&
+        !(interior = create_polypolygon_region( points, &count, 1, WINDING, &rect )))
     {
         free( points );
         if (outline) NtGdiDeleteObjectApp( outline );
@@ -1597,49 +1607,6 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         NtGdiDeleteObjectApp( interior );
         interior = 0;
     }
-
-    count = ellipse_first_quadrant( ellipse_width, ellipse_height, points );
-
-    if (dc->attr->arc_direction == AD_CLOCKWISE)
-    {
-        for (i = 0; i < count; i++)
-        {
-            points[i].x = rect.right - ellipse_width + points[i].x;
-            points[i].y = rect.bottom - ellipse_height + points[i].y;
-        }
-    }
-    else
-    {
-        for (i = 0; i < count; i++)
-        {
-            points[i].x = rect.right - ellipse_width + points[i].x;
-            points[i].y = rect.top + ellipse_height - 1 - points[i].y;
-        }
-    }
-
-    /* horizontal symmetry */
-
-    end = 2 * count - 1;
-    /* avoid duplicating the midpoint */
-    if (ellipse_width % 2 && ellipse_width == rect.right - rect.left) end--;
-    for (i = 0; i < count; i++)
-    {
-        points[end - i].x = rect.left + rect.right - 1 - points[i].x;
-        points[end - i].y = points[i].y;
-    }
-    count = end + 1;
-
-    /* vertical symmetry */
-
-    end = 2 * count - 1;
-    /* avoid duplicating the midpoint */
-    if (ellipse_height % 2 && ellipse_height == rect.bottom - rect.top) end--;
-    for (i = 0; i < count; i++)
-    {
-        points[end - i].x = points[i].x;
-        points[end - i].y = rect.top + rect.bottom - 1 - points[i].y;
-    }
-    count = end + 1;
 
     reset_dash_origin( pdev );
     pdev->pen_lines( pdev, count, points, TRUE, outline );
