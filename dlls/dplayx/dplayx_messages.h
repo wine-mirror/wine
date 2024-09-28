@@ -55,8 +55,6 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
 void DP_MSG_ReplyReceived( IDirectPlayImpl *This, WORD wCommandId,
                            LPCVOID lpMsgBody, DWORD dwMsgBodySize,
                            const void *msgHeader );
-void DP_MSG_ErrorReceived( IDirectPlayImpl *This, WORD wCommandId,
-                           LPCVOID lpMsgBody, DWORD dwMsgBodySize );
 void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf );
 
 /* Timings -> 1000 ticks/sec */
@@ -254,6 +252,12 @@ typedef struct
 #define DPLAYI_SUPERPACKEDPLAYER_PLAYER_COUNT_SIZE( mask )       (((mask) >> 6) & 0x3)
 #define DPLAYI_SUPERPACKEDPLAYER_PARENT_ID_PRESENT               0x100
 #define DPLAYI_SUPERPACKEDPLAYER_SHORTCUT_COUNT_SIZE( mask )     (((mask) >> 9) & 0x3)
+
+typedef struct
+{
+  DPMSG_SENDENVELOPE envelope;
+  HRESULT error;
+} DPSP_MSG_ADDFORWARDREPLY;
 
 typedef struct
 {

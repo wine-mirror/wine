@@ -495,7 +495,8 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
 
   /* Send the message */
   {
-    WORD replyCommands[] = { DPMSGCMD_GETNAMETABLEREPLY, DPMSGCMD_SUPERENUMPLAYERSREPLY };
+    WORD replyCommands[] = { DPMSGCMD_GETNAMETABLEREPLY, DPMSGCMD_SUPERENUMPLAYERSREPLY,
+                             DPMSGCMD_FORWARDADDPLAYERNACK };
     SGBUFFER buffers[ 6 ] = { 0 };
     DPSP_SENDEXDATA data = { 0 };
 
@@ -587,6 +588,25 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
     else if( envelope->wCommandId == DPMSGCMD_GETNAMETABLEREPLY )
     {
       FIXME( "Name Table reply received: stub\n" );
+    }
+    else if( envelope->wCommandId == DPMSGCMD_FORWARDADDPLAYERNACK )
+    {
+      DPSP_MSG_ADDFORWARDREPLY *addForwardReply;
+
+      if( dwMsgSize < sizeof( DPSP_MSG_ADDFORWARDREPLY ) )
+      {
+        free( msgHeader );
+        free( lpMsg );
+        return DPERR_GENERIC;
+      }
+      addForwardReply = (DPSP_MSG_ADDFORWARDREPLY *) envelope;
+
+      hr = addForwardReply->error;
+
+      free( msgHeader );
+      free( lpMsg );
+
+      return hr;
     }
     free( msgHeader );
     free( lpMsg );
@@ -719,16 +739,4 @@ void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf )
                         &replyCommand, 1,
                         &lpMsg, &dwMsgSize, &msgHeader );
   }
-}
-
-void DP_MSG_ErrorReceived( IDirectPlayImpl *This, WORD wCommandId, const void *lpMsgBody,
-        DWORD dwMsgBodySize )
-{
-  LPCDPMSG_FORWARDADDPLAYERNACK lpcErrorMsg;
-
-  lpcErrorMsg = lpMsgBody;
-
-  ERR( "Received error message %u. Error is %s\n",
-       wCommandId, DPLAYX_HresultToString( lpcErrorMsg->errorCode) );
-  DebugBreak();
 }

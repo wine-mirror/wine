@@ -383,6 +383,7 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
 
     case DPMSGCMD_GETNAMETABLEREPLY:
     case DPMSGCMD_NEWPLAYERIDREPLY:
+    case DPMSGCMD_FORWARDADDPLAYERNACK:
     case DPMSGCMD_SUPERENUMPLAYERSREPLY:
       DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize, lpcMessageHeader );
       break;
@@ -395,10 +396,6 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
     case DPMSGCMD_FORWARDADDPLAYER:
       TRACE( "Sending message to self to get my addr\n" );
       DP_MSG_ToSelf( This, 1 ); /* This is a hack right now */
-      break;
-
-    case DPMSGCMD_FORWARDADDPLAYERNACK:
-      DP_MSG_ErrorReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
       break;
 
     default:
