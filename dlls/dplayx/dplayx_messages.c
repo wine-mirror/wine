@@ -282,6 +282,14 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
     }
     lpcReply = lpMsg;
 
+    if ( FAILED( lpcReply->result ) )
+    {
+      hr = lpcReply->result;
+      free( msgHeader );
+      free( lpMsg );
+      return hr;
+    }
+
     *lpdpidAllocatedId = lpcReply->dpidNewPlayerId;
 
     TRACE( "Received reply for id = 0x%08lx\n", lpcReply->dpidNewPlayerId );
