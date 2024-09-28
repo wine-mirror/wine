@@ -1569,11 +1569,6 @@ static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, const DPNAME *lpSrc, BOOL bAnsi
     return TRUE;
   }
 
-  if( lpSrc->dwSize != sizeof( *lpSrc) )
-  {
-    return FALSE;
-  }
-
   /* Delete any existing pointers */
   free( lpDst->lpszShortNameA );
   free( lpDst->lpszLongNameA );
