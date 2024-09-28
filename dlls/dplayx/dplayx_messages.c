@@ -286,14 +286,6 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
 
     TRACE( "Received reply for id = 0x%08lx\n", lpcReply->dpidNewPlayerId );
 
-    /* FIXME: I think that the rest of the message has something to do
-     *        with remote data for the player that perhaps I need to setup.
-     *        However, with the information that is passed, all that it could
-     *        be used for is a standardized initialization value, which I'm
-     *        guessing we can do without. Unless the message content is the same
-     *        for several different messages?
-     */
-
     free( msgHeader );
     free( lpMsg );
   }

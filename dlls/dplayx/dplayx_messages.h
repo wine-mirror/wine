@@ -209,10 +209,10 @@ typedef struct tagDPMSG_NEWPLAYERIDREPLY
 
   DPID dpidNewPlayerId;
 
-  /* Assume that this is data that is tacked on to the end of the message
-   * that comes from the SP remote data stored that needs to be propagated.
-   */
-  BYTE unknown[36];     /* This appears to always be 0 - not sure though */
+  DPSECURITYDESC secDesc;
+  DWORD sspiProviderOffset;
+  DWORD capiProviderOffset;
+  HRESULT result;
 } DPMSG_NEWPLAYERIDREPLY, *LPDPMSG_NEWPLAYERIDREPLY;
 typedef const DPMSG_NEWPLAYERIDREPLY* LPCDPMSG_NEWPLAYERIDREPLY;
 
