@@ -2990,7 +2990,8 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
                 if (old_pos.x != pos.x) mask |= CWX;
                 if (old_pos.y != pos.y) mask |= CWY;
 
-                if (mask) XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
+                data->configure_serial = NextRequest( data->display );
+                XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
             }
 
             release_win_data( data );
