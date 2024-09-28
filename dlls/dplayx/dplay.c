@@ -2259,18 +2259,9 @@ static HRESULT WINAPI IDirectPlay3Impl_EnumGroupPlayers( IDirectPlay3 *iface, DP
             enumplayercb, context, flags );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupPlayers( IDirectPlay4A *iface, DPID group,
-        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+static HRESULT DP_IF_EnumGroupPlayers( IDirectPlayImpl *This, DPID group, GUID *instance,
+        LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags, BOOL ansi )
 {
-    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-    return IDirectPlayX_EnumGroupPlayers( &This->IDirectPlay4_iface, group, instance, enumplayercb,
-            context, flags );
-}
-
-static HRESULT WINAPI IDirectPlay4Impl_EnumGroupPlayers( IDirectPlay4 *iface, DPID group,
-        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
-{
-    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     lpGroupData  gdata;
     lpPlayerList plist;
 
@@ -2297,7 +2288,8 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumGroupPlayers( IDirectPlay4 *iface, DP
         {
             /* FIXME: Need to add stuff for flags checking */
             if ( !enumplayercb( plist->lpPData->dpid, DPPLAYERTYPE_PLAYER,
-                        plist->lpPData->name, plist->lpPData->dwFlags, context ) )
+                        ansi ? plist->lpPData->nameA : plist->lpPData->name,
+                        plist->lpPData->dwFlags, context ) )
               /* User requested break */
               return DP_OK;
         }
@@ -2306,6 +2298,20 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumGroupPlayers( IDirectPlay4 *iface, DP
             break;
     }
     return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupPlayers( IDirectPlay4A *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return DP_IF_EnumGroupPlayers( This, group, instance, enumplayercb, context, flags, TRUE );
+}
+
+static HRESULT WINAPI IDirectPlay4Impl_EnumGroupPlayers( IDirectPlay4 *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    return DP_IF_EnumGroupPlayers( This, group, instance, enumplayercb, context, flags, FALSE );
 }
 
 /* NOTE: This only enumerates top level groups (created with CreateGroup) */
@@ -4571,18 +4577,9 @@ static HRESULT WINAPI IDirectPlay3Impl_EnumGroupsInGroup( IDirectPlay3 *iface, D
             enumplayercb, context, flags );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupsInGroup( IDirectPlay4A *iface, DPID group,
-        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+static HRESULT DP_IF_EnumGroupsInGroup( IDirectPlayImpl *This, DPID group, GUID *instance,
+        LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags, BOOL ansi )
 {
-    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-    return IDirectPlayX_EnumGroupsInGroup( &This->IDirectPlay4_iface, group, instance,
-            enumplayercb, context, flags );
-}
-
-static HRESULT WINAPI IDirectPlay4Impl_EnumGroupsInGroup( IDirectPlay4 *iface, DPID group,
-        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
-{
-    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     lpGroupList glist;
     lpGroupData gdata;
 
@@ -4602,8 +4599,8 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumGroupsInGroup( IDirectPlay4 *iface, D
     for( glist = DPQ_FIRST( gdata->groups ); ; glist = DPQ_NEXT( glist->groups ) )
     {
         /* FIXME: Should check flags for match here */
-        if ( !(*enumplayercb)( glist->lpGData->dpid, DPPLAYERTYPE_GROUP, glist->lpGData->name,
-                    flags, context ) )
+        if ( !(*enumplayercb)( glist->lpGData->dpid, DPPLAYERTYPE_GROUP,
+                    ansi ? glist->lpGData->nameA : glist->lpGData->name, flags, context ) )
             return DP_OK; /* User requested break */
 
         if ( DPQ_IS_ENDOFLIST( glist->groups ) )
@@ -4611,6 +4608,20 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumGroupsInGroup( IDirectPlay4 *iface, D
     }
 
     return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay4AImpl_EnumGroupsInGroup( IDirectPlay4A *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return DP_IF_EnumGroupsInGroup( This, group, instance, enumplayercb, context, flags, TRUE );
+}
+
+static HRESULT WINAPI IDirectPlay4Impl_EnumGroupsInGroup( IDirectPlay4 *iface, DPID group,
+        GUID *instance, LPDPENUMPLAYERSCALLBACK2 enumplayercb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    return DP_IF_EnumGroupsInGroup( This, group, instance, enumplayercb, context, flags, FALSE );
 }
 
 static HRESULT WINAPI IDirectPlay3AImpl_GetGroupConnectionSettings( IDirectPlay3A *iface,

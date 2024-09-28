@@ -2033,8 +2033,8 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
                                          playerType );
             if ( player->expectedShortName )
             {
-                todo_wine ok_( __FILE__, data->line )( name->lpszShortNameA && !strcmp( name->lpszShortNameA, player->expectedShortName ),
-                                                       "got short name %s.\n", wine_dbgstr_a( name->lpszShortNameA ) );
+                ok_( __FILE__, data->line )( name->lpszShortNameA && !strcmp( name->lpszShortNameA, player->expectedShortName ),
+                                             "got short name %s.\n", wine_dbgstr_a( name->lpszShortNameA ) );
             }
             else
             {
@@ -2043,8 +2043,8 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
             }
             if ( player->expectedLongName )
             {
-                todo_wine ok_( __FILE__, data->line )( name->lpszLongNameA && !strcmp( name->lpszLongNameA, player->expectedLongName ),
-                                                       "got long name %s.\n", wine_dbgstr_a( name->lpszLongNameA ) );
+                ok_( __FILE__, data->line )( name->lpszLongNameA && !strcmp( name->lpszLongNameA, player->expectedLongName ),
+                                             "got long name %s.\n", wine_dbgstr_a( name->lpszLongNameA ) );
             }
             else
             {
