@@ -400,7 +400,6 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
 
     default:
       FIXME( "Unknown wCommandId %u. Ignoring message\n", wCommandId );
-      DebugBreak();
       break;
   }
 
