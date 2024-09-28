@@ -1213,7 +1213,7 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
 /***********************************************************************
  *     update_net_wm_states
  */
-void update_net_wm_states( struct x11drv_win_data *data )
+static void update_net_wm_states( struct x11drv_win_data *data )
 {
     UINT i, style, ex_style, new_state = 0;
 
@@ -1301,17 +1301,15 @@ void update_net_wm_states( struct x11drv_win_data *data )
 /***********************************************************************
  *     read_net_wm_states
  */
-void read_net_wm_states( Display* display, struct x11drv_win_data *data )
+UINT get_window_net_wm_state( Display *display, Window window )
 {
     Atom type, *state;
     int format;
     unsigned long i, j, count, remaining;
-    DWORD new_state = 0;
+    UINT new_state = 0;
     BOOL maximized_horz = FALSE;
 
-    if (!data->whole_window) return;
-
-    if (!XGetWindowProperty( display, data->whole_window, x11drv_atom(_NET_WM_STATE), 0,
+    if (!XGetWindowProperty( display, window, x11drv_atom(_NET_WM_STATE), 0,
                              65536/sizeof(CARD32), False, XA_ATOM, &type, &format, &count,
                              &remaining, (unsigned char **)&state ))
     {
@@ -1336,7 +1334,7 @@ void read_net_wm_states( Display* display, struct x11drv_win_data *data )
     if (!maximized_horz)
         new_state &= ~(1 << NET_WM_STATE_MAXIMIZED);
 
-    data->net_wm_state = new_state;
+    return new_state;
 }
 
 
