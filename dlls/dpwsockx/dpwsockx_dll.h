@@ -80,11 +80,21 @@ typedef struct
     SOCKADDR_IN         addr;
 
     SOCKET              tcpSock;
+    WSAOVERLAPPED       overlapped;
 } DPWS_OUT_CONNECTION;
 
 typedef struct
 {
+    struct rb_entry      entry;
+    ULONG                ref;
     DPWS_OUT_CONNECTION *connection;
+} DPWS_CONNECTION_REF;
+
+typedef struct
+{
+    struct rb_entry      entry;
+    DPID                 id;
+    struct rb_tree       connectionRefs;
 } DPWS_PLAYER;
 
 typedef struct tagDPWS_DATA
@@ -98,6 +108,7 @@ typedef struct tagDPWS_DATA
 
     CRITICAL_SECTION      sendCs;
     DPWS_PLAYER           nameserver;
+    DPWS_CONNECTION_REF   nameserverConnectionRef;
     struct rb_tree        connections;
 
     BOOL                  started;
