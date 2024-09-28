@@ -274,6 +274,11 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
   {
     LPCDPMSG_NEWPLAYERIDREPLY lpcReply;
 
+    if ( dwMsgSize < sizeof( DPMSG_NEWPLAYERIDREPLY ) )
+    {
+      free( lpMsg );
+      return DPERR_GENERIC;
+    }
     lpcReply = lpMsg;
 
     *lpdpidAllocatedId = lpcReply->dpidNewPlayerId;
