@@ -1901,7 +1901,7 @@ static HWND set_focus_window( HWND hwnd )
 /*******************************************************************
  *		set_active_window
  */
-BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
+BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DWORD new_active_thread_id )
 {
     HWND previous = get_active_window();
     BOOL ret;
@@ -1959,10 +1959,11 @@ BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
         {
             if (old_thread)
             {
+                if (!new_active_thread_id) new_active_thread_id = new_thread;
                 for (phwnd = list; *phwnd; phwnd++)
                 {
                     if (get_window_thread( *phwnd, NULL ) == old_thread)
-                        send_message( *phwnd, WM_ACTIVATEAPP, 0, new_thread );
+                        send_message( *phwnd, WM_ACTIVATEAPP, 0, new_active_thread_id );
                 }
             }
             if (new_thread)
@@ -2032,7 +2033,7 @@ HWND WINAPI NtUserSetActiveWindow( HWND hwnd )
             return get_active_window();  /* Windows doesn't seem to return an error here */
     }
 
-    if (!set_active_window( hwnd, &prev, FALSE, TRUE )) return 0;
+    if (!set_active_window( hwnd, &prev, FALSE, TRUE, 0 )) return 0;
     return prev;
 }
 
@@ -2078,7 +2079,7 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
         /* activate hwndTop if needed. */
         if (hwndTop != get_active_window())
         {
-            if (!set_active_window( hwndTop, NULL, FALSE, FALSE )) return 0;
+            if (!set_active_window( hwndTop, NULL, FALSE, FALSE, 0 )) return 0;
             if (!is_window( hwnd )) return 0;  /* Abort if window destroyed */
 
             /* Do not change focus if the window is no longer active */
@@ -2101,9 +2102,11 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
 BOOL set_foreground_window( HWND hwnd, BOOL mouse )
 {
     BOOL ret, send_msg_old = FALSE, send_msg_new = FALSE;
+    DWORD new_thread_id;
     HWND previous = 0;
 
     if (mouse) hwnd = get_full_window_handle( hwnd );
+    new_thread_id = get_window_thread( hwnd, NULL );
 
     SERVER_START_REQ( set_foreground_window )
     {
@@ -2120,16 +2123,16 @@ BOOL set_foreground_window( HWND hwnd, BOOL mouse )
     if (ret && previous != hwnd)
     {
         if (send_msg_old)  /* old window belongs to other thread */
-            NtUserMessageCall( previous, WM_WINE_SETACTIVEWINDOW, 0, 0,
+            NtUserMessageCall( previous, WM_WINE_SETACTIVEWINDOW, 0, new_thread_id,
                                0, NtUserSendNotifyMessage, FALSE );
         else if (send_msg_new)  /* old window belongs to us but new one to other thread */
-            ret = set_active_window( 0, NULL, mouse, TRUE );
+            ret = set_active_window( 0, NULL, mouse, TRUE, new_thread_id );
 
         if (send_msg_new)  /* new window belongs to other thread */
             NtUserMessageCall( hwnd, WM_WINE_SETACTIVEWINDOW, (WPARAM)hwnd, 0,
                                0, NtUserSendNotifyMessage, FALSE );
         else  /* new window belongs to us */
-            ret = set_active_window( hwnd, NULL, mouse, TRUE );
+            ret = set_active_window( hwnd, NULL, mouse, TRUE, 0 );
     }
     return ret;
 }

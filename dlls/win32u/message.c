@@ -2103,7 +2103,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         HWND prev;
 
         if (!wparam && NtUserGetForegroundWindow() == hwnd) return 0;
-        if (!set_active_window( (HWND)wparam, &prev, FALSE, TRUE )) return 0;
+        if (!set_active_window( (HWND)wparam, &prev, FALSE, TRUE, lparam )) return 0;
         return (LRESULT)prev;
     }
     case WM_WINE_KEYBOARD_LL_HOOK:
