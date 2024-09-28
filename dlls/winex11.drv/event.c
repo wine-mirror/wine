@@ -1075,6 +1075,13 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         host_window_configure_child( data->parent, data->whole_window, rect, event->send_event );
     }
 
+    /* synthetic events are already in absolute coordinates */
+    if (!event->send_event) pos = host_window_map_point( data->parent, event->x, event->y );
+    else if (is_virtual_desktop()) FIXME( "synthetic event mapping not implemented\n" );
+
+    pos = root_to_virtual_screen( pos.x, pos.y );
+    SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
+
     if (!data->mapped || data->iconic) goto done;
     if (!data->whole_window || !data->managed) goto done;
     if (data->configure_serial && (long)(data->configure_serial - event->serial) > 0)
@@ -1085,12 +1092,6 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         goto done;
     }
 
-    /* synthetic events are already in absolute coordinates */
-    if (!event->send_event) pos = host_window_map_point( data->parent, event->x, event->y );
-    else if (is_virtual_desktop()) FIXME( "synthetic event mapping not implemented\n" );
-
-    pos = root_to_virtual_screen( pos.x, pos.y );
-    SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
     rect = window_rect_from_visible( &data->rects, rect );
 
     TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
