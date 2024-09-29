@@ -28,33 +28,44 @@ import "windows.storage.streams.idl";
 namespace Windows.Media
 {
     typedef enum AudioProcessing AudioProcessing;
+    typedef enum MediaPlaybackAutoRepeatMode MediaPlaybackAutoRepeatMode;
     typedef enum MediaPlaybackStatus MediaPlaybackStatus;
     typedef enum MediaPlaybackType MediaPlaybackType;
     typedef enum SoundLevel SoundLevel;
     typedef enum SystemMediaTransportControlsButton SystemMediaTransportControlsButton;
     typedef enum SystemMediaTransportControlsProperty SystemMediaTransportControlsProperty;
 
+    interface IAutoRepeatModeChangeRequestedEventArgs;
     interface IImageDisplayProperties;
     interface IMediaControl;
     interface IMediaMarker;
     interface IMusicDisplayProperties;
     interface IMusicDisplayProperties2;
     interface IMusicDisplayProperties3;
+    interface IPlaybackPositionChangeRequestedEventArgs;
+    interface IPlaybackRateChangeRequestedEventArgs;
+    interface IShuffleEnabledChangeRequestedEventArgs;
     interface ISystemMediaTransportControls;
     interface ISystemMediaTransportControls2;
     interface ISystemMediaTransportControlsButtonPressedEventArgs;
     interface ISystemMediaTransportControlsDisplayUpdater;
     interface ISystemMediaTransportControlsPropertyChangedEventArgs;
     interface ISystemMediaTransportControlsStatics;
+    interface ISystemMediaTransportControlsTimelineProperties;
     interface IVideoDisplayProperties;
     interface IVideoDisplayProperties2;
 
+    runtimeclass AutoRepeatModeChangeRequestedEventArgs;
     runtimeclass ImageDisplayProperties;
     runtimeclass MusicDisplayProperties;
+    runtimeclass PlaybackPositionChangeRequestedEventArgs;
+    runtimeclass PlaybackRateChangeRequestedEventArgs;
+    runtimeclass ShuffleEnabledChangeRequestedEventArgs;
     runtimeclass SystemMediaTransportControls;
     runtimeclass SystemMediaTransportControlsButtonPressedEventArgs;
     runtimeclass SystemMediaTransportControlsDisplayUpdater;
     runtimeclass SystemMediaTransportControlsPropertyChangedEventArgs;
+    runtimeclass SystemMediaTransportControlsTimelineProperties;
     runtimeclass VideoDisplayProperties;
 
     declare
@@ -63,6 +74,11 @@ namespace Windows.Media
         interface Windows.Foundation.Collections.IIterator<Windows.Media.IMediaMarker*>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Media.IMediaMarker*>;
         interface Windows.Foundation.Collections.IVector<Windows.Media.IMediaMarker*>;
+        interface Windows.Foundation.IReference<Windows.Media.MediaPlaybackAutoRepeatMode>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls*, Windows.Media.AutoRepeatModeChangeRequestedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls*, Windows.Media.PlaybackPositionChangeRequestedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls*, Windows.Media.PlaybackRateChangeRequestedEventArgs*>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls*, Windows.Media.ShuffleEnabledChangeRequestedEventArgs*>;
         interface Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls*, Windows.Media.SystemMediaTransportControlsButtonPressedEventArgs*>;
         interface Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls*, Windows.Media.SystemMediaTransportControlsPropertyChangedEventArgs*>;
     }
@@ -74,6 +90,16 @@ namespace Windows.Media
     {
         Default = 0,
         Raw     = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum MediaPlaybackAutoRepeatMode
+    {
+        None  = 0,
+        Track = 1,
+        List  = 2,
     };
 
     [
@@ -136,6 +162,16 @@ namespace Windows.Media
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.AutoRepeatModeChangeRequestedEventArgs),
+        uuid(ea137efa-d852-438e-882b-c990109a78f4)
+    ]
+    interface IAutoRepeatModeChangeRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT RequestedAutoRepeatMode([out, retval] Windows.Media.MediaPlaybackAutoRepeatMode *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         uuid(1803def8-dca5-4b6f-9c20-e3d3c0643625)
     ]
     interface IMediaMarker : IInspectable
@@ -172,6 +208,36 @@ namespace Windows.Media
         [propget] HRESULT TrackNumber([out, retval] UINT32 *value);
         [propput] HRESULT TrackNumber([in] UINT32 value);
         [propget] HRESULT Genres([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.PlaybackPositionChangeRequestedEventArgs),
+        uuid(b4493f88-eb28-4961-9c14-335e44f3e125)
+    ]
+    interface IPlaybackPositionChangeRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT RequestedPlaybackPosition([out, retval] Windows.Foundation.TimeSpan *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.PlaybackRateChangeRequestedEventArgs),
+        uuid(2ce2c41f-3cd6-4f77-9ba7-eb27c26a2140)
+    ]
+    interface IPlaybackRateChangeRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT RequestedPlaybackRate([out, retval] DOUBLE *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.ShuffleEnabledChangeRequestedEventArgs),
+        uuid(49b593fe-4fd0-4666-a314-c0e01940d302)
+    ]
+    interface IShuffleEnabledChangeRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT RequestedShuffleEnabled([out, retval] boolean *value);
     }
 
     [
@@ -221,6 +287,38 @@ namespace Windows.Media
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.SystemMediaTransportControls),
+        uuid(ea98d2f6-7f3c-4af2-a586-72889808efb1)
+    ]
+    interface ISystemMediaTransportControls2 : IInspectable
+    {
+        [propget] HRESULT AutoRepeatMode([out, retval] Windows.Media.MediaPlaybackAutoRepeatMode *value);
+        [propput] HRESULT AutoRepeatMode([in] Windows.Media.MediaPlaybackAutoRepeatMode value);
+        [propget] HRESULT ShuffleEnabled([out, retval] boolean *value);
+        [propput] HRESULT ShuffleEnabled([in] boolean value);
+        [propget] HRESULT PlaybackRate([out, retval] DOUBLE *value);
+        [propput] HRESULT PlaybackRate([in] DOUBLE value);
+        HRESULT UpdateTimelineProperties([in] Windows.Media.SystemMediaTransportControlsTimelineProperties *timeline_properties);
+        [eventadd] HRESULT PlaybackPositionChangeRequested(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls *, Windows.Media.PlaybackPositionChangeRequestedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT PlaybackPositionChangeRequested([in] EventRegistrationToken token);
+        [eventadd] HRESULT PlaybackRateChangeRequested(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls *, Windows.Media.PlaybackRateChangeRequestedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT PlaybackRateChangeRequested([in] EventRegistrationToken token);
+        [eventadd] HRESULT ShuffleEnabledChangeRequested(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls *, Windows.Media.ShuffleEnabledChangeRequestedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ShuffleEnabledChangeRequested([in] EventRegistrationToken token);
+        [eventadd] HRESULT AutoRepeatModeChangeRequested(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Media.SystemMediaTransportControls *, Windows.Media.AutoRepeatModeChangeRequestedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT AutoRepeatModeChangeRequested([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Media.SystemMediaTransportControlsDisplayUpdater),
         uuid(8abbc53e-fa55-4ecf-ad8e-c984e5dd1550)
     ]
@@ -265,6 +363,34 @@ namespace Windows.Media
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Media.SystemMediaTransportControlsTimelineProperties),
+        uuid(5125316a-c3a2-475b-8507-93534dc88f15)
+    ]
+    interface ISystemMediaTransportControlsTimelineProperties : IInspectable
+    {
+        [propget] HRESULT StartTime([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT StartTime([in] Windows.Foundation.TimeSpan value);
+        [propget] HRESULT EndTime([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT EndTime([in] Windows.Foundation.TimeSpan value);
+        [propget] HRESULT MinSeekTime([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT MinSeekTime([in] Windows.Foundation.TimeSpan value);
+        [propget] HRESULT MaxSeekTime([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT MaxSeekTime([in] Windows.Foundation.TimeSpan value);
+        [propget] HRESULT Position([out, retval] Windows.Foundation.TimeSpan *value);
+        [propput] HRESULT Position([in] Windows.Foundation.TimeSpan value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass AutoRepeatModeChangeRequestedEventArgs
+    {
+        [default] interface Windows.Media.IAutoRepeatModeChangeRequestedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         threading(both)
     ]
@@ -283,6 +409,33 @@ namespace Windows.Media
         [default] interface Windows.Media.IMusicDisplayProperties;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Media.IMusicDisplayProperties2;
         [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Media.IMusicDisplayProperties3;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PlaybackPositionChangeRequestedEventArgs
+    {
+        [default] interface Windows.Media.IPlaybackPositionChangeRequestedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass PlaybackRateChangeRequestedEventArgs
+    {
+        [default] interface Windows.Media.IPlaybackRateChangeRequestedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ShuffleEnabledChangeRequestedEventArgs
+    {
+        [default] interface Windows.Media.IShuffleEnabledChangeRequestedEventArgs;
     }
 
     [
@@ -323,6 +476,17 @@ namespace Windows.Media
     runtimeclass SystemMediaTransportControlsPropertyChangedEventArgs
     {
         [default] interface Windows.Media.ISystemMediaTransportControlsPropertyChangedEventArgs;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass SystemMediaTransportControlsTimelineProperties
+    {
+        [default] interface Windows.Media.ISystemMediaTransportControlsTimelineProperties;
     }
 
     [
