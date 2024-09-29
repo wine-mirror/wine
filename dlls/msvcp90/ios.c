@@ -11520,6 +11520,17 @@ basic_ofstream_char* __thiscall basic_ofstream_char_ctor_name(basic_ofstream_cha
     return this;
 }
 
+#if _MSVCP_VER == 70
+/* ??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAE@PBDH@Z */
+/* ??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAA@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ofstream_char_ctor_name_mode, 16)
+basic_ofstream_char* __thiscall basic_ofstream_char_ctor_name_mode(basic_ofstream_char *this,
+        const char *name, int mode, bool virt_init)
+{
+    return basic_ofstream_char_ctor_name(this, name, mode, _SH_DENYNO, virt_init);
+}
+#endif
+
 /* ??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAE@PBGHH@Z */
 /* ??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QEAA@PEBGHH@Z */
 /* ??0?$basic_ofstream@DU?$char_traits@D@std@@@std@@QAE@PB_WHH@Z */
@@ -11766,6 +11777,17 @@ basic_ofstream_wchar* __thiscall basic_ofstream_wchar_ctor_name(basic_ofstream_w
     return this;
 }
 
+#if _MSVCP_VER == 70
+/* ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PBDH@Z */
+/* ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ofstream_wchar_ctor_name_mode, 16)
+basic_ofstream_wchar* __thiscall basic_ofstream_wchar_ctor_name_mode(basic_ofstream_wchar *this,
+        const char *name, int mode, bool virt_init)
+{
+    return basic_ofstream_wchar_ctor_name(this, name, mode, _SH_DENYNO, virt_init);
+}
+#endif
+
 /* ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PBDHH@Z */
 /* ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEBDHH@Z */
 DEFINE_THISCALL_WRAPPER(basic_ofstream_short_ctor_name, 20)
@@ -11776,6 +11798,17 @@ basic_ofstream_wchar* __thiscall basic_ofstream_short_ctor_name(basic_ofstream_w
     basic_ostream_wchar_get_basic_ios(&this->base)->base.vtable = &basic_ofstream_short_vtable;
     return this;
 }
+
+#if _MSVCP_VER == 70
+/* ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QAE@PBDH@Z */
+/* ??0?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEAA@PEBDH@Z */
+DEFINE_THISCALL_WRAPPER(basic_ofstream_short_ctor_name_mode, 16)
+basic_ofstream_wchar* __thiscall basic_ofstream_short_ctor_name_mode(basic_ofstream_wchar *this,
+        const char *name, int mode, bool virt_init)
+{
+    return basic_ofstream_short_ctor_name(this, name, mode, _SH_DENYNO, virt_init);
+}
+#endif
 
 /* ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QAE@PBGHH@Z */
 /* ??0?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEAA@PEBGHH@Z */
