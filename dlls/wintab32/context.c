@@ -102,7 +102,7 @@ static const char* DUMPBITS(int x)
 
 static inline void DUMPPACKET(WTPACKET packet)
 {
-    TRACE("pkContext: %p pkStatus: 0x%x pkTime : 0x%lx pkChanged: 0x%lx pkSerialNumber: 0x%x pkCursor : %i pkButtons: %lx pkX: %li pkY: %li pkZ: %li pkNormalPressure: %i pkTangentPressure: %i pkOrientation: (%i,%i,%i) pkRotation: (%i,%i,%i)\n",
+    TRACE("pkContext: 0x%x pkStatus: 0x%x pkTime : 0x%lx pkChanged: 0x%lx pkSerialNumber: 0x%x pkCursor : %i pkButtons: %lx pkX: %li pkY: %li pkZ: %li pkNormalPressure: %i pkTangentPressure: %i pkOrientation: (%i,%i,%i) pkRotation: (%i,%i,%i)\n",
           packet.pkContext, packet.pkStatus, packet.pkTime, packet.pkChanged, packet.pkSerialNumber,
           packet.pkCursor, packet.pkButtons, packet.pkX, packet.pkY, packet.pkZ,
           packet.pkNormalPressure, packet.pkTangentPressure,
@@ -205,7 +205,7 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
 
             tgt = ptr->PacketsQueued;
 
-            packet->pkContext = ptr->handle;
+            packet->pkContext = HandleToULong(ptr->handle);
 
             /* translate packet data to the context */
             packet->pkChanged = packet->pkChanged & ptr->context.lcPktData;
@@ -296,12 +296,15 @@ static LPVOID TABLET_CopyPacketData(LPOPENCONTEXT context, LPVOID lpPkt,
                                     LPWTPACKET wtp)
 {
     LPBYTE ptr;
+    HCTX ctx;
 
     ptr = lpPkt;
     TRACE("Packet Bits %s\n",DUMPBITS(context->context.lcPktData));
 
+    ctx = ULongToHandle(wtp->pkContext);
+
     if (context->context.lcPktData & PK_CONTEXT)
-        ptr+=CopyTabletData(ptr,&wtp->pkContext,sizeof(HCTX));
+        ptr+=CopyTabletData(ptr,&ctx,sizeof(HCTX));
     if (context->context.lcPktData & PK_STATUS)
         ptr+=CopyTabletData(ptr,&wtp->pkStatus,sizeof(UINT));
     if (context->context.lcPktData & PK_TIME)
