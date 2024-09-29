@@ -3233,7 +3233,7 @@ done:
  */
 static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNICODE_STRING *nt_name,
                                WINE_MODREF **pwm, HANDLE *mapping, SECTION_IMAGE_INFORMATION *image_info,
-                               struct file_id *id )
+                               struct file_id *id, BOOL find_loaded )
 {
     WCHAR *fullname = NULL;
     NTSTATUS status;
@@ -3264,6 +3264,12 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
             if ((*pwm = find_basename_module( libname )) != NULL)
             {
                 status = STATUS_SUCCESS;
+                goto done;
+            }
+            if (find_loaded)
+            {
+                TRACE( "Skipping file search for %s.\n", debugstr_w(libname) );
+                status = STATUS_DLL_NOT_FOUND;
                 goto done;
             }
         }
@@ -3309,7 +3315,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
 
     if (nts)
     {
-        nts = find_dll_file( load_path, libname, &nt_name, pwm, &mapping, &image_info, &id );
+        nts = find_dll_file( load_path, libname, &nt_name, pwm, &mapping, &image_info, &id, FALSE );
         system = FALSE;
     }
 
@@ -3499,7 +3505,7 @@ NTSTATUS WINAPI LdrGetDllHandleEx( ULONG flags, LPCWSTR load_path, ULONG *dll_ch
     RtlEnterCriticalSection( &loader_section );
 
     status = find_dll_file( load_path, dllname ? dllname : name->Buffer,
-                            &nt_name, &wm, &mapping, &image_info, &id );
+                            &nt_name, &wm, &mapping, &image_info, &id, TRUE );
 
     if (wm) *base = wm->ldr.DllBase;
     else

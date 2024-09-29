@@ -1412,7 +1412,7 @@ static void test_LdrGetDllHandleEx(void)
     bret = MoveFileA( "d01.dll", "d02.dll" );
     ok( bret, "got error %lu.\n", GetLastError() );
     status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL, &name, &loaded_mod );
-    todo_wine ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
+    ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
     CreateDirectoryA( "testdir", NULL );
     DeleteFileA( "testdir\\d02.dll" );
     bret = MoveFileA( "d02.dll", "testdir\\d02.dll" );
