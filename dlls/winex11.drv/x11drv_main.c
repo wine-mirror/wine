@@ -811,12 +811,6 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 
 #ifdef _WIN64
 
-static NTSTATUS x11drv_wow64_tablet_get_packet( void *arg )
-{
-    FIXME( "%p\n", arg );
-    return 0;
-}
-
 static NTSTATUS x11drv_wow64_tablet_info( void *arg )
 {
     struct
@@ -837,7 +831,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     x11drv_init,
     x11drv_tablet_attach_queue,
-    x11drv_wow64_tablet_get_packet,
+    x11drv_tablet_get_packet,
     x11drv_wow64_tablet_info,
     x11drv_tablet_load_info,
 };
