@@ -5932,6 +5932,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
 /*******************************************************************
  *           NtUserDragDetect (win32u.@)
+ *
+ * Note that x and y are in the coordinate relative to the upper-left corner of the client area, not
+ * in screen coordinates as MSDN claims.
  */
 BOOL WINAPI NtUserDragDetect( HWND hwnd, int x, int y )
 {

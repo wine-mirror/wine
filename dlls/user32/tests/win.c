@@ -74,6 +74,30 @@ static const char* szAWRClass = "Winsize";
 static HMENU hmenu;
 static DWORD our_pid;
 
+static void hold_key( int vk )
+{
+    BYTE kstate[256];
+    BOOL res;
+
+    res = GetKeyboardState( kstate );
+    ok(res, "GetKeyboardState failed.\n");
+    kstate[vk] |= 0x80;
+    res = SetKeyboardState( kstate );
+    ok(res, "SetKeyboardState failed.\n");
+}
+
+static void release_key( int vk )
+{
+    BYTE kstate[256];
+    BOOL res;
+
+    res = GetKeyboardState( kstate );
+    ok(res, "GetKeyboardState failed.\n");
+    kstate[vk] &= ~0x80;
+    res = SetKeyboardState( kstate );
+    ok(res, "SetKeyboardState failed.\n");
+}
+
 static void dump_minmax_info( const MINMAXINFO *minmax )
 {
     trace("Reserved=%ld,%ld MaxSize=%ld,%ld MaxPos=%ld,%ld MinTrack=%ld,%ld MaxTrack=%ld,%ld\n",
@@ -12900,6 +12924,8 @@ static void test_cancel_mode(void)
 
 static void test_DragDetect(void)
 {
+    int cx_drag = GetSystemMetrics( SM_CXDRAG ), cy_drag = GetSystemMetrics( SM_CYDRAG );
+    HWND hwnd;
     POINT pt;
     BOOL ret;
 
@@ -12912,6 +12938,53 @@ static void test_DragDetect(void)
 
     ok(!GetCapture(), "got capture window %p\n", GetCapture());
     ok(!(GetKeyState( VK_LBUTTON ) & 0x8000), "got VK_LBUTTON\n");
+
+    /* Test mouse moving out of the drag rectangle in client coordinates */
+    hwnd = CreateWindowA( "static", "test", WS_POPUP | WS_VISIBLE, 100, 100, 50, 50, 0, 0, 0, 0 );
+    hold_key( VK_LBUTTON );
+
+    PostMessageA( hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(cx_drag, cy_drag) );
+
+    pt.x = 0;
+    pt.y = 0;
+    ret = DragDetect( hwnd, pt );
+    ok(ret, "Got unexpected %d.\n", ret);
+    flush_events( TRUE );
+
+    /* Test mouse not moving out of the drag rectangle in client coordinates */
+    PostMessageA( hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(cx_drag - 1, cy_drag - 1) );
+    PostMessageA( hwnd, WM_LBUTTONUP, 0, 0 );
+
+    pt.x = 0;
+    pt.y = 0;
+    ret = DragDetect( hwnd, pt );
+    ok(!ret || broken(ret) /* Win 7 */, "Got unexpected %d\n", ret);
+    flush_events( TRUE );
+
+    /* Test mouse moving out of the drag rectangle in screen coordinates */
+    PostMessageA( hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(cx_drag, cy_drag) );
+
+    pt.x = 0;
+    pt.y = 0;
+    ClientToScreen( hwnd, &pt );
+    ret = DragDetect( hwnd, pt );
+    ok(ret || broken(!ret) /* Win 7 */, "Got unexpected %d\n", ret);
+    flush_events( TRUE );
+
+    /* Test mouse not moving out of the drag rectangle in screen coordinates */
+    PostMessageA( hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(0, 0) );
+
+    pt.x = 0;
+    pt.y = 0;
+    ClientToScreen( hwnd, &pt );
+    ret = DragDetect( hwnd, pt );
+    /* NOTE that if DragDetect() do use screen coordinates for the second parameter for the initial
+     * mouse position, then FALSE should be returned in this case. But TRUE is returned here. So
+     * this means that DragDetect() don't use screen coordinates even though MSDN says that it does */
+    ok(ret, "Got unexpected %d\n", ret);
+
+    DestroyWindow( hwnd );
+    release_key( VK_LBUTTON );
 }
 
 static LRESULT WINAPI ncdestroy_test_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
