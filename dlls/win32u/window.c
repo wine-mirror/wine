@@ -1998,7 +1998,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 {
     struct window_rects monitor_rects;
     WND *win;
-    HWND surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
+    HWND owner_hint, surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
     BOOL ret, is_fullscreen, is_layered, is_child, needs_update = FALSE;
     struct window_rects old_rects;
     RECT extra_rects[3];
@@ -2138,7 +2138,13 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             }
         }
 
-        user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, is_fullscreen, &monitor_rects, get_driver_window_surface( new_surface, monitor_dpi ) );
+        owner_hint = NtUserGetWindowRelative(hwnd, GW_OWNER);
+        /* fallback to any window that is right below our top left corner */
+        if (!owner_hint) owner_hint = NtUserWindowFromPoint(new_rects->window.left - 1, new_rects->window.top - 1);
+        if (owner_hint) owner_hint = NtUserGetAncestor(owner_hint, GA_ROOT);
+
+        user_driver->pWindowPosChanged( hwnd, insert_after, owner_hint, swp_flags, is_fullscreen, &monitor_rects,
+                                        get_driver_window_surface( new_surface, monitor_dpi ) );
 
         update_children_window_state( hwnd );
     }

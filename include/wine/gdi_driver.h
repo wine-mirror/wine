@@ -219,7 +219,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 100
+#define WINE_GDI_DRIVER_VERSION 101
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -387,7 +387,7 @@ struct user_driver_funcs
     BOOL    (*pGetWindowStyleMasks)(HWND,UINT,UINT,UINT*,UINT*);
     BOOL    (*pCreateWindowSurface)(HWND,BOOL,const RECT *,struct window_surface**);
     void    (*pMoveWindowBits)(HWND,const struct window_rects *,const struct window_rects *,const RECT *);
-    void    (*pWindowPosChanged)(HWND,HWND,UINT,BOOL,const struct window_rects*,struct window_surface*);
+    void    (*pWindowPosChanged)(HWND,HWND,HWND,UINT,BOOL,const struct window_rects*,struct window_surface*);
     /* system parameters */
     BOOL    (*pSystemParametersInfo)(UINT,UINT,void*,UINT);
     /* vulkan support */
