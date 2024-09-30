@@ -1620,8 +1620,8 @@ static RETURN_CODE search_command(WCHAR *command, struct search_command *sc, BOO
             DWORD attribs = GetFileAttributesW(sc->path);
             found = attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY);
         }
-        else
-            found = search_in_pathext(sc->path);
+        /* if foo.bat was given but not found, try to match foo.bat.bat (or any valid ext) */
+        if (!found) found = search_in_pathext(sc->path);
         if (found) return NO_ERROR;
     }
     return RETURN_CODE_CANT_LAUNCH;
