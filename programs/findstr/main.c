@@ -19,6 +19,8 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <io.h>
+#include <fcntl.h>
 #include "findstr.h"
 #include "wine/debug.h"
 
@@ -63,10 +65,11 @@ static BOOL add_file(struct findstr_file **head, const WCHAR *path)
     if (!path)
     {
         new_file->file = stdin;
+        _setmode(_fileno(stdin), _O_BINARY);
     }
     else
     {
-        new_file->file = _wfopen(path, L"rt,ccs=unicode");
+        new_file->file = _wfopen(path, L"rb");
         if (!new_file->file)
         {
             findstr_error_wprintf(STRING_CANNOT_OPEN, path);
@@ -78,9 +81,27 @@ static BOOL add_file(struct findstr_file **head, const WCHAR *path)
     return TRUE;
 }
 
+static inline char *strdupWA(const WCHAR *src)
+{
+    char *dst = NULL;
+    if (src)
+    {
+        int len = WideCharToMultiByte(GetOEMCP(), 0, src, -1, NULL, 0, NULL, NULL);
+        if ((dst = malloc(len))) WideCharToMultiByte(CP_ACP, 0, src, -1, dst, len, NULL, NULL);
+    }
+    return dst;
+}
+
 static void add_string(struct findstr_string **head, const WCHAR *string)
 {
     struct findstr_string **ptr, *new_string;
+    char *str = strdupWA(string);
+
+    if (!str)
+    {
+        WINE_ERR("Out of memory.\n");
+        return;
+    }
 
     ptr = head;
     while (*ptr)
@@ -93,19 +114,19 @@ static void add_string(struct findstr_string **head, const WCHAR *string)
         return;
     }
 
-    new_string->string = string;
+    new_string->string = str;
     *ptr = new_string;
 }
 
-static BOOL match_substring(const WCHAR *str, const WCHAR *substr, BOOL case_sensitive)
+static BOOL match_substring(const char *str, const char *substr, BOOL case_sensitive)
 {
-    if (case_sensitive) return !!wcsstr(str, substr);
+    if (case_sensitive) return !!strstr(str, substr);
 
     while (*str)
     {
-        const WCHAR *p1 = str, *p2 = substr;
+        const char *p1 = str, *p2 = substr;
 
-        while (*p1 && *p2 && towlower(*p1) == towlower(*p2))
+        while (*p1 && *p2 && tolower(*p1) == tolower(*p2))
         {
             p1++;
             p2++;
@@ -113,46 +134,45 @@ static BOOL match_substring(const WCHAR *str, const WCHAR *substr, BOOL case_sen
         if (!*p2) return TRUE;
         str++;
     }
-
     return FALSE;
 }
 
-static inline BOOL is_op(WCHAR c, const WCHAR *regexp, UINT pos)
+static inline BOOL is_op(char c, const char *regexp, UINT pos)
 {
     if (!pos) return (*regexp == c);
     return (regexp[pos] == c && regexp[pos - 1] != '\\');
 }
 
-static inline BOOL match_char(WCHAR c1, WCHAR c2, BOOL case_sensitive)
+static inline BOOL match_char(char c1, char c2, BOOL case_sensitive)
 {
     if (case_sensitive) return c1 == c2;
-    return towlower(c1) == towlower(c2);
+    return tolower(c1) == tolower(c2);
 }
 
-static BOOL match_star(WCHAR, const WCHAR *, const WCHAR *, UINT, BOOL);
+static BOOL match_star(char, const char *, const char *, UINT, BOOL);
 
-static BOOL match_here(const WCHAR *str, const WCHAR *regexp, UINT pos, BOOL case_sensitive)
+static BOOL match_here(const char *str, const char *regexp, UINT pos, BOOL case_sensitive)
 {
     if (regexp[pos] == '\\' && regexp[pos + 1]) pos++;
     if (!regexp[pos]) return TRUE;
     if (is_op('*', regexp, pos + 1)) return match_star(regexp[pos], str, regexp, pos + 2, case_sensitive);
-    if (is_op('$', regexp, pos) && !regexp[pos + 1]) return (*str == '\n');
+    if (is_op('$', regexp, pos) && !regexp[pos + 1]) return (str[0] == '\n' || (str[0] == '\r' && str[1] == '\n'));
     if (*str && (is_op('.', regexp, pos) || match_char(*str, regexp[pos], case_sensitive)))
         return match_here(str + 1, regexp, pos + 1, case_sensitive);
     return FALSE;
 }
 
-static BOOL match_star(WCHAR c, const WCHAR *str, const WCHAR *regexp, UINT pos, BOOL case_sensitive)
+static BOOL match_star(char c, const char *str, const char *regexp, UINT pos, BOOL case_sensitive)
 {
     do { if (match_here(str, regexp, pos, case_sensitive)) return TRUE; }
     while (*str && (match_char(*str++, c, case_sensitive) || c == '.'));
     return FALSE;
 }
 
-static BOOL match_regexp(const WCHAR *str, const WCHAR *regexp, BOOL case_sensitive)
+static BOOL match_regexp(const char *str, const char *regexp, BOOL case_sensitive)
 {
-    if (wcsstr(regexp, L"[")) FIXME("character ranges (i.e. [abc], [^a-z]) are not supported\n");
-    if (wcsstr(regexp, L"\\<") || wcsstr(regexp, L"\\>")) FIXME("word position (i.e. \\< and \\>) not supported\n");
+    if (strstr(regexp, "[")) FIXME("character ranges (i.e. [abc], [^a-z]) are not supported\n");
+    if (strstr(regexp, "\\<") || strstr(regexp, "\\>")) FIXME("word position (i.e. \\< and \\>) not supported\n");
 
     if (regexp[0] == '^') return match_here(str, regexp, 1, case_sensitive);
     do { if (match_here(str, regexp, 0, case_sensitive)) return TRUE; } while (*str++);
@@ -163,7 +183,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 {
     struct findstr_string *string_head = NULL, *current_string, *next_string;
     struct findstr_file *file_head = NULL, *current_file, *next_file;
-    WCHAR *string, *ptr, *buffer, line[MAXSTRING];
+    char line[MAXSTRING];
+    WCHAR *string, *ptr, *buffer;
     BOOL has_string = FALSE, has_file = FALSE, case_sensitive = TRUE, regular_expression = FALSE;
     int ret = 1, i, j;
 
@@ -190,7 +211,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
             j = 1;
             while (argv[i][j] != '\0')
             {
-                switch(argv[i][j])
+                switch (argv[i][j])
                 {
                 case '?':
                     findstr_message(STRING_USAGE);
@@ -258,10 +279,12 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     if (!has_file)
         add_file(&file_head, NULL);
 
+    _setmode(_fileno(stdout), _O_BINARY);
+
     current_file = file_head;
     while (current_file)
     {
-        while (fgetws(line, ARRAY_SIZE(line), current_file->file))
+        while (fgets(line, ARRAY_SIZE(line), current_file->file))
         {
             current_string = string_head;
             while (current_string)
@@ -274,16 +297,14 @@ int __cdecl wmain(int argc, WCHAR *argv[])
                     match = match_substring(line, current_string->string, case_sensitive);
                 if (match)
                 {
-                    wprintf(line);
-                    if (current_file->file == stdin)
-                        wprintf(L"\n");
+                    printf("%s",line);
+                    if (current_file->file == stdin && line[0] && line[strlen(line) - 1] != '\n')
+                        printf("\r\n");
                     ret = 0;
                 }
-
                 current_string = current_string->next;
             }
         }
-
         current_file = current_file->next;
     }
 
