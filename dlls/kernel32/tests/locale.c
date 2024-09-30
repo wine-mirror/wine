@@ -4135,6 +4135,7 @@ static void test_FoldStringW(void)
       { 0x104a0, 0, 9 },                  /* Osmanya */
       { 0x10a40, 1, 4, TRUE /*win10*/ },  /* Kharoshthi */
       { 0x10d30, 0, 9, TRUE /*win10*/ },  /* Hanifi Rohingya */
+      { 0x10d40, 0, 9, TRUE /*win10*/ },  /* Garay */
       { 0x10e60, 1, 9, TRUE /*win10*/ },  /* Rumi */
       { 0x11052, 1, 9, TRUE /*win10*/ },  /* Brahmi Number */
       { 0x11066, 0, 9, TRUE /*win10*/ },  /* Brahmi Digit */
@@ -4146,16 +4147,22 @@ static void test_FoldStringW(void)
       { 0x114d0, 0, 9, TRUE /*win10*/ },  /* Tirhuta */
       { 0x11650, 0, 9, TRUE /*win10*/ },  /* Modi */
       { 0x116c0, 0, 9, TRUE /*win10*/ },  /* Takri */
+      { 0x116d0, 0, 9, TRUE /*win10*/ },  /* Myanmar Pa-O */
+      { 0x116da, 0, 9, TRUE /*win10*/ },  /* Myanmar Eastern Pwo */
       { 0x11730, 0, 9, TRUE /*win10*/ },  /* Ahom */
       { 0x118e0, 0, 9, TRUE /*win10*/ },  /* Warang */
       { 0x11950, 0, 9, TRUE /*win10*/ },  /* Dives Akuru */
+      { 0x11bf0, 0, 9, TRUE /*win10*/ },  /* Sunuwar */
       { 0x11c50, 0, 9, TRUE /*win10*/ },  /* Bhaiksuki */
       { 0x11d50, 0, 9, TRUE /*win10*/ },  /* Masaram Gondi */
       { 0x11da0, 0, 9, TRUE /*win10*/ },  /* Gunjala Gondi */
       { 0x11f50, 0, 9, TRUE /*win10*/ },  /* Kawi */
+      { 0x16130, 0, 9, TRUE /*win10*/ },  /* Gurung Khema */
       { 0x16a60, 0, 9, TRUE /*win10*/ },  /* Mro */
       { 0x16ac0, 0, 9, TRUE /*win10*/ },  /* Tangsa */
       { 0x16b50, 0, 9, TRUE /*win10*/ },  /* Pahawh Hmong */
+      { 0x16d70, 0, 9, TRUE /*win10*/ },  /* Kirat Rai */
+      { 0x1ccf0, 0, 9, TRUE /*win10*/ },  /* Outlined digits */
       { 0x1d7ce, 0, 9 },                  /* Mathematical Bold */
       { 0x1d7d8, 0, 9 },                  /* Mathematical Double Struck */
       { 0x1d7e2, 0, 9 },                  /* Mathematical Sans Serif */
@@ -4164,6 +4171,7 @@ static void test_FoldStringW(void)
       { 0x1e140, 0, 9, TRUE /*win10*/ },  /* Nyiakeng Puachue Hmong */
       { 0x1e2f0, 0, 9, TRUE /*win10*/ },  /* Wancho */
       { 0x1e4f0, 0, 9, TRUE /*win10*/ },  /* Nag Mundari */
+      { 0x1e5f1, 0, 9, TRUE /*win10*/ },  /* Ol Onal */
       { 0x1e950, 0, 9, TRUE /*win10*/ },  /* Adlam */
       { 0x1f100, 0, 0, TRUE /*win10*/ },  /* Full Stop */
       { 0x1f101, 0, 9, TRUE /*win10*/ },  /* Comma */
