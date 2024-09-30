@@ -242,6 +242,39 @@ static void handle_display_settings_apply(void)
     ChangeDisplaySettingsExW( NULL, NULL, 0, 0, NULL );
 }
 
+static void handle_emulate_modeset_change( HWND hwnd )
+{
+    const WCHAR *value = L"N";
+    HKEY hkey;
+
+    /* Registry key can be found in HKCU\Software\Wine\X11 Driver */
+    if (!RegCreateKeyExW( HKEY_CURRENT_USER, L"Software\\Wine\\X11 Driver", 0, NULL, 0,
+                          KEY_SET_VALUE, NULL, &hkey, NULL ))
+    {
+        if (IsDlgButtonChecked( hwnd, IDC_EMULATE_MODESET ) == BST_CHECKED) value = L"Y";
+        RegSetValueExW( hkey, L"EmulateModeset", 0, REG_SZ, (BYTE *)value, (wcslen( value ) + 1) * sizeof(WCHAR) );
+        RegCloseKey( hkey );
+    }
+}
+
+static BOOL get_option( const WCHAR *option, BOOL default_value )
+{
+    BOOL ret = default_value;
+    WCHAR buffer[MAX_PATH];
+    DWORD size = sizeof(buffer);
+
+#define IS_OPTION_TRUE(ch) \
+    ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+
+    /* Registry key can be found in HKCU\Software\Wine\X11 Driver */
+    if (!RegGetValueW( HKEY_CURRENT_USER, L"Software\\Wine\\X11 Driver", option, RRF_RT_REG_SZ, NULL,
+                       (BYTE *)buffer, &size ))
+        ret = IS_OPTION_TRUE(buffer[0]);
+
+#undef IS_OPTION_TRUE
+    return ret;
+}
+
 static RECT map_virtual_client_rect( RECT rect, RECT client_rect, RECT virtual_rect, float scale )
 {
     OffsetRect( &rect, -(virtual_rect.left + virtual_rect.right) / 2, -(virtual_rect.top + virtual_rect.bottom) / 2 );
@@ -424,6 +457,8 @@ static INT_PTR CALLBACK desktop_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam,
     case WM_INITDIALOG:
         refresh_device_list( hwnd );
         create_desktop_view( hwnd );
+        SendMessageW( GetDlgItem( hwnd, IDC_EMULATE_MODESET ), BM_SETCHECK,
+                      get_option( L"EmulateModeset", FALSE ), 0 );
         return TRUE;
 
     case WM_COMMAND:
@@ -431,6 +466,9 @@ static INT_PTR CALLBACK desktop_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam,
         {
         case MAKEWPARAM( IDC_DISPLAY_SETTINGS_LIST, CBN_SELCHANGE ):
             handle_display_settings_change( hwnd );
+            break;
+        case IDC_EMULATE_MODESET:
+            handle_emulate_modeset_change( hwnd );
             break;
         case IDC_DISPLAY_SETTINGS_APPLY:
             handle_display_settings_apply();

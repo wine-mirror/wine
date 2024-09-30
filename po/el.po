@@ -3106,6 +3106,10 @@ msgstr "Επιφάνεια Εργασίας"
 msgid "&Reset"
 msgstr "Ε&παναφορά"
 
+#: dlls/desk.cpl/desk.rc:42
+msgid "Emulate display mode changes (requires restart)"
+msgstr ""
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 msgid "Display Settings"

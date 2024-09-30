@@ -1,5 +1,5 @@
 MODULE    = desk.cpl
-IMPORTS   = ole32 comctl32 user32 gdi32
+IMPORTS   = advapi32 ole32 comctl32 user32 gdi32
 
 SOURCES = \
 	desk.rc \

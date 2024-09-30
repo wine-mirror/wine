@@ -3213,6 +3213,10 @@ msgstr "Área de trabalho"
 msgid "&Reset"
 msgstr "Reinicializar"
 
+#: dlls/desk.cpl/desk.rc:42
+msgid "Emulate display mode changes (requires restart)"
+msgstr ""
+
 #: dlls/desk.cpl/desk.rc:29
 #, fuzzy
 #| msgid "Default Settings"

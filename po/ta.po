@@ -3110,6 +3110,10 @@ msgstr "Wine உதவி"
 msgid "&Reset"
 msgstr "மீட்டமை (&E)"
 
+#: dlls/desk.cpl/desk.rc:42
+msgid "Emulate display mode changes (requires restart)"
+msgstr ""
+
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
 msgstr ""
