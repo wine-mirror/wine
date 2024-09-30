@@ -1775,6 +1775,10 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
         SERVER_END_REQ;
         return ret;
 
+    case ProcessPowerThrottlingState:
+        FIXME( "ProcessPowerThrottlingState - stub\n" );
+        return STATUS_SUCCESS;
+
     default:
         FIXME( "(%p,0x%08x,%p,0x%08x) stub\n", handle, class, info, (int)size );
         ret = STATUS_NOT_IMPLEMENTED;
