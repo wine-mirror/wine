@@ -3394,7 +3394,15 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
 
     hr = DP_IF_CreateGroup( This, NULL, &systemGroup, NULL,
                             NULL, 0, 0, TRUE );
-
+    if ( FAILED( hr ) )
+    {
+      if( This->dp2->spData.lpCB->CloseEx )
+      {
+        DPSP_CLOSEDATA data;
+        data.lpISP = This->dp2->spData.lpISP;
+        (*This->dp2->spData.lpCB->CloseEx)( &data );
+      }
+    }
   }
 
   if( dwFlags & DPOPEN_JOIN )
@@ -3414,17 +3422,43 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
     if( FAILED( hr ) )
     {
       ERR( "Request for ID failed: %s\n", DPLAYX_HresultToString( hr ) );
+      DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );
+      if( This->dp2->spData.lpCB->CloseEx )
+      {
+        DPSP_CLOSEDATA data;
+        data.lpISP = This->dp2->spData.lpISP;
+        (*This->dp2->spData.lpCB->CloseEx)( &data );
+      }
       return hr;
     }
 
     hr = DP_CreatePlayer( This, NULL, &dpidServerId, NULL, NULL, 0, NULL, 0, createFlags, NULL,
                           bAnsi );
     if( FAILED( hr ) )
+    {
+      DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );
+      if( This->dp2->spData.lpCB->CloseEx )
+      {
+        DPSP_CLOSEDATA data;
+        data.lpISP = This->dp2->spData.lpISP;
+        (*This->dp2->spData.lpCB->CloseEx)( &data );
+      }
       return hr;
+    }
 
     hr = DP_MSG_ForwardPlayerCreation( This, dpidServerId );
     if( FAILED( hr ) )
+    {
+      DP_DeletePlayer( This, dpidServerId );
+      DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );
+      if( This->dp2->spData.lpCB->CloseEx )
+      {
+        DPSP_CLOSEDATA data;
+        data.lpISP = This->dp2->spData.lpISP;
+        (*This->dp2->spData.lpCB->CloseEx)( &data );
+      }
       return hr;
+    }
   }
   else if( dwFlags & DPOPEN_CREATE )
   {
@@ -3434,7 +3468,16 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
     hr = DP_CreatePlayer( This, NULL, &dpidNameServerId, NULL, NULL, 0, NULL, 0, createFlags, NULL,
                           bAnsi );
     if( FAILED( hr ) )
+    {
+      DP_IF_DestroyGroup( This, NULL, DPID_SYSTEM_GROUP, TRUE );
+      if( This->dp2->spData.lpCB->CloseEx )
+      {
+        DPSP_CLOSEDATA data;
+        data.lpISP = This->dp2->spData.lpISP;
+        (*This->dp2->spData.lpCB->CloseEx)( &data );
+      }
       return hr;
+    }
   }
 
   return DP_OK;
