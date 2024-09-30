@@ -2204,7 +2204,7 @@ static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT d
 }
 
 /* display_lock must be held */
-static struct monitor *get_monitor_from_rect( RECT rect, UINT flags, UINT dpi )
+static struct monitor *get_monitor_from_rect( RECT rect, UINT flags, UINT dpi, MONITOR_DPI_TYPE type )
 {
     struct monitor *monitor, *primary = NULL, *nearest = NULL, *found = NULL;
     UINT max_area = 0, min_distance = -1;
@@ -2221,7 +2221,7 @@ static struct monitor *get_monitor_from_rect( RECT rect, UINT flags, UINT dpi )
 
         if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
 
-        monitor_rect = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
+        monitor_rect = monitor_get_rect( monitor, dpi, type );
         if (intersect_rect( &intersect, &monitor_rect, &rect ))
         {
             /* check for larger intersecting area */
@@ -3827,7 +3827,7 @@ static HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
     r = map_dpi_rect( *rect, dpi, system_dpi );
 
     if (!lock_display_devices()) return 0;
-    if ((monitor = get_monitor_from_rect( r, flags, system_dpi ))) ret = monitor->handle;
+    if ((monitor = get_monitor_from_rect( r, flags, system_dpi, MDT_DEFAULT ))) ret = monitor->handle;
     unlock_display_devices();
 
     TRACE( "%s flags %x returning %p\n", wine_dbgstr_rect(rect), flags, ret );
@@ -3840,7 +3840,8 @@ MONITORINFO monitor_info_from_rect( RECT rect, UINT dpi )
     struct monitor *monitor;
 
     if (!lock_display_devices()) return info;
-    if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi ))) monitor_get_info( monitor, &info, dpi );
+    if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi, MDT_DEFAULT )))
+        monitor_get_info( monitor, &info, dpi );
     unlock_display_devices();
 
     return info;
@@ -3852,7 +3853,7 @@ UINT monitor_dpi_from_rect( RECT rect, UINT dpi )
     UINT ret = system_dpi, x, y;
 
     if (!lock_display_devices()) return 0;
-    if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi )))
+    if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi, MDT_DEFAULT )))
         ret = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
     unlock_display_devices();
 
