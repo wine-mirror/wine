@@ -1914,11 +1914,12 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
     RECT dummy;
     HRGN shape;
 
-    monitor_dpi = monitor_dpi_from_rect( rects->window, get_thread_dpi() );
-
     style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     ex_style = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE );
     is_child = parent && parent != NtUserGetDesktopWindow();
+
+    if (is_child) monitor_dpi = get_win_monitor_dpi( parent );
+    else monitor_dpi = monitor_dpi_from_rect( rects->window, get_thread_dpi() );
 
     if (get_window_region( hwnd, FALSE, &shape, &dummy )) shaped = FALSE;
     else if ((shaped = !!shape)) NtGdiDeleteObjectApp( shape );
@@ -1998,8 +1999,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 {
     struct window_rects monitor_rects;
     WND *win;
-    HWND surface_win = 0;
-    BOOL ret, is_fullscreen, is_layered, needs_update = FALSE;
+    HWND surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
+    BOOL ret, is_fullscreen, is_layered, is_child, needs_update = FALSE;
     struct window_rects old_rects;
     RECT extra_rects[3];
     struct window_surface *old_surface;
@@ -2007,6 +2008,10 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 
     is_layered = new_surface && new_surface->alpha_mask;
     is_fullscreen = is_window_rect_full_screen( &new_rects->visible, get_thread_dpi() );
+    is_child = parent && parent != NtUserGetDesktopWindow();
+
+    if (is_child) monitor_dpi = get_win_monitor_dpi( parent );
+    else monitor_dpi = monitor_dpi_from_rect( new_rects->window, get_thread_dpi() );
 
     get_window_rects( hwnd, COORDS_SCREEN, &old_rects, get_thread_dpi() );
     if (IsRectEmpty( &valid_rects[0] ) || is_layered) valid_rects = NULL;
@@ -2024,7 +2029,6 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         valid_rects = NULL;
     }
 
-    monitor_dpi = monitor_dpi_from_rect( new_rects->window, get_thread_dpi() );
     monitor_rects = map_dpi_window_rects( *new_rects, get_thread_dpi(), monitor_dpi );
 
     SERVER_START_REQ( set_window_pos )
