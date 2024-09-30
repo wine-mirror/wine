@@ -2562,6 +2562,8 @@ static HRESULT WINAPI IFileDialog2_fnSetFileTypeIndex(IFileDialog2 *iface, UINT 
     iFileType = min(iFileType, This->filterspec_count);
     This->filetypeindex = iFileType-1;
 
+    set_current_filter(This, This->filterspecs[This->filetypeindex].pszSpec);
+
     return S_OK;
 }
 
