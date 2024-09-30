@@ -2512,11 +2512,19 @@ RECT map_rect_virt_to_raw( RECT rect, UINT dpi_from )
 struct window_rects map_window_rects_virt_to_raw( struct window_rects rects, UINT dpi_from )
 {
     struct monitor *monitor;
+    RECT rect, monitor_rect;
+    BOOL is_fullscreen;
 
     if (!lock_display_devices()) return rects;
     if ((monitor = get_monitor_from_rect( rects.window, MONITOR_DEFAULTTONEAREST, dpi_from, MDT_DEFAULT )))
     {
-        rects.visible = map_monitor_rect( monitor, rects.visible, dpi_from, MDT_DEFAULT, 0, MDT_RAW_DPI );
+        /* if the visible rect is fullscreen, make it cover the full raw monitor, regardless of aspect ratio */
+        monitor_rect = monitor_get_rect( monitor, dpi_from, MDT_DEFAULT );
+
+        is_fullscreen = intersect_rect( &rect, &monitor_rect, &rects.visible ) && EqualRect( &rect, &monitor_rect );
+        if (is_fullscreen) rects.visible = monitor_get_rect( monitor, 0, MDT_RAW_DPI );
+        else rects.visible = map_monitor_rect( monitor, rects.visible, dpi_from, MDT_DEFAULT, 0, MDT_RAW_DPI );
+
         rects.window = map_monitor_rect( monitor, rects.window, dpi_from, MDT_DEFAULT, 0, MDT_RAW_DPI );
         rects.client = map_monitor_rect( monitor, rects.client, dpi_from, MDT_DEFAULT, 0, MDT_RAW_DPI );
     }
