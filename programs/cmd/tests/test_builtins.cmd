@@ -3165,6 +3165,13 @@ exit /b 0
 
 :call_expand_done
 
+echo --- search with dots
+echo @echo a> .bat
+call .bat
+echo @echo b> f00.bat.bat
+call f00.bat || echo fail1
+call f00 2> nul || echo fail2
+
 cd .. & rd /s/q foobar
 
 echo --- builtin in expansions

@@ -1823,6 +1823,10 @@ abc
 abc
 abc %WINE_BAR% %WINE_BAR%
 abc def def
+--- search with dots
+a
+@todo_wine@b
+fail2
 --- builtin in expansions
 bar p1 echo
 bar cp1 echo
