@@ -1739,6 +1739,11 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
     return DPERR_UNINITIALIZED;
   }
 
+  if( !This->dp2->bConnectionOpen )
+  {
+    return DPERR_INVALIDPARAM;
+  }
+
   if( dwFlags == 0 )
   {
     dwFlags = DPPLAYER_SPECTATOR;
