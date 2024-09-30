@@ -1329,7 +1329,7 @@ static void touch_file(LPCWSTR filename)
 }
 
 static void test_filename_savedlg_(LPCWSTR set_filename, LPCWSTR set_filename2, LPCWSTR defext,
-                                   const COMDLG_FILTERSPEC *filterspec, UINT fs_count,
+                                   const COMDLG_FILTERSPEC *filterspec, UINT fs_count, UINT ft_index,
                                    LPCWSTR exp_filename, const char *file, int line)
 {
     IFileSaveDialog *pfsd;
@@ -1349,6 +1349,12 @@ static void test_filename_savedlg_(LPCWSTR set_filename, LPCWSTR set_filename2, 
     {
         hr = IFileSaveDialog_SetFileTypes(pfsd, fs_count, filterspec);
         ok_(file,line)(hr == S_OK, "SetFileTypes failed: Got 0x%08lx\n", hr);
+    }
+
+    if(ft_index)
+    {
+        hr = IFileSaveDialog_SetFileTypeIndex(pfsd, ft_index);
+        ok_(file,line)(hr == S_OK, "SetFileTypeIndex failed: Got 0x%08lx\n", hr);
     }
 
     if(defext)
@@ -1394,12 +1400,12 @@ static void test_filename_savedlg_(LPCWSTR set_filename, LPCWSTR set_filename2, 
 
     IFileDialogEvents_Release(pfde);
 }
-#define test_filename_savedlg(set_filename, set_filename2, defext, filterspec, fs_count, exp_filename) \
-    test_filename_savedlg_(set_filename, set_filename2, defext, filterspec, fs_count, exp_filename, __FILE__, __LINE__)
+#define test_filename_savedlg(set_filename, set_filename2, defext, filterspec, fs_count, ft_index, exp_filename) \
+    test_filename_savedlg_(set_filename, set_filename2, defext, filterspec, fs_count, ft_index, exp_filename, __FILE__, __LINE__)
 
 static void test_filename_opendlg_(LPCWSTR set_filename, LPCWSTR set_filename2,
                                    IShellItem *psi_current, LPCWSTR defext,
-                                   const COMDLG_FILTERSPEC *filterspec, UINT fs_count,
+                                   const COMDLG_FILTERSPEC *filterspec, UINT fs_count, UINT ft_index,
                                    LPCWSTR exp_filename, const char *file, int line)
 {
     IFileOpenDialog *pfod;
@@ -1426,6 +1432,12 @@ static void test_filename_opendlg_(LPCWSTR set_filename, LPCWSTR set_filename2,
     {
         hr = IFileOpenDialog_SetFileTypes(pfod, 2, filterspec);
         ok_(file,line)(hr == S_OK, "SetFileTypes failed: Got 0x%08lx\n", hr);
+    }
+
+    if(ft_index)
+    {
+        hr = IFileOpenDialog_SetFileTypeIndex(pfod, ft_index);
+        ok_(file,line)(hr == S_OK, "SetFileTypeIndex failed: Got 0x%08lx\n", hr);
     }
 
     if(set_filename2)
@@ -1494,8 +1506,8 @@ static void test_filename_opendlg_(LPCWSTR set_filename, LPCWSTR set_filename2,
 
     IFileDialogEvents_Release(pfde);
 }
-#define test_filename_opendlg(set_filename, set_filename2, psi, defext, filterspec, fs_count, exp_filename) \
-    test_filename_opendlg_(set_filename, set_filename2, psi, defext, filterspec, fs_count, exp_filename, __FILE__, __LINE__)
+#define test_filename_opendlg(set_filename, set_filename2, psi, defext, filterspec, fs_count, ft_index, exp_filename) \
+    test_filename_opendlg_(set_filename, set_filename2, psi, defext, filterspec, fs_count, ft_index, exp_filename, __FILE__, __LINE__)
 
 static void test_filename(void)
 {
@@ -1529,25 +1541,27 @@ static void test_filename(void)
     };
 
     /* No extension */
-    test_filename_savedlg(filename_noextW, NULL, NULL, NULL, 0, filename_noextW);
+    test_filename_savedlg(filename_noextW, NULL, NULL, NULL, 0, 0, filename_noextW);
     /* Default extension */
-    test_filename_savedlg(filename_noextW, NULL, defextW, NULL, 0, filename_defextW);
+    test_filename_savedlg(filename_noextW, NULL, defextW, NULL, 0, 0, filename_defextW);
     /* Default extension on filename ending with a . */
-    test_filename_savedlg(filename_dotextW, NULL, defextW, NULL, 0, filename_dotanddefW);
+    test_filename_savedlg(filename_dotextW, NULL, defextW, NULL, 0, 0, filename_dotanddefW);
     /* Default extension on filename with default extension */
-    test_filename_savedlg(filename_defextW, NULL, defextW, NULL, 0, filename_defextW);
+    test_filename_savedlg(filename_defextW, NULL, defextW, NULL, 0, 0, filename_defextW);
     /* Default extension on filename with another extension */
-    test_filename_savedlg(filename_ext1W, NULL, defextW, NULL, 0, filename_ext1anddefW);
+    test_filename_savedlg(filename_ext1W, NULL, defextW, NULL, 0, 0, filename_ext1anddefW);
     /* Default extension, filterspec without default extension */
-    test_filename_savedlg(filename_noextW, NULL, defextW, filterspec, 2, filename_ext1W);
+    test_filename_savedlg(filename_noextW, NULL, defextW, filterspec, 2, 0, filename_ext1W);
     /* Default extension, filterspec with default extension */
-    test_filename_savedlg(filename_noextW, NULL, defextW, filterspec, 3, filename_ext1W);
+    test_filename_savedlg(filename_noextW, NULL, defextW, filterspec, 3, 0, filename_ext1W);
+    /* Default extension, filterspec with default extension and filetype index */
+    test_filename_savedlg(filename_noextW, NULL, defextW, filterspec, 3, 2, filename_ext2W);
     /* Default extension, filterspec with "complex" extension */
-    test_filename_savedlg(filename_noextW, NULL, defextW, filterspec2, 1, filename_ext2W);
+    test_filename_savedlg(filename_noextW, NULL, defextW, filterspec2, 1, 0, filename_ext2W);
     /* Default extension, filterspec with extension that differs in case from the specified filename */
-    test_filename_savedlg(filename_mixedcaseW, NULL, defextW, filterspec, 0, filename_mixedcaseW);
+    test_filename_savedlg(filename_mixedcaseW, NULL, defextW, filterspec, 0, 0, filename_mixedcaseW);
     /* Default extension, filterspec with default extension, filename filter */
-    test_filename_savedlg(filename_noextW, ext2, defextW, filterspec, 3, filename_ext2W);
+    test_filename_savedlg(filename_noextW, ext2, defextW, filterspec, 3, 0, filename_ext2W);
 
     GetCurrentDirectoryW(MAX_PATH, buf);
     ok(!!pSHCreateItemFromParsingName, "SHCreateItemFromParsingName is missing.\n");
@@ -1559,21 +1573,21 @@ static void test_filename(void)
     touch_file(filename_ext2W);
 
     /* IFileOpenDialog, default extension */
-    test_filename_opendlg(filename_noextW, NULL, psi_current, defextW, NULL, 0, filename_noextW);
+    test_filename_opendlg(filename_noextW, NULL, psi_current, defextW, NULL, 0, 0, filename_noextW);
     /* IFileOpenDialog, default extension and filterspec */
-    test_filename_opendlg(filename_noextW, NULL, psi_current, defextW, filterspec, 2, filename_noextW);
+    test_filename_opendlg(filename_noextW, NULL, psi_current, defextW, filterspec, 2, 0, filename_noextW);
     /* IFileOpenDialog, default extension, filterspec and filename filter */
-    test_filename_opendlg(filename_noextW, ext2, psi_current, defextW, filterspec, 2, filename_noextW);
+    test_filename_opendlg(filename_noextW, ext2, psi_current, defextW, filterspec, 2, 0, filename_noextW);
 
     DeleteFileW(filename_noextW);
     /* IFileOpenDialog, default extension, noextW deleted */
-    test_filename_opendlg(filename_noextW, NULL, psi_current, defextW, NULL, 0, filename_defextW);
+    test_filename_opendlg(filename_noextW, NULL, psi_current, defextW, NULL, 0, 0, filename_defextW);
     /* IFileOpenDialog, default extension and filename filter, noextW deleted */
-    test_filename_opendlg(filename_noextW, ext2, psi_current, defextW, NULL, 0, filename_ext2W);
+    test_filename_opendlg(filename_noextW, ext2, psi_current, defextW, NULL, 0, 0, filename_ext2W);
     if(0) /* Interactive */
     {
     /* IFileOpenDialog, filterspec, no default extension, noextW deleted */
-    test_filename_opendlg(filename_noextW, NULL, psi_current, NULL, filterspec, 2, NULL);
+    test_filename_opendlg(filename_noextW, NULL, psi_current, NULL, filterspec, 2, 0, NULL);
     }
 
     IShellItem_Release(psi_current);
