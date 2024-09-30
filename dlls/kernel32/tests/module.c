@@ -1317,8 +1317,10 @@ static void test_LdrGetDllHandleEx(void)
 {
     HMODULE mod, loaded_mod;
     UNICODE_STRING name;
+    char path[MAX_PATH];
     NTSTATUS status;
     unsigned int i;
+    BOOL bret;
 
     if (!pLdrGetDllHandleEx)
     {
@@ -1392,6 +1394,39 @@ static void test_LdrGetDllHandleEx(void)
     winetest_push_context( "LDR_GET_DLL_HANDLE_EX_FLAG_PIN" );
     check_refcount( loaded_mod, ~0u );
     winetest_pop_context();
+
+    GetCurrentDirectoryA( ARRAY_SIZE(path), path );
+    create_test_dll( "d01.dll" );
+    mod = LoadLibraryA( "d01.dll" );
+    ok( !!mod, "got error %lu.\n", GetLastError() );
+    RtlInitUnicodeString( &name, L"d01.dll" );
+    status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL, &name, &loaded_mod );
+    ok( !status, "got %#lx.\n", status );
+
+    RtlInitUnicodeString( &name, L"d02.dll" );
+    status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL, &name, &loaded_mod );
+    ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
+
+    /* Same (moved) file, different name: not found in loaded modules with short name but found with path. */
+    DeleteFileA( "d02.dll" );
+    bret = MoveFileA( "d01.dll", "d02.dll" );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL, &name, &loaded_mod );
+    todo_wine ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
+    CreateDirectoryA( "testdir", NULL );
+    DeleteFileA( "testdir\\d02.dll" );
+    bret = MoveFileA( "d02.dll", "testdir\\d02.dll" );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    RtlInitUnicodeString( &name, L"testdir\\d02.dll" );
+    status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL, &name, &loaded_mod );
+    ok( !status, "got %#lx.\n", status );
+    ok( loaded_mod == mod, "got %p, %p.\n", loaded_mod, mod );
+    FreeLibrary( mod );
+    status = pLdrGetDllHandleEx( LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, NULL, NULL, &name, &loaded_mod );
+    ok( status == STATUS_DLL_NOT_FOUND, "got %#lx.\n", status );
+
+    DeleteFileA( "testdir\\d02.dll" );
+    RemoveDirectoryA( "testdir" );
 }
 
 static void test_LdrGetDllFullName(void)
