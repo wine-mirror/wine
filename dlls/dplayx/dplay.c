@@ -3360,6 +3360,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
         break;
     }
 
+    free( This->dp2->lpSessionDesc );
     This->dp2->lpSessionDesc = DP_DuplicateSessionDesc( sessionDesc, bAnsi, bAnsi );
     if ( !This->dp2->lpSessionDesc )
       return DPERR_OUTOFMEMORY;
