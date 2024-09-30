@@ -2132,8 +2132,13 @@ static void checkPlayerList_( int line, IDirectPlay4 *dp, ExpectedPlayer *expect
                            data.actualPlayerCount );
 }
 
-#define check_Open( dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr ) check_Open_( __LINE__, dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr )
-static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, const DPSESSIONDESC2 *serverDpsd, BOOL requestExpected, unsigned short port, const WCHAR *expectedPassword, HRESULT expectedHr )
+#define check_Open( dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, port, expectedPassword, \
+                    idReplyHr, expectedHr ) \
+        check_Open_( __LINE__, dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, port, expectedPassword, \
+                     idReplyHr, expectedHr )
+static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, const DPSESSIONDESC2 *serverDpsd,
+                         BOOL idRequestExpected, BOOL forwardRequestExpected, unsigned short port,
+                         const WCHAR *expectedPassword, HRESULT idReplyHr, HRESULT expectedHr )
 {
     SOCKET listenSock;
     OpenParam *param;
@@ -2150,7 +2155,7 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
 
     param = openAsync( dp, dpsd, DPOPEN_JOIN );
 
-    if ( requestExpected )
+    if ( idRequestExpected )
     {
         unsigned short port;
 
@@ -2161,44 +2166,46 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
 
         sendSock = connectTcp_( line, port );
 
-        sendRequestPlayerReply( sendSock, port, 0x12345678, DP_OK );
+        sendRequestPlayerReply( sendSock, port, 0x12345678, idReplyHr );
 
-        receiveAddForwardRequest_( line, recvSock, 0x12345678, expectedPassword, serverDpsd->dwReserved1 );
-
-        sendSuperEnumPlayersReply( sendSock, port, 2399, serverDpsd, L"normal" );
-
-        checkNoMoreMessages_( line, recvSock );
-
-        hr = openAsyncWait( param, 2000 );
-        ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
-
-        if ( expectedHr == DP_OK )
+        if ( forwardRequestExpected )
         {
-            BYTE expectedPlayerData[] = { 1, 2, 3, 4, };
-            ExpectedPlayer expectedPlayers[] = {
-                {
-                    .expectedDpid = 0x1337,
-                    .expectedPlayerType = DPPLAYERTYPE_PLAYER,
-                    .expectedShortName = "short name",
-                    .expectedLongName = "long name",
-                    .expectedFlags = 0,
-                    .expectedPlayerData = expectedPlayerData,
-                    .expectedPlayerDataSize = sizeof( expectedPlayerData ),
-                },
-            };
+            receiveAddForwardRequest_( line, recvSock, 0x12345678, expectedPassword, serverDpsd->dwReserved1 );
 
-            checkPlayerList_( line, dp, expectedPlayers, ARRAYSIZE( expectedPlayers ) );
+            sendSuperEnumPlayersReply( sendSock, port, 2399, serverDpsd, L"normal" );
+
+            checkNoMoreMessages_( line, recvSock );
+
+            hr = openAsyncWait( param, 2000 );
+            ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
+
+            if ( expectedHr == DP_OK )
+            {
+                BYTE expectedPlayerData[] = { 1, 2, 3, 4, };
+                ExpectedPlayer expectedPlayers[] = {
+                    {
+                        .expectedDpid = 0x1337,
+                        .expectedPlayerType = DPPLAYERTYPE_PLAYER,
+                        .expectedShortName = "short name",
+                        .expectedLongName = "long name",
+                        .expectedFlags = 0,
+                        .expectedPlayerData = expectedPlayerData,
+                        .expectedPlayerDataSize = sizeof( expectedPlayerData ),
+                    },
+                };
+
+                checkPlayerList_( line, dp, expectedPlayers, ARRAYSIZE( expectedPlayers ) );
+            }
+
+            hr = IDirectPlayX_Close( dp );
+            checkHR( DP_OK, hr );
         }
-
-        hr = IDirectPlayX_Close( dp );
-        checkHR( DP_OK, hr );
-
         closesocket( sendSock );
         closesocket( recvSock );
     }
     else
     {
-        hr = openAsyncWait( param, 2000 );
+        hr = openAsyncWait( param, 7000 );
         ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
     }
 
@@ -2270,9 +2277,9 @@ static void test_Open(void)
 
     dpsd = dpsdZero;
     dpsd.dwSize = 0;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
+    check_Open( dp, &dpsd, NULL, FALSE, FALSE, 2349, NULL, DP_OK, DPERR_INVALIDPARAMS );
 
-    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_UNINITIALIZED );
+    check_Open( dp, &dpsdZero, NULL, FALSE, FALSE, 2349, NULL, DP_OK, DPERR_UNINITIALIZED );
 
     init_TCPIP_provider( dp, "127.0.0.1", 0 );
 
@@ -2280,19 +2287,19 @@ static void test_Open(void)
     /* - Checking how strict dplay is with sizes */
     dpsd = dpsdZero;
     dpsd.dwSize = 0;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
+    check_Open( dp, &dpsd, NULL, FALSE, FALSE, 2349, NULL, DP_OK, DPERR_INVALIDPARAMS );
 
     dpsd = dpsdZero;
     dpsd.dwSize = sizeof( DPSESSIONDESC2 ) - 1;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
+    check_Open( dp, &dpsd, NULL, FALSE, FALSE, 2349, NULL, DP_OK, DPERR_INVALIDPARAMS );
 
     dpsd = dpsdZero;
     dpsd.dwSize = sizeof( DPSESSIONDESC2 ) + 1;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
+    check_Open( dp, &dpsd, NULL, FALSE, FALSE, 2349, NULL, DP_OK, DPERR_INVALIDPARAMS );
 
-    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS );
+    check_Open( dp, &dpsdZero, NULL, FALSE, FALSE, 2349, NULL, DP_OK, DPERR_NOSESSIONS );
 
-    check_Open( dp, &dpsdAppGuid, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS );
+    check_Open( dp, &dpsdAppGuid, NULL, FALSE, FALSE, 2349, NULL, DP_OK, DPERR_NOSESSIONS );
 
     enumSock = bindUdp( 47624 );
 
@@ -2326,13 +2333,15 @@ static void test_Open(void)
         break;
     }
 
-    check_Open( dp, &dpsdAppGuid, &normalDpsd, TRUE, 2349, L"", DP_OK );
+    check_Open( dp, &dpsdAppGuid, &normalDpsd, TRUE, FALSE, 2349, L"", DPERR_CANTCREATEPLAYER, DPERR_CANTCREATEPLAYER );
+
+    check_Open( dp, &dpsdAppGuid, &normalDpsd, TRUE, TRUE, 2349, L"", DP_OK, DP_OK );
 
     dpsd = dpsdAppGuid;
     dpsd.guidInstance = appGuid2;
     replyDpsd = normalDpsd;
     replyDpsd.guidInstance = appGuid2;
-    check_Open( dp, &dpsd, &replyDpsd, TRUE, 2348, L"", DP_OK );
+    check_Open( dp, &dpsd, &replyDpsd, TRUE, TRUE, 2348, L"", DP_OK, DP_OK );
 
     /* Join to protected session */
     for ( tryIndex = 0; ; ++tryIndex )
@@ -2363,7 +2372,7 @@ static void test_Open(void)
 
     dpsd = dpsdAppGuid;
     dpsd.lpszPasswordA = (char *) "hadouken";
-    check_Open( dp, &dpsd, &protectedDpsd, TRUE, 2349, L"hadouken", DP_OK );
+    check_Open( dp, &dpsd, &protectedDpsd, TRUE, TRUE, 2349, L"hadouken", DP_OK, DP_OK );
 
     closesocket( enumSock );
 
