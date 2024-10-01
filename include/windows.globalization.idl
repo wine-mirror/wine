@@ -26,12 +26,15 @@ import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
+import "windows.system.idl";
 #endif
 
 namespace Windows {
     namespace Globalization {
         typedef enum DayOfWeek DayOfWeek;
         typedef enum LanguageLayoutDirection LanguageLayoutDirection;
+        interface IApplicationLanguagesStatics;
+        interface IApplicationLanguagesStatics2;
         interface ICalendar;
         interface ICalendarFactory;
         interface ICalendarFactory2;
@@ -47,6 +50,7 @@ namespace Windows {
         interface IGeographicRegionFactory;
         interface IGeographicRegionStatics;
         interface ITimeZoneOnCalendar;
+        runtimeclass ApplicationLanguages;
         runtimeclass Calendar;
         runtimeclass Language;
         runtimeclass GeographicRegion;
@@ -229,6 +233,29 @@ namespace Windows {
 
         [
             contract(Windows.Foundation.UniversalApiContract, 1.0),
+            exclusiveto(Windows.Globalization.ApplicationLanguages),
+            uuid(75b40847-0a4c-4a92-9565-fd63c95f7aed)
+        ]
+        interface IApplicationLanguagesStatics : IInspectable
+        {
+            [propget] HRESULT PrimaryLanguageOverride([out, retval] HSTRING *value);
+            [propput] HRESULT PrimaryLanguageOverride([in] HSTRING value);
+            [propget] HRESULT Languages([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+            [propget] HRESULT ManifestLanguages([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 6.0),
+            exclusiveto(Windows.Globalization.ApplicationLanguages),
+            uuid(1df0de4f-072b-4d7b-8f06-cb2db40f2bb5)
+        ]
+        interface IApplicationLanguagesStatics2 : IInspectable
+        {
+            HRESULT GetLanguagesForUser([in] Windows.System.User *user, [out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
             exclusiveto(Windows.Globalization.Language),
             uuid(ea79a752-f7c2-4265-b1bd-c4dec4e4f080)
         ]
@@ -372,6 +399,17 @@ namespace Windows {
         {
             [contract(Windows.Foundation.UniversalApiContract, 1.0)] [default] interface Windows.Globalization.ICalendar;
             [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Globalization.ITimeZoneOnCalendar;
+        }
+
+        [
+            contract(Windows.Foundation.UniversalApiContract, 1.0),
+            marshaling_behavior(agile),
+            static(Windows.Globalization.IApplicationLanguagesStatics, Windows.Foundation.UniversalApiContract, 1.0),
+            static(Windows.Globalization.IApplicationLanguagesStatics2, Windows.Foundation.UniversalApiContract, 6.0),
+            threading(both)
+        ]
+        runtimeclass ApplicationLanguages
+        {
         }
 
         [
