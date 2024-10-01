@@ -4677,7 +4677,6 @@ static void test_measure_string(void)
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
     expectf(width, bounds.Width);
-    todo_wine
     expectf(height / 2.0, bounds.Height);
 
     range.First = 0;

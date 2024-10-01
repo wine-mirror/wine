@@ -5602,7 +5602,7 @@ GpStatus gdip_format_string(GpGraphics *graphics, HDC hdc,
         {
             if (format->attr & StringFormatFlagsLineLimit)
                 break;
-            bounds.Height = nheight - (height + size.cy);
+            bounds.Height = nheight - height;
         }
         else
             bounds.Height = size.cy;
