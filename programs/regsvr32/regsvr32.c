@@ -117,17 +117,18 @@ static void reexec_self( WORD machine )
     LPCWSTR args;
     WCHAR *cmdline;
     HANDLE process = 0;
-    STARTUPINFOW si = {0};
+    STARTUPINFOEXW si = {{ sizeof(si.StartupInfo) }};
     PROCESS_INFORMATION pi;
+    SIZE_T size = 1024;
+    struct _PROC_THREAD_ATTRIBUTE_LIST *list = HeapAlloc( GetProcessHeap(), 0, size );
     void *cookie;
     ULONG i;
 
     NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
                                 machines, sizeof(machines), NULL );
     for (i = 0; machines[i].Machine; i++) if (machines[i].Machine == machine) break;
-    if (!machines[i].Machine) return;
-    if (machines[i].Native) machine = IMAGE_FILE_MACHINE_TARGET_HOST;
-    if (!GetSystemWow64Directory2W( app, MAX_PATH, machine )) return;
+    if (!GetSystemWow64Directory2W( app, MAX_PATH, machines[i].WoW64Container ?
+                                    machine : IMAGE_FILE_MACHINE_TARGET_HOST )) return;
     wcscat( app, L"\\regsvr32.exe" );
 
     TRACE( "restarting as %s\n", debugstr_w(app) );
@@ -140,10 +141,13 @@ static void reexec_self( WORD machine )
     wcscpy(cmdline, app);
     wcscat(cmdline, args);
 
-    si.cb = sizeof(si);
+    InitializeProcThreadAttributeList( list, 1, 0, &size );
+    UpdateProcThreadAttribute( list, 0, PROC_THREAD_ATTRIBUTE_MACHINE_TYPE, &machine, sizeof(machine), NULL, NULL );
+    si.StartupInfo.cb = sizeof(si);
+    si.lpAttributeList = list;
 
     Wow64DisableWow64FsRedirection(&cookie);
-    if (CreateProcessW(app, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    if (CreateProcessW(app, cmdline, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL, &si.StartupInfo, &pi))
     {
         DWORD exit_code;
         WaitForSingleObject(pi.hProcess, INFINITE);
@@ -156,6 +160,7 @@ static void reexec_self( WORD machine )
     }
     Wow64RevertWow64FsRedirection(cookie);
     HeapFree(GetProcessHeap(), 0, cmdline);
+    HeapFree( GetProcessHeap(), 0, list );
 }
 
 /**
