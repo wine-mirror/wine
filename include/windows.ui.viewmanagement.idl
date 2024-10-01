@@ -20,6 +20,7 @@
 #pragma winrt ns_prefix
 #endif
 
+#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -31,6 +32,7 @@ import "windows.ui.idl";
 import "windows.ui.core.idl";
 /* import "windows.ui.popups.idl"; */
 /* import "windows.ui.windowmanagement.idl"; */
+#endif
 
 namespace Windows.UI.ViewManagement
 {

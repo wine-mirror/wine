@@ -20,6 +20,7 @@
 #pragma winrt ns_prefix
 #endif
 
+#ifndef DO_NO_IMPORTS
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -32,6 +33,7 @@ import "windows.ui.input.idl";
 /* import "windows.ui.input.inking.idl"; */
 /* import "windows.ui.input.inking.core.idl"; */
 /* import "windows.ui.popups.idl"; */
+#endif
 
 namespace Windows.UI.Input {
     runtimeclass PointerPoint;
