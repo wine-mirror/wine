@@ -1694,6 +1694,12 @@ static void test_GetDisplayConfigBufferSizes(void)
         ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
     else
         ok(ret == ERROR_NOT_SUPPORTED, "got %ld\n", ret);
+
+    paths = modes = 0;
+    ret = pGetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS | QDC_VIRTUAL_MODE_AWARE, &paths, &modes);
+    todo_wine ok(!ret || broken(ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED) /* before Win10 */, "got %ld\n", ret);
+    if (!ret)
+        ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
 }
 
 static BOOL CALLBACK test_EnumDisplayMonitors_normal_cb(HMONITOR monitor, HDC hdc, LPRECT rect,
@@ -1970,12 +1976,13 @@ static void check_preferred_mode(const DISPLAYCONFIG_TARGET_PREFERRED_MODE *mode
 static void test_QueryDisplayConfig_result(UINT32 flags,
         UINT32 paths, const DISPLAYCONFIG_PATH_INFO *pi, UINT32 modes, const DISPLAYCONFIG_MODE_INFO *mi)
 {
-    UINT32 i;
+    UINT32 i, src_mode_idx, tgt_mode_idx;
     LONG ret;
     DISPLAYCONFIG_SOURCE_DEVICE_NAME source_name;
     DISPLAYCONFIG_TARGET_DEVICE_NAME target_name;
     DISPLAYCONFIG_TARGET_PREFERRED_MODE preferred_mode;
     DISPLAYCONFIG_ADAPTER_NAME adapter_name;
+    const DISPLAYCONFIG_DESKTOP_IMAGE_INFO *di;
 
     for (i = 0; i < paths; i++)
     {
@@ -2028,65 +2035,141 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
         }
 
         /* Check corresponding modes */
-        if (pi[i].sourceInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+        if (flags & QDC_VIRTUAL_MODE_AWARE)
         {
-            skip("Path doesn't contain source modeInfoIdx\n");
-            continue;
+            src_mode_idx = pi[i].sourceInfo.sourceModeInfoIdx;
+            if (src_mode_idx == DISPLAYCONFIG_PATH_SOURCE_MODE_IDX_INVALID)
+            {
+                ok(pi[i].sourceInfo.cloneGroupId != DISPLAYCONFIG_PATH_CLONE_GROUP_INVALID, "got cloneGroupId %#x.\n",
+                        pi[i].sourceInfo.cloneGroupId);
+                skip("Path doesn't contain source modeInfoIdx\n");
+                continue;
+            }
+            ok(pi[i].sourceInfo.cloneGroupId == DISPLAYCONFIG_PATH_CLONE_GROUP_INVALID, "got cloneGroupId %#x.\n",
+                    pi[i].sourceInfo.cloneGroupId);
         }
-        ok(pi[i].sourceInfo.modeInfoIdx < modes, "Expected index <%d, got %d\n", modes, pi[i].sourceInfo.modeInfoIdx);
-        if (pi[i].sourceInfo.modeInfoIdx >= modes)
+        else
+        {
+            src_mode_idx = pi[i].sourceInfo.modeInfoIdx;
+            if (src_mode_idx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+            {
+                skip("Path doesn't contain source modeInfoIdx\n");
+                continue;
+            }
+        }
+        ok(src_mode_idx < modes, "Expected index <%d, got %d\n", modes, src_mode_idx);
+        if (src_mode_idx >= modes)
             continue;
 
-        ok(mi[pi[i].sourceInfo.modeInfoIdx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, "Expected infoType %d, got %d\n",
-                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[pi[i].sourceInfo.modeInfoIdx].infoType);
-        ok(pi[i].sourceInfo.id == mi[pi[i].sourceInfo.modeInfoIdx].id, "Expected id %u, got %u\n",
-                pi[i].sourceInfo.id, mi[pi[i].sourceInfo.modeInfoIdx].id);
-        ok(pi[i].sourceInfo.adapterId.HighPart == mi[pi[i].sourceInfo.modeInfoIdx].adapterId.HighPart &&
-           pi[i].sourceInfo.adapterId.LowPart == mi[pi[i].sourceInfo.modeInfoIdx].adapterId.LowPart,
+        ok(mi[src_mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, "Expected infoType %d, got %d\n",
+                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[src_mode_idx].infoType);
+        ok(pi[i].sourceInfo.id == mi[src_mode_idx].id, "Expected id %u, got %u\n",
+                pi[i].sourceInfo.id, mi[src_mode_idx].id);
+        ok(pi[i].sourceInfo.adapterId.HighPart == mi[src_mode_idx].adapterId.HighPart &&
+                pi[i].sourceInfo.adapterId.LowPart == mi[src_mode_idx].adapterId.LowPart,
                 "Expected LUID %08lx:%08lx, got %08lx:%08lx\n",
                 pi[i].sourceInfo.adapterId.HighPart, pi[i].sourceInfo.adapterId.LowPart,
-                mi[pi[i].sourceInfo.modeInfoIdx].adapterId.HighPart, mi[pi[i].sourceInfo.modeInfoIdx].adapterId.LowPart);
-        ok(mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.width > 0 && mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.height > 0,
+                mi[src_mode_idx].adapterId.HighPart, mi[src_mode_idx].adapterId.LowPart);
+        ok(mi[src_mode_idx].sourceMode.width > 0 && mi[src_mode_idx].sourceMode.height > 0,
                 "Expected non-zero height/width, got %ux%u\n",
-                mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.width, mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.height);
+                mi[src_mode_idx].sourceMode.width, mi[src_mode_idx].sourceMode.height);
 
 
-        if (pi[i].targetInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+        if (flags & QDC_VIRTUAL_MODE_AWARE)
         {
-            skip("Path doesn't contain target modeInfoIdx\n");
-            continue;
+            tgt_mode_idx = pi[i].targetInfo.targetModeInfoIdx;
+            if (tgt_mode_idx == DISPLAYCONFIG_PATH_TARGET_MODE_IDX_INVALID)
+            {
+                skip("Path doesn't contain target modeInfoIdx\n");
+                continue;
+            }
         }
-        ok(pi[i].targetInfo.modeInfoIdx < modes, "Expected index <%d, got %d\n", modes, pi[i].targetInfo.modeInfoIdx);
-        if (pi[i].targetInfo.modeInfoIdx >= modes)
+        else
+        {
+            tgt_mode_idx = pi[i].targetInfo.modeInfoIdx;
+            if (tgt_mode_idx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+            {
+                skip("Path doesn't contain target modeInfoIdx\n");
+                continue;
+            }
+        }
+        ok(tgt_mode_idx < modes, "Expected index <%d, got %d\n", modes, tgt_mode_idx);
+        if (tgt_mode_idx >= modes)
             continue;
 
-        ok(mi[pi[i].targetInfo.modeInfoIdx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET, "Expected infoType %d, got %d\n",
-                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[pi[i].targetInfo.modeInfoIdx].infoType);
-        ok(pi[i].targetInfo.id == mi[pi[i].targetInfo.modeInfoIdx].id, "Expected id %u, got %u\n",
-                pi[i].targetInfo.id, mi[pi[i].targetInfo.modeInfoIdx].id);
-        ok(pi[i].targetInfo.adapterId.HighPart == mi[pi[i].targetInfo.modeInfoIdx].adapterId.HighPart &&
-           pi[i].targetInfo.adapterId.LowPart == mi[pi[i].targetInfo.modeInfoIdx].adapterId.LowPart,
+        ok(mi[tgt_mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET, "Expected infoType %d, got %d\n",
+                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[tgt_mode_idx].infoType);
+        ok(pi[i].targetInfo.id == mi[tgt_mode_idx].id, "Expected id %u, got %u\n",
+                pi[i].targetInfo.id, mi[tgt_mode_idx].id);
+        ok(pi[i].targetInfo.adapterId.HighPart == mi[tgt_mode_idx].adapterId.HighPart &&
+                pi[i].targetInfo.adapterId.LowPart == mi[tgt_mode_idx].adapterId.LowPart,
                 "Expected LUID %08lx:%08lx, got %08lx:%08lx\n",
                 pi[i].targetInfo.adapterId.HighPart, pi[i].targetInfo.adapterId.LowPart,
-                mi[pi[i].targetInfo.modeInfoIdx].adapterId.HighPart, mi[pi[i].targetInfo.modeInfoIdx].adapterId.LowPart);
-        ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cx > 0 &&
-           mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cy > 0,
+                mi[tgt_mode_idx].adapterId.HighPart, mi[tgt_mode_idx].adapterId.LowPart);
+        ok(mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.activeSize.cx > 0 &&
+                mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.activeSize.cy > 0,
                 "Expected non-zero height/width, got %ux%u\n",
-                mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cx,
-                mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cy);
+                mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.activeSize.cx,
+                mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.activeSize.cy);
 
         if (flags == QDC_DATABASE_CURRENT)
-            ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx == 0 &&
-               mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy == 0,
+            ok(mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cx == 0 &&
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cy == 0,
                     "Expected zero height/width, got %ux%u\n",
-                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx,
-                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy);
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cx,
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cy);
         else
-            ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx > 0 &&
-               mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy > 0,
+            ok(mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cx > 0 &&
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cy > 0,
                     "Expected non-zero height/width, got %ux%u\n",
-                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx,
-                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy);
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cx,
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cy);
+        if (flags & QDC_VIRTUAL_MODE_AWARE)
+        {
+            tgt_mode_idx = pi[i].targetInfo.desktopModeInfoIdx;
+            if (tgt_mode_idx == DISPLAYCONFIG_PATH_DESKTOP_IMAGE_IDX_INVALID)
+            {
+                ok(!(pi[i].flags & DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE), "got path flags %#x.\n", pi[i].flags);
+                skip("Path doesn't contain target desktopModeInfoIdx.\n");
+                continue;
+            }
+            ok(pi[i].flags & DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE, "got path flags %#x.\n", pi[i].flags);
+        }
+        else
+        {
+            continue;
+        }
+
+        ok(mi[tgt_mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE, "Expected infoType %d, got %d\n",
+                DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE, mi[tgt_mode_idx].infoType);
+        ok(pi[i].targetInfo.id == mi[tgt_mode_idx].id, "Expected id %u, got %u\n",
+                pi[i].targetInfo.id, mi[tgt_mode_idx].id);
+        ok(pi[i].targetInfo.adapterId.HighPart == mi[tgt_mode_idx].adapterId.HighPart &&
+                pi[i].targetInfo.adapterId.LowPart == mi[tgt_mode_idx].adapterId.LowPart,
+                "Expected LUID %08lx:%08lx, got %08lx:%08lx\n",
+                pi[i].targetInfo.adapterId.HighPart, pi[i].targetInfo.adapterId.LowPart,
+                mi[tgt_mode_idx].adapterId.HighPart, mi[tgt_mode_idx].adapterId.LowPart);
+        di = &mi[tgt_mode_idx].desktopImageInfo;
+        ok(!di->DesktopImageRegion.left && !di->DesktopImageRegion.top,
+                "Expected zero left/top, got %lux%lu\n",
+                di->DesktopImageRegion.left,
+                di->DesktopImageRegion.top);
+        ok(di->DesktopImageRegion.right > 0 && di->DesktopImageRegion.bottom > 0,
+                "Expected non-zero height/width, got %lux%lu\n",
+                di->DesktopImageRegion.right,
+                di->DesktopImageRegion.bottom);
+        ok(!di->DesktopImageClip.left && !di->DesktopImageClip.top,
+                "Expected zero left/top, got %lux%lu\n",
+                di->DesktopImageClip.left,
+                di->DesktopImageClip.top);
+        ok(di->DesktopImageClip.right > 0 && di->DesktopImageClip.bottom > 0,
+                "Expected non-zero height/width, got %lux%lu\n",
+                di->DesktopImageClip.right,
+                di->DesktopImageClip.bottom);
+        ok(di->PathSourceSize.x > 0 && di->PathSourceSize.y > 0,
+                "Expected non-zero x/y, got %lux%lu\n",
+                di->PathSourceSize.x,
+                di->PathSourceSize.y);
     }
 }
 
@@ -2185,6 +2268,17 @@ static void test_QueryDisplayConfig(void)
     ok(topologyid != 0xFF, "expected topologyid to be set, got %d\n", topologyid);
     if (!ret && paths > 0 && modes > 0)
         test_QueryDisplayConfig_result(QDC_DATABASE_CURRENT, paths, pi, modes, mi);
+
+    paths = ARRAY_SIZE(pi);
+    modes = ARRAY_SIZE(mi);
+    memset(pi, 0xFF, sizeof(pi));
+    memset(mi, 0xFF, sizeof(mi));
+    ret = pQueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS | QDC_VIRTUAL_MODE_AWARE, &paths, pi, &modes, mi, NULL);
+    todo_wine ok(!ret || broken(ret == ERROR_INVALID_PARAMETER) /* before Win10 */, "got %ld\n", ret);
+    if (!ret)
+        ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
+    if (!ret && paths > 0 && modes > 0)
+        test_QueryDisplayConfig_result(QDC_ONLY_ACTIVE_PATHS | QDC_VIRTUAL_MODE_AWARE, paths, pi, modes, mi);
 }
 
 static void test_DisplayConfigGetDeviceInfo(void)
