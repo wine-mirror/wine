@@ -24,6 +24,10 @@ import "inspectable.idl";
 import "eventtoken.idl";
 import "windows.foundation.idl";
 
+namespace Windows.Storage {
+    interface IStorageFile;
+}
+
 namespace Windows.Storage.Streams {
     typedef enum ByteOrder ByteOrder;
     typedef enum UnicodeEncoding UnicodeEncoding;
@@ -178,6 +182,24 @@ namespace Windows.Storage.Streams {
         HRESULT CloneStream([out, retval] Windows.Storage.Streams.IRandomAccessStream **stream);
         [propget] HRESULT CanRead([out, retval] boolean *value);
         [propget] HRESULT CanWrite([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.Streams.RandomAccessStreamReference),
+        uuid(857309dc-3fbf-4e7d-986f-ef3b1a07a964)
+    ]
+    interface IRandomAccessStreamReferenceStatics : IInspectable
+    {
+        HRESULT CreateFromFile(
+            [in] Windows.Storage.IStorageFile *file,
+            [out, retval] Windows.Storage.Streams.RandomAccessStreamReference **stream_reference);
+        HRESULT CreateFromUri(
+            [in] Windows.Foundation.Uri *uri,
+            [out, retval] Windows.Storage.Streams.RandomAccessStreamReference **stream_reference);
+        HRESULT CreateFromStream(
+            [in] Windows.Storage.Streams.IRandomAccessStream *stream,
+            [out, retval] Windows.Storage.Streams.RandomAccessStreamReference **stream_reference);
     }
 
     [
