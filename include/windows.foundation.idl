@@ -108,12 +108,20 @@ namespace Windows.Foundation {
         interface Windows.Foundation.IAsyncOperation<boolean>;
         interface Windows.Foundation.IAsyncOperation<UINT32>;
         interface Windows.Foundation.IReference<BYTE>;
-        interface Windows.Foundation.IReference<INT32>;
         interface Windows.Foundation.IReference<DOUBLE>;
         interface Windows.Foundation.IReference<FLOAT>;
+        interface Windows.Foundation.IReference<GUID>;
+        interface Windows.Foundation.IReference<INT16>;
+        interface Windows.Foundation.IReference<INT32>;
+        interface Windows.Foundation.IReference<INT64>;
         interface Windows.Foundation.IReference<UINT32>;
         interface Windows.Foundation.IReference<UINT64>;
         interface Windows.Foundation.IReference<Windows.Foundation.DateTime>;
+        interface Windows.Foundation.IReference<Windows.Foundation.Point>;
+        interface Windows.Foundation.IReference<Windows.Foundation.Rect>;
+        interface Windows.Foundation.IReference<Windows.Foundation.Size>;
+        interface Windows.Foundation.IReference<Windows.Foundation.TimeSpan>;
+        interface Windows.Foundation.IReference<boolean>;
         interface Windows.Foundation.TypedEventHandler<IInspectable *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Foundation.IMemoryBufferReference *, IInspectable *>;
     }
