@@ -2274,7 +2274,7 @@ static void test_QueryDisplayConfig(void)
     memset(pi, 0xFF, sizeof(pi));
     memset(mi, 0xFF, sizeof(mi));
     ret = pQueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS | QDC_VIRTUAL_MODE_AWARE, &paths, pi, &modes, mi, NULL);
-    todo_wine ok(!ret || broken(ret == ERROR_INVALID_PARAMETER) /* before Win10 */, "got %ld\n", ret);
+    ok(!ret || broken(ret == ERROR_INVALID_PARAMETER) /* before Win10 */, "got %ld\n", ret);
     if (!ret)
         ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
     if (!ret && paths > 0 && modes > 0)

@@ -2717,11 +2717,17 @@ static void set_mode_target_info( DISPLAYCONFIG_MODE_INFO *info, const LUID *gpu
 }
 
 static void set_path_target_info( DISPLAYCONFIG_PATH_TARGET_INFO *info, const LUID *gpu_luid,
-                                  UINT32 target_id, UINT32 mode_index, const DEVMODEW *devmode )
+                                  UINT32 target_id, UINT32 mode_index, UINT32 desktop_mode_index,
+                                  UINT32 flags, const DEVMODEW *devmode )
 {
     info->adapterId = *gpu_luid;
     info->id = target_id;
-    info->modeInfoIdx = mode_index;
+    if (flags & QDC_VIRTUAL_MODE_AWARE)
+    {
+        info->targetModeInfoIdx = mode_index;
+        info->desktopModeInfoIdx = desktop_mode_index;
+    }
+    else info->modeInfoIdx = mode_index;
     info->outputTechnology = DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EXTERNAL;
     info->rotation = get_dc_rotation( devmode );
     info->scaling = DISPLAYCONFIG_SCALING_IDENTITY;
@@ -2755,12 +2761,34 @@ static void set_mode_source_info( DISPLAYCONFIG_MODE_INFO *info, const LUID *gpu
     }
 }
 
+static void set_mode_desktop_info( DISPLAYCONFIG_MODE_INFO *info, const LUID *gpu_luid, UINT32 target_id,
+                                   const DISPLAYCONFIG_SOURCE_MODE *source_mode )
+{
+    DISPLAYCONFIG_DESKTOP_IMAGE_INFO *mode = &info->desktopImageInfo;
+
+    info->infoType = DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE;
+    info->adapterId = *gpu_luid;
+    info->id = target_id;
+    mode->PathSourceSize.x = source_mode->width;
+    mode->PathSourceSize.y = source_mode->height;
+    mode->DesktopImageRegion.left = 0;
+    mode->DesktopImageRegion.top = 0;
+    mode->DesktopImageRegion.right = source_mode->width;
+    mode->DesktopImageRegion.bottom = source_mode->height;
+    mode->DesktopImageClip = mode->DesktopImageRegion;
+}
+
 static void set_path_source_info( DISPLAYCONFIG_PATH_SOURCE_INFO *info, const LUID *gpu_luid,
-                                  UINT32 source_id, UINT32 mode_index )
+                                  UINT32 source_id, UINT32 mode_index, UINT32 flags )
 {
     info->adapterId = *gpu_luid;
     info->id = source_id;
-    info->modeInfoIdx = mode_index;
+    if (flags & QDC_VIRTUAL_MODE_AWARE)
+    {
+        info->sourceModeInfoIdx = mode_index;
+        info->cloneGroupId = DISPLAYCONFIG_PATH_CLONE_GROUP_INVALID;
+    }
+    else info->modeInfoIdx = mode_index;
     info->statusFlags = DISPLAYCONFIG_SOURCE_IN_USE;
 }
 
@@ -2794,8 +2822,9 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
     const LUID *gpu_luid;
     DEVMODEW devmode;
     struct monitor *monitor;
+    DWORD retrieve_flags = flags & qdc_retrieve_flags_mask;
 
-    FIXME( "flags %#x, paths_count %p, paths %p, modes_count %p, modes %p, topology_id %p semi-stub\n",
+    TRACE( "flags %#x, paths_count %p, paths %p, modes_count %p, modes %p, topology_id %p.\n",
            flags, paths_count, paths, modes_count, modes, topology_id );
 
     if (!paths_count || !modes_count)
@@ -2804,16 +2833,22 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
     if (!*paths_count || !*modes_count)
         return ERROR_INVALID_PARAMETER;
 
-    if (flags != QDC_ALL_PATHS &&
-        flags != QDC_ONLY_ACTIVE_PATHS &&
-        flags != QDC_DATABASE_CURRENT)
+    if (retrieve_flags != QDC_ALL_PATHS &&
+        retrieve_flags != QDC_ONLY_ACTIVE_PATHS &&
+        retrieve_flags != QDC_DATABASE_CURRENT)
         return ERROR_INVALID_PARAMETER;
 
-    if (((flags == QDC_DATABASE_CURRENT) && !topology_id) ||
-        ((flags != QDC_DATABASE_CURRENT) && topology_id))
+    if (((retrieve_flags == QDC_DATABASE_CURRENT) && !topology_id) ||
+        ((retrieve_flags != QDC_DATABASE_CURRENT) && topology_id))
         return ERROR_INVALID_PARAMETER;
 
-    if (flags != QDC_ONLY_ACTIVE_PATHS)
+    if ((flags & ~(qdc_retrieve_flags_mask | QDC_VIRTUAL_MODE_AWARE)))
+    {
+        FIXME( "unsupported flags %#x.\n", flags );
+        return ERROR_INVALID_PARAMETER;
+    }
+
+    if (retrieve_flags != QDC_ONLY_ACTIVE_PATHS)
         FIXME( "only returning active paths\n" );
 
     if (topology_id)
@@ -2849,17 +2884,6 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
             goto done;
         }
 
-        paths[path_index].flags = DISPLAYCONFIG_PATH_ACTIVE;
-        set_mode_target_info( &modes[mode_index], gpu_luid, output_id, flags, &devmode );
-        set_path_target_info( &paths[path_index].targetInfo, gpu_luid, output_id, mode_index, &devmode );
-
-        mode_index++;
-        if (mode_index == *modes_count)
-        {
-            ret = ERROR_INSUFFICIENT_BUFFER;
-            goto done;
-        }
-
         /* Multiple targets can be driven by the same source, ensure a mode
          * hasn't already been added for this source.
          */
@@ -2867,9 +2891,31 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
         {
             set_mode_source_info( &modes[mode_index], gpu_luid, source_index, &devmode );
             source_mode_index = mode_index;
-            mode_index++;
+            if (++mode_index == *modes_count)
+            {
+                ret = ERROR_INSUFFICIENT_BUFFER;
+                goto done;
+            }
         }
-        set_path_source_info( &paths[path_index].sourceInfo, gpu_luid, source_index, source_mode_index );
+
+        paths[path_index].flags = DISPLAYCONFIG_PATH_ACTIVE;
+        set_mode_target_info( &modes[mode_index], gpu_luid, output_id, flags, &devmode );
+        if (flags & QDC_VIRTUAL_MODE_AWARE)
+        {
+            paths[path_index].flags |= DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE;
+            if (++mode_index == *modes_count)
+            {
+                ret = ERROR_INSUFFICIENT_BUFFER;
+                goto done;
+            }
+            set_mode_desktop_info( &modes[mode_index], gpu_luid, output_id, &modes[source_mode_index].sourceMode );
+            set_path_target_info( &paths[path_index].targetInfo, gpu_luid, output_id, mode_index - 1, mode_index,
+                                  flags, &devmode );
+        }
+        else set_path_target_info( &paths[path_index].targetInfo, gpu_luid, output_id, mode_index, ~0u, flags, &devmode );
+        ++mode_index;
+
+        set_path_source_info( &paths[path_index].sourceInfo, gpu_luid, source_index, source_mode_index, flags );
         path_index++;
     }
 
