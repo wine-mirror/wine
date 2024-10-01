@@ -32,6 +32,8 @@ build-linux:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  tags:
+    - build
   artifacts:
     expire_in: 1 day
     paths:
@@ -46,6 +48,8 @@ build-clang:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  tags:
+    - build
   script:
     - mkdir -p build32 build64
     - ./tools/gitlab/build-clang
@@ -90,6 +94,8 @@ build-daily-linux:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  tags:
+    - build
   artifacts:
     expire_in: 1 day
     paths:
