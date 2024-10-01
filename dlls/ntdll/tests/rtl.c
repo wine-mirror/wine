@@ -3940,7 +3940,6 @@ static void test_RtlConvertDeviceFamilyInfoToString(void)
 
     if (!pRtlConvertDeviceFamilyInfoToString)
     {
-        todo_wine
         win_skip("RtlConvertDeviceFamilyInfoToString is unavailable.\n" );
         return;
     }

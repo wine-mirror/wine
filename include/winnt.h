@@ -6065,6 +6065,7 @@ typedef struct _TAPE_GET_MEDIA_PARAMETERS {
 #define DEVICEFAMILYDEVICEFORM_MAX                    0x21
 
 NTSYSAPI void WINAPI RtlGetDeviceFamilyInfoEnum(ULONGLONG*,DWORD*,DWORD*);
+NTSYSAPI DWORD WINAPI RtlConvertDeviceFamilyInfoToString(DWORD *,DWORD *,WCHAR *,WCHAR *);
 
 #define EVENTLOG_SUCCESS                0x0000
 #define EVENTLOG_ERROR_TYPE             0x0001

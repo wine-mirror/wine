@@ -1030,3 +1030,30 @@ void WINAPI RtlGetDeviceFamilyInfoEnum(ULONGLONG *version, DWORD *family, DWORD 
     if (family) *family = DEVICEFAMILYINFOENUM_DESKTOP;
     if (form) *form = DEVICEFAMILYDEVICEFORM_UNKNOWN;
 }
+
+/*********************************************************************
+ *           RtlConvertDeviceFamilyInfoToString [NTDLL.@]
+ */
+DWORD WINAPI RtlConvertDeviceFamilyInfoToString(DWORD *device_family_size, DWORD *device_form_size,
+                                                WCHAR *device_family, WCHAR *device_form)
+{
+    static const WCHAR *windows_desktop = L"Windows.Desktop";
+    static const WCHAR *unknown_form = L"Unknown";
+    DWORD family_length, form_length;
+
+    TRACE("%p %p %p %p\n", device_family_size, device_form_size, device_family, device_form);
+
+    family_length = (wcslen(windows_desktop) + 1) * sizeof(WCHAR);
+    form_length = (wcslen(unknown_form) + 1) * sizeof(WCHAR);
+
+    if (*device_family_size < family_length || *device_form_size < form_length)
+    {
+        *device_family_size = family_length;
+        *device_form_size = form_length;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    memcpy(device_family, windows_desktop, family_length);
+    memcpy(device_form, unknown_form, form_length);
+    return STATUS_SUCCESS;
+}
