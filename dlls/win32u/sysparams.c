@@ -3648,13 +3648,25 @@ static POINT get_placement_offset( const DEVMODEW *displays, const DEVMODEW *pla
     return min_offset;
 }
 
-static void place_all_displays( DEVMODEW *displays )
+static void place_all_displays( DEVMODEW *displays, const WCHAR *primary_name )
 {
-    POINT min_offset, offset;
+    POINT min_offset, offset = {0};
     DEVMODEW *mode, *placing;
 
     for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
+    {
+        if (wcsicmp( mode->dmDeviceName, primary_name )) continue;
+        offset.x = -mode->dmPosition.x;
+        offset.y = -mode->dmPosition.y;
+        break;
+    }
+
+    for (mode = displays; mode->dmSize; mode = NEXT_DEVMODEW(mode))
+    {
+        mode->dmPosition.x += offset.x;
+        mode->dmPosition.y += offset.y;
         mode->dmFields &= ~DM_POSITION;
+    }
 
     /* Place all displays with no extra space between them and no overlapping */
     while (1)
@@ -3763,8 +3775,6 @@ static LONG apply_display_settings( struct source *target, const DEVMODEW *devmo
         return DISP_CHANGE_SUCCESSFUL;
     }
 
-    place_all_displays( displays );
-
     if (!(primary = find_primary_source())) primary_name[0] = 0;
     else
     {
@@ -3772,6 +3782,8 @@ static LONG apply_display_settings( struct source *target, const DEVMODEW *devmo
         snprintf( device_name, sizeof(device_name), "\\\\.\\DISPLAY%d", primary->id + 1 );
         asciiz_to_unicode( primary_name, device_name );
     }
+
+    place_all_displays( displays, primary_name );
 
     /* use the default implementation in virtual desktop mode */
     if (is_virtual_desktop()) ret = DISP_CHANGE_SUCCESSFUL;
