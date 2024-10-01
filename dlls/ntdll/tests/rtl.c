@@ -110,6 +110,7 @@ static NTSTATUS  (WINAPI *pLdrUnregisterDllNotification)(void *);
 static VOID      (WINAPI *pRtlGetDeviceFamilyInfoEnum)(ULONGLONG *,DWORD *,DWORD *);
 static void      (WINAPI *pRtlRbInsertNodeEx)(RTL_RB_TREE *, RTL_BALANCED_NODE *, BOOLEAN, RTL_BALANCED_NODE *);
 static void      (WINAPI *pRtlRbRemoveNode)(RTL_RB_TREE *, RTL_BALANCED_NODE *);
+static DWORD     (WINAPI *pRtlConvertDeviceFamilyInfoToString)(DWORD *, DWORD *, WCHAR *, WCHAR *);
 
 
 static HMODULE hkernel32 = 0;
@@ -157,6 +158,7 @@ static void InitFunctionPtrs(void)
         pRtlGetDeviceFamilyInfoEnum = (void *)GetProcAddress(hntdll, "RtlGetDeviceFamilyInfoEnum");
         pRtlRbInsertNodeEx = (void *)GetProcAddress(hntdll, "RtlRbInsertNodeEx");
         pRtlRbRemoveNode = (void *)GetProcAddress(hntdll, "RtlRbRemoveNode");
+        pRtlConvertDeviceFamilyInfoToString = (void *)GetProcAddress(hntdll, "RtlConvertDeviceFamilyInfoToString");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -3931,6 +3933,66 @@ static void test_rb_tree(void)
     free(nodes);
 }
 
+static void test_RtlConvertDeviceFamilyInfoToString(void)
+{
+    DWORD device_family_size, device_form_size, ret;
+    WCHAR device_family[16], device_form[16];
+
+    if (!pRtlConvertDeviceFamilyInfoToString)
+    {
+        todo_wine
+        win_skip("RtlConvertDeviceFamilyInfoToString is unavailable.\n" );
+        return;
+    }
+
+    if (0) /* Crash on Windows */
+    {
+    ret = pRtlConvertDeviceFamilyInfoToString(NULL, NULL, NULL, NULL);
+    ok(ret == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx.\n", ret);
+
+    device_family_size = 0;
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, NULL, NULL, NULL);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", ret);
+    ok(device_family_size == (wcslen(L"Windows.Desktop") + 1) * sizeof(WCHAR),
+       "Got unexpected %#lx.\n", device_family_size);
+
+    device_form_size = 0;
+    ret = pRtlConvertDeviceFamilyInfoToString(NULL, &device_form_size, NULL, NULL);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", ret);
+    ok(device_form_size == (wcslen(L"Unknown") + 1) * sizeof(WCHAR), "Got unexpected %#lx.\n",
+       device_form_size);
+
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, NULL, device_family, NULL);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#lx.\n", ret);
+    ok(device_family_size == (wcslen(L"Windows.Desktop") + 1) * sizeof(WCHAR),
+       "Got unexpected %#lx.\n", device_family_size);
+    ok(!wcscmp(device_family, L"Windows.Desktop"), "Got unexpected %s.\n", wine_dbgstr_w(device_family));
+
+    ret = pRtlConvertDeviceFamilyInfoToString(NULL, &device_form_size, NULL, device_form);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#lx.\n", ret);
+    ok(device_form_size == (wcslen(L"Unknown") + 1) * sizeof(WCHAR), "Got unexpected %#lx.\n",
+       device_form_size);
+    ok(!wcscmp(device_form, L"Unknown"), "Got unexpected %s.\n", wine_dbgstr_w(device_form));
+
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, &device_form_size, NULL, NULL);
+    ok(ret == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx.\n", ret);
+    }
+
+    device_family_size = wcslen(L"Windows.Desktop") * sizeof(WCHAR);
+    device_form_size = wcslen(L"Unknown") * sizeof(WCHAR);
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, &device_form_size, NULL, NULL);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", ret);
+    ok(device_family_size == (wcslen(L"Windows.Desktop") + 1) * sizeof(WCHAR),
+       "Got unexpected %#lx.\n", device_family_size);
+    ok(device_form_size == (wcslen(L"Unknown") + 1) * sizeof(WCHAR), "Got unexpected %#lx.\n",
+       device_form_size);
+
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, &device_form_size, device_family, device_form);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#lx.\n", ret);
+    ok(!wcscmp(device_family, L"Windows.Desktop"), "Got unexpected %s.\n", wine_dbgstr_w(device_family));
+    ok(!wcscmp(device_form, L"Unknown"), "Got unexpected %s.\n", wine_dbgstr_w(device_form));
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -3980,5 +4042,6 @@ START_TEST(rtl)
     test_RtlValidSecurityDescriptor();
     test_RtlFindExportedRoutineByName();
     test_RtlGetDeviceFamilyInfoEnum();
+    test_RtlConvertDeviceFamilyInfoToString();
     test_rb_tree();
 }
