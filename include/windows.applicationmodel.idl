@@ -36,6 +36,8 @@ namespace Windows.ApplicationModel {
     typedef struct PackageVersion PackageVersion;
 
     interface IAppDisplayInfo;
+    interface IDesignModeStatics;
+    interface IDesignModeStatics2;
     interface IEnteredBackgroundEventArgs;
     interface ILeavingBackgroundEventArgs;
     interface IPackage;
@@ -50,6 +52,7 @@ namespace Windows.ApplicationModel {
     interface ISuspendingOperation;
 
     runtimeclass AppDisplayInfo;
+    runtimeclass DesignMode;
     runtimeclass EnteredBackgroundEventArgs;
     runtimeclass LeavingBackgroundEventArgs;
     runtimeclass Package;
@@ -92,6 +95,26 @@ namespace Windows.ApplicationModel {
         [propget] HRESULT DisplayName([out, retval] HSTRING *value);
         [propget] HRESULT Description([out, retval] HSTRING *value);
         HRESULT GetLogo([in] Windows.Foundation.Size size, [out, retval] Windows.Storage.Streams.RandomAccessStreamReference **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DesignMode),
+        uuid(2c3893cc-f81a-4e7a-b857-76a80887e185)
+    ]
+    interface IDesignModeStatics : IInspectable
+    {
+        [propget] HRESULT DesignModeEnabled([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.ApplicationModel.DesignMode),
+        uuid(80cf8137-b064-4858-bec8-3eba22357535)
+    ]
+    interface IDesignModeStatics2 : IInspectable
+    {
+        [propget] HRESULT DesignMode2Enabled([out, retval] boolean *value);
     }
 
     [
@@ -248,6 +271,18 @@ namespace Windows.ApplicationModel {
     runtimeclass AppDisplayInfo
     {
         [default] interface Windows.ApplicationModel.IAppDisplayInfo;
+    }
+
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.ApplicationModel.IDesignModeStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.ApplicationModel.IDesignModeStatics2, Windows.Foundation.UniversalApiContract, 5.0),
+        threading(both)
+    ]
+    runtimeclass DesignMode
+    {
     }
 
     [
