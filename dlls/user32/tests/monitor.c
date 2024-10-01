@@ -1697,7 +1697,7 @@ static void test_GetDisplayConfigBufferSizes(void)
 
     paths = modes = 0;
     ret = pGetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS | QDC_VIRTUAL_MODE_AWARE, &paths, &modes);
-    todo_wine ok(!ret || broken(ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED) /* before Win10 */, "got %ld\n", ret);
+    ok(!ret || broken(ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED) /* before Win10 */, "got %ld\n", ret);
     if (!ret)
         ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
 }

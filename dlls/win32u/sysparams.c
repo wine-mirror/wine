@@ -88,6 +88,8 @@ static const char guid_devinterface_display_adapterA[] = "{5B45201D-F2F2-4F3B-85
 static const char guid_display_device_arrivalA[] = "{1CA05180-A699-450A-9A0C-DE4FBE3DDD89}";
 static const char guid_devinterface_monitorA[] = "{E6F07B5F-EE97-4A90-B076-33F57BF4EAA7}";
 
+static const UINT32 qdc_retrieve_flags_mask = QDC_ALL_PATHS | QDC_ONLY_ACTIVE_PATHS | QDC_DATABASE_CURRENT;
+
 #define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))
 
 struct gpu
@@ -2618,7 +2620,7 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
 
     *num_path_info = 0;
 
-    switch (flags)
+    switch (flags & qdc_retrieve_flags_mask)
     {
     case QDC_ALL_PATHS:
     case QDC_ONLY_ACTIVE_PATHS:
@@ -2628,8 +2630,14 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
         return ERROR_INVALID_PARAMETER;
     }
 
+    if ((flags & ~(qdc_retrieve_flags_mask | QDC_VIRTUAL_MODE_AWARE)))
+    {
+        FIXME( "unsupported flags %#x.\n", flags );
+        return ERROR_INVALID_PARAMETER;
+    }
+
     /* FIXME: semi-stub */
-    if (flags != QDC_ONLY_ACTIVE_PATHS)
+    if ((flags & qdc_retrieve_flags_mask) != QDC_ONLY_ACTIVE_PATHS)
         FIXME( "only returning active paths\n" );
 
     if (lock_display_devices())
@@ -2644,6 +2652,8 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
 
     *num_path_info = count;
     *num_mode_info = count * 2;
+    if (flags & QDC_VIRTUAL_MODE_AWARE)
+        *num_mode_info += count;
     TRACE( "returning %u paths %u modes\n", *num_path_info, *num_mode_info );
     return ERROR_SUCCESS;
 }
