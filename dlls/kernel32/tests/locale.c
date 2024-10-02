@@ -4509,7 +4509,7 @@ static BOOL CALLBACK test_EnumSystemLocalesW_callback(LPWSTR str)
 
     if (swscanf(str, L"%lx", &lcid) != 1)
     {
-        ok(FALSE, "EnumSystemLocalesW callback received unparsable LCID string \"%hs\"\n", str);
+        ok(FALSE, "unparsable LCID string %s\n", debugstr_w(str));
         return FALSE;
     }
 
@@ -5507,7 +5507,7 @@ static void test_IdnToNameprepUnicode(void)
         { 3, L"a-a", IDN_USE_STD3_ASCII_RULES, 3, 3, L"a-a" },
         { 3, L"aa-", IDN_USE_STD3_ASCII_RULES, 0, 0, L"aa-" },
         { -1, L"T\xdf\x130\x143\x37a\x6a\x30c \xaa", 0, 12, 12, L"tssi\x307\x144 \x3b9\x1f0 a" },
-        { 11, L"t\xad\x34f\x1806\x180b\x180c\x180d\x200b\x200c\x200d", 0, 0, 2, L"t",
+        { 11, L"t\xad\x34f\x2066\x180b\x180c\x180d\x200b\x200c\x200d", 0, 0, 2, L"t",
           STATUS_NO_UNICODE_TRANSLATION },
         /* 10 */
         { 2, {0x3b0}, 0, 2, 2, {0x3b0} },
