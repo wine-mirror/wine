@@ -1445,7 +1445,6 @@ static void test_inplace_active( BOOL active )
         CHECK_CALLED(ITextHostImpl_TxScrollWindowEx);
         CHECK_CALLED(ITextHostImpl_TxGetClientRect);
     } else {
-        todo_wine
         CHECK_NOT_CALLED(ITextHostImpl_TxScrollWindowEx);
         todo_wine
         CHECK_NOT_CALLED(ITextHostImpl_TxGetClientRect);

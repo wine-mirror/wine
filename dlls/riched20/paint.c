@@ -1212,6 +1212,8 @@ void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
   ME_Paragraph *para = cursor->para;
   int x, y, yheight;
 
+  if (!editor->in_place_active)
+    return;
 
   if (editor->scrollbars & ES_AUTOHSCROLL)
   {
