@@ -222,7 +222,7 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWO
     char *buffer;
 
     /* Try to read from console as Unicode */
-    if (ReadConsoleW(hIn, intoBuf, maxChars, charsRead, NULL)) return TRUE;
+    if (VerifyConsoleIoHandle(hIn) && ReadConsoleW(hIn, intoBuf, maxChars, charsRead, NULL)) return TRUE;
 
     /* We assume it's a file handle and read then convert from assumed OEM codepage */
     if (!(buffer = get_file_buffer()))
