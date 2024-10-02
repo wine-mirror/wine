@@ -709,9 +709,9 @@ BOOL WINAPI NtUserSetCursorPos( INT x, INT y )
     RECT rect = {x, y, x, y};
     BOOL ret;
     INT prev_x, prev_y, new_x, new_y;
-    UINT dpi;
+    UINT dpi, raw_dpi;
 
-    dpi = monitor_dpi_from_rect( rect, get_thread_dpi() );
+    dpi = monitor_dpi_from_rect( rect, get_thread_dpi(), &raw_dpi );
     rect = map_dpi_rect( rect, get_thread_dpi(), dpi );
 
     SERVER_START_REQ( set_cursor )
@@ -743,7 +743,7 @@ BOOL get_cursor_pos( POINT *pt )
     DWORD last_change = 0;
     NTSTATUS status;
     RECT rect;
-    UINT dpi;
+    UINT dpi, raw_dpi;
 
     if (!pt) return FALSE;
 
@@ -760,7 +760,7 @@ BOOL get_cursor_pos( POINT *pt )
     if (!ret) return FALSE;
 
     SetRect( &rect, pt->x, pt->y, pt->x, pt->y );
-    dpi = monitor_dpi_from_rect( rect, get_thread_dpi() );
+    dpi = monitor_dpi_from_rect( rect, get_thread_dpi(), &raw_dpi );
     rect = map_dpi_rect( rect, dpi, get_thread_dpi() );
     *pt = *(POINT *)&rect.left;
     return ret;
@@ -2623,7 +2623,7 @@ BOOL get_clip_cursor( RECT *rect, UINT dpi )
     if (!status)
     {
         UINT ctx = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
-        UINT dpi_from = monitor_dpi_from_rect( *rect, get_thread_dpi() );
+        UINT raw_dpi, dpi_from = monitor_dpi_from_rect( *rect, get_thread_dpi(), &raw_dpi );
         *rect = map_dpi_rect( *rect, dpi_from, dpi );
         set_thread_dpi_awareness_context( ctx );
     }
@@ -2671,7 +2671,7 @@ BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
  */
 BOOL WINAPI NtUserClipCursor( const RECT *rect )
 {
-    UINT dpi_from = get_thread_dpi(), dpi_to;
+    UINT dpi_from = get_thread_dpi(), dpi_to, raw_dpi;
     BOOL ret;
     RECT new_rect;
 
@@ -2680,7 +2680,7 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
     if (rect)
     {
         if (rect->left > rect->right || rect->top > rect->bottom) return FALSE;
-        dpi_to = monitor_dpi_from_rect( *rect, dpi_from );
+        dpi_to = monitor_dpi_from_rect( *rect, dpi_from, &raw_dpi );
         new_rect = map_dpi_rect( *rect, dpi_from, dpi_to );
         rect = &new_rect;
     }

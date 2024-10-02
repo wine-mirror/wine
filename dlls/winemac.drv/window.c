@@ -355,7 +355,7 @@ static void sync_window_min_max_info(HWND hwnd)
 {
     LONG style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     LONG exstyle = NtUserGetWindowLongW(hwnd, GWL_EXSTYLE);
-    UINT dpi = NtUserGetWinMonitorDpi(hwnd);
+    UINT dpi = NtUserGetWinMonitorDpi(hwnd, MDT_DEFAULT);
     RECT win_rect, primary_monitor_rect;
     MINMAXINFO minmax;
     LONG adjustedStyle;
@@ -1087,7 +1087,7 @@ static HMONITOR monitor_from_point(POINT pt, UINT flags)
  */
 static LRESULT move_window(HWND hwnd, WPARAM wparam)
 {
-    UINT dpi = NtUserGetWinMonitorDpi(hwnd);
+    UINT dpi = NtUserGetWinMonitorDpi(hwnd, MDT_DEFAULT);
     MSG msg;
     RECT origRect, movedRect, desktopRect;
     int hittest = (int)(wparam & 0x0f);
@@ -1114,7 +1114,7 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
     else
         captionHeight = 0;
 
-    NtUserGetWindowRect(hwnd, &origRect, NtUserGetWinMonitorDpi(hwnd));
+    NtUserGetWindowRect(hwnd, &origRect, NtUserGetWinMonitorDpi(hwnd, MDT_DEFAULT));
     movedRect = origRect;
 
     if (!hittest)

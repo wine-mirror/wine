@@ -1544,9 +1544,9 @@ static inline BOOL NtUserExposeWindowSurface( HWND hwnd, UINT flags, const RECT 
     return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_ExposeWindowSurface );
 }
 
-static inline UINT NtUserGetWinMonitorDpi( HWND hwnd )
+static inline UINT NtUserGetWinMonitorDpi( HWND hwnd, MONITOR_DPI_TYPE type )
 {
-    return NtUserCallHwndParam( hwnd, 0, NtUserCallHwndParam_GetWinMonitorDpi );
+    return NtUserCallHwndParam( hwnd, type, NtUserCallHwndParam_GetWinMonitorDpi );
 }
 
 #endif /* _NTUSER_ */

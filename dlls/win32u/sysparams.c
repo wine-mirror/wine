@@ -2310,9 +2310,10 @@ static UINT get_monitor_dpi( HMONITOR handle, UINT type, UINT *x, UINT *y )
 /**********************************************************************
  *              get_win_monitor_dpi
  */
-UINT get_win_monitor_dpi( HWND hwnd )
+UINT get_win_monitor_dpi( HWND hwnd, UINT *raw_dpi )
 {
     /* FIXME: use the monitor DPI instead */
+    *raw_dpi = system_dpi;
     return system_dpi;
 }
 
@@ -2466,7 +2467,8 @@ POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
  */
 static POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
 {
-    return map_dpi_point( pt, get_dpi_for_window( hwnd ), get_win_monitor_dpi( hwnd ) );
+    UINT raw_dpi, dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+    return map_dpi_point( pt, get_dpi_for_window( hwnd ), dpi );
 }
 
 /**********************************************************************
@@ -2474,7 +2476,8 @@ static POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
  */
 POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
 {
-    return map_dpi_point( pt, get_win_monitor_dpi( hwnd ), get_dpi_for_window( hwnd ));
+    UINT raw_dpi, dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+    return map_dpi_point( pt, dpi, get_dpi_for_window( hwnd ) );
 }
 
 /**********************************************************************
@@ -2482,8 +2485,8 @@ POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
  */
 POINT point_thread_to_win_dpi( HWND hwnd, POINT pt )
 {
-    UINT dpi = get_thread_dpi();
-    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
+    UINT dpi = get_thread_dpi(), raw_dpi;
+    if (!dpi) dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
     return map_dpi_point( pt, dpi, get_dpi_for_window( hwnd ));
 }
 
@@ -2492,8 +2495,8 @@ POINT point_thread_to_win_dpi( HWND hwnd, POINT pt )
  */
 RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect )
 {
-    UINT dpi = get_thread_dpi();
-    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
+    UINT dpi = get_thread_dpi(), raw_dpi;
+    if (!dpi) dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
     return map_dpi_rect( rect, dpi, get_dpi_for_window( hwnd ) );
 }
 
@@ -3847,14 +3850,17 @@ MONITORINFO monitor_info_from_rect( RECT rect, UINT dpi )
     return info;
 }
 
-UINT monitor_dpi_from_rect( RECT rect, UINT dpi )
+UINT monitor_dpi_from_rect( RECT rect, UINT dpi, UINT *raw_dpi )
 {
     struct monitor *monitor;
     UINT ret = system_dpi, x, y;
 
     if (!lock_display_devices()) return 0;
     if ((monitor = get_monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, dpi, MDT_DEFAULT )))
+    {
+        *raw_dpi = monitor_get_dpi( monitor, MDT_RAW_DPI, &x, &y );
         ret = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
+    }
     unlock_display_devices();
 
     return ret;
