@@ -921,7 +921,7 @@ static void make_owner_managed( HWND hwnd )
     if (is_managed( owner )) return;
     if (!is_managed( hwnd )) return;
 
-    set_window_pos( owner, 0, 0, 0, 0, 0, flags );
+    NtUserSetWindowPos( owner, 0, 0, 0, 0, 0, flags );
 }
 
 
