@@ -146,13 +146,13 @@ simple and macro), #undef, #if, #ifdef, #ifndef, #elif, #else, #endif,
 .PP
 The preprocessor sets by default several defines:
 .br
-RC_INVOKED      set to 1
+- RC_INVOKED      set to 1
 .br
-__WRC__         Major version of wrc
+- __WRC__         Major version of wrc
 .br
-__WRC_MINOR__   Minor version of wrc
+- __WRC_MINOR__   Minor version of wrc
 .br
-__WRC_PATCHLEVEL__   Patch level
+- __WRC_PATCHLEVEL__   Patch level
 .PP
 Win32 compilation mode also sets _WIN32 to 1.
 .PP
@@ -167,26 +167,20 @@ you declare it correctly before the VERSIONINFO resource starts.
 .PP
 Example:
 .PP
+.nf
 1 RCDATA DISCARDABLE
-.br
 LANGUAGE 1, 0
-.br
 VERSION 312
-.br
 CHARACTERISTICS 876
-.br
 {
-.br
 	1, 2, 3, 4, 5, "and whatever more data you want"
-.br
 	'00 01 02 03 04 05 06 07 08'
-.br
 }
 .SH AUTHORS
 .B wrc
 was written by Bertho A. Stultiens and is a nearly complete rewrite of
 the first wine resource compiler (1994) by Martin von Loewis.
-Additional resource\-types were contributed by Ulrich Czekalla and Albert
+Additional resource types were contributed by Ulrich Czekalla and Albert
 den Haan. Many cleanups by Dimitrie O. Paun in 2002-2003.
 Bugfixes have been contributed by many Wine developers.
 .SH BUGS
