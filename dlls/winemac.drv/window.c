@@ -1837,7 +1837,6 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
 {
     struct macdrv_win_data *data;
     RECT rect;
-    HWND parent;
     UINT flags = SWP_NOACTIVATE | SWP_NOZORDER;
     int width, height;
     BOOL being_dragged;
@@ -1852,16 +1851,12 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
 
     /* Get geometry */
 
-    parent = NtUserGetAncestor(hwnd, GA_PARENT);
-
     TRACE("win %p/%p new Cocoa frame %s fullscreen %d in_resize %d\n", hwnd, data->cocoa_window,
           wine_dbgstr_cgrect(event->window_frame_changed.frame),
           event->window_frame_changed.fullscreen, event->window_frame_changed.in_resize);
 
     rect = rect_from_cgrect(event->window_frame_changed.frame);
     rect = window_rect_from_visible(&data->rects, rect);
-    NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */);
-
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
 
@@ -2090,13 +2085,8 @@ void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event)
 
         if ((style & WS_MAXIMIZE) && (style & WS_VISIBLE) && (data = get_win_data(hwnd)))
         {
-            RECT rect;
-            HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
-
-            rect = rect_from_cgrect(event->window_restore_requested.frame);
+            RECT rect = rect_from_cgrect(event->window_restore_requested.frame);
             rect = window_rect_from_visible(&data->rects, rect);
-            NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */);
-
             release_win_data(data);
 
             set_internal_window_pos(hwnd, SW_SHOW, &rect, NULL);
