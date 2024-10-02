@@ -15,7 +15,7 @@ If no option is given launch the graphical version of
 .BR winecfg .
 .SH OPTIONS
 .TP
-\fB\-v \fR[\fIversion\fR], \fB/v \fR[\fB\fIversion\fR]
+\fB\-v \fR[\fIversion\fR], \fB/v \fR[\fIversion\fR]
 Set global Windows version to
 .I version
 and exit.

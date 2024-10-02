@@ -1,6 +1,6 @@
 .TH WINEPATH 1 "November 2010" "@PACKAGE_STRING@" "Wine Programs"
 .SH NAME
-winepath \- Tool to convert Unix paths to/from Win32 paths
+winepath \- convert Unix paths to/from Win32 paths
 .SH SYNOPSIS
 .B winepath
 .IR "option " { path }
