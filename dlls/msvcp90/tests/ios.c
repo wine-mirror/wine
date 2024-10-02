@@ -1467,7 +1467,6 @@ static void test_num_put_put_double(void)
         streamsize    prec;  /* set to -1 for default */
         IOSB_fmtflags fmtfl; /* FMTFLAG_scientific, FMTFLAG_fixed */
         const char    *str;
-        MSVCP_bool    is_todo;
     } tests[] = {
         { 0.0, NULL, -1, 0, "0" },
 
@@ -1515,7 +1514,7 @@ static void test_num_put_put_double(void)
         { -1.23456789e-9, NULL, 9, FMTFLAG_fixed, "-0.000000001"       },
 
         { -1.0, NULL, -1, 0,                "-1" },
-        { -1.0, NULL, -1, FMTFLAG_internal, "-1", TRUE },
+        { -1.0, NULL, -1, FMTFLAG_internal, "-1" },
     };
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
@@ -1539,7 +1538,6 @@ static void test_num_put_put_double(void)
         len = (MSVCP_size_t)call_func1(p_basic_string_char_length, &pstr);
 
         ok(!strcmp(tests[i].str, str), "wrong output, expected = %s found = %s\n", tests[i].str, str);
-        todo_wine_if(tests[i].is_todo)
         ok(len == strlen(str), "wrong size, expected = %Iu found = %Iu\n", strlen(str), len);
         call_func1(p_basic_string_char_dtor, &pstr);
 
@@ -1569,7 +1567,6 @@ static void test_num_put_put_double(void)
 
         AtoW(wide, tests[i].str, strlen(tests[i].str));
         ok(!lstrcmpW(wide, wstr), "wrong output, expected = %s found = %s\n", tests[i].str, wine_dbgstr_w(wstr));
-        todo_wine_if(tests[i].is_todo)
         ok(len == lstrlenW(wstr), "wrong size, expected = %u found = %Iu\n", lstrlenW(wstr), len);
         call_func1(p_basic_string_wchar_dtor, &pwstr);
 
@@ -1597,11 +1594,10 @@ static void test_num_put_put_int(void)
         int           val;
         IOSB_fmtflags fmtfl;
         const char    *str;
-        MSVCP_bool    is_todo;
     } tests[] = {
         {  1, 0,                "1" },
         { -1, 0,                "-1" },
-        { -1, FMTFLAG_internal, "-1", TRUE },
+        { -1, FMTFLAG_internal, "-1" },
     };
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
@@ -1618,7 +1614,6 @@ static void test_num_put_put_int(void)
         len = (MSVCP_size_t)call_func1(p_basic_string_char_length, &pstr);
 
         ok(!strcmp(tests[i].str, str), "wrong output, expected = %s found = %s\n", tests[i].str, str);
-        todo_wine_if(tests[i].is_todo)
         ok(len == strlen(str), "wrong size, expected = %Iu found = %Iu\n", strlen(str), len);
         call_func1(p_basic_string_char_dtor, &pstr);
 
@@ -1638,7 +1633,6 @@ static void test_num_put_put_int(void)
 
         AtoW(wide, tests[i].str, strlen(tests[i].str));
         ok(!lstrcmpW(wide, wstr), "wrong output, expected = %s found = %s\n", tests[i].str, wine_dbgstr_w(wstr));
-        todo_wine_if(tests[i].is_todo)
         ok(len == lstrlenW(wstr), "wrong size, expected = %u found = %Iu\n", lstrlenW(wstr), len);
         call_func1(p_basic_string_wchar_dtor, &pwstr);
 
