@@ -11,5 +11,5 @@ autoreconf -f
 
 cd build64
 ../configure -q -C --enable-archs=i386,x86_64,aarch64 --with-mingw=clang
-make -s -j$(nproc)
+make -s
 cd ..

@@ -11,18 +11,18 @@ autoreconf -f
 
 cd build64
 ../configure -q -C --enable-win64 --enable-werror --with-mingw
-make -s -j$(nproc)
+make -s
 cd ..
 
 cd build32
 ../configure -q -C --enable-werror --with-mingw
-make -s -j$(nproc)
+make -s
 cd ..
 
 if ! test -s .git/rebase-merge/git-rebase-todo
 then
-    make -s -j$(nproc) -C build32 install-lib install-test DESTDIR=$BASEDIR
-    make -s -j$(nproc) -C build64 install-lib install-test DESTDIR=$BASEDIR
+    make -s -C build32 install-lib install-test DESTDIR=$BASEDIR
+    make -s -C build64 install-lib install-test DESTDIR=$BASEDIR
 fi
 
 git reset --hard
