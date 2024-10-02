@@ -518,6 +518,10 @@ static basic_ostream_char* (*__cdecl p_basic_ostream_char_print_complex_ldouble)
 
 static basic_ostream_wchar* (*__thiscall p_basic_ostream_short_print_ushort)(basic_ostream_wchar*, unsigned short);
 
+static basic_ostream_char* (*__thiscall p_basic_ostream_char_print_int)(basic_ostream_char*, int);
+
+static basic_ostream_wchar* (*__thiscall p_basic_ostream_wchar_print_int)(basic_ostream_wchar*, int);
+
 /* basic_ios */
 static locale*  (*__thiscall p_basic_ios_char_imbue)(basic_ios_char*, locale*, const locale*);
 static basic_ios_char* (*__thiscall p_basic_ios_char_ctor)(basic_ios_char*);
@@ -765,6 +769,12 @@ static BOOL init(void)
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@0@AEAV10@AEBV?$complex@O@0@@Z");
 
+        SET(p_basic_ostream_char_print_int,
+            "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAAAEAV01@J@Z");
+
+        SET(p_basic_ostream_wchar_print_int,
+            "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV01@J@Z");
+
         SET(p_ios_base__Init,
             "?_Init@ios_base@std@@IEAAXXZ");
         SET(p_ios_base_rdstate,
@@ -922,6 +932,12 @@ static BOOL init(void)
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@O@0@@Z");
 
+        SET(p_basic_ostream_char_print_int,
+            "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAAAAV01@J@Z");
+
+        SET(p_basic_ostream_wchar_print_int,
+            "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAAAAV01@J@Z");
+
         SET(p_ios_base__Init,
             "?_Init@ios_base@std@@IAAXXZ");
         SET(p_ios_base_rdstate,
@@ -1074,6 +1090,12 @@ static BOOL init(void)
 
         SET(p_basic_ostream_char_print_complex_ldouble,
             "??$?6ODU?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@ABV?$complex@O@0@@Z");
+
+        SET(p_basic_ostream_char_print_int,
+            "??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@J@Z");
+
+        SET(p_basic_ostream_wchar_print_int,
+            "??6?$basic_ostream@_WU?$char_traits@_W@std@@@std@@QAEAAV01@J@Z");
 
         SET(p_ios_base__Init,
             "?_Init@ios_base@std@@IAEXXZ");
@@ -1553,6 +1575,72 @@ static void test_num_put_put_double(void)
 
         if(tests[i].lcl)
             call_func1(p_locale_dtor, &lcl);
+
+        call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
+    }
+}
+
+
+static void test_num_put_put_int(void)
+{
+    basic_stringstream_wchar wss;
+    basic_stringstream_char ss;
+    basic_string_wchar pwstr;
+    basic_string_char pstr;
+    const wchar_t *wstr;
+    const char *str;
+    wchar_t wide[64];
+    MSVCP_size_t len;
+    int i;
+
+    struct {
+        int           val;
+        IOSB_fmtflags fmtfl;
+        const char    *str;
+        MSVCP_bool    is_todo;
+    } tests[] = {
+        {  1, 0,                "1" },
+        { -1, 0,                "-1" },
+        { -1, FMTFLAG_internal, "-1", TRUE },
+    };
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        /* char version */
+        call_func1(p_basic_stringstream_char_ctor, &ss);
+
+        /* set format only if specified, so we can try defaults */
+        if(tests[i].fmtfl)
+            call_func3(p_ios_base_setf_mask, &ss.basic_ios.base, tests[i].fmtfl, FMTFLAG_mask);
+        call_func2(p_basic_ostream_char_print_int, &ss.base.base2, tests[i].val);
+
+        call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
+        str = call_func1(p_basic_string_char_cstr, &pstr);
+        len = (MSVCP_size_t)call_func1(p_basic_string_char_length, &pstr);
+
+        ok(!strcmp(tests[i].str, str), "wrong output, expected = %s found = %s\n", tests[i].str, str);
+        todo_wine_if(tests[i].is_todo)
+        ok(len == strlen(str), "wrong size, expected = %Iu found = %Iu\n", strlen(str), len);
+        call_func1(p_basic_string_char_dtor, &pstr);
+
+        call_func1(p_basic_stringstream_char_vbase_dtor, &ss);
+
+        /* wchar_t version */
+        call_func1(p_basic_stringstream_wchar_ctor, &wss);
+
+        /* set format only if specified, so we can try defaults */
+        if(tests[i].fmtfl)
+            call_func3(p_ios_base_setf_mask, &wss.basic_ios.base, tests[i].fmtfl, FMTFLAG_mask);
+        call_func2(p_basic_ostream_wchar_print_int, &wss.base.base2, tests[i].val);
+
+        call_func2(p_basic_stringstream_wchar_str_get, &wss, &pwstr);
+        wstr = call_func1(p_basic_string_wchar_cstr, &pwstr);
+        len = (MSVCP_size_t)call_func1(p_basic_string_wchar_length, &pwstr);
+
+        AtoW(wide, tests[i].str, strlen(tests[i].str));
+        ok(!lstrcmpW(wide, wstr), "wrong output, expected = %s found = %s\n", tests[i].str, wine_dbgstr_w(wstr));
+        todo_wine_if(tests[i].is_todo)
+        ok(len == lstrlenW(wstr), "wrong size, expected = %u found = %Iu\n", lstrlenW(wstr), len);
+        call_func1(p_basic_string_wchar_dtor, &pwstr);
 
         call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
     }
@@ -2529,6 +2617,7 @@ START_TEST(ios)
     test_num_get_get_uint64();
     test_num_get_get_double();
     test_num_put_put_double();
+    test_num_put_put_int();
     test_istream_ipfx();
     test_istream_ignore();
     test_istream_seekg();
