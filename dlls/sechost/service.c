@@ -2087,6 +2087,7 @@ static DWORD WINAPI device_notify_proc( void *arg )
         EnterCriticalSection( &service_cs );
         LIST_FOR_EACH_ENTRY(registration, &device_notify_list, struct device_notify_registration, entry)
         {
+            if (!notification_filter_matches( &registration->details.filter.header, (DEV_BROADCAST_HDR *)buf )) continue;
             details_copy[i++] = registration->details;
             details_copy_nelems++;
             if (i == details_copy_size)
@@ -2099,7 +2100,6 @@ static DWORD WINAPI device_notify_proc( void *arg )
 
         for (i = 0; i < details_copy_nelems; i++)
         {
-            if (!notification_filter_matches( &details_copy[i].filter.header, (DEV_BROADCAST_HDR *)buf )) continue;
             details_copy[i].callback( details_copy[i].handle, code, (DEV_BROADCAST_HDR *)buf );
         }
         MIDL_user_free(buf);
