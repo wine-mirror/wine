@@ -743,7 +743,7 @@ static void set_focus(HWND hwnd, BOOL raise)
     if (!(hwnd = NtUserGetAncestor(hwnd, GA_ROOT))) return;
 
     if (raise && hwnd == NtUserGetForegroundWindow() && hwnd != NtUserGetDesktopWindow() && !is_all_the_way_front(hwnd))
-        set_window_pos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 
     if (!(data = get_win_data(hwnd))) return;
 
@@ -2054,7 +2054,7 @@ done:
 void macdrv_window_brought_forward(HWND hwnd)
 {
     TRACE("win %p\n", hwnd);
-    set_window_pos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
 
