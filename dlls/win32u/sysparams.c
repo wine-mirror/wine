@@ -4970,9 +4970,43 @@ static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
     return ERROR_FILE_NOT_FOUND;
 }
 
+static char *get_app_compat_flags( const WCHAR *appname )
+{
+    char buffer[4096];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    WCHAR *value_str = NULL;
+    char *compat_flags;
+    HKEY hkey;
+    UINT i;
+
+    if ((hkey = reg_open_hkcu_key( "Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers" )))
+    {
+        if ((query_reg_value( hkey, appname, value, sizeof(buffer) ) && value->Type == REG_SZ) ||
+            /* Wine extension: set default application flag using the default key value */
+            (query_reg_value( hkey, NULL, value, sizeof(buffer) ) && value->Type == REG_SZ))
+            value_str = (WCHAR *)value->Data;
+        NtClose( hkey );
+    }
+
+    if (!value_str && (hkey = reg_open_ascii_key( NULL, "Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers" )))
+    {
+        if ((query_reg_value( hkey, appname, value, sizeof(buffer) ) && value->Type == REG_SZ) ||
+            /* Wine extension: set default application flag using the default key value */
+            (query_reg_value( hkey, NULL, value, sizeof(buffer) ) && value->Type == REG_SZ))
+            value_str = (WCHAR *)value->Data;
+        NtClose( hkey );
+    }
+
+    if (!value_str) return NULL;
+    if (!(compat_flags = calloc( 1, value->DataLength / sizeof(WCHAR) + 1 ))) return NULL;
+    for (i = 0; compat_flags && i < value->DataLength / sizeof(WCHAR); i++) compat_flags[i] = value_str[i];
+    return compat_flags;
+}
+
 void sysparams_init(void)
 {
     WCHAR buffer[MAX_PATH+16], *p, *appname;
+    char *app_compat_flags = NULL;
     DWORD i, dispos, dpi_scaling;
     WCHAR layout[KL_NAMELENGTH];
     pthread_mutexattr_t attr;
@@ -5052,11 +5086,14 @@ void sysparams_init(void)
         for (i = 0; appname[i]; i++) buffer[i] = RtlDowncaseUnicodeChar( appname[i] );
         buffer[i] = 0;
         appname = buffer;
-        memcpy( appname + i, x11driverW, sizeof(x11driverW) );
+
+        app_compat_flags = get_app_compat_flags( appname );
+        if (app_compat_flags) TRACE( "Found %s AppCompatFlags %s\n", debugstr_w(appname), debugstr_a(app_compat_flags) );
 
         /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\X11 Driver */
         if ((tmpkey = reg_open_hkcu_key( "Software\\Wine\\AppDefaults" )))
         {
+            memcpy( appname + i, x11driverW, sizeof(x11driverW) );
             appkey = reg_open_key( tmpkey, appname, lstrlenW( appname ) * sizeof(WCHAR) );
             NtClose( tmpkey );
         }
@@ -5073,6 +5110,13 @@ void sysparams_init(void)
         decorated_mode = IS_OPTION_TRUE( buffer[0] );
 
 #undef IS_OPTION_TRUE
+
+    if (app_compat_flags)
+    {
+        if (strstr( app_compat_flags, "HIGHDPIAWARE" )) NtUserSetProcessDpiAwarenessContext( NTUSER_DPI_SYSTEM_AWARE, 0 );
+        if (strstr( app_compat_flags, "DPIUNAWARE" )) NtUserSetProcessDpiAwarenessContext( NTUSER_DPI_UNAWARE, 0 );
+    }
+    free( app_compat_flags );
 }
 
 static BOOL update_desktop_wallpaper(void)
