@@ -58,10 +58,12 @@ namespace Windows.Storage.Streams {
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.Collections.IVector<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IOutputStream *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IOutputStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
@@ -166,6 +168,19 @@ namespace Windows.Storage.Streams {
         HRESULT CreateDataWriter(
             [in] Windows.Storage.Streams.IOutputStream *output_stream,
             [out, retval] Windows.Storage.Streams.DataWriter **data_writer);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(905a0fe6-bc53-11df-8c49-001e4fc686da)
+    ]
+    interface IOutputStream : IInspectable
+        requires Windows.Foundation.IClosable
+    {
+        HRESULT WriteAsync(
+            [in] Windows.Storage.Streams.IBuffer *buffer,
+            [out, retval] Windows.Foundation.IAsyncOperationWithProgress<UINT32, UINT32> **operation);
+        HRESULT FlushAsync([out, retval] Windows.Foundation.IAsyncOperation<boolean> **operation);
     }
 
     [
