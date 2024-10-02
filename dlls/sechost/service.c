@@ -1996,6 +1996,16 @@ struct device_notify_registration
     struct device_notification_details details;
 };
 
+static struct device_notify_registration *device_notify_copy( struct device_notify_registration *notify )
+{
+    struct device_notify_registration *event;
+
+    if (!(event = calloc( 1, sizeof(*event) ))) return NULL;
+    event->details = notify->details;
+
+    return event;
+}
+
 static BOOL notification_filter_matches( DEV_BROADCAST_HDR *filter, DEV_BROADCAST_HDR *event )
 {
     if (!filter->dbch_devicetype) return TRUE;
@@ -2019,12 +2029,11 @@ static DWORD WINAPI device_notify_proc( void *arg )
     WCHAR protseq[] = L"ncacn_np";
     RPC_WSTR binding_str;
     DWORD err = ERROR_SUCCESS;
-    struct device_notify_registration *registration;
-    struct device_notification_details *details_copy;
-    unsigned int details_copy_nelems, details_copy_size;
+    struct device_notify_registration *registration, *event, *next;
+    struct list events = LIST_INIT(events);
     plugplay_rpc_handle handle = NULL;
     DWORD code = 0;
-    unsigned int i, size;
+    unsigned int size;
     BYTE *buf;
 
     SetThreadDescription( GetCurrentThread(), L"wine_sechost_device_notify" );
@@ -2058,9 +2067,6 @@ static DWORD WINAPI device_notify_proc( void *arg )
         return 1;
     }
 
-    details_copy_size = 8;
-    details_copy = malloc( details_copy_size * sizeof(*details_copy) );
-
     for (;;)
     {
         buf = NULL;
@@ -2082,25 +2088,20 @@ static DWORD WINAPI device_notify_proc( void *arg )
         }
 
         /* Make a copy to avoid a hang if a callback tries to register or unregister for notifications. */
-        i = 0;
-        details_copy_nelems = 0;
         EnterCriticalSection( &service_cs );
         LIST_FOR_EACH_ENTRY(registration, &device_notify_list, struct device_notify_registration, entry)
         {
             if (!notification_filter_matches( &registration->details.filter.header, (DEV_BROADCAST_HDR *)buf )) continue;
-            details_copy[i++] = registration->details;
-            details_copy_nelems++;
-            if (i == details_copy_size)
-            {
-                details_copy_size *= 2;
-                details_copy = realloc( details_copy, details_copy_size * sizeof(*details_copy) );
-            }
+            if (!(event = device_notify_copy( registration ))) break;
+            list_add_tail( &events, &event->entry );
         }
         LeaveCriticalSection(&service_cs);
 
-        for (i = 0; i < details_copy_nelems; i++)
+        LIST_FOR_EACH_ENTRY_SAFE( event, next, &events, struct device_notify_registration, entry )
         {
-            details_copy[i].callback( details_copy[i].handle, code, (DEV_BROADCAST_HDR *)buf );
+            event->details.callback( event->details.handle, code, (DEV_BROADCAST_HDR *)buf );
+            list_remove( &event->entry );
+            free( event );
         }
         MIDL_user_free(buf);
     }
@@ -2114,7 +2115,6 @@ static DWORD WINAPI device_notify_proc( void *arg )
     }
     __ENDTRY
 
-    free( details_copy );
     RpcBindingFree( &plugplay_binding_handle );
     return 0;
 }
