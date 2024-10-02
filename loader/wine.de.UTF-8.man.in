@@ -3,8 +3,8 @@
 .SH NAME
 wine \- Windows-Programme auf Unix-Systemen ausführen
 .SH ÜBERSICHT
-.BI "wine " Programm
-[Argumente ... ]
+.B wine
+.IR Programm " [" Argumente ]
 .br
 .B wine --help
 .br
@@ -12,8 +12,7 @@ wine \- Windows-Programme auf Unix-Systemen ausführen
 .PP
 Für das Übergeben von Kommandos an Windows-Programme siehe den
 Abschnitt
-.B
-"Programm / Argumente"
+.B PROGRAMM/ARGUMENTE
 in dieser Manpage.
 .SH BESCHREIBUNG
 .B wine

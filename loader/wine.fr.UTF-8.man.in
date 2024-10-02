@@ -10,8 +10,7 @@ wine \- exécuter des programmes Windows sur Unix
 .B wine --version
 .PP
 Pour des instructions sur le passage d'arguments aux programmes Windows, veuillez lire la section
-.B
-PROGRAMME/ARGUMENTS
+.B PROGRAMME/ARGUMENTS
 de la page de manuel.
 .SH DESCRIPTION
 .B wine

@@ -10,8 +10,7 @@ wine \- run Windows programs on Unix
 .B wine --version
 .PP
 For instructions on passing arguments to Windows programs, please see the
-.B
-PROGRAM/ARGUMENTS
+.B PROGRAM/ARGUMENTS
 section of the man page.
 .SH DESCRIPTION
 .B wine
@@ -228,12 +227,15 @@ Specifies Direct3D configuration options. It can be used instead of
 modifying the
 .B HKEY_CURRENT_USER\\\\Software\\\\Wine\\\\Direct3D
 registry key. The value is a comma- or semicolon-separated list
-of key-value pairs. For example:
-.IP
+of key-value pairs.
+.RS
+For example:
+.TP
 WINE_D3D_CONFIG="renderer=vulkan;VideoPciVendorID=0xc0de"
-.IP
+.PP
 If an individual setting is specified in both
 the environment variable and the registry, the former takes precedence.
+.RE
 .TP
 .B DISPLAY
 Specifies the X11 display to use.

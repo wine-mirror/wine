@@ -3,16 +3,15 @@
 .SH NAZWA
 wine \- uruchamiaj programy Windowsowe na Uniksie
 .SH SKŁADNIA
-.BI "wine " program
-[opcje ... ]
+.B wine
+.IR program " [" opcje ]
 .br
 .B wine --help
 .br
 .B wine --version
 .PP
 Informacji na temat przekazywania opcji programom Windowsowym szukaj w rozdziale
-.B
-OPCJE
+.B OPCJE
 tej instrukcji.
 .SH OPIS
 .B wine
