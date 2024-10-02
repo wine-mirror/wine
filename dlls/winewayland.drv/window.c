@@ -37,15 +37,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 
-/* per-monitor DPI aware NtUserSetWindowPos call */
-static BOOL set_window_pos(HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags)
-{
-    UINT context = NtUserSetThreadDpiAwarenessContext(NTUSER_DPI_PER_MONITOR_AWARE_V2);
-    BOOL ret = NtUserSetWindowPos(hwnd, after, x, y, cx, cy, flags);
-    NtUserSetThreadDpiAwarenessContext(context);
-    return ret;
-}
-
 /* per-monitor DPI aware NtUserWindowFromPoint call */
 static HWND window_from_point(INT x, INT y)
 {
@@ -518,6 +509,7 @@ static void wayland_configure_window(HWND hwnd)
     BOOL needs_enter_size_move = FALSE;
     BOOL needs_exit_size_move = FALSE;
     struct wayland_win_data *data;
+    RECT rect;
 
     if (!(data = wayland_win_data_get(hwnd))) return;
     if (!(surface = data->wayland_surface))
@@ -623,7 +615,9 @@ static void wayland_configure_window(HWND hwnd)
         flags |= SWP_NOSENDCHANGING;
     }
 
-    set_window_pos(hwnd, 0, 0, 0, window_width, window_height, flags);
+    SetRect(&rect, 0, 0, window_width, window_height);
+    OffsetRect(&rect, data->rects.window.left, data->rects.window.top);
+    NtUserSetRawWindowPos(hwnd, rect, flags, FALSE);
 }
 
 /**********************************************************************

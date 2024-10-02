@@ -1320,6 +1320,7 @@ enum
     NtUserCallHwndParam_SendHardwareInput,
     NtUserCallHwndParam_ExposeWindowSurface,
     NtUserCallHwndParam_GetWinMonitorDpi,
+    NtUserCallHwndParam_SetRawWindowPos,
     /* temporary exports */
     NtUserSetWindowStyle,
 };
@@ -1548,6 +1549,19 @@ static inline BOOL NtUserExposeWindowSurface( HWND hwnd, UINT flags, const RECT 
 static inline UINT NtUserGetWinMonitorDpi( HWND hwnd, MONITOR_DPI_TYPE type )
 {
     return NtUserCallHwndParam( hwnd, type, NtUserCallHwndParam_GetWinMonitorDpi );
+}
+
+struct set_raw_window_pos_params
+{
+    RECT rect;
+    UINT flags;
+    BOOL internal;
+};
+
+static inline BOOL NtUserSetRawWindowPos( HWND hwnd, RECT rect, UINT flags, BOOL internal )
+{
+    struct set_raw_window_pos_params params = {.rect = rect, .flags = flags, .internal = internal};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_SetRawWindowPos );
 }
 
 #endif /* _NTUSER_ */

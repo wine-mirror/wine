@@ -56,15 +56,6 @@ static BOOL set_window_pos(HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, 
 }
 
 
-/* per-monitor DPI aware NtUserSetInternalWindowPos call */
-static void set_internal_window_pos(HWND hwnd, UINT cmd, RECT *rect, POINT *pt)
-{
-    UINT context = NtUserSetThreadDpiAwarenessContext(NTUSER_DPI_PER_MONITOR_AWARE_V2);
-    NtUserSetInternalWindowPos(hwnd, cmd, rect, pt);
-    NtUserSetThreadDpiAwarenessContext(context);
-}
-
-
 static struct macdrv_window_features get_window_features_for_style(DWORD style, DWORD ex_style, BOOL shaped)
 {
     struct macdrv_window_features wf = {0};
@@ -1884,7 +1875,7 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
         int send_sizemove = !event->window_frame_changed.in_resize && !being_dragged && !event->window_frame_changed.skip_size_move_loop;
         if (send_sizemove)
             send_message(hwnd, WM_ENTERSIZEMOVE, 0, 0);
-        set_window_pos(hwnd, 0, rect.left, rect.top, width, height, flags);
+        NtUserSetRawWindowPos(hwnd, rect, flags, FALSE);
         if (send_sizemove)
             send_message(hwnd, WM_EXITSIZEMOVE, 0, 0);
     }
@@ -2089,7 +2080,7 @@ void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event)
             rect = window_rect_from_visible(&data->rects, rect);
             release_win_data(data);
 
-            set_internal_window_pos(hwnd, SW_SHOW, &rect, NULL);
+            NtUserSetRawWindowPos(hwnd, rect, 0, TRUE);
         }
     }
 

@@ -5717,6 +5717,24 @@ static BOOL set_dialog_info( HWND hwnd, void *info )
     return TRUE;
 }
 
+static BOOL set_raw_window_pos( HWND hwnd, RECT rect, UINT flags, BOOL internal )
+{
+    UINT dpi, raw_dpi;
+
+    TRACE( "hwnd %p, rect %s, flags %#x, internal %u\n", hwnd, wine_dbgstr_rect(&rect), flags, internal );
+
+    dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+    rect = map_dpi_rect( rect, dpi, get_thread_dpi() );
+
+    if (internal)
+    {
+        NtUserSetInternalWindowPos( hwnd, SW_SHOW, &rect, NULL );
+        return TRUE;
+    }
+
+    return NtUserSetWindowPos( hwnd, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, flags );
+}
+
 /*****************************************************************************
  *           NtUserCallHwnd (win32u.@)
  */
@@ -5920,6 +5938,12 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     {
         UINT raw_dpi, dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
         return param == MDT_EFFECTIVE_DPI ? dpi : raw_dpi;
+    }
+
+    case NtUserCallHwndParam_SetRawWindowPos:
+    {
+        struct set_raw_window_pos_params *params = (void *)param;
+        return set_raw_window_pos( hwnd, params->rect, params->flags, params->internal );
     }
 
     /* temporary exports */
