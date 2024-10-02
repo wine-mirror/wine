@@ -2029,6 +2029,7 @@ static DWORD WINAPI device_notify_proc( void *arg )
     plugplay_rpc_handle handle = NULL;
     DWORD code = 0;
     unsigned int size;
+    WCHAR *path;
     BYTE *buf;
 
     SetThreadDescription( GetCurrentThread(), L"wine_sechost_device_notify" );
@@ -2064,10 +2065,11 @@ static DWORD WINAPI device_notify_proc( void *arg )
 
     for (;;)
     {
+        path = NULL;
         buf = NULL;
         __TRY
         {
-            code = plugplay_get_event( handle, &buf, &size );
+            code = plugplay_get_event( handle, &path, &buf, &size );
             err = ERROR_SUCCESS;
         }
         __EXCEPT(rpc_filter)
@@ -2098,7 +2100,9 @@ static DWORD WINAPI device_notify_proc( void *arg )
             list_remove( &event->entry );
             free( event );
         }
+
         MIDL_user_free(buf);
+        MIDL_user_free(path);
     }
 
     __TRY

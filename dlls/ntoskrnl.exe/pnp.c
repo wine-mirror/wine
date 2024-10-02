@@ -744,11 +744,11 @@ static LONG WINAPI rpc_filter( EXCEPTION_POINTERS *eptr )
     return I_RpcExceptionFilter( eptr->ExceptionRecord->ExceptionCode );
 }
 
-static void send_devicechange( DWORD code, void *data, unsigned int size )
+static void send_devicechange( const WCHAR *path, DWORD code, void *data, unsigned int size )
 {
     __TRY
     {
-        plugplay_send_event( code, data, size );
+        plugplay_send_event( path, code, data, size );
     }
     __EXCEPT(rpc_filter)
     {
@@ -864,7 +864,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         broadcast->dbcc_classguid  = iface->interface_class;
         lstrcpynW( broadcast->dbcc_name, name->Buffer, namelen + 1 );
         if (namelen > 1) broadcast->dbcc_name[1] = '\\';
-        send_devicechange( enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
+        send_devicechange( L"", enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
         heap_free( broadcast );
     }
     return ret;
