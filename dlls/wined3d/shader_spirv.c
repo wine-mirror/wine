@@ -1065,6 +1065,8 @@ static void shader_spirv_init_context_state(struct wined3d_context *context)
 
 static void shader_spirv_get_caps(const struct wined3d_adapter *adapter, struct shader_caps *caps)
 {
+    memset(caps, 0, sizeof(*caps));
+
     caps->vs_version = min(wined3d_settings.max_sm_vs, 5);
     caps->hs_version = min(wined3d_settings.max_sm_hs, 5);
     caps->ds_version = min(wined3d_settings.max_sm_ds, 5);
