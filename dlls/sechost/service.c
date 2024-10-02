@@ -1978,8 +1978,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceCtrlDispatcherW( const SERVICE_TABLE_E
 
 struct device_notification_details
 {
-    DWORD (CALLBACK *cb)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
     HANDLE handle;
+    device_notify_callback callback;
     union
     {
         DEV_BROADCAST_HDR header;
@@ -2100,7 +2100,7 @@ static DWORD WINAPI device_notify_proc( void *arg )
         for (i = 0; i < details_copy_nelems; i++)
         {
             if (!notification_filter_matches( &details_copy[i].filter.header, (DEV_BROADCAST_HDR *)buf )) continue;
-            details_copy[i].cb( details_copy[i].handle, code, (DEV_BROADCAST_HDR *)buf );
+            details_copy[i].callback( details_copy[i].handle, code, (DEV_BROADCAST_HDR *)buf );
         }
         MIDL_user_free(buf);
     }
@@ -2122,12 +2122,11 @@ static DWORD WINAPI device_notify_proc( void *arg )
 /******************************************************************************
  *     I_ScRegisterDeviceNotification   (sechost.@)
  */
-HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( struct device_notification_details *details,
-        void *filter, DWORD flags )
+HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( HANDLE handle, DEV_BROADCAST_HDR *filter, device_notify_callback callback )
 {
     struct device_notify_registration *registration;
 
-    TRACE("callback %p, handle %p, filter %p, flags %#lx\n", details->cb, details->handle, filter, flags);
+    TRACE( "handle %p, filter %p, callback %p\n", handle, filter, callback );
 
     if (!(registration = malloc( sizeof(struct device_notify_registration) )))
     {
@@ -2135,7 +2134,9 @@ HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( struct device_notification_det
         return NULL;
     }
 
-    registration->details = *details;
+    registration->details.handle = handle;
+    registration->details.callback = callback;
+    memcpy( &registration->details.filter, filter, filter->dbch_size );
 
     EnterCriticalSection( &service_cs );
     list_add_tail( &device_notify_list, &registration->entry );

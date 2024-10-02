@@ -16,7 +16,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma makedep header
+
 import "wtypes.idl";
+
+cpp_quote("#if 0")
+typedef void *HDEVNOTIFY;
+typedef struct _DEV_BROADCAST_HDR DEV_BROADCAST_HDR;
+cpp_quote("#else")
+cpp_quote("#include \"dbt.h\"")
+cpp_quote("#endif")
+
+typedef DWORD (__stdcall *device_notify_callback)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
+HDEVNOTIFY __stdcall I_ScRegisterDeviceNotification(HANDLE handle, DEV_BROADCAST_HDR *filter, device_notify_callback callback);
+BOOL __stdcall I_ScUnregisterDeviceNotification(HDEVNOTIFY handle);
 
 [
     uuid(57c680ac-7bce-4f39-97fd-ffea566754d5),
