@@ -59,8 +59,12 @@ namespace Windows.Storage.Streams {
         interface Windows.Foundation.Collections.IVector<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IBuffer *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStream *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamReference *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IBuffer *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStream *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamReference *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
     }
 
     [
@@ -182,6 +186,15 @@ namespace Windows.Storage.Streams {
         HRESULT CloneStream([out, retval] Windows.Storage.Streams.IRandomAccessStream **stream);
         [propget] HRESULT CanRead([out, retval] boolean *value);
         [propget] HRESULT CanWrite([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(33ee3134-1dd6-4e3a-8067-d1c162e8642b)
+    ]
+    interface IRandomAccessStreamReference : IInspectable
+    {
+        HRESULT OpenReadAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamWithContentType *> **operation);
     }
 
     [
