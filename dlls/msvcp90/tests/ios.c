@@ -540,10 +540,12 @@ static void     (*__thiscall p_locale_dtor)(locale *this);
 /* basic_string */
 static basic_string_char* (__thiscall *p_basic_string_char_ctor_cstr)(basic_string_char*, const char*);
 static const char* (__thiscall *p_basic_string_char_cstr)(basic_string_char*);
+static MSVCP_size_t (__thiscall *p_basic_string_char_length)(const basic_string_char*);
 static void (__thiscall *p_basic_string_char_dtor)(basic_string_char*);
 
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_ctor_cstr)(basic_string_wchar*, const wchar_t*);
 static const wchar_t* (__thiscall *p_basic_string_wchar_cstr)(basic_string_wchar*);
+static MSVCP_size_t (__thiscall *p_basic_string_wchar_length)(const basic_string_wchar*);
 static void (__thiscall *p_basic_string_wchar_dtor)(basic_string_wchar*);
 
 /* basic_istringstream */
@@ -795,6 +797,8 @@ static BOOL init(void)
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@PEBD@Z");
         SET(p_basic_string_char_cstr,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
+        SET(p_basic_string_char_length,
+                "?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ");
         SET(p_basic_string_char_dtor,
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ");
 
@@ -802,6 +806,8 @@ static BOOL init(void)
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W@Z");
         SET(p_basic_string_wchar_cstr,
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ");
+        SET(p_basic_string_wchar_length,
+                "?length@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ");
         SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
 
@@ -948,6 +954,8 @@ static BOOL init(void)
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z");
         SET(p_basic_string_char_cstr,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
+        SET(p_basic_string_char_length,
+                "?length@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ");
         SET(p_basic_string_char_dtor,
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
 
@@ -955,6 +963,8 @@ static BOOL init(void)
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_W@Z");
         SET(p_basic_string_wchar_cstr,
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
+        SET(p_basic_string_wchar_length,
+                "?length@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ");
         SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
 
@@ -1097,6 +1107,8 @@ static BOOL init(void)
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z");
         SET(p_basic_string_char_cstr,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
+        SET(p_basic_string_char_length,
+                "?length@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ");
         SET(p_basic_string_char_dtor,
                 "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
 
@@ -1104,6 +1116,8 @@ static BOOL init(void)
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_W@Z");
         SET(p_basic_string_wchar_cstr,
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
+        SET(p_basic_string_wchar_length,
+                "?length@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ");
         SET(p_basic_string_wchar_dtor,
                 "??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
 
@@ -1422,6 +1436,7 @@ static void test_num_put_put_double(void)
     const wchar_t *wstr;
     const char *str;
     wchar_t wide[64];
+    MSVCP_size_t len;
     int i;
 
     struct _test_num_get {
@@ -1430,6 +1445,7 @@ static void test_num_put_put_double(void)
         streamsize    prec;  /* set to -1 for default */
         IOSB_fmtflags fmtfl; /* FMTFLAG_scientific, FMTFLAG_fixed */
         const char    *str;
+        MSVCP_bool    is_todo;
     } tests[] = {
         { 0.0, NULL, -1, 0, "0" },
 
@@ -1474,7 +1490,10 @@ static void test_num_put_put_double(void)
         { -1.23456789e9,  NULL, 0, FMTFLAG_fixed, "-1234567890"        },
         { -1.23456789e9,  NULL, 6, FMTFLAG_fixed, "-1234567890.000000" },
         { -1.23456789e-9, NULL, 6, FMTFLAG_fixed, "-0.000000"          },
-        { -1.23456789e-9, NULL, 9, FMTFLAG_fixed, "-0.000000001"       }
+        { -1.23456789e-9, NULL, 9, FMTFLAG_fixed, "-0.000000001"       },
+
+        { -1.0, NULL, -1, 0,                "-1" },
+        { -1.0, NULL, -1, FMTFLAG_internal, "-1", TRUE },
     };
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
@@ -1488,15 +1507,18 @@ static void test_num_put_put_double(void)
 
         /* set format and precision only if specified, so we can try defaults */
         if(tests[i].fmtfl)
-            call_func3(p_ios_base_setf_mask, &ss.basic_ios.base, tests[i].fmtfl, FMTFLAG_floatfield);
+            call_func3(p_ios_base_setf_mask, &ss.basic_ios.base, tests[i].fmtfl, FMTFLAG_mask);
         if(tests[i].prec != -1)
             call_func2(p_ios_base_precision_set, &ss.basic_ios.base, tests[i].prec);
         call_func2_ptr_dbl(p_basic_ostream_char_print_double, &ss.base.base2, tests[i].val);
 
         call_func2(p_basic_stringstream_char_str_get, &ss, &pstr);
         str = call_func1(p_basic_string_char_cstr, &pstr);
+        len = (MSVCP_size_t)call_func1(p_basic_string_char_length, &pstr);
 
         ok(!strcmp(tests[i].str, str), "wrong output, expected = %s found = %s\n", tests[i].str, str);
+        todo_wine_if(tests[i].is_todo)
+        ok(len == strlen(str), "wrong size, expected = %Iu found = %Iu\n", strlen(str), len);
         call_func1(p_basic_string_char_dtor, &pstr);
 
         if(tests[i].lcl)
@@ -1514,16 +1536,19 @@ static void test_num_put_put_double(void)
 
         /* set format and precision only if specified, so we can try defaults */
         if(tests[i].fmtfl)
-            call_func3(p_ios_base_setf_mask, &wss.basic_ios.base, tests[i].fmtfl, FMTFLAG_floatfield);
+            call_func3(p_ios_base_setf_mask, &wss.basic_ios.base, tests[i].fmtfl, FMTFLAG_mask);
         if(tests[i].prec != -1)
             call_func2(p_ios_base_precision_set, &wss.basic_ios.base, tests[i].prec);
         call_func2_ptr_dbl(p_basic_ostream_wchar_print_double, &wss.base.base2, tests[i].val);
 
         call_func2(p_basic_stringstream_wchar_str_get, &wss, &pwstr);
         wstr = call_func1(p_basic_string_wchar_cstr, &pwstr);
+        len = (MSVCP_size_t)call_func1(p_basic_string_wchar_length, &pwstr);
 
         AtoW(wide, tests[i].str, strlen(tests[i].str));
         ok(!lstrcmpW(wide, wstr), "wrong output, expected = %s found = %s\n", tests[i].str, wine_dbgstr_w(wstr));
+        todo_wine_if(tests[i].is_todo)
+        ok(len == lstrlenW(wstr), "wrong size, expected = %u found = %Iu\n", lstrlenW(wstr), len);
         call_func1(p_basic_string_wchar_dtor, &pwstr);
 
         if(tests[i].lcl)
