@@ -2543,7 +2543,7 @@ static NTSTATUS pulse_set_sample_rate(void *args)
     size = 0;
     NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
 
-    silence_buffer(new_ss.format, new_buffer, size);
+    silence_buffer(new_ss.format, new_buffer, stream->real_bufsize_bytes);
     stream->local_buffer = new_buffer;
 
 exit:
