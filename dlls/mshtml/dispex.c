@@ -1323,17 +1323,7 @@ static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **re
 
 static HRESULT get_builtin_id(DispatchEx *This, const WCHAR *name, DWORD grfdex, DISPID *ret)
 {
-    int min, max, n, c;
-    HRESULT hres;
-
-    if(This->info->vtbl->lookup_dispid) {
-        hres = This->info->vtbl->lookup_dispid(This, name, grfdex, ret);
-        if(hres != DISP_E_UNKNOWNNAME)
-            return hres;
-    }
-
-    min = 0;
-    max = This->info->name_cnt-1;
+    int min = 0, max = This->info->name_cnt - 1, n, c;
 
     while(min <= max) {
         n = (min+max)/2;
@@ -1351,12 +1341,6 @@ static HRESULT get_builtin_id(DispatchEx *This, const WCHAR *name, DWORD grfdex,
             max = n-1;
         else
             min = n+1;
-    }
-
-    if(This->info->vtbl->get_dispid) {
-        hres = This->info->vtbl->get_dispid(This, name, grfdex, ret);
-        if(hres != DISP_E_UNKNOWNNAME)
-            return hres;
     }
 
     return DISP_E_UNKNOWNNAME;
@@ -2059,9 +2043,21 @@ HRESULT dispex_get_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID
     dynamic_prop_t *dprop = NULL;
     HRESULT hres;
 
+    if(dispex->info->vtbl->lookup_dispid) {
+        hres = dispex->info->vtbl->lookup_dispid(dispex, name, flags, pid);
+        if(hres != DISP_E_UNKNOWNNAME)
+            return hres;
+    }
+
     hres = get_builtin_id(dispex, name, flags, pid);
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
+
+    if(dispex->info->vtbl->get_dispid) {
+        hres = dispex->info->vtbl->get_dispid(dispex, name, flags, pid);
+        if(hres != DISP_E_UNKNOWNNAME)
+            return hres;
+    }
 
     hres = get_dynamic_prop(dispex, name, flags & ~fdexNameEnsure, &dprop);
     if(FAILED(hres)) {
