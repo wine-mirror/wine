@@ -1402,10 +1402,16 @@ HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvider *ca
     return VariantChangeType(dst, src, 0, vt);
 }
 
-static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *dp, VARIANT *res)
+static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     IUnknown *iface;
     HRESULT hres;
+
+    if(func->hook) {
+        hres = func->hook(This, DISPATCH_PROPERTYGET, dp, res, ei, caller);
+        if(hres != S_FALSE)
+            return hres;
+    }
 
     if(dp && dp->cArgs) {
         FIXME("cArgs %d\n", dp->cArgs);
@@ -1442,11 +1448,17 @@ static HRESULT builtin_propget(DispatchEx *This, func_info_t *func, DISPPARAMS *
     return S_OK;
 }
 
-static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *dp, IServiceProvider *caller)
+static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *dp, EXCEPINFO *ei, IServiceProvider *caller)
 {
     VARIANT *v, tmpv;
     IUnknown *iface;
     HRESULT hres;
+
+    if(func->hook) {
+        hres = func->hook(This, DISPATCH_PROPERTYPUT, dp, NULL, ei, caller);
+        if(hres != S_FALSE)
+            return hres;
+    }
 
     if(dp->cArgs != 1 || (dp->cNamedArgs == 1 && *dp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
             || dp->cNamedArgs > 1) {
@@ -1699,28 +1711,27 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
     if(func->func_disp_idx >= 0)
         return invoke_builtin_function(This, func, flags, dp, res, ei, caller);
 
-    if(func->hook) {
-        hres = func->hook(This, flags, dp, res, ei, caller);
-        if(hres != S_FALSE)
-            return hres;
-    }
-
     switch(flags) {
     case DISPATCH_PROPERTYPUT:
         if(res)
             V_VT(res) = VT_EMPTY;
-        hres = builtin_propput(This, func, dp, caller);
+        hres = builtin_propput(This, func, dp, ei, caller);
         break;
     case DISPATCH_PROPERTYGET:
-        hres = builtin_propget(This, func, dp, res);
+        hres = builtin_propget(This, func, dp, res, ei, caller);
         break;
     default:
         if(!func->get_vtbl_off) {
+            if(func->hook) {
+                hres = func->hook(This, flags, dp, res, ei, caller);
+                if(hres != S_FALSE)
+                    return hres;
+            }
             hres = typeinfo_invoke(This, func, flags, dp, res, ei);
         }else {
             VARIANT v;
 
-            hres = builtin_propget(This, func, NULL, &v);
+            hres = builtin_propget(This, func, NULL, &v, ei, caller);
             if(FAILED(hres))
                 return hres;
 
@@ -1811,7 +1822,7 @@ HRESULT remove_attribute(DispatchEx *This, DISPID id, VARIANT_BOOL *success)
         *success = VARIANT_TRUE;
 
         V_VT(&var) = VT_EMPTY;
-        hres = builtin_propput(This, func, &dp, NULL);
+        hres = builtin_propput(This, func, &dp, NULL, NULL);
         if(FAILED(hres)) {
             VARIANT *ref;
             hres = dispex_get_dprop_ref(This, func->name, FALSE, &ref);
