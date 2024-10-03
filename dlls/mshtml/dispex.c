@@ -2521,7 +2521,8 @@ static HRESULT get_host_property_descriptor(DispatchEx *This, DISPID id, struct 
         desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
         desc->name = func->name;
         if(func->func_disp_idx < 0) {
-            desc->flags |= PROPF_ENUMERABLE;
+            if(func->func_disp_idx == -1)
+                desc->flags |= PROPF_ENUMERABLE;
             desc->func_iid = 0;
         }else {
             desc->func_iid = func->tid;
