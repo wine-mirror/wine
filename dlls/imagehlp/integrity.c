@@ -766,7 +766,6 @@ static BOOL IMAGEHLP_ReportImportSection( IMAGE_SECTION_HEADER *hdr,
  *  FALSE if unsuccessful.  GetLastError returns more about the error.
  *
  * NOTES
- *  Only supports 32-bit PE files, not tested with any other format.
  *  Reports data in the following order:
  *  1. The file headers are reported first
  *  2. Any code sections are reported next.
