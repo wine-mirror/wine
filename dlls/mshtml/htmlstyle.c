@@ -2936,12 +2936,15 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 
     style_entry = lookup_style_tbl(&This->css_style, strAttributeName);
     if(!style_entry) {
+        DWORD fdex = (lFlags & 1) ? fdexNameCaseSensitive : fdexNameCaseInsensitive;
         compat_mode_t compat_mode = dispex_compat_mode(&This->css_style.dispex);
         DISPID dispid;
         unsigned i;
 
-        hres = dispex_get_id(&This->css_style.dispex, strAttributeName,
-                             (lFlags & 1) ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
+        if(compat_mode < COMPAT_MODE_IE9)
+            hres = IWineJSDispatchHost_GetDispID(&This->css_style.dispex.IWineJSDispatchHost_iface, strAttributeName, fdex, &dispid);
+        else
+            hres = dispex_get_chain_builtin_id(&This->css_style.dispex, strAttributeName, fdex, &dispid);
         if(hres != S_OK) {
             *pfSuccess = VARIANT_FALSE;
             return S_OK;

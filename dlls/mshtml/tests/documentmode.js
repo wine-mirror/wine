@@ -2596,6 +2596,36 @@ sync_test("builtins_diffs", function() {
     }
 });
 
+sync_test("style attribute", function() {
+    var r, v = document.documentMode, s = document.createElement("div").style;
+
+    s.setAttribute("background-color", "black");
+    s.foobar = "white";
+
+    r = s.getAttribute("background-color");
+    ok(r === "black", "background-color = " + r);
+    r = s.foobar;
+    ok(r === "white", "foobar prop = " + r);
+
+    r = s.removeAttribute("background-color");
+    ok(r === true, "removeAttribute(background-color) returned " + r);
+    r = s.removeAttribute("border");
+    ok(r === false, "removeAttribute(border) returned " + r);
+    r = s.removeAttribute("foobar");
+    ok(r === (v < 9 ? true : false), "removeAttribute(foobar) returned " + r);
+    r = s.removeAttribute("barfoo");
+    ok(r === false, "removeAttribute(barfoo) returned " + r);
+
+    r = s.getAttribute("background-color");
+    ok(r === "", "background-color after remove = " + r);
+    if(v < 9)
+        ok(!("foobar" in s), "foobar in style after remove");
+    else {
+        r = s.foobar;
+        ok(r === "white", "foobar prop after remove = " + r);
+    }
+});
+
 sync_test("nullDisp", function() {
     var v = document.documentMode, nullDisp = external.nullDisp, r;
 

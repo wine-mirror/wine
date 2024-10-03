@@ -1321,19 +1321,19 @@ static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **re
     return DISP_E_MEMBERNOTFOUND;
 }
 
-static HRESULT get_builtin_id(DispatchEx *This, const WCHAR *name, DWORD grfdex, DISPID *ret)
+static HRESULT get_builtin_id(const dispex_data_t *info, const WCHAR *name, DWORD grfdex, DISPID *ret)
 {
-    int min = 0, max = This->info->name_cnt - 1, n, c;
+    int min = 0, max = info->name_cnt - 1, n, c;
 
     while(min <= max) {
         n = (min+max)/2;
 
-        c = wcsicmp(This->info->name_table[n]->name, name);
+        c = wcsicmp(info->name_table[n]->name, name);
         if(!c) {
-            if((grfdex & fdexNameCaseSensitive) && wcscmp(This->info->name_table[n]->name, name))
+            if((grfdex & fdexNameCaseSensitive) && wcscmp(info->name_table[n]->name, name))
                 break;
 
-            *ret = This->info->name_table[n]->id;
+            *ret = info->name_table[n]->id;
             return S_OK;
         }
 
@@ -1344,6 +1344,24 @@ static HRESULT get_builtin_id(DispatchEx *This, const WCHAR *name, DWORD grfdex,
     }
 
     return DISP_E_UNKNOWNNAME;
+}
+
+HRESULT dispex_get_chain_builtin_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *pid)
+{
+    compat_mode_t compat_mode = dispex->info->compat_mode;
+    const dispex_data_t *info = dispex->info;
+    HRESULT hres;
+
+    assert(compat_mode >= COMPAT_MODE_IE9);
+
+    for(;;) {
+        hres = get_builtin_id(info, name, flags, pid);
+        if(hres != DISP_E_UNKNOWNNAME)
+            return hres;
+        if(!info->desc->prototype_id)
+            return DISP_E_UNKNOWNNAME;
+        info = object_descriptors[info->desc->prototype_id]->prototype_info[compat_mode - COMPAT_MODE_IE9];
+    }
 }
 
 HRESULT change_type(VARIANT *dst, VARIANT *src, VARTYPE vt, IServiceProvider *caller)
@@ -2049,7 +2067,7 @@ HRESULT dispex_get_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID
             return hres;
     }
 
-    hres = get_builtin_id(dispex, name, flags, pid);
+    hres = get_builtin_id(dispex->info, name, flags, pid);
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 

@@ -629,6 +629,7 @@ HRESULT dispex_prop_get(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *r, EX
                         IServiceProvider *caller);
 HRESULT dispex_prop_put(DispatchEx *dispex, DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei,
                         IServiceProvider *caller);
+HRESULT dispex_get_chain_builtin_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *pid);
 HRESULT dispex_get_id(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *pid);
 HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, DISPID *ret);
 HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret);
