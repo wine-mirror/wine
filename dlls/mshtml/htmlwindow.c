@@ -3473,13 +3473,13 @@ static HRESULT WINAPI WindowDispEx_ConfigureProperty(IWineJSDispatchHost *iface,
     return IWineJSDispatchHost_ConfigureProperty(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, id, flags);
 }
 
-static HRESULT WINAPI WindowDispEx_CallFunction(IWineJSDispatchHost *iface, DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret,
-                                                EXCEPINFO *ei, IServiceProvider *caller)
+static HRESULT WINAPI WindowDispEx_CallFunction(IWineJSDispatchHost *iface, DISPID id, UINT32 iid, DWORD flags, DISPPARAMS *dp,
+                                                VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller)
 {
     HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     return IWineJSDispatchHost_CallFunction(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface,
-                                        id, iid, dp, ret, ei, caller);
+                                            id, iid, flags, dp, ret, ei, caller);
 }
 
 static HRESULT WINAPI WindowDispEx_Construct(IWineJSDispatchHost *iface, LCID lcid, DWORD flags, DISPPARAMS *dp, VARIANT *ret,
@@ -3981,7 +3981,7 @@ HRESULT HTMLWindow_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_
     desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
     if(prop->type == GLOBAL_DISPEXVAR)
         desc->flags |= PROPF_ENUMERABLE;
-    desc->func_iid = 0;
+    desc->iid = 0;
     return S_OK;
 }
 

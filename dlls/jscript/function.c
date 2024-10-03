@@ -68,6 +68,7 @@ typedef struct {
     const WCHAR *name;
     UINT32 id;
     UINT32 iid;
+    UINT32 flags;
 } HostFunction;
 
 typedef struct {
@@ -1022,8 +1023,8 @@ static HRESULT HostFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsva
 
     if(SUCCEEDED(hres)) {
         V_VT(&retv) = VT_EMPTY;
-        hres = IWineJSDispatchHost_CallFunction(obj, function->id, function->iid, &dp, r ? &retv : NULL, &ei,
-                                                &ctx->jscaller->IServiceProvider_iface);
+        hres = IWineJSDispatchHost_CallFunction(obj, function->id, function->iid, function->flags, &dp,
+                                                r ? &retv : NULL, &ei, &ctx->jscaller->IServiceProvider_iface);
         if(hres == DISP_E_EXCEPTION)
             handle_dispatch_exception(ctx, &ei);
         if(SUCCEEDED(hres) && r) {
@@ -1068,7 +1069,7 @@ static const function_vtbl_t HostFunctionVtbl = {
     HostFunction_gc_traverse
 };
 
-HRESULT create_host_function(script_ctx_t *ctx, const struct property_info *desc, jsdisp_t **ret)
+HRESULT create_host_function(script_ctx_t *ctx, const struct property_info *desc, DWORD flags, jsdisp_t **ret)
 {
     HostFunction *function;
     HRESULT hres;
@@ -1083,7 +1084,8 @@ HRESULT create_host_function(script_ctx_t *ctx, const struct property_info *desc
 
     function->name = desc->name;
     function->id = desc->id;
-    function->iid = desc->func_iid;
+    function->iid = desc->iid;
+    function->flags = flags;
     *ret = &function->function.dispex;
     return S_OK;
 }
@@ -1104,7 +1106,7 @@ static HRESULT HostConstructor_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, 
 {
     HostConstructor *constr = (HostConstructor*)jsdisp;
     HRESULT hres = IWineJSDispatchHost_LookupProperty(constr->host_iface, name, flags, desc);
-    assert(hres != S_OK || desc->func_iid); /* external properties are not allowed */
+    assert(hres != S_OK || (desc->flags & PROPF_METHOD)); /* external properties are not allowed */
     return hres;
 }
 

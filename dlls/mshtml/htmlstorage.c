@@ -1274,7 +1274,7 @@ static HRESULT HTMLStorage_get_prop_desc(DispatchEx *dispex, DISPID id, struct p
     desc->name = This->props[id - MSHTML_DISPID_CUSTOM_MIN];
     desc->id = id;
     desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
-    desc->func_iid = 0;
+    desc->iid = 0;
     return S_OK;
 }
 

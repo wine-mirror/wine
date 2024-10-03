@@ -27,8 +27,11 @@ struct property_info
     UINT32 flags;
     const WCHAR *name;
     UINT32 index;
-    UINT32 func_iid;
+    UINT32 iid;
 };
+
+const unsigned int PROPF_METHOD       = 0x0100;
+const unsigned int PROPF_CONSTR       = 0x0200;
 
 const unsigned int PROPF_ENUMERABLE   = 0x0400;
 const unsigned int PROPF_WRITABLE     = 0x0800;
@@ -65,7 +68,7 @@ interface IWineJSDispatchHost : IDispatchEx
     HRESULT SetProperty(DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei, IServiceProvider *caller);
     HRESULT DeleteProperty(DISPID id);
     HRESULT ConfigureProperty(DISPID id, UINT32 flags);
-    HRESULT CallFunction(DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
+    HRESULT CallFunction(DISPID id, UINT32 iid, DWORD flags, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
     HRESULT Construct(LCID lcid, DWORD flags, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
     HRESULT GetOuterDispatch(IWineJSDispatchHost **ret);
     HRESULT ToString(BSTR *str);

@@ -270,23 +270,41 @@ static dispex_prop_t *lookup_dispex_prop(jsdisp_t *obj, unsigned hash, const WCH
 
 static HRESULT update_external_prop(jsdisp_t *obj, dispex_prop_t *prop, const struct property_info *desc)
 {
-    if(desc->func_iid) {
-        jsdisp_t *func;
-        HRESULT hres;
+    HRESULT hres;
 
-        hres = create_host_function(obj->ctx, desc, &func);
+    if(!desc->iid) {
+        prop->type = PROP_EXTERN;
+        prop->u.id = desc->id;
+    }else if(desc->flags & PROPF_METHOD) {
+        jsdisp_t *func;
+
+        hres = create_host_function(obj->ctx, desc, DISPATCH_METHOD, &func);
         if(FAILED(hres))
             return hres;
 
         prop->type = PROP_JSVAL;
-        prop->flags = desc->flags;
         prop->u.val = jsval_obj(func);
-        return S_OK;
+    }else {
+        jsdisp_t *getter, *setter = NULL;
+
+        hres = create_host_function(obj->ctx, desc, DISPATCH_PROPERTYGET, &getter);
+        if(FAILED(hres))
+            return hres;
+
+        if(desc->flags & PROPF_WRITABLE) {
+            hres = create_host_function(obj->ctx, desc, DISPATCH_PROPERTYPUT, &setter);
+            if(FAILED(hres)) {
+                jsdisp_release(getter);
+                return hres;
+            }
+        }
+
+        prop->type = PROP_ACCESSOR;
+        prop->u.accessor.getter = getter;
+        prop->u.accessor.setter = setter;
     }
 
-    prop->type = PROP_EXTERN;
-    prop->flags = desc->flags;
-    prop->u.id = desc->id;
+    prop->flags = desc->flags & PROPF_ALL;
     return S_OK;
 }
 
@@ -469,13 +487,14 @@ HRESULT jsdisp_index_lookup(jsdisp_t *obj, const WCHAR *name, unsigned length, s
     }
     if(*ptr)
         return DISP_E_UNKNOWNNAME;
+
     desc->id = idx;
     desc->flags = PROPF_ENUMERABLE;
     if(obj->builtin_info->prop_put)
         desc->flags |= PROPF_WRITABLE;
     desc->name = NULL;
     desc->index = idx;
-    desc->func_iid = 0;
+    desc->iid = 0;
     return S_OK;
 }
 
@@ -483,13 +502,14 @@ HRESULT jsdisp_next_index(jsdisp_t *obj, unsigned length, unsigned id, struct pr
 {
     if(id + 1 == length)
         return S_FALSE;
+
     desc->id = id + 1;
     desc->flags = PROPF_ENUMERABLE;
     if(obj->builtin_info->prop_put)
         desc->flags |= PROPF_WRITABLE;
     desc->name = NULL;
     desc->index = desc->id;
-    desc->func_iid = 0;
+    desc->iid = 0;
     return S_OK;
 }
 

@@ -2661,6 +2661,20 @@ sync_test("screen", function() {
     ok(Object.isFrozen(o) === false, "Object.isFrozen(o) = " + Object.isFrozen(o));
     ok(Object.isSealed(o) === true, "Object.isSealed(o) = " + Object.isSealed(o));
 
+    ok(!o.hasOwnProperty("width"), 'o.hasOwnProperty("width") = ' + o.hasOwnProperty("width"));
+    ok(Screen.prototype.hasOwnProperty("width"),
+       'Screen.prototype.hasOwnProperty("width") = ' + Screen.prototype.hasOwnProperty("width"));
+
+    var desc = Object.getOwnPropertyDescriptor(Screen.prototype, "width");
+    ok(!("value" in desc), "width prop: value is in desc");
+    ok(!("writable" in desc), "width prop: writable is in desc");
+    ok(desc.enumerable === true, "width prop: enumerable = " + desc.enumerable);
+    ok(desc.configurable === true, "width prop: configurable = " + desc.configurable);
+    ok(Object.getPrototypeOf(desc.get) === Function.prototype, "width prop: get not a function: " + desc.get);
+    ok("set" in desc, "width prop: set is not in desc");
+    ok(desc.set === undefined, "width prop: set not undefined: " + desc.set);
+    ok(desc.get.call(o) === o.width, "width prop: get.call() not same as o.width: " + desc.get.call(o) + ", expected " + o.width);
+
     o.prop2 = 3;
     ok(!("prop2" in o), "o.prop2 = " + o.prop2);
 
@@ -2672,7 +2686,7 @@ sync_test("screen", function() {
 });
 
 sync_test("builtin_func", function() {
-    var o = document.implementation;
+    var o = document.implementation, r;
     var f = o.hasFeature;
 
     ok(f instanceof Function, "f is not an instance of Function");
@@ -2681,6 +2695,20 @@ sync_test("builtin_func", function() {
     ok(f.length === 0, "f.length = " + f.length);
     ok(f.call(o, "test", 1) === false, 'f.call(o, "test", 1) = ' + f.call(o, "test", 1));
     ok("" + f === "\nfunction hasFeature() {\n    [native code]\n}\n", "f = " + f);
+
+    o = document.body;
+    var desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Object.getPrototypeOf(o)), "innerHTML");
+    ok(!("value" in desc), "innerHTML prop: value is in desc");
+    ok(!("writable" in desc), "innerHTML prop: writable is in desc");
+    ok(desc.enumerable === true, "innerHTML prop: enumerable = " + desc.enumerable);
+    ok(desc.configurable === true, "innerHTML prop: configurable = " + desc.configurable);
+    ok(Object.getPrototypeOf(desc.get) === Function.prototype, "innerHTML prop: get not a function: " + desc.get);
+    ok(Object.getPrototypeOf(desc.set) === Function.prototype, "innerHTML prop: set not a function: " + desc.set);
+    r = desc.set.call(o, '<div id="winetest"></div>');
+    ok(r === undefined, "innerHTML prop: setter returned " + r);
+    r = desc.get.call(o);
+    ok(r === '<div id="winetest"></div>', "innerHTML prop: getter returned " + r);
+    ok(r === o.innerHTML, "innerHTML prop: getter not same as o.innerHTML: " + r + ", expected " + o.innerHTML);
 });
 
 async_test("script_global", function() {
