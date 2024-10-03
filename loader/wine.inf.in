@@ -596,6 +596,8 @@ HKLM,Software\Microsoft\WBEM,"Installation Directory",2,"%11%\wbem"
 HKLM,Software\Microsoft\Windows Messaging Subsystem,"MAPI",2,"1"
 HKLM,Software\Policies,,16
 HKLM,Software\Registered Applications,,16
+HKLM,System\CurrentControlSet\Control\Filesystem,"NtfsDisable8dot3NameCreation",0x10003,0
+HKLM,System\CurrentControlSet\Control\Filesystem,"NtfsDisableLastAccessUpdate",0x10003,0x80000002
 HKLM,System\CurrentControlSet\Control\hivelist,,16
 HKLM,System\CurrentControlSet\Control\Lsa,"Security Packages",0x10002,kerberos,schannel
 HKLM,System\CurrentControlSet\Control\Lsa\Kerberos,,16
