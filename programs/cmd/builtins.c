@@ -1759,14 +1759,8 @@ RETURN_CODE WCMD_pushd(const WCHAR *args)
       return errorlevel = ERROR_INVALID_FUNCTION;
     }
 
-    curdir  = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
-    thisdir = LocalAlloc (LMEM_FIXED, 1024 * sizeof(WCHAR));
-    if( !curdir || !thisdir ) {
-      LocalFree(curdir);
-      LocalFree(thisdir);
-      WINE_ERR ("out of memory\n");
-      return errorlevel = ERROR_INVALID_FUNCTION;
-    }
+    curdir  = xalloc(sizeof(struct env_stack));
+    thisdir = xalloc(1024 * sizeof(WCHAR));
 
     /* Change directory using CD code with /D parameter */
     lstrcpyW(quals, L"/D");
@@ -1775,8 +1769,8 @@ RETURN_CODE WCMD_pushd(const WCHAR *args)
     return_code = WCMD_setshow_default(args);
     if (return_code != NO_ERROR)
     {
-      LocalFree(curdir);
-      LocalFree(thisdir);
+      free(curdir);
+      free(thisdir);
       return errorlevel = ERROR_INVALID_FUNCTION;
     } else {
       curdir -> next    = pushd_directories;
@@ -1808,8 +1802,8 @@ RETURN_CODE WCMD_popd(void)
     /* pop the old environment from the stack, and make it the current dir */
     pushd_directories = temp->next;
     SetCurrentDirectoryW(temp->strings);
-    LocalFree (temp->strings);
-    LocalFree (temp);
+    free(temp->strings);
+    free(temp);
     return NO_ERROR;
 }
 
@@ -2150,16 +2144,11 @@ static WCHAR *WCMD_dupenv( const WCHAR *env )
 
   len = 0;
   while ( env[len] )
-    len += (lstrlenW(&env[len]) + 1);
+    len += lstrlenW(&env[len]) + 1;
+  len++;
 
-  env_copy = LocalAlloc (LMEM_FIXED, (len+1) * sizeof (WCHAR) );
-  if (!env_copy)
-  {
-    WINE_ERR("out of memory\n");
-    return env_copy;
-  }
-  memcpy (env_copy, env, len*sizeof (WCHAR));
-  env_copy[len] = 0;
+  env_copy = xalloc(len * sizeof (WCHAR));
+  memcpy(env_copy, env, len*sizeof (WCHAR));
 
   return env_copy;
 }
@@ -2199,12 +2188,7 @@ RETURN_CODE WCMD_setlocal(WCHAR *args)
       TRACE("Setting delayed expansion to %d\n", newdelay);
   }
 
-  env_copy = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
-  if( !env_copy )
-  {
-      ERR("out of memory\n");
-      return errorlevel = ERROR_OUTOFMEMORY;
-  }
+  env_copy = xalloc( sizeof(struct env_stack));
 
   env = GetEnvironmentStringsW ();
   env_copy->strings = WCMD_dupenv (env);
@@ -2221,7 +2205,7 @@ RETURN_CODE WCMD_setlocal(WCHAR *args)
     env_copy->u.cwd = cwd[0];
   }
   else
-    LocalFree (env_copy);
+    free(env_copy);
 
   FreeEnvironmentStringsW (env);
   return errorlevel = NO_ERROR;
@@ -2266,7 +2250,7 @@ RETURN_CODE WCMD_endlocal(void)
     }
     len += n;
   }
-  LocalFree (old);
+  free(old);
   FreeEnvironmentStringsW (env);
 
   /* restore old environment */
@@ -2297,8 +2281,8 @@ RETURN_CODE WCMD_endlocal(void)
     }
   }
 
-  LocalFree (env);
-  LocalFree (temp);
+  free(env);
+  free(temp);
   return NO_ERROR;
 }
 
@@ -2477,14 +2461,12 @@ static int WCMD_setshow_sortenv(const WCHAR *s, const WCHAR *stub)
 
   /* count the number of strings, and the total length */
   while ( s[len] ) {
-    len += (lstrlenW(&s[len]) + 1);
+    len += lstrlenW(&s[len]) + 1;
     count++;
   }
 
   /* add the strings to an array */
-  str = LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, count * sizeof (WCHAR*) );
-  if( !str )
-    return 0;
+  str = xalloc(count * sizeof (WCHAR*) );
   str[0] = s;
   for( i=1; i<count; i++ )
     str[i] = str[i-1] + lstrlenW(str[i-1]) + 1;
@@ -2506,7 +2488,7 @@ static int WCMD_setshow_sortenv(const WCHAR *s, const WCHAR *stub)
     }
   }
 
-  LocalFree( str );
+  free( str );
   return displayedcount;
 }
 
