@@ -69,7 +69,7 @@ BEGIN
     EDITTEXT        IDC_CRASH_TXT, 4, 4, 392, 272, ES_MULTILINE | ES_READONLY | WS_HSCROLL | WS_VSCROLL, WS_TABSTOP
     CONTROL         "If this problem is not present under Windows and has not been reported yet, \
                      you can save the detailed information to a file using the \"Save As\" button, \
-                     then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> \
+                     then <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Bugs\">file a bug report</a> \
                      and attach that file to the report.",
                     IDC_STATIC_TXT2,"SysLink",0,6,285,388,32
     DEFPUSHBUTTON   "Close", IDOK, 326, 320, 70, 16, WS_TABSTOP
