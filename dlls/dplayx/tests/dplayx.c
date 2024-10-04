@@ -2223,7 +2223,7 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
             HRESULT hr;
 
             if ( player->actualCount )
-                todo_wine ok_( __FILE__, data->line )( 0, "duplicate player dpid %#lx.\n", dpid );
+                ok_( __FILE__, data->line )( 0, "duplicate player dpid %#lx.\n", dpid );
             ok_( __FILE__, data->line )( playerType == player->expectedPlayerType, "got player type %lu.\n",
                                          playerType );
             if ( player->expectedShortName )
@@ -2332,8 +2332,8 @@ static void checkPlayerList_( int line, IDirectPlay4 *dp, ExpectedPlayer *expect
     hr = IDirectPlayX_EnumPlayers( dp, NULL, checkPlayerListCallback, &data, DPENUMPLAYERS_REMOTE );
     ok_( __FILE__, line )( hr == DP_OK, "EnumPlayers() returned %#lx.\n", hr );
 
-    todo_wine ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
-                                     data.actualPlayerCount );
+    ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
+                           data.actualPlayerCount );
 }
 
 #define check_Open( dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, listenPort, expectedPassword, \
@@ -2399,7 +2399,6 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
                         .expectedFlags = DPENUMPLAYERS_REMOTE,
                         .expectedPlayerData = expectedPlayerData,
                         .expectedPlayerDataSize = sizeof( expectedPlayerData ),
-                        .flagsTodo = TRUE,
                     },
                 };
 

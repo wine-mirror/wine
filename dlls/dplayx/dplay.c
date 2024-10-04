@@ -2361,18 +2361,28 @@ static HRESULT DP_IF_EnumGroupPlayers( IDirectPlayImpl *This, DPID group, GUID *
     /* Walk the players in this group */
     for( plist = DPQ_FIRST( gdata->players ); plist; plist = DPQ_NEXT( plist->players ) )
     {
+        DWORD playerFlags;
+
         /* We do not enum the name server or app server as they are of no
          * consequence to the end user.
          */
-        if ( !(plist->lpPData->dwFlags & DPLAYI_PLAYER_SYSPLAYER) )
-        {
-            /* FIXME: Need to add stuff for flags checking */
-            if ( !enumplayercb( plist->lpPData->dpid, DPPLAYERTYPE_PLAYER,
-                        ansi ? plist->lpPData->nameA : plist->lpPData->name,
-                        plist->lpPData->dwFlags, context ) )
-              /* User requested break */
-              break;
-        }
+        if ( plist->lpPData->dwFlags & DPLAYI_PLAYER_SYSPLAYER )
+            continue;
+
+        if ( (plist->lpPData->dwFlags & flags) != (flags & ~DPENUMPLAYERS_REMOTE) )
+            continue;
+        if ( (plist->lpPData->dwFlags & DPENUMPLAYERS_LOCAL) && (flags & DPENUMPLAYERS_REMOTE) )
+            continue;
+
+        playerFlags = plist->lpPData->dwFlags;
+        playerFlags &= ~(DPENUMPLAYERS_GROUP | DPENUMPLAYERS_LOCAL | DPENUMPLAYERS_OWNER);
+        playerFlags |= flags;
+
+        if ( !enumplayercb( plist->lpPData->dpid, DPPLAYERTYPE_PLAYER,
+                    ansi ? plist->lpPData->nameA : plist->lpPData->name,
+                    playerFlags, context ) )
+            /* User requested break */
+            break;
     }
 
     LeaveCriticalSection( &This->lock );
