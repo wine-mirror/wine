@@ -3013,14 +3013,14 @@ exprerrorreturn:
 RETURN_CODE WCMD_setshow_env(WCHAR *s)
 {
   RETURN_CODE return_code = NO_ERROR;
-  LPVOID env;
   WCHAR *p;
   BOOL status;
   WCHAR string[MAXSTRING];
 
   if (param1[0] == 0x00 && quals[0] == 0x00) {
-    env = GetEnvironmentStringsW();
+    WCHAR *env = GetEnvironmentStringsW();
     WCMD_setshow_sortenv( env, NULL );
+    FreeEnvironmentStringsW(env);
   }
 
   /* See if /P supplied, and if so echo the prompt, and read in a reply */
@@ -3118,11 +3118,12 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
 
     p = wcschr (s, '=');
     if (p == NULL) {
-      env = GetEnvironmentStringsW();
+      WCHAR *env = GetEnvironmentStringsW();
       if (WCMD_setshow_sortenv( env, s ) == 0) {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_MISSINGENV), s);
         return_code = ERROR_INVALID_FUNCTION;
       }
+      FreeEnvironmentStringsW(env);
     }
     else
     {
