@@ -103,7 +103,7 @@ FONT 8, "MS Shell Dlg"
     CONTROL "Wine could not find a Gecko package which is needed for applications embedding HTML " \
           "to work correctly. Wine can automatically download and install it for you.\n\n" \
           "Note: it is recommended to use your distribution's packages instead. " \
-          "See <a href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> for details.",
+          "See <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details.",
           ID_DWL_STATUS, "SysLink", 0, 10, 10, 240, 65
     CONTROL "", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
     DEFPUSHBUTTON "&Install", ID_DWL_INSTALL, 200, 76, 50, 14, WS_GROUP | WS_TABSTOP
@@ -118,7 +118,7 @@ FONT 8, "MS Shell Dlg"
     CONTROL "Wine could not find a wine-mono package which is needed for .NET applications " \
           "to work correctly. Wine can automatically download and install it for you.\n\n" \
           "Note: it is recommended to use your distribution's packages instead. " \
-          "See <a href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> for details.",
+          "See <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono\">https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono</a> for details.",
           ID_DWL_STATUS, "SysLink", 0, 10, 10, 240, 65
     CONTROL "", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
     DEFPUSHBUTTON "&Install", ID_DWL_INSTALL, 200, 76, 50, 14, WS_GROUP | WS_TABSTOP
