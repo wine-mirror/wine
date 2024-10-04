@@ -627,7 +627,7 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = SW_SHOWNORMAL;
-    ret = CreateProcessW( NULL, cmdline, NULL, NULL, TRUE, 0, env, NULL, &startup, &info );
+    ret = CreateProcessW( NULL, cmdline, NULL, NULL, TRUE, CREATE_UNICODE_ENVIRONMENT, env, NULL, &startup, &info );
     FreeEnvironmentStringsW( env );
 
     if (ret)
