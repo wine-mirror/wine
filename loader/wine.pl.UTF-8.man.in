@@ -278,39 +278,11 @@ dodać jej samodzielnie.
 .PP
 Raporty błędów mogą być wysyłane do Wine Bugzilla
 .I https://bugs.winehq.org
-Jeżeli chcesz zgłosić błąd zapoznaj się z
-.I https://wiki.winehq.org/Bugs
-w źródle
-.B wine
-, aby dowiedzieć się jakie informacje są niezbędne
-.PP
-Sugestie i problemy dotyczące tej instrukcji również przesyłaj do
-.I https://bugs.winehq.org
 .SH DOSTĘPNOŚĆ
 Najaktualniejszą publiczną wersję
 .B wine
 można pobrać ze strony
-.I https://www.winehq.org/download
-.PP
-Najaktualnieszy zrzut kodu można pobrać przez GIT.  Aby dowiedzieć się
-jak to zrobić, odwiedź stronę
-.I
-https://www.winehq.org/git
-.PP
-WineHQ, siedziba rozwoju
-.B wine
-, mieści się na stronie
-.IR https://www.winehq.org .
-Strona ta zawiera wiele informacji o
-.BR wine .
-.PP
-Po dalsze informacje na temat rozwoju
-.B wine
-zapisz się na listę mailingową
-.B wine
-na stronie
-.I https://www.winehq.org/forums
-
+.I https://www.winehq.org
 .SH "ZOBACZ TAKŻE"
 .BR wineserver (1),
 .BR winedbg (1)

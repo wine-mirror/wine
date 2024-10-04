@@ -274,39 +274,12 @@ Statusberichte für viele Anwendungen sind unter
 .PP
 Fehler können unter
 .I https://bugs.winehq.org
-gemeldet werden. Wenn Sie einen Fehler melden möchten, lesen Sie
-bitte vorher
-.I https://wiki.winehq.org/Bugs
-im
-.B wine
--Quellcode, um zu sehen, welche Informationen benötigt werden.
-.PP
-Probleme und Hinweise mit/zu dieser Manpage können auch auf
-.I https://bugs.winehq.org
 gemeldet werden.
 .SH VERFÜGBARKEIT
-Die aktuellste öffentliche Wine-Version kann auf
-.I https://www.winehq.org/download
+Die aktuellste öffentliche Wine-Version kann auf WineHQ,
+.UR https://www.winehq.org/
+die Hauptseite der wine-Entwicklung
+.UE ,
 bezogen werden.
-.PP
-Ein Schnappschuss des Entwicklungscodes kann via GIT besorgt werden,
-siehe dazu
-.I
-https://www.winehq.org/git
-.PP
-WineHQ, die Hauptseite der
-.B wine
--Entwicklung, befindet sich auf
-.IR https://www.winehq.org .
-Diese Website bietet viele Informationen und Ressourcen zu
-.BR wine .
-.PP
-Für nähere Informationen zur Entwicklung von
-.B wine
-können Sie sich als Abonnement bei der
-.B wine
--Mailingliste auf
-.I https://www.winehq.org/forums
-eintragen.
 .SH "SIEHE AUCH"
 .BR wineserver (1),\  winedbg (1)

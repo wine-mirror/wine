@@ -3,10 +3,10 @@
 	List of Wine subsection maintainers
 
 When submitting patches to Wine, the guidelines at
-<https://wiki.winehq.org/SubmittingPatches> should be followed. This file
-contains a list of maintainers for subsections of Wine. If you have
-questions about your work in an area of Wine, you may find a list of
-knowledgeable people here.
+<https://gitlab.winehq.org/wine/wine/-/wikis/Submitting-Patches>
+should be followed. This file contains a list of maintainers for
+subsections of Wine. If you have questions about your work in an area
+of Wine, you may find a list of knowledgeable people here.
 
 Many areas of Wine don't have a specific maintainer, although there may
 be people with knowledge of those areas. If an area is not listed here
@@ -403,7 +403,7 @@ F:	*/
 
 Stable Branch
 M:	Michael Stefaniuc <mstefani@winehq.org>
-W:	https://wiki.winehq.org/StableRules
+W:	https://gitlab.winehq.org/wine/wine/-/wikis/Stable-Rules
 
 Staging Branch
 M:	Alistair Leslie-Hughes <leslie_alistair@hotmail.com>

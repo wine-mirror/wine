@@ -84,13 +84,11 @@ futur.
 **Bibliothèques optionnelles** :
   « configure » affiche des messages quand des bibliothèques optionnelles
   ne sont pas détectées sur votre système.
-  Consultez https://wiki.winehq.org/Recommended_Packages (en anglais) pour
-  des indications sur les paquets logiciels que vous devriez installer.
-  Sur les plates-formes 64 bits, si vous compilez Wine pour le mode 32 bits
-  (mode par défaut), les versions 32 bits de ces bibliothèques doivent être
-  installées. Voyez https://wiki.winehq.org/WineOn64bit pour les détails.
-  Si vous désirez un Wine 64 bits pur (ou une configuration mixte
-  32/64 bits), consultez https://wiki.winehq.org/Wine64.
+  Consultez https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
+  (en anglais) pour des indications sur les paquets logiciels que vous
+  devriez installer.  Sur les plates-formes 64 bits, si vous compilez
+  Wine pour le mode 32 bits (mode par défaut), les versions 32 bits de
+  ces bibliothèques doivent être installées.
 
 
 ## COMPILATION
@@ -110,8 +108,7 @@ compiler et lier du code source Windows sous Unix.
 
 Pour voir les options de compilation, tapez `./configure --help`.
 
-Pour plus d'information consultez https://wiki.winehq.org/Building_Wine
-
+Pour plus d'information consultez https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
 
 ## INSTALLATION
 
@@ -163,15 +160,15 @@ d'attacher à un éventuel rapport de bogue.
         point de départ.
 
 - **FAQ** :   La Foire aux Questions de Wine se trouve sur
-        https://www.winehq.org/FAQ
+        https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki** :  Le wiki Wine est situé sur https://wiki.winehq.org
+- **Wiki** :  Le wiki Wine est situé sur https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: Le développement de Wine est hébergé sur https://gitlab.winehq.org
 
 - **Listes de diffusion** :
         Il existe plusieurs listes de diffusion pour les utilisateurs et
-        les développeurs Wine ; voyez https://www.winehq.org/forums pour de
+        les développeurs Wine ; voyez https://gitlab.winehq.org/wine/wine/-/wikis/Forums pour de
         plus amples informations.
 
 - **Bogues** :

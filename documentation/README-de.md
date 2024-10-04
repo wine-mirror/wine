@@ -94,7 +94,7 @@ Umständen in der Zukunft unterstützt.
   Der Configure-Aufruf zeigt am Ende optionale Bibliotheken an,
   die von Wine benutzt werden können, aber auf Ihrem System nicht gefunden
   wurden. Tipps zum Installieren fehlender Pakete finden Sie unter:
-  https://wiki.winehq.org/Recommended_Packages
+  https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
   Unter 64-Bit-Plattformen benötigen Sie auch die 32-Bit-Versionen dieser
   Bibliotheken.
 
@@ -117,7 +117,7 @@ unter Unix zu kompilieren und zu verlinken.
 Mit `./configure --help` können Sie sich Konfigurations-Optionen für die
 Kompilierung anzeigen lassen.
 
-Weitere Informationen finden Sie unter https://wiki.winehq.org/Building_Wine
+Weitere Informationen finden Sie unter https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
 
 
 ## SETUP
@@ -164,15 +164,16 @@ wenn Sie den Fehler melden.
         Applikations-Datenbank, Bugtracker.
         Das ist vermutlich der beste Ausgangspunkt.
 
-- **FAQ**: Die FAQ zu Wine befindet sich unter https://www.winehq.org/FAQ
+- **FAQ**: Die FAQ zu Wine befindet sich unter https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: Das Wine-Wiki finden Sie unter https://wiki.winehq.org
+- **Wiki**: Das Wine-Wiki finden Sie unter https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **Mailing-Listen**:
     Es gibt mehrere Mailing-Listen für Wine-Anwender und -Entwickler;
-    Schauen Sie sich dazu bitte https://www.winehq.org/forums an.
+    Schauen Sie sich dazu bitte
+    https://gitlab.winehq.org/wine/wine/-/wikis/Forums an.
 
 - **Fehler**: Melden Sie Fehler bitte an Wine-Bugzilla unter https://bugs.winehq.org
     Schauen Sie bitte erst in der Bugzilla-Datenbank nach, ob Ihr Problem

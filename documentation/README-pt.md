@@ -159,14 +159,14 @@ http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
         dados de aplicações, localizaçao de erros. Isto é provavelmente o
         melhor ponto de começo.
 
-- **FAQ**: A Wine FAQ está localizada em https://www.winehq.org/FAQ
+- **FAQ**: A Wine FAQ está localizada em https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: https://wiki.winehq.org
+- **Wiki**: https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **Mailing Lists**:
 	Há algumas mailing list para responsaveis pelo desenvolvimento Wine; ver em
-	https://www.winehq.org/forums para mais informação.
+	https://gitlab.winehq.org/wine/wine/-/wikis/Forums para mais informação.
 
 - **IRC** Ajuda online está disponivel em `#WineHQ` on irc.libera.chat.

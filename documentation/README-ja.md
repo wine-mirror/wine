@@ -89,9 +89,9 @@ Wineをコンパイルし実行するには、以下のうち一つを持って�
 **オプションのサポートライブラリ**:
   configureはオプションのライブラリがシステム上に見つからなかったときに通知を
   表示します。インストールすべきパッケージについてのヒントについては
-  <https://wiki.winehq.org/Recommended_Packages>を参照してください。64ビットプ
-  ラットフォームでは、これらライブラリの32ビットバージョンをインストールした
-  ことをよく確認してください。
+  <https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine>を参照し
+  てください。64ビットプラットフォームでは、これらライブラリの32ビット
+  バージョンをインストールしたことをよく確認してください。
 
 
 ## コンパイル
@@ -110,7 +110,7 @@ make
 
 コンパイル設定オプションを見るには、`./configure --help`を行なってください。
 
-更なる情報は<https://wiki.winehq.org/Building_Wine>を参照してください。
+更なる情報は<https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine>を参照してください。
 
 
 ## 設定
@@ -157,15 +157,15 @@ Wineは完璧ではないので、いくつかのプログラムはクラッシ�
         WineHQから入手できます。多様なWineガイド、アプリケーションデータベース、
 	バグ追跡。これはおそらく最良の出発点です。
 
-- **FAQ**: Wine FAQは<https://www.winehq.org/FAQ>にあります
+- **FAQ**: Wine FAQは<https://gitlab.winehq.org/wine/wine/-/wikis/FAQ>にあります
 
-- **Wiki**: Wine Wikiは<https://wiki.winehq.org>にあります
+- **Wiki**: Wine Wikiは<https://gitlab.winehq.org/wine/wine/-/wikis/>にあります
 
 - **Gitlab**: <https://gitlab.winehq.org>
 
 - **メーリングリスト**:
 	Wineユーザと開発者のためのいくつかのメーリングリストがあります。
-	詳細については<https://www.winehq.org/forums>を参照してください。
+	詳細については<https://gitlab.winehq.org/wine/wine/-/wikis/Forums>を参照してください。
 
 - **バグ**: <https://bugs.winehq.org>にあるWine Bugzillaでバグを報告してください。
         バグ報告を投稿する前に問題が既知や修正済みかどうかを調べるために

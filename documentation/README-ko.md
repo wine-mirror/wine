@@ -82,7 +82,7 @@ Wine을 실행하려면 커널 차원의 스레드 지원이 필요하기 때문
 
 **선택적 지원 라이브러리**:
   configure는 빌드 시스템에서 찾을 수 없는 선택적 라이브러리를 표시해
-  줍니다.  https://wiki.winehq.org/Recommended_Packages 에서 설치해야 하는
+  줍니다.  https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine 에서 설치해야 하는
   패키지에 대한 힌트를 얻을 수 있습니다.  64비트 플랫폼에서는 이러한
   라이브러리의 32비트 버전을 설치해야 합니다.
 
@@ -103,7 +103,7 @@ make
 
 컴파일 설정 옵션을 보려면 `./configure --help` 명령을 사용합니다.
 
-자세한 내용은 https://wiki.winehq.org/Building_Wine 을 참조하십시오.
+자세한 내용은 https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine 을 참조하십시오.
 
 
 ## 설정
@@ -149,15 +149,15 @@ Wine은 아직 완성 단계에 도달하지 못했기 때문에 프로그램이
         사이트에서 얻을 수 있습니다.  정보를 찾을 때 대개 이 사이트가
         최고의 출발점이 됩니다.
 
-- **FAQ**: Wine FAQ는 https://www.winehq.org/FAQ 에 있습니다.
+- **FAQ**: Wine FAQ는 https://gitlab.winehq.org/wine/wine/-/wikis/FAQ 에 있습니다.
 
-- **위키**: Wine 위키는 https://wiki.winehq.org 에 있습니다.
+- **위키**: Wine 위키는 https://gitlab.winehq.org/wine/wine/-/wikis/ 에 있습니다.
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **메일링 리스트**:
         Wine 사용자와 개발자를 위해 메일링 리스트가 운영되고 있습니다.  더
-        자세한 정보는 https://www.winehq.org/forums 를 참조하기 바랍니다.
+        자세한 정보는 https://gitlab.winehq.org/wine/wine/-/wikis/Forums 를 참조하기 바랍니다.
 
 - **Bugs**: https://bugs.winehq.org 의 Wine Bugzilla에 버그를 보고하십시오.
         버그 보고서를 제출하기 전에 같은 문제가 이미 제출된 적이 있는지

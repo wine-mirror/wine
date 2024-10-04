@@ -81,9 +81,10 @@ stöder kerneltrådar kommer eventuellt att stödjas i framtiden.
 
 **Valfria stödbibliotek**:
   configure-skriptet visar varningar när valfria bibliotek inte hittats.
-  Se https://wiki.winehq.org/Recommended_Packages för information om vilka
-  paket du bör installera. På 64-bitars system måste du säkerställa att du
-  installerar 32-bitars versionerna av dessa bibliotek.
+  Se https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine för
+  information om vilka paket du bör installera. På 64-bitars system
+  måste du säkerställa att du installerar 32-bitars versionerna av
+  dessa bibliotek.
 
 
 ## KOMPILERING
@@ -102,7 +103,7 @@ Windows-källkod i Unix.
 
 Kör `./configure --help` för att se inställningar och val vid kompilering.
 
-För mer information se https://wiki.winehq.org/Building_Wine
+För mer information se https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
 
 
 ## INSTALLATION
@@ -146,15 +147,15 @@ rapporterar ett fel.
            https://www.winehq.org/ : diverse guider, en programdatabas samt
            felspårning. Detta är antagligen det bästa stället att börja.
 
-- **Frågor**: Frågor och svar om Wine finns samlade på https://www.winehq.org/FAQ
+- **Frågor**: Frågor och svar om Wine finns samlade på https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: Wines Wiki finns på https://wiki.winehq.org
+- **Wiki**: Wines Wiki finns på https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **E-postlistor**:
            Det finns flera e-postlistor för Wine-användare och -utvecklare; se
-           https://www.winehq.org/forums för mer information.
+           https://gitlab.winehq.org/wine/wine/-/wikis/Forums för mer information.
 
 - **Fel**: Rapportera fel till Wines Bugzilla på https://bugs.winehq.org
            Sök i Bugzilla-databasen för att se om problemet redan finns

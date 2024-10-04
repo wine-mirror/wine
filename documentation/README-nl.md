@@ -92,9 +92,10 @@ toekomst ook ondersteund worden.
 **Optionele bibliotheken**:
   Tijdens het uitvoeren van ./configure wordt er aangegeven of de optionele
   bibliotheken zijn gevonden op het systeem. Bekijk
-  https://wiki.winehq.org/Building_Wine voor meer informatie over welke
-  pakketten er geïnstalleerd zouden moeten worden. Op 64-bit systemen
-  moeten ook de 32-bit versies van deze pakketten geïnstalleerd worden.
+  https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine voor meer
+  informatie over welke pakketten er geïnstalleerd zouden moeten
+  worden. Op 64-bit systemen moeten ook de 32-bit versies van deze
+  pakketten geïnstalleerd worden.
 
 
 ## COMPILEREN
@@ -114,7 +115,7 @@ broncode te compileren en te linken in Unix.
 
 Voor alle opties tijdens het compileren, voer `./configure --help` uit.
 
-Voor meer informatie bekijk: https://wiki.winehq.org/Building_Wine
+Voor meer informatie bekijk: https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
 
 
 ## SETUP
@@ -162,15 +163,15 @@ fout wordt gerapporteerd.
         handleidingen, programma database, bug tracking. Dit is
         waarschijnlijk de beste plek om te beginnen.
 
-- **FAQ**: Veel vragen over Wine zijn te vinden op https://www.winehq.org/FAQ
+- **FAQ**: Veel vragen over Wine zijn te vinden op https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: De Wine-Wiki staat op https://wiki.winehq.org
+- **Wiki**: De Wine-Wiki staat op https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **Mail-lijsten**:
         Er zijn meerdere mail-lijsten voor gebruikers en ontwikkelaars van
-        Wine. Bekijk https://www.winehq.org/forums voor meer informatie.
+        Wine. Bekijk https://gitlab.winehq.org/wine/wine/-/wikis/Forums voor meer informatie.
 
 - **Fouten**: Op https://bugs.winehq.org kunnen fouten gemeld worden aan de Wine
         Bugzilla. Doorzoek eerst de database van bugzilla om te kijken of

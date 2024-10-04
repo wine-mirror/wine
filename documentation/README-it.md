@@ -74,13 +74,10 @@ che forniscono kernel threads potrebbero essere supportati in futuro.
 
 **Librerie opzionali di supporto**:
   Configure notificherà a video quando le librerie opzionali non sono
-  trovate sul sistema. Leggere https://wiki.winehq.org/Recommended_Packages
+  trovate sul sistema. Leggere https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
   per suggerimenti sui pacchetti da installare.
   Su piattaforme a 64-bit, per compilare Wine a 32-bit (predefinito),
-  assicurarsi di installare la versione a 32-bit di queste librerie;
-  leggere https://wiki.winehq.org/WineOn64bit per i dettagli. Per avere
-  Wine solo 64-bit (o un setup di Wine misto tra 32-bit e 64-bit),
-  leggere https://wiki.winehq.org/Wine64 per maggiori informazioni.
+  assicurarsi di installare la versione a 32-bit di queste librerie.
 
 
 ## COMPILAZIONE
@@ -147,15 +144,16 @@ di segnalazione del problema.
 	delle applicazioni, rintracciamento di bug. Questo è probabilmente
 	il miglior punto di partenza.
 
-- **FAQ**: Le FAQ di Wine si trovano all'indirizzo https://www.winehq.org/FAQ
+- **FAQ**: Le FAQ di Wine si trovano all'indirizzo https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: Il Wiki di Wine si trova all'indirizzo https://wiki.winehq.org
+- **Wiki**: Il Wiki di Wine si trova all'indirizzo https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **Mailing list**:
 	Esistono diverse mailing list per utenti e sviluppatori di Wine;
-	visitare https://www.winehq.org/forums per ulteriori informazioni.
+	visitare https://gitlab.winehq.org/wine/wine/-/wikis/Forums per
+	ulteriori informazioni.
 
 - **Bugs**: Segnalare i bug su Wine Bugzilla all'indirizzo https://bugs.winehq.org
 	Si prega di controllare il database di Bugzilla per verificare che

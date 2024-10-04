@@ -85,10 +85,10 @@ support kernel threads may be supported in the future.
 
 **Optional support libraries**:
   Configure will display notices when optional libraries are not found
-  on your system. See https://wiki.winehq.org/Recommended_Packages for
-  hints about the packages you should install. On 64-bit platforms,
-  you have to make sure to install the 32-bit versions of these
-  libraries.
+  on your system. See https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
+  for hints about the packages you should install. On 64-bit
+  platforms, you have to make sure to install the 32-bit versions of
+  these libraries.
 
 
 ## COMPILATION
@@ -107,7 +107,7 @@ Windows source code under Unix.
 
 To see compile configuration options, do `./configure --help`.
 
-For more information, see https://wiki.winehq.org/Building_Wine
+For more information, see https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
 
 
 ## SETUP
@@ -153,15 +153,16 @@ a bug.
 	https://www.winehq.org/ : various Wine Guides, application database,
 	bug tracking. This is probably the best starting point.
 
-- **FAQ**: The Wine FAQ is located at https://www.winehq.org/FAQ
+- **FAQ**: The Wine FAQ is located at https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: The Wine Wiki is located at https://wiki.winehq.org
+- **Wiki**: The Wine Wiki is located at https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: Wine development is hosted at https://gitlab.winehq.org
 
 - **Mailing lists**:
-	There are several mailing lists for Wine users and developers;
-	see https://www.winehq.org/forums for more information.
+	There are several mailing lists for Wine users and developers; see
+	https://gitlab.winehq.org/wine/wine/-/wikis/Forums for more
+	information.
 
 - **Bugs**: Report bugs to Wine Bugzilla at https://bugs.winehq.org
 	Please search the bugzilla database to check whether your

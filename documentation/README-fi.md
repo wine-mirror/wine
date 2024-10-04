@@ -82,7 +82,7 @@ muillekin käyttöjärjestelmille, joissa on tarvittava tuki säikeille.
 
 **Valinnaisia tukikirjastoja**:
   configure-skripti näyttää varoituksia, kun valinnaisia kirjastoja puuttuu.
-  Osoitteessa https://wiki.winehq.org/Recommended_Packages on tietoa, mitkä
+  Osoitteessa https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine on tietoa, mitkä
   paketit ovat hyödyksi. 64-bittisissä järjestelmissä täytyy varmistaa, että
   kirjastoista on asennettu 32-bittiset versiot.
 
@@ -104,8 +104,7 @@ kääntämiseen Unixissa.
 Komento `./configure --help` näyttää asetuksia ja valintoja, joita
 käännösprosessiin voi lisätä.
 
-Lisätietoja on osoitteessa https://wiki.winehq.org/Building_Wine
-
+Lisätietoja on osoitteessa https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
 
 ## ASENNUS
 
@@ -148,15 +147,15 @@ mukaan, jos raportoi virheestä.
 	Täältä kannattaa yleensä aloittaa.
 
 - **Kysymyksiä**:
-	Sivulle https://www.winehq.org/FAQ on koottu kysymyksiä ja vastauksia.
+	Sivulle https://gitlab.winehq.org/wine/wine/-/wikis/FAQ on koottu kysymyksiä ja vastauksia.
 
-- **Wiki**: Wine Wiki on osoitteessa https://wiki.winehq.org/.
+- **Wiki**: Wine Wiki on osoitteessa https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: Winen kehitykseen voi osallistua sivustolla https://gitlab.winehq.org
 
 - **Postituslistat**:
 	Winen käyttäjille ja kehittäjille on joitakin postituslistoja,
-	sivulla https://www.winehq.org/forums kerrotaan niistä lisää.
+	sivulla https://gitlab.winehq.org/wine/wine/-/wikis/Forums kerrotaan niistä lisää.
 
 - **Virheet**:
 	Ilmoita virheistä Winen Bugzillaan, https://bugs.winehq.org/.

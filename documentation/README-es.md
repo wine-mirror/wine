@@ -76,13 +76,11 @@ podrían obtener soporte en el futuro.
 **Librerías de soporte adicionales**:
   Configure mostrará advertencias cuando las librerías opcionales no se
   encuentren disponibles en su sistema.
-  Visite https://wiki.winehq.org/Recommended_Packages para recomendaciones
-  acerca de que paquetes debe instalar.
-  En plataformas de 64-bit, si se está compilando Wine 32-bits (es la
-  compilación por defecto), debe estar seguro de tener instaladas las librerías
-  de desarrollo de 32-bits; visite https://wiki.winehq.org/WineOn64bit para más
-  detalles. Si usted desea un entorno Wine 64-bits puro (o una mezcla de 32-bits
-  y 64-bits), vaya a https://wiki.winehq.org/Wine64 para más detalles.
+  Visite https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
+  para recomendaciones acerca de que paquetes debe instalar. En
+  plataformas de 64-bit, si se está compilando Wine 32-bits (es la
+  compilación por defecto), debe estar seguro de tener instaladas las
+  librerías de desarrollo de 32-bits.
 
 
 ## COMPILACIÓN
@@ -151,15 +149,15 @@ recibirá un log de error que debe adjuntar en caso de reportar un fallo.
         partida.
 
 - **FAQ**: Las preguntas frecuentes de Wine se encuentran en
-        https://www.winehq.org/FAQ
+        https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: https://wiki.winehq.org
+- **Wiki**: https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **Listas de correo**:
         Hay varias listas de correo, tanto para usuarios como desarrolladores;
-        Vaya a https://www.winehq.org/forums para más información.
+        Vaya a https://gitlab.winehq.org/wine/wine/-/wikis/Forums para más información.
 
 - **Bugs**: Reporte fallos en el Bugzilla de Wine, https://bugs.winehq.org
         Por favor, antes de enviar un informe de fallo busque en la base de

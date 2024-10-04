@@ -145,15 +145,15 @@ Felhívás: a fájl eléséi útja is hozzá lesz adva a path-hez, ha a teljes n
 	alkalmazás adatbázis, és hibakövetés.
 	Ez talán a legjobb kiindulási pont.
 
-- **GYIK**: A Wine GYIK itt található: https://www.winehq.org/FAQ
+- **GYIK**: A Wine GYIK itt található: https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: https://wiki.winehq.org
+- **Wiki**: https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **Levelezõlisták**:
 	Elérhetõ néhány levelezõlista a Wine fejlesztõk számára; nézze meg a
-	https://www.winehq.org/forums címet a további információhoz.
+	https://gitlab.winehq.org/wine/wine/-/wikis/Forums címet a további információhoz.
 
 - **Hibák**: Wine hibabejelentés a Bugzilla-n keresztül itt: https://bugs.winehq.org
 	Kérem hibabejelentés küldése elõtt ellenõrizze, hogy az ön problémája

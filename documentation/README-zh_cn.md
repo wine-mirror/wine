@@ -71,12 +71,10 @@ make
 
 **可选的支持库**：
   当可选的函数库无法在您的系统中找到时，configure 会显示对应的提示信息。
-  请查看 https://wiki.winehq.org/Recommended_Packages 以了解您应当安装的
+  请查看 https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine 以了解您应当安装的
   软件包的信息。
   在 64 位平台上，如果以 32 位的方式编译 Wine（这是默认情况），您必须确保
-  对应函数库的 32 位版本已被安装；请查看 https://wiki.winehq.org/WineOn64bit
-  以了解详情。如果您想安装一个真正的 64 位 Wine（或者一个混合 32 位 Wine 和
-  64 位 Wine 的版本），请参阅 https://wiki.winehq.org/Wine64 以了解具体内容。
+  对应函数库的 32 位版本已被安装。
 
 ## 编译
 
@@ -134,15 +132,15 @@ Wine 不是十全十美的，所以某些程序可能会崩溃。如果这样的
 	上面找到。包括：各类 Wine 相关的向导、应用程序数据库（AppDB）、
 	漏洞跟踪系统等等。这个网站可能是您最佳的起始之处。
 
-- **FAQ**: Wine 常见问题位于 https://www.winehq.org/FAQ
+- **FAQ**: Wine 常见问题位于 https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **维基**： Wine 维基位于 https://wiki.winehq.org
+- **维基**： Wine 维基位于 https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **邮件列表**：
 	存在数个服务于 Wine 用户和开发者的邮件列表；
-	请查看 https://www.winehq.org/forums 以了解更多信息。
+	请查看 https://gitlab.winehq.org/wine/wine/-/wikis/Forums 以了解更多信息。
 
 - **Bugs**: 请向位于 https://bugs.winehq.org 的 Wine Bugzilla 提交 bug。
 	请在提交漏洞报告前先在 bugzilla 数据库中进行搜索，检查
