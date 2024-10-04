@@ -712,7 +712,7 @@ prompt XbarX
 prompt YfooY
 'prompt' YfooY
 promptYfooY
-@todo_wine@------------ Testing 'choice' ------------
+------------ Testing 'choice' ------------
 Example message [A,B,C]?A@or_broken@choice unavailable
 1@or_broken@9009
 Example message [A,B,C]?B@or_broken@choice unavailable

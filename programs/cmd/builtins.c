@@ -3017,7 +3017,7 @@ RETURN_CODE WCMD_setshow_env(WCHAR *s)
   BOOL status;
   WCHAR string[MAXSTRING];
 
-  if (param1[0] == 0x00 && quals[0] == 0x00) {
+  if (!*s) {
     WCHAR *env = GetEnvironmentStringsW();
     WCMD_setshow_sortenv( env, NULL );
     FreeEnvironmentStringsW(env);
