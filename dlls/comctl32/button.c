@@ -885,6 +885,11 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         InvalidateRect( hWnd, NULL, FALSE );
         break;
 
+    case WM_GETOBJECT:
+        if ((LONG)lParam == OBJID_QUERYCLASSNAMEIDX)
+            return 0x10002;
+        break;
+
     case BM_SETSTYLE:
     {
         DWORD new_btn_type;
