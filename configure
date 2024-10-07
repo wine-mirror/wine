@@ -850,6 +850,7 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+SARIF_CONVERTER
 srcdir
 host_os
 host_vendor
@@ -908,6 +909,7 @@ enable_win64
 enable_tests
 enable_build_id
 enable_maintainer_mode
+enable_sast
 enable_silent_rules
 enable_werror
 with_alsa
@@ -2487,6 +2489,8 @@ Optional Features:
   --enable-build-id       include .buildid section in output objects
   --enable-maintainer-mode
                           enable maintainer-specific build rules
+  --enable-sast           enable static application security testing using
+                          Clang
   --enable-silent-rules   use silent build rules (override: "make V=1")
   --enable-werror         treat compilation warnings as errors
   --disable-largefile     omit support for large files
@@ -4278,6 +4282,12 @@ then :
   enableval=$enable_maintainer_mode;
 fi
 
+# Check whether --enable-sast was given.
+if test ${enable_sast+y}
+then :
+  enableval=$enable_sast;
+fi
+
 # Check whether --enable-silent-rules was given.
 if test ${enable_silent_rules+y}
 then :
@@ -4710,6 +4720,60 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
+if test "x$enable_sast" = xyes
+then :
+  CC=${CC:-clang}
+with_mingw=${with_mingw:-clang}
+for ac_prog in sarif-converter
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_SARIF_CONVERTER+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if test -n "$SARIF_CONVERTER"; then
+  ac_cv_prog_SARIF_CONVERTER="$SARIF_CONVERTER" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_SARIF_CONVERTER="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi ;;
+esac
+fi
+SARIF_CONVERTER=$ac_cv_prog_SARIF_CONVERTER
+if test -n "$SARIF_CONVERTER"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $SARIF_CONVERTER" >&5
+printf "%s\n" "$SARIF_CONVERTER" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$SARIF_CONVERTER" && break
+done
+test -n "$SARIF_CONVERTER" || SARIF_CONVERTER="false"
+
+fi
 
 
 
@@ -23764,6 +23828,7 @@ host_cpu = $host_cpu
 host_vendor = $host_vendor
 host_os = $host_os
 srcdir = $srcdir
+SARIF_CONVERTER = $SARIF_CONVERTER
 CC = $CC
 CFLAGS = $CFLAGS
 LDFLAGS = $LDFLAGS

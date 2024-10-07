@@ -73,6 +73,30 @@ build-mac:
     - mkdir -p build32 build64
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
 
+build-sast:
+  extends: .wine-build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'push' && $CI_PROJECT_PATH == "wine/wine" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  tags:
+    - build
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+  variables:
+    SASTFLAGS: >-
+      -Xclang -analyzer-disable-checker=core.CallAndMessage
+      -Xclang -analyzer-disable-checker=core.DivideZero
+      -Xclang -analyzer-disable-checker=core.NullDereference
+      -Xclang -analyzer-disable-checker=core.UndefinedBinaryOperatorResult
+      -Xclang -analyzer-disable-checker=core.uninitialized.Assign
+      -Xclang -analyzer-disable-checker=deadcode.DeadStores
+      -Xclang -analyzer-disable-checker=unix.Malloc
+  script:
+    - cd build64
+    - ../configure -q -C --enable-sast --enable-win64
+    - make -s gl-code-quality-report.json SASTFLAGS="${SASTFLAGS}"
+
 build-winetest:
   stage: build
   image: $CI_REGISTRY/wine/wine:debian-bookworm

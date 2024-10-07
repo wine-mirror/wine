@@ -157,6 +157,7 @@ static const char *msgfmt;
 static const char *ln_s;
 static const char *sed_cmd;
 static const char *wayland_scanner;
+static const char *sarif_converter;
 static int so_dll_supported;
 static int unix_lib_supported;
 /* per-architecture global variables */
@@ -211,6 +212,7 @@ struct makefile
     struct strarray in_files;
     struct strarray pot_files;
     struct strarray test_files;
+    struct strarray sast_files;
     struct strarray clean_files;
     struct strarray distclean_files;
     struct strarray maintainerclean_files;
@@ -3197,6 +3199,7 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
                                     unsigned int arch )
 {
     const char *obj_name, *var_cc, *var_cflags;
+    struct compile_command *cmd;
     struct strarray cflags = empty_strarray;
 
     if (make->disabled[arch] && !(source->file->flags & FLAG_C_IMPLIB)) return;
@@ -3285,30 +3288,48 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
                 obj_dir_path( make, arch_module_name( test_exe, arch )), obj );
     }
 
-    if (!(source->file->flags & FLAG_GENERATED))
+    if (source->file->flags & FLAG_GENERATED) return;
+
+    /* static analysis rules */
+
+    if (sarif_converter && make->module && !make->extlib)
     {
-        struct compile_command *cmd = malloc( sizeof(*cmd) );
-
-        cmd->source = source->filename;
-        cmd->obj = obj_dir_path( make, obj_name );
-        cmd->args = empty_strarray;
-        strarray_addall( &cmd->args, defines );
-        strarray_addall( &cmd->args, cflags );
-
-        if ((source->file->flags & FLAG_ARM64EC_X64) && !strcmp( archs.str[arch], "arm64ec" ))
-        {
-            char *cflags = get_expanded_make_variable( make, "x86_64_CFLAGS" );
-            cmd->cmd = get_expanded_make_variable( make, "x86_64_CC" );
-            if (cflags) strarray_add( &cmd->args, cflags );
-        }
-        else
-        {
-            char *cflags = get_expanded_arch_var( make, "CFLAGS", arch );
-            cmd->cmd = get_expanded_arch_var( make, "CC", arch );
-            if (cflags) strarray_add( &cmd->args, cflags );
-        }
-        list_add_tail( &compile_commands, &cmd->entry );
+        const char *sast_name = strmake( "%s%s.sarif", source->arch ? "" : arch_dirs[arch], obj );
+        output( "%s: %s\n", obj_dir_path( make, sast_name ), source->filename );
+        output( "\t%s%s -o $@ %s", cmd_prefix( "SAST" ), var_cc, source->filename );
+        output_filenames( defines );
+        output_filenames( cflags );
+        output_filename( "--analyze" );
+        output_filename( "-Xclang" );
+        output_filename( "-analyzer-output=sarif" );
+        output_filename( "$(SASTFLAGS)" );
+        output( "\n" );
+        strarray_add( &make->sast_files, sast_name );
+        strarray_add( targets, sast_name );
     }
+
+    /* compile commands */
+
+    cmd = xmalloc( sizeof(*cmd) );
+    cmd->source = source->filename;
+    cmd->obj = obj_dir_path( make, obj_name );
+    cmd->args = empty_strarray;
+    strarray_addall( &cmd->args, defines );
+    strarray_addall( &cmd->args, cflags );
+
+    if ((source->file->flags & FLAG_ARM64EC_X64) && !strcmp( archs.str[arch], "arm64ec" ))
+    {
+        char *cflags = get_expanded_make_variable( make, "x86_64_CFLAGS" );
+        cmd->cmd = get_expanded_make_variable( make, "x86_64_CC" );
+        if (cflags) strarray_add( &cmd->args, cflags );
+    }
+    else
+    {
+        char *cflags = get_expanded_arch_var( make, "CFLAGS", arch );
+        cmd->cmd = get_expanded_arch_var( make, "CC", arch );
+        if (cflags) strarray_add( &cmd->args, cflags );
+    }
+    list_add_tail( &compile_commands, &cmd->entry );
 }
 
 
@@ -3739,6 +3760,7 @@ static void output_subdirs( struct makefile *make )
     struct strarray all_targets = empty_strarray;
     struct strarray makefile_deps = empty_strarray;
     struct strarray clean_files = empty_strarray;
+    struct strarray sast_files = empty_strarray;
     struct strarray testclean_files = empty_strarray;
     struct strarray distclean_files = empty_strarray;
     struct strarray distclean_dirs = empty_strarray;
@@ -3761,6 +3783,7 @@ static void output_subdirs( struct makefile *make )
         strarray_addall_uniq( &make->uninstall_files, submakes[i]->uninstall_files );
         strarray_addall_uniq( &dependencies, submakes[i]->dependencies );
         strarray_addall_path( &clean_files, submakes[i]->obj_dir, submakes[i]->clean_files );
+        strarray_addall_path( &sast_files, submakes[i]->obj_dir, submakes[i]->sast_files );
         strarray_addall_path( &distclean_files, submakes[i]->obj_dir, submakes[i]->distclean_files );
         strarray_addall_path( &distclean_dirs, submakes[i]->obj_dir, subclean );
         strarray_addall_path( &make->maintainerclean_files, submakes[i]->obj_dir, submakes[i]->maintainerclean_files );
@@ -3818,6 +3841,25 @@ static void output_subdirs( struct makefile *make )
     output( "\n" );
     strarray_add_uniq( &make->phony_targets, "check" );
     strarray_add_uniq( &make->phony_targets, "test" );
+
+    if (sarif_converter)
+    {
+        if (strcmp( sarif_converter, "false" ))
+        {
+            output( "gl-code-quality-report.json:\n" );
+            output( "\t%s%s -t codequality -r", cmd_prefix( "SAST" ), sarif_converter );
+            output_filename( root_src_dir_path("") );
+            output_filenames( sast_files );
+            output_filename( "$@" );
+            output( "\n" );
+            strarray_add( &clean_files, "gl-code-quality-report.json" );
+            output( "gl-code-quality-report.json " );
+        }
+        output( "sast:" );
+        output_filenames( sast_files );
+        output( "\n" );
+        strarray_add_uniq( &make->phony_targets, "sast" );
+    }
 
     if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
 
@@ -3961,6 +4003,7 @@ static void output_sources( struct makefile *make )
     strarray_addall( &make->clean_files, make->unixobj_files );
     strarray_addall( &make->clean_files, make->pot_files );
     strarray_addall( &make->clean_files, make->debug_files );
+    strarray_addall( &make->clean_files, make->sast_files );
 
     if (make == top_makefile)
     {
@@ -4252,6 +4295,7 @@ static void output_silent_rules(void)
         "GEN",
         "LN",
         "MSG",
+        "SAST",
         "SED",
         "TEST",
         "WIDL",
@@ -4574,6 +4618,7 @@ int main( int argc, char *argv[] )
     sed_cmd            = get_expanded_make_variable( top_makefile, "SED_CMD" );
     ln_s               = get_expanded_make_variable( top_makefile, "LN_S" );
     wayland_scanner    = get_expanded_make_variable( top_makefile, "WAYLAND_SCANNER" );
+    sarif_converter    = get_expanded_make_variable( top_makefile, "SARIF_CONVERTER" );
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
