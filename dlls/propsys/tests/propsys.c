@@ -1526,10 +1526,10 @@ static void test_PropVariantToDouble(void)
 
 static void test_PropVariantToString(void)
 {
-    PROPVARIANT propvar;
+    static WCHAR stringW[] = L"Wine";
     static CHAR string[] = "Wine";
-    static WCHAR stringW[] = {'W','i','n','e',0};
     WCHAR bufferW[256] = {0};
+    PROPVARIANT propvar;
     HRESULT hr;
 
     PropVariantInit(&propvar);
@@ -1587,12 +1587,23 @@ static void test_PropVariantToString(void)
     ok(!lstrcmpW(bufferW, stringW), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
 
+    /*  Result string will be truncated if output buffer is too small. */
+    PropVariantInit(&propvar);
+    propvar.vt = VT_UI4;
+    propvar.lVal = 123456;
+    hr = PropVariantToString(&propvar, bufferW, 4);
+    todo_wine
+    ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "PropVariantToString returned: %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(bufferW, L"123"), "Unexpected string %s.\n", debugstr_w(bufferW));
+    memset(bufferW, 0, sizeof(bufferW));
+
     PropVariantInit(&propvar);
     propvar.vt = VT_LPWSTR;
     propvar.pwszVal = stringW;
     hr = PropVariantToString(&propvar, bufferW, 4);
     ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "PropVariantToString returned: 0x%08lx.\n", hr);
-    ok(!memcmp(bufferW, stringW, 4), "got wrong string.\n");
+    ok(!wcscmp(bufferW, L"Win"), "Unexpected string %s.\n", debugstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
 
     PropVariantInit(&propvar);
@@ -1600,7 +1611,7 @@ static void test_PropVariantToString(void)
     propvar.pszVal = string;
     hr = PropVariantToString(&propvar, bufferW, 4);
     ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "PropVariantToString returned: 0x%08lx.\n", hr);
-    ok(!memcmp(bufferW, stringW, 4), "got wrong string.\n");
+    ok(!wcscmp(bufferW, L"Win"), "Unexpected string %s.\n", debugstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
 
     PropVariantInit(&propvar);
