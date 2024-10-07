@@ -643,6 +643,7 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
         return D3DXERR_INVALIDDATA;
     }
 
+    image->palette = (is_indexed_fmt) ? (PALETTEENTRY *)(((uint8_t *)src_data) + sizeof(*header)) : NULL;
     image->pixels = ((BYTE *)src_data) + header_size;
     image->image_file_format = D3DXIFF_DDS;
     if (starting_mip_level && (image->mip_levels > 1))
@@ -891,13 +892,13 @@ static HRESULT d3dx_image_wic_frame_decode(struct d3dx_image *image,
     }
 
     image->image_buf = image->pixels = buffer;
-    image->palette = palette;
+    image->image_palette = image->palette = palette;
 
 exit:
     free(colors);
     if (image->image_buf != buffer)
         free(buffer);
-    if (image->palette != palette)
+    if (image->image_palette != palette)
         free(palette);
     if (wic_palette)
         IWICPalette_Release(wic_palette);
@@ -1033,7 +1034,7 @@ HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3d
 void d3dx_image_cleanup(struct d3dx_image *image)
 {
     free(image->image_buf);
-    free(image->palette);
+    free(image->image_palette);
 }
 
 HRESULT d3dx_image_get_pixels(struct d3dx_image *image, uint32_t layer, uint32_t mip_level,

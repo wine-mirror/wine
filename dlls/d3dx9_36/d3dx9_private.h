@@ -153,15 +153,16 @@ struct d3dx_image
     uint32_t layer_count;
 
     BYTE *pixels;
+    PALETTEENTRY *palette;
     uint32_t layer_pitch;
 
     /*
-     * image_buf and palette are pointers to allocated memory used to store
+     * image_buf and image_palette are pointers to allocated memory used to store
      * image data. If they are non-NULL, they need to be freed when no longer
      * in use.
      */
     void *image_buf;
-    PALETTEENTRY *palette;
+    PALETTEENTRY *image_palette;
 
     D3DXIMAGE_FILEFORMAT image_file_format;
 };

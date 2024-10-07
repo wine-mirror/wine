@@ -1740,23 +1740,16 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         }
 
         /* Test D3DXLoadSurfaceFromFileInMemory with indexed pixel format DDS files. */
-        if (!strcmp(winetest_platform, "windows"))
-        {
-            hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_8bit, sizeof(dds_8bit), &rect, D3DX_FILTER_NONE, 0, NULL);
-            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-            hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-            ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
-            check_pixel_4bpp(&lockrect, 0, 0, 0xffec2700);
-            check_pixel_4bpp(&lockrect, 1, 0, 0xffec2700);
-            check_pixel_4bpp(&lockrect, 0, 1, 0xffec2700);
-            check_pixel_4bpp(&lockrect, 1, 1, 0xffec2700);
-            hr = IDirect3DSurface9_UnlockRect(surf);
-            ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
-        }
-        else
-        {
-            skip("Skipping test on wine to avoid access violation.\n");
-        }
+        hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_8bit, sizeof(dds_8bit), &rect, D3DX_FILTER_NONE, 0, NULL);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+        check_pixel_4bpp(&lockrect, 0, 0, 0xffec2700);
+        check_pixel_4bpp(&lockrect, 1, 0, 0xffec2700);
+        check_pixel_4bpp(&lockrect, 0, 1, 0xffec2700);
+        check_pixel_4bpp(&lockrect, 1, 1, 0xffec2700);
+        hr = IDirect3DSurface9_UnlockRect(surf);
+        ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_a8p8, sizeof(dds_a8p8), &rect, D3DX_FILTER_NONE, 0, NULL);
         todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
