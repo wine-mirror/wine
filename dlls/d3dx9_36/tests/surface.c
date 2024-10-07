@@ -325,6 +325,7 @@ static void test_dds_header_handling(void)
         {
             HRESULT hr;
             UINT miplevels;
+            BOOL todo;
         }
         expected;
     } tests[] = {
@@ -350,6 +351,7 @@ static void test_dds_header_handling(void)
         /* linear size is ignored */
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, 0, 4, 4, 0, 0,
           7 /* pixel data size */, { D3DXERR_INVALIDDATA, 1 } },
+        /* 10. */
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 0 /* linear size */, 0,
           8, { D3D_OK, 1 } },
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 1 /* linear size */, 0,
@@ -364,14 +366,14 @@ static void test_dds_header_handling(void)
           8, { D3D_OK, 1 } },
         /* integer overflows */
         { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000000, 0x80000000 /* 0x80000000 * 0x80000000 * 4 = 0 */, 0, 0,
-          64, { D3D_OK, 1 } },
+          64, { D3D_OK, 1, .todo = TRUE } },
         { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x8000100, 0x800100 /* 0x8000100 * 0x800100 * 4 = 262144 */, 0, 0,
           64, { D3DXERR_INVALIDDATA, 0 } },
         { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000001, 0x80000001 /* 0x80000001 * 0x80000001 * 4 = 4 */, 0, 0,
           4, { D3D_OK, 1 } },
         { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000001, 0x80000001 /* 0x80000001 * 0x80000001 * 4 = 4 */, 0, 0,
           3 /* pixel data size */, { D3DXERR_INVALIDDATA, 0 } },
-        /* file size is validated */
+        /* 20. File size is validated. */
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 64, 0, 0, 49151, { D3DXERR_INVALIDDATA, 0 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 64, 0, 0, 49152, { D3D_OK, 1 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 64, 0, 4, 65279, { D3DXERR_INVALIDDATA, 0 } },
@@ -382,6 +384,7 @@ static void test_dds_header_handling(void)
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 0, 196608, { D3D_OK, 1 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 0, 196609, { D3D_OK, 1 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 1, 196607, { D3DXERR_INVALIDDATA, 0 } },
+        /* 30. */
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 1, 196608, { D3D_OK, 1 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 196607, { D3DXERR_INVALIDDATA, 0 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 196608, { D3D_OK, 1 } },
@@ -392,6 +395,7 @@ static void test_dds_header_handling(void)
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 10, 262146, { D3D_OK, 10 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 262175, { D3DXERR_INVALIDDATA, 0 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 262176, { D3D_OK, 20 } },
+        /* 40. */
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, 0, 256, 256, 0, 0, 32767, { D3DXERR_INVALIDDATA, 0 } },
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, 0, 256, 256, 0, 0, 32768, { D3D_OK, 1 } },
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 32767, { D3DXERR_INVALIDDATA, 0 } },
@@ -402,6 +406,7 @@ static void test_dds_header_handling(void)
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 43792, { D3D_OK, 20 } },
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, 0, 256, 256, 0, 0, 65535, { D3DXERR_INVALIDDATA, 0 } },
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, 0, 256, 256, 0, 0, 65536, { D3D_OK, 1 } },
+        /* 50. */
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 65535, { D3DXERR_INVALIDDATA, 0 } },
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 65536, { D3D_OK, 1 } },
         { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 9, 87407, { D3DXERR_INVALIDDATA, 0 } },
@@ -413,8 +418,24 @@ static void test_dds_header_handling(void)
         /* DDS_MIPMAPCOUNT is ignored */
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 0, 262146, { D3D_OK, 1 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 2, 262146, { D3D_OK, 2 } },
+        /* 60. */
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 9, 262146, { D3D_OK, 9 } },
         { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 10, 262146, { D3D_OK, 10 } },
+        /* Packed formats. */
+        { { 32, DDS_PF_FOURCC, D3DFMT_R8G8_B8G8, 0, 0, 0, 0, 0 }, 0, 3, 3, 0, 0, (4 * 3 * 2), { D3D_OK, 1, .todo = TRUE } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_G8R8_G8B8, 0, 0, 0, 0, 0 }, 0, 3, 3, 0, 0, (4 * 3 * 2), { D3D_OK, 1, .todo = TRUE } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_UYVY, 0, 0, 0, 0, 0 }, 0, 3, 3, 0, 0, (4 * 3 * 2), { D3D_OK, 1, .todo = TRUE } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_YUY2, 0, 0, 0, 0, 0 }, 0, 3, 3, 0, 0, (4 * 3 * 2), { D3D_OK, 1, .todo = TRUE } },
+        /* Uneven height/width is supported, but pixel size must align. */
+        { { 32, DDS_PF_FOURCC, D3DFMT_R8G8_B8G8, 0, 0, 0, 0, 0 }, 0, 3, 3, 0, 0, (3 * 3 * 2), { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_G8R8_G8B8, 0, 0, 0, 0, 0 }, 0, 3, 3, 0, 0, (3 * 3 * 2), { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_R8G8_B8G8, 0, 0, 0, 0, 0 }, 0, 4, 3, 4, 1, (4 * 3 * 2), { D3D_OK, 1, .todo = TRUE } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_G8R8_G8B8, 0, 0, 0, 0, 0 }, 0, 4, 3, 4, 1, (4 * 3 * 2), { D3D_OK, 1, .todo = TRUE } },
+        /* 70. */
+        { { 32, DDS_PF_FOURCC, D3DFMT_UYVY, 0, 0, 0, 0, 0 }, 0, 3, 3, 0, 0, (3 * 3 * 2), { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_YUY2, 0, 0, 0, 0, 0 }, 0, 3, 3, 0, 0, (3 * 3 * 2), { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_UYVY, 0, 0, 0, 0, 0 }, 0, 4, 3, 4, 1, (4 * 3 * 2), { D3D_OK, 1, .todo = TRUE } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_YUY2, 0, 0, 0, 0, 0 }, 0, 4, 3, 4, 1, (4 * 3 * 2), { D3D_OK, 1, .todo = TRUE } },
     };
     static const struct
     {
@@ -484,6 +505,7 @@ static void test_dds_header_handling(void)
         DWORD file_size = sizeof(dds->magic) + sizeof(dds->header) + tests[i].pixel_data_size;
         assert(file_size <= sizeof(*dds));
 
+        winetest_push_context("Test %u", i);
         dds->magic = MAKEFOURCC('D','D','S',' ');
         fill_dds_header(&dds->header);
         dds->header.flags |= tests[i].flags;
@@ -494,14 +516,14 @@ static void test_dds_header_handling(void)
         dds->header.pixel_format = tests[i].pixel_format;
 
         hr = D3DXGetImageInfoFromFileInMemory(dds, file_size, &info);
-        todo_wine_if(i == 16)
-        ok(hr == tests[i].expected.hr, "%d: D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n",
-                i, hr, tests[i].expected.hr);
+        todo_wine_if(tests[i].expected.todo) ok(hr == tests[i].expected.hr, "Unexpected hr %#lx, expected %#lx.\n",
+                hr, tests[i].expected.hr);
         if (SUCCEEDED(hr))
         {
-            ok(info.MipLevels == tests[i].expected.miplevels, "%d: Got MipLevels %u, expected %u\n",
-                    i, info.MipLevels, tests[i].expected.miplevels);
+            ok(info.MipLevels == tests[i].expected.miplevels, "Unexpected MipLevels %u, expected %u.\n",
+                    info.MipLevels, tests[i].expected.miplevels);
         }
+        winetest_pop_context();
     }
 
     for (i = 0; i < ARRAY_SIZE(info_tests); i++)
