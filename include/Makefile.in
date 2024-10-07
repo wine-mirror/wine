@@ -832,6 +832,7 @@ SOURCES = \
 	windows.applicationmodel.core.idl \
 	windows.applicationmodel.idl \
 	windows.data.json.idl \
+	windows.data.xml.dom.idl \
 	windows.devices.bluetooth.idl \
 	windows.devices.enumeration.idl \
 	windows.devices.geolocation.idl \
