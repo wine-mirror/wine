@@ -1008,7 +1008,7 @@ static void test_format_conversion(IDirect3DDevice9 *device)
         { D3DFMT_V16U16,        NULL,         { 0, 0, 2, 2 }, v16u16_2_2,       D3DFMT_G16R16,        v16u16_2_2_expected },
         { D3DFMT_V16U16,        NULL,         { 0, 0, 2, 2 }, v16u16_2_2,       D3DFMT_A32B32G32R32F, v16u16_2_2_expected2 },
         { D3DFMT_V8U8,          NULL,         { 0, 0, 2, 2 }, v8u8_2_2,         D3DFMT_A32B32G32R32F, v8u8_2_2_expected },
-        { D3DFMT_Q16W16V16U16,  NULL,         { 0, 0, 2, 2 }, q16w16v16u16_2_2, D3DFMT_A32B32G32R32F, q16w16v16u16_2_2_expected, .todo = TRUE },
+        { D3DFMT_Q16W16V16U16,  NULL,         { 0, 0, 2, 2 }, q16w16v16u16_2_2, D3DFMT_A32B32G32R32F, q16w16v16u16_2_2_expected },
         { D3DFMT_A8P8,          test_palette, { 0, 0, 2, 2 }, a8p8_2_2,         D3DFMT_A8R8G8B8,      a8p8_2_2_expected },
     };
     uint32_t i;
