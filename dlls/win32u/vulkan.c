@@ -173,6 +173,12 @@ static VkSurfaceKHR win32u_wine_get_host_surface( VkSurfaceKHR handle )
     return surface->host_surface;
 }
 
+static void win32u_vulkan_surface_update( VkSurfaceKHR handle )
+{
+    struct surface *surface = surface_from_handle( handle );
+    driver_funcs->p_vulkan_surface_update( surface->hwnd, surface->driver_private );
+}
+
 static struct vulkan_funcs vulkan_funcs =
 {
     .p_vkCreateWin32SurfaceKHR = win32u_vkCreateWin32SurfaceKHR,
@@ -181,6 +187,7 @@ static struct vulkan_funcs vulkan_funcs =
     .p_vkGetDeviceProcAddr = win32u_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = win32u_vkGetInstanceProcAddr,
     .p_wine_get_host_surface = win32u_wine_get_host_surface,
+    .p_vulkan_surface_update = win32u_vulkan_surface_update,
 };
 
 static VkResult nulldrv_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private )
@@ -194,6 +201,10 @@ static void nulldrv_vulkan_surface_destroy( HWND hwnd, void *private )
 }
 
 static void nulldrv_vulkan_surface_detach( HWND hwnd, void *private )
+{
+}
+
+static void nulldrv_vulkan_surface_update( HWND hwnd, void *private )
 {
 }
 
@@ -216,6 +227,7 @@ static const struct vulkan_driver_funcs nulldrv_funcs =
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
     .p_vulkan_surface_destroy = nulldrv_vulkan_surface_destroy,
     .p_vulkan_surface_detach = nulldrv_vulkan_surface_detach,
+    .p_vulkan_surface_update = nulldrv_vulkan_surface_update,
     .p_vulkan_surface_presented = nulldrv_vulkan_surface_presented,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = nulldrv_get_host_surface_extension,
@@ -265,6 +277,12 @@ static void lazydrv_vulkan_surface_detach( HWND hwnd, void *private )
     return driver_funcs->p_vulkan_surface_detach( hwnd, private );
 }
 
+static void lazydrv_vulkan_surface_update( HWND hwnd, void *private )
+{
+    vulkan_driver_load();
+    return driver_funcs->p_vulkan_surface_update( hwnd, private );
+}
+
 static void lazydrv_vulkan_surface_presented( HWND hwnd, void *private, VkResult result )
 {
     vulkan_driver_load();
@@ -288,6 +306,7 @@ static const struct vulkan_driver_funcs lazydrv_funcs =
     .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
     .p_vulkan_surface_destroy = lazydrv_vulkan_surface_destroy,
     .p_vulkan_surface_detach = lazydrv_vulkan_surface_detach,
+    .p_vulkan_surface_update = lazydrv_vulkan_surface_update,
     .p_vulkan_surface_presented = lazydrv_vulkan_surface_presented,
 };
 

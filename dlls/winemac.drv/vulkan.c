@@ -182,6 +182,10 @@ static void macdrv_vulkan_surface_detach(HWND hwnd, void *private)
 {
 }
 
+static void macdrv_vulkan_surface_update(HWND hwnd, void *private)
+{
+}
+
 static void macdrv_vulkan_surface_presented(HWND hwnd, void *private, VkResult result)
 {
 }
@@ -204,6 +208,7 @@ static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
     .p_vulkan_surface_destroy = macdrv_vulkan_surface_destroy,
     .p_vulkan_surface_detach = macdrv_vulkan_surface_detach,
+    .p_vulkan_surface_update = macdrv_vulkan_surface_update,
     .p_vulkan_surface_presented = macdrv_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,

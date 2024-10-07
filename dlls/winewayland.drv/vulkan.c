@@ -118,6 +118,10 @@ static void wayland_vulkan_surface_detach(HWND hwnd, void *private)
 {
 }
 
+static void wayland_vulkan_surface_update(HWND hwnd, void *private)
+{
+}
+
 static void wayland_vulkan_surface_presented(HWND hwnd, void *private, VkResult result)
 {
     HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
@@ -143,6 +147,7 @@ static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
     .p_vulkan_surface_create = wayland_vulkan_surface_create,
     .p_vulkan_surface_destroy = wayland_vulkan_surface_destroy,
     .p_vulkan_surface_detach = wayland_vulkan_surface_detach,
+    .p_vulkan_surface_update = wayland_vulkan_surface_update,
     .p_vulkan_surface_presented = wayland_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,

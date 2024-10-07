@@ -1786,6 +1786,9 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCrea
     if (surface) create_info_host.surface = surface->host_surface;
     if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->host_swapchain;
 
+    /* update the host surface to commit any pending size change */
+    vk_funcs->p_vulkan_surface_update( surface->driver_surface );
+
     /* Windows allows client rect to be empty, but host Vulkan often doesn't, adjust extents back to the host capabilities */
     res = instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device->host_physical_device,
                                                                       surface->host_surface, &capabilities);

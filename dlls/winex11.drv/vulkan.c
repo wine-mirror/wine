@@ -203,6 +203,16 @@ static void vulkan_surface_update_offscreen( HWND hwnd, struct vulkan_surface *s
     }
 }
 
+static void X11DRV_vulkan_surface_update( HWND hwnd, void *private )
+{
+    struct vulkan_surface *surface = private;
+
+    TRACE( "%p %p\n", hwnd, private );
+
+    vulkan_surface_update_size( hwnd, surface );
+    vulkan_surface_update_offscreen( hwnd, surface );
+}
+
 static void X11DRV_vulkan_surface_presented( HWND hwnd, void *private, VkResult result )
 {
     struct vulkan_surface *surface = private;
@@ -261,6 +271,7 @@ static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
     .p_vulkan_surface_destroy = X11DRV_vulkan_surface_destroy,
     .p_vulkan_surface_detach = X11DRV_vulkan_surface_detach,
+    .p_vulkan_surface_update = X11DRV_vulkan_surface_update,
     .p_vulkan_surface_presented = X11DRV_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
