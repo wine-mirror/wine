@@ -2592,14 +2592,10 @@ static void test_PropVariantToVariant(void)
     propvar.vt = VT_BSTR;
     propvar.bstrVal = SysAllocString(L"test");
     hr = PropVariantToVariant(&propvar, &var);
-    todo_wine
     ok(hr == S_OK, "PropVariantToVariant returned %#lx.\n", hr);
-    if (hr == S_OK)
-    {
     ok(V_VT(&var) == VT_BSTR, "Unexpected V_VT(&var) %d.\n", V_VT(&var));
     ok(V_BSTR(&var) != propvar.bstrVal, "Got same string pointer.\n");
     ok(!wcscmp(V_BSTR(&var), propvar.bstrVal), "Unexpected V_BSTR(&var) %s.\n", debugstr_w(V_BSTR(&var)));
-    }
     PropVariantClear(&propvar);
     VariantClear(&var);
 
@@ -2608,36 +2604,25 @@ static void test_PropVariantToVariant(void)
     hr = PropVariantToVariant(&propvar, &var);
     todo_wine
     ok(hr == 39, "PropVariantToVariant returned %#lx.\n", hr);
-    if (hr == 39)
-    {
     ok(V_VT(&var) == VT_BSTR, "Unexpected V_VT(&var) %d.\n", V_VT(&var));
     ok(!wcscmp(V_BSTR(&var), dummy_guid_str), "Unexpected V_BSTR(&var) %s.\n", debugstr_w(V_BSTR(&var)));
-    }
     VariantClear(&var);
 
     propvar.vt = VT_LPSTR;
     propvar.pszVal = (char *)topic;
     hr = PropVariantToVariant(&propvar, &var);
-    todo_wine
     ok(hr == S_OK, "PropVariantToVariant returned %#lx.\n", hr);
-    if (hr == S_OK)
-    {
     ok(V_VT(&var) == VT_BSTR, "Unexpected V_VT(&var) %d.\n", V_VT(&var));
     ok(!wcscmp(V_BSTR(&var), topicW), "Unexpected V_BSTR(&var) %s.\n", debugstr_w(V_BSTR(&var)));
-    }
     VariantClear(&var);
 
     propvar.vt = VT_LPWSTR;
     propvar.pwszVal = (WCHAR *)topicW;
     hr = PropVariantToVariant(&propvar, &var);
-    todo_wine
     ok(hr == S_OK, "PropVariantToVariant returned %#lx.\n", hr);
-    if (hr == S_OK)
-    {
     ok(V_VT(&var) == VT_BSTR, "Unexpected V_VT(&var) %d.\n", V_VT(&var));
     ok(V_BSTR(&var) != topicW, "Got same string pointer.\n");
     ok(!wcscmp(V_BSTR(&var), topicW), "Unexpected V_BSTR(&var) %s.\n", debugstr_w(V_BSTR(&var)));
-    }
     VariantClear(&var);
 }
 

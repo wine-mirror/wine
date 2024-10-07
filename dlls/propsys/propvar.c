@@ -1069,6 +1069,8 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
 
 HRESULT WINAPI PropVariantToVariant(const PROPVARIANT *propvar, VARIANT *var)
 {
+    HRESULT hr = S_OK;
+
     TRACE("propvar %p, var %p, propvar->vt %#x.\n", propvar, var, propvar ? propvar->vt : 0);
 
     if (!var || !propvar)
@@ -1115,12 +1117,19 @@ HRESULT WINAPI PropVariantToVariant(const PROPVARIANT *propvar, VARIANT *var)
         case VT_R8:
             V_R8(var) = propvar->dblVal;
             break;
+        case VT_LPSTR:
+        case VT_LPWSTR:
+        case VT_BSTR:
+        case VT_CLSID:
+            var->vt = VT_BSTR;
+            hr = PropVariantToBSTR(propvar, &V_BSTR(var));
+            break;
         default:
             FIXME("Unsupported type %d.\n", propvar->vt);
             return E_INVALIDARG;
     }
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI VariantToPropVariant(const VARIANT *var, PROPVARIANT *propvar)
