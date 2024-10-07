@@ -674,7 +674,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	LANGID Language = 0;
 
 	DWORD LogMode = 0;
-	LPWSTR LogFileName = NULL;
 	DWORD LogAttributes = 0;
 
 	LPWSTR PatchFileName = NULL;
@@ -686,7 +685,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DWORD ReturnCode;
 	int argc;
 	LPWSTR *argvW = NULL;
-	WCHAR *path, *package_unquoted = NULL;
+	WCHAR *path, *package_unquoted = NULL, *dll_unquoted = NULL, *patch_unquoted = NULL, *log_unquoted;
 
         InitCommonControls();
 
@@ -979,11 +978,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argvW[%d] = %s\n", i, wine_dbgstr_w(argvW[i]));
-			LogFileName = argvW[i];
-			if(MsiEnableLogW(LogMode, LogFileName, LogAttributes) != ERROR_SUCCESS)
+			if (!(log_unquoted =  remove_quotes(argvW[i]))) return 1;
+			if (MsiEnableLogW(LogMode, log_unquoted, LogAttributes) != ERROR_SUCCESS)
 			{
 				report_error("Logging in %s (0x%08lx, %lu) failed\n",
-					     wine_dbgstr_w(LogFileName), LogMode, LogAttributes);
+					     wine_dbgstr_w(log_unquoted), LogMode, LogAttributes);
 				ExitProcess(1);
 			}
 		}
@@ -1095,7 +1094,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if(FunctionInstallAdmin && FunctionPatch)
 		FunctionInstall = FALSE;
 
-    if (PackageName && !(package_unquoted = remove_quotes(PackageName))) return ERROR_OUTOFMEMORY;
+    if (PackageName && !(package_unquoted = remove_quotes(PackageName))) return 1;
+    if (PatchFileName && !(patch_unquoted = remove_quotes(PatchFileName))) return 1;
+    if (DllName && !(dll_unquoted = remove_quotes(DllName))) return 1;
 
 	ReturnCode = 1;
 	if(FunctionInstall)
@@ -1133,15 +1134,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	else if(FunctionPatch)
 	{
-		ReturnCode = MsiApplyPatchW(PatchFileName, package_unquoted, InstallType, Properties);
+		ReturnCode = MsiApplyPatchW(patch_unquoted, package_unquoted, InstallType, Properties);
 	}
 	else if(FunctionDllRegisterServer)
 	{
-		ReturnCode = DoDllRegisterServer(DllName);
+		ReturnCode = DoDllRegisterServer(dll_unquoted);
 	}
 	else if(FunctionDllUnregisterServer)
 	{
-		ReturnCode = DoDllUnregisterServer(DllName);
+		ReturnCode = DoDllUnregisterServer(dll_unquoted);
 	}
 	else if (FunctionRegServer)
 	{
@@ -1162,6 +1163,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	else
 		ShowUsage(1);
 
-    free( package_unquoted );
 	return ReturnCode;
 }
