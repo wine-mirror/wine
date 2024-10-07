@@ -761,7 +761,7 @@ static void test_D3DXGetImageInfo(void)
 
     /* Size includes the size of the color palette. */
     hr = D3DXGetImageInfoFromFileInMemory(dds_8bit, (sizeof(dds_8bit) - (sizeof(PALETTEENTRY) * 256)), &info);
-    todo_wine ok(hr == D3DXERR_INVALIDDATA, "Unexpected hr %#lx.\n", hr);
+    ok(hr == D3DXERR_INVALIDDATA, "Unexpected hr %#lx.\n", hr);
 
     /* cleanup */
     if(testdummy_ok) DeleteFileA("testdummy.bmp");
