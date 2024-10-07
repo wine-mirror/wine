@@ -120,6 +120,9 @@
 /* Define to 1 if you have the <libavcodec/avcodec.h> header file. */
 #undef HAVE_LIBAVCODEC_AVCODEC_H
 
+/* Define to 1 if you have the <libavcodec/bsf.h> header file. */
+#undef HAVE_LIBAVCODEC_BSF_H
+
 /* Define to 1 if you have the <libavformat/avformat.h> header file. */
 #undef HAVE_LIBAVFORMAT_AVFORMAT_H
 

@@ -17677,6 +17677,12 @@ then :
   printf "%s\n" "#define HAVE_LIBAVCODEC_AVCODEC_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "libavcodec/bsf.h" "ac_cv_header_libavcodec_bsf_h" "$ac_includes_default"
+if test "x$ac_cv_header_libavcodec_bsf_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBAVCODEC_BSF_H 1" >>confdefs.h
+
+fi
 
          if test "$ac_cv_header_libavutil_avutil_h" = "yes" -a "$ac_cv_header_libavformat_avformat_h" = "yes" -a "$ac_cv_header_libavcodec_avcodec_h" = "yes"
          then
