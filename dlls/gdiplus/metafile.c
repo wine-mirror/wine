@@ -3748,8 +3748,20 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             return stat;
         }
+        case EmfPlusRecordTypeSetRenderingOrigin:
+        {
+            const EmfPlusSetRenderingOrigin *origin = (const EmfPlusSetRenderingOrigin *)header;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusSetRenderingOrigin))
+                return InvalidParameter;
+
+            return GdipSetRenderingOrigin(real_metafile->playback_graphics, origin->x, origin->y);
+        }
         default:
-            FIXME("Not implemented for record type %x\n", recordType);
+            if (recordType >= GDIP_EMFPLUS_RECORD_BASE)
+                FIXME("Not implemented for EMF+ record type %u\n", recordType - GDIP_EMFPLUS_RECORD_BASE);
+            else
+                FIXME("Not implemented for record type %x\n", recordType);
             return NotImplemented;
         }
     }
