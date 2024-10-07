@@ -104,6 +104,7 @@ enum component_type
 enum format_flag
 {
     FMT_FLAG_DXT  = 0x01,
+    FMT_FLAG_PACKED = 0x02,
 };
 
 struct pixel_format_desc {
@@ -197,6 +198,11 @@ static inline BOOL is_compressed_format(const struct pixel_format_desc *format)
     return !!(format->flags & FMT_FLAG_DXT);
 }
 
+static inline BOOL is_packed_format(const struct pixel_format_desc *format)
+{
+    return !!(format->flags & FMT_FLAG_PACKED);
+}
+
 static inline BOOL format_types_match(const struct pixel_format_desc *src, const struct pixel_format_desc *dst)
 {
     if ((src->a_type && dst->a_type) && (src->a_type != dst->a_type))
@@ -213,12 +219,12 @@ static inline BOOL format_types_match(const struct pixel_format_desc *src, const
 
 static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)
 {
-    return !is_unknown_format(format);
+    return !is_packed_format(format) && !is_unknown_format(format);
 }
 
 static inline BOOL is_conversion_to_supported(const struct pixel_format_desc *format)
 {
-    return !is_index_format(format) && !is_unknown_format(format);
+    return !is_index_format(format) && !is_packed_format(format) && !is_unknown_format(format);
 }
 
 HRESULT map_view_of_file(const WCHAR *filename, void **buffer, DWORD *length);
