@@ -19,11 +19,7 @@
  *
  */
 
-/* FIXMEs:
- *  - built-in wait queues used which means:
- *    + "max concurrent active threads" parameter not used
- *    + completion handle is waitable, while native isn't
- */
+/* FIXME: "max concurrent active threads" parameter is not used */
 
 #include "config.h"
 
@@ -80,6 +76,7 @@ struct completion
     struct list    queue;
     struct list    wait_queue;
     unsigned int   depth;
+    int            closed;
 };
 
 static void completion_wait_dump( struct object*, int );
@@ -131,6 +128,7 @@ static int completion_wait_signaled( struct object *obj, struct wait_queue_entry
     struct completion_wait *wait = (struct completion_wait *)obj;
 
     assert( obj->ops == &completion_wait_ops );
+    if (!wait->completion) return 1;
     return wait->completion->depth;
 }
 
@@ -141,6 +139,11 @@ static void completion_wait_satisfied( struct object *obj, struct wait_queue_ent
     struct comp_msg *msg;
 
     assert( obj->ops == &completion_wait_ops );
+    if (!wait->completion)
+    {
+        make_wait_abandoned( entry );
+        return;
+    }
     msg_entry = list_head( &wait->completion->queue );
     assert( msg_entry );
     msg = LIST_ENTRY( msg_entry, struct comp_msg, queue_entry );
@@ -152,6 +155,7 @@ static void completion_wait_satisfied( struct object *obj, struct wait_queue_ent
 
 static void completion_dump( struct object*, int );
 static int completion_signaled( struct object *obj, struct wait_queue_entry *entry );
+static int completion_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void completion_destroy( struct object * );
 
 static const struct object_ops completion_ops =
@@ -174,25 +178,18 @@ static const struct object_ops completion_ops =
     default_unlink_name,       /* unlink_name */
     no_open_file,              /* open_file */
     no_kernel_obj_list,        /* get_kernel_obj_list */
-    no_close_handle,           /* close_handle */
+    completion_close_handle,   /* close_handle */
     completion_destroy         /* destroy */
 };
 
 static void completion_destroy( struct object *obj)
 {
     struct completion *completion = (struct completion *) obj;
-    struct completion_wait *wait, *wait_next;
     struct comp_msg *tmp, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE( tmp, next, &completion->queue, struct comp_msg, queue_entry )
     {
         free( tmp );
-    }
-
-    LIST_FOR_EACH_ENTRY_SAFE( wait, wait_next, &completion->wait_queue, struct completion_wait, wait_queue_entry )
-    {
-        assert( wait->completion );
-        cleanup_thread_completion( wait->thread );
     }
 }
 
@@ -208,7 +205,30 @@ static int completion_signaled( struct object *obj, struct wait_queue_entry *ent
 {
     struct completion *completion = (struct completion *)obj;
 
-    return !list_empty( &completion->queue );
+    return !list_empty( &completion->queue ) || completion->closed;
+}
+
+static int completion_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
+{
+    struct completion *completion = (struct completion *)obj;
+    struct completion_wait *wait, *wait_next;
+
+    if (completion->obj.handle_count != 1) return 1;
+
+    LIST_FOR_EACH_ENTRY_SAFE( wait, wait_next, &completion->wait_queue, struct completion_wait, wait_queue_entry )
+    {
+        assert( wait->completion );
+        wait->completion = NULL;
+        list_remove( &wait->wait_queue_entry );
+        if (!wait->msg)
+        {
+            wake_up( &wait->obj, 0 );
+            cleanup_thread_completion( wait->thread );
+        }
+    }
+    completion->closed = 1;
+    wake_up( obj, 0 );
+    return 1;
 }
 
 void cleanup_thread_completion( struct thread *thread )
@@ -220,7 +240,7 @@ void cleanup_thread_completion( struct thread *thread )
         close_handle( thread->process, thread->completion_wait->handle );
         thread->completion_wait->handle = 0;
     }
-    list_remove( &thread->completion_wait->wait_queue_entry );
+    if (thread->completion_wait->completion) list_remove( &thread->completion_wait->wait_queue_entry );
     release_object( &thread->completion_wait->obj );
     thread->completion_wait = NULL;
 }
@@ -254,6 +274,7 @@ static struct completion *create_completion( struct object *root, const struct u
             list_init( &completion->queue );
             list_init( &completion->wait_queue );
             completion->depth = 0;
+            completion->closed = 0;
         }
     }
 
@@ -397,6 +418,7 @@ DECL_HANDLER(get_thread_completion)
     reply->information = msg->information;
     free( msg );
     current->completion_wait->msg = NULL;
+    if (!current->completion_wait->completion) cleanup_thread_completion( current );
 }
 
 /* get queue depth for completion port */
