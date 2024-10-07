@@ -334,9 +334,22 @@ HRESULT WINAPI PropVariantToBoolean(REFPROPVARIANT propvarIn, BOOL *ret)
 
 HRESULT WINAPI PropVariantToBSTR(REFPROPVARIANT propvar, BSTR *bstr)
 {
-    FIXME("propvar %p, bstr %p.\n", propvar, bstr);
+    WCHAR *str;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("propvar %p, propvar->vt %#x, bstr %p.\n",
+            propvar, propvar ? propvar->vt : 0, bstr);
+
+    if (FAILED(hr = PropVariantToStringAlloc(propvar, &str)))
+        return hr;
+
+    *bstr = SysAllocString(str);
+    CoTaskMemFree(str);
+
+    if (!*bstr)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 HRESULT WINAPI PropVariantToBuffer(REFPROPVARIANT propvarIn, void *ret, UINT cb)

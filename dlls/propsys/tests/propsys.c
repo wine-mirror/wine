@@ -1679,10 +1679,10 @@ static void test_PropVariantToBSTR(void)
     check_PropVariantToBSTR(VT_BOOL,   boolVal,        TRUE,                 L"1");
     check_PropVariantToBSTR(VT_R4,     fltVal,         0.123f,               L"0.123000003397464752");
     check_PropVariantToBSTR(VT_R8,     dblVal,         0.456,                L"0.456");
+    }
     check_PropVariantToBSTR(VT_CLSID,  puuid,          (CLSID *)&dummy_guid, dummy_guid_str);
     check_PropVariantToBSTR(VT_LPSTR,  pszVal,         (char *)topic,        topicW);
     check_PropVariantToBSTR(VT_LPWSTR, pwszVal,        (WCHAR *)topicW,      topicW);
-    }
 
     PropVariantInit(&propvar);
     propvar.vt = VT_FILETIME;
@@ -1726,15 +1726,11 @@ static void test_PropVariantToBSTR(void)
     propvar.vt = VT_BSTR;
     propvar.bstrVal = SysAllocStringLen(test_bstr, ARRAY_SIZE(test_bstr));
     hr = PropVariantToBSTR(&propvar, &bstr);
-    todo_wine
     ok(hr == S_OK, "PropVariantToBSTR returned %#lx.\n", hr);
-    if (hr == S_OK)
-    {
     length = SysStringLen(bstr);
     ok(length == wcslen(test_bstr), "Unexpected length %u.\n", length);
     ok(!wcscmp(bstr, test_bstr), "Unexpected bstr %s.", debugstr_wn(bstr, ARRAY_SIZE(test_bstr)));
     SysFreeString(bstr);
-    }
     PropVariantClear(&propvar);
 }
 
