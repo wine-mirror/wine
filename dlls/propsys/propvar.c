@@ -1127,7 +1127,7 @@ HRESULT WINAPI VariantToPropVariant(const VARIANT *var, PROPVARIANT *propvar)
 {
     HRESULT hr;
 
-    TRACE("var %p, propvar %p, var->vt %04x.\n", var, propvar, var->vt);
+    TRACE("var %p, propvar %p.\n", debugstr_variant(var), propvar);
 
     if (!var || !propvar)
         return E_INVALIDARG;
