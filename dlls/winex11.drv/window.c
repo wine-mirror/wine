@@ -1209,49 +1209,15 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
     data->net_wm_fullscreen_monitors_set = TRUE;
 }
 
-/***********************************************************************
- *     update_net_wm_states
- */
-static void update_net_wm_states( struct x11drv_win_data *data )
+static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_state )
 {
-    UINT i, style, ex_style, new_state = 0;
+    UINT i, count;
 
-    if (!data->managed || data->embedded) return;
-    if (data->whole_window == root_window)
-    {
-        update_desktop_fullscreen(data->display);
-        return;
-    }
-
-    style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
-    if (style & WS_MINIMIZE)
-        new_state |= data->net_wm_state & ((1 << NET_WM_STATE_FULLSCREEN)|(1 << NET_WM_STATE_MAXIMIZED));
-    if (data->is_fullscreen)
-    {
-        if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
-            new_state |= (1 << NET_WM_STATE_MAXIMIZED);
-        else if (!(style & WS_MINIMIZE))
-            new_state |= (1 << NET_WM_STATE_FULLSCREEN);
-    }
-    else if (style & WS_MAXIMIZE)
-        new_state |= (1 << NET_WM_STATE_MAXIMIZED);
-
-    ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
-    if (ex_style & WS_EX_TOPMOST)
-        new_state |= (1 << NET_WM_STATE_ABOVE);
-    if (!data->add_taskbar)
-    {
-        if (data->skip_taskbar || (ex_style & WS_EX_NOACTIVATE)
-            || (ex_style & WS_EX_TOOLWINDOW && !(ex_style & WS_EX_APPWINDOW)))
-            new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER) | (1 << KDE_NET_WM_STATE_SKIP_SWITCHER);
-        else if (!(ex_style & WS_EX_APPWINDOW) && NtUserGetWindowRelative( data->hwnd, GW_OWNER ))
-            new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR);
-    }
+    if (!data->whole_window) return; /* no window, nothing to update */
 
     if (!data->mapped)  /* set the _NET_WM_STATE atom directly */
     {
-        Atom atoms[NB_NET_WM_STATES+1];
-        DWORD count;
+        Atom atoms[NB_NET_WM_STATES + 1];
 
         for (i = count = 0; i < NB_NET_WM_STATES; i++)
         {
@@ -1293,6 +1259,48 @@ static void update_net_wm_states( struct x11drv_win_data *data )
                         SubstructureRedirectMask | SubstructureNotifyMask, &xev );
         }
     }
+}
+
+/***********************************************************************
+ *     update_net_wm_states
+ */
+static void update_net_wm_states( struct x11drv_win_data *data )
+{
+    UINT style, ex_style, new_state = 0;
+
+    if (!data->managed || data->embedded) return;
+    if (data->whole_window == root_window)
+    {
+        update_desktop_fullscreen(data->display);
+        return;
+    }
+
+    style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
+    if (style & WS_MINIMIZE)
+        new_state |= data->net_wm_state & ((1 << NET_WM_STATE_FULLSCREEN)|(1 << NET_WM_STATE_MAXIMIZED));
+    if (data->is_fullscreen)
+    {
+        if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
+            new_state |= (1 << NET_WM_STATE_MAXIMIZED);
+        else if (!(style & WS_MINIMIZE))
+            new_state |= (1 << NET_WM_STATE_FULLSCREEN);
+    }
+    else if (style & WS_MAXIMIZE)
+        new_state |= (1 << NET_WM_STATE_MAXIMIZED);
+
+    ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
+    if (ex_style & WS_EX_TOPMOST)
+        new_state |= (1 << NET_WM_STATE_ABOVE);
+    if (!data->add_taskbar)
+    {
+        if (data->skip_taskbar || (ex_style & WS_EX_NOACTIVATE)
+            || (ex_style & WS_EX_TOOLWINDOW && !(ex_style & WS_EX_APPWINDOW)))
+            new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER) | (1 << KDE_NET_WM_STATE_SKIP_SWITCHER);
+        else if (!(ex_style & WS_EX_APPWINDOW) && NtUserGetWindowRelative( data->hwnd, GW_OWNER ))
+            new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR);
+    }
+
+    window_set_net_wm_state( data, new_state );
     data->net_wm_state = new_state;
     update_net_wm_fullscreen_monitors( data );
 }
