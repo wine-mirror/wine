@@ -128,6 +128,23 @@ build-daily-linux:
   script:
     - ./tools/gitlab/build-linux
 
+build-daily-mac:
+  extends: .wine-build
+  image: winehq-sonoma-pristine
+  variables:
+    TART_EXECUTOR_SSH_USERNAME: "gitlab"
+    TART_EXECUTOR_SSH_PASSWORD: "gitlab"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  tags:
+    - mac
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - usr/local/
+  script:
+    - ./tools/gitlab/build-mac
+
 build-daily-winetest:
   stage: build
   image: $CI_REGISTRY/wine/wine:debian-bookworm

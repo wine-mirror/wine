@@ -36,6 +36,11 @@ $ARCH_CMD ../configure -C --enable-win64 --with-mingw BISON="$ARCH_BREW_HOME/opt
 $ARCH_CMD make -s -j$(sysctl -n hw.activecpu)
 cd ..
 
+if ! test -s .git/rebase-merge/git-rebase-todo
+then
+    make -s -C build64 install-lib install-test DESTDIR=$BASEDIR
+fi
+
 git reset --hard
 
 sleep 2
