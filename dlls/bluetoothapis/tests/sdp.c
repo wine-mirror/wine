@@ -29,7 +29,7 @@
 
 static const char *debugstr_SDP_ELEMENT_DATA( const SDP_ELEMENT_DATA *data )
 {
-    return wine_dbg_sprintf( "{%#x %#x {%llu %llu}}", data->type, data->specificType,
+    return wine_dbg_sprintf( "{%#x %#x {%I64u %I64u}}", data->type, data->specificType,
                              data->data.uint128.LowPart, data->data.uint128.HighPart );
 }
 
@@ -74,7 +74,7 @@ static void test_BluetoothSdpGetElementData_invalid( void )
 
 static void test_BluetoothSdpGetElementData_nil( void )
 {
-    static struct
+    struct
     {
         BYTE data_elem;
         DWORD error;
@@ -96,39 +96,28 @@ static void test_BluetoothSdpGetElementData_nil( void )
     }
 }
 
-#define SDP_SIZE_DESC_1_BYTE 0
-#define SDP_SIZE_DESC_2_BYTES 1
-#define SDP_SIZE_DESC_4_BYTES 2
-#define SDP_SIZE_DESC_8_BYTES 3
-#define SDP_SIZE_DESC_16_BYTES 4
-#define SDP_SIZE_DESC_NEXT_UINT8 5
-#define SDP_SIZE_DESC_NEXT_UINT16 6
-#define SDP_SIZE_DESC_NEXT_UINT32 7
+#define SDP_TYPE_DESC_INT8    (0x10)
+#define SDP_TYPE_DESC_UINT8   (0x8)
+#define SDP_TYPE_DESC_INT16   (0x11)
+#define SDP_TYPE_DESC_UINT16  (0x9)
+#define SDP_TYPE_DESC_INT32   (0x12)
+#define SDP_TYPE_DESC_UINT32  (0xa)
+#define SDP_TYPE_DESC_INT64   (0x13)
+#define SDP_TYPE_DESC_UINT64  (0xb)
+#define SDP_TYPE_DESC_INT128  (0x14)
+#define SDP_TYPE_DESC_UINT128 (0xc)
 
-#define SDP_DATA_ELEM_TYPE_DESC(t,s) ((t) << 3 | SDP_SIZE_DESC_##s)
+#define SDP_TYPE_DESC_STR8  (0x25)
+#define SDP_TYPE_DESC_STR16 (0x26)
+#define SDP_TYPE_DESC_STR32 (0x27)
 
-#define SDP_DEF_TYPE(n, t, s) const static BYTE SDP_TYPE_DESC_##n = SDP_DATA_ELEM_TYPE_DESC(SDP_TYPE_##t, s)
-#define SDP_DEF_INTEGRAL( w, s )                                                                   \
-    SDP_DEF_TYPE( INT##w, INT, s );                                                                \
-    SDP_DEF_TYPE( UINT##w, UINT, s);
-
-SDP_DEF_INTEGRAL( 8, 1_BYTE );
-SDP_DEF_INTEGRAL( 16, 2_BYTES );
-SDP_DEF_INTEGRAL( 32, 4_BYTES );
-SDP_DEF_INTEGRAL( 64, 8_BYTES );
-SDP_DEF_INTEGRAL( 128, 16_BYTES );
-
-SDP_DEF_TYPE( STR8, STRING, NEXT_UINT8 );
-SDP_DEF_TYPE( STR16, STRING, NEXT_UINT16 );
-SDP_DEF_TYPE( STR32, STRING, NEXT_UINT32 );
-
-SDP_DEF_TYPE( SEQ8, SEQUENCE, NEXT_UINT8 );
-SDP_DEF_TYPE( SEQ16, SEQUENCE, NEXT_UINT16 );
-SDP_DEF_TYPE( SEQ32, SEQUENCE, NEXT_UINT32 );
+#define SDP_TYPE_DESC_SEQ8  (0x35)
+#define SDP_TYPE_DESC_SEQ16 (0x36)
+#define SDP_TYPE_DESC_SEQ32 (0x37)
 
 static void test_BluetoothSdpGetElementData_ints( void )
 {
-    static struct
+    struct
     {
         BYTE data_elem[17];
         SIZE_T size;
@@ -221,7 +210,7 @@ static void test_BluetoothSdpGetElementData_ints( void )
 
 static void test_BluetoothSdpGetElementData_str( void )
 {
-    static struct {
+    struct {
         BYTE stream[11];
         SIZE_T size;
         DWORD error;
@@ -279,7 +268,7 @@ static void test_BluetoothSdpGetElementData_str( void )
 
 static void test_BluetoothSdpGetContainerElementData( void )
 {
-    static struct {
+    struct {
         BYTE stream[11];
         SIZE_T size;
         DWORD error;
@@ -423,7 +412,7 @@ static BOOL WINAPI enum_attr_callback( ULONG attr_id, BYTE *stream, ULONG stream
 
 static void test_BluetoothSdpEnumAttributes( void )
 {
-    static SDP_ELEMENT_DATA attributes[] = {
+    SDP_ELEMENT_DATA attributes[] = {
         {SDP_TYPE_UINT, SDP_ST_UINT32, {.uint32 = 0x10000}},
         {SDP_TYPE_SEQUENCE, SDP_ST_NONE, {.sequence = {&sdp_record_bytes[13], 5}}},
         {SDP_TYPE_SEQUENCE, SDP_ST_NONE, {.sequence = {&sdp_record_bytes[21], 5}}},
