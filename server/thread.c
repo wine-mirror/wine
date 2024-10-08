@@ -249,6 +249,7 @@ static inline void init_thread_structure( struct thread *thread )
 
     thread->creation_time = current_time;
     thread->exit_time     = 0;
+    thread->completion_wait = NULL;
 
     list_init( &thread->mutex_list );
     list_init( &thread->system_apc );
@@ -402,6 +403,7 @@ static void cleanup_thread( struct thread *thread )
 {
     int i;
 
+    cleanup_thread_completion( thread );
     if (thread->context)
     {
         thread->context->status = STATUS_ACCESS_DENIED;

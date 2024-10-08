@@ -56,12 +56,70 @@ struct type_descr completion_type =
     },
 };
 
+struct completion_wait
+{
+    struct object      obj;
+    obj_handle_t       handle;
+    struct completion *completion;
+    struct thread     *thread;
+    struct list        wait_queue_entry;
+};
+
 struct completion
 {
     struct object  obj;
     struct list    queue;
+    struct list    wait_queue;
     unsigned int   depth;
 };
+
+static void completion_wait_dump( struct object*, int );
+static int completion_wait_signaled( struct object *obj, struct wait_queue_entry *entry );
+static void completion_wait_destroy( struct object * );
+
+static const struct object_ops completion_wait_ops =
+{
+    sizeof(struct completion_wait), /* size */
+    &no_type,                       /* type */
+    completion_wait_dump,           /* dump */
+    add_queue,                      /* add_queue */
+    remove_queue,                   /* remove_queue */
+    completion_wait_signaled,       /* signaled */
+    no_satisfied,                   /* satisfied */
+    no_signal,                      /* signal */
+    no_get_fd,                      /* get_fd */
+    default_map_access,             /* map_access */
+    default_get_sd,                 /* get_sd */
+    default_set_sd,                 /* set_sd */
+    no_get_full_name,               /* get_full_name */
+    no_lookup_name,                 /* lookup_name */
+    no_link_name,                   /* link_name */
+    NULL,                           /* unlink_name */
+    no_open_file,                   /* open_file */
+    no_kernel_obj_list,             /* get_kernel_obj_list */
+    no_close_handle,                /* close_handle */
+    completion_wait_destroy         /* destroy */
+};
+
+static void completion_wait_destroy( struct object *obj )
+{
+}
+
+static void completion_wait_dump( struct object *obj, int verbose )
+{
+    struct completion_wait *wait = (struct completion_wait *)obj;
+
+    assert( obj->ops == &completion_wait_ops );
+    fprintf( stderr, "Completion wait completion=%p\n", wait->completion );
+}
+
+static int completion_wait_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct completion_wait *wait = (struct completion_wait *)obj;
+
+    assert( obj->ops == &completion_wait_ops );
+    return wait->completion->depth;
+}
 
 static void completion_dump( struct object*, int );
 static int completion_signaled( struct object *obj, struct wait_queue_entry *entry );
@@ -103,11 +161,18 @@ struct comp_msg
 static void completion_destroy( struct object *obj)
 {
     struct completion *completion = (struct completion *) obj;
+    struct completion_wait *wait, *wait_next;
     struct comp_msg *tmp, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE( tmp, next, &completion->queue, struct comp_msg, queue_entry )
     {
         free( tmp );
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE( wait, wait_next, &completion->wait_queue, struct completion_wait, wait_queue_entry )
+    {
+        assert( wait->completion );
+        cleanup_thread_completion( wait->thread );
     }
 }
 
@@ -126,6 +191,35 @@ static int completion_signaled( struct object *obj, struct wait_queue_entry *ent
     return !list_empty( &completion->queue );
 }
 
+void cleanup_thread_completion( struct thread *thread )
+{
+    if (!thread->completion_wait) return;
+
+    if (thread->completion_wait->handle)
+    {
+        close_handle( thread->process, thread->completion_wait->handle );
+        thread->completion_wait->handle = 0;
+    }
+    list_remove( &thread->completion_wait->wait_queue_entry );
+    release_object( &thread->completion_wait->obj );
+    thread->completion_wait = NULL;
+}
+
+static struct completion_wait *create_completion_wait( struct thread *thread )
+{
+    struct completion_wait *wait;
+
+    if (!(wait = alloc_object( &completion_wait_ops ))) return NULL;
+    wait->completion = NULL;
+    wait->thread = thread;
+    if (!(wait->handle = alloc_handle( current->process, wait, SYNCHRONIZE, 0 )))
+    {
+        release_object( &wait->obj );
+        return NULL;
+    }
+    return wait;
+}
+
 static struct completion *create_completion( struct object *root, const struct unicode_str *name,
                                              unsigned int attr, unsigned int concurrent,
                                              const struct security_descriptor *sd )
@@ -137,6 +231,7 @@ static struct completion *create_completion( struct object *root, const struct u
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             list_init( &completion->queue );
+            list_init( &completion->wait_queue );
             completion->depth = 0;
         }
     }
@@ -153,6 +248,7 @@ void add_completion( struct completion *completion, apc_param_t ckey, apc_param_
                      unsigned int status, apc_param_t information )
 {
     struct comp_msg *msg = mem_alloc( sizeof( *msg ) );
+    struct completion_wait *wait;
 
     if (!msg)
         return;
@@ -164,7 +260,12 @@ void add_completion( struct completion *completion, apc_param_t ckey, apc_param_
 
     list_add_tail( &completion->queue, &msg->queue_entry );
     completion->depth++;
-    wake_up( &completion->obj, 1 );
+    LIST_FOR_EACH_ENTRY( wait, &completion->wait_queue, struct completion_wait, wait_queue_entry )
+    {
+        wake_up( &wait->obj, 1 );
+        if (list_empty( &completion->queue )) return;
+    }
+    if (!list_empty( &completion->queue )) wake_up( &completion->obj, 0 );
 }
 
 /* create a completion */
@@ -219,8 +320,22 @@ DECL_HANDLER(remove_completion)
     if (!completion) return;
 
     entry = list_head( &completion->queue );
+    if (current->completion_wait)
+    {
+        list_remove( &current->completion_wait->wait_queue_entry );
+    }
+    else if (!(current->completion_wait = create_completion_wait( current )))
+    {
+        release_object( completion );
+        return;
+    }
+    current->completion_wait->completion = completion;
+    list_add_head( &completion->wait_queue, &current->completion_wait->wait_queue_entry );
     if (!entry)
+    {
+        reply->wait_handle = current->completion_wait->handle;
         set_error( STATUS_PENDING );
+    }
     else
     {
         list_remove( entry );
@@ -231,6 +346,7 @@ DECL_HANDLER(remove_completion)
         reply->status = msg->status;
         reply->information = msg->information;
         free( msg );
+        reply->wait_handle = 0;
     }
 
     release_object( completion );

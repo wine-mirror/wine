@@ -1999,6 +1999,7 @@ NTSTATUS WINAPI NtSetIoCompletion( HANDLE handle, ULONG_PTR key, ULONG_PTR value
 NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE handle, ULONG_PTR *key, ULONG_PTR *value,
                                       IO_STATUS_BLOCK *io, LARGE_INTEGER *timeout )
 {
+    HANDLE wait_handle = NULL;
     unsigned int status;
 
     TRACE( "(%p, %p, %p, %p, %p)\n", handle, key, value, io, timeout );
@@ -2015,10 +2016,11 @@ NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE handle, ULONG_PTR *key, ULONG_PTR *
                 io->Information = reply->information;
                 io->Status      = reply->status;
             }
+            else wait_handle = wine_server_ptr_handle( reply->wait_handle );
         }
         SERVER_END_REQ;
         if (status != STATUS_PENDING) return status;
-        status = NtWaitForSingleObject( handle, FALSE, timeout );
+        status = NtWaitForSingleObject( wait_handle, FALSE, timeout );
         if (status != WAIT_OBJECT_0) return status;
     }
 }
@@ -2030,6 +2032,7 @@ NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE handle, ULONG_PTR *key, ULONG_PTR *
 NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORMATION *info, ULONG count,
                                         ULONG *written, LARGE_INTEGER *timeout, BOOLEAN alertable )
 {
+    HANDLE wait_handle = NULL;
     unsigned int status;
     ULONG i = 0;
 
@@ -2049,6 +2052,7 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORM
                     info[i].IoStatusBlock.Information = reply->information;
                     info[i].IoStatusBlock.Status      = reply->status;
                 }
+                else wait_handle = wine_server_ptr_handle( reply->wait_handle );
             }
             SERVER_END_REQ;
             if (status != STATUS_SUCCESS) break;
@@ -2059,7 +2063,7 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORM
             if (status == STATUS_PENDING) status = STATUS_SUCCESS;
             break;
         }
-        status = NtWaitForSingleObject( handle, alertable, timeout );
+        status = NtWaitForSingleObject( wait_handle, alertable, timeout );
         if (status != WAIT_OBJECT_0) break;
     }
     *written = i ? i : 1;

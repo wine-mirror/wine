@@ -4527,6 +4527,7 @@ static void dump_remove_completion_reply( const struct remove_completion_reply *
     dump_uint64( ", cvalue=", &req->cvalue );
     dump_uint64( ", information=", &req->information );
     fprintf( stderr, ", status=%08x", req->status );
+    fprintf( stderr, ", wait_handle=%04x", req->wait_handle );
 }
 
 static void dump_query_completion_request( const struct query_completion_request *req )

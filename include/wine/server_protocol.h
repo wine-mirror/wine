@@ -5410,7 +5410,7 @@ struct remove_completion_reply
     apc_param_t   cvalue;
     apc_param_t   information;
     unsigned int  status;
-    char __pad_36[4];
+    obj_handle_t  wait_handle;
 };
 
 
@@ -6711,7 +6711,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 843
+#define SERVER_PROTOCOL_VERSION 844
 
 /* ### protocol_version end ### */
 

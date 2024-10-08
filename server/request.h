@@ -2240,6 +2240,7 @@ C_ASSERT( FIELD_OFFSET(struct remove_completion_reply, ckey) == 8 );
 C_ASSERT( FIELD_OFFSET(struct remove_completion_reply, cvalue) == 16 );
 C_ASSERT( FIELD_OFFSET(struct remove_completion_reply, information) == 24 );
 C_ASSERT( FIELD_OFFSET(struct remove_completion_reply, status) == 32 );
+C_ASSERT( FIELD_OFFSET(struct remove_completion_reply, wait_handle) == 36 );
 C_ASSERT( sizeof(struct remove_completion_reply) == 40 );
 C_ASSERT( FIELD_OFFSET(struct query_completion_request, handle) == 12 );
 C_ASSERT( sizeof(struct query_completion_request) == 16 );

@@ -31,6 +31,7 @@ struct thread_apc;
 struct debug_obj;
 struct debug_event;
 struct msg_queue;
+struct completion_wait;
 
 enum run_state
 {
@@ -91,6 +92,7 @@ struct thread
     struct list            kernel_object; /* list of kernel object pointers */
     data_size_t            desc_len;      /* thread description length in bytes */
     WCHAR                 *desc;          /* thread description string */
+    struct completion_wait *completion_wait; /* completion port wait object the thread is associated with */
 };
 
 extern struct thread *current;

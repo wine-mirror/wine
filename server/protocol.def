@@ -3798,6 +3798,7 @@ typedef union
     apc_param_t   cvalue;         /* completion value */
     apc_param_t   information;    /* IO_STATUS_BLOCK Information */
     unsigned int  status;         /* completion result */
+    obj_handle_t  wait_handle;    /* handle to completion wait internal object */
 @END
 
 
