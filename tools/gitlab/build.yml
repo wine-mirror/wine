@@ -39,7 +39,6 @@ build-linux:
     paths:
       - usr/local/
   script:
-    - mkdir -p build32 build64
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
     - git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA | sed -re '/\/tests\//!d; s@/tests/.*@/tests/Makefile.in@' |
       (xargs -r ls 2>/dev/null || true) | xargs -r sed '/TESTDLL/!d; s@.dll@@; s@.*= *@@' >usr/local/share/wine/winetest.args
@@ -51,7 +50,6 @@ build-clang:
   tags:
     - build
   script:
-    - mkdir -p build32 build64
     - ./tools/gitlab/build-clang
 
 build-mac:
@@ -70,13 +68,12 @@ build-mac:
       - build64/config.log
       - build32/config.log
   script:
-    - mkdir -p build32 build64
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
 
 build-sast:
   extends: .wine-build
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'push' && $CI_PROJECT_PATH == "wine/wine" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   tags:
     - build
@@ -96,6 +93,7 @@ build-sast:
     - cd build64
     - ../configure -q -C --enable-sast --enable-win64
     - make -s gl-code-quality-report.json SASTFLAGS="${SASTFLAGS}"
+    - mv gl-code-quality-report.json $BASEDIR
 
 build-winetest:
   stage: build
@@ -128,7 +126,6 @@ build-daily-linux:
     paths:
       - usr/local/
   script:
-    - mkdir -p build32 build64
     - ./tools/gitlab/build-linux
 
 build-daily-winetest:
