@@ -276,6 +276,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags, DPID *
 
     if ( dwMsgSize < sizeof( DPMSG_NEWPLAYERIDREPLY ) )
     {
+      free( msgHeader );
       free( lpMsg );
       return DPERR_GENERIC;
     }
