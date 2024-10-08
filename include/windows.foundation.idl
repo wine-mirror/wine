@@ -31,12 +31,17 @@ namespace Windows.Foundation.Collections {
     interface IPropertySet;
 
     declare {
+        interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, HSTRING>;
         interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, HSTRING> *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Foundation.Collections.IKeyValuePair<HSTRING, HSTRING> *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>;
         interface Windows.Foundation.Collections.IMapChangedEventArgs<HSTRING>;
         interface Windows.Foundation.Collections.MapChangedEventHandler<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IMap<HSTRING, HSTRING>;
         interface Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, HSTRING>;
         interface Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *>;
         interface Windows.Foundation.Collections.IObservableMap<HSTRING, IInspectable *>;
     }
@@ -50,6 +55,20 @@ namespace Windows.Foundation.Collections {
                  Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>,
                  Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>
     {
+    }
+
+    [
+        activatable(Windows.Foundation.FoundationContract, 1.0),
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ValueSet
+    {
+        [default] interface Windows.Foundation.Collections.IPropertySet;
+        interface Windows.Foundation.Collections.IObservableMap<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>;
     }
 }
 
