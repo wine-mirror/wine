@@ -2007,6 +2007,7 @@ NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE handle, ULONG_PTR *key, ULONG_PTR *
     SERVER_START_REQ( remove_completion )
     {
         req->handle = wine_server_obj_handle( handle );
+        req->alertable = 0;
         if (!(status = wine_server_call( req )))
         {
             *key            = reply->ckey;
@@ -2055,6 +2056,7 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORM
         SERVER_START_REQ( remove_completion )
         {
             req->handle = wine_server_obj_handle( handle );
+            req->alertable = alertable;
             if (!(status = wine_server_call( req )))
             {
                 info[i].CompletionKey             = reply->ckey;
@@ -2068,13 +2070,19 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORM
         if (status != STATUS_SUCCESS) break;
         ++i;
     }
-    if (i || status != STATUS_PENDING)
+    if (i || (status != STATUS_PENDING && status != STATUS_USER_APC))
     {
         if (i) status = STATUS_SUCCESS;
         goto done;
     }
-    if (!timeout || timeout->QuadPart || alertable) status = NtWaitForSingleObject( wait_handle, alertable, timeout );
-    else                                            status = STATUS_TIMEOUT;
+    if (status == STATUS_USER_APC)
+    {
+        status = NtDelayExecution( TRUE, NULL );
+        assert( status == STATUS_USER_APC );
+        goto done;
+    }
+    if (!timeout || timeout->QuadPart) status = NtWaitForSingleObject( wait_handle, alertable, timeout );
+    else                               status = STATUS_TIMEOUT;
     if (status != WAIT_OBJECT_0) goto done;
 
     SERVER_START_REQ( get_thread_completion )

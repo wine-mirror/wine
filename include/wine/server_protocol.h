@@ -5402,6 +5402,8 @@ struct remove_completion_request
 {
     struct request_header __header;
     obj_handle_t handle;
+    int          alertable;
+    char __pad_20[4];
 };
 struct remove_completion_reply
 {
@@ -6731,7 +6733,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 845
+#define SERVER_PROTOCOL_VERSION 846
 
 /* ### protocol_version end ### */
 

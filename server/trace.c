@@ -4519,6 +4519,7 @@ static void dump_add_completion_request( const struct add_completion_request *re
 static void dump_remove_completion_request( const struct remove_completion_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", alertable=%d", req->alertable );
 }
 
 static void dump_remove_completion_reply( const struct remove_completion_reply *req )

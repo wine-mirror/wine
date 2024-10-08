@@ -958,13 +958,58 @@ static void test_set_io_completion(void)
     NTSTATUS res;
     ULONG count;
     SIZE_T size = 3;
-    HANDLE h;
+    HANDLE h, h2;
 
     if (sizeof(size) > 4) size |= (ULONGLONG)0x12345678 << 32;
+
+    res = pNtCreateIoCompletion( &h2, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+    ok( res == STATUS_SUCCESS, "NtCreateIoCompletion failed: %#lx\n", res );
+    ok( h2 && h2 != INVALID_HANDLE_VALUE, "got invalid handle %p\n", h2 );
+    res = pNtSetIoCompletion( h2, 123, 456, 789, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#lx\n", res );
+    res = pNtRemoveIoCompletionEx( h2, info, 2, &count, &timeout, TRUE );
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletionEx failed: %#lx\n", res );
+    ok( count == 1, "wrong count %lu\n", count );
 
     res = pNtCreateIoCompletion( &h, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
     ok( res == STATUS_SUCCESS, "NtCreateIoCompletion failed: %#lx\n", res );
     ok( h && h != INVALID_HANDLE_VALUE, "got invalid handle %p\n", h );
+
+    apc_count = 0;
+    QueueUserAPC( user_apc_proc, GetCurrentThread(), (ULONG_PTR)&apc_count );
+    res = pNtSetIoCompletion( h, 123, 456, 789, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#lx\n", res );
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, TRUE );
+    /* APC goes first associated with completion port APC takes priority over pending completion.
+     * Even if the thread is associated with some other completion port. */
+    ok( res == STATUS_USER_APC, "NtRemoveIoCompletionEx unexpected status %#lx\n", res );
+    ok( apc_count == 1, "wrong apc count %u\n", apc_count );
+
+    CloseHandle( h2 );
+
+    apc_count = 0;
+    QueueUserAPC( user_apc_proc, GetCurrentThread(), (ULONG_PTR)&apc_count );
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, TRUE );
+    /* Previous call resulted in STATUS_USER_APC did not associate the thread with the port. */
+    ok( res == STATUS_USER_APC, "NtRemoveIoCompletion unexpected status %#lx\n", res );
+    ok( apc_count == 1, "wrong apc count %u\n", apc_count );
+
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, TRUE );
+    /* Now the thread is associated. */
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletion failed: %#lx\n", res );
+    ok( count == 1, "wrong count %lu\n", count );
+
+    apc_count = 0;
+    QueueUserAPC( user_apc_proc, GetCurrentThread(), (ULONG_PTR)&apc_count );
+    res = pNtSetIoCompletion( h, 123, 456, 789, size );
+    ok( res == STATUS_SUCCESS, "NtSetIoCompletion failed: %#lx\n", res );
+    res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, TRUE );
+    /* After a thread is associated with completion port existing completion is returned if APC is pending. */
+    ok( res == STATUS_SUCCESS, "NtRemoveIoCompletionEx failed: %#lx\n", res );
+    ok( count == 1, "wrong count %lu\n", count );
+    ok( apc_count == 0, "wrong apc count %u\n", apc_count );
+    SleepEx( 0, TRUE);
+    ok( apc_count == 1, "wrong apc count %u\n", apc_count );
 
     res = pNtRemoveIoCompletion( h, &key, &value, &iosb, &timeout );
     ok( res == STATUS_TIMEOUT, "NtRemoveIoCompletion failed: %#lx\n", res );

@@ -341,6 +341,13 @@ DECL_HANDLER(remove_completion)
     if (!completion) return;
 
     entry = list_head( &completion->queue );
+    if (req->alertable && !list_empty( &current->user_apc )
+        && !(entry && current->completion_wait && current->completion_wait->completion == completion))
+    {
+        set_error( STATUS_USER_APC );
+        release_object( completion );
+        return;
+    }
     if (current->completion_wait)
     {
         list_remove( &current->completion_wait->wait_queue_entry );
