@@ -605,6 +605,7 @@ enum x11drv_net_wm_state
 struct window_state
 {
     UINT wm_state;
+    UINT net_wm_state;
 };
 
 /* x11drv private window data */
@@ -643,6 +644,7 @@ struct x11drv_win_data
     struct window_state pending_state; /* window state tracking the pending / requested state */
     struct window_state current_state; /* window state tracking the current X11 state */
     unsigned long wm_state_serial;     /* serial of last pending WM_STATE request */
+    unsigned long net_wm_state_serial; /* serial of last pending _NET_WM_STATE request */
 };
 
 extern struct x11drv_win_data *get_win_data( HWND hwnd );
@@ -657,6 +659,7 @@ extern void destroy_gl_drawable( HWND hwnd );
 extern void destroy_vk_surface( HWND hwnd );
 
 extern void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
+extern void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
 extern void wait_for_withdrawn_state( HWND hwnd, BOOL set );
 extern Window init_clip_window(void);
 extern void update_user_time( Time time );

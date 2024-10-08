@@ -1307,6 +1307,17 @@ static void handle_xembed_info_notify( HWND hwnd, XPropertyEvent *event )
     release_win_data( data );
 }
 
+static void handle_net_wm_state_notify( HWND hwnd, XPropertyEvent *event )
+{
+    struct x11drv_win_data *data;
+    UINT value = 0;
+
+    if (!(data = get_win_data( hwnd ))) return;
+    if (event->state == PropertyNewValue) value = get_window_net_wm_state( event->display, event->window );
+    window_net_wm_state_notify( data, event->serial, value );
+    release_win_data( data );
+}
+
 /***********************************************************************
  *           X11DRV_PropertyNotify
  */
@@ -1317,6 +1328,7 @@ static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
     if (!hwnd) return FALSE;
     if (event->atom == x11drv_atom(WM_STATE)) handle_wm_state_notify( hwnd, event, TRUE );
     if (event->atom == x11drv_atom(_XEMBED_INFO)) handle_xembed_info_notify( hwnd, event );
+    if (event->atom == x11drv_atom(_NET_WM_STATE)) handle_net_wm_state_notify( hwnd, event );
     return TRUE;
 }
 
