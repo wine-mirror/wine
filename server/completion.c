@@ -21,7 +21,6 @@
 
 /* FIXMEs:
  *  - built-in wait queues used which means:
- *    + threads are awaken FIFO and not LIFO as native does
  *    + "max concurrent active threads" parameter not used
  *    + completion handle is waitable, while native isn't
  */
@@ -56,12 +55,22 @@ struct type_descr completion_type =
     },
 };
 
+struct comp_msg
+{
+    struct   list queue_entry;
+    apc_param_t   ckey;
+    apc_param_t   cvalue;
+    apc_param_t   information;
+    unsigned int  status;
+};
+
 struct completion_wait
 {
     struct object      obj;
     obj_handle_t       handle;
     struct completion *completion;
     struct thread     *thread;
+    struct comp_msg   *msg;
     struct list        wait_queue_entry;
 };
 
@@ -75,6 +84,7 @@ struct completion
 
 static void completion_wait_dump( struct object*, int );
 static int completion_wait_signaled( struct object *obj, struct wait_queue_entry *entry );
+static void completion_wait_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static void completion_wait_destroy( struct object * );
 
 static const struct object_ops completion_wait_ops =
@@ -85,7 +95,7 @@ static const struct object_ops completion_wait_ops =
     add_queue,                      /* add_queue */
     remove_queue,                   /* remove_queue */
     completion_wait_signaled,       /* signaled */
-    no_satisfied,                   /* satisfied */
+    completion_wait_satisfied,      /* satisfied */
     no_signal,                      /* signal */
     no_get_fd,                      /* get_fd */
     default_map_access,             /* map_access */
@@ -103,6 +113,9 @@ static const struct object_ops completion_wait_ops =
 
 static void completion_wait_destroy( struct object *obj )
 {
+    struct completion_wait *wait = (struct completion_wait *)obj;
+
+    free( wait->msg );
 }
 
 static void completion_wait_dump( struct object *obj, int verbose )
@@ -119,6 +132,22 @@ static int completion_wait_signaled( struct object *obj, struct wait_queue_entry
 
     assert( obj->ops == &completion_wait_ops );
     return wait->completion->depth;
+}
+
+static void completion_wait_satisfied( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct completion_wait *wait = (struct completion_wait *)obj;
+    struct list *msg_entry;
+    struct comp_msg *msg;
+
+    assert( obj->ops == &completion_wait_ops );
+    msg_entry = list_head( &wait->completion->queue );
+    assert( msg_entry );
+    msg = LIST_ENTRY( msg_entry, struct comp_msg, queue_entry );
+    --wait->completion->depth;
+    list_remove( &msg->queue_entry );
+    if (wait->msg) free( wait->msg );
+    wait->msg = msg;
 }
 
 static void completion_dump( struct object*, int );
@@ -147,15 +176,6 @@ static const struct object_ops completion_ops =
     no_kernel_obj_list,        /* get_kernel_obj_list */
     no_close_handle,           /* close_handle */
     completion_destroy         /* destroy */
-};
-
-struct comp_msg
-{
-    struct   list queue_entry;
-    apc_param_t   ckey;
-    apc_param_t   cvalue;
-    apc_param_t   information;
-    unsigned int  status;
 };
 
 static void completion_destroy( struct object *obj)
@@ -212,6 +232,7 @@ static struct completion_wait *create_completion_wait( struct thread *thread )
     if (!(wait = alloc_object( &completion_wait_ops ))) return NULL;
     wait->completion = NULL;
     wait->thread = thread;
+    wait->msg = NULL;
     if (!(wait->handle = alloc_handle( current->process, wait, SYNCHRONIZE, 0 )))
     {
         release_object( &wait->obj );
@@ -350,6 +371,25 @@ DECL_HANDLER(remove_completion)
     }
 
     release_object( completion );
+}
+
+/* get completion after successful waiting for it */
+DECL_HANDLER(get_thread_completion)
+{
+    struct comp_msg *msg;
+
+    if (!current->completion_wait || !(msg = current->completion_wait->msg))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
+
+    reply->ckey = msg->ckey;
+    reply->cvalue = msg->cvalue;
+    reply->status = msg->status;
+    reply->information = msg->information;
+    free( msg );
+    current->completion_wait->msg = NULL;
 }
 
 /* get queue depth for completion port */

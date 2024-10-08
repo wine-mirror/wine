@@ -3802,6 +3802,16 @@ typedef union
 @END
 
 
+/* get completion after successful wait */
+@REQ(get_thread_completion)
+@REPLY
+    apc_param_t   ckey;           /* completion key */
+    apc_param_t   cvalue;         /* completion value */
+    apc_param_t   information;    /* IO_STATUS_BLOCK Information */
+    unsigned int  status;         /* completion result */
+@END
+
+
 /* get completion queue depth */
 @REQ(query_completion)
     obj_handle_t  handle;         /* port handle */

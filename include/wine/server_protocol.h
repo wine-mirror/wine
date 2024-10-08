@@ -5415,6 +5415,23 @@ struct remove_completion_reply
 
 
 
+struct get_thread_completion_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+};
+struct get_thread_completion_reply
+{
+    struct reply_header __header;
+    apc_param_t   ckey;
+    apc_param_t   cvalue;
+    apc_param_t   information;
+    unsigned int  status;
+    char __pad_36[4];
+};
+
+
+
 struct query_completion_request
 {
     struct request_header __header;
@@ -6090,6 +6107,7 @@ enum request
     REQ_open_completion,
     REQ_add_completion,
     REQ_remove_completion,
+    REQ_get_thread_completion,
     REQ_query_completion,
     REQ_set_completion_info,
     REQ_add_fd_completion,
@@ -6386,6 +6404,7 @@ union generic_request
     struct open_completion_request open_completion_request;
     struct add_completion_request add_completion_request;
     struct remove_completion_request remove_completion_request;
+    struct get_thread_completion_request get_thread_completion_request;
     struct query_completion_request query_completion_request;
     struct set_completion_info_request set_completion_info_request;
     struct add_fd_completion_request add_fd_completion_request;
@@ -6680,6 +6699,7 @@ union generic_reply
     struct open_completion_reply open_completion_reply;
     struct add_completion_reply add_completion_reply;
     struct remove_completion_reply remove_completion_reply;
+    struct get_thread_completion_reply get_thread_completion_reply;
     struct query_completion_reply query_completion_reply;
     struct set_completion_info_reply set_completion_info_reply;
     struct add_fd_completion_reply add_fd_completion_reply;
@@ -6711,7 +6731,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 844
+#define SERVER_PROTOCOL_VERSION 845
 
 /* ### protocol_version end ### */
 
