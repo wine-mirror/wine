@@ -462,7 +462,7 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
         list_add_tail( &ime_updates, &update->entry );
         pthread_mutex_unlock( &imm_mutex );
 
-        NtUserPostMessage( hwnd, WM_IME_NOTIFY, IMN_WINE_SET_COMP_STRING, id );
+        NtUserPostMessage( hwnd, WM_WINE_IME_NOTIFY, IMN_WINE_SET_COMP_STRING, id );
     }
     else
     {
