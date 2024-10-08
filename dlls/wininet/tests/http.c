@@ -1137,6 +1137,22 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
         "InternetReadFile should have set last error to ERROR_INVALID_HANDLE instead of %lu\n",
         GetLastError());
 
+    SetLastError(0xdeadbeef);
+    res = InternetReadFile(hor, buffer, 100, NULL);
+    ok(!res && GetLastError() == ERROR_INVALID_PARAMETER, "got res %d, error %lu.\n", res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    length = 0xdeadbeef;
+    res = InternetReadFile(hor, NULL, 100, &length);
+    ok(!res && GetLastError() == ERROR_INVALID_PARAMETER, "got res %d, error %lu.\n", res, GetLastError());
+    ok(!length, "got %lu.\n", length);
+
+    SetLastError(0xdeadbeef);
+    length = 0xdeadbeef;
+    res = InternetReadFile(hor, NULL, 0, &length);
+    ok(!res && GetLastError() == ERROR_INVALID_PARAMETER, "got res %d, error %lu.\n", res, GetLastError());
+    ok(!length, "got %lu.\n", length);
+
     length = 100;
     if(winetest_debug > 1)
         trace("Entering Query loop\n");

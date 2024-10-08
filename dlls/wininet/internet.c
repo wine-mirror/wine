@@ -2607,6 +2607,13 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 
     TRACE("%p %p %ld %p\n", hFile, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead);
 
+    if (!lpBuffer || !pdwNumOfBytesRead)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        if (pdwNumOfBytesRead) *pdwNumOfBytesRead = 0;
+        return FALSE;
+    }
+
     hdr = get_handle_object(hFile);
     if (!hdr) {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
