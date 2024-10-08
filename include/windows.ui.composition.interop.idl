@@ -31,7 +31,7 @@ namespace Windows.UI.Composition {
         uuid(25297d5c-3ad4-4c9c-b5cf-e36a38512330),
         pointer_default(unique)
     ]
-    interface ICompositorInterop : IInspectable
+    interface ICompositorInterop : IUnknown
     {
         HRESULT CreateCompositionSurfaceForHandle([in] HANDLE swapchain, [out, retval] ICompositionSurface **result);
         HRESULT CreateCompositionSurfaceForSwapChain([in] IUnknown *swapchain, [out, retval] ICompositionSurface **result);
