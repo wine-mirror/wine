@@ -147,62 +147,6 @@ struct dds_header
     DWORD reserved2;
 };
 
-static D3DFORMAT dds_fourcc_to_d3dformat(DWORD fourcc)
-{
-    unsigned int i;
-    static const DWORD known_fourcc[] = {
-        D3DFMT_UYVY,
-        D3DFMT_YUY2,
-        D3DFMT_R8G8_B8G8,
-        D3DFMT_G8R8_G8B8,
-        D3DFMT_DXT1,
-        D3DFMT_DXT2,
-        D3DFMT_DXT3,
-        D3DFMT_DXT4,
-        D3DFMT_DXT5,
-        D3DFMT_R16F,
-        D3DFMT_G16R16F,
-        D3DFMT_A16B16G16R16F,
-        D3DFMT_R32F,
-        D3DFMT_G32R32F,
-        D3DFMT_A32B32G32R32F,
-    };
-
-    for (i = 0; i < ARRAY_SIZE(known_fourcc); i++)
-    {
-        if (known_fourcc[i] == fourcc)
-            return fourcc;
-    }
-
-    WARN("Unknown FourCC %#lx.\n", fourcc);
-    return D3DFMT_UNKNOWN;
-}
-
-static const struct {
-    DWORD bpp;
-    DWORD rmask;
-    DWORD gmask;
-    DWORD bmask;
-    DWORD amask;
-    D3DFORMAT format;
-} rgb_pixel_formats[] = {
-    { 8, 0xe0, 0x1c, 0x03, 0, D3DFMT_R3G3B2 },
-    { 16, 0xf800, 0x07e0, 0x001f, 0x0000, D3DFMT_R5G6B5 },
-    { 16, 0x7c00, 0x03e0, 0x001f, 0x8000, D3DFMT_A1R5G5B5 },
-    { 16, 0x7c00, 0x03e0, 0x001f, 0x0000, D3DFMT_X1R5G5B5 },
-    { 16, 0x0f00, 0x00f0, 0x000f, 0xf000, D3DFMT_A4R4G4B4 },
-    { 16, 0x0f00, 0x00f0, 0x000f, 0x0000, D3DFMT_X4R4G4B4 },
-    { 16, 0x00e0, 0x001c, 0x0003, 0xff00, D3DFMT_A8R3G3B2 },
-    { 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000, D3DFMT_R8G8B8 },
-    { 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000, D3DFMT_A8R8G8B8 },
-    { 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000, D3DFMT_X8R8G8B8 },
-    { 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, D3DFMT_A2B10G10R10 },
-    { 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000, D3DFMT_A2R10G10B10 },
-    { 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000, D3DFMT_G16R16 },
-    { 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000, D3DFMT_A8B8G8R8 },
-    { 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000, D3DFMT_X8B8G8R8 },
-};
-
 HRESULT lock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect, D3DLOCKED_RECT *lock,
         IDirect3DSurface9 **temp_surface, BOOL write)
 {
@@ -297,115 +241,127 @@ HRESULT unlock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect,
     return hr;
 }
 
-static D3DFORMAT dds_rgb_to_d3dformat(const struct dds_pixel_format *pixel_format)
+static const struct
 {
-    unsigned int i;
+    struct dds_pixel_format dds_pixel_format;
+    D3DFORMAT d3d_format;
+} dds_pixel_formats[] = {
+    /* DDS_PF_FOURCC. */
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('U','Y','V','Y') }, D3DFMT_UYVY },
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('Y','U','Y','2') }, D3DFMT_YUY2 },
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('R','G','B','G') }, D3DFMT_R8G8_B8G8 },
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('G','R','G','B') }, D3DFMT_G8R8_G8B8 },
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1') }, D3DFMT_DXT1 },
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','2') }, D3DFMT_DXT2 },
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','3') }, D3DFMT_DXT3 },
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','4') }, D3DFMT_DXT4 },
+    { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','5') }, D3DFMT_DXT5 },
+    /* These aren't actually fourcc values, they're just D3DFMT values. */
+    { { 32, DDS_PF_FOURCC, 0x6f }, D3DFMT_R16F, },
+    { { 32, DDS_PF_FOURCC, 0x70 }, D3DFMT_G16R16F },
+    { { 32, DDS_PF_FOURCC, 0x71 }, D3DFMT_A16B16G16R16F },
+    { { 32, DDS_PF_FOURCC, 0x72 }, D3DFMT_R32F },
+    { { 32, DDS_PF_FOURCC, 0x73 }, D3DFMT_G32R32F },
+    { { 32, DDS_PF_FOURCC, 0x74 }, D3DFMT_A32B32G32R32F },
+    /* DDS_PF_RGB. */
+    { { 32, DDS_PF_RGB,  0, 8,  0xe0,       0x1c,       0x03,       0x00       }, D3DFMT_R3G3B2 },
+    { { 32, DDS_PF_RGB,  0, 16, 0xf800,     0x07e0,     0x001f,     0x0000     }, D3DFMT_R5G6B5 },
+    { { 32, DDS_PF_RGB,  0, 16, 0x7c00,     0x03e0,     0x001f,     0x0000     }, D3DFMT_X1R5G5B5 },
+    { { 32, DDS_PF_RGB,  0, 16, 0x0f00,     0x00f0,     0x000f,     0x0000     }, D3DFMT_X4R4G4B4 },
+    { { 32, DDS_PF_RGB,  0, 24, 0xff0000,   0x00ff00,   0x0000ff,   0x000000   }, D3DFMT_R8G8B8 },
+    { { 32, DDS_PF_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 }, D3DFMT_X8R8G8B8 },
+    { { 32, DDS_PF_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 }, D3DFMT_G16R16 },
+    { { 32, DDS_PF_RGB,  0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 }, D3DFMT_X8B8G8R8 },
+    { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x00e0,     0x001c,     0x0003,     0xff00     }, D3DFMT_A8R3G3B2 },
+    { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x7c00,     0x03e0,     0x001f,     0x8000     }, D3DFMT_A1R5G5B5 },
+    { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x0f00,     0x00f0,     0x000f,     0xf000     }, D3DFMT_A4R4G4B4 },
+    { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, D3DFMT_A8R8G8B8 },
+    { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 }, D3DFMT_A8B8G8R8 },
+    { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 }, D3DFMT_A2B10G10R10 },
+    { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000 }, D3DFMT_A2R10G10B10 },
+    /* DDS_PF_INDEXED. */
+    { { 32, DDS_PF_INDEXED, 0, 8 },                                   D3DFMT_P8 },
+    { { 32, DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00, }, D3DFMT_A8P8 },
+    /* DDS_PF_LUMINANCE. */
+    { { 32, DDS_PF_LUMINANCE, 0,  8, 0x00ff },                              D3DFMT_L8 },
+    { { 32, DDS_PF_LUMINANCE, 0, 16, 0xffff },                              D3DFMT_L16 },
+    { { 32, DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0,  8, 0x000f, 0, 0, 0x00f0 }, D3DFMT_A4L4 },
+    { { 32, DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 16, 0x00ff, 0, 0, 0xff00 }, D3DFMT_A8L8 },
+    /* DDS_PF_ALPHA_ONLY. */
+    { { 32, DDS_PF_ALPHA_ONLY, 0, 8, 0, 0, 0, 0xff }, D3DFMT_A8 },
+    /* DDS_PF_BUMPDUDV. */
+    { { 32, DDS_PF_BUMPDUDV, 0, 16, 0x000000ff, 0x0000ff00, 0x00000000, 0x00000000 }, D3DFMT_V8U8 },
+    { { 32, DDS_PF_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 }, D3DFMT_V16U16 },
+    /* DDS_PF_BUMPLUMINANCE. */
+    { { 32, DDS_PF_BUMPLUMINANCE, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 }, D3DFMT_X8L8V8U8 },
+};
 
-    for (i = 0; i < ARRAY_SIZE(rgb_pixel_formats); i++)
-    {
-        if (rgb_pixel_formats[i].bpp == pixel_format->bpp
-            && rgb_pixel_formats[i].rmask == pixel_format->rmask
-            && rgb_pixel_formats[i].gmask == pixel_format->gmask
-            && rgb_pixel_formats[i].bmask == pixel_format->bmask)
-        {
-            if ((pixel_format->flags & DDS_PF_ALPHA) && rgb_pixel_formats[i].amask == pixel_format->amask)
-                return rgb_pixel_formats[i].format;
-            if (rgb_pixel_formats[i].amask == 0)
-                return rgb_pixel_formats[i].format;
-        }
-    }
-
-    WARN("Unknown RGB pixel format (r %#lx, g %#lx, b %#lx, a %#lx).\n",
-            pixel_format->rmask, pixel_format->gmask, pixel_format->bmask, pixel_format->amask);
-    return D3DFMT_UNKNOWN;
-}
-
-static D3DFORMAT dds_luminance_to_d3dformat(const struct dds_pixel_format *pixel_format)
+static BOOL dds_pixel_format_compare(const struct dds_pixel_format *pf_a, const struct dds_pixel_format *pf_b,
+        BOOL check_rmask, BOOL check_gmask, BOOL check_bmask, BOOL check_amask)
 {
-    if (pixel_format->bpp == 8)
-    {
-        if (pixel_format->rmask == 0xff)
-            return D3DFMT_L8;
-        if ((pixel_format->flags & DDS_PF_ALPHA) && pixel_format->rmask == 0x0f && pixel_format->amask == 0xf0)
-            return D3DFMT_A4L4;
-    }
-    if (pixel_format->bpp == 16)
-    {
-        if (pixel_format->rmask == 0xffff)
-            return D3DFMT_L16;
-        if ((pixel_format->flags & DDS_PF_ALPHA) && pixel_format->rmask == 0x00ff && pixel_format->amask == 0xff00)
-            return D3DFMT_A8L8;
-    }
-
-    WARN("Unknown luminance pixel format (bpp %lu, l %#lx, a %#lx).\n",
-            pixel_format->bpp, pixel_format->rmask, pixel_format->amask);
-    return D3DFMT_UNKNOWN;
-}
-
-static D3DFORMAT dds_alpha_to_d3dformat(const struct dds_pixel_format *pixel_format)
-{
-    if (pixel_format->bpp == 8 && pixel_format->amask == 0xff)
-        return D3DFMT_A8;
-
-    WARN("Unknown alpha pixel format (bpp %lu, a %#lx).\n", pixel_format->bpp, pixel_format->rmask);
-    return D3DFMT_UNKNOWN;
-}
-
-static D3DFORMAT dds_indexed_to_d3dformat(const struct dds_pixel_format *pixel_format)
-{
-    if (pixel_format->bpp == 8)
-        return D3DFMT_P8;
-    if (pixel_format->bpp == 16 && pixel_format->amask == 0xff00)
-        return D3DFMT_A8P8;
-
-    WARN("Unknown indexed pixel format (bpp %lu).\n", pixel_format->bpp);
-    return D3DFMT_UNKNOWN;
-}
-
-static D3DFORMAT dds_bump_to_d3dformat(const struct dds_pixel_format *pixel_format)
-{
-    if (pixel_format->bpp == 16 && pixel_format->rmask == 0x00ff && pixel_format->gmask == 0xff00)
-        return D3DFMT_V8U8;
-    if (pixel_format->bpp == 32 && pixel_format->rmask == 0x0000ffff && pixel_format->gmask == 0xffff0000)
-        return D3DFMT_V16U16;
-
-    WARN("Unknown bump pixel format (bpp %lu, r %#lx, g %#lx, b %#lx, a %#lx).\n", pixel_format->bpp,
-            pixel_format->rmask, pixel_format->gmask, pixel_format->bmask, pixel_format->amask);
-    return D3DFMT_UNKNOWN;
-}
-
-static D3DFORMAT dds_bump_luminance_to_d3dformat(const struct dds_pixel_format *pixel_format)
-{
-    if (pixel_format->bpp == 32 && pixel_format->rmask == 0x000000ff && pixel_format->gmask == 0x0000ff00
-            && pixel_format->bmask == 0x00ff0000)
-        return D3DFMT_X8L8V8U8;
-
-    WARN("Unknown bump pixel format (bpp %lu, r %#lx, g %#lx, b %#lx, a %#lx).\n", pixel_format->bpp,
-            pixel_format->rmask, pixel_format->gmask, pixel_format->bmask, pixel_format->amask);
-    return D3DFMT_UNKNOWN;
+    return pf_a->bpp == pf_b->bpp && !((check_rmask && pf_a->rmask != pf_b->rmask)
+            || (check_gmask && pf_a->gmask != pf_b->gmask) || (check_bmask && pf_a->bmask != pf_b->bmask)
+            || (check_amask && pf_a->amask != pf_b->amask));
 }
 
 static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pixel_format)
 {
+    uint32_t i;
+
     TRACE("pixel_format: size %lu, flags %#lx, fourcc %#lx, bpp %lu.\n", pixel_format->size,
             pixel_format->flags, pixel_format->fourcc, pixel_format->bpp);
     TRACE("rmask %#lx, gmask %#lx, bmask %#lx, amask %#lx.\n", pixel_format->rmask, pixel_format->gmask,
             pixel_format->bmask, pixel_format->amask);
 
-    if (pixel_format->flags & DDS_PF_FOURCC)
-        return dds_fourcc_to_d3dformat(pixel_format->fourcc);
-    if (pixel_format->flags & DDS_PF_INDEXED)
-        return dds_indexed_to_d3dformat(pixel_format);
-    if (pixel_format->flags & DDS_PF_RGB)
-        return dds_rgb_to_d3dformat(pixel_format);
-    if (pixel_format->flags & DDS_PF_LUMINANCE)
-        return dds_luminance_to_d3dformat(pixel_format);
-    if (pixel_format->flags & DDS_PF_ALPHA_ONLY)
-        return dds_alpha_to_d3dformat(pixel_format);
-    if (pixel_format->flags & DDS_PF_BUMPDUDV)
-        return dds_bump_to_d3dformat(pixel_format);
-    if (pixel_format->flags & DDS_PF_BUMPLUMINANCE)
-        return dds_bump_luminance_to_d3dformat(pixel_format);
+    for (i = 0; i < ARRAY_SIZE(dds_pixel_formats); ++i)
+    {
+        const struct dds_pixel_format *dds_pf = &dds_pixel_formats[i].dds_pixel_format;
+
+        if (pixel_format->flags != dds_pf->flags)
+            continue;
+
+        switch (pixel_format->flags & ~DDS_PF_ALPHA)
+        {
+            case DDS_PF_ALPHA_ONLY:
+                if (dds_pixel_format_compare(pixel_format, dds_pf, FALSE, FALSE, FALSE, TRUE))
+                    return dds_pixel_formats[i].d3d_format;
+                break;
+
+            case DDS_PF_FOURCC:
+                if (pixel_format->fourcc == dds_pf->fourcc)
+                    return dds_pixel_formats[i].d3d_format;
+                break;
+
+            case DDS_PF_INDEXED:
+                if (dds_pixel_format_compare(pixel_format, dds_pf, FALSE, FALSE, FALSE, pixel_format->flags & DDS_PF_ALPHA))
+                    return dds_pixel_formats[i].d3d_format;
+                break;
+
+            case DDS_PF_RGB:
+                if (dds_pixel_format_compare(pixel_format, dds_pf, TRUE, TRUE, TRUE, pixel_format->flags & DDS_PF_ALPHA))
+                    return dds_pixel_formats[i].d3d_format;
+                break;
+
+            case DDS_PF_LUMINANCE:
+                if (dds_pixel_format_compare(pixel_format, dds_pf, TRUE, FALSE, FALSE, pixel_format->flags & DDS_PF_ALPHA))
+                    return dds_pixel_formats[i].d3d_format;
+                break;
+
+            case DDS_PF_BUMPLUMINANCE:
+                if (dds_pixel_format_compare(pixel_format, dds_pf, TRUE, TRUE, TRUE, FALSE))
+                    return dds_pixel_formats[i].d3d_format;
+                break;
+
+            case DDS_PF_BUMPDUDV:
+                if (dds_pixel_format_compare(pixel_format, dds_pf, TRUE, TRUE, TRUE, TRUE))
+                    return dds_pixel_formats[i].d3d_format;
+                break;
+
+            default:
+                assert(0); /* Should not happen. */
+                break;
+        }
+    }
 
     WARN("Unknown pixel format (flags %#lx, fourcc %#lx, bpp %lu, r %#lx, g %#lx, b %#lx, a %#lx).\n",
         pixel_format->flags, pixel_format->fourcc, pixel_format->bpp,
@@ -415,23 +371,15 @@ static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pi
 
 static HRESULT d3dformat_to_dds_pixel_format(struct dds_pixel_format *pixel_format, D3DFORMAT d3dformat)
 {
-    unsigned int i;
+    uint32_t i;
 
     memset(pixel_format, 0, sizeof(*pixel_format));
-
     pixel_format->size = sizeof(*pixel_format);
-
-    for (i = 0; i < ARRAY_SIZE(rgb_pixel_formats); i++)
+    for (i = 0; i < ARRAY_SIZE(dds_pixel_formats); ++i)
     {
-        if (rgb_pixel_formats[i].format == d3dformat)
+        if (dds_pixel_formats[i].d3d_format == d3dformat)
         {
-            pixel_format->flags |= DDS_PF_RGB;
-            pixel_format->bpp = rgb_pixel_formats[i].bpp;
-            pixel_format->rmask = rgb_pixel_formats[i].rmask;
-            pixel_format->gmask = rgb_pixel_formats[i].gmask;
-            pixel_format->bmask = rgb_pixel_formats[i].bmask;
-            pixel_format->amask = rgb_pixel_formats[i].amask;
-            if (pixel_format->amask) pixel_format->flags |= DDS_PF_ALPHA;
+            *pixel_format = dds_pixel_formats[i].dds_pixel_format;
             return D3D_OK;
         }
     }
