@@ -100,6 +100,9 @@ typedef struct
     UINT_PTR handle;
 } winebluetooth_radio_t;
 
+
+NTSTATUS winebluetooth_radio_get_unique_name( winebluetooth_radio_t radio, char *name,
+                                              SIZE_T *size );
 void winebluetooth_radio_free( winebluetooth_radio_t radio );
 
 enum winebluetooth_watcher_event_type

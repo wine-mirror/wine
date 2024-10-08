@@ -36,6 +36,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( winebth );
 
+NTSTATUS winebluetooth_radio_get_unique_name( winebluetooth_radio_t radio, char *name,
+                                              SIZE_T *size )
+{
+    struct bluetooth_adapter_get_unique_name_params params = {0};
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %p)\n", (void *)radio.handle, name, size );
+
+    params.adapter = radio.handle;
+    params.buf = name;
+    params.buf_size = *size;
+    status = UNIX_BLUETOOTH_CALL( bluetooth_adapter_get_unique_name, &params );
+    if (status == STATUS_BUFFER_TOO_SMALL)
+        *size = params.buf_size;
+    return status;
+}
+
 void winebluetooth_radio_free( winebluetooth_radio_t radio )
 {
     struct bluetooth_adapter_free_params args = { 0 };

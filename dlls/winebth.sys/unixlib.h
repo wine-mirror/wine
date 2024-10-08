@@ -48,6 +48,14 @@ struct bluetooth_adapter_free_params
     unix_name_t adapter;
 };
 
+struct bluetooth_adapter_get_unique_name_params
+{
+    unix_name_t adapter;
+
+    char *buf;
+    SIZE_T buf_size;
+};
+
 struct bluetooth_get_event_params
 {
     struct winebluetooth_event result;
@@ -58,6 +66,7 @@ enum bluetoothapis_funcs
     unix_bluetooth_init,
     unix_bluetooth_shutdown,
 
+    unix_bluetooth_adapter_get_unique_name,
     unix_bluetooth_adapter_free,
 
     unix_bluetooth_get_event,

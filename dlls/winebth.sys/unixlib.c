@@ -118,6 +118,35 @@ static NTSTATUS bluetooth_shutdown( void *params )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_unique_name( const struct unix_name *name, char *buf, SIZE_T *buf_size )
+{
+    SIZE_T path_len, i;
+
+    path_len = strlen( name->str );
+    if (*buf_size <= (path_len * sizeof(char)))
+    {
+        *buf_size = (path_len + 1) * sizeof(char);
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    for (i = 0; i < path_len; i++)
+    {
+        if (name->str[i] == '/') buf[i] = '_';
+        else
+            buf[i] = name->str[i];
+    }
+    buf[path_len] = '\0';
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS bluetooth_adapter_get_unique_name( void *args )
+{
+    struct bluetooth_adapter_get_unique_name_params *params = args;
+    if (!dbus_connection) return STATUS_NOT_SUPPORTED;
+
+    return get_unique_name( params->adapter, params->buf, &params->buf_size );
+}
+
 static NTSTATUS bluetooth_adapter_free( void *args )
 {
     struct bluetooth_adapter_free_params *params = args;
@@ -138,6 +167,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
     bluetooth_init,
     bluetooth_shutdown,
 
+    bluetooth_adapter_get_unique_name,
     bluetooth_adapter_free,
 
     bluetooth_get_event,

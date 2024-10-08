@@ -66,6 +66,7 @@ struct bluetooth_radio
 
     DEVICE_OBJECT *device_obj;
     winebluetooth_radio_t radio;
+    WCHAR *hw_name;
 };
 
 void WINAPIV append_id( struct string_buffer *buffer, const WCHAR *format, ... )
@@ -98,7 +99,45 @@ void WINAPIV append_id( struct string_buffer *buffer, const WCHAR *format, ... )
 
 
 static HANDLE event_loop_thread;
+static NTSTATUS radio_get_hw_name_w( winebluetooth_radio_t radio, WCHAR **name )
+{
+    char *name_a;
+    SIZE_T size = sizeof( char ) *  256;
+    NTSTATUS status;
 
+    name_a = malloc( size );
+    if (!name_a)
+        return STATUS_NO_MEMORY;
+
+    status = winebluetooth_radio_get_unique_name( radio, name_a, &size );
+    if (status == STATUS_BUFFER_TOO_SMALL)
+    {
+        void *ptr = realloc( name_a, size );
+        if (!ptr)
+        {
+            free( name_a );
+            return STATUS_NO_MEMORY;
+        }
+        name_a = ptr;
+        status = winebluetooth_radio_get_unique_name( radio, name_a, &size );
+    }
+    if (status != STATUS_SUCCESS)
+    {
+        free( name_a );
+        return status;
+    }
+
+    *name = malloc( (mbstowcs( NULL, name_a, 0 ) + 1) * sizeof( WCHAR ));
+    if (!*name)
+    {
+        free( name_a );
+        return status;
+    }
+
+    mbstowcs( *name, name_a, strlen( name_a ) + 1 );
+    free( name_a );
+    return STATUS_SUCCESS;
+}
 static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added event )
 {
     struct bluetooth_radio *device;
@@ -106,10 +145,18 @@ static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added 
     UNICODE_STRING string;
     NTSTATUS status;
     WCHAR name[256];
+    WCHAR *hw_name;
     static unsigned int radio_index;
 
     swprintf( name, ARRAY_SIZE( name ), L"\\Device\\WINEBTH-RADIO-%d", radio_index++ );
     TRACE( "Adding new bluetooth radio %p: %s\n", (void *)event.radio.handle, debugstr_w( name ) );
+
+    status = radio_get_hw_name_w( event.radio, &hw_name );
+    if (status)
+    {
+        ERR( "Failed to get hardware name for radio %p, status %#lx\n", (void *)event.radio.handle, status );
+        return;
+    }
 
     RtlInitUnicodeString( &string, name );
     status = IoCreateDevice( driver_obj, sizeof( *device ), &string, FILE_DEVICE_BLUETOOTH, 0,
@@ -124,6 +171,7 @@ static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added 
     device->device_obj = device_obj;
     device->radio = event.radio;
     device->removed = FALSE;
+    device->hw_name = hw_name;
 
     EnterCriticalSection( &device_list_cs );
     list_add_tail( &device_list, &device->entry );
@@ -257,6 +305,13 @@ static NTSTATUS query_id(const struct bluetooth_radio *ext, IRP *irp, BUS_QUERY_
     TRACE( "(%p, %p, %s)\n", ext, irp, debugstr_BUS_QUERY_ID_TYPE( type ) );
     switch (type)
     {
+    case BusQueryDeviceID:
+        append_id( &buf, L"WINEBTH\\RADIO" );
+        break;
+    case BusQueryInstanceID:
+        append_id( &buf, L"%s", ext->hw_name );
+        break;
+    case BusQueryHardwareIDs:
     case BusQueryCompatibleIDs:
         append_id( &buf, L"" );
         break;
@@ -297,6 +352,7 @@ static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
             break;
         case IRP_MN_REMOVE_DEVICE:
             assert( device->removed );
+            free( device->hw_name );
             winebluetooth_radio_free( device->radio );
             IoDeleteDevice( device->device_obj );
             ret = STATUS_SUCCESS;
