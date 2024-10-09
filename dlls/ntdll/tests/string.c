@@ -1816,6 +1816,147 @@ static void test__snwprintf_s(void)
 
 }
 
+static void test_printf_format(void)
+{
+    const struct
+    {
+        const char *spec;
+        unsigned int arg_size;
+        const char *expected;
+        const WCHAR *expectedw;
+        ULONG64 arg;
+        const void *argw;
+    }
+    tests[] =
+    {
+        { "%qu", 0, "qu", NULL, 10 },
+        { "%ll", 0, "", NULL, 10 },
+        { "%lu", sizeof(ULONG), "65537", NULL, 65537 },
+        { "%llu", sizeof(ULONG64), "10", NULL, 10 },
+        { "%lllllllu", sizeof(ULONG64), "10", NULL, 10 },
+        { "%#lx", sizeof(ULONG), "0xa", NULL, 10 },
+        { "%#llx", sizeof(ULONG64), "0x1000000000", NULL, 0x1000000000 },
+        { "%#lllx", sizeof(ULONG64), "0x1000000000", NULL, 0x1000000000 },
+        { "%hu", sizeof(ULONG), "1", NULL, 65537 },
+        { "%hllx", sizeof(ULONG64), "100000010", NULL, 0x100000010 },
+        { "%hlllx", sizeof(ULONG64), "100000010", NULL, 0x100000010 },
+        { "%llhx", sizeof(ULONG64), "100000010", NULL, 0x100000010 },
+        { "%lllhx", sizeof(ULONG64), "100000010", NULL, 0x100000010 },
+        { "%lhu", sizeof(ULONG), "1", NULL, 65537 },
+        { "%hhu", sizeof(ULONG), "1", NULL, 65537 },
+        { "%hwu", sizeof(ULONG), "1", NULL, 65537 },
+        { "%whu", sizeof(ULONG), "1", NULL, 65537 },
+        { "%##lhllwlx", sizeof(ULONG64), "0x1000000010", NULL, 0x1000000010 },
+        { "%##lhlwlx", sizeof(ULONG), "0x10", NULL, 0x1000000010 },
+        { "%04lhlwllx", sizeof(ULONG64), "1000000010", NULL, 0x1000000010 },
+        { "%s", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)"str", L"str" },
+        { "%S", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str", "str" },
+        { "%ls", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%lS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%lls", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)"str", L"str" },
+        { "%llS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str", "str" },
+        { "%llls", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%lllS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%lllls", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)"str", L"str" },
+        { "%llllS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str", "str" },
+        { "%hs", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)"str" },
+        { "%hS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)"str" },
+        { "%ws", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%wS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%hhs", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)"str" },
+        { "%hhS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)"str" },
+        { "%wws", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%wwS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%wwws", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%wwwS", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)L"str" },
+        { "%c", sizeof(SHORT), "\xc8", L"\x95c8", 0x95c8 },
+        { "%llc", sizeof(SHORT), "\xc8", L"\x95c8", 0x95c8 },
+        { "%llllc", sizeof(SHORT), "\xc8", L"\x95c8", 0x95c8 },
+        { "%hc", sizeof(BYTE), "\xc8", L"\xc8", 0x95c8 },
+        { "%hhc", sizeof(BYTE), "\xc8", L"\xc8", 0x95c8 },
+        { "%hhhc", sizeof(BYTE), "\xc8", L"\xc8", 0x95c8 },
+        { "%I64u", sizeof(ULONG64), "10", NULL, 10 },
+        { "%llI64u", sizeof(ULONG64), "10", NULL, 10 },
+        { "%I64llu", sizeof(ULONG64), "10", NULL, 10 },
+        { "%I64s", sizeof(ULONG_PTR), "str", NULL, (ULONG_PTR)"str", L"str" },
+        { "%q%u", sizeof(ULONG), "q10", NULL, 10 },
+        { "%u% ", sizeof(ULONG), "10", NULL, 10 },
+        { "%  ll u", 0, " u", NULL, 10 },
+        { "% llu", sizeof(ULONG64), "10", NULL, 10 },
+        { "%# llx", sizeof(ULONG64), "0xa", NULL, 10 },
+        { "%  #llx", sizeof(ULONG64), "0xa", NULL, 10 },
+    };
+    WCHAR ws[256], expectedw[256], specw[256];
+    unsigned int i, j;
+    char expected[256], spec[256], s[256];
+    int len;
+
+    p_snprintf(s, ARRAY_SIZE(s), "%C", 0x95c8);
+    p_snwprintf(ws, ARRAY_SIZE(ws), L"%c", 0x95c8);
+    p_snwprintf(expectedw, ARRAY_SIZE(expectedw), L"%C", 0x95c8);
+    if (s[0] != 0x3f || ws[0] != 0x95c8 || expectedw[0] != 0xc8)
+    {
+        /* The test is not designed for testing locale but some of the test expected results depend on locale. */
+        skip("An English non-UTF8 locale is required for the printf tests.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        strcpy(spec, tests[i].spec);
+        winetest_push_context("%s", spec);
+        strcat(spec,"|%s");
+        *s = 0;
+        *ws = 0;
+        j = 0;
+        do
+            specw[j] = spec[j];
+        while (specw[j++]);
+        if (tests[i].argw)
+            len = p_snwprintf(ws, ~(size_t)0, specw, tests[i].argw, L"end");
+        switch (tests[i].arg_size)
+        {
+            case 0:
+                p_snprintf(s, ~(size_t)0, spec, "end");
+                len = p_snwprintf(ws, ~(size_t)0, specw, L"end");
+                break;
+            case 1:
+            case 2:
+            case 4:
+                p_snprintf(s, ARRAY_SIZE(s), spec, (ULONG)tests[i].arg, "end");
+                if (!tests[i].argw)
+                    len = p_snwprintf(ws, ~(size_t)0, specw, (ULONG)tests[i].arg, L"end");
+                break;
+            case 8:
+                p_snprintf(s, ~(size_t)0, spec, (ULONG64)tests[i].arg, "end");
+                if (!tests[i].argw)
+                    len = p_snwprintf(ws, ~(size_t)0, specw, (ULONG64)tests[i].arg, L"end");
+                break;
+            default:
+                len = 0;
+                ok(0, "unknown length %u.\n", tests[i].arg_size);
+                break;
+        }
+        strcpy(expected, tests[i].expected);
+        strcat(expected, "|end");
+        ok(len == strlen(expected), "got len %d, expected %Id.\n", len, strlen(expected));
+        ok(!strcmp(s, expected), "got %s, expected %s.\n", debugstr_a(s), debugstr_a(expected));
+        if (tests[i].expectedw)
+        {
+            wcscpy(expectedw, tests[i].expectedw);
+            wcscat(expectedw, L"|end");
+        }
+        else
+        {
+            for (j = 0; j < len; ++j)
+                expectedw[j] = expected[j];
+        }
+        expectedw[len] = 0;
+        ok(!wcscmp(ws, expectedw), "got %s, expected %s.\n", debugstr_w(ws), debugstr_w(expectedw));
+        winetest_pop_context();
+    }
+}
+
 static void test_tolower(void)
 {
     int i, ret, exp_ret;
@@ -2086,6 +2227,7 @@ START_TEST(string)
     test__snprintf_s();
     test__snwprintf();
     test__snwprintf_s();
+    test_printf_format();
     test_tolower();
     test_toupper();
     test__strnicmp();
