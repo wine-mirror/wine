@@ -200,19 +200,14 @@ static int FUNC_NAME(pf_handle_string_format)( FUNC_NAME(pf_output) *out, const 
      if (str == NULL)  /* catch NULL pointer */
          return FUNC_NAME(pf_output_format)( out, APISTR("(null)"), -1, flags );
 
-     /* prefixes take priority over %c,%s vs. %C,%S, so we handle them first */
-    if (flags->WideString || flags->IntegerLength == LEN_LONG)
-        return FUNC_NAME(pf_output_format_wstr)( out, str, len, flags );
-    if (flags->IntegerLength == LEN_SHORT)
-        return FUNC_NAME(pf_output_format_str)( out, str, len, flags );
-
-    /* %s,%c ->  chars in ansi functions & wchars in unicode
-     * %S,%C -> wchars in ansi functions &  chars in unicode */
-    if (!inverted) return FUNC_NAME(pf_output_format)( out, str, len, flags);
 #ifdef PRINTF_WIDE
-    return FUNC_NAME(pf_output_format_str)( out, str, len, flags );
-#else
+    if (flags->IntegerLength == LEN_SHORT || (inverted && !flags->WideString))
+        return FUNC_NAME(pf_output_format_str)( out, str, len, flags );
     return FUNC_NAME(pf_output_format_wstr)( out, str, len, flags );
+#else
+    if (flags->WideString || (inverted && flags->IntegerLength != LEN_SHORT))
+        return FUNC_NAME(pf_output_format_wstr)( out, str, len, flags );
+    return FUNC_NAME(pf_output_format_str)( out, str, len, flags );
 #endif
 }
 
@@ -378,6 +373,7 @@ static int FUNC_NAME(pf_vsnprintf)( FUNC_NAME(pf_output) *out, const APICHAR *fo
             else if( *p == 'l' )
             {
                 flags.IntegerLength = LEN_LONG;
+                flags.WideString = TRUE;
                 p++;
             }
             else if( *p == 'L' )
