@@ -1036,11 +1036,14 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
     const struct tga_header *header = (const struct tga_header *)src_data;
     const BOOL right_to_left = !!(header->image_descriptor & IMAGE_RIGHTTOLEFT);
     const BOOL bottom_to_top = !(header->image_descriptor & IMAGE_TOPTOBOTTOM);
+    const struct pixel_format_desc *fmt_desc = get_format_info(image->format);
     const BOOL is_rle = !!(header->image_type & IMAGETYPE_RLE);
-    uint32_t row_pitch, slice_pitch;
+    uint32_t row_pitch, slice_pitch, i;
+    uint8_t *img_buf = NULL;
+    const uint8_t *src_row;
     HRESULT hr;
 
-    if (image->format == D3DFMT_P8 || is_rle || bottom_to_top || right_to_left)
+    if (image->format == D3DFMT_P8 || is_rle)
         return E_NOTIMPL;
 
     hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
@@ -1051,7 +1054,43 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
     if ((src_header_size + slice_pitch) > src_data_size)
         return D3DXERR_INVALIDDATA;
 
-    image->pixels = (uint8_t *)src_data + src_header_size;
+    if (!bottom_to_top && !right_to_left)
+    {
+        image->pixels = (uint8_t *)src_data + src_header_size;
+        return D3D_OK;
+    }
+
+    if (!(img_buf = malloc(slice_pitch)))
+        return E_OUTOFMEMORY;
+
+    src_row = (const uint8_t *)src_data + src_header_size;
+    for (i = 0; i < image->size.height; ++i)
+    {
+        const uint32_t dst_row_idx = bottom_to_top ? (image->size.height - i - 1) : i;
+        uint8_t *dst_row = img_buf + (dst_row_idx * row_pitch);
+
+        if (right_to_left)
+        {
+            const uint8_t *src_pixel = &src_row[((image->size.width - 1)) * fmt_desc->bytes_per_pixel];
+            uint8_t *dst_pixel = dst_row;
+            uint32_t j;
+
+            for (j = 0; j < image->size.width; ++j)
+            {
+                memcpy(dst_pixel, src_pixel, fmt_desc->bytes_per_pixel);
+                src_pixel -= fmt_desc->bytes_per_pixel;
+                dst_pixel += fmt_desc->bytes_per_pixel;
+            }
+        }
+        else
+        {
+            memcpy(dst_row, src_row, row_pitch);
+        }
+
+        src_row += row_pitch;
+    }
+
+    image->image_buf = image->pixels = img_buf;
     return D3D_OK;
 }
 
