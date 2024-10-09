@@ -299,7 +299,7 @@ static int leaf_as_variant(VARIANT *v, const unsigned char *leaf)
         case LF_USHORT:
             length += 2;
             V_VT(v) = VT_UI2;
-            V_UI2(v) = *leaf;
+            V_UI2(v) = *(const unsigned short*)leaf;
             break;
 
         case LF_LONG:
@@ -421,7 +421,7 @@ static int numeric_leaf(int *value, const unsigned char *leaf)
 
         case LF_USHORT:
             length += 2;
-            *value = *leaf;
+            *value = *(const unsigned short*)leaf;
             break;
 
         case LF_LONG:
@@ -759,7 +759,7 @@ static BOOL codeview_type_extract_name(const union codeview_type* cvtype,
         break;
     case LF_ENUM_V3:
         c_name = cvtype->enumeration_v3.name;
-        decorated = cvtype->union_v3.property.has_decorated_name;
+        decorated = cvtype->enumeration_v3.property.has_decorated_name;
         break;
     default:
         return FALSE;
