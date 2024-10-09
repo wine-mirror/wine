@@ -5644,17 +5644,7 @@ static HRESULT WINAPI IDirectPlay4Impl_SendEx( IDirectPlay4 *iface, DPID from, D
     /* Verify that the message is being sent to a valid player, group or to
      * everyone. If it's valid, send it to those players.
      */
-    if ( to == DPID_ALLPLAYERS )
-    {
-        /* See if SP has the ability to multicast. If so, use it */
-        if ( This->dp2->spData.lpCB->SendToGroupEx )
-            FIXME( "Use group sendex to group 0\n" );
-        else if ( This->dp2->spData.lpCB->SendToGroup ) /* obsolete interface */
-            FIXME( "Use obsolete group send to group 0\n" );
-        else /* No multicast, multiplicate */
-            FIXME( "Send to all players using EnumPlayersInGroup\n" );
-    }
-    else if ( DP_FindPlayer( This, to ) )
+    if ( DP_FindPlayer( This, to ) )
     {
         /* Have the service provider send this message */
         /* FIXME: Could optimize for local interface sends */
