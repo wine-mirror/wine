@@ -1480,7 +1480,7 @@ static void sendSuperEnumPlayersReply_( int line, SOCKET sock, unsigned short tc
             .flags = 0x8,
             .id = 0x1337,
             .infoMask = 0x17,
-            .versionOrSystemPlayerId = 14,
+            .versionOrSystemPlayerId = 0x51573,
         },
         .shortName = SHORT_NAME,
         .longName = LONG_NAME,
