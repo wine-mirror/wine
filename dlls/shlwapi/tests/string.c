@@ -1173,6 +1173,29 @@ if (0)
         ok(broken(ret == 9) || ret == -1 /* Vista */, "Unexpected wnsprintfA return %d, expected 9 or -1\n", ret);
         expect_eq(buf[9], 0, CHAR, "%x");
         expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
+
+        memset(buf, 0xbf, sizeof(buf));
+        ret = pwnsprintfA(buf + 1, -1, "%s", str1);
+        ok(ret == -1, "got %d.\n", ret);
+        expect_eq(buf[0], (CHAR)0xbf, CHAR, "%x");
+        if (!broken(1))
+        {
+            /* This is 0xbf before Win8. */
+            expect_eq(buf[1], 0, CHAR, "%x");
+        }
+        expect_eq(buf[2], (CHAR)0xbf, CHAR, "%x");
+
+        memset(buf, 0xbf, sizeof(buf));
+        ret = pwnsprintfA(buf + 1, 0, "%s", str1);
+        ok(ret == -1, "got %d.\n", ret);
+        expect_eq(buf[0], (CHAR)0xbf, CHAR, "%x");
+        expect_eq(buf[1], (CHAR)0xbf, CHAR, "%x");
+
+        memset(buf, 0xbf, sizeof(buf));
+        ret = pwnsprintfA(buf, 1, "");
+        ok(!ret, "got %d.\n", ret);
+        expect_eq(buf[0], 0, CHAR, "%x");
+        expect_eq(buf[1], (CHAR)0xbf, CHAR, "%x");
     }
     else
         win_skip("wnsprintfA() is not available\n");
@@ -1184,6 +1207,29 @@ if (0)
         ok(broken(ret == 9) || ret == -1 /* Vista */, "Unexpected wnsprintfW return %d, expected 9 or -1\n", ret);
         expect_eq(wbuf[9], 0, WCHAR, "%x");
         expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
+
+        memset(wbuf, 0xbf, sizeof(wbuf));
+        ret = pwnsprintfW(wbuf + 1, -1, fmt, wstr1);
+        ok(ret == -1, "got %d.\n", ret);
+        expect_eq(wbuf[0], (WCHAR)0xbfbf, WCHAR, "%x");
+        if (!broken(1))
+        {
+            /* This is 0xbfbf before Win8. */
+            expect_eq(wbuf[1], 0, WCHAR, "%x");
+        }
+        expect_eq(wbuf[2], (WCHAR)0xbfbf, WCHAR, "%x");
+
+        memset(wbuf, 0xbf, sizeof(wbuf));
+        ret = pwnsprintfW(wbuf + 1, 0, fmt, wstr1);
+        ok(ret == -1, "got %d.\n", ret);
+        expect_eq(wbuf[0], (WCHAR)0xbfbf, WCHAR, "%x");
+        expect_eq(wbuf[1], (WCHAR)0xbfbf, WCHAR, "%x");
+
+        memset(wbuf, 0xbf, sizeof(wbuf));
+        ret = pwnsprintfW(wbuf, 1, L"");
+        ok(!ret, "got %d.\n", ret);
+        expect_eq(wbuf[0], 0, WCHAR, "%x");
+        expect_eq(wbuf[1], (WCHAR)0xbfbf, WCHAR, "%x");
     }
     else
         win_skip("wnsprintfW() is not available\n");
@@ -1689,6 +1735,174 @@ static void test_StrCatChainW(void)
     ok(buf[5] == 'e', "Expected buf[5] = 'e', got %x\n", buf[5]);
 }
 
+static void test_printf_format(void)
+{
+    const struct
+    {
+        const char *spec;
+        unsigned int arg_size;
+        ULONG64 arg;
+        const void *argw;
+    }
+    tests[] =
+    {
+        { "%qu", 0, 10 },
+        { "%ll", 0, 10 },
+        { "%lu", sizeof(ULONG), 65537 },
+        { "%llu", sizeof(ULONG64), 10 },
+        { "%lllllllu", sizeof(ULONG64), 10 },
+        { "%#lx", sizeof(ULONG), 10 },
+        { "%#llx", sizeof(ULONG64), 0x1000000000 },
+        { "%#lllx", sizeof(ULONG64), 0x1000000000 },
+        { "%hu", sizeof(ULONG), 65537 },
+        { "%hlu", sizeof(ULONG), 65537 },
+        { "%hllx", sizeof(ULONG64), 0x100000010 },
+        { "%hlllx", sizeof(ULONG64), 0x100000010 },
+        { "%llhx", sizeof(ULONG64), 0x100000010 },
+        { "%lllhx", sizeof(ULONG64), 0x100000010 },
+        { "%lhu", sizeof(ULONG), 65537 },
+        { "%hhu", sizeof(ULONG), 65537 },
+        { "%hwu", sizeof(ULONG), 65537 },
+        { "%whu", sizeof(ULONG), 65537 },
+        { "%##lhllwlx", sizeof(ULONG64), 0x1000000010 },
+        { "%##lhlwlx", sizeof(ULONG), 0x1000000010 },
+        { "%04lhlwllx", sizeof(ULONG64), 0x1000000010 },
+        { "%s", sizeof(ULONG_PTR), (ULONG_PTR)"str", L"str" },
+        { "%S", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%ls", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%lS", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%lls", sizeof(ULONG_PTR), (ULONG_PTR)"str", L"str" },
+        { "%llS", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%llls", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%lllS", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%lllls", sizeof(ULONG_PTR), (ULONG_PTR)"str", L"str" },
+        { "%llllS", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%hs", sizeof(ULONG_PTR), (ULONG_PTR)"str" },
+        { "%hS", sizeof(ULONG_PTR), (ULONG_PTR)"str" },
+        { "%ws", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%wS", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%hhs", sizeof(ULONG_PTR), (ULONG_PTR)"str" },
+        { "%hhS", sizeof(ULONG_PTR), (ULONG_PTR)"str" },
+        { "%wws", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%wwS", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%wwws", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%wwwS", sizeof(ULONG_PTR), (ULONG_PTR)L"str" },
+        { "%hws", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%hwS", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%whs", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%whS", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%hwls", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%hwlls", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%hwlS", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%hwllS", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%lhws", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%llhws", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%lhwS", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%llhwS", sizeof(ULONG_PTR), (ULONG_PTR)L"str", "str" },
+        { "%c", sizeof(SHORT), 0x95c8 },
+        { "%lc", sizeof(SHORT), 0x95c8 },
+        { "%llc", sizeof(SHORT), 0x95c8 },
+        { "%lllc", sizeof(SHORT), 0x95c8 },
+        { "%llllc", sizeof(SHORT), 0x95c8 },
+        { "%lllllc", sizeof(SHORT), 0x95c8 },
+        { "%C", sizeof(SHORT), 0x95c8 },
+        { "%lC", sizeof(SHORT), 0x95c8 },
+        { "%llC", sizeof(SHORT), 0x95c8 },
+        { "%lllC", sizeof(SHORT), 0x95c8 },
+        { "%llllC", sizeof(SHORT), 0x95c8 },
+        { "%lllllC", sizeof(SHORT), 0x95c8 },
+        { "%hc", sizeof(BYTE), 0x95c8 },
+        { "%hhc", sizeof(BYTE), 0x95c8 },
+        { "%hhhc", sizeof(BYTE), 0x95c8 },
+        { "%wc", sizeof(BYTE), 0x95c8 },
+        { "%wC", sizeof(BYTE), 0x95c8 },
+        { "%hwc", sizeof(BYTE), 0x95c8 },
+        { "%whc", sizeof(BYTE), 0x95c8 },
+        { "%hwC", sizeof(BYTE), 0x95c8 },
+        { "%whC", sizeof(BYTE), 0x95c8 },
+        { "%I64u", sizeof(ULONG64), 10 },
+        { "%llI64u", sizeof(ULONG64), 10 },
+        { "%I64llu", sizeof(ULONG64), 10 },
+        { "%I64s", sizeof(ULONG_PTR), (ULONG_PTR)"str", L"str" },
+        { "%q%u", sizeof(ULONG), 10 },
+        { "%lhw%u", 0, 10 },
+        { "%u% ", sizeof(ULONG), 10 },
+        { "%u% %u", sizeof(ULONG), 10 },
+        { "%  ll u", 0, 10 },
+        { "% llu", sizeof(ULONG64), 10 },
+        { "%# llx", sizeof(ULONG64), 10 },
+        { "%  #llx", sizeof(ULONG64), 10 },
+    };
+    int (WINAPIV *ntdll__snprintf)(char *str, size_t len, const char *format, ...);
+    int (WINAPIV *ntdll__snwprintf)( WCHAR *str, size_t len, const WCHAR *format, ... );
+    WCHAR ws[256], expectedw[256], specw[256];
+    unsigned int i, j;
+    char expected[256], spec[256], s[256];
+    int len_a, len_w = 0, expected_len_a, expected_len_w = 0;
+    HANDLE hntdll = GetModuleHandleW(L"ntdll.dll");
+
+    ntdll__snprintf = (void *)GetProcAddress(hntdll, "_snprintf");
+    ok(!!ntdll__snprintf, "_snprintf not found.\n");
+    ntdll__snwprintf = (void *)GetProcAddress(hntdll, "_snwprintf");
+    ok(!!ntdll__snwprintf, "_snwprintf not found.\n");
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        strcpy(spec, tests[i].spec);
+        winetest_push_context("%s", spec);
+        strcat(spec,"|%s");
+        *s = 0;
+        *ws = 0;
+        j = 0;
+        do
+            specw[j] = spec[j];
+        while (specw[j++]);
+        if (tests[i].argw)
+        {
+            len_w = pwnsprintfW(ws, ARRAY_SIZE(ws), specw, tests[i].argw, L"end");
+            expected_len_w = ntdll__snwprintf(expectedw, ARRAY_SIZE(expectedw), specw, tests[i].argw, L"end");
+        }
+        switch (tests[i].arg_size)
+        {
+            case 0:
+                len_a = pwnsprintfA(s, ARRAY_SIZE(s), spec, "end");
+                expected_len_a = ntdll__snprintf(expected, ARRAY_SIZE(expected), spec, "end");
+                len_w = pwnsprintfW(ws, ARRAY_SIZE(ws), specw, L"end");
+                expected_len_w = ntdll__snwprintf(expectedw, ARRAY_SIZE(expectedw), specw, L"end");
+                break;
+            case 1:
+            case 2:
+            case 4:
+                len_a = pwnsprintfA(s, ARRAY_SIZE(s), spec, (ULONG)tests[i].arg, "end");
+                expected_len_a = ntdll__snprintf(expected, ARRAY_SIZE(expected), spec, (ULONG)tests[i].arg, "end");
+                if (!tests[i].argw)
+                {
+                    len_w = pwnsprintfW(ws, ARRAY_SIZE(ws), specw, (ULONG)tests[i].arg, L"end");
+                    expected_len_w = ntdll__snwprintf(expectedw, ARRAY_SIZE(expectedw), specw, (ULONG)tests[i].arg, L"end");
+                }
+                break;
+            case 8:
+                len_a = pwnsprintfA(s, ARRAY_SIZE(s), spec, (ULONG64)tests[i].arg, "end");
+                expected_len_a = ntdll__snprintf(expected, ARRAY_SIZE(s), spec, (ULONG64)tests[i].arg, "end");
+                if (!tests[i].argw)
+                {
+                    len_w = pwnsprintfW(ws, ARRAY_SIZE(ws), specw, (ULONG64)tests[i].arg, L"end");
+                    expected_len_w = ntdll__snwprintf(expectedw, ARRAY_SIZE(expectedw), specw, (ULONG64)tests[i].arg, L"end");
+                }
+                break;
+            default:
+                len_a = len_w = expected_len_a = expected_len_w = 0;
+                ok(0, "unknown length %u.\n", tests[i].arg_size);
+                break;
+        }
+        ok(len_a == expected_len_a, "got len %d, expected %d.\n", len_a, expected_len_a);
+        ok(!strcmp(s, expected), "got %s, expected %s.\n", debugstr_a(s), debugstr_a(expected));
+        ok(len_w == expected_len_w, "got len %d, expected %d.\n", len_a, expected_len_a);
+        ok(!wcscmp(ws, expectedw), "got %s, expected %s.\n", debugstr_w(ws), debugstr_w(expectedw));
+        winetest_pop_context();
+    }
+}
+
 START_TEST(string)
 {
   HMODULE hShlwapi;
@@ -1777,6 +1991,7 @@ START_TEST(string)
   test_StrStrNW();
   test_StrStrNIW();
   test_StrCatChainW();
+  test_printf_format();
 
   CoUninitialize();
 }

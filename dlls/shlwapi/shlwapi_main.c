@@ -29,8 +29,108 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
+WINE_DECLARE_DEBUG_CHANNEL(string);
 
 HINSTANCE shlwapi_hInstance = 0;
+
+static int (CDECL *ntdll__vsnprintf)( char *str, size_t len, const char *format, va_list args );
+static int (CDECL *ntdll__vsnwprintf)( WCHAR *str, size_t len, const WCHAR *format, va_list args );
+
+
+/***********************************************************************
+ *           wvnsprintfA   (SHLWAPI.@)
+ *
+ * Print formatted output to a string, up to a maximum number of chars.
+ *
+ * PARAMS
+ * buffer [O] Destination for output string
+ * maxlen [I] Maximum number of characters to write
+ * spec   [I] Format string
+ *
+ * RETURNS
+ *  Success: The number of characters written.
+ *  Failure: -1.
+ */
+INT WINAPI wvnsprintfA( LPSTR buffer, INT maxlen, LPCSTR spec, va_list args )
+{
+    INT ret;
+
+    TRACE_(string)( "%p %u %s\n", buffer, maxlen, debugstr_a(spec) );
+
+    if (!maxlen) return -1;
+    if (maxlen < 0)
+    {
+        buffer[0] = 0;
+        return -1;
+    }
+    if ((ret = ntdll__vsnprintf( buffer, maxlen, spec, args )) == -1)
+        buffer[maxlen - 1] = 0;
+    return ret;
+}
+
+/***********************************************************************
+ *           wvnsprintfW   (SHLWAPI.@)
+ *
+ * See wvnsprintfA.
+ */
+INT WINAPI wvnsprintfW( LPWSTR buffer, INT maxlen, LPCWSTR spec, va_list args )
+{
+    INT ret;
+
+    TRACE_(string)( "%p %u %s\n", buffer, maxlen, debugstr_w(spec) );
+
+    if (!maxlen) return -1;
+    if (maxlen < 0)
+    {
+        buffer[0] = 0;
+        return -1;
+    }
+    if ((ret = ntdll__vsnwprintf( buffer, maxlen, spec, args )) == -1)
+        buffer[maxlen - 1] = 0;
+    return ret;
+}
+
+/*************************************************************************
+ *           wnsprintfA   (SHLWAPI.@)
+ *
+ * Print formatted output to a string, up to a maximum number of chars.
+ *
+ * PARAMS
+ * lpOut      [O] Destination for output string
+ * cchLimitIn [I] Maximum number of characters to write
+ * lpFmt      [I] Format string
+ *
+ * RETURNS
+ *  Success: The number of characters written.
+ *  Failure: -1.
+ */
+int WINAPIV wnsprintfA(LPSTR lpOut, int cchLimitIn, LPCSTR lpFmt, ...)
+{
+    va_list valist;
+    INT res;
+
+    va_start( valist, lpFmt );
+    res = wvnsprintfA( lpOut, cchLimitIn, lpFmt, valist );
+    va_end( valist );
+    return res;
+}
+
+/*************************************************************************
+ *           wnsprintfW   (SHLWAPI.@)
+ *
+ * See wnsprintfA.
+ */
+int WINAPIV wnsprintfW(LPWSTR lpOut, int cchLimitIn, LPCWSTR lpFmt, ...)
+{
+    va_list valist;
+    INT res;
+
+    va_start( valist, lpFmt );
+    res = wvnsprintfW( lpOut, cchLimitIn, lpFmt, valist );
+    va_end( valist );
+    return res;
+}
+
 
 /*************************************************************************
  * SHLWAPI {SHLWAPI}
@@ -54,15 +154,21 @@ HINSTANCE shlwapi_hInstance = 0;
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-	TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
-	switch (fdwReason)
-	{
-	  case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-	    shlwapi_hInstance = hinstDLL;
-	    break;
-	}
-	return TRUE;
+    TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+    switch (fdwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+    {
+        HANDLE hntdll = GetModuleHandleW(L"ntdll.dll");
+
+        ntdll__vsnprintf = (void *)GetProcAddress(hntdll, "_vsnprintf");
+        ntdll__vsnwprintf = (void *)GetProcAddress(hntdll, "_vsnwprintf");
+        DisableThreadLibraryCalls(hinstDLL);
+        shlwapi_hInstance = hinstDLL;
+        break;
+    }
+    }
+    return TRUE;
 }
 
 /***********************************************************************
