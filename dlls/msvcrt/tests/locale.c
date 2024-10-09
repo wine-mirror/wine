@@ -19,6 +19,7 @@
  */
 
 #include <locale.h>
+#include <process.h>
 
 #include "wine/test.h"
 #include "winnls.h"
@@ -845,6 +846,29 @@ static void test__wcsicmp_l(void)
     }
 }
 
+static unsigned __stdcall test_thread_setlocale_func(void *arg)
+{
+    char *ret;
+
+    ret = setlocale(LC_ALL, NULL);
+    ok(!strcmp(ret, "C"), "expected ret=C, but received ret=%s\n", ret);
+
+    ret = setlocale(LC_ALL, "");
+    ok(strcmp(ret, "Invariant Language_Invariant Country.0"), "expected valid locale\n");
+
+    return 0;
+}
+
+static void test_thread_setlocale(void)
+{
+    HANDLE hThread;
+
+    hThread = (HANDLE)_beginthreadex(NULL, 0, test_thread_setlocale_func, NULL, 0, NULL);
+    ok(hThread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
+    WaitForSingleObject(hThread, 5000);
+    CloseHandle(hThread);
+}
+
 START_TEST(locale)
 {
     init();
@@ -854,4 +878,5 @@ START_TEST(locale)
     test__Gettnames();
     test___mb_cur_max_func();
     test__wcsicmp_l();
+    test_thread_setlocale();
 }
