@@ -361,6 +361,15 @@ extern HRGN get_dc_monitor_region( HWND hwnd, HDC hdc );
  * X11 USER driver
  */
 
+/* thread-local host-only window, for X11 relative position tracking */
+struct host_window
+{
+    LONG refcount;
+    Window window;
+};
+
+extern void host_window_destroy( struct host_window *win );
+
 struct x11drv_thread_data
 {
     Display *display;
@@ -595,6 +604,7 @@ struct x11drv_win_data
     Window      whole_window;   /* X window for the complete window */
     Window      client_window;  /* X window for the client area */
     struct window_rects rects;  /* window rects in monitor DPI, relative to parent client area */
+    struct host_window *parent; /* the host window parent, frame or embedder, NULL if root_window */
     XIC         xic;            /* X input context */
     UINT        managed : 1;    /* is window managed? */
     UINT        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
@@ -607,6 +617,7 @@ struct x11drv_win_data
     UINT        add_taskbar : 1; /* does window should be added to taskbar regardless of style */
     UINT        net_wm_fullscreen_monitors_set : 1; /* is _NET_WM_FULLSCREEN_MONITORS set */
     UINT        is_fullscreen : 1; /* is the window visible rect fullscreen */
+    UINT        parent_invalid : 1; /* is the parent host window possibly invalid */
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */
@@ -619,6 +630,7 @@ struct x11drv_win_data
 
 extern struct x11drv_win_data *get_win_data( HWND hwnd );
 extern void release_win_data( struct x11drv_win_data *data );
+extern void set_window_parent( struct x11drv_win_data *data, Window parent );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern Window get_dummy_parent(void);
 

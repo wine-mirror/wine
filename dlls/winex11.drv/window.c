@@ -98,6 +98,7 @@ XContext winContext = 0;
 
 /* X context to associate a struct x11drv_win_data to an hwnd */
 static XContext win_data_context = 0;
+static XContext host_window_context = 0;
 
 /* time of last user event and window where it's stored */
 static Time last_user_time;
@@ -111,6 +112,50 @@ static const WCHAR clip_window_prop[] =
     {'_','_','w','i','n','e','_','x','1','1','_','c','l','i','p','_','w','i','n','d','o','w',0};
 
 static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void host_window_add_ref( struct host_window *win )
+{
+    int ref = ++win->refcount;
+    TRACE( "host window %p/%lx increasing refcount to %d\n", win, win->window, ref );
+}
+
+static void host_window_release( struct host_window *win )
+{
+    int ref = --win->refcount;
+
+    TRACE( "host window %p/%lx decreasing refcount to %d\n", win, win->window, ref );
+
+    if (!ref)
+    {
+        struct x11drv_thread_data *data = x11drv_thread_data();
+
+        XDeleteContext( data->display, win->window, host_window_context );
+        free( win );
+    }
+}
+
+static struct host_window *get_host_window( Window window, BOOL create )
+{
+    struct x11drv_thread_data *data = x11drv_thread_data();
+    struct host_window *win;
+
+    if (window == root_window) return NULL;
+    if (!XFindContext( data->display, window, host_window_context, (XPointer *)&win )) return win;
+
+    if (!create || !(win = calloc( 1, sizeof(*win) ))) return NULL;
+    win->window = window;
+
+    TRACE( "created host window %p/%lx\n", win, win->window );
+    XSaveContext( data->display, window, host_window_context, (char *)win );
+    return win;
+}
+
+static void host_window_reparent( struct host_window **win, Window parent, Window window )
+{
+    struct host_window *old = *win, *new = get_host_window( parent, TRUE );
+    if ((*win = new)) host_window_add_ref( new );
+    if (old) host_window_release( old );
+}
 
 
 /***********************************************************************
@@ -1761,6 +1806,18 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     /* Outlook stops processing messages after destroying a dialog, so we need an explicit flush */
     XFlush( data->display );
     NtUserRemoveProp( data->hwnd, whole_window_prop );
+
+    /* It's possible that we are in a different thread, when called from
+     * set_window_visual, and about to recreate the window. In this case
+     * just set a window flag to indicate the parent isn't valid and let
+     * the thread eventually replace it with the proper one later on.
+     */
+    if (data->display != thread_init_display()) data->parent_invalid = 1;
+    else if (data->parent)
+    {
+        host_window_release( data->parent );
+        data->parent = NULL;
+    }
 }
 
 
@@ -1846,6 +1903,7 @@ void X11DRV_DestroyWindow( HWND hwnd )
     if (thread_data->last_xic_hwnd == hwnd) thread_data->last_xic_hwnd = 0;
     if (data->icon_pixmap) XFreePixmap( gdi_display, data->icon_pixmap );
     if (data->icon_mask) XFreePixmap( gdi_display, data->icon_mask );
+    if (data->parent) host_window_release( data->parent );
     free( data->icon_bits );
     XDeleteContext( gdi_display, (XID)hwnd, win_data_context );
     release_win_data( data );
@@ -2029,6 +2087,15 @@ struct x11drv_win_data *get_win_data( HWND hwnd )
 void release_win_data( struct x11drv_win_data *data )
 {
     if (data) pthread_mutex_unlock( &win_data_mutex );
+}
+
+/* update the whole window parent host window, must be called from the window's owner thread */
+void set_window_parent( struct x11drv_win_data *data, Window parent )
+{
+    if (!data->whole_window) return; /* only keep track of parent if we have a toplevel */
+    TRACE( "window %p/%lx, parent %lx\n", data->hwnd, data->whole_window, parent );
+    host_window_reparent( &data->parent, parent, data->whole_window );
+    data->parent_invalid = 0;
 }
 
 
@@ -3107,5 +3174,6 @@ void init_win_context(void)
 
     winContext = XUniqueContext();
     win_data_context = XUniqueContext();
+    host_window_context = XUniqueContext();
     cursor_context = XUniqueContext();
 }

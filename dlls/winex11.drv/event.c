@@ -996,6 +996,7 @@ static BOOL X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
     struct x11drv_win_data *data;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
+    set_window_parent( data, event->parent );
 
     if (!data->embedded)
     {
@@ -1479,6 +1480,7 @@ static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
                 break;
             }
 
+            set_window_parent( data, data->embedder );
             make_window_embedded( data );
             release_win_data( data );
             reparent_notify( event->display, hwnd, event->data.l[3], 0, 0 );
