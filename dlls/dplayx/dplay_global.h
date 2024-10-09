@@ -131,7 +131,8 @@ struct GroupList
 };
 typedef struct GroupList* lpGroupList;
 
-typedef DWORD FN_COPY_MESSAGE( DPMSG_GENERIC *genericDst, DPMSG_GENERIC *genericSrc, BOOL ansi );
+typedef DWORD FN_COPY_MESSAGE( DPMSG_GENERIC *genericDst, DPMSG_GENERIC *genericSrc,
+                               DWORD genericSize, BOOL ansi );
 
 struct DPMSG
 {
@@ -140,6 +141,7 @@ struct DPMSG
   DPID toId;
   DPMSG_GENERIC* msg;
   FN_COPY_MESSAGE *copyMessage;
+  DWORD genericSize;
 };
 typedef struct DPMSG* LPDPMSG;
 

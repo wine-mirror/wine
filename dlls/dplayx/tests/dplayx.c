@@ -4284,9 +4284,7 @@ static DPID checkPlayerMessage_( int line, IDirectPlay4 *dp, DPID expectedFromId
     memset( data, 0xcc, sizeof( data ) );
     dataSize = sizeof( data );
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, data, &dataSize );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
-    if ( FAILED( hr ) )
-        return toId;
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
 
     ok_( __FILE__, line )( fromId == expectedFromId, "got source id %#lx.\n", fromId );
     ok_( __FILE__, line )( !memcmp( data, expectedData, expectedDataSize ), "message data didn't match.\n" );
@@ -7695,7 +7693,7 @@ static void test_Send(void)
     ok( hr == DP_OK, "got hr %#lx.\n", hr );
 
     dpid = checkPlayerMessage( dp, 0x07734, data, sizeof( data ) );
-    todo_wine ok( dpid == 0x14, "got destination id %#lx.\n", dpid );
+    ok( dpid == 0x14, "got destination id %#lx.\n", dpid );
 
     hr = IDirectPlayX_Send( dp, 0x07734, 0x07734, DPSEND_GUARANTEED, data, sizeof( data ) );
     ok( hr == DP_OK, "got hr %#lx.\n", hr );
@@ -7707,7 +7705,7 @@ static void test_Send(void)
     ok( hr == DP_OK, "got hr %#lx.\n", hr );
 
     dpid = checkPlayerMessage( dp, 0x07734, data, sizeof( data ) );
-    todo_wine ok( dpid == 0x14, "got destination id %#lx.\n", dpid );
+    ok( dpid == 0x14, "got destination id %#lx.\n", dpid );
     receiveGuaranteedGameMessage( recvSock, 0x07734, DPID_ALLPLAYERS, data, sizeof( data ) );
 
     checkNoMorePlayerMessages( dp );
