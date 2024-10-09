@@ -989,6 +989,93 @@ exit:
     return hr;
 }
 
+static D3DFORMAT d3dx_get_tga_format_for_bpp(uint8_t bpp)
+{
+    switch (bpp)
+    {
+        case 15: return D3DFMT_X1R5G5B5;
+        case 16: return D3DFMT_A1R5G5B5;
+        case 24: return D3DFMT_R8G8B8;
+        case 32: return D3DFMT_A8R8G8B8;
+        default:
+            WARN("Unhandled bpp %u for targa.\n", bpp);
+            return D3DFMT_UNKNOWN;
+    }
+}
+
+#define IMAGETYPE_COLORMAPPED 1
+#define IMAGETYPE_TRUECOLOR 2
+#define IMAGETYPE_GRAYSCALE 3
+#define IMAGETYPE_MASK 0x07
+#define IMAGETYPE_RLE 8
+
+#include "pshpack1.h"
+struct tga_header
+{
+    uint8_t  id_length;
+    uint8_t  color_map_type;
+    uint8_t  image_type;
+    uint16_t color_map_firstentry;
+    uint16_t color_map_length;
+    uint8_t  color_map_entrysize;
+    uint16_t xorigin;
+    uint16_t yorigin;
+    uint16_t width;
+    uint16_t height;
+    uint8_t  depth;
+    uint8_t  image_descriptor;
+};
+#include "poppack.h"
+
+static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src_data_size, struct d3dx_image *image)
+{
+    const struct tga_header *header = (const struct tga_header *)src_data;
+    uint32_t expected_header_size = sizeof(*header);
+
+    if (src_data_size < sizeof(*header))
+        return D3DXERR_INVALIDDATA;
+
+    expected_header_size += header->id_length;
+    expected_header_size += header->color_map_length * ((header->color_map_entrysize + 7) / CHAR_BIT);
+    if (src_data_size < expected_header_size)
+        return D3DXERR_INVALIDDATA;
+
+    if (header->color_map_type && ((header->color_map_type > 1) || (!header->color_map_length)
+                || (d3dx_get_tga_format_for_bpp(header->color_map_entrysize) == D3DFMT_UNKNOWN)))
+        return D3DXERR_INVALIDDATA;
+
+    switch (header->image_type & IMAGETYPE_MASK)
+    {
+        case IMAGETYPE_COLORMAPPED:
+            if (header->depth != 8 || !header->color_map_type)
+                return D3DXERR_INVALIDDATA;
+            image->format = D3DFMT_P8;
+            break;
+
+        case IMAGETYPE_TRUECOLOR:
+            if ((image->format = d3dx_get_tga_format_for_bpp(header->depth)) == D3DFMT_UNKNOWN)
+                return D3DXERR_INVALIDDATA;
+            break;
+
+        case IMAGETYPE_GRAYSCALE:
+            if (header->depth != 8)
+                return D3DXERR_INVALIDDATA;
+            image->format = D3DFMT_L8;
+            break;
+
+        default:
+            return D3DXERR_INVALIDDATA;
+    }
+
+    set_volume_struct(&image->size, header->width, header->height, 1);
+    image->mip_levels = 1;
+    image->layer_count = 1;
+    image->resource_type = D3DRTYPE_TEXTURE;
+    image->image_file_format = D3DXIFF_TGA;
+
+    return D3D_OK;
+}
+
 HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image,
         uint32_t starting_mip_level, uint32_t flags)
 {
@@ -1014,6 +1101,9 @@ HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3d
         }
 
         /* Last resort, try TGA. */
+        if (flags & D3DX_IMAGE_INFO_ONLY)
+            return d3dx_initialize_image_from_tga(src_data, src_data_size, image);
+
         return d3dx_initialize_image_from_wic(src_data, src_data_size, image, D3DXIFF_TGA, flags);
     }
 

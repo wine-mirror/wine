@@ -626,17 +626,15 @@ static void test_tga_header_handling(void)
             D3DFORMAT format;
         } expected;
         uint32_t extra_header_size;
-        BOOL todo_hr;
-        BOOL todo_info;
     } info_tests[] =
     {
         /* 15 bpp true color. */
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 15, 0 },
-          { D3D_OK, 4, 4, D3DFMT_X1R5G5B5 }, .todo_hr = TRUE
+          { D3D_OK, 4, 4, D3DFMT_X1R5G5B5 }
         },
         /* 16 bpp true color. */
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 16, 0 },
-          { D3D_OK, 4, 4, D3DFMT_A1R5G5B5 }, .todo_info = TRUE
+          { D3D_OK, 4, 4, D3DFMT_A1R5G5B5 }
         },
         /* 24 bpp true color. */
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 24, 0 },
@@ -644,7 +642,7 @@ static void test_tga_header_handling(void)
         },
         /* 32 bpp true color. */
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 32, 0 },
-          { D3D_OK, 4, 4, D3DFMT_A8R8G8B8 }, .todo_info = TRUE
+          { D3D_OK, 4, 4, D3DFMT_A8R8G8B8 }
         },
         /* 8 bit paletted, 15 bpp palette. */
         { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 15, 0, 0, 4, 4, 8, 0 },
@@ -695,19 +693,18 @@ static void test_tga_header_handling(void)
 
         tga->header = info_tests[i].header;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, info_tests[i].todo_hr, info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 
         /* X/Y origin fields are ignored. */
         tga->header.xorigin = tga->header.width + 1;
         tga->header.yorigin = tga->header.height + 1;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, info_tests[i].todo_hr, info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 
         /* Image descriptor field is ignored. */
         tga->header.image_descriptor = 0xcf;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
-                info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 
         if (FAILED(info_tests[i].expected.hr))
             goto next;
@@ -720,12 +717,12 @@ static void test_tga_header_handling(void)
         tmp_footer.extension_area_offset = 65536;
         memcpy(&tga->data[info_tests[i].extra_header_size], &tmp_footer, sizeof(tmp_footer));
         check_tga_image_info(tga, file_size + sizeof(tmp_footer), info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, TRUE, info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 
         /* Check RLE type. */
         tga->header.image_type |= IMAGETYPE_RLE;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, TRUE, info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
         tga->header.image_type &= ~IMAGETYPE_RLE;
 
         if (tga->header.image_type == IMAGETYPE_COLORMAPPED)
@@ -737,16 +734,14 @@ static void test_tga_header_handling(void)
          */
         tga->header.color_map_length = 1;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
-                info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 
         tga->header.color_map_entrysize = 8;
         check_tga_image_info(tga, file_size, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
 
         /* Add a byte to file size to account for color map. */
         check_tga_image_info(tga, file_size + 1, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
-                info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 
         /* ID length field is also considered. */
         tga->header.id_length = 1;
@@ -754,8 +749,7 @@ static void test_tga_header_handling(void)
 
         /* Add another byte to file size to account for id length. */
         check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
-                info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 
         /*
          * If the color map type field is set but the color map fields
@@ -775,14 +769,12 @@ static void test_tga_header_handling(void)
         /* 16 is a valid entry size. */
         tga->header.color_map_entrysize = 16;
         check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
-                info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 
         /* First entry doesn't factor into validation. */
         tga->header.color_map_firstentry = 512;
         check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
-                info_tests[i].todo_info);
+                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
 next:
         winetest_pop_context();
     }
