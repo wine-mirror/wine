@@ -1973,7 +1973,7 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 15, 0 },
           NULL, 0,
           test_tga_true_color_15bpp_4_4, sizeof(test_tga_true_color_15bpp_4_4),
-          test_tga_true_color_15bpp_4_4, .todo_hr = TRUE
+          test_tga_true_color_15bpp_4_4
         },
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR | IMAGETYPE_RLE, 0, 0, 0, 0, 0, 4, 4, 15, 0 },
           NULL, 0,
@@ -1983,7 +1983,7 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 16, 0 },
           NULL, 0,
           test_tga_true_color_16bpp_4_4, sizeof(test_tga_true_color_16bpp_4_4),
-          test_tga_true_color_16bpp_4_4, .todo_surface = TRUE
+          test_tga_true_color_16bpp_4_4
         },
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR | IMAGETYPE_RLE, 0, 0, 0, 0, 0, 4, 4, 16, 0 },
           NULL, 0,
@@ -2070,9 +2070,9 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
 
         /* Read as default, bottom to top, left to right. */
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(tga_tests[i].todo_hr) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine_if(tga_tests[i].todo_hr || tga->header.depth == 15) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
-            check_tga_surface_load(surface, tga_tests[i].expected, FALSE, TRUE, tga_tests[i].todo_surface);
+            check_tga_surface_load(surface, tga_tests[i].expected, FALSE, TRUE, tga_tests[i].todo_surface || tga->header.depth == 16);
 
         /* Read as top to bottom, left to right. */
         tga->header.image_descriptor = IMAGE_TOPTOBOTTOM;

@@ -1009,6 +1009,9 @@ static D3DFORMAT d3dx_get_tga_format_for_bpp(uint8_t bpp)
 #define IMAGETYPE_MASK 0x07
 #define IMAGETYPE_RLE 8
 
+#define IMAGE_RIGHTTOLEFT 0x10
+#define IMAGE_TOPTOBOTTOM 0x20
+
 #include "pshpack1.h"
 struct tga_header
 {
@@ -1027,7 +1030,33 @@ struct tga_header
 };
 #include "poppack.h"
 
-static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src_data_size, struct d3dx_image *image)
+static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_size, uint32_t src_header_size,
+        struct d3dx_image *image)
+{
+    const struct tga_header *header = (const struct tga_header *)src_data;
+    const BOOL right_to_left = !!(header->image_descriptor & IMAGE_RIGHTTOLEFT);
+    const BOOL bottom_to_top = !(header->image_descriptor & IMAGE_TOPTOBOTTOM);
+    const BOOL is_rle = !!(header->image_type & IMAGETYPE_RLE);
+    uint32_t row_pitch, slice_pitch;
+    HRESULT hr;
+
+    if (image->format == D3DFMT_P8 || is_rle || bottom_to_top || right_to_left)
+        return E_NOTIMPL;
+
+    hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
+    if (FAILED(hr))
+        return hr;
+
+    /* File is too small. */
+    if ((src_header_size + slice_pitch) > src_data_size)
+        return D3DXERR_INVALIDDATA;
+
+    image->pixels = (uint8_t *)src_data + src_header_size;
+    return D3D_OK;
+}
+
+static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src_data_size, struct d3dx_image *image,
+        uint32_t flags)
 {
     const struct tga_header *header = (const struct tga_header *)src_data;
     uint32_t expected_header_size = sizeof(*header);
@@ -1073,6 +1102,9 @@ static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src
     image->resource_type = D3DRTYPE_TEXTURE;
     image->image_file_format = D3DXIFF_TGA;
 
+    if (!(flags & D3DX_IMAGE_INFO_ONLY))
+        return d3dx_image_tga_decode(src_data, src_data_size, expected_header_size, image);
+
     return D3D_OK;
 }
 
@@ -1101,10 +1133,10 @@ HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3d
         }
 
         /* Last resort, try TGA. */
-        if (flags & D3DX_IMAGE_INFO_ONLY)
-            return d3dx_initialize_image_from_tga(src_data, src_data_size, image);
-
-        return d3dx_initialize_image_from_wic(src_data, src_data_size, image, D3DXIFF_TGA, flags);
+        hr = d3dx_initialize_image_from_tga(src_data, src_data_size, image, flags);
+        if (hr == E_NOTIMPL)
+            hr = d3dx_initialize_image_from_wic(src_data, src_data_size, image, D3DXIFF_TGA, flags);
+        return hr;
     }
 
     switch (iff)
