@@ -596,6 +596,82 @@ static const uint8_t dds_24bit_8_8[] =
     0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00
 };
 
+static inline const char *debug_d3dformat(D3DFORMAT format_id)
+{
+    switch (format_id)
+    {
+#define FMT_TO_STR(format_id) case format_id: return #format_id
+    FMT_TO_STR(D3DFMT_UNKNOWN);
+    FMT_TO_STR(D3DFMT_R8G8B8);
+    FMT_TO_STR(D3DFMT_A8R8G8B8);
+    FMT_TO_STR(D3DFMT_X8R8G8B8);
+    FMT_TO_STR(D3DFMT_R5G6B5);
+    FMT_TO_STR(D3DFMT_X1R5G5B5);
+    FMT_TO_STR(D3DFMT_A1R5G5B5);
+    FMT_TO_STR(D3DFMT_A4R4G4B4);
+    FMT_TO_STR(D3DFMT_R3G3B2);
+    FMT_TO_STR(D3DFMT_A8);
+    FMT_TO_STR(D3DFMT_A8R3G3B2);
+    FMT_TO_STR(D3DFMT_X4R4G4B4);
+    FMT_TO_STR(D3DFMT_A2B10G10R10);
+    FMT_TO_STR(D3DFMT_A8B8G8R8);
+    FMT_TO_STR(D3DFMT_X8B8G8R8);
+    FMT_TO_STR(D3DFMT_G16R16);
+    FMT_TO_STR(D3DFMT_A2R10G10B10);
+    FMT_TO_STR(D3DFMT_A16B16G16R16);
+    FMT_TO_STR(D3DFMT_A8P8);
+    FMT_TO_STR(D3DFMT_P8);
+    FMT_TO_STR(D3DFMT_L8);
+    FMT_TO_STR(D3DFMT_A8L8);
+    FMT_TO_STR(D3DFMT_A4L4);
+    FMT_TO_STR(D3DFMT_V8U8);
+    FMT_TO_STR(D3DFMT_L6V5U5);
+    FMT_TO_STR(D3DFMT_X8L8V8U8);
+    FMT_TO_STR(D3DFMT_Q8W8V8U8);
+    FMT_TO_STR(D3DFMT_V16U16);
+    FMT_TO_STR(D3DFMT_A2W10V10U10);
+    FMT_TO_STR(D3DFMT_UYVY);
+    FMT_TO_STR(D3DFMT_YUY2);
+    FMT_TO_STR(D3DFMT_DXT1);
+    FMT_TO_STR(D3DFMT_DXT2);
+    FMT_TO_STR(D3DFMT_DXT3);
+    FMT_TO_STR(D3DFMT_DXT4);
+    FMT_TO_STR(D3DFMT_DXT5);
+    FMT_TO_STR(D3DFMT_MULTI2_ARGB8);
+    FMT_TO_STR(D3DFMT_G8R8_G8B8);
+    FMT_TO_STR(D3DFMT_R8G8_B8G8);
+    FMT_TO_STR(D3DFMT_D16_LOCKABLE);
+    FMT_TO_STR(D3DFMT_D32);
+    FMT_TO_STR(D3DFMT_D15S1);
+    FMT_TO_STR(D3DFMT_D24S8);
+    FMT_TO_STR(D3DFMT_D24X8);
+    FMT_TO_STR(D3DFMT_D24X4S4);
+    FMT_TO_STR(D3DFMT_D16);
+    FMT_TO_STR(D3DFMT_L16);
+    FMT_TO_STR(D3DFMT_D32F_LOCKABLE);
+    FMT_TO_STR(D3DFMT_D24FS8);
+    FMT_TO_STR(D3DFMT_D32_LOCKABLE);
+    FMT_TO_STR(D3DFMT_S8_LOCKABLE);
+    FMT_TO_STR(D3DFMT_VERTEXDATA);
+    FMT_TO_STR(D3DFMT_INDEX16);
+    FMT_TO_STR(D3DFMT_INDEX32);
+    FMT_TO_STR(D3DFMT_Q16W16V16U16);
+    FMT_TO_STR(D3DFMT_R16F);
+    FMT_TO_STR(D3DFMT_G16R16F);
+    FMT_TO_STR(D3DFMT_A16B16G16R16F);
+    FMT_TO_STR(D3DFMT_R32F);
+    FMT_TO_STR(D3DFMT_G32R32F);
+    FMT_TO_STR(D3DFMT_A32B32G32R32F);
+    FMT_TO_STR(D3DFMT_CxV8U8);
+    FMT_TO_STR(D3DFMT_A1);
+    FMT_TO_STR(D3DFMT_A2B10G10R10_XR_BIAS);
+    FMT_TO_STR(D3DFMT_BINARYBUFFER);
+#undef FMT_TO_STR
+    default:
+        return "unknown";
+    }
+}
+
 #define check_image_info(info, width, height, depth, mip_levels, format, resource_type, image_file_format, wine_todo) \
     check_image_info_(__FILE__, __LINE__, info, width, height, depth, mip_levels, format, resource_type, \
             image_file_format, wine_todo)
@@ -620,7 +696,9 @@ static inline void check_image_info_(const char *file, uint32_t line, const D3DX
     todo_wine_if(wine_todo && info->MipLevels != mip_levels)
         ok_(file, line)(info->MipLevels == mip_levels, "Expected mip_levels %u, got %u.\n", mip_levels,
                 info->MipLevels);
-    ok_(file, line)(info->Format == format, "Expected texture format %d, got %d.\n", format, info->Format);
+    todo_wine_if(wine_todo && info->Format != format)
+        ok_(file, line)(info->Format == format, "Expected texture format %s (%u), got %s (%u).\n",
+                debug_d3dformat(format), format, debug_d3dformat(info->Format), info->Format);
     todo_wine_if(wine_todo && info->ResourceType != resource_type)
         ok_(file, line)(info->ResourceType == resource_type, "Expected resource_type %d, got %d.\n", resource_type,
                 info->ResourceType);

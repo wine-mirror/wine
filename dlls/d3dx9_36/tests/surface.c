@@ -558,6 +558,238 @@ static void test_dds_header_handling(void)
     free(dds);
 }
 
+#define COLORMAP_TYPE_NONE 0
+#define COLORMAP_TYPE_ONE  1
+
+#define IMAGETYPE_COLORMAPPED 1
+#define IMAGETYPE_TRUECOLOR 2
+#define IMAGETYPE_GRAYSCALE 3
+#define IMAGETYPE_RLE 8
+
+#include "pshpack1.h"
+struct tga_header
+{
+    uint8_t  id_length;
+    uint8_t  color_map_type;
+    uint8_t  image_type;
+    uint16_t color_map_firstentry;
+    uint16_t color_map_length;
+    uint8_t  color_map_entrysize;
+    uint16_t xorigin;
+    uint16_t yorigin;
+    uint16_t width;
+    uint16_t height;
+    uint8_t  depth;
+    uint8_t  image_descriptor;
+};
+
+struct tga_footer
+{
+    uint32_t extension_area_offset;
+    uint32_t developer_directory_offset;
+    uint8_t magic[18];
+};
+#include "poppack.h"
+
+static const struct tga_footer default_tga_footer = {
+    0, 0,
+    { 'T', 'R', 'U', 'E', 'V', 'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.', 0 }
+};
+
+#define check_tga_image_info(tga, tga_size, expected_width, expected_height, expected_format, expected_hr, todo_hr, todo_info) \
+    check_tga_image_info_(__LINE__, tga, tga_size, expected_width, expected_height, expected_format, expected_hr, todo_hr, todo_info)
+static void check_tga_image_info_(uint32_t line, const void *tga, uint32_t tga_size, uint32_t expected_width,
+        uint32_t expected_height, D3DFORMAT expected_format, HRESULT expected_hr, BOOL todo_hr, BOOL todo_info)
+{
+    D3DXIMAGE_INFO info = { 0 };
+    HRESULT hr;
+
+    hr = D3DXGetImageInfoFromFileInMemory(tga, tga_size, &info);
+    todo_wine_if(todo_hr) ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(expected_hr) && SUCCEEDED(hr))
+    {
+        check_image_info_(__FILE__, line, &info, expected_width, expected_height, 1, 1, expected_format,
+                D3DRTYPE_TEXTURE, D3DXIFF_TGA, todo_info);
+    }
+}
+
+static void test_tga_header_handling(void)
+{
+    static const struct
+    {
+        struct tga_header header;
+        struct
+        {
+            HRESULT hr;
+            uint32_t width;
+            uint32_t height;
+            D3DFORMAT format;
+        } expected;
+        uint32_t extra_header_size;
+        BOOL todo_hr;
+        BOOL todo_info;
+    } info_tests[] =
+    {
+        /* 15 bpp true color. */
+        { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 15, 0 },
+          { D3D_OK, 4, 4, D3DFMT_X1R5G5B5 }, .todo_hr = TRUE
+        },
+        /* 16 bpp true color. */
+        { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 16, 0 },
+          { D3D_OK, 4, 4, D3DFMT_A1R5G5B5 }, .todo_info = TRUE
+        },
+        /* 24 bpp true color. */
+        { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 24, 0 },
+          { D3D_OK, 4, 4, D3DFMT_R8G8B8 }
+        },
+        /* 32 bpp true color. */
+        { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 32, 0 },
+          { D3D_OK, 4, 4, D3DFMT_A8R8G8B8 }, .todo_info = TRUE
+        },
+        /* 8 bit paletted, 15 bpp palette. */
+        { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 15, 0, 0, 4, 4, 8, 0 },
+          { D3D_OK, 4, 4, D3DFMT_P8 }, (256 * 2)
+        },
+        /* 8 bit paletted, 16 bpp palette. */
+        { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 16, 0, 0, 4, 4, 8, 0 },
+          { D3D_OK, 4, 4, D3DFMT_P8 }, (256 * 2)
+        },
+        /* 8 bit paletted, 24 bpp palette. */
+        { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 24, 0, 0, 4, 4, 8, 0 },
+          { D3D_OK, 4, 4, D3DFMT_P8 }, (256 * 3)
+        },
+        /* 8 bit paletted, 32 bpp palette. */
+        { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 32, 0, 0, 4, 4, 8, 0 },
+          { D3D_OK, 4, 4, D3DFMT_P8 }, (256 * 4)
+        },
+        /* Grayscale, 8bpp. */
+        { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_GRAYSCALE, 0, 0, 0, 0, 0, 4, 4, 8, 0 },
+          { D3D_OK, 4, 4, D3DFMT_L8 }
+        },
+        /* No 16-bit grayscale. */
+        { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_GRAYSCALE, 0, 0, 0, 0, 0, 4, 4, 16, 0 },
+          { D3DXERR_INVALIDDATA }
+        },
+    };
+    struct
+    {
+        struct tga_header header;
+        uint8_t data[4096 * 1024];
+    } *tga;
+    struct tga_footer tmp_footer;
+    uint32_t i;
+
+    tga = calloc(1, sizeof(*tga));
+    if (!tga)
+    {
+        skip("Failed to allocate memory.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(info_tests); i++)
+    {
+        uint32_t file_size = sizeof(tga->header) + info_tests[i].extra_header_size;
+        assert(file_size <= sizeof(*tga));
+
+        winetest_push_context("Test %u", i);
+
+        tga->header = info_tests[i].header;
+        check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, info_tests[i].todo_hr, info_tests[i].todo_info);
+
+        /* X/Y origin fields are ignored. */
+        tga->header.xorigin = tga->header.width + 1;
+        tga->header.yorigin = tga->header.height + 1;
+        check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, info_tests[i].todo_hr, info_tests[i].todo_info);
+
+        /* Image descriptor field is ignored. */
+        tga->header.image_descriptor = 0xcf;
+        check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
+                info_tests[i].todo_info);
+
+        if (FAILED(info_tests[i].expected.hr))
+            goto next;
+
+        /*
+         * Footer offsets do not seem to be validated. Possible that footer
+         * isn't even checked for.
+         */
+        tmp_footer = default_tga_footer;
+        tmp_footer.extension_area_offset = 65536;
+        memcpy(&tga->data[info_tests[i].extra_header_size], &tmp_footer, sizeof(tmp_footer));
+        check_tga_image_info(tga, file_size + sizeof(tmp_footer), info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, TRUE, info_tests[i].todo_info);
+
+        /* Check RLE type. */
+        tga->header.image_type |= IMAGETYPE_RLE;
+        check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, TRUE, info_tests[i].todo_info);
+        tga->header.image_type &= ~IMAGETYPE_RLE;
+
+        if (tga->header.image_type == IMAGETYPE_COLORMAPPED)
+            goto next;
+
+        /*
+         * Even if the image isn't color mapped, the color map fields are used
+         * to validate header size.
+         */
+        tga->header.color_map_length = 1;
+        check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
+                info_tests[i].todo_info);
+
+        tga->header.color_map_entrysize = 8;
+        check_tga_image_info(tga, file_size, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
+
+        /* Add a byte to file size to account for color map. */
+        check_tga_image_info(tga, file_size + 1, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
+                info_tests[i].todo_info);
+
+        /* ID length field is also considered. */
+        tga->header.id_length = 1;
+        check_tga_image_info(tga, file_size + 1, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
+
+        /* Add another byte to file size to account for id length. */
+        check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
+                info_tests[i].todo_info);
+
+        /*
+         * If the color map type field is set but the color map fields
+         * result in a color map size of 0, header is considered invalid.
+         * Also, the entrysize value is now validated, e.g it must be 15,
+         * 16, 24, or 32.
+         */
+        tga->header.id_length = tga->header.color_map_entrysize = tga->header.color_map_length = 0;
+        tga->header.color_map_type = COLORMAP_TYPE_ONE;
+        check_tga_image_info(tga, file_size + 2, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
+
+        /* 8 isn't a valid entry size. */
+        tga->header.color_map_entrysize = 8;
+        tga->header.color_map_length = 1;
+        check_tga_image_info(tga, file_size + 1, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
+
+        /* 16 is a valid entry size. */
+        tga->header.color_map_entrysize = 16;
+        check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
+                info_tests[i].todo_info);
+
+        /* First entry doesn't factor into validation. */
+        tga->header.color_map_firstentry = 512;
+        check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
+                info_tests[i].expected.format, info_tests[i].expected.hr, SUCCEEDED(info_tests[i].expected.hr),
+                info_tests[i].todo_info);
+next:
+        winetest_pop_context();
+    }
+
+    free(tga);
+}
+
 static void test_D3DXGetImageInfo(void)
 {
     HRESULT hr;
@@ -818,6 +1050,7 @@ static void test_D3DXGetImageInfo(void)
     check_dds_pixel_format(DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00, D3DFMT_A8P8);
 
     test_dds_header_handling();
+    test_tga_header_handling();
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_16bit, sizeof(dds_16bit) - 1, &info);
     ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
