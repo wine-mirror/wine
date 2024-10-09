@@ -372,7 +372,11 @@ static int FUNC_NAME(pf_vsnprintf)( FUNC_NAME(pf_output) *out, const APICHAR *fo
             }
             else if( *p == 'l' )
             {
-                flags.IntegerLength = LEN_LONG;
+                if (flags.IntegerLength != LEN_SHORT)
+                {
+                    flags.IntegerLength = LEN_LONG;
+                    flags.WideString = TRUE;
+                }
                 flags.WideString = TRUE;
                 p++;
             }
