@@ -32,12 +32,6 @@ enum x11drv_funcs
 
 #define X11DRV_CALL(func, params) WINE_UNIX_CALL( unix_ ## func, params )
 
-/* x11drv_init params */
-struct init_params
-{
-    UINT64 foreign_window_proc;
-};
-
 /* x11drv_tablet_info params */
 struct tablet_info_params
 {

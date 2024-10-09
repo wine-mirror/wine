@@ -89,7 +89,6 @@ static BOOL X11DRV_ReparentNotify( HWND hwnd, XEvent *event );
 static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
 static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *event );
 static BOOL X11DRV_ClientMessage( HWND hwnd, XEvent *event );
-static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *event );
 
 #define MAX_EVENT_HANDLERS 128
 
@@ -119,7 +118,7 @@ static x11drv_event_handler handlers[MAX_EVENT_HANDLERS] =
     X11DRV_ReparentNotify,    /* 21 ReparentNotify */
     X11DRV_ConfigureNotify,   /* 22 ConfigureNotify */
     NULL,                     /* 23 ConfigureRequest */
-    X11DRV_GravityNotify,     /* 24 GravityNotify */
+    NULL,                     /* 24 GravityNotify */
     NULL,                     /* 25 ResizeRequest */
     NULL,                     /* 26 CirculateNotify */
     NULL,                     /* 27 CirculateRequest */
@@ -176,7 +175,6 @@ static BOOL host_window_filter_event( XEvent *event )
 {
     struct host_window *win;
     RECT old_rect;
-    HWND hwnd;
 
     if (!(win = get_host_window( event->xany.window, FALSE ))) return FALSE;
     old_rect = win->rect;
@@ -233,8 +231,6 @@ static BOOL host_window_filter_event( XEvent *event )
         }
     }
 
-    /* keep processing the event for foreign windows */
-    if (!XFindContext( event->xany.display, event->xany.window, winContext, (char **)&hwnd )) return FALSE;
     return TRUE;
 }
 
@@ -1023,40 +1019,6 @@ static BOOL X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 
 
 /***********************************************************************
- *           reparent_notify
- */
-static void reparent_notify( Display *display, HWND hwnd, Window xparent, int x, int y )
-{
-    HWND parent, old_parent;
-    DWORD style, flags = 0;
-    RECT rect;
-
-    style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
-    if (xparent == root_window)
-    {
-        parent = NtUserGetDesktopWindow();
-        style = (style & ~WS_CHILD) | WS_POPUP;
-    }
-    else
-    {
-        if (!(parent = create_foreign_window( display, xparent ))) return;
-        style = (style & ~WS_POPUP) | WS_CHILD;
-    }
-
-    NtUserShowWindow( hwnd, SW_HIDE );
-    old_parent = NtUserSetParent( hwnd, parent );
-    NtUserSetWindowLong( hwnd, GWL_STYLE, style, FALSE );
-
-    if (style & WS_VISIBLE) flags = SWP_SHOWWINDOW;
-    SetRect( &rect, x, y, x, y );
-    NtUserSetRawWindowPos( hwnd, rect, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOCOPYBITS | flags, FALSE );
-
-    /* make old parent destroy itself if it no longer has children */
-    if (old_parent != NtUserGetDesktopWindow()) NtUserPostMessage( old_parent, WM_CLOSE, 0, 0 );
-}
-
-
-/***********************************************************************
  *           X11DRV_ReparentNotify
  */
 static BOOL X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
@@ -1088,37 +1050,7 @@ static BOOL X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
 
     TRACE( "%p/%lx reparented to %lx\n", hwnd, data->whole_window, event->parent );
     release_win_data( data );
-
-    reparent_notify( event->display, hwnd, event->parent, event->x, event->y );
     return TRUE;
-}
-
-/* map XConfigureNotify event coordinates to parent-relative monitor DPI coordinates */
-static POINT map_configure_event_coords( struct x11drv_win_data *data, XConfigureEvent *event )
-{
-    Window child, parent = data->embedder ? data->embedder : root_window;
-    POINT pos;
-
-    if (event->send_event && parent == DefaultRootWindow( event->display ))
-    {
-        pos.x = event->x;
-        pos.y = event->y;
-    }
-    else if (event->send_event)
-    {
-        /* synthetic events are always in root coords */
-        XTranslateCoordinates( event->display, DefaultRootWindow( event->display ), parent,
-                               event->x, event->y, (int *)&pos.x, (int *)&pos.y, &child );
-    }
-    else
-    {
-        /* query the current window position, events are relative to their parent */
-        XTranslateCoordinates( event->display, event->window, parent, 0, 0,
-                               (int *)&pos.x, (int *)&pos.y, &child );
-    }
-
-    if (parent == root_window) pos = root_to_virtual_screen( pos.x, pos.y );
-    return pos;
 }
 
 /***********************************************************************
@@ -1129,9 +1061,9 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     XConfigureEvent *event = &xev->xconfigure;
     struct x11drv_win_data *data;
     RECT rect;
-    POINT pos;
+    POINT pos = {event->x, event->y};
     UINT flags;
-    int cx, cy, x = event->x, y = event->y;
+    int cx, cy, x, y;
     DWORD style;
 
     if (!hwnd) return FALSE;
@@ -1144,9 +1076,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     }
 
     if (!data->mapped || data->iconic) goto done;
-    if (data->whole_window && !data->managed) goto done;
-    /* ignore synthetic events on foreign windows */
-    if (event->send_event && !data->whole_window) goto done;
+    if (!data->whole_window || !data->managed) goto done;
     if (data->configure_serial && (long)(data->configure_serial - event->serial) > 0)
     {
         TRACE( "win %p/%lx event %d,%d,%dx%d ignoring old serial %lu/%lu\n",
@@ -1155,9 +1085,11 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         goto done;
     }
 
-    /* Get geometry */
+    /* synthetic events are already in absolute coordinates */
+    if (!event->send_event) pos = host_window_map_point( data->parent, event->x, event->y );
+    else if (is_virtual_desktop()) FIXME( "synthetic event mapping not implemented\n" );
 
-    pos = map_configure_event_coords( data, event );
+    pos = root_to_virtual_screen( pos.x, pos.y );
     SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
     rect = window_rect_from_visible( &data->rects, rect );
 
@@ -1223,43 +1155,6 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 done:
     release_win_data( data );
     return FALSE;
-}
-
-
-/**********************************************************************
- *           X11DRV_GravityNotify
- */
-static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
-{
-    XGravityEvent *event = &xev->xgravity;
-    struct x11drv_win_data *data = get_win_data( hwnd );
-    RECT window_rect;
-    int x, y;
-
-    if (!data) return FALSE;
-
-    if (data->whole_window)  /* only handle this for foreign windows */
-    {
-        release_win_data( data );
-        return FALSE;
-    }
-
-    x = event->x + data->rects.window.left - data->rects.visible.left;
-    y = event->y + data->rects.window.top - data->rects.visible.top;
-
-    TRACE( "win %p/%lx new X pos %d,%d (event %d,%d)\n",
-           hwnd, data->whole_window, x, y, event->x, event->y );
-
-    window_rect = data->rects.window;
-    release_win_data( data );
-
-    if (window_rect.left != x || window_rect.top != y)
-    {
-        RECT rect = {x, y, x, y};
-        NtUserSetRawWindowPos( hwnd, rect, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS, FALSE );
-    }
-
-    return TRUE;
 }
 
 
@@ -1559,7 +1454,6 @@ static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
             set_window_parent( data, data->embedder );
             make_window_embedded( data );
             release_win_data( data );
-            reparent_notify( event->display, hwnd, event->data.l[3], 0, 0 );
         }
         break;
 

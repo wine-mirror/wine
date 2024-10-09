@@ -376,6 +376,7 @@ struct host_window
 extern void host_window_destroy( struct host_window *win );
 extern void host_window_set_parent( struct host_window *win, Window parent );
 extern RECT host_window_configure_child( struct host_window *win, Window window, RECT rect, BOOL root_coords );
+extern POINT host_window_map_point( struct host_window *win, int x, int y );
 extern struct host_window *get_host_window( Window window, BOOL create );
 
 struct x11drv_thread_data
@@ -450,7 +451,6 @@ extern int alloc_system_colors;
 extern int xrender_error_base;
 extern char *process_name;
 extern Display *clipboard_display;
-extern UINT64 client_foreign_window_proc;
 
 /* atoms */
 
@@ -659,7 +659,6 @@ extern void attach_client_window( struct x11drv_win_data *data, Window client_wi
 extern void destroy_client_window( HWND hwnd, Window client_window );
 extern void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis, BOOL use_alpha );
 extern void change_systray_owner( Display *display, Window systray_window );
-extern HWND create_foreign_window( Display *display, Window window );
 extern BOOL update_clipboard( HWND hwnd );
 extern void init_win_context(void);
 extern DROPFILES *file_list_to_drop_files( const void *data, size_t size, size_t *ret_size );

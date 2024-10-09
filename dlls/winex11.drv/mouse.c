@@ -509,17 +509,15 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
     {
         if (window == root_window) pt = root_to_virtual_screen( pt.x, pt.y );
         else if (event_root == root_window) pt = root_to_virtual_screen( x_root, y_root );
+        else if (window == data->client_window)
+        {
+            pt.x += data->rects.client.left;
+            pt.y += data->rects.client.top;
+        }
         else
         {
-            if (window == data->whole_window)
-            {
-                pt.x += data->rects.visible.left - data->rects.client.left;
-                pt.y += data->rects.visible.top - data->rects.client.top;
-            }
-
-            if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-                pt.x = data->rects.client.right - data->rects.client.left - 1 - pt.x;
-            NtUserMapWindowPoints( hwnd, 0, &pt, 1, 0 /* per-monitor DPI */ );
+            pt.x += data->rects.visible.left;
+            pt.y += data->rects.visible.top;
         }
         release_win_data( data );
     }
