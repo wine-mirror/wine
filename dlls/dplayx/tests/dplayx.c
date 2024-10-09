@@ -965,6 +965,12 @@ typedef struct
     PackedPlayer playerInfo;
 } CreatePlayer;
 
+typedef struct
+{
+    DPID fromId;
+    DPID toId;
+} GameMessage;
+
 #include "poppack.h"
 
 #define bindUdp( port ) bindUdp_( __LINE__, port )
@@ -1174,6 +1180,14 @@ static void checkPackedPlayer_( int line, PackedPlayer *player, DWORD expectedFl
                            player->systemPlayerId );
     ok_( __FILE__, line )( player->fixedSize == sizeof( PackedPlayer ), "got fixed size %lu.\n", player->fixedSize );
     ok_( __FILE__, line )( !player->parentId, "got parent id %#lx.\n", player->parentId );
+}
+
+#define checkGameMessage( message, expectedFromId, expectedToId ) \
+        checkGameMessage_( __LINE__, message, expectedFromId, expectedToId )
+static void checkGameMessage_( int line, GameMessage *message, DPID expectedFromId, DPID expectedToId )
+{
+    ok_( __FILE__, line )( message->fromId == expectedFromId, "got source id %#lx.\n", message->fromId );
+    ok_( __FILE__, line )( message->toId == expectedToId, "got destination id %#lx.\n", message->toId );
 }
 
 #define receiveEnumSessionsRequest( sock, expectedAppGuid, expectedPassword, expectedFlags ) \
@@ -1826,6 +1840,34 @@ static void sendCreatePlayer_( int line, SOCKET sock, unsigned short tcpPort, un
 
     wsResult = send( sock, reserved, sizeof( reserved ), 0 );
     ok_( __FILE__, line )( wsResult == sizeof( reserved ), "send() returned %d.\n", wsResult );
+}
+
+#define receiveGuaranteedGameMessage( sock, expectedFromId, expectedToId, expectedData, expectedDataSize ) \
+        receiveGuaranteedGameMessage_( __LINE__, sock, expectedFromId, expectedToId, expectedData, expectedDataSize )
+static unsigned short receiveGuaranteedGameMessage_( int line, SOCKET sock, DPID expectedFromId, DPID expectedToId,
+                                                     void *expectedData, DWORD expectedDataSize )
+{
+    struct
+    {
+        SpHeader spHeader;
+        GameMessage request;
+        BYTE data[ 256 ];
+    } request;
+    unsigned short port;
+    int wsResult;
+
+    DWORD expectedSize = sizeof( request.spHeader ) + sizeof( request.request ) + expectedDataSize;
+
+    wsResult = receiveMessage_( line, sock, &request, expectedSize );
+    todo_wine ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
+    if ( wsResult == SOCKET_ERROR )
+        return 0;
+
+    port = checkSpHeader_( line, &request.spHeader, expectedSize );
+    checkGameMessage_( line, &request.request, expectedFromId, expectedToId );
+    ok_( __FILE__, line )( !memcmp( &request.data, expectedData, expectedDataSize ), "message data didn't match.\n" );
+
+    return port;
 }
 
 static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, WORD port )
@@ -4223,6 +4265,32 @@ static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD 
                         + expectedPlayerDataSize;
 
     ok_( __FILE__, line )( msgDataSize == expectedMsgDataSize, "got message size %lu.\n", msgDataSize );
+
+    return toId;
+}
+
+#define checkPlayerMessage( dp, expectedFromId, expectedData, expectedDataSize ) \
+        checkPlayerMessage_( __LINE__, dp, expectedFromId, expectedData, expectedDataSize )
+static DPID checkPlayerMessage_( int line, IDirectPlay4 *dp, DPID expectedFromId, void *expectedData,
+                                 DWORD expectedDataSize )
+{
+    DPID fromId, toId;
+    BYTE data[ 1024 ];
+    DWORD dataSize;
+    HRESULT hr;
+
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    memset( data, 0xcc, sizeof( data ) );
+    dataSize = sizeof( data );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, data, &dataSize );
+    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+    if ( FAILED( hr ) )
+        return toId;
+
+    ok_( __FILE__, line )( fromId == expectedFromId, "got source id %#lx.\n", fromId );
+    ok_( __FILE__, line )( !memcmp( data, expectedData, expectedDataSize ), "message data didn't match.\n" );
+    ok_( __FILE__, line )( dataSize == expectedDataSize, "got data size %lu.\n", dataSize );
 
     return toId;
 }
@@ -7576,6 +7644,83 @@ static void test_groups_cs(void)
 
 static void test_Send(void)
 {
+    DPSESSIONDESC2 appGuidDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+    };
+    DPSESSIONDESC2 serverDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+        .lpszSessionName = (WCHAR *) L"normal",
+        .dwReserved1 = 0xaabbccdd,
+    };
+    BYTE data[] = { 1, 2, 3, 4, 5, 6, 7, 8, };
+    IDirectPlay4 *dp;
+    SOCKET sendSock;
+    SOCKET recvSock;
+    HRESULT hr;
+    DPID dpid;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay4A, (void **) &dp );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    hr = IDirectPlayX_Send( dp, 0x07734, 0x1337, DPSEND_GUARANTEED, data, sizeof( data ) );
+    ok( hr == DPERR_UNINITIALIZED, "got hr %#lx.\n", hr );
+
+    init_TCPIP_provider( dp, "127.0.0.1", 0 );
+
+    hr = IDirectPlayX_Send( dp, 0x07734, 0x1337, DPSEND_GUARANTEED, data, sizeof( data ) );
+    ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
+
+    joinSession( dp, &appGuidDpsd, &serverDpsd, &sendSock, &recvSock );
+
+    createPlayer( dp, 0x07734, NULL, NULL, 0, 0, sendSock, recvSock );
+    createPlayer( dp, 0x14, NULL, NULL, 0, 0, sendSock, recvSock );
+
+    checkCreatePlayerOrGroupMessage( dp, DPPLAYERTYPE_PLAYER, 0x14, 2, NULL, 0, NULL, NULL, 0, DPPLAYER_LOCAL );
+
+    hr = IDirectPlayX_Send( dp, 0x07734, 0xdeadbeef, DPSEND_GUARANTEED, data, sizeof( data ) );
+    todo_wine ok( hr == DPERR_INVALIDPARAM, "got hr %#lx.\n", hr );
+
+    hr = IDirectPlayX_Send( dp, 0x07734, 0x1337, DPSEND_GUARANTEED, data, sizeof( data ) );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    receiveGuaranteedGameMessage( recvSock, 0x07734, 0x1337, data, sizeof( data ) );
+
+    hr = IDirectPlayX_Send( dp, 0x07734, 0x14, DPSEND_GUARANTEED, data, sizeof( data ) );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    dpid = checkPlayerMessage( dp, 0x07734, data, sizeof( data ) );
+    todo_wine ok( dpid == 0x14, "got destination id %#lx.\n", dpid );
+
+    hr = IDirectPlayX_Send( dp, 0x07734, 0x07734, DPSEND_GUARANTEED, data, sizeof( data ) );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    checkNoMorePlayerMessages( dp );
+    checkNoMoreMessages( recvSock );
+
+    hr = IDirectPlayX_Send( dp, 0x07734, DPID_ALLPLAYERS, DPSEND_GUARANTEED, data, sizeof( data ) );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    dpid = checkPlayerMessage( dp, 0x07734, data, sizeof( data ) );
+    todo_wine ok( dpid == 0x14, "got destination id %#lx.\n", dpid );
+    receiveGuaranteedGameMessage( recvSock, 0x07734, DPID_ALLPLAYERS, data, sizeof( data ) );
+
+    checkNoMorePlayerMessages( dp );
+    checkNoMoreMessages( recvSock );
+
+    closesocket( recvSock );
+    closesocket( sendSock );
+
+    IDirectPlayX_Release( dp );
+}
+
+static void test_interactive_Send(void)
+{
 
     IDirectPlay4 *pDP[2];
     DPSESSIONDESC2 dpsd;
@@ -9445,6 +9590,7 @@ START_TEST(dplayx)
     test_ADDFORWARD();
     test_CreatePlayer();
     test_CREATEPLAYER();
+    test_Send();
 
     if (!winetest_interactive)
     {
@@ -9481,7 +9627,7 @@ START_TEST(dplayx)
     test_groups_p2p();
     test_groups_cs();
 
-    test_Send();
+    test_interactive_Send();
     test_Receive();
     test_GetMessageCount();
     test_GetMessageQueue();
