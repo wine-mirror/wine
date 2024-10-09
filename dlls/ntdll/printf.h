@@ -498,8 +498,8 @@ static int FUNC_NAME(pf_vsnprintf)( FUNC_NAME(pf_output) *out, const APICHAR *fo
             if( x != number )
                 RtlFreeHeap( GetProcessHeap(), 0, x );
         }
-        else
-            continue;
+        else if (*p) r = FUNC_NAME(pf_output_string)( out, p, 1 );
+        else break;
 
         if( r<0 )
             return r;
