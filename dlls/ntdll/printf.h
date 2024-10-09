@@ -446,7 +446,7 @@ static int FUNC_NAME(pf_vsnprintf)( FUNC_NAME(pf_output) *out, const APICHAR *fo
         /* output a single character */
         else if( flags.Format == 'c' || flags.Format == 'C' )
         {
-            APICHAR ch = (APICHAR)va_arg( valist, int );
+            wchar_t ch = (wchar_t)va_arg( valist, int );
             r = FUNC_NAME(pf_handle_string_format)( out, &ch, 1, &flags, (flags.Format == 'C') );
         }
 
