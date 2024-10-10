@@ -2355,15 +2355,9 @@ BOOL WINAPI NtUserGetCaretPos( POINT *pt )
 
 BOOL set_ime_composition_rect( HWND hwnd, RECT rect )
 {
-    HWND root_hwnd;
-
-    if (!NtUserIsWindow( hwnd ))
-        return FALSE;
-
-    root_hwnd = NtUserGetAncestor( hwnd, GA_ROOT );
-    NtUserMapWindowPoints( hwnd, root_hwnd, (POINT *)&rect, 2, 0 /* per-monitor DPI */ );
-
-    return user_driver->pSetIMECompositionRect( root_hwnd, rect );
+    if (!NtUserIsWindow( hwnd )) return FALSE;
+    NtUserMapWindowPoints( hwnd, 0, (POINT *)&rect, 2, 0 /* per-monitor DPI */ );
+    return user_driver->pSetIMECompositionRect( NtUserGetAncestor( hwnd, GA_ROOT ), rect );
 }
 
 /*******************************************************************

@@ -507,14 +507,8 @@ BOOL X11DRV_SetIMECompositionRect( HWND hwnd, RECT rect )
         return FALSE;
     }
 
-    if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-    {
-        rect.left = data->rects.client.right - data->rects.client.left - 1 - rect.left;
-        rect.right = data->rects.client.right - data->rects.client.left - 1 - rect.right;
-    }
-
-    xpoint.x = rect.left + data->rects.client.left - data->rects.visible.left;
-    xpoint.y = rect.top + data->rects.client.top - data->rects.visible.top;
+    xpoint.x = rect.left - data->rects.visible.left;
+    xpoint.y = rect.top - data->rects.visible.top;
     attr = XVaCreateNestedList( 0, XNSpotLocation, &xpoint, NULL );
     if (attr)
     {
