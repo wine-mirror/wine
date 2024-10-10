@@ -473,6 +473,7 @@ sync_test("array_sort", function() {
 });
 
 sync_test("identifier_keywords", function() {
+    function get() { }
     { get /* asdf */: 10 }
     var set = 1234;
     var o = {

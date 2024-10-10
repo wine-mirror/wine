@@ -268,9 +268,9 @@ FunctionStatementList
 FunctionExpression
         : kFUNCTION left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
                                 { $$ = new_function_expression(ctx, NULL, $3, $6, NULL, ctx->begin + @1, @7 - @1 + 1); }
-        | kFUNCTION tIdentifier left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
+        | kFUNCTION Identifier left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
                                 { $$ = new_function_expression(ctx, $2, $4, $7, NULL, ctx->begin + @1, @8 - @1 + 1); }
-        | kFUNCTION tIdentifier kDCOL tIdentifier left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
+        | kFUNCTION Identifier kDCOL Identifier left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
                                 { $$ = new_function_expression(ctx, $4, $6, $9, $2, ctx->begin + @1, @10 - @1 + 1); }
 
 /* ECMA-262 10th Edition   14.1 */
