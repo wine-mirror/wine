@@ -511,6 +511,15 @@ sync_test("identifier_keywords", function() {
     ok(ro().default === 2, "ro().default = " + ro().default);
     ok(o.false === true, "o.false = " + o.false);
     ok(o.instanceof === 3, "o.instanceof = " + o.instanceof);
+
+    var tmp = false;
+    try {
+        eval('function var() { }');
+    }
+    catch(set) {
+        tmp = true;
+    }
+    ok(tmp === true, "Expected exception for 'function var() { }'");
 });
 
 function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerable,

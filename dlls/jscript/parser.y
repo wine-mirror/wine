@@ -527,7 +527,7 @@ TryStatement
 
 /* ECMA-262 3rd Edition    12.14 */
 Catch
-        : kCATCH left_bracket tIdentifier right_bracket Block
+        : kCATCH left_bracket Identifier right_bracket Block
                                 { $$ = new_catch_block(ctx, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.14 */
