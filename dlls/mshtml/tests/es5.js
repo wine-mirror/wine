@@ -473,6 +473,8 @@ sync_test("array_sort", function() {
 });
 
 sync_test("identifier_keywords", function() {
+    { get /* asdf */: 10 }
+    var set = 1234;
     var o = {
         if: 1,
         default: 2,
@@ -486,8 +488,8 @@ sync_test("identifier_keywords", function() {
         else: true,
         finally: true,
         for: true,
-        in: true,
-        instanceof: true,
+        set in(x) { },
+        get instanceof() { return 3; },
         new: true,
         return: true,
         switch: true,
@@ -508,6 +510,7 @@ sync_test("identifier_keywords", function() {
     ok(o.if === 1, "o.if = " + o.if);
     ok(ro().default === 2, "ro().default = " + ro().default);
     ok(o.false === true, "o.false = " + o.false);
+    ok(o.instanceof === 3, "o.instanceof = " + o.instanceof);
 });
 
 function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerable,

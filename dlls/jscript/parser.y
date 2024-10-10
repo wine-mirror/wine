@@ -221,7 +221,7 @@ static expression_t *new_prop_and_value_expression(parser_ctx_t*,property_list_t
 %type <expr> MemberExpression
 %type <expr> PrimaryExpression
 %type <expr> GetterSetterMethod
-%type <identifier> Identifier_opt
+%type <identifier> Identifier Identifier_opt
 %type <variable_list> VariableDeclarationList
 %type <variable_list> VariableDeclarationListNoIn
 %type <variable_declaration> VariableDeclaration
@@ -241,7 +241,7 @@ static expression_t *new_prop_and_value_expression(parser_ctx_t*,property_list_t
 %type <literal> PropertyName
 %type <literal> BooleanLiteral
 %type <ival> AssignOper
-%type <identifier> IdentifierName ReservedAsIdentifier
+%type <identifier> IdentifierName ReservedAsIdentifier ES5Keyword
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc kELSE
@@ -381,12 +381,12 @@ VariableDeclarationListNoIn
 
 /* ECMA-262 3rd Edition    12.2 */
 VariableDeclaration
-        : tIdentifier Initialiser_opt
+        : Identifier Initialiser_opt
                                 { $$ = new_variable_declaration(ctx, $1, $2); }
 
 /* ECMA-262 3rd Edition    12.2 */
 VariableDeclarationNoIn
-        : tIdentifier InitialiserNoIn_opt
+        : Identifier InitialiserNoIn_opt
                                 { $$ = new_variable_declaration(ctx, $1, $2); }
 
 /* ECMA-262 3rd Edition    12.2 */
@@ -860,7 +860,11 @@ PropertyName
 /* ECMA-262 3rd Edition    7.6 */
 Identifier_opt
         : /* empty*/            { $$ = NULL; }
-        | tIdentifier           { $$ = $1; }
+        | Identifier            { $$ = $1; }
+
+Identifier
+        : tIdentifier           { $$ = $1; }
+        | ES5Keyword            { $$ = $1; }
 
 /* ECMA-262 5.1 Edition    7.6 */
 IdentifierName
@@ -890,15 +894,12 @@ ReservedAsIdentifier
         | kFINALLY              { $$ = $1; }
         | kFOR                  { $$ = $1; }
         | kFUNCTION             { $$ = $1; }
-        | kGET                  { $$ = $1; }
         | kIF                   { $$ = $1; }
         | kIN                   { $$ = $1; }
         | kINSTANCEOF           { $$ = $1; }
-        | kLET                  { $$ = $1; }
         | kNEW                  { $$ = $1; }
         | kNULL                 { $$ = $1; }
         | kRETURN               { $$ = $1; }
-        | kSET                  { $$ = $1; }
         | kSWITCH               { $$ = $1; }
         | kTHIS                 { $$ = $1; }
         | kTHROW                { $$ = $1; }
@@ -909,6 +910,12 @@ ReservedAsIdentifier
         | kVOID                 { $$ = $1; }
         | kWHILE                { $$ = $1; }
         | kWITH                 { $$ = $1; }
+        | ES5Keyword            { $$ = $1; }
+
+ES5Keyword
+        : kGET                  { $$ = $1; }
+        | kLET                  { $$ = $1; }
+        | kSET                  { $$ = $1; }
 
 /* ECMA-262 3rd Edition    7.8 */
 Literal
