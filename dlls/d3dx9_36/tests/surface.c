@@ -779,8 +779,8 @@ static void test_D3DXGetImageInfo(void)
      * D3DFMTs that aren't fourCC values, but are supported in the fourCC
      * field.
      */
-    todo_wine check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_A16B16G16R16, 0, 0, 0, 0, 0, D3DFMT_A16B16G16R16);
-    todo_wine check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_Q16W16V16U16, 0, 0, 0, 0, 0, D3DFMT_Q16W16V16U16);
+    check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_A16B16G16R16, 0, 0, 0, 0, 0, D3DFMT_A16B16G16R16);
+    check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_Q16W16V16U16, 0, 0, 0, 0, 0, D3DFMT_Q16W16V16U16);
     check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_R16F, 0, 0, 0, 0, 0, D3DFMT_R16F);
     check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_G16R16F, 0, 0, 0, 0, 0, D3DFMT_G16R16F);
     check_dds_pixel_format(DDS_PF_FOURCC, D3DFMT_A16B16G16R16F, 0, 0, 0, 0, 0, D3DFMT_A16B16G16R16F);
@@ -805,11 +805,13 @@ static void test_D3DXGetImageInfo(void)
     check_dds_pixel_format(DDS_PF_LUMINANCE, 0, 8, 0xff, 0, 0, 0, D3DFMT_L8);
     check_dds_pixel_format(DDS_PF_LUMINANCE, 0, 16, 0xffff, 0, 0, 0, D3DFMT_L16);
     check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 16, 0x00ff, 0, 0, 0xff00, D3DFMT_A8L8);
+    /* 8bpp works too for D3DFMT_A8L8. */
+    check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 8, 0x00ff, 0, 0, 0xff00, D3DFMT_A8L8);
     check_dds_pixel_format(DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 8, 0x0f, 0, 0, 0xf0, D3DFMT_A4L4);
     check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0, 0, D3DFMT_V8U8);
     check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0, 0, D3DFMT_V16U16);
-    todo_wine check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 32, 0xff, 0xff00, 0x00ff0000, 0xff000000, D3DFMT_Q8W8V8U8);
-    todo_wine check_dds_pixel_format(DDS_PF_BUMPDUDV | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, D3DFMT_A2W10V10U10);
+    check_dds_pixel_format(DDS_PF_BUMPDUDV, 0, 32, 0xff, 0xff00, 0x00ff0000, 0xff000000, D3DFMT_Q8W8V8U8);
+    check_dds_pixel_format(DDS_PF_BUMPDUDV | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000, D3DFMT_A2W10V10U10);
     check_dds_pixel_format(DDS_PF_BUMPLUMINANCE, 0, 32, 0x0000ff, 0x00ff00, 0xff0000, 0, D3DFMT_X8L8V8U8);
     todo_wine check_dds_pixel_format(DDS_PF_BUMPLUMINANCE, 0, 16, 0x001f, 0x03e0, 0xfc00, 0, D3DFMT_L6V5U5);
     check_dds_pixel_format(DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0, D3DFMT_P8);

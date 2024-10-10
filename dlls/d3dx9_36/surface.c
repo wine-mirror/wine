@@ -257,6 +257,8 @@ static const struct
     { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','4') }, D3DFMT_DXT4 },
     { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','5') }, D3DFMT_DXT5 },
     /* These aren't actually fourcc values, they're just D3DFMT values. */
+    { { 32, DDS_PF_FOURCC, 0x24 }, D3DFMT_A16B16G16R16 },
+    { { 32, DDS_PF_FOURCC, 0x6e }, D3DFMT_Q16W16V16U16 },
     { { 32, DDS_PF_FOURCC, 0x6f }, D3DFMT_R16F, },
     { { 32, DDS_PF_FOURCC, 0x70 }, D3DFMT_G16R16F },
     { { 32, DDS_PF_FOURCC, 0x71 }, D3DFMT_A16B16G16R16F },
@@ -287,11 +289,15 @@ static const struct
     { { 32, DDS_PF_LUMINANCE, 0, 16, 0xffff },                              D3DFMT_L16 },
     { { 32, DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0,  8, 0x000f, 0, 0, 0x00f0 }, D3DFMT_A4L4 },
     { { 32, DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 16, 0x00ff, 0, 0, 0xff00 }, D3DFMT_A8L8 },
+    /* Exceptional case, A8L8 can also have 8bpp. */
+    { { 32, DDS_PF_LUMINANCE | DDS_PF_ALPHA, 0, 8,  0x00ff, 0, 0, 0xff00 }, D3DFMT_A8L8 },
     /* DDS_PF_ALPHA_ONLY. */
     { { 32, DDS_PF_ALPHA_ONLY, 0, 8, 0, 0, 0, 0xff }, D3DFMT_A8 },
     /* DDS_PF_BUMPDUDV. */
     { { 32, DDS_PF_BUMPDUDV, 0, 16, 0x000000ff, 0x0000ff00, 0x00000000, 0x00000000 }, D3DFMT_V8U8 },
     { { 32, DDS_PF_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 }, D3DFMT_V16U16 },
+    { { 32, DDS_PF_BUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 }, D3DFMT_Q8W8V8U8 },
+    { { 32, DDS_PF_BUMPDUDV | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 }, D3DFMT_A2W10V10U10 },
     /* DDS_PF_BUMPLUMINANCE. */
     { { 32, DDS_PF_BUMPLUMINANCE, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 }, D3DFMT_X8L8V8U8 },
 };
