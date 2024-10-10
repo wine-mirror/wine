@@ -279,8 +279,8 @@ FunctionBody
 
 /* ECMA-262 3rd Edition    13 */
 FormalParameterList
-        : tIdentifier           { $$ = new_parameter_list(ctx, $1); }
-        | FormalParameterList ',' tIdentifier
+        : Identifier            { $$ = new_parameter_list(ctx, $1); }
+        | FormalParameterList ',' Identifier
                                 { $$ = parameter_list_add(ctx, $1, $3); }
 
 /* ECMA-262 3rd Edition    13 */
