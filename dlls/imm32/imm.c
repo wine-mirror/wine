@@ -2637,7 +2637,7 @@ BOOL WINAPI ImmSetCompositionStringW(
 BOOL WINAPI ImmSetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
 {
     INPUTCONTEXT *ctx;
-    POINT point;
+    RECT rect;
 
     TRACE( "himc %p, composition %s\n", himc, debugstr_composition( composition ) );
 
@@ -2652,17 +2652,10 @@ BOOL WINAPI ImmSetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
 
     if (composition->dwStyle & (CFS_RECT | CFS_POINT | CFS_FORCE_POSITION))
     {
-        if (composition->dwStyle & CFS_RECT)
-        {
-            point.x = composition->rcArea.left;
-            point.y = composition->rcArea.top;
-        }
-        else
-        {
-            point = composition->ptCurrentPos;
-        }
-
-        NtUserCallTwoParam( (ULONG_PTR)ctx->hWnd, (ULONG_PTR)&point, NtUserCallTwoParam_SetIMECompositionWindowPos );
+        if (composition->dwStyle & CFS_RECT) rect = composition->rcArea;
+        else SetRect( &rect, composition->ptCurrentPos.x, composition->ptCurrentPos.y,
+                      composition->ptCurrentPos.x + 1, composition->ptCurrentPos.y + 1 );
+        NtUserCallTwoParam( (ULONG_PTR)ctx->hWnd, (ULONG_PTR)&rect, NtUserCallTwoParam_SetIMECompositionRect );
     }
 
     ImmUnlockIMC( himc );

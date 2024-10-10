@@ -6742,8 +6742,8 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     case NtUserCallTwoParam_SetIconParam:
         return set_icon_param( UlongToHandle(arg1), UlongToHandle(arg2) );
 
-    case NtUserCallTwoParam_SetIMECompositionWindowPos:
-        return set_ime_composition_window_pos( UlongToHandle(arg1), (const POINT *)arg2 );
+    case NtUserCallTwoParam_SetIMECompositionRect:
+        return set_ime_composition_rect( UlongToHandle(arg1), *(const RECT *)arg2 );
 
     case NtUserCallTwoParam_UnhookWindowsHook:
         return unhook_windows_hook( arg1, (HOOKPROC)arg2 );

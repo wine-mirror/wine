@@ -489,12 +489,14 @@ void xim_set_focus( HWND hwnd, BOOL focus )
     else XUnsetICFocus( xic );
 }
 
-BOOL X11DRV_SetIMECompositionWindowPos( HWND hwnd, const POINT *point )
+/***********************************************************************
+ *      SetIMECompositionRect (X11DRV.@)
+ */
+BOOL X11DRV_SetIMECompositionRect( HWND hwnd, RECT rect )
 {
     struct x11drv_win_data *data = NULL;
     XVaNestedList attr;
     XPoint xpoint;
-    POINT pt;
 
     if (!(input_style & XIMPreeditPosition))
         return FALSE;
@@ -505,12 +507,14 @@ BOOL X11DRV_SetIMECompositionWindowPos( HWND hwnd, const POINT *point )
         return FALSE;
     }
 
-    pt = *point;
     if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-        pt.x = data->rects.client.right - data->rects.client.left - 1 - pt.x;
+    {
+        rect.left = data->rects.client.right - data->rects.client.left - 1 - rect.left;
+        rect.right = data->rects.client.right - data->rects.client.left - 1 - rect.right;
+    }
 
-    xpoint.x = pt.x + data->rects.client.left - data->rects.visible.left;
-    xpoint.y = pt.y + data->rects.client.top - data->rects.visible.top;
+    xpoint.x = rect.left + data->rects.client.left - data->rects.visible.left;
+    xpoint.y = rect.top + data->rects.client.top - data->rects.visible.top;
     attr = XVaCreateNestedList( 0, XNSpotLocation, &xpoint, NULL );
     if (attr)
     {

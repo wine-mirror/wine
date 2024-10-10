@@ -686,7 +686,7 @@ static void nulldrv_NotifyIMEStatus( HWND hwnd, UINT status )
 {
 }
 
-static BOOL nulldrv_SetIMECompositionWindowPos( HWND hwnd, const POINT *point )
+static BOOL nulldrv_SetIMECompositionRect( HWND hwnd, RECT rect )
 {
     return FALSE;
 }
@@ -1095,9 +1095,9 @@ static void loaderdrv_NotifyIMEStatus( HWND hwnd, UINT status )
     return load_driver()->pNotifyIMEStatus( hwnd, status );
 }
 
-static BOOL loaderdrv_SetIMECompositionWindowPos( HWND hwnd, const POINT *point )
+static BOOL loaderdrv_SetIMECompositionRect( HWND hwnd, RECT rect )
 {
-    return load_driver()->pSetIMECompositionWindowPos( hwnd, point );
+    return load_driver()->pSetIMECompositionRect( hwnd, rect );
 }
 
 static LONG loaderdrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd,
@@ -1234,7 +1234,7 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_ReleaseKbdTables,
     loaderdrv_ImeProcessKey,
     loaderdrv_NotifyIMEStatus,
-    loaderdrv_SetIMECompositionWindowPos,
+    loaderdrv_SetIMECompositionRect,
     /* cursor/icon functions */
     nulldrv_DestroyCursorIcon,
     loaderdrv_SetCursor,
@@ -1327,7 +1327,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ReleaseKbdTables);
     SET_USER_FUNC(ImeProcessKey);
     SET_USER_FUNC(NotifyIMEStatus);
-    SET_USER_FUNC(SetIMECompositionWindowPos);
+    SET_USER_FUNC(SetIMECompositionRect);
     SET_USER_FUNC(DestroyCursorIcon);
     SET_USER_FUNC(SetCursor);
     SET_USER_FUNC(GetCursorPos);
