@@ -34,6 +34,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 WINE_DECLARE_DEBUG_CHANNEL(imm);
 
+static pthread_mutex_t ime_mutex = PTHREAD_MUTEX_INITIALIZER;
+static RECT ime_composition_rect;
+
 /* return the name of an Mac event */
 static const char *dbgstr_event(int type)
 {
@@ -307,32 +310,36 @@ BOOL query_ime_char_rect(macdrv_query* query)
     HWND hwnd = macdrv_get_window_hwnd(query->window);
     void *himc = query->ime_char_rect.himc;
     CFRange *range = &query->ime_char_rect.range;
-    GUITHREADINFO info = {.cbSize = sizeof(info)};
-    BOOL ret = FALSE;
 
     TRACE_(imm)("win %p/%p himc %p range %ld-%ld\n", hwnd, query->window, himc, range->location,
                 range->length);
 
-    if (NtUserGetGUIThreadInfo(0, &info))
-    {
-        /* NtUserGetGUIThreadInfo always return client-relative rcCaret in window DPI */
-        NtUserMapWindowPoints(info.hwndCaret, 0, (POINT *)&info.rcCaret, 2, NtUserGetDpiForWindow(info.hwndCaret));
-        NtUserLogicalToPerMonitorDPIPhysicalPoint(info.hwndCaret, (POINT *)&info.rcCaret.left);
-        NtUserLogicalToPerMonitorDPIPhysicalPoint(info.hwndCaret, (POINT *)&info.rcCaret.right);
-        if (range->length && info.rcCaret.left == info.rcCaret.right) info.rcCaret.right++;
-        query->ime_char_rect.rect = cgrect_from_rect(info.rcCaret);
-        ret = TRUE;
-    }
+    pthread_mutex_lock(&ime_mutex);
+    query->ime_char_rect.rect = cgrect_from_rect(ime_composition_rect);
+    pthread_mutex_unlock(&ime_mutex);
 
-    TRACE_(imm)(" -> %s range %ld-%ld rect %s\n", ret ? "TRUE" : "FALSE", range->location,
+    TRACE_(imm)(" -> range %ld-%ld rect %s\n", range->location,
                 range->length, wine_dbgstr_cgrect(query->ime_char_rect.rect));
 
-    return ret;
+    return TRUE;
 }
 
 
 /***********************************************************************
- *      NotifyIMEStatus (X11DRV.@)
+ *      SetIMECompositionRect (MACDRV.@)
+ */
+BOOL macdrv_SetIMECompositionRect(HWND hwnd, RECT rect)
+{
+    TRACE("hwnd %p, rect %s\n", hwnd, wine_dbgstr_rect(&rect));
+    pthread_mutex_lock(&ime_mutex);
+    ime_composition_rect = rect;
+    pthread_mutex_unlock(&ime_mutex);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *      NotifyIMEStatus (MACDRV.@)
  */
 void macdrv_NotifyIMEStatus( HWND hwnd, UINT status )
 {
