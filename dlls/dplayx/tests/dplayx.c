@@ -2176,12 +2176,12 @@ static void checkPlayerList_( int line, IDirectPlay4 *dp, ExpectedPlayer *expect
                            data.actualPlayerCount );
 }
 
-#define check_Open( dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, port, expectedPassword, \
+#define check_Open( dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, listenPort, expectedPassword, \
                     idReplyHr, addForwardReplyHr, expectedHr ) \
-        check_Open_( __LINE__, dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, port, expectedPassword, \
+        check_Open_( __LINE__, dp, dpsd, serverDpsd, idRequestExpected, forwardRequestExpected, listenPort, expectedPassword, \
                      idReplyHr, addForwardReplyHr, expectedHr )
 static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, const DPSESSIONDESC2 *serverDpsd,
-                         BOOL idRequestExpected, BOOL forwardRequestExpected, unsigned short port,
+                         BOOL idRequestExpected, BOOL forwardRequestExpected, unsigned short listenPort,
                          const WCHAR *expectedPassword, HRESULT idReplyHr, HRESULT addForwardReplyHr,
                          HRESULT expectedHr )
 {
@@ -2196,7 +2196,7 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
     wsResult = WSAStartup( MAKEWORD( 2, 0 ), &wsaData );
     ok_( __FILE__, line )( !wsResult, "WSAStartup() returned %d.\n", wsResult );
 
-    listenSock = listenTcp_( line, port );
+    listenSock = listenTcp_( line, listenPort );
 
     param = openAsync( dp, dpsd, DPOPEN_JOIN );
 
@@ -2211,16 +2211,16 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
 
         sendSock = connectTcp_( line, port );
 
-        sendRequestPlayerReply_( line, sendSock, port, 0x12345678, idReplyHr );
+        sendRequestPlayerReply_( line, sendSock, listenPort, 0x12345678, idReplyHr );
 
         if ( forwardRequestExpected )
         {
             receiveAddForwardRequest_( line, recvSock, 0x12345678, expectedPassword, serverDpsd->dwReserved1 );
 
             if ( addForwardReplyHr == DP_OK )
-                sendSuperEnumPlayersReply_( line, sendSock, port, 2399, serverDpsd, L"normal" );
+                sendSuperEnumPlayersReply_( line, sendSock, listenPort, 2399, serverDpsd, L"normal" );
             else
-                sendAddForwardReply_( line, sendSock, 2349, addForwardReplyHr );
+                sendAddForwardReply_( line, sendSock, listenPort, addForwardReplyHr );
 
             hr = openAsyncWait( param, 7000 );
             ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
