@@ -2248,6 +2248,11 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
                 checkHR( DP_OK, hr );
             }
         }
+        else
+        {
+            hr = openAsyncWait( param, 7000 );
+            ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
+        }
         closesocket( sendSock );
         closesocket( recvSock );
     }
