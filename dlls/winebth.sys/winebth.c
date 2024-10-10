@@ -29,6 +29,7 @@
 #include <winternl.h>
 #include <initguid.h>
 #include <devpkey.h>
+#include <bthdef.h>
 #include <winioctl.h>
 #include <ddk/wdm.h>
 
@@ -67,6 +68,8 @@ struct bluetooth_radio
     DEVICE_OBJECT *device_obj;
     winebluetooth_radio_t radio;
     WCHAR *hw_name;
+    UNICODE_STRING bthport_symlink_name;
+    UNICODE_STRING bthradio_symlink_name;
 };
 
 void WINAPIV append_id( struct string_buffer *buffer, const WCHAR *format, ... )
@@ -348,10 +351,27 @@ static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
             break;
         }
         case IRP_MN_START_DEVICE:
+            if (IoRegisterDeviceInterface( device_obj, &GUID_BTHPORT_DEVICE_INTERFACE, NULL,
+                                          &device->bthport_symlink_name ) == STATUS_SUCCESS)
+                IoSetDeviceInterfaceState( &device->bthport_symlink_name, TRUE );
+
+            if (IoRegisterDeviceInterface( device_obj, &GUID_BLUETOOTH_RADIO_INTERFACE, NULL,
+                                          &device->bthradio_symlink_name ) == STATUS_SUCCESS)
+                IoSetDeviceInterfaceState( &device->bthradio_symlink_name, TRUE );
             ret = STATUS_SUCCESS;
             break;
         case IRP_MN_REMOVE_DEVICE:
             assert( device->removed );
+            if (device->bthport_symlink_name.Buffer)
+            {
+                IoSetDeviceInterfaceState(&device->bthport_symlink_name, FALSE);
+                RtlFreeUnicodeString( &device->bthport_symlink_name );
+            }
+            if (device->bthradio_symlink_name.Buffer)
+            {
+                IoSetDeviceInterfaceState(&device->bthradio_symlink_name, FALSE);
+                RtlFreeUnicodeString( &device->bthradio_symlink_name );
+            }
             free( device->hw_name );
             winebluetooth_radio_free( device->radio );
             IoDeleteDevice( device->device_obj );
