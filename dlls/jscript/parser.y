@@ -795,7 +795,11 @@ ArgumentList
 /* ECMA-262 3rd Edition    11.1 */
 PrimaryExpression
         : kTHIS                 { $$ = new_expression(ctx, EXPR_THIS, 0); }
+        /* We have to lay out the keywords explicitly instead of using Identifier, see LabelledStatement. */
         | tIdentifier           { $$ = new_identifier_expression(ctx, $1); }
+        | kGET                  { $$ = new_identifier_expression(ctx, $1); }
+        | kSET                  { $$ = new_identifier_expression(ctx, $1); }
+        | kLET                  { $$ = new_identifier_expression(ctx, $1); }
         | Literal               { $$ = new_literal_expression(ctx, $1); }
         | ArrayLiteral          { $$ = $1; }
         | ObjectLiteral         { $$ = $1; }
