@@ -475,6 +475,11 @@ sync_test("array_sort", function() {
 sync_test("identifier_keywords", function() {
     function get(let, set) { }
     { get /* asdf */: 10 }
+    let /* block label */ : {
+        break let;
+        ok(false, "did not break out of 'let' labelled block statement");
+    }
+    set: var let;
     var set = 1234;
     var o = {
         if: 1,

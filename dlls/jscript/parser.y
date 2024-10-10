@@ -244,7 +244,8 @@ static expression_t *new_prop_and_value_expression(parser_ctx_t*,property_list_t
 %type <identifier> IdentifierName ReservedAsIdentifier ES5Keyword
 
 %nonassoc LOWER_THAN_ELSE
-%nonassoc kELSE
+%nonassoc kELSE kIN kINSTANCEOF ':'
+%nonassoc kGET kLET kSET
 
 %%
 
@@ -479,6 +480,14 @@ WithStatement
 LabelledStatement
         : tIdentifier ':' Statement
                                 { $$ = new_labelled_statement(ctx, @$, $1, $3); }
+
+        /* We have to lay out the keywords explicitly instead of using Identifier, as otherwise bison's parser
+         * wouldn't be able to figure out whether to reduce the Identifier or shift the colon (following the
+         * label and thus treating it as a label). This happens because the parser has only one lookahead token
+         * that can be used to decide a shift/reduce and would introduce a conflict in this case... */
+        | kGET ':' Statement    { $$ = new_labelled_statement(ctx, @$, $1, $3); }
+        | kSET ':' Statement    { $$ = new_labelled_statement(ctx, @$, $1, $3); }
+        | kLET ':' Statement    { $$ = new_labelled_statement(ctx, @$, $1, $3); }
 
 /* ECMA-262 3rd Edition    12.11 */
 SwitchStatement
