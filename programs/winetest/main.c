@@ -883,28 +883,22 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
     }
     else
     {
+        char *data, tmpname[MAX_PATH];
+        HANDLE tmpfile = create_temp_file( tmpname );
         int status;
         DWORD pid, size, start = GetTickCount();
         char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
+
         report (R_STEP, "Running: %s:%s", test->name, subtest);
         xprintf ("%s:%s start %s\n", test->name, subtest, file);
         /* Flush to disk so we know which test caused Windows to crash if it does */
         FlushFileBuffers(out_file);
-        if (quiet_mode > 1)
-        {
-            char *data, tmpname[MAX_PATH];
-            HANDLE tmpfile = create_temp_file( tmpname );
-            status = run_ex (cmd, tmpfile, tempdir, 120000, FALSE, &pid);
-            data = flush_temp_file( tmpname, tmpfile, &size );
-            if (status || size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
-            free( data );
-        }
-        else
-        {
-            DWORD start_size = GetFileSize( out_file, NULL );
-            status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
-            size = GetFileSize( out_file, NULL ) - start_size;
-        }
+
+        status = run_ex( cmd, tmpfile, tempdir, 120000, FALSE, &pid );
+        data = flush_temp_file( tmpname, tmpfile, &size );
+        if (quiet_mode <= 1 || status || size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
+        free( data );
+
         if (status == -2) status = -GetLastError();
         free(cmd);
         xprintf ("%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000, size);
