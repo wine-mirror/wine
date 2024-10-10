@@ -1029,7 +1029,8 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
     long monitors[4];
     XEvent xev;
 
-    if (!(data->net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop())
+    if (!(data->net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop()
+        || NtUserGetWindowLongW( data->hwnd, GWL_STYLE ) & WS_MINIMIZE)
         return;
 
     /* If the current display device handler cannot detect dynamic device changes, do not use
