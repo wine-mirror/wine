@@ -27,6 +27,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winternl.h>
+#include <winnls.h>
 #include <initguid.h>
 #include <devpkey.h>
 #include <bthdef.h>
@@ -66,6 +67,9 @@ struct bluetooth_radio
     BOOL removed;
 
     DEVICE_OBJECT *device_obj;
+    CRITICAL_SECTION props_cs;
+    winebluetooth_radio_props_mask_t props_mask; /* Guarded by props_cs */
+    struct winebluetooth_radio_properties props; /* Guarded by props_cs */
     winebluetooth_radio_t radio;
     WCHAR *hw_name;
     UNICODE_STRING bthport_symlink_name;
@@ -175,6 +179,10 @@ static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added 
     device->radio = event.radio;
     device->removed = FALSE;
     device->hw_name = hw_name;
+    device->props = event.props;
+    device->props_mask = event.props_mask;
+
+    InitializeCriticalSection( &device->props_cs );
 
     EnterCriticalSection( &device_list_cs );
     list_add_tail( &device_list, &device->entry );
@@ -329,6 +337,41 @@ static NTSTATUS query_id(const struct bluetooth_radio *ext, IRP *irp, BUS_QUERY_
     return STATUS_SUCCESS;
 }
 
+/* Caller must hold props_cs */
+static void bluetooth_radio_set_properties( DEVICE_OBJECT *obj,
+                                            winebluetooth_radio_props_mask_t mask,
+                                            struct winebluetooth_radio_properties *props )
+{
+    if (mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS)
+    {
+        union
+        {
+            UINT64 uint;
+            BYTE addr[8];
+        } radio_addr = {0};
+        memcpy( &radio_addr.addr[2], props->address.rgBytes, sizeof( props->address.rgBytes ) );
+        IoSetDevicePropertyData( obj, &DEVPKEY_BluetoothRadio_Address, LOCALE_NEUTRAL, 0,
+                                 DEVPROP_TYPE_UINT64, sizeof( radio_addr ), &radio_addr );
+    }
+    if (mask & WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER)
+    {
+        UINT16 manufacturer = props->manufacturer;
+        IoSetDevicePropertyData( obj, &DEVPKEY_BluetoothRadio_Manufacturer, LOCALE_NEUTRAL,
+                                 0, DEVPROP_TYPE_UINT16, sizeof( manufacturer ), &manufacturer );
+    }
+    if (mask & WINEBLUETOOTH_RADIO_PROPERTY_NAME)
+    {
+        WCHAR buf[BLUETOOTH_MAX_NAME_SIZE * sizeof(WCHAR)];
+        INT ret;
+
+        if ((ret = MultiByteToWideChar( CP_ACP, 0, props->name, -1, buf, BLUETOOTH_MAX_NAME_SIZE)))
+            IoSetDevicePropertyData( obj, &DEVPKEY_NAME, LOCALE_NEUTRAL, 0, DEVPROP_TYPE_STRING, ret, buf );
+    }
+    if (mask & WINEBLUETOOTH_RADIO_PROPERTY_VERSION)
+        IoSetDevicePropertyData( obj, &DEVPKEY_BluetoothRadio_LMPVersion, LOCALE_NEUTRAL, 0, DEVPROP_TYPE_BYTE,
+                                 sizeof( props->version ), &props->version );
+}
+
 static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -351,6 +394,10 @@ static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
             break;
         }
         case IRP_MN_START_DEVICE:
+            EnterCriticalSection( &device->props_cs );
+            bluetooth_radio_set_properties( device_obj, device->props_mask, &device->props );
+            LeaveCriticalSection( &device->props_cs );
+
             if (IoRegisterDeviceInterface( device_obj, &GUID_BTHPORT_DEVICE_INTERFACE, NULL,
                                           &device->bthport_symlink_name ) == STATUS_SUCCESS)
                 IoSetDeviceInterfaceState( &device->bthport_symlink_name, TRUE );

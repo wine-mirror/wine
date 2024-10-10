@@ -95,11 +95,55 @@ static inline const char *debugstr_minor_function_code( UCHAR code )
 }
 #undef XX
 
+/* Undocumented device properties for Bluetooth radios. */
+#define DEFINE_BTH_RADIO_DEVPROPKEY( d, i )                                                        \
+    DEFINE_DEVPROPKEY( DEVPKEY_BluetoothRadio_##d, 0xa92f26ca, 0xeda7, 0x4b1d, 0x9d, 0xb2, 0x27,   \
+                       0xb6, 0x8a, 0xa5, 0xa2, 0xeb, (i) )
+
+DEFINE_BTH_RADIO_DEVPROPKEY( Address, 1 );                         /* DEVPROP_TYPE_UINT64 */
+DEFINE_BTH_RADIO_DEVPROPKEY( Manufacturer, 2 );                    /* DEVPROP_TYPE_UINT16 */
+DEFINE_BTH_RADIO_DEVPROPKEY( LMPSupportedFeatures, 3 );            /* DEVPROP_TYPE_UINT64 */
+DEFINE_BTH_RADIO_DEVPROPKEY( LMPVersion, 4 );                      /* DEVPROP_TYPE_BYTE */
+DEFINE_BTH_RADIO_DEVPROPKEY( HCIVendorFeatures, 8 );               /* DEVPROP_TYPE_UINT64 */
+DEFINE_BTH_RADIO_DEVPROPKEY( MaximumAdvertisementDataLength, 17 ); /* DEVPROP_TYPE_UINT16 */
+DEFINE_BTH_RADIO_DEVPROPKEY( LELocalSupportedFeatures, 22 );       /* DEVPROP_TYPE_UINT64 */
+
 typedef struct
 {
     UINT_PTR handle;
 } winebluetooth_radio_t;
 
+typedef UINT16 winebluetooth_radio_props_mask_t;
+
+#define WINEBLUETOOTH_RADIO_PROPERTY_NAME         (1)
+#define WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS      (1 << 2)
+#define WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERABLE (1 << 3)
+#define WINEBLUETOOTH_RADIO_PROPERTY_CONNECTABLE  (1 << 4)
+#define WINEBLUETOOTH_RADIO_PROPERTY_CLASS        (1 << 5)
+#define WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER (1 << 6)
+#define WINEBLUETOOTH_RADIO_PROPERTY_VERSION      (1 << 7)
+#define WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERING  (1 << 8)
+#define WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE     (1 << 9)
+
+#define WINEBLUETOOTH_RADIO_ALL_PROPERTIES                                                         \
+    (WINEBLUETOOTH_RADIO_PROPERTY_NAME | WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS |                    \
+     WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERABLE | WINEBLUETOOTH_RADIO_PROPERTY_CONNECTABLE |        \
+     WINEBLUETOOTH_RADIO_PROPERTY_CLASS | WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER |              \
+     WINEBLUETOOTH_RADIO_PROPERTY_VERSION | WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERING |             \
+     WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE)
+
+struct winebluetooth_radio_properties
+{
+    BOOL discoverable;
+    BOOL connectable;
+    BOOL discovering;
+    BOOL pairable;
+    BLUETOOTH_ADDRESS address;
+    CHAR name[BLUETOOTH_MAX_NAME_SIZE];
+    ULONG class;
+    USHORT manufacturer;
+    BYTE version;
+};
 
 NTSTATUS winebluetooth_radio_get_unique_name( winebluetooth_radio_t radio, char *name,
                                               SIZE_T *size );
@@ -112,6 +156,8 @@ enum winebluetooth_watcher_event_type
 
 struct winebluetooth_watcher_event_radio_added
 {
+    winebluetooth_radio_props_mask_t props_mask;
+    struct winebluetooth_radio_properties props;
     winebluetooth_radio_t radio;
 };
 

@@ -148,6 +148,97 @@ static NTSTATUS bluez_get_objects_async( DBusConnection *connection, DBusPending
     DBUS_DICT_ENTRY_END_CHAR_AS_STRING                                                             \
     DBUS_DICT_ENTRY_END_CHAR_AS_STRING
 
+
+static void parse_mac_address( const char *addr_str, BYTE dest[6] )
+{
+    int addr[6], i;
+
+    sscanf( addr_str, "%x:%x:%x:%x:%x:%x", &addr[0], &addr[1], &addr[2], &addr[3], &addr[4],
+            &addr[5] );
+    for (i = 0 ; i < 6; i++)
+        dest[i] = addr[i];
+}
+
+static void bluez_radio_prop_from_dict_entry( const char *prop_name, DBusMessageIter *variant,
+                                              struct winebluetooth_radio_properties *props,
+                                              winebluetooth_radio_props_mask_t *props_mask,
+                                              winebluetooth_radio_props_mask_t wanted_props_mask )
+{
+    TRACE_(dbus)( "(%s, %p, %p, %p, %#x)\n", debugstr_a( prop_name ), variant, props, props_mask,
+                  wanted_props_mask );
+
+    if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS &&
+        !strcmp( prop_name, "Address" ) &&
+        p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_STRING)
+    {
+        const char *addr_str;
+        p_dbus_message_iter_get_basic( variant, &addr_str );
+        parse_mac_address( addr_str, props->address.rgBytes );
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_CLASS &&
+             !strcmp( prop_name, "Class" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_UINT32)
+    {
+        dbus_uint32_t class;
+        p_dbus_message_iter_get_basic( variant, &class );
+        props->class = class;
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_CLASS;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER &&
+             !strcmp( prop_name, "Manufacturer" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_UINT16)
+    {
+        dbus_uint16_t manufacturer;
+        p_dbus_message_iter_get_basic( variant, &manufacturer );
+        props->manufacturer = manufacturer;
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_CONNECTABLE &&
+             !strcmp( prop_name, "Connectable" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BOOLEAN)
+    {
+        dbus_bool_t connectable;
+        p_dbus_message_iter_get_basic( variant, &connectable );
+        props->connectable = connectable != 0;
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_CONNECTABLE;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERABLE &&
+             !strcmp( prop_name, "Discoverable" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BOOLEAN)
+    {
+        dbus_bool_t discoverable;
+        p_dbus_message_iter_get_basic( variant, &discoverable );
+        props->discoverable = discoverable != 0;
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERABLE;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERING &&
+             !strcmp( prop_name, "Discovering") &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BOOLEAN)
+    {
+        dbus_bool_t discovering;
+        p_dbus_message_iter_get_basic( variant, &discovering );
+        props->discovering = discovering != 0;
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERING;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE &&
+             !strcmp( prop_name, "Pairable" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BOOLEAN)
+    {
+        dbus_bool_t pairable;
+        p_dbus_message_iter_get_basic( variant, &pairable );
+        props->pairable = pairable != 0;
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_VERSION &&
+             !strcmp( prop_name, "Version" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BYTE)
+    {
+        p_dbus_message_iter_get_basic( variant, &props->version );
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_VERSION;
+    }
+}
+
 struct bluez_watcher_ctx
 {
     void *init_device_list_call;
@@ -253,6 +344,8 @@ static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct lis
         {
             if (!strcmp( iface, BLUEZ_INTERFACE_ADAPTER ))
             {
+                const char *prop_name;
+                DBusMessageIter variant;
                 struct bluez_init_entry *init_device = calloc( 1, sizeof( *init_device ) );
                 struct unix_name *radio_name;
 
@@ -267,6 +360,12 @@ static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct lis
                     free( init_device );
                     status = STATUS_NO_MEMORY;
                     goto done;
+                }
+                while ((prop_name = bluez_next_dict_entry( &prop_iter, &variant )))
+                {
+                    bluez_radio_prop_from_dict_entry(
+                        prop_name, &variant, &init_device->object.radio.props,
+                        &init_device->object.radio.props_mask, WINEBLUETOOTH_RADIO_ALL_PROPERTIES );
                 }
                 init_device->object.radio.radio.handle = (UINT_PTR)radio_name;
                 list_add_tail( adapter_list, &init_device->entry );
