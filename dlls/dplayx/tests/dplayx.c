@@ -2211,16 +2211,16 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
 
         sendSock = connectTcp_( line, port );
 
-        sendRequestPlayerReply( sendSock, port, 0x12345678, idReplyHr );
+        sendRequestPlayerReply_( line, sendSock, port, 0x12345678, idReplyHr );
 
         if ( forwardRequestExpected )
         {
             receiveAddForwardRequest_( line, recvSock, 0x12345678, expectedPassword, serverDpsd->dwReserved1 );
 
             if ( addForwardReplyHr == DP_OK )
-                sendSuperEnumPlayersReply( sendSock, port, 2399, serverDpsd, L"normal" );
+                sendSuperEnumPlayersReply_( line, sendSock, port, 2399, serverDpsd, L"normal" );
             else
-                sendAddForwardReply( sendSock, 2349, addForwardReplyHr );
+                sendAddForwardReply_( line, sendSock, 2349, addForwardReplyHr );
 
             hr = openAsyncWait( param, 7000 );
             ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
