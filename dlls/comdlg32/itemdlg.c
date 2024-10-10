@@ -558,10 +558,17 @@ static void fill_filename_from_selection(FileDialogImpl *This)
 static LPWSTR get_first_ext_from_spec(LPWSTR buf, LPCWSTR spec)
 {
     WCHAR *endpos, *ext;
+    INT len;
 
-    lstrcpyW(buf, spec);
-    if( (endpos = StrChrW(buf, ';')) )
-        *endpos = '\0';
+    if( (endpos = StrChrW(spec, ';')) )
+        len = endpos-spec+1;
+    else
+        len = lstrlenW(spec)+1;
+
+    if (len > MAX_PATH)
+        return NULL;
+
+    lstrcpynW(buf, spec, len);
 
     ext = PathFindExtensionW(buf);
     if(StrChrW(ext, '*'))
