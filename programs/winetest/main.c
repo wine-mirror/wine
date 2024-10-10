@@ -870,6 +870,26 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     return 0;
 }
 
+static void report_test_start( struct wine_test *test, const char *subtest, const char *file )
+{
+    report( R_STEP, "Running: %s:%s", test->name, subtest );
+    xprintf( "%s:%s start %s\n", test->name, subtest, file );
+}
+
+static void report_test_done( struct wine_test *test, const char *subtest, const char *file, DWORD pid, DWORD ticks,
+                              HANDLE out_file, UINT status, const char *data, DWORD size )
+{
+    if (quiet_mode <= 1 || status || size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
+    xprintf( "%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, ticks / 1000, size );
+    if (size > MAX_OUTPUT_SIZE) xprintf( "%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size );
+}
+
+static void report_test_skip( struct wine_test *test, const char *subtest, const char *file )
+{
+    report( R_STEP, "Skipping: %s:%s", test->name, subtest );
+    xprintf( "%s:%s skipped %s\n", test->name, subtest, file );
+}
+
 static void
 run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const char *tempdir)
 {
@@ -878,8 +898,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
 
     if (test_filtered_out( test->name, subtest ))
     {
-        report (R_STEP, "Skipping: %s:%s", test->name, subtest);
-        xprintf ("%s:%s skipped %s\n", test->name, subtest, file);
+        report_test_skip( test, subtest, file );
         nr_of_skips++;
     }
     else
@@ -890,25 +909,19 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         DWORD pid, size, start = GetTickCount();
         char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
 
-        report (R_STEP, "Running: %s:%s", test->name, subtest);
-        xprintf ("%s:%s start %s\n", test->name, subtest, file);
+        report_test_start( test, subtest, file );
         /* Flush to disk so we know which test caused Windows to crash if it does */
         FlushFileBuffers(out_file);
 
         status = run_ex( cmd, tmpfile, tempdir, 120000, FALSE, &pid );
+        if (status == -2 && GetLastError()) status = -GetLastError();
+        free(cmd);
+
         data = flush_temp_file( tmpname, tmpfile, &size );
-        if (quiet_mode <= 1 || status || size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
+        report_test_done( test, subtest, file, pid, GetTickCount() - start, out_file, status, data, size );
         free( data );
 
-        if (status == -2) status = -GetLastError();
-        free(cmd);
-        xprintf ("%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000, size);
-        if (size > MAX_OUTPUT_SIZE)
-        {
-            xprintf ("%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size);
-            failures++;
-        }
-        else if (status) failures++;
+        if (status || size > MAX_OUTPUT_SIZE) failures++;
     }
     if (failures) report (R_STATUS, "Running tests - %u failures", failures);
 }
