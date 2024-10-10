@@ -980,7 +980,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     release_win_data( data );
 
-    NtUserExposeWindowSurface( hwnd, flags, &rect, NtUserGetWinMonitorDpi( hwnd, MDT_DEFAULT ) );
+    NtUserExposeWindowSurface( hwnd, flags, &rect, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
     return TRUE;
 }
 

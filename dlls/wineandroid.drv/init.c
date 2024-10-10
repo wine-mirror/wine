@@ -78,7 +78,7 @@ void init_monitors( int width, int height )
     monitor_rc_work = virtual_screen_rect;
 
     if (!hwnd || !NtUserIsWindowVisible( hwnd )) return;
-    if (!NtUserGetWindowRect( hwnd, &rect, NtUserGetWinMonitorDpi( hwnd, MDT_DEFAULT ) )) return;
+    if (!NtUserGetWindowRect( hwnd, &rect, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) )) return;
     if (rect.top) monitor_rc_work.bottom = rect.top;
     else monitor_rc_work.top = rect.bottom;
     TRACE( "found tray %p %s work area %s\n", hwnd,

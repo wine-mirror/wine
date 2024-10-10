@@ -852,7 +852,7 @@ extern void xim_set_focus( HWND hwnd, BOOL focus );
 
 static inline BOOL is_window_rect_mapped( const RECT *rect )
 {
-    RECT virtual_rect = NtUserGetVirtualScreenRect( MDT_DEFAULT );
+    RECT virtual_rect = NtUserGetVirtualScreenRect( MDT_RAW_DPI );
     return (rect->left < virtual_rect.right &&
             rect->top < virtual_rect.bottom &&
             max( rect->right, rect->left + 1 ) > virtual_rect.left &&

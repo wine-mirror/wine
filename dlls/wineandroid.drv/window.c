@@ -98,7 +98,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
     {
         data->hwnd = hwnd;
         data->window = create_ioctl_window( hwnd, FALSE,
-                                            (float)NtUserGetWinMonitorDpi( hwnd, MDT_DEFAULT ) / NtUserGetDpiForWindow( hwnd ));
+                                            (float)NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) / NtUserGetDpiForWindow( hwnd ));
         pthread_mutex_lock( &win_data_mutex );
         win_data_context[context_idx(hwnd)] = data;
     }
@@ -1101,7 +1101,7 @@ void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent )
     TRACE( "win %p parent %p -> %p\n", hwnd, old_parent, parent );
 
     data->parent = (parent == NtUserGetDesktopWindow()) ? 0 : parent;
-    ioctl_set_window_parent( hwnd, parent, (float)NtUserGetWinMonitorDpi( hwnd, MDT_DEFAULT ) / NtUserGetDpiForWindow( hwnd ));
+    ioctl_set_window_parent( hwnd, parent, (float)NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) / NtUserGetDpiForWindow( hwnd ));
     release_win_data( data );
 }
 

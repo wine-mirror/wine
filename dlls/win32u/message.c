@@ -2637,14 +2637,18 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
                                       HWND hwnd_filter, UINT first, UINT last, BOOL remove )
 {
     struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
+    RECT rect = {msg->pt.x, msg->pt.y, msg->pt.x, msg->pt.y};
     UINT context;
     BOOL ret = FALSE;
 
     thread_info->msg_source.deviceType = msg_data->source.device;
     thread_info->msg_source.originId   = msg_data->source.origin;
 
-    /* hardware messages are always in physical coords */
+    /* hardware messages are always in raw physical coords */
     context = set_thread_dpi_awareness_context( NTUSER_DPI_PER_MONITOR_AWARE );
+    rect = map_rect_raw_to_virt( rect, get_thread_dpi() );
+    msg->pt.x = rect.left;
+    msg->pt.y = rect.top;
 
     if (msg->message == WM_INPUT || msg->message == WM_INPUT_DEVICE_CHANGE)
         ret = process_rawinput_message( msg, hw_id, msg_data );

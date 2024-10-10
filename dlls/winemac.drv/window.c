@@ -346,7 +346,7 @@ static void sync_window_min_max_info(HWND hwnd)
 {
     LONG style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     LONG exstyle = NtUserGetWindowLongW(hwnd, GWL_EXSTYLE);
-    UINT dpi = NtUserGetWinMonitorDpi(hwnd, MDT_DEFAULT);
+    UINT dpi = NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI);
     RECT win_rect, primary_monitor_rect;
     MINMAXINFO minmax;
     LONG adjustedStyle;

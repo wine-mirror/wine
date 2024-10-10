@@ -770,16 +770,17 @@ LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void 
         return KeUserModeCallback( NtUserDragDropLeave, 0, 0, &ret_ptr, &ret_len );
     case WINE_DRAG_DROP_DRAG:
     {
+        RECT rect = {LOWORD(wparam), HIWORD(wparam), LOWORD(wparam), HIWORD(wparam)};
         struct drag_drop_drag_params params =
         {
             .hwnd = hwnd,
-            .point.x = LOWORD(wparam),
-            .point.y = HIWORD(wparam),
             .effect = lparam,
         };
-        UINT raw_dpi;
 
-        params.point = map_dpi_point( params.point, get_win_monitor_dpi( hwnd, &raw_dpi ), get_thread_dpi() );
+        rect = map_rect_raw_to_virt( rect, get_thread_dpi() );
+        params.point.x = rect.left;
+        params.point.y = rect.top;
+
         if (KeUserModeCallback( NtUserDragDropDrag, &params, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(DWORD))
             return DROPEFFECT_NONE;
         return *(DWORD *)ret_ptr;
@@ -796,9 +797,9 @@ LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void 
     {
         struct drag_drop_post_params *params;
         const DROPFILES *drop = (DROPFILES *)lparam;
+        RECT rect = {drop->pt.x, drop->pt.y, drop->pt.x, drop->pt.y};
         UINT drop_size = wparam, size;
         NTSTATUS status;
-        UINT raw_dpi;
 
         size = offsetof(struct drag_drop_post_params, drop) + drop_size;
         if (!(params = malloc( size ))) return STATUS_NO_MEMORY;
@@ -806,7 +807,10 @@ LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void 
         params->drop_size = drop_size;
         memcpy( &params->drop, drop, drop_size );
 
-        params->drop.pt = map_dpi_point( params->drop.pt, get_win_monitor_dpi( hwnd, &raw_dpi ), get_thread_dpi() );
+        rect = map_rect_raw_to_virt( rect, get_thread_dpi() );
+        params->drop.pt.x = rect.left;
+        params->drop.pt.y = rect.top;
+
         status = KeUserModeCallback( NtUserDragDropPost, params, size, &ret_ptr, &ret_len );
         free( params );
         return status;
