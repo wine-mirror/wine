@@ -5170,7 +5170,7 @@ void destroy_thread_windows(void)
         if (win->tid != GetCurrentThreadId()) continue;
         free_dce( win->dce, win->obj.handle );
         set_user_handle_ptr( handle, NULL );
-        win->obj.handle = free_list;
+        win->userdata = (UINT_PTR)free_list;
         free_list = win;
     }
     if (free_list)
@@ -5186,9 +5186,10 @@ void destroy_thread_windows(void)
 
     while ((win = free_list))
     {
-        free_list = win->obj.handle;
+        free_list = (WND *)win->userdata;
         TRACE( "destroying %p\n", win );
 
+        user_driver->pDestroyWindow( win->obj.handle );
         vulkan_detach_surfaces( &win->vulkan_surfaces );
 
         if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && win->wIDmenu)
