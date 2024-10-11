@@ -188,6 +188,22 @@ static BOOL host_window_filter_event( XEvent *event )
         host_window_set_parent( win, reparent->parent );
         break;
     }
+    case GravityNotify:
+    {
+        XGravityEvent *gravity = (XGravityEvent *)event;
+        OffsetRect( &win->rect, gravity->x - win->rect.left, gravity->y - win->rect.top );
+        if (win->parent) win->rect = host_window_configure_child( win->parent, win->window, win->rect, FALSE );
+        TRACE( "host window %p/%lx GravityNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
+        break;
+    }
+    case ConfigureNotify:
+    {
+        XConfigureEvent *configure = (XConfigureEvent *)event;
+        SetRect( &win->rect, configure->x, configure->y, configure->x + configure->width, configure->y + configure->height );
+        if (win->parent) win->rect = host_window_configure_child( win->parent, win->window, win->rect, configure->send_event );
+        TRACE( "host window %p/%lx ConfigureNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
+        break;
+    }
     }
 
     /* keep processing the event for foreign windows */
@@ -1093,6 +1109,13 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     if (!hwnd) return FALSE;
     if (!(data = get_win_data( hwnd ))) return FALSE;
+
+    if (data->whole_window && data->parent && !data->parent_invalid)
+    {
+        SetRect( &rect, event->x, event->y, event->x + event->width, event->y + event->height );
+        host_window_configure_child( data->parent, data->whole_window, rect, event->send_event );
+    }
+
     if (!data->mapped || data->iconic) goto done;
     if (data->whole_window && !data->managed) goto done;
     /* ignore synthetic events on foreign windows */

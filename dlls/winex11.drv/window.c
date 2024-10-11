@@ -136,6 +136,20 @@ static void host_window_release( struct host_window *win )
     }
 }
 
+static POINT host_window_map_point( struct host_window *win, int x, int y )
+{
+    POINT pos = {x, y};
+
+    while (win)
+    {
+        pos.x += win->rect.left;
+        pos.y += win->rect.top;
+        win = win->parent;
+    }
+
+    return pos;
+}
+
 static unsigned int find_host_window_child( struct host_window *win, Window child )
 {
     unsigned int i;
@@ -153,6 +167,7 @@ struct host_window *get_host_window( Window window, BOOL create )
     struct x11drv_thread_data *data = x11drv_thread_data();
     Window xparent = 0, xroot, *xchildren;
     struct host_window *win;
+    XWindowAttributes attr;
     unsigned int nchildren;
 
     if (window == root_window) return NULL;
@@ -162,13 +177,16 @@ struct host_window *get_host_window( Window window, BOOL create )
     win->window = window;
 
     X11DRV_expect_error( data->display, host_window_error, NULL );
+    if (!XGetWindowAttributes( data->display, window, &attr )) memset( &attr, 0, sizeof(attr) );
     if (!XQueryTree( data->display, window, &xroot, &xparent, &xchildren, &nchildren )) xparent = root_window;
     else XFree( xchildren );
     if (X11DRV_check_error()) WARN( "window %lx already destroyed\n", window );
 
     host_window_set_parent( win, xparent );
+    SetRect( &win->rect, attr.x, attr.y, attr.x + attr.width, attr.y + attr.height );
 
-    TRACE( "created host window %p/%lx, parent %lx\n", win, win->window, xparent );
+    TRACE( "created host window %p/%lx, parent %lx rect %s\n", win, win->window,
+           xparent, wine_dbgstr_rect(&win->rect) );
     XSaveContext( data->display, window, host_window_context, (char *)win );
     return win;
 }
@@ -196,6 +214,17 @@ static void host_window_reparent( struct host_window **win, Window parent, Windo
     }
 
     if (old) host_window_release( old );
+}
+
+RECT host_window_configure_child( struct host_window *win, Window window, RECT rect, BOOL root_coords )
+{
+    if (root_coords)
+    {
+        POINT offset = host_window_map_point( win, 0, 0 );
+        OffsetRect( &rect, -offset.x, -offset.y );
+    }
+
+    return rect;
 }
 
 void host_window_set_parent( struct host_window *win, Window parent )
