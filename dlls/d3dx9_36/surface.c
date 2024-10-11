@@ -32,9 +32,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
 
-/* Wine-specific WIC GUIDs */
-DEFINE_GUID(GUID_WineContainerFormatTga, 0x0c44fda1,0xa5c5,0x4298,0x96,0x85,0x47,0x3f,0xc1,0x7c,0xd3,0x22);
-
 static const struct
 {
     const GUID *wic_guid;
@@ -755,8 +752,7 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, struct d3dx_image *image
     BYTE *buffer;
     HRESULT hr;
 
-    if (image->format != D3DFMT_X8R8G8B8 || (image->image_file_format != D3DXIFF_BMP
-            && image->image_file_format != D3DXIFF_TGA))
+    if (image->format != D3DFMT_X8R8G8B8 || image->image_file_format != D3DXIFF_BMP)
         return FALSE;
 
     size = image->size.width * image->size.height * 4;
@@ -794,7 +790,6 @@ static const GUID *d3dx_file_format_to_wic_container_guid(D3DXIMAGE_FILEFORMAT i
     switch (iff)
     {
         case D3DXIFF_BMP: return &GUID_ContainerFormatBmp;
-        case D3DXIFF_TGA: return &GUID_WineContainerFormatTga;
         case D3DXIFF_JPG: return &GUID_ContainerFormatJpeg;
         case D3DXIFF_PNG: return &GUID_ContainerFormatPng;
         default:
@@ -1078,11 +1073,9 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
     const BOOL is_rle = !!(header->image_type & IMAGETYPE_RLE);
     uint8_t *img_buf = NULL, *src_row = NULL;
     uint32_t row_pitch, slice_pitch, i;
+    PALETTEENTRY *palette = NULL;
     const uint8_t *src_pos;
     HRESULT hr;
-
-    if (image->format == D3DFMT_P8)
-        return E_NOTIMPL;
 
     hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
     if (FAILED(hr))
@@ -1092,14 +1085,47 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
     if (!is_rle && (src_header_size + slice_pitch) > src_data_size)
         return D3DXERR_INVALIDDATA;
 
+    if (image->format == D3DFMT_P8)
+    {
+        const uint8_t *src_palette = ((const uint8_t *)src_data) + sizeof(*header) + header->id_length;
+        const struct volume image_map_size = { header->color_map_length, 1, 1 };
+        uint32_t src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
+        const struct pixel_format_desc *src_desc, *dst_desc;
+
+        if (!(palette = malloc(sizeof(*palette) * 256)))
+            return E_OUTOFMEMORY;
+
+        /*
+         * Convert from a TGA colormap to PALETTEENTRY. TGA is BGRA,
+         * PALETTEENTRY is RGBA.
+         */
+        src_desc = get_format_info(d3dx_get_tga_format_for_bpp(header->color_map_entrysize));
+        hr = d3dx_calculate_pixels_size(src_desc->format, header->color_map_length, 1, &src_row_pitch, &src_slice_pitch);
+        if (FAILED(hr))
+            goto exit;
+
+        dst_desc = get_format_info(D3DFMT_A8B8G8R8);
+        d3dx_calculate_pixels_size(dst_desc->format, 256, 1, &dst_row_pitch, &dst_slice_pitch);
+        convert_argb_pixels(src_palette, src_row_pitch, src_slice_pitch, &image_map_size, src_desc, (BYTE *)palette,
+                dst_row_pitch, dst_slice_pitch, &image_map_size, dst_desc, 0, NULL);
+
+        /* Initialize unused palette entries to 0xff. */
+        if (header->color_map_length < 256)
+            memset(&palette[header->color_map_length], 0xff, sizeof(*palette) * (256 - header->color_map_length));
+    }
+
     if (!is_rle && !bottom_to_top && !right_to_left)
     {
         image->pixels = (uint8_t *)src_data + src_header_size;
+        image->image_palette = image->palette = palette;
         return D3D_OK;
     }
 
     if (!(img_buf = malloc(slice_pitch)))
-        return E_OUTOFMEMORY;
+    {
+        hr = E_OUTOFMEMORY;
+        goto exit;
+    }
 
     /* Allocate an extra row to use as a temporary buffer. */
     if (is_rle)
@@ -1150,12 +1176,15 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
     }
 
     image->image_buf = image->pixels = img_buf;
+    image->image_palette = image->palette = palette;
 
 exit:
     if (is_rle)
         free(src_row);
     if (img_buf && (image->image_buf != img_buf))
         free(img_buf);
+    if (palette && (image->image_palette != palette))
+        free(palette);
 
     return hr;
 }
@@ -1238,10 +1267,7 @@ HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3d
         }
 
         /* Last resort, try TGA. */
-        hr = d3dx_initialize_image_from_tga(src_data, src_data_size, image, flags);
-        if (hr == E_NOTIMPL)
-            hr = d3dx_initialize_image_from_wic(src_data, src_data_size, image, D3DXIFF_TGA, flags);
-        return hr;
+        return d3dx_initialize_image_from_tga(src_data, src_data_size, image, flags);
     }
 
     switch (iff)

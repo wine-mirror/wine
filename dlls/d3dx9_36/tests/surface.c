@@ -1887,12 +1887,12 @@ static const uint8_t test_tga_grayscale_8bpp_rle_expected[] =
     0x00,0x10,0x20,0x30,0x40,0x40,0x40,0x70,0x80,0x90,0xa0,0xb0,0xc0,0xd0,0xe0,0xf0,
 };
 
-#define check_tga_surface_load(surface, expected, right_to_left, bottom_to_top, todo) \
-    check_tga_surface_load_(__LINE__, surface, expected, right_to_left, bottom_to_top, todo)
+#define check_tga_surface_load(surface, expected, right_to_left, bottom_to_top) \
+    check_tga_surface_load_(__LINE__, surface, expected, right_to_left, bottom_to_top)
 static void check_tga_surface_load_(uint32_t line, IDirect3DSurface9 *surface, const uint8_t *expected, BOOL right_to_left,
-        BOOL bottom_to_top, BOOL todo)
+        BOOL bottom_to_top)
 {
-    uint32_t x, y, fmt_bpp, fmt_pitch, mismatch_count;
+    uint32_t x, y, fmt_bpp, fmt_pitch;
     D3DLOCKED_RECT lock_rect;
     D3DSURFACE_DESC desc;
     HRESULT hr;
@@ -1903,7 +1903,6 @@ static void check_tga_surface_load_(uint32_t line, IDirect3DSurface9 *surface, c
     fmt_bpp = get_bpp_for_d3dformat(desc.Format);
     fmt_pitch = fmt_bpp * desc.Width;
     IDirect3DSurface9_LockRect(surface, &lock_rect, NULL, D3DLOCK_READONLY);
-    mismatch_count = 0;
     for (y = 0; y < desc.Height; ++y)
     {
         const uint32_t expected_row_idx = bottom_to_top ? (desc.Height - y - 1) : y;
@@ -1917,11 +1916,9 @@ static void check_tga_surface_load_(uint32_t line, IDirect3DSurface9 *surface, c
             const uint8_t *pixel = row + (fmt_bpp * x);
             BOOL pixel_match = !memcmp(pixel, expected_pixel, fmt_bpp);
 
-            if (!pixel_match)
-                mismatch_count++;
+            ok_(__FILE__, line)(pixel_match, "Pixel mismatch at (%u,%u).\n", x, y);
         }
     }
-    todo_wine_if(todo) ok_(__FILE__, line)(!mismatch_count, "%u mismatched pixels.\n", mismatch_count);
     IDirect3DSurface9_UnlockRect(surface);
 }
 
@@ -1936,8 +1933,6 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         uint32_t pixels_size;
 
         const uint8_t *expected;
-        BOOL todo_hr;
-        BOOL todo_surface;
     } tga_tests[] =
     {
         { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 15, 0, 0, 4, 4, 8, 0 },
@@ -1953,22 +1948,22 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 16, 0, 0, 4, 4, 8, 0 },
           test_tga_color_map_16bpp, sizeof(test_tga_color_map_16bpp),
           test_tga_color_map_index_4_4, sizeof(test_tga_color_map_index_4_4),
-          test_tga_color_map_16bpp_expected, .todo_surface = TRUE
+          test_tga_color_map_16bpp_expected
         },
         { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 24, 0, 0, 4, 4, 8, 0 },
           test_tga_color_map_24bpp, sizeof(test_tga_color_map_24bpp),
           test_tga_color_map_index_4_4, sizeof(test_tga_color_map_index_4_4),
-          test_tga_color_map_24bpp_expected, .todo_surface = TRUE
+          test_tga_color_map_24bpp_expected
         },
         { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 256, 32, 0, 0, 4, 4, 8, 0 },
           test_tga_color_map_32bpp, sizeof(test_tga_color_map_32bpp),
           test_tga_color_map_index_4_4, sizeof(test_tga_color_map_index_4_4),
-          test_tga_color_map_32bpp_expected, .todo_surface = TRUE
+          test_tga_color_map_32bpp_expected
         },
         { { 0, COLORMAP_TYPE_ONE, IMAGETYPE_COLORMAPPED, 0, 128, 32, 0, 0, 4, 4, 8, 0 },
           test_tga_color_map_32bpp, sizeof(test_tga_color_map_32bpp) / 2,
           test_tga_color_map_index_4_4, sizeof(test_tga_color_map_index_4_4),
-          test_tga_color_map_half_32bpp_expected, .todo_surface = TRUE
+          test_tga_color_map_half_32bpp_expected
         },
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 15, 0 },
           NULL, 0,
@@ -2070,30 +2065,26 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
 
         /* Read as default, bottom to top, left to right. */
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(tga_tests[i].todo_hr) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-        if (SUCCEEDED(hr))
-            check_tga_surface_load(surface, tga_tests[i].expected, FALSE, TRUE, tga_tests[i].todo_surface);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        check_tga_surface_load(surface, tga_tests[i].expected, FALSE, TRUE);
 
         /* Read as top to bottom, left to right. */
         tga->header.image_descriptor = IMAGE_TOPTOBOTTOM;
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(tga_tests[i].todo_hr) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-        if (SUCCEEDED(hr))
-            check_tga_surface_load(surface, tga_tests[i].expected, FALSE, FALSE, tga_tests[i].todo_surface);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        check_tga_surface_load(surface, tga_tests[i].expected, FALSE, FALSE);
 
         /* Read as bottom to top, right to left. */
         tga->header.image_descriptor = IMAGE_RIGHTTOLEFT;
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(tga_tests[i].color_map) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-        if (SUCCEEDED(hr))
-            check_tga_surface_load(surface, tga_tests[i].expected, TRUE, TRUE, FALSE);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        check_tga_surface_load(surface, tga_tests[i].expected, TRUE, TRUE);
 
         /* Read as top to bottom, right to left. */
         tga->header.image_descriptor = IMAGE_TOPTOBOTTOM | IMAGE_RIGHTTOLEFT;
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(tga_tests[i].color_map) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-        if (SUCCEEDED(hr))
-            check_tga_surface_load(surface, tga_tests[i].expected, TRUE, FALSE, FALSE);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        check_tga_surface_load(surface, tga_tests[i].expected, TRUE, FALSE);
 
         check_release((IUnknown *)surface, 0);
         winetest_pop_context();
