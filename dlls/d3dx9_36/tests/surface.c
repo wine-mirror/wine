@@ -1978,7 +1978,7 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR | IMAGETYPE_RLE, 0, 0, 0, 0, 0, 4, 4, 15, 0 },
           NULL, 0,
           test_tga_true_color_15bpp_4_4_rle, sizeof(test_tga_true_color_15bpp_4_4_rle),
-          test_tga_true_color_15bpp_rle_expected, .todo_hr = TRUE
+          test_tga_true_color_15bpp_rle_expected
         },
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 16, 0 },
           NULL, 0,
@@ -1988,7 +1988,7 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR | IMAGETYPE_RLE, 0, 0, 0, 0, 0, 4, 4, 16, 0 },
           NULL, 0,
           test_tga_true_color_16bpp_4_4_rle, sizeof(test_tga_true_color_16bpp_4_4_rle),
-          test_tga_true_color_16bpp_rle_expected, .todo_surface = TRUE
+          test_tga_true_color_16bpp_rle_expected
         },
         { { 0, COLORMAP_TYPE_NONE, IMAGETYPE_TRUECOLOR, 0, 0, 0, 0, 0, 4, 4, 24, 0 },
           NULL, 0,
@@ -2084,14 +2084,14 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         /* Read as bottom to top, right to left. */
         tga->header.image_descriptor = IMAGE_RIGHTTOLEFT;
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(tga_tests[i].color_map || (tga->header.image_type & IMAGETYPE_RLE)) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine_if(tga_tests[i].color_map) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             check_tga_surface_load(surface, tga_tests[i].expected, TRUE, TRUE, FALSE);
 
         /* Read as top to bottom, right to left. */
         tga->header.image_descriptor = IMAGE_TOPTOBOTTOM | IMAGE_RIGHTTOLEFT;
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(tga_tests[i].color_map || (tga->header.image_type & IMAGETYPE_RLE)) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine_if(tga_tests[i].color_map) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             check_tga_surface_load(surface, tga_tests[i].expected, TRUE, FALSE, FALSE);
 
@@ -2131,7 +2131,7 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         tga->data[0] = 0x87;
         file_size += packet_size;
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(rle_test_bits[i] != 15) ok(hr == D3DXERR_INVALIDDATA, "Unexpected hr %#lx.\n", hr);
+        ok(hr == D3DXERR_INVALIDDATA, "Unexpected hr %#lx.\n", hr);
 
         /* Two packets, each containing 4 pixels. This succeeds. */
         tga->data[0] = 0x83;
@@ -2139,7 +2139,7 @@ static void test_load_surface_from_tga(IDirect3DDevice9 *device)
         file_size += packet_size;
 
         hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, tga, file_size, NULL, D3DX_FILTER_NONE, 0, NULL);
-        todo_wine_if(rle_test_bits[i] == 15) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         /* Second packet with only 2 pixels, doesn't finish the final row. */
         tga->data[packet_size] = 0x82;

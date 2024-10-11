@@ -1030,6 +1030,44 @@ struct tga_header
 };
 #include "poppack.h"
 
+static HRESULT d3dx_image_tga_rle_decode_row(const uint8_t **src, uint32_t src_bytes_left, uint32_t row_width,
+        uint32_t bytes_per_pixel, uint8_t *dst_row)
+{
+    const uint8_t *src_ptr = *src;
+    uint32_t pixel_count = 0;
+
+    while (pixel_count != row_width)
+    {
+        uint32_t rle_count = (src_ptr[0] & 0x7f) + 1;
+        uint32_t rle_packet_size = 1;
+
+        rle_packet_size += (src_ptr[0] & 0x80) ? bytes_per_pixel : (bytes_per_pixel * rle_count);
+        if ((rle_packet_size > src_bytes_left) || (pixel_count + rle_count) > row_width)
+            return D3DXERR_INVALIDDATA;
+
+        if (src_ptr[0] & 0x80)
+        {
+            uint32_t i;
+
+            for (i = 0; i < rle_count; ++i)
+                memcpy(&dst_row[(pixel_count + i) * bytes_per_pixel], src_ptr + 1, bytes_per_pixel);
+        }
+        else
+        {
+            memcpy(&dst_row[pixel_count * bytes_per_pixel], src_ptr + 1, rle_packet_size - 1);
+        }
+
+        src_ptr += rle_packet_size;
+        src_bytes_left -= rle_packet_size;
+        pixel_count += rle_count;
+        if (!src_bytes_left && pixel_count != row_width)
+            return D3DXERR_INVALIDDATA;
+    }
+
+    *src = src_ptr;
+    return D3D_OK;
+}
+
 static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_size, uint32_t src_header_size,
         struct d3dx_image *image)
 {
@@ -1038,12 +1076,12 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
     const BOOL bottom_to_top = !(header->image_descriptor & IMAGE_TOPTOBOTTOM);
     const struct pixel_format_desc *fmt_desc = get_format_info(image->format);
     const BOOL is_rle = !!(header->image_type & IMAGETYPE_RLE);
+    uint8_t *img_buf = NULL, *src_row = NULL;
     uint32_t row_pitch, slice_pitch, i;
-    uint8_t *img_buf = NULL;
-    const uint8_t *src_row;
+    const uint8_t *src_pos;
     HRESULT hr;
 
-    if (image->format == D3DFMT_P8 || is_rle)
+    if (image->format == D3DFMT_P8)
         return E_NOTIMPL;
 
     hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
@@ -1051,10 +1089,10 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
         return hr;
 
     /* File is too small. */
-    if ((src_header_size + slice_pitch) > src_data_size)
+    if (!is_rle && (src_header_size + slice_pitch) > src_data_size)
         return D3DXERR_INVALIDDATA;
 
-    if (!bottom_to_top && !right_to_left)
+    if (!is_rle && !bottom_to_top && !right_to_left)
     {
         image->pixels = (uint8_t *)src_data + src_header_size;
         return D3D_OK;
@@ -1063,11 +1101,34 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
     if (!(img_buf = malloc(slice_pitch)))
         return E_OUTOFMEMORY;
 
-    src_row = (const uint8_t *)src_data + src_header_size;
+    /* Allocate an extra row to use as a temporary buffer. */
+    if (is_rle)
+    {
+        if (!(src_row = malloc(row_pitch)))
+        {
+            hr = E_OUTOFMEMORY;
+            goto exit;
+        }
+    }
+
+    src_pos = (const uint8_t *)src_data + src_header_size;
     for (i = 0; i < image->size.height; ++i)
     {
         const uint32_t dst_row_idx = bottom_to_top ? (image->size.height - i - 1) : i;
         uint8_t *dst_row = img_buf + (dst_row_idx * row_pitch);
+
+        if (is_rle)
+        {
+            hr = d3dx_image_tga_rle_decode_row(&src_pos, src_data_size - (src_pos - (const uint8_t *)src_data),
+                    image->size.width, fmt_desc->bytes_per_pixel, src_row);
+            if (FAILED(hr))
+                goto exit;
+        }
+        else
+        {
+            src_row = (uint8_t *)src_pos;
+            src_pos += row_pitch;
+        }
 
         if (right_to_left)
         {
@@ -1086,12 +1147,17 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
         {
             memcpy(dst_row, src_row, row_pitch);
         }
-
-        src_row += row_pitch;
     }
 
     image->image_buf = image->pixels = img_buf;
-    return D3D_OK;
+
+exit:
+    if (is_rle)
+        free(src_row);
+    if (img_buf && (image->image_buf != img_buf))
+        free(img_buf);
+
+    return hr;
 }
 
 static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src_data_size, struct d3dx_image *image,
