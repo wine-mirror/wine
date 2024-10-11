@@ -184,6 +184,7 @@ struct host_window *get_host_window( Window window, BOOL create )
 
     host_window_set_parent( win, xparent );
     SetRect( &win->rect, attr.x, attr.y, attr.x + attr.width, attr.y + attr.height );
+    if (win->parent) host_window_configure_child( win->parent, win->window, win->rect, FALSE );
 
     TRACE( "created host window %p/%lx, parent %lx rect %s\n", win, win->window,
            xparent, wine_dbgstr_rect(&win->rect) );
@@ -195,12 +196,14 @@ static void host_window_reparent( struct host_window **win, Window parent, Windo
 {
     struct host_window *old = *win, *new = get_host_window( parent, TRUE );
     unsigned int index;
+    RECT rect = {0};
     void *tmp;
 
     if ((*win = new)) host_window_add_ref( new );
 
     if (old && (index = find_host_window_child( old, window )) < old->children_count)
     {
+        rect = old->children[index].rect;
         old->children[index] = old->children[old->children_count - 1];
         old->children_count--;
     }
@@ -209,7 +212,11 @@ static void host_window_reparent( struct host_window **win, Window parent, Windo
     {
         if (!(tmp = realloc( new->children, (index + 1) * sizeof(*new->children) ))) return;
         new->children = tmp;
+
+        OffsetRect( &rect, -rect.left, -rect.top );
         new->children[index].window = window;
+        new->children[index].rect = rect;
+
         new->children_count++;
     }
 
@@ -218,12 +225,16 @@ static void host_window_reparent( struct host_window **win, Window parent, Windo
 
 RECT host_window_configure_child( struct host_window *win, Window window, RECT rect, BOOL root_coords )
 {
+    unsigned int index;
+
     if (root_coords)
     {
         POINT offset = host_window_map_point( win, 0, 0 );
         OffsetRect( &rect, -offset.x, -offset.y );
     }
 
+    index = find_host_window_child( win, window );
+    if (index < win->children_count) win->children[index].rect = rect;
     return rect;
 }
 
@@ -2171,6 +2182,7 @@ void set_window_parent( struct x11drv_win_data *data, Window parent )
     if (!data->whole_window) return; /* only keep track of parent if we have a toplevel */
     TRACE( "window %p/%lx, parent %lx\n", data->hwnd, data->whole_window, parent );
     host_window_reparent( &data->parent, parent, data->whole_window );
+    if (data->parent) host_window_configure_child( data->parent, data->whole_window, data->rects.visible, TRUE );
     data->parent_invalid = 0;
 }
 
