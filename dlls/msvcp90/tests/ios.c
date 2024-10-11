@@ -1595,9 +1595,15 @@ static void test_num_put_put_int(void)
         IOSB_fmtflags fmtfl;
         const char    *str;
     } tests[] = {
-        {  1, 0,                "1" },
-        { -1, 0,                "-1" },
-        { -1, FMTFLAG_internal, "-1" },
+        {  1, 0,                                                               "1"   },
+        { -1, 0,                                                               "-1"  },
+        { -1, FMTFLAG_internal,                                                "-1"  },
+        {  1, FMTFLAG_showpos,                                                 "+1"  },
+        {  1, FMTFLAG_hex,                                                     "1"   },
+        {  1, FMTFLAG_hex|FMTFLAG_showbase,                                    "0x1" },
+        {  1, FMTFLAG_internal|FMTFLAG_hex|FMTFLAG_showbase,                   "0x1" },
+        {  1, FMTFLAG_internal|FMTFLAG_hex|FMTFLAG_showbase|FMTFLAG_uppercase, "0X1" },
+        {  1, FMTFLAG_internal|FMTFLAG_oct|FMTFLAG_showbase,                   "01"  },
     };
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
