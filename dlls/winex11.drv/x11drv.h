@@ -367,6 +367,8 @@ struct host_window
     LONG refcount;
     Window window;
     struct host_window *parent;
+    unsigned int children_count;
+    struct { Window window; } *children;
 };
 
 extern void host_window_destroy( struct host_window *win );

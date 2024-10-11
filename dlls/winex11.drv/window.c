@@ -131,8 +131,16 @@ static void host_window_release( struct host_window *win )
 
         XDeleteContext( data->display, win->window, host_window_context );
         if (win->parent) host_window_release( win->parent );
+        free( win->children );
         free( win );
     }
+}
+
+static unsigned int find_host_window_child( struct host_window *win, Window child )
+{
+    unsigned int i;
+    for (i = 0; i < win->children_count; i++) if (win->children[i].window == child) break;
+    return i;
 }
 
 static int host_window_error( Display *display, XErrorEvent *event, void *arg )
@@ -168,7 +176,25 @@ struct host_window *get_host_window( Window window, BOOL create )
 static void host_window_reparent( struct host_window **win, Window parent, Window window )
 {
     struct host_window *old = *win, *new = get_host_window( parent, TRUE );
+    unsigned int index;
+    void *tmp;
+
     if ((*win = new)) host_window_add_ref( new );
+
+    if (old && (index = find_host_window_child( old, window )) < old->children_count)
+    {
+        old->children[index] = old->children[old->children_count - 1];
+        old->children_count--;
+    }
+
+    if (new && (index = find_host_window_child( new, window )) == new->children_count)
+    {
+        if (!(tmp = realloc( new->children, (index + 1) * sizeof(*new->children) ))) return;
+        new->children = tmp;
+        new->children[index].window = window;
+        new->children_count++;
+    }
+
     if (old) host_window_release( old );
 }
 
