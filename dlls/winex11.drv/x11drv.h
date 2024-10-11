@@ -366,9 +366,12 @@ struct host_window
 {
     LONG refcount;
     Window window;
+    struct host_window *parent;
 };
 
 extern void host_window_destroy( struct host_window *win );
+extern void host_window_set_parent( struct host_window *win, Window parent );
+extern struct host_window *get_host_window( Window window, BOOL create );
 
 struct x11drv_thread_data
 {

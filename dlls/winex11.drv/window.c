@@ -130,14 +130,22 @@ static void host_window_release( struct host_window *win )
         struct x11drv_thread_data *data = x11drv_thread_data();
 
         XDeleteContext( data->display, win->window, host_window_context );
+        if (win->parent) host_window_release( win->parent );
         free( win );
     }
 }
 
-static struct host_window *get_host_window( Window window, BOOL create )
+static int host_window_error( Display *display, XErrorEvent *event, void *arg )
+{
+    return (event->error_code == BadWindow);
+}
+
+struct host_window *get_host_window( Window window, BOOL create )
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
+    Window xparent = 0, xroot, *xchildren;
     struct host_window *win;
+    unsigned int nchildren;
 
     if (window == root_window) return NULL;
     if (!XFindContext( data->display, window, host_window_context, (XPointer *)&win )) return win;
@@ -145,7 +153,14 @@ static struct host_window *get_host_window( Window window, BOOL create )
     if (!create || !(win = calloc( 1, sizeof(*win) ))) return NULL;
     win->window = window;
 
-    TRACE( "created host window %p/%lx\n", win, win->window );
+    X11DRV_expect_error( data->display, host_window_error, NULL );
+    if (!XQueryTree( data->display, window, &xroot, &xparent, &xchildren, &nchildren )) xparent = root_window;
+    else XFree( xchildren );
+    if (X11DRV_check_error()) WARN( "window %lx already destroyed\n", window );
+
+    host_window_set_parent( win, xparent );
+
+    TRACE( "created host window %p/%lx, parent %lx\n", win, win->window, xparent );
     XSaveContext( data->display, window, host_window_context, (char *)win );
     return win;
 }
@@ -155,6 +170,12 @@ static void host_window_reparent( struct host_window **win, Window parent, Windo
     struct host_window *old = *win, *new = get_host_window( parent, TRUE );
     if ((*win = new)) host_window_add_ref( new );
     if (old) host_window_release( old );
+}
+
+void host_window_set_parent( struct host_window *win, Window parent )
+{
+    TRACE( "host window %p/%lx, parent %lx\n", win, win->window, parent );
+    host_window_reparent( &win->parent, parent, win->window );
 }
 
 

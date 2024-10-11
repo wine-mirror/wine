@@ -172,6 +172,29 @@ static inline void free_event_data( XEvent *event )
 #endif
 }
 
+static BOOL host_window_filter_event( XEvent *event )
+{
+    struct host_window *win;
+    HWND hwnd;
+
+    if (!(win = get_host_window( event->xany.window, FALSE ))) return FALSE;
+
+    switch (event->type)
+    {
+    case ReparentNotify:
+    {
+        XReparentEvent *reparent = (XReparentEvent *)event;
+        TRACE( "host window %p/%lx ReparentNotify, parent %lx\n", win, win->window, reparent->parent );
+        host_window_set_parent( win, reparent->parent );
+        break;
+    }
+    }
+
+    /* keep processing the event for foreign windows */
+    if (!XFindContext( event->xany.display, event->xany.window, winContext, (char **)&hwnd )) return FALSE;
+    return TRUE;
+}
+
 /***********************************************************************
  *           xembed_request_focus
  */
@@ -445,6 +468,9 @@ BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,XPointer
             else
                 continue;  /* filtered, ignore it */
         }
+
+        if (host_window_filter_event( &event )) continue;
+
         get_event_data( &event );
         if (prev_event.type) action = merge_events( &prev_event, &event );
         switch( action )
