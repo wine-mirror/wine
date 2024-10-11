@@ -366,6 +366,7 @@ struct host_window
 {
     LONG refcount;
     Window window;
+    BOOL destroyed; /* host window has already been destroyed */
     RECT rect; /* host window rect, relative to parent */
     struct host_window *parent;
     unsigned int children_count;

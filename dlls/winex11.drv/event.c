@@ -181,6 +181,10 @@ static BOOL host_window_filter_event( XEvent *event )
 
     switch (event->type)
     {
+    case DestroyNotify:
+        TRACE( "host window %p/%lx DestroyNotify\n", win, win->window );
+        win->destroyed = TRUE;
+        break;
     case ReparentNotify:
     {
         XReparentEvent *reparent = (XReparentEvent *)event;

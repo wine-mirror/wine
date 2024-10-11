@@ -129,6 +129,7 @@ static void host_window_release( struct host_window *win )
     {
         struct x11drv_thread_data *data = x11drv_thread_data();
 
+        if (!win->destroyed) XSelectInput( data->display, win->window, 0 );
         XDeleteContext( data->display, win->window, host_window_context );
         if (win->parent) host_window_release( win->parent );
         free( win->children );
@@ -177,6 +178,7 @@ struct host_window *get_host_window( Window window, BOOL create )
     win->window = window;
 
     X11DRV_expect_error( data->display, host_window_error, NULL );
+    XSelectInput( data->display, window, StructureNotifyMask );
     if (!XGetWindowAttributes( data->display, window, &attr )) memset( &attr, 0, sizeof(attr) );
     if (!XQueryTree( data->display, window, &xroot, &xparent, &xchildren, &nchildren )) xparent = root_window;
     else XFree( xchildren );
@@ -1860,7 +1862,6 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
             Window xwin = (Window)NtUserGetProp( data->hwnd, foreign_window_prop );
             if (xwin)
             {
-                if (!already_destroyed) XSelectInput( data->display, xwin, 0 );
                 XDeleteContext( data->display, xwin, winContext );
                 NtUserRemoveProp( data->hwnd, foreign_window_prop );
             }
@@ -2266,13 +2267,9 @@ HWND create_foreign_window( Display *display, Window xwin )
     if (XFindContext( display, xwin, winContext, (char **)&hwnd )) hwnd = 0;
     if (hwnd) return hwnd;  /* already created */
 
-    XSelectInput( display, xwin, StructureNotifyMask );
     if (!XGetWindowAttributes( display, xwin, &attr ) ||
         !XQueryTree( display, xwin, &xroot, &xparent, &xchildren, &nchildren ))
-    {
-        XSelectInput( display, xwin, 0 );
         return 0;
-    }
     XFree( xchildren );
 
     if (xparent == xroot)
