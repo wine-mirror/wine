@@ -510,6 +510,8 @@ static HRESULT DP_MSG_ReadSuperPackedPlayer( char *data, DWORD *inoutOffset, DWO
 
   if( playerInfo->playerCount )
   {
+    if( UINT_MAX / sizeof( DPID ) < playerInfo->playerCount )
+      return DPERR_GENERIC;
     if( maxSize - offset < playerInfo->playerCount * sizeof( DPID ) )
       return DPERR_GENERIC;
     playerInfo->playerIds = (DPID *) &data[ offset ];
@@ -532,6 +534,8 @@ static HRESULT DP_MSG_ReadSuperPackedPlayer( char *data, DWORD *inoutOffset, DWO
 
   if( playerInfo->shortcutCount )
   {
+    if( UINT_MAX / sizeof( DPID ) < playerInfo->shortcutCount )
+      return DPERR_GENERIC;
     if( maxSize - offset < playerInfo->shortcutCount * sizeof( DPID ) )
       return DPERR_GENERIC;
     playerInfo->shortcutIds = (DPID *) &data[ offset ];
