@@ -33,4 +33,10 @@
 #define mkdir(p,m) _mkdir(p)
 #endif
 
+#ifdef __GNUC__
+#define ATTRIBUTE_UNUSED __attribute__((unused))
+#else
+#define ATTRIBUTE_UNUSED
+#endif
+
 #endif /* ! __XSLT_LIBXSLT_H__ */
