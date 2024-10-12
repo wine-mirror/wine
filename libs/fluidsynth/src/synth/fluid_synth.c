@@ -1813,11 +1813,12 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         break;
 
     case DATA_ENTRY_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
-        break;
-
     case DATA_ENTRY_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
     {
-        int data = (value << 7) + fluid_channel_get_cc(chan, DATA_ENTRY_LSB);
+        /* handle both because msb might come first */
+        int lsb_value = fluid_channel_get_cc(chan, DATA_ENTRY_LSB);
+        int msb_value = fluid_channel_get_cc(chan, DATA_ENTRY_MSB);
+        int data = (msb_value << 7) + lsb_value;
 
         if(chan->nrpn_active)   /* NRPN is active? */
         {
@@ -1830,6 +1831,10 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 if(nrpn_select < GEN_LAST)
                 {
                     float val = fluid_gen_scale_nrpn(nrpn_select, data);
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "NRPN\t%d\t%d\t%d\t%f", channum, nrpn_select, data, val);
+                    }
                     fluid_synth_set_gen_LOCAL(synth, channum, nrpn_select, val);
                 }
 
@@ -1840,10 +1845,9 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         {
             switch(fluid_channel_get_cc(chan, RPN_LSB))
             {
-            case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones */
-                fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], value);
+            case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones plus cents */
+                fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], msb_value + lsb_value / 100.0f); /* 0-127 maps to 0-100 cents */
                 fluid_synth_update_pitch_wheel_sens_LOCAL(synth, channum);    /* Update bend range */
-                /* FIXME - Handle LSB? (Fine bend range in cents) */
                 break;
 
             case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over +/-1 semitone (+/- 100 cents, 8192 = center) */
@@ -1853,18 +1857,18 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
             case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
                 fluid_synth_set_gen_LOCAL(synth, channum, GEN_COARSETUNE,
-                                          value - 64);
+                                          msb_value - 64);
                 break;
 
             case RPN_TUNING_PROGRAM_CHANGE:
-                fluid_channel_set_tuning_prog(chan, value);
+                fluid_channel_set_tuning_prog(chan, msb_value);
                 fluid_synth_activate_tuning(synth, channum,
                                             fluid_channel_get_tuning_bank(chan),
-                                            value, TRUE);
+                                            msb_value, TRUE);
                 break;
 
             case RPN_TUNING_BANK_SELECT:
-                fluid_channel_set_tuning_bank(chan, value);
+                fluid_channel_set_tuning_bank(chan, msb_value);
                 break;
 
             case RPN_MODULATION_DEPTH_RANGE:
@@ -2052,8 +2056,8 @@ fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                 || data[3] == MIDI_SYSEX_GM2_ON))
         {
             int result;
-            synth->bank_select = FLUID_BANK_STYLE_GM;
             fluid_synth_api_enter(synth);
+            synth->bank_select = FLUID_BANK_STYLE_GM;
             result = fluid_synth_system_reset_LOCAL(synth);
             FLUID_API_RETURN(result);
         }

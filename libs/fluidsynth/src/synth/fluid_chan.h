@@ -105,7 +105,7 @@ struct _fluid_channel_t
     enum fluid_interp interp_method;                    /**< Interpolation method (enum fluid_interp) */
 
     unsigned char channel_pressure;                 /**< MIDI channel pressure from [0;127] */
-    unsigned char pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
+    float pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
     short pitch_bend;                      /**< Current pitch bend value */
     /* Sostenuto order id gives the order of SostenutoOn event.
      * This value is useful to known when the sostenuto pedal is depressed

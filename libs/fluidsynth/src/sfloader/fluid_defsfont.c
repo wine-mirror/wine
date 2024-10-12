@@ -1746,7 +1746,7 @@ fluid_preset_zone_get_inst(fluid_preset_zone_t *zone)
  * new_fluid_inst
  */
 fluid_inst_t *
-new_fluid_inst()
+new_fluid_inst(void)
 {
     fluid_inst_t *inst = FLUID_NEW(fluid_inst_t);
 
