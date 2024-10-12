@@ -28,6 +28,7 @@
 #include "FAPOBase.h"
 #include <stdarg.h>
 
+
 #ifdef FAUDIO_WIN32_PLATFORM
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +40,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+#define NO_MEMCPY_OVERRIDE
+#define NO_MEMSET_OVERRIDE
 
 #define FAudio_malloc malloc
 #define FAudio_realloc realloc
@@ -110,16 +114,40 @@ extern void FAudio_Log(char const *msg);
 	((x << 24)	& 0x00FF000000000000) | \
 	((x << 32)	& 0xFF00000000000000)
 #else
+
 #ifdef FAUDIO_SDL3_PLATFORM
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_assert.h>
 #include <SDL3/SDL_endian.h>
 #include <SDL3/SDL_log.h>
+
+#define FAudio_swap16LE(x) SDL_Swap16LE(x)
+#define FAudio_swap16BE(x) SDL_Swap16BE(x)
+#define FAudio_swap32LE(x) SDL_Swap32LE(x)
+#define FAudio_swap32BE(x) SDL_Swap32BE(x)
+#define FAudio_swap64LE(x) SDL_Swap64LE(x)
+#define FAudio_swap64BE(x) SDL_Swap64BE(x)
+
 #else
 #include <SDL_stdinc.h>
 #include <SDL_assert.h>
 #include <SDL_endian.h>
 #include <SDL_log.h>
+
+#define FAudio_swap16LE(x) SDL_SwapLE16(x)
+#define FAudio_swap16BE(x) SDL_SwapBE16(x)
+#define FAudio_swap32LE(x) SDL_SwapLE32(x)
+#define FAudio_swap32BE(x) SDL_SwapBE32(x)
+#define FAudio_swap64LE(x) SDL_SwapLE64(x)
+#define FAudio_swap64BE(x) SDL_SwapBE64(x)
+#endif
+
+/* SDL3 allows memcpy/memset for compiler optimization reasons */
+#ifndef SDL_SLOW_MEMCPY
+#define NO_MEMCPY_OVERRIDE
+#endif
+#ifndef SDL_SLOW_MEMSET
+#define NO_MEMSET_OVERRIDE
 #endif
 
 #define FAudio_malloc SDL_malloc
@@ -180,13 +208,6 @@ extern void FAudio_Log(char const *msg);
 #define FAudio_getenv SDL_getenv
 #define FAudio_PRIu64 SDL_PRIu64
 #define FAudio_PRIx64 SDL_PRIx64
-
-#define FAudio_swap16LE(x) SDL_SwapLE16(x)
-#define FAudio_swap16BE(x) SDL_SwapBE16(x)
-#define FAudio_swap32LE(x) SDL_SwapLE32(x)
-#define FAudio_swap32BE(x) SDL_SwapBE32(x)
-#define FAudio_swap64LE(x) SDL_SwapLE64(x)
-#define FAudio_swap64BE(x) SDL_SwapBE64(x)
 #endif
 
 /* Easy Macros */
