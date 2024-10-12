@@ -16645,7 +16645,7 @@ static void test_multiple_devices(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, &texture_handle2);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
-    todo_wine ok(texture_handle2 == texture_handle, "got different handles.\n");
+    ok(texture_handle2 == texture_handle, "got different handles.\n");
 
     IDirect3DTexture2_Release(texture2);
     IDirect3DTexture2_Release(texture);

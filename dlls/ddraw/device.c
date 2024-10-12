@@ -564,12 +564,16 @@ static HRESULT WINAPI d3d_device2_SwapTextureHandles(IDirect3DDevice2 *iface,
 {
     struct ddraw_surface *surf1 = unsafe_impl_from_IDirect3DTexture2(tex1);
     struct ddraw_surface *surf2 = unsafe_impl_from_IDirect3DTexture2(tex2);
-    DWORD h1, h2;
+    DWORD h1, h2, h;
+    HRESULT hr;
 
     TRACE("iface %p, tex1 %p, tex2 %p.\n", iface, tex1, tex2);
 
     if (!surf1->Handle || !surf2->Handle)
         return E_INVALIDARG;
+
+    if (FAILED(hr = IDirect3DDevice2_GetRenderState(iface, D3DRENDERSTATE_TEXTUREHANDLE, &h)))
+        return hr;
 
     wined3d_mutex_lock();
 
@@ -582,6 +586,9 @@ static HRESULT WINAPI d3d_device2_SwapTextureHandles(IDirect3DDevice2 *iface,
 
     wined3d_mutex_unlock();
 
+    if ((h == surf1->Handle || h == surf2->Handle)
+            && FAILED(hr = IDirect3DDevice2_SetRenderState(iface, D3DRENDERSTATE_TEXTUREHANDLE, h)))
+        return hr;
     return D3D_OK;
 }
 
