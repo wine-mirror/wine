@@ -568,6 +568,9 @@ static HRESULT WINAPI d3d_device2_SwapTextureHandles(IDirect3DDevice2 *iface,
 
     TRACE("iface %p, tex1 %p, tex2 %p.\n", iface, tex1, tex2);
 
+    if (!surf1->Handle || !surf2->Handle)
+        return E_INVALIDARG;
+
     wined3d_mutex_lock();
 
     h1 = surf1->Handle - 1;

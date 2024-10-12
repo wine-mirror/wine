@@ -15653,11 +15653,17 @@ static void test_multiple_devices(void)
     hr = IDirectDrawSurface_QueryInterface(texture_surf2, &IID_IDirect3DTexture, (void **)&texture2);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
 
+    hr = IDirect3DDevice_SwapTextureHandles(device, texture, texture2);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
     hr = IDirect3DTexture_GetHandle(texture, device, &texture_handle);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice_SwapTextureHandles(device, texture, texture2);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
     hr = IDirect3DTexture_GetHandle(texture, device2, &texture_handle2);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     ok(texture_handle == texture_handle2, "got same handles.\n");
+    hr = IDirect3DDevice_SwapTextureHandles(device, texture, texture2);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
     hr = IDirect3DTexture_GetHandle(texture2, device, &texture_handle2);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     hr = IDirect3DDevice_SwapTextureHandles(device, texture, texture2);
