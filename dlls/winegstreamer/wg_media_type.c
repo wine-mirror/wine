@@ -151,13 +151,13 @@ static void init_caps_from_wave_format_wma2(GstCaps *caps, const WMAUDIO2WAVEFOR
     gst_caps_set_simple(caps, "bitrate", G_TYPE_INT, format->wfx.nAvgBytesPerSec * 8, NULL);
 }
 
-static void init_caps_from_wave_format_wma3(GstCaps *caps, const WMAUDIO3WAVEFORMAT *format, UINT32 format_size)
+static void init_caps_from_wave_format_wma3(GstCaps *caps, const WMAUDIO3WAVEFORMAT *format, UINT32 format_size, UINT version)
 {
     init_caps_codec_data(caps, &format->wfx + 1, format->wfx.cbSize);
 
     gst_structure_remove_field(gst_caps_get_structure(caps, 0), "format");
     gst_structure_set_name(gst_caps_get_structure(caps, 0), "audio/x-wma");
-    gst_caps_set_simple(caps, "wmaversion", G_TYPE_INT, 3, NULL);
+    gst_caps_set_simple(caps, "wmaversion", G_TYPE_INT, version, NULL);
     gst_caps_set_simple(caps, "block_align", G_TYPE_INT, format->wfx.nBlockAlign, NULL);
     gst_caps_set_simple(caps, "depth", G_TYPE_INT, format->wfx.wBitsPerSample, NULL);
     gst_caps_set_simple(caps, "bitrate", G_TYPE_INT, format->wfx.nAvgBytesPerSec * 8, NULL);
@@ -178,9 +178,10 @@ static void init_caps_from_wave_format(GstCaps *caps, const GUID *subtype,
         return init_caps_from_wave_format_wma1(caps, format, format_size);
     if (IsEqualGUID(subtype, &MFAudioFormat_WMAudioV8))
         return init_caps_from_wave_format_wma2(caps, format, format_size);
-    if (IsEqualGUID(subtype, &MFAudioFormat_WMAudioV9)
-            || IsEqualGUID(subtype, &MFAudioFormat_WMAudio_Lossless))
-        return init_caps_from_wave_format_wma3(caps, format, format_size);
+    if (IsEqualGUID(subtype, &MFAudioFormat_WMAudioV9))
+        return init_caps_from_wave_format_wma3(caps, format, format_size, 3);
+    if (IsEqualGUID(subtype, &MFAudioFormat_WMAudio_Lossless))
+        return init_caps_from_wave_format_wma3(caps, format, format_size, 4);
 
     GST_FIXME("Unsupported subtype " WG_GUID_FORMAT, WG_GUID_ARGS(*subtype));
 }
