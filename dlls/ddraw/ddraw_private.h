@@ -308,6 +308,7 @@ void ddraw_handle_table_destroy(struct ddraw_handle_table *t);
 DWORD ddraw_allocate_handle(struct ddraw_handle_table *t, void *object, enum ddraw_handle_type type);
 void *ddraw_free_handle(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type);
 void *ddraw_get_object(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type);
+extern struct ddraw_handle_table global_handle_table;
 
 struct d3d_device
 {

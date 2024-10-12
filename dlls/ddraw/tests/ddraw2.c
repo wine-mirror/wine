@@ -16504,15 +16504,15 @@ static void run_for_each_device_type(void (*test_func)(const GUID *))
 
 static void test_multiple_devices(void)
 {
-    D3DTEXTUREHANDLE texture_handle, texture_handle2;
+    D3DTEXTUREHANDLE texture_handle, texture_handle2, texture_handle3;
+    IDirectDrawSurface *surface, *texture_surf, *texture_surf2;
     IDirect3DDevice2 *device, *device2, *device3;
-    IDirectDrawSurface *surface, *texture_surf;
     D3DMATERIALHANDLE mat_handle, mat_handle2;
     IDirect3DViewport2 *viewport, *viewport2;
+    IDirect3DTexture2 *texture, *texture2;
     IDirectDraw2 *ddraw, *ddraw2;
     IDirect3DMaterial2 *material;
     DDSURFACEDESC surface_desc;
-    IDirect3DTexture2 *texture;
     IDirect3D2 *d3d;
     ULONG refcount;
     DWORD value;
@@ -16604,6 +16604,11 @@ static void test_multiple_devices(void)
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     hr = IDirectDrawSurface_QueryInterface(texture_surf, &IID_IDirect3DTexture2, (void **)&texture);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &texture_surf2, NULL);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(texture_surf2, &IID_IDirect3DTexture2, (void **)&texture2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
     hr = IDirect3DTexture2_GetHandle(texture, device, &texture_handle);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     hr = IDirect3DTexture2_GetHandle(texture, device2, &texture_handle2);
@@ -16612,14 +16617,33 @@ static void test_multiple_devices(void)
     hr = IDirect3DTexture2_GetHandle(texture, device3, &texture_handle2);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     ok(texture_handle == texture_handle2, "got different handles.\n");
+    hr = IDirect3DTexture2_GetHandle(texture2, device, &texture_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(texture_handle != texture_handle2, "got same handles.\n");
+    hr = IDirect3DDevice2_SwapTextureHandles(device, texture, texture2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DTexture2_GetHandle(texture, device, &texture_handle3);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(texture_handle3 == texture_handle2, "got different handles.\n");
+    hr = IDirect3DTexture2_GetHandle(texture2, device2, &texture_handle3);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(texture_handle3 == texture_handle, "got different handles.\n");
+
     hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     hr = IDirect3DDevice2_SetRenderState(device3, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice2_SwapTextureHandles(device, texture, texture2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, &texture_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    todo_wine ok(texture_handle2 == texture_handle, "got different handles.\n");
 
+    IDirect3DTexture2_Release(texture2);
     IDirect3DTexture2_Release(texture);
+    IDirectDrawSurface_Release(texture_surf2);
     IDirectDrawSurface_Release(texture_surf);
     IDirect3DMaterial2_Release(material);
     IDirect3DViewport2_Release(viewport);
