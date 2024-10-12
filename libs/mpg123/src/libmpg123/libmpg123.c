@@ -560,6 +560,15 @@ double attribute_align_arg mpg123_geteq2(mpg123_handle *mh, int channel, int ban
 }
 
 #ifndef PORTABLE_API
+
+#ifdef FORCED_OFF_64
+// Only _64 symbols for a system-wide enforced _FILE_OFFSET_BITS=64.
+#define mpg123_open mpg123_open_64
+#define mpg123_open_fixed mpg123_open_fixed_64
+#define mpg123_open_fd mpg123_open_fd_64
+#define mpg123_open_handle mpg123_open_handle_64
+#endif
+
 /* plain file access, no http! */
 int attribute_align_arg mpg123_open(mpg123_handle *mh, const char *path)
 {
@@ -579,7 +588,9 @@ int attribute_align_arg mpg123_open(mpg123_handle *mh, const char *path)
 // The convenience function mpg123_open_fixed() wraps over acual mpg123_open
 // and hence needs to have the exact same code in lfs_wrap.c. The flesh is
 // in INT123_open_fixed_pre() and INT123_open_fixed_post(), wich are only defined here.
-int INT123_open_fixed_pre(mpg123_handle *mh, int channels, int encoding)
+// Update: The open routines are just alias calls now, since the conversion to
+// int64_t internally.
+static int INT123_open_fixed_pre(mpg123_handle *mh, int channels, int encoding)
 {
 	if(!mh)
 		return MPG123_BAD_HANDLE;
@@ -590,7 +601,7 @@ int INT123_open_fixed_pre(mpg123_handle *mh, int channels, int encoding)
 	return err;
 }
 
-int INT123_open_fixed_post(mpg123_handle *mh, int channels, int encoding)
+static int INT123_open_fixed_post(mpg123_handle *mh, int channels, int encoding)
 {
 	if(!mh)
 		return MPG123_BAD_HANDLE;
@@ -637,7 +648,7 @@ int attribute_align_arg mpg123_open_fd(mpg123_handle *mh, int fd)
 		ret = INT123_open_stream_handle(mh, mh->wrapperdata);
 	return ret;
 }
-#endif
+#endif // PORTABLE_API
 
 int attribute_align_arg mpg123_open_handle(mpg123_handle *mh, void *iohandle)
 {

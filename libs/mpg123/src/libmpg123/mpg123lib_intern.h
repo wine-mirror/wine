@@ -323,9 +323,6 @@ int64_t INT123_outblock_bytes(mpg123_handle *fr, int64_t s);
 /* Postprocessing format conversion of freshly decoded buffer. */
 void INT123_postprocess_buffer(mpg123_handle *fr);
 
-int INT123_open_fixed_pre(mpg123_handle *mh, int channels, int encoding);
-int INT123_open_fixed_post(mpg123_handle *mh, int channels, int encoding);
-
 /* If networking is enabled and we really mean internal networking, the timeout_read function is available. */
 #if defined (NETWORK) && !defined (WANT_WIN32_SOCKETS)
 /* Does not work with win32 */

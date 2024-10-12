@@ -732,7 +732,7 @@ static void bc_forget(struct bufferchain *bc)
 		bc->pos  -= b->size;
 		bc->size -= b->size;
 
-		debug5("bc_forget: forgot %p with %td, pos=%td, size=%td, fileoff=%td"
+		debug5("bc_forget: forgot %p with %td, pos=%td, size=%td, fileoff=%"PRIi64
 		,	(void*)b->data, b->size, bc->pos,  bc->size, bc->fileoff);
 
 		bc_free(bc, b);
