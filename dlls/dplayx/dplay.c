@@ -1032,6 +1032,12 @@ static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
 
     TRACE( "(%p)\n", This );
 
+    EnterCriticalSection( &This->lock );
+
+    This->dp2->bConnectionOpen = FALSE;
+
+    LeaveCriticalSection( &This->lock );
+
     /* FIXME: Need to find a new host I assume (how?) */
     /* FIXME: Need to destroy all local groups */
     /* FIXME: Need to migrate all remotely visible players to the new host */
@@ -3492,6 +3498,12 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
       return hr;
     }
   }
+
+  EnterCriticalSection( &This->lock );
+
+  This->dp2->bConnectionOpen = TRUE;
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
