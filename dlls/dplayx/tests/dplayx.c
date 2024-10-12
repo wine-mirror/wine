@@ -1859,9 +1859,7 @@ static unsigned short receiveGuaranteedGameMessage_( int line, SOCKET sock, DPID
     DWORD expectedSize = sizeof( request.spHeader ) + sizeof( request.request ) + expectedDataSize;
 
     wsResult = receiveMessage_( line, sock, &request, expectedSize );
-    todo_wine ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
-    if ( wsResult == SOCKET_ERROR )
-        return 0;
+    ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
 
     port = checkSpHeader_( line, &request.spHeader, expectedSize );
     checkGameMessage_( line, &request.request, expectedFromId, expectedToId );

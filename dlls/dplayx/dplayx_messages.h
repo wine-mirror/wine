@@ -48,6 +48,7 @@ typedef struct
 DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
                                          HANDLE hDeath, HANDLE hConnRead );
 
+DWORD DP_MSG_ComputeMessageSize( SGBUFFER *buffers, DWORD bufferCount );
 HRESULT DP_MSG_SendRequestPlayerId( IDirectPlayImpl *This, DWORD dwFlags,
                                     LPDPID lpdipidAllocatedId );
 HRESULT DP_MSG_ReadPackedPlayer( char *data, DWORD *offset, DWORD maxSize,

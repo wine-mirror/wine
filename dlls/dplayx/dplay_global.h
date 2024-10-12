@@ -174,7 +174,6 @@ typedef struct tagDirectPlay2Data
 
   /* I/O Msg queues */
   DPQ_HEAD( DPMSG ) receiveMsgs; /* Msg receive queue */
-  DPQ_HEAD( DPMSG ) sendMsgs;    /* Msg send pending queue */
 
   /* Information about the service provider active on this connection */
   SPINITDATA spData;
