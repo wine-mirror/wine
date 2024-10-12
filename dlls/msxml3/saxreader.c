@@ -2503,18 +2503,9 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
 
     if (size >= 4)
     {
-        const unsigned char *buff = (unsigned char*)buffer;
-
         encoding = xmlDetectCharEncoding((xmlChar*)buffer, 4);
         enc_name = (xmlChar*)xmlGetCharEncodingName(encoding);
         TRACE("detected encoding: %s\n", enc_name);
-        /* skip BOM, parser won't switch encodings and so won't skip it on its own */
-        if ((encoding == XML_CHAR_ENCODING_UTF8) &&
-            buff[0] == 0xEF && buff[1] == 0xBB && buff[2] == 0xBF)
-        {
-            buffer += 3;
-            size -= 3;
-        }
     }
 
     /* if libxml2 detection failed try to guess */

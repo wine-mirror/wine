@@ -756,7 +756,7 @@ static void XSLPattern_OP_IGEq(xmlXPathParserContextPtr pctx, int nargs)
     xmlFree(arg2);
 }
 
-static void query_serror(void* ctx, xmlErrorPtr err)
+static void query_serror(void* ctx, const xmlError* err)
 {
     LIBXML2_CALLBACK_SERROR(domselection_create, err);
 }

@@ -32,6 +32,15 @@
 extern "C" {
 #endif
 
+typedef enum {
+    XML_ENC_ERR_SUCCESS     =  0,
+    XML_ENC_ERR_SPACE       = -1,
+    XML_ENC_ERR_INPUT       = -2,
+    XML_ENC_ERR_PARTIAL     = -3,
+    XML_ENC_ERR_INTERNAL    = -4,
+    XML_ENC_ERR_MEMORY      = -5
+} xmlCharEncError;
+
 /*
  * xmlCharEncoding:
  *
@@ -142,14 +151,6 @@ struct _xmlCharEncodingHandler {
 #endif /* LIBXML_ICU_ENABLED */
 };
 
-#ifdef __cplusplus
-}
-#endif
-#include <libxml/tree.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * Interfaces for encoding handlers.
  */
@@ -194,20 +195,21 @@ XMLPUBFUN xmlCharEncoding
 	xmlDetectCharEncoding		(const unsigned char *in,
 					 int len);
 
+struct _xmlBuffer;
 XMLPUBFUN int
 	xmlCharEncOutFunc		(xmlCharEncodingHandler *handler,
-					 xmlBufferPtr out,
-					 xmlBufferPtr in);
+					 struct _xmlBuffer *out,
+					 struct _xmlBuffer *in);
 
 XMLPUBFUN int
 	xmlCharEncInFunc		(xmlCharEncodingHandler *handler,
-					 xmlBufferPtr out,
-					 xmlBufferPtr in);
+					 struct _xmlBuffer *out,
+					 struct _xmlBuffer *in);
 XML_DEPRECATED
 XMLPUBFUN int
 	xmlCharEncFirstLine		(xmlCharEncodingHandler *handler,
-					 xmlBufferPtr out,
-					 xmlBufferPtr in);
+					 struct _xmlBuffer *out,
+					 struct _xmlBuffer *in);
 XMLPUBFUN int
 	xmlCharEncCloseFunc		(xmlCharEncodingHandler *handler);
 

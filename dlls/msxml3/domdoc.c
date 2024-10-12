@@ -49,15 +49,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-/* not defined in older versions */
-#define XML_SAVE_FORMAT     1
-#define XML_SAVE_NO_DECL    2
-#define XML_SAVE_NO_EMPTY   4
-#define XML_SAVE_NO_XHTML   8
-#define XML_SAVE_XHTML     16
-#define XML_SAVE_AS_XML    32
-#define XML_SAVE_AS_HTML   64
-
 static const WCHAR PropertySelectionLanguageW[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
 static const WCHAR PropertySelectionNamespacesW[] = {'S','e','l','e','c','t','i','o','n','N','a','m','e','s','p','a','c','e','s',0};
 static const WCHAR PropertyProhibitDTDW[] = {'P','r','o','h','i','b','i','t','D','T','D',0};
@@ -502,13 +493,14 @@ static void LIBXML2_LOG_CALLBACK sax_warning(void* ctx, char const* msg, ...)
     va_end(ap);
 }
 
-static void sax_serror(void* ctx, xmlErrorPtr err)
+static void sax_serror(void* ctx, const xmlError* err)
 {
     LIBXML2_CALLBACK_SERROR(doparse, err);
 }
 
 static xmlDocPtr doparse(domdoc* This, char const* ptr, int len, xmlCharEncoding encoding)
 {
+    char *ctx_encoding;
     xmlDocPtr doc = NULL;
     xmlParserCtxtPtr pctx;
     static xmlSAXHandler sax_handler = {
@@ -573,6 +565,8 @@ static xmlDocPtr doparse(domdoc* This, char const* ptr, int len, xmlCharEncoding
        pctx->myDoc = NULL;
     }
     pctx->sax = NULL;
+    ctx_encoding = (char *)pctx->encoding;
+    pctx->encoding = NULL;
     xmlFreeParserCtxt(pctx);
 
     /* TODO: put this in one of the SAX callbacks */
@@ -589,9 +583,9 @@ static xmlDocPtr doparse(domdoc* This, char const* ptr, int len, xmlCharEncoding
         sprintf(buff, "version=\"%s\"", doc->version ? (char*)doc->version : "1.0");
         xmlNodeAddContent( node, xmlbuff );
 
-        if (doc->encoding)
+        if (ctx_encoding)
         {
-            sprintf(buff, " encoding=\"%s\"", doc->encoding);
+            sprintf(buff, " encoding=\"%s\"", ctx_encoding);
             xmlNodeAddContent( node, xmlbuff );
         }
 
@@ -604,6 +598,7 @@ static xmlDocPtr doparse(domdoc* This, char const* ptr, int len, xmlCharEncoding
         xmldoc_link_xmldecl( doc, node );
     }
 
+    xmlFree( ctx_encoding );
     return doc;
 }
 

@@ -79,10 +79,17 @@ XMLPUBFUN int
 XMLPUBFUN int
 		xmlSaveSetAttrEscape	(xmlSaveCtxtPtr ctxt,
 					 xmlCharEncodingOutputFunc escape);
+
+XMLPUBFUN int
+                xmlThrDefIndentTreeOutput(int v);
+XMLPUBFUN const char *
+                xmlThrDefTreeIndentString(const char * v);
+XMLPUBFUN int
+                xmlThrDefSaveNoEmptyTags(int v);
+
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* LIBXML_OUTPUT_ENABLED */
 #endif /* __XML_XMLSAVE_H__ */
-
-

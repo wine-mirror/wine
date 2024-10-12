@@ -11008,8 +11008,8 @@ static void test_load(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IXMLDOMDocument_load(doc, src, &b);
-    todo_wine ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(b == VARIANT_FALSE, "got %d\n", b);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
 
     VariantClear(&src);
 

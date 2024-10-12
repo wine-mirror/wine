@@ -12,7 +12,9 @@
 #define __XML_ENTITIES_H__
 
 #include <libxml/xmlversion.h>
+#define XML_TREE_INTERNALS
 #include <libxml/tree.h>
+#undef XML_TREE_INTERNALS
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,6 +87,8 @@ XMLPUBFUN xmlEntityPtr
 						 const xmlChar *ExternalID,
 						 const xmlChar *SystemID,
 						 const xmlChar *content);
+XMLPUBFUN void
+			xmlFreeEntity		(xmlEntityPtr entity);
 XMLPUBFUN xmlEntityPtr
 			xmlAddDocEntity		(xmlDocPtr doc,
 						 const xmlChar *name,

@@ -243,7 +243,7 @@ static void LIBXML2_LOG_CALLBACK parser_warning(void* ctx, char const* msg, ...)
     va_end(ap);
 }
 
-static void parser_serror(void* ctx, xmlErrorPtr err)
+static void parser_serror(void* ctx, const xmlError* err)
 {
     LIBXML2_CALLBACK_SERROR(Schema_parse, err);
 }
@@ -273,7 +273,7 @@ static void LIBXML2_LOG_CALLBACK validate_warning(void* ctx, char const* msg, ..
     va_end(ap);
 }
 
-static void validate_serror(void* ctx, xmlErrorPtr err)
+static void validate_serror(void* ctx, const xmlError* err)
 {
     LIBXML2_CALLBACK_SERROR(Schema_validate_tree, err);
 }
