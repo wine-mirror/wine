@@ -3202,6 +3202,8 @@ static HRESULT DP_GetSessionDesc( IDirectPlayImpl *This, void *lpData, DWORD *lp
     return DPERR_INVALIDPARAMS;
   }
 
+  EnterCriticalSection( &This->lock );
+
   dwRequiredSize = DP_CopySessionDesc( NULL, This->dp2->lpSessionDesc, bAnsi, bAnsi );
 
   if ( ( lpData == NULL ) ||
@@ -3209,10 +3211,13 @@ static HRESULT DP_GetSessionDesc( IDirectPlayImpl *This, void *lpData, DWORD *lp
      )
   {
     *lpdwDataSize = dwRequiredSize;
+    LeaveCriticalSection( &This->lock );
     return DPERR_BUFFERTOOSMALL;
   }
 
   DP_CopySessionDesc( lpData, This->dp2->lpSessionDesc, bAnsi, bAnsi );
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
@@ -3361,6 +3366,9 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
       if ( IsEqualGUID( &sessionDesc->guidInstance, &lpsd->guidInstance ) )
         break;
     }
+
+    /* No need to enter the critical section here as the messaging thread won't access the data
+     * while bConnectionOpen is FALSE. */
 
     free( This->dp2->lpSessionDesc );
     This->dp2->lpSessionDesc = DP_DuplicateSessionDesc( sessionDesc, bAnsi, bAnsi );
@@ -4010,10 +4018,13 @@ static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *l
     return DPERR_ACCESSDENIED;
   }
 
+  EnterCriticalSection( &This->lock );
+
   lpTempSessDesc = DP_DuplicateSessionDesc( lpSessDesc, bAnsi, bAnsi );
 
   if( lpTempSessDesc == NULL )
   {
+    LeaveCriticalSection( &This->lock );
     return DPERR_OUTOFMEMORY;
   }
 
@@ -4030,6 +4041,8 @@ static HRESULT DP_SetSessionDesc( IDirectPlayImpl *This, const DPSESSIONDESC2 *l
   {
     FIXME( "Need to send a DPMSG_SETSESSIONDESC msg to everyone\n" );
   }
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
