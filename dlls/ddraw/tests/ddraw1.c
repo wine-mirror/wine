@@ -15646,13 +15646,13 @@ static void test_multiple_devices(void)
     surface_desc.dwHeight = 256;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &texture_surf, NULL);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
-    hr = IDirectDrawSurface_QueryInterface(texture_surf, &IID_IDirect3DTexture2, (void **)&texture);
+    hr = IDirectDrawSurface_QueryInterface(texture_surf, &IID_IDirect3DTexture, (void **)&texture);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     hr = IDirect3DTexture_GetHandle(texture, device, &texture_handle);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     hr = IDirect3DTexture_GetHandle(texture, device2, &texture_handle2);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
-    ok(texture_handle != texture_handle2, "got same handles.\n");
+    ok(texture_handle == texture_handle2, "got same handles.\n");
 
     hr = IDirect3DDevice_CreateMatrix(device, &matrix_handle);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
