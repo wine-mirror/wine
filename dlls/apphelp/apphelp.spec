@@ -86,7 +86,7 @@
 @ stub SdbGetNamedLayer
 @ stub SdbGetNextChild
 @ stub SdbGetNthUserSdb
-@ stub SdbGetPermLayerKeys
+@ stdcall SdbGetPermLayerKeys(wstr ptr ptr long)
 @ stub SdbGetShowDebugInfoOption
 @ stub SdbGetShowDebugInfoOptionValue
 @ stub SdbGetStandardDatabaseGUID

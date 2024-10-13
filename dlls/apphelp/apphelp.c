@@ -109,3 +109,10 @@ BOOL WINAPI SdbSetPermLayerKeys( PCWSTR path, PCWSTR layers, BOOL machine )
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return TRUE;
 }
+
+BOOL WINAPI SdbGetPermLayerKeys( PCWSTR path, PWSTR layers, PDWORD size, DWORD flags )
+{
+    FIXME("stub: %s %p %p %ld\n", debugstr_w(path), layers, size, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
+}
