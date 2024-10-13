@@ -1868,6 +1868,41 @@ static unsigned short receiveGuaranteedGameMessage_( int line, SOCKET sock, DPID
     return port;
 }
 
+#define sendGuaranteedGameMessage( sock, port, fromId, toId, data, dataSize ) \
+        sendGuaranteedGameMessage_( __LINE__, sock, port, fromId, toId, data, dataSize )
+static void sendGuaranteedGameMessage_( int line, SOCKET sock, unsigned short port, DPID fromId, DPID toId, void *data,
+                                        DWORD dataSize )
+{
+    struct
+    {
+        SpHeader spHeader;
+        GameMessage request;
+    } request =
+    {
+        .spHeader =
+        {
+            .mixed = 0xfab00000 + sizeof( request ) + dataSize,
+            .addr =
+            {
+                .sin_family = AF_INET,
+                .sin_port = htons( port ),
+            },
+        },
+        .request =
+        {
+            .fromId = fromId,
+            .toId = toId,
+        }
+    };
+    int wsResult;
+
+    wsResult = send( sock, (char *) &request, sizeof( request ), 0 );
+    ok_( __FILE__, line )( wsResult == sizeof( request ), "send() returned %d.\n", wsResult );
+
+    wsResult = send( sock, data, dataSize, 0 );
+    ok_( __FILE__, line )( wsResult == dataSize, "send() returned %d.\n", wsResult );
+}
+
 static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, WORD port )
 {
 
@@ -8052,6 +8087,211 @@ static void test_interactive_Send(void)
 
 static void test_Receive(void)
 {
+    DPSESSIONDESC2 appGuidDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+    };
+    DPSESSIONDESC2 serverDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+        .lpszSessionName = (WCHAR *) L"normal",
+        .dwReserved1 = 0xaabbccdd,
+    };
+    BYTE data0[] = { 1, 2, 3, 4, 5, 6, 7, 8, };
+    BYTE data1[] = { 4, 3, 2, 1, };
+    BYTE msgData[ 256 ];
+    DWORD msgDataSize;
+    DPID fromId, toId;
+    DWORD waitResult;
+    IDirectPlay4 *dp;
+    SOCKET sendSock;
+    SOCKET recvSock;
+    HANDLE event0;
+    HANDLE event1;
+    HRESULT hr;
+
+    event0 = CreateEventA( NULL, FALSE, FALSE, NULL );
+    event1 = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay4A, (void **) &dp );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
+    ok( hr == DPERR_UNINITIALIZED, "got hr %#lx.\n", hr );
+
+    init_TCPIP_provider( dp, "127.0.0.1", 0 );
+
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
+    ok( hr == DPERR_NOMESSAGES, "got hr %#lx.\n", hr );
+
+    joinSession( dp, &appGuidDpsd, &serverDpsd, &sendSock, &recvSock );
+
+    createPlayer( dp, 0x07734, event0, NULL, 0, 0, sendSock, recvSock );
+    createPlayer( dp, 0x14, event1, NULL, 0, 0, sendSock, recvSock );
+
+    waitResult = WaitForSingleObject( event0, 2000 );
+    ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+
+    checkCreatePlayerOrGroupMessage( dp, DPPLAYERTYPE_PLAYER, 0x14, 2, NULL, 0, NULL, NULL, 0, DPPLAYER_LOCAL );
+
+    sendGuaranteedGameMessage( sendSock, 2349, 0x1337, 0x07734, data0, sizeof( data0 ) );
+    sendGuaranteedGameMessage( sendSock, 2349, 0x1337, 0x14, data1, sizeof( data1 ) );
+
+    waitResult = WaitForSingleObject( event0, 2000 );
+    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    waitResult = WaitForSingleObject( event1, 2000 );
+    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    msgDataSize = sizeof( data0 ) - 1;
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_ALL | DPRECEIVE_PEEK, msgData, &msgDataSize );
+    todo_wine ok( hr == DPERR_BUFFERTOOSMALL, "got hr %#lx.\n", hr );
+    ok( fromId == 0xdeadbeef, "got source id %#lx.\n", fromId );
+    ok( toId == 0xdeadbeef, "got destination id %#lx.\n", toId );
+    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, NULL, &msgDataSize );
+    todo_wine ok( hr == DPERR_BUFFERTOOSMALL, "got hr %#lx.\n", hr );
+    ok( fromId == 0xdeadbeef, "got source id %#lx.\n", fromId );
+    ok( toId == 0xdeadbeef, "got destination id %#lx.\n", toId );
+    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    memset( msgData, 0xcc, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_ALL | DPRECEIVE_PEEK, msgData, &msgDataSize );
+    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    todo_wine ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    memset( msgData, 0xcc, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_PEEK, msgData, &msgDataSize );
+    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    todo_wine ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    memset( msgData, 0xcc, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
+    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    todo_wine ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    memset( msgData, 0xcc, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
+    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    todo_wine ok( toId == 0x14, "got destination id %#lx.\n", toId );
+    todo_wine ok( !memcmp( msgData, data1, sizeof( data1 ) ), "message data didn't match.\n" );
+    todo_wine ok( msgDataSize == sizeof( data1 ), "got message size %lu.\n", msgDataSize );
+
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
+    ok( hr == DPERR_NOMESSAGES, "got hr %#lx.\n", hr );
+
+    sendGuaranteedGameMessage( sendSock, 2349, 0x1337, 0x07734, data0, sizeof( data0 ) );
+
+    waitResult = WaitForSingleObject( event0, 2000 );
+    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+
+    fromId = 0x14;
+    toId = 0xdeadbeef;
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_FROMPLAYER, msgData, &msgDataSize );
+    ok( hr == DPERR_NOMESSAGES, "got hr %#lx.\n", hr );
+
+    fromId = 0x1337;
+    toId = 0xdeadbeef;
+    memset( msgData, 0xcc, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_FROMPLAYER, msgData, &msgDataSize );
+    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    todo_wine ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+
+    fromId = 0x1337;
+    toId = 0xdeadbeef;
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_FROMPLAYER, msgData, &msgDataSize );
+    ok( hr == DPERR_NOMESSAGES, "got hr %#lx.\n", hr );
+
+    sendGuaranteedGameMessage( sendSock, 2349, 0x1337, DPID_ALLPLAYERS, data0, sizeof( data0 ) );
+
+    waitResult = WaitForSingleObject( event0, 2000 );
+    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    waitResult = WaitForSingleObject( event1, 2000 );
+    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+
+    fromId = 0xdeadbeef;
+    toId = 0x07734;
+    memset( msgData, 0xcc, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_TOPLAYER, msgData, &msgDataSize );
+    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    ok( toId == 0x07734, "got destination id %#lx.\n", toId );
+    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+
+    toId = 0x07734;
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_TOPLAYER, msgData, &msgDataSize );
+    ok( hr == DPERR_NOMESSAGES, "got hr %#lx.\n", hr );
+
+    fromId = 0xdeadbeef;
+    toId = 0x14;
+    memset( msgData, 0xcc, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_TOPLAYER, msgData, &msgDataSize );
+    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( fromId == 0x1337, "got source id %#lx.\n", fromId );
+    ok( toId == 0x14, "got destination id %#lx.\n", toId );
+    todo_wine ok( !memcmp( msgData, data0, sizeof( data0 ) ), "message data didn't match.\n" );
+    todo_wine ok( msgDataSize == sizeof( data0 ), "got message size %lu.\n", msgDataSize );
+
+    toId = 0x14;
+    msgDataSize = sizeof( msgData );
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, DPRECEIVE_TOPLAYER, msgData, &msgDataSize );
+    ok( hr == DPERR_NOMESSAGES, "got hr %#lx.\n", hr );
+
+    closesocket( recvSock );
+    closesocket( sendSock );
+
+    IDirectPlayX_Release( dp );
+
+    CloseHandle( event1 );
+    CloseHandle( event0 );
+}
+
+static void test_interactive_Receive(void)
+{
 
     IDirectPlay4 *pDP;
     DPSESSIONDESC2 dpsd;
@@ -9587,6 +9827,7 @@ START_TEST(dplayx)
     test_CreatePlayer();
     test_CREATEPLAYER();
     test_Send();
+    test_Receive();
 
     if (!winetest_interactive)
     {
@@ -9624,7 +9865,7 @@ START_TEST(dplayx)
     test_groups_cs();
 
     test_interactive_Send();
-    test_Receive();
+    test_interactive_Receive();
     test_GetMessageCount();
     test_GetMessageQueue();
 
