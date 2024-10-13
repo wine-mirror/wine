@@ -213,6 +213,34 @@ static void remove_bluetooth_radio( winebluetooth_radio_t radio )
     winebluetooth_radio_free( radio );
 }
 
+static void bluetooth_radio_set_properties( DEVICE_OBJECT *obj,
+                                            winebluetooth_radio_props_mask_t mask,
+                                            struct winebluetooth_radio_properties *props );
+
+static void update_bluetooth_radio_properties( struct winebluetooth_watcher_event_radio_props_changed event )
+{
+    struct bluetooth_radio *device;
+    winebluetooth_radio_t radio = event.radio;
+    winebluetooth_radio_props_mask_t mask = event.changed_props_mask;
+    struct winebluetooth_radio_properties props = event.props;
+
+    EnterCriticalSection( &device_list_cs );
+    LIST_FOR_EACH_ENTRY( device, &device_list, struct bluetooth_radio, entry )
+    {
+        if (winebluetooth_radio_equal( radio, device->radio ) && !device->removed)
+        {
+            EnterCriticalSection( &device->props_cs );
+            device->props_mask = mask;
+            device->props = props;
+            bluetooth_radio_set_properties( device->device_obj, device->props_mask,
+                                            &device->props );
+            LeaveCriticalSection( &device->props_cs );
+            break;
+        }
+    }
+    LeaveCriticalSection( &device_list_cs );
+}
+
 static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
 {
     NTSTATUS status;
@@ -235,6 +263,9 @@ static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
                         break;
                     case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_REMOVED:
                         remove_bluetooth_radio( event->event_data.radio_removed );
+                        break;
+                    case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED:
+                        update_bluetooth_radio_properties( event->event_data.radio_props_changed );
                         break;
                     default:
                         FIXME( "Unknown bluetooth watcher event code: %#x\n", event->event_type );

@@ -52,6 +52,30 @@
 
 #ifdef SONAME_LIBDBUS_1
 
+/* BlueZ is the userspace Bluetooth management daemon for Linux systems, which provides an
+ * object-based API for interacting with Bluetooth adapters and devices on top of DBus. Every DBus
+ * object has one or more "interfaces", with each interface have its own set of methods and signals
+ * that we can call or listen for, respectively. Objects are identified by their "path", which
+ * provide a way to organize objects under a hierarchy. For instance, a bluetooth adapter/radio will
+ * have a path of the form "/org/bluez/hciX", with any remote devices discovered by or bonded to it
+ * having the path "/org/bluez/hciX/XX:XX:XX:XX:XX:XX". Similarly, any LE GATT services,
+ * characteristics or descriptors specific to this remote device are represented as objects under
+ * the device's path. Among BlueZ's own interfaces, the other important interfaces we rely on are:
+ *
+ * org.freedesktop.DBus.Properties: Allows us to read and (optionally) modify properties specific
+ * to an object's interface using the "Get" and "Set" methods. Additionally, some objects may
+ * broadcast a "PropertiesChanged" signal if any of their properties change, which gets used by
+ * bluez_filter to let the driver know to appropriately update the equivalent PDO. The "GetAll"
+ * method provides a convenient way to get all properties for an interface.
+ *
+ * org.freedesktop.DBus.ObjectManager: This contains the "GetManagedObjects" method, that returns a
+ * list of all known objects under the object's path namespace, with the interfaces they implement
+ * (and any properties those interfaces might have). This is used to build a list of initially known
+ * devices in bluez_build_initial_device_lists. The "InterfacesAdded" and "InterfacesRemoved"
+ * signals are used to detect when a bluetooth adapter or device has been addeed/removed in
+ * bluez_filter, which we relay to the bluetooth driver to add/remove the corresponding PDO.
+ */
+
 WINE_DEFAULT_DEBUG_CHANNEL( winebth );
 WINE_DECLARE_DEBUG_CHANNEL( dbus );
 
@@ -60,6 +84,7 @@ const int bluez_timeout = -1;
 #define DBUS_INTERFACE_OBJECTMANAGER "org.freedesktop.DBus.ObjectManager"
 #define DBUS_OBJECTMANAGER_SIGNAL_INTERFACESADDED "InterfacesAdded"
 #define DBUS_OBJECTMANAGER_SIGNAL_INTERFACESREMOVED "InterfacesRemoved"
+#define DBUS_PROPERTIES_SIGNAL_PROPERTIESCHANGED "PropertiesChanged"
 
 #define DBUS_INTERFACES_ADDED_SIGNATURE                                                            \
     DBUS_TYPE_OBJECT_PATH_AS_STRING                                                                \
@@ -73,6 +98,14 @@ const int bluez_timeout = -1;
 
 #define DBUS_INTERFACES_REMOVED_SIGNATURE                                                          \
     DBUS_TYPE_OBJECT_PATH_AS_STRING                                                                \
+    DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_STRING_AS_STRING
+
+#define DBUS_PROPERTIES_CHANGED_SIGNATURE                                                          \
+    DBUS_TYPE_STRING_AS_STRING                                                                     \
+    DBUS_TYPE_ARRAY_AS_STRING                                                                      \
+    DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING                                                           \
+    DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING                                         \
+    DBUS_DICT_ENTRY_END_CHAR_AS_STRING                                                             \
     DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_STRING_AS_STRING
 
 #define BLUEZ_DEST "org.bluez"
@@ -311,6 +344,29 @@ static void bluez_radio_prop_from_dict_entry( const char *prop_name, DBusMessage
     }
 }
 
+static NTSTATUS bluez_adapter_get_props_async( void *connection, const char *radio_object_path,
+                                               DBusPendingCall **call )
+{
+    DBusMessage *request;
+    static const char *adapter_iface = BLUEZ_INTERFACE_ADAPTER;
+    dbus_bool_t success;
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, radio_object_path,
+                                              DBUS_INTERFACE_PROPERTIES, "GetAll" );
+    if (!request) return STATUS_NO_MEMORY;
+
+    p_dbus_message_append_args( request, DBUS_TYPE_STRING, &adapter_iface, DBUS_TYPE_INVALID );
+
+    success = p_dbus_connection_send_with_reply( connection, request, call, bluez_timeout );
+    p_dbus_message_unref( request );
+    if (!success)
+        return STATUS_NO_MEMORY;
+    if (!*call)
+        return STATUS_INTERNAL_ERROR;
+
+    return STATUS_SUCCESS;
+}
+
 struct bluez_watcher_ctx
 {
     void *init_device_list_call;
@@ -363,16 +419,22 @@ struct bluez_watcher_event
     struct list entry;
     enum winebluetooth_watcher_event_type event_type;
     union winebluetooth_watcher_event_data event;
+
+    /* Some DBus signals, like PropertiesChanged in org.freedesktop.DBus.Properties, require us to
+     * perform an additional call to get the complete state of the object (in this instance, call
+     * Get/GetAll to get the values of invalidated properties). The event is queued out only once
+     * this call completes. */
+    DBusPendingCall *pending_call;
 };
 
-static BOOL bluez_event_list_queue_new_event( struct list *event_list,
-                                              enum winebluetooth_watcher_event_type event_type,
-                                              union winebluetooth_watcher_event_data event )
+static BOOL bluez_event_list_queue_new_event_with_call(
+    struct list *event_list, enum winebluetooth_watcher_event_type event_type,
+    union winebluetooth_watcher_event_data event, DBusPendingCall *call,
+    DBusPendingCallNotifyFunction callback )
 {
     struct bluez_watcher_event *event_entry;
 
-    event_entry = calloc( 1,  sizeof( *event_entry ) );
-    if (!event_entry)
+    if (!(event_entry = calloc(1, sizeof( *event_entry ) )))
     {
         ERR( "Could not allocate memory for DBus event.\n" );
         return FALSE;
@@ -380,9 +442,85 @@ static BOOL bluez_event_list_queue_new_event( struct list *event_list,
 
     event_entry->event_type = event_type;
     event_entry->event = event;
+    event_entry->pending_call = call;
+    if (!call)
+        p_dbus_pending_call_set_notify( call, callback, &event_entry->event, NULL );
     list_add_tail( event_list, &event_entry->entry );
 
     return TRUE;
+}
+
+static BOOL bluez_event_list_queue_new_event( struct list *event_list,
+                                              enum winebluetooth_watcher_event_type event_type,
+                                              union winebluetooth_watcher_event_data event )
+{
+    return bluez_event_list_queue_new_event_with_call( event_list, event_type, event, NULL, NULL );
+}
+
+static void bluez_filter_radio_props_changed_callback( DBusPendingCall *call, void *user_data )
+{
+    union winebluetooth_watcher_event_data *event = user_data;
+    struct winebluetooth_watcher_event_radio_props_changed *changed = &event->radio_props_changed;
+    const struct unix_name *radio = (struct unix_name *)event->radio_props_changed.radio.handle;
+    DBusMessage *reply;
+    DBusMessageIter dict, prop_iter, variant;
+    const char *prop_name;
+    DBusError error;
+
+    TRACE( "call %p, radio %s\n", call, debugstr_a( radio->str ) );
+
+    reply = p_dbus_pending_call_steal_reply( call );
+    p_dbus_error_init( &error );
+    if (p_dbus_set_error_from_message( &error, reply ))
+    {
+        ERR( "Failed to get adapter properties for %s: %s: %s\n", debugstr_a( radio->str ),
+             debugstr_a( error.name ), debugstr_a( error.message ) );
+        p_dbus_error_free( &error );
+        p_dbus_message_unref( reply );
+        return;
+    }
+    p_dbus_error_free( &error );
+
+    p_dbus_message_iter_init( reply, &dict );
+    p_dbus_message_iter_recurse( &dict, &prop_iter );
+    while((prop_name = bluez_next_dict_entry( &prop_iter, &variant )))
+    {
+        bluez_radio_prop_from_dict_entry( prop_name, &variant, &changed->props,
+                                          &changed->changed_props_mask, changed->invalid_props_mask );
+    }
+    changed->invalid_props_mask &= ~changed->changed_props_mask;
+    p_dbus_message_unref( reply );
+}
+
+struct bluez_object_property_masks
+{
+    const char *prop_name;
+    UINT16 mask;
+};
+
+static UINT16 bluez_dbus_get_invalidated_properties_from_iter(
+    DBusMessageIter *invalid_prop_iter, const struct bluez_object_property_masks *prop_masks,
+    SIZE_T len )
+{
+    UINT16 mask = 0;
+
+    while (p_dbus_message_iter_has_next( invalid_prop_iter ))
+    {
+        const char *prop_name;
+        SIZE_T i;
+
+        assert( p_dbus_message_iter_get_arg_type( invalid_prop_iter ) == DBUS_TYPE_STRING );
+        p_dbus_message_iter_get_basic( invalid_prop_iter, &prop_name );
+        for (i = 0; i < len; i++)
+        {
+            if (strcmp( prop_masks[i].prop_name, prop_name ) == 0)
+                mask |= prop_masks[i].mask;
+        }
+
+        p_dbus_message_iter_next( invalid_prop_iter );
+    }
+
+    return mask;
 }
 
 static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, void *user_data )
@@ -493,6 +631,101 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
         }
         p_dbus_free_string_array( interfaces );
     }
+    else if (p_dbus_message_is_signal( msg, DBUS_INTERFACE_PROPERTIES, DBUS_PROPERTIES_SIGNAL_PROPERTIESCHANGED ) &&
+             p_dbus_message_has_signature( msg, DBUS_PROPERTIES_CHANGED_SIGNATURE ))
+    {
+        DBusMessageIter iter;
+        const char *iface;
+
+        p_dbus_message_iter_init( msg, &iter );
+        p_dbus_message_iter_get_basic( &iter, &iface );
+
+        if (!strcmp( iface, BLUEZ_INTERFACE_ADAPTER ))
+        {
+            struct winebluetooth_watcher_event_radio_props_changed props_changed = {0};
+            struct unix_name *radio;
+            DBusMessageIter changed_props_iter, invalid_props_iter, variant;
+            const char *prop_name;
+            const static struct bluez_object_property_masks radio_prop_masks[] = {
+                { "Name", WINEBLUETOOTH_RADIO_PROPERTY_NAME },
+                { "Address", WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS },
+                { "Discoverable", WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERABLE },
+                { "Connectable", WINEBLUETOOTH_RADIO_PROPERTY_CONNECTABLE },
+                { "Class", WINEBLUETOOTH_RADIO_PROPERTY_CLASS },
+                { "Manufacturer", WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER },
+                { "Version", WINEBLUETOOTH_RADIO_PROPERTY_VERSION },
+                { "Discovering", WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERING },
+                { "Pairable", WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE },
+            };
+            const char *object_path;
+
+            p_dbus_message_iter_next( &iter );
+            p_dbus_message_iter_recurse( &iter, &changed_props_iter );
+            while ((prop_name = bluez_next_dict_entry( &changed_props_iter, &variant )))
+            {
+                bluez_radio_prop_from_dict_entry( prop_name, &variant, &props_changed.props,
+                                                  &props_changed.changed_props_mask,
+                                                  WINEBLUETOOTH_RADIO_ALL_PROPERTIES );
+            }
+
+            p_dbus_message_iter_next( &iter );
+            p_dbus_message_iter_recurse( &iter, &invalid_props_iter );
+            props_changed.invalid_props_mask = bluez_dbus_get_invalidated_properties_from_iter(
+                &invalid_props_iter, radio_prop_masks, ARRAY_SIZE( radio_prop_masks ) );
+            if (!props_changed.changed_props_mask && !props_changed.invalid_props_mask)
+                /* No properties that are of any interest to us have changed or been invalidated,
+                 * no need to generate an event. */
+                return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
+            object_path = p_dbus_message_get_path( msg );
+            radio = unix_name_get_or_create( object_path );
+            if (!radio)
+            {
+                ERR( "failed to allocate memory for adapter path %s\n", debugstr_a( object_path ) );
+                return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+            }
+            props_changed.radio.handle = (UINT_PTR)radio;
+            TRACE( "Properties changed for radio %s, changed %#x, invalid %#x\n",
+                   debugstr_a( radio->str ), props_changed.changed_props_mask,
+                  props_changed.invalid_props_mask );
+            if (props_changed.invalid_props_mask != 0)
+            {
+                DBusPendingCall *pending_call = NULL;
+                union winebluetooth_watcher_event_data event = { .radio_props_changed = props_changed };
+                NTSTATUS status = bluez_adapter_get_props_async( conn, radio->str, &pending_call );
+
+                if (status != STATUS_SUCCESS)
+                {
+                    ERR( "Failed to create async call to get adapter properties: %#x\n",
+                         (int)status );
+                    unix_name_free( radio );
+                    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                }
+
+                if (!bluez_event_list_queue_new_event_with_call( event_list,
+                                                                BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED,
+                                                                event, pending_call,
+                                                                bluez_filter_radio_props_changed_callback ))
+                {
+                    unix_name_free( radio );
+                    p_dbus_pending_call_cancel( pending_call );
+                    p_dbus_pending_call_unref( pending_call );
+                    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                }
+            }
+            else
+            {
+                union winebluetooth_watcher_event_data event = { .radio_props_changed = props_changed };
+                if (!bluez_event_list_queue_new_event( event_list,
+                                                      BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED,
+                                                      event ))
+                {
+                    unix_name_free( radio );
+                    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+                }
+            }
+        }
+    }
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
@@ -501,8 +734,12 @@ static const char BLUEZ_MATCH_OBJECTMANAGER[] = "type='signal',"
                                                 "interface='org.freedesktop.DBus.ObjectManager',"
                                                 "sender='"BLUEZ_DEST"',"
                                                 "path='/'";
+static const char BLUEZ_MATCH_PROPERTIES[] = "type='signal',"
+                                             "interface='"DBUS_INTERFACE_PROPERTIES"',"
+                                             "member='PropertiesChanged',"
+                                             "sender='"BLUEZ_DEST"',";
 
-static const char *BLUEZ_MATCH_RULES[] = { BLUEZ_MATCH_OBJECTMANAGER };
+static const char *BLUEZ_MATCH_RULES[] = { BLUEZ_MATCH_OBJECTMANAGER, BLUEZ_MATCH_PROPERTIES };
 
 NTSTATUS bluez_watcher_init( void *connection, void **ctx )
 {
@@ -560,7 +797,18 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
 
 void bluez_watcher_close( void *connection, void *ctx )
 {
-    p_dbus_bus_remove_match( connection, BLUEZ_MATCH_OBJECTMANAGER, NULL );
+    SIZE_T i;
+    for (i = 0; i < ARRAY_SIZE( BLUEZ_MATCH_RULES ); i++)
+    {
+        DBusError error;
+
+        p_dbus_error_init( &error );
+        p_dbus_bus_remove_match( connection, BLUEZ_MATCH_RULES[i], &error );
+        if (p_dbus_error_is_set( &error ))
+            ERR( "Could not remove DBus match %s: %s: %s", BLUEZ_MATCH_RULES[i],
+                 debugstr_a( error.name ), debugstr_a( error.message ) );
+        p_dbus_error_free( &error );
+    }
     p_dbus_connection_remove_filter( connection, bluez_filter, ctx );
 }
 
@@ -649,9 +897,15 @@ static BOOL bluez_watcher_event_queue_ready( struct bluez_watcher_ctx *ctx, stru
     {
         struct bluez_watcher_event *event =
             LIST_ENTRY( list_head( &ctx->event_list ), struct bluez_watcher_event, entry );
+
+        if (event->pending_call && !p_dbus_pending_call_get_completed( event->pending_call ))
+            return FALSE;
+
         event->event_type = event->event_type;
         event->event = event->event;
         list_remove( &event->entry );
+        if (event->pending_call)
+            p_dbus_pending_call_unref( event->pending_call );
         free( event );
         return TRUE;
     }

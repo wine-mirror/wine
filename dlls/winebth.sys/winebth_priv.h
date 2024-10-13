@@ -157,6 +157,7 @@ enum winebluetooth_watcher_event_type
 {
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED,
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_REMOVED,
+    BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED,
 };
 
 struct winebluetooth_watcher_event_radio_added
@@ -166,10 +167,20 @@ struct winebluetooth_watcher_event_radio_added
     winebluetooth_radio_t radio;
 };
 
+struct winebluetooth_watcher_event_radio_props_changed
+{
+    winebluetooth_radio_props_mask_t changed_props_mask;
+    struct winebluetooth_radio_properties props;
+
+    winebluetooth_radio_props_mask_t invalid_props_mask;
+    winebluetooth_radio_t radio;
+};
+
 union winebluetooth_watcher_event_data
 {
     struct winebluetooth_watcher_event_radio_added radio_added;
     winebluetooth_radio_t radio_removed;
+    struct winebluetooth_watcher_event_radio_props_changed radio_props_changed;
 };
 
 struct winebluetooth_watcher_event
