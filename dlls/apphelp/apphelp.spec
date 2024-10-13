@@ -161,6 +161,7 @@
 @ stub SdbWriteStringTag
 @ stub SdbWriteStringTagDirect
 @ stub SdbWriteWORDTag
+@ stdcall SetPermLayerState(wstr ptr ptr long long)
 @ stub SetPermLayers
 @ stub ShimDbgPrint
 @ stub ShimDumpCache
