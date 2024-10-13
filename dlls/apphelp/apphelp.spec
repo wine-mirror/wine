@@ -140,7 +140,7 @@
 @ stub SdbSetApphelpDebugParameters
 @ stub SdbSetEntryFlags
 @ stub SdbSetImageType
-@ stub SdbSetPermLayerKeys
+@ stdcall SdbSetPermLayerKeys(wstr wstr long)
 @ stub SdbShowApphelpDialog
 @ stub SdbShowApphelpFromQuery
 @ stub SdbStartIndexing

@@ -102,3 +102,10 @@ void WINAPI SdbGetAppPatchDir(HSDB hsdb, WCHAR *path, DWORD size)
     FIXME("stub: %p %p %ld\n", hsdb, path, size);
     if (size && path) *path = 0;
 }
+
+BOOL WINAPI SdbSetPermLayerKeys( PCWSTR path, PCWSTR layers, BOOL machine )
+{
+    FIXME("stub: %s %s %d\n", debugstr_w(path), debugstr_w(layers), machine);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
+}
