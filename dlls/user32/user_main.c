@@ -166,6 +166,13 @@ static NTSTATUS WINAPI User32CallDispatchCallback( void *args, ULONG size )
     return callback( params, size );
 }
 
+static NTSTATUS WINAPI User32DragDropPost( void *args, ULONG size )
+{
+    const struct drag_drop_post_params *params = args;
+    drag_drop_post( params->hwnd, params->drop_size, (DROPFILES *)&params->drop );
+    return STATUS_SUCCESS;
+}
+
 static KERNEL_CALLBACK_PROC kernel_callback_table[NtUserCallCount] =
 {
     User32CallDispatchCallback,
@@ -188,6 +195,7 @@ static KERNEL_CALLBACK_PROC kernel_callback_table[NtUserCallCount] =
     User32PostDDEMessage,
     User32RenderSsynthesizedFormat,
     User32UnpackDDEMessage,
+    User32DragDropPost,
 };
 
 

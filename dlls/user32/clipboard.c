@@ -629,3 +629,16 @@ HANDLE WINAPI GetClipboardData( UINT format )
     LeaveCriticalSection( &clipboard_cs );
     return ret;
 }
+
+void drag_drop_post( HWND hwnd, UINT drop_size, const DROPFILES *drop )
+{
+    HDROP handle;
+
+    if ((handle = GlobalAlloc( GMEM_SHARE, drop_size )))
+    {
+        DROPFILES *ptr = GlobalLock( handle );
+        memcpy( ptr, drop, drop_size );
+        GlobalUnlock( handle );
+        PostMessageW( hwnd, WM_DROPFILES, (WPARAM)handle, 0 );
+    }
+}

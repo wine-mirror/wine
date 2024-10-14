@@ -89,14 +89,3 @@ struct dnd_drop_event_params
     struct dispatch_callback_params dispatch;
     ULONG hwnd;
 };
-
-/* x11drv_dnd_post_drop params */
-struct dnd_post_drop_params
-{
-    struct dispatch_callback_params dispatch;
-    UINT32 __pad;
-    DROPFILES drop;
-    char data[];
-};
-
-C_ASSERT(sizeof(struct dnd_post_drop_params) == offsetof(struct dnd_post_drop_params, data[0]));

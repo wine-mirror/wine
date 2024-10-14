@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "ntuser.h"
 #include "shellapi.h"
+#include "shlobj.h"
 #include "wow64win_private.h"
 #include "wine/debug.h"
 
@@ -1450,6 +1451,26 @@ static NTSTATUS WINAPI wow64_NtUserCallDispatchCallback( void *arg, ULONG size )
     return dispatch_callback( NtUserCallDispatchCallback, arg, size );
 }
 
+static NTSTATUS WINAPI wow64_NtUserDragDropPost( void *arg, ULONG size )
+{
+    struct drag_drop_post_params32
+    {
+        ULONG hwnd;
+        UINT drop_size;
+        struct drop_files drop;
+        BYTE files[];
+    };
+    const struct drag_drop_post_params *params = arg;
+    struct drag_drop_post_params32 *params32;
+
+    size = offsetof(struct drag_drop_post_params32, drop) + params->drop_size;
+    if (!(params32 = Wow64AllocateTemp( size ))) return STATUS_NO_MEMORY;
+    params32->hwnd = HandleToUlong( params->hwnd );
+    params32->drop_size = params->drop_size;
+    memcpy( &params32->drop, &params->drop, params->drop_size );
+    return dispatch_callback( NtUserDragDropPost, params32, size );
+}
+
 ntuser_callback user_callbacks[] =
 {
     /* user32 callbacks */
@@ -1473,6 +1494,7 @@ ntuser_callback user_callbacks[] =
     wow64_NtUserPostDDEMessage,
     wow64_NtUserRenderSynthesizedFormat,
     wow64_NtUserUnpackDDEMessage,
+    wow64_NtUserDragDropPost,
 };
 
 C_ASSERT( ARRAYSIZE(user_callbacks) == NtUserCallCount );
@@ -3619,6 +3641,9 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
         default:
             return NtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
         }
+
+    case NtUserDragDropCall:
+        return NtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
     }
 
     return message_call_32to64( hwnd, msg, wparam, lparam, result_info, type, ansi );

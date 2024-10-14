@@ -31,7 +31,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     {
         .dnd_enter_event_callback = (UINT_PTR)x11drv_dnd_enter_event,
         .dnd_position_event_callback = (UINT_PTR)x11drv_dnd_position_event,
-        .dnd_post_drop_callback = (UINT_PTR)x11drv_dnd_post_drop,
         .dnd_drop_event_callback = (UINT_PTR)x11drv_dnd_drop_event,
         .dnd_leave_event_callback = (UINT_PTR)x11drv_dnd_leave_event,
         .foreign_window_proc = (UINT_PTR)foreign_window_proc,

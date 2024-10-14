@@ -1436,17 +1436,10 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
     return hQueryWnd;
 }
 
-static void post_drop( HWND hwnd, DROPFILES *drop, ULONG size )
+static void drag_drop_post( HWND hwnd, DROPFILES *drop, ULONG size )
 {
-    struct dnd_post_drop_params *params;
-    void *ret_ptr;
-    ULONG ret_len;
-    if (!(params = malloc( sizeof(*params) + size - sizeof(*drop) ))) return;
-    memcpy( &params->drop, drop, size );
-    params->drop.fWide = HandleToUlong( hwnd ); /* abuse fWide to pass window handle */
-    params->dispatch.callback = dnd_post_drop_callback;
-    KeUserDispatchCallback( &params->dispatch, size, &ret_ptr, &ret_len );
-    free( params );
+    NtUserMessageCall( hwnd, WINE_DRAG_DROP_POST, size, (LPARAM)drop, NULL,
+                       NtUserDragDropCall, FALSE );
 }
 
 /**********************************************************************
@@ -1498,7 +1491,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
         if ((drop = file_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size )))
         {
-            post_drop( hWnd, drop, drop_size );
+            drag_drop_post( hWnd, drop, drop_size );
             free( drop );
         }
     }
@@ -1560,7 +1553,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
               release_win_data( win_data );
           }
 
-          post_drop( hWnd, drop, drop_size );
+          drag_drop_post( hWnd, drop, drop_size );
           free( drop );
       }
 

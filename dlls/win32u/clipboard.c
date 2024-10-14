@@ -754,3 +754,38 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
         return 0;
     }
 }
+
+LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data )
+{
+    void *ret_ptr;
+    ULONG ret_len;
+
+    TRACE( "hwnd %p, msg %#x, wparam %#zx, lparam %#lx, data %p\n", hwnd, msg, wparam, lparam, data );
+
+    switch (msg)
+    {
+    case WINE_DRAG_DROP_POST:
+    {
+        struct drag_drop_post_params *params;
+        const DROPFILES *drop = (DROPFILES *)lparam;
+        UINT drop_size = wparam, size;
+        NTSTATUS status;
+
+        size = offsetof(struct drag_drop_post_params, drop) + drop_size;
+        if (!(params = malloc( size ))) return STATUS_NO_MEMORY;
+        params->hwnd = hwnd;
+        params->drop_size = drop_size;
+        memcpy( &params->drop, drop, drop_size );
+
+        status = KeUserModeCallback( NtUserDragDropPost, params, size, &ret_ptr, &ret_len );
+        free( params );
+        return status;
+    }
+
+    default:
+        FIXME( "Unknown NtUserDragDropCall msg %#x\n", msg );
+        break;
+    }
+
+    return -1;
+}

@@ -24,6 +24,7 @@
 
 #include "ntuser.h"
 #include "shellapi.h"
+#include "shlobj.h"
 #include "wine/list.h"
 #include "wine/vulkan.h"
 
@@ -215,6 +216,9 @@ extern void register_desktop_class(void);
 /* imm.c */
 extern LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPARAM lparam,
                                 struct ime_driver_call_params *params );
+
+/* clipboard.c */
+extern LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
 
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon );

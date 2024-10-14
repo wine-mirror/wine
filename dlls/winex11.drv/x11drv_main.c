@@ -88,7 +88,6 @@ char *process_name = NULL;
 UINT64 client_foreign_window_proc = 0;
 UINT64 dnd_enter_event_callback = 0;
 UINT64 dnd_position_event_callback = 0;
-UINT64 dnd_post_drop_callback = 0;
 UINT64 dnd_drop_event_callback = 0;
 UINT64 dnd_leave_event_callback = 0;
 
@@ -650,7 +649,6 @@ static NTSTATUS x11drv_init( void *arg )
 
     dnd_enter_event_callback = params->dnd_enter_event_callback;
     dnd_position_event_callback = params->dnd_position_event_callback;
-    dnd_post_drop_callback = params->dnd_post_drop_callback;
     dnd_drop_event_callback = params->dnd_drop_event_callback;
     dnd_leave_event_callback = params->dnd_leave_event_callback;
     client_foreign_window_proc = params->foreign_window_proc;

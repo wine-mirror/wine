@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "ntuser.h"
+#include "shlobj.h"
 #include "winreg.h"
 #include "winnls.h"
 #include "wine/heap.h"
@@ -51,6 +52,7 @@ extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
                                 const void *buffer, size_t size );
 extern void free_cached_data( UINT format, HANDLE handle );
 extern HANDLE render_synthesized_format( UINT format, UINT from );
+extern void drag_drop_post( HWND hwnd, UINT drop_size, const DROPFILES *drop );
 extern void unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                             void *buffer, BOOL ansi );
 

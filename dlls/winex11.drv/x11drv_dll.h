@@ -29,7 +29,6 @@
 
 extern NTSTATUS WINAPI x11drv_dnd_enter_event( void *params, ULONG size );
 extern NTSTATUS WINAPI x11drv_dnd_position_event( void *params, ULONG size );
-extern NTSTATUS WINAPI x11drv_dnd_post_drop( void *data, ULONG size );
 extern NTSTATUS WINAPI x11drv_dnd_drop_event( void *params, ULONG size );
 extern NTSTATUS WINAPI x11drv_dnd_leave_event( void *params, ULONG size );
 

@@ -744,24 +744,3 @@ NTSTATUS WINAPI x11drv_dnd_enter_event( void *args, ULONG size )
     if (previous) IDataObject_Release( previous );
     return STATUS_SUCCESS;
 }
-
-
-NTSTATUS WINAPI x11drv_dnd_post_drop( void *args, ULONG size )
-{
-    UINT drop_size = size - offsetof(struct dnd_post_drop_params, drop);
-    struct dnd_post_drop_params *params = args;
-    HDROP handle;
-
-    if ((handle = GlobalAlloc( GMEM_SHARE, drop_size )))
-    {
-        DROPFILES *ptr = GlobalLock( handle );
-        HWND hwnd;
-        memcpy( ptr, &params->drop, drop_size );
-        hwnd = UlongToHandle( ptr->fWide );
-        ptr->fWide = TRUE;
-        GlobalUnlock( handle );
-        PostMessageW( hwnd, WM_DROPFILES, (WPARAM)handle, 0 );
-    }
-
-    return STATUS_SUCCESS;
-}
