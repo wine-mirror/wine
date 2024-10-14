@@ -33,7 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(xdnd);
 
 static IDataObject *xdnd_data_object;
 static BOOL XDNDAccepted = FALSE;
-static DWORD XDNDDropEffect = DROPEFFECT_NONE;
 /* might be an ancestor of XDNDLastTargetWnd */
 static HWND XDNDLastDropTargetWnd;
 
@@ -93,6 +92,7 @@ struct data_object
 
     HWND target_hwnd; /* the last window the mouse was over */
     POINT target_pos;
+    DWORD target_effect;
 
     struct format_entry *entries_end;
     struct format_entry entries[];
@@ -609,14 +609,14 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
         {
             hr = IDropTarget_DragOver(dropTarget, MK_LBUTTON, pointl, &effect);
             if (hr == S_OK)
-                XDNDDropEffect = effect;
+                object->target_effect = effect;
             else
                 WARN("IDropTarget_DragOver failed, error 0x%08lx\n", hr);
             IDropTarget_Release(dropTarget);
         }
     }
 
-    if (XDNDAccepted && XDNDDropEffect != DROPEFFECT_NONE)
+    if (XDNDAccepted && object->target_effect != DROPEFFECT_NONE)
         accept = 1;
     else
     {
@@ -641,12 +641,13 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
     struct dnd_drop_event_params *params = args;
     HWND hwnd = UlongToHandle( params->hwnd );
     IDropTarget *dropTarget;
-    DWORD effect = XDNDDropEffect;
+    DWORD effect;
     int accept = 0; /* Assume we're not accepting */
     struct data_object *object;
     BOOL drop_file = TRUE;
 
     if (!(object = get_data_object( TRUE ))) return STATUS_INVALID_PARAMETER;
+    effect = object->target_effect;
 
     /* Notify OLE of Drop */
     if (XDNDAccepted)
@@ -715,7 +716,7 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
     }
 
     TRACE("effectRequested(0x%lx) accept(%d) performed(0x%lx) at x(%ld),y(%ld)\n",
-          XDNDDropEffect, accept, effect, object->target_pos.x, object->target_pos.y);
+          object->target_effect, accept, effect, object->target_pos.x, object->target_pos.y);
 
     if (!accept) effect = DROPEFFECT_NONE;
     IDataObject_Release( &object->IDataObject_iface );
