@@ -134,6 +134,8 @@ typedef struct GroupList* lpGroupList;
 struct DPMSG
 {
   DPQ_ENTRY( DPMSG ) msgs;
+  DPID fromId;
+  DPID toId;
   DPMSG_GENERIC* msg;
 };
 typedef struct DPMSG* LPDPMSG;

@@ -4078,7 +4078,7 @@ static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD 
     toId = 0xdeadbeef;
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
     ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
+    ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
 
     msg = (DPMSG_CREATEPLAYERORGROUP *) msgData;
     ok_( __FILE__, line )( msg->dwType == DPSYS_CREATEPLAYERORGROUP, "got message type %#lx.\n", msg->dwType );
@@ -4200,8 +4200,7 @@ static void checkCreatePlayerOrGroupMessages_( int line, IDirectPlay4 *dp, DWORD
                 break;
             }
         }
-        todo_wine ok_( __FILE__, line )( dpid && dpid != expectedDpid && j < data.idCount, "got destination id %#lx.\n",
-                                         dpid );
+        ok_( __FILE__, line )( dpid && dpid != expectedDpid && j < data.idCount, "got destination id %#lx.\n", dpid );
     }
 }
 

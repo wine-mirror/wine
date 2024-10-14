@@ -322,7 +322,7 @@ static void *DP_DuplicateString( void *src, BOOL dstAnsi, BOOL srcAnsi )
     return dst;
 }
 
-static HRESULT DP_QueuePlayerMessage( IDirectPlayImpl *This, struct PlayerData *player,
+static HRESULT DP_QueuePlayerMessage( IDirectPlayImpl *This, DPID fromId, struct PlayerData *player,
                                       DPID excludeId, void *msg, DWORD msgSize )
 {
     struct DPMSG *elem;
@@ -346,6 +346,9 @@ static HRESULT DP_QueuePlayerMessage( IDirectPlayImpl *This, struct PlayerData *
     }
     memcpy( elem->msg, msg, msgSize );
 
+    elem->fromId = fromId;
+    elem->toId = player->dpid;
+
     DPQ_INSERT_IN_TAIL( This->dp2->receiveMsgs, elem, msgs );
 
     if( player->hEvent )
@@ -354,8 +357,8 @@ static HRESULT DP_QueuePlayerMessage( IDirectPlayImpl *This, struct PlayerData *
     return DP_OK;
 }
 
-static HRESULT DP_QueueMessage( IDirectPlayImpl *This, DPID toId, DPID excludeId, void *msg,
-                                DWORD msgSize )
+static HRESULT DP_QueueMessage( IDirectPlayImpl *This, DPID fromId, DPID toId, DPID excludeId,
+                                void *msg, DWORD msgSize )
 {
     struct PlayerList *plist;
     struct GroupData *group;
@@ -363,14 +366,14 @@ static HRESULT DP_QueueMessage( IDirectPlayImpl *This, DPID toId, DPID excludeId
 
     plist = DP_FindPlayer( This, toId );
     if ( plist )
-        return DP_QueuePlayerMessage( This, plist->lpPData, excludeId, msg, msgSize );
+        return DP_QueuePlayerMessage( This, fromId, plist->lpPData, excludeId, msg, msgSize );
 
     group = DP_FindAnyGroup( This, toId );
     if( group )
     {
         for( plist = DPQ_FIRST( group->players ); plist; plist = DPQ_NEXT( plist->players ) )
         {
-            hr = DP_QueuePlayerMessage( This, plist->lpPData, excludeId, msg, msgSize );
+            hr = DP_QueuePlayerMessage( This, fromId, plist->lpPData, excludeId, msg, msgSize );
             if ( FAILED( hr ) )
                 return hr;
         }
@@ -1690,7 +1693,7 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
     msg.dpIdParent = 0;
     msg.dwFlags = dwFlags;
 
-    hr = DP_QueueMessage( This, DPID_ALLPLAYERS, *lpid, &msg, sizeof( msg ) );
+    hr = DP_QueueMessage( This, DPID_SYSMSG, DPID_ALLPLAYERS, *lpid, &msg, sizeof( msg ) );
     if ( FAILED( hr ) )
     {
         DP_DeleteSPPlayer( This, *lpid );
@@ -3756,6 +3759,9 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
   {
     return DPERR_NOMESSAGES;
   }
+
+  *lpidFrom = lpMsg->fromId;
+  *lpidTo = lpMsg->toId;
 
   /* Copy into the provided buffer */
   if (lpData) CopyMemory( lpData, lpMsg->msg, *lpdwDataSize );
