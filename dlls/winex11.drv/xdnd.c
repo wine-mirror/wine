@@ -32,9 +32,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(xdnd);
 
 static IDataObject *xdnd_data_object;
-static IDropTarget *xdnd_drop_target;
-
-static void X11DRV_XDND_FreeDragDropOp(void);
 
 static CRITICAL_SECTION xdnd_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -91,6 +88,7 @@ struct data_object
     HWND target_hwnd; /* the last window the mouse was over */
     POINT target_pos;
     DWORD target_effect;
+    IDropTarget *drop_target;
 
     struct format_entry *entries_end;
     struct format_entry entries[];
@@ -270,8 +268,21 @@ static ULONG WINAPI data_object_Release( IDataObject *iface )
 {
     struct data_object *object = data_object_from_IDataObject( iface );
     ULONG ref = InterlockedDecrement( &object->refcount );
+
     TRACE( "object %p decreasing refcount to %lu.\n", object, ref );
-    if (!ref) free( object );
+
+    if (!ref)
+    {
+        if (object->drop_target)
+        {
+            HRESULT hr = IDropTarget_DragLeave( object->drop_target );
+            if (FAILED(hr)) WARN( "IDropTarget_DragLeave returned %#lx\n", hr );
+            IDropTarget_Release( object->drop_target );
+        }
+
+        free( object );
+    }
+
     return ref;
 }
 
@@ -557,46 +568,46 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
     object->target_pos = params->point;
     targetWindow = window_from_point_dnd( UlongToHandle( params->hwnd ), object->target_pos );
 
-    if (!xdnd_drop_target || object->target_hwnd != targetWindow)
+    if (!object->drop_target || object->target_hwnd != targetWindow)
     {
         /* Notify OLE of DragEnter. Result determines if we accept */
         HWND dropTargetWindow;
 
-        if (xdnd_drop_target)
+        if (object->drop_target)
         {
-            hr = IDropTarget_DragLeave( xdnd_drop_target );
+            hr = IDropTarget_DragLeave( object->drop_target );
             if (FAILED(hr)) WARN( "IDropTarget_DragLeave returned %#lx\n", hr );
-            IDropTarget_Release( xdnd_drop_target );
-            xdnd_drop_target = NULL;
+            IDropTarget_Release( object->drop_target );
+            object->drop_target = NULL;
         }
 
         dropTargetWindow = targetWindow;
-        do { xdnd_drop_target = get_droptarget_pointer( dropTargetWindow ); }
-        while (!xdnd_drop_target && !!(dropTargetWindow = GetParent( dropTargetWindow )));
+        do { object->drop_target = get_droptarget_pointer( dropTargetWindow ); }
+        while (!object->drop_target && !!(dropTargetWindow = GetParent( dropTargetWindow )));
         object->target_hwnd = targetWindow;
 
-        if (xdnd_drop_target)
+        if (object->drop_target)
         {
             DWORD effect_ignore = effect;
-            hr = IDropTarget_DragEnter( xdnd_drop_target, &object->IDataObject_iface,
+            hr = IDropTarget_DragEnter( object->drop_target, &object->IDataObject_iface,
                                         MK_LBUTTON, pointl, &effect_ignore );
             if (hr == S_OK) TRACE( "the application accepted the drop (effect = %ld)\n", effect_ignore );
             else
             {
                 WARN( "IDropTarget_DragEnter returned %#lx\n", hr );
-                IDropTarget_Release( xdnd_drop_target );
-                xdnd_drop_target = NULL;
+                IDropTarget_Release( object->drop_target );
+                object->drop_target = NULL;
             }
         }
     }
-    else if (xdnd_drop_target)
+    else if (object->drop_target)
     {
-        hr = IDropTarget_DragOver( xdnd_drop_target, MK_LBUTTON, pointl, &effect );
+        hr = IDropTarget_DragOver( object->drop_target, MK_LBUTTON, pointl, &effect );
         if (hr == S_OK) object->target_effect = effect;
         else WARN( "IDropTarget_DragOver returned %#lx\n", hr );
     }
 
-    if (xdnd_drop_target && object->target_effect != DROPEFFECT_NONE)
+    if (object->drop_target && object->target_effect != DROPEFFECT_NONE)
         accept = 1;
     else
     {
@@ -629,12 +640,12 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
     effect = object->target_effect;
 
     /* Notify OLE of Drop */
-    if (xdnd_drop_target && effect != DROPEFFECT_NONE)
+    if (object->drop_target && effect != DROPEFFECT_NONE)
     {
         POINTL pointl = {object->target_pos.x, object->target_pos.y};
         HRESULT hr;
 
-        hr = IDropTarget_Drop( xdnd_drop_target, &object->IDataObject_iface,
+        hr = IDropTarget_Drop( object->drop_target, &object->IDataObject_iface,
                                MK_LBUTTON, pointl, &effect );
         if (hr == S_OK)
         {
@@ -655,12 +666,12 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
             drop_file = FALSE;
         }
     }
-    else if (xdnd_drop_target)
+    else if (object->drop_target)
     {
-        HRESULT hr = IDropTarget_DragLeave( xdnd_drop_target );
+        HRESULT hr = IDropTarget_DragLeave( object->drop_target );
         if (FAILED(hr)) WARN( "IDropTarget_DragLeave returned %#lx\n", hr );
-        IDropTarget_Release( xdnd_drop_target );
-        xdnd_drop_target = NULL;
+        IDropTarget_Release( object->drop_target );
+        object->drop_target = NULL;
     }
 
     if (drop_file)
@@ -709,18 +720,7 @@ NTSTATUS WINAPI x11drv_dnd_leave_event( void *params, ULONG size )
 
     TRACE("DND Operation canceled\n");
 
-    /* Notify OLE of DragLeave */
-    if (xdnd_drop_target)
-    {
-        HRESULT hr = IDropTarget_DragLeave( xdnd_drop_target );
-        if (FAILED(hr)) WARN( "IDropTarget_DragLeave returned %#lx\n", hr );
-        IDropTarget_Release( xdnd_drop_target );
-        xdnd_drop_target = NULL;
-    }
-
     if ((object = get_data_object( TRUE ))) IDataObject_Release( &object->IDataObject_iface );
-
-    X11DRV_XDND_FreeDragDropOp();
     return STATUS_SUCCESS;
 }
 
@@ -734,8 +734,6 @@ NTSTATUS WINAPI x11drv_dnd_enter_event( void *args, ULONG size )
     struct dnd_enter_event_params *params = args;
     IDataObject *object, *previous;
 
-    X11DRV_XDND_FreeDragDropOp(); /* Clear previously cached data */
-
     if (FAILED(data_object_create( formats_size, params->entries, &object ))) return STATUS_NO_MEMORY;
 
     EnterCriticalSection( &xdnd_cs );
@@ -747,24 +745,6 @@ NTSTATUS WINAPI x11drv_dnd_enter_event( void *args, ULONG size )
     return STATUS_SUCCESS;
 }
 
-
-/**************************************************************************
- * X11DRV_XDND_FreeDragDropOp
- */
-static void X11DRV_XDND_FreeDragDropOp(void)
-{
-    TRACE("\n");
-
-    EnterCriticalSection(&xdnd_cs);
-
-    if (xdnd_drop_target)
-    {
-        IDropTarget_Release( xdnd_drop_target );
-        xdnd_drop_target = NULL;
-    }
-
-    LeaveCriticalSection(&xdnd_cs);
-}
 
 NTSTATUS WINAPI x11drv_dnd_post_drop( void *args, ULONG size )
 {
