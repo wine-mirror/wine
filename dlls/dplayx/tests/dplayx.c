@@ -1868,6 +1868,29 @@ static unsigned short receiveGuaranteedGameMessage_( int line, SOCKET sock, DPID
     return port;
 }
 
+#define receiveGameMessage( sock, expectedFromId, expectedToId, expectedData, expectedDataSize ) \
+        receiveGameMessage_( __LINE__, sock, expectedFromId, expectedToId, expectedData, expectedDataSize )
+static void receiveGameMessage_( int line, SOCKET sock, DPID expectedFromId, DPID expectedToId, void *expectedData,
+                                 DWORD expectedDataSize )
+{
+    struct
+    {
+        GameMessage request;
+        BYTE data[ 256 ];
+    } request;
+    int wsResult;
+
+    DWORD expectedSize = sizeof( request.request ) + expectedDataSize;
+
+    wsResult = receiveMessage_( line, sock, &request, expectedSize );
+    todo_wine ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
+    if ( wsResult == SOCKET_ERROR )
+        return;
+
+    checkGameMessage_( line, &request.request, expectedFromId, expectedToId );
+    ok_( __FILE__, line )( !memcmp( &request.data, expectedData, expectedDataSize ), "message data didn't match.\n" );
+}
+
 #define sendGuaranteedGameMessage( sock, port, fromId, toId, data, dataSize ) \
         sendGuaranteedGameMessage_( __LINE__, sock, port, fromId, toId, data, dataSize )
 static void sendGuaranteedGameMessage_( int line, SOCKET sock, unsigned short port, DPID fromId, DPID toId, void *data,
@@ -7693,6 +7716,7 @@ static void test_Send(void)
     IDirectPlay4 *dp;
     SOCKET sendSock;
     SOCKET recvSock;
+    SOCKET udpSock;
     HRESULT hr;
     DPID dpid;
 
@@ -7741,9 +7765,18 @@ static void test_Send(void)
     ok( dpid == 0x14, "got destination id %#lx.\n", dpid );
     receiveGuaranteedGameMessage( recvSock, 0x07734, DPID_ALLPLAYERS, data, sizeof( data ) );
 
+    udpSock = bindUdp( 2399 );
+
+    hr = IDirectPlayX_Send( dp, 0x07734, 0x1337, 0, data, sizeof( data ) );
+    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    receiveGameMessage( udpSock, 0x07734, 0x1337, data, sizeof( data ) );
+
     checkNoMorePlayerMessages( dp );
+    checkNoMoreMessages( udpSock );
     checkNoMoreMessages( recvSock );
 
+    closesocket( udpSock );
     closesocket( recvSock );
     closesocket( sendSock );
 
