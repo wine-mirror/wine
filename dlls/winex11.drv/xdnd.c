@@ -41,7 +41,6 @@ static HWND XDNDLastTargetWnd;
 static HWND XDNDLastDropTargetWnd;
 
 static BOOL X11DRV_XDND_HasHDROP(void);
-static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd);
 static void X11DRV_XDND_FreeDragDropOp(void);
 
 static CRITICAL_SECTION xdnd_cs;
@@ -571,17 +570,27 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
     {
         /* Only send WM_DROPFILES if Drop didn't succeed or DROPEFFECT_NONE was set.
          * Doing both causes winamp to duplicate the dropped files (#29081) */
-
         HWND hwnd_drop = window_accepting_files(window_from_point_dnd( hwnd, XDNDxy ));
+        FORMATETC format = {.cfFormat = CF_HDROP};
+        STGMEDIUM medium;
 
-        if (hwnd_drop && X11DRV_XDND_HasHDROP())
+        if (hwnd_drop && SUCCEEDED(IDataObject_GetData( &object->IDataObject_iface, &format, &medium )))
         {
-            HRESULT hr = X11DRV_XDND_SendDropFiles(hwnd_drop);
-            if (SUCCEEDED(hr))
-            {
-                accept = 1;
-                effect = DROPEFFECT_COPY;
-            }
+            DROPFILES *drop = GlobalLock( medium.hGlobal );
+            void *files = (char *)drop + drop->pFiles;
+            RECT rect;
+
+            drop->pt.x = XDNDxy.x;
+            drop->pt.y = XDNDxy.y;
+            drop->fNC  = !ScreenToClient( hwnd, &drop->pt ) || !GetClientRect( hwnd, &rect ) || !PtInRect( &rect, drop->pt );
+
+            TRACE( "Sending WM_DROPFILES: hwnd %p, pt %s, fNC %u, files %p (%s)\n", hwnd,
+                   wine_dbgstr_point( &drop->pt), drop->fNC, files, debugstr_w(files) );
+            GlobalUnlock( medium.hGlobal );
+
+            PostMessageW( hwnd, WM_DROPFILES, (WPARAM)medium.hGlobal, 0 );
+            accept = 1;
+            effect = DROPEFFECT_COPY;
         }
     }
 
@@ -668,39 +677,6 @@ static BOOL X11DRV_XDND_HasHDROP(void)
     LeaveCriticalSection(&xdnd_cs);
 
     return found;
-}
-
-/**************************************************************************
- * X11DRV_XDND_SendDropFiles
- */
-static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
-{
-    FORMATETC format = {.cfFormat = CF_HDROP};
-    struct data_object *object;
-    STGMEDIUM medium;
-    HRESULT hr;
-
-    if (!(object = get_data_object())) return E_FAIL;
-
-    if (SUCCEEDED(hr = IDataObject_GetData( &object->IDataObject_iface, &format, &medium )))
-    {
-        DROPFILES *drop = GlobalLock( medium.hGlobal );
-        void *files = (char *)drop + drop->pFiles;
-        RECT rect;
-
-        drop->pt.x = XDNDxy.x;
-        drop->pt.y = XDNDxy.y;
-        drop->fNC  = !ScreenToClient( hwnd, &drop->pt ) || !GetClientRect( hwnd, &rect ) || !PtInRect( &rect, drop->pt );
-
-        TRACE( "Sending WM_DROPFILES: hwnd %p, pt %s, fNC %u, files %p (%s)\n", hwnd,
-               wine_dbgstr_point( &drop->pt), drop->fNC, files, debugstr_w(files) );
-        GlobalUnlock( medium.hGlobal );
-
-        PostMessageW( hwnd, WM_DROPFILES, (WPARAM)medium.hGlobal, 0 );
-    }
-
-    IDataObject_Release( &object->IDataObject_iface );
-    return hr;
 }
 
 
