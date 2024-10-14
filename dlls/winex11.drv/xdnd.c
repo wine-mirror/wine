@@ -31,7 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xdnd);
 
-static POINT XDNDxy = { 0, 0 };
 static IDataObject *xdnd_data_object;
 static BOOL XDNDAccepted = FALSE;
 static DWORD XDNDDropEffect = DROPEFFECT_NONE;
@@ -93,6 +92,7 @@ struct data_object
     LONG refcount;
 
     HWND target_hwnd; /* the last window the mouse was over */
+    POINT target_pos;
 
     struct format_entry *entries_end;
     struct format_entry entries[];
@@ -557,8 +557,8 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
 
     if (!(object = get_data_object( FALSE ))) return STATUS_INVALID_PARAMETER;
 
-    XDNDxy = params->point;
-    targetWindow = window_from_point_dnd( UlongToHandle( params->hwnd ), XDNDxy );
+    object->target_pos = params->point;
+    targetWindow = window_from_point_dnd( UlongToHandle( params->hwnd ), object->target_pos );
 
     if (!XDNDAccepted || object->target_hwnd != targetWindow)
     {
@@ -654,11 +654,9 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
         dropTarget = get_droptarget_pointer(XDNDLastDropTargetWnd);
         if (dropTarget && effect!=DROPEFFECT_NONE)
         {
+            POINTL pointl = {object->target_pos.x, object->target_pos.y};
             HRESULT hr;
-            POINTL pointl;
 
-            pointl.x = XDNDxy.x;
-            pointl.y = XDNDxy.y;
             hr = IDropTarget_Drop(dropTarget, &object->IDataObject_iface, MK_LBUTTON,
                                   pointl, &effect);
             if (hr == S_OK)
@@ -694,7 +692,7 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
     {
         /* Only send WM_DROPFILES if Drop didn't succeed or DROPEFFECT_NONE was set.
          * Doing both causes winamp to duplicate the dropped files (#29081) */
-        HWND hwnd_drop = window_accepting_files(window_from_point_dnd( hwnd, XDNDxy ));
+        HWND hwnd_drop = window_accepting_files(window_from_point_dnd( hwnd, object->target_pos ));
         FORMATETC format = {.cfFormat = CF_HDROP};
         STGMEDIUM medium;
 
@@ -704,10 +702,8 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
             void *files = (char *)drop + drop->pFiles;
             RECT rect;
 
-            drop->pt.x = XDNDxy.x;
-            drop->pt.y = XDNDxy.y;
-            drop->fNC  = !ScreenToClient( hwnd, &drop->pt ) || !GetClientRect( hwnd, &rect ) || !PtInRect( &rect, drop->pt );
-
+            drop->pt = object->target_pos;
+            drop->fNC = !ScreenToClient( hwnd, &drop->pt ) || !GetClientRect( hwnd, &rect ) || !PtInRect( &rect, drop->pt );
             TRACE( "Sending WM_DROPFILES: hwnd %p, pt %s, fNC %u, files %p (%s)\n", hwnd,
                    wine_dbgstr_point( &drop->pt), drop->fNC, files, debugstr_w(files) );
             GlobalUnlock( medium.hGlobal );
@@ -719,7 +715,7 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
     }
 
     TRACE("effectRequested(0x%lx) accept(%d) performed(0x%lx) at x(%ld),y(%ld)\n",
-          XDNDDropEffect, accept, effect, XDNDxy.x, XDNDxy.y);
+          XDNDDropEffect, accept, effect, object->target_pos.x, object->target_pos.y);
 
     if (!accept) effect = DROPEFFECT_NONE;
     IDataObject_Release( &object->IDataObject_iface );
@@ -792,7 +788,6 @@ static void X11DRV_XDND_FreeDragDropOp(void)
 
     EnterCriticalSection(&xdnd_cs);
 
-    XDNDxy.x = XDNDxy.y = 0;
     XDNDLastDropTargetWnd = NULL;
     XDNDAccepted = FALSE;
 
