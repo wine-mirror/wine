@@ -304,12 +304,16 @@ static HRESULT data_object_create( UINT entries_size, const struct format_entry 
     return S_OK;
 }
 
-static struct data_object *get_data_object(void)
+static struct data_object *get_data_object( BOOL clear )
 {
     IDataObject *iface;
 
     EnterCriticalSection( &xdnd_cs );
-    if ((iface = xdnd_data_object)) IDataObject_AddRef( iface );
+    if ((iface = xdnd_data_object))
+    {
+        if (clear) xdnd_data_object = NULL;
+        else IDataObject_AddRef( iface );
+    }
     LeaveCriticalSection( &xdnd_cs );
 
     if (!iface) return NULL;
@@ -432,7 +436,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
     HWND targetWindow;
     HRESULT hr;
 
-    if (!(object = get_data_object())) return STATUS_INVALID_PARAMETER;
+    if (!(object = get_data_object( FALSE ))) return STATUS_INVALID_PARAMETER;
 
     XDNDxy = params->point;
     targetWindow = window_from_point_dnd( UlongToHandle( params->hwnd ), XDNDxy );
@@ -522,7 +526,7 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
     struct data_object *object;
     BOOL drop_file = TRUE;
 
-    if (!(object = get_data_object())) return STATUS_INVALID_PARAMETER;
+    if (!(object = get_data_object( TRUE ))) return STATUS_INVALID_PARAMETER;
 
     /* Notify OLE of Drop */
     if (XDNDAccepted)
@@ -611,7 +615,7 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
 NTSTATUS WINAPI x11drv_dnd_leave_event( void *params, ULONG size )
 {
     IDropTarget *dropTarget;
-    IDataObject *object;
+    struct data_object *object;
 
     TRACE("DND Operation canceled\n");
 
@@ -628,12 +632,7 @@ NTSTATUS WINAPI x11drv_dnd_leave_event( void *params, ULONG size )
         }
     }
 
-    EnterCriticalSection( &xdnd_cs );
-    object = xdnd_data_object;
-    xdnd_data_object = NULL;
-    LeaveCriticalSection( &xdnd_cs );
-
-    if (object) IDataObject_Release( object );
+    if ((object = get_data_object( TRUE ))) IDataObject_Release( &object->IDataObject_iface );
 
     X11DRV_XDND_FreeDragDropOp();
     return STATUS_SUCCESS;
