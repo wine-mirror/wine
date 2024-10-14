@@ -4076,17 +4076,17 @@ static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD 
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
-    if ( FAILED( hr ) )
-        return toId;
-    ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+    todo_wine ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
 
     msg = (DPMSG_CREATEPLAYERORGROUP *) msgData;
     ok_( __FILE__, line )( msg->dwType == DPSYS_CREATEPLAYERORGROUP, "got message type %#lx.\n", msg->dwType );
     ok_( __FILE__, line )( msg->dwPlayerType == expectedType, "got player type %#lx.\n", msg->dwPlayerType );
-    ok_( __FILE__, line )( msg->dpId == expectedDpid, "got id %#lx.\n", msg->dpId );
-    ok_( __FILE__, line )( msg->dwCurrentPlayers == expectedCurrentPlayers, "got current players %lu.\n",
-                           msg->dwCurrentPlayers );
+    todo_wine_if( msg->dpId != expectedDpid ) ok_( __FILE__, line )( msg->dpId == expectedDpid, "got id %#lx.\n",
+                                                                     msg->dpId );
+    todo_wine_if( msg->dwCurrentPlayers != expectedCurrentPlayers )
+        ok_( __FILE__, line )( msg->dwCurrentPlayers == expectedCurrentPlayers, "got current players %lu.\n",
+                               msg->dwCurrentPlayers );
     ok_( __FILE__, line )( msg->dwDataSize == expectedPlayerDataSize, "got player data size %lu.\n", msg->dwDataSize );
     if ( expectedPlayerData )
     {
@@ -4101,33 +4101,38 @@ static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD 
     ok_( __FILE__, line )( !msg->dpnName.dwFlags, "got name flags %#lx.\n", msg->dpnName.dwFlags );
     if ( expectedShortName )
     {
-        ok_( __FILE__, line )( msg->dpnName.lpszShortNameA && !strcmp( msg->dpnName.lpszShortNameA, expectedShortName ),
-                               "got short name %s.\n", wine_dbgstr_a( msg->dpnName.lpszShortNameA ) );
+        todo_wine
+            ok_( __FILE__, line )( msg->dpnName.lpszShortNameA && !strcmp( msg->dpnName.lpszShortNameA, expectedShortName ),
+                                   "got short name %s.\n", wine_dbgstr_a( msg->dpnName.lpszShortNameA ) );
     }
     else
     {
-        ok_( __FILE__, line )( !msg->dpnName.lpszShortNameA, "got short name %s.\n",
-                               wine_dbgstr_a( msg->dpnName.lpszShortNameA ) );
+        todo_wine_if( msg->dpnName.lpszShortNameA)
+            ok_( __FILE__, line )( !msg->dpnName.lpszShortNameA, "got short name %s.\n",
+                                   wine_dbgstr_a( msg->dpnName.lpszShortNameA ) );
     }
     if ( expectedLongName )
     {
-        ok_( __FILE__, line )( msg->dpnName.lpszLongNameA && !strcmp( msg->dpnName.lpszLongNameA, expectedLongName ),
-                               "got long name %s.\n", wine_dbgstr_a( msg->dpnName.lpszLongNameA ) );
+        todo_wine
+            ok_( __FILE__, line )( msg->dpnName.lpszLongNameA && !strcmp( msg->dpnName.lpszLongNameA, expectedLongName ),
+                                   "got long name %s.\n", wine_dbgstr_a( msg->dpnName.lpszLongNameA ) );
     }
     else
     {
-        ok_( __FILE__, line )( !msg->dpnName.lpszLongNameA, "got long name %s.\n",
-                               wine_dbgstr_a( msg->dpnName.lpszLongNameA ) );
+        todo_wine_if( msg->dpnName.lpszShortNameA)
+            ok_( __FILE__, line )( !msg->dpnName.lpszLongNameA, "got long name %s.\n",
+                                   wine_dbgstr_a( msg->dpnName.lpszLongNameA ) );
     }
     ok_( __FILE__, line )( msg->dpIdParent == expectedParent, "got parent id %#lx.\n", msg->dpIdParent );
-    ok_( __FILE__, line )( msg->dwFlags == expectedFlags, "got flags %#lx.\n", msg->dwFlags );
+    todo_wine_if( msg->dwFlags != expectedFlags ) ok_( __FILE__, line )( msg->dwFlags == expectedFlags,
+                                                                         "got flags %#lx.\n", msg->dwFlags );
 
     expectedShortNameSize = expectedShortName ? strlen( expectedShortName ) + 1 : 0;
     expectedLongNameSize = expectedLongName ? strlen( expectedLongName ) + 1 : 0;
     expectedMsgDataSize = sizeof( DPMSG_CREATEPLAYERORGROUP ) + expectedShortNameSize + expectedLongNameSize
                         + expectedPlayerDataSize;
 
-    ok_( __FILE__, line )( msgDataSize == expectedMsgDataSize, "got message size %lu.\n", msgDataSize );
+    todo_wine ok_( __FILE__, line )( msgDataSize == expectedMsgDataSize, "got message size %lu.\n", msgDataSize );
 
     return toId;
 }
@@ -4247,7 +4252,7 @@ static void check_CreatePlayer_( int line, IDirectPlay4 *dp, DPID *dpid, DPNAME 
                                                playerData, sizeof( playerData ), expectedShortNameA, expectedLongNameA,
                                                0, expectedFlags );
 
-        checkNoMorePlayerMessages_( line, dp );
+        todo_wine_if( expectedCurrentPlayers >= 2 ) checkNoMorePlayerMessages_( line, dp );
 
         closesocket( sendSock );
     }
