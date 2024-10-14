@@ -2259,9 +2259,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
 
     TRACE("%s (%p)->(%lx %lx %x %p %p %p %p)\n", This->info->name, This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
-    if(!ensure_real_info(This))
-        return E_OUTOFMEMORY;
-
     if(wFlags == (DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF))
         wFlags = DISPATCH_PROPERTYPUT;
 
@@ -2270,6 +2267,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id,
         if(hres != S_FALSE)
             return hres;
     }
+
+    if(!ensure_real_info(This))
+        return E_OUTOFMEMORY;
 
     if(This->jsdisp)
         return IWineJSDispatch_InvokeEx(This->jsdisp, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
