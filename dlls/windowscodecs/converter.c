@@ -1555,6 +1555,66 @@ static HRESULT copypixels_to_16bppBGRA5551(struct FormatConverter *This, const W
     }
 }
 
+static HRESULT copypixels_to_64bppRGBA(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    HRESULT hr;
+
+    switch (source_format)
+    {
+    case format_64bppRGBA:
+        if (prc)
+            return IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+        return S_OK;
+
+    case format_48bppRGB:
+    {
+        UINT srcstride, srcdatasize;
+        const USHORT *srcpixel;
+        const BYTE *srcrow;
+        USHORT *dstpixel;
+        BYTE *srcdata;
+        BYTE *dstrow;
+        INT x, y;
+
+        if (!prc)
+            return S_OK;
+
+        srcstride = 6 * prc->Width;
+        srcdatasize = srcstride * prc->Height;
+
+        srcdata = malloc(srcdatasize);
+        if (!srcdata) return E_OUTOFMEMORY;
+
+        hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+        if (SUCCEEDED(hr))
+        {
+            srcrow = srcdata;
+            dstrow = pbBuffer;
+            for (y = 0; y < prc->Height; y++)
+            {
+                srcpixel = (USHORT *)srcrow;
+                dstpixel= (USHORT *)dstrow;
+                for (x = 0; x < prc->Width; x++)
+                {
+                    *dstpixel++ = *srcpixel++;
+                    *dstpixel++ = *srcpixel++;
+                    *dstpixel++ = *srcpixel++;
+                    *dstpixel++ = 65535;
+                }
+                srcrow += srcstride;
+                dstrow += cbStride;
+            }
+        }
+        free(srcdata);
+        return hr;
+    }
+    default:
+        FIXME("Unimplemented conversion path %d.\n", source_format);
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
+}
+
 static const struct pixelformatinfo supported_formats[] = {
     {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL, TRUE},
     {format_2bppIndexed, &GUID_WICPixelFormat2bppIndexed, NULL, TRUE},
@@ -1578,7 +1638,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_32bppPBGRA, &GUID_WICPixelFormat32bppPBGRA, copypixels_to_32bppPBGRA},
     {format_32bppPRGBA, &GUID_WICPixelFormat32bppPRGBA, copypixels_to_32bppPRGBA},
     {format_48bppRGB, &GUID_WICPixelFormat48bppRGB, NULL},
-    {format_64bppRGBA, &GUID_WICPixelFormat64bppRGBA, NULL},
+    {format_64bppRGBA, &GUID_WICPixelFormat64bppRGBA, copypixels_to_64bppRGBA},
     {format_32bppCMYK, &GUID_WICPixelFormat32bppCMYK, NULL},
     {0}
 };
