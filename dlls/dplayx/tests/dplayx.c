@@ -971,6 +971,13 @@ typedef struct
     DPID toId;
 } GameMessage;
 
+typedef struct
+{
+    MessageHeader header;
+    DPID fromId;
+    DWORD tickCount;
+} Ping;
+
 #include "poppack.h"
 
 #define bindUdp( port ) bindUdp_( __LINE__, port )
@@ -1972,6 +1979,69 @@ static void sendGameMessage_( int line, SOCKET sock, DPID fromId, DPID toId, voi
 
     wsResult = send( sock, (char *) &request, size, 0 );
     ok_( __FILE__, line )( wsResult == size, "send() returned %d.\n", wsResult );
+}
+
+#define sendPing( sock, port, fromId, tickCount ) \
+        sendPing_( __LINE__, sock, port, fromId, tickCount )
+static void sendPing_( int line, SOCKET sock, unsigned short port, DPID fromId, DWORD tickCount )
+{
+    struct
+    {
+        SpHeader spHeader;
+        Ping request;
+    } request =
+    {
+        .spHeader =
+        {
+            .mixed = 0xfab00000 + sizeof( request ),
+            .addr =
+            {
+                .sin_family = AF_INET,
+                .sin_port = htons( port ),
+            },
+        },
+        .request =
+        {
+            .header =
+            {
+                .magic = 0x79616c70,
+                .command = 22,
+                .version = 14,
+            },
+            .fromId = fromId,
+            .tickCount = tickCount,
+        }
+    };
+    int wsResult;
+
+    wsResult = send( sock, (char *) &request, sizeof( request ), 0 );
+    ok_( __FILE__, line )( wsResult == sizeof( request ), "send() returned %d.\n", wsResult );
+}
+
+#define receivePingReply( sock, expectedFromId, expectedTickCount ) \
+        receivePingReply_( __LINE__, sock, expectedFromId, expectedTickCount )
+static unsigned short receivePingReply_( int line, SOCKET sock, DPID expectedFromId, DWORD expectedTickCount )
+{
+    struct
+    {
+        SpHeader spHeader;
+        Ping request;
+    } request;
+    unsigned short port;
+    int wsResult;
+
+    wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
+    todo_wine ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
+    if ( wsResult == SOCKET_ERROR )
+        return 0;
+
+    port = checkSpHeader_( line, &request.spHeader, sizeof( request ) );
+    checkMessageHeader_( line, &request.request.header, 23 );
+    ok_( __FILE__, line )( request.request.fromId == expectedFromId, "got source id %#lx.\n", request.request.fromId );
+    ok_( __FILE__, line )( request.request.tickCount == expectedTickCount, "got tick count %#lx.\n",
+                           request.request.tickCount );
+
+    return port;
 }
 
 static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, WORD port )
@@ -8678,6 +8748,53 @@ static void test_interactive_Receive(void)
 
 }
 
+static void test_PING(void)
+{
+    DPSESSIONDESC2 appGuidDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidInstance = appGuid,
+        .guidApplication = appGuid,
+    };
+    DPSESSIONDESC2 serverDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+        .lpszSessionName = (WCHAR *) L"normal",
+        .dwReserved1 = 0xaabbccdd,
+    };
+    unsigned short udpPort;
+    SOCKET udpSendSock;
+    SOCKET udpRecvSock;
+    IDirectPlay4A *dp;
+    SOCKET sendSock;
+    SOCKET recvSock;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay4A, (void **) &dp );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    init_TCPIP_provider( dp, "127.0.0.1", 0 );
+
+    joinSession( dp, &appGuidDpsd, &serverDpsd, &sendSock, &recvSock, &udpPort );
+
+    udpSendSock = connectUdp( udpPort );
+
+    udpRecvSock = bindUdp( 2399 );
+
+    sendPing( udpSendSock, 2349, 0x51573, 0x44332211 );
+    receivePingReply( udpRecvSock, 0x12345678, 0x44332211 );
+    checkNoMoreMessages( udpRecvSock );
+
+    closesocket( udpRecvSock );
+    closesocket( udpSendSock );
+    closesocket( recvSock );
+    closesocket( sendSock );
+
+    IDirectPlayX_Release( dp );
+}
+
 /* GetMessageCount */
 
 static void test_GetMessageCount(void)
@@ -9934,6 +10051,7 @@ START_TEST(dplayx)
     test_CREATEPLAYER();
     test_Send();
     test_Receive();
+    test_PING();
 
     if (!winetest_interactive)
     {
