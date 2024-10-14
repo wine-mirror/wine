@@ -35,8 +35,6 @@ static POINT XDNDxy = { 0, 0 };
 static IDataObject *xdnd_data_object;
 static BOOL XDNDAccepted = FALSE;
 static DWORD XDNDDropEffect = DROPEFFECT_NONE;
-/* the last window the mouse was over */
-static HWND XDNDLastTargetWnd;
 /* might be an ancestor of XDNDLastTargetWnd */
 static HWND XDNDLastDropTargetWnd;
 
@@ -93,6 +91,8 @@ struct data_object
 {
     IDataObject IDataObject_iface;
     LONG refcount;
+
+    HWND target_hwnd; /* the last window the mouse was over */
 
     struct format_entry *entries_end;
     struct format_entry entries[];
@@ -560,7 +560,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
     XDNDxy = params->point;
     targetWindow = window_from_point_dnd( UlongToHandle( params->hwnd ), XDNDxy );
 
-    if (!XDNDAccepted || XDNDLastTargetWnd != targetWindow)
+    if (!XDNDAccepted || object->target_hwnd != targetWindow)
     {
         /* Notify OLE of DragEnter. Result determines if we accept */
         HWND dropTargetWindow;
@@ -581,7 +581,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
         {
             dropTarget = get_droptarget_pointer(dropTargetWindow);
         } while (dropTarget == NULL && (dropTargetWindow = GetParent(dropTargetWindow)) != NULL);
-        XDNDLastTargetWnd = targetWindow;
+        object->target_hwnd = targetWindow;
         XDNDLastDropTargetWnd = dropTargetWindow;
         if (dropTarget)
         {
@@ -601,7 +601,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
             IDropTarget_Release(dropTarget);
         }
     }
-    if (XDNDAccepted && XDNDLastTargetWnd == targetWindow)
+    if (XDNDAccepted && object->target_hwnd == targetWindow)
     {
         /* If drag accepted notify OLE of DragOver */
         dropTarget = get_droptarget_pointer(XDNDLastDropTargetWnd);
@@ -793,7 +793,6 @@ static void X11DRV_XDND_FreeDragDropOp(void)
     EnterCriticalSection(&xdnd_cs);
 
     XDNDxy.x = XDNDxy.y = 0;
-    XDNDLastTargetWnd = NULL;
     XDNDLastDropTargetWnd = NULL;
     XDNDAccepted = FALSE;
 
