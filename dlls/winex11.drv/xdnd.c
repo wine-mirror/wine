@@ -305,6 +305,18 @@ static HRESULT data_object_create( UINT entries_size, const struct format_entry 
     return S_OK;
 }
 
+static struct data_object *get_data_object(void)
+{
+    IDataObject *iface;
+
+    EnterCriticalSection( &xdnd_cs );
+    if ((iface = xdnd_data_object)) IDataObject_AddRef( iface );
+    LeaveCriticalSection( &xdnd_cs );
+
+    if (!iface) return NULL;
+    return data_object_from_IDataObject( iface );
+}
+
 /* Based on functions in dlls/ole32/ole2.c */
 static HANDLE get_droptarget_local_handle(HWND hwnd)
 {
@@ -417,8 +429,11 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
     IDropTarget *dropTarget = NULL;
     DWORD effect = params->effect;
     POINTL pointl = { .x = params->point.x, .y = params->point.y };
+    struct data_object *object;
     HWND targetWindow;
     HRESULT hr;
+
+    if (!(object = get_data_object())) return STATUS_INVALID_PARAMETER;
 
     XDNDxy = params->point;
     targetWindow = window_from_point_dnd( UlongToHandle( params->hwnd ), XDNDxy );
@@ -449,7 +464,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
         if (dropTarget)
         {
             DWORD effect_ignore = effect;
-            hr = IDropTarget_DragEnter(dropTarget, xdnd_data_object,
+            hr = IDropTarget_DragEnter(dropTarget, &object->IDataObject_iface,
                                        MK_LBUTTON, pointl, &effect_ignore);
             if (hr == S_OK)
             {
@@ -493,6 +508,8 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
     }
 
     if (!accept) effect = DROPEFFECT_NONE;
+    IDataObject_Release( &object->IDataObject_iface );
+
     return NtCallbackReturn( &effect, sizeof(effect), STATUS_SUCCESS );
 }
 
@@ -503,7 +520,10 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
     IDropTarget *dropTarget;
     DWORD effect = XDNDDropEffect;
     int accept = 0; /* Assume we're not accepting */
+    struct data_object *object;
     BOOL drop_file = TRUE;
+
+    if (!(object = get_data_object())) return STATUS_INVALID_PARAMETER;
 
     /* Notify OLE of Drop */
     if (XDNDAccepted)
@@ -516,7 +536,7 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
 
             pointl.x = XDNDxy.x;
             pointl.y = XDNDxy.y;
-            hr = IDropTarget_Drop(dropTarget, xdnd_data_object, MK_LBUTTON,
+            hr = IDropTarget_Drop(dropTarget, &object->IDataObject_iface, MK_LBUTTON,
                                   pointl, &effect);
             if (hr == S_OK)
             {
@@ -569,6 +589,8 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
           XDNDDropEffect, accept, effect, XDNDxy.x, XDNDxy.y);
 
     if (!accept) effect = DROPEFFECT_NONE;
+    IDataObject_Release( &object->IDataObject_iface );
+
     return NtCallbackReturn( &effect, sizeof(effect), STATUS_SUCCESS );
 }
 
@@ -580,6 +602,7 @@ NTSTATUS WINAPI x11drv_dnd_drop_event( void *args, ULONG size )
 NTSTATUS WINAPI x11drv_dnd_leave_event( void *params, ULONG size )
 {
     IDropTarget *dropTarget;
+    IDataObject *object;
 
     TRACE("DND Operation canceled\n");
 
@@ -596,6 +619,13 @@ NTSTATUS WINAPI x11drv_dnd_leave_event( void *params, ULONG size )
         }
     }
 
+    EnterCriticalSection( &xdnd_cs );
+    object = xdnd_data_object;
+    xdnd_data_object = NULL;
+    LeaveCriticalSection( &xdnd_cs );
+
+    if (object) IDataObject_Release( object );
+
     X11DRV_XDND_FreeDragDropOp();
     return STATUS_SUCCESS;
 }
@@ -608,7 +638,7 @@ NTSTATUS WINAPI x11drv_dnd_enter_event( void *args, ULONG size )
 {
     UINT formats_size = size - offsetof(struct dnd_enter_event_params, entries);
     struct dnd_enter_event_params *params = args;
-    IDataObject *object;
+    IDataObject *object, *previous;
 
     XDNDAccepted = FALSE;
     X11DRV_XDND_FreeDragDropOp(); /* Clear previously cached data */
@@ -616,9 +646,11 @@ NTSTATUS WINAPI x11drv_dnd_enter_event( void *args, ULONG size )
     if (FAILED(data_object_create( formats_size, params->entries, &object ))) return STATUS_NO_MEMORY;
 
     EnterCriticalSection( &xdnd_cs );
+    previous = xdnd_data_object;
     xdnd_data_object = object;
     LeaveCriticalSection( &xdnd_cs );
 
+    if (previous) IDataObject_Release( previous );
     return STATUS_SUCCESS;
 }
 
@@ -644,13 +676,13 @@ static BOOL X11DRV_XDND_HasHDROP(void)
 static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
 {
     FORMATETC format = {.cfFormat = CF_HDROP};
+    struct data_object *object;
     STGMEDIUM medium;
     HRESULT hr;
 
-    EnterCriticalSection(&xdnd_cs);
+    if (!(object = get_data_object())) return E_FAIL;
 
-    if (!xdnd_data_object) hr = E_FAIL;
-    else if (SUCCEEDED(hr = IDataObject_GetData( xdnd_data_object, &format, &medium )))
+    if (SUCCEEDED(hr = IDataObject_GetData( &object->IDataObject_iface, &format, &medium )))
     {
         DROPFILES *drop = GlobalLock( medium.hGlobal );
         void *files = (char *)drop + drop->pFiles;
@@ -673,8 +705,7 @@ static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
         }
     }
 
-    LeaveCriticalSection(&xdnd_cs);
-
+    IDataObject_Release( &object->IDataObject_iface );
     return hr;
 }
 
@@ -687,12 +718,6 @@ static void X11DRV_XDND_FreeDragDropOp(void)
     TRACE("\n");
 
     EnterCriticalSection(&xdnd_cs);
-
-    if (xdnd_data_object)
-    {
-        IDataObject_Release( xdnd_data_object );
-        xdnd_data_object = NULL;
-    }
 
     XDNDxy.x = XDNDxy.y = 0;
     XDNDLastTargetWnd = NULL;
