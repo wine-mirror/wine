@@ -604,6 +604,7 @@ static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
     struct format_entry *iter;
     HRESULT hr;
     BOOL found = FALSE;
+    HGLOBAL hglobal;
 
     EnterCriticalSection(&xdnd_cs);
 
@@ -615,36 +616,32 @@ static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
              break;
          }
     }
-    if (found)
-    {
-        HGLOBAL dropHandle = GlobalAlloc(GMEM_FIXED, iter->size);
-        if (dropHandle)
-        {
-            RECT rect;
-            DROPFILES *lpDrop = GlobalLock(dropHandle);
-            memcpy(lpDrop, iter->data, iter->size);
-            lpDrop->pt.x = XDNDxy.x;
-            lpDrop->pt.y = XDNDxy.y;
-            lpDrop->fNC  = !(ScreenToClient(hwnd, &lpDrop->pt) &&
-                             GetClientRect(hwnd, &rect) &&
-                             PtInRect(&rect, lpDrop->pt));
-            TRACE("Sending WM_DROPFILES: hWnd=0x%p, fNC=%d, x=%ld, y=%ld, files=%p(%s)\n", hwnd,
-                    lpDrop->fNC, lpDrop->pt.x, lpDrop->pt.y, ((char*)lpDrop) + lpDrop->pFiles,
-                    debugstr_w((WCHAR*)(((char*)lpDrop) + lpDrop->pFiles)));
-            GlobalUnlock(dropHandle);
-            if (PostMessageW(hwnd, WM_DROPFILES, (WPARAM)dropHandle, 0))
-                hr = S_OK;
-            else
-            {
-                hr = HRESULT_FROM_WIN32(GetLastError());
-                GlobalFree(dropHandle);
-            }
-        }
-        else
-            hr = HRESULT_FROM_WIN32(GetLastError());
-    }
+    if (!found) hr = E_FAIL;
+    else if (!(hglobal = GlobalAlloc( GMEM_FIXED, iter->size ))) hr = HRESULT_FROM_WIN32(GetLastError());
     else
-        hr = E_FAIL;
+    {
+        DROPFILES *drop = GlobalLock( hglobal );
+        void *files;
+        RECT rect;
+
+        memcpy( drop, iter->data, iter->size );
+        files = (char *)drop + drop->pFiles;
+        drop->pt.x = XDNDxy.x;
+        drop->pt.y = XDNDxy.y;
+        drop->fNC  = !ScreenToClient( hwnd, &drop->pt ) || !GetClientRect( hwnd, &rect ) || !PtInRect( &rect, drop->pt );
+
+        TRACE( "Sending WM_DROPFILES: hwnd %p, pt %s, fNC %u, files %p (%s)\n", hwnd,
+               wine_dbgstr_point( &drop->pt), drop->fNC, files, debugstr_w(files) );
+        GlobalUnlock( hglobal );
+
+        if (PostMessageW( hwnd, WM_DROPFILES, (WPARAM)hglobal, 0 ))
+            hr = S_OK;
+        else
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+            GlobalFree( hglobal );
+        }
+    }
 
     LeaveCriticalSection(&xdnd_cs);
 
