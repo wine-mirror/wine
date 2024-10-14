@@ -40,7 +40,6 @@ static HWND XDNDLastTargetWnd;
 /* might be an ancestor of XDNDLastTargetWnd */
 static HWND XDNDLastDropTargetWnd;
 
-static BOOL X11DRV_XDND_HasHDROP(void);
 static void X11DRV_XDND_FreeDragDropOp(void);
 
 static CRITICAL_SECTION xdnd_cs;
@@ -622,8 +621,9 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
     else
     {
         /* fallback search for window able to accept these files. */
+        FORMATETC format = {.cfFormat = CF_HDROP};
 
-        if (window_accepting_files(targetWindow) && X11DRV_XDND_HasHDROP())
+        if (window_accepting_files(targetWindow) && SUCCEEDED(IDataObject_QueryGetData( &object->IDataObject_iface, &format )))
         {
             accept = 1;
             effect = DROPEFFECT_COPY;
@@ -780,22 +780,6 @@ NTSTATUS WINAPI x11drv_dnd_enter_event( void *args, ULONG size )
 
     if (previous) IDataObject_Release( previous );
     return STATUS_SUCCESS;
-}
-
-
-/**************************************************************************
- * X11DRV_XDND_HasHDROP
- */
-static BOOL X11DRV_XDND_HasHDROP(void)
-{
-    FORMATETC format = {.cfFormat = CF_HDROP};
-    BOOL found = FALSE;
-
-    EnterCriticalSection(&xdnd_cs);
-    found = xdnd_data_object && SUCCEEDED(IDataObject_QueryGetData( xdnd_data_object, &format ));
-    LeaveCriticalSection(&xdnd_cs);
-
-    return found;
 }
 
 
