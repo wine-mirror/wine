@@ -323,9 +323,10 @@ static void *DP_DuplicateString( void *src, BOOL dstAnsi, BOOL srcAnsi )
 }
 
 static HRESULT DP_QueuePlayerMessage( IDirectPlayImpl *This, DPID fromId, struct PlayerData *player,
-                                      DPID excludeId, void *msg, DWORD msgSize )
+                                      DPID excludeId, void *msg, FN_COPY_MESSAGE *copyMessage )
 {
     struct DPMSG *elem;
+    DWORD msgSize;
 
     if ( !( player->dwFlags & DPLAYI_PLAYER_PLAYERLOCAL ) )
         return DP_OK;
@@ -338,16 +339,18 @@ static HRESULT DP_QueuePlayerMessage( IDirectPlayImpl *This, DPID fromId, struct
     if( !elem )
         return DPERR_OUTOFMEMORY;
 
+    msgSize = copyMessage( NULL, msg, FALSE );
     elem->msg = malloc( msgSize );
     if ( !elem->msg )
     {
         free( elem );
         return DPERR_OUTOFMEMORY;
     }
-    memcpy( elem->msg, msg, msgSize );
+    copyMessage( elem->msg, msg, FALSE );
 
     elem->fromId = fromId;
     elem->toId = player->dpid;
+    elem->copyMessage = copyMessage;
 
     DPQ_INSERT_IN_TAIL( This->dp2->receiveMsgs, elem, msgs );
 
@@ -358,7 +361,7 @@ static HRESULT DP_QueuePlayerMessage( IDirectPlayImpl *This, DPID fromId, struct
 }
 
 static HRESULT DP_QueueMessage( IDirectPlayImpl *This, DPID fromId, DPID toId, DPID excludeId,
-                                void *msg, DWORD msgSize )
+                                void *msg, FN_COPY_MESSAGE *copyMessage )
 {
     struct PlayerList *plist;
     struct GroupData *group;
@@ -366,14 +369,14 @@ static HRESULT DP_QueueMessage( IDirectPlayImpl *This, DPID fromId, DPID toId, D
 
     plist = DP_FindPlayer( This, toId );
     if ( plist )
-        return DP_QueuePlayerMessage( This, fromId, plist->lpPData, excludeId, msg, msgSize );
+        return DP_QueuePlayerMessage( This, fromId, plist->lpPData, excludeId, msg, copyMessage );
 
     group = DP_FindAnyGroup( This, toId );
     if( group )
     {
         for( plist = DPQ_FIRST( group->players ); plist; plist = DPQ_NEXT( plist->players ) )
         {
-            hr = DP_QueuePlayerMessage( This, fromId, plist->lpPData, excludeId, msg, msgSize );
+            hr = DP_QueuePlayerMessage( This, fromId, plist->lpPData, excludeId, msg, copyMessage );
             if ( FAILED( hr ) )
                 return hr;
         }
@@ -382,6 +385,34 @@ static HRESULT DP_QueueMessage( IDirectPlayImpl *This, DPID fromId, DPID toId, D
     }
 
     return DPERR_INVALIDPLAYER;
+}
+
+static DWORD DP_CopyCreatePlayerOrGroup( DPMSG_GENERIC *genericDst, DPMSG_GENERIC *genericSrc,
+                                         BOOL ansi )
+{
+    DPMSG_CREATEPLAYERORGROUP *src = (DPMSG_CREATEPLAYERORGROUP *) genericSrc;
+    DPMSG_CREATEPLAYERORGROUP *dst = (DPMSG_CREATEPLAYERORGROUP *) genericDst;
+    DWORD offset = sizeof( DPMSG_CREATEPLAYERORGROUP );
+
+    if ( dst )
+        *dst = *src;
+
+    if ( src->lpData )
+    {
+        if ( dst )
+        {
+            dst->lpData = (char *) dst + offset;
+            memcpy( dst->lpData, src->lpData, src->dwDataSize );
+        }
+        offset += src->dwDataSize;
+    }
+
+    offset += DP_CopyString( &dst->dpnName.lpszShortNameA, src->dpnName.lpszShortNameA, ansi, FALSE,
+                             genericDst, offset );
+    offset += DP_CopyString( &dst->dpnName.lpszLongNameA, src->dpnName.lpszLongNameA, ansi, FALSE,
+                             genericDst, offset );
+
+    return offset;
 }
 
 /* *lplpReply will be non NULL iff there is something to reply */
@@ -1693,7 +1724,8 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
     msg.dpIdParent = 0;
     msg.dwFlags = dwFlags;
 
-    hr = DP_QueueMessage( This, DPID_SYSMSG, DPID_ALLPLAYERS, *lpid, &msg, sizeof( msg ) );
+    hr = DP_QueueMessage( This, DPID_SYSMSG, DPID_ALLPLAYERS, *lpid, &msg,
+                          DP_CopyCreatePlayerOrGroup );
     if ( FAILED( hr ) )
     {
         DP_DeleteSPPlayer( This, *lpid );
@@ -3764,7 +3796,7 @@ static HRESULT DP_IF_Receive( IDirectPlayImpl *This, DPID *lpidFrom, DPID *lpidT
   *lpidTo = lpMsg->toId;
 
   /* Copy into the provided buffer */
-  if (lpData) CopyMemory( lpData, lpMsg->msg, *lpdwDataSize );
+  if (lpData) lpMsg->copyMessage( lpData, lpMsg->msg, bAnsi );
 
   if( !( dwFlags & DPRECEIVE_PEEK ) )
   {

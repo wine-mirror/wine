@@ -4100,9 +4100,8 @@ static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD 
     ok_( __FILE__, line )( !msg->dpnName.dwFlags, "got name flags %#lx.\n", msg->dpnName.dwFlags );
     if ( expectedShortName )
     {
-        todo_wine
-            ok_( __FILE__, line )( msg->dpnName.lpszShortNameA && !strcmp( msg->dpnName.lpszShortNameA, expectedShortName ),
-                                   "got short name %s.\n", wine_dbgstr_a( msg->dpnName.lpszShortNameA ) );
+        ok_( __FILE__, line )( msg->dpnName.lpszShortNameA && !strcmp( msg->dpnName.lpszShortNameA, expectedShortName ),
+                               "got short name %s.\n", wine_dbgstr_a( msg->dpnName.lpszShortNameA ) );
     }
     else
     {
@@ -4111,9 +4110,8 @@ static DPID checkCreatePlayerOrGroupMessage_( int line, IDirectPlay4 *dp, DWORD 
     }
     if ( expectedLongName )
     {
-        todo_wine
-            ok_( __FILE__, line )( msg->dpnName.lpszLongNameA && !strcmp( msg->dpnName.lpszLongNameA, expectedLongName ),
-                                   "got long name %s.\n", wine_dbgstr_a( msg->dpnName.lpszLongNameA ) );
+        ok_( __FILE__, line )( msg->dpnName.lpszLongNameA && !strcmp( msg->dpnName.lpszLongNameA, expectedLongName ),
+                               "got long name %s.\n", wine_dbgstr_a( msg->dpnName.lpszLongNameA ) );
     }
     else
     {
