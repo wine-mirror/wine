@@ -104,6 +104,145 @@ static struct data_object *data_object_from_IDataObject( IDataObject *iface )
     return CONTAINING_RECORD( iface, struct data_object, IDataObject_iface );
 }
 
+struct format_iterator
+{
+    IEnumFORMATETC IEnumFORMATETC_iface;
+    LONG refcount;
+
+    struct format_entry *entry;
+    IDataObject *object;
+};
+
+static inline struct format_iterator *format_iterator_from_IEnumFORMATETC( IEnumFORMATETC *iface )
+{
+    return CONTAINING_RECORD(iface, struct format_iterator, IEnumFORMATETC_iface);
+}
+
+static HRESULT WINAPI format_iterator_QueryInterface( IEnumFORMATETC *iface, REFIID iid, void **obj )
+{
+    struct format_iterator *iterator = format_iterator_from_IEnumFORMATETC( iface );
+
+    TRACE( "iterator %p, iid %s, obj %p\n", iterator, debugstr_guid(iid), obj );
+
+    if (IsEqualIID( iid, &IID_IUnknown ) || IsEqualIID( iid, &IID_IEnumFORMATETC ))
+    {
+        IEnumFORMATETC_AddRef( &iterator->IEnumFORMATETC_iface );
+        *obj = &iterator->IEnumFORMATETC_iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid) );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI format_iterator_AddRef( IEnumFORMATETC *iface )
+{
+    struct format_iterator *iterator = format_iterator_from_IEnumFORMATETC( iface );
+    ULONG ref = InterlockedIncrement( &iterator->refcount );
+    TRACE( "iterator %p increasing refcount to %lu.\n", iterator, ref );
+    return ref;
+}
+
+static ULONG WINAPI format_iterator_Release(IEnumFORMATETC *iface)
+{
+    struct format_iterator *iterator = format_iterator_from_IEnumFORMATETC( iface );
+    ULONG ref = InterlockedDecrement( &iterator->refcount );
+
+    TRACE( "iterator %p increasing refcount to %lu.\n", iterator, ref );
+
+    if (!ref)
+    {
+        IDataObject_Release( iterator->object );
+        free( iterator );
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI format_iterator_Next( IEnumFORMATETC *iface, ULONG count, FORMATETC *formats, ULONG *ret )
+{
+    struct format_iterator *iterator = format_iterator_from_IEnumFORMATETC( iface );
+    struct data_object *object = data_object_from_IDataObject( iterator->object );
+    struct format_entry *entry;
+    UINT i;
+
+    TRACE( "iterator %p, count %lu, formats %p, ret %p\n", iterator, count, formats, ret );
+
+    for (entry = iterator->entry, i = 0; entry < object->entries_end && i < count; entry = next_format( entry ), i++)
+    {
+        formats[i].cfFormat = entry->format;
+        formats[i].ptd = NULL;
+        formats[i].dwAspect = DVASPECT_CONTENT;
+        formats[i].lindex = -1;
+        formats[i].tymed = TYMED_HGLOBAL;
+    }
+
+    iterator->entry = entry;
+    if (ret) *ret = i;
+    return (i == count) ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI format_iterator_Skip( IEnumFORMATETC *iface, ULONG count )
+{
+    struct format_iterator *iterator = format_iterator_from_IEnumFORMATETC( iface );
+    struct data_object *object = data_object_from_IDataObject( iterator->object );
+    struct format_entry *entry;
+
+    TRACE( "iterator %p, count %lu\n", iterator, count );
+
+    for (entry = iterator->entry; entry < object->entries_end; entry = next_format( entry ))
+        if (!count--) break;
+
+    iterator->entry = entry;
+    return count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI format_iterator_Reset( IEnumFORMATETC *iface )
+{
+    struct format_iterator *iterator = format_iterator_from_IEnumFORMATETC( iface );
+    struct data_object *object = data_object_from_IDataObject( iterator->object );
+
+    TRACE( "iterator %p\n", iterator );
+    iterator->entry = object->entries;
+    return S_OK;
+}
+
+static HRESULT format_iterator_create( IDataObject *object, IEnumFORMATETC **out );
+
+static HRESULT WINAPI format_iterator_Clone( IEnumFORMATETC *iface, IEnumFORMATETC **out )
+{
+    struct format_iterator *iterator = format_iterator_from_IEnumFORMATETC( iface );
+    TRACE( "iterator %p, out %p\n", iterator, out );
+    return format_iterator_create( iterator->object, out );
+}
+
+static const IEnumFORMATETCVtbl format_iterator_vtbl =
+{
+    format_iterator_QueryInterface,
+    format_iterator_AddRef,
+    format_iterator_Release,
+    format_iterator_Next,
+    format_iterator_Skip,
+    format_iterator_Reset,
+    format_iterator_Clone,
+};
+
+static HRESULT format_iterator_create( IDataObject *object, IEnumFORMATETC **out )
+{
+    struct format_iterator *iterator;
+
+    if (!(iterator = calloc( 1, sizeof(*iterator) ))) return E_OUTOFMEMORY;
+    iterator->IEnumFORMATETC_iface.lpVtbl = &format_iterator_vtbl;
+    iterator->refcount = 1;
+    IDataObject_AddRef( (iterator->object = object) );
+    iterator->entry = data_object_from_IDataObject(object)->entries;
+
+    *out = &iterator->IEnumFORMATETC_iface;
+    TRACE( "created object %p iterator %p\n", object, iterator );
+    return S_OK;
+}
+
 static HRESULT WINAPI data_object_QueryInterface( IDataObject *iface, REFIID iid, void **obj )
 {
     struct data_object *object = data_object_from_IDataObject( iface );
@@ -219,10 +358,6 @@ static HRESULT WINAPI data_object_SetData( IDataObject *iface, FORMATETC *format
 static HRESULT WINAPI data_object_EnumFormatEtc( IDataObject *iface, DWORD direction, IEnumFORMATETC **out )
 {
     struct data_object *object = data_object_from_IDataObject( iface );
-    struct format_entry *iter;
-    DWORD i = 0, count = 0;
-    FORMATETC *formats;
-    HRESULT hr;
 
     TRACE( "object %p, direction %lu, out %p\n", object, direction, out );
 
@@ -232,22 +367,7 @@ static HRESULT WINAPI data_object_EnumFormatEtc( IDataObject *iface, DWORD direc
         return E_NOTIMPL;
     }
 
-    for (iter = object->entries; iter < object->entries_end; iter = next_format( iter )) count++;
-
-    if (!(formats = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*formats) ))) return E_OUTOFMEMORY;
-
-    for (iter = object->entries; iter < object->entries_end; iter = next_format( iter ), i++)
-    {
-        formats[i].cfFormat = iter->format;
-        formats[i].ptd = NULL;
-        formats[i].dwAspect = DVASPECT_CONTENT;
-        formats[i].lindex = -1;
-        formats[i].tymed = TYMED_HGLOBAL;
-    }
-
-    hr = SHCreateStdEnumFmtEtc( count, formats, out );
-    HeapFree( GetProcessHeap(), 0, formats );
-    return hr;
+    return format_iterator_create( iface, out );
 }
 
 static HRESULT WINAPI data_object_DAdvise( IDataObject *iface, FORMATETC *format, DWORD flags,

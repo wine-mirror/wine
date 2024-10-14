@@ -1,7 +1,7 @@
 MODULE    = winex11.drv
 UNIXLIB   = winex11.so
 IMPORTS   = uuid user32 gdi32 win32u
-DELAYIMPORTS = comctl32 ole32 shell32 imm32
+DELAYIMPORTS = combase
 UNIX_CFLAGS  = $(X_CFLAGS)
 UNIX_LIBS    = -lwin32u $(X_LIBS) $(PTHREAD_LIBS) -lm
 
