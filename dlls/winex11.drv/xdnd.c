@@ -586,21 +586,11 @@ NTSTATUS WINAPI x11drv_dnd_enter_event( void *args, ULONG size )
  */
 static BOOL X11DRV_XDND_HasHDROP(void)
 {
-    struct format_entry *iter;
+    FORMATETC format = {.cfFormat = CF_HDROP};
     BOOL found = FALSE;
 
     EnterCriticalSection(&xdnd_cs);
-
-    /* Find CF_HDROP type if any */
-    for (iter = xdnd_formats; iter < xdnd_formats_end; iter = next_format( iter ))
-    {
-        if (iter->format == CF_HDROP)
-        {
-            found = TRUE;
-            break;
-        }
-    }
-
+    found = xdnd_formats && SUCCEEDED(IDataObject_QueryGetData( &xdnd_data_object, &format ));
     LeaveCriticalSection(&xdnd_cs);
 
     return found;
