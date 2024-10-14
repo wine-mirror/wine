@@ -2895,9 +2895,10 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
 
     if (!dst_buffer || !src_surface) return D3DERR_INVALIDCALL;
 
-    if (src_palette)
+    IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
+    if (src_palette || is_index_format(get_format_info(src_surface_desc.Format)))
     {
-        FIXME("Saving surfaces with palettized pixel formats is not implemented yet\n");
+        FIXME("Saving surfaces with palettized pixel formats is not implemented yet.\n");
         return D3DERR_INVALIDCALL;
     }
 
@@ -2925,7 +2926,6 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             return D3DERR_INVALIDCALL;
     }
 
-    IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
     if (src_rect)
     {
         if (src_rect->left == src_rect->right || src_rect->top == src_rect->bottom)
