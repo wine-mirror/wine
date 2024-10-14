@@ -696,13 +696,7 @@ static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
                wine_dbgstr_point( &drop->pt), drop->fNC, files, debugstr_w(files) );
         GlobalUnlock( medium.hGlobal );
 
-        if (PostMessageW( hwnd, WM_DROPFILES, (WPARAM)medium.hGlobal, 0 ))
-            hr = S_OK;
-        else
-        {
-            hr = HRESULT_FROM_WIN32(GetLastError());
-            GlobalFree( medium.hGlobal );
-        }
+        PostMessageW( hwnd, WM_DROPFILES, (WPARAM)medium.hGlobal, 0 );
     }
 
     IDataObject_Release( &object->IDataObject_iface );
