@@ -3266,10 +3266,11 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerData( IDirectPlay4 *iface, DPID 
         src = plist->lpPData->lpRemoteData;
     }
 
+    *size = bufsize;
+
     /* Is the user requesting to know how big a buffer is required? */
     if ( !data || *size < bufsize )
     {
-        *size = bufsize;
         LeaveCriticalSection( &This->lock );
         return DPERR_BUFFERTOOSMALL;
     }
