@@ -2098,10 +2098,16 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         {
             if (valid_rects)
             {
+                RECT rects[2] = {valid_rects[0], valid_rects[1]};
+                valid_rects = rects;
+
                 if (old_surface != new_surface)
                     move_window_bits_surface( hwnd, &new_rects->window, old_surface, &old_rects.visible, valid_rects );
                 else
-                    move_window_bits( hwnd, &new_rects->visible, &old_rects.visible, &new_rects->window, valid_rects );
+                {
+                    OffsetRect( &rects[1], new_rects->visible.left - old_rects.visible.left, new_rects->visible.top - old_rects.visible.top );
+                    move_window_bits( hwnd, new_rects, valid_rects );
+                }
             }
             window_surface_release( old_surface );
         }
@@ -2129,7 +2135,10 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             if (!surface_win || surface_win == hwnd)
                 user_driver->pMoveWindowBits( hwnd, &old_rects, new_rects, valid_rects );
             else
-                move_window_bits( hwnd, &new_rects->visible, &new_rects->visible, &new_rects->window, valid_rects );
+            {
+                OffsetRect( &rects[1], new_rects->visible.left - old_rects.visible.left, new_rects->visible.top - old_rects.visible.top );
+                move_window_bits( hwnd, new_rects, valid_rects );
+            }
         }
 
         user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, is_fullscreen, &monitor_rects, get_driver_window_surface( new_surface, monitor_dpi ) );

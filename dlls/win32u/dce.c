@@ -1612,22 +1612,20 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
  *
  * Move the window bits when a window is resized, or moved within a parent window.
  */
-void move_window_bits( HWND hwnd, const RECT *visible_rect, const RECT *old_visible_rect,
-                       const RECT *window_rect, const RECT *valid_rects )
+void move_window_bits( HWND hwnd, const struct window_rects *rects, const RECT *valid_rects )
 {
-    RECT dst = valid_rects[0];
-    RECT src = valid_rects[1];
+    RECT dst = valid_rects[0], src = valid_rects[1];
 
-    if (src.left - old_visible_rect->left != dst.left - visible_rect->left ||
-        src.top - old_visible_rect->top != dst.top - visible_rect->top)
+    if (src.left - rects->visible.left != dst.left - rects->visible.left ||
+        src.top - rects->visible.top != dst.top - rects->visible.top)
     {
         UINT flags = UPDATE_NOCHILDREN | UPDATE_CLIPCHILDREN;
         HRGN rgn = get_update_region( hwnd, &flags, NULL );
         HDC hdc = NtUserGetDCEx( hwnd, rgn, DCX_CACHE | DCX_WINDOW | DCX_EXCLUDERGN );
 
         TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
-        OffsetRect( &src, -window_rect->left, -window_rect->top );
-        OffsetRect( &dst, -window_rect->left, -window_rect->top );
+        OffsetRect( &src, -rects->window.left, -rects->window.top );
+        OffsetRect( &dst, -rects->window.left, -rects->window.top );
 
         NtGdiStretchBlt( hdc, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
                          hdc, src.left, src.top, src.right - src.left, src.bottom - src.top, SRCCOPY, 0 );
