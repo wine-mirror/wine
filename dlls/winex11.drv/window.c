@@ -2524,7 +2524,7 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
     release_win_data( data );
 
     /* if all that happened is that the whole window moved, copy everything */
-    if (EqualRect( &valid_rects[0], &new_rects->visible ) && EqualRect( &valid_rects[1], &old_rects->visible ))
+    if (EqualRect( &valid_rects[0], &new_rects->window ) && EqualRect( &valid_rects[1], &old_rects->window ))
     {
         /* if we have an X window the bits will be moved by the X server */
         if (!window && (valid_rects[0].left - valid_rects[1].left || valid_rects[0].top - valid_rects[1].top))

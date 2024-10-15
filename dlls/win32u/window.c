@@ -2107,9 +2107,10 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         }
         else if (valid_rects)
         {
-            RECT rects[2];
+            RECT rects[2] = {valid_rects[0], valid_rects[1]};
             int x_offset = old_rects.visible.left - new_rects->visible.left;
             int y_offset = old_rects.visible.top - new_rects->visible.top;
+            valid_rects = rects;
 
             /* if all that happened is that the whole window moved, copy everything */
             if (!(swp_flags & SWP_FRAMECHANGED) &&
@@ -2121,15 +2122,14 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
                 old_rects.client.bottom  - new_rects->client.bottom == y_offset &&
                 EqualRect( &valid_rects[0], &new_rects->client ))
             {
-                rects[0] = new_rects->visible;
-                rects[1] = old_rects.visible;
-                valid_rects = rects;
+                rects[0] = new_rects->window;
+                rects[1] = old_rects.window;
             }
 
-            if (surface_win && surface_win != hwnd)
-                move_window_bits( hwnd, &new_rects->visible, &new_rects->visible, &new_rects->window, valid_rects );
-            else
+            if (!surface_win || surface_win == hwnd)
                 user_driver->pMoveWindowBits( hwnd, &old_rects, new_rects, valid_rects );
+            else
+                move_window_bits( hwnd, &new_rects->visible, &new_rects->visible, &new_rects->window, valid_rects );
         }
 
         user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, is_fullscreen, &monitor_rects, get_driver_window_surface( new_surface, monitor_dpi ) );
