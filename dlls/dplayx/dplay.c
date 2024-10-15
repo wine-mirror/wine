@@ -1891,7 +1891,7 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
 {
   struct PlayerData *player;
   HRESULT hr = DP_OK;
-  DWORD dwCreateFlags = 0;
+  DWORD dwCreateFlags;
 
   TRACE( "(%p)->(%p,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
          This, lpidPlayer, lpPlayerName, hEvent, lpData,
@@ -1906,11 +1906,6 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
     return DPERR_INVALIDPARAM;
   }
 
-  if( dwFlags == 0 )
-  {
-    dwFlags = DPPLAYER_SPECTATOR;
-  }
-
   if( lpidPlayer == NULL )
   {
     return DPERR_INVALIDPARAMS;
@@ -1921,10 +1916,7 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
    * to the name server if requesting a player id and to the SP when
    * informing it of the player creation
    */
-  if( dwFlags & DPPLAYER_SERVERPLAYER )
-    dwCreateFlags |= DPLAYI_PLAYER_APPSERVER;
-
-  dwCreateFlags |= DPLAYI_PLAYER_PLAYERLOCAL;
+  dwCreateFlags = dwFlags | DPLAYI_PLAYER_PLAYERLOCAL;
 
   /* Verify we know how to handle all the flags */
   if( !( ( dwFlags & DPPLAYER_SERVERPLAYER ) ||
