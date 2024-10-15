@@ -1203,11 +1203,8 @@ COORD WINAPI DECLSPEC_HOTPATCH GetLargestConsoleWindowSize( HANDLE handle )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetNumberOfConsoleInputEvents( HANDLE handle, DWORD *count )
 {
-    struct condrv_input_info info;
-    if (!console_ioctl( handle, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
-        return FALSE;
-    *count = info.input_count;
-    return TRUE;
+    return console_ioctl( handle, IOCTL_CONDRV_GET_INPUT_COUNT, NULL, 0,
+                          count, sizeof(*count), NULL );
 }
 
 
