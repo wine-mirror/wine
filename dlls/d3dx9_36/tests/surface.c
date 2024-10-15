@@ -927,6 +927,30 @@ static void test_D3DXGetImageInfo(void)
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Format == D3DFMT_A8R8G8B8, "Got unexpected format %u.\n", info.Format);
 
+    /* Test JPG support. */
+    hr = D3DXGetImageInfoFromFileInMemory(jpg_rgb_2_2, sizeof(jpg_rgb_2_2), &info);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_JPG, TRUE);
+
+    hr = D3DXGetImageInfoFromFileInMemory(jpg_grayscale_2_2, sizeof(jpg_grayscale_2_2), &info);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_L8, D3DRTYPE_TEXTURE, D3DXIFF_JPG, FALSE);
+
+    /* Test PNG support. */
+    hr = D3DXGetImageInfoFromFileInMemory(png_2_2_48bpp_rgb, sizeof(png_2_2_48bpp_rgb), &info);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        check_image_info(&info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
+
+    hr = D3DXGetImageInfoFromFileInMemory(png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba), &info);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        check_image_info(&info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
+
+    hr = D3DXGetImageInfoFromFileInMemory(png_2_2_24bpp_bgr, sizeof(png_2_2_24bpp_bgr), &info);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_PNG, TRUE);
+
     /* Grayscale PNG */
     hr = D3DXGetImageInfoFromFileInMemory(png_grayscale, sizeof(png_grayscale), &info);
     ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
@@ -1080,6 +1104,13 @@ static inline void _check_pixel_4bpp(unsigned int line, const D3DLOCKED_RECT *lo
 {
    DWORD color = ((DWORD*)lockrect->pBits)[x + y * lockrect->Pitch / 4];
    ok_(__FILE__, line)(color == expected_color, "Got color 0x%08lx, expected 0x%08lx\n", color, expected_color);
+}
+
+#define check_pixel_8bpp(lockrect, x, y, color) _check_pixel_8bpp(__LINE__, lockrect, x, y, color)
+static inline void _check_pixel_8bpp(unsigned int line, const D3DLOCKED_RECT *lockrect, int x, int y, uint64_t expected_color)
+{
+   uint64_t color = ((uint64_t *)lockrect->pBits)[x + y * (lockrect->Pitch / 8)];
+   ok_(__FILE__, line)(color == expected_color, "Got color %#I64x, expected %#I64x.\n", color, expected_color);
 }
 
 #define check_pixel_float4(lockrect, x, y, fx, fy, fz, fw, ulps, todo) \
@@ -3371,6 +3402,44 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         check_release((IUnknown*)surf, 1);
         check_release((IUnknown*)tex, 0);
     }
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_A16B16G16R16, D3DPOOL_SCRATCH, &surf, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, png_2_2_48bpp_rgb, sizeof(png_2_2_48bpp_rgb), NULL,
+            D3DX_FILTER_NONE, 0, NULL);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+
+        check_pixel_8bpp(&lockrect, 0, 0, 0xffff202010100000);
+        check_pixel_8bpp(&lockrect, 1, 0, 0xffff505040403030);
+        check_pixel_8bpp(&lockrect, 0, 1, 0xffff808070706060);
+        check_pixel_8bpp(&lockrect, 1, 1, 0xffffb0b0a0a09090);
+
+        hr = IDirect3DSurface9_UnlockRect(surf);
+        ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
+    }
+
+    hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba), NULL,
+            D3DX_FILTER_NONE, 0, NULL);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+
+        check_pixel_8bpp(&lockrect, 0, 0, 0x3030202010100000);
+        check_pixel_8bpp(&lockrect, 1, 0, 0x7070606050504040);
+        check_pixel_8bpp(&lockrect, 0, 1, 0xb0b0a0a090908080);
+        check_pixel_8bpp(&lockrect, 1, 1, 0xf0f0e0e0d0d0c0c0);
+
+        hr = IDirect3DSurface9_UnlockRect(surf);
+        ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
+    }
+    check_release((IUnknown *)surf, 0);
 
     test_format_conversion(device);
     test_dxt_premultiplied_alpha(device);

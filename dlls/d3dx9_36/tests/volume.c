@@ -30,6 +30,13 @@ static inline void _check_pixel_4bpp(unsigned int line, const D3DLOCKED_BOX *box
    ok_(__FILE__, line)(color == expected_color, "Got color 0x%08lx, expected 0x%08lx\n", color, expected_color);
 }
 
+#define check_pixel_8bpp(box, x, y, z, color) _check_pixel_8bpp(__LINE__, box, x, y, z, color)
+static inline void _check_pixel_8bpp(unsigned int line, const D3DLOCKED_BOX *box, int x, int y, int z, uint64_t expected_color)
+{
+   uint64_t color = ((uint64_t *)box->pBits)[x + (y * box->RowPitch + z * box->SlicePitch) / 8];
+   ok_(__FILE__, line)(color == expected_color, "Got color %#I64x, expected %#I64x.\n", color, expected_color);
+}
+
 static inline void set_box(D3DBOX *box, UINT left, UINT top, UINT right, UINT bottom, UINT front, UINT back)
 {
     box->Left = left;
@@ -214,6 +221,7 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
     D3DVOLUME_DESC desc;
     D3DXIMAGE_INFO img_info;
     IDirect3DVolume9 *volume;
+    D3DLOCKED_BOX locked_box;
     struct volume_readback volume_rb;
     IDirect3DVolumeTexture9 *volume_texture;
     static const uint32_t bmp_32bpp_4_4_argb_expected[] =
@@ -333,6 +341,52 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
         }
     }
     release_volume_readback(&volume_rb);
+
+    IDirect3DVolume9_Release(volume);
+    IDirect3DVolumeTexture9_Release(volume_texture);
+
+    /* PNG tests. */
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 2, 2, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A16B16G16R16, D3DPOOL_DEFAULT,
+            &volume_texture, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create volume texture\n");
+        return;
+    }
+
+    IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
+
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, png_2_2_48bpp_rgb, sizeof(png_2_2_48bpp_rgb), NULL,
+            D3DX_FILTER_POINT, 0, NULL);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    IDirect3DVolume9_LockBox(volume, &locked_box, NULL, D3DLOCK_READONLY);
+
+    for (i = 0; i < 2; ++i)
+    {
+        todo_wine check_pixel_8bpp(&locked_box, 0, 0, i, 0xffff202010100000);
+        todo_wine check_pixel_8bpp(&locked_box, 1, 0, i, 0xffff505040403030);
+        todo_wine check_pixel_8bpp(&locked_box, 0, 1, i, 0xffff808070706060);
+        todo_wine check_pixel_8bpp(&locked_box, 1, 1, i, 0xffffb0b0a0a09090);
+    }
+
+    IDirect3DVolume9_UnlockBox(volume);
+
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba), NULL,
+            D3DX_FILTER_POINT, 0, NULL);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    IDirect3DVolume9_LockBox(volume, &locked_box, NULL, D3DLOCK_READONLY);
+
+    for (i = 0; i < 2; ++i)
+    {
+        todo_wine check_pixel_8bpp(&locked_box, 0, 0, i, 0x3030202010100000);
+        todo_wine check_pixel_8bpp(&locked_box, 1, 0, i, 0x7070606050504040);
+        todo_wine check_pixel_8bpp(&locked_box, 0, 1, i, 0xb0b0a0a090908080);
+        todo_wine check_pixel_8bpp(&locked_box, 1, 1, i, 0xf0f0e0e0d0d0c0c0);
+    }
+
+    IDirect3DVolume9_UnlockBox(volume);
 
     IDirect3DVolume9_Release(volume);
     IDirect3DVolumeTexture9_Release(volume_texture);
