@@ -745,6 +745,8 @@ FLUIDSYNTH_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS
 FAUDIO_PE_LIBS
 FAUDIO_PE_CFLAGS
+CAPSTONE_PE_LIBS
+CAPSTONE_PE_CFLAGS
 MINGW_PKG_CONFIG
 PE_ARCHS
 WINELOADER_DEPENDS
@@ -1610,6 +1612,7 @@ enable_xtajit64
 enable_fonts
 enable_include
 enable_adsiid
+enable_capstone
 enable_dmoguids
 enable_dxerr8
 enable_dxerr9
@@ -1770,6 +1773,8 @@ CXXFLAGS
 CCC
 OBJC
 OBJCFLAGS
+CAPSTONE_PE_CFLAGS
+CAPSTONE_PE_LIBS
 FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS
@@ -2564,6 +2569,11 @@ Some influential environment variables:
   CXXFLAGS    C++ compiler flags
   OBJC        Objective C compiler command
   OBJCFLAGS   Objective C compiler flags
+  CAPSTONE_PE_CFLAGS
+              C compiler flags for the PE capstone, overriding the bundled
+              version
+  CAPSTONE_PE_LIBS
+              Linker flags for the PE capstone, overriding the bundled version
   FAUDIO_PE_CFLAGS
               C compiler flags for the PE faudio, overriding the bundled
               version
@@ -13517,6 +13527,23 @@ CPPFLAGS=$ac_save_CPPFLAGS
     fi
 fi
 
+if ${CAPSTONE_PE_LIBS:+false} :
+then :
+  CAPSTONE_PE_LIBS=capstone
+   if ${CAPSTONE_PE_CFLAGS:+false} :
+then :
+  CAPSTONE_PE_CFLAGS="-I\$(top_srcdir)/libs/capstone/include"
+else case e in #(
+  e) enable_capstone=no ;;
+esac
+fi
+else case e in #(
+  e) enable_capstone=no ;;
+esac
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: capstone cflags: $CAPSTONE_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: capstone libs: $CAPSTONE_PE_LIBS" >&5
+
 if ${FAUDIO_PE_LIBS:+false} :
 then :
   FAUDIO_PE_LIBS="faudio mfplat mfreadwrite mfuuid propsys"
@@ -22793,6 +22820,7 @@ wine_fn_config_makefile dlls/xtajit64 enable_xtajit64
 wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/adsiid enable_adsiid
+wine_fn_config_makefile libs/capstone enable_capstone
 wine_fn_config_makefile libs/dmoguids enable_dmoguids
 wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
@@ -23940,6 +23968,8 @@ ac_ct_OBJC = $ac_ct_OBJC
 WINELOADER_DEPENDS = $WINELOADER_DEPENDS
 PE_ARCHS = $PE_ARCHS
 MINGW_PKG_CONFIG = $MINGW_PKG_CONFIG
+CAPSTONE_PE_CFLAGS = $CAPSTONE_PE_CFLAGS
+CAPSTONE_PE_LIBS = $CAPSTONE_PE_LIBS
 FAUDIO_PE_CFLAGS = $FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS = $FAUDIO_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS = $FLUIDSYNTH_PE_CFLAGS

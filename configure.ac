@@ -1154,6 +1154,7 @@ then
     fi
 fi
 
+WINE_EXTLIB_FLAGS(CAPSTONE, capstone, capstone, "-I\$(top_srcdir)/libs/capstone/include")
 WINE_EXTLIB_FLAGS(FAUDIO, faudio, "faudio mfplat mfreadwrite mfuuid propsys", "-I\$(top_srcdir)/libs/faudio/include")
 WINE_EXTLIB_FLAGS(FLUIDSYNTH, fluidsynth, "fluidsynth", "-I\$(top_srcdir)/libs/fluidsynth/include")
 WINE_EXTLIB_FLAGS(GSM, gsm, gsm, "-I\$(top_srcdir)/libs/gsm/inc")
@@ -3379,6 +3380,7 @@ WINE_CONFIG_MAKEFILE(dlls/xtajit64)
 WINE_CONFIG_MAKEFILE(fonts)
 WINE_CONFIG_MAKEFILE(include)
 WINE_CONFIG_MAKEFILE(libs/adsiid)
+WINE_CONFIG_MAKEFILE(libs/capstone)
 WINE_CONFIG_MAKEFILE(libs/dmoguids)
 WINE_CONFIG_MAKEFILE(libs/dxerr8)
 WINE_CONFIG_MAKEFILE(libs/dxerr9)
