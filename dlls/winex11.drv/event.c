@@ -1447,22 +1447,21 @@ static void drag_drop_post( HWND hwnd, DROPFILES *drop, ULONG size )
  *
  * don't know if it still works (last Changelog is from 96/11/04)
  */
-static void drop_dnd_files( HWND hWnd, XClientMessageEvent *event, POINT pos )
+static void drop_dnd_files( HWND hWnd, XClientMessageEvent *event, POINT pos, unsigned char *data, size_t size )
 {
-    struct x11drv_win_data *data;
+    struct x11drv_win_data *win_data;
     POINT pt;
-    unsigned long	data_length;
     unsigned long	aux_long;
-    unsigned char*	p_data = NULL;
-    Atom atom_aux;
-    int x, y, cx, cy, dummy, format;
+    int x, y, cx, cy, dummy;
     Window		win, w_aux_root, w_aux_child;
+    size_t drop_size;
+    DROPFILES *drop;
 
-    if (!(data = get_win_data( hWnd ))) return;
-    cx = data->rects.visible.right - data->rects.visible.left;
-    cy = data->rects.visible.bottom - data->rects.visible.top;
-    win = data->whole_window;
-    release_win_data( data );
+    if (!(win_data = get_win_data( hWnd ))) return;
+    cx = win_data->rects.visible.right - win_data->rects.visible.left;
+    cy = win_data->rects.visible.bottom - win_data->rects.visible.top;
+    win = win_data->whole_window;
+    release_win_data( win_data );
 
     XQueryPointer( event->display, win, &w_aux_root, &w_aux_child,
                    &x, &y, &dummy, &dummy, (unsigned int*)&aux_long);
@@ -1479,24 +1478,11 @@ static void drop_dnd_files( HWND hWnd, XClientMessageEvent *event, POINT pos )
         if (!find_drop_window( hWnd, &pt )) return;
     }
 
-    XGetWindowProperty( event->display, DefaultRootWindow(event->display),
-                        x11drv_atom(DndSelection), 0, 65535, FALSE,
-                        AnyPropertyType, &atom_aux, &format,
-                        &data_length, &aux_long, &p_data);
-
-    if (!aux_long && p_data)  /* don't bother if > 64K */
+    if ((drop = file_list_to_drop_files( data, size, &drop_size )))
     {
-        size_t drop_size;
-        DROPFILES *drop;
-
-        if ((drop = file_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size )))
-        {
-            drag_drop_post( hWnd, drop, drop_size );
-            free( drop );
-        }
+        drag_drop_post( hWnd, drop, drop_size );
+        free( drop );
     }
-
-    if (p_data) XFree(p_data);
 }
 
 /**********************************************************************
@@ -1507,59 +1493,42 @@ static void drop_dnd_files( HWND hWnd, XClientMessageEvent *event, POINT pos )
  *
  * event->data.l[3], event->data.l[4] contains drop x,y position
  */
-static void drop_dnd_urls( HWND hWnd, XClientMessageEvent *event, POINT pos )
+static void drop_dnd_urls( HWND hWnd, XClientMessageEvent *event, POINT pos, unsigned char *data, size_t size )
 {
   struct x11drv_win_data *win_data;
-  unsigned long	data_length;
-  unsigned long	aux_long;
-  unsigned char	*p_data = NULL; /* property data */
   int		x, y;
-  int format;
   union {
     Atom	atom_aux;
     int         i;
     Window      w_aux;
     unsigned int u;
   }		u; /* unused */
+  size_t drop_size;
+  DROPFILES *drop;
 
   if (!(NtUserGetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return;
 
-  XGetWindowProperty( event->display, DefaultRootWindow(event->display),
-                      x11drv_atom(DndSelection), 0, 65535, FALSE,
-                      AnyPropertyType, &u.atom_aux, &format,
-                      &data_length, &aux_long, &p_data);
-  if (aux_long)
-    WARN("property too large, truncated!\n");
-  TRACE("urls=%s\n", p_data);
-
-  if (!aux_long && p_data) /* don't bother if > 64K */
+  if ((drop = uri_list_to_drop_files( data, size, &drop_size )))
   {
-      size_t drop_size;
-      DROPFILES *drop;
+      XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
+                     &x, &y, &u.i, &u.i, &u.u);
+      drop->pt = root_to_virtual_screen( x, y );
 
-      if ((drop = uri_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size )))
+      if ((win_data = get_win_data( hWnd )))
       {
-          XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
-                         &x, &y, &u.i, &u.i, &u.u);
-          drop->pt = root_to_virtual_screen( x, y );
-
-          if ((win_data = get_win_data( hWnd )))
-          {
-              drop->fNC =
-                  (drop->pt.x < (win_data->rects.client.left - win_data->rects.visible.left)  ||
-                   drop->pt.y < (win_data->rects.client.top - win_data->rects.visible.top)    ||
-                   drop->pt.x > (win_data->rects.client.right - win_data->rects.visible.left) ||
-                   drop->pt.y > (win_data->rects.client.bottom - win_data->rects.visible.top) );
-              release_win_data( win_data );
-          }
-
-          drag_drop_post( hWnd, drop, drop_size );
-          free( drop );
+          drop->fNC =
+              (drop->pt.x < (win_data->rects.client.left - win_data->rects.visible.left)  ||
+               drop->pt.y < (win_data->rects.client.top - win_data->rects.visible.top)    ||
+               drop->pt.x > (win_data->rects.client.right - win_data->rects.visible.left) ||
+               drop->pt.y > (win_data->rects.client.bottom - win_data->rects.visible.top) );
+          release_win_data( win_data );
       }
 
+      drag_drop_post( hWnd, drop, drop_size );
       free( drop );
   }
-  if (p_data) XFree( p_data );
+
+  free( drop );
 }
 
 
@@ -1624,10 +1593,14 @@ static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
  */
 static void handle_dnd_protocol( HWND hwnd, XClientMessageEvent *event )
 {
+    unsigned long count, remaining;
     Window root, child;
-    int root_x, root_y;
+    int root_x, root_y, format;
+    unsigned char *data;
     unsigned int mask;
+    size_t size;
     POINT pos;
+    Atom type;
 
     /* query window (drag&drop event contains only drag window) */
     XQueryPointer( event->display, root_window, &root, &child, &root_x, &root_y,
@@ -1637,10 +1610,19 @@ static void handle_dnd_protocol( HWND hwnd, XClientMessageEvent *event )
     if (XFindContext( event->display, child, winContext, (char **)&hwnd ) != 0) hwnd = 0;
     if (!hwnd) return;
 
-    if (event->data.l[0] == DndFile || event->data.l[0] == DndFiles)
-        drop_dnd_files( hwnd, event, pos );
-    else if (event->data.l[0] == DndURL)
-        drop_dnd_urls( hwnd, event, pos );
+    if (XGetWindowProperty( event->display, DefaultRootWindow(event->display), x11drv_atom(DndSelection), 0, 65535,
+                            False, AnyPropertyType, &type, &format, &count, &remaining, &data ) || !data)
+        return;
+
+    if (!remaining /* don't bother if > 64K */ && (size = get_property_size( format, count )))
+    {
+        if (event->data.l[0] == DndFile || event->data.l[0] == DndFiles)
+            drop_dnd_files( hwnd, event, pos, data, size );
+        else if (event->data.l[0] == DndURL)
+            drop_dnd_urls( hwnd, event, pos, data, size );
+    }
+
+    XFree( data );
 }
 
 
