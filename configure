@@ -713,8 +713,6 @@ X_CFLAGS
 CPP
 XMKMF
 PTHREAD_LIBS
-ZYDIS_PE_LIBS
-ZYDIS_PE_CFLAGS
 ZLIB_PE_LIBS
 ZLIB_PE_CFLAGS
 XSLT_PE_LIBS
@@ -1638,7 +1636,6 @@ enable_wmcodecdspuuid
 enable_xml2
 enable_xslt
 enable_zlib
-enable_zydis
 enable_loader
 enable_nls
 enable_po
@@ -1805,8 +1802,6 @@ XSLT_PE_CFLAGS
 XSLT_PE_LIBS
 ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS
-ZYDIS_PE_CFLAGS
-ZYDIS_PE_LIBS
 XMKMF
 CPP
 WAYLAND_CLIENT_CFLAGS
@@ -2637,11 +2632,6 @@ Some influential environment variables:
               C compiler flags for the PE zlib, overriding the bundled version
   ZLIB_PE_LIBS
               Linker flags for the PE zlib, overriding the bundled version
-  ZYDIS_PE_CFLAGS
-              C compiler flags for the PE zydis, overriding the bundled
-              version
-  ZYDIS_PE_LIBS
-              Linker flags for the PE zydis, overriding the bundled version
   XMKMF       Path to xmkmf, Makefile generator for X Window System
   CPP         C preprocessor
   WAYLAND_CLIENT_CFLAGS
@@ -13799,23 +13789,6 @@ fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: zlib cflags: $ZLIB_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: zlib libs: $ZLIB_PE_LIBS" >&5
 
-if ${ZYDIS_PE_LIBS:+false} :
-then :
-  ZYDIS_PE_LIBS=zydis
-   if ${ZYDIS_PE_CFLAGS:+false} :
-then :
-  ZYDIS_PE_CFLAGS="-I\$(top_srcdir)/libs/zydis/include"
-else case e in #(
-  e) enable_zydis=no ;;
-esac
-fi
-else case e in #(
-  e) enable_zydis=no ;;
-esac
-fi
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: zydis cflags: $ZYDIS_PE_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: zydis libs: $ZYDIS_PE_LIBS" >&5
-
 
 
 if test "x$with_pthread" = xno
@@ -22846,7 +22819,6 @@ wine_fn_config_makefile libs/wmcodecdspuuid enable_wmcodecdspuuid
 wine_fn_config_makefile libs/xml2 enable_xml2
 wine_fn_config_makefile libs/xslt enable_xslt
 wine_fn_config_makefile libs/zlib enable_zlib
-wine_fn_config_makefile libs/zydis enable_zydis
 wine_fn_config_makefile loader enable_loader
 wine_fn_config_makefile nls enable_nls
 wine_fn_config_makefile po enable_po
@@ -24000,8 +23972,6 @@ XSLT_PE_CFLAGS = $XSLT_PE_CFLAGS
 XSLT_PE_LIBS = $XSLT_PE_LIBS
 ZLIB_PE_CFLAGS = $ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS = $ZLIB_PE_LIBS
-ZYDIS_PE_CFLAGS = $ZYDIS_PE_CFLAGS
-ZYDIS_PE_LIBS = $ZYDIS_PE_LIBS
 PTHREAD_LIBS = $PTHREAD_LIBS
 XMKMF = $XMKMF
 CPP = $CPP
