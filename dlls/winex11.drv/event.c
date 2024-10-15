@@ -1443,11 +1443,11 @@ static void drag_drop_post( HWND hwnd, DROPFILES *drop, ULONG size )
 }
 
 /**********************************************************************
- *           EVENT_DropFromOffix
+ *           drop_dnd_files
  *
  * don't know if it still works (last Changelog is from 96/11/04)
  */
-static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
+static void drop_dnd_files( HWND hWnd, XClientMessageEvent *event, POINT pos )
 {
     struct x11drv_win_data *data;
     POINT pt;
@@ -1500,14 +1500,14 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 }
 
 /**********************************************************************
- *           EVENT_DropURLs
+ *           drop_dnd_urls
  *
  * drop items are separated by \n
  * each item is prefixed by its mime type
  *
  * event->data.l[3], event->data.l[4] contains drop x,y position
  */
-static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
+static void drop_dnd_urls( HWND hWnd, XClientMessageEvent *event, POINT pos )
 {
   struct x11drv_win_data *win_data;
   unsigned long	data_length;
@@ -1625,18 +1625,22 @@ static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
 static void handle_dnd_protocol( HWND hwnd, XClientMessageEvent *event )
 {
     Window root, child;
-    int root_x, root_y, child_x, child_y;
-    unsigned int u;
+    int root_x, root_y;
+    unsigned int mask;
+    POINT pos;
 
     /* query window (drag&drop event contains only drag window) */
-    XQueryPointer( event->display, root_window, &root, &child,
-                   &root_x, &root_y, &child_x, &child_y, &u);
+    XQueryPointer( event->display, root_window, &root, &child, &root_x, &root_y,
+                   (int *)&pos.x, (int *)&pos.y, &mask );
+    pos = root_to_virtual_screen( pos.x, pos.y );
+
     if (XFindContext( event->display, child, winContext, (char **)&hwnd ) != 0) hwnd = 0;
     if (!hwnd) return;
+
     if (event->data.l[0] == DndFile || event->data.l[0] == DndFiles)
-        EVENT_DropFromOffiX(hwnd, event);
+        drop_dnd_files( hwnd, event, pos );
     else if (event->data.l[0] == DndURL)
-        EVENT_DropURLs(hwnd, event);
+        drop_dnd_urls( hwnd, event, pos );
 }
 
 
