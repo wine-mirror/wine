@@ -1,6 +1,6 @@
 MODULE    = winedbg.exe
-IMPORTS   = $(ZYDIS_PE_LIBS) dbghelp advapi32
-EXTRAINCL = $(ZYDIS_PE_CFLAGS)
+IMPORTS   = $(CAPSTONE_PE_LIBS) dbghelp advapi32
+EXTRAINCL = $(CAPSTONE_PE_CFLAGS)
 DELAYIMPORTS = comdlg32 shell32 comctl32 user32 gdi32 ws2_32
 
 EXTRADLLFLAGS = -mconsole

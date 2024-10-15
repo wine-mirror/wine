@@ -20,7 +20,9 @@
 
 #include "debugger.h"
 
-#if defined(__aarch64__) && !defined(__AARCH64EB__)
+#ifdef __aarch64__
+
+#include <capstone/capstone.h>
 
 static BOOL be_arm64_get_addr(HANDLE hThread, const dbg_ctx_t *ctx,
                               enum be_cpu_addr bca, ADDRESS64* addr)
@@ -230,7 +232,29 @@ static int be_arm64_adjust_pc_for_break(dbg_ctx_t *ctx, BOOL way)
 
 void be_arm64_disasm_one_insn(ADDRESS64 *addr, int display)
 {
-    dbg_printf("be_arm64_disasm_one_insn: not done\n");
+    static csh handle;
+    cs_insn *insn;
+    unsigned char buffer[4];
+    SIZE_T count, len;
+
+    if (display)
+    {
+        if (!dbg_curr_process->process_io->read( dbg_curr_process->handle, memory_to_linear_addr(addr),
+                                                 buffer, sizeof(buffer), &len )) return;
+
+        if (!handle) cs_open( CS_ARCH_ARM64, 0, &handle );
+
+        cs_option( handle, CS_OPT_DETAIL, CS_OPT_ON );
+        count = cs_disasm( handle, buffer, len, addr->Offset, 0, &insn );
+        dbg_printf( "%s %s", insn[0].mnemonic, insn[0].op_str );
+        if (insn[0].id == ARM64_INS_B || insn[0].id == ARM64_INS_BL)
+        {
+            ADDRESS64 a = { .Mode = AddrModeFlat, .Offset = insn[0].detail->arm64.operands[0].imm };
+            print_address_symbol( &a, TRUE, "" );
+        }
+        cs_free( insn, count );
+    }
+    addr->Offset += 4;
 }
 
 static BOOL be_arm64_get_context(HANDLE thread, dbg_ctx_t *ctx)
