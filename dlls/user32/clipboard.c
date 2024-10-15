@@ -630,10 +630,43 @@ HANDLE WINAPI GetClipboardData( UINT format )
     return ret;
 }
 
+/* Recursively searches for a window on given coordinates in a drag&drop specific manner.
+ *
+ * Don't use WindowFromPoint instead, because it omits the STATIC and transparent
+ * windows, but they can be a valid drop targets if have WS_EX_ACCEPTFILES set.
+ */
+static HWND window_from_point_dnd( HWND hwnd, POINT point )
+{
+    HWND child;
+
+    ScreenToClient( hwnd, &point );
+
+    while ((child = ChildWindowFromPointEx( hwnd, point, CWP_SKIPDISABLED | CWP_SKIPINVISIBLE )) && child != hwnd)
+    {
+       MapWindowPoints( hwnd, child, &point, 1 );
+       hwnd = child;
+    }
+
+    return hwnd;
+}
+
+/* Returns the first window down the hierarchy that has WS_EX_ACCEPTFILES set or
+ * returns NULL, if such window does not exists.
+ */
+static HWND window_accepting_files( HWND hwnd )
+{
+    /* MUST to be GetParent, not GetAncestor, because the owner window (with WS_EX_ACCEPTFILES)
+     * of a window with WS_POPUP is a valid drop target. GetParent works exactly this way! */
+    while (hwnd && !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) hwnd = GetParent( hwnd );
+    return hwnd;
+}
+
 void drag_drop_post( HWND hwnd, UINT drop_size, const DROPFILES *drop )
 {
+    POINT point = drop->pt;
     HDROP handle;
 
+    hwnd = window_accepting_files( window_from_point_dnd( hwnd, point ) );
     if ((handle = GlobalAlloc( GMEM_SHARE, drop_size )))
     {
         DROPFILES *ptr = GlobalLock( handle );

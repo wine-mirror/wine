@@ -1400,135 +1400,36 @@ void X11DRV_SetFocus( HWND hwnd )
     release_win_data( data );
 }
 
-
-static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
-{
-    UINT dpi = NtUserGetWinMonitorDpi( hQueryWnd, MDT_DEFAULT );
-    RECT tempRect;
-
-    if (!NtUserIsWindowEnabled(hQueryWnd)) return 0;
-    
-    NtUserGetWindowRect( hQueryWnd, &tempRect, dpi );
-
-    if(!PtInRect(&tempRect, *lpPt)) return 0;
-
-    if (!(NtUserGetWindowLongW( hQueryWnd, GWL_STYLE ) & WS_MINIMIZE))
-    {
-        POINT pt = *lpPt;
-        NtUserMapWindowPoints( 0, hQueryWnd, &pt, 1, 0 /* per-monitor DPI */ );
-        NtUserGetClientRect( hQueryWnd, &tempRect, dpi );
-
-        if (PtInRect( &tempRect, pt))
-        {
-            HWND ret = child_window_from_point( hQueryWnd, pt.x, pt.y, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED );
-            if (ret && ret != hQueryWnd)
-            {
-                ret = find_drop_window( ret, lpPt );
-                if (ret) return ret;
-            }
-        }
-    }
-
-    if(!(NtUserGetWindowLongW( hQueryWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return 0;
-    
-    NtUserMapWindowPoints( 0, hQueryWnd, lpPt, 1, 0 /* per-monitor DPI */ );
-
-    return hQueryWnd;
-}
-
 static void drag_drop_post( HWND hwnd, DROPFILES *drop, ULONG size )
 {
     NtUserMessageCall( hwnd, WINE_DRAG_DROP_POST, size, (LPARAM)drop, NULL,
                        NtUserDragDropCall, FALSE );
 }
 
-/**********************************************************************
- *           drop_dnd_files
- *
- * don't know if it still works (last Changelog is from 96/11/04)
- */
-static void drop_dnd_files( HWND hWnd, XClientMessageEvent *event, POINT pos, unsigned char *data, size_t size )
+static void drop_dnd_files( HWND hWnd, POINT pos, unsigned char *data, size_t size )
 {
-    struct x11drv_win_data *win_data;
-    POINT pt;
-    unsigned long	aux_long;
-    int x, y, cx, cy, dummy;
-    Window		win, w_aux_root, w_aux_child;
     size_t drop_size;
     DROPFILES *drop;
 
-    if (!(win_data = get_win_data( hWnd ))) return;
-    cx = win_data->rects.visible.right - win_data->rects.visible.left;
-    cy = win_data->rects.visible.bottom - win_data->rects.visible.top;
-    win = win_data->whole_window;
-    release_win_data( win_data );
-
-    XQueryPointer( event->display, win, &w_aux_root, &w_aux_child,
-                   &x, &y, &dummy, &dummy, (unsigned int*)&aux_long);
-    pt = root_to_virtual_screen( x, y );
-
-    /* find out drop point and drop window */
-    if (pt.x < 0 || pt.y < 0 || pt.x > cx || pt.y > cy)
-    {
-	if (!(NtUserGetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return;
-	pt.x = pt.y = 0;
-    }
-    else
-    {
-        if (!find_drop_window( hWnd, &pt )) return;
-    }
-
     if ((drop = file_list_to_drop_files( data, size, &drop_size )))
     {
+        drop->pt = pos;
         drag_drop_post( hWnd, drop, drop_size );
         free( drop );
     }
 }
 
-/**********************************************************************
- *           drop_dnd_urls
- *
- * drop items are separated by \n
- * each item is prefixed by its mime type
- *
- * event->data.l[3], event->data.l[4] contains drop x,y position
- */
-static void drop_dnd_urls( HWND hWnd, XClientMessageEvent *event, POINT pos, unsigned char *data, size_t size )
+static void drop_dnd_urls( HWND hWnd, POINT pos, unsigned char *data, size_t size )
 {
-  struct x11drv_win_data *win_data;
-  int		x, y;
-  union {
-    Atom	atom_aux;
-    int         i;
-    Window      w_aux;
-    unsigned int u;
-  }		u; /* unused */
-  size_t drop_size;
-  DROPFILES *drop;
+    size_t drop_size;
+    DROPFILES *drop;
 
-  if (!(NtUserGetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return;
-
-  if ((drop = uri_list_to_drop_files( data, size, &drop_size )))
-  {
-      XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
-                     &x, &y, &u.i, &u.i, &u.u);
-      drop->pt = root_to_virtual_screen( x, y );
-
-      if ((win_data = get_win_data( hWnd )))
-      {
-          drop->fNC =
-              (drop->pt.x < (win_data->rects.client.left - win_data->rects.visible.left)  ||
-               drop->pt.y < (win_data->rects.client.top - win_data->rects.visible.top)    ||
-               drop->pt.x > (win_data->rects.client.right - win_data->rects.visible.left) ||
-               drop->pt.y > (win_data->rects.client.bottom - win_data->rects.visible.top) );
-          release_win_data( win_data );
-      }
-
-      drag_drop_post( hWnd, drop, drop_size );
-      free( drop );
-  }
-
-  free( drop );
+    if ((drop = uri_list_to_drop_files( data, size, &drop_size )))
+    {
+        drop->pt = pos;
+        drag_drop_post( hWnd, drop, drop_size );
+        free( drop );
+    }
 }
 
 
@@ -1617,9 +1518,9 @@ static void handle_dnd_protocol( HWND hwnd, XClientMessageEvent *event )
     if (!remaining /* don't bother if > 64K */ && (size = get_property_size( format, count )))
     {
         if (event->data.l[0] == DndFile || event->data.l[0] == DndFiles)
-            drop_dnd_files( hwnd, event, pos, data, size );
+            drop_dnd_files( hwnd, pos, data, size );
         else if (event->data.l[0] == DndURL)
-            drop_dnd_urls( hwnd, event, pos, data, size );
+            drop_dnd_urls( hwnd, pos, data, size );
     }
 
     XFree( data );
