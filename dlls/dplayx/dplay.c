@@ -1723,8 +1723,7 @@ DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
 
 }
 
-/* Note: lpMsgHdr is NULL for local creation, non NULL for remote creation */
-static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *lpidPlayer,
+static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
         DPNAME *lpPlayerName, HANDLE hEvent, void *lpData, DWORD dwDataSize, DWORD dwFlags,
         BOOL bAnsi )
 {
@@ -1779,8 +1778,7 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
       }
     }
 
-    if( lpMsgHdr == NULL )
-      dwCreateFlags |= DPLAYI_PLAYER_PLAYERLOCAL;
+    dwCreateFlags |= DPLAYI_PLAYER_PLAYERLOCAL;
   }
 
   /* Verify we know how to handle all the flags */
@@ -1929,7 +1927,7 @@ static HRESULT WINAPI IDirectPlay4AImpl_CreatePlayer( IDirectPlay4A *iface, DPID
     *lpidPlayer = DPID_UNKNOWN;
   }
 
-  return DP_IF_CreatePlayer( This, NULL, lpidPlayer, lpPlayerName, hEvent,
+  return DP_IF_CreatePlayer( This, lpidPlayer, lpPlayerName, hEvent,
                            lpData, dwDataSize, dwFlags, TRUE );
 }
 
@@ -1952,7 +1950,7 @@ static HRESULT WINAPI IDirectPlay4Impl_CreatePlayer( IDirectPlay4 *iface, DPID *
     *lpidPlayer = DPID_UNKNOWN;
   }
 
-  return DP_IF_CreatePlayer( This, NULL, lpidPlayer, lpPlayerName, hEvent,
+  return DP_IF_CreatePlayer( This, lpidPlayer, lpPlayerName, hEvent,
                            lpData, dwDataSize, dwFlags, FALSE );
 }
 
