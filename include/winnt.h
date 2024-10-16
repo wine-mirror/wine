@@ -229,28 +229,6 @@ extern "C" {
 
 /* Anonymous union/struct handling */
 
-#ifndef NONAMELESSSTRUCT
-# ifdef __GNUC__
-   /* Anonymous struct support starts with gcc 2.96 or gcc/g++ 3.x */
-#  if (__GNUC__ < 2) || ((__GNUC__ == 2) && (defined(__cplusplus) || (__GNUC_MINOR__ < 96)))
-#   define NONAMELESSSTRUCT
-#  endif
-# elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
-#  define NONAMELESSSTRUCT
-# endif
-#endif  /* NONAMELESSSTRUCT */
-
-#ifndef NONAMELESSUNION
-# ifdef __GNUC__
-   /* Anonymous unions support starts with gcc 2.96/g++ 2.95 */
-#  if (__GNUC__ < 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ < 95) || ((__GNUC_MINOR__ == 95) && !defined(__cplusplus))))
-#   define NONAMELESSUNION
-#  endif
-# elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
-#  define NONAMELESSUNION
-# endif
-#endif  /* NONAMELESSUNION */
-
 #undef DUMMYSTRUCTNAME
 #undef DUMMYSTRUCTNAME1
 #undef DUMMYSTRUCTNAME2
@@ -323,10 +301,7 @@ extern "C" {
 
 #if !defined(WINE_NO_NAMELESS_EXTENSION)
 # ifdef __GNUC__
-   /* Anonymous structs support starts with gcc 2.96/g++ 2.95 */
-#  if (__GNUC__ > 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ > 95) || ((__GNUC_MINOR__ == 95) && defined(__cplusplus))))
-#   define __C89_NAMELESS __extension__
-#  endif
+#  define __C89_NAMELESS __extension__
 # elif defined(_MSC_VER)
 #  define __C89_NAMELESS
 # endif
