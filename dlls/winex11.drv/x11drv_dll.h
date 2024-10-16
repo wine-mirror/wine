@@ -27,11 +27,6 @@
 #include "ntgdi.h"
 #include "unixlib.h"
 
-extern NTSTATUS WINAPI x11drv_dnd_enter_event( void *params, ULONG size );
-extern NTSTATUS WINAPI x11drv_dnd_position_event( void *params, ULONG size );
-extern NTSTATUS WINAPI x11drv_dnd_drop_event( void *params, ULONG size );
-extern NTSTATUS WINAPI x11drv_dnd_leave_event( void *params, ULONG size );
-
 extern LRESULT WINAPI foreign_window_proc( HWND hwnd, UINT msg, WPARAM wparam,
                                            LPARAM lparam );
 

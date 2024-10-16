@@ -434,10 +434,6 @@ extern int xrender_error_base;
 extern char *process_name;
 extern Display *clipboard_display;
 extern UINT64 client_foreign_window_proc;
-extern UINT64 dnd_enter_event_callback;
-extern UINT64 dnd_position_event_callback;
-extern UINT64 dnd_drop_event_callback;
-extern UINT64 dnd_leave_event_callback;
 
 /* atoms */
 

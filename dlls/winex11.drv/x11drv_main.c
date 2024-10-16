@@ -86,10 +86,6 @@ int alloc_system_colors = 256;
 int xrender_error_base = 0;
 char *process_name = NULL;
 UINT64 client_foreign_window_proc = 0;
-UINT64 dnd_enter_event_callback = 0;
-UINT64 dnd_position_event_callback = 0;
-UINT64 dnd_drop_event_callback = 0;
-UINT64 dnd_leave_event_callback = 0;
 
 static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
@@ -647,10 +643,6 @@ static NTSTATUS x11drv_init( void *arg )
     if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
     if (!(display = XOpenDisplay( NULL ))) return STATUS_UNSUCCESSFUL;
 
-    dnd_enter_event_callback = params->dnd_enter_event_callback;
-    dnd_position_event_callback = params->dnd_position_event_callback;
-    dnd_drop_event_callback = params->dnd_drop_event_callback;
-    dnd_leave_event_callback = params->dnd_leave_event_callback;
     client_foreign_window_proc = params->foreign_window_proc;
 
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */

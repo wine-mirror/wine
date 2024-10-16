@@ -166,6 +166,32 @@ static NTSTATUS WINAPI User32CallDispatchCallback( void *args, ULONG size )
     return callback( params, size );
 }
 
+static NTSTATUS WINAPI User32DragDropEnter( void *args, ULONG size )
+{
+    if (!drag_drop_enter( size, args )) return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS WINAPI User32DragDropLeave( void *args, ULONG size )
+{
+    drag_drop_leave();
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS WINAPI User32DragDropDrag( void *args, ULONG size )
+{
+    const struct drag_drop_drag_params *params = args;
+    UINT effect = drag_drop_drag( params->hwnd, params->point, params->effect );
+    return NtCallbackReturn( &effect, sizeof(effect), STATUS_SUCCESS );
+}
+
+static NTSTATUS WINAPI User32DragDropDrop( void *args, ULONG size )
+{
+    const struct drag_drop_drop_params *params = args;
+    UINT effect = drag_drop_drop( params->hwnd );
+    return NtCallbackReturn( &effect, sizeof(effect), STATUS_SUCCESS );
+}
+
 static NTSTATUS WINAPI User32DragDropPost( void *args, ULONG size )
 {
     const struct drag_drop_post_params *params = args;
@@ -195,6 +221,10 @@ static KERNEL_CALLBACK_PROC kernel_callback_table[NtUserCallCount] =
     User32PostDDEMessage,
     User32RenderSsynthesizedFormat,
     User32UnpackDDEMessage,
+    User32DragDropEnter,
+    User32DragDropLeave,
+    User32DragDropDrag,
+    User32DragDropDrop,
     User32DragDropPost,
 };
 

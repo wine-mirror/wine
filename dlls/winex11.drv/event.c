@@ -1400,6 +1400,30 @@ void X11DRV_SetFocus( HWND hwnd )
     release_win_data( data );
 }
 
+static void drag_drop_enter( UINT entries_size, struct format_entry *entries )
+{
+    NtUserMessageCall( 0, WINE_DRAG_DROP_ENTER, entries_size, (LPARAM)entries, NULL,
+                       NtUserDragDropCall, FALSE );
+}
+
+static void drag_drop_leave(void)
+{
+    NtUserMessageCall( 0, WINE_DRAG_DROP_LEAVE, 0, 0, NULL,
+                       NtUserDragDropCall, FALSE );
+}
+
+static DWORD drag_drop_drag( HWND hwnd, POINT point, DWORD effect )
+{
+    return NtUserMessageCall( hwnd, WINE_DRAG_DROP_DRAG, MAKELONG(point.x, point.y), effect, NULL,
+                              NtUserDragDropCall, FALSE );
+}
+
+static DWORD drag_drop_drop( HWND hwnd )
+{
+    return NtUserMessageCall( hwnd, WINE_DRAG_DROP_DROP, 0, 0, NULL,
+                              NtUserDragDropCall, FALSE );
+}
+
 static void drag_drop_post( HWND hwnd, DROPFILES *drop, ULONG size )
 {
     NtUserMessageCall( hwnd, WINE_DRAG_DROP_POST, size, (LPARAM)drop, NULL,
@@ -1534,7 +1558,6 @@ static void handle_dnd_protocol( HWND hwnd, XClientMessageEvent *event )
  */
 static void handle_xdnd_enter_event( HWND hWnd, XClientMessageEvent *event )
 {
-    struct dnd_enter_event_params *params;
     struct format_entry *data;
     unsigned long count = 0;
     Atom *xdndtypes;
@@ -1590,15 +1613,7 @@ static void handle_xdnd_enter_event( HWND hWnd, XClientMessageEvent *event )
 
     data = import_xdnd_selection( event->display, event->window, x11drv_atom(XdndSelection),
                                   xdndtypes, count, &size );
-    if (data && (params = malloc( sizeof(*params) + size )))
-    {
-        void *ret_ptr;
-        ULONG ret_len;
-        memcpy( params->entries, data, size );
-        params->dispatch.callback = dnd_enter_event_callback;
-        KeUserDispatchCallback( &params->dispatch, sizeof(*params) + size, &ret_ptr, &ret_len );
-        free( params );
-    }
+    if (data) drag_drop_enter( size, data );
     free( data );
 
     if (event->data.l[1] & 1)
@@ -1644,23 +1659,16 @@ static long drop_effect_to_xdnd_action( UINT effect )
 
 static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
 {
-    struct dnd_position_event_params params;
     XClientMessageEvent e;
-    void *ret_ptr;
-    ULONG ret_len;
+    POINT point;
     UINT effect;
 
-    params.dispatch.callback = dnd_position_event_callback;
-    params.hwnd = HandleToUlong( hwnd );
-    params.point = root_to_virtual_screen( event->data.l[2] >> 16, event->data.l[2] & 0xFFFF );
-    params.effect = effect = xdnd_action_to_drop_effect( event->data.l[4] );
-
-    if (KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(effect))
-        return;
-    effect = *(UINT *)ret_ptr;
+    point = root_to_virtual_screen( event->data.l[2] >> 16, event->data.l[2] & 0xFFFF );
+    effect = xdnd_action_to_drop_effect( event->data.l[4] );
+    effect = drag_drop_drag( hwnd, point, effect );
 
     TRACE( "actionRequested(%ld) chosen(0x%x) at x(%d),y(%d)\n",
-           event->data.l[4], effect, (int)params.point.x, (int)params.point.y );
+           event->data.l[4], effect, (int)point.x, (int)point.y );
 
     /*
      * Let source know if we're accepting the drop by
@@ -1682,15 +1690,10 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
 
 static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
 {
-    struct dnd_drop_event_params params = {.dispatch.callback = dnd_drop_event_callback, .hwnd = HandleToULong(hwnd)};
     XClientMessageEvent e;
-    void *ret_ptr;
-    ULONG ret_len;
     UINT effect;
 
-    if (KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(effect))
-        return;
-    effect = *(UINT *)ret_ptr;
+    effect = drag_drop_drop( hwnd );
 
     /* Tell the target we are finished. */
     memset( &e, 0, sizeof(e) );
@@ -1708,10 +1711,7 @@ static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
 
 static void handle_xdnd_leave_event( HWND hwnd, XClientMessageEvent *event )
 {
-    struct dispatch_callback_params params = {.callback = dnd_leave_event_callback};
-    void *ret_ptr;
-    ULONG ret_len;
-    KeUserDispatchCallback( &params, sizeof(params), &ret_ptr, &ret_len );
+    drag_drop_leave();
 }
 
 

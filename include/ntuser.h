@@ -73,6 +73,10 @@ enum
     NtUserPostDDEMessage,
     NtUserRenderSynthesizedFormat,
     NtUserUnpackDDEMessage,
+    NtUserDragDropEnter,
+    NtUserDragDropLeave,
+    NtUserDragDropDrag,
+    NtUserDragDropDrop,
     NtUserDragDropPost,
     NtUserCallCount
 };
@@ -298,6 +302,28 @@ struct unpack_dde_message_result
 {
     WPARAM wparam;
     LPARAM lparam;
+};
+
+/* NtUserDragDropEnter params */
+struct format_entry
+{
+    UINT format;
+    UINT size;
+    char data[1];
+};
+
+/* NtUserDragDropDrag params */
+struct drag_drop_drag_params
+{
+    HWND hwnd;
+    POINT point;
+    UINT effect;
+};
+
+/* NtUserDragDropDrop params */
+struct drag_drop_drop_params
+{
+    HWND hwnd;
 };
 
 /* NtUserDragDropPost params */
@@ -594,6 +620,10 @@ enum wine_systray_call
 /* NtUserDragDropCall calls */
 enum wine_drag_drop_call
 {
+    WINE_DRAG_DROP_ENTER,
+    WINE_DRAG_DROP_LEAVE,
+    WINE_DRAG_DROP_DRAG,
+    WINE_DRAG_DROP_DROP,
     WINE_DRAG_DROP_POST,
 };
 

@@ -52,6 +52,10 @@ extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
                                 const void *buffer, size_t size );
 extern void free_cached_data( UINT format, HANDLE handle );
 extern HANDLE render_synthesized_format( UINT format, UINT from );
+extern BOOL drag_drop_enter( UINT entries_size, const struct format_entry *entries );
+extern void drag_drop_leave(void);
+extern DWORD drag_drop_drag( HWND hwnd, POINT point, DWORD effect );
+extern DWORD drag_drop_drop( HWND hwnd );
 extern void drag_drop_post( HWND hwnd, UINT drop_size, const DROPFILES *drop );
 extern void unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                             void *buffer, BOOL ansi );

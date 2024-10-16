@@ -764,6 +764,32 @@ LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void 
 
     switch (msg)
     {
+    case WINE_DRAG_DROP_ENTER:
+        return KeUserModeCallback( NtUserDragDropEnter, (struct format_entry *)lparam, wparam, &ret_ptr, &ret_len );
+    case WINE_DRAG_DROP_LEAVE:
+        return KeUserModeCallback( NtUserDragDropLeave, 0, 0, &ret_ptr, &ret_len );
+    case WINE_DRAG_DROP_DRAG:
+    {
+        struct drag_drop_drag_params params =
+        {
+            .hwnd = hwnd,
+            .point.x = LOWORD(wparam),
+            .point.y = HIWORD(wparam),
+            .effect = lparam,
+        };
+
+        if (KeUserModeCallback( NtUserDragDropDrag, &params, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(DWORD))
+            return DROPEFFECT_NONE;
+        return *(DWORD *)ret_ptr;
+    }
+    case WINE_DRAG_DROP_DROP:
+    {
+        struct drag_drop_drop_params params = {.hwnd = hwnd};
+        if (KeUserModeCallback( NtUserDragDropDrop, &params, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(DWORD))
+            return DROPEFFECT_NONE;
+        return *(DWORD *)ret_ptr;
+    }
+
     case WINE_DRAG_DROP_POST:
     {
         struct drag_drop_post_params *params;

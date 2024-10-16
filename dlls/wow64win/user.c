@@ -1451,6 +1451,42 @@ static NTSTATUS WINAPI wow64_NtUserCallDispatchCallback( void *arg, ULONG size )
     return dispatch_callback( NtUserCallDispatchCallback, arg, size );
 }
 
+static NTSTATUS WINAPI wow64_NtUserDragDropEnter( void *arg, ULONG size )
+{
+    return dispatch_callback( NtUserDragDropEnter, arg, size );
+}
+
+static NTSTATUS WINAPI wow64_NtUserDragDropLeave( void *arg, ULONG size )
+{
+    return dispatch_callback( NtUserDragDropLeave, arg, size );
+}
+
+static NTSTATUS WINAPI wow64_NtUserDragDropDrag( void *arg, ULONG size )
+{
+    const struct drag_drop_drag_params *params = arg;
+    struct
+    {
+        ULONG hwnd;
+        POINT point;
+        UINT effect;
+    } params32;
+    params32.hwnd = HandleToUlong( params->hwnd );
+    params32.point = params->point;
+    params32.effect = params->effect;
+    return dispatch_callback( NtUserDragDropDrag, &params32, sizeof(params32) );
+}
+
+static NTSTATUS WINAPI wow64_NtUserDragDropDrop( void *arg, ULONG size )
+{
+    const struct drag_drop_drop_params *params = arg;
+    struct
+    {
+        ULONG hwnd;
+    } params32;
+    params32.hwnd = HandleToUlong( params->hwnd );
+    return dispatch_callback( NtUserDragDropDrop, &params32, sizeof(params32) );
+}
+
 static NTSTATUS WINAPI wow64_NtUserDragDropPost( void *arg, ULONG size )
 {
     struct drag_drop_post_params32
@@ -1494,6 +1530,10 @@ ntuser_callback user_callbacks[] =
     wow64_NtUserPostDDEMessage,
     wow64_NtUserRenderSynthesizedFormat,
     wow64_NtUserUnpackDDEMessage,
+    wow64_NtUserDragDropEnter,
+    wow64_NtUserDragDropLeave,
+    wow64_NtUserDragDropDrag,
+    wow64_NtUserDragDropDrop,
     wow64_NtUserDragDropPost,
 };
 
@@ -3643,6 +3683,16 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
         }
 
     case NtUserDragDropCall:
+        if (msg == WINE_DRAG_DROP_ENTER)
+        {
+            ULONG *data32 = result_info;
+            NTSTATUS status;
+            void *data;
+
+            status = NtUserMessageCall( hwnd, msg, wparam, lparam, &data, type, ansi );
+            if (!status) *data32 = HandleToUlong( data );
+            return status;
+        }
         return NtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
     }
 
