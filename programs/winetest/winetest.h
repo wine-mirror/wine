@@ -27,8 +27,8 @@
 #include <stdarg.h>
 #include "wine/debug.h"
 
-extern HANDLE logfile;
-extern void WINAPIV xprintf( const char *fmt, ... ) __WINE_PRINTF_ATTR(1,2);
+#define xprintf( fmt, ... ) output( logfile, fmt, ## __VA_ARGS__ )
+extern void WINAPIV output( HANDLE file, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
 extern char *WINAPIV strmake( size_t *len, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
 
 void fatal (const char* msg);

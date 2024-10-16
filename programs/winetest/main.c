@@ -68,6 +68,7 @@ static char build_id[64];
 static BOOL is_wow64;
 static int failures;
 static int quiet_mode;
+static HANDLE logfile;
 
 /* filters for running only specific tests */
 static char **filters;

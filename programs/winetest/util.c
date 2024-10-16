@@ -25,8 +25,6 @@
 
 #include "winetest.h"
 
-HANDLE logfile = 0;
-
 void *xalloc (size_t len)
 {
     void *p = malloc( len );
@@ -90,8 +88,8 @@ char *WINAPIV strmake( size_t *len, const char *fmt, ... )
     return p;
 }
 
-void WINAPIV xprintf( const char *fmt, ... ) __WINE_PRINTF_ATTR(1,2);
-void WINAPIV xprintf( const char *fmt, ... )
+void WINAPIV output( HANDLE file, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
+void WINAPIV output( HANDLE file, const char *fmt, ... )
 {
     va_list ap;
     size_t size;
@@ -103,7 +101,7 @@ void WINAPIV xprintf( const char *fmt, ... )
     head = buffer;
     va_end (ap);
     while (size) {
-        if (!WriteFile( logfile, head, size, &written, NULL ))
+        if (!WriteFile( file, head, size, &written, NULL ))
             report (R_FATAL, "Can't write logs: %u", GetLastError());
         head += written;
         size -= written;
