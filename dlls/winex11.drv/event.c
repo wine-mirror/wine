@@ -175,9 +175,11 @@ static inline void free_event_data( XEvent *event )
 static BOOL host_window_filter_event( XEvent *event )
 {
     struct host_window *win;
+    RECT old_rect;
     HWND hwnd;
 
     if (!(win = get_host_window( event->xany.window, FALSE ))) return FALSE;
+    old_rect = win->rect;
 
     switch (event->type)
     {
@@ -208,6 +210,27 @@ static BOOL host_window_filter_event( XEvent *event )
         TRACE( "host window %p/%lx ConfigureNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
         break;
     }
+    }
+
+    if (old_rect.left != win->rect.left || old_rect.top != win->rect.top)
+    {
+        XConfigureEvent configure = {.type = ConfigureNotify, .serial = event->xany.serial, .display = event->xany.display};
+        unsigned int i;
+
+        for (i = 0; i < win->children_count; i++)
+        {
+            RECT rect = win->children[i].rect;
+
+            configure.event = win->children[i].window;
+            configure.window = configure.event;
+            configure.x = rect.left;
+            configure.y = rect.top;
+            configure.width = rect.right - rect.left;
+            configure.height = rect.bottom - rect.top;
+            configure.send_event = 0;
+
+            XPutBackEvent( configure.display, (XEvent *)&configure );
+        }
     }
 
     /* keep processing the event for foreign windows */
