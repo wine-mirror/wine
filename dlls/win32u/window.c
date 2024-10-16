@@ -1941,9 +1941,8 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
 
     if ((create_opaque && is_layered) || (create_layered && !is_layered))
     {
-        window_surface_release( new_surface );
-        new_surface = &dummy_surface;
-        window_surface_add_ref( new_surface );
+        if (new_surface) window_surface_release( new_surface );
+        window_surface_add_ref( (new_surface = &dummy_surface) );
     }
     else if (!create_opaque && is_layered) create_layered = TRUE;
 
