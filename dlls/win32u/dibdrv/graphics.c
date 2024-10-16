@@ -1529,7 +1529,7 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
      * is exactly as many as in one ellipse arc. */
     max_points = get_arc_max_points( dc, &rect );
     points = malloc( max_points * sizeof(*points) );
-    top_points = malloc( max_points / 2 * sizeof(*points) );
+    top_points = malloc( max_points * sizeof(*points) );
     if (!points || !top_points)
     {
         free( points );
