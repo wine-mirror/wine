@@ -217,7 +217,7 @@ static unsigned int generate_ellipse_top_half( const DC *dc, double width, doubl
         double dy = -(a * pt.x + b * pt.y);
         int x_inc = (dx > 0 ? 1 : -1);
         int y_inc = (dy > 0 ? 1 : -1);
-        double sigma;
+        double sigma1, sigma2;
 
         points[pos++] = pt;
 
@@ -226,29 +226,42 @@ static unsigned int generate_ellipse_top_half( const DC *dc, double width, doubl
             /* Increment y, maybe increment x. */
             pt.y += y_inc;
 
-            sigma = (a * pt.x * pt.x) + (2 * b * pt.x * pt.y) + (c * pt.y * pt.y) - d;
-            /* σ < 0 if the next point would be inside the ellipse.
-             * If we are moving towards a vertical or horizontal tangent point,
-             * and (x, y+1) is outside the ellipse, then it's certainly
-             * closer to the ellipse than (x-1, y+1). [Same for the 180°
-             * rotation.] Hence we want to increment x if σ < 0.
-             * If we are moving away from a tangent point, the opposite applies,
-             * and we want to increment x if σ > 0.
-             * We are moving towards a tangent point if (dx > 0 XOR dy > 0),
-             * so want to increment x if (dx > 0 XOR dy > 0 XOR σ > 0). */
-            if (sigma != 0.0 && (dx > 0) ^ (dy > 0) ^ (sigma > 0))
+            /* If this point has 45° slope, and it's directly adjacent to one
+             * we just wrote, using the algorithm as-is will select this point
+             * and then the one horizontally adjacent to it (our reflection
+             * across the 45° line.) This creates an L-shaped corner, which we
+             * don't want. Force incrementing X to skip that corner. */
+            if (fabs(b * pt.x + c * pt.y) == fabs(a * pt.x + b * pt.y))
+            {
                 pt.x += x_inc;
+                continue;
+            }
+
+            sigma1 = (a * pt.x * pt.x) + (2 * b * pt.x * pt.y) + (c * pt.y * pt.y) - d;
+            pt.x += x_inc;
+            sigma2 = (a * pt.x * pt.x) + (2 * b * pt.x * pt.y) + (c * pt.y * pt.y) - d;
+
+            /* Pick whichever point is closer to the ellipse. */
+            if (fabs(sigma2) > fabs(sigma1))
+                pt.x -= x_inc;
         }
         else
         {
             /* Increment x, maybe increment y. */
             pt.x += x_inc;
 
-            sigma = (a * pt.x * pt.x) + (2 * b * pt.x * pt.y) + (c * pt.y * pt.y) - d;
-            /* As above, but we are moving towards a tangent point if the
-             * opposite condition is true, i.e. (dx < 0 XOR dy > 0). */
-            if (sigma != 0.0 && (dx < 0) ^ (dy > 0) ^ (sigma > 0))
+            if (fabs(b * pt.x + c * pt.y) == fabs(a * pt.x + b * pt.y))
+            {
                 pt.y += y_inc;
+                continue;
+            }
+
+            sigma1 = (a * pt.x * pt.x) + (2 * b * pt.x * pt.y) + (c * pt.y * pt.y) - d;
+            pt.y += y_inc;
+            sigma2 = (a * pt.x * pt.x) + (2 * b * pt.x * pt.y) + (c * pt.y * pt.y) - d;
+
+            if (fabs(sigma2) > fabs(sigma1))
+                pt.y -= y_inc;
         }
     }
     return pos;
