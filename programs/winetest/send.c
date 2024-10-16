@@ -30,7 +30,7 @@
 #define URL_PATH "/submit"
 #define SEP "--8<--cut-here--8<--"
 #define CONTENT_HEADERS "Content-Type: multipart/form-data; boundary=\"" SEP "\"\r\n" \
-                        "Content-Length: %u\r\n\r\n"
+                        "Content-Length: %lu\r\n\r\n"
 static const char body1[] = "--" SEP "\r\n"
     "Content-Disposition: form-data; name=\"reportfile\"; filename=\"%s\"\r\n"
     "Content-Type: application/octet-stream\r\n\r\n";
@@ -218,7 +218,7 @@ send_file_direct (const char * url, const char *name)
         return 1;
     }
 
-    str = strmake (&count, "Received %s (%d bytes).\n",
+    str = strmake (&count, "Received %s (%ld bytes).\n",
                    name, filesize);
     ret = total < count || memcmp (str, buffer + total - count, count) != 0;
     free(str);
@@ -412,7 +412,7 @@ send_file_wininet (const char *url, const char *name)
     while (bytes_read != 0);
 
     free(str);
-    str = strmake (&count, "Received %s (%d bytes).\n",
+    str = strmake (&count, "Received %s (%ld bytes).\n",
                    name, filesize);
     if (total < count || memcmp (str, buffer + total - count, count) != 0) {
         buffer[total] = 0;

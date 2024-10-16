@@ -50,7 +50,8 @@ char *xstrdup( const char *str )
     return res;
 }
 
-static char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
+static char *vstrfmtmake( size_t *lenp, const char *fmt, va_list ap ) __WINE_PRINTF_ATTR(2,0);
+static char *vstrfmtmake( size_t *lenp, const char *fmt, va_list ap )
 {
     size_t size = 1000;
     char *p;
@@ -77,14 +78,15 @@ char *vstrmake (size_t *lenp, va_list ap)
     return vstrfmtmake (lenp, fmt, ap);
 }
 
-char * WINAPIV strmake (size_t *lenp, ...)
+char *WINAPIV strmake( size_t *len, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
+char *WINAPIV strmake( size_t *len, const char *fmt, ... )
 {
     va_list ap;
     char *p;
 
-    va_start (ap, lenp);
-    p = vstrmake (lenp, ap);
-    va_end (ap);
+    va_start( ap, fmt );
+    p = vstrfmtmake( len, fmt, ap );
+    va_end( ap );
     return p;
 }
 

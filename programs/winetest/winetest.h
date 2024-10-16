@@ -25,12 +25,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "wine/debug.h"
+
+extern char *WINAPIV strmake( size_t *len, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
 
 void fatal (const char* msg);
 void warning (const char* msg);
 void WINAPIV xprintf (const char *fmt, ...);
 char *vstrmake (size_t *lenp, va_list ap);
-char * WINAPIV strmake (size_t *lenp, ...);
 int goodtagchar (char c);
 const char *findbadtagchar (const char *tag);
 
