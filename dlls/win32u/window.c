@@ -2013,13 +2013,10 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
     if (is_child) monitor_dpi = get_win_monitor_dpi( parent, &raw_dpi );
     else monitor_dpi = monitor_dpi_from_rect( new_rects->window, get_thread_dpi(), &raw_dpi );
 
-    get_window_rects( hwnd, COORDS_SCREEN, &old_rects, get_thread_dpi() );
+    get_window_rects( hwnd, COORDS_PARENT, &old_rects, get_thread_dpi() );
     if (IsRectEmpty( &valid_rects[0] ) || is_layered) valid_rects = NULL;
 
     if (!(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
-
-    old_rects.visible = win->rects.visible;
-    old_rects.client = win->rects.client;
     old_surface = win->surface;
     if (old_surface != new_surface) swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
     if (new_surface == &dummy_surface) swp_flags |= SWP_NOREDRAW;

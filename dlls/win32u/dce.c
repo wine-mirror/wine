@@ -1146,19 +1146,16 @@ static void make_dc_dirty( struct dce *dce )
  * rectangle. In addition, pWnd->parent DCEs may need to be updated if
  * DCX_CLIPCHILDREN flag is set.
  */
-void invalidate_dce( WND *win, const RECT *extra_rect )
+void invalidate_dce( WND *win, const RECT *old_rect )
 {
     UINT context;
-    RECT window_rect;
     struct dce *dce;
 
     if (!win->parent) return;
 
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( win->obj.handle ));
-    get_window_rect( win->obj.handle, &window_rect, get_thread_dpi() );
 
-    TRACE("%p parent %p %s (%s)\n",
-          win->obj.handle, win->parent, wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(extra_rect) );
+    TRACE("%p parent %p, old_rect %s\n", win->obj.handle, win->parent, wine_dbgstr_rect(old_rect) );
 
     /* walk all DCEs and fixup non-empty entries */
 
@@ -1182,11 +1179,26 @@ void invalidate_dce( WND *win, const RECT *extra_rect )
         /* otherwise check if the window rectangle intersects this DCE window */
         if (win->parent == dce->hwnd || is_child( win->parent, dce->hwnd ))
         {
-            RECT dce_rect, tmp;
-            get_window_rect( dce->hwnd, &dce_rect, get_thread_dpi() );
-            if (intersect_rect( &tmp, &dce_rect, &window_rect ) ||
-                (extra_rect && intersect_rect( &tmp, &dce_rect, extra_rect )))
-                make_dc_dirty( dce );
+            RECT tmp, new_window_rect, old_window_rect;
+            struct window_rects rects;
+
+            /* get the parent client-relative old/new window rects */
+            get_window_rects( win->obj.handle, COORDS_PARENT, &rects, get_thread_dpi() );
+            old_window_rect = old_rect ? *old_rect : rects.window;
+            new_window_rect = rects.window;
+
+            /* get the DCE window rect in client-relative coordinates */
+            get_window_rects( dce->hwnd, COORDS_CLIENT, &rects, get_thread_dpi() );
+            if (win->parent != dce->hwnd)
+            {
+                /* map the window rects from parent client-relative to DCE window client-relative coordinates */
+                map_window_points( win->parent, dce->hwnd, (POINT *)&new_window_rect, 2, get_thread_dpi() );
+                map_window_points( win->parent, dce->hwnd, (POINT *)&old_window_rect, 2, get_thread_dpi() );
+            }
+
+            /* check if any of the window rects intersects with the DCE window rect */
+            if (intersect_rect( &tmp, &rects.window, &old_window_rect )) make_dc_dirty( dce );
+            else if (intersect_rect( &tmp, &rects.window, &new_window_rect )) make_dc_dirty( dce );
         }
     }
     set_thread_dpi_awareness_context( context );

@@ -221,7 +221,7 @@ HICON alloc_cursoricon_handle( BOOL is_icon );
 
 /* dce.c */
 extern void free_dce( struct dce *dce, HWND hwnd );
-extern void invalidate_dce( WND *win, const RECT *extra_rect );
+extern void invalidate_dce( WND *win, const RECT *old_rect );
 
 /* message.c */
 struct peek_message_filter
