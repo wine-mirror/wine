@@ -96,8 +96,8 @@ _ACRTIMP int      __cdecl _findnext32i64(intptr_t,struct _finddata32i64_t*);
 _ACRTIMP int      __cdecl _findnext64(intptr_t,struct _finddata64_t*);
 _ACRTIMP int      __cdecl _findnext64i32(intptr_t,struct _finddata64i32_t*);
 _ACRTIMP char*    __cdecl _mktemp(char*);
-_ACRTIMP int      WINAPIV _open(const char*,int,...);
-_ACRTIMP int      WINAPIV _sopen(const char*,int,int,...);
+_ACRTIMP int      __cdecl _open(const char*,int,...);
+_ACRTIMP int      __cdecl _sopen(const char*,int,int,...);
 _ACRTIMP int      __cdecl _unlink(const char*);
 
 #ifdef __cplusplus

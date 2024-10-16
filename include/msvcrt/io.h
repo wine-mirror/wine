@@ -85,12 +85,12 @@ _ACRTIMP __msvcrt_long __cdecl _lseek(int,__msvcrt_long,int);
 _ACRTIMP __int64     __cdecl _lseeki64(int,__int64,int);
 _ACRTIMP char*       __cdecl _mktemp(char*);
 _ACRTIMP int         __cdecl _mktemp_s(char*,size_t);
-_ACRTIMP int         WINAPIV _open(const char*,int,...);
+_ACRTIMP int         __cdecl _open(const char*,int,...);
 _ACRTIMP int         __cdecl _open_osfhandle(intptr_t,int);
 _ACRTIMP int         __cdecl _pipe(int*,unsigned int,int);
 _ACRTIMP int         __cdecl _read(int,void*,unsigned int);
 _ACRTIMP int         __cdecl _setmode(int,int);
-_ACRTIMP int         WINAPIV _sopen(const char*,int,int,...);
+_ACRTIMP int         __cdecl _sopen(const char*,int,int,...);
 _ACRTIMP errno_t     __cdecl _sopen_dispatch(const char*,int,int,int,int*,int);
 _ACRTIMP errno_t     __cdecl _sopen_s(int*,const char*,int,int,int);
 _ACRTIMP __msvcrt_long __cdecl _tell(int);
@@ -134,8 +134,8 @@ static inline int unlink(const char* path) { return _unlink(path); }
 static inline int write(int fd, const void* buf, unsigned int size) { return _write(fd, buf, size); }
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
-_ACRTIMP int WINAPIV open(const char*,int,...) __attribute__((alias("_open")));
-_ACRTIMP int WINAPIV sopen(const char*,int,int,...) __attribute__((alias("_sopen")));
+_ACRTIMP int __cdecl open(const char*,int,...) __attribute__((alias("_open")));
+_ACRTIMP int __cdecl sopen(const char*,int,int,...) __attribute__((alias("_sopen")));
 #else
 #define open _open
 #define sopen _sopen

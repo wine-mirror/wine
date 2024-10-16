@@ -1030,7 +1030,7 @@ mp_clamp (mp_int * a)
   }
 }
 
-void WINAPIV mp_clear_multi(mp_int *mp, ...)
+void mp_clear_multi(mp_int *mp, ...)
 {
     mp_int* next_mp = mp;
     va_list args;
@@ -2352,7 +2352,7 @@ int mp_init_copy (mp_int * a, const mp_int * b)
   return mp_copy (b, a);
 }
 
-int WINAPIV mp_init_multi(mp_int *mp, ...)
+int mp_init_multi(mp_int *mp, ...)
 {
     mp_err res = MP_OKAY;      /* Assume ok until proven otherwise */
     int n = 0;                 /* Number of ok inits */

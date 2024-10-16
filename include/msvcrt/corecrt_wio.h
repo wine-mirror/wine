@@ -98,9 +98,9 @@ _ACRTIMP int      __cdecl _wfindnext32i64(intptr_t,struct _wfinddata32i64_t*);
 _ACRTIMP int      __cdecl _wfindnext64(intptr_t,struct _wfinddata64_t*);
 _ACRTIMP int      __cdecl _wfindnext64i32(intptr_t,struct _wfinddata64i32_t*);
 _ACRTIMP wchar_t* __cdecl _wmktemp(wchar_t*);
-_ACRTIMP int      WINAPIV _wopen(const wchar_t*,int,...);
+_ACRTIMP int      __cdecl _wopen(const wchar_t*,int,...);
 _ACRTIMP int      __cdecl _wrename(const wchar_t*,const wchar_t*);
-_ACRTIMP int      WINAPIV _wsopen(const wchar_t*,int,int,...);
+_ACRTIMP int      __cdecl _wsopen(const wchar_t*,int,int,...);
 _ACRTIMP int      __cdecl _wunlink(const wchar_t*);
 
 #ifdef __cplusplus

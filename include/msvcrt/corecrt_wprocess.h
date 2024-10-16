@@ -12,18 +12,18 @@
 extern "C" {
 #endif
 
-_ACRTIMP intptr_t WINAPIV _wexecl(const wchar_t*,const wchar_t*,...);
-_ACRTIMP intptr_t WINAPIV _wexecle(const wchar_t*,const wchar_t*,...);
-_ACRTIMP intptr_t WINAPIV _wexeclp(const wchar_t*,const wchar_t*,...);
-_ACRTIMP intptr_t WINAPIV _wexeclpe(const wchar_t*,const wchar_t*,...);
+_ACRTIMP intptr_t __cdecl _wexecl(const wchar_t*,const wchar_t*,...);
+_ACRTIMP intptr_t __cdecl _wexecle(const wchar_t*,const wchar_t*,...);
+_ACRTIMP intptr_t __cdecl _wexeclp(const wchar_t*,const wchar_t*,...);
+_ACRTIMP intptr_t __cdecl _wexeclpe(const wchar_t*,const wchar_t*,...);
 _ACRTIMP intptr_t __cdecl _wexecv(const wchar_t*,const wchar_t* const *);
 _ACRTIMP intptr_t __cdecl _wexecve(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
 _ACRTIMP intptr_t __cdecl _wexecvp(const wchar_t*,const wchar_t* const *);
 _ACRTIMP intptr_t __cdecl _wexecvpe(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-_ACRTIMP intptr_t WINAPIV _wspawnl(int,const wchar_t*,const wchar_t*,...);
-_ACRTIMP intptr_t WINAPIV _wspawnle(int,const wchar_t*,const wchar_t*,...);
-_ACRTIMP intptr_t WINAPIV _wspawnlp(int,const wchar_t*,const wchar_t*,...);
-_ACRTIMP intptr_t WINAPIV _wspawnlpe(int,const wchar_t*,const wchar_t*,...);
+_ACRTIMP intptr_t __cdecl _wspawnl(int,const wchar_t*,const wchar_t*,...);
+_ACRTIMP intptr_t __cdecl _wspawnle(int,const wchar_t*,const wchar_t*,...);
+_ACRTIMP intptr_t __cdecl _wspawnlp(int,const wchar_t*,const wchar_t*,...);
+_ACRTIMP intptr_t __cdecl _wspawnlpe(int,const wchar_t*,const wchar_t*,...);
 _ACRTIMP intptr_t __cdecl _wspawnv(int,const wchar_t*,const wchar_t* const *);
 _ACRTIMP intptr_t __cdecl _wspawnve(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
 _ACRTIMP intptr_t __cdecl _wspawnvp(int,const wchar_t*,const wchar_t* const *);

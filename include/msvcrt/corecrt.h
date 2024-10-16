@@ -122,10 +122,6 @@
 # endif
 #endif  /* _MSC_VER || __MINGW32__ */
 
-#ifndef WINAPIV
-# define WINAPIV __cdecl
-#endif
-
 #ifndef DECLSPEC_NORETURN
 # if __has_declspec_attribute(noreturn) && !defined(MIDL_PASS)
 #  define DECLSPEC_NORETURN __declspec(noreturn)

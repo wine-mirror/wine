@@ -15,9 +15,9 @@ extern "C" {
 #endif
 
 _ACRTIMP char* __cdecl _cgets(char*);
-_ACRTIMP int   WINAPIV _cprintf(const char*,...);
+_ACRTIMP int   __cdecl _cprintf(const char*,...);
 _ACRTIMP int   __cdecl _cputs(const char*);
-_ACRTIMP int   WINAPIV _cscanf(const char*,...);
+_ACRTIMP int   __cdecl _cscanf(const char*,...);
 _ACRTIMP int   __cdecl _getch(void);
 _ACRTIMP int   __cdecl _getche(void);
 _ACRTIMP int   __cdecl _kbhit(void);
@@ -53,8 +53,8 @@ static inline unsigned short outpw(unsigned short i, unsigned short j) { return 
 #endif
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
-_ACRTIMP int WINAPIV cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
-_ACRTIMP int WINAPIV cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
+_ACRTIMP int __cdecl cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
+_ACRTIMP int __cdecl cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
 #else
 #define cprintf _cprintf
 #define cscanf _cscanf

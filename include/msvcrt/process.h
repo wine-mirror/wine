@@ -33,19 +33,19 @@ _ACRTIMP uintptr_t __cdecl _beginthreadex(void*,unsigned int,_beginthreadex_star
 _ACRTIMP intptr_t  __cdecl _cwait(int*,intptr_t,int);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl _endthread(void);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl _endthreadex(unsigned int);
-_ACRTIMP intptr_t  WINAPIV _execl(const char*,const char*,...);
-_ACRTIMP intptr_t  WINAPIV _execle(const char*,const char*,...);
-_ACRTIMP intptr_t  WINAPIV _execlp(const char*,const char*,...);
-_ACRTIMP intptr_t  WINAPIV _execlpe(const char*,const char*,...);
+_ACRTIMP intptr_t  __cdecl _execl(const char*,const char*,...);
+_ACRTIMP intptr_t  __cdecl _execle(const char*,const char*,...);
+_ACRTIMP intptr_t  __cdecl _execlp(const char*,const char*,...);
+_ACRTIMP intptr_t  __cdecl _execlpe(const char*,const char*,...);
 _ACRTIMP intptr_t  __cdecl _execv(const char*,const char* const *);
 _ACRTIMP intptr_t  __cdecl _execve(const char*,const char* const *,const char* const *);
 _ACRTIMP intptr_t  __cdecl _execvp(const char*,const char* const *);
 _ACRTIMP intptr_t  __cdecl _execvpe(const char*,const char* const *,const char* const *);
 _ACRTIMP int       __cdecl _getpid(void);
-_ACRTIMP intptr_t  WINAPIV _spawnl(int,const char*,const char*,...);
-_ACRTIMP intptr_t  WINAPIV _spawnle(int,const char*,const char*,...);
-_ACRTIMP intptr_t  WINAPIV _spawnlp(int,const char*,const char*,...);
-_ACRTIMP intptr_t  WINAPIV _spawnlpe(int,const char*,const char*,...);
+_ACRTIMP intptr_t  __cdecl _spawnl(int,const char*,const char*,...);
+_ACRTIMP intptr_t  __cdecl _spawnle(int,const char*,const char*,...);
+_ACRTIMP intptr_t  __cdecl _spawnlp(int,const char*,const char*,...);
+_ACRTIMP intptr_t  __cdecl _spawnlpe(int,const char*,const char*,...);
 _ACRTIMP intptr_t  __cdecl _spawnv(int,const char*,const char* const *);
 _ACRTIMP intptr_t  __cdecl _spawnve(int,const char*,const char* const *,const char* const *);
 _ACRTIMP intptr_t  __cdecl _spawnvp(int,const char*,const char* const *);
@@ -85,14 +85,14 @@ static inline intptr_t spawnvpe(int flags, const char* name, const char* const* 
 #define execvpe _execvpe
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
-_ACRTIMP intptr_t WINAPIV execl(const char*,const char*,...) __attribute__((alias("_execl")));
-_ACRTIMP intptr_t WINAPIV execle(const char*,const char*,...) __attribute__((alias("_execle")));
-_ACRTIMP intptr_t WINAPIV execlp(const char*,const char*,...) __attribute__((alias("_execlp")));
-_ACRTIMP intptr_t WINAPIV execlpe(const char*,const char*,...) __attribute__((alias("_execlpe")));
-_ACRTIMP intptr_t WINAPIV spawnl(int,const char*,const char*,...) __attribute__((alias("_spawnl")));
-_ACRTIMP intptr_t WINAPIV spawnle(int,const char*,const char*,...) __attribute__((alias("_spawnle")));
-_ACRTIMP intptr_t WINAPIV spawnlp(int,const char*,const char*,...) __attribute__((alias("_spawnlp")));
-_ACRTIMP intptr_t WINAPIV spawnlpe(int,const char*,const char*,...) __attribute__((alias("_spawnlpe")));
+_ACRTIMP intptr_t __cdecl execl(const char*,const char*,...) __attribute__((alias("_execl")));
+_ACRTIMP intptr_t __cdecl execle(const char*,const char*,...) __attribute__((alias("_execle")));
+_ACRTIMP intptr_t __cdecl execlp(const char*,const char*,...) __attribute__((alias("_execlp")));
+_ACRTIMP intptr_t __cdecl execlpe(const char*,const char*,...) __attribute__((alias("_execlpe")));
+_ACRTIMP intptr_t __cdecl spawnl(int,const char*,const char*,...) __attribute__((alias("_spawnl")));
+_ACRTIMP intptr_t __cdecl spawnle(int,const char*,const char*,...) __attribute__((alias("_spawnle")));
+_ACRTIMP intptr_t __cdecl spawnlp(int,const char*,const char*,...) __attribute__((alias("_spawnlp")));
+_ACRTIMP intptr_t __cdecl spawnlpe(int,const char*,const char*,...) __attribute__((alias("_spawnlpe")));
 #else
 #define execl    _execl
 #define execle   _execle
