@@ -27,18 +27,17 @@
 #include <stdarg.h>
 #include "wine/debug.h"
 
+extern HANDLE logfile;
+extern void WINAPIV xprintf( const char *fmt, ... ) __WINE_PRINTF_ATTR(1,2);
 extern char *WINAPIV strmake( size_t *len, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
 
 void fatal (const char* msg);
 void warning (const char* msg);
-void WINAPIV xprintf (const char *fmt, ...);
 char *vstrmake (size_t *lenp, va_list ap);
 int goodtagchar (char c);
 const char *findbadtagchar (const char *tag);
 
 int send_file (const char *url, const char *name);
-
-extern HANDLE logfile;
 
 /* GUI definitions */
 

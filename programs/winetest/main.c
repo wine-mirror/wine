@@ -516,8 +516,8 @@ static void print_version (void)
         xprintf ("    Description=%s\n", description );
     if (url)
         xprintf ("    URL=%s\n", url );
-    xprintf ("    dwMajorVersion=%u\n    dwMinorVersion=%u\n"
-             "    dwBuildNumber=%u\n    PlatformId=%u\n    szCSDVersion=%s\n",
+    xprintf ("    dwMajorVersion=%lu\n    dwMinorVersion=%lu\n"
+             "    dwBuildNumber=%lu\n    PlatformId=%lu\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
              ver.dwPlatformId, ver.szCSDVersion);
 
@@ -547,7 +547,7 @@ static void print_version (void)
         DWORD prodtype = 0;
 
         pGetProductInfo(ver.dwMajorVersion, ver.dwMinorVersion, ver.wServicePackMajor, ver.wServicePackMinor, &prodtype);
-        xprintf("    dwProductInfo=%u\n", prodtype);
+        xprintf("    dwProductInfo=%lu\n", prodtype);
     }
 }
 
@@ -558,9 +558,9 @@ static void print_language(void)
     LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
     LANGID (WINAPI *pGetThreadUILanguage)(void);
 
-    xprintf ("    SystemDefaultLCID=%04x\n", GetSystemDefaultLCID());
-    xprintf ("    UserDefaultLCID=%04x\n", GetUserDefaultLCID());
-    xprintf ("    ThreadLocale=%04x\n", GetThreadLocale());
+    xprintf ("    SystemDefaultLCID=%04lx\n", GetSystemDefaultLCID());
+    xprintf ("    UserDefaultLCID=%04lx\n", GetUserDefaultLCID());
+    xprintf ("    ThreadLocale=%04lx\n", GetThreadLocale());
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pGetSystemPreferredUILanguages = (void*)GetProcAddress(hkernel32, "GetSystemPreferredUILanguages");
@@ -584,7 +584,7 @@ static void print_language(void)
     if (pGetThreadUILanguage)
         xprintf ("    ThreadUILanguage=%04x\n", pGetThreadUILanguage());
     xprintf ("    KeyboardLayout=%p\n", GetKeyboardLayout(0));
-    xprintf ("    Country=%d\n", GetUserGeoID(GEOCLASS_NATION));
+    xprintf ("    Country=%ld\n", GetUserGeoID(GEOCLASS_NATION));
     xprintf ("    ACP=%d\n", GetACP());
 }
 
@@ -907,10 +907,10 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         }
         if (status == -2) status = -GetLastError();
         free(cmd);
-        xprintf ("%s:%s:%04x done (%d) in %ds %uB\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000, size);
+        xprintf ("%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000, size);
         if (size > MAX_OUTPUT_SIZE)
         {
-            xprintf ("%s:%s:%04x The test prints too much data (%u bytes)\n", test->name, subtest, pid, size);
+            xprintf ("%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size);
             failures++;
         }
         else if (status) failures++;
@@ -1102,7 +1102,7 @@ extract_test_proc (HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lP
             xprintf ("    %s=dll is missing the requested side-by-side version\n", dllname);
             break;
         default:
-            xprintf ("    %s=load error %u\n", dllname, err);
+            xprintf ("    %s=load error %lu\n", dllname, err);
             break;
         }
     }
@@ -1191,7 +1191,7 @@ run_tests (char *logname, char *outdir)
             nextline = strsize?eol+1:NULL;
             if (eol > strres && *(eol-1) == '\r') eol--;
         }
-        xprintf ("    %.*s\n", eol-strres, strres);
+        xprintf ("    %.*s\n", (int)(eol-strres), strres);
         strres = nextline;
     }
     xprintf ("Operating system version:\n");

@@ -90,7 +90,8 @@ char *WINAPIV strmake( size_t *len, const char *fmt, ... )
     return p;
 }
 
-void WINAPIV xprintf (const char *fmt, ...)
+void WINAPIV xprintf( const char *fmt, ... ) __WINE_PRINTF_ATTR(1,2);
+void WINAPIV xprintf( const char *fmt, ... )
 {
     va_list ap;
     size_t size;
