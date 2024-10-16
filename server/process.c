@@ -1721,6 +1721,24 @@ DECL_HANDLER(make_process_system)
     release_object( process );
 }
 
+/* grant a process a primary admin token with Default elevation */
+DECL_HANDLER(grant_process_admin_token)
+{
+    struct process *process;
+    struct token *token;
+
+    if (!(process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION )))
+        return;
+
+    if ((token = token_create_admin( TRUE, SecurityIdentification,
+                                     TokenElevationTypeDefault, default_session_id )))
+    {
+        release_object( process->token );
+        process->token = token;
+    }
+    release_object( process );
+}
+
 /* create a new job object */
 DECL_HANDLER(create_job)
 {

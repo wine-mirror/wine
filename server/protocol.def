@@ -3755,6 +3755,12 @@ struct handle_info
 @END
 
 
+/* Grant the given process an admin token with Default elevation */
+@REQ(grant_process_admin_token)
+    obj_handle_t handle;          /* handle to the process */
+@END
+
+
 /* Get detailed fixed-size information about a token */
 @REQ(get_token_info)
     obj_handle_t   handle;        /* handle to the object */

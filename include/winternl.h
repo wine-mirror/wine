@@ -1897,6 +1897,7 @@ typedef enum _PROCESSINFOCLASS {
 #ifdef __WINESRC__
     ProcessWineMakeProcessSystem = 1000,
     ProcessWineLdtCopy,
+    ProcessWineGrantAdminToken,
 #endif
 } PROCESSINFOCLASS;
 

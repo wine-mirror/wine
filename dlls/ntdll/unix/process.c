@@ -1837,6 +1837,15 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
         SERVER_END_REQ;
         return ret;
 
+    case ProcessWineGrantAdminToken:
+        SERVER_START_REQ( grant_process_admin_token )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            ret = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        break;
+
     case ProcessPowerThrottlingState:
         FIXME( "ProcessPowerThrottlingState - stub\n" );
         return STATUS_SUCCESS;
