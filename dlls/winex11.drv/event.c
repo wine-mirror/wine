@@ -761,12 +761,20 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
     }
     else if (protocol == x11drv_atom(WM_TAKE_FOCUS))
     {
-        HWND last_focus = x11drv_thread_data()->last_focus;
+        HWND last_focus = x11drv_thread_data()->last_focus, foreground = NtUserGetForegroundWindow();
 
-        TRACE( "got take focus msg for %p, enabled=%d, visible=%d (style %08x), focus=%p, active=%p, fg=%p, last=%p\n",
-               hwnd, NtUserIsWindowEnabled(hwnd), NtUserIsWindowVisible(hwnd),
-               (int)NtUserGetWindowLongW(hwnd, GWL_STYLE),
-               get_focus(), get_active_window(), NtUserGetForegroundWindow(), last_focus );
+        if (window_has_pending_wm_state( hwnd, -1 ))
+        {
+            WARN( "Ignoring window %p/%lx WM_TAKE_FOCUS serial %lu, event_time %ld, foreground %p during WM_STATE change\n",
+                  hwnd, event->window, event->serial, event_time, foreground );
+            return;
+        }
+
+        TRACE( "window %p/%lx WM_TAKE_FOCUS serial %lu, event_time %ld, foreground %p\n", hwnd, event->window,
+               event->serial, event_time, foreground );
+        TRACE( "  enabled %u, visible %u, style %#x, focus %p, active %p, last %p\n",
+                NtUserIsWindowEnabled( hwnd ), NtUserIsWindowVisible( hwnd ), (int)NtUserGetWindowLongW( hwnd, GWL_STYLE ),
+                get_focus(), get_active_window(), last_focus );
 
         if (can_activate_window(hwnd))
         {
@@ -783,7 +791,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
         }
         else if (hwnd == NtUserGetDesktopWindow())
         {
-            hwnd = NtUserGetForegroundWindow();
+            hwnd = foreground;
             if (!hwnd) hwnd = last_focus;
             if (!hwnd) hwnd = NtUserGetDesktopWindow();
             set_focus( event->display, hwnd, event_time );
@@ -845,14 +853,23 @@ BOOL is_current_process_focused(void)
  */
 static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
 {
+    HWND foreground = NtUserGetForegroundWindow();
     XFocusChangeEvent *event = &xev->xfocus;
     BOOL was_grabbed;
 
+    if (event->detail == NotifyPointer) return FALSE;
     if (!hwnd) return FALSE;
 
-    TRACE( "win %p xwin %lx detail=%s mode=%s\n", hwnd, event->window, focus_details[event->detail], focus_modes[event->mode] );
+    if (window_has_pending_wm_state( hwnd, -1 ))
+    {
+        WARN( "Ignoring window %p/%lx FocusIn serial %lu, detail %s, mode %s, foreground %p during WM_STATE change\n",
+              hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
+        return FALSE;
+    }
 
-    if (event->detail == NotifyPointer) return FALSE;
+    TRACE( "window %p/%lx FocusIn serial %lu, detail %s, mode %s, foreground %p\n", hwnd, event->window,
+           event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
+
     /* when focusing in the virtual desktop window, re-apply the cursor clipping rect */
     if (is_virtual_desktop() && hwnd == NtUserGetDesktopWindow()) reapply_cursor_clipping();
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
@@ -921,9 +938,8 @@ static void focus_out( Display *display , HWND hwnd )
  */
 static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
 {
+    HWND foreground = NtUserGetForegroundWindow();
     XFocusChangeEvent *event = &xev->xfocus;
-
-    TRACE( "win %p xwin %lx detail=%s mode=%s\n", hwnd, event->window, focus_details[event->detail], focus_modes[event->mode] );
 
     if (event->detail == NotifyPointer)
     {
@@ -937,6 +953,16 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
         return TRUE;
     }
     if (!hwnd) return FALSE;
+
+    if (window_has_pending_wm_state( hwnd, NormalState )) /* ignore FocusOut only if the window is being shown */
+    {
+        WARN( "Ignoring window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p during WM_STATE change\n",
+              hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
+        return FALSE;
+    }
+
+    TRACE( "window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p\n", hwnd, event->window,
+           event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
 
     /* in virtual desktop mode or when keyboard is grabbed, release any cursor grab but keep the clipping rect */
     keyboard_grabbed = event->mode == NotifyGrab || event->mode == NotifyWhileGrabbed;

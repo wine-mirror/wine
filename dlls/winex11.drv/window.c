@@ -1418,8 +1418,8 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
 
     data->pending_state.wm_state = new_state;
     data->wm_state_serial = NextRequest( data->display );
-    TRACE( "window %p/%lx, requesting WM_STATE %#x -> %#x serial %lu\n", data->hwnd, data->whole_window,
-           old_state, new_state, data->wm_state_serial );
+    TRACE( "window %p/%lx, requesting WM_STATE %#x -> %#x serial %lu, foreground %p\n", data->hwnd, data->whole_window,
+           old_state, new_state, data->wm_state_serial, NtUserGetForegroundWindow() );
 
     switch (MAKELONG(old_state, new_state))
     {
@@ -1591,6 +1591,19 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
 
     *current = *value;
     *expect_serial = 0;
+}
+
+BOOL window_has_pending_wm_state( HWND hwnd, UINT state )
+{
+    struct x11drv_win_data *data;
+    BOOL pending;
+
+    if (!(data = get_win_data( hwnd ))) return FALSE;
+    if (state != -1 && data->pending_state.wm_state != state) pending = FALSE;
+    else pending = !!data->wm_state_serial;
+    release_win_data( data );
+
+    return pending;
 }
 
 /***********************************************************************
