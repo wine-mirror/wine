@@ -29,7 +29,7 @@
 #define _ADDRESSOF(v) (&(v))
 #endif
 
-#if defined (__GNUC__) && (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi)))
+#if defined (__GNUC__) && defined(__x86_64__)
 
 typedef __builtin_ms_va_list va_list;
 #define _crt_va_start(v,l)  __builtin_ms_va_start(v,l)

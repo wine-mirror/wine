@@ -64,42 +64,29 @@ extern "C" {
 #ifdef WINE_UNIX_LIB
 # define __stdcall
 # define __cdecl
-#elif defined(__GNUC__)
-# ifdef __i386__
+#else
+# if defined(__i386__) && defined(__GNUC__)
 #  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
 #   define __stdcall __attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))
+#   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
 #  else
 #   define __stdcall __attribute__((__stdcall__))
+#   define __cdecl __attribute__((__cdecl__))
 #  endif
-# elif defined(__x86_64__)
+# elif defined(__x86_64__) && defined(__GNUC__)
 #  if __has_attribute(__force_align_arg_pointer__)
 #   define __stdcall __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
 #  else
 #   define __stdcall __attribute__((ms_abi))
 #  endif
-#  define __ms_va_list __builtin_ms_va_list
-# elif defined(__arm__) && !defined(__SOFTFP__) && !defined(__CYGWIN__)
-#  define __stdcall __attribute__((pcs("aapcs-vfp")))
-#  define WINAPIV __attribute__((pcs("aapcs")))
-# elif defined(__aarch64__) && __has_attribute(ms_abi)
-#  define __stdcall __attribute__((ms_abi))
-#  define __ms_va_list __builtin_ms_va_list
-# else  /* __i386__ */
-#  define __stdcall
-# endif  /* __i386__ */
-# ifdef __i386__
-#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
-#   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
-#  else
-#   define __cdecl __attribute__((__cdecl__))
-#  endif
-# else
 #  define __cdecl __stdcall
+#  define __ms_va_list __builtin_ms_va_list
+# else
+#  define __stdcall
+#  define __cdecl
 # endif
 # define __fastcall __stdcall
 # define __thiscall __stdcall
-#elif !defined(RC_INVOKED)
-# error You need to define __stdcall for your compiler
 #endif  /* WINE_UNIX_LIB */
 
 #endif  /* _MSC_VER || __MINGW32__ */
