@@ -69,6 +69,7 @@ static BOOL is_wow64;
 static int failures;
 static int quiet_mode;
 static HANDLE logfile;
+static HANDLE junit;
 
 /* filters for running only specific tests */
 static char **filters;
@@ -870,6 +871,31 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     return 0;
 }
 
+static char *xmlescape( const char *src, const char *end, int comment )
+{
+    char *dst = calloc( 1, (end - src) * 6 + 1 ), *tmp;
+
+    while (end > src && (end[-1] == '\r' || end[-1] == '\n')) end--;
+    for (tmp = dst; tmp && src < end; src++)
+    {
+        if (comment && *src == '-') tmp += sprintf( tmp, "&#45;" );
+        else if (comment) *tmp++ = *src;
+        else if (*src == '&') tmp += sprintf( tmp, "&amp;" );
+        else if (*src == '"') tmp += sprintf( tmp, "&quot;" );
+        else if (*src == '<') tmp += sprintf( tmp, "&lt;" );
+        else if (*src == '>') tmp += sprintf( tmp, "&gt;" );
+        else if (*src < ' ' && *src != '\t' && *src != '\r' && *src != '\n')
+        {
+            char *esc = strmake( NULL, "\\x%02x", *src );
+            tmp += sprintf( tmp, "%s", esc );
+            free( esc );
+        }
+        else *tmp++ = *src;
+    }
+
+    return dst;
+}
+
 static void report_test_start( struct wine_test *test, const char *subtest, const char *file )
 {
     report( R_STEP, "Running: %s:%s", test->name, subtest );
@@ -882,6 +908,108 @@ static void report_test_done( struct wine_test *test, const char *subtest, const
     if (quiet_mode <= 1 || status || size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
     xprintf( "%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, ticks / 1000, size );
     if (size > MAX_OUTPUT_SIZE) xprintf( "%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size );
+
+    if (junit)
+    {
+        int total = 0, fail_total = 0, skip_total = 0, failures = 0;
+        const char *next, *line, *ptr, *dir = strrchr( file, '/' );
+        float time, last_time = 0;
+
+        for (line = next = data; *line; line = next)
+        {
+            int count, todo_count, flaky_count, fail_count, skip_count;
+
+            if ((next = strchr( next, '\n' ))) next += 1;
+            else next = line + strlen( line );
+            if (!(ptr = strchr( line, ' ' ))) continue;
+
+            if (sscanf( ptr, " %d tests executed (%d marked as todo, %d as flaky, %d failur%*[^)]), %d skipped.",
+                        &count, &todo_count, &flaky_count, &fail_count, &skip_count ) == 5)
+            {
+                total += count;
+                fail_total += fail_count;
+                skip_total += skip_count;
+            }
+        }
+
+        output( junit, "  <testsuite name=\"%s:%s\" file=\"%s\" time=\"%f\" tests=\"%d\" failures=\"%d\" skipped=\"%d\">\n",
+                test->name, subtest, file, ticks / 1000.0, total, fail_total, skip_total );
+
+        for (line = next = data; *line; line = next)
+        {
+            struct { const char *pattern; int length; int error; } patterns[] =
+            {
+                #define X(x, y) {.pattern = x, .length = strlen(x), .error = y}
+                X("Tests skipped: ", -1),
+                X("Test failed: ", 1),
+                X("Test succeeded inside todo block: ", 1),
+                X("Test succeeded inside flaky todo block: ", 1),
+                #undef X
+            };
+            char src[256], *name, *message;
+            int i, n, len;
+
+            if ((next = strchr( next, '\n' ))) next += 1;
+            else next = line + strlen( line );
+
+            if ((len = sscanf( line, "%255[^:\n]:%d:%f", src, &n, &time )) != 2 && len != 3) continue;
+            if (len == 2) time = last_time;
+
+            if (!(ptr = strchr( line, ' ' ))) continue;
+            ptr++;
+
+            message = xmlescape( ptr, next, 0 );
+            name = strmake( NULL, "%s:%d %s", src, n, message );
+            for (i = 0; i < ARRAY_SIZE(patterns); i++)
+            {
+                if (!strncmp( ptr, patterns[i].pattern, patterns[i].length ))
+                {
+                    output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s %s\" file=\"%.*s%s#L%d\" assertions=\"1\" time=\"%f\">",
+                             test->name, subtest, test->name, subtest, name, (int)(dir - file + 1), file, src, n, time - last_time );
+                    if (patterns[i].error == -1) output( junit, "<system-out>%s</system-out><skipped/>", message );
+                    else if (patterns[i].error == 1) output( junit, "<system-out>%s</system-out><failure/>", message );
+                    output( junit, "</testcase>\n" );
+
+                    if (patterns[i].error == 1) failures++;
+                    last_time = time;
+                    break;
+                }
+            }
+            free( name );
+            free( message );
+        }
+
+        if (total > fail_total + skip_total)
+        {
+            output( junit, "    <testcase classname=\"%s:%s\" name=\"%d succeeding tests\" file=\"%s\" assertions=\"%d\" time=\"%f\"/>\n",
+                     test->name, subtest, total - fail_total - skip_total, file, total - fail_total - skip_total, ticks / 1000.0 - last_time );
+        }
+
+        if (status == WAIT_TIMEOUT)
+        {
+            output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s timeout\" file=\"%s\" assertions=\"%d\" time=\"%f\">",
+                     test->name, subtest, test->name, subtest, file, total, ticks / 1000.0 );
+            output( junit, "<system-out>Test timeout after %f seconds</system-out><failure/>", ticks / 1000.0 );
+            output( junit, "</testcase>\n" );
+        }
+        else if (status != failures)
+        {
+            output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s status %d\" file=\"%s\" assertions=\"%d\" time=\"%f\">",
+                     test->name, subtest, test->name, subtest, status, file, total, ticks / 1000.0 );
+            output( junit, "<system-out>Test exited with status %d</system-out><failure/>", status );
+            output( junit, "</testcase>\n" );
+        }
+        if (size > MAX_OUTPUT_SIZE)
+        {
+            output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s output overflow\" file=\"%s\" assertions=\"%d\" time=\"%f\">",
+                     test->name, subtest, test->name, subtest, file, total, ticks / 1000.0 );
+            output( junit, "<system-out>Test prints too much data (%lukB > %ukB)</system-out><failure/>",
+                    size / 1024, MAX_OUTPUT_SIZE / 1024 );
+            output( junit, "</testcase>\n" );
+        }
+
+        output( junit, "  </testsuite>\n" );
+    }
 }
 
 static void report_test_skip( struct wine_test *test, const char *subtest, const char *file )
@@ -1183,6 +1311,11 @@ run_tests (char *logname, char *outdir)
 
     report (R_DIR, "%s", tempdir);
 
+    if (junit)
+    {
+        output( junit, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
+        output( junit, "<testsuites>\n" );
+    }
     xprintf ("Version 4\n");
     xprintf ("Tests from build %s\n", build_id[0] ? build_id : "-" );
     xprintf ("Archive: -\n");  /* no longer used */
@@ -1268,6 +1401,11 @@ run_tests (char *logname, char *outdir)
         }
     }
     report (R_DELTA, 0, "Running: Done");
+    if (junit)
+    {
+        output( junit, "</testsuites>\n" );
+        CloseHandle( junit );
+    }
 
     report (R_STATUS, "Cleaning up - %u failures", failures);
     if (strcmp(logname, "-") != 0) CloseHandle( logfile );
@@ -1348,6 +1486,7 @@ usage (void)
 " -n        exclude the specified tests\n"
 " -p        shutdown when the tests are done\n"
 " -q        quiet mode, no output at all\n"
+" -J FILE   output junit XML report into FILE\n"
 " -o FILE   put report into FILE, do not submit\n"
 " -s FILE   submit FILE, do not run tests\n"
 " -S URL    URL to submit the results to\n"
@@ -1359,7 +1498,7 @@ usage (void)
 int __cdecl main( int argc, char *argv[] )
 {
     BOOL (WINAPI *pIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
-    char *logname = NULL, *outdir = NULL;
+    char *logname = NULL, *outdir = NULL, *path = NULL;
     const char *extract = NULL;
     const char *cp, *submit = NULL, *submiturl = NULL;
     int reset_env = 1;
@@ -1406,6 +1545,14 @@ int __cdecl main( int argc, char *argv[] )
                 usage();
                 exit( 2 );
             }
+            break;
+        case 'J':
+            if (!(path = argv[++i]))
+            {
+                usage();
+                exit( 2 );
+            }
+            junit = create_output_file( path );
             break;
         case 'm':
             if (!(email = argv[++i]))
@@ -1523,6 +1670,11 @@ int __cdecl main( int argc, char *argv[] )
             SetEnvironmentVariableA( "WINETEST_DEBUG", "1" );
             SetEnvironmentVariableA( "WINETEST_INTERACTIVE", "0" );
             SetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", "0" );
+        }
+        if (junit)
+        {
+            SetEnvironmentVariableA( "WINETEST_COLOR", "0" );
+            SetEnvironmentVariableA( "WINETEST_TIME", "1" );
         }
 
         if (nb_filters && !exclude_tests)
