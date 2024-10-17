@@ -4092,6 +4092,8 @@ static void test_SetForegroundWindow(HWND hwnd)
     CloseHandle(thread_params.window_created);
     CloseHandle(thread);
     DestroyWindow(hwnd2);
+
+    flush_events(TRUE);
 }
 
 static WNDPROC old_button_proc;
