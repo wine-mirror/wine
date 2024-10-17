@@ -1933,7 +1933,7 @@ static inline int get_format_idx(enum wined3d_format_id format_id)
 {
     unsigned int i;
 
-    if (format_id < WINED3D_FORMAT_FOURCC_BASE)
+    if ((unsigned int)format_id < WINED3D_FORMAT_FOURCC_BASE)
         return format_id;
 
     for (i = 0; i < ARRAY_SIZE(format_index_remap); ++i)
