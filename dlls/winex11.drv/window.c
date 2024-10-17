@@ -1271,9 +1271,11 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
 static void window_set_config( struct x11drv_win_data *data, const RECT *new_rect, BOOL above )
 {
     UINT style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), mask = 0;
+    const RECT *old_rect = &data->pending_state.rect;
     XWindowChanges changes;
 
     if (!data->whole_window) return; /* no window, nothing to update */
+    if (EqualRect( old_rect, new_rect )) return; /* rects are the same, nothing to update */
 
     /* resizing a managed maximized window is not allowed */
     if (!(style & WS_MAXIMIZE) || !data->managed)
