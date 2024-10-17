@@ -601,14 +601,18 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                         for (i = 0; i < min(fcp->Count, count); i++)
                         {
                             sub_type.id = fcp->ChildId[i];
-                            if (!types_get_info(&sub_type, TI_GET_VALUE, &variant)) 
+                            if (!types_get_info(&sub_type, TI_GET_VALUE, &variant))
                                 continue;
                             switch (V_VT(&variant))
                             {
-                            case VT_I1: ok = (val_int == V_I1(&variant)); break;
-                            case VT_I2: ok = (val_int == V_I2(&variant)); break;
-                            case VT_I4: ok = (val_int == V_I4(&variant)); break;
-                            case VT_I8: ok = (val_int == V_I8(&variant)); break;
+                            case VT_I1:  ok = (val_int == V_I1(&variant)); break;
+                            case VT_I2:  ok = (val_int == V_I2(&variant)); break;
+                            case VT_I4:  ok = (val_int == V_I4(&variant)); break;
+                            case VT_I8:  ok = (val_int == V_I8(&variant)); break;
+                            case VT_UI1: ok = (val_int == (dbg_lguint_t)V_UI1(&variant)); break;
+                            case VT_UI2: ok = (val_int == (dbg_lguint_t)V_UI2(&variant)); break;
+                            case VT_UI4: ok = (val_int == (dbg_lguint_t)V_UI4(&variant)); break;
+                            case VT_UI8: ok = (val_int == (dbg_lguint_t)V_UI8(&variant)); break;
                             default: WINE_FIXME("Unsupported variant type (%u)\n", V_VT(&variant));
                             }
                             if (ok && types_get_info(&sub_type, TI_GET_SYMNAME, &ptr) && ptr)
