@@ -2206,6 +2206,10 @@ static void test_token(void)
 #define IO_COMPLETION_GENERIC_EXECUTE (STANDARD_RIGHTS_EXECUTE|SYNCHRONIZE)
 #define IO_COMPLETION_GENERIC_READ    (STANDARD_RIGHTS_READ|IO_COMPLETION_QUERY_STATE)
 #define IO_COMPLETION_GENERIC_WRITE   (STANDARD_RIGHTS_WRITE|IO_COMPLETION_MODIFY_STATE)
+#define IO_COMPLETION_RESERVE_GENERIC_EXECUTE (STANDARD_RIGHTS_EXECUTE)
+#define IO_COMPLETION_RESERVE_GENERIC_READ    (STANDARD_RIGHTS_READ|0x1)
+#define IO_COMPLETION_RESERVE_GENERIC_WRITE   (STANDARD_RIGHTS_WRITE|0x2)
+#define IO_COMPLETION_RESERVE_ALL_ACCESS      (STANDARD_RIGHTS_REQUIRED|0x3)
 #define JOB_OBJECT_GENERIC_EXECUTE    (STANDARD_RIGHTS_EXECUTE|SYNCHRONIZE)
 #define JOB_OBJECT_GENERIC_READ       (STANDARD_RIGHTS_READ|JOB_OBJECT_QUERY)
 #define JOB_OBJECT_GENERIC_WRITE      (STANDARD_RIGHTS_WRITE|JOB_OBJECT_TERMINATE|\
@@ -2253,6 +2257,10 @@ static void test_token(void)
 #define TYPE_GENERIC_EXECUTE          (STANDARD_RIGHTS_EXECUTE)
 #define TYPE_GENERIC_READ             (STANDARD_RIGHTS_READ)
 #define TYPE_GENERIC_WRITE            (STANDARD_RIGHTS_WRITE)
+#define USER_APC_RESERVE_GENERIC_EXECUTE (STANDARD_RIGHTS_EXECUTE)
+#define USER_APC_RESERVE_GENERIC_READ    (STANDARD_RIGHTS_READ|0x1)
+#define USER_APC_RESERVE_GENERIC_WRITE   (STANDARD_RIGHTS_WRITE|0x2)
+#define USER_APC_RESERVE_ALL_ACCESS      (STANDARD_RIGHTS_REQUIRED|0x3)
 #define WINSTA_GENERIC_EXECUTE        (STANDARD_RIGHTS_EXECUTE|WINSTA_EXITWINDOWS|WINSTA_ACCESSGLOBALATOMS)
 #define WINSTA_GENERIC_READ           (STANDARD_RIGHTS_READ|WINSTA_READSCREEN|WINSTA_ENUMERATE|\
                                        WINSTA_READATTRIBUTES|WINSTA_ENUMDESKTOPS)
@@ -2318,6 +2326,7 @@ static void test_object_types(void)
         TYPE( L"Event",         EVENT, 0, 0 ),
         TYPE( L"File",          FILE, 0, 0 ),
         TYPE( L"IoCompletion",  IO_COMPLETION, 0, 0 ),
+        TYPE( L"IoCompletionReserve", IO_COMPLETION_RESERVE, 0, 0 ),
         TYPE( L"Job",           JOB_OBJECT, 0, JOB_OBJECT_IMPERSONATE ),
         TYPE( L"Key",           KEY, SYNCHRONIZE, 0 ),
         TYPE( L"KeyedEvent",    KEYEDEVENT, SYNCHRONIZE, 0 ),
@@ -2330,6 +2339,7 @@ static void test_object_types(void)
         TYPE( L"Timer",         TIMER, 0, 0 ),
         TYPE( L"Token",         TOKEN, SYNCHRONIZE, 0 ),
         TYPE( L"Type",          TYPE, SYNCHRONIZE, 0 ),
+        TYPE( L"UserApcReserve", USER_APC_RESERVE, 0, 0 ),
         TYPE( L"WindowStation", WINSTA, 0, 0 ),
 #undef TYPE
     };
@@ -2390,6 +2400,8 @@ static void test_object_types(void)
             tested[j] = TRUE;
             break;
         }
+
+        todo_wine_if(!lstrcmpW( tests[i].name, L"IoCompletionReserve" ) || !lstrcmpW( tests[i].name, L"UserApcReserve" ))
         ok( j < ARRAY_SIZE(all_types), "type %s not found\n", debugstr_w(tests[i].name) );
     }
     for (j = 0; j < ARRAY_SIZE(all_types); j++)
