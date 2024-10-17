@@ -2295,6 +2295,17 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         return STATUS_SUCCESS;
     }
 
+    case ThreadIdealProcessorEx:
+    {
+        PROCESSOR_NUMBER *number = data;
+
+        FIXME( "ThreadIdealProcessorEx info class - stub\n" );
+        if (length != sizeof(*number)) return STATUS_INFO_LENGTH_MISMATCH;
+        memset( number, 0, sizeof(*number) );
+        if (ret_len) *ret_len = sizeof(*number);
+        return STATUS_SUCCESS;
+    }
+
     case ThreadIdealProcessor:
     case ThreadEnableAlignmentFaultFixup:
         return STATUS_INVALID_INFO_CLASS;

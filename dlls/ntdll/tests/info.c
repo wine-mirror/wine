@@ -3547,6 +3547,7 @@ static void test_thread_lookup(void)
 static void test_thread_ideal_processor(void)
 {
     ULONG number, len;
+    PROCESSOR_NUMBER processor;
     NTSTATUS status;
 
     number = 0;
@@ -3563,6 +3564,12 @@ static void test_thread_ideal_processor(void)
 
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadIdealProcessor, &number, sizeof(number), &len );
     ok(status == STATUS_INVALID_INFO_CLASS, "Unexpected status %#lx.\n", status);
+
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadIdealProcessorEx, &processor, sizeof(processor) + 1, &len );
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Unexpected status %#lx.\n", status);
+
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadIdealProcessorEx, &processor, sizeof(processor), &len );
+    ok(status == STATUS_SUCCESS, "Unexpected status %#lx.\n", status);
 }
 
 static void test_thread_info(void)
