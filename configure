@@ -797,6 +797,7 @@ RUNTESTFLAGS
 toolsdir
 x86_64_DISABLED_SUBDIRS
 x86_64_DELAYLOADFLAG
+x86_64_STRIP
 x86_64_TARGET
 x86_64_DEBUG
 x86_64_LDFLAGS
@@ -805,6 +806,7 @@ x86_64_CFLAGS
 x86_64_CC
 i386_DISABLED_SUBDIRS
 i386_DELAYLOADFLAG
+i386_STRIP
 i386_TARGET
 i386_DEBUG
 i386_LDFLAGS
@@ -813,6 +815,7 @@ i386_CFLAGS
 i386_CC
 arm64ec_DISABLED_SUBDIRS
 arm64ec_DELAYLOADFLAG
+arm64ec_STRIP
 arm64ec_TARGET
 arm64ec_DEBUG
 arm64ec_LDFLAGS
@@ -821,6 +824,7 @@ arm64ec_CFLAGS
 arm64ec_CC
 arm_DISABLED_SUBDIRS
 arm_DELAYLOADFLAG
+arm_STRIP
 arm_TARGET
 arm_DEBUG
 arm_LDFLAGS
@@ -829,6 +833,7 @@ arm_CFLAGS
 arm_CC
 aarch64_DISABLED_SUBDIRS
 aarch64_DELAYLOADFLAG
+aarch64_STRIP
 aarch64_TARGET
 aarch64_DEBUG
 aarch64_LDFLAGS
@@ -10369,6 +10374,7 @@ fi
     done
 
         llvm_target=$target
+    target_strip=${target:-llvm}-strip
     if test -z "$llvm_target"
     then
         case $wine_arch in
@@ -10519,6 +10525,7 @@ fi
     fi
 
     eval "${wine_arch}_TARGET=\$target"
+    eval "${wine_arch}_STRIP=\$target_strip"
     as_wine_cv_crosscc_c99=`printf "%s\n" "ac_cv_${wine_arch}_crosscc_c99" | sed "$as_sed_sh"`
 
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CC option to enable C99 features" >&5
@@ -23856,6 +23863,7 @@ aarch64_EXTRACFLAGS = $aarch64_EXTRACFLAGS
 aarch64_LDFLAGS = $aarch64_LDFLAGS
 aarch64_DEBUG = $aarch64_DEBUG
 aarch64_TARGET = $aarch64_TARGET
+aarch64_STRIP = $aarch64_STRIP
 aarch64_DELAYLOADFLAG = $aarch64_DELAYLOADFLAG
 aarch64_DISABLED_SUBDIRS = $aarch64_DISABLED_SUBDIRS
 arm_CC = $arm_CC
@@ -23864,6 +23872,7 @@ arm_EXTRACFLAGS = $arm_EXTRACFLAGS
 arm_LDFLAGS = $arm_LDFLAGS
 arm_DEBUG = $arm_DEBUG
 arm_TARGET = $arm_TARGET
+arm_STRIP = $arm_STRIP
 arm_DELAYLOADFLAG = $arm_DELAYLOADFLAG
 arm_DISABLED_SUBDIRS = $arm_DISABLED_SUBDIRS
 arm64ec_CC = $arm64ec_CC
@@ -23872,6 +23881,7 @@ arm64ec_EXTRACFLAGS = $arm64ec_EXTRACFLAGS
 arm64ec_LDFLAGS = $arm64ec_LDFLAGS
 arm64ec_DEBUG = $arm64ec_DEBUG
 arm64ec_TARGET = $arm64ec_TARGET
+arm64ec_STRIP = $arm64ec_STRIP
 arm64ec_DELAYLOADFLAG = $arm64ec_DELAYLOADFLAG
 arm64ec_DISABLED_SUBDIRS = $arm64ec_DISABLED_SUBDIRS
 i386_CC = $i386_CC
@@ -23880,6 +23890,7 @@ i386_EXTRACFLAGS = $i386_EXTRACFLAGS
 i386_LDFLAGS = $i386_LDFLAGS
 i386_DEBUG = $i386_DEBUG
 i386_TARGET = $i386_TARGET
+i386_STRIP = $i386_STRIP
 i386_DELAYLOADFLAG = $i386_DELAYLOADFLAG
 i386_DISABLED_SUBDIRS = $i386_DISABLED_SUBDIRS
 x86_64_CC = $x86_64_CC
@@ -23888,6 +23899,7 @@ x86_64_EXTRACFLAGS = $x86_64_EXTRACFLAGS
 x86_64_LDFLAGS = $x86_64_LDFLAGS
 x86_64_DEBUG = $x86_64_DEBUG
 x86_64_TARGET = $x86_64_TARGET
+x86_64_STRIP = $x86_64_STRIP
 x86_64_DELAYLOADFLAG = $x86_64_DELAYLOADFLAG
 x86_64_DISABLED_SUBDIRS = $x86_64_DISABLED_SUBDIRS
 toolsdir = $toolsdir
