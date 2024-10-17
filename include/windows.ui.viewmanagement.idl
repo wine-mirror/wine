@@ -198,6 +198,20 @@ namespace Windows.UI.ViewManagement
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.UI.ViewManagement.UISettings),
+        uuid(52bb3002-919b-4d6b-9b78-8dd66ff4b93b)
+    ]
+    interface IUISettings4 : IInspectable
+    {
+        [propget] HRESULT AdvancedEffectsEnabled([out, retval] boolean *value);
+        [eventadd] HRESULT AdvancedEffectsEnabledChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT AdvancedEffectsEnabledChanged([in] EventRegistrationToken cookie);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.UI.ViewManagement.UIViewSettings),
         uuid(c63657f6-8850-470d-88f8-455e16ea2c26)
@@ -295,6 +309,7 @@ namespace Windows.UI.ViewManagement
         [default] interface Windows.UI.ViewManagement.IUISettings;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings2;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings3;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.UI.ViewManagement.IUISettings4;
     }
 
     [
