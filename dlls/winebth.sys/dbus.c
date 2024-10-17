@@ -59,6 +59,7 @@ const int bluez_timeout = -1;
 
 #define DBUS_INTERFACE_OBJECTMANAGER "org.freedesktop.DBus.ObjectManager"
 #define DBUS_OBJECTMANAGER_SIGNAL_INTERFACESADDED "InterfacesAdded"
+#define DBUS_OBJECTMANAGER_SIGNAL_INTERFACESREMOVED "InterfacesRemoved"
 
 #define DBUS_INTERFACES_ADDED_SIGNATURE                                                            \
     DBUS_TYPE_OBJECT_PATH_AS_STRING                                                                \
@@ -69,6 +70,10 @@ const int bluez_timeout = -1;
     DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING    \
     DBUS_DICT_ENTRY_END_CHAR_AS_STRING                                                             \
     DBUS_DICT_ENTRY_END_CHAR_AS_STRING
+
+#define DBUS_INTERFACES_REMOVED_SIGNATURE                                                          \
+    DBUS_TYPE_OBJECT_PATH_AS_STRING                                                                \
+    DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_STRING_AS_STRING
 
 #define BLUEZ_DEST "org.bluez"
 #define BLUEZ_INTERFACE_ADAPTER "org.bluez.Adapter1"
@@ -442,6 +447,51 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
             }
             p_dbus_message_iter_next( &ifaces_iter );
         }
+    }
+    else if (p_dbus_message_is_signal( msg, DBUS_INTERFACE_OBJECTMANAGER, DBUS_OBJECTMANAGER_SIGNAL_INTERFACESREMOVED )
+             && p_dbus_message_has_signature( msg, DBUS_INTERFACES_REMOVED_SIGNATURE ))
+    {
+        const char *object_path;
+        char **interfaces;
+        int n_interfaces, i;
+        DBusError error;
+        dbus_bool_t success;
+
+        p_dbus_error_init( &error );
+        success = p_dbus_message_get_args( msg, &error, DBUS_TYPE_OBJECT_PATH, &object_path,
+                                           DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &interfaces,
+                                           &n_interfaces, DBUS_TYPE_INVALID );
+        if (!success)
+        {
+            ERR( "error getting arguments from message: %s: %s\n", debugstr_a( error.name ),
+                 debugstr_a( error.message ) );
+            p_dbus_error_free( &error );
+            return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+        }
+
+        p_dbus_error_free( &error );
+        for (i = 0; i < n_interfaces; i++)
+        {
+            if (!strcmp( interfaces[i], BLUEZ_INTERFACE_ADAPTER ))
+            {
+                winebluetooth_radio_t radio;
+                struct unix_name *radio_name;
+                union winebluetooth_watcher_event_data event;
+
+                radio_name = unix_name_get_or_create( object_path );
+                if (!radio_name)
+                {
+                    ERR( "failed to allocate memory for adapter path %s\n", object_path );
+                    continue;
+                }
+                radio.handle = (UINT_PTR)radio_name;
+                event.radio_removed = radio;
+                if (!bluez_event_list_queue_new_event(
+                        event_list, BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_REMOVED, event ))
+                    unix_name_free( radio_name );
+            }
+        }
+        p_dbus_free_string_array( interfaces );
     }
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
