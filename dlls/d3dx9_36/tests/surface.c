@@ -596,20 +596,20 @@ static const struct tga_footer default_tga_footer = {
     { 'T', 'R', 'U', 'E', 'V', 'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.', 0 }
 };
 
-#define check_tga_image_info(tga, tga_size, expected_width, expected_height, expected_format, expected_hr, todo_hr, todo_info) \
-    check_tga_image_info_(__LINE__, tga, tga_size, expected_width, expected_height, expected_format, expected_hr, todo_hr, todo_info)
+#define check_tga_image_info(tga, tga_size, expected_width, expected_height, expected_format, expected_hr) \
+    check_tga_image_info_(__LINE__, tga, tga_size, expected_width, expected_height, expected_format, expected_hr)
 static void check_tga_image_info_(uint32_t line, const void *tga, uint32_t tga_size, uint32_t expected_width,
-        uint32_t expected_height, D3DFORMAT expected_format, HRESULT expected_hr, BOOL todo_hr, BOOL todo_info)
+        uint32_t expected_height, D3DFORMAT expected_format, HRESULT expected_hr)
 {
     D3DXIMAGE_INFO info = { 0 };
     HRESULT hr;
 
     hr = D3DXGetImageInfoFromFileInMemory(tga, tga_size, &info);
-    todo_wine_if(todo_hr) ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(expected_hr) && SUCCEEDED(hr))
     {
         check_image_info_(__FILE__, line, &info, expected_width, expected_height, 1, 1, expected_format,
-                D3DRTYPE_TEXTURE, D3DXIFF_TGA, todo_info);
+                D3DRTYPE_TEXTURE, D3DXIFF_TGA, FALSE);
     }
 }
 
@@ -693,18 +693,18 @@ static void test_tga_header_handling(void)
 
         tga->header = info_tests[i].header;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 
         /* X/Y origin fields are ignored. */
         tga->header.xorigin = tga->header.width + 1;
         tga->header.yorigin = tga->header.height + 1;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 
         /* Image descriptor field is ignored. */
         tga->header.image_descriptor = 0xcf;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 
         if (FAILED(info_tests[i].expected.hr))
             goto next;
@@ -717,12 +717,12 @@ static void test_tga_header_handling(void)
         tmp_footer.extension_area_offset = 65536;
         memcpy(&tga->data[info_tests[i].extra_header_size], &tmp_footer, sizeof(tmp_footer));
         check_tga_image_info(tga, file_size + sizeof(tmp_footer), info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 
         /* Check RLE type. */
         tga->header.image_type |= IMAGETYPE_RLE;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
         tga->header.image_type &= ~IMAGETYPE_RLE;
 
         if (tga->header.image_type == IMAGETYPE_COLORMAPPED)
@@ -734,22 +734,22 @@ static void test_tga_header_handling(void)
          */
         tga->header.color_map_length = 1;
         check_tga_image_info(tga, file_size, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 
         tga->header.color_map_entrysize = 8;
-        check_tga_image_info(tga, file_size, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
+        check_tga_image_info(tga, file_size, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA);
 
         /* Add a byte to file size to account for color map. */
         check_tga_image_info(tga, file_size + 1, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 
         /* ID length field is also considered. */
         tga->header.id_length = 1;
-        check_tga_image_info(tga, file_size + 1, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
+        check_tga_image_info(tga, file_size + 1, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA);
 
         /* Add another byte to file size to account for id length. */
         check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 
         /*
          * If the color map type field is set but the color map fields
@@ -759,22 +759,22 @@ static void test_tga_header_handling(void)
          */
         tga->header.id_length = tga->header.color_map_entrysize = tga->header.color_map_length = 0;
         tga->header.color_map_type = COLORMAP_TYPE_ONE;
-        check_tga_image_info(tga, file_size + 2, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
+        check_tga_image_info(tga, file_size + 2, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA);
 
         /* 8 isn't a valid entry size. */
         tga->header.color_map_entrysize = 8;
         tga->header.color_map_length = 1;
-        check_tga_image_info(tga, file_size + 1, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA, FALSE, FALSE);
+        check_tga_image_info(tga, file_size + 1, 0, 0, D3DFMT_UNKNOWN, D3DXERR_INVALIDDATA);
 
         /* 16 is a valid entry size. */
         tga->header.color_map_entrysize = 16;
         check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 
         /* First entry doesn't factor into validation. */
         tga->header.color_map_firstentry = 512;
         check_tga_image_info(tga, file_size + 2, info_tests[i].expected.width, info_tests[i].expected.height,
-                info_tests[i].expected.format, info_tests[i].expected.hr, FALSE, FALSE);
+                info_tests[i].expected.format, info_tests[i].expected.hr);
 next:
         winetest_pop_context();
     }
