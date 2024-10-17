@@ -717,7 +717,6 @@ static DWORD MIDI_mciOpen(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_OPEN_PARMSW lp
 
 	    if (ckMainRIFF.ckid == FOURCC_RIFF && ckMainRIFF.fccType == mmioFOURCC('R', 'M', 'I', 'D')) {
 		mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
-		mmioSeek(wmm->hFile, ckMainRIFF.dwDataOffset + ((ckMainRIFF.cksize + 1) & ~1), SEEK_SET);
 		if (mmioDescend(wmm->hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0) {
 		    TRACE("... is a 'RMID' file\n");
 		    dwOffset = mmckInfo.dwDataOffset;
