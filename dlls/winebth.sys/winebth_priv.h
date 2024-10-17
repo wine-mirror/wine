@@ -21,6 +21,8 @@
 #ifndef __WINE_WINEBTH_WINEBTH_H_
 #define __WINE_WINEBTH_WINEBTH_H_
 
+#include <bthsdpdef.h>
+#include <bluetoothapis.h>
 #include <ddk/wdm.h>
 
 #include <wine/debug.h>
@@ -44,6 +46,20 @@ struct string_buffer
 
 #define XX(i) case (i): return #i
 
+static inline const char *debugstr_BUS_QUERY_ID_TYPE( BUS_QUERY_ID_TYPE type )
+{
+    switch (type)
+    {
+        XX(BusQueryDeviceID);
+        XX(BusQueryHardwareIDs);
+        XX(BusQueryCompatibleIDs);
+        XX(BusQueryInstanceID);
+        XX(BusQueryDeviceSerialNumber);
+        XX(BusQueryContainerID);
+    default:
+        return wine_dbg_sprintf( "(unknown %d)", type );
+    }
+}
 
 static inline const char *debugstr_minor_function_code( UCHAR code )
 {
@@ -79,6 +95,48 @@ static inline const char *debugstr_minor_function_code( UCHAR code )
 }
 #undef XX
 
+typedef struct
+{
+    UINT_PTR handle;
+} winebluetooth_radio_t;
+
+void winebluetooth_radio_free( winebluetooth_radio_t radio );
+
+enum winebluetooth_watcher_event_type
+{
+    BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED,
+};
+
+struct winebluetooth_watcher_event_radio_added
+{
+    winebluetooth_radio_t radio;
+};
+
+union winebluetooth_watcher_event_data
+{
+    struct winebluetooth_watcher_event_radio_added radio_added;
+};
+
+struct winebluetooth_watcher_event
+{
+    enum winebluetooth_watcher_event_type event_type;
+    union winebluetooth_watcher_event_data event_data;
+};
+
+enum winebluetooth_event_type
+{
+    WINEBLUETOOTH_EVENT_WATCHER_EVENT,
+};
+
+struct winebluetooth_event
+{
+    enum winebluetooth_event_type status;
+    union {
+        struct winebluetooth_watcher_event watcher_event;
+    } data;
+};
+
+NTSTATUS winebluetooth_get_event( struct winebluetooth_event *result );
 NTSTATUS winebluetooth_init( void );
 NTSTATUS winebluetooth_shutdown( void );
 

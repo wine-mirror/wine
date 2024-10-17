@@ -21,14 +21,46 @@
 #ifndef __WINE_WINEBTH_UNIXLIB_H
 #define __WINE_WINEBTH_UNIXLIB_H
 
+#include <stdlib.h>
 #include <stdarg.h>
 
+#include <windef.h>
+#include <winbase.h>
+
+#include <bthsdpdef.h>
+#include <bluetoothapis.h>
+
 #include <wine/unixlib.h>
+#include <wine/debug.h>
+
+#include "winebth_priv.h"
+
+#ifdef WINE_UNIX_LIB
+typedef struct unix_name *unix_name_t;
+typedef void *unix_handle_t;
+#else
+typedef UINT_PTR unix_name_t;
+typedef UINT_PTR unix_handle_t;
+#endif
+
+struct bluetooth_adapter_free_params
+{
+    unix_name_t adapter;
+};
+
+struct bluetooth_get_event_params
+{
+    struct winebluetooth_event result;
+};
 
 enum bluetoothapis_funcs
 {
     unix_bluetooth_init,
     unix_bluetooth_shutdown,
+
+    unix_bluetooth_adapter_free,
+
+    unix_bluetooth_get_event,
 
     unix_funcs_count
 };

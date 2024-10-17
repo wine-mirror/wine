@@ -34,6 +34,29 @@
 #include "winebth_priv.h"
 #include "unixlib.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL( winebth );
+
+void winebluetooth_radio_free( winebluetooth_radio_t radio )
+{
+    struct bluetooth_adapter_free_params args = { 0 };
+    TRACE( "(%p)\n", (void *)radio.handle );
+
+    args.adapter = radio.handle;
+    UNIX_BLUETOOTH_CALL( bluetooth_adapter_free, &args );
+}
+
+NTSTATUS winebluetooth_get_event( struct winebluetooth_event *result )
+{
+    struct bluetooth_get_event_params params = {0};
+    NTSTATUS status;
+
+    TRACE( "(%p)\n", result );
+
+    status = UNIX_BLUETOOTH_CALL( bluetooth_get_event, &params );
+    *result = params.result;
+    return status;
+}
+
 NTSTATUS winebluetooth_init( void )
 {
     NTSTATUS status;
