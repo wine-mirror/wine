@@ -87,7 +87,7 @@ static inline char *strdupWA(const WCHAR *src)
     if (src)
     {
         int len = WideCharToMultiByte(GetOEMCP(), 0, src, -1, NULL, 0, NULL, NULL);
-        if ((dst = malloc(len))) WideCharToMultiByte(CP_ACP, 0, src, -1, dst, len, NULL, NULL);
+        if ((dst = malloc(len))) WideCharToMultiByte(GetOEMCP(), 0, src, -1, dst, len, NULL, NULL);
     }
     return dst;
 }
