@@ -225,33 +225,10 @@ Drawable get_dc_drawable( HDC hdc, RECT *rect )
 
 HRGN get_dc_monitor_region( HWND hwnd, HDC hdc )
 {
-    RGNDATA *data;
-    UINT i, size;
     HRGN region;
-    POINT pt;
 
     if (!(region = NtGdiCreateRectRgn( 0, 0, 0, 0 ))) return 0;
-    if (NtGdiGetRandomRgn( hdc, region, SYSRGN ) <= 0) goto failed;
-    if (!(size = NtGdiGetRegionData( region, 0, NULL ))) goto failed;
-    if (!(data = malloc( size ))) goto failed;
-    NtGdiGetRegionData( region, size, data );
-    NtGdiDeleteObjectApp( region );
-
-    NtGdiGetDCPoint( hdc, NtGdiGetDCOrg, &pt );
-    NtUserLogicalToPerMonitorDPIPhysicalPoint( hwnd, &pt );
-    for (i = 0; i < data->rdh.nCount; i++)
-    {
-        RECT *rect = (RECT *)data->Buffer + i;
-        NtUserLogicalToPerMonitorDPIPhysicalPoint( hwnd, (POINT *)&rect->left );
-        NtUserLogicalToPerMonitorDPIPhysicalPoint( hwnd, (POINT *)&rect->right );
-        OffsetRect( rect, -pt.x, -pt.y );
-    }
-
-    region = NtGdiExtCreateRegion( NULL, size, data );
-    free( data );
-    return region;
-
-failed:
+    if (NtGdiGetRandomRgn( hdc, region, SYSRGN | NTGDI_RGN_MONITOR_DPI ) > 0) return region;
     NtGdiDeleteObjectApp( region );
     return 0;
 }

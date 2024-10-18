@@ -417,7 +417,7 @@ INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
 
     if (!dc) return -1;
 
-    switch (iCode & ~NTGDI_RGN_MIRROR_RTL)
+    switch (iCode & ~(NTGDI_RGN_MIRROR_RTL | NTGDI_RGN_MONITOR_DPI))
     {
     case 1:
         if (!dc->hClipRgn) ret = 0;
@@ -459,6 +459,19 @@ INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
         mirror_region( hRgn, hRgn, dc->attr->vis_rect.right - dc->attr->vis_rect.left );
 
     release_dc_ptr( dc );
+
+    if (ret > 0 && (iCode & NTGDI_RGN_MONITOR_DPI))
+    {
+        HWND hwnd = NtUserWindowFromDC( hDC );
+        UINT raw_dpi, monitor_dpi = get_win_monitor_dpi( hwnd, &raw_dpi );
+        HRGN region;
+
+        NtGdiOffsetRgn( hRgn, -dc->attr->vis_rect.left, -dc->attr->vis_rect.top );
+        region = map_dpi_region( hRgn, get_dpi_for_window( hwnd ), monitor_dpi );
+        NtGdiCombineRgn( hRgn, region, 0, RGN_COPY );
+        NtGdiDeleteObjectApp( region );
+    }
+
     return ret;
 }
 
