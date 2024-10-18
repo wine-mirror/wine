@@ -34,6 +34,7 @@ _ACRTIMP errno_t __cdecl _strlwr_s(char*,size_t);
 _ACRTIMP int   __cdecl _strncoll(const char*, const char*, size_t);
 _ACRTIMP int   __cdecl _strncoll_l(const char*, const char*, size_t, _locale_t);
 _ACRTIMP int   __cdecl _strnicmp(const char*,const char*,size_t);
+_ACRTIMP int   __cdecl _strnicmp_l(const char*, const char*, size_t, _locale_t);
 _ACRTIMP int   __cdecl _strnicoll(const char*, const char*, size_t);
 _ACRTIMP int   __cdecl _strnicoll_l(const char*, const char*, size_t, _locale_t);
 _ACRTIMP char* __cdecl _strnset(char*,int,size_t);
