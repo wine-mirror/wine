@@ -1192,10 +1192,12 @@ static int get_window_wm_state( Display *display, Window window )
  */
 static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL update_window )
 {
-    struct x11drv_win_data *data = get_win_data( hwnd );
-    UINT style;
+    struct x11drv_win_data *data;
+    UINT style, value = 0;
 
-    if (!data) return;
+    if (!(data = get_win_data( hwnd ))) return;
+    if (event->state == PropertyNewValue) value = get_window_wm_state( event->display, event->window );
+    if (update_window) window_wm_state_notify( data, event->serial, value );
 
     switch(event->state)
     {

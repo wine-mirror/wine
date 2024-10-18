@@ -1375,7 +1375,12 @@ static void map_window( HWND hwnd, DWORD new_style )
         sync_window_style( data );
 
         if (data->embedded) set_xembed_flags( data, XEMBED_MAPPED );
-        else XMapWindow( data->display, data->whole_window );
+        else
+        {
+            data->pending_state.wm_state = data->iconic ? IconicState : NormalState;
+            data->wm_state_serial = NextRequest( data->display );
+            XMapWindow( data->display, data->whole_window );
+        }
         XFlush( data->display );
 
         data->mapped = TRUE;
@@ -1402,8 +1407,13 @@ static void unmap_window( HWND hwnd )
         TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
 
         if (data->embedded) set_xembed_flags( data, 0 );
-        else if (!data->managed) XUnmapWindow( data->display, data->whole_window );
-        else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
+        else
+        {
+            data->pending_state.wm_state = WithdrawnState;
+            data->wm_state_serial = NextRequest( data->display );
+            if (!data->managed) XUnmapWindow( data->display, data->whole_window );
+            else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
+        }
 
         data->mapped = FALSE;
         data->net_wm_state = 0;
@@ -1411,6 +1421,39 @@ static void unmap_window( HWND hwnd )
     release_win_data( data );
 }
 
+void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value )
+{
+    UINT *pending = &data->pending_state.wm_state, *current = &data->current_state.wm_state;
+    unsigned long *expect_serial = &data->wm_state_serial;
+    const char *reason = NULL, *expected, *received;
+
+    received = wine_dbg_sprintf( "WM_STATE %#x/%lu", value, serial );
+    expected = *expect_serial ? wine_dbg_sprintf( ", expected %#x/%lu", *pending, *expect_serial ) : "";
+
+    if (serial < *expect_serial) reason = "old ";
+    else if (!*expect_serial && *current == value) reason = "no-op ";
+    /* ignore Metacity/Mutter transient NormalState during WithdrawnState <-> IconicState transitions */
+    else if (value == NormalState && *current + *pending == IconicState) reason = "transient ";
+
+    if (reason)
+    {
+        WARN( "Ignoring window %p/%lx %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
+        return;
+    }
+
+    if (!*expect_serial) reason = "unexpected ";
+    else if (*pending != value) reason = "mismatch ";
+
+    if (!reason) TRACE( "window %p/%lx, %s%s\n", data->hwnd, data->whole_window, received, expected );
+    else
+    {
+        WARN( "window %p/%lx, %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
+        *pending = value; /* avoid requesting the same state again */
+    }
+
+    *current = value;
+    *expect_serial = 0;
+}
 
 /***********************************************************************
  *     make_window_embedded
@@ -1420,6 +1463,8 @@ void make_window_embedded( struct x11drv_win_data *data )
     /* the window cannot be mapped before being embedded */
     if (data->mapped)
     {
+        data->pending_state.wm_state = WithdrawnState;
+        data->wm_state_serial = NextRequest( data->display );
         if (!data->managed) XUnmapWindow( data->display, data->whole_window );
         else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
         data->net_wm_state = 0;
@@ -1868,6 +1913,11 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     data->wm_state = WithdrawnState;
     data->net_wm_state = 0;
     data->mapped = FALSE;
+
+    memset( &data->pending_state, 0, sizeof(data->pending_state) );
+    memset( &data->current_state, 0, sizeof(data->current_state) );
+    data->wm_state_serial = 0;
+
     if (data->xic)
     {
         XUnsetICFocus( data->xic );
@@ -2722,10 +2772,14 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, BOOL
             set_wm_hints( data );
             data->iconic = (new_style & WS_MINIMIZE) != 0;
             TRACE( "changing win %p iconic state to %u\n", data->hwnd, data->iconic );
+
+            data->pending_state.wm_state = data->iconic ? IconicState : NormalState;
+            data->wm_state_serial = NextRequest( data->display );
             if (data->iconic)
                 XIconifyWindow( data->display, data->whole_window, data->vis.screen );
             else if (is_window_rect_mapped( &new_rects->window ))
                 XMapWindow( data->display, data->whole_window );
+
             update_net_wm_states( data );
         }
         else
