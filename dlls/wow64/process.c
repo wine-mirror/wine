@@ -713,6 +713,7 @@ NTSTATUS WINAPI wow64_NtQueryInformationThread( UINT *args )
     case ThreadHideFromDebugger:  /* BOOLEAN */
     case ThreadSuspendCount:  /* ULONG */
     case ThreadPriorityBoost:   /* ULONG */
+    case ThreadIdealProcessorEx: /* PROCESSOR_NUMBER */
         /* FIXME: check buffer alignment */
         return NtQueryInformationThread( handle, class, ptr, len, retlen );
 
