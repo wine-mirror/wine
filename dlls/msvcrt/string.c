@@ -3338,7 +3338,7 @@ int __cdecl _strnicmp_l(const char *s1, const char *s2,
                 c2 -= 'A' - 'a';
         }while(--count && c1 && c1==c2);
 
-        return c1-c2;
+        return (unsigned char)c1 - (unsigned char)c2;
     }
 
     do {
