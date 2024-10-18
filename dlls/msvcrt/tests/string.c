@@ -3387,6 +3387,46 @@ static void test_tolower(void)
     ret = p_tolower((unsigned char)0xD0);
     ok(ret == 0xF0, "ret = %x\n", ret);
 
+    ok(setlocale(LC_ALL, "Japanese_Japan.932") != NULL, "setlocale failed.\n");
+    errno = 0xdeadbeef;
+    ret = p_tolower((signed char)0xd0);
+    ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+    errno = 0xdeadbeef;
+    ret = p_tolower(0xd0);
+    ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
+
+    ok(setlocale(LC_ALL, "Chinese_China.936") != NULL, "setlocale failed.\n");
+    errno = 0xdeadbeef;
+    ret = p_tolower((signed char)0xd0);
+    ok(ret == (signed char)0xd0, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+    errno = 0xdeadbeef;
+    ret = p_tolower(0xd0);
+    todo_wine ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
+
+    ok(setlocale(LC_ALL, "Korean_Korea.949") != NULL, "setlocale failed.\n");
+    errno = 0xdeadbeef;
+    ret = p_tolower((signed char)0xd0);
+    ok(ret == (signed char)0xd0, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+    errno = 0xdeadbeef;
+    ret = p_tolower(0xd0);
+    todo_wine ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
+
+    ok(setlocale(LC_ALL, "Chinese_Taiwan.950") != NULL, "setlocale failed.\n");
+    errno = 0xdeadbeef;
+    ret = p_tolower((signed char)0xd0);
+    ok(ret == (signed char)0xd0, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+    errno = 0xdeadbeef;
+    ret = p_tolower(0xd0);
+    todo_wine ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
+
     setlocale(LC_ALL, "C");
 }
 
