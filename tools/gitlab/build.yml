@@ -90,6 +90,10 @@ build-sast:
       -Xclang -analyzer-disable-checker=deadcode.DeadStores
       -Xclang -analyzer-disable-checker=unix.Malloc
   script:
+    - ./tools/make_requests
+    - ./tools/make_specfiles
+    - ./tools/make_makefiles
+    - autoreconf -f
     - cd build64
     - ../configure -q -C --enable-sast --enable-win64
     - make -s gl-code-quality-report.json SASTFLAGS="${SASTFLAGS}"
