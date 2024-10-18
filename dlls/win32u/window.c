@@ -2132,7 +2132,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
                 user_driver->pMoveWindowBits( hwnd, &old_rects, new_rects, valid_rects );
             else
             {
-                OffsetRect( &rects[1], new_rects->visible.left - old_rects.visible.left, new_rects->visible.top - old_rects.visible.top );
+                /* move a child window bits within its parent window surface, the surface itself
+                 * didn't move and valid rects are already relative to the surface rect. */
                 move_window_bits( hwnd, new_rects, valid_rects );
             }
         }
