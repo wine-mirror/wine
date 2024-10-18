@@ -1299,6 +1299,7 @@ static void window_set_config( struct x11drv_win_data *data, const RECT *new_rec
         mask |= CWStackMode;
     }
 
+    data->pending_state.rect = *new_rect;
     data->configure_serial = NextRequest( data->display );
     TRACE( "window %p/%lx, requesting config %s above %u, serial %lu\n", data->hwnd, data->whole_window,
            wine_dbgstr_rect(new_rect), above, data->configure_serial );
@@ -1551,6 +1552,38 @@ void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long ser
     }
 
     *current = value;
+    *expect_serial = 0;
+}
+
+void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *value )
+{
+    RECT *pending = &data->pending_state.rect, *current = &data->current_state.rect;
+    unsigned long *expect_serial = &data->configure_serial;
+    const char *reason = NULL, *expected, *received;
+
+    received = wine_dbg_sprintf( "config %s/%lu", wine_dbgstr_rect(value), serial );
+    expected = *expect_serial ? wine_dbg_sprintf( ", expected %s/%lu", wine_dbgstr_rect(pending), *expect_serial ) : "";
+
+    if (serial < *expect_serial) reason = "old ";
+    else if (!*expect_serial && EqualRect( current, value )) reason = "no-op ";
+
+    if (reason)
+    {
+        WARN( "Ignoring window %p/%lx %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
+        return;
+    }
+
+    if (!*expect_serial) reason = "unexpected ";
+    else if (!EqualRect( pending, value )) reason = "mismatch ";
+
+    if (!reason) TRACE( "window %p/%lx, %s%s\n", data->hwnd, data->whole_window, received, expected );
+    else
+    {
+        WARN( "window %p/%lx, %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
+        *pending = *value; /* avoid requesting the same state again */
+    }
+
+    *current = *value;
     *expect_serial = 0;
 }
 
@@ -1916,6 +1949,8 @@ static void create_whole_window( struct x11drv_win_data *data )
                                         cx, cy, 0, data->vis.depth, InputOutput,
                                         data->vis.visual, mask, &attr );
     if (!data->whole_window) goto done;
+    SetRect( &data->current_state.rect, pos.x, pos.y, pos.x + cx, pos.y + cy );
+    data->pending_state.rect = data->current_state.rect;
 
     x11drv_xinput2_enable( data->display, data->whole_window );
     set_initial_wm_hints( data->display, data->whole_window );
@@ -1978,6 +2013,7 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     memset( &data->current_state, 0, sizeof(data->current_state) );
     data->wm_state_serial = 0;
     data->net_wm_state_serial = 0;
+    data->configure_serial = 0;
 
     if (data->xic)
     {

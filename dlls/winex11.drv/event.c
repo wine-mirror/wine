@@ -1081,6 +1081,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     pos = root_to_virtual_screen( pos.x, pos.y );
     SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
+    window_configure_notify( data, event->serial, &rect );
 
     if (!data->mapped || data->iconic) goto done;
     if (!data->whole_window || !data->managed) goto done;

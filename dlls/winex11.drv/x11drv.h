@@ -606,6 +606,7 @@ struct window_state
 {
     UINT wm_state;
     UINT net_wm_state;
+    RECT rect;
 };
 
 /* x11drv private window data */
@@ -635,7 +636,6 @@ struct x11drv_win_data
     int         wm_state;       /* current value of the WM_STATE property */
     DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */
-    unsigned long configure_serial; /* serial number of last configure request */
     Pixmap         icon_pixmap;
     Pixmap         icon_mask;
     unsigned long *icon_bits;
@@ -645,6 +645,7 @@ struct x11drv_win_data
     struct window_state current_state; /* window state tracking the current X11 state */
     unsigned long wm_state_serial;     /* serial of last pending WM_STATE request */
     unsigned long net_wm_state_serial; /* serial of last pending _NET_WM_STATE request */
+    unsigned long configure_serial;    /* serial of last pending configure request */
 };
 
 extern struct x11drv_win_data *get_win_data( HWND hwnd );
@@ -660,6 +661,7 @@ extern void destroy_vk_surface( HWND hwnd );
 
 extern void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
 extern void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
+extern void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *rect );
 extern void wait_for_withdrawn_state( HWND hwnd, BOOL set );
 extern Window init_clip_window(void);
 extern void update_user_time( Time time );
