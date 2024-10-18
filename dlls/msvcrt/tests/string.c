@@ -4824,6 +4824,37 @@ static void test_mbsrev(void)
     _setmbcp(cp);
 }
 
+static void test__tolower_l(void)
+{
+    int ret;
+
+    ok(setlocale(LC_ALL, "english") != NULL, "setlocale failed.\n");
+    ret = _tolower_l('\xa5', 0);
+    ok(ret == 165, "Got %d.\n", ret);
+    ret = _tolower_l('\xb9', 0);
+    ok(ret == 185, "Got %d.\n", ret);
+    ret = _tolower_l('a', 0);
+    ok(ret == 97, "Got %d.\n", ret);
+
+    ok(setlocale(LC_ALL, ".936") != NULL, "setlocale failed.\n");
+    ret = _tolower_l('\xa5', 0);
+    ok(ret == -91, "Got %d.\n", ret);
+    ret = _tolower_l('\xb9', 0);
+    ok(ret == -71, "Got %d.\n", ret);
+    ret = _tolower_l('a', 0);
+    ok(ret == 97, "Got %d.\n", ret);
+
+    ok(setlocale(LC_ALL, "chinese-simplified") != NULL, "setlocale failed.\n");
+    ret = _tolower_l('\xa5', 0);
+    ok(ret == -91, "Got %d.\n", ret);
+    ret = _tolower_l('\xb9', 0);
+    ok(ret == -71, "Got %d.\n", ret);
+    ret = _tolower_l('a', 0);
+    ok(ret == 97, "Got %d.\n", ret);
+
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4986,4 +5017,5 @@ START_TEST(string)
     test__mbbtype();
     test_wcsncpy();
     test_mbsrev();
+    test__tolower_l();
 }
