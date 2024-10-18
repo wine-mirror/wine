@@ -120,6 +120,7 @@ static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
 static size_t (__cdecl *p___strncnt)(const char*, size_t);
 static unsigned int (__cdecl *p_mbsnextc_l)(const unsigned char*, _locale_t);
 static int (__cdecl *p_mbscmp_l)(const unsigned char*, const unsigned char*, _locale_t);
+static int (__cdecl *p__strnicmp_l)(const char*, const char*, size_t, _locale_t);
 
 int CDECL __STRINGTOLD(_LDOUBLE*, char**, const char*, int);
 
@@ -4901,6 +4902,78 @@ static void test__tolower_l(void)
     setlocale(LC_ALL, "C");
 }
 
+static void test__strnicmp_l(void)
+{
+    static const struct {
+        const char *str1;
+        const char *str2;
+    } tests[] = {
+        { "wine",             "win" },
+        /* GBK string tests */
+        { "\xce\xac",         "ceac" },
+        { "\xce\xac\xc4\xe1", "\xce\xac" },
+        { "\xce\xac""abc",    "\xce\xac" },
+        { "abc\xce\xac",      "abc" },
+        { "\xce\xac\xc4\xe1", "\xc4\xe1" },
+        { "\xce\xac",         "\xc4\xe1" },
+        { "\xb8\xdf",         "\xb8\xdb" },
+        { "\xb9",             "\xa5" },
+    };
+    _locale_t locale;
+    int ret, i;
+
+    if (!p__strnicmp_l)
+    {
+        win_skip("_strnicmp_l isn't available.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        ret = p__strnicmp_l(tests[i].str1, tests[i].str2, INT_MAX, 0);
+        ok(ret > 0, "tests[%d]: Got %d.\n", i, ret);
+
+        ret = p__strnicmp_l(tests[i].str2, tests[i].str1, INT_MAX, 0);
+        ok(ret < 0, "tests[%d]: Got %d.\n", i, ret);
+    }
+
+    if (!p__create_locale)
+        win_skip("_create_locale isn't available.\n");
+    else
+    {
+        locale = p__create_locale(LC_ALL, ".936");
+        ok(locale != NULL, "Failed to create locale.\n");
+
+        for (i = 0; i < ARRAY_SIZE(tests); i++)
+        {
+            ret = p__strnicmp_l(tests[i].str1, tests[i].str2, INT_MAX, locale);
+            ok(ret > 0, "tests[%d]: Got %d.\n", i, ret);
+
+            ret = p__strnicmp_l(tests[i].str2, tests[i].str1, INT_MAX, locale);
+            ok(ret < 0, "tests[%d]: Got %d.\n", i, ret);
+        }
+
+        p__free_locale(locale);
+    }
+
+    if (!setlocale(LC_ALL, ".936"))
+    {
+        win_skip("Skip testing _strnicmp_l with 936 code page.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        ret = p__strnicmp_l(tests[i].str1, tests[i].str2, INT_MAX, 0);
+        ok(ret > 0, "tests[%d]: Got %d.\n", i, ret);
+
+        ret = p__strnicmp_l(tests[i].str2, tests[i].str1, INT_MAX, 0);
+        ok(ret < 0, "tests[%d]: Got %d.\n", i, ret);
+    }
+
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4976,6 +5049,7 @@ START_TEST(string)
     p___strncnt = (void*)GetProcAddress(hMsvcrt, "__strncnt");
     p_mbsnextc_l = (void*)GetProcAddress(hMsvcrt, "_mbsnextc_l");
     p_mbscmp_l = (void*)GetProcAddress(hMsvcrt, "_mbscmp_l");
+    p__strnicmp_l = (void*)GetProcAddress(hMsvcrt, "_strnicmp_l");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -5064,4 +5138,5 @@ START_TEST(string)
     test_wcsncpy();
     test_mbsrev();
     test__tolower_l();
+    test__strnicmp_l();
 }
