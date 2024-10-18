@@ -3404,7 +3404,7 @@ static void test_tolower(void)
     ok(errno == EILSEQ, "Got errno %d.\n", errno);
     errno = 0xdeadbeef;
     ret = p_tolower(0xd0);
-    todo_wine ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(ret == 0xd0, "Got %#x.\n", ret);
     ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
 
     ok(setlocale(LC_ALL, "Korean_Korea.949") != NULL, "setlocale failed.\n");
@@ -3414,7 +3414,7 @@ static void test_tolower(void)
     ok(errno == EILSEQ, "Got errno %d.\n", errno);
     errno = 0xdeadbeef;
     ret = p_tolower(0xd0);
-    todo_wine ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(ret == 0xd0, "Got %#x.\n", ret);
     ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
 
     ok(setlocale(LC_ALL, "Chinese_Taiwan.950") != NULL, "setlocale failed.\n");
@@ -3424,7 +3424,7 @@ static void test_tolower(void)
     ok(errno == EILSEQ, "Got errno %d.\n", errno);
     errno = 0xdeadbeef;
     ret = p_tolower(0xd0);
-    todo_wine ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(ret == 0xd0, "Got %#x.\n", ret);
     ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
 
     setlocale(LC_ALL, "C");
