@@ -1244,32 +1244,6 @@ static void xrandr14_register_event_handlers(void)
                                    "XRandR ProviderChange" );
 }
 
-static Bool filter_rrnotify_event( Display *display, XEvent *event, char *arg )
-{
-    ULONG_PTR event_base = (ULONG_PTR)arg;
-
-    if (event->type == event_base + RRNotify_CrtcChange
-            || event->type == event_base + RRNotify_OutputChange
-            || event->type == event_base + RRNotify_ProviderChange)
-        return 1;
-
-    return 0;
-}
-
-static void process_rrnotify_events(void)
-{
-    struct x11drv_thread_data *data = x11drv_thread_data();
-    int event_base, error_base;
-
-    if (!data) return;
-    if (data->current_event) return; /* don't process nested events */
-
-    if (!pXRRQueryExtension( data->display, &event_base, &error_base ))
-        return;
-
-    process_events( data->display, filter_rrnotify_event, event_base );
-}
-
 /* XRandR 1.4 display settings handler */
 static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_settings_id *id )
 {
@@ -1284,8 +1258,6 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
     display_idx = wcstol( device_name + 11, &end, 10 ) - 1;
     if (*end)
         return FALSE;
-
-    process_rrnotify_events();
 
     /* Update cache */
     pthread_mutex_lock( &xrandr_mutex );
