@@ -3531,6 +3531,10 @@ static void test__stricmp(void)
     ok(ret > 0, "_stricmp returned %d\n", ret);
     ret = _stricmp("\xa5", "\xb9");
     ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\xa5\xa1", "\xb9\xa1"); /* valid gbk characters */
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("abc\xa5\xa1", "abc");
+    ok(ret > 0, "_stricmp returned %d\n", ret);
 
     if(!setlocale(LC_ALL, "polish")) {
         win_skip("stricmp tests\n");
@@ -3547,6 +3551,48 @@ static void test__stricmp(void)
     ok(ret == 0, "_stricmp returned %d\n", ret);
     ret = _stricmp("a", "\xb9");
     ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\xa5\xa1", "\xb9\xa1"); /* valid gbk characters */
+    ok(ret == 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("abc\xa5\xa1", "abc");
+    ok(ret > 0, "_stricmp returned %d\n", ret);
+
+    ok(setlocale(LC_ALL, ".936") != NULL, "setlocale failed.\n");
+    ret = _stricmp("test", "test");
+    ok(ret == 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("a", "z");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("z", "a");
+    ok(ret > 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\xa5", "\xb9");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("a", "\xb9");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\xa5\xa1", "\xb9\xa1"); /* valid gbk characters */
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\x82\xa0", "\x83\x41"); /* valid shift-jis characters */
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\x81\x00", "\x81\x01"); /* invalid for gbk and shift-jis */
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("abc\xa5\xa1", "abc");
+    ok(ret > 0, "_stricmp returned %d\n", ret);
+
+    ok(setlocale(LC_ALL, "Japanese_Japan.932") != NULL, "setlocale failed.\n");
+    ret = _stricmp("test", "test");
+    ok(ret == 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("a", "z");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("z", "a");
+    ok(ret > 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\xa5", "\xb9");
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\xa5\xa1", "\xb9\xa1"); /* valid gbk characters */
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\x82\xa0", "\x83\x41"); /* valid shift-jis characters */
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("\x81\x00", "\x81\x01"); /* invalid for gbk and shift-jis */
+    ok(ret < 0, "_stricmp returned %d\n", ret);
+    ret = _stricmp("abc\x82\xa0", "abc");
+    ok(ret > 0, "_stricmp returned %d\n", ret);
 
     setlocale(LC_ALL, "C");
 }
