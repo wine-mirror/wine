@@ -33,6 +33,7 @@
 #include "wine/test.h"
 
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
+static NTSTATUS (WINAPI *pNtAllocateReserveObject)( HANDLE *, const OBJECT_ATTRIBUTES *, MEMORY_RESERVE_OBJECT_TYPE );
 static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, EVENT_TYPE, BOOLEAN);
 static NTSTATUS (WINAPI *pNtOpenEvent)   ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES);
 static NTSTATUS (WINAPI *pNtCreateJobObject)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES );
@@ -3391,10 +3392,75 @@ static void test_object_permanence(void)
     ok( status == STATUS_SUCCESS, "NtSetInformationThread returned %08lx\n", status );
 }
 
+static void test_NtAllocateReserveObject(void)
+{
+    UNICODE_STRING name = RTL_CONSTANT_STRING(L"\\BaseNamedObjects\\test_NtAllocateReserveObject_name");
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE handle;
+    int i;
+
+    static const struct
+    {
+        MEMORY_RESERVE_OBJECT_TYPE type;
+        const WCHAR *type_name;
+    }
+    tests[] =
+    {
+        {MemoryReserveObjectTypeUserApc, L"UserApcReserve"},
+        {MemoryReserveObjectTypeIoCompletion, L"IoCompletionReserve"},
+    };
+
+    if (!pNtAllocateReserveObject)
+    {
+        win_skip("NtAllocateReserveObject is unavailable.\n");
+        return;
+    }
+
+    InitializeObjectAttributes(&attr, &name, 0, NULL, NULL);
+
+    /* Parameter checks */
+    status = pNtAllocateReserveObject(NULL, &attr, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#lx.\n", status);
+
+    status = pNtAllocateReserveObject(&handle, NULL, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    status = NtClose(handle);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+    status = pNtAllocateReserveObject(&handle, NULL, MemoryReserveObjectTypeIoCompletion + 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx.\n", status);
+
+    status = pNtAllocateReserveObject(&handle, &attr, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#lx.\n", status);
+
+    attr.ObjectName = NULL;
+    status = pNtAllocateReserveObject(&handle, &attr, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    status = NtClose(handle);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+    /* Test creating objects */
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("type %d", tests[i].type);
+
+        status = pNtAllocateReserveObject(&handle, NULL, tests[i].type);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+        test_object_type(handle, tests[i].type_name);
+
+        status = NtClose(handle);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
 
+    pNtAllocateReserveObject= (void *)GetProcAddress(hntdll, "NtAllocateReserveObject");
     pNtCreateEvent          = (void *)GetProcAddress(hntdll, "NtCreateEvent");
     pNtCreateJobObject      = (void *)GetProcAddress(hntdll, "NtCreateJobObject");
     pNtOpenJobObject        = (void *)GetProcAddress(hntdll, "NtOpenJobObject");
@@ -3455,4 +3521,5 @@ START_TEST(om)
     test_object_identity();
     test_query_directory();
     test_object_permanence();
+    test_NtAllocateReserveObject();
 }
