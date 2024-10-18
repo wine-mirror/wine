@@ -2848,9 +2848,8 @@ static DWORD WINAPI wndproc_thread(void *param)
     DWORD res;
     BOOL ret;
 
-    p->dummy_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
-            registry_mode.dmPelsHeight, 0, 0, 0, 0);
+    p->dummy_window = CreateWindowA("static", "d3d9_test", WS_VISIBLE | WS_CAPTION,
+            100, 100, 200, 200, 0, 0, 0, 0);
     flush_events();
 
     ret = SetEvent(p->window_created);
