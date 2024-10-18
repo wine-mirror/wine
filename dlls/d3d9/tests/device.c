@@ -3762,7 +3762,6 @@ struct wndproc_thread_param
     HWND dummy_window;
     HANDLE window_created;
     HANDLE test_finished;
-    BOOL running_in_foreground;
 };
 
 static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
@@ -3843,7 +3842,7 @@ static DWORD WINAPI wndproc_thread(void *param)
     p->dummy_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
             WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
             registry_mode.dmPelsHeight, 0, 0, 0, 0);
-    p->running_in_foreground = SetForegroundWindow(p->dummy_window);
+    flush_events();
 
     ret = SetEvent(p->window_created);
     ok(ret, "SetEvent failed, last error %#lx.\n", GetLastError());
@@ -4147,11 +4146,14 @@ static void test_wndproc(void)
                 WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, user32_width, user32_height, 0, 0, 0, 0);
         device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
                 WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, user32_width, user32_height, 0, 0, 0, 0);
+        flush_events();
+
         thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
         ok(!!thread, "Failed to create thread, last error %#lx.\n", GetLastError());
 
         res = WaitForSingleObject(thread_params.window_created, INFINITE);
         ok(res == WAIT_OBJECT_0, "Wait failed (%#lx), last error %#lx.\n", res, GetLastError());
+        flush_events();
 
         proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
         ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#Ix, got %#Ix.\n",
@@ -4164,15 +4166,10 @@ static void test_wndproc(void)
                 device_window, focus_window, thread_params.dummy_window);
 
         tmp = GetFocus();
-        ok(tmp == device_window, "Expected focus %p, got %p.\n", device_window, tmp);
-        if (thread_params.running_in_foreground)
-        {
-            tmp = GetForegroundWindow();
-            ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
-                    thread_params.dummy_window, tmp);
-        }
-        else
-            skip("Not running in foreground, skip foreground window test\n");
+        ok(tmp == NULL, "Expected focus %p, got %p.\n", NULL, tmp);
+        tmp = GetForegroundWindow();
+        ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
+                thread_params.dummy_window, tmp);
 
         flush_events();
 
@@ -4193,13 +4190,10 @@ static void test_wndproc(void)
                 expect_messages->message, expect_messages->window, i);
         expect_messages = NULL;
 
-        if (0) /* Disabled until we can make this work in a reliable way on Wine. */
-        {
-            tmp = GetFocus();
-            ok(tmp == focus_window, "Expected focus %p, got %p.\n", focus_window, tmp);
-            tmp = GetForegroundWindow();
-            ok(tmp == focus_window, "Expected foreground window %p, got %p.\n", focus_window, tmp);
-        }
+        tmp = GetFocus();
+        ok(tmp == focus_window, "Expected focus %p, got %p.\n", focus_window, tmp);
+        tmp = GetForegroundWindow();
+        ok(tmp == focus_window, "Expected foreground window %p, got %p.\n", focus_window, tmp);
         SetForegroundWindow(focus_window);
         flush_events();
 
@@ -4614,11 +4608,14 @@ static void test_wndproc_windowed(void)
     device_window = CreateWindowA("d3d9_test_wndproc_wc", "d3d9_test",
             WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, registry_mode.dmPelsWidth,
             registry_mode.dmPelsHeight, 0, 0, 0, 0);
+    flush_events();
+
     thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#lx.\n", GetLastError());
 
     res = WaitForSingleObject(thread_params.window_created, INFINITE);
     ok(res == WAIT_OBJECT_0, "Wait failed (%#lx), last error %#lx.\n", res, GetLastError());
+    flush_events();
 
     proc = GetWindowLongPtrA(device_window, GWLP_WNDPROC);
     ok(proc == (LONG_PTR)test_proc, "Expected wndproc %#Ix, got %#Ix.\n",
@@ -4631,15 +4628,10 @@ static void test_wndproc_windowed(void)
             device_window, focus_window, thread_params.dummy_window);
 
     tmp = GetFocus();
-    ok(tmp == device_window, "Expected focus %p, got %p.\n", device_window, tmp);
-    if (thread_params.running_in_foreground)
-    {
-        tmp = GetForegroundWindow();
-        ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
-                thread_params.dummy_window, tmp);
-    }
-    else
-        skip("Not running in foreground, skip foreground window test\n");
+    ok(tmp == NULL, "Expected focus %p, got %p.\n", NULL, tmp);
+    tmp = GetForegroundWindow();
+    ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
+            thread_params.dummy_window, tmp);
 
     filter_messages = focus_window;
 
@@ -4655,7 +4647,7 @@ static void test_wndproc_windowed(void)
     }
 
     tmp = GetFocus();
-    ok(tmp == device_window, "Expected focus %p, got %p.\n", device_window, tmp);
+    ok(tmp == NULL, "Expected focus %p, got %p.\n", NULL, tmp);
     tmp = GetForegroundWindow();
     ok(tmp == thread_params.dummy_window, "Expected foreground window %p, got %p.\n",
             thread_params.dummy_window, tmp);
