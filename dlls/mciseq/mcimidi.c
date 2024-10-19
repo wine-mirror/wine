@@ -133,8 +133,8 @@ static	DWORD	MIDI_drvClose(DWORD dwDevID)
     WINE_MCIMIDI*  wmm = (WINE_MCIMIDI*)mciGetDriverData(dwDevID);
 
     if (wmm) {
-	HeapFree(GetProcessHeap(), 0, wmm);
 	mciSetDriverData(dwDevID, 0);
+	HeapFree(GetProcessHeap(), 0, wmm);
 	return 1;
     }
     return (dwDevID == 0xFFFFFFFF) ? 1 : 0;
