@@ -1344,12 +1344,42 @@ static void set_xembed_flags( struct x11drv_win_data *data, unsigned long flags 
 {
     unsigned long info[2];
 
-    if (!data->whole_window) return;
-
     info[0] = 0; /* protocol version */
     info[1] = flags;
     XChangeProperty( data->display, data->whole_window, x11drv_atom(_XEMBED_INFO),
                      x11drv_atom(_XEMBED_INFO), 32, PropModeReplace, (unsigned char*)info, 2 );
+}
+
+static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
+{
+    UINT old_state = data->pending_state.wm_state;
+
+    if (!data->whole_window) return; /* no window, nothing to update */
+    if (old_state == new_state) return; /* states are the same, nothing to update */
+
+    data->pending_state.wm_state = new_state;
+    data->wm_state_serial = NextRequest( data->display );
+    TRACE( "window %p/%lx, requesting WM_STATE %#x -> %#x serial %lu\n", data->hwnd, data->whole_window,
+           old_state, new_state, data->wm_state_serial );
+
+    switch (MAKELONG(old_state, new_state))
+    {
+    case MAKELONG(WithdrawnState, IconicState):
+    case MAKELONG(WithdrawnState, NormalState):
+    case MAKELONG(IconicState, NormalState):
+        if (data->embedded) set_xembed_flags( data, XEMBED_MAPPED );
+        else XMapWindow( data->display, data->whole_window );
+        break;
+    case MAKELONG(NormalState, WithdrawnState):
+    case MAKELONG(IconicState, WithdrawnState):
+        if (data->embedded) set_xembed_flags( data, 0 );
+        else if (!data->managed) XUnmapWindow( data->display, data->whole_window );
+        else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
+        break;
+    case MAKELONG(NormalState, IconicState):
+        if (!data->embedded) XIconifyWindow( data->display, data->whole_window, data->vis.screen );
+        break;
+    }
 }
 
 
@@ -1374,10 +1404,7 @@ static void map_window( HWND hwnd, DWORD new_style )
         update_net_wm_states( data );
         sync_window_style( data );
 
-        data->pending_state.wm_state = data->iconic ? IconicState : NormalState;
-        data->wm_state_serial = NextRequest( data->display );
-        if (data->embedded) set_xembed_flags( data, XEMBED_MAPPED );
-        else XMapWindow( data->display, data->whole_window );
+        window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
         XFlush( data->display );
 
         data->mapped = TRUE;
@@ -1402,13 +1429,7 @@ static void unmap_window( HWND hwnd )
     if (data->mapped)
     {
         TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-
-        data->pending_state.wm_state = WithdrawnState;
-        data->wm_state_serial = NextRequest( data->display );
-        if (data->embedded) set_xembed_flags( data, 0 );
-        else if (!data->managed) XUnmapWindow( data->display, data->whole_window );
-        else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
-
+        window_set_wm_state( data, WithdrawnState );
         data->mapped = FALSE;
         data->net_wm_state = 0;
     }
@@ -1455,20 +1476,12 @@ void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial,
 void make_window_embedded( struct x11drv_win_data *data )
 {
     /* the window cannot be mapped before being embedded */
-    if (data->mapped)
-    {
-        data->pending_state.wm_state = WithdrawnState;
-        data->wm_state_serial = NextRequest( data->display );
-        if (!data->managed) XUnmapWindow( data->display, data->whole_window );
-        else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
-        data->net_wm_state = 0;
-    }
+    window_set_wm_state( data, WithdrawnState );
+    data->net_wm_state = 0;
     data->embedded = TRUE;
     data->managed = TRUE;
     sync_window_style( data );
-    data->pending_state.wm_state = NormalState;
-    data->wm_state_serial = NextRequest( data->display );
-    set_xembed_flags( data, (data->mapped || data->embedder) ? XEMBED_MAPPED : 0 );
+    window_set_wm_state( data, NormalState );
 }
 
 
@@ -2767,15 +2780,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, BOOL
         {
             set_wm_hints( data );
             data->iconic = (new_style & WS_MINIMIZE) != 0;
-            TRACE( "changing win %p iconic state to %u\n", data->hwnd, data->iconic );
-
-            data->pending_state.wm_state = data->iconic ? IconicState : NormalState;
-            data->wm_state_serial = NextRequest( data->display );
-            if (data->iconic)
-                XIconifyWindow( data->display, data->whole_window, data->vis.screen );
-            else if (is_window_rect_mapped( &new_rects->window ))
-                XMapWindow( data->display, data->whole_window );
-
+            window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
             update_net_wm_states( data );
         }
         else
