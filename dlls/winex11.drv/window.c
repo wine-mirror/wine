@@ -1374,13 +1374,10 @@ static void map_window( HWND hwnd, DWORD new_style )
         update_net_wm_states( data );
         sync_window_style( data );
 
+        data->pending_state.wm_state = data->iconic ? IconicState : NormalState;
+        data->wm_state_serial = NextRequest( data->display );
         if (data->embedded) set_xembed_flags( data, XEMBED_MAPPED );
-        else
-        {
-            data->pending_state.wm_state = data->iconic ? IconicState : NormalState;
-            data->wm_state_serial = NextRequest( data->display );
-            XMapWindow( data->display, data->whole_window );
-        }
+        else XMapWindow( data->display, data->whole_window );
         XFlush( data->display );
 
         data->mapped = TRUE;
@@ -1406,14 +1403,11 @@ static void unmap_window( HWND hwnd )
     {
         TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
 
+        data->pending_state.wm_state = WithdrawnState;
+        data->wm_state_serial = NextRequest( data->display );
         if (data->embedded) set_xembed_flags( data, 0 );
-        else
-        {
-            data->pending_state.wm_state = WithdrawnState;
-            data->wm_state_serial = NextRequest( data->display );
-            if (!data->managed) XUnmapWindow( data->display, data->whole_window );
-            else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
-        }
+        else if (!data->managed) XUnmapWindow( data->display, data->whole_window );
+        else XWithdrawWindow( data->display, data->whole_window, data->vis.screen );
 
         data->mapped = FALSE;
         data->net_wm_state = 0;
@@ -1472,6 +1466,8 @@ void make_window_embedded( struct x11drv_win_data *data )
     data->embedded = TRUE;
     data->managed = TRUE;
     sync_window_style( data );
+    data->pending_state.wm_state = NormalState;
+    data->wm_state_serial = NextRequest( data->display );
     set_xembed_flags( data, (data->mapped || data->embedder) ? XEMBED_MAPPED : 0 );
 }
 
