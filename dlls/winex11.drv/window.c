@@ -2526,17 +2526,19 @@ void X11DRV_SystrayDockClear( HWND hwnd )
 BOOL X11DRV_SystrayDockRemove( HWND hwnd )
 {
     struct x11drv_win_data *data;
-    BOOL ret;
+    BOOL ret = FALSE;
 
-    /* make sure we don't try to unmap it, it confuses some systray docks */
     if ((data = get_win_data( hwnd )))
     {
-        if ((ret = data->embedded)) data->mapped = FALSE;
+        if ((ret = data->embedded))
+        {
+            window_set_wm_state( data, WithdrawnState );
+            data->mapped = FALSE;
+        }
         release_win_data( data );
-        return ret;
     }
 
-    return FALSE;
+    return ret;
 }
 
 
