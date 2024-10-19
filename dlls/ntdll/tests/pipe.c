@@ -2731,7 +2731,6 @@ static void subtest_empty_name_pipe_operations(HANDLE handle)
             WaitForSingleObject(event, INFINITE);
             status = io.Status;
         }
-        todo_wine_if(ft->status != STATUS_NOT_SUPPORTED)
         ok(status == ft->status || (ft->status_broken && broken(status == ft->status_broken)),
            "NtFsControlFile(%s) on \\Device\\NamedPipe: expected %#lx, got %#lx\n",
            ft->name, ft->status, status);

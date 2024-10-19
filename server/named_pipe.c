@@ -1506,7 +1506,18 @@ static void named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, struct as
     switch(code)
     {
     case FSCTL_PIPE_WAIT:
+    case FSCTL_PIPE_LISTEN:
+    case FSCTL_PIPE_IMPERSONATE:
         set_error( STATUS_ILLEGAL_FUNCTION );
+        return;
+
+    case FSCTL_PIPE_DISCONNECT:
+    case FSCTL_PIPE_TRANSCEIVE:
+        set_error( STATUS_PIPE_DISCONNECTED );
+        return;
+
+    case FSCTL_PIPE_QUERY_CLIENT_PROCESS:
+        set_error( STATUS_INVALID_PARAMETER );
         return;
 
     default:
