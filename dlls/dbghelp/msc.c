@@ -4379,7 +4379,13 @@ static BOOL codeview_process_info(const struct process *pcs,
 
         TRACE("Got RSDS type of PDB file: guid=%s age=%08x name=%s\n",
               wine_dbgstr_guid(&rsds->guid), rsds->age, debugstr_a(rsds->name));
-        ret = pdb_process_file(pcs, msc_dbg, rsds->name, &rsds->guid, 0, rsds->age);
+        /* gcc/mingw and clang can emit build-id information, but with an empty PDB filename.
+         * Don't search for the .pdb file in that case.
+         */
+        if (rsds->name[0])
+            ret = pdb_process_file(pcs, msc_dbg, rsds->name, &rsds->guid, 0, rsds->age);
+        else
+            ret = TRUE;
         break;
     }
     default:
@@ -4487,7 +4493,7 @@ typedef struct _FPO_DATA
     __ENDTRY
 
     /* we haven't found yet any debug information, fallback to unmatched pdb */
-    if (module->module.SymType == SymDeferred)
+    if (!ret && module->module.SymType == SymDeferred)
     {
         SYMSRV_INDEX_INFOW info = {.sizeofstruct = sizeof(info)};
         char buffer[MAX_PATH];
