@@ -1036,3 +1036,27 @@ DWORD pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
     }
     return msc_get_file_indexinfo(image, dbg, dirsize / sizeof(*dbg), info);
 }
+
+/* check if image contains a debug entry that contains a gcc/mingw - clang build-id information */
+BOOL pe_has_buildid_debug(struct image_file_map *fmap, GUID *guid)
+{
+    BOOL ret = FALSE;
+
+    if (fmap->modtype == DMT_PE)
+    {
+        SYMSRV_INDEX_INFOW info = {.sizeofstruct = sizeof(info)};
+        const void *image = pe_map_full(fmap, NULL);
+
+        if (image)
+        {
+            DWORD retval = pe_get_file_indexinfo((void*)image, GetFileSize(fmap->u.pe.hMap, NULL), &info);
+            if ((retval == ERROR_SUCCESS || retval == ERROR_BAD_EXE_FORMAT) && info.age && !info.pdbfile[0])
+            {
+                *guid = info.guid;
+                ret = TRUE;
+            }
+            pe_unmap_full(fmap);
+        }
+    }
+    return ret;
+}

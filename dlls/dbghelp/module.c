@@ -527,6 +527,7 @@ static BOOL image_check_debug_link_gnu_id(const WCHAR* file, struct image_file_m
 {
     struct image_section_map buildid_sect;
     DWORD read_bytes;
+    GUID guid;
     HANDLE handle;
     WCHAR *path;
     WORD magic;
@@ -545,6 +546,9 @@ static BOOL image_check_debug_link_gnu_id(const WCHAR* file, struct image_file_m
         ret = elf_map_handle(handle, fmap);
     CloseHandle(handle);
 
+    if (ret && pe_has_buildid_debug(fmap, &guid))
+        return TRUE;
+
     if (ret && image_find_section(fmap, ".note.gnu.build-id", &buildid_sect))
     {
         const UINT32* note;
@@ -557,12 +561,13 @@ static BOOL image_check_debug_link_gnu_id(const WCHAR* file, struct image_file_m
             {
                 if (note[1] == idlen && !memcmp(note + 3 + ((note[0] + 3) >> 2), id, idlen))
                     return TRUE;
-                WARN("mismatch in buildid information for %s\n", debugstr_w(file));
             }
         }
         image_unmap_section(&buildid_sect);
         image_unmap_file(fmap);
     }
+    if (ret)
+        WARN("mismatch in buildid information for %s\n", debugstr_w(file));
     return FALSE;
 }
 
@@ -844,7 +849,18 @@ BOOL image_check_alternate(struct image_file_map* fmap, const struct module* mod
     struct image_file_map* fmap_link = NULL;
 
     /* if present, add the .gnu_debuglink file as an alternate to current one */
-    if (image_find_section(fmap, ".note.gnu.build-id", &buildid_sect))
+    if (fmap->modtype == DMT_PE)
+    {
+        GUID guid;
+
+        if (pe_has_buildid_debug(fmap, &guid))
+        {
+            /* reorder bytes to match little endian order */
+            fmap_link = image_locate_build_id_target((const BYTE*)&guid, sizeof(guid));
+        }
+    }
+    /* if present, add the .note.gnu.build-id as an alternate to current one */
+    if (!fmap_link && image_find_section(fmap, ".note.gnu.build-id", &buildid_sect))
     {
         const UINT32* note;
 

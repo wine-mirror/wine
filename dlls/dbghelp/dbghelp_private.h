@@ -788,6 +788,8 @@ extern BOOL         pe_unmap_directory(struct module* module, int dirno, const c
 extern DWORD        pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
 extern const BYTE*  pe_lock_region_from_rva(struct module *module, DWORD rva, DWORD size, DWORD *length);
 extern BOOL         pe_unlock_region(struct module *module, const BYTE* region);
+struct image_file_map;
+extern BOOL         pe_has_buildid_debug(struct image_file_map *fmap, GUID *guid);
 
 /* source.c */
 extern unsigned     source_new(struct module* module, const char* basedir, const char* source);
