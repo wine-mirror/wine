@@ -440,7 +440,8 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
     static UINT ime_update_count;
 
     struct imm_thread_data *data = get_imm_thread_data();
-    UINT id = -1, comp_len, result_len;
+    UINT id = -1, comp_len, result_len, prev_result_len;
+    WCHAR *prev_result_str, *tmp;
     struct ime_update *update;
 
     TRACE( "hwnd %p, cursor_pos %u, comp_str %s, result_str %s\n", hwnd, cursor_pos,
@@ -449,7 +450,25 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
     comp_len = comp_str ? wcslen( comp_str ) + 1 : 0;
     result_len = result_str ? wcslen( result_str ) + 1 : 0;
 
-    if (!(update = malloc( offsetof(struct ime_update, buffer[comp_len + result_len]) ))) return;
+    /* prepend or keep the previous result string, if there was any */
+    if (!data->ime_process_vkey || !data->update) prev_result_str = NULL;
+    else prev_result_str = data->update->result_str;
+    prev_result_len = prev_result_str ? wcslen( prev_result_str ) + 1 : 0;
+
+    if (!prev_result_len && !result_len) tmp = NULL;
+    else if (!(tmp = malloc( (prev_result_len + result_len) * sizeof(WCHAR) ))) return;
+
+    if (prev_result_len && result_len) prev_result_len -= 1; /* concat both strings */
+    if (prev_result_len) memcpy( tmp, prev_result_str, prev_result_len * sizeof(WCHAR) );
+    if (result_len) memcpy( tmp + prev_result_len, result_str, result_len * sizeof(WCHAR) );
+    result_len += prev_result_len;
+    result_str = tmp;
+
+    if (!(update = malloc( offsetof(struct ime_update, buffer[comp_len + result_len]) )))
+    {
+        free( tmp );
+        return;
+    }
     update->cursor_pos = cursor_pos;
     update->comp_str = comp_str ? memcpy( update->buffer, comp_str, comp_len * sizeof(WCHAR) ) : NULL;
     update->result_str = result_str ? memcpy( update->buffer + comp_len, result_str, result_len * sizeof(WCHAR) ) : NULL;
@@ -470,6 +489,8 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
         free( data->update );
         data->update = update;
     }
+
+    free( tmp );
 }
 
 static struct ime_update *find_ime_update( WORD vkey, WORD scan )
