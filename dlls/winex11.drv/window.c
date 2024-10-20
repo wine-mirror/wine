@@ -488,7 +488,7 @@ static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttrib
  */
 static void sync_window_style( struct x11drv_win_data *data )
 {
-    if (data->whole_window != root_window)
+    if (data->whole_window != root_window && !data->embedded)
     {
         XSetWindowAttributes attr;
         int mask = get_window_attributes( data, &attr );
@@ -1217,7 +1217,7 @@ static void update_net_wm_states( struct x11drv_win_data *data )
 {
     UINT i, style, ex_style, new_state = 0;
 
-    if (!data->managed) return;
+    if (!data->managed || data->embedded) return;
     if (data->whole_window == root_window)
     {
         update_desktop_fullscreen(data->display);
@@ -1372,15 +1372,12 @@ static void map_window( HWND hwnd, DWORD new_style )
 
         remove_startup_notification( data->display, data->whole_window );
         set_wm_hints( data );
+        update_net_wm_states( data );
+        sync_window_style( data );
 
-        if (!data->embedded)
-        {
-            update_net_wm_states( data );
-            sync_window_style( data );
-            XMapWindow( data->display, data->whole_window );
-            XFlush( data->display );
-        }
-        else set_xembed_flags( data, XEMBED_MAPPED );
+        if (data->embedded) set_xembed_flags( data, XEMBED_MAPPED );
+        else XMapWindow( data->display, data->whole_window );
+        XFlush( data->display );
 
         data->mapped = TRUE;
         data->iconic = (new_style & WS_MINIMIZE) != 0;
