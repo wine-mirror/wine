@@ -3656,29 +3656,94 @@ done:
 /***********************************************************************
  *		SetupDiOpenDeviceInterfaceW (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiOpenDeviceInterfaceW(
-       HDEVINFO DeviceInfoSet,
-       PCWSTR DevicePath,
-       DWORD OpenFlags,
-       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+BOOL WINAPI SetupDiOpenDeviceInterfaceW (HDEVINFO devinfo, const WCHAR *device_path,
+       DWORD flags, SP_DEVICE_INTERFACE_DATA *iface_data)
 {
-    FIXME("%p %s %08lx %p\n",
-        DeviceInfoSet, debugstr_w(DevicePath), OpenFlags, DeviceInterfaceData);
+    SP_DEVINFO_DATA device_data = {.cbSize = sizeof(device_data)};
+    WCHAR *instance_id = NULL, *tmp;
+    struct device_iface *iface;
+    struct device *device;
+    unsigned int len;
+
+    TRACE("%p %s %#lx %p\n", devinfo, debugstr_w(device_path), flags, iface_data);
+
+    if (flags)
+        FIXME("flags %#lx not implemented\n", flags);
+
+    if (!device_path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if ((len = wcslen(device_path)) < 4)
+        goto error;
+    if (!(instance_id = malloc((len - 4 + 1) * sizeof(*instance_id))))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+
+    wcscpy(instance_id, device_path + 4);
+    if ((tmp = wcsrchr(instance_id, '#'))) *tmp = 0;
+    while ((tmp = wcschr(instance_id, '#'))) *tmp = '\\';
+
+    if (!SetupDiGetClassDevsExW(NULL, instance_id, NULL, DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES,
+            devinfo, NULL, NULL))
+        goto error;
+    if (!SetupDiOpenDeviceInfoW(devinfo, instance_id, NULL, 0, &device_data))
+        goto error;
+
+    if (!(device = get_device(devinfo, &device_data)))
+        goto error;
+    LIST_FOR_EACH_ENTRY(iface, &device->interfaces, struct device_iface, entry)
+    {
+        if (iface->symlink && !wcsicmp(device_path, iface->symlink))
+        {
+            if (iface_data)
+                copy_device_iface_data(iface_data, iface);
+            free(instance_id);
+            return TRUE;
+        }
+    }
+
+error:
+    free(instance_id);
+    SetLastError(ERROR_NO_SUCH_DEVICE_INTERFACE);
     return FALSE;
 }
 
 /***********************************************************************
  *		SetupDiOpenDeviceInterfaceA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiOpenDeviceInterfaceA(
-       HDEVINFO DeviceInfoSet,
-       PCSTR DevicePath,
-       DWORD OpenFlags,
-       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
+BOOL WINAPI SetupDiOpenDeviceInterfaceA(HDEVINFO devinfo, const char *device_path,
+       DWORD flags, SP_DEVICE_INTERFACE_DATA *iface_data)
 {
-    FIXME("%p %s %08lx %p\n", DeviceInfoSet,
-        debugstr_a(DevicePath), OpenFlags, DeviceInterfaceData);
-    return FALSE;
+    WCHAR *device_pathW;
+    BOOL ret;
+    int len;
+
+    TRACE("%p %s %#lx %p\n", devinfo, debugstr_a(device_path), flags, iface_data);
+
+    if (!device_path)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!(len = MultiByteToWideChar(CP_ACP, 0, device_path, -1, NULL, 0)))
+    {
+        SetLastError(ERROR_NO_SUCH_DEVICE_INTERFACE);
+        return FALSE;
+    }
+    if (!(device_pathW = malloc(len * sizeof(*device_pathW))))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+    MultiByteToWideChar(CP_ACP, 0, device_path, -1, device_pathW, len);
+    ret = SetupDiOpenDeviceInterfaceW(devinfo, device_pathW, flags, iface_data);
+    free(device_pathW);
+    return ret;
 }
 
 /***********************************************************************
