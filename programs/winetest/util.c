@@ -48,8 +48,8 @@ char *xstrdup( const char *str )
     return res;
 }
 
-static char *vstrfmtmake( size_t *lenp, const char *fmt, va_list ap ) __WINE_PRINTF_ATTR(2,0);
-static char *vstrfmtmake( size_t *lenp, const char *fmt, va_list ap )
+static char *vstrfmtmake( const char *fmt, va_list ap ) __WINE_PRINTF_ATTR(1,0);
+static char *vstrfmtmake( const char *fmt, va_list ap )
 {
     size_t size = 1000;
     char *p;
@@ -64,47 +64,42 @@ static char *vstrfmtmake( size_t *lenp, const char *fmt, va_list ap )
         else break;
         p = xrealloc(p, size);
     }
-    if (lenp) *lenp = n;
     return p;
 }
 
-char *vstrmake (size_t *lenp, va_list ap)
+char *vstrmake(va_list ap)
 {
     const char *fmt;
 
     fmt = va_arg (ap, const char*);
-    return vstrfmtmake (lenp, fmt, ap);
+    return vstrfmtmake (fmt, ap);
 }
 
-char *WINAPIV strmake( size_t *len, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
-char *WINAPIV strmake( size_t *len, const char *fmt, ... )
+char *strmake( const char *fmt, ... )
 {
     va_list ap;
     char *p;
 
     va_start( ap, fmt );
-    p = vstrfmtmake( len, fmt, ap );
+    p = vstrfmtmake( fmt, ap );
     va_end( ap );
     return p;
 }
 
-void WINAPIV output( HANDLE file, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
-void WINAPIV output( HANDLE file, const char *fmt, ... )
+void output( HANDLE file, const char *fmt, ... )
 {
     va_list ap;
-    size_t size;
     DWORD written;
     char *buffer, *head;
 
     va_start (ap, fmt);
-    buffer = vstrfmtmake (&size, fmt, ap);
+    buffer = vstrfmtmake (fmt, ap);
     head = buffer;
     va_end (ap);
-    while (size) {
-        if (!WriteFile( file, head, size, &written, NULL ))
+    while (head[0]) {
+        if (!WriteFile( file, head, strlen(head), &written, NULL ))
             report (R_FATAL, "Can't write logs: %u", GetLastError());
         head += written;
-        size -= written;
     }
     free(buffer);
 }

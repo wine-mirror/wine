@@ -671,7 +671,7 @@ extract_test (struct wine_test *test, const char *dir, LPSTR res_name)
     if (!code) report (R_FATAL, "Can't find test resource %s: %d",
                        res_name, GetLastError ());
     test->name = xstrdup( res_name );
-    test->exename = strmake (NULL, "%s\\%s", dir, test->name);
+    test->exename = strmake("%s\\%s", dir, test->name);
     exepos = strstr (test->name, testexe);
     if (!exepos) report (R_FATAL, "Not an .exe file: %s", test->name);
     *exepos = 0;
@@ -721,7 +721,7 @@ static DWORD wait_process( HANDLE process, DWORD timeout )
 
 static void append_path( const char *path)
 {
-    char *newpath = strmake( NULL, "%s;%s", curpath, path );
+    char *newpath = strmake( "%s;%s", curpath, path );
     SetEnvironmentVariableA("PATH", newpath);
     free(newpath);
 }
@@ -827,7 +827,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     subfile = create_temp_file( subname );
     if (subfile == INVALID_HANDLE_VALUE) return GetLastError();
 
-    cmd = strmake (NULL, "%s --list", test->exename);
+    cmd = strmake("%s --list", test->exename);
     if (test->maindllpath) {
         /* We need to add the path (to the main dll) to PATH */
         append_path(test->maindllpath);
@@ -886,7 +886,7 @@ static char *xmlescape( const char *src, const char *end, int comment )
         else if (*src == '>') tmp += sprintf( tmp, "&gt;" );
         else if (*src < ' ' && *src != '\t' && *src != '\r' && *src != '\n')
         {
-            char *esc = strmake( NULL, "\\x%02x", *src );
+            char *esc = strmake( "\\x%02x", *src );
             tmp += sprintf( tmp, "%s", esc );
             free( esc );
         }
@@ -959,7 +959,7 @@ static void report_test_done( struct wine_test *test, const char *subtest, const
             ptr++;
 
             message = xmlescape( ptr, next, 0 );
-            name = strmake( NULL, "%s:%d %s", src, n, message );
+            name = strmake( "%s:%d %s", src, n, message );
             for (i = 0; i < ARRAY_SIZE(patterns); i++)
             {
                 if (!strncmp( ptr, patterns[i].pattern, patterns[i].length ))
@@ -1035,7 +1035,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         HANDLE tmpfile = create_temp_file( tmpname );
         int status;
         DWORD pid, size, start = GetTickCount();
-        char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
+        char *cmd = strmake("%s %s", test->exename, subtest);
 
         report_test_start( test, subtest, file );
         /* Flush to disk so we know which test caused Windows to crash if it does */

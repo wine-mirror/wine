@@ -28,12 +28,12 @@
 #include "wine/debug.h"
 
 #define xprintf( fmt, ... ) output( logfile, fmt, ## __VA_ARGS__ )
-extern void WINAPIV output( HANDLE file, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
-extern char *WINAPIV strmake( size_t *len, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
+extern void output( HANDLE file, const char *fmt, ... ) __WINE_PRINTF_ATTR(2,3);
+extern char *strmake( const char *fmt, ... ) __WINE_PRINTF_ATTR(1,2);
 
 void fatal (const char* msg);
 void warning (const char* msg);
-char *vstrmake (size_t *lenp, va_list ap);
+char *vstrmake (va_list ap);
 int goodtagchar (char c);
 const char *findbadtagchar (const char *tag);
 

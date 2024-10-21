@@ -103,17 +103,16 @@ send_buf (SOCKET s, const char *buf, size_t length)
     return 0;
 }
 
-static int WINAPIV send_str (SOCKET s, ...)
+static int send_str (SOCKET s, ...)
 {
     va_list ap;
     char *p;
     int ret;
-    size_t len;
 
     va_start (ap, s);
-    p = vstrmake (&len, ap);
+    p = vstrmake (ap);
     va_end (ap);
-    ret = send_buf (s, p, len);
+    ret = send_buf (s, p, strlen(p));
     free(p);
     return ret;
 }
@@ -164,7 +163,8 @@ send_file_direct (const char * url, const char *name)
 
     report (R_STATUS, "Sending header");
     filesize = GetFileSize( file, NULL );
-    str = strmake (&total, body1, name);
+    str = strmake (body1, name);
+    total = strlen(str);
     ret = send_str (s, head, filesize + total + sizeof body2 - 1) ||
         send_buf (s, str, total);
     free(str);
@@ -218,8 +218,8 @@ send_file_direct (const char * url, const char *name)
         return 1;
     }
 
-    str = strmake (&count, "Received %s (%ld bytes).\n",
-                   name, filesize);
+    str = strmake("Received %s (%ld bytes).\n", name, filesize);
+    count = strlen(str);
     ret = total < count || memcmp (str, buffer + total - count, count) != 0;
     free(str);
     if (ret) {
@@ -355,12 +355,13 @@ send_file_wininet (const char *url, const char *name)
 
     report (R_STATUS, "Sending request");
     filesize = GetFileSize( file, NULL );
-    str = strmake (&total, body1, name);
+    str = strmake(body1, name);
+    total = strlen(str);
     memset(&buffers_in, 0, sizeof(INTERNET_BUFFERSA));
     buffers_in.dwStructSize = sizeof(INTERNET_BUFFERSA);
     buffers_in.dwBufferTotal = filesize + total + sizeof body2 - 1;
-    buffers_in.lpcszHeader = strmake (&count, extra_headers, buffers_in.dwBufferTotal);
-    buffers_in.dwHeadersLength = count;
+    buffers_in.lpcszHeader = strmake(extra_headers, buffers_in.dwBufferTotal);
+    buffers_in.dwHeadersLength = strlen(buffers_in.lpcszHeader);
     if (! pHttpSendRequestEx(request, &buffers_in, NULL, 0, 0)) {
         report (R_WARNING, "Unable to send request, error %u", GetLastError());
         goto done;
@@ -412,8 +413,8 @@ send_file_wininet (const char *url, const char *name)
     while (bytes_read != 0);
 
     free(str);
-    str = strmake (&count, "Received %s (%ld bytes).\n",
-                   name, filesize);
+    str = strmake("Received %s (%ld bytes).\n", name, filesize);
+    count = strlen(str);
     if (total < count || memcmp (str, buffer + total - count, count) != 0) {
         buffer[total] = 0;
         report (R_ERROR, "Can't submit logfile '%s'. "
