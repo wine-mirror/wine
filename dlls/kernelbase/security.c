@@ -704,8 +704,8 @@ BOOL WINAPI DuplicateTokenEx( HANDLE token, DWORD access, LPSECURITY_ATTRIBUTES 
 BOOL WINAPI GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class,
                                  LPVOID info, DWORD len, LPDWORD retlen )
 {
-    TRACE("(%p, %s, %p, %ld, %p):\n",
-          token,
+    TRACE("(%p, %d [%s], %p, %ld, %p):\n",
+          token, class,
           (class == TokenUser) ? "TokenUser" :
           (class == TokenGroups) ? "TokenGroups" :
           (class == TokenPrivileges) ? "TokenPrivileges" :
@@ -721,6 +721,9 @@ BOOL WINAPI GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class,
           (class == TokenGroupsAndPrivileges) ? "TokenGroupsAndPrivileges" :
           (class == TokenSessionReference) ? "TokenSessionReference" :
           (class == TokenSandBoxInert) ? "TokenSandBoxInert" :
+          (class == TokenElevation) ? "TokenElevation" :
+          (class == TokenElevationType) ? "TokenElevationType" :
+          (class == TokenLinkedToken) ? "TokenLinkedToken" :
           "Unknown",
           info, len, retlen);
 
