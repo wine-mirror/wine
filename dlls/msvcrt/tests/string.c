@@ -121,6 +121,7 @@ static size_t (__cdecl *p___strncnt)(const char*, size_t);
 static unsigned int (__cdecl *p_mbsnextc_l)(const unsigned char*, _locale_t);
 static int (__cdecl *p_mbscmp_l)(const unsigned char*, const unsigned char*, _locale_t);
 static int (__cdecl *p__strnicmp_l)(const char*, const char*, size_t, _locale_t);
+static int (__cdecl *p_toupper)(int);
 
 int CDECL __STRINGTOLD(_LDOUBLE*, char**, const char*, int);
 
@@ -4974,6 +4975,53 @@ static void test__strnicmp_l(void)
     setlocale(LC_ALL, "C");
 }
 
+static void test_toupper(void)
+{
+    int ret;
+
+    ok(setlocale(LC_ALL, "English_United States") != NULL, "setlocale failed.\n");
+    errno = 0xdeadbeef;
+    ret = p_toupper((signed char)0xf0);
+    ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+    errno = 0xdeadbeef;
+    ret = p_toupper(0xf0);
+    ok(ret == 0xd0, "Got %#x.\n", ret);
+    ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
+
+    ok(setlocale(LC_ALL, "Polish") != NULL, "setlocale failed.\n");
+    errno = 0xdeadbeef;
+    ret = p_toupper((signed char)0xa5);
+    ok(ret == 0xa5, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+    errno = 0xdeadbeef;
+    ret = p_toupper((signed char)0xb9);
+    ok(ret == 0xa5, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+
+    ok(setlocale(LC_ALL, "Japanese_Japan.932") != NULL, "setlocale failed.\n");
+    errno = 0xdeadbeef;
+    ret = p_toupper((signed char)0xf0);
+    ok(ret == (signed char)0xf0, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+    errno = 0xdeadbeef;
+    ret = p_toupper(0xf0);
+    todo_wine ok(ret == 0xf0, "Got %#x.\n", ret);
+    ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
+
+    ok(setlocale(LC_ALL, "Chinese_China.936") != NULL, "setlocale failed.\n");
+    errno = 0xdeadbeef;
+    ret = p_toupper((signed char)0xf0);
+    ok(ret == (signed char)0xf0, "Got %#x.\n", ret);
+    ok(errno == EILSEQ, "Got errno %d.\n", errno);
+    errno = 0xdeadbeef;
+    ret = p_toupper(0xf0);
+    todo_wine ok(ret == 0xf0, "Got %#x.\n", ret);
+    ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
+
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -5050,6 +5098,7 @@ START_TEST(string)
     p_mbsnextc_l = (void*)GetProcAddress(hMsvcrt, "_mbsnextc_l");
     p_mbscmp_l = (void*)GetProcAddress(hMsvcrt, "_mbscmp_l");
     p__strnicmp_l = (void*)GetProcAddress(hMsvcrt, "_strnicmp_l");
+    p_toupper = (void*)GetProcAddress(hMsvcrt, "toupper");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -5139,4 +5188,5 @@ START_TEST(string)
     test_mbsrev();
     test__tolower_l();
     test__strnicmp_l();
+    test_toupper();
 }
