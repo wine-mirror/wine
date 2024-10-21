@@ -7778,10 +7778,10 @@ static void test_video_processor(BOOL use_2d_buffer)
         {0},
     };
 
-    static const MFVideoArea actual_aperture = {.Area={82,84}};
-    static const DWORD actual_width = 96, actual_height = 96, nv12_aligned_width = 128;
-    static const DWORD extra_width = actual_width + 0x30;
-    static const DWORD nv12_aligned_extra_width = 192;
+    const MFVideoArea actual_aperture = {.Area={82,84}};
+    const DWORD actual_width = 96, actual_height = 96, nv12_aligned_width = 128;
+    const DWORD extra_width = actual_width + 0x30;
+    const DWORD nv12_aligned_extra_width = 192;
     const struct attribute_desc rgb32_with_aperture[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
