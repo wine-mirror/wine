@@ -1533,7 +1533,7 @@ static void test_filename(void)
     static const WCHAR extdef[] = {'*','.','w','t','e',0};
     static const WCHAR complexext[] = {'*','.','w','t','2',';','*','.','w','t','1',0};
     /* 300 chars, to be longer than MAX_PATH=260 */
-    static const WCHAR *const long_ext = L"*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;";
+    static const WCHAR long_ext[] = L"*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;*.wt2;";
 
     static const COMDLG_FILTERSPEC filterspec[] = {
         { desc1, ext1 }, { desc2, ext2 }, { descdef, extdef }
