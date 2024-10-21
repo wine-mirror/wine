@@ -36,12 +36,26 @@ struct handler_entry
     IEventHandler_IInspectable *handler;
 };
 
+static struct handler_entry *handler_entry_create( IEventHandler_IInspectable *handler )
+{
+    struct handler_entry *entry;
+    if (!(entry = calloc( 1, sizeof(*entry) ))) return NULL;
+    IEventHandler_IInspectable_AddRef( (entry->handler = handler) );
+
+    return entry;
+}
+
+static void handler_entry_destroy( struct handler_entry *entry )
+{
+    IEventHandler_IInspectable_Release( entry->handler );
+    free( entry );
+}
+
 HRESULT event_handlers_append( struct list *list, IEventHandler_IInspectable *handler, EventRegistrationToken *token )
 {
     struct handler_entry *entry;
 
-    if (!(entry = calloc( 1, sizeof(*entry) ))) return E_OUTOFMEMORY;
-    IEventHandler_IInspectable_AddRef( (entry->handler = handler) );
+    if (!(entry = handler_entry_create( handler ))) return E_OUTOFMEMORY;
 
     EnterCriticalSection( &handlers_cs );
 
@@ -67,23 +81,29 @@ HRESULT event_handlers_remove( struct list *list, EventRegistrationToken *token 
 
     LeaveCriticalSection( &handlers_cs );
 
-    if (found)
-    {
-        IEventHandler_IInspectable_Release( entry->handler );
-        free( entry );
-    }
-
+    if (found) handler_entry_destroy( entry );
     return S_OK;
 }
 
 void event_handlers_notify( struct list *list, IInspectable *element )
 {
-    struct handler_entry *entry;
+    struct handler_entry *entry, *next, *copy;
+    struct list copies = LIST_INIT(copies);
 
     EnterCriticalSection( &handlers_cs );
 
     LIST_FOR_EACH_ENTRY( entry, list, struct handler_entry, entry )
-        IEventHandler_IInspectable_Invoke( entry->handler, NULL, element );
+    {
+        if (!(copy = handler_entry_create( entry->handler ))) continue;
+        list_add_tail( &copies, &copy->entry );
+    }
 
     LeaveCriticalSection( &handlers_cs );
+
+    LIST_FOR_EACH_ENTRY_SAFE( entry, next, &copies, struct handler_entry, entry )
+    {
+        IEventHandler_IInspectable_Invoke( entry->handler, NULL, element );
+        list_remove( &entry->entry );
+        handler_entry_destroy( entry );
+    }
 }
