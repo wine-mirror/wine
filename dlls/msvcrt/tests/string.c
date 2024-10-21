@@ -5006,7 +5006,7 @@ static void test_toupper(void)
     ok(errno == EILSEQ, "Got errno %d.\n", errno);
     errno = 0xdeadbeef;
     ret = p_toupper(0xf0);
-    todo_wine ok(ret == 0xf0, "Got %#x.\n", ret);
+    ok(ret == 0xf0, "Got %#x.\n", ret);
     ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
 
     ok(setlocale(LC_ALL, "Chinese_China.936") != NULL, "setlocale failed.\n");
@@ -5016,7 +5016,7 @@ static void test_toupper(void)
     ok(errno == EILSEQ, "Got errno %d.\n", errno);
     errno = 0xdeadbeef;
     ret = p_toupper(0xf0);
-    todo_wine ok(ret == 0xf0, "Got %#x.\n", ret);
+    ok(ret == 0xf0, "Got %#x.\n", ret);
     ok(errno == 0xdeadbeef, "Got errno %d.\n", errno);
 
     setlocale(LC_ALL, "C");
