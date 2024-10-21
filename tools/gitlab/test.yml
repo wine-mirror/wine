@@ -57,7 +57,7 @@ test-linux-64:
     - job: build-linux
   script:
     - export WINETEST_COLOR=1
-    - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q -q -o - -t gitlab -u $CI_JOB_URL -J winetest.xml $INCLUDE_TESTS
+    - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q -q -o - -J winetest.xml $INCLUDE_TESTS
   artifacts:
     when: always
     paths:
@@ -75,7 +75,7 @@ test-linux-32:
     - job: build-linux
   script:
     - export WINETEST_COLOR=1
-    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -q -o - -t gitlab -u $CI_JOB_URL -J winetest.xml -n $EXCLUDE_TESTS
+    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -q -o - -J winetest.xml -n $EXCLUDE_TESTS
   artifacts:
     when: always
     paths:
@@ -98,7 +98,7 @@ test-win10-21h2-32:
     - $WINETEST_ARGS = @(Get-Content ./winetest.args)
     - |
       if ($WINETEST_ARGS.count -gt 0) {
-        ./winetest.exe -q -q -o - -t gitlab -u $CI_JOB_URL -J winetest.tmp @WINETEST_ARGS >winetest.log
+        ./winetest.exe -q -q -o - -J winetest.tmp @WINETEST_ARGS >winetest.log
       } else {
         echo '<?xml version="1.0" encoding="UTF-8"?><testsuites/>' >winetest.tmp
         echo $null >winetest.log
@@ -129,7 +129,7 @@ test-win10-21h2-64:
     - $WINETEST_ARGS = @(Get-Content ./winetest.args)
     - |
       if ($WINETEST_ARGS.count -gt 0) {
-        ./winetest64.exe -q -q -o - -t gitlab -u $CI_JOB_URL -J winetest.tmp @WINETEST_ARGS >winetest.log
+        ./winetest64.exe -q -q -o - -J winetest.tmp @WINETEST_ARGS >winetest.log
       } else {
         echo '<?xml version="1.0" encoding="UTF-8"?><testsuites/>' >winetest.tmp
         echo $null >winetest.log
@@ -152,7 +152,7 @@ debian-32:
   needs:
     - job: build-daily-linux
   script:
-    - wine usr/local/lib/wine/i386-windows/winetest.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL
+    - wine usr/local/lib/wine/i386-windows/winetest.exe -q
 
 debian-64:
   extends: .wine-test
@@ -161,7 +161,7 @@ debian-64:
   needs:
     - job: build-daily-linux
   script:
-    - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL
+    - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q
 
 win10-21h2-32:
   stage: test
@@ -175,7 +175,7 @@ win10-21h2-32:
   tags:
     - win10-21h2
   script:
-    - ./winetest.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL
+    - ./winetest.exe -q
 
 win10-21h2-64:
   stage: test
@@ -189,4 +189,4 @@ win10-21h2-64:
   tags:
     - win10-21h2
   script:
-    - ./winetest64.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL
+    - ./winetest64.exe -q

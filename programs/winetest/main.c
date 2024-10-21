@@ -1500,7 +1500,7 @@ int __cdecl main( int argc, char *argv[] )
     BOOL (WINAPI *pIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
     char *logname = NULL, *outdir = NULL, *path = NULL;
     const char *extract = NULL;
-    const char *cp, *submit = NULL, *submiturl = NULL;
+    const char *cp, *submit = NULL, *submiturl = NULL, *job_name;
     int reset_env = 1;
     int poweroff = 0;
     int interactive = 1;
@@ -1513,6 +1513,12 @@ int __cdecl main( int argc, char *argv[] )
 
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),"IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
+    if ((job_name = getenv( "CI_JOB_NAME" )))
+    {
+        tag = strmake( "gitlab-%s", job_name );
+        url = getenv( "CI_JOB_URL" );
+    }
 
     for (i = 1; i < argc && argv[i]; i++)
     {
@@ -1602,12 +1608,6 @@ int __cdecl main( int argc, char *argv[] )
             if (strlen (tag) > MAXTAGLEN)
                 report (R_FATAL, "tag is too long (maximum %d characters)",
                         MAXTAGLEN);
-            cp = findbadtagchar (tag);
-            if (cp) {
-                report (R_ERROR, "invalid char in tag: %c", *cp);
-                usage ();
-                exit (2);
-            }
             break;
         case 'u':
             if (!(url = argv[++i]))
@@ -1681,6 +1681,13 @@ int __cdecl main( int argc, char *argv[] )
         {
             run_tests( logname, outdir );
             exit( failures ? 3 : 0 );
+        }
+
+        if (tag && (cp = findbadtagchar(tag)))
+        {
+            report (R_ERROR, "invalid char in tag: %c", *cp);
+            usage ();
+            exit (2);
         }
 
         while (!tag) {
