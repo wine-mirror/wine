@@ -73,6 +73,8 @@
 #define ARCH "none"
 #endif
 
+static void pump_msg_loop(HWND hwnd, HACCEL hAccel);
+
 /* encoded DRAWITEMSTRUCT into an LPARAM */
 typedef struct
 {
@@ -108,6 +110,7 @@ typedef struct
 
 static BOOL test_DestroyWindow_flag;
 static BOOL test_context_menu;
+static BOOL ignore_mouse_messages = TRUE;
 static HWINEVENTHOOK hEvent_hook;
 static HHOOK hKBD_hook;
 static HHOOK hCBT_hook;
@@ -6160,6 +6163,30 @@ static const struct message WmFrameChanged_move[] = {
     { 0 }
 };
 
+static const struct message WmMove_mouse[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOSIZE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOCLIENTSIZE },
+    { WM_MOVE, sent|defwinproc, 0 },
+    { WM_GETTEXT, sent|optional },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
+    { WM_SETCURSOR, sent|lparam, 0, HTCLIENT | (WM_MOUSEMOVE << 16) },
+    { WM_MOUSEMOVE, sent },
+    /* WM_MOUSEMOVE with accompanying WM_SETCURSOR may sometimes appear a few extra times on Windows 7 with the
+     * same parameters. */
+    { WM_SETCURSOR, sent|lparam|optional, 0, HTCLIENT | (WM_MOUSEMOVE << 16) },
+    { WM_MOUSEMOVE, sent|optional },
+    { WM_SETCURSOR, sent|lparam|optional, 0, HTCLIENT | (WM_MOUSEMOVE << 16) },
+    { WM_MOUSEMOVE, sent|optional },
+    { WM_SETCURSOR, sent|lparam|optional, 0, HTCLIENT | (WM_MOUSEMOVE << 16) },
+    { WM_MOUSEMOVE, sent|optional },
+    { WM_SETCURSOR, sent|lparam|optional, 0, HTCLIENT | (WM_MOUSEMOVE << 16) },
+    { WM_MOUSEMOVE, sent|optional },
+    { WM_SETCURSOR, sent|lparam|optional, 0, HTCLIENT | (WM_MOUSEMOVE << 16) },
+    { WM_MOUSEMOVE, sent|optional },
+    { 0 }
+};
+
 static void test_setwindowpos(void)
 {
     HWND hwnd;
@@ -6198,6 +6225,7 @@ static void test_setwindowpos(void)
     expect(sysX + X, rc.right);
     expect(winY + Y, rc.bottom);
 
+    GetWindowRect(hwnd, &rc);
     res = SetWindowPos( hwnd, 0, 0, 0, 0, 0,
             SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     ok_sequence(WmFrameChanged_move, "FrameChanged", FALSE);
@@ -6206,6 +6234,26 @@ static void test_setwindowpos(void)
     GetWindowRect(hwnd, &rc);
     expect(sysX, rc.right);
     expect(winY, rc.bottom);
+
+    /* get away from possible menu bar to avoid spurious position changed induced by WM. */
+    res = SetWindowPos( hwnd, HWND_TOPMOST, 200, 200, 200, 200, SWP_SHOWWINDOW );
+    ok(res == TRUE, "SetWindowPos expected TRUE, got %Id.\n", res);
+    SetForegroundWindow( hwnd );
+    SetActiveWindow( hwnd );
+    flush_events();
+    pump_msg_loop( hwnd, 0 );
+    flush_sequence();
+    GetWindowRect( hwnd, &rc );
+    SetCursorPos( rc.left + 100, rc.top + 100 );
+    flush_events();
+    pump_msg_loop( hwnd, 0 );
+    flush_sequence();
+    ignore_mouse_messages = FALSE;
+    res = SetWindowPos( hwnd, 0, 205, 205, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+    ok(res == TRUE, "SetWindowPos expected TRUE, got %Id.\n", res);
+    flush_events();
+    ok_sequence(WmMove_mouse, "MouseMove", FALSE);
+    ignore_mouse_messages = TRUE;
 
     DestroyWindow(hwnd);
 }
@@ -10853,7 +10901,8 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	case WM_NCMOUSEMOVE:
 	case WM_SETCURSOR:
 	case WM_IME_SELECT:
-	    return 0;
+	    if (ignore_mouse_messages) return 0;
+        break;
     }
 
     msg.hwnd = hwnd;

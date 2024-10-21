@@ -584,6 +584,15 @@ static void set_cursor_pos( struct desktop *desktop, int x, int y )
     queue_hardware_message( desktop, msg, 1 );
 }
 
+/* sync cursor position after window change */
+void update_cursor_pos( struct desktop *desktop )
+{
+    const desktop_shm_t *desktop_shm;
+
+    desktop_shm = desktop->shared;
+    set_cursor_pos( desktop, desktop_shm->cursor.x, desktop_shm->cursor.y );
+}
+
 /* retrieve default position and time for synthesized messages */
 static void get_message_defaults( struct msg_queue *queue, int *x, int *y, unsigned int *time )
 {

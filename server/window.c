@@ -2405,7 +2405,7 @@ DECL_HANDLER(set_window_pos)
     const rectangle_t *extra_rects = get_req_data();
     struct window *previous = NULL;
     struct window *top, *win = get_window( req->handle );
-    unsigned int flags = req->swp_flags;
+    unsigned int flags = req->swp_flags, old_style;
 
     if (!win) return;
     if (!win->parent) flags |= SWP_NOZORDER;  /* no Z order for the desktop */
@@ -2470,8 +2470,10 @@ DECL_HANDLER(set_window_pos)
     if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
 
     win->monitor_dpi = req->monitor_dpi;
+    old_style = win->style;
     set_window_pos( win, previous, flags, &window_rect, &client_rect,
                     &visible_rect, &surface_rect, &valid_rect );
+    if (win->style & old_style & WS_VISIBLE) update_cursor_pos( win->desktop );
 
     if (win->paint_flags & SET_WINPOS_LAYERED_WINDOW) validate_whole_window( win );
 
