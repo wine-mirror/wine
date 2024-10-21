@@ -870,13 +870,16 @@ static const char *find_libgcc(struct strarray prefix, struct strarray link_tool
     const char *out = make_temp_file( "find_libgcc", ".out" );
     const char *err = make_temp_file( "find_libgcc", ".err" );
     struct strarray link = empty_strarray;
-    int sout = -1, serr = -1;
+    int sout = -1, serr = -1, i;
     char *libgcc, *p;
     struct stat st;
     size_t cnt;
     int ret;
 
-    strarray_addall( &link, link_tool );
+    for (i = 0; i < link_tool.count; i++)
+	if (strcmp(link_tool.str[i], "--no-default-config" ))
+            strarray_add( &link, link_tool.str[i] );
+
     strarray_add( &link, "-print-libgcc-file-name" );
 
     sout = dup( fileno(stdout) );
