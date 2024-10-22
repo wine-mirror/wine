@@ -1531,16 +1531,16 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
-    RECT rect;
+    RECT rect, arc_rect;
     POINT start, end, rect_center, *points, *top_points;
     int count, max_points;
     BOOL ret = TRUE;
     HRGN outline = 0, interior = 0;
 
-    SetRect( &rect, 0, 0, ellipse_width, ellipse_height );
+    SetRect( &arc_rect, 0, 0, ellipse_width, ellipse_height );
     /* We are drawing four arcs, but the number of points we will actually use
      * is exactly as many as in one ellipse arc. */
-    max_points = get_arc_max_points( dc, &rect );
+    max_points = get_arc_max_points( dc, &arc_rect );
     points = malloc( max_points * sizeof(*points) );
     top_points = malloc( max_points * sizeof(*points) );
     if (!points || !top_points)
@@ -1556,27 +1556,30 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         return FALSE;
     }
 
-    SetRect( &rect, left, top, left + ellipse_width, top + ellipse_height );
+    SetRect( &rect, left, top, right, bottom );
+    order_rect( &rect );
+
+    SetRect( &arc_rect, rect.left, rect.top, rect.left + ellipse_width, rect.top + ellipse_height );
     /* Points are relative to the arc center.
      * We just need to specify any point on the vector. */
     start.x = -1;
     start.y = 0;
     end.x = 0;
     end.y = -1;
-    count = get_arc_points( dc, AD_CLOCKWISE, &rect, start, end, top_points );
+    count = get_arc_points( dc, AD_CLOCKWISE, &arc_rect, start, end, top_points );
 
-    SetRect( &rect, right - ellipse_width, top, right, top + ellipse_height );
+    SetRect( &arc_rect, rect.right - ellipse_width, rect.top, rect.right, rect.top + ellipse_height );
     start.x = 0;
     start.y = -1;
     end.x = 1;
     end.y = 0;
-    count += get_arc_points( dc, AD_CLOCKWISE, &rect, start, end, top_points + count );
+    count += get_arc_points( dc, AD_CLOCKWISE, &arc_rect, start, end, top_points + count );
 
     if (count * 2 > max_points)
         ERR( "point count %u * 2 exceeds max points %u\n", count, max_points );
 
-    rect_center.x = (left + right) / 2;
-    rect_center.y = (top + bottom) / 2;
+    rect_center.x = (rect.left + rect.right) / 2;
+    rect_center.y = (rect.top + rect.bottom) / 2;
     lp_to_dp( dc, &rect_center, 1 );
 
     if (dc->attr->arc_direction == AD_CLOCKWISE)
