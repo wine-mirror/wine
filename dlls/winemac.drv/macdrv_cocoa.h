@@ -440,9 +440,9 @@ typedef struct macdrv_event {
 } macdrv_event;
 
 enum {
-    QUERY_DRAG_DROP,
-    QUERY_DRAG_EXITED,
-    QUERY_DRAG_OPERATION,
+    QUERY_DRAG_DROP_LEAVE,
+    QUERY_DRAG_DROP_DRAG,
+    QUERY_DRAG_DROP_DROP,
     QUERY_IME_CHAR_RECT,
     QUERY_PASTEBOARD_DATA,
     QUERY_RESIZE_SIZE,
@@ -461,16 +461,9 @@ typedef struct macdrv_query {
         struct {
             int                 x;
             int                 y;
-            uint32_t            op;
+            uint32_t            ops;
             CFTypeRef           pasteboard;
         }                                           drag_drop;
-        struct {
-            int                 x;
-            int                 y;
-            uint32_t            offered_ops;
-            uint32_t            accepted_op;
-            CFTypeRef           pasteboard;
-        }                                           drag_operation;
         struct {
             void   *himc;
             CFRange range;

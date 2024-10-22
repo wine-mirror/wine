@@ -223,9 +223,9 @@ static uint32_t dropeffect_to_drag_operation(DWORD effect, uint32_t ops)
 
 
 /**************************************************************************
- *              query_drag_drop
+ *              query_drag_drop_drop
  */
-static BOOL query_drag_drop(macdrv_query *query)
+static BOOL query_drag_drop_drop(macdrv_query *query)
 {
     HWND hwnd = macdrv_get_window_hwnd(query->window);
     struct macdrv_win_data *data = get_win_data(hwnd);
@@ -240,7 +240,7 @@ static BOOL query_drag_drop(macdrv_query *query)
     }
 
     params.hwnd = HandleToUlong(hwnd);
-    params.effect = drag_operations_to_dropeffects(query->drag_drop.op);
+    params.effect = drag_operations_to_dropeffects(query->drag_drop.ops);
     params.x = query->drag_drop.x + data->rects.visible.left;
     params.y = query->drag_drop.y + data->rects.visible.top;
     params.handle = (UINT_PTR)query->drag_drop.pasteboard;
@@ -251,9 +251,9 @@ static BOOL query_drag_drop(macdrv_query *query)
 }
 
 /**************************************************************************
- *              query_drag_exited
+ *              query_drag_drop_leave
  */
-static BOOL query_drag_exited(macdrv_query *query)
+static BOOL query_drag_drop_leave(macdrv_query *query)
 {
     struct dnd_query_exited_params params = {.dispatch = {.callback = dnd_query_exited_callback}};
     void *ret_ptr;
@@ -267,9 +267,9 @@ static BOOL query_drag_exited(macdrv_query *query)
 
 
 /**************************************************************************
- *              query_drag_operation
+ *              query_drag_drop_drag
  */
-static BOOL query_drag_operation(macdrv_query *query)
+static BOOL query_drag_drop_drag(macdrv_query *query)
 {
     struct dnd_query_drag_params params = {.dispatch = {.callback = dnd_query_drag_callback}};
     HWND hwnd = macdrv_get_window_hwnd(query->window);
@@ -285,10 +285,10 @@ static BOOL query_drag_operation(macdrv_query *query)
     }
 
     params.hwnd = HandleToUlong(hwnd);
-    params.effect = drag_operations_to_dropeffects(query->drag_operation.offered_ops);
-    params.x = query->drag_operation.x + data->rects.visible.left;
-    params.y = query->drag_operation.y + data->rects.visible.top;
-    params.handle = (UINT_PTR)query->drag_operation.pasteboard;
+    params.effect = drag_operations_to_dropeffects(query->drag_drop.ops);
+    params.x = query->drag_drop.x + data->rects.visible.left;
+    params.y = query->drag_drop.y + data->rects.visible.top;
+    params.handle = (UINT_PTR)query->drag_drop.pasteboard;
     release_win_data(data);
 
     if (KeUserDispatchCallback(&params.dispatch, sizeof(params), &ret_ptr, &ret_len))
@@ -296,8 +296,7 @@ static BOOL query_drag_operation(macdrv_query *query)
     effect = *(DWORD *)ret_ptr;
     if (!effect) return FALSE;
 
-    query->drag_operation.accepted_op = dropeffect_to_drag_operation(effect,
-                                                                     query->drag_operation.offered_ops);
+    query->drag_drop.ops = dropeffect_to_drag_operation(effect, query->drag_drop.ops);
     return TRUE;
 }
 
@@ -360,17 +359,17 @@ static void macdrv_query_event(HWND hwnd, const macdrv_event *event)
 
     switch (query->type)
     {
-        case QUERY_DRAG_DROP:
-            TRACE("QUERY_DRAG_DROP\n");
-            success = query_drag_drop(query);
+        case QUERY_DRAG_DROP_LEAVE:
+            TRACE("QUERY_DRAG_DROP_LEAVE\n");
+            success = query_drag_drop_leave(query);
             break;
-        case QUERY_DRAG_EXITED:
-            TRACE("QUERY_DRAG_EXITED\n");
-            success = query_drag_exited(query);
+        case QUERY_DRAG_DROP_DRAG:
+            TRACE("QUERY_DRAG_DROP_DRAG\n");
+            success = query_drag_drop_drag(query);
             break;
-        case QUERY_DRAG_OPERATION:
-            TRACE("QUERY_DRAG_OPERATION\n");
-            success = query_drag_operation(query);
+        case QUERY_DRAG_DROP_DROP:
+            TRACE("QUERY_DRAG_DROP_DROP\n");
+            success = query_drag_drop_drop(query);
             break;
         case QUERY_IME_CHAR_RECT:
             TRACE("QUERY_IME_CHAR_RECT\n");
