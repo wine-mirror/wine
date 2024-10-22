@@ -30,6 +30,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(fc);
 
+static BOOL option_case_insensitive;
+
 enum section_type
 {
     SECTION_TYPE_COPY,
@@ -102,7 +104,8 @@ static unsigned int len_data1, len_data2;
 static int equal_lines( const struct line *line1, const struct line *line2 )
 {
     if (line1->len != line2->len) return 0;
-    return !memcmp( line1->start, line2->start, line1->len );
+    if (option_case_insensitive) return !memicmp( line1->start, line2->start, line1->len );
+    else return !memcmp( line1->start, line2->start, line1->len );
 }
 
 /* return the number of equal lines at given ranges */
@@ -369,31 +372,43 @@ done:
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
-    BOOL option = FALSE;
+    BOOL unsupported = FALSE;
+    const WCHAR *filename1 = NULL, *filename2 = NULL;
     int i;
 
-    for (i = 0; i < argc; i++)
+    for (i = 1; i < argc; i++)
     {
-        if (argv[i][0] == '/') option = TRUE;
+        if (argv[i][0] == '/')
+        {
+            if (!wcsicmp( argv[i] + 1, L"c" )) option_case_insensitive = TRUE;
+            else
+            {
+                FIXME( "option %s not supported\n", debugstr_w(argv[i]) );
+                unsupported = TRUE;
+            }
+        }
+        else if (!filename1) filename1 = argv[i];
+        else if (!filename2) filename2 = argv[i];
+        else
+        {
+            wprintf( L"FC: Wrong number of files %s\n", argv[i] );
+            return 2;
+        }
     }
 
-    if (option)
-    {
-        FIXME( "options not supported\n" );
-        return 2;
-    }
+    if (unsupported) return 2;
 
-    if (argc != 3)
+    if (!filename1 || !filename2)
     {
         wprintf( L"FC: Wrong number of files\n" );
         return 2;
     }
 
-    if (wcschr( argv[1], '?' ) || wcschr( argv[1], '*' ) || wcschr( argv[2], '?' ) || wcschr( argv[2], '*' ))
+    if (wcschr( filename1, '?' ) || wcschr( filename1, '*' ) || wcschr( filename2, '?' ) || wcschr( filename2, '*' ))
     {
         FIXME( "wildcards not supported\n" );
         return 2;
     }
 
-    return compare_files( argv[1], argv[2] );
+    return compare_files( filename1, filename2 );
 }
