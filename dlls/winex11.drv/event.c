@@ -965,10 +965,8 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     if (event->window != root_window)
     {
-        if (NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-            mirror_rect( &data->rects.client, &rect );
         abs_rect = rect;
-        NtUserMapWindowPoints( hwnd, 0, (POINT *)&abs_rect, 2, 0 /* per-monitor DPI */ );
+        OffsetRect( &abs_rect, data->rects.client.left, data->rects.client.top );
 
         SERVER_START_REQ( update_window_zorder )
         {
