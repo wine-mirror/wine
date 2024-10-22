@@ -26,8 +26,10 @@
 #include "initguid.h"
 #include "roapi.h"
 
+#define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Metadata
 #include "windows.foundation.metadata.h"
+#include "wintypes_test.h"
 
 #include "wine/test.h"
 
@@ -457,7 +459,303 @@ static void test_IApiInformationStatics(void)
     RoUninitialize();
 }
 
+static void test_IPropertyValueStatics(void)
+{
+    static const WCHAR *class_name = L"Windows.Foundation.PropertyValue";
+    static const BYTE byte_value = 0x12;
+    static const INT16 int16_value = 0x1234;
+    static const UINT16 uint16_value = 0x1234;
+    static const INT32 int32_value= 0x1234abcd;
+    static const UINT32 uint32_value = 0x1234abcd;
+    static const INT64 int64_value = 0x12345678abcdef;
+    static const UINT64 uint64_value = 0x12345678abcdef;
+    static const FLOAT float_value = 1.5;
+    static const DOUBLE double_value = 1.5;
+    static const WCHAR wchar_value = 0x1234;
+    static const boolean boolean_value = TRUE;
+    static const struct DateTime datetime_value = {0x12345678abcdef};
+    static const struct TimeSpan timespan_value = {0x12345678abcdef};
+    static const struct Point point_value = {1, 2};
+    static const struct Size size_value = {1, 2};
+    static const struct Rect rect_value = {1, 2, 3, 4};
+    IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
+    IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
+    IPropertyValueStatics *statics = NULL;
+    IActivationFactory *factory = NULL;
+    IReference_boolean *iref_boolean;
+    IReference_HSTRING *iref_hstring;
+    IReference_DOUBLE *iref_double;
+    IPropertyValue *value = NULL;
+    enum PropertyType type;
+    unsigned int i, count;
+    BYTE byte, *ptr_byte;
+    HSTRING str, ret_str;
+    DOUBLE ret_double;
+    boolean ret;
+    HRESULT hr;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+        WindowsDeleteString(str);
+        RoUninitialize();
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&agile_object);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IPropertyValueStatics, (void **)&statics);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValueStatics_QueryInterface(statics, &IID_IInspectable, (void **)&tmp_inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(tmp_inspectable == inspectable, "QueryInterface IID_IInspectable returned %p, expected %p.\n",
+            tmp_inspectable, inspectable);
+    IInspectable_Release(tmp_inspectable);
+    IInspectable_Release(inspectable);
+
+    hr = IPropertyValueStatics_QueryInterface(statics, &IID_IAgileObject, (void **)&tmp_agile_object);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(tmp_agile_object == agile_object, "QueryInterface IID_IAgileObject returned %p, expected %p.\n",
+            tmp_agile_object, agile_object);
+    IAgileObject_Release(tmp_agile_object);
+    IAgileObject_Release(agile_object);
+
+    /* Parameter checks */
+    hr = IPropertyValueStatics_CreateUInt8(statics, 0x12, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValueStatics_CreateUInt8(statics, 0x12, &inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(value == (IPropertyValue *)inspectable, "Expected the same pointer.\n");
+    IInspectable_Release(inspectable);
+
+    hr = IPropertyValue_get_Type(value, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetBoolean(value, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetBoolean(value, &ret);
+    ok(hr == TYPE_E_TYPEMISMATCH, "Got unexpected hr %#lx.\n", hr);
+
+    IPropertyValue_Release(value);
+
+    /* Parameter checks for array types */
+    hr = IPropertyValueStatics_CreateUInt8Array(statics, 1, NULL, &inspectable);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValueStatics_CreateUInt8Array(statics, 1, &byte, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValueStatics_CreateUInt8Array(statics, 1, &byte, &inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(value == (IPropertyValue *)inspectable, "Expected the same pointer.\n");
+    IInspectable_Release(inspectable);
+
+    hr = IPropertyValue_get_Type(value, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetBoolean(value, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetBoolean(value, &ret);
+    ok(hr == TYPE_E_TYPEMISMATCH, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetUInt8Array(value, NULL, &ptr_byte);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetUInt8Array(value, &count, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetUInt8Array(value, &count, &ptr_byte);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    IPropertyValue_Release(value);
+
+    /* PropertyType_Empty */
+    hr = IPropertyValueStatics_CreateEmpty(statics, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    inspectable = (IInspectable *)0xdeadbeef;
+    hr = IPropertyValueStatics_CreateEmpty(statics, &inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(inspectable == NULL, "Got unexpected inspectable.\n");
+
+    /* Test a single property value */
+#define TEST_PROPERTY_VALUE(PROPERTY_TYPE, TYPE, VALUE)                                      \
+    do                                                                                       \
+    {                                                                                        \
+        TYPE expected_value;                                                                 \
+                                                                                             \
+        inspectable = NULL;                                                                  \
+        hr = IPropertyValueStatics_Create##PROPERTY_TYPE(statics, VALUE, &inspectable);      \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(inspectable != NULL, "Got unexpected inspectable.\n");                            \
+                                                                                             \
+        hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value); \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        IInspectable_Release(inspectable);                                                   \
+                                                                                             \
+        hr = IPropertyValue_get_Type(value, &type);                                          \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(type == PropertyType_##PROPERTY_TYPE, "Got unexpected type %d.\n",                \
+           PropertyType_##PROPERTY_TYPE);                                                    \
+                                                                                             \
+        ret = TRUE;                                                                          \
+        hr = IPropertyValue_get_IsNumericScalar(value, &ret);                                \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(ret == FALSE, "Expected not numeric scalar.\n");                                  \
+                                                                                             \
+        hr = IPropertyValue_Get##PROPERTY_TYPE(value, &expected_value);                      \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(!memcmp(&VALUE, &expected_value, sizeof(VALUE)), "Got unexpected value.\n");      \
+                                                                                             \
+        IPropertyValue_Release(value);                                                       \
+    } while (0);
+
+    TEST_PROPERTY_VALUE(UInt8, BYTE, byte_value)
+    TEST_PROPERTY_VALUE(Int16, INT16, int16_value)
+    TEST_PROPERTY_VALUE(UInt16, UINT16, uint16_value)
+    TEST_PROPERTY_VALUE(Int32, INT32, int32_value)
+    TEST_PROPERTY_VALUE(UInt32, UINT32, uint32_value)
+    TEST_PROPERTY_VALUE(Int64, INT64, int64_value)
+    TEST_PROPERTY_VALUE(UInt64, UINT64, uint64_value)
+    TEST_PROPERTY_VALUE(Single, FLOAT, float_value)
+    TEST_PROPERTY_VALUE(Double, DOUBLE, double_value)
+    TEST_PROPERTY_VALUE(Char16, WCHAR, wchar_value)
+    TEST_PROPERTY_VALUE(Boolean, boolean, boolean_value)
+    TEST_PROPERTY_VALUE(String, HSTRING, str)
+    TEST_PROPERTY_VALUE(DateTime, DateTime, datetime_value)
+    TEST_PROPERTY_VALUE(TimeSpan, TimeSpan, timespan_value)
+    TEST_PROPERTY_VALUE(Guid, GUID, IID_IPropertyValue)
+    TEST_PROPERTY_VALUE(Point, Point, point_value)
+    TEST_PROPERTY_VALUE(Size, Size, size_value)
+    TEST_PROPERTY_VALUE(Rect, Rect, rect_value)
+
+#undef TEST_PROPERTY_VALUE
+
+    /* Test property value array */
+#define TEST_PROPERTY_COUNT 2
+#define TEST_PROPERTY_VALUE_ARRAY(PROPERTY_TYPE, TYPE, VALUE)                                   \
+    do                                                                                          \
+    {                                                                                           \
+        TYPE values[TEST_PROPERTY_COUNT], *expected_values;                                     \
+                                                                                                \
+        for (i = 0; i < TEST_PROPERTY_COUNT; i++)                                               \
+            memcpy(&values[i], &VALUE, sizeof(VALUE));                                          \
+                                                                                                \
+        hr = IPropertyValueStatics_Create##PROPERTY_TYPE(statics, TEST_PROPERTY_COUNT, values,  \
+                                                         NULL);                                 \
+        ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);                                   \
+                                                                                                \
+        inspectable = NULL;                                                                     \
+        hr = IPropertyValueStatics_Create##PROPERTY_TYPE(statics, TEST_PROPERTY_COUNT, values,  \
+                                                         &inspectable);                         \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        ok(inspectable != NULL, "Got unexpected inspectable.\n");                               \
+                                                                                                \
+        hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value);    \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        IInspectable_Release(inspectable);                                                      \
+                                                                                                \
+        hr = IPropertyValue_get_Type(value, &type);                                             \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        ok(type == PropertyType_##PROPERTY_TYPE, "Got unexpected type %d.\n",                   \
+           PropertyType_##PROPERTY_TYPE);                                                       \
+                                                                                                \
+        ret = TRUE;                                                                             \
+        hr = IPropertyValue_get_IsNumericScalar(value, &ret);                                   \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        ok(ret == FALSE, "Expected not numeric scalar.\n");                                     \
+                                                                                                \
+        count = 0;                                                                              \
+        hr = IPropertyValue_Get##PROPERTY_TYPE(value, &count, &expected_values);                \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        ok(count == TEST_PROPERTY_COUNT, "Got unexpected count %u.\n", count);                  \
+        ok(expected_values != values, "Got same pointer.\n");                                   \
+        for (i = 0; i < TEST_PROPERTY_COUNT; i++)                                               \
+            ok(!memcmp(&VALUE, &expected_values[i], sizeof(VALUE)), "Got unexpected value.\n"); \
+                                                                                                \
+        IPropertyValue_Release(value);                                                          \
+    } while (0);
+
+    TEST_PROPERTY_VALUE_ARRAY(UInt8Array, BYTE, byte_value)
+    TEST_PROPERTY_VALUE_ARRAY(Int16Array, INT16, int16_value)
+    TEST_PROPERTY_VALUE_ARRAY(UInt16Array, UINT16, uint16_value)
+    TEST_PROPERTY_VALUE_ARRAY(Int32Array, INT32, int32_value)
+    TEST_PROPERTY_VALUE_ARRAY(UInt32Array, UINT32, uint32_value)
+    TEST_PROPERTY_VALUE_ARRAY(Int64Array, INT64, int64_value)
+    TEST_PROPERTY_VALUE_ARRAY(UInt64Array, UINT64, uint64_value)
+    TEST_PROPERTY_VALUE_ARRAY(SingleArray, FLOAT, float_value)
+    TEST_PROPERTY_VALUE_ARRAY(DoubleArray, DOUBLE, double_value)
+    TEST_PROPERTY_VALUE_ARRAY(Char16Array, WCHAR, wchar_value)
+    TEST_PROPERTY_VALUE_ARRAY(BooleanArray, boolean, boolean_value)
+    TEST_PROPERTY_VALUE_ARRAY(StringArray, HSTRING, str)
+    TEST_PROPERTY_VALUE_ARRAY(DateTimeArray, DateTime, datetime_value)
+    TEST_PROPERTY_VALUE_ARRAY(TimeSpanArray, TimeSpan, timespan_value)
+    TEST_PROPERTY_VALUE_ARRAY(GuidArray, GUID, IID_IPropertyValue)
+    TEST_PROPERTY_VALUE_ARRAY(PointArray, Point, point_value)
+    TEST_PROPERTY_VALUE_ARRAY(SizeArray, Size, size_value)
+    TEST_PROPERTY_VALUE_ARRAY(RectArray, Rect, rect_value)
+
+#undef TEST_PROPERTY_VALUE_ARRAY
+#undef TEST_PROPERTY_COUNT
+
+    /* Test IReference<*> interface */
+#define TEST_PROPERTY_VALUE_IREFERENCE(TYPE, IFACE_TYPE, VALUE, RET_OBJ, RET_VALUE)          \
+    do                                                                                       \
+    {                                                                                        \
+        hr = IPropertyValueStatics_Create##TYPE(statics, VALUE, &inspectable);               \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+                                                                                             \
+        hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value); \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(value == (IPropertyValue *)inspectable, "Expected the same pointer.\n");          \
+                                                                                             \
+        hr = IPropertyValue_QueryInterface(value, &IID_##IFACE_TYPE, (void **)&RET_OBJ);     \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+                                                                                             \
+        hr = IFACE_TYPE##_get_Value(RET_OBJ, &RET_VALUE);                                    \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(RET_VALUE == VALUE, "Got unexpected value.\n");                                   \
+                                                                                             \
+        IFACE_TYPE##_Release(RET_OBJ);                                                       \
+        IPropertyValue_Release(value);                                                       \
+        IInspectable_Release(inspectable);                                                   \
+    } while (0);
+
+    TEST_PROPERTY_VALUE_IREFERENCE(Boolean, IReference_boolean, TRUE, iref_boolean, ret)
+    TEST_PROPERTY_VALUE_IREFERENCE(String, IReference_HSTRING, str, iref_hstring, ret_str)
+    TEST_PROPERTY_VALUE_IREFERENCE(Double, IReference_DOUBLE, 1.5, iref_double, ret_double)
+
+#undef TEST_PROPERTY_VALUE_IREFERENCE
+
+    IPropertyValueStatics_Release(statics);
+    IActivationFactory_Release(factory);
+    WindowsDeleteString(str);
+    RoUninitialize();
+}
+
 START_TEST(wintypes)
 {
     test_IApiInformationStatics();
+    test_IPropertyValueStatics();
 }

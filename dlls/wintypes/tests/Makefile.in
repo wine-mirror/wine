@@ -2,4 +2,5 @@ TESTDLL = wintypes.dll
 IMPORTS = combase uuid
 
 SOURCES = \
-	wintypes.c
+	wintypes.c \
+	wintypes_test.idl
