@@ -70,6 +70,16 @@ CONFIGRET WINAPI CM_Register_Notification( CM_NOTIFY_FILTER *filter, void *conte
 }
 
 /***********************************************************************
+ *           CM_Unregister_Notification (cfgmgr32.@)
+ */
+CONFIGRET WINAPI CM_Unregister_Notification( HCMNOTIFICATION notify )
+{
+    FIXME( "(%p) stub!\n", notify );
+
+    return CR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *           CM_Get_Device_Interface_PropertyW (cfgmgr32.@)
  */
 CONFIGRET WINAPI CM_Get_Device_Interface_PropertyW( LPCWSTR device_interface, const DEVPROPKEY *property_key,

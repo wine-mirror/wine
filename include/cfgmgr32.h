@@ -330,6 +330,7 @@ CMAPI DWORD     WINAPI CM_MapCrToWin32Err(CONFIGRET,DWORD);
 CMAPI CONFIGRET WINAPI CM_Open_DevNode_Key(DEVINST dnDevInst, REGSAM access, ULONG ulHardwareProfile,
                                            REGDISPOSITION disposition, PHKEY phkDevice, ULONG ulFlags);
 CMAPI CONFIGRET WINAPI CM_Register_Notification(PCM_NOTIFY_FILTER,PVOID,PCM_NOTIFY_CALLBACK,PHCMNOTIFICATION);
+CMAPI CONFIGRET WINAPI CM_Unregister_Notification(HCMNOTIFICATION);
 CMAPI CONFIGRET WINAPI CM_Request_Device_EjectA(DEVINST dev, PPNP_VETO_TYPE type, LPSTR name, ULONG length, ULONG flags);
 CMAPI CONFIGRET WINAPI CM_Request_Device_EjectW(DEVINST dev, PPNP_VETO_TYPE type, LPWSTR name, ULONG length, ULONG flags);
 #define     CM_Request_Device_Eject WINELIB_NAME_AW(CM_Get_Device_ID_List_Ex)

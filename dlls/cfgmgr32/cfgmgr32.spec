@@ -187,3 +187,4 @@
 @ stub CM_Unregister_Device_InterfaceW
 @ stub CM_Unregister_Device_Interface_ExA
 @ stub CM_Unregister_Device_Interface_ExW
+@ stdcall CM_Unregister_Notification(ptr)
