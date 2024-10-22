@@ -1014,9 +1014,9 @@ This is an error since --enable-archs=$wine_arch was requested.])])
     AS_VAR_SET([${wine_arch}_DEBUG],[$wine_crossdebug])
 
     test "x$enable_werror" != xyes || WINE_TRY_PE_CFLAGS([-Werror])
-    test "x$enable_build_id" != xyes || WINE_TRY_PE_CFLAGS([-Wl,--build-id],
-                                         [AS_VAR_APPEND([${wine_arch}_CFLAGS],[" -Wl,--build-id"])
-                                          AS_VAR_APPEND([${wine_arch}_LDFLAGS],[" -Wl,--build-id"])])
+    dnl clang for PE target wants -build-id (and not --build-id as gcc/mingw or clang in unix target)
+    dnl don't bother testing flags, compilation will fail afterwards
+    test "x$enable_build_id" != xyes || AS_VAR_APPEND([${wine_arch}_LDFLAGS],[" -Wl,--build-id"])
 
 done
 
