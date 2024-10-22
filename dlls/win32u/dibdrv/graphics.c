@@ -316,6 +316,12 @@ static int get_arc_points( DC *dc, int arc_dir, const RECT *rect, POINT start, P
 
     count = generate_ellipse_top_half( dc, width, height, points );
 
+    /* The ellipse is always generated counterclockwise from the origin.
+     * This means our points will essentially be backwards if the world
+     * transform includes a flip. Swap the arc direction to correct for this. */
+    if (dc->xformWorld2Vport.eM11 * dc->xformWorld2Vport.eM22 < dc->xformWorld2Vport.eM12 * dc->xformWorld2Vport.eM21)
+        arc_dir = (arc_dir == AD_CLOCKWISE ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE);
+
     /* Transform the start and end, but do not translate them, so that they
      * remain relative to the ellipse center. */
     lp_to_dp_no_translate( dc, &start );
