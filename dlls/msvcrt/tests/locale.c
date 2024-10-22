@@ -904,11 +904,11 @@ static void test_locale_info(void)
         ok(!!ret, "Got locale name %s vs %s.\n", locinfo->lc_category[LC_CTYPE].locale,
                 locinfo2->lc_category[LC_CTYPE].locale);
         ret = memcmp(locinfo->ctype1, locinfo2->ctype1, 257 * sizeof(*locinfo->ctype1));
-        todo_wine ok(!ret, "Got wrong ctype1 data.\n");
+        ok(!ret, "Got wrong ctype1 data.\n");
         ret = memcmp(locinfo->pclmap, locinfo2->pclmap, 256 * sizeof(*locinfo->pclmap));
-        todo_wine ok(!ret, "Got wrong pclmap data.\n");
+        ok(!ret, "Got wrong pclmap data.\n");
         ret = memcmp(locinfo->pcumap, locinfo2->pcumap, 256 * sizeof(*locinfo->pcumap));
-        todo_wine ok(!ret, "Got wrong pcumap data.\n");
+        ok(!ret, "Got wrong pcumap data.\n");
         ok(locinfo->lc_handle[LC_CTYPE] != locinfo2->lc_handle[LC_CTYPE],
                 "Got wrong LC_CTYPE %#lx vs %#lx.\n", locinfo->lc_handle[LC_CTYPE], locinfo2->lc_handle[LC_CTYPE]);
 
@@ -965,11 +965,11 @@ static void test_locale_info(void)
     ok(!!ret, "Got locale name %s vs %s.\n", locinfo->lc_category[LC_CTYPE].locale,
             locinfo2->lc_category[LC_CTYPE].locale);
     ret = memcmp(locinfo->ctype1, locinfo2->ctype1, 257 * sizeof(*locinfo->ctype1));
-    todo_wine ok(!!ret, "Got wrong ctype1 data.\n");
+    ok(!!ret, "Got wrong ctype1 data.\n");
     ret = memcmp(locinfo->pclmap, locinfo2->pclmap, 256 * sizeof(*locinfo->pclmap));
-    todo_wine ok(!!ret, "Got wrong pclmap data.\n");
+    ok(!!ret, "Got wrong pclmap data.\n");
     ret = memcmp(locinfo->pcumap, locinfo2->pcumap, 256 * sizeof(*locinfo->pcumap));
-    todo_wine ok(!!ret, "Got wrong pcumap data.\n");
+    ok(!!ret, "Got wrong pcumap data.\n");
     ok(locinfo->lc_handle[LC_CTYPE] == locinfo2->lc_handle[LC_CTYPE],
             "Got wrong LC_CTYPE %#lx vs %#lx.\n", locinfo->lc_handle[LC_CTYPE], locinfo2->lc_handle[LC_CTYPE]);
 
