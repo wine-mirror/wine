@@ -1123,10 +1123,9 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
     window_configure_notify( data, event->serial, &rect );
 
-    state_cmd = window_update_client_state( data );
-    config_cmd = window_update_client_config( data );
-    rect = window_rect_from_visible( &data->rects, data->current_state.rect );
     release_win_data( data );
+
+    if (!get_window_state_updates( hwnd, &state_cmd, &config_cmd, &rect )) return FALSE;
 
     if (state_cmd)
     {
@@ -1140,7 +1139,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
     }
 
-    return config_cmd || state_cmd;
+    return TRUE;
 }
 
 
@@ -1209,12 +1208,9 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event )
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_wm_state( event->display, event->window );
     window_wm_state_notify( data, event->serial, value );
-
-    state_cmd = window_update_client_state( data );
-    config_cmd = window_update_client_config( data );
-    rect = window_rect_from_visible( &data->rects, data->current_state.rect );
-
     release_win_data( data );
+
+    if (!get_window_state_updates( hwnd, &state_cmd, &config_cmd, &rect )) return;
 
     if (state_cmd)
     {
@@ -1249,12 +1245,9 @@ static void handle_net_wm_state_notify( HWND hwnd, XPropertyEvent *event )
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_net_wm_state( event->display, event->window );
     window_net_wm_state_notify( data, event->serial, value );
-
-    state_cmd = window_update_client_state( data );
-    config_cmd = window_update_client_config( data );
-    rect = window_rect_from_visible( &data->rects, data->current_state.rect );
-
     release_win_data( data );
+
+    if (!get_window_state_updates( hwnd, &state_cmd, &config_cmd, &rect )) return;
 
     if (state_cmd)
     {

@@ -1499,7 +1499,7 @@ static void unmap_window( HWND hwnd )
     release_win_data( data );
 }
 
-UINT window_update_client_state( struct x11drv_win_data *data )
+static UINT window_update_client_state( struct x11drv_win_data *data )
 {
     UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
 
@@ -1540,7 +1540,7 @@ UINT window_update_client_state( struct x11drv_win_data *data )
     return 0;
 }
 
-UINT window_update_client_config( struct x11drv_win_data *data )
+static UINT window_update_client_config( struct x11drv_win_data *data )
 {
     UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), flags;
     RECT rect, old_rect = data->rects.window, new_rect;
@@ -1578,6 +1578,20 @@ UINT window_update_client_config( struct x11drv_win_data *data )
     TRACE( "window %p/%lx config changed %s -> %s, flags %#x\n", data->hwnd, data->whole_window,
            wine_dbgstr_rect(&old_rect), wine_dbgstr_rect(&new_rect), flags );
     return MAKELONG(SC_MOVE, flags);
+}
+
+BOOL get_window_state_updates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, RECT *rect )
+{
+    struct x11drv_win_data *data;
+
+    if (!(data = get_win_data( hwnd ))) return FALSE;
+
+    *state_cmd = window_update_client_state( data );
+    *config_cmd = window_update_client_config( data );
+    *rect = window_rect_from_visible( &data->rects, data->current_state.rect );
+
+    release_win_data( data );
+    return *state_cmd || *config_cmd;
 }
 
 void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value )
