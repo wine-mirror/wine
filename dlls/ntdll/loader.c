@@ -309,9 +309,6 @@ static void update_hybrid_metadata( void *module, IMAGE_NT_HEADERS *nt,
             SET_FUNC( __os_arm64x_dispatch_icall, __os_arm64x_check_icall );
             SET_FUNC( __os_arm64x_dispatch_icall_cfg, __os_arm64x_check_icall_cfg );
             SET_FUNC( __os_arm64x_dispatch_ret, __os_arm64x_dispatch_ret );
-            SET_FUNC( __os_arm64x_helper0, __os_arm64x_helper0 );
-            SET_FUNC( __os_arm64x_helper1, __os_arm64x_helper1 );
-            SET_FUNC( __os_arm64x_helper2, __os_arm64x_helper2 );
             SET_FUNC( __os_arm64x_helper3, __os_arm64x_helper3 );
             SET_FUNC( __os_arm64x_helper4, __os_arm64x_helper4 );
             SET_FUNC( __os_arm64x_helper5, __os_arm64x_helper5 );
