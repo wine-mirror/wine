@@ -100,8 +100,10 @@ void map_implicit_reads(MCInst *MI, const insn_map *imap)
 	while (reg != 0) {
 		if (i >= MAX_IMPL_R_REGS ||
 		    detail->regs_read_count >= MAX_IMPL_R_REGS) {
+#if 0 /* disabled in Wine */
 			printf("ERROR: Too many implicit read register defined in "
 			       "instruction mapping.\n");
+#endif
 			return;
 		}
 		detail->regs_read[detail->regs_read_count++] = reg;
@@ -125,8 +127,10 @@ void map_implicit_writes(MCInst *MI, const insn_map *imap)
 	while (reg != 0) {
 		if (i >= MAX_IMPL_W_REGS ||
 		    detail->regs_write_count >= MAX_IMPL_W_REGS) {
+#if 0 /* disabled in Wine */
 			printf("ERROR: Too many implicit write register defined in "
 			       "instruction mapping.\n");
+#endif
 			return;
 		}
 		detail->regs_write[detail->regs_write_count++] = reg;
@@ -149,7 +153,9 @@ void map_groups(MCInst *MI, const insn_map *imap)
 	uint16_t group = imap[Opcode].groups[i];
 	while (group != 0) {
 		if (detail->groups_count >= MAX_NUM_GROUPS) {
+#if 0 /* disabled in Wine */
 			printf("ERROR: Too many groups defined in instruction mapping.\n");
+#endif
 			return;
 		}
 		detail->groups[detail->groups_count++] = group;
@@ -199,8 +205,10 @@ void map_cs_id(MCInst *MI, const insn_map *imap, unsigned int imap_size)
 		MI->flat_insn->id = imap[i].mapid;
 		return;
 	}
+#if 0 /* disabled in Wine */
 	printf("ERROR: Could not find CS id for MCInst opcode: %d\n",
 	       MCInst_getOpcode(MI));
+#endif
 	return;
 }
 
