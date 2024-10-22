@@ -228,26 +228,18 @@ static uint32_t dropeffect_to_drag_operation(DWORD effect, uint32_t ops)
 static BOOL query_drag_drop_drop(macdrv_query *query)
 {
     HWND hwnd = macdrv_get_window_hwnd(query->window);
-    struct macdrv_win_data *data = get_win_data(hwnd);
-    struct dnd_query_drop_params params = {.dispatch = {.callback = dnd_query_drop_callback}};
-    void *ret_ptr;
-    ULONG ret_len;
+    struct macdrv_win_data *data;
 
-    if (!data)
+    if (!(data = get_win_data(hwnd)))
     {
         WARN("no win_data for win %p/%p\n", hwnd, query->window);
         return FALSE;
     }
 
-    params.hwnd = HandleToUlong(hwnd);
-    params.effect = drag_operations_to_dropeffects(query->drag_drop.ops);
-    params.x = query->drag_drop.x + data->rects.visible.left;
-    params.y = query->drag_drop.y + data->rects.visible.top;
-    params.handle = (UINT_PTR)query->drag_drop.pasteboard;
     release_win_data(data);
-    if (KeUserDispatchCallback(&params.dispatch, sizeof(params), &ret_ptr, &ret_len))
-        return FALSE;
-    return *(BOOL *)ret_ptr;
+
+    NtUserMessageCall(hwnd, WINE_DRAG_DROP_DROP, 0, 0, NULL, NtUserDragDropCall, FALSE);
+    return TRUE;
 }
 
 /**************************************************************************
@@ -260,6 +252,7 @@ static BOOL query_drag_drop_enter(macdrv_query *query)
     UINT entries_size;
 
     if (!(entries = get_format_entries(pasteboard, &entries_size))) return FALSE;
+    NtUserMessageCall(0, WINE_DRAG_DROP_ENTER, entries_size, (LPARAM)entries, NULL, NtUserDragDropCall, FALSE);
     free(entries);
 
     return TRUE;
@@ -270,14 +263,8 @@ static BOOL query_drag_drop_enter(macdrv_query *query)
  */
 static BOOL query_drag_drop_leave(macdrv_query *query)
 {
-    struct dnd_query_exited_params params = {.dispatch = {.callback = dnd_query_exited_callback}};
-    void *ret_ptr;
-    ULONG ret_len;
-
-    params.hwnd = HandleToUlong(macdrv_get_window_hwnd(query->window));
-    if (KeUserDispatchCallback(&params.dispatch, sizeof(params), &ret_ptr, &ret_len))
-        return FALSE;
-    return *(BOOL *)ret_ptr;
+    NtUserMessageCall(0, WINE_DRAG_DROP_LEAVE, 0, 0, NULL, NtUserDragDropCall, FALSE);
+    return TRUE;
 }
 
 
@@ -286,12 +273,10 @@ static BOOL query_drag_drop_leave(macdrv_query *query)
  */
 static BOOL query_drag_drop_drag(macdrv_query *query)
 {
-    struct dnd_query_drag_params params = {.dispatch = {.callback = dnd_query_drag_callback}};
     HWND hwnd = macdrv_get_window_hwnd(query->window);
     struct macdrv_win_data *data = get_win_data(hwnd);
-    void *ret_ptr;
-    ULONG ret_len;
     DWORD effect;
+    POINT point;
 
     if (!data)
     {
@@ -299,16 +284,12 @@ static BOOL query_drag_drop_drag(macdrv_query *query)
         return FALSE;
     }
 
-    params.hwnd = HandleToUlong(hwnd);
-    params.effect = drag_operations_to_dropeffects(query->drag_drop.ops);
-    params.x = query->drag_drop.x + data->rects.visible.left;
-    params.y = query->drag_drop.y + data->rects.visible.top;
-    params.handle = (UINT_PTR)query->drag_drop.pasteboard;
+    effect = drag_operations_to_dropeffects(query->drag_drop.ops);
+    point.x = query->drag_drop.x + data->rects.visible.left;
+    point.y = query->drag_drop.y + data->rects.visible.top;
     release_win_data(data);
 
-    if (KeUserDispatchCallback(&params.dispatch, sizeof(params), &ret_ptr, &ret_len))
-        return FALSE;
-    effect = *(DWORD *)ret_ptr;
+    effect = NtUserMessageCall(hwnd, WINE_DRAG_DROP_DRAG, MAKELONG(point.x, point.y), effect, NULL, NtUserDragDropCall, FALSE);
     if (!effect) return FALSE;
 
     query->drag_drop.ops = dropeffect_to_drag_operation(effect, query->drag_drop.ops);
