@@ -251,6 +251,21 @@ static BOOL query_drag_drop_drop(macdrv_query *query)
 }
 
 /**************************************************************************
+ *              query_drag_drop_enter
+ */
+static BOOL query_drag_drop_enter(macdrv_query *query)
+{
+    CFTypeRef pasteboard = query->drag_drop.pasteboard;
+    struct format_entry *entries;
+    UINT entries_size;
+
+    if (!(entries = get_format_entries(pasteboard, &entries_size))) return FALSE;
+    free(entries);
+
+    return TRUE;
+}
+
+/**************************************************************************
  *              query_drag_drop_leave
  */
 static BOOL query_drag_drop_leave(macdrv_query *query)
@@ -359,6 +374,10 @@ static void macdrv_query_event(HWND hwnd, const macdrv_event *event)
 
     switch (query->type)
     {
+        case QUERY_DRAG_DROP_ENTER:
+            TRACE("QUERY_DRAG_DROP_ENTER\n");
+            success = query_drag_drop_enter(query);
+            break;
         case QUERY_DRAG_DROP_LEAVE:
             TRACE("QUERY_DRAG_DROP_LEAVE\n");
             success = query_drag_drop_leave(query);

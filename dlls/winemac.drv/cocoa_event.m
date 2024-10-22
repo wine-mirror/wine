@@ -720,6 +720,7 @@ void macdrv_release_query(macdrv_query *query)
     {
         switch (query->type)
         {
+            case QUERY_DRAG_DROP_ENTER:
             case QUERY_DRAG_DROP_LEAVE:
             case QUERY_DRAG_DROP_DRAG:
             case QUERY_DRAG_DROP_DROP:

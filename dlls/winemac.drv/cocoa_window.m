@@ -3256,6 +3256,16 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
      */
     - (NSDragOperation) draggingEntered:(id <NSDraggingInfo>)sender
     {
+        macdrv_query* query = macdrv_create_query();
+        NSPasteboard* pb = [sender draggingPasteboard];
+
+        query->type = QUERY_DRAG_DROP_ENTER;
+        query->window = (macdrv_window)[self retain];
+        query->drag_drop.pasteboard = (CFTypeRef)[pb retain];
+
+        [self.queue query:query timeout:0.1];
+        macdrv_release_query(query);
+
         return [self draggingUpdated:sender];
     }
 

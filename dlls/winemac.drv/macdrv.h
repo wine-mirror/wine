@@ -261,6 +261,8 @@ extern void macdrv_status_item_mouse_move(const macdrv_event *event);
 extern void check_retina_status(void);
 extern void init_user_driver(void);
 
+extern struct format_entry *get_format_entries(CFTypeRef pasteboard, UINT *entries_size);
+
 /* unixlib interface */
 
 extern NTSTATUS macdrv_dnd_get_data(void *arg);

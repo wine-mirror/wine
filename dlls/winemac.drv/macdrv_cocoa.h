@@ -440,6 +440,7 @@ typedef struct macdrv_event {
 } macdrv_event;
 
 enum {
+    QUERY_DRAG_DROP_ENTER,
     QUERY_DRAG_DROP_LEAVE,
     QUERY_DRAG_DROP_DRAG,
     QUERY_DRAG_DROP_DROP,

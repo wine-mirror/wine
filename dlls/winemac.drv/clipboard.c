@@ -1130,6 +1130,52 @@ static CFDataRef export_unicodetext_to_utf16(void *data, size_t size)
     return ret;
 }
 
+struct format_entry *get_format_entries(CFTypeRef pasteboard, UINT *entries_size)
+{
+    struct format_entry *entries = NULL;
+    CFStringRef type;
+    CFArrayRef types;
+    size_t size = 0;
+    CFIndex i;
+    char *tmp;
+
+    TRACE("pasteboard %p\n", pasteboard);
+
+    types = macdrv_copy_pasteboard_types(pasteboard);
+    if (!types) return NULL;
+
+    for (i = 0; i < CFArrayGetCount(types); i++)
+    {
+        WINE_CLIPFORMAT *format;
+        size_t import_size;
+        CFDataRef data;
+        void *import;
+
+        type = CFArrayGetValueAtIndex(types, i);
+        if (!(format = format_for_type(type))) continue;
+
+        data = macdrv_copy_pasteboard_data(pasteboard, type);
+        import = format->import_func(data, &import_size);
+
+        if ((tmp = realloc(entries, size + sizeof(*entries) + import_size)))
+        {
+            struct format_entry *entry = (struct format_entry *)(tmp + size);
+            entry->format = format->format_id;
+            entry->size = import_size;
+            memcpy(entry->data, import, import_size);
+
+            entries = (struct format_entry *)tmp;
+            size += sizeof(*entry) + import_size;
+        }
+
+        free(import);
+    }
+
+    CFRelease(types);
+
+    *entries_size = size;
+    return entries;
+}
 
 /**************************************************************************
  *              macdrv_dnd_get_data
