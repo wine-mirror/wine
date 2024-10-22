@@ -473,8 +473,7 @@ static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttrib
     attr->event_mask        = (ExposureMask | PointerMotionMask |
                                ButtonPressMask | ButtonReleaseMask | EnterWindowMask |
                                KeyPressMask | KeyReleaseMask | FocusChangeMask |
-                               KeymapStateMask | StructureNotifyMask);
-    if (data->managed) attr->event_mask |= PropertyChangeMask;
+                               KeymapStateMask | StructureNotifyMask | PropertyChangeMask);
 
     return (CWOverrideRedirect | CWSaveUnder | CWColormap | CWBorderPixel |
             CWEventMask | CWBitGravity | CWBackingStore);
