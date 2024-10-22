@@ -317,6 +317,7 @@ struct property_value
     union
     {
         IReference_boolean boolean_iface;
+        IReference_DOUBLE double_iface;
         IReference_HSTRING hstring_iface;
     } irefs;
     PropertyType type;
@@ -384,6 +385,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_boolean_AddRef(&impl->irefs.boolean_iface);
         *out = &impl->irefs.boolean_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_DOUBLE) && impl->type == PropertyType_Double)
+    {
+        IReference_DOUBLE_AddRef(&impl->irefs.double_iface);
+        *out = &impl->irefs.double_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_HSTRING) && impl->type == PropertyType_String)
@@ -833,6 +840,31 @@ static const struct IReference_HSTRINGVtbl iref_hstring_vtbl =
     iref_hstring_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_double, IReference_DOUBLE, struct property_value,
+                     impl_from_IReference_DOUBLE, irefs.double_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_double_get_Value(IReference_DOUBLE *iface, DOUBLE *value)
+{
+    struct property_value *impl = impl_from_IReference_DOUBLE(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetDouble(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_DOUBLEVtbl iref_double_vtbl =
+{
+    iref_double_QueryInterface,
+    iref_double_AddRef,
+    iref_double_Release,
+    /* IInspectable methods */
+    iref_double_GetIids,
+    iref_double_GetRuntimeClassName,
+    iref_double_GetTrustLevel,
+    /* IReference<DOUBLE> methods */
+    iref_double_get_Value,
+};
+
 DEFINE_IINSPECTABLE(property_value_statics, IPropertyValueStatics, struct wintypes, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateEmpty(IPropertyValueStatics *iface,
@@ -907,7 +939,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateDouble(IPropertyVa
         DOUBLE value, IInspectable **property_value)
 {
     TRACE("iface %p, value %f, property_value %p.\n", iface, value, property_value);
-    return create_primitive_property_value(PropertyType_Double);
+    create_primitive_property_value_iref(PropertyType_Double, irefs.double_iface.lpVtbl, iref_double_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateChar16(IPropertyValueStatics *iface,
