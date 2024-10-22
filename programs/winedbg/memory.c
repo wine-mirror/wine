@@ -30,6 +30,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
+cs_opt_mem cs_mem =
+{
+    .malloc = malloc,
+    .calloc = calloc,
+    .realloc = realloc,
+    .free = free,
+    .vsnprintf = vsnprintf,
+};
+
 void* be_cpu_linearize(HANDLE hThread, const ADDRESS64* addr)
 {
     assert(addr->Mode == AddrModeFlat);
@@ -759,7 +768,11 @@ void memory_disasm_one_x86_insn(ADDRESS64 *addr, int display)
     if (!dbg_curr_process->process_io->read( dbg_curr_process->handle, memory_to_linear_addr(addr),
                                              buffer, sizeof(buffer), &len )) return;
 
-    if (!handle) cs_open( CS_ARCH_X86, CS_MODE_32, &handle );
+    if (!handle)
+    {
+        cs_option( 0, CS_OPT_MEM, (size_t)&cs_mem );
+        cs_open( CS_ARCH_X86, CS_MODE_32, &handle );
+    }
 
     switch (addr->Mode)
     {

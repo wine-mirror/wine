@@ -24,6 +24,8 @@
 
 #include <capstone/capstone.h>
 
+extern cs_opt_mem cs_mem;
+
 static BOOL be_arm64_get_addr(HANDLE hThread, const dbg_ctx_t *ctx,
                               enum be_cpu_addr bca, ADDRESS64* addr)
 {
@@ -242,8 +244,11 @@ void be_arm64_disasm_one_insn(ADDRESS64 *addr, int display)
         if (!dbg_curr_process->process_io->read( dbg_curr_process->handle, memory_to_linear_addr(addr),
                                                  buffer, sizeof(buffer), &len )) return;
 
-        if (!handle) cs_open( CS_ARCH_ARM64, 0, &handle );
-
+        if (!handle)
+        {
+            cs_option( 0, CS_OPT_MEM, (size_t)&cs_mem );
+            cs_open( CS_ARCH_ARM64, 0, &handle );
+        }
         cs_option( handle, CS_OPT_DETAIL, CS_OPT_ON );
         count = cs_disasm( handle, buffer, len, addr->Offset, 0, &insn );
         dbg_printf( "%s %s", insn[0].mnemonic, insn[0].op_str );

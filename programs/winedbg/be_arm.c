@@ -24,6 +24,8 @@
 
 #include <capstone/capstone.h>
 
+extern cs_opt_mem cs_mem;
+
 /***********************************************************************
  *              disasm_one_insn
  *
@@ -42,8 +44,11 @@ void be_arm_disasm_one_insn(ADDRESS64 *addr, int display)
     if (!dbg_curr_process->process_io->read( dbg_curr_process->handle, memory_to_linear_addr(addr),
                                              buffer, sizeof(buffer), &len )) return;
 
-    if (!handle) cs_open( CS_ARCH_ARM, 0, &handle );
-
+    if (!handle)
+    {
+        cs_option( 0, CS_OPT_MEM, (size_t)&cs_mem );
+        cs_open( CS_ARCH_ARM, 0, &handle );
+    }
     cs_option( handle, CS_OPT_MODE, pc & 1 ? CS_MODE_THUMB : CS_MODE_ARM );
     cs_option( handle, CS_OPT_DETAIL, CS_OPT_ON );
     count = cs_disasm( handle, buffer, len, pc, 0, &insn );
