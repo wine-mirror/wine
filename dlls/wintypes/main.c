@@ -314,6 +314,10 @@ static const struct IApiInformationStaticsVtbl api_information_statics_vtbl =
 struct property_value
 {
     IPropertyValue IPropertyValue_iface;
+    union
+    {
+        IReference_boolean boolean_iface;
+    } irefs;
     PropertyType type;
     unsigned int value_size;
     void *value;
@@ -321,6 +325,11 @@ struct property_value
 };
 
 static inline struct property_value *impl_from_IPropertyValue(IPropertyValue *iface)
+{
+    return CONTAINING_RECORD(iface, struct property_value, IPropertyValue_iface);
+}
+
+static inline struct property_value *impl_from_IInspectable(IInspectable *iface)
 {
     return CONTAINING_RECORD(iface, struct property_value, IPropertyValue_iface);
 }
@@ -368,6 +377,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IPropertyValue_AddRef(iface);
         *out = &impl->IPropertyValue_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_boolean) && impl->type == PropertyType_Boolean)
+    {
+        IReference_boolean_AddRef(&impl->irefs.boolean_iface);
+        *out = &impl->irefs.boolean_iface;
         return S_OK;
     }
 
@@ -749,6 +764,43 @@ static HRESULT _create_primitive_property_value(PropertyType type, void *value,
     return S_OK;
 }
 
+#define create_primitive_property_value_iref(type, iref_vtbl, vtbl)                      \
+    do                                                                                   \
+    {                                                                                    \
+        HRESULT hr = create_primitive_property_value(type);                              \
+        if (hr == S_OK)                                                                  \
+        {                                                                                \
+            struct property_value *value_impl = impl_from_IInspectable(*property_value); \
+            value_impl->iref_vtbl = &vtbl;                                               \
+        }                                                                                \
+        return hr;                                                                       \
+    } while (0)
+
+DEFINE_IINSPECTABLE_(iref_boolean, IReference_boolean, struct property_value,
+                     impl_from_IReference_boolean, irefs.boolean_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_boolean_get_Value(IReference_boolean *iface, boolean *value)
+{
+    struct property_value *impl = impl_from_IReference_boolean(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetBoolean(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_booleanVtbl iref_boolean_vtbl =
+{
+    iref_boolean_QueryInterface,
+    iref_boolean_AddRef,
+    iref_boolean_Release,
+    /* IInspectable methods */
+    iref_boolean_GetIids,
+    iref_boolean_GetRuntimeClassName,
+    iref_boolean_GetTrustLevel,
+    /* IReference<boolean> methods */
+    iref_boolean_get_Value,
+};
+
 DEFINE_IINSPECTABLE(property_value_statics, IPropertyValueStatics, struct wintypes, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateEmpty(IPropertyValueStatics *iface,
@@ -837,7 +889,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateBoolean(IPropertyV
         boolean value, IInspectable **property_value)
 {
     TRACE("iface %p, value %d, property_value %p.\n", iface, value, property_value);
-    return create_primitive_property_value(PropertyType_Boolean);
+    create_primitive_property_value_iref(PropertyType_Boolean, irefs.boolean_iface.lpVtbl, iref_boolean_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateString(IPropertyValueStatics *iface,
