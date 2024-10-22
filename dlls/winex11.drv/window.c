@@ -2516,7 +2516,6 @@ void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
                    const RECT *top_rect, DWORD flags )
 {
     struct x11drv_escape_set_drawable escape;
-    HWND parent;
 
     escape.code = X11DRV_SET_DRAWABLE;
     escape.mode = IncludeInferiors;
@@ -2539,19 +2538,7 @@ void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     }
     else
     {
-        /* find the first ancestor that has a drawable */
-        for (parent = hwnd; parent && parent != top; parent = NtUserGetAncestor( parent, GA_PARENT ))
-            if ((escape.drawable = X11DRV_get_whole_window( parent ))) break;
-
-        if (escape.drawable)
-        {
-            POINT pt = { 0, 0 };
-            NtUserMapWindowPoints( 0, parent, &pt, 1, 0 /* per-monitor DPI */ );
-            escape.dc_rect = *win_rect;
-            OffsetRect( &escape.dc_rect, pt.x, pt.y );
-            if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;
-        }
-        else escape.drawable = X11DRV_get_whole_window( top );
+        escape.drawable = X11DRV_get_whole_window( top );
     }
 
     if (!escape.drawable) return; /* don't create a GC for foreign windows */
