@@ -311,97 +311,520 @@ static const struct IApiInformationStaticsVtbl api_information_statics_vtbl =
     api_information_statics_IsApiContractPresentByMajorAndMinor
 };
 
+struct property_value
+{
+    IPropertyValue IPropertyValue_iface;
+    PropertyType type;
+    void *value;
+    LONG ref;
+};
+
+static inline struct property_value *impl_from_IPropertyValue(IPropertyValue *iface)
+{
+    return CONTAINING_RECORD(iface, struct property_value, IPropertyValue_iface);
+}
+
+#define property_value_get_primitive(type) _property_value_get_primitive(iface, type, value, sizeof(*value))
+static HRESULT _property_value_get_primitive(IPropertyValue *iface, PropertyType type, void *value, size_t size)
+{
+    struct property_value *impl = impl_from_IPropertyValue(iface);
+
+    if (!value)
+        return E_POINTER;
+
+    if (impl->type != type)
+        return TYPE_E_TYPEMISMATCH;
+
+    memcpy(value, impl->value, size);
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *iface, REFIID riid, void **out)
+{
+    struct property_value *impl = impl_from_IPropertyValue(iface);
+
+    TRACE("%p, %s, %p\n", impl, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IUnknown)
+        || IsEqualIID(riid, &IID_IInspectable)
+        || IsEqualIID(riid, &IID_IPropertyValue))
+    {
+        IPropertyValue_AddRef(iface);
+        *out = &impl->IPropertyValue_iface;
+        return S_OK;
+    }
+
+    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE property_value_AddRef(IPropertyValue *iface)
+{
+    struct property_value *impl = impl_from_IPropertyValue(iface);
+    ULONG refcount = InterlockedIncrement(&impl->ref);
+
+    TRACE("%p, refcount %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE property_value_Release(IPropertyValue *iface)
+{
+    struct property_value *impl = impl_from_IPropertyValue(iface);
+    ULONG refcount = InterlockedDecrement(&impl->ref);
+
+    TRACE("%p, refcount %lu.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        if (impl->value)
+            free(impl->value);
+        free(impl);
+    }
+
+    return refcount;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetIids(IPropertyValue *iface, ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetRuntimeClassName(IPropertyValue *iface, HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetTrustLevel(IPropertyValue *iface, TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_get_Type(IPropertyValue *iface, enum PropertyType *type)
+{
+    struct property_value *impl = impl_from_IPropertyValue(iface);
+
+    TRACE("iface %p, type %p.\n", iface, type);
+
+    if (!type)
+        return E_POINTER;
+
+    *type = impl->type;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_get_IsNumericScalar(IPropertyValue *iface, boolean *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    *value = FALSE;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetUInt8(IPropertyValue *iface, BYTE *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_UInt8);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetInt16(IPropertyValue *iface, INT16 *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Int16);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetUInt16(IPropertyValue *iface, UINT16 *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_UInt16);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetInt32(IPropertyValue *iface, INT32 *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Int32);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetUInt32(IPropertyValue *iface, UINT32 *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_UInt32);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetInt64(IPropertyValue *iface, INT64 *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Int64);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetUInt64(IPropertyValue *iface, UINT64 *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_UInt64);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetSingle(IPropertyValue *iface, FLOAT *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Single);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetDouble(IPropertyValue *iface, DOUBLE *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Double);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetChar16(IPropertyValue *iface, WCHAR *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Char16);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetBoolean(IPropertyValue *iface, boolean *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Boolean);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetString(IPropertyValue *iface, HSTRING *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_String);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetGuid(IPropertyValue *iface, GUID *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Guid);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetDateTime(IPropertyValue *iface,
+                                                            struct DateTime *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_DateTime);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetTimeSpan(IPropertyValue *iface, struct TimeSpan *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_TimeSpan);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetPoint(IPropertyValue *iface, struct Point *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Point);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetSize(IPropertyValue *iface, struct Size *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Size);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetRect(IPropertyValue *iface, struct Rect *value)
+{
+    TRACE("iface %p, value %p.\n", iface, value);
+    return property_value_get_primitive(PropertyType_Rect);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetUInt8Array(IPropertyValue *iface, UINT32 *value_size, BYTE **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetInt16Array(IPropertyValue *iface, UINT32 *value_size, INT16 **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetUInt16Array(IPropertyValue *iface, UINT32 *value_size, UINT16 **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetInt32Array(IPropertyValue *iface, UINT32 *value_size, INT32 **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetUInt32Array(IPropertyValue *iface, UINT32 *value_size, UINT32 **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetInt64Array(IPropertyValue *iface, UINT32 *value_size, INT64 **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetUInt64Array(IPropertyValue *iface, UINT32 *value_size, UINT64 **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetSingleArray(IPropertyValue *iface, UINT32 *value_size, FLOAT **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetDoubleArray(IPropertyValue *iface, UINT32 *value_size, DOUBLE **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetChar16Array(IPropertyValue *iface, UINT32 *value_size, WCHAR **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetBooleanArray(IPropertyValue *iface, UINT32 *value_size, boolean **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetStringArray(IPropertyValue *iface, UINT32 *value_size, HSTRING **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetInspectableArray(IPropertyValue *iface, UINT32 *value_size, IInspectable ***value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetGuidArray(IPropertyValue *iface, UINT32 *value_size, GUID **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetDateTimeArray(IPropertyValue *iface, UINT32 *value_size, struct DateTime **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetTimeSpanArray(IPropertyValue *iface, UINT32 *value_size, struct TimeSpan **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetPointArray(IPropertyValue *iface, UINT32 *value_size, struct Point **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetSizeArray(IPropertyValue *iface, UINT32 *value_size, struct Size **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_GetRectArray(IPropertyValue *iface, UINT32 *value_size, struct Rect **value)
+{
+    FIXME("iface %p, value_size %p, value %p stub!\n", iface, value_size, value);
+    return E_NOTIMPL;
+}
+
+static const struct IPropertyValueVtbl property_value_vtbl =
+{
+    property_value_QueryInterface,
+    property_value_AddRef,
+    property_value_Release,
+    /* IInspectable methods */
+    property_value_GetIids,
+    property_value_GetRuntimeClassName,
+    property_value_GetTrustLevel,
+    /* IPropertyValue methods */
+    property_value_get_Type,
+    property_value_get_IsNumericScalar,
+    property_value_GetUInt8,
+    property_value_GetInt16,
+    property_value_GetUInt16,
+    property_value_GetInt32,
+    property_value_GetUInt32,
+    property_value_GetInt64,
+    property_value_GetUInt64,
+    property_value_GetSingle,
+    property_value_GetDouble,
+    property_value_GetChar16,
+    property_value_GetBoolean,
+    property_value_GetString,
+    property_value_GetGuid,
+    property_value_GetDateTime,
+    property_value_GetTimeSpan,
+    property_value_GetPoint,
+    property_value_GetSize,
+    property_value_GetRect,
+    property_value_GetUInt8Array,
+    property_value_GetInt16Array,
+    property_value_GetUInt16Array,
+    property_value_GetInt32Array,
+    property_value_GetUInt32Array,
+    property_value_GetInt64Array,
+    property_value_GetUInt64Array,
+    property_value_GetSingleArray,
+    property_value_GetDoubleArray,
+    property_value_GetChar16Array,
+    property_value_GetBooleanArray,
+    property_value_GetStringArray,
+    property_value_GetInspectableArray,
+    property_value_GetGuidArray,
+    property_value_GetDateTimeArray,
+    property_value_GetTimeSpanArray,
+    property_value_GetPointArray,
+    property_value_GetSizeArray,
+    property_value_GetRectArray,
+};
+
+#define create_primitive_property_value(type) _create_primitive_property_value(type, &value, sizeof(value), property_value)
+static HRESULT _create_primitive_property_value(PropertyType type, void *value, size_t size, IInspectable **property_value)
+{
+    struct property_value *impl;
+
+    if (!value || !property_value)
+        return E_POINTER;
+
+    impl = calloc(1, sizeof(*impl));
+    if (!impl)
+        return E_OUTOFMEMORY;
+
+    impl->IPropertyValue_iface.lpVtbl = &property_value_vtbl;
+    impl->type = type;
+    impl->ref = 1;
+    if (type != PropertyType_Empty)
+    {
+        impl->value = malloc(size);
+        if (!impl->value)
+        {
+            free(impl);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(impl->value, value, size);
+    }
+
+    *property_value = (IInspectable *)&impl->IPropertyValue_iface;
+    return S_OK;
+}
+
 DEFINE_IINSPECTABLE(property_value_statics, IPropertyValueStatics, struct wintypes, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateEmpty(IPropertyValueStatics *iface,
         IInspectable **property_value)
 {
-    FIXME("iface %p, property_value %p stub!\n", iface, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, property_value %p.\n", iface, property_value);
+
+    if (!property_value)
+        return E_POINTER;
+
+    *property_value = NULL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt8(IPropertyValueStatics *iface,
         BYTE value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %#x, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %#x, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_UInt8);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInt16(IPropertyValueStatics *iface,
         INT16 value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %d, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %d, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_Int16);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt16(IPropertyValueStatics *iface,
         UINT16 value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %u, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %u, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_UInt16);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInt32(IPropertyValueStatics *iface,
         INT32 value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %d, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %d, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_Int32);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt32(IPropertyValueStatics *iface,
         UINT32 value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %u, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %u, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_UInt32);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInt64(IPropertyValueStatics *iface,
         INT64 value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %I64d, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %I64d, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_Int64);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt64(IPropertyValueStatics *iface,
         UINT64 value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %I64u, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %I64u, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_UInt64);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateSingle(IPropertyValueStatics *iface,
         FLOAT value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %f, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %f, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_Single);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateDouble(IPropertyValueStatics *iface,
         DOUBLE value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %f, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %f, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_Double);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateChar16(IPropertyValueStatics *iface,
         WCHAR value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %s, property_value %p stub!\n", iface, wine_dbgstr_wn(&value, 1), property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %s, property_value %p.\n", iface, wine_dbgstr_wn(&value, 1), property_value);
+    return create_primitive_property_value(PropertyType_Char16);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateBoolean(IPropertyValueStatics *iface,
         boolean value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %d, property_value %p stub!\n", iface, value, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %d, property_value %p.\n", iface, value, property_value);
+    return create_primitive_property_value(PropertyType_Boolean);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateString(IPropertyValueStatics *iface,
         HSTRING value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %s, property_value %p stub!\n", iface, debugstr_hstring(value), property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %s, property_value %p.\n", iface, debugstr_hstring(value), property_value);
+    return create_primitive_property_value(PropertyType_String);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInspectable(IPropertyValueStatics *iface,
@@ -414,44 +837,44 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInspectable(IPrope
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateGuid(IPropertyValueStatics *iface,
         GUID value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %s, property_value %p stub!\n", iface, debugstr_guid(&value), property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %s, property_value %p.\n", iface, wine_dbgstr_guid(&value), property_value);
+    return create_primitive_property_value(PropertyType_Guid);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateDateTime(IPropertyValueStatics *iface,
         DateTime value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %I64d, property_value %p stub!\n", iface, value.UniversalTime, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %I64d, property_value %p.\n", iface, value.UniversalTime, property_value);
+    return create_primitive_property_value(PropertyType_DateTime);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateTimeSpan(IPropertyValueStatics *iface,
         TimeSpan value, IInspectable **property_value)
 {
-    FIXME("iface %p, value %I64d, property_value %p stub!\n", iface, value.Duration, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %I64d, property_value %p.\n", iface, value.Duration, property_value);
+    return create_primitive_property_value(PropertyType_TimeSpan);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreatePoint(IPropertyValueStatics *iface,
         Point value, IInspectable **property_value)
 {
-    FIXME("iface %p, value (%f, %f), property_value %p stub!\n", iface, value.X, value.Y, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value (%f, %f), property_value %p.\n", iface, value.X, value.Y, property_value);
+    return create_primitive_property_value(PropertyType_Point);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateSize(IPropertyValueStatics *iface,
         Size value, IInspectable **property_value)
 {
-    FIXME("iface %p, value (%fx%f), property_value %p stub!\n", iface, value.Width, value.Height, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value (%fx%f), property_value %p.\n", iface, value.Width, value.Height, property_value);
+    return create_primitive_property_value(PropertyType_Size);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateRect(IPropertyValueStatics *iface,
         Rect value, IInspectable **property_value)
 {
-    FIXME("iface %p, value (%f, %f %fx%f), property_value %p stub!\n", iface, value.X, value.Y, value.Width,
-            value.Height, property_value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value (%f, %f %fx%f), property_value %p.\n", iface, value.X, value.Y,
+            value.Width, value.Height, property_value);
+    return create_primitive_property_value(PropertyType_Rect);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt8Array(IPropertyValueStatics *iface,
