@@ -55,18 +55,24 @@ namespace Windows.Storage.Streams {
     declare {
         interface Windows.Foundation.Collections.IIterable<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Storage.Streams.IRandomAccessStream *>;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *>;
+        interface Windows.Foundation.Collections.IMap<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.Collections.IVector<Windows.Storage.Streams.IRandomAccessStream *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *> *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IBuffer *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IOutputStream *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.RandomAccessStreamReference *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *> *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IBuffer *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IOutputStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamReference *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStreamWithContentType *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.RandomAccessStreamReference *>;
     }
 
     [

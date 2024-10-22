@@ -830,6 +830,7 @@ SOURCES = \
 	windows.applicationmodel.activation.idl \
 	windows.applicationmodel.background.idl \
 	windows.applicationmodel.core.idl \
+	windows.applicationmodel.datatransfer.idl \
 	windows.applicationmodel.idl \
 	windows.data.json.idl \
 	windows.data.xml.dom.idl \
@@ -878,6 +879,7 @@ SOURCES = \
 	windows.security.credentials.idl \
 	windows.security.credentials.ui.idl \
 	windows.security.cryptography.idl \
+	windows.security.enterprisedata.idl \
 	windows.security.exchangeactivesyncprovisioning.idl \
 	windows.security.isolation.idl \
 	windows.storage.fileproperties.idl \

@@ -77,7 +77,9 @@ namespace Windows.Storage {
     declare {
         interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *> *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Storage.ApplicationDataContainer *> *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.ApplicationDataContainer *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *>;

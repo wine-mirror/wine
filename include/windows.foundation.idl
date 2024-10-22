@@ -125,12 +125,16 @@ namespace Windows.Foundation {
         interface Windows.Foundation.EventHandler<IInspectable *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<IInspectable *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<HSTRING>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<UINT32>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Uri *>;
         interface Windows.Foundation.AsyncOperationProgressHandler<UINT32, UINT32>;
         interface Windows.Foundation.AsyncOperationWithProgressCompletedHandler<UINT32, UINT32>;
         interface Windows.Foundation.IAsyncOperation<IInspectable *>;
         interface Windows.Foundation.IAsyncOperation<boolean>;
+        interface Windows.Foundation.IAsyncOperation<HSTRING>;
         interface Windows.Foundation.IAsyncOperation<UINT32>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Uri *>;
         interface Windows.Foundation.IAsyncOperationWithProgress<UINT32, UINT32>;
         interface Windows.Foundation.IReference<BYTE>;
         interface Windows.Foundation.IReference<DOUBLE>;
