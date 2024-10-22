@@ -282,8 +282,75 @@ static void test_CM_Get_Device_ID_List(void)
     free(buf);
 }
 
+DWORD WINAPI notify_callback( HCMNOTIFICATION notify, void *ctx, CM_NOTIFY_ACTION action,
+                              CM_NOTIFY_EVENT_DATA *data, DWORD size )
+{
+    return ERROR_SUCCESS;
+}
+
+static void test_CM_Register_Notification( void )
+{
+    struct
+    {
+        CM_NOTIFY_FILTER filter;
+        CONFIGRET ret;
+    } test_cases[] = {
+        {
+            { 0, CM_NOTIFY_FILTER_FLAG_ALL_INTERFACE_CLASSES, CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE, 0 },
+            CR_INVALID_DATA
+        },
+        {
+            { sizeof( CM_NOTIFY_FILTER ) + 1, 0, CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE, 0,
+              .u.DeviceInterface = { GUID_DEVINTERFACE_DISPLAY_ADAPTER } },
+            CR_INVALID_DATA
+        },
+        {
+            { sizeof( CM_NOTIFY_FILTER ), CM_NOTIFY_FILTER_FLAG_ALL_INTERFACE_CLASSES,
+              CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE, 0, .u.DeviceInterface = { GUID_DEVINTERFACE_DISPLAY_ADAPTER } },
+            CR_INVALID_DATA
+        },
+        {
+            { sizeof( CM_NOTIFY_FILTER ), CM_NOTIFY_FILTER_FLAG_ALL_INTERFACE_CLASSES,
+              CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE, 0 },
+            CR_SUCCESS
+        },
+        {
+            { sizeof( CM_NOTIFY_FILTER ), 0, CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE, 0,
+              .u.DeviceInterface = { GUID_DEVINTERFACE_DISPLAY_ADAPTER } },
+            CR_SUCCESS
+        }
+    };
+    DWORD i;
+    HCMNOTIFICATION notify = NULL;
+    CONFIGRET ret;
+
+    ret = CM_Register_Notification( NULL, NULL, NULL, NULL );
+    todo_wine ok( ret == CR_FAILURE, "Expected 0x13, got %#lx.\n", ret );
+
+    ret = CM_Register_Notification( NULL, NULL, NULL, &notify );
+    todo_wine ok( ret == CR_INVALID_DATA, "Expected 0x1f, got %#lx.\n", ret );
+    ok( !notify, "Expected handle to be NULL, got %p\n", notify );
+
+    for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
+    {
+        notify = NULL;
+        winetest_push_context( "test_cases %lu", i );
+        ret = CM_Register_Notification( &test_cases[i].filter, NULL, notify_callback, &notify );
+        todo_wine ok( test_cases[i].ret == ret, "Expected %#lx, got %#lx\n", test_cases[i].ret, ret );
+        if (test_cases[i].ret)
+            ok( !notify, "Expected handle to be NULL, got %p\n", notify );
+        if (notify)
+        {
+            ret = CM_Unregister_Notification( notify );
+            ok( !ret, "Expected 0, got %#lx\n", ret );
+        }
+        winetest_pop_context();
+    }
+}
+
 START_TEST(cfgmgr32)
 {
     test_CM_MapCrToWin32Err();
     test_CM_Get_Device_ID_List();
+    test_CM_Register_Notification();
 }
