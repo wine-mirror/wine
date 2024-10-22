@@ -900,15 +900,6 @@ static inline BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, NtUserSendNotifyMessage, FALSE );
 }
 
-/* per-monitor DPI aware NtUserChildWindowFromPointEx call */
-static inline HWND child_window_from_point( HWND parent, LONG x, LONG y, UINT flags )
-{
-    UINT context = NtUserSetThreadDpiAwarenessContext( NTUSER_DPI_PER_MONITOR_AWARE_V2 );
-    HWND ret = NtUserChildWindowFromPointEx( parent, x, y, flags );
-    NtUserSetThreadDpiAwarenessContext( context );
-    return ret;
-}
-
 static inline HWND get_focus(void)
 {
     GUITHREADINFO info;
