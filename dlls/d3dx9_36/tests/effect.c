@@ -7156,11 +7156,17 @@ static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
     pass = effect->lpVtbl->GetPass(effect, "tech0", 1);
     ok(!!pass, "GetPass() failed.\n");
 
+    /* Calling GetPassDesc() on a D3DXFX_NOT_CLONEABLE effect is apparently
+     * not safe on Windows: the following Release() would crash with a
+     * STATUS_ACCESS_VIOLATION exception on the GitLab CI instance. */
+    if (0)
+    {
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
     ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
     ok(!desc.pPixelShaderFunction, "Unexpected non null desc.pPixelShaderFunction.\n");
+    }
 
     effect->lpVtbl->Release(effect);
 }
