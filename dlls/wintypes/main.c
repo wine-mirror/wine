@@ -31,6 +31,7 @@
 
 #define WIDL_using_Windows_Foundation_Metadata
 #include "windows.foundation.metadata.h"
+#include "wintypes_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintypes);
 
@@ -65,11 +66,6 @@ struct wintypes
 static inline struct wintypes *impl_from_IActivationFactory(IActivationFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct wintypes, IActivationFactory_iface);
-}
-
-static inline struct wintypes *impl_from_IApiInformationStatics(IApiInformationStatics *iface)
-{
-    return CONTAINING_RECORD(iface, struct wintypes, IApiInformationStatics_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE wintypes_QueryInterface(IActivationFactory *iface, REFIID iid,
@@ -158,47 +154,7 @@ static const struct IActivationFactoryVtbl activation_factory_vtbl =
     wintypes_ActivateInstance,
 };
 
-static HRESULT STDMETHODCALLTYPE api_information_statics_QueryInterface(
-        IApiInformationStatics *iface, REFIID iid, void **out)
-{
-    struct wintypes *impl = impl_from_IApiInformationStatics(iface);
-    return wintypes_QueryInterface(&impl->IActivationFactory_iface, iid, out);
-}
-
-static ULONG STDMETHODCALLTYPE api_information_statics_AddRef(
-        IApiInformationStatics *iface)
-{
-    struct wintypes *impl = impl_from_IApiInformationStatics(iface);
-    return wintypes_AddRef(&impl->IActivationFactory_iface);
-}
-
-static ULONG STDMETHODCALLTYPE api_information_statics_Release(
-        IApiInformationStatics *iface)
-{
-    struct wintypes *impl = impl_from_IApiInformationStatics(iface);
-    return wintypes_Release(&impl->IActivationFactory_iface);
-}
-
-static HRESULT STDMETHODCALLTYPE api_information_statics_GetIids(
-        IApiInformationStatics *iface, ULONG *iid_count, IID **iids)
-{
-    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE api_information_statics_GetRuntimeClassName(
-        IApiInformationStatics *iface, HSTRING *class_name)
-{
-    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE api_information_statics_GetTrustLevel(
-        IApiInformationStatics *iface, TrustLevel *trust_level)
-{
-    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
-    return E_NOTIMPL;
-}
+DEFINE_IINSPECTABLE(api_information_statics, IApiInformationStatics, struct wintypes, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE api_information_statics_IsTypePresent(
         IApiInformationStatics *iface, HSTRING type_name, BOOLEAN *value)
