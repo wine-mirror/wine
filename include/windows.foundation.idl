@@ -87,6 +87,8 @@ namespace Windows.Foundation {
     interface IMemoryBuffer;
     interface IMemoryBufferFactory;
     interface IMemoryBufferReference;
+    interface IPropertyValue;
+    interface IPropertyValueStatics;
     interface IStringable;
     interface IUriEscapeStatics;
     interface IUriRuntimeClass;
@@ -98,6 +100,7 @@ namespace Windows.Foundation {
 
     runtimeclass Deferral;
     runtimeclass MemoryBuffer;
+    runtimeclass PropertyValue;
     runtimeclass Uri;
     runtimeclass WwwFormUrlDecoder;
     runtimeclass WwwFormUrlDecoderEntry;
@@ -336,6 +339,101 @@ namespace Windows.Foundation {
     }
 
     [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        uuid(4bd682dd-7554-40e9-9a9b-82654ede7e62)
+    ]
+    interface IPropertyValue : IInspectable
+    {
+        [propget] HRESULT Type([out, retval] Windows.Foundation.PropertyType *value);
+        [propget] HRESULT IsNumericScalar([out, retval] boolean *value);
+        HRESULT GetUInt8([out, retval] BYTE *value);
+        HRESULT GetInt16([out, retval] INT16 *value);
+        HRESULT GetUInt16([out, retval] UINT16 *value);
+        HRESULT GetInt32([out, retval] INT32 *value);
+        HRESULT GetUInt32([out, retval] UINT32 *value);
+        HRESULT GetInt64([out, retval] INT64 *value);
+        HRESULT GetUInt64([out, retval] UINT64 *value);
+        HRESULT GetSingle([out, retval] FLOAT *value);
+        HRESULT GetDouble([out, retval] DOUBLE *value);
+        HRESULT GetChar16([out, retval] WCHAR *value);
+        HRESULT GetBoolean([out, retval] boolean *value);
+        HRESULT GetString([out, retval] HSTRING *value);
+        HRESULT GetGuid([out, retval] GUID *value);
+        HRESULT GetDateTime([out, retval] Windows.Foundation.DateTime *value);
+        HRESULT GetTimeSpan([out, retval] Windows.Foundation.TimeSpan *value);
+        HRESULT GetPoint([out, retval] Windows.Foundation.Point *value);
+        HRESULT GetSize([out, retval] Windows.Foundation.Size *value);
+        HRESULT GetRect([out, retval] Windows.Foundation.Rect *value);
+        HRESULT GetUInt8Array([out] UINT32 *value_size, [out, size_is(*value_size)] BYTE **value);
+        HRESULT GetInt16Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT16 **value);
+        HRESULT GetUInt16Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT16 **value);
+        HRESULT GetInt32Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT32 **value);
+        HRESULT GetUInt32Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT32 **value);
+        HRESULT GetInt64Array([out] UINT32 *value_size, [out, size_is(*value_size)] INT64 **value);
+        HRESULT GetUInt64Array([out] UINT32 *value_size, [out, size_is(*value_size)] UINT64 **value);
+        HRESULT GetSingleArray([out] UINT32 *value_size, [out, size_is(*value_size)] FLOAT **value);
+        HRESULT GetDoubleArray([out] UINT32 *value_size, [out, size_is(*value_size)] DOUBLE **value);
+        HRESULT GetChar16Array([out] UINT32 *value_size, [out, size_is(*value_size)] WCHAR **value);
+        HRESULT GetBooleanArray([out] UINT32 *value_size, [out, size_is(*value_size)] boolean **value);
+        HRESULT GetStringArray([out] UINT32 *value_size, [out, size_is(*value_size)] HSTRING **value);
+        HRESULT GetInspectableArray([out] UINT32 *value_size, [out, size_is(*value_size)] IInspectable ***value);
+        HRESULT GetGuidArray([out] UINT32 *value_size, [out, size_is(*value_size)] GUID **value);
+        HRESULT GetDateTimeArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.DateTime **value);
+        HRESULT GetTimeSpanArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.TimeSpan **value);
+        HRESULT GetPointArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Point **value);
+        HRESULT GetSizeArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Size **value);
+        HRESULT GetRectArray([out] UINT32 *value_size, [out, size_is(*value_size)] Windows.Foundation.Rect **value);
+    }
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        exclusiveto(Windows.Foundation.PropertyValue),
+        uuid(629bdbc8-d932-4ff4-96b9-8d96c5c1e858)
+    ]
+    interface IPropertyValueStatics : IInspectable
+    {
+        HRESULT CreateEmpty([out, retval] IInspectable **property_value);
+        HRESULT CreateUInt8([in] BYTE value, [out, retval] IInspectable **property_value);
+        HRESULT CreateInt16([in] INT16 value, [out, retval] IInspectable **property_value);
+        HRESULT CreateUInt16([in] UINT16 value, [out, retval] IInspectable **property_value);
+        HRESULT CreateInt32([in] INT32 value, [out, retval] IInspectable **property_value);
+        HRESULT CreateUInt32([in] UINT32 value, [out, retval] IInspectable **property_value);
+        HRESULT CreateInt64([in] INT64 value, [out, retval] IInspectable **property_value);
+        HRESULT CreateUInt64([in] UINT64 value, [out, retval] IInspectable **property_value);
+        HRESULT CreateSingle([in] FLOAT value, [out, retval] IInspectable **property_value);
+        HRESULT CreateDouble([in] DOUBLE value, [out, retval] IInspectable **property_value);
+        HRESULT CreateChar16([in] WCHAR value, [out, retval] IInspectable **property_value);
+        HRESULT CreateBoolean([in] boolean value, [out, retval] IInspectable **property_value);
+        HRESULT CreateString([in] HSTRING value, [out, retval] IInspectable **property_value);
+        HRESULT CreateInspectable([in] IInspectable *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateGuid([in] GUID value, [out, retval] IInspectable **property_value);
+        HRESULT CreateDateTime([in] Windows.Foundation.DateTime value, [out, retval] IInspectable **property_value);
+        HRESULT CreateTimeSpan([in] Windows.Foundation.TimeSpan value, [out, retval] IInspectable **property_value);
+        HRESULT CreatePoint([in] Windows.Foundation.Point value, [out, retval] IInspectable **property_value);
+        HRESULT CreateSize([in] Windows.Foundation.Size value, [out, retval] IInspectable **property_value);
+        HRESULT CreateRect([in] Windows.Foundation.Rect value, [out, retval] IInspectable **property_value);
+        HRESULT CreateUInt8Array([in] UINT32 value_size, [in, size_is(value_size)] BYTE *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateInt16Array([in] UINT32 value_size, [in, size_is(value_size)] INT16 *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateUInt16Array([in] UINT32 value_size, [in, size_is(value_size)] UINT16 *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateInt32Array([in] UINT32 value_size, [in, size_is(value_size)] INT32 *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateUInt32Array([in] UINT32 value_size, [in, size_is(value_size)] UINT32 *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateInt64Array([in] UINT32 value_size, [in, size_is(value_size)] INT64 *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateUInt64Array([in] UINT32 value_size, [in, size_is(value_size)] UINT64 *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateSingleArray([in] UINT32 value_size, [in, size_is(value_size)] FLOAT *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateDoubleArray([in] UINT32 value_size, [in, size_is(value_size)] DOUBLE *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateChar16Array([in] UINT32 value_size, [in, size_is(value_size)] WCHAR *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateBooleanArray([in] UINT32 value_size, [in, size_is(value_size)] boolean *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateStringArray([in] UINT32 value_size, [in, size_is(value_size)] HSTRING *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateInspectableArray([in] UINT32 value_size, [in, size_is(value_size)] IInspectable **value, [out, retval] IInspectable **property_value);
+        HRESULT CreateGuidArray([in] UINT32 value_size, [in, size_is(value_size)] GUID *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateDateTimeArray([in] UINT32 value_size, [in, size_is(value_size)] Windows.Foundation.DateTime *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateTimeSpanArray([in] UINT32 value_size, [in, size_is(value_size)] Windows.Foundation.TimeSpan *value, [out, retval] IInspectable **property_value);
+        HRESULT CreatePointArray([in] UINT32 value_size, [in, size_is(value_size)] Windows.Foundation.Point *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateSizeArray([in] UINT32 value_size, [in, size_is(value_size)] Windows.Foundation.Size *value, [out, retval] IInspectable **property_value);
+        HRESULT CreateRectArray([in] UINT32 value_size, [in, size_is(value_size)] Windows.Foundation.Rect *value, [out, retval] IInspectable **property_value);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.Foundation.Uri),
         uuid(c1d432ba-c824-4452-a7fd-512bc3bbe9a1)
@@ -447,6 +545,16 @@ namespace Windows.Foundation {
     {
         [default] interface Windows.Foundation.IMemoryBuffer;
         interface Windows.Foundation.IClosable;
+    }
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Foundation.IPropertyValueStatics, Windows.Foundation.FoundationContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass PropertyValue
+    {
     }
 
     [
