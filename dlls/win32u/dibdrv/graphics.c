@@ -267,7 +267,7 @@ static unsigned int generate_ellipse_top_half( const DC *dc, double width, doubl
     return pos;
 }
 
-static int find_intersection( const POINT *points, int x, int y, int count )
+static int find_intersection( const POINT *points, double x, double y, int count )
 {
     int i;
 
@@ -299,15 +299,16 @@ static int find_intersection( const POINT *points, int x, int y, int count )
     }
 }
 
-static void lp_to_dp_no_translate( DC *dc, POINT *point )
+static void lp_to_dp_no_translate( DC *dc, double *x, double *y )
 {
-    double x = point->x;
-    double y = point->y;
-    point->x = GDI_ROUND( x * dc->xformWorld2Vport.eM11 + y * dc->xformWorld2Vport.eM21 );
-    point->y = GDI_ROUND( x * dc->xformWorld2Vport.eM12 + y * dc->xformWorld2Vport.eM22 );
+    double in_x = *x, in_y = *y;
+
+    *x = in_x * dc->xformWorld2Vport.eM11 + in_y * dc->xformWorld2Vport.eM21;
+    *y = in_x * dc->xformWorld2Vport.eM12 + in_y * dc->xformWorld2Vport.eM22;
 }
 
-static int get_arc_points( DC *dc, int arc_dir, const RECT *rect, POINT start, POINT end, POINT *points )
+static int get_arc_points( DC *dc, int arc_dir, const RECT *rect, double start_x, double start_y,
+                           double end_x, double end_y, POINT *points )
 {
     int i, pos, count, start_pos, end_pos;
     int width = rect->right - rect->left;
@@ -324,11 +325,11 @@ static int get_arc_points( DC *dc, int arc_dir, const RECT *rect, POINT start, P
 
     /* Transform the start and end, but do not translate them, so that they
      * remain relative to the ellipse center. */
-    lp_to_dp_no_translate( dc, &start );
-    lp_to_dp_no_translate( dc, &end );
+    lp_to_dp_no_translate( dc, &start_x, &start_y );
+    lp_to_dp_no_translate( dc, &end_x, &end_y );
 
-    start_pos = find_intersection( points, start.x, start.y, count );
-    end_pos = find_intersection( points, end.x, end.y, count );
+    start_pos = find_intersection( points, start_x, start_y, count );
+    end_pos = find_intersection( points, end_x, end_y, count );
     if (arc_dir == AD_CLOCKWISE)
     {
         int tmp = start_pos;
@@ -429,9 +430,9 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     {
         points[0] = dc->attr->cur_pos;
         lp_to_dp( dc, points, 1 );
-        count = 1 + get_arc_points( dc, dc->attr->arc_direction, &rect, pt[0], pt[1], points + 1 );
+        count = 1 + get_arc_points( dc, dc->attr->arc_direction, &rect, pt[0].x, pt[0].y, pt[1].x, pt[1].y, points + 1 );
     }
-    else count = get_arc_points( dc, dc->attr->arc_direction, &rect, pt[0], pt[1], points );
+    else count = get_arc_points( dc, dc->attr->arc_direction, &rect, pt[0].x, pt[0].y, pt[1].x, pt[1].y, points );
 
     if (count > max_points)
         ERR( "point count %u exceeds max points %u\n", count, max_points );
@@ -1538,7 +1539,7 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     DC *dc = get_physdev_dc( dev );
     RECT rect, arc_rect;
-    POINT start, end, rect_center, *points, *top_points;
+    POINT rect_center, *points, *top_points;
     int count, max_points;
     BOOL ret = TRUE;
     HRGN outline = 0, interior = 0;
@@ -1568,18 +1569,10 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     SetRect( &arc_rect, rect.left, rect.top, rect.left + ellipse_width, rect.top + ellipse_height );
     /* Points are relative to the arc center.
      * We just need to specify any point on the vector. */
-    start.x = -1;
-    start.y = 0;
-    end.x = 0;
-    end.y = -1;
-    count = get_arc_points( dc, AD_CLOCKWISE, &arc_rect, start, end, top_points );
+    count = get_arc_points( dc, AD_CLOCKWISE, &arc_rect, -1.0, 0.0, 0.0, -1.0, top_points );
 
     SetRect( &arc_rect, rect.right - ellipse_width, rect.top, rect.right, rect.top + ellipse_height );
-    start.x = 0;
-    start.y = -1;
-    end.x = 1;
-    end.y = 0;
-    count += get_arc_points( dc, AD_CLOCKWISE, &arc_rect, start, end, top_points + count );
+    count += get_arc_points( dc, AD_CLOCKWISE, &arc_rect, 0.0, -1.0, 1.0, 0.0, top_points + count );
 
     if (count * 2 > max_points)
         ERR( "point count %u * 2 exceeds max points %u\n", count, max_points );
