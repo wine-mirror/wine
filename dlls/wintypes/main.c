@@ -317,6 +317,7 @@ struct property_value
     union
     {
         IReference_boolean boolean_iface;
+        IReference_HSTRING hstring_iface;
     } irefs;
     PropertyType type;
     unsigned int value_size;
@@ -383,6 +384,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_boolean_AddRef(&impl->irefs.boolean_iface);
         *out = &impl->irefs.boolean_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_HSTRING) && impl->type == PropertyType_String)
+    {
+        IReference_HSTRING_AddRef(&impl->irefs.hstring_iface);
+        *out = &impl->irefs.hstring_iface;
         return S_OK;
     }
 
@@ -801,6 +808,31 @@ static const struct IReference_booleanVtbl iref_boolean_vtbl =
     iref_boolean_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_hstring, IReference_HSTRING, struct property_value,
+                     impl_from_IReference_HSTRING, irefs.hstring_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_hstring_get_Value(IReference_HSTRING *iface, HSTRING *value)
+{
+    struct property_value *impl = impl_from_IReference_HSTRING(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetString(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_HSTRINGVtbl iref_hstring_vtbl =
+{
+    iref_hstring_QueryInterface,
+    iref_hstring_AddRef,
+    iref_hstring_Release,
+    /* IInspectable methods */
+    iref_hstring_GetIids,
+    iref_hstring_GetRuntimeClassName,
+    iref_hstring_GetTrustLevel,
+    /* IReference<HSTRING> methods */
+    iref_hstring_get_Value,
+};
+
 DEFINE_IINSPECTABLE(property_value_statics, IPropertyValueStatics, struct wintypes, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateEmpty(IPropertyValueStatics *iface,
@@ -896,7 +928,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateString(IPropertyVa
         HSTRING value, IInspectable **property_value)
 {
     TRACE("iface %p, value %s, property_value %p.\n", iface, debugstr_hstring(value), property_value);
-    return create_primitive_property_value(PropertyType_String);
+    create_primitive_property_value_iref(PropertyType_String, irefs.hstring_iface.lpVtbl, iref_hstring_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInspectable(IPropertyValueStatics *iface,

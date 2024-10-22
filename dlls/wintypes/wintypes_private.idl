@@ -18,6 +18,16 @@
 
 #pragma makedep header
 
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "windows.foundation.idl";
+
+declare {
+    interface Windows.Foundation.IReference<HSTRING>;
+}
+
 cpp_quote("#define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \\")
 cpp_quote("    static inline impl_type *impl_from( iface_type *iface )                                        \\")
 cpp_quote("    {                                                                                              \\")
