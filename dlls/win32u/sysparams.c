@@ -140,6 +140,7 @@ struct edid_monitor_info
 
 struct monitor
 {
+    LONG refcount;
     struct list entry;
     char path[MAX_PATH];
     struct source *source;
@@ -370,6 +371,17 @@ static void source_release( struct source *source )
         gpu_release( source->gpu );
         free( source->modes );
         free( source );
+    }
+}
+
+static void monitor_release( struct monitor *monitor )
+{
+    UINT ref = InterlockedDecrement( &monitor->refcount );
+    TRACE( "monitor %p decreasing refcount to %u\n", monitor, ref );
+    if (!ref)
+    {
+        if (monitor->source) source_release( monitor->source );
+        free( monitor );
     }
 }
 
@@ -767,9 +779,8 @@ static void clear_display_devices(void)
     while (!list_empty( &monitors ))
     {
         monitor = LIST_ENTRY( list_head( &monitors ), struct monitor, entry );
-        if (monitor->source) source_release( monitor->source );
         list_remove( &monitor->entry );
-        free( monitor );
+        monitor_release( monitor );
     }
 
     while (!list_empty( &sources ))
@@ -1516,7 +1527,7 @@ static BOOL write_monitor_to_registry( struct monitor *monitor, const BYTE *edid
 static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
 {
     struct device_manager_ctx *ctx = param;
-    struct monitor monitor = {0};
+    struct monitor *monitor;
     struct source *source;
     char buffer[MAX_PATH];
     char monitor_id_string[16];
@@ -1524,32 +1535,37 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
     assert( !list_empty( &sources ) );
     source = LIST_ENTRY( list_tail( &sources ), struct source, entry );
 
-    monitor.source = source_acquire( source );
-    monitor.id = source->monitor_count;
-    monitor.output_id = ctx->monitor_count;
-    monitor.rc_work = gdi_monitor->rc_work;
+    if (!(monitor = calloc( 1, sizeof(*monitor) ))) return;
+    monitor->refcount = 1;
+    monitor->source = source_acquire( source );
+    monitor->id = source->monitor_count;
+    monitor->output_id = ctx->monitor_count;
+    monitor->rc_work = gdi_monitor->rc_work;
 
-    TRACE( "%u %s %s\n", monitor.id, wine_dbgstr_rect(&gdi_monitor->rc_monitor), wine_dbgstr_rect(&gdi_monitor->rc_work) );
+    TRACE( "%u %s %s\n", monitor->id, wine_dbgstr_rect(&gdi_monitor->rc_monitor), wine_dbgstr_rect(&gdi_monitor->rc_work) );
 
-    get_monitor_info_from_edid( &monitor.edid_info, gdi_monitor->edid, gdi_monitor->edid_len );
-    if (monitor.edid_info.flags & MONITOR_INFO_HAS_MONITOR_ID)
-        strcpy( monitor_id_string, monitor.edid_info.monitor_id_string );
+    get_monitor_info_from_edid( &monitor->edid_info, gdi_monitor->edid, gdi_monitor->edid_len );
+    if (monitor->edid_info.flags & MONITOR_INFO_HAS_MONITOR_ID)
+        strcpy( monitor_id_string, monitor->edid_info.monitor_id_string );
     else
         strcpy( monitor_id_string, "Default_Monitor" );
 
-    snprintf( buffer, sizeof(buffer), "MonitorID%u", monitor.id );
-    snprintf( monitor.path, sizeof(monitor.path), "DISPLAY\\%s\\%04X&%04X", monitor_id_string, source->id, monitor.id );
-    set_reg_ascii_value( source->key, buffer, monitor.path );
+    snprintf( buffer, sizeof(buffer), "MonitorID%u", monitor->id );
+    snprintf( monitor->path, sizeof(monitor->path), "DISPLAY\\%s\\%04X&%04X", monitor_id_string, source->id, monitor->id );
+    set_reg_ascii_value( source->key, buffer, monitor->path );
 
-    if (!write_monitor_to_registry( &monitor, gdi_monitor->edid, gdi_monitor->edid_len ))
-        WARN( "Failed to write monitor to registry\n" );
+    if (!write_monitor_to_registry( monitor, gdi_monitor->edid, gdi_monitor->edid_len ))
+    {
+        WARN( "Failed to write monitor %p to registry\n", monitor );
+        monitor_release( monitor );
+    }
     else
     {
+        list_add_tail( &monitors, &monitor->entry );
+        TRACE( "created monitor %p for source %p\n", monitor, source );
         source->monitor_count++;
         ctx->monitor_count++;
     }
-
-    source_release( monitor.source );
 }
 
 static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial,
@@ -1812,6 +1828,7 @@ static void enum_monitors( const char *path )
 {
     struct monitor *monitor;
     if (!(monitor = calloc( 1, sizeof(*monitor) ))) return;
+    monitor->refcount = 1;
     strcpy( monitor->path, path );
     list_add_tail( &monitors, &monitor->entry );
 }
