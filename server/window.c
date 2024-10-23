@@ -255,6 +255,75 @@ static rectangle_t monitors_get_union_rect( struct winstation *winstation, int i
     return rect;
 }
 
+/* returns the largest intersecting or nearest monitor, keep in sync with win32u/sysparams.c */
+static struct monitor_info *get_monitor_from_rect( struct winstation *winstation, const rectangle_t *rect, int is_raw )
+{
+    struct monitor_info *monitor, *nearest = NULL, *found = NULL, *end;
+    unsigned int max_area = 0, min_distance = -1;
+
+    for (monitor = winstation->monitors, end = monitor + winstation->monitor_count; monitor < end; monitor++)
+    {
+        rectangle_t intersect, target = is_raw ? monitor->raw : monitor->virt;
+
+        if (monitor->flags & (MONITOR_FLAG_CLONE | MONITOR_FLAG_INACTIVE)) continue;
+
+        if (intersect_rect( &intersect, &target, rect ))
+        {
+            /* check for larger intersecting area */
+            unsigned int area = (intersect.right - intersect.left) * (intersect.bottom - intersect.top);
+
+            if (area > max_area)
+            {
+                max_area = area;
+                found = monitor;
+            }
+        }
+
+        if (!found)  /* if not intersecting, check for min distance */
+        {
+            unsigned int distance, x, y;
+
+            if (rect->right <= target.left) x = target.left - rect->right;
+            else if (target.right <= rect->left) x = rect->left - target.right;
+            else x = 0;
+
+            if (rect->bottom <= target.top) y = target.top - rect->bottom;
+            else if (target.bottom <= rect->top) y = rect->top - target.bottom;
+            else y = 0;
+
+            distance = x * x + y * y;
+            if (distance < min_distance)
+            {
+                min_distance = distance;
+                nearest = monitor;
+            }
+        }
+    }
+
+    return found ? found : nearest;
+}
+
+static void map_point_raw_to_virt( struct desktop *desktop, int *x, int *y )
+{
+    int width_from, height_from, width_to, height_to;
+    rectangle_t rect = {*x, *y, *x + 1, *y + 1};
+    struct monitor_info *monitor;
+
+    if (!(monitor = get_monitor_from_rect( desktop->winstation, &rect, 1 ))) return;
+    width_to = monitor->virt.right - monitor->virt.left;
+    height_to = monitor->virt.bottom - monitor->virt.top;
+    width_from = monitor->raw.right - monitor->raw.left;
+    height_from = monitor->raw.bottom - monitor->raw.top;
+
+    *x = *x * 2 - (monitor->raw.left * 2 + width_from);
+    *x = (*x * width_to * 2 + width_from) / (width_from * 2);
+    *x = (*x + monitor->virt.left * 2 + width_to) / 2;
+
+    *y = *y * 2 - (monitor->raw.top * 2 + height_from);
+    *y = (*y * height_to * 2 + height_from) / (height_from * 2);
+    *y = (*y + monitor->virt.top * 2 + height_to) / 2;
+}
+
 /* get the per-monitor DPI for a window */
 static unsigned int get_monitor_dpi( struct window *win )
 {
@@ -914,6 +983,8 @@ user_handle_t shallow_window_from_point( struct desktop *desktop, int x, int y )
 
     if (!desktop->top_window) return 0;
 
+    map_point_raw_to_virt( desktop, &x, &y );
+
     LIST_FOR_EACH_ENTRY( ptr, &desktop->top_window->children, struct window, entry )
     {
         int x_child = x, y_child = y;
@@ -930,6 +1001,8 @@ struct thread *window_thread_from_point( user_handle_t scope, int x, int y )
     struct window *win = get_user_object( scope, USER_WINDOW );
 
     if (!win) return NULL;
+
+    map_point_raw_to_virt( win->desktop, &x, &y );
 
     screen_to_client( win, &x, &y, 0 );
     win = child_window_from_point( win, x, y );
