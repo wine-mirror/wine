@@ -1759,6 +1759,60 @@ static BOOL is_monitor_primary( struct monitor *monitor )
     return !!(source->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
 }
 
+/* display_lock must be held */
+static UINT monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE type, UINT *dpi_x, UINT *dpi_y )
+{
+    struct source *source = monitor->source;
+    float scale_x = 1.0, scale_y = 1.0;
+    UINT dpi;
+
+    if (!source || !(dpi = source->dpi)) dpi = system_dpi;
+    *dpi_x = round( dpi * scale_x );
+    *dpi_y = round( dpi * scale_y );
+    return min( *dpi_x, *dpi_y );
+}
+
+/* display_lock must be held */
+static RECT monitor_get_rect( struct monitor *monitor, UINT dpi, MONITOR_DPI_TYPE type )
+{
+    DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
+    RECT rect = {0, 0, 1024, 768};
+    struct source *source;
+    UINT dpi_from, x, y;
+
+    /* services do not have any adapters, only a virtual monitor */
+    if (!(source = monitor->source)) return rect;
+
+    SetRectEmpty( &rect );
+    if (!(source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) return rect;
+    source_get_current_settings( source, &current_mode );
+
+    SetRect( &rect, current_mode.dmPosition.x, current_mode.dmPosition.y,
+             current_mode.dmPosition.x + current_mode.dmPelsWidth,
+             current_mode.dmPosition.y + current_mode.dmPelsHeight );
+
+    dpi_from = monitor_get_dpi( monitor, type, &x, &y );
+    return map_dpi_rect( rect, dpi_from, dpi );
+}
+
+/* display_lock must be held */
+static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT dpi )
+{
+    UINT x, y;
+
+    info->rcMonitor = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
+    info->rcWork = map_dpi_rect( monitor->rc_work, monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y ), dpi );
+    info->dwFlags = is_monitor_primary( monitor ) ? MONITORINFOF_PRIMARY : 0;
+
+    if (info->cbSize >= sizeof(MONITORINFOEXW))
+    {
+        char buffer[CCHDEVICENAME];
+        if (monitor->source) snprintf( buffer, sizeof(buffer), "\\\\.\\DISPLAY%d", monitor->source->id + 1 );
+        else strcpy( buffer, "WinDisc" );
+        asciiz_to_unicode( ((MONITORINFOEXW *)info)->szDevice, buffer );
+    }
+}
+
 static void enum_device_keys( const char *root, const WCHAR *classW, UINT class_size, void (*callback)(const char *) )
 {
     char buffer[1024];
@@ -2213,59 +2267,6 @@ HBITMAP get_display_bitmap(void)
 static void release_display_dc( HDC hdc )
 {
     pthread_mutex_unlock( &display_dc_lock );
-}
-
-/* display_lock must be held */
-static UINT monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE type, UINT *dpi_x, UINT *dpi_y )
-{
-    struct source *source = monitor->source;
-    float scale_x = 1.0, scale_y = 1.0;
-    UINT dpi;
-
-    if (!source || !(dpi = source->dpi)) dpi = system_dpi;
-    *dpi_x = round( dpi * scale_x );
-    *dpi_y = round( dpi * scale_y );
-    return min( *dpi_x, *dpi_y );
-}
-
-/* display_lock must be held */
-static RECT monitor_get_rect( struct monitor *monitor, UINT dpi, MONITOR_DPI_TYPE type )
-{
-    DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
-    RECT rect = {0, 0, 1024, 768};
-    struct source *source;
-    UINT dpi_from, x, y;
-
-    /* services do not have any adapters, only a virtual monitor */
-    if (!(source = monitor->source)) return rect;
-
-    SetRectEmpty( &rect );
-    if (!(source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) return rect;
-    source_get_current_settings( source, &current_mode );
-
-    SetRect( &rect, current_mode.dmPosition.x, current_mode.dmPosition.y,
-             current_mode.dmPosition.x + current_mode.dmPelsWidth,
-             current_mode.dmPosition.y + current_mode.dmPelsHeight );
-
-    dpi_from = monitor_get_dpi( monitor, type, &x, &y );
-    return map_dpi_rect( rect, dpi_from, dpi );
-}
-
-static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT dpi )
-{
-    UINT x, y;
-
-    info->rcMonitor = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
-    info->rcWork = map_dpi_rect( monitor->rc_work, monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y ), dpi );
-    info->dwFlags = is_monitor_primary( monitor ) ? MONITORINFOF_PRIMARY : 0;
-
-    if (info->cbSize >= sizeof(MONITORINFOEXW))
-    {
-        char buffer[CCHDEVICENAME];
-        if (monitor->source) snprintf( buffer, sizeof(buffer), "\\\\.\\DISPLAY%d", monitor->source->id + 1 );
-        else strcpy( buffer, "WinDisc" );
-        asciiz_to_unicode( ((MONITORINFOEXW *)info)->szDevice, buffer );
-    }
 }
 
 /* display_lock must be held */
