@@ -2307,7 +2307,7 @@ static void release_display_dc( HDC hdc )
     pthread_mutex_unlock( &display_dc_lock );
 }
 
-/* display_lock must be held */
+/* display_lock must be held, keep in sync with server/window.c */
 static struct monitor *get_monitor_from_rect( RECT rect, UINT flags, UINT dpi, MONITOR_DPI_TYPE type )
 {
     struct monitor *monitor, *primary = NULL, *nearest = NULL, *found = NULL;
