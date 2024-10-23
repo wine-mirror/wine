@@ -1,0 +1,7 @@
+MODULE = dataexchange.dll
+IMPORTLIB = dataexchange
+IMPORTS = combase
+
+SOURCES = \
+	classes.idl \
+	main.c
