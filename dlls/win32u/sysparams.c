@@ -2377,9 +2377,35 @@ static UINT get_monitor_dpi( HMONITOR handle, UINT type, UINT *x, UINT *y )
  */
 UINT get_win_monitor_dpi( HWND hwnd, UINT *raw_dpi )
 {
-    /* FIXME: use the monitor DPI instead */
-    *raw_dpi = system_dpi;
-    return system_dpi;
+    UINT dpi = NTUSER_DPI_CONTEXT_GET_DPI( get_window_dpi_awareness_context( hwnd ) );
+    HWND parent = get_parent( hwnd );
+    RECT rect = {0};
+    WND *win;
+
+    if (!(win = get_win_ptr( hwnd )))
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    if (win == WND_DESKTOP) return monitor_dpi_from_rect( rect, get_thread_dpi(), raw_dpi );
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (!get_window_rect( hwnd, &rect, dpi )) return 0;
+    }
+    /* avoid recursive calls from get_window_rects for the process windows */
+    else if ((parent = win->parent))
+    {
+        release_win_ptr( win );
+        return get_win_monitor_dpi( parent, raw_dpi );
+    }
+    else
+    {
+        rect = win->rects.window;
+        release_win_ptr( win );
+    }
+
+    return monitor_dpi_from_rect( rect, dpi, raw_dpi );
 }
 
 /* keep in sync with user32 */
