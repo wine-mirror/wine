@@ -355,13 +355,16 @@ static void gpu_release( struct gpu *gpu )
 
 static struct source *source_acquire( struct source *source )
 {
-    InterlockedIncrement( &source->refcount );
+    UINT ref = InterlockedIncrement( &source->refcount );
+    TRACE( "source %p increasing refcount to %u\n", source, ref );
     return source;
 }
 
 static void source_release( struct source *source )
 {
-    if (!InterlockedDecrement( &source->refcount ))
+    UINT ref = InterlockedDecrement( &source->refcount );
+    TRACE( "source %p decreasing refcount to %u\n", source, ref );
+    if (!ref)
     {
         if (source->key) NtClose( source->key );
         gpu_release( source->gpu );
@@ -961,7 +964,6 @@ struct device_manager_ctx
     UINT source_count;
     UINT monitor_count;
     HANDLE mutex;
-    struct source source;
     struct list vulkan_gpus;
     BOOL has_primary;
     /* for the virtual desktop settings */
@@ -1396,7 +1398,9 @@ static BOOL write_source_to_registry( struct source *source )
 static void add_source( const char *name, UINT state_flags, UINT dpi, void *param )
 {
     struct device_manager_ctx *ctx = param;
+    struct source *source;
     struct gpu *gpu;
+    BOOL is_primary;
 
     TRACE( "name %s, state_flags %#x\n", name, state_flags );
 
@@ -1404,30 +1408,35 @@ static void add_source( const char *name, UINT state_flags, UINT dpi, void *para
     gpu = LIST_ENTRY( list_tail( &gpus ), struct gpu, entry );
 
     /* in virtual desktop mode, report all physical sources as detached */
-    ctx->is_primary = !!(state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
+    is_primary = !!(state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
     if (is_virtual_desktop()) state_flags &= ~(DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE);
 
-    if (ctx->source.gpu) gpu_release( ctx->source.gpu );
-    if (ctx->source.key) NtClose( ctx->source.key );
-    memset( &ctx->source, 0, sizeof(ctx->source) );
-    ctx->source.gpu = gpu_acquire( gpu );
-    ctx->source.id = ctx->source_count + (ctx->has_primary ? 0 : 1);
-    ctx->source.state_flags = state_flags;
+    if (!(source = calloc( 1, sizeof(*source) ))) return;
+    source->refcount = 1;
+    source->gpu = gpu_acquire( gpu );
+    source->id = ctx->source_count + (ctx->has_primary ? 0 : 1);
+    source->state_flags = state_flags;
     if (state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE)
     {
-        ctx->source.id = 0;
+        source->id = 0;
         ctx->has_primary = TRUE;
     }
-    ctx->source.dpi = dpi;
+    source->dpi = dpi;
 
     /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
-    snprintf( ctx->source.path, sizeof(ctx->source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
+    snprintf( source->path, sizeof(source->path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
               control_keyA + strlen( "\\Registry\\Machine" ), gpu->guid, name );
 
-    if (!write_source_to_registry( &ctx->source ))
-        WARN( "Failed to write source to registry\n" );
+    if (!write_source_to_registry( source ))
+    {
+        WARN( "Failed to write source %p to registry\n", source );
+        source_release( source );
+    }
     else
     {
+        list_add_tail( &sources, &source->entry );
+        TRACE( "created source %p for gpu %p\n", source, gpu );
+        ctx->is_primary = is_primary;
         gpu->source_count++;
         ctx->source_count++;
     }
@@ -1508,11 +1517,15 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
 {
     struct device_manager_ctx *ctx = param;
     struct monitor monitor = {0};
+    struct source *source;
     char buffer[MAX_PATH];
     char monitor_id_string[16];
 
-    monitor.source = &ctx->source;
-    monitor.id = ctx->source.monitor_count;
+    assert( !list_empty( &sources ) );
+    source = LIST_ENTRY( list_tail( &sources ), struct source, entry );
+
+    monitor.source = source_acquire( source );
+    monitor.id = source->monitor_count;
     monitor.output_id = ctx->monitor_count;
     monitor.rc_work = gdi_monitor->rc_work;
 
@@ -1525,16 +1538,18 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
         strcpy( monitor_id_string, "Default_Monitor" );
 
     snprintf( buffer, sizeof(buffer), "MonitorID%u", monitor.id );
-    snprintf( monitor.path, sizeof(monitor.path), "DISPLAY\\%s\\%04X&%04X", monitor_id_string, ctx->source.id, monitor.id );
-    set_reg_ascii_value( ctx->source.key, buffer, monitor.path );
+    snprintf( monitor.path, sizeof(monitor.path), "DISPLAY\\%s\\%04X&%04X", monitor_id_string, source->id, monitor.id );
+    set_reg_ascii_value( source->key, buffer, monitor.path );
 
     if (!write_monitor_to_registry( &monitor, gdi_monitor->edid, gdi_monitor->edid_len ))
         WARN( "Failed to write monitor to registry\n" );
     else
     {
-        ctx->source.monitor_count++;
+        source->monitor_count++;
         ctx->monitor_count++;
     }
+
+    source_release( monitor.source );
 }
 
 static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial,
@@ -1626,24 +1641,28 @@ static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW
     struct device_manager_ctx *ctx = param;
     DEVMODEW dummy, detached = *current, virtual, *virtual_modes = NULL;
     const DEVMODEW physical = modes_count == 1 ? *modes : *current;
+    struct source *source;
     UINT virtual_count;
 
     TRACE( "current %s, modes_count %u, modes %p, param %p\n", debugstr_devmodew( current ), modes_count, modes, param );
+
+    assert( !list_empty( &sources ) );
+    source = LIST_ENTRY( list_tail( &sources ), struct source, entry );
 
     if (ctx->is_primary) ctx->primary = *current;
 
     detached.dmPelsWidth = 0;
     detached.dmPelsHeight = 0;
-    if (!(ctx->source.state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) current = &detached;
+    if (!(source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) current = &detached;
 
     if (modes_count > 1 || current == &detached)
     {
-        reg_delete_value( ctx->source.key, physicalW );
+        reg_delete_value( source->key, physicalW );
         virtual_modes = NULL;
     }
     else
     {
-        if (!read_source_mode( ctx->source.key, ENUM_CURRENT_SETTINGS, &virtual ))
+        if (!read_source_mode( source->key, ENUM_CURRENT_SETTINGS, &virtual ))
             virtual = physical;
 
         if ((virtual_modes = get_virtual_modes( &virtual, current, &physical, &virtual_count )))
@@ -1652,18 +1671,18 @@ static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW
             modes = virtual_modes;
             current = &virtual;
 
-            write_source_mode( ctx->source.key, WINE_ENUM_PHYSICAL_SETTINGS, &physical );
+            write_source_mode( source->key, WINE_ENUM_PHYSICAL_SETTINGS, &physical );
         }
     }
 
-    if (current == &detached || !read_source_mode( ctx->source.key, ENUM_REGISTRY_SETTINGS, &dummy ))
-        write_source_mode( ctx->source.key, ENUM_REGISTRY_SETTINGS, current );
-    write_source_mode( ctx->source.key, ENUM_CURRENT_SETTINGS, current );
+    if (current == &detached || !read_source_mode( source->key, ENUM_REGISTRY_SETTINGS, &dummy ))
+        write_source_mode( source->key, ENUM_REGISTRY_SETTINGS, current );
+    write_source_mode( source->key, ENUM_CURRENT_SETTINGS, current );
 
     assert( !modes_count || modes->dmDriverExtra == 0 );
-    set_reg_value( ctx->source.key, modesW, REG_BINARY, modes, modes_count * sizeof(*modes) );
-    set_reg_value( ctx->source.key, mode_countW, REG_DWORD, &modes_count, sizeof(modes_count) );
-    ctx->source.mode_count = modes_count;
+    set_reg_value( source->key, modesW, REG_BINARY, modes, modes_count * sizeof(*modes) );
+    set_reg_value( source->key, mode_countW, REG_DWORD, &modes_count, sizeof(modes_count) );
+    source->mode_count = modes_count;
 
     free( virtual_modes );
 }
@@ -1685,16 +1704,7 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
         ctx->mutex = 0;
     }
 
-    if (ctx->source.key)
-    {
-        NtClose( ctx->source.key );
-        last_query_display_time = 0;
-    }
-    if (ctx->source.gpu)
-    {
-        gpu_release( ctx->source.gpu );
-        ctx->source.gpu = NULL;
-    }
+    if (!list_empty( &sources )) last_query_display_time = 0;
     if (ctx->gpu_count) cleanup_devices();
 
     while (!list_empty( &ctx->vulkan_gpus ))
@@ -1933,11 +1943,15 @@ static NTSTATUS default_update_display_devices( struct device_manager_ctx *ctx )
     struct pci_id pci_id = {0};
     struct gdi_monitor monitor = {0};
     DEVMODEW mode = {.dmSize = sizeof(mode)};
+    struct source *source;
 
     add_gpu( "Wine GPU", &pci_id, NULL, ctx );
     add_source( "Default", source_flags, system_dpi, ctx );
 
-    if (!read_source_mode( ctx->source.key, ENUM_CURRENT_SETTINGS, &mode ))
+    assert( !list_empty( &sources ) );
+    source = LIST_ENTRY( list_tail( &sources ), struct source, entry );
+
+    if (!read_source_mode( source->key, ENUM_CURRENT_SETTINGS, &mode ))
     {
         mode = modes[2];
         mode.dmFields |= DM_POSITION;
@@ -1988,7 +2002,7 @@ static BOOL get_default_desktop_size( DWORD *width, DWORD *height )
 static BOOL add_virtual_source( struct device_manager_ctx *ctx )
 {
     DEVMODEW current = {.dmSize = sizeof(current)}, initial = ctx->primary, maximum = ctx->primary, *modes;
-    struct source virtual_source = {.state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_VGA_COMPATIBLE};
+    struct source *physical, *source;
     struct gdi_monitor monitor = {0};
     UINT modes_count;
     struct gpu *gpu;
@@ -1996,26 +2010,33 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
     assert( !list_empty( &gpus ) );
     gpu = LIST_ENTRY( list_tail( &gpus ), struct gpu, entry );
 
-    if (ctx->has_primary) ctx->source.id = ctx->source_count;
+    if (list_empty( &sources )) physical = NULL;
+    else physical = LIST_ENTRY( list_tail( &sources ), struct source, entry );
+
+    if (!(source = calloc( 1, sizeof(*source) ))) return STATUS_NO_MEMORY;
+    source->refcount = 1;
+    source->state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_VGA_COMPATIBLE;
+
+    if (ctx->has_primary && physical) physical->id = ctx->source_count;
     else
     {
-        virtual_source.state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
+        source->state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
         ctx->has_primary = TRUE;
     }
-    virtual_source.gpu = gpu_acquire( gpu );
+    source->gpu = gpu_acquire( gpu );
 
     /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
-    snprintf( virtual_source.path, sizeof(virtual_source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
+    snprintf( source->path, sizeof(source->path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
               control_keyA + strlen( "\\Registry\\Machine" ), gpu->guid, "Virtual" );
 
-    if (!write_source_to_registry( &virtual_source ))
+    if (!write_source_to_registry( source ))
     {
         WARN( "Failed to write source to registry\n" );
-        gpu_release( virtual_source.gpu );
+        source_release( source );
         return STATUS_UNSUCCESSFUL;
     }
 
-    ctx->source = virtual_source;
+    list_add_tail( &sources, &source->entry );
     gpu->source_count++;
     ctx->source_count++;
 
@@ -2025,7 +2046,7 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
         initial.dmPelsHeight = maximum.dmPelsHeight;
     }
 
-    if (!read_source_mode( ctx->source.key, ENUM_CURRENT_SETTINGS, &current ))
+    if (!read_source_mode( source->key, ENUM_CURRENT_SETTINGS, &current ))
     {
         current = ctx->primary;
         current.dmDisplayFrequency = 60;
