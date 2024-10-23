@@ -3534,14 +3534,14 @@ static void test_save_surface_to_dds(IDirect3DDevice9 *device)
           { D3D_OK, { 32, DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_PALETTE, 0,
             PALETTED_DDS_FILE_HEADER_SIZE + (4 * 4)
-          }, .todo_hr = TRUE
+          }
         },
         { D3DFMT_A8P8, 4, 4, test_palette,
           { D3D_OK, { 32, DDS_PF_INDEXED | DDS_PF_ALPHA, 0, 16, 0, 0, 0, 0xff00 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0,
             DDSCAPS_TEXTURE | DDSCAPS_PALETTE | DDSCAPS_ALPHA, 0,
             PALETTED_DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
-          }, .todo_hr = TRUE
+          }
         },
         /* If a palette isn't provided, d3dx converts to D3DFMT_A8R8G8B8. */
         { D3DFMT_P8, 4, 4, NULL,

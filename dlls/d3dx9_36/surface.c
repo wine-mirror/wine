@@ -79,6 +79,8 @@ static const GUID *wic_guid_from_d3dformat(D3DFORMAT format)
     return NULL;
 }
 
+#define DDS_PALETTE_SIZE (sizeof(PALETTEENTRY) * 256)
+
 /* dds_header.flags */
 #define DDS_CAPS 0x1
 #define DDS_HEIGHT 0x2
@@ -92,6 +94,7 @@ static const GUID *wic_guid_from_d3dformat(D3DFORMAT format)
 /* dds_header.caps */
 #define DDSCAPS_ALPHA    0x2
 #define DDS_CAPS_COMPLEX 0x8
+#define DDSCAPS_PALETTE  0x100
 #define DDS_CAPS_TEXTURE 0x1000
 #define DDS_CAPS_MIPMAP 0x400000
 
@@ -481,6 +484,8 @@ static HRESULT d3dx_init_dds_header(struct dds_header *header, D3DRESOURCETYPE r
     header->caps = DDS_CAPS_TEXTURE;
     if (header->pixel_format.flags & DDS_PF_ALPHA || header->pixel_format.flags & DDS_PF_ALPHA_ONLY)
         header->caps |= DDSCAPS_ALPHA;
+    if (header->pixel_format.flags & DDS_PF_INDEXED)
+        header->caps |= DDSCAPS_PALETTE;
 
     return D3D_OK;
 }
@@ -502,6 +507,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
         case D3DXIFF_DDS:
         {
             struct dds_header *header;
+            uint32_t header_size;
 
             hr = dds_pixel_format_from_d3dx_pixel_format_id(NULL, dst_format);
             if (FAILED(hr))
@@ -513,15 +519,19 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
             if (FAILED(hr))
                 return hr;
 
-            hr = D3DXCreateBuffer(dst_slice_pitch + sizeof(*header), &buffer);
+            header_size = is_index_format(dst_fmt_desc) ? sizeof(*header) + DDS_PALETTE_SIZE : sizeof(*header);
+            hr = D3DXCreateBuffer(dst_slice_pitch + header_size, &buffer);
             if (FAILED(hr))
                 return hr;
 
             header = ID3DXBuffer_GetBufferPointer(buffer);
-            pixels = (uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + sizeof(*header);
+            pixels = (uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + header_size;
             hr = d3dx_init_dds_header(header, D3DRTYPE_TEXTURE, dst_format, &src_pixels->size, 1);
             if (FAILED(hr))
                 goto exit;
+            if (is_index_format(dst_fmt_desc))
+                memcpy((uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + sizeof(*header), src_pixels->palette,
+                        DDS_PALETTE_SIZE);
             break;
         }
 
@@ -549,7 +559,8 @@ exit:
     return hr;
 }
 
-static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSurface9 *src_surface, const RECT *src_rect)
+static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSurface9 *src_surface,
+        const PALETTEENTRY *src_palette, const RECT *src_rect)
 {
     const struct pixel_format_desc *src_fmt_desc;
     D3DSURFACE_DESC src_surface_desc;
@@ -564,6 +575,12 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
     src_fmt_desc = get_format_info(src_surface_desc.Format);
     if (is_unknown_format(src_fmt_desc))
         return E_NOTIMPL;
+
+    if (!src_palette && is_index_format(src_fmt_desc))
+    {
+        FIXME("Default palette unimplemented.\n");
+        return E_NOTIMPL;
+    }
 
     if (src_rect)
     {
@@ -585,7 +602,7 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
     if (FAILED(hr))
         return hr;
 
-    hr = d3dx_pixels_init(locked_rect.pBits, locked_rect.Pitch, 0, NULL, src_fmt_desc->format,
+    hr = d3dx_pixels_init(locked_rect.pBits, locked_rect.Pitch, 0, src_palette, src_fmt_desc->format,
             src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1, &src_pixels);
     if (FAILED(hr))
     {
@@ -665,7 +682,6 @@ static BOOL d3dx_get_image_file_format_from_file_signature(const void *src_data,
     return FALSE;
 }
 
-#define DDS_PALETTE_SIZE (sizeof(PALETTEENTRY) * 256)
 static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src_data_size,
         struct d3dx_image *image, uint32_t starting_mip_level)
 {
@@ -2958,9 +2974,9 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     if (!dst_buffer || !src_surface) return D3DERR_INVALIDCALL;
 
     IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
-    if (src_palette || is_index_format(get_format_info(src_surface_desc.Format)))
+    if (file_format != D3DXIFF_DDS && (src_palette || is_index_format(get_format_info(src_surface_desc.Format))))
     {
-        FIXME("Saving surfaces with palettized pixel formats is not implemented yet.\n");
+        FIXME("Saving surfaces with palettized pixel formats to non-DDS files is not implemented yet.\n");
         return D3DERR_INVALIDCALL;
     }
 
@@ -2977,7 +2993,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             container_format = &GUID_ContainerFormatJpeg;
             break;
         case D3DXIFF_DDS:
-            return save_dds_surface_to_memory(dst_buffer, src_surface, src_rect);
+            return save_dds_surface_to_memory(dst_buffer, src_surface, src_palette, src_rect);
         case D3DXIFF_HDR:
         case D3DXIFF_PFM:
         case D3DXIFF_TGA:
