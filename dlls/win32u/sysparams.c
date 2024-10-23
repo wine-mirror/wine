@@ -745,6 +745,41 @@ static void reg_empty_key( HKEY root, const char *key_name )
     if (hkey != root) NtClose( hkey );
 }
 
+static void clear_display_devices(void)
+{
+    struct source *source;
+    struct monitor *monitor;
+    struct gpu *gpu;
+
+    if (list_head( &monitors ) == &virtual_monitor.entry)
+    {
+        list_init( &monitors );
+        return;
+    }
+
+    while (!list_empty( &monitors ))
+    {
+        monitor = LIST_ENTRY( list_head( &monitors ), struct monitor, entry );
+        if (monitor->source) source_release( monitor->source );
+        list_remove( &monitor->entry );
+        free( monitor );
+    }
+
+    while (!list_empty( &sources ))
+    {
+        source = LIST_ENTRY( list_head( &sources ), struct source, entry );
+        list_remove( &source->entry );
+        source_release( source );
+    }
+
+    while (!list_empty( &gpus ))
+    {
+        gpu = LIST_ENTRY( list_head( &gpus ), struct gpu, entry );
+        list_remove( &gpu->entry );
+        gpu_release( gpu );
+    }
+}
+
 static void prepare_devices(void)
 {
     char buffer[4096];
@@ -754,6 +789,8 @@ static void prepare_devices(void)
     unsigned i = 0;
     DWORD size;
     HKEY hkey, subkey, device_key, prop_key;
+
+    clear_display_devices();
 
     if (!enum_key) enum_key = reg_create_ascii_key( NULL, enum_keyA, 0, NULL );
     if (!control_key) control_key = reg_create_ascii_key( NULL, control_keyA, 0, NULL );
@@ -1644,41 +1681,6 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
         struct vulkan_gpu *gpu = LIST_ENTRY( list_head( &ctx->vulkan_gpus ), struct vulkan_gpu, entry );
         list_remove( &gpu->entry );
         free_vulkan_gpu( gpu );
-    }
-}
-
-static void clear_display_devices(void)
-{
-    struct source *source;
-    struct monitor *monitor;
-    struct gpu *gpu;
-
-    if (list_head( &monitors ) == &virtual_monitor.entry)
-    {
-        list_init( &monitors );
-        return;
-    }
-
-    while (!list_empty( &monitors ))
-    {
-        monitor = LIST_ENTRY( list_head( &monitors ), struct monitor, entry );
-        if (monitor->source) source_release( monitor->source );
-        list_remove( &monitor->entry );
-        free( monitor );
-    }
-
-    while (!list_empty( &sources ))
-    {
-        source = LIST_ENTRY( list_head( &sources ), struct source, entry );
-        list_remove( &source->entry );
-        source_release( source );
-    }
-
-    while (!list_empty( &gpus ))
-    {
-        gpu = LIST_ENTRY( list_head( &gpus ), struct gpu, entry );
-        list_remove( &gpu->entry );
-        gpu_release( gpu );
     }
 }
 
