@@ -340,14 +340,16 @@ static void release_display_device_init_mutex( HANDLE mutex )
 
 static struct gpu *gpu_acquire( struct gpu *gpu )
 {
-    InterlockedIncrement( &gpu->refcount );
+    UINT ref = InterlockedIncrement( &gpu->refcount );
+    TRACE( "gpu %p increasing refcount to %u\n", gpu, ref );
     return gpu;
 }
 
 static void gpu_release( struct gpu *gpu )
 {
-    if (!InterlockedDecrement( &gpu->refcount ))
-        free( gpu );
+    UINT ref = InterlockedDecrement( &gpu->refcount );
+    TRACE( "gpu %p decreasing refcount to %u\n", gpu, ref );
+    if (!ref) free( gpu );
 }
 
 static struct source *source_acquire( struct source *source )
@@ -957,7 +959,6 @@ struct device_manager_ctx
     UINT source_count;
     UINT monitor_count;
     HANDLE mutex;
-    struct gpu gpu;
     struct source source;
     HKEY source_key;
     struct list vulkan_gpus;
@@ -1242,6 +1243,7 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     struct vulkan_gpu *vulkan_gpu = NULL;
     struct list *ptr;
+    struct gpu *gpu;
     unsigned int i;
     HKEY hkey, subkey;
     DWORD len;
@@ -1261,8 +1263,9 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
         prepare_devices();
     }
 
-    memset( &ctx->gpu, 0, sizeof(ctx->gpu) );
-    ctx->gpu.index = ctx->gpu_count;
+    if (!(gpu = calloc( 1, sizeof(*gpu) ))) return;
+    gpu->refcount = 1;
+    gpu->index = ctx->gpu_count;
 
     if ((vulkan_gpu = find_vulkan_gpu_from_uuid( ctx, vulkan_uuid )))
         TRACE( "Found vulkan GPU matching uuid %s, pci_id %#04x:%#04x, name %s\n", debugstr_guid(&vulkan_gpu->uuid),
@@ -1279,34 +1282,34 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
                debugstr_guid(&vulkan_gpu->uuid), debugstr_a(vulkan_gpu->name));
     }
 
-    if (vulkan_uuid && !IsEqualGUID( vulkan_uuid, &empty_uuid )) ctx->gpu.vulkan_uuid = *vulkan_uuid;
-    else if (vulkan_gpu) ctx->gpu.vulkan_uuid = vulkan_gpu->uuid;
+    if (vulkan_uuid && !IsEqualGUID( vulkan_uuid, &empty_uuid )) gpu->vulkan_uuid = *vulkan_uuid;
+    else if (vulkan_gpu) gpu->vulkan_uuid = vulkan_gpu->uuid;
 
     if (!pci_id->vendor && !pci_id->device && vulkan_gpu) pci_id = &vulkan_gpu->pci_id;
 
     if ((!name || !strcmp( name, "Wine GPU" )) && vulkan_gpu) name = vulkan_gpu->name;
-    if (name) RtlUTF8ToUnicodeN( ctx->gpu.name, sizeof(ctx->gpu.name) - sizeof(WCHAR), &len, name, strlen( name ) );
+    if (name) RtlUTF8ToUnicodeN( gpu->name, sizeof(gpu->name) - sizeof(WCHAR), &len, name, strlen( name ) );
 
-    snprintf( ctx->gpu.path, sizeof(ctx->gpu.path), "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
-              pci_id->vendor, pci_id->device, pci_id->subsystem, pci_id->revision, ctx->gpu.index );
-    if (!(hkey = reg_create_ascii_key( enum_key, ctx->gpu.path, 0, NULL ))) return;
+    snprintf( gpu->path, sizeof(gpu->path), "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
+              pci_id->vendor, pci_id->device, pci_id->subsystem, pci_id->revision, gpu->index );
+    if (!(hkey = reg_create_ascii_key( enum_key, gpu->path, 0, NULL ))) return;
 
     if ((subkey = reg_create_ascii_key( hkey, "Device Parameters", 0, NULL )))
     {
-        if (query_reg_ascii_value( subkey, "VideoID", value, sizeof(buffer) ) != sizeof(ctx->gpu.guid) * sizeof(WCHAR))
+        if (query_reg_ascii_value( subkey, "VideoID", value, sizeof(buffer) ) != sizeof(gpu->guid) * sizeof(WCHAR))
         {
             GUID guid;
             uuid_create( &guid );
-            snprintf( ctx->gpu.guid, sizeof(ctx->gpu.guid), "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            snprintf( gpu->guid, sizeof(gpu->guid), "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
                       (unsigned int)guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
                       guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
-            TRACE( "created guid %s\n", debugstr_a(ctx->gpu.guid) );
+            TRACE( "created guid %s\n", debugstr_a(gpu->guid) );
         }
         else
         {
             WCHAR *guidW = (WCHAR *)value->Data;
-            for (i = 0; i < sizeof(ctx->gpu.guid); i++) ctx->gpu.guid[i] = guidW[i];
-            TRACE( "got guid %s\n", debugstr_a(ctx->gpu.guid) );
+            for (i = 0; i < sizeof(gpu->guid); i++) gpu->guid[i] = guidW[i];
+            TRACE( "got guid %s\n", debugstr_a(gpu->guid) );
         }
         NtClose( subkey );
     }
@@ -1315,23 +1318,30 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     {
         if (query_reg_value( subkey, NULL, value, sizeof(buffer) ) != sizeof(LUID))
         {
-            NtAllocateLocallyUniqueId( &ctx->gpu.luid );
-            TRACE("allocated luid %08x%08x\n", (int)ctx->gpu.luid.HighPart, (int)ctx->gpu.luid.LowPart );
+            NtAllocateLocallyUniqueId( &gpu->luid );
+            TRACE("allocated luid %08x%08x\n", (int)gpu->luid.HighPart, (int)gpu->luid.LowPart );
         }
         else
         {
-            memcpy( &ctx->gpu.luid, value->Data, sizeof(ctx->gpu.luid) );
-            TRACE("got luid %08x%08x\n", (int)ctx->gpu.luid.HighPart, (int)ctx->gpu.luid.LowPart );
+            memcpy( &gpu->luid, value->Data, sizeof(gpu->luid) );
+            TRACE("got luid %08x%08x\n", (int)gpu->luid.HighPart, (int)gpu->luid.LowPart );
         }
         NtClose( subkey );
     }
 
     NtClose( hkey );
 
-    if (!write_gpu_to_registry( &ctx->gpu, pci_id, vulkan_gpu ? vulkan_gpu->memory : 0 ))
-        WARN( "Failed to write gpu to registry\n" );
+    if (!write_gpu_to_registry( gpu, pci_id, vulkan_gpu ? vulkan_gpu->memory : 0 ))
+    {
+        WARN( "Failed to write gpu %p to registry\n", gpu );
+        gpu_release( gpu );
+    }
     else
+    {
+        list_add_tail( &gpus, &gpu->entry );
+        TRACE( "created gpu %p\n", gpu );
         ctx->gpu_count++;
+    }
 
     if (vulkan_gpu)
     {
@@ -1386,15 +1396,20 @@ static BOOL write_source_to_registry( const struct source *source, HKEY *source_
 static void add_source( const char *name, UINT state_flags, UINT dpi, void *param )
 {
     struct device_manager_ctx *ctx = param;
+    struct gpu *gpu;
 
     TRACE( "name %s, state_flags %#x\n", name, state_flags );
+
+    assert( !list_empty( &gpus ) );
+    gpu = LIST_ENTRY( list_tail( &gpus ), struct gpu, entry );
 
     /* in virtual desktop mode, report all physical sources as detached */
     ctx->is_primary = !!(state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
     if (is_virtual_desktop()) state_flags &= ~(DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE);
 
+    if (ctx->source.gpu) gpu_release( ctx->source.gpu );
     memset( &ctx->source, 0, sizeof(ctx->source) );
-    ctx->source.gpu = &ctx->gpu;
+    ctx->source.gpu = gpu_acquire( gpu );
     ctx->source.id = ctx->source_count + (ctx->has_primary ? 0 : 1);
     ctx->source.state_flags = state_flags;
     if (state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE)
@@ -1406,13 +1421,13 @@ static void add_source( const char *name, UINT state_flags, UINT dpi, void *para
 
     /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
     snprintf( ctx->source.path, sizeof(ctx->source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
-              control_keyA + strlen( "\\Registry\\Machine" ), ctx->gpu.guid, name );
+              control_keyA + strlen( "\\Registry\\Machine" ), gpu->guid, name );
 
     if (!write_source_to_registry( &ctx->source, &ctx->source_key ))
         WARN( "Failed to write source to registry\n" );
     else
     {
-        ctx->gpu.source_count++;
+        gpu->source_count++;
         ctx->source_count++;
     }
 }
@@ -1673,6 +1688,11 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
     {
         NtClose( ctx->source_key );
         last_query_display_time = 0;
+    }
+    if (ctx->source.gpu)
+    {
+        gpu_release( ctx->source.gpu );
+        ctx->source.gpu = NULL;
     }
     if (ctx->gpu_count) cleanup_devices();
 
@@ -1967,13 +1987,13 @@ static BOOL get_default_desktop_size( DWORD *width, DWORD *height )
 static BOOL add_virtual_source( struct device_manager_ctx *ctx )
 {
     DEVMODEW current = {.dmSize = sizeof(current)}, initial = ctx->primary, maximum = ctx->primary, *modes;
-    struct source virtual_source =
-    {
-        .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_VGA_COMPATIBLE,
-        .gpu = &ctx->gpu,
-    };
+    struct source virtual_source = {.state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_VGA_COMPATIBLE};
     struct gdi_monitor monitor = {0};
     UINT modes_count;
+    struct gpu *gpu;
+
+    assert( !list_empty( &gpus ) );
+    gpu = LIST_ENTRY( list_tail( &gpus ), struct gpu, entry );
 
     if (ctx->has_primary) ctx->source.id = ctx->source_count;
     else
@@ -1981,19 +2001,21 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
         virtual_source.state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
         ctx->has_primary = TRUE;
     }
+    virtual_source.gpu = gpu_acquire( gpu );
 
     /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
     snprintf( virtual_source.path, sizeof(virtual_source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
-              control_keyA + strlen( "\\Registry\\Machine" ), virtual_source.gpu->guid, "Virtual" );
+              control_keyA + strlen( "\\Registry\\Machine" ), gpu->guid, "Virtual" );
 
     if (!write_source_to_registry( &virtual_source, &ctx->source_key ))
     {
         WARN( "Failed to write source to registry\n" );
+        gpu_release( virtual_source.gpu );
         return STATUS_UNSUCCESSFUL;
     }
 
     ctx->source = virtual_source;
-    ctx->gpu.source_count++;
+    gpu->source_count++;
     ctx->source_count++;
 
     if (!get_default_desktop_size( &initial.dmPelsWidth, &initial.dmPelsHeight ))
