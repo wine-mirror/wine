@@ -1,5 +1,6 @@
-MODULE = wintypes.dll
-IMPORTS = combase
+MODULE    = wintypes.dll
+IMPORTLIB = wintypes
+IMPORTS   = combase
 
 SOURCES = \
 	classes.idl \

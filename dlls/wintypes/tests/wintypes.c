@@ -25,6 +25,7 @@
 
 #include "initguid.h"
 #include "roapi.h"
+#include "rometadataresolution.h"
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Metadata
@@ -32,6 +33,8 @@
 #include "wintypes_test.h"
 
 #include "wine/test.h"
+
+static BOOL is_wow64;
 
 static void test_IApiInformationStatics(void)
 {
@@ -754,8 +757,68 @@ static void test_IPropertyValueStatics(void)
     RoUninitialize();
 }
 
+static void test_RoResolveNamespace(void)
+{
+    static const WCHAR foundation[] = L"c:\\windows\\system32\\winmetadata\\windows.foundation.winmd";
+    static const WCHAR foundation_wow64[] = L"c:\\windows\\sysnative\\winmetadata\\windows.foundation.winmd";
+    static const WCHAR networking[] = L"c:\\windows\\system32\\winmetadata\\windows.networking.winmd";
+    static const WCHAR networking_wow64[] = L"c:\\windows\\sysnative\\winmetadata\\windows.networking.winmd";
+    HSTRING name, *paths;
+    DWORD count, i;
+    HRESULT hr;
+    static const struct
+    {
+        const WCHAR *namespace;
+        DWORD        len_namespace;
+        const WCHAR *path;
+        const WCHAR *path_wow64;
+    }
+    tests[] =
+    {
+        { L"Windows.Networking.Connectivity", ARRAY_SIZE(L"Windows.Networking.Connectivity") - 1,
+          networking, networking_wow64 },
+        { L"Windows.Foundation", ARRAY_SIZE(L"Windows.Foundation") - 1,
+          foundation, foundation_wow64 },
+    };
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%lu: ", i);
+        hr = WindowsCreateString(tests[i].namespace, tests[i].len_namespace, &name);
+        ok(hr == S_OK, "got %#lx\n", hr);
+
+        count = 0;
+        hr = RoResolveNamespace(name, NULL, 0, NULL, &count, &paths, 0, NULL);
+        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            const WCHAR *str = WindowsGetStringRawBuffer(paths[0], NULL);
+
+            ok(count == 1, "got %lu\n", count);
+            ok((!is_wow64 && !wcsicmp( str, tests[i].path )) ||
+               (is_wow64 && !wcsicmp( str, tests[i].path_wow64 )) ||
+               broken(is_wow64 && !wcsicmp( str, tests[i].path )) /* win8, win10 1507 */,
+               "got %s\n", wine_dbgstr_w(str) );
+
+            WindowsDeleteString(paths[0]);
+            CoTaskMemFree(paths);
+        }
+
+        WindowsDeleteString(name);
+        winetest_pop_context();
+    }
+
+    RoUninitialize();
+}
+
 START_TEST(wintypes)
 {
+    IsWow64Process(GetCurrentProcess(), &is_wow64);
+
     test_IApiInformationStatics();
     test_IPropertyValueStatics();
+    test_RoResolveNamespace();
 }
