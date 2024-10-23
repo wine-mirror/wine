@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use XML::LibXML;
+use File::Basename;
 
 # This script is called thus :
 #
@@ -626,10 +627,12 @@ if ($version eq "1.0") {
 #
 my $url="https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry";
 my $commit="03e1bfb87c4664d34dc7822fb591841eec747094";
+my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
 
--f "gl-$commit.xml" || system "wget", "-O", "gl-$commit.xml", "$url/$commit/xml/gl.xml" || die "cannot download gl.xml";
--f "wgl-$commit.xml" || system "wget", "-O", "wgl-$commit.xml", "$url/$commit/xml/wgl.xml" || die "cannot download wgl.xml";
-
+system "mkdir", "-p", $cache;
+-f "$cache/gl-$commit.xml" || system "wget", "-q", "-O", "$cache/gl-$commit.xml", "$url/$commit/xml/gl.xml" || die "cannot download gl.xml";
+-f "$cache/wgl-$commit.xml" || system "wget", "-q", "-O", "$cache/wgl-$commit.xml", "$url/$commit/xml/wgl.xml" || die "cannot download wgl.xml";
+chdir(dirname($0));
 
 #
 # Then, create the list of all OpenGL functions using the registry
@@ -851,8 +854,8 @@ sub parse_file($)
     }
 }
 
-parse_file( "gl-$commit.xml" );
-parse_file( "wgl-$commit.xml" );
+parse_file( "$cache/gl-$commit.xml" );
+parse_file( "$cache/wgl-$commit.xml" );
 parse_file( "winegl.xml" );
 
 #
