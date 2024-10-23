@@ -3908,16 +3908,22 @@ def main():
 
     set_working_directory()
 
+    if "XDG_CACHE_HOME" in os.environ:
+        cache = os.path.expandvars("$XDG_CACHE_HOME/wine")
+    else:
+        cache = os.path.expandvars("$HOME/.cache/wine")
+    os.makedirs(cache, exist_ok=True)
+
     if args.xml:
         vk_xml = args.xml
     else:
-        vk_xml = "vk-{0}.xml".format(VK_XML_VERSION)
+        vk_xml = os.path.join(cache, "vk-{0}.xml".format(VK_XML_VERSION))
         download_vk_xml(vk_xml, "vk.xml")
 
     if args.video_xml:
         video_xml = args.video_xml
     else:
-        video_xml = "video-{0}.xml".format(VK_XML_VERSION)
+        video_xml = os.path.join(cache, "video-{0}.xml".format(VK_XML_VERSION))
         download_vk_xml(video_xml, "video.xml")
 
     registry = VkRegistry(vk_xml, video_xml)
