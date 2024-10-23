@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 #include "objbase.h"
 #include "activation.h"
+#include "dragdropinterop.h"
 
 #define WIDL_using_Windows_Networking_Connectivity
 #include "windows.networking.connectivity.h"

@@ -24,6 +24,7 @@ struct dataexchange
 {
     IActivationFactory IActivationFactory_iface;
     ICoreDragDropManagerStatics ICoreDragDropManagerStatics_iface;
+    IDragDropManagerInterop IDragDropManagerInterop_iface;
     LONG ref;
 };
 
@@ -52,6 +53,12 @@ static HRESULT STDMETHODCALLTYPE dataexchange_QueryInterface(IActivationFactory 
     {
         ICoreDragDropManagerStatics_AddRef(&impl->ICoreDragDropManagerStatics_iface);
         *out = &impl->ICoreDragDropManagerStatics_iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IDragDropManagerInterop))
+    {
+        IDragDropManagerInterop_AddRef(&impl->IDragDropManagerInterop_iface);
+        *out = &impl->IDragDropManagerInterop_iface;
         return S_OK;
     }
 
@@ -140,10 +147,34 @@ static const struct ICoreDragDropManagerStaticsVtbl core_dragdrop_manager_static
     core_dragdrop_manager_statics_GetForCurrentView,
 };
 
+DEFINE_IINSPECTABLE(dragdrop_manager_interop, IDragDropManagerInterop, struct dataexchange,
+                    IActivationFactory_iface)
+
+static HRESULT STDMETHODCALLTYPE dragdrop_manager_interop_GetForWindow(IDragDropManagerInterop *iface,
+                                                                       HWND hwnd, REFIID iid, void **out)
+{
+    FIXME("iface %p, hwnd %p, iid %s, out %p stub!\n", iface, hwnd, debugstr_guid(iid), out);
+    return E_NOTIMPL;
+}
+
+static const struct IDragDropManagerInteropVtbl dragdrop_manager_interop_vtbl =
+{
+    dragdrop_manager_interop_QueryInterface,
+    dragdrop_manager_interop_AddRef,
+    dragdrop_manager_interop_Release,
+    /* IInspectable methods */
+    dragdrop_manager_interop_GetIids,
+    dragdrop_manager_interop_GetRuntimeClassName,
+    dragdrop_manager_interop_GetTrustLevel,
+    /* IDragDropManagerInterop methods */
+    dragdrop_manager_interop_GetForWindow,
+};
+
 static struct dataexchange dataexchange =
 {
     {&activation_factory_vtbl},
     {&core_dragdrop_manager_statics_vtbl},
+    {&dragdrop_manager_interop_vtbl},
     1
 };
 
