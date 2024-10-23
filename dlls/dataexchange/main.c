@@ -23,6 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dataexchange);
 struct dataexchange
 {
     IActivationFactory IActivationFactory_iface;
+    ICoreDragDropManagerStatics ICoreDragDropManagerStatics_iface;
     LONG ref;
 };
 
@@ -34,6 +35,8 @@ static inline struct dataexchange *impl_from_IActivationFactory(IActivationFacto
 static HRESULT STDMETHODCALLTYPE dataexchange_QueryInterface(IActivationFactory *iface, REFIID iid,
                                                              void **out)
 {
+    struct dataexchange *impl = impl_from_IActivationFactory(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown)
@@ -43,6 +46,12 @@ static HRESULT STDMETHODCALLTYPE dataexchange_QueryInterface(IActivationFactory 
     {
         IUnknown_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_ICoreDragDropManagerStatics))
+    {
+        ICoreDragDropManagerStatics_AddRef(&impl->ICoreDragDropManagerStatics_iface);
+        *out = &impl->ICoreDragDropManagerStatics_iface;
         return S_OK;
     }
 
@@ -108,9 +117,33 @@ static const struct IActivationFactoryVtbl activation_factory_vtbl =
     dataexchange_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE(core_dragdrop_manager_statics, ICoreDragDropManagerStatics, struct dataexchange,
+                    IActivationFactory_iface)
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_statics_GetForCurrentView(ICoreDragDropManagerStatics *iface,
+                                                                                 ICoreDragDropManager **value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct ICoreDragDropManagerStaticsVtbl core_dragdrop_manager_statics_vtbl =
+{
+    core_dragdrop_manager_statics_QueryInterface,
+    core_dragdrop_manager_statics_AddRef,
+    core_dragdrop_manager_statics_Release,
+    /* IInspectable methods */
+    core_dragdrop_manager_statics_GetIids,
+    core_dragdrop_manager_statics_GetRuntimeClassName,
+    core_dragdrop_manager_statics_GetTrustLevel,
+    /* ICoreDragDropManagerStatics methods */
+    core_dragdrop_manager_statics_GetForCurrentView,
+};
+
 static struct dataexchange dataexchange =
 {
     {&activation_factory_vtbl},
+    {&core_dragdrop_manager_statics_vtbl},
     1
 };
 
