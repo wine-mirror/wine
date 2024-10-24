@@ -35,6 +35,10 @@ class Color
 {
 protected:
     ARGB Argb;
+
+public:
+    ARGB GetValue() const { return Argb; }
+    void SetValue(ARGB argb) { Argb = argb; }
 };
 
 #else /* end of c++ typedefs */
