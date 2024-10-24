@@ -124,6 +124,146 @@ static const struct IActivationFactoryVtbl activation_factory_vtbl =
     dataexchange_ActivateInstance,
 };
 
+struct core_dragdrop_manager
+{
+    ICoreDragDropManager ICoreDragDropManager_iface;
+    HWND hwnd;
+    LONG ref;
+};
+
+static inline struct core_dragdrop_manager *impl_from_ICoreDragDropManager(ICoreDragDropManager *iface)
+{
+    return CONTAINING_RECORD(iface, struct core_dragdrop_manager, ICoreDragDropManager_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_QueryInterface(ICoreDragDropManager *iface,
+                                                                      REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+        || IsEqualGUID(iid, &IID_IInspectable)
+        || IsEqualGUID(iid, &IID_ICoreDragDropManager))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE core_dragdrop_manager_AddRef(ICoreDragDropManager *iface)
+{
+    struct core_dragdrop_manager *impl = impl_from_ICoreDragDropManager(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE core_dragdrop_manager_Release(ICoreDragDropManager *iface)
+{
+    struct core_dragdrop_manager *impl = impl_from_ICoreDragDropManager(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+
+    if (!ref)
+        free(impl);
+
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_GetIids(ICoreDragDropManager *iface,
+                                                               ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_GetRuntimeClassName(ICoreDragDropManager *iface,
+                                                                           HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_GetTrustLevel(ICoreDragDropManager *iface,
+                                                                     TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_add_TargetRequested(ICoreDragDropManager *iface,
+                                                                           ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs *value,
+                                                                           EventRegistrationToken *return_value)
+{
+    FIXME("iface %p, value %p, return_value %p stub!\n", iface, value, return_value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_remove_TargetRequested(ICoreDragDropManager *iface,
+                                                                              EventRegistrationToken value)
+{
+    FIXME("iface %p, value %#I64x stub!\n", iface, value.value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_get_AreConcurrentOperationsEnabled(ICoreDragDropManager *iface,
+                                                                                          boolean *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_put_AreConcurrentOperationsEnabled(ICoreDragDropManager *iface,
+                                                                                          boolean value)
+{
+    FIXME("iface %p, value %d stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct ICoreDragDropManagerVtbl core_dragdrop_manager_vtbl =
+{
+    core_dragdrop_manager_QueryInterface,
+    core_dragdrop_manager_AddRef,
+    core_dragdrop_manager_Release,
+    /* IInspectable methods */
+    core_dragdrop_manager_GetIids,
+    core_dragdrop_manager_GetRuntimeClassName,
+    core_dragdrop_manager_GetTrustLevel,
+    /* ICoreDragDropManager methods */
+    core_dragdrop_manager_add_TargetRequested,
+    core_dragdrop_manager_remove_TargetRequested,
+    core_dragdrop_manager_get_AreConcurrentOperationsEnabled,
+    core_dragdrop_manager_put_AreConcurrentOperationsEnabled,
+};
+
+static HRESULT create_core_dragdrop_manager(HWND hwnd, REFIID iid, void **out)
+{
+    struct core_dragdrop_manager *manager;
+    HRESULT hr;
+
+    if (!IsWindow(hwnd))
+        return HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE);
+
+    if (hwnd == GetDesktopWindow())
+        return E_ACCESSDENIED;
+
+    if (!(manager = calloc(1, sizeof(*manager))))
+        return E_OUTOFMEMORY;
+
+    manager->ICoreDragDropManager_iface.lpVtbl = &core_dragdrop_manager_vtbl;
+    manager->hwnd = hwnd;
+    manager->ref = 1;
+    hr = ICoreDragDropManager_QueryInterface(&manager->ICoreDragDropManager_iface, iid, out);
+    ICoreDragDropManager_Release(&manager->ICoreDragDropManager_iface);
+    return hr;
+}
+
 DEFINE_IINSPECTABLE(core_dragdrop_manager_statics, ICoreDragDropManagerStatics, struct dataexchange,
                     IActivationFactory_iface)
 
@@ -153,8 +293,9 @@ DEFINE_IINSPECTABLE(dragdrop_manager_interop, IDragDropManagerInterop, struct da
 static HRESULT STDMETHODCALLTYPE dragdrop_manager_interop_GetForWindow(IDragDropManagerInterop *iface,
                                                                        HWND hwnd, REFIID iid, void **out)
 {
-    FIXME("iface %p, hwnd %p, iid %s, out %p stub!\n", iface, hwnd, debugstr_guid(iid), out);
-    return E_NOTIMPL;
+    FIXME("iface %p, hwnd %p, iid %s, out %p semi-stub!\n", iface, hwnd, debugstr_guid(iid), out);
+
+    return create_core_dragdrop_manager(hwnd, iid, out);
 }
 
 static const struct IDragDropManagerInteropVtbl dragdrop_manager_interop_vtbl =

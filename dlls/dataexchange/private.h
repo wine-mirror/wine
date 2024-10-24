@@ -31,6 +31,7 @@
 #include "activation.h"
 #include "dragdropinterop.h"
 
+#define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Networking_Connectivity
 #include "windows.networking.connectivity.h"
 #define WIDL_using_Windows_ApplicationModel_DataTransfer_DragDrop_Core

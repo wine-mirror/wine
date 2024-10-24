@@ -1,6 +1,6 @@
 MODULE = dataexchange.dll
 IMPORTLIB = dataexchange
-IMPORTS = combase
+IMPORTS = combase user32
 
 SOURCES = \
 	classes.idl \
