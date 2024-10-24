@@ -202,7 +202,8 @@ static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_add_TargetRequested(ICore
                                                                            EventRegistrationToken *return_value)
 {
     FIXME("iface %p, value %p, return_value %p stub!\n", iface, value, return_value);
-    return E_NOTIMPL;
+    return_value->value = 0xdeadbeef;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE core_dragdrop_manager_remove_TargetRequested(ICoreDragDropManager *iface,

@@ -218,9 +218,7 @@ static void test_ICoreDragDropManager(void)
     token.value = 0;
     hr = ICoreDragDropManager_add_TargetRequested(manager, &target_requested_handler_added.ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs_iface,
                                                   &token);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(token.value != 0, "Got unexpected hr %#lx.\n", hr);
 
     token.value++;
