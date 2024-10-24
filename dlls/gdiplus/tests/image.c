@@ -5410,7 +5410,7 @@ static void test_createeffect(void)
     GpStatus (WINAPI *pGdipGetEffectParameterSize)(CGpEffect *effect, UINT *size);
     GpStatus (WINAPI *pGdipGetEffectParameters)(CGpEffect *effect, const VOID *params, const UINT size);
     GpStatus stat;
-    CGpEffect *effect;
+    CGpEffect *effect = NULL;
     HMODULE mod = GetModuleHandleA("gdiplus.dll");
     int i;
     UINT param_size;
@@ -5449,7 +5449,8 @@ static void test_createeffect(void)
     expect(InvalidParameter, stat);
 
     stat = pGdipCreateEffect(noneffect, &effect);
-    todo_wine expect(Win32Error, stat);
+    expect(Win32Error, stat);
+    ok( !effect, "expected null effect\n");
 
     param_size = 0;
     stat = pGdipGetEffectParameterSize(NULL, &param_size);
@@ -5459,12 +5460,12 @@ static void test_createeffect(void)
     for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         stat = pGdipCreateEffect(*(td[i].effect), &effect);
-        todo_wine_if(td[i].todo) expect(Ok, stat);
+        expect(Ok, stat);
         if (stat == Ok)
         {
             param_size = 0;
             stat = pGdipGetEffectParameterSize(effect, &param_size);
-            todo_wine_if(td[i].todo) expect(Ok, stat);
+            expect(Ok, stat);
 #ifdef _WIN64
             /* Parameter Size for Red Eye Correction effect is different for 64 bits build */
             if (td[i].effect == &RedEyeCorrectionEffectGuid)

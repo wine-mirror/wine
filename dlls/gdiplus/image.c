@@ -5509,14 +5509,69 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
  */
 GpStatus WINGDIPAPI GdipCreateEffect(const GUID guid, CGpEffect **effect)
 {
-    FIXME("(%s, %p): stub\n", debugstr_guid(&guid), effect);
+    CGpEffect *ef = NULL;
+    EffectType type;
+
+    TRACE("(%s, %p)\n", debugstr_guid(&guid), effect);
 
     if(!effect)
         return InvalidParameter;
 
-    *effect = NULL;
+    if (IsEqualGUID(&guid, &BlurEffectGuid))
+    {
+        type = BlurEffect;
+    }
+    else if (IsEqualGUID(&guid, &SharpenEffectGuid))
+    {
+        type = SharpenEffect;
+    }
+    else if (IsEqualGUID(&guid, &TintEffectGuid))
+    {
+        type = TintEffect;
+    }
+    else if (IsEqualGUID(&guid, &RedEyeCorrectionEffectGuid))
+    {
+        type = RedEyeCorrectionEffect;
+    }
+    else if (IsEqualGUID(&guid, &ColorMatrixEffectGuid))
+    {
+        type = ColorMatrixEffect;
+    }
+    else if (IsEqualGUID(&guid, &ColorLUTEffectGuid))
+    {
+        type = ColorLUTEffect;
+    }
+    else if (IsEqualGUID(&guid, &BrightnessContrastEffectGuid))
+    {
+        type = BrightnessContrastEffect;
+    }
+    else if (IsEqualGUID(&guid, &HueSaturationLightnessEffectGuid))
+    {
+        type = HueSaturationLightnessEffect;
+    }
+    else if (IsEqualGUID(&guid, &ColorBalanceEffectGuid))
+    {
+        type = ColorBalanceEffect;
+    }
+    else if (IsEqualGUID(&guid, &LevelsEffectGuid))
+    {
+        type = LevelsEffect;
+    }
+    else if (IsEqualGUID(&guid, &ColorCurveEffectGuid))
+    {
+        type = ColorCurveEffect;
+    }
+    else
+    {
+        *effect = NULL;
+        return Win32Error;
+    }
 
-    return NotImplemented;
+    ef = malloc(sizeof(CGpEffect));
+    ef->type = type;
+    *effect = ef;
+
+    return Ok;
 }
 
 /*****************************************************************************
@@ -5524,13 +5579,13 @@ GpStatus WINGDIPAPI GdipCreateEffect(const GUID guid, CGpEffect **effect)
  */
 GpStatus WINGDIPAPI GdipDeleteEffect(CGpEffect *effect)
 {
-    FIXME("(%p): stub\n", effect);
+    TRACE("(%p)\n", effect);
 
     if (!effect)
         return InvalidParameter;
-    /* note: According to Jose Roca's GDI+ Docs, this is not implemented
-     * in Windows's gdiplus */
-    return NotImplemented;
+
+    free(effect);
+    return Ok;
 }
 
 /*****************************************************************************
