@@ -5418,20 +5418,24 @@ static void test_createeffect(void)
     static const struct test_data {
         const GUID *effect;
         const UINT parameters_number;
-        const BOOL todo;
     } td[] =
     {
-        { &BlurEffectGuid, 8, TRUE },
-        { &BrightnessContrastEffectGuid, 8, TRUE },
-        { &ColorBalanceEffectGuid, 12, TRUE },
-        { &ColorCurveEffectGuid, 12, TRUE },
-        { &ColorLUTEffectGuid, 1024, TRUE },
-        { &ColorMatrixEffectGuid, 100, TRUE },
-        { &HueSaturationLightnessEffectGuid, 12, TRUE },
-        { &LevelsEffectGuid, 12, TRUE },
-        { &RedEyeCorrectionEffectGuid, 8, TRUE },
-        { &SharpenEffectGuid, 8, TRUE },
-        { &TintEffectGuid, 8, TRUE },
+        { &BlurEffectGuid, 8 },
+        { &BrightnessContrastEffectGuid, 8 },
+        { &ColorBalanceEffectGuid, 12 },
+        { &ColorCurveEffectGuid, 12 },
+        { &ColorLUTEffectGuid, 1024 },
+        { &ColorMatrixEffectGuid, 100 },
+        { &HueSaturationLightnessEffectGuid, 12 },
+        { &LevelsEffectGuid, 12 },
+        /* Parameter Size for Red Eye Correction effect is different for 64 bits build */
+#ifdef _WIN64
+        { &RedEyeCorrectionEffectGuid, 16 },
+#else
+        { &RedEyeCorrectionEffectGuid, 8 },
+#endif
+        { &SharpenEffectGuid, 8 },
+        { &TintEffectGuid, 8 },
     };
 
     pGdipCreateEffect = (void*)GetProcAddress( mod, "GdipCreateEffect");
@@ -5466,15 +5470,7 @@ static void test_createeffect(void)
             param_size = 0;
             stat = pGdipGetEffectParameterSize(effect, &param_size);
             expect(Ok, stat);
-#ifdef _WIN64
-            /* Parameter Size for Red Eye Correction effect is different for 64 bits build */
-            if (td[i].effect == &RedEyeCorrectionEffectGuid)
-                todo_wine_if(td[i].todo) expect(16, param_size);
-            else
-                todo_wine_if(td[i].todo) expect(td[i].parameters_number, param_size);
-#else
-            todo_wine_if(td[i].todo) expect(td[i].parameters_number, param_size);
-#endif
+            expect(td[i].parameters_number, param_size);
             stat = pGdipDeleteEffect(effect);
             expect(Ok, stat);
         }

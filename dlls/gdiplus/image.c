@@ -5593,11 +5593,56 @@ GpStatus WINGDIPAPI GdipDeleteEffect(CGpEffect *effect)
  */
 GpStatus WINGDIPAPI GdipGetEffectParameterSize(CGpEffect *effect, UINT *size)
 {
-    FIXME("(%p,%p): stub\n", effect, size);
+    UINT sz = 0;
+    GpStatus status = Ok;
+
+    TRACE("(%p,%p)\n", effect, size);
 
     if (!effect || !size)
         return InvalidParameter;
-    return NotImplemented;
+
+    switch (effect->type)
+    {
+    case BlurEffect:
+        sz = sizeof(struct BlurParams);
+        break;
+    case SharpenEffect:
+        sz = sizeof(struct SharpenParams);
+        break;
+    case TintEffect:
+        sz = sizeof(struct TintParams);
+        break;
+    case RedEyeCorrectionEffect:
+        sz = sizeof(struct RedEyeCorrectionParams);
+        break;
+    case ColorMatrixEffect:
+        sz = sizeof(ColorMatrix);
+        break;
+    case ColorLUTEffect:
+        sz = sizeof(struct ColorLUTParams);
+        break;
+    case BrightnessContrastEffect:
+        sz = sizeof(struct BrightnessContrastParams);
+        break;
+    case HueSaturationLightnessEffect:
+        sz = sizeof(struct HueSaturationLightnessParams);
+        break;
+    case ColorBalanceEffect:
+        sz = sizeof(struct ColorBalanceParams);
+        break;
+    case LevelsEffect:
+        sz = sizeof(struct LevelsParams);
+        break;
+    case ColorCurveEffect:
+        sz = sizeof(struct ColorCurveParams);
+        break;
+    default:
+        status = InvalidParameter;
+        break;
+    }
+
+    *size = sz;
+    return status;
 }
 
 /*****************************************************************************
