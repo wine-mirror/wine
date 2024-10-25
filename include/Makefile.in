@@ -679,6 +679,7 @@ SOURCES = \
 	rpcsal.h \
 	rstbas.idl \
 	rstchg.idl \
+	rstfnd.idl \
 	rstinf.idl \
 	rstloc.idl \
 	rstnot.idl \
