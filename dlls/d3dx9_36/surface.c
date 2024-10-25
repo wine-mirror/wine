@@ -46,7 +46,8 @@ static const struct
     { &GUID_WICPixelFormat16bppBGR565, D3DX_PIXEL_FORMAT_B5G6R5_UNORM },
     { &GUID_WICPixelFormat24bppBGR,    D3DX_PIXEL_FORMAT_B8G8R8_UNORM },
     { &GUID_WICPixelFormat32bppBGR,    D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM },
-    { &GUID_WICPixelFormat32bppBGRA,   D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM }
+    { &GUID_WICPixelFormat32bppBGRA,   D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM },
+    { &GUID_WICPixelFormat64bppRGBA,   D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM },
 };
 
 static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_wic_pixel_format(const GUID *guid)

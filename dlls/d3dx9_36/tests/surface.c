@@ -943,9 +943,8 @@ static void test_D3DXGetImageInfo(void)
         check_image_info(&info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
 
     hr = D3DXGetImageInfoFromFileInMemory(png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba), &info);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        check_image_info(&info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
 
     hr = D3DXGetImageInfoFromFileInMemory(png_2_2_24bpp_bgr, sizeof(png_2_2_24bpp_bgr), &info);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
@@ -3425,20 +3424,18 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba), NULL,
             D3DX_FILTER_NONE, 0, NULL);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-        check_pixel_8bpp(&lockrect, 0, 0, 0x3030202010100000);
-        check_pixel_8bpp(&lockrect, 1, 0, 0x7070606050504040);
-        check_pixel_8bpp(&lockrect, 0, 1, 0xb0b0a0a090908080);
-        check_pixel_8bpp(&lockrect, 1, 1, 0xf0f0e0e0d0d0c0c0);
+    hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+    ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
 
-        hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
-    }
+    check_pixel_8bpp(&lockrect, 0, 0, 0x3030202010100000);
+    check_pixel_8bpp(&lockrect, 1, 0, 0x7070606050504040);
+    check_pixel_8bpp(&lockrect, 0, 1, 0xb0b0a0a090908080);
+    check_pixel_8bpp(&lockrect, 1, 1, 0xf0f0e0e0d0d0c0c0);
+
+    hr = IDirect3DSurface9_UnlockRect(surf);
+    ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
     check_release((IUnknown *)surf, 0);
 
     test_format_conversion(device);

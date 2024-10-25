@@ -374,16 +374,16 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
 
     hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba), NULL,
             D3DX_FILTER_POINT, 0, NULL);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirect3DVolume9_LockBox(volume, &locked_box, NULL, D3DLOCK_READONLY);
 
     for (i = 0; i < 2; ++i)
     {
-        todo_wine check_pixel_8bpp(&locked_box, 0, 0, i, 0x3030202010100000);
-        todo_wine check_pixel_8bpp(&locked_box, 1, 0, i, 0x7070606050504040);
-        todo_wine check_pixel_8bpp(&locked_box, 0, 1, i, 0xb0b0a0a090908080);
-        todo_wine check_pixel_8bpp(&locked_box, 1, 1, i, 0xf0f0e0e0d0d0c0c0);
+        check_pixel_8bpp(&locked_box, 0, 0, i, 0x3030202010100000);
+        check_pixel_8bpp(&locked_box, 1, 0, i, 0x7070606050504040);
+        check_pixel_8bpp(&locked_box, 0, 1, i, 0xb0b0a0a090908080);
+        check_pixel_8bpp(&locked_box, 1, 1, i, 0xf0f0e0e0d0d0c0c0);
     }
 
     IDirect3DVolume9_UnlockBox(volume);
