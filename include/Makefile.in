@@ -684,6 +684,7 @@ SOURCES = \
 	rstnot.idl \
 	rstscr.idl \
 	rstupd.idl \
+	rstxsc.idl \
 	rtlsupportapi.h \
 	rtutils.h \
 	rtworkq.idl \
