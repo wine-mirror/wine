@@ -28,13 +28,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmo);
 
 static struct stream_context *stream_context_create( struct winedmo_stream *stream, UINT64 stream_size )
 {
+    static const UINT BUFFER_SIZE = 0x40000;
     struct stream_context *context;
 
-    if (!(context = malloc( 0x10000 ))) return NULL;
+    if (!(context = malloc( sizeof(*context) + BUFFER_SIZE ))) return NULL;
     context->stream = (UINT_PTR)stream;
     context->length = stream_size;
     context->position = 0;
-    context->buffer_size = 0x10000 - offsetof(struct stream_context, buffer);
+    context->capacity = BUFFER_SIZE;
+    context->size = 0;
 
     return context;
 }

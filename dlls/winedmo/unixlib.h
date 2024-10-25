@@ -40,10 +40,12 @@ struct process_attach_params
 
 struct stream_context
 {
-    UINT64 stream;
-    UINT64 length;
-    UINT64 position;
-    UINT64 buffer_size;
+    UINT64 stream; /* client-side stream handle */
+    UINT64 length; /* total length of the stream */
+    UINT64 position; /* current position in the stream */
+
+    UINT32 capacity; /* total allocated capacity for the buffer */
+    UINT32 size; /* current data size in the buffer */
     BYTE buffer[];
 };
 
