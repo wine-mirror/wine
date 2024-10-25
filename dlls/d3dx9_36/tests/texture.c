@@ -2489,7 +2489,7 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     check_texture_mip_levels(texture, 2, FALSE);
-    check_image_info(&img_info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_JPG, TRUE);
+    check_image_info(&img_info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_JPG, FALSE);
     check_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 2, 2, FALSE);
     check_texture_level_desc(texture, 1, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, FALSE);
 
@@ -3061,7 +3061,7 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_texture_mip_levels(texture, 2, FALSE);
-    check_image_info(&img_info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_JPG, TRUE);
+    check_image_info(&img_info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_JPG, FALSE);
     check_volume_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 2, 2, 1, FALSE);
     check_volume_texture_level_desc(texture, 1, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 1, 1, 1, FALSE);
 

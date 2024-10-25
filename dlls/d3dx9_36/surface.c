@@ -1365,7 +1365,11 @@ void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *ima
     info->Height = image->size.height;
     info->Depth = image->size.depth;
     info->MipLevels = image->mip_levels;
-    info->Format = d3dformat_from_d3dx_pixel_format_id(image->format);
+    if ((info->ImageFileFormat == D3DXIFF_PNG || info->ImageFileFormat == D3DXIFF_JPG)
+            && image->format == D3DX_PIXEL_FORMAT_B8G8R8_UNORM)
+        info->Format = D3DFMT_X8R8G8B8;
+    else
+        info->Format = d3dformat_from_d3dx_pixel_format_id(image->format);
     info->ResourceType = image->resource_type;
 }
 

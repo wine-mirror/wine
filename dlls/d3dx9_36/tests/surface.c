@@ -930,7 +930,7 @@ static void test_D3DXGetImageInfo(void)
     /* Test JPG support. */
     hr = D3DXGetImageInfoFromFileInMemory(jpg_rgb_2_2, sizeof(jpg_rgb_2_2), &info);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    check_image_info(&info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_JPG, TRUE);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_JPG, FALSE);
 
     hr = D3DXGetImageInfoFromFileInMemory(jpg_grayscale_2_2, sizeof(jpg_grayscale_2_2), &info);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
@@ -949,7 +949,7 @@ static void test_D3DXGetImageInfo(void)
 
     hr = D3DXGetImageInfoFromFileInMemory(png_2_2_24bpp_bgr, sizeof(png_2_2_24bpp_bgr), &info);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    check_image_info(&info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_PNG, TRUE);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_X8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
 
     /* Grayscale PNG */
     hr = D3DXGetImageInfoFromFileInMemory(png_grayscale, sizeof(png_grayscale), &info);
