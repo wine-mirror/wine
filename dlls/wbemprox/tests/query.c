@@ -773,14 +773,10 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
     type = 0xdeadbeef;
     VariantInit( &val );
     hr = IWbemClassObject_Get( process, L"ExecutablePath", 0, &val, &type, NULL );
-    todo_wine
     ok( hr == S_OK, "IWbemClassObject_Get failed with %#lx\n", hr );
-    todo_wine
     ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
-    todo_wine
     ok( type == CIM_STRING, "unexpected type %#lx\n", type );
     GetModuleFileNameW( NULL, executable_path, ARRAY_SIZE(executable_path) );
-    todo_wine
     ok( !lstrcmpiW( V_BSTR( &val ), executable_path ), "got %s, expected %s\n", wine_dbgstr_w(V_BSTR(&val)), wine_dbgstr_w(executable_path) );
     VariantClear( &val );
     IWbemClassObject_Release( process );

@@ -323,6 +323,7 @@ static const struct column col_process[] =
     { L"Caption",         CIM_STRING|COL_FLAG_DYNAMIC },
     { L"CommandLine",     CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Description",     CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"ExecutablePath",  CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Handle",          CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { L"Name",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ParentProcessID", CIM_UINT32 },
@@ -815,6 +816,7 @@ struct record_process
     const WCHAR *caption;
     const WCHAR *commandline;
     const WCHAR *description;
+    const WCHAR *executablepath;
     const WCHAR *handle;
     const WCHAR *name;
     UINT32       pprocess_id;
@@ -3360,6 +3362,28 @@ static WCHAR *get_cmdline( DWORD process_id )
     return NULL; /* FIXME handle different process case */
 }
 
+static WCHAR *get_executablepath( DWORD process_id )
+{
+    DWORD size = MAX_PATH;
+    HANDLE process = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id );
+    WCHAR *executable_path;
+
+    if (!process) return NULL;
+
+    for (;;)
+    {
+        if (!(executable_path = malloc( (size + 1) * sizeof(WCHAR) ))) break;
+        executable_path[0] = 0;
+        if (QueryFullProcessImageNameW( process, 0, executable_path, &size )) break;
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) break;
+        free( executable_path );
+        size *= 2;
+    }
+
+    CloseHandle( process );
+    return executable_path;
+}
+
 static enum fill_status fill_process( struct table *table, const struct expr *cond )
 {
     WCHAR handle[11];
@@ -3388,6 +3412,7 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
         rec->caption        = wcsdup( entry.szExeFile );
         rec->commandline    = get_cmdline( entry.th32ProcessID );
         rec->description    = wcsdup( entry.szExeFile );
+        rec->executablepath = get_executablepath( entry.th32ProcessID  );
         swprintf( handle, ARRAY_SIZE( handle ), L"%u", entry.th32ProcessID );
         rec->handle         = wcsdup( handle );
         rec->name           = wcsdup( entry.szExeFile );
