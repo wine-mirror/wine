@@ -35,39 +35,42 @@ HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
 static const struct
 {
     const GUID *wic_guid;
-    D3DFORMAT d3dformat;
-} wic_pixel_formats[] = {
-    { &GUID_WICPixelFormat8bppIndexed, D3DFMT_P8 },
-    { &GUID_WICPixelFormat1bppIndexed, D3DFMT_P8 },
-    { &GUID_WICPixelFormat4bppIndexed, D3DFMT_P8 },
-    { &GUID_WICPixelFormat8bppGray, D3DFMT_L8 },
-    { &GUID_WICPixelFormat16bppBGR555, D3DFMT_X1R5G5B5 },
-    { &GUID_WICPixelFormat16bppBGR565, D3DFMT_R5G6B5 },
-    { &GUID_WICPixelFormat24bppBGR, D3DFMT_R8G8B8 },
-    { &GUID_WICPixelFormat32bppBGR, D3DFMT_X8R8G8B8 },
-    { &GUID_WICPixelFormat32bppBGRA, D3DFMT_A8R8G8B8 }
+    enum d3dx_pixel_format_id d3dx_pixel_format;
+} wic_pixel_formats[] =
+{
+    { &GUID_WICPixelFormat8bppIndexed, D3DX_PIXEL_FORMAT_P8_UINT },
+    { &GUID_WICPixelFormat1bppIndexed, D3DX_PIXEL_FORMAT_P8_UINT },
+    { &GUID_WICPixelFormat4bppIndexed, D3DX_PIXEL_FORMAT_P8_UINT },
+    { &GUID_WICPixelFormat8bppGray,    D3DX_PIXEL_FORMAT_L8_UNORM },
+    { &GUID_WICPixelFormat16bppBGR555, D3DX_PIXEL_FORMAT_B5G5R5X1_UNORM },
+    { &GUID_WICPixelFormat16bppBGR565, D3DX_PIXEL_FORMAT_B5G6R5_UNORM },
+    { &GUID_WICPixelFormat24bppBGR,    D3DX_PIXEL_FORMAT_B8G8R8_UNORM },
+    { &GUID_WICPixelFormat32bppBGR,    D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM },
+    { &GUID_WICPixelFormat32bppBGRA,   D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM }
 };
 
-static D3DFORMAT wic_guid_to_d3dformat(const GUID *guid)
+static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_wic_pixel_format(const GUID *guid)
 {
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(wic_pixel_formats); i++)
     {
         if (IsEqualGUID(wic_pixel_formats[i].wic_guid, guid))
-            return wic_pixel_formats[i].d3dformat;
+            return wic_pixel_formats[i].d3dx_pixel_format;
     }
 
-    return D3DFMT_UNKNOWN;
+    return D3DX_PIXEL_FORMAT_COUNT;
+
 }
 
-static const GUID *d3dformat_to_wic_guid(D3DFORMAT format)
+static const GUID *wic_guid_from_d3dformat(D3DFORMAT format)
 {
+    enum d3dx_pixel_format_id d3dx_pixel_format = d3dx_pixel_format_id_from_d3dformat(format);
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(wic_pixel_formats); i++)
     {
-        if (wic_pixel_formats[i].d3dformat == format)
+        if (wic_pixel_formats[i].d3dx_pixel_format == d3dx_pixel_format)
             return wic_pixel_formats[i].wic_guid;
     }
 
@@ -953,7 +956,7 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
     if (FAILED(hr))
         goto exit;
 
-    image->format = d3dx_pixel_format_id_from_d3dformat(wic_guid_to_d3dformat(&pixel_format));
+    image->format = d3dx_pixel_format_id_from_wic_pixel_format(&pixel_format);
     if (image->format == D3DX_PIXEL_FORMAT_COUNT)
     {
         WARN("Unsupported pixel format %s.\n", debugstr_guid(&pixel_format));
@@ -2940,7 +2943,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     hr = IWICBitmapFrameEncode_SetSize(frame, width, height);
     if (FAILED(hr)) goto cleanup_err;
 
-    pixel_format_guid = d3dformat_to_wic_guid(src_surface_desc.Format);
+    pixel_format_guid = wic_guid_from_d3dformat(src_surface_desc.Format);
     if (!pixel_format_guid)
     {
         FIXME("Pixel format %#x is not supported yet\n", src_surface_desc.Format);
@@ -2950,7 +2953,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
 
     memcpy(&wic_pixel_format, pixel_format_guid, sizeof(GUID));
     hr = IWICBitmapFrameEncode_SetPixelFormat(frame, &wic_pixel_format);
-    d3d_pixel_format = wic_guid_to_d3dformat(&wic_pixel_format);
+    d3d_pixel_format = d3dformat_from_d3dx_pixel_format_id(d3dx_pixel_format_id_from_wic_pixel_format(&wic_pixel_format));
     if (SUCCEEDED(hr) && d3d_pixel_format != D3DFMT_UNKNOWN)
     {
         TRACE("Using pixel format %s %#x\n", debugstr_guid(&wic_pixel_format), d3d_pixel_format);
