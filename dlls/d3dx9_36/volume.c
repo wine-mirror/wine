@@ -209,8 +209,9 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
     if (FAILED(hr))
         goto exit;
 
-    hr = D3DXLoadVolumeFromMemory(dst_volume, dst_palette, dst_box, pixels.data, image_info.Format,
-            pixels.row_pitch, pixels.slice_pitch, pixels.palette, &box, filter, color_key);
+    hr = D3DXLoadVolumeFromMemory(dst_volume, dst_palette, dst_box, pixels.data,
+            d3dformat_from_d3dx_pixel_format_id(image.format), pixels.row_pitch, pixels.slice_pitch, pixels.palette,
+            &box, filter, color_key);
     if (SUCCEEDED(hr) && src_info)
         *src_info = image_info;
 

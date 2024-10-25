@@ -663,7 +663,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
 
     TRACE("Texture created correctly. Now loading the texture data into it.\n");
     dst_fmt_desc = get_format_info(format);
-    src_fmt_desc = get_format_info(imginfo.Format);
+    src_fmt_desc = get_d3dx_pixel_format_info(image.format);
     loaded_miplevels = min(imginfo.MipLevels, IDirect3DTexture9_GetLevelCount(tex));
     for (i = 0; i < loaded_miplevels; i++)
     {
@@ -1194,7 +1194,7 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
 
     TRACE("Texture created correctly. Now loading the texture data into it.\n");
     dst_fmt_desc = get_format_info(format);
-    src_fmt_desc = get_format_info(image_info.Format);
+    src_fmt_desc = get_d3dx_pixel_format_info(image.format);
     loaded_miplevels = min(image_info.MipLevels, IDirect3DVolumeTexture9_GetLevelCount(tex));
     for (i = 0; i < loaded_miplevels; i++)
     {
@@ -1429,7 +1429,7 @@ HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device,
 
     TRACE("Texture created correctly. Now loading the texture data into it.\n");
     dst_fmt_desc = get_format_info(format);
-    src_fmt_desc = get_format_info(img_info.Format);
+    src_fmt_desc = get_d3dx_pixel_format_info(image.format);
     loaded_miplevels = min(img_info.MipLevels, IDirect3DCubeTexture9_GetLevelCount(tex));
     for (i = 0; i < loaded_miplevels; ++i)
     {

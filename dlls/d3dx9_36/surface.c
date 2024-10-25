@@ -405,10 +405,10 @@ static const char *debug_volume(const struct volume *volume)
     return wine_dbg_sprintf("(%ux%ux%u)", volume->width, volume->height, volume->depth);
 }
 
-static HRESULT d3dx_calculate_pixels_size(D3DFORMAT format, uint32_t width, uint32_t height,
+static HRESULT d3dx_calculate_pixels_size(enum d3dx_pixel_format_id format, uint32_t width, uint32_t height,
     uint32_t *pitch, uint32_t *size)
 {
-    const struct pixel_format_desc *format_desc = get_format_info(format);
+    const struct pixel_format_desc *format_desc = get_d3dx_pixel_format_info(format);
 
     if (is_unknown_format(format_desc))
         return E_NOTIMPL;
@@ -429,7 +429,7 @@ static HRESULT d3dx_calculate_pixels_size(D3DFORMAT format, uint32_t width, uint
     return D3D_OK;
 }
 
-static uint32_t d3dx_calculate_layer_pixels_size(D3DFORMAT format, uint32_t width, uint32_t height, uint32_t depth,
+static uint32_t d3dx_calculate_layer_pixels_size(enum d3dx_pixel_format_id format, uint32_t width, uint32_t height, uint32_t depth,
         uint32_t mip_levels)
 {
     uint32_t layer_size, row_pitch, slice_pitch, i;
@@ -450,12 +450,13 @@ static uint32_t d3dx_calculate_layer_pixels_size(D3DFORMAT format, uint32_t widt
 static UINT calculate_dds_file_size(D3DFORMAT format, UINT width, UINT height, UINT depth,
     UINT miplevels, UINT faces)
 {
+    const struct pixel_format_desc *fmt_desc = get_format_info(format);
     UINT i, file_size = 0;
 
     for (i = 0; i < miplevels; i++)
     {
         UINT pitch, size = 0;
-        if (FAILED(d3dx_calculate_pixels_size(format, width, height, &pitch, &size)))
+        if (FAILED(d3dx_calculate_pixels_size(fmt_desc->format, width, height, &pitch, &size)))
             return 0;
         size *= depth;
         file_size += size;
@@ -498,7 +499,7 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
     if (!file_size)
         return D3DERR_INVALIDCALL;
 
-    hr = d3dx_calculate_pixels_size(src_desc.Format, src_desc.Width, src_desc.Height, &dst_pitch, &surface_size);
+    hr = d3dx_calculate_pixels_size(pixel_format->format, src_desc.Width, src_desc.Height, &dst_pitch, &surface_size);
     if (FAILED(hr)) return hr;
 
     hr = D3DXCreateBuffer(file_size, &buffer);
@@ -613,10 +614,10 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
 
     set_volume_struct(&image->size, header->width, header->height, 1);
     image->mip_levels = header->miplevels ? header->miplevels : 1;
-    image->format = dds_pixel_format_to_d3dformat(&header->pixel_format);
+    image->format = d3dx_pixel_format_id_from_d3dformat(dds_pixel_format_to_d3dformat(&header->pixel_format));
     image->layer_count = 1;
 
-    if (image->format == D3DFMT_UNKNOWN)
+    if (image->format == D3DX_PIXEL_FORMAT_COUNT)
         return D3DXERR_INVALIDDATA;
 
     TRACE("Pixel format is %#x.\n", image->format);
@@ -752,7 +753,7 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, struct d3dx_image *image
     BYTE *buffer;
     HRESULT hr;
 
-    if (image->format != D3DFMT_X8R8G8B8 || image->image_file_format != D3DXIFF_BMP)
+    if (image->format != D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM || image->image_file_format != D3DXIFF_BMP)
         return FALSE;
 
     size = image->size.width * image->size.height * 4;
@@ -829,7 +830,7 @@ static HRESULT d3dx_image_wic_frame_decode(struct d3dx_image *image,
     BYTE *buffer = NULL;
     HRESULT hr;
 
-    fmt_desc = get_format_info(image->format);
+    fmt_desc = get_d3dx_pixel_format_info(image->format);
     hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
     if (FAILED(hr))
         return hr;
@@ -950,7 +951,8 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
     if (FAILED(hr))
         goto exit;
 
-    if ((image->format = wic_guid_to_d3dformat(&pixel_format)) == D3DFMT_UNKNOWN)
+    image->format = d3dx_pixel_format_id_from_d3dformat(wic_guid_to_d3dformat(&pixel_format));
+    if (image->format == D3DX_PIXEL_FORMAT_COUNT)
     {
         WARN("Unsupported pixel format %s.\n", debugstr_guid(&pixel_format));
         hr = D3DXERR_INVALIDDATA;
@@ -958,7 +960,7 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
     }
 
     if (image_is_argb(bitmap_frame, image))
-        image->format = D3DFMT_A8R8G8B8;
+        image->format = D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM;
 
     if (!(flags & D3DX_IMAGE_INFO_ONLY))
     {
@@ -984,17 +986,17 @@ exit:
     return hr;
 }
 
-static D3DFORMAT d3dx_get_tga_format_for_bpp(uint8_t bpp)
+static enum d3dx_pixel_format_id d3dx_get_tga_format_for_bpp(uint8_t bpp)
 {
     switch (bpp)
     {
-        case 15: return D3DFMT_X1R5G5B5;
-        case 16: return D3DFMT_A1R5G5B5;
-        case 24: return D3DFMT_R8G8B8;
-        case 32: return D3DFMT_A8R8G8B8;
+        case 15: return D3DX_PIXEL_FORMAT_B5G5R5X1_UNORM;
+        case 16: return D3DX_PIXEL_FORMAT_B5G5R5A1_UNORM;
+        case 24: return D3DX_PIXEL_FORMAT_B8G8R8_UNORM;
+        case 32: return D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM;
         default:
             WARN("Unhandled bpp %u for targa.\n", bpp);
-            return D3DFMT_UNKNOWN;
+            return D3DX_PIXEL_FORMAT_COUNT;
     }
 }
 
@@ -1066,10 +1068,10 @@ static HRESULT d3dx_image_tga_rle_decode_row(const uint8_t **src, uint32_t src_b
 static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_size, uint32_t src_header_size,
         struct d3dx_image *image)
 {
+    const struct pixel_format_desc *fmt_desc = get_d3dx_pixel_format_info(image->format);
     const struct tga_header *header = (const struct tga_header *)src_data;
     const BOOL right_to_left = !!(header->image_descriptor & IMAGE_RIGHTTOLEFT);
     const BOOL bottom_to_top = !(header->image_descriptor & IMAGE_TOPTOBOTTOM);
-    const struct pixel_format_desc *fmt_desc = get_format_info(image->format);
     const BOOL is_rle = !!(header->image_type & IMAGETYPE_RLE);
     uint8_t *img_buf = NULL, *src_row = NULL;
     uint32_t row_pitch, slice_pitch, i;
@@ -1085,7 +1087,7 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
     if (!is_rle && (src_header_size + slice_pitch) > src_data_size)
         return D3DXERR_INVALIDDATA;
 
-    if (image->format == D3DFMT_P8)
+    if (image->format == D3DX_PIXEL_FORMAT_P8_UINT)
     {
         const uint8_t *src_palette = ((const uint8_t *)src_data) + sizeof(*header) + header->id_length;
         const struct volume image_map_size = { header->color_map_length, 1, 1 };
@@ -1099,15 +1101,13 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
          * Convert from a TGA colormap to PALETTEENTRY. TGA is BGRA,
          * PALETTEENTRY is RGBA.
          */
-        src_desc = get_format_info(d3dx_get_tga_format_for_bpp(header->color_map_entrysize));
-        hr = d3dx_calculate_pixels_size(d3dformat_from_d3dx_pixel_format_id(src_desc->format), header->color_map_length,
-                1, &src_row_pitch, &src_slice_pitch);
+        src_desc = get_d3dx_pixel_format_info(d3dx_get_tga_format_for_bpp(header->color_map_entrysize));
+        hr = d3dx_calculate_pixels_size(src_desc->format, header->color_map_length, 1, &src_row_pitch, &src_slice_pitch);
         if (FAILED(hr))
             goto exit;
 
         dst_desc = get_format_info(D3DFMT_A8B8G8R8);
-        d3dx_calculate_pixels_size(d3dformat_from_d3dx_pixel_format_id(dst_desc->format), 256, 1, &dst_row_pitch,
-                &dst_slice_pitch);
+        d3dx_calculate_pixels_size(dst_desc->format, 256, 1, &dst_row_pitch, &dst_slice_pitch);
         convert_argb_pixels(src_palette, src_row_pitch, src_slice_pitch, &image_map_size, src_desc, (BYTE *)palette,
                 dst_row_pitch, dst_slice_pitch, &image_map_size, dst_desc, 0, NULL);
 
@@ -1206,7 +1206,7 @@ static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src
         return D3DXERR_INVALIDDATA;
 
     if (header->color_map_type && ((header->color_map_type > 1) || (!header->color_map_length)
-                || (d3dx_get_tga_format_for_bpp(header->color_map_entrysize) == D3DFMT_UNKNOWN)))
+                || (d3dx_get_tga_format_for_bpp(header->color_map_entrysize) == D3DX_PIXEL_FORMAT_COUNT)))
         return D3DXERR_INVALIDDATA;
 
     switch (header->image_type & IMAGETYPE_MASK)
@@ -1214,18 +1214,18 @@ static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src
         case IMAGETYPE_COLORMAPPED:
             if (header->depth != 8 || !header->color_map_type)
                 return D3DXERR_INVALIDDATA;
-            image->format = D3DFMT_P8;
+            image->format = D3DX_PIXEL_FORMAT_P8_UINT;
             break;
 
         case IMAGETYPE_TRUECOLOR:
-            if ((image->format = d3dx_get_tga_format_for_bpp(header->depth)) == D3DFMT_UNKNOWN)
+            if ((image->format = d3dx_get_tga_format_for_bpp(header->depth)) == D3DX_PIXEL_FORMAT_COUNT)
                 return D3DXERR_INVALIDDATA;
             break;
 
         case IMAGETYPE_GRAYSCALE:
             if (header->depth != 8)
                 return D3DXERR_INVALIDDATA;
-            image->format = D3DFMT_L8;
+            image->format = D3DX_PIXEL_FORMAT_L8_UNORM;
             break;
 
         default:
@@ -1360,7 +1360,7 @@ void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *ima
     info->Height = image->size.height;
     info->Depth = image->size.depth;
     info->MipLevels = image->mip_levels;
-    info->Format = image->format;
+    info->Format = d3dformat_from_d3dx_pixel_format_id(image->format);
     info->ResourceType = image->resource_type;
 }
 
@@ -1564,8 +1564,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     if (FAILED(hr))
         goto exit;
 
-    hr = D3DXLoadSurfaceFromMemory(pDestSurface, pDestPalette, pDestRect, pixels.data, img_info.Format,
-            pixels.row_pitch, pixels.palette, &src_rect, dwFilter, Colorkey);
+    hr = D3DXLoadSurfaceFromMemory(pDestSurface, pDestPalette, pDestRect, pixels.data,
+            d3dformat_from_d3dx_pixel_format_id(image.format), pixels.row_pitch, pixels.palette, &src_rect, dwFilter,
+            Colorkey);
     if (SUCCEEDED(hr) && pSrcInfo)
         *pSrcInfo = img_info;
 
