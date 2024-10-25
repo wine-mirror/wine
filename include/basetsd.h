@@ -75,10 +75,10 @@ extern "C" {
 
 /* FIXME: DECLSPEC_ALIGN should be declared only in winnt.h, but we need it here too */
 #ifndef DECLSPEC_ALIGN
-# if __has_declspec_attribute(align) && !defined(MIDL_PASS)
-#  define DECLSPEC_ALIGN(x) __declspec(align(x))
-# elif defined(__GNUC__)
+# ifdef __GNUC__
 #  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
+# elif __has_declspec_attribute(align) && !defined(MIDL_PASS)
+#  define DECLSPEC_ALIGN(x) __declspec(align(x))
 # else
 #  define DECLSPEC_ALIGN(x)
 # endif
