@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <libxml/parser.h>
 #include <libxml/xmlerror.h>
+#include <libxml/xmlsave.h>
 #include <libxslt/pattern.h>
 #include <libxslt/transform.h>
 #include <libxslt/imports.h>
@@ -365,8 +366,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
     case DLL_PROCESS_ATTACH:
         xmlInitParser();
 
-        /* Set the default indent character to a single tab */
+        /* Set the default indent character to a single tab,
+           for this thread and as default for new threads */
         xmlTreeIndentString = "\t";
+        xmlThrDefTreeIndentString("\t");
 
          /* Register callbacks for loading XML files */
         if(xmlRegisterInputCallbacks(wineXmlMatchCallback, wineXmlOpenCallback,
