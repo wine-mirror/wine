@@ -79,6 +79,7 @@ static INT64 get_context_duration( const AVFormatContext *ctx )
         if (max_duration == AV_NOPTS_VALUE) max_duration = duration;
     }
 
+    if (max_duration == AV_NOPTS_VALUE) return get_user_time( ctx->duration, AV_TIME_BASE_Q );
     return max_duration;
 }
 
