@@ -2673,6 +2673,81 @@ static void test_endpointvolume(void)
     IAudioEndpointVolume_Release(aev);
 }
 
+static void test_audio_clock_adjustment(void)
+{
+    HRESULT hr;
+    IAudioClient *ac;
+    IAudioClockAdjustment *aca;
+    UINT bufsize, expected_bufsize;
+    WAVEFORMATEX *pwfx;
+    HANDLE event;
+
+    const REFERENCE_TIME buffer_duration = 500000;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08lx\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08lx\n", hr);
+
+    pwfx->nSamplesPerSec = 44100;
+    expected_bufsize = (buffer_duration / 10000000.) * pwfx->nSamplesPerSec;
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_RATEADJUST, buffer_duration, 0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08lx\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetBufferSize(ac, &bufsize);
+    ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioClockAdjustment, (void**)&aca);
+    ok(hr == S_OK, "IAudioClient_GetService(IID_IAudioClockAdjustment) returned %08lx\n", hr);
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed\n");
+
+    hr = IAudioClient_SetEventHandle(ac, event);
+    ok(hr == S_OK, "SetEventHandle failed: %08lx\n", hr);
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start failed: %08lx\n", hr);
+
+    hr = IAudioClockAdjustment_SetSampleRate(aca, 48000.00f);
+    ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
+
+    /* Wait for frame processing */
+    WaitForSingleObject(event, 1000);
+
+    hr = IAudioClient_GetBufferSize(ac, &bufsize);
+    todo_wine ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+
+    hr = IAudioClockAdjustment_SetSampleRate(aca, 44100.00f);
+    ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
+
+    /* Wait for frame processing */
+    WaitForSingleObject(event, 1000);
+
+    hr = IAudioClient_GetBufferSize(ac, &bufsize);
+    ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+
+    hr = IAudioClockAdjustment_SetSampleRate(aca, 22050.00f);
+    ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
+
+    /* Wait for frame processing */
+    WaitForSingleObject(event, 1000);
+
+    hr = IAudioClient_GetBufferSize(ac, &bufsize);
+   todo_wine ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+
+    IAudioClockAdjustment_Release(aca);
+    IAudioClient_Release(ac);
+}
+
 START_TEST(render)
 {
     HRESULT hr;
@@ -2719,6 +2794,7 @@ START_TEST(render)
     test_session_creation();
     test_worst_case();
     test_endpointvolume();
+    test_audio_clock_adjustment();
 
     IMMDevice_Release(dev);
 
