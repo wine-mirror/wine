@@ -156,7 +156,6 @@ _ACRTIMP int           __cdecl _atodbl_l(_CRT_DOUBLE*,char*,_locale_t);
 _ACRTIMP int           __cdecl _atoflt(_CRT_FLOAT*,char*);
 _ACRTIMP int           __cdecl _atoflt_l(_CRT_FLOAT*,char*,_locale_t);
 _ACRTIMP __int64       __cdecl _atoi64(const char*);
-_ACRTIMP long double   __cdecl _atold(const char*);
 _ACRTIMP int           __cdecl _atoldbl(_LDOUBLE*,char*);
 _ACRTIMP void          __cdecl _beep(unsigned int,unsigned int);
 _ACRTIMP unsigned short   __cdecl _byteswap_ushort(unsigned short);
