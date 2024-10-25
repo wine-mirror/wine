@@ -2724,7 +2724,7 @@ static void test_audio_clock_adjustment(void)
     WaitForSingleObject(event, 1000);
 
     hr = IAudioClient_GetBufferSize(ac, &bufsize);
-    todo_wine ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+    ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
 
     hr = IAudioClockAdjustment_SetSampleRate(aca, 44100.00f);
     ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
@@ -2742,7 +2742,7 @@ static void test_audio_clock_adjustment(void)
     WaitForSingleObject(event, 1000);
 
     hr = IAudioClient_GetBufferSize(ac, &bufsize);
-   todo_wine ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+    ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
 
     IAudioClockAdjustment_Release(aca);
     IAudioClient_Release(ac);

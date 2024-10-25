@@ -2494,8 +2494,6 @@ static NTSTATUS pulse_set_sample_rate(void *args)
     struct pulse_stream *stream = handle_get_stream(params->stream);
     HRESULT hr = S_OK;
     int success;
-    SIZE_T size, new_bufsize_frames;
-    BYTE *new_buffer = NULL;
     pa_sample_spec new_ss;
 
     pulse_lock();
@@ -2510,22 +2508,12 @@ static NTSTATUS pulse_set_sample_rate(void *args)
 
     new_ss = stream->ss;
     new_ss.rate = params->rate;
-    new_bufsize_frames = ceil((stream->duration / 10000000.) * new_ss.rate);
-    size = new_bufsize_frames * 2 * pa_frame_size(&stream->ss);
-
-    if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&new_buffer,
-                                zero_bits, &size, MEM_COMMIT, PAGE_READWRITE)) {
-        hr = E_OUTOFMEMORY;
-        goto exit;
-    }
 
     if (!wait_pa_operation_complete(pa_stream_update_sample_rate(stream->stream, params->rate, pulse_op_cb, &success)))
         success = 0;
 
     if (!success) {
         hr = E_OUTOFMEMORY;
-        size = 0;
-        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&new_buffer, &size, MEM_RELEASE);
         goto exit;
     }
 
@@ -2536,15 +2524,9 @@ static NTSTATUS pulse_set_sample_rate(void *args)
     stream->pa_offs_bytes = stream->lcl_offs_bytes = 0;
     stream->held_bytes = stream->pa_held_bytes = 0;
     stream->period_bytes = pa_frame_size(&new_ss) * muldiv(stream->mmdev_period_usec, new_ss.rate, 1000000);
-    stream->real_bufsize_bytes = size;
-    stream->bufsize_frames = new_bufsize_frames;
     stream->ss = new_ss;
 
-    size = 0;
-    NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
-
-    silence_buffer(new_ss.format, new_buffer, stream->real_bufsize_bytes);
-    stream->local_buffer = new_buffer;
+    silence_buffer(new_ss.format, stream->local_buffer, stream->real_bufsize_bytes);
 
 exit:
     pulse_unlock();
