@@ -1100,12 +1100,14 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
          * PALETTEENTRY is RGBA.
          */
         src_desc = get_format_info(d3dx_get_tga_format_for_bpp(header->color_map_entrysize));
-        hr = d3dx_calculate_pixels_size(src_desc->format, header->color_map_length, 1, &src_row_pitch, &src_slice_pitch);
+        hr = d3dx_calculate_pixels_size(d3dformat_from_d3dx_pixel_format_id(src_desc->format), header->color_map_length,
+                1, &src_row_pitch, &src_slice_pitch);
         if (FAILED(hr))
             goto exit;
 
         dst_desc = get_format_info(D3DFMT_A8B8G8R8);
-        d3dx_calculate_pixels_size(dst_desc->format, 256, 1, &dst_row_pitch, &dst_slice_pitch);
+        d3dx_calculate_pixels_size(d3dformat_from_d3dx_pixel_format_id(dst_desc->format), 256, 1, &dst_row_pitch,
+                &dst_slice_pitch);
         convert_argb_pixels(src_palette, src_row_pitch, src_slice_pitch, &image_map_size, src_desc, (BYTE *)palette,
                 dst_row_pitch, dst_slice_pitch, &image_map_size, dst_desc, 0, NULL);
 
@@ -2203,17 +2205,17 @@ static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct p
 
     switch (desc->format)
     {
-        case D3DFMT_DXT1:
+        case D3DX_PIXEL_FORMAT_DXT1_UNORM:
             uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
             fetch_dxt_texel = fetch_2d_texel_rgba_dxt1;
             break;
-        case D3DFMT_DXT2:
-        case D3DFMT_DXT3:
+        case D3DX_PIXEL_FORMAT_DXT2_UNORM:
+        case D3DX_PIXEL_FORMAT_DXT3_UNORM:
             uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
             fetch_dxt_texel = fetch_2d_texel_rgba_dxt3;
             break;
-        case D3DFMT_DXT4:
-        case D3DFMT_DXT5:
+        case D3DX_PIXEL_FORMAT_DXT4_UNORM:
+        case D3DX_PIXEL_FORMAT_DXT5_UNORM:
             uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
             fetch_dxt_texel = fetch_2d_texel_rgba_dxt5;
             break;
@@ -2278,10 +2280,10 @@ exit:
 }
 
 HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
-        const PALETTEENTRY *palette, D3DFORMAT format, uint32_t left, uint32_t top, uint32_t right, uint32_t bottom,
-        uint32_t front, uint32_t back, struct d3dx_pixels *pixels)
+        const PALETTEENTRY *palette, enum d3dx_pixel_format_id format, uint32_t left, uint32_t top, uint32_t right,
+        uint32_t bottom, uint32_t front, uint32_t back, struct d3dx_pixels *pixels)
 {
-    const struct pixel_format_desc *fmt_desc = get_format_info(format);
+    const struct pixel_format_desc *fmt_desc = get_d3dx_pixel_format_info(format);
     const BYTE *ptr = data;
     RECT unaligned_rect;
 
@@ -2429,15 +2431,15 @@ HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
             TRACE("Compressing DXTn surface.\n");
             switch (dst_desc->format)
             {
-                case D3DFMT_DXT1:
+                case D3DX_PIXEL_FORMAT_DXT1_UNORM:
                     gl_format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
                     break;
-                case D3DFMT_DXT2:
-                case D3DFMT_DXT3:
+                case D3DX_PIXEL_FORMAT_DXT2_UNORM:
+                case D3DX_PIXEL_FORMAT_DXT3_UNORM:
                     gl_format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
                     break;
-                case D3DFMT_DXT4:
-                case D3DFMT_DXT5:
+                case D3DX_PIXEL_FORMAT_DXT4_UNORM:
+                case D3DX_PIXEL_FORMAT_DXT5_UNORM:
                     gl_format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
                     break;
                 default:

@@ -136,7 +136,7 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     }
 
     hr = d3dx_pixels_init(src_memory, src_row_pitch, src_slice_pitch,
-        src_palette, src_format, src_box->Left, src_box->Top, src_box->Right, src_box->Bottom,
+        src_palette, src_format_desc->format, src_box->Left, src_box->Top, src_box->Right, src_box->Bottom,
         src_box->Front, src_box->Back, &src_pixels);
     if (FAILED(hr))
         return hr;
