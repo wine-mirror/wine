@@ -875,3 +875,9 @@ void InternetExplorer_WebBrowser_Init(InternetExplorer *This)
     This->IExternalConnection_iface.lpVtbl = &ExternalConnectionVtbl;
     This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
 }
+
+HRESULT WINAPI IERefreshElevationPolicy(void)
+{
+    FIXME("(): stub\n");
+    return S_OK;
+}
