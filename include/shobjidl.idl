@@ -1609,6 +1609,17 @@ cpp_quote("#define DWFAF_HIDDEN           0x0001")
         [out] LPVOID *ppvObj);
 }
 
+cpp_quote("#include <pshpack8.h>")
+typedef struct
+{
+    SIZE     sizeDragImage;
+    POINT    ptOffset;
+    HBITMAP  hbmpDragImage;
+    COLORREF crColorKey;
+} SHDRAGIMAGE, *LPSHDRAGIMAGE;
+cpp_quote("#include <poppack.h>")
+
+cpp_quote("#define DI_GETDRAGIMAGE TEXT(\"ShellGetDragImage\")")
 
 /*****************************************************************************
  * IDragSourceHelper interface
@@ -1621,14 +1632,6 @@ cpp_quote("#define DWFAF_HIDDEN           0x0001")
 ]
 interface IDragSourceHelper : IUnknown
 {
-    typedef struct
-    {
-        SIZE     sizeDragImage;
-        POINT    ptOffset;
-        HBITMAP  hbmpDragImage;
-        COLORREF crColorKey;
-    } SHDRAGIMAGE, *LPSHDRAGIMAGE;
-
   HRESULT InitializeFromBitmap(
       [in] LPSHDRAGIMAGE pshdi,
       [in] IDataObject *pDataObject);
@@ -1639,6 +1642,11 @@ interface IDragSourceHelper : IUnknown
       [in] IDataObject *pDataObject);
 }
 
+typedef [v1_enum] enum DSH_FLAGS
+{
+    DSH_ALLOWDROPDESCRIPTIONTEXT = 0x0001,
+} DSH_FLAGS;
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(DSH_FLAGS)")
 
 /*****************************************************************************
  * IDragSourceHelper2 interface
