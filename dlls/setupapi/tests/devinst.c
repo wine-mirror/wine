@@ -56,6 +56,7 @@ static HRESULT (WINAPI *pDriverStoreFindDriverPackageA)(const char *inf_path, vo
 static BOOL (WINAPI *pSetupDiSetDevicePropertyW)(HDEVINFO, SP_DEVINFO_DATA *, const DEVPROPKEY *, DEVPROPTYPE, const BYTE *, DWORD, DWORD);
 static BOOL (WINAPI *pSetupDiGetDevicePropertyW)(HDEVINFO, SP_DEVINFO_DATA *, const DEVPROPKEY *, DEVPROPTYPE *, BYTE *, DWORD, DWORD *, DWORD);
 static BOOL (WINAPI *pSetupQueryInfOriginalFileInformationA)(SP_INF_INFORMATION *, UINT, SP_ALTPLATFORM_INFO *, SP_ORIGINAL_FILE_INFO_A *);
+static BOOL (WINAPI *pSetupDiGetDevicePropertyKeys)(HDEVINFO, PSP_DEVINFO_DATA, DEVPROPKEY *,DWORD, DWORD *, DWORD);
 
 static BOOL wow64;
 
@@ -885,6 +886,7 @@ static void test_device_property(void)
     hmod = LoadLibraryA("setupapi.dll");
     pSetupDiSetDevicePropertyW = (void *)GetProcAddress(hmod, "SetupDiSetDevicePropertyW");
     pSetupDiGetDevicePropertyW = (void *)GetProcAddress(hmod, "SetupDiGetDevicePropertyW");
+    pSetupDiGetDevicePropertyKeys = (void *)GetProcAddress(hmod, "SetupDiGetDevicePropertyKeys");
 
     if (!pSetupDiSetDevicePropertyW || !pSetupDiGetDevicePropertyW)
     {
@@ -1189,6 +1191,86 @@ static void test_device_property(void)
     ok(type == DEVPROP_TYPE_STRING, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_STRING, type);
     ok(size == sizeof(valueW), "Got size %ld\n", size);
     ok(!lstrcmpW((WCHAR *)buffer, valueW), "Expect buffer %s, got %s\n", wine_dbgstr_w(valueW), wine_dbgstr_w((WCHAR *)buffer));
+
+    if (pSetupDiGetDevicePropertyKeys)
+    {
+        DWORD keys_len = 0, n, required_len, expected_keys = 1;
+        DEVPROPKEY *keys;
+
+        ret = pSetupDiGetDevicePropertyKeys(NULL, NULL, NULL, 0, NULL, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        todo_wine ok(err == ERROR_INVALID_HANDLE, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_HANDLE, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, NULL, NULL, 0, NULL, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        todo_wine ok(err == ERROR_INVALID_PARAMETER, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_PARAMETER, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 10, NULL, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        todo_wine ok(err == ERROR_INVALID_USER_BUFFER, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_USER_BUFFER, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, NULL, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n",
+           ERROR_INSUFFICIENT_BUFFER, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, &keys_len, 0xdeadbeef);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        todo_wine ok(err == ERROR_INVALID_FLAGS, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_FLAGS, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, &keys_len, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n",
+           ERROR_INSUFFICIENT_BUFFER, err);
+
+        keys = calloc(keys_len, sizeof(*keys));
+        todo_wine ok(keys_len && !!keys, "Failed to allocate buffer\n");
+        SetLastError(0xdeadbeef);
+
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, keys, keys_len, &keys_len, 0xdeadbeef);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        todo_wine ok(err == ERROR_INVALID_FLAGS, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_FLAGS, err);
+
+        required_len = 0xdeadbeef;
+        ret = SetupDiGetDevicePropertyKeys(set, &device_data, keys, keys_len, &required_len, 0);
+        todo_wine ok(ret, "Expect success\n");
+        err = GetLastError();
+        todo_wine ok(!err, "Expect last error %#x, got %#lx\n", ERROR_SUCCESS, err);
+        todo_wine ok(keys_len == required_len, "%lu != %lu\n", keys_len, required_len);
+        todo_wine ok(keys_len >= expected_keys, "Expected %lu >= %lu\n", keys_len, expected_keys);
+
+        keys_len = 0;
+        if (keys)
+        {
+            for (n = 0; n < required_len; n++)
+            {
+                if (!memcmp(&keys[n], &DEVPKEY_Device_FriendlyName, sizeof(keys[n])))
+                    keys_len++;
+            }
+
+        }
+        todo_wine ok(keys_len == expected_keys, "%lu != %lu\n", keys_len, expected_keys);
+        free(keys);
+    }
+    else
+        win_skip("SetupDiGetDevicePropertyKeys not available\n");
 
     ret = SetupDiRemoveDevice(set, &device_data);
     ok(ret, "Got unexpected error %#lx.\n", GetLastError());
