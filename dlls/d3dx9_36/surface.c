@@ -1529,6 +1529,73 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, const WCHAR *resour
     return D3DXGetImageInfoFromFileInMemory(buffer, size, info);
 }
 
+static HRESULT d3dx_load_surface_from_memory(IDirect3DSurface9 *dst_surface,
+        const PALETTEENTRY *dst_palette, const RECT *dst_rect, const void *src_memory,
+        enum d3dx_pixel_format_id src_format, uint32_t src_pitch, const PALETTEENTRY *src_palette, const RECT *src_rect,
+        DWORD filter, D3DCOLOR color_key)
+{
+    const struct pixel_format_desc *src_desc, *dst_desc;
+    struct d3dx_pixels src_pixels, dst_pixels;
+    RECT dst_rect_tmp, dst_rect_aligned;
+    IDirect3DSurface9 *surface;
+    D3DLOCKED_RECT lock_rect;
+    D3DSURFACE_DESC desc;
+    HRESULT hr;
+
+    IDirect3DSurface9_GetDesc(dst_surface, &desc);
+    if (desc.MultiSampleType != D3DMULTISAMPLE_NONE)
+    {
+        TRACE("Multisampled destination surface, doing nothing.\n");
+        return D3D_OK;
+    }
+
+    dst_desc = get_format_info(desc.Format);
+    if (!dst_rect)
+    {
+        SetRect(&dst_rect_tmp, 0, 0, desc.Width, desc.Height);
+        dst_rect = &dst_rect_tmp;
+    }
+    else
+    {
+        if (dst_rect->left > dst_rect->right || dst_rect->right > desc.Width
+                || dst_rect->top > dst_rect->bottom || dst_rect->bottom > desc.Height
+                || dst_rect->left < 0 || dst_rect->top < 0)
+        {
+            WARN("Invalid dst_rect specified.\n");
+            return D3DERR_INVALIDCALL;
+        }
+        if (dst_rect->left == dst_rect->right || dst_rect->top == dst_rect->bottom)
+        {
+            WARN("Empty dst_rect specified.\n");
+            return D3D_OK;
+        }
+    }
+
+    src_desc = get_d3dx_pixel_format_info(src_format);
+    hr = d3dx_pixels_init(src_memory, src_pitch, 0, src_palette, src_desc->format,
+            src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1, &src_pixels);
+    if (FAILED(hr))
+        return hr;
+
+    get_aligned_rect(dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, desc.Width, desc.Height,
+        dst_desc, &dst_rect_aligned);
+    if (FAILED(hr = lock_surface(dst_surface, &dst_rect_aligned, &lock_rect, &surface, TRUE)))
+        return hr;
+
+    set_d3dx_pixels(&dst_pixels, lock_rect.pBits, lock_rect.Pitch, 0, dst_palette,
+            (dst_rect_aligned.right - dst_rect_aligned.left), (dst_rect_aligned.bottom - dst_rect_aligned.top), 1,
+            dst_rect);
+    OffsetRect(&dst_pixels.unaligned_rect, -dst_rect_aligned.left, -dst_rect_aligned.top);
+
+    if (FAILED(hr = d3dx_load_pixels_from_pixels(&dst_pixels, dst_desc, &src_pixels, src_desc, filter, color_key)))
+    {
+        unlock_surface(dst_surface, &dst_rect_aligned, surface, FALSE);
+        return hr;
+    }
+
+    return unlock_surface(dst_surface, &dst_rect_aligned, surface, TRUE);
+}
+
 /************************************************************
  * D3DXLoadSurfaceFromFileInMemory
  *
@@ -1587,9 +1654,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     if (FAILED(hr))
         goto exit;
 
-    hr = D3DXLoadSurfaceFromMemory(pDestSurface, pDestPalette, pDestRect, pixels.data,
-            d3dformat_from_d3dx_pixel_format_id(image.format), pixels.row_pitch, pixels.palette, &src_rect, dwFilter,
-            Colorkey);
+    hr = d3dx_load_surface_from_memory(pDestSurface, pDestPalette, pDestRect, pixels.data, image.format, pixels.row_pitch,
+            pixels.palette, &src_rect, dwFilter, Colorkey);
     if (SUCCEEDED(hr) && pSrcInfo)
         *pSrcInfo = img_info;
 
@@ -2560,12 +2626,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         D3DFORMAT src_format, UINT src_pitch, const PALETTEENTRY *src_palette, const RECT *src_rect,
         DWORD filter, D3DCOLOR color_key)
 {
-    const struct pixel_format_desc *srcformatdesc, *destformatdesc;
-    struct d3dx_pixels src_pixels, dst_pixels;
-    RECT dst_rect_temp, dst_rect_aligned;
-    IDirect3DSurface9 *surface;
-    D3DSURFACE_DESC surfdesc;
-    D3DLOCKED_RECT lockrect;
+    const struct pixel_format_desc *src_desc;
     HRESULT hr;
 
     TRACE("dst_surface %p, dst_palette %p, dst_rect %s, src_memory %p, src_format %#x, "
@@ -2578,6 +2639,10 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         WARN("Invalid argument specified.\n");
         return D3DERR_INVALIDCALL;
     }
+
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
+
     if (src_format == D3DFMT_UNKNOWN
             || src_rect->left >= src_rect->right
             || src_rect->top >= src_rect->bottom)
@@ -2586,70 +2651,15 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         return E_FAIL;
     }
 
-    srcformatdesc = get_format_info(src_format);
-    if (is_unknown_format(srcformatdesc))
+    src_desc = get_format_info(src_format);
+    if (is_unknown_format(src_desc))
     {
         FIXME("Unsupported format %#x.\n", src_format);
         return E_NOTIMPL;
     }
 
-    IDirect3DSurface9_GetDesc(dst_surface, &surfdesc);
-    if (surfdesc.MultiSampleType != D3DMULTISAMPLE_NONE)
-    {
-        TRACE("Multisampled destination surface, doing nothing.\n");
-        return D3D_OK;
-    }
-
-    destformatdesc = get_format_info(surfdesc.Format);
-    if (!dst_rect)
-    {
-        dst_rect = &dst_rect_temp;
-        dst_rect_temp.left = 0;
-        dst_rect_temp.top = 0;
-        dst_rect_temp.right = surfdesc.Width;
-        dst_rect_temp.bottom = surfdesc.Height;
-    }
-    else
-    {
-        if (dst_rect->left > dst_rect->right || dst_rect->right > surfdesc.Width
-                || dst_rect->top > dst_rect->bottom || dst_rect->bottom > surfdesc.Height
-                || dst_rect->left < 0 || dst_rect->top < 0)
-        {
-            WARN("Invalid dst_rect specified.\n");
-            return D3DERR_INVALIDCALL;
-        }
-        if (dst_rect->left == dst_rect->right || dst_rect->top == dst_rect->bottom)
-        {
-            WARN("Empty dst_rect specified.\n");
-            return D3D_OK;
-        }
-    }
-
-    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
-        return hr;
-
-    hr = d3dx_pixels_init(src_memory, src_pitch, 0, src_palette, srcformatdesc->format,
-            src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1, &src_pixels);
-    if (FAILED(hr))
-        return hr;
-
-    get_aligned_rect(dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, surfdesc.Width, surfdesc.Height,
-        destformatdesc, &dst_rect_aligned);
-    if (FAILED(hr = lock_surface(dst_surface, &dst_rect_aligned, &lockrect, &surface, TRUE)))
-        return hr;
-
-    set_d3dx_pixels(&dst_pixels, lockrect.pBits, lockrect.Pitch, 0, dst_palette,
-            (dst_rect_aligned.right - dst_rect_aligned.left), (dst_rect_aligned.bottom - dst_rect_aligned.top), 1,
-            dst_rect);
-    OffsetRect(&dst_pixels.unaligned_rect, -dst_rect_aligned.left, -dst_rect_aligned.top);
-
-    if (FAILED(hr = d3dx_load_pixels_from_pixels(&dst_pixels, destformatdesc, &src_pixels, srcformatdesc, filter, color_key)))
-    {
-        unlock_surface(dst_surface, &dst_rect_aligned, surface, FALSE);
-        return hr;
-    }
-
-    return unlock_surface(dst_surface, &dst_rect_aligned, surface, TRUE);
+    return d3dx_load_surface_from_memory(dst_surface, dst_palette, dst_rect, src_memory, src_desc->format, src_pitch,
+            src_palette, src_rect, filter, color_key);
 }
 
 /************************************************************
