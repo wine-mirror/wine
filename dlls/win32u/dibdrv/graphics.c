@@ -1544,6 +1544,9 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     BOOL ret = TRUE;
     HRGN outline = 0, interior = 0;
 
+    if (!ellipse_width || !ellipse_height)
+        return dibdrv_Rectangle( dev, left, top, right, bottom );
+
     SetRect( &arc_rect, 0, 0, ellipse_width, ellipse_height );
     /* We are drawing four arcs, but the number of points we will actually use
      * is exactly as many as in one ellipse arc. */
