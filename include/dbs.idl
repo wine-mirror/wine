@@ -801,6 +801,11 @@ typedef struct tagRMTPACK
     [size_is(cArray)] VARIANT *rgArray;
 } RMTPACK;
 
+typedef struct tagDBVECTOR {
+	DBLENGTH size;
+	[size_is((ULONG)size)] void *ptr;
+} DBVECTOR;
+
 typedef struct tagDBDATE {
 	SHORT year;
 	USHORT month;
