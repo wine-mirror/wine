@@ -82,9 +82,9 @@ static void set_d3dbox(D3DBOX *box, uint32_t left, uint32_t top, uint32_t right,
     box->Back = back;
 }
 
-HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
+static HRESULT d3dx_load_volume_from_memory(IDirect3DVolume9 *dst_volume,
         const PALETTEENTRY *dst_palette, const D3DBOX *dst_box, const void *src_memory,
-        D3DFORMAT src_format, UINT src_row_pitch, UINT src_slice_pitch,
+        enum d3dx_pixel_format_id src_format, uint32_t src_row_pitch, uint32_t src_slice_pitch,
         const PALETTEENTRY *src_palette, const D3DBOX *src_box, DWORD filter, D3DCOLOR color_key)
 {
     const struct pixel_format_desc *src_format_desc, *dst_format_desc;
@@ -94,26 +94,6 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     D3DLOCKED_BOX locked_box;
     D3DVOLUME_DESC desc;
     HRESULT hr;
-
-    TRACE("dst_volume %p, dst_palette %p, dst_box %p, src_memory %p, src_format %#x, "
-            "src_row_pitch %u, src_slice_pitch %u, src_palette %p, src_box %p, filter %#lx, color_key 0x%08lx.\n",
-            dst_volume, dst_palette, dst_box, src_memory, src_format, src_row_pitch, src_slice_pitch,
-            src_palette, src_box, filter, color_key);
-
-    if (!dst_volume || !src_memory || !src_box) return D3DERR_INVALIDCALL;
-
-    if (src_format == D3DFMT_UNKNOWN
-            || src_box->Left >= src_box->Right
-            || src_box->Top >= src_box->Bottom
-            || src_box->Front >= src_box->Back)
-        return E_FAIL;
-
-    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
-        return hr;
-
-    src_format_desc = get_format_info(src_format);
-    if (is_unknown_format(src_format_desc))
-        return E_NOTIMPL;
 
     IDirect3DVolume9_GetDesc(dst_volume, &desc);
     dst_format_desc = get_format_info(desc.Format);
@@ -135,6 +115,7 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
             return D3DERR_INVALIDCALL;
     }
 
+    src_format_desc = get_d3dx_pixel_format_info(src_format);
     hr = d3dx_pixels_init(src_memory, src_row_pitch, src_slice_pitch,
         src_palette, src_format_desc->format, src_box->Left, src_box->Top, src_box->Right, src_box->Bottom,
         src_box->Front, src_box->Back, &src_pixels);
@@ -160,6 +141,39 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
             color_key);
     IDirect3DVolume9_UnlockBox(dst_volume);
     return hr;
+}
+
+HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
+        const PALETTEENTRY *dst_palette, const D3DBOX *dst_box, const void *src_memory,
+        D3DFORMAT src_format, UINT src_row_pitch, UINT src_slice_pitch,
+        const PALETTEENTRY *src_palette, const D3DBOX *src_box, DWORD filter, D3DCOLOR color_key)
+{
+    const struct pixel_format_desc *src_format_desc;
+    HRESULT hr;
+
+    TRACE("dst_volume %p, dst_palette %p, dst_box %p, src_memory %p, src_format %#x, "
+            "src_row_pitch %u, src_slice_pitch %u, src_palette %p, src_box %p, filter %#lx, color_key 0x%08lx.\n",
+            dst_volume, dst_palette, dst_box, src_memory, src_format, src_row_pitch, src_slice_pitch,
+            src_palette, src_box, filter, color_key);
+
+    if (!dst_volume || !src_memory || !src_box)
+        return D3DERR_INVALIDCALL;
+
+    if (src_format == D3DFMT_UNKNOWN
+            || src_box->Left >= src_box->Right
+            || src_box->Top >= src_box->Bottom
+            || src_box->Front >= src_box->Back)
+        return E_FAIL;
+
+    if (FAILED(hr = d3dx9_handle_load_filter(&filter)))
+        return hr;
+
+    src_format_desc = get_format_info(src_format);
+    if (is_unknown_format(src_format_desc))
+        return E_NOTIMPL;
+
+    return d3dx_load_volume_from_memory(dst_volume, dst_palette, dst_box, src_memory, src_format_desc->format,
+            src_row_pitch, src_slice_pitch, src_palette, src_box, filter, color_key);
 }
 
 HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *dst_palette,
@@ -197,6 +211,12 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
             hr = D3DERR_INVALIDCALL;
             goto exit;
         }
+        if (src_box->Left >= src_box->Right || src_box->Top >= src_box->Bottom
+                || src_box->Front >= src_box->Back)
+        {
+            hr = E_FAIL;
+            goto exit;
+        }
 
         box = *src_box;
     }
@@ -209,9 +229,8 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
     if (FAILED(hr))
         goto exit;
 
-    hr = D3DXLoadVolumeFromMemory(dst_volume, dst_palette, dst_box, pixels.data,
-            d3dformat_from_d3dx_pixel_format_id(image.format), pixels.row_pitch, pixels.slice_pitch, pixels.palette,
-            &box, filter, color_key);
+    hr = d3dx_load_volume_from_memory(dst_volume, dst_palette, dst_box, pixels.data, image.format,
+            pixels.row_pitch, pixels.slice_pitch, pixels.palette, &box, filter, color_key);
     if (SUCCEEDED(hr) && src_info)
         *src_info = image_info;
 
