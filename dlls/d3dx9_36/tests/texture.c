@@ -2499,15 +2499,12 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
     hr = D3DXCreateTextureFromFileInMemoryEx(device, png_2_2_48bpp_rgb, sizeof(png_2_2_48bpp_rgb), D3DX_DEFAULT,
             D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
             D3DX_DEFAULT, D3DX_DEFAULT, 0, &img_info, NULL, &texture);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        check_texture_mip_levels(texture, 2, FALSE);
-        check_image_info(&img_info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, TRUE);
-        check_texture_level_desc(texture, 0, D3DFMT_A16B16G16R16, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 2, 2, FALSE);
-        check_texture_level_desc(texture, 1, D3DFMT_A16B16G16R16, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, FALSE);
-        IDirect3DTexture9_Release(texture);
-    }
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_texture_mip_levels(texture, 2, FALSE);
+    check_image_info(&img_info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
+    check_texture_level_desc(texture, 0, D3DFMT_A16B16G16R16, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 2, 2, FALSE);
+    check_texture_level_desc(texture, 1, D3DFMT_A16B16G16R16, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, FALSE);
+    IDirect3DTexture9_Release(texture);
 
     hr = D3DXCreateTextureFromFileInMemoryEx(device, png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba), D3DX_DEFAULT,
             D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
@@ -3069,16 +3066,14 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
     hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, png_2_2_48bpp_rgb, sizeof(png_2_2_48bpp_rgb),
             D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
             D3DX_DEFAULT, D3DX_FILTER_POINT, 0, &img_info, NULL, &texture);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        check_texture_mip_levels(texture, 2, FALSE);
-        check_image_info(&img_info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, TRUE);
-        check_volume_texture_level_desc(texture, 0, D3DFMT_A16B16G16R16, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 2, 2, 1, FALSE);
-        check_volume_texture_level_desc(texture, 1, D3DFMT_A16B16G16R16, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 1, 1, 1, FALSE);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-        IDirect3DVolumeTexture9_Release(texture);
-    }
+    check_texture_mip_levels(texture, 2, FALSE);
+    check_image_info(&img_info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
+    check_volume_texture_level_desc(texture, 0, D3DFMT_A16B16G16R16, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 2, 2, 1, FALSE);
+    check_volume_texture_level_desc(texture, 1, D3DFMT_A16B16G16R16, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 1, 1, 1, FALSE);
+
+    IDirect3DVolumeTexture9_Release(texture);
 
     hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba),
             D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,

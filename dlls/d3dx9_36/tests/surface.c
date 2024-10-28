@@ -938,9 +938,8 @@ static void test_D3DXGetImageInfo(void)
 
     /* Test PNG support. */
     hr = D3DXGetImageInfoFromFileInMemory(png_2_2_48bpp_rgb, sizeof(png_2_2_48bpp_rgb), &info);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        check_image_info(&info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_A16B16G16R16, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
 
     hr = D3DXGetImageInfoFromFileInMemory(png_2_2_64bpp_rgba, sizeof(png_2_2_64bpp_rgba), &info);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);

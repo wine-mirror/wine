@@ -47,6 +47,7 @@ static const struct
     { &GUID_WICPixelFormat24bppBGR,    D3DX_PIXEL_FORMAT_B8G8R8_UNORM },
     { &GUID_WICPixelFormat32bppBGR,    D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM },
     { &GUID_WICPixelFormat32bppBGRA,   D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM },
+    { &GUID_WICPixelFormat48bppRGB,    D3DX_PIXEL_FORMAT_R16G16B16_UNORM },
     { &GUID_WICPixelFormat64bppRGBA,   D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM },
 };
 
@@ -1366,11 +1367,23 @@ void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *ima
     info->Height = image->size.height;
     info->Depth = image->size.depth;
     info->MipLevels = image->mip_levels;
-    if ((info->ImageFileFormat == D3DXIFF_PNG || info->ImageFileFormat == D3DXIFF_JPG)
-            && image->format == D3DX_PIXEL_FORMAT_B8G8R8_UNORM)
-        info->Format = D3DFMT_X8R8G8B8;
-    else
-        info->Format = d3dformat_from_d3dx_pixel_format_id(image->format);
+    switch (image->format)
+    {
+        case D3DX_PIXEL_FORMAT_R16G16B16_UNORM:
+            info->Format = D3DFMT_A16B16G16R16;
+            break;
+
+        case D3DX_PIXEL_FORMAT_B8G8R8_UNORM:
+            if (info->ImageFileFormat == D3DXIFF_PNG || info->ImageFileFormat == D3DXIFF_JPG)
+                info->Format = D3DFMT_X8R8G8B8;
+            else
+                info->Format = d3dformat_from_d3dx_pixel_format_id(image->format);
+            break;
+
+        default:
+            info->Format = d3dformat_from_d3dx_pixel_format_id(image->format);
+            break;
+    }
     info->ResourceType = image->resource_type;
 }
 

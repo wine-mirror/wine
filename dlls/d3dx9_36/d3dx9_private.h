@@ -107,6 +107,7 @@ enum d3dx_pixel_format_id
     D3DX_PIXEL_FORMAT_B4G4R4X4_UNORM,
     D3DX_PIXEL_FORMAT_B10G10R10A2_UNORM,
     D3DX_PIXEL_FORMAT_R10G10B10A2_UNORM,
+    D3DX_PIXEL_FORMAT_R16G16B16_UNORM,
     D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM,
     D3DX_PIXEL_FORMAT_R16G16_UNORM,
     D3DX_PIXEL_FORMAT_A8_UNORM,
@@ -155,6 +156,8 @@ enum format_flag
 {
     FMT_FLAG_DXT  = 0x01,
     FMT_FLAG_PACKED = 0x02,
+    /* Internal only format, has no exact D3DFORMAT equivalent. */
+    FMT_FLAG_INTERNAL = 0x04,
 };
 
 struct pixel_format_desc {
@@ -265,6 +268,11 @@ static inline BOOL format_types_match(const struct pixel_format_desc *src, const
         return FALSE;
 
     return (src->rgb_type == dst->rgb_type || src->a_type == dst->a_type);
+}
+
+static inline BOOL is_internal_format(const struct pixel_format_desc *format)
+{
+    return !!(format->flags & FMT_FLAG_INTERNAL);
 }
 
 static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)
