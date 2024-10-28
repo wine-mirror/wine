@@ -4495,6 +4495,16 @@ static LSTATUS get_device_property(struct device *device, const DEVPROPKEY *prop
     return ls;
 }
 
+BOOL WINAPI SetupDiGetDevicePropertyKeys( HDEVINFO devinfo, PSP_DEVINFO_DATA device_data,
+                                          DEVPROPKEY *prop_keys, DWORD prop_keys_len,
+                                          DWORD *required_prop_keys, DWORD flags )
+{
+    FIXME( "%p, %p, %p, %lu, %p, %#lx stub!\n", devinfo, device_data, prop_keys, prop_keys_len,
+           required_prop_keys, flags);
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 /***********************************************************************
  *              SetupDiGetDevicePropertyW (SETUPAPI.@)
  */
