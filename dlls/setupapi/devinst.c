@@ -4499,10 +4499,114 @@ BOOL WINAPI SetupDiGetDevicePropertyKeys( HDEVINFO devinfo, PSP_DEVINFO_DATA dev
                                           DEVPROPKEY *prop_keys, DWORD prop_keys_len,
                                           DWORD *required_prop_keys, DWORD flags )
 {
-    FIXME( "%p, %p, %p, %lu, %p, %#lx stub!\n", devinfo, device_data, prop_keys, prop_keys_len,
+    struct device *device;
+    DWORD count = 0, i;
+    HKEY hkey;
+    LSTATUS ls;
+    DEVPROPKEY *keys_buf = NULL;
+
+    TRACE( "%p, %p, %p, %lu, %p, %#lx\n", devinfo, device_data, prop_keys, prop_keys_len,
            required_prop_keys, flags);
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+
+    if (flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+    if (!prop_keys && prop_keys_len)
+    {
+        SetLastError( ERROR_INVALID_USER_BUFFER );
+        return FALSE;
+    }
+
+    device = get_device( devinfo, device_data );
+    if (!device)
+        return FALSE;
+
+    ls = RegOpenKeyExW( device->key, L"Properties", 0, KEY_ENUMERATE_SUB_KEYS, &hkey );
+    if (ls)
+    {
+        SetLastError( ls );
+        return FALSE;
+    }
+
+    keys_buf = malloc( sizeof( *keys_buf ) * prop_keys_len );
+    if (!keys_buf && prop_keys_len)
+    {
+        RegCloseKey( hkey );
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
+    for (i = 0; ;i++)
+    {
+        WCHAR guid_str[39];
+        HKEY propkey;
+        DWORD len, j;
+        GUID prop_guid;
+
+        len = ARRAY_SIZE( guid_str );
+        ls = RegEnumKeyExW( hkey, i, guid_str, &len, NULL, NULL, NULL, NULL );
+        if (ls)
+        {
+            if (ls == ERROR_NO_MORE_ITEMS)
+                ls = ERROR_SUCCESS;
+            else
+                ERR( "Could not enumerate subkeys for device %s: %lu\n",
+                     debugstr_w( device->instanceId ), ls );
+            break;
+        }
+        ls = RegOpenKeyExW( hkey, guid_str, 0, KEY_ENUMERATE_SUB_KEYS, &propkey );
+        if (ls)
+            break;
+        guid_str[37] = 0;
+        if (UuidFromStringW( &guid_str[1], &prop_guid ))
+        {
+            ERR( "Could not parse propkey GUID string %s\n", debugstr_w( &guid_str[1] ) );
+            RegCloseKey( propkey );
+            continue;
+        }
+        for (j = 0; ;j++)
+        {
+            DEVPROPID pid;
+            WCHAR key_name[6];
+
+            len = 5;
+            ls = RegEnumKeyExW( propkey, j, key_name, &len, NULL, NULL, NULL, NULL );
+            if (ls)
+            {
+                if (ls != ERROR_NO_MORE_ITEMS)
+                    ERR( "Could not enumerate subkeys for device %s under %s: %lu\n", debugstr_w( device->instanceId ),
+                         debugstr_guid( &prop_guid ), ls );
+                break;
+            }
+            swscanf( key_name, L"%04X", &pid );
+            if (++count <= prop_keys_len)
+            {
+                keys_buf[count-1].fmtid = prop_guid;
+                keys_buf[count-1].pid = pid;
+            }
+        }
+        RegCloseKey( propkey );
+    }
+
+    RegCloseKey( hkey );
+    if (!ls)
+    {
+        if (required_prop_keys)
+            *required_prop_keys = count;
+
+        if (prop_keys_len < count)
+        {
+            free( keys_buf );
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+        memcpy( prop_keys, keys_buf, count * sizeof( *keys_buf ) );
+    }
+    free( keys_buf );
+    SetLastError( ls );
+    return !ls;
 }
 
 /***********************************************************************

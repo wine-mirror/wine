@@ -1200,61 +1200,61 @@ static void test_device_property(void)
         ret = pSetupDiGetDevicePropertyKeys(NULL, NULL, NULL, 0, NULL, 0);
         ok(!ret, "Expect failure\n");
         err = GetLastError();
-        todo_wine ok(err == ERROR_INVALID_HANDLE, "Expect last error %#x, got %#lx\n",
+        ok(err == ERROR_INVALID_HANDLE, "Expect last error %#x, got %#lx\n",
            ERROR_INVALID_HANDLE, err);
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDevicePropertyKeys(set, NULL, NULL, 0, NULL, 0);
         ok(!ret, "Expect failure\n");
         err = GetLastError();
-        todo_wine ok(err == ERROR_INVALID_PARAMETER, "Expect last error %#x, got %#lx\n",
+        ok(err == ERROR_INVALID_PARAMETER, "Expect last error %#x, got %#lx\n",
            ERROR_INVALID_PARAMETER, err);
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 10, NULL, 0);
         ok(!ret, "Expect failure\n");
         err = GetLastError();
-        todo_wine ok(err == ERROR_INVALID_USER_BUFFER, "Expect last error %#x, got %#lx\n",
+        ok(err == ERROR_INVALID_USER_BUFFER, "Expect last error %#x, got %#lx\n",
            ERROR_INVALID_USER_BUFFER, err);
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, NULL, 0);
         ok(!ret, "Expect failure\n");
         err = GetLastError();
-        todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n",
+        ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n",
            ERROR_INSUFFICIENT_BUFFER, err);
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, &keys_len, 0xdeadbeef);
         ok(!ret, "Expect failure\n");
         err = GetLastError();
-        todo_wine ok(err == ERROR_INVALID_FLAGS, "Expect last error %#x, got %#lx\n",
+        ok(err == ERROR_INVALID_FLAGS, "Expect last error %#x, got %#lx\n",
            ERROR_INVALID_FLAGS, err);
 
         SetLastError(0xdeadbeef);
         ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, &keys_len, 0);
         ok(!ret, "Expect failure\n");
         err = GetLastError();
-        todo_wine ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n",
+        ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n",
            ERROR_INSUFFICIENT_BUFFER, err);
 
         keys = calloc(keys_len, sizeof(*keys));
-        todo_wine ok(keys_len && !!keys, "Failed to allocate buffer\n");
+        ok(keys_len && !!keys, "Failed to allocate buffer\n");
         SetLastError(0xdeadbeef);
 
         ret = pSetupDiGetDevicePropertyKeys(set, &device_data, keys, keys_len, &keys_len, 0xdeadbeef);
         ok(!ret, "Expect failure\n");
         err = GetLastError();
-        todo_wine ok(err == ERROR_INVALID_FLAGS, "Expect last error %#x, got %#lx\n",
+        ok(err == ERROR_INVALID_FLAGS, "Expect last error %#x, got %#lx\n",
            ERROR_INVALID_FLAGS, err);
 
         required_len = 0xdeadbeef;
         ret = SetupDiGetDevicePropertyKeys(set, &device_data, keys, keys_len, &required_len, 0);
-        todo_wine ok(ret, "Expect success\n");
+        ok(ret, "Expect success\n");
         err = GetLastError();
-        todo_wine ok(!err, "Expect last error %#x, got %#lx\n", ERROR_SUCCESS, err);
-        todo_wine ok(keys_len == required_len, "%lu != %lu\n", keys_len, required_len);
-        todo_wine ok(keys_len >= expected_keys, "Expected %lu >= %lu\n", keys_len, expected_keys);
+        ok(!err, "Expect last error %#x, got %#lx\n", ERROR_SUCCESS, err);
+        ok(keys_len == required_len, "%lu != %lu\n", keys_len, required_len);
+        ok(keys_len >= expected_keys, "Expected %lu >= %lu\n", keys_len, expected_keys);
 
         keys_len = 0;
         if (keys)
@@ -1266,7 +1266,7 @@ static void test_device_property(void)
             }
 
         }
-        todo_wine ok(keys_len == expected_keys, "%lu != %lu\n", keys_len, expected_keys);
+        ok(keys_len == expected_keys, "%lu != %lu\n", keys_len, expected_keys);
         free(keys);
     }
     else
