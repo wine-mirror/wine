@@ -3923,7 +3923,7 @@ static void test_save_surface_iffs(IDirect3DDevice9 *device)
         { D3DFMT_R8G8B8, NULL, 0x00,
           { { D3D_OK, D3DFMT_R8G8B8, },
             { D3D_OK, D3DFMT_X8R8G8B8 },
-            { D3D_OK, D3DFMT_R8G8B8, .todo_hr = TRUE },
+            { D3D_OK, D3DFMT_R8G8B8 },
             { D3D_OK, D3DFMT_X8R8G8B8 },
             { D3D_OK, D3DFMT_X8R8G8B8, .todo_hr = TRUE },
             { D3D_OK, D3DFMT_R8G8B8, },
@@ -3943,7 +3943,7 @@ static void test_save_surface_iffs(IDirect3DDevice9 *device)
         { D3DFMT_A8R8G8B8, NULL, 0x00,
           { { D3D_OK, D3DFMT_X8R8G8B8, .todo_format = TRUE },
             { D3D_OK, D3DFMT_X8R8G8B8 },
-            { D3D_OK, D3DFMT_A8R8G8B8, .todo_hr = TRUE },
+            { D3D_OK, D3DFMT_A8R8G8B8 },
             { D3D_OK, D3DFMT_A8R8G8B8, },
             { D3D_OK, D3DFMT_X8R8G8B8, .todo_hr = TRUE },
             { D3D_OK, D3DFMT_X8R8G8B8, .todo_format = TRUE },
@@ -3954,7 +3954,7 @@ static void test_save_surface_iffs(IDirect3DDevice9 *device)
         { D3DFMT_A8R8G8B8, NULL, 0xff,
           { { D3D_OK, D3DFMT_A8R8G8B8 },
             { D3D_OK, D3DFMT_X8R8G8B8 },
-            { D3D_OK, D3DFMT_A8R8G8B8, .todo_hr = TRUE },
+            { D3D_OK, D3DFMT_A8R8G8B8 },
             { D3D_OK, D3DFMT_A8R8G8B8, },
             { D3D_OK, D3DFMT_X8R8G8B8, .todo_hr = TRUE },
             { D3D_OK, D3DFMT_A8R8G8B8 },
@@ -4633,36 +4633,32 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
 
     /* Test saved targa file headers. */
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_TGA, surface, NULL, NULL);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        tga = ID3DXBuffer_GetBufferPointer(buffer);
-        ok(ID3DXBuffer_GetBufferSize(buffer) == (sizeof(tga->header) + tga->header.id_length + (4 * 4 * 4)), "Unexpected buffer size %lu.\n",
-                ID3DXBuffer_GetBufferSize(buffer));
-        ok(tga->header.image_type == IMAGETYPE_TRUECOLOR, "Got unexpected image type %u.\n", tga->header.image_type);
-        ok(tga->header.height == 4, "Got unexpected height %u.\n", tga->header.height);
-        ok(tga->header.width == 4, "Got unexpected width %u.\n", tga->header.width);
-        ok(tga->header.depth == 32, "Got unexpected depth %u.\n", tga->header.depth);
-        ok(tga->header.image_descriptor == (IMAGE_TOPTOBOTTOM | 0x8), "Got unexpected image descriptor %#x.\n", tga->header.image_descriptor);
-        ID3DXBuffer_Release(buffer);
-    }
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    tga = ID3DXBuffer_GetBufferPointer(buffer);
+    ok(ID3DXBuffer_GetBufferSize(buffer) == (sizeof(tga->header) + tga->header.id_length + (4 * 4 * 4)), "Unexpected buffer size %lu.\n",
+            ID3DXBuffer_GetBufferSize(buffer));
+    ok(tga->header.image_type == IMAGETYPE_TRUECOLOR, "Got unexpected image type %u.\n", tga->header.image_type);
+    ok(tga->header.height == 4, "Got unexpected height %u.\n", tga->header.height);
+    ok(tga->header.width == 4, "Got unexpected width %u.\n", tga->header.width);
+    ok(tga->header.depth == 32, "Got unexpected depth %u.\n", tga->header.depth);
+    ok(tga->header.image_descriptor == (IMAGE_TOPTOBOTTOM | 0x8), "Got unexpected image descriptor %#x.\n", tga->header.image_descriptor);
+    ID3DXBuffer_Release(buffer);
 
     /* Size 0 rectangle. */
     SetRectEmpty(&rect);
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_TGA, surface, NULL, &rect);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        tga = ID3DXBuffer_GetBufferPointer(buffer);
-        ok(ID3DXBuffer_GetBufferSize(buffer) == (sizeof(tga->header) + tga->header.id_length), "Unexpected buffer size %lu.\n",
-                ID3DXBuffer_GetBufferSize(buffer));
-        ok(tga->header.image_type == IMAGETYPE_TRUECOLOR, "Got unexpected image type %u.\n", tga->header.image_type);
-        ok(!tga->header.height, "Got unexpected height %u.\n", tga->header.height);
-        ok(!tga->header.width, "Got unexpected width %u.\n", tga->header.width);
-        ok(tga->header.depth == 32, "Got unexpected depth %u.\n", tga->header.depth);
-        ok(tga->header.image_descriptor == (IMAGE_TOPTOBOTTOM | 0x8), "Got unexpected image descriptor %#x.\n", tga->header.image_descriptor);
-        ID3DXBuffer_Release(buffer);
-    }
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    tga = ID3DXBuffer_GetBufferPointer(buffer);
+    ok(ID3DXBuffer_GetBufferSize(buffer) == (sizeof(tga->header) + tga->header.id_length), "Unexpected buffer size %lu.\n",
+            ID3DXBuffer_GetBufferSize(buffer));
+    ok(tga->header.image_type == IMAGETYPE_TRUECOLOR, "Got unexpected image type %u.\n", tga->header.image_type);
+    ok(!tga->header.height, "Got unexpected height %u.\n", tga->header.height);
+    ok(!tga->header.width, "Got unexpected width %u.\n", tga->header.width);
+    ok(tga->header.depth == 32, "Got unexpected depth %u.\n", tga->header.depth);
+    ok(tga->header.image_descriptor == (IMAGE_TOPTOBOTTOM | 0x8), "Got unexpected image descriptor %#x.\n", tga->header.image_descriptor);
+    ID3DXBuffer_Release(buffer);
 
     /* Saving as D3DXIFF_DIB actually saves as a BMP. */
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DIB, surface, NULL, NULL);
@@ -4786,9 +4782,10 @@ static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
     {
         hr = D3DXSaveSurfaceToFileA("saved_surface.ppm", D3DXIFF_PPM, surface, NULL, NULL);
         ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        hr = D3DXSaveSurfaceToFileA("saved_surface.tga", D3DXIFF_TGA, surface, NULL, NULL);
-        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     }
+
+    hr = D3DXSaveSurfaceToFileA("saved_surface.tga", D3DXIFF_TGA, surface, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXSaveSurfaceToFileA("saved_surface.dds", D3DXIFF_DDS, surface, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);

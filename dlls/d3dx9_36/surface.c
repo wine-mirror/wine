@@ -153,6 +153,33 @@ struct dds_header
     DWORD reserved2;
 };
 
+#define TGA_IMAGETYPE_COLORMAPPED 1
+#define TGA_IMAGETYPE_TRUECOLOR 2
+#define TGA_IMAGETYPE_GRAYSCALE 3
+#define TGA_IMAGETYPE_MASK 0x07
+#define TGA_IMAGETYPE_RLE 8
+
+#define TGA_IMAGE_RIGHTTOLEFT 0x10
+#define TGA_IMAGE_TOPTOBOTTOM 0x20
+
+#include "pshpack1.h"
+struct tga_header
+{
+    uint8_t  id_length;
+    uint8_t  color_map_type;
+    uint8_t  image_type;
+    uint16_t color_map_firstentry;
+    uint16_t color_map_length;
+    uint8_t  color_map_entrysize;
+    uint16_t xorigin;
+    uint16_t yorigin;
+    uint16_t width;
+    uint16_t height;
+    uint8_t  depth;
+    uint8_t  image_descriptor;
+};
+#include "poppack.h"
+
 HRESULT lock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect, D3DLOCKED_RECT *lock,
         IDirect3DSurface9 **temp_surface, BOOL write)
 {
@@ -501,23 +528,40 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
     uint8_t *pixels;
     HRESULT hr;
 
-    *dst_buffer = NULL;
+    *dst_buffer = buffer = NULL;
+    switch (file_format)
+    {
+        case D3DXIFF_DDS:
+            hr = dds_pixel_format_from_d3dx_pixel_format_id(NULL, dst_format);
+            if (FAILED(hr))
+                return hr;
+            break;
+
+        case D3DXIFF_TGA:
+            if ((dst_format != D3DX_PIXEL_FORMAT_B8G8R8_UNORM) && (dst_format != D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM))
+            {
+                FIXME("Format replacement for TGA files is currently unimplemented.\n");
+                return E_NOTIMPL;
+            }
+            break;
+
+        default:
+            assert(0 && "Unexpected file format.");
+            return E_FAIL;
+    }
+
+    dst_fmt_desc = get_d3dx_pixel_format_info(dst_format);
+    hr = d3dx_calculate_pixels_size(dst_format, src_pixels->size.width, src_pixels->size.height, &dst_row_pitch,
+            &dst_slice_pitch);
+    if (FAILED(hr))
+        return hr;
+
     switch (file_format)
     {
         case D3DXIFF_DDS:
         {
             struct dds_header *header;
             uint32_t header_size;
-
-            hr = dds_pixel_format_from_d3dx_pixel_format_id(NULL, dst_format);
-            if (FAILED(hr))
-                return hr;
-
-            dst_fmt_desc = get_d3dx_pixel_format_info(dst_format);
-            hr = d3dx_calculate_pixels_size(dst_format, src_pixels->size.width, src_pixels->size.height, &dst_row_pitch,
-                    &dst_slice_pitch);
-            if (FAILED(hr))
-                return hr;
 
             header_size = is_index_format(dst_fmt_desc) ? sizeof(*header) + DDS_PALETTE_SIZE : sizeof(*header);
             hr = D3DXCreateBuffer(dst_slice_pitch + header_size, &buffer);
@@ -535,9 +579,30 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
             break;
         }
 
+        case D3DXIFF_TGA:
+        {
+            struct tga_header *header;
+
+            hr = D3DXCreateBuffer(dst_slice_pitch + sizeof(*header), &buffer);
+            if (FAILED(hr))
+                return hr;
+
+            header = ID3DXBuffer_GetBufferPointer(buffer);
+            pixels = (uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + sizeof(*header);
+
+            memset(header, 0, sizeof(*header));
+            header->image_type = TGA_IMAGETYPE_TRUECOLOR;
+            header->width = src_pixels->size.width;
+            header->height = src_pixels->size.height;
+            header->image_descriptor = TGA_IMAGE_TOPTOBOTTOM;
+            header->depth = dst_fmt_desc->bytes_per_pixel * 8;
+            if (dst_fmt_desc->format == D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM)
+                header->image_descriptor |= 0x08;
+             break;
+        }
+
         default:
-            assert(0 && "Unexpected file format.");
-            return E_FAIL;
+            break;
     }
 
     if (src_pixels->size.width != 0 && src_pixels->size.height != 0)
@@ -559,8 +624,8 @@ exit:
     return hr;
 }
 
-static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSurface9 *src_surface,
-        const PALETTEENTRY *src_palette, const RECT *src_rect)
+static HRESULT save_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSurface9 *src_surface,
+        const PALETTEENTRY *src_palette, const RECT *src_rect, D3DXIMAGE_FILEFORMAT file_format)
 {
     const struct pixel_format_desc *src_fmt_desc;
     D3DSURFACE_DESC src_surface_desc;
@@ -610,7 +675,7 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
         return hr;
     }
 
-    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc, D3DXIFF_DDS, &buffer);
+    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc, file_format, &buffer);
     if (FAILED(hr))
     {
         unlock_surface(src_surface, NULL, temp_surface, FALSE);
@@ -1084,33 +1149,6 @@ static enum d3dx_pixel_format_id d3dx_get_tga_format_for_bpp(uint8_t bpp)
             return D3DX_PIXEL_FORMAT_COUNT;
     }
 }
-
-#define TGA_IMAGETYPE_COLORMAPPED 1
-#define TGA_IMAGETYPE_TRUECOLOR 2
-#define TGA_IMAGETYPE_GRAYSCALE 3
-#define TGA_IMAGETYPE_MASK 0x07
-#define TGA_IMAGETYPE_RLE 8
-
-#define TGA_IMAGE_RIGHTTOLEFT 0x10
-#define TGA_IMAGE_TOPTOBOTTOM 0x20
-
-#include "pshpack1.h"
-struct tga_header
-{
-    uint8_t  id_length;
-    uint8_t  color_map_type;
-    uint8_t  image_type;
-    uint16_t color_map_firstentry;
-    uint16_t color_map_length;
-    uint8_t  color_map_entrysize;
-    uint16_t xorigin;
-    uint16_t yorigin;
-    uint16_t width;
-    uint16_t height;
-    uint8_t  depth;
-    uint8_t  image_descriptor;
-};
-#include "poppack.h"
 
 static HRESULT d3dx_image_tga_rle_decode_row(const uint8_t **src, uint32_t src_bytes_left, uint32_t row_width,
         uint32_t bytes_per_pixel, uint8_t *dst_row)
@@ -2993,10 +3031,10 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             container_format = &GUID_ContainerFormatJpeg;
             break;
         case D3DXIFF_DDS:
-            return save_dds_surface_to_memory(dst_buffer, src_surface, src_palette, src_rect);
+        case D3DXIFF_TGA:
+            return save_surface_to_memory(dst_buffer, src_surface, src_palette, src_rect, file_format);
         case D3DXIFF_HDR:
         case D3DXIFF_PFM:
-        case D3DXIFF_TGA:
         case D3DXIFF_PPM:
             FIXME("File format %#x is not supported yet\n", file_format);
             return E_NOTIMPL;
