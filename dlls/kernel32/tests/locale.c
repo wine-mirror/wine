@@ -5371,6 +5371,9 @@ static void test_GetStringTypeW(void)
                   0x206a, 0x206b, 0x206c, 0x206d, 0x206e, 0x206f, 0xfeff,
                   0xfff9, 0xfffa, 0xfffb};
     static const WCHAR space_special[] = {0x09, 0x0d, 0x85};
+    static const WCHAR alpha_thai[] = {0xe31, 0xe34, 0xe35, 0xe36, 0xe37, 0xe38, 0xe39, 0xe3a,
+                                       0xe47, 0xe48, 0xe49, 0xe4a, 0xe4b, 0xe4c, 0xe4d, 0xe4e,
+                                       0x1885, 0x1886};
 
     WORD types[20];
     WCHAR ch[2];
@@ -5447,6 +5450,13 @@ static void test_GetStringTypeW(void)
     GetStringTypeW(CT_CTYPE1, space_special, 3, types);
     for (i = 0; i < 3; i++)
         ok(types[i] & C1_SPACE || broken(types[i] == C1_CNTRL) || broken(types[i] == 0), "incorrect types returned for %x -> (%x does not have %x)\n",space_special[i], types[i], C1_SPACE );
+
+    /* alpha is set for certain Thai and Mongolian */
+    memset(types, 0, sizeof(types));
+    GetStringTypeW(CT_CTYPE1, alpha_thai, 18, types);
+    for (i = 0; i < 18; i++)
+        todo_wine
+        ok(types[i] == (C1_ALPHA|C1_DEFINED), "incorrect types returned for %x -> (%x does not have %x)\n",alpha_thai[i], types[i], (C1_ALPHA|C1_DEFINED));
 
     /* surrogate pairs */
     ch[0] = 0xd800;
