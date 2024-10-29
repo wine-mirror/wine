@@ -5455,7 +5455,6 @@ static void test_GetStringTypeW(void)
     memset(types, 0, sizeof(types));
     GetStringTypeW(CT_CTYPE1, alpha_thai, 18, types);
     for (i = 0; i < 18; i++)
-        todo_wine
         ok(types[i] == (C1_ALPHA|C1_DEFINED), "incorrect types returned for %x -> (%x does not have %x)\n",alpha_thai[i], types[i], (C1_ALPHA|C1_DEFINED));
 
     /* surrogate pairs */

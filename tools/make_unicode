@@ -333,6 +333,7 @@ my %categories =
 # a few characters need additional categories that cannot be determined automatically
 my %special_categories =
 (
+    "alpha"  => [ 0xe31, 0xe34..0xe3a, 0xe47..0xe4e, 0x1885..0x1886 ],
     "xdigit" => [ ord('0')..ord('9'),ord('A')..ord('F'),ord('a')..ord('f'),
                   0xff10..0xff19, 0xff21..0xff26, 0xff41..0xff46 ],
     "space"  => [ 0x09..0x0d, 0x85 ],
