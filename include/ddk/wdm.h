@@ -1703,6 +1703,8 @@ typedef enum _MODE
 #define SYMBOLIC_LINK_QUERY             0x0001
 #define SYMBOLIC_LINK_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | 0x1)
 
+typedef void (WINAPI *PREQUEST_POWER_COMPLETE)(DEVICE_OBJECT *device, UCHAR minor, POWER_STATE state, void *ctx, IO_STATUS_BLOCK *iosb);
+
 #ifndef WINE_UNIX_LIB
 
 NTSTATUS  WINAPI DbgQueryDebugFilterState(ULONG, ULONG);
@@ -1872,6 +1874,7 @@ NTSTATUS  WINAPI ObReferenceObjectByPointer(void*,ACCESS_MASK,POBJECT_TYPE,KPROC
 void      WINAPI ObUnRegisterCallbacks(void*);
 
 NTSTATUS  WINAPI PoCallDriver(DEVICE_OBJECT*,IRP*);
+NTSTATUS  WINAPI PoRequestPowerIrp(DEVICE_OBJECT *device, UCHAR minor, POWER_STATE state, PREQUEST_POWER_COMPLETE complete_cb, void *ctx, IRP **irp);
 POWER_STATE WINAPI PoSetPowerState(PDEVICE_OBJECT,POWER_STATE_TYPE,POWER_STATE);
 void      WINAPI PoStartNextPowerIrp(IRP*);
 

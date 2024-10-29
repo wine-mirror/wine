@@ -880,7 +880,7 @@
 @ stub PoRegisterDeviceForIdleDetection
 @ stub PoRegisterDeviceNotify
 @ stub PoRegisterSystemState
-@ stub PoRequestPowerIrp
+@ stdcall PoRequestPowerIrp(ptr long long ptr ptr ptr)
 @ stub PoRequestShutdownEvent
 @ stub PoSetHiberRange
 @ stdcall PoSetPowerState(ptr long long)

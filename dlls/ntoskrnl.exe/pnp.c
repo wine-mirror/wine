@@ -1086,6 +1086,17 @@ NTSTATUS WINAPI IoOpenDeviceRegistryKey( DEVICE_OBJECT *device, ULONG type, ACCE
 }
 
 /***********************************************************************
+ *           PoRequestPowerIrp   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PoRequestPowerIrp( DEVICE_OBJECT *device, UCHAR minor,
+        POWER_STATE state, PREQUEST_POWER_COMPLETE complete_cb, void *ctx, IRP **irp )
+{
+    FIXME("device %p, minor %#x, state %u, complete_cb %p, ctx %p, irp %p, stub!\n",
+            device, minor, state.DeviceState, complete_cb, ctx, irp);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  *           PoSetPowerState   (NTOSKRNL.EXE.@)
  */
 POWER_STATE WINAPI PoSetPowerState( DEVICE_OBJECT *device, POWER_STATE_TYPE type, POWER_STATE state)
