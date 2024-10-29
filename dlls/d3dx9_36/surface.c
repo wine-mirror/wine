@@ -378,24 +378,31 @@ static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_dds_pixel_format(cons
     return D3DX_PIXEL_FORMAT_COUNT;
 }
 
-static HRESULT dds_pixel_format_from_d3dformat(struct dds_pixel_format *pixel_format, D3DFORMAT d3dformat)
+static HRESULT dds_pixel_format_from_d3dx_pixel_format_id(struct dds_pixel_format *pixel_format,
+        enum d3dx_pixel_format_id d3dx_pixel_format)
 {
-    enum d3dx_pixel_format_id d3dx_pixel_format = d3dx_pixel_format_id_from_d3dformat(d3dformat);
+    const struct dds_pixel_format *pf = NULL;
     uint32_t i;
 
-    memset(pixel_format, 0, sizeof(*pixel_format));
-    pixel_format->size = sizeof(*pixel_format);
     for (i = 0; i < ARRAY_SIZE(dds_pixel_formats); ++i)
     {
         if (dds_pixel_formats[i].d3dx_pixel_format == d3dx_pixel_format)
         {
-            *pixel_format = dds_pixel_formats[i].dds_pixel_format;
-            return D3D_OK;
+            pf = &dds_pixel_formats[i].dds_pixel_format;
+            break;
         }
     }
 
-    WARN("Unknown pixel format %#x.\n", d3dformat);
-    return E_NOTIMPL;
+    if (!pf)
+    {
+        WARN("Unhandled format %#x.\n", d3dx_pixel_format);
+        return E_NOTIMPL;
+    }
+
+    if (pixel_format)
+        *pixel_format = *pf;
+
+    return D3D_OK;
 }
 
 static void d3dx_get_next_mip_level_size(struct volume *size)
@@ -454,96 +461,148 @@ static uint32_t d3dx_calculate_layer_pixels_size(enum d3dx_pixel_format_id forma
     return layer_size;
 }
 
-static UINT calculate_dds_file_size(D3DFORMAT format, UINT width, UINT height, UINT depth,
-    UINT miplevels, UINT faces)
+static HRESULT d3dx_init_dds_header(struct dds_header *header, D3DRESOURCETYPE resource_type,
+        enum d3dx_pixel_format_id format, const struct volume *size, uint32_t mip_levels)
 {
-    const struct pixel_format_desc *fmt_desc = get_format_info(format);
-    UINT i, file_size = 0;
+    HRESULT hr;
 
-    for (i = 0; i < miplevels; i++)
+    memset(header, 0, sizeof(*header));
+    header->signature = MAKEFOURCC('D','D','S',' ');
+    /* The signature is not really part of the DDS header. */
+    header->size = sizeof(*header) - FIELD_OFFSET(struct dds_header, size);
+    hr = dds_pixel_format_from_d3dx_pixel_format_id(&header->pixel_format, format);
+    if (FAILED(hr))
+        return hr;
+
+    header->flags = DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT;
+    header->height = size->height;
+    header->width = size->width;
+    header->caps = DDS_CAPS_TEXTURE;
+
+    return D3D_OK;
+}
+
+static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
+        D3DXIMAGE_FILEFORMAT file_format, ID3DXBuffer **dst_buffer)
+{
+    enum d3dx_pixel_format_id dst_format = src_fmt_desc->format;
+    const struct pixel_format_desc *dst_fmt_desc;
+    uint32_t dst_row_pitch, dst_slice_pitch;
+    struct d3dx_pixels dst_pixels;
+    ID3DXBuffer *buffer = NULL;
+    uint8_t *pixels;
+    HRESULT hr;
+
+    *dst_buffer = NULL;
+    switch (file_format)
     {
-        UINT pitch, size = 0;
-        if (FAILED(d3dx_calculate_pixels_size(fmt_desc->format, width, height, &pitch, &size)))
-            return 0;
-        size *= depth;
-        file_size += size;
-        width = max(1, width / 2);
-        height = max(1, height / 2);
-        depth = max(1, depth / 2);
+        case D3DXIFF_DDS:
+        {
+            struct dds_header *header;
+
+            hr = dds_pixel_format_from_d3dx_pixel_format_id(NULL, dst_format);
+            if (FAILED(hr))
+                return hr;
+
+            dst_fmt_desc = get_d3dx_pixel_format_info(dst_format);
+            hr = d3dx_calculate_pixels_size(dst_format, src_pixels->size.width, src_pixels->size.height, &dst_row_pitch,
+                    &dst_slice_pitch);
+            if (FAILED(hr))
+                return hr;
+
+            hr = D3DXCreateBuffer(dst_slice_pitch + sizeof(*header), &buffer);
+            if (FAILED(hr))
+                return hr;
+
+            header = ID3DXBuffer_GetBufferPointer(buffer);
+            pixels = (uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + sizeof(*header);
+            hr = d3dx_init_dds_header(header, D3DRTYPE_TEXTURE, dst_format, &src_pixels->size, 1);
+            if (FAILED(hr))
+                goto exit;
+            break;
+        }
+
+        default:
+            assert(0 && "Unexpected file format.");
+            return E_FAIL;
     }
 
-    file_size *= faces;
-    file_size += sizeof(struct dds_header);
-    return file_size;
+    if (src_pixels->size.width != 0 && src_pixels->size.height != 0)
+    {
+        const RECT dst_rect = { 0, 0, src_pixels->size.width, src_pixels->size.height };
+
+        set_d3dx_pixels(&dst_pixels, pixels, dst_row_pitch, dst_slice_pitch, src_pixels->palette, src_pixels->size.width,
+                src_pixels->size.height, src_pixels->size.depth, &dst_rect);
+
+        hr = d3dx_load_pixels_from_pixels(&dst_pixels, dst_fmt_desc, src_pixels, src_fmt_desc, D3DX_FILTER_NONE, 0);
+        if (FAILED(hr))
+            goto exit;
+    }
+
+    *dst_buffer = buffer;
+exit:
+    if (buffer && *dst_buffer != buffer)
+        ID3DXBuffer_Release(buffer);
+    return hr;
 }
 
 static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSurface9 *src_surface, const RECT *src_rect)
 {
-    HRESULT hr;
-    UINT dst_pitch, surface_size, file_size;
-    D3DSURFACE_DESC src_desc;
+    const struct pixel_format_desc *src_fmt_desc;
+    D3DSURFACE_DESC src_surface_desc;
+    IDirect3DSurface9 *temp_surface;
+    struct d3dx_pixels src_pixels;
     D3DLOCKED_RECT locked_rect;
     ID3DXBuffer *buffer;
-    struct dds_header *header;
-    BYTE *pixels;
-    struct volume volume;
-    const struct pixel_format_desc *pixel_format;
-    IDirect3DSurface9 *temp_surface;
+    RECT src_rect_temp;
+    HRESULT hr;
+
+    IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
+    src_fmt_desc = get_format_info(src_surface_desc.Format);
+    if (is_unknown_format(src_fmt_desc))
+        return E_NOTIMPL;
 
     if (src_rect)
     {
-        FIXME("Saving a part of a surface to a DDS file is not implemented yet\n");
-        return E_NOTIMPL;
+        if (src_rect->left > src_rect->right || src_rect->right > src_surface_desc.Width
+                || src_rect->top > src_rect->bottom || src_rect->bottom > src_surface_desc.Height
+                || src_rect->left < 0 || src_rect->top < 0)
+        {
+            WARN("Invalid src_rect specified.\n");
+            return D3DERR_INVALIDCALL;
+        }
     }
-
-    hr = IDirect3DSurface9_GetDesc(src_surface, &src_desc);
-    if (FAILED(hr)) return hr;
-
-    pixel_format = get_format_info(src_desc.Format);
-    if (is_unknown_format(pixel_format)) return E_NOTIMPL;
-
-    file_size = calculate_dds_file_size(src_desc.Format, src_desc.Width, src_desc.Height, 1, 1, 1);
-    if (!file_size)
-        return D3DERR_INVALIDCALL;
-
-    hr = d3dx_calculate_pixels_size(pixel_format->format, src_desc.Width, src_desc.Height, &dst_pitch, &surface_size);
-    if (FAILED(hr)) return hr;
-
-    hr = D3DXCreateBuffer(file_size, &buffer);
-    if (FAILED(hr)) return hr;
-
-    header = ID3DXBuffer_GetBufferPointer(buffer);
-    pixels = (BYTE *)(header + 1);
-
-    memset(header, 0, sizeof(*header));
-    header->signature = MAKEFOURCC('D','D','S',' ');
-    /* The signature is not really part of the DDS header */
-    header->size = sizeof(*header) - FIELD_OFFSET(struct dds_header, size);
-    header->flags = DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT;
-    header->height = src_desc.Height;
-    header->width = src_desc.Width;
-    header->caps = DDS_CAPS_TEXTURE;
-    hr = dds_pixel_format_from_d3dformat(&header->pixel_format, src_desc.Format);
-    if (FAILED(hr))
+    else
     {
-        ID3DXBuffer_Release(buffer);
-        return hr;
+        SetRect(&src_rect_temp, 0, 0, src_surface_desc.Width, src_surface_desc.Height);
+        src_rect = &src_rect_temp;
     }
 
     hr = lock_surface(src_surface, NULL, &locked_rect, &temp_surface, FALSE);
     if (FAILED(hr))
+        return hr;
+
+    hr = d3dx_pixels_init(locked_rect.pBits, locked_rect.Pitch, 0, NULL, src_fmt_desc->format,
+            src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1, &src_pixels);
+    if (FAILED(hr))
+    {
+        unlock_surface(src_surface, NULL, temp_surface, FALSE);
+        return hr;
+    }
+
+    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc, D3DXIFF_DDS, &buffer);
+    if (FAILED(hr))
+    {
+        unlock_surface(src_surface, NULL, temp_surface, FALSE);
+        return hr;
+    }
+
+    hr = unlock_surface(src_surface, NULL, temp_surface, FALSE);
+    if (FAILED(hr))
     {
         ID3DXBuffer_Release(buffer);
         return hr;
     }
-
-    volume.width = src_desc.Width;
-    volume.height = src_desc.Height;
-    volume.depth = 1;
-    copy_pixels(locked_rect.pBits, locked_rect.Pitch, 0, pixels, dst_pitch, 0,
-        &volume, pixel_format);
-
-    unlock_surface(src_surface, NULL, temp_surface, FALSE);
 
     *dst_buffer = buffer;
     return D3D_OK;

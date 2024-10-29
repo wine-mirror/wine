@@ -3881,58 +3881,50 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
 
     SetRectEmpty(&rect);
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, &rect);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        dds = ID3DXBuffer_GetBufferPointer(buffer);
-        check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 0, 0, 0, 0, 0,
-                &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, FALSE);
-        ID3DXBuffer_Release(buffer);
-    }
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    dds = ID3DXBuffer_GetBufferPointer(buffer);
+    check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 0, 0, 0, 0, 0,
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+    ID3DXBuffer_Release(buffer);
 
     /* Test rectangle argument for D3DXIFF_DDS. */
     SetRect(&rect, 0, 0, 0, 2);
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, &rect);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        dds = ID3DXBuffer_GetBufferPointer(buffer);
-        check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 2, 0, 0, 0, 0,
-                &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
-        ID3DXBuffer_Release(buffer);
-    }
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    dds = ID3DXBuffer_GetBufferPointer(buffer);
+    check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 2, 0, 0, 0, 0,
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+    ID3DXBuffer_Release(buffer);
 
     SetRect(&rect, 0, 0, 2, 0);
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, &rect);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        dds = ID3DXBuffer_GetBufferPointer(buffer);
-        check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 0, 2, 0, 0, 0,
-                &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
-        ID3DXBuffer_Release(buffer);
-    }
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    dds = ID3DXBuffer_GetBufferPointer(buffer);
+    check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 0, 2, 0, 0, 0,
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+    ID3DXBuffer_Release(buffer);
 
     SetRect(&rect, 2, 2, 4, 4);
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, &rect);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        dds = ID3DXBuffer_GetBufferPointer(buffer);
-        check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 2, 2, 0, 0, 0,
-                &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
-        for (y = 0; y < 2; ++y)
-        {
-            for (x = 0; x < 2; ++x)
-            {
-                const uint32_t expected_pixel = tmp_pixdata_4_4[((2 + y) * 4) + (x + 2)];
-                const uint32_t saved_pixel = ((uint32_t *)&dds->data)[(y * 2) + x];
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
-                ok(expected_pixel == saved_pixel, "Unexpected pixel value %#x.\n", saved_pixel);
-            }
+    dds = ID3DXBuffer_GetBufferPointer(buffer);
+    check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 2, 2, 0, 0, 0,
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+    for (y = 0; y < 2; ++y)
+    {
+        for (x = 0; x < 2; ++x)
+        {
+            const uint32_t expected_pixel = tmp_pixdata_4_4[((2 + y) * 4) + (x + 2)];
+            const uint32_t saved_pixel = ((uint32_t *)&dds->data)[(y * 2) + x];
+
+            ok(expected_pixel == saved_pixel, "Unexpected pixel value %#x.\n", saved_pixel);
         }
-        ID3DXBuffer_Release(buffer);
     }
+    ID3DXBuffer_Release(buffer);
 
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
