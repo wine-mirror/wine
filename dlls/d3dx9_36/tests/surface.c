@@ -3857,10 +3857,11 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
          struct tga_header header;
          BYTE *data;
     } *tga;
+    ID3DXBuffer *buffer, *buffer2;
     IDirect3DSurface9 *surface;
     IDirect3DTexture9 *texture;
     unsigned int i, x, y;
-    ID3DXBuffer *buffer;
+    D3DXIMAGE_INFO info;
     HRESULT hr;
     RECT rect;
 
@@ -3971,6 +3972,26 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
         ok(tga->header.image_descriptor == (IMAGE_TOPTOBOTTOM | 0x8), "Got unexpected image descriptor %#x.\n", tga->header.image_descriptor);
         ID3DXBuffer_Release(buffer);
     }
+
+    /* Saving as D3DXIFF_DIB actually saves as a BMP. */
+    hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DIB, surface, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DXSaveSurfaceToFileInMemory(&buffer2, D3DXIFF_BMP, surface, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = D3DXGetImageInfoFromFileInMemory(ID3DXBuffer_GetBufferPointer(buffer), ID3DXBuffer_GetBufferSize(buffer), &info);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(info.ImageFileFormat == D3DXIFF_BMP, "Unexpected ImageFileFormat %d.\n", info.ImageFileFormat);
+    todo_wine ok(ID3DXBuffer_GetBufferSize(buffer) == ID3DXBuffer_GetBufferSize(buffer2), "Unexpected buffer size.\n");
+    if (ID3DXBuffer_GetBufferSize(buffer) == ID3DXBuffer_GetBufferSize(buffer2))
+    {
+        ok(!memcmp(ID3DXBuffer_GetBufferPointer(buffer), ID3DXBuffer_GetBufferPointer(buffer2), ID3DXBuffer_GetBufferSize(buffer)),
+                "Files do not match.\n");
+    }
+
+    ID3DXBuffer_Release(buffer);
+    ID3DXBuffer_Release(buffer2);
 
     IDirect3DSurface9_Release(surface);
 
