@@ -834,6 +834,7 @@ SOURCES = \
 	windows.applicationmodel.activation.idl \
 	windows.applicationmodel.background.idl \
 	windows.applicationmodel.core.idl \
+	windows.applicationmodel.datatransfer.dragdrop.idl \
 	windows.applicationmodel.datatransfer.idl \
 	windows.applicationmodel.idl \
 	windows.data.json.idl \
