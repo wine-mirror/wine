@@ -1858,7 +1858,6 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
 {
     HRESULT hr;
     D3DRESOURCETYPE type;
-    IDirect3DSurface9 *surface;
 
     TRACE("dst_buffer %p, file_format %u, src_texture %p, src_palette %p.\n",
             dst_buffer, file_format, src_texture, src_palette);
@@ -1876,19 +1875,33 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     {
         case D3DRTYPE_TEXTURE:
         case D3DRTYPE_CUBETEXTURE:
+        {
+            IDirect3DSurface9 *surface;
+
             hr = get_surface(type, src_texture, D3DCUBEMAP_FACE_POSITIVE_X, 0, &surface);
+            if (SUCCEEDED(hr))
+            {
+                hr = D3DXSaveSurfaceToFileInMemory(dst_buffer, file_format, surface, src_palette, NULL);
+                IDirect3DSurface9_Release(surface);
+            }
             break;
+        }
+
         case D3DRTYPE_VOLUMETEXTURE:
-            FIXME("Volume textures aren't supported yet\n");
-            return E_NOTIMPL;
+        {
+            IDirect3DVolume9 *volume;
+
+            hr = IDirect3DVolumeTexture9_GetVolumeLevel((IDirect3DVolumeTexture9 *)src_texture, 0, &volume);
+            if (SUCCEEDED(hr))
+            {
+                hr = D3DXSaveVolumeToFileInMemory(dst_buffer, file_format, volume, src_palette, NULL);
+                IDirect3DVolume9_Release(volume);
+            }
+            break;
+        }
+
         default:
             return D3DERR_INVALIDCALL;
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        hr = D3DXSaveSurfaceToFileInMemory(dst_buffer, file_format, surface, src_palette, NULL);
-        IDirect3DSurface9_Release(surface);
     }
 
     return hr;

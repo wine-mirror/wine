@@ -3230,7 +3230,6 @@ static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
         return;
     }
 
-    todo_wine {
     hr = D3DXSaveTextureToFileInMemory(&buffer, D3DXIFF_BMP, (IDirect3DBaseTexture9 *)volume_texture, NULL);
     ok(hr == D3D_OK, "D3DXSaveTextureToFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
@@ -3249,6 +3248,7 @@ static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
         ID3DXBuffer_Release(buffer);
     }
 
+    todo_wine {
     hr = D3DXSaveTextureToFileInMemory(&buffer, D3DXIFF_DDS, (IDirect3DBaseTexture9 *)volume_texture, NULL);
     ok(hr == D3D_OK, "D3DXSaveTextureToFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
