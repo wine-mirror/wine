@@ -702,12 +702,22 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
          * and their respective layouts to avoid false matches, when possible. */
         int mac_keyc;
     } symbol_vkeys[] = {
+        { '-', VK_OEM_PLUS, kVK_ANSI_Equal },
         { '-', VK_OEM_MINUS, -1 },
         { '+', VK_OEM_PLUS, -1 },
         { '_', VK_OEM_MINUS, -1 },
         { ',', VK_OEM_COMMA, -1 },
         { '.', VK_OEM_PERIOD, -1 },
+        { '=', VK_OEM_8, kVK_ANSI_Slash },
         { '=', VK_OEM_PLUS, -1 },
+        { '!', VK_OEM_8, kVK_ANSI_Slash },
+        { 0x00F9, VK_OEM_3, kVK_ANSI_Quote }, /* 0x00F9 is French U accent grave */
+        { '$', VK_OEM_1, kVK_ANSI_RightBracket },
+        { ':', VK_OEM_2, kVK_ANSI_Period },
+        { '*', VK_OEM_5, kVK_ANSI_Backslash },
+        { '`', VK_OEM_5, kVK_ANSI_Backslash },
+        { ';', VK_OEM_PERIOD, kVK_ANSI_Comma },
+        { ')', VK_OEM_4, kVK_ANSI_Minus },
         { '>', VK_OEM_PERIOD, -1 },
         { '<', VK_OEM_COMMA, -1 },
         { '|', VK_OEM_5, -1 },
