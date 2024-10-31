@@ -715,10 +715,10 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         { '`', VK_OEM_3, -1 },
         { '[', VK_OEM_4, -1 },
         { '~', VK_OEM_3, -1 },
-        { 0x00DF, VK_OEM_4, -1 }, /* 0x00DF is ESZETT */
-        { 0x00FC, VK_OEM_1, -1 }, /* 0x00FC is German U Umlaut */
-        { 0x00F6, VK_OEM_3, -1 }, /* 0x00F6 is German O Umlaut */
-        { 0x00E4, VK_OEM_7, -1 }, /* 0x00B4 is German A Umlaut */
+        { 0x00DF, VK_OEM_4, kVK_ANSI_Minus }, /* 0x00DF is ESZETT */
+        { 0x00FC, VK_OEM_1, kVK_ANSI_LeftBracket }, /* 0x00FC is German U Umlaut */
+        { 0x00F6, VK_OEM_3, kVK_ANSI_Semicolon }, /* 0x00F6 is German O Umlaut */
+        { 0x00E4, VK_OEM_7, kVK_ANSI_Quote }, /* 0x00B4 is German A Umlaut */
         { '?', VK_OEM_2, -1 },
         { ']', VK_OEM_6, -1 },
         { '/', VK_OEM_2, -1 },
@@ -730,7 +730,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         { ':', VK_OEM_PERIOD, -1 },
         { ';', VK_OEM_COMMA, -1 },
         { '"', VK_OEM_7,  -1 },
-        { 0x00B4, VK_OEM_4, -1 }, /* 0x00B4 is ACUTE ACCENT */
+        { 0x00B4, VK_OEM_4, kVK_ANSI_Equal }, /* 0x00B4 is ACUTE ACCENT */
         { '\'', VK_OEM_2, -1 },
         { 0x00A7, VK_OEM_5, -1 }, /* 0x00A7 is SECTION SIGN */
         { '*', VK_OEM_PLUS, -1 },
