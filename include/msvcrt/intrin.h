@@ -90,6 +90,14 @@ unsigned __int64 __getReg(int);
 
 #endif
 
+#if defined(_MSC_VER)
+unsigned char _BitScanForward(unsigned long*,unsigned long);
+#endif
+
+#if defined(_MSC_VER) && (defined(__x86_64__) || defined(__aarch64__))
+unsigned char _BitScanForward64(unsigned long*,unsigned __int64);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
