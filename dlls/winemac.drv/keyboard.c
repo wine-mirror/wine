@@ -696,57 +696,62 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
     static const struct {
         WCHAR wchar;
         DWORD vkey;
+        /* Mac virtual key code that must match wchar under the current layout.
+         * A value of -1 means match-any.
+         * TODO: replace -1 with the actual mac virtual key codes for all mappings
+         * and their respective layouts to avoid false matches, when possible. */
+        int mac_keyc;
     } symbol_vkeys[] = {
-        { '-', VK_OEM_MINUS },
-        { '+', VK_OEM_PLUS },
-        { '_', VK_OEM_MINUS },
-        { ',', VK_OEM_COMMA },
-        { '.', VK_OEM_PERIOD },
-        { '=', VK_OEM_PLUS },
-        { '>', VK_OEM_PERIOD },
-        { '<', VK_OEM_COMMA },
-        { '|', VK_OEM_5 },
-        { '\\', VK_OEM_5 },
-        { '`', VK_OEM_3 },
-        { '[', VK_OEM_4 },
-        { '~', VK_OEM_3 },
-        { 0x00DF, VK_OEM_4 }, /* 0x00DF is ESZETT */
-        { 0x00FC, VK_OEM_1 }, /* 0x00FC is German U Umlaut */
-        { 0x00F6, VK_OEM_3 }, /* 0x00F6 is German O Umlaut */
-        { 0x00E4, VK_OEM_7 }, /* 0x00B4 is German A Umlaut */
-        { '?', VK_OEM_2 },
-        { ']', VK_OEM_6 },
-        { '/', VK_OEM_2 },
-        { ':', VK_OEM_1 },
-        { '}', VK_OEM_6 },
-        { '{', VK_OEM_4 },
-        { ';', VK_OEM_1 },
-        { '\'', VK_OEM_7 },
-        { ':', VK_OEM_PERIOD },
-        { ';', VK_OEM_COMMA },
-        { '"', VK_OEM_7 },
-        { 0x00B4, VK_OEM_4 }, /* 0x00B4 is ACUTE ACCENT */
-        { '\'', VK_OEM_2 },
-        { 0x00A7, VK_OEM_5 }, /* 0x00A7 is SECTION SIGN */
-        { '*', VK_OEM_PLUS },
-        { 0x00B4, VK_OEM_7 },
-        { '`', VK_OEM_4 },
-        { '[', VK_OEM_6 },
-        { '/', VK_OEM_5 },
-        { '^', VK_OEM_6 },
-        { '*', VK_OEM_2 },
-        { '{', VK_OEM_6 },
-        { 0x00B4, VK_OEM_6 },
-        { '~', VK_OEM_1 },
-        { '?', VK_OEM_PLUS },
-        { '?', VK_OEM_4 },
-        { 0x00B4, VK_OEM_3 },
-        { '?', VK_OEM_COMMA },
-        { '~', VK_OEM_PLUS },
-        { ']', VK_OEM_4 },
-        { '\'', VK_OEM_3 },
-        { 0x00A7, VK_OEM_7 },
-        { '<', VK_OEM_102 },
+        { '-', VK_OEM_MINUS, -1 },
+        { '+', VK_OEM_PLUS, -1 },
+        { '_', VK_OEM_MINUS, -1 },
+        { ',', VK_OEM_COMMA, -1 },
+        { '.', VK_OEM_PERIOD, -1 },
+        { '=', VK_OEM_PLUS, -1 },
+        { '>', VK_OEM_PERIOD, -1 },
+        { '<', VK_OEM_COMMA, -1 },
+        { '|', VK_OEM_5, -1 },
+        { '\\', VK_OEM_5, -1 },
+        { '`', VK_OEM_3, -1 },
+        { '[', VK_OEM_4, -1 },
+        { '~', VK_OEM_3, -1 },
+        { 0x00DF, VK_OEM_4, -1 }, /* 0x00DF is ESZETT */
+        { 0x00FC, VK_OEM_1, -1 }, /* 0x00FC is German U Umlaut */
+        { 0x00F6, VK_OEM_3, -1 }, /* 0x00F6 is German O Umlaut */
+        { 0x00E4, VK_OEM_7, -1 }, /* 0x00B4 is German A Umlaut */
+        { '?', VK_OEM_2, -1 },
+        { ']', VK_OEM_6, -1 },
+        { '/', VK_OEM_2, -1 },
+        { ':', VK_OEM_1, -1 },
+        { '}', VK_OEM_6, -1 },
+        { '{', VK_OEM_4,  },
+        { ';', VK_OEM_1, -1 },
+        { '\'', VK_OEM_7, -1 },
+        { ':', VK_OEM_PERIOD, -1 },
+        { ';', VK_OEM_COMMA, -1 },
+        { '"', VK_OEM_7,  -1 },
+        { 0x00B4, VK_OEM_4, -1 }, /* 0x00B4 is ACUTE ACCENT */
+        { '\'', VK_OEM_2, -1 },
+        { 0x00A7, VK_OEM_5, -1 }, /* 0x00A7 is SECTION SIGN */
+        { '*', VK_OEM_PLUS, -1 },
+        { 0x00B4, VK_OEM_7, -1 },
+        { '`', VK_OEM_4, -1 },
+        { '[', VK_OEM_6, -1 },
+        { '/', VK_OEM_5, -1 },
+        { '^', VK_OEM_6, -1 },
+        { '*', VK_OEM_2, -1 },
+        { '{', VK_OEM_6, -1 },
+        { 0x00B4, VK_OEM_6, -1 },
+        { '~', VK_OEM_1, -1 },
+        { '?', VK_OEM_PLUS, -1 },
+        { '?', VK_OEM_4, -1 },
+        { 0x00B4, VK_OEM_3, -1 },
+        { '?', VK_OEM_COMMA, -1 },
+        { '~', VK_OEM_PLUS, -1 },
+        { ']', VK_OEM_4, -1 },
+        { '\'', VK_OEM_3, -1 },
+        { 0x00A7, VK_OEM_7, -1 },
+        { '<', VK_OEM_102, -1 },
     };
     int i;
 
@@ -914,6 +919,8 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
             {
                 if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
                 if (thread_data->keyc2vkey[keyc] || !map[keyc][combo][0])
+                    continue;
+                if (symbol_vkeys[i].mac_keyc != -1 && symbol_vkeys[i].mac_keyc != keyc)
                     continue;
 
                 if (char_matches_string(symbol_vkeys[i].wchar, map[keyc][combo], collatorRef))
