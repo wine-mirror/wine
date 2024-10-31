@@ -7366,7 +7366,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
-                shader_addline(buffer, "%s = clamp(outputs[%u].%c, 0.0, 1.0);\n",
+                shader_addline(buffer, "%s = outputs[%u].%c;\n",
                         legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord",
                         output->register_idx, reg_mask[1]);
             }
