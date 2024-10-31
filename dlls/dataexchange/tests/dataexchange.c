@@ -126,7 +126,140 @@ static void test_ICoreDragDropManagerStatics(void)
     RoUninitialize();
 }
 
+struct target_requested_handler
+{
+    ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs
+    ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs_iface;
+};
+
+static HRESULT WINAPI target_requested_handler_QueryInterface(ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs *iface,
+                                                              REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown)
+        || IsEqualGUID(iid, &IID_IAgileObject)
+        || IsEqualGUID(iid, &IID_ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs))
+    {
+        IUnknown_AddRef( iface );
+        *out = iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI target_requested_handler_AddRef(ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI target_requested_handler_Release(ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI target_requested_handler_Invoke(ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs *iface,
+                                                      ICoreDragDropManager *sender, ICoreDropOperationTargetRequestedEventArgs *args)
+{
+    ok(0, "Unexpected call.\n");
+    return S_OK;
+}
+
+static const ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgsVtbl target_requested_handler_vtbl =
+{
+    target_requested_handler_QueryInterface,
+    target_requested_handler_AddRef,
+    target_requested_handler_Release,
+    target_requested_handler_Invoke,
+};
+
+static struct target_requested_handler target_requested_handler_added = {{&target_requested_handler_vtbl}};
+
+static void test_ICoreDragDropManager(void)
+{
+    static const WCHAR *class_name = L"Windows.ApplicationModel.DataTransfer.DragDrop.Core.CoreDragDropManager";
+    ICoreDragDropManagerStatics *statics = NULL;
+    ICoreDragDropManager *manager = NULL;
+    IActivationFactory *factory = NULL;
+    IDragDropManagerInterop *interop;
+    EventRegistrationToken token;
+    boolean enabled;
+    HSTRING str;
+    HRESULT hr;
+    HWND hwnd;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+    WindowsDeleteString(str);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+        RoUninitialize();
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_ICoreDragDropManagerStatics, (void **)&statics);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ICoreDragDropManagerStatics_QueryInterface(statics, &IID_IDragDropManagerInterop, (void **)&interop);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hwnd = CreateWindowA("static", "test", WS_POPUP | WS_VISIBLE, 0, 0, 10, 10, 0, 0, 0, NULL);
+    ok(!!hwnd, "Failed to create a test window, error %lu.\n", GetLastError());
+
+    hr = IDragDropManagerInterop_GetForWindow(interop, hwnd, &IID_ICoreDragDropManager, (void **)&manager);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    token.value = 0;
+    hr = ICoreDragDropManager_add_TargetRequested(manager, &target_requested_handler_added.ITypedEventHandler_CoreDragDropManager_CoreDropOperationTargetRequestedEventArgs_iface,
+                                                  &token);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(token.value != 0, "Got unexpected hr %#lx.\n", hr);
+
+    token.value++;
+    hr = ICoreDragDropManager_remove_TargetRequested(manager, token);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    token.value--;
+
+    hr = ICoreDragDropManager_remove_TargetRequested(manager, token);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    enabled = TRUE;
+    hr = ICoreDragDropManager_get_AreConcurrentOperationsEnabled(manager, &enabled);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(enabled == FALSE, "Got unexpected state.\n");
+
+    enabled = TRUE;
+    hr = ICoreDragDropManager_put_AreConcurrentOperationsEnabled(manager, enabled);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ICoreDragDropManager_get_AreConcurrentOperationsEnabled(manager, &enabled);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(enabled == TRUE, "Got unexpected state.\n");
+
+    ICoreDragDropManager_Release(manager);
+    DestroyWindow(hwnd);
+    IDragDropManagerInterop_Release(interop);
+    ICoreDragDropManagerStatics_Release(statics);
+    IActivationFactory_Release(factory);
+    RoUninitialize();
+}
+
 START_TEST(dataexchange)
 {
     test_ICoreDragDropManagerStatics();
+    test_ICoreDragDropManager();
 }
