@@ -21982,6 +21982,7 @@ wine_fn_config_makefile dlls/d3dx9_43 enable_d3dx9_43
 wine_fn_config_makefile dlls/d3dxof enable_d3dxof
 wine_fn_config_makefile dlls/d3dxof/tests enable_tests
 wine_fn_config_makefile dlls/dataexchange enable_dataexchange
+wine_fn_config_makefile dlls/dataexchange/tests enable_tests
 wine_fn_config_makefile dlls/davclnt enable_davclnt
 wine_fn_config_makefile dlls/dbgeng enable_dbgeng
 wine_fn_config_makefile dlls/dbgeng/tests enable_tests
