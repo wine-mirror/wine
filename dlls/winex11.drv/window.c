@@ -2320,7 +2320,12 @@ void set_window_parent( struct x11drv_win_data *data, Window parent )
     if (!data->whole_window) return; /* only keep track of parent if we have a toplevel */
     TRACE( "window %p/%lx, parent %lx\n", data->hwnd, data->whole_window, parent );
     host_window_reparent( &data->parent, parent, data->whole_window );
-    if (data->parent) host_window_configure_child( data->parent, data->whole_window, data->rects.visible, TRUE );
+    if (data->parent)
+    {
+        RECT rect = data->rects.visible;
+        OffsetRect( &rect, -rect.left, -rect.top );
+        host_window_configure_child( data->parent, data->whole_window, rect, TRUE );
+    }
     data->parent_invalid = 0;
 }
 
