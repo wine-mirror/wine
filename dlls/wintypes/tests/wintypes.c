@@ -28,7 +28,9 @@
 #include "rometadataresolution.h"
 
 #define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
 #define WIDL_using_Windows_Foundation_Metadata
+#include "windows.foundation.h"
 #include "windows.foundation.metadata.h"
 #include "wintypes_test.h"
 
@@ -1250,6 +1252,109 @@ static void test_RoParseTypeName(void)
     }
 }
 
+static void test_IPropertySet(void)
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_Foundation_Collections_PropertySet;
+    IActivationFactory *propset_factory;
+    IInspectable *inspectable;
+    IPropertySet *propset;
+    IMap_HSTRING_IInspectable *map;
+    IMapView_HSTRING_IInspectable *map_view;
+    IObservableMap_HSTRING_IInspectable *observable_map;
+    IIterable_IKeyValuePair_HSTRING_IInspectable *iterable;
+    IIterator_IKeyValuePair_HSTRING_IInspectable *iterator;
+    HRESULT hr;
+    HSTRING name;
+
+    hr = RoInitialize( RO_INIT_MULTITHREADED );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WindowsCreateString( class_name, wcslen( class_name ), &name );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    hr = RoGetActivationFactory( name, &IID_IActivationFactory, (void **)&propset_factory );
+    WindowsDeleteString( name );
+    todo_wine
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "RoGetActivationFactory failed, hr %#lx.\n", hr );
+    if (hr != S_OK)
+    {
+        todo_wine
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        goto done;
+    }
+
+    hr = IActivationFactory_ActivateInstance( propset_factory, &inspectable );
+    IActivationFactory_Release( propset_factory );
+    todo_wine
+    ok( hr == S_OK, "got %#lx\n", hr );
+    if (FAILED( hr ))
+    {
+        skip("could not activate PropertySet instance.\n");
+        goto done;
+    }
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IPropertySet, (void **)&propset );
+    IInspectable_Release( inspectable );
+    todo_wine
+    ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+    if (FAILED( hr ))
+        goto done;
+
+    hr = IPropertySet_QueryInterface( propset, &IID_IObservableMap_HSTRING_IInspectable, (void **)&observable_map );
+    todo_wine
+    ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+    if (SUCCEEDED( hr ))
+        IObservableMap_HSTRING_IInspectable_Release( observable_map );
+
+    hr = IPropertySet_QueryInterface( propset, &IID_IMap_HSTRING_IInspectable, (void **)&map );
+    IPropertySet_Release( propset );
+    todo_wine
+    ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+    if (FAILED( hr ))
+        goto done;
+
+    hr = IMap_HSTRING_IInspectable_QueryInterface( map, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
+                                                   (void **)&iterable );
+    todo_wine
+    ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+    if (SUCCEEDED( hr ))
+    {
+        hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
+        todo_wine
+        ok( hr == S_OK, "got %#lx\n", hr );
+        if (SUCCEEDED( hr ))
+            IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
+        IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
+    }
+    else
+    {
+        skip( "Could not obtain IIterable<IKeyValuePair<HSTRING, IInspectable *>> instance.\n");
+    }
+
+    hr = IMap_HSTRING_IInspectable_GetView( map, &map_view );
+    todo_wine
+    ok( hr == S_OK, "GetView failed, got %#lx\n", hr );
+    if (SUCCEEDED( hr ))
+    {
+        hr = IMapView_HSTRING_IInspectable_QueryInterface( map_view, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
+                                                           (void **)&iterable );
+        todo_wine
+        ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+        if (SUCCEEDED( hr ))
+        {
+            hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
+            todo_wine
+            ok( hr == S_OK, "got %#lx\n", hr );
+            if (SUCCEEDED( hr ))
+                IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
+            IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
+        }
+        IMapView_HSTRING_IInspectable_Release( map_view );
+    }
+    IMap_HSTRING_IInspectable_Release( map );
+done:
+    RoUninitialize();
+}
+
 START_TEST(wintypes)
 {
     IsWow64Process(GetCurrentProcess(), &is_wow64);
@@ -1260,4 +1365,5 @@ START_TEST(wintypes)
     test_IPropertyValueStatics();
     test_RoParseTypeName();
     test_RoResolveNamespace();
+    test_IPropertySet();
 }
