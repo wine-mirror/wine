@@ -30,6 +30,8 @@ import "windows.foundation.collections.idl";
 namespace Windows.Foundation.Collections {
     interface IPropertySet;
 
+    runtimeclass PropertySet;
+
     declare {
         interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, HSTRING>;
         interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *>;
@@ -55,6 +57,20 @@ namespace Windows.Foundation.Collections {
                  Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>,
                  Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>
     {
+    }
+
+    [
+        activatable(Windows.Foundation.FoundationContract, 1.0),
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass PropertySet
+    {
+        [default] interface Windows.Foundation.Collections.IPropertySet;
+        interface Windows.Foundation.Collections.IObservableMap<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>;
     }
 
     [
