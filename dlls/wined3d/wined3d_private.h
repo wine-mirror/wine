@@ -4376,8 +4376,8 @@ static inline BOOL shader_sampler_is_shadow(const struct wined3d_shader *shader,
 
 void get_identity_matrix(struct wined3d_matrix *mat);
 void get_modelview_matrix(const struct wined3d_stateblock_state *state, unsigned int index, struct wined3d_matrix *mat);
-void get_texture_matrix(const struct wined3d_stream_info *si,
-        const struct wined3d_stateblock_state *state, const unsigned int tex, struct wined3d_matrix *mat);
+void get_texture_matrix(const struct wined3d_stateblock_state *state,
+        const unsigned int tex, struct wined3d_matrix *mat);
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
         float *out_min, float *out_max);
 void get_fog_start_end(const struct wined3d_context *context, const struct wined3d_state *state,

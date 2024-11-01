@@ -3697,14 +3697,9 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     if (changed->texture_matrices)
     {
         struct wined3d_ffp_vs_constants constants;
-        struct wined3d_stream_info si;
-
-        /* FIXME: This is a bit fragile. Ideally we should be calculating
-         * stream info from the stateblock state. */
-        wined3d_stream_info_from_declaration(&si, context->state, &device->adapter->d3d_info);
 
         for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
-            get_texture_matrix(&si, state, i, &constants.texture_matrices[i]);
+            get_texture_matrix(state, i, &constants.texture_matrices[i]);
         wined3d_device_context_push_constants(context,
                 WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_TEXMATRIX,
                 offsetof(struct wined3d_ffp_vs_constants, texture_matrices),
