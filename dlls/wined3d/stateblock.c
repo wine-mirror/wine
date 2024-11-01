@@ -3560,7 +3560,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             float x_offset = (-(2.0f * x) - w) / w;
             float y_scale = 2.0f / -h;
             float y_offset = (-(2.0f * y) - h) / -h;
-            float z_scale = state->rs[WINED3D_RS_ZENABLE] ? 1.0f : 0.0f;
+            bool depth = (state->rs[WINED3D_RS_ZENABLE] && context->state->fb.depth_stencil);
+            float z_scale = depth ? 1.0f : 0.0f;
             const struct wined3d_matrix matrix =
             {
                  x_scale,     0.0f,    0.0f, 0.0f,
@@ -3925,4 +3926,18 @@ void CDECL wined3d_stateblock_texture_changed(struct wined3d_stateblock *statebl
         if (stateblock->stateblock_state.textures[i] == texture)
             stateblock->changed.textures |= (1u << i);
     }
+}
+
+void CDECL wined3d_stateblock_depth_buffer_changed(struct wined3d_stateblock *stateblock)
+{
+    struct wined3d_vertex_declaration *decl = stateblock->stateblock_state.vertex_declaration;
+
+    /* The presence of a depth buffer affects depth clipping when drawing RHW.
+     * The depth buffer is not part of the stateblock, though, so we need a
+     * separate function to invalidate it.
+     * We pass this via the projection matrix, but use
+     * changed->position_transformed to invalidate it. */
+
+    if (decl && decl->position_transformed)
+        stateblock->changed.position_transformed = 1;
 }

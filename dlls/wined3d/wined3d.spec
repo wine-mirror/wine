@@ -232,6 +232,7 @@
 @ cdecl wined3d_stateblock_capture(ptr ptr)
 @ cdecl wined3d_stateblock_create(ptr ptr long ptr)
 @ cdecl wined3d_stateblock_decref(ptr)
+@ cdecl wined3d_stateblock_depth_buffer_changed(ptr)
 @ cdecl wined3d_stateblock_get_light(ptr long ptr ptr)
 @ cdecl wined3d_stateblock_get_ps_consts_b(ptr long long ptr)
 @ cdecl wined3d_stateblock_get_ps_consts_f(ptr long long ptr)

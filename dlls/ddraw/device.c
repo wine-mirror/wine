@@ -3410,6 +3410,7 @@ static void d3d_device_sync_rendertarget(struct d3d_device *device)
     dsv = device->target_ds ? ddraw_surface_get_rendertarget_view(device->target_ds) : NULL;
     if (FAILED(wined3d_device_context_set_depth_stencil_view(device->immediate_context, dsv)))
         ERR("wined3d_device_context_set_depth_stencil_view failed.\n");
+    wined3d_stateblock_depth_buffer_changed(device->state);
 
     if (device->hardware_device)
         return;
@@ -6820,6 +6821,7 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     {
         TRACE("Setting wined3d depth stencil to NULL\n");
         wined3d_device_context_set_depth_stencil_view(device->immediate_context, NULL);
+        wined3d_stateblock_depth_buffer_changed(device->state);
         device->target_ds = NULL;
         return WINED3D_ZB_FALSE;
     }
@@ -6827,6 +6829,7 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     device->target_ds = impl_from_IDirectDrawSurface7(depthStencil);
     wined3d_device_context_set_depth_stencil_view(device->immediate_context,
             ddraw_surface_get_rendertarget_view(device->target_ds));
+    wined3d_stateblock_depth_buffer_changed(device->state);
 
     IDirectDrawSurface7_Release(depthStencil);
     return WINED3D_ZB_TRUE;

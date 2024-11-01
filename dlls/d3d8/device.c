@@ -1601,6 +1601,7 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
                 wined3d_device_context_set_depth_stencil_view(device->immediate_context, original_dsv);
         }
         d3d8_surface_release_rendertarget_view(rt_impl, rtv);
+        wined3d_stateblock_depth_buffer_changed(device->state);
     }
 
     wined3d_mutex_unlock();

@@ -2191,6 +2191,7 @@ static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surfa
 {
     struct wined3d_rendertarget_view *dsv;
     struct ddraw_surface *prev = surface;
+    struct d3d_device *device;
 
     TRACE("surface %p, attachment %p, detach_iface %p.\n", surface, attachment, detach_iface);
 
@@ -2239,7 +2240,11 @@ static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surfa
      * but don't cleanup properly after the relevant dll is unloaded. */
     dsv = wined3d_device_context_get_depth_stencil_view(surface->ddraw->immediate_context);
     if (attachment->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER && dsv == attachment->wined3d_rtv)
+    {
         wined3d_device_context_set_depth_stencil_view(surface->ddraw->immediate_context, NULL);
+        LIST_FOR_EACH_ENTRY(device, &surface->ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
+            wined3d_stateblock_depth_buffer_changed(device->state);
+    }
     wined3d_mutex_unlock();
 
     /* Set attached_iface to NULL before releasing it, the surface may go

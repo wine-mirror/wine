@@ -2200,6 +2200,7 @@ static HRESULT WINAPI d3d9_device_SetDepthStencilSurface(IDirect3DDevice9Ex *ifa
     wined3d_mutex_lock();
     rtv = ds_impl ? d3d9_surface_acquire_rendertarget_view(ds_impl) : NULL;
     hr = wined3d_device_context_set_depth_stencil_view(device->immediate_context, rtv);
+    wined3d_stateblock_depth_buffer_changed(device->state);
     d3d9_surface_release_rendertarget_view(ds_impl, rtv);
     wined3d_mutex_unlock();
 
