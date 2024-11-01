@@ -3902,7 +3902,7 @@ typedef struct _CMSG_CMS_RECIPIENT_INFO {
 #define CMSG_KEY_AGREE_VERSION          CMSG_ENVELOPED_RECIPIENT_V3
 #define CMSG_MAIL_LIST_VERSION          CMSG_ENVELOPED_RECIPIENT_V4
 
-typedef void * (WINAPI *PFN_CMSG_ALLOC)(size_t cb);
+typedef void * (__WINE_ALLOC_SIZE(1) WINAPI *PFN_CMSG_ALLOC)(size_t cb);
 typedef void   (WINAPI *PFN_CMSG_FREE)(void *pv);
 
 typedef struct _CMSG_CONTENT_ENCRYPT_INFO {
