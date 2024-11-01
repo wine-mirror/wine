@@ -5608,38 +5608,43 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
 
     mat = *matrix;
 
-    /* Under Direct3D the R/Z coord can be used for translation, under
-     * OpenGL we use the Q coord instead. */
+    /* When less than 4 components are provided for an attribute, the remaining
+     * components are filled with (..., 0, 0, 1). This is the case when using
+     * shaders in Direct3D as well as in GL and Vulkan.
+     *
+     * However, when using the Direct3D fixed function vertex pipeline, the
+     * texture coordinates transformed by texture matrices effectively have
+     * 1 in the first "default" component and 0 in the others (e.g. for
+     * R32_FLOAT the coordinates are (..., 1, 0, 0).
+     *
+     * We could approximate this by modifying the shader, but modifying uniforms
+     * is generally cheaper, so instead we change the matrix, copying the 2nd or
+     * 3rd column to the 4th. That is, whichever coefficients expect a value of
+     * 1 will instead be used as the coefficients for the 4th column, which
+     * actually has a value of 1. The coefficients for other columns don't need
+     * to be modified, since the corresponding texcoord components are zero. */
+
     if (!(flags & WINED3D_TTFF_PROJECTED) && !calculated_coords)
     {
         switch (format_id)
         {
-            /* Direct3D passes the default 1.0 in the 2nd coord, while GL
-             * passes it in the 4th. Swap 2nd and 4th coord. No need to
-             * store the value of mat._41 in mat._21 because the input
-             * value to the transformation will be 0, so the matrix value
-             * is irrelevant. */
             case WINED3DFMT_R32_FLOAT:
                 mat._41 = mat._21;
                 mat._42 = mat._22;
                 mat._43 = mat._23;
                 mat._44 = mat._24;
                 break;
-            /* See above, just 3rd and 4th coord. */
+
             case WINED3DFMT_R32G32_FLOAT:
                 mat._41 = mat._31;
                 mat._42 = mat._32;
                 mat._43 = mat._33;
                 mat._44 = mat._34;
                 break;
-            case WINED3DFMT_R32G32B32_FLOAT: /* Opengl defaults match dx defaults */
-            case WINED3DFMT_R32G32B32A32_FLOAT: /* No defaults apply, all app defined */
 
-            /* This is to prevent swapping the matrix lines and put the default 4th coord = 1.0
-             * into a bad place. The division elimination below will apply to make sure the
-             * 1.0 doesn't do anything bad. The caller will set this value if the stride is 0
-             */
-            case WINED3DFMT_UNKNOWN: /* No texture coords, 0/0/0/1 defaults are passed */
+            case WINED3DFMT_R32G32B32_FLOAT:
+            case WINED3DFMT_R32G32B32A32_FLOAT:
+            case WINED3DFMT_UNKNOWN:
                 break;
             default:
                 FIXME("Unexpected fixed function texture coord input\n");
