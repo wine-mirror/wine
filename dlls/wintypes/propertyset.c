@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL( wintypes );
 struct propertyset
 {
     IPropertySet IPropertySet_iface;
+    IObservableMap_HSTRING_IInspectable IObservableMap_HSTRING_IInspectable_iface;
     LONG ref;
 };
 
@@ -39,6 +40,8 @@ static inline struct propertyset *impl_from_IPropertySet( IPropertySet *iface )
 
 static HRESULT STDMETHODCALLTYPE propertyset_QueryInterface( IPropertySet *iface, REFIID iid, void **out )
 {
+    struct propertyset *impl = impl_from_IPropertySet( iface );
+
     TRACE( "(%p, %s, %p)\n", iface, debugstr_guid( iid ), out );
 
     *out = NULL;
@@ -47,6 +50,12 @@ static HRESULT STDMETHODCALLTYPE propertyset_QueryInterface( IPropertySet *iface
         IsEqualGUID( iid, &IID_IPropertySet ))
     {
         *out = iface;
+        IUnknown_AddRef( (IUnknown *)*out );
+        return S_OK;
+    }
+    else if (IsEqualGUID( iid, &IID_IObservableMap_HSTRING_IInspectable ))
+    {
+        *out = &impl->IObservableMap_HSTRING_IInspectable_iface;
         IUnknown_AddRef( (IUnknown *)*out );
         return S_OK;
     }
@@ -105,6 +114,37 @@ static const IPropertySetVtbl propertyset_vtbl =
     propertyset_GetIids,
     propertyset_GetRuntimeClassName,
     propertyset_GetTrustLevel,
+};
+
+DEFINE_IINSPECTABLE( propertyset_IObservableMap, IObservableMap_HSTRING_IInspectable, struct propertyset, IPropertySet_iface );
+
+static HRESULT STDMETHODCALLTYPE propertyset_IObservableMap_add_MapChanged( IObservableMap_HSTRING_IInspectable *iface,
+                                                                            IMapChangedEventHandler_HSTRING_IInspectable *handler,
+                                                                            EventRegistrationToken *token )
+{
+    FIXME( "(%p, %p, %p) stub!\n", iface, handler, token );
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE propertyset_IObservableMap_remove_MapChanged( IObservableMap_HSTRING_IInspectable *iface, EventRegistrationToken token )
+{
+    FIXME( "(%p, %I64d) stub!\n", iface, token.value );
+    return E_NOTIMPL;
+}
+
+const static IObservableMap_HSTRING_IInspectableVtbl propertyset_IObservableMap_vtbl =
+{
+    /* IUnknown */
+    propertyset_IObservableMap_QueryInterface,
+    propertyset_IObservableMap_AddRef,
+    propertyset_IObservableMap_Release,
+    /* IInspectable */
+    propertyset_IObservableMap_GetIids,
+    propertyset_IObservableMap_GetRuntimeClassName,
+    propertyset_IObservableMap_GetTrustLevel,
+    /* IObservableMap<HSTRING, IInspectable*> */
+    propertyset_IObservableMap_add_MapChanged,
+    propertyset_IObservableMap_remove_MapChanged,
 };
 
 struct propertyset_factory
@@ -179,6 +219,7 @@ static HRESULT STDMETHODCALLTYPE factory_ActivateInstance( IActivationFactory *i
         return E_OUTOFMEMORY;
 
     impl->IPropertySet_iface.lpVtbl = &propertyset_vtbl;
+    impl->IObservableMap_HSTRING_IInspectable_iface.lpVtbl = &propertyset_IObservableMap_vtbl;
     impl->ref = 1;
     *instance = (IInspectable *)&impl->IPropertySet_iface;
     return S_OK;
