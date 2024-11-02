@@ -30,6 +30,7 @@
 #include "rometadataresolution.h"
 
 #define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
 #define WIDL_using_Windows_Foundation_Metadata
 #include "windows.foundation.metadata.h"
 #define WIDL_using_Windows_Storage
@@ -40,3 +41,4 @@
 
 extern IActivationFactory *data_writer_activation_factory;
 extern IActivationFactory *buffer_activation_factory;
+extern IActivationFactory *property_set_factory;
