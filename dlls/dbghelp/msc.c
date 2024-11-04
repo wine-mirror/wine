@@ -61,8 +61,7 @@ enum pdb_kind {PDB_JG, PDB_DS};
 struct pdb_file_info
 {
     enum pdb_kind               kind;
-    HANDLE                      file_handle;
-    HANDLE                      hMap;
+    struct pdb_reader          *pdb_reader; /* new pdb reader */
     const char*                 image;
     struct pdb_stream_name*     stream_dict;
     unsigned                    fpoext_stream;
@@ -97,13 +96,13 @@ struct cv_module_snarf
     const PDB_STRING_TABLE*                     strimage;
 };
 
-BOOL pdb_hack_get_main_info(struct module_format *modfmt, HANDLE *file, unsigned *fpoext_stream)
+BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream)
 {
     struct pdb_module_info*     pdb_info;
 
     if (!modfmt) return FALSE;
     pdb_info = modfmt->u.pdb_info;
-    *file = pdb_info->pdb_files[0].file_handle;
+    *pdb = pdb_info->pdb_files[0].pdb_reader;
     if (fpoext_stream)
         *fpoext_stream = pdb_info->pdb_files[0].fpoext_stream;
     return TRUE;
@@ -3174,7 +3173,7 @@ static void pdb_free(void* buffer)
     HeapFree(GetProcessHeap(), 0, buffer);
 }
 
-static void pdb_free_file(struct pdb_file_info* pdb_file)
+static void pdb_free_file(struct pdb_file_info* pdb_file, BOOL unmap)
 {
     switch (pdb_file->kind)
     {
@@ -3188,6 +3187,12 @@ static void pdb_free_file(struct pdb_file_info* pdb_file)
         break;
     }
     HeapFree(GetProcessHeap(), 0, pdb_file->stream_dict);
+    pdb_file->stream_dict = NULL;
+    if (unmap)
+    {
+        UnmapViewOfFile(pdb_file->image);
+        pdb_file->image = NULL;
+    }
 }
 
 static struct pdb_stream_name* pdb_load_stream_name_table(const char* str, unsigned cb)
@@ -3267,13 +3272,11 @@ static void pdb_module_remove(struct process* pcsn, struct module_format* modfmt
 
     for (i = 0; i < modfmt->u.pdb_info->used_subfiles; i++)
     {
-        pdb_free_file(&modfmt->u.pdb_info->pdb_files[i]);
+        pdb_free_file(&modfmt->u.pdb_info->pdb_files[i], TRUE);
         if (modfmt->u.pdb_info->pdb_files[i].image)
             UnmapViewOfFile(modfmt->u.pdb_info->pdb_files[i].image);
-        if (modfmt->u.pdb_info->pdb_files[i].hMap)
-            CloseHandle(modfmt->u.pdb_info->pdb_files[i].hMap);
-        if (modfmt->u.pdb_info->pdb_files[i].file_handle)
-            CloseHandle(modfmt->u.pdb_info->pdb_files[i].file_handle);
+        if (modfmt->u.pdb_info->pdb_files[i].pdb_reader)
+            pdb_reader_dispose(modfmt->u.pdb_info->pdb_files[i].pdb_reader);
     }
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
@@ -3800,22 +3803,26 @@ static BOOL pdb_process_internal(const struct process *pcs,
         return FALSE;
     }
 
+    CloseHandle(hMap);
+    /* old pdb reader */
     if (!pdb_init(pdb_file, image))
     {
         CloseHandle(hFile);
-        CloseHandle(hMap);
         UnmapViewOfFile(image);
         return FALSE;
     }
     if (getenv("WINE_DBGHELP_OLD_PDB")) /* keep using old pdb reader */
     {
-        pdb_file->file_handle = NULL;
+        pdb_file->pdb_reader = NULL;
         CloseHandle(hFile);
     }
-    else
-        pdb_file->file_handle = hFile;
+    else if (!(pdb_file->pdb_reader = pdb_hack_reader_init(msc_dbg->module, hFile)))
+    {
+        CloseHandle(hFile);
+        UnmapViewOfFile(image);
+        return FALSE;
+    }
 
-    pdb_file->hMap = hMap;
     pdb_file->image = image;
     symbols_image = pdb_read_stream(pdb_file, 3);
     if (symbols_image)
@@ -3959,6 +3966,8 @@ static BOOL pdb_process_internal(const struct process *pcs,
 
     pdb_free(symbols_image);
     pdb_free(files_image);
+
+    pdb_free_file(pdb_file, pdb_file->pdb_reader != NULL);
 
     return TRUE;
 }

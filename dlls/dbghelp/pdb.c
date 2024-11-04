@@ -67,8 +67,10 @@ typedef enum pdb_result (*pdb_reader_fetch_t)(struct pdb_reader *pdb, void *buff
 
 struct pdb_reader
 {
+    struct module *module;
     HANDLE file;
-    HANDLE heap;
+    /* using ad hoc pool (not the module one), so that we can measure memory of each PDB reader during transition */
+    struct pool pool;
 
     /* header */
     unsigned block_size;
@@ -108,12 +110,12 @@ static const char       PDB_DS_IDENT[] = "Microsoft C/C++ MSF 7.00\r\n\032DS\0";
 
 static inline enum pdb_result pdb_reader_alloc(struct pdb_reader *pdb, size_t size, void **ptr)
 {
-    return (*ptr = HeapAlloc(pdb->heap, 0, size)) ? R_PDB_SUCCESS : R_PDB_OUT_OF_MEMORY;
+    return (*ptr = pool_alloc(&pdb->pool, size)) ? R_PDB_SUCCESS : R_PDB_OUT_OF_MEMORY;
 }
 
 static inline enum pdb_result pdb_reader_realloc(struct pdb_reader *pdb, void **ptr, size_t size)
 {
-    void *new = HeapReAlloc(pdb->heap, 0, *ptr, size);
+    void *new = pool_realloc(&pdb->pool, *ptr, size);
     if (!new) return R_PDB_OUT_OF_MEMORY;
     *ptr = new;
     return R_PDB_SUCCESS;
@@ -121,7 +123,7 @@ static inline enum pdb_result pdb_reader_realloc(struct pdb_reader *pdb, void **
 
 static inline void pdb_reader_free(struct pdb_reader *pdb, void *ptr)
 {
-    HeapFree(pdb->heap, 0, ptr);
+    pool_free(&pdb->pool, ptr);
 }
 
 static inline unsigned pdb_reader_num_blocks(struct pdb_reader *pdb, pdbsize_t size)
@@ -200,7 +202,7 @@ static enum pdb_result pdb_reader_read_from_stream(struct pdb_reader *pdb, const
     return R_PDB_SUCCESS;
 }
 
-static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, HANDLE file, HANDLE heap)
+static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *module, HANDLE file)
 {
     enum pdb_result result;
     struct PDB_DS_HEADER hdr;
@@ -211,8 +213,9 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, HANDLE file, HAND
     uint32_t *blocks;
 
     memset(pdb, 0, sizeof(*pdb));
+    pdb->module = module;
     pdb->file = file;
-    pdb->heap = heap;
+    pool_init(&pdb->pool, 65536);
     pdb->fetch = &pdb_reader_fetch_file;
 
     if ((result = (*pdb->fetch)(pdb, &hdr, 0, sizeof(hdr)))) return result;
@@ -261,14 +264,10 @@ failure:
     return result;
 }
 
-static void pdb_reader_dispose(struct pdb_reader *pdb)
+void pdb_reader_dispose(struct pdb_reader *pdb)
 {
-    unsigned i;
-
-    for (i = 0; i < pdb->toc->num_streams; i++)
-        pdb_reader_free(pdb, pdb->streams[i].name);
-    pdb_reader_free(pdb, pdb->streams);
-    pdb_reader_free(pdb, pdb->toc);
+    CloseHandle(pdb->file);
+    pool_destroy(&pdb->pool);
 }
 
 static enum pdb_result pdb_reader_internal_read_advance(struct pdb_reader *pdb, struct pdb_reader_walker *walker,
@@ -432,6 +431,14 @@ static enum pdb_result pdb_reader_alloc_and_fetch_global_string(struct pdb_reade
     if ((result = pdb_reader_walker_init(pdb, stream_id, &walker))) return result;
     walker.offset = sizeof(PDB_STRING_TABLE) + str_offset;
     return pdb_reader_alloc_and_fetch_string(pdb, &walker, buffer);
+}
+
+struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file)
+{
+    struct pdb_reader *pdb = pool_alloc(&module->pool, sizeof(*pdb));
+    if (pdb && pdb_reader_init(pdb, module, file) == R_PDB_SUCCESS) return pdb;
+    pool_free(&module->pool, pdb);
+    return NULL;
 }
 
 /*========================================================================
@@ -741,48 +748,44 @@ done:
 BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
                         union ctx *context, struct pdb_cmd_pair *cpair)
 {
+    struct pdb_reader          *pdb;
     struct pdb_reader_walker    walker;
-    struct pdb_reader           pdb;
     struct module_pair          pair;
-    HANDLE                      file_handle;
     unsigned                    fpoext_stream;
     PDB_FPO_DATA                fpoext;
     BOOL                        ret = FALSE;
 
     if (!module_init_pair(&pair, csw->hProcess, ip)) return FALSE;
-    if (!pdb_hack_get_main_info(pair.effective->format_info[DFI_PDB], &file_handle, &fpoext_stream)) return FALSE;
+    if (!pdb_hack_get_main_info(pair.effective->format_info[DFI_PDB], &pdb, &fpoext_stream)) return FALSE;
 
-    if (!file_handle)
+    if (!pdb)
         return pdb_old_virtual_unwind(csw, ip, context, cpair);
     TRACE("searching %Ix => %Ix\n", ip, ip - (DWORD_PTR)pair.effective->module.BaseOfImage);
     ip -= (DWORD_PTR)pair.effective->module.BaseOfImage;
 
-    if (pdb_reader_init(&pdb, file_handle, pair.effective->pool.heap))
-        return FALSE;
-
-    if (!pdb_reader_walker_init(&pdb, fpoext_stream, &walker) &&
+    if (!pdb_reader_walker_init(pdb, fpoext_stream, &walker) &&
         (walker.last % sizeof(fpoext)) == 0)
     {
         /* FIXME likely a binary search should be more appropriate here */
-        while (pdb_reader_READ(&pdb, &walker, &fpoext) == R_PDB_SUCCESS)
+        while (pdb_reader_READ(pdb, &walker, &fpoext) == R_PDB_SUCCESS)
         {
             if (fpoext.start <= ip && ip < fpoext.start + fpoext.func_size)
             {
                 char *cmd;
 
-                if (pdb_reader_alloc_and_fetch_global_string(&pdb, fpoext.str_offset, &cmd)) break;
+                if (pdb_reader_alloc_and_fetch_global_string(pdb, fpoext.str_offset, &cmd)) break;
                 TRACE("\t%08x %08x %8x %8x %4x %4x %4x %08x %s\n",
                       fpoext.start, fpoext.func_size, fpoext.locals_size,
                       fpoext.params_size, fpoext.maxstack_size, fpoext.prolog_size,
                       fpoext.savedregs_size, fpoext.flags,
                       debugstr_a(cmd));
+
                 ret = pdb_fpo_unwind_parse_cmd_string(csw, &fpoext, cmd, cpair);
-                pdb_reader_free(&pdb, cmd);
+                pdb_reader_free(pdb, cmd);
                 break;
             }
         }
     }
-    pdb_reader_dispose(&pdb);
 
     return ret;
 }

@@ -992,4 +992,7 @@ extern BOOL pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, struct _
                                             const char* cmd, struct pdb_cmd_pair* cpair);
 extern BOOL pdb_old_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
                                    union ctx *context, struct pdb_cmd_pair *cpair);
-extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, HANDLE *file, unsigned *fpoext_stream);
+struct pdb_reader;
+extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream);
+extern void pdb_reader_dispose(struct pdb_reader *pdb);
+extern struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file);
