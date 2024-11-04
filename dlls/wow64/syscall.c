@@ -684,7 +684,7 @@ NTSTATUS WINAPI wow64_NtWow64IsProcessorFeaturePresent( UINT *args )
  */
 NTSTATUS WINAPI wow64_NtWow64QueryInformationProcess64( UINT *args )
 {
-    HANDLE handle = get_ptr( &args );
+    HANDLE handle = get_handle( &args );
     PROCESSINFOCLASS class = get_ulong( &args );
     void *info = get_ptr( &args );
     ULONG size = get_ulong( &args );
