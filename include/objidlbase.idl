@@ -95,6 +95,26 @@ interface IAgileObject : IUnknown
 [
     local,
     object,
+    uuid(c03f6a43-65a4-9818-987e-e0b810d2a6f2),
+    pointer_default(unique)
+]
+interface IAgileReference : IUnknown
+{
+    HRESULT Resolve([in] REFIID riid, [out, retval, iid_is(riid)] void **object);
+}
+
+[
+    local,
+    object,
+    uuid(ecc8691b-c1db-4dc0-855e-65f6c551af49)
+]
+interface INoMarshal : IUnknown
+{
+}
+
+[
+    local,
+    object,
     uuid(000001cf-0000-0000-C000-000000000046)
 ]
 interface IMarshal2 : IMarshal
