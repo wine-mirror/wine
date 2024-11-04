@@ -680,27 +680,6 @@ NTSTATUS WINAPI wow64_NtWow64IsProcessorFeaturePresent( UINT *args )
 
 
 /**********************************************************************
- *           wow64_NtWow64QueryInformationProcess64
- */
-NTSTATUS WINAPI wow64_NtWow64QueryInformationProcess64( UINT *args )
-{
-    HANDLE handle = get_handle( &args );
-    PROCESSINFOCLASS class = get_ulong( &args );
-    void *info = get_ptr( &args );
-    ULONG size = get_ulong( &args );
-    ULONG *ret_len = get_ptr( &args );
-
-    switch (class)
-    {
-    case ProcessBasicInformation:
-        return NtQueryInformationProcess( handle, class, info, size, ret_len );
-    default:
-        return STATUS_NOT_IMPLEMENTED;
-    }
-}
-
-
-/**********************************************************************
  *           init_image_mapping
  */
 void init_image_mapping( HMODULE module )
