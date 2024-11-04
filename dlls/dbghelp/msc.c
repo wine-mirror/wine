@@ -1585,7 +1585,7 @@ static BOOL codeview_parse_type_table(struct codeview_type_parse* ctp)
 static ULONG_PTR codeview_get_address(const struct msc_debug_info* msc_dbg,
                                           unsigned seg, unsigned offset);
 
-static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const BYTE* linetab,
+static BOOL codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const BYTE* linetab,
                                    int size, BOOL pascal_str)
 {
     const BYTE*                 ptr = linetab;
@@ -1603,6 +1603,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
     const struct codeview_linetab_block* ltb;
 
     nfile = *(const short*)linetab;
+    if (!nfile) return FALSE;
     filetab = (const unsigned int*)(linetab + 2 * sizeof(short));
 
     for (i = 0; i < nfile; i++)
@@ -1650,11 +1651,12 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
             }
 	}
     }
+    return TRUE;
 }
 
 static const char* pdb_get_string_table_entry(const PDB_STRING_TABLE* table, unsigned offset);
 
-static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const struct cv_module_snarf* cvmod)
+static BOOL codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const struct cv_module_snarf* cvmod)
 {
     unsigned    i;
     const void* hdr_last = (const char*)cvmod->dbgsubsect + cvmod->dbgsubsect_size;
@@ -1680,7 +1682,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
     if (!hdr_files)
     {
         TRACE("No DEBUG_S_FILECHKSMS found\n");
-        return;
+        return FALSE;
     }
 
     for (hdr = cvmod->dbgsubsect; CV_IS_INSIDE(hdr, hdr_last); hdr = hdr_next)
@@ -1730,6 +1732,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
         }
         hdr = hdr_next;
     }
+    return TRUE;
 }
 
 /*========================================================================
@@ -2837,7 +2840,6 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             break;
         }
     }
-    if (cvmod) codeview_snarf_linetab2(msc_dbg, cvmod);
     return TRUE;
 }
 
@@ -3595,7 +3597,8 @@ static BOOL pdb_process_internal(const struct process *pcs,
                                  const struct msc_debug_info *msc_dbg,
                                  const WCHAR *filename,
                                  struct pdb_module_info *pdb_module_info,
-                                 unsigned module_index);
+                                 unsigned module_index,
+                                 BOOL *has_linenumber_info);
 
 DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
 {
@@ -3730,6 +3733,7 @@ static void pdb_process_symbol_imports(const struct process *pcs,
         while (imp < (const PDB_SYMBOL_IMPORT*)last)
         {
             SYMSRV_INDEX_INFOW info;
+            BOOL line_info;
 
             ptr = (const char*)imp + sizeof(*imp) + strlen(imp->filename);
             if (i >= CV_MAX_MODULES) FIXME("Out of bounds!!!\n");
@@ -3737,7 +3741,7 @@ static void pdb_process_symbol_imports(const struct process *pcs,
                   debugstr_a(imp->filename), imp->Age, imp->TimeDateStamp);
             if (path_find_symbol_file(pcs, msc_dbg->module, imp->filename, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
                                       &msc_dbg->module->module.PdbUnmatched))
-                pdb_process_internal(pcs, msc_dbg, info.pdbfile, pdb_module_info, i);
+                pdb_process_internal(pcs, msc_dbg, info.pdbfile, pdb_module_info, i, &line_info);
             i++;
             imp = (const PDB_SYMBOL_IMPORT*)((const char*)first + ((ptr - (const char*)first + strlen(ptr) + 1 + 3) & ~3));
         }
@@ -3757,7 +3761,8 @@ static BOOL pdb_process_internal(const struct process *pcs,
                                  const struct msc_debug_info *msc_dbg,
                                  const WCHAR *filename,
                                  struct pdb_module_info *pdb_module_info,
-                                 unsigned module_index)
+                                 unsigned module_index,
+                                 BOOL *has_linenumber_info)
 {
     HANDLE                      hFile = NULL, hMap = NULL;
     char*                       image = NULL;
@@ -3766,6 +3771,8 @@ static BOOL pdb_process_internal(const struct process *pcs,
     struct pdb_file_info*       pdb_file;
 
     TRACE("Processing PDB file %ls\n", filename);
+
+    *has_linenumber_info = FALSE;
 
     pdb_file = &pdb_module_info->pdb_files[module_index == -1 ? 0 : module_index];
     /* Open and map() .PDB file */
@@ -3845,9 +3852,10 @@ static BOOL pdb_process_internal(const struct process *pcs,
             data = pdb_read_stream(pdb_file, symbols.global_hash_stream);
             if (data)
             {
-                codeview_snarf_sym_hashtable(msc_dbg, globalimage, global_size,
-                                             data, pdb_get_stream_size(pdb_file, symbols.global_hash_stream),
-                                             pdb_global_feed_types);
+                if (codeview_snarf_sym_hashtable(msc_dbg, globalimage, global_size,
+                                                 data, pdb_get_stream_size(pdb_file, symbols.global_hash_stream),
+                                                 pdb_global_feed_types))
+                    *has_linenumber_info = TRUE;
                 pdb_free((void*)data);
             }
         }
@@ -3874,11 +3882,18 @@ static BOOL pdb_process_internal(const struct process *pcs,
                 if (sfile.lineno_size && sfile.lineno2_size)
                     FIXME("Both line info present... only supporting second\n");
                 else if (sfile.lineno_size)
-                    codeview_snarf_linetab(msc_dbg,
-                                           modimage + sfile.symbol_size,
-                                           sfile.lineno_size,
-                                           pdb_file->kind == PDB_JG);
-
+                {
+                    if (codeview_snarf_linetab(msc_dbg,
+                                               modimage + sfile.symbol_size,
+                                               sfile.lineno_size,
+                                               pdb_file->kind == PDB_JG))
+                        *has_linenumber_info = TRUE;
+                }
+                else if (sfile.lineno2_size)
+                {
+                    if (codeview_snarf_linetab2(msc_dbg, &cvmod))
+                        *has_linenumber_info = TRUE;
+                }
                 pdb_free(modimage);
             }
             file_name += strlen(file_name) + 1;
@@ -3935,7 +3950,7 @@ static BOOL pdb_process_file(const struct process *pcs,
         (modfmt = HeapAlloc(GetProcessHeap(), 0,
                             sizeof(struct module_format) + sizeof(struct pdb_module_info))))
     {
-        BOOL ret;
+        BOOL ret, has_linenumber_info;
 
         pdb_module_info = (void*)(modfmt + 1);
         msc_dbg->module->format_info[DFI_PDB] = modfmt;
@@ -3947,7 +3962,7 @@ static BOOL pdb_process_file(const struct process *pcs,
         memset(cv_zmodules, 0, sizeof(cv_zmodules));
         codeview_init_basic_types(msc_dbg->module);
         ret = pdb_process_internal(pcs, msc_dbg, info.pdbfile,
-                                   msc_dbg->module->format_info[DFI_PDB]->u.pdb_info, -1);
+                                   msc_dbg->module->format_info[DFI_PDB]->u.pdb_info, -1, &has_linenumber_info);
         codeview_clear_type_table();
         if (ret)
         {
@@ -3959,7 +3974,7 @@ static BOOL pdb_process_file(const struct process *pcs,
             wcscpy(msc_dbg->module->module.LoadedPdbName, info.pdbfile);
 
             /* FIXME: we could have a finer grain here */
-            msc_dbg->module->module.LineNumbers = TRUE;
+            msc_dbg->module->module.LineNumbers = has_linenumber_info;
             msc_dbg->module->module.GlobalSymbols = TRUE;
             msc_dbg->module->module.TypeInfo = TRUE;
             msc_dbg->module->module.SourceIndexed = TRUE;
@@ -4358,7 +4373,8 @@ static BOOL codeview_process_info(const struct process *pcs,
         const OMFDirEntry*      ent;
         const OMFDirEntry*      prev;
         const OMFDirEntry*      next;
-        unsigned int                    i;
+        unsigned int            i;
+        BOOL                    has_linenumber_info = FALSE;
 
         codeview_init_basic_types(msc_dbg->module);
 
@@ -4407,19 +4423,21 @@ static BOOL codeview_process_info(const struct process *pcs,
                  * FIXME: This is not a general solution!
                  */
                 if (next && next->iMod == ent->iMod && next->SubSection == sstSrcModule)
-                    codeview_snarf_linetab(msc_dbg, msc_dbg->root + next->lfo,
-                                           next->cb, TRUE);
+                    if (codeview_snarf_linetab(msc_dbg, msc_dbg->root + next->lfo,
+                                               next->cb, TRUE))
+                        has_linenumber_info = TRUE;
 
                 if (prev && prev->iMod == ent->iMod && prev->SubSection == sstSrcModule)
-                    codeview_snarf_linetab(msc_dbg, msc_dbg->root + prev->lfo,
-                                           prev->cb, TRUE);
+                    if (codeview_snarf_linetab(msc_dbg, msc_dbg->root + prev->lfo,
+                                               prev->cb, TRUE))
+                        has_linenumber_info = TRUE;
 
             }
         }
 
         msc_dbg->module->module.SymType = SymCv;
+        msc_dbg->module->module.LineNumbers = has_linenumber_info;
         /* FIXME: we could have a finer grain here */
-        msc_dbg->module->module.LineNumbers = TRUE;
         msc_dbg->module->module.GlobalSymbols = TRUE;
         msc_dbg->module->module.TypeInfo = TRUE;
         msc_dbg->module->module.SourceIndexed = TRUE;
