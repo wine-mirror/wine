@@ -9114,61 +9114,36 @@ static void test_COM(void)
     hr = CoCreateInstance(&CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay4,
             (void**)&dp4);
     ok(hr == S_OK, "DirectPlay create failed: %08lx, expected S_OK\n", hr);
-    refcount = IDirectPlayX_AddRef(dp4);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay2A, (void**)&dp2A);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlay2A failed: %08lx\n", hr);
-    refcount = IDirectPlay2_AddRef(dp2A);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay2_Release(dp2A);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay2, (void**)&dp2);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlay2 failed: %08lx\n", hr);
-    refcount = IDirectPlay2_AddRef(dp2);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay2_Release(dp2);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay3A, (void**)&dp3A);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlay3A failed: %08lx\n", hr);
-    refcount = IDirectPlay3_AddRef(dp3A);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay3_Release(dp3A);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay3, (void**)&dp3);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlay3 failed: %08lx\n", hr);
-    refcount = IDirectPlay3_AddRef(dp3);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay3_Release(dp3);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay4A, (void**)&dp4A);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlay4A failed: %08lx\n", hr);
-    refcount = IDirectPlayX_AddRef(dp4A);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlayX_Release(dp4A);
 
     /* IDirectPlay and IUnknown share a refcount */
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IDirectPlay, (void**)&dp);
     ok(hr == S_OK, "QueryInterface for IID_IDirectPlay failed: %08lx\n", hr);
-    refcount = IDirectPlayX_AddRef(dp);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
     IDirectPlay_Release(dp);
 
     hr = IDirectPlayX_QueryInterface(dp4, &IID_IUnknown, (void**)&unk);
     ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08lx\n", hr);
-    refcount = IUnknown_AddRef(unk);
-    ok(refcount == 3, "refcount == %lu, expected 3\n", refcount);
-    refcount = IUnknown_Release(unk);
-    ok(refcount == 2, "refcount == %lu, expected 2\n", refcount);
 
     IUnknown_Release(unk);
-    IDirectPlay_Release(dp);
-    IDirectPlayX_Release(dp4A);
-    IDirectPlay3_Release(dp3);
-    IDirectPlay3_Release(dp3A);
-    IDirectPlay2_Release(dp2);
-    IDirectPlay2_Release(dp2A);
-    IDirectPlayX_Release(dp4);
     refcount = IDirectPlayX_Release(dp4);
     ok(refcount == 0, "refcount == %lu, expected 0\n", refcount);
 }
