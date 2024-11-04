@@ -54,6 +54,7 @@ static _Context* (__cdecl *p__Context__CurrentContext)(_Context*);
 
 static int (__cdecl *p_strcmp)(const char *, const char *);
 static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
+static intptr_t (__cdecl *p__get_heap_handle)(void);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -89,6 +90,7 @@ static BOOL init(void)
 
     SET(p_strcmp, "strcmp");
     SET(p_strncmp, "strncmp");
+    SET(p__get_heap_handle, "_get_heap_handle");
 
     return TRUE;
 }
@@ -307,6 +309,11 @@ static void test_strcmp(void)
     ok( ret == 0, "wrong ret %d\n", ret );
 }
 
+static void test__get_heap_handle(void)
+{
+    ok((HANDLE)p__get_heap_handle() == GetProcessHeap(), "Expected _get_heap_handle() to return GetProcessHeap()\n");
+}
+
 START_TEST(msvcr110)
 {
     if (!init()) return;
@@ -315,4 +322,5 @@ START_TEST(msvcr110)
     test___strncnt();
     test_CurrentContext();
     test_strcmp();
+    test__get_heap_handle();
 }

@@ -1706,6 +1706,11 @@ static void test_gmtime64(void)
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 }
 
+static void test__get_heap_handle(void)
+{
+    ok((HANDLE)_get_heap_handle() == GetProcessHeap(), "Expected _get_heap_handle() to return GetProcessHeap()\n");
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1752,4 +1757,5 @@ START_TEST(misc)
     test_rewind_i386_abi();
 #endif
     test_gmtime64();
+    test__get_heap_handle();
 }

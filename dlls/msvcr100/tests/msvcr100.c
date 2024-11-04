@@ -239,6 +239,7 @@ static size_t (__cdecl *p___strncnt)(const char*, size_t);
 
 static int (__cdecl *p_strcmp)(const char *, const char *);
 static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
+static intptr_t (__cdecl *p__get_heap_handle)(void);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -282,6 +283,7 @@ static BOOL init(void)
 
     SET(p_strcmp, "strcmp");
     SET(p_strncmp, "strncmp");
+    SET(p__get_heap_handle, "_get_heap_handle");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QEAA@P6AXXZ@Z");
@@ -1152,6 +1154,11 @@ static void test_strcmp(void)
     ok( ret == 0, "wrong ret %d\n", ret );
 }
 
+static void test__get_heap_handle(void)
+{
+    ok((HANDLE)p__get_heap_handle() != GetProcessHeap(), "Expected _get_heap_handle() not to return GetProcessHeap()\n");
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -1173,4 +1180,5 @@ START_TEST(msvcr100)
     test_setlocale();
     test___strncnt();
     test_strcmp();
+    test__get_heap_handle();
 }

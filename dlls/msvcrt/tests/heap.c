@@ -523,10 +523,16 @@ static void test_calloc(void)
     free(ptr);
 }
 
+static void test__get_heap_handle(void)
+{
+    ok((HANDLE)_get_heap_handle() != GetProcessHeap(), "Expected _get_heap_handle() not to return GetProcessHeap()\n");
+}
+
 START_TEST(heap)
 {
     test_aligned();
     test_sbheap();
     test_malloc();
     test_calloc();
+    test__get_heap_handle();
 }
