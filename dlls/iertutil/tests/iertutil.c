@@ -94,7 +94,78 @@ static void test_IUriRuntimeClassFactory(void)
     RoUninitialize();
 }
 
+static void test_IUriRuntimeClass(void)
+{
+    static const WCHAR *class_name = L"Windows.Foundation.Uri";
+    IActivationFactory *activation_factory = NULL;
+    IUriRuntimeClassFactory *uri_factory = NULL;
+    IUriRuntimeClass *uri_class = NULL;
+    IInspectable *inspectable = NULL;
+    IPropertyValue *value;
+    HSTRING str, uri;
+    HRESULT hr;
+    INT32 res;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&activation_factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+    WindowsDeleteString(str);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+        RoUninitialize();
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface(activation_factory, &IID_IUriRuntimeClassFactory, (void **)&uri_factory);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(L"https://www.winehq.org/", wcslen(L"https://www.winehq.org/"), &uri);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IUriRuntimeClassFactory_CreateUri(uri_factory, uri, &uri_class);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IUriRuntimeClass_QueryInterface(uri_class, &IID_IInspectable, (void **)&inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(uri_class == (void *)inspectable, "QueryInterface IID_IInspectable returned %p, expected %p.\n",
+       inspectable, uri_factory);
+    IInspectable_Release(inspectable);
+
+    hr = IUriRuntimeClass_QueryInterface(uri_class, &IID_IPropertyValue, (void **)&value);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
+
+    /* Test IUriRuntimeClass_get_RawUri() */
+    hr = IUriRuntimeClass_get_RawUri(uri_class, &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(str != uri, "Expected a different pointer.\n");
+    hr = WindowsCompareStringOrdinal(uri, str, &res);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(res == 0, "Expected %s, got %s.\n", debugstr_hstring(uri), debugstr_hstring(str));
+    WindowsDeleteString(str);
+
+    /* Test IUriRuntimeClass_get_AbsoluteUri() */
+    hr = IUriRuntimeClass_get_AbsoluteUri(uri_class, &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(str != uri, "Expected a different pointer.\n");
+    hr = WindowsCompareStringOrdinal(uri, str, &res);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(res == 0, "Expected %s, got %s.\n", debugstr_hstring(uri), debugstr_hstring(str));
+    WindowsDeleteString(str);
+
+    WindowsDeleteString(uri);
+    IUriRuntimeClass_Release(uri_class);
+    IUriRuntimeClassFactory_Release(uri_factory);
+    IActivationFactory_Release(activation_factory);
+    RoUninitialize();
+}
+
+
 START_TEST(iertutil)
 {
     test_IUriRuntimeClassFactory();
+    test_IUriRuntimeClass();
 }
