@@ -985,3 +985,11 @@ extern struct symt_function*
 #define IFC_DEPTH_MASK   0x3FFFFFFF
 #define IFC_MODE(x)      ((x) & ~IFC_DEPTH_MASK)
 #define IFC_DEPTH(x)     ((x) & IFC_DEPTH_MASK)
+
+/* temporary helpers for PDB rewriting */
+struct _PDB_FPO_DATA;
+extern BOOL pdb_fpo_unwind_parse_cmd_string(struct cpu_stack_walk* csw, struct _PDB_FPO_DATA* fpoext,
+                                            const char* cmd, struct pdb_cmd_pair* cpair);
+extern BOOL pdb_old_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
+                                   union ctx *context, struct pdb_cmd_pair *cpair);
+extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, HANDLE *file, unsigned *fpoext_stream);

@@ -50,10 +50,6 @@ void* pool_realloc(struct pool* pool, void* ptr, size_t len)
 
 void pool_free(struct pool* pool, void* ptr)
 {
-#ifdef USE_STATS
-    if (ptr)
-        mem_stats_down(&pool->stats, HeapSize(pool->heap, 0, ptr));
-#endif
     HeapFree(pool->heap, 0, ptr);
 }
 
