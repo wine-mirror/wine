@@ -5461,8 +5461,10 @@ void file_complete_async( HANDLE handle, unsigned int options, HANDLE event, PIO
 
     set_sync_iosb( io, status, information, options );
     if (event) NtSetEvent( event, NULL );
-    if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
-    else if (apc_user) add_completion( handle, (ULONG_PTR)apc_user, status, information, FALSE );
+    if (apc)
+        NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
+    else if (apc_user && !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+        add_completion( handle, (ULONG_PTR)apc_user, status, information, FALSE );
 }
 
 
@@ -5678,7 +5680,8 @@ err:
     ret_status = async_read && type == FD_TYPE_FILE && (status == STATUS_SUCCESS || status == STATUS_END_OF_FILE)
             ? STATUS_PENDING : status;
 
-    if (send_completion) add_completion( handle, cvalue, status, total, ret_status == STATUS_PENDING );
+    if (send_completion && async_read)
+        add_completion( handle, cvalue, status, total, ret_status == STATUS_PENDING );
     return ret_status;
 }
 
@@ -5979,7 +5982,8 @@ err:
     }
 
     ret_status = async_write && type == FD_TYPE_FILE && status == STATUS_SUCCESS ? STATUS_PENDING : status;
-    if (send_completion) add_completion( handle, cvalue, status, total, ret_status == STATUS_PENDING );
+    if (send_completion && async_write)
+        add_completion( handle, cvalue, status, total, ret_status == STATUS_PENDING );
     return ret_status;
 }
 
