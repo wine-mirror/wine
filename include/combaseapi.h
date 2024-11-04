@@ -44,7 +44,14 @@ typedef struct tagServerInformation
     UINT64  ui64ServerAddress;
 } ServerInformation, *PServerInformation;
 
+enum AgileReferenceOptions
+{
+    AGILEREFERENCE_DEFAULT,
+    AGILEREFERENCE_DELAYEDMARSHAL
+};
+
 HRESULT WINAPI CoDecodeProxy(DWORD client_pid, UINT64 proxy_addr, ServerInformation *server_info);
+HRESULT WINAPI RoGetAgileReference(enum AgileReferenceOptions options, REFIID riid, IUnknown *obj, IAgileReference **agile_reference);
 
 #ifdef __cplusplus
 }
