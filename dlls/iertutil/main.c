@@ -96,8 +96,10 @@ static HRESULT STDMETHODCALLTYPE uri_GetTrustLevel(IUriRuntimeClass *iface, Trus
 
 static HRESULT STDMETHODCALLTYPE uri_AbsoluteUri(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    FIXME("iface %p, value %p semi-stub!\n", iface, value);
+
+    /* TODO: Parse the raw URI and reconstruct it from parts according to RFC 3986 or RFC 3987 */
+    return IUriRuntimeClass_get_RawUri(iface, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_DisplayUri(IUriRuntimeClass *iface, HSTRING *value)
