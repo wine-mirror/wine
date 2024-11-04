@@ -638,8 +638,6 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
       if (equalspos == NULL) return start+1;
       s = xstrdupW(endOfVar + 1);
 
-      /* Null terminate both strings */
-      thisVar[lstrlenW(thisVar)-1] = 0x00;
       *equalspos = 0x00;
 
       /* Since we need to be case insensitive, copy the 2 buffers */
