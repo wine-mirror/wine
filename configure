@@ -22124,6 +22124,7 @@ wine_fn_config_makefile dlls/ieframe enable_ieframe
 wine_fn_config_makefile dlls/ieframe/tests enable_tests
 wine_fn_config_makefile dlls/ieproxy enable_ieproxy
 wine_fn_config_makefile dlls/iertutil enable_iertutil
+wine_fn_config_makefile dlls/iertutil/tests enable_tests
 wine_fn_config_makefile dlls/ifsmgr.vxd enable_win16
 wine_fn_config_makefile dlls/imaadp32.acm enable_imaadp32_acm
 wine_fn_config_makefile dlls/imagehlp enable_imagehlp
