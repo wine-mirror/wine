@@ -6175,7 +6175,6 @@ static void test_process_access(void)
                           PROCESS_VM_OPERATION | PROCESS_VM_WRITE, FALSE, 0);
     ok(ret, "DuplicateHandle error %ld\n", GetLastError());
     access = get_obj_access(dup);
-    todo_wine
     ok(access == (PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_QUERY_LIMITED_INFORMATION) ||
        broken(access == (PROCESS_VM_OPERATION | PROCESS_VM_WRITE)) /* Win8 and before */,
        "expected PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_QUERY_LIMITED_INFORMATION, got %#lx\n", access);
