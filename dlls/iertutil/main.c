@@ -157,8 +157,11 @@ static HRESULT STDMETHODCALLTYPE uri_QueryParsed(IUriRuntimeClass *iface,
 
 static HRESULT STDMETHODCALLTYPE uri_RawUri(IUriRuntimeClass *iface, HSTRING *value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct uri *impl = impl_from_IUriRuntimeClass(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return WindowsDuplicateString(impl->raw_uri, value);
 }
 
 static HRESULT STDMETHODCALLTYPE uri_SchemeName(IUriRuntimeClass *iface, HSTRING *value)
