@@ -4163,7 +4163,7 @@ static BOOL  pev_binop(struct pevaluator* pev, char op)
     char        res[PEV_MAX_LEN];
     DWORD_PTR   v1, v2, c;
 
-    if (!pev_pop_val(pev, &v1) || !pev_pop_val(pev, &v2)) return FALSE;
+    if (!pev_pop_val(pev, &v2) || !pev_pop_val(pev, &v1)) return FALSE;
     if ((op == '/' || op == '%') && v2 == 0)
     {
         pev_set_error(pev, "binop: division by zero");
