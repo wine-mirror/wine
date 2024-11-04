@@ -1065,8 +1065,20 @@ RETURN_CODE WCMD_copy(WCHAR * args)
           /* Do the copy as appropriate */
           if (overwrite) {
             if (anyconcats && WCMD_IsSameFile(srcpath, outname)) {
-              /* Silently skip if the destination file is also a source file */
-              status = TRUE;
+              /* behavior is as Unix 'touch' (change last-written time only) */
+              HANDLE file = CreateFileW(srcpath, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
+                                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+              if (file != INVALID_HANDLE_VALUE)
+              {
+                FILETIME file_time;
+                SYSTEMTIME system_time;
+
+                GetSystemTime(&system_time);
+                SystemTimeToFileTime(&system_time, &file_time);
+                status = SetFileTime(file, NULL, NULL, &file_time);
+                CloseHandle(file);
+              }
+              else status = FALSE;
             } else if (anyconcats && writtenoneconcat) {
               if (thiscopy->binarycopy) {
                 status = WCMD_ManualCopy(srcpath, outname, FALSE, TRUE);
