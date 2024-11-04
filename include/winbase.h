@@ -1680,6 +1680,7 @@ typedef struct _PROC_THREAD_ATTRIBUTE_LIST
 typedef enum _PROC_THREAD_ATTRIBUTE_NUM
 {
     ProcThreadAttributeParentProcess = 0,
+    ProcThreadAttributeExtendedFlags = 1,
     ProcThreadAttributeHandleList = 2,
     ProcThreadAttributeGroupAffinity = 3,
     ProcThreadAttributePreferredNode = 4,
@@ -1703,6 +1704,7 @@ typedef enum _PROC_THREAD_ATTRIBUTE_NUM
 } PROC_THREAD_ATTRIBUTE_NUM;
 
 #define PROC_THREAD_ATTRIBUTE_PARENT_PROCESS (ProcThreadAttributeParentProcess | PROC_THREAD_ATTRIBUTE_INPUT)
+#define PROC_THREAD_ATTRIBUTE_EXTENDED_FLAGS (ProcThreadAttributeExtendedFlags | PROC_THREAD_ATTRIBUTE_INPUT | PROC_THREAD_ATTRIBUTE_ADDITIVE)
 #define PROC_THREAD_ATTRIBUTE_HANDLE_LIST (ProcThreadAttributeHandleList | PROC_THREAD_ATTRIBUTE_INPUT)
 #define PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY (ProcThreadAttributeGroupAffinity | PROC_THREAD_ATTRIBUTE_THREAD | PROC_THREAD_ATTRIBUTE_INPUT)
 #define PROC_THREAD_ATTRIBUTE_PREFERRED_NODE (ProcThreadAttributePreferredNode | PROC_THREAD_ATTRIBUTE_INPUT)
