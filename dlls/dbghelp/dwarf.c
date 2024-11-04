@@ -3074,7 +3074,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
                 child = *(dwarf2_debug_info_t**)vector_at(children, i);
                 dwarf2_load_one_entry(child);
             }
-            if (dwarf2_find_attribute(di, DW_AT_stmt_list, &stmt_list))
+            if ((SymGetOptions() & SYMOPT_LOAD_LINES) && dwarf2_find_attribute(di, DW_AT_stmt_list, &stmt_list))
             {
                 if (dwarf2_parse_line_numbers(ctx, comp_dir.u.string, stmt_list.u.uvalue))
                     ctx->module_ctx->module->module.LineNumbers = TRUE;

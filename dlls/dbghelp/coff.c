@@ -161,7 +161,6 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
     int		       		        linetab_indx;
     const char*                         nampnt;
     int		       		        naux;
-    BOOL                                ret = FALSE;
     ULONG64                             addr;
 
     TRACE("Processing COFF symbols...\n");
@@ -378,7 +377,8 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
         i += naux;
     }
 
-    if (coff_files.files != NULL)
+    if (coff_files.files == NULL) return FALSE;
+    if (SymGetOptions() & SYMOPT_LOAD_LINES)
     {
         /*
          * OK, we now should have a list of files, and we should have a list
@@ -436,15 +436,13 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             HeapFree(GetProcessHeap(), 0, coff_files.files[j].entries);
 	}
         HeapFree(GetProcessHeap(), 0, coff_files.files);
-        msc_dbg->module->module.SymType = SymCoff;
-        /* FIXME: we could have a finer grain here */
-        msc_dbg->module->module.LineNumbers = TRUE;
-        msc_dbg->module->module.GlobalSymbols = TRUE;
-        msc_dbg->module->module.TypeInfo = FALSE;
-        msc_dbg->module->module.SourceIndexed = TRUE;
-        msc_dbg->module->module.Publics = TRUE;
-        ret = TRUE;
     }
+    msc_dbg->module->module.SymType = SymCoff;
 
-    return ret;
+    msc_dbg->module->module.LineNumbers = !!(SymGetOptions() & SYMOPT_LOAD_LINES);
+    msc_dbg->module->module.GlobalSymbols = TRUE;
+    msc_dbg->module->module.TypeInfo = FALSE;
+    msc_dbg->module->module.SourceIndexed = TRUE;
+    msc_dbg->module->module.Publics = TRUE;
+    return TRUE;
 }

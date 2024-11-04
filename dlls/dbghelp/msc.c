@@ -3773,7 +3773,6 @@ static BOOL pdb_process_internal(const struct process *pcs,
     TRACE("Processing PDB file %ls\n", filename);
 
     *has_linenumber_info = FALSE;
-
     pdb_file = &pdb_module_info->pdb_files[module_index == -1 ? 0 : module_index];
     /* Open and map() .PDB file */
     if ((hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
@@ -3879,21 +3878,25 @@ static BOOL pdb_process_internal(const struct process *pcs,
                     files_image};
                 codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size, &cvmod, file_name);
 
-                if (sfile.lineno_size && sfile.lineno2_size)
-                    FIXME("Both line info present... only supporting second\n");
-                else if (sfile.lineno_size)
+                if (SymGetOptions() & SYMOPT_LOAD_LINES)
                 {
-                    if (codeview_snarf_linetab(msc_dbg,
-                                               modimage + sfile.symbol_size,
-                                               sfile.lineno_size,
-                                               pdb_file->kind == PDB_JG))
-                        *has_linenumber_info = TRUE;
+                    if (sfile.lineno_size && sfile.lineno2_size)
+                        FIXME("Both line info present... only supporting second\n");
+                    else if (sfile.lineno_size)
+                    {
+                        if (codeview_snarf_linetab(msc_dbg,
+                                                   modimage + sfile.symbol_size,
+                                                   sfile.lineno_size,
+                                                   pdb_file->kind == PDB_JG))
+                            *has_linenumber_info = TRUE;
+                    }
+                    else if (sfile.lineno2_size)
+                    {
+                        if (codeview_snarf_linetab2(msc_dbg, &cvmod))
+                            *has_linenumber_info = TRUE;
+                    }
                 }
-                else if (sfile.lineno2_size)
-                {
-                    if (codeview_snarf_linetab2(msc_dbg, &cvmod))
-                        *has_linenumber_info = TRUE;
-                }
+
                 pdb_free(modimage);
             }
             file_name += strlen(file_name) + 1;
@@ -3909,9 +3912,11 @@ static BOOL pdb_process_internal(const struct process *pcs,
             data = pdb_read_stream(pdb_file, symbols.global_hash_stream);
             if (data)
             {
-                codeview_snarf_sym_hashtable(msc_dbg, globalimage, global_size,
-                                             data, pdb_get_stream_size(pdb_file, symbols.global_hash_stream),
-                                             pdb_global_feed_variables);
+                if (codeview_snarf_sym_hashtable(msc_dbg, globalimage, global_size,
+                                                 data, pdb_get_stream_size(pdb_file,
+                                                                           symbols.global_hash_stream),
+                                                 pdb_global_feed_variables))
+                    *has_linenumber_info = TRUE;
                 pdb_free((void*)data);
             }
             if (!(dbghelp_options & SYMOPT_NO_PUBLICS) && (data = pdb_read_stream(pdb_file, symbols.public_stream)))
@@ -4415,23 +4420,25 @@ static BOOL codeview_process_info(const struct process *pcs,
             {
                 codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD), ent->cb, NULL, NULL);
 
-                /*
-                 * Check the next and previous entry.  If either is a
-                 * sstSrcModule, it contains the line number info for
-                 * this file.
-                 *
-                 * FIXME: This is not a general solution!
-                 */
-                if (next && next->iMod == ent->iMod && next->SubSection == sstSrcModule)
-                    if (codeview_snarf_linetab(msc_dbg, msc_dbg->root + next->lfo,
-                                               next->cb, TRUE))
-                        has_linenumber_info = TRUE;
+                if (SymGetOptions() & SYMOPT_LOAD_LINES)
+                {
+                    /*
+                     * Check the next and previous entry.  If either is a
+                     * sstSrcModule, it contains the line number info for
+                     * this file.
+                     *
+                     * FIXME: This is not a general solution!
+                     */
+                    if (next && next->iMod == ent->iMod && next->SubSection == sstSrcModule)
+                        if (codeview_snarf_linetab(msc_dbg, msc_dbg->root + next->lfo,
+                                                   next->cb, TRUE))
+                            has_linenumber_info = TRUE;
 
-                if (prev && prev->iMod == ent->iMod && prev->SubSection == sstSrcModule)
-                    if (codeview_snarf_linetab(msc_dbg, msc_dbg->root + prev->lfo,
-                                               prev->cb, TRUE))
-                        has_linenumber_info = TRUE;
-
+                    if (prev && prev->iMod == ent->iMod && prev->SubSection == sstSrcModule)
+                        if (codeview_snarf_linetab(msc_dbg, msc_dbg->root + prev->lfo,
+                                                   prev->cb, TRUE))
+                            has_linenumber_info = TRUE;
+                }
             }
         }
 

@@ -1493,21 +1493,24 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             if (curr_func != NULL) pending_add_var(&pending_block, ptr, DataIsLocal, &loc);
             break;
         case N_SLINE:
-            /*
-             * This is a line number.  These are always relative to the start
-             * of the function (N_FUN), and this makes the lookup easier.
-             */
-            assert(source_idx >= 0);
-            if (curr_func != NULL)
+            if (SymGetOptions() & SYMOPT_LOAD_LINES)
             {
-                ULONG_PTR offset = n_value;
-                if (module->type == DMT_MACHO)
-                    offset -= curr_func->ranges[0].low - load_offset;
-                symt_add_func_line(module, curr_func, source_idx, 
-                                   stab_ptr->n_desc, curr_func->ranges[0].low + offset);
+                /*
+                 * This is a line number.  These are always relative to the start
+                 * of the function (N_FUN), and this makes the lookup easier.
+                 */
+                assert(source_idx >= 0);
+                if (curr_func != NULL)
+                {
+                    ULONG_PTR offset = n_value;
+                    if (module->type == DMT_MACHO)
+                        offset -= curr_func->ranges[0].low - load_offset;
+                    symt_add_func_line(module, curr_func, source_idx,
+                                       stab_ptr->n_desc, curr_func->ranges[0].low + offset);
+                }
+                else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
+                                      n_value, load_offset);
             }
-            else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
-                                  n_value, load_offset);
             break;
         case N_FUN:
             /*
