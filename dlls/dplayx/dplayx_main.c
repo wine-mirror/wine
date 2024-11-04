@@ -95,19 +95,3 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 
   return TRUE;
 }
-
-/***********************************************************************
- *              DllCanUnloadNow (DPLAYX.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-  HRESULT hr = ( gdwDPlaySPRefCount > 0 ) ? S_FALSE : S_OK;
-
-  /* FIXME: Should I be putting a check in for class factory objects
-   *        as well?
-   */
-
-  TRACE( ": returning %#lx\n", hr );
-
-  return hr;
-}
