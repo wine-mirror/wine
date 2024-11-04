@@ -4368,13 +4368,15 @@ static void test_PrefetchVirtualMemory(void)
 
 static void test_ReadProcessMemory(void)
 {
-    BYTE buf[0x2000];
+    BYTE *buf;
     DWORD old_prot;
     SIZE_T copied;
     HANDLE hproc;
     void *ptr;
     BOOL ret;
 
+    buf = malloc(2 * si.dwPageSize);
+    ok(buf != NULL, "OOM\n");
     ret = DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
             &hproc, 0, FALSE, DUPLICATE_SAME_ACCESS);
     ok(ret, "DuplicateHandle failed %lu\n", GetLastError());
@@ -4403,6 +4405,7 @@ static void test_ReadProcessMemory(void)
     ret = VirtualFree(ptr, 0, MEM_RELEASE);
     ok(ret, "VirtualFree failed %lu\n", GetLastError());
     CloseHandle(hproc);
+    free(buf);
 }
 
 START_TEST(virtual)
