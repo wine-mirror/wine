@@ -1140,7 +1140,7 @@
 @ stub NtUserRegisterShellPTPListener
 @ stub NtUserRegisterTasklist
 @ stub NtUserRegisterTouchHitTestingWindow
-@ stub NtUserRegisterTouchPadCapable
+@ stdcall -syscall NtUserRegisterTouchPadCapable(long)
 @ stub NtUserRegisterUserApiHook
 @ stub NtUserRegisterWindowMessage
 @ stdcall -syscall NtUserReleaseDC(long long)

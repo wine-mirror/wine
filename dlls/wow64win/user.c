@@ -3920,6 +3920,13 @@ NTSTATUS WINAPI wow64_NtUserRegisterRawInputDevices( UINT *args )
     return NtUserRegisterRawInputDevices( devices64, count, sizeof(*devices64) );
 }
 
+NTSTATUS WINAPI wow64_NtUserRegisterTouchPadCapable( UINT *args )
+{
+    UINT capable = get_ulong( &args );
+
+    return NtUserRegisterTouchPadCapable( capable );
+}
+
 NTSTATUS WINAPI wow64_NtUserReleaseDC( UINT *args )
 {
     HWND hwnd = get_handle( &args );

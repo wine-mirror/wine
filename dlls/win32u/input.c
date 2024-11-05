@@ -2685,3 +2685,13 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
 
     return ret;
 }
+
+/**********************************************************************
+ *       NtUserRegisterTouchPadCapable    (win32u.@)
+ */
+BOOL WINAPI NtUserRegisterTouchPadCapable( BOOL capable )
+{
+    FIXME( "capable %u stub!\n", capable );
+    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}

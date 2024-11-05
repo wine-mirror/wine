@@ -1902,6 +1902,11 @@ BOOL SYSCALL_API NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, U
     SYSCALL_FUNC( NtUserRegisterRawInputDevices );
 }
 
+BOOL SYSCALL_API NtUserRegisterTouchPadCapable( BOOL capable )
+{
+    SYSCALL_FUNC( NtUserRegisterTouchPadCapable );
+}
+
 INT SYSCALL_API NtUserReleaseDC( HWND hwnd, HDC hdc )
 {
     SYSCALL_FUNC( NtUserReleaseDC );

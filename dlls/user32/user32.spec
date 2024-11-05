@@ -813,6 +813,7 @@
 # @ stub UserLpkTabbedTextOut
 @ stdcall UserRealizePalette(long)
 @ stdcall UserRegisterWowHandlers(ptr ptr)
+2546 stdcall RegisterTouchPadCapable(long) NtUserRegisterTouchPadCapable
 # @ stub UserSetDeviceHoldState
 @ stdcall UserSignalProc(long long long long)
 # @ stub VRipOutput
