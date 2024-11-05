@@ -51,6 +51,7 @@ static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)( LPCWSTR, PUNICODE_STRING, PWSTR*, CURDIR* );
 static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirectionEx)( ULONG, ULONG * );
 
+static NTSTATUS (WINAPI *pNtAllocateReserveObject)( HANDLE *, const OBJECT_ATTRIBUTES *, MEMORY_RESERVE_OBJECT_TYPE );
 static NTSTATUS (WINAPI *pNtCreateMailslotFile)( PHANDLE, ULONG, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK,
                                        ULONG, ULONG, ULONG, PLARGE_INTEGER );
 static NTSTATUS (WINAPI *pNtCreateFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,PIO_STATUS_BLOCK,PLARGE_INTEGER,ULONG,ULONG,ULONG,ULONG,PVOID,ULONG);
@@ -76,6 +77,7 @@ static NTSTATUS (WINAPI *pNtQueryIoCompletion)(HANDLE, IO_COMPLETION_INFORMATION
 static NTSTATUS (WINAPI *pNtRemoveIoCompletion)(HANDLE, PULONG_PTR, PULONG_PTR, PIO_STATUS_BLOCK, PLARGE_INTEGER);
 static NTSTATUS (WINAPI *pNtRemoveIoCompletionEx)(HANDLE,FILE_IO_COMPLETION_INFORMATION*,ULONG,ULONG*,LARGE_INTEGER*,BOOLEAN);
 static NTSTATUS (WINAPI *pNtSetIoCompletion)(HANDLE, ULONG_PTR, ULONG_PTR, NTSTATUS, SIZE_T);
+static NTSTATUS (WINAPI *pNtSetIoCompletionEx)(HANDLE, HANDLE, ULONG_PTR, ULONG_PTR, NTSTATUS, SIZE_T);
 static NTSTATUS (WINAPI *pNtSetInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtQueryAttributesFile)(const OBJECT_ATTRIBUTES*,FILE_BASIC_INFORMATION*);
 static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, PVOID, ULONG, FILE_INFORMATION_CLASS);
@@ -5932,6 +5934,63 @@ static void test_reparse_points(void)
     CloseHandle( handle );
 }
 
+static void test_set_io_completion_ex(void)
+{
+    HANDLE completion, completion_reserve, apc_reserve;
+    LARGE_INTEGER timeout = {{0}};
+    IO_STATUS_BLOCK iosb;
+    ULONG_PTR key, value;
+    NTSTATUS status;
+    SIZE_T size = 3;
+
+    if (!pNtSetIoCompletionEx || !pNtAllocateReserveObject)
+    {
+        todo_wine
+        win_skip("NtSetIoCompletionEx() or NtAllocateReserveObject() is unavailable.\n");
+        return;
+    }
+
+    if (sizeof(size) > 4) size |= (ULONGLONG)0x12345678 << 32;
+
+    status = pNtCreateIoCompletion(&completion, IO_COMPLETION_ALL_ACCESS, NULL, 0);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    status = pNtAllocateReserveObject(&completion_reserve, NULL, MemoryReserveObjectTypeIoCompletion);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    status = pNtAllocateReserveObject(&apc_reserve, NULL, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+    /* Parameter checks */
+    status = pNtSetIoCompletionEx(NULL, completion_reserve, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size);
+    ok(status == STATUS_INVALID_HANDLE, "Got unexpected status %#lx.\n", status);
+
+    status = pNtSetIoCompletionEx(INVALID_HANDLE_VALUE, completion_reserve, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#lx.\n", status);
+
+    status = pNtSetIoCompletionEx(completion, NULL, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size);
+    ok(status == STATUS_INVALID_HANDLE, "Got unexpected status %#lx.\n", status);
+
+    status = pNtSetIoCompletionEx(completion, INVALID_HANDLE_VALUE, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#lx.\n", status);
+
+    status = pNtSetIoCompletionEx(completion, apc_reserve, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#lx.\n", status);
+
+    /* Normal call */
+    status = pNtSetIoCompletionEx(completion, completion_reserve, CKEY_FIRST, CVALUE_FIRST, STATUS_INVALID_DEVICE_REQUEST, size);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+    status = pNtRemoveIoCompletion(completion, &key, &value, &iosb, &timeout);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    ok(key == CKEY_FIRST, "Invalid completion key: %#Ix\n", key);
+    ok(iosb.Information == size, "Invalid iosb.Information: %Iu\n", iosb.Information);
+    ok(iosb.Status == STATUS_INVALID_DEVICE_REQUEST, "Invalid iosb.Status: %#lx\n", iosb.Status);
+    ok(value == CVALUE_FIRST, "Invalid completion value: %#Ix\n", value);
+
+    CloseHandle(apc_reserve);
+    CloseHandle(completion_reserve);
+    CloseHandle(completion);
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -5949,6 +6008,7 @@ START_TEST(file)
     pRtlInitUnicodeString   = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pRtlWow64EnableFsRedirectionEx = (void *)GetProcAddress(hntdll, "RtlWow64EnableFsRedirectionEx");
+    pNtAllocateReserveObject= (void *)GetProcAddress(hntdll, "NtAllocateReserveObject");
     pNtCreateMailslotFile   = (void *)GetProcAddress(hntdll, "NtCreateMailslotFile");
     pNtCreateFile           = (void *)GetProcAddress(hntdll, "NtCreateFile");
     pNtOpenFile             = (void *)GetProcAddress(hntdll, "NtOpenFile");
@@ -5965,6 +6025,7 @@ START_TEST(file)
     pNtRemoveIoCompletion   = (void *)GetProcAddress(hntdll, "NtRemoveIoCompletion");
     pNtRemoveIoCompletionEx = (void *)GetProcAddress(hntdll, "NtRemoveIoCompletionEx");
     pNtSetIoCompletion      = (void *)GetProcAddress(hntdll, "NtSetIoCompletion");
+    pNtSetIoCompletionEx    = (void *)GetProcAddress(hntdll, "NtSetIoCompletionEx");
     pNtSetInformationFile   = (void *)GetProcAddress(hntdll, "NtSetInformationFile");
     pNtQueryAttributesFile  = (void *)GetProcAddress(hntdll, "NtQueryAttributesFile");
     pNtQueryInformationFile = (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
@@ -5983,6 +6044,7 @@ START_TEST(file)
     append_file_test();
     nt_mailslot_test();
     test_set_io_completion();
+    test_set_io_completion_ex();
     test_file_io_completion();
     test_file_basic_information();
     test_file_all_information();
