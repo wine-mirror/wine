@@ -5724,6 +5724,45 @@ static void test_instrumentation_callback(void)
     ok( !data.call_count, "got %u.\n", data.call_count );
 }
 
+static UINT32 find_syscall_nr(const char *function)
+{
+    UINT32 syscall_nr;
+
+    char *code = (char *)GetProcAddress(hntdll, function);
+
+    /* This assumes that Nt* syscall thunks are all formatted as:
+     *
+     * 4c 8b d1                      movq    %rcx, %r10
+     * b8 ?? ?? ?? ??                movl    $(syscall number), %eax
+     */
+    memcpy(&syscall_nr, code + 4, sizeof(UINT32));
+    return syscall_nr;
+}
+
+static void test_direct_syscalls(void)
+{
+    static const BYTE code[] =
+    {
+        0x49, 0x89, 0xd2,           /* movq %rdx, %r10 */
+        0x4c, 0x89, 0xc2,           /* movq %r8,  %rdx */
+        0x89, 0xc8,                 /* movl %ecx, %eax */
+        0x0f, 0x05,                 /* syscall */
+        0xc3,                       /* ret */
+    };
+
+    HANDLE event;
+    NTSTATUS (WINAPI *func)(UINT32 syscall_nr, HANDLE h, LONG *prev_state);
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    memcpy(code_mem, code, sizeof(code));
+    func = code_mem;
+    func(find_syscall_nr("NtSetEvent"), event, NULL);
+
+    todo_wine
+    ok(WaitForSingleObject(event, 0) == WAIT_OBJECT_0, "Event not signaled.\n");
+    CloseHandle(event);
+}
+
 #elif defined(__arm__)
 
 static void test_thread_context(void)
@@ -11870,6 +11909,7 @@ START_TEST(exception)
     test_raiseexception_regs();
     test_hwbpt_in_syscall();
     test_instrumentation_callback();
+    test_direct_syscalls();
 
 #elif defined(__aarch64__)
 
