@@ -625,9 +625,7 @@ BOOL PSDRV_WriteArc(print_ctx *ctx, INT x, INT y, INT w, INT h, double ang1,
 
     /* Make angles -ve and swap order because we're working with an upside
        down y-axis */
-    push_lc_numeric("C");
-    sprintf(buf, psarc, x, y, w, h, -ang2, -ang1);
-    pop_lc_numeric();
+    _sprintf_l(buf, psarc, c_locale, x, y, w, h, -ang2, -ang1);
     return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 
@@ -678,16 +676,11 @@ BOOL PSDRV_WriteSetColor(print_ctx *ctx, PSCOLOR *color)
 
     switch(color->type) {
     case PSCOLOR_RGB:
-        push_lc_numeric("C");
-        sprintf(buf, pssetrgbcolor, color->value.rgb.r, color->value.rgb.g,
-		color->value.rgb.b);
-        pop_lc_numeric();
+        _sprintf_l(buf, pssetrgbcolor, c_locale, color->value.rgb.r, color->value.rgb.g, color->value.rgb.b);
 	return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 
     case PSCOLOR_GRAY:
-        push_lc_numeric("C");
-        sprintf(buf, pssetgray, color->value.gray.i);
-        pop_lc_numeric();
+        _sprintf_l(buf, pssetgray, c_locale, color->value.gray.i);
 	return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 
     default:
@@ -786,9 +779,7 @@ BOOL PSDRV_WriteRotate(print_ctx *ctx, float ang)
 {
     char buf[256];
 
-    push_lc_numeric("C");
-    sprintf(buf, psrotate, ang);
-    pop_lc_numeric();
+    _sprintf_l(buf, psrotate, c_locale, ang);
     return PSDRV_WriteSpool(ctx, buf, strlen(buf));
 }
 

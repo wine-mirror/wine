@@ -544,13 +544,7 @@ extern DWORD ASCII85_encode(BYTE *in_buf, DWORD len, BYTE *out_buf);
 extern void passthrough_enter(print_ctx *ctx);
 extern void passthrough_leave(print_ctx *ctx);
 
-#define push_lc_numeric(x) do {					\
-	const char *tmplocale = setlocale(LC_NUMERIC,NULL);	\
-	setlocale(LC_NUMERIC,x);
-
-#define pop_lc_numeric()					\
-	setlocale(LC_NUMERIC,tmplocale);			\
-} while (0)
+extern _locale_t c_locale;
 
 static inline WCHAR *strdupW( const WCHAR *str )
 {

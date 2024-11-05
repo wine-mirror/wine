@@ -203,11 +203,9 @@ TYPE42 *T42_download_header(print_ctx *ctx, char *ps_name,
     buf = HeapAlloc(GetProcessHeap(), 0, sizeof(start) + strlen(ps_name) +
 		    100);
 
-    push_lc_numeric("C");
-    sprintf(buf, start, ps_name,
-	    (float)bbox->left / emsize, (float)bbox->bottom / emsize,
-	    (float)bbox->right / emsize, (float)bbox->top / emsize);
-    pop_lc_numeric();
+    _sprintf_l(buf, start, c_locale, ps_name,
+               (float)bbox->left / emsize, (float)bbox->bottom / emsize,
+               (float)bbox->right / emsize, (float)bbox->top / emsize);
 
     PSDRV_WriteSpool(ctx, buf, strlen(buf));
 
