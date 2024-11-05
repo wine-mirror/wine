@@ -1350,6 +1350,11 @@ BOOL SYSCALL_API NtUserEnableMouseInPointer( BOOL enable )
     SYSCALL_FUNC( NtUserEnableMouseInPointer );
 }
 
+BOOL SYSCALL_API NtUserEnableMouseInPointerForThread(void)
+{
+    SYSCALL_FUNC( NtUserEnableMouseInPointerForThread );
+}
+
 BOOL SYSCALL_API NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags )
 {
     SYSCALL_FUNC( NtUserEnableScrollBar );

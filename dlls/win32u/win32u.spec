@@ -865,6 +865,7 @@
 @ stub NtUserEnableIAMAccess
 @ stdcall -syscall NtUserEnableMenuItem(long long long)
 @ stdcall -syscall NtUserEnableMouseInPointer(long)
+@ stdcall -syscall NtUserEnableMouseInPointerForThread()
 @ stub NtUserEnableMouseInPointerForWindow
 @ stub NtUserEnableMouseInputForCursorSuppression
 @ stub NtUserEnableNonClientDpiScaling

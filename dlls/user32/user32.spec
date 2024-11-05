@@ -208,6 +208,7 @@
 @ stdcall EmptyClipboard() NtUserEmptyClipboard
 @ stdcall EnableMenuItem(long long long) NtUserEnableMenuItem
 @ stdcall EnableMouseInPointer(long) NtUserEnableMouseInPointer
+2561 stdcall EnableMouseInPointerForThread() NtUserEnableMouseInPointerForThread
 @ stdcall EnableNonClientDpiScaling(long)
 @ stdcall -import EnableScrollBar(long long long) NtUserEnableScrollBar
 @ stdcall EnableWindow(long long)
