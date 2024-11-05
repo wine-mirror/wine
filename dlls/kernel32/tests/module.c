@@ -1317,7 +1317,7 @@ static void test_LdrGetDllHandleEx(void)
 {
     HMODULE mod, loaded_mod;
     UNICODE_STRING name;
-    char path[MAX_PATH];
+    WCHAR path[MAX_PATH];
     NTSTATUS status;
     unsigned int i;
     BOOL bret;
@@ -1395,7 +1395,8 @@ static void test_LdrGetDllHandleEx(void)
     check_refcount( loaded_mod, ~0u );
     winetest_pop_context();
 
-    GetCurrentDirectoryA( ARRAY_SIZE(path), path );
+    GetCurrentDirectoryW( ARRAY_SIZE(path), path );
+    if (pAddDllDirectory) pAddDllDirectory( path );
     create_test_dll( "d01.dll" );
     mod = LoadLibraryA( "d01.dll" );
     ok( !!mod, "got error %lu.\n", GetLastError() );
