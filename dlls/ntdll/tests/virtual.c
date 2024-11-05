@@ -2172,12 +2172,18 @@ static void test_syscalls(void)
         ok( ret, "got %d, err %lu.\n", ret, GetLastError() );
         ret = ReadFile( file, exec_mem, 32, NULL, NULL );
         ok( ret, "got %d, err %lu.\n", ret, GetLastError() );
-        pNtQueryInformationProcess = exec_mem;
-        /* The thunk still works without relocation. */
-        status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &size );
-        ok( !status, "got %#lx.\n", status );
-        ok( size == sizeof(pbi), "got %lu.\n", size );
-        ok( pbi.PebBaseAddress == NtCurrentTeb()->Peb, "got %p, %p.\n", pbi.PebBaseAddress, NtCurrentTeb()->Peb );
+        if (!memcmp( exec_mem, pNtQueryInformationProcess, 5 ))
+        {
+            pNtQueryInformationProcess = exec_mem;
+            /* The thunk still works without relocation. */
+            status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &size );
+            ok( !status, "got %#lx.\n", status );
+            ok( size == sizeof(pbi), "got %lu.\n", size );
+            ok( pbi.PebBaseAddress == NtCurrentTeb()->Peb, "got %p, %p.\n", pbi.PebBaseAddress, NtCurrentTeb()->Peb );
+        }
+        else
+            ok( 0, "file on disk doesn't match syscall %x / %x\n",
+                *(UINT *)pNtQueryInformationProcess, *(UINT *)exec_mem );
 
         VirtualFree( exec_mem, 0, MEM_RELEASE );
 #elif defined __x86_64__
