@@ -3118,7 +3118,7 @@ static void test_process_security_child(void)
     /* Test thread security */
     handle = OpenThread( THREAD_TERMINATE, FALSE, GetCurrentThreadId() );
     ok(handle != NULL, "OpenThread(THREAD_TERMINATE) with err:%ld\n", GetLastError());
-    TEST_GRANTED_ACCESS( handle, PROCESS_TERMINATE );
+    TEST_GRANTED_ACCESS( handle, THREAD_TERMINATE );
     CloseHandle( handle );
 
     handle = OpenThread( THREAD_SET_THREAD_TOKEN, FALSE, GetCurrentThreadId() );
