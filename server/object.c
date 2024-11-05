@@ -854,6 +854,11 @@ static struct reserve *create_reserve( struct object *root, const struct unicode
     return reserve;
 }
 
+struct reserve *get_completion_reserve_obj( struct process *process, obj_handle_t handle, unsigned int access )
+{
+    return (struct reserve *)get_handle_obj( process, handle, access, &completion_reserve_ops );
+}
+
 /* Allocate a reserve object for pre-allocating memory for object types */
 DECL_HANDLER(allocate_reserve_object)
 {

@@ -1525,6 +1525,7 @@
 @ stdcall -private ZwSetInformationToken(long long ptr long) NtSetInformationToken
 @ stdcall -private ZwSetIntervalProfile(long long) NtSetIntervalProfile
 @ stdcall -private ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
+@ stdcall -private ZwSetIoCompletionEx(ptr ptr long long long long) NtSetIoCompletionEx
 @ stdcall -private ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 @ stdcall -private ZwSetSystemInformation(long ptr long) NtSetSystemInformation
 @ stdcall -private ZwSetSystemTime(ptr ptr) NtSetSystemTime

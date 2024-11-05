@@ -1450,6 +1450,22 @@ NTSTATUS WINAPI wow64_NtSetIoCompletion( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtSetIoCompletionEx
+ */
+NTSTATUS WINAPI wow64_NtSetIoCompletionEx( UINT *args )
+{
+    HANDLE completion_handle = get_handle( &args );
+    HANDLE completion_reserve_handle = get_handle( &args );
+    ULONG_PTR key = get_ulong( &args );
+    ULONG_PTR value = get_ulong( &args );
+    NTSTATUS status = get_ulong( &args );
+    SIZE_T count = get_ulong( &args );
+
+    return NtSetIoCompletionEx( completion_handle, completion_reserve_handle, key, value, status, count );
+}
+
+
+/**********************************************************************
  *           wow64_NtSetTimer
  */
 NTSTATUS WINAPI wow64_NtSetTimer( UINT *args )

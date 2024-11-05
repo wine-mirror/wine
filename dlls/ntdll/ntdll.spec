@@ -400,6 +400,7 @@
 @ stdcall -syscall NtSetInformationVirtualMemory(long long ptr ptr ptr long)
 @ stdcall -syscall NtSetIntervalProfile(long long)
 @ stdcall -syscall NtSetIoCompletion(ptr long long long long)
+@ stdcall -syscall NtSetIoCompletionEx(ptr ptr long long long long)
 @ stdcall -syscall NtSetLdtEntries(long int64 long int64)
 # @ stub NtSetLowEventPair
 # @ stub NtSetLowWaitHighEventPair
@@ -1460,6 +1461,7 @@
 @ stdcall -private -syscall ZwSetInformationVirtualMemory(long long ptr ptr ptr long) NtSetInformationVirtualMemory
 @ stdcall -private -syscall ZwSetIntervalProfile(long long) NtSetIntervalProfile
 @ stdcall -private -syscall ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
+@ stdcall -private -syscall ZwSetIoCompletionEx(ptr ptr long long long long) NtSetIoCompletionEx
 @ stdcall -private -syscall ZwSetLdtEntries(long int64 long int64) NtSetLdtEntries
 # @ stub ZwSetLowEventPair
 # @ stub ZwSetLowWaitHighEventPair

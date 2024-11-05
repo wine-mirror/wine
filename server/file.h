@@ -29,6 +29,7 @@ struct fd;
 struct mapping;
 struct async_queue;
 struct completion;
+struct reserve;
 
 /* server-side representation of I/O status block */
 struct iosb
@@ -236,6 +237,7 @@ extern struct dir *get_dir_obj( struct process *process, obj_handle_t handle, un
 /* completion */
 
 extern struct completion *get_completion_obj( struct process *process, obj_handle_t handle, unsigned int access );
+extern struct reserve *get_completion_reserve_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern void add_completion( struct completion *completion, apc_param_t ckey, apc_param_t cvalue,
                             unsigned int status, apc_param_t information );
 extern void cleanup_thread_completion( struct thread *thread );

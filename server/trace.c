@@ -4536,6 +4536,7 @@ static void dump_add_completion_request( const struct add_completion_request *re
     dump_uint64( ", ckey=", &req->ckey );
     dump_uint64( ", cvalue=", &req->cvalue );
     dump_uint64( ", information=", &req->information );
+    fprintf( stderr, ", reserve_handle=%04x", req->reserve_handle );
     fprintf( stderr, ", status=%08x", req->status );
 }
 

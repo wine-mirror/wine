@@ -344,11 +344,19 @@ DECL_HANDLER(open_completion)
 DECL_HANDLER(add_completion)
 {
     struct completion* completion = get_completion_obj( current->process, req->handle, IO_COMPLETION_MODIFY_STATE );
+    struct reserve *reserve = NULL;
 
     if (!completion) return;
 
+    if (req->reserve_handle && !(reserve = get_completion_reserve_obj( current->process, req->reserve_handle, 0 )))
+    {
+        release_object( completion );
+        return;
+    }
+
     add_completion( completion, req->ckey, req->cvalue, req->status, req->information );
 
+    if (reserve) release_object( reserve );
     release_object( completion );
 }
 

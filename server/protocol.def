@@ -3803,6 +3803,7 @@ typedef union
     apc_param_t   ckey;           /* completion key */
     apc_param_t   cvalue;         /* completion value */
     apc_param_t   information;    /* IO_STATUS_BLOCK Information */
+    obj_handle_t  reserve_handle; /* completion reserve object handle */
     unsigned int  status;         /* completion result */
 @END
 

@@ -5945,7 +5945,6 @@ static void test_set_io_completion_ex(void)
 
     if (!pNtSetIoCompletionEx || !pNtAllocateReserveObject)
     {
-        todo_wine
         win_skip("NtSetIoCompletionEx() or NtAllocateReserveObject() is unavailable.\n");
         return;
     }
