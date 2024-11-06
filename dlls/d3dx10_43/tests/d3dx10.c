@@ -39,10 +39,25 @@
 #define DDS_PIXELFORMAT 0x00001000
 #define DDS_MIPMAPCOUNT 0x00020000
 #define DDS_LINEARSIZE 0x00080000
+#define DDS_DEPTH 0x00800000
 
 /* dds_header.caps */
 #define DDSCAPS_ALPHA    0x00000002
+#define DDS_CAPS_COMPLEX 0x00000008
 #define DDS_CAPS_TEXTURE 0x00001000
+
+/* dds_header.caps2 */
+#define DDS_CAPS2_VOLUME  0x00200000
+#define DDS_CAPS2_CUBEMAP 0x00000200
+#define DDS_CAPS2_CUBEMAP_POSITIVEX 0x00000400
+#define DDS_CAPS2_CUBEMAP_NEGATIVEX 0x00000800
+#define DDS_CAPS2_CUBEMAP_POSITIVEY 0x00001000
+#define DDS_CAPS2_CUBEMAP_NEGATIVEY 0x00002000
+#define DDS_CAPS2_CUBEMAP_POSITIVEZ 0x00004000
+#define DDS_CAPS2_CUBEMAP_NEGATIVEZ 0x00008000
+#define DDS_CAPS2_CUBEMAP_ALL_FACES ( DDS_CAPS2_CUBEMAP_POSITIVEX | DDS_CAPS2_CUBEMAP_NEGATIVEX \
+                                    | DDS_CAPS2_CUBEMAP_POSITIVEY | DDS_CAPS2_CUBEMAP_NEGATIVEY \
+                                    | DDS_CAPS2_CUBEMAP_POSITIVEZ | DDS_CAPS2_CUBEMAP_NEGATIVEZ )
 
 /* dds_pixel_format.flags */
 #define DDS_PF_ALPHA 0x00000001
@@ -84,6 +99,7 @@ struct dds_header
     DWORD reserved2;
 };
 
+#define DDS_RESOURCE_MISC_TEXTURECUBE 0x04
 struct dds_header_dxt10
 {
     uint32_t dxgi_format;
@@ -1314,6 +1330,47 @@ static void check_image_info(D3DX10_IMAGE_INFO *image_info, const struct test_im
     ok_(__FILE__, line)(image_info->ImageFileFormat == image->expected_info.ImageFileFormat,
             "Got unexpected ImageFileFormat %u, expected %u.\n",
             image_info->ImageFileFormat, image->expected_info.ImageFileFormat);
+}
+
+#define check_image_info_values(info, width, height, depth, array_size, mip_levels, misc_flags, format, resource_dimension, \
+                                image_file_format, wine_todo) \
+    check_image_info_values_(__LINE__, info, width, height, depth, array_size, mip_levels, misc_flags, format, resource_dimension, \
+            image_file_format, wine_todo)
+static inline void check_image_info_values_(uint32_t line, const D3DX10_IMAGE_INFO *info, uint32_t width,
+        uint32_t height, uint32_t depth, uint32_t array_size, uint32_t mip_levels, uint32_t misc_flags,
+        DXGI_FORMAT format, D3D10_RESOURCE_DIMENSION resource_dimension, D3DX10_IMAGE_FILE_FORMAT image_file_format,
+        BOOL wine_todo)
+{
+    const D3DX10_IMAGE_INFO expected_info = { width, height, depth, array_size, mip_levels, misc_flags, format,
+                                              resource_dimension, image_file_format };
+    BOOL matched;
+
+    matched = !memcmp(&expected_info, info, sizeof(*info));
+    todo_wine_if(wine_todo) ok_(__FILE__, line)(matched, "Got unexpected image info values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && info->Width != width)
+        ok_(__FILE__, line)(info->Width == width, "Expected width %u, got %u.\n", width, info->Width);
+    todo_wine_if(wine_todo && info->Height != height)
+        ok_(__FILE__, line)(info->Height == height, "Expected height %u, got %u.\n", height, info->Height);
+    todo_wine_if(wine_todo && info->Depth != depth)
+        ok_(__FILE__, line)(info->Depth == depth, "Expected depth %u, got %u.\n", depth, info->Depth);
+    todo_wine_if(wine_todo && info->ArraySize != array_size)
+        ok_(__FILE__, line)(info->ArraySize == array_size, "Expected array_size %u, got %u.\n", array_size,
+                info->ArraySize);
+    todo_wine_if(wine_todo && info->MipLevels != mip_levels)
+        ok_(__FILE__, line)(info->MipLevels == mip_levels, "Expected mip_levels %u, got %u.\n", mip_levels,
+                info->MipLevels);
+    todo_wine_if(wine_todo && info->MiscFlags != misc_flags)
+        ok_(__FILE__, line)(info->MiscFlags == misc_flags, "Expected misc_flags %u, got %u.\n", misc_flags,
+                info->MiscFlags);
+    ok_(__FILE__, line)(info->Format == format, "Expected texture format %d, got %d.\n", format, info->Format);
+    todo_wine_if(wine_todo && info->ResourceDimension != resource_dimension)
+        ok_(__FILE__, line)(info->ResourceDimension == resource_dimension, "Expected resource_dimension %d, got %d.\n",
+                resource_dimension, info->ResourceDimension);
+    ok_(__FILE__, line)(info->ImageFileFormat == image_file_format, "Expected image_file_format %d, got %d.\n",
+            image_file_format, info->ImageFileFormat);
 }
 
 static ID3D10Texture2D *get_texture2d_readback(ID3D10Texture2D *texture)
@@ -2866,6 +2923,318 @@ static void check_dds_dxt10_format_image_info(unsigned int line, DXGI_FORMAT for
 
 #define check_dds_dxt10_format_unsupported(format, expected_hr) \
     check_dds_dxt10_format_image_info(__LINE__, format, DXGI_FORMAT_UNKNOWN, expected_hr, FALSE)
+
+static void test_legacy_dds_header_image_info(void)
+{
+    struct expected
+    {
+        HRESULT hr;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        uint32_t array_size;
+        uint32_t mip_levels;
+        uint32_t misc_flags;
+        DXGI_FORMAT format;
+        D3D10_RESOURCE_DIMENSION resource_dimension;
+    };
+    static const struct
+    {
+        uint32_t flags;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        uint32_t row_pitch;
+        uint32_t mip_levels;
+        uint32_t caps;
+        uint32_t caps2;
+        uint32_t pixel_data_size;
+        struct expected expected;
+        BOOL todo_hr;
+    } tests[] =
+    {
+        /*
+         * Only DDS header size is validated on d3dx10, unlike d3dx9 where image pixel size
+         * is as well.
+         */
+        {
+            (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 1, (4 * 4), 3, 0, 0, 0,
+            { S_OK, 4, 4, 1, 1, 3, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, },
+            .todo_hr = TRUE
+        },
+        /* Depth value set to 4, but no caps bits are set. Depth is ignored. */
+        {
+            (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 4, (4 * 4), 3, 0, 0, 292,
+            { S_OK, 4, 4, 1, 1, 3, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, },
+        },
+        /* The volume texture caps2 field is ignored. */
+        {
+            (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 4, (4 * 4), 3,
+            (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), DDS_CAPS2_VOLUME, 292,
+            { S_OK, 4, 4, 1, 1, 3, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, }
+        },
+        /*
+         * The DDS_DEPTH flag is the only thing checked to determine if a DDS
+         * file represents a 3D texture.
+         */
+        {
+            (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 4, (4 * 4), 3, 0, 0, 292,
+            { S_OK, 4, 4, 4, 1, 3, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, }
+        },
+        /* Even if the depth field is set to 0, it's still a 3D texture. */
+        {
+            (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 0, (4 * 4), 3, 0, 0, 292,
+            { S_OK, 4, 4, 1, 1, 3, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, }
+        },
+        /*
+         * 5.
+         * The DDS_DEPTH flag overrides cubemap caps.
+         */
+        {
+            (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT | DDS_DEPTH), 4, 4, 4, (4 * 4), 3,
+            (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_ALL_FACES), 292,
+            { S_OK, 4, 4, 4, 1, 3, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, }
+        },
+        /* Cubemap where width field does not equal height. */
+        {
+            (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 5, 1, (4 * 4), 1,
+            (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_ALL_FACES), (80 * 6),
+            {
+                S_OK, 4, 5, 1, 6, 1, D3D10_RESOURCE_MISC_TEXTURECUBE, DXGI_FORMAT_R8G8B8A8_UNORM,
+                D3D10_RESOURCE_DIMENSION_TEXTURE2D,
+            }
+        },
+        /* Partial cubemaps are not supported. */
+        {
+            (DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT), 4, 4, 1, (4 * 4), 1,
+            (DDS_CAPS_TEXTURE | DDS_CAPS_COMPLEX), (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_POSITIVEX), (64 * 6),
+            { E_FAIL, }, .todo_hr = TRUE
+        },
+    };
+    D3DX10_IMAGE_INFO info;
+    unsigned int i;
+    struct
+    {
+        DWORD magic;
+        struct dds_header header;
+    } dds;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        const uint32_t file_size = sizeof(dds) + tests[i].pixel_data_size;
+
+        winetest_push_context("Test %u", i);
+
+        dds.magic = MAKEFOURCC('D','D','S',' ');
+        fill_dds_header(&dds.header);
+        dds.header.flags = tests[i].flags;
+        dds.header.width = tests[i].width;
+        dds.header.height = tests[i].height;
+        dds.header.depth = tests[i].depth;
+        dds.header.pitch_or_linear_size = tests[i].row_pitch;
+        dds.header.miplevels = tests[i].mip_levels;
+        dds.header.caps = tests[i].caps;
+        dds.header.caps2 = tests[i].caps2;
+
+        memset(&info, 0, sizeof(info));
+        hr = D3DX10GetImageInfoFromMemory(&dds, file_size, NULL, &info, NULL);
+        todo_wine_if(tests[i].todo_hr) ok(hr == tests[i].expected.hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr) && SUCCEEDED(tests[i].expected.hr))
+            check_image_info_values(&info, tests[i].expected.width, tests[i].expected.height,
+                    tests[i].expected.depth, tests[i].expected.array_size, tests[i].expected.mip_levels,
+                    tests[i].expected.misc_flags, tests[i].expected.format,
+                    tests[i].expected.resource_dimension, D3DX10_IFF_DDS, FALSE);
+
+        winetest_pop_context();
+    }
+
+    /*
+     * Image size (e.g, the size of the pixels) isn't validated, but header
+     * size is.
+     */
+    dds.magic = MAKEFOURCC('D','D','S',' ');
+    fill_dds_header(&dds.header);
+
+    hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds) - 1, NULL, &info, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
+static void test_dxt10_dds_header_image_info(void)
+{
+    struct expected
+    {
+        HRESULT hr;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        uint32_t array_size;
+        uint32_t mip_levels;
+        uint32_t misc_flags;
+        DXGI_FORMAT format;
+        D3D10_RESOURCE_DIMENSION resource_dimension;
+    };
+    static const struct
+    {
+        uint32_t append_flags;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        uint32_t row_pitch;
+        uint32_t mip_levels;
+        uint32_t caps;
+        uint32_t caps2;
+        struct dds_header_dxt10 dxt10;
+        uint32_t pixel_data_size;
+        struct expected expected;
+        BOOL todo_hr;
+        BOOL todo_info;
+    } tests[] =
+    {
+        /* File size validation isn't done on d3dx10. */
+        {
+            0, 4, 4, 0, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, 0, 1, 0, }, 0,
+            { S_OK, 4, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, },
+            .todo_hr = TRUE
+        },
+        /*
+         * Setting the misc_flags2 field to anything other than 0 results in
+         * E_FAIL on d3dx10_37+.
+         */
+        {
+            0, 4, 4, 0, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, 0, 1, 1, }, (4 * 4 * 4),
+#if D3DX10_SDK_VERSION >= 37
+            { E_FAIL }, .todo_hr = TRUE
+#else
+            { S_OK, 4, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, },
+#endif
+        },
+        /*
+         * The misc_flags field isn't passed through directly, only the
+         * cube texture flag is (if it's set).
+         */
+        {
+            0, 4, 4, 0, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, 0xfffffffb, 1, 0, }, (4 * 4 * 4),
+            { S_OK, 4, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, }
+        },
+        /* Resource dimension field of the header isn't validated. */
+        {
+            0, 4, 4, 0, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, 500, 0, 1, 0, }, (4 * 4 * 4),
+            { S_OK, 4, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, 500, }, .todo_info = TRUE
+        },
+        /* Depth value of 2, but D3D10_RESOURCE_DIMENSION_TEXTURE2D. */
+        {
+            DDS_DEPTH, 4, 4, 2, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, 0, 1, 0, }, (4 * 4 * 4 * 2),
+            { S_OK, 4, 4, 2, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, }
+        },
+        /*
+         * 5.
+         * Depth field value is ignored if DDS_DEPTH isn't set.
+         */
+        {
+            0, 4, 4, 2, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, 0, 1, 0, }, (4 * 4 * 4 * 2),
+            { S_OK, 4, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, },
+            .todo_info = TRUE
+        },
+        /*
+         * 3D texture with an array size larger than 1. Technically there's no
+         * such thing as a 3D texture array, but it succeeds.
+         */
+        {
+            DDS_DEPTH, 4, 4, 2, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, 0, 2, 0, }, (4 * 4 * 4 * 2 * 2),
+            { S_OK, 4, 4, 2, 2, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, }
+        },
+        /* Cubemap caps are ignored for DXT10 files. */
+        {
+            0, 4, 4, 1, (4 * 4), 1, 0, DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_ALL_FACES,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, 0, 1, 0, }, (4 * 4 * 4 * 6),
+            { S_OK, 4, 4, 1, 1, 1, 0, DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D }
+        },
+        /* Array size value is multiplied by 6 for cubemap files. */
+        {
+            0, 4, 4, 1, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, DDS_RESOURCE_MISC_TEXTURECUBE, 2, 0, },
+            (4 * 4 * 4 * 12),
+            {
+                S_OK, 4, 4, 1, 12, 1, D3D10_RESOURCE_MISC_TEXTURECUBE, DXGI_FORMAT_R8G8B8A8_UNORM,
+                D3D10_RESOURCE_DIMENSION_TEXTURE2D
+            }
+        },
+        /* Resource dimension is validated for cube textures. */
+        {
+            0, 4, 4, 1, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE3D, DDS_RESOURCE_MISC_TEXTURECUBE, 2, 0, },
+            (4 * 4 * 4 * 12), { E_FAIL }, .todo_hr = TRUE
+        },
+        /*
+         * 10.
+         * 1D Texture cube, invalid.
+         */
+        {
+            0, 4, 4, 1, (4 * 4), 1, 0, 0,
+            { DXGI_FORMAT_R8G8B8A8_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE1D, DDS_RESOURCE_MISC_TEXTURECUBE, 2, 0, },
+            (4 * 4 * 4 * 12), { E_FAIL }, .todo_hr = TRUE
+        },
+    };
+    D3DX10_IMAGE_INFO info;
+    unsigned int i;
+    struct
+    {
+        DWORD magic;
+        struct dds_header header;
+        struct dds_header_dxt10 dxt10;
+    } dds;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        const uint32_t file_size = sizeof(dds) + tests[i].pixel_data_size;
+
+        winetest_push_context("Test %u", i);
+
+        dds.magic = MAKEFOURCC('D','D','S',' ');
+        set_dxt10_dds_header(&dds.header, tests[i].append_flags, tests[i].width, tests[i].height,
+                tests[i].depth, tests[i].mip_levels, tests[i].row_pitch, tests[i].caps,
+                tests[i].caps2);
+        dds.dxt10 = tests[i].dxt10;
+
+        memset(&info, 0, sizeof(info));
+        hr = D3DX10GetImageInfoFromMemory(&dds, file_size, NULL, &info, NULL);
+        todo_wine_if(tests[i].todo_hr) ok(hr == tests[i].expected.hr, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr) && SUCCEEDED(tests[i].expected.hr))
+            check_image_info_values(&info, tests[i].expected.width, tests[i].expected.height,
+                    tests[i].expected.depth, tests[i].expected.array_size, tests[i].expected.mip_levels,
+                    tests[i].expected.misc_flags, tests[i].expected.format,
+                    tests[i].expected.resource_dimension, D3DX10_IFF_DDS, tests[i].todo_info);
+
+        winetest_pop_context();
+    }
+
+    /*
+     * Image size (e.g, the size of the pixels) isn't validated, but header
+     * size is.
+     */
+    dds.magic = MAKEFOURCC('D','D','S',' ');
+    set_dxt10_dds_header(&dds.header, tests[0].append_flags, tests[0].width, tests[0].height,
+            tests[0].depth, tests[0].mip_levels, tests[0].row_pitch, tests[0].caps, tests[0].caps2);
+    dds.dxt10 = tests[0].dxt10;
+
+    hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds) - 1, NULL, &info, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DX10GetImageInfoFromMemory(&dds, sizeof(dds), NULL, &info, NULL);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
 
 static void test_get_image_info(void)
 {
@@ -4789,4 +5158,6 @@ START_TEST(d3dx10)
     test_create_effect_from_file();
     test_create_effect_from_resource();
     test_preprocess_shader();
+    test_legacy_dds_header_image_info();
+    test_dxt10_dds_header_image_info();
 }
