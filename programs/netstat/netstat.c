@@ -24,44 +24,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netstat);
 
-static const WCHAR ipW[] = {'I', 'P', 0};
-static const WCHAR ipv6W[] = {'I', 'P', 'v', '6', 0};
-static const WCHAR icmpW[] = {'I', 'C', 'M', 'P', 0};
-static const WCHAR icmpv6W[] = {'I', 'C', 'M', 'P', 'v', '6', 0};
-static const WCHAR tcpW[] = {'T', 'C', 'P', 0};
-static const WCHAR tcpv6W[] = {'T', 'C', 'P', 'v', '6', 0};
-static const WCHAR udpW[] = {'U', 'D', 'P', 0};
-static const WCHAR udpv6W[] = {'U', 'D', 'P', 'v', '6', 0};
-
-static const WCHAR fmtport[] = {'%', 'd', 0};
-static const WCHAR fmtip[] = {'%', 'd', '.', '%', 'd', '.', '%', 'd', '.', '%', 'd', 0};
-static const WCHAR fmtn[] = {'\n', 0};
-static const WCHAR fmtnn[] = {'\n', '%', 's', '\n', 0};
-static const WCHAR fmtcolon[] = {'%', 's', ':', '%', 's', 0};
-static const WCHAR fmttcpout[] = {' ', ' ', '%', '-', '6', 's', ' ', '%', '-', '2', '2', 's', ' ', '%', '-', '2', '2', 's', ' ', '%', 's', '\n', 0};
-static const WCHAR fmtudpout[] = {' ', ' ', '%', '-', '6', 's', ' ', '%', '-', '2', '2', 's', ' ', '*', ':', '*', '\n', 0};
-static const WCHAR fmtethout[] = {'%', '-', '2', '0', 's', ' ', '%', '1', '4', 'l', 'u', ' ', '%', '1', '5', 'l', 'u', '\n', 0};
-static const WCHAR fmtethoutu[] = {'%', '-', '2', '0', 's', ' ', '%', '1', '4', 'l', 'u', '\n', '\n', 0};
-static const WCHAR fmtethheader[] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                                     ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-                                     ' ', '%', '-', '1', '9', 's', ' ', '%', 's', '\n', '\n', 0};
-static const WCHAR fmttcpstat[] = {' ', ' ', '%', '-', '3', '5', 's', ' ', '=', ' ', '%', 'l', 'u', '\n', 0};
-static const WCHAR fmtudpstat[] = {' ', ' ', '%', '-', '2', '1', 's', ' ', '=', ' ', '%', 'l', 'u', '\n', 0};
-
 static const WCHAR tcpstatesW[][16] = {
-    {'?', '?', '?', 0},
-    {'C', 'L', 'O', 'S', 'E', 'D', 0},
-    {'L', 'I', 'S', 'T', 'E', 'N', 'I', 'N', 'G', 0},
-    {'S', 'Y', 'N', '_', 'S', 'E', 'N', 'T', 0},
-    {'S', 'Y', 'N', '_', 'R', 'C', 'V', 'D', 0},
-    {'E', 'S', 'T', 'A', 'B', 'L', 'I', 'S', 'H', 'E', 'D', 0},
-    {'F', 'I', 'N', '_', 'W', 'A', 'I', 'T', '1', 0},
-    {'F', 'I', 'N', '_', 'W', 'A', 'I', 'T', '2', 0},
-    {'C', 'L', 'O', 'S', 'E', '_', 'W', 'A', 'I', 'T', 0},
-    {'C', 'L', 'O', 'S', 'I', 'N', 'G', 0},
-    {'L', 'A', 'S', 'T', '_', 'A', 'C', 'K', 0},
-    {'T', 'I', 'M', 'E', '_', 'W', 'A', 'I', 'T', 0},
-    {'D', 'E', 'L', 'E', 'T', 'E', '_', 'T', 'C', 'B', 0},
+    L"???",
+    L"CLOSED",
+    L"LISTENING",
+    L"SYN_SENT",
+    L"SYN_RCVD",
+    L"ESTABLISHED",
+    L"FIN_WAIT1",
+    L"FIN_WAIT2",
+    L"CLOSE_WAIT",
+    L"CLOSING",
+    L"LAST_ACK",
+    L"TIME_WAIT",
+    L"DELETE_TCB",
 };
 
 /* =========================================================================
@@ -141,11 +117,10 @@ static int WINAPIV NETSTAT_wprintf(const WCHAR *format, ...)
 
 static WCHAR *NETSTAT_load_message(UINT id) {
     static WCHAR msg[2048];
-    static const WCHAR failedW[]  = {'F','a','i','l','e','d','!','\0'};
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
         WINE_FIXME("LoadString failed with %ld\n", GetLastError());
-        lstrcpyW(msg, failedW);
+        lstrcpyW(msg, L"Failed!");
     }
     return msg;
 }
@@ -153,7 +128,7 @@ static WCHAR *NETSTAT_load_message(UINT id) {
 static WCHAR *NETSTAT_port_name(UINT port, WCHAR name[])
 {
     /* FIXME: can we get the name? */
-    swprintf(name, 32, fmtport, htons((WORD)port));
+    swprintf(name, 32, L"%d", htons((WORD)port));
     return name;
 }
 
@@ -163,7 +138,7 @@ static WCHAR *NETSTAT_host_name(UINT ip, WCHAR name[])
 
     /* FIXME: can we get the name? */
     nip = htonl(ip);
-    swprintf(name, MAX_HOSTNAME_LEN, fmtip,
+    swprintf(name, MAX_HOSTNAME_LEN, L"%d.%d.%d.%d",
              (nip >> 24) & 0xFF, (nip >> 16) & 0xFF, (nip >> 8) & 0xFF, (nip) & 0xFF);
     return name;
 }
@@ -171,12 +146,11 @@ static WCHAR *NETSTAT_host_name(UINT ip, WCHAR name[])
 static void NETSTAT_conn_header(void)
 {
     WCHAR local[22], remote[22], state[22];
-    NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_TCP_ACTIVE_CONN));
-    NETSTAT_wprintf(fmtn);
+    NETSTAT_wprintf(L"\n%s\n\n", NETSTAT_load_message(IDS_TCP_ACTIVE_CONN));
     lstrcpyW(local, NETSTAT_load_message(IDS_TCP_LOCAL_ADDR));
     lstrcpyW(remote, NETSTAT_load_message(IDS_TCP_REMOTE_ADDR));
     lstrcpyW(state, NETSTAT_load_message(IDS_TCP_STATE));
-    NETSTAT_wprintf(fmttcpout, NETSTAT_load_message(IDS_TCP_PROTO), local, remote, state);
+    NETSTAT_wprintf(L"  %-6s %-22s %-22s %s\n", NETSTAT_load_message(IDS_TCP_PROTO), local, remote, state);
 }
 
 static void NETSTAT_eth_stats(void)
@@ -197,10 +171,9 @@ static void NETSTAT_eth_stats(void)
     if (err) return;
 
     NETSTAT_wprintf(NETSTAT_load_message(IDS_ETH_STAT));
-    NETSTAT_wprintf(fmtn);
-    NETSTAT_wprintf(fmtn);
+    NETSTAT_wprintf(L"\n\n");
     lstrcpyW(recv, NETSTAT_load_message(IDS_ETH_RECV));
-    NETSTAT_wprintf(fmtethheader, recv, NETSTAT_load_message(IDS_ETH_SENT));
+    NETSTAT_wprintf(L"                           %-19s %s\n\n", recv, NETSTAT_load_message(IDS_ETH_SENT));
 
     octets[0] = octets[1] = 0;
     ucastpkts[0] = ucastpkts[1] = 0;
@@ -224,12 +197,12 @@ static void NETSTAT_eth_stats(void)
         unknown += table->table[i].dwInUnknownProtos;
     }
 
-    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_BYTES), octets[0], octets[1]);
-    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_UNICAST), ucastpkts[0], ucastpkts[1]);
-    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_NUNICAST), nucastpkts[0], nucastpkts[1]);
-    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_DISCARDS), discards[0], discards[1]);
-    NETSTAT_wprintf(fmtethout, NETSTAT_load_message(IDS_ETH_ERRORS), errors[0], errors[1]);
-    NETSTAT_wprintf(fmtethoutu, NETSTAT_load_message(IDS_ETH_UNKNOWN), unknown);
+    NETSTAT_wprintf(L"%-20s %14lu %15lu\n", NETSTAT_load_message(IDS_ETH_BYTES), octets[0], octets[1]);
+    NETSTAT_wprintf(L"%-20s %14lu %15lu\n", NETSTAT_load_message(IDS_ETH_UNICAST), ucastpkts[0], ucastpkts[1]);
+    NETSTAT_wprintf(L"%-20s %14lu %15lu\n", NETSTAT_load_message(IDS_ETH_NUNICAST), nucastpkts[0], nucastpkts[1]);
+    NETSTAT_wprintf(L"%-20s %14lu %15lu\n", NETSTAT_load_message(IDS_ETH_DISCARDS), discards[0], discards[1]);
+    NETSTAT_wprintf(L"%-20s %14lu %15lu\n", NETSTAT_load_message(IDS_ETH_ERRORS), errors[0], errors[1]);
+    NETSTAT_wprintf(L"%-20s %14lu\n\n", NETSTAT_load_message(IDS_ETH_UNKNOWN), unknown);
 
     HeapFree(GetProcessHeap(), 0, table);
 }
@@ -264,9 +237,9 @@ static void NETSTAT_tcp_table(void)
             NETSTAT_host_name(table->table[i].dwRemoteAddr, RemoteIp);
             NETSTAT_port_name(table->table[i].dwRemotePort, RemotePort);
 
-            swprintf(Host, ARRAY_SIZE(Host), fmtcolon, HostIp, HostPort);
-            swprintf(Remote, ARRAY_SIZE(Remote), fmtcolon, RemoteIp, RemotePort);
-            NETSTAT_wprintf(fmttcpout, tcpW, Host, Remote, tcpstatesW[table->table[i].dwState]);
+            swprintf(Host, ARRAY_SIZE(Host), L"%s:%s", HostIp, HostPort);
+            swprintf(Remote, ARRAY_SIZE(Remote), L"%s:%s", RemoteIp, RemotePort);
+            NETSTAT_wprintf(L"  %-6s %-22s %-22s %s\n", L"TCP", Host, Remote, tcpstatesW[table->table[i].dwState]);
         }
     }
     HeapFree(GetProcessHeap(), 0, table);
@@ -278,16 +251,15 @@ static void NETSTAT_tcp_stats(void)
 
     if (GetTcpStatistics(&stats) == NO_ERROR)
     {
-        NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_TCP_STAT));
-        NETSTAT_wprintf(fmtn);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_ACTIVE_OPEN), stats.dwActiveOpens);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_PASSIV_OPEN), stats.dwPassiveOpens);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_FAILED_CONN), stats.dwAttemptFails);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_RESET_CONN),  stats.dwEstabResets);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_CURR_CONN),   stats.dwCurrEstab);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_RECV),   stats.dwInSegs);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_SENT),   stats.dwOutSegs);
-        NETSTAT_wprintf(fmttcpstat, NETSTAT_load_message(IDS_TCP_SEGM_RETRAN), stats.dwRetransSegs);
+        NETSTAT_wprintf(L"\n%s\n\n", NETSTAT_load_message(IDS_TCP_STAT));
+        NETSTAT_wprintf(L"  %-35s = %lu\n", NETSTAT_load_message(IDS_TCP_ACTIVE_OPEN), stats.dwActiveOpens);
+        NETSTAT_wprintf(L"  %-35s = %lu\n", NETSTAT_load_message(IDS_TCP_PASSIV_OPEN), stats.dwPassiveOpens);
+        NETSTAT_wprintf(L"  %-35s = %lu\n", NETSTAT_load_message(IDS_TCP_FAILED_CONN), stats.dwAttemptFails);
+        NETSTAT_wprintf(L"  %-35s = %lu\n", NETSTAT_load_message(IDS_TCP_RESET_CONN),  stats.dwEstabResets);
+        NETSTAT_wprintf(L"  %-35s = %lu\n", NETSTAT_load_message(IDS_TCP_CURR_CONN),   stats.dwCurrEstab);
+        NETSTAT_wprintf(L"  %-35s = %lu\n", NETSTAT_load_message(IDS_TCP_SEGM_RECV),   stats.dwInSegs);
+        NETSTAT_wprintf(L"  %-35s = %lu\n", NETSTAT_load_message(IDS_TCP_SEGM_SENT),   stats.dwOutSegs);
+        NETSTAT_wprintf(L"  %-35s = %lu\n", NETSTAT_load_message(IDS_TCP_SEGM_RETRAN), stats.dwRetransSegs);
     }
 }
 
@@ -313,8 +285,8 @@ static void NETSTAT_udp_table(void)
         NETSTAT_host_name(table->table[i].dwLocalAddr, HostIp);
         NETSTAT_port_name(table->table[i].dwLocalPort, HostPort);
 
-        swprintf(Host, ARRAY_SIZE(Host), fmtcolon, HostIp, HostPort);
-        NETSTAT_wprintf(fmtudpout, udpW, Host);
+        swprintf(Host, ARRAY_SIZE(Host), L"%s:%s", HostIp, HostPort);
+        NETSTAT_wprintf(L"  %-6s %-22s *:*\n", L"UDP", Host);
     }
     HeapFree(GetProcessHeap(), 0, table);
 }
@@ -325,25 +297,24 @@ static void NETSTAT_udp_stats(void)
 
     if (GetUdpStatistics(&stats) == NO_ERROR)
     {
-        NETSTAT_wprintf(fmtnn, NETSTAT_load_message(IDS_UDP_STAT));
-        NETSTAT_wprintf(fmtn);
-        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_DGRAMS_RECV), stats.dwInDatagrams);
-        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_NO_PORTS), stats.dwNoPorts);
-        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_RECV_ERRORS), stats.dwInErrors);
-        NETSTAT_wprintf(fmtudpstat, NETSTAT_load_message(IDS_UDP_DGRAMS_SENT),  stats.dwOutDatagrams);
+        NETSTAT_wprintf(L"\n%s\n\n", NETSTAT_load_message(IDS_UDP_STAT));
+        NETSTAT_wprintf(L"  %-21s = %lu\n", NETSTAT_load_message(IDS_UDP_DGRAMS_RECV), stats.dwInDatagrams);
+        NETSTAT_wprintf(L"  %-21s = %lu\n", NETSTAT_load_message(IDS_UDP_NO_PORTS), stats.dwNoPorts);
+        NETSTAT_wprintf(L"  %-21s = %lu\n", NETSTAT_load_message(IDS_UDP_RECV_ERRORS), stats.dwInErrors);
+        NETSTAT_wprintf(L"  %-21s = %lu\n", NETSTAT_load_message(IDS_UDP_DGRAMS_SENT),  stats.dwOutDatagrams);
     }
 }
 
 static NETSTATPROTOCOLS NETSTAT_get_protocol(WCHAR name[])
 {
-    if (!wcsicmp(name, ipW)) return PROT_IP;
-    if (!wcsicmp(name, ipv6W)) return PROT_IPV6;
-    if (!wcsicmp(name, icmpW)) return PROT_ICMP;
-    if (!wcsicmp(name, icmpv6W)) return PROT_ICMPV6;
-    if (!wcsicmp(name, tcpW)) return PROT_TCP;
-    if (!wcsicmp(name, tcpv6W)) return PROT_TCPV6;
-    if (!wcsicmp(name, udpW)) return PROT_UDP;
-    if (!wcsicmp(name, udpv6W)) return PROT_UDPV6;
+    if (!wcsicmp(name, L"IP")) return PROT_IP;
+    if (!wcsicmp(name, L"IPv6")) return PROT_IPV6;
+    if (!wcsicmp(name, L"ICMP")) return PROT_ICMP;
+    if (!wcsicmp(name, L"ICMPv6")) return PROT_ICMPV6;
+    if (!wcsicmp(name, L"TCP")) return PROT_TCP;
+    if (!wcsicmp(name, L"TCPv6")) return PROT_TCPV6;
+    if (!wcsicmp(name, L"UDP")) return PROT_UDP;
+    if (!wcsicmp(name, L"UDPv6")) return PROT_UDPV6;
     return PROT_UNKNOWN;
 }
 
