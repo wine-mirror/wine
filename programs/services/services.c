@@ -51,29 +51,6 @@ static HANDLE job_object, job_completion_port;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
-static const WCHAR SZ_LOCAL_SYSTEM[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
-
-/* Registry constants */
-static const WCHAR SZ_SERVICES_KEY[] = { 'S','y','s','t','e','m','\\',
-      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-      'S','e','r','v','i','c','e','s',0 };
-
-/* Service key values names */
-static const WCHAR SZ_DISPLAY_NAME[]      = {'D','i','s','p','l','a','y','N','a','m','e',0 };
-static const WCHAR SZ_TYPE[]              = {'T','y','p','e',0 };
-static const WCHAR SZ_START[]             = {'S','t','a','r','t',0 };
-static const WCHAR SZ_ERROR[]             = {'E','r','r','o','r','C','o','n','t','r','o','l',0 };
-static const WCHAR SZ_IMAGE_PATH[]        = {'I','m','a','g','e','P','a','t','h',0};
-static const WCHAR SZ_GROUP[]             = {'G','r','o','u','p',0};
-static const WCHAR SZ_DEPEND_ON_SERVICE[] = {'D','e','p','e','n','d','O','n','S','e','r','v','i','c','e',0};
-static const WCHAR SZ_DEPEND_ON_GROUP[]   = {'D','e','p','e','n','d','O','n','G','r','o','u','p',0};
-static const WCHAR SZ_OBJECT_NAME[]       = {'O','b','j','e','c','t','N','a','m','e',0};
-static const WCHAR SZ_TAG[]               = {'T','a','g',0};
-static const WCHAR SZ_DESCRIPTION[]       = {'D','e','s','c','r','i','p','t','i','o','n',0};
-static const WCHAR SZ_PRESHUTDOWN[]       = {'P','r','e','s','h','u','t','d','o','w','n','T','i','m','e','o','u','t',0};
-static const WCHAR SZ_WOW64[]             = {'W','O','W','6','4',0};
-static const WCHAR SZ_DELAYED_AUTOSTART[] = {'D','e','l','a','y','e','d','A','u','t','o','S','t','a','r','t',0};
-
 static DWORD process_create(const WCHAR *name, struct process_entry **entry)
 {
     DWORD err;
@@ -163,35 +140,22 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
     DWORD err, value = 0;
     WCHAR *wptr;
 
-    if ((err = load_reg_string(hKey, SZ_IMAGE_PATH,   TRUE, &entry->config.lpBinaryPathName)) != 0)
-        return err;
-    if ((err = load_reg_string(hKey, SZ_GROUP,        0,    &entry->config.lpLoadOrderGroup)) != 0)
-        return err;
-    if ((err = load_reg_string(hKey, SZ_OBJECT_NAME,  TRUE, &entry->config.lpServiceStartName)) != 0)
-        return err;
-    if ((err = load_reg_string(hKey, SZ_DISPLAY_NAME, 0,    &entry->config.lpDisplayName)) != 0)
-        return err;
-    if ((err = load_reg_string(hKey, SZ_DESCRIPTION,  0,    &entry->description)) != 0)
-        return err;
-    if ((err = load_reg_multisz(hKey, SZ_DEPEND_ON_SERVICE, TRUE, &entry->dependOnServices)) != 0)
-        return err;
-    if ((err = load_reg_multisz(hKey, SZ_DEPEND_ON_GROUP, FALSE, &entry->dependOnGroups)) != 0)
-        return err;
+    if ((err = load_reg_string(hKey, L"ImagePath",   TRUE, &entry->config.lpBinaryPathName))) return err;
+    if ((err = load_reg_string(hKey, L"Group", FALSE, &entry->config.lpLoadOrderGroup))) return err;
+    if ((err = load_reg_string(hKey, L"ObjectName",  TRUE, &entry->config.lpServiceStartName))) return err;
+    if ((err = load_reg_string(hKey, L"DisplayName", FALSE, &entry->config.lpDisplayName))) return err;
+    if ((err = load_reg_string(hKey, L"Description",  FALSE, &entry->description))) return err;
+    if ((err = load_reg_multisz(hKey, L"DependOnService", TRUE, &entry->dependOnServices))) return err;
+    if ((err = load_reg_multisz(hKey, L"DependOnGroup", FALSE, &entry->dependOnGroups))) return err;
+    if ((err = load_reg_dword(hKey, L"Type",  &entry->config.dwServiceType))) return err;
+    if ((err = load_reg_dword(hKey, L"Start", &entry->config.dwStartType))) return err;
+    if ((err = load_reg_dword(hKey, L"ErrorControl", &entry->config.dwErrorControl))) return err;
+    if ((err = load_reg_dword(hKey, L"Tag", &entry->config.dwTagId))) return err;
+    if ((err = load_reg_dword(hKey, L"PreshutdownTimeout", &entry->preshutdown_timeout))) return err;
 
-    if ((err = load_reg_dword(hKey, SZ_TYPE,  &entry->config.dwServiceType)) != 0)
-        return err;
-    if ((err = load_reg_dword(hKey, SZ_START, &entry->config.dwStartType)) != 0)
-        return err;
-    if ((err = load_reg_dword(hKey, SZ_ERROR, &entry->config.dwErrorControl)) != 0)
-        return err;
-    if ((err = load_reg_dword(hKey, SZ_TAG,   &entry->config.dwTagId)) != 0)
-        return err;
-    if ((err = load_reg_dword(hKey, SZ_PRESHUTDOWN, &entry->preshutdown_timeout)) != 0)
-        return err;
-
-    if (load_reg_dword(hKey, SZ_WOW64, &value) == 0 && value == 1)
+    if (load_reg_dword(hKey, L"WOW64", &value) == 0 && value == 1)
         entry->is_wow64 = TRUE;
-    if (load_reg_dword(hKey, SZ_DELAYED_AUTOSTART, &value) == 0 && value == 1)
+    if (load_reg_dword(hKey, L"DelayedAutoStart", &value) == 0 && value == 1)
         entry->delayed_autostart = TRUE;
 
     WINE_TRACE("Image path           = %s\n", wine_dbgstr_w(entry->config.lpBinaryPathName) );
@@ -242,6 +206,11 @@ static DWORD reg_set_multisz_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string
     return RegSetValueExW(hKey, value_name, 0, REG_MULTI_SZ, (const BYTE*)string, sizeof(WCHAR)*(ptr - string + 1));
 }
 
+static DWORD reg_set_dword_value(HKEY hKey, LPCWSTR value_name, DWORD val)
+{
+    return RegSetValueExW(hKey, value_name, 0, REG_DWORD, (const BYTE *)&val, sizeof(val));
+}
+
 DWORD save_service_config(struct service_entry *entry)
 {
     DWORD err;
@@ -251,49 +220,34 @@ DWORD save_service_config(struct service_entry *entry)
     if (err != ERROR_SUCCESS)
         goto cleanup;
 
-    if ((err = reg_set_string_value(hKey, SZ_DISPLAY_NAME, entry->config.lpDisplayName)) != 0)
-        goto cleanup;
-    if ((err = reg_set_string_value(hKey, SZ_IMAGE_PATH, entry->config.lpBinaryPathName)) != 0)
-        goto cleanup;
-    if ((err = reg_set_string_value(hKey, SZ_GROUP, entry->config.lpLoadOrderGroup)) != 0)
-        goto cleanup;
-    if ((err = reg_set_string_value(hKey, SZ_OBJECT_NAME, entry->config.lpServiceStartName)) != 0)
-        goto cleanup;
-    if ((err = reg_set_string_value(hKey, SZ_DESCRIPTION, entry->description)) != 0)
-        goto cleanup;
-    if ((err = reg_set_multisz_value(hKey, SZ_DEPEND_ON_SERVICE, entry->dependOnServices)) != 0)
-        goto cleanup;
-    if ((err = reg_set_multisz_value(hKey, SZ_DEPEND_ON_GROUP, entry->dependOnGroups)) != 0)
-        goto cleanup;
-    if ((err = RegSetValueExW(hKey, SZ_START, 0, REG_DWORD, (LPBYTE)&entry->config.dwStartType, sizeof(DWORD))) != 0)
-        goto cleanup;
-    if ((err = RegSetValueExW(hKey, SZ_ERROR, 0, REG_DWORD, (LPBYTE)&entry->config.dwErrorControl, sizeof(DWORD))) != 0)
-        goto cleanup;
-    if ((err = RegSetValueExW(hKey, SZ_TYPE, 0, REG_DWORD, (LPBYTE)&entry->config.dwServiceType, sizeof(DWORD))) != 0)
-        goto cleanup;
-    if ((err = RegSetValueExW(hKey, SZ_PRESHUTDOWN, 0, REG_DWORD, (LPBYTE)&entry->preshutdown_timeout, sizeof(DWORD))) != 0)
-        goto cleanup;
-    if ((err = RegSetValueExW(hKey, SZ_PRESHUTDOWN, 0, REG_DWORD, (LPBYTE)&entry->preshutdown_timeout, sizeof(DWORD))) != 0)
-        goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"DisplayName", entry->config.lpDisplayName))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"ImagePath", entry->config.lpBinaryPathName))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"Group", entry->config.lpLoadOrderGroup))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"ObjectName", entry->config.lpServiceStartName))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"Description", entry->description))) goto cleanup;
+    if ((err = reg_set_multisz_value(hKey, L"DependOnService", entry->dependOnServices))) goto cleanup;
+    if ((err = reg_set_multisz_value(hKey, L"DependOnGroup", entry->dependOnGroups))) goto cleanup;
+    if ((err = reg_set_dword_value(hKey, L"Start", entry->config.dwStartType))) goto cleanup;
+    if ((err = reg_set_dword_value(hKey, L"ErrorControl", entry->config.dwErrorControl))) goto cleanup;
+    if ((err = reg_set_dword_value(hKey, L"Type", entry->config.dwServiceType))) goto cleanup;
+    if ((err = reg_set_dword_value(hKey, L"PreshutdownTimeout", entry->preshutdown_timeout))) goto cleanup;
 
     if (entry->delayed_autostart)
-        err = RegSetValueExW(hKey, SZ_DELAYED_AUTOSTART, 0, REG_DWORD, (LPBYTE)&entry->delayed_autostart, sizeof(DWORD));
+        err = reg_set_dword_value(hKey, L"DelayedAutoStart", entry->delayed_autostart);
     else
-        err = RegDeleteValueW(hKey, SZ_DELAYED_AUTOSTART);
+        err = RegDeleteValueW(hKey, L"DelayedAutoStart");
     if (err != 0 && err != ERROR_FILE_NOT_FOUND)
         goto cleanup;
 
     if (entry->is_wow64)
     {
-        const DWORD is_wow64 = 1;
-        if ((err = RegSetValueExW(hKey, SZ_WOW64, 0, REG_DWORD, (LPBYTE)&is_wow64, sizeof(DWORD))) != 0)
-            goto cleanup;
+        if ((err = reg_set_dword_value(hKey, L"WOW64", TRUE))) goto cleanup;
     }
 
     if (entry->config.dwTagId)
-        err = RegSetValueExW(hKey, SZ_TAG, 0, REG_DWORD, (LPBYTE)&entry->config.dwTagId, sizeof(DWORD));
+        err = reg_set_dword_value(hKey, L"Tag", entry->config.dwTagId);
     else
-        err = RegDeleteValueW(hKey, SZ_TAG);
+        err = RegDeleteValueW(hKey, L"Tag");
 
     if (err != 0 && err != ERROR_FILE_NOT_FOUND)
         goto cleanup;
@@ -451,7 +405,6 @@ static BOOL is_root_pnp_service(HDEVINFO set, const struct service_entry *servic
 
 static void scmdatabase_autostart_services(struct scmdatabase *db)
 {
-    static const WCHAR rootW[] = {'R','O','O','T',0};
     struct service_entry **services_list;
     unsigned int i = 0;
     unsigned int size = 32;
@@ -463,7 +416,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     if (!services_list)
         return;
 
-    if ((set = SetupDiGetClassDevsW( NULL, rootW, NULL, DIGCF_ALLCLASSES )) == INVALID_HANDLE_VALUE)
+    if ((set = SetupDiGetClassDevsW( NULL, L"ROOT", NULL, DIGCF_ALLCLASSES )) == INVALID_HANDLE_VALUE)
         WINE_ERR("Failed to enumerate devices, error %#lx.\n", GetLastError());
 
     scmdatabase_lock(db);
@@ -564,7 +517,7 @@ BOOL validate_service_config(struct service_entry *entry)
     case SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS:
     case SERVICE_WIN32_SHARE_PROCESS | SERVICE_INTERACTIVE_PROCESS:
         /* These can be only run as LocalSystem */
-        if (entry->config.lpServiceStartName && wcsicmp(entry->config.lpServiceStartName, SZ_LOCAL_SYSTEM) != 0)
+        if (entry->config.lpServiceStartName && wcsicmp(entry->config.lpServiceStartName, L"LocalSystem") != 0)
         {
             WINE_ERR("Service %s is interactive but has a start name\n", wine_dbgstr_w(entry->name));
             return FALSE;
@@ -591,7 +544,7 @@ BOOL validate_service_config(struct service_entry *entry)
     }
 
     if (entry->config.lpServiceStartName == NULL)
-        entry->config.lpServiceStartName = wcsdup(SZ_LOCAL_SYSTEM);
+        entry->config.lpServiceStartName = wcsdup(L"LocalSystem");
 
     return TRUE;
 }
@@ -678,7 +631,7 @@ static DWORD scmdatabase_create(struct scmdatabase **db)
     InitializeCriticalSectionEx(&(*db)->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     (*db)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": scmdatabase");
 
-    err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, 0, NULL,
+    err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services", 0, NULL,
                           REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL,
                           &(*db)->root_key, NULL);
     if (err != ERROR_SUCCESS)
@@ -802,9 +755,7 @@ void service_unlock(struct service_entry *service)
  * value here */
 static LPWSTR service_get_pipe_name(void)
 {
-    static const WCHAR format[] = { '\\','\\','.','\\','p','i','p','e','\\',
-        'n','e','t','\\','N','t','C','o','n','t','r','o','l','P','i','p','e','%','u',0};
-    static WCHAR name[ARRAY_SIZE(format) + 10]; /* lstrlenW("4294967295") */
+    static WCHAR name[ARRAY_SIZE(L"\\\\.\\pipe\\net\\NtControlPipe") + 10]; /* lstrlenW("4294967295") */
     static DWORD service_current = 0;
     DWORD len, value = -1;
     LONG ret;
@@ -817,7 +768,7 @@ static LPWSTR service_get_pipe_name(void)
         service_current = max(service_current, value + 1);
     RegSetValueExW(service_current_key, NULL, 0, REG_DWORD,
         (BYTE *)&service_current, sizeof(service_current));
-    swprintf(name, ARRAY_SIZE(name), format, service_current);
+    swprintf(name, ARRAY_SIZE(name), L"\\\\.\\pipe\\net\\NtControlPipe%u", service_current);
     service_current++;
     return name;
 }
@@ -865,7 +816,6 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
 
 static DWORD get_winedevice_binary_path(struct service_entry *service_entry, WCHAR **path, BOOL *is_wow64)
 {
-    static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',0};
     WCHAR system_dir[MAX_PATH];
     DWORD type;
 
@@ -878,11 +828,11 @@ static DWORD get_winedevice_binary_path(struct service_entry *service_entry, WCH
 
     GetSystemDirectoryW(system_dir, MAX_PATH);
     free(*path);
-    if (!(*path = malloc(wcslen(system_dir) * sizeof(WCHAR) + sizeof(winedeviceW))))
+    if (!(*path = malloc(wcslen(system_dir) * sizeof(WCHAR) + sizeof(L"\\winedevice.exe"))))
        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
 
     lstrcpyW(*path, system_dir);
-    lstrcatW(*path, winedeviceW);
+    lstrcatW(*path, L"\\winedevice.exe");
     return ERROR_SUCCESS;
 }
 
@@ -915,15 +865,14 @@ static struct process_entry *get_winedevice_process(struct service_entry *servic
 static DWORD add_winedevice_service(const struct service_entry *service, WCHAR *path, BOOL is_wow64,
                                     struct service_entry **entry)
 {
-    static const WCHAR format[] = {'W','i','n','e','d','e','v','i','c','e','%','u',0};
-    static WCHAR name[ARRAY_SIZE(format) + 10]; /* lstrlenW("4294967295") */
+    static WCHAR name[ARRAY_SIZE(L"Winedevice") + 10]; /* lstrlenW("4294967295") */
     static DWORD current = 0;
     struct scmdatabase *db = service->db;
     DWORD err;
 
     for (;;)
     {
-        swprintf(name, ARRAY_SIZE(name), format, ++current);
+        swprintf(name, ARRAY_SIZE(name), L"Winedevice%u", ++current);
         if (!scmdatabase_find_service(db, name)) break;
     }
 
@@ -938,7 +887,7 @@ static DWORD add_winedevice_service(const struct service_entry *service, WCHAR *
 
     if (!((*entry)->config.lpBinaryPathName = wcsdup(path)))
         goto error;
-    if (!((*entry)->config.lpServiceStartName = wcsdup(SZ_LOCAL_SYSTEM)))
+    if (!((*entry)->config.lpServiceStartName = wcsdup(L"LocalSystem")))
         goto error;
     if (!((*entry)->config.lpDisplayName = wcsdup(name)))
         goto error;
@@ -1073,8 +1022,7 @@ found:
     si.cb = sizeof(STARTUPINFOW);
     if (!(service_entry->config.dwServiceType & SERVICE_INTERACTIVE_PROCESS))
     {
-        static WCHAR desktopW[] = {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n','\\','D','e','f','a','u','l','t',0};
-        si.lpDesktop = desktopW;
+        si.lpDesktop = (WCHAR *)L"__wineservice_winstation\\Default";
     }
 
     if (!environment && OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &token))
@@ -1255,34 +1203,24 @@ void process_terminate(struct process_entry *process)
 
 static void load_registry_parameters(void)
 {
-    static const WCHAR controlW[] =
-        { 'S','y','s','t','e','m','\\',
-          'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-          'C','o','n','t','r','o','l',0 };
-    static const WCHAR pipetimeoutW[] =
-        {'S','e','r','v','i','c','e','s','P','i','p','e','T','i','m','e','o','u','t',0};
-    static const WCHAR killtimeoutW[] =
-        {'W','a','i','t','T','o','K','i','l','l','S','e','r','v','i','c','e','T','i','m','e','o','u','t',0};
-    static const WCHAR autostartdelayW[] =
-        {'A','u','t','o','S','t','a','r','t','D','e','l','a','y',0};
     HKEY key;
     WCHAR buffer[64];
     DWORD type, count, val;
 
-    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, controlW, &key )) return;
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control", &key )) return;
 
     count = sizeof(buffer);
-    if (!RegQueryValueExW( key, pipetimeoutW, NULL, &type, (BYTE *)buffer, &count ) &&
+    if (!RegQueryValueExW( key, L"ServicesPipeTimeout", NULL, &type, (BYTE *)buffer, &count ) &&
         type == REG_SZ && (val = wcstol( buffer, NULL, 10 )))
         service_pipe_timeout = val;
 
     count = sizeof(buffer);
-    if (!RegQueryValueExW( key, killtimeoutW, NULL, &type, (BYTE *)buffer, &count ) &&
+    if (!RegQueryValueExW( key, L"WaitToKillServiceTimeout", NULL, &type, (BYTE *)buffer, &count ) &&
         type == REG_SZ && (val = wcstol( buffer, NULL, 10 )))
         service_kill_timeout = val;
 
     count = sizeof(val);
-    if (!RegQueryValueExW( key, autostartdelayW, NULL, &type, (BYTE *)&val, &count ) && type == REG_DWORD)
+    if (!RegQueryValueExW( key, L"AutoStartDelay", NULL, &type, (BYTE *)&val, &count ) && type == REG_DWORD)
         autostart_delay = val;
 
     RegCloseKey( key );
@@ -1334,10 +1272,6 @@ static DWORD WINAPI process_monitor_thread_proc( void *arg )
 
 int __cdecl main(int argc, char *argv[])
 {
-    static const WCHAR service_current_key_str[] = { 'S','Y','S','T','E','M','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'S','e','r','v','i','c','e','C','u','r','r','e','n','t',0};
     static const WCHAR svcctl_started_event[] = SVCCTL_STARTED_EVENT;
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_limit;
     JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info;
@@ -1363,7 +1297,7 @@ int __cdecl main(int argc, char *argv[])
 
     started_event = CreateEventW(NULL, TRUE, FALSE, svcctl_started_event);
 
-    err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, service_current_key_str, 0,
+    err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\ServiceCurrent", 0,
         NULL, REG_OPTION_VOLATILE, KEY_SET_VALUE | KEY_QUERY_VALUE, NULL,
         &service_current_key, NULL);
     if (err != ERROR_SUCCESS)

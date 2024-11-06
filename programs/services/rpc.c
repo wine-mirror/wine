@@ -115,7 +115,6 @@ struct sc_lock
     struct scmdatabase *db;
 };
 
-static const WCHAR emptyW[] = {0};
 static PTP_CLEANUP_GROUP cleanup_group;
 HANDLE exit_event;
 
@@ -164,7 +163,7 @@ static void CALLBACK shutdown_callback(TP_CALLBACK_INSTANCE *instance, void *con
     result = WaitForSingleObject(process->control_mutex, 30000);
     if (result == WAIT_OBJECT_0)
     {
-        process_send_control(process, FALSE, emptyW, SERVICE_CONTROL_STOP, NULL, 0, &result);
+        process_send_control(process, FALSE, L"", SERVICE_CONTROL_STOP, NULL, 0, &result);
         ReleaseMutex(process->control_mutex);
     }
 
@@ -1227,7 +1226,7 @@ BOOL process_send_control(struct process_entry *process, BOOL shared_process, co
         control |= SERVICE_CONTROL_FORWARD_FLAG;
         data = (BYTE *)name;
         data_size = (lstrlenW(name) + 1) * sizeof(WCHAR);
-        name = emptyW;
+        name = L"";
     }
 
     /* calculate how much space we need to send the startup info */
