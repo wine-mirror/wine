@@ -2672,7 +2672,7 @@ static inline void wined3d_private_store_free_private_data(struct wined3d_privat
     if (entry->flags & WINED3DSPD_IUNKNOWN)
         IUnknown_Release(entry->content.object);
     list_remove(&entry->entry);
-    HeapFree(GetProcessHeap(), 0, entry);
+    free(entry);
 }
 
 static inline void wined3d_private_store_cleanup(struct wined3d_private_store *store)
@@ -2700,8 +2700,7 @@ static inline HRESULT wined3d_private_store_set_private_data(struct wined3d_priv
         ptr = &data;
     }
 
-    if (!(d = HeapAlloc(GetProcessHeap(), 0,
-            FIELD_OFFSET(struct wined3d_private_data, content.data[data_size]))))
+    if (!(d = malloc(FIELD_OFFSET(struct wined3d_private_data, content.data[data_size]))))
         return E_OUTOFMEMORY;
 
     d->tag = *guid;
