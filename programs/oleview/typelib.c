@@ -25,63 +25,38 @@
 WINE_DEFAULT_DEBUG_CHANNEL(oleview);
 
 TYPELIB typelib;
-static const WCHAR wszTypeLib[] = { 'T','Y','P','E','L','I','B','\0' };
+static const WCHAR wszVT_BOOL[] = L"VARIANT_BOOL";
+static const WCHAR wszVT_UI1[] = L"unsigned char";
+static const WCHAR wszVT_UI2[] = L"unsigned short";
+static const WCHAR wszVT_UI4[] = L"unsigned long";
+static const WCHAR wszVT_UI8[] = L"uint64";
+static const WCHAR wszVT_UINT[] = L"unsigned int";
+static const WCHAR wszVT_I1[] = L"char";
+static const WCHAR wszVT_I2[] = L"short";
+static const WCHAR wszVT_I4[] = L"long";
+static const WCHAR wszVT_I8[] = L"int64";
+static const WCHAR wszVT_R4[] = L"single";
+static const WCHAR wszVT_INT[] = L"int";
+static const WCHAR wszVT_BSTR[] = L"BSTR";
+static const WCHAR wszVT_CY[] = L"CURRENCY";
+static const WCHAR wszVT_VARIANT[] = L"VARIANT";
+static const WCHAR wszVT_VOID[] = L"void";
+static const WCHAR wszVT_ERROR[] = L"SCODE";
+static const WCHAR wszVT_LPSTR[] = L"LPSTR";
+static const WCHAR wszVT_LPWSTR[] = L"LPWSTR";
+static const WCHAR wszVT_HRESULT[] = L"HRESULT";
+static const WCHAR wszVT_UNKNOWN[] = L"IUnknown";
+static const WCHAR wszVT_DISPATCH[] = L"IDispatch";
+static const WCHAR wszVT_DATE[] = L"DATE";
+static const WCHAR wszVT_R8[] = L"double";
+static const WCHAR wszVT_SAFEARRAY[] = L"SAFEARRAY";
 
-static const WCHAR wszFailed[] = { '<','f','a','i','l','e','d','>','\0' };
-
-static const WCHAR wszUUID[] = { 'u','u','i','d','\0' };
-static const WCHAR wszOdl[] = { 'o','d','l','\0' };
-
-static const WCHAR wszVT_BOOL[]
-    = { 'V','A','R','I','A','N','T','_','B','O','O','L','\0' };
-static const WCHAR wszVT_UI1[]
-    = { 'u','n','s','i','g','n','e','d',' ','c','h','a','r','\0' };
-static const WCHAR wszVT_UI2[]
-    = { 'u','n','s','i','g','n','e','d',' ','s','h','o','r','t','\0' };
-static const WCHAR wszVT_UI4[]
-    = { 'u','n','s','i','g','n','e','d',' ','l','o','n','g','\0' };
-static const WCHAR wszVT_UI8[] = { 'u','i','n','t','6','4','\0' };
-static const WCHAR wszVT_UINT[]
-    = { 'u','n','s','i','g','n','e','d',' ','i','n','t','\0' };
-static const WCHAR wszVT_I1[] = { 'c','h','a','r','\0' };
-static const WCHAR wszVT_I2[] = { 's','h','o','r','t','\0' };
-static const WCHAR wszVT_I4[] = { 'l','o','n','g','\0' };
-static const WCHAR wszVT_I8[] = { 'i','n','t','6','4','\0' };
-static const WCHAR wszVT_R4[] = { 's','i','n','g','l','e','\0' };
-static const WCHAR wszVT_INT[] = { 'i','n','t','\0' };
-static const WCHAR wszVT_BSTR[] = { 'B','S','T','R','\0' };
-static const WCHAR wszVT_CY[] = { 'C','U','R','R','E','N','C','Y','\0' };
-static const WCHAR wszVT_VARIANT[] = { 'V','A','R','I','A','N','T','\0' };
-static const WCHAR wszVT_VOID[] = { 'v','o','i','d','\0' };
-static const WCHAR wszVT_ERROR[] = { 'S','C','O','D','E','\0' };
-static const WCHAR wszVT_LPSTR[] = { 'L','P','S','T','R','\0' };
-static const WCHAR wszVT_LPWSTR[] = { 'L','P','W','S','T','R','\0' };
-static const WCHAR wszVT_HRESULT[] = { 'H','R','E','S','U','L','T','\0' };
-static const WCHAR wszVT_UNKNOWN[] = { 'I','U','n','k','n','o','w','n','\0' };
-static const WCHAR wszVT_DISPATCH[] = { 'I','D','i','s','p','a','t','c','h','\0' };
-static const WCHAR wszVT_DATE[] = { 'D','A','T','E','\0' };
-static const WCHAR wszVT_R8[] = { 'd','o','u','b','l','e','\0' };
-static const WCHAR wszVT_SAFEARRAY[] = { 'S','A','F','E','A','R','R','A','Y','\0' };
-
-static const WCHAR wszFormat[] = { '0','x','%','.','8','l','x','\0' };
-static const WCHAR wszStdCall[] = { '_','s','t','d','c','a','l','l','\0' };
-static const WCHAR wszId[] = { 'i','d','\0' };
-static const WCHAR wszHelpstring[] = { 'h','e','l','p','s','t','r','i','n','g','\0' };
-static const WCHAR wszPropPut[] = { 'p','r','o','p','p','u','t','\0' };
-static const WCHAR wszPropGet[] = { 'p','r','o','p','g','e','t','\0' };
-static const WCHAR wszPropPutRef[] = { 'p','r','o','p','p','u','t','r','e','f','\0' };
-static const WCHAR wszPARAMFLAG_FIN[] = { 'i','n','\0' };
-static const WCHAR wszPARAMFLAG_FOUT[] = { 'o','u','t','\0' };
-static const WCHAR wszPARAMFLAG_FLCID[] = { 'c','i','d','\0' };
-static const WCHAR wszPARAMFLAG_FRETVAL[] = { 'r','e','t','v','a','l','\0' };
-static const WCHAR wszPARAMFLAG_FOPT[] = { 'o','p','t','i','o','n','a','l','\0' };
-static const WCHAR wszPARAMFLAG_FHASCUSTDATA[]
-    = { 'h','a','s','c','u','s','t','d','a','t','a','\0' };
-static const WCHAR wszDefaultValue[]
-    = { 'd','e','f','a','u','l','t','v','a','l','u','e','\0' };
-
-static const WCHAR wszReadOnly[] = { 'r','e','a','d','o','n','l','y','\0' };
-static const WCHAR wszConst[] = { 'c','o','n','s','t','\0' };
+static const WCHAR wszPARAMFLAG_FIN[] = L"in";
+static const WCHAR wszPARAMFLAG_FOUT[] = L"out";
+static const WCHAR wszPARAMFLAG_FLCID[] = L"cid";
+static const WCHAR wszPARAMFLAG_FRETVAL[] = L"retval";
+static const WCHAR wszPARAMFLAG_FOPT[] = L"optional";
+static const WCHAR wszPARAMFLAG_FHASCUSTDATA[] = L"hascustdata";
 
 static void ShowLastError(void)
 {
@@ -140,8 +115,6 @@ static void GetSaveIdlAsPath(void)
     WCHAR *pFileName;
     WCHAR wszPath[MAX_LOAD_STRING];
     WCHAR wszDir[MAX_LOAD_STRING];
-    static const WCHAR wszDefaultExt[] = { 'i','d','l',0 };
-    static const WCHAR wszIdlFiles[] = { '*','.','i','d','l','\0','\0' };
 
     memset(&saveidl, 0, sizeof(saveidl));
 
@@ -163,12 +136,12 @@ static void GetSaveIdlAsPath(void)
     saveidl.lStructSize = sizeof(OPENFILENAMEW);
     saveidl.hwndOwner = globals.hTypeLibWnd;
     saveidl.hInstance = globals.hMainInst;
-    saveidl.lpstrFilter = wszIdlFiles;
+    saveidl.lpstrFilter = L"*.idl\0";
     saveidl.lpstrFile = wszPath;
     saveidl.nMaxFile = MAX_LOAD_STRING;
     saveidl.lpstrInitialDir = wszDir;
     saveidl.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-    saveidl.lpstrDefExt = wszDefaultExt;
+    saveidl.lpstrDefExt = L"idl";
 
     if (GetSaveFileNameW(&saveidl))
         SaveIdl(wszPath);
@@ -189,12 +162,12 @@ static void AddToTLDataStrW(TYPELIB_DATA *pTLData, const WCHAR *wszSource)
     pTLData->idlLen += SourceLen;
 }
 
-static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
+static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, const WCHAR *wszSource)
 {
     int lineLen = lstrlenW(wszSource);
     int newLinesNo = 0;
-    WCHAR *pSourcePos = wszSource;
-    WCHAR *pSourceBeg;
+    const WCHAR *pSourcePos = wszSource;
+    const WCHAR *pSourceBeg;
 
     if(!lineLen) return;
     while(*pSourcePos)
@@ -218,14 +191,8 @@ static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
         }
         newLinesNo--;
 
-        if(*pSourcePos)
-        {
-            *pSourcePos = '\0';
-            lineLen = lstrlenW(pSourceBeg)+1;
-            *pSourcePos = '\n';
-            pSourcePos += 1;
-        }
-        else lineLen = lstrlenW(pSourceBeg);
+        if(*pSourcePos) pSourcePos++;
+        lineLen = pSourcePos - pSourceBeg;
 
         pTLData->idl[pTLData->idlLen] = L' ';
         pTLData->idl[pTLData->idlLen+1] = L' ';
@@ -285,7 +252,6 @@ static void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, 
     HRESULT hRes;
     ITypeInfo *pRefTypeInfo;
     WCHAR wszBuf[MAX_LOAD_STRING];
-    WCHAR wszFormat[] = { '[','%','l','u',']','\0' };
 
     switch(tdesc.vt&VT_TYPEMASK)
     {
@@ -319,7 +285,7 @@ static void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, 
         case VT_CARRAY:
         for(i=0; i<tdesc.lpadesc->cDims; i++)
         {
-            wsprintfW(wszBuf, wszFormat, tdesc.lpadesc->rgbounds[i].cElements);
+            wsprintfW(wszBuf, L"[%lu]", tdesc.lpadesc->rgbounds[i].cElements);
             AddToStrW(wszAddAfter, wszBuf);
         }
         CreateTypeInfo(wszAddTo, wszAddAfter, tdesc.lpadesc->tdescElem, pTypeInfo);
@@ -345,7 +311,7 @@ static void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, 
             SysFreeString(bstrData);
             ITypeInfo_Release(pRefTypeInfo);
         }
-        else AddToStrW(wszAddTo, wszFailed);
+        else AddToStrW(wszAddTo, L"<failed>");
         break;
         default:
         WINE_FIXME("tdesc.vt&VT_TYPEMASK == %d not supported\n",
@@ -381,19 +347,10 @@ static int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         if(pVarDesc->memid < MIN_VAR_ID)
         {
 
-            AddToTLDataStrW(tld, L"[");
-            AddToTLDataStrW(tld, wszId);
-            AddToTLDataStrW(tld, L"(");
-            wsprintfW(wszText, wszFormat, pVarDesc->memid);
+            wsprintfW(wszText, L"[id(0x%.8lx)", pVarDesc->memid);
             AddToTLDataStrW(tld, wszText);
-            memset(wszText, 0, sizeof(wszText));
-            AddToTLDataStrW(tld, L")");
 
-            if(pVarDesc->wVarFlags & VARFLAG_FREADONLY)
-            {
-                AddToTLDataStrW(tld, L", ");
-                AddToTLDataStrW(tld, wszReadOnly);
-            }
+            if(pVarDesc->wVarFlags & VARFLAG_FREADONLY) AddToTLDataStrW(tld, L", readonly");
             AddToTLDataStrW(tld, L"]\n");
         }
 
@@ -449,8 +406,7 @@ static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
             VariantInit(&var);
             if (VariantChangeType(&var, pVarDesc->lpvarValue, 0, VT_BSTR) == S_OK)
             {
-                AddToStrW(wszText, wszConst);
-                AddToStrW(wszText, L" ");
+                AddToStrW(wszText, L"const ");
                 AddToStrW(wszAfter, L" = ");
                 AddToStrW(wszAfter, V_BSTR(&var));
             }
@@ -484,7 +440,6 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
     BSTR bstrName, bstrHelpString, *bstrParamNames;
     WCHAR wszText[MAX_LOAD_STRING];
     WCHAR wszAfter[MAX_LOAD_STRING];
-    WCHAR szRhs[] = {'r','h','s',0};    /* Right-hand side of a propput */
     BOOL bFirst;
 
     tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
@@ -517,13 +472,9 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         bFirst = TRUE;
         if(pFuncDesc->memid < MIN_FUNC_ID || pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL)
         {
-            AddToTLDataStrW(tld, L"[");
             bFirst = FALSE;
-            AddToTLDataStrW(tld, wszId);
-            AddToTLDataStrW(tld, L"(");
-            wsprintfW(wszText, wszFormat, pFuncDesc->memid);
+            wsprintfW(wszText, L"[id(0x%.8lx)", pFuncDesc->memid);
             AddToTLDataStrW(tld, wszText);
-            AddToTLDataStrW(tld, L")");
             memset(wszText, 0, sizeof(wszText));
         }
 
@@ -534,19 +485,19 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
                 if(bFirst) AddToTLDataStrW(tld, L"[");
                 else AddToTLDataStrW(tld, L", ");
                 bFirst = FALSE;
-                AddToTLDataStrW(tld, wszPropGet);
+                AddToTLDataStrW(tld, L"propget");
                 break;
             case INVOKE_PROPERTYPUT:
                 if(bFirst) AddToTLDataStrW(tld, L"[");
                 else AddToTLDataStrW(tld, L", ");
                 bFirst = FALSE;
-                AddToTLDataStrW(tld, wszPropPut);
+                AddToTLDataStrW(tld, L"propput");
                 break;
             case INVOKE_PROPERTYPUTREF:
                 if(bFirst) AddToTLDataStrW(tld, L"[");
                 else AddToTLDataStrW(tld, L", ");
                 bFirst = FALSE;
-                AddToTLDataStrW(tld, wszPropPutRef);
+                AddToTLDataStrW(tld, L"propputref");
                 break;
             default:;
         }
@@ -555,8 +506,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
             if(bFirst) AddToTLDataStrW(tld, L"[");
             else AddToTLDataStrW(tld, L", ");
             bFirst = FALSE;
-            AddToTLDataStrW(tld, wszHelpstring);
-            AddToTLDataStrW(tld, L"(\"");
+            AddToTLDataStrW(tld, L"helpstring(\"");
             AddToTLDataStrW(tld, bstrHelpString);
             AddToTLDataStrW(tld, L"\")");
         }
@@ -583,8 +533,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         AddToTLDataStrW(tld, L" ");
         if(pFuncDesc->memid >= MIN_FUNC_ID)
         {
-            AddToTLDataStrW(tld, wszStdCall);
-            AddToTLDataStrW(tld, L" ");
+            AddToTLDataStrW(tld, L"_stdcall ");
         }
         if (bstrName) AddToTLDataStrW(tld, bstrName);
         AddToTLDataStrW(tld, L"(");
@@ -624,8 +573,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
                 if(bFirst) AddToTLDataStrW(tld, L"[");
                 else AddToTLDataStrW(tld, L", ");
                 bFirst = FALSE;
-                AddToTLDataStrW(tld, wszDefaultValue);
-                AddToTLDataStrW(tld, L"(");
+                AddToTLDataStrW(tld, L"defaultvalue(");
 		if (V_VT(param) == VT_BSTR)
 		{
                     AddToTLDataStrW(tld, L"\"");
@@ -652,7 +600,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
                     SysFreeString(bstrParamNames[j+1]);
                 }
             } else {
-                AddToTLDataStrW(tld, szRhs);
+                AddToTLDataStrW(tld, L"rhs");
             }
         }
         AddToTLDataStrW(tld, L");\n");
@@ -733,15 +681,9 @@ static void EnumCoclassImplTypes(ITypeInfo *pTypeInfo,
     BSTR bstrName;
     BOOL bFirst;
     INT flags;
-    const WCHAR wszTKIND_INTERFACE[] = { 'i','n','t','e','r','f','a','c','e',' ','\0' };
-    const WCHAR wszTKIND_DISPATCH[]
-        = { 'd','i','s','p','i','n','t','e','r','f','a','c','e',' ','\0' };
-    const WCHAR wszIMPLTYPEFLAG_FDEFAULT[]
-        = { 'd','e','f','a','u','l','t','\0' };
-    const WCHAR wszIMPLTYPEFLAG_FSOURCE[]
-        = { 's','o','u','r','c','e','\0' };
-    const WCHAR wszIMPLTYPEFLAG_FRESTRICTED[]
-        = { 'r','e','s','t','r','i','c','t','e','d','\0' };
+    static const WCHAR wszIMPLTYPEFLAG_FDEFAULT[] = L"default";
+    static const WCHAR wszIMPLTYPEFLAG_FSOURCE[] = L"source";
+    static const WCHAR wszIMPLTYPEFLAG_FRESTRICTED[] = L"restricted";
 
     for(i=0; i<cImplTypes; i++)
     {
@@ -783,9 +725,9 @@ static void EnumCoclassImplTypes(ITypeInfo *pTypeInfo,
 
         if(pTypeAttr->typekind == TKIND_INTERFACE ||
                 (pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL))
-            AddToTLDataStrW(pTLData, wszTKIND_INTERFACE);
+            AddToTLDataStrW(pTLData, L"interface ");
         else if(pTypeAttr->typekind == TKIND_DISPATCH)
-            AddToTLDataStrW(pTLData, wszTKIND_DISPATCH);
+            AddToTLDataStrW(pTLData, L"dispinterface ");
         AddToTLDataStrW(pTLData, L" ");
 
         AddToTLDataStrW(pTLData, bstrName);
@@ -824,15 +766,11 @@ static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
     HTREEITEM hCur;
     TVITEMW tvi;
     WCHAR wszText[MAX_LOAD_STRING];
-    WCHAR wszPredefinition[] = { '/','/',' ','T','L','i','b',' ',':','\n',
-        '/','/',' ','F','o','r','w','a','r','d',' ','d','e','c','l','a','r','e',' ',
-        'a','l','l',' ','t','y','p','e','s',' ','d','e','f','i','n','e','d',' ',
-        'i','n',' ','t','h','i','s',' ','t','y','p','e','l','i','b','\0' };
 
     hFirst = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
             TVGN_CHILD, (LPARAM)hFirst);
 
-    AddToTLDataStrWithTabsW(pTLData, wszPredefinition);
+    AddToTLDataStrWithTabsW(pTLData, L"// TLib :\n// Forward declare all types defined in this typelib");
     AddToTLDataStrW(pTLData, L"\n");
 
     hCur = hFirst;
@@ -866,41 +804,29 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
     WCHAR wszGuid[MAX_LOAD_STRING];
     WCHAR wszHelpContext[MAX_LOAD_STRING];
 
-    const WCHAR wszInterface[] = { 'i','n','t','e','r','f','a','c','e',' ','\0' };
-    const WCHAR wszDispinterface[]
-        = { 'd','i','s','p','i','n','t','e','r','f','a','c','e',' ','\0' };
-    const WCHAR wszHelpcontext[] = { 'h','e','l','p','c','o','n','t','e','x','t','\0' };
-    const WCHAR wszTYPEFLAG_FAPPOBJECT[] = { 'a','p','p','o','b','j','e','c','t','\0' };
-    const WCHAR wszTYPEFLAG_FCANCREATE[] = { 'c','a','n','c','r','e','a','t','e','\0' };
-    const WCHAR wszTYPEFLAG_FLICENSED[] = { 'l','i','c','e','n','s','e','d','\0' };
-    const WCHAR wszTYPEFLAG_FPREDECLID[] = { 'p','r','e','d','e','c','l','i','d','\0' };
-    const WCHAR wszTYPEFLAG_FHIDDEN[] = { 'h','i','d','d','e','n','\0' };
-    const WCHAR wszTYPEFLAG_FCONTROL[] = { 'c','o','n','t','r','o','l','\0' };
-    const WCHAR wszTYPEFLAG_FDUAL[] = { 'd','u','a','l','\0' };
-    const WCHAR wszTYPEFLAG_FNONEXTENSIBLE[]
-        = { 'n','o','n','e','x','t','e','n','s','i','b','l','e','\0' };
-    const WCHAR wszTYPEFLAG_FOLEAUTOMATION[]
-        = { 'o','l','e','a','u','t','o','m','a','t','i','o','n','\0' };
-    const WCHAR wszTYPEFLAG_FRESTRICTED[]
-        = { 'r','e','s','t','r','i','c','t','e','d','\0' };
-    const WCHAR wszTYPEFLAG_FAGGREGATABLE[]
-        = { 'a','g','g','r','e','g','a','t','a','b','l','e','\0' };
-    const WCHAR wszTYPEFLAG_FREPLACEABLE[]
-        = { 'r','e','p','l','a','c','a','b','l','e','\0' };
-    const WCHAR wszTYPEFLAG_FREVERSEBIND[]
-        = { 'r','e','v','e','r','s','e','b','i','n','d','\0' };
-    const WCHAR wszTYPEFLAG_FPROXY[] = { 'p','r','o','x','y','\0' };
+    static const WCHAR wszTYPEFLAG_FAPPOBJECT[] = L"appobject";
+    static const WCHAR wszTYPEFLAG_FCANCREATE[] = L"cancreate";
+    static const WCHAR wszTYPEFLAG_FLICENSED[] = L"licensed";
+    static const WCHAR wszTYPEFLAG_FPREDECLID[] = L"predeclid";
+    static const WCHAR wszTYPEFLAG_FHIDDEN[] = L"hidden";
+    static const WCHAR wszTYPEFLAG_FCONTROL[] = L"control";
+    static const WCHAR wszTYPEFLAG_FDUAL[] = L"dual";
+    static const WCHAR wszTYPEFLAG_FNONEXTENSIBLE[] = L"nonextensible";
+    static const WCHAR wszTYPEFLAG_FOLEAUTOMATION[] = L"oleautomation";
+    static const WCHAR wszTYPEFLAG_FRESTRICTED[] = L"restricted";
+    static const WCHAR wszTYPEFLAG_FAGGREGATABLE[] = L"aggregatable";
+    static const WCHAR wszTYPEFLAG_FREPLACEABLE[] = L"replacable";
+    static const WCHAR wszTYPEFLAG_FREVERSEBIND[] = L"reversebind";
+    static const WCHAR wszTYPEFLAG_FPROXY[] = L"proxy";
 
     AddToTLDataStrW(pTLData, L"[\n");
     if(pTypeAttr->typekind != TKIND_DISPATCH)
     {
         AddSpaces(pTLData, TAB_SIZE);
-        AddToTLDataStrW(pTLData, wszOdl);
-        AddToTLDataStrW(pTLData, L",\n");
+        AddToTLDataStrW(pTLData, L"odl,\n");
     }
     AddSpaces(pTLData, TAB_SIZE);
-    AddToTLDataStrW(pTLData, wszUUID);
-    AddToTLDataStrW(pTLData, L"(");
+    AddToTLDataStrW(pTLData, L"uuid(");
     StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
     wszGuid[lstrlenW(wszGuid)-1] = '\0';
     AddToTLDataStrW(pTLData, &wszGuid[1]);
@@ -909,8 +835,7 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
     {
         AddToTLDataStrW(pTLData, L",\n");
         AddSpaces(pTLData, TAB_SIZE);
-        AddToTLDataStrW(pTLData, wszHelpstring);
-        AddToTLDataStrW(pTLData, L"(\"");
+        AddToTLDataStrW(pTLData, L"helpstring(\"");
         AddToTLDataStrW(pTLData, wszHelpString);
         AddToTLDataStrW(pTLData, L"\")");
     }
@@ -918,11 +843,8 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
     {
         AddToTLDataStrW(pTLData, L",\n");
         AddSpaces(pTLData, TAB_SIZE);
-        AddToTLDataStrW(pTLData, wszHelpcontext);
-        AddToTLDataStrW(pTLData, L"(");
-        wsprintfW(wszHelpContext, wszFormat, ulHelpContext);
+        wsprintfW(wszHelpContext, L"helpcontext(0x%.8lx)", ulHelpContext);
         AddToTLDataStrW(pTLData, wszHelpContext);
-        AddToTLDataStrW(pTLData, L")");
     }
     if(pTypeAttr->wTypeFlags)
     {
@@ -948,8 +870,8 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
         ENUM_FLAGS(TYPEFLAG_FPROXY);
     }
     AddToTLDataStrW(pTLData, L"\n]\n");
-    if(pTypeAttr->typekind != TKIND_DISPATCH) AddToTLDataStrW(pTLData, wszInterface);
-    else AddToTLDataStrW(pTLData, wszDispinterface);
+    if(pTypeAttr->typekind != TKIND_DISPATCH) AddToTLDataStrW(pTLData, L"interface ");
+    else AddToTLDataStrW(pTLData, L"dispinterface ");
     AddToTLDataStrW(pTLData, wszName);
     AddToTLDataStrW(pTLData, L" ");
     if(cImplTypes && pTypeAttr->typekind != TKIND_DISPATCH)
@@ -968,7 +890,7 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
             ITypeInfo_Release(pRefTypeInfo);
         }
         else
-            AddToTLDataStrW(pTLData, wszFailed);
+            AddToTLDataStrW(pTLData, L"<failed>");
     }
     AddToTLDataStrW(pTLData, L"{\n");
 
@@ -980,16 +902,12 @@ static void CreateTypedefHeader(ITypeInfo *pTypeInfo,
 {
     BOOL bFirst = TRUE;
     WCHAR wszGuid[MAX_LOAD_STRING];
-    const WCHAR wszTypedef[] = { 't','y','p','e','d','e','f',' ','\0' };
-    const WCHAR wszPublic[] = { 'p','u','b','l','i','c','\0' };
 
-    AddToTLDataStrW(pTLData, wszTypedef);
+    AddToTLDataStrW(pTLData, L"typedef ");
     if(memcmp(&pTypeAttr->guid, &GUID_NULL, sizeof(GUID)))
     {
-        AddToTLDataStrW(pTLData, L"[");
         bFirst = FALSE;
-        AddToTLDataStrW(pTLData, wszUUID);
-        AddToTLDataStrW(pTLData, L"(");
+        AddToTLDataStrW(pTLData, L"[uuid(");
         StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
         wszGuid[lstrlenW(wszGuid)-1] = '\0';
         AddToTLDataStrW(pTLData, &wszGuid[1]);
@@ -1000,7 +918,7 @@ static void CreateTypedefHeader(ITypeInfo *pTypeInfo,
         if(bFirst) AddToTLDataStrW(pTLData, L"[");
         else AddToTLDataStrW(pTLData, L", ");
         bFirst = FALSE;
-        AddToTLDataStrW(pTLData, wszPublic);
+        AddToTLDataStrW(pTLData, L"public");
     }
     if(!bFirst) AddToTLDataStrW(pTLData, L"]\n");
 }
@@ -1010,14 +928,11 @@ static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
 {
     WCHAR wszGuid[MAX_LOAD_STRING];
     BSTR bstrHelpString;
-    const WCHAR wszNoncreatable[]
-        = { 'n','o','n','c','r','e','a','t','a','b','l','e','\0' };
 
     AddToTLDataStrW(pTLData, L"[\n");
 
     AddSpaces(pTLData, TAB_SIZE);
-    AddToTLDataStrW(pTLData, wszUUID);
-    AddToTLDataStrW(pTLData, L"(");
+    AddToTLDataStrW(pTLData, L"uuid(");
     StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
     wszGuid[lstrlenW(wszGuid)-1] = '\0';
     AddToTLDataStrW(pTLData, &wszGuid[1]);
@@ -1030,8 +945,7 @@ static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
         {
             AddToTLDataStrW(pTLData, L",\n");
             AddSpaces(pTLData, TAB_SIZE);
-            AddToTLDataStrW(pTLData, wszHelpstring);
-            AddToTLDataStrW(pTLData, L"(\"");
+            AddToTLDataStrW(pTLData, L"helpstring(\"");
             AddToTLDataStrW(pTLData, bstrHelpString);
             AddToTLDataStrW(pTLData, L"\")");
         }
@@ -1042,7 +956,7 @@ static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
     {
         AddToTLDataStrW(pTLData, L",\n");
         AddSpaces(pTLData, TAB_SIZE);
-        AddToTLDataStrW(pTLData, wszNoncreatable);
+        AddToTLDataStrW(pTLData, L"noncreatable");
     }
 
     AddToTLDataStrW(pTLData, L"\n]\n");
@@ -1069,34 +983,6 @@ static int PopulateTree(void)
     BOOL bInsert;
     TYPELIB_DATA *tldDispatch;
     TYPELIB_DATA *tld;
-
-    const WCHAR wszGeneratedInfo[] = { '/','/',' ','G','e','n','e','r','a','t','e','d',
-        ' ','.','I','D','L',' ','f','i','l','e',' ','(','b','y',' ','t','h','e',' ',
-        'O','L','E','/','C','O','M',' ','O','b','j','e','c','t',' ',
-        'V','i','e','w','e','r',')','\n','/','/','\n','/','/',' ',
-        't','y','p','e','l','i','b',' ','f','i','l','e','n','a','m','e',':',' ','\0'};
-
-    const WCHAR wszFormat[] = { '%','s',' ','(','%','s',')','\0' };
-    const WCHAR wszFormat2[] = { 'v','e','r','s','i','o','n',
-        '(','%','l','d','.','%','l','d',')','\0' };
-
-    const WCHAR wszTKIND_ENUM[] = { 't','y','p','e','d','e','f',' ','e','n','u','m',' ','\0' };
-    const WCHAR wszTKIND_RECORD[]
-        = { 't','y','p','e','d','e','f',' ','s','t','r','u','c','t',' ','\0' };
-    const WCHAR wszTKIND_MODULE[] = { 'm','o','d','u','l','e',' ','\0' };
-    const WCHAR wszTKIND_INTERFACE[] = { 'i','n','t','e','r','f','a','c','e',' ','\0' };
-    const WCHAR wszTKIND_DISPATCH[]
-        = { 'd','i','s','p','i','n','t','e','r','f','a','c','e',' ','\0' };
-    const WCHAR wszTKIND_COCLASS[] = { 'c','o','c','l','a','s','s',' ','\0' };
-    const WCHAR wszTKIND_ALIAS[] = { 't','y','p','e','d','e','f',' ','\0' };
-    const WCHAR wszTKIND_UNION[]
-        = { 't','y','p','e','d','e','f',' ','u','n','i','o','n',' ','\0' };
-
-    const WCHAR wszLibrary[] = { 'l','i','b','r','a','r','y',' ','\0' };
-    const WCHAR wszTag[] = { 't','a','g','\0' };
-
-    WCHAR wszProperties[] = { 'p','r','o','p','e','r','t','i','e','s','\0' };
-    WCHAR wszMethods[] = { 'm','e','t','h','o','d','s','\0' };
 
     tvis.item.mask = TVIF_TEXT|TVIF_PARAM;
     tvis.item.cchTextMax = MAX_LOAD_STRING;
@@ -1125,18 +1011,17 @@ static int PopulateTree(void)
 
     tld = InitializeTLData();
     tvis.item.lParam = (LPARAM) tld;
-    AddToTLDataStrW(tld, wszGeneratedInfo);
+    AddToTLDataStrW(tld, L"// Generated .IDL file (by the OLE/COM Object Viewer)\n//\n// typelib filename: ");
     AddToTLDataStrW(tld, typelib.wszFileName);
     AddToTLDataStrW(tld, L"\n\n[\n");
     AddSpaces(tld, TAB_SIZE);
-    AddToTLDataStrW(tld, wszUUID);
-    AddToTLDataStrW(tld, L"(");
+    AddToTLDataStrW(tld, L"uuid(");
     StringFromGUID2(&(pTLibAttr->guid), wszText, MAX_LOAD_STRING);
     wszText[lstrlenW(wszText)-1] = '\0';
     AddToTLDataStrW(tld, &wszText[1]);
     AddToTLDataStrW(tld, L"),\n");
     AddSpaces(tld, TAB_SIZE);
-    wsprintfW(wszText, wszFormat2, pTLibAttr->wMajorVerNum, pTLibAttr->wMinorVerNum);
+    wsprintfW(wszText, L"version(%ld.%ld)", pTLibAttr->wMajorVerNum, pTLibAttr->wMinorVerNum);
     AddToTLDataStrW(tld, wszText);
 
     if (bstrData)
@@ -1144,20 +1029,19 @@ static int PopulateTree(void)
         /* helpstring is optional */
         AddToTLDataStrW(tld, L",\n");
         AddSpaces(tld, TAB_SIZE);
-        AddToTLDataStrW(tld, wszHelpstring);
-        AddToTLDataStrW(tld, L"(\"");
+        AddToTLDataStrW(tld, L"helpstring(\"");
         AddToTLDataStrW(tld, bstrData);
         AddToTLDataStrW(tld, L"\")");
     }
 
     AddToTLDataStrW(tld, L"\n]\n");
-    AddToTLDataStrW(tld, wszLibrary);
+    AddToTLDataStrW(tld, L"library ");
     if (bstrName) AddToTLDataStrW(tld, bstrName);
     AddToTLDataStrW(tld, L"\n{\n");
 
     AddToStrW(tld->wszInsertAfter, L"};");
 
-    wsprintfW(wszText, wszFormat, bstrName, bstrData);
+    wsprintfW(wszText, L"%s (%s)", bstrName, bstrData);
     SysFreeString(bstrName);
     SysFreeString(bstrData);
     tvis.hParent = (HTREEITEM)SendMessageW(typelib.hTree,
@@ -1179,12 +1063,11 @@ static int PopulateTree(void)
         switch(pTypeAttr->typekind)
         {
             case TKIND_ENUM:
-                AddToStrW(wszText, wszTKIND_ENUM);
+                AddToStrW(wszText, L"typedef enum ");
                 AddToStrW(wszText, bstrName);
 
                 CreateTypedefHeader(pTypeInfo, pTypeAttr, tld);
-                AddToTLDataStrW(tld, &wszTKIND_ENUM[lstrlenW(wszTKIND_ALIAS)]);
-                AddToTLDataStrW(tld, L"{\n");
+                AddToTLDataStrW(tld, L"enum {\n");
                 AddToStrW(tld->wszInsertAfter, L"} ");
                 AddToStrW(tld->wszInsertAfter, bstrName);
                 AddToStrW(tld->wszInsertAfter, L";\n");
@@ -1196,8 +1079,7 @@ static int PopulateTree(void)
                 AddToTLDataStrW(tld, tld->wszInsertAfter);
                 break;
             case TKIND_RECORD:
-                AddToTLDataStrW(tld, wszTKIND_RECORD);
-                AddToTLDataStrW(tld, wszTag);
+                AddToTLDataStrW(tld, L"typedef struct tag");
                 AddToTLDataStrW(tld, bstrName);
                 AddToTLDataStrW(tld, L" {\n");
 
@@ -1205,11 +1087,11 @@ static int PopulateTree(void)
                 AddToStrW(tld->wszInsertAfter, bstrName);
                 AddToStrW(tld->wszInsertAfter, L";\n");
 
-                AddToStrW(wszText, wszTKIND_RECORD);
+                AddToStrW(wszText, L"typedef struct ");
                 AddToStrW(wszText, bstrName);
                 break;
             case TKIND_MODULE:
-                AddToStrW(wszText, wszTKIND_MODULE);
+                AddToStrW(wszText, L"module ");
                 AddToStrW(wszText, bstrName);
                 break;
             case TKIND_INTERFACE:
@@ -1217,15 +1099,15 @@ static int PopulateTree(void)
                         bstrData, ulHelpContext, pTypeAttr, tld);
                 tld->bPredefine = TRUE;
 
-                AddToStrW(wszText, wszTKIND_INTERFACE);
+                AddToStrW(wszText, L"interface ");
                 AddToStrW(wszText, bstrName);
                 break;
             case TKIND_COCLASS:
-                AddToStrW(wszText, wszTKIND_COCLASS);
+                AddToStrW(wszText, L"coclass ");
                 AddToStrW(wszText, bstrName);
 
                 CreateCoclassHeader(pTypeInfo, pTypeAttr, tld);
-                AddToTLDataStrW(tld, wszTKIND_COCLASS);
+                AddToTLDataStrW(tld, L"coclass ");
                 AddToTLDataStrW(tld, bstrName);
                 AddToTLDataStrW(tld, L" {\n");
 
@@ -1238,7 +1120,7 @@ static int PopulateTree(void)
                 AddToTLDataStrW(tld, tld->wszInsertAfter);
                 break;
             case TKIND_UNION:
-                AddToStrW(wszText, wszTKIND_UNION);
+                AddToStrW(wszText, L"typedef union ");
                 AddToStrW(wszText, bstrName);
                 break;
             case TKIND_DISPATCH:
@@ -1247,29 +1129,27 @@ static int PopulateTree(void)
                 tld->bPredefine = TRUE;
                 if(pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL)
                     tld->bHide = TRUE;
-                AddToStrW(wszText, wszTKIND_DISPATCH);
+                AddToStrW(wszText, L"dispinterface ");
                 AddToStrW(wszText, bstrName);
 
                 hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 hMain = tvis.hParent;
                 tldDispatch = tld;
 
-                lstrcpyW(wszText, wszProperties);
+                lstrcpyW(wszText, L"properties");
                 tvis.hParent = hParent;
                 tld = InitializeTLData();
                 tvis.item.lParam = (LPARAM) tld;
-                AddToTLDataStrW(tld, wszProperties);
-                AddToTLDataStrW(tld, L":\n");
+                AddToTLDataStrW(tld, L"properties:\n");
                 tvis.hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 EnumVars(pTypeInfo, pTypeAttr->cVars, tvis.hParent);
                 AddChildrenData(tvis.hParent, tld);
 
-                lstrcpyW(wszText, wszMethods);
+                lstrcpyW(wszText, L"methods");
                 tvis.hParent = hParent;
                 tld = InitializeTLData();
                 tvis.item.lParam = (LPARAM) tld;
-                AddToTLDataStrW(tld, wszMethods);
-                AddToTLDataStrW(tld, L":\n");
+                AddToTLDataStrW(tld, L"methods:\n");
                 tvis.hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 EnumFuncs(pTypeInfo, pTypeAttr, tvis.hParent);
                 AddChildrenData(tvis.hParent, tld);
@@ -1302,20 +1182,20 @@ static int PopulateTree(void)
                             bstrData, ulHelpContext, pTypeAttr, tld);
                     tld->bPredefine = TRUE;
 
-                    AddToStrW(wszText, wszTKIND_INTERFACE);
+                    AddToStrW(wszText, L"interface ");
                     AddToStrW(wszText, bstrName);
                     ITypeInfo_Release(pRefTypeInfo);
                 }
                 break;
             case TKIND_ALIAS:
-                AddToStrW(wszText, wszTKIND_ALIAS);
+                AddToStrW(wszText, L"typedef ");
                 CreateTypeInfo(wszText, wszAfter, pTypeAttr->tdescAlias, pTypeInfo);
                 AddToStrW(wszText, L" ");
                 AddToStrW(wszText, bstrName);
                 AddToStrW(wszText, wszAfter);
 
                 CreateTypedefHeader(pTypeInfo, pTypeAttr, tld);
-                AddToTLDataStrW(tld, &wszText[lstrlenW(wszTKIND_ALIAS)]);
+                AddToTLDataStrW(tld, &wszText[lstrlenW(L"typedef ")]);
                 AddToTLDataStrW(tld, L";\n");
                 break;
             default:
@@ -1511,7 +1391,7 @@ BOOL TypeLibRegisterClassW(void)
     wcc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wcc.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     wcc.lpszMenuName = MAKEINTRESOURCEW(IDM_TYPELIB);
-    wcc.lpszClassName = wszTypeLib;
+    wcc.lpszClassName = L"TYPELIB";
 
     if(!RegisterClassW(&wcc))
         return FALSE;
@@ -1537,7 +1417,7 @@ BOOL CreateTypeLibWindow(HINSTANCE hInst, WCHAR *wszFileName)
         lstrcpyW(typelib.wszFileName, ((ITEM_INFO*)tvi.lParam)->path);
     }
 
-    globals.hTypeLibWnd = CreateWindowW(wszTypeLib, wszTitle,
+    globals.hTypeLibWnd = CreateWindowW(L"TYPELIB", wszTitle,
             WS_OVERLAPPEDWINDOW|WS_VISIBLE,
             CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInst, NULL);
     if(!globals.hTypeLibWnd) return FALSE;

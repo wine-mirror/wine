@@ -21,21 +21,6 @@
 #include "main.h"
 
 TREE tree;
-static const WCHAR wszCLSID[] = { 'C','L','S','I','D','\\','\0' };
-static const WCHAR wszInProcServer32[] = 
-    { 'I','n','P','r','o','c','S','e','r','v','e','r','3','2','\0' };
-static const WCHAR wszOle32dll[] = { 'o','l','e','3','2','.','d','l','l','\0' };
-static const WCHAR wszOleAut32dll[] =
-    { 'o','l','e','a','u','t','3','2','.','d','l','l','\0' };
-static const WCHAR wszImplementedCategories[] = 
-    { 'I','m','p','l','e','m','e','n','t','e','d',' ',
-        'C','a','t','e','g','o','r','i','e','s','\0' };
-static const WCHAR wszAppID[] = { 'A','p','p','I','D','\\','\0' };
-static const WCHAR wszTypeLib[] = { 'T','y','p','e','L','i','b','\\','\0' };
-static const WCHAR wszInterface[] = { 'I','n','t','e','r','f','a','c','e','\\','\0' };
-static const WCHAR wszComponentCategories[] = { 'C','o','m','p','o','n','e','n','t',
-    ' ','C','a','t','e','g','o','r','i','e','s','\\','\0' };
-static const WCHAR wszGetPath[] = { '0','\\','w','i','n','3','2','\0' };
 
 static LPARAM CreateITEM_INFO(INT flag, const WCHAR *info, const WCHAR *clsid, const WCHAR *path)
 {
@@ -61,7 +46,6 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
     WCHAR wszFlagName[MAX_LOAD_STRING];
     WCHAR wszTreeName[MAX_LOAD_STRING];
     WCHAR wszRegPath[MAX_LOAD_STRING];
-    const WCHAR wszFormat[] = { '\n','%','s',' ','(','$','%','x',')','\n','\0' };
     CLSID clsid;
     COSERVERINFO remoteInfo;
     MULTI_QI qi;
@@ -131,8 +115,7 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
                 LoadStringW(globals.hMainInst, IDS_ERROR_UNKN, wszFlagName, ARRAY_SIZE(wszFlagName));
         }
 
-        wsprintfW(&wszMessage[lstrlenW(wszMessage)], wszFormat,
-                wszFlagName, (unsigned)hRes);
+        wsprintfW(&wszMessage[lstrlenW(wszMessage)], L"\n%s ($%x)\n", wszFlagName, (unsigned)hRes);
         MessageBoxW(globals.hMainWnd, wszMessage, wszTitle, MB_OK|MB_ICONEXCLAMATION);
         return;
     }
@@ -166,7 +149,7 @@ void CreateInst(HTREEITEM item, WCHAR *wszMachineName)
         {
             IUnknown_Release(unk);
 
-            lstrcpyW(wszRegPath, wszInterface);
+            lstrcpyW(wszRegPath, L"Interface\\");
             lstrcpyW(&wszRegPath[lstrlenW(wszRegPath)], ((ITEM_INFO *)tvi.lParam)->clsid);
             tvis.item.lParam = CreateITEM_INFO(REGTOP|INTERFACE|REGPATH,
                     wszRegPath, ((ITEM_INFO *)tvi.lParam)->clsid, NULL);
@@ -265,7 +248,7 @@ static void AddCOMandAll(void)
     tvis.item.cChildren = 1;
     tvis.hInsertAfter = TVI_FIRST;
 
-    if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszCLSID, &hKey) != ERROR_SUCCESS) return;
+    if(RegOpenKeyW(HKEY_CLASSES_ROOT, L"CLSID", &hKey) != ERROR_SUCCESS) return;
 
     while(TRUE)
     {
@@ -278,12 +261,12 @@ static void AddCOMandAll(void)
         lenBuffer = sizeof(WCHAR[MAX_LOAD_STRING]);
         tvis.hParent = tree.hAO;
 
-        if(RegOpenKeyW(hCurKey, wszInProcServer32, &hInfo) == ERROR_SUCCESS)
+        if(RegOpenKeyW(hCurKey, L"InProcServer32", &hInfo) == ERROR_SUCCESS)
         {
             if(RegQueryValueW(hInfo, NULL, buffer, &lenBuffer) == ERROR_SUCCESS
                     && *buffer)
-                if(!memcmp(buffer, wszOle32dll, sizeof(WCHAR[9]))
-                        ||!memcmp(buffer, wszOleAut32dll, sizeof(WCHAR[12])))
+                if(!wcsncmp(buffer, L"ole32.dll", 9) ||
+                   !wcsncmp(buffer, L"oleaut32.dll", 12))
                     tvis.hParent = tree.hCLO;
 
             RegCloseKey(hInfo);
@@ -298,7 +281,7 @@ static void AddCOMandAll(void)
         tvis.item.lParam = CreateITEM_INFO(REGPATH|SHOWALL, valName, valName, NULL);
         if(tvis.hParent) SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
 
-        if(RegOpenKeyW(hCurKey, wszImplementedCategories, &hInfo) == ERROR_SUCCESS)
+        if(RegOpenKeyW(hCurKey, L"Implemented Categories", &hInfo) == ERROR_SUCCESS)
         {
             if(RegEnumKeyW(hInfo, 0, wszComp, ARRAY_SIZE(wszComp)) != ERROR_SUCCESS) break;
 
@@ -319,7 +302,7 @@ static void AddCOMandAll(void)
                     tvis.hParent = curSearch;
 
                     memmove(&valName[6], valName, sizeof(WCHAR[MAX_LOAD_STRING-6]));
-                    memmove(valName, wszCLSID, sizeof(WCHAR[6]));
+                    memmove(valName, L"CLSID\\", sizeof(WCHAR[6]));
                     tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH|SHOWALL,
                             valName, &valName[6], NULL);
 
@@ -352,7 +335,7 @@ static void AddApplicationID(void)
     tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hAID;
 
-    if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszAppID, &hKey) != ERROR_SUCCESS) return;
+    if(RegOpenKeyW(HKEY_CLASSES_ROOT, L"AppID", &hKey) != ERROR_SUCCESS) return;
 
     while(TRUE)
     {
@@ -387,8 +370,6 @@ static void AddTypeLib(void)
     WCHAR buffer[MAX_LOAD_STRING];
     WCHAR wszVer[MAX_LOAD_STRING];
     WCHAR wszPath[MAX_LOAD_STRING];
-    const WCHAR wszFormat[] = { ' ','(','%','s',' ','%','s',')','\0' };
-    const WCHAR wszFormat2[] = { '%','s','\\','%','s','\0' };
     LONG lenBuffer;
     int i=-1, j;
 
@@ -397,7 +378,7 @@ static void AddTypeLib(void)
     tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hTL;
 
-    if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszTypeLib, &hKey) != ERROR_SUCCESS) return;
+    if(RegOpenKeyW(HKEY_CLASSES_ROOT, L"TypeLib", &hKey) != ERROR_SUCCESS) return;
 
     while(TRUE)
     {
@@ -423,11 +404,11 @@ static void AddTypeLib(void)
             {
                 LoadStringW(globals.hMainInst, IDS_TL_VER, wszVer, ARRAY_SIZE(wszVer));
 
-                wsprintfW(&buffer[lstrlenW(buffer)], wszFormat, wszVer, valName);
+                wsprintfW(&buffer[lstrlenW(buffer)], L" (%s %s)", wszVer, valName);
                 tvis.item.pszText = buffer;
 
                 lenBuffer = MAX_LOAD_STRING;
-                RegOpenKeyW(hInfoKey, wszGetPath, &hPath);
+                RegOpenKeyW(hInfoKey, L"0\\win32", &hPath);
                 RegQueryValueW(hPath, NULL, wszPath, &lenBuffer);
                 RegCloseKey(hPath);
             }
@@ -435,7 +416,7 @@ static void AddTypeLib(void)
 
             RegCloseKey(hInfoKey);
 
-            wsprintfW(wszVer, wszFormat2, valParent, valName);
+            wsprintfW(wszVer, L"%s\\%s", valParent, valName);
             tvis.item.lParam = CreateITEM_INFO(REGPATH, wszVer, valParent, wszPath);
 
             SendMessageW(globals.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
@@ -462,7 +443,7 @@ static void AddInterfaces(void)
     tvis.hInsertAfter = TVI_FIRST;
     tvis.hParent = tree.hI;
 
-    if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszInterface, &hKey) != ERROR_SUCCESS) return;
+    if(RegOpenKeyW(HKEY_CLASSES_ROOT, L"Interface", &hKey) != ERROR_SUCCESS) return;
 
     while(TRUE)
     {
@@ -508,7 +489,7 @@ static void AddComponentCategories(void)
     else tvis.hParent = TVI_ROOT;
     tvis.item.cChildren = 1;
 
-    if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszComponentCategories, &hKey) != ERROR_SUCCESS)
+    if(RegOpenKeyW(HKEY_CLASSES_ROOT, L"Component Categories", &hKey) != ERROR_SUCCESS)
         return;
 
     while(TRUE)
@@ -556,17 +537,17 @@ static void AddBaseEntries(void)
 
     LoadStringW(globals.hMainInst, IDS_TREE_I, tvis.item.pszText,
             MAX_LOAD_STRING);
-    tvis.item.lParam = CreateITEM_INFO(REGTOP, wszInterface, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP, L"Interface\\", NULL, NULL);
     tree.hI = TreeView_InsertItemW(globals.hTree, &tvis);
 
     LoadStringW(globals.hMainInst, IDS_TREE_TL, tvis.item.pszText,
             MAX_LOAD_STRING);
-    tvis.item.lParam = CreateITEM_INFO(REGTOP, wszTypeLib, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP, L"TypeLib\\", NULL, NULL);
     tree.hTL = TreeView_InsertItemW(globals.hTree, &tvis);
 
     LoadStringW(globals.hMainInst, IDS_TREE_AID, tvis.item.pszText,
             MAX_LOAD_STRING);
-    tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH, wszAppID, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH, L"AppID\\", NULL, NULL);
     tree.hAID = TreeView_InsertItemW(globals.hTree, &tvis);
 
     LoadStringW(globals.hMainInst, IDS_TREE_OC, tvis.item.pszText,
@@ -578,7 +559,7 @@ static void AddBaseEntries(void)
     tvis.hParent = tree.hOC;
     LoadStringW(globals.hMainInst, IDS_TREE_AO, tvis.item.pszText,
             MAX_LOAD_STRING);
-    tvis.item.lParam = CreateITEM_INFO(REGTOP, wszCLSID, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP, L"CLSID\\", NULL, NULL);
     tree.hAO = TreeView_InsertItemW(globals.hTree, &tvis);
 
     LoadStringW(globals.hMainInst, IDS_TREE_CLO, tvis.item.pszText,
@@ -592,8 +573,7 @@ static void AddBaseEntries(void)
 
     LoadStringW(globals.hMainInst, IDS_TREE_GBCC, tvis.item.pszText,
             MAX_LOAD_STRING);
-    tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH,
-            wszComponentCategories, NULL, NULL);
+    tvis.item.lParam = CreateITEM_INFO(REGTOP|REGPATH, L"Component Categories\\", NULL, NULL);
     tree.hGBCC = TreeView_InsertItemW(globals.hTree, &tvis);
 
     SendMessageW(globals.hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)tree.hOC);
@@ -669,16 +649,15 @@ static LRESULT CALLBACK TreeProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 HWND CreateTreeWindow(HINSTANCE hInst)
 {
     WNDCLASSW wct;
-    const WCHAR wszTreeClass[] = { 'T','R','E','E','\0' };
 
     memset(&wct, 0, sizeof(WNDCLASSW));
     wct.lpfnWndProc = TreeProc;
-    wct.lpszClassName = wszTreeClass;
+    wct.lpszClassName = L"TREE";
     wct.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wct.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 
     if(!RegisterClassW(&wct)) return NULL;
 
-    return CreateWindowExW(WS_EX_CLIENTEDGE, wszTreeClass, NULL, WS_CHILD|WS_VISIBLE,
+    return CreateWindowExW(WS_EX_CLIENTEDGE, L"TREE", NULL, WS_CHILD|WS_VISIBLE,
             0, 0, 0, 0, globals.hPaneWnd, NULL, hInst, NULL);
 }

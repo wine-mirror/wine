@@ -21,12 +21,6 @@
 #include "main.h"
 
 DETAILS details;
-static const WCHAR wszAppID[] = { 'A','p','p','I','D','\0' };
-static const WCHAR wszCLSID[] = { 'C','L','S','I','D','\0' };
-static const WCHAR wszProgID[] = { 'P','r','o','g','I','D','\0' };
-static const WCHAR wszProxyStubClsid32[] = 
-    { 'P','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2','\0' };
-static const WCHAR wszTypeLib[] = { 'T','y','p','e','L','i','b','\0' };
 
 static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL addings)
 {
@@ -36,10 +30,6 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
     WCHAR wszName[MAX_LOAD_STRING];
     WCHAR wszData[MAX_LOAD_STRING];
     WCHAR wszTree[MAX_LOAD_STRING];
-    const WCHAR wszBinary[] = { '%','0','2','X',' ','\0' };
-    const WCHAR wszDots[] = { '.','.','.','\0' };
-    const WCHAR wszFormat1[] = { '%','s',' ','[','%','s',']',' ','=',' ','%','s','\0' };
-    const WCHAR wszFormat2[] = { '%','s',' ','=',' ','%','s','\0' };
     TVINSERTSTRUCTW tvis;
     HTREEITEM addPlace = parent;
 
@@ -73,23 +63,22 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
             WCHAR wszBuf[MAX_LOAD_STRING];
 
             for(j=0; j<MAX_LOAD_STRING/3-1; j++)
-                wsprintfW(&wszBuf[3*j], wszBinary, (int)((unsigned char)wszData[j]));
+                wsprintfW(&wszBuf[3*j], L"%02X ", (int)((unsigned char)wszData[j]));
             wszBuf[(lenData*3>=MAX_LOAD_STRING ? MAX_LOAD_STRING-1 : lenData*3)] = '\0';
             lstrcpyW(wszData, wszBuf);
-            lstrcpyW(&wszData[MAX_LOAD_STRING-5], wszDots);
+            lstrcpyW(&wszData[MAX_LOAD_STRING-5], L"...");
         }
 
-        if(lenName) wsprintfW(wszTree, wszFormat1, wszKeyName, wszName, wszData);
-        else wsprintfW(wszTree, wszFormat2, wszKeyName, wszData);
+        if(lenName) wsprintfW(wszTree, L"%s [%s] = %s", wszKeyName, wszName, wszData);
+        else wsprintfW(wszTree, L"%s = %s", wszKeyName, wszData);
 
         addPlace = TreeView_InsertItemW(details.hReg, &tvis);
 
-        if(addings && !memcmp(wszName, wszAppID, sizeof(WCHAR[6])))
+        if(addings && !wcscmp(wszName, L"AppID"))
         {
             lstrcpyW(wszTree, wszName);
             memmove(&wszData[6], wszData, sizeof(WCHAR[MAX_LOAD_STRING-6]));
-            lstrcpyW(wszData, wszCLSID);
-            wszData[5] = '\\';
+            memcpy(wszData, L"CLSID\\",sizeof(WCHAR[6]));
 
             if(RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey) != ERROR_SUCCESS)
             {
@@ -104,7 +93,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
             RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
             RegCloseKey(hCurKey);
 
-            wsprintfW(wszTree, wszFormat2, &wszData[6], wszName);
+            wsprintfW(wszTree, L"%s = %s", &wszData[6], wszName);
 
             SendMessageW(details.hReg, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
             SendMessageW(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
@@ -127,7 +116,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
         CreateRegRec(hCurKey, addPlace, wszName, addings);
         SendMessageW(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)addPlace);
 
-        if(addings && !memcmp(wszName, wszProgID, sizeof(WCHAR[7])))
+        if(addings && !wcscmp(wszName, L"ProgID"))
         {
             lenData = sizeof(wszData);
             RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
@@ -137,27 +126,26 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
                 continue;
             CreateRegRec(hCurKey, TVI_ROOT, wszData, FALSE);
         }
-        else if(addings && !memcmp(wszName, wszProxyStubClsid32, sizeof(WCHAR[17])))
+        else if(addings && !wcscmp(wszName, L"ProxyStubClsid32"))
         {
             lenData = sizeof(wszData);
 
             RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
             RegCloseKey(hCurKey);
 
-            RegOpenKeyW(HKEY_CLASSES_ROOT, wszCLSID, &hCurKey);
+            RegOpenKeyW(HKEY_CLASSES_ROOT, L"CLSID", &hCurKey);
 
             lenName = sizeof(wszName);
             RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
 
             tvis.hParent = TVI_ROOT;
-            wsprintfW(wszTree, wszFormat2, wszCLSID, wszName);
+            wsprintfW(wszTree, L"CLSID = %s", wszName);
             tvis.hParent = TreeView_InsertItemW(details.hReg, &tvis);
 
             RegCloseKey(hCurKey);
 
             memmove(&wszData[6], wszData, lenData);
-            memcpy(wszData, wszCLSID, sizeof(WCHAR[6]));
-            wszData[5] = '\\';
+            memcpy(wszData, L"CLSID\\", sizeof(WCHAR[6]));
 
             RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey);
 
@@ -166,26 +154,25 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
             SendMessageW(details.hReg, TVM_EXPAND, TVE_EXPAND, (LPARAM)tvis.hParent);
             tvis.hParent = parent;
         }
-        else if(addings && !memcmp(wszName, wszTypeLib, sizeof(WCHAR[8])))
+        else if(addings && !wcscmp(wszName, L"TypeLib"))
         {
             lenData = sizeof(wszData);
             RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
             RegCloseKey(hCurKey);
 
-            RegOpenKeyW(HKEY_CLASSES_ROOT, wszTypeLib, &hCurKey);
+            RegOpenKeyW(HKEY_CLASSES_ROOT, L"TypeLib", &hCurKey);
 
             lenName = sizeof(wszName);
             RegQueryValueW(hCurKey, NULL, wszName, (LONG *)&lenName);
 
             tvis.hParent = TVI_ROOT;
-            wsprintfW(wszTree, wszFormat2, wszTypeLib, wszName);
+            wsprintfW(wszTree, L"TypeLib = %s", wszName);
             tvis.hParent = TreeView_InsertItemW(details.hReg, &tvis);
 
             RegCloseKey(hCurKey);
 
             memmove(&wszData[8], wszData, lenData);
-            memcpy(wszData, wszTypeLib, sizeof(WCHAR[8]));
-            wszData[7] = '\\';
+            memcpy(wszData, L"TypeLib\\", sizeof(WCHAR[8]));
             RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey);
 
             CreateRegRec(hCurKey, tvis.hParent, &wszData[8], FALSE);
@@ -269,7 +256,6 @@ void RefreshDetails(HTREEITEM item)
     TVITEMW tvi;
     WCHAR wszBuf[MAX_LOAD_STRING];
     WCHAR wszStaticText[MAX_LOAD_STRING];
-    const WCHAR wszFormat[] = { '%','s','\n','%','s','\0' };
     BOOL show;
 
     memset(&tvi, 0, sizeof(TVITEMW));
@@ -281,7 +267,7 @@ void RefreshDetails(HTREEITEM item)
     SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 
     if(tvi.lParam)
-        wsprintfW(wszStaticText, wszFormat, tvi.pszText, ((ITEM_INFO *)tvi.lParam)->clsid);
+        wsprintfW(wszStaticText, L"%s\n%s", tvi.pszText, ((ITEM_INFO *)tvi.lParam)->clsid);
     else lstrcpyW(wszStaticText, tvi.pszText);
 
     SetWindowTextW(details.hStatic, wszStaticText);
@@ -350,13 +336,9 @@ static LRESULT CALLBACK DetailsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     switch(uMsg)
     {
         case WM_CREATE:
-            {
-                const WCHAR wszStatic[] = { 'S','t','a','t','i','c','\0' };
-
-                details.hStatic = CreateWindowW(wszStatic, NULL, WS_CHILD|WS_VISIBLE,
-                        0, 0, 0, 0, hWnd, NULL, globals.hMainInst, NULL);
-                CreateTabCtrl(hWnd);
-            }
+            details.hStatic = CreateWindowW(L"Static", NULL, WS_CHILD|WS_VISIBLE,
+                                            0, 0, 0, 0, hWnd, NULL, globals.hMainInst, NULL);
+            CreateTabCtrl(hWnd);
             break;
         case WM_SIZE:
             MoveWindow(details.hStatic, 0, 0, LOWORD(lParam), 40, TRUE);
@@ -385,17 +367,16 @@ static LRESULT CALLBACK DetailsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 HWND CreateDetailsWindow(HINSTANCE hInst)
 {
     WNDCLASSW wcd;
-    const WCHAR wszDetailsClass[] = { 'D','E','T','A','I','L','S','\0' };
 
     memset(&wcd, 0, sizeof(WNDCLASSW));
     wcd.lpfnWndProc = DetailsProc;
-    wcd.lpszClassName = wszDetailsClass;
+    wcd.lpszClassName = L"DETAILS";
     wcd.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wcd.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 
     if(!RegisterClassW(&wcd)) return NULL;
 
-    globals.hDetails = CreateWindowExW(WS_EX_CLIENTEDGE, wszDetailsClass, NULL,
+    globals.hDetails = CreateWindowExW(WS_EX_CLIENTEDGE, L"DETAILS", NULL,
             WS_CHILD|WS_VISIBLE, 0, 0, 0, 0, globals.hPaneWnd, NULL, hInst, NULL);
 
     return globals.hDetails;

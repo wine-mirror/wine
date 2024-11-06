@@ -75,7 +75,6 @@ static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
     ULARGE_INTEGER size;
     WCHAR wszSize[MAX_LOAD_STRING];
     WCHAR wszBuf[MAX_LOAD_STRING];
-    WCHAR wszFormat[] = { '%','d',' ','%','s','\0' };
 
     switch(uMsg)
     {
@@ -107,7 +106,7 @@ static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
                 IPersistStream_GetSizeMax((IPersistStream *)unk, &size);
                 IUnknown_Release(unk);
                 LoadStringW(globals.hMainInst, IDS_BYTES, wszBuf, ARRAY_SIZE(wszBuf));
-                wsprintfW(wszSize, wszFormat, size.LowPart, wszBuf);
+                wsprintfW(wszSize, L"%d %s", size.LowPart, wszBuf);
                 hObject = GetDlgItem(hDlgWnd, IDC_GETSIZEMAX);
                 SetWindowTextW(hObject, wszSize);
                 return TRUE;
@@ -119,10 +118,8 @@ static INT_PTR CALLBACK InterfaceViewerProc(HWND hDlgWnd, UINT uMsg,
 static void IPersistStreamInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
 {
     DIALOG_INFO di;
-    WCHAR wszClassMoniker[] = { 'C','l','a','s','s','M','o','n','i','k','e','r','\0' };
 
-    if(wszName[0] == '{')
-        di.wszLabel = wszClassMoniker;
+    if(wszName[0] == '{') di.wszLabel = (WCHAR *)L"ClassMoniker";
     else di.wszLabel = wszName;
     di.wszIdentifier = clsid;
 
@@ -133,10 +130,8 @@ static void IPersistStreamInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
 static void IPersistInterfaceViewer(WCHAR *clsid, WCHAR *wszName)
 {
     DIALOG_INFO di;
-    WCHAR wszClassMoniker[] = { 'C','l','a','s','s','M','o','n','i','k','e','r','\0' };
 
-    if(wszName[0] == '{')
-        di.wszLabel = wszClassMoniker;
+    if(wszName[0] == '{') di.wszLabel = (WCHAR *)L"ClassMoniker";
     else di.wszLabel = wszName;
     di.wszIdentifier = clsid;
 
@@ -161,12 +156,6 @@ void InterfaceViewer(HTREEITEM item)
     WCHAR *clsid;
     WCHAR wszName[MAX_LOAD_STRING];
     WCHAR wszParent[MAX_LOAD_STRING];
-    WCHAR wszIPersistStream[] = { '{','0','0','0','0','0','1','0','9','-',
-        '0','0','0','0','-','0','0','0','0','-','C','0','0','0','-',
-        '0','0','0','0','0','0','0','0','0','0','4','6','}','\0' };
-    WCHAR wszIPersist[] = { '{','0','0','0','0','0','1','0','C','-',
-        '0','0','0','0','-','0','0','0','0','-','C','0','0','0','-',
-        '0','0','0','0','0','0','0','0','0','0','4','6','}','\0' };
 
     memset(&tvi, 0, sizeof(TVITEMW));
     tvi.mask = TVIF_TEXT;
@@ -186,10 +175,9 @@ void InterfaceViewer(HTREEITEM item)
 
     SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 
-    if(!memcmp(clsid, wszIPersistStream, sizeof(wszIPersistStream)))
+    if(!wcscmp(clsid, L"{00000109-0000-0000-C000-000000000046}"))
         IPersistStreamInterfaceViewer(clsid, wszParent);
-
-    else if(!memcmp(clsid, wszIPersist, sizeof(wszIPersist)))
+    else if(!wcscmp(clsid, L"{0000010C-0000-0000-C000-000000000046}"))
         IPersistInterfaceViewer(clsid, wszParent);
 
     else DefaultInterfaceViewer(clsid, wszName);
