@@ -176,10 +176,6 @@ static void DebugChannels_FillList(HWND hChannelLV)
 
 static void DebugChannels_OnCreate(HWND hwndDlg)
 {
-    static WCHAR fixmeW[] = {'F','i','x','m','e','\0'};
-    static WCHAR errW[]   = {'E','r','r','\0'};
-    static WCHAR warnW[]  = {'W','a','r','n','\0'};
-    static WCHAR traceW[] = {'T','r','a','c','e','\0'};
     HWND        hLV = GetDlgItem(hwndDlg, IDC_DEBUG_CHANNELS_LIST);
     LVCOLUMNW   lvc;
     WCHAR debug_channelW[255];
@@ -194,25 +190,25 @@ static void DebugChannels_OnCreate(HWND hwndDlg)
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = fixmeW;
+    lvc.pszText = (WCHAR *)L"Fixme";
     lvc.cx = 55;
     SendMessageW(hLV, LVM_INSERTCOLUMNW, 1, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = errW;
+    lvc.pszText = (WCHAR *)L"Err";
     lvc.cx = 55;
     SendMessageW(hLV, LVM_INSERTCOLUMNW, 2, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = warnW;
+    lvc.pszText = (WCHAR *)L"Warn";
     lvc.cx = 55;
     SendMessageW(hLV, LVM_INSERTCOLUMNW, 3, (LPARAM) &lvc);
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_CENTER;
-    lvc.pszText = traceW;
+    lvc.pszText = (WCHAR *)L"Trace";
     lvc.cx = 55;
     SendMessageW(hLV, LVM_INSERTCOLUMNW, 4, (LPARAM) &lvc);
 
