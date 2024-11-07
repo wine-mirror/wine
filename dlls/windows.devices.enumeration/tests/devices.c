@@ -1,5 +1,6 @@
 /*
  * Copyright 2022 Julian Klemann for CodeWeavers
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -135,6 +136,184 @@ static void device_watcher_handler_create( struct device_watcher_handler *impl )
     impl->ref = 1;
 }
 
+struct device_information_collection_async_handler
+{
+    IAsyncOperationCompletedHandler_DeviceInformationCollection iface;
+
+    IAsyncOperation_DeviceInformationCollection *async;
+    AsyncStatus status;
+    BOOL invoked;
+    HANDLE event;
+    LONG ref;
+};
+
+static inline struct device_information_collection_async_handler *impl_from_IAsyncOperationCompletedHandler_DeviceInformationCollection( IAsyncOperationCompletedHandler_DeviceInformationCollection *iface )
+{
+    return CONTAINING_RECORD( iface, struct device_information_collection_async_handler, iface );
+}
+
+static HRESULT WINAPI device_information_collection_async_handler_QueryInterface( IAsyncOperationCompletedHandler_DeviceInformationCollection *iface,
+                                                                                  REFIID iid, void **out )
+{
+    if (IsEqualGUID( iid, &IID_IUnknown ) || IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IAsyncOperationCompletedHandler_DeviceInformationCollection ))
+    {
+        IUnknown_AddRef( iface );
+        *out = iface;
+        return S_OK;
+    }
+
+    if (winetest_debug > 1)
+        trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI device_information_collection_async_handler_AddRef( IAsyncOperationCompletedHandler_DeviceInformationCollection *iface )
+{
+    struct device_information_collection_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_DeviceInformationCollection( iface );
+    return InterlockedIncrement( &impl->ref );
+}
+
+static ULONG WINAPI device_information_collection_async_handler_Release( IAsyncOperationCompletedHandler_DeviceInformationCollection *iface )
+{
+    struct device_information_collection_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_DeviceInformationCollection( iface );
+    ULONG ref;
+
+    ref = InterlockedDecrement( &impl->ref );
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI device_information_collection_async_handler_Invoke( IAsyncOperationCompletedHandler_DeviceInformationCollection *iface,
+                                                                          IAsyncOperation_DeviceInformationCollection *async, AsyncStatus status )
+{
+    struct device_information_collection_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_DeviceInformationCollection( iface );
+
+    ok( !impl->invoked, "invoked twice\n" );
+    impl->invoked = TRUE;
+    impl->async = async;
+    impl->status = status;
+    if (impl->event) SetEvent( impl->event );
+
+    return S_OK;
+}
+
+static IAsyncOperationCompletedHandler_DeviceInformationCollectionVtbl device_information_collection_async_handler_vtbl =
+{
+    /* IUnknown */
+    device_information_collection_async_handler_QueryInterface,
+    device_information_collection_async_handler_AddRef,
+    device_information_collection_async_handler_Release,
+    /* IAsyncOperationCompletedHandler<DeviceInformationCollection> */
+    device_information_collection_async_handler_Invoke,
+};
+
+static IAsyncOperationCompletedHandler_DeviceInformationCollection *device_information_collection_async_handler_create( HANDLE event )
+{
+    struct device_information_collection_async_handler *impl;
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return NULL;
+    impl->iface.lpVtbl = &device_information_collection_async_handler_vtbl;
+    impl->event = event;
+    impl->ref = 1;
+
+    return &impl->iface;
+}
+
+#define await_device_information_collection( a ) await_device_information_collection_( __LINE__, (a) )
+static void await_device_information_collection_( int line, IAsyncOperation_DeviceInformationCollection *async )
+{
+    IAsyncOperationCompletedHandler_DeviceInformationCollection *handler;
+    HANDLE event;
+    HRESULT hr;
+    DWORD ret;
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok_(__FILE__, line)( !!event, "CreateEventW failed, error %lu\n", GetLastError() );
+
+    handler = device_information_collection_async_handler_create( event );
+    ok_(__FILE__, line)( !!handler, "device_information_collection_async_handler_create failed\n" );
+    hr = IAsyncOperation_DeviceInformationCollection_put_Completed( async, handler );
+    ok_(__FILE__, line)( hr == S_OK, "put_Completed returned %#lx\n", hr );
+    IAsyncOperationCompletedHandler_DeviceInformationCollection_Release( handler );
+
+    ret = WaitForSingleObject( event, 5000 );
+    ok_(__FILE__, line)( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    ret = CloseHandle( event );
+    ok_(__FILE__, line)( ret, "CloseHandle failed, error %lu\n", GetLastError() );
+}
+
+#define check_device_information_collection_async( a, b, c, d, e ) check_device_information_collection_async_( __LINE__, a, b, c, d, e )
+static void check_device_information_collection_async_( int line, IAsyncOperation_DeviceInformationCollection *async,
+                                                        UINT32 expect_id, AsyncStatus expect_status,
+                                                        HRESULT expect_hr, IVectorView_DeviceInformation **result )
+{
+    AsyncStatus async_status;
+    IAsyncInfo *async_info;
+    HRESULT hr, async_hr;
+    UINT32 async_id;
+
+    hr = IAsyncOperation_DeviceInformationCollection_QueryInterface( async, &IID_IAsyncInfo, (void **)&async_info );
+    ok_(__FILE__, line)( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+
+    async_id = 0xdeadbeef;
+    hr = IAsyncInfo_get_Id( async_info, &async_id );
+    if (expect_status < 4) ok_(__FILE__, line)( hr == S_OK, "get_Id returned %#lx\n", hr );
+    else ok_(__FILE__, line)( hr == E_ILLEGAL_METHOD_CALL, "get_Id returned %#lx\n", hr );
+    ok_(__FILE__, line)( async_id == expect_id, "got id %u\n", async_id );
+
+    async_status = 0xdeadbeef;
+    hr = IAsyncInfo_get_Status( async_info, &async_status );
+    if (expect_status < 4) ok_(__FILE__, line)( hr == S_OK, "get_Status returned %#lx\n", hr );
+    else ok_(__FILE__, line)( hr == E_ILLEGAL_METHOD_CALL, "get_Status returned %#lx\n", hr );
+    ok_(__FILE__, line)( async_status == expect_status, "got status %u\n", async_status );
+
+    async_hr = 0xdeadbeef;
+    hr = IAsyncInfo_get_ErrorCode( async_info, &async_hr );
+    if (expect_status < 4) ok_(__FILE__, line)( hr == S_OK, "get_ErrorCode returned %#lx\n", hr );
+    else ok_(__FILE__, line)( hr == E_ILLEGAL_METHOD_CALL, "get_ErrorCode returned %#lx\n", hr );
+    if (expect_status < 4) todo_wine_if( FAILED(expect_hr))
+    ok_(__FILE__, line)( async_hr == expect_hr, "got error %#lx\n", async_hr );
+    else ok_(__FILE__, line)( async_hr == E_ILLEGAL_METHOD_CALL, "got error %#lx\n", async_hr );
+
+        IAsyncInfo_Release( async_info );
+
+    hr = IAsyncOperation_DeviceInformationCollection_GetResults( async, result );
+    switch (expect_status)
+    {
+    case Completed:
+    case Error:
+        todo_wine_if( FAILED(expect_hr))
+        ok_(__FILE__, line)( hr == expect_hr, "GetResults returned %#lx\n", hr );
+        break;
+    case Canceled:
+    case Started:
+    default:
+        ok_(__FILE__, line)( hr == E_ILLEGAL_METHOD_CALL, "GetResults returned %#lx\n", hr );
+        break;
+    }
+}
+
+static void test_DeviceInformation_obj( int line, IDeviceInformation *info )
+{
+    HRESULT hr;
+    HSTRING str;
+    boolean bool_val;
+
+    hr = IDeviceInformation_get_Id( info, &str );
+    ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+    str = NULL;
+    hr = IDeviceInformation_get_Name( info, &str );
+    todo_wine ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
+    WindowsDeleteString( str );
+    hr = IDeviceInformation_get_IsEnabled( info, &bool_val );
+    todo_wine ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
+    hr = IDeviceInformation_get_IsDefault( info, &bool_val );
+    todo_wine ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
+}
+
 static void test_DeviceInformation( void )
 {
     static const WCHAR *device_info_name = L"Windows.Devices.Enumeration.DeviceInformation";
@@ -147,9 +326,13 @@ static void test_DeviceInformation( void )
     IDeviceInformationStatics *device_info_statics;
     IDeviceWatcher *device_watcher;
     DeviceWatcherStatus status = 0xdeadbeef;
-    ULONG ref;
+    IAsyncOperation_DeviceInformationCollection *info_collection_async = NULL;
+    IVectorView_DeviceInformation *info_collection = NULL;
+    IDeviceInformation *info;
+    UINT32 i, size;
     HSTRING str;
     HRESULT hr;
+    ULONG ref;
 
     device_watcher_handler_create( &added_handler );
     device_watcher_handler_create( &stopped_handler );
@@ -188,14 +371,9 @@ static void test_DeviceInformation( void )
     check_interface( device_watcher, &IID_IAgileObject, TRUE );
     check_interface( device_watcher, &IID_IDeviceWatcher, TRUE );
 
-    hr = IDeviceWatcher_add_Added(
-            device_watcher,
-            (ITypedEventHandler_DeviceWatcher_DeviceInformation *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface,
-            &added_token );
+    hr = IDeviceWatcher_add_Added( device_watcher, (void *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &added_token );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    hr = IDeviceWatcher_add_Stopped(
-            device_watcher, &stopped_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface,
-            &stopped_token );
+    hr = IDeviceWatcher_add_Stopped( device_watcher, &stopped_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &stopped_token );
     ok( hr == S_OK, "got hr %#lx\n", hr );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
@@ -240,14 +418,9 @@ static void test_DeviceInformation( void )
     check_interface( device_watcher, &IID_IAgileObject, TRUE );
     check_interface( device_watcher, &IID_IDeviceWatcher, TRUE );
 
-    hr = IDeviceWatcher_add_Added(
-            device_watcher,
-            (ITypedEventHandler_DeviceWatcher_DeviceInformation *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface,
-            &added_token );
+    hr = IDeviceWatcher_add_Added( device_watcher, (void *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &added_token );
     ok( hr == S_OK, "got hr %#lx\n", hr );
-    hr = IDeviceWatcher_add_Stopped(
-            device_watcher, &stopped_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface,
-            &stopped_token );
+    hr = IDeviceWatcher_add_Stopped( device_watcher, &stopped_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &stopped_token );
     ok( hr == S_OK, "got hr %#lx\n", hr );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
@@ -273,7 +446,31 @@ static void test_DeviceInformation( void )
     ok( stopped_handler.args == NULL, "stopped_handler not invoked\n" );
 
     IDeviceWatcher_Release( device_watcher );
+
+    hr = IDeviceInformationStatics_FindAllAsync( device_info_statics, &info_collection_async );
+    todo_wine ok( hr == S_OK, "got %#lx\n", hr );
+    if (hr == S_OK)
+    {
+    await_device_information_collection( info_collection_async );
+    check_device_information_collection_async( info_collection_async, 1, Completed, S_OK, &info_collection );
+    IAsyncOperation_DeviceInformationCollection_Release( info_collection_async );
+
+    hr = IVectorView_DeviceInformation_get_Size( info_collection, &size );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    for (i = 0; i < size; i++)
+    {
+        winetest_push_context( "info_collection %u", i );
+        hr = IVectorView_DeviceInformation_GetAt( info_collection, i, &info );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        test_DeviceInformation_obj( __LINE__, info );
+        IDeviceInformation_Release( info );
+        winetest_pop_context();
+    }
+    IVectorView_DeviceInformation_Release( info_collection );
+    }
+
     IDeviceInformationStatics_Release( device_info_statics );
+
 skip_device_statics:
     IInspectable_Release( inspectable );
     ref = IActivationFactory_Release( factory );
