@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-09-20 00:23+0300\n"
+"PO-Revision-Date: 2024-11-08 00:18+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -14967,10 +14967,8 @@ msgid "Current LogonId is"
 msgstr "Dabartinis prisijungimo ID yra"
 
 #: programs/klist/klist.rc:38
-#, fuzzy
-#| msgid "client"
 msgid "Client"
-msgstr "klientas"
+msgstr "Klientas"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
