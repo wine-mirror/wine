@@ -3271,21 +3271,24 @@ class VkRegistry(object):
         # All of the relevant extensions and commands are in vk.xml.
         video_tree = ET.parse(video_xml)
         video_root = video_tree.getroot()
-        self._parse_enums(root, video_root)
-        self._parse_types(root, video_root)
+
+        self.copyright = root.find('./comment').text
+        self.video_copyright = video_root.find('./comment').text
+
+        root.extend(video_root)
+
+        self._parse_enums(root)
+        self._parse_types(root)
         self._parse_commands(root)
 
         # Pull in any required types and functions.
         self._parse_features(root)
-        self._parse_extensions(root, video_root)
+        self._parse_extensions(root)
 
         for enum in self.enums.values():
             enum.fixup_64bit_aliases()
 
         self._match_object_types()
-
-        self.copyright = root.find('./comment').text
-        self.video_copyright = video_root.find('./comment').text
 
     def _is_feature_supported(self, feature):
         version = self.version_regex.match(feature)
@@ -3426,11 +3429,11 @@ class VkRegistry(object):
         # calls when needed e.g. to adjust member variables.
         self.funcs = OrderedDict(sorted(funcs.items()))
 
-    def _parse_enums(self, root, video_root):
+    def _parse_enums(self, root):
         """ Parse enums section or better described as constants section. """
         enums = {}
         self.consts = []
-        for enum in root.findall("./enums") + video_root.findall("./enums"):
+        for enum in root.findall("./enums"):
             name = enum.attrib.get("name")
             _type = enum.attrib.get("type")
 
@@ -3522,10 +3525,10 @@ class VkRegistry(object):
                 if "data" in member.type_info:
                   VkRegistry._require_type(member.type_info["data"])
 
-    def _parse_extensions(self, root, video_root):
+    def _parse_extensions(self, root):
         """ Parse extensions section and pull in any types and commands for this extension. """
         extensions = []
-        exts = root.findall("./extensions/extension") + video_root.findall("./extensions/extension")
+        exts = root.findall("./extensions/extension")
         deferred_exts = []
         skipped_exts = UNSUPPORTED_EXTENSIONS.copy()
 
@@ -3688,9 +3691,9 @@ class VkRegistry(object):
                         type_info = self.types[name]
                         type_info["data"].required = True
 
-    def _parse_types(self, root, video_root):
+    def _parse_types(self, root):
         """ Parse types section, which contains all data types e.g. structs, typedefs etcetera. """
-        types = root.findall("./types/type") + video_root.findall("./types/type")
+        types = root.findall("./types/type")
 
         base_types = []
         bitmasks = []
