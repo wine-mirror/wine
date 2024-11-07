@@ -1577,7 +1577,7 @@ class VkMember(VkVariable):
             elif self.is_handle() and self.is_wrapped():
                 handle = self.type_info["data"]
                 if direction == Direction.OUTPUT:
-                    LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
+                    LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
                 elif self.optional:
                     return "{0}{1} = {2} ? {3} : 0;\n".format(output, self.name, self.value(input, conv),
                         handle.unwrap_handle(self.value(input, conv), unwrap))
@@ -1586,9 +1586,9 @@ class VkMember(VkVariable):
                         handle.unwrap_handle(self.value(input, conv), unwrap))
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
-                    LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
+                    LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
                 if unwrap == Unwrap.DRIVER and self.is_wrapped(Unwrap.DRIVER):
-                    LOGGER.err("DRIVER unwrapping of {0}.{1} not implemented".format(self.type, self.name))
+                    LOGGER.error("DRIVER unwrapping of {0}.{1} not implemented".format(self.type, self.name))
                 return "{0}{1} = wine_vk_unwrap_handle({2}{3}, {2}{1});\n".format(output, self.name, input, self.object_type)
             else:
                 selector_part = ", {0}{1}".format(input, self.selector) if self.selector else ""
@@ -1754,7 +1754,7 @@ class VkParam(VkVariable):
         # Since we have parsed all types before hand, this should not happen.
         type_info = types.get(type_elem.text, None)
         if type_info is None:
-            LOGGER.err("type info not found for: {0}".format(type_elem.text))
+            LOGGER.error("type info not found for: {0}".format(type_elem.text))
 
         return VkParam(type_info, const=const, pointer=pointer, name=name, array_lens=array_lens,
                        dyn_array_len=dyn_array_len, object_type=object_type, optional=optional,
@@ -1992,7 +1992,7 @@ class VkParam(VkVariable):
             unwrap_handle = None
             if self.object_type != None and self.type == "uint64_t":
                 if unwrap == Unwrap.DRIVER and self.is_wrapped(Unwrap.DRIVER):
-                    LOGGER.err("DRIVER unwrapping of {0}.{1} not implemented".format(self.type, self.name))
+                    LOGGER.error("DRIVER unwrapping of {0}.{1} not implemented".format(self.type, self.name))
                 unwrap_handle = "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(
                     params_prefix, self.object_type, self.name)
 
