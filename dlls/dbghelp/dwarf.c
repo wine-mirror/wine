@@ -3129,12 +3129,12 @@ static const dwarf2_cuhead_t* get_cuhead_from_func(const struct symt_function* f
 
 static enum location_error compute_call_frame_cfa(struct module* module, ULONG_PTR ip, struct location* frame);
 
-static enum location_error loc_compute_frame(struct process* pcs,
-                                             const struct module_format* modfmt,
+static enum location_error loc_compute_frame(const struct module_format* modfmt,
                                              const struct symt_function* func,
                                              DWORD_PTR ip, const dwarf2_cuhead_t* head,
                                              struct location* frame)
 {
+    struct process             *pcs = modfmt->module->process;
     struct symt**               psym = NULL;
     struct location*            pframe;
     dwarf2_traverse_context_t   lctx;
@@ -4007,8 +4007,7 @@ static enum location_error compute_call_frame_cfa(struct module* module, ULONG_P
     return 0;
 }
 
-static void dwarf2_location_compute(struct process* pcs,
-                                    const struct module_format* modfmt,
+static void dwarf2_location_compute(const struct module_format* modfmt,
                                     const struct symt_function* func,
                                     struct location* loc)
 {
@@ -4026,10 +4025,11 @@ static void dwarf2_location_compute(struct process* pcs,
     }
     else
     {
+        struct process *pcs = modfmt->module->process;
         /* instruction pointer relative to compiland's start */
         ip = pcs->localscope_pc - ((struct symt_compiland*)func->container)->address;
 
-        if ((err = loc_compute_frame(pcs, modfmt, func, ip, head, &frame)) == 0)
+        if ((err = loc_compute_frame(modfmt, func, ip, head, &frame)) == 0)
         {
             switch (loc->kind)
             {
@@ -4187,7 +4187,7 @@ static inline void dwarf2_fini_section(dwarf2_section_t* section)
         HeapFree(GetProcessHeap(), 0, (void*)section->address);
 }
 
-static void dwarf2_module_remove(struct process* pcs, struct module_format* modfmt)
+static void dwarf2_module_remove(struct module_format* modfmt)
 {
     dwarf2_fini_section(&modfmt->u.dwarf2_info->debug_loc);
     dwarf2_fini_section(&modfmt->u.dwarf2_info->debug_frame);
@@ -4293,6 +4293,12 @@ static BOOL dwarf2_unload_CU_module(dwarf2_parse_module_context_t* module_ctx)
     return TRUE;
 }
 
+static const struct module_format_vtable dwarf2_module_format_vtable =
+{
+    dwarf2_module_remove,
+    dwarf2_location_compute,
+};
+
 BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
                   const struct elf_thunk_area* thunks,
                   struct image_file_map* fmap)
@@ -4340,8 +4346,7 @@ BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
         goto leave;
     }
     dwarf2_modfmt->module = module;
-    dwarf2_modfmt->remove = dwarf2_module_remove;
-    dwarf2_modfmt->loc_compute = dwarf2_location_compute;
+    dwarf2_modfmt->vtable = &dwarf2_module_format_vtable;
     dwarf2_modfmt->u.dwarf2_info = (struct dwarf2_module_info_s*)(dwarf2_modfmt + 1);
     dwarf2_modfmt->u.dwarf2_info->word_size = fmap->addr_size / 8; /* set the word_size for eh_frame parsing */
     dwarf2_modfmt->module->format_info[DFI_DWARF] = dwarf2_modfmt;

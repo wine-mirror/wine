@@ -1039,19 +1039,15 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         case DataIsParam:
             {
                 struct location loc = ((const struct symt_data*)type)->u.var;
-                unsigned                i;
-                struct module_format*   modfmt;
+                struct module_format_vtable_iterator iter = { 0 };
 
                 if (loc.kind < loc_user) return FALSE;
-                for (i = 0; i < DFI_LAST; i++)
+                while ((module_format_vtable_iterator_next(module, &iter,
+                                                           MODULE_FORMAT_VTABLE_INDEX(loc_compute))))
                 {
-                    modfmt = module->format_info[i];
-                    if (modfmt && modfmt->loc_compute)
-                    {
-                        modfmt->loc_compute(module->process, modfmt,
-                                            (const struct symt_function*)((const struct symt_data*)type)->container, &loc);
-                        break;
-                    }
+                    iter.modfmt->vtable->loc_compute(iter.modfmt,
+                                                     (const struct symt_function*)((const struct symt_data*)type)->container, &loc);
+                    break;
                 }
                 if (loc.kind != loc_absolute) return FALSE;
                 V_VT(&X(VARIANT)) = VT_UI4; /* FIXME */

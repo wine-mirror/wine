@@ -387,7 +387,7 @@ BOOL pe_unlock_region(struct module *module, const BYTE* region)
     return TRUE;
 }
 
-static void pe_module_remove(struct process* pcs, struct module_format* modfmt)
+static void pe_module_remove(struct module_format* modfmt)
 {
     image_unmap_file(&modfmt->u.pe_info->fmap);
     HeapFree(GetProcessHeap(), 0, modfmt);
@@ -802,6 +802,12 @@ static BOOL search_builtin_pe(void *param, HANDLE handle, const WCHAR *path)
     return TRUE;
 }
 
+static const struct module_format_vtable pe_module_format_vtable =
+{
+    pe_module_remove,
+    NULL,
+};
+
 /******************************************************************
  *		pe_load_native_module
  *
@@ -877,8 +883,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
             {
                 module->real_path = real_path ? pool_wcsdup(&module->pool, real_path) : NULL;
                 modfmt->module = module;
-                modfmt->remove = pe_module_remove;
-                modfmt->loc_compute = NULL;
+                modfmt->vtable = &pe_module_format_vtable;
                 module->format_info[DFI_PE] = modfmt;
                 module->reloc_delta = base - PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
             }

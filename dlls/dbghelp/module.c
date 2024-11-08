@@ -1023,9 +1023,8 @@ DWORD64 WINAPI SymLoadModule64(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
  */
 BOOL module_remove(struct process* pcs, struct module* module)
 {
-    struct module_format*modfmt;
+    struct module_format_vtable_iterator iter = {};
     struct module**     p;
-    unsigned            i;
 
     TRACE("%s (%p)\n", debugstr_w(module->modulename), module);
 
@@ -1046,11 +1045,9 @@ BOOL module_remove(struct process* pcs, struct module* module)
             }
         }
     }
-    for (i = 0; i < DFI_LAST; i++)
-    {
-        if ((modfmt = module->format_info[i]) && modfmt->remove)
-            modfmt->remove(pcs, module->format_info[i]);
-    }
+    while (module_format_vtable_iterator_next(module, &iter, MODULE_FORMAT_VTABLE_INDEX(remove)))
+        iter.modfmt->vtable->remove(iter.modfmt);
+
     hash_table_destroy(&module->ht_symbols);
     hash_table_destroy(&module->ht_types);
     HeapFree(GetProcessHeap(), 0, module->sources);

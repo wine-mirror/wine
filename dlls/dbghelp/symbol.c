@@ -733,17 +733,13 @@ static void symt_fill_sym_info(struct module_pair* pair,
 
                     if (loc.kind >= loc_user)
                     {
-                        unsigned                i;
-                        struct module_format*   modfmt;
+                        struct module_format_vtable_iterator iter = {};
 
-                        for (i = 0; i < DFI_LAST; i++)
+                        while ((module_format_vtable_iterator_next(pair->effective, &iter,
+                                                                   MODULE_FORMAT_VTABLE_INDEX(loc_compute))))
                         {
-                            modfmt = pair->effective->format_info[i];
-                            if (modfmt && modfmt->loc_compute)
-                            {
-                                modfmt->loc_compute(pair->pcs, modfmt, func, &loc);
-                                break;
-                            }
+                            iter.modfmt->vtable->loc_compute(iter.modfmt, func, &loc);
+                            break;
                         }
                     }
                     switch (loc.kind)

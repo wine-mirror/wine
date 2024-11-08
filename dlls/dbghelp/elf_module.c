@@ -602,7 +602,7 @@ BOOL elf_map_handle(HANDLE handle, struct image_file_map* fmap)
     return elf_map_file(&emfd, fmap);
 }
 
-static void elf_module_remove(struct process* pcs, struct module_format* modfmt)
+static void elf_module_remove(struct module_format* modfmt)
 {
     image_unmap_file(&modfmt->u.elf_info->file_map);
     HeapFree(GetProcessHeap(), 0, modfmt);
@@ -1142,6 +1142,12 @@ static BOOL elf_fetch_file_info(struct process* process, const WCHAR* name, ULON
     return TRUE;
 }
 
+static const struct module_format_vtable elf_module_format_vtable =
+{
+    elf_module_remove,
+    NULL,
+};
+
 static BOOL elf_load_file_from_fmap(struct process* pcs, const WCHAR* filename,
                                     struct image_file_map* fmap, ULONG_PTR load_offset,
                                     ULONG_PTR dyn_addr, struct elf_info* elf_info)
@@ -1253,8 +1259,7 @@ static BOOL elf_load_file_from_fmap(struct process* pcs, const WCHAR* filename,
         elf_module_info = (void*)(modfmt + 1);
         elf_info->module->format_info[DFI_ELF] = modfmt;
         modfmt->module      = elf_info->module;
-        modfmt->remove      = elf_module_remove;
-        modfmt->loc_compute = NULL;
+        modfmt->vtable      = &elf_module_format_vtable;
         modfmt->u.elf_info  = elf_module_info;
 
         elf_module_info->elf_addr = load_offset;

@@ -2866,8 +2866,7 @@ static BOOL codeview_is_inside(const struct cv_local_info* locinfo, const struct
     return TRUE;
 }
 
-static void pdb_location_compute(struct process* pcs,
-                                 const struct module_format* modfmt,
+static void pdb_location_compute(const struct module_format* modfmt,
                                  const struct symt_function* func,
                                  struct location* loc)
 {
@@ -2880,7 +2879,7 @@ static void pdb_location_compute(struct process* pcs,
              locinfo->kind != 0;
              locinfo = (const struct cv_local_info*)((const char*)(locinfo + 1) + locinfo->ngaps * sizeof(locinfo->gaps[0])))
         {
-            if (!codeview_is_inside(locinfo, func, pcs->localscope_pc)) continue;
+            if (!codeview_is_inside(locinfo, func, modfmt->module->process->localscope_pc)) continue;
             switch (locinfo->kind)
             {
             case S_DEFRANGE:
@@ -3266,7 +3265,7 @@ static const char* pdb_get_string_table_entry(const PDB_STRING_TABLE* table, uns
     return (!table || offset >= table->length) ? NULL : (const char*)(table + 1) + offset;
 }
 
-static void pdb_module_remove(struct process* pcsn, struct module_format* modfmt)
+static void pdb_module_remove(struct module_format* modfmt)
 {
     unsigned    i;
 
@@ -3972,6 +3971,12 @@ static BOOL pdb_process_internal(const struct process *pcs,
     return TRUE;
 }
 
+static const struct module_format_vtable pdb_module_format_vtable =
+{
+    pdb_module_remove,
+    pdb_location_compute,
+};
+
 static BOOL pdb_process_file(const struct process *pcs,
                              const struct msc_debug_info *msc_dbg,
                              const char *filename, const GUID *guid, DWORD timestamp, DWORD age)
@@ -3991,8 +3996,7 @@ static BOOL pdb_process_file(const struct process *pcs,
         pdb_module_info = (void*)(modfmt + 1);
         msc_dbg->module->format_info[DFI_PDB] = modfmt;
         modfmt->module      = msc_dbg->module;
-        modfmt->remove      = pdb_module_remove;
-        modfmt->loc_compute = pdb_location_compute;
+        modfmt->vtable      = &pdb_module_format_vtable;
         modfmt->u.pdb_info  = pdb_module_info;
 
         memset(cv_zmodules, 0, sizeof(cv_zmodules));
