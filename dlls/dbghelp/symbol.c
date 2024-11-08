@@ -1754,19 +1754,6 @@ BOOL WINAPI SymGetSymFromName(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL Symb
     return TRUE;
 }
 
-struct lineinfo_t
-{
-    BOOL                        unicode;
-    PVOID                       key;
-    DWORD                       line_number;
-    union
-    {
-        CHAR*                   file_nameA;
-        WCHAR*                  file_nameW;
-    };
-    DWORD64                     address;
-};
-
 static void init_lineinfo(struct lineinfo_t* line_info, BOOL unicode)
 {
     line_info->unicode = unicode;
@@ -1806,7 +1793,7 @@ static BOOL lineinfo_copy_toW64(const struct lineinfo_t* line_info, IMAGEHLP_LIN
     return TRUE;
 }
 
-static BOOL lineinfo_set_nameA(struct process* pcs, struct lineinfo_t* line_info, char* str)
+BOOL lineinfo_set_nameA(struct process* pcs, struct lineinfo_t* line_info, char* str)
 {
     DWORD len;
 
@@ -1892,14 +1879,27 @@ static BOOL get_line_from_function(struct module_pair* pair, struct symt_functio
 static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
                                PDWORD pdwDisplacement, struct lineinfo_t* line_info)
 {
-    struct module_pair          pair;
-    struct symt_ht*             symt;
-
+    struct module_pair                   pair;
+    struct symt_ht*                      symt;
+    struct module_format_vtable_iterator iter = {};
+    BOOL                                 ret = FALSE;
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    symt = symt_find_symbol_at(pair.effective, addr);
 
-    if (!symt_check_tag(&symt->symt, SymTagFunction)) return FALSE;
-    return get_line_from_function(&pair, (struct symt_function*)symt, addr, pdwDisplacement, line_info);
+    while ((module_format_vtable_iterator_next(pair.effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(get_line_from_address))))
+    {
+        if (iter.modfmt->vtable->get_line_from_address(iter.modfmt, addr, line_info) == MR_SUCCESS)
+        {
+            if (pdwDisplacement) *pdwDisplacement = addr - line_info->address;
+            return TRUE;
+        }
+    }
+
+    symt = symt_find_symbol_at(pair.effective, addr);
+    if (symt_check_tag(&symt->symt, SymTagFunction))
+        ret = get_line_from_function(&pair, (struct symt_function*)symt, addr, pdwDisplacement, line_info);
+
+    return ret;
 }
 
 /***********************************************************************
@@ -2006,7 +2006,19 @@ static BOOL symt_get_func_line_prev(HANDLE hProcess, struct lineinfo_t* line_inf
     struct line_info*   srcli;
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-
+    if (key == NULL)
+    {
+        struct symt_ht*                      symt;
+        /* likely line_info has been filled in by pdb reader,  but it can advance yet
+         * so force reloading the old information
+         */
+        symt = symt_find_symbol_at(pair.effective, addr);
+        if (!symt_check_tag(&symt->symt, SymTagFunction) ||
+            !get_line_from_function(&pair, (struct symt_function*)symt, addr, NULL, line_info))
+            return FALSE;
+        if (line_info->key == NULL) return FALSE;
+        key = line_info->key;
+    }
     if (key == NULL) return FALSE;
 
     li = key;
@@ -2083,8 +2095,21 @@ static BOOL symt_get_func_line_next(HANDLE hProcess, struct lineinfo_t* line_inf
     struct line_info*   li;
     struct line_info*   srcli;
 
-    if (key == NULL) return FALSE;
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
+    if (key == NULL)
+    {
+        struct symt_ht*                      symt;
+        /* likely line_info has been filled in by pdb reader,  but it can advance yet
+         * so force reloading the information from old reader
+         */
+        symt = symt_find_symbol_at(pair.effective, addr);
+        if (!symt_check_tag(&symt->symt, SymTagFunction) ||
+            !get_line_from_function(&pair, (struct symt_function*)symt, addr, NULL, line_info))
+            return FALSE;
+        if (line_info->key == NULL) return FALSE;
+        key = line_info->key;
+    }
+    if (key == NULL) return FALSE;
 
     /* search current source file */
     for (srcli = key; !srcli->is_source_file; srcli--);

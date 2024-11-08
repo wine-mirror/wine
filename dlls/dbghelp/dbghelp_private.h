@@ -414,7 +414,21 @@ enum format_info
     DFI_LAST
 };
 
+struct lineinfo_t
+{
+    BOOL                        unicode;
+    PVOID                       key;
+    DWORD                       line_number;
+    union
+    {
+        CHAR*                   file_nameA;
+        WCHAR*                  file_nameW;
+    };
+    DWORD64                     address;
+};
+
 struct module_format;
+enum method_result {MR_SUCCESS, MR_FAILURE, MR_NOT_FOUND};
 struct module_format_vtable
 {
     /* module handling */
@@ -423,6 +437,9 @@ struct module_format_vtable
     void                        (*loc_compute)(const struct module_format* modfmt,
                                                const struct symt_function* func,
                                                struct location* loc);
+    /* line information */
+    enum method_result          (*get_line_from_address)(struct module_format *modfmt,
+                                                         DWORD64 address, struct lineinfo_t *line_info);
 };
 
 struct module_format
@@ -941,6 +958,7 @@ extern DWORD        symt_ptr2index(struct module* module, const struct symt* sym
 extern struct symt_custom*
                     symt_new_custom(struct module* module, const char* name,
                                     DWORD64 addr, DWORD size);
+extern BOOL         lineinfo_set_nameA(struct process* pcs, struct lineinfo_t* intl, char* str);
 
 /* type.c */
 extern void         symt_init_basic(struct module* module);
@@ -1026,4 +1044,4 @@ extern BOOL pdb_old_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
 struct pdb_reader;
 extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream);
 extern void pdb_reader_dispose(struct pdb_reader *pdb);
-extern struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file);
+extern struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections);
