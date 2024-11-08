@@ -149,13 +149,13 @@ enum builtin_winprocs
     WINPROC_SCROLLBAR,
     WINPROC_STATIC,
     WINPROC_IME,
-    /* unicode-only procs */
     WINPROC_DESKTOP,
+    /* unicode-only procs */
     WINPROC_ICONTITLE,
     WINPROC_MENU,
     WINPROC_MESSAGE,
     NB_BUILTIN_WINPROCS,
-    NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
+    NB_BUILTIN_AW_WINPROCS = WINPROC_ICONTITLE
 };
 
 /* FIXME: make it private to scroll.c */

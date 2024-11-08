@@ -61,7 +61,7 @@ extern void *window_surface_get_color( struct window_surface *surface, BITMAPINF
 extern BOOL adjust_window_rect( RECT *rect, DWORD style, BOOL menu, DWORD ex_style, UINT dpi );
 extern LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                     BOOL ansi );
-extern LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+extern LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi );
 extern void draw_menu_button( HWND hwnd, HDC dc, RECT *r, enum NONCLIENT_BUTTON_TYPE, BOOL down, BOOL grayed );
 extern BOOL draw_frame_menu( HDC dc, RECT *r, UINT flags );
 extern BOOL draw_nc_sys_button( HWND hwnd, HDC hdc, BOOL down );

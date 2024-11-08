@@ -1073,6 +1073,7 @@ static const struct user_client_procs client_procsA =
     .pScrollBarWndProc = ScrollBarWndProcA,
     .pStaticWndProc = StaticWndProcA,
     .pImeWndProc = ImeWndProcA,
+    .pDesktopWndProc = DesktopWndProcA,
 };
 
 static const struct user_client_procs client_procsW =
@@ -1087,7 +1088,7 @@ static const struct user_client_procs client_procsW =
     .pScrollBarWndProc = ScrollBarWndProcW,
     .pStaticWndProc = StaticWndProcW,
     .pImeWndProc = ImeWndProcW,
-    .pDesktopWndProc = DesktopWndProc,
+    .pDesktopWndProc = DesktopWndProcW,
     .pIconTitleWndProc = IconTitleWndProc,
     .pPopupMenuWndProc = PopupMenuWndProc,
     .pMessageWndProc = MessageWndProc,

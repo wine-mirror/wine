@@ -2946,7 +2946,7 @@ static void update_children_window_state( HWND hwnd )
     free( children );
 }
 
-LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     static const WCHAR wine_display_device_guidW[] =
         {'_','_','w','i','n','e','_','d','i','s','p','l','a','y','_','d','e','v','i','c','e',
@@ -3012,7 +3012,7 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
             return user_driver->pDesktopWindowProc( hwnd, msg, wparam, lparam );
     }
 
-    return default_window_proc( hwnd, msg, wparam, lparam, FALSE );
+    return default_window_proc( hwnd, msg, wparam, lparam, ansi );
 }
 
 /***********************************************************************
