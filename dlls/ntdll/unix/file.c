@@ -3976,22 +3976,22 @@ static NTSTATUS unmount_device( HANDLE handle )
             if ((mount_point = get_device_mount_point( st.st_rdev )))
             {
 #ifdef __APPLE__
-                static const char umount[] = "diskutil unmount >/dev/null 2>&1 ";
+                static char diskutil[] = "diskutil";
+                static char unmount[] = "unmount";
+                char *argv[4] = {diskutil, unmount, mount_point, NULL};
 #else
-                static const char umount[] = "umount >/dev/null 2>&1 ";
+                static char umount[] = "umount";
+                char *argv[3] = {umount, mount_point, NULL};
 #endif
-                char *cmd;
-                if (asprintf( &cmd, "%s%s", umount, mount_point ) != -1)
-                {
-                    system( cmd );
-                    free( cmd );
+                __wine_unix_spawnvp( argv, TRUE );
 #ifdef linux
-                    /* umount will fail to release the loop device since we still have
-                       a handle to it, so we release it here */
-                    if (major(st.st_rdev) == LOOP_MAJOR) ioctl( unix_fd, 0x4c01 /*LOOP_CLR_FD*/, 0 );
+                /* umount will fail to release the loop device since we still have
+                    a handle to it, so we release it here */
+                if (major(st.st_rdev) == LOOP_MAJOR) ioctl( unix_fd, 0x4c01 /*LOOP_CLR_FD*/, 0 );
 #endif
-                }
-                free( mount_point );
+                /* Add in a small delay. Without this subsequent tasks
+                    like IOCTL_STORAGE_EJECT_MEDIA might fail. */
+                usleep( 100000 );
             }
         }
         if (needs_close) close( unix_fd );
