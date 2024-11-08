@@ -1076,6 +1076,7 @@ static const struct user_client_procs client_procsA =
     .pDesktopWndProc = DesktopWndProcA,
     .pIconTitleWndProc = IconTitleWndProcA,
     .pPopupMenuWndProc = PopupMenuWndProcA,
+    .pMessageWndProc = MessageWndProc,
 };
 
 static const struct user_client_procs client_procsW =

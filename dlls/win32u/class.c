@@ -91,13 +91,13 @@ static WINDOWPROC *find_winproc( WNDPROC func, BOOL ansi )
 {
     unsigned int i;
 
-    for (i = 0; i < NB_BUILTIN_AW_WINPROCS; i++)
+    for (i = 0; i < NB_BUILTIN_WINPROCS; i++)
     {
         /* match either proc, some apps confuse A and W */
         if (winproc_array[i].procA != func && winproc_array[i].procW != func) continue;
         return &winproc_array[i];
     }
-    for (i = NB_BUILTIN_AW_WINPROCS; i < winproc_used; i++)
+    for ( ; i < winproc_used; i++)
     {
         if (ansi && winproc_array[i].procA != func) continue;
         if (!ansi && winproc_array[i].procW != func) continue;

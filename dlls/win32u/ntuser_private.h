@@ -138,7 +138,6 @@ struct hook_extra_info
 
 enum builtin_winprocs
 {
-    /* dual A/W procs */
     WINPROC_BUTTON = 0,
     WINPROC_COMBO,
     WINPROC_DEFWND,
@@ -152,10 +151,8 @@ enum builtin_winprocs
     WINPROC_DESKTOP,
     WINPROC_ICONTITLE,
     WINPROC_MENU,
-    /* unicode-only procs */
     WINPROC_MESSAGE,
     NB_BUILTIN_WINPROCS,
-    NB_BUILTIN_AW_WINPROCS = WINPROC_MESSAGE
 };
 
 /* FIXME: make it private to scroll.c */
