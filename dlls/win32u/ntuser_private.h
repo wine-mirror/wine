@@ -150,12 +150,12 @@ enum builtin_winprocs
     WINPROC_STATIC,
     WINPROC_IME,
     WINPROC_DESKTOP,
-    /* unicode-only procs */
     WINPROC_ICONTITLE,
+    /* unicode-only procs */
     WINPROC_MENU,
     WINPROC_MESSAGE,
     NB_BUILTIN_WINPROCS,
-    NB_BUILTIN_AW_WINPROCS = WINPROC_ICONTITLE
+    NB_BUILTIN_AW_WINPROCS = WINPROC_MENU
 };
 
 /* FIXME: make it private to scroll.c */
