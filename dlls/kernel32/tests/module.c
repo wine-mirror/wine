@@ -48,6 +48,8 @@ static NTSTATUS (WINAPI *pLdrGetDllFullName)( HMODULE module, UNICODE_STRING *na
 
 static BOOL (WINAPI *pIsApiSetImplemented)(LPCSTR);
 
+static NTSTATUS (WINAPI *pRtlHashUnicodeString)( const UNICODE_STRING *, BOOLEAN, ULONG, ULONG * );
+
 static BOOL is_unicode_enabled = TRUE;
 
 static BOOL cmpStrAW(const char* a, const WCHAR* b, DWORD lenA, DWORD lenB)
@@ -967,6 +969,7 @@ static void init_pointers(void)
     MAKEFUNC(LdrGetDllHandle);
     MAKEFUNC(LdrGetDllHandleEx);
     MAKEFUNC(LdrGetDllFullName);
+    MAKEFUNC(RtlHashUnicodeString);
     mod = GetModuleHandleA( "kernelbase.dll" );
     MAKEFUNC(IsApiSetImplemented);
 #undef MAKEFUNC
@@ -1810,6 +1813,45 @@ static void test_base_address_index_tree(void)
     ok( tree_count == list_count, "count mismatch %u, %u.\n", tree_count, list_count );
 }
 
+static ULONG hash_basename( const UNICODE_STRING *basename )
+{
+    NTSTATUS status;
+    ULONG hash;
+
+    status = pRtlHashUnicodeString( basename, TRUE, HASH_STRING_ALGORITHM_DEFAULT, &hash );
+    ok( !status, "got %#lx.\n", status );
+    return hash & 31;
+}
+
+static void test_hash_links(void)
+{
+    LIST_ENTRY *hash_map, *entry, *entry2, *mark, *root;
+    LDR_DATA_TABLE_ENTRY *module;
+    const WCHAR *modname;
+    BOOL found;
+
+    /* Hash links structure is the same on older Windows loader but hashing algorithm is different. */
+    if (is_old_loader_struct()) return;
+
+    root = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    module = CONTAINING_RECORD(root->Flink, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+    hash_map = module->HashLinks.Blink - hash_basename( &module->BaseDllName );
+
+    for (entry = root->Flink; entry != root; entry = entry->Flink)
+    {
+        module = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+        modname = module->BaseDllName.Buffer;
+        mark = &hash_map[hash_basename( &module->BaseDllName )];
+        found = FALSE;
+        for (entry2 = mark->Flink; entry2 != mark; entry2 = entry2->Flink)
+        {
+            module = CONTAINING_RECORD(entry2, LDR_DATA_TABLE_ENTRY, HashLinks);
+            if ((found = !lstrcmpiW( module->BaseDllName.Buffer, modname ))) break;
+        }
+        ok( found, "Could not find %s.\n", debugstr_w(modname) );
+    }
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -1848,4 +1890,5 @@ START_TEST(module)
     test_ddag_node();
     test_tls_links();
     test_base_address_index_tree();
+    test_hash_links();
 }
