@@ -2882,7 +2882,7 @@ static void draw_popup_menu( HWND hwnd, HDC hdc, HMENU hmenu )
     }
 }
 
-LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam )
+LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     TRACE( "hwnd=%p msg=0x%04x wp=0x%04lx lp=0x%08lx\n", hwnd, message, (long)wparam, lparam );
 
@@ -2938,7 +2938,7 @@ LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam, LPARAM l
         return get_window_long_ptr( hwnd, 0, FALSE );
 
     default:
-        return default_window_proc( hwnd, message, wparam, lparam, FALSE );
+        return default_window_proc( hwnd, message, wparam, lparam, ansi );
     }
     return 0;
 }

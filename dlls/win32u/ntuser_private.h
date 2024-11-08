@@ -151,11 +151,11 @@ enum builtin_winprocs
     WINPROC_IME,
     WINPROC_DESKTOP,
     WINPROC_ICONTITLE,
-    /* unicode-only procs */
     WINPROC_MENU,
+    /* unicode-only procs */
     WINPROC_MESSAGE,
     NB_BUILTIN_WINPROCS,
-    NB_BUILTIN_AW_WINPROCS = WINPROC_MENU
+    NB_BUILTIN_AW_WINPROCS = WINPROC_MESSAGE
 };
 
 /* FIXME: make it private to scroll.c */

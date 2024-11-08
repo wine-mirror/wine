@@ -184,11 +184,34 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
 }
 
 /***********************************************************************
- *           PopupMenuWndProc
- *
- * NOTE: Windows has totally different (and undocumented) popup wndproc.
+ *           PopupMenuWndProcA
  */
-LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT WINAPI PopupMenuWndProcA( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+{
+    switch(message)
+    {
+    case WM_DESTROY:
+    case WM_CREATE:
+    case WM_MOUSEACTIVATE:
+    case WM_PAINT:
+    case WM_PRINTCLIENT:
+    case WM_ERASEBKGND:
+    case WM_SHOWWINDOW:
+    case MN_GETHMENU:
+        return NtUserMessageCall( hwnd, message, wParam, lParam,
+                                  NULL, NtUserPopupMenuWndProc, TRUE );
+
+    default:
+        return DefWindowProcA( hwnd, message, wParam, lParam );
+    }
+    return 0;
+}
+
+
+/***********************************************************************
+ *           PopupMenuWndProcW
+ */
+LRESULT WINAPI PopupMenuWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     switch(message)
     {
