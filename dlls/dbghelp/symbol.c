@@ -1910,9 +1910,9 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
     struct symt_ht*             symt;
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    if ((symt = symt_find_symbol_at(pair.effective, addr)) == NULL) return FALSE;
+    symt = symt_find_symbol_at(pair.effective, addr);
 
-    if (symt->symt.tag != SymTagFunction && symt->symt.tag != SymTagInlineSite) return FALSE;
+    if (!symt_check_tag(&symt->symt, SymTagFunction)) return FALSE;
     return get_line_from_function(&pair, (struct symt_function*)symt, addr, pdwDisplacement, intl);
 }
 
