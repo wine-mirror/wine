@@ -300,20 +300,6 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, PSTR szSearchPath,
     return ret;
 }
 
-/******************************************************************
- *		invade_process
- *
- * SymInitialize helper: loads in dbghelp all known (and loaded modules)
- * this assumes that hProcess is a handle on a valid process
- */
-static BOOL WINAPI process_invade_cb(PCWSTR name, ULONG64 base, ULONG size, PVOID user)
-{
-    HANDLE      hProcess = user;
-
-    SymLoadModuleExW(hProcess, 0, name, NULL, base, size, NULL, 0);
-    return TRUE;
-}
-
 const WCHAR *process_getenv(const struct process *process, const WCHAR *name)
 {
     size_t name_len;
@@ -432,7 +418,10 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
 
     TRACE("got debug info address %#I64x from PEB %p\n", base, pbi.PebBaseAddress);
     if (!elf_read_wine_loader_dbg_info(pcs, base) && !macho_read_wine_loader_dbg_info(pcs, base))
+    {
         WARN("couldn't load process debug info at %#I64x\n", base);
+        pcs->loader = &empty_loader_ops;
+    }
     return TRUE;
 }
 
@@ -510,8 +499,9 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
     if (check_live_target(pcs, wow64, child_wow64))
     {
         if (fInvadeProcess)
-            EnumerateLoadedModulesW64(hProcess, process_invade_cb, hProcess);
-        if (pcs->loader) pcs->loader->synchronize_module_list(pcs);
+            module_refresh_list(pcs);
+        else
+            pcs->loader->synchronize_module_list(pcs);
     }
     else if (fInvadeProcess)
     {

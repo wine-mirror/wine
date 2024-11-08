@@ -24,6 +24,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "dbghelp_private.h"
 #include "image_private.h"
 #include "psapi.h"
@@ -1317,7 +1319,11 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE process,
     size_t              sysdir_len = 0, wowdir_len = 0;
 
     /* process might not be a handle to a live process */
-    if (!IsWow64Process2(process, &pcs_machine, &native_machine)) return FALSE;
+    if (!IsWow64Process2(process, &pcs_machine, &native_machine))
+    {
+        SetLastError(STATUS_INVALID_CID);
+        return FALSE;
+    }
     with_32bit_modules = sizeof(void*) > sizeof(int) &&
         pcs_machine != IMAGE_FILE_MACHINE_UNKNOWN &&
         (dbghelp_options & SYMOPT_INCLUDE_32BIT_MODULES);
@@ -1600,18 +1606,41 @@ void module_reset_debug_info(struct module* module)
     module->sources = NULL;
 }
 
+static BOOL WINAPI process_invade_cb(PCWSTR name, ULONG64 base, ULONG size, PVOID user)
+{
+    HANDLE      hProcess = user;
+
+    /* Note: this follows native behavior:
+     * If a PE module has been unloaded from debuggee, it's not immediately removed
+     * from module list in dbghelp.
+     * Removal may eventually happen when loading a another module with SymLoadModule:
+     * if the module to be loaded overlaps an existing one, SymLoadModule will
+     * automatically unload the eldest one.
+     */
+    SymLoadModuleExW(hProcess, 0, name, NULL, base, size, NULL, 0);
+    return TRUE;
+}
+
+BOOL module_refresh_list(struct process *pcs)
+{
+    BOOL ret;
+
+    ret = pcs->loader->synchronize_module_list(pcs);
+    ret = EnumerateLoadedModulesW64(pcs->handle, process_invade_cb, pcs->handle) && ret;
+    return ret;
+}
+
 /******************************************************************
  *              SymRefreshModuleList (DBGHELP.@)
  */
 BOOL WINAPI SymRefreshModuleList(HANDLE hProcess)
 {
-    struct process*     pcs;
+    struct process *pcs;
 
     TRACE("(%p)\n", hProcess);
 
     if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
-
-    return pcs->loader->synchronize_module_list(pcs);
+    return module_refresh_list(pcs);
 }
 
 /***********************************************************************

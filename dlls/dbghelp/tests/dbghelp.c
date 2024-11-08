@@ -537,7 +537,6 @@ static BOOL test_modules(void)
 
     ret = SymRefreshModuleList(dummy);
     ok(!ret, "SymRefreshModuleList should have failed\n");
-    todo_wine
     ok(GetLastError() == STATUS_INVALID_CID, "Unexpected last error %lx\n", GetLastError());
 
     count = get_module_count(dummy);
@@ -875,7 +874,6 @@ static void test_loaded_modules(void)
     /* testing invalid process handle */
     ret = wrapper_EnumerateLoadedModulesW64((HANDLE)(ULONG_PTR)0xffffffc0, NULL, FALSE);
     ok(!ret, "EnumerateLoadedModulesW64 should have failed\n");
-    todo_wine
     ok(GetLastError() == STATUS_INVALID_CID, "Unexpected last error %lx\n", GetLastError());
 
     /* testing with child process of different machines */
@@ -939,7 +937,6 @@ static void test_loaded_modules(void)
     pcskind = get_process_kind(pi.hProcess);
 
     ret = wrapper_SymRefreshModuleList(pi.hProcess);
-    todo_wine_if(pcskind == PCSKIND_WOW64)
     ok(ret || broken(GetLastError() == STATUS_PARTIAL_COPY /* Win11 in some cases */ ||
                              GetLastError() == STATUS_INFO_LENGTH_MISMATCH /* Win11 in some cases */),
        "SymRefreshModuleList failed: %lx\n", GetLastError());
@@ -1613,7 +1610,6 @@ static void test_refresh_modules(void)
     ok(ret, "SymRefreshModuleList failed: %lx\n", GetLastError());
 
     count_current = get_module_count(GetCurrentProcess());
-    todo_wine
     ok(count == count_current, "Unexpected module count %u, %u\n", count, count_current);
 
     hmod = GetModuleHandleW(unused_dll);
@@ -1623,7 +1619,6 @@ static void test_refresh_modules(void)
     ok(hmod != NULL, "LoadLibraryW failed: %lu\n", GetLastError());
 
     count_current = get_module_count(GetCurrentProcess());
-    todo_wine
     ok(count == count_current, "Unexpected module count %u, %u\n", count, count_current);
     ret = is_module_present(GetCurrentProcess(), unused_dll);
     ok(!ret, "Couldn't find module %ls\n", unused_dll);
@@ -1632,17 +1627,14 @@ static void test_refresh_modules(void)
     ok(ret, "SymRefreshModuleList failed: %lx\n", GetLastError());
 
     count_current = get_module_count(GetCurrentProcess());
-    todo_wine
     ok(count + 1 == count_current, "Unexpected module count %u, %u\n", count, count_current);
     ret = is_module_present(GetCurrentProcess(), unused_dll);
-    todo_wine
     ok(ret, "Couldn't find module %ls\n", unused_dll);
 
     ret = FreeLibrary(hmod);
     ok(ret, "LoadLibraryW failed: %lu\n", GetLastError());
 
     count_current = get_module_count(GetCurrentProcess());
-    todo_wine
     ok(count + 1 == count_current, "Unexpected module count %u, %u\n", count, count_current);
 
     ret = wrapper_SymRefreshModuleList(GetCurrentProcess());
@@ -1650,10 +1642,8 @@ static void test_refresh_modules(void)
 
     /* SymRefreshModuleList() doesn't remove the unloaded modules... */
     count_current = get_module_count(GetCurrentProcess());
-    todo_wine
     ok(count + 1 == count_current, "Unexpected module count %u != %u\n", count, count_current);
     ret = is_module_present(GetCurrentProcess(), unused_dll);
-    todo_wine
     ok(ret, "Couldn't find module %ls\n", unused_dll);
 
     ret = SymCleanup(GetCurrentProcess());

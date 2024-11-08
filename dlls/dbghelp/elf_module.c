@@ -1785,7 +1785,6 @@ BOOL elf_read_wine_loader_dbg_info(struct process* pcs, ULONG_PTR addr)
     {
         ERR("Unable to access ELF libraries (outside 32bit limit)\n");
         module_remove(pcs, elf_info.module);
-        pcs->loader = &empty_loader_ops;
         return FALSE;
     }
     TRACE("Found ELF debug header %#I64x\n", elf_info.dbg_hdr_addr);
