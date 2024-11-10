@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-02-17 17:00+0100\n"
+"PO-Revision-Date: 2024-11-10 20:20+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -246,7 +246,7 @@ msgstr ""
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
-msgstr "Software"
+msgstr "Programma's"
 
 #: dlls/appwiz.cpl/appwiz.rc:32
 msgid ""
@@ -3161,32 +3161,24 @@ msgid "Not yet implemented"
 msgstr "Nog niet geïmplementeerd"
 
 #: dlls/desk.cpl/desk.rc:35
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Desktop"
-msgstr "Bureaublad"
+msgstr "Schermen"
 
 #: dlls/desk.cpl/desk.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Virtual Desktop"
-msgstr "Bureaublad"
+msgstr "Virtueel Bureaublad"
 
 #: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
 msgid "&Reset"
 msgstr "&Terugzetten"
 
 #: dlls/desk.cpl/desk.rc:29
-#, fuzzy
-#| msgid "Default Settings"
 msgid "Display Settings"
-msgstr "Standaardinstellingen"
+msgstr "Beeldscherm Instellingen"
 
 #: dlls/desk.cpl/desk.rc:30
 msgid "Configure monitors and display devices."
-msgstr ""
+msgstr "Beeldschermen en grafische apparaten configureren."
 
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
@@ -3721,7 +3713,7 @@ msgstr "Poort:"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:31
 msgid "Internet Settings"
-msgstr "Internetinstellingen"
+msgstr "Internet Instellingen"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:32
 msgid "Configure Wine Internet Browser and related settings"
@@ -3780,16 +3772,12 @@ msgid "&Enable"
 msgstr "&Activeren"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (DirectInput devices)"
-msgstr "Verbonden (xinput apparaat)"
+msgstr "Verbonden (DirectInput apparaat)"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (XInput devices)"
-msgstr "Verbonden (xinput apparaat)"
+msgstr "Verbonden (XInput apparaat)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3797,19 +3785,15 @@ msgstr "Uitgeschakeld"
 
 #: dlls/joy.cpl/joy.rc:51
 msgid "Advanced settings (restart prefix required to take effect)"
-msgstr ""
+msgstr "Geavanceerde instellingen (herstart prefix vereist)"
 
 #: dlls/joy.cpl/joy.rc:52
-#, fuzzy
-#| msgid "&Enable"
 msgid "Enable SDL"
-msgstr "&Activeren"
+msgstr "SDL gebruiken"
 
 #: dlls/joy.cpl/joy.rc:53
-#, fuzzy
-#| msgid "Disabled"
 msgid "Disable hidraw"
-msgstr "Uitgeschakeld"
+msgstr "Hidraw uitschakelen"
 
 #: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
@@ -10202,7 +10186,7 @@ msgstr "Configuratiescherm"
 
 #: dlls/shell32/shell32.rc:162
 msgid "Ne&w"
-msgstr ""
+msgstr "Nieu&w"
 
 #: dlls/shell32/shell32.rc:164
 msgid "E&xplore"
@@ -10210,7 +10194,7 @@ msgstr "&Verkennen"
 
 #: dlls/shell32/shell32.rc:167
 msgid "Run as &Administrator"
-msgstr ""
+msgstr "Als &Administrator uitvoeren"
 
 #: dlls/shell32/shell32.rc:189
 msgid "Restart"
@@ -14660,22 +14644,16 @@ msgstr ""
 " hexadecimaal (0x34) of octaal (056) zijn.\n"
 
 #: programs/cmd/cmd.rc:407
-#, fuzzy
-#| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
-msgstr "Formuleringsfout\n"
+msgstr "Formuleringsfout: %1 onverwacht\n"
 
 #: programs/cmd/cmd.rc:408
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of line"
-msgstr "Einde van bestand.\n"
+msgstr "Einde van regel"
 
 #: programs/cmd/cmd.rc:409
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of file"
-msgstr "Einde van bestand.\n"
+msgstr "Einde van bestand"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -14864,11 +14842,8 @@ msgstr ""
 "Doorgaan?"
 
 #: programs/explorer/explorer.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Wine Desktop"
-msgstr "Bureaublad"
+msgstr "Wine Bureaublad"
 
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
@@ -15038,10 +15013,8 @@ msgid "Current LogonId is"
 msgstr "Huidige LoginId is"
 
 #: programs/klist/klist.rc:38
-#, fuzzy
-#| msgid "client"
 msgid "Client"
-msgstr "cliënt"
+msgstr "Cliënt"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -19510,10 +19483,8 @@ msgid "Help topics: "
 msgstr "Help-onderwerpen: "
 
 #: programs/wmic/wmic.rc:28
-#, fuzzy
-#| msgid "Error: Command line not supported\n"
 msgid "Error: Command not supported\n"
-msgstr "Fout: Opdrachtregel niet ondersteund\n"
+msgstr "Fout: Opdracht niet ondersteund\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
@@ -19528,10 +19499,8 @@ msgid "Error: Invalid syntax for PATH\n"
 msgstr "Fout: Foutieve formulering voor PATH\n"
 
 #: programs/wmic/wmic.rc:32
-#, fuzzy
-#| msgid "Bad command.\n"
 msgid "Supply a command\n"
-msgstr "Verkeerd commando.\n"
+msgstr "Geef een opdracht\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
