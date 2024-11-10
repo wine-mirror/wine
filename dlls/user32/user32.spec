@@ -895,7 +895,7 @@
 @ stdcall OpenWindowStationA(str long long)
 @ stdcall OpenWindowStationW(wstr long long)
 @ stdcall PackDDElParam(long long long)
-# @ stub PackTouchHitTestingProximityEvaluation
+@ stdcall PackTouchHitTestingProximityEvaluation(ptr ptr)
 @ stdcall PaintDesktop(long)
 # @ stub PaintMenuBar
 # @ stub PaintMonitor
