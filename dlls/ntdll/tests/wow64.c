@@ -2614,7 +2614,7 @@ static void test_nt_wow64(void)
                 status = NtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi32, sizeof(pbi32), NULL );
                 ok( !status, "NtQueryInformationProcess returned 0x%08lx\n", status );
 
-                status = NtWow64QueryInformationProcess64( GetCurrentProcess(), ProcessBasicInformation, &pbi64, sizeof(pbi64), NULL );
+                status = pNtWow64QueryInformationProcess64( GetCurrentProcess(), ProcessBasicInformation, &pbi64, sizeof(pbi64), NULL );
                 ok( !status, "NtWow64QueryInformationProcess64 returned 0x%08lx\n", status );
 
                 expected_peb = (ULONG)pbi32.PebBaseAddress;
@@ -2634,7 +2634,7 @@ static void test_nt_wow64(void)
                     "expected %Ix got %I64x\n", pbi32.UniqueProcessId, pbi64.UniqueProcessId );
                 break;
             default:
-                status = NtWow64QueryInformationProcess64( GetCurrentProcess(), class, NULL, 0, NULL );
+                status = pNtWow64QueryInformationProcess64( GetCurrentProcess(), class, NULL, 0, NULL );
                 ok( status == STATUS_NOT_IMPLEMENTED, "NtWow64QueryInformationProcess64 returned 0x%08lx\n", status );
             }
 
