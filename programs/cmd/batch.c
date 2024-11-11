@@ -307,11 +307,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
  */
 void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
 {
-
-#define NUMMODIFIERS 11
-  static const WCHAR validmodifiers[NUMMODIFIERS] = {
-        '~', 'f', 'd', 'p', 'n', 'x', 's', 'a', 't', 'z', '$'
-  };
+  static const WCHAR *validmodifiers = L"~fdpnxsatz$";
 
   WIN32_FILE_ATTRIBUTE_DATA fileInfo;
   WCHAR  outputparam[MAXSTRING];
@@ -321,41 +317,17 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
   WCHAR  *filepart       = NULL;
   WCHAR  *pos            = *start+1;
   WCHAR  *firstModifier  = pos;
-  WCHAR  *lastModifier   = NULL;
+  WCHAR  *lastModifier   = pos++;
   int   modifierLen     = 0;
-  BOOL  finished        = FALSE;
-  int   i               = 0;
   BOOL  exists          = TRUE;
   BOOL  skipFileParsing = FALSE;
   BOOL  doneModifier    = FALSE;
 
   /* Search forwards until find invalid character modifier */
-  while (!finished) {
-
-    /* Work on the previous character */
-    if (lastModifier != NULL) {
-
-      for (i=0; i<NUMMODIFIERS; i++) {
-        if (validmodifiers[i] == *lastModifier) {
-
-          /* Special case '$' to skip until : found */
-          if (*lastModifier == '$') {
-            while (*pos != ':' && *pos) pos++;
-            if (*pos == 0x00) return; /* Invalid syntax */
-            pos++;                    /* Skip ':'       */
-          }
-          break;
-        }
-      }
-
-      if (i==NUMMODIFIERS) {
-        finished = TRUE;
-      }
-    }
-
-    /* Save this one away */
-    if (!finished) {
-      lastModifier = pos;
+  for (; wcschr(validmodifiers, towlower(*lastModifier)); lastModifier = pos++) {
+    /* Special case '$' to skip until : found */
+    if (*lastModifier == L'$') {
+      if (!(pos = wcschr(pos, L':'))) return; /* Invalid syntax */
       pos++;
     }
   }
@@ -377,6 +349,9 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
     }
   }
   if (lastModifier == firstModifier) return; /* Invalid syntax */
+  /* put all modifiers in lowercase */
+  for (pos = firstModifier; pos < lastModifier; pos++)
+      *pos = towlower(*pos);
 
   /* So now, firstModifier points to beginning of modifiers, lastModifier
      points to the variable just after the modifiers. Process modifiers
