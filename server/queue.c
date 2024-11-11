@@ -1939,6 +1939,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     {
         if (input && !(flags & RIDEV_NOLEGACY)) update_thread_input_key_state( input, msg->msg, msg->wparam );
         free_message( msg );
+        if (thread) release_object( thread );
         return;
     }
 
