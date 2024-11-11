@@ -3196,14 +3196,14 @@ static BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
             handleExpansion(expanded_left, TRUE);
             if ((len = wcslen(expanded_left)))
             {
-                /* FindFirstFile does not like a directory path ending in '\' or '/', so append a '.' */
-                if ((expanded_left[len - 1] == '\\' || expanded_left[len - 1] == '/') && len < MAXSTRING - 1)
+                if (!wcspbrk(expanded_left, L"*?"))
+                    *test = GetFileAttributesW(expanded_left) != INVALID_FILE_ATTRIBUTES;
+                else
                 {
-                    wcscat(expanded_left, L".");
+                    hff = FindFirstFileW(expanded_left, &fd);
+                    *test = (hff != INVALID_HANDLE_VALUE);
+                    if (*test) FindClose(hff);
                 }
-                hff = FindFirstFileW(expanded_left, &fd);
-                *test = (hff != INVALID_HANDLE_VALUE);
-                if (*test) FindClose(hff);
             }
         }
         break;
