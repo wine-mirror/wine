@@ -3578,7 +3578,7 @@ static void test_save_surface_to_dds(IDirect3DDevice9 *device)
           { D3D_OK, { 32, DDS_PF_BUMPDUDV | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
             DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_X8L8V8U8, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_BUMPLUMINANCE, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 },
@@ -3597,13 +3597,13 @@ static void test_save_surface_to_dds(IDirect3DDevice9 *device)
           { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x7c00, 0x03e0, 0x001f, 0x8000 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
             DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_A4R4G4B4, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x0f00, 0x00f0, 0x000f, 0xf000 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
             DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_R3G3B2, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_RGB, 0, 8, 0xe0, 0x1c, 0x03, 0 },
@@ -3615,7 +3615,7 @@ static void test_save_surface_to_dds(IDirect3DDevice9 *device)
           { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 16, 0x00e0, 0x001c, 0x0003, 0xff00 },
               DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
               DDS_FILE_HEADER_SIZE + (4 * 2 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_X4R4G4B4, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_RGB, 0, 16, 0xf00, 0x0f0, 0x00f, 0 },
@@ -3627,25 +3627,25 @@ static void test_save_surface_to_dds(IDirect3DDevice9 *device)
           { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
             DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_A2R10G10B10, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
             DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_A8R8G8B8, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
             DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_A8B8G8R8, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
             DDS_FILE_HEADER_SIZE + (4 * 4 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_X8R8G8B8, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 },
@@ -3676,7 +3676,7 @@ static void test_save_surface_to_dds(IDirect3DDevice9 *device)
           { D3D_OK, { 32, DDS_PF_ALPHA_ONLY, 0, 8, 0, 0, 0, 0xff },
             DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0,
             DDS_FILE_HEADER_SIZE + (4 * 4)
-          }, .todo_expected = TRUE
+          }
         },
         { D3DFMT_DXT1, 4, 4, NULL,
           { D3D_OK, { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 },
@@ -3885,7 +3885,7 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
 
     dds = ID3DXBuffer_GetBufferPointer(buffer);
     check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 0, 0, 0, 0, 0,
-            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, FALSE);
     ID3DXBuffer_Release(buffer);
 
     /* Test rectangle argument for D3DXIFF_DDS. */
@@ -3895,7 +3895,7 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
 
     dds = ID3DXBuffer_GetBufferPointer(buffer);
     check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 2, 0, 0, 0, 0,
-            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, FALSE);
     ID3DXBuffer_Release(buffer);
 
     SetRect(&rect, 0, 0, 2, 0);
@@ -3904,7 +3904,7 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
 
     dds = ID3DXBuffer_GetBufferPointer(buffer);
     check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 0, 2, 0, 0, 0,
-            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, FALSE);
     ID3DXBuffer_Release(buffer);
 
     SetRect(&rect, 2, 2, 4, 4);
@@ -3913,7 +3913,7 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
 
     dds = ID3DXBuffer_GetBufferPointer(buffer);
     check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 2, 2, 0, 0, 0,
-            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, FALSE);
     for (y = 0; y < 2; ++y)
     {
         for (x = 0; x < 2; ++x)
@@ -3931,7 +3931,7 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
 
     dds = ID3DXBuffer_GetBufferPointer(buffer);
     check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 4, 4, 0, 0, 0,
-            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, TRUE);
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, FALSE);
     ID3DXBuffer_Release(buffer);
 
     IDirect3DSurface9_Release(surface);

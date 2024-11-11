@@ -90,6 +90,7 @@ static const GUID *wic_guid_from_d3dformat(D3DFORMAT format)
 #define DDS_DEPTH 0x800000
 
 /* dds_header.caps */
+#define DDSCAPS_ALPHA    0x2
 #define DDS_CAPS_COMPLEX 0x8
 #define DDS_CAPS_TEXTURE 0x1000
 #define DDS_CAPS_MIPMAP 0x400000
@@ -478,6 +479,8 @@ static HRESULT d3dx_init_dds_header(struct dds_header *header, D3DRESOURCETYPE r
     header->height = size->height;
     header->width = size->width;
     header->caps = DDS_CAPS_TEXTURE;
+    if (header->pixel_format.flags & DDS_PF_ALPHA || header->pixel_format.flags & DDS_PF_ALPHA_ONLY)
+        header->caps |= DDSCAPS_ALPHA;
 
     return D3D_OK;
 }
