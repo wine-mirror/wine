@@ -525,11 +525,19 @@ void find_domain_name(const WCHAR *host, DWORD host_len,
                     return;
             }
         } else if(last_tld-host < 3)
-            /* Anything less than 3 characters is considered part
+        {
+            /* Anything less than 3 ASCII characters is considered part
              * of the TLD name.
              *  Ex: ak.uk -> Has no domain name.
              */
-            return;
+            for(p = host; p < last_tld; p++) {
+                if(!is_ascii(*p))
+                    break;
+            }
+
+            if(p == last_tld)
+                return;
+        }
 
         /* Otherwise the domain name is the whole host name. */
         *domain_start = 0;
@@ -1339,11 +1347,21 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD extras) {
     /* If the host is empty, then it's an unknown host type. */
     if(data->host_len == 0 || is_res)
         data->host_type = Uri_HOST_UNKNOWN;
-    else
+    else {
+        unsigned int i;
+
         data->host_type = Uri_HOST_DNS;
 
-    TRACE("(%p %p %lx): Parsed reg-name. host=%s len=%ld\n", ptr, data, extras,
-        debugstr_wn(data->host, data->host_len), data->host_len);
+        for(i = 0; i < data->host_len; i++) {
+            if(!is_ascii(data->host[i])) {
+                data->host_type = Uri_HOST_IDN;
+                break;
+            }
+        }
+    }
+
+    TRACE("(%p %p %lx): Parsed reg-name. host=%s len=%ld type=%d\n", ptr, data, extras,
+          debugstr_wn(data->host, data->host_len), data->host_len, data->host_type);
     return TRUE;
 }
 
@@ -2275,6 +2293,13 @@ static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOO
                 return FALSE;
 
             uri->host_type = Uri_HOST_IPV6;
+            break;
+
+        case Uri_HOST_IDN:
+            uri->host_type = Uri_HOST_IDN;
+            if(!canonicalize_reg_name(data, uri, flags, computeOnly))
+                return FALSE;
+
             break;
         case Uri_HOST_UNKNOWN:
             if(data->host_len > 0 || data->scheme_type != URL_SCHEME_FILE) {
