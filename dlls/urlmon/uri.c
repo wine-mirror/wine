@@ -3898,13 +3898,14 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
         return E_INVALIDARG;
     }
 
-    if(dwFlags != 0 && dwFlags != Uri_DISPLAY_NO_FRAGMENT && dwFlags != Uri_PUNYCODE_IDN_HOST) {
-        FIXME("(%p)->(%d %p %lx)\n", This, uriProp, pbstrProperty, dwFlags);
-        return E_NOTIMPL;
-    }
+    if(dwFlags != 0 && dwFlags != Uri_DISPLAY_NO_FRAGMENT && dwFlags != Uri_PUNYCODE_IDN_HOST
+       && dwFlags != Uri_DISPLAY_IDN_HOST)
+        return E_INVALIDARG;
 
     if((dwFlags == Uri_DISPLAY_NO_FRAGMENT && uriProp != Uri_PROPERTY_DISPLAY_URI)
        || (dwFlags == Uri_PUNYCODE_IDN_HOST && uriProp != Uri_PROPERTY_ABSOLUTE_URI
+           && uriProp != Uri_PROPERTY_DOMAIN && uriProp != Uri_PROPERTY_HOST)
+       || (dwFlags == Uri_DISPLAY_IDN_HOST && uriProp != Uri_PROPERTY_ABSOLUTE_URI
            && uriProp != Uri_PROPERTY_DOMAIN && uriProp != Uri_PROPERTY_HOST))
         return E_INVALIDARG;
 
@@ -4234,9 +4235,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     if(uriProp > Uri_PROPERTY_STRING_LAST)
         return E_INVALIDARG;
 
-    if(dwFlags != 0 && dwFlags != Uri_DISPLAY_NO_FRAGMENT && dwFlags != Uri_PUNYCODE_IDN_HOST) {
-        FIXME("(%p)->(%d %p %lx)\n", This, uriProp, pcchProperty, dwFlags);
-        return E_NOTIMPL;
+    if(dwFlags != 0 && dwFlags != Uri_DISPLAY_NO_FRAGMENT && dwFlags != Uri_PUNYCODE_IDN_HOST
+       && dwFlags != Uri_DISPLAY_IDN_HOST) {
+        *pcchProperty = 0;
+        return E_INVALIDARG;
     }
 
     switch(uriProp) {
@@ -4369,6 +4371,8 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     if(hres == S_OK
        && ((dwFlags == Uri_DISPLAY_NO_FRAGMENT && uriProp != Uri_PROPERTY_DISPLAY_URI)
             || (dwFlags == Uri_PUNYCODE_IDN_HOST && uriProp != Uri_PROPERTY_ABSOLUTE_URI
+                && uriProp != Uri_PROPERTY_DOMAIN && uriProp != Uri_PROPERTY_HOST)
+            || (dwFlags == Uri_DISPLAY_IDN_HOST && uriProp != Uri_PROPERTY_ABSOLUTE_URI
                 && uriProp != Uri_PROPERTY_DOMAIN && uriProp != Uri_PROPERTY_HOST))) {
         *pcchProperty = 0;
         hres = E_INVALIDARG;
