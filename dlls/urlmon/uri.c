@@ -3898,11 +3898,13 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
         return E_INVALIDARG;
     }
 
-    /* Don't have support for flags yet. */
-    if(dwFlags) {
+    if(dwFlags != 0 && dwFlags != Uri_DISPLAY_NO_FRAGMENT) {
         FIXME("(%p)->(%d %p %lx)\n", This, uriProp, pbstrProperty, dwFlags);
         return E_NOTIMPL;
     }
+
+    if(dwFlags == Uri_DISPLAY_NO_FRAGMENT && uriProp != Uri_PROPERTY_DISPLAY_URI)
+        return E_INVALIDARG;
 
     switch(uriProp) {
     case Uri_PROPERTY_ABSOLUTE_URI:
@@ -3969,18 +3971,32 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
          * scheme types.
          */
         if(This->scheme_type != URL_SCHEME_UNKNOWN && This->userinfo_start > -1) {
-            *pbstrProperty = SysAllocStringLen(NULL, This->canon_len-This->userinfo_len);
+            unsigned int length = This->canon_len-This->userinfo_len;
+
+            /* Skip fragment if Uri_DISPLAY_NO_FRAGMENT is specified */
+            if(dwFlags == Uri_DISPLAY_NO_FRAGMENT && This->fragment_start > -1)
+                length -= This->fragment_len;
+
+            *pbstrProperty = SysAllocStringLen(NULL, length);
 
             if(*pbstrProperty) {
                 /* Copy everything before the userinfo over. */
                 memcpy(*pbstrProperty, This->canon_uri, This->userinfo_start*sizeof(WCHAR));
+
                 /* Copy everything after the userinfo over. */
+                length -= This->userinfo_start+1;
                 memcpy(*pbstrProperty+This->userinfo_start,
-                   This->canon_uri+This->userinfo_start+This->userinfo_len+1,
-                   (This->canon_len-(This->userinfo_start+This->userinfo_len+1))*sizeof(WCHAR));
+                   This->canon_uri+This->userinfo_start+This->userinfo_len+1, length*sizeof(WCHAR));
             }
-        } else
-            *pbstrProperty = SysAllocString(This->canon_uri);
+        } else {
+            unsigned int length = This->canon_len;
+
+            /* Skip fragment if Uri_DISPLAY_NO_FRAGMENT is specified */
+            if(dwFlags == Uri_DISPLAY_NO_FRAGMENT && This->fragment_start > -1)
+                length -= This->fragment_len;
+
+            *pbstrProperty = SysAllocStringLen(This->canon_uri, length);
+        }
 
         if(!(*pbstrProperty))
             hres = E_OUTOFMEMORY;
@@ -4181,8 +4197,7 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     if(uriProp > Uri_PROPERTY_STRING_LAST)
         return E_INVALIDARG;
 
-    /* Don't have support for flags yet. */
-    if(dwFlags) {
+    if(dwFlags != 0 && dwFlags != Uri_DISPLAY_NO_FRAGMENT) {
         FIXME("(%p)->(%d %p %lx)\n", This, uriProp, pcchProperty, dwFlags);
         return E_NOTIMPL;
     }
@@ -4225,6 +4240,9 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
             *pcchProperty = This->canon_len-This->userinfo_len-1;
         else
             *pcchProperty = This->canon_len;
+
+        if(dwFlags == Uri_DISPLAY_NO_FRAGMENT && This->fragment_start > -1)
+            *pcchProperty -= This->fragment_len;
 
         hres = S_OK;
         break;
@@ -4297,6 +4315,12 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     default:
         FIXME("(%p)->(%d %p %lx)\n", This, uriProp, pcchProperty, dwFlags);
         hres = E_NOTIMPL;
+    }
+
+    if(hres == S_OK
+       && (dwFlags == Uri_DISPLAY_NO_FRAGMENT && uriProp != Uri_PROPERTY_DISPLAY_URI)) {
+        *pcchProperty = 0;
+        hres = E_INVALIDARG;
     }
 
     return hres;
