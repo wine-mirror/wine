@@ -5939,6 +5939,12 @@ static HRESULT WINAPI winhttp_request_get_Option(
         V_VT( value ) = VT_I4;
         V_I4( value ) = request->url_codepage;
         break;
+    case WinHttpRequestOption_SslErrorIgnoreFlags:
+    {
+        V_VT( value ) = VT_I4;
+        V_I4( value ) = request->security_flags;
+        break;
+    }
     default:
         FIXME("unimplemented option %u\n", option);
         hr = E_NOTIMPL;
