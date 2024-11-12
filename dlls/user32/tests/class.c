@@ -684,7 +684,6 @@ static void test_builtinproc(void)
     static const WCHAR classW[] = {'d','e','f','t','e','s','t',0};
     WCHAR unistring[] = {0x142, 0x40e, 0x3b4, 0};  /* a string that would be destroyed by a W->A->W conversion */
     WNDPROC pDefWindowProcA, pDefWindowProcW;
-    WNDPROC pNtdllDefWindowProcA, pNtdllDefWindowProcW;
     WNDPROC oldproc;
     WNDCLASSEXA cls;  /* the memory layout of WNDCLASSEXA and WNDCLASSEXW is the same */
     WCHAR buf[128];
@@ -694,57 +693,6 @@ static void test_builtinproc(void)
 
     pDefWindowProcA = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "DefWindowProcA");
     pDefWindowProcW = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "DefWindowProcW");
-    pNtdllDefWindowProcA = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtdllDefWindowProc_A");
-    pNtdllDefWindowProcW = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtdllDefWindowProc_W");
-
-    /* On Vista+, the user32.dll export DefWindowProcA/W is forwarded to  */
-    /* ntdll.NtdllDefWindowProc_A/W. However, the wndproc returned by     */
-    /* GetClassLong/GetWindowLong points to an unexported user32 function */
-    if (pDefWindowProcA == pNtdllDefWindowProcA &&
-        pDefWindowProcW == pNtdllDefWindowProcW)
-        skip("user32.DefWindowProcX forwarded to ntdll.NtdllDefWindowProc_X\n");
-    else
-    {
-        for (i = 0; i < 4; i++)
-        {
-            ZeroMemory(&cls, sizeof(cls));
-            cls.cbSize = sizeof(cls);
-            cls.hInstance = GetModuleHandleA(NULL);
-            cls.hbrBackground = GetStockObject (WHITE_BRUSH);
-            if (i & 1)
-                cls.lpfnWndProc = pDefWindowProcA;
-            else
-                cls.lpfnWndProc = pDefWindowProcW;
-
-            if (i & 2)
-            {
-                cls.lpszClassName = classA;
-                atom = RegisterClassExA(&cls);
-            }
-            else
-            {
-                cls.lpszClassName = (LPCSTR)classW;
-                atom = RegisterClassExW((WNDCLASSEXW *)&cls);
-            }
-            ok(atom != 0, "Couldn't register class, i=%d, %ld\n", i, GetLastError());
-
-            hwnd = CreateWindowA(classA, NULL, 0, 0, 0, 100, 100, NULL, NULL, GetModuleHandleA(NULL), NULL);
-            ok(hwnd != NULL, "Couldn't create window i=%d\n", i);
-
-            ok(GetWindowLongPtrA(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrA(hwnd, GWLP_WNDPROC), pDefWindowProcA);
-            ok(GetClassLongPtrA(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcA, "Wrong ANSI wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrA(hwnd, GCLP_WNDPROC), pDefWindowProcA);
-
-            ok(GetWindowLongPtrW(hwnd, GWLP_WNDPROC) == (LONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetWindowLongPtrW(hwnd, GWLP_WNDPROC), pDefWindowProcW);
-            ok(GetClassLongPtrW(hwnd, GCLP_WNDPROC) == (ULONG_PTR)pDefWindowProcW, "Wrong Unicode wndproc: %p vs %p\n",
-                (void *)GetClassLongPtrW(hwnd, GCLP_WNDPROC), pDefWindowProcW);
-
-            DestroyWindow(hwnd);
-            UnregisterClassA((LPSTR)(DWORD_PTR)atom, GetModuleHandleA(NULL));
-        }
-    }
 
     /* built-in winproc - window A/W type automatically detected */
     ZeroMemory(&cls, sizeof(cls));
