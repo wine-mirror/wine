@@ -28,7 +28,9 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
+#include "winbase.h"
 #include "winternl.h"
+#include "ntuser.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
@@ -166,6 +168,73 @@ NTSTATUS WINAPI vDbgPrintExWithPrefix( LPCSTR prefix, ULONG id, ULONG level, LPC
 
     return STATUS_SUCCESS;
 }
+
+
+static struct ntuser_client_procs_table user_procs;
+
+#define DEFINE_USER_FUNC(name,ptr) \
+    LRESULT WINAPI name( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) { return (ptr)( hwnd, msg, wp, lp ); }
+
+#define USER_FUNC(name,proc) \
+    DEFINE_USER_FUNC( Ntdll##name##_A, user_procs.A[proc][0] ) \
+    DEFINE_USER_FUNC( Ntdll##name##_W, user_procs.W[proc][0] )
+ALL_NTUSER_CLIENT_PROCS
+#undef USER_FUNC
+
+static const struct ntuser_client_procs_table user_funcs =
+{
+#define USER_FUNC(name,proc) .A[proc] = { Ntdll##name##_A }, .W[proc] = { Ntdll##name##_W },
+    ALL_NTUSER_CLIENT_PROCS
+#undef USER_FUNC
+};
+
+static BOOL user_procs_init_done;
+
+/***********************************************************************
+ *	     RtlInitializeNtUserPfn   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitializeNtUserPfn( const void *client_procsA, ULONG procsA_size,
+                                        const void *client_procsW, ULONG procsW_size,
+                                        const void *client_workers, ULONG workers_size )
+{
+    if (procsA_size % sizeof(ntuser_client_func_ptr) || procsA_size > sizeof(user_procs.A) ||
+        procsW_size % sizeof(ntuser_client_func_ptr) || procsW_size > sizeof(user_procs.W) ||
+        workers_size % sizeof(ntuser_client_func_ptr) || workers_size > sizeof(user_procs.workers))
+        return STATUS_INVALID_PARAMETER;
+
+    if (user_procs_init_done) return STATUS_INVALID_PARAMETER;
+    memcpy( user_procs.A, client_procsA, procsA_size );
+    memcpy( user_procs.W, client_procsW, procsW_size );
+    memcpy( user_procs.workers, client_workers, workers_size );
+    user_procs_init_done = TRUE;
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *	     RtlRetrieveNtUserPfn   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlRetrieveNtUserPfn( const void **client_procsA,
+                                      const void **client_procsW,
+                                      const void **client_workers )
+{
+    if (!user_procs_init_done) return STATUS_INVALID_PARAMETER;
+    *client_procsA  = user_funcs.A;
+    *client_procsW  = user_funcs.W;
+    *client_workers = user_funcs.workers;
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *	     RtlResetNtUserPfn   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlResetNtUserPfn(void)
+{
+    if (!user_procs_init_done) return STATUS_INVALID_PARAMETER;
+    user_procs_init_done = FALSE;
+    memset( &user_procs, 0, sizeof(user_procs) );
+    return STATUS_SUCCESS;
+}
+
 
 /******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]

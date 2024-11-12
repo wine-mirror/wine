@@ -465,6 +465,53 @@ struct user_client_procs
     WNDPROC pMessageWndProc;
 };
 
+enum ntuser_client_procs
+{
+    NTUSER_WNDPROC_BUTTON,
+    NTUSER_WNDPROC_COMBO,
+    NTUSER_WNDPROC_DEFWND,
+    NTUSER_WNDPROC_DIALOG,
+    NTUSER_WNDPROC_EDIT,
+    NTUSER_WNDPROC_LISTBOX,
+    NTUSER_WNDPROC_MDICLIENT,
+    NTUSER_WNDPROC_SCROLLBAR,
+    NTUSER_WNDPROC_STATIC,
+    NTUSER_WNDPROC_IME,
+    NTUSER_WNDPROC_DESKTOP,
+    NTUSER_WNDPROC_ICONTITLE,
+    NTUSER_WNDPROC_MENU,
+    NTUSER_WNDPROC_MESSAGE,
+    NTUSER_NB_PROCS
+};
+
+#define NTUSER_NB_WORKERS 11
+
+/* 64-bit pointers are used on all platforms */
+typedef WNDPROC ntuser_client_func_ptr[sizeof(UINT64) / sizeof(void *)];
+
+struct ntuser_client_procs_table
+{
+    ntuser_client_func_ptr A[NTUSER_NB_PROCS];
+    ntuser_client_func_ptr W[NTUSER_NB_PROCS];
+    ntuser_client_func_ptr workers[NTUSER_NB_WORKERS];
+};
+#define ALL_NTUSER_CLIENT_PROCS \
+  USER_FUNC( ButtonWndProc, NTUSER_WNDPROC_BUTTON ) \
+  USER_FUNC( ComboWndProc, NTUSER_WNDPROC_COMBO ) \
+  USER_FUNC( DefWindowProc, NTUSER_WNDPROC_DEFWND ) \
+  USER_FUNC( DefDlgProc, NTUSER_WNDPROC_DIALOG ) \
+  USER_FUNC( EditWndProc, NTUSER_WNDPROC_EDIT ) \
+  USER_FUNC( ListBoxWndProc, NTUSER_WNDPROC_LISTBOX ) \
+  USER_FUNC( MDIClientWndProc, NTUSER_WNDPROC_MDICLIENT ) \
+  USER_FUNC( ScrollBarWndProc, NTUSER_WNDPROC_SCROLLBAR ) \
+  USER_FUNC( StaticWndProc, NTUSER_WNDPROC_STATIC ) \
+  USER_FUNC( ImeWndProc, NTUSER_WNDPROC_IME ) \
+  USER_FUNC( DesktopWndProc, NTUSER_WNDPROC_DESKTOP ) \
+  USER_FUNC( IconTitleWndProc, NTUSER_WNDPROC_ICONTITLE ) \
+  USER_FUNC( PopupMenuWndProc, NTUSER_WNDPROC_MENU ) \
+  USER_FUNC( MessageWndProc, NTUSER_WNDPROC_MESSAGE )
+
+
 /* NtUserSetCursorIconData parameter, not compatible with Windows */
 struct cursoricon_frame
 {

@@ -803,6 +803,7 @@
 @ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr)
 @ stdcall RtlInitializeGenericTableAvl(ptr ptr ptr ptr ptr)
 @ stdcall RtlInitializeHandleTable(long long ptr)
+@ stdcall RtlInitializeNtUserPfn(ptr long ptr long ptr long)
 @ stub RtlInitializeRXact
 # @ stub RtlInitializeRangeList
 @ stdcall RtlInitializeResource(ptr)
@@ -974,9 +975,11 @@
 @ stub RtlRemoteCall
 @ stdcall RtlRemoveVectoredContinueHandler(ptr)
 @ stdcall RtlRemoveVectoredExceptionHandler(ptr)
+@ stdcall RtlResetNtUserPfn()
 @ stdcall RtlResetRtlTranslations(ptr)
 @ cdecl RtlRestoreContext(ptr ptr)
 @ stdcall RtlRestoreLastWin32Error(long) RtlSetLastWin32Error
+@ stdcall RtlRetrieveNtUserPfn(ptr ptr ptr)
 @ stub RtlRevertMemoryStream
 @ stub RtlRunDecodeUnicodeString
 @ stub RtlRunEncodeUnicodeString
