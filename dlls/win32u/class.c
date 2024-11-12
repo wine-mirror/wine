@@ -1091,7 +1091,7 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = "ComboLBox",
         .style = CS_DBLCLKS | CS_SAVEBITS,
-        .proc = NTUSER_WNDPROC_LISTBOX,
+        .proc = NTUSER_WNDPROC_COMBOLBOX,
         .extra = sizeof(void *),
         .cursor = IDC_ARROW,
     },

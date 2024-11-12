@@ -1061,10 +1061,15 @@ struct wow_handlers16 wow_handlers =
     NULL,  /* call_dialog_proc */
 };
 
-static const struct ntuser_client_procs_table client_procs =
-{
 #define MessageWndProcA MessageWndProc
 #define MessageWndProcW MessageWndProc
+#define ComboLBoxWndProcA ListBoxWndProcA
+#define ComboLBoxWndProcW ListBoxWndProcW
+#define GhostWndProcA DefWindowProcA
+#define GhostWndProcW DefWindowProcW
+
+static const struct ntuser_client_procs_table client_procs =
+{
 #define USER_FUNC(name,proc) .A[proc] = { name##A }, .W[proc] = { name##W },
     ALL_NTUSER_CLIENT_PROCS
 #undef USER_FUNC
