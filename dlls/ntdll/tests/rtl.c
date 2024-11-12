@@ -58,6 +58,8 @@ typedef struct _RTL_HANDLE_TABLE
 
 #endif
 
+static BOOL is_win64 = (sizeof(void *) > sizeof(int));
+
 /* avoid #include <winsock2.h> */
 #undef htons
 #ifdef WORDS_BIGENDIAN
@@ -111,7 +113,13 @@ static VOID      (WINAPI *pRtlGetDeviceFamilyInfoEnum)(ULONGLONG *,DWORD *,DWORD
 static void      (WINAPI *pRtlRbInsertNodeEx)(RTL_RB_TREE *, RTL_BALANCED_NODE *, BOOLEAN, RTL_BALANCED_NODE *);
 static void      (WINAPI *pRtlRbRemoveNode)(RTL_RB_TREE *, RTL_BALANCED_NODE *);
 static DWORD     (WINAPI *pRtlConvertDeviceFamilyInfoToString)(DWORD *, DWORD *, WCHAR *, WCHAR *);
-
+static NTSTATUS  (WINAPI *pRtlInitializeNtUserPfn)( const UINT64 *client_procsA, ULONG procsA_size,
+                                                    const UINT64 *client_procsW, ULONG procsW_size,
+                                                    const void *client_workers, ULONG workers_size );
+static NTSTATUS  (WINAPI *pRtlRetrieveNtUserPfn)( const UINT64 **client_procsA,
+                                                  const UINT64 **client_procsW,
+                                                  const UINT64 **client_workers );
+static NTSTATUS  (WINAPI *pRtlResetNtUserPfn)(void);
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -159,6 +167,9 @@ static void InitFunctionPtrs(void)
         pRtlRbInsertNodeEx = (void *)GetProcAddress(hntdll, "RtlRbInsertNodeEx");
         pRtlRbRemoveNode = (void *)GetProcAddress(hntdll, "RtlRbRemoveNode");
         pRtlConvertDeviceFamilyInfoToString = (void *)GetProcAddress(hntdll, "RtlConvertDeviceFamilyInfoToString");
+        pRtlInitializeNtUserPfn = (void *)GetProcAddress(hntdll, "RtlInitializeNtUserPfn");
+        pRtlRetrieveNtUserPfn = (void *)GetProcAddress(hntdll, "RtlRetrieveNtUserPfn");
+        pRtlResetNtUserPfn = (void *)GetProcAddress(hntdll, "RtlResetNtUserPfn");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -3992,6 +4003,71 @@ static void test_RtlConvertDeviceFamilyInfoToString(void)
     ok(!wcscmp(device_form, L"Unknown"), "Got unexpected %s.\n", wine_dbgstr_w(device_form));
 }
 
+static void test_user_procs(void)
+{
+    UINT64 ptrs[32], dummy[32] = { 0 };
+    NTSTATUS status;
+    const UINT64 *ptr_A, *ptr_W, *ptr_workers;
+    ULONG size_A, size_W, size_workers;
+
+    if (!pRtlRetrieveNtUserPfn || !pRtlInitializeNtUserPfn)
+    {
+        win_skip( "user procs not supported\n" );
+        return;
+    }
+
+    status = pRtlRetrieveNtUserPfn( &ptr_A, &ptr_W, &ptr_workers );
+    ok( !status || broken(!is_win64 && status == STATUS_INVALID_PARAMETER), /* <= win8 32-bit */
+        "RtlRetrieveNtUserPfn failed %lx\n", status );
+    if (status) return;
+
+    /* assume that the tables are consecutive */
+    size_A = (ptr_W - ptr_A) * sizeof(UINT64);
+    size_W = (ptr_workers - ptr_W) * sizeof(UINT64);
+    ok( size_A > 0x80 && size_A < 0x100, "unexpected size for %p %p %p\n", ptr_A, ptr_W, ptr_workers );
+    ok( size_W == size_A, "unexpected size for %p %p %p\n", ptr_A, ptr_W, ptr_workers );
+    memcpy( ptrs, ptr_A, size_A );
+
+    status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, 0 );
+    ok( status == STATUS_INVALID_PARAMETER, "RtlInitializeNtUserPfn failed %lx\n", status );
+
+    if (!pRtlResetNtUserPfn)
+    {
+        win_skip( "RtlResetNtUserPfn not supported\n" );
+        return;
+    }
+
+    status = pRtlResetNtUserPfn();
+    ok( !status, "RtlResetNtUserPfn failed %lx\n", status );
+    ok( !memcmp( ptrs, ptr_A, size_A ), "pointers changed by reset\n" );
+
+    /* can't do anything after reset except set them again */
+    status = pRtlResetNtUserPfn();
+    ok( status == STATUS_INVALID_PARAMETER, "RtlResetNtUserPfn failed %lx\n", status );
+    status = pRtlRetrieveNtUserPfn( &ptr_A, &ptr_W, &ptr_workers );
+    ok( status == STATUS_INVALID_PARAMETER, "RtlRetrieveNtUserPfn failed %lx\n", status );
+
+    for (size_workers = 0x100; size_workers > 0; size_workers--)
+    {
+        status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, size_workers );
+        if (!status) break;
+        ok( status == STATUS_INVALID_PARAMETER, "RtlInitializeNtUserPfn failed %lx\n", status );
+        status = pRtlResetNtUserPfn();
+        ok( status == STATUS_INVALID_PARAMETER, "RtlResetNtUserPfn failed %lx\n", status );
+    }
+    trace( "got sizes %lx %lx %lx\n", size_A, size_W, size_workers );
+    ok( !memcmp( ptrs, ptr_A, size_A ), "pointers changed by init\n" );
+
+    /* can't set twice without a reset */
+    status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, size_workers );
+    ok( status == STATUS_INVALID_PARAMETER, "RtlInitializeNtUserPfn failed %lx\n", status );
+    status = pRtlResetNtUserPfn();
+    ok( !status, "RtlResetNtUserPfn failed %lx\n", status );
+    status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, size_workers );
+    ok( !status, "RtlInitializeNtUserPfn failed %lx\n", status );
+    ok( !memcmp( ptrs, ptr_A, size_A ), "pointers changed by init\n" );
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -4043,4 +4119,5 @@ START_TEST(rtl)
     test_RtlGetDeviceFamilyInfoEnum();
     test_RtlConvertDeviceFamilyInfoToString();
     test_rb_tree();
+    test_user_procs();
 }
