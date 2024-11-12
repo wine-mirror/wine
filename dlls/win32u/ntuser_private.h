@@ -136,25 +136,6 @@ struct hook_extra_info
     LPARAM lparam;
 };
 
-enum builtin_winprocs
-{
-    WINPROC_BUTTON = 0,
-    WINPROC_COMBO,
-    WINPROC_DEFWND,
-    WINPROC_DIALOG,
-    WINPROC_EDIT,
-    WINPROC_LISTBOX,
-    WINPROC_MDICLIENT,
-    WINPROC_SCROLLBAR,
-    WINPROC_STATIC,
-    WINPROC_IME,
-    WINPROC_DESKTOP,
-    WINPROC_ICONTITLE,
-    WINPROC_MENU,
-    WINPROC_MESSAGE,
-    NB_BUILTIN_WINPROCS,
-};
-
 /* FIXME: make it private to scroll.c */
 
 /* data for a single scroll bar */

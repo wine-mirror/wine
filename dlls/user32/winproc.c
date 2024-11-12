@@ -1061,43 +1061,16 @@ struct wow_handlers16 wow_handlers =
     NULL,  /* call_dialog_proc */
 };
 
-static const struct user_client_procs client_procsA =
+static const struct ntuser_client_procs_table client_procs =
 {
-    .pButtonWndProc = ButtonWndProcA,
-    .pComboWndProc = ComboWndProcA,
-    .pDefWindowProc = DefWindowProcA,
-    .pDefDlgProc = DefDlgProcA,
-    .pEditWndProc = EditWndProcA,
-    .pListBoxWndProc = ListBoxWndProcA,
-    .pMDIClientWndProc = MDIClientWndProcA,
-    .pScrollBarWndProc = ScrollBarWndProcA,
-    .pStaticWndProc = StaticWndProcA,
-    .pImeWndProc = ImeWndProcA,
-    .pDesktopWndProc = DesktopWndProcA,
-    .pIconTitleWndProc = IconTitleWndProcA,
-    .pPopupMenuWndProc = PopupMenuWndProcA,
-    .pMessageWndProc = MessageWndProc,
-};
-
-static const struct user_client_procs client_procsW =
-{
-    .pButtonWndProc = ButtonWndProcW,
-    .pComboWndProc = ComboWndProcW,
-    .pDefWindowProc = DefWindowProcW,
-    .pDefDlgProc = DefDlgProcW,
-    .pEditWndProc = EditWndProcW,
-    .pListBoxWndProc = ListBoxWndProcW,
-    .pMDIClientWndProc = MDIClientWndProcW,
-    .pScrollBarWndProc = ScrollBarWndProcW,
-    .pStaticWndProc = StaticWndProcW,
-    .pImeWndProc = ImeWndProcW,
-    .pDesktopWndProc = DesktopWndProcW,
-    .pIconTitleWndProc = IconTitleWndProcW,
-    .pPopupMenuWndProc = PopupMenuWndProcW,
-    .pMessageWndProc = MessageWndProc,
+#define MessageWndProcA MessageWndProc
+#define MessageWndProcW MessageWndProc
+#define USER_FUNC(name,proc) .A[proc] = { name##A }, .W[proc] = { name##W },
+    ALL_NTUSER_CLIENT_PROCS
+#undef USER_FUNC
 };
 
 void winproc_init(void)
 {
-    NtUserInitializeClientPfnArrays( &client_procsA, &client_procsW, NULL, user32_module );
+    NtUserInitializeClientPfnArrays( client_procs.A, client_procs.W, client_procs.workers, user32_module );
 }

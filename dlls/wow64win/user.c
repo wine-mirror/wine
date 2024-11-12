@@ -3158,57 +3158,14 @@ NTSTATUS WINAPI wow64_NtUserHiliteMenuItem( UINT *args )
     return NtUserHiliteMenuItem( hwnd, handle, item, hilite );
 }
 
-struct user_client_procs32
-{
-    ULONG pButtonWndProc;
-    ULONG pComboWndProc;
-    ULONG pDefWindowProc;
-    ULONG pDefDlgProc;
-    ULONG pEditWndProc;
-    ULONG pListBoxWndProc;
-    ULONG pMDIClientWndProc;
-    ULONG pScrollBarWndProc;
-    ULONG pStaticWndProc;
-    ULONG pImeWndProc;
-    ULONG pDesktopWndProc;
-    ULONG pIconTitleWndProc;
-    ULONG pPopupMenuWndProc;
-    ULONG pMessageWndProc;
-};
-
-static struct user_client_procs *user_client_procs_32to64( struct user_client_procs *procs,
-                                                           const struct user_client_procs32 *procs32 )
-{
-    if (!procs32) return NULL;
-
-    procs->pButtonWndProc    = UlongToPtr( procs32->pButtonWndProc );
-    procs->pComboWndProc     = UlongToPtr( procs32->pComboWndProc );
-    procs->pDefWindowProc    = UlongToPtr( procs32->pDefWindowProc );
-    procs->pDefDlgProc       = UlongToPtr( procs32->pDefDlgProc );
-    procs->pEditWndProc      = UlongToPtr( procs32->pEditWndProc );
-    procs->pListBoxWndProc   = UlongToPtr( procs32->pListBoxWndProc );
-    procs->pMDIClientWndProc = UlongToPtr( procs32->pMDIClientWndProc );
-    procs->pScrollBarWndProc = UlongToPtr( procs32->pScrollBarWndProc );
-    procs->pStaticWndProc    = UlongToPtr( procs32->pStaticWndProc );
-    procs->pImeWndProc       = UlongToPtr( procs32->pImeWndProc );
-    procs->pDesktopWndProc   = UlongToPtr( procs32->pDesktopWndProc );
-    procs->pIconTitleWndProc = UlongToPtr( procs32->pIconTitleWndProc );
-    procs->pPopupMenuWndProc = UlongToPtr( procs32->pPopupMenuWndProc );
-    procs->pMessageWndProc   = UlongToPtr( procs32->pMessageWndProc );
-    return procs;
-}
-
 NTSTATUS WINAPI wow64_NtUserInitializeClientPfnArrays( UINT *args )
 {
-    const struct user_client_procs32 *procsA32 = get_ptr( &args );
-    const struct user_client_procs32 *procsW32 = get_ptr( &args );
-    void *workers = get_ptr( &args );
+    const ntuser_client_func_ptr *procsA = get_ptr( &args );
+    const ntuser_client_func_ptr *procsW = get_ptr( &args );
+    const ntuser_client_func_ptr *workers = get_ptr( &args );
     HINSTANCE user_module = get_ptr( &args );
 
-    struct user_client_procs procsA, procsW;
-    return NtUserInitializeClientPfnArrays( user_client_procs_32to64( &procsA, procsA32 ),
-                                            user_client_procs_32to64( &procsW, procsW32 ),
-                                            workers, user_module );
+    return NtUserInitializeClientPfnArrays( procsA, procsW, workers, user_module );
 }
 
 NTSTATUS WINAPI wow64_NtUserInternalGetWindowIcon( UINT *args )

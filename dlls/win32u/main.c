@@ -1729,9 +1729,9 @@ BOOL SYSCALL_API NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT 
     SYSCALL_FUNC( NtUserHiliteMenuItem );
 }
 
-NTSTATUS SYSCALL_API NtUserInitializeClientPfnArrays( const struct user_client_procs *client_procsA,
-                                                      const struct user_client_procs *client_procsW,
-                                                      const void *client_workers, HINSTANCE user_module )
+NTSTATUS SYSCALL_API NtUserInitializeClientPfnArrays( const ntuser_client_func_ptr *client_procsA,
+                                                      const ntuser_client_func_ptr *client_procsW,
+                                                      const ntuser_client_func_ptr *client_workers, HINSTANCE user_module )
 {
     SYSCALL_FUNC( NtUserInitializeClientPfnArrays );
 }

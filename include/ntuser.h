@@ -447,24 +447,6 @@ struct send_message_callback_params
 #define SIF_RETURNPREV  0x1000
 
 /* NtUserInitializeClientPfnArrays parameter, not compatible with Windows */
-struct user_client_procs
-{
-    WNDPROC pButtonWndProc;
-    WNDPROC pComboWndProc;
-    WNDPROC pDefWindowProc;
-    WNDPROC pDefDlgProc;
-    WNDPROC pEditWndProc;
-    WNDPROC pListBoxWndProc;
-    WNDPROC pMDIClientWndProc;
-    WNDPROC pScrollBarWndProc;
-    WNDPROC pStaticWndProc;
-    WNDPROC pImeWndProc;
-    WNDPROC pDesktopWndProc;
-    WNDPROC pIconTitleWndProc;
-    WNDPROC pPopupMenuWndProc;
-    WNDPROC pMessageWndProc;
-};
-
 enum ntuser_client_procs
 {
     NTUSER_WNDPROC_BUTTON,
@@ -822,9 +804,9 @@ W32KAPI BOOL    WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *pla
 W32KAPI int     WINAPI NtUserGetWindowRgnEx( HWND hwnd, HRGN hrgn, UINT unk );
 W32KAPI BOOL    WINAPI NtUserHideCaret( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilite );
-W32KAPI NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs *client_procsA,
-                                                         const struct user_client_procs *client_procsW,
-                                                         const void *client_workers, HINSTANCE user_module );
+W32KAPI NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const ntuser_client_func_ptr *client_procsA,
+                                                         const ntuser_client_func_ptr *client_procsW,
+                                                         const ntuser_client_func_ptr *client_workers, HINSTANCE user_module );
 W32KAPI HICON   WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type );
 W32KAPI INT     WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count );
 W32KAPI BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
