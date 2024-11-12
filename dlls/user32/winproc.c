@@ -1072,5 +1072,11 @@ static const struct ntuser_client_procs_table client_procs =
 
 void winproc_init(void)
 {
-    NtUserInitializeClientPfnArrays( client_procs.A, client_procs.W, client_procs.workers, user32_module );
+    const ntuser_client_func_ptr *ptr_A, *ptr_W, *ptr_workers;
+
+    RtlInitializeNtUserPfn( client_procs.A, sizeof(client_procs.A),
+                            client_procs.W, sizeof(client_procs.W),
+                            client_procs.workers, sizeof(client_procs.workers) );
+    RtlRetrieveNtUserPfn( (const void **)&ptr_A, (const void **)&ptr_W, (const void **)&ptr_workers );
+    NtUserInitializeClientPfnArrays( ptr_A, ptr_W, ptr_workers, user32_module );
 }

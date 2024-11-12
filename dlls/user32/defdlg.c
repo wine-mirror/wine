@@ -423,17 +423,17 @@ LRESULT WINAPI USER_DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 }
 
 /***********************************************************************
- *              DefDlgProcA (USER32.@)
+ *              DialogWndProcA
  */
-LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+LRESULT WINAPI DialogWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     return user_api->pDefDlgProc( hwnd, msg, wParam, lParam, FALSE );
 }
 
 /***********************************************************************
- *              DefDlgProcW (USER32.@)
+ *              DialogWndProcW
  */
-LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+LRESULT WINAPI DialogWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     return user_api->pDefDlgProc( hwnd, msg, wParam, lParam, TRUE );
 }

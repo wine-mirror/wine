@@ -379,15 +379,15 @@
 @ stdcall DdeSetUserHandle(long long long)
 @ stdcall DdeUnaccessData(long)
 @ stdcall DdeUninitialize(long)
-@ stdcall DefDlgProcA(long long long long)
-@ stdcall DefDlgProcW(long long long long)
+@ stdcall DefDlgProcA(long long long long) NTDLL.NtdllDialogWndProc_A
+@ stdcall DefDlgProcW(long long long long) NTDLL.NtdllDialogWndProc_W
 @ stdcall DefFrameProcA(long long long long long)
 @ stdcall DefFrameProcW(long long long long long)
 @ stdcall DefMDIChildProcA(long long long long)
 @ stdcall DefMDIChildProcW(long long long long)
 @ stdcall DefRawInputProc(ptr long long)
-@ stdcall DefWindowProcA(long long long long)
-@ stdcall DefWindowProcW(long long long long)
+@ stdcall DefWindowProcA(long long long long) NTDLL.NtdllDefWindowProc_A
+@ stdcall DefWindowProcW(long long long long) NTDLL.NtdllDefWindowProc_W
 @ stdcall DeferWindowPos(long long long long long long long long)
 # @ stub DeferWindowPosAndBand
 @ stdcall DeleteMenu(long long long) NtUserDeleteMenu
