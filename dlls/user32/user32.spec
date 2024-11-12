@@ -558,7 +558,7 @@
 @ stdcall GetDlgItemTextA(long long ptr long)
 @ stdcall GetDlgItemTextW(long long ptr long)
 @ stdcall GetDoubleClickTime() NtUserGetDoubleClickTime
-# @ stub GetDpiAwarenessContextForProcess
+@ stdcall GetDpiAwarenessContextForProcess(ptr)
 @ stdcall GetDpiForMonitorInternal(long long ptr ptr) NtUserGetDpiForMonitor
 @ stdcall GetDpiForSystem()
 @ stdcall GetDpiForWindow(long)

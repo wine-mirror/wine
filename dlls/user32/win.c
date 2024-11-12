@@ -615,6 +615,13 @@ DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
     return LongToHandle( NtUserGetWindowDpiAwarenessContext( hwnd ) );
 }
 
+/***********************************************************************
+ *		GetDpiAwarenessContextForProcess  (USER32.@)
+ */
+DPI_AWARENESS_CONTEXT WINAPI GetDpiAwarenessContextForProcess(HANDLE process)
+{
+    return LongToHandle( NtUserGetProcessDpiAwarenessContext( process ) );
+}
 
 /***********************************************************************
  *		GetWindowDpiHostingBehavior  (USER32.@)
