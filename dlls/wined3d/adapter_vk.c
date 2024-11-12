@@ -2371,6 +2371,11 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
         {VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME,    VK_API_VERSION_1_1},
         {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1},
         {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u,                true},
+        /* KHR_synchronization2 is required for KHR_video_queue. */
+        {VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,           ~0u},
+        {VK_KHR_VIDEO_DECODE_H264_EXTENSION_NAME,           ~0u},
+        {VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME,          ~0u},
+        {VK_KHR_VIDEO_QUEUE_EXTENSION_NAME,                 ~0u},
     };
 
     static const struct
@@ -2391,6 +2396,8 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
         {VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME, WINED3D_VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE},
         {VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME,     WINED3D_VK_KHR_SAMPLER_YCBCR_CONVERSION},
         {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,       WINED3D_VK_KHR_SHADER_DRAW_PARAMETERS},
+        {VK_KHR_VIDEO_DECODE_H264_EXTENSION_NAME,            WINED3D_VK_KHR_VIDEO_DECODE_H264},
+        {VK_KHR_VIDEO_QUEUE_EXTENSION_NAME,                  WINED3D_VK_KHR_VIDEO_QUEUE},
     };
 
     if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, NULL))) < 0)
@@ -2528,7 +2535,7 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     adapter->fragment_pipe = wined3d_spirv_fragment_pipe_init_vk();
     adapter->misc_state_template = misc_state_template_vk;
     adapter->shader_backend = wined3d_spirv_shader_backend_init_vk();
-    adapter->decoder_ops = &wined3d_null_decoder_ops;
+    adapter->decoder_ops = &wined3d_decoder_vk_ops;
 
     wined3d_adapter_vk_init_d3d_info(adapter_vk, wined3d_creation_flags);
 

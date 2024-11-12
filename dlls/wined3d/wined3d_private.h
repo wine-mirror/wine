@@ -4468,6 +4468,7 @@ struct wined3d_decoder_ops
     void (*get_profiles)(struct wined3d_adapter *adapter, unsigned int *count, GUID *profiles);
 };
 
+extern const struct wined3d_decoder_ops wined3d_decoder_vk_ops;
 extern const struct wined3d_decoder_ops wined3d_null_decoder_ops;
 
 /* DirectDraw utility functions */

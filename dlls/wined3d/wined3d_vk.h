@@ -53,6 +53,8 @@ struct wined3d_device_vk;
     VK_INSTANCE_PFN(vkGetPhysicalDeviceSurfaceFormatsKHR) \
     VK_INSTANCE_PFN(vkGetPhysicalDeviceSurfacePresentModesKHR) \
     VK_INSTANCE_PFN(vkGetPhysicalDeviceSurfaceSupportKHR) \
+    /* VK_KHR_video_queue */ \
+    VK_INSTANCE_EXT_PFN(vkGetPhysicalDeviceVideoCapabilitiesKHR) \
     /* VK_KHR_win32_surface */ \
     VK_INSTANCE_PFN(vkCreateWin32SurfaceKHR) \
     /* VK_EXT_host_query_reset */ \
@@ -248,6 +250,8 @@ enum wined3d_vk_extension
     WINED3D_VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE,
     WINED3D_VK_KHR_SAMPLER_YCBCR_CONVERSION,
     WINED3D_VK_KHR_SHADER_DRAW_PARAMETERS,
+    WINED3D_VK_KHR_VIDEO_DECODE_H264,
+    WINED3D_VK_KHR_VIDEO_QUEUE,
 
     WINED3D_VK_EXT_COUNT,
 };
