@@ -897,7 +897,7 @@ static HRESULT layout_shape_get_user_features(const struct dwrite_textlayout *la
         feature_count = IDWriteTypography_GetFontFeatureCount(typography);
         if (!feature_count)
         {
-            i = range->h.range.length - i + 1;
+            i = range->h.range.startPosition + range->h.range.length;
             continue;
         }
 
