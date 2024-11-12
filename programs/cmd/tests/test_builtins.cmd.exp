@@ -1088,6 +1088,9 @@ exist subdir with /. ok
 exist subdir with / ok
 exist subdir with / and quotes ok
 exist empty string works
+@todo_wine@ok
+@todo_wine@ok
+@todo_wine@ok
 ------ for numbers
 negative numbers handled
 negative numbers handled

@@ -1603,6 +1603,10 @@ if not exist "" (
 del foo subdir\bar
 rd subdir
 
+if exist %~D0 (echo ok) else echo failure
+if exist %~D0\ (echo ok) else echo failure
+if exist %~D0\. (echo ok) else echo failure
+
 echo ------ for numbers
 if -1 LSS 1 (echo negative numbers handled)
 if not -1 LSS -10 (echo negative numbers handled)
