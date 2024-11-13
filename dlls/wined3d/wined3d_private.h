@@ -3711,6 +3711,8 @@ void wined3d_cs_emit_add_dirty_texture_region(struct wined3d_cs *cs,
         struct wined3d_texture *texture, unsigned int layer);
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
         uint32_t flags, const struct wined3d_color *color, float depth, DWORD stencil);
+void wined3d_cs_emit_decode(struct wined3d_decoder *decoder, struct wined3d_decoder_output_view *output_view,
+        unsigned int bitstream_size, unsigned int slice_control_size);
 void wined3d_device_context_emit_clear_uav(struct wined3d_device_context *context,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value, bool fp);
 void wined3d_cs_emit_preload_resource(struct wined3d_cs *cs, struct wined3d_resource *resource);
@@ -4496,6 +4498,9 @@ struct wined3d_decoder_ops
     HRESULT (*create)(struct wined3d_device *device,
             const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder);
     void (*destroy)(struct wined3d_decoder *decoder);
+    void (*decode)(struct wined3d_context *context, struct wined3d_decoder *decoder,
+            struct wined3d_decoder_output_view *output_view,
+            unsigned int bitstream_size, unsigned int slice_control_size);
 };
 
 extern const struct wined3d_decoder_ops wined3d_decoder_vk_ops;

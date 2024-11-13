@@ -440,11 +440,19 @@ static HRESULT wined3d_decoder_vk_create(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
+static void wined3d_decoder_vk_decode(struct wined3d_context *context, struct wined3d_decoder *decoder,
+        struct wined3d_decoder_output_view *output_view,
+        unsigned int bitstream_size, unsigned int slice_control_size)
+{
+    FIXME("Not implemented.\n");
+}
+
 const struct wined3d_decoder_ops wined3d_decoder_vk_ops =
 {
     .get_profiles = wined3d_decoder_vk_get_profiles,
     .create = wined3d_decoder_vk_create,
     .destroy = wined3d_decoder_vk_destroy,
+    .decode = wined3d_decoder_vk_decode,
 };
 
 struct wined3d_resource * CDECL wined3d_decoder_get_buffer(
@@ -499,5 +507,20 @@ HRESULT CDECL wined3d_decoder_end_frame(struct wined3d_decoder *decoder)
     wined3d_decoder_output_view_decref(decoder->output_view);
     decoder->output_view = NULL;
 
+    return S_OK;
+}
+
+HRESULT CDECL wined3d_decoder_decode(struct wined3d_decoder *decoder,
+        unsigned int bitstream_size, unsigned int slice_control_size)
+{
+    TRACE("decoder %p, bitstream_size %u, slice_control_size %u.\n", decoder, bitstream_size, slice_control_size);
+
+    if (!decoder->output_view)
+    {
+        ERR("Not in frame.\n");
+        return E_INVALIDARG;
+    }
+
+    wined3d_cs_emit_decode(decoder, decoder->output_view, bitstream_size, slice_control_size);
     return S_OK;
 }

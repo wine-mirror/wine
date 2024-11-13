@@ -141,6 +141,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW,
     WINED3D_CS_OP_COPY_UAV_COUNTER,
     WINED3D_CS_OP_GENERATE_MIPMAPS,
+    WINED3D_CS_OP_DECODE,
     WINED3D_CS_OP_EXECUTE_COMMAND_LIST,
     WINED3D_CS_OP_STOP,
 };
@@ -539,6 +540,14 @@ struct wined3d_cs_generate_mipmaps
     struct wined3d_shader_resource_view *view;
 };
 
+struct wined3d_cs_decode
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_decoder *decoder;
+    struct wined3d_decoder_output_view *output_view;
+    unsigned int bitstream_size, slice_control_size;
+};
+
 struct wined3d_cs_execute_command_list
 {
     enum wined3d_cs_op opcode;
@@ -634,6 +643,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW);
         WINED3D_TO_STR(WINED3D_CS_OP_COPY_UAV_COUNTER);
         WINED3D_TO_STR(WINED3D_CS_OP_GENERATE_MIPMAPS);
+        WINED3D_TO_STR(WINED3D_CS_OP_DECODE);
         WINED3D_TO_STR(WINED3D_CS_OP_EXECUTE_COMMAND_LIST);
         WINED3D_TO_STR(WINED3D_CS_OP_STOP);
 #undef WINED3D_TO_STR
@@ -2968,6 +2978,43 @@ void wined3d_device_context_emit_generate_mipmaps(struct wined3d_device_context 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
+static void wined3d_cs_exec_decode(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_decode *op = data;
+    struct wined3d_context *context;
+
+    context = context_acquire(cs->c.device, NULL, 0);
+    cs->c.device->adapter->decoder_ops->decode(context, op->decoder,
+            op->output_view, op->bitstream_size, op->slice_control_size);
+    context_release(context);
+}
+
+void wined3d_cs_emit_decode(struct wined3d_decoder *decoder, struct wined3d_decoder_output_view *output_view,
+        unsigned int bitstream_size, unsigned int slice_control_size)
+{
+    struct wined3d_device_context *context = &output_view->texture->resource.device->cs->c;
+    struct wined3d_cs_decode *op;
+
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_DECODE;
+    op->decoder = decoder;
+    op->output_view = output_view;
+    op->bitstream_size = bitstream_size;
+    op->slice_control_size = slice_control_size;
+
+    wined3d_device_context_reference_resource(context, &output_view->texture->resource);
+    wined3d_device_context_reference_resource(context,
+            wined3d_decoder_get_buffer(decoder, WINED3D_DECODER_BUFFER_BITSTREAM));
+    wined3d_device_context_reference_resource(context,
+            wined3d_decoder_get_buffer(decoder, WINED3D_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX));
+    wined3d_device_context_reference_resource(context,
+            wined3d_decoder_get_buffer(decoder, WINED3D_DECODER_BUFFER_PICTURE_PARAMETERS));
+    wined3d_device_context_reference_resource(context,
+            wined3d_decoder_get_buffer(decoder, WINED3D_DECODER_BUFFER_SLICE_CONTROL));
+
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
+}
+
 static void wined3d_cs_emit_stop(struct wined3d_cs *cs)
 {
     struct wined3d_cs_stop *op;
@@ -3038,6 +3085,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW */ wined3d_cs_exec_clear_unordered_access_view,
     /* WINED3D_CS_OP_COPY_UAV_COUNTER            */ wined3d_cs_exec_copy_uav_counter,
     /* WINED3D_CS_OP_GENERATE_MIPMAPS            */ wined3d_cs_exec_generate_mipmaps,
+    /* WINED3D_CS_OP_DECODE                      */ wined3d_cs_exec_decode,
     /* WINED3D_CS_OP_EXECUTE_COMMAND_LIST        */ wined3d_cs_exec_execute_command_list,
 };
 

@@ -3232,8 +3232,34 @@ static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderEndFrame(
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_SubmitDecoderBuffers(ID3D11VideoContext *iface,
         ID3D11VideoDecoder *decoder, UINT count, const D3D11_VIDEO_DECODER_BUFFER_DESC *buffers)
 {
-    FIXME("iface %p, decoder %p, count %u, buffers %p, stub!\n", iface, decoder, count, buffers);
-    return E_NOTIMPL;
+    struct d3d_video_decoder *decoder_impl = unsafe_impl_from_ID3D11VideoDecoder(decoder);
+    unsigned int bitstream_size = 0, slice_control_size = 0;
+
+    TRACE("iface %p, decoder %p, count %u, buffers %p.\n", iface, decoder, count, buffers);
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        const D3D11_VIDEO_DECODER_BUFFER_DESC *buffer = &buffers[i];
+
+        TRACE("  [%u] type %#x, size %u, first MB %u, MB count %u.\n",
+                i, buffer->BufferType, buffer->DataSize, buffer->FirstMBaddress, buffer->NumMBsInBuffer);
+
+        switch (buffer->BufferType)
+        {
+            case D3D11_VIDEO_DECODER_BUFFER_BITSTREAM:
+                bitstream_size = buffer->DataSize;
+                break;
+
+            case D3D11_VIDEO_DECODER_BUFFER_SLICE_CONTROL:
+                slice_control_size = buffer->DataSize;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    return wined3d_decoder_decode(decoder_impl->wined3d_decoder, bitstream_size, slice_control_size);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderExtension(ID3D11VideoContext *iface,

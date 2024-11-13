@@ -2382,6 +2382,8 @@ HRESULT __cdecl wined3d_decoder_begin_frame(struct wined3d_decoder *decoder,
         struct wined3d_decoder_output_view *view);
 HRESULT __cdecl wined3d_decoder_create(struct wined3d_device *device,
         const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder);
+HRESULT __cdecl wined3d_decoder_decode(struct wined3d_decoder *decoder,
+        unsigned int bitstream_size, unsigned int slice_control_size);
 ULONG __cdecl wined3d_decoder_decref(struct wined3d_decoder *decoder);
 HRESULT __cdecl wined3d_decoder_end_frame(struct wined3d_decoder *decoder);
 struct wined3d_resource * __cdecl wined3d_decoder_get_buffer(

@@ -43,6 +43,7 @@
 @ cdecl wined3d_decoder_begin_frame(ptr ptr)
 @ cdecl wined3d_decoder_create(ptr ptr ptr)
 @ cdecl wined3d_decoder_decref(ptr)
+@ cdecl wined3d_decoder_decode(ptr long long)
 @ cdecl wined3d_decoder_end_frame(ptr)
 @ cdecl wined3d_decoder_get_buffer(ptr long)
 
