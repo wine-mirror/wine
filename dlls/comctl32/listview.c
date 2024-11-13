@@ -4150,6 +4150,7 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
     /* see if we are supposed to be tracking mouse hovering */
     if (LISTVIEW_IsHotTracking(infoPtr)) {
         TRACKMOUSEEVENT trackinfo;
+        NMLISTVIEW nmlv = { 0 };
         DWORD flags;
 
         trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
@@ -4170,6 +4171,15 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
             /* call TRACKMOUSEEVENT so we receive WM_MOUSEHOVER messages */
             _TrackMouseEvent(&trackinfo);
         }
+
+        ht.pt = pt;
+        LISTVIEW_HitTest(infoPtr, &ht, TRUE, TRUE);
+
+        nmlv.iItem = ht.iItem;
+        nmlv.iSubItem = ht.iSubItem;
+        nmlv.ptAction = pt;
+
+        notify_listview(infoPtr, LVN_HOTTRACK, &nmlv);
     }
 
     return 0;
