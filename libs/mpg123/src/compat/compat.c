@@ -88,7 +88,7 @@ int INT123_compat_open(const char *filename, int flags)
 open_fallback:
 #endif
 
-#if (defined(WIN32) && !defined (__CYGWIN__))
+#if defined(MPG123_COMPAT_MSVCRT_IO)
 	/* MSDN says POSIX function is deprecated beginning in Visual C++ 2005 */
 	/* Try plain old _open(), if it fails, do nothing */
 	ret = _open(filename, flags|_O_BINARY, _S_IREAD | _S_IWRITE);
@@ -138,12 +138,16 @@ fopen_ok:
 
 FILE* INT123_compat_fdopen(int fd, const char *mode)
 {
+#if defined(MPG123_COMPAT_MSVCRT_IO)
+	return _fdopen(fd, mode);
+#else
 	return fdopen(fd, mode);
+#endif
 }
 
 int INT123_compat_close(int infd)
 {
-#if (defined(WIN32) && !defined (__CYGWIN__)) /* MSDN says POSIX function is deprecated beginning in Visual C++ 2005 */
+#if defined(MPG123_COMPAT_MSVCRT_IO)
 	return _close(infd);
 #else
 	return close(infd);

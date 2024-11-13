@@ -137,7 +137,11 @@ static void wrap_io_cleanup(void *handle)
 	if(ioh->my_fd >= 0)
 	{
 		mdebug("closing my fd %d", ioh->my_fd);
+#if defined(MPG123_COMPAT_MSVCRT_IO)
+		_close(ioh->my_fd);
+#else
 		close(ioh->my_fd);
+#endif
 		ioh->my_fd = -1;
 	}
 }
@@ -699,6 +703,35 @@ static int64_t wrap_lseek(void *handle, int64_t offset, int whence)
 	return -1;
 }
 
+// Defining a wrapper to the native read to be sure the prototype matches.
+// There are platforms where it is read(int, void*, unsigned int).
+// We know that we read small chunks where the difference does not matter. Could
+// apply specific hackery, use a common compat_read() (INT123_unintr_read()?) with system
+// specifics.
+static mpg123_ssize_t fallback_read(int fd, void *buf, size_t count)
+{
+#if defined(MPG123_COMPAT_MSVCRT_IO)
+	if(count > UINT_MAX)
+	{
+		errno = EOVERFLOW;
+		return -1;
+	}
+	return _read(fd, buf, (unsigned int)count);
+#else
+	return read(fd, buf, count);
+#endif
+}
+
+static off_t fallback_lseek(int fd, off_t offset, int whence)
+{
+#if defined(MPG123_COMPAT_MSVCRT_IO)
+	// Off_t is 32 bit and does fit into long. We know that.
+	return _lseek(fd, (long)offset, whence);
+#else
+	return lseek(fd, offset, whence);
+#endif
+}
+
 // This is assuming an internally opened file, which usually will be
 // using 64 bit offsets. It keeps reading on on trivial interruptions.
 // I guess any file descriptor that matches the libc should work fine.
@@ -730,7 +763,7 @@ static int internal_read64(void *handle, void *buf, size_t bytes, size_t *got_by
 		}
 #endif
 		errno = 0;
-		ptrdiff_t part = read(fd, (char*)buf+got, bytes);
+		ptrdiff_t part = fallback_read(fd, (char*)buf+got, bytes);
 		if(part > 0) // == 0 is end of file
 		{
 			SATURATE_SUB(bytes, part, 0)
@@ -755,13 +788,15 @@ static int64_t internal_lseek64(void *handle, int64_t offset, int whence)
 	struct wrap_data* ioh = handle;
 #ifdef LFS_LARGEFILE_64
 	return lseek64(ioh->fd, offset, whence);
+#elif defined(MPG123_COMPAT_MSVCRT_IO_64)
+	return _lseeki64(ioh->fd, offset, whence);
 #else
 	if(offset < OFF_MIN || offset > OFF_MAX)
 	{
 		errno = EOVERFLOW;
 		return -1;
 	}
-	return lseek(ioh->fd, (off_t)offset, whence);
+	return fallback_lseek(ioh->fd, (off_t)offset, whence);
 #endif
 }
 
@@ -861,16 +896,6 @@ int INT123_wrap_open(mpg123_handle *mh, void *handle, const char *path, int fd, 
 
 // So, native off_t reader replacement.
 
-// Defining a wrapper to the native read to be sure the prototype matches.
-// There are platforms where it is read(int, void*, unsigned int).
-// We know that we read small chunks where the difference does not matter. Could
-// apply specific hackery, use a common compat_read() (INT123_unintr_read()?) with system
-// specifics.
-static mpg123_ssize_t fallback_read(int fd, void *buf, size_t count)
-{
-	return read(fd, buf, count);
-}
-
 // In forced 64 bit offset mode, the only definitions of these are
 // the _64 ones.
 #ifdef FORCED_OFF_64
@@ -902,7 +927,7 @@ int attribute_align_arg mpg123_replace_reader(mpg123_handle *mh, mpg123_ssize_t 
 		ioh->iotype = IO_FD;
 		ioh->fd = -1; /* On next mpg123_open_fd(), this gets a value. */
 		ioh->r_read = r_read != NULL ? r_read : fallback_read;
-		ioh->r_lseek = r_lseek != NULL ? (void *)r_lseek : (void *)lseek;
+		ioh->r_lseek = r_lseek != NULL ? r_lseek : fallback_lseek;
 	}
 
 	/* The real reader replacement will happen while opening. */
