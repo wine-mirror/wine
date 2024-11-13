@@ -3641,6 +3641,85 @@ static void test_invokeex(void)
     IActiveScript_Release(script);
 }
 
+static void test_members(void)
+{
+    DISPID func_id, prop_id;
+    IActiveScript *script;
+    IDispatchEx *dispex;
+    DWORD propflags;
+    HRESULT hres;
+    VARIANT v;
+    BSTR str;
+
+    hres = parse_script_expr(L"var o = { func: function() {}, prop: 1 }; o", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    VariantClear(&v);
+
+    str = SysAllocString(L"func");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &func_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
+    str = SysAllocString(L"prop");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &prop_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
+    hres = IDispatchEx_GetMemberName(dispex, func_id, &str);
+    ok(hres == S_OK, "GetMemberName failed: %08lx\n", hres);
+    ok(!wcscmp(str, L"func"), "GetMemberName returned %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IDispatchEx_GetMemberName(dispex, prop_id, &str);
+    ok(hres == S_OK, "GetMemberName failed: %08lx\n", hres);
+    ok(!wcscmp(str, L"prop"), "GetMemberName returned %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    propflags = 0xdeadbeef;
+    hres = IDispatchEx_GetMemberProperties(dispex, func_id, 0, &propflags);
+    ok(hres == S_OK, "GetMemberProperties failed: %08lx\n", hres);
+    ok(propflags == 0, "propflags = %08lx", propflags);
+
+    propflags = 0xdeadbeef;
+    hres = IDispatchEx_GetMemberProperties(dispex, prop_id, 0, &propflags);
+    ok(hres == S_OK, "GetMemberProperties failed: %08lx\n", hres);
+    ok(propflags == 0, "propflags = %08lx", propflags);
+
+    hres = IDispatchEx_DeleteMemberByDispID(dispex, func_id);
+    ok(hres == S_OK, "DeleteMemberByDispID failed: %08lx\n", hres);
+
+    hres = IDispatchEx_GetMemberName(dispex, func_id, &str);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "GetMemberName failed: %08lx\n", hres);
+    hres = IDispatchEx_GetMemberProperties(dispex, func_id, 0, &propflags);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "GetMemberProperties failed: %08lx\n", hres);
+
+    hres = IDispatchEx_GetMemberName(dispex, prop_id, &str);
+    ok(hres == S_OK, "GetMemberName failed: %08lx\n", hres);
+    ok(!wcscmp(str, L"prop"), "GetMemberName returned %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    propflags = 0xdeadbeef;
+    hres = IDispatchEx_GetMemberProperties(dispex, prop_id, 0, &propflags);
+    ok(hres == S_OK, "GetMemberProperties failed: %08lx\n", hres);
+    ok(propflags == 0, "propflags = %08lx", propflags);
+
+    str = SysAllocString(L"prop");
+    hres = IDispatchEx_DeleteMemberByName(dispex, str, 0);
+    ok(hres == S_OK, "DeleteMemberByName failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    hres = IDispatchEx_GetMemberName(dispex, prop_id, &str);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "GetMemberName failed: %08lx\n", hres);
+    hres = IDispatchEx_GetMemberProperties(dispex, prop_id, 0, &propflags);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "GetMemberProperties failed: %08lx\n", hres);
+
+    IDispatchEx_Release(dispex);
+    IActiveScript_Release(script);
+}
+
 static void test_destructors(void)
 {
     static const WCHAR cyclic_refs[] = L"(function() {\n"
@@ -4299,6 +4378,7 @@ static BOOL run_tests(void)
 
     test_script_exprs();
     test_invokeex();
+    test_members();
     test_destructors();
     test_eval();
     test_error_reports();

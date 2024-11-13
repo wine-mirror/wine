@@ -2322,8 +2322,21 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IWineJSDispatch *iface, DI
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IWineJSDispatch *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
 {
     jsdisp_t *This = impl_from_IWineJSDispatch(iface);
-    FIXME("(%p)->(%lx %lx %p)\n", This, id, grfdexFetch, pgrfdex);
-    return E_NOTIMPL;
+    dispex_prop_t *prop;
+
+    TRACE("(%p)->(%lx %lx %p)\n", This, id, grfdexFetch, pgrfdex);
+
+    prop = get_prop(This, id);
+    if(!prop)
+        return DISP_E_MEMBERNOTFOUND;
+    *pgrfdex = 0;
+
+    if(grfdexFetch) {
+        FIXME("unimplemented flags %08lx\n", grfdexFetch);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DispatchEx_GetMemberName(IWineJSDispatch *iface, DISPID id, BSTR *pbstrName)
