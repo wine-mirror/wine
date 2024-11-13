@@ -1493,6 +1493,44 @@ static void unmap_window( HWND hwnd )
     release_win_data( data );
 }
 
+UINT window_update_client_state( struct x11drv_win_data *data )
+{
+    UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
+
+    if (!data->managed) return 0; /* unmanaged windows are managed by the Win32 side */
+    if (!data->mapped) return 0; /* ignore state changes on invisible windows */
+
+    if (data->iconic && data->current_state.wm_state == NormalState)  /* restore window */
+    {
+        data->iconic = FALSE;
+        if ((old_style & WS_CAPTION) == WS_CAPTION && (data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))
+        {
+            if ((old_style & WS_MAXIMIZEBOX) && !(old_style & WS_DISABLED))
+            {
+                TRACE( "restoring to max %p/%lx\n", data->hwnd, data->whole_window );
+                return SC_MAXIMIZE;
+            }
+        }
+        else if (old_style & (WS_MINIMIZE | WS_MAXIMIZE))
+        {
+            BOOL activate = (old_style & (WS_MINIMIZE | WS_VISIBLE)) == (WS_MINIMIZE | WS_VISIBLE);
+            TRACE( "restoring win %p/%lx\n", data->hwnd, data->whole_window );
+            return MAKELONG(SC_RESTORE, activate);
+        }
+    }
+    else if (!data->iconic && data->current_state.wm_state == IconicState)
+    {
+        data->iconic = TRUE;
+        if ((old_style & WS_MINIMIZEBOX) && !(old_style & WS_DISABLED))
+        {
+            TRACE( "minimizing win %p/%lx\n", data->hwnd, data->whole_window );
+            return SC_MINIMIZE;
+        }
+    }
+
+    return 0;
+}
+
 void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value )
 {
     UINT *pending = &data->pending_state.wm_state, *current = &data->current_state.wm_state;
