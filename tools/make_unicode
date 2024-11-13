@@ -1933,25 +1933,37 @@ sub to_utf16(@)
 }
 
 ################################################################
+# download all data files into the cache
+sub download_data_files()
+{
+    my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
+
+    foreach my $id (keys %data_files)
+    {
+        my $data = $data_files{$id};
+        my $url = $data->{url};
+        my $filename = "$cache/" . ($data->{name} || ($url =~ s/.*\/([^\/]+)$/$1/r));
+
+        unless (-f $filename)
+        {
+            print "Fetching $url...\n";
+            system "mkdir", "-p", $cache;
+            !system "wget", "-q", "-O", $filename, $url or die "cannot fetch $url";
+        }
+        my $sha = Digest::SHA->new( "sha256" )->addfile( $filename )->hexdigest;
+        die "invalid checksum $sha for $filename" unless $sha eq $data->{sha};
+        $data->{filename} = $filename;
+    }
+}
+
+
+################################################################
 # fetch a unicode.org file and open it
 sub open_data_file($@)
 {
     my ($id, $name) = @_;
-    my $data = $data_files{$id};
-    my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
-    local *FILE;
-
-    my $url = $data->{url};
-    my $filename = "$cache/" . ($data->{name} || ($url =~ s/.*\/([^\/]+)$/$1/r));
-    unless (-f $filename)
-    {
-        print "Fetching $url...\n";
-        system "mkdir", "-p", $cache;
-        !system "wget", "-q", "-O", $filename, $url or die "cannot fetch $url";
-    }
-
-    my $sha = Digest::SHA->new( "sha256" )->addfile( $filename )->hexdigest;
-    die "invalid checksum $sha for $filename" unless $sha eq $data->{sha};
+    my $url = $data_files{$id}->{url};
+    my $filename = $data_files{$id}->{filename};
 
     if ($filename =~ /\.zip$/)
     {
@@ -5833,6 +5845,7 @@ sub save_file($)
 # main routine
 
 chdir ".." if -f "./make_unicode";
+download_data_files();
 load_data();
 dump_bidi_dir_table( "dlls/gdi32/uniscribe/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
