@@ -9585,6 +9585,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, WPARAM wParam, const CREATESTRUCTW *
   infoPtr->iVersion = COMCTL32_VERSION;
   infoPtr->colRectsDirty = FALSE;
   infoPtr->selected_column = -1;
+  infoPtr->hHotCursor = LoadCursorW(NULL, (LPWSTR)IDC_HAND);
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);

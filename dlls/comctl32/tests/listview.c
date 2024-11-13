@@ -7255,6 +7255,19 @@ static void test_LVM_GETNEXTITEM(void)
     DestroyWindow(hwnd);
 }
 
+static void test_LVM_GETHOTCURSOR(void)
+{
+    HCURSOR cursor;
+    HWND hwnd;
+
+    hwnd = create_listview_control(LVS_REPORT);
+
+    cursor = (HCURSOR)SendMessageA(hwnd, LVM_GETHOTCURSOR, 0, 0);
+    ok(!!cursor, "Unexpected cursor %p.\n", cursor);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -7322,6 +7335,7 @@ START_TEST(listview)
     test_LVM_SETBKIMAGE(FALSE);
     test_custom_sort();
     test_LVM_GETNEXTITEM();
+    test_LVM_GETHOTCURSOR();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -7372,6 +7386,7 @@ START_TEST(listview)
     test_LVM_GETNEXTITEMINDEX();
     test_LVM_GETNEXTITEM();
     test_LVM_SETBKIMAGE(TRUE);
+    test_LVM_GETHOTCURSOR();
 
     unload_v6_module(ctx_cookie, hCtx);
 
