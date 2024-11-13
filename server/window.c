@@ -2488,7 +2488,7 @@ DECL_HANDLER(get_window_tree)
 /* set the position and Z order of a window */
 DECL_HANDLER(set_window_pos)
 {
-    rectangle_t window_rect, client_rect, visible_rect, surface_rect, valid_rect;
+    rectangle_t window_rect, client_rect, visible_rect, surface_rect, valid_rect, old_window, old_client;
     const rectangle_t *extra_rects = get_req_data();
     struct window *previous = NULL;
     struct window *top, *win = get_window( req->handle );
@@ -2558,9 +2558,13 @@ DECL_HANDLER(set_window_pos)
 
     win->monitor_dpi = req->monitor_dpi;
     old_style = win->style;
+    old_window = win->window_rect;
+    old_client = win->client_rect;
     set_window_pos( win, previous, flags, &window_rect, &client_rect,
                     &visible_rect, &surface_rect, &valid_rect );
-    if (win->style & old_style & WS_VISIBLE) update_cursor_pos( win->desktop );
+    if ((win->style & old_style & WS_VISIBLE) && (memcmp( &old_client, &win->client_rect, sizeof(old_client) )
+        || memcmp( &old_window, &win->window_rect, sizeof(old_window) )))
+        update_cursor_pos( win->desktop );
 
     if (win->paint_flags & SET_WINPOS_LAYERED_WINDOW) validate_whole_window( win );
 

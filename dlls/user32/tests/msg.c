@@ -6187,6 +6187,13 @@ static const struct message WmMove_mouse[] = {
     { 0 }
 };
 
+static const struct message WmMove_mouse2[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE },
+    { WM_GETTEXT, sent|optional },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { 0 }
+};
+
 static void test_setwindowpos(void)
 {
     HWND hwnd;
@@ -6253,6 +6260,11 @@ static void test_setwindowpos(void)
     ok(res == TRUE, "SetWindowPos expected TRUE, got %Id.\n", res);
     flush_events();
     ok_sequence(WmMove_mouse, "MouseMove", FALSE);
+    /* if the window and client rects were not changed WM_MOUSEMOVE is not sent. */
+    res = SetWindowPos( hwnd, 0, 205, 205, 200, 200, SWP_NOZORDER | SWP_NOACTIVATE );
+    ok(res == TRUE, "SetWindowPos expected TRUE, got %Id.\n", res);
+    flush_events();
+    ok_sequence(WmMove_mouse2, "MouseMove2", FALSE);
     ignore_mouse_messages = TRUE;
 
     DestroyWindow(hwnd);
