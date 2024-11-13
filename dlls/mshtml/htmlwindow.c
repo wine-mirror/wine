@@ -3926,6 +3926,9 @@ HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, 
         case DISPATCH_PROPERTYPUT: {
             DISPID dispex_id;
 
+            if(This->event_target.dispex.jsdisp)
+                return S_FALSE;
+
             hres = dispex_get_dynid(&This->event_target.dispex, prop->name, TRUE, &dispex_id);
             if(FAILED(hres))
                 return hres;

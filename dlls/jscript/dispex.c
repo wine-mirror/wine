@@ -656,7 +656,13 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
             TRACE("no prop_put\n");
             return S_OK;
         }
-        return This->builtin_info->prop_put(This, prop->u.id, val);
+        hres = This->builtin_info->prop_put(This, prop->u.id, val);
+        if(hres != S_FALSE)
+            return hres;
+        prop->type = PROP_JSVAL;
+        prop->flags = PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE;
+        prop->u.val = jsval_undefined();
+        break;
     default:
         ERR("type %d\n", prop->type);
         return E_FAIL;
