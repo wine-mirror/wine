@@ -45,7 +45,7 @@ enum fluid_loop
 {
     FLUID_UNLOOPED = 0,
     FLUID_LOOP_DURING_RELEASE = 1,
-    FLUID_NOTUSED = 2,
+    FLUID_START_ON_RELEASE = 2, /* this is a looping mode introduced by Polyphone, see #1398 for more info */
     FLUID_LOOP_UNTIL_RELEASE = 3
 };
 

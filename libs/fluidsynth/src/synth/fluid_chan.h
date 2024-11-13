@@ -24,6 +24,7 @@
 #include "fluidsynth_priv.h"
 #include "fluid_midi.h"
 #include "fluid_tuning.h"
+#include "fluid_gen.h"
 
 /* The mononophonic list is part of the legato detector for monophonic mode */
 /* see fluid_synth_monopoly.c about a description of the legato detector device */
@@ -124,11 +125,20 @@ struct _fluid_channel_t
     enum fluid_gen_type nrpn_select;      /* Generator ID of SoundFont NRPN message */
     char nrpn_active;      /* 1 if data entry CCs are for NRPN, 0 if RPN */
 
+    char awe32_filter_coeff;
+
     /* The values of the generators, set by NRPN messages, or by
      * fluid_synth_set_gen(), are cached in the channel so they can be
      * applied to future notes. They are copied to a voice's generators
      * in fluid_voice_init(), which calls fluid_gen_init().  */
     fluid_real_t gen[GEN_LAST];
+
+    /* Same for AWE32 NRPNs, however they override the gen's default values */
+    struct
+    {
+        enum fluid_gen_flags flags;
+        fluid_real_t val;
+    } override_gen_default[GEN_LAST];
 };
 
 fluid_channel_t *new_fluid_channel(fluid_synth_t *synth, int num);
@@ -272,5 +282,7 @@ void fluid_channel_invalid_prev_note_staccato(fluid_channel_t *chan);
 void fluid_channel_cc_legato(fluid_channel_t *chan, int value);
 void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value);
 
+int fluid_channel_get_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t *val);
+void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t val);
 
 #endif /* _FLUID_CHAN_H */

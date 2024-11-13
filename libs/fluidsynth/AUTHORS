@@ -40,8 +40,11 @@ summary of contributions.
   changes and bug fixes and got the synthesizer to actually work. Most
   importantly, he used it on stage to make music.
 
-* S. Christian Collins did much testing of FluidSynth in regards to
-  EMU10K1 compatibility and provided many synthesis fixes in that regard.
+* S. Christian Collins provided many tests and fixes on EMU10K1
+  compatibility. He also supplied reference chorus and reverb settings for
+  developing the default ones.
+
+* Alberto Salvia Novella developed the default chorus and reverb settings.
 
 * Stephane Letz from Grame wrote most of the MidiShare driver, all of
   the PortAudio driver, ported iiwusynth to MacOS X, and sent in many

@@ -27,10 +27,12 @@
 fluid_real_t fluid_ct2hz_real(fluid_real_t cents);
 fluid_real_t fluid_ct2hz(fluid_real_t cents);
 fluid_real_t fluid_cb2amp(fluid_real_t cb);
+fluid_real_t fluid_sec2tc(fluid_real_t sec);
 fluid_real_t fluid_tc2sec(fluid_real_t tc);
 fluid_real_t fluid_tc2sec_delay(fluid_real_t tc);
 fluid_real_t fluid_tc2sec_attack(fluid_real_t tc);
 fluid_real_t fluid_tc2sec_release(fluid_real_t tc);
+fluid_real_t fluid_hz2ct(fluid_real_t f);
 double fluid_act2hz(double c);
 fluid_real_t fluid_pan(fluid_real_t c, int left);
 fluid_real_t fluid_balance(fluid_real_t balance, int left);

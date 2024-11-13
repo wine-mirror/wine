@@ -111,9 +111,20 @@ fluid_cb2amp(fluid_real_t cb)
      */
 
     /* minimum attenuation: 0 dB */
-    if(cb < 0)
+    if(FLUID_UNLIKELY(cb < 0))
     {
-        return 1.0;
+        /* Issue #1374: it seems that by using modLfoToVolEnv, the attenuation can become negative and
+         * therefore the signal needs to be amplified.
+         * In such a rare case, calculate the attenuation on the fly.
+         *
+         * This behavior is backed by the spec saying:
+         * modLfoToVolume: "A positive number indicates a positive LFO excursion increases volume;
+         * a negative number indicates a positive excursion decreases volume.
+         * [...] For example, a value of 100 indicates that the volume will first rise ten dB, then fall ten dB."
+         *
+         * And in order to rise, a negative attenuation must be permitted.
+         */
+        return FLUID_POW(10.0f, cb / -200.0f);
     }
 
     if(cb >= FLUID_CB_AMP_SIZE)
@@ -150,7 +161,7 @@ fluid_tc2sec_delay(fluid_real_t tc)
         tc = (fluid_real_t) 5000.0f;
     }
 
-    return FLUID_POW(2.f, tc / 1200.f);
+    return fluid_tc2sec(tc);
 }
 
 /*
@@ -178,7 +189,7 @@ fluid_tc2sec_attack(fluid_real_t tc)
         tc = (fluid_real_t) 8000.f;
     };
 
-    return FLUID_POW(2.f, tc / 1200.f);
+    return fluid_tc2sec(tc);
 }
 
 /*
@@ -189,6 +200,29 @@ fluid_tc2sec(fluid_real_t tc)
 {
     /* No range checking here! */
     return FLUID_POW(2.f, tc / 1200.f);
+}
+
+/*
+ * fluid_sec2tc
+ *
+ * seconds to timecents
+ */
+fluid_real_t
+fluid_sec2tc(fluid_real_t sec)
+{
+    fluid_real_t res;
+    if(sec < 0)
+    {
+        // would require a complex solution of fluid_tc2sec(), but this is real-only
+        return -32768.f;
+    }
+
+    res = (1200.f / M_LN2) * FLUID_LOGF(sec);
+    if(res < -32768.f)
+    {
+        res = -32768.f;
+    }
+    return res;
 }
 
 /*
@@ -216,20 +250,21 @@ fluid_tc2sec_release(fluid_real_t tc)
         tc = (fluid_real_t) 8000.f;
     };
 
-    return FLUID_POW(2.f, tc / 1200.f);
+    return fluid_tc2sec(tc);
+}
+
+/**
+ * The inverse operation, converting from Hertz to cents
+ */
+fluid_real_t fluid_hz2ct(fluid_real_t f)
+{
+    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f);
 }
 
 /*
  * fluid_act2hz
  *
  * Convert from absolute cents to Hertz
- *
- * The inverse operation, converting from Hertz to cents, was unused and implemented as
- *
-fluid_hz2ct(fluid_real_t f)
-{
-    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
-}
  */
 double
 fluid_act2hz(double c)

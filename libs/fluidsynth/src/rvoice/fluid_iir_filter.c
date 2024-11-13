@@ -65,7 +65,6 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         fluid_real_t dsp_a2 = iir_filter->a2;
         fluid_real_t dsp_b02 = iir_filter->b02;
         fluid_real_t dsp_b1 = iir_filter->b1;
-        int dsp_filter_coeff_incr_count = iir_filter->filter_coeff_incr_count;
 
         fluid_real_t dsp_centernode;
         int dsp_i;
@@ -83,51 +82,18 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         * doesn't change.
         */
 
-        if(dsp_filter_coeff_incr_count > 0)
+        for(dsp_i = 0; dsp_i < count; dsp_i++)
         {
-            fluid_real_t dsp_a1_incr = iir_filter->a1_incr;
-            fluid_real_t dsp_a2_incr = iir_filter->a2_incr;
-            fluid_real_t dsp_b02_incr = iir_filter->b02_incr;
-            fluid_real_t dsp_b1_incr = iir_filter->b1_incr;
-
-
-            /* Increment is added to each filter coefficient filter_coeff_incr_count times. */
-            for(dsp_i = 0; dsp_i < count; dsp_i++)
-            {
-                /* The filter is implemented in Direct-II form. */
-                dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-                dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
-                dsp_hist2 = dsp_hist1;
-                dsp_hist1 = dsp_centernode;
-
-                if(dsp_filter_coeff_incr_count-- > 0)
-                {
-                    fluid_real_t old_b02 = dsp_b02;
-                    dsp_a1 += dsp_a1_incr;
-                    dsp_a2 += dsp_a2_incr;
-                    dsp_b02 += dsp_b02_incr;
-                    dsp_b1 += dsp_b1_incr;
-
-                    /* Compensate history to avoid the filter going havoc with large frequency changes */
-                    if(iir_filter->compensate_incr && FLUID_FABS(dsp_b02) > 0.001f)
-                    {
-                        fluid_real_t compensate = old_b02 / dsp_b02;
-                        dsp_hist1 *= compensate;
-                        dsp_hist2 *= compensate;
-                    }
-                }
-            } /* for dsp_i */
-        }
-        else /* The filter parameters are constant.  This is duplicated to save time. */
-        {
-            for(dsp_i = 0; dsp_i < count; dsp_i++)
-            {
-                /* The filter is implemented in Direct-II form. */
-                dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-                dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
-                dsp_hist2 = dsp_hist1;
-                dsp_hist1 = dsp_centernode;
-            }
+            /* The filter is implemented in Direct-II form. */
+            dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
+            dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+            dsp_hist2 = dsp_hist1;
+            dsp_hist1 = dsp_centernode;
+            /* Alternatively, it could be implemented in Transposed Direct Form II */
+            // fluid_real_t dsp_input = dsp_buf[dsp_i];
+            // dsp_buf[dsp_i] = dsp_b02 * dsp_input + dsp_hist1;
+            // dsp_hist1 = dsp_b1 * dsp_input - dsp_a1 * dsp_buf[dsp_i] + dsp_hist2;
+            // dsp_hist2 = dsp_b02 * dsp_input - dsp_a2 * dsp_buf[dsp_i];
         }
 
         iir_filter->hist1 = dsp_hist1;
@@ -136,7 +102,6 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         iir_filter->a2 = dsp_a2;
         iir_filter->b02 = dsp_b02;
         iir_filter->b1 = dsp_b1;
-        iir_filter->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
 
         fluid_check_fpe("voice_filter");
     }
@@ -320,47 +285,11 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
             return;
         }
 
-        iir_filter->compensate_incr = 0;
-
-        if(iir_filter->filter_startup || (transition_samples == 0))
-        {
-            /* The filter is calculated, because the voice was started up.
-             * In this case set the filter coefficients without delay.
-             */
-            iir_filter->a1 = a1_temp;
-            iir_filter->a2 = a2_temp;
-            iir_filter->b02 = b02_temp;
-            iir_filter->b1 = b1_temp;
-            iir_filter->filter_coeff_incr_count = 0;
-            iir_filter->filter_startup = 0;
-//       printf("Setting initial filter coefficients.\n");
-        }
-        else
-        {
-
-            /* The filter frequency is changed.  Calculate an increment
-             * factor, so that the new setting is reached after one buffer
-             * length. x_incr is added to the current value FLUID_BUFSIZE
-             * times. The length is arbitrarily chosen. Longer than one
-             * buffer will sacrifice some performance, though.  Note: If
-             * the filter is still too 'grainy', then increase this number
-             * at will.
-             */
-
-            iir_filter->a1_incr = (a1_temp - iir_filter->a1) / transition_samples;
-            iir_filter->a2_incr = (a2_temp - iir_filter->a2) / transition_samples;
-            iir_filter->b02_incr = (b02_temp - iir_filter->b02) / transition_samples;
-            iir_filter->b1_incr = (b1_temp - iir_filter->b1) / transition_samples;
-
-            if(FLUID_FABS(iir_filter->b02) > 0.0001f)
-            {
-                fluid_real_t quota = b02_temp / iir_filter->b02;
-                iir_filter->compensate_incr = quota < 0.5f || quota > 2.f;
-            }
-
-            /* Have to add the increments filter_coeff_incr_count times. */
-            iir_filter->filter_coeff_incr_count = transition_samples;
-        }
+        iir_filter->a1 = a1_temp;
+        iir_filter->a2 = a2_temp;
+        iir_filter->b02 = b02_temp;
+        iir_filter->b1 = b1_temp;
+        iir_filter->filter_startup = 0;
 
         fluid_check_fpe("voice_write filter calculation");
     }
@@ -375,9 +304,6 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
 
     /* calculate the frequency of the resonant filter in Hz */
     fres = fluid_ct2hz(iir_filter->fres + fres_mod);
-
-    /* FIXME - Still potential for a click during turn on, can we interpolate
-       between 20khz cutoff and 0 Q? */
 
     /* I removed the optimization of turning the filter off when the
      * resonance frequency is above the maximum frequency. Instead, the
@@ -398,6 +324,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
         fres = 5.f;
     }
 
+    // FLUID_LOG(FLUID_INFO, "%f + %f cents = %f cents = %f Hz | Q: %f", iir_filter->fres, fres_mod, iir_filter->fres + fres_mod, fres, iir_filter->q_lin);
     /* if filter enabled and there is a significant frequency change.. */
     if(iir_filter->type != FLUID_IIR_DISABLED && FLUID_FABS(fres - iir_filter->last_fres) > 0.01f)
     {

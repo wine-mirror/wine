@@ -129,6 +129,7 @@ static void fluid_synth_stop_LOCAL(fluid_synth_t *synth, unsigned int id);
 
 static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels);
 
+static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data, int data_lsb);
 
 /* Callback handlers for real-time settings */
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
@@ -229,7 +230,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.effects-channels", 2, 2, 2, 0);
     fluid_settings_register_int(settings, "synth.effects-groups", 1, 1, 128, 0);
     fluid_settings_register_num(settings, "synth.sample-rate", 44100.0, 8000.0, 96000.0, 0);
-    fluid_settings_register_int(settings, "synth.device-id", 0, 0, 127, 0);
+    fluid_settings_register_int(settings, "synth.device-id", 16, 0, 127, 0);
 #ifdef ENABLE_MIXER_THREADS
     fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0);
 #else
@@ -1600,7 +1601,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
         /* chan is enabled */
         if(synth->verbose)
         {
-            FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", chan, num, val);
+            FLUID_LOG(FLUID_INFO, "cc\t\t%d\t%d\t%d", chan, num, val);
         }
 
         fluid_channel_set_cc(channel, num, val);
@@ -1634,7 +1635,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
             {
                 if(synth->verbose)
                 {
-                    FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", i, num, val);
+                    FLUID_LOG(FLUID_INFO, "cc\t\t%d\t%d\t%d", i, num, val);
                 }
 
                 fluid_channel_set_cc(synth->channel[i], num, val);
@@ -1839,6 +1840,26 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
                 }
 
                 chan->nrpn_select = 0;  /* Reset to 0 */
+            }
+            else if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
+            {
+                // ALTITUDE.MID also manipulates AWE32 NRPNs by only using DATA LSB events - seems to be legal
+                if(fluid_channel_get_cc(chan, NRPN_MSB) == 127) // indicates AWE32 NRPNs
+                {
+                    int gen = fluid_channel_get_cc(chan, NRPN_LSB);
+                    if(synth->verbose)
+                    {
+                        FLUID_LOG(FLUID_INFO, "AWE32 NRPN RAW: Chan %d, Gen %d, data %d | 0x%X, MSB: %d, LSB: %d", channum, gen, data, data, msb_value, lsb_value);
+                    }
+                    if(gen <= 26)  // Effect 26 (reverb) is the last effect to select
+                    {
+                        fluid_synth_process_awe32_nrpn_LOCAL(synth, channum, gen, data, lsb_value);
+                    }
+                    else
+                    {
+                        FLUID_LOG(FLUID_INFO, "Ignoring unknown AWE32 NRPN targetting effect %d", gen);
+                    }
+                }
             }
         }
         else if(fluid_channel_get_cc(chan, RPN_MSB) == 0)      /* RPN is active: MSB = 0? */
@@ -2859,7 +2880,7 @@ fluid_synth_pitch_bend(fluid_synth_t *synth, int chan, int val)
 
     if(synth->verbose)
     {
-        FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
+        FLUID_LOG(FLUID_INFO, "pitchb\t\t%d\t%d", chan, val);
     }
 
     fluid_channel_set_pitch_bend(synth->channel[chan], val);
@@ -3091,7 +3112,7 @@ fluid_synth_program_change(fluid_synth_t *synth, int chan, int prognum)
 
     if(synth->verbose)
     {
-        FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
+        FLUID_LOG(FLUID_INFO, "prog\t\t%d\t%d\t%d", chan, banknum, prognum);
     }
 
     /* I think this is a hack for MIDI files that do bank changes in GM mode.
@@ -6852,15 +6873,30 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan,
                 && (fluid_voice_get_key(voice) == key)
                 && (fluid_voice_get_id(voice) != synth->noteid))
         {
+            enum fluid_midi_channel_type type = synth->channel[chan]->channel_type;
+
             /* Id of voices that was sustained by sostenuto */
             if(fluid_voice_is_sostenuto(voice))
             {
                 synth->storeid = fluid_voice_get_id(voice);
             }
 
-            /* Force the voice into release stage except if pedaling
-               (sostenuto or sustain) is active */
-            fluid_voice_noteoff(voice);
+            switch(type)
+            {
+                case CHANNEL_TYPE_DRUM:
+                    /* release the voice, this should make riding hi-hats or snares sound more
+                     * realistic (Discussion #1196) */
+                    fluid_voice_off(voice);
+                    break;
+                case CHANNEL_TYPE_MELODIC:
+                    /* Force the voice into release stage except if pedaling (sostenuto or sustain) is active.
+                     * This gives a more realistic sound to pianos and possibly other instruments (see PR #905). */
+                    fluid_voice_noteoff(voice);
+                    break;
+                default:
+                    FLUID_LOG(FLUID_ERR, "This should never happen: unknown channel type %d", (int)type);
+                    break;
+            }
         }
     }
 }
@@ -7568,6 +7604,272 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
         if(fluid_voice_get_channel(voice) == chan)
         {
             fluid_voice_set_param(voice, param, value);
+        }
+    }
+}
+
+// The "SB AWE32 Developer's Information Pack" provides a lookup table for the filter resonance.
+// Instead of a single Q value, a high and low Q value is given. This suggests a variable-Q filter design, which is
+// incompatible to fluidsynth's IIR filter. Therefore we need to somehow derive a single Q value.
+// Options are:
+// * mean
+// * geometric distance (sqrt(q_lo * q_hi))
+// * either q_lo or q_hi
+// * linear interpolation between low and high fc
+// * log interpolation between low and high fc
+static fluid_real_t
+calc_awe32_filter_q(int data, fluid_real_t* fc)
+{
+    typedef struct
+    {
+        fluid_real_t fc_lo;
+        fluid_real_t fc_hi;
+        fluid_real_t q_lo;
+        fluid_real_t q_hi;
+        fluid_real_t dc_atten;
+    } awe32_q;
+
+    // Q in dB
+    static const awe32_q awe32_q_table[] =
+    {
+        {92, 22000, 5.f, 0.f, -0.0f },  /* coef 0 */
+        {93, 8500, 6.f, 0.5f, -0.5f },  /* coef 1 */
+        {94, 8300, 8.f, 1.f, -1.2f },   /* coef 2 */
+        {95, 8200, 10.f, 2.f, -1.8f },  /* coef 3 */
+        {96, 8100, 11.f, 3.f, -2.5f },  /* coef 4 */
+        {97, 8000, 13.f, 4.f, -3.3f },  /* coef 5 */
+        {98, 7900, 14.f, 5.f, -4.1f },  /* coef 6 */
+        {99, 7800, 16.f, 6.f, -5.5f},   /* coef 7 */
+        {100, 7700, 17.f, 7.f, -6.0f },  /* coef 8 */
+        {100, 7500, 19.f, 9.f, -6.6f },  /* coef 9 */
+        {100, 7400, 20.f, 10.f, -7.2f }, /* coef 10 */
+        {100, 7300, 22.f, 11.f, -7.9f }, /* coef 11 */
+        {100, 7200, 23.f, 13.f, -8.5f }, /* coef 12 */
+        {100, 7100, 25.f, 15.f, -9.3f }, /* coef 13 */
+        {100, 7100, 26.f, 16.f, -10.1f },/* coef 14 */
+        {100, 7000, 28.f, 18.f, -11.0f}, /* coef 15 */
+    };
+
+    const awe32_q* tab;
+    fluid_real_t alpha;
+
+    fluid_clip(data, 0, 127);
+    data /= 8;
+    tab = &awe32_q_table[data];
+
+    fluid_clip(*fc, tab->fc_lo, tab->fc_hi);
+
+    alpha = (*fc - tab->fc_lo) / (tab->fc_hi - tab->fc_lo);
+
+    // linearly interpolate between high and low Q
+    return 10 * /* cB */ (tab->q_lo * (1.0f - alpha) + tab->q_hi * alpha);
+
+    // alternatively: log interpolation
+    // return 10 * /* cB */ FLUID_POW(tab->q_hi, alpha) * FLUID_POW(tab->q_lo, 1.0f - alpha);
+}
+
+/**
+ * This implementation is based on "Frequently Asked Questions for SB AWE32" http://archive.gamedev.net/archive/reference/articles/article445.html
+ * as well as on the "SB AWE32 Developer's Information Pack" https://github.com/user-attachments/files/15757220/adip301.pdf
+ *
+ * @param gen the AWE32 effect or generator to manipulate
+ * @param data the composed value of DATA_MSB and DATA_LSB
+ */
+static void fluid_synth_process_awe32_nrpn_LOCAL(fluid_synth_t *synth, int chan, int gen, int data, int data_lsb)
+{
+    static const enum fluid_gen_type awe32_to_sf2_gen[] =
+    {
+        // assuming LFO1 maps to MODLFO and LFO2 maps to VIBLFO
+        // observe how nicely most of the AWE32 generators here match up with the order of SF2 generators in fluid_gen_type
+        GEN_MODLFODELAY,		/**< Modulation LFO delay */
+        GEN_MODLFOFREQ,		/**< Modulation LFO frequency */
+        GEN_VIBLFODELAY,		/**< Vibrato LFO delay */
+        GEN_VIBLFOFREQ,		/**< Vibrato LFO frequency */
+        GEN_MODENVDELAY,		/**< Modulation envelope delay */
+        GEN_MODENVATTACK,		/**< Modulation envelope attack */
+        GEN_MODENVHOLD,		/**< Modulation envelope hold */
+        GEN_MODENVDECAY,		/**< Modulation envelope decay */
+        GEN_MODENVSUSTAIN,		/**< Modulation envelope sustain */
+        GEN_MODENVRELEASE,		/**< Modulation envelope release */
+        GEN_VOLENVDELAY,		/**< Volume envelope delay */
+        GEN_VOLENVATTACK,		/**< Volume envelope attack */
+        GEN_VOLENVHOLD,		/**< Volume envelope hold */
+        GEN_VOLENVDECAY,		/**< Volume envelope decay */
+        GEN_VOLENVSUSTAIN,		/**< Volume envelope sustain */
+        GEN_VOLENVRELEASE,		/**< Volume envelope release */
+        GEN_PITCH,              /**< Initial Pitch */
+        GEN_MODLFOTOPITCH,		/**< Modulation LFO to pitch */
+        GEN_VIBLFOTOPITCH,		/**< Vibrato LFO to pitch */
+        GEN_MODENVTOPITCH,		/**< Modulation envelope to pitch */
+        GEN_MODLFOTOVOL,		/**< Modulation LFO to volume */
+        GEN_FILTERFC,			/**< Filter cutoff */
+        GEN_FILTERQ,			/**< Filter Q */
+        GEN_MODLFOTOFILTERFC,		/**< Modulation LFO to filter cutoff */
+        GEN_MODENVTOFILTERFC,		/**< Modulation envelope to filter cutoff */
+        GEN_CHORUSSEND,		/**< Chorus send amount */
+        GEN_REVERBSEND,		/**< Reverb send amount */
+    };
+
+    enum fluid_gen_type sf2_gen = awe32_to_sf2_gen[gen];
+    int is_realtime = FALSE, i, coef;
+    fluid_real_t converted_sf2_generator_value, q;
+
+    // The AWE32 NRPN docs say that a value of 8192 is considered to be the middle, i.e. zero.
+    // However, it looks like for those generators which work in range [0,127], the AWE32 only inspects the DATA_LSB, i.e. and not doing this subtraction. Found while investigating Uplift.mid.
+    data -= 8192;
+
+    switch(sf2_gen)
+    {
+        case GEN_MODLFODELAY:
+        case GEN_VIBLFODELAY:
+        case GEN_MODENVDELAY:
+        case GEN_VOLENVDELAY:
+            fluid_clip(data, 0, 5900);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(4.0 / 1000.0));
+            break;
+
+        case GEN_MODLFOFREQ:
+        case GEN_VIBLFOFREQ:
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = fluid_hz2ct(data_lsb * (fluid_real_t)0.084 /* Hz */);
+            is_realtime = TRUE;
+            break;
+
+        case GEN_MODENVATTACK:
+        case GEN_VOLENVATTACK:
+            fluid_clip(data, 0, 5940);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(1.0 / 1000.0));
+            break;
+
+        case GEN_MODENVHOLD:
+        case GEN_VOLENVHOLD:
+            fluid_clip(data, 0, 8191);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(1.0 / 1000.0));
+            break;
+
+        case GEN_MODENVDECAY:
+        case GEN_MODENVRELEASE:
+        case GEN_VOLENVDECAY:
+        case GEN_VOLENVRELEASE:
+            fluid_clip(data, 0, 5940);
+            converted_sf2_generator_value = fluid_sec2tc(data * (fluid_real_t)(4.0 / 1000.0));
+            break;
+
+        case GEN_MODENVSUSTAIN:
+        case GEN_VOLENVSUSTAIN:
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.75 /* dB */ * 10) /* cB */;
+            break;
+
+        case GEN_PITCH:
+            converted_sf2_generator_value = data + 8192;
+            // This has the side effect of manipulating the modulation state of the channel's pitchwheel, but
+            // I'll buy it, since pitch bend is not a regular SF2 generator and we do a bit of magic there to
+            // make it work
+            fluid_synth_pitch_bend(synth, chan, converted_sf2_generator_value);
+            return;
+
+        case GEN_MODLFOTOPITCH:
+        case GEN_VIBLFOTOPITCH:
+            is_realtime = TRUE;
+            /* fallthrough */
+        case GEN_MODENVTOPITCH:
+            fluid_clip(data, -127, 127);
+            converted_sf2_generator_value = data * (fluid_real_t)9.375 /* cents */;
+            break;
+
+        case GEN_MODLFOTOVOL:
+            fluid_clip(data_lsb, 0, 127);
+            converted_sf2_generator_value = data_lsb * (fluid_real_t)(0.1875 /* dB */ * 10.0) /* cB */;
+            is_realtime = TRUE;
+            break;
+
+        case GEN_FILTERFC:
+            fluid_clip(data_lsb, 0, 127);
+            // Yes, DO NOT use data here, Uplift.mid doesn't set MSB=64, therefore we would always get a negative value after subtracting 8192.
+            // Since Uplift.mid sounds fine on hardware though, it seems like AWE32 only inspects DATA_LSB in this case.
+            // conversion continues below!
+            converted_sf2_generator_value = (data_lsb * 62 /* Hz */);
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc: %f Hz",converted_sf2_generator_value);
+            is_realtime = TRUE;
+            break;
+
+        case GEN_FILTERQ:
+            FLUID_LOG(FLUID_DBG, "AWE32 IIR Q Tab: %d",data_lsb);
+            synth->channel[chan]->awe32_filter_coeff = data_lsb;
+            return;
+
+        case GEN_MODLFOTOFILTERFC:
+            fluid_clip(data, -64, 63);
+            converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
+            FLUID_LOG(FLUID_DBG, "AWE32 MOD LFO TO FILTER Fc: %f cents", converted_sf2_generator_value);
+            is_realtime = TRUE;
+            // not supported, as this modulates the "phase" rather than the filters cutoff frequency
+            return;
+
+        case GEN_MODENVTOFILTERFC:
+            fluid_clip(data, -127, 127);
+            converted_sf2_generator_value = data * (fluid_real_t)56.25 /* cents */;
+            FLUID_LOG(FLUID_DBG, "AWE32 MOD ENV TO FILTER Fc: %f cents", converted_sf2_generator_value);
+            // not supported, as this modulates the "phase" rather than the filters cutoff frequency
+            return;
+
+        case GEN_REVERBSEND:
+            fluid_clip(data, 0, 255);
+            /* transform the input value */
+            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_reverb_mod.flags1, 256);
+            FLUID_LOG(FLUID_DBG, "AWE32 Reverb: %f", converted_sf2_generator_value);
+            converted_sf2_generator_value*= fluid_mod_get_amount(&default_reverb_mod);
+            break;
+
+        case GEN_CHORUSSEND:
+            fluid_clip(data, 0, 255);
+            /* transform the input value */
+            converted_sf2_generator_value = fluid_mod_transform_source_value(data, default_chorus_mod.flags1, 256);
+            FLUID_LOG(FLUID_DBG, "AWE32 Chorus: %f", converted_sf2_generator_value);
+            converted_sf2_generator_value*= fluid_mod_get_amount(&default_chorus_mod);
+            break;
+
+        default:
+            // should not happen
+            FLUID_LOG(FLUID_WARN, "AWE32 NPRN %d conversion not implemented", gen);
+            return;
+    }
+
+    coef = synth->channel[chan]->awe32_filter_coeff;
+    if(sf2_gen == GEN_FILTERFC)
+    {
+        // The cutoff at fc seems to be very steep for SoundBlaster! hardware. Listening tests have shown that lowering the cutoff frequency by 1000Hz gives a closer signal to the SB! hardware filter...
+        converted_sf2_generator_value -= 1000;
+        q = calc_awe32_filter_q(coef, &converted_sf2_generator_value);
+        FLUID_LOG(FLUID_DBG, "AWE32 IIR Fc (corrected): %f Hz", converted_sf2_generator_value);
+        FLUID_LOG(FLUID_DBG, "AWE32 IIR Q: %f cB", q);
+
+        converted_sf2_generator_value = fluid_hz2ct(converted_sf2_generator_value /* Hz */);
+
+        // Safe the "true initial Q"
+        fluid_channel_set_override_gen_default(synth->channel[chan], GEN_FILTERQ, q);
+    }
+
+    fluid_channel_set_override_gen_default(synth->channel[chan], sf2_gen, converted_sf2_generator_value);
+
+    for (i = 0; is_realtime && i < synth->polyphony; i++)
+    {
+        fluid_voice_t* voice = synth->voice[i];
+
+        if (fluid_voice_is_playing(voice) && fluid_voice_get_channel(voice) == chan)
+        {
+            // sets the adjusted generator
+            fluid_voice_gen_set(voice, sf2_gen, converted_sf2_generator_value);
+            fluid_voice_update_param(voice, sf2_gen);
+
+            FLUID_LOG(FLUID_DBG, "AWE32 Realtime: adjusting voice id %d, generator %d, chan %d", fluid_voice_get_id(voice), sf2_gen, chan);
+            if(sf2_gen == GEN_FILTERFC)
+            {
+                // also sets the calculated Q
+                fluid_voice_gen_set(voice, GEN_FILTERQ, q);
+                fluid_voice_update_param(voice, GEN_FILTERQ);
+            }
         }
     }
 }

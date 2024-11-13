@@ -357,8 +357,13 @@ fluid_midi_file_read_mthd(fluid_midi_file *mf)
     }
 
     mf->type = mthd[9];
-    mf->ntracks = (unsigned) mthd[11];
-    mf->ntracks += (unsigned int)(mthd[10]) << 16;
+    if(!(mf->type == 0 || mf->type == 1))
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "Sorry, but MIDI Format %d is not supported by this player", mf->type);
+        return FLUID_FAILED;
+    }
+    mf->ntracks = (signed)((unsigned)(mthd[10]) << 8 | (unsigned) mthd[11]);
 
     if((signed char)mthd[12] < 0)
     {
@@ -1062,7 +1067,7 @@ fluid_midi_file_get_division(fluid_midi_file *midifile)
  * @return New MIDI event structure or NULL when out of memory.
  */
 fluid_midi_event_t *
-new_fluid_midi_event()
+new_fluid_midi_event(void)
 {
     fluid_midi_event_t *evt;
     evt = FLUID_NEW(fluid_midi_event_t);
@@ -2696,7 +2701,7 @@ int fluid_player_get_midi_tempo(fluid_player_t *player)
  * new_fluid_midi_parser
  */
 fluid_midi_parser_t *
-new_fluid_midi_parser()
+new_fluid_midi_parser(void)
 {
     fluid_midi_parser_t *parser;
     parser = FLUID_NEW(fluid_midi_parser_t);
