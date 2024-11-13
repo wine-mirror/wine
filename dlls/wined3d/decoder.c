@@ -95,6 +95,8 @@ const struct wined3d_decoder_ops wined3d_null_decoder_ops =
 struct wined3d_decoder_vk
 {
     struct wined3d_decoder d;
+    VkVideoSessionKHR vk_session;
+    uint64_t command_buffer_id;
 };
 
 static struct wined3d_decoder_vk *wined3d_decoder_vk(struct wined3d_decoder *decoder)
@@ -195,9 +197,14 @@ static void wined3d_decoder_vk_get_profiles(struct wined3d_adapter *adapter, uns
 
 static void wined3d_decoder_vk_destroy_object(void *object)
 {
-    struct wined3d_video_decoder_vk *decoder_vk = object;
+    struct wined3d_decoder_vk *decoder_vk = object;
+    struct wined3d_context_vk *context_vk;
 
     TRACE("decoder_vk %p.\n", decoder_vk);
+
+    context_vk = wined3d_context_vk(context_acquire(decoder_vk->d.device, NULL, 0));
+
+    wined3d_context_vk_destroy_vk_video_session(context_vk, decoder_vk->vk_session, decoder_vk->command_buffer_id);
 
     free(decoder_vk);
 }
@@ -209,6 +216,62 @@ static void wined3d_decoder_vk_destroy(struct wined3d_decoder *decoder)
     wined3d_cs_destroy_object(decoder->device->cs, wined3d_decoder_vk_destroy_object, decoder_vk);
 }
 
+static void wined3d_decoder_vk_cs_init(void *object)
+{
+    VkVideoDecodeH264CapabilitiesKHR h264_caps = {.sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_CAPABILITIES_KHR};
+    VkVideoDecodeCapabilitiesKHR decode_caps = {.sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_CAPABILITIES_KHR};
+    VkVideoSessionCreateInfoKHR session_desc = {.sType = VK_STRUCTURE_TYPE_VIDEO_SESSION_CREATE_INFO_KHR};
+    VkVideoProfileInfoKHR profile = {.sType = VK_STRUCTURE_TYPE_VIDEO_PROFILE_INFO_KHR};
+    VkVideoCapabilitiesKHR caps = {.sType = VK_STRUCTURE_TYPE_VIDEO_CAPABILITIES_KHR};
+    struct wined3d_decoder_vk *decoder_vk = object;
+    struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk(decoder_vk->d.device->adapter);
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(decoder_vk->d.device);
+    const struct wined3d_vk_info *vk_info = &device_vk->vk_info;
+    const struct wined3d_format_vk *output_format;
+    VkResult vr;
+
+    output_format = wined3d_format_vk(wined3d_get_format(&adapter_vk->a, decoder_vk->d.desc.output_format, 0));
+
+    session_desc.queueFamilyIndex = device_vk->decode_queue.vk_queue_family_index;
+    session_desc.pVideoProfile = &profile;
+    session_desc.pictureFormat = output_format->vk_format;
+    session_desc.referencePictureFormat = output_format->vk_format;
+
+    fill_vk_profile_info(&profile, &decoder_vk->d.desc.codec, decoder_vk->d.desc.output_format);
+
+    if (IsEqualGUID(&decoder_vk->d.desc.codec, &DXVA_ModeH264_VLD_NoFGT))
+    {
+        caps.pNext = &decode_caps;
+        decode_caps.pNext = &h264_caps;
+
+        vr = VK_CALL(vkGetPhysicalDeviceVideoCapabilitiesKHR(adapter_vk->physical_device, &profile, &caps));
+        if (vr != VK_SUCCESS)
+        {
+            ERR("Device does not support the requested caps, vr %s.\n", wined3d_debug_vkresult(vr));
+            return;
+        }
+
+        session_desc.maxCodedExtent = caps.maxCodedExtent;
+        session_desc.maxDpbSlots = caps.maxDpbSlots;
+        session_desc.maxActiveReferencePictures = caps.maxActiveReferencePictures;
+        session_desc.pStdHeaderVersion = &caps.stdHeaderVersion;
+    }
+    else
+    {
+        ERR("Unsupported codec %s.\n", debugstr_guid(&decoder_vk->d.desc.codec));
+        return;
+    }
+
+    if ((vr = VK_CALL(vkCreateVideoSessionKHR(device_vk->vk_device,
+            &session_desc, NULL, &decoder_vk->vk_session))))
+    {
+        ERR("Failed to create video session, vr %s.\n", wined3d_debug_vkresult(vr));
+        return;
+    }
+
+    TRACE("Created video session 0x%s.\n", wine_dbgstr_longlong(decoder_vk->vk_session));
+}
+
 static HRESULT wined3d_decoder_vk_create(struct wined3d_device *device,
         const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder)
 {
@@ -218,6 +281,8 @@ static HRESULT wined3d_decoder_vk_create(struct wined3d_device *device,
         return E_OUTOFMEMORY;
 
     wined3d_decoder_init(&object->d, device, desc);
+
+    wined3d_cs_init_object(device->cs, wined3d_decoder_vk_cs_init, object);
 
     TRACE("Created decoder %p.\n", object);
     *decoder = &object->d;

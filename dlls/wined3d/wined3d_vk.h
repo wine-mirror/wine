@@ -214,7 +214,10 @@ struct wined3d_device_vk;
     VK_DEVICE_PFN(vkCreateSwapchainKHR) \
     VK_DEVICE_PFN(vkDestroySwapchainKHR) \
     VK_DEVICE_PFN(vkGetSwapchainImagesKHR) \
-    VK_DEVICE_PFN(vkQueuePresentKHR)
+    VK_DEVICE_PFN(vkQueuePresentKHR) \
+    /* VK_KHR_video_queue */ \
+    VK_DEVICE_EXT_PFN(vkCreateVideoSessionKHR) \
+    VK_DEVICE_EXT_PFN(vkDestroyVideoSessionKHR)
 
 #define DECLARE_VK_PFN(name) PFN_##name name;
 
@@ -444,6 +447,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_QUERY_POOL_VK,
     WINED3D_RETIRED_EVENT_VK,
     WINED3D_RETIRED_PIPELINE_VK,
+    WINED3D_RETIRED_VIDEO_SESSION_VK,
 };
 
 struct wined3d_retired_object_vk
@@ -468,6 +472,7 @@ struct wined3d_retired_object_vk
         VkSampler vk_sampler;
         VkEvent vk_event;
         VkPipeline vk_pipeline;
+        VkVideoSessionKHR vk_video_session;
         struct
         {
             struct wined3d_query_pool_vk *pool_vk;
@@ -706,6 +711,8 @@ void wined3d_context_vk_destroy_vk_event(struct wined3d_context_vk *context_vk,
         VkEvent vk_event, uint64_t command_buffer_id);
 void wined3d_context_vk_destroy_vk_pipeline(struct wined3d_context_vk *context_vk,
         VkPipeline vk_pipeline, uint64_t command_buffer_id);
+void wined3d_context_vk_destroy_vk_video_session(struct wined3d_context_vk *context_vk,
+        VkPipeline vk_video_session, uint64_t command_buffer_id);
 void wined3d_context_vk_end_current_render_pass(struct wined3d_context_vk *context_vk);
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk);
 struct wined3d_pipeline_layout_vk *wined3d_context_vk_get_pipeline_layout(struct wined3d_context_vk *context_vk,
