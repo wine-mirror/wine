@@ -3302,7 +3302,7 @@ static global_prop_t *alloc_global_prop(HTMLInnerWindow *This, global_prop_type_
         This->global_prop_size = new_size;
     }
 
-    This->global_props[This->global_prop_cnt].name = wcsdup(name);
+    This->global_props[This->global_prop_cnt].name = SysAllocString(name);
     if(!This->global_props[This->global_prop_cnt].name)
         return NULL;
 
@@ -3779,7 +3779,7 @@ static void HTMLWindow_destructor(DispatchEx *dispex)
     VariantClear(&This->performance);
 
     for(i = 0; i < This->global_prop_cnt; i++)
-        free(This->global_props[i].name);
+        SysFreeString(This->global_props[i].name);
     free(This->global_props);
 
     if(This->mon)
