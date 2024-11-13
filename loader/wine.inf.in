@@ -2338,7 +2338,7 @@ Description="Device mounting service"
 DisplayName="Mount Manager"
 ServiceBinary="%12%\mountmgr.sys"
 ServiceType=1
-StartType=2
+StartType=0
 ErrorControl=1
 LoadOrderGroup="System Bus Extender"
 
