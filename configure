@@ -10407,6 +10407,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10444,6 +10447,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10660,6 +10666,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10696,6 +10705,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10732,6 +10744,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10768,6 +10783,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10804,6 +10822,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10840,6 +10861,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10876,6 +10900,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10912,6 +10939,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10948,6 +10978,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -10984,6 +11017,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11020,6 +11056,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11056,6 +11095,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11092,6 +11134,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11128,6 +11173,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11164,6 +11212,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11200,6 +11251,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11236,6 +11290,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11272,6 +11329,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11308,6 +11368,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11344,6 +11407,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11380,6 +11446,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11418,6 +11487,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11441,6 +11513,47 @@ then :
   as_fn_append ${wine_arch}_EXTRACFLAGS " -ffunction-sections"
 fi }
 
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fms-hotpatch -DMIN_CLANG_VERSION=18" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fms-hotpatch -DMIN_CLANG_VERSION=18" >&5
+printf %s "checking whether $CC supports -fms-hotpatch -DMIN_CLANG_VERSION=18... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fms-hotpatch -DMIN_CLANG_VERSION=18"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -fms-hotpatch"
+                        as_fn_append ${wine_arch}_LDFLAGS " -fms-hotpatch"
+fi }
+
         { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-flarge-source-files -Wmisleading-indentation" | sed "$as_sed_sh"`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -flarge-source-files -Wmisleading-indentation" >&5
 printf %s "checking whether $CC supports -flarge-source-files -Wmisleading-indentation... " >&6; }
@@ -11455,6 +11568,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11493,6 +11609,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11529,6 +11648,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11565,6 +11687,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11601,6 +11726,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11637,6 +11765,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11673,6 +11804,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11709,6 +11843,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11768,6 +11905,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11804,6 +11944,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11844,6 +11987,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
@@ -11880,6 +12026,9 @@ ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 void *__os_arm64x_dispatch_ret = 0;
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
