@@ -765,16 +765,13 @@ static void test_SystemFirmwareTable(void)
     ok( *(UINT *)sfti->TableBuffer == 0, "wrong table id %x\n", *(UINT *)sfti->TableBuffer );
 
     len = pEnumSystemFirmwareTables( RSMB, NULL, 0 );
-    todo_wine
     ok( len == sizeof(UINT), "wrong len %u\n", len );
-    if (len)
-    {
     smbios_table = malloc( len );
     len = pEnumSystemFirmwareTables( RSMB, smbios_table, len );
     ok( len == sizeof(UINT), "wrong len %u\n", len );
     ok( *(UINT *)smbios_table == 0, "wrong table id %x\n", *(UINT *)smbios_table );
     free( smbios_table );
-    }
+
     HeapFree(GetProcessHeap(), 0, sfti);
 }
 
