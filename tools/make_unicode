@@ -26,7 +26,7 @@ use Encode;
 use Time::Local qw(timegm_modern);
 
 my $UNIVERSION = "16.0.0";
-my $CLDRVERSION = "45";
+my $CLDRVERSION = "46";
 my $ISO639VERSION = "20230123";
 my $TZVERSION = "2024a";
 
@@ -39,7 +39,7 @@ my %data_files =
  idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
                 sha  => "6db2ef4ed35f3b3de74ebc2e00404a9607f76d499f576b8d4043cf14f1ed175c" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
-                sha  => "29f4dafa918017e74cb84edf19fb707894cbce1cf7da1dd89fff24c107a66ecb" },
+                sha  => "716d0fc10a6469f7b808e55671ab98640c387e43bae152382e725462e366ccb2" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
                 sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
  sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt",
@@ -984,6 +984,12 @@ my @locales =
  { name => "ka", lcid => 0x00000037, group => 16 },
  { name => "ka-GE", lcid => 0x00000437 },
  { name => "ka-GE_modern", lcid => 0x00010437, alias => "ka-GE" },
+ { name => "kaa" },
+ { name => "kaa-Cyrl" },
+ { name => "kaa-Cyrl-UZ" },
+ { name => "kaa-Latn" },
+ { name => "kaa-Latn-UZ" },
+ { name => "kaa-UZ", alias => "kaa-Cyrl-UZ" },
  { name => "kab", sopentypelang => "KAB0" },
  { name => "kab-DZ" },
  { name => "kam", sopentypelang => "KMB" },
@@ -999,8 +1005,10 @@ my @locales =
  { name => "ki" },
  { name => "ki-KE" },
  { name => "kk", lcid => 0x0000003f, group => 5, sabbrevlangname => "KKZ" },
- { name => "kk-Cyrl", alias => "kk" },
- { name => "kk-Cyrl-KZ", alias => "kk-KZ" },
+ { name => "kk-Arab" },
+ { name => "kk-Arab-CN" },
+ { name => "kk-Cyrl" },
+ { name => "kk-Cyrl-KZ" },
  { name => "kk-KZ", lcid => 0x0000043f },
  { name => "kkj" },
  { name => "kkj-CM" },
@@ -1016,7 +1024,11 @@ my @locales =
  { name => "ko-KP", oemcp => 65001 },
  { name => "ko-KR", lcid => 0x00000412 },
  { name => "kok", lcid => 0x00000057, slist => ",", group => 15, sabbrevlangname => "KNK" },
- { name => "kok-IN", lcid => 0x00000457 },
+ { name => "kok-Deva" },
+ { name => "kok-Deva-IN", lcid => 0x00000457 },
+ { name => "kok-Latn" },
+ { name => "kok-Latn-IN" },
+ { name => "kok-IN", alias => "kok-Deva-IN" },
  { name => "kr", lcid => 0x00000071, sortlocale => "kr-Latn-NG", oemcp => 850, dir => "exemplars", sabbrevlangname => "ZZZ", sopentypelang => "KNR" },
  { name => "kr-Latn", file => "kr", dir => "exemplars" },
  { name => "kr-Latn-NG", lcid => 0x00000471, file => "kr", dir => "exemplars" },
@@ -1054,6 +1066,8 @@ my @locales =
  { name => "lg-UG" },
  { name => "lkt" },
  { name => "lkt-US" },
+ { name => "lld" },
+ { name => "lld-IT" },
  { name => "ln" },
  { name => "ln-AO" },
  { name => "ln-CD" },
@@ -1066,6 +1080,8 @@ my @locales =
  { name => "lrc-IR" },
  { name => "lt", lcid => 0x00000027, oemcp => 775, group => 3, sabbrevlangname => "LTH", sopentypelang => "LTH" },
  { name => "lt-LT", lcid => 0x00000427 },
+ { name => "ltg" },
+ { name => "ltg-LV" },
  { name => "lu" },
  { name => "lu-CD" },
  { name => "luo" },
@@ -1089,6 +1105,8 @@ my @locales =
  { name => "mgh-MZ" },
  { name => "mgo" },
  { name => "mgo-CM" },
+ { name => "mhn" },
+ { name => "mhn-IT" },
  { name => "mi", lcid => 0x00000081, slist => "," },
  { name => "mi-Latn", alias => "mi" },
  { name => "mi-Latn-NZ", alias => "mi-NZ" },
@@ -1503,6 +1521,7 @@ my @locales =
  { name => "yue-Hans" },
  { name => "yue-Hans-CN" },
  { name => "yue-Hant" },
+ { name => "yue-Hant-CN" },
  { name => "yue-Hant-HK" },
  { name => "zgh" },
  { name => "zgh-MA", alias => "zgh-Tfng-MA" },
@@ -1520,6 +1539,7 @@ my @locales =
  { name => "zh-Hans-CN-u-co-stroke", alias => "zh-CN_stroke" },
  { name => "zh-Hans-HK", slist => ";", nativedigits => "" },
  { name => "zh-Hans-MO", slist => ";", nativedigits => "" },
+ { name => "zh-Hans-MY", slist => ";", nativedigits => "" },
  { name => "zh-Hans-SG", alias => "zh-SG" },
  { name => "zh-Hans-SG-u-co-phonebk", alias => "zh-SG_phoneb" },
  { name => "zh-Hans-SG-u-co-stroke", alias => "zh-SG_stroke" },
@@ -1529,9 +1549,12 @@ my @locales =
  { name => "zh-Hant-MO", alias => "zh-MO" },
  { name => "zh-Hant-MO-u-co-stroke", alias => "zh-MO_stroke" },
  { name => "zh-Hant-MO-u-co-unihan", alias => "zh-MO_radstr" },
+ { name => "zh-Hant-MY" },
  { name => "zh-Hant-TW", alias => "zh-TW" },
  { name => "zh-Hant-TW-u-co-phonetic", alias => "zh-TW_pronun" },
  { name => "zh-Hant-TW-u-co-unihan", alias => "zh-TW_radstr" },
+ { name => "zh-Latn" },
+ { name => "zh-Latn-CN" },
  { name => "zh-HK", lcid => 0x00000c04, file => "zh_Hant_HK", sparent => "zh-Hant", sabbrevlangname => "ZHH" },
  { name => "zh-HK_radstr", lcid => 0x00040c04, alias => "zh-HK" },
  { name => "zh-MO", lcid => 0x00001404, file => "zh_Hant_MO", sparent => "zh-Hant", sabbrevlangname => "ZHM", sopentypelang => "ZHT" },
@@ -4748,10 +4771,10 @@ sub build_locale_data()
 
         # numbers
 
-        my $sdecimal = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/decimal" );
+        my $sdecimal = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/decimal[not(\@alt)]" );
         my $slist = locale_entry( $loc, "slist", ";" );
         my $smondecimalsep = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/currencyDecimal" ) || $sdecimal;
-        my $sthousand = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/group" );
+        my $sthousand = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/group[not(\@alt)]" );
         $sthousand =~ s/\x{202f}/\x{00a0}/;
         my $smonthousandsep = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/currencyGroup" ) || $sthousand;
         my $spositivesign = "";
