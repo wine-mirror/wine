@@ -217,7 +217,6 @@ static void test_HeapCreate(void)
     count = GetProcessHeaps( ARRAY_SIZE(heaps), heaps );
     ok( count == heap_count + 2, "GetProcessHeaps returned %lu\n", count );
     ok( heaps[0] == GetProcessHeap(), "got wrong heap\n" );
-    todo_wine
     ok( heaps[heap_count + 0] == heap, "got wrong heap\n" );
     todo_wine
     ok( heaps[heap_count + 1] == heap1, "got wrong heap\n" );
