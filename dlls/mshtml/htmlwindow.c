@@ -3974,6 +3974,44 @@ HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, 
     return hres;
 }
 
+static HRESULT HTMLWindow_delete(DispatchEx *dispex, DISPID id)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    DWORD idx = id - MSHTML_DISPID_CUSTOM_MIN;
+    global_prop_t *prop;
+    HRESULT hres = S_OK;
+
+    if(idx >= This->global_prop_cnt)
+        return DISP_E_MEMBERNOTFOUND;
+
+    prop = This->global_props + idx;
+    switch(prop->type) {
+    case GLOBAL_SCRIPTVAR: {
+        IDispatchEx *iface;
+        IDispatch *disp;
+
+        disp = get_script_disp(prop->script_host);
+        if(!disp)
+            return E_UNEXPECTED;
+
+        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&iface);
+        if(SUCCEEDED(hres)) {
+            hres = IDispatchEx_DeleteMemberByDispID(iface, prop->id);
+            IDispatchEx_Release(iface);
+        }else {
+            WARN("No IDispatchEx, so can't delete\n");
+            hres = S_OK;
+        }
+        IDispatch_Release(disp);
+        break;
+    }
+    default:
+        break;
+    }
+
+    return hres;
+}
+
 static HRESULT HTMLWindow_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
 {
     DWORD idx = (id == DISPID_STARTENUM) ? 0 : id - MSHTML_DISPID_CUSTOM_MIN + 1;
@@ -4200,6 +4238,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         .lookup_dispid       = HTMLWindow_lookup_dispid,
         .find_dispid         = HTMLWindow_find_dispid,
         .invoke              = HTMLWindow_invoke,
+        .delete              = HTMLWindow_delete,
         .next_dispid         = HTMLWindow_next_dispid,
         .get_prop_desc       = HTMLWindow_get_prop_desc,
         .get_script_global   = HTMLWindow_get_script_global,

@@ -1386,7 +1386,6 @@ sync_test("delete_prop", function() {
         r = (delete window.encodeURIComponent);
         ok(v >= 9, "did not get an expect exception deleting encodeURIComponent");
         ok(r, "delete returned " + r);
-        todo_wine.
         ok(!("encodeURIComponent" in obj), "encodeURIComponent is still in obj");
         window.encodeURIComponent = prop;
     }catch(ex) {
@@ -1424,7 +1423,6 @@ sync_test("delete_prop", function() {
         ok(r, "did not get an expected globalprop2 exception");
     }else {
         ok(!r, "got an unexpected exception");
-        todo_wine.
         ok(!("globalprop2" in obj), "globalprop2 is still in obj");
     }
 
@@ -1457,7 +1455,6 @@ sync_test("delete_prop", function() {
         r = (delete window.globalprop5);
         ok(v >= 9, "did not get an expected exception deleting globalprop5");
         ok(r, "delete returned " + r);
-        todo_wine.
         ok(!("globalprop5" in obj), "globalprop5 is still in obj");
     }catch(ex) {
         ok(v < 9, "expected exception deleting globalprop5");
