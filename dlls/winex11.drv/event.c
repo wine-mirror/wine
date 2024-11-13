@@ -197,7 +197,8 @@ static void host_window_send_configure_events( struct host_window *win, Display 
         if (!XFindContext( configure.display, configure.window, winContext, (char **)&hwnd ) &&
             (data = get_win_data( hwnd )))
         {
-            BOOL has_serial = data->wm_state_serial || data->configure_serial;
+            /* embedded windows won't receive synthetic ConfigureNotify and are positioned by the WM */
+            BOOL has_serial = !data->embedded && (data->wm_state_serial || data->configure_serial);
             release_win_data( data );
             if (has_serial) continue;
         }
@@ -211,10 +212,8 @@ static void host_window_send_configure_events( struct host_window *win, Display 
 static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
 {
     struct host_window *win;
-    RECT old_rect;
 
     if (!(win = get_host_window( event->xany.window, FALSE ))) return FALSE;
-    old_rect = win->rect;
 
     switch (event->type)
     {
@@ -227,6 +226,7 @@ static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
         XReparentEvent *reparent = (XReparentEvent *)event;
         TRACE( "host window %p/%lx ReparentNotify, parent %lx\n", win, win->window, reparent->parent );
         host_window_set_parent( win, reparent->parent );
+        host_window_send_configure_events( win, event->xany.display, event->xany.serial, previous );
         break;
     }
     case GravityNotify:
@@ -235,6 +235,7 @@ static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
         OffsetRect( &win->rect, gravity->x - win->rect.left, gravity->y - win->rect.top );
         if (win->parent) win->rect = host_window_configure_child( win->parent, win->window, win->rect, FALSE );
         TRACE( "host window %p/%lx GravityNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
+        host_window_send_configure_events( win, event->xany.display, event->xany.serial, previous );
         break;
     }
     case ConfigureNotify:
@@ -243,12 +244,10 @@ static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
         SetRect( &win->rect, configure->x, configure->y, configure->x + configure->width, configure->y + configure->height );
         if (win->parent) win->rect = host_window_configure_child( win->parent, win->window, win->rect, configure->send_event );
         TRACE( "host window %p/%lx ConfigureNotify, rect %s\n", win, win->window, wine_dbgstr_rect(&win->rect) );
+        host_window_send_configure_events( win, event->xany.display, event->xany.serial, previous );
         break;
     }
     }
-
-    if (old_rect.left != win->rect.left || old_rect.top != win->rect.top)
-        host_window_send_configure_events( win, event->xany.display, event->xany.serial, previous );
 
     return TRUE;
 }
