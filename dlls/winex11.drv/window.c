@@ -1531,6 +1531,45 @@ UINT window_update_client_state( struct x11drv_win_data *data )
     return 0;
 }
 
+UINT window_update_client_config( struct x11drv_win_data *data )
+{
+    UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), flags;
+    RECT rect, old_rect = data->rects.window, new_rect;
+
+    if (!data->managed) return 0; /* unmanaged windows are managed by the Win32 side */
+    if (!data->mapped) return 0; /* ignore config changes on invisible windows */
+    if (data->iconic) return 0; /* ignore config changes on minimized windows */
+
+    if (data->configure_serial) return 0; /* another config update is pending, wait for it to complete */
+
+    if ((old_style & WS_CAPTION) == WS_CAPTION || !data->is_fullscreen)
+    {
+        if ((data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && !(old_style & WS_MAXIMIZE))
+        {
+            TRACE( "window %p/%lx is maximized\n", data->hwnd, data->whole_window );
+            return SC_MAXIMIZE;
+        }
+        if (!(data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && (old_style & WS_MAXIMIZE))
+        {
+            TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
+            return SC_RESTORE;
+        }
+    }
+
+    flags = SWP_NOACTIVATE | SWP_NOZORDER;
+    rect = new_rect = window_rect_from_visible( &data->rects, data->current_state.rect );
+    if (new_rect.left == old_rect.left && new_rect.top == old_rect.top) flags |= SWP_NOMOVE;
+    else OffsetRect( &rect, old_rect.left - new_rect.left, old_rect.top - new_rect.top );
+    if (rect.right == old_rect.right && rect.bottom == old_rect.bottom) flags |= SWP_NOSIZE;
+    else if (IsRectEmpty( &rect )) flags |= SWP_NOSIZE;
+
+    if ((flags & (SWP_NOSIZE | SWP_NOMOVE)) == (SWP_NOSIZE | SWP_NOMOVE)) return 0;
+
+    TRACE( "window %p/%lx config changed %s -> %s, flags %#x\n", data->hwnd, data->whole_window,
+           wine_dbgstr_rect(&old_rect), wine_dbgstr_rect(&new_rect), flags );
+    return MAKELONG(SC_MOVE, flags);
+}
+
 void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value )
 {
     UINT *pending = &data->pending_state.wm_state, *current = &data->current_state.wm_state;

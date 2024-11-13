@@ -1104,8 +1104,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     struct x11drv_win_data *data;
     RECT rect;
     POINT pos = {event->x, event->y};
-    UINT style, flags = 0, config_cmd = 0;
-    int cx, cy, x, y;
+    UINT config_cmd;
 
     if (!hwnd) return FALSE;
     if (!(data = get_win_data( hwnd ))) return FALSE;
@@ -1124,68 +1123,8 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
     window_configure_notify( data, event->serial, &rect );
 
-    if (!data->mapped || data->iconic) goto done;
-    if (!data->whole_window || !data->managed) goto done;
-    if (data->configure_serial && (long)(data->configure_serial - event->serial) > 0)
-    {
-        TRACE( "win %p/%lx event %d,%d,%dx%d ignoring old serial %lu/%lu\n",
-               hwnd, data->whole_window, event->x, event->y, event->width, event->height,
-               event->serial, data->configure_serial );
-        goto done;
-    }
-
-    rect = window_rect_from_visible( &data->rects, rect );
-
-    TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
-           hwnd, data->whole_window, (int)rect.left, (int)rect.top,
-           (int)(rect.right-rect.left), (int)(rect.bottom-rect.top),
-           event->x, event->y, event->width, event->height );
-
-    /* Compare what has changed */
-
-    x     = rect.left;
-    y     = rect.top;
-    cx    = rect.right - rect.left;
-    cy    = rect.bottom - rect.top;
-    flags = SWP_NOACTIVATE | SWP_NOZORDER;
-
-    if (!data->whole_window) flags |= SWP_NOCOPYBITS;  /* we can't copy bits of foreign windows */
-
-    if (data->rects.window.left == x && data->rects.window.top == y) flags |= SWP_NOMOVE;
-    else
-        TRACE( "%p moving from (%d,%d) to (%d,%d)\n",
-               hwnd, (int)data->rects.window.left, (int)data->rects.window.top, x, y );
-
-    if ((data->rects.window.right - data->rects.window.left == cx &&
-         data->rects.window.bottom - data->rects.window.top == cy) ||
-        IsRectEmpty( &data->rects.window ))
-        flags |= SWP_NOSIZE;
-    else
-        TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
-               hwnd, (int)(data->rects.window.right - data->rects.window.left),
-               (int)(data->rects.window.bottom - data->rects.window.top), cx, cy );
-
-    style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
-    if ((style & WS_CAPTION) == WS_CAPTION || !data->is_fullscreen)
-    {
-        if ((data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && !(style & WS_MAXIMIZE))
-        {
-            TRACE( "window %p/%lx is maximized\n", data->hwnd, data->whole_window );
-            config_cmd = SC_MAXIMIZE;
-        }
-        else if (!(data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && (style & WS_MAXIMIZE))
-        {
-            TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
-            config_cmd = SC_RESTORE;
-        }
-    }
-    if (!config_cmd && (flags & (SWP_NOSIZE | SWP_NOMOVE)) != (SWP_NOSIZE | SWP_NOMOVE))
-    {
-        TRACE( "window %p/%lx config changed %s -> %s, flags %#x\n", data->hwnd, data->whole_window,
-               wine_dbgstr_rect(&data->rects.window), wine_dbgstr_rect(&rect), flags );
-        config_cmd = MAKELONG(SC_MOVE, flags);
-    }
-done:
+    config_cmd = window_update_client_config( data );
+    rect = window_rect_from_visible( &data->rects, data->current_state.rect );
     release_win_data( data );
 
     if (config_cmd)

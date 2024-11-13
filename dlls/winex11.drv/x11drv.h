@@ -663,6 +663,7 @@ extern void window_wm_state_notify( struct x11drv_win_data *data, unsigned long 
 extern void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
 extern void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *rect );
 extern UINT window_update_client_state( struct x11drv_win_data *data );
+extern UINT window_update_client_config( struct x11drv_win_data *data );
 
 extern void wait_for_withdrawn_state( HWND hwnd, BOOL set );
 extern Window init_clip_window(void);
