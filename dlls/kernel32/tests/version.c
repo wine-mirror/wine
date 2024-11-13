@@ -756,18 +756,13 @@ static void test_SystemFirmwareTable(void)
 
     sfti->Action = SystemFirmwareTable_Enumerate;
     status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &expected_len);
-    todo_wine
     ok( status == STATUS_BUFFER_TOO_SMALL, "NtQuerySystemInformation failed %lx\n", status );
     sfti = HeapReAlloc(GetProcessHeap(), 0, sfti, expected_len);
     status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, expected_len, &expected_len);
-    todo_wine
     ok( !status, "NtQuerySystemInformation failed %lx\n", status );
-    if (!status)
-    {
     ok( expected_len == min_sfti_len + sizeof(UINT), "wrong len %lu\n", expected_len );
     ok( sfti->TableBufferLength == sizeof(UINT), "wrong len %lu\n", sfti->TableBufferLength );
     ok( *(UINT *)sfti->TableBuffer == 0, "wrong table id %x\n", *(UINT *)sfti->TableBuffer );
-    }
 
     len = pEnumSystemFirmwareTables( RSMB, NULL, 0 );
     todo_wine

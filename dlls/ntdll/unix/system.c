@@ -2131,6 +2131,26 @@ static struct smbios_prologue *create_smbios_data(void)
 
 #endif
 
+static NTSTATUS enum_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
+                                    ULONG *required_len )
+{
+    ULONG len;
+
+    switch (sfti->ProviderSignature)
+    {
+    case RSMB:
+        sfti->TableBufferLength = len = sizeof(UINT);
+        *required_len = offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer[len] );
+        if (available_len < *required_len) return STATUS_BUFFER_TOO_SMALL;
+        *(UINT *)sfti->TableBuffer = 0;
+        return STATUS_SUCCESS;
+
+    default:
+        FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", (unsigned int)sfti->ProviderSignature);
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
 static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
                                    ULONG *required_len )
 {
@@ -3462,6 +3482,9 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
         switch (sfti->Action)
         {
+        case SystemFirmwareTable_Enumerate:
+            ret = enum_firmware_info(sfti, size, &len);
+            break;
         case SystemFirmwareTable_Get:
             ret = get_firmware_info(sfti, size, &len);
             break;
