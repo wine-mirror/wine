@@ -623,6 +623,7 @@ struct d3d_video_decoder
 
     struct wined3d_private_store private_store;
     struct d3d_device *device;
+    struct wined3d_decoder *wined3d_decoder;
 };
 
 HRESULT d3d_video_decoder_create(struct d3d_device *device, const D3D11_VIDEO_DECODER_DESC *desc,

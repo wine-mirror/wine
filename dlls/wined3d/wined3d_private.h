@@ -4466,6 +4466,9 @@ struct wined3d_palette
 struct wined3d_decoder_ops
 {
     void (*get_profiles)(struct wined3d_adapter *adapter, unsigned int *count, GUID *profiles);
+    HRESULT (*create)(struct wined3d_device *device,
+            const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder);
+    void (*destroy)(struct wined3d_decoder *decoder);
 };
 
 extern const struct wined3d_decoder_ops wined3d_decoder_vk_ops;

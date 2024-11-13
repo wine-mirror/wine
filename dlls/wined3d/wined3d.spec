@@ -40,6 +40,9 @@
 @ cdecl wined3d_command_list_decref(ptr)
 @ cdecl wined3d_command_list_incref(ptr)
 
+@ cdecl wined3d_decoder_create(ptr ptr ptr)
+@ cdecl wined3d_decoder_decref(ptr)
+
 @ cdecl wined3d_deferred_context_create(ptr ptr)
 @ cdecl wined3d_deferred_context_destroy(ptr)
 @ cdecl wined3d_deferred_context_record_command_list(ptr long ptr)

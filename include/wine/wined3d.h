@@ -2050,6 +2050,14 @@ struct wined3d_blend_state_desc
     } rt[WINED3D_MAX_RENDER_TARGETS];
 };
 
+struct wined3d_decoder_desc
+{
+    GUID codec;
+    unsigned int width, height;
+    enum wined3d_format_id output_format;
+    bool long_slice_info;
+};
+
 struct wined3d_stencil_op_desc
 {
     enum wined3d_stencil_op fail_op;
@@ -2223,6 +2231,7 @@ struct wined3d_adapter;
 struct wined3d_blend_state;
 struct wined3d_buffer;
 struct wined3d_command_list;
+struct wined3d_decoder;
 struct wined3d_depth_stencil_state;
 struct wined3d_device;
 struct wined3d_device_context;
@@ -2356,6 +2365,10 @@ ULONG __cdecl wined3d_buffer_incref(struct wined3d_buffer *buffer);
 
 ULONG __cdecl wined3d_command_list_decref(struct wined3d_command_list *list);
 ULONG __cdecl wined3d_command_list_incref(struct wined3d_command_list *list);
+
+HRESULT __cdecl wined3d_decoder_create(struct wined3d_device *device,
+        const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder);
+ULONG __cdecl wined3d_decoder_decref(struct wined3d_decoder *decoder);
 
 HRESULT __cdecl wined3d_deferred_context_create(struct wined3d_device *device, struct wined3d_device_context **context);
 void __cdecl wined3d_deferred_context_destroy(struct wined3d_device_context *context);

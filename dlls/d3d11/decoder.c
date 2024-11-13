@@ -18,6 +18,8 @@
  */
 
 #include "d3d11_private.h"
+#include "initguid.h"
+#include "dxva.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
@@ -65,6 +67,7 @@ static ULONG STDMETHODCALLTYPE d3d11_video_decoder_Release(ID3D11VideoDecoder *i
 
     if (!refcount)
     {
+        wined3d_decoder_decref(decoder->wined3d_decoder);
         ID3D11Device2_Release(&decoder->device->ID3D11Device2_iface);
         wined3d_private_store_cleanup(&decoder->private_store);
         free(decoder);
@@ -142,13 +145,63 @@ static const struct ID3D11VideoDecoderVtbl d3d11_video_decoder_vtbl =
 HRESULT d3d_video_decoder_create(struct d3d_device *device, const D3D11_VIDEO_DECODER_DESC *desc,
         const D3D11_VIDEO_DECODER_CONFIG *config, struct d3d_video_decoder **decoder)
 {
+    struct wined3d_decoder_desc wined3d_desc;
     struct d3d_video_decoder *object;
+    HRESULT hr;
+
+    TRACE("profile %s, size %ux%u, output format %#x.\n",
+            debugstr_guid(&desc->Guid), desc->SampleWidth, desc->SampleHeight, desc->OutputFormat);
+
+    TRACE("    guidConfigBitstreamEncryption: %s\n", debugstr_guid(&config->guidConfigBitstreamEncryption));
+    TRACE("    guidConfigMBcontrolEncryption: %s\n", debugstr_guid(&config->guidConfigMBcontrolEncryption));
+    TRACE("    guidConfigResidDiffEncryption: %s\n", debugstr_guid(&config->guidConfigResidDiffEncryption));
+#define X(field) TRACE("    " #field ": %u\n", config->field)
+    X(ConfigBitstreamRaw);
+    X(ConfigMBcontrolRasterOrder);
+    X(ConfigResidDiffHost);
+    X(ConfigSpatialResid8);
+    X(ConfigResid8Subtraction);
+    X(ConfigSpatialHost8or9Clipping);
+    X(ConfigSpatialResidInterleaved);
+    X(ConfigIntraResidUnsigned);
+    X(ConfigResidDiffAccelerator);
+    X(ConfigHostInverseScan);
+    X(ConfigSpecificIDCT);
+    X(Config4GroupedCoefs);
+    X(ConfigMinRenderTargetBuffCount);
+    X(ConfigDecoderSpecific);
+#undef X
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ID3D11VideoDecoder_iface.lpVtbl = &d3d11_video_decoder_vtbl;
     object->refcount = 1;
+
+    wined3d_desc.codec = desc->Guid;
+    wined3d_desc.width = desc->SampleWidth;
+    wined3d_desc.height = desc->SampleHeight;
+    wined3d_desc.output_format = wined3dformat_from_dxgi_format(desc->OutputFormat);
+    wined3d_desc.long_slice_info = false;
+
+    if (IsEqualGUID(&wined3d_desc.codec, &DXVA_ModeH264_VLD_NoFGT))
+    {
+        if (config->ConfigBitstreamRaw == 1)
+        {
+            wined3d_desc.long_slice_info = true;
+        }
+        else if (config->ConfigBitstreamRaw != 2)
+        {
+            FIXME("Unsupported ConfigBitstreamRaw value %u.\n", config->ConfigBitstreamRaw);
+            return E_NOTIMPL;
+        }
+    }
+
+    if (FAILED(hr = wined3d_decoder_create(device->wined3d_device, &wined3d_desc, &object->wined3d_decoder)))
+    {
+        free(object);
+        return hr;
+    }
 
     wined3d_private_store_init(&object->private_store);
     object->device = device;

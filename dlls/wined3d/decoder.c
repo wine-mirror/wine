@@ -21,6 +21,67 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+struct wined3d_decoder
+{
+    LONG ref;
+    struct wined3d_device *device;
+    struct wined3d_decoder_desc desc;
+};
+
+ULONG CDECL wined3d_decoder_decref(struct wined3d_decoder *decoder)
+{
+    unsigned int refcount = InterlockedDecrement(&decoder->ref);
+
+    TRACE("%p decreasing refcount to %u.\n", decoder, refcount);
+
+    if (!refcount)
+    {
+        wined3d_mutex_lock();
+        decoder->device->adapter->decoder_ops->destroy(decoder);
+        wined3d_mutex_unlock();
+    }
+
+    return refcount;
+}
+
+static bool is_supported_codec(struct wined3d_adapter *adapter, const GUID *codec)
+{
+    GUID profiles[WINED3D_DECODER_MAX_PROFILE_COUNT];
+    unsigned int count;
+
+    adapter->decoder_ops->get_profiles(adapter, &count, profiles);
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        if (IsEqualGUID(&profiles[i], codec))
+            return true;
+    }
+    return false;
+}
+
+static void wined3d_decoder_init(struct wined3d_decoder *decoder,
+        struct wined3d_device *device, const struct wined3d_decoder_desc *desc)
+{
+    decoder->ref = 1;
+    decoder->device = device;
+    decoder->desc = *desc;
+}
+
+HRESULT CDECL wined3d_decoder_create(struct wined3d_device *device,
+        const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder)
+{
+    TRACE("device %p, codec %s, size %ux%u, output_format %s, decoder %p.\n", device,
+            debugstr_guid(&desc->codec), desc->width, desc->height, debug_d3dformat(desc->output_format), decoder);
+
+    if (!is_supported_codec(device->adapter, &desc->codec))
+    {
+        WARN("Codec %s is not supported; returning E_INVALIDARG.\n", debugstr_guid(&desc->codec));
+        return E_INVALIDARG;
+    }
+
+    return device->adapter->decoder_ops->create(device, desc, decoder);
+}
+
 static void wined3d_null_decoder_get_profiles(struct wined3d_adapter *adapter, unsigned int *count, GUID *profiles)
 {
     *count = 0;
@@ -30,6 +91,16 @@ const struct wined3d_decoder_ops wined3d_null_decoder_ops =
 {
     .get_profiles = wined3d_null_decoder_get_profiles,
 };
+
+struct wined3d_decoder_vk
+{
+    struct wined3d_decoder d;
+};
+
+static struct wined3d_decoder_vk *wined3d_decoder_vk(struct wined3d_decoder *decoder)
+{
+    return CONTAINING_RECORD(decoder, struct wined3d_decoder_vk, d);
+}
 
 static void fill_vk_profile_info(VkVideoProfileInfoKHR *profile, const GUID *codec, enum wined3d_format_id format)
 {
@@ -122,7 +193,41 @@ static void wined3d_decoder_vk_get_profiles(struct wined3d_adapter *adapter, uns
     }
 }
 
+static void wined3d_decoder_vk_destroy_object(void *object)
+{
+    struct wined3d_video_decoder_vk *decoder_vk = object;
+
+    TRACE("decoder_vk %p.\n", decoder_vk);
+
+    free(decoder_vk);
+}
+
+static void wined3d_decoder_vk_destroy(struct wined3d_decoder *decoder)
+{
+    struct wined3d_decoder_vk *decoder_vk = wined3d_decoder_vk(decoder);
+
+    wined3d_cs_destroy_object(decoder->device->cs, wined3d_decoder_vk_destroy_object, decoder_vk);
+}
+
+static HRESULT wined3d_decoder_vk_create(struct wined3d_device *device,
+        const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder)
+{
+    struct wined3d_decoder_vk *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    wined3d_decoder_init(&object->d, device, desc);
+
+    TRACE("Created decoder %p.\n", object);
+    *decoder = &object->d;
+
+    return WINED3D_OK;
+}
+
 const struct wined3d_decoder_ops wined3d_decoder_vk_ops =
 {
     .get_profiles = wined3d_decoder_vk_get_profiles,
+    .create = wined3d_decoder_vk_create,
+    .destroy = wined3d_decoder_vk_destroy,
 };
