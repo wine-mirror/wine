@@ -183,16 +183,6 @@ static void host_window_send_configure_events( struct host_window *win, Display 
         BOOL has_serial;
         HWND hwnd;
 
-        /* Only send a fake event if we're not expecting one from a state/config request.
-         * We may know what was requested, but not what the WM will decide to reply, and our
-         * fake event might trigger some undesired changes before the real ConfigureNotify.
-         */
-        if (XFindContext( display, win->window, winContext, (char **)&hwnd )) continue;
-        if (!(data = get_win_data( hwnd ))) continue;
-        has_serial = data->wm_state_serial || data->configure_serial;
-        release_win_data( data );
-        if (has_serial) continue;
-
         configure.event = win->children[i].window;
         configure.window = configure.event;
         configure.x = rect.left;
@@ -200,6 +190,16 @@ static void host_window_send_configure_events( struct host_window *win, Display 
         configure.width = rect.right - rect.left;
         configure.height = rect.bottom - rect.top;
         configure.send_event = 0;
+
+        /* Only send a fake event if we're not expecting one from a state/config request.
+         * We may know what was requested, but not what the WM will decide to reply, and our
+         * fake event might trigger some undesired changes before the real ConfigureNotify.
+         */
+        if (XFindContext( configure.display, configure.window, winContext, (char **)&hwnd )) continue;
+        if (!(data = get_win_data( hwnd ))) continue;
+        has_serial = data->wm_state_serial || data->configure_serial;
+        release_win_data( data );
+        if (has_serial) continue;
 
         TRACE( "generating ConfigureNotify for window %p/%lx, rect %s\n", hwnd, configure.window, wine_dbgstr_rect(&rect) );
         XPutBackEvent( configure.display, (XEvent *)&configure );
