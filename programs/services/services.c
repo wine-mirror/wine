@@ -291,10 +291,12 @@ static void scmdatabase_remove_service(struct scmdatabase *db, struct service_en
     service->entry.next = service->entry.prev = NULL;
 }
 
-static int __cdecl compare_tags(const void *a, const void *b)
+static int __cdecl compare_service(const void *a, const void *b)
 {
     struct service_entry *service_a = *(struct service_entry **)a;
     struct service_entry *service_b = *(struct service_entry **)b;
+    if (service_a->config.dwStartType != service_b->config.dwStartType)
+        return service_a->config.dwStartType - service_b->config.dwStartType;
     return service_a->config.dwTagId - service_b->config.dwTagId;
 }
 
@@ -443,7 +445,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     size = i;
 
     scmdatabase_unlock(db);
-    qsort(services_list, size, sizeof(services_list[0]), compare_tags);
+    qsort(services_list, size, sizeof(services_list[0]), compare_service);
     scmdatabase_lock_startup(db, INFINITE);
 
     for (i = 0; i < size; i++)
