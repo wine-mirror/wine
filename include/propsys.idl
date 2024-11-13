@@ -810,6 +810,7 @@ cpp_quote("PSSTDAPI PSCreatePropertyStoreFromObject(IUnknown*,DWORD,REFIID,void 
 cpp_quote("PSSTDAPI PSGetPropertySystem(REFIID, void**);")
 cpp_quote("PSSTDAPI PSStringFromPropertyKey(REFPROPERTYKEY,LPWSTR,UINT);")
 cpp_quote("PSSTDAPI PSGetPropertyKeyFromName(PCWSTR,PROPERTYKEY *);")
+cpp_quote("PSSTDAPI PSGetNameFromPropertyKey(REFPROPERTYKEY,LPWSTR *);")
 cpp_quote("PSSTDAPI PSPropertyKeyFromString(LPCWSTR,PROPERTYKEY*);")
 cpp_quote("PSSTDAPI PSGetPropertyDescription(REFPROPERTYKEY,REFIID,void **);")
 cpp_quote("PSSTDAPI PSGetPropertyDescriptionListFromString(LPCWSTR,REFIID,void **);")
