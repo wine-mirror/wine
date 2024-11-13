@@ -3364,8 +3364,16 @@ static HRESULT WINAPI WindowDispEx_InvokeEx(IWineJSDispatchHost *iface, DISPID i
 static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IWineJSDispatchHost *iface, BSTR bstrName, DWORD grfdex)
 {
     HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
+    compat_mode_t compat_mode = dispex_compat_mode(&This->base.inner_window->event_target.dispex);
 
     TRACE("(%p)->(%s %lx)\n", This, debugstr_w(bstrName), grfdex);
+
+    if(compat_mode < COMPAT_MODE_IE8) {
+        /* Not implemented by IE */
+        return E_NOTIMPL;
+    }
+    if(compat_mode == COMPAT_MODE_IE8)
+        return MSHTML_E_INVALID_ACTION;
 
     return IWineJSDispatchHost_DeleteMemberByName(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, bstrName, grfdex);
 }
@@ -3373,8 +3381,16 @@ static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IWineJSDispatchHost *iface
 static HRESULT WINAPI WindowDispEx_DeleteMemberByDispID(IWineJSDispatchHost *iface, DISPID id)
 {
     HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
+    compat_mode_t compat_mode = dispex_compat_mode(&This->base.inner_window->event_target.dispex);
 
     TRACE("(%p)->(%lx)\n", This, id);
+
+    if(compat_mode < COMPAT_MODE_IE8) {
+        /* Not implemented by IE */
+        return E_NOTIMPL;
+    }
+    if(compat_mode == COMPAT_MODE_IE8)
+        return MSHTML_E_INVALID_ACTION;
 
     return IWineJSDispatchHost_DeleteMemberByDispID(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, id);
 }

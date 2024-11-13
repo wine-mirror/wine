@@ -1380,16 +1380,31 @@ sync_test("delete_prop", function() {
     /* test window object and its global scope handling */
     obj = window;
 
+    ok("encodeURIComponent" in obj, "encodeURIComponent not in obj");
+    try {
+        prop = window.encodeURIComponent;
+        r = (delete window.encodeURIComponent);
+        ok(v >= 9, "did not get an expect exception deleting encodeURIComponent");
+        ok(r, "delete returned " + r);
+        todo_wine.
+        ok(!("encodeURIComponent" in obj), "encodeURIComponent is still in obj");
+        window.encodeURIComponent = prop;
+    }catch(ex) {
+        ok(v < 9, "expected exception deleting encodeURIComponent");
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting encodeURIComponent threw " + ex.number);
+        ok("encodeURIComponent" in obj, "encodeURIComponent is not in obj");
+    }
+
     obj.globalprop1 = true;
     ok(globalprop1, "globalprop1 = " + globalprop1);
     r = false;
     try {
         delete obj.globalprop1;
     }catch(ex) {
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting globalprop1 threw " + ex.number);
         r = true;
     }
     if(v < 9) {
-        todo_wine.
         ok(r, "did not get an expected exception");
     }else {
         ok(!r, "got an unexpected globalprop1 exception");
@@ -1402,10 +1417,10 @@ sync_test("delete_prop", function() {
     try {
         delete obj.globalprop2;
     }catch(ex) {
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting globalprop2 threw " + ex.number);
         r = true;
     }
     if(v < 9) {
-        todo_wine.
         ok(r, "did not get an expected globalprop2 exception");
     }else {
         ok(!r, "got an unexpected exception");
@@ -1419,12 +1434,11 @@ sync_test("delete_prop", function() {
     try {
         delete globalprop3;
     }catch(ex) {
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting globalprop3 threw " + ex.number);
         r = true;
     }
     if(v < 9) {
-        todo_wine.
         ok(r, "did not get an expected exception");
-        todo_wine.
         ok("globalprop3" in obj, "globalprop3 is not in obj");
     }else {
         ok(!r, "got an unexpected globalprop3 exception");
