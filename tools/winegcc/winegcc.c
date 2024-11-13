@@ -1641,6 +1641,8 @@ int main(int argc, char **argv)
                         opts.unwind_tables = 1;
 		    else if (!strcmp("-fno-asynchronous-unwind-tables", opts.args.str[i]))
                         opts.unwind_tables = 0;
+		    else if (!strcmp("-fms-hotpatch", opts.args.str[i]))
+                        raw_linker_arg = 1;
                     else if (!strcmp("-fPIC", opts.args.str[i]) || !strcmp("-fpic", opts.args.str[i]))
                         opts.pic = 1;
                     else if (!strcmp("-fno-PIC", opts.args.str[i]) || !strcmp("-fno-pic", opts.args.str[i]))
