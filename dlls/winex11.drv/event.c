@@ -180,7 +180,6 @@ static void host_window_send_configure_events( struct host_window *win, Display 
     {
         RECT rect = win->children[i].rect;
         struct x11drv_win_data *data;
-        BOOL has_serial;
         HWND hwnd;
 
         configure.event = win->children[i].window;
@@ -195,11 +194,13 @@ static void host_window_send_configure_events( struct host_window *win, Display 
          * We may know what was requested, but not what the WM will decide to reply, and our
          * fake event might trigger some undesired changes before the real ConfigureNotify.
          */
-        if (XFindContext( configure.display, configure.window, winContext, (char **)&hwnd )) continue;
-        if (!(data = get_win_data( hwnd ))) continue;
-        has_serial = data->wm_state_serial || data->configure_serial;
-        release_win_data( data );
-        if (has_serial) continue;
+        if (!XFindContext( configure.display, configure.window, winContext, (char **)&hwnd ) &&
+            (data = get_win_data( hwnd )))
+        {
+            BOOL has_serial = data->wm_state_serial || data->configure_serial;
+            release_win_data( data );
+            if (has_serial) continue;
+        }
 
         if (previous->type == ConfigureNotify && previous->xconfigure.window == configure.window) continue;
         TRACE( "generating ConfigureNotify for window %p/%lx, rect %s\n", hwnd, configure.window, wine_dbgstr_rect(&rect) );
