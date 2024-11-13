@@ -3004,7 +3004,7 @@ static void test_PropertySystem(void)
 
     CoInitialize(NULL);
     hr = CoCreateInstance(&CLSID_PropertySystem, NULL, CLSCTX_INPROC_SERVER, &IID_IPropertySystem, (void **)&system);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     if (FAILED(hr))
     {
         CoUninitialize();

@@ -92,11 +92,39 @@ static const IClassFactoryVtbl InMemoryPropertyStoreFactoryVtbl = {
 
 static IClassFactory InMemoryPropertyStoreFactory = { &InMemoryPropertyStoreFactoryVtbl };
 
+static IPropertySystem propsys;
+
+static HRESULT WINAPI propsys_factory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID iid, void **out)
+{
+    TRACE("%p, %p, %s, %p\n", iface, outer, debugstr_guid(iid), out);
+
+    *out = NULL;
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+    return IPropertySystem_QueryInterface(&propsys, iid, out);
+}
+
+static const IClassFactoryVtbl PropertySystemFactoryVtbl =
+{
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    propsys_factory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory PropertySystemFactory = { &PropertySystemFactoryVtbl };
+
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     if(IsEqualGUID(&CLSID_InMemoryPropertyStore, rclsid)) {
         TRACE("(CLSID_InMemoryPropertyStore %s %p)\n", debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&InMemoryPropertyStoreFactory, riid, ppv);
+    }
+    if (IsEqualGUID(&CLSID_PropertySystem, rclsid))
+    {
+        TRACE("(CLSID_PropertySystem %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&PropertySystemFactory, riid, ppv);
     }
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
@@ -105,6 +133,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
 static HRESULT WINAPI propsys_QueryInterface(IPropertySystem *iface, REFIID riid, void **obj)
 {
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(riid), obj);
     *obj = NULL;
 
     if (IsEqualIID(riid, &IID_IPropertySystem) || IsEqualIID(riid, &IID_IUnknown)) {
@@ -130,13 +159,14 @@ static ULONG WINAPI propsys_Release(IPropertySystem *iface)
 static HRESULT WINAPI propsys_GetPropertyDescription(IPropertySystem *iface,
     REFPROPERTYKEY propkey, REFIID riid, void **ppv)
 {
-    return PSGetPropertyDescription(propkey, riid, ppv);
+    FIXME("(%p, %s, %s, %p): stub\n", iface, debugstr_propkey(propkey), debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI propsys_GetPropertyDescriptionByName(IPropertySystem *iface,
     LPCWSTR canonical_name, REFIID riid, void **ppv)
 {
-    FIXME("%s %s %p: stub\n", debugstr_w(canonical_name), debugstr_guid(riid), ppv);
+    FIXME("(%p, %s, %s, %p): stub\n", iface, debugstr_w(canonical_name), debugstr_guid(riid), ppv);
     return E_NOTIMPL;
 }
 
@@ -216,14 +246,22 @@ HRESULT WINAPI PSRegisterPropertySchema(PCWSTR path)
 HRESULT WINAPI PSUnregisterPropertySchema(PCWSTR path)
 {
     FIXME("%s stub\n", debugstr_w(path));
-
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI PSGetPropertyDescription(REFPROPERTYKEY propkey, REFIID riid, void **ppv)
 {
-    FIXME("%p, %p, %p\n", propkey, riid, ppv);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IPropertySystem *system;
+
+    TRACE("%p, %p, %p\n", propkey, riid, ppv);
+    hr = IPropertySystem_QueryInterface(&propsys, &IID_IPropertySystem, (void **)&system);
+    if (SUCCEEDED(hr))
+    {
+        hr = IPropertySystem_GetPropertyDescription(system, propkey, riid, ppv);
+        IPropertySystem_Release(system);
+    }
+    return hr;
 }
 
 HRESULT WINAPI PSGetPropertyDescriptionListFromString(LPCWSTR proplist, REFIID riid, void **ppv)
@@ -234,8 +272,24 @@ HRESULT WINAPI PSGetPropertyDescriptionListFromString(LPCWSTR proplist, REFIID r
 
 HRESULT WINAPI PSGetPropertyKeyFromName(PCWSTR name, PROPERTYKEY *key)
 {
-    FIXME("%s, %p\n", debugstr_w(name), key);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IPropertySystem *system;
+
+    TRACE("%s, %p\n", debugstr_w(name), debugstr_propkey(key));
+    hr = IPropertySystem_QueryInterface(&propsys, &IID_IPropertySystem, (void **)&system);
+    if (SUCCEEDED(hr))
+    {
+        IPropertyDescription *desc;
+        hr = IPropertySystem_GetPropertyDescriptionByName(system, name, &IID_IPropertyDescription, (void **)&desc);
+        if (SUCCEEDED(hr))
+        {
+            hr = IPropertyDescription_GetPropertyKey(desc, key);
+            IPropertyDescription_Release(desc);
+        }
+        IPropertySystem_Release(system);
+    }
+
+    return hr;
 }
 
 HRESULT WINAPI PSRefreshPropertySchema(void)
