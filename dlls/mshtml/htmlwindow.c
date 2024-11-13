@@ -3324,8 +3324,10 @@ HRESULT search_window_props(HTMLInnerWindow *This, const WCHAR *name, DWORD grfd
     for(i=0; i < This->global_prop_cnt; i++) {
         /* FIXME: case sensitivity */
         if(!wcscmp(This->global_props[i].name, name)) {
-            *pid = MSHTML_DISPID_CUSTOM_MIN+i;
-            return S_OK;
+            HRESULT hres = global_prop_still_exists(This, &This->global_props[i]);
+            if(hres == S_OK)
+                *pid = MSHTML_DISPID_CUSTOM_MIN + i;
+            return (hres == DISP_E_MEMBERNOTFOUND) ? DISP_E_UNKNOWNNAME : hres;
         }
     }
 

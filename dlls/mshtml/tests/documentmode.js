@@ -1449,8 +1449,89 @@ sync_test("delete_prop", function() {
     ok(obj.globalprop4, "globalprop4 = " + globalprop4);
     r = (delete globalprop4);
     ok(r, "delete returned " + r);
-    todo_wine.
     ok(!("globalprop4" in obj), "globalprop4 is still in obj");
+
+    globalprop5 = true;
+    ok(obj.globalprop5, "globalprop5 = " + globalprop5);
+    try {
+        r = (delete window.globalprop5);
+        ok(v >= 9, "did not get an expected exception deleting globalprop5");
+        ok(r, "delete returned " + r);
+        todo_wine.
+        ok(!("globalprop5" in obj), "globalprop5 is still in obj");
+    }catch(ex) {
+        ok(v < 9, "expected exception deleting globalprop5");
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting globalprop5 threw " + ex.number);
+        ok("globalprop5" in obj, "globalprop5 is not in obj");
+    }
+
+    document.body.innerHTML = '<div id="winetest"/>';
+    ok("winetest" in obj, "winetest not in obj");
+    try {
+        r = (delete window.winetest);
+        ok(v >= 9, "did not get an expected exception deleting winetest");
+        ok(r, "delete returned " + r);
+    }catch(ex) {
+        ok(v < 9, "expected exception deleting winetest");
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting winetest threw " + ex.number);
+    }
+    ok("winetest" in obj, "winetest is not in obj");
+    document.body.innerHTML = "";
+    ok(!("winetest" in obj), "winetest is still in obj");
+
+    document.body.innerHTML = '<div id="foobar"/>';
+    ok("foobar" in obj, "foobar not in obj");
+    window.foobar = "1234";
+    ok(obj.foobar === "1234", "foobar = " + obj.foobar);
+    document.body.innerHTML = "";
+    ok("foobar" in obj, "foobar is not in obj");
+    ok(obj.foobar === "1234", "foobar = " + obj.foobar);
+    try {
+        r = (delete window.foobar);
+        ok(v >= 9, "did not get an expected exception deleting foobar");
+        ok(r, "delete returned " + r);
+        ok(!("foobar" in obj), "foobar is still in obj");
+    }catch(ex) {
+        ok(v < 9, "expected exception deleting foobar");
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting foobar threw " + ex.number);
+        ok("foobar" in obj, "foobar is not in obj");
+    }
+
+    document.body.innerHTML = '<div id="barfoo"/>';
+    ok("barfoo" in obj, "barfoo not in obj");
+    window.barfoo = "5678";
+    ok(obj.barfoo === "5678", "barfoo = " + obj.barfoo);
+    try {
+        r = (delete window.barfoo);
+        ok(v >= 9, "did not get an expected exception deleting barfoo");
+        ok(r, "delete returned " + r);
+        ok(obj.barfoo !== "5678", "barfoo is still 5678");
+    }catch(ex) {
+        ok(v < 9, "expected exception deleting barfoo");
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting barfoo threw " + ex.number);
+        ok(obj.barfoo === "5678", "barfoo = " + obj.barfoo);
+    }
+    ok("barfoo" in obj, "barfoo is not in obj");
+    document.body.innerHTML = "";
+    if(v < 9)
+        ok("barfoo" in obj, "barfoo is not in obj");
+    else
+        ok(!("barfoo" in obj), "barfoo is still in obj");
+
+    document.body.innerHTML = '<iframe id="testwine"/>';
+    ok("testwine" in obj, "testwine not in obj");
+    try {
+        r = (delete window.testwine);
+        ok(v >= 9, "did not get an expected exception deleting testwine");
+        ok(r, "delete returned " + r);
+    }catch(ex) {
+        ok(v < 9, "expected exception deleting testwine");
+        ok(ex.number === 0xa01bd - 0x80000000, "deleting testwine threw " + ex.number);
+    }
+    ok("testwine" in obj, "testwine is not in obj");
+
+    document.body.innerHTML = "";
+    ok(!("testwine" in obj), "testwine is still in obj");
 });
 
 sync_test("detached arguments", function() {
