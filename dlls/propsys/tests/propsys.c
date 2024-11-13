@@ -32,6 +32,7 @@
 #include "propsys.h"
 #include "propvarutil.h"
 #include "strsafe.h"
+#include "propkey.h"
 #include "wine/test.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -54,6 +55,13 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     IUnknown_AddRef(obj);
     rc = IUnknown_Release(obj);
     ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
+}
+
+static inline const char *debugstr_propkey(const PROPERTYKEY *key)
+{
+    if (!key)
+        return "(null)";
+    return wine_dbg_sprintf("{%s,%04lx}", wine_dbgstr_guid(&key->fmtid), key->pid);
 }
 
 static void test_PSStringFromPropertyKey(void)
@@ -2949,6 +2957,105 @@ void test_PropVariantGetStringElem(void)
     PropVariantClear(&propvar);
 }
 
+static void test_PropertyDescription_(int line, const PROPERTYKEY *expect_key, const WCHAR *expect_name, VARTYPE expect_type,
+                                      IPropertyDescription *desc)
+{
+    HRESULT hr;
+    PROPERTYKEY key;
+    VARTYPE type;
+    WCHAR *name;
+
+    hr = IPropertyDescription_GetPropertyKey(desc, &key);
+    ok_(__FILE__, line)(hr == S_OK, "got %#lx\n", hr);
+    ok_(__FILE__, line)(IsEqualPropertyKey(key, *expect_key), "%s != %s\n", debugstr_propkey(&key),
+                        debugstr_propkey(expect_key));
+    hr = IPropertyDescription_GetCanonicalName(desc, &name);
+    ok_(__FILE__, line)(hr == S_OK, "got %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok_(__FILE__, line)(!wcscmp(name, expect_name), "%s != %s\n", debugstr_w(name), debugstr_w(expect_name));
+        CoTaskMemFree(name);
+    }
+    hr = IPropertyDescription_GetPropertyType(desc, &type);
+    ok_(__FILE__, line)(hr == S_OK, "got %#lx\n", hr);
+    if (SUCCEEDED(hr))
+        ok_(__FILE__, line)(type == expect_type, "%s != !%s\n", debugstr_vt(type), debugstr_vt(expect_type));
+}
+#define test_PropertyDescription(k,n,t,d) test_PropertyDescription_(__LINE__, k, n, t, d)
+
+static void test_PropertySystem(void)
+{
+    const static struct
+    {
+        const PROPERTYKEY *key;
+        const WCHAR *name;
+        VARTYPE type;
+    } system_props[] = {
+        {&PKEY_ItemNameDisplay, L"System.ItemNameDisplay", VT_LPWSTR},
+        {&PKEY_Devices_ContainerId, L"System.Devices.ContainerId", VT_CLSID},
+        {&PKEY_Devices_InterfaceClassGuid, L"System.Devices.InterfaceClassGuid", VT_CLSID},
+        {&PKEY_Devices_HardwareIds, L"System.Devices.HardwareIds", VT_VECTOR | VT_LPWSTR},
+        {&PKEY_Devices_ClassGuid, L"System.Devices.ClassGuid", VT_CLSID}
+    };
+    IPropertySystem *system;
+    HRESULT hr;
+    IPropertyDescription *desc;
+    SIZE_T i;
+
+    CoInitialize(NULL);
+    hr = CoCreateInstance(&CLSID_PropertySystem, NULL, CLSCTX_INPROC_SERVER, &IID_IPropertySystem, (void **)&system);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    if (FAILED(hr))
+    {
+        CoUninitialize();
+        return;
+    }
+
+    for(i = 0; i < ARRAY_SIZE(system_props); i++)
+    {
+        IPropertyDescription *desc;
+        winetest_push_context("system_props %d", (int)i);
+
+        hr = IPropertySystem_GetPropertyDescription(system, system_props[i].key, &IID_IPropertyDescription, (void **)&desc);
+        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            test_PropertyDescription(system_props[i].key, system_props[i].name, system_props[i].type, desc);
+            IPropertyDescription_Release(desc);
+        }
+        hr = PSGetPropertyDescription(system_props[i].key, &IID_IPropertyDescription, (void **)&desc);
+        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            test_PropertyDescription(system_props[i].key, system_props[i].name, system_props[i].type, desc);
+            IPropertyDescription_Release(desc);
+        }
+
+        hr = IPropertySystem_GetPropertyDescriptionByName(system, system_props[i].name, &IID_IPropertyDescription, (void **)&desc);
+        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            test_PropertyDescription(system_props[i].key, system_props[i].name, system_props[i].type, desc);
+            IPropertyDescription_Release(desc);
+        }
+        hr = PSGetPropertyDescription(system_props[i].key, &IID_IPropertyDescription, (void **)&desc);
+        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            test_PropertyDescription(system_props[i].key, system_props[i].name, system_props[i].type, desc);
+            IPropertyDescription_Release(desc);
+        }
+
+        winetest_pop_context();
+    }
+
+    hr = IPropertySystem_GetPropertyDescriptionByName(system, L"Non.Existent.Property.Name", &IID_IPropertyDescription, (void **)&desc);
+    todo_wine ok(hr == TYPE_E_ELEMENTNOTFOUND, "%#lx != %#lx\n", hr, TYPE_E_ELEMENTNOTFOUND);
+
+    IPropertySystem_Release(system);
+    CoUninitialize();
+}
+
 START_TEST(propsys)
 {
     test_InitPropVariantFromGUIDAsString();
@@ -2981,4 +3088,6 @@ START_TEST(propsys)
     test_VariantToPropVariant();
     test_PropVariantToVariant();
     test_PropVariantGetStringElem();
+
+    test_PropertySystem();
 }
