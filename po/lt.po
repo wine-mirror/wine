@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-11-08 00:18+0200\n"
+"PO-Revision-Date: 2024-11-13 23:36+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3166,7 +3166,7 @@ msgstr "&Atkurti"
 
 #: dlls/desk.cpl/desk.rc:42
 msgid "Emulate display mode changes (requires restart)"
-msgstr ""
+msgstr "Emuliuoti rodymo veiksenos pakeitimus (reikia perleisti)"
 
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
