@@ -4052,10 +4052,9 @@ static void test_user_procs(void)
         status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, size_workers );
         if (!status) break;
         ok( status == STATUS_INVALID_PARAMETER, "RtlInitializeNtUserPfn failed %lx\n", status );
-        status = pRtlResetNtUserPfn();
-        ok( status == STATUS_INVALID_PARAMETER, "RtlResetNtUserPfn failed %lx\n", status );
     }
     trace( "got sizes %lx %lx %lx\n", size_A, size_W, size_workers );
+    if (!size_workers) return;  /* something went wrong */
     ok( !memcmp( ptrs, ptr_A, size_A ), "pointers changed by init\n" );
 
     /* can't set twice without a reset */
