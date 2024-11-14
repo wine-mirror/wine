@@ -276,16 +276,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
     HWND hWnd;
     LPWSTR szDllName,szEntryPoint;
     void *entry_point = NULL;
-    BOOL unicode = FALSE, win16 = FALSE, activated = FALSE;
-    HMODULE hDll, hCtx = INVALID_HANDLE_VALUE;
+    BOOL unicode = FALSE, win16 = FALSE;
+    HMODULE hDll, hCtx;
     WCHAR path[MAX_PATH];
     STARTUPINFOW info;
     ULONG_PTR cookie;
     ACTCTXW ctx;
-
-    hWnd=NULL;
-    hDll=NULL;
-    szDllName=NULL;
 
     /* Initialize the rundll32 class */
     register_class();
@@ -296,7 +292,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
     WINE_TRACE("CmdLine=%s\n",wine_dbgstr_w(szCmdLine));
     szDllName = get_next_arg(&szCmdLine);
     if (!szDllName || *szDllName==0)
-        goto CLEANUP;
+        return 0;
     WINE_TRACE("DllName=%s\n",wine_dbgstr_w(szDllName));
     if ((szEntryPoint = wcschr(szDllName, ',' )))
         *szEntryPoint++=0;
@@ -314,7 +310,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
         ctx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
         hCtx = CreateActCtxW(&ctx);
         if (hCtx != INVALID_HANDLE_VALUE)
-            activated = ActivateActCtx(hCtx, &cookie);
+            ActivateActCtx(hCtx, &cookie);
         else
             WINE_TRACE("No manifest at ID 123 in %s\n", wine_dbgstr_w(path));
     }
@@ -330,7 +326,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
         {
             /* Windows has a MessageBox here... */
             WINE_ERR("Unable to load %s\n",wine_dbgstr_w(szDllName));
-            goto CLEANUP;
+            return 0;
         }
         win16 = TRUE;
         entry_point = get_entry_point16( dll, szEntryPoint );
@@ -342,7 +338,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
         /* Windows has a MessageBox here... */
         WINE_ERR( "Unable to find the entry point %s in %s\n",
                   wine_dbgstr_w(szEntryPoint), wine_dbgstr_w(szDllName) );
-        goto CLEANUP;
+        return 0;
     }
 
     GetStartupInfoW( &info );
@@ -361,7 +357,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
         char *cmdline = HeapAlloc( GetProcessHeap(), 0, len );
 
         if (!cmdline)
-            goto CLEANUP;
+            return 0;
 
         WideCharToMultiByte( CP_ACP, 0, szCmdLine, -1, cmdline, len, NULL, NULL );
 
@@ -376,18 +372,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
                 pRunDLL_CallEntry16( entry_point, hWnd, instance, cmdline, info.wShowWindow );
         }
         else call_entry_point( entry_point, hWnd, instance, cmdline, info.wShowWindow );
-
-        HeapFree( GetProcessHeap(), 0, cmdline );
     }
 
-CLEANUP:
-    if (hWnd)
-        DestroyWindow(hWnd);
-    if (hDll)
-        FreeLibrary(hDll);
-    if (activated)
-        DeactivateActCtx(0, cookie);
-    ReleaseActCtx(hCtx);
-    HeapFree(GetProcessHeap(),0,szDllName);
     return 0; /* rundll32 always returns 0! */
 }
