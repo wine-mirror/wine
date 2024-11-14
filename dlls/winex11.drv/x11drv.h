@@ -634,7 +634,6 @@ struct x11drv_win_data
     UINT        is_fullscreen : 1; /* is the window visible rect fullscreen */
     UINT        parent_invalid : 1; /* is the parent host window possibly invalid */
     int         wm_state;       /* current value of the WM_STATE property */
-    DWORD       net_wm_state;   /* bit mask of active x11drv_net_wm_state values */
     Window      embedder;       /* window id of embedder */
     Pixmap         icon_pixmap;
     Pixmap         icon_mask;

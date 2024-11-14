@@ -1168,13 +1168,12 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
     if ((style & WS_CAPTION) == WS_CAPTION || !data->is_fullscreen)
     {
-        data->net_wm_state = get_window_net_wm_state( event->display, data->whole_window );
-        if ((data->net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && !(style & WS_MAXIMIZE))
+        if ((data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && !(style & WS_MAXIMIZE))
         {
             TRACE( "window %p/%lx is maximized\n", data->hwnd, data->whole_window );
             config_cmd = SC_MAXIMIZE;
         }
-        else if (!(data->net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && (style & WS_MAXIMIZE))
+        else if (!(data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) && (style & WS_MAXIMIZE))
         {
             TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
             config_cmd = SC_RESTORE;
@@ -1294,8 +1293,7 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
     if (data->iconic && data->wm_state == NormalState)  /* restore window */
     {
         data->iconic = FALSE;
-        data->net_wm_state = get_window_net_wm_state( event->display, data->whole_window );
-        if ((style & WS_CAPTION) == WS_CAPTION && (data->net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))
+        if ((style & WS_CAPTION) == WS_CAPTION && (data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))
         {
             if ((style & WS_MAXIMIZEBOX) && !(style & WS_DISABLED))
             {

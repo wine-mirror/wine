@@ -1160,7 +1160,7 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
     long monitors[4];
     XEvent xev;
 
-    if (!(data->net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop()
+    if (!(data->pending_state.net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop()
         || NtUserGetWindowLongW( data->hwnd, GWL_STYLE ) & WS_MINIMIZE)
         return;
 
@@ -1328,7 +1328,7 @@ static void update_net_wm_states( struct x11drv_win_data *data )
 
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
     if (style & WS_MINIMIZE)
-        new_state |= data->net_wm_state & ((1 << NET_WM_STATE_FULLSCREEN)|(1 << NET_WM_STATE_MAXIMIZED));
+        new_state |= data->pending_state.net_wm_state & ((1 << NET_WM_STATE_FULLSCREEN)|(1 << NET_WM_STATE_MAXIMIZED));
     if (data->is_fullscreen)
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
@@ -1352,7 +1352,6 @@ static void update_net_wm_states( struct x11drv_win_data *data )
     }
 
     window_set_net_wm_state( data, new_state );
-    data->net_wm_state = new_state;
     update_net_wm_fullscreen_monitors( data );
 }
 
@@ -1490,7 +1489,6 @@ static void unmap_window( HWND hwnd )
         TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
         window_set_wm_state( data, WithdrawnState );
         data->mapped = FALSE;
-        data->net_wm_state = 0;
     }
     release_win_data( data );
 }
@@ -1613,7 +1611,6 @@ void make_window_embedded( struct x11drv_win_data *data )
 {
     /* the window cannot be mapped before being embedded */
     window_set_wm_state( data, WithdrawnState );
-    data->net_wm_state = 0;
     data->embedded = TRUE;
     data->managed = TRUE;
     sync_window_style( data );
@@ -2025,7 +2022,6 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     data->whole_window = data->client_window = 0;
     data->whole_colormap = 0;
     data->wm_state = WithdrawnState;
-    data->net_wm_state = 0;
     data->mapped = FALSE;
 
     memset( &data->pending_state, 0, sizeof(data->pending_state) );
