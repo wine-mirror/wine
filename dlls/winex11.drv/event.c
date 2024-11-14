@@ -1290,7 +1290,7 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
 
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
 
-    if (data->iconic && data->wm_state == NormalState)  /* restore window */
+    if (data->iconic && data->current_state.wm_state == NormalState)  /* restore window */
     {
         data->iconic = FALSE;
         if ((style & WS_CAPTION) == WS_CAPTION && (data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))
@@ -1311,7 +1311,7 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
             }
         }
     }
-    else if (!data->iconic && data->wm_state == IconicState)
+    else if (!data->iconic && data->current_state.wm_state == IconicState)
     {
         data->iconic = TRUE;
         if ((style & WS_MINIMIZEBOX) && !(style & WS_DISABLED))
