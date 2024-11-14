@@ -36353,8 +36353,6 @@ static void test_nv12(void)
         winetest_push_context("test %u (%ux%u, %u,%u,%ux%u)", test_idx, width, height,
                 copy_x, copy_y, copy_width, copy_height);
 
-        /* Apparently no Vulkan implementation supports rendering to a NV12 texture, so here we do
-         * not request D3D11_BIND_RENDER_TARGET. We will recreate it later for render target usage. */
         desc.Width = width;
         desc.Height = height;
         desc.MipLevels = 1;
@@ -36362,7 +36360,7 @@ static void test_nv12(void)
         desc.Format = DXGI_FORMAT_NV12;
         desc.SampleDesc.Count = 1;
         desc.Usage = D3D11_USAGE_DEFAULT;
-        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 
         content = calloc(width * height * 3 / 2, 1);
         content2 = calloc(width * height * 3 / 2, 1);
@@ -36411,6 +36409,17 @@ static void test_nv12(void)
 
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &check_texture);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srvs[0]);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+        srv_desc.Format = DXGI_FORMAT_NV12;
+        srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+        srv_desc.Texture2D.MostDetailedMip = 0;
+        srv_desc.Texture2D.MipLevels = 1;
+
+        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srvs[0]);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
         srv_desc.Format = DXGI_FORMAT_R8_UINT;
         srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -36499,30 +36508,15 @@ static void test_nv12(void)
             release_resource_readback(&rb);
         }
 
-        ID3D11ShaderResourceView_Release(srvs[0]);
-        ID3D11ShaderResourceView_Release(srvs[1]);
-        ID3D11Texture2D_Release(texture);
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv1);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
-        desc.Height = height;
-        desc.Format = DXGI_FORMAT_NV12;
-        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+        rtv_desc.Format = DXGI_FORMAT_NV12;
+        rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        rtv_desc.Texture2D.MipSlice = 0;
 
-        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-        todo_wine
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        if (FAILED(hr))
-            goto no_render_target;
-
-        srv_desc.Format = DXGI_FORMAT_R8_UINT;
-
-        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srvs[0]);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-        srv_desc.Format = DXGI_FORMAT_R8G8_UINT;
-
-        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srvs[1]);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv1);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
         rtv_desc.Format = DXGI_FORMAT_R8_UINT;
         rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
@@ -36563,8 +36557,6 @@ static void test_nv12(void)
 
         ID3D11RenderTargetView_Release(rtv2);
         ID3D11RenderTargetView_Release(rtv1);
-
-    no_render_target:
         ID3D11Buffer_Release(cbuffer);
         ID3D11UnorderedAccessView_Release(check_uav);
         ID3D11ShaderResourceView_Release(srvs[1]);
