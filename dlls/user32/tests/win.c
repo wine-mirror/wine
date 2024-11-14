@@ -4067,11 +4067,8 @@ static void test_SetForegroundWindow(HWND hwnd)
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     if (0) check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
 
-    /* FIXME: these tests are failing because of a race condition
-     * between internal focus state applied immediately and X11 focus
-     * message coming late */
-    todo_wine ok(GetActiveWindow() == hwnd2, "Expected active window %p, got %p.\n", hwnd2, GetActiveWindow());
-    todo_wine ok(GetFocus() == hwnd2, "Expected focus window %p, got %p.\n", hwnd2, GetFocus());
+    ok(GetActiveWindow() == hwnd2, "Expected active window %p, got %p.\n", hwnd2, GetActiveWindow());
+    ok(GetFocus() == hwnd2, "Expected focus window %p, got %p.\n", hwnd2, GetFocus());
 
     SetForegroundWindow(hwnd);
     check_wnd_state(hwnd, hwnd, hwnd, 0);

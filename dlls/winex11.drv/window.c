@@ -1213,7 +1213,10 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
 {
     UINT i, count, old_state = data->pending_state.net_wm_state;
 
+    data->desired_state.net_wm_state = new_state;
     if (!data->whole_window) return; /* no window, nothing to update */
+    if (data->wm_state_serial) return; /* another WM_STATE update is pending, wait for it to complete */
+    /* we ignore and override previous _NET_WM_STATE update requests */
     if (old_state == new_state) return; /* states are the same, nothing to update */
 
     if (data->pending_state.wm_state == IconicState) return; /* window is iconic, don't update its state now */
@@ -1267,6 +1270,8 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
                         SubstructureRedirectMask | SubstructureNotifyMask, &xev );
         }
     }
+
+    XFlush( data->display );
 }
 
 static void window_set_config( struct x11drv_win_data *data, const RECT *new_rect, BOOL above )
@@ -1275,6 +1280,7 @@ static void window_set_config( struct x11drv_win_data *data, const RECT *new_rec
     const RECT *old_rect = &data->pending_state.rect;
     XWindowChanges changes;
 
+    data->desired_state.rect = *new_rect;
     if (!data->whole_window) return; /* no window, nothing to update */
     if (EqualRect( old_rect, new_rect )) return; /* rects are the same, nothing to update */
 
@@ -1328,7 +1334,7 @@ static void update_net_wm_states( struct x11drv_win_data *data )
 
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
     if (style & WS_MINIMIZE)
-        new_state |= data->pending_state.net_wm_state & ((1 << NET_WM_STATE_FULLSCREEN)|(1 << NET_WM_STATE_MAXIMIZED));
+        new_state |= data->desired_state.net_wm_state & ((1 << NET_WM_STATE_FULLSCREEN)|(1 << NET_WM_STATE_MAXIMIZED));
     if (data->is_fullscreen)
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
@@ -1412,7 +1418,9 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
 {
     UINT old_state = data->pending_state.wm_state;
 
+    data->desired_state.wm_state = new_state;
     if (!data->whole_window) return; /* no window, nothing to update */
+    if (data->wm_state_serial) return; /* another WM_STATE update is pending, wait for it to complete */
     if (old_state == new_state) return; /* states are the same, nothing to update */
 
     data->pending_state.wm_state = new_state;
@@ -1441,6 +1449,8 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
 
     /* override redirect windows won't receive WM_STATE property changes */
     if (!data->managed) data->wm_state_serial = 0;
+
+    XFlush( data->display );
 }
 
 
@@ -1452,7 +1462,6 @@ static void map_window( HWND hwnd, DWORD new_style )
     struct x11drv_win_data *data;
 
     make_owner_managed( hwnd );
-    wait_for_withdrawn_state( hwnd, TRUE );
 
     if (!(data = get_win_data( hwnd ))) return;
 
@@ -1466,7 +1475,6 @@ static void map_window( HWND hwnd, DWORD new_style )
         sync_window_style( data );
 
         window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
-        XFlush( data->display );
 
         data->mapped = TRUE;
         data->iconic = (new_style & WS_MINIMIZE) != 0;
@@ -1482,8 +1490,6 @@ static void map_window( HWND hwnd, DWORD new_style )
 static void unmap_window( HWND hwnd )
 {
     struct x11drv_win_data *data;
-
-    wait_for_withdrawn_state( hwnd, FALSE );
 
     if (!(data = get_win_data( hwnd ))) return;
 
@@ -1581,7 +1587,7 @@ UINT window_update_client_config( struct x11drv_win_data *data )
 
 void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value )
 {
-    UINT *pending = &data->pending_state.wm_state, *current = &data->current_state.wm_state;
+    UINT *desired = &data->desired_state.wm_state, *pending = &data->pending_state.wm_state, *current = &data->current_state.wm_state;
     unsigned long *expect_serial = &data->wm_state_serial;
     const char *reason = NULL, *expected, *received;
 
@@ -1606,16 +1612,20 @@ void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial,
     else
     {
         WARN( "window %p/%lx, %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
-        *pending = value; /* avoid requesting the same state again */
+        *desired = *pending = value; /* avoid requesting the same state again */
     }
 
     *current = value;
     *expect_serial = 0;
+
+    /* send any pending changes from the desired state */
+    window_set_wm_state( data, data->desired_state.wm_state );
+    window_set_net_wm_state( data, data->desired_state.net_wm_state );
 }
 
 void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value )
 {
-    UINT *pending = &data->pending_state.net_wm_state, *current = &data->current_state.net_wm_state;
+    UINT *desired = &data->desired_state.net_wm_state, *pending = &data->pending_state.net_wm_state, *current = &data->current_state.net_wm_state;
     unsigned long *expect_serial = &data->net_wm_state_serial;
     const char *reason = NULL, *expected, *received;
 
@@ -1638,16 +1648,20 @@ void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long ser
     else
     {
         WARN( "window %p/%lx, %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
-        *pending = value; /* avoid requesting the same state again */
+        *desired = *pending = value; /* avoid requesting the same state again */
     }
 
     *current = value;
     *expect_serial = 0;
+
+    /* send any pending changes from the desired state */
+    window_set_wm_state( data, data->desired_state.wm_state );
+    window_set_net_wm_state( data, data->desired_state.net_wm_state );
 }
 
 void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *value )
 {
-    RECT *pending = &data->pending_state.rect, *current = &data->current_state.rect;
+    RECT *desired = &data->desired_state.rect, *pending = &data->pending_state.rect, *current = &data->current_state.rect;
     unsigned long *expect_serial = &data->configure_serial;
     const char *reason = NULL, *expected, *received;
 
@@ -1670,7 +1684,7 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
     else
     {
         WARN( "window %p/%lx, %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
-        *pending = *value; /* avoid requesting the same state again */
+        *desired = *pending = *value; /* avoid requesting the same state again */
     }
 
     *current = *value;
@@ -1683,7 +1697,7 @@ BOOL window_has_pending_wm_state( HWND hwnd, UINT state )
     BOOL pending;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
-    if (state != -1 && data->pending_state.wm_state != state) pending = FALSE;
+    if (state != -1 && data->desired_state.wm_state != state) pending = FALSE;
     else pending = !!data->wm_state_serial;
     release_win_data( data );
 
@@ -2053,6 +2067,7 @@ static void create_whole_window( struct x11drv_win_data *data )
     if (!data->whole_window) goto done;
     SetRect( &data->current_state.rect, pos.x, pos.y, pos.x + cx, pos.y + cy );
     data->pending_state.rect = data->current_state.rect;
+    data->desired_state.rect = data->current_state.rect;
 
     x11drv_xinput2_enable( data->display, data->whole_window );
     set_initial_wm_hints( data->display, data->whole_window );
@@ -2107,9 +2122,9 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     if (data->whole_colormap) XFreeColormap( data->display, data->whole_colormap );
     data->whole_window = data->client_window = 0;
     data->whole_colormap = 0;
-    data->wm_state = WithdrawnState;
     data->mapped = FALSE;
 
+    memset( &data->desired_state, 0, sizeof(data->desired_state) );
     memset( &data->pending_state, 0, sizeof(data->pending_state) );
     memset( &data->current_state, 0, sizeof(data->current_state) );
     data->wm_state_serial = 0;
