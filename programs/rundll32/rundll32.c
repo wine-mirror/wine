@@ -117,14 +117,14 @@ static HINSTANCE16 load_dll16( LPCWSTR dll )
     HINSTANCE16 (WINAPI *pLoadLibrary16)(LPCSTR libname);
     HINSTANCE16 ret = 0;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, dll, -1, NULL, 0, NULL, NULL );
-    char *dllA = HeapAlloc( GetProcessHeap(), 0, len );
+    char *dllA = malloc( len );
 
     if (dllA)
     {
         WideCharToMultiByte( CP_ACP, 0, dll, -1, dllA, len, NULL, NULL );
         pLoadLibrary16 = (void *)GetProcAddress( GetModuleHandleW(L"kernel32.dll"), (LPCSTR)35 );
         if (pLoadLibrary16) ret = pLoadLibrary16( dllA );
-        HeapFree( GetProcessHeap(), 0, dllA );
+        free( dllA );
     }
     return ret;
 }
@@ -134,14 +134,14 @@ static FARPROC16 get_entry_point16( HINSTANCE16 inst, LPCWSTR entry )
     FARPROC16 (WINAPI *pGetProcAddress16)(HMODULE16 hModule, LPCSTR name);
     FARPROC16 ret = 0;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
-    char *entryA = HeapAlloc( GetProcessHeap(), 0, len );
+    char *entryA = malloc( len );
 
     if (entryA)
     {
         WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
         pGetProcAddress16 = (void *)GetProcAddress( GetModuleHandleW(L"kernel32.dll"), (LPCSTR)37 );
         if (pGetProcAddress16) ret = pGetProcAddress16( inst, entryA );
-        HeapFree( GetProcessHeap(), 0, entryA );
+        free( entryA );
     }
     return ret;
 }
@@ -164,7 +164,7 @@ static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
     else
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
-        char *entryA = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+        char *entryA = malloc( len + 1 );
 
         if (!entryA)
             return NULL;
@@ -186,7 +186,7 @@ static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
                 ret = GetProcAddress( module, entryA );
             }
         }
-        HeapFree( GetProcessHeap(), 0, entryA );
+        free( entryA );
     }
     return ret;
 }
@@ -220,7 +220,7 @@ static LPWSTR get_next_arg(LPWSTR *cmdline)
         s++;
         len++;
     }
-    arg=HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+    arg=malloc( (len+1)*sizeof(WCHAR) );
     if (!arg)
         return NULL;
 
@@ -354,7 +354,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
     else
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, szCmdLine, -1, NULL, 0, NULL, NULL );
-        char *cmdline = HeapAlloc( GetProcessHeap(), 0, len );
+        char *cmdline = malloc( len );
 
         if (!cmdline)
             return 0;
