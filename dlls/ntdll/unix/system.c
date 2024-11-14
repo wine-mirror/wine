@@ -3479,6 +3479,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             ret = STATUS_INFO_LENGTH_MISMATCH;
             break;
         }
+        len = 0;
 
         switch (sfti->Action)
         {
@@ -3489,7 +3490,6 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             ret = get_firmware_info(sfti, size, &len);
             break;
         default:
-            len = 0;
             ret = STATUS_NOT_IMPLEMENTED;
             FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION action %d\n", sfti->Action);
         }
