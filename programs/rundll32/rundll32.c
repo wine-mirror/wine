@@ -191,90 +191,33 @@ static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
     return ret;
 }
 
-static LPWSTR get_next_arg(LPWSTR *cmdline)
+static WCHAR *parse_arguments( WCHAR *cmdline, WCHAR **dll, WCHAR **entrypoint )
 {
-    LPWSTR s;
-    LPWSTR arg,d;
-    BOOL in_quotes;
-    int bcount,len=0;
+    WCHAR *p;
 
-    /* count the chars */
-    bcount=0;
-    in_quotes=FALSE;
-    s=*cmdline;
-    while (1) {
-        if (*s==0 || ((*s=='\t' || *s==' ') && !in_quotes)) {
-            /* end of this command line argument */
-            break;
-        } else if (*s=='\\') {
-            /* '\', count them */
-            bcount++;
-        } else if ((*s=='"') && ((bcount & 1)==0)) {
-            /* unescaped '"' */
-            in_quotes=!in_quotes;
-            bcount=0;
-        } else {
-            /* a regular character */
-            bcount=0;
-        }
-        s++;
-        len++;
-    }
-    arg=malloc( (len+1)*sizeof(WCHAR) );
-    if (!arg)
-        return NULL;
+    if (cmdline[0] == '"')
+        p = wcschr( ++cmdline, '"' );
+    else
+        p = wcspbrk( cmdline, L" ,\t" );
 
-    bcount=0;
-    in_quotes=FALSE;
-    d=arg;
-    s=*cmdline;
-    while (*s) {
-        if ((*s=='\t' || *s==' ') && !in_quotes) {
-            /* end of this command line argument */
-            break;
-        } else if (*s=='\\') {
-            /* '\\' */
-            *d++=*s++;
-            bcount++;
-        } else if (*s=='"') {
-            /* '"' */
-            if ((bcount & 1)==0) {
-                /* Preceded by an even number of '\', this is half that
-                 * number of '\', plus a quote which we erase.
-                 */
-                d-=bcount/2;
-                in_quotes=!in_quotes;
-                s++;
-            } else {
-                /* Preceded by an odd number of '\', this is half that
-                 * number of '\' followed by a '"'
-                 */
-                d=d-bcount/2-1;
-                *d++='"';
-                s++;
-            }
-            bcount=0;
-        } else {
-            /* a regular character */
-            *d++=*s++;
-            bcount=0;
-        }
-    }
-    *d=0;
-    *cmdline=s;
-
-    /* skip the remaining spaces */
-    while (**cmdline=='\t' || **cmdline==' ') {
-        (*cmdline)++;
-    }
-
-    return arg;
+    if (!p) return NULL;
+    *p++ = 0;
+    *dll = cmdline;
+    /* skip spaces and commas */
+    p += wcsspn( p, L" ,\t" );
+    if (!*p) return NULL;
+    *entrypoint = p;
+    /* find end of entry point string */
+    p += wcscspn( p, L" \t" );
+    if (*p) *p++ = 0;
+    p += wcsspn( p, L" \t" );
+    return p;
 }
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine, int nCmdShow)
 {
     HWND hWnd;
-    LPWSTR szDllName,szEntryPoint;
+    LPWSTR szDllName, szEntryPoint, args;
     void *entry_point = NULL;
     BOOL unicode = FALSE, win16 = FALSE;
     HMODULE hDll, hCtx;
@@ -289,16 +232,11 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
           CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, NULL, NULL);
 
     /* Get the dll name and API EntryPoint */
-    WINE_TRACE("CmdLine=%s\n",wine_dbgstr_w(szCmdLine));
-    szDllName = get_next_arg(&szCmdLine);
-    if (!szDllName || *szDllName==0)
-        return 0;
-    WINE_TRACE("DllName=%s\n",wine_dbgstr_w(szDllName));
-    if ((szEntryPoint = wcschr(szDllName, ',' )))
-        *szEntryPoint++=0;
-    else
-        szEntryPoint = get_next_arg(&szCmdLine);
-    WINE_TRACE("EntryPoint=%s\n",wine_dbgstr_w(szEntryPoint));
+    args = parse_arguments( wcsdup(szCmdLine), &szDllName, &szEntryPoint );
+    if (!args) return 0;
+
+    TRACE( "dll %s entry %s cmdline %s\n", wine_dbgstr_w(szDllName),
+           wine_dbgstr_w(szEntryPoint), wine_dbgstr_w(args) );
 
     /* Activate context before DllMain() is called */
     if (SearchPathW(NULL, szDllName, NULL, ARRAY_SIZE(path), path, NULL))
@@ -347,19 +285,19 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
     if (unicode)
     {
         WINE_TRACE( "Calling %s (%p,%p,%s,%d)\n", wine_dbgstr_w(szEntryPoint),
-                    hWnd, instance, wine_dbgstr_w(szCmdLine), info.wShowWindow );
+                    hWnd, instance, wine_dbgstr_w(args), info.wShowWindow );
 
-        call_entry_point( entry_point, hWnd, instance, szCmdLine, info.wShowWindow );
+        call_entry_point( entry_point, hWnd, instance, args, info.wShowWindow );
     }
     else
     {
-        DWORD len = WideCharToMultiByte( CP_ACP, 0, szCmdLine, -1, NULL, 0, NULL, NULL );
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, args, -1, NULL, 0, NULL, NULL );
         char *cmdline = malloc( len );
 
         if (!cmdline)
             return 0;
 
-        WideCharToMultiByte( CP_ACP, 0, szCmdLine, -1, cmdline, len, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, args, -1, cmdline, len, NULL, NULL );
 
         WINE_TRACE( "Calling %s (%p,%p,%s,%d)\n", wine_dbgstr_w(szEntryPoint),
                     hWnd, instance, wine_dbgstr_a(cmdline), info.wShowWindow );
