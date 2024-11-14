@@ -214,6 +214,49 @@ static WCHAR *parse_arguments( WCHAR *cmdline, WCHAR **dll, WCHAR **entrypoint )
     return p;
 }
 
+static void reexec_self( WCHAR *args, WORD machine )
+{
+    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
+    WCHAR app[MAX_PATH];
+    WCHAR *cmdline;
+    HANDLE process = 0;
+    STARTUPINFOEXW si = {{ sizeof(si.StartupInfo) }};
+    PROCESS_INFORMATION pi;
+    SIZE_T len, size = 1024;
+    struct _PROC_THREAD_ATTRIBUTE_LIST *list = malloc( size );
+    void *cookie;
+    ULONG i;
+
+    NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                machines, sizeof(machines), NULL );
+    for (i = 0; machines[i].Machine; i++) if (machines[i].Machine == machine) break;
+    if (!GetSystemWow64Directory2W( app, MAX_PATH, machines[i].WoW64Container ?
+                                    machine : IMAGE_FILE_MACHINE_TARGET_HOST )) return;
+    wcscat( app, L"\\rundll32.exe" );
+
+    TRACE( "restarting as %s cmdline %s\n", debugstr_w(app), debugstr_w(args) );
+
+    len = wcslen(app) + wcslen(args) + 2;
+    cmdline = malloc( len * sizeof(WCHAR) );
+    swprintf( cmdline, len, L"%s %s", app, args );
+
+    InitializeProcThreadAttributeList( list, 1, 0, &size );
+    UpdateProcThreadAttribute( list, 0, PROC_THREAD_ATTRIBUTE_MACHINE_TYPE, &machine, sizeof(machine), NULL, NULL );
+    si.StartupInfo.cb = sizeof(si);
+    si.lpAttributeList = list;
+
+    Wow64DisableWow64FsRedirection(&cookie);
+    if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT,
+                        NULL, NULL, &si.StartupInfo, &pi ))
+    {
+        DWORD exit_code;
+        WaitForSingleObject( pi.hProcess, INFINITE );
+        GetExitCodeProcess( pi.hProcess, &exit_code );
+        ExitProcess( exit_code );
+    }
+    Wow64RevertWow64FsRedirection(cookie);
+}
+
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine, int nCmdShow)
 {
     HWND hWnd;
@@ -256,20 +299,30 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
     /* Load the library */
     hDll=LoadLibraryW(szDllName);
     if (hDll) entry_point = get_entry_point32( hDll, szEntryPoint, &unicode );
-#ifdef __i386__
     else
     {
-        HINSTANCE16 dll = load_dll16( szDllName );
-        if (dll <= 32)
+        HMODULE module;
+        if (GetLastError() == ERROR_BAD_EXE_FORMAT &&
+            (module = LoadLibraryExW( szDllName, 0, LOAD_LIBRARY_AS_IMAGE_RESOURCE )))
         {
-            /* Windows has a MessageBox here... */
-            WINE_ERR("Unable to load %s\n",wine_dbgstr_w(szDllName));
-            return 0;
+            IMAGE_NT_HEADERS *nt = RtlImageNtHeader( (HMODULE)((ULONG_PTR)module & ~3) );
+            reexec_self( szCmdLine, nt->FileHeader.Machine );
         }
-        win16 = TRUE;
-        entry_point = get_entry_point16( dll, szEntryPoint );
-    }
+#ifdef __i386__
+        else
+        {
+            HINSTANCE16 dll = load_dll16( szDllName );
+            if (dll <= 32)
+            {
+                /* Windows has a MessageBox here... */
+                WINE_ERR("Unable to load %s\n",wine_dbgstr_w(szDllName));
+                return 0;
+            }
+            win16 = TRUE;
+            entry_point = get_entry_point16( dll, szEntryPoint );
+        }
 #endif
+    }
 
     if (!entry_point)
     {
