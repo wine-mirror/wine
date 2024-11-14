@@ -1547,6 +1547,8 @@ UINT window_update_client_config( struct x11drv_win_data *data )
     if (!data->mapped) return 0; /* ignore config changes on invisible windows */
     if (data->iconic) return 0; /* ignore config changes on minimized windows */
 
+    if (data->wm_state_serial) return 0; /* another WM_STATE update is pending, wait for it to complete */
+    if (data->net_wm_state_serial) return 0; /* another _NET_WM_STATE update is pending, wait for it to complete */
     if (data->configure_serial) return 0; /* another config update is pending, wait for it to complete */
 
     if ((old_style & WS_CAPTION) == WS_CAPTION || !data->is_fullscreen)

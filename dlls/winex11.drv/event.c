@@ -1203,7 +1203,8 @@ static int get_window_xembed_info( Display *display, Window window )
 static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL update_window )
 {
     struct x11drv_win_data *data;
-    UINT value = 0, state_cmd = 0;
+    UINT value = 0, state_cmd = 0, config_cmd = 0;
+    RECT rect;
 
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_wm_state( event->display, event->window );
@@ -1229,7 +1230,12 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
         break;
     }
 
-    if (update_window) state_cmd = window_update_client_state( data );
+    if (update_window)
+    {
+        state_cmd = window_update_client_state( data );
+        config_cmd = window_update_client_config( data );
+        rect = window_rect_from_visible( &data->rects, data->current_state.rect );
+    }
 
     release_win_data( data );
 
@@ -1237,6 +1243,12 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
     {
         if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
         send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+    }
+
+    if (config_cmd)
+    {
+        if (LOWORD(config_cmd) == SC_MOVE) NtUserSetRawWindowPos( hwnd, rect, HIWORD(config_cmd), FALSE );
+        else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
     }
 }
 
@@ -1254,19 +1266,29 @@ static void handle_xembed_info_notify( HWND hwnd, XPropertyEvent *event )
 static void handle_net_wm_state_notify( HWND hwnd, XPropertyEvent *event )
 {
     struct x11drv_win_data *data;
-    UINT value = 0, state_cmd = 0;
+    UINT value = 0, state_cmd = 0, config_cmd = 0;
+    RECT rect;
 
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_net_wm_state( event->display, event->window );
     window_net_wm_state_notify( data, event->serial, value );
 
     state_cmd = window_update_client_state( data );
+    config_cmd = window_update_client_config( data );
+    rect = window_rect_from_visible( &data->rects, data->current_state.rect );
+
     release_win_data( data );
 
     if (state_cmd)
     {
         if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
         send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+    }
+
+    if (config_cmd)
+    {
+        if (LOWORD(config_cmd) == SC_MOVE) NtUserSetRawWindowPos( hwnd, rect, HIWORD(config_cmd), FALSE );
+        else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
     }
 }
 
