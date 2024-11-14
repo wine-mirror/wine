@@ -1505,6 +1505,7 @@ UINT window_update_client_state( struct x11drv_win_data *data )
 
     if (data->wm_state_serial) return 0; /* another WM_STATE update is pending, wait for it to complete */
     if (data->net_wm_state_serial) return 0; /* another _NET_WM_STATE update is pending, wait for it to complete */
+    if (data->configure_serial) return 0; /* another config update is pending, wait for it to complete */
 
     if (data->iconic && data->current_state.wm_state == NormalState)  /* restore window */
     {

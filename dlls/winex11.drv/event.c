@@ -1104,7 +1104,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     struct x11drv_win_data *data;
     RECT rect;
     POINT pos = {event->x, event->y};
-    UINT config_cmd;
+    UINT config_cmd, state_cmd;
 
     if (!hwnd) return FALSE;
     if (!(data = get_win_data( hwnd ))) return FALSE;
@@ -1123,9 +1123,16 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
     window_configure_notify( data, event->serial, &rect );
 
+    state_cmd = window_update_client_state( data );
     config_cmd = window_update_client_config( data );
     rect = window_rect_from_visible( &data->rects, data->current_state.rect );
     release_win_data( data );
+
+    if (state_cmd)
+    {
+        if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
+        send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+    }
 
     if (config_cmd)
     {
@@ -1133,7 +1140,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
     }
 
-    return !!config_cmd;
+    return config_cmd || state_cmd;
 }
 
 
