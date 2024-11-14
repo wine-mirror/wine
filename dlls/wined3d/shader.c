@@ -2268,6 +2268,54 @@ static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
     return WINED3D_OK;
 }
 
+static void shader_trace(const void *code, size_t size, enum vkd3d_shader_source_type source_type)
+{
+    struct vkd3d_shader_compile_info info = {.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO};
+    struct vkd3d_shader_code d3d_asm;
+    const char *ptr, *end, *line;
+    char *messages;
+    int ret;
+
+    static const struct vkd3d_shader_compile_option compile_options[] =
+    {
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_6},
+    };
+
+    info.source.code = code;
+    info.source.size = size;
+    info.source_type = source_type;
+    info.target_type = VKD3D_SHADER_TARGET_D3D_ASM;
+    info.options = compile_options;
+    info.option_count = ARRAY_SIZE(compile_options);
+    info.log_level = VKD3D_SHADER_LOG_WARNING;
+
+    ret = vkd3d_shader_compile(&info, &d3d_asm, &messages);
+    if (messages && *messages && FIXME_ON(d3d_shader))
+    {
+        FIXME("Shader log:\n");
+        ptr = messages;
+        end = ptr + strlen(ptr);
+        while ((line = wined3d_get_line(&ptr, end)))
+            FIXME("    %.*s", (int)(ptr - line), line);
+        FIXME("\n");
+    }
+    vkd3d_shader_free_messages(messages);
+
+    if (ret < 0)
+    {
+        ERR("Failed to disassemble, ret %d.\n", ret);
+        return;
+    }
+
+    ptr = d3d_asm.code;
+    end = ptr + d3d_asm.size;
+    while ((line = wined3d_get_line(&ptr, end)))
+        TRACE("    %.*s", (int)(ptr - line), line);
+    TRACE("\n");
+
+    vkd3d_shader_free_shader_code(&d3d_asm);
+}
+
 static HRESULT shader_set_function(struct wined3d_shader *shader,
         enum wined3d_shader_type type, const struct wined3d_stream_output_desc *so_desc, unsigned int float_const_count)
 {
@@ -2611,61 +2659,6 @@ bool vshader_get_input(const struct wined3d_shader *shader,
     }
 
     return false;
-}
-
-static void shader_trace(const void *code, size_t size, enum vkd3d_shader_source_type source_type)
-{
-    struct vkd3d_shader_compile_info info;
-    struct vkd3d_shader_code d3d_asm;
-    const char *ptr, *end, *line;
-    char *messages;
-    int ret;
-
-    static const struct vkd3d_shader_compile_option compile_options[] =
-    {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_6},
-    };
-
-    info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
-    info.next = NULL;
-    info.source.code = code;
-    info.source.size = size;
-    info.source_type = source_type;
-    info.target_type = VKD3D_SHADER_TARGET_D3D_ASM;
-    info.options = compile_options;
-    info.option_count = ARRAY_SIZE(compile_options);
-    info.log_level = VKD3D_SHADER_LOG_WARNING;
-    info.source_name = NULL;
-
-    ret = vkd3d_shader_compile(&info, &d3d_asm, &messages);
-    if (messages && *messages && FIXME_ON(d3d_shader))
-    {
-        FIXME("Shader log:\n");
-        ptr = messages;
-        end = ptr + strlen(ptr);
-        while ((line = wined3d_get_line(&ptr, end)))
-        {
-            FIXME("    %.*s", (int)(ptr - line), line);
-        }
-        FIXME("\n");
-    }
-    vkd3d_shader_free_messages(messages);
-
-    if (ret < 0)
-    {
-        ERR("Failed to disassemble, ret %d.\n", ret);
-        return;
-    }
-
-    ptr = d3d_asm.code;
-    end = ptr + d3d_asm.size;
-    while ((line = wined3d_get_line(&ptr, end)))
-    {
-        TRACE("    %.*s", (int)(ptr - line), line);
-    }
-    TRACE("\n");
-
-    vkd3d_shader_free_shader_code(&d3d_asm);
 }
 
 static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
