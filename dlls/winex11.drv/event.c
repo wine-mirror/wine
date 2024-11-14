@@ -171,7 +171,7 @@ static inline void free_event_data( XEvent *event )
 #endif
 }
 
-static void host_window_send_configure_events( struct host_window *win, Display *display, unsigned long serial )
+static void host_window_send_configure_events( struct host_window *win, Display *display, unsigned long serial, XEvent *previous )
 {
     XConfigureEvent configure = {.type = ConfigureNotify, .serial = serial, .display = display};
     unsigned int i;
@@ -201,12 +201,13 @@ static void host_window_send_configure_events( struct host_window *win, Display 
         release_win_data( data );
         if (has_serial) continue;
 
+        if (previous->type == ConfigureNotify && previous->xconfigure.window == configure.window) continue;
         TRACE( "generating ConfigureNotify for window %p/%lx, rect %s\n", hwnd, configure.window, wine_dbgstr_rect(&rect) );
         XPutBackEvent( configure.display, (XEvent *)&configure );
     }
 }
 
-static BOOL host_window_filter_event( XEvent *event )
+static BOOL host_window_filter_event( XEvent *event, XEvent *previous )
 {
     struct host_window *win;
     RECT old_rect;
@@ -246,7 +247,7 @@ static BOOL host_window_filter_event( XEvent *event )
     }
 
     if (old_rect.left != win->rect.left || old_rect.top != win->rect.top)
-        host_window_send_configure_events( win, event->xany.display, event->xany.serial );
+        host_window_send_configure_events( win, event->xany.display, event->xany.serial, previous );
 
     return TRUE;
 }
@@ -525,7 +526,7 @@ static BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,X
                 continue;  /* filtered, ignore it */
         }
 
-        if (host_window_filter_event( &event )) continue;
+        if (host_window_filter_event( &event, &prev_event )) continue;
 
         get_event_data( &event );
         if (prev_event.type) action = merge_events( &prev_event, &event );
