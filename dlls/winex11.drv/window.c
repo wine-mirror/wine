@@ -1503,6 +1503,9 @@ UINT window_update_client_state( struct x11drv_win_data *data )
     if (!data->managed) return 0; /* unmanaged windows are managed by the Win32 side */
     if (!data->mapped) return 0; /* ignore state changes on invisible windows */
 
+    if (data->wm_state_serial) return 0; /* another WM_STATE update is pending, wait for it to complete */
+    if (data->net_wm_state_serial) return 0; /* another _NET_WM_STATE update is pending, wait for it to complete */
+
     if (data->iconic && data->current_state.wm_state == NormalState)  /* restore window */
     {
         data->iconic = FALSE;

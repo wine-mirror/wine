@@ -1247,12 +1247,20 @@ static void handle_xembed_info_notify( HWND hwnd, XPropertyEvent *event )
 static void handle_net_wm_state_notify( HWND hwnd, XPropertyEvent *event )
 {
     struct x11drv_win_data *data;
-    UINT value = 0;
+    UINT value = 0, state_cmd = 0;
 
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_net_wm_state( event->display, event->window );
     window_net_wm_state_notify( data, event->serial, value );
+
+    state_cmd = window_update_client_state( data );
     release_win_data( data );
+
+    if (state_cmd)
+    {
+        if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
+        send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+    }
 }
 
 /***********************************************************************
