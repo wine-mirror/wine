@@ -4969,10 +4969,44 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
         }
 
         dst_bo = &staging_bo;
+
+        region.bufferRowLength = (src_row_pitch / dst_format->block_byte_count) * dst_format->block_width;
+        if (src_row_pitch)
+            region.bufferImageHeight = (src_slice_pitch / src_row_pitch) * dst_format->block_height;
+        else
+            region.bufferImageHeight = 1;
+
+        if (src_row_pitch % dst_format->byte_count)
+        {
+            FIXME("Row pitch %u is not a multiple of byte count %u.\n", src_row_pitch, dst_format->byte_count);
+            return;
+        }
+        if (src_row_pitch && src_slice_pitch % src_row_pitch)
+        {
+            FIXME("Slice pitch %u is not a multiple of row pitch %u.\n", src_slice_pitch, src_row_pitch);
+            return;
+        }
     }
     else
     {
         dst_bo = wined3d_bo_vk(dst_bo_addr->buffer_object);
+
+        region.bufferRowLength = (dst_row_pitch / dst_format->block_byte_count) * dst_format->block_width;
+        if (dst_row_pitch)
+            region.bufferImageHeight = (dst_slice_pitch / dst_row_pitch) * dst_format->block_height;
+        else
+            region.bufferImageHeight = 1;
+
+        if (dst_row_pitch % dst_format->byte_count)
+        {
+            FIXME("Row pitch %u is not a multiple of byte count %u.\n", dst_row_pitch, dst_format->byte_count);
+            return;
+        }
+        if (dst_row_pitch && dst_slice_pitch % dst_row_pitch)
+        {
+            FIXME("Slice pitch %u is not a multiple of row pitch %u.\n", dst_slice_pitch, dst_row_pitch);
+            return;
+        }
 
         vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier.pNext = NULL;
@@ -5005,8 +5039,6 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
             src_texture_vk->image.vk_image, &vk_range);
 
     region.bufferOffset = dst_bo->b.buffer_offset + dst_offset;
-    region.bufferRowLength = 0;
-    region.bufferImageHeight = 0;
     region.imageSubresource.aspectMask = vk_range.aspectMask;
     region.imageSubresource.mipLevel = vk_range.baseMipLevel;
     region.imageSubresource.baseArrayLayer = vk_range.baseArrayLayer;
