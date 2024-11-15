@@ -46,7 +46,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winnls.h"
-#include "ime.h"
+#include "kbd.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
