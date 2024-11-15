@@ -80,7 +80,7 @@ struct thread_apc
     struct object      *owner;    /* object that queued this apc */
     int                 executed; /* has it been executed by the client? */
     union apc_call      call;     /* call arguments */
-    apc_result_t        result;   /* call results once executed */
+    union apc_result    result;   /* call results once executed */
 };
 
 static void dump_thread_apc( struct object *obj, int verbose );
@@ -1584,7 +1584,7 @@ DECL_HANDLER(select)
     data_size_t op_size, ctx_size;
     struct context *ctx;
     struct thread_apc *apc;
-    const apc_result_t *result = get_req_data();
+    const union apc_result *result = get_req_data();
     unsigned int ctx_count;
 
     if (get_req_data_size() < sizeof(*result)) goto invalid_param;

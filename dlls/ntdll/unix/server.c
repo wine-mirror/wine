@@ -364,7 +364,7 @@ static NTSTATUS invoke_user_apc( CONTEXT *context, const user_apc_t *apc, NTSTAT
 /***********************************************************************
  *              invoke_system_apc
  */
-static void invoke_system_apc( const union apc_call *call, apc_result_t *result, BOOL self )
+static void invoke_system_apc( const union apc_call *call, union apc_result *result, BOOL self )
 {
     SIZE_T size, bits;
     void *addr;
@@ -694,7 +694,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
     int cookie;
     obj_handle_t apc_handle = 0;
     BOOL suspend_context = !!context;
-    apc_result_t result;
+    union apc_result result;
     sigset_t old_set;
     int signaled;
     data_size_t reply_size;
@@ -823,7 +823,7 @@ NTSTATUS WINAPI NtTestAlert(void)
 /***********************************************************************
  *           server_queue_process_apc
  */
-unsigned int server_queue_process_apc( HANDLE process, const union apc_call *call, apc_result_t *result )
+unsigned int server_queue_process_apc( HANDLE process, const union apc_call *call, union apc_result *result )
 {
     for (;;)
     {
@@ -1760,7 +1760,7 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
     if ((options & DUPLICATE_CLOSE_SOURCE) && source_process != NtCurrentProcess())
     {
         union apc_call call;
-        apc_result_t result;
+        union apc_result result;
 
         memset( &call, 0, sizeof(call) );
 

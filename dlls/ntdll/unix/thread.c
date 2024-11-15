@@ -1324,7 +1324,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     if (process != NtCurrentProcess())
     {
         union apc_call call;
-        apc_result_t result;
+        union apc_result result;
 
         memset( &call, 0, sizeof(call) );
 

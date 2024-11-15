@@ -638,7 +638,7 @@ union apc_call
     } dup_handle;
 };
 
-typedef union
+union apc_result
 {
     enum apc_type type;
     struct
@@ -748,7 +748,7 @@ typedef union
         enum apc_type    type;      /* APC_BREAK_PROCESS */
         unsigned int     status;    /* status returned by call */
     } break_process;
-} apc_result_t;
+};
 
 enum irp_type
 {
@@ -1232,7 +1232,7 @@ typedef struct
 @REQ(get_apc_result)
     obj_handle_t handle;       /* handle to the APC */
 @REPLY
-    apc_result_t result;       /* result of the APC */
+    union apc_result result;   /* result of the APC */
 @END
 
 

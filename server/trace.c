@@ -293,7 +293,7 @@ static void dump_apc_call( const char *prefix, const union apc_call *call )
     fputc( '}', stderr );
 }
 
-static void dump_apc_result( const char *prefix, const apc_result_t *result )
+static void dump_apc_result( const char *prefix, const union apc_result *result )
 {
     fprintf( stderr, "%s{", prefix );
     switch(result->type)
@@ -570,7 +570,7 @@ static void dump_varargs_apc_call( const char *prefix, data_size_t size )
 
 static void dump_varargs_apc_result( const char *prefix, data_size_t size )
 {
-    const apc_result_t *result = cur_data;
+    const union apc_result *result = cur_data;
 
     if (size >= sizeof(*result))
     {

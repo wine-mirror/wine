@@ -622,7 +622,7 @@ union apc_call
     } dup_handle;
 };
 
-typedef union
+union apc_result
 {
     enum apc_type type;
     struct
@@ -732,7 +732,7 @@ typedef union
         enum apc_type    type;
         unsigned int     status;
     } break_process;
-} apc_result_t;
+};
 
 enum irp_type
 {
@@ -1343,7 +1343,7 @@ struct get_apc_result_request
 struct get_apc_result_reply
 {
     struct reply_header __header;
-    apc_result_t result;
+    union apc_result result;
 };
 
 
