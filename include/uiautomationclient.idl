@@ -431,6 +431,36 @@ library UIAutomationClient {
     }
 
     [dllname("<no entry points>")]
+    module UIA_AnnotationTypes
+    {
+        const long AnnotationType_Unknown = 60000;
+        const long AnnotationType_SpellingError = 60001;
+        const long AnnotationType_GrammarError = 60002;
+        const long AnnotationType_Comment = 60003;
+        const long AnnotationType_FormulaError = 60004;
+        const long AnnotationType_TrackChanges = 60005;
+        const long AnnotationType_Header = 60006;
+        const long AnnotationType_Footer = 60007;
+        const long AnnotationType_Highlighted = 60008;
+        const long AnnotationType_Endnote = 60009;
+        const long AnnotationType_Footnote = 60010;
+        const long AnnotationType_InsertionChange = 60011;
+        const long AnnotationType_DeletionChange = 60012;
+        const long AnnotationType_MoveChange = 60013;
+        const long AnnotationType_FormatChange = 60014;
+        const long AnnotationType_UnsyncedChange = 60015;
+        const long AnnotationType_EditingLockedChange = 60016;
+        const long AnnotationType_ExternalChange = 60017;
+        const long AnnotationType_ConflictingChange = 60018;
+        const long AnnotationType_Author = 60019;
+        const long AnnotationType_AdvancedProofingIssue = 60020;
+        const long AnnotationType_DataValidationError = 60021;
+        const long AnnotationType_CircularReferenceError = 60022;
+        const long AnnotationType_Mathematics = 60023;
+        const long AnnotationType_Sensitive = 60024;
+    }
+
+    [dllname("<no entry points>")]
     module UIA_LandmarkTypeIds
     {
         const long UIA_CustomLandmarkTypeId = 80000;
