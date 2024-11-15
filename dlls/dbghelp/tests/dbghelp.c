@@ -424,6 +424,28 @@ static BOOL wrapper_EnumerateLoadedModulesW64(HANDLE proc, PENUMLOADED_MODULES_C
     return ret;
 }
 
+/* wrapper around SymRefreshModuleList which sometimes fails (it's very likely implemented on top
+ * of EnumerateLoadedModulesW64 on native too)
+ */
+static BOOL wrapper_SymRefreshModuleList(HANDLE proc)
+{
+    BOOL ret;
+    int retry;
+    int retry_count = !strcmp(winetest_platform, "wine") ? 1 : 5;
+
+    for (retry = retry_count - 1; retry >= 0; retry--)
+    {
+        ret = SymRefreshModuleList(proc);
+        if (ret || (GetLastError() != STATUS_INFO_LENGTH_MISMATCH && GetLastError() == STATUS_PARTIAL_COPY))
+            break;
+        Sleep(10);
+    }
+    if (retry + 1 < retry_count)
+        trace("used wrapper retry: ret=%d retry=%d top=%d\n", ret, retry, retry_count);
+
+    return ret;
+}
+
 static BOOL test_modules(void)
 {
     BOOL ret;
@@ -492,6 +514,8 @@ static BOOL test_modules(void)
 
     ret = SymRefreshModuleList(dummy);
     ok(!ret, "SymRefreshModuleList should have failed\n");
+    todo_wine
+    ok(GetLastError() == STATUS_INVALID_CID, "Unexpected last error %lx\n", GetLastError());
 
     count = get_module_count(dummy);
     ok(count == 0, "Unexpected count (%u instead of 0)\n", count);
@@ -885,9 +909,11 @@ static void test_loaded_modules(void)
 
     pcskind = get_process_kind(pi.hProcess);
 
-    ret = SymRefreshModuleList(pi.hProcess);
+    ret = wrapper_SymRefreshModuleList(pi.hProcess);
     todo_wine_if(pcskind == PCSKIND_WOW64)
-    ok(ret || broken(GetLastError() == STATUS_PARTIAL_COPY /* Win11 in some cases */), "SymRefreshModuleList failed: %lu\n", GetLastError());
+    ok(ret || broken(GetLastError() == STATUS_PARTIAL_COPY /* Win11 in some cases */ ||
+                             GetLastError() == STATUS_INFO_LENGTH_MISMATCH /* Win11 in some cases */),
+       "SymRefreshModuleList failed: %lu\n", GetLastError());
 
     if (!strcmp(winetest_platform, "wine"))
     {
@@ -945,7 +971,7 @@ static void test_loaded_modules(void)
                    "Wrong directory aggregation count %u %u\n",
                    aggregation.count_systemdir, aggregation.count_wowdir);
             }
-            ret = SymRefreshModuleList(pi.hProcess);
+            ret = wrapper_SymRefreshModuleList(pi.hProcess);
             ok(ret, "SymRefreshModuleList failed: %lu\n", GetLastError());
 
             if (!strcmp(winetest_platform, "wine"))
@@ -1007,7 +1033,7 @@ static void test_loaded_modules(void)
                 break;
             }
 
-            ret = SymRefreshModuleList(pi.hProcess);
+            ret = wrapper_SymRefreshModuleList(pi.hProcess);
             ok(ret, "SymRefreshModuleList failed: %lu\n", GetLastError());
 
             if (!strcmp(winetest_platform, "wine"))
