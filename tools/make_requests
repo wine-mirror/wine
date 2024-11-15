@@ -32,28 +32,19 @@ my %formats =
     "data_size_t"   => [  4,   4,  "%u" ],
     "obj_handle_t"  => [  4,   4,  "%04x" ],
     "atom_t"        => [  4,   4,  "%04x" ],
-    "user_handle_t" => [  4,   4,  "%08x" ],
     "process_id_t"  => [  4,   4,  "%04x" ],
     "thread_id_t"   => [  4,   4,  "%04x" ],
-    "client_ptr_t"  => [  8,   8,  "&dump_uint64" ],
-    "mod_handle_t"  => [  8,   8,  "&dump_uint64" ],
-    "lparam_t"      => [  8,   8,  "&dump_uint64" ],
-    "apc_param_t"   => [  8,   8,  "&dump_uint64" ],
-    "file_pos_t"    => [  8,   8,  "&dump_uint64" ],
-    "mem_size_t"    => [  8,   8,  "&dump_uint64" ],
-    "affinity_t"    => [  8,   8,  "&dump_uint64" ],
-    "object_id_t"   => [  8,   8,  "&dump_uint64" ],
-    "timeout_t"     => [  8,   8,  "&dump_timeout" ],
-    "abstime_t"     => [  8,   8,  "&dump_abstime" ],
-    "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],
-    "apc_result_t"  => [  40,  8,  "&dump_apc_result" ],
-    "async_data_t"  => [  40,  8,  "&dump_async_data" ],
-    "irp_params_t"  => [  32,  8,  "&dump_irp_params" ],
-    "struct luid"   => [  8,   4,  "&dump_luid" ],
-    "generic_map_t" => [  16,  4,  "&dump_generic_map" ],
-    "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
-    "hw_input_t"    => [  40,  8,  "&dump_hw_input" ],
-    "obj_locator_t" => [  16,  8,  "&dump_obj_locator" ],
+    "unsigned __int64" => [ 8, 8,  "&uint64" ],
+    "timeout_t"     => [  8,   8 ],
+    "abstime_t"     => [  8,   8 ],
+    "rectangle_t"   => [  16,  4 ],
+    "apc_result_t"  => [  40,  8 ],
+    "async_data_t"  => [  40,  8 ],
+    "irp_params_t"  => [  32,  8 ],
+    "generic_map_t" => [  16,  4 ],
+    "ioctl_code_t"  => [  4,   4 ],
+    "hw_input_t"    => [  40,  8 ],
+    "obj_locator_t" => [  16,  8 ],
     # varargs-only structures
     "apc_call_t"               => [  64,  8 ],
     "context_t"                => [  1728,  8 ],
@@ -69,6 +60,7 @@ my %formats =
     "user_apc_t"               => [  40,  8 ],
     "struct filesystem_event"  => [ 12, 4 ],
     "struct handle_info"       => [ 20, 4 ],
+    "struct luid"              => [  8, 4 ],
     "struct luid_attr"         => [ 12, 4 ],
     "struct object_attributes" => [ 16, 4 ],
     "struct object_type_info"  => [ 44, 4 ],
@@ -85,6 +77,7 @@ my $file_header =
 
 my @requests = ();
 my %replies = ();
+my %dump_funcs = ();
 my @asserts = ();
 
 my @trace_lines = ();
@@ -121,10 +114,24 @@ sub DO_DUMP_FUNC($$@)
 	if (defined($formats{$type}))
 	{
             my $fmt = ${$formats{$type}}[2];
-            if ($fmt =~ /^&(.*)/)
+            while ($fmt && $fmt !~ /^[%&]/)
+            {
+                $type = $fmt;
+                $fmt = ${$formats{$type}}[2];
+            }
+            if (!$fmt)
+            {
+                my $func = $type;
+                $func =~ s/^(struct|union)\s+//;
+                $func =~ s/_t$//;
+                push @trace_lines, "    dump_$func( \"$prefix$var=\", &req->$var );\n";
+                $dump_funcs{$func} = $type;
+            }
+            elsif ($fmt =~ /^&(.*)/)
             {
                 my $func = $1;
-                push @trace_lines, "    $func( \"$prefix$var=\", &req->$var );\n";
+                push @trace_lines, "    dump_$func( \"$prefix$var=\", &req->$var );\n";
+                $dump_funcs{$func} = $type;
             }
             elsif ($fmt =~ /^(%.*)\s+\((.*)\)/)
             {
@@ -244,22 +251,18 @@ sub PARSE_REQUESTS()
                 next;
             }
 
-            if (/^\s*VARARG\((\w+),(\w+),(\d+)\)/)
+            if (/^\s*VARARG\((\w+),(\w+),(\w+)\)/)
             {
                 $var = $1;
-                $type = "dump_varargs_$2( \"%s\", min(cur_size,$3) )";
-                s!(VARARG\(.*\)\s*;)!/* $1 */!;
-            }
-            elsif (/^\s*VARARG\((\w+),(\w+),(\w+)\)/)
-            {
-                $var = $1;
-                $type = "dump_varargs_" . $2 . "( \"%s\", min(cur_size,req->" . $3 . ") )";
+                $type = "dump_varargs_$2( \"%s\", min( cur_size, req->" . $3 . " ))";
+                $dump_funcs{"varargs_$2"} = $2;
                 s!(VARARG\(.*\)\s*;)!/* $1 */!;
             }
             elsif (/^\s*VARARG\((\w+),(\w+)\)/)
             {
                 $var = $1;
-                $type = "dump_varargs_" . $2 . "( \"%s\", cur_size )";
+                $type = "dump_varargs_$2( \"%s\", cur_size )";
+                $dump_funcs{"varargs_$2"} = $2;
                 s!(VARARG\(.*\)\s*;)!/* $1 */!;
             }
             elsif (/^\s*(\w+\**(\s+\w+\**)*)\s+(\w+);/)
@@ -292,6 +295,15 @@ sub PARSE_REQUESTS()
             if ($state == 2) { push @in_struct, $type, $var; }
             if ($state == 3) { push @out_struct, $type, $var; }
         }
+        elsif (/^typedef\s+(.*)\s+(\w+_t);$/)
+        {
+            if (defined $formats{$1} && !defined $formats{$2})
+            {
+                @{$formats{$2}} = @{$formats{$1}};
+                $formats{$2}->[2] = $1;
+            }
+        }
+
 
         # Pass it through into the output file
         print SERVER_PROT $_ . "\n";
@@ -451,21 +463,22 @@ if (update_file( "include/wine/server_protocol.h" ))
 
 ### Output the dumping function tables
 
-push @trace_lines, "static const dump_func req_dumpers[REQ_NB_REQUESTS] = {\n";
+push @trace_lines, "typedef void (*dump_func)( const void *req );\n\n";
+push @trace_lines, "static const dump_func req_dumpers[REQ_NB_REQUESTS] =\n{\n";
 foreach my $req (@requests)
 {
     push @trace_lines, "    (dump_func)dump_${req}_request,\n";
 }
 push @trace_lines, "};\n\n";
 
-push @trace_lines, "static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {\n";
+push @trace_lines, "static const dump_func reply_dumpers[REQ_NB_REQUESTS] =\n{\n";
 foreach my $req (@requests)
 {
     push @trace_lines, "    ", $replies{$req} ? "(dump_func)dump_${req}_reply,\n" : "NULL,\n";
 }
 push @trace_lines, "};\n\n";
 
-push @trace_lines, "static const char * const req_names[REQ_NB_REQUESTS] = {\n";
+push @trace_lines, "static const char * const req_names[REQ_NB_REQUESTS] =\n{\n";
 foreach my $req (@requests)
 {
     push @trace_lines, "    \"$req\",\n";
@@ -484,10 +497,28 @@ foreach my $err (sort keys %errors)
 push @trace_lines, "    { NULL, 0 }\n";
 push @trace_lines, "};\n";
 
-replace_in_file( "server/trace.c",
-                 "### make_requests begin ###",
-                 "### make_requests end ###",
-                 @trace_lines );
+
+my @trace_header = ( $file_header );
+
+foreach my $func (sort keys %dump_funcs)
+{
+    if ($func =~ /^varargs_/)
+    {
+        push @trace_header, "static void dump_$func( const char *prefix, data_size_t size );\n";
+    }
+    else
+    {
+        push @trace_header, "static void dump_$func( const char *prefix, const $dump_funcs{$func} *val );\n";
+    }
+}
+
+push @trace_header, "\nstatic const void *cur_data;\n";
+push @trace_header, "static data_size_t cur_size;\n\n";
+
+open TRACE, ">server/request_trace.h.new" or die "Cannot create server/request_trace.h.new";
+print TRACE @trace_header, @trace_lines;
+close TRACE;
+update_file( "server/request_trace.h" );
 
 ### Output the request handlers list
 

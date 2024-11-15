@@ -641,6 +641,7 @@ C_ASSERT( sizeof(tcp_connection) == 60 );
 C_ASSERT( sizeof(thread_id_t) == 4 );
 C_ASSERT( sizeof(timeout_t) == 8 );
 C_ASSERT( sizeof(udp_endpoint) == 32 );
+C_ASSERT( sizeof(unsigned __int64) == 8 );
 C_ASSERT( sizeof(unsigned char) == 1 );
 C_ASSERT( sizeof(unsigned int) == 4 );
 C_ASSERT( sizeof(unsigned short) == 2 );
