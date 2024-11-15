@@ -2412,6 +2412,7 @@ static const char okmsg2[] =
 "Content-Length: 0\r\n"
 "Set-Cookie: one\r\n"
 "Set-Cookie: two\r\n"
+"Last-Modified: Mon, 01 Dec 2008 13:44:34 UTC\r\n"
 "\r\n";
 
 static DWORD64 content_length;
@@ -4566,9 +4567,11 @@ static void test_head_request(int port)
 
 static void test_HttpQueryInfo(int port)
 {
+    static const SYSTEMTIME expect = {2008, 12, 1, 1, 13, 44, 34};
     test_request_t req;
     DWORD size, index, error;
     char buffer[1024];
+    SYSTEMTIME st;
     BOOL ret;
 
     open_simple_request(&req, "localhost", port, NULL, "/testD");
@@ -4589,9 +4592,27 @@ static void test_HttpQueryInfo(int port)
     ok(index == 1, "expected 1 got %lu\n", index);
 
     index = 0;
-    size = sizeof(buffer);
-    ret = HttpQueryInfoA(req.request, HTTP_QUERY_DATE | HTTP_QUERY_FLAG_SYSTEMTIME, buffer, &size, &index);
+    size = 0;
+    ret = HttpQueryInfoA(req.request, HTTP_QUERY_DATE | HTTP_QUERY_FLAG_SYSTEMTIME, &st, &size, &index);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", GetLastError());
+    ok(size == sizeof(st), "got %lu\n", size);
+
+    index = 0;
+    size = sizeof(st) + 1;
+    memset(&st, 0, sizeof(st));
+    ret = HttpQueryInfoA(req.request, HTTP_QUERY_DATE | HTTP_QUERY_FLAG_SYSTEMTIME, &st, &size, &index);
     ok(ret, "HttpQueryInfo failed %lu\n", GetLastError());
+    ok(!memcmp(&st, &expect, sizeof(st)), "wrong time\n");
+    ok(size == sizeof(st), "got %lu\n", size);
+    ok(index == 1, "expected 1 got %lu\n", index);
+
+    index = 0;
+    size = sizeof(st);
+    memset(&st, 0, sizeof(st));
+    ret = HttpQueryInfoA(req.request, HTTP_QUERY_LAST_MODIFIED | HTTP_QUERY_FLAG_SYSTEMTIME, &st, &size, &index);
+    ok(ret, "HttpQueryInfo failed %lu\n", GetLastError());
+    ok(!memcmp(&st, &expect, sizeof(st)), "wrong time\n");
+    ok(size == sizeof(st), "got %lu\n", size);
     ok(index == 1, "expected 1 got %lu\n", index);
 
     index = 0;
