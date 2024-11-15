@@ -597,7 +597,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
 
 C_ASSERT( sizeof(abstime_t) == 8 );
 C_ASSERT( sizeof(affinity_t) == 8 );
-C_ASSERT( sizeof(apc_call_t) == 64 );
 C_ASSERT( sizeof(apc_param_t) == 8 );
 C_ASSERT( sizeof(apc_result_t) == 40 );
 C_ASSERT( sizeof(async_data_t) == 40 );
@@ -641,6 +640,7 @@ C_ASSERT( sizeof(tcp_connection) == 60 );
 C_ASSERT( sizeof(thread_id_t) == 4 );
 C_ASSERT( sizeof(timeout_t) == 8 );
 C_ASSERT( sizeof(udp_endpoint) == 32 );
+C_ASSERT( sizeof(union apc_call) == 64 );
 C_ASSERT( sizeof(unsigned __int64) == 8 );
 C_ASSERT( sizeof(unsigned char) == 1 );
 C_ASSERT( sizeof(unsigned int) == 4 );

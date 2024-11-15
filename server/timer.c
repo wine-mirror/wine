@@ -123,7 +123,7 @@ static void timer_callback( void *private )
     /* queue an APC */
     if (timer->thread)
     {
-        apc_call_t data;
+        union apc_call data;
 
         assert (timer->callback);
         memset( &data, 0, sizeof(data) );

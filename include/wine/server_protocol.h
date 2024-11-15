@@ -496,7 +496,7 @@ typedef struct
     apc_param_t      args[3];
 } user_apc_t;
 
-typedef union
+union apc_call
 {
     enum apc_type type;
     user_apc_t    user;
@@ -620,7 +620,7 @@ typedef union
         unsigned int     attributes;
         unsigned int     options;
     } dup_handle;
-} apc_call_t;
+};
 
 typedef union
 {

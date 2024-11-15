@@ -194,7 +194,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
     }
 }
 
-static void dump_apc_call( const char *prefix, const apc_call_t *call )
+static void dump_apc_call( const char *prefix, const union apc_call *call )
 {
     fprintf( stderr, "%s{", prefix );
     switch(call->type)
@@ -557,7 +557,7 @@ static void dump_varargs_ushorts( const char *prefix, data_size_t size )
 
 static void dump_varargs_apc_call( const char *prefix, data_size_t size )
 {
-    const apc_call_t *call = cur_data;
+    const union apc_call *call = cur_data;
 
     if (size >= sizeof(*call))
     {
