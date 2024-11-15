@@ -3065,6 +3065,20 @@ static void wined3d_cs_st_finish(struct wined3d_device_context *context, enum wi
 {
 }
 
+static void get_map_pitch(const struct wined3d_format *format, const struct wined3d_box *box,
+        struct wined3d_map_desc *map_desc, size_t *size)
+{
+    unsigned int height = box->bottom - box->top;
+    unsigned int width = box->right - box->left;
+    unsigned int depth = box->back - box->front;
+
+    wined3d_format_calculate_pitch(format, 1, width, height, &map_desc->row_pitch, &map_desc->slice_pitch);
+
+    *size = (depth - 1) * map_desc->slice_pitch
+            + ((height - 1) / format->block_height) * map_desc->row_pitch
+            + ((width + format->block_width - 1) / format->block_width) * format->block_byte_count;
+}
+
 static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,
         unsigned int sub_resource_idx, struct wined3d_map_desc *map_desc, const struct wined3d_box *box, uint32_t flags)
 {
@@ -3155,12 +3169,7 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
         return true;
     }
 
-    wined3d_format_calculate_pitch(format, 1, box->right - box->left,
-            box->bottom - box->top, &map_desc->row_pitch, &map_desc->slice_pitch);
-
-    size = (box->back - box->front - 1) * map_desc->slice_pitch
-            + ((box->bottom - box->top - 1) / format->block_height) * map_desc->row_pitch
-            + ((box->right - box->left + format->block_width - 1) / format->block_width) * format->block_byte_count;
+    get_map_pitch(format, box, map_desc, &size);
 
     if (!(map_desc->data = malloc(size)))
     {
@@ -4259,12 +4268,7 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
     uint8_t *sysmem;
     size_t size;
 
-    wined3d_format_calculate_pitch(format, 1, box->right - box->left,
-            box->bottom - box->top, &map_desc->row_pitch, &map_desc->slice_pitch);
-
-    size = (box->back - box->front - 1) * map_desc->slice_pitch
-            + ((box->bottom - box->top - 1) / format->block_height) * map_desc->row_pitch
-            + ((box->right - box->left + format->block_width - 1) / format->block_width) * format->block_byte_count;
+    get_map_pitch(format, box, map_desc, &size);
 
     if (!(flags & WINED3D_MAP_WRITE))
     {
