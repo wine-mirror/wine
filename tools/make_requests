@@ -55,7 +55,6 @@ my %formats =
     "startup_info_t"           => [  96,  4 ],
     "tcp_connection"           => [  60, 4 ],
     "udp_endpoint"             => [  32, 4 ],
-    "user_apc_t"               => [  40,  8 ],
     "union apc_call"           => [ 64, 8 ],
     "union apc_result"         => [ 40, 8 ],
     "struct filesystem_event"  => [ 12, 4 ],
@@ -67,6 +66,7 @@ my %formats =
     "struct process_info"      => [ 40, 8 ],
     "struct rawinput_device"   => [ 12, 4 ],
     "struct thread_info"       => [ 40, 8 ],
+    "struct user_apc"          => [ 40, 8 ],
 );
 
 my $file_header =

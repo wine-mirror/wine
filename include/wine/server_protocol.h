@@ -488,18 +488,18 @@ enum apc_type
     APC_DUP_HANDLE
 };
 
-typedef struct
+struct user_apc
 {
     enum apc_type    type;
     int              __pad;
     client_ptr_t     func;
     apc_param_t      args[3];
-} user_apc_t;
+};
 
 union apc_call
 {
     enum apc_type type;
-    user_apc_t    user;
+    struct user_apc user;
     struct
     {
         enum apc_type    type;
