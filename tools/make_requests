@@ -80,6 +80,7 @@ my %replies = ();
 my %dump_funcs = ();
 my @asserts = ();
 
+my @protocol_lines = ();
 my @trace_lines = ();
 
 my $max_req_size = 64;
@@ -92,7 +93,7 @@ sub add_padding($$)
     if ($offset % $padding)
     {
         my $count = $padding - ($offset % $padding);
-        print SERVER_PROT "    char __pad_$offset\[$count\];\n";
+        push @protocol_lines,  "    char __pad_$offset\[$count\];\n";
         $offset += $count;
     }
     return $offset;
@@ -191,8 +192,8 @@ sub PARSE_REQUESTS()
             @in_struct = ();
             @out_struct = ();
             $offset = 12;
-            print SERVER_PROT "struct ${name}_request\n{\n";
-            print SERVER_PROT "    struct request_header __header;\n";
+            push @protocol_lines,  "struct ${name}_request\n{\n";
+            push @protocol_lines,  "    struct request_header __header;\n";
             $state++;
             next;
         }
@@ -203,9 +204,9 @@ sub PARSE_REQUESTS()
             $offset = add_padding( $offset, 8 ); # all requests should be 8-byte aligned
             die "request $name too large ($offset)" if ($offset > $max_req_size);
             push @asserts, "C_ASSERT( sizeof(struct ${name}_request) == $offset );\n";
-            print SERVER_PROT "};\n";
-            print SERVER_PROT "struct ${name}_reply\n{\n";
-            print SERVER_PROT "    struct reply_header __header;\n";
+            push @protocol_lines,  "};\n";
+            push @protocol_lines,  "struct ${name}_reply\n{\n";
+            push @protocol_lines,  "    struct reply_header __header;\n";
             $offset = 8;
             $state++;
             next;
@@ -216,14 +217,14 @@ sub PARSE_REQUESTS()
             die "Misplaced \@END" unless ($state == 2 || $state == 3);
 
             $offset = add_padding( $offset, 8 ); # all requests should be 8-byte aligned
-            print SERVER_PROT "};\n";
+            push @protocol_lines,  "};\n";
             if ($state == 2)  # build dummy reply struct
             {
                 die "request $name too large ($offset)" if ($offset > $max_req_size);
                 push @asserts, "C_ASSERT( sizeof(struct ${name}_request) == $offset );\n";
-                print SERVER_PROT "struct ${name}_reply\n{\n";
-                print SERVER_PROT "    struct reply_header __header;\n";
-                print SERVER_PROT "};\n";
+                push @protocol_lines,  "struct ${name}_reply\n{\n";
+                push @protocol_lines,  "    struct reply_header __header;\n";
+                push @protocol_lines,  "};\n";
             }
             else
             {
@@ -247,7 +248,7 @@ sub PARSE_REQUESTS()
             # skip empty lines (but keep them in output file)
             if (/^$/)
             {
-                print SERVER_PROT "\n";
+                push @protocol_lines,  "\n";
                 next;
             }
 
@@ -275,7 +276,7 @@ sub PARSE_REQUESTS()
                 {
                     my $count = $fmt[1] - ($offset & ($fmt[1] - 1));
                     print "protocol.def:$.: warning: $name $offset $type $var needs padding\n" if $warnings;
-                    print SERVER_PROT "    char __pad_$offset\[$count\];\n";
+                    push @protocol_lines,  "    char __pad_$offset\[$count\];\n";
                     $offset += $count;
                 }
                 if ($state == 2)
@@ -306,7 +307,7 @@ sub PARSE_REQUESTS()
 
 
         # Pass it through into the output file
-        print SERVER_PROT $_ . "\n";
+        push @protocol_lines,  $_ . "\n";
     }
     close PROTOCOL;
 }
@@ -355,9 +356,15 @@ sub GET_ERROR_NAMES()
 }
 
 # update a file if changed
-sub update_file($)
+sub update_file($@)
 {
-    my $file = shift;
+    my ($file, @lines) = @_;
+
+    open OUTPUT, ">$file.new" or die "Cannot create $file.new";
+    print OUTPUT $file_header;
+    print OUTPUT @lines;
+    close OUTPUT;
+
     my $ret = !(-f $file) || system "cmp $file $file.new >/dev/null";
     if (!$ret)
     {
@@ -371,42 +378,6 @@ sub update_file($)
     return $ret;
 }
 
-# replace some lines in a file between two markers
-sub replace_in_file($$$@)
-{
-    my $file = shift;
-    my $start = shift;
-    my $end = shift;
-
-    open NEW_FILE, ">$file.new" or die "cannot create $file.new";
-
-    if (defined($start))
-    {
-        open OLD_FILE, "$file" or die "cannot open $file";
-        while (<OLD_FILE>)
-        {
-            print NEW_FILE $_;
-            last if /$start/;
-        }
-    }
-
-    print NEW_FILE "\n", @_, "\n";
-
-    if (defined($end))
-    {
-        my $skip=1;
-        while (<OLD_FILE>)
-        {
-            $skip = 0 if /$end/;
-            print NEW_FILE $_ unless $skip;
-        }
-    }
-
-    close OLD_FILE if defined($start);
-    close NEW_FILE;
-    return update_file($file);
-}
-
 ### Main
 
 # Get the server protocol version
@@ -416,10 +387,8 @@ my %errors = GET_ERROR_NAMES();
 
 ### Create server_protocol.h and print header
 
-open SERVER_PROT, ">include/wine/server_protocol.h.new" or die "Cannot create include/wine/server_protocol.h.new";
-print SERVER_PROT $file_header;
-print SERVER_PROT "#ifndef __WINE_WINE_SERVER_PROTOCOL_H\n";
-print SERVER_PROT "#define __WINE_WINE_SERVER_PROTOCOL_H\n";
+push @protocol_lines,  "#ifndef __WINE_WINE_SERVER_PROTOCOL_H\n";
+push @protocol_lines,  "#define __WINE_WINE_SERVER_PROTOCOL_H\n";
 
 ### Parse requests to find request/reply structure definitions
 
@@ -427,38 +396,33 @@ PARSE_REQUESTS();
 
 ### Build the request list and structures
 
-print SERVER_PROT "\n\nenum request\n{\n";
-foreach my $req (@requests) { print SERVER_PROT "    REQ_$req,\n"; }
-print SERVER_PROT "    REQ_NB_REQUESTS\n};\n\n";
+push @protocol_lines,  "\n\nenum request\n{\n";
+foreach my $req (@requests) { push @protocol_lines,  "    REQ_$req,\n"; }
+push @protocol_lines,  "    REQ_NB_REQUESTS\n};\n\n";
 
-print SERVER_PROT "union generic_request\n{\n";
-print SERVER_PROT "    struct request_max_size max_size;\n";
-print SERVER_PROT "    struct request_header request_header;\n";
-foreach my $req (@requests) { print SERVER_PROT "    struct ${req}_request ${req}_request;\n"; }
-print SERVER_PROT "};\n";
+push @protocol_lines,  "union generic_request\n{\n";
+push @protocol_lines,  "    struct request_max_size max_size;\n";
+push @protocol_lines,  "    struct request_header request_header;\n";
+foreach my $req (@requests) { push @protocol_lines,  "    struct ${req}_request ${req}_request;\n"; }
+push @protocol_lines,  "};\n";
 
-print SERVER_PROT "union generic_reply\n{\n";
-print SERVER_PROT "    struct request_max_size max_size;\n";
-print SERVER_PROT "    struct reply_header reply_header;\n";
-foreach my $req (@requests) { print SERVER_PROT "    struct ${req}_reply ${req}_reply;\n"; }
-print SERVER_PROT "};\n\n";
+push @protocol_lines,  "union generic_reply\n{\n";
+push @protocol_lines,  "    struct request_max_size max_size;\n";
+push @protocol_lines,  "    struct reply_header reply_header;\n";
+foreach my $req (@requests) { push @protocol_lines,  "    struct ${req}_reply ${req}_reply;\n"; }
+push @protocol_lines,  "};\n\n";
 
-print SERVER_PROT "/* ### protocol_version begin ### */\n\n";
-printf SERVER_PROT "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol;
-print SERVER_PROT "/* ### protocol_version end ### */\n\n";
-print SERVER_PROT "#endif /* __WINE_WINE_SERVER_PROTOCOL_H */\n";
+push @protocol_lines, sprintf "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol;
+push @protocol_lines,  "#endif /* __WINE_WINE_SERVER_PROTOCOL_H */\n";
+
+open SERVER_PROT, ">include/wine/server_protocol.h.new" or die "Cannot create include/wine/server_protocol.h.new";
+print SERVER_PROT @protocol_lines;
 close SERVER_PROT;
 
-if (update_file( "include/wine/server_protocol.h" ))
+if (update_file( "include/wine/server_protocol.h", @protocol_lines ))
 {
-    my @version_lines = ();
-
-    push @version_lines, sprintf( "#define SERVER_PROTOCOL_VERSION %d\n", $protocol + 1 );
-
-    replace_in_file( "include/wine/server_protocol.h",
-                     "### protocol_version begin ###",
-                     "### protocol_version end ###",
-                     @version_lines );
+    $protocol_lines[$#protocol_lines - 1] = sprintf "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol + 1;
+    update_file( "include/wine/server_protocol.h", @protocol_lines );
 }
 
 ### Output the dumping function tables
@@ -498,7 +462,7 @@ push @trace_lines, "    { NULL, 0 }\n";
 push @trace_lines, "};\n";
 
 
-my @trace_header = ( $file_header );
+my @trace_header = ();
 
 foreach my $func (sort keys %dump_funcs)
 {
@@ -515,14 +479,11 @@ foreach my $func (sort keys %dump_funcs)
 push @trace_header, "\nstatic const void *cur_data;\n";
 push @trace_header, "static data_size_t cur_size;\n\n";
 
-open TRACE, ">server/request_trace.h.new" or die "Cannot create server/request_trace.h.new";
-print TRACE @trace_header, @trace_lines;
-close TRACE;
-update_file( "server/request_trace.h" );
+update_file( "server/request_trace.h", @trace_header, @trace_lines);
 
 ### Output the request handlers list
 
-my @request_lines = ( $file_header . "#include \"request.h\"\n\n" );
+my @request_lines = ( "#include \"request.h\"\n\n" );
 
 foreach my $req (@requests) { push @request_lines, "DECL_HANDLER($req);\n"; }
 push @request_lines, "\ntypedef void (*req_handler)( const void *req, void *reply );\n";
@@ -539,9 +500,5 @@ foreach my $type (sort keys %formats)
     die "$type: invalid size $size for alignment $align" if $size % $align;
     push @request_lines, "C_ASSERT( sizeof($type) == $size );\n";
 }
-push @request_lines, @asserts;
 
-open HANDLERS, ">server/request_handlers.h.new" or die "Cannot create server/request_handlers.h.new";
-print HANDLERS @request_lines;
-close HANDLERS;
-update_file( "server/request_handlers.h" );
+update_file( "server/request_handlers.h", @request_lines, @asserts );

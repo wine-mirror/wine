@@ -6758,10 +6758,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-/* ### protocol_version begin ### */
-
 #define SERVER_PROTOCOL_VERSION 848
-
-/* ### protocol_version end ### */
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
