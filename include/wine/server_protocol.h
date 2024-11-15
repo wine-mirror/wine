@@ -260,7 +260,7 @@ typedef struct
 } rectangle_t;
 
 
-typedef struct
+struct async_data
 {
     obj_handle_t    handle;
     obj_handle_t    event;
@@ -268,7 +268,7 @@ typedef struct
     client_ptr_t    user;
     client_ptr_t    apc;
     apc_param_t     apc_context;
-} async_data_t;
+};
 
 
 
@@ -1829,7 +1829,7 @@ struct flush_request
 {
     struct request_header __header;
     char __pad_12[4];
-    async_data_t   async;
+    struct async_data async;
 };
 struct flush_reply
 {
@@ -1857,7 +1857,7 @@ struct get_volume_info_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    async_data_t async;
+    struct async_data async;
     unsigned int info_class;
     char __pad_60[4];
 };
@@ -1906,7 +1906,7 @@ struct recv_socket_request
 {
     struct request_header __header;
     int          oob;
-    async_data_t async;
+    struct async_data async;
     int          force_async;
     char __pad_60[4];
 };
@@ -1925,7 +1925,7 @@ struct send_socket_request
 {
     struct request_header __header;
     unsigned int flags;
-    async_data_t async;
+    struct async_data async;
 };
 struct send_socket_reply
 {
@@ -2016,7 +2016,7 @@ struct read_directory_changes_request
     unsigned int filter;
     int          subtree;
     int          want_data;
-    async_data_t async;
+    struct async_data async;
 };
 struct read_directory_changes_reply
 {
@@ -3152,7 +3152,7 @@ struct register_async_request
 {
     struct request_header __header;
     int          type;
-    async_data_t async;
+    struct async_data async;
     int          count;
     char __pad_60[4];
 };
@@ -3216,7 +3216,7 @@ struct read_request
 {
     struct request_header __header;
     char __pad_12[4];
-    async_data_t   async;
+    struct async_data async;
     file_pos_t     pos;
 };
 struct read_reply
@@ -3233,7 +3233,7 @@ struct write_request
 {
     struct request_header __header;
     char __pad_12[4];
-    async_data_t   async;
+    struct async_data async;
     file_pos_t     pos;
     /* VARARG(data,bytes); */
 };
@@ -3252,7 +3252,7 @@ struct ioctl_request
 {
     struct request_header __header;
     ioctl_code_t   code;
-    async_data_t   async;
+    struct async_data async;
     /* VARARG(in_data,bytes); */
 };
 struct ioctl_reply

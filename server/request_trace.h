@@ -7,7 +7,7 @@
 
 static void dump_abstime( const char *prefix, const abstime_t *val );
 static void dump_apc_result( const char *prefix, const union apc_result *val );
-static void dump_async_data( const char *prefix, const async_data_t *val );
+static void dump_async_data( const char *prefix, const struct async_data *val );
 static void dump_generic_map( const char *prefix, const generic_map_t *val );
 static void dump_hw_input( const char *prefix, const hw_input_t *val );
 static void dump_ioctl_code( const char *prefix, const ioctl_code_t *val );

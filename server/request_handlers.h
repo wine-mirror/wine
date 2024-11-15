@@ -598,7 +598,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
 C_ASSERT( sizeof(abstime_t) == 8 );
 C_ASSERT( sizeof(affinity_t) == 8 );
 C_ASSERT( sizeof(apc_param_t) == 8 );
-C_ASSERT( sizeof(async_data_t) == 40 );
 C_ASSERT( sizeof(atom_t) == 4 );
 C_ASSERT( sizeof(char) == 1 );
 C_ASSERT( sizeof(client_ptr_t) == 8 );
@@ -626,6 +625,7 @@ C_ASSERT( sizeof(rectangle_t) == 16 );
 C_ASSERT( sizeof(select_op_t) == 264 );
 C_ASSERT( sizeof(short int) == 2 );
 C_ASSERT( sizeof(startup_info_t) == 96 );
+C_ASSERT( sizeof(struct async_data) == 40 );
 C_ASSERT( sizeof(struct filesystem_event) == 12 );
 C_ASSERT( sizeof(struct handle_info) == 20 );
 C_ASSERT( sizeof(struct luid) == 8 );

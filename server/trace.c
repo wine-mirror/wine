@@ -377,7 +377,7 @@ static void dump_apc_result( const char *prefix, const union apc_result *result 
     fputc( '}', stderr );
 }
 
-static void dump_async_data( const char *prefix, const async_data_t *data )
+static void dump_async_data( const char *prefix, const struct async_data *data )
 {
     fprintf( stderr, "%s{handle=%04x,event=%04x", prefix, data->handle, data->event );
     dump_uint64( ",iosb=", &data->iosb );

@@ -252,8 +252,8 @@ extern struct object *create_serial( struct fd *fd );
 typedef void (*async_completion_callback)( void *private );
 
 extern void free_async_queue( struct async_queue *queue );
-extern struct async *create_async( struct fd *fd, struct thread *thread, const async_data_t *data, struct iosb *iosb );
-extern struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data,
+extern struct async *create_async( struct fd *fd, struct thread *thread, const struct async_data *data, struct iosb *iosb );
+extern struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const struct async_data *data,
                                            int is_system );
 extern obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_blocking );
 extern void queue_async( struct async_queue *queue, struct async *async );

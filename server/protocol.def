@@ -276,7 +276,7 @@ typedef struct
 } rectangle_t;
 
 /* structure for parameters of async I/O calls */
-typedef struct
+struct async_data
 {
     obj_handle_t    handle;        /* object to perform I/O on */
     obj_handle_t    event;         /* event to signal when done */
@@ -284,7 +284,7 @@ typedef struct
     client_ptr_t    user;          /* opaque user data containing callback pointer and async-specific data */
     client_ptr_t    apc;           /* user APC to call */
     apc_param_t     apc_context;   /* user APC context or completion value */
-} async_data_t;
+};
 
 /* structures for extra message data */
 
@@ -1539,7 +1539,7 @@ enum server_fd_type
 
 /* Flush a file buffers */
 @REQ(flush)
-    async_data_t   async;       /* async I/O parameters */
+    struct async_data async;    /* async I/O parameters */
 @REPLY
     obj_handle_t event;         /* event set when finished */
 @END
@@ -1555,7 +1555,7 @@ enum server_fd_type
 /* Query volume information */
 @REQ(get_volume_info)
     obj_handle_t handle;        /* handle to the file */
-    async_data_t async;         /* async I/O parameters */
+    struct async_data async;    /* async I/O parameters */
     unsigned int info_class;    /* queried information class */
 @REPLY
     obj_handle_t wait;          /* handle to wait on for blocking read */
@@ -1586,7 +1586,7 @@ enum server_fd_type
 /* Perform a recv on a socket */
 @REQ(recv_socket)
     int          oob;           /* are we receiving OOB data? */
-    async_data_t async;         /* async I/O parameters */
+    struct async_data async;    /* async I/O parameters */
     int          force_async;   /* Force asynchronous mode? */
 @REPLY
     obj_handle_t wait;          /* handle to wait on for blocking recv */
@@ -1598,7 +1598,7 @@ enum server_fd_type
 /* Perform a send on a socket */
 @REQ(send_socket)
     unsigned int flags;         /* SERVER_SOCKET_IO_* flags */
-    async_data_t async;         /* async I/O parameters */
+    struct async_data async;    /* async I/O parameters */
 @REPLY
     obj_handle_t wait;          /* handle to wait on for blocking send */
     unsigned int options;       /* device open options */
@@ -1656,7 +1656,7 @@ enum server_fd_type
     unsigned int filter;        /* notification filter */
     int          subtree;       /* watch the subtree? */
     int          want_data;     /* flag indicating whether change data should be collected */
-    async_data_t async;         /* async I/O parameters */
+    struct async_data async;    /* async I/O parameters */
 @END
 
 
@@ -2355,7 +2355,7 @@ enum message_type
 /* Create an async I/O */
 @REQ(register_async)
     int          type;          /* type of queue to look after */
-    async_data_t async;         /* async I/O parameters */
+    struct async_data async;    /* async I/O parameters */
     int          count;         /* count - usually # of bytes to be read/written */
 @END
 #define ASYNC_TYPE_READ  0x01
@@ -2392,7 +2392,7 @@ enum message_type
 
 /* Perform a read on a file object */
 @REQ(read)
-    async_data_t   async;         /* async I/O parameters */
+    struct async_data async;      /* async I/O parameters */
     file_pos_t     pos;           /* read position */
 @REPLY
     obj_handle_t   wait;          /* handle to wait on for blocking read */
@@ -2403,7 +2403,7 @@ enum message_type
 
 /* Perform a write on a file object */
 @REQ(write)
-    async_data_t   async;         /* async I/O parameters */
+    struct async_data async;      /* async I/O parameters */
     file_pos_t     pos;           /* write position */
     VARARG(data,bytes);           /* write data */
 @REPLY
@@ -2416,7 +2416,7 @@ enum message_type
 /* Perform an ioctl on a file */
 @REQ(ioctl)
     ioctl_code_t   code;          /* ioctl code */
-    async_data_t   async;         /* async I/O parameters */
+    struct async_data async;      /* async I/O parameters */
     VARARG(in_data,bytes);        /* ioctl input data */
 @REPLY
     obj_handle_t   wait;          /* handle to wait on for blocking ioctl */

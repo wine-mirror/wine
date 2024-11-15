@@ -436,10 +436,10 @@ static inline void mutex_unlock( pthread_mutex_t *mutex )
     if (!process_exiting) pthread_mutex_unlock( mutex );
 }
 
-static inline async_data_t server_async( HANDLE handle, struct async_fileio *user, HANDLE event,
-                                         PIO_APC_ROUTINE apc, void *apc_context, client_ptr_t iosb )
+static inline struct async_data server_async( HANDLE handle, struct async_fileio *user, HANDLE event,
+                                              PIO_APC_ROUTINE apc, void *apc_context, client_ptr_t iosb )
 {
-    async_data_t async;
+    struct async_data async;
     async.handle      = wine_server_obj_handle( handle );
     async.user        = wine_server_client_ptr( user );
     async.iosb        = iosb;

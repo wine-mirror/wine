@@ -45,7 +45,7 @@ struct async
     struct timeout_user *timeout;
     unsigned int         timeout_status;  /* status to report upon timeout */
     struct event        *event;
-    async_data_t         data;            /* data for async I/O call */
+    struct async_data    data;            /* data for async I/O call */
     struct iosb         *iosb;            /* I/O status block */
     obj_handle_t         wait_handle;     /* pre-allocated wait handle */
     unsigned int         initial_status;  /* status returned from initial request */
@@ -248,7 +248,7 @@ void queue_async( struct async_queue *queue, struct async *async )
 }
 
 /* create an async on a given queue of a fd */
-struct async *create_async( struct fd *fd, struct thread *thread, const async_data_t *data, struct iosb *iosb )
+struct async *create_async( struct fd *fd, struct thread *thread, const struct async_data *data, struct iosb *iosb )
 {
     struct event *event = NULL;
     struct async *async;
@@ -753,7 +753,7 @@ static struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_
 
 /* create an async associated with iosb for async-based requests
  * returned async must be passed to async_handoff */
-struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data, int is_system )
+struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const struct async_data *data, int is_system )
 {
     struct async *async;
     struct iosb *iosb;
