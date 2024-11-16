@@ -854,10 +854,13 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
             pipe_info->ReadDataAvailable   = pipe_end_get_avail( pipe_end );
 
             pipe_info->OutboundQuota       = pipe->outsize;
-            pipe_info->WriteQuotaAvailable = 0; /* FIXME */
             pipe_info->NamedPipeState      = pipe_end->state;
             pipe_info->NamedPipeEnd        = pipe_end->obj.ops == &pipe_server_ops
                 ? FILE_PIPE_SERVER_END : FILE_PIPE_CLIENT_END;
+
+            pipe_info->WriteQuotaAvailable = pipe_info->NamedPipeEnd == FILE_PIPE_CLIENT_END
+                ? pipe_info->InboundQuota : pipe_info->OutboundQuota;
+                /* FIXME: Needs to be reduced by ReadDataAvailable at the other end of the pipe. */
             break;
         }
     case FileStandardInformation:

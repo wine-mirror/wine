@@ -2309,7 +2309,6 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
         ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable = %lu\n",
            local_info.ReadDataAvailable);
         ok(local_info.OutboundQuota == 200, "OutboundQuota = %lu\n", local_info.OutboundQuota);
-        todo_wine
         ok(local_info.WriteQuotaAvailable == (is_server ? 200 : 100), "WriteQuotaAvailable = %lu\n",
            local_info.WriteQuotaAvailable);
         ok(local_info.NamedPipeState == state, "%s NamedPipeState = %lu, expected %lu\n",
