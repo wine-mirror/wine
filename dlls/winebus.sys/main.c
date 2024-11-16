@@ -684,7 +684,7 @@ static NTSTATUS get_device_descriptors(UINT64 unix_device, BYTE **report_desc, U
     return STATUS_SUCCESS;
 }
 
-static USAGE_AND_PAGE get_hidraw_device_usages(UINT64 unix_device)
+static USAGE_AND_PAGE get_device_usages(UINT64 unix_device)
 {
     HIDP_DEVICE_DESC device_desc;
     USAGE_AND_PAGE usages = {0};
@@ -749,18 +749,20 @@ static DWORD CALLBACK bus_main_thread(void *args)
         case BUS_EVENT_TYPE_DEVICE_CREATED:
         {
             struct device_desc desc = event->device_created.desc;
-            if (desc.is_hidraw && !desc.usages.UsagePage) desc.usages = get_hidraw_device_usages(event->device);
-            if (!desc.is_hidraw != !is_hidraw_enabled(desc.vid, desc.pid, &desc.usages))
+            USAGE_AND_PAGE usages;
+
+            usages = get_device_usages(event->device);
+            if (!desc.is_hidraw != !is_hidraw_enabled(desc.vid, desc.pid, &usages))
             {
                 struct device_remove_params params = {.device = event->device};
                 WARN("ignoring %shidraw device %04x:%04x with usages %04x:%04x\n", desc.is_hidraw ? "" : "non-",
-                     desc.vid, desc.pid, desc.usages.UsagePage, desc.usages.Usage);
+                     desc.vid, desc.pid, usages.UsagePage, usages.Usage);
                 winebus_call(device_remove, &params);
                 break;
             }
 
             TRACE("creating %shidraw device %04x:%04x with usages %04x:%04x\n", desc.is_hidraw ? "" : "non-",
-                  desc.vid, desc.pid, desc.usages.UsagePage, desc.usages.Usage);
+                  desc.vid, desc.pid, usages.UsagePage, usages.Usage);
 
             device = bus_create_hid_device(&event->device_created.desc, event->device);
             if (device) IoInvalidateDeviceRelations(bus_pdo, BusRelations);
