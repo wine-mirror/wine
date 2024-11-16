@@ -436,6 +436,48 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, 
     if (is_dualshock4_gamepad(vid, pid)) prefer_hidraw = TRUE;
     if (is_dualsense_gamepad(vid, pid)) prefer_hidraw = TRUE;
 
+    switch (vid)
+    {
+    case 0x044f:
+        if (pid == 0xb679) prefer_hidraw = TRUE; /* ThrustMaster T-Rudder */
+        if (pid == 0xb687) prefer_hidraw = TRUE; /* ThrustMaster TWCS Throttle */
+        if (pid == 0xb10a) prefer_hidraw = TRUE; /* ThrustMaster T.16000M Joystick */
+        break;
+    case 0x16d0:
+        if (pid == 0x0d61) prefer_hidraw = TRUE; /* Simucube 2 Sport */
+        if (pid == 0x0d60) prefer_hidraw = TRUE; /* Simucube 2 Pro */
+        if (pid == 0x0d5f) prefer_hidraw = TRUE; /* Simucube 2 Ultimate */
+        if (pid == 0x0d5a) prefer_hidraw = TRUE; /* Simucube 1 */
+        break;
+    case 0x0eb7:
+        if (pid == 0x183b) prefer_hidraw = TRUE; /* Fanatec ClubSport Pedals v3 */
+        if (pid == 0x1839) prefer_hidraw = TRUE; /* Fanatec ClubSport Pedals v1/v2 */
+        break;
+    case 0x231d:
+        /* comes with 128 buttons in the default configuration */
+        if (buttons == 128) prefer_hidraw = TRUE;
+        /* if customized, less than 128 buttons may be shown, decide by PID */
+        if (pid == 0x0200) prefer_hidraw = TRUE; /* VKBsim Gladiator EVO Right Grip */
+        if (pid == 0x0201) prefer_hidraw = TRUE; /* VKBsim Gladiator EVO Left Grip */
+        if (pid == 0x0126) prefer_hidraw = TRUE; /* VKB-Sim Space Gunfighter */
+        if (pid == 0x0127) prefer_hidraw = TRUE; /* VKB-Sim Space Gunfighter L */
+        break;
+    case 0x3344:
+        /* comes with 31 buttons in the default configuration, or 128 max */
+        if ((buttons == 31) || (buttons == 128)) prefer_hidraw = TRUE;
+        /* users may have configured button limits, usually 32/50/64 */
+        if ((buttons == 32) || (buttons == 50) || (buttons == 64)) prefer_hidraw = TRUE;
+        /* if customized, arbitrary amount of buttons may be shown, decide by PID */
+        if (pid == 0x412f) prefer_hidraw = TRUE; /* Virpil Constellation ALPHA-R */
+        if (pid == 0x812c) prefer_hidraw = TRUE; /* Virpil Constellation ALPHA-L */
+        break;
+    case 0x03eb:
+        /* users may have configured button limits, usually 32/50/64 */
+        if ((buttons == 32) || (buttons == 50) || (buttons == 64)) prefer_hidraw = TRUE;
+        if (pid == 0x2055) prefer_hidraw = TRUE; /* ATMEL/VIRPIL/200325 VPC Throttle MT-50 CM2 */
+        break;
+    }
+
     RtlInitUnicodeString(&str, L"EnableHidraw");
     if (!NtQueryValueKey(driver_key, &str, KeyValuePartialInformation, info,
                          sizeof(buffer) - sizeof(WCHAR), &size))
