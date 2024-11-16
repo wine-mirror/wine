@@ -728,12 +728,6 @@ static void lnxev_device_destroy(struct unix_device *iface)
 
 static NTSTATUS lnxev_device_start(struct unix_device *iface)
 {
-    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
-    NTSTATUS status;
-
-    if ((status = build_report_descriptor(iface, impl->base.udev_device)))
-        return status;
-
     pthread_mutex_lock(&udev_cs);
     start_polling_device(iface);
     pthread_mutex_unlock(&udev_cs);
@@ -1320,6 +1314,13 @@ static void udev_add_device(struct udev_device *dev, int fd)
         impl->udev_device = udev_device_ref(dev);
         strcpy(impl->devnode, devnode);
         impl->device_fd = fd;
+
+        if (build_report_descriptor(&impl->unix_device, impl->udev_device))
+        {
+            list_remove(&impl->unix_device.entry);
+            impl->unix_device.vtbl->destroy(&impl->unix_device);
+            return;
+        }
 
         bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
     }

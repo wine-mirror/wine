@@ -443,17 +443,12 @@ static void sdl_device_destroy(struct unix_device *iface)
 static NTSTATUS sdl_device_start(struct unix_device *iface)
 {
     struct sdl_device *impl = impl_from_unix_device(iface);
-    NTSTATUS status;
 
     pthread_mutex_lock(&sdl_cs);
-
-    if (impl->sdl_controller) status = build_controller_report_descriptor(iface);
-    else status = build_joystick_report_descriptor(iface);
-    impl->started = !status;
-
+    impl->started = TRUE;
     pthread_mutex_unlock(&sdl_cs);
 
-    return status;
+    return STATUS_SUCCESS;
 }
 
 static void sdl_device_stop(struct unix_device *iface)
@@ -1006,6 +1001,8 @@ static void sdl_add_device(unsigned int index)
 
     for (axis_offset = 0; axis_offset < axis_count; axis_offset += (options.split_controllers ? 6 : axis_count))
     {
+        NTSTATUS status;
+
         if (!axis_offset) strcpy(buffer, product);
         else snprintf(buffer, ARRAY_SIZE(buffer), "%s %d", product, axis_offset / 6);
         ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
@@ -1018,6 +1015,15 @@ static void sdl_add_device(unsigned int index)
         impl->sdl_controller = controller;
         impl->id = id;
         impl->axis_offset = axis_offset;
+
+        if (impl->sdl_controller) status = build_controller_report_descriptor(&impl->unix_device);
+        else status = build_joystick_report_descriptor(&impl->unix_device);
+        if (status)
+        {
+            list_remove(&impl->unix_device.entry);
+            impl->unix_device.vtbl->destroy(&impl->unix_device);
+            return;
+        }
 
         bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
     }

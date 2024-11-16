@@ -49,14 +49,6 @@ static void mouse_destroy(struct unix_device *iface)
 
 static NTSTATUS mouse_start(struct unix_device *iface)
 {
-    const USAGE_AND_PAGE device_usage = {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_MOUSE};
-    if (!hid_device_begin_report_descriptor(iface, &device_usage))
-        return STATUS_NO_MEMORY;
-    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, 3))
-        return STATUS_NO_MEMORY;
-    if (!hid_device_end_report_descriptor(iface))
-        return STATUS_NO_MEMORY;
-
     return STATUS_SUCCESS;
 }
 
@@ -123,9 +115,21 @@ static const struct device_desc mouse_device_desc =
 
 static NTSTATUS mouse_device_create(void *args)
 {
+    const USAGE_AND_PAGE device_usage = {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_MOUSE};
     struct device_create_params *params = args;
+    struct unix_device *iface;
+
+    if (!(iface = hid_device_create(&mouse_vtbl, sizeof(struct mouse_device))))
+        return STATUS_NO_MEMORY;
+    if (!hid_device_begin_report_descriptor(iface, &device_usage))
+        return STATUS_NO_MEMORY;
+    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_BUTTON, 1, 3))
+        return STATUS_NO_MEMORY;
+    if (!hid_device_end_report_descriptor(iface))
+        return STATUS_NO_MEMORY;
+
     params->desc = mouse_device_desc;
-    params->device = (UINT_PTR)hid_device_create(&mouse_vtbl, sizeof(struct mouse_device));
+    params->device = (UINT_PTR)iface;
     return STATUS_SUCCESS;
 }
 
@@ -140,14 +144,6 @@ static void keyboard_destroy(struct unix_device *iface)
 
 static NTSTATUS keyboard_start(struct unix_device *iface)
 {
-    const USAGE_AND_PAGE device_usage = {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_KEYBOARD};
-    if (!hid_device_begin_report_descriptor(iface, &device_usage))
-        return STATUS_NO_MEMORY;
-    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_KEYBOARD, 0, 101))
-        return STATUS_NO_MEMORY;
-    if (!hid_device_end_report_descriptor(iface))
-        return STATUS_NO_MEMORY;
-
     return STATUS_SUCCESS;
 }
 
@@ -214,9 +210,21 @@ static const struct device_desc keyboard_device_desc =
 
 static NTSTATUS keyboard_device_create(void *args)
 {
+    const USAGE_AND_PAGE device_usage = {.UsagePage = HID_USAGE_PAGE_GENERIC, .Usage = HID_USAGE_GENERIC_KEYBOARD};
     struct device_create_params *params = args;
+    struct unix_device *iface;
+
+    if (!(iface = hid_device_create(&keyboard_vtbl, sizeof(struct keyboard_device))))
+        return STATUS_NO_MEMORY;
+    if (!hid_device_begin_report_descriptor(iface, &device_usage))
+        return STATUS_NO_MEMORY;
+    if (!hid_device_add_buttons(iface, HID_USAGE_PAGE_KEYBOARD, 0, 101))
+        return STATUS_NO_MEMORY;
+    if (!hid_device_end_report_descriptor(iface))
+        return STATUS_NO_MEMORY;
+
     params->desc = keyboard_device_desc;
-    params->device = (UINT_PTR)hid_device_create(&keyboard_vtbl, sizeof(struct keyboard_device));
+    params->device = (UINT_PTR)iface;
     return STATUS_SUCCESS;
 }
 
