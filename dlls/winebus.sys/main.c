@@ -417,7 +417,7 @@ static DWORD check_bus_option(const WCHAR *option, DWORD default_value)
     return default_value;
 }
 
-static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages)
+static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, UINT buttons)
 {
     char buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[1024])];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
@@ -684,22 +684,41 @@ static NTSTATUS get_device_descriptors(UINT64 unix_device, BYTE **report_desc, U
     return STATUS_SUCCESS;
 }
 
-static USAGE_AND_PAGE get_device_usages(UINT64 unix_device)
+static USAGE_AND_PAGE get_device_usages(UINT64 unix_device, UINT *buttons)
 {
     HIDP_DEVICE_DESC device_desc;
     USAGE_AND_PAGE usages = {0};
-    UINT report_desc_length;
+    UINT i, count = 0, report_desc_length;
+    HIDP_BUTTON_CAPS *button_caps;
     BYTE *report_desc;
     NTSTATUS status;
+    HIDP_CAPS caps;
 
     if (!(status = get_device_descriptors(unix_device, &report_desc, &report_desc_length, &device_desc)))
     {
+        PHIDP_PREPARSED_DATA preparsed = device_desc.CollectionDesc[0].PreparsedData;
         usages.UsagePage = device_desc.CollectionDesc[0].UsagePage;
         usages.Usage = device_desc.CollectionDesc[0].Usage;
+
+        if ((status = HidP_GetCaps(preparsed, &caps)) == HIDP_STATUS_SUCCESS &&
+            (button_caps = malloc(sizeof(*button_caps) * caps.NumberInputButtonCaps)))
+        {
+            status = HidP_GetButtonCaps(HidP_Input, button_caps, &caps.NumberInputButtonCaps, preparsed);
+            if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetButtonCaps returned %#lx\n", status);
+            else for (i = 0; i < caps.NumberInputButtonCaps; i++)
+            {
+                if (button_caps[i].UsagePage != HID_USAGE_PAGE_BUTTON) continue;
+                if (button_caps[i].IsRange) count = max(count, button_caps[i].Range.UsageMax);
+                else count = max(count, button_caps[i].NotRange.Usage);
+            }
+            free(button_caps);
+        }
+
         HidP_FreeCollectionDescription(&device_desc);
         RtlFreeHeap(GetProcessHeap(), 0, report_desc);
     }
 
+    *buttons = count;
     return usages;
 }
 
@@ -750,9 +769,10 @@ static DWORD CALLBACK bus_main_thread(void *args)
         {
             struct device_desc desc = event->device_created.desc;
             USAGE_AND_PAGE usages;
+            UINT buttons;
 
-            usages = get_device_usages(event->device);
-            if (!desc.is_hidraw != !is_hidraw_enabled(desc.vid, desc.pid, &usages))
+            usages = get_device_usages(event->device, &buttons);
+            if (!desc.is_hidraw != !is_hidraw_enabled(desc.vid, desc.pid, &usages, buttons))
             {
                 struct device_remove_params params = {.device = event->device};
                 WARN("ignoring %shidraw device %04x:%04x with usages %04x:%04x\n", desc.is_hidraw ? "" : "non-",
