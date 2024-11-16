@@ -1438,6 +1438,9 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
         if (!data->embedded) XIconifyWindow( data->display, data->whole_window, data->vis.screen );
         break;
     }
+
+    /* override redirect windows won't receive WM_STATE property changes */
+    if (!data->managed) data->wm_state_serial = 0;
 }
 
 
