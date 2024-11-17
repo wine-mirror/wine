@@ -427,6 +427,29 @@ static DWORD DP_CopyCreatePlayerOrGroup( DPMSG_GENERIC *genericDst, DPMSG_GENERI
     return offset;
 }
 
+static DWORD DP_CopySetPlayerOrGroupData( DPMSG_GENERIC *genericDst, DPMSG_GENERIC *genericSrc,
+                                          DWORD genericSize, BOOL ansi )
+{
+    DPMSG_SETPLAYERORGROUPDATA *src = (DPMSG_SETPLAYERORGROUPDATA *) genericSrc;
+    DPMSG_SETPLAYERORGROUPDATA *dst = (DPMSG_SETPLAYERORGROUPDATA *) genericDst;
+    DWORD offset = sizeof( DPMSG_SETPLAYERORGROUPDATA );
+
+    if ( dst )
+        *dst = *src;
+
+    if ( src->lpData )
+    {
+        if ( dst )
+        {
+            dst->lpData = (char *) dst + offset;
+            memcpy( dst->lpData, src->lpData, src->dwDataSize );
+        }
+        offset += src->dwDataSize;
+    }
+
+    return offset;
+}
+
 /* *lplpReply will be non NULL iff there is something to reply */
 HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
         DWORD dwMessageBodySize, void *messageHeader, WORD wCommandId, WORD wVersion,
@@ -534,6 +557,59 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, void *messageBody,
     case DPMSGCMD_SUPERENUMPLAYERSREPLY:
       DP_MSG_ReplyReceived( This, wCommandId, messageBody, dwMessageBodySize, messageHeader );
       break;
+
+    case DPMSGCMD_GROUPDATACHANGED: {
+      DPMSG_SETPLAYERORGROUPDATA setPlayerOrGroupDataMsg;
+      DPSP_MSG_GROUPDATACHANGED *msg;
+      struct GroupData *group;
+      HRESULT hr;
+      void *data;
+
+      if( dwMessageBodySize < sizeof( DPSP_MSG_GROUPDATACHANGED ) )
+        return DPERR_GENERIC;
+      msg = (DPSP_MSG_GROUPDATACHANGED *)messageBody;
+
+      if( dwMessageBodySize < msg->dataOffset )
+        return DPERR_GENERIC;
+      if( dwMessageBodySize - msg->dataOffset < msg->dataSize )
+        return DPERR_GENERIC;
+      data = (char *)messageBody + msg->dataOffset;
+
+      EnterCriticalSection( &This->lock );
+
+      if( !This->dp2->bConnectionOpen )
+      {
+        LeaveCriticalSection( &This->lock );
+        return DP_OK;
+      }
+
+      group = DP_FindAnyGroup( This, msg->groupId );
+      if( !group )
+      {
+        LeaveCriticalSection( &This->lock );
+        return DPERR_GENERIC;
+      }
+
+      DP_SetGroupData( group, DPSET_REMOTE, data, msg->dataSize );
+
+      setPlayerOrGroupDataMsg.dwType = DPSYS_SETPLAYERORGROUPDATA;
+      setPlayerOrGroupDataMsg.dwPlayerType = DPPLAYERTYPE_GROUP;
+      setPlayerOrGroupDataMsg.dpId = msg->groupId;
+      setPlayerOrGroupDataMsg.lpData = data;
+      setPlayerOrGroupDataMsg.dwDataSize = msg->dataSize;
+
+      hr = DP_QueueMessage( This, DPID_SYSMSG, DPID_ALLPLAYERS, 0, &setPlayerOrGroupDataMsg,
+                            DP_CopySetPlayerOrGroupData, 0 );
+      if ( FAILED( hr ) )
+      {
+        LeaveCriticalSection( &This->lock );
+        return hr;
+      }
+
+      LeaveCriticalSection( &This->lock );
+
+      break;
+    }
 
     case DPMSGCMD_JUSTENVELOPE:
       TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08lx\n", messageHeader, ((const DWORD *)messageHeader)[1] );

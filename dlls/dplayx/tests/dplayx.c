@@ -9194,9 +9194,7 @@ static DPID checkSetPlayerOrGroupDataMessage_( int line, IDirectPlay4 *dp, DWORD
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
-    if ( FAILED( hr ) )
-        return 0;
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
     ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
 
     msg = (DPMSG_SETPLAYERORGROUPDATA *) msgData;
@@ -9258,18 +9256,18 @@ static void test_GROUPDATACHANGED(void)
     sendGroupDataChanged( sendSock, 2349, 0x5e7, expectedGroupData, sizeof( expectedGroupData ) );
 
     waitResult = WaitForSingleObject( event, 2000 );
-    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+    ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
 
     dpid = checkSetPlayerOrGroupDataMessage( dp, DPPLAYERTYPE_GROUP, 0x5e7, expectedGroupData,
                                              sizeof( expectedGroupData ) );
-    todo_wine ok( dpid == 0x11223344, "got destination id %#lx.\n", dpid );
+    ok( dpid == 0x11223344, "got destination id %#lx.\n", dpid );
 
     memset( groupData, 0xcc, sizeof( groupData ) );
     groupDataSize = sizeof( groupData );
     hr = IDirectPlayX_GetGroupData( dp, 0x5e7, groupData, &groupDataSize, DPGET_REMOTE );
     ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( groupDataSize == sizeof( expectedGroupData ), "got group data size %lu.\n", groupDataSize );
-    todo_wine ok( !memcmp( groupData, expectedGroupData, sizeof( expectedGroupData ) ), "group data didn't match.\n" );
+    ok( groupDataSize == sizeof( expectedGroupData ), "got group data size %lu.\n", groupDataSize );
+    ok( !memcmp( groupData, expectedGroupData, sizeof( expectedGroupData ) ), "group data didn't match.\n" );
 
     checkNoMorePlayerMessages( dp );
 
