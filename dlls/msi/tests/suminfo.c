@@ -415,7 +415,6 @@ static void test_suminfo(void)
     strcpy(buf,"x");
     r = MsiSummaryInfoGetPropertyA(hsuminfo, PID_AUTHOR, &type, NULL, NULL, buf, &sz);
     ok(r == ERROR_SUCCESS, "MsiSummaryInfoGetPropertyA wrong error\n");
-    todo_wine
     ok(!strcmp(buf,"Fabian3"), "buffer was wrong: %s\n", buf);
 
     r = MsiCloseHandle(hsuminfo);
