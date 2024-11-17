@@ -1281,12 +1281,14 @@ static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
     return hr;
 }
 
-static HRESULT DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, const DPNAME *lpName,
-        void *data, DWORD dataSize, DWORD dwFlags, DPID idParent, BOOL bAnsi )
+static HRESULT DP_CreateGroup( IDirectPlayImpl *This, void *msgHeader, const DPID *lpid,
+        const DPNAME *lpName, void *data, DWORD dataSize, DWORD dwFlags, DPID idParent,
+        BOOL bAnsi )
 {
   struct GroupList *groupList = NULL;
   struct GroupData *parent = NULL;
   lpGroupData lpGData;
+  HRESULT hr;
 
   if( DPID_SYSTEM_GROUP != *lpid )
   {
@@ -1364,6 +1366,51 @@ static HRESULT DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, const DP
   lpGData->uRef++;
 
   DP_SetGroupData( lpGData, DPSET_REMOTE, data, dataSize );
+
+  /* FIXME: We should only create the system group if GetCaps returns
+   *        DPCAPS_GROUPOPTIMIZED.
+   */
+
+  /* Let the SP know that we've created this group */
+  if( This->dp2->spData.lpCB->CreateGroup )
+  {
+    DPSP_CREATEGROUPDATA data;
+    DWORD dwCreateFlags = 0;
+
+    TRACE( "Calling SP CreateGroup\n" );
+
+    if( !parent )
+      dwCreateFlags |= DPLAYI_GROUP_SYSGROUP;
+
+    if( !msgHeader )
+      dwCreateFlags |= DPLAYI_PLAYER_PLAYERLOCAL;
+
+    if( dwFlags & DPGROUP_HIDDEN )
+      dwCreateFlags |= DPLAYI_GROUP_HIDDEN;
+
+    data.idGroup           = *lpid;
+    data.dwFlags           = dwCreateFlags;
+    data.lpSPMessageHeader = msgHeader;
+    data.lpISP             = This->dp2->spData.lpISP;
+
+    hr = (*This->dp2->spData.lpCB->CreateGroup)( &data );
+    if( FAILED( hr ) )
+    {
+      if( groupList )
+      {
+        DPQ_REMOVE( parent->groups, groupList, groups );
+        free( groupList );
+      }
+      else
+      {
+        This->dp2->lpSysGroup = NULL;
+      }
+      free( lpGData->nameA );
+      free( lpGData->name );
+      free( lpGData );
+      return hr;
+    }
+  }
 
   TRACE( "Created group id 0x%08lx\n", *lpid );
 
@@ -1455,41 +1502,12 @@ static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *l
     }
   }
 
-  hr = DP_CreateGroup( This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags,
+  hr = DP_CreateGroup( This, lpMsgHdr, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags,
                        DPID_NOPARENT_GROUP, bAnsi );
 
   if( FAILED( hr ) )
   {
     return hr;
-  }
-
-  /* FIXME: We should only create the system group if GetCaps returns
-   *        DPCAPS_GROUPOPTIMIZED.
-   */
-
-  /* Let the SP know that we've created this group */
-  if( This->dp2->spData.lpCB->CreateGroup )
-  {
-    DPSP_CREATEGROUPDATA data;
-    DWORD dwCreateFlags = 0;
-
-    TRACE( "Calling SP CreateGroup\n" );
-
-    if( *lpidGroup == DPID_NOPARENT_GROUP )
-      dwCreateFlags |= DPLAYI_GROUP_SYSGROUP;
-
-    if( lpMsgHdr == NULL )
-      dwCreateFlags |= DPLAYI_PLAYER_PLAYERLOCAL;
-
-    if( dwFlags & DPGROUP_HIDDEN )
-      dwCreateFlags |= DPLAYI_GROUP_HIDDEN;
-
-    data.idGroup           = *lpidGroup;
-    data.dwFlags           = dwCreateFlags;
-    data.lpSPMessageHeader = lpMsgHdr;
-    data.lpISP             = This->dp2->spData.lpISP;
-
-    (*This->dp2->spData.lpCB->CreateGroup)( &data );
   }
 
   /* Inform all other peers of the creation of a new group. If there are
@@ -4483,27 +4501,12 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
     return DPERR_UNINITIALIZED;
   }
 
-  hr = DP_CreateGroup(This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags, idParentGroup,
-                      bAnsi );
+  hr = DP_CreateGroup(This, lpMsgHdr, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags,
+                      idParentGroup, bAnsi );
 
   if( FAILED( hr ) )
   {
     return hr;
-  }
-
-  /* Let the SP know that we've created this group */
-  if( This->dp2->spData.lpCB->CreateGroup )
-  {
-    DPSP_CREATEGROUPDATA data;
-
-    TRACE( "Calling SP CreateGroup\n" );
-
-    data.idGroup           = *lpidGroup;
-    data.dwFlags           = dwFlags;
-    data.lpSPMessageHeader = lpMsgHdr;
-    data.lpISP             = This->dp2->spData.lpISP;
-
-    (*This->dp2->spData.lpCB->CreateGroup)( &data );
   }
 
   /* Inform all other peers of the creation of a new group. If there are
