@@ -1281,7 +1281,7 @@ static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
     return hr;
 }
 
-static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, const DPNAME *lpName,
+static HRESULT DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, const DPNAME *lpName,
         void *data, DWORD dataSize, DWORD dwFlags, DPID idParent, BOOL bAnsi )
 {
   struct GroupList *groupList = NULL;
@@ -1292,7 +1292,7 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
   {
     parent = DP_FindAnyGroup( This, idParent );
     if( !parent )
-      return NULL;
+      return DPERR_INVALIDGROUP;
   }
 
   /* Allocate the new space and add to end of high level group list */
@@ -1300,7 +1300,7 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
 
   if( lpGData == NULL )
   {
-    return NULL;
+    return DPERR_OUTOFMEMORY;
   }
 
   DPQ_INIT(lpGData->groups);
@@ -1313,7 +1313,7 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
   if ( !lpGData->name )
   {
     free( lpGData );
-    return NULL;
+    return DPERR_OUTOFMEMORY;
   }
 
   lpGData->nameA = DP_DuplicateName( lpName, TRUE, bAnsi );
@@ -1321,7 +1321,7 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
   {
     free( lpGData->name );
     free( lpGData );
-    return NULL;
+    return DPERR_OUTOFMEMORY;
   }
 
   lpGData->parent = idParent;
@@ -1336,7 +1336,7 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
     free( lpGData->nameA );
     free( lpGData->name );
     free( lpGData );
-    return NULL;
+    return DPERR_OUTOFMEMORY;
   }
 
   if( DPID_SYSTEM_GROUP == *lpid )
@@ -1353,7 +1353,7 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
       free( lpGData->nameA );
       free( lpGData->name );
       free( lpGData );
-      return NULL;
+      return DPERR_OUTOFMEMORY;
     }
     groupList->lpGData = lpGData;
 
@@ -1367,7 +1367,7 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
 
   TRACE( "Created group id 0x%08lx\n", *lpid );
 
-  return lpGData;
+  return DP_OK;
 }
 
 /* This method assumes that all links to it are already deleted */
@@ -1428,7 +1428,7 @@ static lpGroupData DP_FindAnyGroup( IDirectPlayImpl *This, DPID dpid )
 static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *lpidGroup,
         DPNAME *lpGroupName, void *lpData, DWORD dwDataSize, DWORD dwFlags, BOOL bAnsi )
 {
-  lpGroupData lpGData;
+  HRESULT hr;
 
   TRACE( "(%p)->(%p,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
          This, lpMsgHdr, lpidGroup, lpGroupName, lpData, dwDataSize,
@@ -1455,12 +1455,12 @@ static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *l
     }
   }
 
-  lpGData = DP_CreateGroup( This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags,
-                            DPID_NOPARENT_GROUP, bAnsi );
+  hr = DP_CreateGroup( This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags,
+                       DPID_NOPARENT_GROUP, bAnsi );
 
-  if( lpGData == NULL )
+  if( FAILED( hr ) )
   {
-    return DPERR_CANTADDPLAYER; /* yes player not group */
+    return hr;
   }
 
   /* FIXME: We should only create the system group if GetCaps returns
@@ -4472,7 +4472,7 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
         DPID *lpidGroup, DPNAME *lpGroupName, void *lpData, DWORD dwDataSize, DWORD dwFlags,
         BOOL bAnsi )
 {
-  lpGroupData lpGData;
+  HRESULT hr;
 
   TRACE( "(%p)->(0x%08lx,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
          This, idParentGroup, lpidGroup, lpGroupName, lpData,
@@ -4483,12 +4483,12 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
     return DPERR_UNINITIALIZED;
   }
 
-  lpGData = DP_CreateGroup(This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags, idParentGroup,
-                           bAnsi );
+  hr = DP_CreateGroup(This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags, idParentGroup,
+                      bAnsi );
 
-  if( lpGData == NULL )
+  if( FAILED( hr ) )
   {
-    return DPERR_CANTADDPLAYER; /* yes player not group */
+    return hr;
   }
 
   /* Let the SP know that we've created this group */
