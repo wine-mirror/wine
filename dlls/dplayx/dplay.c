@@ -1134,6 +1134,7 @@ static HRESULT WINAPI IDirectPlay4AImpl_AddPlayerToGroup( IDirectPlay4A *iface, 
 
 HRESULT DP_AddPlayerToGroup( IDirectPlayImpl *This, DPID group, DPID player )
 {
+    DPMSG_ADDPLAYERTOGROUP addPlayerToGroupMsg;
     lpGroupData  gdata;
     lpPlayerList plist;
     lpPlayerList newplist;
@@ -1178,6 +1179,28 @@ HRESULT DP_AddPlayerToGroup( IDirectPlayImpl *This, DPID group, DPID player )
             free( newplist );
             return hr;
         }
+    }
+
+    addPlayerToGroupMsg.dwType = DPSYS_ADDPLAYERTOGROUP;
+    addPlayerToGroupMsg.dpIdGroup = group;
+    addPlayerToGroupMsg.dpIdPlayer = player;
+
+    hr = DP_QueueMessage( This, DPID_SYSMSG, DPID_ALLPLAYERS, 0, &addPlayerToGroupMsg,
+                          DP_CopyGeneric, sizeof( DPMSG_ADDPLAYERTOGROUP ) );
+    if ( FAILED( hr ) )
+    {
+        if ( This->dp2->spData.lpCB->RemovePlayerFromGroup )
+        {
+            DPSP_REMOVEPLAYERFROMGROUPDATA data;
+            data.idPlayer = player;
+            data.idGroup = group;
+            data.lpISP = This->dp2->spData.lpISP;
+            This->dp2->spData.lpCB->RemovePlayerFromGroup( &data );
+        }
+        DPQ_REMOVE( gdata->players, newplist, players );
+        --plist->lpPData->uRef;
+        free( newplist );
+        return hr;
     }
 
     return DP_OK;

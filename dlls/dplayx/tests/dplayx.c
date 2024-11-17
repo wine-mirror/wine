@@ -9058,9 +9058,7 @@ static DPID checkAddPlayerToGroupMessage_( int line, IDirectPlay4 *dp, DPID expe
     fromId = 0xdeadbeef;
     toId = 0xdeadbeef;
     hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
-    if ( FAILED( hr ) )
-        return 0;
+    ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
     ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
 
     msg = (DPMSG_ADDPLAYERTOGROUP *) msgData;
@@ -9112,7 +9110,7 @@ static void test_AddPlayerToGroup(void)
     ok( hr == DP_OK, "got hr %#lx.\n", hr );
 
     dpid = checkAddPlayerToGroupMessage( dp, 0x5e7, 0x07734 );
-    todo_wine ok( dpid == 0x07734, "got destination id %#lx.\n", dpid );
+    ok( dpid == 0x07734, "got destination id %#lx.\n", dpid );
 
     receiveAddPlayerToGroup( recvSock, 0x07734, 0x5e7 );
 
