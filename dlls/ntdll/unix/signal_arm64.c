@@ -1135,28 +1135,44 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
     case TRAP_BRKPT:
-    default:
         /* debug exceptions do not update ESR on Linux, so we fetch the instruction directly. */
         if (!(PSTATE_sig( context ) & 0x10) && /* AArch64 (not WoW) */
-            !(PC_sig( context ) & 3) &&
-            *(ULONG *)PC_sig( context ) == 0xd43e0060UL) /* brk #0xf003 -> __fastfail */
+            !(PC_sig( context ) & 3))
         {
-            rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
-            rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-            rec.NumberParameters = 1;
-            rec.ExceptionInformation[0] = ctx.X[0];
-            NtRaiseException( &rec, &ctx, FALSE );
-            return;
+            ULONG imm = (*(ULONG *)PC_sig( context ) >> 5) & 0xffff;
+            switch (imm)
+            {
+            case 0xf000:
+                ctx.Pc += 4;  /* skip the brk instruction */
+                rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+                rec.NumberParameters = 1;
+                break;
+            case 0xf001:
+                rec.ExceptionCode = STATUS_ASSERTION_FAILURE;
+                break;
+            case 0xf003:
+                rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
+                rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                rec.NumberParameters = 1;
+                rec.ExceptionInformation[0] = ctx.X[0];
+                NtRaiseException( &rec, &ctx, FALSE );
+                break;
+            case 0xf004:
+                rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+                break;
+            default:
+                rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+                break;
+            }
         }
-        ctx.Pc += 4;  /* skip the brk instruction */
-        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-        rec.NumberParameters = 1;
+        break;
+    default:
+        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
 
     setup_raise_exception( sigcontext, &rec, &ctx );
 }
-
 
 /**********************************************************************
  *		fpe_handler
