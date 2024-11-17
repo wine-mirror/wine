@@ -1284,7 +1284,16 @@ static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
 static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, const DPNAME *lpName,
         DWORD dwFlags, DPID idParent, BOOL bAnsi )
 {
+  struct GroupList *groupList = NULL;
+  struct GroupData *parent = NULL;
   lpGroupData lpGData;
+
+  if( DPID_SYSTEM_GROUP != *lpid )
+  {
+    parent = DP_FindAnyGroup( This, idParent );
+    if( !parent )
+      return NULL;
+  }
 
   /* Allocate the new space and add to end of high level group list */
   lpGData = calloc( 1, sizeof( *lpGData ) );
@@ -1315,8 +1324,7 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
     return NULL;
   }
 
-  /* FIXME: Should we check that the parent exists? */
-  lpGData->parent  = idParent;
+  lpGData->parent = idParent;
 
   /* FIXME: Should we validate the dwFlags? */
   lpGData->dwFlags = dwFlags;
@@ -1330,6 +1338,30 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
     free( lpGData );
     return NULL;
   }
+
+  if( DPID_SYSTEM_GROUP == *lpid )
+  {
+    This->dp2->lpSysGroup = lpGData;
+    TRACE( "Inserting system group\n" );
+  }
+  else
+  {
+    /* Insert into the parent group */
+    groupList = calloc( 1, sizeof( *groupList ) );
+    if( !groupList )
+    {
+      free( lpGData->nameA );
+      free( lpGData->name );
+      free( lpGData );
+      return NULL;
+    }
+    groupList->lpGData = lpGData;
+
+    DPQ_INSERT( parent->groups, groupList, groups );
+  }
+
+  /* Something is now referencing this data */
+  lpGData->uRef++;
 
   TRACE( "Created group id 0x%08lx\n", *lpid );
 
@@ -1428,23 +1460,6 @@ static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *l
   {
     return DPERR_CANTADDPLAYER; /* yes player not group */
   }
-
-  if( DPID_SYSTEM_GROUP == *lpidGroup )
-  {
-    This->dp2->lpSysGroup = lpGData;
-    TRACE( "Inserting system group\n" );
-  }
-  else
-  {
-    /* Insert into the system group */
-    lpGroupList lpGroup = calloc( 1, sizeof( *lpGroup ) );
-    lpGroup->lpGData = lpGData;
-
-    DPQ_INSERT( This->dp2->lpSysGroup->groups, lpGroup, groups );
-  }
-
-  /* Something is now referencing this data */
-  lpGData->uRef++;
 
   /* Set all the important stuff for the group */
   DP_SetGroupData( lpGData, DPSET_REMOTE, lpData, dwDataSize );
@@ -4458,8 +4473,6 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
         DPID *lpidGroup, DPNAME *lpGroupName, void *lpData, DWORD dwDataSize, DWORD dwFlags,
         BOOL bAnsi )
 {
-  lpGroupData lpGParentData;
-  lpGroupList lpGList;
   lpGroupData lpGData;
 
   TRACE( "(%p)->(0x%08lx,%p,%p,%p,0x%08lx,0x%08lx,%u)\n",
@@ -4471,10 +4484,6 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
     return DPERR_UNINITIALIZED;
   }
 
-  /* Verify that the specified parent is valid */
-  if( ( lpGParentData = DP_FindAnyGroup(This, idParentGroup ) ) == NULL )
-    return DPERR_INVALIDGROUP;
-
   lpGData = DP_CreateGroup(This, lpidGroup, lpGroupName, dwFlags, idParentGroup, bAnsi );
 
   if( lpGData == NULL )
@@ -4482,23 +4491,7 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
     return DPERR_CANTADDPLAYER; /* yes player not group */
   }
 
-  /* Something else is referencing this data */
-  lpGData->uRef++;
-
   DP_SetGroupData( lpGData, DPSET_REMOTE, lpData, dwDataSize );
-
-  /* The list has now been inserted into the interface group list. We now
-     need to put a "shortcut" to this group in the parent group */
-  lpGList = calloc( 1, sizeof( *lpGList ) );
-  if( lpGList == NULL )
-  {
-    FIXME( "Memory leak\n" );
-    return DPERR_CANTADDPLAYER; /* yes player not group */
-  }
-
-  lpGList->lpGData = lpGData;
-
-  DPQ_INSERT( lpGParentData->groups, lpGList, groups );
 
   /* Let the SP know that we've created this group */
   if( This->dp2->spData.lpCB->CreateGroup )
