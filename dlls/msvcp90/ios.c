@@ -3268,18 +3268,56 @@ FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
 /* ?_Fiopen@std@@YAPEAU_iobuf@@PEBDHH@Z */
 FILE* __cdecl _Fiopen(const char *name, int mode, int prot)
 {
-    wchar_t nameW[FILENAME_MAX];
+    static const struct {
+        int mode;
+        const char str[4];
+        const char str_bin[4];
+    } str_mode[] = {
+        {OPENMODE_out,                              "w",   "wb"},
+        {OPENMODE_out|OPENMODE_app,                 "a",   "ab"},
+        {OPENMODE_app,                              "a",   "ab"},
+        {OPENMODE_out|OPENMODE_trunc,               "w",   "wb"},
+        {OPENMODE_in,                               "r",   "rb"},
+        {OPENMODE_in|OPENMODE_out,                  "r+",  "r+b"},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_trunc,   "w+",  "w+b"},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_app,     "a+",  "a+b"},
+        {OPENMODE_in|OPENMODE_app,                  "a+",  "a+b"}
+    };
 
-    TRACE("(%s %d %d)\n", name, mode, prot);
+    int real_mode = mode & ~(OPENMODE_ate|OPENMODE__Nocreate|OPENMODE__Noreplace|OPENMODE_binary);
+    size_t mode_idx;
+    FILE *f = NULL;
 
-#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
-    if(mbstowcs_s(NULL, nameW, FILENAME_MAX, name, FILENAME_MAX-1) != 0)
+    TRACE("(%s %d %d)\n", debugstr_a(name), mode, prot);
+
+    for(mode_idx=0; mode_idx<ARRAY_SIZE(str_mode); mode_idx++)
+        if(str_mode[mode_idx].mode == real_mode)
+            break;
+    if(mode_idx == ARRAY_SIZE(str_mode))
         return NULL;
-#else
-    if(!MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, FILENAME_MAX-1))
+
+    if((mode & OPENMODE__Nocreate) && !(f = fopen(name, "r")))
         return NULL;
-#endif
-    return _Fiopen_wchar(nameW, mode, prot);
+    else if(f)
+        fclose(f);
+
+    if((mode & OPENMODE__Noreplace) && (mode & (OPENMODE_out|OPENMODE_app))
+            && (f = fopen(name, "r"))) {
+        fclose(f);
+        return NULL;
+    }
+
+    f = _fsopen(name, (mode & OPENMODE_binary) ? str_mode[mode_idx].str_bin
+            : str_mode[mode_idx].str, prot);
+    if(!f)
+        return NULL;
+
+    if((mode & OPENMODE_ate) && fseek(f, 0, SEEK_END)) {
+        fclose(f);
+        return NULL;
+    }
+
+    return f;
 }
 
 /* ?__Fiopen@std@@YAPAU_iobuf@@PBDH@Z */
