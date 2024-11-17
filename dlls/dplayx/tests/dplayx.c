@@ -978,6 +978,16 @@ typedef struct
     DWORD tickCount;
 } Ping;
 
+typedef struct
+{
+    MessageHeader header;
+    DPID toId;
+    DPID playerId;
+    DPID groupId;
+    DWORD createOffset;
+    DWORD passwordOffset;
+} AddPlayerToGroup;
+
 #include "poppack.h"
 
 #define bindUdp( port ) bindUdp_( __LINE__, port )
@@ -2164,6 +2174,39 @@ static unsigned short receivePingReply_( int line, SOCKET sock, DPID expectedFro
     ok_( __FILE__, line )( request.request.fromId == expectedFromId, "got source id %#lx.\n", request.request.fromId );
     ok_( __FILE__, line )( request.request.tickCount == expectedTickCount, "got tick count %#lx.\n",
                            request.request.tickCount );
+
+    return port;
+}
+
+#define receiveAddPlayerToGroup( sock, expectedPlayerId, expectedGroupId ) \
+        receiveAddPlayerToGroup_( __LINE__, sock, expectedPlayerId, expectedGroupId )
+static unsigned short receiveAddPlayerToGroup_( int line, SOCKET sock, DPID expectedPlayerId, DPID expectedGroupId )
+{
+#include "pshpack1.h"
+    struct
+    {
+        SpHeader spHeader;
+        AddPlayerToGroup request;
+    } request;
+#include "poppack.h"
+    unsigned short port;
+    int wsResult;
+
+    wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
+    todo_wine ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
+    if ( wsResult == SOCKET_ERROR )
+        return 0;
+
+    port = checkSpHeader_( line, &request.spHeader, sizeof( request ) );
+    checkMessageHeader_( line, &request.request.header, 13 );
+
+    ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
+    ok_( __FILE__, line )( request.request.playerId == expectedPlayerId, "got player id %#lx.\n",
+                           request.request.playerId );
+    ok_( __FILE__, line )( request.request.groupId == expectedGroupId, "got group id %#lx.\n",
+                           request.request.groupId );
+    ok_( __FILE__, line )( !request.request.createOffset, "got create offset %lu.\n", request.request.createOffset );
+    ok_( __FILE__, line )( !request.request.passwordOffset, "got password offset %lu.\n", request.request.passwordOffset );
 
     return port;
 }
@@ -8998,6 +9041,90 @@ static void test_PING(void)
     IDirectPlayX_Release( dp );
 }
 
+/* AddPlayerToGroup */
+
+#define checkAddPlayerToGroupMessage( dp, expectedGroupId, expectedPlayerId ) \
+        checkAddPlayerToGroupMessage_( __LINE__, dp, expectedGroupId, expectedPlayerId )
+static DPID checkAddPlayerToGroupMessage_( int line, IDirectPlay4 *dp, DPID expectedGroupId, DPID expectedPlayerId )
+{
+    DPMSG_ADDPLAYERTOGROUP *msg;
+    BYTE msgData[ 256 ];
+    DWORD msgDataSize;
+    DPID fromId, toId;
+    HRESULT hr;
+
+    memset( &msgData, 0, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
+    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+    if ( FAILED( hr ) )
+        return 0;
+    ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
+
+    msg = (DPMSG_ADDPLAYERTOGROUP *) msgData;
+    ok_( __FILE__, line )( msg->dwType == DPSYS_ADDPLAYERTOGROUP, "got message type %#lx.\n", msg->dwType );
+    ok_( __FILE__, line )( msg->dpIdGroup == expectedGroupId, "got id %#lx.\n", msg->dpIdGroup );
+    ok_( __FILE__, line )( msg->dpIdPlayer == expectedPlayerId, "got id %#lx.\n", msg->dpIdPlayer );
+
+    return toId;
+}
+
+static void test_AddPlayerToGroup(void)
+{
+    DPSESSIONDESC2 appGuidDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+    };
+    DPSESSIONDESC2 serverDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+        .lpszSessionName = (WCHAR *) L"normal",
+        .dwReserved1 = 0xaabbccdd,
+    };
+    IDirectPlay4 *dp;
+    SOCKET sendSock;
+    SOCKET recvSock;
+    HRESULT hr;
+    DPID dpid;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay4A, (void **) &dp );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    hr = IDirectPlayX_AddPlayerToGroup( dp, 0x5e7, 0x07734 );
+    ok( hr == DPERR_UNINITIALIZED, "got hr %#lx.\n", hr );
+
+    init_TCPIP_provider( dp, "127.0.0.1", 0 );
+
+    joinSession( dp, &appGuidDpsd, &serverDpsd, &sendSock, &recvSock, NULL );
+
+    hr = IDirectPlayX_AddPlayerToGroup( dp, 0x5e7, 0x07734 );
+    ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
+
+    createPlayer( dp, 0x07734, NULL, NULL, 0, 0, sendSock, recvSock );
+
+    hr = IDirectPlayX_AddPlayerToGroup( dp, 0x5e7, 0x07734 );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    dpid = checkAddPlayerToGroupMessage( dp, 0x5e7, 0x07734 );
+    todo_wine ok( dpid == 0x07734, "got destination id %#lx.\n", dpid );
+
+    receiveAddPlayerToGroup( recvSock, 0x07734, 0x5e7 );
+
+    checkNoMorePlayerMessages( dp );
+    checkNoMoreMessages( recvSock );
+
+    closesocket( recvSock );
+    closesocket( sendSock );
+
+    IDirectPlayX_Release( dp );
+}
+
 /* GetMessageCount */
 
 static void test_GetMessageCount(void)
@@ -10255,6 +10382,7 @@ START_TEST(dplayx)
     test_Send();
     test_Receive();
     test_PING();
+    test_AddPlayerToGroup();
 
     if (!winetest_interactive)
     {
