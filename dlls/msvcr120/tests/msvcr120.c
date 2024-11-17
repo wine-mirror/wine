@@ -26,6 +26,7 @@
 #include <fenv.h>
 #include <limits.h>
 #include <wctype.h>
+#include <share.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -233,6 +234,10 @@ static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
 static errno_t    (__cdecl *p_gmtime32_s)(struct tm*, __time32_t*);
 static struct tm* (__cdecl *p_gmtime64)(__time64_t*);
 static errno_t    (__cdecl *p_gmtime64_s)(struct tm*, __time64_t*);
+static FILE * (__cdecl *p__fsopen)(const char *, const char *, int);
+static FILE * (__cdecl *p__wfsopen)(const wchar_t *, const wchar_t *, int);
+static int (__cdecl *p_fclose)(FILE *);
+static int (__cdecl *p__unlink)(const char *);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -318,6 +323,11 @@ static BOOL init(void)
     SET(p_feclearexcept, "feclearexcept");
     SET(p_feholdexcept, "feholdexcept");
     SET(p_feupdateenv, "feupdateenv");
+
+    SET(p__fsopen, "_fsopen");
+    SET(p__wfsopen, "_wfsopen");
+    SET(p_fclose, "fclose");
+    SET(p__unlink, "_unlink");
 
     SET(p__clearfp, "_clearfp");
     SET(p_vsscanf, "vsscanf");
@@ -1825,6 +1835,47 @@ static void test_gmtime64(void)
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 }
 
+static void test__fsopen(void)
+{
+    int i;
+    FILE *f;
+    wchar_t wpath[MAX_PATH];
+    static const struct {
+        const char *loc;
+        const char *path;
+    } tests[] = {
+        { "German",   "t\xe4\xcf\xf6\xdf.txt" },
+        { "Turkish",  "t\xd0\xf0\xdd\xde\xfd\xfe.txt" },
+        { "Arabic",   "t\xca\x8c.txt" },
+        { "Japanese", "t\xb8\xd5.txt" },
+        { "Chinese",  "t\x81\x40\xfd\x71.txt" },
+    };
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        if(!p_setlocale(LC_ALL, tests[i].loc)) {
+            win_skip("skipping locale %s\n", tests[i].loc);
+            continue;
+        }
+
+        memset(wpath, 0, sizeof(wpath));
+        ok(MultiByteToWideChar(CP_ACP, 0, tests[i].path, -1, wpath, MAX_PATH),
+            "MultiByteToWideChar failed on %s with locale %s: %lx\n",
+            tests[i].path, tests[i].loc, GetLastError());
+
+        f = p__fsopen(tests[i].path, "w", SH_DENYNO);
+        ok(!!f, "failed to create %s with locale %s\n", tests[i].path, tests[i].loc);
+        p_fclose(f);
+
+        f = p__wfsopen(wpath, L"r", SH_DENYNO);
+        ok(!!f, "failed to open %s with locale %s\n", wine_dbgstr_w(wpath), tests[i].loc);
+        p_fclose(f);
+
+        ok(!p__unlink(tests[i].path), "failed to unlink %s with locale %s\n",
+            tests[i].path, tests[i].loc);
+    }
+    p_setlocale(LC_ALL, "C");
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -1850,4 +1901,5 @@ START_TEST(msvcr120)
     test_StructuredTaskCollection();
     test_strcmp();
     test_gmtime64();
+    test__fsopen();
 }
