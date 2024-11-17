@@ -17,12 +17,14 @@
  */
 
 #include <locale.h>
+#include <share.h>
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "winnls.h"
 
 DWORD expect_idx;
 static int vector_alloc_count;
@@ -210,6 +212,8 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
 static char* (__cdecl *p_setlocale)(int, const char*);
 static int (__cdecl *p__setmbcp)(int);
 static int (__cdecl *p__ismbblead)(unsigned int);
+static int (__cdecl *p_fclose)(FILE*);
+static int (__cdecl *p__unlink)(const char*);
 
 static MSVCRT_long (__cdecl *p__Xtime_diff_to_millis2)(const xtime*, const xtime*);
 static int (__cdecl *p_xtime_get)(xtime*, int);
@@ -423,6 +427,21 @@ static void (__thiscall *p_vector_base_v4__Internal_resize)(
 
 static const BYTE *p_byte_reverse_table;
 
+typedef enum {
+    OPENMODE_in         = 0x01,
+    OPENMODE_out        = 0x02,
+    OPENMODE_ate        = 0x04,
+    OPENMODE_app        = 0x08,
+    OPENMODE_trunc      = 0x10,
+    OPENMODE__Nocreate  = 0x40,
+    OPENMODE__Noreplace = 0x80,
+    OPENMODE_binary     = 0x20,
+    OPENMODE_mask       = 0xff
+} IOSB_openmode;
+
+static FILE* (__cdecl *p__Fiopen_wchar)(const wchar_t*, int, int);
+static FILE* (__cdecl *p__Fiopen)(const char*, int, int);
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -584,6 +603,10 @@ static BOOL init(void)
                 "?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00P6AXPEAX0@ZP6AX1PEBX0@Z3@Z");
         SET(p__Syserror_map,
                 "?_Syserror_map@std@@YAPEBDH@Z");
+        SET(p__Fiopen_wchar,
+                "?_Fiopen@std@@YAPEAU_iobuf@@PEB_WHH@Z");
+        SET(p__Fiopen,
+                "?_Fiopen@std@@YAPEAU_iobuf@@PEBDHH@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -659,6 +682,10 @@ static BOOL init(void)
                 "?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z");
         SET(p__Syserror_map,
                 "?_Syserror_map@std@@YAPBDH@Z");
+        SET(p__Fiopen_wchar,
+                "?_Fiopen@std@@YAPAU_iobuf@@PB_WHH@Z");
+        SET(p__Fiopen,
+                "?_Fiopen@std@@YAPAU_iobuf@@PBDHH@Z");
 #ifdef __i386__
         SET(p_i386_Thrd_current,
                 "_Thrd_current");
@@ -821,6 +848,8 @@ static BOOL init(void)
     p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
     p__setmbcp = (void*)GetProcAddress(hdll, "_setmbcp");
     p__ismbblead = (void*)GetProcAddress(hdll, "_ismbblead");
+    p_fclose = (void*)GetProcAddress(hdll, "fclose");
+    p__unlink = (void*)GetProcAddress(hdll, "_unlink");
 
     hdll = GetModuleHandleA("kernel32.dll");
     pCreateSymbolicLinkA = (void*)GetProcAddress(hdll, "CreateSymbolicLinkA");
@@ -3343,6 +3372,47 @@ static void test_data_exports(void)
     }
 }
 
+static void test__Fiopen(void)
+{
+    int i;
+    FILE *f;
+    wchar_t wpath[MAX_PATH];
+    static const struct {
+        const char *loc;
+        const char *path;
+    } tests[] = {
+        { "German",   "t\xe4\xcf\xf6\xdf.txt" },
+        { "Turkish",  "t\xd0\xf0\xdd\xde\xfd\xfe.txt" },
+        { "Arabic",   "t\xca\x8c.txt" },
+        { "Japanese", "t\xb8\xd5.txt" },
+        { "Chinese",  "t\x81\x40\xfd\x71.txt" },
+    };
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        if(!p_setlocale(LC_ALL, tests[i].loc)) {
+            win_skip("skipping locale %s\n", tests[i].loc);
+            continue;
+        }
+
+        memset(wpath, 0, sizeof(wpath));
+        ok(MultiByteToWideChar(CP_ACP, 0, tests[i].path, -1, wpath, MAX_PATH),
+            "MultiByteToWideChar failed on %s with locale %s: %lx\n",
+            tests[i].path, tests[i].loc, GetLastError());
+
+        f = p__Fiopen(tests[i].path, OPENMODE_out, SH_DENYNO);
+        ok(!!f, "failed to create %s with locale %s\n", tests[i].path, tests[i].loc);
+        p_fclose(f);
+
+        f = p__Fiopen_wchar(wpath, OPENMODE_in, SH_DENYNO);
+        ok(!!f, "failed to open %s with locale %s\n", wine_dbgstr_w(wpath), tests[i].loc);
+        p_fclose(f);
+
+        ok(!p__unlink(tests[i].path), "failed to unlink %s with locale %s\n",
+            tests[i].path, tests[i].loc);
+    }
+    p_setlocale(LC_ALL, "C");
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -3389,6 +3459,8 @@ START_TEST(msvcp120)
     test_vbtable_size_exports();
 
     test_data_exports();
+
+    test__Fiopen();
 
     free_expect_struct();
     TlsFree(expect_idx);
