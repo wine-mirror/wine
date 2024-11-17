@@ -62,7 +62,6 @@ static void test_stop(void)
     /* Stop non existing service */
 
     run_net_exe("net stop non-existing-service", &r);
-    todo_wine
     check_exit_code(2);
 }
 
