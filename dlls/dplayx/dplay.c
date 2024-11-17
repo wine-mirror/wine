@@ -4953,19 +4953,22 @@ static HRESULT DP_IF_EnumGroupsInGroup( IDirectPlayImpl *This, DPID group, GUID 
     if ( ( gdata = DP_FindAnyGroup(This, group ) ) == NULL )
         return DPERR_INVALIDGROUP;
 
-    if ( DPQ_IS_EMPTY( gdata->groups ) )
-        return DP_OK;
-
-
-    for( glist = DPQ_FIRST( gdata->groups ); ; glist = DPQ_NEXT( glist->groups ) )
+    for( glist = DPQ_FIRST( gdata->groups ); glist; glist = DPQ_NEXT( glist->groups ) )
     {
-        /* FIXME: Should check flags for match here */
-        if ( !(*enumplayercb)( glist->lpGData->dpid, DPPLAYERTYPE_GROUP,
-                    ansi ? glist->lpGData->nameA : glist->lpGData->name, flags, context ) )
-            return DP_OK; /* User requested break */
+        DWORD groupFlags;
 
-        if ( DPQ_IS_ENDOFLIST( glist->groups ) )
-            break;
+        if ( (glist->lpGData->dwFlags & flags) != (flags & ~DPENUMGROUPS_REMOTE) )
+            continue;
+        if ( (glist->lpGData->dwFlags & DPENUMGROUPS_LOCAL) && (flags & DPENUMGROUPS_REMOTE) )
+            continue;
+
+        groupFlags = glist->lpGData->dwFlags;
+        groupFlags &= ~(DPENUMGROUPS_LOCAL | DPLAYI_GROUP_DPLAYOWNS);
+        groupFlags |= flags;
+
+        if ( !(*enumplayercb)( glist->lpGData->dpid, DPPLAYERTYPE_GROUP,
+                    ansi ? glist->lpGData->nameA : glist->lpGData->name, groupFlags, context ) )
+            return DP_OK; /* User requested break */
     }
 
     return DP_OK;
