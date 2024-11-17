@@ -2830,7 +2830,7 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
             HRESULT hr;
 
             if ( player->actualCount )
-                ok_( __FILE__, data->line )( 0, "duplicate player dpid %#lx.\n", dpid );
+                todo_wine ok_( __FILE__, data->line )( 0, "duplicate player dpid %#lx.\n", dpid );
             ok_( __FILE__, data->line )( playerType == player->expectedPlayerType, "got player type %lu.\n",
                                          playerType );
             if ( player->expectedShortName )
@@ -2853,7 +2853,8 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
                 ok_( __FILE__, data->line )( !name->lpszLongNameA, "got long name %s.\n",
                                              wine_dbgstr_a( name->lpszLongNameA ) );
             }
-            ok_( __FILE__, data->line )( flags == player->expectedFlags, "got flags %#lx.\n", flags );
+            todo_wine_if( playerType == DPPLAYERTYPE_GROUP && flags == DPENUMPLAYERS_LOCAL )
+                ok_( __FILE__, data->line )( flags == player->expectedFlags, "got flags %#lx.\n", flags );
 
             memset( &playerData, 0xcc, sizeof( playerData ) );
             playerDataSize = sizeof( playerData );
@@ -2862,8 +2863,9 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
             else
                 hr = IDirectPlayX_GetGroupData( data->dp, dpid, playerData, &playerDataSize, DPGET_REMOTE );
             ok_( __FILE__, data->line )( hr == DP_OK, "GetPlayerData() returned %#lx.\n", hr );
-            ok_( __FILE__, data->line )( playerDataSize == player->expectedPlayerDataSize,
-                                         "got player data size %lu.\n", playerDataSize );
+            todo_wine_if( playerType == DPPLAYERTYPE_GROUP )
+                ok_( __FILE__, data->line )( playerDataSize == player->expectedPlayerDataSize,
+                                             "got player data size %lu.\n", playerDataSize );
             ok_( __FILE__, data->line )( !memcmp( playerData, player->expectedPlayerData, player->expectedPlayerDataSize ),
                                          "player data doesn't match.\n" );
 
@@ -2964,10 +2966,10 @@ static void checkGroupPlayerList_( int line, DPID group, IDirectPlay4 *dp, Expec
     HRESULT hr;
 
     hr = IDirectPlayX_EnumGroupPlayers( dp, group, NULL, checkPlayerListCallback, &data, DPENUMPLAYERS_LOCAL );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "EnumGroupPlayers() returned %#lx.\n", hr );
+    ok_( __FILE__, line )( hr == DP_OK, "EnumGroupPlayers() returned %#lx.\n", hr );
 
     hr = IDirectPlayX_EnumGroupPlayers( dp, group, NULL, checkPlayerListCallback, &data, DPENUMPLAYERS_REMOTE );
-    todo_wine ok_( __FILE__, line )( hr == DP_OK, "EnumGroupPlayers() returned %#lx.\n", hr );
+    ok_( __FILE__, line )( hr == DP_OK, "EnumGroupPlayers() returned %#lx.\n", hr );
 
     todo_wine ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
                                      data.actualPlayerCount );

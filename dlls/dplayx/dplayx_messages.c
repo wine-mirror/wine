@@ -676,6 +676,30 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
           return hr;
         }
       }
+      for( i = 0; i < enumPlayersReply->groupCount; ++i )
+      {
+        DPPLAYERINFO playerInfo;
+
+        hr = DP_MSG_ReadSuperPackedPlayer( (char *) enumPlayersReply, &offset, dwMsgSize,
+                                           &playerInfo );
+        if( FAILED( hr ) )
+        {
+          free( msgHeader );
+          free( lpMsg );
+          return hr;
+        }
+
+        hr = DP_CreateGroup( This, msgHeader, &playerInfo.id, &playerInfo.name,
+                             playerInfo.playerData, playerInfo.playerDataLength,
+                             playerInfo.flags & ~DPLAYI_PLAYER_PLAYERLOCAL, playerInfo.parentId,
+                             FALSE );
+        if( FAILED( hr ) )
+        {
+          free( msgHeader );
+          free( lpMsg );
+          return hr;
+        }
+      }
     }
     else if( envelope->wCommandId == DPMSGCMD_GETNAMETABLEREPLY )
     {

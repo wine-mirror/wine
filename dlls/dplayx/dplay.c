@@ -1281,7 +1281,7 @@ static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
     return hr;
 }
 
-static HRESULT DP_CreateGroup( IDirectPlayImpl *This, void *msgHeader, const DPID *lpid,
+HRESULT DP_CreateGroup( IDirectPlayImpl *This, void *msgHeader, const DPID *lpid,
         const DPNAME *lpName, void *data, DWORD dataSize, DWORD dwFlags, DPID idParent,
         BOOL bAnsi )
 {

@@ -218,6 +218,9 @@ HRESULT DP_HandleGameMessage( IDirectPlayImpl *This, void *messageBody, DWORD me
 HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPNAME *lpName,
                          void *data, DWORD dataSize, void *spData, DWORD spDataSize, DWORD dwFlags,
                          HANDLE hEvent, struct PlayerData **playerData, BOOL bAnsi );
+HRESULT DP_CreateGroup( IDirectPlayImpl *This, void *msgHeader, const DPID *lpid,
+                        const DPNAME *lpName, void *data, DWORD dataSize, DWORD dwFlags,
+                        DPID idParent, BOOL bAnsi );
 
 /* DP SP external interfaces into DirectPlay */
 extern HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData );
