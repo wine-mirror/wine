@@ -3078,12 +3078,11 @@ static HRESULT WINAPI IDirectPlay4Impl_GetGroupData( IDirectPlay4 *iface, DPID g
         src = gdata->lpRemoteData;
     }
 
+    *size = bufsize;
+
     /* Is the user requesting to know how big a buffer is required? */
     if ( !data || *size < bufsize )
-    {
-        *size = bufsize;
         return DPERR_BUFFERTOOSMALL;
-    }
 
     CopyMemory( data, src, bufsize );
 

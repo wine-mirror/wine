@@ -2862,9 +2862,8 @@ static BOOL CALLBACK checkPlayerListCallback( DPID dpid, DWORD playerType, const
             else
                 hr = IDirectPlayX_GetGroupData( data->dp, dpid, playerData, &playerDataSize, DPGET_REMOTE );
             ok_( __FILE__, data->line )( hr == DP_OK, "GetPlayerData() returned %#lx.\n", hr );
-            todo_wine_if( playerType == DPPLAYERTYPE_GROUP )
-                ok_( __FILE__, data->line )( playerDataSize == player->expectedPlayerDataSize,
-                                             "got player data size %lu.\n", playerDataSize );
+            ok_( __FILE__, data->line )( playerDataSize == player->expectedPlayerDataSize,
+                                         "got player data size %lu.\n", playerDataSize );
             ok_( __FILE__, data->line )( !memcmp( playerData, player->expectedPlayerData, player->expectedPlayerDataSize ),
                                          "player data doesn't match.\n" );
 
