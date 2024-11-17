@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+#include <locale.h>
+#include <share.h>
+
+#include <windef.h>
+#include <winbase.h>
+#include <winnls.h>
 #include "wine/test.h"
 
 static void test_std_stream_buffering(void)
@@ -162,9 +169,57 @@ static void test_std_stream_open(void)
     close(fd);
 }
 
+static void test_fopen(void)
+{
+    int i;
+    FILE *f;
+    wchar_t wpath[MAX_PATH];
+    static const struct {
+        const char *loc;
+        const char *path;
+        int is_todo;
+    } tests[] = {
+        { "German.utf8",    "t\xc3\xa4\xc3\x8f\xc3\xb6\xc3\x9f.txt", TRUE },
+        { "Polish.utf8",    "t\xc4\x99\xc5\x9b\xc4\x87.txt", TRUE },
+        { "Turkish.utf8",   "t\xc3\x87\xc4\x9e\xc4\xb1\xc4\xb0\xc5\x9e.txt", TRUE },
+        { "Arabic.utf8",    "t\xd8\xaa\xda\x86.txt", TRUE },
+        { "Japanese.utf8",  "t\xe3\x82\xaf\xe3\x83\xa4.txt", TRUE },
+        { "Chinese.utf8",   "t\xe4\xb8\x82\xe9\xbd\xab.txt", TRUE },
+        { "Japanese",       "t\xb8\xd5.txt" },
+
+    };
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        if(!setlocale(LC_ALL, tests[i].loc)) {
+            win_skip("skipping locale %s\n", tests[i].loc);
+            continue;
+        }
+
+        if(!MultiByteToWideChar(___lc_codepage_func() == CP_UTF8 ? CP_UTF8 : CP_ACP,
+                    MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, tests[i].path, -1, wpath, MAX_PATH))
+            continue;
+
+        f = _fsopen(tests[i].path, "w", SH_DENYNO);
+        ok(!!f, "failed to create %s with locale %s\n",
+                debugstr_a(tests[i].path), tests[i].loc);
+        fclose(f);
+
+        f = _wfsopen(wpath, L"r", SH_DENYNO);
+        todo_wine_if(tests[i].is_todo && GetACP() != CP_UTF8)
+        ok(!!f, "failed to open %s with locale %s\n",
+                debugstr_a(tests[i].path), tests[i].loc);
+        if(f) fclose(f);
+
+        ok(!unlink(tests[i].path), "failed to unlink %s with locale %s\n",
+                tests[i].path, tests[i].loc);
+    }
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(file)
 {
     test_std_stream_buffering();
     test_iobuf_layout();
     test_std_stream_open();
+    test_fopen();
 }
