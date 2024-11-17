@@ -221,6 +221,7 @@ HRESULT DP_CreatePlayer( IDirectPlayImpl *This, void *msgHeader, DPID *lpid, DPN
 HRESULT DP_CreateGroup( IDirectPlayImpl *This, void *msgHeader, const DPID *lpid,
                         const DPNAME *lpName, void *data, DWORD dataSize, DWORD dwFlags,
                         DPID idParent, BOOL bAnsi );
+HRESULT DP_AddPlayerToGroup( IDirectPlayImpl *This, DPID group, DPID player );
 
 /* DP SP external interfaces into DirectPlay */
 extern HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData );

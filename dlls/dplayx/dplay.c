@@ -1132,7 +1132,7 @@ static HRESULT WINAPI IDirectPlay4AImpl_AddPlayerToGroup( IDirectPlay4A *iface, 
     return IDirectPlayX_AddPlayerToGroup( &This->IDirectPlay4_iface, group, player );
 }
 
-static HRESULT DP_AddPlayerToGroup( IDirectPlayImpl *This, DPID group, DPID player )
+HRESULT DP_AddPlayerToGroup( IDirectPlayImpl *This, DPID group, DPID player )
 {
     lpGroupData  gdata;
     lpPlayerList plist;

@@ -2969,8 +2969,8 @@ static void checkGroupPlayerList_( int line, DPID group, IDirectPlay4 *dp, Expec
     hr = IDirectPlayX_EnumGroupPlayers( dp, group, NULL, checkPlayerListCallback, &data, DPENUMPLAYERS_REMOTE );
     ok_( __FILE__, line )( hr == DP_OK, "EnumGroupPlayers() returned %#lx.\n", hr );
 
-    todo_wine ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
-                                     data.actualPlayerCount );
+    ok_( __FILE__, line )( data.actualPlayerCount == data.expectedPlayerCount, "got player count %d.\n",
+                           data.actualPlayerCount );
 }
 
 #define checkGroupList( dp, expectedGroups, expectedGroupCount ) \

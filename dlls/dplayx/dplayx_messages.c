@@ -679,6 +679,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
       for( i = 0; i < enumPlayersReply->groupCount; ++i )
       {
         DPPLAYERINFO playerInfo;
+        int j;
 
         hr = DP_MSG_ReadSuperPackedPlayer( (char *) enumPlayersReply, &offset, dwMsgSize,
                                            &playerInfo );
@@ -698,6 +699,17 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
           free( msgHeader );
           free( lpMsg );
           return hr;
+        }
+
+        for( j = 0; j < playerInfo.playerCount; ++j )
+        {
+          hr = DP_AddPlayerToGroup( This, playerInfo.id, playerInfo.playerIds[ j ] );
+          if( FAILED( hr ) )
+          {
+            free( msgHeader );
+            free( lpMsg );
+            return hr;
+          }
         }
       }
     }
