@@ -988,6 +988,15 @@ typedef struct
     DWORD passwordOffset;
 } AddPlayerToGroup;
 
+typedef struct
+{
+    MessageHeader header;
+    DPID toId;
+    DPID groupId;
+    DWORD dataSize;
+    DWORD dataOffset;
+} GroupDataChanged;
+
 #include "poppack.h"
 
 #define bindUdp( port ) bindUdp_( __LINE__, port )
@@ -2207,6 +2216,52 @@ static unsigned short receiveAddPlayerToGroup_( int line, SOCKET sock, DPID expe
     ok_( __FILE__, line )( !request.request.passwordOffset, "got password offset %lu.\n", request.request.passwordOffset );
 
     return port;
+}
+
+#define sendGroupDataChanged( sock, port, groupId, data, dataSize ) \
+        sendGroupDataChanged_( __LINE__, sock, port, groupId, data, dataSize )
+static void sendGroupDataChanged_( int line, SOCKET sock, unsigned short port, DPID groupId, void *data, DWORD dataSize )
+{
+#include "pshpack1.h"
+    struct
+    {
+        SpHeader spHeader;
+        GroupDataChanged request;
+        BYTE data[ 256 ];
+    } request =
+    {
+        .spHeader =
+        {
+            .mixed = 0xfab00000 + sizeof( request ),
+            .addr =
+            {
+                .sin_family = AF_INET,
+                .sin_port = htons( port ),
+            },
+        },
+        .request =
+        {
+            .header =
+            {
+                .magic = 0x79616c70,
+                .command = 17,
+                .version = 14,
+            },
+            .toId = 0,
+            .groupId = groupId,
+            .dataSize = dataSize,
+            .dataOffset = sizeof( request.request ),
+        },
+    };
+#include "poppack.h"
+    int wsResult;
+    int size;
+
+    size = sizeof( request ) + dataSize;
+    memcpy( &request.data, data, dataSize );
+
+    wsResult = send( sock, (char *) &request, size, 0 );
+    ok_( __FILE__, line )( wsResult == size, "send() returned %d.\n", wsResult );
 }
 
 static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, WORD port )
@@ -9121,6 +9176,111 @@ static void test_AddPlayerToGroup(void)
     IDirectPlayX_Release( dp );
 }
 
+/* GROUPDATACHANGED */
+
+#define checkSetPlayerOrGroupDataMessage( dp, expectedPlayerType, expectedDpid, expectedData, expectedDataSize ) \
+        checkSetPlayerOrGroupDataMessage_( __LINE__, dp, expectedPlayerType, expectedDpid, expectedData, expectedDataSize )
+static DPID checkSetPlayerOrGroupDataMessage_( int line, IDirectPlay4 *dp, DWORD expectedPlayerType, DPID expectedDpid,
+                                               void *expectedData, DWORD expectedDataSize )
+{
+    DPMSG_SETPLAYERORGROUPDATA *msg;
+    BYTE msgData[ 256 ];
+    DWORD msgDataSize;
+    DPID fromId, toId;
+    HRESULT hr;
+
+    memset( &msgData, 0, sizeof( msgData ) );
+    msgDataSize = sizeof( msgData );
+    fromId = 0xdeadbeef;
+    toId = 0xdeadbeef;
+    hr = IDirectPlayX_Receive( dp, &fromId, &toId, 0, msgData, &msgDataSize );
+    todo_wine ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
+    if ( FAILED( hr ) )
+        return 0;
+    ok_( __FILE__, line )( fromId == DPID_SYSMSG, "got source id %#lx.\n", fromId );
+
+    msg = (DPMSG_SETPLAYERORGROUPDATA *) msgData;
+    ok_( __FILE__, line )( msg->dwType == DPSYS_SETPLAYERORGROUPDATA, "got message type %#lx.\n", msg->dwType );
+    ok_( __FILE__, line )( msg->dwPlayerType == expectedPlayerType, "got player type %#lx.\n", msg->dwPlayerType );
+    ok_( __FILE__, line )( msg->dpId == expectedDpid, "got dpid %#lx.\n", msg->dpId );
+    ok_( __FILE__, line )( msg->dwDataSize == expectedDataSize, "got player data size %lu.\n", msg->dwDataSize );
+    if ( expectedData )
+    {
+        ok_( __FILE__, line )( msg->lpData && !memcmp( msg->lpData, expectedData, expectedDataSize ),
+                               "data didn't match.\n" );
+    }
+    else
+    {
+        ok_( __FILE__, line )( !msg->lpData, "got data %p.\n", msg->lpData );
+    }
+
+    return toId;
+}
+
+static void test_GROUPDATACHANGED(void)
+{
+    BYTE expectedGroupData[] = { 8, 7, 6, 5, 4, 3, 2, 1, };
+    DPSESSIONDESC2 appGuidDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidInstance = appGuid,
+        .guidApplication = appGuid,
+    };
+    DPSESSIONDESC2 serverDpsd =
+    {
+        .dwSize = sizeof( DPSESSIONDESC2 ),
+        .guidApplication = appGuid,
+        .guidInstance = appGuid,
+        .lpszSessionName = (WCHAR *) L"normal",
+        .dwReserved1 = 0xaabbccdd,
+    };
+    BYTE groupData[ 256 ];
+    DWORD groupDataSize;
+    IDirectPlay4A *dp;
+    DWORD waitResult;
+    SOCKET sendSock;
+    SOCKET recvSock;
+    HANDLE event;
+    HRESULT hr;
+    DPID dpid;
+
+    event = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay4A, (void **) &dp );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+
+    init_TCPIP_provider( dp, "127.0.0.1", 0 );
+
+    joinSession( dp, &appGuidDpsd, &serverDpsd, &sendSock, &recvSock, NULL );
+
+    createPlayer( dp, 0x11223344, event, NULL, 0, 0, sendSock, recvSock );
+
+    sendGroupDataChanged( sendSock, 2349, 0x5e7, expectedGroupData, sizeof( expectedGroupData ) );
+
+    waitResult = WaitForSingleObject( event, 2000 );
+    todo_wine ok( waitResult == WAIT_OBJECT_0, "message wait returned %lu\n", waitResult );
+
+    dpid = checkSetPlayerOrGroupDataMessage( dp, DPPLAYERTYPE_GROUP, 0x5e7, expectedGroupData,
+                                             sizeof( expectedGroupData ) );
+    todo_wine ok( dpid == 0x11223344, "got destination id %#lx.\n", dpid );
+
+    memset( groupData, 0xcc, sizeof( groupData ) );
+    groupDataSize = sizeof( groupData );
+    hr = IDirectPlayX_GetGroupData( dp, 0x5e7, groupData, &groupDataSize, DPGET_REMOTE );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( groupDataSize == sizeof( expectedGroupData ), "got group data size %lu.\n", groupDataSize );
+    todo_wine ok( !memcmp( groupData, expectedGroupData, sizeof( expectedGroupData ) ), "group data didn't match.\n" );
+
+    checkNoMorePlayerMessages( dp );
+
+    closesocket( recvSock );
+    closesocket( sendSock );
+
+    IDirectPlayX_Release( dp );
+
+    CloseHandle( event );
+}
+
 /* GetMessageCount */
 
 static void test_GetMessageCount(void)
@@ -10379,6 +10539,7 @@ START_TEST(dplayx)
     test_Receive();
     test_PING();
     test_AddPlayerToGroup();
+    test_GROUPDATACHANGED();
 
     if (!winetest_interactive)
     {
