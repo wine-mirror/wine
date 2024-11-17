@@ -18,6 +18,8 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <locale.h>
+#include <share.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -253,6 +255,24 @@ static ULONG (__cdecl *p__Winerror_message)(ULONG, char*, ULONG);
 static int (__cdecl *p__Winerror_map)(int);
 static const char* (__cdecl *p__Syserror_map)(int err);
 
+typedef enum {
+    OPENMODE_in         = 0x01,
+    OPENMODE_out        = 0x02,
+    OPENMODE_ate        = 0x04,
+    OPENMODE_app        = 0x08,
+    OPENMODE_trunc      = 0x10,
+    OPENMODE__Nocreate  = 0x40,
+    OPENMODE__Noreplace = 0x80,
+    OPENMODE_binary     = 0x20,
+    OPENMODE_mask       = 0xff
+} IOSB_openmode;
+static FILE* (__cdecl *p__Fiopen_wchar)(const wchar_t*, int, int);
+static FILE* (__cdecl *p__Fiopen)(const char*, int, int);
+
+static char* (__cdecl *p_setlocale)(int, const char*);
+static int (__cdecl *p_fclose)(FILE*);
+static int (__cdecl *p__unlink)(const char*);
+
 static BOOLEAN (WINAPI *pCreateSymbolicLinkW)(const WCHAR *, const WCHAR *, DWORD);
 
 static HMODULE msvcp;
@@ -291,6 +311,9 @@ static BOOL init(void)
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPEAU_Threadpool_chore@12@@Z");
         SET(p__Winerror_message, "?_Winerror_message@std@@YAKKPEADK@Z");
         SET(p__Syserror_map, "?_Syserror_map@std@@YAPEBDH@Z");
+
+        SET(p__Fiopen_wchar, "?_Fiopen@std@@YAPEAU_iobuf@@PEB_WHH@Z");
+        SET(p__Fiopen, "?_Fiopen@std@@YAPEAU_iobuf@@PEBDHH@Z");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
@@ -322,6 +345,9 @@ static BOOL init(void)
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
         SET(p__Winerror_message, "?_Winerror_message@std@@YAKKPADK@Z");
         SET(p__Syserror_map, "?_Syserror_map@std@@YAPBDH@Z");
+
+        SET(p__Fiopen_wchar, "?_Fiopen@std@@YAPAU_iobuf@@PB_WHH@Z");
+        SET(p__Fiopen, "?_Fiopen@std@@YAPAU_iobuf@@PBDHH@Z");
     }
 
     SET(p__Mtx_init, "_Mtx_init");
@@ -364,6 +390,11 @@ static BOOL init(void)
 
     hdll = GetModuleHandleA("kernel32.dll");
     pCreateSymbolicLinkW = (void*)GetProcAddress(hdll, "CreateSymbolicLinkW");
+
+    hdll = GetModuleHandleA("ucrtbase.dll");
+    p_setlocale = (void*)GetProcAddress(hdll, "setlocale");
+    p_fclose = (void*)GetProcAddress(hdll, "fclose");
+    p__unlink = (void*)GetProcAddress(hdll, "_unlink");
 
     init_thiscall_thunk();
     return TRUE;
@@ -1670,6 +1701,49 @@ static void test__Mtx(void)
     p__Mtx_destroy(mtx);
 }
 
+static void test__Fiopen(void)
+{
+    int i;
+    FILE *f;
+    wchar_t wpath[MAX_PATH];
+    static const struct {
+        const char *loc;
+        const char *path;
+        int is_todo;
+    } tests[] = {
+        { "German.utf8",    "t\xc3\xa4\xc3\x8f\xc3\xb6\xc3\x9f.txt", TRUE },
+        { "Polish.utf8",    "t\xc4\x99\xc5\x9b\xc4\x87.txt", TRUE },
+        { "Turkish.utf8",   "t\xc3\x87\xc4\x9e\xc4\xb1\xc4\xb0\xc5\x9e.txt", TRUE },
+        { "Arabic.utf8",    "t\xd8\xaa\xda\x86.txt", TRUE },
+        { "Japanese.utf8",  "t\xe3\x82\xaf\xe3\x83\xa4.txt", TRUE },
+        { "Chinese.utf8",   "t\xe4\xb8\x82\xe9\xbd\xab.txt", TRUE },
+    };
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        if(!p_setlocale(LC_ALL, tests[i].loc)) {
+            win_skip("skipping locale %s\n", tests[i].loc);
+            continue;
+        }
+
+        ok(MultiByteToWideChar(CP_UTF8, 0, tests[i].path, -1, wpath, MAX_PATH),
+                "MultiByteToWideChar failed on %s with locale %s: %lx\n",
+                debugstr_a(tests[i].path), tests[i].loc, GetLastError());
+
+        f = p__Fiopen(tests[i].path, OPENMODE_out, SH_DENYNO);
+        ok(!!f, "failed to create %s with locale %s\n", tests[i].path, tests[i].loc);
+        p_fclose(f);
+
+        f = p__Fiopen_wchar(wpath, OPENMODE_in, SH_DENYNO);
+        todo_wine_if(tests[i].is_todo && GetACP() != CP_UTF8)
+        ok(!!f, "failed to open %s with locale %s\n", wine_dbgstr_w(wpath), tests[i].loc);
+        if(f) p_fclose(f);
+
+        ok(!p__unlink(tests[i].path), "failed to unlink %s with locale %s\n",
+                tests[i].path, tests[i].loc);
+    }
+    p_setlocale(LC_ALL, "C");
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -1698,5 +1772,6 @@ START_TEST(msvcp140)
     test_cnd();
     test_Copy_file();
     test__Mtx();
+    test__Fiopen();
     FreeLibrary(msvcp);
 }
