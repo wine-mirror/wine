@@ -1282,7 +1282,7 @@ static HRESULT WINAPI IDirectPlay4Impl_Close( IDirectPlay4 *iface )
 }
 
 static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, const DPNAME *lpName,
-        DWORD dwFlags, DPID idParent, BOOL bAnsi )
+        void *data, DWORD dataSize, DWORD dwFlags, DPID idParent, BOOL bAnsi )
 {
   struct GroupList *groupList = NULL;
   struct GroupData *parent = NULL;
@@ -1362,6 +1362,8 @@ static lpGroupData DP_CreateGroup( IDirectPlayImpl *This, const DPID *lpid, cons
 
   /* Something is now referencing this data */
   lpGData->uRef++;
+
+  DP_SetGroupData( lpGData, DPSET_REMOTE, data, dataSize );
 
   TRACE( "Created group id 0x%08lx\n", *lpid );
 
@@ -1453,16 +1455,13 @@ static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *l
     }
   }
 
-  lpGData = DP_CreateGroup( This, lpidGroup, lpGroupName, dwFlags,
+  lpGData = DP_CreateGroup( This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags,
                             DPID_NOPARENT_GROUP, bAnsi );
 
   if( lpGData == NULL )
   {
     return DPERR_CANTADDPLAYER; /* yes player not group */
   }
-
-  /* Set all the important stuff for the group */
-  DP_SetGroupData( lpGData, DPSET_REMOTE, lpData, dwDataSize );
 
   /* FIXME: We should only create the system group if GetCaps returns
    *        DPCAPS_GROUPOPTIMIZED.
@@ -4484,14 +4483,13 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
     return DPERR_UNINITIALIZED;
   }
 
-  lpGData = DP_CreateGroup(This, lpidGroup, lpGroupName, dwFlags, idParentGroup, bAnsi );
+  lpGData = DP_CreateGroup(This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags, idParentGroup,
+                           bAnsi );
 
   if( lpGData == NULL )
   {
     return DPERR_CANTADDPLAYER; /* yes player not group */
   }
-
-  DP_SetGroupData( lpGData, DPSET_REMOTE, lpData, dwDataSize );
 
   /* Let the SP know that we've created this group */
   if( This->dp2->spData.lpCB->CreateGroup )
