@@ -1231,20 +1231,11 @@ static HRESULT WINAPI IDirectPlay4Impl_AddPlayerToGroup( IDirectPlay4 *iface, DP
      * Also, if this event was the result of another machine sending it to us,
      * don't bother rebroadcasting it.
      */
-    if ( This->dp2->lpSessionDesc &&
-            ( This->dp2->lpSessionDesc->dwFlags & DPSESSION_MULTICASTSERVER ) )
+    hr = DP_MSG_SendAddPlayerToGroup( This, DPID_ALLPLAYERS, player, group );
+    if( FAILED( hr ) )
     {
-        DPMSG_ADDPLAYERTOGROUP msg;
-        msg.dwType = DPSYS_ADDPLAYERTOGROUP;
-
-        msg.dpIdGroup  = group;
-        msg.dpIdPlayer = player;
-
-        /* FIXME: Correct to just use send effectively? */
-        /* FIXME: Should size include data w/ message or just message "header" */
-        /* FIXME: Check return code */
-        IDirectPlayX_SendEx( iface, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg, sizeof( msg ),
-                0, 0, NULL, NULL );
+        LeaveCriticalSection( &This->lock );
+        return hr;
     }
 
     LeaveCriticalSection( &This->lock );

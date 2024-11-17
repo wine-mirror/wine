@@ -57,6 +57,8 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer, WC
 HRESULT DP_MSG_SendCreatePlayer( IDirectPlayImpl *This, DPID toId, DPID id, DWORD flags,
                                  DPNAME *name, void *playerData, DWORD playerDataSize,
                                  DPID systemPlayerId );
+HRESULT DP_MSG_SendAddPlayerToGroup( IDirectPlayImpl *This, DPID toId, DPID playerId,
+                                     DPID groupId );
 HRESULT DP_MSG_SendPingReply( IDirectPlayImpl *This, DPID toId, DPID fromId, DWORD tickCount );
 HRESULT DP_MSG_SendAddForwardAck( IDirectPlayImpl *This, DPID id );
 
@@ -103,6 +105,7 @@ typedef struct
 #define DPMSGCMD_SYSTEMMESSAGE        10
 #define DPMSGCMD_DELETEPLAYER         11
 #define DPMSGCMD_DELETEGROUP          12
+#define DPMSGCMD_ADDPLAYERTOGROUP     13
 
 #define DPMSGCMD_ENUMGROUPS           17
 
@@ -230,6 +233,16 @@ typedef struct tagDPMSG_NEWPLAYERIDREPLY
   HRESULT result;
 } DPMSG_NEWPLAYERIDREPLY, *LPDPMSG_NEWPLAYERIDREPLY;
 typedef const DPMSG_NEWPLAYERIDREPLY* LPCDPMSG_NEWPLAYERIDREPLY;
+
+typedef struct
+{
+  DPMSG_SENDENVELOPE envelope;
+  DPID toId;
+  DPID playerId;
+  DPID groupId;
+  DWORD createOffset;
+  DWORD passwordOffset;
+} DPSP_MSG_ADDPLAYERTOGROUP;
 
 typedef struct tagDPMSG_FORWARDADDPLAYER
 {
