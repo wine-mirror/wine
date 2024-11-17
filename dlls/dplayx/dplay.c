@@ -1132,42 +1132,25 @@ static HRESULT WINAPI IDirectPlay4AImpl_AddPlayerToGroup( IDirectPlay4A *iface, 
     return IDirectPlayX_AddPlayerToGroup( &This->IDirectPlay4_iface, group, player );
 }
 
-static HRESULT WINAPI IDirectPlay4Impl_AddPlayerToGroup( IDirectPlay4 *iface, DPID group,
-        DPID player )
+static HRESULT DP_AddPlayerToGroup( IDirectPlayImpl *This, DPID group, DPID player )
 {
-    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     lpGroupData  gdata;
     lpPlayerList plist;
     lpPlayerList newplist;
-
-    TRACE( "(%p)->(0x%08lx,0x%08lx)\n", This, group, player );
-
-    if ( This->dp2->connectionInitialized == NO_PROVIDER )
-        return DPERR_UNINITIALIZED;
-
-    EnterCriticalSection( &This->lock );
+    HRESULT hr;
 
     /* Find the group */
     if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
-    {
-        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDGROUP;
-    }
 
     /* Find the player */
     if ( ( plist = DP_FindPlayer( This, player ) ) == NULL )
-    {
-        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDPLAYER;
-    }
 
     /* Create a player list (ie "shortcut" ) */
     newplist = calloc( 1, sizeof( *newplist ) );
     if ( !newplist )
-    {
-        LeaveCriticalSection( &This->lock );
         return DPERR_CANTADDPLAYER;
-    }
 
     /* Add the shortcut */
     plist->lpPData->uRef++;
@@ -1187,7 +1170,37 @@ static HRESULT WINAPI IDirectPlay4Impl_AddPlayerToGroup( IDirectPlay4 *iface, DP
         data.idGroup  = group;
         data.lpISP    = This->dp2->spData.lpISP;
 
-        (*This->dp2->spData.lpCB->AddPlayerToGroup)( &data );
+        hr = (*This->dp2->spData.lpCB->AddPlayerToGroup)( &data );
+        if ( FAILED( hr ) )
+        {
+            DPQ_REMOVE( gdata->players, newplist, players );
+            --plist->lpPData->uRef;
+            free( newplist );
+            return hr;
+        }
+    }
+
+    return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay4Impl_AddPlayerToGroup( IDirectPlay4 *iface, DPID group,
+        DPID player )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    HRESULT hr;
+
+    TRACE( "(%p)->(0x%08lx,0x%08lx)\n", This, group, player );
+
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
+
+    EnterCriticalSection( &This->lock );
+
+    hr = DP_AddPlayerToGroup( This, group, player );
+    if ( FAILED( hr ) )
+    {
+        LeaveCriticalSection( &This->lock );
+        return hr;
     }
 
     /* Inform all other peers of the addition of player to the group. If there are
