@@ -1513,6 +1513,8 @@ static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *l
     return DPERR_UNINITIALIZED;
   }
 
+  EnterCriticalSection( &This->lock );
+
   /* If the name is not specified, we must provide one */
   if( DPID_UNKNOWN == *lpidGroup )
   {
@@ -1534,6 +1536,7 @@ static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *l
 
   if( FAILED( hr ) )
   {
+    LeaveCriticalSection( &This->lock );
     return hr;
   }
 
@@ -1563,6 +1566,8 @@ static HRESULT DP_IF_CreateGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID *l
     IDirectPlayX_SendEx( &This->IDirectPlay4_iface, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg,
             sizeof( msg ), 0, 0, NULL, NULL );
   }
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
@@ -2308,9 +2313,12 @@ static HRESULT DP_IF_DestroyGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID i
   FIXME( "(%p)->(%p,0x%08lx,%u): semi stub\n",
          This, lpMsgHdr, idGroup, bAnsi );
 
+  EnterCriticalSection( &This->lock );
+
   /* Find the group */
   if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
   {
+    LeaveCriticalSection( &This->lock );
     return DPERR_INVALIDPLAYER; /* yes player */
   }
 
@@ -2348,6 +2356,8 @@ static HRESULT DP_IF_DestroyGroup( IDirectPlayImpl *This, void *lpMsgHdr, DPID i
   }
 
   FIXME( "Send out a DESTORYPLAYERORGROUP message\n" );
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
@@ -3090,8 +3100,13 @@ static HRESULT WINAPI IDirectPlay4Impl_GetGroupData( IDirectPlay4 *iface, DPID g
 
     TRACE( "(%p)->(0x%08lx,%p,%p,0x%08lx)\n", This, group, data, size, flags );
 
+    EnterCriticalSection( &This->lock );
+
     if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDGROUP;
+    }
 
     /* How much buffer is required? */
     if ( flags & DPSET_LOCAL )
@@ -3109,9 +3124,14 @@ static HRESULT WINAPI IDirectPlay4Impl_GetGroupData( IDirectPlay4 *iface, DPID g
 
     /* Is the user requesting to know how big a buffer is required? */
     if ( !data || *size < bufsize )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_BUFFERTOOSMALL;
+    }
 
     CopyMemory( data, src, bufsize );
+
+    LeaveCriticalSection( &This->lock );
 
     return DP_OK;
 }
@@ -3125,8 +3145,11 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
   FIXME("(%p)->(0x%08lx,%p,%p,%u) ANSI ignored\n",
           This, idGroup, lpData, lpdwDataSize, bAnsi );
 
+  EnterCriticalSection( &This->lock );
+
   if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
   {
+    LeaveCriticalSection( &This->lock );
     return DPERR_INVALIDGROUP;
   }
 
@@ -3137,10 +3160,13 @@ static HRESULT DP_IF_GetGroupName( IDirectPlayImpl *This, DPID idGroup, void *lp
     )
   {
     *lpdwDataSize = dwRequiredDataSize;
+    LeaveCriticalSection( &This->lock );
     return DPERR_BUFFERTOOSMALL;
   }
 
   DP_CopyName( lpData, bAnsi ? lpGData->nameA : lpGData->name, bAnsi, bAnsi );
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
@@ -4060,9 +4086,14 @@ static HRESULT WINAPI IDirectPlay4Impl_SetGroupData( IDirectPlay4 *iface, DPID g
     if ( !data && size )
         return DPERR_INVALIDPARAMS;
 
+    EnterCriticalSection( &This->lock );
+
     /* Find the pointer to the data for this player */
     if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDOBJECT;
+    }
 
     if ( !(flags & DPSET_LOCAL) )
     {
@@ -4080,6 +4111,8 @@ static HRESULT WINAPI IDirectPlay4Impl_SetGroupData( IDirectPlay4 *iface, DPID g
     if ( !(flags & DPSET_LOCAL) )
         FIXME( "Send msg?\n" );
 
+    LeaveCriticalSection( &This->lock );
+
     return DP_OK;
 }
 
@@ -4093,19 +4126,26 @@ static HRESULT DP_IF_SetGroupName( IDirectPlayImpl *This, DPID idGroup, DPNAME *
   TRACE( "(%p)->(0x%08lx,%p,0x%08lx,%u)\n", This, idGroup,
          lpGroupName, dwFlags, bAnsi );
 
+  EnterCriticalSection( &This->lock );
+
   if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
   {
+    LeaveCriticalSection( &This->lock );
     return DPERR_INVALIDGROUP;
   }
 
   name = DP_DuplicateName( lpGroupName, FALSE, bAnsi );
   if ( !name )
+  {
+    LeaveCriticalSection( &This->lock );
     return DPERR_OUTOFMEMORY;
+  }
 
   nameA = DP_DuplicateName( lpGroupName, TRUE, bAnsi );
   if ( !nameA )
   {
     free( name );
+    LeaveCriticalSection( &This->lock );
     return DPERR_OUTOFMEMORY;
   }
 
@@ -4114,6 +4154,8 @@ static HRESULT DP_IF_SetGroupName( IDirectPlayImpl *This, DPID idGroup, DPNAME *
 
   /* Should send a DPMSG_SETPLAYERORGROUPNAME message */
   FIXME( "Message not sent and dwFlags ignored\n" );
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
@@ -4488,16 +4530,27 @@ static HRESULT WINAPI IDirectPlay4Impl_AddGroupToGroup( IDirectPlay4 *iface, DPI
     if ( This->dp2->connectionInitialized == NO_PROVIDER )
         return DPERR_UNINITIALIZED;
 
+    EnterCriticalSection( &This->lock );
+
     if ( !DP_FindAnyGroup(This, parent ) )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDGROUP;
+    }
 
     if ( ( gdata = DP_FindAnyGroup(This, group ) ) == NULL )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDGROUP;
+    }
 
     /* Create a player list (ie "shortcut" ) */
     glist = calloc( 1, sizeof( *glist ) );
     if ( !glist )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_CANTADDPLAYER;
+    }
 
     /* Add the shortcut */
     gdata->uRef++;
@@ -4508,6 +4561,8 @@ static HRESULT WINAPI IDirectPlay4Impl_AddGroupToGroup( IDirectPlay4 *iface, DPI
 
     /* Send a ADDGROUPTOGROUP message */
     FIXME( "Not sending message\n" );
+
+    LeaveCriticalSection( &This->lock );
 
     return DP_OK;
 }
@@ -4527,11 +4582,14 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
     return DPERR_UNINITIALIZED;
   }
 
+  EnterCriticalSection( &This->lock );
+
   hr = DP_CreateGroup(This, lpMsgHdr, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags,
                       idParentGroup, bAnsi );
 
   if( FAILED( hr ) )
   {
+    LeaveCriticalSection( &This->lock );
     return hr;
   }
 
@@ -4557,6 +4615,8 @@ static HRESULT DP_IF_CreateGroupInGroup( IDirectPlayImpl *This, void *lpMsgHdr, 
     IDirectPlayX_SendEx( &This->IDirectPlay4_iface, DPID_SERVERPLAYER, DPID_ALLPLAYERS, 0, &msg,
             sizeof( msg ), 0, 0, NULL, NULL );
   }
+
+  LeaveCriticalSection( &This->lock );
 
   return DP_OK;
 }
@@ -4630,15 +4690,23 @@ static HRESULT WINAPI IDirectPlay4Impl_DeleteGroupFromGroup( IDirectPlay4 *iface
 
     TRACE("(%p)->(0x%08lx,0x%08lx)\n", This, parent, group );
 
+    EnterCriticalSection( &This->lock );
+
     /* Is the parent group valid? */
     if ( ( parentdata = DP_FindAnyGroup(This, parent ) ) == NULL )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDGROUP;
+    }
 
     /* Remove the group from the parent group queue */
     DPQ_REMOVE_ENTRY( parentdata->groups, groups, lpGData->dpid, ==, group, glist );
 
     if ( glist == NULL )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDGROUP;
+    }
 
     /* Decrement the ref count */
     glist->lpGData->uRef--;
@@ -4648,6 +4716,8 @@ static HRESULT WINAPI IDirectPlay4Impl_DeleteGroupFromGroup( IDirectPlay4 *iface
 
     /* Should send a DELETEGROUPFROMGROUP message */
     FIXME( "message not sent\n" );
+
+    LeaveCriticalSection( &This->lock );
 
     return DP_OK;
 }
@@ -4976,8 +5046,13 @@ static HRESULT DP_IF_EnumGroupsInGroup( IDirectPlayImpl *This, DPID group, GUID 
     if ( This->dp2->connectionInitialized == NO_PROVIDER )
         return DPERR_UNINITIALIZED;
 
+    EnterCriticalSection( &This->lock );
+
     if ( ( gdata = DP_FindAnyGroup(This, group ) ) == NULL )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDGROUP;
+    }
 
     for( glist = DPQ_FIRST( gdata->groups ); glist; glist = DPQ_NEXT( glist->groups ) )
     {
@@ -4994,8 +5069,10 @@ static HRESULT DP_IF_EnumGroupsInGroup( IDirectPlayImpl *This, DPID group, GUID 
 
         if ( !(*enumplayercb)( glist->lpGData->dpid, DPPLAYERTYPE_GROUP,
                     ansi ? glist->lpGData->nameA : glist->lpGData->name, groupFlags, context ) )
-            return DP_OK; /* User requested break */
+            break; /* User requested break */
     }
+
+    LeaveCriticalSection( &This->lock );
 
     return DP_OK;
 }
@@ -5551,10 +5628,17 @@ static HRESULT WINAPI IDirectPlay4Impl_GetGroupParent( IDirectPlay4 *iface, DPID
 
     TRACE( "(%p)->(0x%08lx,%p)\n", This, group, parent );
 
+    EnterCriticalSection( &This->lock );
+
     if ( ( gdata = DP_FindAnyGroup( This, group ) ) == NULL )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_INVALIDGROUP;
+    }
 
     *parent = gdata->dpid;
+
+    LeaveCriticalSection( &This->lock );
 
     return DP_OK;
 }
