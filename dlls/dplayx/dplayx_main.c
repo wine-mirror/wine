@@ -64,6 +64,7 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "wine/debug.h"
+#include "dplay_global.h"
 #include "dplayx_global.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
@@ -85,6 +86,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
         return DPLAYX_ConstructData();
 
     case DLL_PROCESS_DETACH:
+        DP_FreeConnections();
         /* Last instance performs destruction of global processor data */
         return DPLAYX_DestructData();
 

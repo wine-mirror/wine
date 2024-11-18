@@ -4858,10 +4858,8 @@ static HRESULT WINAPI IDirectPlay3Impl_EnumConnections( IDirectPlay3 *iface,
             flags );
 }
 
-static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
-                                   const GUID *addressDataType,
-                                   LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, void *lpContext,
-                                   BOOL ansi )
+static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
+                                const GUID *addressDataType, struct list *connections )
 {
   HKEY hkResult;
   LPCSTR guidDataSubKey  = "Guid";
@@ -4875,7 +4873,7 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
   {
     /* Hmmm. Does this mean that there are no service providers? */
     ERR(": no service providers?\n");
-    return DP_OK;
+    return;
   }
 
 
@@ -4887,16 +4885,13 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
   {
 
     HKEY     hkServiceProvider;
-    GUID     serviceProviderGUID;
     DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
     char     returnBuffer[51];
     WCHAR    buff[51];
-    DPNAME   dpName;
     HRESULT  hr;
 
     DPCOMPOUNDADDRESSELEMENT dpCompoundAddress;
-    LPVOID                   lpAddressBuffer = NULL;
-    DWORD                    dwAddressBufferSize = 0;
+    DPCONNECTION *connection;
 
     TRACE(" this time through: %s\n", subKeyName );
 
@@ -4908,11 +4903,21 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
       continue;
     }
 
+    connection = calloc( 1, sizeof( DPCONNECTION) );
+    if( !connection )
+    {
+      RegCloseKey( hkServiceProvider );
+      continue;
+    }
+
+    connection->flags = dwFlags;
+
     if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
                           NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
       ERR(": missing GUID registry data members\n" );
+      free( connection );
       RegCloseKey(hkServiceProvider);
       continue;
     }
@@ -4920,16 +4925,27 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
 
     /* FIXME: Check return types to ensure we're interpreting data right */
     MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, ARRAY_SIZE( buff ));
-    CLSIDFromString( buff, &serviceProviderGUID );
+    CLSIDFromString( buff, &connection->spGuid );
     /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
 
     /* Fill in the DPNAME struct for the service provider */
-    dpName.dwSize             = sizeof( dpName );
-    dpName.dwFlags            = 0;
-    dpName.lpszShortNameA = DP_DuplicateString( subKeyName, ansi, TRUE );
-    dpName.lpszLongNameA  = NULL;
-    if ( !dpName.lpszShortNameA )
-      return DPERR_OUTOFMEMORY;
+
+    connection->name.dwSize = sizeof( DPNAME );
+    connection->name.lpszShortName = DP_DuplicateString( subKeyName, FALSE, TRUE );
+    if( !connection->name.lpszShortName )
+    {
+      free( connection );
+      continue;
+    }
+
+    connection->nameA.dwSize = sizeof( DPNAME );
+    connection->nameA.lpszShortNameA = DP_DuplicateString( subKeyName, TRUE, TRUE );
+    if( !connection->name.lpszShortNameA )
+    {
+      free( connection->name.lpszShortName );
+      free( connection );
+      continue;
+    }
 
     /* Create the compound address for the service provider.
      * NOTE: This is a gruesome architectural scar right now.  DP
@@ -4942,48 +4958,90 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
 
     dpCompoundAddress.guidDataType = *addressDataType;
     dpCompoundAddress.dwDataSize   = sizeof( GUID );
-    dpCompoundAddress.lpData       = &serviceProviderGUID;
+    dpCompoundAddress.lpData       = &connection->spGuid;
 
-    if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
-                                          &dwAddressBufferSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
+    if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, connection->address,
+                                          &connection->addressSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
     {
       ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
-      free( dpName.lpszShortNameA );
-      return hr;
+      free( connection->nameA.lpszShortNameA );
+      free( connection->name.lpszShortName );
+      free( connection );
+      continue;
     }
 
     /* Now allocate the buffer */
-    lpAddressBuffer = calloc( 1, dwAddressBufferSize );
+    connection->address = calloc( 1, connection->addressSize );
 
-    if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
-                                          &dwAddressBufferSize, TRUE ) ) != DP_OK )
+    if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, connection->address,
+                                          &connection->addressSize, TRUE ) ) != DP_OK )
     {
       ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
-      free( lpAddressBuffer );
-      free( dpName.lpszShortNameA );
-      return hr;
+      free( connection->address );
+      free( connection->nameA.lpszShortNameA );
+      free( connection->name.lpszShortName );
+      free( connection );
+      continue;
     }
 
-    /* The enumeration will return FALSE if we are not to continue */
-    if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize,
-                         &dpName, dwFlags, lpContext ) )
-    {
-      free( lpAddressBuffer );
-      free( dpName.lpszShortNameA );
-      return DP_OK;
-    }
-    free( lpAddressBuffer );
-    free( dpName.lpszShortNameA );
+    list_add_tail( connections, &connection->entry );
   }
+}
 
-  return DP_OK;
+static BOOL connectionsInitialized;
+
+static BOOL WINAPI DP_InitConnections( INIT_ONCE *initOnce, void *param, void **context )
+{
+    struct list *connections = param;
+
+    DP_ReadConnections( "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers",
+                        DPCONNECTION_DIRECTPLAY, &DPAID_ServiceProvider, connections );
+
+    DP_ReadConnections( "SOFTWARE\\Microsoft\\DirectPlay\\Lobby Providers",
+                        DPCONNECTION_DIRECTPLAYLOBBY, &DPAID_LobbyProvider, connections );
+
+    connectionsInitialized = TRUE;
+
+    return TRUE;
+}
+
+static struct list *DP_GetConnections(void)
+{
+    static struct list connections = LIST_INIT( connections );
+    static INIT_ONCE initOnce = INIT_ONCE_STATIC_INIT;
+
+    InitOnceExecuteOnce( &initOnce, DP_InitConnections, &connections, NULL );
+
+    return &connections;
+}
+
+void DP_FreeConnections(void)
+{
+    struct list *connections;
+
+    if ( !connectionsInitialized )
+        return;
+
+    connections = DP_GetConnections();
+
+    while ( !list_empty( connections ) )
+    {
+        DPCONNECTION *connection = LIST_ENTRY( list_tail( connections ), DPCONNECTION, entry );
+
+        list_remove( &connection->entry );
+        free( connection->nameA.lpszShortNameA );
+        free( connection->name.lpszShortName );
+        free( connection->address );
+        free( connection );
+    }
 }
 
 static HRESULT DP_IF_EnumConnections( IDirectPlayImpl *This,
         const GUID *lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, void *lpContext,
         DWORD dwFlags, BOOL ansi )
 {
-  HRESULT hr;
+  DPCONNECTION *connection;
+  struct list *connections;
 
   TRACE("(%p)->(%p,%p,%p,0x%08lx)\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
 
@@ -5005,22 +5063,16 @@ static HRESULT DP_IF_EnumConnections( IDirectPlayImpl *This,
      return DPERR_INVALIDPARAMS;
   }
 
-  /* Enumerate DirectPlay service providers */
-  if( dwFlags & DPCONNECTION_DIRECTPLAY )
-  {
-    hr = DP_ReadConnections( "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers", dwFlags,
-                             &DPAID_ServiceProvider, lpEnumCallback, lpContext, ansi );
-    if ( FAILED( hr ) )
-      return hr;
-  }
+  connections = DP_GetConnections();
 
-  /* Enumerate DirectPlayLobby service providers */
-  if( dwFlags & DPCONNECTION_DIRECTPLAYLOBBY )
+  LIST_FOR_EACH_ENTRY( connection, connections, DPCONNECTION, entry )
   {
-    hr = DP_ReadConnections( "SOFTWARE\\Microsoft\\DirectPlay\\Lobby Providers", dwFlags,
-                             &DPAID_LobbyProvider, lpEnumCallback, lpContext, ansi );
-    if ( FAILED( hr ) )
-      return hr;
+    if ( !(connection->flags & dwFlags) )
+      continue;
+
+    if ( !lpEnumCallback( &connection->spGuid, connection->address, connection->addressSize,
+                          ansi ? &connection->nameA : &connection->name, dwFlags, lpContext ) )
+        break;
   }
 
   return DP_OK;

@@ -24,12 +24,25 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/dplaysp.h"
+#include "wine/list.h"
 #include "lobbysp.h"
 #include "dplayx_queue.h"
 
 extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
                                 LPCVOID lpAddress, DWORD dwAddressSize,
                                 LPVOID lpContext );
+
+typedef struct
+{
+    struct list entry;
+
+    DWORD flags;
+    GUID spGuid;
+    void *address;
+    DWORD addressSize;
+    DPNAME name;
+    DPNAME nameA;
+} DPCONNECTION;
 
 typedef struct tagEnumSessionAsyncCallbackData
 {
@@ -222,6 +235,8 @@ HRESULT DP_CreateGroup( IDirectPlayImpl *This, void *msgHeader, const DPID *lpid
                         const DPNAME *lpName, void *data, DWORD dataSize, DWORD dwFlags,
                         DPID idParent, BOOL bAnsi );
 HRESULT DP_AddPlayerToGroup( IDirectPlayImpl *This, DPID group, DPID player );
+
+void DP_FreeConnections(void);
 
 /* DP SP external interfaces into DirectPlay */
 extern HRESULT DP_GetSPPlayerData( IDirectPlayImpl *lpDP, DPID idPlayer, void **lplpData );
