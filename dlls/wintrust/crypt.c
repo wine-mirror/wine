@@ -332,28 +332,50 @@ done:
     return ret;
 }
 
-/***********************************************************************
- *             CryptCATAdminCalcHashFromFileHandle (WINTRUST.@)
- */
-BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BYTE *pbHash, DWORD dwFlags)
+static BOOL catadmin_calc_hash_from_filehandle(HCATADMIN catAdmin, HANDLE hFile, DWORD *pcbHash,
+                                               BYTE *pbHash, DWORD dwFlags)
 {
     BOOL ret = FALSE;
-
-    TRACE("%p %p %p %lx\n", hFile, pcbHash, pbHash, dwFlags);
+    struct catadmin *ca = catAdmin;
+    ALG_ID alg = CALG_SHA1;
+    const WCHAR *providerName = MS_DEF_PROV_W;
+    DWORD providerType = PROV_RSA_FULL;
+    DWORD hashLength;
 
     if (!hFile || !pcbHash || dwFlags)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (*pcbHash < 20)
+
+    if (ca)
     {
-        *pcbHash = 20;
+        alg = ca->alg;
+        providerName = ca->providerName;
+        providerType = ca->providerType;
+    }
+
+    switch (alg)
+    {
+        case CALG_SHA1:
+            hashLength = 20;
+            break;
+        case CALG_SHA_256:
+            hashLength = 32;
+            break;
+        default:
+            FIXME("unsupported algorithm %x\n", alg);
+            return FALSE;
+    }
+
+    if (*pcbHash < hashLength)
+    {
+        *pcbHash = hashLength;
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return TRUE;
     }
 
-    *pcbHash = 20;
+    *pcbHash = hashLength;
     if (pbHash)
     {
         HCRYPTPROV prov;
@@ -366,13 +388,13 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BY
             SetLastError(ERROR_OUTOFMEMORY);
             return FALSE;
         }
-        ret = CryptAcquireContextW(&prov, NULL, MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+        ret = CryptAcquireContextW(&prov, NULL, providerName, providerType, CRYPT_VERIFYCONTEXT);
         if (!ret)
         {
             free(buffer);
             return FALSE;
         }
-        ret = CryptCreateHash(prov, CALG_SHA1, 0, 0, &hash);
+        ret = CryptCreateHash(prov, alg, 0, 0, &hash);
         if (!ret)
         {
             free(buffer);
@@ -395,6 +417,48 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BY
     }
     return ret;
 }
+
+/***********************************************************************
+ *             CryptCATAdminCalcHashFromFileHandle (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BYTE *pbHash, DWORD dwFlags)
+{
+    TRACE("%p %p %p %lx\n", hFile, pcbHash, pbHash, dwFlags);
+    return catadmin_calc_hash_from_filehandle(NULL, hFile, pcbHash, pbHash, dwFlags);
+}
+
+/***********************************************************************
+ *    CryptCATAdminCalcHashFromFileHandle2 (WINTRUST.@)
+ *
+ * Calculate hash for a specific file using a catalog administrator context.
+ *
+ * PARAMS
+ *   catAdmin  [I] Catalog administrator context handle.
+ *   hFile     [I] Handle for the file to hash.
+ *   pcbHash   [I] Pointer to the length of the hash.
+ *   pbHash    [O] Pointer to the buffer that will store that hash
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE. If pcbHash is too small, LastError will be set to ERROR_INSUFFICIENT_BUFFER.
+ *                  pbHash contains the computed hash, if supplied.
+ *   Failure: FALSE.
+ *
+ */
+BOOL WINAPI CryptCATAdminCalcHashFromFileHandle2(HCATADMIN catAdmin, HANDLE hFile,  DWORD *pcbHash,
+                                                 BYTE *pbHash, DWORD dwFlags)
+{
+    TRACE("%p %p %p %p %lx\n", catAdmin, hFile, pcbHash, pbHash, dwFlags);
+
+    if (!catAdmin || ((struct catadmin *)catAdmin)->magic != CATADMIN_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    return catadmin_calc_hash_from_filehandle(catAdmin, hFile, pcbHash, pbHash, dwFlags);
+}
+
 
 /***********************************************************************
  *             CryptCATAdminEnumCatalogFromHash (WINTRUST.@)

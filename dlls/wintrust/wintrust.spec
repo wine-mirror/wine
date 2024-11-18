@@ -7,7 +7,7 @@
 @ stdcall CryptCATAdminAcquireContext2(ptr ptr wstr ptr long)
 @ stdcall CryptCATAdminAddCatalog(long wstr wstr long)
 @ stdcall CryptCATAdminCalcHashFromFileHandle(long ptr ptr long)
-#@ stub CryptCATAdminCalcHashFromFileHandle2
+@ stdcall CryptCATAdminCalcHashFromFileHandle2(ptr ptr ptr ptr long)
 @ stdcall CryptCATAdminEnumCatalogFromHash(long ptr long long ptr)
 @ stub CryptCATAdminPauseServiceForBackup
 @ stdcall CryptCATAdminReleaseCatalogContext(long long long)
