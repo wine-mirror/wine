@@ -1240,3 +1240,211 @@ HRESULT WINAPI RoResolveNamespace(HSTRING name, HSTRING windowsMetaDataDir,
 
     return RO_E_METADATA_NAME_NOT_FOUND;
 }
+
+struct parse_type_context
+{
+    DWORD allocated_parts_count;
+    DWORD parts_count;
+    HSTRING *parts;
+};
+
+static HRESULT add_part(struct parse_type_context *context, const WCHAR *part, size_t length)
+{
+    DWORD new_parts_count;
+    HSTRING *new_parts;
+    HRESULT hr;
+
+    if (context->parts_count == context->allocated_parts_count)
+    {
+        new_parts_count = context->allocated_parts_count ? context->allocated_parts_count * 2 : 4;
+        new_parts = CoTaskMemRealloc(context->parts, new_parts_count * sizeof(*context->parts));
+        if (!new_parts)
+            return E_OUTOFMEMORY;
+
+        context->allocated_parts_count = new_parts_count;
+        context->parts = new_parts;
+    }
+
+    if (FAILED(hr = WindowsCreateString(part, length, &context->parts[context->parts_count])))
+        return hr;
+
+    context->parts_count++;
+    return S_OK;
+}
+
+static HRESULT parse_part(struct parse_type_context *context, const WCHAR *input, unsigned int length)
+{
+    const WCHAR *start, *end, *ptr;
+
+    start = input;
+    end = start + length;
+
+    /* Remove leading spaces */
+    while (start < end && *start == ' ')
+        start++;
+
+    /* Remove trailing spaces */
+    while (end - 1 >= start && end[-1] == ' ')
+        end--;
+
+    /* Only contains spaces */
+    if (start == end)
+        return RO_E_METADATA_INVALID_TYPE_FORMAT;
+
+    /* Has spaces in the middle */
+    for (ptr = start; ptr < end; ptr++)
+    {
+        if (*ptr == ' ')
+            return RO_E_METADATA_INVALID_TYPE_FORMAT;
+    }
+
+    return add_part(context, start, end - start);
+}
+
+static HRESULT parse_type(struct parse_type_context *context, const WCHAR *input, unsigned int length)
+{
+    unsigned int i, parameter_count, nested_level;
+    const WCHAR *start, *end, *part_start, *ptr;
+    HRESULT hr;
+
+    start = input;
+    end = start + length;
+    part_start = start;
+    ptr = start;
+
+    /* Read until the end of input or '`' or '<' or '>' or ',' */
+    while (ptr < end && *ptr != '`' && *ptr != '<' && *ptr != '>' && *ptr != ',')
+        ptr++;
+
+    /* If the type name has '`' and there are characters before '`' */
+    if (ptr > start && ptr < end && *ptr == '`')
+    {
+        /* Move past the '`' */
+        ptr++;
+
+        /* Read the number of type parameters, expecting '1' to '9' */
+        if (!(ptr < end && *ptr >= '1' && *ptr <= '9'))
+            return RO_E_METADATA_INVALID_TYPE_FORMAT;
+        parameter_count = *ptr - '0';
+
+        /* Move past the number of type parameters, expecting '<' */
+        ptr++;
+        if (!(ptr < end && *ptr == '<'))
+            return RO_E_METADATA_INVALID_TYPE_FORMAT;
+
+        /* Add the name of parameterized interface, e.g., the "interface`1" in "interface`1<parameter>" */
+        if (FAILED(hr = parse_part(context, part_start, ptr - part_start)))
+            return hr;
+
+        /* Move past the '<' */
+        ptr++;
+        nested_level = 1;
+
+        /* Read parameters inside brackets, e.g., the "p1" and "p2" in "interface`2<p1, p2>" */
+        for (i = 0; i < parameter_count; i++)
+        {
+            /* Read a new parameter */
+            part_start = ptr;
+
+            /* Read until ','. The comma must be at the same nested bracket level */
+            while (ptr < end)
+            {
+                if (*ptr == '<')
+                {
+                    nested_level++;
+                    ptr++;
+                }
+                else if (*ptr == '>')
+                {
+                    /* The last parameter before '>' */
+                    if (i == parameter_count - 1 && nested_level == 1)
+                    {
+                        if (FAILED(hr = parse_type(context, part_start, ptr - part_start)))
+                            return hr;
+
+                        nested_level--;
+                        ptr++;
+
+                        /* Finish reading all parameters */
+                        break;
+                    }
+
+                    nested_level--;
+                    ptr++;
+                }
+                else if (*ptr == ',' && nested_level == 1)
+                {
+                    /* Parse the parameter, which can be another parameterized type */
+                    if (FAILED(hr = parse_type(context, part_start, ptr - part_start)))
+                        return hr;
+
+                    /* Move past the ',' */
+                    ptr++;
+
+                    /* Finish reading one parameter */
+                    break;
+                }
+                else
+                {
+                    ptr++;
+                }
+            }
+        }
+
+        /* Mismatching brackets or not enough parameters */
+        if (nested_level != 0 || i != parameter_count)
+            return RO_E_METADATA_INVALID_TYPE_FORMAT;
+
+        /* The remaining characters must be spaces */
+        while (ptr < end)
+        {
+            if (*ptr++ != ' ')
+                return RO_E_METADATA_INVALID_TYPE_FORMAT;
+        }
+
+        return S_OK;
+    }
+    /* Contain invalid '`', '<', '>' or ',' */
+    else if (ptr != end)
+    {
+        return RO_E_METADATA_INVALID_TYPE_FORMAT;
+    }
+    /* Non-parameterized */
+    else
+    {
+        return parse_part(context, part_start, ptr - part_start);
+    }
+}
+
+HRESULT WINAPI RoParseTypeName(HSTRING type_name, DWORD *parts_count, HSTRING **parts)
+{
+    struct parse_type_context context = {0};
+    const WCHAR *input;
+    unsigned int i;
+    HRESULT hr;
+
+    TRACE("%s %p %p.\n", debugstr_hstring(type_name), parts_count, parts);
+
+    /* Empty string */
+    if (!WindowsGetStringLen(type_name))
+        return E_INVALIDARG;
+
+    input = WindowsGetStringRawBuffer(type_name, NULL);
+    /* The string has a leading space */
+    if (input[0] == ' ')
+        return RO_E_METADATA_INVALID_TYPE_FORMAT;
+
+    *parts_count = 0;
+    *parts = NULL;
+    if (FAILED(hr = parse_type(&context, input, wcslen(input))))
+    {
+        for (i = 0; i < context.parts_count; i++)
+            WindowsDeleteString(context.parts[i]);
+        CoTaskMemFree(context.parts);
+        return hr;
+    }
+
+    *parts_count = context.parts_count;
+    *parts = context.parts;
+    return S_OK;
+}
