@@ -2153,6 +2153,23 @@ sync_test("builtin_context", function() {
     ok(obj.length === 1, "obj.length = " + obj.length);
 });
 
+sync_test("globals override", function() {
+    wineprop = 1337;  /* global */
+    ok(window.hasOwnProperty("wineprop"), "wineprop not a prop of window");
+    ok(window.wineprop === 1337, "window.wineprop = " + window.wineprop);
+    ok(wineprop === 1337, "wineprop = " + wineprop);
+
+    var r = Object.defineProperty(window, "wineprop", { value: 42, configurable: true });
+    ok(r === window, "defineProperty(window.wineprop) returned " + r);
+    ok(window.hasOwnProperty("wineprop"), "wineprop not a prop of window after override");
+    ok(window.wineprop === 42, "window.wineprop after override = " + window.wineprop);
+    ok(wineprop === 42, "wineprop after override = " + wineprop);
+
+    r = (delete window.wineprop);
+    ok(r === true, "delete window.wineprop returned " + r);
+    ok(!("wineprop" in window), "wineprop in window after delete");
+});
+
 sync_test("host this", function() {
     var tests = [ undefined, null, external.nullDisp, function() {}, [0], "foobar", true, 42, new Number(42), external.testHostContext(true), window, document ];
     var i, obj = Object.create(Function.prototype);

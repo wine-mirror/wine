@@ -3282,8 +3282,14 @@ HRESULT jsdisp_define_property(jsdisp_t *obj, const WCHAR *name, property_desc_t
             if(desc->explicit_value) {
                 if(prop->type == PROP_JSVAL)
                     jsval_release(prop->u.val);
-                else
+                else {
+                    if(prop->type == PROP_EXTERN && obj->builtin_info->prop_delete) {
+                        hres = obj->builtin_info->prop_delete(obj, prop->u.id);
+                        if(FAILED(hres))
+                            return hres;
+                    }
                     prop->type = PROP_JSVAL;
+                }
                 hres = jsval_copy(desc->value, &prop->u.val);
                 if(FAILED(hres)) {
                     prop->u.val = jsval_undefined();
