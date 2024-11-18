@@ -814,11 +814,159 @@ static void test_RoResolveNamespace(void)
     RoUninitialize();
 }
 
+static void test_RoParseTypeName(void)
+{
+    static const struct
+    {
+        const WCHAR *type_name;
+        HRESULT hr;
+        DWORD parts_count;
+        const WCHAR *parts[16];
+    }
+    tests[] =
+    {
+        /* Invalid type names */
+        {L"", E_INVALIDARG},
+        {L" ", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"`", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"<", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L">", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L",", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"`<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a b", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a,b", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"1<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L" a", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L" a ", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a<", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`1<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a<b>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`<b> ", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"`1<b>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L" a`1<b>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`1<b>c", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`1<b,>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`2<b, <c, d>>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`10<b1, b2, b3, b4, b5, b6, b7, b8, b9, b10>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`0xa<b1, b2, b3, b4, b5, b6, b7, b8, b9, b10>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`a<b1, b2, b3, b4, b5, b6, b7, b8, b9, b10>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        /* Valid type names */
+        {L"1", S_OK, 1, {L"1"}},
+        {L"a", S_OK, 1, {L"a"}},
+        {L"-", S_OK, 1, {L"-"}},
+        {L"a ", S_OK, 1, {L"a"}},
+        {L"0`1<b>", S_OK, 2, {L"0`1", L"b"}},
+        {L"a`1<b>", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`1<b> ", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`1<b >", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`1< b>", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`1< b >", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`2<b,c>", S_OK, 3, {L"a`2", L"b", L"c"}},
+        {L"a`2<b, c>", S_OK, 3, {L"a`2", L"b", L"c"}},
+        {L"a`2<b ,c>", S_OK, 3, {L"a`2", L"b", L"c"}},
+        {L"a`2<b , c>", S_OK, 3, {L"a`2", L"b", L"c"}},
+        {L"a`3<b, c, d>", S_OK, 4, {L"a`3", L"b", L"c", L"d"}},
+        {L"a`1<b`1<c>>", S_OK, 3, {L"a`1", L"b`1", L"c"}},
+        {L"a`1<b`2<c, d>>", S_OK, 4, {L"a`1", L"b`2", L"c", L"d"}},
+        {L"a`2<b`2<c, d>, e>", S_OK, 5, {L"a`2", L"b`2", L"c", L"d", L"e"}},
+        {L"a`2<b, c`2<d, e>>", S_OK, 5, {L"a`2", L"b", L"c`2", L"d", L"e"}},
+        {L"a`9<b1, b2, b3, b4, b5, b6, b7, b8, b9>", S_OK, 10, {L"a`9", L"b1", L"b2", L"b3", L"b4", L"b5", L"b6", L"b7", L"b8", L"b9"}},
+        {L"Windows.Foundation.IExtensionInformation", S_OK, 1, {L"Windows.Foundation.IExtensionInformation"}},
+        {L"Windows.Foundation.IReference`1<Windows.UI.Color>", S_OK, 2, {L"Windows.Foundation.IReference`1", L"Windows.UI.Color"}},
+        {L"Windows.Foundation.Collections.IIterator`1<Windows.Foundation.Collections.IMapView`2<Windows.Foundation.Collections.IVector`1<String>, String>>",
+         S_OK, 5, {L"Windows.Foundation.Collections.IIterator`1",
+                   L"Windows.Foundation.Collections.IMapView`2",
+                   L"Windows.Foundation.Collections.IVector`1",
+                   L"String",
+                   L"String"}},
+    };
+    HSTRING type_name, *parts;
+    const WCHAR *buffer;
+    DWORD parts_count;
+    unsigned int i, j;
+    HRESULT hr;
+
+    /* Parameter checks */
+    hr = WindowsCreateString(L"a", 1, &type_name);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = RoParseTypeName(NULL, &parts_count, &parts);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    /* Crash on Windows */
+    if (0)
+    {
+    hr = RoParseTypeName(type_name, NULL, &parts);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = RoParseTypeName(type_name, &parts_count, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    }
+
+    hr = RoParseTypeName(type_name, &parts_count, &parts);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(parts_count == 1, "Got unexpected %ld.\n", parts_count);
+    hr = WindowsDeleteString(parts[0]);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    CoTaskMemFree(parts);
+    hr = WindowsDeleteString(type_name);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Parsing checks */
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%s", wine_dbgstr_w(tests[i].type_name));
+
+        if (tests[i].type_name)
+        {
+            hr = WindowsCreateString(tests[i].type_name, wcslen(tests[i].type_name), &type_name);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+        else
+        {
+            type_name = NULL;
+        }
+
+        parts_count = 0;
+        hr = RoParseTypeName(type_name, &parts_count, &parts);
+        ok(hr == tests[i].hr, "Got unexpected hr %#lx.\n", hr);
+        if (FAILED(hr))
+        {
+            hr = WindowsDeleteString(type_name);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            winetest_pop_context();
+            continue;
+        }
+        ok(parts_count == tests[i].parts_count, "Got unexpected %lu.\n", parts_count);
+
+        for (j = 0; j < parts_count; j++)
+        {
+            winetest_push_context("%s", wine_dbgstr_w(tests[i].parts[j]));
+
+            buffer = WindowsGetStringRawBuffer(parts[j], NULL);
+            ok(!lstrcmpW(tests[i].parts[j], buffer), "Got unexpected %s.\n", wine_dbgstr_w(buffer));
+            hr = WindowsDeleteString(parts[j]);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            winetest_pop_context();
+        }
+        CoTaskMemFree(parts);
+
+        hr = WindowsDeleteString(type_name);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(wintypes)
 {
     IsWow64Process(GetCurrentProcess(), &is_wow64);
 
     test_IApiInformationStatics();
     test_IPropertyValueStatics();
+    test_RoParseTypeName();
     test_RoResolveNamespace();
 }
