@@ -248,7 +248,7 @@ static void keyed_event_dump( struct object *obj, int verbose )
     fputs( "Keyed event\n", stderr );
 }
 
-static enum select_op matching_op( enum select_op op )
+static enum select_opcode matching_op( enum select_opcode op )
 {
     return op ^ (SELECT_KEYED_EVENT_WAIT ^ SELECT_KEYED_EVENT_RELEASE);
 }
@@ -257,7 +257,7 @@ static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *en
 {
     struct wait_queue_entry *ptr;
     struct process *process;
-    enum select_op select_op;
+    enum select_opcode select_op;
 
     assert( obj->ops == &keyed_event_ops );
 

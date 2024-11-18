@@ -435,7 +435,7 @@ struct object_type_info
 
 };
 
-enum select_op
+enum select_opcode
 {
     SELECT_NONE,
     SELECT_WAIT,
@@ -445,28 +445,28 @@ enum select_op
     SELECT_KEYED_EVENT_RELEASE
 };
 
-typedef union
+union select_op
 {
-    enum select_op op;
+    enum select_opcode op;
     struct
     {
-        enum select_op  op;
+        enum select_opcode op;
         obj_handle_t    handles[MAXIMUM_WAIT_OBJECTS];
         int             __pad;
     } wait;
     struct
     {
-        enum select_op  op;
+        enum select_opcode op;
         obj_handle_t    wait;
         obj_handle_t    signal;
     } signal_and_wait;
     struct
     {
-        enum select_op  op;
+        enum select_opcode op;
         obj_handle_t    handle;
         client_ptr_t    key;
     } keyed_event;
-} select_op_t;
+};
 
 enum apc_type
 {

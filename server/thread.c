@@ -61,7 +61,7 @@ struct thread_wait
     int                     count;      /* count of objects */
     int                     flags;
     int                     abandoned;
-    enum select_op          select;
+    enum select_opcode      select;
     client_ptr_t            key;        /* wait key for keyed events */
     client_ptr_t            cookie;     /* magic cookie to return to client */
     abstime_t               when;
@@ -721,7 +721,7 @@ struct thread *get_wait_queue_thread( struct wait_queue_entry *entry )
     return entry->wait->thread;
 }
 
-enum select_op get_wait_queue_select_op( struct wait_queue_entry *entry )
+enum select_opcode get_wait_queue_select_op( struct wait_queue_entry *entry )
 {
     return entry->wait->select;
 }
@@ -775,7 +775,7 @@ static unsigned int end_wait( struct thread *thread, unsigned int status )
 }
 
 /* build the thread wait structure */
-static int wait_on( const select_op_t *select_op, unsigned int count, struct object *objects[],
+static int wait_on( const union select_op *select_op, unsigned int count, struct object *objects[],
                     int flags, abstime_t when )
 {
     struct thread_wait *wait;
@@ -812,7 +812,7 @@ static int wait_on( const select_op_t *select_op, unsigned int count, struct obj
     return current->wait ? 1 : 0;
 }
 
-static int wait_on_handles( const select_op_t *select_op, unsigned int count, const obj_handle_t *handles,
+static int wait_on_handles( const union select_op *select_op, unsigned int count, const obj_handle_t *handles,
                             int flags, abstime_t when )
 {
     struct object *objects[MAXIMUM_WAIT_OBJECTS];
@@ -981,7 +981,7 @@ static int signal_object( obj_handle_t handle )
 }
 
 /* select on a list of handles */
-static int select_on( const select_op_t *select_op, data_size_t op_size, client_ptr_t cookie,
+static int select_on( const union select_op *select_op, data_size_t op_size, client_ptr_t cookie,
                       int flags, abstime_t when )
 {
     int ret;
@@ -996,8 +996,8 @@ static int select_on( const select_op_t *select_op, data_size_t op_size, client_
 
     case SELECT_WAIT:
     case SELECT_WAIT_ALL:
-        count = (op_size - offsetof( select_op_t, wait.handles )) / sizeof(select_op->wait.handles[0]);
-        if (op_size < offsetof( select_op_t, wait.handles ) || count > MAXIMUM_WAIT_OBJECTS)
+        count = (op_size - offsetof( union select_op, wait.handles )) / sizeof(select_op->wait.handles[0]);
+        if (op_size < offsetof( union select_op, wait.handles ) || count > MAXIMUM_WAIT_OBJECTS)
         {
             set_error( STATUS_INVALID_PARAMETER );
             return 1;
@@ -1580,7 +1580,7 @@ DECL_HANDLER(resume_thread)
 /* select on a handle list */
 DECL_HANDLER(select)
 {
-    select_op_t select_op;
+    union select_op select_op;
     data_size_t op_size, ctx_size;
     struct context *ctx;
     struct thread_apc *apc;

@@ -1572,7 +1572,7 @@ NTSTATUS WINAPI NtQueryTimer( HANDLE handle, TIMER_INFORMATION_CLASS class,
 NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles, BOOLEAN wait_any,
                                           BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    select_op_t select_op;
+    union select_op select_op;
     UINT i, flags = SELECT_INTERRUPTIBLE;
 
     if (!count || count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
@@ -1580,7 +1580,7 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles, BO
     if (alertable) flags |= SELECT_ALERTABLE;
     select_op.wait.op = wait_any ? SELECT_WAIT : SELECT_WAIT_ALL;
     for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
-    return server_wait( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout );
+    return server_wait( &select_op, offsetof( union select_op, wait.handles[count] ), flags, timeout );
 }
 
 
@@ -1599,7 +1599,7 @@ NTSTATUS WINAPI NtWaitForSingleObject( HANDLE handle, BOOLEAN alertable, const L
 NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE signal, HANDLE wait,
                                                 BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    select_op_t select_op;
+    union select_op select_op;
     UINT flags = SELECT_INTERRUPTIBLE;
 
     if (!signal) return STATUS_INVALID_HANDLE;
@@ -1883,7 +1883,7 @@ NTSTATUS WINAPI NtOpenKeyedEvent( HANDLE *handle, ACCESS_MASK access, const OBJE
 NTSTATUS WINAPI NtWaitForKeyedEvent( HANDLE handle, const void *key,
                                      BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    select_op_t select_op;
+    union select_op select_op;
     UINT flags = SELECT_INTERRUPTIBLE;
 
     if (!handle) handle = keyed_event;
@@ -1902,7 +1902,7 @@ NTSTATUS WINAPI NtWaitForKeyedEvent( HANDLE handle, const void *key,
 NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
                                      BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    select_op_t select_op;
+    union select_op select_op;
     UINT flags = SELECT_INTERRUPTIBLE;
 
     if (!handle) handle = keyed_event;

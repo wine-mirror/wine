@@ -582,7 +582,7 @@ static void dump_varargs_apc_result( const char *prefix, data_size_t size )
 
 static void dump_varargs_select_op( const char *prefix, data_size_t size )
 {
-    select_op_t data;
+    union select_op data;
 
     if (!size)
     {
@@ -601,9 +601,9 @@ static void dump_varargs_select_op( const char *prefix, data_size_t size )
     case SELECT_WAIT:
     case SELECT_WAIT_ALL:
         fprintf( stderr, "%s", data.op == SELECT_WAIT ? "WAIT" : "WAIT_ALL" );
-        if (size > offsetof( select_op_t, wait.handles ))
+        if (size > offsetof( union select_op, wait.handles ))
             dump_handles( ",handles=", data.wait.handles,
-                          min( size, sizeof(data.wait) ) - offsetof( select_op_t, wait.handles ));
+                          min( size, sizeof(data.wait) ) - offsetof( union select_op, wait.handles ));
         break;
     case SELECT_SIGNAL_AND_WAIT:
         fprintf( stderr, "SIGNAL_AND_WAIT,signal=%04x,wait=%04x",

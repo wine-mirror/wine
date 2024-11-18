@@ -1512,7 +1512,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
     DWORD i;
     obj_handle_t handle = 0;
     client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
-    select_op_t select_op;
+    union select_op select_op;
     sigset_t old_set;
 
     if (!peb->BeingDebugged) return 0;  /* no debugger present */
@@ -1545,7 +1545,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
         contexts_to_server( server_contexts, context );
         server_contexts[0].flags |= SERVER_CTX_EXEC_SPACE;
         server_contexts[0].exec_space.space.space = exception ? EXEC_SPACE_EXCEPTION : EXEC_SPACE_SYSCALL;
-        server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE,
+        server_select( &select_op, offsetof( union select_op, wait.handles[1] ), SELECT_INTERRUPTIBLE,
                        TIMEOUT_INFINITE, server_contexts, NULL );
 
         SERVER_START_REQ( get_exception_status )

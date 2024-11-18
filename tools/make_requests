@@ -46,7 +46,6 @@ my %formats =
     "cursor_pos_t"             => [  24,  8 ],
     "pe_image_info_t"          => [  88,  8 ],
     "property_data_t"          => [  16,  8 ],
-    "select_op_t"              => [  264,  8 ],
     "startup_info_t"           => [  96,  4 ],
     "tcp_connection"           => [  60, 4 ],
     "udp_endpoint"             => [  32, 4 ],
@@ -65,6 +64,7 @@ my %formats =
     "struct object_type_info"  => [ 44, 4 ],
     "struct process_info"      => [ 40, 8 ],
     "struct rawinput_device"   => [ 12, 4 ],
+    "union select_op"          => [ 264, 8 ],
     "struct thread_info"       => [ 40, 8 ],
     "struct user_apc"          => [ 40, 8 ],
 );
