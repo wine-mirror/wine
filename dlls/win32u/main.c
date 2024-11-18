@@ -1133,6 +1133,11 @@ NTSTATUS SYSCALL_API NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3,
     SYSCALL_FUNC( NtUserBuildHwndList );
 }
 
+NTSTATUS SYSCALL_API NtUserBuildPropList( HWND hwnd, ULONG count, struct ntuser_property_list *buffer, ULONG *ret_count )
+{
+    SYSCALL_FUNC( NtUserBuildPropList );
+}
+
 ULONG_PTR SYSCALL_API NtUserCallHwnd( HWND hwnd, DWORD code )
 {
     SYSCALL_FUNC( NtUserCallHwnd );

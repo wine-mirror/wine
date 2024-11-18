@@ -18,11 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/winuser16.h"
 #include "wownt32.h"
 #include "user_private.h"
 #include "wine/list.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
@@ -192,22 +193,16 @@ BOOL16 WINAPI SetProp16( HWND16 hwnd, LPCSTR str, HANDLE16 handle )
  */
 INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 {
-    int ret = -1, i, count, total = 32;
-    property_data_t *list;
+    int ret = -1, i;
+    struct ntuser_property_list *list;
+    ULONG count, total = 32;
+    NTSTATUS status;
 
     while (total)
     {
         if (!(list = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*list) ))) break;
-        count = 0;
-        SERVER_START_REQ( get_window_properties )
-        {
-            req->window = wine_server_user_handle( HWND_32(hwnd) );
-            wine_server_set_reply( req, list, total * sizeof(*list) );
-            if (!wine_server_call( req )) count = reply->total;
-        }
-        SERVER_END_REQ;
-
-        if (count && count <= total)
+        status = NtUserBuildPropList( WIN_Handle32(hwnd), total, list, &count );
+        if (!status && count)
         {
             char string[ATOM_BUFFER_SIZE];
             SEGPTR segptr = MapLS( string );
@@ -239,6 +234,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
             break;
         }
         HeapFree( GetProcessHeap(), 0, list );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
         total = count;  /* restart with larger buffer */
     }
     return ret;

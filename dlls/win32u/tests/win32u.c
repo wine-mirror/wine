@@ -120,6 +120,9 @@ static void test_window_props(void)
     ATOM atom;
     HWND hwnd;
     BOOL ret;
+    ULONG i, count;
+    NTSTATUS status;
+    struct ntuser_property_list *props;
 
     hwnd = CreateWindowExA( 0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL );
 
@@ -134,11 +137,39 @@ static void test_window_props(void)
     prop = NtUserGetProp( hwnd, UlongToPtr(atom) );
     ok( prop == UlongToHandle(0xdeadbeef), "prop = %p\n", prop );
 
+    props = malloc( 32 * sizeof(*props) );
+    count = 0xdead;
+    status = NtUserBuildPropList( hwnd, 32, NULL, &count );
+    ok( status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_HANDLE,
+        "NtUserBuildPropList failed %lx\n", status );
+    ok( count == 0xdead, "wrong count %lu\n", count );
+
+    status = NtUserBuildPropList( hwnd, 32, props, NULL );
+    ok( status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_HANDLE,
+        "NtUserBuildPropList failed %lx\n", status );
+    ok( count == 0xdead, "wrong count %lu\n", count );
+
+    status = NtUserBuildPropList( hwnd, 32, props, &count );
+    ok( !status, "NtUserBuildPropList failed %lx\n", status );
+    ok( count, "wrong count %lu\n", count );
+    for (i = 0; i < count; i++)
+    {
+        if (props[i].data != (INT_PTR)0xdeadbeef) continue;
+        ok( props[i].atom == atom, "prop = %x / %x\n", props[i].atom, atom );
+        break;
+    }
+    ok( i < count, "property not found\n" );
+
     prop = NtUserRemoveProp( hwnd, UlongToPtr(atom) );
     ok( prop == UlongToHandle(0xdeadbeef), "prop = %p\n", prop );
 
     prop = GetPropW(hwnd, L"test");
     ok(!prop, "prop = %p\n", prop);
+
+    status = NtUserBuildPropList( hwnd, 32, props, &count );
+    ok( !status, "NtUserBuildPropList failed %lx\n", status );
+    for (i = 0; i < count; i++) ok( props[i].atom != atom, "property still exists\n" );
+    free( props );
 
     GlobalDeleteAtom( atom );
     DestroyWindow( hwnd );

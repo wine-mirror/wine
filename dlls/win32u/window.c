@@ -1561,6 +1561,43 @@ HANDLE WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str )
     return (HANDLE)ret;
 }
 
+
+/***********************************************************************
+ *           NtUserBuildPropList   (win32u.@)
+ */
+NTSTATUS WINAPI NtUserBuildPropList( HWND hwnd, ULONG count, struct ntuser_property_list *buffer, ULONG *ret_count )
+{
+    property_data_t *data;
+    ULONG i;
+    NTSTATUS status;
+
+    if (!buffer || !ret_count) return STATUS_INVALID_PARAMETER;
+
+    if (!(data = malloc( count * sizeof(*data) ))) return STATUS_NO_MEMORY;
+
+    SERVER_START_REQ( get_window_properties )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        wine_server_set_reply( req, data, count * sizeof(*data) );
+        if (!(status = wine_server_call( req )))
+        {
+            for (i = 0; i < wine_server_reply_size(reply) / sizeof(*data); i++)
+            {
+                buffer[i].data   = data[i].data;
+                buffer[i].atom   = data[i].atom;
+                buffer[i].string = data[i].string;
+            }
+            *ret_count = reply->total;
+            if (reply->total > count) status = STATUS_BUFFER_TOO_SMALL;
+        }
+    }
+    SERVER_END_REQ;
+
+    free( data );
+    return status;
+}
+
+
 static void mirror_rect( const RECT *window_rect, RECT *rect )
 {
     int width = window_rect->right - window_rect->left;
