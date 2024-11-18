@@ -16,6 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PATHCCH_NONE                            0x00
 #define PATHCCH_ALLOW_LONG_PATHS                0x01
 #define PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS  0x02
@@ -48,3 +52,7 @@ WINBASEAPI HRESULT WINAPI PathCchSkipRoot(const WCHAR *path, const WCHAR **root_
 WINBASEAPI HRESULT WINAPI PathCchStripPrefix(WCHAR *path, SIZE_T size);
 WINBASEAPI HRESULT WINAPI PathCchStripToRoot(WCHAR *path, SIZE_T size);
 WINBASEAPI BOOL    WINAPI PathIsUNCEx(const WCHAR *path, const WCHAR **server);
+
+#ifdef __cplusplus
+}
+#endif
