@@ -53,7 +53,7 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo );
 
 
 void NS_ResetSessionEnumeration( LPVOID lpNSInfo );
-LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo, void **spMessageHeader );
+LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo, void **spMessageHeader, BOOL ansi );
 void NS_PruneSessionCache( LPVOID lpNSInfo );
 
 #endif /* __WINE_DPLAYX_NAMESERVER */

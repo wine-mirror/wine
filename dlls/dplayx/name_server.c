@@ -48,6 +48,7 @@ struct NSCacheData
 
   DWORD dwTime; /* Time at which data was last known valid */
   LPDPSESSIONDESC2 data;
+  LPDPSESSIONDESC2 dataA;
 
   LPVOID lpNSAddrHdr;
 
@@ -135,11 +136,21 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
   dpsd.lpszSessionName = (WCHAR *) (lpcMsg + 1);
   dpsd.lpszPassword = NULL;
 
-  lpCacheNode->data = DP_DuplicateSessionDesc( &dpsd, TRUE, FALSE );
+  lpCacheNode->data = DP_DuplicateSessionDesc( &dpsd, FALSE, FALSE );
 
   if( lpCacheNode->data == NULL )
   {
     ERR( "no memory for SESSIONDESC2\n" );
+    free( lpCacheNode );
+    return;
+  }
+
+  lpCacheNode->dataA = DP_DuplicateSessionDesc( &dpsd, TRUE, FALSE );
+
+  if( lpCacheNode->dataA == NULL )
+  {
+    ERR( "no memory for SESSIONDESC2\n" );
+    free( lpCacheNode->data );
     free( lpCacheNode );
     return;
   }
@@ -213,6 +224,7 @@ static DPQ_DECL_DELETECB( cbReleaseNSNode, lpNSCacheData )
   if ( ref )
     return;
 
+  free( elem->dataA );
   free( elem->data );
   free( elem->lpNSAddrHdr );
   free( elem );
@@ -280,7 +292,7 @@ void NS_ResetSessionEnumeration( LPVOID lpNSInfo )
   ((lpNSCache)lpNSInfo)->present = ((lpNSCache)lpNSInfo)->walkFirst.lpQHFirst;
 }
 
-LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo, void **spMessageHeader )
+LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo, void **spMessageHeader, BOOL ansi )
 {
   LPDPSESSIONDESC2 lpSessionDesc;
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
@@ -291,7 +303,7 @@ LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo, void **spMessageHeader )
     return NULL;
   }
 
-  lpSessionDesc = lpCache->present->data;
+  lpSessionDesc = ansi ? lpCache->present->dataA : lpCache->present->data;
 
   if( spMessageHeader )
     *spMessageHeader = lpCache->present->lpNSAddrHdr;

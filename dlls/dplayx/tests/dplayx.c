@@ -1176,11 +1176,10 @@ static void checkNoMoreMessages_( int line, SOCKET sock )
     ok_( __FILE__, line )( !wsResult || wsResult == SOCKET_ERROR, "recv() returned %d.\n", wsResult );
 }
 
-#define checkSpHeader( header, expectedSize, sizeTodo ) checkSpHeader_( __LINE__, header, expectedSize, sizeTodo )
-static unsigned short checkSpHeader_( int line, SpHeader *header, DWORD expectedSize, BOOL sizeTodo )
+#define checkSpHeader( header, expectedSize ) checkSpHeader_( __LINE__, header, expectedSize )
+static unsigned short checkSpHeader_( int line, SpHeader *header, DWORD expectedSize )
 {
-    todo_wine_if( sizeTodo )
-        ok_( __FILE__, line )( header->mixed == 0xfab00000 + expectedSize, "got mixed %#lx.\n", header->mixed );
+    ok_( __FILE__, line )( header->mixed == 0xfab00000 + expectedSize, "got mixed %#lx.\n", header->mixed );
     ok_( __FILE__, line )( header->addr.sin_family == AF_INET, "got family %d.\n", header->addr.sin_family );
     ok_( __FILE__, line )( 2300 <= ntohs( header->addr.sin_port ) && ntohs( header->addr.sin_port ) < 2350,
                            "got port %d.\n", ntohs( header->addr.sin_port ) );
@@ -1250,11 +1249,10 @@ static void checkGameMessage_( int line, GameMessage *message, DPID expectedFrom
     ok_( __FILE__, line )( message->toId == expectedToId, "got destination id %#lx.\n", message->toId );
 }
 
-#define receiveEnumSessionsRequest( sock, expectedAppGuid, expectedPassword, expectedFlags, passwordTodo ) \
-        receiveEnumSessionsRequest_( __LINE__, sock, expectedAppGuid, expectedPassword, expectedFlags, passwordTodo )
+#define receiveEnumSessionsRequest( sock, expectedAppGuid, expectedPassword, expectedFlags ) \
+        receiveEnumSessionsRequest_( __LINE__, sock, expectedAppGuid, expectedPassword, expectedFlags )
 static unsigned short receiveEnumSessionsRequest_( int line, SOCKET sock, const GUID *expectedAppGuid,
-                                                   const WCHAR *expectedPassword, DWORD expectedFlags,
-                                                   BOOL passwordTodo )
+                                                   const WCHAR *expectedPassword, DWORD expectedFlags )
 {
 #include "pshpack1.h"
     struct
@@ -1273,11 +1271,11 @@ static unsigned short receiveEnumSessionsRequest_( int line, SOCKET sock, const 
     expectedSize = sizeof( request.spHeader ) + sizeof( request.request ) + expectedPasswordSize;
 
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
-    todo_wine_if( passwordTodo ) ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
+    ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
     if ( wsResult == SOCKET_ERROR )
         return 0;
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, passwordTodo );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize );
     checkMessageHeader_( line, &request.request.header, 2 );
     ok_( __FILE__, line )( IsEqualGUID( &request.request.appGuid, expectedAppGuid ), "got app guid %s.\n",
                            wine_dbgstr_guid( &request.request.appGuid ) );
@@ -1285,9 +1283,8 @@ static unsigned short receiveEnumSessionsRequest_( int line, SOCKET sock, const 
     {
         ok_( __FILE__, line )( request.request.passwordOffset == 32, "got password offset %lu.\n",
                                request.request.passwordOffset );
-        todo_wine_if( passwordTodo )
-            ok_( __FILE__, line )( !lstrcmpW( request.password, expectedPassword ), "got password %s.\n",
-                                   wine_dbgstr_w( request.password ) );
+        ok_( __FILE__, line )( !lstrcmpW( request.password, expectedPassword ), "got password %s.\n",
+                               wine_dbgstr_w( request.password ) );
     }
     else
     {
@@ -1364,7 +1361,7 @@ static unsigned short receiveRequestPlayerId_( int line, SOCKET sock, DWORD expe
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, sizeof( request ), FALSE );
+    port = checkSpHeader_( line, &request.spHeader, sizeof( request ) );
     checkMessageHeader_( line, &request.request.header, 5 );
     ok_( __FILE__, line )( request.request.flags == expectedFlags, "got flags %#lx.\n", request.request.flags );
 
@@ -1437,7 +1434,7 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
     if ( wsResult == SOCKET_ERROR )
         return 0;
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, FALSE );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize );
     checkMessageHeader_( line, &request.request.header, 19 );
     ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
     ok_( __FILE__, line )( request.request.playerId == expectedPlayerId, "got player id %#lx.\n",
@@ -1817,7 +1814,7 @@ static unsigned short receiveAddForwardAck_( int line, SOCKET sock, DPID expecte
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, sizeof( request ), FALSE );
+    port = checkSpHeader_( line, &request.spHeader, sizeof( request ) );
     checkMessageHeader_( line, &request.request.header, 47 );
 
     return port;
@@ -1858,7 +1855,7 @@ static unsigned short receiveCreatePlayer_( int line, SOCKET sock, DPID expected
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, FALSE );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize );
     checkMessageHeader_( line, &request.request.header, 8 );
     ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
     ok_( __FILE__, line )( request.request.playerId == expectedPlayerId, "got player id %#lx.\n",
@@ -2040,7 +2037,7 @@ static unsigned short receiveGuaranteedGameMessage_( int line, SOCKET sock, DPID
     wsResult = receiveMessage_( line, sock, &request, expectedSize );
     ok_( __FILE__, line )( wsResult == expectedSize, "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, FALSE );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize );
     checkGameMessage_( line, &request.request, expectedFromId, expectedToId );
     ok_( __FILE__, line )( !memcmp( &request.data, expectedData, expectedDataSize ), "message data didn't match.\n" );
 
@@ -2192,7 +2189,7 @@ static unsigned short receivePingReply_( int line, SOCKET sock, DPID expectedFro
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, sizeof( request ), FALSE );
+    port = checkSpHeader_( line, &request.spHeader, sizeof( request ) );
     checkMessageHeader_( line, &request.request.header, 23 );
     ok_( __FILE__, line )( request.request.fromId == expectedFromId, "got source id %#lx.\n", request.request.fromId );
     ok_( __FILE__, line )( request.request.tickCount == expectedTickCount, "got tick count %#lx.\n",
@@ -2218,7 +2215,7 @@ static unsigned short receiveAddPlayerToGroup_( int line, SOCKET sock, DPID expe
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
 
-    port = checkSpHeader_( line, &request.spHeader, sizeof( request ), FALSE );
+    port = checkSpHeader_( line, &request.spHeader, sizeof( request ) );
     checkMessageHeader_( line, &request.request.header, 13 );
 
     ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
@@ -3356,7 +3353,7 @@ static void test_Open(void)
 
         enumSessionsParam = enumSessionsAsync( dp, &dpsdAppGuid, 100, countSessionsCallback, &count, 0 );
 
-        port = receiveEnumSessionsRequest( enumSock, &appGuid, NULL, 0, FALSE );
+        port = receiveEnumSessionsRequest( enumSock, &appGuid, NULL, 0 );
 
         sock = connectTcp( port );
 
@@ -3398,7 +3395,7 @@ static void test_Open(void)
         enumSessionsParam = enumSessionsAsync( dp, &dpsdAppGuid, 100, countSessionsCallback, &count,
                                                DPENUMSESSIONS_PASSWORDREQUIRED );
 
-        port = receiveEnumSessionsRequest( enumSock, &appGuid, NULL, DPENUMSESSIONS_PASSWORDREQUIRED, FALSE );
+        port = receiveEnumSessionsRequest( enumSock, &appGuid, NULL, DPENUMSESSIONS_PASSWORDREQUIRED );
 
         sock = connectTcp( port );
 
@@ -3583,7 +3580,7 @@ static void joinSession_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dpsd, DPSE
 
         enumSessionsParam = enumSessionsAsync( dp, dpsd, 100, countSessionsCallback, &count, 0 );
 
-        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, 0, FALSE );
+        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, 0 );
 
         *sendSock = connectTcp_( line, port );
 
@@ -3775,9 +3772,8 @@ static BOOL CALLBACK checkSessionListCallback( const DPSESSIONDESC2 *thisSd, DWO
                                      "got current player count %lu.\n", thisSd->dwMaxPlayers );
         ok_( __FILE__, data->line )( thisSd->dwCurrentPlayers == expectedSession->dpsd.dwCurrentPlayers,
                                      "got max player count %lu.\n", thisSd->dwCurrentPlayers );
-        todo_wine_if( !data->ansi )
-            ok_( __FILE__, data->line )( !strcmpAW( thisSd->lpszSessionNameA, expectedSession->dpsd.lpszSessionNameA, data->ansi ),
-                                         "got session name %s.\n", dbgStrAW( thisSd->lpszSessionNameA, data->ansi ) );
+        ok_( __FILE__, data->line )( !strcmpAW( thisSd->lpszSessionNameA, expectedSession->dpsd.lpszSessionNameA, data->ansi ),
+                                     "got session name %s.\n", dbgStrAW( thisSd->lpszSessionNameA, data->ansi ) );
         ok_( __FILE__, data->line )( !thisSd->lpszPasswordA, "got password %s.\n",
                                      dbgStrAW( thisSd->lpszPasswordA, data->ansi ) );
         ok_( __FILE__, data->line )( thisSd->dwReserved1 == expectedSession->dpsd.dwReserved1, "got reserved1 %#lx.\n",
@@ -3878,8 +3874,7 @@ static void check_EnumSessions_( int line, IDirectPlay4 *dp, DPSESSIONDESC2 *dps
         param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, flags );
 
         if ( requestExpected )
-            port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, expectedPassword, flags,
-                                                !ansi && expectedPassword );
+            port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, expectedPassword, flags );
 
         for ( i = 0; i < replyCount; ++i )
         {
@@ -3975,7 +3970,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
         /* Do a sync enumeration first to fill the cache */
         param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, 0 );
 
-        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, 0, FALSE );
+        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, 0 );
 
         sock = connectTcp_( line, port );
 
@@ -4014,7 +4009,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
     /* Read cache of last sync enumeration */
     param = enumSessionsAsync( dp, dpsd, 100, checkSessionListCallback, &callbackData, DPENUMSESSIONS_ASYNC );
 
-    receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, DPENUMSESSIONS_ASYNC, FALSE );
+    receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, DPENUMSESSIONS_ASYNC );
 
     hr = enumSessionsAsyncWait( param, 2000 );
     ok_( __FILE__, line )( hr == DP_OK, "got hr %#lx.\n", hr );
@@ -4025,7 +4020,7 @@ static void check_EnumSessions_async_( int line, DPSESSIONDESC2 *dpsd, IDirectPl
 
     /* Check that requests are sent periodically */
     for ( i = 0; i < 2; ++i )
-        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, DPENUMSESSIONS_ASYNC, FALSE );
+        port = receiveEnumSessionsRequest_( line, enumSock, &appGuid, NULL, DPENUMSESSIONS_ASYNC );
 
     for ( i = 0; i < ARRAYSIZE( replyDpsds ); ++i )
     {

@@ -2801,7 +2801,8 @@ static BOOL DP_InvokeEnumSessionCallbacks
        ( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
          LPVOID lpNSInfo,
          DWORD *timeout,
-         LPVOID lpContext )
+         LPVOID lpContext,
+         BOOL ansi )
 {
   LPDPSESSIONDESC2 lpSessionDesc;
 
@@ -2809,7 +2810,7 @@ static BOOL DP_InvokeEnumSessionCallbacks
 
   /* Enumerate all sessions */
   /* FIXME: Need to indicate ANSI */
-  while( (lpSessionDesc = NS_WalkSessions( lpNSInfo, NULL ) ) != NULL )
+  while( (lpSessionDesc = NS_WalkSessions( lpNSInfo, NULL, ansi ) ) != NULL )
   {
     TRACE( "EnumSessionsCallback2 invoked\n" );
     if( !lpEnumSessionsCallback2( lpSessionDesc, timeout, 0, lpContext ) )
@@ -2921,18 +2922,10 @@ static HRESULT WINAPI IDirectPlay3Impl_EnumSessions( IDirectPlay3 *iface, DPSESS
             context, flags );
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_EnumSessions( IDirectPlay4A *iface, DPSESSIONDESC2 *sdesc,
-        DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
+static HRESULT DP_IF_EnumSessions( IDirectPlayImpl *This, DPSESSIONDESC2 *sdesc,
+        DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags,
+        BOOL ansi )
 {
-    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
-    return IDirectPlayX_EnumSessions( &This->IDirectPlay4_iface, sdesc, timeout, enumsessioncb,
-            context, flags );
-}
-
-static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESSIONDESC2 *sdesc,
-        DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
-{
-    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
     EnumSessionAsyncCallbackData *data;
     WCHAR *password = NULL;
     DWORD defaultTimeout;
@@ -2999,7 +2992,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         return DP_OK;
     }
 
-    password = DP_DuplicateString( sdesc->lpszPassword, FALSE, TRUE );
+    password = DP_DuplicateString( sdesc->lpszPassword, FALSE, ansi );
     if ( !password && sdesc->lpszPassword )
         return DPERR_OUTOFMEMORY;
 
@@ -3033,7 +3026,7 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
         LeaveCriticalSection( &This->lock );
 
         if ( !DP_InvokeEnumSessionCallbacks( enumsessioncb, This->dp2->lpNameServerData, &timeout,
-                                             context ) )
+                                             context, ansi ) )
             break;
     }
 
@@ -3095,6 +3088,20 @@ static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESS
     This->dp2->dwEnumSessionLock--;
 
     return DP_OK;
+}
+
+static HRESULT WINAPI IDirectPlay4AImpl_EnumSessions( IDirectPlay4A *iface, DPSESSIONDESC2 *sdesc,
+        DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+    return DP_IF_EnumSessions( This, sdesc, timeout, enumsessioncb, context, flags, TRUE );
+}
+
+static HRESULT WINAPI IDirectPlay4Impl_EnumSessions( IDirectPlay4 *iface, DPSESSIONDESC2 *sdesc,
+        DWORD timeout, LPDPENUMSESSIONSCALLBACK2 enumsessioncb, void *context, DWORD flags )
+{
+    IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    return DP_IF_EnumSessions( This, sdesc, timeout, enumsessioncb, context, flags, FALSE );
 }
 
 static HRESULT WINAPI IDirectPlay2AImpl_GetCaps( IDirectPlay2A *iface, DPCAPS *caps, DWORD flags )
@@ -3775,7 +3782,7 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
 
     for ( ;; )
     {
-      sessionDesc = NS_WalkSessions( This->dp2->lpNameServerData, &spMessageHeader );
+      sessionDesc = NS_WalkSessions( This->dp2->lpNameServerData, &spMessageHeader, bAnsi );
       if ( !sessionDesc )
         return DPERR_NOSESSIONS;
       if ( IsEqualGUID( &sessionDesc->guidInstance, &lpsd->guidInstance ) )
