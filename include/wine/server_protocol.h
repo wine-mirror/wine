@@ -344,13 +344,13 @@ typedef union
     } hw;
 } hw_input_t;
 
-typedef union
+union message_data
 {
     unsigned char            bytes[1];
     struct hardware_msg_data hardware;
     struct callback_msg_data callback;
     struct winevent_msg_data winevent;
-} message_data_t;
+};
 
 
 struct filesystem_event

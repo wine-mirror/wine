@@ -2729,7 +2729,7 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
     {
         NTSTATUS res;
         size_t size = 0;
-        const message_data_t *msg_data = buffer;
+        const union message_data *msg_data = buffer;
         UINT wake_mask, signal_bits, wake_bits, changed_bits, clear_bits = 0;
 
         /* use the same logic as in server/queue.c get_message */
@@ -3320,7 +3320,7 @@ BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
 static BOOL put_message_in_queue( const struct send_message_info *info, size_t *reply_size )
 {
     struct packed_message data;
-    message_data_t msg_data;
+    union message_data msg_data;
     unsigned int res;
     int i;
     timeout_t timeout = TIMEOUT_INFINITE;
