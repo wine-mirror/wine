@@ -99,6 +99,7 @@ static const BYTE test_catalog[] = {
 };
 
 static BOOL (WINAPI * pCryptCATAdminAcquireContext)(HCATADMIN*, const GUID*, DWORD);
+static BOOL (WINAPI * pCryptCATAdminAcquireContext2)(HCATADMIN*, const GUID*, const WCHAR *, const CERT_STRONG_SIGN_PARA *, DWORD);
 static BOOL (WINAPI * pCryptCATAdminReleaseContext)(HCATADMIN, DWORD);
 static BOOL (WINAPI * pCryptCATAdminCalcHashFromFileHandle)(HANDLE hFile, DWORD*, BYTE*, DWORD);
 static HCATINFO (WINAPI * pCryptCATAdminAddCatalog)(HCATADMIN, PWSTR, PWSTR, DWORD);
@@ -130,6 +131,7 @@ static void InitFunctionPtrs(void)
     }
 
     WINTRUST_GET_PROC(CryptCATAdminAcquireContext)
+    WINTRUST_GET_PROC(CryptCATAdminAcquireContext2)
     WINTRUST_GET_PROC(CryptCATAdminReleaseContext)
     WINTRUST_GET_PROC(CryptCATAdminCalcHashFromFileHandle)
     WINTRUST_GET_PROC(CryptCATAdminAddCatalog)
@@ -164,6 +166,7 @@ static void test_context(void)
     BOOL ret;
     HCATADMIN hca;
     static GUID unknown = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }}; /* WINTRUST.DLL */
+    static const WCHAR unknown_alg[] = {'A', 'L', 'G', '-', 'U', 'N', 'K', 'N', 'O', 'W', 'N', '\0'};
     CHAR dummydir[MAX_PATH];
     DWORD attrs;
 
@@ -301,6 +304,28 @@ static void test_context(void)
         ret = pCryptCATAdminReleaseContext(hca, 0);
         ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
     }
+
+    /* Specify SHA-1 algorithm */
+    ret = pCryptCATAdminAcquireContext2(&hca, &unknown, BCRYPT_SHA1_ALGORITHM, NULL,  0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    ok(hca != NULL, "Expected a context handle, got NULL\n");
+
+    ret = pCryptCATAdminReleaseContext(hca, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+
+    /* Specify SHA-256 algorithm */
+    ret = pCryptCATAdminAcquireContext2(&hca, &unknown, BCRYPT_SHA256_ALGORITHM, NULL,  0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    ok(hca != NULL, "Expected a context handle, got NULL\n");
+
+    ret = pCryptCATAdminReleaseContext(hca, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+
+    /* Set unknown algorithm - should return failure */
+    ret = pCryptCATAdminAcquireContext2(&hca, &unknown, unknown_alg, NULL,  0);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == NTE_BAD_ALGID, "Expected NTE_BAD_ALGID, got %ld\n", GetLastError());
+
 }
 
 /* TODO: Check whether SHA-1 is the algorithm that's always used */
