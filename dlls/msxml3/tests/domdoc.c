@@ -14137,9 +14137,56 @@ static void test_validate_on_parse_values(void)
     }
 }
 
+static void test_indent(void)
+{
+    HRESULT hr;
+    VARIANT_BOOL b = VARIANT_FALSE;
+    BSTR data, str;
+    const WCHAR *data_expected;
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *element = NULL;
+
+    str = SysAllocString(L"<?xml version='1.0' encoding='Windows-1252'?>\n"
+                          "<root>\n"
+                              "<a>\n"
+                                  "<b/>\n"
+                              "</a>\n"
+                          "</root>\n");
+    hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void **)&doc);
+    ok(hr == S_OK, "Unable to create instance hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_loadXML(doc, str, &b);
+    ok(hr == S_OK, "Unable to load XML hr %#lx.\n", hr);
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok(hr == S_OK, "Unable to get element hr %#lx.\n", hr);
+    hr = IXMLDOMElement_get_xml(element, &data);
+    ok(hr == S_OK, "Unable to get XML hr %#lx.\n", hr);
+
+    data_expected = L"<root>\r\n"
+                         "\t<a>\r\n"
+                             "\t\t<b/>\r\n"
+                         "\t</a>\r\n"
+                     "</root>";
+    ok(!lstrcmpW(data, data_expected), "incorrect element string, got '%s'\n", wine_dbgstr_w(data));
+
+    SysFreeString(str);
+}
+
+static DWORD WINAPI new_thread(void *arg)
+{
+    HRESULT hr = CoInitialize(NULL);
+    ok(hr == S_OK, "failed to init com\n");
+    if (hr != S_OK) return 1;
+
+    test_indent();
+
+    CoUninitialize();
+    return 0;
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
+    HANDLE thread;
 
     hr = CoInitialize( NULL );
     ok( hr == S_OK, "failed to init com\n");
@@ -14232,6 +14279,13 @@ START_TEST(domdoc)
         test_mxnamespacemanager();
         test_mxnamespacemanager_override();
     }
+
+    /* We need to test test_indent in a seperate thread. This is to prevent regressions in multi-threaded
+    applications where the default indentation is set (e.g. by setting xmlTreeIndentString) in the first
+    thread but not for new threads, leading to the wrong indentation in subsequent threads. */
+    thread = CreateThread(NULL, 0, new_thread, NULL, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
 
     CoUninitialize();
 }
