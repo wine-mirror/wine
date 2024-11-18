@@ -387,7 +387,7 @@ static void dump_async_data( const char *prefix, const struct async_data *data )
     fputc( '}', stderr );
 }
 
-static void dump_irp_params( const char *prefix, const irp_params_t *data )
+static void dump_irp_params( const char *prefix, const union irp_params *data )
 {
     switch (data->type)
     {

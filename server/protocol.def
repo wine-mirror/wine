@@ -764,7 +764,7 @@ enum irp_type
     IRP_CALL_CANCEL
 };
 
-typedef union
+union irp_params
 {
     enum irp_type        type;      /* irp call type */
     struct
@@ -832,7 +832,7 @@ typedef union
         int              __pad;
         client_ptr_t     irp;       /* opaque ptr for canceled irp */
     } cancel;
-} irp_params_t;
+};
 
 /* information about a PE image mapping, roughly equivalent to SECTION_IMAGE_INFORMATION */
 typedef struct
@@ -3695,7 +3695,7 @@ typedef union
     data_size_t  result;          /* IOSB result of the previous irp */
     VARARG(data,bytes);           /* output data of the previous irp */
 @REPLY
-    irp_params_t params;          /* irp parameters */
+    union irp_params params;      /* irp parameters */
     obj_handle_t next;            /* handle to the next irp */
     thread_id_t  client_tid;      /* tid of thread calling irp */
     client_ptr_t client_thread;   /* pointer to thread object of calling irp */

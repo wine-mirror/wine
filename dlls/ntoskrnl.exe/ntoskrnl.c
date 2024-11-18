@@ -506,7 +506,7 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
 
 struct dispatch_context
 {
-    irp_params_t params;
+    union irp_params params;
     HANDLE handle;
     struct irp_data *irp_data;
     ULONG  in_size;

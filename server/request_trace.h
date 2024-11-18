@@ -11,7 +11,7 @@ static void dump_async_data( const char *prefix, const struct async_data *val );
 static void dump_generic_map( const char *prefix, const generic_map_t *val );
 static void dump_hw_input( const char *prefix, const union hw_input *val );
 static void dump_ioctl_code( const char *prefix, const ioctl_code_t *val );
-static void dump_irp_params( const char *prefix, const irp_params_t *val );
+static void dump_irp_params( const char *prefix, const union irp_params *val );
 static void dump_luid( const char *prefix, const struct luid *val );
 static void dump_obj_locator( const char *prefix, const obj_locator_t *val );
 static void dump_rectangle( const char *prefix, const rectangle_t *val );

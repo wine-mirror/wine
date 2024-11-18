@@ -748,7 +748,7 @@ enum irp_type
     IRP_CALL_CANCEL
 };
 
-typedef union
+union irp_params
 {
     enum irp_type        type;
     struct
@@ -816,7 +816,7 @@ typedef union
         int              __pad;
         client_ptr_t     irp;
     } cancel;
-} irp_params_t;
+};
 
 
 typedef struct
@@ -5239,7 +5239,7 @@ struct get_next_device_request_request
 struct get_next_device_request_reply
 {
     struct reply_header __header;
-    irp_params_t params;
+    union irp_params params;
     obj_handle_t next;
     thread_id_t  client_tid;
     client_ptr_t client_thread;
