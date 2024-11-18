@@ -4851,11 +4851,127 @@ static HRESULT WINAPI IDirectPlay3Impl_EnumConnections( IDirectPlay3 *iface,
             flags );
 }
 
+static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
+                                   const GUID *addressDataType,
+                                   LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, void *lpContext )
+{
+  HKEY hkResult;
+  LPCSTR guidDataSubKey  = "Guid";
+  char subKeyName[51];
+  DWORD dwIndex, sizeOfSubKeyName=50;
+  FILETIME filetime;
+
+  /* Need to loop over the service providers in the registry */
+  if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
+                     0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
+  {
+    /* Hmmm. Does this mean that there are no service providers? */
+    ERR(": no service providers?\n");
+    return DP_OK;
+  }
+
+
+  /* Traverse all the service providers we have available */
+  for( dwIndex=0;
+       RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName,
+                      NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
+       ++dwIndex, sizeOfSubKeyName=51 )
+  {
+
+    HKEY     hkServiceProvider;
+    GUID     serviceProviderGUID;
+    DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
+    char     returnBuffer[51];
+    WCHAR    buff[51];
+    DPNAME   dpName;
+    HRESULT  hr;
+
+    DPCOMPOUNDADDRESSELEMENT dpCompoundAddress;
+    LPVOID                   lpAddressBuffer = NULL;
+    DWORD                    dwAddressBufferSize = 0;
+
+    TRACE(" this time through: %s\n", subKeyName );
+
+    /* Get a handle for this particular service provider */
+    if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
+                       &hkServiceProvider ) != ERROR_SUCCESS )
+    {
+      ERR(": what the heck is going on?\n" );
+      continue;
+    }
+
+    if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
+                          NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
+                          &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+    {
+      ERR(": missing GUID registry data members\n" );
+      RegCloseKey(hkServiceProvider);
+      continue;
+    }
+    RegCloseKey(hkServiceProvider);
+
+    /* FIXME: Check return types to ensure we're interpreting data right */
+    MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, ARRAY_SIZE( buff ));
+    CLSIDFromString( buff, &serviceProviderGUID );
+    /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
+
+    /* Fill in the DPNAME struct for the service provider */
+    dpName.dwSize             = sizeof( dpName );
+    dpName.dwFlags            = 0;
+    dpName.lpszShortNameA = subKeyName;
+    dpName.lpszLongNameA  = NULL;
+
+    /* Create the compound address for the service provider.
+     * NOTE: This is a gruesome architectural scar right now.  DP
+     * uses DPL and DPL uses DP.  Nasty stuff. This may be why the
+     * native dll just gets around this little bit by allocating an
+     * 80 byte buffer which isn't even filled with a valid compound
+     * address. Oh well. Creating a proper compound address is the
+     * way to go anyways despite this method taking slightly more
+     * heap space and realtime :) */
+
+    dpCompoundAddress.guidDataType = *addressDataType;
+    dpCompoundAddress.dwDataSize   = sizeof( GUID );
+    dpCompoundAddress.lpData       = &serviceProviderGUID;
+
+    if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
+                                          &dwAddressBufferSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
+    {
+      ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
+      return hr;
+    }
+
+    /* Now allocate the buffer */
+    lpAddressBuffer = calloc( 1, dwAddressBufferSize );
+
+    if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
+                                          &dwAddressBufferSize, TRUE ) ) != DP_OK )
+    {
+      ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
+      free( lpAddressBuffer );
+      return hr;
+    }
+
+    /* The enumeration will return FALSE if we are not to continue */
+    if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize,
+                         &dpName, dwFlags, lpContext ) )
+    {
+      free( lpAddressBuffer );
+      return DP_OK;
+    }
+    free( lpAddressBuffer );
+  }
+
+  return DP_OK;
+}
+
 static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
         const GUID *lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, void *lpContext,
         DWORD dwFlags )
 {
   IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+  HRESULT hr;
+
   TRACE("(%p)->(%p,%p,%p,0x%08lx)\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
 
   /* A default dwFlags (0) is backwards compatible -- DPCONNECTION_DIRECTPLAY */
@@ -4879,208 +4995,19 @@ static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
   /* Enumerate DirectPlay service providers */
   if( dwFlags & DPCONNECTION_DIRECTPLAY )
   {
-    HKEY hkResult;
-    LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
-    LPCSTR guidDataSubKey  = "Guid";
-    char subKeyName[51];
-    DWORD dwIndex, sizeOfSubKeyName=50;
-    FILETIME filetime;
-
-    /* Need to loop over the service providers in the registry */
-    if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
-                         0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
-    {
-      /* Hmmm. Does this mean that there are no service providers? */
-      ERR(": no service providers?\n");
-      return DP_OK;
-    }
-
-
-    /* Traverse all the service providers we have available */
-    for( dwIndex=0;
-         RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName,
-                        NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
-         ++dwIndex, sizeOfSubKeyName=51 )
-    {
-
-      HKEY     hkServiceProvider;
-      GUID     serviceProviderGUID;
-      DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
-      char     returnBuffer[51];
-      WCHAR    buff[51];
-      DPNAME   dpName;
-      BOOL     bBuildPass;
-
-      LPVOID                   lpAddressBuffer = NULL;
-      DWORD                    dwAddressBufferSize = 0;
-
-      TRACE(" this time through: %s\n", subKeyName );
-
-      /* Get a handle for this particular service provider */
-      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
-                         &hkServiceProvider ) != ERROR_SUCCESS )
-      {
-         ERR(": what the heck is going on?\n" );
-         continue;
-      }
-
-      if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                            NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
-                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
-      {
-        ERR(": missing GUID registry data members\n" );
-        RegCloseKey(hkServiceProvider);
-        continue;
-      }
-      RegCloseKey(hkServiceProvider);
-
-      /* FIXME: Check return types to ensure we're interpreting data right */
-      MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, ARRAY_SIZE( buff ));
-      CLSIDFromString( buff, &serviceProviderGUID );
-      /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
-
-      /* Fill in the DPNAME struct for the service provider */
-      dpName.dwSize             = sizeof( dpName );
-      dpName.dwFlags            = 0;
-      dpName.lpszShortNameA = subKeyName;
-      dpName.lpszLongNameA  = NULL;
-
-      /* Create the compound address for the service provider.
-       * NOTE: This is a gruesome architectural scar right now.  DP
-       * uses DPL and DPL uses DP.  Nasty stuff. This may be why the
-       * native dll just gets around this little bit by allocating an
-       * 80 byte buffer which isn't even filled with a valid compound
-       * address. Oh well. Creating a proper compound address is the
-       * way to go anyways despite this method taking slightly more
-       * heap space and realtime :) */
-
-      bBuildPass = DP_BuildSPCompoundAddr( &serviceProviderGUID,
-                                           &lpAddressBuffer,
-                                           &dwAddressBufferSize );
-      if( !bBuildPass )
-      {
-        ERR( "Can't build compound addr\n" );
-        return DPERR_GENERIC;
-      }
-
-      /* The enumeration will return FALSE if we are not to continue */
-      if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize,
-                           &dpName, dwFlags, lpContext ) )
-      {
-         free( lpAddressBuffer );
-         return DP_OK;
-      }
-      free( lpAddressBuffer );
-    }
+    hr = DP_ReadConnections( "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers", dwFlags,
+                             &DPAID_ServiceProvider, lpEnumCallback, lpContext );
+    if ( FAILED( hr ) )
+      return hr;
   }
 
   /* Enumerate DirectPlayLobby service providers */
   if( dwFlags & DPCONNECTION_DIRECTPLAYLOBBY )
   {
-    HKEY hkResult;
-    LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Lobby Providers";
-    LPCSTR guidDataSubKey  = "Guid";
-    char subKeyName[51];
-    DWORD dwIndex, sizeOfSubKeyName=50;
-    FILETIME filetime;
-
-    /* Need to loop over the service providers in the registry */
-    if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
-                         0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
-    {
-      TRACE("No Lobby Providers have been registered.\n");
-      return DP_OK;
-    }
-
-
-    /* Traverse all the lobby providers we have available */
-    for( dwIndex=0;
-         RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName,
-                        NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
-         ++dwIndex, sizeOfSubKeyName=51 )
-    {
-
-      HKEY     hkServiceProvider;
-      GUID     serviceProviderGUID;
-      DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
-      char     returnBuffer[51];
-      WCHAR    buff[51];
-      DPNAME   dpName;
-      HRESULT  hr;
-
-      DPCOMPOUNDADDRESSELEMENT dpCompoundAddress;
-      LPVOID                   lpAddressBuffer = NULL;
-      DWORD                    dwAddressBufferSize = 0;
-
-      TRACE(" this time through: %s\n", subKeyName );
-
-      /* Get a handle for this particular service provider */
-      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
-                         &hkServiceProvider ) != ERROR_SUCCESS )
-      {
-         ERR(": what the heck is going on?\n" );
-         continue;
-      }
-
-      if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                            NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
-                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
-      {
-        ERR(": missing GUID registry data members\n" );
-        RegCloseKey(hkServiceProvider);
-        continue;
-      }
-      RegCloseKey(hkServiceProvider);
-
-      /* FIXME: Check return types to ensure we're interpreting data right */
-      MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, ARRAY_SIZE( buff ));
-      CLSIDFromString( buff, &serviceProviderGUID );
-      /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
-
-      /* Fill in the DPNAME struct for the service provider */
-      dpName.dwSize             = sizeof( dpName );
-      dpName.dwFlags            = 0;
-      dpName.lpszShortNameA = subKeyName;
-      dpName.lpszLongNameA  = NULL;
-
-      /* Create the compound address for the service provider.
-         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP
-               nast stuff. This may be why the native dll just gets around this little bit by
-               allocating an 80 byte buffer which isn't even a filled with a valid compound
-               address. Oh well. Creating a proper compound address is the way to go anyways
-               despite this method taking slightly more heap space and realtime :) */
-
-      dpCompoundAddress.guidDataType = DPAID_LobbyProvider;
-      dpCompoundAddress.dwDataSize   = sizeof( GUID );
-      dpCompoundAddress.lpData       = &serviceProviderGUID;
-
-      if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
-                                     &dwAddressBufferSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
-      {
-        ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
-        return hr;
-      }
-
-      /* Now allocate the buffer */
-      lpAddressBuffer = calloc( 1, dwAddressBufferSize );
-
-      if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
-                                     &dwAddressBufferSize, TRUE ) ) != DP_OK )
-      {
-        ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
-        free( lpAddressBuffer );
-        return hr;
-      }
-
-      /* The enumeration will return FALSE if we are not to continue */
-      if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize,
-                           &dpName, dwFlags, lpContext ) )
-      {
-         free( lpAddressBuffer );
-         return DP_OK;
-      }
-      free( lpAddressBuffer );
-    }
+    hr = DP_ReadConnections( "SOFTWARE\\Microsoft\\DirectPlay\\Lobby Providers", dwFlags,
+                             &DPAID_LobbyProvider, lpEnumCallback, lpContext );
+    if ( FAILED( hr ) )
+      return hr;
   }
 
   return DP_OK;
