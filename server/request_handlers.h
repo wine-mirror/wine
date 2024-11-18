@@ -188,7 +188,6 @@ DECL_HANDLER(set_input_desktop);
 DECL_HANDLER(close_desktop);
 DECL_HANDLER(get_thread_desktop);
 DECL_HANDLER(set_thread_desktop);
-DECL_HANDLER(enum_desktop);
 DECL_HANDLER(set_user_object_info);
 DECL_HANDLER(register_hotkey);
 DECL_HANDLER(unregister_hotkey);
@@ -483,7 +482,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_close_desktop,
     (req_handler)req_get_thread_desktop,
     (req_handler)req_set_thread_desktop,
-    (req_handler)req_enum_desktop,
     (req_handler)req_set_user_object_info,
     (req_handler)req_register_hotkey,
     (req_handler)req_unregister_hotkey,
@@ -1626,9 +1624,10 @@ C_ASSERT( offsetof(struct get_process_winstation_reply, handle) == 8 );
 C_ASSERT( sizeof(struct get_process_winstation_reply) == 16 );
 C_ASSERT( offsetof(struct set_process_winstation_request, handle) == 12 );
 C_ASSERT( sizeof(struct set_process_winstation_request) == 16 );
-C_ASSERT( offsetof(struct enum_winstation_request, index) == 12 );
+C_ASSERT( offsetof(struct enum_winstation_request, handle) == 12 );
 C_ASSERT( sizeof(struct enum_winstation_request) == 16 );
-C_ASSERT( offsetof(struct enum_winstation_reply, next) == 8 );
+C_ASSERT( offsetof(struct enum_winstation_reply, count) == 8 );
+C_ASSERT( offsetof(struct enum_winstation_reply, total) == 12 );
 C_ASSERT( sizeof(struct enum_winstation_reply) == 16 );
 C_ASSERT( offsetof(struct create_desktop_request, flags) == 12 );
 C_ASSERT( offsetof(struct create_desktop_request, access) == 16 );
@@ -1662,11 +1661,6 @@ C_ASSERT( offsetof(struct set_thread_desktop_request, handle) == 12 );
 C_ASSERT( sizeof(struct set_thread_desktop_request) == 16 );
 C_ASSERT( offsetof(struct set_thread_desktop_reply, locator) == 8 );
 C_ASSERT( sizeof(struct set_thread_desktop_reply) == 24 );
-C_ASSERT( offsetof(struct enum_desktop_request, winstation) == 12 );
-C_ASSERT( offsetof(struct enum_desktop_request, index) == 16 );
-C_ASSERT( sizeof(struct enum_desktop_request) == 24 );
-C_ASSERT( offsetof(struct enum_desktop_reply, next) == 8 );
-C_ASSERT( sizeof(struct enum_desktop_reply) == 16 );
 C_ASSERT( offsetof(struct set_user_object_info_request, handle) == 12 );
 C_ASSERT( offsetof(struct set_user_object_info_request, flags) == 16 );
 C_ASSERT( offsetof(struct set_user_object_info_request, obj_flags) == 20 );

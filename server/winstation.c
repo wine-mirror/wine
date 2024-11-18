@@ -922,56 +922,68 @@ DECL_HANDLER(set_user_object_info)
 }
 
 
-/* enumerate window stations */
+/* enumerate window stations and desktops */
 DECL_HANDLER(enum_winstation)
 {
-    unsigned int index = 0;
-    struct winstation *winsta;
-    const WCHAR *name;
-    data_size_t len;
-
-    LIST_FOR_EACH_ENTRY( winsta, &winstation_list, struct winstation, entry )
-    {
-        unsigned int access = WINSTA_ENUMERATE;
-        if (req->index > index++) continue;
-        if (!check_object_access( NULL, &winsta->obj, &access )) continue;
-        clear_error();
-        reply->next = index;
-        if ((name = get_object_name( &winsta->obj, &len )))
-            set_reply_data( name, min( len, get_reply_max_size() ));
-        return;
-    }
-    set_error( STATUS_NO_MORE_ENTRIES );
-}
-
-
-/* enumerate desktops */
-DECL_HANDLER(enum_desktop)
-{
+    data_size_t size = get_reply_max_size() / sizeof(WCHAR) * sizeof(WCHAR);
+    struct object_name *name;
     struct winstation *winstation;
-    struct desktop *desktop;
-    unsigned int index = 0;
-    const WCHAR *name;
-    data_size_t len;
+    WCHAR *data = NULL, *ptr;
 
-    if (!(winstation = (struct winstation *)get_handle_obj( current->process, req->winstation,
-                                                            WINSTA_ENUMDESKTOPS, &winstation_ops )))
-        return;
+    if (size && !(data = mem_alloc( size ))) return;
+    ptr = data;
 
-    LIST_FOR_EACH_ENTRY( desktop, &winstation->desktops, struct desktop, entry )
+    if (req->handle)
     {
-        unsigned int access = DESKTOP_ENUMERATE;
-        if (req->index > index++) continue;
-        if (!desktop->obj.name) continue;
-        if (!check_object_access( NULL, &desktop->obj, &access )) continue;
-        if ((name = get_object_name( &desktop->obj, &len )))
-            set_reply_data( name, min( len, get_reply_max_size() ));
+        struct desktop *desktop;
+
+        if (!(winstation = (struct winstation *)get_handle_obj( current->process, req->handle,
+                                                                WINSTA_ENUMDESKTOPS, &winstation_ops )))
+        {
+            free( data );
+            return;
+        }
+
+        LIST_FOR_EACH_ENTRY( desktop, &winstation->desktops, struct desktop, entry )
+        {
+            unsigned int access = DESKTOP_ENUMERATE;
+            if (!(name = desktop->obj.name)) continue;
+            if (!check_object_access( NULL, &desktop->obj, &access )) continue;
+            reply->count++;
+            reply->total += name->len + sizeof(WCHAR);
+            if (reply->total <= size)
+            {
+                ptr = mem_append( ptr, name->name, name->len );
+                *ptr++ = 0;
+            }
+        }
         release_object( winstation );
-        clear_error();
-        reply->next = index;
-        return;
+    }
+    else
+    {
+        LIST_FOR_EACH_ENTRY( winstation, &winstation_list, struct winstation, entry )
+        {
+            unsigned int access = WINSTA_ENUMERATE;
+            if (!(name = winstation->obj.name)) continue;
+            if (!check_object_access( NULL, &winstation->obj, &access )) continue;
+            reply->count++;
+            reply->total += name->len + sizeof(WCHAR);
+            if (reply->total <= size)
+            {
+                ptr = mem_append( ptr, name->name, name->len );
+                *ptr++ = 0;
+            }
+        }
     }
 
-    release_object( winstation );
-    set_error( STATUS_NO_MORE_ENTRIES );
+    if (reply->total <= size)
+    {
+        set_reply_data_ptr( data, reply->total );
+        clear_error();
+    }
+    else
+    {
+        set_reply_data_ptr( data, (ptr - data) * sizeof(WCHAR) );
+        set_error( STATUS_BUFFER_TOO_SMALL );
+    }
 }

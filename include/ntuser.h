@@ -668,6 +668,13 @@ struct ntuser_property_list
     BOOLEAN string;  /* Wine extension */
 };
 
+struct ntuser_name_list
+{
+    ULONG size;
+    ULONG count;
+    WCHAR strings[1];
+};
+
 #define WM_SYSTIMER  0x0118
 
 
@@ -679,6 +686,7 @@ W32KAPI HDC     WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps );
 W32KAPI NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, UINT *size );
 W32KAPI NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
                                              ULONG thread_id, ULONG count, HWND *buffer, ULONG *size );
+W32KAPI NTSTATUS WINAPI NtUserBuildNameList( HWINSTA winsta, ULONG size, struct ntuser_name_list *buffer, ULONG *ret_size );
 W32KAPI NTSTATUS WINAPI NtUserBuildPropList( HWND hwnd, ULONG count, struct ntuser_property_list *buffer, ULONG *ret_count );
 W32KAPI ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code );
 W32KAPI ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code );

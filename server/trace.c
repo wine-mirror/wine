@@ -669,6 +669,25 @@ static void dump_varargs_unicode_str( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_unicode_strings( const char *prefix, data_size_t size )
+{
+    fprintf( stderr, "%s{", prefix );
+    while (cur_size >= sizeof(WCHAR))
+    {
+        const WCHAR *str = cur_data;
+        unsigned int len = 0;
+
+        while (len < cur_size / sizeof(WCHAR) && str[len]) len++;
+        fputs( "L\"", stderr );
+        dump_strW( cur_data, len * sizeof(WCHAR), stderr, "\"\"" );
+        fputc( '\"', stderr );
+        if (len < cur_size / sizeof(WCHAR)) len++;  /* skip terminating null */
+        remove_data( len * sizeof(WCHAR) );
+        if (cur_size >= sizeof(WCHAR)) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
 static void dump_varargs_context( const char *prefix, data_size_t size )
 {
     const context_t *context = cur_data;

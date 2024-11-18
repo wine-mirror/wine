@@ -50,6 +50,7 @@ static void dump_varargs_udp_endpoints( const char *prefix, data_size_t size );
 static void dump_varargs_uints( const char *prefix, data_size_t size );
 static void dump_varargs_uints64( const char *prefix, data_size_t size );
 static void dump_varargs_unicode_str( const char *prefix, data_size_t size );
+static void dump_varargs_unicode_strings( const char *prefix, data_size_t size );
 static void dump_varargs_user_handles( const char *prefix, data_size_t size );
 static void dump_varargs_ushorts( const char *prefix, data_size_t size );
 
@@ -2031,13 +2032,14 @@ static void dump_set_process_winstation_request( const struct set_process_winsta
 
 static void dump_enum_winstation_request( const struct enum_winstation_request *req )
 {
-    fprintf( stderr, " index=%08x", req->index );
+    fprintf( stderr, " handle=%04x", req->handle );
 }
 
 static void dump_enum_winstation_reply( const struct enum_winstation_reply *req )
 {
-    fprintf( stderr, " next=%08x", req->next );
-    dump_varargs_unicode_str( ", name=", cur_size );
+    fprintf( stderr, " count=%u", req->count );
+    fprintf( stderr, ", total=%u", req->total );
+    dump_varargs_unicode_strings( ", names=", cur_size );
 }
 
 static void dump_create_desktop_request( const struct create_desktop_request *req )
@@ -2108,18 +2110,6 @@ static void dump_set_thread_desktop_request( const struct set_thread_desktop_req
 static void dump_set_thread_desktop_reply( const struct set_thread_desktop_reply *req )
 {
     dump_obj_locator( " locator=", &req->locator );
-}
-
-static void dump_enum_desktop_request( const struct enum_desktop_request *req )
-{
-    fprintf( stderr, " winstation=%04x", req->winstation );
-    fprintf( stderr, ", index=%08x", req->index );
-}
-
-static void dump_enum_desktop_reply( const struct enum_desktop_reply *req )
-{
-    fprintf( stderr, " next=%08x", req->next );
-    dump_varargs_unicode_str( ", name=", cur_size );
 }
 
 static void dump_set_user_object_info_request( const struct set_user_object_info_request *req )
@@ -3516,7 +3506,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_close_desktop_request,
     (dump_func)dump_get_thread_desktop_request,
     (dump_func)dump_set_thread_desktop_request,
-    (dump_func)dump_enum_desktop_request,
     (dump_func)dump_set_user_object_info_request,
     (dump_func)dump_register_hotkey_request,
     (dump_func)dump_unregister_hotkey_request,
@@ -3811,7 +3800,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     NULL,
     (dump_func)dump_get_thread_desktop_reply,
     (dump_func)dump_set_thread_desktop_reply,
-    (dump_func)dump_enum_desktop_reply,
     (dump_func)dump_set_user_object_info_reply,
     (dump_func)dump_register_hotkey_reply,
     (dump_func)dump_unregister_hotkey_reply,
@@ -4106,7 +4094,6 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "close_desktop",
     "get_thread_desktop",
     "set_thread_desktop",
-    "enum_desktop",
     "set_user_object_info",
     "register_hotkey",
     "unregister_hotkey",

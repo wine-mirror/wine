@@ -1635,6 +1635,16 @@ NTSTATUS WINAPI wow64_NtUserBuildHwndList( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtUserBuildNameList( UINT *args )
+{
+    HWINSTA handle = get_handle( &args );
+    ULONG count = get_ulong( &args );
+    struct ntuser_name_list *props = get_ptr( &args );
+    ULONG *ret_count = get_ptr( &args );
+
+    return NtUserBuildNameList( handle, count, props, ret_count );
+}
+
 NTSTATUS WINAPI wow64_NtUserBuildPropList( UINT *args )
 {
     HWND hwnd = get_handle( &args );

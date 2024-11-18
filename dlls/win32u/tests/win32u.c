@@ -563,6 +563,106 @@ static void test_NtUserBuildHwndList(void)
     DestroyWindow( hwnd );
 }
 
+static BOOL CALLBACK enum_names( LPWSTR name, LPARAM lp )
+{
+    struct ntuser_name_list *buffer = (struct ntuser_name_list *)lp;
+    WCHAR *p;
+    UINT i;
+
+    for (i = 0, p = buffer->strings; i < buffer->count; i++, p += wcslen(p) + 1)
+        if (!wcscmp( p, name )) break;
+    ok( i < buffer->count, "string %s not found\n", debugstr_w(name) );
+    return TRUE;
+}
+
+static void test_NtUserBuildNameList(void)
+{
+    struct ntuser_name_list *buffer;
+    WCHAR *p;
+    NTSTATUS status;
+    ULONG i, count, ret_size, expect, size = offsetof( struct ntuser_name_list, strings[256] );
+
+    buffer = malloc( size );
+    memset( buffer, 0xcc, size );
+    status = NtUserBuildNameList( 0, size, buffer, &ret_size );
+    ok( !status, "NtUserBuildNameList failed %lx\n", status );
+    count = buffer->count;
+    for (i = 0, p = buffer->strings; i < count; i++)
+    {
+        trace( "%lu: %s\n", i, debugstr_w(p) );
+        p += wcslen(p) + 1;
+    }
+    ok( *p == 0, "missing final null\n" );
+    ok( (char *)(p + 1) == (char *)buffer + buffer->size, "wrong size %lx / %lx\n",
+        (ULONG)((char *)(p + 1) - (char *)buffer), buffer->size );
+    ok( ret_size == buffer->size, "wrong ret size %lx / %lx\n", ret_size, buffer->size );
+
+    EnumWindowStationsW( enum_names, (LPARAM)buffer );
+
+    memset( buffer, 0xcc, size );
+    status = NtUserBuildNameList( 0, ret_size - sizeof(WCHAR), buffer, &ret_size );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "NtUserBuildNameList failed %lx\n", status );
+    p = buffer->strings;
+    while (*p) p += wcslen(p) + 1;
+    expect = (char *)(p + 1) - (char *)buffer;
+    ok( buffer->size == expect, "wrong size %lx / %lx\n", buffer->size, expect );
+    ok( buffer->count == count, "wrong count %lx / %lx\n", buffer->count, count );
+    ok( ret_size > expect, "wrong size %lx / %lx\n", ret_size, expect );
+
+    memset( buffer, 0xcc, size );
+    ret_size = 0xdead;
+    status = NtUserBuildNameList( 0, offsetof( struct ntuser_name_list, strings[3] ), buffer, &ret_size );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "NtUserBuildNameList failed %lx\n", status );
+    ok( buffer->size == offsetof( struct ntuser_name_list, strings[1] ), "wrong size %lx\n", buffer->size );
+    ok( buffer->count == count, "wrong count %lx / %lx\n", buffer->count, count );
+    ok( buffer->strings[0] == 0, "missing final null\n" );
+    ok( ret_size > offsetof( struct ntuser_name_list, strings[1] ), "wrong size %lx\n", ret_size );
+
+    memset( buffer, 0xcc, size );
+    ret_size = 0xdead;
+    status = NtUserBuildNameList( 0, offsetof( struct ntuser_name_list, strings[1] ), buffer, &ret_size );
+    ok( status == STATUS_INVALID_HANDLE, "NtUserBuildNameList failed %lx\n", status );
+    ok( buffer->size == 0xcccccccc, "wrong size %lx\n", buffer->size );
+    ok( buffer->count == 0xcccccccc, "wrong count %lx\n", buffer->count );
+    ok( ret_size == 0xdead, "wrong size %lx\n", ret_size );
+
+    memset( buffer, 0xcc, size );
+    ret_size = 0xdead;
+    status = NtUserBuildNameList( 0, offsetof( struct ntuser_name_list, strings ) - 1, buffer, &ret_size );
+    ok( status == STATUS_INVALID_HANDLE, "NtUserBuildNameList failed %lx\n", status );
+    ok( buffer->size == 0xcccccccc, "wrong size %lx\n", buffer->size );
+    ok( buffer->count == 0xcccccccc, "wrong count %lx\n", buffer->count );
+    ok( ret_size == 0xdead, "wrong size %lx\n", ret_size );
+
+    memset( buffer, 0xcc, size );
+    ret_size = 0xdead;
+    status = NtUserBuildNameList( 0, 0, NULL, &ret_size );
+    ok( status == STATUS_INVALID_HANDLE, "NtUserBuildNameList failed %lx\n", status );
+    ok( buffer->size == 0xcccccccc, "wrong size %lx\n", buffer->size );
+    ok( buffer->count == 0xcccccccc, "wrong count %lx\n", buffer->count );
+    ok( ret_size == 0xdead, "wrong size %lx\n", ret_size );
+
+    status = NtUserBuildNameList( (HANDLE)0xdeadbeef, 1024, buffer, &ret_size );
+    ok( status == STATUS_INVALID_HANDLE, "NtUserBuildNameList failed %lx\n", status );
+
+    memset( buffer, 0xcc, size );
+    status = NtUserBuildNameList( GetProcessWindowStation(), size, buffer, &ret_size );
+    ok( !status, "NtUserBuildNameList failed %lx\n", status );
+    for (i = 0, p = buffer->strings; i < buffer->count; i++)
+    {
+        trace( "%lu: %s\n", i, debugstr_w(p) );
+        p += wcslen(p) + 1;
+    }
+    ok( *p == 0, "missing final null\n" );
+    ok( (char *)(p + 1) == (char *)buffer + buffer->size, "wrong size %lx / %lx\n",
+        (ULONG)((char *)(p + 1) - (char *)buffer), buffer->size );
+    ok( ret_size == buffer->size, "wrong ret size %lx / %lx\n", ret_size, buffer->size );
+
+    EnumDesktopsW( GetProcessWindowStation(), enum_names, (LPARAM)buffer );
+
+    free( buffer );
+}
+
 static void test_cursoricon(void)
 {
     WCHAR module[MAX_PATH], res_buf[MAX_PATH];
@@ -2226,6 +2326,7 @@ START_TEST(win32u)
     test_NtUserCreateInputContext();
     test_NtUserBuildHimcList();
     test_NtUserBuildHwndList();
+    test_NtUserBuildNameList();
     test_cursoricon();
     test_message_call();
     test_window_text();

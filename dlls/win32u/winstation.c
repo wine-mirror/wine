@@ -602,6 +602,43 @@ BOOL WINAPI NtUserSwitchDesktop( HDESK desktop )
     return TRUE;
 }
 
+/******************************************************************************
+ *              NtUserBuildNameList   (win32u.@)
+ */
+NTSTATUS WINAPI NtUserBuildNameList( HWINSTA handle, ULONG size, struct ntuser_name_list *list,
+                                     ULONG *ret_size )
+{
+    const ULONG header_size = offsetof( struct ntuser_name_list, strings[1] ); /* header + final null */
+    WCHAR *buffer;
+    NTSTATUS status;
+    ULONG count, result, total;
+
+    if (size <= header_size) return STATUS_INVALID_HANDLE;
+    if (!(buffer = malloc( size - header_size ))) return STATUS_NO_MEMORY;
+
+    SERVER_START_REQ( enum_winstation )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        wine_server_set_reply( req, buffer, size - header_size );
+        status = wine_server_call( req );
+        result = wine_server_reply_size( reply );
+        total  = reply->total;
+        count  = reply->count;
+    }
+    SERVER_END_REQ;
+
+    if (!status || status == STATUS_BUFFER_TOO_SMALL)
+    {
+        list->size = header_size + result;
+        list->count = count;
+        memcpy( list->strings, buffer, result );
+        list->strings[result / sizeof(WCHAR)] = 0;
+        *ret_size = header_size + total;
+    }
+    return status;
+}
+
+
 /***********************************************************************
  *           NtUserGetObjectInformation   (win32u.@)
  */

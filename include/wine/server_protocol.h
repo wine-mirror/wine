@@ -3895,14 +3895,14 @@ struct set_process_winstation_reply
 struct enum_winstation_request
 {
     struct request_header __header;
-    unsigned int index;
+    obj_handle_t handle;
 };
 struct enum_winstation_reply
 {
     struct reply_header __header;
-    unsigned int next;
-    /* VARARG(name,unicode_str); */
-    char __pad_12[4];
+    data_size_t count;
+    data_size_t total;
+    /* VARARG(names,unicode_strings); */
 };
 
 
@@ -4007,23 +4007,6 @@ struct set_thread_desktop_reply
 {
     struct reply_header __header;
     obj_locator_t  locator;
-};
-
-
-
-struct enum_desktop_request
-{
-    struct request_header __header;
-    obj_handle_t winstation;
-    unsigned int index;
-    char __pad_20[4];
-};
-struct enum_desktop_reply
-{
-    struct reply_header __header;
-    unsigned int next;
-    /* VARARG(name,unicode_str); */
-    char __pad_12[4];
 };
 
 
@@ -6052,7 +6035,6 @@ enum request
     REQ_close_desktop,
     REQ_get_thread_desktop,
     REQ_set_thread_desktop,
-    REQ_enum_desktop,
     REQ_set_user_object_info,
     REQ_register_hotkey,
     REQ_unregister_hotkey,
@@ -6350,7 +6332,6 @@ union generic_request
     struct close_desktop_request close_desktop_request;
     struct get_thread_desktop_request get_thread_desktop_request;
     struct set_thread_desktop_request set_thread_desktop_request;
-    struct enum_desktop_request enum_desktop_request;
     struct set_user_object_info_request set_user_object_info_request;
     struct register_hotkey_request register_hotkey_request;
     struct unregister_hotkey_request unregister_hotkey_request;
@@ -6646,7 +6627,6 @@ union generic_reply
     struct close_desktop_reply close_desktop_reply;
     struct get_thread_desktop_reply get_thread_desktop_reply;
     struct set_thread_desktop_reply set_thread_desktop_reply;
-    struct enum_desktop_reply enum_desktop_reply;
     struct set_user_object_info_reply set_user_object_info_reply;
     struct register_hotkey_reply register_hotkey_reply;
     struct unregister_hotkey_reply unregister_hotkey_reply;
@@ -6758,6 +6738,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 848
+#define SERVER_PROTOCOL_VERSION 849
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
