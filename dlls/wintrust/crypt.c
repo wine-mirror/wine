@@ -58,6 +58,9 @@ struct catadmin
     DWORD magic;
     WCHAR path[MAX_PATH];
     HANDLE find;
+    ALG_ID alg;
+    const WCHAR *providerName;
+    DWORD providerType;
 };
 
 struct catinfo
@@ -98,6 +101,29 @@ static HCATINFO create_catinfo(const WCHAR *filename)
 BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
                                         const GUID *sys, DWORD dwFlags)
 {
+    TRACE("%p %s %lx\n", catAdmin, debugstr_guid(sys), dwFlags);
+    return CryptCATAdminAcquireContext2(catAdmin, sys, NULL, NULL, dwFlags);
+}
+
+/***********************************************************************
+ *             CryptCATAdminAcquireContext2 (WINTRUST.@)
+ * Get a catalog administrator context handle.
+ *
+ * PARAMS
+ *   catAdmin  [O] Pointer to the context handle.
+ *   sys       [I] Pointer to a GUID for the needed subsystem.
+ *   algorithm [I] String of hashing algorithm to use for catalog (SHA1/SHA256).
+ *   policy    [I] Pointer to policy structure for checking strong signatures.
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE. catAdmin contains the context handle.
+ *   Failure: FALSE.
+ *
+ */
+BOOL WINAPI CryptCATAdminAcquireContext2(HCATADMIN *catAdmin, const GUID *sys, const WCHAR *algorithm,
+                                         const CERT_STRONG_SIGN_PARA *policy, DWORD dwFlags)
+{
     static const WCHAR catroot[] =
         {'\\','c','a','t','r','o','o','t',0};
     static const WCHAR fmt[] =
@@ -110,19 +136,48 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
 
     WCHAR catroot_dir[MAX_PATH];
     struct catadmin *ca;
+    ALG_ID alg;
+    const WCHAR *providerName;
+    DWORD providerType;
 
-    TRACE("%p %s %lx\n", catAdmin, debugstr_guid(sys), dwFlags);
+    TRACE("%p %s %s %p %lx\n", catAdmin, debugstr_guid(sys), debugstr_w(algorithm), policy, dwFlags);
 
     if (!catAdmin || dwFlags)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+
+    if (policy != NULL)
+        FIXME("strong policy parameter is unimplemented\n");
+
+    if (algorithm == NULL || wcscmp(algorithm, BCRYPT_SHA1_ALGORITHM) == 0)
+    {
+        alg = CALG_SHA1;
+        providerName = MS_DEF_PROV_W;
+        providerType = PROV_RSA_FULL;
+    }
+    else if (wcscmp(algorithm, BCRYPT_SHA256_ALGORITHM) == 0)
+    {
+        alg = CALG_SHA_256;
+        providerName = MS_ENH_RSA_AES_PROV_W;
+        providerType = PROV_RSA_AES;
+    }
+    else
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
     if (!(ca = malloc(sizeof(*ca))))
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
+
+    ca->alg = alg;
+    ca->providerName = providerName;
+    ca->providerType = providerType;
 
     GetSystemDirectoryW(catroot_dir, MAX_PATH);
     lstrcatW(catroot_dir, catroot);
@@ -144,17 +199,6 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
 
     *catAdmin = ca;
     return TRUE;
-}
-
-/***********************************************************************
- *             CryptCATAdminAcquireContext2 (WINTRUST.@)
- */
-BOOL WINAPI CryptCATAdminAcquireContext2(HCATADMIN *catAdmin, const GUID *sys, const WCHAR *algorithm,
-                                         const CERT_STRONG_SIGN_PARA *policy, DWORD flags)
-{
-    FIXME("%p %s %s %p %lx stub\n", catAdmin, debugstr_guid(sys), debugstr_w(algorithm), policy, flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
 }
 
 /***********************************************************************
