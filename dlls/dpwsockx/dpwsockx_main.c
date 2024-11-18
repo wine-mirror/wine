@@ -516,7 +516,7 @@ static HRESULT WINAPI DPWSCB_EnumSessions( LPDPSP_ENUMSESSIONSDATA data )
     DPWS_DATA *dpwsData;
     DWORD dpwsDataSize;
     SOCKADDR_IN addr;
-    BOOL true = TRUE;
+    BOOL trueflag = TRUE;
     SOCKET sock;
     HRESULT hr;
 
@@ -539,8 +539,9 @@ static HRESULT WINAPI DPWSCB_EnumSessions( LPDPSP_ENUMSESSIONSDATA data )
         return DPERR_UNAVAILABLE;
     }
 
-    if ( SOCKET_ERROR == setsockopt( sock, SOL_SOCKET, SO_BROADCAST, (const char *) &true,
-                                     sizeof( true ) ) )
+    if ( SOCKET_ERROR == setsockopt( sock, SOL_SOCKET, SO_BROADCAST,
+                                     (const char *) &trueflag,
+                                     sizeof( trueflag ) ) )
     {
         ERR( "setsockopt() failed\n" );
         closesocket( sock );
