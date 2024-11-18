@@ -174,6 +174,42 @@ ok(m.length === 2, "m.length is not 2");
 ok(m["0"] === "aaab", "m[0] is not \"ab\"");
 ok(m["1"] === "ab", "m[1] is not \"ab\"");
 
+m = "".match(/a*/g);
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 1, "m.length is not 1");
+ok(m["0"] === "", "m[0] is not \"\"");
+
+m = "aaa".match(/a*/g);
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 2, "m.length is not 2");
+ok(m["0"] === "aaa", "m[0] is not \"aaa\"");
+ok(m["1"] === "", "m[1] is not \"\"");
+
+m = "b".match(/a*/g);
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 2, "m.length is not 2");
+ok(m["0"] === "", "m[0] is not \"\"");
+ok(m["1"] === "", "m[1] is not \"\"");
+
+m = "".match(/a?/g);
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 1, "m.length is not 1");
+ok(m["0"] === "", "m[0] is not \"\"");
+
+m = "aaa".match(/a?/g);
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 4, "m.length is not 4");
+ok(m["0"] === "a", "m[0] is not \"a\"");
+ok(m["1"] === "a", "m[1] is not \"a\"");
+ok(m["2"] === "a", "m[2] is not \"a\"");
+ok(m["3"] === "", "m[3] is not \"\"");
+
+m = "b".match(/a?/g);
+ok(typeof(m) === "object", "typeof m is not object");
+ok(m.length === 2, "m.length is not 2");
+ok(m["0"] === "", "m[0] is not \"\"");
+ok(m["1"] === "", "m[1] is not \"\"");
+
 m = "aaa\\\\cabc".match(/\\/g);
 ok(typeof(m) === "object", "typeof m is not object");
 ok(m.length === 2, "m.length is not 2");
