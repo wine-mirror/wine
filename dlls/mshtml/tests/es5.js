@@ -23,6 +23,7 @@ var JS_E_NUMBER_EXPECTED = 0x800a1389;
 var JS_E_FUNCTION_EXPECTED = 0x800a138a;
 var JS_E_DATE_EXPECTED = 0x800a138e;
 var JS_E_OBJECT_EXPECTED = 0x800a138f;
+var JS_E_UNDEFINED_VARIABLE = 0x800a1391;
 var JS_E_BOOLEAN_EXPECTED = 0x800a1392;
 var JS_E_VBARRAY_EXPECTED = 0x800a1395;
 var JS_E_ENUMERATOR_EXPECTED = 0x800a1397;
@@ -2159,7 +2160,7 @@ sync_test("globals override", function() {
     ok(window.wineprop === 1337, "window.wineprop = " + window.wineprop);
     ok(wineprop === 1337, "wineprop = " + wineprop);
 
-    var r = Object.defineProperty(window, "wineprop", { value: 42, configurable: true });
+    var i, desc, r = Object.defineProperty(window, "wineprop", { value: 42, configurable: true });
     ok(r === window, "defineProperty(window.wineprop) returned " + r);
     ok(window.hasOwnProperty("wineprop"), "wineprop not a prop of window after override");
     ok(window.wineprop === 42, "window.wineprop after override = " + window.wineprop);
@@ -2168,6 +2169,94 @@ sync_test("globals override", function() {
     r = (delete window.wineprop);
     ok(r === true, "delete window.wineprop returned " + r);
     ok(!("wineprop" in window), "wineprop in window after delete");
+
+    /* configurable */
+    var builtins = [
+        "ActiveXObject",
+        "Array",
+        "ArrayBuffer",
+        "Boolean",
+        "CollectGarbage",
+        "DataView",
+        "Date",
+        "decodeURI",
+        "decodeURIComponent",
+        "encodeURI",
+        "encodeURIComponent",
+        "Enumerator",
+        "Error",
+        "escape",
+        "EvalError",
+        "Function",
+        "isFinite",
+        "isNaN",
+        "JSON",
+        "Map",
+        "Math",
+        "Number",
+        "parseFloat",
+        "parseInt",
+        "RangeError",
+        "ReferenceError",
+        "RegExp",
+        "ScriptEngine",
+        "ScriptEngineBuildVersion",
+        "ScriptEngineMajorVersion",
+        "ScriptEngineMinorVersion",
+        "Set",
+        "String",
+        "SyntaxError",
+        "TypeError",
+        "unescape",
+        "URIError",
+        "VBArray",
+        "WeakMap"
+    ];
+    for(i = 0; i < builtins.length; i++) {
+        desc = Object.getOwnPropertyDescriptor(window, builtins[i]);
+        ok(desc !== undefined, "getOwnPropertyDescriptor('" + builtins[i] + "' returned undefined");
+        ok(desc.configurable === true, builtins[i] + " not configurable");
+        ok(desc.enumerable === false, builtins[i] + " is enumerable");
+        ok(desc.writable === true, builtins[i] + " not writable");
+
+        r = Object.defineProperty(window, builtins[i], { value: 12, configurable: true, writable: true });
+        ok(r === window, "defineProperty('" + builtins[i] + "' returned " + r);
+        r = Object.getOwnPropertyDescriptor(window, builtins[i]);
+        ok(r !== undefined, "getOwnPropertyDescriptor('" + builtins[i] + "' after override returned undefined");
+        ok(r.value === 12, builtins[i] + " value = " + r.value);
+
+        r = eval(builtins[i]);
+        ok(r === window[builtins[i]], "Global " + builtins[i] + " does not match redefined window." + builtins[i]);
+        r = (delete window[builtins[i]]);
+        ok(r === true, "delete window." + builtins[i] + " returned " + r);
+        ok(!(builtins[i] in window), builtins[i] + " in window after delete");
+        try {
+            eval(builtins[i]);
+            ok(false, "expected exception retrieving global " + builtins[i] + " after delete.");
+        }catch(ex) {
+            r = ex.number >>> 0;
+            ok(r === JS_E_UNDEFINED_VARIABLE, "retrieving global " + builtins[i] + " after delete threw " + r);
+        }
+
+        r = Object.defineProperty(window, builtins[i], desc);
+        ok(r === window, "defineProperty('" + builtins[i] + "' to restore returned " + r);
+    }
+
+    /* non-configurable */
+    builtins = [
+        "undefined",
+        "Infinity",
+        "NaN"
+    ];
+    for(i = 0; i < builtins.length; i++) {
+        desc = Object.getOwnPropertyDescriptor(window, builtins[i]);
+        ok(desc !== undefined, "getOwnPropertyDescriptor('" + builtins[i] + "' returned undefined");
+        todo_wine.
+        ok(desc.configurable === false, builtins[i] + " is configurable");
+        ok(desc.enumerable === false, builtins[i] + " is enumerable");
+        todo_wine.
+        ok(desc.writable === false, builtins[i] + " is writable");
+    }
 });
 
 sync_test("host this", function() {

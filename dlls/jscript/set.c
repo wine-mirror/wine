@@ -903,7 +903,7 @@ HRESULT init_set_constructor(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_define_data_property(ctx->global, L"Set", PROPF_WRITABLE,
+    hres = jsdisp_define_data_property(ctx->global, L"Set", PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                        jsval_obj(constructor));
     jsdisp_release(constructor);
     if(FAILED(hres))
@@ -918,7 +918,7 @@ HRESULT init_set_constructor(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_define_data_property(ctx->global, L"Map", PROPF_WRITABLE,
+    hres = jsdisp_define_data_property(ctx->global, L"Map", PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                        jsval_obj(constructor));
     jsdisp_release(constructor);
     if(FAILED(hres))
@@ -933,7 +933,7 @@ HRESULT init_set_constructor(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = jsdisp_define_data_property(ctx->global, L"WeakMap", PROPF_WRITABLE,
+    hres = jsdisp_define_data_property(ctx->global, L"WeakMap", PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                        jsval_obj(constructor));
     jsdisp_release(constructor);
     return hres;
