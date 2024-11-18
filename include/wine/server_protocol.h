@@ -312,7 +312,7 @@ struct winevent_msg_data
 
 };
 
-typedef union
+union hw_input
 {
     int type;
     struct
@@ -342,7 +342,7 @@ typedef union
         lparam_t       lparam;
         struct hid_input hid;
     } hw;
-} hw_input_t;
+};
 
 union message_data
 {
@@ -2970,7 +2970,7 @@ struct send_hardware_message_request
 {
     struct request_header __header;
     user_handle_t   win;
-    hw_input_t      input;
+    union hw_input  input;
     unsigned int    flags;
     /* VARARG(report,bytes); */
     char __pad_60[4];

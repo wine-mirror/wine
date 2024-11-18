@@ -62,7 +62,7 @@ struct key_repeat
     int                  enable;           /* enable auto-repeat */
     timeout_t            delay;            /* auto-repeat delay */
     timeout_t            period;           /* auto-repeat period */
-    hw_input_t           input;            /* the input to repeat */
+    union hw_input       input;            /* the input to repeat */
     user_handle_t        win;              /* target window for input event */
     struct timeout_user *timeout;          /* timeout for repeat */
 };

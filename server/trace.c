@@ -449,7 +449,7 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
     }
 }
 
-static void dump_hw_input( const char *prefix, const hw_input_t *input )
+static void dump_hw_input( const char *prefix, const union hw_input *input )
 {
     switch (input->type)
     {

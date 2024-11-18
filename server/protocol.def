@@ -328,7 +328,7 @@ struct winevent_msg_data
     /* followed by module name if any */
 };
 
-typedef union
+union hw_input
 {
     int type;
     struct
@@ -358,7 +358,7 @@ typedef union
         lparam_t       lparam;  /* parameters */
         struct hid_input hid;   /* defined in ntuser.h */
     } hw;
-} hw_input_t;
+};
 
 union message_data
 {
@@ -2241,7 +2241,7 @@ enum message_type
 /* Send a hardware message to a thread queue */
 @REQ(send_hardware_message)
     user_handle_t   win;       /* window handle */
-    hw_input_t      input;     /* input data */
+    union hw_input  input;     /* input data */
     unsigned int    flags;     /* flags (see below) */
     VARARG(report,bytes);      /* HID report data */
 @REPLY

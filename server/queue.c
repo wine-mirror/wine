@@ -2106,7 +2106,7 @@ static void rawkeyboard_init( struct rawinput *rawinput, RAWKEYBOARD *keyboard, 
     keyboard->ExtraInformation = info;
 }
 
-static void rawhid_init( struct rawinput *rawinput, RAWHID *hid, const hw_input_t *input )
+static void rawhid_init( struct rawinput *rawinput, RAWHID *hid, const union hw_input *input )
 {
     rawinput->type   = RIM_TYPEHID;
     rawinput->device = input->hw.hid.device;
@@ -2203,7 +2203,7 @@ static void dispatch_rawinput_message( struct desktop *desktop, struct rawinput_
 }
 
 /* queue a hardware message for a mouse event */
-static int queue_mouse_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
+static int queue_mouse_message( struct desktop *desktop, user_handle_t win, const union hw_input *input,
                                 unsigned int origin, struct msg_queue *sender )
 {
     const desktop_shm_t *desktop_shm = desktop->shared;
@@ -2309,7 +2309,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     return wait;
 }
 
-static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
+static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, const union hw_input *input,
                                    unsigned int origin, struct msg_queue *sender, int repeat );
 
 static void key_repeat_timeout( void *private )
@@ -2329,7 +2329,7 @@ static void stop_key_repeat( struct desktop *desktop )
 }
 
 /* queue a hardware message for a keyboard event */
-static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
+static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, const union hw_input *input,
                                    unsigned int origin, struct msg_queue *sender, int repeat )
 {
     const desktop_shm_t *desktop_shm = desktop->shared;
@@ -2502,7 +2502,7 @@ struct pointer
     struct desktop *desktop;
     user_handle_t win;
     int primary;
-    hw_input_t input;
+    union hw_input input;
 };
 
 static void queue_pointer_message( struct pointer *pointer, int repeated );
@@ -2524,7 +2524,7 @@ static void queue_pointer_message( struct pointer *pointer, int repeated )
     struct hw_msg_source source = { IMDT_UNAVAILABLE, IMDT_TOUCH };
     struct desktop *desktop = pointer->desktop;
     const desktop_shm_t *desktop_shm = desktop->shared;
-    const hw_input_t *input = &pointer->input;
+    const union hw_input *input = &pointer->input;
     unsigned int i, wparam = input->hw.wparam;
     timeout_t time = get_tick_count();
     user_handle_t win = pointer->win;
@@ -2600,7 +2600,7 @@ static struct pointer *find_pointer_from_id( struct desktop *desktop, unsigned i
 
 /* queue a hardware message for a custom type of event */
 static void queue_custom_hardware_message( struct desktop *desktop, user_handle_t win,
-                                           unsigned int origin, const hw_input_t *input )
+                                           unsigned int origin, const union hw_input *input )
 {
     const desktop_shm_t *desktop_shm = desktop->shared;
     struct hw_msg_source source = { IMDT_UNAVAILABLE, origin };
