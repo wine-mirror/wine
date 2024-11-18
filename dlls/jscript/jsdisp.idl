@@ -51,6 +51,7 @@ interface IWineJSDispatchHost;
 interface IWineJSDispatch : IDispatchEx
 {
     void Free();
+    HRESULT GetPropertyFlags(DISPID id, UINT32 *ret);
     HRESULT GetScriptGlobal(IWineJSDispatchHost **ret);
 }
 

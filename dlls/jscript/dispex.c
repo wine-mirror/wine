@@ -2388,7 +2388,19 @@ static void WINAPI WineJSDispatch_Free(IWineJSDispatch *iface)
 {
    jsdisp_t *This = impl_from_IWineJSDispatch(iface);
    jsdisp_free(This);
- }
+}
+
+static HRESULT WINAPI WineJSDispatch_GetPropertyFlags(IWineJSDispatch *iface, DISPID id, UINT32 *ret)
+{
+    jsdisp_t *This = impl_from_IWineJSDispatch(iface);
+    dispex_prop_t *prop = get_prop(This, id);
+
+    if(!prop || prop->type == PROP_DELETED || prop->type == PROP_PROTREF)
+        return DISP_E_MEMBERNOTFOUND;
+
+    *ret = prop->flags & PROPF_PUBLIC_MASK;
+    return S_OK;
+}
 
 static HRESULT WINAPI WineJSDispatch_GetScriptGlobal(IWineJSDispatch *iface, IWineJSDispatchHost **ret)
 {
@@ -2422,6 +2434,7 @@ static IWineJSDispatchVtbl DispatchExVtbl = {
     DispatchEx_GetNextDispID,
     DispatchEx_GetNameSpaceParent,
     WineJSDispatch_Free,
+    WineJSDispatch_GetPropertyFlags,
     WineJSDispatch_GetScriptGlobal,
 };
 

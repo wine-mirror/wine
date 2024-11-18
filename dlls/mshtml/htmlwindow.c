@@ -4029,7 +4029,9 @@ static HRESULT HTMLWindow_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid
 HRESULT HTMLWindow_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_info *desc)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    IWineJSDispatch *jsdisp;
     global_prop_t *prop;
+    HRESULT hres = S_OK;
 
     if(id - MSHTML_DISPID_CUSTOM_MIN >= This->global_prop_cnt)
         return DISP_E_MEMBERNOTFOUND;
@@ -4038,10 +4040,22 @@ HRESULT HTMLWindow_get_prop_desc(DispatchEx *dispex, DISPID id, struct property_
     desc->name = prop->name;
     desc->id = id;
     desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE;
-    if(prop->type == GLOBAL_DISPEXVAR)
-        desc->flags |= PROPF_ENUMERABLE;
     desc->iid = 0;
-    return S_OK;
+
+    switch(prop->type) {
+    case GLOBAL_SCRIPTVAR: {
+        if((jsdisp = get_script_jsdisp(prop->script_host)))
+            hres = IWineJSDispatch_GetPropertyFlags(jsdisp, prop->id, &desc->flags);
+        break;
+    }
+    case GLOBAL_DISPEXVAR:
+        desc->flags |= PROPF_ENUMERABLE;
+        break;
+    default:
+        break;
+    }
+
+    return hres;
 }
 
 static HTMLInnerWindow *HTMLWindow_get_script_global(DispatchEx *dispex)

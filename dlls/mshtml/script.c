@@ -85,7 +85,7 @@ struct ScriptHost {
     SCRIPTSTATE script_state;
 
     HTMLInnerWindow *window;
-    IDispatchEx *script_dispex;
+    IWineJSDispatch *script_jsdisp;
 
     GUID guid;
     struct list entry;
@@ -264,7 +264,7 @@ static BOOL init_script_engine(ScriptHost *script_host, IActiveScript *script)
             if(FAILED(hres))
                 WARN("GetScriptDispatch failed: %08lx\n", hres);
             else {
-                IDispatch_QueryInterface(script_disp, &IID_IDispatchEx, (void**)&script_host->script_dispex);
+                IDispatch_QueryInterface(script_disp, &IID_IWineJSDispatch, (void**)&script_host->script_jsdisp);
                 IDispatch_Release(script_disp);
             }
         }
@@ -301,8 +301,8 @@ static void release_script_engine(ScriptHost *This)
         unlink_ref(&This->parse);
     }
 
-    if(This->script_dispex)
-        IDispatchEx_Release(This->script_dispex);
+    if(This->script_jsdisp)
+        IWineJSDispatch_Release(This->script_jsdisp);
     IActiveScript_Release(This->script);
     This->script = NULL;
     This->script_state = SCRIPTSTATE_UNINITIALIZED;
@@ -1588,6 +1588,11 @@ IDispatch *get_script_disp(ScriptHost *script_host)
     return disp;
 }
 
+IWineJSDispatch *get_script_jsdisp(ScriptHost *script_host)
+{
+    return script_host->script_jsdisp;
+}
+
 IActiveScriptSite *get_first_script_site(HTMLInnerWindow *window)
 {
     if(list_empty(&window->script_hosts)) {
@@ -1850,9 +1855,9 @@ HRESULT global_prop_still_exists(HTMLInnerWindow *window, global_prop_t *prop)
 
         if(!prop->script_host->script)
             return E_UNEXPECTED;
-        if(!prop->script_host->script_dispex)
+        if(!prop->script_host->script_jsdisp)
             return S_OK;
-        return IDispatchEx_GetMemberProperties(prop->script_host->script_dispex, prop->id, 0, &properties);
+        return IWineJSDispatch_GetMemberProperties(prop->script_host->script_jsdisp, prop->id, 0, &properties);
     }
     case GLOBAL_ELEMENTVAR: {
         IHTMLElement *elem;

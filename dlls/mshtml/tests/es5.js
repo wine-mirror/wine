@@ -2251,10 +2251,8 @@ sync_test("globals override", function() {
     for(i = 0; i < builtins.length; i++) {
         desc = Object.getOwnPropertyDescriptor(window, builtins[i]);
         ok(desc !== undefined, "getOwnPropertyDescriptor('" + builtins[i] + "' returned undefined");
-        todo_wine.
         ok(desc.configurable === false, builtins[i] + " is configurable");
         ok(desc.enumerable === false, builtins[i] + " is enumerable");
-        todo_wine.
         ok(desc.writable === false, builtins[i] + " is writable");
     }
 });
