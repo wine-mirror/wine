@@ -57,7 +57,7 @@ struct request_max_size
 
 
 
-typedef union
+union debug_event_data
 {
     int code;
     struct
@@ -109,7 +109,7 @@ typedef union
         int          __pad;
         mod_handle_t base;
     } unload_dll;
-} debug_event_t;
+};
 
 
 enum context_exec_space

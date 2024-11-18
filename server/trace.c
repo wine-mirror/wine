@@ -887,7 +887,7 @@ static void dump_varargs_contexts( const char *prefix, data_size_t size )
 
 static void dump_varargs_debug_event( const char *prefix, data_size_t size )
 {
-    debug_event_t event;
+    union debug_event_data event;
 
     if (!size)
     {
