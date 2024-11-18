@@ -4853,7 +4853,8 @@ static HRESULT WINAPI IDirectPlay3Impl_EnumConnections( IDirectPlay3 *iface,
 
 static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
                                    const GUID *addressDataType,
-                                   LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, void *lpContext )
+                                   LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, void *lpContext,
+                                   BOOL ansi )
 {
   HKEY hkResult;
   LPCSTR guidDataSubKey  = "Guid";
@@ -4918,8 +4919,10 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
     /* Fill in the DPNAME struct for the service provider */
     dpName.dwSize             = sizeof( dpName );
     dpName.dwFlags            = 0;
-    dpName.lpszShortNameA = subKeyName;
+    dpName.lpszShortNameA = DP_DuplicateString( subKeyName, ansi, TRUE );
     dpName.lpszLongNameA  = NULL;
+    if ( !dpName.lpszShortNameA )
+      return DPERR_OUTOFMEMORY;
 
     /* Create the compound address for the service provider.
      * NOTE: This is a gruesome architectural scar right now.  DP
@@ -4938,6 +4941,7 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
                                           &dwAddressBufferSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
     {
       ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
+      free( dpName.lpszShortNameA );
       return hr;
     }
 
@@ -4949,6 +4953,7 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
     {
       ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
       free( lpAddressBuffer );
+      free( dpName.lpszShortNameA );
       return hr;
     }
 
@@ -4957,19 +4962,20 @@ static HRESULT DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
                          &dpName, dwFlags, lpContext ) )
     {
       free( lpAddressBuffer );
+      free( dpName.lpszShortNameA );
       return DP_OK;
     }
     free( lpAddressBuffer );
+    free( dpName.lpszShortNameA );
   }
 
   return DP_OK;
 }
 
-static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
+static HRESULT DP_IF_EnumConnections( IDirectPlayImpl *This,
         const GUID *lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, void *lpContext,
-        DWORD dwFlags )
+        DWORD dwFlags, BOOL ansi )
 {
-  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
   HRESULT hr;
 
   TRACE("(%p)->(%p,%p,%p,0x%08lx)\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
@@ -4996,7 +5002,7 @@ static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
   if( dwFlags & DPCONNECTION_DIRECTPLAY )
   {
     hr = DP_ReadConnections( "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers", dwFlags,
-                             &DPAID_ServiceProvider, lpEnumCallback, lpContext );
+                             &DPAID_ServiceProvider, lpEnumCallback, lpContext, ansi );
     if ( FAILED( hr ) )
       return hr;
   }
@@ -5005,7 +5011,7 @@ static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
   if( dwFlags & DPCONNECTION_DIRECTPLAYLOBBY )
   {
     hr = DP_ReadConnections( "SOFTWARE\\Microsoft\\DirectPlay\\Lobby Providers", dwFlags,
-                             &DPAID_LobbyProvider, lpEnumCallback, lpContext );
+                             &DPAID_LobbyProvider, lpEnumCallback, lpContext, ansi );
     if ( FAILED( hr ) )
       return hr;
   }
@@ -5013,12 +5019,19 @@ static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
   return DP_OK;
 }
 
+static HRESULT WINAPI IDirectPlay4AImpl_EnumConnections( IDirectPlay4A *iface,
+        const GUID *lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, void *lpContext,
+        DWORD dwFlags )
+{
+  IDirectPlayImpl *This = impl_from_IDirectPlay4A( iface );
+  return DP_IF_EnumConnections( This, lpguidApplication, lpEnumCallback, lpContext, dwFlags, TRUE );
+}
+
 static HRESULT WINAPI IDirectPlay4Impl_EnumConnections( IDirectPlay4 *iface,
         const GUID *application, LPDPENUMCONNECTIONSCALLBACK enumcb, void *context, DWORD flags )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
-    return IDirectPlayX_EnumConnections( &This->IDirectPlay4A_iface, application, enumcb, context,
-            flags );
+    return DP_IF_EnumConnections( This, application, enumcb, context, flags, FALSE );
 }
 
 static HRESULT WINAPI IDirectPlay3AImpl_EnumGroupsInGroup( IDirectPlay3A *iface, DPID group,
