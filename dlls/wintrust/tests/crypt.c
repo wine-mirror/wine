@@ -102,6 +102,7 @@ static BOOL (WINAPI * pCryptCATAdminAcquireContext)(HCATADMIN*, const GUID*, DWO
 static BOOL (WINAPI * pCryptCATAdminAcquireContext2)(HCATADMIN*, const GUID*, const WCHAR *, const CERT_STRONG_SIGN_PARA *, DWORD);
 static BOOL (WINAPI * pCryptCATAdminReleaseContext)(HCATADMIN, DWORD);
 static BOOL (WINAPI * pCryptCATAdminCalcHashFromFileHandle)(HANDLE hFile, DWORD*, BYTE*, DWORD);
+static BOOL (WINAPI * pCryptCATAdminCalcHashFromFileHandle2)(HCATADMIN, HANDLE hFile, DWORD*, BYTE*, DWORD);
 static HCATINFO (WINAPI * pCryptCATAdminAddCatalog)(HCATADMIN, PWSTR, PWSTR, DWORD);
 static BOOL (WINAPI * pCryptCATAdminRemoveCatalog)(HCATADMIN, LPCWSTR, DWORD);
 static BOOL (WINAPI * pCryptCATAdminReleaseCatalogContext)(HCATADMIN, HCATINFO, DWORD);
@@ -134,6 +135,7 @@ static void InitFunctionPtrs(void)
     WINTRUST_GET_PROC(CryptCATAdminAcquireContext2)
     WINTRUST_GET_PROC(CryptCATAdminReleaseContext)
     WINTRUST_GET_PROC(CryptCATAdminCalcHashFromFileHandle)
+    WINTRUST_GET_PROC(CryptCATAdminCalcHashFromFileHandle2)
     WINTRUST_GET_PROC(CryptCATAdminAddCatalog)
     WINTRUST_GET_PROC(CryptCATAdminRemoveCatalog)
     WINTRUST_GET_PROC(CryptCATAdminReleaseCatalogContext)
@@ -332,10 +334,12 @@ static void test_context(void)
 static void test_calchash(void)
 {
     BOOL ret;
+    HCATADMIN hca_sha1, hca_sha256;
     HANDLE file;
     DWORD hashsize = 0;
     BYTE* hash;
     BYTE expectedhash[20] = {0x3a,0xa1,0x19,0x08,0xec,0xa6,0x0d,0x2e,0x7e,0xcc,0x7a,0xca,0xf5,0xb8,0x2e,0x62,0x6a,0xda,0xf0,0x19};
+    BYTE expectedhash_sha256[32] = { 0x8a, 0xfd, 0x8c, 0xec, 0xdd, 0xe3, 0x0b, 0xaa, 0x2f, 0x1c, 0x3f, 0x61, 0xaf, 0xdf, 0x24, 0x84, 0x99, 0x8b, 0xe3, 0xcf, 0xda, 0xff, 0x0c, 0x5e, 0xa8, 0x68, 0xe8, 0xea, 0x94, 0x1e, 0x90, 0xe2};
     CHAR temp[MAX_PATH];
     DWORD written;
 
@@ -361,6 +365,15 @@ static void test_calchash(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
     CloseHandle(file);
+
+    /* Correct catadmin, rest is NULL */
+    ret = pCryptCATAdminAcquireContext2(&hca_sha1, NULL, BCRYPT_SHA1_ALGORITHM, NULL, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+
+    ret = pCryptCATAdminCalcHashFromFileHandle2(hca_sha1, NULL, NULL, NULL, 0);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
     /* All OK, but dwFlags set to 1 */
     file = CreateFileA(selfname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -419,8 +432,82 @@ static void test_calchash(void)
        !memcmp(hash, expectedhash, sizeof(expectedhash)),
        "Hashes didn't match\n");
     CloseHandle(file);
-
     HeapFree(GetProcessHeap(), 0, hash);
+
+    /* Calculate hash with SHA-1 specified as algorithm */
+    file = CreateFileA(selfname, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    SetLastError(0xdeadbeef);
+    hashsize = 0;
+    ret = pCryptCATAdminCalcHashFromFileHandle2(hca_sha1, file, &hashsize, NULL, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    ok(hashsize == 20," Expected a hash size of 20, got %ld\n", hashsize);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
+    hash = HeapAlloc(GetProcessHeap(), 0, hashsize);
+    SetLastError(0xdeadbeef);
+    ret = pCryptCATAdminCalcHashFromFileHandle2(hca_sha1, file, &hashsize, hash, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    ok(hashsize == 20," Expected a hash size of 20, got %ld\n", hashsize);
+    ok(GetLastError() == ERROR_SUCCESS,
+       "Expected ERROR_SUCCESS, got %ld\n", GetLastError());
+    CloseHandle(file);
+    HeapFree(GetProcessHeap(), 0, hash);
+
+    /* Check SHA1-hash for file with known hash */
+    file = CreateFileA(temp, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    hashsize = 0;
+    pCryptCATAdminCalcHashFromFileHandle2(hca_sha1, file, &hashsize, NULL, 0);
+    hash = HeapAlloc(GetProcessHeap(), 0, hashsize);
+    SetLastError(0xdeadbeef);
+    ret = pCryptCATAdminCalcHashFromFileHandle2(hca_sha1, file, &hashsize, hash, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS,
+       "Expected ERROR_SUCCESS, got %ld\n", GetLastError());
+    ok(hashsize == sizeof(expectedhash) &&
+       !memcmp(hash, expectedhash, sizeof(expectedhash)),
+       "Hashes didn't match\n");
+    CloseHandle(file);
+    HeapFree(GetProcessHeap(), 0, hash);
+    pCryptCATAdminReleaseContext(hca_sha1, 0);
+
+    /* Calculate hash with SHA-256 specified as algorithm */
+    ret = pCryptCATAdminAcquireContext2(&hca_sha256, NULL, BCRYPT_SHA256_ALGORITHM, NULL, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    file = CreateFileA(selfname, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    hashsize = 0;
+    ret = pCryptCATAdminCalcHashFromFileHandle2(hca_sha256, file, &hashsize, NULL, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    ok(hashsize == 32," Expected a hash size of 32, got %ld\n", hashsize);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
+    hash = HeapAlloc(GetProcessHeap(), 0, hashsize);
+    SetLastError(0xdeadbeef);
+    ret = pCryptCATAdminCalcHashFromFileHandle2(hca_sha256, file, &hashsize, hash, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    ok(hashsize == 32," Expected a hash size of 32, got %ld\n", hashsize);
+    ok(GetLastError() == ERROR_SUCCESS,
+       "Expected ERROR_SUCCESS, got %ld\n", GetLastError());
+    CloseHandle(file);
+    HeapFree(GetProcessHeap(), 0, hash);
+
+    /* All OK, first request the size and then retrieve the SHA256 hash */
+    /* Check SHA256-hash for file with known hash */
+    file = CreateFileA(temp, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    hashsize = 0;
+    ret = pCryptCATAdminCalcHashFromFileHandle2(hca_sha256, file, &hashsize, NULL, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    hash = HeapAlloc(GetProcessHeap(), 0, hashsize);
+    SetLastError(0xdeadbeef);
+    ret = pCryptCATAdminCalcHashFromFileHandle2(hca_sha256, file, &hashsize, hash, 0);
+    ok(ret, "Expected success, got FALSE with %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS,
+       "Expected ERROR_SUCCESS, got %ld\n", GetLastError());
+    ok(hashsize == sizeof(expectedhash_sha256) &&
+       !memcmp(hash, expectedhash_sha256, sizeof(expectedhash_sha256)),
+       "Hashes didn't match\n");
+    CloseHandle(file);
+    HeapFree(GetProcessHeap(), 0, hash);
+    pCryptCATAdminReleaseContext(hca_sha256, 0);
     DeleteFileA(temp);
 }
 
