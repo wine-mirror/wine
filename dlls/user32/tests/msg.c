@@ -20587,7 +20587,7 @@ static void test_radiobutton_focus(void)
         flush_sequence();
         SendMessageA(button, WM_SETFOCUS, 0, 0);
         flush_events();
-        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on default radiobutton", TRUE);
+        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on default radiobutton", FALSE);
         DestroyWindow(button);
 
         /* Test already checked button */
@@ -20608,7 +20608,7 @@ static void test_radiobutton_focus(void)
         flush_sequence();
         SendMessageA(button, WM_SETFOCUS, 0, 0);
         flush_events();
-        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on focused radiobutton", TRUE);
+        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on focused radiobutton", FALSE);
         DestroyWindow(button);
 
         /* Test WM_LBUTTONDOWN */
@@ -20627,7 +20627,7 @@ static void test_radiobutton_focus(void)
         flush_sequence();
         SendMessageA(button, WM_SETFOCUS, 0, 0);
         flush_events();
-        ok_sequence(set_focus_without_notify_seq, "WM_SETFOCUS on radiobutton without BS_NOTIFY", TRUE);
+        ok_sequence(set_focus_without_notify_seq, "WM_SETFOCUS on radiobutton without BS_NOTIFY", FALSE);
         DestroyWindow(button);
 
         /* Test disabled button */
@@ -20638,7 +20638,7 @@ static void test_radiobutton_focus(void)
         flush_sequence();
         SendMessageA(button, WM_SETFOCUS, 0, 0);
         flush_events();
-        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on disabled radiobutton", TRUE);
+        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on disabled radiobutton", FALSE);
         DestroyWindow(button);
     }
 
