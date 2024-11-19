@@ -18905,7 +18905,7 @@ static void check_layout_element_exclusion(ID3D11Device *device, const D3D11_INP
     unsigned int i;
     HRESULT hr;
 
-    winetest_push_context(test_context);
+    winetest_push_context("%s", test_context);
 
     hr = ID3D11Device_CreateInputLayout(device, elements, element_count, shader_code, shader_code_size, &layout);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
