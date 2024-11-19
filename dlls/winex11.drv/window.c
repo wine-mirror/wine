@@ -1542,6 +1542,7 @@ static UINT window_update_client_state( struct x11drv_win_data *data )
 
 static UINT window_update_client_config( struct x11drv_win_data *data )
 {
+    static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
     UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), flags;
     RECT rect, old_rect = data->rects.window, new_rect;
 
@@ -1574,6 +1575,9 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
     else if (IsRectEmpty( &rect )) flags |= SWP_NOSIZE;
 
     if ((flags & (SWP_NOSIZE | SWP_NOMOVE)) == (SWP_NOSIZE | SWP_NOMOVE)) return 0;
+
+    /* avoid event feedback loops from window rect adjustments of maximized / fullscreen windows */
+    if (data->current_state.net_wm_state & fullscreen_mask) flags |= SWP_NOSENDCHANGING;
 
     TRACE( "window %p/%lx config changed %s -> %s, flags %#x\n", data->hwnd, data->whole_window,
            wine_dbgstr_rect(&old_rect), wine_dbgstr_rect(&new_rect), flags );
