@@ -1088,7 +1088,6 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     struct x11drv_win_data *data;
     RECT rect;
     POINT pos = {event->x, event->y};
-    UINT config_cmd, state_cmd;
 
     if (!hwnd) return FALSE;
     if (!(data = get_win_data( hwnd ))) return FALSE;
@@ -1110,21 +1109,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     release_win_data( data );
 
-    if (!get_window_state_updates( hwnd, &state_cmd, &config_cmd, &rect )) return FALSE;
-
-    if (state_cmd)
-    {
-        if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
-        send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
-    }
-
-    if (config_cmd)
-    {
-        if (LOWORD(config_cmd) == SC_MOVE) NtUserSetRawWindowPos( hwnd, rect, HIWORD(config_cmd), FALSE );
-        else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
-    }
-
-    return TRUE;
+    return NtUserPostMessage( hwnd, WM_WINE_WINDOW_STATE_CHANGED, 0, 0 );
 }
 
 /***********************************************************************
@@ -1136,7 +1121,6 @@ static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
     struct x11drv_win_data *data;
     RECT rect;
     POINT pos = {event->x, event->y};
-    UINT config_cmd, state_cmd;
 
     if (!hwnd) return FALSE;
     if (!(data = get_win_data( hwnd ))) return FALSE;
@@ -1165,21 +1149,7 @@ static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
 
     release_win_data( data );
 
-    if (!get_window_state_updates( hwnd, &state_cmd, &config_cmd, &rect )) return FALSE;
-
-    if (state_cmd)
-    {
-        if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
-        send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
-    }
-
-    if (config_cmd)
-    {
-        if (LOWORD(config_cmd) == SC_MOVE) NtUserSetRawWindowPos( hwnd, rect, HIWORD(config_cmd), FALSE );
-        else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
-    }
-
-    return TRUE;
+    return NtUserPostMessage( hwnd, WM_WINE_WINDOW_STATE_CHANGED, 0, 0 );
 }
 
 /***********************************************************************
@@ -1241,27 +1211,14 @@ static int get_window_xembed_info( Display *display, Window window )
 static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event )
 {
     struct x11drv_win_data *data;
-    UINT value = 0, state_cmd = 0, config_cmd = 0;
-    RECT rect;
+    UINT value = 0;
 
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_wm_state( event->display, event->window );
     window_wm_state_notify( data, event->serial, value );
     release_win_data( data );
 
-    if (!get_window_state_updates( hwnd, &state_cmd, &config_cmd, &rect )) return;
-
-    if (state_cmd)
-    {
-        if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
-        send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
-    }
-
-    if (config_cmd)
-    {
-        if (LOWORD(config_cmd) == SC_MOVE) NtUserSetRawWindowPos( hwnd, rect, HIWORD(config_cmd), FALSE );
-        else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
-    }
+    NtUserPostMessage( hwnd, WM_WINE_WINDOW_STATE_CHANGED, 0, 0 );
 }
 
 static void handle_xembed_info_notify( HWND hwnd, XPropertyEvent *event )
@@ -1278,27 +1235,14 @@ static void handle_xembed_info_notify( HWND hwnd, XPropertyEvent *event )
 static void handle_net_wm_state_notify( HWND hwnd, XPropertyEvent *event )
 {
     struct x11drv_win_data *data;
-    UINT value = 0, state_cmd = 0, config_cmd = 0;
-    RECT rect;
+    UINT value = 0;
 
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_net_wm_state( event->display, event->window );
     window_net_wm_state_notify( data, event->serial, value );
     release_win_data( data );
 
-    if (!get_window_state_updates( hwnd, &state_cmd, &config_cmd, &rect )) return;
-
-    if (state_cmd)
-    {
-        if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
-        send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
-    }
-
-    if (config_cmd)
-    {
-        if (LOWORD(config_cmd) == SC_MOVE) NtUserSetRawWindowPos( hwnd, rect, HIWORD(config_cmd), FALSE );
-        else send_message( hwnd, WM_SYSCOMMAND, LOWORD(config_cmd), 0 );
-    }
+    NtUserPostMessage( hwnd, WM_WINE_WINDOW_STATE_CHANGED, 0, 0 );
 }
 
 /***********************************************************************

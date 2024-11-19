@@ -1597,9 +1597,14 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
     return MAKELONG(SC_MOVE, flags);
 }
 
-BOOL get_window_state_updates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, RECT *rect )
+/***********************************************************************
+ *      GetWindowStateUpdates   (X11DRV.@)
+ */
+BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, RECT *rect )
 {
     struct x11drv_win_data *data;
+
+    TRACE( "hwnd %p, state_cmd %p, config_cmd %p, rect %p\n", hwnd, state_cmd, config_cmd, rect );
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
@@ -1608,6 +1613,8 @@ BOOL get_window_state_updates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, REC
     *rect = window_rect_from_visible( &data->rects, data->current_state.rect );
 
     release_win_data( data );
+
+    TRACE( "returning state_cmd %#x, config_cmd %#x, rect %s\n", *state_cmd, *config_cmd, wine_dbgstr_rect(rect) );
     return *state_cmd || *config_cmd;
 }
 
