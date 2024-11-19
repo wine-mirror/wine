@@ -1176,7 +1176,7 @@ typedef struct _bezier_vector {
     GLdouble y;
 } bezier_vector;
 
-static double bezier_deviation_squared(const bezier_vector *p)
+static BOOL bezier_fits_deviation(const bezier_vector *p, FLOAT max_deviation)
 {
     bezier_vector deviation;
     bezier_vector vertex;
@@ -1184,25 +1184,36 @@ static double bezier_deviation_squared(const bezier_vector *p)
     double base_length;
     double dot;
 
+    max_deviation *= max_deviation;
+
     vertex.x = (p[0].x + p[1].x*2 + p[2].x)/4 - p[0].x;
     vertex.y = (p[0].y + p[1].y*2 + p[2].y)/4 - p[0].y;
 
     base.x = p[2].x - p[0].x;
     base.y = p[2].y - p[0].y;
 
-    base_length = sqrt(base.x*base.x + base.y*base.y);
-    base.x /= base_length;
-    base.y /= base_length;
+    base_length = base.x * base.x + base.y * base.y;
+    if (base_length <= max_deviation)
+    {
+        base.x = 0.0;
+        base.y = 0.0;
+    }
+    else
+    {
+        base_length = sqrt(base_length);
+        base.x /= base_length;
+        base.y /= base_length;
 
-    dot = base.x*vertex.x + base.y*vertex.y;
-    dot = min(max(dot, 0.0), base_length);
-    base.x *= dot;
-    base.y *= dot;
+        dot = base.x*vertex.x + base.y*vertex.y;
+        dot = min(max(dot, 0.0), base_length);
+        base.x *= dot;
+        base.y *= dot;
+    }
 
     deviation.x = vertex.x-base.x;
     deviation.y = vertex.y-base.y;
 
-    return deviation.x*deviation.x + deviation.y*deviation.y;
+    return deviation.x*deviation.x + deviation.y*deviation.y <= max_deviation;
 }
 
 static int bezier_approximate(const bezier_vector *p, bezier_vector *points, FLOAT deviation)
@@ -1212,7 +1223,7 @@ static int bezier_approximate(const bezier_vector *p, bezier_vector *points, FLO
     bezier_vector vertex;
     int total_vertices;
 
-    if(bezier_deviation_squared(p) <= deviation*deviation)
+    if (bezier_fits_deviation(p, deviation))
     {
         if(points)
             *points = p[2];
