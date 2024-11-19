@@ -2909,12 +2909,10 @@ BOOL X11DRV_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *sty
 void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
                               const struct window_rects *new_rects, struct window_surface *surface )
 {
-    struct x11drv_thread_data *thread_data;
     struct x11drv_win_data *data;
     UINT new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE ), old_style;
     struct window_rects old_rects;
     BOOL was_fullscreen;
-    int event_type;
 
     if (!(data = get_win_data( hwnd ))) return;
 
@@ -2922,8 +2920,6 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     if (data->desired_state.wm_state != WithdrawnState) old_style |= WS_VISIBLE;
     if (data->desired_state.wm_state == IconicState) old_style |= WS_MINIMIZE;
     if (data->desired_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) old_style |= WS_MAXIMIZE;
-
-    thread_data = x11drv_thread_data();
 
     old_rects = data->rects;
     was_fullscreen = data->is_fullscreen;
@@ -2947,23 +2943,10 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
         return;
     }
 
-    /* check if we are currently processing an event relevant to this window */
-    event_type = 0;
-    if (thread_data &&
-        thread_data->current_event &&
-        thread_data->current_event->xany.window == data->whole_window)
-    {
-        event_type = thread_data->current_event->type;
-        if (event_type != ConfigureNotify && event_type != PropertyNotify &&
-            event_type != GravityNotify && event_type != ReparentNotify)
-            event_type = 0;  /* ignore other events */
-    }
-
-    if ((old_style & WS_VISIBLE) && event_type != ReparentNotify)
+    if (old_style & WS_VISIBLE)
     {
         if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
-            (!event_type && !(new_style & WS_MINIMIZE) &&
-             !is_window_rect_mapped( &new_rects->window ) && is_window_rect_mapped( &old_rects.window )))
+            (!(new_style & WS_MINIMIZE) && !is_window_rect_mapped( &new_rects->window ) && is_window_rect_mapped( &old_rects.window )))
         {
             release_win_data( data );
             unmap_window( hwnd );
@@ -2973,8 +2956,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     }
 
     /* don't change position if we are about to minimize or maximize a managed window */
-    if (!event_type &&
-        !(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & (WS_MINIMIZE|WS_MAXIMIZE))))
+    if (!(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & (WS_MINIMIZE|WS_MAXIMIZE))))
     {
         sync_window_position( data, swp_flags );
 #ifdef HAVE_LIBXSHAPE
@@ -3017,7 +2999,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
         else
         {
             if (swp_flags & (SWP_FRAMECHANGED|SWP_STATECHANGED)) set_wm_hints( data );
-            if (!event_type) update_net_wm_states( data );
+            update_net_wm_states( data );
         }
     }
 
