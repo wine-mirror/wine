@@ -118,7 +118,7 @@ BOOL WINAPI BindImageEx(DWORD flags, const char *module, const char *dll_path,
 
                 if (!(name = ImageRvaToVa(image.FileHeader, image.MappedAddress, thunk->u1.AddressOfData, 0)))
                 {
-                    ERR("Failed to get VA for name RVA %#Ix.\n", thunk->u1.AddressOfData);
+                    ERR("Failed to get VA for name RVA %#Ix.\n", (size_t)thunk->u1.AddressOfData);
                     continue;
                 }
 
