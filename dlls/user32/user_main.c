@@ -126,7 +126,7 @@ static NTSTATUS WINAPI User32PostDDEMessage( void *args, ULONG size )
 {
     const struct post_dde_message_params *params = args;
     return post_dde_message( params->hwnd, params->msg, params->wparam, params->lparam,
-                             params->dest_tid, params->type );
+                             params->dest_tid );
 }
 
 static NTSTATUS WINAPI User32RenderSsynthesizedFormat( void *args, ULONG size )

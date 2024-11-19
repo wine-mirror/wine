@@ -333,10 +333,9 @@ static HGLOBAL dde_get_pair(HGLOBAL shm)
  *
  * Post a DDE message
  */
-NTSTATUS post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid, DWORD type )
+NTSTATUS post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid )
 {
-    void*       ptr = NULL;
-    int         size = 0;
+    struct post_dde_message_call_params params = { .dest_tid = dest_tid };
     UINT_PTR    uiLo, uiHi;
     LPARAM      lp;
     HGLOBAL     hunlock = 0;
@@ -364,8 +363,8 @@ NTSTATUS post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DW
             {
                 hpack = pack_ptr( h );
                 /* send back the value of h on the other side */
-                ptr = &hpack;
-                size = sizeof(hpack);
+                params.ptr = &hpack;
+                params.size = sizeof(hpack);
                 lp = uiLo;
                 TRACE( "send dde-ack %Ix %08Ix => %p\n", uiLo, uiHi, h );
             }
@@ -382,10 +381,10 @@ NTSTATUS post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DW
     case WM_DDE_POKE:
         if (uiLo)
         {
-            size = GlobalSize( (HGLOBAL)uiLo ) ;
-            if ((msg == WM_DDE_ADVISE && size < sizeof(DDEADVISE)) ||
-                (msg == WM_DDE_DATA   && size < FIELD_OFFSET(DDEDATA, Value)) ||
-                (msg == WM_DDE_POKE   && size < FIELD_OFFSET(DDEPOKE, Value)))
+            params.size = GlobalSize( (HGLOBAL)uiLo ) ;
+            if ((msg == WM_DDE_ADVISE && params.size < sizeof(DDEADVISE)) ||
+                (msg == WM_DDE_DATA   && params.size < FIELD_OFFSET(DDEDATA, Value)) ||
+                (msg == WM_DDE_POKE   && params.size < FIELD_OFFSET(DDEPOKE, Value)))
                 return STATUS_INVALID_PARAMETER;
         }
         else if (msg != WM_DDE_DATA) return STATUS_INVALID_PARAMETER;
@@ -393,23 +392,23 @@ NTSTATUS post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DW
         lp = uiHi;
         if (uiLo)
         {
-            if ((ptr = GlobalLock( (HGLOBAL)uiLo) ))
+            if ((params.ptr = GlobalLock( (HGLOBAL)uiLo) ))
             {
-                DDEDATA *dde_data = ptr;
+                DDEDATA *dde_data = params.ptr;
                 TRACE("unused %d, fResponse %d, fRelease %d, fDeferUpd %d, fAckReq %d, cfFormat %d\n",
                        dde_data->unused, dde_data->fResponse, dde_data->fRelease,
                        dde_data->reserved, dde_data->fAckReq, dde_data->cfFormat);
                 hunlock = (HGLOBAL)uiLo;
             }
         }
-        TRACE( "send ddepack %u %Ix\n", size, uiHi );
+        TRACE( "send ddepack %u %Ix\n", params.size, uiHi );
         break;
     case WM_DDE_EXECUTE:
         if (lparam)
         {
-            if ((ptr = GlobalLock( (HGLOBAL)lparam) ))
+            if ((params.ptr = GlobalLock( (HGLOBAL)lparam) ))
             {
-                size = GlobalSize( (HGLOBAL)lparam );
+                params.size = GlobalSize( (HGLOBAL)lparam );
                 /* so that the other side can send it back on ACK */
                 lp = lparam;
                 hunlock = (HGLOBAL)lparam;
@@ -417,20 +416,9 @@ NTSTATUS post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DW
         }
         break;
     }
-    SERVER_START_REQ( send_message )
-    {
-        req->id      = dest_tid;
-        req->type    = type;
-        req->flags   = 0;
-        req->win     = wine_server_user_handle( hwnd );
-        req->msg     = msg;
-        req->wparam  = wparam;
-        req->lparam  = lp;
-        req->timeout = TIMEOUT_INFINITE;
-        if (size) wine_server_add_data( req, ptr, size );
-        if (!(res = wine_server_call( req ))) FreeDDElParam( msg, lparam );
-    }
-    SERVER_END_REQ;
+
+    res = NtUserMessageCall( hwnd, msg, wparam, lp, &params, NtUserPostDdeCall, FALSE );
+    if (!res) FreeDDElParam( msg, lparam );
     if (hunlock) GlobalUnlock(hunlock);
 
     return res;

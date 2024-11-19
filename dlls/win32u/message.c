@@ -34,7 +34,6 @@
 #include "dbt.h"
 #include "dde.h"
 #include "immdev.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
@@ -3368,7 +3367,6 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
         params.wparam   = info->wparam;
         params.lparam   = info->lparam;
         params.dest_tid = info->dest_tid;
-        params.type     = info->type;
         res = KeUserModeCallback( NtUserPostDDEMessage, &params, sizeof(params), &ret_ptr, &ret_len );
         goto done;
     }
@@ -3395,6 +3393,32 @@ done:
     if (res) RtlSetLastWin32Error( RtlNtStatusToDosError(res) );
     return !res;
 }
+
+/***********************************************************************
+ *           post_dde_message_call
+ */
+static NTSTATUS post_dde_message_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                       const struct post_dde_message_call_params *params )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( send_message )
+    {
+        req->id      = params->dest_tid;
+        req->type    = MSG_POSTED;
+        req->flags   = 0;
+        req->win     = wine_server_user_handle( hwnd );
+        req->msg     = msg;
+        req->wparam  = wparam;
+        req->lparam  = lparam;
+        req->timeout = TIMEOUT_INFINITE;
+        wine_server_add_data( req, params->ptr, params->size );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
 
 /***********************************************************************
  *           wait_message_reply
@@ -4446,6 +4470,9 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
     case NtUserDragDropCall:
         return drag_drop_call( hwnd, msg, wparam, lparam, result_info );
+
+    case NtUserPostDdeCall:
+        return post_dde_message_call( hwnd, msg, wparam, lparam, result_info );
 
     default:
         FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, (long)wparam, lparam, result_info, (int)type, ansi );

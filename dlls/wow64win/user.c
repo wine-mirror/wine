@@ -1395,7 +1395,6 @@ static NTSTATUS WINAPI wow64_NtUserPostDDEMessage( void *arg, ULONG size )
         LONG wparam;
         LONG lparam;
         DWORD dest_tid;
-        DWORD type;
     } params32;
 
     params32.hwnd = HandleToUlong( params->hwnd );
@@ -1403,7 +1402,6 @@ static NTSTATUS WINAPI wow64_NtUserPostDDEMessage( void *arg, ULONG size )
     params32.wparam = params->wparam;
     params32.lparam = params->lparam;
     params32.dest_tid = params->dest_tid;
-    params32.type = params->type;
     return dispatch_callback( NtUserPostDDEMessage, &params32, sizeof(params32) );
 }
 
@@ -3676,6 +3674,22 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
             return status;
         }
         return NtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
+
+    case NtUserPostDdeCall:
+        {
+            struct
+            {
+                ULONG ptr;
+                UINT  size;
+                DWORD dest_tid;
+            } *params32 = result_info;
+            struct post_dde_message_call_params params;
+
+            params.ptr = UlongToPtr(params32->ptr);
+            params.size = params32->size;
+            params.dest_tid = params32->dest_tid;
+            return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, type, ansi );
+        }
     }
 
     return message_call_32to64( hwnd, msg, wparam, lparam, result_info, type, ansi );

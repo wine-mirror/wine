@@ -279,7 +279,6 @@ struct post_dde_message_params
     WPARAM wparam;
     LPARAM lparam;
     DWORD dest_tid;
-    DWORD type;
 };
 
 /* NtUserRenderSynthesizedFormat params */
@@ -398,6 +397,7 @@ enum
     NtUserImeDriverCall       = 0x0305,
     NtUserSystemTrayCall      = 0x0306,
     NtUserDragDropCall        = 0x0307,
+    NtUserPostDdeCall         = 0x0308,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
@@ -426,6 +426,13 @@ struct send_message_callback_params
 {
     SENDASYNCPROC callback;
     ULONG_PTR data;
+};
+
+struct post_dde_message_call_params
+{
+    void *ptr;
+    UINT  size;
+    DWORD dest_tid;
 };
 
 /* color index used to retrieve system 55aa brush */
