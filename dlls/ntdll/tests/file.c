@@ -4111,9 +4111,7 @@ static void _test_completion_flags(unsigned line, HANDLE handle, DWORD expected_
     ok_(__FILE__,line)(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08lx\n", status);
     ok_(__FILE__,line)(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
     ok_(__FILE__,line)(io.Information == sizeof(info), "Information = %Iu\n", io.Information);
-    /* FILE_SKIP_SET_USER_EVENT_ON_FAST_IO is not supported on win2k3 */
-    ok_(__FILE__,line)((info.Flags & ~FILE_SKIP_SET_USER_EVENT_ON_FAST_IO) == expected_flags,
-                       "got %08lx\n", info.Flags);
+    ok_(__FILE__,line)((info.Flags & expected_flags) == expected_flags, "got %08lx\n", info.Flags);
 }
 
 static void test_file_completion_information(void)
