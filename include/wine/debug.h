@@ -90,7 +90,7 @@ struct __wine_debug_channel
 #define __WINE_DBG_LOG(...) \
    wine_dbg_log( __dbcl, __dbch, __func__, __VA_ARGS__); } } while(0)
 
-#if defined(__MINGW32__) || (!defined(__WINE_USE_MSVCRT) && (defined(__GNUC__) || defined(__clang__)))
+#if (defined(__GNUC__) || defined(__clang__)) && (defined(__MINGW32__) || defined (_MSC_VER) || !defined(__WINE_USE_MSVCRT))
 #define __WINE_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 #else
 #define __WINE_PRINTF_ATTR(fmt,args)
