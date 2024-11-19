@@ -10483,7 +10483,7 @@ fi }
         eval "${wine_arch}_DELAYLOADFLAG=\"-Wl,-delayload,\""
         as_fn_append ${wine_arch}_EXTRACFLAGS " $llvm_extra_cflags"
         as_fn_append ${wine_arch}_LDFLAGS " $llvm_extra_ldflags"
-        CFLAGS="$llvm_extra_cflags $llvm_cflags"
+        CFLAGS="$CFLAGS $llvm_extra_cflags $llvm_cflags"
     else
         as_wine_cv_crosscc=`printf "%s\n" "wine_cv_${wine_arch}_crosscc" | sed "$as_sed_sh"`
 

@@ -879,7 +879,7 @@ do
         AS_VAR_SET([${wine_arch}_DELAYLOADFLAG],["-Wl,-delayload,"])
         AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" $llvm_extra_cflags"])
         AS_VAR_APPEND([${wine_arch}_LDFLAGS],[" $llvm_extra_ldflags"])
-        CFLAGS="$llvm_extra_cflags $llvm_cflags"
+        CFLAGS="$CFLAGS $llvm_extra_cflags $llvm_cflags"
     else
         AS_VAR_PUSHDEF([wine_cv_crosscc], [wine_cv_${wine_arch}_crosscc])
         AC_CACHE_CHECK([whether $CC works], wine_cv_crosscc,
