@@ -17118,7 +17118,7 @@ static void test_viewport(void)
 
         for (j = 0; j < ARRAY_SIZE(tests); ++j)
         {
-            winetest_push_context(tests[j].message);
+            winetest_push_context("%s", tests[j].message);
 
             expected_failure = tests[j].vp.dwX + tests[j].vp.dwWidth > rt_sizes[i].x
                     || tests[j].vp.dwY + tests[j].vp.dwHeight > rt_sizes[i].y;

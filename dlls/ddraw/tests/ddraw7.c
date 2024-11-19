@@ -16666,7 +16666,7 @@ static void test_viewport(void)
 
         for (j = 0; j < ARRAY_SIZE(tests); ++j)
         {
-            winetest_push_context(tests[j].message);
+            winetest_push_context("%s", tests[j].message);
 
             hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000,
                     tests[j].expected_z - z_eps, 0);
