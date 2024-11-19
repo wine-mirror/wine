@@ -4335,7 +4335,6 @@ static void test_file_completion_information(void)
         if (flag == FILE_SKIP_SET_EVENT_ON_HANDLE)
             ok(!is_signaled(server), "Expected not signaled.\n");
         else
-            todo_wine
             ok(is_signaled(server), "Expected signaled.\n");
 
         status = pNtClose(client);
