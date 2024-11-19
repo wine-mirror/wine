@@ -300,7 +300,7 @@ static DWORD DP_CopyString( char **dst, const void *src, BOOL dstAnsi, BOOL srcA
     return size;
 }
 
-static void *DP_DuplicateString( void *src, BOOL dstAnsi, BOOL srcAnsi )
+static void *DP_DuplicateString( const void *src, BOOL dstAnsi, BOOL srcAnsi )
 {
     DWORD size;
     char *dst;
@@ -4858,6 +4858,56 @@ static HRESULT WINAPI IDirectPlay3Impl_EnumConnections( IDirectPlay3 *iface,
             flags );
 }
 
+static BOOL DP_GetRegString( HKEY key, const void *name, const char *defaultValue, void **outValue,
+                             BOOL ansi )
+{
+    DWORD size = 0;
+    LSTATUS status;
+    void *value;
+
+    if ( ansi )
+        status = RegGetValueA( key, NULL, name, RRF_RT_REG_SZ, NULL, NULL, &size );
+    else
+        status = RegGetValueW( key, NULL, name, RRF_RT_REG_SZ, NULL, NULL, &size );
+
+    if ( status == ERROR_SUCCESS )
+    {
+        value = malloc( size );
+        if ( !value )
+            return FALSE;
+
+        if ( ansi )
+            status = RegGetValueA( key, NULL, name, RRF_RT_REG_SZ, NULL, value, &size );
+        else
+            status = RegGetValueW( key, NULL, name, RRF_RT_REG_SZ, NULL, value, &size );
+
+        if ( status == ERROR_SUCCESS )
+        {
+            *outValue = value;
+            return TRUE;
+        }
+
+        free( value );
+    }
+
+    value = DP_DuplicateString( defaultValue, ansi, TRUE );
+    if ( !value )
+        return FALSE;
+
+    *outValue = value;
+    return TRUE;
+}
+
+static BOOL DP_GetRegStringW( HKEY key, const WCHAR *name, const char *defaultValue, WCHAR **outValue )
+{
+    return DP_GetRegString( key, name, defaultValue, (void **) outValue, FALSE );
+}
+
+static BOOL DP_GetRegStringA( HKEY key, const char *name, const char *defaultValue, char **outValue )
+{
+    return DP_GetRegString( key, name, defaultValue, (void **) outValue, TRUE );
+}
+
 static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
                                 const GUID *addressDataType, struct list *connections )
 {
@@ -4921,7 +4971,6 @@ static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
       RegCloseKey(hkServiceProvider);
       continue;
     }
-    RegCloseKey(hkServiceProvider);
 
     /* FIXME: Check return types to ensure we're interpreting data right */
     MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, ARRAY_SIZE( buff ));
@@ -4931,21 +4980,25 @@ static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
     /* Fill in the DPNAME struct for the service provider */
 
     connection->name.dwSize = sizeof( DPNAME );
-    connection->name.lpszShortName = DP_DuplicateString( subKeyName, FALSE, TRUE );
-    if( !connection->name.lpszShortName )
+    if( !DP_GetRegStringW( hkServiceProvider, L"DescriptionW", subKeyName,
+                           &connection->name.lpszShortName ) )
     {
       free( connection );
+      RegCloseKey( hkServiceProvider );
       continue;
     }
 
     connection->nameA.dwSize = sizeof( DPNAME );
-    connection->nameA.lpszShortNameA = DP_DuplicateString( subKeyName, TRUE, TRUE );
-    if( !connection->name.lpszShortNameA )
+    if( !DP_GetRegStringA( hkServiceProvider, "DescriptionA", subKeyName,
+                           &connection->nameA.lpszShortNameA ) )
     {
       free( connection->name.lpszShortName );
       free( connection );
+      RegCloseKey( hkServiceProvider );
       continue;
     }
+
+    RegCloseKey( hkServiceProvider );
 
     /* Create the compound address for the service provider.
      * NOTE: This is a gruesome architectural scar right now.  DP
