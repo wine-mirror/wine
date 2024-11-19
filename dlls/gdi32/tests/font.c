@@ -6298,6 +6298,31 @@ static void test_vertical_font(void)
     ok(ret, "RemoveFontResourceEx() error %ld\n", GetLastError());
 
     DeleteFileA(ttf_name);
+
+    if (!write_ttf_file("vertical2.ttf", ttf_name))
+    {
+        skip("Failed to create ttf file for testing\n");
+        return;
+    }
+
+    num = AddFontResourceExA(ttf_name, FR_PRIVATE, 0);
+    ok(num == 2, "AddFontResourceExA should add 2 fonts from vertical2.ttf\n");
+
+    check_vertical_font("WineTestVertical2", &installed, &selected, &gm, &hgi);
+    ok(installed, "WineTestVertical2 is not installed\n");
+    ok(selected, "WineTestVertical2 is not selected\n");
+
+    check_vertical_font("@WineTestVertical2", &installed, &selected, &gm, &vgi);
+    ok(installed, "@WineTestVertical2 is not installed\n");
+    ok(selected, "@WineTestVertical2 is not selected\n");
+
+    /* use the first vertical alternates table that doesn't replace U+2025 */
+    todo_wine ok(hgi == vgi, "different glyph h:%u v:%u\n", hgi, vgi);
+
+    ret = RemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
+    ok(ret, "RemoveFontResourceEx() error %ld\n", GetLastError());
+
+    DeleteFileA(ttf_name);
 }
 
 static INT CALLBACK has_vertical_font_proc(const LOGFONTA *lf, const TEXTMETRICA *ntm,
