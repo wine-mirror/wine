@@ -25,7 +25,6 @@
  *
  *  Messages
  *  - WM_CHAR: Checks a (manual or automatic) check box on '+' or '=', clears it on '-' key.
- *  - WM_SETFOCUS: For (manual or automatic) radio buttons, send the parent window BN_CLICKED
  *  - WM_NCCREATE: Turns any BS_OWNERDRAW button into a BS_PUSHBUTTON button.
  *  - WM_SYSKEYUP
  *
@@ -628,15 +627,18 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         }
         /* fall through */
     case WM_LBUTTONDOWN:
+        infoPtr->state |= BUTTON_BTNPRESSED;
         SetFocus( hWnd );
 
         if ((btn_type == BS_SPLITBUTTON || btn_type == BS_DEFSPLITBUTTON) &&
             !(infoPtr->split_style & BCSS_NOSPLIT) &&
             notify_split_button_dropdown(infoPtr, &pt, hWnd))
+        {
+            infoPtr->state &= ~BUTTON_BTNPRESSED;
             break;
+        }
 
         SetCapture( hWnd );
-        infoPtr->state |= BUTTON_BTNPRESSED;
         SendMessageW( hWnd, BM_SETSTATE, TRUE, 0 );
         break;
 
@@ -867,6 +869,12 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 
         if (style & BS_NOTIFY)
             BUTTON_NOTIFY_PARENT(hWnd, BN_SETFOCUS);
+
+        if (((btn_type == BS_RADIOBUTTON) || (btn_type == BS_AUTORADIOBUTTON)) &&
+            !(infoPtr->state & (BST_CHECKED | BUTTON_BTNPRESSED)))
+        {
+            BUTTON_NOTIFY_PARENT(hWnd, BN_CLICKED);
+        }
         break;
 
     case WM_KILLFOCUS:
