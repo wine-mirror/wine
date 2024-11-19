@@ -1451,7 +1451,7 @@ static void test_encoder_formats(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        winetest_push_context(tests[i].name);
+        winetest_push_context("%s", tests[i].name);
         pixelformat = *tests[i].format;
         hr = IWICBitmapFrameEncode_SetPixelFormat(frame_encode, &pixelformat);
         ok(hr == S_OK, "got %#lx.\n", hr);
