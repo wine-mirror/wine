@@ -522,7 +522,6 @@ static void test_scheduled_items(void)
     /* One or two callback invocations with RTWQ_E_OPERATION_CANCELLED may have been
      * pending when RtwqShutdown() was called. Release depends upon their execution. */
     refcount = IRtwqAsyncResult_Release(result);
-    flaky_wine
     ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
 
     IRtwqAsyncCallback_Release(&test_callback->IRtwqAsyncCallback_iface);
@@ -558,17 +557,13 @@ static void test_queue_shutdown(void)
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 
     res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 100, &callback_result);
-    flaky_wine
     ok(res == 0, "got %#lx\n", res);
     res = wait_async_callback_result(&test_callback2->IRtwqAsyncCallback_iface, 100, &callback_result);
-    todo_wine
     ok(res == 0, "got %#lx\n", res);
 
     refcount = IRtwqAsyncResult_Release(result);
-    flaky_wine
     ok(!refcount, "Unexpected refcount %ld.\n", refcount);
     refcount = IRtwqAsyncResult_Release(result2);
-    todo_wine
     ok(!refcount, "Unexpected refcount %ld.\n", refcount);
 
     hr = RtwqStartup();
@@ -589,14 +584,11 @@ static void test_queue_shutdown(void)
     RtwqUnlockWorkQueue(queue);
 
     res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 100, &callback_result);
-    flaky_wine
     ok(res == 0, "got %#lx\n", res);
     res = wait_async_callback_result(&test_callback2->IRtwqAsyncCallback_iface, 100, &callback_result);
-    todo_wine
     ok(res == 0, "got %#lx\n", res);
 
     refcount = IRtwqAsyncResult_Release(result);
-    flaky_wine
     ok(!refcount, "Unexpected refcount %ld.\n", refcount);
     /* An internal reference to result2 may still be held here even in Windows. */
     IRtwqAsyncResult_Release(result2);

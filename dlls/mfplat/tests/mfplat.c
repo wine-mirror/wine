@@ -4425,7 +4425,6 @@ static void test_scheduled_items(void)
     /* A callback invocation with RTWQ_E_OPERATION_CANCELLED may have been pending
      * when MFShutdown() was called. Release depends upon its execution. */
     refcount = IMFAsyncResult_Release(result);
-    flaky_wine
     ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
 
     IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);

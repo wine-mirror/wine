@@ -371,7 +371,7 @@ static BOOL pool_queue_shutdown(struct queue *queue)
     if (!queue->pool)
         return FALSE;
 
-    CloseThreadpoolCleanupGroupMembers(queue->envs[0].CleanupGroup, TRUE, NULL);
+    CloseThreadpoolCleanupGroupMembers(queue->envs[0].CleanupGroup, FALSE, NULL);
     CloseThreadpool(queue->pool);
     queue->pool = NULL;
 
