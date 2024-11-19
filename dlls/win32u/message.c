@@ -3649,6 +3649,20 @@ NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARA
     return ret;
 }
 
+/***********************************************************************
+ *		post_quit_message
+ */
+BOOL post_quit_message( int exit_code )
+{
+    SERVER_START_REQ( post_quit_message )
+    {
+        req->exit_code = exit_code;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return TRUE;
+}
+
 /**********************************************************************
  *           NtUserDispatchMessage  (win32u.@)
  */

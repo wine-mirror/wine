@@ -1035,6 +1035,7 @@ enum
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
     NtUserCallOneParam_MessageBeep,
+    NtUserCallOneParam_PostQuitMessage,
     NtUserCallOneParam_RealizePalette,
     NtUserCallOneParam_ReplyMessage,
     NtUserCallOneParam_SetCaretBlinkTime,
@@ -1139,6 +1140,11 @@ static inline INT NtUserGetSystemMetrics( INT index )
 static inline BOOL NtUserMessageBeep( UINT i )
 {
     return NtUserCallOneParam( i, NtUserCallOneParam_MessageBeep );
+}
+
+static inline void NtUserPostQuitMessage( INT exit_code )
+{
+    NtUserCallOneParam( exit_code, NtUserCallOneParam_PostQuitMessage );
 }
 
 static inline UINT NtUserRealizePalette( HDC hdc )

@@ -746,12 +746,7 @@ BOOL WINAPI PostThreadMessageA( DWORD thread, UINT msg, WPARAM wparam, LPARAM lp
  */
 void WINAPI PostQuitMessage( INT exit_code )
 {
-    SERVER_START_REQ( post_quit_message )
-    {
-        req->exit_code = exit_code;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
+    NtUserPostQuitMessage( exit_code );
 }
 
 /***********************************************************************
