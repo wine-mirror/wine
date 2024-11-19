@@ -735,6 +735,7 @@ static void test_LB_SETCURSEL(void)
     ok(ret == -1, "Unexpected anchor index %d.\n", ret);
 
     DestroyWindow(hLB);
+    DestroyWindow(parent);
 }
 
 static void test_LB_SETSEL(void)
@@ -2484,6 +2485,7 @@ static void test_WM_MEASUREITEM(void)
 
     data = SendMessageA(listbox, LB_GETITEMDATA, 0, 0);
     ok(data == (LRESULT)strings[0], "data = %08Ix, expected %p\n", data, strings[0]);
+    DestroyWindow(listbox);
     DestroyWindow(parent);
 
     parent = create_parent();
@@ -2491,6 +2493,8 @@ static void test_WM_MEASUREITEM(void)
 
     data = SendMessageA(listbox, LB_GETITEMDATA, 0, 0);
     ok(!data, "data = %08Ix\n", data);
+    DestroyWindow(listbox);
+    DestroyWindow(parent);
 
     /* LBS_HASSTRINGS */
     parent = create_parent();
