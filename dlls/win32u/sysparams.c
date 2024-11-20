@@ -3920,6 +3920,7 @@ static BOOL source_enum_display_settings( const struct source *source, UINT inde
 {
     DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
     const DEVMODEW *source_mode;
+    unsigned int i = index;
 
     if (!(flags & EDS_ROTATEDMODE) && !source_get_current_settings( source, &current_mode ))
     {
@@ -3935,7 +3936,7 @@ static BOOL source_enum_display_settings( const struct source *source, UINT inde
         if (!(flags & EDS_RAWMODE) && (source_mode->dmFields & DM_DISPLAYFLAGS) &&
             (source_mode->dmDisplayFlags & WINE_DM_UNSUPPORTED))
             continue;
-        if (!index--)
+        if (!i--)
         {
             memcpy( &devmode->dmFields, &source_mode->dmFields, devmode->dmSize - FIELD_OFFSET(DEVMODEW, dmFields) );
             devmode->dmDisplayFlags &= ~WINE_DM_UNSUPPORTED;
