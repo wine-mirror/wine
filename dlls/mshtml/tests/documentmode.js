@@ -513,6 +513,7 @@ sync_test("elem_props", function() {
     test_exposed("clientTop", true);
     test_exposed("title", true);
     test_exposed("removeNode", true);
+    test_exposed("replaceNode", true);
     test_exposed("querySelectorAll", v >= 8);
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
@@ -604,6 +605,7 @@ sync_test("textnode_props", function() {
     test_exposed("nodeValue", true);
     test_exposed("ownerDocument", true);
     test_exposed("removeNode", true);
+    test_exposed("replaceNode", true);
     test_exposed("compareDocumentPosition", v >= 9);
     test_exposed("isEqualNode", v >= 9);
     test_exposed("prefix", v >= 9);
@@ -1204,6 +1206,7 @@ sync_test("doctype", function() {
 
     ok(doctype.name === "html", "doctype.name = " + doctype.name);
     ok(!("removeNode" in doctype), "removeNode found in doctype.");
+    ok(!("replaceNode" in doctype), "replaceNode found in doctype.");
 });
 
 async_test("iframe_doc_mode", function() {
@@ -3684,7 +3687,7 @@ sync_test("prototype props", function() {
         "DOCUMENT_POSITION_FOLLOWING", "DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC", "DOCUMENT_POSITION_PRECEDING",
         "DOCUMENT_TYPE_NODE", "ELEMENT_NODE", "ENTITY_NODE", "ENTITY_REFERENCE_NODE", "NOTATION_NODE",
         "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE", "hasAttributes", "normalize",
-        "replaceNode", "swapNode"
+        "swapNode"
     ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);
