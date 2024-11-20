@@ -1480,13 +1480,8 @@ static void map_window( HWND hwnd, DWORD new_style )
     make_owner_managed( hwnd );
 
     if (!(data = get_win_data( hwnd ))) return;
-
-    if (data->whole_window && !data->mapped)
-    {
-        TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-        window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
-        data->mapped = TRUE;
-    }
+    TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
+    window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
     release_win_data( data );
 }
 
@@ -1499,13 +1494,8 @@ static void unmap_window( HWND hwnd )
     struct x11drv_win_data *data;
 
     if (!(data = get_win_data( hwnd ))) return;
-
-    if (data->mapped)
-    {
-        TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-        window_set_wm_state( data, WithdrawnState );
-        data->mapped = FALSE;
-    }
+    TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
+    window_set_wm_state( data, WithdrawnState );
     release_win_data( data );
 }
 
@@ -1514,7 +1504,7 @@ UINT window_update_client_state( struct x11drv_win_data *data )
     UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
 
     if (!data->managed) return 0; /* unmanaged windows are managed by the Win32 side */
-    if (!data->mapped) return 0; /* ignore state changes on invisible windows */
+    if (data->desired_state.wm_state == WithdrawnState) return 0; /* ignore state changes on invisible windows */
 
     if (data->wm_state_serial) return 0; /* another WM_STATE update is pending, wait for it to complete */
     if (data->net_wm_state_serial) return 0; /* another _NET_WM_STATE update is pending, wait for it to complete */
@@ -2126,7 +2116,6 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     if (data->whole_colormap) XFreeColormap( data->display, data->whole_colormap );
     data->whole_window = data->client_window = 0;
     data->whole_colormap = 0;
-    data->mapped = FALSE;
 
     memset( &data->desired_state, 0, sizeof(data->desired_state) );
     memset( &data->pending_state, 0, sizeof(data->pending_state) );
@@ -2527,11 +2516,7 @@ BOOL X11DRV_SystrayDockRemove( HWND hwnd )
 
     if ((data = get_win_data( hwnd )))
     {
-        if ((ret = data->embedded))
-        {
-            window_set_wm_state( data, WithdrawnState );
-            data->mapped = FALSE;
-        }
+        if ((ret = data->embedded)) window_set_wm_state( data, WithdrawnState );
         release_win_data( data );
     }
 
@@ -2934,7 +2919,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
             event_type = 0;  /* ignore other events */
     }
 
-    if (data->mapped && event_type != ReparentNotify)
+    if ((old_style & WS_VISIBLE) && event_type != ReparentNotify)
     {
         if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
             (!event_type && !(new_style & WS_MINIMIZE) &&
@@ -2971,7 +2956,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     if ((new_style & WS_VISIBLE) &&
         ((new_style & WS_MINIMIZE) || is_window_rect_mapped( &new_rects->window )))
     {
-        if (!data->mapped)
+        if (!(old_style & WS_VISIBLE))
         {
             BOOL needs_icon = !data->icon_pixmap;
             BOOL needs_map = TRUE;
@@ -3126,7 +3111,7 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
             sync_window_opacity( data->display, data->whole_window, alpha, flags );
 
         data->layered = TRUE;
-        if (!data->mapped)  /* mapping is delayed until attributes are set */
+        if (data->desired_state.wm_state == WithdrawnState)  /* mapping is delayed until attributes are set */
         {
             DWORD style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
 
@@ -3162,7 +3147,7 @@ void X11DRV_UpdateLayeredWindow( HWND hwnd, UINT flags )
     BOOL mapped;
 
     if (!(data = get_win_data( hwnd ))) return;
-    mapped = data->mapped;
+    mapped = data->desired_state.wm_state != WithdrawnState;
     release_win_data( data );
 
     /* layered windows are mapped only once their attributes are set */
@@ -3314,7 +3299,7 @@ LRESULT X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
         if (wparam == SC_SCREENSAVE && hwnd == NtUserGetDesktopWindow()) return start_screensaver();
         return -1;
     }
-    if (!data->whole_window || !data->managed || !data->mapped) goto failed;
+    if (!data->whole_window || !data->managed || data->desired_state.wm_state == WithdrawnState) goto failed;
 
     switch (wparam & 0xfff0)
     {

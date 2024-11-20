@@ -1040,7 +1040,7 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
-    if (!data->managed && !data->embedded && data->mapped)
+    if (!data->managed && !data->embedded && data->desired_state.wm_state != WithdrawnState)
     {
         HWND hwndFocus = get_focus();
         if (hwndFocus && NtUserIsChild( hwnd, hwndFocus ))
