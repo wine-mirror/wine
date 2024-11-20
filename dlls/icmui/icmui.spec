@@ -1,2 +1,2 @@
 @ stub SetupColorMatchingA
-@ stub SetupColorMatchingW
+@ stdcall SetupColorMatchingW(ptr)

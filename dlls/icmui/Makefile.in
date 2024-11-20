@@ -1,1 +1,4 @@
 MODULE = icmui.dll
+
+SOURCES = \
+	icmui.c
