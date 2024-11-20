@@ -120,7 +120,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     case WM_IME_COMPOSITION:
     {
-        HWND ime_hwnd = NtUserGetDefaultImeWindow( hwnd );
+        HWND ime_hwnd = NtUserQueryWindow( hwnd, WindowDefaultImeWindow );
         if (!ime_hwnd || ime_hwnd == NtUserGetParent( hwnd )) break;
 
         default_ime_compositionA( hwnd, wParam, lParam );
@@ -184,7 +184,7 @@ LRESULT WINAPI DefWindowProcW(
 
     case WM_IME_COMPOSITION:
     {
-        HWND ime_hwnd = NtUserGetDefaultImeWindow( hwnd );
+        HWND ime_hwnd = NtUserQueryWindow( hwnd, WindowDefaultImeWindow );
         if (!ime_hwnd || ime_hwnd == NtUserGetParent( hwnd )) break;
 
         default_ime_compositionW( hwnd, wParam, lParam );

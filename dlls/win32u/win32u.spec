@@ -1246,7 +1246,7 @@
 @ stub NtUserQueryInformationThread
 @ stdcall -syscall NtUserQueryInputContext(long long)
 @ stub NtUserQuerySendMessage
-@ stub NtUserQueryWindow
+@ stdcall -syscall NtUserQueryWindow(long long)
 @ stub NtUserRaiseLowerShellWindow
 @ stdcall -syscall NtUserRealChildWindowFromPoint(long long long)
 @ stub NtUserRealInternalGetMessage

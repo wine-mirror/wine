@@ -1885,6 +1885,11 @@ UINT_PTR SYSCALL_API NtUserQueryInputContext( HIMC handle, UINT attr )
     SYSCALL_FUNC( NtUserQueryInputContext );
 }
 
+HANDLE SYSCALL_API NtUserQueryWindow( HWND hwnd, WINDOWINFOCLASS cls )
+{
+    SYSCALL_FUNC( NtUserQueryWindow );
+}
+
 HWND SYSCALL_API NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG y )
 {
     SYSCALL_FUNC( NtUserRealChildWindowFromPoint );

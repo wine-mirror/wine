@@ -684,6 +684,20 @@ struct ntuser_name_list
 
 #define WM_SYSTIMER  0x0118
 
+/* NtUserQueryWindow info classes */
+typedef enum _WINDOWINFOCLASS
+{
+    WindowProcess,
+    WindowProcess2, /* FIXME: same as WindowProcess? */
+    WindowThread,
+    WindowActiveWindow,
+    WindowFocusWindow,
+    WindowIsHung,
+    WindowClientBase,
+    WindowIsForegroundThread,
+    WindowDefaultImeWindow,
+    WindowDefaultInputContext,
+} WINDOWINFOCLASS;
 
 W32KAPI HKL     WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags );
 W32KAPI BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
@@ -866,6 +880,7 @@ W32KAPI LONG    WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_cou
                                                  UINT32 *modes_count, DISPLAYCONFIG_MODE_INFO *modes,
                                                  DISPLAYCONFIG_TOPOLOGY_ID *topology_id);
 W32KAPI UINT_PTR WINAPI NtUserQueryInputContext( HIMC handle, UINT attr );
+W32KAPI HANDLE  WINAPI NtUserQueryWindow( HWND hwnd, WINDOWINFOCLASS cls );
 W32KAPI HWND    WINAPI NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG y );
 W32KAPI BOOL    WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags );
 W32KAPI ATOM    WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
@@ -1287,7 +1302,6 @@ enum
     NtUserCallHwnd_ActivateOtherWindow,
     NtUserCallHwnd_ArrangeIconicWindows,
     NtUserCallHwnd_DrawMenuBar,
-    NtUserCallHwnd_GetDefaultImeWindow,
     NtUserCallHwnd_GetDialogInfo,
     NtUserCallHwnd_GetDpiForWindow,
     NtUserCallHwnd_GetMDIClientInfo,
@@ -1328,11 +1342,6 @@ static inline BOOL NtUserDrawMenuBar( HWND hwnd )
 static inline DWORD NtUserGetWindowContextHelpId( HWND hwnd )
 {
     return NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowContextHelpId );
-}
-
-static inline HWND NtUserGetDefaultImeWindow( HWND hwnd )
-{
-    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetDefaultImeWindow ));
 }
 
 static inline void *NtUserGetDialogInfo( HWND hwnd )

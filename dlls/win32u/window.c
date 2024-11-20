@@ -850,6 +850,21 @@ BOOL enable_window( HWND hwnd, BOOL enable )
     return ret;
 }
 
+
+/* see IsHungAppWindow */
+static BOOL is_hung_app_window( HWND hwnd )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( is_window_hung )
+    {
+        req->win = wine_server_user_handle( hwnd );
+        ret = !wine_server_call_err( req ) && reply->is_hung;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 /* see IsWindowEnabled */
 BOOL is_window_enabled( HWND hwnd )
 {
@@ -5802,9 +5817,6 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_DrawMenuBar:
         return draw_menu_bar( hwnd );
 
-    case NtUserCallHwnd_GetDefaultImeWindow:
-        return HandleToUlong( get_default_ime_window( hwnd ));
-
     case NtUserCallHwnd_GetDpiForWindow:
         return get_dpi_for_window( hwnd );
 
@@ -6081,6 +6093,55 @@ HWND get_shell_window(void)
     SERVER_END_REQ;
 
     return hwnd;
+}
+
+/*******************************************************************
+ *           NtUserQueryWindow (win32u.@)
+ */
+HANDLE WINAPI NtUserQueryWindow( HWND hwnd, WINDOWINFOCLASS cls )
+{
+    DWORD pid;
+    GUITHREADINFO info;
+
+    switch (cls)
+    {
+    case WindowProcess:
+    case WindowProcess2:
+        get_window_thread( hwnd, &pid );
+        return UlongToHandle( pid );
+
+    case WindowThread:
+        return UlongToHandle( get_window_thread( hwnd, NULL ));
+
+    case WindowActiveWindow:
+        info.cbSize = sizeof(info);
+        NtUserGetGUIThreadInfo( get_window_thread( hwnd, NULL ), &info );
+        return info.hwndActive;
+
+    case WindowFocusWindow:
+        info.cbSize = sizeof(info);
+        NtUserGetGUIThreadInfo( get_window_thread( hwnd, NULL ), &info );
+        return info.hwndFocus;
+
+    case WindowIsHung:
+        return UlongToHandle( is_hung_app_window( hwnd ));
+
+    case WindowIsForegroundThread:
+        return UlongToHandle( get_window_thread( NtUserGetForegroundWindow(), NULL ) ==
+                              get_window_thread( hwnd, NULL ));
+
+    case WindowDefaultImeWindow:
+        return get_default_ime_window( hwnd );
+
+    case WindowDefaultInputContext:
+        /* FIXME: should get it for the specified window */
+        return get_default_input_context();
+
+    case WindowClientBase:
+    default:
+        WARN( "unsupported class %u\n", cls );
+        return 0;
+    }
 }
 
 /***********************************************************************

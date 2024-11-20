@@ -154,7 +154,7 @@ static void test_window_props(void)
     ok( count, "wrong count %lu\n", count );
     for (i = 0; i < count; i++)
     {
-        if (props[i].data != (INT_PTR)0xdeadbeef) continue;
+        if ((UINT)props[i].data != 0xdeadbeef) continue;
         ok( props[i].atom == atom, "prop = %x / %x\n", props[i].atom, atom );
         break;
     }
@@ -661,6 +661,60 @@ static void test_NtUserBuildNameList(void)
     EnumDesktopsW( GetProcessWindowStation(), enum_names, (LPARAM)buffer );
 
     free( buffer );
+}
+
+static void test_NtUserQueryWindow(void)
+{
+    UINT i;
+    HANDLE ret;
+    HWND hwnd  = CreateWindowExA( 0, "static", NULL, WS_POPUP|WS_VISIBLE, 0,0,0,0,GetDesktopWindow(),0,0, NULL );
+    HWND child = CreateWindowExA( 0, "static", NULL, WS_CHILD|WS_VISIBLE, 0,0,0,0,hwnd,0,0, NULL );
+
+    SetActiveWindow( hwnd );
+    SetFocus( child );
+    for (i = 0; i < 32; i++)
+    {
+        winetest_push_context( "%u", i );
+        ret = NtUserQueryWindow( hwnd, i );
+        switch (i)
+        {
+        case WindowProcess:
+        case WindowProcess2:
+            ok( ret == UlongToHandle( GetCurrentProcessId() ),
+                "wrong value %p / %lx\n", ret, GetCurrentProcessId() );
+            break;
+        case WindowThread:
+            ok( ret == UlongToHandle( GetCurrentThreadId() ), "wrong value %p / %lx\n",
+                ret, GetCurrentThreadId() );
+            break;
+        case WindowActiveWindow:
+            ok( ret == GetActiveWindow(), "wrong value %p / %p\n", ret, GetActiveWindow() );
+            break;
+        case WindowFocusWindow:
+            ok( ret == GetFocus(), "wrong value %p / %p\n", ret, GetFocus() );
+            break;
+        case WindowIsHung:
+            ok( !ret, "wrong value %p\n", ret );
+            break;
+        case WindowClientBase:
+            ok( !ret, "wrong value %p\n", ret );
+            break;
+        case WindowIsForegroundThread:
+            ok( ret == (HANDLE)TRUE, "wrong value %p\n", ret );
+            break;
+        case WindowDefaultImeWindow:
+            ok( ret == ImmGetDefaultIMEWnd( hwnd ), "wrong value %p / %p\n", ret, ImmGetDefaultIMEWnd( hwnd ));
+            break;
+       case WindowDefaultInputContext:
+            ok( ret == ImmGetContext( hwnd ), "wrong value %p / %p\n", ret, ImmGetContext( hwnd ));
+            break;
+        default:
+            ok( !ret, "NtUserQueryWindow returned %p\n", ret );
+            break;
+        }
+        winetest_pop_context();
+    }
+    DestroyWindow( hwnd );
 }
 
 static void test_cursoricon(void)
@@ -2338,6 +2392,7 @@ START_TEST(win32u)
 
     test_NtUserCloseWindowStation();
     test_NtUserDisplayConfigGetDeviceInfo();
+    test_NtUserQueryWindow();
 
     run_in_process( argv, "NtUserEnableMouseInPointer 0" );
     run_in_process( argv, "NtUserEnableMouseInPointer 1" );

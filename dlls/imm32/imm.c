@@ -1858,7 +1858,7 @@ BOOL WINAPI ImmGetConversionStatus( HIMC himc, DWORD *conversion, DWORD *sentenc
  */
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
-    return NtUserGetDefaultImeWindow(hWnd);
+    return NtUserQueryWindow( hWnd, WindowDefaultImeWindow );
 }
 
 /***********************************************************************

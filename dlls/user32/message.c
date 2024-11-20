@@ -24,7 +24,6 @@
 #include "user_private.h"
 #include "controls.h"
 #include "dde.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 
@@ -1288,15 +1287,7 @@ BOOL WINAPI IsGUIThread( BOOL convert )
  */
 BOOL WINAPI IsHungAppWindow( HWND hWnd )
 {
-    BOOL ret;
-
-    SERVER_START_REQ( is_window_hung )
-    {
-        req->win = wine_server_user_handle( hWnd );
-        ret = !wine_server_call_err( req ) && reply->is_hung;
-    }
-    SERVER_END_REQ;
-    return ret;
+    return HandleToUlong( NtUserQueryWindow( hWnd, WindowIsHung ));
 }
 
 /******************************************************************

@@ -3859,6 +3859,14 @@ NTSTATUS WINAPI wow64_NtUserQueryInputContext( UINT *args )
     return NtUserQueryInputContext( handle, attr );
 }
 
+NTSTATUS WINAPI wow64_NtUserQueryWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    WINDOWINFOCLASS cls = get_ulong( &args );
+
+    return HandleToUlong( NtUserQueryWindow( hwnd, cls ));
+}
+
 NTSTATUS WINAPI wow64_NtUserRedrawWindow( UINT *args )
 {
     HWND hwnd = get_handle( &args );
