@@ -3658,7 +3658,7 @@ sync_test("prototype props", function() {
         "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_CONTAINS", "DOCUMENT_POSITION_DISCONNECTED",
         "DOCUMENT_POSITION_FOLLOWING", "DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC", "DOCUMENT_POSITION_PRECEDING",
         "DOCUMENT_TYPE_NODE", "ELEMENT_NODE", "ENTITY_NODE", "ENTITY_REFERENCE_NODE", "NOTATION_NODE",
-        "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE", "hasAttributes", "normalize", "ownerDocument", "removeNode",
+        "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE", "hasAttributes", "normalize", "removeNode",
         "replaceNode", "swapNode"
     ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);

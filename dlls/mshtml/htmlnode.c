@@ -1252,8 +1252,10 @@ static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMN
 
 void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
-    if(mode >= COMPAT_MODE_IE9)
+    if(mode >= COMPAT_MODE_IE9) {
+        dispex_info_add_interface(info, IHTMLDOMNode2_tid, NULL);
         dispex_info_add_interface(info, IHTMLDOMNode3_tid, NULL);
+    }
 
     EventTarget_init_dispex_info(info, mode);
 }
