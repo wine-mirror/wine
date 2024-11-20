@@ -1362,7 +1362,7 @@ static void dump_varargs_filesystem_event( const char *prefix, data_size_t size 
 
 static void dump_varargs_pe_image_info( const char *prefix, data_size_t size )
 {
-    pe_image_info_t info;
+    struct pe_image_info info;
 
     if (!size)
     {

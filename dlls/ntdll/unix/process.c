@@ -148,7 +148,7 @@ static char **build_argv( const UNICODE_STRING *cmdline, int reserved )
 /***********************************************************************
  *           get_so_file_info
  */
-static BOOL get_so_file_info( int fd, pe_image_info_t *info )
+static BOOL get_so_file_info( int fd, struct pe_image_info *info )
 {
     union
     {
@@ -248,7 +248,7 @@ static BOOL get_so_file_info( int fd, pe_image_info_t *info )
 /***********************************************************************
  *           get_pe_file_info
  */
-static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_image_info_t *info )
+static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, struct pe_image_info *info )
 {
     unsigned int status;
     HANDLE mapping;
@@ -421,7 +421,7 @@ static BOOL is_unix_console_handle( HANDLE handle )
  *           spawn_process
  */
 static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
-                               int unixdir, char *winedebug, const pe_image_info_t *pe_info )
+                               int unixdir, char *winedebug, const struct pe_image_info *pe_info )
 {
     NTSTATUS status = STATUS_SUCCESS;
     int stdin_fd = -1, stdout_fd = -1;
@@ -726,7 +726,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     struct startup_info_data *startup_info = NULL;
     ULONG startup_info_size, env_size;
     int unixdir, socketfd[2] = { -1, -1 };
-    pe_image_info_t pe_info;
+    struct pe_image_info pe_info;
     CLIENT_ID id;
     USHORT machine = 0;
     HANDLE parent = 0, debug = 0, token = 0;
@@ -1528,7 +1528,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
         {
             if (info)
             {
-                pe_image_info_t pe_info;
+                struct pe_image_info pe_info;
 
                 SERVER_START_REQ( get_process_info )
                 {

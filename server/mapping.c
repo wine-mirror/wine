@@ -128,7 +128,7 @@ struct memory_view
     struct fd      *fd;              /* fd for mapped file */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct shared_map *shared;       /* temp file for shared PE mapping */
-    pe_image_info_t image;           /* image info (for PE image mapping) */
+    struct pe_image_info image;      /* image info (for PE image mapping) */
     unsigned int    flags;           /* SEC_* flags */
     client_ptr_t    base;            /* view base address (in process addr space) */
     mem_size_t      size;            /* view size */
@@ -158,7 +158,7 @@ struct mapping
     mem_size_t      size;            /* mapping size */
     unsigned int    flags;           /* SEC_* flags */
     struct fd      *fd;              /* fd for mapped file */
-    pe_image_info_t image;           /* image info (for PE image mapping) */
+    struct pe_image_info image;      /* image info (for PE image mapping) */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct shared_map *shared;       /* temp file for shared PE mapping */
 };
@@ -1137,7 +1137,7 @@ struct file *get_view_file( const struct memory_view *view, unsigned int access,
 }
 
 /* get the image info for a SEC_IMAGE mapped view */
-const pe_image_info_t *get_view_image_info( const struct memory_view *view, client_ptr_t *base )
+const struct pe_image_info *get_view_image_info( const struct memory_view *view, client_ptr_t *base )
 {
     if (!(view->flags & SEC_IMAGE)) return NULL;
     *base = view->base;
@@ -1497,13 +1497,13 @@ DECL_HANDLER(get_mapping_info)
         void *data;
 
         if (mapping->fd) get_nt_name( mapping->fd, &name );
-        size = min( sizeof(pe_image_info_t) + name.len, get_reply_max_size() );
+        size = min( sizeof(struct pe_image_info) + name.len, get_reply_max_size() );
         if ((data = set_reply_data_size( size )))
         {
-            data = mem_append( data, &mapping->image, min( sizeof(pe_image_info_t), size ));
-            if (size > sizeof(pe_image_info_t)) memcpy( data, name.str, size - sizeof(pe_image_info_t) );
+            data = mem_append( data, &mapping->image, min( sizeof(struct pe_image_info), size ));
+            if (size > sizeof(struct pe_image_info)) memcpy( data, name.str, size - sizeof(struct pe_image_info) );
         }
-        reply->total = sizeof(pe_image_info_t) + name.len;
+        reply->total = sizeof(struct pe_image_info) + name.len;
     }
 
     if (!(req->access & (SECTION_MAP_READ | SECTION_MAP_WRITE)))  /* query only */
@@ -1632,7 +1632,7 @@ done:
 DECL_HANDLER(map_builtin_view)
 {
     struct memory_view *view;
-    const pe_image_info_t *image = get_req_data();
+    const struct pe_image_info *image = get_req_data();
     data_size_t namelen = get_req_data_size() - sizeof(*image);
 
     if (get_req_data_size() < sizeof(*image) ||

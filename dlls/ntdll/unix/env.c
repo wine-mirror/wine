@@ -2161,7 +2161,7 @@ static BOOL is_console_handle( HANDLE handle )
  */
 void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
                            const RTL_USER_PROCESS_PARAMETERS *params,
-                           const pe_image_info_t *pe_info, DWORD *info_size )
+                           const struct pe_image_info *pe_info, DWORD *info_size )
 {
     struct startup_info_data *info;
     UNICODE_STRING dos_image = *nt_image;

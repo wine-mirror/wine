@@ -157,7 +157,7 @@ static void fill_create_thread_event( struct debug_event *event, const void *arg
 static void fill_create_process_event( struct debug_event *event, const void *arg )
 {
     const struct memory_view *view = arg;
-    const pe_image_info_t *image_info = get_view_image_info( view, &event->data.create_process.base );
+    const struct pe_image_info *image_info = get_view_image_info( view, &event->data.create_process.base );
 
     event->data.create_process.start      = event->sender->entry_point;
     event->data.create_process.dbg_offset = image_info->dbg_offset;
@@ -181,7 +181,7 @@ static void fill_exit_process_event( struct debug_event *event, const void *arg 
 static void fill_load_dll_event( struct debug_event *event, const void *arg )
 {
     const struct memory_view *view = arg;
-    const pe_image_info_t *image_info = get_view_image_info( view, &event->data.load_dll.base );
+    const struct pe_image_info *image_info = get_view_image_info( view, &event->data.load_dll.base );
 
     event->data.load_dll.dbg_offset = image_info->dbg_offset;
     event->data.load_dll.dbg_size   = image_info->dbg_size;
