@@ -1256,6 +1256,7 @@ void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     static const dispex_hook_t ie9_hooks[] = {
         {DISPID_IHTMLDOMNODE_REMOVENODE,  NULL},
         {DISPID_IHTMLDOMNODE_REPLACENODE, NULL},
+        {DISPID_IHTMLDOMNODE_SWAPNODE,    NULL},
         {DISPID_UNKNOWN}
     };
 
