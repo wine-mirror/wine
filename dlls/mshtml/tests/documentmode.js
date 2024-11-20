@@ -512,6 +512,7 @@ sync_test("elem_props", function() {
     test_exposed("readyState", v < 11);
     test_exposed("clientTop", true);
     test_exposed("title", true);
+    test_exposed("removeNode", true);
     test_exposed("querySelectorAll", v >= 8);
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
@@ -584,6 +585,28 @@ sync_test("docfrag_props", function() {
     var v = document.documentMode;
 
     test_exposed("compareDocumentPosition", v >= 9);
+});
+
+sync_test("textnode_props", function() {
+    var node = document.createTextNode("testNode");
+
+    function test_exposed(prop, expect) {
+        if(expect)
+            ok(prop in node, prop + " not found in text node.");
+        else
+            ok(!(prop in node), prop + " found in text node.");
+    }
+
+    var v = document.documentMode;
+
+    test_exposed("childNodes", true);
+    test_exposed("nodeName", true);
+    test_exposed("nodeValue", true);
+    test_exposed("ownerDocument", true);
+    test_exposed("removeNode", true);
+    test_exposed("compareDocumentPosition", v >= 9);
+    test_exposed("isEqualNode", v >= 9);
+    test_exposed("prefix", v >= 9);
 });
 
 sync_test("window_props", function() {
@@ -1180,6 +1203,7 @@ sync_test("doctype", function() {
     }
 
     ok(doctype.name === "html", "doctype.name = " + doctype.name);
+    ok(!("removeNode" in doctype), "removeNode found in doctype.");
 });
 
 async_test("iframe_doc_mode", function() {
@@ -3631,6 +3655,7 @@ sync_test("prototype props", function() {
 
     check(CSSStyleRule, [ "readOnly", "selectorText", "style" ]);
     check(CustomEvent, [ "detail", "initCustomEvent" ]);
+    check(DocumentType, [ "entities", "internalSubset", "name", "notations", "publicId", "systemId" ]);
     check(Event, [
         "AT_TARGET", "BUBBLING_PHASE", "CAPTURING_PHASE", "bubbles", "cancelBubble", "cancelable", "currentTarget",
         "defaultPrevented", "eventPhase", "initEvent", "isTrusted", "preventDefault", "srcElement",
@@ -3658,7 +3683,7 @@ sync_test("prototype props", function() {
         "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_CONTAINS", "DOCUMENT_POSITION_DISCONNECTED",
         "DOCUMENT_POSITION_FOLLOWING", "DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC", "DOCUMENT_POSITION_PRECEDING",
         "DOCUMENT_TYPE_NODE", "ELEMENT_NODE", "ENTITY_NODE", "ENTITY_REFERENCE_NODE", "NOTATION_NODE",
-        "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE", "hasAttributes", "normalize", "removeNode",
+        "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE", "hasAttributes", "normalize",
         "replaceNode", "swapNode"
     ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);

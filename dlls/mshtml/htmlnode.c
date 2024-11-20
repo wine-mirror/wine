@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -1252,6 +1253,13 @@ static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMN
 
 void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
+    static const dispex_hook_t ie9_hooks[] = {
+        {DISPID_IHTMLDOMNODE_REMOVENODE,  NULL},
+        {DISPID_UNKNOWN}
+    };
+
+    dispex_info_add_interface(info, IHTMLDOMNode_tid, mode >= COMPAT_MODE_IE9 ? ie9_hooks : NULL);
+
     if(mode >= COMPAT_MODE_IE9) {
         dispex_info_add_interface(info, IHTMLDOMNode2_tid, NULL);
         dispex_info_add_interface(info, IHTMLDOMNode3_tid, NULL);
@@ -1295,15 +1303,10 @@ static const dispex_static_data_vtbl_t Node_dispex_vtbl = {
     .unlink          = HTMLDOMNode_unlink
 };
 
-static const tid_t HTMLDOMNode_iface_tids[] = {
-    IHTMLDOMNode_tid,
-    0
-};
 dispex_static_data_t Node_dispex = {
     .id         = PROT_Node,
     .vtbl       = &Node_dispex_vtbl,
     .disp_tid   = IHTMLDOMNode_tid,
-    .iface_tids = HTMLDOMNode_iface_tids,
     .init_info  = HTMLDOMNode_init_dispex_info,
 };
 

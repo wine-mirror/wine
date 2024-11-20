@@ -316,9 +316,6 @@ static const event_target_vtbl_t DocumentType_event_target_vtbl = {
 
 static const tid_t DocumentType_iface_tids[] = {
     IDOMDocumentType_tid,
-    IHTMLDOMNode_tid,
-    IHTMLDOMNode2_tid,
-    IHTMLDOMNode3_tid,
     0
 };
 
@@ -328,6 +325,7 @@ dispex_static_data_t DocumentType_dispex = {
     .vtbl         = &DocumentType_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispDOMDocumentType_tid,
     .iface_tids   = DocumentType_iface_tids,
+    .init_info    = HTMLDOMNode_init_dispex_info,
 };
 
 HRESULT create_doctype_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **ret)
