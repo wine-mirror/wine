@@ -6034,6 +6034,14 @@ static void test_AWRwindow(LPCSTR class, LONG style, LONG exStyle, BOOL menu)
     ok(hwnd != NULL, "Failed to create window class=%s, style=0x%08lx, exStyle=0x%08lx\n", class, style, exStyle);
 
     ShowWindow(hwnd, SW_SHOW);
+    flush_events(TRUE);
+
+    /* retry setting the maximized state to workaround a FVWM bug */
+    if ((style & WS_MAXIMIZE) && !(GetWindowLongW(hwnd, GWL_STYLE) & WS_MAXIMIZE))
+    {
+        ShowWindow(hwnd, SW_MAXIMIZE);
+        flush_events(TRUE);
+    }
 
     test_nonclient_area(hwnd);
 
