@@ -1187,7 +1187,7 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
         && !data->net_wm_fullscreen_monitors_set)
         return;
 
-    if (!data->mapped)
+    if (data->pending_state.wm_state == WithdrawnState)
     {
         XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
                          XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors, 4 );
@@ -1220,7 +1220,7 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
     if (old_state == new_state) return; /* states are the same, nothing to update */
 
     if (data->pending_state.wm_state == IconicState) return; /* window is iconic, don't update its state now */
-    if (!data->mapped)  /* set the _NET_WM_STATE atom directly */
+    if (data->pending_state.wm_state == WithdrawnState)  /* set the _NET_WM_STATE atom directly */
     {
         Atom atoms[NB_NET_WM_STATES + 1];
 
@@ -3371,7 +3371,7 @@ void X11DRV_FlashWindowEx( FLASHWINFO *pfinfo )
     if (!data)
         return;
 
-    if (data->mapped)
+    if (data->pending_state.wm_state != WithdrawnState)
     {
         xev.type = ClientMessage;
         xev.xclient.window = data->whole_window;
