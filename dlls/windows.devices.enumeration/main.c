@@ -333,11 +333,36 @@ static HRESULT WINAPI device_statics_CreateFromIdAsyncAdditionalProperties( IDev
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+{
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_IInspectable,
+        .view = &IID_IVectorView_DeviceInformation,
+        .iterable = &IID_IIterable_DeviceInformation,
+        .iterator = &IID_IIterator_DeviceInformation,
+    };
+    HRESULT hr;
+    IVector_IInspectable *vector;
+    IVectorView_DeviceInformation *view;
+
+    FIXME( "invoker %p, param %p, result %p semi-stub!\n", invoker, param, result );
+
+    if (FAILED(hr = vector_create( &iids, (void *)&vector ))) return hr;
+    hr = IVector_IInspectable_GetView( vector, (void *)&view );
+    IVector_IInspectable_Release( vector );
+    if (FAILED(hr)) return hr;
+
+    result->vt = VT_UNKNOWN;
+    result->punkVal = (IUnknown *)view;
+    return hr;
+}
+
 static HRESULT WINAPI device_statics_FindAllAsync( IDeviceInformationStatics *iface,
                                                    IAsyncOperation_DeviceInformationCollection **op )
 {
-    FIXME( "iface %p, op %p stub!\n", iface, op );
-    return E_NOTIMPL;
+    TRACE( "iface %p, op %p\n", iface, op );
+    return async_operation_device_info_collection_result_create( (IUnknown *)iface, NULL, find_all_async, op );
 }
 
 static HRESULT WINAPI device_statics_FindAllAsyncDeviceClass( IDeviceInformationStatics *iface, DeviceClass class,

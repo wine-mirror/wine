@@ -448,9 +448,8 @@ static void test_DeviceInformation( void )
     IDeviceWatcher_Release( device_watcher );
 
     hr = IDeviceInformationStatics_FindAllAsync( device_info_statics, &info_collection_async );
-    todo_wine ok( hr == S_OK, "got %#lx\n", hr );
-    if (hr == S_OK)
-    {
+    ok( hr == S_OK, "got %#lx\n", hr );
+
     await_device_information_collection( info_collection_async );
     check_device_information_collection_async( info_collection_async, 1, Completed, S_OK, &info_collection );
     IAsyncOperation_DeviceInformationCollection_Release( info_collection_async );
@@ -467,7 +466,6 @@ static void test_DeviceInformation( void )
         winetest_pop_context();
     }
     IVectorView_DeviceInformation_Release( info_collection );
-    }
 
     IDeviceInformationStatics_Release( device_info_statics );
 

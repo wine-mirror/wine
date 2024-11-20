@@ -39,6 +39,14 @@
 
 #include "wine/list.h"
 
+struct vector_iids
+{
+    const GUID *vector;
+    const GUID *view;
+    const GUID *iterable;
+    const GUID *iterator;
+};
+
 extern IActivationFactory *device_access_factory;
 
 HRESULT typed_event_handlers_append( struct list *list, ITypedEventHandler_IInspectable_IInspectable *handler, EventRegistrationToken *token );
@@ -46,6 +54,10 @@ HRESULT typed_event_handlers_remove( struct list *list, EventRegistrationToken *
 HRESULT typed_event_handlers_notify( struct list *list, IInspectable *sender, IInspectable *args );
 HRESULT typed_event_handlers_clear( struct list *list );
 
+typedef HRESULT (WINAPI *async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
+extern HRESULT async_operation_device_info_collection_result_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
+                                                                     IAsyncOperation_DeviceInformationCollection **out );
+extern HRESULT vector_create( const struct vector_iids *iids, void **out );
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
     {                                                                                              \
