@@ -6500,96 +6500,21 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
                                      LPDPENUMDPCALLBACKW lpEnumCallbackW,
                                      LPVOID lpContext)
 {
-    HKEY   hkResult;
-    DWORD  dwIndex;
-    FILETIME filetime;
+    DPCONNECTION *connection;
+    struct list *connections;
 
-    char  *descriptionA = NULL;
-    DWORD max_sizeOfDescriptionA = 0;
-    WCHAR *descriptionW = NULL;
-    DWORD max_sizeOfDescriptionW = 0;
-    DWORD sizeOfSubKeyName;
-    WCHAR subKeyName[255]; /* 255 is the maximum key size according to MSDN */
-    LONG  ret_value;
-    static GUID *guid_cache;
-    static int cache_count;
-    
     if (!lpEnumCallbackA && !lpEnumCallbackW)
     {
 	return DPERR_INVALIDPARAMS;
     }
-    
-    /* Need to loop over the service providers in the registry */
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\DirectPlay\\Service Providers",
-		      0, KEY_READ, &hkResult) != ERROR_SUCCESS)
-    {
-	/* Hmmm. Does this mean that there are no service providers? */
-	ERR(": no service provider key in the registry - check your Wine installation !!!\n");
-	return DPERR_GENERIC;
-    }
 
-    dwIndex = 0;
-    do
-    {
-        sizeOfSubKeyName = ARRAY_SIZE(subKeyName);
-	ret_value = RegEnumKeyW(hkResult, dwIndex, subKeyName, sizeOfSubKeyName);
-	dwIndex++;
-    }
-    while (ret_value == ERROR_SUCCESS);
-    /* The game Swing from bug 37185 expects GUID values to persist after
-     * the end of the enumeration. */
-    if (cache_count < dwIndex)
-    {
-	free(guid_cache);
-	guid_cache = malloc(sizeof(GUID) * dwIndex);
-	if (!guid_cache)
-	{
-	    ERR(": failed to allocate required memory.\n");
-	    return DPERR_EXCEPTION;
-	}
-	cache_count = dwIndex;
-    }
-    /* Traverse all the service providers we have available */
-    dwIndex = 0;
-    while (1)
-    {
-	HKEY  hkServiceProvider;
-	WCHAR guidKeyContent[(2 * 16) + 1 + 6 /* This corresponds to '{....-..-..-..-......}' */ ];
-	DWORD sizeOfGuidKeyContent = sizeof(guidKeyContent);
+    connections = DP_GetConnections();
 
-        sizeOfSubKeyName = ARRAY_SIZE(subKeyName);
-	ret_value = RegEnumKeyExW(hkResult, dwIndex, subKeyName, &sizeOfSubKeyName,
-				  NULL, NULL, NULL, &filetime);
-	if (ret_value == ERROR_NO_MORE_ITEMS)
-	    break;
-	else if (ret_value != ERROR_SUCCESS)
-	{
-	    ERR(": could not enumerate on service provider key.\n");
-	    return DPERR_EXCEPTION;
-	}
-	TRACE(" this time through sub-key %s.\n", debugstr_w(subKeyName));
-	
-	/* Open the key for this service provider */
-	if (RegOpenKeyExW(hkResult, subKeyName, 0, KEY_READ, &hkServiceProvider) != ERROR_SUCCESS)
-	{
-	    ERR(": could not open registry key for service provider %s.\n", debugstr_w(subKeyName));
+    LIST_FOR_EACH_ENTRY(connection, connections, DPCONNECTION, entry)
+    {
+	if (!(connection->flags & DPCONNECTION_DIRECTPLAY))
 	    continue;
-	}
-	
-	/* Get the GUID from the registry */
-        if (RegQueryValueExW(hkServiceProvider, L"Guid",
-			     NULL, NULL, (LPBYTE) guidKeyContent, &sizeOfGuidKeyContent) != ERROR_SUCCESS)
-	{
-	    ERR(": missing GUID registry data member for service provider %s.\n", debugstr_w(subKeyName));
-	    continue;
-	}
-	if (sizeOfGuidKeyContent != sizeof(guidKeyContent))
-	{
-	    ERR(": invalid format for the GUID registry data member for service provider %s (%s).\n", debugstr_w(subKeyName), debugstr_w(guidKeyContent));
-	    continue;
-	}
-	CLSIDFromString(guidKeyContent, &guid_cache[dwIndex]);
-	
+
 	/* The enumeration will return FALSE if we are not to continue.
 	 *
 	 * Note: on my windows box, major / minor version is 6 / 0 for all service providers
@@ -6598,56 +6523,17 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
 	 */
 	if (lpEnumCallbackA)
 	{
-	    DWORD sizeOfDescription = 0;
-	    
-	    /* Note that this is the A case of this function, so use the A variant to get the description string */
-	    if (RegQueryValueExA(hkServiceProvider, "DescriptionA",
-				 NULL, NULL, NULL, &sizeOfDescription) != ERROR_SUCCESS)
-	    {
-		ERR(": missing 'DescriptionA' registry data member for service provider %s.\n", debugstr_w(subKeyName));
-		continue;
-	    }
-	    if (sizeOfDescription > max_sizeOfDescriptionA)
-	    {
-		free(descriptionA);
-		max_sizeOfDescriptionA = sizeOfDescription;
-	    }
-	    descriptionA = malloc(sizeOfDescription);
-	    RegQueryValueExA(hkServiceProvider, "DescriptionA",
-			     NULL, NULL, (LPBYTE) descriptionA, &sizeOfDescription);
-	    
-	    if (!lpEnumCallbackA(&guid_cache[dwIndex], descriptionA, 6, 0, lpContext))
-		goto end;
+	    if (!lpEnumCallbackA(&connection->spGuid, connection->nameA.lpszShortNameA, 6, 0,
+				 lpContext))
+		break;
 	}
 	else
 	{
-	    DWORD sizeOfDescription = 0;
-
-            if (RegQueryValueExW(hkServiceProvider, L"DescriptionW",
-				 NULL, NULL, NULL, &sizeOfDescription) != ERROR_SUCCESS)
-	    {
-		ERR(": missing 'DescriptionW' registry data member for service provider %s.\n", debugstr_w(subKeyName));
-		continue;
-	    }
-	    if (sizeOfDescription > max_sizeOfDescriptionW)
-	    {
-		free(descriptionW);
-		max_sizeOfDescriptionW = sizeOfDescription;
-	    }
-	    descriptionW = malloc(sizeOfDescription);
-            RegQueryValueExW(hkServiceProvider, L"DescriptionW",
-			     NULL, NULL, (LPBYTE) descriptionW, &sizeOfDescription);
-
-	    if (!lpEnumCallbackW(&guid_cache[dwIndex], descriptionW, 6, 0, lpContext))
-		goto end;
+	    if (!lpEnumCallbackW(&connection->spGuid, connection->name.lpszShortName, 6, 0,
+				 lpContext))
+		break;
 	}
-      
-      dwIndex++;
-  }
-
- end:
-    free(descriptionA);
-    free(descriptionW);
+    }
 
     return DP_OK;
 }
