@@ -2559,7 +2559,7 @@ UINT get_win_monitor_dpi( HWND hwnd, UINT *raw_dpi )
         if (!get_window_rect( hwnd, &rect, dpi )) return 0;
     }
     /* avoid recursive calls from get_window_rects for the process windows */
-    else if ((parent = win->parent))
+    else if ((parent = win->parent) && parent != get_desktop_window())
     {
         release_win_ptr( win );
         return get_win_monitor_dpi( parent, raw_dpi );
