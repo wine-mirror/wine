@@ -215,10 +215,17 @@ struct wined3d_device_vk;
     VK_DEVICE_PFN(vkDestroySwapchainKHR) \
     VK_DEVICE_PFN(vkGetSwapchainImagesKHR) \
     VK_DEVICE_PFN(vkQueuePresentKHR) \
+    /* VK_KHR_video_decode_queue */ \
+    VK_DEVICE_EXT_PFN(vkCmdDecodeVideoKHR) \
     /* VK_KHR_video_queue */ \
     VK_DEVICE_EXT_PFN(vkBindVideoSessionMemoryKHR) \
+    VK_DEVICE_EXT_PFN(vkCmdBeginVideoCodingKHR) \
+    VK_DEVICE_EXT_PFN(vkCmdControlVideoCodingKHR) \
+    VK_DEVICE_EXT_PFN(vkCmdEndVideoCodingKHR) \
     VK_DEVICE_EXT_PFN(vkCreateVideoSessionKHR) \
+    VK_DEVICE_EXT_PFN(vkCreateVideoSessionParametersKHR) \
     VK_DEVICE_EXT_PFN(vkDestroyVideoSessionKHR) \
+    VK_DEVICE_EXT_PFN(vkDestroyVideoSessionParametersKHR) \
     VK_DEVICE_EXT_PFN(vkGetVideoSessionMemoryRequirementsKHR)
 
 #define DECLARE_VK_PFN(name) PFN_##name name;
@@ -461,6 +468,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_EVENT_VK,
     WINED3D_RETIRED_PIPELINE_VK,
     WINED3D_RETIRED_VIDEO_SESSION_VK,
+    WINED3D_RETIRED_VIDEO_PARAMETERS_VK,
     WINED3D_RETIRED_AUX_COMMAND_BUFFER_VK,
 };
 
@@ -487,6 +495,7 @@ struct wined3d_retired_object_vk
         VkEvent vk_event;
         VkPipeline vk_pipeline;
         VkVideoSessionKHR vk_video_session;
+        VkVideoSessionParametersKHR vk_video_parameters;
         struct
         {
             struct wined3d_query_pool_vk *pool_vk;
@@ -760,6 +769,8 @@ void wined3d_context_vk_destroy_vk_event(struct wined3d_context_vk *context_vk,
         VkEvent vk_event, uint64_t command_buffer_id);
 void wined3d_context_vk_destroy_vk_pipeline(struct wined3d_context_vk *context_vk,
         VkPipeline vk_pipeline, uint64_t command_buffer_id);
+void wined3d_context_vk_destroy_vk_video_parameters(struct wined3d_context_vk *context_vk,
+        VkVideoSessionParametersKHR vk_video_parameters, uint64_t command_buffer_id);
 void wined3d_context_vk_destroy_vk_video_session(struct wined3d_context_vk *context_vk,
         VkPipeline vk_video_session, uint64_t command_buffer_id);
 void wined3d_context_vk_end_current_render_pass(struct wined3d_context_vk *context_vk);
