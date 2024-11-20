@@ -1518,7 +1518,7 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read
     {
         DWORD count, i;
 
-        switch (prop->vt & VT_VECTOR)
+        switch (prop->vt & ~VT_VECTOR)
         {
             case VT_BSTR:
             case VT_VARIANT:
