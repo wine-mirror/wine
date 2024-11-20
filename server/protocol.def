@@ -879,14 +879,14 @@ struct rawinput_device
     user_handle_t  target;
 };
 
-typedef struct
+struct cursor_pos
 {
     int x;
     int y;
     unsigned int time;
     int __pad;
     lparam_t info;
-} cursor_pos_t;
+};
 
 struct directory_entry
 {

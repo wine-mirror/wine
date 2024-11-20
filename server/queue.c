@@ -220,7 +220,7 @@ static const struct object_ops thread_input_ops =
 /* pointer to input structure of foreground thread */
 static unsigned int last_input_time;
 
-static cursor_pos_t cursor_history[64];
+static struct cursor_pos cursor_history[64];
 static unsigned int cursor_history_latest;
 
 static void queue_hardware_message( struct desktop *desktop, struct message *msg, int always_queue );
@@ -1865,7 +1865,7 @@ static struct rawinput_device *find_rawinput_device( struct process *process, un
 
 static void prepend_cursor_history( int x, int y, unsigned int time, lparam_t info )
 {
-    cursor_pos_t *pos = &cursor_history[--cursor_history_latest % ARRAY_SIZE(cursor_history)];
+    struct cursor_pos *pos = &cursor_history[--cursor_history_latest % ARRAY_SIZE(cursor_history)];
 
     pos->x = x;
     pos->y = y;
@@ -4035,7 +4035,7 @@ DECL_HANDLER(set_cursor)
 /* Get the history of the 64 last cursor positions */
 DECL_HANDLER(get_cursor_history)
 {
-    cursor_pos_t *pos;
+    struct cursor_pos *pos;
     unsigned int i, count = min( 64, get_reply_max_size() / sizeof(*pos) );
 
     if ((pos = set_reply_data_size( count * sizeof(*pos) )))

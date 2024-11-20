@@ -42,12 +42,12 @@ my %formats =
     "obj_locator_t" => [  16,  8 ],
     # varargs-only structures
     "context_t"                => [  1728,  8 ],
-    "cursor_pos_t"             => [  24,  8 ],
     "tcp_connection"           => [  60, 4 ],
     "udp_endpoint"             => [  32, 4 ],
     "union apc_call"           => [ 64, 8 ],
     "union apc_result"         => [ 40, 8 ],
     "struct async_data"        => [ 40, 8 ],
+    "struct cursor_pos"        => [ 24, 8 ],
     "union debug_event_data"   => [ 160, 8 ],
     "struct filesystem_event"  => [ 12, 4 ],
     "struct generic_map"       => [ 16, 4 ],

@@ -1496,7 +1496,7 @@ BOOL WINAPI NtUserUnregisterHotKey( HWND hwnd, INT id )
 int WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOVEPOINT *ptout,
                                        int count, DWORD resolution )
 {
-    cursor_pos_t *pos, positions[64];
+    struct cursor_pos *pos, positions[64];
     int copied;
     unsigned int i;
 

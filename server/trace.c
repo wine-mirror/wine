@@ -1033,7 +1033,7 @@ static void dump_varargs_rectangles( const char *prefix, data_size_t size )
 
 static void dump_varargs_cursor_positions( const char *prefix, data_size_t size )
 {
-    const cursor_pos_t *pos = cur_data;
+    const struct cursor_pos *pos = cur_data;
     data_size_t len = size / sizeof(*pos);
 
     fprintf( stderr, "%s{", prefix );
