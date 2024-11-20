@@ -7513,7 +7513,7 @@ static HRESULT get_attr_dispid_by_relative_idx(HTMLAttributeCollection *This, LO
     FIXME("filter non-enumerable attributes out\n");
 
     while(1) {
-        hres = dispex_next_id(&This->elem->node.event_target.dispex, id, &id);
+        hres = dispex_next_id(&This->elem->node.event_target.dispex, id, FALSE, &id);
         if(FAILED(hres))
             return hres;
         else if(hres == S_FALSE)

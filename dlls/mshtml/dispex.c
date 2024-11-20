@@ -52,9 +52,10 @@ typedef struct {
 
 typedef struct {
     DISPID id;
-    BSTR name;
     tid_t tid;
+    BSTR name;
     dispex_hook_invoke_t hook;
+    BOOLEAN on_prototype;
     SHORT call_vtbl_off;
     SHORT put_vtbl_off;
     SHORT get_vtbl_off;
@@ -594,8 +595,10 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     data->name_table = malloc(data->func_cnt * sizeof(func_info_t*));
     for(i=0; i < data->func_cnt; i++) {
         /* Don't expose properties that are exposed by object's prototype */
-        if(find_prototype_member(data, data->funcs[i].id))
+        if(find_prototype_member(data, data->funcs[i].id)) {
+            data->funcs[i].on_prototype = TRUE;
             continue;
+        }
         data->name_table[data->name_cnt++] = data->funcs+i;
     }
     qsort(data->name_table, data->name_cnt, sizeof(func_info_t*), func_name_cmp);
@@ -2455,7 +2458,7 @@ static HRESULT next_dynamic_id(DispatchEx *dispex, DWORD idx, DISPID *ret_id)
     return S_OK;
 }
 
-HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, DISPID *ret)
+HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, DISPID *ret)
 {
     func_info_t *func;
     HRESULT hres;
@@ -2480,7 +2483,7 @@ HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, DISPID *ret)
         }
 
         while(func < dispex->info->funcs + dispex->info->func_cnt) {
-            if(func->func_disp_idx == -1) {
+            if(enum_all_own_props ? (!func->on_prototype) : (func->func_disp_idx == -1)) {
                 *ret = func->id;
                 return S_OK;
             }
@@ -2513,7 +2516,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IWineJSDispatchHost *iface, DWORD
         return E_OUTOFMEMORY;
     if(This->jsdisp)
         return IWineJSDispatch_GetNextDispID(This->jsdisp, grfdex, id, pid);
-    return dispex_next_id(This, id, pid);
+    return dispex_next_id(This, id, FALSE, pid);
 }
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IWineJSDispatchHost *iface, IUnknown **ppunk)
@@ -2616,7 +2619,7 @@ static HRESULT WINAPI JSDispatchHost_NextProperty(IWineJSDispatchHost *iface, DI
 
     TRACE("%s (%p)->(%lx)\n", This->info->name, This, id);
 
-    hres = dispex_next_id(This, id, &next);
+    hres = dispex_next_id(This, id, TRUE, &next);
     if(hres != S_OK)
         return hres;
 
