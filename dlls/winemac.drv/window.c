@@ -1591,7 +1591,7 @@ done:
  *
  * Perform WM_SYSCOMMAND handling.
  */
-LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
+LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT *pos)
 {
     struct macdrv_win_data *data;
     LRESULT ret = -1;

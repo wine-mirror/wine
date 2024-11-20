@@ -947,6 +947,9 @@ static void track_nc_scroll_bar( HWND hwnd, WPARAM wparam, POINT pt )
 
 static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
+    POINT pos;
+    RECT rect;
+
     TRACE( "hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, (long)wparam, lparam );
 
     if (!is_window_enabled( hwnd )) return 0;
@@ -954,7 +957,15 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
     if (call_hooks( WH_CBT, HCBT_SYSCOMMAND, wparam, lparam, 0 ))
         return 0;
 
-    if (!user_driver->pSysCommand( hwnd, wparam, lparam ))
+    pos.x = (short)LOWORD( NtUserGetThreadInfo()->message_pos );
+    pos.y = (short)HIWORD( NtUserGetThreadInfo()->message_pos );
+    NtUserLogicalToPerMonitorDPIPhysicalPoint( hwnd, &pos );
+    SetRect( &rect, pos.x, pos.y, pos.x, pos.y );
+    rect = map_rect_virt_to_raw( rect, 0 );
+    pos.x = rect.left;
+    pos.y = rect.top;
+
+    if (!user_driver->pSysCommand( hwnd, wparam, lparam, &pos ))
         return 0;
 
     switch (wparam & 0xfff0)

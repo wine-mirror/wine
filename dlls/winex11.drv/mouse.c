@@ -1446,22 +1446,15 @@ BOOL X11DRV_ClipCursor( const RECT *clip, BOOL reset )
 /***********************************************************************
  *           move_resize_window
  */
-void move_resize_window( HWND hwnd, int dir )
+void move_resize_window( HWND hwnd, int dir, POINT pos )
 {
     Display *display = thread_display();
-    DWORD pt;
-    POINT pos;
     int button = 0;
     XEvent xev;
     Window win, root, child;
     unsigned int xstate;
 
     if (!(win = X11DRV_get_whole_window( hwnd ))) return;
-
-    pt = NtUserGetThreadInfo()->message_pos;
-    pos.x = (short)LOWORD( pt );
-    pos.y = (short)HIWORD( pt );
-    NtUserLogicalToPerMonitorDPIPhysicalPoint( hwnd, &pos );
     pos = virtual_screen_to_root( pos.x, pos.y );
 
     if (NtUserGetKeyState( VK_LBUTTON ) & 0x8000) button = 1;

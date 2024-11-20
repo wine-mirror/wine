@@ -671,7 +671,7 @@ void WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text)
 /***********************************************************************
  *          WAYLAND_SysCommand
  */
-LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
+LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT *pos)
 {
     LRESULT ret = -1;
     WPARAM command = wparam & 0xfff0;
