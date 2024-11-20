@@ -93,7 +93,8 @@ struct process
 extern unsigned int alloc_ptid( void *ptr );
 extern void free_ptid( unsigned int id );
 extern void *get_ptid_entry( unsigned int id );
-extern struct process *create_process( int fd, struct process *parent, unsigned int flags, const startup_info_t *info,
+extern struct process *create_process( int fd, struct process *parent, unsigned int flags,
+                                       const struct startup_info_data *info,
                                        const struct security_descriptor *sd, const obj_handle_t *handles,
                                        unsigned int handle_count, struct token *token );
 extern data_size_t get_process_startup_info_size( struct process *process );

@@ -206,7 +206,7 @@ typedef __int64 timeout_t;
 typedef __int64 abstime_t;
 
 
-typedef struct
+struct startup_info_data
 {
     unsigned int debug_flags;
     unsigned int console_flags;
@@ -240,7 +240,7 @@ typedef struct
 
 
 
-} startup_info_t;
+};
 
 
 typedef struct

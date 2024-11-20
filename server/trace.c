@@ -991,7 +991,7 @@ static data_size_t dump_inline_unicode_string( const char *prefix, data_size_t p
 
 static void dump_varargs_startup_info( const char *prefix, data_size_t size )
 {
-    startup_info_t info;
+    struct startup_info_data info;
     data_size_t pos = sizeof(info);
 
     memset( &info, 0, sizeof(info) );

@@ -723,7 +723,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     struct object_attributes *objattr;
     data_size_t attr_len;
     char *winedebug = NULL;
-    startup_info_t *startup_info = NULL;
+    struct startup_info_data *startup_info = NULL;
     ULONG startup_info_size, env_size;
     int unixdir, socketfd[2] = { -1, -1 };
     pe_image_info_t pe_info;

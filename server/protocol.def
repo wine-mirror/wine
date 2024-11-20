@@ -222,7 +222,7 @@ typedef __int64 timeout_t;
 typedef __int64 abstime_t;
 
 /* structure for process startup info */
-typedef struct
+struct startup_info_data
 {
     unsigned int debug_flags;
     unsigned int console_flags;
@@ -256,7 +256,7 @@ typedef struct
     /* VARARG(desktop,unicode_str,desktop_len); */
     /* VARARG(shellinfo,unicode_str,shellinfo_len); */
     /* VARARG(runtime,unicode_str,runtime_len); */
-} startup_info_t;
+};
 
 /* structure returned in the list of window properties */
 typedef struct
