@@ -43,7 +43,6 @@ my %formats =
     # varargs-only structures
     "context_t"                => [  1728,  8 ],
     "cursor_pos_t"             => [  24,  8 ],
-    "property_data_t"          => [  16,  8 ],
     "tcp_connection"           => [  60, 4 ],
     "udp_endpoint"             => [  32, 4 ],
     "union apc_call"           => [ 64, 8 ],
@@ -62,6 +61,7 @@ my %formats =
     "struct object_type_info"  => [ 44, 4 ],
     "struct pe_image_info"     => [ 88, 8 ],
     "struct process_info"      => [ 40, 8 ],
+    "struct property_data"     => [ 16, 8 ],
     "struct rawinput_device"   => [ 12, 4 ],
     "union select_op"          => [ 264, 8 ],
     "struct startup_info_data" => [ 96, 4 ],

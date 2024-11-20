@@ -1582,7 +1582,7 @@ HANDLE WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str )
  */
 NTSTATUS WINAPI NtUserBuildPropList( HWND hwnd, ULONG count, struct ntuser_property_list *buffer, ULONG *ret_count )
 {
-    property_data_t *data;
+    struct property_data *data;
     ULONG i;
     NTSTATUS status;
 

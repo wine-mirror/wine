@@ -243,12 +243,12 @@ struct startup_info_data
 };
 
 
-typedef struct
+struct property_data
 {
     atom_t         atom;
     int            string;
     lparam_t       data;
-} property_data_t;
+};
 
 
 typedef struct

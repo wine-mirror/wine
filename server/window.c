@@ -2979,7 +2979,7 @@ DECL_HANDLER(get_window_property)
 /* get the list of properties of a window */
 DECL_HANDLER(get_window_properties)
 {
-    property_data_t *data;
+    struct property_data *data;
     int i, count, max = get_reply_max_size() / sizeof(*data);
     struct window *win = get_window( req->window );
 

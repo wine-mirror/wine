@@ -259,12 +259,12 @@ struct startup_info_data
 };
 
 /* structure returned in the list of window properties */
-typedef struct
+struct property_data
 {
     atom_t         atom;     /* property atom */
     int            string;   /* was atom a string originally? */
     lparam_t       data;     /* data stored in property */
-} property_data_t;
+};
 
 /* structure to specify window rectangles */
 typedef struct

@@ -1057,7 +1057,7 @@ static void dump_varargs_message_data( const char *prefix, data_size_t size )
 
 static void dump_varargs_properties( const char *prefix, data_size_t size )
 {
-    const property_data_t *prop = cur_data;
+    const struct property_data *prop = cur_data;
     data_size_t len = size / sizeof(*prop);
 
     fprintf( stderr,"%s{", prefix );
