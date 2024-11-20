@@ -503,7 +503,7 @@ static void dump_luid( const char *prefix, const struct luid *luid )
     fprintf( stderr, "%s%d.%u", prefix, luid->high_part, luid->low_part );
 }
 
-static void dump_generic_map( const char *prefix, const generic_map_t *map )
+static void dump_generic_map( const char *prefix, const struct generic_map *map )
 {
     fprintf( stderr, "%s{r=%08x,w=%08x,x=%08x,a=%08x}",
              prefix, map->read, map->write, map->exec, map->all );

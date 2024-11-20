@@ -55,7 +55,7 @@ struct type_descr
 {
     struct unicode_str name;          /* type name */
     unsigned int       valid_access;  /* mask for valid access bits */
-    generic_map_t      mapping;       /* generic access mapping */
+    struct generic_map mapping;       /* generic access mapping */
     unsigned int       index;         /* index in global array of types */
     unsigned int       obj_count;     /* count of objects of this type */
     unsigned int       handle_count;  /* count of handles of this type */
@@ -193,7 +193,7 @@ extern void close_objects(void);
 static inline void make_object_permanent( struct object *obj ) { obj->is_permanent = 1; }
 static inline void make_object_temporary( struct object *obj ) { obj->is_permanent = 0; }
 
-static inline unsigned int map_access( unsigned int access, const generic_map_t *mapping )
+static inline unsigned int map_access( unsigned int access, const struct generic_map *mapping )
 {
     if (access & GENERIC_READ)    access |= mapping->read;
     if (access & GENERIC_WRITE)   access |= mapping->write;

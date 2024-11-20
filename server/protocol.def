@@ -405,13 +405,13 @@ struct sid
     unsigned int  sub_auth[15];
 };
 
-typedef struct
+struct generic_map
 {
     unsigned int read;
     unsigned int write;
     unsigned int exec;
     unsigned int all;
-} generic_map_t;
+};
 
 #define MAX_ACL_LEN 65535
 
@@ -447,7 +447,7 @@ struct object_type_info
     unsigned int  obj_max;       /* max count of objects of this type */
     unsigned int  handle_max;    /* max count of handles of this type */
     unsigned int  valid_access;  /* mask for valid access bits */
-    generic_map_t mapping;       /* generic access mappings */
+    struct generic_map mapping;  /* generic access mappings */
     /* VARARG(name,unicode_str); */
 };
 
@@ -3378,7 +3378,7 @@ enum caret_state
 @REQ(access_check)
     obj_handle_t    handle; /* handle to the token */
     unsigned int    desired_access; /* desired access to the object */
-    generic_map_t   mapping;        /* mapping to specific rights */
+    struct generic_map mapping;     /* mapping to specific rights */
     VARARG(sd,security_descriptor); /* security descriptor to check */
 @REPLY
     unsigned int    access_granted; /* access rights actually granted */

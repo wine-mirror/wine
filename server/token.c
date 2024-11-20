@@ -917,7 +917,7 @@ static unsigned int token_access_check( struct token *token,
                                  unsigned int desired_access,
                                  struct luid_attr *privs,
                                  unsigned int *priv_count,
-                                 const generic_map_t *mapping,
+                                 const struct generic_map *mapping,
                                  unsigned int *granted_access,
                                  unsigned int *status )
 {
@@ -1085,7 +1085,7 @@ unsigned int token_get_session_id( struct token *token )
 
 int check_object_access(struct token *token, struct object *obj, unsigned int *access)
 {
-    generic_map_t mapping;
+    struct generic_map mapping;
     unsigned int status;
     int res;
 

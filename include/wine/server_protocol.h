@@ -389,13 +389,13 @@ struct sid
     unsigned int  sub_auth[15];
 };
 
-typedef struct
+struct generic_map
 {
     unsigned int read;
     unsigned int write;
     unsigned int exec;
     unsigned int all;
-} generic_map_t;
+};
 
 #define MAX_ACL_LEN 65535
 
@@ -431,7 +431,7 @@ struct object_type_info
     unsigned int  obj_max;
     unsigned int  handle_max;
     unsigned int  valid_access;
-    generic_map_t mapping;
+    struct generic_map mapping;
 
 };
 
@@ -4744,7 +4744,7 @@ struct access_check_request
     struct request_header __header;
     obj_handle_t    handle;
     unsigned int    desired_access;
-    generic_map_t   mapping;
+    struct generic_map mapping;
     /* VARARG(sd,security_descriptor); */
     char __pad_36[4];
 };
