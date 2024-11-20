@@ -1423,6 +1423,22 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
     if (data->wm_state_serial) return; /* another WM_STATE update is pending, wait for it to complete */
     if (old_state == new_state) return; /* states are the same, nothing to update */
 
+    switch (MAKELONG(old_state, new_state))
+    {
+    case MAKELONG(WithdrawnState, IconicState):
+    case MAKELONG(WithdrawnState, NormalState):
+        remove_startup_notification( data->display, data->whole_window );
+        set_wm_hints( data );
+        update_net_wm_states( data );
+        sync_window_style( data );
+        update_net_wm_fullscreen_monitors( data );
+        break;
+    case MAKELONG(IconicState, NormalState):
+    case MAKELONG(NormalState, IconicState):
+        set_wm_hints( data );
+        break;
+    }
+
     data->pending_state.wm_state = new_state;
     data->wm_state_serial = NextRequest( data->display );
     TRACE( "window %p/%lx, requesting WM_STATE %#x -> %#x serial %lu, foreground %p\n", data->hwnd, data->whole_window,
@@ -1468,17 +1484,9 @@ static void map_window( HWND hwnd, DWORD new_style )
     if (data->whole_window && !data->mapped)
     {
         TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-
-        remove_startup_notification( data->display, data->whole_window );
-        set_wm_hints( data );
-        update_net_wm_states( data );
-        sync_window_style( data );
-
         window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
-
         data->mapped = TRUE;
         data->iconic = (new_style & WS_MINIMIZE) != 0;
-        update_net_wm_fullscreen_monitors( data );
     }
     release_win_data( data );
 }
@@ -1713,7 +1721,6 @@ void make_window_embedded( struct x11drv_win_data *data )
     window_set_wm_state( data, WithdrawnState );
     data->embedded = TRUE;
     data->managed = TRUE;
-    sync_window_style( data );
     window_set_wm_state( data, NormalState );
 }
 
@@ -2975,7 +2982,6 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
         }
         else if ((swp_flags & SWP_STATECHANGED) && (!data->iconic != !(new_style & WS_MINIMIZE)))
         {
-            set_wm_hints( data );
             data->iconic = (new_style & WS_MINIMIZE) != 0;
             window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
             update_net_wm_states( data );
