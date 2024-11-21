@@ -404,6 +404,9 @@ typedef struct {
 
     /* Used by objects that want to populate some dynamic props on initialization */
     HRESULT (*populate_props)(DispatchEx*);
+
+    /* Used by objects that want to return a custom name instead of the one in the dispex static data */
+    const char *(*get_name)(DispatchEx*);
 } dispex_static_data_vtbl_t;
 
 #define ALL_PROTOTYPES                     \

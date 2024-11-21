@@ -353,6 +353,12 @@ sync_test("builtin_toString", function() {
         test("SVGSVGElement", document.createElementNS(svg_ns, "svg"), "SVGSVGElement");
         test("SVGCircleElement", document.createElementNS(svg_ns, "circle"), "SVGCircleElement");
         test("SVGCircleElement", document.createElementNS(svg_ns, "tspan"), "SVGTSpanElement");
+
+        /* Non-function constructors */
+        var props = Object.getOwnPropertyNames(window);
+        for(i = 0; i < props.length; i++)
+            if(typeof(window[props[i]]) === "object" && window[props[i]].hasOwnProperty("prototype"))
+                test(props[i] + " constructor", window[props[i]], props[i]);
     }
 });
 

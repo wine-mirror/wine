@@ -2907,7 +2907,6 @@ sync_test("prototypes", function() {
     test_own_data_prop_desc(window, "DOMImplementation", true, false, true);
     ok(Object.getPrototypeOf(DOMImplementation) === Object.prototype,
        "Object.getPrototypeOf(DOMImplementation) = " + Object.getPrototypeOf(DOMImplementation));
-    todo_wine.
     ok(DOMImplementation == "[object DOMImplementation]", "DOMImplementation = " + DOMImplementation);
 
     var proto = constr.prototype;

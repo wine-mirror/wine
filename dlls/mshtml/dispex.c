@@ -1855,6 +1855,8 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
     if(compat_mode < COMPAT_MODE_IE9)
         p--;
     else {
+        if(dispex->info->vtbl->get_name)
+            name = dispex->info->vtbl->get_name(dispex);
         while(*name)
             *p++ = *name++;
         assert(p + ARRAY_SIZE(suffix) - buf <= ARRAY_SIZE(buf));
@@ -3066,9 +3068,16 @@ static HRESULT constructor_find_dispid(DispatchEx *dispex, const WCHAR *name, DW
     return hres;
 }
 
+static const char *constructor_get_name(DispatchEx *dispex)
+{
+    struct constructor *constr = constr_from_DispatchEx(dispex);
+    return object_names[constr->id - 1];
+}
+
 static const dispex_static_data_vtbl_t constructor_dispex_vtbl = {
     .destructor  = constructor_destructor,
     .find_dispid = constructor_find_dispid,
+    .get_name    = constructor_get_name,
 };
 
 static dispex_static_data_t constructor_dispex = {
