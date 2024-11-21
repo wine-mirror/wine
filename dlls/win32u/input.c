@@ -900,6 +900,22 @@ DWORD get_input_state(void)
 }
 
 /***********************************************************************
+ *           get_last_input_time
+ */
+DWORD get_last_input_time(void)
+{
+    DWORD ret;
+
+    SERVER_START_REQ( get_last_input_time )
+    {
+        wine_server_call( req );
+        ret = reply->time;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/***********************************************************************
  *           get_locale_kbd_layout
  */
 static HKL get_locale_kbd_layout(void)

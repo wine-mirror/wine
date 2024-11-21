@@ -96,6 +96,7 @@ extern HWND get_capture(void);
 extern BOOL get_cursor_pos( POINT *pt );
 extern HWND get_focus(void);
 extern DWORD get_input_state(void);
+extern DWORD get_last_input_time(void);
 extern BOOL get_async_keyboard_state( BYTE state[256] );
 extern BOOL release_capture(void);
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret );

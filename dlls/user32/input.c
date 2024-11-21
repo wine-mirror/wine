@@ -26,7 +26,6 @@
 
 #include "user_private.h"
 #include "dbt.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/plugplay.h"
 
@@ -164,8 +163,6 @@ BOOL WINAPI GetInputState(void)
  */
 BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
 {
-    BOOL ret;
-
     TRACE("%p\n", plii);
 
     if (plii->cbSize != sizeof (*plii) )
@@ -173,15 +170,8 @@ BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-
-    SERVER_START_REQ( get_last_input_time )
-    {
-        ret = !wine_server_call_err( req );
-        if (ret)
-            plii->dwTime = reply->time;
-    }
-    SERVER_END_REQ;
-    return ret;
+    plii->dwTime = NtUserGetLastInputTime();
+    return TRUE;
 }
 
 

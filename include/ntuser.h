@@ -981,6 +981,7 @@ enum
     NtUserCallNoParam_GetDesktopWindow,
     NtUserCallNoParam_GetDialogBaseUnits,
     NtUserCallNoParam_GetInputState,
+    NtUserCallNoParam_GetLastInputTime,
     NtUserCallNoParam_GetProcessDefaultLayout,
     NtUserCallNoParam_GetProgmanWindow,
     NtUserCallNoParam_GetShellWindow,
@@ -1010,6 +1011,11 @@ static inline DWORD NtUserGetDialogBaseUnits(void)
 static inline BOOL NtUserGetInputState(void)
 {
     return NtUserCallNoParam( NtUserCallNoParam_GetInputState );
+}
+
+static inline DWORD NtUserGetLastInputTime(void)
+{
+    return NtUserCallNoParam( NtUserCallNoParam_GetLastInputTime );
 }
 
 static inline DWORD NtUserGetProcessDefaultLayout(void)
