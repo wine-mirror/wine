@@ -335,7 +335,7 @@ static DWORD WINAPI sliced_thread_proc(void *arg)
 struct thread_pool
 {
     INIT_ONCE init_once;
-    TP_POOL *pool;
+    TP_CALLBACK_ENVIRON environment;
 };
 
 static struct thread_pool pools[3];
@@ -344,9 +344,12 @@ static BOOL CALLBACK pool_init_once(INIT_ONCE *init_once, void *param, void **co
 {
     struct thread_pool *pool = param;
 
-    if (!(pool->pool = CreateThreadpool(NULL))) return FALSE;
+    memset(&pool->environment, 0, sizeof(pool->environment));
+    pool->environment.Version = 1;
 
-    SetThreadpoolThreadMaximum(pool->pool, 10);
+    if (!(pool->environment.Pool = CreateThreadpool(NULL))) return FALSE;
+
+    SetThreadpoolThreadMaximum(pool->environment.Pool, 10);
 
     return TRUE;
 }
@@ -371,7 +374,7 @@ static HRESULT submit_threadpool_work(struct work_item *item, WorkItemPriority p
     if (!InitOnceExecuteOnce(&pool->init_once, pool_init_once, pool, NULL))
         return E_FAIL;
 
-    if (!(work = CreateThreadpoolWork(pool_work_callback, item, NULL)))
+    if (!(work = CreateThreadpoolWork(pool_work_callback, item, &pool->environment)))
         return E_FAIL;
 
     IAsyncAction_AddRef((*action = item->action));
