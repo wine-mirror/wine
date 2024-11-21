@@ -91,6 +91,7 @@ static HRESULT STDMETHODCALLTYPE async_action_QueryInterface(IAsyncAction *iface
     {
         *out = NULL;
         WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
     }
 
     IUnknown_AddRef((IUnknown *)*out);
