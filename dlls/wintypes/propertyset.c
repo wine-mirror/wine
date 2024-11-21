@@ -31,6 +31,7 @@ struct propertyset
     IPropertySet IPropertySet_iface;
     IObservableMap_HSTRING_IInspectable IObservableMap_HSTRING_IInspectable_iface;
     IMap_HSTRING_IInspectable IMap_HSTRING_IInspectable_iface;
+    IIterable_IKeyValuePair_HSTRING_IInspectable IIterable_IKeyValuePair_HSTRING_IInspectable_iface;
     LONG ref;
 };
 
@@ -63,6 +64,12 @@ static HRESULT STDMETHODCALLTYPE propertyset_QueryInterface( IPropertySet *iface
     else if (IsEqualGUID( iid, &IID_IMap_HSTRING_IInspectable ))
     {
         *out = &impl->IMap_HSTRING_IInspectable_iface;
+        IUnknown_AddRef( (IUnknown *)iface );
+        return S_OK;
+    }
+    else if (IsEqualGUID( iid, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable ))
+    {
+        *out = &impl->IIterable_IKeyValuePair_HSTRING_IInspectable_iface;
         IUnknown_AddRef( (IUnknown *)iface );
         return S_OK;
     }
@@ -219,6 +226,31 @@ const static IMap_HSTRING_IInspectableVtbl propertyset_IMap_vtbl =
     propertyset_Clear,
 };
 
+DEFINE_IINSPECTABLE_( iterable_kvpair_HSTRING_IInspectable, IIterable_IKeyValuePair_HSTRING_IInspectable, struct propertyset,
+                      impl_from_IIterable_IKeyValuePair_HSTRING_IInspectable, IIterable_IKeyValuePair_HSTRING_IInspectable_iface,
+                      &impl->IMap_HSTRING_IInspectable_iface );
+
+static HRESULT STDMETHODCALLTYPE iterable_kvpair_HSTRING_IInspectable_First( IIterable_IKeyValuePair_HSTRING_IInspectable *iface,
+                                                                             IIterator_IKeyValuePair_HSTRING_IInspectable **iter )
+{
+    FIXME( "(%p, %p) stub!\n", iface, iter );
+    return E_NOTIMPL;
+}
+
+const static IIterable_IKeyValuePair_HSTRING_IInspectableVtbl iterable_kvpair_HSTRING_IInspectable_vtbl =
+{
+    /* IUnknown */
+    iterable_kvpair_HSTRING_IInspectable_QueryInterface,
+    iterable_kvpair_HSTRING_IInspectable_AddRef,
+    iterable_kvpair_HSTRING_IInspectable_Release,
+    /* IInspectable */
+    iterable_kvpair_HSTRING_IInspectable_GetIids,
+    iterable_kvpair_HSTRING_IInspectable_GetRuntimeClassName,
+    iterable_kvpair_HSTRING_IInspectable_GetTrustLevel,
+    /* IIterable<IKeyValuePair<HSTRING, IInspectable*>> */
+    iterable_kvpair_HSTRING_IInspectable_First
+};
+
 struct propertyset_factory
 {
     IActivationFactory IActivationFactory_iface;
@@ -293,6 +325,7 @@ static HRESULT STDMETHODCALLTYPE factory_ActivateInstance( IActivationFactory *i
     impl->IPropertySet_iface.lpVtbl = &propertyset_vtbl;
     impl->IObservableMap_HSTRING_IInspectable_iface.lpVtbl = &propertyset_IObservableMap_vtbl;
     impl->IMap_HSTRING_IInspectable_iface.lpVtbl = &propertyset_IMap_vtbl;
+    impl->IIterable_IKeyValuePair_HSTRING_IInspectable_iface.lpVtbl = &iterable_kvpair_HSTRING_IInspectable_vtbl;
     impl->ref = 1;
     *instance = (IInspectable *)&impl->IPropertySet_iface;
     return S_OK;

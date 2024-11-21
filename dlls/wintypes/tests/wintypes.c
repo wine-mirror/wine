@@ -1298,21 +1298,13 @@ static void test_IPropertySet(void)
 
     hr = IMap_HSTRING_IInspectable_QueryInterface( map, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
                                                    (void **)&iterable );
-    todo_wine
     ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
+    hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
+    todo_wine
+    ok( hr == S_OK, "got %#lx\n", hr );
     if (SUCCEEDED( hr ))
-    {
-        hr = IIterable_IKeyValuePair_HSTRING_IInspectable_First( iterable, &iterator );
-        todo_wine
-        ok( hr == S_OK, "got %#lx\n", hr );
-        if (SUCCEEDED( hr ))
-            IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
-        IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
-    }
-    else
-    {
-        skip( "Could not obtain IIterable<IKeyValuePair<HSTRING, IInspectable *>> instance.\n");
-    }
+        IIterator_IKeyValuePair_HSTRING_IInspectable_Release( iterator );
+    IIterable_IKeyValuePair_HSTRING_IInspectable_Release( iterable );
 
     hr = IMap_HSTRING_IInspectable_GetView( map, &map_view );
     todo_wine
