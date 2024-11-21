@@ -187,6 +187,11 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
         {
             texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
         }
+        else if (IsEqualGUID(&bitmap_format, &GUID_WICPixelFormat32bppPRGBA)
+                || IsEqualGUID(&bitmap_format, &GUID_WICPixelFormat32bppRGB))
+        {
+            texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        }
         else
         {
             WARN("Unsupported WIC bitmap format %s.\n", debugstr_guid(&bitmap_format));
@@ -197,6 +202,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     switch (texture_desc.Format)
     {
         case DXGI_FORMAT_B8G8R8A8_UNORM:
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
             render_target->bpp = 4;
             break;
 

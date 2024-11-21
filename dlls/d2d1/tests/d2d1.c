@@ -15285,9 +15285,7 @@ static void test_wic_target_format(BOOL d3d11)
         rt_desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
         rt_desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
         hr = ID2D1Factory_CreateWicBitmapRenderTarget(ctx.factory, wic_bitmap, &rt_desc, &rt);
-        todo_wine_if(IsEqualGUID(wic_target_formats[i].wic_format, &GUID_WICPixelFormat32bppPRGBA)
-                || IsEqualGUID(wic_target_formats[i].wic_format, &GUID_WICPixelFormat32bppRGB)
-                || FAILED(wic_target_formats[i].hr))
+        todo_wine_if(FAILED(wic_target_formats[i].hr))
         ok(hr == wic_target_formats[i].hr, "Got unexpected hr %#lx.\n", hr);
 
         IWICBitmap_Release(wic_bitmap);
