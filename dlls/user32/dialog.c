@@ -21,6 +21,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "controls.h"
 #include "wine/debug.h"
@@ -1120,26 +1123,23 @@ static void DIALOG_FixChildrenOnChangeFocus (HWND hwndDlg, HWND hwndNext)
  * RETURNS
  *  The HWND for a Child ID.
  */
-static HWND DIALOG_IdToHwnd( HWND hwndDlg, INT id )
+static HWND DIALOG_IdToHwnd( HWND hwnd, INT id, BOOL recurse )
 {
-    int i;
-    HWND *list = WIN_ListChildren( hwndDlg );
-    HWND ret = 0;
+    HWND ret, *list;
+    ULONG i, size = 128;
+    NTSTATUS status;
 
-    if (!list) return 0;
-
-    for (i = 0; list[i]; i++)
+    for (;;)
     {
-        if (GetWindowLongPtrW( list[i], GWLP_ID ) == id)
-        {
-            ret = list[i];
-            break;
-        }
-
-        /* Recurse into every child */
-        if ((ret = DIALOG_IdToHwnd( list[i], id ))) break;
+        if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return 0;
+        status = NtUserBuildHwndList( 0, hwnd, recurse, FALSE, 0, size, list, &size );
+        if (!status) break;
+        HeapFree( GetProcessHeap(), 0, list );
+        if (status != STATUS_BUFFER_TOO_SMALL) return 0;
     }
-
+    list[size - 1] = 0;
+    for (i = 0; list[i]; i++) if (GetWindowLongPtrW( list[i], GWLP_ID ) == id) break;
+    ret = list[i];
     HeapFree( GetProcessHeap(), 0, list );
     return ret;
 }
@@ -1258,7 +1258,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                 }
                 else if (DC_HASDEFID == HIWORD(dw = SendMessageW (hwndDlg, DM_GETDEFID, 0, 0)))
                 {
-                    HWND hwndDef = DIALOG_IdToHwnd(hwndDlg, LOWORD(dw));
+                    HWND hwndDef = DIALOG_IdToHwnd(hwndDlg, LOWORD(dw), TRUE);
                     if (!hwndDef || IsWindowEnabled(hwndDef))
                         SendMessageW( hwndDlg, WM_COMMAND, MAKEWPARAM( LOWORD(dw), BN_CLICKED ), (LPARAM)hwndDef);
                 }
@@ -1309,16 +1309,10 @@ INT WINAPI GetDlgCtrlID( HWND hwnd )
  */
 HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
 {
-    int i;
-    HWND *list = WIN_ListChildren( hwndDlg );
-    HWND ret = 0;
+    HWND hwnd = GetWindow( hwndDlg, GW_CHILD );
 
-    if (!list) return 0;
-
-    for (i = 0; list[i]; i++) if (GetWindowLongPtrW( list[i], GWLP_ID ) == id) break;
-    ret = list[i];
-    HeapFree( GetProcessHeap(), 0, list );
-    return ret;
+    if (hwnd) hwnd = DIALOG_IdToHwnd( hwnd, id, FALSE );
+    return hwnd;
 }
 
 
