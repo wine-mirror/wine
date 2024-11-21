@@ -1,0 +1,4 @@
+TESTDLL   = timeout.exe
+
+SOURCES = \
+	timeout.c
