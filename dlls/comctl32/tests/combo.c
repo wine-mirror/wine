@@ -1352,7 +1352,6 @@ static void test_combo_dropdown_size(DWORD style)
             if (expected_height_list < 0)
                 expected_height_list = 0;
 
-            todo_wine_if(height_item * info_test->num_items < list_height_calculated)
             ok(expected_height_list == height_list, "expected list height to be %d, got %d\n",
                     expected_height_list, height_list);
         }
