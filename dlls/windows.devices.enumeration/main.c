@@ -342,14 +342,22 @@ static HRESULT WINAPI find_all_async( IUnknown *invoker, IUnknown *param, PROPVA
         .iterable = &IID_IIterable_DeviceInformation,
         .iterator = &IID_IIterator_DeviceInformation,
     };
-    HRESULT hr;
-    IVector_IInspectable *vector;
     IVectorView_DeviceInformation *view;
+    IDeviceInformation *device;
+    IVector_IInspectable *vector;
+    HRESULT hr;
 
     FIXME( "invoker %p, param %p, result %p semi-stub!\n", invoker, param, result );
 
     if (FAILED(hr = vector_create( &iids, (void *)&vector ))) return hr;
-    hr = IVector_IInspectable_GetView( vector, (void *)&view );
+
+    if (SUCCEEDED(hr = device_information_create( &device )))
+    {
+        hr = IVector_IInspectable_Append( vector, (IInspectable *)device );
+        IDeviceInformation_Release( device );
+    }
+
+    if (SUCCEEDED(hr)) hr = IVector_IInspectable_GetView( vector, (void *)&view );
     IVector_IInspectable_Release( vector );
     if (FAILED(hr)) return hr;
 
