@@ -806,7 +806,7 @@ static bool wined3d_null_image_vk_init(struct wined3d_image_vk *image, struct wi
 
     if (!wined3d_context_vk_create_image(context_vk, type,
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM,
-            1, 1, 1, sample_count, 1, layer_count, flags, image))
+            1, 1, 1, sample_count, 1, layer_count, flags, NULL, image))
     {
         return false;
     }

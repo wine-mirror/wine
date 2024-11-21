@@ -610,7 +610,7 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
 BOOL wined3d_context_vk_create_image(struct wined3d_context_vk *context_vk, VkImageType vk_image_type,
         VkImageUsageFlags usage, VkFormat vk_format, unsigned int width, unsigned int height, unsigned int depth,
         unsigned int sample_count, unsigned int mip_levels, unsigned int layer_count, unsigned int flags,
-        struct wined3d_image_vk *image)
+        const void *next, struct wined3d_image_vk *image)
 {
     struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk(context_vk->c.device->adapter);
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -621,7 +621,7 @@ BOOL wined3d_context_vk_create_image(struct wined3d_context_vk *context_vk, VkIm
     VkResult vr;
 
     create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    create_info.pNext = NULL;
+    create_info.pNext = next;
     create_info.flags = flags;
     create_info.imageType = vk_image_type;
     create_info.format = vk_format;
