@@ -1294,10 +1294,7 @@ static void test_IPropertySet(void)
 
     hr = IPropertySet_QueryInterface( propset, &IID_IMap_HSTRING_IInspectable, (void **)&map );
     IPropertySet_Release( propset );
-    todo_wine
     ok( hr == S_OK, "QueryInterface failed, got %#lx\n", hr );
-    if (FAILED( hr ))
-        goto done;
 
     hr = IMap_HSTRING_IInspectable_QueryInterface( map, &IID_IIterable_IKeyValuePair_HSTRING_IInspectable,
                                                    (void **)&iterable );
