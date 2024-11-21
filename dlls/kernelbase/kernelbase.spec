@@ -489,7 +489,7 @@
 @ stdcall GetCurrentPackageFamilyName(ptr ptr)
 @ stdcall GetCurrentPackageFullName(ptr ptr)
 @ stdcall GetCurrentPackageId(ptr ptr)
-# @ stub GetCurrentPackageInfo
+@ stdcall GetCurrentPackageInfo(long ptr ptr ptr)
 @ stdcall GetCurrentPackagePath(ptr ptr)
 # @ stub GetCurrentPackageResourcesContext
 # @ stub GetCurrentPackageSecurityContext
