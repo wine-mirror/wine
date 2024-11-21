@@ -4912,7 +4912,6 @@ static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
                                 const GUID *addressDataType, struct list *connections )
 {
   HKEY hkResult;
-  LPCSTR guidDataSubKey  = "Guid";
   char subKeyName[51];
   DWORD dwIndex, sizeOfSubKeyName=50;
   FILETIME filetime;
@@ -4935,9 +4934,7 @@ static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
   {
 
     HKEY     hkServiceProvider;
-    DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
-    char     returnBuffer[51];
-    WCHAR    buff[51];
+    WCHAR    *spGuid;
     HRESULT  hr;
 
     DPCOMPOUNDADDRESSELEMENT dpCompoundAddress;
@@ -4962,20 +4959,15 @@ static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
 
     connection->flags = dwFlags;
 
-    if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                          NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
-                          &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+    if( !DP_GetRegStringW( hkServiceProvider, L"Guid", NULL, &spGuid ) )
     {
       ERR(": missing GUID registry data members\n" );
       free( connection );
       RegCloseKey(hkServiceProvider);
       continue;
     }
-
-    /* FIXME: Check return types to ensure we're interpreting data right */
-    MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, ARRAY_SIZE( buff ));
-    CLSIDFromString( buff, &connection->spGuid );
-    /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
+    CLSIDFromString( spGuid, &connection->spGuid );
+    free( spGuid );
 
     /* Fill in the DPNAME struct for the service provider */
 
