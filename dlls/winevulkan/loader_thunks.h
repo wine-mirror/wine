@@ -486,6 +486,7 @@ enum unix_call
     unix_vkGetImageSubresourceLayout2EXT,
     unix_vkGetImageSubresourceLayout2KHR,
     unix_vkGetImageViewAddressNVX,
+    unix_vkGetImageViewHandle64NVX,
     unix_vkGetImageViewHandleNVX,
     unix_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
     unix_vkGetLatencyTimingsNV,
@@ -494,6 +495,7 @@ enum unix_call
     unix_vkGetPerformanceParameterINTEL,
     unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     unix_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
+    unix_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
     unix_vkGetPhysicalDeviceExternalBufferProperties,
@@ -4200,6 +4202,13 @@ struct vkGetImageViewAddressNVX_params
     VkResult result;
 };
 
+struct vkGetImageViewHandle64NVX_params
+{
+    VkDevice device;
+    const VkImageViewHandleInfoNVX *pInfo;
+    uint64_t result;
+};
+
 struct vkGetImageViewHandleNVX_params
 {
     VkDevice device;
@@ -4260,6 +4269,14 @@ struct vkGetPhysicalDeviceCalibrateableTimeDomainsKHR_params
     VkPhysicalDevice physicalDevice;
     uint32_t *pTimeDomainCount;
     VkTimeDomainKHR *pTimeDomains;
+    VkResult result;
+};
+
+struct vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV_params
+{
+    VkPhysicalDevice physicalDevice;
+    uint32_t *pPropertyCount;
+    VkCooperativeMatrixFlexibleDimensionsPropertiesNV *pProperties;
     VkResult result;
 };
 

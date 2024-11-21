@@ -4820,6 +4820,17 @@ VkResult WINAPI vkGetImageViewAddressNVX(VkDevice device, VkImageView imageView,
     return params.result;
 }
 
+uint64_t WINAPI vkGetImageViewHandle64NVX(VkDevice device, const VkImageViewHandleInfoNVX *pInfo)
+{
+    struct vkGetImageViewHandle64NVX_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pInfo = pInfo;
+    status = UNIX_CALL(vkGetImageViewHandle64NVX, &params);
+    assert(!status && "vkGetImageViewHandle64NVX");
+    return params.result;
+}
+
 uint32_t WINAPI vkGetImageViewHandleNVX(VkDevice device, const VkImageViewHandleInfoNVX *pInfo)
 {
     struct vkGetImageViewHandleNVX_params params;
@@ -4912,6 +4923,18 @@ VkResult WINAPI vkGetPhysicalDeviceCalibrateableTimeDomainsKHR(VkPhysicalDevice 
     params.pTimeDomains = pTimeDomains;
     status = UNIX_CALL(vkGetPhysicalDeviceCalibrateableTimeDomainsKHR, &params);
     assert(!status && "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR");
+    return params.result;
+}
+
+VkResult WINAPI vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeMatrixFlexibleDimensionsPropertiesNV *pProperties)
+{
+    struct vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV_params params;
+    NTSTATUS status;
+    params.physicalDevice = physicalDevice;
+    params.pPropertyCount = pPropertyCount;
+    params.pProperties = pProperties;
+    status = UNIX_CALL(vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV, &params);
+    assert(!status && "vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV");
     return params.result;
 }
 
@@ -6964,6 +6987,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetImageSubresourceLayout2EXT", vkGetImageSubresourceLayout2EXT},
     {"vkGetImageSubresourceLayout2KHR", vkGetImageSubresourceLayout2KHR},
     {"vkGetImageViewAddressNVX", vkGetImageViewAddressNVX},
+    {"vkGetImageViewHandle64NVX", vkGetImageViewHandle64NVX},
     {"vkGetImageViewHandleNVX", vkGetImageViewHandleNVX},
     {"vkGetImageViewOpaqueCaptureDescriptorDataEXT", vkGetImageViewOpaqueCaptureDescriptorDataEXT},
     {"vkGetLatencyTimingsNV", vkGetLatencyTimingsNV},
@@ -7068,6 +7092,7 @@ static const struct vulkan_func vk_phys_dev_dispatch_table[] =
     {"vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR", vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR},
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsEXT", vkGetPhysicalDeviceCalibrateableTimeDomainsEXT},
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsKHR", vkGetPhysicalDeviceCalibrateableTimeDomainsKHR},
+    {"vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV", vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR", vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesNV", vkGetPhysicalDeviceCooperativeMatrixPropertiesNV},
     {"vkGetPhysicalDeviceExternalBufferProperties", vkGetPhysicalDeviceExternalBufferProperties},

@@ -228,14 +228,6 @@ typedef struct VkAttachmentSampleCountInfoAMD32
 } VkAttachmentSampleCountInfoAMD32;
 typedef VkAttachmentSampleCountInfoAMD32 VkAttachmentSampleCountInfoNV32;
 
-typedef struct VkMultiviewPerViewAttributesInfoNVX32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 perViewAttributes;
-    VkBool32 perViewAttributesPositionXOnly;
-} VkMultiviewPerViewAttributesInfoNVX32;
-
 typedef struct VkRenderingAttachmentLocationInfoKHR32
 {
     VkStructureType sType;
@@ -660,6 +652,18 @@ typedef struct VkVideoEncodeH265RateControlLayerInfoKHR32
     VkVideoEncodeH265FrameSizeKHR maxFrameSize;
 } VkVideoEncodeH265RateControlLayerInfoKHR32;
 
+typedef struct VkVideoEncodeAV1RateControlLayerInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 useMinQIndex;
+    VkVideoEncodeAV1QIndexKHR minQIndex;
+    VkBool32 useMaxQIndex;
+    VkVideoEncodeAV1QIndexKHR maxQIndex;
+    VkBool32 useMaxFrameSize;
+    VkVideoEncodeAV1FrameSizeKHR maxFrameSize;
+} VkVideoEncodeAV1RateControlLayerInfoKHR32;
+
 typedef struct VkVideoEncodeRateControlLayerInfoKHR32
 {
     VkStructureType sType;
@@ -669,6 +673,16 @@ typedef struct VkVideoEncodeRateControlLayerInfoKHR32
     uint32_t frameRateNumerator;
     uint32_t frameRateDenominator;
 } VkVideoEncodeRateControlLayerInfoKHR32;
+
+typedef struct StdVideoEncodeAV1ReferenceInfo32
+{
+    StdVideoEncodeAV1ReferenceInfoFlags flags;
+    uint32_t RefFrameId;
+    StdVideoAV1FrameType frame_type;
+    uint8_t OrderHint;
+    uint8_t reserved1[3];
+    PTR32 pExtensionHeader;
+} StdVideoEncodeAV1ReferenceInfo32;
 
 typedef struct VkVideoPictureResourceInfoKHR32
 {
@@ -714,6 +728,13 @@ typedef struct VkVideoEncodeH265DpbSlotInfoKHR32
     PTR32 pNext;
     PTR32 pStdReferenceInfo;
 } VkVideoEncodeH265DpbSlotInfoKHR32;
+
+typedef struct VkVideoEncodeAV1DpbSlotInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 pStdReferenceInfo;
+} VkVideoEncodeAV1DpbSlotInfoKHR32;
 
 typedef struct VkVideoReferenceSlotInfoKHR32
 {
@@ -776,6 +797,27 @@ typedef struct VkVideoEncodeH265GopRemainingFrameInfoKHR32
     uint32_t gopRemainingP;
     uint32_t gopRemainingB;
 } VkVideoEncodeH265GopRemainingFrameInfoKHR32;
+
+typedef struct VkVideoEncodeAV1RateControlInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkVideoEncodeAV1RateControlFlagsKHR flags;
+    uint32_t gopFrameCount;
+    uint32_t keyFramePeriod;
+    uint32_t consecutiveBipredictiveFrameCount;
+    uint32_t temporalLayerCount;
+} VkVideoEncodeAV1RateControlInfoKHR32;
+
+typedef struct VkVideoEncodeAV1GopRemainingFrameInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 useGopRemainingFrames;
+    uint32_t gopRemainingIntra;
+    uint32_t gopRemainingPredictive;
+    uint32_t gopRemainingBipredictive;
+} VkVideoEncodeAV1GopRemainingFrameInfoKHR32;
 
 typedef struct VkVideoBeginCodingInfoKHR32
 {
@@ -1346,6 +1388,45 @@ typedef struct StdVideoEncodeH265PictureInfo32
     PTR32 pLongTermRefPics;
 } StdVideoEncodeH265PictureInfo32;
 
+typedef struct StdVideoEncodeAV1PictureInfo32
+{
+    StdVideoEncodeAV1PictureInfoFlags flags;
+    StdVideoAV1FrameType frame_type;
+    uint32_t frame_presentation_time;
+    uint32_t current_frame_id;
+    uint8_t order_hint;
+    uint8_t primary_ref_frame;
+    uint8_t refresh_frame_flags;
+    uint8_t coded_denom;
+    uint16_t render_width_minus_1;
+    uint16_t render_height_minus_1;
+    StdVideoAV1InterpolationFilter interpolation_filter;
+    StdVideoAV1TxMode TxMode;
+    uint8_t delta_q_res;
+    uint8_t delta_lf_res;
+    uint8_t ref_order_hint[STD_VIDEO_AV1_NUM_REF_FRAMES];
+    int8_t ref_frame_idx[STD_VIDEO_AV1_REFS_PER_FRAME];
+    uint8_t reserved1[3];
+    uint32_t delta_frame_id_minus_1[STD_VIDEO_AV1_REFS_PER_FRAME];
+    PTR32 pTileInfo;
+    PTR32 pQuantization;
+    PTR32 pSegmentation;
+    PTR32 pLoopFilter;
+    PTR32 pCDEF;
+    PTR32 pLoopRestoration;
+    PTR32 pGlobalMotion;
+    PTR32 pExtensionHeader;
+    PTR32 pBufferRemovalTimes;
+} StdVideoEncodeAV1PictureInfo32;
+
+typedef struct VkVideoEncodeQuantizationMapInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkImageView DECLSPEC_ALIGN(8) quantizationMap;
+    VkExtent2D quantizationMapExtent;
+} VkVideoEncodeQuantizationMapInfoKHR32;
+
 typedef struct VkVideoEncodeH264PictureInfoKHR32
 {
     VkStructureType sType;
@@ -1364,6 +1445,19 @@ typedef struct VkVideoEncodeH265PictureInfoKHR32
     PTR32 pNaluSliceSegmentEntries;
     PTR32 pStdPictureInfo;
 } VkVideoEncodeH265PictureInfoKHR32;
+
+typedef struct VkVideoEncodeAV1PictureInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkVideoEncodeAV1PredictionModeKHR predictionMode;
+    VkVideoEncodeAV1RateControlGroupKHR rateControlGroup;
+    uint32_t constantQIndex;
+    PTR32 pStdPictureInfo;
+    int32_t referenceNameSlotIndices[VK_MAX_VIDEO_AV1_REFERENCES_PER_FRAME_KHR];
+    VkBool32 primaryReferenceCdfOnly;
+    VkBool32 generateObuExtensionHeader;
+} VkVideoEncodeAV1PictureInfoKHR32;
 
 typedef struct VkVideoEncodeInfoKHR32
 {
@@ -1917,6 +2011,13 @@ typedef struct VkVideoEncodeH265ProfileInfoKHR32
     StdVideoH265ProfileIdc stdProfileIdc;
 } VkVideoEncodeH265ProfileInfoKHR32;
 
+typedef struct VkVideoEncodeAV1ProfileInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    StdVideoAV1Profile stdProfile;
+} VkVideoEncodeAV1ProfileInfoKHR32;
+
 typedef struct VkVideoProfileInfoKHR32
 {
     VkStructureType sType;
@@ -2148,6 +2249,13 @@ typedef struct VkCuFunctionCreateInfoNVX32
     VkCuModuleNVX DECLSPEC_ALIGN(8) module;
     PTR32 pName;
 } VkCuFunctionCreateInfoNVX32;
+
+typedef struct VkCuModuleTexturingModeCreateInfoNVX32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 use64bitTexturing;
+} VkCuModuleTexturingModeCreateInfoNVX32;
 
 typedef struct VkCuModuleCreateInfoNVX32
 {
@@ -3430,6 +3538,20 @@ typedef struct VkPhysicalDeviceVideoMaintenance1FeaturesKHR32
     VkBool32 videoMaintenance1;
 } VkPhysicalDeviceVideoMaintenance1FeaturesKHR32;
 
+typedef struct VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 videoEncodeQuantizationMap;
+} VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32;
+
+typedef struct VkPhysicalDeviceVideoEncodeAV1FeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 videoEncodeAV1;
+} VkPhysicalDeviceVideoEncodeAV1FeaturesKHR32;
+
 typedef struct VkPhysicalDeviceInheritedViewportScissorFeaturesNV32
 {
     VkStructureType sType;
@@ -3954,6 +4076,40 @@ typedef struct VkPhysicalDeviceShaderReplicatedCompositesFeaturesEXT32
     PTR32 pNext;
     VkBool32 shaderReplicatedComposites;
 } VkPhysicalDeviceShaderReplicatedCompositesFeaturesEXT32;
+
+typedef struct VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 presentModeFifoLatestReady;
+} VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT32;
+
+typedef struct VkPhysicalDeviceCooperativeMatrix2FeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 cooperativeMatrixWorkgroupScope;
+    VkBool32 cooperativeMatrixFlexibleDimensions;
+    VkBool32 cooperativeMatrixReductions;
+    VkBool32 cooperativeMatrixConversions;
+    VkBool32 cooperativeMatrixPerElementOperations;
+    VkBool32 cooperativeMatrixTensorAddressing;
+    VkBool32 cooperativeMatrixBlockLoads;
+} VkPhysicalDeviceCooperativeMatrix2FeaturesNV32;
+
+typedef struct VkPhysicalDeviceHdrVividFeaturesHUAWEI32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 hdrVivid;
+} VkPhysicalDeviceHdrVividFeaturesHUAWEI32;
+
+typedef struct VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 vertexAttributeRobustness;
+} VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32;
 
 typedef struct VkDeviceCreateInfo32
 {
@@ -5316,6 +5472,14 @@ typedef struct VkVideoEncodeH265SessionCreateInfoKHR32
     StdVideoH265LevelIdc maxLevelIdc;
 } VkVideoEncodeH265SessionCreateInfoKHR32;
 
+typedef struct VkVideoEncodeAV1SessionCreateInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 useMaxLevel;
+    StdVideoAV1Level maxLevel;
+} VkVideoEncodeAV1SessionCreateInfoKHR32;
+
 typedef struct VkVideoSessionCreateInfoKHR32
 {
     VkStructureType sType;
@@ -5631,6 +5795,13 @@ typedef struct VkVideoDecodeAV1SessionParametersCreateInfoKHR32
     PTR32 pStdSequenceHeader;
 } VkVideoDecodeAV1SessionParametersCreateInfoKHR32;
 
+typedef struct VkVideoEncodeQuantizationMapSessionParametersCreateInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkExtent2D quantizationMapTexelSize;
+} VkVideoEncodeQuantizationMapSessionParametersCreateInfoKHR32;
+
 typedef struct VkVideoEncodeH264SessionParametersCreateInfoKHR32
 {
     VkStructureType sType;
@@ -5649,6 +5820,16 @@ typedef struct VkVideoEncodeH265SessionParametersCreateInfoKHR32
     uint32_t maxStdPPSCount;
     PTR32 pParametersAddInfo;
 } VkVideoEncodeH265SessionParametersCreateInfoKHR32;
+
+typedef struct VkVideoEncodeAV1SessionParametersCreateInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 pStdSequenceHeader;
+    PTR32 pStdDecoderModelInfo;
+    uint32_t stdOperatingPointCount;
+    PTR32 pStdOperatingPoints;
+} VkVideoEncodeAV1SessionParametersCreateInfoKHR32;
 
 typedef struct VkVideoSessionParametersCreateInfoKHR32
 {
@@ -6228,6 +6409,22 @@ typedef struct VkPerformanceValueINTEL32
     VkPerformanceValueTypeINTEL type;
     VkPerformanceValueDataINTEL32 DECLSPEC_ALIGN(8) data;
 } VkPerformanceValueINTEL32;
+
+typedef struct VkCooperativeMatrixFlexibleDimensionsPropertiesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t MGranularity;
+    uint32_t NGranularity;
+    uint32_t KGranularity;
+    VkComponentTypeKHR AType;
+    VkComponentTypeKHR BType;
+    VkComponentTypeKHR CType;
+    VkComponentTypeKHR ResultType;
+    VkBool32 saturatingAccumulation;
+    VkScopeKHR scope;
+    uint32_t workgroupInvocations;
+} VkCooperativeMatrixFlexibleDimensionsPropertiesNV32;
 
 typedef struct VkCooperativeMatrixPropertiesKHR32
 {
@@ -7659,6 +7856,15 @@ typedef struct VkPhysicalDeviceImageAlignmentControlPropertiesMESA32
     uint32_t supportedImageAlignmentMask;
 } VkPhysicalDeviceImageAlignmentControlPropertiesMESA32;
 
+typedef struct VkPhysicalDeviceCooperativeMatrix2PropertiesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t cooperativeMatrixWorkgroupScopeMaxWorkgroupSize;
+    uint32_t cooperativeMatrixFlexibleDimensionsMaxDimension;
+    uint32_t cooperativeMatrixWorkgroupScopeReservedSharedMemory;
+} VkPhysicalDeviceCooperativeMatrix2PropertiesNV32;
+
 typedef struct VkPhysicalDeviceProperties232
 {
     VkStructureType sType;
@@ -7816,6 +8022,37 @@ typedef struct VkPhysicalDeviceToolProperties32
 } VkPhysicalDeviceToolProperties32;
 typedef VkPhysicalDeviceToolProperties32 VkPhysicalDeviceToolPropertiesEXT32;
 
+typedef struct VkVideoEncodeQuantizationMapCapabilitiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkExtent2D maxQuantizationMapExtent;
+} VkVideoEncodeQuantizationMapCapabilitiesKHR32;
+
+typedef struct VkVideoEncodeH264QuantizationMapCapabilitiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    int32_t minQpDelta;
+    int32_t maxQpDelta;
+} VkVideoEncodeH264QuantizationMapCapabilitiesKHR32;
+
+typedef struct VkVideoEncodeH265QuantizationMapCapabilitiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    int32_t minQpDelta;
+    int32_t maxQpDelta;
+} VkVideoEncodeH265QuantizationMapCapabilitiesKHR32;
+
+typedef struct VkVideoEncodeAV1QuantizationMapCapabilitiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    int32_t minQIndexDelta;
+    int32_t maxQIndexDelta;
+} VkVideoEncodeAV1QuantizationMapCapabilitiesKHR32;
+
 typedef struct VkVideoDecodeCapabilitiesKHR32
 {
     VkStructureType sType;
@@ -7899,6 +8136,36 @@ typedef struct VkVideoEncodeH265CapabilitiesKHR32
     VkVideoEncodeH265StdFlagsKHR stdSyntaxFlags;
 } VkVideoEncodeH265CapabilitiesKHR32;
 
+typedef struct VkVideoEncodeAV1CapabilitiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkVideoEncodeAV1CapabilityFlagsKHR flags;
+    StdVideoAV1Level maxLevel;
+    VkExtent2D codedPictureAlignment;
+    VkExtent2D maxTiles;
+    VkExtent2D minTileSize;
+    VkExtent2D maxTileSize;
+    VkVideoEncodeAV1SuperblockSizeFlagsKHR superblockSizes;
+    uint32_t maxSingleReferenceCount;
+    uint32_t singleReferenceNameMask;
+    uint32_t maxUnidirectionalCompoundReferenceCount;
+    uint32_t maxUnidirectionalCompoundGroup1ReferenceCount;
+    uint32_t unidirectionalCompoundReferenceNameMask;
+    uint32_t maxBidirectionalCompoundReferenceCount;
+    uint32_t maxBidirectionalCompoundGroup1ReferenceCount;
+    uint32_t maxBidirectionalCompoundGroup2ReferenceCount;
+    uint32_t bidirectionalCompoundReferenceNameMask;
+    uint32_t maxTemporalLayerCount;
+    uint32_t maxSpatialLayerCount;
+    uint32_t maxOperatingPoints;
+    uint32_t minQIndex;
+    uint32_t maxQIndex;
+    VkBool32 prefersGopRemainingFrames;
+    VkBool32 requiresGopRemainingFrames;
+    VkVideoEncodeAV1StdFlagsKHR stdSyntaxFlags;
+} VkVideoEncodeAV1CapabilitiesKHR32;
+
 typedef struct VkVideoCapabilitiesKHR32
 {
     VkStructureType sType;
@@ -7951,6 +8218,27 @@ typedef struct VkVideoEncodeH265QualityLevelPropertiesKHR32
     uint32_t preferredMaxL1ReferenceCount;
 } VkVideoEncodeH265QualityLevelPropertiesKHR32;
 
+typedef struct VkVideoEncodeAV1QualityLevelPropertiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkVideoEncodeAV1RateControlFlagsKHR preferredRateControlFlags;
+    uint32_t preferredGopFrameCount;
+    uint32_t preferredKeyFramePeriod;
+    uint32_t preferredConsecutiveBipredictiveFrameCount;
+    uint32_t preferredTemporalLayerCount;
+    VkVideoEncodeAV1QIndexKHR preferredConstantQIndex;
+    uint32_t preferredMaxSingleReferenceCount;
+    uint32_t preferredSingleReferenceNameMask;
+    uint32_t preferredMaxUnidirectionalCompoundReferenceCount;
+    uint32_t preferredMaxUnidirectionalCompoundGroup1ReferenceCount;
+    uint32_t preferredUnidirectionalCompoundReferenceNameMask;
+    uint32_t preferredMaxBidirectionalCompoundReferenceCount;
+    uint32_t preferredMaxBidirectionalCompoundGroup1ReferenceCount;
+    uint32_t preferredMaxBidirectionalCompoundGroup2ReferenceCount;
+    uint32_t preferredBidirectionalCompoundReferenceNameMask;
+} VkVideoEncodeAV1QualityLevelPropertiesKHR32;
+
 typedef struct VkVideoEncodeQualityLevelPropertiesKHR32
 {
     VkStructureType sType;
@@ -7965,6 +8253,27 @@ typedef struct VkPhysicalDeviceVideoFormatInfoKHR32
     PTR32 pNext;
     VkImageUsageFlags imageUsage;
 } VkPhysicalDeviceVideoFormatInfoKHR32;
+
+typedef struct VkVideoFormatQuantizationMapPropertiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkExtent2D quantizationMapTexelSize;
+} VkVideoFormatQuantizationMapPropertiesKHR32;
+
+typedef struct VkVideoFormatH265QuantizationMapPropertiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkVideoEncodeH265CtbSizeFlagsKHR compatibleCtbSizes;
+} VkVideoFormatH265QuantizationMapPropertiesKHR32;
+
+typedef struct VkVideoFormatAV1QuantizationMapPropertiesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkVideoEncodeAV1SuperblockSizeFlagsKHR compatibleSuperblockSizes;
+} VkVideoFormatAV1QuantizationMapPropertiesKHR32;
 
 typedef struct VkVideoFormatPropertiesKHR32
 {
@@ -8403,6 +8712,14 @@ typedef struct VkDebugUtilsObjectTagInfoEXT32
     PTR32 tagSize;
     PTR32 pTag;
 } VkDebugUtilsObjectTagInfoEXT32;
+
+typedef struct VkHdrVividDynamicMetadataHUAWEI32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 dynamicMetadataSize;
+    PTR32 pDynamicMetadata;
+} VkHdrVividDynamicMetadataHUAWEI32;
 
 typedef struct VkHdrMetadataEXT32
 {
@@ -8924,18 +9241,6 @@ static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(struct c
             out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
             out_ext->pColorAttachmentSamples = UlongToPtr(in_ext->pColorAttachmentSamples);
             out_ext->depthStencilAttachmentSamples = in_ext->depthStencilAttachmentSamples;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX:
-        {
-            VkMultiviewPerViewAttributesInfoNVX *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkMultiviewPerViewAttributesInfoNVX32 *in_ext = (const VkMultiviewPerViewAttributesInfoNVX32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX;
-            out_ext->pNext = NULL;
-            out_ext->perViewAttributes = in_ext->perViewAttributes;
-            out_ext->perViewAttributesPositionXOnly = in_ext->perViewAttributesPositionXOnly;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -10002,18 +10307,6 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX:
-        {
-            VkMultiviewPerViewAttributesInfoNVX *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkMultiviewPerViewAttributesInfoNVX32 *in_ext = (const VkMultiviewPerViewAttributesInfoNVX32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX;
-            out_ext->pNext = NULL;
-            out_ext->perViewAttributes = in_ext->perViewAttributes;
-            out_ext->perViewAttributesPositionXOnly = in_ext->perViewAttributesPositionXOnly;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_RENDER_AREAS_RENDER_PASS_BEGIN_INFO_QCOM:
         {
             VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -10095,6 +10388,22 @@ static inline void convert_VkVideoEncodeRateControlLayerInfoKHR_win32_to_host(st
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_RATE_CONTROL_LAYER_INFO_KHR:
+        {
+            VkVideoEncodeAV1RateControlLayerInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1RateControlLayerInfoKHR32 *in_ext = (const VkVideoEncodeAV1RateControlLayerInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_RATE_CONTROL_LAYER_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->useMinQIndex = in_ext->useMinQIndex;
+            out_ext->minQIndex = in_ext->minQIndex;
+            out_ext->useMaxQIndex = in_ext->useMaxQIndex;
+            out_ext->maxQIndex = in_ext->maxQIndex;
+            out_ext->useMaxFrameSize = in_ext->useMaxFrameSize;
+            out_ext->maxFrameSize = in_ext->maxFrameSize;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -10113,6 +10422,34 @@ static inline const VkVideoEncodeRateControlLayerInfoKHR *convert_VkVideoEncodeR
     for (i = 0; i < count; i++)
     {
         convert_VkVideoEncodeRateControlLayerInfoKHR_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoEncodeAV1ReferenceInfo_win32_to_host(const StdVideoEncodeAV1ReferenceInfo32 *in, StdVideoEncodeAV1ReferenceInfo *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->RefFrameId = in->RefFrameId;
+    out->frame_type = in->frame_type;
+    out->OrderHint = in->OrderHint;
+    memcpy(out->reserved1, in->reserved1, 3 * sizeof(uint8_t));
+    out->pExtensionHeader = UlongToPtr(in->pExtensionHeader);
+}
+
+static inline const StdVideoEncodeAV1ReferenceInfo *convert_StdVideoEncodeAV1ReferenceInfo_array_win32_to_host(struct conversion_context *ctx, const StdVideoEncodeAV1ReferenceInfo32 *in, uint32_t count)
+{
+    StdVideoEncodeAV1ReferenceInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoEncodeAV1ReferenceInfo_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -10215,6 +10552,17 @@ static inline void convert_VkVideoReferenceSlotInfoKHR_win32_to_host(struct conv
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_DPB_SLOT_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->pStdReferenceInfo = UlongToPtr(in_ext->pStdReferenceInfo);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_DPB_SLOT_INFO_KHR:
+        {
+            VkVideoEncodeAV1DpbSlotInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1DpbSlotInfoKHR32 *in_ext = (const VkVideoEncodeAV1DpbSlotInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_DPB_SLOT_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->pStdReferenceInfo = convert_StdVideoEncodeAV1ReferenceInfo_array_win32_to_host(ctx, (const StdVideoEncodeAV1ReferenceInfo32 *)UlongToPtr(in_ext->pStdReferenceInfo), 1);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -10331,6 +10679,35 @@ static inline void convert_VkVideoBeginCodingInfoKHR_win32_to_host(struct conver
             out_ext->gopRemainingI = in_ext->gopRemainingI;
             out_ext->gopRemainingP = in_ext->gopRemainingP;
             out_ext->gopRemainingB = in_ext->gopRemainingB;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_RATE_CONTROL_INFO_KHR:
+        {
+            VkVideoEncodeAV1RateControlInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1RateControlInfoKHR32 *in_ext = (const VkVideoEncodeAV1RateControlInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_RATE_CONTROL_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->flags = in_ext->flags;
+            out_ext->gopFrameCount = in_ext->gopFrameCount;
+            out_ext->keyFramePeriod = in_ext->keyFramePeriod;
+            out_ext->consecutiveBipredictiveFrameCount = in_ext->consecutiveBipredictiveFrameCount;
+            out_ext->temporalLayerCount = in_ext->temporalLayerCount;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_GOP_REMAINING_FRAME_INFO_KHR:
+        {
+            VkVideoEncodeAV1GopRemainingFrameInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1GopRemainingFrameInfoKHR32 *in_ext = (const VkVideoEncodeAV1GopRemainingFrameInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_GOP_REMAINING_FRAME_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->useGopRemainingFrames = in_ext->useGopRemainingFrames;
+            out_ext->gopRemainingIntra = in_ext->gopRemainingIntra;
+            out_ext->gopRemainingPredictive = in_ext->gopRemainingPredictive;
+            out_ext->gopRemainingBipredictive = in_ext->gopRemainingBipredictive;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -10759,6 +11136,21 @@ static inline void convert_VkVideoCodingControlInfoKHR_win32_to_host(struct conv
             out_ext->idrPeriod = in_ext->idrPeriod;
             out_ext->consecutiveBFrameCount = in_ext->consecutiveBFrameCount;
             out_ext->subLayerCount = in_ext->subLayerCount;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_RATE_CONTROL_INFO_KHR:
+        {
+            VkVideoEncodeAV1RateControlInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1RateControlInfoKHR32 *in_ext = (const VkVideoEncodeAV1RateControlInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_RATE_CONTROL_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->flags = in_ext->flags;
+            out_ext->gopFrameCount = in_ext->gopFrameCount;
+            out_ext->keyFramePeriod = in_ext->keyFramePeriod;
+            out_ext->consecutiveBipredictiveFrameCount = in_ext->consecutiveBipredictiveFrameCount;
+            out_ext->temporalLayerCount = in_ext->temporalLayerCount;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -11545,6 +11937,55 @@ static inline const StdVideoEncodeH265PictureInfo *convert_StdVideoEncodeH265Pic
     return out;
 }
 
+static inline void convert_StdVideoEncodeAV1PictureInfo_win32_to_host(struct conversion_context *ctx, const StdVideoEncodeAV1PictureInfo32 *in, StdVideoEncodeAV1PictureInfo *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->frame_type = in->frame_type;
+    out->frame_presentation_time = in->frame_presentation_time;
+    out->current_frame_id = in->current_frame_id;
+    out->order_hint = in->order_hint;
+    out->primary_ref_frame = in->primary_ref_frame;
+    out->refresh_frame_flags = in->refresh_frame_flags;
+    out->coded_denom = in->coded_denom;
+    out->render_width_minus_1 = in->render_width_minus_1;
+    out->render_height_minus_1 = in->render_height_minus_1;
+    out->interpolation_filter = in->interpolation_filter;
+    out->TxMode = in->TxMode;
+    out->delta_q_res = in->delta_q_res;
+    out->delta_lf_res = in->delta_lf_res;
+    memcpy(out->ref_order_hint, in->ref_order_hint, STD_VIDEO_AV1_NUM_REF_FRAMES * sizeof(uint8_t));
+    memcpy(out->ref_frame_idx, in->ref_frame_idx, STD_VIDEO_AV1_REFS_PER_FRAME * sizeof(int8_t));
+    memcpy(out->reserved1, in->reserved1, 3 * sizeof(uint8_t));
+    memcpy(out->delta_frame_id_minus_1, in->delta_frame_id_minus_1, STD_VIDEO_AV1_REFS_PER_FRAME * sizeof(uint32_t));
+    out->pTileInfo = convert_StdVideoAV1TileInfo_array_win32_to_host(ctx, (const StdVideoAV1TileInfo32 *)UlongToPtr(in->pTileInfo), 1);
+    out->pQuantization = UlongToPtr(in->pQuantization);
+    out->pSegmentation = UlongToPtr(in->pSegmentation);
+    out->pLoopFilter = UlongToPtr(in->pLoopFilter);
+    out->pCDEF = UlongToPtr(in->pCDEF);
+    out->pLoopRestoration = UlongToPtr(in->pLoopRestoration);
+    out->pGlobalMotion = UlongToPtr(in->pGlobalMotion);
+    out->pExtensionHeader = UlongToPtr(in->pExtensionHeader);
+    out->pBufferRemovalTimes = UlongToPtr(in->pBufferRemovalTimes);
+}
+
+static inline const StdVideoEncodeAV1PictureInfo *convert_StdVideoEncodeAV1PictureInfo_array_win32_to_host(struct conversion_context *ctx, const StdVideoEncodeAV1PictureInfo32 *in, uint32_t count)
+{
+    StdVideoEncodeAV1PictureInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoEncodeAV1PictureInfo_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+
 static inline void convert_VkVideoEncodeInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoEncodeInfoKHR32 *in, VkVideoEncodeInfoKHR *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -11581,6 +12022,18 @@ static inline void convert_VkVideoEncodeInfoKHR_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_INFO_KHR:
+        {
+            VkVideoEncodeQuantizationMapInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeQuantizationMapInfoKHR32 *in_ext = (const VkVideoEncodeQuantizationMapInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->quantizationMap = in_ext->quantizationMap;
+            out_ext->quantizationMapExtent = in_ext->quantizationMapExtent;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_PICTURE_INFO_KHR:
         {
             VkVideoEncodeH264PictureInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11604,6 +12057,23 @@ static inline void convert_VkVideoEncodeInfoKHR_win32_to_host(struct conversion_
             out_ext->naluSliceSegmentEntryCount = in_ext->naluSliceSegmentEntryCount;
             out_ext->pNaluSliceSegmentEntries = convert_VkVideoEncodeH265NaluSliceSegmentInfoKHR_array_win32_to_host(ctx, (const VkVideoEncodeH265NaluSliceSegmentInfoKHR32 *)UlongToPtr(in_ext->pNaluSliceSegmentEntries), in_ext->naluSliceSegmentEntryCount);
             out_ext->pStdPictureInfo = convert_StdVideoEncodeH265PictureInfo_array_win32_to_host(ctx, (const StdVideoEncodeH265PictureInfo32 *)UlongToPtr(in_ext->pStdPictureInfo), 1);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_PICTURE_INFO_KHR:
+        {
+            VkVideoEncodeAV1PictureInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1PictureInfoKHR32 *in_ext = (const VkVideoEncodeAV1PictureInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_PICTURE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->predictionMode = in_ext->predictionMode;
+            out_ext->rateControlGroup = in_ext->rateControlGroup;
+            out_ext->constantQIndex = in_ext->constantQIndex;
+            out_ext->pStdPictureInfo = convert_StdVideoEncodeAV1PictureInfo_array_win32_to_host(ctx, (const StdVideoEncodeAV1PictureInfo32 *)UlongToPtr(in_ext->pStdPictureInfo), 1);
+            memcpy(out_ext->referenceNameSlotIndices, in_ext->referenceNameSlotIndices, VK_MAX_VIDEO_AV1_REFERENCES_PER_FRAME_KHR * sizeof(int32_t));
+            out_ext->primaryReferenceCdfOnly = in_ext->primaryReferenceCdfOnly;
+            out_ext->generateObuExtensionHeader = in_ext->generateObuExtensionHeader;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -13004,6 +13474,17 @@ static inline void convert_VkVideoProfileInfoKHR_win32_to_host(struct conversion
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_PROFILE_INFO_KHR:
+        {
+            VkVideoEncodeAV1ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1ProfileInfoKHR32 *in_ext = (const VkVideoEncodeAV1ProfileInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_PROFILE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->stdProfile = in_ext->stdProfile;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -13677,16 +14158,38 @@ static inline void convert_VkCuFunctionCreateInfoNVX_win32_to_host(const VkCuFun
         FIXME("Unexpected pNext\n");
 }
 
-static inline void convert_VkCuModuleCreateInfoNVX_win32_to_host(const VkCuModuleCreateInfoNVX32 *in, VkCuModuleCreateInfoNVX *out)
+static inline void convert_VkCuModuleCreateInfoNVX_win32_to_host(struct conversion_context *ctx, const VkCuModuleCreateInfoNVX32 *in, VkCuModuleCreateInfoNVX *out)
 {
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = NULL;
     out->dataSize = in->dataSize;
     out->pData = UlongToPtr(in->pData);
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_CU_MODULE_TEXTURING_MODE_CREATE_INFO_NVX:
+        {
+            VkCuModuleTexturingModeCreateInfoNVX *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkCuModuleTexturingModeCreateInfoNVX32 *in_ext = (const VkCuModuleTexturingModeCreateInfoNVX32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_CU_MODULE_TEXTURING_MODE_CREATE_INFO_NVX;
+            out_ext->pNext = NULL;
+            out_ext->use64bitTexturing = in_ext->use64bitTexturing;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 static inline void convert_VkCudaFunctionCreateInfoNV_win32_to_host(const VkCudaFunctionCreateInfoNV32 *in, VkCudaFunctionCreateInfoNV *out)
@@ -15651,6 +16154,28 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *in_ext = (const VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoEncodeQuantizationMap = in_ext->videoEncodeQuantizationMap;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoEncodeAV1FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoEncodeAV1FeaturesKHR *in_ext = (const VkPhysicalDeviceVideoEncodeAV1FeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoEncodeAV1 = in_ext->videoEncodeAV1;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV:
         {
             VkPhysicalDeviceInheritedViewportScissorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -16463,6 +16988,56 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_REPLICATED_COMPOSITES_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->shaderReplicatedComposites = in_ext->shaderReplicatedComposites;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT:
+        {
+            VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT *in_ext = (const VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->presentModeFifoLatestReady = in_ext->presentModeFifoLatestReady;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrix2FeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeMatrix2FeaturesNV *in_ext = (const VkPhysicalDeviceCooperativeMatrix2FeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeMatrixWorkgroupScope = in_ext->cooperativeMatrixWorkgroupScope;
+            out_ext->cooperativeMatrixFlexibleDimensions = in_ext->cooperativeMatrixFlexibleDimensions;
+            out_ext->cooperativeMatrixReductions = in_ext->cooperativeMatrixReductions;
+            out_ext->cooperativeMatrixConversions = in_ext->cooperativeMatrixConversions;
+            out_ext->cooperativeMatrixPerElementOperations = in_ext->cooperativeMatrixPerElementOperations;
+            out_ext->cooperativeMatrixTensorAddressing = in_ext->cooperativeMatrixTensorAddressing;
+            out_ext->cooperativeMatrixBlockLoads = in_ext->cooperativeMatrixBlockLoads;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI:
+        {
+            VkPhysicalDeviceHdrVividFeaturesHUAWEI *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceHdrVividFeaturesHUAWEI *in_ext = (const VkPhysicalDeviceHdrVividFeaturesHUAWEI *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI;
+            out_ext->pNext = NULL;
+            out_ext->hdrVivid = in_ext->hdrVivid;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT:
+        {
+            VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *in_ext = (const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->vertexAttributeRobustness = in_ext->vertexAttributeRobustness;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -18078,6 +18653,28 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32 *in_ext = (const VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoEncodeQuantizationMap = in_ext->videoEncodeQuantizationMap;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoEncodeAV1FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoEncodeAV1FeaturesKHR32 *in_ext = (const VkPhysicalDeviceVideoEncodeAV1FeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoEncodeAV1 = in_ext->videoEncodeAV1;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV:
         {
             VkPhysicalDeviceInheritedViewportScissorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -18890,6 +19487,56 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_REPLICATED_COMPOSITES_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->shaderReplicatedComposites = in_ext->shaderReplicatedComposites;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT:
+        {
+            VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT32 *in_ext = (const VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->presentModeFifoLatestReady = in_ext->presentModeFifoLatestReady;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrix2FeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeMatrix2FeaturesNV32 *in_ext = (const VkPhysicalDeviceCooperativeMatrix2FeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeMatrixWorkgroupScope = in_ext->cooperativeMatrixWorkgroupScope;
+            out_ext->cooperativeMatrixFlexibleDimensions = in_ext->cooperativeMatrixFlexibleDimensions;
+            out_ext->cooperativeMatrixReductions = in_ext->cooperativeMatrixReductions;
+            out_ext->cooperativeMatrixConversions = in_ext->cooperativeMatrixConversions;
+            out_ext->cooperativeMatrixPerElementOperations = in_ext->cooperativeMatrixPerElementOperations;
+            out_ext->cooperativeMatrixTensorAddressing = in_ext->cooperativeMatrixTensorAddressing;
+            out_ext->cooperativeMatrixBlockLoads = in_ext->cooperativeMatrixBlockLoads;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI:
+        {
+            VkPhysicalDeviceHdrVividFeaturesHUAWEI *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceHdrVividFeaturesHUAWEI32 *in_ext = (const VkPhysicalDeviceHdrVividFeaturesHUAWEI32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI;
+            out_ext->pNext = NULL;
+            out_ext->hdrVivid = in_ext->hdrVivid;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT:
+        {
+            VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32 *in_ext = (const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->vertexAttributeRobustness = in_ext->vertexAttributeRobustness;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -19921,18 +20568,6 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win64_to_host(struct con
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX:
-        {
-            VkMultiviewPerViewAttributesInfoNVX *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkMultiviewPerViewAttributesInfoNVX *in_ext = (const VkMultiviewPerViewAttributesInfoNVX *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX;
-            out_ext->pNext = NULL;
-            out_ext->perViewAttributes = in_ext->perViewAttributes;
-            out_ext->perViewAttributesPositionXOnly = in_ext->perViewAttributesPositionXOnly;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
         case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT:
         {
             VkGraphicsPipelineLibraryCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -20170,18 +20805,6 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
             out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
             out_ext->pColorAttachmentSamples = UlongToPtr(in_ext->pColorAttachmentSamples);
             out_ext->depthStencilAttachmentSamples = in_ext->depthStencilAttachmentSamples;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX:
-        {
-            VkMultiviewPerViewAttributesInfoNVX *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkMultiviewPerViewAttributesInfoNVX32 *in_ext = (const VkMultiviewPerViewAttributesInfoNVX32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_MULTIVIEW_PER_VIEW_ATTRIBUTES_INFO_NVX;
-            out_ext->pNext = NULL;
-            out_ext->perViewAttributes = in_ext->perViewAttributes;
-            out_ext->perViewAttributesPositionXOnly = in_ext->perViewAttributesPositionXOnly;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -20727,7 +21350,7 @@ static inline void convert_VkIndirectCommandsTokenDataEXT_win32_to_host(const Vk
 {
     if (!in) return;
 
-    if (selector == VK_INDIRECT_COMMANDS_TOKEN_TYPE_PUSH_CONSTANT_EXT)
+    if (selector == VK_INDIRECT_COMMANDS_TOKEN_TYPE_PUSH_CONSTANT_EXT || selector == VK_INDIRECT_COMMANDS_TOKEN_TYPE_SEQUENCE_INDEX_EXT)
         out->pPushConstant = UlongToPtr(in->pPushConstant);
     if (selector == VK_INDIRECT_COMMANDS_TOKEN_TYPE_VERTEX_BUFFER_EXT)
         out->pVertexBuffer = UlongToPtr(in->pVertexBuffer);
@@ -21601,6 +22224,17 @@ static inline void convert_VkQueryPoolCreateInfo_win32_to_host(struct conversion
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_PROFILE_INFO_KHR;
             out_ext->pNext = NULL;
             out_ext->stdProfileIdc = in_ext->stdProfileIdc;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_PROFILE_INFO_KHR:
+        {
+            VkVideoEncodeAV1ProfileInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1ProfileInfoKHR32 *in_ext = (const VkVideoEncodeAV1ProfileInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_PROFILE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->stdProfile = in_ext->stdProfile;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -23011,6 +23645,18 @@ static inline void convert_VkVideoSessionCreateInfoKHR_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_SESSION_CREATE_INFO_KHR:
+        {
+            VkVideoEncodeAV1SessionCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1SessionCreateInfoKHR32 *in_ext = (const VkVideoEncodeAV1SessionCreateInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_SESSION_CREATE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->useMaxLevel = in_ext->useMaxLevel;
+            out_ext->maxLevel = in_ext->maxLevel;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -23589,6 +24235,17 @@ static inline void convert_VkVideoSessionParametersCreateInfoKHR_win32_to_host(s
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_SESSION_PARAMETERS_CREATE_INFO_KHR:
+        {
+            VkVideoEncodeQuantizationMapSessionParametersCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeQuantizationMapSessionParametersCreateInfoKHR32 *in_ext = (const VkVideoEncodeQuantizationMapSessionParametersCreateInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_SESSION_PARAMETERS_CREATE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->quantizationMapTexelSize = in_ext->quantizationMapTexelSize;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUALITY_LEVEL_INFO_KHR:
         {
             VkVideoEncodeQualityLevelInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -23623,6 +24280,20 @@ static inline void convert_VkVideoSessionParametersCreateInfoKHR_win32_to_host(s
             out_ext->maxStdSPSCount = in_ext->maxStdSPSCount;
             out_ext->maxStdPPSCount = in_ext->maxStdPPSCount;
             out_ext->pParametersAddInfo = convert_VkVideoEncodeH265SessionParametersAddInfoKHR_array_win32_to_host(ctx, (const VkVideoEncodeH265SessionParametersAddInfoKHR32 *)UlongToPtr(in_ext->pParametersAddInfo), 1);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_SESSION_PARAMETERS_CREATE_INFO_KHR:
+        {
+            VkVideoEncodeAV1SessionParametersCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoEncodeAV1SessionParametersCreateInfoKHR32 *in_ext = (const VkVideoEncodeAV1SessionParametersCreateInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_SESSION_PARAMETERS_CREATE_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->pStdSequenceHeader = convert_StdVideoAV1SequenceHeader_array_win32_to_host(ctx, (const StdVideoAV1SequenceHeader32 *)UlongToPtr(in_ext->pStdSequenceHeader), 1);
+            out_ext->pStdDecoderModelInfo = UlongToPtr(in_ext->pStdDecoderModelInfo);
+            out_ext->stdOperatingPointCount = in_ext->stdOperatingPointCount;
+            out_ext->pStdOperatingPoints = UlongToPtr(in_ext->pStdOperatingPoints);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -25005,12 +25676,6 @@ static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoEXT_win32_to
     }
 }
 
-static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoEXT_host_to_win32(const VkGeneratedCommandsMemoryRequirementsInfoEXT *in, const VkGeneratedCommandsMemoryRequirementsInfoEXT32 *out)
-{
-    if (!in) return;
-
-}
-
 static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win32_to_host(const VkGeneratedCommandsMemoryRequirementsInfoNV32 *in, VkGeneratedCommandsMemoryRequirementsInfoNV *out)
 {
     if (!in) return;
@@ -25287,6 +25952,60 @@ static inline void convert_VkPerformanceValueINTEL_host_to_win32(const VkPerform
 
     out->type = in->type;
     convert_VkPerformanceValueDataINTEL_host_to_win32(&in->data, &out->data, in->type);
+}
+
+static inline void convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_win32_to_host(const VkCooperativeMatrixFlexibleDimensionsPropertiesNV32 *in, VkCooperativeMatrixFlexibleDimensionsPropertiesNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_host_to_win32(const VkCooperativeMatrixFlexibleDimensionsPropertiesNV *in, VkCooperativeMatrixFlexibleDimensionsPropertiesNV32 *out)
+{
+    if (!in) return;
+
+    out->MGranularity = in->MGranularity;
+    out->NGranularity = in->NGranularity;
+    out->KGranularity = in->KGranularity;
+    out->AType = in->AType;
+    out->BType = in->BType;
+    out->CType = in->CType;
+    out->ResultType = in->ResultType;
+    out->saturatingAccumulation = in->saturatingAccumulation;
+    out->scope = in->scope;
+    out->workgroupInvocations = in->workgroupInvocations;
+}
+
+static inline VkCooperativeMatrixFlexibleDimensionsPropertiesNV *convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_array_win32_to_host(struct conversion_context *ctx, const VkCooperativeMatrixFlexibleDimensionsPropertiesNV32 *in, uint32_t count)
+{
+    VkCooperativeMatrixFlexibleDimensionsPropertiesNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_array_host_to_win32(const VkCooperativeMatrixFlexibleDimensionsPropertiesNV *in, VkCooperativeMatrixFlexibleDimensionsPropertiesNV32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_host_to_win32(&in[i], &out[i]);
+    }
 }
 
 static inline void convert_VkCooperativeMatrixPropertiesKHR_win32_to_host(const VkCooperativeMatrixPropertiesKHR32 *in, VkCooperativeMatrixPropertiesKHR *out)
@@ -27056,6 +27775,28 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32 *in_ext = (const VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoEncodeQuantizationMap = in_ext->videoEncodeQuantizationMap;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoEncodeAV1FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoEncodeAV1FeaturesKHR32 *in_ext = (const VkPhysicalDeviceVideoEncodeAV1FeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoEncodeAV1 = in_ext->videoEncodeAV1;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV:
         {
             VkPhysicalDeviceInheritedViewportScissorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -27846,6 +28587,56 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_REPLICATED_COMPOSITES_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->shaderReplicatedComposites = in_ext->shaderReplicatedComposites;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT:
+        {
+            VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT32 *in_ext = (const VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->presentModeFifoLatestReady = in_ext->presentModeFifoLatestReady;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrix2FeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeMatrix2FeaturesNV32 *in_ext = (const VkPhysicalDeviceCooperativeMatrix2FeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeMatrixWorkgroupScope = in_ext->cooperativeMatrixWorkgroupScope;
+            out_ext->cooperativeMatrixFlexibleDimensions = in_ext->cooperativeMatrixFlexibleDimensions;
+            out_ext->cooperativeMatrixReductions = in_ext->cooperativeMatrixReductions;
+            out_ext->cooperativeMatrixConversions = in_ext->cooperativeMatrixConversions;
+            out_ext->cooperativeMatrixPerElementOperations = in_ext->cooperativeMatrixPerElementOperations;
+            out_ext->cooperativeMatrixTensorAddressing = in_ext->cooperativeMatrixTensorAddressing;
+            out_ext->cooperativeMatrixBlockLoads = in_ext->cooperativeMatrixBlockLoads;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI:
+        {
+            VkPhysicalDeviceHdrVividFeaturesHUAWEI *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceHdrVividFeaturesHUAWEI32 *in_ext = (const VkPhysicalDeviceHdrVividFeaturesHUAWEI32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI;
+            out_ext->pNext = NULL;
+            out_ext->hdrVivid = in_ext->hdrVivid;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT:
+        {
+            VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32 *in_ext = (const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->vertexAttributeRobustness = in_ext->vertexAttributeRobustness;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -29146,6 +29937,24 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR);
+            const VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *in_ext = (const VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR;
+            out_ext->videoEncodeQuantizationMap = in_ext->videoEncodeQuantizationMap;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoEncodeAV1FeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR);
+            const VkPhysicalDeviceVideoEncodeAV1FeaturesKHR *in_ext = (const VkPhysicalDeviceVideoEncodeAV1FeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_AV1_FEATURES_KHR;
+            out_ext->videoEncodeAV1 = in_ext->videoEncodeAV1;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV:
         {
             VkPhysicalDeviceInheritedViewportScissorFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV);
@@ -29797,6 +30606,48 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceShaderReplicatedCompositesFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderReplicatedCompositesFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_REPLICATED_COMPOSITES_FEATURES_EXT;
             out_ext->shaderReplicatedComposites = in_ext->shaderReplicatedComposites;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT:
+        {
+            VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT);
+            const VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT *in_ext = (const VkPhysicalDevicePresentModeFifoLatestReadyFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_EXT;
+            out_ext->presentModeFifoLatestReady = in_ext->presentModeFifoLatestReady;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrix2FeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV);
+            const VkPhysicalDeviceCooperativeMatrix2FeaturesNV *in_ext = (const VkPhysicalDeviceCooperativeMatrix2FeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_FEATURES_NV;
+            out_ext->cooperativeMatrixWorkgroupScope = in_ext->cooperativeMatrixWorkgroupScope;
+            out_ext->cooperativeMatrixFlexibleDimensions = in_ext->cooperativeMatrixFlexibleDimensions;
+            out_ext->cooperativeMatrixReductions = in_ext->cooperativeMatrixReductions;
+            out_ext->cooperativeMatrixConversions = in_ext->cooperativeMatrixConversions;
+            out_ext->cooperativeMatrixPerElementOperations = in_ext->cooperativeMatrixPerElementOperations;
+            out_ext->cooperativeMatrixTensorAddressing = in_ext->cooperativeMatrixTensorAddressing;
+            out_ext->cooperativeMatrixBlockLoads = in_ext->cooperativeMatrixBlockLoads;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI:
+        {
+            VkPhysicalDeviceHdrVividFeaturesHUAWEI32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI);
+            const VkPhysicalDeviceHdrVividFeaturesHUAWEI *in_ext = (const VkPhysicalDeviceHdrVividFeaturesHUAWEI *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HDR_VIVID_FEATURES_HUAWEI;
+            out_ext->hdrVivid = in_ext->hdrVivid;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT:
+        {
+            VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT);
+            const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *in_ext = (const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT;
+            out_ext->vertexAttributeRobustness = in_ext->vertexAttributeRobustness;
             out_header = (void *)out_ext;
             break;
         }
@@ -31322,6 +32173,15 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrix2PropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -32566,6 +33426,17 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeMatrix2PropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV);
+            const VkPhysicalDeviceCooperativeMatrix2PropertiesNV *in_ext = (const VkPhysicalDeviceCooperativeMatrix2PropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_2_PROPERTIES_NV;
+            out_ext->cooperativeMatrixWorkgroupScopeMaxWorkgroupSize = in_ext->cooperativeMatrixWorkgroupScopeMaxWorkgroupSize;
+            out_ext->cooperativeMatrixFlexibleDimensionsMaxDimension = in_ext->cooperativeMatrixFlexibleDimensionsMaxDimension;
+            out_ext->cooperativeMatrixWorkgroupScopeReservedSharedMemory = in_ext->cooperativeMatrixWorkgroupScopeReservedSharedMemory;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             break;
         }
@@ -33159,6 +34030,42 @@ static inline void convert_VkVideoCapabilitiesKHR_win32_to_host(struct conversio
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeQuantizationMapCapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_CAPABILITIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_QUANTIZATION_MAP_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeH264QuantizationMapCapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_QUANTIZATION_MAP_CAPABILITIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUANTIZATION_MAP_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeH265QuantizationMapCapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUANTIZATION_MAP_CAPABILITIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUANTIZATION_MAP_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeAV1QuantizationMapCapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUANTIZATION_MAP_CAPABILITIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_CAPABILITIES_KHR:
         {
             VkVideoDecodeCapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -33222,6 +34129,15 @@ static inline void convert_VkVideoCapabilitiesKHR_win32_to_host(struct conversio
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeAV1CapabilitiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_CAPABILITIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -33250,6 +34166,45 @@ static inline void convert_VkVideoCapabilitiesKHR_host_to_win32(const VkVideoCap
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeQuantizationMapCapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_CAPABILITIES_KHR);
+            const VkVideoEncodeQuantizationMapCapabilitiesKHR *in_ext = (const VkVideoEncodeQuantizationMapCapabilitiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUANTIZATION_MAP_CAPABILITIES_KHR;
+            out_ext->maxQuantizationMapExtent = in_ext->maxQuantizationMapExtent;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_QUANTIZATION_MAP_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeH264QuantizationMapCapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_QUANTIZATION_MAP_CAPABILITIES_KHR);
+            const VkVideoEncodeH264QuantizationMapCapabilitiesKHR *in_ext = (const VkVideoEncodeH264QuantizationMapCapabilitiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_QUANTIZATION_MAP_CAPABILITIES_KHR;
+            out_ext->minQpDelta = in_ext->minQpDelta;
+            out_ext->maxQpDelta = in_ext->maxQpDelta;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUANTIZATION_MAP_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeH265QuantizationMapCapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUANTIZATION_MAP_CAPABILITIES_KHR);
+            const VkVideoEncodeH265QuantizationMapCapabilitiesKHR *in_ext = (const VkVideoEncodeH265QuantizationMapCapabilitiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUANTIZATION_MAP_CAPABILITIES_KHR;
+            out_ext->minQpDelta = in_ext->minQpDelta;
+            out_ext->maxQpDelta = in_ext->maxQpDelta;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUANTIZATION_MAP_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeAV1QuantizationMapCapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUANTIZATION_MAP_CAPABILITIES_KHR);
+            const VkVideoEncodeAV1QuantizationMapCapabilitiesKHR *in_ext = (const VkVideoEncodeAV1QuantizationMapCapabilitiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUANTIZATION_MAP_CAPABILITIES_KHR;
+            out_ext->minQIndexDelta = in_ext->minQIndexDelta;
+            out_ext->maxQIndexDelta = in_ext->maxQIndexDelta;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_CAPABILITIES_KHR:
         {
             VkVideoDecodeCapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_DECODE_CAPABILITIES_KHR);
@@ -33347,6 +34302,38 @@ static inline void convert_VkVideoCapabilitiesKHR_host_to_win32(const VkVideoCap
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_CAPABILITIES_KHR:
+        {
+            VkVideoEncodeAV1CapabilitiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_CAPABILITIES_KHR);
+            const VkVideoEncodeAV1CapabilitiesKHR *in_ext = (const VkVideoEncodeAV1CapabilitiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_CAPABILITIES_KHR;
+            out_ext->flags = in_ext->flags;
+            out_ext->maxLevel = in_ext->maxLevel;
+            out_ext->codedPictureAlignment = in_ext->codedPictureAlignment;
+            out_ext->maxTiles = in_ext->maxTiles;
+            out_ext->minTileSize = in_ext->minTileSize;
+            out_ext->maxTileSize = in_ext->maxTileSize;
+            out_ext->superblockSizes = in_ext->superblockSizes;
+            out_ext->maxSingleReferenceCount = in_ext->maxSingleReferenceCount;
+            out_ext->singleReferenceNameMask = in_ext->singleReferenceNameMask;
+            out_ext->maxUnidirectionalCompoundReferenceCount = in_ext->maxUnidirectionalCompoundReferenceCount;
+            out_ext->maxUnidirectionalCompoundGroup1ReferenceCount = in_ext->maxUnidirectionalCompoundGroup1ReferenceCount;
+            out_ext->unidirectionalCompoundReferenceNameMask = in_ext->unidirectionalCompoundReferenceNameMask;
+            out_ext->maxBidirectionalCompoundReferenceCount = in_ext->maxBidirectionalCompoundReferenceCount;
+            out_ext->maxBidirectionalCompoundGroup1ReferenceCount = in_ext->maxBidirectionalCompoundGroup1ReferenceCount;
+            out_ext->maxBidirectionalCompoundGroup2ReferenceCount = in_ext->maxBidirectionalCompoundGroup2ReferenceCount;
+            out_ext->bidirectionalCompoundReferenceNameMask = in_ext->bidirectionalCompoundReferenceNameMask;
+            out_ext->maxTemporalLayerCount = in_ext->maxTemporalLayerCount;
+            out_ext->maxSpatialLayerCount = in_ext->maxSpatialLayerCount;
+            out_ext->maxOperatingPoints = in_ext->maxOperatingPoints;
+            out_ext->minQIndex = in_ext->minQIndex;
+            out_ext->maxQIndex = in_ext->maxQIndex;
+            out_ext->prefersGopRemainingFrames = in_ext->prefersGopRemainingFrames;
+            out_ext->requiresGopRemainingFrames = in_ext->requiresGopRemainingFrames;
+            out_ext->stdSyntaxFlags = in_ext->stdSyntaxFlags;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             break;
         }
@@ -33392,6 +34379,15 @@ static inline void convert_VkVideoEncodeQualityLevelPropertiesKHR_win32_to_host(
         {
             VkVideoEncodeH265QualityLevelPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_QUALITY_LEVEL_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUALITY_LEVEL_PROPERTIES_KHR:
+        {
+            VkVideoEncodeAV1QualityLevelPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUALITY_LEVEL_PROPERTIES_KHR;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
@@ -33451,6 +34447,29 @@ static inline void convert_VkVideoEncodeQualityLevelPropertiesKHR_host_to_win32(
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUALITY_LEVEL_PROPERTIES_KHR:
+        {
+            VkVideoEncodeAV1QualityLevelPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUALITY_LEVEL_PROPERTIES_KHR);
+            const VkVideoEncodeAV1QualityLevelPropertiesKHR *in_ext = (const VkVideoEncodeAV1QualityLevelPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_QUALITY_LEVEL_PROPERTIES_KHR;
+            out_ext->preferredRateControlFlags = in_ext->preferredRateControlFlags;
+            out_ext->preferredGopFrameCount = in_ext->preferredGopFrameCount;
+            out_ext->preferredKeyFramePeriod = in_ext->preferredKeyFramePeriod;
+            out_ext->preferredConsecutiveBipredictiveFrameCount = in_ext->preferredConsecutiveBipredictiveFrameCount;
+            out_ext->preferredTemporalLayerCount = in_ext->preferredTemporalLayerCount;
+            out_ext->preferredConstantQIndex = in_ext->preferredConstantQIndex;
+            out_ext->preferredMaxSingleReferenceCount = in_ext->preferredMaxSingleReferenceCount;
+            out_ext->preferredSingleReferenceNameMask = in_ext->preferredSingleReferenceNameMask;
+            out_ext->preferredMaxUnidirectionalCompoundReferenceCount = in_ext->preferredMaxUnidirectionalCompoundReferenceCount;
+            out_ext->preferredMaxUnidirectionalCompoundGroup1ReferenceCount = in_ext->preferredMaxUnidirectionalCompoundGroup1ReferenceCount;
+            out_ext->preferredUnidirectionalCompoundReferenceNameMask = in_ext->preferredUnidirectionalCompoundReferenceNameMask;
+            out_ext->preferredMaxBidirectionalCompoundReferenceCount = in_ext->preferredMaxBidirectionalCompoundReferenceCount;
+            out_ext->preferredMaxBidirectionalCompoundGroup1ReferenceCount = in_ext->preferredMaxBidirectionalCompoundGroup1ReferenceCount;
+            out_ext->preferredMaxBidirectionalCompoundGroup2ReferenceCount = in_ext->preferredMaxBidirectionalCompoundGroup2ReferenceCount;
+            out_ext->preferredBidirectionalCompoundReferenceNameMask = in_ext->preferredBidirectionalCompoundReferenceNameMask;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             break;
         }
@@ -33491,18 +34510,59 @@ static inline void convert_VkPhysicalDeviceVideoFormatInfoKHR_win32_to_host(stru
     }
 }
 
-static inline void convert_VkVideoFormatPropertiesKHR_win32_to_host(const VkVideoFormatPropertiesKHR32 *in, VkVideoFormatPropertiesKHR *out)
+static inline void convert_VkVideoFormatPropertiesKHR_win32_to_host(struct conversion_context *ctx, const VkVideoFormatPropertiesKHR32 *in, VkVideoFormatPropertiesKHR *out)
 {
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = NULL;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_VIDEO_FORMAT_QUANTIZATION_MAP_PROPERTIES_KHR:
+        {
+            VkVideoFormatQuantizationMapPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_FORMAT_QUANTIZATION_MAP_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_FORMAT_H265_QUANTIZATION_MAP_PROPERTIES_KHR:
+        {
+            VkVideoFormatH265QuantizationMapPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_FORMAT_H265_QUANTIZATION_MAP_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_FORMAT_AV1_QUANTIZATION_MAP_PROPERTIES_KHR:
+        {
+            VkVideoFormatAV1QuantizationMapPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_FORMAT_AV1_QUANTIZATION_MAP_PROPERTIES_KHR;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 static inline void convert_VkVideoFormatPropertiesKHR_host_to_win32(const VkVideoFormatPropertiesKHR *in, VkVideoFormatPropertiesKHR32 *out)
 {
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure32 *out_header = (void *)out;
+
     if (!in) return;
 
     out->format = in->format;
@@ -33511,6 +34571,42 @@ static inline void convert_VkVideoFormatPropertiesKHR_host_to_win32(const VkVide
     out->imageType = in->imageType;
     out->imageTiling = in->imageTiling;
     out->imageUsageFlags = in->imageUsageFlags;
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_VIDEO_FORMAT_QUANTIZATION_MAP_PROPERTIES_KHR:
+        {
+            VkVideoFormatQuantizationMapPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_FORMAT_QUANTIZATION_MAP_PROPERTIES_KHR);
+            const VkVideoFormatQuantizationMapPropertiesKHR *in_ext = (const VkVideoFormatQuantizationMapPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_FORMAT_QUANTIZATION_MAP_PROPERTIES_KHR;
+            out_ext->quantizationMapTexelSize = in_ext->quantizationMapTexelSize;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_FORMAT_H265_QUANTIZATION_MAP_PROPERTIES_KHR:
+        {
+            VkVideoFormatH265QuantizationMapPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_FORMAT_H265_QUANTIZATION_MAP_PROPERTIES_KHR);
+            const VkVideoFormatH265QuantizationMapPropertiesKHR *in_ext = (const VkVideoFormatH265QuantizationMapPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_FORMAT_H265_QUANTIZATION_MAP_PROPERTIES_KHR;
+            out_ext->compatibleCtbSizes = in_ext->compatibleCtbSizes;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_FORMAT_AV1_QUANTIZATION_MAP_PROPERTIES_KHR:
+        {
+            VkVideoFormatAV1QuantizationMapPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_VIDEO_FORMAT_AV1_QUANTIZATION_MAP_PROPERTIES_KHR);
+            const VkVideoFormatAV1QuantizationMapPropertiesKHR *in_ext = (const VkVideoFormatAV1QuantizationMapPropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_FORMAT_AV1_QUANTIZATION_MAP_PROPERTIES_KHR;
+            out_ext->compatibleSuperblockSizes = in_ext->compatibleSuperblockSizes;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
 }
 
 static inline VkVideoFormatPropertiesKHR *convert_VkVideoFormatPropertiesKHR_array_win32_to_host(struct conversion_context *ctx, const VkVideoFormatPropertiesKHR32 *in, uint32_t count)
@@ -33523,7 +34619,7 @@ static inline VkVideoFormatPropertiesKHR *convert_VkVideoFormatPropertiesKHR_arr
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkVideoFormatPropertiesKHR_win32_to_host(&in[i], &out[i]);
+        convert_VkVideoFormatPropertiesKHR_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -35077,8 +36173,11 @@ static inline const VkSwapchainKHR *convert_VkSwapchainKHR_array_win32_to_host(s
     return out;
 }
 
-static inline void convert_VkHdrMetadataEXT_win32_to_host(const VkHdrMetadataEXT32 *in, VkHdrMetadataEXT *out)
+static inline void convert_VkHdrMetadataEXT_win32_to_host(struct conversion_context *ctx, const VkHdrMetadataEXT32 *in, VkHdrMetadataEXT *out)
 {
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
@@ -35091,8 +36190,28 @@ static inline void convert_VkHdrMetadataEXT_win32_to_host(const VkHdrMetadataEXT
     out->minLuminance = in->minLuminance;
     out->maxContentLightLevel = in->maxContentLightLevel;
     out->maxFrameAverageLightLevel = in->maxFrameAverageLightLevel;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_HDR_VIVID_DYNAMIC_METADATA_HUAWEI:
+        {
+            VkHdrVividDynamicMetadataHUAWEI *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkHdrVividDynamicMetadataHUAWEI32 *in_ext = (const VkHdrVividDynamicMetadataHUAWEI32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_HDR_VIVID_DYNAMIC_METADATA_HUAWEI;
+            out_ext->pNext = NULL;
+            out_ext->dynamicMetadataSize = in_ext->dynamicMetadataSize;
+            out_ext->pDynamicMetadata = UlongToPtr(in_ext->pDynamicMetadata);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 static inline const VkHdrMetadataEXT *convert_VkHdrMetadataEXT_array_win32_to_host(struct conversion_context *ctx, const VkHdrMetadataEXT32 *in, uint32_t count)
@@ -35105,7 +36224,7 @@ static inline const VkHdrMetadataEXT *convert_VkHdrMetadataEXT_array_win32_to_ho
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkHdrMetadataEXT_win32_to_host(&in[i], &out[i]);
+        convert_VkHdrMetadataEXT_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -42634,11 +43753,15 @@ static NTSTATUS thunk32_vkCreateCuModuleNVX(void *args)
         VkResult result;
     } *params = args;
     VkCuModuleCreateInfoNVX pCreateInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %#x, %#x, %#x\n", params->device, params->pCreateInfo, params->pAllocator, params->pModule);
 
-    convert_VkCuModuleCreateInfoNVX_win32_to_host((const VkCuModuleCreateInfoNVX32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
+    init_conversion_context(ctx);
+    convert_VkCuModuleCreateInfoNVX_win32_to_host(ctx, (const VkCuModuleCreateInfoNVX32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateCuModuleNVX(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pCreateInfo_host, NULL, (VkCuModuleNVX *)UlongToPtr(params->pModule));
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -47723,7 +48846,6 @@ static NTSTATUS thunk32_vkGetGeneratedCommandsMemoryRequirementsEXT(void *args)
     convert_VkGeneratedCommandsMemoryRequirementsInfoEXT_win32_to_host(ctx, (const VkGeneratedCommandsMemoryRequirementsInfoEXT32 *)UlongToPtr(params->pInfo), &pInfo_host);
     convert_VkMemoryRequirements2_win32_to_host(ctx, (VkMemoryRequirements232 *)UlongToPtr(params->pMemoryRequirements), &pMemoryRequirements_host);
     wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetGeneratedCommandsMemoryRequirementsEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pInfo_host, &pMemoryRequirements_host);
-    convert_VkGeneratedCommandsMemoryRequirementsInfoEXT_host_to_win32(&pInfo_host, (const VkGeneratedCommandsMemoryRequirementsInfoEXT32 *)UlongToPtr(params->pInfo));
     convert_VkMemoryRequirements2_host_to_win32(&pMemoryRequirements_host, (VkMemoryRequirements232 *)UlongToPtr(params->pMemoryRequirements));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -48142,6 +49264,35 @@ static NTSTATUS thunk32_vkGetImageViewAddressNVX(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetImageViewHandle64NVX(void *args)
+{
+    struct vkGetImageViewHandle64NVX_params *params = args;
+
+    TRACE("%p, %p\n", params->device, params->pInfo);
+
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetImageViewHandle64NVX(wine_device_from_handle(params->device)->host_device, params->pInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetImageViewHandle64NVX(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pInfo;
+        uint64_t result;
+    } *params = args;
+    VkImageViewHandleInfoNVX pInfo_host;
+
+    TRACE("%#x, %#x\n", params->device, params->pInfo);
+
+    convert_VkImageViewHandleInfoNVX_win32_to_host((const VkImageViewHandleInfoNVX32 *)UlongToPtr(params->pInfo), &pInfo_host);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetImageViewHandle64NVX(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, &pInfo_host);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetImageViewHandleNVX(void *args)
 {
     struct vkGetImageViewHandleNVX_params *params = args;
@@ -48386,6 +49537,41 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR(void *arg
     TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->pTimeDomainCount, params->pTimeDomains);
 
     params->result = wine_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), (uint32_t *)UlongToPtr(params->pTimeDomainCount), (VkTimeDomainKHR *)UlongToPtr(params->pTimeDomains));
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(void *args)
+{
+    struct vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV_params *params = args;
+
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
+
+    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->funcs.p_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pPropertyCount, params->pProperties);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(void *args)
+{
+    struct
+    {
+        PTR32 physicalDevice;
+        PTR32 pPropertyCount;
+        PTR32 pProperties;
+        VkResult result;
+    } *params = args;
+    VkCooperativeMatrixFlexibleDimensionsPropertiesNV *pProperties_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
+
+    init_conversion_context(ctx);
+    pProperties_host = convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_array_win32_to_host(ctx, (VkCooperativeMatrixFlexibleDimensionsPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
+    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->funcs.p_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
+    convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_array_host_to_win32(pProperties_host, (VkCooperativeMatrixFlexibleDimensionsPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -52829,6 +54015,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_pipeline_protected_access",
     "VK_EXT_pipeline_robustness",
     "VK_EXT_post_depth_coverage",
+    "VK_EXT_present_mode_fifo_latest_ready",
     "VK_EXT_primitive_topology_list_restart",
     "VK_EXT_primitives_generated_query",
     "VK_EXT_private_data",
@@ -52862,6 +54049,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_transform_feedback",
     "VK_EXT_validation_cache",
     "VK_EXT_vertex_attribute_divisor",
+    "VK_EXT_vertex_attribute_robustness",
     "VK_EXT_vertex_input_dynamic_state",
     "VK_EXT_ycbcr_2plane_444_formats",
     "VK_EXT_ycbcr_image_arrays",
@@ -52869,6 +54057,7 @@ static const char * const vk_device_extensions[] =
     "VK_GOOGLE_hlsl_functionality1",
     "VK_GOOGLE_user_type",
     "VK_HUAWEI_cluster_culling_shader",
+    "VK_HUAWEI_hdr_vivid",
     "VK_HUAWEI_invocation_mask",
     "VK_HUAWEI_subpass_shading",
     "VK_IMG_filter_cubic",
@@ -52961,8 +54150,10 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_video_decode_h264",
     "VK_KHR_video_decode_h265",
     "VK_KHR_video_decode_queue",
+    "VK_KHR_video_encode_av1",
     "VK_KHR_video_encode_h264",
     "VK_KHR_video_encode_h265",
+    "VK_KHR_video_encode_quantization_map",
     "VK_KHR_video_encode_queue",
     "VK_KHR_video_maintenance1",
     "VK_KHR_video_queue",
@@ -52977,6 +54168,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_command_buffer_inheritance",
     "VK_NV_compute_shader_derivatives",
     "VK_NV_cooperative_matrix",
+    "VK_NV_cooperative_matrix2",
     "VK_NV_copy_memory_indirect",
     "VK_NV_corner_sampled_image",
     "VK_NV_coverage_reduction_mode",
@@ -53594,6 +54786,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetImageSubresourceLayout2EXT,
     thunk64_vkGetImageSubresourceLayout2KHR,
     thunk64_vkGetImageViewAddressNVX,
+    thunk64_vkGetImageViewHandle64NVX,
     thunk64_vkGetImageViewHandleNVX,
     thunk64_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
     thunk64_vkGetLatencyTimingsNV,
@@ -53602,6 +54795,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetPerformanceParameterINTEL,
     thunk64_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     thunk64_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
+    thunk64_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
     thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
     thunk64_vkGetPhysicalDeviceExternalBufferProperties,
@@ -54215,6 +55409,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetImageSubresourceLayout2EXT,
     thunk32_vkGetImageSubresourceLayout2KHR,
     thunk32_vkGetImageViewAddressNVX,
+    thunk32_vkGetImageViewHandle64NVX,
     thunk32_vkGetImageViewHandleNVX,
     thunk32_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
     thunk32_vkGetLatencyTimingsNV,
@@ -54223,6 +55418,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetPerformanceParameterINTEL,
     thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
+    thunk32_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
     thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
     thunk32_vkGetPhysicalDeviceExternalBufferProperties,

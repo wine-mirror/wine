@@ -524,6 +524,7 @@ struct vulkan_device_funcs
     void (*p_vkGetImageSubresourceLayout2EXT)(VkDevice, VkImage, const VkImageSubresource2KHR *, VkSubresourceLayout2KHR *);
     void (*p_vkGetImageSubresourceLayout2KHR)(VkDevice, VkImage, const VkImageSubresource2KHR *, VkSubresourceLayout2KHR *);
     VkResult (*p_vkGetImageViewAddressNVX)(VkDevice, VkImageView, VkImageViewAddressPropertiesNVX *);
+    uint64_t (*p_vkGetImageViewHandle64NVX)(VkDevice, const VkImageViewHandleInfoNVX *);
     uint32_t (*p_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX *);
     VkResult (*p_vkGetImageViewOpaqueCaptureDescriptorDataEXT)(VkDevice, const VkImageViewCaptureDescriptorDataInfoEXT *, void *);
     void (*p_vkGetLatencyTimingsNV)(VkDevice, VkSwapchainKHR, VkGetLatencyMarkerInfoNV *);
@@ -641,6 +642,7 @@ struct vulkan_instance_funcs
     VkResult (*p_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR)(VkPhysicalDevice, uint32_t, uint32_t *, VkPerformanceCounterKHR *, VkPerformanceCounterDescriptionKHR *);
     VkResult (*p_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)(VkPhysicalDevice, uint32_t *, VkTimeDomainKHR *);
     VkResult (*p_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR)(VkPhysicalDevice, uint32_t *, VkTimeDomainKHR *);
+    VkResult (*p_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV)(VkPhysicalDevice, uint32_t *, VkCooperativeMatrixFlexibleDimensionsPropertiesNV *);
     VkResult (*p_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR)(VkPhysicalDevice, uint32_t *, VkCooperativeMatrixPropertiesKHR *);
     VkResult (*p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV)(VkPhysicalDevice, uint32_t *, VkCooperativeMatrixPropertiesNV *);
     void (*p_vkGetPhysicalDeviceFeatures)(VkPhysicalDevice, VkPhysicalDeviceFeatures *);
@@ -1130,6 +1132,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetImageSubresourceLayout2EXT) \
     USE_VK_FUNC(vkGetImageSubresourceLayout2KHR) \
     USE_VK_FUNC(vkGetImageViewAddressNVX) \
+    USE_VK_FUNC(vkGetImageViewHandle64NVX) \
     USE_VK_FUNC(vkGetImageViewHandleNVX) \
     USE_VK_FUNC(vkGetImageViewOpaqueCaptureDescriptorDataEXT) \
     USE_VK_FUNC(vkGetLatencyTimingsNV) \
@@ -1244,6 +1247,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceCalibrateableTimeDomainsEXT) \
     USE_VK_FUNC(vkGetPhysicalDeviceCalibrateableTimeDomainsKHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceCooperativeMatrixPropertiesNV) \
     USE_VK_FUNC(vkGetPhysicalDeviceFeatures) \
