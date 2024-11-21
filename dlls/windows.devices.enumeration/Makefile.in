@@ -1,5 +1,5 @@
 MODULE = windows.devices.enumeration.dll
-IMPORTS = combase uuid
+IMPORTS = advapi32 combase setupapi uuid
 
 SOURCES = \
 	access.c \

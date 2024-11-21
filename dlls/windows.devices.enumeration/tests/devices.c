@@ -302,7 +302,7 @@ static void test_DeviceInformation_obj( int line, IDeviceInformation *info )
     boolean bool_val;
 
     hr = IDeviceInformation_get_Id( info, &str );
-    todo_wine ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
+    ok_(__FILE__, line)( hr == S_OK, "got hr %#lx\n", hr );
     WindowsDeleteString( str );
     str = NULL;
     hr = IDeviceInformation_get_Name( info, &str );

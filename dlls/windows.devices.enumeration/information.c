@@ -19,10 +19,7 @@
 
 #include "private.h"
 
-#include <roapi.h>
-
-#include <wine/debug.h>
-#include <wine/rbtree.h>
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(enumeration);
 
@@ -30,6 +27,8 @@ struct device_information
 {
     IDeviceInformation IDeviceInformation_iface;
     LONG ref;
+
+    HSTRING path;
 };
 
 static inline struct device_information *impl_DeviceInterface_from_IDeviceInformation( IDeviceInformation *iface )
@@ -68,9 +67,15 @@ static ULONG WINAPI device_information_Release( IDeviceInformation *iface )
 {
     struct device_information *impl = impl_DeviceInterface_from_IDeviceInformation( iface );
     ULONG ref = InterlockedDecrement( &impl->ref );
+
     TRACE( "iface %p, ref %lu.\n", iface, ref );
 
-    if (!ref) free( impl );
+    if (!ref)
+    {
+        WindowsDeleteString( impl->path );
+        free( impl );
+    }
+
     return ref;
 }
 
@@ -95,8 +100,9 @@ static HRESULT WINAPI device_information_GetTrustLevel( IDeviceInformation *ifac
 
 static HRESULT WINAPI device_information_get_Id( IDeviceInformation *iface, HSTRING *id )
 {
-    FIXME( "iface %p, id %p stub!\n", iface, id );
-    return E_NOTIMPL;
+    struct device_information *impl = impl_DeviceInterface_from_IDeviceInformation( iface );
+    TRACE( "iface %p, id %p\n", iface, id );
+    return WindowsDuplicateString( impl->path, id );
 }
 
 static HRESULT WINAPI device_information_get_Name( IDeviceInformation *iface, HSTRING *name )
@@ -170,15 +176,22 @@ static const struct IDeviceInformationVtbl device_information_vtbl =
     device_information_GetGlyphThumbnailAsync,
 };
 
-HRESULT device_information_create( IDeviceInformation **info )
+HRESULT device_information_create( const WCHAR *path, IDeviceInformation **info )
 {
     struct device_information *impl;
+    HRESULT hr;
 
-    TRACE( "info %p\n", info );
+    TRACE( "path %s, info %p\n", debugstr_w(path), info );
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
     impl->IDeviceInformation_iface.lpVtbl = &device_information_vtbl;
     impl->ref = 1;
+
+    if (FAILED(hr = WindowsCreateString( path, wcslen( path ), &impl->path )))
+    {
+        free( impl );
+        return hr;
+    }
 
     *info = &impl->IDeviceInformation_iface;
     TRACE( "created DeviceInformation %p\n", impl );

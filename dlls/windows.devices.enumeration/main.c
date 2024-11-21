@@ -20,6 +20,7 @@
 
 #include "initguid.h"
 #include "private.h"
+#include "setupapi.h"
 
 #include "wine/debug.h"
 
@@ -343,19 +344,59 @@ static HRESULT WINAPI find_all_async( IUnknown *invoker, IUnknown *param, PROPVA
         .iterator = &IID_IIterator_DeviceInformation,
     };
     IVectorView_DeviceInformation *view;
-    IDeviceInformation *device;
     IVector_IInspectable *vector;
+    HKEY iface_key;
     HRESULT hr;
+    DWORD i;
 
-    FIXME( "invoker %p, param %p, result %p semi-stub!\n", invoker, param, result );
+    TRACE( "invoker %p, param %p, result %p\n", invoker, param, result );
 
     if (FAILED(hr = vector_create( &iids, (void *)&vector ))) return hr;
 
-    if (SUCCEEDED(hr = device_information_create( &device )))
+    if (!(iface_key = SetupDiOpenClassRegKeyExW( NULL, KEY_ENUMERATE_SUB_KEYS, DIOCR_INTERFACE, NULL, NULL )))
     {
-        hr = IVector_IInspectable_Append( vector, (IInspectable *)device );
-        IDeviceInformation_Release( device );
+        IVector_IInspectable_Release( vector );
+        return HRESULT_FROM_WIN32( GetLastError() );
     }
+
+    for (i = 0; SUCCEEDED(hr); i++)
+    {
+        char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
+        SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
+        SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
+        HDEVINFO set = INVALID_HANDLE_VALUE;
+        GUID iface_class;
+        WCHAR name[40];
+        DWORD j, len;
+        LSTATUS ret;
+
+        len = ARRAY_SIZE(name);
+        ret = RegEnumKeyExW( iface_key, i, name, &len, NULL, NULL, NULL, NULL );
+        if (ret == ERROR_NO_MORE_ITEMS) break;
+        if (ret) hr = HRESULT_FROM_WIN32( ret );
+
+        if (SUCCEEDED(hr) && SUCCEEDED(hr = CLSIDFromString( name, &iface_class )))
+        {
+            set = SetupDiGetClassDevsW( &iface_class, NULL, NULL, DIGCF_DEVICEINTERFACE );
+            if (set == INVALID_HANDLE_VALUE) hr = HRESULT_FROM_WIN32( GetLastError() );
+        }
+
+        for (j = 0; SUCCEEDED(hr) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface ); j++)
+        {
+            IDeviceInformation *info;
+
+            detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+            if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof(buffer), NULL, NULL )) continue;
+
+            if (SUCCEEDED(hr = device_information_create( detail->DevicePath, &info )))
+            {
+                hr = IVector_IInspectable_Append( vector, (IInspectable *)info );
+                IDeviceInformation_Release( info );
+            }
+        }
+    }
+
+    RegCloseKey( iface_key );
 
     if (SUCCEEDED(hr)) hr = IVector_IInspectable_GetView( vector, (void *)&view );
     IVector_IInspectable_Release( vector );
