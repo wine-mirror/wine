@@ -1304,6 +1304,7 @@ enum
     NtUserCallHwnd_DrawMenuBar,
     NtUserCallHwnd_GetDialogInfo,
     NtUserCallHwnd_GetDpiForWindow,
+    NtUserCallHwnd_GetLastActivePopup,
     NtUserCallHwnd_GetMDIClientInfo,
     NtUserCallHwnd_GetParent,
     NtUserCallHwnd_GetWindowContextHelpId,
@@ -1352,6 +1353,11 @@ static inline void *NtUserGetDialogInfo( HWND hwnd )
 static inline UINT NtUserGetDpiForWindow( HWND hwnd )
 {
     return NtUserCallHwnd( hwnd, NtUserCallHwnd_GetDpiForWindow );
+}
+
+static inline HWND NtUserGetLastActivePopup( HWND hwnd )
+{
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetLastActivePopup ));
 }
 
 static inline void *NtUserGetMDIClientInfo( HWND hwnd )

@@ -23,7 +23,6 @@
 #include "user_private.h"
 #include "controls.h"
 #include "winver.h"
-#include "wine/server.h"
 #include "wine/asm.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
@@ -1315,15 +1314,7 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL show )
  */
 HWND WINAPI GetLastActivePopup( HWND hwnd )
 {
-    HWND retval = hwnd;
-
-    SERVER_START_REQ( get_window_info )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        if (!wine_server_call_err( req )) retval = wine_server_ptr_handle( reply->last_active );
-    }
-    SERVER_END_REQ;
-    return retval;
+    return NtUserGetLastActivePopup( hwnd );
 }
 
 

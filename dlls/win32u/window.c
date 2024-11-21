@@ -940,6 +940,20 @@ UINT get_dpi_for_window( HWND hwnd )
     return NTUSER_DPI_CONTEXT_GET_DPI( context );
 }
 
+/* see GetLastActivePopup */
+static HWND get_last_active_popup( HWND hwnd )
+{
+    HWND retval = hwnd;
+
+    SERVER_START_REQ( get_window_info )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        if (!wine_server_call_err( req )) retval = wine_server_ptr_handle( reply->last_active );
+    }
+    SERVER_END_REQ;
+    return retval;
+}
+
 static LONG_PTR get_win_data( const void *ptr, UINT size )
 {
     if (size == sizeof(WORD))
@@ -5821,6 +5835,9 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 
     case NtUserCallHwnd_GetDpiForWindow:
         return get_dpi_for_window( hwnd );
+
+    case NtUserCallHwnd_GetLastActivePopup:
+        return (ULONG_PTR)get_last_active_popup( hwnd );
 
     case NtUserCallHwnd_GetParent:
         return HandleToUlong( get_parent( hwnd ));
