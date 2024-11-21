@@ -544,7 +544,6 @@ static void test_NtUserBuildHwndList(void)
     size = 0xdeadbeef;
     status = NtUserBuildHwndList( 0, 0, FALSE, TRUE, 0, ARRAYSIZE(buf), buf, &size );
     ok( !status, "NtUserBuildHwndList failed: %#lx\n", status );
-    todo_wine /* EnumDesktopWindows also returns message windows */
     ok( size == desktop_windows_cnt + 1, "size = %lu, expected %lu\n", size, desktop_windows_cnt + 1 );
 
     desktop_windows_cnt = 0;
