@@ -2571,6 +2571,18 @@ enum message_type
 @END
 
 
+/* Get a list of window siblings or children */
+@REQ(get_window_list)
+    obj_handle_t   desktop;       /* handle to desktop */
+    user_handle_t  handle;        /* handle to window to start from */
+    thread_id_t    tid;           /* thread owning the listed windows */
+    int            children;      /* enumerate children? */
+@REPLY
+    int            count;         /* total count of windows */
+    VARARG(windows,user_handles); /* window handles */
+@END
+
+
 /* Get a list of the window children */
 @REQ(get_window_children)
     obj_handle_t   desktop;       /* handle to desktop */

@@ -904,6 +904,60 @@ static int is_point_in_window( struct window *win, int *x, int *y, unsigned int 
     return 1;
 }
 
+/* helper for get_window_list */
+static void append_window_to_list( struct window *win, struct thread *thread, user_handle_t *handles,
+                                   unsigned int *count, unsigned int max_count )
+{
+    if (thread && win->thread != thread) return;
+    if (*count < max_count) handles[*count] = win->handle;
+    (*count)++;
+}
+
+/* fill an array with the handles of siblings or children */
+static void get_window_list( struct desktop *desktop, struct window *win, struct thread *thread,
+                             int children, user_handle_t *handles,
+                             unsigned int *count, unsigned int max_count )
+{
+    struct list *ptr;
+    struct window *child;
+
+    if (desktop)  /* top-level windows of specified desktop */
+    {
+        if (children) return;
+        if (!desktop->top_window) return;
+        LIST_FOR_EACH_ENTRY( child, &desktop->top_window->children, struct window, entry )
+            append_window_to_list( child, thread, handles, count, max_count );
+    }
+    else if (!win)  /* top-level windows of current desktop */
+    {
+        if (!(win = get_desktop_window( current ))) return;
+        LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
+            append_window_to_list( child, thread, handles, count, max_count );
+    }
+    else if (children)  /* children (recursively) of specified window */
+    {
+        LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
+        {
+            append_window_to_list( child, thread, handles, count, max_count );
+            get_window_list( NULL, child, thread, TRUE, handles, count, max_count );
+        }
+    }
+    else if (!is_desktop_window( win ))  /* siblings starting from specified window */
+    {
+        for (ptr = &win->entry; ptr; ptr = list_next( &win->parent->children, ptr ))
+        {
+            struct window *sibling = LIST_ENTRY( ptr, struct window, entry );
+            append_window_to_list( sibling, thread, handles, count, max_count );
+        }
+    }
+    else  /* desktop window siblings */
+    {
+        append_window_to_list( win, thread, handles, count, max_count );
+        if (win == win->desktop->top_window && win->desktop->msg_window)
+            append_window_to_list( win->desktop->msg_window, thread, handles, count, max_count );
+    }
+}
+
 /* fill an array with the handles of the children of a specified window */
 static unsigned int get_children_windows( struct window *parent, atom_t atom, thread_id_t tid,
                                           user_handle_t *handles, unsigned int max_count )
@@ -2377,6 +2431,49 @@ DECL_HANDLER(get_window_parents)
         for (ptr = win->parent; ptr && len; ptr = ptr->parent, len -= sizeof(*data))
             *data++ = ptr->handle;
     }
+}
+
+
+/* get a list of window siblings or children */
+DECL_HANDLER(get_window_list)
+{
+    struct window *win = NULL;
+    struct desktop *desktop = NULL;
+    struct thread *thread = NULL;
+    user_handle_t *data;
+    unsigned int count = 0, max_count = get_reply_max_size() / sizeof(*data);
+
+    if (req->handle && !(win = get_window( req->handle )))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
+    if (req->tid && !(thread = get_thread_from_id( req->tid )))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
+    if (req->desktop && !(desktop = get_desktop_obj( current->process, req->desktop, DESKTOP_ENUMERATE )))
+    {
+        if (thread) release_object( thread );
+        return;
+    }
+
+    max_count = min( max_count, MAX_USER_HANDLES );
+    if ((data = mem_alloc( max_count * sizeof(*data) )))
+    {
+        get_window_list( desktop, win, thread, req->children, data, &count, max_count );
+        if (count > max_count)
+        {
+            free( data );
+            set_error( STATUS_BUFFER_TOO_SMALL );
+        }
+        else set_reply_data_ptr( data, count * sizeof(*data) );
+        reply->count = count;
+    }
+
+    if (thread) release_object( thread );
+    if (desktop) release_object( desktop );
 }
 
 

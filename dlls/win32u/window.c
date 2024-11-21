@@ -2969,24 +2969,26 @@ BOOL WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
 /*****************************************************************************
  *           NtUserBuildHwndList (win32u.@)
  */
-NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
+NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, HWND hwnd, BOOL children, BOOL non_immersive,
                                      ULONG thread_id, ULONG count, HWND *buffer, ULONG *size )
 {
     user_handle_t *list = (user_handle_t *)buffer;
     int i;
     NTSTATUS status;
 
-    SERVER_START_REQ( get_window_children )
+    SERVER_START_REQ( get_window_list )
     {
-        req->desktop = wine_server_obj_handle( desktop );
-        req->tid = thread_id;
-        if (count) wine_server_set_reply( req, list, (count - 1) * sizeof(user_handle_t) );
+        req->desktop  = wine_server_obj_handle( desktop );
+        req->handle   = wine_server_user_handle( hwnd );
+        req->tid      = thread_id;
+        req->children = children;
+        if (count) wine_server_set_reply( req, list, (count - 1) * sizeof(*list) );
         status = wine_server_call( req );
-        if (status && status != STATUS_BUFFER_TOO_SMALL) return status;
-        *size = reply->count + 1;
+        if (!status || status == STATUS_BUFFER_TOO_SMALL) *size = reply->count + 1;
     }
     SERVER_END_REQ;
-    if (*size > count) return STATUS_BUFFER_TOO_SMALL;
+
+    if (status) return status;
 
     /* start from the end since HWND is potentially larger than user_handle_t */
     for (i = *size - 2; i >= 0; i--)

@@ -156,6 +156,7 @@ DECL_HANDLER(get_window_info);
 DECL_HANDLER(set_window_info);
 DECL_HANDLER(set_parent);
 DECL_HANDLER(get_window_parents);
+DECL_HANDLER(get_window_list);
 DECL_HANDLER(get_window_children);
 DECL_HANDLER(get_window_children_from_point);
 DECL_HANDLER(get_window_tree);
@@ -450,6 +451,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_window_info,
     (req_handler)req_set_parent,
     (req_handler)req_get_window_parents,
+    (req_handler)req_get_window_list,
     (req_handler)req_get_window_children,
     (req_handler)req_get_window_children_from_point,
     (req_handler)req_get_window_tree,
@@ -1494,6 +1496,13 @@ C_ASSERT( offsetof(struct get_window_parents_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_window_parents_request) == 16 );
 C_ASSERT( offsetof(struct get_window_parents_reply, count) == 8 );
 C_ASSERT( sizeof(struct get_window_parents_reply) == 16 );
+C_ASSERT( offsetof(struct get_window_list_request, desktop) == 12 );
+C_ASSERT( offsetof(struct get_window_list_request, handle) == 16 );
+C_ASSERT( offsetof(struct get_window_list_request, tid) == 20 );
+C_ASSERT( offsetof(struct get_window_list_request, children) == 24 );
+C_ASSERT( sizeof(struct get_window_list_request) == 32 );
+C_ASSERT( offsetof(struct get_window_list_reply, count) == 8 );
+C_ASSERT( sizeof(struct get_window_list_reply) == 16 );
 C_ASSERT( offsetof(struct get_window_children_request, desktop) == 12 );
 C_ASSERT( offsetof(struct get_window_children_request, parent) == 16 );
 C_ASSERT( offsetof(struct get_window_children_request, atom) == 20 );

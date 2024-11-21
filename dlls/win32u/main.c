@@ -1127,7 +1127,7 @@ NTSTATUS SYSCALL_API NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buff
     SYSCALL_FUNC( NtUserBuildHimcList );
 }
 
-NTSTATUS SYSCALL_API NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULONG unk4,
+NTSTATUS SYSCALL_API NtUserBuildHwndList( HDESK desktop, HWND hwnd, BOOL children, BOOL non_immersive,
                                           ULONG thread_id, ULONG count, HWND *buffer, ULONG *size )
 {
     SYSCALL_FUNC( NtUserBuildHwndList );
