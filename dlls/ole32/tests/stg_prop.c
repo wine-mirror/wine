@@ -628,11 +628,15 @@ static void test_propertyset_storage_enum(void)
     IPropertyStorage *prop_storage, *prop_storage2;
     IPropertySetStorage *ps_storage;
     IEnumSTATPROPSETSTG *ps_enum;
+    IEnumSTATPROPSTG *prop_enum;
     WCHAR filename[MAX_PATH];
     STATPROPSETSTG psstg;
+    STATPROPSTG pstg;
     DWORD ret, fetched;
     IStorage *storage;
     FILETIME ftime;
+    PROPVARIANT pv;
+    PROPSPEC ps;
     HRESULT hr;
 
     ret = GetTempFileNameW(L".", L"stg", 0, filename);
@@ -728,6 +732,81 @@ todo_wine {
     IEnumSTATPROPSETSTG_Release(ps_enum);
 
     IPropertyStorage_Release(prop_storage2);
+    IPropertyStorage_Release(prop_storage);
+
+    IPropertySetStorage_Release(ps_storage);
+    IStorage_Release(storage);
+
+    /* test FMTID_UserDefinedProperties */
+    hr = StgCreateDocfile(filename, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
+    ok(hr == S_OK, "Failed to crate storage, hr %#lx.\n", hr);
+
+    hr = StgCreatePropSetStg(storage, 0, &ps_storage);
+    ok(hr == S_OK, "Failed to create property set storage, hr %#lx.\n", hr);
+
+    hr = IPropertySetStorage_Create(ps_storage, &FMTID_UserDefinedProperties, &IID_IUnknown,
+            PROPSETFLAG_ANSI, STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE, &prop_storage);
+    ok(hr == S_OK, "Failed to create property storage, hr %#lx.\n", hr);
+    ps.ulKind = PRSPEC_PROPID;
+    ps.propid = 0x10;
+    pv.vt = VT_I4;
+    pv.lVal = 10;
+    hr = IPropertyStorage_WriteMultiple(prop_storage, 1, &ps, &pv, 0x10);
+    ok(hr == S_OK, "Failed to add property, hr %#lx.\n", hr);
+    IPropertyStorage_Release(prop_storage);
+
+    hr = IPropertySetStorage_Open(ps_storage, &FMTID_DocSummaryInformation,
+            STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &prop_storage);
+    ok(hr == S_OK, "Failed to open FMTID_DocSummaryInformation, hr %#lx.\n", hr);
+    pv.vt = VT_UI4;
+    pv.lVal = 11;
+    hr = IPropertyStorage_WriteMultiple(prop_storage, 1, &ps, &pv, 0x10);
+    ok(hr == S_OK, "Failed to add property, hr %#lx.\n", hr);
+    IPropertyStorage_Release(prop_storage);
+
+    hr = IPropertySetStorage_Enum(ps_storage, &ps_enum);
+    ok(hr == S_OK, "Failed to get enum object, hr %#lx.\n", hr);
+    memset(&psstg, 0, sizeof(psstg));
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+    ok(hr == S_OK, "Failed to get enum item, hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected fetched count.\n");
+    ok(IsEqualCLSID(&psstg.fmtid, &FMTID_DocSummaryInformation), "Unexpected fmtid %s.\n",
+            wine_dbgstr_guid(&psstg.fmtid));
+    memset(&psstg, 0, sizeof(psstg));
+    hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    IEnumSTATPROPSETSTG_Release(ps_enum);
+
+    hr = IPropertySetStorage_Open(ps_storage, &FMTID_DocSummaryInformation,
+            STGM_READ | STGM_SHARE_EXCLUSIVE, &prop_storage);
+    ok(hr == S_OK, "Failed to open FMTID_DocSummaryInformation, hr %#lx.\n", hr);
+    hr = IPropertyStorage_Enum(prop_storage, &prop_enum);
+    ok(hr == S_OK, "IPropertyStorage_Enum failed, hr %#lx.\n", hr);
+    memset(&pstg, 0, sizeof(pstg));
+    hr = IEnumSTATPROPSTG_Next(prop_enum, 1, &pstg, &fetched);
+    ok(hr == S_OK, "IEnumSTATPROPSTG_Next failed, hr %#lx.\n", hr);
+    ok(pstg.propid == 0x10, "pstg.propid = %lx\n", pstg.propid);
+    ok(pstg.vt == VT_UI4, "pstg.vt = %d\n", pstg.vt);
+    memset(&pstg, 0, sizeof(pstg));
+    hr = IEnumSTATPROPSTG_Next(prop_enum, 1, &pstg, &fetched);
+    ok(hr == S_FALSE, "IEnumSTATPROPSTG_Next failed, hr %#lx.\n", hr);
+    IEnumSTATPROPSTG_Release(prop_enum);
+    IPropertyStorage_Release(prop_storage);
+
+    hr = IPropertySetStorage_Open(ps_storage, &FMTID_UserDefinedProperties,
+            STGM_READ | STGM_SHARE_EXCLUSIVE, &prop_storage);
+    ok(hr == S_OK, "Failed to open FMTID_DocSummaryInformation, hr %#lx.\n", hr);
+    hr = IPropertyStorage_Enum(prop_storage, &prop_enum);
+    ok(hr == S_OK, "IPropertyStorage_Enum failed, hr %#lx.\n", hr);
+    memset(&pstg, 0, sizeof(pstg));
+    hr = IEnumSTATPROPSTG_Next(prop_enum, 1, &pstg, &fetched);
+    ok(hr == S_OK, "IEnumSTATPROPSTG_Next failed, hr %#lx.\n", hr);
+    ok(pstg.propid == 0x10, "pstg.propid = %lx\n", pstg.propid);
+    todo_wine ok(pstg.vt == VT_I4, "pstg.vt = %d\n", pstg.vt);
+    memset(&pstg, 0, sizeof(pstg));
+    hr = IEnumSTATPROPSTG_Next(prop_enum, 1, &pstg, &fetched);
+    ok(hr == S_FALSE, "IEnumSTATPROPSTG_Next failed, hr %#lx.\n", hr);
+    IEnumSTATPROPSTG_Release(prop_enum);
     IPropertyStorage_Release(prop_storage);
 
     IPropertySetStorage_Release(ps_storage);
