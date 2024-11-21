@@ -1798,6 +1798,10 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
         hr = STG_E_INVALIDHEADER;
         goto end;
     }
+    seek.QuadPart = fmtOffset.dwOffset;
+    hr = IStream_Seek(This->stm, seek, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr))
+        goto end;
     /* wackiness alert: if the format ID is FMTID_DocSummaryInformation, there
      * follows not one, but two sections.  The first contains the standard properties
      * for the document summary information, and the second consists of user-defined
