@@ -86,54 +86,6 @@ static BOOL enum_windows( HDESK desktop, HWND hwnd, DWORD tid, BOOL children,
 
 
 /*******************************************************************
- *           list_window_children
- *
- * Build an array of the children of a given window. The array must be
- * freed with HeapFree. Returns NULL when no windows are found.
- */
-static HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *class, DWORD tid )
-{
-    HWND *list;
-    int i, size = 128;
-    ATOM atom = class ? get_int_atom_value( class ) : 0;
-
-    /* empty class is not the same as NULL class */
-    if (!atom && class && !class->Length) return NULL;
-
-    for (;;)
-    {
-        int count = 0;
-
-        if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) break;
-
-        SERVER_START_REQ( get_window_children )
-        {
-            req->desktop = wine_server_obj_handle( desktop );
-            req->parent = wine_server_user_handle( hwnd );
-            req->tid = tid;
-            req->atom = atom;
-            if (!atom && class) wine_server_add_data( req, class->Buffer, class->Length );
-            wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
-            if (!wine_server_call( req )) count = reply->count;
-        }
-        SERVER_END_REQ;
-        if (count && count < size)
-        {
-            /* start from the end since HWND is potentially larger than user_handle_t */
-            for (i = count - 1; i >= 0; i--)
-                list[i] = wine_server_ptr_handle( ((user_handle_t *)list)[i] );
-            list[count] = 0;
-            return list;
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-        if (!count) break;
-        size = count + 1;  /* restart with a large enough buffer */
-    }
-    return NULL;
-}
-
-
-/*******************************************************************
  *           is_desktop_window
  *
  * Check if window is the desktop or the HWND_MESSAGE top parent.
@@ -1383,12 +1335,22 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  */
 HWND *WIN_ListChildren( HWND hwnd )
 {
-    if (!hwnd)
+    HWND *list;
+    ULONG size = 128;
+    NTSTATUS status;
+
+    if (!(hwnd = GetWindow( hwnd, GW_CHILD ))) return NULL;
+
+    for (;;)
     {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return NULL;
+        if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
+        status = NtUserBuildHwndList( 0, hwnd, FALSE, TRUE, 0, size, list, &size );
+        if (!status && size > 1) break;
+        HeapFree( GetProcessHeap(), 0, list );
+        if (status != STATUS_BUFFER_TOO_SMALL) return NULL;
     }
-    return list_window_children( 0, hwnd, NULL, 0 );
+    list[size - 1] = 0;
+    return list;
 }
 
 
