@@ -1004,11 +1004,11 @@ typedef volatile struct
     object_shm_t         shm;
 } shared_object_t;
 
-typedef struct
+struct obj_locator
 {
     object_id_t          id;
     mem_size_t           offset;
-} obj_locator_t;
+};
 
 
 
@@ -2916,7 +2916,7 @@ struct get_msg_queue_request
 struct get_msg_queue_reply
 {
     struct reply_header __header;
-    obj_locator_t  locator;
+    struct obj_locator locator;
 };
 
 
@@ -4064,7 +4064,7 @@ struct get_thread_desktop_request
 struct get_thread_desktop_reply
 {
     struct reply_header __header;
-    obj_locator_t  locator;
+    struct obj_locator locator;
     obj_handle_t   handle;
     char __pad_28[4];
 };
@@ -4079,7 +4079,7 @@ struct set_thread_desktop_request
 struct set_thread_desktop_reply
 {
     struct reply_header __header;
-    obj_locator_t  locator;
+    struct obj_locator locator;
 };
 
 
@@ -4161,7 +4161,7 @@ struct get_thread_input_request
 struct get_thread_input_reply
 {
     struct reply_header __header;
-    obj_locator_t  locator;
+    struct obj_locator locator;
 };
 
 

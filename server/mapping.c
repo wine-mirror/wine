@@ -1422,10 +1422,10 @@ void invalidate_shared_object( const volatile void *object_shm )
     SHARED_WRITE_END;
 }
 
-obj_locator_t get_shared_object_locator( const volatile void *object_shm )
+struct obj_locator get_shared_object_locator( const volatile void *object_shm )
 {
     struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );
-    obj_locator_t locator = {.offset = object->offset, .id = object->obj.id};
+    struct obj_locator locator = {.offset = object->offset, .id = object->obj.id};
     return locator;
 }
 

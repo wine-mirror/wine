@@ -490,7 +490,7 @@ static void dump_hw_input( const char *prefix, const union hw_input *input )
     }
 }
 
-static void dump_obj_locator( const char *prefix, const obj_locator_t *locator )
+static void dump_obj_locator( const char *prefix, const struct obj_locator *locator )
 {
     fprintf( stderr, "%s{", prefix );
     dump_uint64( "id=", &locator->id );

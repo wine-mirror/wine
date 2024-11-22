@@ -179,7 +179,7 @@ static NTSTATUS find_shared_session_block( SIZE_T offset, SIZE_T size, struct se
     return status;
 }
 
-static const shared_object_t *find_shared_session_object( obj_locator_t locator )
+static const shared_object_t *find_shared_session_object( struct obj_locator locator )
 {
     const shared_object_t *object;
     struct session_block *block;
@@ -204,7 +204,7 @@ NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **des
 
     if (!(object = data->shared_desktop))
     {
-        obj_locator_t locator;
+        struct obj_locator locator;
 
         SERVER_START_REQ( get_thread_desktop )
         {
@@ -239,7 +239,7 @@ NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_s
 
     if (!(object = data->shared_queue))
     {
-        obj_locator_t locator;
+        struct obj_locator locator;
 
         SERVER_START_REQ( get_msg_queue )
         {
@@ -272,7 +272,7 @@ static NTSTATUS try_get_shared_input( UINT tid, struct object_lock *lock, const 
 
     if (!(object = cache->object))
     {
-        obj_locator_t locator;
+        struct obj_locator locator;
 
         SERVER_START_REQ( get_thread_input )
         {
@@ -541,7 +541,7 @@ HDESK WINAPI NtUserGetThreadDesktop( DWORD thread )
 BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
 {
     BOOL ret, was_virtual_desktop = is_virtual_desktop();
-    obj_locator_t locator;
+    struct obj_locator locator;
 
     SERVER_START_REQ( set_thread_desktop )
     {

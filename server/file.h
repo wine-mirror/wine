@@ -196,7 +196,7 @@ extern void set_session_mapping( struct mapping *mapping );
 extern const volatile void *alloc_shared_object(void);
 extern void free_shared_object( const volatile void *object_shm );
 extern void invalidate_shared_object( const volatile void *object_shm );
-extern obj_locator_t get_shared_object_locator( const volatile void *object_shm );
+extern struct obj_locator get_shared_object_locator( const volatile void *object_shm );
 
 #define SHARED_WRITE_BEGIN( object_shm, type )                          \
     do {                                                                \
