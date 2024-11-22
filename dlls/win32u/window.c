@@ -3017,46 +3017,59 @@ NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, HWND hwnd, BOOL children, BO
 HWND WINAPI NtUserFindWindowEx( HWND parent, HWND child, UNICODE_STRING *class, UNICODE_STRING *title,
                                 ULONG unk )
 {
-    HWND *list;
+    user_handle_t *list;
     HWND retvalue = 0;
-    int i = 0, len = 0, title_len;
-    WCHAR *buffer = NULL;
+    int i = 0, size = 128, title_len;
+    ATOM atom = class ? get_int_atom_value( class ) : 0;
+    NTSTATUS status;
 
-    if (!parent && child) parent = get_desktop_window();
-    else if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
+    /* empty class is not the same as NULL class */
+    if (!atom && class && !class->Length) return 0;
 
-    if (title)
+    if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
+
+    for (;;)
     {
-        len = title->Length / sizeof(WCHAR) + 1;  /* one extra char to check for chars beyond the end */
-        if (!(buffer = malloc( (len + 1) * sizeof(WCHAR) ))) return 0;
-    }
+        if (!(list = malloc( size * sizeof(*list) ))) return 0;
 
-    if (!(list = list_window_children( 0, parent, class, 0 ))) goto done;
-
-    if (child)
-    {
-        child = get_full_window_handle( child );
-        while (list[i] && list[i] != child) i++;
-        if (!list[i]) goto done;
-        i++;  /* start from next window */
-    }
-
-    if (title)
-    {
-        while (list[i])
+        SERVER_START_REQ( get_class_windows )
         {
-            title_len = NtUserInternalGetWindowText( list[i], buffer, len + 1 );
+            req->parent = wine_server_user_handle( parent );
+            req->child  = wine_server_user_handle( child );
+            req->atom   = atom;
+            if (!atom && class) wine_server_add_data( req, class->Buffer, class->Length );
+            wine_server_set_reply( req, list, size * sizeof(user_handle_t) );
+            status = wine_server_call( req );
+            size = reply->count;
+        }
+        SERVER_END_REQ;
+
+        if (!status && size) break;
+        free( list );
+        if (status != STATUS_BUFFER_TOO_SMALL) return 0;
+    }
+
+    if (title)
+    {
+        int len = title->Length / sizeof(WCHAR) + 1;  /* one extra char to check for chars beyond the end */
+        WCHAR *buffer = malloc( (len + 1) * sizeof(WCHAR) );
+
+        if (!buffer) goto done;
+        while (i < size)
+        {
+            title_len = NtUserInternalGetWindowText( wine_server_ptr_handle(list[i]), buffer, len + 1 );
             if (title_len * sizeof(WCHAR) == title->Length &&
                 (!title_len || !wcsnicmp( buffer, title->Buffer, title_len )))
                 break;
             i++;
         }
+        free( buffer );
     }
-    retvalue = list[i];
+
+    if (i < size) retvalue = wine_server_ptr_handle(list[i]);
 
  done:
     free( list );
-    free( buffer );
     return retvalue;
 }
 
