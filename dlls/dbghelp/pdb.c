@@ -732,11 +732,85 @@ static enum method_result pdb_method_get_line_from_address(struct module_format 
     return pdb_method_result(result);
 }
 
+static enum pdb_result pdb_reader_advance_line_info(struct pdb_reader *pdb,
+                                                    struct lineinfo_t *line_info, BOOL forward)
+{
+    struct pdb_reader_compiland_iterator compiland_iter;
+    struct pdb_reader_walker linetab2_walker;
+    struct CV_DebugSLinesFileBlockHeader_t files_hdr;
+    DWORD64 lineblk_base;
+    struct CV_Line_t *lines;
+    enum pdb_result result;
+    unsigned i;
+
+    if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter)))
+        return result;
+    do
+    {
+        if (compiland_iter.dbi_cu_header.lineno2_size)
+        {
+            if ((result = pdb_reader_walker_init_linetab2(pdb, &compiland_iter.dbi_cu_header, &linetab2_walker)))
+                return result;
+            result = pdb_reader_locate_filehdr_in_linetab2(pdb, linetab2_walker, line_info->address, &lineblk_base, &files_hdr, &lines);
+            if (result == R_PDB_NOT_FOUND) continue;
+            if (result) return result;
+            if ((result = pdb_find_matching_linetab2(lines, files_hdr.nLines, line_info->address - lineblk_base, &i)))
+                return result;
+
+            /* It happens that several entries have same address (yet potentially different line numbers)
+             * Simplify handling by getting the first entry (forward or backward) with a different address.
+             * More tests from native are required.
+             */
+            if (forward)
+            {
+                for (; i + 1 < files_hdr.nLines; i++)
+                    if (line_info->address != lineblk_base + lines[i + 1].offset)
+                    {
+                        line_info->address = lineblk_base + lines[i + 1].offset;
+                        line_info->line_number = lines[i + 1].linenumStart;
+                        break;
+                    }
+                if (i + 1 >= files_hdr.nLines)
+                    result = R_PDB_INVALID_ARGUMENT;
+            }
+            else
+            {
+                for (; i; --i)
+                {
+                    if (line_info->address != lineblk_base + lines[i - 1].offset)
+                    {
+                        line_info->address = lineblk_base + lines[i - 1].offset;
+                        line_info->line_number = lines[i - 1].linenumStart;
+                        break;
+                    }
+                }
+                if (!i)
+                    result = R_PDB_INVALID_ARGUMENT;
+            }
+            pdb_reader_free(pdb, lines);
+            /* refresh filename in case it has been tempered with */
+            return result ? result : pdb_reader_set_lineinfo_filename(pdb, linetab2_walker, files_hdr.offFile, line_info);
+        }
+    } while (pdb_reader_compiland_iterator_next(pdb, &compiland_iter) == R_PDB_SUCCESS);
+
+    return R_PDB_NOT_FOUND;
+}
+
+static enum method_result pdb_method_advance_line_info(struct module_format *modfmt,
+                                                       struct lineinfo_t *line_info, BOOL forward)
+{
+    struct pdb_reader *pdb;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+    return pdb_reader_advance_line_info(pdb, line_info, forward) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
     NULL,/*pdb_location_compute*/
     pdb_method_get_line_from_address,
+    pdb_method_advance_line_info,
 };
 
 struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections)

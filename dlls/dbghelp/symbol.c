@@ -2004,20 +2004,24 @@ static BOOL symt_get_func_line_prev(HANDLE hProcess, struct lineinfo_t* line_inf
     struct module_pair  pair;
     struct line_info*   li;
     struct line_info*   srcli;
+    struct module_format_vtable_iterator iter = {};
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    if (key == NULL)
+
+    line_info->address = addr;
+    line_info->key = key;
+    while ((module_format_vtable_iterator_next(pair.effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(advance_line_info))))
     {
-        struct symt_ht*                      symt;
-        /* likely line_info has been filled in by pdb reader,  but it can advance yet
-         * so force reloading the old information
-         */
-        symt = symt_find_symbol_at(pair.effective, addr);
-        if (!symt_check_tag(&symt->symt, SymTagFunction) ||
-            !get_line_from_function(&pair, (struct symt_function*)symt, addr, NULL, line_info))
+        switch (iter.modfmt->vtable->advance_line_info(iter.modfmt, line_info, FALSE))
+        {
+        case MR_SUCCESS:
+            return TRUE;
+        case MR_NOT_FOUND: /* continue */
+            break;
+        default:
             return FALSE;
-        if (line_info->key == NULL) return FALSE;
-        key = line_info->key;
+        }
     }
     if (key == NULL) return FALSE;
 
@@ -2094,23 +2098,23 @@ static BOOL symt_get_func_line_next(HANDLE hProcess, struct lineinfo_t* line_inf
     struct module_pair  pair;
     struct line_info*   li;
     struct line_info*   srcli;
+    struct module_format_vtable_iterator iter = {};
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    if (key == NULL)
-    {
-        struct symt_ht*                      symt;
-        /* likely line_info has been filled in by pdb reader,  but it can advance yet
-         * so force reloading the information from old reader
-         */
-        symt = symt_find_symbol_at(pair.effective, addr);
-        if (!symt_check_tag(&symt->symt, SymTagFunction) ||
-            !get_line_from_function(&pair, (struct symt_function*)symt, addr, NULL, line_info))
-            return FALSE;
-        if (line_info->key == NULL) return FALSE;
-        key = line_info->key;
-    }
-    if (key == NULL) return FALSE;
 
+    line_info->address = addr;
+    line_info->key = key;
+    while ((module_format_vtable_iterator_next(pair.effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(advance_line_info))))
+    {
+        switch (iter.modfmt->vtable->advance_line_info(iter.modfmt, line_info, TRUE))
+        {
+        case MR_SUCCESS: return TRUE;
+        default: break;
+        }
+    }
+
+    if (key == NULL) return FALSE;
     /* search current source file */
     for (srcli = key; !srcli->is_source_file; srcli--);
 

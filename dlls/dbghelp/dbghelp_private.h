@@ -440,6 +440,8 @@ struct module_format_vtable
     /* line information */
     enum method_result          (*get_line_from_address)(struct module_format *modfmt,
                                                          DWORD64 address, struct lineinfo_t *line_info);
+    enum method_result          (*advance_line_info)(struct module_format *modfmt,
+                                                     struct lineinfo_t *line_info, BOOL forward);
 };
 
 struct module_format
