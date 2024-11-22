@@ -623,6 +623,81 @@ static void testFmtId(void)
      "Got unexpected FMTID, expected IID_IPropertySetStorage\n");
 }
 
+typedef struct
+{
+    WORD byte_order;
+    WORD format;
+    DWORD os_ver;
+    CLSID clsid;
+    DWORD reserved;
+} PROPERTYSETHEADER;
+
+typedef struct
+{
+    FMTID fmtid;
+    DWORD offset;
+} FORMATIDOFFSET;
+
+typedef struct
+{
+    DWORD size;
+    DWORD properties;
+} PROPERTYSECTIONHEADER;
+
+typedef struct
+{
+    DWORD propid;
+    DWORD offset;
+} PROPERTYIDOFFSET;
+
+typedef struct
+{
+    DWORD type;
+    DWORD data;
+} PROPVARIANT_DWORD;
+
+struct test_prop_data
+{
+    PROPERTYSETHEADER header;
+    FORMATIDOFFSET doc_summary;
+    FORMATIDOFFSET user_def_props;
+    PROPERTYSECTIONHEADER doc_summary_header;
+    PROPERTYIDOFFSET prop1;
+    PROPVARIANT_DWORD prop1_val;
+    PROPERTYSECTIONHEADER user_def_props_header;
+    PROPERTYIDOFFSET prop2;
+    PROPVARIANT_DWORD prop2_val;
+} test_prop_data = {
+    {
+        0xfffe, 0, 0x2000a00,
+        /* IID_IUnknown */
+        {0x00000000, 0x0000, 0x0000, {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}},
+        2
+    },
+    {
+        /* FMTID_DocSummaryInformation */
+        {0xd5cdd502, 0x2e9c, 0x101b, {0x93, 0x97, 0x08, 0x00, 0x2b, 0x2c, 0xf9, 0xae}},
+        FIELD_OFFSET(struct test_prop_data, doc_summary_header)
+    },
+    {
+        /* FMTID_UserDefinedProperties */
+        {0xd5cdd505, 0x2e9c, 0x101b, {0x93, 0x97, 0x08, 0x00, 0x2b, 0x2c, 0xf9, 0xae}},
+        FIELD_OFFSET(struct test_prop_data, user_def_props_header)
+    },
+    {
+        sizeof(PROPERTYSECTIONHEADER) + sizeof(PROPERTYIDOFFSET) + sizeof(PROPVARIANT_DWORD),
+        1
+    },
+    { 0x10, sizeof(PROPERTYSECTIONHEADER) + sizeof(PROPERTYIDOFFSET) },
+    { VT_UI4, 11 },
+    {
+        sizeof(PROPERTYSECTIONHEADER) + sizeof(PROPERTYIDOFFSET) + sizeof(PROPVARIANT_DWORD),
+        1
+    },
+    { 0x10, sizeof(PROPERTYSECTIONHEADER) + sizeof(PROPERTYIDOFFSET) },
+    { VT_I4, 10 }
+};
+
 static void test_propertyset_storage_enum(void)
 {
     IPropertyStorage *prop_storage, *prop_storage2;
@@ -634,6 +709,7 @@ static void test_propertyset_storage_enum(void)
     STATPROPSTG pstg;
     DWORD ret, fetched;
     IStorage *storage;
+    IStream *stream;
     FILETIME ftime;
     PROPVARIANT pv;
     PROPSPEC ps;
@@ -776,6 +852,45 @@ todo_wine {
     hr = IEnumSTATPROPSETSTG_Next(ps_enum, 1, &psstg, &fetched);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     IEnumSTATPROPSETSTG_Release(ps_enum);
+
+    hr = IPropertySetStorage_Open(ps_storage, &FMTID_DocSummaryInformation,
+            STGM_READ | STGM_SHARE_EXCLUSIVE, &prop_storage);
+    ok(hr == S_OK, "Failed to open FMTID_DocSummaryInformation, hr %#lx.\n", hr);
+    hr = IPropertyStorage_Enum(prop_storage, &prop_enum);
+    ok(hr == S_OK, "IPropertyStorage_Enum failed, hr %#lx.\n", hr);
+    memset(&pstg, 0, sizeof(pstg));
+    hr = IEnumSTATPROPSTG_Next(prop_enum, 1, &pstg, &fetched);
+    ok(hr == S_OK, "IEnumSTATPROPSTG_Next failed, hr %#lx.\n", hr);
+    ok(pstg.propid == 0x10, "pstg.propid = %lx\n", pstg.propid);
+    ok(pstg.vt == VT_UI4, "pstg.vt = %d\n", pstg.vt);
+    memset(&pstg, 0, sizeof(pstg));
+    hr = IEnumSTATPROPSTG_Next(prop_enum, 1, &pstg, &fetched);
+    ok(hr == S_FALSE, "IEnumSTATPROPSTG_Next failed, hr %#lx.\n", hr);
+    IEnumSTATPROPSTG_Release(prop_enum);
+    IPropertyStorage_Release(prop_storage);
+
+    hr = IPropertySetStorage_Open(ps_storage, &FMTID_UserDefinedProperties,
+            STGM_READ | STGM_SHARE_EXCLUSIVE, &prop_storage);
+    ok(hr == S_OK, "Failed to open FMTID_DocSummaryInformation, hr %#lx.\n", hr);
+    hr = IPropertyStorage_Enum(prop_storage, &prop_enum);
+    ok(hr == S_OK, "IPropertyStorage_Enum failed, hr %#lx.\n", hr);
+    memset(&pstg, 0, sizeof(pstg));
+    hr = IEnumSTATPROPSTG_Next(prop_enum, 1, &pstg, &fetched);
+    ok(hr == S_OK, "IEnumSTATPROPSTG_Next failed, hr %#lx.\n", hr);
+    ok(pstg.propid == 0x10, "pstg.propid = %lx\n", pstg.propid);
+    todo_wine ok(pstg.vt == VT_I4, "pstg.vt = %d\n", pstg.vt);
+    memset(&pstg, 0, sizeof(pstg));
+    hr = IEnumSTATPROPSTG_Next(prop_enum, 1, &pstg, &fetched);
+    ok(hr == S_FALSE, "IEnumSTATPROPSTG_Next failed, hr %#lx.\n", hr);
+    IEnumSTATPROPSTG_Release(prop_enum);
+    IPropertyStorage_Release(prop_storage);
+
+    hr = IStorage_OpenStream(storage, L"\5DocumentSummaryInformation", NULL,
+            STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stream);
+    ok(hr == S_OK, "IStorage_CreateStream failed, hr %#lx.\n", hr);
+    hr = IStream_Write(stream, &test_prop_data, sizeof(test_prop_data), NULL);
+    ok(hr == S_OK, "IStream_Write failed, hr %#lx.\n", hr);
+    IStream_Release(stream);
 
     hr = IPropertySetStorage_Open(ps_storage, &FMTID_DocSummaryInformation,
             STGM_READ | STGM_SHARE_EXCLUSIVE, &prop_storage);
