@@ -1915,29 +1915,45 @@ static void http_release_netconn(http_request_t *req, BOOL reuse)
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
+static BOOL has_token(const WCHAR *str, const WCHAR *token)
+{
+    UINT len = wcslen(token);
+    const WCHAR *next;
+
+    for (; *str; str = next + wcsspn(next, L" ,"))
+    {
+        next = str + wcscspn(str, L" ,");
+        if (next - str != len) continue;
+        if (wcsnicmp(str, token, len)) continue;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL has_keep_alive(const WCHAR *version, const WCHAR *connection)
+{
+    return !wcsicmp(version, L"HTTP/1.1") ? !has_token(connection, L"Close")
+                                          : has_token(connection, L"Keep-Alive");
+}
+
 static BOOL HTTP_KeepAlive(http_request_t *request)
 {
     WCHAR szVersion[10];
     WCHAR szConnectionResponse[20];
     DWORD dwBufferSize = sizeof(szVersion);
-    BOOL keepalive = FALSE;
 
     /* as per RFC 2068, S8.1.2.1, if the client is HTTP/1.1 then assume that
      * the connection is keep-alive by default */
-    if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_VERSION, szVersion, &dwBufferSize, NULL) == ERROR_SUCCESS
-        && !wcsicmp(szVersion, L"HTTP/1.1"))
-    {
-        keepalive = TRUE;
-    }
+    if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_VERSION, szVersion, &dwBufferSize, NULL) != ERROR_SUCCESS)
+        *szVersion = 0;
 
     dwBufferSize = sizeof(szConnectionResponse);
-    if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) == ERROR_SUCCESS
-        || HTTP_HttpQueryInfoW(request, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) == ERROR_SUCCESS)
-    {
-        keepalive = !wcsicmp(szConnectionResponse, L"Keep-Alive");
-    }
+    if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) != ERROR_SUCCESS &&
+        HTTP_HttpQueryInfoW(request, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) != ERROR_SUCCESS)
+        *szConnectionResponse = 0;
 
-    return keepalive;
+    return has_keep_alive(szVersion, szConnectionResponse);
 }
 
 static void HTTPREQ_CloseConnection(object_header_t *hdr)
@@ -4874,16 +4890,15 @@ static void HTTP_ProcessLastModified(http_request_t *request)
 
 static void http_process_keep_alive(http_request_t *req)
 {
+    const WCHAR *connection = L"";
     int index;
 
     EnterCriticalSection( &req->headers_section );
 
-    if ((index = HTTP_GetCustomHeaderIndex(req, L"Connection", 0, FALSE)) != -1)
-        req->netconn->keep_alive = !wcsicmp(req->custHeaders[index].lpszValue, L"Keep-Alive");
-    else if ((index = HTTP_GetCustomHeaderIndex(req, L"Proxy-Connection", 0, FALSE)) != -1)
-        req->netconn->keep_alive = !wcsicmp(req->custHeaders[index].lpszValue, L"Keep-Alive");
-    else
-        req->netconn->keep_alive = !wcsicmp(req->version, L"HTTP/1.1");
+    if ((index = HTTP_GetCustomHeaderIndex(req, L"Connection", 0, FALSE)) != -1 ||
+        (index = HTTP_GetCustomHeaderIndex(req, L"Proxy-Connection", 0, FALSE)) != -1)
+        connection = req->custHeaders[index].lpszValue;
+    req->netconn->keep_alive = has_keep_alive(req->version, connection);
 
     LeaveCriticalSection( &req->headers_section );
 }
