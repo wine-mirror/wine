@@ -1142,6 +1142,8 @@ VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags)
         usage |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
     if (bind_flags & WINED3D_BIND_INDIRECT_BUFFER)
         usage |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+    if (bind_flags & WINED3D_BIND_DECODER_SRC)
+        usage |= VK_BUFFER_USAGE_VIDEO_DECODE_SRC_BIT_KHR;
     if (bind_flags & (WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_DEPTH_STENCIL))
         FIXME("Ignoring some bind flags %#x.\n", bind_flags);
     return usage;

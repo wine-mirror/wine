@@ -863,6 +863,7 @@ enum wined3d_decoder_buffer_type
     WINED3D_DECODER_BUFFER_PICTURE_PARAMETERS = 0,
     WINED3D_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX = 4,
     WINED3D_DECODER_BUFFER_SLICE_CONTROL = 5,
+    WINED3D_DECODER_BUFFER_BITSTREAM = 6,
 };
 
 enum wined3d_memory_segment_group
@@ -923,6 +924,8 @@ enum wined3d_memory_segment_group
 #define WINED3D_BIND_DEPTH_STENCIL                              0x00000040
 #define WINED3D_BIND_UNORDERED_ACCESS                           0x00000080
 #define WINED3D_BIND_INDIRECT_BUFFER                            0x00000100
+/* Used internally. */
+#define WINED3D_BIND_DECODER_SRC                                0x80000000
 
 #define WINED3DUSAGE_SOFTWAREPROCESSING                         0x00000010
 #define WINED3DUSAGE_DONOTCLIP                                  0x00000020

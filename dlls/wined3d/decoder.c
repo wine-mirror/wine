@@ -26,11 +26,12 @@ struct wined3d_decoder
     LONG ref;
     struct wined3d_device *device;
     struct wined3d_decoder_desc desc;
-    struct wined3d_buffer *parameters, *matrix, *slice_control;
+    struct wined3d_buffer *bitstream, *parameters, *matrix, *slice_control;
 };
 
 static void wined3d_decoder_cleanup(struct wined3d_decoder *decoder)
 {
+    wined3d_buffer_decref(decoder->bitstream);
     wined3d_buffer_decref(decoder->parameters);
     wined3d_buffer_decref(decoder->matrix);
     wined3d_buffer_decref(decoder->slice_control);
@@ -102,6 +103,23 @@ static HRESULT wined3d_decoder_init(struct wined3d_decoder *decoder,
     {
         wined3d_buffer_decref(decoder->matrix);
         wined3d_buffer_decref(decoder->parameters);
+        return hr;
+    }
+
+    /* NVidia makes this buffer as large as width * height (as if each pixel
+     * is at most 1 byte). AMD makes it larger than that.
+     * Go with the smaller of the two. */
+    buffer_desc.byte_width = desc->width * desc->height;
+    buffer_desc.bind_flags = WINED3D_BIND_DECODER_SRC;
+    buffer_desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP_W;
+    buffer_desc.usage = WINED3DUSAGE_DYNAMIC;
+
+    if (FAILED(hr = wined3d_buffer_create(device, &buffer_desc,
+            NULL, NULL, &wined3d_null_parent_ops, &decoder->bitstream)))
+    {
+        wined3d_buffer_decref(decoder->matrix);
+        wined3d_buffer_decref(decoder->parameters);
+        wined3d_buffer_decref(decoder->slice_control);
         return hr;
     }
 
@@ -433,6 +451,9 @@ struct wined3d_resource * CDECL wined3d_decoder_get_buffer(
 {
     switch (type)
     {
+        case WINED3D_DECODER_BUFFER_BITSTREAM:
+            return &decoder->bitstream->resource;
+
         case WINED3D_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX:
             return &decoder->matrix->resource;
 
