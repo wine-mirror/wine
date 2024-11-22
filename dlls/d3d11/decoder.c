@@ -211,3 +211,9 @@ HRESULT d3d_video_decoder_create(struct d3d_device *device, const D3D11_VIDEO_DE
     *decoder = object;
     return S_OK;
 }
+
+struct d3d_video_decoder *unsafe_impl_from_ID3D11VideoDecoder(ID3D11VideoDecoder *iface)
+{
+    assert(iface->lpVtbl == &d3d11_video_decoder_vtbl);
+    return impl_from_ID3D11VideoDecoder(iface);
+}

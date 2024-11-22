@@ -3171,17 +3171,38 @@ static HRESULT STDMETHODCALLTYPE d3d11_video_context_SetPrivateDataInterface(
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_GetDecoderBuffer(ID3D11VideoContext *iface,
-        ID3D11VideoDecoder *decoder, D3D11_VIDEO_DECODER_BUFFER_TYPE type, UINT *size, void **buffer)
+        ID3D11VideoDecoder *decoder, D3D11_VIDEO_DECODER_BUFFER_TYPE type, UINT *size, void **data)
 {
-    FIXME("iface %p, decoder %p, type %#x, size %p, buffer %p, stub!\n", iface, decoder, type, size, buffer);
-    return E_NOTIMPL;
+    struct d3d_video_decoder *decoder_impl = unsafe_impl_from_ID3D11VideoDecoder(decoder);
+    struct wined3d_map_desc map_desc;
+    struct wined3d_resource *buffer;
+    HRESULT hr;
+
+    TRACE("iface %p, decoder %p, type %#x, size %p, data %p.\n", iface, decoder, type, size, data);
+
+    if (!(buffer = wined3d_decoder_get_buffer(decoder_impl->wined3d_decoder, (enum wined3d_decoder_buffer_type)type)))
+        return E_NOTIMPL;
+
+    if (SUCCEEDED(hr = wined3d_resource_map(buffer, 0, &map_desc, NULL, WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD)))
+    {
+        *size = map_desc.row_pitch;
+        *data = map_desc.data;
+    }
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_ReleaseDecoderBuffer(ID3D11VideoContext *iface,
         ID3D11VideoDecoder *decoder, D3D11_VIDEO_DECODER_BUFFER_TYPE type)
 {
-    FIXME("iface %p, decoder %p, type %#x, stub!\n", iface, decoder, type);
-    return E_NOTIMPL;
+    struct d3d_video_decoder *decoder_impl = unsafe_impl_from_ID3D11VideoDecoder(decoder);
+    struct wined3d_resource *buffer;
+
+    TRACE("iface %p, decoder %p, type %#x.\n", iface, decoder, type);
+
+    if (!(buffer = wined3d_decoder_get_buffer(decoder_impl->wined3d_decoder, (enum wined3d_decoder_buffer_type)type)))
+        return E_NOTIMPL;
+
+    return wined3d_resource_unmap(buffer, 0);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_video_context_DecoderBeginFrame(ID3D11VideoContext *iface,

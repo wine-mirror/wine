@@ -858,6 +858,13 @@ enum wined3d_pipeline
     WINED3D_PIPELINE_COUNT,
 };
 
+enum wined3d_decoder_buffer_type
+{
+    WINED3D_DECODER_BUFFER_PICTURE_PARAMETERS = 0,
+    WINED3D_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX = 4,
+    WINED3D_DECODER_BUFFER_SLICE_CONTROL = 5,
+};
+
 enum wined3d_memory_segment_group
 {
     WINED3D_MEMORY_SEGMENT_GROUP_LOCAL = 0,
@@ -2369,6 +2376,8 @@ ULONG __cdecl wined3d_command_list_incref(struct wined3d_command_list *list);
 HRESULT __cdecl wined3d_decoder_create(struct wined3d_device *device,
         const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder);
 ULONG __cdecl wined3d_decoder_decref(struct wined3d_decoder *decoder);
+struct wined3d_resource * __cdecl wined3d_decoder_get_buffer(
+        struct wined3d_decoder *decoder, enum wined3d_decoder_buffer_type type);
 
 HRESULT __cdecl wined3d_deferred_context_create(struct wined3d_device *device, struct wined3d_device_context **context);
 void __cdecl wined3d_deferred_context_destroy(struct wined3d_device_context *context);

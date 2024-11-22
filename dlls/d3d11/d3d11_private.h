@@ -628,6 +628,7 @@ struct d3d_video_decoder
 
 HRESULT d3d_video_decoder_create(struct d3d_device *device, const D3D11_VIDEO_DECODER_DESC *desc,
         const D3D11_VIDEO_DECODER_CONFIG *config, struct d3d_video_decoder **decoder);
+struct d3d_video_decoder *unsafe_impl_from_ID3D11VideoDecoder(ID3D11VideoDecoder *iface);
 
 /* Layered device */
 enum dxgi_device_layer_id

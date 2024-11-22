@@ -26,7 +26,15 @@ struct wined3d_decoder
     LONG ref;
     struct wined3d_device *device;
     struct wined3d_decoder_desc desc;
+    struct wined3d_buffer *parameters, *matrix, *slice_control;
 };
+
+static void wined3d_decoder_cleanup(struct wined3d_decoder *decoder)
+{
+    wined3d_buffer_decref(decoder->parameters);
+    wined3d_buffer_decref(decoder->matrix);
+    wined3d_buffer_decref(decoder->slice_control);
+}
 
 ULONG CDECL wined3d_decoder_decref(struct wined3d_decoder *decoder)
 {
@@ -59,12 +67,45 @@ static bool is_supported_codec(struct wined3d_adapter *adapter, const GUID *code
     return false;
 }
 
-static void wined3d_decoder_init(struct wined3d_decoder *decoder,
+static HRESULT wined3d_decoder_init(struct wined3d_decoder *decoder,
         struct wined3d_device *device, const struct wined3d_decoder_desc *desc)
 {
+    HRESULT hr;
+
+    struct wined3d_buffer_desc buffer_desc =
+    {
+        .access = WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W,
+    };
+
     decoder->ref = 1;
     decoder->device = device;
     decoder->desc = *desc;
+
+    buffer_desc.byte_width = sizeof(DXVA_PicParams_H264);
+    if (FAILED(hr = wined3d_buffer_create(device, &buffer_desc,
+            NULL, NULL, &wined3d_null_parent_ops, &decoder->parameters)))
+        return hr;
+
+    buffer_desc.byte_width = sizeof(DXVA_Qmatrix_H264);
+    if (FAILED(hr = wined3d_buffer_create(device, &buffer_desc,
+            NULL, NULL, &wined3d_null_parent_ops, &decoder->matrix)))
+    {
+        wined3d_buffer_decref(decoder->parameters);
+        return hr;
+    }
+
+    /* NVidia gives 64 * sizeof(DXVA_Slice_H264_Long).
+     * AMD gives 4096 bytes. Pick the smaller one. */
+    buffer_desc.byte_width = 4096;
+    if (FAILED(hr = wined3d_buffer_create(device, &buffer_desc,
+            NULL, NULL, &wined3d_null_parent_ops, &decoder->slice_control)))
+    {
+        wined3d_buffer_decref(decoder->matrix);
+        wined3d_buffer_decref(decoder->parameters);
+        return hr;
+    }
+
+    return S_OK;
 }
 
 HRESULT CDECL wined3d_decoder_create(struct wined3d_device *device,
@@ -222,6 +263,7 @@ static void wined3d_decoder_vk_destroy(struct wined3d_decoder *decoder)
 {
     struct wined3d_decoder_vk *decoder_vk = wined3d_decoder_vk(decoder);
 
+    wined3d_decoder_cleanup(decoder);
     wined3d_cs_destroy_object(decoder->device->cs, wined3d_decoder_vk_destroy_object, decoder_vk);
 }
 
@@ -360,11 +402,16 @@ static HRESULT wined3d_decoder_vk_create(struct wined3d_device *device,
         const struct wined3d_decoder_desc *desc, struct wined3d_decoder **decoder)
 {
     struct wined3d_decoder_vk *object;
+    HRESULT hr;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    wined3d_decoder_init(&object->d, device, desc);
+    if (FAILED(hr = wined3d_decoder_init(&object->d, device, desc)))
+    {
+        free(object);
+        return hr;
+    }
 
     wined3d_cs_init_object(device->cs, wined3d_decoder_vk_cs_init, object);
 
@@ -380,3 +427,22 @@ const struct wined3d_decoder_ops wined3d_decoder_vk_ops =
     .create = wined3d_decoder_vk_create,
     .destroy = wined3d_decoder_vk_destroy,
 };
+
+struct wined3d_resource * CDECL wined3d_decoder_get_buffer(
+        struct wined3d_decoder *decoder, enum wined3d_decoder_buffer_type type)
+{
+    switch (type)
+    {
+        case WINED3D_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX:
+            return &decoder->matrix->resource;
+
+        case WINED3D_DECODER_BUFFER_PICTURE_PARAMETERS:
+            return &decoder->parameters->resource;
+
+        case WINED3D_DECODER_BUFFER_SLICE_CONTROL:
+            return &decoder->slice_control->resource;
+    }
+
+    FIXME("Unhandled buffer type %#x.\n", type);
+    return NULL;
+}
