@@ -14,7 +14,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *val );
 static void dump_irp_params( const char *prefix, const union irp_params *val );
 static void dump_luid( const char *prefix, const struct luid *val );
 static void dump_obj_locator( const char *prefix, const struct obj_locator *val );
-static void dump_rectangle( const char *prefix, const rectangle_t *val );
+static void dump_rectangle( const char *prefix, const struct rectangle *val );
 static void dump_timeout( const char *prefix, const timeout_t *val );
 static void dump_uint64( const char *prefix, const unsigned __int64 *val );
 static void dump_varargs_acl( const char *prefix, data_size_t size );

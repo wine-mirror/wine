@@ -471,7 +471,7 @@ static struct message *alloc_hardware_message( lparam_t info, struct hw_msg_sour
 static int is_cursor_clipped( struct desktop *desktop )
 {
     const desktop_shm_t *desktop_shm = desktop->shared;
-    rectangle_t top_rect, clip_rect = desktop_shm->cursor.clip;
+    struct rectangle top_rect, clip_rect = desktop_shm->cursor.clip;
     get_virtual_screen_rect( desktop, &top_rect, 1 );
     return !is_rect_equal( &clip_rect, &top_rect );
 }
@@ -605,10 +605,10 @@ static void get_message_defaults( struct msg_queue *queue, int *x, int *y, unsig
 }
 
 /* set the cursor clip rectangle */
-void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect, unsigned int flags, int reset )
+void set_clip_rectangle( struct desktop *desktop, const struct rectangle *rect, unsigned int flags, int reset )
 {
     const desktop_shm_t *desktop_shm = desktop->shared;
-    rectangle_t top_rect, new_rect;
+    struct rectangle top_rect, new_rect;
     unsigned int old_flags;
     int x, y;
 
@@ -2528,7 +2528,7 @@ static void queue_pointer_message( struct pointer *pointer, int repeated )
     unsigned int i, wparam = input->hw.wparam;
     timeout_t time = get_tick_count();
     user_handle_t win = pointer->win;
-    rectangle_t top_rect;
+    struct rectangle top_rect;
     struct message *msg;
     int x, y;
 

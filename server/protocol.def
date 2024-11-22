@@ -267,13 +267,13 @@ struct property_data
 };
 
 /* structure to specify window rectangles */
-typedef struct
+struct rectangle
 {
     int  left;
     int  top;
     int  right;
     int  bottom;
-} rectangle_t;
+};
 
 /* structure for parameters of async I/O calls */
 struct async_data
@@ -898,10 +898,10 @@ struct directory_entry
 
 struct monitor_info
 {
-    rectangle_t raw;     /* host / physical position of the monitor rect */
-    rectangle_t virt;    /* client / virtual position of the monitor rect */
-    unsigned int flags;  /* MONITOR_FLAG_* flags for the monitor */
-    unsigned int dpi;    /* physical DPI for the monitor */
+    struct rectangle raw;     /* host / physical position of the monitor rect */
+    struct rectangle virt;    /* client / virtual position of the monitor rect */
+    unsigned int     flags;  /* MONITOR_FLAG_* flags for the monitor */
+    unsigned int     dpi;    /* physical DPI for the monitor */
 };
 #define MONITOR_FLAG_PRIMARY  0x01
 #define MONITOR_FLAG_CLONE    0x02
@@ -971,7 +971,7 @@ struct shared_cursor
     int                  x;                /* cursor position */
     int                  y;
     unsigned int         last_change;      /* time of last position change */
-    rectangle_t          clip;             /* cursor clip rectangle */
+    struct rectangle     clip;             /* cursor clip rectangle */
 };
 
 typedef volatile struct
@@ -999,7 +999,7 @@ typedef volatile struct
     user_handle_t        menu_owner;       /* handle to the menu owner */
     user_handle_t        move_size;        /* handle to the moving/resizing window */
     user_handle_t        caret;            /* handle to the caret window */
-    rectangle_t          caret_rect;       /* caret rectangle */
+    struct rectangle     caret_rect;       /* caret rectangle */
     user_handle_t        cursor;           /* handle to the cursor */
     int                  cursor_count;     /* cursor show count */
     unsigned char        keystate[256];    /* key state */
@@ -2684,8 +2684,8 @@ enum message_type
     unsigned int   monitor_dpi;   /* DPI of the window's monitor */
     user_handle_t  handle;        /* handle to the window */
     user_handle_t  previous;      /* previous window in Z order */
-    rectangle_t    window;        /* window rectangle (in parent coords) */
-    rectangle_t    client;        /* client rectangle (in parent coords) */
+    struct rectangle window;      /* window rectangle (in parent coords) */
+    struct rectangle client;      /* client rectangle (in parent coords) */
     VARARG(valid,rectangles);     /* valid rectangles from WM_NCCALCSIZE (in parent coords) */
 @REPLY
     unsigned int   new_style;     /* new window style */
@@ -2703,8 +2703,8 @@ enum message_type
     int            relative;      /* coords relative to (see below) */
     int            dpi;           /* DPI to map to, or zero for per-monitor DPI */
 @REPLY
-    rectangle_t    window;        /* window rectangle */
-    rectangle_t    client;        /* client rectangle */
+    struct rectangle window;      /* window rectangle */
+    struct rectangle client;      /* client rectangle */
 @END
 enum coords_relative
 {
@@ -2749,8 +2749,8 @@ enum coords_relative
     unsigned int   flags;         /* DCX flags */
 @REPLY
     user_handle_t  top_win;       /* top window to clip against */
-    rectangle_t    top_rect;      /* top window visible rect with screen coords */
-    rectangle_t    win_rect;      /* window rect in screen coords */
+    struct rectangle top_rect;    /* top window visible rect with screen coords */
+    struct rectangle win_rect;    /* window rect in screen coords */
     unsigned int   paint_flags;   /* paint flags (from SET_WINPOS_* flags) */
     data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region (in screen coords) */
@@ -2762,7 +2762,7 @@ enum coords_relative
     user_handle_t  window;        /* handle to the window */
     int            surface;       /* get the visible surface region */
 @REPLY
-    rectangle_t    visible_rect;  /* window visible rect in screen coords */
+    struct rectangle visible_rect;/* window visible rect in screen coords */
     data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region (in window coords) */
 @END
@@ -2801,7 +2801,7 @@ enum coords_relative
 /* Update the z order of a window so that a given rectangle is fully visible */
 @REQ(update_window_zorder)
     user_handle_t  window;        /* handle to the window */
-    rectangle_t    rect;          /* rectangle that must be visible (in client coords) */
+    struct rectangle rect;        /* rectangle that must be visible (in client coords) */
 @END
 
 
@@ -3087,7 +3087,7 @@ enum coords_relative
     int            height;        /* caret height */
 @REPLY
     user_handle_t  previous;      /* handle to the previous caret window */
-    rectangle_t    old_rect;      /* previous caret rectangle */
+    struct rectangle old_rect;    /* previous caret rectangle */
     int            old_hide;      /* previous hide count */
     int            old_state;     /* previous caret state (1=on, 0=off) */
 @END
@@ -3103,7 +3103,7 @@ enum coords_relative
     int            state;         /* caret state (see below) */
 @REPLY
     user_handle_t  full_handle;   /* handle to the current caret window */
-    rectangle_t    old_rect;      /* previous caret rectangle */
+    struct rectangle old_rect;    /* previous caret rectangle */
     int            old_hide;      /* previous hide count */
     int            old_state;     /* previous caret state (1=on, 0=off) */
 @END
@@ -3931,7 +3931,7 @@ struct handle_info
     int            show_count;    /* show count increment/decrement */
     int            x;             /* cursor position */
     int            y;
-    rectangle_t    clip;          /* cursor clip rectangle */
+    struct rectangle clip;        /* cursor clip rectangle */
 @REPLY
     user_handle_t  prev_handle;   /* previous handle */
     int            prev_count;    /* previous show count */
@@ -3939,7 +3939,7 @@ struct handle_info
     int            prev_y;
     int            new_x;         /* new position */
     int            new_y;
-    rectangle_t    new_clip;      /* new clip rectangle */
+    struct rectangle new_clip;    /* new clip rectangle */
     unsigned int   last_change;   /* time of last position change */
 @END
 #define SET_CURSOR_HANDLE 0x01

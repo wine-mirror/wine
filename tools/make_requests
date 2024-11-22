@@ -37,7 +37,6 @@ my %formats =
     "unsigned __int64" => [ 8, 8,  "&uint64" ],
     "timeout_t"     => [  8,   8 ],
     "abstime_t"     => [  8,   8 ],
-    "rectangle_t"   => [  16,  4 ],
     "ioctl_code_t"  => [  4,   4 ],
     # structures and unions
     "union apc_call"           => [ 64, 8 ],
@@ -61,6 +60,7 @@ my %formats =
     "struct process_info"      => [ 40, 8 ],
     "struct property_data"     => [ 16, 8 ],
     "struct rawinput_device"   => [ 12, 4 ],
+    "struct rectangle"         => [ 16, 4 ],
     "union select_op"          => [ 264, 8 ],
     "struct startup_info_data" => [ 96, 4 ],
     "union tcp_connection"     => [ 60, 4 ],

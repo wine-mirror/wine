@@ -118,8 +118,8 @@ static inline void *wine_server_get_ptr( client_ptr_t ptr )
     return (void *)(ULONG_PTR)ptr;
 }
 
-/* convert a server rectangle_t to a RECT */
-static inline RECT wine_server_get_rect( rectangle_t rectangle )
+/* convert a server struct rectangle to a RECT */
+static inline RECT wine_server_get_rect( struct rectangle rectangle )
 {
     RECT rect =
     {
@@ -131,10 +131,10 @@ static inline RECT wine_server_get_rect( rectangle_t rectangle )
     return rect;
 }
 
-/* convert a RECT to a server rectangle_t */
-static inline rectangle_t wine_server_rectangle( RECT rect )
+/* convert a RECT to a server struct rectangle */
+static inline struct rectangle wine_server_rectangle( RECT rect )
 {
-    rectangle_t rectangle =
+    struct rectangle rectangle =
     {
         .left = rect.left,
         .top = rect.top,

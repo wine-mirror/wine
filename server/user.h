@@ -130,7 +130,7 @@ extern int init_thread_queue( struct thread *thread );
 extern void check_thread_queue_idle( struct thread *thread );
 extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
 extern void detach_thread_input( struct thread *thread_from );
-extern void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect,
+extern void set_clip_rectangle( struct desktop *desktop, const struct rectangle *rect,
                                 unsigned int flags, int reset );
 extern void update_cursor_pos( struct desktop *desktop );
 extern void post_message( user_handle_t win, unsigned int message,
@@ -151,16 +151,16 @@ extern void set_rawinput_process( struct process *process, int enable );
 extern struct region *create_empty_region(void);
 extern struct region *create_region_from_req_data( const void *data, data_size_t size );
 extern void free_region( struct region *region );
-extern void set_region_rect( struct region *region, const rectangle_t *rect );
-extern rectangle_t *get_region_data( const struct region *region, data_size_t max_size,
-                                     data_size_t *total_size );
-extern rectangle_t *get_region_data_and_free( struct region *region, data_size_t max_size,
-                                              data_size_t *total_size );
+extern void set_region_rect( struct region *region, const struct rectangle *rect );
+extern struct rectangle *get_region_data( const struct region *region, data_size_t max_size,
+                                          data_size_t *total_size );
+extern struct rectangle *get_region_data_and_free( struct region *region, data_size_t max_size,
+                                                   data_size_t *total_size );
 extern int is_region_empty( const struct region *region );
 extern int is_region_equal( const struct region *region1, const struct region *region2 );
-extern void get_region_extents( const struct region *region, rectangle_t *rect );
+extern void get_region_extents( const struct region *region, struct rectangle *rect );
 extern void offset_region( struct region *region, int x, int y );
-extern void mirror_region( const rectangle_t *client_rect, struct region *region );
+extern void mirror_region( const struct rectangle *client_rect, struct region *region );
 extern void scale_region( struct region *region, unsigned int dpi_from, unsigned int dpi_to );
 extern struct region *copy_region( struct region *dst, const struct region *src );
 extern struct region *intersect_region( struct region *dst, const struct region *src1,
@@ -172,12 +172,12 @@ extern struct region *union_region( struct region *dst, const struct region *src
 extern struct region *xor_region( struct region *dst, const struct region *src1,
                                   const struct region *src2 );
 extern int point_in_region( struct region *region, int x, int y );
-extern int rect_in_region( struct region *region, const rectangle_t *rect );
+extern int rect_in_region( struct region *region, const struct rectangle *rect );
 
 /* window functions */
 
 extern struct process *get_top_window_owner( struct desktop *desktop );
-extern void get_virtual_screen_rect( struct desktop *desktop, rectangle_t *rect, int is_raw );
+extern void get_virtual_screen_rect( struct desktop *desktop, struct rectangle *rect, int is_raw );
 extern void post_desktop_message( struct desktop *desktop, unsigned int message,
                                   lparam_t wparam, lparam_t lparam );
 extern void free_window_handle( struct window *win );
@@ -222,18 +222,18 @@ extern void set_thread_default_desktop( struct thread *thread, struct desktop *d
 extern void release_thread_desktop( struct thread *thread, int close );
 
 /* checks if two rectangles are identical */
-static inline int is_rect_equal( const rectangle_t *rect1, const rectangle_t *rect2 )
+static inline int is_rect_equal( const struct rectangle *rect1, const struct rectangle *rect2 )
 {
     return (rect1->left == rect2->left && rect1->right == rect2->right &&
             rect1->top == rect2->top && rect1->bottom == rect2->bottom);
 }
 
-static inline int is_rect_empty( const rectangle_t *rect )
+static inline int is_rect_empty( const struct rectangle *rect )
 {
     return (rect->left >= rect->right || rect->top >= rect->bottom);
 }
 
-static inline int point_in_rect( const rectangle_t *rect, int x, int y )
+static inline int point_in_rect( const struct rectangle *rect, int x, int y )
 {
     return (x >= rect->left && x < rect->right && y >= rect->top && y < rect->bottom);
 }
@@ -244,7 +244,7 @@ static inline int scale_dpi( int val, unsigned int dpi_from, unsigned int dpi_to
     return (val * dpi_to - (dpi_from / 2)) / dpi_from;
 }
 
-static inline void scale_dpi_rect( rectangle_t *rect, unsigned int dpi_from, unsigned int dpi_to )
+static inline void scale_dpi_rect( struct rectangle *rect, unsigned int dpi_from, unsigned int dpi_to )
 {
     rect->left   = scale_dpi( rect->left, dpi_from, dpi_to );
     rect->top    = scale_dpi( rect->top, dpi_from, dpi_to );
@@ -253,7 +253,7 @@ static inline void scale_dpi_rect( rectangle_t *rect, unsigned int dpi_from, uns
 }
 
 /* offset the coordinates of a rectangle */
-static inline void offset_rect( rectangle_t *rect, int offset_x, int offset_y )
+static inline void offset_rect( struct rectangle *rect, int offset_x, int offset_y )
 {
     rect->left   += offset_x;
     rect->top    += offset_y;
@@ -262,7 +262,7 @@ static inline void offset_rect( rectangle_t *rect, int offset_x, int offset_y )
 }
 
 /* mirror a rectangle respective to the window client area */
-static inline void mirror_rect( const rectangle_t *client_rect, rectangle_t *rect )
+static inline void mirror_rect( const struct rectangle *client_rect, struct rectangle *rect )
 {
     int width = client_rect->right - client_rect->left;
     int tmp = rect->left;
@@ -271,7 +271,7 @@ static inline void mirror_rect( const rectangle_t *client_rect, rectangle_t *rec
 }
 
 /* compute the intersection of two rectangles; return 0 if the result is empty */
-static inline int intersect_rect( rectangle_t *dst, const rectangle_t *src1, const rectangle_t *src2 )
+static inline int intersect_rect( struct rectangle *dst, const struct rectangle *src1, const struct rectangle *src2 )
 {
     dst->left   = max( src1->left, src2->left );
     dst->top    = max( src1->top, src2->top );
@@ -280,13 +280,13 @@ static inline int intersect_rect( rectangle_t *dst, const rectangle_t *src1, con
     return !is_rect_empty( dst );
 }
 
-static inline void reset_bounds( rectangle_t *bounds )
+static inline void reset_bounds( struct rectangle *bounds )
 {
     bounds->left = bounds->top = INT_MAX;
     bounds->right = bounds->bottom = INT_MIN;
 }
 
-static inline void union_rect( rectangle_t *dest, const rectangle_t *src1, const rectangle_t *src2 )
+static inline void union_rect( struct rectangle *dest, const struct rectangle *src1, const struct rectangle *src2 )
 {
     if (is_rect_empty( src1 ))
     {

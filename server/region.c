@@ -85,8 +85,8 @@ struct region
 {
     int size;
     int num_rects;
-    rectangle_t *rects;
-    rectangle_t extents;
+    struct rectangle *rects;
+    struct rectangle extents;
 };
 
 
@@ -98,19 +98,19 @@ struct region
     (r1)->bottom > (r2)->top && \
     (r1)->top < (r2)->bottom)
 
-typedef int (*overlap_func_t)( struct region *reg, const rectangle_t *r1, const rectangle_t *r1End,
-                               const rectangle_t *r2, const rectangle_t *r2End, int top, int bottom );
-typedef int (*non_overlap_func_t)( struct region *reg, const rectangle_t *r,
-                                   const rectangle_t *rEnd, int top, int bottom );
+typedef int (*overlap_func_t)( struct region *reg, const struct rectangle *r1, const struct rectangle *r1End,
+                               const struct rectangle *r2, const struct rectangle *r2End, int top, int bottom );
+typedef int (*non_overlap_func_t)( struct region *reg, const struct rectangle *r,
+                                   const struct rectangle *rEnd, int top, int bottom );
 
-static const rectangle_t empty_rect;  /* all-zero rectangle for empty regions */
+static const struct rectangle empty_rect;  /* all-zero rectangle for empty regions */
 
 /* add a rectangle to a region */
-static inline rectangle_t *add_rect( struct region *reg )
+static inline struct rectangle *add_rect( struct region *reg )
 {
     if (reg->num_rects >= reg->size)
     {
-        rectangle_t *new_rect = realloc( reg->rects, 2 * sizeof(rectangle_t) * reg->size );
+        struct rectangle *new_rect = realloc( reg->rects, 2 * sizeof(struct rectangle) * reg->size );
         if (!new_rect)
         {
             set_error( STATUS_NO_MEMORY );
@@ -123,9 +123,9 @@ static inline rectangle_t *add_rect( struct region *reg )
 }
 
 /* make sure all the rectangles are valid and that the region is properly y-x-banded */
-static inline int validate_rectangles( const rectangle_t *rects, unsigned int nb_rects )
+static inline int validate_rectangles( const struct rectangle *rects, unsigned int nb_rects )
 {
-    const rectangle_t *ptr, *end;
+    const struct rectangle *ptr, *end;
 
     for (ptr = rects, end = rects + nb_rects; ptr < end; ptr++)
     {
@@ -149,9 +149,9 @@ static inline int validate_rectangles( const rectangle_t *rects, unsigned int nb
 static int coalesce_region( struct region *pReg, int prevStart, int curStart )
 {
     int curNumRects;
-    rectangle_t *pRegEnd = &pReg->rects[pReg->num_rects];
-    rectangle_t *pPrevRect = &pReg->rects[prevStart];
-    rectangle_t *pCurRect = &pReg->rects[curStart];
+    struct rectangle *pRegEnd = &pReg->rects[pReg->num_rects];
+    struct rectangle *pPrevRect = &pReg->rects[prevStart];
+    struct rectangle *pCurRect = &pReg->rects[curStart];
     int prevNumRects = curStart - prevStart;
     int bandtop = pCurRect->top;
 
@@ -212,14 +212,14 @@ static int region_op( struct region *newReg, const struct region *reg1, const st
                       non_overlap_func_t non_overlap2_func )
 {
     int ybot, ytop, top, bot, prevBand, curBand;
-    const rectangle_t *r1BandEnd, *r2BandEnd;
+    const struct rectangle *r1BandEnd, *r2BandEnd;
 
-    const rectangle_t *r1 = reg1->rects;
-    const rectangle_t *r2 = reg2->rects;
-    const rectangle_t *r1End = r1 + reg1->num_rects;
-    const rectangle_t *r2End = r2 + reg2->num_rects;
+    const struct rectangle *r1 = reg1->rects;
+    const struct rectangle *r2 = reg2->rects;
+    const struct rectangle *r1End = r1 + reg1->num_rects;
+    const struct rectangle *r2End = r2 + reg2->num_rects;
 
-    rectangle_t *new_rects, *old_rects = newReg->rects;
+    struct rectangle *new_rects, *old_rects = newReg->rects;
     int new_size, ret = 0;
 
     new_size = max( reg1->num_rects, reg2->num_rects ) * 2;
@@ -339,7 +339,7 @@ done:
 /* recalculate the extents of a region */
 static void set_region_extents( struct region *region )
 {
-    rectangle_t *pRect, *pRectEnd;
+    struct rectangle *pRect, *pRectEnd;
 
     if (region->num_rects == 0)
     {
@@ -368,8 +368,8 @@ static void set_region_extents( struct region *region )
 
 /* handle an overlapping band for intersect_region */
 static int intersect_overlapping( struct region *pReg,
-                                  const rectangle_t *r1, const rectangle_t *r1End,
-                                  const rectangle_t *r2, const rectangle_t *r2End,
+                                  const struct rectangle *r1, const struct rectangle *r1End,
+                                  const struct rectangle *r2, const struct rectangle *r2End,
                                   int top, int bottom )
 
 {
@@ -382,7 +382,7 @@ static int intersect_overlapping( struct region *pReg,
 
         if (left < right)
         {
-            rectangle_t *rect = add_rect( pReg );
+            struct rectangle *rect = add_rect( pReg );
             if (!rect) return 0;
             rect->left = left;
             rect->top = top;
@@ -402,12 +402,12 @@ static int intersect_overlapping( struct region *pReg,
 }
 
 /* handle a non-overlapping band for subtract_region */
-static int subtract_non_overlapping( struct region *pReg, const rectangle_t *r,
-                                  const rectangle_t *rEnd, int top, int bottom )
+static int subtract_non_overlapping( struct region *pReg, const struct rectangle *r,
+                                     const struct rectangle *rEnd, int top, int bottom )
 {
     while (r != rEnd)
     {
-        rectangle_t *rect = add_rect( pReg );
+        struct rectangle *rect = add_rect( pReg );
         if (!rect) return 0;
         rect->left = r->left;
         rect->top = top;
@@ -420,8 +420,8 @@ static int subtract_non_overlapping( struct region *pReg, const rectangle_t *r,
 
 /* handle an overlapping band for subtract_region */
 static int subtract_overlapping( struct region *pReg,
-                                 const rectangle_t *r1, const rectangle_t *r1End,
-                                 const rectangle_t *r2, const rectangle_t *r2End,
+                                 const struct rectangle *r1, const struct rectangle *r1End,
+                                 const struct rectangle *r2, const struct rectangle *r2End,
                                  int top, int bottom )
 {
     int left = r1->left;
@@ -442,7 +442,7 @@ static int subtract_overlapping( struct region *pReg,
         }
         else if (r2->left < r1->right)
         {
-            rectangle_t *rect = add_rect( pReg );
+            struct rectangle *rect = add_rect( pReg );
             if (!rect) return 0;
             rect->left = left;
             rect->top = top;
@@ -461,7 +461,7 @@ static int subtract_overlapping( struct region *pReg,
         {
             if (r1->right > left)
             {
-                rectangle_t *rect = add_rect( pReg );
+                struct rectangle *rect = add_rect( pReg );
                 if (!rect) return 0;
                 rect->left = left;
                 rect->top = top;
@@ -476,7 +476,7 @@ static int subtract_overlapping( struct region *pReg,
 
     while (r1 != r1End)
     {
-        rectangle_t *rect = add_rect( pReg );
+        struct rectangle *rect = add_rect( pReg );
         if (!rect) return 0;
         rect->left = left;
         rect->top = top;
@@ -489,12 +489,12 @@ static int subtract_overlapping( struct region *pReg,
 }
 
 /* handle a non-overlapping band for union_region */
-static int union_non_overlapping( struct region *pReg, const rectangle_t *r,
-                                  const rectangle_t *rEnd, int top, int bottom )
+static int union_non_overlapping( struct region *pReg, const struct rectangle *r,
+                                  const struct rectangle *rEnd, int top, int bottom )
 {
     while (r != rEnd)
     {
-        rectangle_t *rect = add_rect( pReg );
+        struct rectangle *rect = add_rect( pReg );
         if (!rect) return 0;
         rect->left = r->left;
         rect->top = top;
@@ -507,8 +507,8 @@ static int union_non_overlapping( struct region *pReg, const rectangle_t *r,
 
 /* handle an overlapping band for union_region */
 static int union_overlapping( struct region *pReg,
-                              const rectangle_t *r1, const rectangle_t *r1End,
-                              const rectangle_t *r2, const rectangle_t *r2End,
+                              const struct rectangle *r1, const struct rectangle *r1End,
+                              const struct rectangle *r2, const struct rectangle *r2End,
                               int top, int bottom )
 {
 #define MERGERECT(r) \
@@ -524,7 +524,7 @@ static int union_overlapping( struct region *pReg,
     }  \
     else  \
     {  \
-        rectangle_t *rect = add_rect( pReg ); \
+        struct rectangle *rect = add_rect( pReg ); \
         if (!rect) return 0; \
         rect->top = top;  \
         rect->bottom = bottom;  \
@@ -586,8 +586,8 @@ struct region *create_region_from_req_data( const void *data, data_size_t size )
 {
     unsigned int alloc_rects;
     struct region *region;
-    const rectangle_t *rects = data;
-    int nb_rects = size / sizeof(rectangle_t);
+    const struct rectangle *rects = data;
+    int nb_rects = size / sizeof(struct rectangle);
 
     /* special case: empty region can be specified by a single all-zero rectangle */
     if (nb_rects == 1 && !memcmp( rects, &empty_rect, sizeof(empty_rect) )) nb_rects = 0;
@@ -621,7 +621,7 @@ void free_region( struct region *region )
 }
 
 /* set region to a simple rectangle */
-void set_region_rect( struct region *region, const rectangle_t *rect )
+void set_region_rect( struct region *region, const struct rectangle *rect )
 {
     if (!is_rect_empty( rect ))
     {
@@ -636,11 +636,11 @@ void set_region_rect( struct region *region, const rectangle_t *rect )
 }
 
 /* retrieve the region data for sending to the client */
-rectangle_t *get_region_data( const struct region *region, data_size_t max_size, data_size_t *total_size )
+struct rectangle *get_region_data( const struct region *region, data_size_t max_size, data_size_t *total_size )
 {
-    const rectangle_t *data = region->rects;
+    const struct rectangle *data = region->rects;
 
-    if (!(*total_size = region->num_rects * sizeof(rectangle_t)))
+    if (!(*total_size = region->num_rects * sizeof(struct rectangle)))
     {
         /* return a single empty rect for empty regions */
         *total_size = sizeof(empty_rect);
@@ -652,11 +652,11 @@ rectangle_t *get_region_data( const struct region *region, data_size_t max_size,
 }
 
 /* retrieve the region data for sending to the client and free the region at the same time */
-rectangle_t *get_region_data_and_free( struct region *region, data_size_t max_size, data_size_t *total_size )
+struct rectangle *get_region_data_and_free( struct region *region, data_size_t max_size, data_size_t *total_size )
 {
-    rectangle_t *ret = region->rects;
+    struct rectangle *ret = region->rects;
 
-    if (!(*total_size = region->num_rects * sizeof(rectangle_t)))
+    if (!(*total_size = region->num_rects * sizeof(struct rectangle)))
     {
         /* return a single empty rect for empty regions */
         *total_size = sizeof(empty_rect);
@@ -702,7 +702,7 @@ int is_region_equal( const struct region *region1, const struct region *region2 
 
 
 /* get the extents rect of a region */
-void get_region_extents( const struct region *region, rectangle_t *rect )
+void get_region_extents( const struct region *region, struct rectangle *rect )
 {
     *rect = region->extents;
 }
@@ -710,7 +710,7 @@ void get_region_extents( const struct region *region, rectangle_t *rect )
 /* add an offset to a region */
 void offset_region( struct region *region, int x, int y )
 {
-    rectangle_t *rect, *end;
+    struct rectangle *rect, *end;
 
     if (!region->num_rects) return;
     for (rect = region->rects, end = rect + region->num_rects; rect < end; rect++)
@@ -719,7 +719,7 @@ void offset_region( struct region *region, int x, int y )
 }
 
 /* mirror a region relative to a window client rect */
-void mirror_region( const rectangle_t *client_rect, struct region *region )
+void mirror_region( const struct rectangle *client_rect, struct region *region )
 {
     int start, end, i, j;
 
@@ -729,7 +729,7 @@ void mirror_region( const rectangle_t *client_rect, struct region *region )
             if (region->rects[end + 1].top != region->rects[end].top) break;
         for (i = start, j = end; i < j; i++, j--)
         {
-            rectangle_t rect = region->rects[j];
+            struct rectangle rect = region->rects[j];
             region->rects[i] = region->rects[j];
             region->rects[j] = rect;
             mirror_rect( client_rect, &region->rects[j] );
@@ -744,7 +744,7 @@ void mirror_region( const rectangle_t *client_rect, struct region *region )
 /* scale a region for a given dpi factor */
 void scale_region( struct region *region, unsigned int dpi_from, unsigned int dpi_to )
 {
-    rectangle_t *rect, *end;
+    struct rectangle *rect, *end;
 
     if (!region->num_rects) return;
     for (rect = region->rects, end = rect + region->num_rects; rect < end; rect++)
@@ -760,7 +760,7 @@ struct region *copy_region( struct region *dst, const struct region *src )
 
     if (dst->size < src->num_rects)
     {
-        rectangle_t *rect = realloc( dst->rects, src->num_rects * sizeof(*rect) );
+        struct rectangle *rect = realloc( dst->rects, src->num_rects * sizeof(*rect) );
         if (!rect)
         {
             set_error( STATUS_NO_MEMORY );
@@ -858,7 +858,7 @@ struct region *xor_region( struct region *dst, const struct region *src1,
 /* check if the given point is inside the region */
 int point_in_region( struct region *region, int x, int y )
 {
-    const rectangle_t *ptr, *end;
+    const struct rectangle *ptr, *end;
 
     for (ptr = region->rects, end = region->rects + region->num_rects; ptr < end; ptr++)
     {
@@ -873,9 +873,9 @@ int point_in_region( struct region *region, int x, int y )
 }
 
 /* check if the given rectangle is (at least partially) inside the region */
-int rect_in_region( struct region *region, const rectangle_t *rect )
+int rect_in_region( struct region *region, const struct rectangle *rect )
 {
-    const rectangle_t *ptr, *end;
+    const struct rectangle *ptr, *end;
 
     for (ptr = region->rects, end = region->rects + region->num_rects; ptr < end; ptr++)
     {

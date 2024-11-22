@@ -150,7 +150,7 @@ static void dump_uints64( const char *prefix, const unsigned __int64 *ptr, int l
     fputc( '}', stderr );
 }
 
-static void dump_rectangle( const char *prefix, const rectangle_t *rect )
+static void dump_rectangle( const char *prefix, const struct rectangle *rect )
 {
     fprintf( stderr, "%s{%d,%d;%d,%d}", prefix,
              rect->left, rect->top, rect->right, rect->bottom );
@@ -1018,7 +1018,7 @@ static void dump_varargs_startup_info( const char *prefix, data_size_t size )
 
 static void dump_varargs_rectangles( const char *prefix, data_size_t size )
 {
-    const rectangle_t *rect = cur_data;
+    const struct rectangle *rect = cur_data;
     data_size_t len = size / sizeof(*rect);
 
     fprintf( stderr,"%s{", prefix );

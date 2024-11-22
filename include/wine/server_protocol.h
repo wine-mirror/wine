@@ -251,13 +251,13 @@ struct property_data
 };
 
 
-typedef struct
+struct rectangle
 {
     int  left;
     int  top;
     int  right;
     int  bottom;
-} rectangle_t;
+};
 
 
 struct async_data
@@ -882,10 +882,10 @@ struct directory_entry
 
 struct monitor_info
 {
-    rectangle_t raw;
-    rectangle_t virt;
-    unsigned int flags;
-    unsigned int dpi;
+    struct rectangle raw;
+    struct rectangle virt;
+    unsigned int     flags;
+    unsigned int     dpi;
 };
 #define MONITOR_FLAG_PRIMARY  0x01
 #define MONITOR_FLAG_CLONE    0x02
@@ -955,7 +955,7 @@ struct shared_cursor
     int                  x;
     int                  y;
     unsigned int         last_change;
-    rectangle_t          clip;
+    struct rectangle     clip;
 };
 
 typedef volatile struct
@@ -983,7 +983,7 @@ typedef volatile struct
     user_handle_t        menu_owner;
     user_handle_t        move_size;
     user_handle_t        caret;
-    rectangle_t          caret_rect;
+    struct rectangle     caret_rect;
     user_handle_t        cursor;
     int                  cursor_count;
     unsigned char        keystate[256];
@@ -3618,8 +3618,8 @@ struct set_window_pos_request
     unsigned int   monitor_dpi;
     user_handle_t  handle;
     user_handle_t  previous;
-    rectangle_t    window;
-    rectangle_t    client;
+    struct rectangle window;
+    struct rectangle client;
     /* VARARG(valid,rectangles); */
     char __pad_60[4];
 };
@@ -3646,8 +3646,8 @@ struct get_window_rectangles_request
 struct get_window_rectangles_reply
 {
     struct reply_header __header;
-    rectangle_t    window;
-    rectangle_t    client;
+    struct rectangle window;
+    struct rectangle client;
 };
 enum coords_relative
 {
@@ -3716,8 +3716,8 @@ struct get_visible_region_reply
 {
     struct reply_header __header;
     user_handle_t  top_win;
-    rectangle_t    top_rect;
-    rectangle_t    win_rect;
+    struct rectangle top_rect;
+    struct rectangle win_rect;
     unsigned int   paint_flags;
     data_size_t    total_size;
     /* VARARG(region,rectangles); */
@@ -3736,7 +3736,7 @@ struct get_window_region_request
 struct get_window_region_reply
 {
     struct reply_header __header;
-    rectangle_t    visible_rect;
+    struct rectangle visible_rect;
     data_size_t    total_size;
     /* VARARG(region,rectangles); */
     char __pad_28[4];
@@ -3791,7 +3791,7 @@ struct update_window_zorder_request
 {
     struct request_header __header;
     user_handle_t  window;
-    rectangle_t    rect;
+    struct rectangle rect;
 };
 struct update_window_zorder_reply
 {
@@ -4277,7 +4277,7 @@ struct set_caret_window_reply
 {
     struct reply_header __header;
     user_handle_t  previous;
-    rectangle_t    old_rect;
+    struct rectangle old_rect;
     int            old_hide;
     int            old_state;
     char __pad_36[4];
@@ -4300,7 +4300,7 @@ struct set_caret_info_reply
 {
     struct reply_header __header;
     user_handle_t  full_handle;
-    rectangle_t    old_rect;
+    struct rectangle old_rect;
     int            old_hide;
     int            old_state;
     char __pad_36[4];
@@ -5628,7 +5628,7 @@ struct set_cursor_request
     int            show_count;
     int            x;
     int            y;
-    rectangle_t    clip;
+    struct rectangle clip;
 };
 struct set_cursor_reply
 {
@@ -5639,7 +5639,7 @@ struct set_cursor_reply
     int            prev_y;
     int            new_x;
     int            new_y;
-    rectangle_t    new_clip;
+    struct rectangle new_clip;
     unsigned int   last_change;
     char __pad_52[4];
 };
