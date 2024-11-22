@@ -442,6 +442,8 @@ struct module_format_vtable
                                                          DWORD64 address, struct lineinfo_t *line_info);
     enum method_result          (*advance_line_info)(struct module_format *modfmt,
                                                      struct lineinfo_t *line_info, BOOL forward);
+    enum method_result          (*enumerate_lines)(struct module_format *modfmt, const WCHAR* compiland_regex,
+                                                   const WCHAR *source_file_regex, PSYM_ENUMLINES_CALLBACK cb, void *user);
 };
 
 struct module_format

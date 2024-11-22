@@ -805,12 +805,133 @@ static enum method_result pdb_method_advance_line_info(struct module_format *mod
     return pdb_reader_advance_line_info(pdb, line_info, forward) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
 }
 
+static enum pdb_result pdb_reader_enum_lines_linetab2(struct pdb_reader *pdb, const PDB_SYMBOL_FILE_EX *dbi_cu_header,
+                                                      const WCHAR *source_file_regex, SRCCODEINFO *source_code_info, PSYM_ENUMLINES_CALLBACK cb, void *user)
+{
+    struct pdb_reader_walker linetab2_walker = {dbi_cu_header->stream, dbi_cu_header->symbol_size, dbi_cu_header->symbol_size + dbi_cu_header->lineno2_size};
+    struct pdb_reader_walker walker, sub_walker, checksum_walker;
+    enum pdb_result result;
+    struct CV_DebugSLinesHeader_t lines_hdr;
+    struct CV_DebugSLinesFileBlockHeader_t files_hdr;
+    DWORD64 lineblk_base;
+
+    for (checksum_walker = linetab2_walker; !(result = pdb_reader_subsection_next(pdb, &checksum_walker, DEBUG_S_FILECHKSMS, &sub_walker)); )
+    {
+        checksum_walker = sub_walker;
+        break;
+    }
+    if (result)
+    {
+        WARN("No DEBUG_S_FILECHKSMS found\n");
+        return R_PDB_MISSING_INFORMATION;
+    }
+
+    for (walker = linetab2_walker;
+         !(result = pdb_reader_subsection_next(pdb, &walker, DEBUG_S_LINES, &sub_walker));
+        )
+    {
+        /* Skip blocks that are too small - Intel C Compiler generates these. */
+        if (sub_walker.offset + sizeof(lines_hdr) + sizeof(struct CV_DebugSLinesFileBlockHeader_t) > sub_walker.last)
+            continue;
+        if ((result = pdb_reader_READ(pdb, &sub_walker, &lines_hdr))) return result;
+        if ((result = pdb_reader_get_segment_address(pdb, lines_hdr.segCon, lines_hdr.offCon, &lineblk_base)))
+            return result;
+        for (; (result = pdb_reader_READ(pdb, &sub_walker, &files_hdr)) == R_PDB_SUCCESS; /*lineblk_base += files_hdr.cbBlock*/)
+        {
+            pdbsize_t current_stream_offset;
+            struct CV_Checksum_t checksum;
+            struct CV_Line_t *lines;
+            char *string;
+            unsigned i;
+            BOOL match = TRUE;
+
+            if ((result = pdb_reader_alloc_and_read(pdb, &sub_walker, files_hdr.nLines * sizeof(lines[0]),
+                                                    (void**)&lines))) return result;
+
+            /* should filter on filename */
+            current_stream_offset = checksum_walker.offset;
+            checksum_walker.offset += files_hdr.offFile;
+            if ((result = pdb_reader_READ(pdb, &checksum_walker, &checksum))) return result;
+            if ((result = pdb_reader_alloc_and_fetch_global_string(pdb, checksum.strOffset, &string))) return result;
+            checksum_walker.offset = current_stream_offset;
+
+            if (source_file_regex)
+                match = symt_match_stringAW(string, source_file_regex, FALSE);
+            if (!match)
+            {
+                sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Line_t);
+                if (lines_hdr.flags & CV_LINES_HAVE_COLUMNS)
+                    sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Column_t);
+                continue;
+            }
+            if (strlen(string) < ARRAY_SIZE(source_code_info->FileName))
+                strcpy(source_code_info->FileName, string);
+            else
+                source_code_info->FileName[0] = '\0';
+            pdb_reader_free(pdb, string);
+
+            for (i = 0; i < files_hdr.nLines; i++)
+            {
+                source_code_info->Address = lineblk_base + lines[i].offset;
+                source_code_info->LineNumber = lines[i].linenumStart;
+                if (!cb(source_code_info, user)) return R_PDB_NOT_FOUND;
+            }
+            pdb_reader_free(pdb, lines);
+            if (lines_hdr.flags & CV_LINES_HAVE_COLUMNS)
+                sub_walker.offset += files_hdr.nLines * sizeof(struct CV_Column_t);
+        }
+    }
+    return result == R_PDB_INVALID_ARGUMENT ? R_PDB_SUCCESS : result;
+}
+
+static BOOL pdb_method_enumerate_lines_internal(struct pdb_reader *pdb, const WCHAR* compiland_regex,
+                                                const WCHAR *source_file_regex, PSYM_ENUMLINES_CALLBACK cb, void *user)
+{
+    struct pdb_reader_compiland_iterator compiland_iter;
+    enum pdb_result result;
+    SRCCODEINFO source_code_info;
+
+    source_code_info.SizeOfStruct = sizeof(source_code_info);
+    source_code_info.ModBase = pdb->module->module.BaseOfImage;
+
+    if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter))) return result;
+    do
+    {
+        struct pdb_reader_walker walker = compiland_iter.dbi_walker;
+
+        if ((result = pdb_reader_fetch_string_from_stream(pdb, &walker, source_code_info.Obj, sizeof(source_code_info.Obj))))
+        {
+            if (result == R_PDB_BUFFER_TOO_SMALL) FIXME("NOT EXPECTED --too small\n");
+            return result;
+        }
+
+        /* FIXME should filter on compiland (if present) */
+        if (compiland_iter.dbi_cu_header.lineno2_size)
+        {
+            result = pdb_reader_enum_lines_linetab2(pdb, &compiland_iter.dbi_cu_header, source_file_regex, &source_code_info, cb, user);
+        }
+
+    } while (pdb_reader_compiland_iterator_next(pdb, &compiland_iter) == R_PDB_SUCCESS);
+    return R_PDB_SUCCESS;
+}
+
+static enum method_result pdb_method_enumerate_lines(struct module_format *modfmt, const WCHAR* compiland_regex,
+                                                     const WCHAR *source_file_regex, PSYM_ENUMLINES_CALLBACK cb, void *user)
+{
+    struct pdb_reader *pdb;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+
+    return pdb_method_result(pdb_method_enumerate_lines_internal(pdb, compiland_regex, source_file_regex, cb, user));
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
     NULL,/*pdb_location_compute*/
     pdb_method_get_line_from_address,
     pdb_method_advance_line_info,
+    pdb_method_enumerate_lines,
 };
 
 struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections)

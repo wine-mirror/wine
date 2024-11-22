@@ -2550,18 +2550,32 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     struct module_pair          pair;
     struct hash_table_iter      hti;
     struct symt_ht*             sym;
-    WCHAR*                      srcmask;
+    WCHAR*                      compiland_regex;
+    WCHAR*                      srcfile_regex;
     struct line_info*           dli;
     void*                       ptr;
     SRCCODEINFO                 sci;
     const char*                 file;
+    struct module_format_vtable_iterator iter = {};
 
     if (!cb) return FALSE;
     if (!(dbghelp_options & SYMOPT_LOAD_LINES)) return TRUE;
 
     if (!module_init_pair(&pair, hProcess, base)) return FALSE;
+    if (!(compiland_regex = file_regex(compiland))) return FALSE;
+    if (!(srcfile_regex = file_regex(srcfile))) return FALSE;
+
+    while ((module_format_vtable_iterator_next(pair.effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(enumerate_lines))))
+    {
+        enum method_result result = iter.modfmt->vtable->enumerate_lines(iter.modfmt, compiland_regex, srcfile_regex, cb, user);
+        HeapFree(GetProcessHeap(), 0, compiland_regex);
+        HeapFree(GetProcessHeap(), 0, srcfile_regex);
+        return result == MR_SUCCESS;
+    }
+
     if (compiland) FIXME("Unsupported yet (filtering on compiland %s)\n", debugstr_a(compiland));
-    if (!(srcmask = file_regex(srcfile))) return FALSE;
+    HeapFree(GetProcessHeap(), 0, compiland_regex);
 
     sci.SizeOfStruct = sizeof(sci);
     sci.ModBase      = base;
@@ -2581,7 +2595,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
             if (dli->is_source_file)
             {
                 file = source_get(pair.effective, dli->u.source_file);
-                if (file && symt_match_stringAW(file, srcmask, FALSE))
+                if (file && symt_match_stringAW(file, srcfile_regex, FALSE))
                     strcpy(sci.FileName, file);
                 else
                     sci.FileName[0] = '\0';
@@ -2596,7 +2610,7 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
             }
         }
     }
-    HeapFree(GetProcessHeap(), 0, srcmask);
+    HeapFree(GetProcessHeap(), 0, srcfile_regex);
     return TRUE;
 }
 
