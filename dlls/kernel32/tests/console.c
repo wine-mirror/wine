@@ -5360,7 +5360,6 @@ static void test_CtrlHandlerSubsystem(void)
             ret = GetExitCodeProcess(info.hProcess, &exit_code);
             ok(ret, "Couldn't get exit code\n");
 
-            todo_wine
             ok(exit_code == STATUS_CONTROL_C_EXIT, "Unexpected exit code %#lx, instead of %#lx\n",
                exit_code, STATUS_CONTROL_C_EXIT);
         }
