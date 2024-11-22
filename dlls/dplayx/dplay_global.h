@@ -42,6 +42,9 @@ typedef struct
     DWORD addressSize;
     DPNAME name;
     DPNAME nameA;
+    DWORD reserved1;
+    DWORD reserved2;
+    char *path;
 } DPCONNECTION;
 
 typedef struct tagEnumSessionAsyncCallbackData

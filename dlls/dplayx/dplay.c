@@ -4908,6 +4908,35 @@ static BOOL DP_GetRegStringA( HKEY key, const char *name, const char *defaultVal
     return DP_GetRegString( key, name, defaultValue, (void **) outValue, TRUE );
 }
 
+static BOOL DP_GetRegDword( HKEY key, const WCHAR *name, DWORD *value )
+{
+    DWORD size = sizeof( DWORD );
+    WCHAR *buffer;
+
+    if ( ERROR_SUCCESS == RegGetValueW( key, NULL, name, RRF_RT_DWORD, NULL, value, &size ) )
+        return TRUE;
+
+    buffer = malloc( size );
+    if ( !buffer )
+        return FALSE;
+
+    if ( ERROR_SUCCESS != RegGetValueW( key, NULL, name, RRF_RT_REG_SZ, NULL, buffer, &size ) )
+    {
+        free( buffer );
+        return FALSE;
+    }
+
+    if ( 1 != swscanf( buffer, L"%lu", value ) )
+    {
+        free( buffer );
+        return FALSE;
+    }
+
+    free( buffer );
+
+    return TRUE;
+}
+
 static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
                                 const GUID *addressDataType, struct list *connections )
 {
@@ -4990,6 +5019,33 @@ static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
       continue;
     }
 
+    if( !DP_GetRegDword( hkServiceProvider, L"dwReserved1", &connection->reserved1 ) )
+    {
+      free( connection->nameA.lpszShortNameA );
+      free( connection->name.lpszShortName );
+      free( connection );
+      RegCloseKey( hkServiceProvider );
+      continue;
+    }
+
+    if( !DP_GetRegDword( hkServiceProvider, L"dwReserved2", &connection->reserved2 ) )
+    {
+      free( connection->nameA.lpszShortNameA );
+      free( connection->name.lpszShortName );
+      free( connection );
+      RegCloseKey( hkServiceProvider );
+      continue;
+    }
+
+    if( !DP_GetRegStringA( hkServiceProvider, "Path", NULL, &connection->path ) )
+    {
+      free( connection->nameA.lpszShortNameA );
+      free( connection->name.lpszShortName );
+      free( connection );
+      RegCloseKey( hkServiceProvider );
+      continue;
+    }
+
     RegCloseKey( hkServiceProvider );
 
     /* Create the compound address for the service provider.
@@ -5009,6 +5065,7 @@ static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
                                           &connection->addressSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
     {
       ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
+      free( connection->path );
       free( connection->nameA.lpszShortNameA );
       free( connection->name.lpszShortName );
       free( connection );
@@ -5023,6 +5080,7 @@ static void DP_ReadConnections( const char *searchSubKey, DWORD dwFlags,
     {
       ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
       free( connection->address );
+      free( connection->path );
       free( connection->nameA.lpszShortNameA );
       free( connection->name.lpszShortName );
       free( connection );
@@ -5076,6 +5134,7 @@ void DP_FreeConnections(void)
         list_remove( &connection->entry );
         free( connection->nameA.lpszShortNameA );
         free( connection->name.lpszShortName );
+        free( connection->path );
         free( connection->address );
         free( connection );
     }
@@ -5276,130 +5335,32 @@ static BOOL CALLBACK DP_GetSpLpGuidFromCompoundAddress(
 /* Find and perform a LoadLibrary on the requested SP or LP GUID */
 static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDpSp )
 {
-  UINT i;
-  LPCSTR spSubKey         = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
-  LPCSTR lpSubKey         = "SOFTWARE\\Microsoft\\DirectPlay\\Lobby Providers";
-  LPCSTR guidDataSubKey   = "Guid";
-  LPCSTR majVerDataSubKey = "dwReserved1";
-  LPCSTR minVerDataSubKey = "dwReserved2";
-  LPCSTR pathSubKey       = "Path";
+  DPCONNECTION *connection;
+  struct list *connections;
 
   TRACE( " request to load %s\n", debugstr_guid( lpcGuid ) );
 
-  /* FIXME: Cloned code with a quick hack. */
-  for( i=0; i<2; i++ )
+  connections = DP_GetConnections();
+
+  LIST_FOR_EACH_ENTRY( connection, connections, DPCONNECTION, entry )
   {
-    HKEY hkResult;
-    LPCSTR searchSubKey;
-    char subKeyName[51];
-    DWORD dwIndex, sizeOfSubKeyName=50;
-    FILETIME filetime;
-
-    (i == 0) ? (searchSubKey = spSubKey ) : (searchSubKey = lpSubKey );
-    *lpbIsDpSp = (i == 0);
-
-
-    /* Need to loop over the service providers in the registry */
-    if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
-                         0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
+    /* Determine if this is the Service Provider that the user asked for */
+    if( !IsEqualGUID( &connection->spGuid, lpcGuid ) )
     {
-      /* Hmmm. Does this mean that there are no service providers? */
-      ERR(": no service providers?\n");
-      return 0;
+      continue;
     }
 
-    /* Traverse all the service providers we have available */
-    for( dwIndex=0;
-         RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName,
-                        NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
-         ++dwIndex, sizeOfSubKeyName=51 )
+    if( connection->flags & DPCONNECTION_DIRECTPLAY )
     {
-
-      HKEY     hkServiceProvider;
-      GUID     serviceProviderGUID;
-      DWORD    returnType, sizeOfReturnBuffer = 255;
-      char     returnBuffer[256];
-      WCHAR    buff[51];
-      DWORD    dwTemp, len;
-
-      TRACE(" this time through: %s\n", subKeyName );
-
-      /* Get a handle for this particular service provider */
-      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
-                         &hkServiceProvider ) != ERROR_SUCCESS )
-      {
-         ERR(": what the heck is going on?\n" );
-         continue;
-      }
-
-      if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                            NULL, &returnType, (LPBYTE)returnBuffer,
-                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
-      {
-        ERR(": missing GUID registry data members\n" );
-        continue;
-      }
-
-      /* FIXME: Check return types to ensure we're interpreting data right */
-      MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, ARRAY_SIZE( buff ));
-      CLSIDFromString( buff, &serviceProviderGUID );
-      /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
-
-      /* Determine if this is the Service Provider that the user asked for */
-      if( !IsEqualGUID( &serviceProviderGUID, lpcGuid ) )
-      {
-        continue;
-      }
-
-      if( i == 0 ) /* DP SP */
-      {
-        len = MultiByteToWideChar( CP_ACP, 0, subKeyName, -1, NULL, 0 );
-        lpSpData->lpszName = malloc( len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, subKeyName, -1, lpSpData->lpszName, len );
-      }
-
-      sizeOfReturnBuffer = 255;
-
-      /* Get dwReserved1 */
-      if( RegQueryValueExA( hkServiceProvider, majVerDataSubKey,
-                            NULL, &returnType, (LPBYTE)returnBuffer,
-                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
-      {
-         ERR(": missing dwReserved1 registry data members\n") ;
-         continue;
-      }
-
-      if( i == 0 )
-          memcpy( &lpSpData->dwReserved1, returnBuffer, sizeof(lpSpData->dwReserved1) );
-
-      sizeOfReturnBuffer = 255;
-
-      /* Get dwReserved2 */
-      if( RegQueryValueExA( hkServiceProvider, minVerDataSubKey,
-                            NULL, &returnType, (LPBYTE)returnBuffer,
-                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
-      {
-         ERR(": missing dwReserved1 registry data members\n") ;
-         continue;
-      }
-
-      if( i == 0 )
-          memcpy( &lpSpData->dwReserved2, returnBuffer, sizeof(lpSpData->dwReserved2) );
-
-      sizeOfReturnBuffer = 255;
-
-      /* Get the path for this service provider */
-      if( ( dwTemp = RegQueryValueExA( hkServiceProvider, pathSubKey,
-                            NULL, NULL, (LPBYTE)returnBuffer,
-                            &sizeOfReturnBuffer ) ) != ERROR_SUCCESS )
-      {
-        ERR(": missing PATH registry data members: 0x%08lx\n", dwTemp );
-        continue;
-      }
-
-      TRACE( "Loading %s\n", returnBuffer );
-      return LoadLibraryA( returnBuffer );
+      lpSpData->lpszName = connection->name.lpszShortName;
+      lpSpData->dwReserved1 = connection->reserved1;
+      lpSpData->dwReserved2 = connection->reserved2;
     }
+
+    *lpbIsDpSp = !!(connection->flags & DPCONNECTION_DIRECTPLAY);
+
+    TRACE( "Loading %s\n", connection->path );
+    return LoadLibraryA( connection->path );
   }
 
   return 0;
