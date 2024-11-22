@@ -981,7 +981,7 @@ static void test_http_info(IInternetProtocol *protocol)
     if(tested_protocol != FTP_TEST) {
         ok(hres == S_OK, "QueryInfo failed: %08lx\n", hres);
 
-        ok(!strcmp(buf, "Keep-Alive"), "buf = %s\n", buf);
+        ok(!strcmp(buf, "Keep-Alive") || !strcmp(buf, "Upgrade, Keep-Alive"), "buf = %s\n", buf);
         len = strlen(buf);
         ok(size == len, "size = %lu, expected %lu\n", size, len);
 
