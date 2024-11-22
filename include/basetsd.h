@@ -132,7 +132,8 @@ typedef unsigned __int64 ULONG_PTR, *PULONG_PTR;
 
 typedef int           INT_PTR, *PINT_PTR;
 typedef unsigned int  UINT_PTR, *PUINT_PTR;
-#if defined(__WINESRC__) && defined(__clang__) && defined(__MINGW32__)  /* llvm-mingw warns about long type in %I formats */
+/* clang warns about long type in %I formats */
+#if defined(__WINESRC__) && defined(__clang__) && (defined(__MINGW32__) || defined(_MSC_VER))
 typedef int           LONG_PTR, *PLONG_PTR;
 typedef unsigned int  ULONG_PTR, *PULONG_PTR;
 #else
