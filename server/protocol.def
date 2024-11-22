@@ -2595,19 +2595,6 @@ enum message_type
 @END
 
 
-/* Get a list of the window children */
-@REQ(get_window_children)
-    obj_handle_t   desktop;       /* handle to desktop */
-    user_handle_t  parent;        /* parent window */
-    atom_t         atom;          /* class atom for the listed children */
-    thread_id_t    tid;           /* thread owning the listed children */
-    VARARG(class,unicode_str);    /* class name */
-@REPLY
-    int            count;         /* total count of children */
-    VARARG(children,user_handles); /* children handles */
-@END
-
-
 /* Get a list of the window children that contain a given point */
 @REQ(get_window_children_from_point)
     user_handle_t  parent;        /* parent window */

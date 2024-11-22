@@ -2907,7 +2907,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_INPUTLANGCHANGE:
         {
             struct user_thread_info *info = get_user_thread_info();
-            HWND *win_array = list_window_children( 0, hwnd, NULL, 0 );
+            HWND *win_array = list_window_children( hwnd );
             int count = 0;
             info->kbd_layout = (HKL)lparam;
 
@@ -2941,7 +2941,7 @@ static void update_children_window_state( HWND hwnd )
     HWND *children;
     int i;
 
-    if (!(children = list_window_children( 0, hwnd, NULL, 0 ))) return;
+    if (!(children = list_window_children( hwnd ))) return;
     for (i = 0; children[i]; i++) update_window_state( children[i] );
     free( children );
 }

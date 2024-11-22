@@ -1966,7 +1966,7 @@ BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DWORD new
     {
         HWND *list, *phwnd;
 
-        if ((list = list_window_children( NULL, get_desktop_window(), NULL, 0 )))
+        if ((list = list_window_children( 0 )))
         {
             if (old_thread)
             {

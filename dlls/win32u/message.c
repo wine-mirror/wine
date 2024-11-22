@@ -3753,7 +3753,7 @@ static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_pt
     HWND *list;
 
     if (is_message_broadcastable( info->msg ) &&
-        (list = list_window_children( 0, get_desktop_window(), NULL, 0 )))
+        (list = list_window_children( 0 )))
     {
         int i;
 

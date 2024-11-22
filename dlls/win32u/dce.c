@@ -2155,7 +2155,7 @@ INT WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
 
     if (flags & SW_SCROLLCHILDREN)
     {
-        HWND *list = list_window_children( 0, hwnd, NULL, 0 );
+        HWND *list = list_window_children( hwnd );
         if (list)
         {
             RECT r, dummy;
