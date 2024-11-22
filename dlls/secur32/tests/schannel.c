@@ -1585,8 +1585,8 @@ static void test_application_protocol_negotiation(void)
     {
         ok(protocol.ProtoNegoStatus == SecApplicationProtocolNegotiationStatus_Success, "got %u\n", protocol.ProtoNegoStatus);
         ok(protocol.ProtoNegoExt == SecApplicationProtocolNegotiationExt_ALPN, "got %u\n", protocol.ProtoNegoExt);
-        ok(protocol.ProtocolIdSize == 8, "got %u\n", protocol.ProtocolIdSize);
-        ok(!memcmp(protocol.ProtocolId, "http/1.1", 8), "wrong protocol id\n");
+        ok(protocol.ProtocolIdSize == 2, "got %u\n", protocol.ProtocolIdSize);
+        ok(!memcmp(protocol.ProtocolId, "h2", 2), "wrong protocol id\n");
     }
 
     DeleteSecurityContext(&context);
