@@ -119,7 +119,7 @@ struct context
 {
     struct object   obj;        /* object header */
     unsigned int    status;     /* status of the context */
-    context_t       regs[2];    /* context data */
+    struct context_data regs[2];/* context data */
 };
 #define CTX_NATIVE  0  /* context for native machine */
 #define CTX_WOW     1  /* context if thread is inside WoW */
@@ -1299,7 +1299,7 @@ void kill_thread( struct thread *thread, int violent_death )
 }
 
 /* copy parts of a context structure */
-static void copy_context( context_t *to, const context_t *from, unsigned int flags )
+static void copy_context( struct context_data *to, const struct context_data *from, unsigned int flags )
 {
     assert( to->machine == from->machine );
     if (flags & SERVER_CTX_CONTROL) to->ctl = from->ctl;
@@ -1591,14 +1591,14 @@ DECL_HANDLER(select)
     if (get_req_data_size() - sizeof(*result) < req->size) goto invalid_param;
     if (req->size & 3) goto invalid_param;
     ctx_size = get_req_data_size() - sizeof(*result) - req->size;
-    ctx_count = ctx_size / sizeof(context_t);
-    if (ctx_count * sizeof(context_t) != ctx_size) goto invalid_param;
+    ctx_count = ctx_size / sizeof(struct context_data);
+    if (ctx_count * sizeof(struct context_data) != ctx_size) goto invalid_param;
     if (ctx_count > 1 + (current->process->machine != native_machine)) goto invalid_param;
 
     if (ctx_count)
     {
-        const context_t *native_context = (const context_t *)((const char *)(result + 1) + req->size);
-        const context_t *wow_context = (ctx_count > 1) ? native_context + 1 : NULL;
+        const struct context_data *native_context = (const struct context_data *)((const char *)(result + 1) + req->size);
+        const struct context_data *wow_context = (ctx_count > 1) ? native_context + 1 : NULL;
 
         if (native_context->machine == native_machine)
         {
@@ -1685,14 +1685,14 @@ DECL_HANDLER(select)
         }
         release_object( apc );
     }
-    else if (reply->signaled && get_reply_max_size() >= sizeof(union apc_call) + sizeof(context_t) &&
+    else if (reply->signaled && get_reply_max_size() >= sizeof(union apc_call) + sizeof(struct context_data) &&
              current->context && current->suspend_cookie == req->cookie)
     {
         ctx = current->context;
         if (ctx->regs[CTX_NATIVE].flags || ctx->regs[CTX_WOW].flags)
         {
             union apc_call *data;
-            data_size_t size = sizeof(*data) + (ctx->regs[CTX_WOW].flags ? 2 : 1) * sizeof(context_t);
+            data_size_t size = sizeof(*data) + (ctx->regs[CTX_WOW].flags ? 2 : 1) * sizeof(struct context_data);
             unsigned int flags = system_flags & ctx->regs[CTX_NATIVE].flags;
 
             if (flags) set_thread_context( current, &ctx->regs[CTX_NATIVE], flags );
@@ -1834,9 +1834,9 @@ DECL_HANDLER(get_thread_context)
 {
     struct context *thread_context = NULL;
     struct thread *thread;
-    context_t *context;
+    struct context_data *context;
 
-    if (get_reply_max_size() < 2 * sizeof(context_t))
+    if (get_reply_max_size() < 2 * sizeof(struct context_data))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -1867,10 +1867,10 @@ DECL_HANDLER(get_thread_context)
                     get_thread_context( thread, &thread->context->regs[CTX_NATIVE], system_flags );
                 if (!get_error()) thread_context = (struct context *)grab_object( thread->context );
             }
-            else if (!get_error() && (context = set_reply_data_size( sizeof(context_t) )))
+            else if (!get_error() && (context = set_reply_data_size( sizeof(struct context_data) )))
             {
                 assert( reply->self );
-                memset( context, 0, sizeof(context_t) );
+                memset( context, 0, sizeof(struct context_data) );
                 context->machine = native_machine;
                 if (system_flags) get_thread_context( thread, context, system_flags );
             }
@@ -1888,7 +1888,7 @@ DECL_HANDLER(get_thread_context)
             native_flags = req->native_flags;
             wow_flags = req->flags & ~native_flags;
         }
-        if ((context = set_reply_data_size( (!!native_flags + !!wow_flags) * sizeof(context_t) )))
+        if ((context = set_reply_data_size( (!!native_flags + !!wow_flags) * sizeof(struct context_data) )))
         {
             if (native_flags)
             {
@@ -1921,10 +1921,10 @@ DECL_HANDLER(get_thread_context)
 DECL_HANDLER(set_thread_context)
 {
     struct thread *thread;
-    const context_t *contexts = get_req_data();
-    unsigned int ctx_count = get_req_data_size() / sizeof(context_t);
+    const struct context_data *contexts = get_req_data();
+    unsigned int ctx_count = get_req_data_size() / sizeof(struct context_data);
 
-    if (!ctx_count || ctx_count > 2 || ctx_count * sizeof(context_t) != get_req_data_size())
+    if (!ctx_count || ctx_count > 2 || ctx_count * sizeof(struct context_data) != get_req_data_size())
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -1952,7 +1952,7 @@ DECL_HANDLER(set_thread_context)
 
             if (ctx_count == 2 && (is_pending || thread->context->regs[CTX_WOW].machine))
             {
-                context_t *ctx = &thread->context->regs[CTX_WOW];
+                struct context_data *ctx = &thread->context->regs[CTX_WOW];
 
                 /* some regs are always set from the native context */
                 flags = contexts[CTX_WOW].flags & ~(req->native_flags | SERVER_CTX_EXEC_SPACE);
@@ -1965,7 +1965,7 @@ DECL_HANDLER(set_thread_context)
 
             if (native_flags)
             {
-                context_t *ctx = &thread->context->regs[CTX_NATIVE];
+                struct context_data *ctx = &thread->context->regs[CTX_NATIVE];
                 copy_context( ctx, &contexts[CTX_NATIVE], native_flags );
                 ctx->flags |= native_flags;
             }

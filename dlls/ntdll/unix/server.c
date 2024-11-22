@@ -688,7 +688,7 @@ static void invoke_system_apc( const union apc_call *call, union apc_result *res
  *              server_select
  */
 unsigned int server_select( const union select_op *select_op, data_size_t size, UINT flags,
-                            timeout_t abs_timeout, context_t *context, struct user_apc *user_apc )
+                            timeout_t abs_timeout, struct context_data *context, struct user_apc *user_apc )
 {
     unsigned int ret;
     int cookie;
@@ -701,7 +701,7 @@ unsigned int server_select( const union select_op *select_op, data_size_t size, 
     struct
     {
         union apc_call call;
-        context_t  context[2];
+        struct context_data context[2];
     } reply_data;
 
     memset( &result, 0, sizeof(result) );

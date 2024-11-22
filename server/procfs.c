@@ -208,13 +208,13 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
     /* FIXME: get debug registers */
 }
 
 /* set the thread registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
     /* FIXME: set debug registers */
 }

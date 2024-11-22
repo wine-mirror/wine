@@ -558,7 +558,7 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread x86 registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
     int i, pid = get_ptrace_tid(thread);
     long data[8];
@@ -614,7 +614,7 @@ done:
 }
 
 /* set the thread x86 registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
     int pid = get_ptrace_tid( thread );
 
@@ -681,7 +681,7 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread x86 registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
     int pid = get_ptrace_tid(thread);
     struct dbreg dbregs;
@@ -723,7 +723,7 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
 }
 
 /* set the thread x86 registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
     int pid = get_ptrace_tid(thread);
     struct dbreg dbregs;
@@ -779,12 +779,12 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread x86 registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
 }
 
 /* set the thread x86 debug registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
 }
 

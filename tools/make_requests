@@ -39,11 +39,11 @@ my %formats =
     "abstime_t"     => [  8,   8 ],
     "rectangle_t"   => [  16,  4 ],
     "ioctl_code_t"  => [  4,   4 ],
-    # varargs-only structures
-    "context_t"                => [  1728,  8 ],
+    # structures and unions
     "union apc_call"           => [ 64, 8 ],
     "union apc_result"         => [ 40, 8 ],
     "struct async_data"        => [ 40, 8 ],
+    "struct context_data"      => [ 1728, 8 ],
     "struct cursor_pos"        => [ 24, 8 ],
     "union debug_event_data"   => [ 160, 8 ],
     "struct filesystem_event"  => [ 12, 4 ],

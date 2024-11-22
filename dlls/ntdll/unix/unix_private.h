@@ -209,7 +209,7 @@ extern unsigned int server_call_unlocked( void *req_ptr );
 extern void server_enter_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset );
 extern void server_leave_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset );
 extern unsigned int server_select( const union select_op *select_op, data_size_t size, UINT flags,
-                                   timeout_t abs_timeout, context_t *context, struct user_apc *user_apc );
+                                   timeout_t abs_timeout, struct context_data *context, struct user_apc *user_apc );
 extern unsigned int server_wait( const union select_op *select_op, data_size_t size, UINT flags,
                                  const LARGE_INTEGER *timeout );
 extern unsigned int server_queue_process_apc( HANDLE process, const union apc_call *call,

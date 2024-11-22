@@ -233,7 +233,7 @@ static unsigned int get_native_context_flags( USHORT native_machine, USHORT wow_
  *
  * Copy xstate to the server format.
  */
-static void xstate_to_server( context_t *to, const CONTEXT_EX *xctx )
+static void xstate_to_server( struct context_data *to, const CONTEXT_EX *xctx )
 {
     const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
 
@@ -248,7 +248,7 @@ static void xstate_to_server( context_t *to, const CONTEXT_EX *xctx )
  *
  * Copy exception reporting flags to the server format.
  */
-static void exception_request_flags_to_server( context_t *to, DWORD context_flags )
+static void exception_request_flags_to_server( struct context_data *to, DWORD context_flags )
 {
     if (!(context_flags & CONTEXT_EXCEPTION_REPORTING)) return;
     to->flags |= SERVER_CTX_EXEC_SPACE;
@@ -263,7 +263,7 @@ static void exception_request_flags_to_server( context_t *to, DWORD context_flag
  *
  * Convert a register context to the server format.
  */
-static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void *src, USHORT from_machine )
+static NTSTATUS context_to_server( struct context_data *to, USHORT to_machine, const void *src, USHORT from_machine )
 {
     DWORD i, flags;
 
@@ -631,7 +631,7 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
  *
  * Copy xstate from the server format.
  */
-static void xstate_from_server( CONTEXT_EX *xctx, const context_t *from )
+static void xstate_from_server( CONTEXT_EX *xctx, const struct context_data *from )
 {
     XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
     unsigned int i;
@@ -659,7 +659,7 @@ static void xstate_from_server( CONTEXT_EX *xctx, const context_t *from )
  *
  * Copy exception reporting flags from the server format.
  */
-static void exception_request_flags_from_server( DWORD *context_flags, const context_t *from )
+static void exception_request_flags_from_server( DWORD *context_flags, const struct context_data *from )
 {
     if (!(*context_flags & CONTEXT_EXCEPTION_REQUEST) || !(from->flags & SERVER_CTX_EXEC_SPACE)) return;
     *context_flags = (*context_flags & ~(CONTEXT_SERVICE_ACTIVE | CONTEXT_EXCEPTION_ACTIVE)) | CONTEXT_EXCEPTION_REPORTING;
@@ -673,7 +673,7 @@ static void exception_request_flags_from_server( DWORD *context_flags, const con
  *
  * Convert a register context from the server format.
  */
-static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT machine )
+static NTSTATUS context_from_server( void *dst, const struct context_data *from, USHORT machine )
 {
     DWORD i, to_flags;
 
@@ -1044,7 +1044,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
 /***********************************************************************
  *           contexts_to_server
  */
-static void contexts_to_server( context_t server_contexts[2], CONTEXT *context )
+static void contexts_to_server( struct context_data server_contexts[2], CONTEXT *context )
 {
     unsigned int count = 0;
     void *native_context = get_native_context( context );
@@ -1070,7 +1070,7 @@ static void contexts_to_server( context_t server_contexts[2], CONTEXT *context )
 /***********************************************************************
  *           contexts_from_server
  */
-static void contexts_from_server( CONTEXT *context, context_t server_contexts[2] )
+static void contexts_from_server( CONTEXT *context, struct context_data server_contexts[2] )
 {
     void *native_context = get_native_context( context );
     void *wow_context = get_wow_context( context );
@@ -1491,7 +1491,7 @@ void exit_process( int status )
 void wait_suspend( CONTEXT *context )
 {
     int saved_errno = errno;
-    context_t server_contexts[2];
+    struct context_data server_contexts[2];
 
     contexts_to_server( server_contexts, context );
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
@@ -1537,7 +1537,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
 
     if (handle)
     {
-        context_t server_contexts[2];
+        struct context_data server_contexts[2];
 
         select_op.wait.op = SELECT_WAIT;
         select_op.wait.handles[0] = handle;
@@ -1749,7 +1749,7 @@ NTSTATUS WINAPI NtQueueApcThreadEx( HANDLE handle, HANDLE reserve_handle, PNTAPC
  */
 NTSTATUS set_thread_context( HANDLE handle, const void *context, BOOL *self, USHORT machine )
 {
-    context_t server_contexts[2];
+    struct context_data server_contexts[2];
     unsigned int count = 0;
     unsigned int ret;
 
@@ -1778,7 +1778,7 @@ NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT ma
 {
     unsigned int ret;
     HANDLE context_handle;
-    context_t server_contexts[2];
+    struct context_data server_contexts[2];
     unsigned int count;
     unsigned int flags = get_server_context_flags( context, machine );
 

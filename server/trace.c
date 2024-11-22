@@ -690,8 +690,8 @@ static void dump_varargs_unicode_strings( const char *prefix, data_size_t size )
 
 static void dump_varargs_context( const char *prefix, data_size_t size )
 {
-    const context_t *context = cur_data;
-    context_t ctx;
+    const struct context_data *context = cur_data;
+    struct context_data ctx;
     unsigned int i;
 
     if (!size)

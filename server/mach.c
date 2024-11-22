@@ -173,7 +173,7 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread x86 registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
 #if defined(__i386__) || defined(__x86_64__)
     x86_debug_state_t state;
@@ -259,7 +259,7 @@ done:
 }
 
 /* set the thread x86 registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
 #if defined(__i386__) || defined(__x86_64__)
     x86_debug_state_t state;

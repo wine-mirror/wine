@@ -120,7 +120,7 @@ enum context_exec_space
 };
 
 
-typedef struct
+struct context_data
 {
     unsigned int     machine;
     unsigned int     flags;
@@ -172,7 +172,7 @@ typedef struct
     {
         struct { struct { unsigned __int64 low, high; } ymm_high[16]; } regs;
     } ymm;
-} context_t;
+};
 
 #define SERVER_CTX_CONTROL            0x01
 #define SERVER_CTX_INTEGER            0x02
