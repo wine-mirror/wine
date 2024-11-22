@@ -470,6 +470,51 @@ BOOL WINAPI WTSQuerySessionInformationA(HANDLE server, DWORD session_id, WTS_INF
     if (class == WTSClientProtocolType || class == WTSConnectState)
         return WTSQuerySessionInformationW(server, session_id, class, (WCHAR **)buffer, count);
 
+    if (class == WTSSessionInfo)
+    {
+        DWORD size;
+        WTSINFOA *info;
+        WTSINFOW *infoW;
+
+        if (!WTSQuerySessionInformationW(server, session_id, class, (WCHAR **)&infoW, &size))
+            return FALSE;
+
+        if (!(info = malloc(sizeof(*info))))
+        {
+            WTSFreeMemory(infoW);
+            return FALSE;
+        }
+        memset(info, 0, sizeof(*info));
+        info->State = infoW->State;
+        info->SessionId = infoW->SessionId;
+        size = sizeof(info->WinStationName);
+        if (!WideCharToMultiByte(CP_ACP, 0, infoW->WinStationName, -1, info->WinStationName, size, NULL, NULL))
+        {
+            WTSFreeMemory(infoW);
+            free(info);
+            return FALSE;
+        }
+        size = sizeof(info->Domain);
+        if (!WideCharToMultiByte(CP_ACP, 0, infoW->Domain, -1, info->Domain, size, NULL, NULL))
+        {
+            WTSFreeMemory(infoW);
+            free(info);
+            return FALSE;
+        }
+        size = sizeof(info->UserName);
+        if (!WideCharToMultiByte(CP_ACP, 0, infoW->UserName, -1, info->UserName, size, NULL, NULL))
+        {
+            WTSFreeMemory(infoW);
+            free(info);
+            return FALSE;
+        }
+        info->CurrentTime = infoW->CurrentTime;
+        WTSFreeMemory(infoW);
+        *buffer = (char *)info;
+        *count = sizeof(*info);
+        return TRUE;
+    }
+
     if (!WTSQuerySessionInformationW(server, session_id, class, &bufferW, count))
         return FALSE;
 
@@ -556,6 +601,35 @@ BOOL WINAPI WTSQuerySessionInformationW(HANDLE server, DWORD session_id, WTS_INF
         /* GetComputerNameW() return size doesn't include terminator */
         size++;
         *count = size * sizeof(WCHAR);
+        return TRUE;
+    }
+
+    if (class == WTSSessionInfo)
+    {
+        WTSINFOW *info;
+        FILETIME ft;
+        DWORD size;
+
+        if (!(info = malloc(sizeof(*info)))) return FALSE;
+        FIXME("returning partial WTSINFO\n");
+        memset(info, 0, sizeof(*info));
+        info->State = WTSActive;
+        if (!ProcessIdToSessionId(GetCurrentProcessId(), &info->SessionId))
+        {
+            free(info);
+            return FALSE;
+        }
+        wcscpy(info->WinStationName, L"Console");
+        size = sizeof(info->Domain) / sizeof(WCHAR);
+        GetComputerNameW(info->Domain, &size);
+        size = sizeof(info->UserName) / sizeof(WCHAR);
+        GetUserNameW(info->UserName, &size);
+        GetSystemTimeAsFileTime(&ft);
+        info->CurrentTime.LowPart = ft.dwLowDateTime;
+        info->CurrentTime.HighPart = ft.dwHighDateTime;
+        /* TODO: fill remaining timestamps with real data */
+        *buffer = (WCHAR *)info;
+        *count = sizeof(*info);
         return TRUE;
     }
 
