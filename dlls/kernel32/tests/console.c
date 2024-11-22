@@ -5331,6 +5331,44 @@ static void test_CtrlHandlerSubsystem(void)
         winetest_pop_context();
     }
 
+    /* test default handlers return code */
+    res = snprintf(buf, ARRAY_SIZE(buf), "\"%s\" console no_ctrl_handler %p", cuiexec, event_child);
+    ok((LONG)res >= 0 && res < ARRAY_SIZE(buf), "Truncated string %s (%lu)\n", buf, res);
+
+    ret = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0, NULL, NULL, &si, &info);
+    ok(ret, "CreateProcess failed: %lu %s\n", GetLastError(), cuiexec);
+
+    res = WaitForSingleObject(event_child, 5000);
+    ok(res == WAIT_OBJECT_0, "Child didn't init %lu\n", res);
+
+    pgid = RtlGetCurrentPeb()->ProcessParameters->ProcessGroupId;
+    ret = GenerateConsoleCtrlEvent(CTRL_C_EVENT, pgid);
+    if (!ret && broken(GetLastError() == ERROR_INVALID_PARAMETER) /* Win7 */)
+    {
+        win_skip("Skip test on Win7\n");
+        TerminateProcess(info.hProcess, 0);
+    }
+    else
+    {
+        ok(ret, "GenerateConsoleCtrlEvent failed: %lu\n", GetLastError());
+
+        res = WaitForSingleObject(info.hProcess, 2000);
+        ok(res == WAIT_OBJECT_0, "Expecting child to be terminated\n");
+
+        if (ret)
+        {
+            ret = GetExitCodeProcess(info.hProcess, &exit_code);
+            ok(ret, "Couldn't get exit code\n");
+
+            todo_wine
+            ok(exit_code == STATUS_CONTROL_C_EXIT, "Unexpected exit code %#lx, instead of %#lx\n",
+               exit_code, STATUS_CONTROL_C_EXIT);
+        }
+    }
+
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+
     CloseHandle(event_child);
 
     RtlGetCurrentPeb()->ProcessParameters->ConsoleFlags = saved_console_flags;
@@ -5382,6 +5420,24 @@ START_TEST(console)
 
         WaitForSingleObject(mch_child_kill_event, 1000); /* enough for all events to be distributed? */
         ExitProcess(mch_child_event);
+    }
+
+    if (argc == 4 && !strcmp(argv[2], "no_ctrl_handler"))
+    {
+        HANDLE event;
+
+        SetConsoleCtrlHandler(NULL, FALSE);
+        sscanf(argv[3], "%p", &event);
+        ret = SetEvent(event);
+        ok(ret, "SetEvent failed\n");
+
+        event = CreateEventA(NULL, FALSE, FALSE, NULL);
+        ok(event != NULL, "Couldn't create event\n");
+
+        /* wait for parent to kill us */
+        WaitForSingleObject(event, INFINITE);
+        ok(0, "Shouldn't happen\n");
+        ExitProcess(0xff);
     }
 
     if (argc == 3 && !strcmp(argv[2], "check_console"))
