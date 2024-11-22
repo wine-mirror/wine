@@ -1477,7 +1477,7 @@ static void dump_varargs_tcp_connections( const char *prefix, data_size_t size )
 
 static void dump_varargs_udp_endpoints( const char *prefix, data_size_t size )
 {
-    const udp_endpoint *endpt;
+    const union udp_endpoint *endpt;
 
     fprintf( stderr, "%s{", prefix );
     while (size >= sizeof(*endpt))

@@ -923,6 +923,30 @@ union tcp_connection
     } ipv6;
 };
 
+union udp_endpoint
+{
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+    } common;
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned int addr;
+        unsigned int port;
+    } ipv4;
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned char addr[16];
+        unsigned int scope_id;
+        unsigned int port;
+    } ipv6;
+};
+
 
 
 
@@ -4929,30 +4953,6 @@ struct get_tcp_connections_reply
     char __pad_12[4];
 };
 
-
-typedef union
-{
-    struct
-    {
-        unsigned int family;
-        process_id_t owner;
-    } common;
-    struct
-    {
-        unsigned int family;
-        process_id_t owner;
-        unsigned int addr;
-        unsigned int port;
-    } ipv4;
-    struct
-    {
-        unsigned int family;
-        process_id_t owner;
-        unsigned char addr[16];
-        unsigned int scope_id;
-        unsigned int port;
-    } ipv6;
-} udp_endpoint;
 
 
 struct get_udp_endpoints_request

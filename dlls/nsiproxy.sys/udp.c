@@ -213,7 +213,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
     struct ipv6_addr_scope *addr_scopes = NULL;
     unsigned int addr_scopes_size = 0;
     NTSTATUS ret = STATUS_SUCCESS;
-    udp_endpoint *endpoints = NULL;
+    union udp_endpoint *endpoints = NULL;
 
     TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size, count );
@@ -250,7 +250,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
 
     for (unsigned int i = 0; i < *count; i++)
     {
-        udp_endpoint *endpt = &endpoints[i];
+        union udp_endpoint *endpt = &endpoints[i];
 
         if (key_out)
         {

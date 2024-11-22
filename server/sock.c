@@ -4275,14 +4275,14 @@ DECL_HANDLER(get_tcp_connections)
 struct enum_udp_endpoint_info
 {
     unsigned int count;
-    udp_endpoint *endpt;
+    union udp_endpoint *endpt;
 };
 
 static int enum_udp_endpoints( struct process *process, struct object *obj, void *user )
 {
     struct sock *sock = (struct sock *)obj;
     struct enum_udp_endpoint_info *info = user;
-    udp_endpoint *endpt;
+    union udp_endpoint *endpt;
 
     assert( obj->ops == &sock_ops );
 
@@ -4322,7 +4322,7 @@ static int enum_udp_endpoints( struct process *process, struct object *obj, void
 DECL_HANDLER(get_udp_endpoints)
 {
     struct enum_udp_endpoint_info info;
-    udp_endpoint *endpt;
+    union udp_endpoint *endpt;
     data_size_t max_endpts = get_reply_max_size() / sizeof(*endpt);
 
     info.endpt = NULL;

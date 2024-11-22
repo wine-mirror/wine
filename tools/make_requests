@@ -42,7 +42,6 @@ my %formats =
     "obj_locator_t" => [  16,  8 ],
     # varargs-only structures
     "context_t"                => [  1728,  8 ],
-    "udp_endpoint"             => [  32, 4 ],
     "union apc_call"           => [ 64, 8 ],
     "union apc_result"         => [ 40, 8 ],
     "struct async_data"        => [ 40, 8 ],
@@ -66,6 +65,7 @@ my %formats =
     "struct startup_info_data" => [ 96, 4 ],
     "union tcp_connection"     => [ 60, 4 ],
     "struct thread_info"       => [ 40, 8 ],
+    "union udp_endpoint"       => [ 32, 4 ],
     "struct user_apc"          => [ 40, 8 ],
 );
 
