@@ -1277,6 +1277,8 @@ static void test_combo_dropdown_size(DWORD style)
         {33, 50, -1},
         {35, 100, 40},
         {15, 50, 3},
+        {1, 650, 40},
+        {7, 650, 3},
     };
 
     for (test = 0; test < ARRAY_SIZE(info_height); test++)
@@ -1350,6 +1352,7 @@ static void test_combo_dropdown_size(DWORD style)
             if (expected_height_list < 0)
                 expected_height_list = 0;
 
+            todo_wine_if(height_item * info_test->num_items < list_height_calculated)
             ok(expected_height_list == height_list, "expected list height to be %d, got %d\n",
                     expected_height_list, height_list);
         }
