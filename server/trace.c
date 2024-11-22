@@ -1438,7 +1438,7 @@ static void dump_varargs_tcp_connections( const char *prefix, data_size_t size )
         "TIME_WAIT",
         "DELETE_TCB"
     };
-    const tcp_connection *conn;
+    const union tcp_connection *conn;
 
     fprintf( stderr, "%s{", prefix );
     while (size >= sizeof(*conn))

@@ -891,6 +891,38 @@ struct monitor_info
 #define MONITOR_FLAG_CLONE    0x02
 #define MONITOR_FLAG_INACTIVE 0x04
 
+union tcp_connection
+{
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned int state;
+    } common;
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned int state;
+        unsigned int local_addr;
+        unsigned int local_port;
+        unsigned int remote_addr;
+        unsigned int remote_port;
+    } ipv4;
+    struct
+    {
+        unsigned int family;
+        process_id_t owner;
+        unsigned int state;
+        unsigned char local_addr[16];
+        unsigned int local_scope_id;
+        unsigned int local_port;
+        unsigned char remote_addr[16];
+        unsigned int remote_scope_id;
+        unsigned int remote_port;
+    } ipv6;
+};
+
 
 
 
@@ -4882,38 +4914,6 @@ struct get_system_handles_reply
     char __pad_12[4];
 };
 
-
-typedef union
-{
-    struct
-    {
-        unsigned int family;
-        process_id_t owner;
-        unsigned int state;
-    } common;
-    struct
-    {
-        unsigned int family;
-        process_id_t owner;
-        unsigned int state;
-        unsigned int local_addr;
-        unsigned int local_port;
-        unsigned int remote_addr;
-        unsigned int remote_port;
-    } ipv4;
-    struct
-    {
-        unsigned int family;
-        process_id_t owner;
-        unsigned int state;
-        unsigned char local_addr[16];
-        unsigned int local_scope_id;
-        unsigned int local_port;
-        unsigned char remote_addr[16];
-        unsigned int remote_scope_id;
-        unsigned int remote_port;
-    } ipv6;
-} tcp_connection;
 
 
 struct get_tcp_connections_request

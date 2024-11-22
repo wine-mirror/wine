@@ -4190,7 +4190,7 @@ struct enum_tcp_connection_info
 {
     MIB_TCP_STATE state_filter;
     unsigned int count;
-    tcp_connection *conn;
+    union tcp_connection *conn;
 };
 
 static int enum_tcp_connections( struct process *process, struct object *obj, void *user )
@@ -4198,7 +4198,7 @@ static int enum_tcp_connections( struct process *process, struct object *obj, vo
     struct sock *sock = (struct sock *)obj;
     struct enum_tcp_connection_info *info = user;
     MIB_TCP_STATE socket_state;
-    tcp_connection *conn;
+    union tcp_connection *conn;
 
     assert( obj->ops == &sock_ops );
 
@@ -4254,7 +4254,7 @@ static int enum_tcp_connections( struct process *process, struct object *obj, vo
 DECL_HANDLER(get_tcp_connections)
 {
     struct enum_tcp_connection_info info;
-    tcp_connection *conn;
+    union tcp_connection *conn;
     data_size_t max_conns = get_reply_max_size() / sizeof(*conn);
 
     info.state_filter = req->state_filter;
