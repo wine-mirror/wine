@@ -314,7 +314,7 @@ typedef struct threadlocaleinfostruct {
 #define _THREADLOCALEINFO
 #endif
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || (defined(_MSC_VER) && defined(__clang__))
 #define __WINE_CRT_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 #define __WINE_CRT_SCANF_ATTR(fmt,args)  __attribute__((format (scanf,fmt,args)))
 #else
