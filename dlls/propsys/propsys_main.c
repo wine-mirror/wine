@@ -156,18 +156,45 @@ static ULONG WINAPI propsys_Release(IPropertySystem *iface)
     return 1;
 }
 
+static HRESULT propdesc_from_system_property( IPropertyDescription **out );
+
 static HRESULT WINAPI propsys_GetPropertyDescription(IPropertySystem *iface,
     REFPROPERTYKEY propkey, REFIID riid, void **ppv)
 {
-    FIXME("(%p, %s, %s, %p): stub\n", iface, debugstr_propkey(propkey), debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IPropertyDescription *desc;
+
+    FIXME("(%p, %s, %s, %p): semi-stub!\n", iface, debugstr_propkey(propkey), debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_INVALIDARG;
+    *ppv = NULL;
+    hr = propdesc_from_system_property( &desc );
+    if (FAILED( hr ))
+        return hr;
+
+    hr = IPropertyDescription_QueryInterface( desc, riid, ppv );
+    IPropertyDescription_Release( desc );
+    return hr;
 }
 
 static HRESULT WINAPI propsys_GetPropertyDescriptionByName(IPropertySystem *iface,
     LPCWSTR canonical_name, REFIID riid, void **ppv)
 {
+    HRESULT hr;
+    IPropertyDescription *desc;
+
     FIXME("(%p, %s, %s, %p): stub\n", iface, debugstr_w(canonical_name), debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+
+    if (!ppv)
+        return E_INVALIDARG;
+    *ppv = NULL;
+    hr = propdesc_from_system_property( &desc );
+    if (FAILED( hr ))
+        return hr;
+    hr = IPropertyDescription_QueryInterface( desc, riid, ppv );
+    IPropertyDescription_Release( desc );
+    return hr;
 }
 
 static HRESULT WINAPI propsys_GetPropertyDescriptionListFromString(IPropertySystem *iface,
@@ -550,4 +577,229 @@ HRESULT WINAPI PSCreateMemoryPropertyStore(REFIID riid, void **ppv)
     TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
 
     return PropertyStore_CreateInstance(NULL, riid, ppv);
+}
+
+struct property_description
+{
+    IPropertyDescription IPropertyDescription_iface;
+    LONG ref;
+};
+
+static inline struct property_description *
+impl_from_IPropertyDescription( IPropertyDescription *iface )
+{
+    return CONTAINING_RECORD( iface, struct property_description, IPropertyDescription_iface );
+}
+
+static HRESULT WINAPI propdesc_QueryInterface( IPropertyDescription *iface, REFIID iid, void **out )
+{
+    TRACE( "(%p, %s, %p)\n", iface, debugstr_guid( iid ), out );
+    *out = NULL;
+
+    if (IsEqualGUID( &IID_IUnknown, iid ) ||
+        IsEqualGUID( &IID_IPropertyDescription, iid ))
+    {
+        *out = iface;
+        IUnknown_AddRef( iface );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented\n", debugstr_guid( iid ) );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI propdesc_AddRef( IPropertyDescription *iface )
+{
+    struct property_description *propdesc = impl_from_IPropertyDescription( iface );
+    TRACE( "(%p)\n", iface );
+    return InterlockedIncrement( &propdesc->ref );
+}
+
+static ULONG WINAPI propdesc_Release( IPropertyDescription *iface )
+{
+    struct property_description *propdesc = impl_from_IPropertyDescription( iface );
+    ULONG ref;
+
+    TRACE( "(%p)\n", iface );
+    ref = InterlockedDecrement( &propdesc->ref );
+    if (!ref)
+        free( propdesc );
+
+    return ref;
+}
+
+static HRESULT WINAPI propdesc_GetPropertyKey( IPropertyDescription *iface, PROPERTYKEY *pkey )
+{
+    FIXME( "(%p, %p) stub!\n", iface, pkey );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetCanonicalName( IPropertyDescription *iface, LPWSTR *name )
+{
+    TRACE( "(%p, %p) stub!\n", iface, name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetPropertyType( IPropertyDescription *iface, VARTYPE *vt )
+{
+    FIXME( "(%p, %p) stub!\n", iface, vt );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetDisplayName( IPropertyDescription *iface, LPWSTR *name )
+{
+    FIXME( "(%p, %p) semi-stub!\n", iface, name );
+    return IPropertyDescription_GetCanonicalName( iface, name );
+}
+
+static HRESULT WINAPI propdesc_GetEditInvitation( IPropertyDescription *iface, LPWSTR *invite )
+{
+    FIXME( "(%p, %p) stub!\n", iface, invite );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetTypeFlags( IPropertyDescription *iface, PROPDESC_TYPE_FLAGS mask,
+                                             PROPDESC_TYPE_FLAGS *flags )
+{
+    FIXME( "(%p, %#x, %p) stub!\n", iface, mask, flags );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetViewFlags( IPropertyDescription *iface, PROPDESC_VIEW_FLAGS *flags )
+{
+    FIXME( "(%p, %p) stub!\n", iface, flags );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetDefaultColumnWidth( IPropertyDescription *iface, UINT *chars )
+{
+    FIXME( "(%p, %p) stub!\n", iface, chars );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetDisplayType( IPropertyDescription *iface, PROPDESC_DISPLAYTYPE *type )
+{
+    FIXME( "(%p, %p) stub!\n", iface, type );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetColumnState( IPropertyDescription *iface, SHCOLSTATEF *flags )
+{
+    FIXME( "(%p, %p) stub!\n", iface, flags );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetGroupingRange( IPropertyDescription *iface, PROPDESC_GROUPING_RANGE *range )
+{
+    FIXME( "(%p, %p) stub!\n", iface, range );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetRelativeDescriptionType( IPropertyDescription *iface,
+                                                           PROPDESC_RELATIVEDESCRIPTION_TYPE *type )
+{
+    FIXME( "(%p, %p) stub!\n", iface, type );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetRelativeDescription( IPropertyDescription *iface, REFPROPVARIANT propvar1,
+                                                       REFPROPVARIANT propvar2, LPWSTR *desc1, LPWSTR *desc2 )
+{
+    FIXME( "(%p, %p, %p, %p, %p) stub!\n", iface, propvar1, propvar2, desc1, desc2 );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetSortDescription( IPropertyDescription *iface, PROPDESC_SORTDESCRIPTION *psd )
+{
+    FIXME( "(%p, %p) stub!\n", iface, psd );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetSortDescriptionLabel( IPropertyDescription *iface, BOOL descending, LPWSTR *desc )
+{
+    FIXME( "(%p, %d, %p) stub!\n", iface, descending, desc );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetAggregationType( IPropertyDescription *iface, PROPDESC_AGGREGATION_TYPE *type )
+{
+    FIXME( "(%p, %p) stub!\n", iface, type );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetConditionType( IPropertyDescription *iface, PROPDESC_CONDITION_TYPE *cond_type,
+                                                 CONDITION_OPERATION *op_default )
+{
+    FIXME( "(%p, %p, %p) stub!\n", iface, cond_type, op_default );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_GetEnumTypeList( IPropertyDescription *iface, REFIID riid, void **out )
+{
+    FIXME( "(%p, %s, %p) stub!\n", iface, debugstr_guid( riid ), out );
+    *out = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_CoerceToCanonicalValue( IPropertyDescription *iface, PROPVARIANT *propvar )
+{
+    FIXME( "(%p, %p) stub!\n", iface, propvar );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_FormatForDisplay( IPropertyDescription *iface, REFPROPVARIANT propvar,
+                                        PROPDESC_FORMAT_FLAGS flags, LPWSTR *display )
+{
+    FIXME( "(%p, %p, %#x, %p) stub!\n", iface, propvar, flags, display );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI propdesc_IsValueCanonical( IPropertyDescription *iface, REFPROPVARIANT propvar )
+{
+    FIXME( "(%p, %p) stub!\n", iface, propvar );
+    return E_NOTIMPL;
+}
+
+const static IPropertyDescriptionVtbl property_description_vtbl =
+{
+    /* IUnknown */
+    propdesc_QueryInterface,
+    propdesc_AddRef,
+    propdesc_Release,
+    /* IPropertyDescription */
+    propdesc_GetPropertyKey,
+    propdesc_GetCanonicalName,
+    propdesc_GetPropertyType,
+    propdesc_GetDisplayName,
+    propdesc_GetEditInvitation,
+    propdesc_GetTypeFlags,
+    propdesc_GetViewFlags,
+    propdesc_GetDefaultColumnWidth,
+    propdesc_GetDisplayType,
+    propdesc_GetColumnState,
+    propdesc_GetGroupingRange,
+    propdesc_GetRelativeDescriptionType,
+    propdesc_GetRelativeDescription,
+    propdesc_GetSortDescription,
+    propdesc_GetSortDescriptionLabel,
+    propdesc_GetAggregationType,
+    propdesc_GetConditionType,
+    propdesc_GetEnumTypeList,
+    propdesc_CoerceToCanonicalValue,
+    propdesc_FormatForDisplay,
+    propdesc_IsValueCanonical
+};
+
+static HRESULT propdesc_from_system_property( IPropertyDescription **out )
+{
+    struct property_description *propdesc;
+
+    if (!(propdesc = calloc( 1, sizeof( *propdesc ) )))
+        return E_OUTOFMEMORY;
+
+    propdesc->IPropertyDescription_iface.lpVtbl = &property_description_vtbl;
+    propdesc->ref = 1;
+
+    *out = &propdesc->IPropertyDescription_iface;
+    return S_OK;
 }
