@@ -525,10 +525,10 @@ static void wine_vk_free_command_buffers(struct vulkan_device *device,
         if (!buffer)
             continue;
 
-        device->p_vkFreeCommandBuffers(device->host.device, pool->host_command_pool, 1,
-                                             &buffer->host_command_buffer);
+        device->p_vkFreeCommandBuffers(device->host.device, pool->host.command_pool, 1,
+                                             &buffer->host.command_buffer);
         remove_handle_mapping(instance, &buffer->wrapper_entry);
-        buffer->handle->obj.unix_handle = 0;
+        buffer->client.command_buffer->obj.unix_handle = 0;
         free(buffer);
     }
 }
@@ -705,7 +705,7 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         debug_utils_messenger = (VkDebugUtilsMessengerCreateInfoEXT *) header;
 
         instance->utils_messengers[i].instance = &instance->obj;
-        instance->utils_messengers[i].host_debug_messenger = VK_NULL_HANDLE;
+        instance->utils_messengers[i].host.debug_messenger = VK_NULL_HANDLE;
         instance->utils_messengers[i].user_callback = (UINT_PTR)debug_utils_messenger->pfnUserCallback;
         instance->utils_messengers[i].user_data = (UINT_PTR)debug_utils_messenger->pUserData;
 
@@ -717,7 +717,7 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
     if ((debug_report_callback = find_next_struct(dst->pNext, VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT)))
     {
         instance->default_callback.instance = &instance->obj;
-        instance->default_callback.host_debug_callback = VK_NULL_HANDLE;
+        instance->default_callback.host.debug_callback = VK_NULL_HANDLE;
         instance->default_callback.user_callback = (UINT_PTR)debug_report_callback->pfnCallback;
         instance->default_callback.user_data = (UINT_PTR)debug_report_callback->pUserData;
 
@@ -865,12 +865,12 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBu
     for (i = 0; i < allocate_info->commandBufferCount; i++)
     {
         VkCommandBufferAllocateInfo allocate_info_host;
-        VkCommandBuffer client_command_buffer = *buffers++;
+        VkCommandBuffer host_command_buffer, client_command_buffer = *buffers++;
 
         /* TODO: future extensions (none yet) may require pNext conversion. */
         allocate_info_host.pNext = allocate_info->pNext;
         allocate_info_host.sType = allocate_info->sType;
-        allocate_info_host.commandPool = pool->host_command_pool;
+        allocate_info_host.commandPool = pool->host.command_pool;
         allocate_info_host.level = allocate_info->level;
         allocate_info_host.commandBufferCount = 1;
 
@@ -883,22 +883,24 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBu
             break;
         }
 
-        buffer->handle = client_command_buffer;
-        buffer->device = device;
         res = device->p_vkAllocateCommandBuffers(device->host.device, &allocate_info_host,
-                                                       &buffer->host_command_buffer);
-        client_command_buffer->obj.unix_handle = (uintptr_t)buffer;
-        add_handle_mapping_ptr(instance, buffer->handle, buffer->host_command_buffer, &buffer->wrapper_entry);
+                                                       &host_command_buffer);
         if (res != VK_SUCCESS)
         {
             ERR("Failed to allocate command buffer, res=%d.\n", res);
-            buffer->host_command_buffer = VK_NULL_HANDLE;
+            free(buffer);
             break;
         }
+
+        buffer->host.command_buffer = host_command_buffer;
+        buffer->client.command_buffer = client_command_buffer;
+        buffer->device = device;
+        client_command_buffer->obj.unix_handle = (uintptr_t)buffer;
+        add_handle_mapping_ptr(instance, buffer->client.command_buffer, buffer->host.command_buffer, &buffer->wrapper_entry);
     }
 
     if (res != VK_SUCCESS)
-        wine_vk_free_command_buffers(device, pool, i + 1, buffers);
+        wine_vk_free_command_buffers(device, pool, i, buffers);
 
     return res;
 }
@@ -1329,12 +1331,12 @@ VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCre
         return res;
     }
 
-    object->host_command_pool = host_command_pool;
-    object->handle = (uintptr_t)client_command_pool;
+    object->host.command_pool = host_command_pool;
+    object->client.command_pool = (uintptr_t)client_command_pool;
     client_command_pool->obj.unix_handle = (uintptr_t)object;
 
-    *command_pool = object->handle;
-    add_handle_mapping(instance, *command_pool, object->host_command_pool, &object->wrapper_entry);
+    *command_pool = object->client.command_pool;
+    add_handle_mapping(instance, *command_pool, object->host.command_pool, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -1348,7 +1350,7 @@ void wine_vkDestroyCommandPool(VkDevice client_device, VkCommandPool handle,
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    device->p_vkDestroyCommandPool(device->host.device, pool->host_command_pool, NULL);
+    device->p_vkDestroyCommandPool(device->host.device, pool->host.command_pool, NULL);
     remove_handle_mapping(instance, &pool->wrapper_entry);
     free(pool);
 }
@@ -2049,12 +2051,12 @@ VkResult wine_vkAllocateMemory(VkDevice client_device, const VkMemoryAllocateInf
         return result;
     }
 
-    memory->host_memory = host_device_memory;
+    memory->host.device_memory = host_device_memory;
     memory->size = info.allocationSize;
     memory->vm_map = mapping;
 
     *ret = (VkDeviceMemory)(uintptr_t)memory;
-    add_handle_mapping(instance, *ret, memory->host_memory, &memory->wrapper_entry);
+    add_handle_mapping(instance, *ret, memory->host.device_memory, &memory->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -2074,13 +2076,13 @@ void wine_vkFreeMemory(VkDevice client_device, VkDeviceMemory memory_handle, con
         const VkMemoryUnmapInfoKHR info =
         {
             .sType = VK_STRUCTURE_TYPE_MEMORY_UNMAP_INFO_KHR,
-            .memory = memory->host_memory,
+            .memory = memory->host.device_memory,
             .flags = VK_MEMORY_UNMAP_RESERVE_BIT_EXT,
         };
         device->p_vkUnmapMemory2KHR(device->host.device, &info);
     }
 
-    device->p_vkFreeMemory(device->host.device, memory->host_memory, NULL);
+    device->p_vkFreeMemory(device->host.device, memory->host.device_memory, NULL);
     remove_handle_mapping(instance, &memory->wrapper_entry);
 
     if (memory->vm_map)
@@ -2119,7 +2121,7 @@ VkResult wine_vkMapMemory2KHR(VkDevice client_device, const VkMemoryMapInfoKHR *
     };
     VkResult result;
 
-    info.memory = memory->host_memory;
+    info.memory = memory->host.device_memory;
     if (memory->vm_map)
     {
         *data = (char *)memory->vm_map + info.offset;
@@ -2174,7 +2176,7 @@ VkResult wine_vkMapMemory2KHR(VkDevice client_device, const VkMemoryMapInfoKHR *
     if (NtCurrentTeb()->WowTebOffset && result == VK_SUCCESS && (UINT_PTR)*data >> 32)
     {
         FIXME("returned mapping %p does not fit 32-bit pointer\n", *data);
-        device->p_vkUnmapMemory(device->host.device, memory->host_memory);
+        device->p_vkUnmapMemory(device->host.device, memory->host.device_memory);
         *data = NULL;
         result = VK_ERROR_OUT_OF_HOST_MEMORY;
     }
@@ -2208,12 +2210,12 @@ VkResult wine_vkUnmapMemory2KHR(VkDevice client_device, const VkMemoryUnmapInfoK
     if (!device->p_vkUnmapMemory2KHR)
     {
         assert(!unmap_info->pNext && !memory->vm_map);
-        device->p_vkUnmapMemory(device->host.device, memory->host_memory);
+        device->p_vkUnmapMemory(device->host.device, memory->host.device_memory);
         return VK_SUCCESS;
     }
 
     info = *unmap_info;
-    info.memory = memory->host_memory;
+    info.memory = memory->host.device_memory;
     if (memory->vm_map)
         info.flags |= VK_MEMORY_UNMAP_RESERVE_BIT_EXT;
 
@@ -2433,13 +2435,13 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance client_instance,
         return res;
     }
 
-    object->host_debug_messenger = host_debug_messenger;
+    object->host.debug_messenger = host_debug_messenger;
     object->instance = instance;
     object->user_callback = (UINT_PTR)create_info->pfnUserCallback;
     object->user_data = (UINT_PTR)create_info->pUserData;
 
     *messenger = wine_debug_utils_messenger_to_handle(object);
-    add_handle_mapping(instance, *messenger, object->host_debug_messenger, &object->wrapper_entry);
+    add_handle_mapping(instance, *messenger, object->host.debug_messenger, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -2454,7 +2456,7 @@ void wine_vkDestroyDebugUtilsMessengerEXT(VkInstance client_instance, VkDebugUti
     if (!object)
         return;
 
-    instance->p_vkDestroyDebugUtilsMessengerEXT(instance->host.instance, object->host_debug_messenger, NULL);
+    instance->p_vkDestroyDebugUtilsMessengerEXT(instance->host.instance, object->host.debug_messenger, NULL);
     remove_handle_mapping(instance, &object->wrapper_entry);
 
     free(object);
@@ -2489,13 +2491,13 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance client_instance,
         return res;
     }
 
-    object->host_debug_callback = host_debug_callback;
+    object->host.debug_callback = host_debug_callback;
     object->instance = instance;
     object->user_callback = (UINT_PTR)create_info->pfnCallback;
     object->user_data = (UINT_PTR)create_info->pUserData;
 
     *callback = wine_debug_report_callback_to_handle(object);
-    add_handle_mapping(instance, *callback, object->host_debug_callback, &object->wrapper_entry);
+    add_handle_mapping(instance, *callback, object->host.debug_callback, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -2510,7 +2512,7 @@ void wine_vkDestroyDebugReportCallbackEXT(VkInstance client_instance, VkDebugRep
     if (!object)
         return;
 
-    instance->p_vkDestroyDebugReportCallbackEXT(instance->host.instance, object->host_debug_callback, NULL);
+    instance->p_vkDestroyDebugReportCallbackEXT(instance->host.instance, object->host.debug_callback, NULL);
     remove_handle_mapping(instance, &object->wrapper_entry);
 
     free(object);
@@ -2539,11 +2541,11 @@ VkResult wine_vkCreateDeferredOperationKHR(VkDevice device_handle,
         return res;
     }
 
-    object->host_deferred_operation = host_deferred_operation;
+    object->host.deferred_operation = host_deferred_operation;
     init_conversion_context(&object->ctx);
 
     *operation = wine_deferred_operation_to_handle(object);
-    add_handle_mapping(instance, *operation, object->host_deferred_operation, &object->wrapper_entry);
+    add_handle_mapping(instance, *operation, object->host.deferred_operation, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -2560,7 +2562,7 @@ void wine_vkDestroyDeferredOperationKHR(VkDevice device_handle,
     if (!object)
         return;
 
-    device->p_vkDestroyDeferredOperationKHR(device->host.device, object->host_deferred_operation, NULL);
+    device->p_vkDestroyDeferredOperationKHR(device->host.device, object->host.deferred_operation, NULL);
     remove_handle_mapping(instance, &object->wrapper_entry);
 
     free_conversion_context(&object->ctx);

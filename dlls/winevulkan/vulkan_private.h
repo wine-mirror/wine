@@ -42,17 +42,15 @@ struct wrapper_entry
 
 struct wine_cmd_buffer
 {
-    struct vulkan_device *device; /* parent */
-
-    VkCommandBuffer handle; /* client command buffer */
-    VkCommandBuffer host_command_buffer;
-
+    VULKAN_OBJECT_HEADER( VkCommandBuffer, command_buffer );
+    struct vulkan_device *device;
     struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_cmd_buffer *wine_cmd_buffer_from_handle(VkCommandBuffer handle)
 {
-    return (struct wine_cmd_buffer *)(uintptr_t)handle->obj.unix_handle;
+    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
+    return (struct wine_cmd_buffer *)(UINT_PTR)client->unix_handle;
 }
 
 struct wine_queue
@@ -81,8 +79,8 @@ struct wine_debug_utils_messenger;
 
 struct wine_debug_report_callback
 {
-    struct vulkan_instance *instance; /* parent */
-    VkDebugReportCallbackEXT host_debug_callback;
+    VULKAN_OBJECT_HEADER( VkDebugReportCallbackEXT, debug_callback );
+    struct vulkan_instance *instance;
 
     UINT64 user_callback; /* client pointer */
     UINT64 user_data; /* client pointer */
@@ -133,21 +131,19 @@ C_ASSERT(sizeof(struct wine_instance) == offsetof(struct wine_instance, phys_dev
 
 struct wine_cmd_pool
 {
-    VkCommandPool handle;
-    VkCommandPool host_command_pool;
-
+    VULKAN_OBJECT_HEADER( VkCommandPool, command_pool );
     struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool handle)
 {
-    struct vk_command_pool *client_ptr = command_pool_from_handle(handle);
-    return (struct wine_cmd_pool *)(uintptr_t)client_ptr->obj.unix_handle;
+    struct vulkan_client_object *client = &command_pool_from_handle(handle)->obj;
+    return (struct wine_cmd_pool *)(UINT_PTR)client->unix_handle;
 }
 
 struct wine_device_memory
 {
-    VkDeviceMemory host_memory;
+    VULKAN_OBJECT_HEADER( VkDeviceMemory, device_memory );
     VkDeviceSize size;
     void *vm_map;
 
@@ -161,8 +157,8 @@ static inline struct wine_device_memory *wine_device_memory_from_handle(VkDevice
 
 struct wine_debug_utils_messenger
 {
-    struct vulkan_instance *instance; /* parent */
-    VkDebugUtilsMessengerEXT host_debug_messenger;
+    VULKAN_OBJECT_HEADER( VkDebugUtilsMessengerEXT, debug_messenger );
+    struct vulkan_instance *instance;
 
     UINT64 user_callback; /* client pointer */
     UINT64 user_data; /* client pointer */
@@ -288,7 +284,7 @@ static inline void *conversion_context_alloc(struct conversion_context *pool, si
 
 struct wine_deferred_operation
 {
-    VkDeferredOperationKHR host_deferred_operation;
+    VULKAN_OBJECT_HEADER( VkDeferredOperationKHR, deferred_operation );
     struct conversion_context ctx; /* to keep params alive. */
     struct wrapper_entry wrapper_entry;
 };
