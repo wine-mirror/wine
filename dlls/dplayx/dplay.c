@@ -2116,10 +2116,13 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, DPID *lpidPlayer,
     return DPERR_UNINITIALIZED;
   }
 
+  EnterCriticalSection( &This->lock );
   if( !This->dp2->bConnectionOpen )
   {
+    LeaveCriticalSection( &This->lock );
     return DPERR_INVALIDPARAM;
   }
+  LeaveCriticalSection( &This->lock );
 
   if( lpidPlayer == NULL )
   {
@@ -2948,8 +2951,13 @@ static HRESULT DP_IF_EnumSessions( IDirectPlayImpl *This, DPSESSIONDESC2 *sdesc,
         return DPERR_INVALIDPARAM;
 
     /* Can't enumerate if the interface is already open */
+    EnterCriticalSection( &This->lock );
     if ( This->dp2->bConnectionOpen )
+    {
+        LeaveCriticalSection( &This->lock );
         return DPERR_GENERIC;
+    }
+    LeaveCriticalSection( &This->lock );
 
     /* The loading of a lobby provider _seems_ to require a backdoor loading
      * of the service provider to also associate with this DP object. This is
@@ -3746,11 +3754,14 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
     return DPERR_UNINITIALIZED;
   }
 
+  EnterCriticalSection( &This->lock );
   if( This->dp2->bConnectionOpen )
   {
     TRACE( ": rejecting already open connection.\n" );
+    LeaveCriticalSection( &This->lock );
     return DPERR_ALREADYINITIALIZED;
   }
+  LeaveCriticalSection( &This->lock );
 
   /* If we're enumerating, kill the thread */
   DP_KillEnumSessionThread( This );
