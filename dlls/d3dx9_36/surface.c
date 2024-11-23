@@ -497,7 +497,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
     const struct pixel_format_desc *dst_fmt_desc;
     uint32_t dst_row_pitch, dst_slice_pitch;
     struct d3dx_pixels dst_pixels;
-    ID3DXBuffer *buffer = NULL;
+    ID3DXBuffer *buffer;
     uint8_t *pixels;
     HRESULT hr;
 
@@ -554,7 +554,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
 
     *dst_buffer = buffer;
 exit:
-    if (buffer && *dst_buffer != buffer)
+    if (*dst_buffer != buffer)
         ID3DXBuffer_Release(buffer);
     return hr;
 }
