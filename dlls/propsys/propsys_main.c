@@ -28,6 +28,7 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "propsys.h"
+#include "propkey.h"
 #include "wine/debug.h"
 
 #include "propsys_private.h"
@@ -156,7 +157,8 @@ static ULONG WINAPI propsys_Release(IPropertySystem *iface)
     return 1;
 }
 
-static HRESULT propdesc_from_system_property( IPropertyDescription **out );
+static HRESULT propdesc_get_by_name( const WCHAR *name, IPropertyDescription **desc );
+static HRESULT propdesc_get_by_key( const PROPERTYKEY *key, IPropertyDescription **desc );
 
 static HRESULT WINAPI propsys_GetPropertyDescription(IPropertySystem *iface,
     REFPROPERTYKEY propkey, REFIID riid, void **ppv)
@@ -169,7 +171,7 @@ static HRESULT WINAPI propsys_GetPropertyDescription(IPropertySystem *iface,
     if (!ppv)
         return E_INVALIDARG;
     *ppv = NULL;
-    hr = propdesc_from_system_property( &desc );
+    hr = propdesc_get_by_key( propkey, &desc );
     if (FAILED( hr ))
         return hr;
 
@@ -189,7 +191,7 @@ static HRESULT WINAPI propsys_GetPropertyDescriptionByName(IPropertySystem *ifac
     if (!ppv)
         return E_INVALIDARG;
     *ppv = NULL;
-    hr = propdesc_from_system_property( &desc );
+    hr = propdesc_get_by_name( canonical_name, &desc );
     if (FAILED( hr ))
         return hr;
     hr = IPropertyDescription_QueryInterface( desc, riid, ppv );
@@ -583,6 +585,11 @@ struct property_description
 {
     IPropertyDescription IPropertyDescription_iface;
     LONG ref;
+
+    PROPERTYKEY key;
+    VARTYPE type;
+    PROPDESC_TYPE_FLAGS type_flags;
+    WCHAR *canonical_name;
 };
 
 static inline struct property_description *
@@ -623,27 +630,42 @@ static ULONG WINAPI propdesc_Release( IPropertyDescription *iface )
     TRACE( "(%p)\n", iface );
     ref = InterlockedDecrement( &propdesc->ref );
     if (!ref)
+    {
+        free( propdesc->canonical_name );
         free( propdesc );
+    }
 
     return ref;
 }
 
 static HRESULT WINAPI propdesc_GetPropertyKey( IPropertyDescription *iface, PROPERTYKEY *pkey )
 {
-    FIXME( "(%p, %p) stub!\n", iface, pkey );
-    return E_NOTIMPL;
+    struct property_description *propdesc = impl_from_IPropertyDescription( iface );
+
+    TRACE( "(%p, %p)\n", iface, pkey );
+    *pkey = propdesc->key;
+    return S_OK;
 }
 
 static HRESULT WINAPI propdesc_GetCanonicalName( IPropertyDescription *iface, LPWSTR *name )
 {
-    TRACE( "(%p, %p) stub!\n", iface, name );
-    return E_NOTIMPL;
+    struct property_description *propdesc = impl_from_IPropertyDescription( iface );
+
+    TRACE( "(%p, %p)\n", iface, name );
+    *name = CoTaskMemAlloc( (wcslen( propdesc->canonical_name ) + 1) * sizeof( WCHAR ) );
+    if (!*name)
+        return E_OUTOFMEMORY;
+    wcscpy( *name, propdesc->canonical_name );
+    return S_OK;
 }
 
 static HRESULT WINAPI propdesc_GetPropertyType( IPropertyDescription *iface, VARTYPE *vt )
 {
-    FIXME( "(%p, %p) stub!\n", iface, vt );
-    return E_NOTIMPL;
+    struct property_description *propdesc = impl_from_IPropertyDescription( iface );
+
+    TRACE( "(%p, %p)\n", iface, vt );
+    *vt = propdesc->type;
+    return S_OK;
 }
 
 static HRESULT WINAPI propdesc_GetDisplayName( IPropertyDescription *iface, LPWSTR *name )
@@ -661,8 +683,11 @@ static HRESULT WINAPI propdesc_GetEditInvitation( IPropertyDescription *iface, L
 static HRESULT WINAPI propdesc_GetTypeFlags( IPropertyDescription *iface, PROPDESC_TYPE_FLAGS mask,
                                              PROPDESC_TYPE_FLAGS *flags )
 {
-    FIXME( "(%p, %#x, %p) stub!\n", iface, mask, flags );
-    return E_NOTIMPL;
+    struct property_description *propdesc = impl_from_IPropertyDescription( iface );
+
+    TRACE( "(%p, %#x, %p)\n", iface, mask, flags );
+    *flags = mask & propdesc->type_flags;
+    return S_OK;
 }
 
 static HRESULT WINAPI propdesc_GetViewFlags( IPropertyDescription *iface, PROPDESC_VIEW_FLAGS *flags )
@@ -790,16 +815,95 @@ const static IPropertyDescriptionVtbl property_description_vtbl =
     propdesc_IsValueCanonical
 };
 
-static HRESULT propdesc_from_system_property( IPropertyDescription **out )
+struct system_property_description
+{
+    const WCHAR *canonical_name;
+    const PROPERTYKEY *key;
+
+    VARTYPE type;
+};
+
+/* It may be ideal to construct rb_trees for looking up property descriptions by name and key if this array gets large
+ * enough. */
+static struct system_property_description system_properties[] =
+{
+    {L"System.Devices.ContainerId", &PKEY_Devices_ContainerId, VT_CLSID},
+    {L"System.Devices.InterfaceClassGuid", &PKEY_Devices_InterfaceClassGuid, VT_CLSID},
+    {L"System.Devices.DeviceInstanceId", &PKEY_Devices_DeviceInstanceId, VT_CLSID},
+    {L"System.Devices.InterfaceEnabled", &PKEY_Devices_InterfaceEnabled, VT_BOOL},
+    {L"System.Devices.ClassGuid", &PKEY_Devices_ClassGuid, VT_CLSID},
+    {L"System.Devices.CompatibleIds", &PKEY_Devices_CompatibleIds, VT_VECTOR | VT_LPWSTR},
+    {L"System.Devices.DeviceCapabilities", &PKEY_Devices_DeviceCapabilities, VT_UI2},
+    {L"System.Devices.DeviceHasProblem", &PKEY_Devices_DeviceHasProblem, VT_BOOL},
+    {L"System.Devices.DeviceManufacturer", &PKEY_Devices_DeviceManufacturer, VT_LPWSTR},
+    {L"System.Devices.HardwareIds", &PKEY_Devices_HardwareIds, VT_VECTOR | VT_LPWSTR},
+    {L"System.Devices.Parent", &PKEY_Devices_Parent, VT_LPWSTR},
+    {L"System.ItemNameDisplay", &PKEY_ItemNameDisplay, VT_LPWSTR},
+    {L"System.Devices.Category", &PKEY_Devices_Category, VT_VECTOR | VT_LPWSTR},
+    {L"System.Devices.CategoryIds", &PKEY_Devices_CategoryIds, VT_VECTOR | VT_LPWSTR},
+    {L"System.Devices.CategoryPlural", &PKEY_Devices_CategoryPlural, VT_VECTOR | VT_LPWSTR},
+    {L"System.Devices.Connected", &PKEY_Devices_Connected, VT_BOOL},
+    {L"System.Devices.GlyphIcon", &PKEY_Devices_GlyphIcon, VT_LPWSTR},
+    {L"System.Devices.DevObjectType", &PKEY_Devices_DevObjectType, VT_UI4},
+    {L"System.DeviceInterface.Bluetooth.DeviceAddress", &PKEY_DeviceInterface_Bluetooth_DeviceAddress, VT_LPWSTR},
+    {L"System.Devices.Aep.AepId", &PKEY_Devices_Aep_AepId, VT_LPWSTR},
+    {L"System.Devices.Aep.ProtocolId", &PKEY_Devices_Aep_ProtocolId, VT_CLSID},
+    {L"System.Devices.Aep.IsPaired", &PKEY_Devices_Aep_IsPaired, VT_BOOL},
+    {L"System.Devices.Aep.IsConnected", &PKEY_Devices_Aep_IsConnected, VT_BOOL},
+    {L"System.Devices.Aep.IsConnected", &PKEY_Devices_Aep_IsConnected, VT_BOOL},
+    {L"System.Devices.Aep.Bluetooth.Le.AddressType", &PKEY_Devices_Aep_Bluetooth_Le_AddressType, VT_UI1},
+    {L"System.Devices.Aep.DeviceAddress", &PKEY_Devices_Aep_DeviceAddress, VT_LPWSTR},
+    {L"System.Devices.AepContainer.IsPaired", &PKEY_Devices_AepContainer_IsPaired, VT_BOOL},
+    {L"System.Devices.AepService.ProtocolId", &PKEY_Devices_AepService_ProtocolId, VT_CLSID},
+};
+
+static HRESULT propdesc_from_system_property( const struct system_property_description *desc, IPropertyDescription **out )
 {
     struct property_description *propdesc;
 
-    if (!(propdesc = calloc( 1, sizeof( *propdesc ) )))
+    propdesc = calloc( 1, sizeof( *propdesc ) );
+    if (!propdesc)
         return E_OUTOFMEMORY;
 
     propdesc->IPropertyDescription_iface.lpVtbl = &property_description_vtbl;
+    if (!(propdesc->canonical_name = wcsdup( desc->canonical_name )))
+    {
+        free( propdesc );
+        return E_OUTOFMEMORY;
+    }
+    propdesc->key = *desc->key;
+    propdesc->type = desc->type;
+    propdesc->type_flags = PDTF_ISINNATE;
+    if (propdesc->type & VT_VECTOR)
+        propdesc->type_flags |= PDTF_MULTIPLEVALUES;
     propdesc->ref = 1;
 
     *out = &propdesc->IPropertyDescription_iface;
     return S_OK;
+}
+
+static HRESULT propdesc_get_by_name( const WCHAR *name, IPropertyDescription **desc )
+{
+    SIZE_T i;
+
+    for (i = 0; i < ARRAY_SIZE( system_properties ); i++)
+    {
+        if (!wcscmp( name, system_properties[i].canonical_name ))
+            return propdesc_from_system_property( &system_properties[i], desc );
+    }
+
+    return TYPE_E_ELEMENTNOTFOUND;
+}
+
+static HRESULT propdesc_get_by_key( const PROPERTYKEY *key, IPropertyDescription **desc )
+{
+    SIZE_T i;
+
+    for (i = 0; i < ARRAY_SIZE( system_properties ); i++)
+    {
+        if (!memcmp( key, system_properties[i].key, sizeof( *key ) ))
+            return propdesc_from_system_property( &system_properties[i], desc );
+    }
+
+    return TYPE_E_ELEMENTNOTFOUND;
 }
