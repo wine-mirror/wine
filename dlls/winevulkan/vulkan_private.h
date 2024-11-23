@@ -172,22 +172,10 @@ static inline struct wine_debug_utils_messenger *wine_debug_utils_messenger_from
     return (struct wine_debug_utils_messenger *)(uintptr_t)handle;
 }
 
-static inline VkDebugUtilsMessengerEXT wine_debug_utils_messenger_to_handle(
-        struct wine_debug_utils_messenger *debug_messenger)
-{
-    return (VkDebugUtilsMessengerEXT)(uintptr_t)debug_messenger;
-}
-
 static inline struct wine_debug_report_callback *wine_debug_report_callback_from_handle(
         VkDebugReportCallbackEXT handle)
 {
     return (struct wine_debug_report_callback *)(uintptr_t)handle;
-}
-
-static inline VkDebugReportCallbackEXT wine_debug_report_callback_to_handle(
-        struct wine_debug_report_callback *debug_messenger)
-{
-    return (VkDebugReportCallbackEXT)(uintptr_t)debug_messenger;
 }
 
 struct wine_surface
@@ -206,11 +194,6 @@ static inline struct wine_surface *wine_surface_from_handle(VkSurfaceKHR handle)
     return CONTAINING_RECORD(obj, struct wine_surface, obj);
 }
 
-static inline VkSurfaceKHR wine_surface_to_handle(struct wine_surface *surface)
-{
-    return (VkSurfaceKHR)(uintptr_t)&surface->obj;
-}
-
 struct wine_swapchain
 {
     struct vulkan_swapchain obj;
@@ -224,11 +207,6 @@ static inline struct wine_swapchain *wine_swapchain_from_handle(VkSwapchainKHR h
 {
     struct vulkan_swapchain *obj = vulkan_swapchain_from_handle(handle);
     return CONTAINING_RECORD(obj, struct wine_swapchain, obj);
-}
-
-static inline VkSwapchainKHR wine_swapchain_to_handle(struct wine_swapchain *surface)
-{
-    return (VkSwapchainKHR)(uintptr_t)&surface->obj;
 }
 
 BOOL wine_vk_device_extension_supported(const char *name);
@@ -293,12 +271,6 @@ static inline struct wine_deferred_operation *wine_deferred_operation_from_handl
         VkDeferredOperationKHR handle)
 {
     return (struct wine_deferred_operation *)(uintptr_t)handle;
-}
-
-static inline VkDeferredOperationKHR wine_deferred_operation_to_handle(
-        struct wine_deferred_operation *deferred_operation)
-{
-    return (VkDeferredOperationKHR)(uintptr_t)deferred_operation;
 }
 
 typedef UINT32 PTR32;

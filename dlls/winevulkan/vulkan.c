@@ -1732,7 +1732,7 @@ VkResult wine_vkCreateWin32SurfaceKHR(VkInstance client_instance, const VkWin32S
     if (dummy) NtUserDestroyWindow(dummy);
     window_surfaces_insert(surface);
 
-    *ret = wine_surface_to_handle(surface);
+    *ret = surface->obj.client.surface;
     add_handle_mapping(instance, *ret, surface->obj.host.surface, &surface->wrapper_entry);
     return VK_SUCCESS;
 }
@@ -1851,7 +1851,7 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice client_device, const VkSwapchainCrea
     object->surface = surface;
     object->extents = create_info->imageExtent;
 
-    *ret = wine_swapchain_to_handle(object);
+    *ret = object->obj.client.swapchain;
     add_handle_mapping(instance, *ret, object->obj.host.swapchain, &object->wrapper_entry);
     return VK_SUCCESS;
 }
@@ -2435,7 +2435,7 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance client_instance,
     object->user_callback = (UINT_PTR)create_info->pfnUserCallback;
     object->user_data = (UINT_PTR)create_info->pUserData;
 
-    *messenger = wine_debug_utils_messenger_to_handle(object);
+    *messenger = object->client.debug_messenger;
     add_handle_mapping(instance, *messenger, object->host.debug_messenger, &object->wrapper_entry);
     return VK_SUCCESS;
 }
@@ -2491,7 +2491,7 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance client_instance,
     object->user_callback = (UINT_PTR)create_info->pfnCallback;
     object->user_data = (UINT_PTR)create_info->pUserData;
 
-    *callback = wine_debug_report_callback_to_handle(object);
+    *callback = object->client.debug_callback;
     add_handle_mapping(instance, *callback, object->host.debug_callback, &object->wrapper_entry);
     return VK_SUCCESS;
 }
@@ -2539,7 +2539,7 @@ VkResult wine_vkCreateDeferredOperationKHR(VkDevice device_handle,
     vulkan_object_init(&object->obj, host_deferred_operation);
     init_conversion_context(&object->ctx);
 
-    *operation = wine_deferred_operation_to_handle(object);
+    *operation = object->client.deferred_operation;
     add_handle_mapping(instance, *operation, object->host.deferred_operation, &object->wrapper_entry);
     return VK_SUCCESS;
 }
