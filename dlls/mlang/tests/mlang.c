@@ -2827,6 +2827,9 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
             ret, font_codepages);
 
+    ret = IMLangFontLink_GetFontCodePages(font_link, hdc, font1, NULL);
+    ok(ret == S_OK, "expected S_OK, but got: %lx\n", ret);
+
     IMLangFontLink_ResetFontMapping(font_link);
     IMLangFontLink2_ResetFontMapping(font_link2);
     ReleaseDC(NULL, hdc);
