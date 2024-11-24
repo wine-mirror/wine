@@ -376,7 +376,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         free(instance);
     }
 
-    if (!instance->obj.unix_handle)
+    if (params.result)
         free(instance);
     return params.result;
 }
@@ -583,7 +583,7 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
     params.client_ptr = device;
     status = UNIX_CALL(vkCreateDevice, &params);
     assert(!status);
-    if (!device->obj.unix_handle)
+    if (params.result)
         free(device);
     return params.result;
 }
@@ -618,7 +618,7 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
     params.client_ptr = cmd_pool;
     status = UNIX_CALL(vkCreateCommandPool, &params);
     assert(!status);
-    if (!cmd_pool->obj.unix_handle)
+    if (params.result)
         free(cmd_pool);
     return params.result;
 }
