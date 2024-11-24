@@ -8049,6 +8049,67 @@ static void test_rtlraiseexception(void)
     run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
 }
 
+static DWORD brk_exception_handler_code;
+
+static DWORD WINAPI brk_exception_handler( EXCEPTION_RECORD *rec, void *frame,
+                                           CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+    ok( rec->ExceptionCode == brk_exception_handler_code, "got: %08lx\n", rec->ExceptionCode );
+    ok( rec->NumberParameters == 0, "got: %ld\n", rec->NumberParameters );
+    ok( rec->ExceptionAddress == (void *)context->Pc, "got addr: %p, pc: %p\n", rec->ExceptionAddress, context->Pc );
+    context->Pc += 4;
+    return ExceptionContinueExecution;
+}
+
+
+static void test_brk(void)
+{
+    DWORD call_brk[] =
+    {
+        0xa9bf7bfd, /* 00: stp x29, x30, [sp, #-16]! */
+        0x910003fd, /* 04: mov x29, sp */
+        0x00000000, /* 08: <filled in later> */
+        0xd503201f, /* 0c: nop */
+        0xa8c17bfd, /* 10: ldp x29, x30, [sp], #16 */
+        0xd65f03c0, /* 14: ret */
+    };
+
+    /* brk #0xf000 is tested as part of breakpoint tests */
+
+    brk_exception_handler_code = STATUS_ASSERTION_FAILURE;
+    call_brk[2] = 0xd43e0020; /* 08: brk #0xf001 */
+    run_exception_test( brk_exception_handler, NULL, call_brk,
+                        sizeof(call_brk), sizeof(call_brk),
+                        PAGE_EXECUTE_READ, UNW_FLAG_EHANDLER,
+                        0, 0 );
+
+    /* FIXME: brk #0xf002 needs debug service tests */
+
+    /* brk #0xf003 is tested as part of fastfail tests*/
+
+    brk_exception_handler_code = EXCEPTION_INT_DIVIDE_BY_ZERO;
+    call_brk[2] = 0xd43e0080; /* 08: brk #0xf004 */
+    run_exception_test( brk_exception_handler, NULL, call_brk,
+                        sizeof(call_brk), sizeof(call_brk),
+                        PAGE_EXECUTE_READ, UNW_FLAG_EHANDLER,
+                        0, 0 );
+
+    /* Any unknown immediate raises EXCEPTION_ILLEGAL_INSTRUCTION */
+
+    brk_exception_handler_code = EXCEPTION_ILLEGAL_INSTRUCTION;
+    call_brk[2] = 0xd43e00a0; /* 08: brk #0xf005 */
+    run_exception_test( brk_exception_handler, NULL, call_brk,
+                        sizeof(call_brk), sizeof(call_brk),
+                        PAGE_EXECUTE_READ, UNW_FLAG_EHANDLER,
+                        0, 0 );
+
+    brk_exception_handler_code = EXCEPTION_ILLEGAL_INSTRUCTION;
+    call_brk[2] = 0xd4200000; /* 08: brk #0x0 */
+    run_exception_test( brk_exception_handler, NULL, call_brk,
+                        sizeof(call_brk), sizeof(call_brk),
+                        PAGE_EXECUTE_READ, UNW_FLAG_EHANDLER,
+                        0, 0 );
+}
 
 static LONG consolidate_dummy_called;
 static LONG pass;
@@ -11959,6 +12020,7 @@ START_TEST(exception)
 #elif defined(__aarch64__)
 
     test_continue();
+    test_brk();
     test_nested_exception();
     test_collided_unwind();
     test_restore_context();
