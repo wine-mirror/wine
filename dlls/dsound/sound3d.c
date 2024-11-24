@@ -969,16 +969,22 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetOrientation(IDirectSound3DLi
         D3DVALUE xFront, D3DVALUE yFront, D3DVALUE zFront, D3DVALUE xTop, D3DVALUE yTop,
         D3DVALUE zTop, DWORD dwApply)
 {
-        IDirectSoundBufferImpl *This = impl_from_IDirectSound3DListener(iface);
+	IDirectSoundBufferImpl *This = impl_from_IDirectSound3DListener(iface);
+	D3DVECTOR front = {.x = xFront, .y = yFront, .z = zFront};
+	D3DVECTOR top = {.x = xTop, .y = yTop, .z = zTop};
+	D3DVALUE angle = 0;
 
 	TRACE("setting: Front vector = (%f,%f,%f); Top vector = (%f,%f,%f); dwApply = %ld\n",
 	xFront, yFront, zFront, xTop, yTop, zTop, dwApply);
-	This->device->ds3dl.vOrientFront.x = xFront;
-	This->device->ds3dl.vOrientFront.y = yFront;
-	This->device->ds3dl.vOrientFront.z = zFront;
-	This->device->ds3dl.vOrientTop.x = xTop;
-	This->device->ds3dl.vOrientTop.y = yTop;
-	This->device->ds3dl.vOrientTop.z = zTop;
+
+	if ((angle = AngleBetweenVectorsDeg(&front, &top)) == 0.0f)
+	{
+		WARN("Angle %f is 0 degrees\n", angle);
+		return DSERR_INVALIDPARAM;
+	}
+
+	This->device->ds3dl.vOrientFront = front;
+	This->device->ds3dl.vOrientTop = top;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
 		This->device->ds3dl_need_recalc = FALSE;
