@@ -96,6 +96,7 @@ static void test_JsonValueStatics(void)
     IJsonValueStatics *json_value_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     IJsonValue *json_value = (void *)0xdeadbeef;
+    JsonValueType json_value_type;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -121,17 +122,31 @@ static void test_JsonValueStatics(void)
 
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, NULL, &json_value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    if (hr == S_OK) IJsonValue_Release( json_value );
+    hr = IJsonValue_get_ValueType( json_value, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IJsonValue_get_ValueType( json_value, &json_value_type );
+    todo_wine
+    ok( json_value_type == JsonValueType_String, "got JsonValueType %d.\n", json_value_type );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ref = IJsonValue_Release( json_value );
+    ok( ref == 0, "got ref %ld.\n", ref );
     hr = WindowsCreateString( L"Wine", wcslen( L"Wine" ), &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, str, NULL );
     ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, str, &json_value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IJsonValue_get_ValueType( json_value, &json_value_type );
+    todo_wine
+    ok( json_value_type == JsonValueType_String, "got JsonValueType %d.\n", json_value_type );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
     WindowsDeleteString( str );
-
     ref = IJsonValue_Release( json_value );
     ok( ref == 0, "got ref %ld.\n", ref );
+
     ref = IJsonValueStatics_Release( json_value_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
