@@ -1103,6 +1103,8 @@ static UINT parse_suminfo( MSISUMMARYINFO *si, MSIPACKAGE *package )
     package->version = msi_suminfo_get_int32( si, PID_PAGECOUNT );
     TRACE("version: %d\n", package->version);
 
+    package->platform = PLATFORM_INTEL;
+
     template = msi_suminfo_dup_string( si, PID_TEMPLATE );
     if (!template)
         return ERROR_SUCCESS; /* native accepts missing template property */
