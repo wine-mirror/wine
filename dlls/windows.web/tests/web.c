@@ -123,12 +123,9 @@ static void test_JsonValueStatics(void)
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, NULL, &json_value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IJsonValue_get_ValueType( json_value, NULL );
-    todo_wine
     ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     hr = IJsonValue_get_ValueType( json_value, &json_value_type );
-    todo_wine
     ok( json_value_type == JsonValueType_String, "got JsonValueType %d.\n", json_value_type );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ref = IJsonValue_Release( json_value );
     ok( ref == 0, "got ref %ld.\n", ref );
@@ -139,9 +136,7 @@ static void test_JsonValueStatics(void)
     hr = IJsonValueStatics_CreateStringValue( json_value_statics, str, &json_value );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     hr = IJsonValue_get_ValueType( json_value, &json_value_type );
-    todo_wine
     ok( json_value_type == JsonValueType_String, "got JsonValueType %d.\n", json_value_type );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     WindowsDeleteString( str );
     ref = IJsonValue_Release( json_value );

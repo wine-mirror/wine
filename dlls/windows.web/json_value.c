@@ -120,6 +120,7 @@ struct json_value
     IJsonValue IJsonValue_iface;
     LONG ref;
 
+    JsonValueType json_value_type;
     HSTRING string_value;
 };
 
@@ -192,8 +193,14 @@ static HRESULT WINAPI json_value_GetTrustLevel( IJsonValue *iface, TrustLevel *t
 
 static HRESULT WINAPI json_value_get_ValueType( IJsonValue *iface, JsonValueType *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct json_value *impl = impl_from_IJsonValue( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (!value) return E_POINTER;
+
+    *value = impl->json_value_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI json_value_Stringify( IJsonValue *iface, HSTRING *value )
@@ -289,6 +296,7 @@ static HRESULT WINAPI json_value_statics_CreateStringValue( IJsonValueStatics *i
 
     impl->IJsonValue_iface.lpVtbl = &json_value_vtbl;
     impl->ref = 1;
+    impl->json_value_type = JsonValueType_String;
     if (FAILED(hr = WindowsDuplicateString( input, &impl->string_value )))
     {
          free( impl );
