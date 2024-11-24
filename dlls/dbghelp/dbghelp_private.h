@@ -470,7 +470,6 @@ struct module
 
     /* types */
     struct hash_table           ht_types;
-    struct vector               vtypes;
 
     /* source files */
     unsigned                    sources_used;
