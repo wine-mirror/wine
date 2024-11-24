@@ -460,6 +460,41 @@ struct symt_typedef* symt_new_typedef(struct module* module, struct symt* ref,
     return sym;
 }
 
+static BOOL sym_enum_types(struct module_pair *pair, const char *type_name, PSYM_ENUMERATESYMBOLS_CALLBACK cb, void *user)
+{
+    char                buffer[sizeof(SYMBOL_INFO) + 256];
+    struct symt        *type;
+    SYMBOL_INFO        *sym_info = (SYMBOL_INFO*)buffer;
+    DWORD64             size;
+    unsigned int        i;
+    const char         *tname;
+
+    sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
+    sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
+
+    for (i = 0; i < vector_length(&pair->effective->vtypes); i++)
+    {
+        type = *(struct symt**)vector_at(&pair->effective->vtypes, i);
+        tname = symt_get_name(type);
+        if (!tname || !*tname) continue;
+        if (type_name && !SymMatchStringA(tname, type_name, TRUE)) continue;
+        sym_info->TypeIndex = symt_ptr2index(pair->effective, type);
+        sym_info->Index = 0; /* FIXME */
+        symt_get_info(pair->effective, type, TI_GET_LENGTH, &size);
+        sym_info->Size = size;
+        sym_info->ModBase = pair->requested->module.BaseOfImage;
+        sym_info->Flags = 0; /* FIXME */
+        sym_info->Value = 0; /* FIXME */
+        sym_info->Address = 0; /* FIXME */
+        sym_info->Register = 0; /* FIXME */
+        sym_info->Scope = 0; /* FIXME */
+        sym_info->Tag = type->tag;
+        symbol_setname(sym_info, symt_get_name(type));
+        if (!cb(sym_info, sym_info->Size, user)) return FALSE;
+    }
+    return TRUE;
+}
+
 /******************************************************************
  *		SymEnumTypes (DBGHELP.@)
  *
@@ -469,36 +504,12 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
                          PVOID UserContext)
 {
     struct module_pair  pair;
-    char                buffer[sizeof(SYMBOL_INFO) + 256];
-    SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
-    struct symt*        type;
-    DWORD64             size;
-    unsigned int        i;
 
     TRACE("(%p %I64x %p %p)\n", hProcess, BaseOfDll, EnumSymbolsCallback, UserContext);
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
 
-    sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
-    sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
-
-    for (i=0; i<vector_length(&pair.effective->vtypes); i++)
-    {
-        type = *(struct symt**)vector_at(&pair.effective->vtypes, i);
-        sym_info->TypeIndex = symt_ptr2index(pair.effective, type);
-        sym_info->Index = 0; /* FIXME */
-        symt_get_info(pair.effective, type, TI_GET_LENGTH, &size);
-        sym_info->Size = size;
-        sym_info->ModBase = pair.requested->module.BaseOfImage;
-        sym_info->Flags = 0; /* FIXME */
-        sym_info->Value = 0; /* FIXME */
-        sym_info->Address = 0; /* FIXME */
-        sym_info->Register = 0; /* FIXME */
-        sym_info->Scope = 0; /* FIXME */
-        sym_info->Tag = type->tag;
-        symbol_setname(sym_info, symt_get_name(type));
-        if (!EnumSymbolsCallback(sym_info, sym_info->Size, UserContext)) break;
-    }
+    sym_enum_types(&pair, NULL, EnumSymbolsCallback, UserContext);
     return TRUE;
 }
 
@@ -534,41 +545,6 @@ BOOL WINAPI SymEnumTypesW(HANDLE hProcess, ULONG64 BaseOfDll,
     return SymEnumTypes(hProcess, BaseOfDll, enum_types_AtoW, &et);
 }
 
-static void enum_types_of_module(struct module_pair* pair, const char* name, PSYM_ENUMERATESYMBOLS_CALLBACK cb, PVOID user)
-{
-    char                buffer[sizeof(SYMBOL_INFO) + 256];
-    SYMBOL_INFO*        sym_info = (SYMBOL_INFO*)buffer;
-    struct symt*        type;
-    DWORD64             size;
-    unsigned            i;
-    const char*         tname;
-
-    sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
-    sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
-
-    for (i = 0; i < vector_length(&pair->effective->vtypes); i++)
-    {
-        type = *(struct symt**)vector_at(&pair->effective->vtypes, i);
-        tname = symt_get_name(type);
-        if (tname && SymMatchStringA(tname, name, TRUE))
-        {
-            sym_info->TypeIndex = symt_ptr2index(pair->effective, type);
-            sym_info->Index = 0; /* FIXME */
-            symt_get_info(pair->effective, type, TI_GET_LENGTH, &size);
-            sym_info->Size = size;
-            sym_info->ModBase = pair->requested->module.BaseOfImage;
-            sym_info->Flags = 0; /* FIXME */
-            sym_info->Value = 0; /* FIXME */
-            sym_info->Address = 0; /* FIXME */
-            sym_info->Register = 0; /* FIXME */
-            sym_info->Scope = 0; /* FIXME */
-            sym_info->Tag = type->tag;
-            symbol_setname(sym_info, tname);
-            if (!cb(sym_info, sym_info->Size, user)) break;
-        }
-    }
-}
-
 static BOOL walk_modules(struct module_pair* pair)
 {
     /* first walk PE only modules */
@@ -597,8 +573,7 @@ BOOL WINAPI SymEnumTypesByName(HANDLE proc, ULONG64 base, PCSTR name, PSYM_ENUME
 
     TRACE("(%p %I64x %s %p %p)\n", proc, base, debugstr_a(name), cb, user);
 
-    if (!name) return SymEnumTypes(proc, base, cb, user);
-    bang = strchr(name, '!');
+    bang = name ? strchr(name, '!') : NULL;
     if (bang)
     {
         DWORD sz;
@@ -614,14 +589,15 @@ BOOL WINAPI SymEnumTypesByName(HANDLE proc, ULONG64 base, PCSTR name, PSYM_ENUME
         while (walk_modules(&pair))
         {
             if (SymMatchStringW(pair.requested->modulename, modW, FALSE))
-                enum_types_of_module(&pair, bang + 1, cb, user);
+                if (!sym_enum_types(&pair, bang + 1, cb, user))
+                    break;
         }
         free(modW);
     }
     else
     {
         if (!module_init_pair(&pair, proc, base) || !module_get_debug(&pair)) return FALSE;
-        enum_types_of_module(&pair, name, cb, user);
+        sym_enum_types(&pair, name, cb, user);
     }
     return TRUE;
 }
