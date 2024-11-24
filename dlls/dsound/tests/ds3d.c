@@ -1254,10 +1254,10 @@ static void check_doppler(IDirectSound *dsound, IDirectSound3DListener *listener
         BOOL play, DWORD mode, float listener_pos, float listener_velocity,
         float buffer_pos, float buffer_velocity, DWORD set_freq, DWORD expected_freq)
 {
+    D3DVECTOR ds_vector1 = {0}, ds_vector2 = {0};
     IDirectSound3DBuffer *buffer_3d;
     IDirectSoundBuffer *ref_buffer;
     IDirectSoundBuffer *buffer;
-    D3DVECTOR ds_vector1 = {0};
     WAVEFORMATEX format;
     DSBUFFERDESC desc;
     DWORD locked_size;
@@ -1390,6 +1390,39 @@ static void check_doppler(IDirectSound *dsound, IDirectSound3DListener *listener
     ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
     hr = IDirectSound3DListener_SetOrientation(listener, NAN, NAN, NAN, NAN, NAN, NAN, DS3D_DEFERRED);
     ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+
+    /* Test the orientation functions. */
+    memset(&ds_vector1, 0, sizeof(ds_vector1));
+    hr = IDirectSound3DListener_GetOrientation(listener, &ds_vector1, &ds_vector2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(ds_vector1.x == 0, "Expected 0.0, got %f.\n", ds_vector1.x);
+    ok(ds_vector1.y == 0, "Expected 0.0, got %f.\n", ds_vector1.y);
+    ok(ds_vector1.z == 1, "Expected 1.0, got %f.\n", ds_vector1.z);
+    ok(ds_vector2.x == 0, "Expected 0.0, got %f.\n", ds_vector2.x);
+    ok(ds_vector2.y == 1, "Expected 1.0, got %f.\n", ds_vector2.y);
+    ok(ds_vector2.z == 0, "Expected 0.0, got %f.\n", ds_vector2.z);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, 0, 0, 0, 0, 0, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 1, 1, 1, 1, 1, 1, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, 1, 0, 0, 1, 0, DS3D_DEFERRED);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 1, 0, 0, 2, 1, 1, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, -1, -1, 0, -1, 0, -1, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 2, 0, 0, 1, 105, 1, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 2, 0, 0, 1, 150, 1, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 2, 0, 0, 1, 1200, 1, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 2, 0, 0, 1, 1800, 1, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, -1, 0, 0, 0, -1, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirectSound3DListener_SetOrientation(listener, 0, 0, 1, 0, 1, 0, DS3D_DEFERRED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* Set to different values first to test that the frequency is updated. */
     hr = IDirectSound3DListener_SetPosition(listener, 0, 0, 0, DS3D_DEFERRED);
