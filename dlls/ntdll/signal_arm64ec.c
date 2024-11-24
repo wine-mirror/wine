@@ -220,6 +220,24 @@ NTSTATUS arm64ec_thread_init(void)
 }
 
 
+/**********************************************************************
+ *           arm64ec_get_module_metadata
+ */
+IMAGE_ARM64EC_METADATA *arm64ec_get_module_metadata( HMODULE module )
+{
+    IMAGE_LOAD_CONFIG_DIRECTORY *cfg;
+    ULONG size;
+
+    if (!(cfg = RtlImageDirectoryEntryToData( module, TRUE,
+                                              IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size )))
+        return NULL;
+
+    size = min( size, cfg->Size );
+    if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, CHPEMetadataPointer )) return NULL;
+    return (IMAGE_ARM64EC_METADATA *)cfg->CHPEMetadataPointer;
+}
+
+
 static void update_hybrid_pointer( void *module, const IMAGE_SECTION_HEADER *sec, UINT rva, void *ptr )
 {
     if (!rva) return;

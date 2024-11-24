@@ -169,6 +169,7 @@ extern void heap_thread_detach(void);
 
 extern NTSTATUS arm64ec_process_init( HMODULE module );
 extern NTSTATUS arm64ec_thread_init(void);
+extern IMAGE_ARM64EC_METADATA *arm64ec_get_module_metadata( HMODULE module );
 extern void arm64ec_update_hybrid_metadata( void *module, IMAGE_NT_HEADERS *nt,
                                             const IMAGE_ARM64EC_METADATA *metadata );
 extern void invoke_arm64ec_syscall(void);
