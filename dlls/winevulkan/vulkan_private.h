@@ -27,7 +27,6 @@
 
 #include "vulkan_loader.h"
 #include "vulkan_thunks.h"
-#include "wine/rbtree.h"
 
 #include "wine/rbtree.h"
 
@@ -53,7 +52,7 @@ struct wine_cmd_buffer
 
 static inline struct wine_cmd_buffer *wine_cmd_buffer_from_handle(VkCommandBuffer handle)
 {
-    return (struct wine_cmd_buffer *)(uintptr_t)handle->base.unix_handle;
+    return (struct wine_cmd_buffer *)(uintptr_t)handle->obj.unix_handle;
 }
 
 struct wine_queue
@@ -72,7 +71,7 @@ struct wine_queue
 
 static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
 {
-    return (struct wine_queue *)(uintptr_t)handle->base.unix_handle;
+    return (struct wine_queue *)(uintptr_t)handle->obj.unix_handle;
 }
 
 struct wine_device
@@ -95,7 +94,7 @@ C_ASSERT(sizeof(struct wine_device) == offsetof(struct wine_device, queues[0]));
 
 static inline struct wine_device *wine_device_from_handle(VkDevice handle)
 {
-    return (struct wine_device *)(uintptr_t)handle->base.unix_handle;
+    return (struct wine_device *)(uintptr_t)handle->obj.unix_handle;
 }
 
 struct wine_debug_utils_messenger;
@@ -130,7 +129,7 @@ struct wine_phys_dev
 
 static inline struct wine_phys_dev *wine_phys_dev_from_handle(VkPhysicalDevice handle)
 {
-    return (struct wine_phys_dev *)(uintptr_t)handle->base.unix_handle;
+    return (struct wine_phys_dev *)(uintptr_t)handle->obj.unix_handle;
 }
 
 struct wine_debug_report_callback;
@@ -167,7 +166,7 @@ C_ASSERT(sizeof(struct wine_instance) == offsetof(struct wine_instance, phys_dev
 
 static inline struct wine_instance *wine_instance_from_handle(VkInstance handle)
 {
-    return (struct wine_instance *)(uintptr_t)handle->base.unix_handle;
+    return (struct wine_instance *)(uintptr_t)handle->obj.unix_handle;
 }
 
 struct wine_cmd_pool
@@ -181,7 +180,7 @@ struct wine_cmd_pool
 static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool handle)
 {
     struct vk_command_pool *client_ptr = command_pool_from_handle(handle);
-    return (struct wine_cmd_pool *)(uintptr_t)client_ptr->unix_handle;
+    return (struct wine_cmd_pool *)(uintptr_t)client_ptr->obj.unix_handle;
 }
 
 struct wine_device_memory

@@ -26,6 +26,22 @@
 #include <windef.h>
 #include <winbase.h>
 
+/* Base 'class' for our Vulkan dispatchable objects such as VkDevice and VkInstance.
+ * This structure MUST be the first element of a dispatchable object as the ICD
+ * loader depends on it. For now only contains loader_magic, but over time more common
+ * functionality is expected.
+ */
+struct vulkan_client_object
+{
+    /* Special section in each dispatchable object for use by the ICD loader for
+     * storing dispatch tables. The start contains a magical value '0x01CDC0DE'.
+     */
+    UINT64 loader_magic;
+    UINT64 unix_handle;
+};
+
+#ifdef WINE_UNIX_LIB
+
 #define WINE_VK_HOST
 #include "wine/vulkan.h"
 
@@ -63,5 +79,7 @@ struct vulkan_driver_funcs
     VkBool32 (*p_vkGetPhysicalDeviceWin32PresentationSupportKHR)(VkPhysicalDevice, uint32_t);
     const char *(*p_get_host_surface_extension)(void);
 };
+
+#endif /* WINE_UNIX_LIB */
 
 #endif /* __WINE_VULKAN_DRIVER_H */

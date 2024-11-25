@@ -31,6 +31,7 @@
 #include "ntuser.h"
 #include "wine/debug.h"
 #include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
 #include "wine/unixlib.h"
 #include "wine/list.h"
 
@@ -41,47 +42,33 @@
 
 #define WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR 0x00000001
 
-/* Base 'class' for our Vulkan dispatchable objects such as VkDevice and VkInstance.
- * This structure MUST be the first element of a dispatchable object as the ICD
- * loader depends on it. For now only contains loader_magic, but over time more common
- * functionality is expected.
- */
-struct wine_vk_base
-{
-    /* Special section in each dispatchable object for use by the ICD loader for
-     * storing dispatch tables. The start contains a magical value '0x01CDC0DE'.
-     */
-    UINT64 loader_magic;
-    UINT64 unix_handle;
-};
-
 struct VkPhysicalDevice_T
 {
-    struct wine_vk_base base;
+    struct vulkan_client_object obj;
 };
 
 struct VkInstance_T
 {
-    struct wine_vk_base base;
+    struct vulkan_client_object obj;
     uint32_t phys_dev_count;
     struct VkPhysicalDevice_T phys_devs[1];
 };
 
 struct VkQueue_T
 {
-    struct wine_vk_base base;
+    struct vulkan_client_object obj;
 };
 
 struct VkDevice_T
 {
-    struct wine_vk_base base;
+    struct vulkan_client_object obj;
     unsigned int quirks;
     struct VkQueue_T queues[1];
 };
 
 struct vk_command_pool
 {
-    UINT64 unix_handle;
+    struct vulkan_client_object obj;
     struct list command_buffers;
 };
 
@@ -92,7 +79,7 @@ static inline struct vk_command_pool *command_pool_from_handle(VkCommandPool han
 
 struct VkCommandBuffer_T
 {
-    struct wine_vk_base base;
+    struct vulkan_client_object obj;
     struct list pool_link;
 };
 
