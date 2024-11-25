@@ -338,6 +338,7 @@ static const IID * const window_iids[] = {
 static const IID * const comment_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLCommentElement,
+    &IID_IHTMLCommentElement2,
     &IID_IConnectionPointContainer,
     NULL
 };

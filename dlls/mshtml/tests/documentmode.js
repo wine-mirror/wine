@@ -535,6 +535,16 @@ sync_test("elem_props", function() {
     test_exposed("msSetPointerCapture", v >= 10);
     if (v >= 9) test_exposed("spellcheck", v >= 10);
 
+    elem = document.createComment("");
+    test_exposed("data", true);
+    test_exposed("length", true);
+    test_exposed("text", true);
+    test_exposed("appendData", true);
+    test_exposed("deleteData", true);
+    test_exposed("insertData", true);
+    test_exposed("replaceData", true);
+    test_exposed("substringData", true);
+
     elem = document.createElement("style");
     test_exposed("media", true);
     test_exposed("type", true);

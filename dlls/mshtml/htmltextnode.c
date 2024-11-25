@@ -52,6 +52,8 @@ struct HTMLDOMTextNode {
 struct HTMLCommentElement {
     HTMLElement element;
     IHTMLCommentElement IHTMLCommentElement_iface;
+    IHTMLCommentElement2 IHTMLCommentElement2_iface;
+    struct CharacterData character_data;
 };
 
 static inline struct CharacterData *impl_from_IWineHTMLCharacterData(IWineHTMLCharacterData *iface)
@@ -70,6 +72,11 @@ static HRESULT WINAPI CharacterData_put_data(IWineHTMLCharacterData *iface, BSTR
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
+    if(!This->nschardata) {
+        FIXME("legacy doctype comment\n");
+        return E_NOTIMPL;
+    }
+
     nsAString_InitDepend(&nsstr, v);
     nsres = nsIDOMCharacterData_SetData(This->nschardata, &nsstr);
     nsAString_Finish(&nsstr);
@@ -84,6 +91,11 @@ static HRESULT WINAPI CharacterData_get_data(IWineHTMLCharacterData *iface, BSTR
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(!This->nschardata) {
+        FIXME("legacy doctype comment\n");
+        return E_NOTIMPL;
+    }
+
     nsAString_Init(&nsstr, NULL);
     nsres = nsIDOMCharacterData_GetData(This->nschardata, &nsstr);
     return return_nsstr(nsres, &nsstr, p);
@@ -96,6 +108,11 @@ static HRESULT WINAPI CharacterData_get_length(IWineHTMLCharacterData *iface, LO
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->nschardata) {
+        FIXME("legacy doctype comment\n");
+        return E_NOTIMPL;
+    }
 
     nsres = nsIDOMCharacterData_GetLength(This->nschardata, &length);
     if(NS_FAILED(nsres))
@@ -121,6 +138,11 @@ static HRESULT WINAPI CharacterData_appendData(IWineHTMLCharacterData *iface, BS
     nsresult nsres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(string));
+
+    if(!This->nschardata) {
+        FIXME("legacy doctype comment\n");
+        return E_NOTIMPL;
+    }
 
     nsAString_InitDepend(&nsstr, string);
     nsres = nsIDOMCharacterData_AppendData(This->nschardata, &nsstr);
@@ -483,6 +505,80 @@ static const IHTMLCommentElementVtbl HTMLCommentElementVtbl = {
     HTMLCommentElement_get_atomic
 };
 
+static inline HTMLCommentElement *comment_from_IHTMLCommentElement2(IHTMLCommentElement2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLCommentElement, IHTMLCommentElement2_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(HTMLCommentElement2, IHTMLCommentElement2,
+                      comment_from_IHTMLCommentElement2(iface)->element.node.event_target.dispex)
+
+static HRESULT WINAPI HTMLCommentElement2_put_data(IHTMLCommentElement2 *iface, BSTR v)
+{
+    HTMLCommentElement *This = comment_from_IHTMLCommentElement2(iface);
+    return CharacterData_put_data(&This->character_data.IWineHTMLCharacterData_iface, v);
+}
+
+static HRESULT WINAPI HTMLCommentElement2_get_data(IHTMLCommentElement2 *iface, BSTR *p)
+{
+    HTMLCommentElement *This = comment_from_IHTMLCommentElement2(iface);
+    return CharacterData_get_data(&This->character_data.IWineHTMLCharacterData_iface, p);
+}
+
+static HRESULT WINAPI HTMLCommentElement2_get_length(IHTMLCommentElement2 *iface, LONG *p)
+{
+    HTMLCommentElement *This = comment_from_IHTMLCommentElement2(iface);
+    return CharacterData_get_length(&This->character_data.IWineHTMLCharacterData_iface, p);
+}
+
+static HRESULT WINAPI HTMLCommentElement2_substringData(IHTMLCommentElement2 *iface, LONG offset, LONG count, BSTR *string)
+{
+    HTMLCommentElement *This = comment_from_IHTMLCommentElement2(iface);
+    return CharacterData_substringData(&This->character_data.IWineHTMLCharacterData_iface, offset, count, string);
+}
+
+static HRESULT WINAPI HTMLCommentElement2_appendData(IHTMLCommentElement2 *iface, BSTR string)
+{
+    HTMLCommentElement *This = comment_from_IHTMLCommentElement2(iface);
+    return CharacterData_appendData(&This->character_data.IWineHTMLCharacterData_iface, string);
+}
+
+static HRESULT WINAPI HTMLCommentElement2_insertData(IHTMLCommentElement2 *iface, LONG offset, BSTR string)
+{
+    HTMLCommentElement *This = comment_from_IHTMLCommentElement2(iface);
+    return CharacterData_insertData(&This->character_data.IWineHTMLCharacterData_iface, offset, string);
+}
+
+static HRESULT WINAPI HTMLCommentElement2_deleteData(IHTMLCommentElement2 *iface, LONG offset, LONG count)
+{
+    HTMLCommentElement *This = comment_from_IHTMLCommentElement2(iface);
+    return CharacterData_deleteData(&This->character_data.IWineHTMLCharacterData_iface, offset, count);
+}
+
+static HRESULT WINAPI HTMLCommentElement2_replaceData(IHTMLCommentElement2 *iface, LONG offset, LONG count, BSTR string)
+{
+    HTMLCommentElement *This = comment_from_IHTMLCommentElement2(iface);
+    return CharacterData_replaceData(&This->character_data.IWineHTMLCharacterData_iface, offset, count, string);
+}
+
+static const IHTMLCommentElement2Vtbl HTMLCommentElement2Vtbl = {
+    HTMLCommentElement2_QueryInterface,
+    HTMLCommentElement2_AddRef,
+    HTMLCommentElement2_Release,
+    HTMLCommentElement2_GetTypeInfoCount,
+    HTMLCommentElement2_GetTypeInfo,
+    HTMLCommentElement2_GetIDsOfNames,
+    HTMLCommentElement2_Invoke,
+    HTMLCommentElement2_put_data,
+    HTMLCommentElement2_get_data,
+    HTMLCommentElement2_get_length,
+    HTMLCommentElement2_substringData,
+    HTMLCommentElement2_appendData,
+    HTMLCommentElement2_insertData,
+    HTMLCommentElement2_deleteData,
+    HTMLCommentElement2_replaceData
+};
+
 static inline HTMLCommentElement *comment_from_HTMLDOMNode(HTMLDOMNode *iface)
 {
     return CONTAINING_RECORD(iface, HTMLCommentElement, element.node);
@@ -513,6 +609,10 @@ static void *HTMLCommentElement_query_interface(DispatchEx *dispex, REFIID riid)
 
     if(IsEqualGUID(&IID_IHTMLCommentElement, riid))
         return &This->IHTMLCommentElement_iface;
+    if(IsEqualGUID(&IID_IHTMLCommentElement2, riid))
+        return &This->IHTMLCommentElement2_iface;
+    if(IsEqualGUID(&IID_IWineHTMLCharacterData, riid))
+        return &This->character_data.IWineHTMLCharacterData_iface;
 
     return HTMLElement_query_interface(&This->element.node.event_target.dispex, riid);
 }
@@ -536,6 +636,12 @@ static const event_target_vtbl_t HTMLCommentElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
+static void Comment_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    HTMLElement_init_dispex_info(info, mode);
+    CharacterData_init_dispex_info(info, mode);
+}
+
 static const tid_t Comment_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLCommentElement_tid,
@@ -547,12 +653,14 @@ dispex_static_data_t Comment_dispex = {
     .vtbl         = &HTMLCommentElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLCommentElement_tid,
     .iface_tids   = Comment_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = Comment_init_dispex_info,
 };
 
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLElement **elem)
 {
+    nsIDOMCharacterData *nschardata;
     HTMLCommentElement *ret;
+    nsresult nsres;
 
     ret = calloc(1, sizeof(*ret));
     if(!ret)
@@ -560,9 +668,21 @@ HRESULT HTMLCommentElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTM
 
     ret->element.node.vtbl = &HTMLCommentElementImplVtbl;
     ret->IHTMLCommentElement_iface.lpVtbl = &HTMLCommentElementVtbl;
+    ret->IHTMLCommentElement2_iface.lpVtbl = &HTMLCommentElement2Vtbl;
 
     HTMLElement_Init(&ret->element, doc, NULL, &Comment_dispex);
     HTMLDOMNode_Init(doc, &ret->element.node, nsnode, &Comment_dispex);
+
+    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMCharacterData, (void**)&nschardata);
+    if(nsres != NS_OK)
+        nschardata = NULL;
+    else {
+        assert((nsIDOMNode*)nschardata == nsnode);
+
+        /* Share reference with nsnode */
+        nsIDOMCharacterData_Release(nschardata);
+    }
+    init_char_data(&ret->element.node, nschardata, &ret->character_data);
 
     *elem = &ret->element;
     return S_OK;
