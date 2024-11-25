@@ -1013,6 +1013,17 @@ static IHTMLCommentElement *_get_comment_iface(unsigned line, IUnknown *unk)
     return comment;
 }
 
+#define get_comment2_iface(u) _get_comment2_iface(__LINE__,u)
+static IHTMLCommentElement2 *_get_comment2_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLCommentElement2 *comment2;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLCommentElement2, (void**)&comment2);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLCommentElement2: %08lx\n", hres);
+    return comment2;
+}
+
 #define get_object_iface(u) _get_object_iface(__LINE__,u)
 static IHTMLObjectElement *_get_object_iface(unsigned line, IUnknown *unk)
 {
@@ -2045,9 +2056,10 @@ static IHTMLFormElement *_get_textarea_form(unsigned line, IUnknown *unk)
     return form;
 }
 
-#define test_comment_text(c,t) _test_comment_text(__LINE__,c,t)
-static void _test_comment_text(unsigned line, IUnknown *unk, const WCHAR *extext)
+#define test_comment_text(c,t,d) _test_comment_text(__LINE__,c,t,d)
+static void _test_comment_text(unsigned line, IUnknown *unk, const WCHAR *extext, const WCHAR *data)
 {
+    IHTMLCommentElement2 *comment2 = _get_comment2_iface(__LINE__,unk);
     IHTMLCommentElement *comment = _get_comment_iface(__LINE__,unk);
     const WCHAR *p;
     BSTR text;
@@ -2061,6 +2073,13 @@ static void _test_comment_text(unsigned line, IUnknown *unk, const WCHAR *extext
         ok_(__FILE__,line)(!lstrcmpW(text, extext), "text = \"%s\", expected \"%s\"\n", wine_dbgstr_w(text), wine_dbgstr_w(extext));
 
     IHTMLCommentElement_Release(comment);
+    SysFreeString(text);
+
+    hres = IHTMLCommentElement2_get_data(comment2, &text);
+    ok_(__FILE__,line)(hres == S_OK, "get_data failed: %08lx\n", hres);
+    ok_(__FILE__,line)(!wcscmp(text, data), "data = \"%s\", expected \"%s\"\n", wine_dbgstr_w(text), wine_dbgstr_w(data));
+
+    IHTMLCommentElement2_Release(comment2);
     SysFreeString(text);
 }
 
@@ -10504,12 +10523,12 @@ static void test_create_elems(IHTMLDocument2 *doc)
             test_elem_title((IUnknown*)comment, NULL);
             test_elem_set_title((IUnknown*)comment, L"comment title");
             test_elem_title((IUnknown*)comment, L"comment title");
-            test_comment_text((IUnknown*)comment, L"<!--testing-->");
+            test_comment_text((IUnknown*)comment, L"<!--testing-->", L"testing");
             test_elem_outerhtml((IUnknown*)comment, L"<!--testing-->");
             test_comment_attrs((IUnknown*)comment);
 
             node2 = clone_node((IUnknown*)comment, VARIANT_TRUE);
-            test_comment_text((IUnknown*)node2, L"<!--testing-->");
+            test_comment_text((IUnknown*)node2, L"<!--testing-->", L"testing");
             IHTMLDOMNode_Release(node2);
 
             test_elem_getelembytag((IUnknown*)comment, ET_COMMENT, 0, NULL);
@@ -10603,7 +10622,7 @@ static void test_doctype(IHTMLDocument2 *doc)
     type = get_node_type((IUnknown*)doctype);
     ok(type == 8, "type = %d\n", type);
 
-    test_comment_text((IUnknown*)doctype, L"<!DOCTYPE html>");
+    test_comment_text((IUnknown*)doctype, L"<!DOCTYPE html>", L"DOCTYPE html");
     test_elem_type((IUnknown*)doctype, ET_COMMENT);
     IHTMLDOMNode_Release(doctype);
 }

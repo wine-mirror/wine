@@ -86,14 +86,31 @@ static HRESULT WINAPI CharacterData_put_data(IWineHTMLCharacterData *iface, BSTR
 static HRESULT WINAPI CharacterData_get_data(IWineHTMLCharacterData *iface, BSTR *p)
 {
     struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+    const PRUnichar *str, *end;
     nsAString nsstr;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     if(!This->nschardata) {
-        FIXME("legacy doctype comment\n");
-        return E_NOTIMPL;
+        nsAString_Init(&nsstr, NULL);
+        hres = nsnode_to_nsstring(This->node->nsnode, &nsstr);
+        if(FAILED(hres))
+            return hres;
+
+        nsAString_GetData(&nsstr, &str);
+        end = str + wcslen(str);
+        if(*str == '<') {
+            end -= (end[-1] == '>');
+            str++;
+            str += (*str == '!');
+        }
+
+        if(!(*p = SysAllocStringLen(str, end - str)))
+            hres = E_OUTOFMEMORY;
+        nsAString_Finish(&nsstr);
+        return hres;
     }
 
     nsAString_Init(&nsstr, NULL);
