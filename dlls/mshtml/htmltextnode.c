@@ -175,6 +175,17 @@ static const IWineHTMLCharacterDataVtbl CharacterDataVtbl = {
     CharacterData_replaceData
 };
 
+static void CharacterData_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    dispex_info_add_interface(info, IWineHTMLCharacterData_tid, NULL);
+}
+
+dispex_static_data_t CharacterData_dispex = {
+    .id           = PROT_CharacterData,
+    .prototype_id = PROT_Node,
+    .init_info    = CharacterData_init_dispex_info,
+};
+
 static void init_char_data(HTMLDOMNode *node, nsIDOMCharacterData *nschardata, struct CharacterData *ret)
 {
     /* nschardata shares reference with nsnode */
@@ -360,17 +371,19 @@ static const NodeImplVtbl HTMLDOMTextNodeImplVtbl = {
     .clone                 = HTMLDOMTextNode_clone
 };
 
-dispex_static_data_t CharacterData_dispex = {
-    .id           = PROT_CharacterData,
-    .prototype_id = PROT_Node,
-};
-
 static const dispex_static_data_vtbl_t Text_dispex_vtbl = {
     .query_interface = HTMLDOMTextNode_query_interface,
     .destructor      = HTMLDOMNode_destructor,
     .traverse        = HTMLDOMNode_traverse,
     .unlink          = HTMLDOMNode_unlink
 };
+
+static void Text_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    HTMLDOMNode_init_dispex_info(info, mode);
+    if(mode >= COMPAT_MODE_IE9)
+        CharacterData_init_dispex_info(info, mode);
+}
 
 static const tid_t Text_iface_tids[] = {
     IHTMLDOMNode_tid,
@@ -385,7 +398,7 @@ dispex_static_data_t Text_dispex = {
     .vtbl         = &Text_dispex_vtbl,
     .disp_tid     = DispHTMLDOMTextNode_tid,
     .iface_tids   = Text_iface_tids,
-    .init_info    = HTMLDOMNode_init_dispex_info,
+    .init_info    = Text_init_dispex_info,
 };
 
 HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNode **node)

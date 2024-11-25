@@ -3665,6 +3665,7 @@ sync_test("prototype props", function() {
         test_own_props(constr.prototype, name, props, todos, flaky);
     }
 
+    check(CharacterData, [ "appendData", "data", "deleteData", "insertData", "length", "replaceData", "substringData" ]);
     check(CSSStyleRule, [ "readOnly", "selectorText", "style" ]);
     check(CustomEvent, [ "detail", "initCustomEvent" ]);
     check(DocumentType, [ "entities", "internalSubset", "name", "notations", "publicId", "systemId" ]);
@@ -3698,5 +3699,6 @@ sync_test("prototype props", function() {
         "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE", "hasAttributes", "normalize"
     ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);
+    check(Text, [ "removeNode", "replaceNode", "replaceWholeText", "splitText", "swapNode", "wholeText" ], [ "replaceWholeText", "toString", "wholeText" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);
 });
