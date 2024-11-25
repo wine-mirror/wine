@@ -28,6 +28,7 @@
 #include "initguid.h"
 #include "d3d11_4.h"
 #include "d3dcompiler.h"
+#include "dxva.h"
 #include "winternl.h"
 #include "wine/wined3d.h"
 #include "wine/test.h"
@@ -36798,6 +36799,453 @@ fail_match:
     release_test_context(&test_context);
 }
 
+struct yuv
+{
+    uint8_t y, u, v;
+};
+
+static void get_readback_nv12(struct resource_readback *rb, unsigned int x, unsigned int y, struct yuv *colour)
+{
+    colour->y = get_readback_u8(rb, x, y, 0);
+    colour->u = get_readback_u8(rb, x & ~1, rb->height + y / 2, 0);
+    colour->v = get_readback_u8(rb, (x & ~1) + 1, rb->height + y / 2, 0);
+}
+
+static void test_h264_decoder(void)
+{
+    D3D11_VIDEO_DECODER_BUFFER_DESC buffers[4] = {{0}};
+    ID3D11Texture2D *output_texture, *readback_texture;
+    ID3D11VideoDecoderOutputView *output_views[17];
+    unsigned int count, size, bitstream_size;
+    D3D11_VIDEO_DECODER_EXTENSION extension;
+    D3D11_VIDEO_DECODER_CONFIG config = {0};
+    D3D11_TEXTURE2D_DESC texture_desc = {0};
+    struct d3d11_test_context test_context;
+    DXVA_Slice_H264_Short *h264_slice;
+    ID3D11VideoContext *video_context;
+    DXVA_PicParams_H264 *h264_params;
+    ID3D11VideoDevice *video_device;
+    DXVA_Qmatrix_H264 *h264_matrix;
+    D3D11_VIDEO_DECODER_DESC desc;
+    DXVA_Status_H264 h264_status;
+    struct resource_readback rb;
+    ID3D11VideoDecoder *decoder;
+    void *bitstream, *buffer2;
+    struct yuv colour;
+    GUID profile;
+    HRESULT hr;
+    HRSRC rsrc;
+
+    DXVA_PicParams_H264 h264_params_template =
+    {
+        .wFrameWidthInMbsMinus1 = 19,
+        .wFrameHeightInMbsMinus1 = 14,
+        .num_ref_frames = 4,
+        .chroma_format_idc = 1,
+        .RefPicFlag = 1,
+        .weighted_pred_flag = 1,
+        .weighted_bipred_idc = 2,
+        .MbsConsecutiveFlag = 1,
+        .frame_mbs_only_flag = 1,
+        .transform_8x8_mode_flag = 1,
+        .Reserved16Bits = 3,
+        .chroma_qp_index_offset = -2,
+        .second_chroma_qp_index_offset = -2,
+        .ContinuationFlag = 1,
+        .num_ref_idx_l0_active_minus1 = 2,
+        .log2_max_pic_order_cnt_lsb_minus4 = 2,
+        .direct_8x8_inference_flag = 1,
+        .entropy_coding_mode_flag = 1,
+        .deblocking_filter_control_present_flag = 1,
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    hr = ID3D11Device_QueryInterface(test_context.device, &IID_ID3D11VideoDevice, (void **)&video_device);
+    if (hr == E_NOINTERFACE)
+    {
+        skip("Failed to get ID3D11VideoDevice.\n");
+        release_test_context(&test_context);
+        return;
+    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    count = ID3D11VideoDevice_GetVideoDecoderProfileCount(video_device);
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        hr = ID3D11VideoDevice_GetVideoDecoderProfile(video_device, i, &profile);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+    /* Native seems to have an off-by-one error; trying to pass "count"
+     * as an index succeeds and leaves a garbage GUID in the output, which is
+     * not consistent across runs. */
+    hr = ID3D11VideoDevice_GetVideoDecoderProfile(video_device, count + 1, &profile);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11DeviceContext_QueryInterface(test_context.immediate_context,
+            &IID_ID3D11VideoContext, (void **)&video_context);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    desc.Guid = DXVA_ModeH264_VLD_NoFGT;
+    desc.SampleWidth = 320;
+    desc.SampleHeight = 240;
+    desc.OutputFormat = DXGI_FORMAT_NV12;
+
+    hr = ID3D11VideoDevice_GetVideoDecoderConfigCount(video_device, &desc, &count);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(count >= 1, "Got no configs.\n");
+    else
+        count = 0;
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        memset(&config, 0xcc, sizeof(config));
+        hr = ID3D11VideoDevice_GetVideoDecoderConfig(video_device, &desc, 0, &config);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        ok(IsEqualGUID(&config.guidConfigBitstreamEncryption, &DXVA_NoEncrypt),
+                "Got guidConfigBitstreamEncryption %s.\n", debugstr_guid(&config.guidConfigBitstreamEncryption));
+        ok(IsEqualGUID(&config.guidConfigMBcontrolEncryption, &DXVA_NoEncrypt),
+                "Got guidConfigMBcontrolEncryption %s.\n", debugstr_guid(&config.guidConfigMBcontrolEncryption));
+        ok(IsEqualGUID(&config.guidConfigResidDiffEncryption, &DXVA_NoEncrypt),
+                "Got guidConfigResidDiffEncryption %s.\n", debugstr_guid(&config.guidConfigResidDiffEncryption));
+        /* NVidia sets 1, AMD sets 2.
+         *
+         * Nevertheless NVidia seems to be fine with short slice info. */
+        ok(config.ConfigBitstreamRaw == 1 || config.ConfigBitstreamRaw == 2,
+                "Got ConfigBitstreamRaw %u.\n", config.ConfigBitstreamRaw);
+        ok(!config.ConfigMBcontrolRasterOrder, "Got ConfigMBcontrolRasterOrder %u.\n",
+                config.ConfigMBcontrolRasterOrder);
+        ok(!config.ConfigResidDiffHost, "Got ConfigResidDiffHost %u.\n", config.ConfigResidDiffHost);
+        ok(!config.ConfigSpatialResid8, "Got ConfigSpatialResid8 %u.\n", config.ConfigSpatialResid8);
+        ok(!config.ConfigResid8Subtraction, "Got ConfigResid8Subtraction %u.\n", config.ConfigResid8Subtraction);
+        ok(!config.ConfigSpatialHost8or9Clipping, "Got ConfigSpatialHost8or9Clipping %u.\n",
+                config.ConfigSpatialHost8or9Clipping);
+        ok(!config.ConfigSpatialResidInterleaved, "Got ConfigSpatialResidInterleaved %u.\n",
+                config.ConfigSpatialResidInterleaved);
+        ok(!config.ConfigIntraResidUnsigned, "Got ConfigIntraResidUnsigned %u.\n", config.ConfigIntraResidUnsigned);
+        ok(config.ConfigResidDiffAccelerator == 1, "Got ConfigResidDiffAccelerator %u.\n",
+                config.ConfigResidDiffAccelerator);
+        ok(config.ConfigHostInverseScan == 1, "Got ConfigHostInverseScan %u.\n", config.ConfigHostInverseScan);
+        ok(config.ConfigSpecificIDCT == 2, "Got ConfigSpecificIDCT %u.\n", config.ConfigSpecificIDCT);
+        ok(!config.Config4GroupedCoefs, "Got Config4GroupedCoefs %u.\n", config.Config4GroupedCoefs);
+        /* AMD has 0 for ConfigMinRenderTargetBuffCount; NVidia has 3. */
+        /* AMD has 0x4000 for ConfigDecoderSpecific.
+         * This flag is an extension bit related to interleaved decoding. */
+        ok(!config.ConfigDecoderSpecific || config.ConfigDecoderSpecific == 0x4000,
+                "Got ConfigDecoderSpecific %u.\n", config.ConfigDecoderSpecific);
+    }
+
+    hr = ID3D11VideoDevice_GetVideoDecoderConfig(video_device, &desc, count, &config);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    memset(&config, 0, sizeof(config));
+    config.guidConfigBitstreamEncryption = DXVA_NoEncrypt;
+    config.guidConfigMBcontrolEncryption = DXVA_NoEncrypt;
+    config.guidConfigResidDiffEncryption = DXVA_NoEncrypt;
+    config.ConfigBitstreamRaw = 2;
+    config.ConfigResidDiffAccelerator = 1;
+    config.ConfigHostInverseScan = 1;
+    config.ConfigSpecificIDCT = 2;
+    config.ConfigMinRenderTargetBuffCount = 1;
+
+    memset(&desc.Guid, 0xcc, sizeof(desc.Guid));
+    hr = ID3D11VideoDevice_CreateVideoDecoder(video_device, &desc, &config, &decoder);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    desc.Guid = DXVA_ModeH264_VLD_NoFGT;
+    hr = ID3D11VideoDevice_CreateVideoDecoder(video_device, &desc, &config, &decoder);
+    if (hr == E_INVALIDARG)
+    {
+        skip("H.264 decoding is not supported.\n");
+        ID3D11VideoContext_Release(video_context);
+        ID3D11VideoDevice_Release(video_device);
+        release_test_context(&test_context);
+        return;
+    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    texture_desc.Width = 320;
+    texture_desc.Height = 240;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = ARRAY_SIZE(output_views);
+    texture_desc.Format = DXGI_FORMAT_NV12;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.BindFlags = D3D11_BIND_DECODER;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    hr = ID3D11Device_CreateTexture2D(test_context.device, &texture_desc, NULL, &output_texture);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    texture_desc.ArraySize = 1;
+    texture_desc.BindFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(test_context.device, &texture_desc, NULL, &readback_texture);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(output_views); ++i)
+    {
+        D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC view_desc =
+        {
+            .DecodeProfile = desc.Guid,
+            .ViewDimension = D3D11_VDOV_DIMENSION_TEXTURE2D,
+            .Texture2D.ArraySlice = i,
+        };
+
+        view_desc.ViewDimension = D3D11_VDOV_DIMENSION_UNKNOWN;
+        hr = ID3D11VideoDevice_CreateVideoDecoderOutputView(video_device,
+                (ID3D11Resource *)output_texture, &view_desc, &output_views[i]);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+        view_desc.ViewDimension = D3D11_VDOV_DIMENSION_TEXTURE2D;
+        hr = ID3D11VideoDevice_CreateVideoDecoderOutputView(video_device,
+                (ID3D11Resource *)output_texture, &view_desc, &output_views[i]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+
+    memset(&h264_status, 0xcc, sizeof(h264_status));
+    memset(&extension, 0, sizeof(extension));
+    extension.Function = DXVA_STATUS_REPORTING_FUNCTION;
+    extension.pPrivateOutputData = &h264_status;
+    extension.PrivateOutputDataSize = sizeof(h264_status);
+    hr = ID3D11VideoContext_DecoderExtension(video_context, decoder, &extension);
+    todo_wine ok(hr == E_FAIL /* AMD */ || hr == S_OK /* NVidia */, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        DXVA_Status_H264 zero_status = {0};
+
+        ok(!memcmp(&h264_status, &zero_status, sizeof(zero_status)), "Expected zeroed structure.\n");
+    }
+
+    hr = ID3D11VideoContext_DecoderBeginFrame(video_context, decoder, output_views[0], 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS, &size, (void **)&h264_params);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= sizeof(*h264_params), "Got size %u.\n", size);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS, &size, &buffer2);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS, &size, &buffer2);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= sizeof(*h264_params), "Got size %u.\n", size);
+    ok(buffer2 == h264_params, "Buffer pointers didn't match.\n");
+
+    *h264_params = h264_params_template;
+    h264_params->CurrPic.Index7Bits = 0;
+    h264_params->IntraPicFlag = 1;
+    h264_params->StatusReportFeedbackNumber = 1;
+    for (unsigned int i = 0; i < 16; ++i)
+        h264_params->RefFrameList[i].bPicEntry = 0xff;
+    h264_params->CurrFieldOrderCnt[0] = 0;
+    h264_params->CurrFieldOrderCnt[1] = 0;
+    h264_params->frame_num = 0;
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX, &size, (void **)&h264_matrix);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= sizeof(*h264_matrix), "Got size %u.\n", size);
+
+    /* All scaling list fields are UCHARs; set them all to 16. */
+    memset(h264_matrix, 16, sizeof(*h264_matrix));
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    rsrc = FindResourceW(NULL, L"h264_frame0", (const WCHAR *)RT_RCDATA);
+    ok(!!rsrc, "Failed to load resource, error %lu.\n", GetLastError());
+    bitstream_size = SizeofResource(NULL, rsrc);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_SLICE_CONTROL, &size, (void **)&h264_slice);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= sizeof(*h264_slice) * 4, "Got size %u.\n", size);
+
+    h264_slice[0].BSNALunitDataLocation = 0;
+    h264_slice[0].SliceBytesInBuffer = bitstream_size;
+    h264_slice[0].wBadSliceChopping = 0;
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_SLICE_CONTROL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_BITSTREAM, &size, &bitstream);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= bitstream_size, "Got size %u, expected at least %u.\n", size, bitstream_size);
+
+    memcpy(bitstream, LockResource(LoadResource(GetModuleHandleW(NULL), rsrc)), bitstream_size);
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_BITSTREAM);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    buffers[0].BufferType = D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS;
+    buffers[0].DataSize = sizeof(*h264_params);
+    buffers[1].BufferType = D3D11_VIDEO_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX;
+    buffers[1].DataSize = sizeof(*h264_matrix);
+    buffers[2].BufferType = D3D11_VIDEO_DECODER_BUFFER_SLICE_CONTROL;
+    buffers[2].DataSize = sizeof(*h264_slice);
+    buffers[3].BufferType = D3D11_VIDEO_DECODER_BUFFER_BITSTREAM;
+    buffers[3].DataSize = bitstream_size;
+    hr = ID3D11VideoContext_SubmitDecoderBuffers(video_context, decoder, ARRAY_SIZE(buffers), buffers);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_DecoderEndFrame(video_context, decoder);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Second frame. */
+
+    rsrc = FindResourceW(NULL, L"h264_frame1", (const WCHAR *)RT_RCDATA);
+    ok(!!rsrc, "Failed to load resource, error %lu.\n", GetLastError());
+    bitstream_size = SizeofResource(NULL, rsrc);
+
+    hr = ID3D11VideoContext_DecoderBeginFrame(video_context, decoder, output_views[1], 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS, &size, (void **)&h264_matrix);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= sizeof(*h264_matrix), "Got size %u.\n", size);
+
+    *h264_params = h264_params_template;
+    h264_params->CurrPic.Index7Bits = 1;
+    h264_params->StatusReportFeedbackNumber = 2;
+    h264_params->RefFrameList[0].Index7Bits = 0;
+    h264_params->RefFrameList[0].AssociatedFlag = 0;
+    for (unsigned int i = 1; i < 16; ++i)
+        h264_params->RefFrameList[i].bPicEntry = 0xff;
+    h264_params->CurrFieldOrderCnt[0] = 2;
+    h264_params->CurrFieldOrderCnt[1] = 2;
+    h264_params->FieldOrderCntList[0][0] = 0;
+    h264_params->FieldOrderCntList[0][1] = 0;
+    h264_params->FrameNumList[0] = 0;
+    h264_params->UsedForReferenceFlags = 0x3;
+    h264_params->frame_num = 1;
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_PICTURE_PARAMETERS);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX, &size, (void **)&h264_matrix);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= sizeof(*h264_matrix), "Got size %u.\n", size);
+
+    /* All scaling list fields are UCHARs; set them all to 16. */
+    memset(h264_matrix, 16, sizeof(*h264_matrix));
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_INVERSE_QUANTIZATION_MATRIX);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_SLICE_CONTROL, &size, (void **)&h264_slice);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= sizeof(*h264_slice) * 4, "Got size %u.\n", size);
+
+    h264_slice[0].BSNALunitDataLocation = 0;
+    h264_slice[0].SliceBytesInBuffer = bitstream_size;
+    h264_slice[0].wBadSliceChopping = 0;
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_SLICE_CONTROL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_GetDecoderBuffer(video_context, decoder,
+            D3D11_VIDEO_DECODER_BUFFER_BITSTREAM, &size, &bitstream);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size >= bitstream_size, "Got size %u, expected at least %u.\n", size, bitstream_size);
+
+    memcpy(bitstream, LockResource(LoadResource(GetModuleHandleW(NULL), rsrc)), bitstream_size);
+
+    hr = ID3D11VideoContext_ReleaseDecoderBuffer(video_context,
+            decoder, D3D11_VIDEO_DECODER_BUFFER_BITSTREAM);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    buffers[3].DataSize = bitstream_size;
+    hr = ID3D11VideoContext_SubmitDecoderBuffers(video_context, decoder, ARRAY_SIZE(buffers), buffers);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11VideoContext_DecoderEndFrame(video_context, decoder);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* We cannot use get_texture_readback() directly.
+     * Direct3D11 seems to forbid CPU NV12 arrays. */
+    ID3D11DeviceContext_CopySubresourceRegion(test_context.immediate_context,
+            (ID3D11Resource *)readback_texture, 0, 0, 0, 0, (ID3D11Resource *)output_texture, 0, NULL);
+    get_texture_readback(readback_texture, 0, &rb);
+    get_readback_nv12(&rb, 148, 109, &colour);
+    ok(colour.y == 49 && colour.u == 109 && colour.v == 184,
+            "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
+    get_readback_nv12(&rb, 176, 136, &colour);
+    ok(colour.y == 41 && colour.u == 240 && colour.v == 110,
+            "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
+    release_resource_readback(&rb);
+
+    ID3D11DeviceContext_CopySubresourceRegion(test_context.immediate_context,
+            (ID3D11Resource *)readback_texture, 0, 0, 0, 0, (ID3D11Resource *)output_texture, 1, NULL);
+    get_texture_readback(readback_texture, 0, &rb);
+    get_readback_nv12(&rb, 148, 109, &colour);
+    ok(colour.y == 41 && colour.u == 240 && colour.v == 110,
+            "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
+    get_readback_nv12(&rb, 176, 136, &colour);
+    ok(colour.y == 49 && colour.u == 109 && colour.v == 184,
+            "Got (Y, U, V) values (%u, %u, %u).\n", colour.y, colour.u, colour.v);
+    release_resource_readback(&rb);
+
+    /* The status query is asynchronous and does not wait for any frames to be
+     * completed. Call it after downloading the frames so we're sure that
+     * they're done. */
+
+    memset(&h264_status, 0xcc, sizeof(h264_status));
+    memset(&extension, 0, sizeof(extension));
+    extension.Function = DXVA_STATUS_REPORTING_FUNCTION;
+    extension.pPrivateOutputData = &h264_status;
+    extension.PrivateOutputDataSize = sizeof(h264_status);
+    hr = ID3D11VideoContext_DecoderExtension(video_context, decoder, &extension);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(h264_status.StatusReportFeedbackNumber == 2, "Got number %u.\n", h264_status.StatusReportFeedbackNumber);
+        ok(h264_status.CurrPic.bPicEntry == 1, "Got index %#x.\n", h264_status.CurrPic.bPicEntry);
+        ok(!h264_status.field_pic_flag, "Got field pic flag %#x.\n", h264_status.field_pic_flag);
+        ok(h264_status.bDXVA_Func == DXVA_PICTURE_DECODING_FUNCTION, "Got function %#x.\n", h264_status.bDXVA_Func);
+        ok(h264_status.bBufType == (UCHAR)~0, "Got buffer type %#x.\n", h264_status.bBufType);
+        ok(!h264_status.bStatus, "Got status %#x.\n", h264_status.bStatus);
+        ok(!h264_status.bReserved8Bits, "Got reserved %#x.\n", h264_status.bReserved8Bits);
+        /* AMD reports that 1 macroblock was successfully decoded, which is
+         * obviously wrong.
+         * NVidia returns 0xffff, which is valid and means that no estimate was
+         * provided. */
+    }
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(output_views); ++i)
+        ID3D11VideoDecoderOutputView_Release(output_views[i]);
+    ID3D11Texture2D_Release(readback_texture);
+    ID3D11Texture2D_Release(output_texture);
+    ID3D11VideoDecoder_Release(decoder);
+    ID3D11VideoContext_Release(video_context);
+    ID3D11VideoDevice_Release(video_device);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -37004,6 +37452,7 @@ START_TEST(d3d11)
     queue_test(test_stencil_export);
     queue_test(test_high_resource_count);
     queue_test(test_nv12);
+    queue_test(test_h264_decoder);
 
     run_queued_tests();
 
