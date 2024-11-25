@@ -753,6 +753,8 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
 /* Helper function which stores wrapped physical devices in the instance object. */
 static VkResult wine_vk_instance_init_physical_devices(struct wine_instance *instance)
 {
+    struct wine_phys_dev *physical_devices = instance->phys_devs;
+    VkInstance client_instance = instance->handle;
     VkPhysicalDevice *host_handles;
     uint32_t phys_dev_count;
     unsigned int i;
@@ -767,12 +769,12 @@ static VkResult wine_vk_instance_init_physical_devices(struct wine_instance *ins
     if (!phys_dev_count)
         return res;
 
-    if (phys_dev_count > instance->handle->phys_dev_count)
+    if (phys_dev_count > client_instance->phys_dev_count)
     {
-        instance->handle->phys_dev_count = phys_dev_count;
+        client_instance->phys_dev_count = phys_dev_count;
         return VK_ERROR_OUT_OF_POOL_MEMORY;
     }
-    instance->handle->phys_dev_count = phys_dev_count;
+    client_instance->phys_dev_count = phys_dev_count;
 
     if (!(host_handles = calloc(phys_dev_count, sizeof(*host_handles))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -787,8 +789,8 @@ static VkResult wine_vk_instance_init_physical_devices(struct wine_instance *ins
     /* Wrap each host physical device handle into a dispatchable object for the ICD loader. */
     for (i = 0; i < phys_dev_count; i++)
     {
-        struct wine_phys_dev *phys_dev = instance->phys_devs + i;
-        res = wine_vk_physical_device_init(phys_dev, host_handles[i], &instance->handle->phys_devs[i], instance);
+        struct wine_phys_dev *phys_dev = physical_devices + i;
+        res = wine_vk_physical_device_init(phys_dev, host_handles[i], &client_instance->phys_devs[i], instance);
         if (res != VK_SUCCESS)
             goto err;
     }
@@ -798,7 +800,7 @@ static VkResult wine_vk_instance_init_physical_devices(struct wine_instance *ins
     return VK_SUCCESS;
 
 err:
-    while (i) wine_phys_dev_cleanup(&instance->phys_devs[--i]);
+    while (i) wine_phys_dev_cleanup(&physical_devices[--i]);
     free(host_handles);
     return res;
 }
@@ -806,11 +808,13 @@ err:
 static struct wine_phys_dev *wine_vk_instance_wrap_physical_device(struct wine_instance *instance,
         VkPhysicalDevice host_handle)
 {
+    struct wine_phys_dev *physical_devices = instance->phys_devs;
+    uint32_t physical_device_count = instance->phys_dev_count;
     unsigned int i;
 
-    for (i = 0; i < instance->phys_dev_count; ++i)
+    for (i = 0; i < physical_device_count; ++i)
     {
-        struct wine_phys_dev *current = instance->phys_devs + i;
+        struct wine_phys_dev *current = physical_devices + i;
         if (current->host_physical_device == host_handle) return current;
     }
 
