@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
@@ -223,10 +224,7 @@ static HRESULT WINAPI HTMLDOMTextNode_toString(IHTMLDOMTextNode *iface, BSTR *St
     if(!String)
         return E_INVALIDARG;
 
-    if(dispex_compat_mode(&This->node.event_target.dispex) < COMPAT_MODE_IE9)
-        return IHTMLDOMTextNode_get_data(&This->IHTMLDOMTextNode_iface, String);
-
-    return dispex_to_string(&This->node.event_target.dispex, String);
+    return IHTMLDOMTextNode_get_data(&This->IHTMLDOMTextNode_iface, String);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode_get_length(IHTMLDOMTextNode *iface, LONG *p)
@@ -380,16 +378,21 @@ static const dispex_static_data_vtbl_t Text_dispex_vtbl = {
 
 static void Text_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
+    static const dispex_hook_t textnode_ie9_hooks[] = {
+        {DISPID_IHTMLDOMTEXTNODE_TOSTRING},
+        {DISPID_UNKNOWN}
+    };
     HTMLDOMNode_init_dispex_info(info, mode);
     if(mode >= COMPAT_MODE_IE9)
         CharacterData_init_dispex_info(info, mode);
+    else
+        dispex_info_add_interface(info, IHTMLDOMTextNode2_tid, NULL);
+    dispex_info_add_interface(info, IHTMLDOMTextNode_tid, mode >= COMPAT_MODE_IE9 ? textnode_ie9_hooks : NULL);
 }
 
 static const tid_t Text_iface_tids[] = {
     IHTMLDOMNode_tid,
     IHTMLDOMNode2_tid,
-    IHTMLDOMTextNode_tid,
-    IHTMLDOMTextNode2_tid,
     0
 };
 dispex_static_data_t Text_dispex = {
