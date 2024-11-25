@@ -9582,7 +9582,7 @@ static void test_GetMessageQueue(void)
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0, 0, &msgCount, &byteCount );
-    todo_wine ok( hr == DPERR_UNINITIALIZED, "got hr %#lx.\n", hr );
+    ok( hr == DPERR_UNINITIALIZED, "got hr %#lx.\n", hr );
     ok( msgCount == 0xdeadbeef, "got message count %lu.\n", msgCount );
     ok( byteCount == 0xdeadbeef, "got byte count %lu.\n", byteCount );
 
@@ -9591,37 +9591,37 @@ static void test_GetMessageQueue(void)
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0, DPMESSAGEQUEUE_SEND | DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DPERR_INVALIDFLAGS, "got hr %#lx.\n", hr );
+    ok( hr == DPERR_INVALIDFLAGS, "got hr %#lx.\n", hr );
     ok( msgCount == 0xdeadbeef, "got message count %lu.\n", msgCount );
     ok( byteCount == 0xdeadbeef, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0, 4, &msgCount, &byteCount );
-    todo_wine ok( hr == DPERR_INVALIDFLAGS, "got hr %#lx.\n", hr );
+    ok( hr == DPERR_INVALIDFLAGS, "got hr %#lx.\n", hr );
     ok( msgCount == 0xdeadbeef, "got message count %lu.\n", msgCount );
     ok( byteCount == 0xdeadbeef, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0x07734, 0, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
+    ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
     ok( msgCount == 0xdeadbeef, "got message count %lu.\n", msgCount );
     ok( byteCount == 0xdeadbeef, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0x07734, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
+    ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
     ok( msgCount == 0xdeadbeef, "got message count %lu.\n", msgCount );
     ok( byteCount == 0xdeadbeef, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( msgCount == 0, "got message count %lu.\n", msgCount );
-    todo_wine ok( byteCount == 0, "got byte count %lu.\n", byteCount );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( msgCount == 0, "got message count %lu.\n", msgCount );
+    ok( byteCount == 0, "got byte count %lu.\n", byteCount );
 
     joinSession( dpA, &appGuidDpsd, &serverDpsd, &sendSock, &recvSock, NULL );
 
@@ -9630,42 +9630,42 @@ static void test_GetMessageQueue(void)
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0x07734, 0, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( msgCount == 0, "got message count %lu.\n", msgCount );
-    todo_wine ok( byteCount == 0, "got byte count %lu.\n", byteCount );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( msgCount == 0, "got message count %lu.\n", msgCount );
+    ok( byteCount == 0, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0x07734, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( msgCount == 0, "got message count %lu.\n", msgCount );
-    todo_wine ok( byteCount == 0, "got byte count %lu.\n", byteCount );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( msgCount == 0, "got message count %lu.\n", msgCount );
+    ok( byteCount == 0, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0x1337, 0, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( msgCount == 0, "got message count %lu.\n", msgCount );
-    todo_wine ok( byteCount == 0, "got byte count %lu.\n", byteCount );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( msgCount == 0, "got message count %lu.\n", msgCount );
+    ok( byteCount == 0, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0x1337, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
+    ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
     ok( msgCount == 0xdeadbeef, "got message count %lu.\n", msgCount );
     ok( byteCount == 0xdeadbeef, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0x5e7, 0, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
+    ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
     ok( msgCount == 0xdeadbeef, "got message count %lu.\n", msgCount );
     ok( byteCount == 0xdeadbeef, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0x5e7, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
+    ok( hr == DPERR_INVALIDPLAYER, "got hr %#lx.\n", hr );
     ok( msgCount == 0xdeadbeef, "got message count %lu.\n", msgCount );
     ok( byteCount == 0xdeadbeef, "got byte count %lu.\n", byteCount );
 
@@ -9689,30 +9689,30 @@ static void test_GetMessageQueue(void)
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0x07734, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( msgCount == 1, "got message count %lu.\n", msgCount );
-    todo_wine ok( byteCount == createPlayerMsgSize, "got byte count %lu.\n", byteCount );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( msgCount == 1, "got message count %lu.\n", msgCount );
+    ok( byteCount == createPlayerMsgSize, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dp, 0, 0x07734, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( msgCount == 1, "got message count %lu.\n", msgCount );
-    todo_wine ok( byteCount == createPlayerMsgSize, "got byte count %lu.\n", byteCount );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( msgCount == 1, "got message count %lu.\n", msgCount );
+    ok( byteCount == createPlayerMsgSize, "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0x1337, 0, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( msgCount == 1, "got message count %lu.\n", msgCount );
-    todo_wine ok( byteCount == sizeof( data ), "got byte count %lu.\n", byteCount );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( msgCount == 1, "got message count %lu.\n", msgCount );
+    ok( byteCount == sizeof( data ), "got byte count %lu.\n", byteCount );
 
     msgCount = 0xdeadbeef;
     byteCount = 0xdeadbeef;
     hr = IDirectPlayX_GetMessageQueue( dpA, 0, 0, DPMESSAGEQUEUE_RECEIVE, &msgCount, &byteCount );
-    todo_wine ok( hr == DP_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( msgCount == 2, "got message count %lu.\n", msgCount );
-    todo_wine ok( byteCount == createPlayerMsgSize + sizeof( data ), "got byte count %lu.\n", byteCount );
+    ok( hr == DP_OK, "got hr %#lx.\n", hr );
+    ok( msgCount == 2, "got message count %lu.\n", msgCount );
+    ok( byteCount == createPlayerMsgSize + sizeof( data ), "got byte count %lu.\n", byteCount );
 
     closesocket( recvSock );
     closesocket( sendSock );

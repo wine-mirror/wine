@@ -5970,9 +5970,75 @@ static HRESULT WINAPI IDirectPlay4Impl_GetMessageQueue( IDirectPlay4 *iface, DPI
         DWORD flags, DWORD *msgs, DWORD *bytes )
 {
     IDirectPlayImpl *This = impl_from_IDirectPlay4( iface );
+    struct PlayerList *playerFrom = NULL;
+    struct PlayerList *playerTo = NULL;
     HRESULT hr = DP_OK;
 
-    FIXME( "(%p)->(0x%08lx,0x%08lx,0x%08lx,%p,%p): semi-stub\n", This, from, to, flags, msgs, bytes );
+    TRACE( "(%p)->(0x%08lx,0x%08lx,0x%08lx,%p,%p)\n", This, from, to, flags, msgs, bytes );
+
+    if ( This->dp2->connectionInitialized == NO_PROVIDER )
+        return DPERR_UNINITIALIZED;
+
+    if ( !flags )
+        flags = DPMESSAGEQUEUE_SEND;
+
+    if ( flags != DPMESSAGEQUEUE_SEND && flags != DPMESSAGEQUEUE_RECEIVE )
+        return DPERR_INVALIDFLAGS;
+
+    EnterCriticalSection( &This->lock );
+
+    if ( to )
+    {
+        playerTo = DP_FindPlayer( This, to );
+        if ( !playerTo )
+        {
+            LeaveCriticalSection( &This->lock );
+            return DPERR_INVALIDPLAYER;
+        }
+    }
+
+    if ( from )
+    {
+        playerFrom = DP_FindPlayer( This, from );
+        if ( !playerFrom )
+        {
+            LeaveCriticalSection( &This->lock );
+            return DPERR_INVALIDPLAYER;
+        }
+    }
+
+    if ( flags & DPMESSAGEQUEUE_RECEIVE )
+    {
+        DWORD byteCount = 0;
+        DWORD msgCount = 0;
+        struct DPMSG *msg;
+
+        if ( playerTo && !(playerTo->lpPData->dwFlags & DPPLAYER_LOCAL) )
+        {
+            LeaveCriticalSection( &This->lock );
+            return DPERR_INVALIDPLAYER;
+        }
+
+        for ( msg = DPQ_FIRST( This->dp2->receiveMsgs ); msg; msg = DPQ_NEXT( msg->msgs ) )
+        {
+            if( from && msg->fromId != from )
+                continue;
+            if( to && msg->toId != to )
+                continue;
+
+            ++msgCount;
+            byteCount += msg->copyMessage( NULL, msg->msg, msg->genericSize, FALSE );
+        }
+
+        if ( msgs )
+            *msgs = msgCount;
+        if ( bytes )
+            *bytes = byteCount;
+
+        LeaveCriticalSection( &This->lock );
+
+        return DP_OK;
+    }
 
     /* FIXME: Do we need to do from and to sanity checking here? */
     /* FIXME: What about sends which are not immediate? */
@@ -5995,6 +6061,8 @@ static HRESULT WINAPI IDirectPlay4Impl_GetMessageQueue( IDirectPlay4 *iface, DPI
     }
     else
         FIXME( "No SP for GetMessageQueue - fake some data\n" );
+
+    LeaveCriticalSection( &This->lock );
 
     return hr;
 }
