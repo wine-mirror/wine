@@ -73,13 +73,8 @@ struct wine_debug_report_callback
 struct wine_phys_dev
 {
     struct vulkan_physical_device obj;
-
-    VkPhysicalDeviceMemoryProperties memory_properties;
     VkExtensionProperties *extensions;
     uint32_t extension_count;
-
-    uint32_t external_memory_align;
-    uint32_t map_placed_align;
 };
 
 struct wine_debug_report_callback;

@@ -341,7 +341,7 @@ static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhy
     vulkan_object_init_ptr(&object->obj.obj, (UINT_PTR)host_physical_device, &client_physical_device->obj);
     object->obj.instance = instance;
 
-    instance->p_vkGetPhysicalDeviceMemoryProperties(host_physical_device, &object->memory_properties);
+    instance->p_vkGetPhysicalDeviceMemoryProperties(host_physical_device, &object->obj.memory_properties);
 
     res = instance->p_vkEnumerateDeviceExtensionProperties(host_physical_device,
             NULL, &num_host_properties, NULL);
@@ -434,12 +434,12 @@ static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhy
             };
 
             instance->p_vkGetPhysicalDeviceProperties2(host_physical_device, &props);
-            object->map_placed_align = map_placed_props.minPlacedMemoryMapAlignment;
-            TRACE( "Using placed map with alignment %u\n", object->map_placed_align );
+            object->obj.map_placed_align = map_placed_props.minPlacedMemoryMapAlignment;
+            TRACE( "Using placed map with alignment %u\n", object->obj.map_placed_align );
         }
     }
 
-    if (zero_bits && have_external_memory_host && !object->map_placed_align)
+    if (zero_bits && have_external_memory_host && !object->obj.map_placed_align)
     {
         VkPhysicalDeviceExternalMemoryHostPropertiesEXT host_mem_props =
         {
@@ -451,10 +451,10 @@ static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhy
             .pNext = &host_mem_props,
         };
         instance->p_vkGetPhysicalDeviceProperties2KHR(host_physical_device, &props);
-        object->external_memory_align = host_mem_props.minImportedHostPointerAlignment;
-        if (object->external_memory_align)
+        object->obj.external_memory_align = host_mem_props.minImportedHostPointerAlignment;
+        if (object->obj.external_memory_align)
             TRACE("Using VK_EXT_external_memory_host for memory mapping with alignment: %u\n",
-                  object->external_memory_align);
+                  object->obj.external_memory_align);
     }
 
     free(host_properties);
@@ -568,7 +568,7 @@ static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physi
         }
     }
 
-    if (phys_dev->map_placed_align)
+    if (phys_dev->obj.map_placed_align)
     {
         VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *map_placed_features;
         map_placed_features = conversion_context_alloc(ctx, sizeof(*map_placed_features));
@@ -584,7 +584,7 @@ static VkResult wine_vk_device_convert_create_info(VkPhysicalDevice client_physi
         if (!find_extension(extensions, extensions_count, "VK_KHR_map_memory2"))
             extra_extensions[extra_count++] = "VK_KHR_map_memory2";
     }
-    else if (phys_dev->external_memory_align)
+    else if (phys_dev->obj.external_memory_align)
     {
         if (!find_extension(extensions, extensions_count, "VK_KHR_external_memory"))
             extra_extensions[extra_count++] = "VK_KHR_external_memory";
@@ -1652,7 +1652,7 @@ VkResult wine_vkAllocateMemory(VkDevice client_device, const VkMemoryAllocateInf
                                const VkAllocationCallbacks *allocator, VkDeviceMemory *ret)
 {
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
-    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
+    struct vulkan_physical_device *physical_device = device->physical_device;
     struct vulkan_instance *instance = device->physical_device->instance;
     struct wine_device_memory *memory;
     VkMemoryAllocateInfo info = *alloc_info;
@@ -1752,7 +1752,7 @@ VkResult wine_vkAllocateMemory(VkDevice client_device, const VkMemoryAllocateInf
 void wine_vkFreeMemory(VkDevice client_device, VkDeviceMemory memory_handle, const VkAllocationCallbacks *allocator)
 {
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
-    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
+    struct vulkan_physical_device *physical_device = device->physical_device;
     struct vulkan_instance *instance = device->physical_device->instance;
     struct wine_device_memory *memory;
 
@@ -1801,7 +1801,7 @@ VkResult wine_vkMapMemory(VkDevice client_device, VkDeviceMemory memory, VkDevic
 VkResult wine_vkMapMemory2KHR(VkDevice client_device, const VkMemoryMapInfoKHR *map_info, void **data)
 {
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
-    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
+    struct vulkan_physical_device *physical_device = device->physical_device;
     struct wine_device_memory *memory = wine_device_memory_from_handle(map_info->memory);
     VkMemoryMapInfoKHR info = *map_info;
     VkMemoryMapPlacedInfoEXT placed_info =
@@ -1888,7 +1888,7 @@ void wine_vkUnmapMemory(VkDevice client_device, VkDeviceMemory memory)
 VkResult wine_vkUnmapMemory2KHR(VkDevice client_device, const VkMemoryUnmapInfoKHR *unmap_info)
 {
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
-    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
+    struct vulkan_physical_device *physical_device = device->physical_device;
     struct wine_device_memory *memory = wine_device_memory_from_handle(unmap_info->memory);
     VkMemoryUnmapInfoKHR info;
     VkResult result;
@@ -1923,7 +1923,7 @@ VkResult wine_vkCreateBuffer(VkDevice client_device, const VkBufferCreateInfo *c
                              const VkAllocationCallbacks *allocator, VkBuffer *buffer)
 {
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
-    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
+    struct vulkan_physical_device *physical_device = device->physical_device;
     VkExternalMemoryBufferCreateInfo external_memory_info;
     VkBufferCreateInfo info = *create_info;
 
@@ -1943,7 +1943,7 @@ VkResult wine_vkCreateImage(VkDevice client_device, const VkImageCreateInfo *cre
                             const VkAllocationCallbacks *allocator, VkImage *image)
 {
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
-    struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
+    struct vulkan_physical_device *physical_device = device->physical_device;
     VkExternalMemoryImageCreateInfo external_memory_info;
     VkImageCreateInfo info = *create_info;
 
