@@ -44,7 +44,7 @@ static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtQueueApcThread)(HANDLE handle, PNTAPCFUNC func,
         ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3);
-static NTSTATUS  (WINAPI *pNtCallbackReturn)( void *ret_ptr, ULONG ret_len, NTSTATUS status );
+static NTSTATUS  (WINAPI *pNtContinueEx)(CONTEXT*,KCONTINUE_ARGUMENT*);
 static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
 static PVOID     (WINAPI *pRtlUnwind)(PVOID, PVOID, PEXCEPTION_RECORD, PVOID);
 static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
@@ -4099,7 +4099,8 @@ static void test_continue(void)
         CONTEXT before;
         CONTEXT after;
     } contexts;
-    NTSTATUS (*func_ptr)( struct context_pair *, BOOL alertable, void *continue_func, void *capture_func ) = code_mem;
+    NTSTATUS (*func_ptr)( struct context_pair *, void *arg, void *continue_func, void *capture_func ) = code_mem;
+    KCONTINUE_ARGUMENT args = { .ContinueType = KCONTINUE_UNWIND };
     int i;
 
     static const BYTE call_func[] =
@@ -4168,7 +4169,7 @@ static void test_continue(void)
 
         /* load args */
         0x48, 0x8b, 0x4c, 0x24, 0x70, /* mov 8*14(%rsp), %rcx; context   */
-        0x48, 0x8b, 0x54, 0x24, 0x78, /* mov 8*15(%rsp), %rdx; alertable */
+        0x48, 0x8b, 0x54, 0x24, 0x78, /* mov 8*15(%rsp), %rdx; arg */
         0x48, 0x83, 0xec, 0x70,       /* sub $0x70, %rsp; change stack   */
 
         /* setup context to return to label 1 */
@@ -4228,7 +4229,7 @@ static void test_continue(void)
     memcpy( func_ptr, call_func, sizeof(call_func) );
     FlushInstructionCache( GetCurrentProcess(), func_ptr, sizeof(call_func) );
 
-    func_ptr( &contexts, FALSE, NtContinue, pRtlCaptureContext );
+    func_ptr( &contexts, 0, NtContinue, pRtlCaptureContext );
 
 #define COMPARE(reg) \
     ok( contexts.before.reg == contexts.after.reg, "wrong " #reg " %p/%p\n", (void *)(ULONG64)contexts.before.reg, (void *)(ULONG64)contexts.after.reg )
@@ -4252,6 +4253,51 @@ static void test_continue(void)
         ok( !memcmp( &contexts.before.Xmm0 + i, &contexts.after.Xmm0 + i, sizeof(contexts.before.Xmm0) ),
             "wrong xmm%u %08I64x%08I64x/%08I64x%08I64x\n", i, *(&contexts.before.Xmm0.High + i*2), *(&contexts.before.Xmm0.Low + i*2),
             *(&contexts.after.Xmm0.High + i*2), *(&contexts.after.Xmm0.Low + i*2) );
+
+    apc_count = 0;
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
+    func_ptr( &contexts, 0, NtContinue, pRtlCaptureContext );
+    ok( apc_count == 0, "apc called\n" );
+    func_ptr( &contexts, (void *)1, NtContinue, pRtlCaptureContext );
+    ok( apc_count == 1, "apc not called\n" );
+
+    if (!pNtContinueEx)
+    {
+        win_skip( "NtContinueEx not supported\n" );
+        return;
+    }
+
+    func_ptr( &contexts, &args, pNtContinueEx, pRtlCaptureContext );
+
+#define COMPARE(reg) \
+    ok( contexts.before.reg == contexts.after.reg, "wrong " #reg " %p/%p\n", (void *)(ULONG64)contexts.before.reg, (void *)(ULONG64)contexts.after.reg )
+
+    COMPARE( Rax );
+    COMPARE( Rdx );
+    COMPARE( Rbx );
+    COMPARE( Rbp );
+    COMPARE( Rsi );
+    COMPARE( Rdi );
+    COMPARE( R8 );
+    COMPARE( R9 );
+    COMPARE( R10 );
+    COMPARE( R11 );
+    COMPARE( R12 );
+    COMPARE( R13 );
+    COMPARE( R14 );
+    COMPARE( R15 );
+
+    for (i = 0; i < 16; i++)
+        ok( !memcmp( &contexts.before.Xmm0 + i, &contexts.after.Xmm0 + i, sizeof(contexts.before.Xmm0) ),
+            "wrong xmm%u %08I64x%08I64x/%08I64x%08I64x\n", i, *(&contexts.before.Xmm0.High + i*2), *(&contexts.before.Xmm0.Low + i*2),
+            *(&contexts.after.Xmm0.High + i*2), *(&contexts.after.Xmm0.Low + i*2) );
+
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234 + apc_count, 0x5678, 0xdeadbeef );
+    func_ptr( &contexts, &args, pNtContinueEx, pRtlCaptureContext );
+    ok( apc_count == 1, "apc called\n" );
+    args.ContinueFlags = KCONTINUE_FLAG_TEST_ALERT;
+    func_ptr( &contexts, &args, pNtContinueEx, pRtlCaptureContext );
+    ok( apc_count == 2, "apc not called\n" );
 
 #undef COMPARE
 }
@@ -7282,8 +7328,9 @@ static void test_continue(void)
         CONTEXT before;
         CONTEXT after;
     } contexts;
+    KCONTINUE_ARGUMENT args = { .ContinueType = KCONTINUE_UNWIND };
     unsigned int i;
-    NTSTATUS (*func_ptr)( struct context_pair *, BOOL alertable, void *continue_func, void *capture_func ) = code_mem;
+    NTSTATUS (*func_ptr)( struct context_pair *, void *arg, void *continue_func, void *capture_func ) = code_mem;
 
     static const DWORD call_func[] =
     {
@@ -7383,7 +7430,7 @@ static void test_continue(void)
 #define COMPARE_INDEXED(reg) \
     ok( contexts.before.reg == contexts.after.reg, "wrong " #reg " i: %u, %p/%p\n", i, (void *)(ULONG64)contexts.before.reg, (void *)(ULONG64)contexts.after.reg )
 
-    func_ptr( &contexts, FALSE, NtContinue, pRtlCaptureContext );
+    func_ptr( &contexts, 0, NtContinue, pRtlCaptureContext );
 
     for (i = 1; i < 29; i++) COMPARE_INDEXED( X[i] );
 
@@ -7395,6 +7442,40 @@ static void test_continue(void)
         COMPARE_INDEXED( V[i].Low );
         COMPARE_INDEXED( V[i].High );
     }
+
+    apc_count = 0;
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
+    func_ptr( &contexts, 0, NtContinue, pRtlCaptureContext );
+    ok( apc_count == 0, "apc called\n" );
+    func_ptr( &contexts, (void *)1, NtContinue, pRtlCaptureContext );
+    ok( apc_count == 1, "apc not called\n" );
+
+    if (!pNtContinueEx)
+    {
+        win_skip( "NtContinueEx not supported\n" );
+        return;
+    }
+
+    func_ptr( &contexts, &args, pNtContinueEx, pRtlCaptureContext );
+
+    for (i = 1; i < 29; i++) COMPARE_INDEXED( X[i] );
+
+    COMPARE( Fpcr );
+    COMPARE( Fpsr );
+
+    for (i = 0; i < 32; i++)
+    {
+        COMPARE_INDEXED( V[i].Low );
+        COMPARE_INDEXED( V[i].High );
+    }
+
+    pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234 + apc_count, 0x5678, 0xdeadbeef );
+    func_ptr( &contexts, &args, pNtContinueEx, pRtlCaptureContext );
+    ok( apc_count == 1, "apc called\n" );
+    args.ContinueFlags = KCONTINUE_FLAG_TEST_ALERT;
+    func_ptr( &contexts, &args, pNtContinueEx, pRtlCaptureContext );
+    ok( apc_count == 2, "apc not called\n" );
+
 #undef COMPARE
 }
 
@@ -9199,7 +9280,7 @@ static void test_user_apc(void)
 
 static void test_user_callback(void)
 {
-    NTSTATUS status = pNtCallbackReturn( NULL, 0, STATUS_SUCCESS );
+    NTSTATUS status = NtCallbackReturn( NULL, 0, STATUS_SUCCESS );
     ok( status == STATUS_NO_CALLBACK_ACTIVE, "failed %lx\n", status );
 }
 
@@ -11656,7 +11737,7 @@ START_TEST(exception)
     X(NtGetContextThread);
     X(NtSetContextThread);
     X(NtQueueApcThread);
-    X(NtCallbackReturn);
+    X(NtContinueEx);
     X(NtReadVirtualMemory);
     X(NtClose);
     X(RtlUnwind);

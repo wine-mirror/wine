@@ -794,8 +794,23 @@ unsigned int server_wait( const union select_op *select_op, data_size_t size, UI
  */
 NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
 {
+    return NtContinueEx( context, ULongToPtr(alertable) );
+}
+
+
+/***********************************************************************
+ *              NtContinueEx  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtContinueEx( CONTEXT *context, KCONTINUE_ARGUMENT *args )
+{
     struct user_apc apc;
     NTSTATUS status;
+    BOOL alertable;
+
+    if ((UINT_PTR)args > 0xff)
+        alertable = args->ContinueFlags & KCONTINUE_FLAG_TEST_ALERT;
+    else
+        alertable = !!args;
 
     if (alertable)
     {

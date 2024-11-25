@@ -169,6 +169,7 @@
 # @ stub NtCompressKey
 @ stdcall -syscall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtContinue(ptr long)
+@ stdcall -syscall NtContinueEx(ptr ptr)
 @ stdcall -syscall NtCreateDebugObject(ptr long ptr long)
 @ stdcall -syscall NtCreateDirectoryObject(ptr long ptr)
 @ stdcall -syscall NtCreateEvent(ptr long ptr long long)
@@ -1235,6 +1236,7 @@
 # @ stub ZwCompressKey
 @ stdcall -private -syscall ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
 @ stdcall -private -syscall ZwContinue(ptr long) NtContinue
+@ stdcall -private -syscall ZwContinueEx(ptr ptr) NtContinueEx
 # @ stub ZwCreateDebugObject
 @ stdcall -private -syscall ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
 @ stdcall -private -syscall ZwCreateEvent(ptr long ptr long long) NtCreateEvent
