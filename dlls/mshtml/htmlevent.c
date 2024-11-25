@@ -3735,11 +3735,12 @@ static const tid_t ProgressEvent_iface_tids[] = {
 };
 
 dispex_static_data_t ProgressEvent_dispex = {
-    .id           = PROT_ProgressEvent,
-    .prototype_id = PROT_Event,
-    .vtbl         = &DOMProgressEvent_dispex_vtbl,
-    .disp_tid     = DispDOMProgressEvent_tid,
-    .iface_tids   = ProgressEvent_iface_tids,
+    .id              = PROT_ProgressEvent,
+    .prototype_id    = PROT_Event,
+    .vtbl            = &DOMProgressEvent_dispex_vtbl,
+    .disp_tid        = DispDOMProgressEvent_tid,
+    .iface_tids      = ProgressEvent_iface_tids,
+    .min_compat_mode = COMPAT_MODE_IE10,
 };
 
 static const dispex_static_data_vtbl_t DOMStorageEvent_dispex_vtbl = {
