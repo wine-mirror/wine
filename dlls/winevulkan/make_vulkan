@@ -302,9 +302,14 @@ MANUAL_LOADER_THUNKS = {
 }
 
 STRUCT_CHAIN_CONVERSIONS = {
+    # Force making copies of some struct chains
+    "VkMemoryAllocateInfo": {},
+    "VkBufferCreateInfo": {},
+    "VkImageCreateInfo": {},
+
     # Ignore to not confuse host loader.
-    "VkDeviceCreateInfo": ["VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO"],
-    "VkInstanceCreateInfo": ["VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO"],
+    "VkDeviceCreateInfo": {"strip": ["VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO"]},
+    "VkInstanceCreateInfo": {"strip": ["VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO"]},
 }
 
 # Some struct members are conditionally ignored and callers are free to leave them uninitialized.
@@ -2294,8 +2299,9 @@ class StructConversionFunction(object):
 
             ident = "            "
 
-            if self.direction == Direction.INPUT and self.type in STRUCT_CHAIN_CONVERSIONS:
-                for i in STRUCT_CHAIN_CONVERSIONS[self.type]:
+            if self.direction == Direction.INPUT and self.type in STRUCT_CHAIN_CONVERSIONS \
+                    and "strip" in STRUCT_CHAIN_CONVERSIONS[self.type]:
+                for i in STRUCT_CHAIN_CONVERSIONS[self.type]["strip"]:
                     body += "        case {0}:\n".format(i)
                 body += ident + "break;\n"
 

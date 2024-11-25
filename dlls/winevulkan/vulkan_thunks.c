@@ -9618,6 +9618,123 @@ static void convert_VkDescriptorSetAllocateInfo_win32_to_host(struct conversion_
     }
 }
 
+#ifdef _WIN64
+static void convert_VkMemoryAllocateInfo_win64_to_host(struct conversion_context *ctx, const VkMemoryAllocateInfo *in, VkMemoryAllocateInfo *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->allocationSize = in->allocationSize;
+    out->memoryTypeIndex = in->memoryTypeIndex;
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV:
+        {
+            VkDedicatedAllocationMemoryAllocateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDedicatedAllocationMemoryAllocateInfoNV *in_ext = (const VkDedicatedAllocationMemoryAllocateInfoNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV;
+            out_ext->pNext = NULL;
+            out_ext->image = in_ext->image;
+            out_ext->buffer = in_ext->buffer;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO:
+        {
+            VkExportMemoryAllocateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkExportMemoryAllocateInfo *in_ext = (const VkExportMemoryAllocateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->handleTypes = in_ext->handleTypes;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT:
+        {
+            VkImportMemoryHostPointerInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImportMemoryHostPointerInfoEXT *in_ext = (const VkImportMemoryHostPointerInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->handleType = in_ext->handleType;
+            out_ext->pHostPointer = in_ext->pHostPointer;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO:
+        {
+            VkMemoryAllocateFlagsInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryAllocateFlagsInfo *in_ext = (const VkMemoryAllocateFlagsInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+            out_ext->pNext = NULL;
+            out_ext->flags = in_ext->flags;
+            out_ext->deviceMask = in_ext->deviceMask;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO:
+        {
+            VkMemoryDedicatedAllocateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryDedicatedAllocateInfo *in_ext = (const VkMemoryDedicatedAllocateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->image = in_ext->image;
+            out_ext->buffer = in_ext->buffer;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_TENSOR_ARM:
+        {
+            VkMemoryDedicatedAllocateInfoTensorARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryDedicatedAllocateInfoTensorARM *in_ext = (const VkMemoryDedicatedAllocateInfoTensorARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_TENSOR_ARM;
+            out_ext->pNext = NULL;
+            out_ext->tensor = in_ext->tensor;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO:
+        {
+            VkMemoryOpaqueCaptureAddressAllocateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryOpaqueCaptureAddressAllocateInfo *in_ext = (const VkMemoryOpaqueCaptureAddressAllocateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->opaqueCaptureAddress = in_ext->opaqueCaptureAddress;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_MEMORY_PRIORITY_ALLOCATE_INFO_EXT:
+        {
+            VkMemoryPriorityAllocateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryPriorityAllocateInfoEXT *in_ext = (const VkMemoryPriorityAllocateInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_PRIORITY_ALLOCATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->priority = in_ext->priority;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
+}
+#endif /* _WIN64 */
+
 static void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context *ctx, const VkMemoryAllocateInfo32 *in, VkMemoryAllocateInfo *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -14743,6 +14860,113 @@ static void convert_VkAccelerationStructureCreateInfoNV_win32_to_host(struct con
         }
     }
 }
+
+#ifdef _WIN64
+static void convert_VkBufferCreateInfo_win64_to_host(struct conversion_context *ctx, const VkBufferCreateInfo *in, VkBufferCreateInfo *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->flags = in->flags;
+    out->size = in->size;
+    out->usage = in->usage;
+    out->sharingMode = in->sharingMode;
+    out->queueFamilyIndexCount = in->queueFamilyIndexCount;
+    out->pQueueFamilyIndices = in->pQueueFamilyIndices;
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT:
+        {
+            VkBufferDeviceAddressCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkBufferDeviceAddressCreateInfoEXT *in_ext = (const VkBufferDeviceAddressCreateInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->deviceAddress = in_ext->deviceAddress;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO:
+        {
+            VkBufferOpaqueCaptureAddressCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkBufferOpaqueCaptureAddressCreateInfo *in_ext = (const VkBufferOpaqueCaptureAddressCreateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->opaqueCaptureAddress = in_ext->opaqueCaptureAddress;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO:
+        {
+            VkBufferUsageFlags2CreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkBufferUsageFlags2CreateInfo *in_ext = (const VkBufferUsageFlags2CreateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_USAGE_FLAGS_2_CREATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->usage = in_ext->usage;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_BUFFER_CREATE_INFO_NV:
+        {
+            VkDedicatedAllocationBufferCreateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkDedicatedAllocationBufferCreateInfoNV *in_ext = (const VkDedicatedAllocationBufferCreateInfoNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_BUFFER_CREATE_INFO_NV;
+            out_ext->pNext = NULL;
+            out_ext->dedicatedAllocation = in_ext->dedicatedAllocation;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO:
+        {
+            VkExternalMemoryBufferCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkExternalMemoryBufferCreateInfo *in_ext = (const VkExternalMemoryBufferCreateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->handleTypes = in_ext->handleTypes;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_OPAQUE_CAPTURE_DESCRIPTOR_DATA_CREATE_INFO_EXT:
+        {
+            VkOpaqueCaptureDescriptorDataCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkOpaqueCaptureDescriptorDataCreateInfoEXT *in_ext = (const VkOpaqueCaptureDescriptorDataCreateInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_OPAQUE_CAPTURE_DESCRIPTOR_DATA_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->opaqueCaptureDescriptorData = in_ext->opaqueCaptureDescriptorData;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR:
+        {
+            VkVideoProfileListInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoProfileListInfoKHR *in_ext = (const VkVideoProfileListInfoKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_PROFILE_LIST_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->profileCount = in_ext->profileCount;
+            out_ext->pProfiles = in_ext->pProfiles;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
+}
+#endif /* _WIN64 */
 
 static void convert_VkVideoProfileInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoProfileInfoKHR32 *in, VkVideoProfileInfoKHR *out)
 {
@@ -27252,6 +27476,35 @@ static void convert_VkAccelerationStructureVersionInfoKHR_win32_to_host(const Vk
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
+
+#ifdef _WIN64
+static const VkBufferCreateInfo *convert_VkBufferCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkBufferCreateInfo *in, uint32_t count)
+{
+    VkBufferCreateInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkBufferCreateInfo_win64_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
+#ifdef _WIN64
+static void convert_VkDeviceBufferMemoryRequirements_win64_to_host(struct conversion_context *ctx, const VkDeviceBufferMemoryRequirements *in, VkDeviceBufferMemoryRequirements *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->pCreateInfo = convert_VkBufferCreateInfo_array_win64_to_host(ctx, in->pCreateInfo, 1);
+}
+#endif /* _WIN64 */
 
 static const VkBufferCreateInfo *convert_VkBufferCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo32 *in, uint32_t count)
 {
@@ -40130,10 +40383,16 @@ static NTSTATUS thunk32_vkAllocateDescriptorSets(void *args)
 static NTSTATUS thunk64_vkAllocateMemory(void *args)
 {
     struct vkAllocateMemory_params *params = args;
+    VkMemoryAllocateInfo pAllocateInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pAllocateInfo, params->pAllocator, params->pMemory);
 
-    params->result = vk_funcs->p_vkAllocateMemory(params->device, params->pAllocateInfo, params->pAllocator, params->pMemory);
+    init_conversion_context(ctx);
+    convert_VkMemoryAllocateInfo_win64_to_host(ctx, params->pAllocateInfo, &pAllocateInfo_host);
+    params->result = vk_funcs->p_vkAllocateMemory(params->device, &pAllocateInfo_host, params->pAllocator, params->pMemory);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -47593,10 +47852,16 @@ static NTSTATUS thunk32_vkCreateAccelerationStructureNV(void *args)
 static NTSTATUS thunk64_vkCreateBuffer(void *args)
 {
     struct vkCreateBuffer_params *params = args;
+    VkBufferCreateInfo pCreateInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pBuffer);
 
-    params->result = vk_funcs->p_vkCreateBuffer(params->device, params->pCreateInfo, params->pAllocator, params->pBuffer);
+    init_conversion_context(ctx);
+    convert_VkBufferCreateInfo_win64_to_host(ctx, params->pCreateInfo, &pCreateInfo_host);
+    params->result = vk_funcs->p_vkCreateBuffer(params->device, &pCreateInfo_host, params->pAllocator, params->pBuffer);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52291,10 +52556,16 @@ static NTSTATUS thunk32_vkGetDeviceAccelerationStructureCompatibilityKHR(void *a
 static NTSTATUS thunk64_vkGetDeviceBufferMemoryRequirements(void *args)
 {
     struct vkGetDeviceBufferMemoryRequirements_params *params = args;
+    VkDeviceBufferMemoryRequirements pInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
 
-    vulkan_device_from_handle(params->device)->p_vkGetDeviceBufferMemoryRequirements(vulkan_device_from_handle(params->device)->host.device, params->pInfo, params->pMemoryRequirements);
+    init_conversion_context(ctx);
+    convert_VkDeviceBufferMemoryRequirements_win64_to_host(ctx, params->pInfo, &pInfo_host);
+    vulkan_device_from_handle(params->device)->p_vkGetDeviceBufferMemoryRequirements(vulkan_device_from_handle(params->device)->host.device, &pInfo_host, params->pMemoryRequirements);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52327,10 +52598,16 @@ static NTSTATUS thunk32_vkGetDeviceBufferMemoryRequirements(void *args)
 static NTSTATUS thunk64_vkGetDeviceBufferMemoryRequirementsKHR(void *args)
 {
     struct vkGetDeviceBufferMemoryRequirementsKHR_params *params = args;
+    VkDeviceBufferMemoryRequirements pInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
 
-    vulkan_device_from_handle(params->device)->p_vkGetDeviceBufferMemoryRequirementsKHR(vulkan_device_from_handle(params->device)->host.device, params->pInfo, params->pMemoryRequirements);
+    init_conversion_context(ctx);
+    convert_VkDeviceBufferMemoryRequirements_win64_to_host(ctx, params->pInfo, &pInfo_host);
+    vulkan_device_from_handle(params->device)->p_vkGetDeviceBufferMemoryRequirementsKHR(vulkan_device_from_handle(params->device)->host.device, &pInfo_host, params->pMemoryRequirements);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
