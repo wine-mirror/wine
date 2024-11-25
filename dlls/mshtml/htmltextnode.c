@@ -33,10 +33,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+struct CharacterData {
+    IWineHTMLCharacterData IWineHTMLCharacterData_iface;
+    HTMLDOMNode *node;
+    nsIDOMCharacterData *nschardata;
+};
+
 struct HTMLDOMTextNode {
     HTMLDOMNode node;
     IHTMLDOMTextNode IHTMLDOMTextNode_iface;
     IHTMLDOMTextNode2 IHTMLDOMTextNode2_iface;
+    struct CharacterData character_data;
 
     nsIDOMText *nstext;
 };
@@ -45,6 +52,136 @@ struct HTMLCommentElement {
     HTMLElement element;
     IHTMLCommentElement IHTMLCommentElement_iface;
 };
+
+static inline struct CharacterData *impl_from_IWineHTMLCharacterData(IWineHTMLCharacterData *iface)
+{
+    return CONTAINING_RECORD(iface, struct CharacterData, IWineHTMLCharacterData_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(CharacterData, IWineHTMLCharacterData,
+                      impl_from_IWineHTMLCharacterData(iface)->node->event_target.dispex)
+
+static HRESULT WINAPI CharacterData_put_data(IWineHTMLCharacterData *iface, BSTR v)
+{
+    struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&nsstr, v);
+    nsres = nsIDOMCharacterData_SetData(This->nschardata, &nsstr);
+    nsAString_Finish(&nsstr);
+    return NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
+}
+
+static HRESULT WINAPI CharacterData_get_data(IWineHTMLCharacterData *iface, BSTR *p)
+{
+    struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMCharacterData_GetData(This->nschardata, &nsstr);
+    return return_nsstr(nsres, &nsstr, p);
+}
+
+static HRESULT WINAPI CharacterData_get_length(IWineHTMLCharacterData *iface, LONG *p)
+{
+    struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+    UINT32 length = 0;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMCharacterData_GetLength(This->nschardata, &length);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    *p = length;
+    return S_OK;
+}
+
+static HRESULT WINAPI CharacterData_substringData(IWineHTMLCharacterData *iface, LONG offset, LONG count, BSTR *string)
+{
+    struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+
+    FIXME("(%p)->(%ld %ld %p)\n", This, offset, count, string);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CharacterData_appendData(IWineHTMLCharacterData *iface, BSTR string)
+{
+    struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(string));
+
+    nsAString_InitDepend(&nsstr, string);
+    nsres = nsIDOMCharacterData_AppendData(This->nschardata, &nsstr);
+    nsAString_Finish(&nsstr);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI CharacterData_insertData(IWineHTMLCharacterData *iface, LONG offset, BSTR string)
+{
+    struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+
+    FIXME("(%p)->(%ld %s)\n", This, offset, debugstr_w(string));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CharacterData_deleteData(IWineHTMLCharacterData *iface, LONG offset, LONG count)
+{
+    struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+
+    FIXME("(%p)->(%ld %ld)\n", This, offset, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CharacterData_replaceData(IWineHTMLCharacterData *iface, LONG offset, LONG count, BSTR string)
+{
+    struct CharacterData *This = impl_from_IWineHTMLCharacterData(iface);
+
+    FIXME("(%p)->(%ld %ld %s)\n", This, offset, count, debugstr_w(string));
+
+    return E_NOTIMPL;
+}
+
+static const IWineHTMLCharacterDataVtbl CharacterDataVtbl = {
+    CharacterData_QueryInterface,
+    CharacterData_AddRef,
+    CharacterData_Release,
+    CharacterData_GetTypeInfoCount,
+    CharacterData_GetTypeInfo,
+    CharacterData_GetIDsOfNames,
+    CharacterData_Invoke,
+    CharacterData_put_data,
+    CharacterData_get_data,
+    CharacterData_get_length,
+    CharacterData_substringData,
+    CharacterData_appendData,
+    CharacterData_insertData,
+    CharacterData_deleteData,
+    CharacterData_replaceData
+};
+
+static void init_char_data(HTMLDOMNode *node, nsIDOMCharacterData *nschardata, struct CharacterData *ret)
+{
+    /* nschardata shares reference with nsnode */
+    ret->IWineHTMLCharacterData_iface.lpVtbl = &CharacterDataVtbl;
+    ret->nschardata = nschardata;
+    ret->node = node;
+}
 
 static inline HTMLDOMTextNode *impl_from_IHTMLDOMTextNode(IHTMLDOMTextNode *iface)
 {
@@ -57,28 +194,13 @@ DISPEX_IDISPATCH_IMPL(HTMLDOMTextNode, IHTMLDOMTextNode,
 static HRESULT WINAPI HTMLDOMTextNode_put_data(IHTMLDOMTextNode *iface, BSTR v)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode(iface);
-    nsAString nsstr;
-    nsresult nsres;
-
-    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
-
-    nsAString_InitDepend(&nsstr, v);
-    nsres = nsIDOMText_SetData(This->nstext, &nsstr);
-    nsAString_Finish(&nsstr);
-    return NS_SUCCEEDED(nsres) ? S_OK : E_FAIL;
+    return CharacterData_put_data(&This->character_data.IWineHTMLCharacterData_iface, v);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode_get_data(IHTMLDOMTextNode *iface, BSTR *p)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode(iface);
-    nsAString nsstr;
-    nsresult nsres;
-
-    TRACE("(%p)->(%p)\n", This, p);
-
-    nsAString_Init(&nsstr, NULL);
-    nsres = nsIDOMText_GetData(This->nstext, &nsstr);
-    return return_nsstr(nsres, &nsstr, p);
+    return CharacterData_get_data(&This->character_data.IWineHTMLCharacterData_iface, p);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode_toString(IHTMLDOMTextNode *iface, BSTR *String)
@@ -99,17 +221,7 @@ static HRESULT WINAPI HTMLDOMTextNode_toString(IHTMLDOMTextNode *iface, BSTR *St
 static HRESULT WINAPI HTMLDOMTextNode_get_length(IHTMLDOMTextNode *iface, LONG *p)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode(iface);
-    UINT32 length = 0;
-    nsresult nsres;
-
-    TRACE("(%p)->(%p)\n", This, p);
-
-    nsres = nsIDOMText_GetLength(This->nstext, &length);
-    if(NS_FAILED(nsres))
-        ERR("GetLength failed: %08lx\n", nsres);
-
-    *p = length;
-    return S_OK;
+    return CharacterData_get_length(&This->character_data.IWineHTMLCharacterData_iface, p);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode_splitText(IHTMLDOMTextNode *iface, LONG offset, IHTMLDOMNode **pRetNode)
@@ -168,48 +280,31 @@ DISPEX_IDISPATCH_IMPL(HTMLDOMTextNode2, IHTMLDOMTextNode2,
 static HRESULT WINAPI HTMLDOMTextNode2_substringData(IHTMLDOMTextNode2 *iface, LONG offset, LONG count, BSTR *string)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
-    FIXME("(%p)->(%ld %ld %p)\n", This, offset, count, string);
-    return E_NOTIMPL;
+    return CharacterData_substringData(&This->character_data.IWineHTMLCharacterData_iface, offset, count, string);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode2_appendData(IHTMLDOMTextNode2 *iface, BSTR string)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
-    nsAString nsstr;
-    nsresult nsres;
-
-    TRACE("(%p)->(%s)\n", This, debugstr_w(string));
-
-    nsAString_InitDepend(&nsstr, string);
-    nsres = nsIDOMText_AppendData(This->nstext, &nsstr);
-    nsAString_Finish(&nsstr);
-    if(NS_FAILED(nsres)) {
-        ERR("AppendData failed: %08lx\n", nsres);
-        return E_FAIL;
-    }
-
-    return S_OK;
+    return CharacterData_appendData(&This->character_data.IWineHTMLCharacterData_iface, string);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode2_insertData(IHTMLDOMTextNode2 *iface, LONG offset, BSTR string)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
-    FIXME("(%p)->(%ld %s)\n", This, offset, debugstr_w(string));
-    return E_NOTIMPL;
+    return CharacterData_insertData(&This->character_data.IWineHTMLCharacterData_iface, offset, string);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode2_deleteData(IHTMLDOMTextNode2 *iface, LONG offset, LONG count)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
-    FIXME("(%p)->(%ld %ld)\n", This, offset, count);
-    return E_NOTIMPL;
+    return CharacterData_deleteData(&This->character_data.IWineHTMLCharacterData_iface, offset, count);
 }
 
 static HRESULT WINAPI HTMLDOMTextNode2_replaceData(IHTMLDOMTextNode2 *iface, LONG offset, LONG count, BSTR string)
 {
     HTMLDOMTextNode *This = impl_from_IHTMLDOMTextNode2(iface);
-    FIXME("(%p)->(%ld %ld %s)\n", This, offset, count, debugstr_w(string));
-    return E_NOTIMPL;
+    return CharacterData_replaceData(&This->character_data.IWineHTMLCharacterData_iface, offset, count, string);
 }
 
 static const IHTMLDOMTextNode2Vtbl HTMLDOMTextNode2Vtbl = {
@@ -252,6 +347,8 @@ static void *HTMLDOMTextNode_query_interface(DispatchEx *dispex, REFIID riid)
         return &This->IHTMLDOMTextNode_iface;
     if(IsEqualGUID(&IID_IHTMLDOMTextNode2, riid))
         return &This->IHTMLDOMTextNode2_iface;
+    if(IsEqualGUID(&IID_IWineHTMLCharacterData, riid))
+        return &This->character_data.IWineHTMLCharacterData_iface;
 
     return HTMLDOMNode_query_interface(&This->node.event_target.dispex, riid);
 }
@@ -311,6 +408,8 @@ HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDO
 
     /* Share reference with nsnode */
     nsIDOMNode_Release(ret->node.nsnode);
+
+    init_char_data(&ret->node, (nsIDOMCharacterData*)ret->nstext, &ret->character_data);
 
     *node = &ret->node;
     return S_OK;

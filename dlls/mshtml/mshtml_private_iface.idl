@@ -154,6 +154,33 @@ interface IWineHTMLWindowCompatPrivate : IDispatch
     oleautomation,
     dual,
     hidden,
+    uuid(465908fd-f394-489f-b7a3-4c00fbbe9eeb)
+]
+interface IWineHTMLCharacterData : IDispatch
+{
+    [propput, id(32)]
+    HRESULT data([in] BSTR v);
+    [propget, id(32)]
+    HRESULT data([out, retval] BSTR *p);
+    [propget, id(33)]
+    HRESULT length([out, retval] LONG *p);
+    [id(34)]
+    HRESULT substringData([in] LONG offset, [in] LONG count, [out, retval] BSTR *p);
+    [id(35)]
+    HRESULT appendData([in] BSTR string);
+    [id(36)]
+    HRESULT insertData([in] LONG offset, [in] BSTR string);
+    [id(37)]
+    HRESULT deleteData([in] LONG offset, [in] LONG count);
+    [id(38)]
+    HRESULT replaceData([in] LONG offset, [in] LONG count, [in] BSTR string);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
     uuid(465908fd-f394-489f-b7a3-4c00fbbe9eec)
 ]
 interface IWineHTMLElementPrivate : IDispatch
