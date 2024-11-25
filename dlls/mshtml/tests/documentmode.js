@@ -545,6 +545,14 @@ sync_test("elem_props", function() {
     test_exposed("insertData", true);
     test_exposed("replaceData", true);
     test_exposed("substringData", true);
+    test_exposed("attachEvent", v < 9);
+    test_exposed("doScroll", v < 9);
+    test_exposed("readyState", v < 9);
+    test_exposed("clientTop", v < 9);
+    test_exposed("title", v < 9);
+    test_exposed("removeNode", v < 9);
+    test_exposed("querySelectorAll", v === 8);
+    test_exposed("hasAttribute", v === 8, v === 8);
 
     elem = document.createElement("style");
     test_exposed("media", true);
@@ -3678,6 +3686,7 @@ sync_test("prototype props", function() {
     }
 
     check(CharacterData, [ "appendData", "data", "deleteData", "insertData", "length", "replaceData", "substringData" ]);
+    check(Comment, [ "text" ]);
     check(CSSStyleRule, [ "readOnly", "selectorText", "style" ]);
     check(CustomEvent, [ "detail", "initCustomEvent" ]);
     check(DocumentType, [ "entities", "internalSubset", "name", "notations", "publicId", "systemId" ]);
