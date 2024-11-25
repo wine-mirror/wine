@@ -44,6 +44,7 @@ struct vulkan_client_object
 
 #define WINE_VK_HOST
 #include "wine/vulkan.h"
+#include "wine/rbtree.h"
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
 #define WINE_VULKAN_DRIVER_VERSION 35
@@ -52,6 +53,7 @@ struct vulkan_object
 {
     UINT64 host_handle;
     UINT64 client_handle;
+    struct rb_entry entry;
 };
 
 #define VULKAN_OBJECT_HEADER( type, name ) \
