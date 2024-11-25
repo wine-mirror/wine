@@ -3696,6 +3696,15 @@ sync_test("prototype props", function() {
         "stopImmediatePropagation", "stopPropagation", "target", "timeStamp", "type"
     ], [ "AT_TARGET", "BUBBLING_PHASE", "CAPTURING_PHASE" ]);
     check(HTMLUnknownElement, [ "namedRecordset", "recordset" ]);
+    check(KeyboardEvent, [
+        "DOM_KEY_LOCATION_JOYSTICK", "DOM_KEY_LOCATION_LEFT", "DOM_KEY_LOCATION_MOBILE",
+        "DOM_KEY_LOCATION_NUMPAD", "DOM_KEY_LOCATION_RIGHT", "DOM_KEY_LOCATION_STANDARD",
+        "altKey", "char", "charCode", "ctrlKey", "getModifierState", "initKeyboardEvent",
+        "key", "keyCode", "locale", "location", "metaKey", "repeat", "shiftKey", "which"
+    ], [
+        "DOM_KEY_LOCATION_JOYSTICK", "DOM_KEY_LOCATION_LEFT", "DOM_KEY_LOCATION_MOBILE",
+        "DOM_KEY_LOCATION_NUMPAD", "DOM_KEY_LOCATION_RIGHT", "DOM_KEY_LOCATION_STANDARD"
+    ]);
     check(MessageEvent, [ "data", "initMessageEvent", "origin", ["ports",10], "source" ], [ ["ports",10] ]);
     check(MouseEvent, [
         "altKey", "button", "buttons", "clientX", "clientY", "ctrlKey", "fromElement", "getModifierState",

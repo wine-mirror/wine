@@ -3638,10 +3638,18 @@ static const dispex_static_data_vtbl_t DOMKeyboardEvent_dispex_vtbl = {
     .unlink           = DOMKeyboardEvent_unlink
 };
 
+static void KeyboardEvent_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t hooks[] = {
+        {DISPID_IDOMKEYBOARDEVENT_IE9_CHAR, NULL, L"char"},
+        {DISPID_UNKNOWN}
+    };
+    dispex_info_add_interface(info, IDOMKeyboardEvent_tid, hooks);
+}
+
 static const tid_t KeyboardEvent_iface_tids[] = {
     IDOMEvent_tid,
     IDOMUIEvent_tid,
-    IDOMKeyboardEvent_tid,
     0
 };
 
@@ -3651,6 +3659,7 @@ dispex_static_data_t KeyboardEvent_dispex = {
     .vtbl         = &DOMKeyboardEvent_dispex_vtbl,
     .disp_tid     = DispDOMKeyboardEvent_tid,
     .iface_tids   = KeyboardEvent_iface_tids,
+    .init_info    = KeyboardEvent_init_dispex_info,
 };
 
 static void DOMPageTransitionEvent_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
