@@ -337,6 +337,8 @@ HRESULT WINAPI OleCreateFontIndirect(
     fd.fStrikethrough = FALSE;
     lpFontDesc = &fd;
   }
+  else if (!lpFontDesc->lpstrName)
+    return CTL_E_INVALIDPROPERTYVALUE;
 
   newFont = OLEFontImpl_Construct(lpFontDesc);
   if (!newFont) return E_OUTOFMEMORY;
