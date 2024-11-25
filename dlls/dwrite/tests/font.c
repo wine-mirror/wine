@@ -1513,7 +1513,6 @@ static void test_CreateBitmapRenderTarget(void)
     hr = IDWriteBitmapRenderTarget_DrawGlyphRun(target, -500.0f, -500.0f, DWRITE_MEASURING_MODE_GDI_NATURAL,
        &run, params, RGB(255, 0, 0), &box);
     ok(hr == S_OK, "Failed to draw a run, hr %#lx.\n", hr);
-    todo_wine
     ok(!IsRectEmpty(&box), "Got unexpected rectangle %s.\n", wine_dbgstr_rect(&box));
 
     IDWriteRenderingParams_Release(params);

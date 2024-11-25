@@ -479,6 +479,10 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
 
         free(bitmap);
     }
+    else if (bbox_ret)
+    {
+        *bbox_ret = bounds;
+    }
 
     IDWriteGlyphRunAnalysis_Release(analysis);
 
