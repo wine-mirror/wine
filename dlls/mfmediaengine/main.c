@@ -2486,7 +2486,7 @@ static HRESULT media_engine_transfer_d3d11(struct media_engine *engine, ID3D11Te
 {
     MFVideoNormalizedRect src_rect_default = {0.0, 0.0, 1.0, 1.0};
     MFARGB color_default = {0, 0, 0, 0};
-    D3D11_TEXTURE2D_DESC src_desc;
+    D3D11_TEXTURE2D_DESC src_desc, dst_desc;
     ID3D11DeviceContext *context;
     ID3D11Texture2D *src_texture;
     RECT dst_rect_default = {0};
@@ -2510,13 +2510,8 @@ static HRESULT media_engine_transfer_d3d11(struct media_engine *engine, ID3D11Te
     if (FAILED(hr))
         return hr;
 
-    if (FAILED(hr = media_engine_lock_d3d_device(engine, &device)))
-    {
-        ID3D11Texture2D_Release(src_texture);
-        return hr;
-    }
-
     ID3D11Texture2D_GetDesc(src_texture, &src_desc);
+    ID3D11Texture2D_GetDesc(dst_texture, &dst_desc);
 
     src_box.left = src_rect->left * src_desc.Width;
     src_box.top = src_rect->top * src_desc.Height;
@@ -2524,6 +2519,19 @@ static HRESULT media_engine_transfer_d3d11(struct media_engine *engine, ID3D11Te
     src_box.right = src_rect->right * src_desc.Width;
     src_box.bottom = src_rect->bottom * src_desc.Height;
     src_box.back = 1;
+
+    if (dst_rect->left + src_box.right - src_box.left > dst_desc.Width ||
+            dst_rect->top + src_box.top - src_box.bottom > dst_desc.Height)
+    {
+        ID3D11Texture2D_Release(src_texture);
+        return MF_E_UNEXPECTED;
+    }
+
+    if (FAILED(hr = media_engine_lock_d3d_device(engine, &device)))
+    {
+        ID3D11Texture2D_Release(src_texture);
+        return hr;
+    }
 
     ID3D11Device_GetImmediateContext(device, &context);
     ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_texture, 0,
