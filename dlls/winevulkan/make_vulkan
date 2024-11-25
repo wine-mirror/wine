@@ -1144,7 +1144,7 @@ class VkHandle(object):
         elif self.name == "VkCommandBuffer":
             return "wine_cmd_buffer_from_handle({0})->device".format(param)
         elif self.name == "VkDevice":
-            return "wine_device_from_handle({0})".format(param)
+            return "vulkan_device_from_handle({0})".format(param)
         elif self.name == "VkPhysicalDevice":
             return "vulkan_physical_device_from_handle({0})->instance".format(param)
         elif self.name == "VkQueue":
@@ -1191,7 +1191,7 @@ class VkHandle(object):
         if self.name == "VkDeferredOperationKHR":
             return "wine_deferred_operation_from_handle({0})->host_deferred_operation".format(name)
         if self.name == "VkDevice":
-            return "wine_device_from_handle({0})->host_device".format(name)
+            return "vulkan_device_from_handle({0})->host.device".format(name)
         if self.name == "VkInstance":
             return "vulkan_instance_from_handle({0})->host.instance".format(name)
         if self.name == "VkDeviceMemory":

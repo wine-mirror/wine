@@ -42,7 +42,7 @@ struct wrapper_entry
 
 struct wine_cmd_buffer
 {
-    struct wine_device *device; /* parent */
+    struct vulkan_device *device; /* parent */
 
     VkCommandBuffer handle; /* client command buffer */
     VkCommandBuffer host_command_buffer;
@@ -57,7 +57,7 @@ static inline struct wine_cmd_buffer *wine_cmd_buffer_from_handle(VkCommandBuffe
 
 struct wine_queue
 {
-    struct wine_device *device; /* parent */
+    struct vulkan_device *device; /* parent */
 
     VkQueue handle; /* client queue */
     VkQueue host_queue;
@@ -76,26 +76,14 @@ static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
 
 struct wine_device
 {
-    struct vulkan_physical_device *physical_device; /* parent */
-#define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
-    ALL_VK_DEVICE_FUNCS
-#undef USE_VK_FUNC
-
-    VkDevice handle; /* client device */
-    VkDevice host_device;
-
+    struct vulkan_device obj;
     struct wrapper_entry wrapper_entry;
 
-    uint32_t queue_count;
+    uint64_t queue_count;
     struct wine_queue queues[];
 };
 
 C_ASSERT(sizeof(struct wine_device) == offsetof(struct wine_device, queues[0]));
-
-static inline struct wine_device *wine_device_from_handle(VkDevice handle)
-{
-    return (struct wine_device *)(uintptr_t)handle->obj.unix_handle;
-}
 
 struct wine_debug_utils_messenger;
 

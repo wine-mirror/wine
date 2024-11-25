@@ -89,6 +89,21 @@ static inline struct vulkan_physical_device *vulkan_physical_device_from_handle(
     return (struct vulkan_physical_device *)(UINT_PTR)client->unix_handle;
 }
 
+struct vulkan_device
+{
+    VULKAN_OBJECT_HEADER( VkDevice, device );
+    struct vulkan_physical_device *physical_device;
+#define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
+    ALL_VK_DEVICE_FUNCS
+#undef USE_VK_FUNC
+};
+
+static inline struct vulkan_device *vulkan_device_from_handle( VkDevice handle )
+{
+    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
+    return (struct vulkan_device *)(UINT_PTR)client->unix_handle;
+}
+
 struct vulkan_funcs
 {
     /* Vulkan global functions. These are the only calls at this point a graphics driver
