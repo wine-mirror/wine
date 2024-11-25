@@ -1452,8 +1452,12 @@ static bool constant_is_one(struct hlsl_ir_constant *const_arg)
 
             case HLSL_TYPE_UINT:
             case HLSL_TYPE_INT:
-            case HLSL_TYPE_BOOL:
                 if (const_arg->value.u[k].u != 1)
+                    return false;
+                break;
+
+            case HLSL_TYPE_BOOL:
+                if (const_arg->value.u[k].u != ~0)
                     return false;
                 break;
 
@@ -1512,6 +1516,20 @@ bool hlsl_fold_constant_identities(struct hlsl_ctx *ctx, struct hlsl_ir_node *in
         case HLSL_OP2_MUL:
             if (constant_is_one(const_arg))
                 res_node = mut_arg;
+            break;
+
+        case HLSL_OP2_LOGIC_AND:
+            if (constant_is_zero(const_arg))
+                res_node = &const_arg->node;
+            else if (constant_is_one(const_arg))
+                res_node = mut_arg;
+            break;
+
+        case HLSL_OP2_LOGIC_OR:
+            if (constant_is_zero(const_arg))
+                res_node = mut_arg;
+            else if (constant_is_one(const_arg))
+                res_node = &const_arg->node;
             break;
 
         default:

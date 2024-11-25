@@ -2498,7 +2498,7 @@ static void d3d12_desc_write_vk_heap_null_descriptor(struct d3d12_descriptor_hea
     enum vkd3d_vk_descriptor_set_index set, end;
     unsigned int i = writes->count;
 
-    end = device->vk_info.EXT_mutable_descriptor_type ? VKD3D_SET_INDEX_UNIFORM_BUFFER
+    end = device->vk_info.EXT_mutable_descriptor_type ? VKD3D_SET_INDEX_MUTABLE
             : VKD3D_SET_INDEX_STORAGE_IMAGE;
     /* Binding a shader with the wrong null descriptor type works in Windows.
      * To support that here we must write one to all applicable Vulkan sets. */
@@ -4250,7 +4250,8 @@ static HRESULT d3d12_descriptor_heap_create_descriptor_pool(struct d3d12_descrip
         if (device->vk_descriptor_heap_layouts[set].applicable_heap_type == desc->Type
                 && device->vk_descriptor_heap_layouts[set].vk_set_layout)
         {
-            pool_sizes[pool_desc.poolSizeCount].type = (device->vk_info.EXT_mutable_descriptor_type && !set)
+            pool_sizes[pool_desc.poolSizeCount].type =
+                    (device->vk_info.EXT_mutable_descriptor_type && set == VKD3D_SET_INDEX_MUTABLE)
                     ? VK_DESCRIPTOR_TYPE_MUTABLE_EXT : device->vk_descriptor_heap_layouts[set].type;
             pool_sizes[pool_desc.poolSizeCount++].descriptorCount = desc->NumDescriptors;
         }
@@ -4280,11 +4281,12 @@ static HRESULT d3d12_descriptor_heap_create_descriptor_set(struct d3d12_descript
 
     if (!device->vk_descriptor_heap_layouts[set].vk_set_layout)
     {
-        /* Set 0 uses mutable descriptors, and this set is unused. */
-        if (!descriptor_heap->vk_descriptor_sets[0].vk_set
-                && FAILED(hr = d3d12_descriptor_heap_create_descriptor_set(descriptor_heap, device, 0)))
+        /* Mutable descriptors are in use, and this set is unused. */
+        if (!descriptor_heap->vk_descriptor_sets[VKD3D_SET_INDEX_MUTABLE].vk_set
+                && FAILED(hr = d3d12_descriptor_heap_create_descriptor_set(descriptor_heap,
+                device, VKD3D_SET_INDEX_MUTABLE)))
             return hr;
-        descriptor_set->vk_set = descriptor_heap->vk_descriptor_sets[0].vk_set;
+        descriptor_set->vk_set = descriptor_heap->vk_descriptor_sets[VKD3D_SET_INDEX_MUTABLE].vk_set;
         descriptor_set->vk_type = device->vk_descriptor_heap_layouts[set].type;
         return S_OK;
     }

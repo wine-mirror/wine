@@ -62,6 +62,8 @@
 #define VKD3D_STRINGIFY(x) #x
 #define VKD3D_EXPAND_AND_STRINGIFY(x) VKD3D_EXPAND(VKD3D_STRINGIFY(x))
 
+#define vkd3d_clamp(value, lower, upper) max(min(value, upper), lower)
+
 #define TAG_AON9 VKD3D_MAKE_TAG('A', 'o', 'n', '9')
 #define TAG_DXBC VKD3D_MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_DXIL VKD3D_MAKE_TAG('D', 'X', 'I', 'L')

@@ -415,6 +415,7 @@ HRESULT vkd3d_create_versioned_root_signature_deserializer(const void *data, SIZ
     if (FAILED(hr = d3d12_versioned_root_signature_deserializer_init(object, &dxbc)))
     {
         vkd3d_free(object);
+        *deserializer = NULL;
         return hr;
     }
 

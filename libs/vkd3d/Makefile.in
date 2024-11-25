@@ -25,6 +25,7 @@ SOURCES = \
 	libs/vkd3d-shader/hlsl_codegen.c \
 	libs/vkd3d-shader/hlsl_constant_ops.c \
 	libs/vkd3d-shader/ir.c \
+	libs/vkd3d-shader/msl.c \
 	libs/vkd3d-shader/preproc.l \
 	libs/vkd3d-shader/preproc.y \
 	libs/vkd3d-shader/spirv.c \

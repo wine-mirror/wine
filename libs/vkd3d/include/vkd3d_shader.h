@@ -56,6 +56,7 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_11,
     VKD3D_SHADER_API_VERSION_1_12,
     VKD3D_SHADER_API_VERSION_1_13,
+    VKD3D_SHADER_API_VERSION_1_14,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_API_VERSION),
 };
@@ -190,6 +191,17 @@ enum vkd3d_shader_compile_option_backward_compatibility
      *  - DEPTH to SV_Depth for pixel shader outputs.
      */
     VKD3D_SHADER_COMPILE_OPTION_BACKCOMPAT_MAP_SEMANTIC_NAMES = 0x00000001,
+    /**
+     *  Causes 'double' to behave as an alias for 'float'. This option only
+     *  applies to HLSL sources with shader model 1-3 target profiles. Without
+     *  this option using the 'double' type produces compilation errors in
+     *  these target profiles.
+     *
+     *  This option is disabled by default.
+     *
+     *  \since 1.14
+     */
+    VKD3D_SHADER_COMPILE_OPTION_DOUBLE_AS_FLOAT_ALIAS = 0x00000002,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_BACKWARD_COMPATIBILITY),
 };
@@ -469,8 +481,8 @@ enum vkd3d_shader_parameter_type
     /** The parameter value is embedded directly in the shader. */
     VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT,
     /**
-     * The parameter value is provided to the shader via a specialization
-     * constant. This value is only supported for the SPIR-V target type.
+     * The parameter value is provided to the shader via specialization
+     * constants. This value is only supported for the SPIR-V target type.
      */
     VKD3D_SHADER_PARAMETER_TYPE_SPECIALIZATION_CONSTANT,
     /**
@@ -495,6 +507,13 @@ enum vkd3d_shader_parameter_data_type
     VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32,
     /** The parameter is provided as a 32-bit float. \since 1.13 */
     VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32,
+    /**
+     * The parameter is provided as a 4-dimensional vector of 32-bit floats.
+     * This parameter must be used with struct vkd3d_shader_parameter1;
+     * it cannot be used with struct vkd3d_shader_parameter.
+     * \since 1.14
+     */
+    VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32_VEC4,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_PARAMETER_DATA_TYPE),
 };
@@ -578,6 +597,143 @@ enum vkd3d_shader_parameter_name
      * \since 1.13
      */
     VKD3D_SHADER_PARAMETER_NAME_FLAT_INTERPOLATION,
+    /**
+     * A mask of enabled clip planes.
+     *
+     * When this parameter is provided to a vertex shader, for each nonzero bit
+     * of this mask, a user clip distance will be generated from vertex position
+     * in clip space, and the clip plane defined by the indexed vector, taken
+     * from the VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_# parameter.
+     *
+     * Regardless of the specific clip planes which are enabled, the clip
+     * distances which are output are a contiguous array starting from clip
+     * distance 0. This affects the interface of OpenGL. For example, if only
+     * clip planes 1 and 3 are enabled (and so the value of the mask is 0xa),
+     * the user should enable only GL_CLIP_DISTANCE0 and GL_CLIP_DISTANCE1.
+     *
+     * The default value is zero, i.e. do not enable any clip planes.
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32.
+     *
+     * Only VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT is supported in this
+     * version of vkd3d-shader.
+     *
+     * If the source shader writes clip distances and this parameter is nonzero,
+     * compilation fails.
+     *
+     * \since 1.14
+     */
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_MASK,
+    /**
+     * Clip plane values.
+     * See VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_MASK for documentation of
+     * clip planes.
+     *
+     * These enum values are contiguous and arithmetic may safely be performed
+     * on them. That is, VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_[n] is
+     * VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_0 plus n.
+     *
+     * The data type for each parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32_VEC4.
+     *
+     * The default value for each plane is a (0, 0, 0, 0) vector.
+     *
+     * \since 1.14
+     */
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_0,
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_1,
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_2,
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_3,
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_4,
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_5,
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_6,
+    VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_7,
+    /**
+     * Point size.
+     *
+     * When this parameter is provided to a vertex, tessellation, or geometry
+     * shader, and the source shader does not write point size, it specifies a
+     * uniform value which will be written to point size.
+     * If the source shader writes point size, this parameter is ignored.
+     *
+     * This parameter can be used to implement fixed function point size, as
+     * present in Direct3D versions 8 and 9, if the target environment does not
+     * support point size as part of its own fixed-function API (as Vulkan and
+     * core OpenGL).
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
+     *
+     * \since 1.14
+     */
+    VKD3D_SHADER_PARAMETER_NAME_POINT_SIZE,
+    /**
+     * Minimum point size.
+     *
+     * When this parameter is provided to a vertex, tessellation, or geometry
+     * shader, and the source shader writes point size or uses the
+     * VKD3D_SHADER_PARAMETER_NAME_POINT_SIZE parameter, the point size will
+     * be clamped to the provided minimum value.
+     * If point size is not written in one of these ways,
+     * this parameter is ignored.
+     * If this parameter is not provided, the point size will not be clamped
+     * to a minimum size by vkd3d-shader.
+     *
+     * This parameter can be used to implement fixed function point size, as
+     * present in Direct3D versions 8 and 9, if the target environment does not
+     * support point size as part of its own fixed-function API (as Vulkan and
+     * core OpenGL).
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
+     *
+     * \since 1.14
+     */
+    VKD3D_SHADER_PARAMETER_NAME_POINT_SIZE_MIN,
+    /**
+     * Maximum point size.
+     *
+     * This parameter has identical behaviour to
+     * VKD3D_SHADER_PARAMETER_NAME_POINT_SIZE_MIN, except that it provides
+     * the maximum size rather than the minimum.
+     *
+     * \since 1.14
+     */
+    VKD3D_SHADER_PARAMETER_NAME_POINT_SIZE_MAX,
+    /**
+     * Whether texture coordinate inputs should take their values from the
+     * point coordinate.
+     *
+     * When this parameter is provided to a pixel shader, and the value is
+     * nonzero, any fragment shader input with the semantic name "TEXCOORD"
+     * takes its value from the point coordinates instead of from the previous
+     * shader. The point coordinates here are defined as a four-component vector
+     * whose X and Y components are the X and Y coordinates of the fragment
+     * within a point being rasterized, and whose Z and W components are zero.
+     *
+     * In GLSL, the X and Y components are drawn from gl_PointCoord; in SPIR-V,
+     * they are drawn from a variable with the BuiltinPointCoord decoration.
+     *
+     * This includes t# fragment shader inputs in shader model 2 shaders,
+     * as well as texture sampling in shader model 1 shaders.
+     *
+     * This parameter can be used to implement fixed function point sprite, as
+     * present in Direct3D versions 8 and 9, if the target environment does not
+     * support point sprite as part of its own fixed-function API (as Vulkan and
+     * core OpenGL).
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32.
+     *
+     * The default value is zero, i.e. use the original varyings.
+     *
+     * Only VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT is supported in this
+     * version of vkd3d-shader.
+     *
+     * \since 1.14
+     */
+    VKD3D_SHADER_PARAMETER_NAME_POINT_SPRITE,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_PARAMETER_NAME),
 };
@@ -625,6 +781,13 @@ struct vkd3d_shader_parameter_immediate_constant1
          * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
          */
         float f32;
+        /**
+         * A pointer to the value if the parameter's data type is
+         * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32_VEC4.
+         *
+         * \since 1.14
+         */
+        float f32_vec4[4];
         void *_pointer_pad;
         uint32_t _pad[4];
     } u;
@@ -636,7 +799,13 @@ struct vkd3d_shader_parameter_immediate_constant1
  */
 struct vkd3d_shader_parameter_specialization_constant
 {
-    /** The ID of the specialization constant. */
+    /**
+     * The ID of the specialization constant.
+     * If the type comprises more than one constant, such as
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32_VEC4, then a contiguous
+     * array of specialization constants should be used, one for each component,
+     * and this ID should point to the first component.
+     */
     uint32_t id;
 };
 
@@ -1046,6 +1215,11 @@ enum vkd3d_shader_source_type
      * the format used for Direct3D shader model 6 shaders. \since 1.9
      */
     VKD3D_SHADER_SOURCE_DXBC_DXIL,
+    /**
+     * Binary format used by Direct3D 9/10.x/11 effects.
+     * Input is a raw FX section without container. \since 1.14
+     */
+    VKD3D_SHADER_SOURCE_FX,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_SOURCE_TYPE),
 };
@@ -1087,6 +1261,10 @@ enum vkd3d_shader_target_type
      * Output is a raw FX section without container. \since 1.11
      */
     VKD3D_SHADER_TARGET_FX,
+    /**
+     * A 'Metal Shading Language' shader. \since 1.14
+     */
+    VKD3D_SHADER_TARGET_MSL,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_TARGET_TYPE),
 };
@@ -1292,7 +1470,8 @@ typedef int (*PFN_vkd3d_shader_open_include)(const char *filename, bool local,
  * vkd3d_shader_preprocess_info.
  *
  * \param code Contents of the included file, which were allocated by the
- * \ref pfn_open_include callback. The user must free them.
+ * vkd3d_shader_preprocess_info.pfn_open_include callback.
+ * The user must free them.
  *
  * \param context The user-defined pointer passed to struct
  * vkd3d_shader_preprocess_info.
@@ -1319,8 +1498,8 @@ struct vkd3d_shader_preprocess_info
 
     /**
      * Pointer to an array of predefined macros. Each macro in this array will
-     * be expanded as if a corresponding #define statement were prepended to the
-     * source code.
+     * be expanded as if a corresponding \#define statement were prepended to
+     * the source code.
      *
      * If the same macro is specified multiple times, only the last value is
      * used.
@@ -2333,6 +2512,7 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_D3D_BYTECODE
  * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_DXBC_TPF
  * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_FX
+ * - VKD3D_SHADER_SOURCE_FX to VKD3D_SHADER_TARGET_D3D_ASM
  *
  * Supported transformations can also be detected at runtime with the functions
  * vkd3d_shader_get_supported_source_types() and
@@ -2798,7 +2978,7 @@ VKD3D_SHADER_API void vkd3d_shader_free_scan_signature_info(struct vkd3d_shader_
  * \param input_signature The input signature of the second shader.
  *
  * \param count On output, contains the number of entries written into
- * \ref varyings.
+ * "varyings".
  *
  * \param varyings Pointer to an output array of varyings.
  * This must point to space for N varyings, where N is the number of elements

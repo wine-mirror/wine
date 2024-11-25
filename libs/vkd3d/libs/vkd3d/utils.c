@@ -703,7 +703,7 @@ const char *debug_vk_extent_3d(VkExtent3D extent)
 
 const char *debug_vk_queue_flags(VkQueueFlags flags)
 {
-    char buffer[159];
+    char buffer[191];
 
     buffer[0] = '\0';
 #define FLAG_TO_STR(f) if (flags & f) { strcat(buffer, " | "#f); flags &= ~f; }
@@ -715,6 +715,7 @@ const char *debug_vk_queue_flags(VkQueueFlags flags)
 #undef FLAG_TO_STR
 #define FLAG_TO_STR(f, n) if (flags & f) { strcat(buffer, " | "#n); flags &= ~f; }
     FLAG_TO_STR(0x20, VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+    FLAG_TO_STR(0x40, VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
 #undef FLAG_TO_STR
     if (flags)
         FIXME("Unrecognized flag(s) %#x.\n", flags);

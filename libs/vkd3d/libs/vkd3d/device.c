@@ -102,6 +102,7 @@ static const struct vkd3d_optional_extension_info optional_device_extensions[] =
     VK_EXTENSION(EXT_CALIBRATED_TIMESTAMPS, EXT_calibrated_timestamps),
     VK_EXTENSION(EXT_CONDITIONAL_RENDERING, EXT_conditional_rendering),
     VK_DEBUG_EXTENSION(EXT_DEBUG_MARKER, EXT_debug_marker),
+    VK_EXTENSION(EXT_DEPTH_RANGE_UNRESTRICTED, EXT_depth_range_unrestricted),
     VK_EXTENSION(EXT_DEPTH_CLIP_ENABLE, EXT_depth_clip_enable),
     VK_EXTENSION(EXT_DESCRIPTOR_INDEXING, EXT_descriptor_indexing),
     VK_EXTENSION(EXT_FRAGMENT_SHADER_INTERLOCK, EXT_fragment_shader_interlock),
@@ -135,7 +136,8 @@ static HRESULT vkd3d_create_vk_descriptor_heap_layout(struct d3d12_device *devic
         VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
     };
 
-    if (device->vk_info.EXT_mutable_descriptor_type && index && index != VKD3D_SET_INDEX_UAV_COUNTER
+    if (device->vk_info.EXT_mutable_descriptor_type
+            && index != VKD3D_SET_INDEX_MUTABLE && index != VKD3D_SET_INDEX_UAV_COUNTER
             && device->vk_descriptor_heap_layouts[index].applicable_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
     {
         device->vk_descriptor_heap_layouts[index].vk_set_layout = VK_NULL_HANDLE;
@@ -143,7 +145,7 @@ static HRESULT vkd3d_create_vk_descriptor_heap_layout(struct d3d12_device *devic
     }
 
     binding.binding = 0;
-    binding.descriptorType = (device->vk_info.EXT_mutable_descriptor_type && !index)
+    binding.descriptorType = (device->vk_info.EXT_mutable_descriptor_type && index == VKD3D_SET_INDEX_MUTABLE)
             ? VK_DESCRIPTOR_TYPE_MUTABLE_EXT : device->vk_descriptor_heap_layouts[index].type;
     binding.descriptorCount = device->vk_descriptor_heap_layouts[index].count;
     binding.stageFlags = VK_SHADER_STAGE_ALL;
@@ -199,14 +201,20 @@ static HRESULT vkd3d_vk_descriptor_heap_layouts_init(struct d3d12_device *device
 {
     static const struct vkd3d_vk_descriptor_heap_layout vk_descriptor_heap_layouts[VKD3D_SET_INDEX_COUNT] =
     {
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
-        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, false, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
-        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
-        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, false, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
-        {VK_DESCRIPTOR_TYPE_SAMPLER, false, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER},
-        /* UAV counters */
-        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        [VKD3D_SET_INDEX_UNIFORM_BUFFER] =
+                {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        [VKD3D_SET_INDEX_UNIFORM_TEXEL_BUFFER] =
+                {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        [VKD3D_SET_INDEX_SAMPLED_IMAGE] =
+                {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, false, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        [VKD3D_SET_INDEX_STORAGE_TEXEL_BUFFER] =
+                {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        [VKD3D_SET_INDEX_STORAGE_IMAGE] =
+                {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, false, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        [VKD3D_SET_INDEX_SAMPLER] =
+                {VK_DESCRIPTOR_TYPE_SAMPLER, false, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER},
+        [VKD3D_SET_INDEX_UAV_COUNTER] =
+                {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
     };
     const struct vkd3d_device_descriptor_limits *limits = &device->vk_info.descriptor_limits;
     enum vkd3d_vk_descriptor_set_index set;
@@ -589,7 +597,7 @@ static HRESULT vkd3d_instance_init(struct vkd3d_instance *instance,
     }
     if (!create_info->pfn_create_thread != !create_info->pfn_join_thread)
     {
-        ERR("Invalid create/join thread function pointers.\n");
+        WARN("Invalid create/join thread function pointers.\n");
         return E_INVALIDARG;
     }
     if (create_info->wchar_size != 2 && create_info->wchar_size != 4)
@@ -607,7 +615,7 @@ static HRESULT vkd3d_instance_init(struct vkd3d_instance *instance,
 
     if (FAILED(hr = vkd3d_init_vk_global_procs(instance, create_info->pfn_vkGetInstanceProcAddr)))
     {
-        ERR("Failed to initialise Vulkan global procs, hr %s.\n", debugstr_hresult(hr));
+        WARN("Failed to initialise Vulkan global procs, hr %s.\n", debugstr_hresult(hr));
         return hr;
     }
 
@@ -689,7 +697,7 @@ static HRESULT vkd3d_instance_init(struct vkd3d_instance *instance,
     vkd3d_free(extensions);
     if (vr < 0)
     {
-        ERR("Failed to create Vulkan instance, vr %d.\n", vr);
+        WARN("Failed to create Vulkan instance, vr %d.\n", vr);
         if (instance->libvulkan)
             vkd3d_dlclose(instance->libvulkan);
         return hresult_from_vk_result(vr);
@@ -697,7 +705,7 @@ static HRESULT vkd3d_instance_init(struct vkd3d_instance *instance,
 
     if (FAILED(hr = vkd3d_load_vk_instance_procs(&instance->vk_procs, vk_global_procs, vk_instance)))
     {
-        ERR("Failed to load instance procs, hr %s.\n", debugstr_hresult(hr));
+        WARN("Failed to load instance procs, hr %s.\n", debugstr_hresult(hr));
         if (instance->vk_procs.vkDestroyInstance)
             instance->vk_procs.vkDestroyInstance(vk_instance, NULL);
         if (instance->libvulkan)
@@ -1572,6 +1580,111 @@ static HRESULT vkd3d_check_device_extensions(struct d3d12_device *device,
     return S_OK;
 }
 
+static void vkd3d_override_caps(struct d3d12_device *device)
+{
+    const char *caps_override, *p;
+
+    static const struct override_value
+    {
+        const char *str;
+        uint32_t value;
+    }
+    feature_level_override_values[] =
+    {
+        {"11.0", D3D_FEATURE_LEVEL_11_0},
+        {"11.1", D3D_FEATURE_LEVEL_11_1},
+        {"12.0", D3D_FEATURE_LEVEL_12_0},
+        {"12.1", D3D_FEATURE_LEVEL_12_1},
+        {"12.2", D3D_FEATURE_LEVEL_12_2},
+    },
+    resource_binding_tier_override_values[] =
+    {
+        {"1", D3D12_RESOURCE_BINDING_TIER_1},
+        {"2", D3D12_RESOURCE_BINDING_TIER_2},
+        {"3", D3D12_RESOURCE_BINDING_TIER_3},
+    };
+    static const struct override_field
+    {
+        const char *name;
+        size_t offset;
+        const struct override_value *values;
+        size_t value_count;
+    }
+    override_fields[] =
+    {
+        {
+            "feature_level",
+            offsetof(struct d3d12_device, vk_info.max_feature_level),
+            feature_level_override_values,
+            ARRAY_SIZE(feature_level_override_values)
+        },
+        {
+            "resource_binding_tier",
+            offsetof(struct d3d12_device, feature_options.ResourceBindingTier),
+            resource_binding_tier_override_values,
+            ARRAY_SIZE(resource_binding_tier_override_values)
+        },
+    };
+
+    if (!(caps_override = getenv("VKD3D_CAPS_OVERRIDE")))
+        return;
+
+    p = caps_override;
+    for (;;)
+    {
+        size_t i;
+
+        for (i = 0; i < ARRAY_SIZE(override_fields); ++i)
+        {
+            const struct override_field *field = &override_fields[i];
+            size_t len = strlen(field->name);
+
+            if (strncmp(p, field->name, len) == 0 && p[len] == '=')
+            {
+                size_t j;
+
+                p += len + 1;
+
+                for (j = 0; j < field->value_count; ++j)
+                {
+                    const struct override_value *value = &field->values[j];
+                    size_t value_len =  strlen(value->str);
+
+                    if (strncmp(p, value->str, value_len) == 0
+                            && (p[value_len] == '\0' || p[value_len] == ','))
+                    {
+                        memcpy(&((uint8_t *)device)[field->offset], (uint8_t *)&value->value, sizeof(value->value));
+
+                        p += value_len;
+                        if (p[0] == '\0')
+                        {
+                            TRACE("Overriding caps with: %s\n", caps_override);
+                            return;
+                        }
+                        p += 1;
+
+                        break;
+                    }
+                }
+
+                if (j == field->value_count)
+                {
+                    WARN("Cannot parse the override caps string: %s\n", caps_override);
+                    return;
+                }
+
+                break;
+            }
+        }
+
+        if (i == ARRAY_SIZE(override_fields))
+        {
+            WARN("Cannot parse the override caps string: %s\n", caps_override);
+            return;
+        }
+    }
+}
+
 static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
         const struct vkd3d_device_create_info *create_info,
         struct vkd3d_physical_device_info *physical_device_info,
@@ -1583,7 +1696,7 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     VkPhysicalDeviceDescriptorIndexingFeaturesEXT *descriptor_indexing;
     VkPhysicalDevice physical_device = device->vk_physical_device;
     struct vkd3d_vulkan_info *vulkan_info = &device->vk_info;
-    VkExtensionProperties *vk_extensions;
+    VkExtensionProperties *vk_extensions = NULL;
     VkPhysicalDeviceFeatures *features;
     uint32_t vk_extension_count;
     HRESULT hr;
@@ -1741,6 +1854,9 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
             vulkan_info->EXT_shader_viewport_index_layer;
 
     vkd3d_init_feature_level(vulkan_info, features, &device->feature_options);
+
+    vkd3d_override_caps(device);
+
     if (vulkan_info->max_feature_level < create_info->minimum_feature_level)
     {
         WARN("Feature level %#x is not supported.\n", create_info->minimum_feature_level);
@@ -1809,12 +1925,41 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
             && descriptor_indexing->descriptorBindingUniformTexelBufferUpdateAfterBind
             && descriptor_indexing->descriptorBindingStorageTexelBufferUpdateAfterBind;
 
+    if (device->use_vk_heaps && device->vk_info.KHR_push_descriptor)
+    {
+        /* VKD3D_SET_INDEX_COUNT for the Vulkan heaps, one for the push
+         * descriptors set and one for the static samplers set. */
+        unsigned int descriptor_set_count = VKD3D_SET_INDEX_COUNT + 2;
+
+        /* A mutable descriptor set can replace all those that should otherwise
+         * back the SRV-UAV-CBV descriptor heap. */
+        if (device->vk_info.EXT_mutable_descriptor_type)
+            descriptor_set_count -= VKD3D_SET_INDEX_COUNT - (VKD3D_SET_INDEX_MUTABLE + 1);
+
+        /* For many Vulkan implementations maxBoundDescriptorSets == 8; also,
+         * if mutable descriptors are not available the descriptor set count
+         * will be 9; so saving a descriptor set is going to be often
+         * significant. */
+        if (descriptor_set_count > device->vk_info.device_limits.maxBoundDescriptorSets)
+        {
+            WARN("Disabling VK_KHR_push_descriptor to save a descriptor set.\n");
+            device->vk_info.KHR_push_descriptor = VK_FALSE;
+        }
+    }
+
     if (device->use_vk_heaps)
         vkd3d_device_vk_heaps_descriptor_limits_init(&vulkan_info->descriptor_limits,
                 &physical_device_info->descriptor_indexing_properties);
     else
         vkd3d_device_descriptor_limits_init(&vulkan_info->descriptor_limits,
                 &physical_device_info->properties2.properties.limits);
+
+    TRACE("Device %p: using %s descriptor heaps, with%s descriptor indexing, "
+            "with%s push descriptors, with%s mutable descriptors\n",
+            device, device->use_vk_heaps ? "Vulkan" : "virtual",
+            device->vk_info.EXT_descriptor_indexing ? "" : "out",
+            device->vk_info.KHR_push_descriptor ? "" : "out",
+            device->vk_info.EXT_mutable_descriptor_type ? "" : "out");
 
     vkd3d_chain_physical_device_info_structures(physical_device_info, device);
 

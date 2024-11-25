@@ -91,7 +91,6 @@ bool preproc_add_macro(struct preproc_ctx *ctx, const struct vkd3d_shader_locati
         size_t arg_count, const struct vkd3d_shader_location *body_loc, struct vkd3d_string_buffer *body)
 {
     struct preproc_macro *macro;
-    unsigned int i;
     int ret;
 
     if ((macro = preproc_find_macro(ctx, name)))
@@ -108,14 +107,6 @@ bool preproc_add_macro(struct preproc_ctx *ctx, const struct vkd3d_shader_locati
     macro->name = name;
     macro->arg_names = arg_names;
     macro->arg_count = arg_count;
-    macro->arg_values = NULL;
-    if (arg_count && !(macro->arg_values = vkd3d_calloc(arg_count, sizeof(*macro->arg_values))))
-    {
-        vkd3d_free(macro);
-        return false;
-    }
-    for (i = 0; i < arg_count; ++i)
-        vkd3d_string_buffer_init(&macro->arg_values[i].text);
     macro->body.text = *body;
     macro->body.location = *body_loc;
     ret = rb_put(&ctx->macros, name, &macro->entry);
@@ -129,12 +120,8 @@ void preproc_free_macro(struct preproc_macro *macro)
 
     vkd3d_free(macro->name);
     for (i = 0; i < macro->arg_count; ++i)
-    {
-        vkd3d_string_buffer_cleanup(&macro->arg_values[i].text);
         vkd3d_free(macro->arg_names[i]);
-    }
     vkd3d_free(macro->arg_names);
-    vkd3d_free(macro->arg_values);
     vkd3d_string_buffer_cleanup(&macro->body.text);
     vkd3d_free(macro);
 }
