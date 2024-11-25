@@ -160,33 +160,53 @@ static VkResult allocate_external_host_memory( struct vulkan_device *device, VkM
 static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryAllocateInfo *alloc_info,
                                          const VkAllocationCallbacks *allocator, VkDeviceMemory *ret )
 {
+    VkBaseOutStructure **next, *prev = (VkBaseOutStructure *)alloc_info; /* cast away const, chain has been copied in the thunks */
     struct vulkan_device *device = vulkan_device_from_handle( client_device );
     struct vulkan_physical_device *physical_device = device->physical_device;
     struct vulkan_instance *instance = device->physical_device->instance;
-    VkImportMemoryHostPointerInfoEXT host_pointer_info;
-    VkMemoryAllocateInfo info = *alloc_info;
+    VkImportMemoryHostPointerInfoEXT host_pointer_info, *pointer_info = NULL;
     VkDeviceMemory host_device_memory;
     struct device_memory *memory;
     uint32_t mem_flags;
     void *mapping = NULL;
     VkResult res;
 
+    for (next = &prev->pNext; *next; prev = *next, next = &(*next)->pNext)
+    {
+        switch ((*next)->sType)
+        {
+        case VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV: break;
+        case VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO:
+            FIXME( "VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO not implemented!\n" );
+            *next = (*next)->pNext; next = &prev;
+            break;
+        case VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT:
+            pointer_info = (VkImportMemoryHostPointerInfoEXT *)*next;
+            break;
+        case VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO: break;
+        case VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO: break;
+        case VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_TENSOR_ARM: break;
+        case VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO: break;
+        case VK_STRUCTURE_TYPE_MEMORY_PRIORITY_ALLOCATE_INFO_EXT: break;
+        default: FIXME( "Unhandled sType %u.\n", (*next)->sType ); break;
+        }
+    }
+
     /* For host visible memory, we try to use VK_EXT_external_memory_host on wow64 to ensure that mapped pointer is 32-bit. */
     mem_flags = physical_device->memory_properties.memoryTypes[alloc_info->memoryTypeIndex].propertyFlags;
-    if (physical_device->external_memory_align && (mem_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) &&
-        !find_next_struct( alloc_info->pNext, VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT ) &&
-        (res = allocate_external_host_memory( device, &info, &host_pointer_info )))
+    if (physical_device->external_memory_align && (mem_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) && !pointer_info &&
+        (res = allocate_external_host_memory( device, (VkMemoryAllocateInfo *)alloc_info, &host_pointer_info )))
         return res;
 
     if (!(memory = malloc( sizeof(*memory) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
-    if ((res = device->p_vkAllocateMemory( device->host.device, &info, NULL, &host_device_memory )))
+    if ((res = device->p_vkAllocateMemory( device->host.device, alloc_info, NULL, &host_device_memory )))
     {
         free( memory );
         return res;
     }
 
     vulkan_object_init( &memory->obj.obj, host_device_memory );
-    memory->size = info.allocationSize;
+    memory->size = alloc_info->allocationSize;
     memory->vm_map = mapping;
     instance->p_insert_object( instance, &memory->obj.obj );
 
