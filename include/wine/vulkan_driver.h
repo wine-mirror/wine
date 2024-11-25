@@ -63,6 +63,12 @@ struct vulkan_object
         }; \
     }
 
+static inline void vulkan_object_init( struct vulkan_object *obj, UINT64 host_handle )
+{
+    obj->host_handle = host_handle;
+    obj->client_handle = (UINT_PTR)obj;
+}
+
 struct vulkan_instance
 {
     VULKAN_OBJECT_HEADER( VkInstance, instance );

@@ -55,6 +55,13 @@ static struct wine_device *wine_device_from_handle(VkDevice handle)
     return CONTAINING_RECORD(object, struct wine_device, obj);
 }
 
+static void vulkan_object_init_ptr( struct vulkan_object *obj, UINT64 host_handle, struct vulkan_client_object *client )
+{
+    obj->host_handle = host_handle;
+    obj->client_handle = (UINT_PTR)client;
+    client->unix_handle = (UINT_PTR)obj;
+}
+
 static int window_surface_compare(const void *key, const struct rb_entry *entry)
 {
     const struct wine_surface *surface = RB_ENTRY_VALUE(entry, struct wine_surface, window_entry);
@@ -383,11 +390,8 @@ static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhy
     VkResult res;
     unsigned int i, j;
 
+    vulkan_object_init_ptr(&object->obj.obj, (UINT_PTR)host_physical_device, &client_physical_device->obj);
     object->obj.instance = instance;
-    object->obj.client.physical_device = client_physical_device;
-    object->obj.host.physical_device = host_physical_device;
-
-    client_physical_device->obj.unix_handle = (uintptr_t)object;
 
     instance->p_vkGetPhysicalDeviceMemoryProperties(host_physical_device, &object->memory_properties);
 
@@ -567,14 +571,12 @@ static void wine_vk_device_init_queues(struct wine_device *object, const VkDevic
             device->p_vkGetDeviceQueue(device->host.device, info->queueFamilyIndex, i, &host_queue);
         }
 
-        queue->obj.host.queue = host_queue;
-        queue->obj.client.queue = client_queue;
+        vulkan_object_init_ptr(&queue->obj.obj, (UINT_PTR)host_queue, &client_queue->obj);
         queue->obj.device = device;
         queue->family_index = info->queueFamilyIndex;
         queue->queue_index = i;
         queue->flags = info->flags;
 
-        client_queue->obj.unix_handle = (uintptr_t)queue;
         TRACE("Got device %p queue %p, host_queue %p.\n", device, queue, queue->obj.host.queue);
     }
 
@@ -892,10 +894,8 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBu
             break;
         }
 
-        buffer->host.command_buffer = host_command_buffer;
-        buffer->client.command_buffer = client_command_buffer;
+        vulkan_object_init_ptr(&buffer->obj, (UINT_PTR)host_command_buffer, &client_command_buffer->obj);
         buffer->device = device;
-        client_command_buffer->obj.unix_handle = (uintptr_t)buffer;
         add_handle_mapping_ptr(instance, buffer->client.command_buffer, buffer->host.command_buffer, &buffer->wrapper_entry);
     }
 
@@ -952,8 +952,8 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
         return res;
     }
 
+    vulkan_object_init_ptr(&device->obj.obj, (UINT_PTR)host_device, &client_device->obj);
     device->obj.physical_device = physical_device;
-    device->obj.host.device = host_device;
 
     /* Just load all function pointers we are aware off. The loader takes care of filtering.
      * We use vkGetDeviceProcAddr as opposed to vkGetInstanceProcAddr for efficiency reasons
@@ -970,7 +970,6 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
         wine_vk_device_init_queues(device, create_info_host.pQueueCreateInfos + i, &client_queues);
 
     client_device->quirks = CONTAINING_RECORD(instance, struct wine_instance, obj)->quirks;
-    client_device->obj.unix_handle = (uintptr_t)device;
 
     TRACE("Created device %p, host_device %p.\n", device, device->obj.host.device);
     for (i = 0; i < device->queue_count; i++)
@@ -988,12 +987,11 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
                                const VkAllocationCallbacks *allocator, VkInstance *ret,
                                void *client_ptr)
 {
-    VkInstance client_instance = client_ptr;
     VkInstanceCreateInfo create_info_host;
     const VkApplicationInfo *app_info;
     struct conversion_context ctx;
     struct wine_instance *instance;
-    VkInstance host_instance;
+    VkInstance host_instance, client_instance = client_ptr;
     unsigned int i;
     VkResult res;
 
@@ -1019,8 +1017,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         return res;
     }
 
-    instance->obj.client.instance = client_instance;
-    instance->obj.host.instance = host_instance;
+    vulkan_object_init_ptr(&instance->obj.obj, (UINT_PTR)host_instance, &client_instance->obj);
 
     /* Load all instance functions we are aware of. Note the loader takes care
      * of any filtering for extensions which were not requested, but which the
@@ -1057,8 +1054,6 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         if (app_info->pEngineName && !strcmp(app_info->pEngineName, "idTech"))
             instance->quirks |= WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR;
     }
-
-    client_instance->obj.unix_handle = (uintptr_t)instance;
 
     TRACE("Created instance %p, host_instance %p.\n", instance, instance->obj.host.instance);
 
@@ -1331,9 +1326,7 @@ VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCre
         return res;
     }
 
-    object->host.command_pool = host_command_pool;
-    object->client.command_pool = (uintptr_t)client_command_pool;
-    client_command_pool->obj.unix_handle = (uintptr_t)object;
+    vulkan_object_init_ptr(&object->obj, host_command_pool, &client_command_pool->obj);
 
     *command_pool = object->client.command_pool;
     add_handle_mapping(instance, *command_pool, object->host.command_pool, &object->wrapper_entry);
@@ -1706,6 +1699,7 @@ VkResult wine_vkCreateWin32SurfaceKHR(VkInstance client_instance, const VkWin32S
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
     VkWin32SurfaceCreateInfoKHR create_info_host = *create_info;
     struct wine_surface *surface;
+    VkSurfaceKHR host_surface;
     HWND dummy = NULL;
     VkResult res;
 
@@ -1733,7 +1727,10 @@ VkResult wine_vkCreateWin32SurfaceKHR(VkInstance client_instance, const VkWin32S
         return res;
     }
 
-    surface->obj.host.surface = vk_funcs->p_wine_get_host_surface(surface->driver_surface);
+    host_surface = vk_funcs->p_wine_get_host_surface(surface->driver_surface);
+    vulkan_object_init(&surface->obj.obj, host_surface);
+    surface->obj.instance = instance;
+
     if (dummy) NtUserDestroyWindow(dummy);
     window_surfaces_insert(surface);
 
@@ -1852,7 +1849,7 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice client_device, const VkSwapchainCrea
         return res;
     }
 
-    object->obj.host.swapchain = host_swapchain;
+    vulkan_object_init(&object->obj.obj, host_swapchain);
     object->surface = surface;
     object->extents = create_info->imageExtent;
 
@@ -2051,7 +2048,7 @@ VkResult wine_vkAllocateMemory(VkDevice client_device, const VkMemoryAllocateInf
         return result;
     }
 
-    memory->host.device_memory = host_device_memory;
+    vulkan_object_init(&memory->obj, host_device_memory);
     memory->size = info.allocationSize;
     memory->vm_map = mapping;
 
@@ -2435,7 +2432,7 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance client_instance,
         return res;
     }
 
-    object->host.debug_messenger = host_debug_messenger;
+    vulkan_object_init(&object->obj, host_debug_messenger);
     object->instance = instance;
     object->user_callback = (UINT_PTR)create_info->pfnUserCallback;
     object->user_data = (UINT_PTR)create_info->pUserData;
@@ -2491,7 +2488,7 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance client_instance,
         return res;
     }
 
-    object->host.debug_callback = host_debug_callback;
+    vulkan_object_init(&object->obj, host_debug_callback);
     object->instance = instance;
     object->user_callback = (UINT_PTR)create_info->pfnCallback;
     object->user_data = (UINT_PTR)create_info->pUserData;
@@ -2541,7 +2538,7 @@ VkResult wine_vkCreateDeferredOperationKHR(VkDevice device_handle,
         return res;
     }
 
-    object->host.deferred_operation = host_deferred_operation;
+    vulkan_object_init(&object->obj, host_deferred_operation);
     init_conversion_context(&object->ctx);
 
     *operation = wine_deferred_operation_to_handle(object);
