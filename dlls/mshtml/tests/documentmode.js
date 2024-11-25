@@ -536,6 +536,7 @@ sync_test("elem_props", function() {
     if (v >= 9) test_exposed("spellcheck", v >= 10);
 
     elem = document.createComment("");
+    test_exposed("atomic", v < 9);
     test_exposed("data", true);
     test_exposed("length", true);
     test_exposed("text", true);

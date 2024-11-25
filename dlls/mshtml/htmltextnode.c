@@ -638,21 +638,22 @@ static const event_target_vtbl_t HTMLCommentElement_event_target_vtbl = {
 
 static void Comment_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
+    static const dispex_hook_t ie9_hooks[] = {
+        {DISPID_IHTMLCOMMENTELEMENT_ATOMIC},
+        {DISPID_UNKNOWN}
+    };
     HTMLElement_init_dispex_info(info, mode);
     CharacterData_init_dispex_info(info, mode);
+
+    dispex_info_add_interface(info, IHTMLCommentElement_tid, mode >= COMPAT_MODE_IE9 ? ie9_hooks : NULL);
 }
 
-static const tid_t Comment_iface_tids[] = {
-    HTMLELEMENT_TIDS,
-    IHTMLCommentElement_tid,
-    0
-};
 dispex_static_data_t Comment_dispex = {
     .id           = PROT_Comment,
     .prototype_id = PROT_CharacterData,
     .vtbl         = &HTMLCommentElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLCommentElement_tid,
-    .iface_tids   = Comment_iface_tids,
+    .iface_tids   = HTMLElement_iface_tids,
     .init_info    = Comment_init_dispex_info,
 };
 
