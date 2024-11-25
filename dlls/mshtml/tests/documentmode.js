@@ -673,6 +673,7 @@ sync_test("window_props", function() {
     test_exposed("console", v >= 10);
     test_exposed("matchMedia", v >= 10);
     test_exposed("MutationObserver", v >= 11);
+    test_exposed("PageTransitionEvent", v >= 11);
 });
 
 sync_test("domimpl_props", function() {
@@ -3728,6 +3729,8 @@ sync_test("prototype props", function() {
         "DOCUMENT_TYPE_NODE", "ELEMENT_NODE", "ENTITY_NODE", "ENTITY_REFERENCE_NODE", "NOTATION_NODE",
         "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE", "hasAttributes", "normalize"
     ]);
+    if(v >= 11)
+        check(PageTransitionEvent, [ "persisted" ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);
     check(Text, [ "removeNode", "replaceNode", "replaceWholeText", "splitText", "swapNode", "wholeText" ], [ "replaceWholeText", "wholeText" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);

@@ -3664,8 +3664,7 @@ dispex_static_data_t KeyboardEvent_dispex = {
 
 static void DOMPageTransitionEvent_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
-    if(mode >= COMPAT_MODE_IE11)
-        dispex_info_add_interface(info, IWinePageTransitionEvent_tid, NULL);
+    dispex_info_add_interface(info, IWinePageTransitionEvent_tid, NULL);
 }
 
 static const dispex_static_data_vtbl_t DOMPageTransitionEvent_dispex_vtbl = {
@@ -3676,12 +3675,13 @@ static const dispex_static_data_vtbl_t DOMPageTransitionEvent_dispex_vtbl = {
 };
 
 dispex_static_data_t PageTransitionEvent_dispex = {
-    .id           = PROT_PageTransitionEvent,
-    .prototype_id = PROT_Event,
-    .vtbl         = &DOMPageTransitionEvent_dispex_vtbl,
-    .disp_tid     = DispDOMEvent_tid,
-    .iface_tids   = Event_iface_tids,
-    .init_info    = DOMPageTransitionEvent_init_dispex_info,
+    .id              = PROT_PageTransitionEvent,
+    .prototype_id    = PROT_Event,
+    .vtbl            = &DOMPageTransitionEvent_dispex_vtbl,
+    .disp_tid        = DispDOMEvent_tid,
+    .iface_tids      = Event_iface_tids,
+    .init_info       = DOMPageTransitionEvent_init_dispex_info,
+    .min_compat_mode = COMPAT_MODE_IE11,
 };
 
 static const dispex_static_data_vtbl_t DOMCustomEvent_dispex_vtbl = {
@@ -3899,7 +3899,7 @@ static const struct {
     [EVENT_TYPE_CLIPBOARD]      = { NULL,                         generic_event_ctor },
     [EVENT_TYPE_FOCUS]          = { NULL,                         generic_event_ctor },
     [EVENT_TYPE_DRAG]           = { NULL,                         generic_event_ctor },
-    [EVENT_TYPE_PAGETRANSITION] = { NULL,                         page_transition_event_ctor },
+    [EVENT_TYPE_PAGETRANSITION] = { NULL,                         page_transition_event_ctor, COMPAT_MODE_IE11 },
     [EVENT_TYPE_CUSTOM]         = { &IID_nsIDOMCustomEvent,       custom_event_ctor },
     [EVENT_TYPE_PROGRESS]       = { &IID_nsIDOMProgressEvent,     progress_event_ctor, COMPAT_MODE_IE10 },
     [EVENT_TYPE_MESSAGE]        = { NULL,                         message_event_ctor },
