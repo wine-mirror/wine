@@ -26,7 +26,6 @@
 
 struct lexret {
   LPCSTR        proto;
-  BOOL          bool;
   LONG          integer;
   LPCSTR        string;
   FARPROC       function;
