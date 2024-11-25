@@ -1780,7 +1780,7 @@ static void test_notifications_noloop(LPGUID lpGuid)
     ok(status == DSBSTATUS_PLAYING,"got %08lx\n", status);
 
     wait = WaitForMultipleObjects(2, handles, FALSE, 1000);
-    todo_wine ok(wait == WAIT_OBJECT_0+1, "Got unexpected notification order or timeout: %lu\n", wait);
+    ok(wait == WAIT_OBJECT_0+1, "Got unexpected notification order or timeout: %lu\n", wait);
     rc = IDirectSoundBuffer_GetStatus(buf, &status);
     ok(rc == DS_OK,"Failed %08lx\n",rc);
     ok(status == 0,"got %08lx\n", status);
