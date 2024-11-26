@@ -557,7 +557,7 @@ static struct mailslot *create_mailslot( struct object *root,
 {
     struct mailslot *mailslot;
 
-    if (!(mailslot = create_named_object( root, &mailslot_ops, name, attr, sd ))) return NULL;
+    if (!(mailslot = create_named_object( root, &mailslot_ops, name, attr & ~OBJ_OPENIF, sd ))) return NULL;
 
     mailslot->fd = NULL;
     mailslot->max_msgsize = max_msgsize;
