@@ -647,8 +647,7 @@ static void test_name_limits(void)
     status = pNtOpenMutant( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenMutant failed %lx\n", str.Length, status );
     status = pNtOpenMutant( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenMutant failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenMutant failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr2, 1, 2 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateSemaphore failed %lx\n", str.Length, status );
@@ -656,8 +655,7 @@ static void test_name_limits(void)
     status = pNtOpenSemaphore( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSemaphore failed %lx\n", str.Length, status );
     status = pNtOpenSemaphore( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenSemaphore failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSemaphore failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateEvent( &ret, GENERIC_ALL, &attr2, SynchronizationEvent, 0 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateEvent failed %lx\n", str.Length, status );
@@ -665,8 +663,7 @@ static void test_name_limits(void)
     status = pNtOpenEvent( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenEvent failed %lx\n", str.Length, status );
     status = pNtOpenEvent( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenEvent failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenEvent failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr2, 0 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateKeyedEvent failed %lx\n", str.Length, status );
@@ -674,8 +671,7 @@ static void test_name_limits(void)
     status = pNtOpenKeyedEvent( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenKeyedEvent failed %lx\n", str.Length, status );
     status = pNtOpenKeyedEvent( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenKeyedEvent failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenKeyedEvent failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateTimer( &ret, GENERIC_ALL, &attr2, NotificationTimer );
     ok( status == STATUS_SUCCESS, "%u: NtCreateTimer failed %lx\n", str.Length, status );
@@ -683,8 +679,7 @@ static void test_name_limits(void)
     status = pNtOpenTimer( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenTimer failed %lx\n", str.Length, status );
     status = pNtOpenTimer( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenTimer failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenTimer failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr2, 0 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateCompletion failed %lx\n", str.Length, status );
@@ -692,8 +687,7 @@ static void test_name_limits(void)
     status = pNtOpenIoCompletion( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenCompletion failed %lx\n", str.Length, status );
     status = pNtOpenIoCompletion( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenCompletion failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenCompletion failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateJobObject failed %lx\n", str.Length, status );
@@ -701,15 +695,13 @@ static void test_name_limits(void)
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenJobObject failed %lx\n", str.Length, status );
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenJobObject failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenJobObject failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateDirectoryObject failed %lx\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenDirectoryObject( &ret2, GENERIC_ALL, &attr );
-    ok( status == STATUS_SUCCESS || broken(status == STATUS_ACCESS_DENIED), /* winxp */
-        "%u: NtOpenDirectoryObject failed %lx\n", str.Length, status );
+    ok( status == STATUS_SUCCESS, "%u: NtOpenDirectoryObject failed %lx\n", str.Length, status );
     if (!status) pNtClose( ret2 );
     status = pNtOpenDirectoryObject( &ret2, GENERIC_ALL, &attr3 );
     ok( status == STATUS_SUCCESS, "%u: NtOpenDirectoryObject failed %lx\n", str.Length, status );
@@ -730,8 +722,7 @@ static void test_name_limits(void)
     status = pNtOpenSection( &ret2, SECTION_MAP_WRITE, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSection failed %lx\n", str.Length, status );
     status = pNtOpenSection( &ret2, SECTION_MAP_WRITE, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenSection failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSection failed %lx\n", str.Length, status );
     pNtClose( ret );
 
     str.Length = 67;
@@ -877,8 +868,7 @@ static void test_name_limits(void)
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenDirectoryObject failed %lx\n", status );
 
     status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, NULL, &target );
-    ok( status == STATUS_ACCESS_VIOLATION || broken( status == STATUS_SUCCESS), /* winxp */
-        "NULL: NtCreateSymbolicLinkObject failed %lx\n", status );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateSymbolicLinkObject failed %lx\n", status );
     if (!status) pNtClose( ret );
     status = pNtCreateSymbolicLinkObject( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, &target );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateSymbolicLinkObject failed %lx\n", status );
@@ -1119,15 +1109,13 @@ static void test_name_limits(void)
     attr3.RootDirectory = 0;
     attr2.ObjectName = attr3.ObjectName = NULL;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr2, 0, NULL, 0, NULL );
-    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE /* vista wow64 */,
-        "NULL: NtCreateKey failed %lx\n", status );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %lx\n", status );
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr3, 0, NULL, 0, NULL );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %lx\n", status );
     status = pNtCreateKey( &ret, GENERIC_ALL, NULL, 0, NULL, 0, NULL );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %lx\n", status );
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr2 );
-    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE /* vista wow64 */,
-        "NULL: NtOpenKey failed %lx\n", status );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenKey failed %lx\n", status );
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenKey failed %lx\n", status );
     status = pNtOpenKey( &ret, GENERIC_ALL, NULL );
@@ -1563,7 +1551,7 @@ static void _test_file_info(unsigned line, HANDLE handle)
 
     status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf),
                                     FileIoCompletionNotificationInformation);
-    ok_(__FILE__,line)(status == STATUS_SUCCESS || broken(status == STATUS_INVALID_INFO_CLASS) /* XP */,
+    ok_(__FILE__,line)(status == STATUS_SUCCESS,
                        "FileIoCompletionNotificationInformation returned %lx\n", status);
 }
 
@@ -1584,7 +1572,7 @@ static void _test_no_file_info(unsigned line, HANDLE handle)
 
     status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf),
                                     FileIoCompletionNotificationInformation);
-    ok_(__FILE__,line)(status == STATUS_OBJECT_TYPE_MISMATCH || broken(status == STATUS_INVALID_INFO_CLASS) /* XP */,
+    ok_(__FILE__,line)(status == STATUS_OBJECT_TYPE_MISMATCH,
                        "FileIoCompletionNotificationInformation returned %lx\n", status);
 }
 
@@ -1735,8 +1723,7 @@ static void test_query_object(void)
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
     /* check for \\Sessions prefix in the name */
     swprintf( expect, ARRAY_SIZE(expect), L"\\Sessions\\%u%s", NtCurrentTeb()->Peb->SessionId, name );
-    ok( (str->Length == wcslen( expect ) * sizeof(WCHAR) && !wcscmp( str->Buffer, expect )) ||
-        broken( !wcscmp( str->Buffer, name )), /* winxp */
+    ok( (str->Length == wcslen( expect ) * sizeof(WCHAR) && !wcscmp( str->Buffer, expect )),
         "wrong name %s\n", wine_dbgstr_w(str->Buffer) );
     trace( "got %s len %lu\n", wine_dbgstr_w(str->Buffer), len );
 
@@ -1781,8 +1768,7 @@ static void test_query_object(void)
     len = 0;
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, 0, &len );
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", status );
-    ok( len == expected_len || broken(!len /* XP */ || len == sizeof(UNICODE_STRING) /* 2003 */),
-        "unexpected len %lu\n", len );
+    ok( len == expected_len, "unexpected len %lu\n", len );
 
     len = 0;
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(UNICODE_STRING), &len );
@@ -3337,7 +3323,7 @@ static void test_object_permanence(void)
             trace( "NOTE: object still has unclosed handle (%p) and shouldn't be deleted", handle );
 
         winetest_push_context( "first handle (%p) still open", handle );
-        status = NtOpenEvent( &handle2, GENERIC_ALL, &attr );
+        status = pNtOpenEvent( &handle2, GENERIC_ALL, &attr );
         ok( status == STATUS_SUCCESS, "NtOpenEvent returned %08lx\n", status );
         if (!NT_ERROR(status))
         {
@@ -3366,7 +3352,7 @@ static void test_object_permanence(void)
         NtClose( handle );
 
         winetest_push_context( "first handle closed" );
-        status = NtOpenEvent( &handle, GENERIC_ALL, &attr );
+        status = pNtOpenEvent( &handle, GENERIC_ALL, &attr );
         ok( status == (is_permanent ? STATUS_SUCCESS : STATUS_OBJECT_NAME_NOT_FOUND), "NtOpenEvent returned %08lx\n", status );
         if (!NT_ERROR(status))
         {
