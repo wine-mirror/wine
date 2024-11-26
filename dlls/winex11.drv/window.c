@@ -1290,12 +1290,13 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
     XFlush( data->display );
 }
 
-static void window_set_config( struct x11drv_win_data *data, const RECT *new_rect, BOOL above )
+static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL above )
 {
     static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
     UINT style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), mask = 0;
     const RECT *old_rect = &data->pending_state.rect;
     XWindowChanges changes;
+    RECT *new_rect = &rect;
 
     data->desired_state.rect = *new_rect;
     if (!data->whole_window) return; /* no window, nothing to update */
@@ -1326,6 +1327,11 @@ static void window_set_config( struct x11drv_win_data *data, const RECT *new_rec
         if (changes.height > 65535) changes.height = 65535;
         mask |= CWWidth | CWHeight;
     }
+    else
+    {
+        new_rect->right = new_rect->left + old_rect->right - old_rect->left;
+        new_rect->bottom = new_rect->top + old_rect->bottom - old_rect->top;
+    }
 
     /* only the size is allowed to change for the desktop window or systray docked windows */
     if ((old_rect->left != new_rect->left || old_rect->top != new_rect->top) &&
@@ -1335,6 +1341,10 @@ static void window_set_config( struct x11drv_win_data *data, const RECT *new_rec
         changes.x = pt.x;
         changes.y = pt.y;
         mask |= CWX | CWY;
+    }
+    else
+    {
+        OffsetRect( new_rect, old_rect->left - new_rect->left, old_rect->top - new_rect->top );
     }
 
     if (above)
@@ -1743,7 +1753,7 @@ void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial,
     /* send any pending changes from the desired state */
     window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
     window_set_net_wm_state( data, data->desired_state.net_wm_state );
-    window_set_config( data, &data->desired_state.rect, FALSE );
+    window_set_config( data, data->desired_state.rect, FALSE );
 
     if (data->current_state.wm_state == NormalState) NtUserSetProp( data->hwnd, focus_time_prop, (HANDLE)time );
     else if (!data->wm_state_serial) NtUserRemoveProp( data->hwnd, focus_time_prop );
@@ -1766,7 +1776,7 @@ void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long ser
     /* send any pending changes from the desired state */
     window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
     window_set_net_wm_state( data, data->desired_state.net_wm_state );
-    window_set_config( data, &data->desired_state.rect, FALSE );
+    window_set_config( data, data->desired_state.rect, FALSE );
 }
 
 void window_mwm_hints_notify( struct x11drv_win_data *data, unsigned long serial, const MwmHints *value )
@@ -1957,7 +1967,7 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags, 
     if (data->is_offscreen) OffsetRect( &new_rect, window_rect.left - old_rects->window.left,
                                         window_rect.top - old_rects->window.top );
 
-    window_set_config( data, &new_rect, above );
+    window_set_config( data, new_rect, above );
 }
 
 
