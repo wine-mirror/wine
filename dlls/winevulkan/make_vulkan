@@ -905,7 +905,7 @@ class VkFunction(object):
                 params += ", {0}{1}".format(params_prefix, self.extra_param)
 
         if self.name not in MANUAL_UNIX_THUNKS:
-            func_prefix = "{0}.p_".format(self.params[0].dispatch_table(params_prefix, conv))
+            func_prefix = "{0}->p_".format(self.params[0].dispatch_table(params_prefix, conv))
         else:
             func_prefix = "wine_"
 
@@ -1140,19 +1140,19 @@ class VkHandle(object):
 
         if self.parent is None:
             # Should only happen for VkInstance
-            return "wine_instance_from_handle({0})->funcs".format(param)
+            return "wine_instance_from_handle({0})".format(param)
         elif self.name == "VkCommandBuffer":
-            return "wine_cmd_buffer_from_handle({0})->device->funcs".format(param)
+            return "wine_cmd_buffer_from_handle({0})->device".format(param)
         elif self.name == "VkDevice":
-            return "wine_device_from_handle({0})->funcs".format(param)
+            return "wine_device_from_handle({0})".format(param)
         elif self.name == "VkPhysicalDevice":
-            return "wine_phys_dev_from_handle({0})->instance->funcs".format(param)
+            return "wine_phys_dev_from_handle({0})->instance".format(param)
         elif self.name == "VkQueue":
-            return "wine_queue_from_handle({0})->device->funcs".format(param)
+            return "wine_queue_from_handle({0})->device".format(param)
         elif self.parent in ["VkInstance", "VkPhysicalDevice"]:
-            return "{0}->instance->funcs".format(param)
+            return "{0}->instance".format(param)
         elif self.parent in ["VkDevice", "VkCommandPool"]:
-            return "{0}->device->funcs".format(param)
+            return "{0}->device".format(param)
         else:
             LOGGER.error("Unhandled dispatchable parent: {0}".format(self.parent))
 
@@ -2919,32 +2919,6 @@ class VkGenerator(object):
 
             f.write("{0};\n".format(vk_func.prototype(prefix=prefix, is_thunk=True)))
         f.write("\n")
-
-        f.write("/* For use by vkDevice and children */\n")
-        f.write("struct vulkan_device_funcs\n{\n")
-        for vk_func in self.registry.device_funcs:
-            if not vk_func.needs_exposing():
-                continue
-
-            if not vk_func.needs_dispatch():
-                LOGGER.debug("skipping {0} in vulkan_device_funcs".format(vk_func.name))
-                continue
-
-            f.write("    {0};\n".format(vk_func.pfn()))
-        f.write("};\n\n")
-
-        f.write("/* For use by vkInstance and children */\n")
-        f.write("struct vulkan_instance_funcs\n{\n")
-        for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
-            if not vk_func.needs_exposing():
-                continue
-
-            if not vk_func.needs_dispatch():
-                LOGGER.debug("skipping {0} in vulkan_instance_funcs".format(vk_func.name))
-                continue
-
-            f.write("    {0};\n".format(vk_func.pfn()))
-        f.write("};\n\n")
 
         f.write("#define ALL_VK_DEVICE_FUNCS() \\\n")
         first = True
