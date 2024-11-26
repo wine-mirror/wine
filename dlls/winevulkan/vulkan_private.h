@@ -76,10 +76,10 @@ static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
 
 struct wine_device
 {
+    struct vulkan_physical_device *physical_device; /* parent */
 #define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
     ALL_VK_DEVICE_FUNCS
 #undef USE_VK_FUNC
-    struct wine_phys_dev *phys_dev; /* parent */
 
     VkDevice handle; /* client device */
     VkDevice host_device;
@@ -112,10 +112,7 @@ struct wine_debug_report_callback
 
 struct wine_phys_dev
 {
-    struct vulkan_instance *instance; /* parent */
-
-    VkPhysicalDevice handle; /* client physical device */
-    VkPhysicalDevice host_physical_device;
+    struct vulkan_physical_device obj;
 
     VkPhysicalDeviceMemoryProperties memory_properties;
     VkExtensionProperties *extensions;
@@ -126,11 +123,6 @@ struct wine_phys_dev
 
     struct wrapper_entry wrapper_entry;
 };
-
-static inline struct wine_phys_dev *wine_phys_dev_from_handle(VkPhysicalDevice handle)
-{
-    return (struct wine_phys_dev *)(uintptr_t)handle->obj.unix_handle;
-}
 
 struct wine_debug_report_callback;
 

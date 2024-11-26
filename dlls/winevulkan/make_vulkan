@@ -1146,7 +1146,7 @@ class VkHandle(object):
         elif self.name == "VkDevice":
             return "wine_device_from_handle({0})".format(param)
         elif self.name == "VkPhysicalDevice":
-            return "wine_phys_dev_from_handle({0})->instance".format(param)
+            return "vulkan_physical_device_from_handle({0})->instance".format(param)
         elif self.name == "VkQueue":
             return "wine_queue_from_handle({0})->device".format(param)
         elif self.parent in ["VkInstance", "VkPhysicalDevice"]:
@@ -1197,7 +1197,7 @@ class VkHandle(object):
         if self.name == "VkDeviceMemory":
             return "wine_device_memory_from_handle({0})->host_memory".format(name)
         if self.name == "VkPhysicalDevice":
-            return "wine_phys_dev_from_handle({0})->host_physical_device".format(name)
+            return "vulkan_physical_device_from_handle({0})->host.physical_device".format(name)
         if self.name == "VkQueue":
             return "wine_queue_from_handle({0})->host_queue".format(name)
         if self.name == "VkSurfaceKHR":

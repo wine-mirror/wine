@@ -8873,7 +8873,7 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
     case VK_OBJECT_TYPE_INSTANCE:
         return (uint64_t) (uintptr_t) vulkan_instance_from_handle(((VkInstance) (uintptr_t) handle))->host.instance;
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
-        return (uint64_t) (uintptr_t) wine_phys_dev_from_handle(((VkPhysicalDevice) (uintptr_t) handle))->host_physical_device;
+        return (uint64_t) (uintptr_t) vulkan_physical_device_from_handle(((VkPhysicalDevice) (uintptr_t) handle))->host.physical_device;
     case VK_OBJECT_TYPE_QUEUE:
         return (uint64_t) (uintptr_t) wine_queue_from_handle(((VkQueue) (uintptr_t) handle))->host_queue;
     case VK_OBJECT_TYPE_SURFACE_KHR:
@@ -14448,7 +14448,7 @@ static inline const VkPhysicalDevice *convert_VkPhysicalDevice_array_win64_to_ho
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i] = wine_phys_dev_from_handle(in[i])->host_physical_device;
+        out[i] = vulkan_physical_device_from_handle(in[i])->host.physical_device;
     }
 
     return out;
@@ -14465,7 +14465,7 @@ static inline const VkPhysicalDevice *convert_VkPhysicalDevice_array_win32_to_ho
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        out[i] = wine_phys_dev_from_handle(UlongToPtr(in[i]))->host_physical_device;
+        out[i] = vulkan_physical_device_from_handle(UlongToPtr(in[i]))->host.physical_device;
     }
 
     return out;
@@ -46955,7 +46955,7 @@ static NTSTATUS thunk64_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCoun
 
     TRACE("%p, %u, %p, %p, %p\n", params->physicalDevice, params->queueFamilyIndex, params->pCounterCount, params->pCounters, params->pCounterDescriptions);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->queueFamilyIndex, params->pCounterCount, params->pCounters, params->pCounterDescriptions);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->queueFamilyIndex, params->pCounterCount, params->pCounters, params->pCounterDescriptions);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -46981,7 +46981,7 @@ static NTSTATUS thunk32_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCoun
     init_conversion_context(ctx);
     pCounters_host = convert_VkPerformanceCounterKHR_array_win32_to_host(ctx, (VkPerformanceCounterKHR32 *)UlongToPtr(params->pCounters), *(uint32_t *)UlongToPtr(params->pCounterCount));
     pCounterDescriptions_host = convert_VkPerformanceCounterDescriptionKHR_array_win32_to_host(ctx, (VkPerformanceCounterDescriptionKHR32 *)UlongToPtr(params->pCounterDescriptions), *(uint32_t *)UlongToPtr(params->pCounterCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->queueFamilyIndex, (uint32_t *)UlongToPtr(params->pCounterCount), pCounters_host, pCounterDescriptions_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->queueFamilyIndex, (uint32_t *)UlongToPtr(params->pCounterCount), pCounters_host, pCounterDescriptions_host);
     convert_VkPerformanceCounterKHR_array_host_to_win32(pCounters_host, (VkPerformanceCounterKHR32 *)UlongToPtr(params->pCounters), *(uint32_t *)UlongToPtr(params->pCounterCount));
     convert_VkPerformanceCounterDescriptionKHR_array_host_to_win32(pCounterDescriptions_host, (VkPerformanceCounterDescriptionKHR32 *)UlongToPtr(params->pCounterDescriptions), *(uint32_t *)UlongToPtr(params->pCounterCount));
     free_conversion_context(ctx);
@@ -49547,7 +49547,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPr
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pPropertyCount, params->pProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -49569,7 +49569,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPr
 
     init_conversion_context(ctx);
     pProperties_host = convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_array_win32_to_host(ctx, (VkCooperativeMatrixFlexibleDimensionsPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
     convert_VkCooperativeMatrixFlexibleDimensionsPropertiesNV_array_host_to_win32(pProperties_host, (VkCooperativeMatrixFlexibleDimensionsPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -49582,7 +49582,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(void *
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pPropertyCount, params->pProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -49604,7 +49604,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(void *
 
     init_conversion_context(ctx);
     pProperties_host = convert_VkCooperativeMatrixPropertiesKHR_array_win32_to_host(ctx, (VkCooperativeMatrixPropertiesKHR32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
     convert_VkCooperativeMatrixPropertiesKHR_array_host_to_win32(pProperties_host, (VkCooperativeMatrixPropertiesKHR32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -49617,7 +49617,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(void *a
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pPropertyCount, params->pProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -49639,7 +49639,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(void *a
 
     init_conversion_context(ctx);
     pProperties_host = convert_VkCooperativeMatrixPropertiesNV_array_win32_to_host(ctx, (VkCooperativeMatrixPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
     convert_VkCooperativeMatrixPropertiesNV_array_host_to_win32(pProperties_host, (VkCooperativeMatrixPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -49860,7 +49860,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFeatures(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFeatures(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pFeatures);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFeatures(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pFeatures);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -49875,7 +49875,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceFeatures(void *args)
 
     TRACE("%#x, %#x\n", params->physicalDevice, params->pFeatures);
 
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFeatures(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (VkPhysicalDeviceFeatures *)UlongToPtr(params->pFeatures));
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFeatures(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (VkPhysicalDeviceFeatures *)UlongToPtr(params->pFeatures));
     return STATUS_SUCCESS;
 }
 
@@ -49886,7 +49886,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFeatures2(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFeatures2(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pFeatures);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFeatures2(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pFeatures);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -49906,7 +49906,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceFeatures2(void *args)
 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceFeatures2_win32_to_host(ctx, (VkPhysicalDeviceFeatures232 *)UlongToPtr(params->pFeatures), &pFeatures_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFeatures2(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pFeatures_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFeatures2(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pFeatures_host);
     convert_VkPhysicalDeviceFeatures2_host_to_win32(&pFeatures_host, (VkPhysicalDeviceFeatures232 *)UlongToPtr(params->pFeatures));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -49919,7 +49919,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFeatures2KHR(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pFeatures);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFeatures2KHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pFeatures);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFeatures2KHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pFeatures);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -49939,7 +49939,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceFeatures2KHR(void *args)
 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceFeatures2_win32_to_host(ctx, (VkPhysicalDeviceFeatures232 *)UlongToPtr(params->pFeatures), &pFeatures_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFeatures2KHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pFeatures_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFeatures2KHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pFeatures_host);
     convert_VkPhysicalDeviceFeatures2_host_to_win32(&pFeatures_host, (VkPhysicalDeviceFeatures232 *)UlongToPtr(params->pFeatures));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -49952,7 +49952,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFormatProperties(void *args)
 
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFormatProperties(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->format, params->pFormatProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFormatProperties(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->format, params->pFormatProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -49968,7 +49968,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceFormatProperties(void *args)
 
     TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->format, params->pFormatProperties);
 
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFormatProperties(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->format, (VkFormatProperties *)UlongToPtr(params->pFormatProperties));
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFormatProperties(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->format, (VkFormatProperties *)UlongToPtr(params->pFormatProperties));
     return STATUS_SUCCESS;
 }
 
@@ -49979,7 +49979,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFormatProperties2(void *args)
 
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFormatProperties2(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->format, params->pFormatProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFormatProperties2(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->format, params->pFormatProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50000,7 +50000,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceFormatProperties2(void *args)
 
     init_conversion_context(ctx);
     convert_VkFormatProperties2_win32_to_host(ctx, (VkFormatProperties232 *)UlongToPtr(params->pFormatProperties), &pFormatProperties_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFormatProperties2(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->format, &pFormatProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFormatProperties2(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->format, &pFormatProperties_host);
     convert_VkFormatProperties2_host_to_win32(&pFormatProperties_host, (VkFormatProperties232 *)UlongToPtr(params->pFormatProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50013,7 +50013,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFormatProperties2KHR(void *args)
 
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->format, params->pFormatProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFormatProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->format, params->pFormatProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFormatProperties2KHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->format, params->pFormatProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50034,7 +50034,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceFormatProperties2KHR(void *args)
 
     init_conversion_context(ctx);
     convert_VkFormatProperties2_win32_to_host(ctx, (VkFormatProperties232 *)UlongToPtr(params->pFormatProperties), &pFormatProperties_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFormatProperties2KHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->format, &pFormatProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFormatProperties2KHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->format, &pFormatProperties_host);
     convert_VkFormatProperties2_host_to_win32(&pFormatProperties_host, (VkFormatProperties232 *)UlongToPtr(params->pFormatProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50047,7 +50047,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceFragmentShadingRatesKHR(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pFragmentShadingRateCount, params->pFragmentShadingRates);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFragmentShadingRatesKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pFragmentShadingRateCount, params->pFragmentShadingRates);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceFragmentShadingRatesKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pFragmentShadingRateCount, params->pFragmentShadingRates);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50069,7 +50069,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceFragmentShadingRatesKHR(void *args)
 
     init_conversion_context(ctx);
     pFragmentShadingRates_host = convert_VkPhysicalDeviceFragmentShadingRateKHR_array_win32_to_host(ctx, (VkPhysicalDeviceFragmentShadingRateKHR32 *)UlongToPtr(params->pFragmentShadingRates), *(uint32_t *)UlongToPtr(params->pFragmentShadingRateCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFragmentShadingRatesKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pFragmentShadingRateCount), pFragmentShadingRates_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceFragmentShadingRatesKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pFragmentShadingRateCount), pFragmentShadingRates_host);
     convert_VkPhysicalDeviceFragmentShadingRateKHR_array_host_to_win32(pFragmentShadingRates_host, (VkPhysicalDeviceFragmentShadingRateKHR32 *)UlongToPtr(params->pFragmentShadingRates), *(uint32_t *)UlongToPtr(params->pFragmentShadingRateCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50082,7 +50082,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceImageFormatProperties(void *args)
 
     TRACE("%p, %#x, %#x, %#x, %#x, %#x, %p\n", params->physicalDevice, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceImageFormatProperties(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceImageFormatProperties(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50104,7 +50104,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties(void *args)
 
     TRACE("%#x, %#x, %#x, %#x, %#x, %#x, %#x\n", params->physicalDevice, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
 
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceImageFormatProperties(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->format, params->type, params->tiling, params->usage, params->flags, &pImageFormatProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceImageFormatProperties(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->format, params->type, params->tiling, params->usage, params->flags, &pImageFormatProperties_host);
     convert_VkImageFormatProperties_host_to_win32(&pImageFormatProperties_host, (VkImageFormatProperties32 *)UlongToPtr(params->pImageFormatProperties));
     return STATUS_SUCCESS;
 }
@@ -50190,7 +50190,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceMemoryProperties(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceMemoryProperties(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pMemoryProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceMemoryProperties(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pMemoryProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50206,7 +50206,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties(void *args)
 
     TRACE("%#x, %#x\n", params->physicalDevice, params->pMemoryProperties);
 
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceMemoryProperties(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pMemoryProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceMemoryProperties(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pMemoryProperties_host);
     convert_VkPhysicalDeviceMemoryProperties_host_to_win32(&pMemoryProperties_host, (VkPhysicalDeviceMemoryProperties32 *)UlongToPtr(params->pMemoryProperties));
     return STATUS_SUCCESS;
 }
@@ -50218,7 +50218,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceMemoryProperties2(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceMemoryProperties2(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pMemoryProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceMemoryProperties2(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pMemoryProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50238,7 +50238,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties2(void *args)
 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(ctx, (VkPhysicalDeviceMemoryProperties232 *)UlongToPtr(params->pMemoryProperties), &pMemoryProperties_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceMemoryProperties2(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pMemoryProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceMemoryProperties2(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pMemoryProperties_host);
     convert_VkPhysicalDeviceMemoryProperties2_host_to_win32(&pMemoryProperties_host, (VkPhysicalDeviceMemoryProperties232 *)UlongToPtr(params->pMemoryProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50251,7 +50251,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceMemoryProperties2KHR(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceMemoryProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pMemoryProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceMemoryProperties2KHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pMemoryProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50271,7 +50271,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties2KHR(void *args)
 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(ctx, (VkPhysicalDeviceMemoryProperties232 *)UlongToPtr(params->pMemoryProperties), &pMemoryProperties_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceMemoryProperties2KHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pMemoryProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceMemoryProperties2KHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pMemoryProperties_host);
     convert_VkPhysicalDeviceMemoryProperties2_host_to_win32(&pMemoryProperties_host, (VkPhysicalDeviceMemoryProperties232 *)UlongToPtr(params->pMemoryProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50284,7 +50284,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceMultisamplePropertiesEXT(void *args)
 
     TRACE("%p, %#x, %p\n", params->physicalDevice, params->samples, params->pMultisampleProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceMultisamplePropertiesEXT(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->samples, params->pMultisampleProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceMultisamplePropertiesEXT(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->samples, params->pMultisampleProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50302,7 +50302,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceMultisamplePropertiesEXT(void *args)
     TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->samples, params->pMultisampleProperties);
 
     convert_VkMultisamplePropertiesEXT_win32_to_host((VkMultisamplePropertiesEXT32 *)UlongToPtr(params->pMultisampleProperties), &pMultisampleProperties_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceMultisamplePropertiesEXT(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->samples, &pMultisampleProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceMultisamplePropertiesEXT(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->samples, &pMultisampleProperties_host);
     convert_VkMultisamplePropertiesEXT_host_to_win32(&pMultisampleProperties_host, (VkMultisamplePropertiesEXT32 *)UlongToPtr(params->pMultisampleProperties));
     return STATUS_SUCCESS;
 }
@@ -50314,7 +50314,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceOpticalFlowImageFormatsNV(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pOpticalFlowImageFormatInfo, params->pFormatCount, params->pImageFormatProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceOpticalFlowImageFormatsNV(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pOpticalFlowImageFormatInfo, params->pFormatCount, params->pImageFormatProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceOpticalFlowImageFormatsNV(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pOpticalFlowImageFormatInfo, params->pFormatCount, params->pImageFormatProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50339,7 +50339,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceOpticalFlowImageFormatsNV(void *args)
     init_conversion_context(ctx);
     convert_VkOpticalFlowImageFormatInfoNV_win32_to_host((const VkOpticalFlowImageFormatInfoNV32 *)UlongToPtr(params->pOpticalFlowImageFormatInfo), &pOpticalFlowImageFormatInfo_host);
     pImageFormatProperties_host = convert_VkOpticalFlowImageFormatPropertiesNV_array_win32_to_host(ctx, (VkOpticalFlowImageFormatPropertiesNV32 *)UlongToPtr(params->pImageFormatProperties), *(uint32_t *)UlongToPtr(params->pFormatCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceOpticalFlowImageFormatsNV(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pOpticalFlowImageFormatInfo_host, (uint32_t *)UlongToPtr(params->pFormatCount), pImageFormatProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceOpticalFlowImageFormatsNV(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pOpticalFlowImageFormatInfo_host, (uint32_t *)UlongToPtr(params->pFormatCount), pImageFormatProperties_host);
     convert_VkOpticalFlowImageFormatPropertiesNV_array_host_to_win32(pImageFormatProperties_host, (VkOpticalFlowImageFormatPropertiesNV32 *)UlongToPtr(params->pImageFormatProperties), *(uint32_t *)UlongToPtr(params->pFormatCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50381,7 +50381,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceProperties(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceProperties(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceProperties(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50397,7 +50397,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties(void *args)
 
     TRACE("%#x, %#x\n", params->physicalDevice, params->pProperties);
 
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceProperties(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceProperties(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pProperties_host);
     convert_VkPhysicalDeviceProperties_host_to_win32(&pProperties_host, (VkPhysicalDeviceProperties32 *)UlongToPtr(params->pProperties));
     return STATUS_SUCCESS;
 }
@@ -50409,7 +50409,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceProperties2(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceProperties2(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceProperties2(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50429,7 +50429,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2(void *args)
 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceProperties2_win32_to_host(ctx, (VkPhysicalDeviceProperties232 *)UlongToPtr(params->pProperties), &pProperties_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceProperties2(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceProperties2(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pProperties_host);
     convert_VkPhysicalDeviceProperties2_host_to_win32(&pProperties_host, (VkPhysicalDeviceProperties232 *)UlongToPtr(params->pProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50442,7 +50442,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceProperties2KHR(void *args)
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceProperties2KHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50462,7 +50462,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2KHR(void *args)
 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceProperties2_win32_to_host(ctx, (VkPhysicalDeviceProperties232 *)UlongToPtr(params->pProperties), &pProperties_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceProperties2KHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceProperties2KHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pProperties_host);
     convert_VkPhysicalDeviceProperties2_host_to_win32(&pProperties_host, (VkPhysicalDeviceProperties232 *)UlongToPtr(params->pProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50475,7 +50475,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pPerformanceQueryCreateInfo, params->pNumPasses);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pPerformanceQueryCreateInfo, params->pNumPasses);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pPerformanceQueryCreateInfo, params->pNumPasses);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50493,7 +50493,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(
     TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->pPerformanceQueryCreateInfo, params->pNumPasses);
 
     convert_VkQueryPoolPerformanceCreateInfoKHR_win32_to_host((const VkQueryPoolPerformanceCreateInfoKHR32 *)UlongToPtr(params->pPerformanceQueryCreateInfo), &pPerformanceQueryCreateInfo_host);
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pPerformanceQueryCreateInfo_host, (uint32_t *)UlongToPtr(params->pNumPasses));
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pPerformanceQueryCreateInfo_host, (uint32_t *)UlongToPtr(params->pNumPasses));
     return STATUS_SUCCESS;
 }
 
@@ -50504,7 +50504,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceQueueFamilyProperties(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceQueueFamilyProperties(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceQueueFamilyProperties(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50520,7 +50520,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceQueueFamilyProperties(void *args)
 
     TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
 
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceQueueFamilyProperties(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount), (VkQueueFamilyProperties *)UlongToPtr(params->pQueueFamilyProperties));
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceQueueFamilyProperties(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount), (VkQueueFamilyProperties *)UlongToPtr(params->pQueueFamilyProperties));
     return STATUS_SUCCESS;
 }
 
@@ -50531,7 +50531,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceQueueFamilyProperties2(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceQueueFamilyProperties2(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceQueueFamilyProperties2(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50552,7 +50552,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceQueueFamilyProperties2(void *args)
 
     init_conversion_context(ctx);
     pQueueFamilyProperties_host = convert_VkQueueFamilyProperties2_array_win32_to_host(ctx, (VkQueueFamilyProperties232 *)UlongToPtr(params->pQueueFamilyProperties), *(uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount));
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceQueueFamilyProperties2(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount), pQueueFamilyProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceQueueFamilyProperties2(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount), pQueueFamilyProperties_host);
     convert_VkQueueFamilyProperties2_array_host_to_win32(pQueueFamilyProperties_host, (VkQueueFamilyProperties232 *)UlongToPtr(params->pQueueFamilyProperties), *(uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50565,7 +50565,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceQueueFamilyProperties2KHR(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceQueueFamilyProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceQueueFamilyProperties2KHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pQueueFamilyPropertyCount, params->pQueueFamilyProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50586,7 +50586,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceQueueFamilyProperties2KHR(void *args)
 
     init_conversion_context(ctx);
     pQueueFamilyProperties_host = convert_VkQueueFamilyProperties2_array_win32_to_host(ctx, (VkQueueFamilyProperties232 *)UlongToPtr(params->pQueueFamilyProperties), *(uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount));
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceQueueFamilyProperties2KHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount), pQueueFamilyProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceQueueFamilyProperties2KHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount), pQueueFamilyProperties_host);
     convert_VkQueueFamilyProperties2_array_host_to_win32(pQueueFamilyProperties_host, (VkQueueFamilyProperties232 *)UlongToPtr(params->pQueueFamilyProperties), *(uint32_t *)UlongToPtr(params->pQueueFamilyPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50599,7 +50599,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSparseImageFormatProperties(void *arg
 
     TRACE("%p, %#x, %#x, %#x, %#x, %#x, %p, %p\n", params->physicalDevice, params->format, params->type, params->samples, params->usage, params->tiling, params->pPropertyCount, params->pProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->format, params->type, params->samples, params->usage, params->tiling, params->pPropertyCount, params->pProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->format, params->type, params->samples, params->usage, params->tiling, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50620,7 +50620,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSparseImageFormatProperties(void *arg
 
     TRACE("%#x, %#x, %#x, %#x, %#x, %#x, %#x, %#x\n", params->physicalDevice, params->format, params->type, params->samples, params->usage, params->tiling, params->pPropertyCount, params->pProperties);
 
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->format, params->type, params->samples, params->usage, params->tiling, (uint32_t *)UlongToPtr(params->pPropertyCount), (VkSparseImageFormatProperties *)UlongToPtr(params->pProperties));
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->format, params->type, params->samples, params->usage, params->tiling, (uint32_t *)UlongToPtr(params->pPropertyCount), (VkSparseImageFormatProperties *)UlongToPtr(params->pProperties));
     return STATUS_SUCCESS;
 }
 
@@ -50631,7 +50631,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSparseImageFormatProperties2(void *ar
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pFormatInfo, params->pPropertyCount, params->pProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties2(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pFormatInfo, params->pPropertyCount, params->pProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties2(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pFormatInfo, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50655,7 +50655,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSparseImageFormatProperties2(void *ar
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceSparseImageFormatInfo2_win32_to_host((const VkPhysicalDeviceSparseImageFormatInfo232 *)UlongToPtr(params->pFormatInfo), &pFormatInfo_host);
     pProperties_host = convert_VkSparseImageFormatProperties2_array_win32_to_host(ctx, (VkSparseImageFormatProperties232 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties2(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pFormatInfo_host, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties2(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pFormatInfo_host, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
     convert_VkSparseImageFormatProperties2_array_host_to_win32(pProperties_host, (VkSparseImageFormatProperties232 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50668,7 +50668,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(void 
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pFormatInfo, params->pPropertyCount, params->pProperties);
 
-    wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pFormatInfo, params->pPropertyCount, params->pProperties);
+    vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pFormatInfo, params->pPropertyCount, params->pProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50692,7 +50692,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(void 
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceSparseImageFormatInfo2_win32_to_host((const VkPhysicalDeviceSparseImageFormatInfo232 *)UlongToPtr(params->pFormatInfo), &pFormatInfo_host);
     pProperties_host = convert_VkSparseImageFormatProperties2_array_win32_to_host(ctx, (VkSparseImageFormatProperties232 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
-    wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pFormatInfo_host, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
+    vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pFormatInfo_host, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
     convert_VkSparseImageFormatProperties2_array_host_to_win32(pProperties_host, (VkSparseImageFormatProperties232 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50705,7 +50705,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombi
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pCombinationCount, params->pCombinations);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pCombinationCount, params->pCombinations);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pCombinationCount, params->pCombinations);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50727,7 +50727,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombi
 
     init_conversion_context(ctx);
     pCombinations_host = convert_VkFramebufferMixedSamplesCombinationNV_array_win32_to_host(ctx, (VkFramebufferMixedSamplesCombinationNV32 *)UlongToPtr(params->pCombinations), *(uint32_t *)UlongToPtr(params->pCombinationCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pCombinationCount), pCombinations_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pCombinationCount), pCombinations_host);
     convert_VkFramebufferMixedSamplesCombinationNV_array_host_to_win32(pCombinations_host, (VkFramebufferMixedSamplesCombinationNV32 *)UlongToPtr(params->pCombinations), *(uint32_t *)UlongToPtr(params->pCombinationCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50872,7 +50872,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfacePresentModesKHR(void *args)
 
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pPresentModeCount, params->pPresentModes);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSurfacePresentModesKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->surface ? wine_surface_from_handle(params->surface)->host_surface : 0, params->pPresentModeCount, params->pPresentModes);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSurfacePresentModesKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->surface ? wine_surface_from_handle(params->surface)->host_surface : 0, params->pPresentModeCount, params->pPresentModes);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50890,7 +50890,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfacePresentModesKHR(void *args)
 
     TRACE("%#x, 0x%s, %#x, %#x\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pPresentModeCount, params->pPresentModes);
 
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSurfacePresentModesKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->surface ? wine_surface_from_handle(params->surface)->host_surface : 0, (uint32_t *)UlongToPtr(params->pPresentModeCount), (VkPresentModeKHR *)UlongToPtr(params->pPresentModes));
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSurfacePresentModesKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->surface ? wine_surface_from_handle(params->surface)->host_surface : 0, (uint32_t *)UlongToPtr(params->pPresentModeCount), (VkPresentModeKHR *)UlongToPtr(params->pPresentModes));
     return STATUS_SUCCESS;
 }
 
@@ -50901,7 +50901,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceSupportKHR(void *args)
 
     TRACE("%p, %u, 0x%s, %p\n", params->physicalDevice, params->queueFamilyIndex, wine_dbgstr_longlong(params->surface), params->pSupported);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSurfaceSupportKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->queueFamilyIndex, wine_surface_from_handle(params->surface)->host_surface, params->pSupported);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceSurfaceSupportKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->queueFamilyIndex, wine_surface_from_handle(params->surface)->host_surface, params->pSupported);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50919,7 +50919,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceSupportKHR(void *args)
 
     TRACE("%#x, %u, 0x%s, %#x\n", params->physicalDevice, params->queueFamilyIndex, wine_dbgstr_longlong(params->surface), params->pSupported);
 
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSurfaceSupportKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->queueFamilyIndex, wine_surface_from_handle(params->surface)->host_surface, (VkBool32 *)UlongToPtr(params->pSupported));
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceSurfaceSupportKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->queueFamilyIndex, wine_surface_from_handle(params->surface)->host_surface, (VkBool32 *)UlongToPtr(params->pSupported));
     return STATUS_SUCCESS;
 }
 
@@ -50930,7 +50930,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceToolProperties(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pToolCount, params->pToolProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceToolProperties(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pToolCount, params->pToolProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceToolProperties(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pToolCount, params->pToolProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50952,7 +50952,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceToolProperties(void *args)
 
     init_conversion_context(ctx);
     pToolProperties_host = convert_VkPhysicalDeviceToolProperties_array_win32_to_host(ctx, (VkPhysicalDeviceToolProperties32 *)UlongToPtr(params->pToolProperties), *(uint32_t *)UlongToPtr(params->pToolCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceToolProperties(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pToolCount), pToolProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceToolProperties(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pToolCount), pToolProperties_host);
     convert_VkPhysicalDeviceToolProperties_array_host_to_win32(pToolProperties_host, (VkPhysicalDeviceToolProperties32 *)UlongToPtr(params->pToolProperties), *(uint32_t *)UlongToPtr(params->pToolCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50965,7 +50965,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceToolPropertiesEXT(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pToolCount, params->pToolProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceToolPropertiesEXT(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pToolCount, params->pToolProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceToolPropertiesEXT(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pToolCount, params->pToolProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50987,7 +50987,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceToolPropertiesEXT(void *args)
 
     init_conversion_context(ctx);
     pToolProperties_host = convert_VkPhysicalDeviceToolProperties_array_win32_to_host(ctx, (VkPhysicalDeviceToolProperties32 *)UlongToPtr(params->pToolProperties), *(uint32_t *)UlongToPtr(params->pToolCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceToolPropertiesEXT(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, (uint32_t *)UlongToPtr(params->pToolCount), pToolProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceToolPropertiesEXT(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pToolCount), pToolProperties_host);
     convert_VkPhysicalDeviceToolProperties_array_host_to_win32(pToolProperties_host, (VkPhysicalDeviceToolProperties32 *)UlongToPtr(params->pToolProperties), *(uint32_t *)UlongToPtr(params->pToolCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -51000,7 +51000,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceVideoCapabilitiesKHR(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pVideoProfile, params->pCapabilities);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceVideoCapabilitiesKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pVideoProfile, params->pCapabilities);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceVideoCapabilitiesKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pVideoProfile, params->pCapabilities);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -51024,7 +51024,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceVideoCapabilitiesKHR(void *args)
     init_conversion_context(ctx);
     convert_VkVideoProfileInfoKHR_win32_to_host(ctx, (const VkVideoProfileInfoKHR32 *)UlongToPtr(params->pVideoProfile), &pVideoProfile_host);
     convert_VkVideoCapabilitiesKHR_win32_to_host(ctx, (VkVideoCapabilitiesKHR32 *)UlongToPtr(params->pCapabilities), &pCapabilities_host);
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceVideoCapabilitiesKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pVideoProfile_host, &pCapabilities_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceVideoCapabilitiesKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pVideoProfile_host, &pCapabilities_host);
     convert_VkVideoCapabilitiesKHR_host_to_win32(&pCapabilities_host, (VkVideoCapabilitiesKHR32 *)UlongToPtr(params->pCapabilities));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -51037,7 +51037,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR(
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pQualityLevelInfo, params->pQualityLevelProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pQualityLevelInfo, params->pQualityLevelProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pQualityLevelInfo, params->pQualityLevelProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -51061,7 +51061,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR(
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceVideoEncodeQualityLevelInfoKHR_win32_to_host(ctx, (const VkPhysicalDeviceVideoEncodeQualityLevelInfoKHR32 *)UlongToPtr(params->pQualityLevelInfo), &pQualityLevelInfo_host);
     convert_VkVideoEncodeQualityLevelPropertiesKHR_win32_to_host(ctx, (VkVideoEncodeQualityLevelPropertiesKHR32 *)UlongToPtr(params->pQualityLevelProperties), &pQualityLevelProperties_host);
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pQualityLevelInfo_host, &pQualityLevelProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pQualityLevelInfo_host, &pQualityLevelProperties_host);
     convert_VkVideoEncodeQualityLevelPropertiesKHR_host_to_win32(&pQualityLevelProperties_host, (VkVideoEncodeQualityLevelPropertiesKHR32 *)UlongToPtr(params->pQualityLevelProperties));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -51074,7 +51074,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceVideoFormatPropertiesKHR(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pVideoFormatInfo, params->pVideoFormatPropertyCount, params->pVideoFormatProperties);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceVideoFormatPropertiesKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->pVideoFormatInfo, params->pVideoFormatPropertyCount, params->pVideoFormatProperties);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceVideoFormatPropertiesKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pVideoFormatInfo, params->pVideoFormatPropertyCount, params->pVideoFormatProperties);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -51099,7 +51099,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceVideoFormatPropertiesKHR(void *args)
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceVideoFormatInfoKHR_win32_to_host(ctx, (const VkPhysicalDeviceVideoFormatInfoKHR32 *)UlongToPtr(params->pVideoFormatInfo), &pVideoFormatInfo_host);
     pVideoFormatProperties_host = convert_VkVideoFormatPropertiesKHR_array_win32_to_host(ctx, (VkVideoFormatPropertiesKHR32 *)UlongToPtr(params->pVideoFormatProperties), *(uint32_t *)UlongToPtr(params->pVideoFormatPropertyCount));
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceVideoFormatPropertiesKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, &pVideoFormatInfo_host, (uint32_t *)UlongToPtr(params->pVideoFormatPropertyCount), pVideoFormatProperties_host);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceVideoFormatPropertiesKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, &pVideoFormatInfo_host, (uint32_t *)UlongToPtr(params->pVideoFormatPropertyCount), pVideoFormatProperties_host);
     convert_VkVideoFormatPropertiesKHR_array_host_to_win32(pVideoFormatProperties_host, (VkVideoFormatPropertiesKHR32 *)UlongToPtr(params->pVideoFormatProperties), *(uint32_t *)UlongToPtr(params->pVideoFormatPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -51112,7 +51112,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceWin32PresentationSupportKHR(void *arg
 
     TRACE("%p, %u\n", params->physicalDevice, params->queueFamilyIndex);
 
-    params->result = wine_phys_dev_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceWin32PresentationSupportKHR(wine_phys_dev_from_handle(params->physicalDevice)->host_physical_device, params->queueFamilyIndex);
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceWin32PresentationSupportKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->queueFamilyIndex);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -51128,7 +51128,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceWin32PresentationSupportKHR(void *arg
 
     TRACE("%#x, %u\n", params->physicalDevice, params->queueFamilyIndex);
 
-    params->result = wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceWin32PresentationSupportKHR(wine_phys_dev_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host_physical_device, params->queueFamilyIndex);
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceWin32PresentationSupportKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->queueFamilyIndex);
     return STATUS_SUCCESS;
 }
 
