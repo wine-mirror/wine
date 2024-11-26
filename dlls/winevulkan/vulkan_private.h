@@ -78,7 +78,7 @@ static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
 struct wine_device
 {
 #define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
-    ALL_VK_DEVICE_FUNCS()
+    ALL_VK_DEVICE_FUNCS
 #undef USE_VK_FUNC
     struct wine_phys_dev *phys_dev; /* parent */
 
@@ -138,7 +138,7 @@ struct wine_debug_report_callback;
 struct wine_instance
 {
 #define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
-    ALL_VK_INSTANCE_FUNCS()
+    ALL_VK_INSTANCE_FUNCS
 #undef USE_VK_FUNC
 
     VkInstance handle; /* client instance */

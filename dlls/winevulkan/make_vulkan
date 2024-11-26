@@ -2920,40 +2920,6 @@ class VkGenerator(object):
             f.write("{0};\n".format(vk_func.prototype(prefix=prefix, is_thunk=True)))
         f.write("\n")
 
-        f.write("#define ALL_VK_DEVICE_FUNCS() \\\n")
-        first = True
-        for vk_func in self.registry.device_funcs:
-            if not vk_func.needs_exposing():
-                continue
-
-            if not vk_func.needs_dispatch():
-                LOGGER.debug("skipping {0} in ALL_VK_DEVICE_FUNCS".format(vk_func.name))
-                continue
-
-            if first:
-                f.write("    USE_VK_FUNC({0})".format(vk_func.name))
-                first = False
-            else:
-                f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
-        f.write("\n\n")
-
-        f.write("#define ALL_VK_INSTANCE_FUNCS() \\\n")
-        first = True
-        for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
-            if not vk_func.needs_exposing():
-                continue
-
-            if not vk_func.needs_dispatch():
-                LOGGER.debug("skipping {0} in ALL_VK_INSTANCE_FUNCS".format(vk_func.name))
-                continue
-
-            if first:
-                f.write("    USE_VK_FUNC({0})".format(vk_func.name))
-                first = False
-            else:
-                f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
-        f.write("\n\n")
-
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
 
     def generate_loader_thunks_c(self, f):
@@ -3168,6 +3134,40 @@ class VkGenerator(object):
             LOGGER.debug("Generating API definition for: {0}".format(func.name))
             f.write("{0};\n".format(func.prototype(call_conv="VKAPI_CALL")))
         f.write("#endif /* VK_NO_PROTOTYPES */\n\n")
+
+        f.write("#define ALL_VK_DEVICE_FUNCS \\\n")
+        first = True
+        for vk_func in self.registry.device_funcs:
+            if not vk_func.needs_exposing():
+                continue
+
+            if not vk_func.needs_dispatch():
+                LOGGER.debug("skipping {0} in ALL_VK_DEVICE_FUNCS".format(vk_func.name))
+                continue
+
+            if first:
+                f.write("    USE_VK_FUNC({0})".format(vk_func.name))
+                first = False
+            else:
+                f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
+        f.write("\n\n")
+
+        f.write("#define ALL_VK_INSTANCE_FUNCS \\\n")
+        first = True
+        for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
+            if not vk_func.needs_exposing():
+                continue
+
+            if not vk_func.needs_dispatch():
+                LOGGER.debug("skipping {0} in ALL_VK_INSTANCE_FUNCS".format(vk_func.name))
+                continue
+
+            if first:
+                f.write("    USE_VK_FUNC({0})".format(vk_func.name))
+                first = False
+            else:
+                f.write(" \\\n    USE_VK_FUNC({0})".format(vk_func.name))
+        f.write("\n\n")
 
         f.write("#endif /* __WINE_VULKAN_H */\n")
 

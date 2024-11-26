@@ -925,7 +925,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
 #define USE_VK_FUNC(name)                                                                          \
     object->p_##name = (void *)vk_funcs->p_vkGetDeviceProcAddr(object->host_device, #name);  \
     if (object->p_##name == NULL) TRACE("Not found '%s'.\n", #name);
-    ALL_VK_DEVICE_FUNCS()
+    ALL_VK_DEVICE_FUNCS
 #undef USE_VK_FUNC
 
     queue_handles = device_handle->queues;
@@ -989,7 +989,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
      */
 #define USE_VK_FUNC(name) \
     object->p_##name = (void *)vk_funcs->p_vkGetInstanceProcAddr(object->host_instance, #name);
-    ALL_VK_INSTANCE_FUNCS()
+    ALL_VK_INSTANCE_FUNCS
 #undef USE_VK_FUNC
 
     /* Cache physical devices for vkEnumeratePhysicalDevices within the instance as
