@@ -830,10 +830,10 @@ static struct wine_phys_dev *wine_vk_instance_wrap_physical_device(struct wine_i
     return NULL;
 }
 
-VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAllocateInfo *allocate_info,
+VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBufferAllocateInfo *allocate_info,
                                        VkCommandBuffer *buffers )
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
     struct wine_cmd_buffer *buffer;
     struct wine_cmd_pool *pool;
@@ -884,16 +884,15 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAll
 }
 
 VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDeviceCreateInfo *create_info,
-                             const VkAllocationCallbacks *allocator, VkDevice *ret_device,
-                             void *client_ptr)
+                             const VkAllocationCallbacks *allocator, VkDevice *ret, void *client_ptr)
 {
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
     struct vulkan_instance *instance = physical_device->instance;
     VkDevice host_device, client_device = client_ptr;
     VkDeviceCreateInfo create_info_host;
-    struct VkQueue_T *queue_handles;
+    struct VkQueue_T *client_queues;
     struct conversion_context ctx;
-    struct wine_device *object;
+    struct wine_device *device;
     unsigned int queue_count, i;
     VkResult res;
 
@@ -915,7 +914,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
     for (queue_count = 0, i = 0; i < create_info->queueCreateInfoCount; i++)
         queue_count += create_info->pQueueCreateInfos[i].queueCount;
 
-    if (!(object = calloc(1, offsetof(struct wine_device, queues[queue_count]))))
+    if (!(device = calloc(1, offsetof(struct wine_device, queues[queue_count]))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     init_conversion_context(&ctx);
@@ -927,39 +926,39 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
     if (res != VK_SUCCESS)
     {
         WARN("Failed to create device, res=%d.\n", res);
-        free(object);
+        free(device);
         return res;
     }
 
-    object->physical_device = physical_device;
-    object->host_device = host_device;
+    device->physical_device = physical_device;
+    device->host_device = host_device;
 
     /* Just load all function pointers we are aware off. The loader takes care of filtering.
      * We use vkGetDeviceProcAddr as opposed to vkGetInstanceProcAddr for efficiency reasons
      * as functions pass through fewer dispatch tables within the loader.
      */
 #define USE_VK_FUNC(name)                                                                          \
-    object->p_##name = (void *)vk_funcs->p_vkGetDeviceProcAddr(object->host_device, #name);  \
-    if (object->p_##name == NULL) TRACE("Not found '%s'.\n", #name);
+    device->p_##name = (void *)vk_funcs->p_vkGetDeviceProcAddr(device->host_device, #name);  \
+    if (device->p_##name == NULL) TRACE("Not found '%s'.\n", #name);
     ALL_VK_DEVICE_FUNCS
 #undef USE_VK_FUNC
 
-    queue_handles = client_device->queues;
+    client_queues = client_device->queues;
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
-        wine_vk_device_init_queues(object, create_info_host.pQueueCreateInfos + i, &queue_handles);
+        wine_vk_device_init_queues(device, create_info_host.pQueueCreateInfos + i, &client_queues);
 
     client_device->quirks = CONTAINING_RECORD(instance, struct wine_instance, obj)->quirks;
-    client_device->obj.unix_handle = (uintptr_t)object;
+    client_device->obj.unix_handle = (uintptr_t)device;
 
-    TRACE("Created device %p, host_device %p.\n", object, object->host_device);
-    for (i = 0; i < object->queue_count; i++)
+    TRACE("Created device %p, host_device %p.\n", device, device->host_device);
+    for (i = 0; i < device->queue_count; i++)
     {
-        struct wine_queue *queue = object->queues + i;
+        struct wine_queue *queue = device->queues + i;
         add_handle_mapping_ptr(instance, queue->handle, queue->host_queue, &queue->wrapper_entry);
     }
 
-    *ret_device = client_device;
-    add_handle_mapping_ptr(instance, *ret_device, object->host_device, &object->wrapper_entry);
+    *ret = client_device;
+    add_handle_mapping_ptr(instance, *ret, device->host_device, &device->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -1055,9 +1054,9 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     return VK_SUCCESS;
 }
 
-void wine_vkDestroyDevice(VkDevice handle, const VkAllocationCallbacks *allocator)
+void wine_vkDestroyDevice(VkDevice client_device, const VkAllocationCallbacks *allocator)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
     unsigned int i;
 
@@ -1237,18 +1236,18 @@ VkResult wine_vkEnumeratePhysicalDevices(VkInstance client_instance, uint32_t *c
     return *count < instance->phys_dev_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
-void wine_vkFreeCommandBuffers(VkDevice handle, VkCommandPool command_pool, uint32_t count,
+void wine_vkFreeCommandBuffers(VkDevice client_device, VkCommandPool command_pool, uint32_t count,
                                const VkCommandBuffer *buffers)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(command_pool);
 
     wine_vk_free_command_buffers(device, pool, count, buffers);
 }
 
-static VkQueue wine_vk_device_find_queue(VkDevice handle, const VkDeviceQueueInfo2 *info)
+static VkQueue wine_vk_device_find_queue(VkDevice client_device, const VkDeviceQueueInfo2 *info)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_queue *queue;
     uint32_t i;
 
@@ -1266,7 +1265,7 @@ static VkQueue wine_vk_device_find_queue(VkDevice handle, const VkDeviceQueueInf
     return VK_NULL_HANDLE;
 }
 
-void wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index, uint32_t queue_index, VkQueue *queue)
+void wine_vkGetDeviceQueue(VkDevice client_device, uint32_t family_index, uint32_t queue_index, VkQueue *queue)
 {
     VkDeviceQueueInfo2 queue_info;
 
@@ -1276,24 +1275,24 @@ void wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index, uint32_t queu
     queue_info.queueFamilyIndex = family_index;
     queue_info.queueIndex = queue_index;
 
-    *queue = wine_vk_device_find_queue(device, &queue_info);
+    *queue = wine_vk_device_find_queue(client_device, &queue_info);
 }
 
-void wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *info, VkQueue *queue)
+void wine_vkGetDeviceQueue2(VkDevice client_device, const VkDeviceQueueInfo2 *info, VkQueue *queue)
 {
     const VkBaseInStructure *chain;
 
     if ((chain = info->pNext))
         FIXME("Ignoring a linked structure of type %u.\n", chain->sType);
 
-    *queue = wine_vk_device_find_queue(device, info);
+    *queue = wine_vk_device_find_queue(client_device, info);
 }
 
-VkResult wine_vkCreateCommandPool(VkDevice device_handle, const VkCommandPoolCreateInfo *info,
+VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCreateInfo *info,
                                   const VkAllocationCallbacks *allocator, VkCommandPool *command_pool,
                                   void *client_ptr)
 {
-    struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
     struct vk_command_pool *client_command_pool = client_ptr;
     struct wine_cmd_pool *object;
@@ -1320,10 +1319,10 @@ VkResult wine_vkCreateCommandPool(VkDevice device_handle, const VkCommandPoolCre
     return VK_SUCCESS;
 }
 
-void wine_vkDestroyCommandPool(VkDevice device_handle, VkCommandPool handle,
+void wine_vkDestroyCommandPool(VkDevice client_device, VkCommandPool handle,
                                const VkAllocationCallbacks *allocator)
 {
-    struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
     struct wine_cmd_pool *pool = wine_cmd_pool_from_handle(handle);
 
@@ -1611,11 +1610,11 @@ static VkResult wine_vk_get_time_domains(struct vulkan_physical_device *physical
     return res;
 }
 
-VkResult wine_vkGetCalibratedTimestampsEXT(VkDevice handle, uint32_t timestamp_count,
+VkResult wine_vkGetCalibratedTimestampsEXT(VkDevice client_device, uint32_t timestamp_count,
                                            const VkCalibratedTimestampInfoEXT *timestamp_infos,
                                            uint64_t *timestamps, uint64_t *max_deviation)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
 
     TRACE("%p, %u, %p, %p, %p\n", device, timestamp_count, timestamp_infos, timestamps, max_deviation);
 
@@ -1623,11 +1622,11 @@ VkResult wine_vkGetCalibratedTimestampsEXT(VkDevice handle, uint32_t timestamp_c
                                   device->p_vkGetCalibratedTimestampsEXT);
 }
 
-VkResult wine_vkGetCalibratedTimestampsKHR(VkDevice handle, uint32_t timestamp_count,
+VkResult wine_vkGetCalibratedTimestampsKHR(VkDevice client_device, uint32_t timestamp_count,
                                            const VkCalibratedTimestampInfoKHR *timestamp_infos,
                                            uint64_t *timestamps, uint64_t *max_deviation)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
 
     TRACE("%p, %u, %p, %p, %p\n", device, timestamp_count, timestamp_infos, timestamps, max_deviation);
 
@@ -1745,11 +1744,11 @@ static BOOL extents_equals(const VkExtent2D *extents, const RECT *rect)
            extents->height == rect->bottom - rect->top;
 }
 
-VkResult wine_vkAcquireNextImage2KHR(VkDevice device_handle, const VkAcquireNextImageInfoKHR *acquire_info,
+VkResult wine_vkAcquireNextImage2KHR(VkDevice client_device, const VkAcquireNextImageInfoKHR *acquire_info,
                                      uint32_t *image_index)
 {
     struct wine_swapchain *swapchain = wine_swapchain_from_handle(acquire_info->swapchain);
-    struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     VkAcquireNextImageInfoKHR acquire_info_host = *acquire_info;
     struct wine_surface *surface = swapchain->surface;
     RECT client_rect;
@@ -1769,11 +1768,11 @@ VkResult wine_vkAcquireNextImage2KHR(VkDevice device_handle, const VkAcquireNext
     return res;
 }
 
-VkResult wine_vkAcquireNextImageKHR(VkDevice device_handle, VkSwapchainKHR swapchain_handle, uint64_t timeout,
+VkResult wine_vkAcquireNextImageKHR(VkDevice client_device, VkSwapchainKHR swapchain_handle, uint64_t timeout,
                                     VkSemaphore semaphore, VkFence fence, uint32_t *image_index)
 {
     struct wine_swapchain *swapchain = wine_swapchain_from_handle(swapchain_handle);
-    struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_surface *surface = swapchain->surface;
     RECT client_rect;
     VkResult res;
@@ -1792,12 +1791,12 @@ VkResult wine_vkAcquireNextImageKHR(VkDevice device_handle, VkSwapchainKHR swapc
     return res;
 }
 
-VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCreateInfoKHR *create_info,
+VkResult wine_vkCreateSwapchainKHR(VkDevice client_device, const VkSwapchainCreateInfoKHR *create_info,
                                    const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain_handle)
 {
     struct wine_swapchain *object, *old_swapchain = wine_swapchain_from_handle(create_info->oldSwapchain);
     struct wine_surface *surface = wine_surface_from_handle(create_info->surface);
-    struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct vulkan_physical_device *physical_device = device->physical_device;
     struct vulkan_instance *instance = physical_device->instance;
     VkSwapchainCreateInfoKHR create_info_host = *create_info;
@@ -1840,10 +1839,10 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCrea
     return VK_SUCCESS;
 }
 
-void wine_vkDestroySwapchainKHR(VkDevice device_handle, VkSwapchainKHR swapchain_handle,
+void wine_vkDestroySwapchainKHR(VkDevice client_device, VkSwapchainKHR swapchain_handle,
                                 const VkAllocationCallbacks *allocator)
 {
-    struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
     struct wine_swapchain *swapchain = wine_swapchain_from_handle(swapchain_handle);
 
@@ -1938,10 +1937,10 @@ VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *pr
     return res;
 }
 
-VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *alloc_info,
+VkResult wine_vkAllocateMemory(VkDevice client_device, const VkMemoryAllocateInfo *alloc_info,
                                const VkAllocationCallbacks *allocator, VkDeviceMemory *ret)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
     struct vulkan_instance *instance = device->physical_device->instance;
     struct wine_device_memory *memory;
@@ -2037,9 +2036,9 @@ VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *allo
     return VK_SUCCESS;
 }
 
-void wine_vkFreeMemory(VkDevice handle, VkDeviceMemory memory_handle, const VkAllocationCallbacks *allocator)
+void wine_vkFreeMemory(VkDevice client_device, VkDeviceMemory memory_handle, const VkAllocationCallbacks *allocator)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
     struct vulkan_instance *instance = device->physical_device->instance;
     struct wine_device_memory *memory;
@@ -2071,7 +2070,7 @@ void wine_vkFreeMemory(VkDevice handle, VkDeviceMemory memory_handle, const VkAl
     free(memory);
 }
 
-VkResult wine_vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset,
+VkResult wine_vkMapMemory(VkDevice client_device, VkDeviceMemory memory, VkDeviceSize offset,
                           VkDeviceSize size, VkMemoryMapFlags flags, void **data)
 {
     const VkMemoryMapInfoKHR info =
@@ -2083,12 +2082,12 @@ VkResult wine_vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize o
       .size = size,
    };
 
-   return wine_vkMapMemory2KHR(device, &info, data);
+   return wine_vkMapMemory2KHR(client_device, &info, data);
 }
 
-VkResult wine_vkMapMemory2KHR(VkDevice handle, const VkMemoryMapInfoKHR *map_info, void **data)
+VkResult wine_vkMapMemory2KHR(VkDevice client_device, const VkMemoryMapInfoKHR *map_info, void **data)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
     struct wine_device_memory *memory = wine_device_memory_from_handle(map_info->memory);
     VkMemoryMapInfoKHR info = *map_info;
@@ -2162,7 +2161,7 @@ VkResult wine_vkMapMemory2KHR(VkDevice handle, const VkMemoryMapInfoKHR *map_inf
     return result;
 }
 
-void wine_vkUnmapMemory(VkDevice device, VkDeviceMemory memory)
+void wine_vkUnmapMemory(VkDevice client_device, VkDeviceMemory memory)
 {
     const VkMemoryUnmapInfoKHR info =
     {
@@ -2170,12 +2169,12 @@ void wine_vkUnmapMemory(VkDevice device, VkDeviceMemory memory)
         .memory = memory,
     };
 
-    wine_vkUnmapMemory2KHR(device, &info);
+    wine_vkUnmapMemory2KHR(client_device, &info);
 }
 
-VkResult wine_vkUnmapMemory2KHR(VkDevice handle, const VkMemoryUnmapInfoKHR *unmap_info)
+VkResult wine_vkUnmapMemory2KHR(VkDevice client_device, const VkMemoryUnmapInfoKHR *unmap_info)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
     struct wine_device_memory *memory = wine_device_memory_from_handle(unmap_info->memory);
     VkMemoryUnmapInfoKHR info;
@@ -2207,10 +2206,10 @@ VkResult wine_vkUnmapMemory2KHR(VkDevice handle, const VkMemoryUnmapInfoKHR *unm
     return result;
 }
 
-VkResult wine_vkCreateBuffer(VkDevice handle, const VkBufferCreateInfo *create_info,
+VkResult wine_vkCreateBuffer(VkDevice client_device, const VkBufferCreateInfo *create_info,
                              const VkAllocationCallbacks *allocator, VkBuffer *buffer)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
     VkExternalMemoryBufferCreateInfo external_memory_info;
     VkBufferCreateInfo info = *create_info;
@@ -2227,10 +2226,10 @@ VkResult wine_vkCreateBuffer(VkDevice handle, const VkBufferCreateInfo *create_i
     return device->p_vkCreateBuffer(device->host_device, &info, NULL, buffer);
 }
 
-VkResult wine_vkCreateImage(VkDevice handle, const VkImageCreateInfo *create_info,
+VkResult wine_vkCreateImage(VkDevice client_device, const VkImageCreateInfo *create_info,
                             const VkAllocationCallbacks *allocator, VkImage *image)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct wine_phys_dev *physical_device = CONTAINING_RECORD(device->physical_device, struct wine_phys_dev, obj);
     VkExternalMemoryImageCreateInfo external_memory_info;
     VkImageCreateInfo info = *create_info;
@@ -2495,11 +2494,11 @@ void wine_vkDestroyDebugReportCallbackEXT(VkInstance client_instance, VkDebugRep
     free(object);
 }
 
-VkResult wine_vkCreateDeferredOperationKHR(VkDevice                     handle,
+VkResult wine_vkCreateDeferredOperationKHR(VkDevice client_device,
                                            const VkAllocationCallbacks* allocator,
                                            VkDeferredOperationKHR*      operation)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
     VkDeferredOperationKHR host_deferred_operation;
     struct wine_deferred_operation *object;
@@ -2527,11 +2526,11 @@ VkResult wine_vkCreateDeferredOperationKHR(VkDevice                     handle,
     return VK_SUCCESS;
 }
 
-void wine_vkDestroyDeferredOperationKHR(VkDevice                     handle,
+void wine_vkDestroyDeferredOperationKHR(VkDevice client_device,
                                         VkDeferredOperationKHR       operation,
                                         const VkAllocationCallbacks* allocator)
 {
-    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device *device = wine_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
     struct wine_deferred_operation *object;
 
