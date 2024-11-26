@@ -1202,8 +1202,10 @@ DECL_HANDLER(create_token)
     token = create_token( req->primary, default_session_id, user, groups, req->group_count,
                           privs, req->priv_count, dacl, NULL, req->primary_group, req->impersonation_level, 0 );
     if (token)
+    {
         reply->token = alloc_handle( current->process, token, req->access, objattr->attributes );
-
+        release_object( token );
+    }
     free( default_dacl );
     free( groups );
 }
