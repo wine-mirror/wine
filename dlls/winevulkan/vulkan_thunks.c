@@ -8871,7 +8871,7 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
     case VK_OBJECT_TYPE_DEVICE_MEMORY:
         return (uint64_t) wine_device_memory_from_handle(handle)->host_memory;
     case VK_OBJECT_TYPE_INSTANCE:
-        return (uint64_t) (uintptr_t) wine_instance_from_handle(((VkInstance) (uintptr_t) handle))->host_instance;
+        return (uint64_t) (uintptr_t) vulkan_instance_from_handle(((VkInstance) (uintptr_t) handle))->host.instance;
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
         return (uint64_t) (uintptr_t) wine_phys_dev_from_handle(((VkPhysicalDevice) (uintptr_t) handle))->host_physical_device;
     case VK_OBJECT_TYPE_QUEUE:
@@ -45384,7 +45384,7 @@ static NTSTATUS thunk64_vkDebugReportMessageEXT(void *args)
 
     TRACE("%p, %#x, %#x, 0x%s, 0x%s, %d, %p, %p\n", params->instance, params->flags, params->objectType, wine_dbgstr_longlong(params->object), wine_dbgstr_longlong(params->location), params->messageCode, params->pLayerPrefix, params->pMessage);
 
-    wine_instance_from_handle(params->instance)->p_vkDebugReportMessageEXT(wine_instance_from_handle(params->instance)->host_instance, params->flags, params->objectType, wine_vk_unwrap_handle(params->objectType, params->object), params->location, params->messageCode, params->pLayerPrefix, params->pMessage);
+    vulkan_instance_from_handle(params->instance)->p_vkDebugReportMessageEXT(vulkan_instance_from_handle(params->instance)->host.instance, params->flags, params->objectType, wine_vk_unwrap_handle(params->objectType, params->object), params->location, params->messageCode, params->pLayerPrefix, params->pMessage);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -45405,7 +45405,7 @@ static NTSTATUS thunk32_vkDebugReportMessageEXT(void *args)
 
     TRACE("%#x, %#x, %#x, 0x%s, 0x%s, %d, %#x, %#x\n", params->instance, params->flags, params->objectType, wine_dbgstr_longlong(params->object), wine_dbgstr_longlong(params->location), params->messageCode, params->pLayerPrefix, params->pMessage);
 
-    wine_instance_from_handle((VkInstance)UlongToPtr(params->instance))->p_vkDebugReportMessageEXT(wine_instance_from_handle((VkInstance)UlongToPtr(params->instance))->host_instance, params->flags, params->objectType, wine_vk_unwrap_handle(params->objectType, params->object), params->location, params->messageCode, (const char *)UlongToPtr(params->pLayerPrefix), (const char *)UlongToPtr(params->pMessage));
+    vulkan_instance_from_handle((VkInstance)UlongToPtr(params->instance))->p_vkDebugReportMessageEXT(vulkan_instance_from_handle((VkInstance)UlongToPtr(params->instance))->host.instance, params->flags, params->objectType, wine_vk_unwrap_handle(params->objectType, params->object), params->location, params->messageCode, (const char *)UlongToPtr(params->pLayerPrefix), (const char *)UlongToPtr(params->pMessage));
     return STATUS_SUCCESS;
 }
 
@@ -53352,7 +53352,7 @@ static NTSTATUS thunk64_vkSubmitDebugUtilsMessageEXT(void *args)
 
     init_conversion_context(ctx);
     convert_VkDebugUtilsMessengerCallbackDataEXT_win64_to_host(ctx, params->pCallbackData, &pCallbackData_host);
-    wine_instance_from_handle(params->instance)->p_vkSubmitDebugUtilsMessageEXT(wine_instance_from_handle(params->instance)->host_instance, params->messageSeverity, params->messageTypes, &pCallbackData_host);
+    vulkan_instance_from_handle(params->instance)->p_vkSubmitDebugUtilsMessageEXT(vulkan_instance_from_handle(params->instance)->host.instance, params->messageSeverity, params->messageTypes, &pCallbackData_host);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -53375,7 +53375,7 @@ static NTSTATUS thunk32_vkSubmitDebugUtilsMessageEXT(void *args)
 
     init_conversion_context(ctx);
     convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(ctx, (const VkDebugUtilsMessengerCallbackDataEXT32 *)UlongToPtr(params->pCallbackData), &pCallbackData_host);
-    wine_instance_from_handle((VkInstance)UlongToPtr(params->instance))->p_vkSubmitDebugUtilsMessageEXT(wine_instance_from_handle((VkInstance)UlongToPtr(params->instance))->host_instance, params->messageSeverity, params->messageTypes, &pCallbackData_host);
+    vulkan_instance_from_handle((VkInstance)UlongToPtr(params->instance))->p_vkSubmitDebugUtilsMessageEXT(vulkan_instance_from_handle((VkInstance)UlongToPtr(params->instance))->host.instance, params->messageSeverity, params->messageTypes, &pCallbackData_host);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }

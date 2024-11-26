@@ -101,7 +101,7 @@ struct wine_debug_utils_messenger;
 
 struct wine_debug_report_callback
 {
-    struct wine_instance *instance; /* parent */
+    struct vulkan_instance *instance; /* parent */
     VkDebugReportCallbackEXT host_debug_callback;
 
     UINT64 user_callback; /* client pointer */
@@ -112,7 +112,7 @@ struct wine_debug_report_callback
 
 struct wine_phys_dev
 {
-    struct wine_instance *instance; /* parent */
+    struct vulkan_instance *instance; /* parent */
 
     VkPhysicalDevice handle; /* client physical device */
     VkPhysicalDevice host_physical_device;
@@ -136,12 +136,7 @@ struct wine_debug_report_callback;
 
 struct wine_instance
 {
-#define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
-    ALL_VK_INSTANCE_FUNCS
-#undef USE_VK_FUNC
-
-    VkInstance handle; /* client instance */
-    VkInstance host_instance;
+    struct vulkan_instance obj;
 
     VkBool32 enable_win32_surface;
     VkBool32 enable_wrapper_list;
@@ -163,11 +158,6 @@ struct wine_instance
 };
 
 C_ASSERT(sizeof(struct wine_instance) == offsetof(struct wine_instance, phys_devs[0]));
-
-static inline struct wine_instance *wine_instance_from_handle(VkInstance handle)
-{
-    return (struct wine_instance *)(uintptr_t)handle->obj.unix_handle;
-}
 
 struct wine_cmd_pool
 {
@@ -199,7 +189,7 @@ static inline struct wine_device_memory *wine_device_memory_from_handle(VkDevice
 
 struct wine_debug_utils_messenger
 {
-    struct wine_instance *instance; /* parent */
+    struct vulkan_instance *instance; /* parent */
     VkDebugUtilsMessengerEXT host_debug_messenger;
 
     UINT64 user_callback; /* client pointer */

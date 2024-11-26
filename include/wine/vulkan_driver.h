@@ -48,6 +48,35 @@ struct vulkan_client_object
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
 #define WINE_VULKAN_DRIVER_VERSION 35
 
+struct vulkan_object
+{
+    UINT64 host_handle;
+    UINT64 client_handle;
+};
+
+#define VULKAN_OBJECT_HEADER( type, name ) \
+    union { \
+        struct vulkan_object obj; \
+        struct { \
+            union { type name; UINT64 handle; } host; \
+            union { type name; UINT64 handle; } client; \
+        }; \
+    }
+
+struct vulkan_instance
+{
+    VULKAN_OBJECT_HEADER( VkInstance, instance );
+#define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
+    ALL_VK_INSTANCE_FUNCS
+#undef USE_VK_FUNC
+};
+
+static inline struct vulkan_instance *vulkan_instance_from_handle( VkInstance handle )
+{
+    struct vulkan_client_object *client = (struct vulkan_client_object *)handle;
+    return (struct vulkan_instance *)(UINT_PTR)client->unix_handle;
+}
+
 struct vulkan_funcs
 {
     /* Vulkan global functions. These are the only calls at this point a graphics driver

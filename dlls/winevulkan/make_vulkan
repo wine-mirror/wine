@@ -1140,7 +1140,7 @@ class VkHandle(object):
 
         if self.parent is None:
             # Should only happen for VkInstance
-            return "wine_instance_from_handle({0})".format(param)
+            return "vulkan_instance_from_handle({0})".format(param)
         elif self.name == "VkCommandBuffer":
             return "wine_cmd_buffer_from_handle({0})->device".format(param)
         elif self.name == "VkDevice":
@@ -1193,7 +1193,7 @@ class VkHandle(object):
         if self.name == "VkDevice":
             return "wine_device_from_handle({0})->host_device".format(name)
         if self.name == "VkInstance":
-            return "wine_instance_from_handle({0})->host_instance".format(name)
+            return "vulkan_instance_from_handle({0})->host.instance".format(name)
         if self.name == "VkDeviceMemory":
             return "wine_device_memory_from_handle({0})->host_memory".format(name)
         if self.name == "VkPhysicalDevice":
