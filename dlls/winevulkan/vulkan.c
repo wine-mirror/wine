@@ -1699,61 +1699,61 @@ void wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDevice cli
 }
 
 VkResult wine_vkCreateWin32SurfaceKHR(VkInstance client_instance, const VkWin32SurfaceCreateInfoKHR *create_info,
-                                      const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
+                                      const VkAllocationCallbacks *allocator, VkSurfaceKHR *ret)
 {
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
     VkWin32SurfaceCreateInfoKHR create_info_host = *create_info;
-    struct wine_surface *object;
+    struct wine_surface *surface;
     HWND dummy = NULL;
     VkResult res;
 
     if (allocator) FIXME("Support for allocation callbacks not implemented yet\n");
 
-    if (!(object = calloc(1, sizeof(*object)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if (!(surface = calloc(1, sizeof(*surface)))) return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     /* Windows allows surfaces to be created with no HWND, they return VK_ERROR_SURFACE_LOST_KHR later */
-    if (!(object->hwnd = create_info->hwnd))
+    if (!(surface->hwnd = create_info->hwnd))
     {
         static const WCHAR staticW[] = {'s','t','a','t','i','c',0};
         UNICODE_STRING static_us = RTL_CONSTANT_STRING(staticW);
         dummy = NtUserCreateWindowEx(0, &static_us, &static_us, &static_us, WS_POPUP,
                                      0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, NULL, 0, FALSE);
         WARN("Created dummy window %p for null surface window\n", dummy);
-        create_info_host.hwnd = object->hwnd = dummy;
+        create_info_host.hwnd = surface->hwnd = dummy;
     }
 
     res = instance->p_vkCreateWin32SurfaceKHR(instance->host.instance, &create_info_host,
-                                                    NULL /* allocator */, &object->driver_surface);
+                                                    NULL /* allocator */, &surface->driver_surface);
     if (res != VK_SUCCESS)
     {
         if (dummy) NtUserDestroyWindow(dummy);
-        free(object);
+        free(surface);
         return res;
     }
 
-    object->host_surface = vk_funcs->p_wine_get_host_surface(object->driver_surface);
+    surface->obj.host.surface = vk_funcs->p_wine_get_host_surface(surface->driver_surface);
     if (dummy) NtUserDestroyWindow(dummy);
-    window_surfaces_insert(object);
+    window_surfaces_insert(surface);
 
-    *surface = wine_surface_to_handle(object);
-    add_handle_mapping(instance, *surface, object->host_surface, &object->wrapper_entry);
+    *ret = wine_surface_to_handle(surface);
+    add_handle_mapping(instance, *ret, surface->obj.host.surface, &surface->wrapper_entry);
     return VK_SUCCESS;
 }
 
-void wine_vkDestroySurfaceKHR(VkInstance client_instance, VkSurfaceKHR surface,
+void wine_vkDestroySurfaceKHR(VkInstance client_instance, VkSurfaceKHR client_surface,
                               const VkAllocationCallbacks *allocator)
 {
     struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
-    struct wine_surface *object = wine_surface_from_handle(surface);
+    struct wine_surface *surface = wine_surface_from_handle(client_surface);
 
-    if (!object)
+    if (!surface)
         return;
 
-    instance->p_vkDestroySurfaceKHR(instance->host.instance, object->driver_surface, NULL);
-    remove_handle_mapping(instance, &object->wrapper_entry);
-    window_surfaces_remove(object);
+    instance->p_vkDestroySurfaceKHR(instance->host.instance, surface->driver_surface, NULL);
+    remove_handle_mapping(instance, &surface->wrapper_entry);
+    window_surfaces_remove(surface);
 
-    free(object);
+    free(surface);
 }
 
 static BOOL extents_equals(const VkExtent2D *extents, const RECT *rect)
@@ -1828,7 +1828,7 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice client_device, const VkSwapchainCrea
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
-    if (surface) create_info_host.surface = surface->host_surface;
+    if (surface) create_info_host.surface = surface->obj.host.surface;
     if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->host_swapchain;
 
     /* update the host surface to commit any pending size change */
@@ -1836,7 +1836,7 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice client_device, const VkSwapchainCrea
 
     /* Windows allows client rect to be empty, but host Vulkan often doesn't, adjust extents back to the host capabilities */
     res = instance->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device->host.physical_device,
-                                                                      surface->host_surface, &capabilities);
+                                                                surface->obj.host.surface, &capabilities);
     if (res != VK_SUCCESS) return res;
 
     create_info_host.imageExtent.width = max(create_info_host.imageExtent.width, capabilities.minImageExtent.width);
@@ -2304,7 +2304,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice client_
 
     if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
     res = instance->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device->host.physical_device,
-                                                                      surface->host_surface, capabilities);
+                                                                surface->obj.host.surface, capabilities);
     if (res == VK_SUCCESS) adjust_surface_capabilities(instance, surface, capabilities);
     return res;
 }
@@ -2326,7 +2326,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice client
                                                               &capabilities->surfaceCapabilities);
     }
 
-    surface_info_host.surface = surface->host_surface;
+    surface_info_host.surface = surface->obj.host.surface;
 
     if (!NtUserIsWindow(surface->hwnd)) return VK_ERROR_SURFACE_LOST_KHR;
     res = instance->p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(physical_device->host.physical_device,
@@ -2335,11 +2335,11 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice client
     return res;
 }
 
-VkResult wine_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice client_physical_device, VkSurfaceKHR surface_handle,
+VkResult wine_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice client_physical_device, VkSurfaceKHR client_surface,
                                                       uint32_t *rect_count, VkRect2D *rects)
 {
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct wine_surface *surface = wine_surface_from_handle(surface_handle);
+    struct wine_surface *surface = wine_surface_from_handle(client_surface);
     struct vulkan_instance *instance = physical_device->instance;
 
     if (!NtUserIsWindow(surface->hwnd))
@@ -2351,17 +2351,17 @@ VkResult wine_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice client_ph
     }
 
     return instance->p_vkGetPhysicalDevicePresentRectanglesKHR(physical_device->host.physical_device,
-                                                                     surface->host_surface, rect_count, rects);
+                                                                     surface->obj.host.surface, rect_count, rects);
 }
 
-VkResult wine_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice client_physical_device, VkSurfaceKHR surface_handle,
+VkResult wine_vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice client_physical_device, VkSurfaceKHR client_surface,
                                                    uint32_t *format_count, VkSurfaceFormatKHR *formats)
 {
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct wine_surface *surface = wine_surface_from_handle(surface_handle);
+    struct wine_surface *surface = wine_surface_from_handle(client_surface);
     struct vulkan_instance *instance = physical_device->instance;
 
-    return instance->p_vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device->host.physical_device, surface->host_surface,
+    return instance->p_vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device->host.physical_device, surface->obj.host.surface,
                                                                   format_count, formats);
 }
 
@@ -2398,7 +2398,7 @@ VkResult wine_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice client_phys
         return res;
     }
 
-    surface_info_host.surface = surface->host_surface;
+    surface_info_host.surface = surface->obj.host.surface;
 
     return instance->p_vkGetPhysicalDeviceSurfaceFormats2KHR(physical_device->host.physical_device,
                                                                    &surface_info_host, format_count, formats);

@@ -196,7 +196,7 @@ static inline VkDebugReportCallbackEXT wine_debug_report_callback_to_handle(
 
 struct wine_surface
 {
-    VkSurfaceKHR host_surface;
+    struct vulkan_surface obj;
     VkSurfaceKHR driver_surface;
     HWND hwnd;
 
@@ -206,12 +206,13 @@ struct wine_surface
 
 static inline struct wine_surface *wine_surface_from_handle(VkSurfaceKHR handle)
 {
-    return (struct wine_surface *)(uintptr_t)handle;
+    struct vulkan_surface *obj = vulkan_surface_from_handle(handle);
+    return CONTAINING_RECORD(obj, struct wine_surface, obj);
 }
 
 static inline VkSurfaceKHR wine_surface_to_handle(struct wine_surface *surface)
 {
-    return (VkSurfaceKHR)(uintptr_t)surface;
+    return (VkSurfaceKHR)(uintptr_t)&surface->obj;
 }
 
 struct wine_swapchain

@@ -116,6 +116,17 @@ static inline struct vulkan_queue *vulkan_queue_from_handle( VkQueue handle )
     return (struct vulkan_queue *)(UINT_PTR)client->unix_handle;
 }
 
+struct vulkan_surface
+{
+    VULKAN_OBJECT_HEADER( VkSurfaceKHR, surface );
+    struct vulkan_instance *instance;
+};
+
+static inline struct vulkan_surface *vulkan_surface_from_handle( VkSurfaceKHR handle )
+{
+    return (struct vulkan_surface *)(UINT_PTR)handle;
+}
+
 struct vulkan_funcs
 {
     /* Vulkan global functions. These are the only calls at this point a graphics driver
