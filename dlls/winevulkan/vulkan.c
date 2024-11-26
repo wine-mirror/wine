@@ -567,15 +567,15 @@ static void wine_vk_device_init_queues(struct wine_device *object, const VkDevic
             device->p_vkGetDeviceQueue(device->host.device, info->queueFamilyIndex, i, &host_queue);
         }
 
-        queue->device = device;
-        queue->host_queue = host_queue;
-        queue->handle = client_queue;
+        queue->obj.host.queue = host_queue;
+        queue->obj.client.queue = client_queue;
+        queue->obj.device = device;
         queue->family_index = info->queueFamilyIndex;
         queue->queue_index = i;
         queue->flags = info->flags;
 
         client_queue->obj.unix_handle = (uintptr_t)queue;
-        TRACE("Got device %p queue %p, host_queue %p.\n", device, queue, queue->host_queue);
+        TRACE("Got device %p queue %p, host_queue %p.\n", device, queue, queue->obj.host.queue);
     }
 
     object->queue_count += info->queueCount;
@@ -974,7 +974,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
     for (i = 0; i < device->queue_count; i++)
     {
         struct wine_queue *queue = device->queues + i;
-        add_handle_mapping_ptr(instance, queue->handle, queue->host_queue, &queue->wrapper_entry);
+        add_handle_mapping_ptr(instance, queue->obj.client.queue, queue->obj.host.queue, &queue->wrapper_entry);
     }
     add_handle_mapping_ptr(instance, client_device, device->obj.host.device, &device->wrapper_entry);
 
@@ -1275,14 +1275,14 @@ static VkQueue wine_vk_device_find_queue(VkDevice client_device, const VkDeviceQ
                 && queue->queue_index == info->queueIndex
                 && queue->flags == info->flags)
         {
-            return queue->handle;
+            return queue->obj.client.queue;
         }
     }
 
     return VK_NULL_HANDLE;
 }
 
-void wine_vkGetDeviceQueue(VkDevice client_device, uint32_t family_index, uint32_t queue_index, VkQueue *queue)
+void wine_vkGetDeviceQueue(VkDevice client_device, uint32_t family_index, uint32_t queue_index, VkQueue *client_queue)
 {
     VkDeviceQueueInfo2 queue_info;
 
@@ -1292,17 +1292,17 @@ void wine_vkGetDeviceQueue(VkDevice client_device, uint32_t family_index, uint32
     queue_info.queueFamilyIndex = family_index;
     queue_info.queueIndex = queue_index;
 
-    *queue = wine_vk_device_find_queue(client_device, &queue_info);
+    *client_queue = wine_vk_device_find_queue(client_device, &queue_info);
 }
 
-void wine_vkGetDeviceQueue2(VkDevice client_device, const VkDeviceQueueInfo2 *info, VkQueue *queue)
+void wine_vkGetDeviceQueue2(VkDevice client_device, const VkDeviceQueueInfo2 *info, VkQueue *client_queue)
 {
     const VkBaseInStructure *chain;
 
     if ((chain = info->pNext))
         FIXME("Ignoring a linked structure of type %u.\n", chain->sType);
 
-    *queue = wine_vk_device_find_queue(client_device, info);
+    *client_queue = wine_vk_device_find_queue(client_device, info);
 }
 
 VkResult wine_vkCreateCommandPool(VkDevice client_device, const VkCommandPoolCreateInfo *info,
@@ -1875,11 +1875,11 @@ void wine_vkDestroySwapchainKHR(VkDevice client_device, VkSwapchainKHR swapchain
     free(swapchain);
 }
 
-VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *present_info)
+VkResult wine_vkQueuePresentKHR(VkQueue client_queue, const VkPresentInfoKHR *present_info)
 {
     VkSwapchainKHR swapchains_buffer[16], *swapchains = swapchains_buffer;
     VkSurfaceKHR surfaces_buffer[ARRAY_SIZE(swapchains_buffer)], *surfaces = surfaces_buffer;
-    struct wine_queue *queue = wine_queue_from_handle(queue_handle);
+    struct vulkan_queue *queue = vulkan_queue_from_handle(client_queue);
     VkPresentInfoKHR present_info_host = *present_info;
     VkResult res;
     UINT i;
@@ -1902,7 +1902,7 @@ VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *pr
 
     present_info_host.pSwapchains = swapchains;
 
-    res = vk_funcs->p_vkQueuePresentKHR(queue->host_queue, &present_info_host, surfaces);
+    res = vk_funcs->p_vkQueuePresentKHR(queue->host.queue, &present_info_host, surfaces);
 
     for (i = 0; i < present_info->swapchainCount; i++)
     {

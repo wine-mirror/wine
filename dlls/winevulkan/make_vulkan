@@ -1148,7 +1148,7 @@ class VkHandle(object):
         elif self.name == "VkPhysicalDevice":
             return "vulkan_physical_device_from_handle({0})->instance".format(param)
         elif self.name == "VkQueue":
-            return "wine_queue_from_handle({0})->device".format(param)
+            return "vulkan_queue_from_handle({0})->device".format(param)
         elif self.parent in ["VkInstance", "VkPhysicalDevice"]:
             return "{0}->instance".format(param)
         elif self.parent in ["VkDevice", "VkCommandPool"]:
@@ -1199,7 +1199,7 @@ class VkHandle(object):
         if self.name == "VkPhysicalDevice":
             return "vulkan_physical_device_from_handle({0})->host.physical_device".format(name)
         if self.name == "VkQueue":
-            return "wine_queue_from_handle({0})->host_queue".format(name)
+            return "vulkan_queue_from_handle({0})->host.queue".format(name)
         if self.name == "VkSurfaceKHR":
             return "wine_surface_from_handle({0})->host_surface".format(name)
         if self.name == "VkSwapchainKHR":

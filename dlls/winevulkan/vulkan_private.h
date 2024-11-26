@@ -57,10 +57,7 @@ static inline struct wine_cmd_buffer *wine_cmd_buffer_from_handle(VkCommandBuffe
 
 struct wine_queue
 {
-    struct vulkan_device *device; /* parent */
-
-    VkQueue handle; /* client queue */
-    VkQueue host_queue;
+    struct vulkan_queue obj;
 
     uint32_t family_index;
     uint32_t queue_index;
@@ -68,11 +65,6 @@ struct wine_queue
 
     struct wrapper_entry wrapper_entry;
 };
-
-static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
-{
-    return (struct wine_queue *)(uintptr_t)handle->obj.unix_handle;
-}
 
 struct wine_device
 {

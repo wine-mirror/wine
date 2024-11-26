@@ -8875,7 +8875,7 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
         return (uint64_t) (uintptr_t) vulkan_physical_device_from_handle(((VkPhysicalDevice) (uintptr_t) handle))->host.physical_device;
     case VK_OBJECT_TYPE_QUEUE:
-        return (uint64_t) (uintptr_t) wine_queue_from_handle(((VkQueue) (uintptr_t) handle))->host_queue;
+        return (uint64_t) (uintptr_t) vulkan_queue_from_handle(((VkQueue) (uintptr_t) handle))->host.queue;
     case VK_OBJECT_TYPE_SURFACE_KHR:
         return (uint64_t) wine_surface_from_handle(handle)->host_surface;
     case VK_OBJECT_TYPE_SWAPCHAIN_KHR:
@@ -51557,7 +51557,7 @@ static NTSTATUS thunk64_vkGetQueueCheckpointData2NV(void *args)
 
     TRACE("%p, %p, %p\n", params->queue, params->pCheckpointDataCount, params->pCheckpointData);
 
-    wine_queue_from_handle(params->queue)->device->p_vkGetQueueCheckpointData2NV(wine_queue_from_handle(params->queue)->host_queue, params->pCheckpointDataCount, params->pCheckpointData);
+    vulkan_queue_from_handle(params->queue)->device->p_vkGetQueueCheckpointData2NV(vulkan_queue_from_handle(params->queue)->host.queue, params->pCheckpointDataCount, params->pCheckpointData);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -51578,7 +51578,7 @@ static NTSTATUS thunk32_vkGetQueueCheckpointData2NV(void *args)
 
     init_conversion_context(ctx);
     pCheckpointData_host = convert_VkCheckpointData2NV_array_win32_to_host(ctx, (VkCheckpointData2NV32 *)UlongToPtr(params->pCheckpointData), *(uint32_t *)UlongToPtr(params->pCheckpointDataCount));
-    wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkGetQueueCheckpointData2NV(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, (uint32_t *)UlongToPtr(params->pCheckpointDataCount), pCheckpointData_host);
+    vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkGetQueueCheckpointData2NV(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, (uint32_t *)UlongToPtr(params->pCheckpointDataCount), pCheckpointData_host);
     convert_VkCheckpointData2NV_array_host_to_win32(pCheckpointData_host, (VkCheckpointData2NV32 *)UlongToPtr(params->pCheckpointData), *(uint32_t *)UlongToPtr(params->pCheckpointDataCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -51591,7 +51591,7 @@ static NTSTATUS thunk64_vkGetQueueCheckpointDataNV(void *args)
 
     TRACE("%p, %p, %p\n", params->queue, params->pCheckpointDataCount, params->pCheckpointData);
 
-    wine_queue_from_handle(params->queue)->device->p_vkGetQueueCheckpointDataNV(wine_queue_from_handle(params->queue)->host_queue, params->pCheckpointDataCount, params->pCheckpointData);
+    vulkan_queue_from_handle(params->queue)->device->p_vkGetQueueCheckpointDataNV(vulkan_queue_from_handle(params->queue)->host.queue, params->pCheckpointDataCount, params->pCheckpointData);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -51612,7 +51612,7 @@ static NTSTATUS thunk32_vkGetQueueCheckpointDataNV(void *args)
 
     init_conversion_context(ctx);
     pCheckpointData_host = convert_VkCheckpointDataNV_array_win32_to_host(ctx, (VkCheckpointDataNV32 *)UlongToPtr(params->pCheckpointData), *(uint32_t *)UlongToPtr(params->pCheckpointDataCount));
-    wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkGetQueueCheckpointDataNV(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, (uint32_t *)UlongToPtr(params->pCheckpointDataCount), pCheckpointData_host);
+    vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkGetQueueCheckpointDataNV(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, (uint32_t *)UlongToPtr(params->pCheckpointDataCount), pCheckpointData_host);
     convert_VkCheckpointDataNV_array_host_to_win32(pCheckpointData_host, (VkCheckpointDataNV32 *)UlongToPtr(params->pCheckpointData), *(uint32_t *)UlongToPtr(params->pCheckpointDataCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -52346,7 +52346,7 @@ static NTSTATUS thunk64_vkQueueBeginDebugUtilsLabelEXT(void *args)
 
     TRACE("%p, %p\n", params->queue, params->pLabelInfo);
 
-    wine_queue_from_handle(params->queue)->device->p_vkQueueBeginDebugUtilsLabelEXT(wine_queue_from_handle(params->queue)->host_queue, params->pLabelInfo);
+    vulkan_queue_from_handle(params->queue)->device->p_vkQueueBeginDebugUtilsLabelEXT(vulkan_queue_from_handle(params->queue)->host.queue, params->pLabelInfo);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52363,7 +52363,7 @@ static NTSTATUS thunk32_vkQueueBeginDebugUtilsLabelEXT(void *args)
     TRACE("%#x, %#x\n", params->queue, params->pLabelInfo);
 
     convert_VkDebugUtilsLabelEXT_win32_to_host((const VkDebugUtilsLabelEXT32 *)UlongToPtr(params->pLabelInfo), &pLabelInfo_host);
-    wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueBeginDebugUtilsLabelEXT(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, &pLabelInfo_host);
+    vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueBeginDebugUtilsLabelEXT(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, &pLabelInfo_host);
     return STATUS_SUCCESS;
 }
 
@@ -52379,7 +52379,7 @@ static NTSTATUS thunk64_vkQueueBindSparse(void *args)
 
     init_conversion_context(ctx);
     pBindInfo_host = convert_VkBindSparseInfo_array_win64_to_host(ctx, params->pBindInfo, params->bindInfoCount);
-    params->result = wine_queue_from_handle(params->queue)->device->p_vkQueueBindSparse(wine_queue_from_handle(params->queue)->host_queue, params->bindInfoCount, pBindInfo_host, params->fence);
+    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueBindSparse(vulkan_queue_from_handle(params->queue)->host.queue, params->bindInfoCount, pBindInfo_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -52403,7 +52403,7 @@ static NTSTATUS thunk32_vkQueueBindSparse(void *args)
 
     init_conversion_context(ctx);
     pBindInfo_host = convert_VkBindSparseInfo_array_win32_to_host(ctx, (const VkBindSparseInfo32 *)UlongToPtr(params->pBindInfo), params->bindInfoCount);
-    params->result = wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueBindSparse(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, params->bindInfoCount, pBindInfo_host, params->fence);
+    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueBindSparse(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->bindInfoCount, pBindInfo_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -52415,7 +52415,7 @@ static NTSTATUS thunk64_vkQueueEndDebugUtilsLabelEXT(void *args)
 
     TRACE("%p\n", params->queue);
 
-    wine_queue_from_handle(params->queue)->device->p_vkQueueEndDebugUtilsLabelEXT(wine_queue_from_handle(params->queue)->host_queue);
+    vulkan_queue_from_handle(params->queue)->device->p_vkQueueEndDebugUtilsLabelEXT(vulkan_queue_from_handle(params->queue)->host.queue);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52429,7 +52429,7 @@ static NTSTATUS thunk32_vkQueueEndDebugUtilsLabelEXT(void *args)
 
     TRACE("%#x\n", params->queue);
 
-    wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueEndDebugUtilsLabelEXT(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue);
+    vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueEndDebugUtilsLabelEXT(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue);
     return STATUS_SUCCESS;
 }
 
@@ -52440,7 +52440,7 @@ static NTSTATUS thunk64_vkQueueInsertDebugUtilsLabelEXT(void *args)
 
     TRACE("%p, %p\n", params->queue, params->pLabelInfo);
 
-    wine_queue_from_handle(params->queue)->device->p_vkQueueInsertDebugUtilsLabelEXT(wine_queue_from_handle(params->queue)->host_queue, params->pLabelInfo);
+    vulkan_queue_from_handle(params->queue)->device->p_vkQueueInsertDebugUtilsLabelEXT(vulkan_queue_from_handle(params->queue)->host.queue, params->pLabelInfo);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52457,7 +52457,7 @@ static NTSTATUS thunk32_vkQueueInsertDebugUtilsLabelEXT(void *args)
     TRACE("%#x, %#x\n", params->queue, params->pLabelInfo);
 
     convert_VkDebugUtilsLabelEXT_win32_to_host((const VkDebugUtilsLabelEXT32 *)UlongToPtr(params->pLabelInfo), &pLabelInfo_host);
-    wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueInsertDebugUtilsLabelEXT(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, &pLabelInfo_host);
+    vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueInsertDebugUtilsLabelEXT(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, &pLabelInfo_host);
     return STATUS_SUCCESS;
 }
 
@@ -52468,7 +52468,7 @@ static NTSTATUS thunk64_vkQueueNotifyOutOfBandNV(void *args)
 
     TRACE("%p, %p\n", params->queue, params->pQueueTypeInfo);
 
-    wine_queue_from_handle(params->queue)->device->p_vkQueueNotifyOutOfBandNV(wine_queue_from_handle(params->queue)->host_queue, params->pQueueTypeInfo);
+    vulkan_queue_from_handle(params->queue)->device->p_vkQueueNotifyOutOfBandNV(vulkan_queue_from_handle(params->queue)->host.queue, params->pQueueTypeInfo);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52485,7 +52485,7 @@ static NTSTATUS thunk32_vkQueueNotifyOutOfBandNV(void *args)
     TRACE("%#x, %#x\n", params->queue, params->pQueueTypeInfo);
 
     convert_VkOutOfBandQueueTypeInfoNV_win32_to_host((const VkOutOfBandQueueTypeInfoNV32 *)UlongToPtr(params->pQueueTypeInfo), &pQueueTypeInfo_host);
-    wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueNotifyOutOfBandNV(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, &pQueueTypeInfo_host);
+    vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueNotifyOutOfBandNV(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, &pQueueTypeInfo_host);
     return STATUS_SUCCESS;
 }
 
@@ -52529,7 +52529,7 @@ static NTSTATUS thunk64_vkQueueSetPerformanceConfigurationINTEL(void *args)
 
     TRACE("%p, 0x%s\n", params->queue, wine_dbgstr_longlong(params->configuration));
 
-    params->result = wine_queue_from_handle(params->queue)->device->p_vkQueueSetPerformanceConfigurationINTEL(wine_queue_from_handle(params->queue)->host_queue, params->configuration);
+    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueSetPerformanceConfigurationINTEL(vulkan_queue_from_handle(params->queue)->host.queue, params->configuration);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52545,7 +52545,7 @@ static NTSTATUS thunk32_vkQueueSetPerformanceConfigurationINTEL(void *args)
 
     TRACE("%#x, 0x%s\n", params->queue, wine_dbgstr_longlong(params->configuration));
 
-    params->result = wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSetPerformanceConfigurationINTEL(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, params->configuration);
+    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSetPerformanceConfigurationINTEL(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->configuration);
     return STATUS_SUCCESS;
 }
 
@@ -52561,7 +52561,7 @@ static NTSTATUS thunk64_vkQueueSubmit(void *args)
 
     init_conversion_context(ctx);
     pSubmits_host = convert_VkSubmitInfo_array_win64_to_host(ctx, params->pSubmits, params->submitCount);
-    params->result = wine_queue_from_handle(params->queue)->device->p_vkQueueSubmit(wine_queue_from_handle(params->queue)->host_queue, params->submitCount, pSubmits_host, params->fence);
+    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueSubmit(vulkan_queue_from_handle(params->queue)->host.queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -52585,7 +52585,7 @@ static NTSTATUS thunk32_vkQueueSubmit(void *args)
 
     init_conversion_context(ctx);
     pSubmits_host = convert_VkSubmitInfo_array_win32_to_host(ctx, (const VkSubmitInfo32 *)UlongToPtr(params->pSubmits), params->submitCount);
-    params->result = wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, params->submitCount, pSubmits_host, params->fence);
+    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -52602,7 +52602,7 @@ static NTSTATUS thunk64_vkQueueSubmit2(void *args)
 
     init_conversion_context(ctx);
     pSubmits_host = convert_VkSubmitInfo2_array_win64_to_host(ctx, params->pSubmits, params->submitCount);
-    params->result = wine_queue_from_handle(params->queue)->device->p_vkQueueSubmit2(wine_queue_from_handle(params->queue)->host_queue, params->submitCount, pSubmits_host, params->fence);
+    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueSubmit2(vulkan_queue_from_handle(params->queue)->host.queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -52626,7 +52626,7 @@ static NTSTATUS thunk32_vkQueueSubmit2(void *args)
 
     init_conversion_context(ctx);
     pSubmits_host = convert_VkSubmitInfo2_array_win32_to_host(ctx, (const VkSubmitInfo232 *)UlongToPtr(params->pSubmits), params->submitCount);
-    params->result = wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit2(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, params->submitCount, pSubmits_host, params->fence);
+    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit2(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -52643,7 +52643,7 @@ static NTSTATUS thunk64_vkQueueSubmit2KHR(void *args)
 
     init_conversion_context(ctx);
     pSubmits_host = convert_VkSubmitInfo2_array_win64_to_host(ctx, params->pSubmits, params->submitCount);
-    params->result = wine_queue_from_handle(params->queue)->device->p_vkQueueSubmit2KHR(wine_queue_from_handle(params->queue)->host_queue, params->submitCount, pSubmits_host, params->fence);
+    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueSubmit2KHR(vulkan_queue_from_handle(params->queue)->host.queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -52667,7 +52667,7 @@ static NTSTATUS thunk32_vkQueueSubmit2KHR(void *args)
 
     init_conversion_context(ctx);
     pSubmits_host = convert_VkSubmitInfo2_array_win32_to_host(ctx, (const VkSubmitInfo232 *)UlongToPtr(params->pSubmits), params->submitCount);
-    params->result = wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit2KHR(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue, params->submitCount, pSubmits_host, params->fence);
+    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueSubmit2KHR(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue, params->submitCount, pSubmits_host, params->fence);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -52679,7 +52679,7 @@ static NTSTATUS thunk64_vkQueueWaitIdle(void *args)
 
     TRACE("%p\n", params->queue);
 
-    params->result = wine_queue_from_handle(params->queue)->device->p_vkQueueWaitIdle(wine_queue_from_handle(params->queue)->host_queue);
+    params->result = vulkan_queue_from_handle(params->queue)->device->p_vkQueueWaitIdle(vulkan_queue_from_handle(params->queue)->host.queue);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52694,7 +52694,7 @@ static NTSTATUS thunk32_vkQueueWaitIdle(void *args)
 
     TRACE("%#x\n", params->queue);
 
-    params->result = wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueWaitIdle(wine_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host_queue);
+    params->result = vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->device->p_vkQueueWaitIdle(vulkan_queue_from_handle((VkQueue)UlongToPtr(params->queue))->host.queue);
     return STATUS_SUCCESS;
 }
 
