@@ -6680,15 +6680,26 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT6_IE9_SETATTRIBUTE, IHTMLElement6_setAttribute_hook},
         {DISPID_UNKNOWN}
     };
-    static const dispex_hook_t elem_ie9_hooks[] = {
+    static const dispex_hook_t elem_ie10_hooks[] = {
+        {DISPID_IHTMLELEMENT_DOCUMENT,     NULL},
+        {DISPID_IHTMLELEMENT_FILTERS,      NULL},
+
+        /* IE9+ */
         {DISPID_IHTMLELEMENT_TOSTRING,     NULL},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const elem_ie9_hooks = elem_ie10_hooks + 2;
     static const dispex_hook_t elem2_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT2_ATTACHEVENT, NULL},
         {DISPID_IHTMLELEMENT2_DETACHEVENT, NULL},
         {DISPID_IHTMLELEMENT2_DOSCROLL,    NULL},
         {DISPID_IHTMLELEMENT2_READYSTATE,  NULL},
+
+        /* IE10+ */
+        {DISPID_IHTMLELEMENT2_SCOPENAME,   NULL},
+        {DISPID_IHTMLELEMENT2_ADDFILTER,   NULL},
+        {DISPID_IHTMLELEMENT2_REMOVEFILTER,NULL},
+        {DISPID_IHTMLELEMENT2_TAGURN,      NULL},
 
         /* IE9+ */
         {DISPID_IHTMLELEMENT2_SETEXPRESSION,    NULL},
@@ -6696,7 +6707,8 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT2_REMOVEEXPRESSION, NULL},
         {DISPID_UNKNOWN}
     };
-    const dispex_hook_t *const elem2_ie9_hooks = elem2_ie11_hooks + 4;
+    const dispex_hook_t *const elem2_ie10_hooks = elem2_ie11_hooks + 4;
+    const dispex_hook_t *const elem2_ie9_hooks  = elem2_ie10_hooks + 4;
     static const dispex_hook_t elem3_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT3_FIREEVENT,   NULL},
 
@@ -6707,12 +6719,23 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     const dispex_hook_t *const elem3_ie9_hooks = elem3_ie11_hooks + 1;
     static const dispex_hook_t elem7_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER},
+
+        /* IE10+ */
+        {DISPID_IHTMLELEMENT7_ONMSTRANSITIONSTART},
+        {DISPID_IHTMLELEMENT7_ONMSTRANSITIONEND},
+        {DISPID_IHTMLELEMENT7_ONMSANIMATIONSTART},
+        {DISPID_IHTMLELEMENT7_ONMSANIMATIONEND},
+        {DISPID_IHTMLELEMENT7_ONMSANIMATIONITERATION},
+        {DISPID_IHTMLELEMENT7_ONINVALID},
+        {DISPID_IHTMLELEMENT7_XMSACCELERATORKEY},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const elem7_ie10_hooks = elem7_ie11_hooks + 1;
 
     HTMLDOMNode_init_dispex_info(info, mode);
 
     dispex_info_add_interface(info, IHTMLElement2_tid, mode >= COMPAT_MODE_IE11 ? elem2_ie11_hooks :
+                                                       mode >= COMPAT_MODE_IE10 ? elem2_ie10_hooks :
                                                        mode >= COMPAT_MODE_IE9  ? elem2_ie9_hooks  : NULL);
     if(mode >= COMPAT_MODE_IE8)
         dispex_info_add_interface(info, IElementSelector_tid, NULL);
@@ -6724,13 +6747,15 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
     if(mode >= COMPAT_MODE_IE10)
     {
-        dispex_info_add_interface(info, IHTMLElement7_tid, mode >= COMPAT_MODE_IE11 ? elem7_ie11_hooks : NULL);
+        dispex_info_add_interface(info, IHTMLElement7_tid, mode >= COMPAT_MODE_IE11 ? elem7_ie11_hooks :
+                                                           mode >= COMPAT_MODE_IE10 ? elem7_ie10_hooks : NULL);
         dispex_info_add_interface(info, IWineHTMLElementPrivate_tid, NULL);
     }
 
     dispex_info_add_interface(info, IHTMLElement3_tid, mode >= COMPAT_MODE_IE11 ? elem3_ie11_hooks :
                                                        mode >= COMPAT_MODE_IE9  ? elem3_ie9_hooks  : NULL);
-    dispex_info_add_interface(info, IHTMLElement_tid, mode >= COMPAT_MODE_IE9 ? elem_ie9_hooks : NULL);
+    dispex_info_add_interface(info, IHTMLElement_tid, mode >= COMPAT_MODE_IE10 ? elem_ie10_hooks :
+                                                      mode >= COMPAT_MODE_IE9  ? elem_ie9_hooks  : NULL);
 }
 
 const DISPID HTMLElement_toString_dispids[] = {
