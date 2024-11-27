@@ -4324,8 +4324,15 @@ failed:
 
     if (FAILED(hr = IMFMediaEventGenerator_BeginGetEvent(event_source, iface, (IUnknown *)event_source)))
     {
-        WARN("Failed to re-subscribe, hr %#lx.\n", hr);
-        IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+        if (hr == MF_E_SHUTDOWN)
+        {
+            session_handle_source_shutdown(session);
+        }
+        else
+        {
+            WARN("Failed to re-subscribe, hr %#lx.\n", hr);
+            IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+        }
     }
 
     if (event)
