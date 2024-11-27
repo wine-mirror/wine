@@ -1029,6 +1029,16 @@ static void session_reset(struct media_session *session)
     session_command_complete(session);
 }
 
+static void session_handle_start_error(struct media_session *session, HRESULT hr)
+{
+    if (hr == MF_E_SHUTDOWN)
+    {
+        session_reset(session);
+        hr = MF_E_INVALIDREQUEST;
+    }
+    session_command_complete_with_event(session, MESessionStarted, hr, NULL);
+}
+
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
 {
     struct media_source *source;
@@ -1057,7 +1067,7 @@ static void session_start(struct media_session *session, const GUID *time_format
 
             if (FAILED(hr = session_subscribe_sources(session)))
             {
-                session_command_complete_with_event(session, MESessionStarted, hr, NULL);
+                session_handle_start_error(session, hr);
                 return;
             }
 
