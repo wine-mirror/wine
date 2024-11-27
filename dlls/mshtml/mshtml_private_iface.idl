@@ -160,6 +160,8 @@ interface IWineHTMLDOMNodePrivate : IDispatch
 {
     [id(DISPID_IHTMLELEMENT6_IE9_HASATTRIBUTES)]
     HRESULT hasAttributes([retval, out] VARIANT_BOOL *p);
+    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
+    HRESULT normalize();
 }
 
 [

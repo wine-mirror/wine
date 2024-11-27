@@ -3746,7 +3746,7 @@ sync_test("prototype props", function() {
         "uniqueID", "uniqueNumber"
     ], [
         ["addBehavior",11], ["addFilter",10], ["all",11], ["behaviorUrns",11], ["dataset",11], ["document",10], ["draggable",10], ["filters",10],
-        "getExpression", ["hidden",11], ["msGetInputContext",11], "normalize", ["onafterupdate",11], ["onbeforeeditfocus",11],
+        "getExpression", ["hidden",11], ["msGetInputContext",11], ["onafterupdate",11], ["onbeforeeditfocus",11],
         ["onbeforeupdate",11], ["oncellchange",11], ["oncontrolselect",11], ["ondataavailable",11], ["ondatasetchanged",11],
         ["ondatasetcomplete",11], ["onerrorupdate",11], ["onfilterchange",11], ["oninvalid",10], ["onlayoutcomplete",11], ["onlosecapture",11],
         ["onmove",11], ["onmoveend",11], ["onmovestart",11], ["onmsanimationend",10], ["onmsanimationiteration",10], ["onmsanimationstart",10],
@@ -3786,7 +3786,7 @@ sync_test("prototype props", function() {
         "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_CONTAINS", "DOCUMENT_POSITION_DISCONNECTED",
         "DOCUMENT_POSITION_FOLLOWING", "DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC", "DOCUMENT_POSITION_PRECEDING",
         "DOCUMENT_TYPE_NODE", "ELEMENT_NODE", "ENTITY_NODE", "ENTITY_REFERENCE_NODE", "NOTATION_NODE",
-        "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE", "normalize"
+        "PROCESSING_INSTRUCTION_NODE", "TEXT_NODE"
     ]);
     if(v >= 11)
         check(PageTransitionEvent, [ "persisted" ]);

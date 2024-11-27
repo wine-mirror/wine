@@ -1207,6 +1207,15 @@ static HRESULT WINAPI HTMLDOMNode_private_get_hasAttributes(IWineHTMLDOMNodePriv
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI HTMLDOMNode_private_normalize(IWineHTMLDOMNodePrivate *iface)
+{
+    HTMLDOMNode *This = impl_from_IWineHTMLDOMNodePrivate(iface);
+
+    FIXME("(%p)\n", This);
+
+    return E_NOTIMPL;
+}
+
 static const IWineHTMLDOMNodePrivateVtbl HTMLDOMNode_private_vtbl = {
     HTMLDOMNode_private_QueryInterface,
     HTMLDOMNode_private_AddRef,
@@ -1216,6 +1225,7 @@ static const IWineHTMLDOMNodePrivateVtbl HTMLDOMNode_private_vtbl = {
     HTMLDOMNode_private_GetIDsOfNames,
     HTMLDOMNode_private_Invoke,
     HTMLDOMNode_private_get_hasAttributes,
+    HTMLDOMNode_private_normalize,
 };
 
 static inline HTMLDOMNode *HTMLDOMNode_from_DispatchEx(DispatchEx *iface)
