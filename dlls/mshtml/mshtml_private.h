@@ -1060,7 +1060,6 @@ typedef struct {
 
 #define HTMLELEMENT_TIDS    \
     IHTMLDOMNode_tid,       \
-    IHTMLDOMNode2_tid,      \
     IHTMLElement4_tid,      \
     IHTMLUniqueName_tid
 

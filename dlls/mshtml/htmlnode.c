@@ -1300,9 +1300,9 @@ void HTMLDOMNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     };
 
     dispex_info_add_interface(info, IHTMLDOMNode_tid, mode >= COMPAT_MODE_IE9 ? ie9_hooks : NULL);
+    dispex_info_add_interface(info, IHTMLDOMNode2_tid, NULL);
 
     if(mode >= COMPAT_MODE_IE9) {
-        dispex_info_add_interface(info, IHTMLDOMNode2_tid, NULL);
         dispex_info_add_interface(info, IHTMLDOMNode3_tid, NULL);
         dispex_info_add_interface(info, IWineHTMLDOMNodePrivate_tid, NULL);
     }

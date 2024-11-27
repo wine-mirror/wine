@@ -5655,7 +5655,6 @@ static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
 
 static const tid_t HTMLDocumentNode_iface_tids[] = {
     IHTMLDOMNode_tid,
-    IHTMLDOMNode2_tid,
     IHTMLDocument4_tid,
     IHTMLDocument5_tid,
     IDocumentSelector_tid,

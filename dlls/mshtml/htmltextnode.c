@@ -431,7 +431,6 @@ static void Text_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
 static const tid_t Text_iface_tids[] = {
     IHTMLDOMNode_tid,
-    IHTMLDOMNode2_tid,
     0
 };
 dispex_static_data_t Text_dispex = {
