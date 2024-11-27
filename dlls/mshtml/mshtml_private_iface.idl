@@ -154,6 +154,19 @@ interface IWineHTMLWindowCompatPrivate : IDispatch
     oleautomation,
     dual,
     hidden,
+    uuid(465908fd-f394-489f-b7a3-4c00fbbe9eea)
+]
+interface IWineHTMLDOMNodePrivate : IDispatch
+{
+    [id(DISPID_IHTMLELEMENT6_IE9_HASATTRIBUTES)]
+    HRESULT hasAttributes([retval, out] VARIANT_BOOL *p);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
     uuid(465908fd-f394-489f-b7a3-4c00fbbe9eeb)
 ]
 interface IWineHTMLCharacterData : IDispatch

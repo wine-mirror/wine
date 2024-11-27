@@ -300,6 +300,7 @@ typedef struct ScriptHost ScriptHost;
 #define PRIVATE_TID_LIST \
     XIID(IWineDOMTokenList) \
     XIID(IWineHTMLCharacterData) \
+    XIID(IWineHTMLDOMNodePrivate) \
     XIID(IWineHTMLElementPrivate) \
     XIID(IWineHTMLWindowPrivate) \
     XIID(IWineHTMLWindowCompatPrivate) \
@@ -1013,6 +1014,7 @@ struct HTMLDOMNode {
     IHTMLDOMNode  IHTMLDOMNode_iface;
     IHTMLDOMNode2 IHTMLDOMNode2_iface;
     IHTMLDOMNode3 IHTMLDOMNode3_iface;
+    IWineHTMLDOMNodePrivate IWineHTMLDOMNodePrivate_iface;
     const NodeImplVtbl *vtbl;
 
     nsIDOMNode *nsnode;
