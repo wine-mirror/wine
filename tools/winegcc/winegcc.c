@@ -178,6 +178,7 @@ struct options
     int strip;
     int pic;
     int no_default_config;
+    int build_id;
     const char* wine_objdir;
     const char* winebuild;
     const char* output_name;
@@ -427,6 +428,9 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
             strarray_add(&link_args, strmake("-Wl,--pdb=%s", opts->debug_file));
 
+        if (opts->build_id)
+            strarray_add( &link_args, "-Wl,--build-id");
+
         if (opts->out_implib)
             strarray_add(&link_args, strmake("-Wl,--out-implib,%s", opts->out_implib));
 
@@ -466,6 +470,9 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         else if (!opts->strip)
             strarray_add(&link_args, "-Wl,-debug:dwarf");
 
+        if (opts->build_id)
+            strarray_add( &link_args, "-Wl,-build-id");
+
         if (opts->out_implib)
             strarray_add(&link_args, strmake("-Wl,-implib:%s", opts->out_implib));
         else
@@ -486,6 +493,9 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
             strarray_add( &flags, "-Wl,-z,max-page-size=0x1000");
         break;
     }
+
+    if (opts->build_id)
+        strarray_add( &link_args, "-Wl,--build-id");
 
     /* generic Unix shared library flags */
 
@@ -1841,6 +1851,11 @@ int main(int argc, char **argv)
                             if (!strcmp(Wl.str[j], "--out-implib"))
                             {
                                 opts.out_implib = xstrdup( Wl.str[++j] );
+                                continue;
+                            }
+                            if (!strcmp( Wl.str[j], "--build-id" ))
+                            {
+                                opts.build_id = 1;
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "-static")) linking = -1;
