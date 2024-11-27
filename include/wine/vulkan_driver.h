@@ -127,6 +127,16 @@ static inline struct vulkan_surface *vulkan_surface_from_handle( VkSurfaceKHR ha
     return (struct vulkan_surface *)(UINT_PTR)handle;
 }
 
+struct vulkan_swapchain
+{
+    VULKAN_OBJECT_HEADER( VkSwapchainKHR, swapchain );
+};
+
+static inline struct vulkan_swapchain *vulkan_swapchain_from_handle( VkSwapchainKHR handle )
+{
+    return (struct vulkan_swapchain *)(UINT_PTR)handle;
+}
+
 struct vulkan_funcs
 {
     /* Vulkan global functions. These are the only calls at this point a graphics driver

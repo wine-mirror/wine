@@ -1203,7 +1203,7 @@ class VkHandle(object):
         if self.name == "VkSurfaceKHR":
             return "vulkan_surface_from_handle({0})->host.surface".format(name)
         if self.name == "VkSwapchainKHR":
-            return "wine_swapchain_from_handle({0})->host_swapchain".format(name)
+            return "vulkan_swapchain_from_handle({0})->host.swapchain".format(name)
         if self.is_dispatchable():
             LOGGER.error("Unhandled host handle for: {0}".format(self.name))
         return None

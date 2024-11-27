@@ -1772,7 +1772,7 @@ VkResult wine_vkAcquireNextImage2KHR(VkDevice client_device, const VkAcquireNext
     RECT client_rect;
     VkResult res;
 
-    acquire_info_host.swapchain = swapchain->host_swapchain;
+    acquire_info_host.swapchain = swapchain->obj.host.swapchain;
     res = device->p_vkAcquireNextImage2KHR(device->host.device, &acquire_info_host, image_index);
 
     if (res == VK_SUCCESS && NtUserGetClientRect(surface->hwnd, &client_rect, NtUserGetDpiForWindow(surface->hwnd)) &&
@@ -1786,16 +1786,16 @@ VkResult wine_vkAcquireNextImage2KHR(VkDevice client_device, const VkAcquireNext
     return res;
 }
 
-VkResult wine_vkAcquireNextImageKHR(VkDevice client_device, VkSwapchainKHR swapchain_handle, uint64_t timeout,
+VkResult wine_vkAcquireNextImageKHR(VkDevice client_device, VkSwapchainKHR client_swapchain, uint64_t timeout,
                                     VkSemaphore semaphore, VkFence fence, uint32_t *image_index)
 {
-    struct wine_swapchain *swapchain = wine_swapchain_from_handle(swapchain_handle);
+    struct wine_swapchain *swapchain = wine_swapchain_from_handle(client_swapchain);
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
     struct wine_surface *surface = swapchain->surface;
     RECT client_rect;
     VkResult res;
 
-    res = device->p_vkAcquireNextImageKHR(device->host.device, swapchain->host_swapchain, timeout,
+    res = device->p_vkAcquireNextImageKHR(device->host.device, swapchain->obj.host.swapchain, timeout,
                                                 semaphore, fence, image_index);
 
     if (res == VK_SUCCESS && NtUserGetClientRect(surface->hwnd, &client_rect, NtUserGetDpiForWindow(surface->hwnd)) &&
@@ -1810,7 +1810,7 @@ VkResult wine_vkAcquireNextImageKHR(VkDevice client_device, VkSwapchainKHR swapc
 }
 
 VkResult wine_vkCreateSwapchainKHR(VkDevice client_device, const VkSwapchainCreateInfoKHR *create_info,
-                                   const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain_handle)
+                                   const VkAllocationCallbacks *allocator, VkSwapchainKHR *ret)
 {
     struct wine_swapchain *object, *old_swapchain = wine_swapchain_from_handle(create_info->oldSwapchain);
     struct wine_surface *surface = wine_surface_from_handle(create_info->surface);
@@ -1829,7 +1829,7 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice client_device, const VkSwapchainCrea
     }
 
     if (surface) create_info_host.surface = surface->obj.host.surface;
-    if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->host_swapchain;
+    if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->obj.host.swapchain;
 
     /* update the host surface to commit any pending size change */
     vk_funcs->p_vulkan_surface_update( surface->driver_surface );
@@ -1850,26 +1850,26 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice client_device, const VkSwapchainCrea
         return res;
     }
 
-    object->host_swapchain = host_swapchain;
+    object->obj.host.swapchain = host_swapchain;
     object->surface = surface;
     object->extents = create_info->imageExtent;
 
-    *swapchain_handle = wine_swapchain_to_handle(object);
-    add_handle_mapping(instance, *swapchain_handle, object->host_swapchain, &object->wrapper_entry);
+    *ret = wine_swapchain_to_handle(object);
+    add_handle_mapping(instance, *ret, object->obj.host.swapchain, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
-void wine_vkDestroySwapchainKHR(VkDevice client_device, VkSwapchainKHR swapchain_handle,
+void wine_vkDestroySwapchainKHR(VkDevice client_device, VkSwapchainKHR client_swapchain,
                                 const VkAllocationCallbacks *allocator)
 {
     struct vulkan_device *device = vulkan_device_from_handle(client_device);
     struct vulkan_instance *instance = device->physical_device->instance;
-    struct wine_swapchain *swapchain = wine_swapchain_from_handle(swapchain_handle);
+    struct wine_swapchain *swapchain = wine_swapchain_from_handle(client_swapchain);
 
     if (allocator) FIXME("Support for allocation callbacks not implemented yet\n");
     if (!swapchain) return;
 
-    device->p_vkDestroySwapchainKHR(device->host.device, swapchain->host_swapchain, NULL);
+    device->p_vkDestroySwapchainKHR(device->host.device, swapchain->obj.host.swapchain, NULL);
     remove_handle_mapping(instance, &swapchain->wrapper_entry);
 
     free(swapchain);
@@ -1896,7 +1896,7 @@ VkResult wine_vkQueuePresentKHR(VkQueue client_queue, const VkPresentInfoKHR *pr
     {
         struct wine_swapchain *swapchain = wine_swapchain_from_handle(present_info->pSwapchains[i]);
         struct wine_surface *surface = swapchain->surface;
-        swapchains[i] = swapchain->host_swapchain;
+        swapchains[i] = swapchain->obj.host.swapchain;
         surfaces[i] = surface->driver_surface;
     }
 
@@ -2294,11 +2294,11 @@ static void adjust_surface_capabilities(struct vulkan_instance *instance, struct
     capabilities->currentExtent.height = client_rect.bottom - client_rect.top;
 }
 
-VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice client_physical_device, VkSurfaceKHR surface_handle,
+VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice client_physical_device, VkSurfaceKHR client_surface,
                                                         VkSurfaceCapabilitiesKHR *capabilities)
 {
     struct vulkan_physical_device *physical_device = vulkan_physical_device_from_handle(client_physical_device);
-    struct wine_surface *surface = wine_surface_from_handle(surface_handle);
+    struct wine_surface *surface = wine_surface_from_handle(client_surface);
     struct vulkan_instance *instance = physical_device->instance;
     VkResult res;
 
