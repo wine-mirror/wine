@@ -6689,8 +6689,14 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT2_DETACHEVENT, NULL},
         {DISPID_IHTMLELEMENT2_DOSCROLL,    NULL},
         {DISPID_IHTMLELEMENT2_READYSTATE,  NULL},
+
+        /* IE9+ */
+        {DISPID_IHTMLELEMENT2_SETEXPRESSION,    NULL},
+        {DISPID_IHTMLELEMENT2_GETEXPRESSION,    NULL},
+        {DISPID_IHTMLELEMENT2_REMOVEEXPRESSION, NULL},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const elem2_ie9_hooks = elem2_ie11_hooks + 4;
     static const dispex_hook_t elem3_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT3_FIREEVENT,   NULL},
 
@@ -6706,8 +6712,8 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
     HTMLDOMNode_init_dispex_info(info, mode);
 
-    dispex_info_add_interface(info, IHTMLElement2_tid, mode >= COMPAT_MODE_IE11 ? elem2_ie11_hooks : NULL);
-
+    dispex_info_add_interface(info, IHTMLElement2_tid, mode >= COMPAT_MODE_IE11 ? elem2_ie11_hooks :
+                                                       mode >= COMPAT_MODE_IE9  ? elem2_ie9_hooks  : NULL);
     if(mode >= COMPAT_MODE_IE8)
         dispex_info_add_interface(info, IElementSelector_tid, NULL);
 
