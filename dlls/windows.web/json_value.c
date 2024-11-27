@@ -227,8 +227,15 @@ static HRESULT WINAPI json_value_GetString( IJsonValue *iface, HSTRING *value )
 
 static HRESULT WINAPI json_value_GetNumber( IJsonValue *iface, DOUBLE *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct json_value *impl = impl_from_IJsonValue( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (impl->json_value_type != JsonValueType_Number) return E_ILLEGAL_METHOD_CALL;
+    if (!value) return E_POINTER;
+
+    *value = impl->parsed_number;
+    return S_OK;
 }
 
 static HRESULT WINAPI json_value_GetBoolean( IJsonValue *iface, boolean *value )
