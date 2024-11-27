@@ -6680,7 +6680,19 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT6_IE9_SETATTRIBUTE, IHTMLElement6_setAttribute_hook},
         {DISPID_UNKNOWN}
     };
-    static const dispex_hook_t elem_ie10_hooks[] = {
+    static const dispex_hook_t elem_ie11_hooks[] = {
+        {DISPID_IHTMLELEMENT_ONBEFOREUPDATE},
+        {DISPID_IHTMLELEMENT_ONAFTERUPDATE},
+        {DISPID_IHTMLELEMENT_ONERRORUPDATE},
+        {DISPID_IHTMLELEMENT_ONROWEXIT},
+        {DISPID_IHTMLELEMENT_ONROWENTER},
+        {DISPID_IHTMLELEMENT_ONDATASETCHANGED},
+        {DISPID_IHTMLELEMENT_ONDATAAVAILABLE},
+        {DISPID_IHTMLELEMENT_ONDATASETCOMPLETE},
+        {DISPID_IHTMLELEMENT_ONFILTERCHANGE},
+        {DISPID_IHTMLELEMENT_ALL},
+
+        /* IE10+ */
         {DISPID_IHTMLELEMENT_DOCUMENT,     NULL},
         {DISPID_IHTMLELEMENT_FILTERS,      NULL},
 
@@ -6688,12 +6700,24 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT_TOSTRING,     NULL},
         {DISPID_UNKNOWN}
     };
-    const dispex_hook_t *const elem_ie9_hooks = elem_ie10_hooks + 2;
+    const dispex_hook_t *const elem_ie10_hooks = elem_ie11_hooks + 10;
+    const dispex_hook_t *const elem_ie9_hooks  = elem_ie10_hooks + 2;
     static const dispex_hook_t elem2_ie11_hooks[] = {
-        {DISPID_IHTMLELEMENT2_ATTACHEVENT, NULL},
-        {DISPID_IHTMLELEMENT2_DETACHEVENT, NULL},
-        {DISPID_IHTMLELEMENT2_DOSCROLL,    NULL},
-        {DISPID_IHTMLELEMENT2_READYSTATE,  NULL},
+        {DISPID_IHTMLELEMENT2_ONLOSECAPTURE},
+        {DISPID_IHTMLELEMENT2_ONPROPERTYCHANGE},
+        {DISPID_IHTMLELEMENT2_ONRESIZE},
+        {DISPID_IHTMLELEMENT2_ATTACHEVENT},
+        {DISPID_IHTMLELEMENT2_DETACHEVENT},
+        {DISPID_IHTMLELEMENT2_DOSCROLL},
+        {DISPID_IHTMLELEMENT2_READYSTATE},
+        {DISPID_IHTMLELEMENT2_ONREADYSTATECHANGE},
+        {DISPID_IHTMLELEMENT2_ONROWSDELETE},
+        {DISPID_IHTMLELEMENT2_ONROWSINSERTED},
+        {DISPID_IHTMLELEMENT2_ONCELLCHANGE},
+        {DISPID_IHTMLELEMENT2_ADDBEHAVIOR},
+        {DISPID_IHTMLELEMENT2_REMOVEBEHAVIOR},
+        {DISPID_IHTMLELEMENT2_BEHAVIORURNS},
+        {DISPID_IHTMLELEMENT2_ONBEFOREEDITFOCUS},
 
         /* IE10+ */
         {DISPID_IHTMLELEMENT2_SCOPENAME,   NULL},
@@ -6707,16 +6731,23 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT2_REMOVEEXPRESSION, NULL},
         {DISPID_UNKNOWN}
     };
-    const dispex_hook_t *const elem2_ie10_hooks = elem2_ie11_hooks + 4;
+    const dispex_hook_t *const elem2_ie10_hooks = elem2_ie11_hooks + 15;
     const dispex_hook_t *const elem2_ie9_hooks  = elem2_ie10_hooks + 4;
     static const dispex_hook_t elem3_ie11_hooks[] = {
-        {DISPID_IHTMLELEMENT3_FIREEVENT,   NULL},
+        {DISPID_IHTMLELEMENT3_ONLAYOUTCOMPLETE},
+        {DISPID_IHTMLELEMENT3_ONMOVE},
+        {DISPID_IHTMLELEMENT3_ONCONTROLSELECT},
+        {DISPID_IHTMLELEMENT3_FIREEVENT},
+        {DISPID_IHTMLELEMENT3_ONRESIZESTART},
+        {DISPID_IHTMLELEMENT3_ONRESIZEEND},
+        {DISPID_IHTMLELEMENT3_ONMOVESTART},
+        {DISPID_IHTMLELEMENT3_ONMOVEEND},
 
         /* IE9+ */
-        {DISPID_IHTMLELEMENT3_ONPAGE,      NULL},
+        {DISPID_IHTMLELEMENT3_ONPAGE},
         {DISPID_UNKNOWN}
     };
-    const dispex_hook_t *const elem3_ie9_hooks = elem3_ie11_hooks + 1;
+    const dispex_hook_t *const elem3_ie9_hooks = elem3_ie11_hooks + 8;
     static const dispex_hook_t elem7_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER},
 
@@ -6754,7 +6785,8 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
     dispex_info_add_interface(info, IHTMLElement3_tid, mode >= COMPAT_MODE_IE11 ? elem3_ie11_hooks :
                                                        mode >= COMPAT_MODE_IE9  ? elem3_ie9_hooks  : NULL);
-    dispex_info_add_interface(info, IHTMLElement_tid, mode >= COMPAT_MODE_IE10 ? elem_ie10_hooks :
+    dispex_info_add_interface(info, IHTMLElement_tid, mode >= COMPAT_MODE_IE11 ? elem_ie11_hooks :
+                                                      mode >= COMPAT_MODE_IE10 ? elem_ie10_hooks :
                                                       mode >= COMPAT_MODE_IE9  ? elem_ie9_hooks  : NULL);
 }
 
