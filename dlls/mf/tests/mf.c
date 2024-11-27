@@ -6434,6 +6434,183 @@ static void test_media_session_Start(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 }
 
+static void test_media_session_source_shutdown(void)
+{
+    media_type_desc video_rgb32_desc =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+    };
+    struct test_grabber_callback *grabber_callback;
+    IMFActivate *sink_activate;
+    IMFAsyncCallback *callback;
+    IMFMediaType *output_type;
+    IMFMediaSession *session;
+    IMFMediaSource *source;
+    IMFTopology *topology;
+    PROPVARIANT propvar;
+    UINT64 duration;
+    HRESULT hr;
+    enum
+    {
+        TEST_START,
+        TEST_RESTART,
+        TEST_PAUSE,
+        TEST_STOP,
+        TEST_CLOSE,
+    } shutdown_point;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    /* These tests don't cover asynchronous shutdown, which is difficult to consistently test. */
+
+    for (shutdown_point = TEST_START; shutdown_point <= TEST_CLOSE; ++shutdown_point)
+    {
+        winetest_push_context("Test %d", shutdown_point);
+
+        if (!(source = create_media_source(L"test.mp4", L"video/mp4")))
+        {
+            todo_wine /* Gitlab CI Debian runner */
+            win_skip("MP4 media source is not supported, skipping tests.\n");
+            MFShutdown();
+            winetest_pop_context();
+            return;
+        }
+
+        grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
+        hr = MFCreateMediaType(&output_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        init_media_type(output_type, video_rgb32_desc, -1);
+        hr = MFCreateSampleGrabberSinkActivate(output_type, &grabber_callback->IMFSampleGrabberSinkCallback_iface, &sink_activate);
+        ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
+        IMFMediaType_Release(output_type);
+
+        hr = MFCreateMediaSession(NULL, &session);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        topology = create_test_topology(source, sink_activate, &duration);
+        hr = IMFMediaSession_SetTopology(session, 0, topology);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFTopology_Release(topology);
+
+        callback = create_test_callback(TRUE);
+
+        propvar.vt = VT_EMPTY;
+        hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+        if (shutdown_point == TEST_START)
+            IMFMediaSource_Shutdown(source);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = wait_media_event(session, callback, MESessionStarted, 5000, &propvar);
+        todo_wine_if(shutdown_point == TEST_START)
+        ok(hr == (shutdown_point == TEST_START ? MF_E_INVALIDREQUEST : S_OK), "Unexpected hr %#lx.\n", hr);
+
+        switch (shutdown_point)
+        {
+            case TEST_RESTART:
+                /* Seek to 1s */
+                propvar.vt = VT_I8;
+                propvar.hVal.QuadPart = 10000000;
+                hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+                IMFMediaSource_Shutdown(source);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                hr = wait_media_event(session, callback, MESessionStarted, 5000, &propvar);
+                /* Windows always returns S_OK here. These four tests in Wine can return
+                 * S_OK from the event if the timing is right, but it's not common. */
+                todo_wine
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                break;
+            case TEST_PAUSE:
+                hr = IMFMediaSession_Pause(session);
+                IMFMediaSource_Shutdown(source);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                hr = wait_media_event(session, callback, MESessionPaused, 1000, &propvar);
+                /* Windows has not been observed to emit PAUSEWHILESTOPPED here, but this could
+                 * be a matter of async command timing, and this error is not exactly wrong. */
+                ok(hr == S_OK || hr == MF_E_SESSION_PAUSEWHILESTOPPED || hr == MF_E_SHUTDOWN,
+                        "Unexpected hr %#lx.\n", hr);
+                break;
+            case TEST_STOP:
+                hr = IMFMediaSession_Stop(session);
+                IMFMediaSource_Shutdown(source);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                hr = wait_media_event(session, callback, MESessionStopped, 1000, &propvar);
+                ok(hr == S_OK || hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+                break;
+            case TEST_CLOSE:
+                hr = IMFMediaSession_Close(session);
+                IMFMediaSource_Shutdown(source);
+                ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+                hr = wait_media_event(session, callback, MESessionClosed, 1000, &propvar);
+                ok(hr == S_OK || hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+            default:
+                break;
+        }
+
+        if (shutdown_point == TEST_CLOSE)
+            goto done;
+
+        IMFMediaSource_Release(source);
+
+        IMFActivate_ShutdownObject(sink_activate);
+        IMFActivate_Release(sink_activate);
+        IMFSampleGrabberSinkCallback_Release(&grabber_callback->IMFSampleGrabberSinkCallback_iface);
+
+        /* Re-use the session. For shutdown after Start(), the session can be re-used in native
+         * Windows but waits may still return MF_E_SHUTDOWN. The other tests can cause timeouts
+         * on close. Clearing topologies has no effect on these errors. */
+
+        grabber_callback = impl_from_IMFSampleGrabberSinkCallback(create_test_grabber_callback());
+        hr = MFCreateMediaType(&output_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        init_media_type(output_type, video_rgb32_desc, -1);
+        hr = MFCreateSampleGrabberSinkActivate(output_type, &grabber_callback->IMFSampleGrabberSinkCallback_iface, &sink_activate);
+        ok(hr == S_OK, "Failed to create grabber sink, hr %#lx.\n", hr);
+        IMFMediaType_Release(output_type);
+
+        source = create_media_source(L"test.mp4", L"video/mp4");
+        ok(!!source, "Failed to create source.\n");
+
+        topology = create_test_topology(source, sink_activate, &duration);
+        hr = IMFMediaSession_SetTopology(session, 0, topology);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IMFTopology_Release(topology);
+
+        propvar.vt = VT_EMPTY;
+        hr = IMFMediaSession_Start(session, &GUID_NULL, &propvar);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = wait_media_event_until_blocking(session, callback, MESessionStarted, 5000, &propvar);
+        ok(hr == MF_E_INVALIDREQUEST || hr == MF_E_SHUTDOWN || hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaSession_Stop(session);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = wait_media_event_until_blocking(session, callback, MESessionStopped, 1000, &propvar);
+        ok(hr == MF_E_INVALIDREQUEST || hr == MF_E_SHUTDOWN || hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaSession_Close(session);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = wait_media_event_until_blocking(session, callback, MESessionClosed, 1000, &propvar);
+        if (shutdown_point >= TEST_PAUSE)
+            ok(hr == MF_E_SHUTDOWN || hr == S_OK || hr == WAIT_TIMEOUT, "Unexpected hr %#lx.\n", hr);
+        else
+            ok(hr == MF_E_SHUTDOWN || hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+done:
+        hr = IMFMediaSession_Shutdown(session);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        IMFMediaSource_Release(source);
+        IMFAsyncCallback_Release(callback);
+        IMFMediaSession_Release(session);
+        IMFActivate_ShutdownObject(sink_activate);
+        IMFActivate_Release(sink_activate);
+        IMFSampleGrabberSinkCallback_Release(&grabber_callback->IMFSampleGrabberSinkCallback_iface);
+
+        winetest_pop_context();
+    }
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
 static void test_MFEnumDeviceSources(void)
 {
     static const WCHAR devinterface_audio_capture_wstr[] = L"{2eef81be-33fa-4800-9670-1cd474972c3f}";
@@ -6658,4 +6835,5 @@ START_TEST(mf)
     test_media_session_Start();
     test_MFEnumDeviceSources();
     test_media_session_Close();
+    test_media_session_source_shutdown();
 }
