@@ -1495,7 +1495,7 @@ static HRESULT draw_diag_edge (HDC hdc, HTHEME theme, int part, int state,
     }
 
     /* Adjust rectangle if asked */
-    if(uFlags & BF_ADJUST)
+    if(contentsRect && uFlags & BF_ADJUST)
     {
         *contentsRect = *rc;
         if(uFlags & BF_LEFT)   contentsRect->left   += add;
@@ -1647,7 +1647,7 @@ static HRESULT draw_rect_edge (HDC hdc, HTHEME theme, int part, int state,
             DeleteObject (br);
         }
 
-        if(uFlags & BF_ADJUST)
+        if(contentsRect && uFlags & BF_ADJUST)
             *contentsRect = InnerRect;
     }
 
@@ -1673,7 +1673,9 @@ HRESULT WINAPI DrawThemeEdge(HTHEME hTheme, HDC hdc, int iPartId,
                              int iStateId, const RECT *pDestRect, UINT uEdge,
                              UINT uFlags, RECT *pContentRect)
 {
-    TRACE("%d %d 0x%08x 0x%08x\n", iPartId, iStateId, uEdge, uFlags);
+    TRACE("%p %p %d %d %s 0x%08x 0x%08x %s\n", hTheme, hdc, iPartId, iStateId,
+          wine_dbgstr_rect(pDestRect), uEdge, uFlags, wine_dbgstr_rect(pContentRect));
+
     if(!hTheme)
         return E_HANDLE;
      
