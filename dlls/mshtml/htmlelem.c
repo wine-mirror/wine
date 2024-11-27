@@ -6693,8 +6693,12 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     };
     static const dispex_hook_t elem3_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT3_FIREEVENT,   NULL},
+
+        /* IE9+ */
+        {DISPID_IHTMLELEMENT3_ONPAGE,      NULL},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const elem3_ie9_hooks = elem3_ie11_hooks + 1;
     static const dispex_hook_t elem7_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER},
         {DISPID_UNKNOWN}
@@ -6718,7 +6722,8 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         dispex_info_add_interface(info, IWineHTMLElementPrivate_tid, NULL);
     }
 
-    dispex_info_add_interface(info, IHTMLElement3_tid, mode >= COMPAT_MODE_IE11 ? elem3_ie11_hooks : NULL);
+    dispex_info_add_interface(info, IHTMLElement3_tid, mode >= COMPAT_MODE_IE11 ? elem3_ie11_hooks :
+                                                       mode >= COMPAT_MODE_IE9  ? elem3_ie9_hooks  : NULL);
     dispex_info_add_interface(info, IHTMLElement_tid, mode >= COMPAT_MODE_IE9 ? elem_ie9_hooks : NULL);
 }
 

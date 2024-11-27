@@ -3750,10 +3750,9 @@ sync_test("prototype props", function() {
         ["onbeforeupdate",11], ["oncellchange",11], ["oncontrolselect",11], ["ondataavailable",11], ["ondatasetchanged",11],
         ["ondatasetcomplete",11], ["onerrorupdate",11], ["onfilterchange",11], ["oninvalid",10], ["onlayoutcomplete",11], ["onlosecapture",11],
         ["onmove",11], ["onmoveend",11], ["onmovestart",11], ["onmsanimationend",10], ["onmsanimationiteration",10], ["onmsanimationstart",10],
-        ["onmscontentzoom",10], ["onmstransitionend",10], ["onmstransitionstart",10], "onpage", ["onpropertychange",11],
-        ["onreadystatechange",11], ["onresize",11], ["onresizeend",11], ["onresizestart",11], ["onrowenter",11], ["onrowexit",11],
-        ["onrowsdelete",11], ["onrowsinserted",11], ["removeBehavior",11], "removeExpression", ["removeFilter",10], ["scopeName",10], "setExpression",
-        ["tagUrn",10], ["xmsAcceleratorKey",10]
+        ["onmscontentzoom",10], ["onmstransitionend",10], ["onmstransitionstart",10], ["onpropertychange",11], ["onreadystatechange",11],
+        ["onresize",11], ["onresizeend",11], ["onresizestart",11], ["onrowenter",11], ["onrowexit",11], ["onrowsdelete",11], ["onrowsinserted",11],
+        ["removeBehavior",11], "removeExpression", ["removeFilter",10], ["scopeName",10], "setExpression", ["tagUrn",10], ["xmsAcceleratorKey",10]
     ]);
     check(HTMLUnknownElement, [ "namedRecordset", "recordset" ]);
     check(KeyboardEvent, [
