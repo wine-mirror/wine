@@ -489,7 +489,7 @@
 @ stdcall EnumWindows(ptr long)
 @ stdcall EqualRect(ptr ptr)
 # @ stub EvaluateProximityToPolygon
-# @ stub EvaluateProximityToRect
+@ stdcall EvaluateProximityToRect(ptr ptr ptr)
 @ stdcall ExcludeUpdateRgn(long long) NtUserExcludeUpdateRgn
 @ stdcall ExitWindowsEx(long long)
 @ stdcall FillRect(long ptr long)
