@@ -444,6 +444,10 @@ struct module_format_vtable
                                                      struct lineinfo_t *line_info, BOOL forward);
     enum method_result          (*enumerate_lines)(struct module_format *modfmt, const WCHAR* compiland_regex,
                                                    const WCHAR *source_file_regex, PSYM_ENUMLINES_CALLBACK cb, void *user);
+
+    /* source files information */
+    enum method_result          (*enumerate_sources)(struct module_format *modfmt, const WCHAR *sourcefile_regex,
+                                                     PSYM_ENUMSOURCEFILES_CALLBACKW cb, void *user);
 };
 
 struct module_format

@@ -84,6 +84,8 @@ struct pdb_reader
     } *streams;
     char *stream_names;
 
+    unsigned source_listed : 1;
+
     /* cache PE module sections for mapping...
      * we should rather use pe_module information
      */
@@ -925,6 +927,64 @@ static enum method_result pdb_method_enumerate_lines(struct module_format *modfm
     return pdb_method_result(pdb_method_enumerate_lines_internal(pdb, compiland_regex, source_file_regex, cb, user));
 }
 
+static enum pdb_result pdb_reader_load_sources_linetab2(struct pdb_reader *pdb, const PDB_SYMBOL_FILE_EX *dbi_cu_header)
+{
+    struct pdb_reader_walker linetab2_walker = {dbi_cu_header->stream, dbi_cu_header->symbol_size, dbi_cu_header->symbol_size + dbi_cu_header->lineno2_size};
+    struct pdb_reader_walker sub_walker, checksum_walker;
+    enum pdb_result result;
+    struct CV_Checksum_t chksum;
+
+    for (checksum_walker = linetab2_walker; !(result = pdb_reader_subsection_next(pdb, &checksum_walker, DEBUG_S_FILECHKSMS, &sub_walker)); )
+    {
+        for (; (result = pdb_reader_READ(pdb, &sub_walker, &chksum)) == R_PDB_SUCCESS; sub_walker.offset = (sub_walker.offset + chksum.size + 3) & ~3)
+        {
+            char *string;
+            if ((result = pdb_reader_alloc_and_fetch_global_string(pdb, chksum.strOffset, &string))) return result;
+            source_new(pdb->module, NULL, string);
+            pdb_reader_free(pdb, string);
+        }
+    }
+    return result == R_PDB_NOT_FOUND ? R_PDB_SUCCESS : result;
+}
+
+static enum pdb_result pdb_load_sources_internal(struct pdb_reader *pdb)
+{
+    enum pdb_result result;
+    struct pdb_reader_compiland_iterator compiland_iter;
+
+    if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter))) return result;
+    do
+    {
+        if (compiland_iter.dbi_cu_header.lineno2_size)
+        {
+            result = pdb_reader_load_sources_linetab2(pdb, &compiland_iter.dbi_cu_header);
+        }
+    } while (pdb_reader_compiland_iterator_next(pdb, &compiland_iter) == R_PDB_SUCCESS);
+
+    return R_PDB_SUCCESS;
+}
+
+static enum method_result pdb_method_enumerate_sources(struct module_format *modfmt, const WCHAR *source_file_regex,
+                                                       PSYM_ENUMSOURCEFILES_CALLBACKW cb, void *user)
+{
+    struct pdb_reader *pdb;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return -1;
+
+    /* Note: in PDB, each compiland lists its used files, which are all in global string table,
+     * but there's no global source files table AFAICT.
+     * So, just walk (once) all compilands to grab all sources, and store them in generic source table.
+     * But don't enumerate here, let generic function take care of it.
+     */
+    if (!pdb->source_listed)
+    {
+        enum pdb_result result = pdb_load_sources_internal(pdb);
+        if (result) return pdb_method_result(result);
+        pdb->source_listed = 1;
+    }
+    return MR_NOT_FOUND;
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
@@ -932,6 +992,7 @@ static struct module_format_vtable pdb_module_format_vtable =
     pdb_method_get_line_from_address,
     pdb_method_advance_line_info,
     pdb_method_enumerate_lines,
+    pdb_method_enumerate_sources,
 };
 
 struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections)

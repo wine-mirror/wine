@@ -145,11 +145,12 @@ BOOL WINAPI SymEnumSourceFilesW(HANDLE hProcess, ULONG64 ModBase, PCWSTR Mask,
     char*               ptr;
     WCHAR*              conversion_buffer = NULL;
     DWORD               conversion_buffer_len = 0;
+    struct module_format_vtable_iterator iter = {};
 
     if (!cbSrcFiles) return FALSE;
     pair.pcs = process_find_by_handle(hProcess);
     if (!pair.pcs) return FALSE;
-         
+
     if (ModBase)
     {
         pair.requested = module_find_by_addr(pair.pcs, ModBase);
@@ -176,6 +177,23 @@ BOOL WINAPI SymEnumSourceFilesW(HANDLE hProcess, ULONG64 ModBase, PCWSTR Mask,
             return FALSE;
         }
     }
+
+    while ((module_format_vtable_iterator_next(pair.effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(enumerate_sources))))
+    {
+        enum method_result result = iter.modfmt->vtable->enumerate_sources(iter.modfmt, NULL, cbSrcFiles, UserContext);
+        switch (result)
+        {
+        case MR_SUCCESS:
+            return TRUE;
+        case MR_NOT_FOUND: /* continue */
+            break;
+        default:
+            /* SetLastError(...); */
+            return FALSE;
+        }
+    }
+
     if (!pair.effective->sources) return FALSE;
     for (ptr = pair.effective->sources; *ptr; ptr += strlen(ptr) + 1)
     {
