@@ -311,6 +311,8 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
 
     if (filter->filter.state == State_Stopped)
         return VFW_E_WRONG_STATE;
+    if (iface->flushing)
+        return S_FALSE;
 
     IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
 

@@ -1823,7 +1823,7 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
     ok(testsink2->got_begin_flush == 1, "Got %u calls to IPin::BeginFlush().\n", testsink2->got_begin_flush);
 
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IPin_EndOfStream(sink);
     todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
