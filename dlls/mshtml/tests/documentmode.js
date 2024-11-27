@@ -3745,6 +3745,11 @@ sync_test("prototype props", function() {
         "scrollIntoView", "setActive", "setCapture", "sourceIndex", ["spellcheck",10], "style", "swapNode", "tabIndex", ["tagUrn",9,9], "title",
         "uniqueID", "uniqueNumber"
     ], [ ["dataset",11], ["draggable",10], ["hidden",11], ["msGetInputContext",11], ["onmscontentzoom",10] ]);
+    check(HTMLTableCellElement, [
+        "abbr", "align", "axis", "background", "bgColor", "borderColor", "borderColorDark", "borderColorLight",
+        "cellIndex", "ch", "chOff", "colSpan", "headers", "height", "noWrap", "rowSpan", "scope", "vAlign", "width"
+    ], [ "abbr", "axis", "ch", "chOff", "headers", "scope" ]);
+    check(HTMLTableDataCellElement, []);
     check(HTMLUnknownElement, [ "namedRecordset", "recordset" ]);
     check(KeyboardEvent, [
         "DOM_KEY_LOCATION_JOYSTICK", "DOM_KEY_LOCATION_LEFT", "DOM_KEY_LOCATION_MOBILE",
