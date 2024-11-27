@@ -123,7 +123,7 @@ struct connection_profile
     IConnectionProfile IConnectionProfile_iface;
     LONG ref;
 
-    NetworkConnectivityLevel network_connectivity_level;
+    INetworkListManager *network_list_manager;
 };
 
 static inline struct connection_profile *impl_from_IConnectionProfile( IConnectionProfile *iface )
@@ -167,7 +167,11 @@ static ULONG WINAPI connection_profile_Release( IConnectionProfile *iface )
 
     TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
 
-    if (!ref) free( impl );
+    if (!ref)
+    {
+        INetworkListManager_Release( impl->network_list_manager );
+        free( impl );
+    }
     return ref;
 }
 
@@ -197,8 +201,27 @@ static HRESULT WINAPI connection_profile_get_ProfileName( IConnectionProfile *if
 
 static HRESULT WINAPI connection_profile_GetNetworkConnectivityLevel( IConnectionProfile *iface, NetworkConnectivityLevel *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct connection_profile *impl = impl_from_IConnectionProfile( iface );
+    NetworkConnectivityLevel network_connectivity_level;
+    NLM_CONNECTIVITY connectivity = 0xdeadbeef;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (!value) return E_POINTER;
+    if (FAILED(hr = INetworkListManager_GetConnectivity( impl->network_list_manager, &connectivity ))) return hr;
+
+    if (connectivity == NLM_CONNECTIVITY_DISCONNECTED)
+        network_connectivity_level = NetworkConnectivityLevel_None;
+    else if (connectivity & ( NLM_CONNECTIVITY_IPV4_INTERNET | NLM_CONNECTIVITY_IPV6_INTERNET ))
+        network_connectivity_level = NetworkConnectivityLevel_InternetAccess;
+    else if (connectivity & ( NLM_CONNECTIVITY_IPV4_LOCALNETWORK | NLM_CONNECTIVITY_IPV6_LOCALNETWORK | NLM_CONNECTIVITY_IPV4_NOTRAFFIC | NLM_CONNECTIVITY_IPV6_NOTRAFFIC ))
+        network_connectivity_level = NetworkConnectivityLevel_LocalAccess;
+    else
+        network_connectivity_level = NetworkConnectivityLevel_ConstrainedInternetAccess;
+
+    *value = network_connectivity_level;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_profile_GetNetworkNames( IConnectionProfile *iface, IVectorView_HSTRING **value )
@@ -274,20 +297,36 @@ static HRESULT WINAPI network_information_statics_GetConnectionProfiles( INetwor
 
 static HRESULT WINAPI network_information_statics_GetInternetConnectionProfile( INetworkInformationStatics *iface, IConnectionProfile **value )
 {
+    NetworkConnectivityLevel network_connectivity_level = 0xdeadbeef;
+    INetworkListManager *network_list_manager = NULL;
     struct connection_profile *impl;
+    HRESULT hr;
 
     TRACE( "iface %p, value %p\n", iface, value );
 
     *value = NULL;
-    if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
+    if (FAILED(hr = CoCreateInstance( &CLSID_NetworkListManager, NULL, CLSCTX_INPROC_SERVER, &IID_INetworkListManager, (void **)&network_list_manager ))) return hr;
+    if (!(impl = calloc( 1, sizeof( *impl ) )))
+    {
+        INetworkListManager_Release( network_list_manager );
+        return E_OUTOFMEMORY;
+    }
 
     impl->IConnectionProfile_iface.lpVtbl = &connection_profile_vtbl;
     impl->ref = 1;
-    impl->network_connectivity_level = NetworkConnectivityLevel_None;
+    impl->network_list_manager = network_list_manager;
+
+    hr = IConnectionProfile_GetNetworkConnectivityLevel( &impl->IConnectionProfile_iface, &network_connectivity_level );
+    if (FAILED(hr) || network_connectivity_level == NetworkConnectivityLevel_None)
+    {
+        free( impl );
+        INetworkListManager_Release( network_list_manager );
+        return hr;
+    }
 
     *value = &impl->IConnectionProfile_iface;
     TRACE( "created IConnectionProfile %p.\n", *value );
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI network_information_statics_GetLanIdentifiers( INetworkInformationStatics *iface, IVectorView_LanIdentifier **value )

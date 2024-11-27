@@ -103,13 +103,10 @@ static void test_NetworkInformationStatics(void)
     }
 
     hr = IConnectionProfile_GetNetworkConnectivityLevel( connection_profile, NULL );
-    todo_wine
     ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     network_connectivity_level = 0xdeadbeef;
     hr = IConnectionProfile_GetNetworkConnectivityLevel( connection_profile, &network_connectivity_level );
-    todo_wine
     ok( hr == S_OK || hr == 0x8007023e /* Internet disconnect after GetInternetConnectionProfile */, "got hr %#lx.\n", hr );
-    todo_wine
     ok( network_connectivity_level != 0xdeadbeef, "failed to get network_connectivity_level\n" );
 
     connectivity = 0xdeadbeef;
@@ -119,16 +116,12 @@ static void test_NetworkInformationStatics(void)
     trace( "GetConnectivity: %08x\n", connectivity );
 
     if (connectivity == NLM_CONNECTIVITY_DISCONNECTED)
-        todo_wine
         ok( network_connectivity_level == NetworkConnectivityLevel_None, "got network_connectivity_level %d.\n", network_connectivity_level );
     else if (connectivity & ( NLM_CONNECTIVITY_IPV4_INTERNET | NLM_CONNECTIVITY_IPV6_INTERNET ))
-        todo_wine
         ok( network_connectivity_level == NetworkConnectivityLevel_InternetAccess, "got network_connectivity_level %d.\n", network_connectivity_level );
     else if (connectivity & ( NLM_CONNECTIVITY_IPV4_LOCALNETWORK | NLM_CONNECTIVITY_IPV6_LOCALNETWORK | NLM_CONNECTIVITY_IPV4_NOTRAFFIC | NLM_CONNECTIVITY_IPV6_NOTRAFFIC ))
-        todo_wine
         ok( network_connectivity_level == NetworkConnectivityLevel_LocalAccess, "got network_connectivity_level %d.\n", network_connectivity_level );
     else
-        todo_wine
         ok( network_connectivity_level == NetworkConnectivityLevel_ConstrainedInternetAccess, "got network_connectivity_level %d.\n", network_connectivity_level );
 
     ref = IConnectionProfile_Release( connection_profile );
