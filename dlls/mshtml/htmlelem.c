@@ -6687,6 +6687,10 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT2_READYSTATE,  NULL},
         {DISPID_UNKNOWN}
     };
+    static const dispex_hook_t elem3_ie11_hooks[] = {
+        {DISPID_IHTMLELEMENT3_FIREEVENT,   NULL},
+        {DISPID_UNKNOWN}
+    };
 
     HTMLDOMNode_init_dispex_info(info, mode);
 
@@ -6705,6 +6709,8 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         dispex_info_add_interface(info, IHTMLElement7_tid, NULL);
         dispex_info_add_interface(info, IWineHTMLElementPrivate_tid, NULL);
     }
+
+    dispex_info_add_interface(info, IHTMLElement3_tid, mode >= COMPAT_MODE_IE11 ? elem3_ie11_hooks : NULL);
 }
 
 const tid_t HTMLElement_iface_tids[] = {
