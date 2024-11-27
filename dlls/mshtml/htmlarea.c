@@ -452,7 +452,6 @@ static void HTMLAreaElement_init_dispex_info(dispex_data_t *info, compat_mode_t 
 }
 
 static const tid_t HTMLAreaElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLAreaElement_tid,
     0
 };

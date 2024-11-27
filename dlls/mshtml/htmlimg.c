@@ -666,11 +666,6 @@ static const event_target_vtbl_t HTMLImgElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLImgElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
-    0
-};
-
 static void HTMLImgElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const dispex_hook_t img_ie11_hooks[] = {
@@ -688,7 +683,6 @@ dispex_static_data_t HTMLImageElement_dispex = {
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLImgElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLImg_tid,
-    .iface_tids   = HTMLImgElement_iface_tids,
     .init_info    = HTMLImgElement_init_dispex_info,
 };
 

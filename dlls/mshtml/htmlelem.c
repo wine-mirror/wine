@@ -6788,16 +6788,14 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     dispex_info_add_interface(info, IHTMLElement_tid, mode >= COMPAT_MODE_IE11 ? elem_ie11_hooks :
                                                       mode >= COMPAT_MODE_IE10 ? elem_ie10_hooks :
                                                       mode >= COMPAT_MODE_IE9  ? elem_ie9_hooks  : NULL);
+    dispex_info_add_interface(info, IHTMLElement4_tid, NULL);
+    dispex_info_add_interface(info, IHTMLDOMNode_tid, NULL);
+    dispex_info_add_interface(info, IHTMLUniqueName_tid, NULL);
 }
 
 const DISPID HTMLElement_toString_dispids[] = {
     DISPID_IHTMLELEMENT_TOSTRING,
     DISPID_UNKNOWN
-};
-
-const tid_t HTMLElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
-    0
 };
 
 static const event_target_vtbl_t HTMLElement_event_target_vtbl = {
@@ -7427,16 +7425,14 @@ dispex_static_data_t HTMLElement_dispex = {
     .prototype_id = PROT_Element,
     .vtbl         = &HTMLElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLUnknownElement_tid,
-    .iface_tids   = HTMLElement_iface_tids,
     .init_info    = HTMLElement_init_dispex_info,
 };
 
 static dispex_static_data_t LegacyUnknownElement_dispex = {
-    "HTMLUnknownElement",
-    &HTMLElement_event_target_vtbl.dispex_vtbl,
-    DispHTMLUnknownElement_tid,
-    HTMLElement_iface_tids,
-    HTMLElement_init_dispex_info
+    .name         = "HTMLUnknownElement",
+    .vtbl         = &HTMLElement_event_target_vtbl.dispex_vtbl,
+    .disp_tid     = DispHTMLUnknownElement_tid,
+    .init_info    = HTMLElement_init_dispex_info
 };
 
 void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMElement *nselem, dispex_static_data_t *dispex_data)

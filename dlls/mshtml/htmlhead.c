@@ -122,7 +122,6 @@ static const event_target_vtbl_t HTMLTitleElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLTitleElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLTitleElement_tid,
     0
 };
@@ -238,7 +237,6 @@ static const event_target_vtbl_t HTMLHtmlElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLHtmlElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLHtmlElement_tid,
     0
 };
@@ -417,7 +415,6 @@ static const event_target_vtbl_t HTMLMetaElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLMetaElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLMetaElement_tid,
     0
 };
@@ -525,7 +522,6 @@ static const event_target_vtbl_t HTMLHeadElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLHeadElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLHeadElement_tid,
     0
 };

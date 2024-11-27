@@ -903,7 +903,6 @@ static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLFormElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLFormElement_tid,
     0
 };

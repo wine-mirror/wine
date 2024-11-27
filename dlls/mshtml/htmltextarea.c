@@ -410,7 +410,6 @@ static const event_target_vtbl_t HTMLTextAreaElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLTextAreaElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLTextAreaElement_tid,
     0
 };

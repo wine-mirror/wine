@@ -409,7 +409,6 @@ HRESULT script_elem_from_nsscript(nsIDOMHTMLScriptElement *nsscript, HTMLScriptE
 }
 
 static const tid_t HTMLScriptElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLScriptElement_tid,
     0
 };

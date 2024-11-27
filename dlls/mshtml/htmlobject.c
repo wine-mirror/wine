@@ -679,7 +679,6 @@ static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
 static const tid_t HTMLObjectElement_iface_tids[] = {
     IHTMLObjectElement2_tid,
     IHTMLObjectElement_tid,
-    HTMLELEMENT_TIDS,
     0
 };
 dispex_static_data_t HTMLObjectElement_dispex = {
@@ -884,7 +883,6 @@ static const event_target_vtbl_t HTMLEmbedElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLEmbedElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLEmbedElement_tid,
     0
 };

@@ -331,16 +331,11 @@ static const event_target_vtbl_t HTMLStyleElement_event_target_vtbl = {
     .handle_event       = HTMLElement_handle_event
 };
 
-static const tid_t HTMLStyleElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
-    0
-};
 dispex_static_data_t HTMLStyleElement_dispex = {
     .id           = PROT_HTMLStyleElement,
     .prototype_id = PROT_HTMLElement,
     .vtbl         = &HTMLStyleElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLStyleElement_tid,
-    .iface_tids   = HTMLStyleElement_iface_tids,
     .init_info    = HTMLStyleElement_init_dispex_info,
 };
 

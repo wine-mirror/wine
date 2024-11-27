@@ -1283,7 +1283,6 @@ static const event_target_vtbl_t HTMLInputElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLInputElement_tid,
     IHTMLInputTextElement2_tid,
     0
@@ -1427,7 +1426,6 @@ static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLLabelElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLLabelElement_tid,
     0
 };
@@ -1714,7 +1712,6 @@ static const event_target_vtbl_t HTMLButtonElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLButtonElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLButtonElement_tid,
     0
 };

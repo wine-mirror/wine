@@ -842,7 +842,6 @@ static void HTMLAnchorElement_init_dispex_info(dispex_data_t *info, compat_mode_
 
 static const tid_t HTMLAnchorElement_iface_tids[] = {
     IHTMLAnchorElement_tid,
-    HTMLELEMENT_TIDS,
     0
 };
 

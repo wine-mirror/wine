@@ -341,7 +341,6 @@ static const event_target_vtbl_t HTMLOptionElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLOptionElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLOptionElement_tid,
     0
 };
@@ -1294,7 +1293,6 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLSelectElement_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLSelectElement_tid,
     0
 };

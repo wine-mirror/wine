@@ -383,7 +383,6 @@ static const event_target_vtbl_t HTMLLinkElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLLinkElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLLinkElement_tid,
     0
 };

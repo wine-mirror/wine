@@ -661,13 +661,8 @@ static void Comment_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 
     if(mode >= COMPAT_MODE_IE9)
         HTMLDOMNode_init_dispex_info(info, mode);
-    else {
+    else
         HTMLElement_init_dispex_info(info, mode);
-        dispex_info_add_interface(info, IHTMLElement_tid, NULL);
-        dispex_info_add_interface(info, IHTMLElement3_tid, NULL);
-        dispex_info_add_interface(info, IHTMLElement4_tid, NULL);
-        dispex_info_add_interface(info, IHTMLUniqueName_tid, NULL);
-    }
     CharacterData_init_dispex_info(info, mode);
 
     dispex_info_add_interface(info, IHTMLCommentElement_tid, mode >= COMPAT_MODE_IE9 ? ie9_hooks : NULL);
