@@ -233,7 +233,13 @@ static HRESULT WINAPI json_value_GetBoolean( IJsonValue *iface, boolean *value )
 
 static HRESULT WINAPI json_value_GetArray( IJsonValue *iface, IJsonArray **value )
 {
+    struct json_value *impl = impl_from_IJsonValue( iface );
+
     FIXME( "iface %p, value %p stub!\n", iface, value );
+
+    if (!value) return E_POINTER;
+    if (impl->json_value_type != JsonValueType_Array) return E_ILLEGAL_METHOD_CALL;
+
     return E_NOTIMPL;
 }
 
