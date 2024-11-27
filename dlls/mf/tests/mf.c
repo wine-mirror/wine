@@ -6501,7 +6501,6 @@ static void test_media_session_source_shutdown(void)
             IMFMediaSource_Shutdown(source);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = wait_media_event(session, callback, MESessionStarted, 5000, &propvar);
-        todo_wine_if(shutdown_point == TEST_START)
         ok(hr == (shutdown_point == TEST_START ? MF_E_INVALIDREQUEST : S_OK), "Unexpected hr %#lx.\n", hr);
 
         switch (shutdown_point)

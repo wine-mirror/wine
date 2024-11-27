@@ -1076,7 +1076,7 @@ static void session_start(struct media_session *session, const GUID *time_format
                 if (FAILED(hr = IMFMediaSource_Start(source->source, source->pd, &GUID_NULL, start_position)))
                 {
                     WARN("Failed to start media source %p, hr %#lx.\n", source->source, hr);
-                    session_command_complete_with_event(session, MESessionStarted, hr, NULL);
+                    session_handle_start_error(session, hr);
                     return;
                 }
             }
