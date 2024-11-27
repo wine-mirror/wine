@@ -21,7 +21,10 @@
 #include "objbase.h"
 #include "cor.h"
 #include "rometadata.h"
+#include "rometadataapi.h"
 #include "wine/debug.h"
+
+#include "rometadatapriv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rometadata);
 
@@ -87,8 +90,19 @@ static HRESULT WINAPI MetaDataDispenser_DefineScope(IMetaDataDispenserEx *iface,
 static HRESULT WINAPI MetaDataDispenser_OpenScope(IMetaDataDispenserEx *iface, const WCHAR *scope,
                                                   DWORD open_flags, REFIID riid, IUnknown **obj)
 {
-    FIXME("%p %s %lx %s %p\n", iface, debugstr_w(scope), open_flags, debugstr_guid(riid), obj);
-    return E_NOTIMPL;
+    IMetaDataTables *tables;
+    HRESULT hr;
+
+    FIXME("%p %s %lx %s %p semi-stub!\n", iface, debugstr_w(scope), open_flags, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+    hr = IMetaDataTables_create(&tables);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IMetaDataTables_QueryInterface(tables, riid, (void **)obj);
+    IMetaDataTables_Release(tables);
+    return hr;
 }
 
 static HRESULT WINAPI MetaDataDispenser_OpenScopeOnMemory(IMetaDataDispenserEx *iface, const void *data,

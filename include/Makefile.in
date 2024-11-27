@@ -689,6 +689,7 @@ SOURCES = \
 	robuffer.idl \
 	roerrorapi.h \
 	rometadata.h \
+	rometadataapi.idl \
 	rometadataresolution.h \
 	roparameterizediid.idl \
 	row.idl \

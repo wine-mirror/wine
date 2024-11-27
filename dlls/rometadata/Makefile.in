@@ -3,4 +3,5 @@ IMPORTLIB = rometadata
 IMPORTS   = combase
 
 SOURCES = \
-	main.c
+	main.c \
+	mdtables.c
