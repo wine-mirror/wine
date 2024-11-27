@@ -18,6 +18,8 @@
  */
 
 #include "private.h"
+#include "initguid.h"
+#include "netlistmgr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(connectivity);
 
@@ -116,6 +118,152 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+struct connection_profile
+{
+    IConnectionProfile IConnectionProfile_iface;
+    LONG ref;
+
+    NetworkConnectivityLevel network_connectivity_level;
+};
+
+static inline struct connection_profile *impl_from_IConnectionProfile( IConnectionProfile *iface )
+{
+    return CONTAINING_RECORD( iface, struct connection_profile, IConnectionProfile_iface );
+}
+
+static HRESULT WINAPI connection_profile_QueryInterface( IConnectionProfile *iface, REFIID iid, void **out )
+{
+    struct connection_profile *impl = impl_from_IConnectionProfile( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IConnectionProfile ))
+    {
+        *out = &impl->IConnectionProfile_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI connection_profile_AddRef( IConnectionProfile *iface )
+{
+    struct connection_profile *impl = impl_from_IConnectionProfile( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI connection_profile_Release( IConnectionProfile *iface )
+{
+    struct connection_profile *impl = impl_from_IConnectionProfile( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI connection_profile_GetIids( IConnectionProfile *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_GetRuntimeClassName( IConnectionProfile *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_GetTrustLevel( IConnectionProfile *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_get_ProfileName( IConnectionProfile *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_GetNetworkConnectivityLevel( IConnectionProfile *iface, NetworkConnectivityLevel *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_GetNetworkNames( IConnectionProfile *iface, IVectorView_HSTRING **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_GetConnectionCost( IConnectionProfile *iface, IConnectionCost **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_GetDataPlanStatus( IConnectionProfile *iface, IDataPlanStatus **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_get_NetworkAdapter( IConnectionProfile *iface, INetworkAdapter **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_GetLocalUsage( IConnectionProfile *iface, DateTime start, DateTime end, IDataUsage **value )
+{
+    FIXME( "iface %p, start %llu, end %llu, value %p stub!\n", iface, start.UniversalTime, end.UniversalTime, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_GetLocalUsagePerRoamingStates( IConnectionProfile *iface, DateTime start, DateTime end, RoamingStates states, IDataUsage **value )
+{
+    FIXME( "iface %p, start %llu, end %llu, states %u, value %p stub!\n", iface, start.UniversalTime, end.UniversalTime, states, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile_get_NetworkSecuritySettings( IConnectionProfile *iface, INetworkSecuritySettings **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IConnectionProfileVtbl connection_profile_vtbl =
+{
+    connection_profile_QueryInterface,
+    connection_profile_AddRef,
+    connection_profile_Release,
+    /* IInspectable methods */
+    connection_profile_GetIids,
+    connection_profile_GetRuntimeClassName,
+    connection_profile_GetTrustLevel,
+    /* IConnectionProfile methods */
+    connection_profile_get_ProfileName,
+    connection_profile_GetNetworkConnectivityLevel,
+    connection_profile_GetNetworkNames,
+    connection_profile_GetConnectionCost,
+    connection_profile_GetDataPlanStatus,
+    connection_profile_get_NetworkAdapter,
+    connection_profile_GetLocalUsage,
+    connection_profile_GetLocalUsagePerRoamingStates,
+    connection_profile_get_NetworkSecuritySettings,
+};
+
 DEFINE_IINSPECTABLE( network_information_statics, INetworkInformationStatics, struct network_information_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI network_information_statics_GetConnectionProfiles( INetworkInformationStatics *iface, IVectorView_ConnectionProfile **value )
@@ -126,8 +274,20 @@ static HRESULT WINAPI network_information_statics_GetConnectionProfiles( INetwor
 
 static HRESULT WINAPI network_information_statics_GetInternetConnectionProfile( INetworkInformationStatics *iface, IConnectionProfile **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct connection_profile *impl;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = NULL;
+    if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
+
+    impl->IConnectionProfile_iface.lpVtbl = &connection_profile_vtbl;
+    impl->ref = 1;
+    impl->network_connectivity_level = NetworkConnectivityLevel_None;
+
+    *value = &impl->IConnectionProfile_iface;
+    TRACE( "created IConnectionProfile %p.\n", *value );
+    return S_OK;
 }
 
 static HRESULT WINAPI network_information_statics_GetLanIdentifiers( INetworkInformationStatics *iface, IVectorView_LanIdentifier **value )
