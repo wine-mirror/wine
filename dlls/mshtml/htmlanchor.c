@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
@@ -828,6 +829,17 @@ static const event_target_vtbl_t HTMLAnchorElement_event_target_vtbl = {
     .handle_event       = HTMLAnchorElement_handle_event
 };
 
+static void HTMLAnchorElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const DISPID elem_dispids[] = {
+        DISPID_IHTMLELEMENT_TOSTRING,
+        DISPID_UNKNOWN
+    };
+    HTMLElement_init_dispex_info(info, mode);
+    if(mode >= COMPAT_MODE_IE9)
+        dispex_info_add_dispids(info, IHTMLElement_tid, elem_dispids);
+}
+
 static const tid_t HTMLAnchorElement_iface_tids[] = {
     IHTMLAnchorElement_tid,
     HTMLELEMENT_TIDS,
@@ -840,7 +852,7 @@ dispex_static_data_t HTMLAnchorElement_dispex = {
     .vtbl         = &HTMLAnchorElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLAnchorElement_tid,
     .iface_tids   = HTMLAnchorElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLAnchorElement_init_dispex_info,
 };
 
 HRESULT HTMLAnchorElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

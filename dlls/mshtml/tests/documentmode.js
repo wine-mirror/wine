@@ -252,11 +252,13 @@ sync_test("builtin_toString", function() {
 
     e = document.createElement("a");
     ok(e.toString() === "", "tag 'a' (without href) toString returned " + e.toString());
+    ok(e + "" === "", "tag 'a' (without href) value = " + e);
     e.href = "https://www.winehq.org/";
     test("tag 'a'", e, "HTMLAnchorElement", "https://www.winehq.org/");
 
     e = document.createElement("area");
     ok(e.toString() === "", "tag 'area' (without href) toString returned " + e.toString());
+    ok(e + "" === "", "tag 'area' (without href) value = " + e);
     e.href = "https://www.winehq.org/";
     test("tag 'area'", e, "HTMLAreaElement", "https://www.winehq.org/");
 
@@ -3751,7 +3753,7 @@ sync_test("prototype props", function() {
         ["onmscontentzoom",10], ["onmstransitionend",10], ["onmstransitionstart",10], "onpage", ["onpropertychange",11],
         ["onreadystatechange",11], ["onresize",11], ["onresizeend",11], ["onresizestart",11], ["onrowenter",11], ["onrowexit",11],
         ["onrowsdelete",11], ["onrowsinserted",11], ["removeBehavior",11], "removeExpression", ["removeFilter",10], ["scopeName",10], "setExpression",
-        ["tagUrn",10], "toString", ["xmsAcceleratorKey",10]
+        ["tagUrn",10], ["xmsAcceleratorKey",10]
     ]);
     check(HTMLUnknownElement, [ "namedRecordset", "recordset" ]);
     check(KeyboardEvent, [

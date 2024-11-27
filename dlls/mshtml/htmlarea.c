@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -439,6 +440,17 @@ static const event_target_vtbl_t HTMLAreaElement_event_target_vtbl = {
     .handle_event       = HTMLAreaElement_handle_event
 };
 
+static void HTMLAreaElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const DISPID elem_dispids[] = {
+        DISPID_IHTMLELEMENT_TOSTRING,
+        DISPID_UNKNOWN
+    };
+    HTMLElement_init_dispex_info(info, mode);
+    if(mode >= COMPAT_MODE_IE9)
+        dispex_info_add_dispids(info, IHTMLElement_tid, elem_dispids);
+}
+
 static const tid_t HTMLAreaElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLAreaElement_tid,
@@ -450,7 +462,7 @@ dispex_static_data_t HTMLAreaElement_dispex = {
     .vtbl         = &HTMLAreaElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLAreaElement_tid,
     .iface_tids   = HTMLAreaElement_iface_tids,
-    .init_info    = HTMLElement_init_dispex_info,
+    .init_info    = HTMLAreaElement_init_dispex_info,
 };
 
 HRESULT HTMLAreaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

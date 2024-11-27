@@ -6680,6 +6680,10 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
         {DISPID_IHTMLELEMENT6_IE9_SETATTRIBUTE, IHTMLElement6_setAttribute_hook},
         {DISPID_UNKNOWN}
     };
+    static const dispex_hook_t elem_ie9_hooks[] = {
+        {DISPID_IHTMLELEMENT_TOSTRING,     NULL},
+        {DISPID_UNKNOWN}
+    };
     static const dispex_hook_t elem2_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT2_ATTACHEVENT, NULL},
         {DISPID_IHTMLELEMENT2_DETACHEVENT, NULL},
@@ -6715,7 +6719,13 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     }
 
     dispex_info_add_interface(info, IHTMLElement3_tid, mode >= COMPAT_MODE_IE11 ? elem3_ie11_hooks : NULL);
+    dispex_info_add_interface(info, IHTMLElement_tid, mode >= COMPAT_MODE_IE9 ? elem_ie9_hooks : NULL);
 }
+
+const DISPID HTMLElement_toString_dispids[] = {
+    DISPID_IHTMLELEMENT_TOSTRING,
+    DISPID_UNKNOWN
+};
 
 const tid_t HTMLElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
