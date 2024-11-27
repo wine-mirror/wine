@@ -438,7 +438,8 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
     }
 }
 
-static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp_typeinfo, const dispex_hook_t *hooks)
+static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp_typeinfo, const dispex_hook_t *hooks,
+                                 const DISPID *allow_list)
 {
     unsigned i = 7; /* skip IDispatch functions */
     ITypeInfo *typeinfo;
@@ -451,6 +452,7 @@ static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp
 
     while(1) {
         const dispex_hook_t *hook = NULL;
+        const DISPID *dispid = NULL;
 
         hres = ITypeInfo_GetFuncDesc(typeinfo, i++, &funcdesc);
         if(FAILED(hres))
@@ -463,6 +465,17 @@ static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp
             }
             if(hook->dispid == DISPID_UNKNOWN)
                 hook = NULL;
+        }
+
+        if(allow_list) {
+            for(dispid = allow_list; *dispid != DISPID_UNKNOWN; dispid++) {
+                if(*dispid == funcdesc->memid)
+                    break;
+            }
+            if(*dispid == DISPID_UNKNOWN) {
+                ITypeInfo_ReleaseFuncDesc(typeinfo, funcdesc);
+                continue;
+            }
         }
 
         if(!hook || hook->invoke || hook->name) {
@@ -480,7 +493,16 @@ void dispex_info_add_interface(dispex_data_t *info, tid_t tid, const dispex_hook
 {
     HRESULT hres;
 
-    hres = process_interface(info, tid, NULL, hooks);
+    hres = process_interface(info, tid, NULL, hooks, NULL);
+    if(FAILED(hres))
+        ERR("process_interface failed: %08lx\n", hres);
+}
+
+void dispex_info_add_dispids(dispex_data_t *info, tid_t tid, const DISPID *dispids)
+{
+    HRESULT hres;
+
+    hres = process_interface(info, tid, NULL, NULL, dispids);
     if(FAILED(hres))
         ERR("process_interface failed: %08lx\n", hres);
 }
@@ -574,7 +596,7 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
 
     if(desc->iface_tids) {
         for(tid = desc->iface_tids; *tid; tid++) {
-            hres = process_interface(data, *tid, dti, NULL);
+            hres = process_interface(data, *tid, dti, NULL, NULL);
             if(FAILED(hres))
                 break;
         }

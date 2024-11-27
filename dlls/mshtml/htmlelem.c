@@ -7236,9 +7236,102 @@ static const IWineHTMLElementPrivateVtbl WineHTMLElementPrivateVtbl = {
     htmlelement_private_get_classList,
 };
 
+static void Element_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const DISPID elem_dispids[] = {
+        DISPID_IHTMLELEMENT_SETATTRIBUTE,
+        DISPID_IHTMLELEMENT_GETATTRIBUTE,
+        DISPID_IHTMLELEMENT_REMOVEATTRIBUTE,
+        DISPID_IHTMLELEMENT_TAGNAME,
+        DISPID_UNKNOWN
+    };
+    static const DISPID elem2_dispids[] = {
+        DISPID_IHTMLELEMENT2_GETCLIENTRECTS,
+        DISPID_IHTMLELEMENT2_GETBOUNDINGCLIENTRECT,
+        DISPID_IHTMLELEMENT2_CLIENTHEIGHT,
+        DISPID_IHTMLELEMENT2_CLIENTWIDTH,
+        DISPID_IHTMLELEMENT2_CLIENTTOP,
+        DISPID_IHTMLELEMENT2_CLIENTLEFT,
+        DISPID_IHTMLELEMENT2_SCROLLHEIGHT,
+        DISPID_IHTMLELEMENT2_SCROLLWIDTH,
+        DISPID_IHTMLELEMENT2_SCROLLTOP,
+        DISPID_IHTMLELEMENT2_SCROLLLEFT,
+        DISPID_IHTMLELEMENT2_GETELEMENTSBYTAGNAME,
+        DISPID_UNKNOWN
+    };
+    static const DISPID elem3_pre_ie11_dispids[] = {
+        DISPID_IHTMLELEMENT3_FIREEVENT,
+        DISPID_UNKNOWN
+    };
+    static const DISPID elem4_dispids[] = {
+        DISPID_IHTMLELEMENT4_GETATTRIBUTENODE,
+        DISPID_IHTMLELEMENT4_SETATTRIBUTENODE,
+        DISPID_IHTMLELEMENT4_REMOVEATTRIBUTENODE,
+        DISPID_UNKNOWN
+    };
+    static const DISPID elem6_dispids[] = {
+        DISPID_IHTMLELEMENT6_GETATTRIBUTENS,
+        DISPID_IHTMLELEMENT6_SETATTRIBUTENS,
+        DISPID_IHTMLELEMENT6_REMOVEATTRIBUTENS,
+        DISPID_IHTMLELEMENT6_GETATTRIBUTENODENS,
+        DISPID_IHTMLELEMENT6_SETATTRIBUTENODENS,
+        DISPID_IHTMLELEMENT6_HASATTRIBUTENS,
+        DISPID_IHTMLELEMENT6_IE9_GETATTRIBUTE,
+        DISPID_IHTMLELEMENT6_IE9_SETATTRIBUTE,
+        DISPID_IHTMLELEMENT6_IE9_REMOVEATTRIBUTE,
+        DISPID_IHTMLELEMENT6_IE9_GETATTRIBUTENODE,
+        DISPID_IHTMLELEMENT6_IE9_SETATTRIBUTENODE,
+        DISPID_IHTMLELEMENT6_IE9_REMOVEATTRIBUTENODE,
+        DISPID_IHTMLELEMENT6_IE9_HASATTRIBUTE,
+        DISPID_IHTMLELEMENT6_GETELEMENTSBYTAGNAMENS,
+        DISPID_IHTMLELEMENT6_IE9_TAGNAME,
+        DISPID_IHTMLELEMENT6_MSMATCHESSELECTOR,
+        DISPID_UNKNOWN
+    };
+    static const DISPID elem7_dispids[] = {
+        DISPID_IHTMLELEMENT7_ONMSPOINTERDOWN,
+        DISPID_IHTMLELEMENT7_ONMSPOINTERMOVE,
+        DISPID_IHTMLELEMENT7_ONMSPOINTERUP,
+        DISPID_IHTMLELEMENT7_ONMSPOINTEROVER,
+        DISPID_IHTMLELEMENT7_ONMSPOINTEROUT,
+        DISPID_IHTMLELEMENT7_ONMSPOINTERCANCEL,
+        DISPID_IHTMLELEMENT7_ONMSLOSTPOINTERCAPTURE,
+        DISPID_IHTMLELEMENT7_ONMSGOTPOINTERCAPTURE,
+        DISPID_IHTMLELEMENT7_ONMSGESTURESTART,
+        DISPID_IHTMLELEMENT7_ONMSGESTURECHANGE,
+        DISPID_IHTMLELEMENT7_ONMSGESTUREEND,
+        DISPID_IHTMLELEMENT7_ONMSGESTUREHOLD,
+        DISPID_IHTMLELEMENT7_ONMSGESTURETAP,
+        DISPID_IHTMLELEMENT7_ONMSGESTUREDOUBLETAP,
+        DISPID_IHTMLELEMENT7_ONMSINERTIASTART,
+        DISPID_IHTMLELEMENT7_MSSETPOINTERCAPTURE,
+        DISPID_IHTMLELEMENT7_MSRELEASEPOINTERCAPTURE,
+        DISPID_UNKNOWN
+    };
+    static const DISPID elem7_ie10_dispids[] = {
+        DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER,
+        DISPID_UNKNOWN
+    };
+
+    dispex_info_add_dispids(info, IHTMLElement2_tid, elem2_dispids);
+    dispex_info_add_dispids(info, IHTMLElement6_tid, elem6_dispids);
+    if(mode >= COMPAT_MODE_IE10) {
+        dispex_info_add_dispids(info, IHTMLElement7_tid, elem7_dispids);
+        if(mode == COMPAT_MODE_IE10)
+            dispex_info_add_dispids(info, IHTMLElement7_tid, elem7_ie10_dispids);
+    }
+    if(mode <= COMPAT_MODE_IE10)
+        dispex_info_add_dispids(info, IHTMLElement3_tid, elem3_pre_ie11_dispids);
+    dispex_info_add_dispids(info, IHTMLElement_tid, elem_dispids);
+    dispex_info_add_dispids(info, IHTMLElement4_tid, elem4_dispids);
+    dispex_info_add_interface(info, IElementSelector_tid, NULL);
+    dispex_info_add_interface(info, IElementTraversal_tid, NULL);
+}
+
 dispex_static_data_t Element_dispex = {
     .id           = PROT_Element,
     .prototype_id = PROT_Node,
+    .init_info    = Element_init_dispex_info,
 };
 
 dispex_static_data_t HTMLElement_dispex = {
