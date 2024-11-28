@@ -1262,6 +1262,8 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
 
     if (testmode == 13 && got_Receive > 1)
         WaitForSingleObject(filter->event, INFINITE);
+    if (testmode == 14)
+        return E_FAIL;
 
     return S_OK;
 }
@@ -1747,6 +1749,22 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx.\n", ret);
     ret = WaitForSingleObject(stop_thread, 200);
     ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx.\n", ret);
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Pause returned %#lx.\n", hr);
+    got_ProcessInput = got_ProcessOutput = got_Receive = got_Discontinuity = 0;
+
+    /* Test receive if downstream receive fails. */
+    testmode = 14;
+    hr = IMemInputPin_Receive(input, sample);
+    todo_wine
+    ok(hr == E_FAIL, "Receive returned %#lx.\n", hr);
+    todo_wine
+    ok(got_ProcessInput == 0, "Got %u calls to ProcessInput().\n", got_ProcessInput);
+    todo_wine
+    ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
+    todo_wine
+    ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
+    ok(got_Discontinuity == 1, "Got %u calls to Discontinuity().\n", got_Discontinuity);
     got_ProcessInput = got_ProcessOutput = got_Receive = got_Discontinuity = 0;
 
     testmode = 0;
