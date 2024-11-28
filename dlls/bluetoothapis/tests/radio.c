@@ -105,8 +105,19 @@ void test_BluetoothFindNextRadio( void )
     todo_wine ok( BluetoothFindRadioClose( find ), "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
 }
 
+void test_BluetoothFindRadioClose( void )
+{
+    DWORD err;
+
+    SetLastError( 0xdeadbeef );
+    ok( !BluetoothFindRadioClose( NULL ), "Expected BluetoothFindRadioClose to return FALSE\n" );
+    err = GetLastError();
+    todo_wine ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
+}
+
 START_TEST( radio )
 {
     test_BluetoothFindFirstRadio();
     test_BluetoothFindNextRadio();
+    test_BluetoothFindRadioClose();
 }
