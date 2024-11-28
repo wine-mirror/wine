@@ -25,6 +25,7 @@ import "unknwn.idl";
 interface IMFByteStream;
 interface IMFMediaSink;
 interface IMFMediaType;
+interface IMFAsyncCallback;
 
 /* Internal interface used to instantiate registered sinks. It should be compatible,
    except for used method names. */
@@ -41,6 +42,19 @@ interface IMFSinkClassFactory : IUnknown
             [in] IMFMediaType *video_type,
             [in] IMFMediaType *audio_type,
             [out] IMFMediaSink **sink
+    );
+}
+
+[
+    uuid(0aab315c-33a4-43db-af6b-c9c86921034e),
+    object,
+    local
+]
+interface IMFMediaShutdownNotify : IUnknown
+{
+    HRESULT set_notification_callback(
+            [in] IMFAsyncCallback *callback,
+            [in] IUnknown *state
     );
 }
 
