@@ -92,6 +92,8 @@ _ACRTIMP _locale_t     __cdecl _get_current_locale(void);
 _ACRTIMP _locale_t     __cdecl _create_locale(int, const char*);
 _ACRTIMP void          __cdecl _free_locale(_locale_t);
 
+_ACRTIMP unsigned int __cdecl ___lc_codepage_func(void);
+
 #ifndef _WLOCALE_DEFINED
 #define _WLOCALE_DEFINED
 _ACRTIMP wchar_t* __cdecl _wsetlocale(int,const wchar_t*);

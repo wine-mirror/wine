@@ -51,7 +51,6 @@ wchar_t* __cdecl _W_Getdays(void);
 char* __cdecl _Getmonths(void);
 wchar_t* __cdecl _W_Getmonths(void);
 void* __cdecl _Gettnames(void);
-unsigned int __cdecl ___lc_codepage_func(void);
 int __cdecl ___lc_collate_cp_func(void);
 const locale_facet* __thiscall locale__Getfacet(const locale*, size_t);
 const locale* __cdecl locale_classic(void);
