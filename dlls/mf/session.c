@@ -1001,6 +1001,34 @@ static void session_flush_nodes(struct media_session *session)
     }
 }
 
+static void session_purge_pending_commands(struct media_session *session)
+{
+    struct session_op *op, *op2;
+
+    /* Purge all commands which are no longer valid after a forced source shutdown.
+     * Calling Stop() in this case is not required in native Windows. */
+    LIST_FOR_EACH_ENTRY_SAFE(op, op2, &session->commands, struct session_op, entry)
+    {
+        if (op->command == SESSION_CMD_SET_TOPOLOGY)
+            break;
+        if (op->command == SESSION_CMD_CLEAR_TOPOLOGIES || op->command == SESSION_CMD_CLOSE
+                || op->command == SESSION_CMD_SHUTDOWN)
+            continue;
+        list_remove(&op->entry);
+        IUnknown_Release(&op->IUnknown_iface);
+    }
+}
+
+static void session_reset(struct media_session *session)
+{
+    /* Media sessions in native Windows are not consistently usable after a
+     * forced source shutdown, but we try to clean up as well as possible. */
+    session->state = SESSION_STATE_STOPPED;
+    session_clear_presentation(session);
+    session_purge_pending_commands(session);
+    session_command_complete(session);
+}
+
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
 {
     struct media_source *source;
@@ -2829,6 +2857,46 @@ static const IMFAsyncCallbackVtbl session_sa_ready_callback_vtbl =
     session_sa_ready_callback_Invoke,
 };
 
+static void session_handle_source_shutdown(struct media_session *session)
+{
+    BOOL finalize_sinks;
+
+    EnterCriticalSection(&session->cs);
+
+    finalize_sinks = session->presentation.flags & SESSION_FLAG_FINALIZE_SINKS;
+
+    /* When stopping the session, MESessionStopped is sent without waiting
+     * for MESourceStopped, so we need do nothing in that case. */
+    switch (session->state)
+    {
+        case SESSION_STATE_STARTING_SOURCES:
+        case SESSION_STATE_RESTARTING_SOURCES:
+        case SESSION_STATE_PREROLLING_SINKS:
+        case SESSION_STATE_STARTING_SINKS:
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStarted, &GUID_NULL,
+                    MF_E_INVALIDREQUEST, NULL);
+            break;
+        case SESSION_STATE_STOPPING_SINKS:
+        case SESSION_STATE_STOPPING_SOURCES:
+            if (!finalize_sinks)
+                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL,
+                        MF_E_INVALIDREQUEST, NULL);
+            break;
+        default:
+            break;
+    }
+
+    if (session->state != SESSION_STATE_CLOSED)
+    {
+        if (finalize_sinks)
+            session_finalize_sinks(session);
+        else
+            session_reset(session);
+    }
+
+    LeaveCriticalSection(&session->cs);
+}
+
 static HRESULT WINAPI session_events_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
@@ -4050,8 +4118,15 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
 
     if (FAILED(hr = IMFMediaEventGenerator_EndGetEvent(event_source, result, &event)))
     {
-        WARN("Failed to get event from %p, hr %#lx.\n", event_source, hr);
-        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEError, &GUID_NULL, hr, NULL);
+        if (hr == MF_E_SHUTDOWN)
+        {
+            session_handle_source_shutdown(session);
+        }
+        else
+        {
+            WARN("Failed to get event from %p, hr %#lx.\n", event_source, hr);
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEError, &GUID_NULL, hr, NULL);
+        }
         IMFMediaEventGenerator_Release(event_source);
         return hr;
     }
