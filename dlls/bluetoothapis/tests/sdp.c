@@ -33,6 +33,26 @@ static const char *debugstr_SDP_ELEMENT_DATA( const SDP_ELEMENT_DATA *data )
                              data->data.uint128.LowPart, data->data.uint128.HighPart );
 }
 
+/* Returns the exact number of bytes we need to compare to test equality between the 'data' fields of two
+ * SDP_ELEMENT_DATA. */
+static SIZE_T sdp_type_size( SDP_TYPE type, SDP_SPECIFICTYPE st )
+{
+
+    switch (type)
+    {
+    case SDP_TYPE_NIL:
+        return 0;
+    case SDP_TYPE_BOOLEAN:
+        return sizeof( UCHAR );
+    case SDP_TYPE_INT:
+    case SDP_TYPE_UINT:
+    case SDP_TYPE_UUID:
+        return 1 << ((st >> 8) & 0x7);
+    default: /* Container/Sequence-like types. */
+        return sizeof( BYTE * ) + sizeof( ULONG );
+    }
+}
+
 static void test_BluetoothSdpGetElementData( BYTE *stream, SIZE_T size, DWORD error,
                                              const SDP_ELEMENT_DATA *sdp_data )
 {
@@ -47,7 +67,7 @@ static void test_BluetoothSdpGetElementData( BYTE *stream, SIZE_T size, DWORD er
         ok( result.specificType == sdp_data->specificType,
             "%#x != %#x.\n", sdp_data->specificType,
             result.specificType );
-        ok( !memcmp( &sdp_data->data, &result.data, sizeof( result.data ) ),
+        ok( !memcmp( &sdp_data->data, &result.data, sdp_type_size( result.type, result.specificType ) ),
             "%s != %s.\n", debugstr_SDP_ELEMENT_DATA( sdp_data ),
             debugstr_SDP_ELEMENT_DATA( &result ) );
     }
