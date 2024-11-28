@@ -2563,6 +2563,13 @@ ULONG WINAPI NtGetCurrentProcessorNumber(void)
 #if defined(__linux__) && defined(__NR_getcpu)
     int res = syscall(__NR_getcpu, &processor, NULL, NULL);
     if (res != -1) return processor;
+#elif defined(__APPLE__) && (defined(__x86_64__) || defined(__i386__))
+    struct {
+        unsigned long p1, p2;
+    } p;
+    __asm__ __volatile__("sidt %[p]" : [p] "=&m"(p));
+    processor = (ULONG)(p.p1 & 0xfff);
+    return processor;
 #endif
 
     if (peb->NumberOfProcessors > 1)
