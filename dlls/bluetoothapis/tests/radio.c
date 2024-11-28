@@ -65,7 +65,48 @@ void test_BluetoothFindFirstRadio( void )
     }
 }
 
+void test_BluetoothFindNextRadio( void )
+{
+    HANDLE radio, dummy = (HANDLE)0xdeadbeef;
+    BLUETOOTH_FIND_RADIO_PARAMS find_params;
+    HBLUETOOTH_RADIO_FIND find;
+    DWORD err;
+    BOOL ret;
+
+    find_params.dwSize = sizeof( find_params );
+    find = BluetoothFindFirstRadio( &find_params, &radio );
+    if (!find)
+    {
+        skip( "No Bluetooth radios found.\n" );
+        return;
+    }
+    CloseHandle( radio );
+
+    radio = dummy;
+    SetLastError( 0xdeadbeef );
+    ret = BluetoothFindNextRadio( NULL, &radio );
+    todo_wine ok( !ret, "Expected BluetoothFindNextRadio to return FALSE\n" );
+    err = GetLastError();
+    todo_wine ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
+    todo_wine ok( radio == dummy, "%p != %p\n", radio, dummy );
+
+    for(;;)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = BluetoothFindNextRadio( find, &radio );
+        if (!ret)
+        {
+            err = GetLastError();
+            todo_wine ok( err == ERROR_NO_MORE_ITEMS, "%lu != %d\n", err, ERROR_NO_MORE_ITEMS );
+            break;
+        }
+        CloseHandle( radio );
+    }
+    todo_wine ok( BluetoothFindRadioClose( find ), "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
+}
+
 START_TEST( radio )
 {
     test_BluetoothFindFirstRadio();
+    test_BluetoothFindNextRadio();
 }
