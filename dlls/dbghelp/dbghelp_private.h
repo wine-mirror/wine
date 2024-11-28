@@ -45,6 +45,7 @@ void*    pool_alloc(struct pool* a, size_t len) __WINE_ALLOC_SIZE(2) __WINE_MALL
 void*    pool_realloc(struct pool* a, void* ptr, size_t len) __WINE_ALLOC_SIZE(3);
 char*    pool_strdup(struct pool* a, const char* str) __WINE_MALLOC;
 WCHAR*   pool_wcsdup(struct pool* a, const WCHAR* str) __WINE_MALLOC;
+void     pool_free(struct pool* a, void* ptr);
 
 struct vector
 {

@@ -48,6 +48,15 @@ void* pool_realloc(struct pool* pool, void* ptr, size_t len)
     return ptr ? HeapReAlloc(pool->heap, 0, ptr, len) : pool_alloc(pool, len);
 }
 
+void pool_free(struct pool* pool, void* ptr)
+{
+#ifdef USE_STATS
+    if (ptr)
+        mem_stats_down(&pool->stats, HeapSize(pool->heap, 0, ptr));
+#endif
+    HeapFree(pool->heap, 0, ptr);
+}
+
 char* pool_strdup(struct pool* pool, const char* str)
 {
     char* ret;
