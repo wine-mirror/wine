@@ -157,10 +157,18 @@ BOOL WINAPI SymEnumSourceFilesW(HANDLE hProcess, ULONG64 ModBase, PCWSTR Mask,
     }
     else
     {
-        if (Mask[0] == '!')
+        WCHAR *bang = wcschr(Mask, '!');
+        if (bang)
         {
-            pair.requested = module_find_by_nameW(pair.pcs, Mask + 1);
+            WCHAR    *module_name;
+
+            if (!(module_name = HeapAlloc(GetProcessHeap(), 0, (bang - Mask + 1) * sizeof(WCHAR)))) return FALSE;
+            memcpy(module_name, Mask, (bang - Mask) * sizeof(WCHAR));
+            module_name[bang - Mask] = L'\0';
+            pair.requested = module_find_by_nameW(pair.pcs, module_name);
+            HeapFree(GetProcessHeap(), 0, module_name);
             if (!module_get_debug(&pair)) return FALSE;
+            Mask = bang + 1;
         }
         else
         {
@@ -183,10 +191,12 @@ BOOL WINAPI SymEnumSourceFilesW(HANDLE hProcess, ULONG64 ModBase, PCWSTR Mask,
 
         MultiByteToWideChar(CP_ACP, 0, ptr, -1, conversion_buffer, len);
 
-        /* FIXME: not using Mask */
-        sf.ModBase = ModBase;
-        sf.FileName = conversion_buffer;
-        if (!cbSrcFiles(&sf, UserContext)) break;
+        if (!Mask || !*Mask || SymMatchStringW(conversion_buffer, Mask, FALSE))
+        {
+            sf.ModBase = pair.requested->module.BaseOfImage;
+            sf.FileName = conversion_buffer;
+            if (!cbSrcFiles(&sf, UserContext)) break;
+        }
     }
 
     HeapFree(GetProcessHeap(), 0, conversion_buffer);
