@@ -1756,13 +1756,9 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     /* Test receive if downstream receive fails. */
     testmode = 14;
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == E_FAIL, "Receive returned %#lx.\n", hr);
-    todo_wine
     ok(got_ProcessInput == 0, "Got %u calls to ProcessInput().\n", got_ProcessInput);
-    todo_wine
     ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
-    todo_wine
     ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
     ok(got_Discontinuity == 1, "Got %u calls to Discontinuity().\n", got_Discontinuity);
     got_ProcessInput = got_ProcessOutput = got_Receive = got_Discontinuity = 0;
