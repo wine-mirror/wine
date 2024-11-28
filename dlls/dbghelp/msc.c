@@ -4187,7 +4187,7 @@ static void  pev_init(struct pevaluator* pev, struct cpu_stack_walk* csw,
 {
     pev->csw = csw;
     pool_init(&pev->pool, 512);
-    vector_init(&pev->stack, sizeof(char*), 8);
+    vector_init(&pev->stack, sizeof(char*), 0);
     pev->stk_index = 0;
     hash_table_init(&pev->pool, &pev->values, 8);
     pev->error[0] = '\0';

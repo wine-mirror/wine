@@ -197,14 +197,14 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
         module->cpu = dbghelp_current_cpu;
     module->debug_format_bitmask = 0;
 
-    vector_init(&module->vsymt, sizeof(struct symt*), 128);
-    vector_init(&module->vcustom_symt, sizeof(struct symt*), 16);
+    vector_init(&module->vsymt, sizeof(struct symt*), 0);
+    vector_init(&module->vcustom_symt, sizeof(struct symt*), 0);
     /* FIXME: this seems a bit too high (on a per module basis)
      * need some statistics about this
      */
     hash_table_init(&module->pool, &module->ht_symbols, 4096);
     hash_table_init(&module->pool, &module->ht_types,   4096);
-    vector_init(&module->vtypes, sizeof(struct symt*),  32);
+    vector_init(&module->vtypes, sizeof(struct symt*),  0);
 
     module->sources_used      = 0;
     module->sources_alloc     = 0;

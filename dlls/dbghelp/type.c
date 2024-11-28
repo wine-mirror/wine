@@ -260,7 +260,7 @@ struct symt_udt* symt_new_udt(struct module* module, const char* typename,
             sym->hash_elt.name = pool_strdup(&module->pool, typename);
             hash_table_add(&module->ht_types, &sym->hash_elt);
         } else sym->hash_elt.name = NULL;
-        vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+        vector_init(&sym->vchildren, sizeof(struct symt*), 0);
         symt_add_type(module, &sym->symt);
     }
     return sym;
@@ -345,7 +345,7 @@ struct symt_enum* symt_new_enum(struct module* module, const char* typename,
             hash_table_add(&module->ht_types, &sym->hash_elt);
         } else sym->hash_elt.name = NULL;
         sym->base_type           = basetype;
-        vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+        vector_init(&sym->vchildren, sizeof(struct symt*), 0);
         symt_add_type(module, &sym->symt);
     }
     return sym;
@@ -404,7 +404,7 @@ struct symt_function_signature* symt_new_function_signature(struct module* modul
     {
         sym->symt.tag = SymTagFunctionType;
         sym->rettype  = ret_type;
-        vector_init(&sym->vchildren, sizeof(struct symt*), 4);
+        vector_init(&sym->vchildren, sizeof(struct symt*), 0);
         sym->call_conv = call_conv;
         symt_add_type(module, &sym->symt);
     }

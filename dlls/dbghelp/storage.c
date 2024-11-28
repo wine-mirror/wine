@@ -74,10 +74,11 @@ WCHAR* pool_wcsdup(struct pool* pool, const WCHAR* str)
 void vector_init(struct vector* v, unsigned esz, unsigned bucket_sz)
 {
     v->buckets = NULL;
-    /* align size on DWORD boundaries */
-    v->elt_size = (esz + 3) & ~3;
+    /* align size */
+    v->elt_size = (esz + sizeof(void*) - 1) & ~(sizeof(void*) - 1);
     switch (bucket_sz)
     {
+    case    0: v->shift =  0; break; /* special case see below */
     case    2: v->shift =  1; break;
     case    4: v->shift =  2; break;
     case    8: v->shift =  3; break;
@@ -102,15 +103,44 @@ unsigned vector_length(const struct vector* v)
 
 void* vector_at(const struct vector* v, unsigned pos)
 {
-    unsigned o;
-
     if (pos >= v->num_elts) return NULL;
-    o = pos & ((1 << v->shift) - 1);
-    return (char*)v->buckets[pos >> v->shift] + o * v->elt_size;
+    if (v->shift)
+    {
+        unsigned o = pos & ((1 << v->shift) - 1);
+        return (char*)v->buckets[pos >> v->shift] + o * v->elt_size;
+    }
+    else
+    {
+        return (char*)v->buckets + pos * v->elt_size;
+    }
 }
 
 void* vector_add(struct vector* v, struct pool* pool)
 {
+    if (!v->shift)
+    {
+        if (v->num_elts == 1024)
+        {
+            /* we'll need a second bucket, so go directly for it */
+            void **new = pool_alloc(pool, 2 * sizeof(void*));
+            if (!new) return NULL;
+            *new = v->buckets;
+            v->buckets = new;
+            v->num_buckets = 1;
+            v->buckets_allocated = 2;
+            v->shift = 10;
+        }
+        else
+        {
+            if (!v->num_elts || !(v->num_elts & (v->num_elts - 1)))
+            {
+                void *new = pool_realloc(pool, v->buckets, (v->num_elts ? v->num_elts * 2 : 1) * v->elt_size);
+                if (!new) return NULL;
+                v->buckets = new;
+            }
+            return vector_at(v, v->num_elts++);
+        }
+    }
     if (v->num_elts == (v->num_buckets << v->shift))
     {
         if (v->num_buckets == v->buckets_allocated)
