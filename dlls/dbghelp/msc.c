@@ -3906,25 +3906,25 @@ static BOOL pdb_process_internal(const struct process *pcs,
                     files_image};
                 codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size, &cvmod, file_name);
 
-                if (SymGetOptions() & SYMOPT_LOAD_LINES)
+                if (sfile.lineno_size && sfile.lineno2_size)
+                    FIXME("Both line info present... preferring second\n");
+                if (sfile.lineno2_size)
                 {
-                    if (sfile.lineno_size && sfile.lineno2_size)
-                        FIXME("Both line info present... only supporting second\n");
-                    else if (sfile.lineno_size)
-                    {
-                        if (codeview_snarf_linetab(msc_dbg,
-                                                   modimage + sfile.symbol_size,
-                                                   sfile.lineno_size,
-                                                   pdb_file->kind == PDB_JG))
-                            *has_linenumber_info = TRUE;
-                    }
-                    else if (sfile.lineno2_size)
-                    {
-                        if (codeview_snarf_linetab2(msc_dbg, &cvmod))
-                            *has_linenumber_info = TRUE;
-                    }
+                    if (pdb_file->pdb_reader ||
+                        ((SymGetOptions() & SYMOPT_LOAD_LINES) && codeview_snarf_linetab2(msc_dbg, &cvmod)))
+                        *has_linenumber_info = TRUE;
                 }
-
+                else if (sfile.lineno_size)
+                {
+                    if (pdb_file->pdb_reader)
+                        FIXME("New PDB reader doesn't support old line format\n");
+                    else if ((SymGetOptions() & SYMOPT_LOAD_LINES) &&
+                             codeview_snarf_linetab(msc_dbg,
+                                                    modimage + sfile.symbol_size,
+                                                    sfile.lineno_size,
+                                                    pdb_file->kind == PDB_JG))
+                        *has_linenumber_info = TRUE;
+                }
                 pdb_free(modimage);
             }
             file_name += strlen(file_name) + 1;
