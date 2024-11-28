@@ -12802,18 +12802,27 @@ size_t __cdecl wcsrtombs(char *dst, const wchar_t **pstr, size_t n, mbstate_t *s
     char buffer[MB_LEN_MAX];
     size_t ret = 0;
 
+    if (state) *state = 0;
     src = *pstr;
 
     while (!dst || n > ret)
     {
         int len = _Wcrtomb( buffer, *src, state, NULL );
         if (len <= 0) return -1;
-        if (n < ret + len) break;
-        memcpy( dst + ret, buffer, len );
+        if (dst)
+        {
+            if (n < ret + len) break;
+            memcpy( dst + ret, buffer, len );
+        }
+        if (!buffer[0])
+        {
+            src = NULL;
+            break;
+        }
         ret += len;
-        if (!buffer[0]) break;
         src++;
     }
+    if (dst) *pstr = src;
     return ret;
 }
 #endif
