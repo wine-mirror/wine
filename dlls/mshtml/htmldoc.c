@@ -5829,13 +5829,36 @@ HRESULT create_document_node(nsIDOMDocument *nsdoc, GeckoBrowser *browser, HTMLI
     return S_OK;
 }
 
+static void DocumentFragment_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const DISPID document3_dispids[] = {
+        DISPID_IHTMLDOCUMENT3_ATTACHEVENT,
+        DISPID_IHTMLDOCUMENT3_DETACHEVENT,
+        DISPID_UNKNOWN
+    };
+
+    if(mode < COMPAT_MODE_IE9) {
+        HTMLDocumentNode_init_dispex_info(info, mode);
+        dispex_info_add_interface(info, IHTMLDocument4_tid, NULL);
+        dispex_info_add_interface(info, IHTMLDocument5_tid, NULL);
+    } else if(mode < COMPAT_MODE_IE11) {
+        dispex_info_add_dispids(info, IHTMLDocument3_tid, document3_dispids);
+    }
+}
+
+static const tid_t DocumentFragment_iface_tids[] = {
+    IHTMLDOMNode_tid,
+    IHTMLDOMNode2_tid,
+    IDocumentSelector_tid,
+    0
+};
 dispex_static_data_t DocumentFragment_dispex = {
     .id           = PROT_DocumentFragment,
     .prototype_id = PROT_Node,
     .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLDocument_tid,
-    .iface_tids   = HTMLDocumentNode_iface_tids,
-    .init_info    = HTMLDocumentNode_init_dispex_info,
+    .iface_tids   = DocumentFragment_iface_tids,
+    .init_info    = DocumentFragment_init_dispex_info,
 };
 
 static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node, HTMLDocumentNode **ret)

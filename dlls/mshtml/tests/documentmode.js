@@ -607,13 +607,32 @@ sync_test("docfrag_props", function() {
 
     function test_exposed(prop, expect) {
         if(expect)
-            ok(prop in docfrag, prop + " not found in document fragent.");
+            ok(prop in docfrag, prop + " not found in document fragment.");
         else
-            ok(!(prop in docfrag), prop + " found in document fragent.");
+            ok(!(prop in docfrag), prop + " found in document fragment.");
     }
 
     var v = document.documentMode;
 
+    test_exposed("attachEvent", v < 11);
+    test_exposed("detachEvent", v < 11);
+    test_exposed("createStyleSheet", v < 9);
+    test_exposed("fileSize", v < 9);
+    test_exposed("selection", v < 9);
+    test_exposed("doctype", v < 9);
+    test_exposed("onstorage", v < 9);
+    test_exposed("textContent", v >= 9);
+    test_exposed("prefix", v >= 9);
+    test_exposed("ownerDocument", true);
+    test_exposed("removeNode", true);
+    test_exposed("replaceNode", true);
+    test_exposed("swapNode", true);
+    test_exposed("defaultView", false);
+    test_exposed("head", false);
+    test_exposed("addEventListener", v >= 9);
+    test_exposed("removeEventListener", v >= 9);
+    test_exposed("dispatchEvent", v >= 9);
+    test_exposed("createEvent", false);
     test_exposed("compareDocumentPosition", v >= 9);
 });
 
@@ -3746,6 +3765,7 @@ sync_test("prototype props", function() {
         ["onpropertychange",11], ["onrowenter",11], ["onrowexit",11], ["onrowsdelete",11], ["onrowsinserted",11], "recalc", ["releaseEvents",11],
         "rootElement", "toString", ["visibilityState",10]
     ]);
+    check(DocumentFragment, [ ["attachEvent",9,10], ["detachEvent",9,10], "querySelector", "querySelectorAll", "removeNode", "replaceNode", "swapNode" ]);
     check(DocumentType, [ "entities", "internalSubset", "name", "notations", "publicId", "systemId" ]);
     check(Element, [
         "childElementCount", "clientHeight", "clientLeft", "clientTop", "clientWidth", ["fireEvent",9,10], "firstElementChild",

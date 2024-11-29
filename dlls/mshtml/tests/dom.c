@@ -103,6 +103,9 @@ static const char frameset_str[] =
 static const char emptydiv_str[] =
     "<html><head><title>emptydiv test</title></head>"
     "<body><div id=\"divid\"></div></body></html>";
+static const char emptydiv_ie9_str[] =
+    "<html><head><meta http-equiv=\"x-ua-compatible\" content=\"IE=9\"/><title>emptydiv test</title></head>"
+    "<body><div id=\"divid\"></div></body></html>";
 static const char noscript_str[] =
     "<html><head><title>noscript test</title><noscript><style>.body { margin-right: 0px; }</style></noscript></head>"
     "<body><noscript><div>test</div></noscript></body></html>";
@@ -11085,6 +11088,8 @@ static void test_docfrag(IHTMLDocument2 *doc)
     frag = create_docfrag(doc);
 
     test_disp((IUnknown*)frag, &DIID_DispHTMLDocument, &CLSID_HTMLDocument, L"[object]");
+    if(is_ie9plus)
+        test_ifaces((IUnknown*)frag, doc_node_iids);
 
     frag_body = (void*)0xdeadbeef;
     hres = IHTMLDocument2_get_body(frag, &frag_body);
@@ -11117,6 +11122,11 @@ static void test_docfrag(IHTMLDocument2 *doc)
     div = get_elem_by_id(doc, L"divid", TRUE);
     test_node_append_child_discard((IUnknown*)div, (IUnknown*)frag);
     IHTMLElement_Release(div);
+
+    if(compat_mode >= COMPAT_IE9) {
+        IHTMLDocument2_Release(frag);
+        return;
+    }
 
     hres = IHTMLDocument2_get_all(doc, &col);
     ok(hres == S_OK, "get_all failed: %08lx\n", hres);
@@ -12262,6 +12272,11 @@ START_TEST(dom)
     run_domtest(emptydiv_str, test_docfrag);
     run_domtest(doc_blank, test_replacechild_elems);
     run_domtest(doctype_str, test_doctype);
+    if(is_ie9plus) {
+        compat_mode = COMPAT_IE9;
+        run_domtest(emptydiv_ie9_str, test_docfrag);
+        compat_mode = COMPAT_NONE;
+    }
 
     test_quirks_mode();
     test_document_mode_lock();
