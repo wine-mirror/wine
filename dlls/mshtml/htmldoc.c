@@ -5708,6 +5708,9 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
 dispex_static_data_t Document_dispex = {
     .id           = PROT_Document,
     .prototype_id = PROT_Node,
+    .disp_tid     = DispHTMLDocument_tid,
+    .iface_tids   = HTMLDocumentNode_iface_tids,
+    .init_info    = HTMLDocumentNode_init_dispex_info,
 };
 
 dispex_static_data_t HTMLDocument_dispex = {
