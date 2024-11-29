@@ -62,6 +62,7 @@ typedef struct _iobuf
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #undef strncpy
 #undef wcsncpy
 
@@ -410,5 +411,22 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 #define COOPERATIVE_WAIT_TIMEOUT     ~0
 
 #define INHERIT_THREAD_PRIORITY 0xF000
+
+static inline int convert_acp_utf8_to_wcs(const char *str, wchar_t *wstr, int len)
+{
+    return MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, str, -1, wstr, len);
+}
+
+static inline wchar_t* wstrdupa_utf8(const char *str)
+{
+    int len = convert_acp_utf8_to_wcs(str, NULL, 0);
+    wchar_t *wstr;
+
+    if (!len) return NULL;
+    wstr = malloc(len * sizeof(wchar_t));
+    if (!wstr) return NULL;
+    convert_acp_utf8_to_wcs(str, wstr, len);
+    return wstr;
+}
 
 #endif /* __WINE_MSVCRT_H */

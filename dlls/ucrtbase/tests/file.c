@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <errno.h>
+#include <direct.h>
 #include <stdarg.h>
 #include <locale.h>
 #include <share.h>
@@ -216,10 +218,43 @@ static void test_fopen(void)
     setlocale(LC_ALL, "C");
 }
 
+static void test_utf8(void)
+{
+    const char dir[] = "dir\xc4\x99\xc5\x9b\xc4\x87";
+    const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
+
+    int ret;
+
+    if (!setlocale(LC_ALL, ".utf8"))
+    {
+        win_skip("utf-8 tests\n");
+        return;
+    }
+
+    ret = _mkdir(dir);
+    if (ret == -1 && errno == ENOENT)
+    {
+        skip("can't create test environment\n");
+        return;
+    }
+    ok(!ret, "_mkdir returned %d, error %d\n", ret, errno);
+
+    ret = _wrmdir(dirW);
+    todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wrmdir returned %d, errno %d\n", ret, errno);
+    if (ret)
+    {
+        ret = _rmdir(dir);
+        ok(!ret, "_rmdir returned %d, errno %d\n", ret, errno);
+    }
+
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(file)
 {
     test_std_stream_buffering();
     test_iobuf_layout();
     test_std_stream_open();
     test_fopen();
+    test_utf8();
 }

@@ -1004,10 +1004,13 @@ unsigned int CDECL _getdiskfree(unsigned int disk, struct _diskfree_t * d)
  */
 int CDECL _mkdir(const char * newdir)
 {
-  if (CreateDirectoryA(newdir,NULL))
-    return 0;
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    wchar_t *newdirW = NULL;
+    int ret;
+
+    if (newdir && !(newdirW = wstrdupa_utf8(newdir))) return -1;
+    ret = _wmkdir(newdirW);
+    free(newdirW);
+    return ret;
 }
 
 /*********************************************************************
