@@ -4209,7 +4209,6 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     bstr = NULL;
     hres = IHTMLDocument2_toString(doc, &bstr);
     ok(hres == S_OK, "toString failed: %08lx\n", hres);
-    todo_wine_if(document_mode >= 9)
     ok(!wcscmp(bstr, (document_mode < 9 ? L"[object]" : L"[object Document]")), "toString returned %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 

@@ -300,7 +300,7 @@ sync_test("builtin_toString", function() {
     if(clientRects) test("clientRect", clientRects[0], "ClientRect");
     if(clientRects) test("clientRects", clientRects, "ClientRectList");
     if(currentStyle) test("currentStyle", currentStyle, "MSCurrentStyleCSSProperties");
-    if(v >= 11 /* todo_wine */) test("document", document, v < 11 ? "Document" : "HTMLDocument");
+    test("document", document, v < 11 ? "Document" : "HTMLDocument");
     test("elements", document.getElementsByTagName("body"), "HTMLCollection");
     test("history", window.history, "History");
     test("implementation", document.implementation, "DOMImplementation");
@@ -675,6 +675,8 @@ sync_test("window_props", function() {
     test_exposed("performance", true);
     test_exposed("console", v >= 10);
     test_exposed("matchMedia", v >= 10);
+    test_exposed("Document", v >= 9);
+    test_exposed("HTMLDocument", v === 8 || v >= 11, v === 8);
     test_exposed("MutationObserver", v >= 11);
     test_exposed("PageTransitionEvent", v >= 11);
     test_exposed("ProgressEvent", v >= 10);
@@ -3481,11 +3483,13 @@ sync_test("prototypes", function() {
     check(Node.prototype, Object.prototype, "node prototype");
     check(sessionStorage, Storage.prototype, "storage");
     check(Storage.prototype, Object.prototype, "storage prototype");
-    if(v >= 11) {
+    if(v < 11)
+        check(document, Document.prototype, "html document");
+    else {
         check(document, HTMLDocument.prototype, "html document");
         check(HTMLDocument.prototype, Document.prototype, "html document prototype");
-        check(Document.prototype, Node.prototype, "document prototype");
     }
+    check(Document.prototype, Node.prototype, "document prototype");
     check(window, Window.prototype, "window");
     check(Window.prototype, Object.prototype, "window prototype");
     check(new XMLHttpRequest(), XMLHttpRequest.prototype, "xhr");

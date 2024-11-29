@@ -5532,13 +5532,17 @@ static HRESULT HTMLDocumentNode_get_prop_desc(DispatchEx *dispex, DISPID id, str
     return S_OK;
 }
 
-static HTMLInnerWindow *HTMLDocumentNode_get_script_global(DispatchEx *dispex)
+static HTMLInnerWindow *HTMLDocumentNode_get_script_global(DispatchEx *dispex, dispex_static_data_t **dispex_data)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
 
     TRACE("(%p) using %u compat mode\n", This, This->document_mode);
 
     lock_document_mode(This);
+    if(This->node.vtbl != &HTMLDocumentNodeImplVtbl)
+        *dispex_data = &DocumentFragment_dispex;
+    else
+        *dispex_data = This->document_mode < COMPAT_MODE_IE11 ? &Document_dispex : &HTMLDocument_dispex;
     return This->script_global;
 }
 
@@ -5708,6 +5712,7 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
 dispex_static_data_t Document_dispex = {
     .id           = PROT_Document,
     .prototype_id = PROT_Node,
+    .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLDocument_tid,
     .iface_tids   = HTMLDocumentNode_iface_tids,
     .init_info    = HTMLDocumentNode_init_dispex_info,
@@ -5720,6 +5725,7 @@ dispex_static_data_t HTMLDocument_dispex = {
     .disp_tid     = DispHTMLDocument_tid,
     .iface_tids   = HTMLDocumentNode_iface_tids,
     .init_info    = HTMLDocumentNode_init_dispex_info,
+    .min_compat_mode = COMPAT_MODE_IE11,
 };
 
 static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindow *window, HTMLInnerWindow *script_global)

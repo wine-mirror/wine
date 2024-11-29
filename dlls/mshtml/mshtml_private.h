@@ -351,6 +351,7 @@ typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 
 typedef struct DispatchEx DispatchEx;
 typedef struct nsCycleCollectionTraversalCallback nsCycleCollectionTraversalCallback;
+typedef struct dispex_static_data_t dispex_static_data_t;
 
 typedef struct {
     UINT_PTR x;
@@ -402,7 +403,7 @@ typedef struct {
     HRESULT (*disp_invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
 
     /* Used by objects that want to delay their compat mode initialization until actually needed */
-    HTMLInnerWindow *(*get_script_global)(DispatchEx*);
+    HTMLInnerWindow *(*get_script_global)(DispatchEx*,dispex_static_data_t**);
 
     /* Used by objects that want to populate some dynamic props on initialization */
     HRESULT (*populate_props)(DispatchEx*);
@@ -510,7 +511,7 @@ typedef enum {
     PROT_LAST,
 } prototype_id_t;
 
-typedef struct {
+struct dispex_static_data_t {
     const char *name;
     const dispex_static_data_vtbl_t *vtbl;
     const tid_t disp_tid;
@@ -527,7 +528,7 @@ typedef struct {
     compat_mode_t min_compat_mode;
     compat_mode_t max_compat_mode;
     char prototype_name[64];
-} dispex_static_data_t;
+};
 
 #define X(name) extern dispex_static_data_t name ## _dispex;
 ALL_PROTOTYPES
