@@ -3760,14 +3760,12 @@ static void test_zero_access(void)
     h1 = OpenDesktopA( "default", 0, TRUE, 0 );
     ok( h1 != 0, "OpenDesktopA failed %lu\n", GetLastError() );
     NtQueryObject( h1, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL );
-    todo_wine
     ok( obj_info.GrantedAccess == (DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS),
         "wrong access %lx\n", obj_info.GrantedAccess );
     CloseDesktop( h1 );
     h1 = OpenDesktopA( "default", 0, TRUE, DESKTOP_CREATEWINDOW );
     ok( h1 != 0, "OpenDesktopA failed %lu\n", GetLastError() );
     NtQueryObject( h1, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL );
-    todo_wine
     ok( obj_info.GrantedAccess == (DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS | DESKTOP_CREATEWINDOW),
         "wrong access %lx\n", obj_info.GrantedAccess );
     CloseDesktop( h1 );
@@ -3778,14 +3776,12 @@ static void test_zero_access(void)
     h1 = OpenInputDesktop( 0, FALSE, 0 );
     ok( h1 != 0, "OpenInputDesktop failed %lu\n", GetLastError() );
     NtQueryObject( h1, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL );
-    todo_wine
     ok( obj_info.GrantedAccess == (DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS),
         "wrong access %lx\n", obj_info.GrantedAccess );
     CloseDesktop( h1 );
     h1 = OpenInputDesktop( 0, FALSE, DESKTOP_ENUMERATE );
     ok( h1 != 0, "OpenInputDesktop failed %lu\n", GetLastError() );
     NtQueryObject( h1, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL );
-    todo_wine
     ok( obj_info.GrantedAccess == (DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS | DESKTOP_ENUMERATE),
         "wrong access %lx\n", obj_info.GrantedAccess );
     CloseDesktop( h1 );

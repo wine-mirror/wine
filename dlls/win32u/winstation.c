@@ -486,11 +486,15 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
 HDESK WINAPI NtUserOpenDesktop( OBJECT_ATTRIBUTES *attr, DWORD flags, ACCESS_MASK access )
 {
     HANDLE ret = 0;
+
+    access |= DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS;
+
     if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
     {
         RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+
     SERVER_START_REQ( open_desktop )
     {
         req->winsta     = wine_server_obj_handle( attr->RootDirectory );
@@ -572,6 +576,8 @@ HDESK WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK acce
     HANDLE ret = 0;
 
     TRACE( "(%x,%i,%x)\n", (int)flags, inherit, (int)access );
+
+    access |= DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS;
 
     if (flags)
         FIXME( "partial stub flags %08x\n", (int)flags );
