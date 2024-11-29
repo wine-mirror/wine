@@ -1790,6 +1790,7 @@ static UINT get_firmware_table( DWORD provider, SYSTEM_FIRMWARE_TABLE_ACTION act
 {
     SYSTEM_FIRMWARE_TABLE_INFORMATION *info;
     ULONG buffer_size = offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer ) + size;
+    NTSTATUS status;
 
     if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, buffer_size )))
     {
@@ -1801,13 +1802,13 @@ static UINT get_firmware_table( DWORD provider, SYSTEM_FIRMWARE_TABLE_ACTION act
     info->Action = action;
     info->TableID = id;
 
-    set_ntstatus( NtQuerySystemInformation( SystemFirmwareTableInformation,
-                                            info, buffer_size, &buffer_size ));
+    status = NtQuerySystemInformation( SystemFirmwareTableInformation, info, buffer_size, &buffer_size );
+    set_ntstatus(status);
     buffer_size -= offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer );
     if (buffer_size <= size) memcpy( buffer, info->TableBuffer, buffer_size );
 
     HeapFree( GetProcessHeap(), 0, info );
-    return buffer_size;
+    return NT_SUCCESS(status) || status == STATUS_BUFFER_TOO_SMALL ? buffer_size : 0;
 }
 
 /***********************************************************************
