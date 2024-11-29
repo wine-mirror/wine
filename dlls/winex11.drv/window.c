@@ -1593,6 +1593,9 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
     if (rect.right == old_rect.right && rect.bottom == old_rect.bottom) flags |= SWP_NOSIZE;
     else if (IsRectEmpty( &rect )) flags |= SWP_NOSIZE;
 
+    /* don't sync win32 position for offscreen windows */
+    if (!is_window_rect_mapped( &new_rect )) flags |= SWP_NOMOVE;
+
     if ((flags & (SWP_NOSIZE | SWP_NOMOVE)) == (SWP_NOSIZE | SWP_NOMOVE)) return 0;
 
     /* avoid event feedback loops from window rect adjustments of maximized / fullscreen windows */
