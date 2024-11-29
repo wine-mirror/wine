@@ -239,6 +239,11 @@ static void test_utf8(void)
     }
     ok(!ret, "_mkdir returned %d, error %d\n", ret, errno);
 
+    ret = _chdir(dir);
+    ok(!ret, "_chdir returned %d, error %d\n", ret, errno);
+    ret = _chdir("..");
+    ok(!ret, "_chdir returned %d, error %d\n", ret, errno);
+
     ret = _wrmdir(dirW);
     todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wrmdir returned %d, errno %d\n", ret, errno);
     if (ret)

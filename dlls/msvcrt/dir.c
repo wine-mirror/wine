@@ -274,12 +274,13 @@ static void msvcrt_wfttofd64i32( const WIN32_FIND_DATAW *fd, struct _wfinddata64
  */
 int CDECL _chdir(const char * newdir)
 {
-  if (!SetCurrentDirectoryA(newdir))
-  {
-    msvcrt_set_errno(newdir?GetLastError():0);
-    return -1;
-  }
-  return 0;
+    wchar_t *newdirW = NULL;
+    int ret;
+
+    if (newdir && !(newdirW = wstrdupa_utf8(newdir))) return -1;
+    ret = _wchdir(newdirW);
+    free(newdirW);
+    return ret;
 }
 
 /*********************************************************************
