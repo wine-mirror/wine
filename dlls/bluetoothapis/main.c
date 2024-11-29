@@ -22,12 +22,24 @@
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
+#include <winuser.h>
+#include <winreg.h>
 
 #include "wine/debug.h"
 #include "bthsdpdef.h"
 #include "bluetoothapis.h"
+#include "setupapi.h"
+
+#include "initguid.h"
+#include "bthdef.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bluetoothapis);
+
+struct bluetooth_find_radio_handle
+{
+    HDEVINFO devinfo;
+    DWORD idx;
+};
 
 /*********************************************************************
  *  BluetoothFindFirstDevice
@@ -43,22 +55,69 @@ HBLUETOOTH_DEVICE_FIND WINAPI BluetoothFindFirstDevice(BLUETOOTH_DEVICE_SEARCH_P
 /*********************************************************************
  *  BluetoothFindFirstRadio
  */
-HBLUETOOTH_RADIO_FIND WINAPI BluetoothFindFirstRadio(BLUETOOTH_FIND_RADIO_PARAMS *params, HANDLE *radio)
+HBLUETOOTH_RADIO_FIND WINAPI BluetoothFindFirstRadio( BLUETOOTH_FIND_RADIO_PARAMS *params, HANDLE *radio )
 {
-    FIXME("(%p %p): stub!\n", params, radio);
-    *radio = NULL;
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    struct bluetooth_find_radio_handle *find;
+    HANDLE device_ret;
+    DWORD err;
+
+    TRACE( "(%p, %p)\n", params, radio );
+
+    if (!params)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    if (params->dwSize != sizeof( *params ))
+    {
+        SetLastError( ERROR_REVISION_MISMATCH );
+        return NULL;
+    }
+    if (!(find = calloc( 1, sizeof( *find ) )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return NULL;
+    }
+
+    find->devinfo = SetupDiGetClassDevsW( &GUID_BTHPORT_DEVICE_INTERFACE, NULL, NULL,
+                                          DIGCF_PRESENT | DIGCF_DEVICEINTERFACE );
+    if (find->devinfo == INVALID_HANDLE_VALUE)
+    {
+        free( find );
+        return NULL;
+    }
+
+    if (BluetoothFindNextRadio( find, &device_ret ))
+    {
+        *radio = device_ret;
+        return find;
+    }
+
+    err = GetLastError();
+    BluetoothFindRadioClose( find );
+    SetLastError( err );
     return NULL;
 }
 
 /*********************************************************************
  *  BluetoothFindRadioClose
  */
-BOOL WINAPI BluetoothFindRadioClose(HBLUETOOTH_RADIO_FIND find)
+BOOL WINAPI BluetoothFindRadioClose( HBLUETOOTH_RADIO_FIND find_handle )
 {
-    FIXME("(%p): stub!\n", find);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    struct bluetooth_find_radio_handle *find = find_handle;
+
+    TRACE( "(%p)\n", find_handle );
+
+    if (!find_handle)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    SetupDiDestroyDeviceInfoList( find->devinfo );
+    free( find );
+    SetLastError( ERROR_SUCCESS );
+    return TRUE;
 }
 
 /*********************************************************************
@@ -74,11 +133,45 @@ BOOL WINAPI BluetoothFindDeviceClose(HBLUETOOTH_DEVICE_FIND find)
 /*********************************************************************
  *  BluetoothFindNextRadio
  */
-BOOL WINAPI BluetoothFindNextRadio(HBLUETOOTH_RADIO_FIND find, HANDLE *radio)
+BOOL WINAPI BluetoothFindNextRadio( HBLUETOOTH_RADIO_FIND find_handle, HANDLE *radio )
 {
-    FIXME("(%p, %p): stub!\n", find, radio);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof( WCHAR )];
+    struct bluetooth_find_radio_handle *find = find_handle;
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)buffer;
+    SP_DEVICE_INTERFACE_DATA iface_data;
+    HANDLE device_ret;
+    BOOL found;
+
+    TRACE( "(%p, %p)\n", find_handle, radio );
+
+    if (!find_handle)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    iface_detail->cbSize = sizeof( *iface_detail );
+    iface_data.cbSize = sizeof( iface_data );
+    found = FALSE;
+    while (SetupDiEnumDeviceInterfaces( find->devinfo, NULL, &GUID_BTHPORT_DEVICE_INTERFACE, find->idx++,
+                                        &iface_data ))
+    {
+        if (!SetupDiGetDeviceInterfaceDetailW( find->devinfo, &iface_data, iface_detail, sizeof( buffer ), NULL,
+                                               NULL ))
+            continue;
+        device_ret = CreateFileW( iface_detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+        if (device_ret != INVALID_HANDLE_VALUE)
+        {
+            found = TRUE;
+            break;
+        }
+    }
+
+    if (found)
+        *radio = device_ret;
+
+    return found;
 }
 
 /*********************************************************************

@@ -40,8 +40,8 @@ void test_BluetoothFindFirstRadio( void )
     find = BluetoothFindFirstRadio( NULL, &radio );
     ok( !find, "Expected %p to be NULL\n", find );
     err = GetLastError();
-    todo_wine ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
-    todo_wine ok( radio == dummy, "%p != %p\n", radio, dummy );
+    ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
+    ok( radio == dummy, "%p != %p\n", radio, dummy );
 
     radio = dummy;
     find_params.dwSize = 0;
@@ -49,19 +49,19 @@ void test_BluetoothFindFirstRadio( void )
     find = BluetoothFindFirstRadio( &find_params, &radio );
     ok( !find, "Expected %p to be NULL\n", find );
     err = GetLastError();
-    todo_wine ok( err == ERROR_REVISION_MISMATCH, "%lu != %d\n", err, ERROR_REVISION_MISMATCH );
-    todo_wine ok( radio == dummy, "%p != %p\n", radio, dummy );
+    ok( err == ERROR_REVISION_MISMATCH, "%lu != %d\n", err, ERROR_REVISION_MISMATCH );
+    ok( radio == dummy, "%p != %p\n", radio, dummy );
 
     find_params.dwSize = sizeof( find_params );
     SetLastError( 0xdeadbeef );
     find = BluetoothFindFirstRadio( &find_params, &radio );
     err = GetLastError();
     exp = find ? ERROR_SUCCESS : ERROR_NO_MORE_ITEMS;
-    todo_wine ok( err == exp, "%lu != %lu\n", err, exp );
+    ok( err == exp, "%lu != %lu\n", err, exp );
     if (find)
     {
         CloseHandle( radio );
-        todo_wine ok( BluetoothFindRadioClose( find ), "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
+        ok( BluetoothFindRadioClose( find ), "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
     }
 }
 
@@ -85,10 +85,10 @@ void test_BluetoothFindNextRadio( void )
     radio = dummy;
     SetLastError( 0xdeadbeef );
     ret = BluetoothFindNextRadio( NULL, &radio );
-    todo_wine ok( !ret, "Expected BluetoothFindNextRadio to return FALSE\n" );
+    ok( !ret, "Expected BluetoothFindNextRadio to return FALSE\n" );
     err = GetLastError();
-    todo_wine ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
-    todo_wine ok( radio == dummy, "%p != %p\n", radio, dummy );
+    ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
+    ok( radio == dummy, "%p != %p\n", radio, dummy );
 
     for(;;)
     {
@@ -97,12 +97,12 @@ void test_BluetoothFindNextRadio( void )
         if (!ret)
         {
             err = GetLastError();
-            todo_wine ok( err == ERROR_NO_MORE_ITEMS, "%lu != %d\n", err, ERROR_NO_MORE_ITEMS );
+            ok( err == ERROR_NO_MORE_ITEMS, "%lu != %d\n", err, ERROR_NO_MORE_ITEMS );
             break;
         }
         CloseHandle( radio );
     }
-    todo_wine ok( BluetoothFindRadioClose( find ), "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
+    ok( BluetoothFindRadioClose( find ), "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
 }
 
 void test_BluetoothFindRadioClose( void )
@@ -112,7 +112,7 @@ void test_BluetoothFindRadioClose( void )
     SetLastError( 0xdeadbeef );
     ok( !BluetoothFindRadioClose( NULL ), "Expected BluetoothFindRadioClose to return FALSE\n" );
     err = GetLastError();
-    todo_wine ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
+    ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
 }
 
 START_TEST( radio )
