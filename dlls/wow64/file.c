@@ -414,6 +414,26 @@ NTSTATUS WINAPI wow64_NtFlushBuffersFile( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtFlushBuffersFileEx
+ */
+NTSTATUS WINAPI wow64_NtFlushBuffersFileEx( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG flags = get_ulong( &args );
+    void *params = get_ptr( &args );
+    ULONG size = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtFlushBuffersFileEx( handle, flags, params, size, iosb_32to64( &io, io32 ) );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtFsControlFile
  */
 NTSTATUS WINAPI wow64_NtFsControlFile( UINT *args )
