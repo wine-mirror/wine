@@ -1043,10 +1043,13 @@ int CDECL _wmkdir(const wchar_t* newdir)
  */
 int CDECL _rmdir(const char * dir)
 {
-  if (RemoveDirectoryA(dir))
-    return 0;
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    wchar_t *dirW = NULL;
+    int ret;
+
+    if (dir && !(dirW = wstrdupa_utf8(dir))) return -1;
+    ret = _wrmdir(dirW);
+    free(dirW);
+    return ret;
 }
 
 /*********************************************************************
