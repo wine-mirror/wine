@@ -2178,7 +2178,11 @@ DECL_HANDLER(create_key)
             key->classlen = (key->classlen / sizeof(WCHAR)) * sizeof(WCHAR);
             if (!(key->class = memdup( class, key->classlen ))) key->classlen = 0;
         }
-        reply->hkey = alloc_handle( current->process, key, access, objattr->attributes );
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->hkey = alloc_handle( current->process, key, access, objattr->attributes );
+        else
+            reply->hkey = alloc_handle_no_access_check( current->process, key,
+                                                        access, objattr->attributes );
         release_object( key );
     }
     if (parent) release_object( parent );

@@ -165,8 +165,6 @@ struct object *create_symlink( struct object *root, const struct unicode_str *na
             return NULL;
         }
     }
-    else clear_error();
-
     return &symlink->obj;
 }
 
@@ -212,7 +210,14 @@ DECL_HANDLER(create_symlink)
 
     if ((symlink = create_symlink( root, &name, objattr->attributes, &target, sd )))
     {
-        reply->handle = alloc_handle( current->process, symlink, req->access, objattr->attributes );
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+        {
+            clear_error();
+            reply->handle = alloc_handle( current->process, symlink, req->access, objattr->attributes );
+        }
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, symlink,
+                                                          req->access, objattr->attributes );
         release_object( symlink );
     }
 
