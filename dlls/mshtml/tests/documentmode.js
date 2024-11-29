@@ -3751,19 +3751,15 @@ sync_test("prototype props", function() {
         "scripts", "security", ["selection",9,10], "styleSheets", "swapNode", "title", "uniqueID", "updateSettings", ["visibilityState",10],
         "vlinkColor", "write", "writeln", "xmlEncoding", "xmlStandalone", "xmlVersion"
     ], [
-        ["captureEvents",11], ["clear",9,9], "createDocumentFromUrl", ["createEventObject",11], "createNodeIterator", "createRange",
-        "createRenderStyle", "createTreeWalker", "expando", ["fireEvent",11], ["hidden",10], "msCapsLockWarningOff",
+        ["captureEvents",11], "createNodeIterator", "createRange", "createTreeWalker", ["hidden",10], "msCapsLockWarningOff",
         ["msCSSOMElementFloatMetrics",10], ["msElementsFromPoint",10], ["msElementsFromRect",10], ["msExitFullscreen",11],
-        ["msFullscreenElement",11], ["msFullscreenEnabled",11], ["msHidden",10], ["msVisibilityState",10], ["namespaces",10],
-        ["onafterupdate",11], ["onbeforeeditfocus",11], ["onbeforeupdate",11], ["oncellchange",11], ["oncontrolselect",11],
-        ["ondataavailable",11], ["ondatasetchanged",11], ["ondatasetcomplete",11], ["onerrorupdate",11], ["onmscontentzoom",10],
+        ["msFullscreenElement",11], ["msFullscreenEnabled",11], ["msHidden",10], ["msVisibilityState",10], ["onmscontentzoom",10],
         ["onmsfullscreenchange",11], ["onmsfullscreenerror",11], ["onmsgesturechange",10], ["onmsgesturedoubletap",10], ["onmsgestureend",10],
         ["onmsgesturehold",10], ["onmsgesturestart",10], ["onmsgesturetap",10], ["onmsinertiastart",10], ["onmsmanipulationstatechanged",10],
         ["onmspointercancel",10], ["onmspointerdown",10], ["onmspointerenter",11], ["onmspointerhover",10,10], ["onmspointerleave",11],
         ["onmspointermove",10], ["onmspointerout",10], ["onmspointerover",10], ["onmspointerup",10], ["onpointercancel",11], ["onpointerdown",11],
         ["onpointerenter",11], ["onpointerleave",11], ["onpointermove",11], ["onpointerout",11], ["onpointerover",11], ["onpointerup",11],
-        ["onpropertychange",11], ["onrowenter",11], ["onrowexit",11], ["onrowsdelete",11], ["onrowsinserted",11], "recalc", ["releaseEvents",11],
-        "rootElement", "toString", ["visibilityState",10]
+        ["releaseEvents",11], "rootElement", ["visibilityState",10]
     ]);
     check(DocumentFragment, [ ["attachEvent",9,10], ["detachEvent",9,10], "querySelector", "querySelectorAll", "removeNode", "replaceNode", "swapNode" ]);
     check(DocumentType, [ "entities", "internalSubset", "name", "notations", "publicId", "systemId" ]);

@@ -5659,7 +5659,6 @@ static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
 
 static const tid_t HTMLDocumentNode_iface_tids[] = {
     IHTMLDOMNode_tid,
-    IHTMLDocument4_tid,
     IHTMLDocument5_tid,
     IDocumentSelector_tid,
     0
@@ -5667,24 +5666,67 @@ static const tid_t HTMLDocumentNode_iface_tids[] = {
 
 static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
-    static const dispex_hook_t document2_hooks[] = {
+    static const dispex_hook_t document2_ie9_hooks[] = {
+        {DISPID_IHTMLDOCUMENT2_CLEAR},
+        {DISPID_IHTMLDOCUMENT2_EXPANDO},
+        {DISPID_IHTMLDOCUMENT2_TOSTRING},
         {DISPID_IHTMLDOCUMENT2_URL,      NULL, L"URL"},
         {DISPID_IHTMLDOCUMENT2_LOCATION, HTMLDocumentNode_location_hook},
         {DISPID_UNKNOWN}
     };
     static const dispex_hook_t document2_ie11_hooks[] = {
-        {DISPID_IHTMLDOCUMENT2_URL,              NULL, L"URL"},
-        {DISPID_IHTMLDOCUMENT2_LOCATION,         HTMLDocumentNode_location_hook},
-        {DISPID_IHTMLDOCUMENT2_CREATESTYLESHEET, NULL},
-        {DISPID_IHTMLDOCUMENT2_FILESIZE,         NULL},
-        {DISPID_IHTMLDOCUMENT2_SELECTION,        NULL},
+        {DISPID_IHTMLDOCUMENT2_CREATESTYLESHEET},
+        {DISPID_IHTMLDOCUMENT2_FILESIZE},
+        {DISPID_IHTMLDOCUMENT2_SELECTION},
+        {DISPID_IHTMLDOCUMENT2_ONAFTERUPDATE},
+        {DISPID_IHTMLDOCUMENT2_ONROWEXIT},
+        {DISPID_IHTMLDOCUMENT2_ONROWENTER},
+        {DISPID_IHTMLDOCUMENT2_ONBEFOREUPDATE},
+        {DISPID_IHTMLDOCUMENT2_ONERRORUPDATE},
+
+        /* IE10+ */
+        {DISPID_IHTMLDOCUMENT2_EXPANDO},
+        {DISPID_IHTMLDOCUMENT2_TOSTRING},
+
+        /* all modes */
+        {DISPID_IHTMLDOCUMENT2_URL,      NULL, L"URL"},
+        {DISPID_IHTMLDOCUMENT2_LOCATION, HTMLDocumentNode_location_hook},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const document2_ie10_hooks = document2_ie11_hooks + 8;
+    const dispex_hook_t *const document2_hooks      = document2_ie10_hooks + 2;
     static const dispex_hook_t document3_ie11_hooks[] = {
-        {DISPID_IHTMLDOCUMENT3_ATTACHEVENT, NULL},
-        {DISPID_IHTMLDOCUMENT3_DETACHEVENT, NULL},
+        {DISPID_IHTMLDOCUMENT3_ATTACHEVENT},
+        {DISPID_IHTMLDOCUMENT3_DETACHEVENT},
+        {DISPID_IHTMLDOCUMENT3_ONROWSDELETE},
+        {DISPID_IHTMLDOCUMENT3_ONROWSINSERTED},
+        {DISPID_IHTMLDOCUMENT3_ONCELLCHANGE},
+        {DISPID_IHTMLDOCUMENT3_ONDATASETCHANGED},
+        {DISPID_IHTMLDOCUMENT3_ONDATAAVAILABLE},
+        {DISPID_IHTMLDOCUMENT3_ONDATASETCOMPLETE},
+        {DISPID_IHTMLDOCUMENT3_ONPROPERTYCHANGE},
+        {DISPID_IHTMLDOCUMENT3_ONBEFOREEDITFOCUS},
+
+        /* IE9+ */
+        {DISPID_IHTMLDOCUMENT3_RECALC},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const document3_ie9_hooks = document3_ie11_hooks + 10;
+    static const dispex_hook_t document4_ie11_hooks[] = {
+        {DISPID_IHTMLDOCUMENT4_CREATEEVENTOBJECT},
+        {DISPID_IHTMLDOCUMENT4_FIREEVENT},
+        {DISPID_IHTMLDOCUMENT4_ONCONTROLSELECT},
+
+        /* IE10+ */
+        {DISPID_IHTMLDOCUMENT4_NAMESPACES},
+
+        /* IE9+ */
+        {DISPID_IHTMLDOCUMENT4_CREATEDOCUMENTFROMURL},
+        {DISPID_IHTMLDOCUMENT4_CREATERENDERSTYLE},
+        {DISPID_UNKNOWN}
+    };
+    const dispex_hook_t *const document4_ie10_hooks = document4_ie11_hooks + 3;
+    const dispex_hook_t *const document4_ie9_hooks  = document4_ie10_hooks + 1;
     static const dispex_hook_t document6_ie9_hooks[] = {
         {DISPID_IHTMLDOCUMENT6_ONSTORAGE},
         {DISPID_UNKNOWN}
@@ -5704,9 +5746,15 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
         dispex_info_add_interface(info, IHTMLDocument6_tid, NULL);
     }else {
         dispex_info_add_interface(info, IHTMLDocument6_tid, mode >= COMPAT_MODE_IE9 ? document6_ie9_hooks : NULL);
-        dispex_info_add_interface(info, IHTMLDocument3_tid, mode >= COMPAT_MODE_IE11 ? document3_ie11_hooks : NULL);
+        dispex_info_add_interface(info, IHTMLDocument3_tid, mode >= COMPAT_MODE_IE11 ? document3_ie11_hooks :
+                                                            mode >= COMPAT_MODE_IE9  ? document3_ie9_hooks  : NULL);
     }
-    dispex_info_add_interface(info, IHTMLDocument2_tid, mode >= COMPAT_MODE_IE11 ? document2_ie11_hooks : document2_hooks);
+    dispex_info_add_interface(info, IHTMLDocument2_tid, mode >= COMPAT_MODE_IE11 ? document2_ie11_hooks :
+                                                        mode >= COMPAT_MODE_IE10 ? document2_ie10_hooks :
+                                                        mode >= COMPAT_MODE_IE9  ? document2_ie9_hooks  : document2_hooks);
+    dispex_info_add_interface(info, IHTMLDocument4_tid, mode >= COMPAT_MODE_IE11 ? document4_ie11_hooks :
+                                                        mode >= COMPAT_MODE_IE10 ? document4_ie10_hooks :
+                                                        mode >= COMPAT_MODE_IE9  ? document4_ie9_hooks  : NULL);
 }
 
 dispex_static_data_t Document_dispex = {
@@ -5839,7 +5887,6 @@ static void DocumentFragment_init_dispex_info(dispex_data_t *info, compat_mode_t
 
     if(mode < COMPAT_MODE_IE9) {
         HTMLDocumentNode_init_dispex_info(info, mode);
-        dispex_info_add_interface(info, IHTMLDocument4_tid, NULL);
         dispex_info_add_interface(info, IHTMLDocument5_tid, NULL);
     } else if(mode < COMPAT_MODE_IE11) {
         dispex_info_add_dispids(info, IHTMLDocument3_tid, document3_dispids);
