@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 #include <limits.h>
+#include <locale.h>
+#include <wchar.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -119,6 +121,8 @@ static void (__thiscall *p_range_error_dtor)(range_error*);
 static logic_error* (__thiscall *p_logic_error_ctor_bstr)(logic_error*, const basic_string_char*);
 static void (__thiscall *p_logic_error_dtor)(logic_error*);
 static const char *(__thiscall *p_logic_error_what)(logic_error*);
+
+size_t (__cdecl *p_wcsrtombs)(char*, const wchar_t**, size_t, mbstate_t*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -365,6 +369,8 @@ static BOOL init(void)
         SET(p_logic_error_what,
                 "?what@logic_error@std@@UBEPBDXZ");
     }
+
+    SET(p_wcsrtombs, "wcsrtombs");
 
     init_thiscall_thunk();
     return TRUE;
@@ -756,6 +762,87 @@ static void test_basic_string_wchar_swap(void) {
     call_func1(p_basic_string_wchar_dtor, &str2);
 }
 
+static void test_wcsrtombs(void)
+{
+    const wchar_t test_str1[] = L"\x3042";
+    const wchar_t test_str2[] = L"\x3042\x3043";
+    const wchar_t *wstr;
+    mbstate_t state;
+    char buf[16];
+    size_t ret;
+
+    if (!setlocale(LC_ALL, "Japanese_Japan.932"))
+    {
+        win_skip("wcrtomb tests\n");
+        return;
+    }
+
+    wstr = test_str1;
+    ret = p_wcsrtombs(NULL, &wstr, 0, NULL);
+    ok(ret == 2, "wcsrtomb returned %Id\n", ret);
+    ok(wstr == test_str1, "wstr = %p, expected %p\n", wstr, test_str1);
+
+    wstr = test_str1;
+    state = 0xdeadbeef;
+    ret = p_wcsrtombs(NULL, &wstr, 0, &state);
+    ok(ret == 2, "wcsrtomb returned %Id\n", ret);
+    ok(!state, "state = %d\n", state);
+    ok(wstr == test_str1, "wstr = %p, expected %p\n", wstr, test_str1);
+
+    buf[0] = 'x';
+    ret = p_wcsrtombs(buf, &wstr, 0, &state);
+    ok(!ret, "wcsrtomb returned %Id\n", ret);
+    ok(!state, "state = %d\n", state);
+    ok(buf[0] == 'x', "buf[0] = %x\n", buf[0]);
+
+    ret = p_wcsrtombs(buf, &wstr, 1, &state);
+    ok(!ret, "wcsrtomb returned %Id\n", ret);
+    ok(!state, "state = %d\n", state);
+    ok(buf[0] == 'x', "buf[0] = %x\n", buf[0]);
+
+    ret = p_wcsrtombs(buf, &wstr, 2, &state);
+    ok(ret == 2, "wcsrtomb returned %Id\n", ret);
+    ok(!memcmp(buf, "\x82\xa0", 2), "buf = %s\n", debugstr_an(buf, 2));
+    ok(!state, "state = %d\n", state);
+    ok(wstr == test_str1 + 1, "wstr = %p, expected %p\n", wstr, test_str1 + 1);
+
+    wstr = test_str2;
+    state = 0xdeadbeef;
+    ret = p_wcsrtombs(NULL, &wstr, 0, &state);
+    ok(ret == 4, "wcsrtomb returned %Id\n", ret);
+    ok(!state, "state = %d\n", state);
+    ok(wstr == test_str2, "wstr = %p, expected %p\n", wstr, test_str2);
+
+    buf[0] = 'x';
+    ret = p_wcsrtombs(buf, &wstr, 1, &state);
+    ok(!ret, "wcsrtomb returned %Id\n", ret);
+    ok(!state, "state = %d\n", state);
+    ok(buf[0] == 'x', "buf[0] = %x\n", buf[0]);
+
+    ret = p_wcsrtombs(buf, &wstr, 2, &state);
+    ok(ret == 2, "wcsrtomb returned %Id\n", ret);
+    ok(!memcmp(buf, "\x82\xa0", 2), "buf = %s\n", debugstr_an(buf, 2));
+    ok(!state, "state = %d\n", state);
+    ok(wstr == test_str2 + 1, "wstr = %p, expected %p\n", wstr, test_str2 + 1);
+
+    wstr = test_str2;
+    ret = p_wcsrtombs(buf, &wstr, 4, &state);
+    ok(ret == 4, "wcsrtomb returned %Id\n", ret);
+    ok(!memcmp(buf, "\x82\xa0\x82\xa1", 4), "buf = %s\n", debugstr_an(buf, 4));
+    ok(!state, "state = %d\n", state);
+    ok(wstr == test_str2 + 2, "wstr = %p, expected %p\n", wstr, test_str2 + 2);
+
+    buf[5] = 'x';
+    wstr = test_str2;
+    ret = p_wcsrtombs(buf, &wstr, 16, &state);
+    ok(ret == 4, "wcsrtomb returned %Id\n", ret);
+    ok(!memcmp(buf, "\x82\xa0\x82\xa1", 5), "buf = %s\n", debugstr_an(buf, 5));
+    ok(!state, "state = %d\n", state);
+    ok(!wstr, "wstr = %p, expected NULL\n", wstr);
+
+    setlocale(LC_ALL, "C");
+}
+
 static void test_exception(void)
 {
     const char *name = "test";
@@ -824,7 +911,7 @@ START_TEST(string)
     test_basic_string_char_replace();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
-
+    test_wcsrtombs();
     test_exception();
 
     FreeLibrary(msvcp);
