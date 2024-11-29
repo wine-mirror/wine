@@ -32,6 +32,7 @@
 #include "wincodec.h"
 
 DEFINE_GUID(CLSID_TestEffect, 0xb9ee12e9,0x32d9,0xe659,0xac,0x61,0x2d,0x7c,0xea,0x69,0x28,0x78);
+DEFINE_GUID(CLSID_TestEffect2, 0xb9ee12e9,0x32d9,0xe659,0xac,0x61,0x2d,0x7c,0xea,0x69,0x28,0x79);
 DEFINE_GUID(CLSID_AuxEffect, 0xb9ee12e9,0x32d9,0xe659,0xac,0x61,0x2d,0x7c,0xea,0x69,0x28,0x79);
 DEFINE_GUID(GUID_TestVertexShader, 0x5bcdcfae,0x1e92,0x4dc1,0x94,0xfa,0x3b,0x01,0xca,0x54,0x59,0x20);
 DEFINE_GUID(GUID_TestPixelShader,  0x53015748,0xfc13,0x4168,0xbd,0x13,0x0f,0xcf,0x15,0x29,0x7f,0x01);
@@ -134,6 +135,9 @@ L"<?xml version='1.0'?>                                                       \
             <Property name='DisplayName' type='string' value='Mat5x4 prop'/>  \
             <Property name='Default' type='matrix5x4'                         \
                 value='(20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1)'/>\
+        </Property>                                                           \
+        <Property name='BlobProp' type='blob' >                               \
+            <Property name='DisplayName' type='string' value='Blob prop'/>    \
         </Property>                                                           \
     </Effect>                                                                 \
 ";
@@ -391,6 +395,11 @@ struct effect_impl
     ID2D1EffectContext *effect_context;
     ID2D1TransformGraph *transform_graph;
     ID2D1DrawInfo *draw_info;
+    struct
+    {
+        BYTE *data;
+        ULONG size;
+    } blob;
 
     const GUID *vertex_buffer;
     const GUID *vertex_shader;
@@ -11213,6 +11222,7 @@ static ULONG STDMETHODCALLTYPE effect_impl_Release(ID2D1EffectImpl *iface)
             ID2D1EffectContext_Release(effect_impl->effect_context);
         if (effect_impl->draw_info)
             ID2D1DrawInfo_Release(effect_impl->draw_info);
+        free(effect_impl->blob.data);
         free(effect_impl);
     }
 
@@ -11293,6 +11303,42 @@ static HRESULT STDMETHODCALLTYPE effect_impl_get_integer(const IUnknown *iface,
     *((UINT *)data) = effect_impl->integer;
     if (actual_size)
         *actual_size = sizeof(effect_impl->integer);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_set_blob(IUnknown *iface, const BYTE *data,
+        UINT32 data_size)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl((ID2D1EffectImpl *)iface);
+
+    free(effect_impl->blob.data);
+    effect_impl->blob.data = NULL;
+    effect_impl->blob.size = 0;
+
+    if (!(effect_impl->blob.data = malloc(data_size)))
+        return E_OUTOFMEMORY;
+    memcpy(effect_impl->blob.data, data, data_size);
+    effect_impl->blob.size = data_size;
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_get_blob(const IUnknown *iface,
+        BYTE *data, UINT32 data_size, UINT32 *actual_size)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl((ID2D1EffectImpl *)iface);
+
+    if (actual_size)
+        *actual_size = effect_impl->blob.size;
+
+    if (!data)
+        return S_OK;
+
+    if (data_size != effect_impl->blob.size)
+        return E_INVALIDARG;
+
+    memcpy(data, effect_impl->blob.data, data_size);
 
     return S_OK;
 }
@@ -15301,6 +15347,98 @@ static void test_wic_target_format(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_blob_property(BOOL d3d11)
+{
+    static const D2D1_PROPERTY_BINDING bindings[] =
+    {
+        { L"BlobProp", effect_impl_set_blob, effect_impl_get_blob },
+    };
+    struct d2d1_test_context ctx;
+    ID2D1Factory1 *factory;
+    ID2D1Effect *effect;
+    UINT32 index, size;
+    BYTE buffer[64];
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_a, bindings, ARRAY_SIZE(bindings), effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    index = ID2D1Effect_GetPropertyIndex(effect, L"BlobProp");
+    ok(index != D2D1_INVALID_PROPERTY_INDEX, "Invalid property index.\n");
+
+    size = ID2D1Effect_GetValueSize(effect, index);
+    ok(!size, "Unexpected property size %u.\n", size);
+
+    hr = ID2D1Effect_SetValue(effect, index, D2D1_PROPERTY_TYPE_BLOB,
+            (const BYTE *)"blob-value", 11);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    size = ID2D1Effect_GetValueSize(effect, index);
+    ok(size == 11, "Unexpected property size %u.\n", size);
+
+    ID2D1Effect_Release(effect);
+
+    /* Without property binding. */
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect2,
+            effect_xml_a, NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect2, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    index = ID2D1Effect_GetPropertyIndex(effect, L"BlobProp");
+    ok(index != D2D1_INVALID_PROPERTY_INDEX, "Invalid property index.\n");
+
+    size = ID2D1Effect_GetValueSize(effect, index);
+    ok(!size, "Unexpected property size %u.\n", size);
+
+    hr = ID2D1Effect_SetValue(effect, index, D2D1_PROPERTY_TYPE_BLOB,
+            (const BYTE *)"blob-value", 11);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    size = ID2D1Effect_GetValueSize(effect, index);
+    ok(!size, "Unexpected property size %u.\n", size);
+
+    memset(buffer, 0xa, sizeof(buffer));
+    hr = ID2D1Effect_GetValue(effect, index, D2D1_PROPERTY_TYPE_BLOB, buffer, 4);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!*buffer, "Unexpected buffer contents.\n");
+    ok(!*(buffer+1), "Unexpected buffer contents.\n");
+    ok(!*(buffer+2), "Unexpected buffer contents.\n");
+    ok(!*(buffer+3), "Unexpected buffer contents.\n");
+    ok(*(buffer+4) == 0xa, "Unexpected buffer contents.\n");
+
+    hr = ID2D1Effect_SetValue(effect, index, D2D1_PROPERTY_TYPE_BLOB,
+            (const BYTE *)"new-value", 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Effect_SetValue(effect, index, D2D1_PROPERTY_TYPE_BLOB,
+            (const BYTE *)"new-value", 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    size = ID2D1Effect_GetValueSize(effect, index);
+    ok(!size, "Unexpected property size %u.\n", size);
+
+    ID2D1Effect_Release(effect);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -15397,6 +15535,7 @@ START_TEST(d2d1)
     queue_test(test_effect_vertex_buffer);
     queue_test(test_compute_geometry_area);
     queue_test(test_wic_target_format);
+    queue_test(test_effect_blob_property);
 
     run_queued_tests();
 }
