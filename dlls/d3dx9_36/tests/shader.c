@@ -18,6 +18,8 @@
  */
 
 #define COBJMACROS
+#include <stdbool.h>
+#include <stdint.h>
 #include "wine/test.h"
 #include "d3dx9.h"
 
@@ -299,6 +301,195 @@ static const DWORD fx_shader_with_ctab[] =
     0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string      */
     0x0000ffff                                                              /* END                      */
 };
+
+struct d3d9_test_context
+{
+    HWND window;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *backbuffer;
+};
+
+static HWND create_window(void)
+{
+    HWND hwnd;
+    RECT rect;
+
+    SetRect(&rect, 0, 0, 640, 480);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+    hwnd = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, 0, 0);
+    return hwnd;
+}
+
+static IDirect3DDevice9 *create_device(IDirect3D9 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device;
+
+    present_parameters.Windowed = windowed;
+    present_parameters.hDeviceWindow = device_window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device)))
+        return device;
+
+    return NULL;
+}
+
+static bool init_test_context(struct d3d9_test_context *context)
+{
+    HRESULT hr;
+
+    memset(context, 0, sizeof(*context));
+
+    context->window = create_window();
+    context->d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!context->d3d, "Failed to create a D3D object.\n");
+    if (!(context->device = create_device(context->d3d, context->window, context->window, TRUE)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D9_Release(context->d3d);
+        DestroyWindow(context->window);
+        return false;
+    }
+
+    hr = IDirect3DDevice9_GetRenderTarget(context->device, 0, &context->backbuffer);
+    ok(hr == S_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
+
+    return true;
+}
+
+#define release_test_context(a) release_test_context_(__LINE__, a)
+static void release_test_context_(unsigned int line, struct d3d9_test_context *context)
+{
+    ULONG refcount;
+
+    IDirect3DSurface9_Release(context->backbuffer);
+    refcount = IDirect3DDevice9_Release(context->device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3D9_Release(context->d3d);
+    ok(!refcount, "D3D object has %lu references left.\n", refcount);
+    DestroyWindow(context->window);
+}
+
+struct vec3
+{
+    float x, y, z;
+};
+
+static void draw_quad(struct d3d9_test_context *context)
+{
+    IDirect3DDevice9 *device = context->device;
+    HRESULT hr;
+
+    static const struct
+    {
+        struct vec3 position;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}},
+    };
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad, sizeof(*quad));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
+struct surface_readback
+{
+    IDirect3DSurface9 *surface;
+    D3DLOCKED_RECT locked_rect;
+};
+
+static uint32_t get_readback_color(struct surface_readback *rb, uint32_t x, uint32_t y)
+{
+    return rb->locked_rect.pBits
+            ? ((uint32_t *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(uint32_t) + x] : 0xdeadbeef;
+}
+
+static void release_surface_readback(struct surface_readback *rb)
+{
+    HRESULT hr;
+
+    if (!rb->surface)
+        return;
+    if (rb->locked_rect.pBits && FAILED(hr = IDirect3DSurface9_UnlockRect(rb->surface)))
+        trace("Can't unlock the readback surface, hr %#lx.\n", hr);
+    IDirect3DSurface9_Release(rb->surface);
+}
+
+static void get_surface_readback(IDirect3DDevice9 *device, IDirect3DSurface9 *surface, struct surface_readback *rb)
+{
+    D3DSURFACE_DESC desc;
+    HRESULT hr;
+
+    hr = IDirect3DSurface9_GetDesc(surface, &desc);
+    if (FAILED(hr))
+    {
+        trace("Failed to get surface description, hr %#lx.\n", hr);
+        goto exit;
+    }
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, desc.Width, desc.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM,
+            &rb->surface, NULL);
+    if (FAILED(hr))
+    {
+        trace("Can't create the readback surface, hr %#lx.\n", hr);
+        goto exit;
+    }
+
+    hr = D3DXLoadSurfaceFromSurface(rb->surface, NULL, NULL, surface, NULL, NULL, D3DX_FILTER_NONE, 0);
+    if (FAILED(hr))
+    {
+        trace("Can't load the readback surface, hr %#lx.\n", hr);
+        goto exit;
+    }
+
+    hr = IDirect3DSurface9_LockRect(rb->surface, &rb->locked_rect, NULL, D3DLOCK_READONLY);
+    if (FAILED(hr))
+        trace("Can't lock the readback surface, hr %#lx.\n", hr);
+
+exit:
+    if (FAILED(hr))
+    {
+        if (rb->surface)
+            IDirect3DSurface9_Release(rb->surface);
+        rb->surface = NULL;
+    }
+}
+
+static bool compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
+static bool color_match(uint32_t c1, uint32_t c2, unsigned int max_diff)
+{
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
+}
 
 static void test_get_shader_size(void)
 {
@@ -6647,6 +6838,65 @@ static void test_fragment_linker(void)
 }
 #endif
 
+static void test_hlsl_double(void)
+{
+    static const char vs_hlsl[] =
+            "float4 main(in float4 pos : POSITION) : POSITION\n"
+            "{\n"
+            "    return pos;\n"
+            "}\n";
+    static const char ps_hlsl[] =
+            "float func(float x){return 0.1;}\n"
+            "float func(half x){return 0.2;}\n"
+            "float func(double x){return 0.3;}\n"
+            "\n"
+            "float4 main(uniform double u) : COLOR\n"
+            "{\n"
+            "    return func(u);\n"
+            "}\n";
+    ID3DXBuffer *vs_bytecode, *ps_bytecode, *errors;
+    struct d3d9_test_context context;
+    struct surface_readback rb;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DPixelShader9 *ps;
+    uint32_t color;
+    HRESULT hr;
+
+    if (!init_test_context(&context))
+        return;
+
+    hr = D3DXCompileShader(vs_hlsl, sizeof(vs_hlsl), NULL, NULL, "main", "vs_2_0", 0, &vs_bytecode, &errors, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXCompileShader(ps_hlsl, sizeof(ps_hlsl), NULL, NULL, "main", "ps_2_0", 0, &ps_bytecode, &errors, NULL);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr))
+    {
+        if (errors)
+            trace("%s", (char *)ID3DXBuffer_GetBufferPointer(errors));
+        release_test_context(&context);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexShader(context.device, ID3DXBuffer_GetBufferPointer(vs_bytecode), &vs);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(context.device, vs);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(context.device, ID3DXBuffer_GetBufferPointer(ps_bytecode), &ps);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(context.device, ps);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    draw_quad(&context);
+
+    get_surface_readback(context.device, context.backbuffer, &rb);
+    color = get_readback_color(&rb, 320, 240);
+    ok(color_match(color, 0x4c4c4c4c, 0), "Unexpected color %#x.\n", color);
+    release_surface_readback(&rb);
+    IDirect3DPixelShader9_Release(ps);
+    IDirect3DVertexShader9_Release(vs);
+    release_test_context(&context);
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
@@ -6664,4 +6914,5 @@ START_TEST(shader)
 #if D3DX_SDK_VERSION <= 41
     test_fragment_linker();
 #endif
+    test_hlsl_double();
 }
