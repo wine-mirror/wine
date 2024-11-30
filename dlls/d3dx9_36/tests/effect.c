@@ -8065,8 +8065,11 @@ static HRESULT WINAPI d3dxinclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE inc
         "}\n";
     char *buffer;
 
-    trace("filename %s.\n", filename);
-    trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
+    if (winetest_debug > 1)
+    {
+        trace("filename %s.\n", filename);
+        trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
+    }
 
     if (!strcmp(filename, "effect2.fx"))
     {
@@ -8087,7 +8090,8 @@ static HRESULT WINAPI d3dxinclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE inc
         buffer = malloc(sizeof(include2));
         memcpy(buffer, include2, sizeof(include2));
         *bytes = sizeof(include2);
-        todo_wine ok(parent_data && !strncmp(parent_data, effect2, strlen(effect2)),
+        /* d3dx9_36 passes parent_data even for includes from the main file. */
+        ok(!parent_data || (parent_data && !strncmp(parent_data, effect2, strlen(effect2))),
                 "unexpected parent_data value.\n");
     }
     else

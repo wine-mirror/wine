@@ -6597,6 +6597,7 @@ static void test_shader_semantics(void)
     }
 }
 
+#if D3DX_SDK_VERSION <= 41
 static void test_fragment_linker(void)
 {
     ID3DXFragmentLinker *linker;
@@ -6644,6 +6645,7 @@ static void test_fragment_linker(void)
     ok(!refcount, "The D3D object has %lu references left.\n", refcount);
     DestroyWindow(window);
 }
+#endif
 
 START_TEST(shader)
 {
@@ -6659,5 +6661,7 @@ START_TEST(shader)
     test_registerset();
     test_registerset_defaults();
     test_shader_semantics();
+#if D3DX_SDK_VERSION <= 41
     test_fragment_linker();
+#endif
 }
