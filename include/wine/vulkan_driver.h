@@ -138,6 +138,16 @@ static inline struct vulkan_queue *vulkan_queue_from_handle( VkQueue handle )
     return (struct vulkan_queue *)(UINT_PTR)client->unix_handle;
 }
 
+struct vulkan_device_memory
+{
+    VULKAN_OBJECT_HEADER( VkDeviceMemory, device_memory );
+};
+
+static inline struct vulkan_device_memory *vulkan_device_memory_from_handle( VkDeviceMemory handle )
+{
+    return (struct vulkan_device_memory *)(UINT_PTR)handle;
+}
+
 struct vulkan_surface
 {
     VULKAN_OBJECT_HEADER( VkSurfaceKHR, surface );
@@ -167,10 +177,14 @@ struct vulkan_funcs
      */
     PFN_vkAcquireNextImage2KHR p_vkAcquireNextImage2KHR;
     PFN_vkAcquireNextImageKHR p_vkAcquireNextImageKHR;
+    PFN_vkAllocateMemory p_vkAllocateMemory;
+    PFN_vkCreateBuffer p_vkCreateBuffer;
+    PFN_vkCreateImage p_vkCreateImage;
     PFN_vkCreateSwapchainKHR p_vkCreateSwapchainKHR;
     PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
     PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
     PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
+    PFN_vkFreeMemory p_vkFreeMemory;
     PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
     PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
     PFN_vkGetPhysicalDevicePresentRectanglesKHR p_vkGetPhysicalDevicePresentRectanglesKHR;
@@ -179,7 +193,11 @@ struct vulkan_funcs
     PFN_vkGetPhysicalDeviceSurfaceFormats2KHR p_vkGetPhysicalDeviceSurfaceFormats2KHR;
     PFN_vkGetPhysicalDeviceSurfaceFormatsKHR p_vkGetPhysicalDeviceSurfaceFormatsKHR;
     PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
+    PFN_vkMapMemory p_vkMapMemory;
+    PFN_vkMapMemory2KHR p_vkMapMemory2KHR;
     PFN_vkQueuePresentKHR p_vkQueuePresentKHR;
+    PFN_vkUnmapMemory p_vkUnmapMemory;
+    PFN_vkUnmapMemory2KHR p_vkUnmapMemory2KHR;
 
     /* winevulkan specific functions */
     const char *(*p_get_host_surface_extension)(void);

@@ -46,6 +46,19 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static const struct vulkan_driver_funcs *driver_funcs;
 
+struct device_memory
+{
+    struct vulkan_device_memory obj;
+    VkDeviceSize size;
+    void *vm_map;
+};
+
+static inline struct device_memory *device_memory_from_handle( VkDeviceMemory handle )
+{
+    struct vulkan_device_memory *obj = vulkan_device_memory_from_handle( handle );
+    return CONTAINING_RECORD( obj, struct device_memory, obj );
+}
+
 struct surface
 {
     struct vulkan_surface obj;
@@ -70,6 +83,309 @@ static struct swapchain *swapchain_from_handle( VkSwapchainKHR handle )
 {
     struct vulkan_swapchain *obj = vulkan_swapchain_from_handle( handle );
     return CONTAINING_RECORD( obj, struct swapchain, obj );
+}
+
+static inline const void *find_next_struct( const void *head, VkStructureType type )
+{
+    const VkBaseInStructure *header;
+    for (header = head; header; header = header->pNext) if (header->sType == type) return header;
+    return NULL;
+}
+
+static VkResult win32u_vkAllocateMemory( VkDevice client_device, const VkMemoryAllocateInfo *alloc_info,
+                                         const VkAllocationCallbacks *allocator, VkDeviceMemory *ret )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct vulkan_physical_device *physical_device = device->physical_device;
+    struct vulkan_instance *instance = device->physical_device->instance;
+    VkImportMemoryHostPointerInfoEXT host_pointer_info;
+    VkMemoryAllocateInfo info = *alloc_info;
+    VkDeviceMemory host_device_memory;
+    struct device_memory *memory;
+    uint32_t mem_flags;
+    void *mapping = NULL;
+    VkResult res;
+
+    /* For host visible memory, we try to use VK_EXT_external_memory_host on wow64 to ensure that mapped pointer is 32-bit. */
+    mem_flags = physical_device->memory_properties.memoryTypes[alloc_info->memoryTypeIndex].propertyFlags;
+    if (physical_device->external_memory_align && (mem_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) &&
+        !find_next_struct( alloc_info->pNext, VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT ))
+    {
+        VkMemoryHostPointerPropertiesEXT props =
+        {
+            .sType = VK_STRUCTURE_TYPE_MEMORY_HOST_POINTER_PROPERTIES_EXT,
+        };
+        uint32_t i, align = physical_device->external_memory_align - 1;
+        SIZE_T alloc_size = info.allocationSize;
+        static int once;
+
+        if (!once++) FIXME( "Using VK_EXT_external_memory_host\n" );
+
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), &mapping, zero_bits, &alloc_size, MEM_COMMIT, PAGE_READWRITE ))
+        {
+            ERR( "NtAllocateVirtualMemory failed\n" );
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
+        }
+
+        if ((res = device->p_vkGetMemoryHostPointerPropertiesEXT( device->host.device, VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT,
+                                                                  mapping, &props )))
+        {
+            ERR( "vkGetMemoryHostPointerPropertiesEXT failed: %d\n", res );
+            return res;
+        }
+
+        if (!(props.memoryTypeBits & (1u << info.memoryTypeIndex)))
+        {
+            /* If requested memory type is not allowed to use external memory,
+             * try to find a supported compatible type. */
+            uint32_t mask = mem_flags & ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            for (i = 0; i < physical_device->memory_properties.memoryTypeCount; i++)
+            {
+                if (!(props.memoryTypeBits & (1u << i))) continue;
+                if ((physical_device->memory_properties.memoryTypes[i].propertyFlags & mask) != mask) continue;
+
+                TRACE( "Memory type not compatible with host memory, using %u instead\n", i );
+                info.memoryTypeIndex = i;
+                break;
+            }
+            if (i == physical_device->memory_properties.memoryTypeCount)
+            {
+                FIXME( "Not found compatible memory type\n" );
+                alloc_size = 0;
+                NtFreeVirtualMemory( GetCurrentProcess(), &mapping, &alloc_size, MEM_RELEASE );
+            }
+        }
+
+        if (props.memoryTypeBits & (1u << info.memoryTypeIndex))
+        {
+            host_pointer_info.sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT;
+            host_pointer_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+            host_pointer_info.pHostPointer = mapping;
+            host_pointer_info.pNext = info.pNext;
+            info.pNext = &host_pointer_info;
+
+            info.allocationSize = (info.allocationSize + align) & ~align;
+        }
+    }
+
+    if (!(memory = malloc( sizeof(*memory) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if ((res = device->p_vkAllocateMemory( device->host.device, &info, NULL, &host_device_memory )))
+    {
+        free( memory );
+        return res;
+    }
+
+    vulkan_object_init( &memory->obj.obj, host_device_memory );
+    memory->size = info.allocationSize;
+    memory->vm_map = mapping;
+    instance->p_insert_object( instance, &memory->obj.obj );
+
+    *ret = memory->obj.client.device_memory;
+    return VK_SUCCESS;
+}
+
+static void win32u_vkFreeMemory( VkDevice client_device, VkDeviceMemory client_memory, const VkAllocationCallbacks *allocator )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct vulkan_physical_device *physical_device = device->physical_device;
+    struct vulkan_instance *instance = device->physical_device->instance;
+    struct device_memory *memory;
+
+    if (!client_memory) return;
+    memory = device_memory_from_handle( client_memory );
+
+    if (memory->vm_map && !physical_device->external_memory_align)
+    {
+        const VkMemoryUnmapInfoKHR info =
+        {
+            .sType = VK_STRUCTURE_TYPE_MEMORY_UNMAP_INFO_KHR,
+            .memory = memory->obj.host.device_memory,
+            .flags = VK_MEMORY_UNMAP_RESERVE_BIT_EXT,
+        };
+        device->p_vkUnmapMemory2KHR( device->host.device, &info );
+    }
+
+    device->p_vkFreeMemory( device->host.device, memory->obj.host.device_memory, NULL );
+    instance->p_remove_object( instance, &memory->obj.obj );
+
+    if (memory->vm_map)
+    {
+        SIZE_T alloc_size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &memory->vm_map, &alloc_size, MEM_RELEASE );
+    }
+
+    free( memory );
+}
+
+static VkResult win32u_vkMapMemory2KHR( VkDevice client_device, const VkMemoryMapInfoKHR *map_info, void **data )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct vulkan_physical_device *physical_device = device->physical_device;
+    struct device_memory *memory = device_memory_from_handle( map_info->memory );
+    VkMemoryMapInfoKHR info = *map_info;
+    VkMemoryMapPlacedInfoEXT placed_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT,
+    };
+    VkResult res;
+
+    info.memory = memory->obj.host.device_memory;
+    if (memory->vm_map)
+    {
+        *data = (char *)memory->vm_map + info.offset;
+        TRACE( "returning %p\n", *data );
+        return VK_SUCCESS;
+    }
+
+    if (physical_device->map_placed_align)
+    {
+        SIZE_T alloc_size = memory->size;
+
+        placed_info.pNext = info.pNext;
+        info.pNext = &placed_info;
+        info.offset = 0;
+        info.size = VK_WHOLE_SIZE;
+        info.flags |= VK_MEMORY_MAP_PLACED_BIT_EXT;
+
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), &placed_info.pPlacedAddress, zero_bits,
+                                     &alloc_size, MEM_COMMIT, PAGE_READWRITE ))
+        {
+            ERR( "NtAllocateVirtualMemory failed\n" );
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
+        }
+    }
+
+    if (device->p_vkMapMemory2KHR)
+        res = device->p_vkMapMemory2KHR( device->host.device, &info, data );
+    else
+    {
+        if (info.pNext) FIXME( "struct extension chain not implemented!\n" );
+        res = device->p_vkMapMemory( device->host.device, info.memory, info.offset, info.size, info.flags, data );
+    }
+
+    if (placed_info.pPlacedAddress)
+    {
+        if (res != VK_SUCCESS)
+        {
+            SIZE_T alloc_size = 0;
+            ERR( "vkMapMemory2EXT failed: %d\n", res );
+            NtFreeVirtualMemory( GetCurrentProcess(), &placed_info.pPlacedAddress, &alloc_size, MEM_RELEASE );
+            return res;
+        }
+        memory->vm_map = placed_info.pPlacedAddress;
+        *data = (char *)memory->vm_map + map_info->offset;
+        TRACE( "Using placed mapping %p\n", memory->vm_map );
+    }
+
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset && res == VK_SUCCESS && (UINT_PTR)*data >> 32)
+    {
+        FIXME( "returned mapping %p does not fit 32-bit pointer\n", *data );
+        device->p_vkUnmapMemory( device->host.device, memory->obj.host.device_memory );
+        *data = NULL;
+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+#endif
+
+    return res;
+}
+
+static VkResult win32u_vkMapMemory( VkDevice client_device, VkDeviceMemory client_memory, VkDeviceSize offset,
+                                    VkDeviceSize size, VkMemoryMapFlags flags, void **data )
+{
+    const VkMemoryMapInfoKHR info =
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_MAP_INFO_KHR,
+        .flags = flags,
+        .memory = client_memory,
+        .offset = offset,
+        .size = size,
+    };
+
+    return win32u_vkMapMemory2KHR( client_device, &info, data );
+}
+
+static VkResult win32u_vkUnmapMemory2KHR( VkDevice client_device, const VkMemoryUnmapInfoKHR *unmap_info )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct vulkan_physical_device *physical_device = device->physical_device;
+    struct device_memory *memory = device_memory_from_handle( unmap_info->memory );
+    VkMemoryUnmapInfoKHR info;
+    VkResult res;
+
+    if (memory->vm_map && physical_device->external_memory_align) return VK_SUCCESS;
+
+    if (!device->p_vkUnmapMemory2KHR)
+    {
+        if (unmap_info->pNext || memory->vm_map) FIXME( "Not implemented\n" );
+        device->p_vkUnmapMemory( device->host.device, memory->obj.host.device_memory );
+        return VK_SUCCESS;
+    }
+
+    info = *unmap_info;
+    info.memory = memory->obj.host.device_memory;
+    if (memory->vm_map) info.flags |= VK_MEMORY_UNMAP_RESERVE_BIT_EXT;
+
+    res = device->p_vkUnmapMemory2KHR( device->host.device, &info );
+
+    if (res == VK_SUCCESS && memory->vm_map)
+    {
+        SIZE_T size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &memory->vm_map, &size, MEM_RELEASE );
+        memory->vm_map = NULL;
+    }
+    return res;
+}
+
+static void win32u_vkUnmapMemory( VkDevice client_device, VkDeviceMemory client_memory )
+{
+    const VkMemoryUnmapInfoKHR info =
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_UNMAP_INFO_KHR,
+        .memory = client_memory,
+    };
+
+    win32u_vkUnmapMemory2KHR( client_device, &info );
+}
+
+static VkResult win32u_vkCreateBuffer( VkDevice client_device, const VkBufferCreateInfo *create_info,
+                                       const VkAllocationCallbacks *allocator, VkBuffer *buffer )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct vulkan_physical_device *physical_device = device->physical_device;
+    VkExternalMemoryBufferCreateInfo external_memory_info;
+    VkBufferCreateInfo info = *create_info;
+
+    if (physical_device->external_memory_align &&
+        !find_next_struct( info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO ))
+    {
+        external_memory_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO;
+        external_memory_info.pNext = info.pNext;
+        external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+        info.pNext = &external_memory_info;
+    }
+
+    return device->p_vkCreateBuffer( device->host.device, &info, NULL, buffer );
+}
+
+static VkResult win32u_vkCreateImage( VkDevice client_device, const VkImageCreateInfo *create_info,
+                                      const VkAllocationCallbacks *allocator, VkImage *image )
+{
+    struct vulkan_device *device = vulkan_device_from_handle( client_device );
+    struct vulkan_physical_device *physical_device = device->physical_device;
+    VkExternalMemoryImageCreateInfo external_memory_info;
+    VkImageCreateInfo info = *create_info;
+
+    if (physical_device->external_memory_align &&
+        !find_next_struct( info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO ))
+    {
+        external_memory_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+        external_memory_info.pNext = info.pNext;
+        external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+        info.pNext = &external_memory_info;
+    }
+
+    return device->p_vkCreateImage( device->host.device, &info, NULL, image );
 }
 
 static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, const VkWin32SurfaceCreateInfoKHR *create_info,
@@ -483,19 +799,27 @@ static const char *win32u_get_host_surface_extension(void)
 
 static struct vulkan_funcs vulkan_funcs =
 {
-    .p_vkCreateWin32SurfaceKHR = win32u_vkCreateWin32SurfaceKHR,
-    .p_vkDestroySurfaceKHR = win32u_vkDestroySurfaceKHR,
-    .p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR = win32u_vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
-    .p_vkGetPhysicalDeviceSurfaceCapabilities2KHR = win32u_vkGetPhysicalDeviceSurfaceCapabilities2KHR,
-    .p_vkGetPhysicalDevicePresentRectanglesKHR = win32u_vkGetPhysicalDevicePresentRectanglesKHR,
-    .p_vkGetPhysicalDeviceSurfaceFormatsKHR = win32u_vkGetPhysicalDeviceSurfaceFormatsKHR,
-    .p_vkGetPhysicalDeviceSurfaceFormats2KHR = win32u_vkGetPhysicalDeviceSurfaceFormats2KHR,
-    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = win32u_vkGetPhysicalDeviceWin32PresentationSupportKHR,
-    .p_vkCreateSwapchainKHR = win32u_vkCreateSwapchainKHR,
-    .p_vkDestroySwapchainKHR = win32u_vkDestroySwapchainKHR,
     .p_vkAcquireNextImage2KHR = win32u_vkAcquireNextImage2KHR,
     .p_vkAcquireNextImageKHR = win32u_vkAcquireNextImageKHR,
+    .p_vkAllocateMemory = win32u_vkAllocateMemory,
+    .p_vkCreateBuffer = win32u_vkCreateBuffer,
+    .p_vkCreateImage = win32u_vkCreateImage,
+    .p_vkCreateSwapchainKHR = win32u_vkCreateSwapchainKHR,
+    .p_vkCreateWin32SurfaceKHR = win32u_vkCreateWin32SurfaceKHR,
+    .p_vkDestroySurfaceKHR = win32u_vkDestroySurfaceKHR,
+    .p_vkDestroySwapchainKHR = win32u_vkDestroySwapchainKHR,
+    .p_vkFreeMemory = win32u_vkFreeMemory,
+    .p_vkGetPhysicalDevicePresentRectanglesKHR = win32u_vkGetPhysicalDevicePresentRectanglesKHR,
+    .p_vkGetPhysicalDeviceSurfaceCapabilities2KHR = win32u_vkGetPhysicalDeviceSurfaceCapabilities2KHR,
+    .p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR = win32u_vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
+    .p_vkGetPhysicalDeviceSurfaceFormats2KHR = win32u_vkGetPhysicalDeviceSurfaceFormats2KHR,
+    .p_vkGetPhysicalDeviceSurfaceFormatsKHR = win32u_vkGetPhysicalDeviceSurfaceFormatsKHR,
+    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = win32u_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_vkMapMemory = win32u_vkMapMemory,
+    .p_vkMapMemory2KHR = win32u_vkMapMemory2KHR,
     .p_vkQueuePresentKHR = win32u_vkQueuePresentKHR,
+    .p_vkUnmapMemory = win32u_vkUnmapMemory,
+    .p_vkUnmapMemory2KHR = win32u_vkUnmapMemory2KHR,
     .p_get_host_surface_extension = win32u_get_host_surface_extension,
 };
 

@@ -213,10 +213,14 @@ FUNCTION_OVERRIDES = {
 USER_DRIVER_FUNCS = {
     "vkAcquireNextImage2KHR",
     "vkAcquireNextImageKHR",
+    "vkAllocateMemory",
+    "vkCreateBuffer",
+    "vkCreateImage",
     "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
     "vkDestroySurfaceKHR",
     "vkDestroySwapchainKHR",
+    "vkFreeMemory",
     "vkGetDeviceProcAddr",
     "vkGetInstanceProcAddr",
     "vkGetPhysicalDevicePresentRectanglesKHR",
@@ -225,20 +229,21 @@ USER_DRIVER_FUNCS = {
     "vkGetPhysicalDeviceSurfaceFormats2KHR",
     "vkGetPhysicalDeviceSurfaceFormatsKHR",
     "vkGetPhysicalDeviceWin32PresentationSupportKHR",
+    "vkMapMemory",
+    "vkMapMemory2KHR",
     "vkQueuePresentKHR",
+    "vkUnmapMemory",
+    "vkUnmapMemory2KHR",
 }
 
 # functions for which the unix thunk is manually implemented
 MANUAL_UNIX_THUNKS = {
     "vkAllocateCommandBuffers",
-    "vkAllocateMemory",
-    "vkCreateBuffer",
     "vkCreateCommandPool",
     "vkCreateDebugReportCallbackEXT",
     "vkCreateDebugUtilsMessengerEXT",
     "vkCreateDeferredOperationKHR",
     "vkCreateDevice",
-    "vkCreateImage",
     "vkCreateInstance",
     "vkDestroyCommandPool",
     "vkDestroyDebugReportCallbackEXT",
@@ -255,7 +260,6 @@ MANUAL_UNIX_THUNKS = {
     "vkEnumeratePhysicalDeviceGroupsKHR",
     "vkEnumeratePhysicalDevices",
     "vkFreeCommandBuffers",
-    "vkFreeMemory",
     "vkGetCalibratedTimestampsEXT",
     "vkGetCalibratedTimestampsKHR",
     "vkGetDeviceProcAddr",
@@ -272,10 +276,6 @@ MANUAL_UNIX_THUNKS = {
     "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR",
     "vkGetPhysicalDeviceImageFormatProperties2",
     "vkGetPhysicalDeviceImageFormatProperties2KHR",
-    "vkMapMemory",
-    "vkMapMemory2KHR",
-    "vkUnmapMemory",
-    "vkUnmapMemory2KHR",
 }
 
 # loader functions which are entirely manually implemented
@@ -1112,7 +1112,7 @@ class VkHandle(object):
         if self.name == "VkInstance":
             return "vulkan_instance_from_handle({0})->host.instance".format(name)
         if self.name == "VkDeviceMemory":
-            return "wine_device_memory_from_handle({0})->host.device_memory".format(name)
+            return "vulkan_device_memory_from_handle({0})->host.device_memory".format(name)
         if self.name == "VkPhysicalDevice":
             return "vulkan_physical_device_from_handle({0})->host.physical_device".format(name)
         if self.name == "VkQueue":

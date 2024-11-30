@@ -9540,7 +9540,7 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
     case VK_OBJECT_TYPE_DEVICE:
         return (uint64_t) (uintptr_t) vulkan_device_from_handle(((VkDevice) (uintptr_t) handle))->host.device;
     case VK_OBJECT_TYPE_DEVICE_MEMORY:
-        return (uint64_t) wine_device_memory_from_handle(handle)->host.device_memory;
+        return (uint64_t) vulkan_device_memory_from_handle(handle)->host.device_memory;
     case VK_OBJECT_TYPE_INSTANCE:
         return (uint64_t) (uintptr_t) vulkan_instance_from_handle(((VkInstance) (uintptr_t) handle))->host.instance;
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
@@ -9934,7 +9934,7 @@ static inline void convert_VkCommandBufferInheritanceInfo_win64_to_host(struct c
             const VkTileMemoryBindInfoQCOM *in_ext = (const VkTileMemoryBindInfoQCOM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_BIND_INFO_QCOM;
             out_ext->pNext = NULL;
-            out_ext->memory = wine_device_memory_from_handle(in_ext->memory)->host.device_memory;
+            out_ext->memory = vulkan_device_memory_from_handle(in_ext->memory)->host.device_memory;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -10077,7 +10077,7 @@ static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(struct c
             const VkTileMemoryBindInfoQCOM32 *in_ext = (const VkTileMemoryBindInfoQCOM32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_BIND_INFO_QCOM;
             out_ext->pNext = NULL;
-            out_ext->memory = wine_device_memory_from_handle(in_ext->memory)->host.device_memory;
+            out_ext->memory = vulkan_device_memory_from_handle(in_ext->memory)->host.device_memory;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -10215,7 +10215,7 @@ static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win64_to_host
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->accelerationStructure = in->accelerationStructure;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
     out->deviceIndexCount = in->deviceIndexCount;
     out->pDeviceIndices = in->pDeviceIndices;
@@ -10229,7 +10229,7 @@ static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host
     out->sType = in->sType;
     out->pNext = NULL;
     out->accelerationStructure = in->accelerationStructure;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
     out->deviceIndexCount = in->deviceIndexCount;
     out->pDeviceIndices = UlongToPtr(in->pDeviceIndices);
@@ -10279,7 +10279,7 @@ static inline void convert_VkBindBufferMemoryInfo_win64_to_host(const VkBindBuff
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->buffer = in->buffer;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
 }
 #endif /* _WIN64 */
@@ -10294,7 +10294,7 @@ static inline void convert_VkBindBufferMemoryInfo_win32_to_host(struct conversio
     out->sType = in->sType;
     out->pNext = NULL;
     out->buffer = in->buffer;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
 
     for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
@@ -10375,7 +10375,7 @@ static inline void convert_VkBindDataGraphPipelineSessionMemoryInfoARM_win64_to_
     out->session = in->session;
     out->bindPoint = in->bindPoint;
     out->objectIndex = in->objectIndex;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
 }
 #endif /* _WIN64 */
@@ -10389,7 +10389,7 @@ static inline void convert_VkBindDataGraphPipelineSessionMemoryInfoARM_win32_to_
     out->session = in->session;
     out->bindPoint = in->bindPoint;
     out->objectIndex = in->objectIndex;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -10440,7 +10440,7 @@ static inline void convert_VkBindImageMemoryInfo_win64_to_host(struct conversion
     out->sType = in->sType;
     out->pNext = NULL;
     out->image = in->image;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
 
     for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
@@ -10513,7 +10513,7 @@ static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion
     out->sType = in->sType;
     out->pNext = NULL;
     out->image = in->image;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
 
     for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
@@ -10617,7 +10617,7 @@ static inline void convert_VkBindTensorMemoryInfoARM_win64_to_host(const VkBindT
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->tensor = in->tensor;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
 }
 #endif /* _WIN64 */
@@ -10629,7 +10629,7 @@ static inline void convert_VkBindTensorMemoryInfoARM_win32_to_host(const VkBindT
     out->sType = in->sType;
     out->pNext = NULL;
     out->tensor = in->tensor;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -10677,7 +10677,7 @@ static inline void convert_VkBindVideoSessionMemoryInfoKHR_win64_to_host(const V
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->memoryBindIndex = in->memoryBindIndex;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
     out->memorySize = in->memorySize;
 }
@@ -10690,7 +10690,7 @@ static inline void convert_VkBindVideoSessionMemoryInfoKHR_win32_to_host(const V
     out->sType = in->sType;
     out->pNext = NULL;
     out->memoryBindIndex = in->memoryBindIndex;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->memoryOffset = in->memoryOffset;
     out->memorySize = in->memorySize;
     if (in->pNext)
@@ -11922,7 +11922,7 @@ static inline void convert_VkTileMemoryBindInfoQCOM_win64_to_host(const VkTileMe
 
     out->sType = in->sType;
     out->pNext = in->pNext;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
 }
 #endif /* _WIN64 */
 
@@ -11932,7 +11932,7 @@ static inline void convert_VkTileMemoryBindInfoQCOM_win32_to_host(const VkTileMe
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -26751,7 +26751,7 @@ static inline void convert_VkMappedMemoryRange_win64_to_host(const VkMappedMemor
 
     out->sType = in->sType;
     out->pNext = in->pNext;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->offset = in->offset;
     out->size = in->size;
 }
@@ -26763,7 +26763,7 @@ static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemor
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->offset = in->offset;
     out->size = in->size;
     if (in->pNext)
@@ -27804,7 +27804,7 @@ static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win64_to_host(
 
     out->sType = in->sType;
     out->pNext = in->pNext;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
 }
 #endif /* _WIN64 */
 
@@ -27814,7 +27814,7 @@ static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win32_to_host(
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -38466,7 +38466,7 @@ static inline void convert_VkMemoryMapInfo_win64_to_host(const VkMemoryMapInfo *
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->flags = in->flags;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->offset = in->offset;
     out->size = in->size;
 }
@@ -38482,7 +38482,7 @@ static inline void convert_VkMemoryMapInfo_win32_to_host(struct conversion_conte
     out->sType = in->sType;
     out->pNext = NULL;
     out->flags = in->flags;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     out->offset = in->offset;
     out->size = in->size;
 
@@ -38551,7 +38551,7 @@ static inline void convert_VkSparseMemoryBind_win64_to_host(const VkSparseMemory
 
     out->resourceOffset = in->resourceOffset;
     out->size = in->size;
-    out->memory = in->memory ? wine_device_memory_from_handle(in->memory)->host.device_memory : 0;
+    out->memory = in->memory ? vulkan_device_memory_from_handle(in->memory)->host.device_memory : 0;
     out->memoryOffset = in->memoryOffset;
     out->flags = in->flags;
 }
@@ -38563,7 +38563,7 @@ static inline void convert_VkSparseMemoryBind_win32_to_host(const VkSparseMemory
 
     out->resourceOffset = in->resourceOffset;
     out->size = in->size;
-    out->memory = in->memory ? wine_device_memory_from_handle(in->memory)->host.device_memory : 0;
+    out->memory = in->memory ? vulkan_device_memory_from_handle(in->memory)->host.device_memory : 0;
     out->memoryOffset = in->memoryOffset;
     out->flags = in->flags;
 }
@@ -38718,7 +38718,7 @@ static inline void convert_VkSparseImageMemoryBind_win64_to_host(const VkSparseI
     out->subresource = in->subresource;
     out->offset = in->offset;
     out->extent = in->extent;
-    out->memory = in->memory ? wine_device_memory_from_handle(in->memory)->host.device_memory : 0;
+    out->memory = in->memory ? vulkan_device_memory_from_handle(in->memory)->host.device_memory : 0;
     out->memoryOffset = in->memoryOffset;
     out->flags = in->flags;
 }
@@ -38731,7 +38731,7 @@ static inline void convert_VkSparseImageMemoryBind_win32_to_host(const VkSparseI
     out->subresource = in->subresource;
     out->offset = in->offset;
     out->extent = in->extent;
-    out->memory = in->memory ? wine_device_memory_from_handle(in->memory)->host.device_memory : 0;
+    out->memory = in->memory ? vulkan_device_memory_from_handle(in->memory)->host.device_memory : 0;
     out->memoryOffset = in->memoryOffset;
     out->flags = in->flags;
 }
@@ -39922,7 +39922,7 @@ static inline void convert_VkMemoryUnmapInfo_win64_to_host(const VkMemoryUnmapIn
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->flags = in->flags;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
 }
 #endif /* _WIN64 */
 
@@ -39933,7 +39933,7 @@ static inline void convert_VkMemoryUnmapInfo_win32_to_host(const VkMemoryUnmapIn
     out->sType = in->sType;
     out->pNext = NULL;
     out->flags = in->flags;
-    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    out->memory = vulkan_device_memory_from_handle(in->memory)->host.device_memory;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -40312,7 +40312,7 @@ static NTSTATUS thunk64_vkAllocateMemory(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pAllocateInfo, params->pAllocator, params->pMemory);
 
-    params->result = wine_vkAllocateMemory(params->device, params->pAllocateInfo, params->pAllocator, params->pMemory);
+    params->result = vk_funcs->p_vkAllocateMemory(params->device, params->pAllocateInfo, params->pAllocator, params->pMemory);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -40335,7 +40335,7 @@ static NTSTATUS thunk32_vkAllocateMemory(void *args)
 
     init_conversion_context(ctx);
     convert_VkMemoryAllocateInfo_win32_to_host(ctx, (const VkMemoryAllocateInfo32 *)UlongToPtr(params->pAllocateInfo), &pAllocateInfo_host);
-    params->result = wine_vkAllocateMemory((VkDevice)UlongToPtr(params->device), &pAllocateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkDeviceMemory *)UlongToPtr(params->pMemory));
+    params->result = vk_funcs->p_vkAllocateMemory((VkDevice)UlongToPtr(params->device), &pAllocateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkDeviceMemory *)UlongToPtr(params->pMemory));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -40458,7 +40458,7 @@ static NTSTATUS thunk64_vkBindBufferMemory(void *args)
 
     TRACE("%p, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
-    params->result = vulkan_device_from_handle(params->device)->p_vkBindBufferMemory(vulkan_device_from_handle(params->device)->host.device, params->buffer, wine_device_memory_from_handle(params->memory)->host.device_memory, params->memoryOffset);
+    params->result = vulkan_device_from_handle(params->device)->p_vkBindBufferMemory(vulkan_device_from_handle(params->device)->host.device, params->buffer, vulkan_device_memory_from_handle(params->memory)->host.device_memory, params->memoryOffset);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -40476,7 +40476,7 @@ static NTSTATUS thunk32_vkBindBufferMemory(void *args)
 
     TRACE("%#x, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
-    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkBindBufferMemory(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->buffer, wine_device_memory_from_handle(params->memory)->host.device_memory, params->memoryOffset);
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkBindBufferMemory(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->buffer, vulkan_device_memory_from_handle(params->memory)->host.device_memory, params->memoryOffset);
     return STATUS_SUCCESS;
 }
 
@@ -40607,7 +40607,7 @@ static NTSTATUS thunk64_vkBindImageMemory(void *args)
 
     TRACE("%p, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->image), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
-    params->result = vulkan_device_from_handle(params->device)->p_vkBindImageMemory(vulkan_device_from_handle(params->device)->host.device, params->image, wine_device_memory_from_handle(params->memory)->host.device_memory, params->memoryOffset);
+    params->result = vulkan_device_from_handle(params->device)->p_vkBindImageMemory(vulkan_device_from_handle(params->device)->host.device, params->image, vulkan_device_memory_from_handle(params->memory)->host.device_memory, params->memoryOffset);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -40625,7 +40625,7 @@ static NTSTATUS thunk32_vkBindImageMemory(void *args)
 
     TRACE("%#x, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->image), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
-    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkBindImageMemory(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->image, wine_device_memory_from_handle(params->memory)->host.device_memory, params->memoryOffset);
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkBindImageMemory(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, params->image, vulkan_device_memory_from_handle(params->memory)->host.device_memory, params->memoryOffset);
     return STATUS_SUCCESS;
 }
 
@@ -47775,7 +47775,7 @@ static NTSTATUS thunk64_vkCreateBuffer(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pBuffer);
 
-    params->result = wine_vkCreateBuffer(params->device, params->pCreateInfo, params->pAllocator, params->pBuffer);
+    params->result = vk_funcs->p_vkCreateBuffer(params->device, params->pCreateInfo, params->pAllocator, params->pBuffer);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -47798,7 +47798,7 @@ static NTSTATUS thunk32_vkCreateBuffer(void *args)
 
     init_conversion_context(ctx);
     convert_VkBufferCreateInfo_win32_to_host(ctx, (const VkBufferCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    params->result = wine_vkCreateBuffer((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkBuffer *)UlongToPtr(params->pBuffer));
+    params->result = vk_funcs->p_vkCreateBuffer((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkBuffer *)UlongToPtr(params->pBuffer));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -48490,7 +48490,7 @@ static NTSTATUS thunk64_vkCreateImage(void *args)
 
     init_conversion_context(ctx);
     convert_VkImageCreateInfo_win64_to_host(ctx, params->pCreateInfo, &pCreateInfo_host);
-    params->result = wine_vkCreateImage(params->device, &pCreateInfo_host, params->pAllocator, params->pImage);
+    params->result = vk_funcs->p_vkCreateImage(params->device, &pCreateInfo_host, params->pAllocator, params->pImage);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -48514,7 +48514,7 @@ static NTSTATUS thunk32_vkCreateImage(void *args)
 
     init_conversion_context(ctx);
     convert_VkImageCreateInfo_win32_to_host(ctx, (const VkImageCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    params->result = wine_vkCreateImage((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkImage *)UlongToPtr(params->pImage));
+    params->result = vk_funcs->p_vkCreateImage((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkImage *)UlongToPtr(params->pImage));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -51461,7 +51461,7 @@ static NTSTATUS thunk64_vkFreeMemory(void *args)
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->memory), params->pAllocator);
 
-    wine_vkFreeMemory(params->device, params->memory, params->pAllocator);
+    vk_funcs->p_vkFreeMemory(params->device, params->memory, params->pAllocator);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -51477,7 +51477,7 @@ static NTSTATUS thunk32_vkFreeMemory(void *args)
 
     TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->memory), params->pAllocator);
 
-    wine_vkFreeMemory((VkDevice)UlongToPtr(params->device), params->memory, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
+    vk_funcs->p_vkFreeMemory((VkDevice)UlongToPtr(params->device), params->memory, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
     return STATUS_SUCCESS;
 }
 
@@ -52957,7 +52957,7 @@ static NTSTATUS thunk64_vkGetDeviceMemoryCommitment(void *args)
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->memory), params->pCommittedMemoryInBytes);
 
-    vulkan_device_from_handle(params->device)->p_vkGetDeviceMemoryCommitment(vulkan_device_from_handle(params->device)->host.device, wine_device_memory_from_handle(params->memory)->host.device_memory, params->pCommittedMemoryInBytes);
+    vulkan_device_from_handle(params->device)->p_vkGetDeviceMemoryCommitment(vulkan_device_from_handle(params->device)->host.device, vulkan_device_memory_from_handle(params->memory)->host.device_memory, params->pCommittedMemoryInBytes);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52973,7 +52973,7 @@ static NTSTATUS thunk32_vkGetDeviceMemoryCommitment(void *args)
 
     TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->memory), params->pCommittedMemoryInBytes);
 
-    vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetDeviceMemoryCommitment(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, wine_device_memory_from_handle(params->memory)->host.device_memory, (VkDeviceSize *)UlongToPtr(params->pCommittedMemoryInBytes));
+    vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetDeviceMemoryCommitment(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, vulkan_device_memory_from_handle(params->memory)->host.device_memory, (VkDeviceSize *)UlongToPtr(params->pCommittedMemoryInBytes));
     return STATUS_SUCCESS;
 }
 
@@ -57108,7 +57108,7 @@ static NTSTATUS thunk64_vkMapMemory(void *args)
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, %#x, %p\n", params->device, wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->size), params->flags, params->ppData);
 
-    params->result = wine_vkMapMemory(params->device, params->memory, params->offset, params->size, params->flags, params->ppData);
+    params->result = vk_funcs->p_vkMapMemory(params->device, params->memory, params->offset, params->size, params->flags, params->ppData);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57130,7 +57130,7 @@ static NTSTATUS thunk32_vkMapMemory(void *args)
     TRACE("%#x, 0x%s, 0x%s, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->size), params->flags, params->ppData);
 
     ppData_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->ppData));
-    params->result = wine_vkMapMemory((VkDevice)UlongToPtr(params->device), params->memory, params->offset, params->size, params->flags, &ppData_host);
+    params->result = vk_funcs->p_vkMapMemory((VkDevice)UlongToPtr(params->device), params->memory, params->offset, params->size, params->flags, &ppData_host);
     *(PTR32 *)UlongToPtr(params->ppData) = PtrToUlong(ppData_host);
     return STATUS_SUCCESS;
 }
@@ -57181,7 +57181,7 @@ static NTSTATUS thunk64_vkMapMemory2KHR(void *args)
 
     TRACE("%p, %p, %p\n", params->device, params->pMemoryMapInfo, params->ppData);
 
-    params->result = wine_vkMapMemory2KHR(params->device, params->pMemoryMapInfo, params->ppData);
+    params->result = vk_funcs->p_vkMapMemory2KHR(params->device, params->pMemoryMapInfo, params->ppData);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -57205,7 +57205,7 @@ static NTSTATUS thunk32_vkMapMemory2KHR(void *args)
     init_conversion_context(ctx);
     convert_VkMemoryMapInfo_win32_to_unwrapped_host(ctx, (const VkMemoryMapInfo32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
     ppData_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->ppData));
-    params->result = wine_vkMapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryMapInfo_host, &ppData_host);
+    params->result = vk_funcs->p_vkMapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryMapInfo_host, &ppData_host);
     *(PTR32 *)UlongToPtr(params->ppData) = PtrToUlong(ppData_host);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -58035,7 +58035,7 @@ static NTSTATUS thunk64_vkSetDeviceMemoryPriorityEXT(void *args)
 
     TRACE("%p, 0x%s, %f\n", params->device, wine_dbgstr_longlong(params->memory), params->priority);
 
-    vulkan_device_from_handle(params->device)->p_vkSetDeviceMemoryPriorityEXT(vulkan_device_from_handle(params->device)->host.device, wine_device_memory_from_handle(params->memory)->host.device_memory, params->priority);
+    vulkan_device_from_handle(params->device)->p_vkSetDeviceMemoryPriorityEXT(vulkan_device_from_handle(params->device)->host.device, vulkan_device_memory_from_handle(params->memory)->host.device_memory, params->priority);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -58051,7 +58051,7 @@ static NTSTATUS thunk32_vkSetDeviceMemoryPriorityEXT(void *args)
 
     TRACE("%#x, 0x%s, %f\n", params->device, wine_dbgstr_longlong(params->memory), params->priority);
 
-    vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkSetDeviceMemoryPriorityEXT(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, wine_device_memory_from_handle(params->memory)->host.device_memory, params->priority);
+    vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkSetDeviceMemoryPriorityEXT(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, vulkan_device_memory_from_handle(params->memory)->host.device_memory, params->priority);
     return STATUS_SUCCESS;
 }
 
@@ -58495,7 +58495,7 @@ static NTSTATUS thunk64_vkUnmapMemory(void *args)
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->memory));
 
-    wine_vkUnmapMemory(params->device, params->memory);
+    vk_funcs->p_vkUnmapMemory(params->device, params->memory);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -58510,7 +58510,7 @@ static NTSTATUS thunk32_vkUnmapMemory(void *args)
 
     TRACE("%#x, 0x%s\n", params->device, wine_dbgstr_longlong(params->memory));
 
-    wine_vkUnmapMemory((VkDevice)UlongToPtr(params->device), params->memory);
+    vk_funcs->p_vkUnmapMemory((VkDevice)UlongToPtr(params->device), params->memory);
     return STATUS_SUCCESS;
 }
 
@@ -58552,7 +58552,7 @@ static NTSTATUS thunk64_vkUnmapMemory2KHR(void *args)
 
     TRACE("%p, %p\n", params->device, params->pMemoryUnmapInfo);
 
-    params->result = wine_vkUnmapMemory2KHR(params->device, params->pMemoryUnmapInfo);
+    params->result = vk_funcs->p_vkUnmapMemory2KHR(params->device, params->pMemoryUnmapInfo);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -58570,7 +58570,7 @@ static NTSTATUS thunk32_vkUnmapMemory2KHR(void *args)
     TRACE("%#x, %#x\n", params->device, params->pMemoryUnmapInfo);
 
     convert_VkMemoryUnmapInfo_win32_to_unwrapped_host((const VkMemoryUnmapInfo32 *)UlongToPtr(params->pMemoryUnmapInfo), &pMemoryUnmapInfo_host);
-    params->result = wine_vkUnmapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryUnmapInfo_host);
+    params->result = vk_funcs->p_vkUnmapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryUnmapInfo_host);
     return STATUS_SUCCESS;
 }
 

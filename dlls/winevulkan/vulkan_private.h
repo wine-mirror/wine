@@ -100,18 +100,6 @@ static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool hand
     return (struct wine_cmd_pool *)(UINT_PTR)client->unix_handle;
 }
 
-struct wine_device_memory
-{
-    VULKAN_OBJECT_HEADER( VkDeviceMemory, device_memory );
-    VkDeviceSize size;
-    void *vm_map;
-};
-
-static inline struct wine_device_memory *wine_device_memory_from_handle(VkDeviceMemory handle)
-{
-    return (struct wine_device_memory *)(uintptr_t)handle;
-}
-
 struct wine_debug_utils_messenger
 {
     VULKAN_OBJECT_HEADER( VkDebugUtilsMessengerEXT, debug_messenger );
