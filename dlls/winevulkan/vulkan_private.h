@@ -73,8 +73,6 @@ struct wine_debug_report_callback
 struct wine_phys_dev
 {
     struct vulkan_physical_device obj;
-    VkExtensionProperties *extensions;
-    uint32_t extension_count;
 };
 
 struct wine_debug_report_callback;

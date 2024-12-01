@@ -325,7 +325,7 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
 
 static void wine_phys_dev_cleanup(struct wine_phys_dev *phys_dev)
 {
-    free(phys_dev->extensions);
+    free(phys_dev->obj.extensions);
 }
 
 static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhysicalDevice host_physical_device,
@@ -392,7 +392,7 @@ static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhy
 
     TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
 
-    if (!(object->extensions = calloc(num_properties, sizeof(*object->extensions))))
+    if (!(object->obj.extensions = calloc(num_properties, sizeof(*object->obj.extensions))))
     {
         ERR("Failed to allocate memory for device extensions!\n");
         goto err;
@@ -402,11 +402,11 @@ static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhy
     {
         if (wine_vk_device_extension_supported(host_properties[i].extensionName))
         {
-            object->extensions[j] = host_properties[i];
+            object->obj.extensions[j] = host_properties[i];
             j++;
         }
     }
-    object->extension_count = num_properties;
+    object->obj.extension_count = num_properties;
 
     if (zero_bits && have_memory_placed && have_map_memory2)
     {
@@ -1082,15 +1082,15 @@ VkResult wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice client_physi
 
     if (!properties)
     {
-        *count = phys_dev->extension_count;
+        *count = phys_dev->obj.extension_count;
         return VK_SUCCESS;
     }
 
-    *count = min(*count, phys_dev->extension_count);
-    memcpy(properties, phys_dev->extensions, *count * sizeof(*properties));
+    *count = min(*count, phys_dev->obj.extension_count);
+    memcpy(properties, phys_dev->obj.extensions, *count * sizeof(*properties));
 
     TRACE("Returning %u extensions.\n", *count);
-    return *count < phys_dev->extension_count ? VK_INCOMPLETE : VK_SUCCESS;
+    return *count < phys_dev->obj.extension_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
 VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t *count,
