@@ -189,6 +189,11 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         process_wayland.wl_data_device_manager =
             wl_registry_bind(registry, id, &wl_data_device_manager_interface, 2);
     }
+    else if (strcmp(interface, "xdg_toplevel_icon_manager_v1") == 0)
+    {
+        process_wayland.xdg_toplevel_icon_manager_v1 =
+            wl_registry_bind(registry, id, &xdg_toplevel_icon_manager_v1_interface, 1);
+    }
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,
@@ -318,6 +323,9 @@ BOOL wayland_process_init(void)
         else
             ERR("Wayland compositor doesn't support optional zwlr_data_control_manager_v1 (clipboard functionality will be limited)\n");
     }
+
+    if (!process_wayland.xdg_toplevel_icon_manager_v1)
+        ERR("Wayland compositor doesn't support xdg_toplevel_icon_manager_v1 (window icons will not be supported)\n");
 
     process_wayland.initialized = TRUE;
 

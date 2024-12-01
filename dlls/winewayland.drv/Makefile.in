@@ -26,4 +26,5 @@ SOURCES = \
 	window_surface.c \
 	wlr-data-control-unstable-v1.xml \
 	xdg-output-unstable-v1.xml \
-	xdg-shell.xml
+	xdg-shell.xml \
+	xdg-toplevel-icon-v1.xml

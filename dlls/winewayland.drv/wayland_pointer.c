@@ -383,98 +383,6 @@ done:
 }
 
 /***********************************************************************
- *           create_color_cursor_buffer
- *
- * Create a wayland_shm_buffer for a color cursor bitmap.
- *
- * Adapted from wineandroid.drv code.
- */
-static struct wayland_shm_buffer *create_color_cursor_buffer(HDC hdc, HBITMAP color,
-                                                             HBITMAP mask)
-{
-    struct wayland_shm_buffer *shm_buffer = NULL;
-    char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
-    BITMAPINFO *info = (BITMAPINFO *)buffer;
-    BITMAP bm;
-    unsigned int *ptr, *bits = NULL;
-    unsigned char *mask_bits = NULL;
-    int i, j;
-    BOOL has_alpha = FALSE;
-
-    if (!NtGdiExtGetObjectW(color, sizeof(bm), &bm)) goto failed;
-
-    shm_buffer = wayland_shm_buffer_create(bm.bmWidth, bm.bmHeight,
-                                           WL_SHM_FORMAT_ARGB8888);
-    if (!shm_buffer) goto failed;
-    bits = shm_buffer->map_data;
-
-    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    info->bmiHeader.biWidth = bm.bmWidth;
-    info->bmiHeader.biHeight = -bm.bmHeight;
-    info->bmiHeader.biPlanes = 1;
-    info->bmiHeader.biBitCount = 32;
-    info->bmiHeader.biCompression = BI_RGB;
-    info->bmiHeader.biSizeImage = bm.bmWidth * bm.bmHeight * 4;
-    info->bmiHeader.biXPelsPerMeter = 0;
-    info->bmiHeader.biYPelsPerMeter = 0;
-    info->bmiHeader.biClrUsed = 0;
-    info->bmiHeader.biClrImportant = 0;
-
-    if (!NtGdiGetDIBitsInternal(hdc, color, 0, bm.bmHeight, bits, info,
-                                DIB_RGB_COLORS, 0, 0))
-        goto failed;
-
-    for (i = 0; i < bm.bmWidth * bm.bmHeight; i++)
-        if ((has_alpha = (bits[i] & 0xff000000) != 0)) break;
-
-    if (!has_alpha)
-    {
-        unsigned int width_bytes = (bm.bmWidth + 31) / 32 * 4;
-        /* generate alpha channel from the mask */
-        info->bmiHeader.biBitCount = 1;
-        info->bmiHeader.biSizeImage = width_bytes * bm.bmHeight;
-        if (!(mask_bits = malloc(info->bmiHeader.biSizeImage))) goto failed;
-        if (!NtGdiGetDIBitsInternal(hdc, mask, 0, bm.bmHeight, mask_bits,
-                                    info, DIB_RGB_COLORS, 0, 0))
-            goto failed;
-        ptr = bits;
-        for (i = 0; i < bm.bmHeight; i++)
-        {
-            for (j = 0; j < bm.bmWidth; j++, ptr++)
-            {
-                if (!((mask_bits[i * width_bytes + j / 8] << (j % 8)) & 0x80))
-                    *ptr |= 0xff000000;
-            }
-        }
-        free(mask_bits);
-    }
-
-    /* Wayland requires pre-multiplied alpha values */
-    for (ptr = bits, i = 0; i < bm.bmWidth * bm.bmHeight; ptr++, i++)
-    {
-        unsigned char alpha = *ptr >> 24;
-        if (alpha == 0)
-        {
-            *ptr = 0;
-        }
-        else if (alpha != 255)
-        {
-            *ptr = (alpha << 24) |
-                   (((BYTE)(*ptr >> 16) * alpha / 255) << 16) |
-                   (((BYTE)(*ptr >> 8) * alpha / 255) << 8) |
-                   (((BYTE)*ptr * alpha / 255));
-        }
-    }
-
-    return shm_buffer;
-
-failed:
-    if (shm_buffer) wayland_shm_buffer_unref(shm_buffer);
-    free(mask_bits);
-    return NULL;
-}
-
-/***********************************************************************
  *           get_icon_info
  *
  * Local GetIconInfoExW helper implementation.
@@ -535,7 +443,7 @@ static void wayland_pointer_update_cursor_buffer(HCURSOR hcursor, double scale)
     {
         HDC hdc = NtGdiCreateCompatibleDC(0);
         cursor->shm_buffer =
-            create_color_cursor_buffer(hdc, info.hbmColor, info.hbmMask);
+            wayland_shm_buffer_from_color_bitmaps(hdc, info.hbmColor, info.hbmMask);
         NtGdiDeleteObjectApp(hdc);
     }
     else
