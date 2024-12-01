@@ -30,8 +30,11 @@
 #include <winnls.h>
 #include <initguid.h>
 #include <devpkey.h>
+#include <bthsdpdef.h>
+#include <bluetoothapis.h>
 #include <bthdef.h>
 #include <winioctl.h>
+#include <bthioctl.h>
 #include <ddk/wdm.h>
 
 #include <wine/debug.h>
@@ -75,6 +78,69 @@ struct bluetooth_radio
     UNICODE_STRING bthport_symlink_name;
     UNICODE_STRING bthradio_symlink_name;
 };
+
+static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
+{
+    struct bluetooth_radio *ext = (struct bluetooth_radio *)device->DeviceExtension;
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+    ULONG outsize = stack->Parameters.DeviceIoControl.OutputBufferLength;
+    NTSTATUS status = irp->IoStatus.Status;
+
+    TRACE( "device %p irp %p code %#lx\n", device, irp, code );
+
+    switch (code)
+    {
+    case IOCTL_BTH_GET_LOCAL_INFO:
+    {
+        BTH_LOCAL_RADIO_INFO *info = (BTH_LOCAL_RADIO_INFO *)irp->AssociatedIrp.SystemBuffer;
+
+        if (!info || outsize < sizeof(*info))
+        {
+            status = STATUS_INVALID_USER_BUFFER;
+            break;
+        }
+
+        memset( info, 0, sizeof( *info ) );
+
+        EnterCriticalSection( &ext->props_cs );
+        if (ext->props_mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS)
+        {
+            info->localInfo.flags |= BDIF_ADDRESS;
+            info->localInfo.address = RtlUlonglongByteSwap( ext->props.address.ullLong );
+        }
+        if (ext->props_mask & WINEBLUETOOTH_RADIO_PROPERTY_NAME)
+        {
+            info->localInfo.flags |= BDIF_NAME;
+            strcpy( info->localInfo.name, ext->props.name );
+        }
+        if (ext->props_mask & WINEBLUETOOTH_RADIO_PROPERTY_CLASS)
+        {
+            info->localInfo.flags |= BDIF_COD;
+            info->localInfo.classOfDevice = ext->props.class;
+        }
+        if (ext->props_mask & WINEBLUETOOTH_RADIO_PROPERTY_VERSION)
+            info->hciVersion = info->radioInfo.lmpVersion = ext->props.version;
+        if (ext->props.connectable)
+            info->flags |= LOCAL_RADIO_CONNECTABLE;
+        if (ext->props.discoverable)
+            info->flags |= LOCAL_RADIO_DISCOVERABLE;
+        if (ext->props_mask & WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER)
+            info->radioInfo.mfg = ext->props.manufacturer;
+        LeaveCriticalSection( &ext->props_cs );
+
+        status = STATUS_SUCCESS;
+        break;
+    }
+    default:
+        FIXME( "Unimplemented IOCTL code: %#lx\n", code );
+        break;
+    }
+
+    irp->IoStatus.Status = status;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return status;
+}
 
 void WINAPIV append_id( struct string_buffer *buffer, const WCHAR *format, ... )
 {
@@ -541,5 +607,6 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
     driver->MajorFunction[IRP_MJ_PNP] = bluetooth_pnp;
+    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = dispatch_bluetooth;
     return STATUS_SUCCESS;
 }

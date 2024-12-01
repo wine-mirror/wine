@@ -29,6 +29,29 @@ DEFINE_GUID( GUID_BTHPORT_DEVICE_INTERFACE, 0x850302a, 0xb344, 0x4fda, 0x9b, 0xe
 DEFINE_GUID( GUID_BLUETOOTH_RADIO_INTERFACE, 0x92383b0e, 0xf90e, 0x4ac9, 0x8d, 0x44, 0x8c, 0x2d,
              0x0d, 0x0e, 0xbd, 0xa2 );
 
+typedef ULONG BTH_COD;
+
+#define BTH_MAX_NAME_SIZE  (248)
+
+#define BDIF_ADDRESS   0x00000001
+#define BDIF_COD       0x00000002
+#define BDIF_NAME      0x00000004
+#define BDIF_PAIRED    0x00000008
+#define BDIF_PERSONAL  0x00000010
+#define BDIF_CONNECTED 0x00000020
+
+#define BDIF_SSP_SUPPORTED      0x00000100
+#define BDIF_SSP_PAIRED         0x00000200
+#define BDIF_SSP_MITM_PROTECTED 0x00000200
+
+typedef struct _BTH_DEVICE_INFO
+{
+    ULONG flags;
+    BTH_ADDR address;
+    BTH_COD classOfDevice;
+    CHAR name[BTH_MAX_NAME_SIZE];
+} BTH_DEVICE_INFO, *PBTH_DEVICE_INFO;
+
 #ifdef __cplusplus
 }
 #endif

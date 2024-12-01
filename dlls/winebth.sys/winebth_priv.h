@@ -108,6 +108,10 @@ DEFINE_BTH_RADIO_DEVPROPKEY( HCIVendorFeatures, 8 );               /* DEVPROP_TY
 DEFINE_BTH_RADIO_DEVPROPKEY( MaximumAdvertisementDataLength, 17 ); /* DEVPROP_TYPE_UINT16 */
 DEFINE_BTH_RADIO_DEVPROPKEY( LELocalSupportedFeatures, 22 );       /* DEVPROP_TYPE_UINT64 */
 
+/* Valid masks for the "flags" field in BTH_LOCAL_RADIO_INFO. */
+#define LOCAL_RADIO_DISCOVERABLE 0x0001
+#define LOCAL_RADIO_CONNECTABLE  0x0002
+
 typedef struct
 {
     UINT_PTR handle;
