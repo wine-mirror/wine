@@ -1296,43 +1296,26 @@ wchar_t * CDECL _wfullpath(wchar_t * absPath, const wchar_t* relPath, size_t siz
  *          Otherwise populates absPath with the path and returns it.
  * Failure: NULL. errno indicates the error.
  */
-char * CDECL _fullpath(char * absPath, const char* relPath, size_t size)
+char * CDECL _fullpath(char *abs_path, const char *rel_path, size_t size)
 {
-  DWORD rc;
-  char* lastpart;
-  char* buffer;
-  BOOL alloced = FALSE;
+    wchar_t abs_pathW[MAX_PATH], *rel_pathW = NULL, *retW;
+    size_t len;
 
-  if (!relPath || !*relPath)
-    return _getcwd(absPath, size);
+    if (rel_path && !(rel_pathW = wstrdupa_utf8(rel_path))) return NULL;
+    retW = _wfullpath(abs_pathW, rel_pathW, ARRAY_SIZE(abs_pathW));
+    free(rel_pathW);
+    if (!retW) return NULL;
 
-  if (absPath == NULL)
-  {
-      buffer = malloc(MAX_PATH);
-      size = MAX_PATH;
-      alloced = TRUE;
-  }
-  else
-      buffer = absPath;
-
-  if (size < 4)
-  {
-    *_errno() = ERANGE;
-    return NULL;
-  }
-
-  TRACE(":resolving relative path '%s'\n",relPath);
-
-  rc = GetFullPathNameA(relPath,size,buffer,&lastpart);
-
-  if (rc > 0 && rc <= size)
-    return buffer;
-  else
-  {
-      if (alloced)
-          free(buffer);
+    if (!abs_path) return astrdupw_utf8(abs_pathW);
+    len = convert_wcs_to_acp_utf8(abs_pathW, NULL, 0);
+    if (!len) return NULL;
+    if (len > size)
+    {
+        *_errno() = ERANGE;
         return NULL;
-  }
+    }
+    convert_wcs_to_acp_utf8(abs_pathW, abs_path, size);
+    return abs_path;
 }
 
 /*********************************************************************

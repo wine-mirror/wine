@@ -269,6 +269,13 @@ static void test_utf8(void)
     todo_wine_if(!is_lossless_convertion(dir))
         ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
 
+    p = _fullpath(buf, NULL, sizeof(buf));
+    ok(p == buf, "_fulpath returned %p, errno %d\n", p, errno);
+    p = strrchr(p, '\\');
+    ok(!!p, "strrchr returned NULL, buf = %s\n", debugstr_a(buf));
+    todo_wine_if(!is_lossless_convertion(dir))
+        ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
+
     ret = _chdir("..");
     ok(!ret, "_chdir returned %d, error %d\n", ret, errno);
 
