@@ -330,6 +330,10 @@ def api_is_vulkan(obj):
     return "vulkan" in obj.get("api", "vulkan").split(",")
 
 
+def innertext(tag):
+    return (tag.text or '') + ''.join(innertext(e) for e in tag) + (tag.tail or '')
+
+
 def convert_suffix(direction, win_type, unwrap, is_wrapped):
     if direction == Direction.OUTPUT:
         if not is_wrapped:
@@ -405,8 +409,7 @@ class VkConstant(object):
 
 
 class VkDefine(object):
-    def __init__(self, name, value):
-        self.name = name
+    def __init__(self, value):
         self.value = value
 
     @staticmethod
@@ -414,59 +417,16 @@ class VkDefine(object):
         if not api_is_vulkan(define):
             return None
 
-        name_elem = define.find("name")
+        value = innertext(define)
+        value = re.sub(r'\s*//.*$', '', value, flags=re.M)
+        value = value.strip()
 
-        if name_elem is None:
-            # <type category="define" name="some_name">some_value</type>
-            name = define.attrib.get("name")
-
-            # We override behavior of VK_USE_64_BIT_PTR_DEFINES as the default non-dispatchable handle
-            # definition various between 64-bit (uses pointers) and 32-bit (uses uint64_t).
-            # This complicates TRACEs in the thunks, so just use uint64_t.
-            if name == "VK_USE_64_BIT_PTR_DEFINES":
-                value = "#define VK_USE_64_BIT_PTR_DEFINES 0"
-            else:
-                value = define.text
-            return VkDefine(name, value)
-
-        # With a name element the structure is like:
-        # <type category="define"><name>some_name</name>some_value</type>
-        name = name_elem.text
-
-        # Perform minimal parsing for Vulkan constants, which we don't need, but are referenced
-        # elsewhere in vk.xml.
-        # - VK_API_VERSION is a messy, deprecated constant and we don't want generate code for it.
-        # - AHardwareBuffer/ANativeWindow are forward declarations for Android types, which leaked
-        #   into the define region.
-        if name in ["VK_API_VERSION", "AHardwareBuffer", "ANativeWindow", "CAMetalLayer"]:
-            return VkDefine(name, None)
-
-        # The body of the define is basically unstructured C code. It is not meant for easy parsing.
-        # Some lines contain deprecated values or comments, which we try to filter out.
-        value = ""
-        for line in define.text.splitlines():
-            # Skip comments or deprecated values.
-            if "//" in line:
-                continue
-            value += line
-
-        for child in define:
-            value += child.text
-            if child.tail is not None:
-                # Split comments for VK_API_VERSION_1_0 / VK_API_VERSION_1_1
-                if "//" in child.tail:
-                    value += child.tail.split("//")[0]
-                else:
-                    value += child.tail
-
-        return VkDefine(name, value.rstrip(' '))
+        if "#define VK_USE_64_BIT_PTR_DEFINES" in value:
+            return VkDefine("#define VK_USE_64_BIT_PTR_DEFINES 0")
+        return VkDefine(value)
 
     def definition(self):
-        if self.value is None:
-            return ""
-
-        # Nothing to do as the value was already put in the right form during parsing.
-        return "{0}\n".format(self.value)
+        return self.value + '\n'
 
 
 class VkEnum(object):
@@ -3692,26 +3652,18 @@ class VkRegistry(object):
 
             if type_info["category"] == "basetype":
                 name = t.find("name").text
-                _type = None
-                if not t.find("type") is None:
-                    _type = t.find("type").text
-                    tail = t.find("type").tail
-                    if tail is not None:
-                        _type += tail.strip()
-                basetype = VkBaseType(name, _type)
-                if basetype:
-                    base_types.append(basetype)
-                    type_info["data"] = basetype
-                else:
-                    continue
+                define = VkDefine.from_xml(t)
+                defines.append(define)
+                type_info["data"] = define
 
             # Basic C types don't need us to define them, but we do need data for them
-            if type_info["requires"] == "vk_platform":
+            elif type_info["requires"] == "vk_platform":
+                name = t.attrib.get("name")
                 requires = type_info["requires"]
-                basic_c = VkBaseType(name, _type, requires=requires)
+                basic_c = VkBaseType(name, name, requires=requires)
                 type_info["data"] = basic_c
 
-            if type_info["category"] == "bitmask":
+            elif type_info["category"] == "bitmask":
                 name = t.find("name").text
                 _type = t.find("type").text
 
@@ -3722,7 +3674,7 @@ class VkRegistry(object):
                 bitmasks.append(bitmask)
                 type_info["data"] = bitmask
 
-            if type_info["category"] == "define":
+            elif type_info["category"] == "define":
                 define = VkDefine.from_xml(t)
                 if define:
                     defines.append(define)
@@ -3730,7 +3682,7 @@ class VkRegistry(object):
                 else:
                     continue
 
-            if type_info["category"] == "enum":
+            elif type_info["category"] == "enum":
                 name = t.attrib.get("name")
                 # The type section only contains enum names, not the actual definition.
                 # Since we already parsed the enum before, just link it in.
@@ -3742,7 +3694,7 @@ class VkRegistry(object):
                     # definitions.
                     type_info["data"] = None
 
-            if type_info["category"] == "funcpointer":
+            elif type_info["category"] == "funcpointer":
                 funcpointer = VkFunctionPointer.from_xml(t)
                 if funcpointer:
                     funcpointers.append(funcpointer)
@@ -3750,7 +3702,7 @@ class VkRegistry(object):
                 else:
                     continue
 
-            if type_info["category"] == "handle":
+            elif type_info["category"] == "handle":
                 handle = VkHandle.from_xml(t)
                 if handle:
                     handles.append(handle)
@@ -3758,7 +3710,7 @@ class VkRegistry(object):
                 else:
                     continue
 
-            if type_info["category"] in ["struct", "union"]:
+            elif type_info["category"] in ["struct", "union"]:
                 # We store unions among structs as some structs depend
                 # on unions. The types are very similar in parsing and
                 # generation anyway. The official Vulkan scripts use

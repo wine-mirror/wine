@@ -891,6 +891,7 @@
 #define VK_API_VERSION_MINOR(version) (((uint32_t)(version) >> 12U) & 0x3FFU)
 #define VK_API_VERSION_PATCH(version) ((uint32_t)(version) & 0xFFFU)
 #define VKSC_API_VARIANT 1
+
 #define VK_API_VERSION_1_0 VK_MAKE_API_VERSION(0, 1, 0, 0)
 #define VK_API_VERSION_1_1 VK_MAKE_API_VERSION(0, 1, 1, 0)
 #define VK_API_VERSION_1_2 VK_MAKE_API_VERSION(0, 1, 2, 0)
@@ -901,7 +902,6 @@
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 4, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
-
 #ifndef VK_DEFINE_NON_DISPATCHABLE_HANDLE
     #if (VK_USE_64_BIT_PTR_DEFINES==1)
         #if (defined(__cplusplus) && (__cplusplus >= 201103L)) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201103L))
@@ -916,7 +916,6 @@
 #ifndef VK_NULL_HANDLE
     #define VK_NULL_HANDLE 0
 #endif
-
 #ifndef VK_DEFINE_NON_DISPATCHABLE_HANDLE
     #if (VK_USE_64_BIT_PTR_DEFINES==1)
         #define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef struct object##_T *object;
@@ -924,6 +923,52 @@
         #define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef uint64_t object;
     #endif
 #endif
+struct ANativeWindow;
+struct AHardwareBuffer;
+#ifdef __OBJC__
+@class CAMetalLayer;
+#else
+typedef void CAMetalLayer;
+#endif
+#ifdef __OBJC__
+@protocol MTLDevice;
+typedef __unsafe_unretained id<MTLDevice> MTLDevice_id;
+#else
+typedef void* MTLDevice_id;
+#endif
+#ifdef __OBJC__
+@protocol MTLCommandQueue;
+typedef __unsafe_unretained id<MTLCommandQueue> MTLCommandQueue_id;
+#else
+typedef void* MTLCommandQueue_id;
+#endif
+#ifdef __OBJC__
+@protocol MTLBuffer;
+typedef __unsafe_unretained id<MTLBuffer> MTLBuffer_id;
+#else
+typedef void* MTLBuffer_id;
+#endif
+#ifdef __OBJC__
+@protocol MTLTexture;
+typedef __unsafe_unretained id<MTLTexture> MTLTexture_id;
+#else
+typedef void* MTLTexture_id;
+#endif
+#ifdef __OBJC__
+@protocol MTLSharedEvent;
+typedef __unsafe_unretained id<MTLSharedEvent> MTLSharedEvent_id;
+#else
+typedef void* MTLSharedEvent_id;
+#endif
+typedef struct __IOSurface* IOSurfaceRef;
+typedef uint32_t VkSampleMask;
+typedef uint32_t VkBool32;
+typedef uint32_t VkFlags;
+typedef uint64_t VkFlags64;
+typedef uint64_t VkDeviceSize;
+typedef uint64_t VkDeviceAddress;
+typedef struct NativeWindow OHNativeWindow;
+typedef void* VkRemoteAddressNV;
 #define VK_MAKE_VIDEO_STD_VERSION(major, minor, patch) \
     ((((uint32_t)(major)) << 22) | (((uint32_t)(minor)) << 12) | ((uint32_t)(patch)))
 #define VK_STD_VULKAN_VIDEO_CODEC_H264_DECODE_API_VERSION_1_0_0 VK_MAKE_VIDEO_STD_VERSION(1, 0, 0)
@@ -988,23 +1033,6 @@ VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkValidationCacheEXT)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkVideoSessionKHR)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkVideoSessionParametersKHR)
 
-struct AHardwareBuffer;
-struct ANativeWindow;
-struct CAMetalLayer;
-struct IOSurfaceRef;
-struct MTLBuffer_id;
-struct MTLCommandQueue_id;
-struct MTLDevice_id;
-struct MTLSharedEvent_id;
-struct MTLTexture_id;
-struct OHNativeWindow;
-typedef uint32_t VkBool32;
-typedef uint64_t VkDeviceAddress;
-typedef uint64_t VkDeviceSize;
-typedef uint32_t VkFlags;
-typedef uint64_t VkFlags64;
-typedef void* VkRemoteAddressNV;
-typedef uint32_t VkSampleMask;
 
 typedef VkFlags VkAccelerationStructureCreateFlagsKHR;
 typedef VkFlags VkAccelerationStructureMotionInfoFlagsNV;
