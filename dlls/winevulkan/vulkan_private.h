@@ -70,11 +70,6 @@ struct wine_debug_report_callback
     UINT64 user_data; /* client pointer */
 };
 
-struct wine_phys_dev
-{
-    struct vulkan_physical_device obj;
-};
-
 struct wine_debug_report_callback;
 
 struct wine_instance
@@ -94,11 +89,11 @@ struct wine_instance
     pthread_rwlock_t objects_lock;
 
     /* We cache devices as we need to wrap them as they are dispatchable objects. */
-    uint32_t phys_dev_count;
-    struct wine_phys_dev phys_devs[];
+    uint32_t physical_device_count;
+    struct vulkan_physical_device physical_devices[];
 };
 
-C_ASSERT(sizeof(struct wine_instance) == offsetof(struct wine_instance, phys_devs[0]));
+C_ASSERT(sizeof(struct wine_instance) == offsetof(struct wine_instance, physical_devices[0]));
 
 struct wine_cmd_pool
 {
