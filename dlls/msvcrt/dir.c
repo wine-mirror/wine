@@ -869,39 +869,21 @@ int CDECL _getdrive(void)
  */
 char* CDECL _getdcwd(int drive, char * buf, int size)
 {
-  static char* dummy;
+    wchar_t dirW[MAX_PATH];
+    int len;
 
-  TRACE(":drive %d(%c), size %d\n",drive, drive + 'A' - 1, size);
+    if (!_wgetdcwd(drive, dirW, ARRAY_SIZE(dirW))) return NULL;
 
-  if (!drive || drive == _getdrive())
-    return _getcwd(buf,size); /* current */
-  else
-  {
-    char dir[MAX_PATH];
-    char drivespec[] = "A:";
-    int dir_len;
-
-    drivespec[0] += drive - 1;
-    if (GetDriveTypeA(drivespec) < DRIVE_REMOVABLE)
+    if (!buf) return astrdupw_utf8(dirW);
+    len = convert_wcs_to_acp_utf8(dirW, NULL, 0);
+    if (!len) return NULL;
+    if (len > size)
     {
-      *_errno() = EACCES;
-      return NULL;
+        *_errno() = ERANGE;
+        return NULL;
     }
-
-    dir_len = GetFullPathNameA(drivespec,MAX_PATH,dir,&dummy);
-    if (dir_len >= size || dir_len < 1)
-    {
-      *_errno() = ERANGE;
-      return NULL; /* buf too small */
-    }
-
-    TRACE(":returning '%s'\n", dir);
-    if (!buf)
-      return _strdup(dir); /* allocate */
-
-    strcpy(buf,dir);
-  }
-  return buf;
+    convert_wcs_to_acp_utf8(dirW, buf, size);
+    return buf;
 }
 
 /*********************************************************************
