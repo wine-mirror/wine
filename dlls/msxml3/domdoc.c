@@ -60,6 +60,7 @@ static const WCHAR PropertyAllowXsltScriptW[] = {'A','l','l','o','w','X','s','l'
 static const WCHAR PropertyAllowDocumentFunctionW[] = {'A','l','l','o','w','D','o','c','u','m','e','n','t','F','u','n','c','t','i','o','n',0};
 static const WCHAR PropertyNormalizeAttributeValuesW[] = {'N','o','r','m','a','l','i','z','e','A','t','t','r','i','b','u','t','e','V','a','l','u','e','s',0};
 static const WCHAR PropertyValidateOnParse[] = L"ValidateOnParse";
+static const WCHAR PropertyMaxElementDepth[] = L"MaxElementDepth";
 
 /* Anything that passes the test_get_ownerDocument()
  * tests can go here (data shared between all instances).
@@ -3200,7 +3201,8 @@ static HRESULT WINAPI domdoc_setProperty(
              lstrcmpiW(p, PropertyResolveExternalsW) == 0 ||
              lstrcmpiW(p, PropertyAllowXsltScriptW) == 0 ||
              lstrcmpiW(p, PropertyNormalizeAttributeValuesW) == 0 ||
-             lstrcmpiW(p, PropertyAllowDocumentFunctionW) == 0)
+             lstrcmpiW(p, PropertyAllowDocumentFunctionW) == 0 ||
+             lstrcmpiW(p, PropertyMaxElementDepth) == 0)
     {
         /* Ignore */
         FIXME("Ignoring property %s, value %s\n", debugstr_w(p), debugstr_variant(&value));

@@ -13667,6 +13667,42 @@ todo_wine {
     IXMLDOMDocument2_Release(doc);
 }
 
+static void test_max_element_depth_values(void)
+{
+    IXMLDOMDocument2 *doc;
+    VARIANT var;
+    HRESULT hr;
+
+    doc = create_document_version(60, &IID_IXMLDOMDocument2);
+
+    /* The default max element depth value should be 256. */
+    V_VT(&var) = VT_UI4;
+    V_UI4(&var) = 0xdeadbeef;
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("MaxElementDepth"), &var);
+todo_wine {
+    ok(hr == S_OK, "Failed to get property value, hr %#lx.\n", hr);
+    ok(V_VT(&var) == VT_I4, "Unexpected property value type, vt %d.\n", V_VT(&var));
+    ok(V_I4(&var) == 256, "Unexpected property value.\n");
+}
+
+    /* Changes to the depth value should be observable when subsequently retrieved. */
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 32;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("MaxElementDepth"), var);
+    ok(hr == S_OK, "Failed to set property, hr %#lx.\n", hr);
+
+    V_VT(&var) = VT_UI4;
+    V_UI4(&var) = 0xdeadbeef;
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("MaxElementDepth"), &var);
+todo_wine {
+    ok(hr == S_OK, "Failed to get property value, hr %#lx.\n", hr);
+    ok(V_VT(&var) == VT_I4, "Unexpected property value type, vt %d.\n", V_VT(&var));
+    ok(V_I4(&var) == 32, "Unexpected property value.\n");
+}
+
+    IXMLDOMDocument2_Release(doc);
+}
+
 typedef struct _namespace_as_attribute_t {
     const GUID *guid;
     const char *clsid;
@@ -14273,6 +14309,7 @@ START_TEST(domdoc)
     test_validate_on_parse_values();
     test_xsltemplate();
     test_xsltext();
+    test_max_element_depth_values();
 
     if (is_clsid_supported(&CLSID_MXNamespaceManager40, &IID_IMXNamespaceManager))
     {
