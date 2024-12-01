@@ -417,6 +417,11 @@ static inline int convert_acp_utf8_to_wcs(const char *str, wchar_t *wstr, int le
     return MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, str, -1, wstr, len);
 }
 
+static inline int convert_wcs_to_acp_utf8(const wchar_t *wstr, char *str, int len)
+{
+    return WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, len, NULL, NULL);
+}
+
 static inline wchar_t* wstrdupa_utf8(const char *str)
 {
     int len = convert_acp_utf8_to_wcs(str, NULL, 0);
@@ -427,6 +432,18 @@ static inline wchar_t* wstrdupa_utf8(const char *str)
     if (!wstr) return NULL;
     convert_acp_utf8_to_wcs(str, wstr, len);
     return wstr;
+}
+
+static inline char* astrdupw_utf8(const wchar_t *wstr)
+{
+    int len = convert_wcs_to_acp_utf8(wstr, NULL, 0);
+    char *str;
+
+    if (!len) return NULL;
+    str = malloc(len * sizeof(char));
+    if (!str) return NULL;
+    convert_wcs_to_acp_utf8(wstr, str, len);
+    return str;
 }
 
 #endif /* __WINE_MSVCRT_H */

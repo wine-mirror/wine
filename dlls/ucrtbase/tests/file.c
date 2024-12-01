@@ -218,11 +218,24 @@ static void test_fopen(void)
     setlocale(LC_ALL, "C");
 }
 
+static BOOL is_lossless_convertion(const char *str)
+{
+    wchar_t bufW[32];
+    char buf[32];
+
+    if (!MultiByteToWideChar(CP_ACP, 0, str, -1, bufW, ARRAY_SIZE(bufW)))
+        return FALSE;
+    if (!WideCharToMultiByte(CP_ACP, 0, bufW, -1, buf, ARRAY_SIZE(buf), NULL, NULL))
+        return FALSE;
+    return !strcmp(str, buf);
+}
+
 static void test_utf8(void)
 {
     const char dir[] = "dir\xc4\x99\xc5\x9b\xc4\x87";
     const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
 
+    char buf[256], *p;
     int ret;
 
     if (!setlocale(LC_ALL, ".utf8"))
@@ -241,6 +254,14 @@ static void test_utf8(void)
 
     ret = _chdir(dir);
     ok(!ret, "_chdir returned %d, error %d\n", ret, errno);
+
+    p = _getcwd(buf, sizeof(buf));
+    ok(p == buf, "_getcwd returned %p, errno %d\n", p, errno);
+    p = strrchr(p, '\\');
+    ok(!!p, "strrchr returned NULL, buf = %s\n", debugstr_a(buf));
+    todo_wine_if(!is_lossless_convertion(dir))
+        ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
+
     ret = _chdir("..");
     ok(!ret, "_chdir returned %d, error %d\n", ret, errno);
 

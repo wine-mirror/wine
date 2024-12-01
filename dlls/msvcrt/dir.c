@@ -787,24 +787,21 @@ int CDECL _wfindnext64i32(intptr_t hand, struct _wfinddata64i32_t * ft)
  */
 char* CDECL _getcwd(char * buf, int size)
 {
-  char dir[MAX_PATH];
-  int dir_len = GetCurrentDirectoryA(MAX_PATH,dir);
+    wchar_t dirW[MAX_PATH];
+    int len;
 
-  if (dir_len < 1)
-    return NULL; /* FIXME: Real return value untested */
+    if (!_wgetcwd(dirW, ARRAY_SIZE(dirW))) return NULL;
 
-  if (!buf)
-  {
-      if (size <= dir_len) size = dir_len + 1;
-      if (!(buf = malloc( size ))) return NULL;
-  }
-  else if (dir_len >= size)
-  {
-    *_errno() = ERANGE;
-    return NULL; /* buf too small */
-  }
-  strcpy(buf,dir);
-  return buf;
+    if (!buf) return astrdupw_utf8(dirW);
+    len = convert_wcs_to_acp_utf8(dirW, NULL, 0);
+    if (!len) return NULL;
+    if (len > size)
+    {
+        *_errno() = ERANGE;
+        return NULL;
+    }
+    convert_wcs_to_acp_utf8(dirW, buf, size);
+    return buf;
 }
 
 /*********************************************************************
