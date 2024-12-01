@@ -733,10 +733,9 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
 }
 
 /* Helper function which stores wrapped physical devices in the instance object. */
-static VkResult wine_vk_instance_init_physical_devices(struct wine_instance *object)
+static VkResult wine_vk_instance_init_physical_devices(struct vulkan_instance *instance,
+        struct vulkan_physical_device *physical_devices)
 {
-    struct vulkan_instance *instance = &object->obj;
-    struct vulkan_physical_device *physical_devices = object->physical_devices;
     VkInstance client_instance = instance->client.instance;
     VkPhysicalDevice *host_physical_devices;
     uint32_t phys_dev_count;
@@ -777,7 +776,8 @@ static VkResult wine_vk_instance_init_physical_devices(struct wine_instance *obj
         if (res != VK_SUCCESS)
             goto err;
     }
-    object->physical_device_count = phys_dev_count;
+    instance->physical_device_count = phys_dev_count;
+    instance->physical_devices = physical_devices;
 
     free(host_physical_devices);
     return VK_SUCCESS;
@@ -788,7 +788,7 @@ err:
     return res;
 }
 
-static struct vulkan_physical_device *wine_vk_instance_wrap_physical_device(struct wine_instance *instance,
+static struct vulkan_physical_device *vulkan_instance_get_physical_device(struct vulkan_instance *instance,
         VkPhysicalDevice host_physical_device)
 {
     struct vulkan_physical_device *physical_devices = instance->physical_devices;
@@ -943,17 +943,19 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     struct conversion_context ctx;
     struct wine_instance *instance;
     VkInstance host_instance, client_instance = client_ptr;
+    struct vulkan_physical_device *physical_devices;
     unsigned int i;
     VkResult res;
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    if (!(instance = calloc(1, offsetof(struct wine_instance, physical_devices[client_instance->phys_dev_count]))))
+    if (!(instance = calloc(1, sizeof(*instance) + sizeof(*physical_devices) * client_instance->phys_dev_count)))
     {
         ERR("Failed to allocate memory for instance\n");
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
+    physical_devices = (struct vulkan_physical_device *)(instance + 1);
 
     init_conversion_context(&ctx);
     res = wine_vk_instance_convert_create_info(&ctx, create_info, &create_info_host, instance);
@@ -986,7 +988,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
      * the host physical devices and present those to the application.
      * Cleanup happens as part of wine_vkDestroyInstance.
      */
-    res = wine_vk_instance_init_physical_devices(instance);
+    res = wine_vk_instance_init_physical_devices(&instance->obj, physical_devices);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to load physical devices, res=%d\n", res);
@@ -1010,9 +1012,9 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     TRACE("Created instance %p, host_instance %p.\n", instance, instance->obj.host.instance);
 
-    for (i = 0; i < instance->physical_device_count; i++)
+    for (i = 0; i < instance->obj.physical_device_count; i++)
     {
-        struct vulkan_physical_device *physical_device = &instance->physical_devices[i];
+        struct vulkan_physical_device *physical_device = &instance->obj.physical_devices[i];
         vulkan_instance_insert_object(&instance->obj, &physical_device->obj);
     }
     vulkan_instance_insert_object(&instance->obj, &instance->obj.obj);
@@ -1051,10 +1053,10 @@ void wine_vkDestroyInstance(VkInstance client_instance, const VkAllocationCallba
         return;
 
     instance->obj.p_vkDestroyInstance(instance->obj.host.instance, NULL /* allocator */);
-    for (i = 0; i < instance->physical_device_count; i++)
+    for (i = 0; i < instance->obj.physical_device_count; i++)
     {
-        vulkan_instance_remove_object(&instance->obj, &instance->physical_devices[i].obj);
-        vulkan_physical_device_cleanup(&instance->physical_devices[i]);
+        vulkan_instance_remove_object(&instance->obj, &instance->obj.physical_devices[i].obj);
+        vulkan_physical_device_cleanup(&instance->obj.physical_devices[i]);
     }
     vulkan_instance_remove_object(&instance->obj, &instance->obj.obj);
 
@@ -1181,7 +1183,7 @@ VkResult wine_vkEnumerateInstanceVersion(uint32_t *version)
 
 VkResult wine_vkEnumeratePhysicalDevices(VkInstance client_instance, uint32_t *count, VkPhysicalDevice *client_physical_devices)
 {
-    struct wine_instance *instance = wine_instance_from_handle(client_instance);
+    struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
     unsigned int i;
 
     if (!client_physical_devices)
@@ -1298,14 +1300,14 @@ void wine_vkDestroyCommandPool(VkDevice client_device, VkCommandPool handle,
     free(pool);
 }
 
-static VkResult wine_vk_enumerate_physical_device_groups(struct wine_instance *instance,
+static VkResult wine_vk_enumerate_physical_device_groups(struct vulkan_instance *instance,
         VkResult (*p_vkEnumeratePhysicalDeviceGroups)(VkInstance, uint32_t *, VkPhysicalDeviceGroupProperties *),
         uint32_t *count, VkPhysicalDeviceGroupProperties *properties)
 {
     unsigned int i, j;
     VkResult res;
 
-    res = p_vkEnumeratePhysicalDeviceGroups(instance->obj.host.instance, count, properties);
+    res = p_vkEnumeratePhysicalDeviceGroups(instance->host.instance, count, properties);
     if (res < 0 || !properties)
         return res;
 
@@ -1315,7 +1317,7 @@ static VkResult wine_vk_enumerate_physical_device_groups(struct wine_instance *i
         for (j = 0; j < current->physicalDeviceCount; ++j)
         {
             VkPhysicalDevice host_physical_device = current->physicalDevices[j];
-            struct vulkan_physical_device *physical_device = wine_vk_instance_wrap_physical_device(instance, host_physical_device);
+            struct vulkan_physical_device *physical_device = vulkan_instance_get_physical_device(instance, host_physical_device);
             if (!physical_device) return VK_ERROR_INITIALIZATION_FAILED;
             current->physicalDevices[j] = physical_device->client.physical_device;
         }
@@ -1327,19 +1329,19 @@ static VkResult wine_vk_enumerate_physical_device_groups(struct wine_instance *i
 VkResult wine_vkEnumeratePhysicalDeviceGroups(VkInstance client_instance, uint32_t *count,
                                               VkPhysicalDeviceGroupProperties *properties)
 {
-    struct wine_instance *instance = wine_instance_from_handle(client_instance);
+    struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
 
     return wine_vk_enumerate_physical_device_groups(instance,
-            instance->obj.p_vkEnumeratePhysicalDeviceGroups, count, properties);
+            instance->p_vkEnumeratePhysicalDeviceGroups, count, properties);
 }
 
 VkResult wine_vkEnumeratePhysicalDeviceGroupsKHR(VkInstance client_instance, uint32_t *count,
                                                  VkPhysicalDeviceGroupProperties *properties)
 {
-    struct wine_instance *instance = wine_instance_from_handle(client_instance);
+    struct vulkan_instance *instance = vulkan_instance_from_handle(client_instance);
 
     return wine_vk_enumerate_physical_device_groups(instance,
-            instance->obj.p_vkEnumeratePhysicalDeviceGroupsKHR, count, properties);
+            instance->p_vkEnumeratePhysicalDeviceGroupsKHR, count, properties);
 }
 
 void wine_vkGetPhysicalDeviceExternalFenceProperties(VkPhysicalDevice client_physical_device,

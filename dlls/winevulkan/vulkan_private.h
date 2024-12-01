@@ -87,13 +87,7 @@ struct wine_instance
 
     struct rb_tree objects;
     pthread_rwlock_t objects_lock;
-
-    /* We cache devices as we need to wrap them as they are dispatchable objects. */
-    uint32_t physical_device_count;
-    struct vulkan_physical_device physical_devices[];
 };
-
-C_ASSERT(sizeof(struct wine_instance) == offsetof(struct wine_instance, physical_devices[0]));
 
 struct wine_cmd_pool
 {
