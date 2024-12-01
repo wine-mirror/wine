@@ -6937,47 +6937,15 @@ typedef enum VkViewportCoordinateSwizzleNV
     VK_VIEWPORT_COORDINATE_SWIZZLE_NV_MAX_ENUM = 0x7fffffff,
 } VkViewportCoordinateSwizzleNV;
 
-typedef void* (VKAPI_PTR * PFN_vkAllocationFunction)(
-    void *pUserData,
-    size_t size,
-    size_t alignment,
-    VkSystemAllocationScope allocationScope);
-typedef VkBool32 (VKAPI_PTR * PFN_vkDebugReportCallbackEXT)(
-    VkDebugReportFlagsEXT flags,
-    VkDebugReportObjectTypeEXT objectType,
-    uint64_t object,
-    size_t location,
-    int32_t messageCode,
-    const char *pLayerPrefix,
-    const char *pMessage,
-    void *pUserData);
 typedef struct VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT;
-typedef VkBool32 (VKAPI_PTR * PFN_vkDebugUtilsMessengerCallbackEXT)(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-    void *pUserData);
-typedef void (VKAPI_PTR * PFN_vkFreeFunction)(
-    void *pUserData,
-    void *pMemory);
-typedef void (VKAPI_PTR * PFN_vkInternalAllocationNotification)(
-    void *pUserData,
-    size_t size,
-    VkInternalAllocationType allocationType,
-    VkSystemAllocationScope allocationScope);
-typedef void (VKAPI_PTR * PFN_vkInternalFreeNotification)(
-    void *pUserData,
-    size_t size,
-    VkInternalAllocationType allocationType,
-    VkSystemAllocationScope allocationScope);
-typedef void* (VKAPI_PTR * PFN_vkReallocationFunction)(
-    void *pUserData,
-    void *pOriginal,
-    size_t size,
-    size_t alignment,
-    VkSystemAllocationScope allocationScope);
-typedef void (VKAPI_PTR * PFN_vkVoidFunction)(
-void);
+typedef VkBool32 (VKAPI_PTR *PFN_vkDebugReportCallbackEXT)( VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData);
+typedef VkBool32 (VKAPI_PTR *PFN_vkDebugUtilsMessengerCallbackEXT)( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+typedef void (VKAPI_PTR *PFN_vkFreeFunction)( void* pUserData, void* pMemory);
+typedef void (VKAPI_PTR *PFN_vkInternalAllocationNotification)( void* pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
+typedef void (VKAPI_PTR *PFN_vkInternalFreeNotification)( void* pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
+typedef void (VKAPI_PTR *PFN_vkVoidFunction)(void);
+typedef void* (VKAPI_PTR *PFN_vkAllocationFunction)( void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
+typedef void* (VKAPI_PTR *PFN_vkReallocationFunction)( void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
 typedef struct StdVideoAV1CDEF
 {

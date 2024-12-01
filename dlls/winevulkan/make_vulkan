@@ -1004,81 +1004,28 @@ class VkFunction(object):
 
 
 class VkFunctionPointer(object):
-    def __init__(self, _type, name, members, forward_decls):
-        self.name = name
-        self.members = members
-        self.type = _type
+    def __init__(self, value):
+        self.value = value
         self.required = False
-        self.forward_decls = forward_decls
 
     @staticmethod
     def from_xml(funcpointer):
         if not api_is_vulkan(funcpointer):
             return None
 
-        members = []
-        begin = None
+        value = innertext(funcpointer).replace('\n', '')
+        value = re.sub(r'\s*//.*$', '', value, flags=re.M)
+        value = re.sub(r'\s+', ' ', value, flags=re.M)
+        value = value.strip()
 
-        for t in funcpointer.findall("type"):
-            # General form:
-            # <type>void</type>*       pUserData,
-            # Parsing of the tail (anything past </type>) is tricky since there
-            # can be other data on the next line like: const <type>int</type>..
-
-            const = True if begin and "const" in begin else False
-            _type = t.text
-            lines = t.tail.split(",\n")
-            if lines[0][0] == "*":
-                pointer = "*"
-                name = lines[0][1:].strip()
-            else:
-                pointer = None
-                name = lines[0].strip()
-
-            # Filter out ); if it is contained.
-            name = name.partition(");")[0]
-
-            # If tail encompasses multiple lines, assign the second line to begin
-            # for the next line.
-            try:
-                begin = lines[1].strip()
-            except IndexError:
-                begin = None
-
-            members.append(VkMember(const=const, _type=_type, pointer=pointer, name=name))
-
-        _type = funcpointer.text
-        name = funcpointer.find("name").text
-        if "requires" in funcpointer.attrib:
-            forward_decls = funcpointer.attrib.get("requires").split(",")
-        else:
-            forward_decls = []
-        return VkFunctionPointer(_type, name, members, forward_decls)
+        return VkFunctionPointer(value)
 
     def definition(self):
-        text = ""
-        # forward declare required structs
-        for decl in self.forward_decls:
-            text += "typedef struct {0} {0};\n".format(decl)
-
-        text += "{0} {1})(\n".format(self.type, self.name)
-
-        first = True
-        if len(self.members) > 0:
-            for m in self.members:
-                if first:
-                    text += "    " + m.definition()
-                    first = False
-                else:
-                    text += ",\n    " + m.definition()
-        else:
-            # Just make the compiler happy by adding a void parameter.
-            text += "void"
-        text += ");\n"
-        return text
+        return self.value + '\n'
 
     def is_alias(self):
         return False
+
 
 class VkHandle(object):
     def __init__(self, name, _type, parent, alias=None):
@@ -3072,6 +3019,8 @@ class VkGenerator(object):
             if enum.required:
                 f.write(enum.definition())
 
+        f.write("typedef struct VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT;\n")
+
         for fp in self.registry.funcpointers:
             if fp.required:
                 f.write(fp.definition())
@@ -3255,15 +3204,6 @@ class VkRegistry(object):
             if bitmask.requires is not None:
                 types[bitmask.requires]["data"].required = True
 
-        def mark_funcpointer_dependencies(fp, types):
-            for m in fp.members:
-                type_info = types[m.type]
-
-                # Complex types have a matching definition e.g. VkStruct.
-                # Not needed for base types such as uint32_t.
-                if "data" in type_info:
-                    types[m.type]["data"].required = True
-
         def mark_struct_dependencies(struct, types):
              for m in struct:
                 type_info = types[m.type]
@@ -3276,8 +3216,6 @@ class VkRegistry(object):
                 if type_info["category"] == "struct" and struct.name != m.type:
                     # Yay, recurse
                     mark_struct_dependencies(type_info["data"], types)
-                elif type_info["category"] == "funcpointer":
-                    mark_funcpointer_dependencies(type_info["data"], types)
                 elif type_info["category"] == "bitmask":
                     mark_bitmask_dependencies(type_info["data"], types)
 
@@ -3810,7 +3748,7 @@ class VkRegistry(object):
         self.bitmasks = sorted(bitmasks, key=lambda bitmask: bitmask.name)
         self.defines = defines
         self.enums = OrderedDict(sorted(self.enums.items()))
-        self.funcpointers = sorted(funcpointers, key=lambda fp: fp.name)
+        self.funcpointers = sorted(funcpointers, key=lambda fp: fp.value)
         self.handles = sorted(handles, key=lambda handle: handle.name)
         self.structs = sorted(structs, key=lambda struct: struct.name)
 
