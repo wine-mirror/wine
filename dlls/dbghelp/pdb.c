@@ -979,10 +979,180 @@ static enum method_result pdb_method_enumerate_sources(struct module_format *mod
     return MR_NOT_FOUND;
 }
 
+#define loc_cv_local_range (loc_user + 0) /* loc.offset contain the copy of all defrange* Codeview records following S_LOCAL */
+#define loc_cv_defrange (loc_user + 1)    /* loc.register+offset contain the stream_id+stream_offset of S_LOCAL Codeview record to search into */
+
+/* Some data (codeview_symbol, codeview_types...) are layed out with a 2 byte integer,
+ * designing length of following blob.
+ * Basic reading of that length + (part) of blob.
+ * Walker is advanced by 2 only (so that any reading inside blob is possible).
+  */
+static enum pdb_result pdb_reader_read_partial_blob(struct pdb_reader *pdb, struct pdb_reader_walker *walker, void *blob, unsigned blob_size)
+{
+    enum pdb_result result;
+    pdbsize_t num_read, toload;
+    unsigned short len;
+
+    if ((result = pdb_reader_internal_read_advance(pdb, walker, &len, sizeof(len)))) return result;
+    toload = min(len, blob_size - sizeof(len));
+
+    if ((result = pdb_reader_read_from_stream(pdb, walker, (char*)blob + sizeof(len), toload, &num_read))) return result;
+    if (num_read != toload) return R_PDB_IOERROR;
+    *(unsigned short*)blob = len;
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_alloc_and_read_full_blob(struct pdb_reader *pdb, struct pdb_reader_walker *walker, void **blob)
+{
+    enum pdb_result result;
+    unsigned short int len;
+
+    if ((result = pdb_reader_READ(pdb, walker, &len))) return result;
+    if ((result = pdb_reader_alloc(pdb, len + sizeof(len), blob)))
+    {
+        walker->offset -= sizeof(len);
+        return result;
+    }
+
+    if ((result = pdb_reader_internal_read_advance(pdb, walker, (char*)*blob + sizeof(len), len)))
+    {
+        pdb_reader_free(pdb, *blob);
+        walker->offset -= sizeof(len);
+        return result;
+    }
+    *(unsigned short int*)*blob = len;
+    return R_PDB_SUCCESS;
+}
+
+/* Read the fixed part of a CodeView symbol (enough to fit inside the union codeview) */
+static enum pdb_result pdb_reader_read_partial_codeview_symbol(struct pdb_reader *pdb, struct pdb_reader_walker *walker, union codeview_symbol *cv_symbol)
+{
+    return pdb_reader_read_partial_blob(pdb, walker, (void*)cv_symbol, sizeof(*cv_symbol));
+}
+
+static enum pdb_result pdb_reader_alloc_and_read_full_codeview_symbol(struct pdb_reader *pdb, struct pdb_reader_walker *walker,
+                                                                      union codeview_symbol **cv_symbol)
+{
+    return pdb_reader_alloc_and_read_full_blob(pdb, walker, (void **)cv_symbol);
+}
+
+static void pdb_method_location_compute(const struct module_format *modfmt,
+                                        const struct symt_function *func,
+                                        struct location *loc)
+{
+    enum pdb_result result;
+    struct pdb_reader_walker walker;
+    struct pdb_reader *pdb;
+    union codeview_symbol cv_local;
+    union codeview_symbol *cv_def;
+    DWORD64 ip = modfmt->module->process->localscope_pc;
+    struct location in_loc = *loc;
+
+    loc->kind = loc_error;
+    loc->reg = loc_err_internal;
+
+    if (!pdb_hack_get_main_info((struct module_format *)modfmt, &pdb, NULL)) return;
+    if (in_loc.kind != loc_cv_defrange || pdb_reader_walker_init(pdb, in_loc.reg, &walker)) return;
+    walker.offset = in_loc.offset;
+
+    /* we have in location: in_loc.reg = stream_id, in_loc.offset offset in stream_id to point to S_LOCAL */
+    if ((result = pdb_reader_read_partial_codeview_symbol(pdb, &walker, &cv_local))) return;
+    walker.offset += cv_local.generic.len;
+
+    while ((result = pdb_reader_alloc_and_read_full_codeview_symbol(pdb, &walker, &cv_def)) == R_PDB_SUCCESS &&
+           cv_def->generic.id >= S_DEFRANGE && cv_def->generic.id <= S_DEFRANGE_REGISTER_REL)
+    {
+        BOOL inside = TRUE;
+
+        /* S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE matches full function scope...
+         * Assuming that if we're here, ip matches the function for which we're
+         * considering the S_LOCAL and S_DEFRANGE_*, there's nothing to do.
+         */
+        if (cv_def->generic.id != S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE)
+        {
+            const struct cv_addr_range* range;
+            const struct cv_addr_gap* gap;
+            DWORD64 range_start;
+
+            switch (cv_def->generic.id)
+            {
+            case S_DEFRANGE: range = &cv_def->defrange_v3.range; break;
+            case S_DEFRANGE_SUBFIELD: range = &cv_def->defrange_subfield_v3.range; break;
+            case S_DEFRANGE_REGISTER: range = &cv_def->defrange_register_v3.range; break;
+            case S_DEFRANGE_FRAMEPOINTER_REL: range = &cv_def->defrange_frameptrrel_v3.range; break;
+            case S_DEFRANGE_SUBFIELD_REGISTER: range = &cv_def->defrange_subfield_register_v3.range; break;
+            case S_DEFRANGE_REGISTER_REL: range = &cv_def->defrange_registerrel_v3.range; break;
+            default: range = NULL;
+            }
+
+            /* check if inside range */
+            if ((result = pdb_reader_get_segment_address(pdb, range->isectStart, range->offStart, &range_start)))
+            {
+                pdb_reader_free(pdb, cv_def);
+                return;
+            }
+            inside = range_start <= ip && ip < range_start + range->cbRange;
+
+            /* the gaps describe part which shall be excluded from range */
+            for (gap = (const void*)(range + 1);
+                 inside && (const char*)(gap + 1) <= (const char*)cv_def + sizeof(cv_def->generic.len) + cv_def->generic.len;
+                 gap++)
+            {
+                if (func->ranges[0].low + gap->gapStartOffset <= ip &&
+                    ip < func->ranges[0].low + gap->gapStartOffset + gap->cbRange)
+                    inside = FALSE;
+            }
+        }
+        if (!inside)
+        {
+            pdb_reader_free(pdb, cv_def);
+            continue;
+        }
+
+        switch (cv_def->generic.id)
+        {
+        case S_DEFRANGE:
+        case S_DEFRANGE_SUBFIELD:
+        default:
+            WARN("Unsupported defrange %d\n", cv_def->generic.id);
+            loc->kind = loc_error;
+            loc->reg = loc_err_internal;
+            break;
+        case S_DEFRANGE_SUBFIELD_REGISTER:
+            WARN("sub-field part not handled\n");
+            /* fall through */
+        case S_DEFRANGE_REGISTER:
+            loc->kind = loc_register;
+            loc->reg = cv_def->defrange_register_v3.reg;
+            break;
+        case S_DEFRANGE_REGISTER_REL:
+            loc->kind = loc_regrel;
+            loc->reg = cv_def->defrange_registerrel_v3.baseReg;
+            loc->offset = cv_def->defrange_registerrel_v3.offBasePointer;
+            break;
+        case S_DEFRANGE_FRAMEPOINTER_REL:
+            loc->kind = loc_regrel;
+            loc->reg = modfmt->module->cpu->frame_regno;
+            loc->offset = cv_def->defrange_frameptrrel_v3.offFramePointer;
+            break;
+        case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
+            loc->kind = loc_regrel;
+            loc->reg = modfmt->module->cpu->frame_regno;
+            loc->offset = cv_def->defrange_frameptr_relfullscope_v3.offFramePointer;
+            break;
+        }
+        pdb_reader_free(pdb, cv_def);
+        return;
+    }
+    if (result == R_PDB_SUCCESS) pdb_reader_free(pdb, cv_def);
+    loc->kind = loc_error;
+    loc->reg = loc_err_out_of_scope;
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
-    NULL,/*pdb_location_compute*/
+    pdb_method_location_compute,
     pdb_method_get_line_from_address,
     pdb_method_advance_line_info,
     pdb_method_enumerate_lines,
@@ -1000,7 +1170,6 @@ struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, cons
         pdb->module = module;
         /* hack (copy old pdb methods until they are moved here) */
         pdb_module_format_vtable.remove = module->format_info[DFI_PDB]->vtable->remove;
-        pdb_module_format_vtable.loc_compute = module->format_info[DFI_PDB]->vtable->loc_compute;
 
         module->format_info[DFI_PDB]->vtable = &pdb_module_format_vtable;
         return pdb;

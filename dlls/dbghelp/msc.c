@@ -2298,6 +2298,7 @@ static struct symt_compiland* codeview_new_compiland(const struct msc_debug_info
 }
 
 static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
+                           unsigned stream_id,
                            const BYTE* root, unsigned offset, unsigned size,
                            const struct cv_module_snarf* cvmod,
                            const char* objname)
@@ -2699,7 +2700,15 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
              */
             if (!sym->local_v3.varflags.enreg_global && !sym->local_v3.varflags.enreg_static)
             {
-                length += codeview_transform_defrange(msc_dbg, curr_func, sym, &loc);
+                if (stream_id)
+                {
+                    loc.kind = loc_user + 1 /* loc_cv_defrange for new PDB reader (see pdb.c) */;
+                    loc.reg = stream_id;
+                    loc.offset = (const BYTE*)sym - root;
+                    length += codeview_defrange_length(sym);
+                }
+                else
+                    length += codeview_transform_defrange(msc_dbg, curr_func, sym, &loc);
                 symt_add_func_local(msc_dbg->module, curr_func,
                                     sym->local_v3.varflags.is_param ? DataIsParam : DataIsLocal,
                                     &loc, block,
@@ -3904,7 +3913,8 @@ static BOOL pdb_process_internal(const struct process *pcs,
             {
                 struct cv_module_snarf cvmod = {ipi_ok ? &ipi_ctp : NULL, (const void*)(modimage + sfile.symbol_size), sfile.lineno2_size,
                     files_image};
-                codeview_snarf(msc_dbg, modimage, sizeof(DWORD), sfile.symbol_size, &cvmod, file_name);
+                codeview_snarf(msc_dbg, pdb_file->pdb_reader ? sfile.stream : 0, modimage, sizeof(DWORD), sfile.symbol_size,
+                               &cvmod, file_name);
 
                 if (sfile.lineno_size && sfile.lineno2_size)
                     FIXME("Both line info present... preferring second\n");
@@ -4103,7 +4113,7 @@ static BOOL codeview_process_info(const struct process *pcs,
 
             if (ent->SubSection == sstAlignSym)
             {
-                codeview_snarf(msc_dbg, msc_dbg->root + ent->lfo, sizeof(DWORD), ent->cb, NULL, NULL);
+                codeview_snarf(msc_dbg, 0, msc_dbg->root + ent->lfo, sizeof(DWORD), ent->cb, NULL, NULL);
 
                 if (SymGetOptions() & SYMOPT_LOAD_LINES)
                 {
