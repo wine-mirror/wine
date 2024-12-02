@@ -20730,9 +20730,7 @@ then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror"
 fi
   fi
-  if test "x$enable_build_id" = "xyes"
-  then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--build-id" >&5
+  test "x$enable_build_id" != xyes || { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--build-id" >&5
 printf %s "checking whether the compiler supports -Wl,--build-id... " >&6; }
 if test ${ac_cv_cflags__Wl___build_id+y}
 then :
@@ -20760,10 +20758,8 @@ fi
 printf "%s\n" "$ac_cv_cflags__Wl___build_id" >&6; }
 if test "x$ac_cv_cflags__Wl___build_id" = xyes
 then :
-  CFLAGS="$CFLAGS -Wl,--build-id"
-                      LDFLAGS="$LDFLAGS -Wl,--build-id"
+  LDFLAGS="$LDFLAGS -Wl,--build-id"
 fi
-  fi
 fi
 
 
