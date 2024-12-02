@@ -1886,10 +1886,17 @@ void init_registry(void)
                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                     'P','e','r','f','l','i','b','\\',
                                     '0','0','9'};
+    static const WCHAR controlset[] = {'S','y','s','t','e','m','\\',
+                                       'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t'};
+    static const WCHAR controlset001_path[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                               'M','a','c','h','i','n','e','\\',
+                                               'S','y','s','t','e','m','\\',
+                                               'C','o','n','t','r','o','l','S','e','t','0','0','1'};
     static const struct unicode_str root_name = { REGISTRY, sizeof(REGISTRY) };
     static const struct unicode_str HKLM_name = { HKLM, sizeof(HKLM) };
     static const struct unicode_str HKU_name = { HKU_default, sizeof(HKU_default) };
     static const struct unicode_str perflib_name = { perflib, sizeof(perflib) };
+    static const struct unicode_str controlset_name = { controlset, sizeof(controlset) };
 
     WCHAR *current_user_path;
     struct unicode_str current_user_str;
@@ -1917,6 +1924,13 @@ void init_registry(void)
             prefix_type = PREFIX_32BIT;
         else
             prefix_type = sizeof(void *) > sizeof(int) ? PREFIX_64BIT : PREFIX_32BIT;
+
+        if ((key = create_key_recursive( hklm, &controlset_name, current_time )))
+        {
+            key->flags |= KEY_SYMLINK;
+            set_value( key, &symlink_str, REG_LINK, controlset001_path, sizeof(controlset001_path) );
+            release_object( key );
+        }
     }
     else if (prefix_type == PREFIX_UNKNOWN)
         prefix_type = PREFIX_32BIT;
