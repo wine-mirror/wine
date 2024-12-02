@@ -36616,7 +36616,7 @@ static NTSTATUS thunk64_vkAcquireNextImage2KHR(void *args)
 
     TRACE("%p, %p, %p\n", params->device, params->pAcquireInfo, params->pImageIndex);
 
-    params->result = wine_vkAcquireNextImage2KHR(params->device, params->pAcquireInfo, params->pImageIndex);
+    params->result = vk_funcs->p_vkAcquireNextImage2KHR(params->device, params->pAcquireInfo, params->pImageIndex);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -36635,7 +36635,7 @@ static NTSTATUS thunk32_vkAcquireNextImage2KHR(void *args)
     TRACE("%#x, %#x, %#x\n", params->device, params->pAcquireInfo, params->pImageIndex);
 
     convert_VkAcquireNextImageInfoKHR_win32_to_unwrapped_host((const VkAcquireNextImageInfoKHR32 *)UlongToPtr(params->pAcquireInfo), &pAcquireInfo_host);
-    params->result = wine_vkAcquireNextImage2KHR((VkDevice)UlongToPtr(params->device), &pAcquireInfo_host, (uint32_t *)UlongToPtr(params->pImageIndex));
+    params->result = vk_funcs->p_vkAcquireNextImage2KHR((VkDevice)UlongToPtr(params->device), &pAcquireInfo_host, (uint32_t *)UlongToPtr(params->pImageIndex));
     return STATUS_SUCCESS;
 }
 
@@ -36646,7 +36646,7 @@ static NTSTATUS thunk64_vkAcquireNextImageKHR(void *args)
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->swapchain), wine_dbgstr_longlong(params->timeout), wine_dbgstr_longlong(params->semaphore), wine_dbgstr_longlong(params->fence), params->pImageIndex);
 
-    params->result = wine_vkAcquireNextImageKHR(params->device, params->swapchain, params->timeout, params->semaphore, params->fence, params->pImageIndex);
+    params->result = vk_funcs->p_vkAcquireNextImageKHR(params->device, params->swapchain, params->timeout, params->semaphore, params->fence, params->pImageIndex);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -36666,7 +36666,7 @@ static NTSTATUS thunk32_vkAcquireNextImageKHR(void *args)
 
     TRACE("%#x, 0x%s, 0x%s, 0x%s, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->swapchain), wine_dbgstr_longlong(params->timeout), wine_dbgstr_longlong(params->semaphore), wine_dbgstr_longlong(params->fence), params->pImageIndex);
 
-    params->result = wine_vkAcquireNextImageKHR((VkDevice)UlongToPtr(params->device), params->swapchain, params->timeout, params->semaphore, params->fence, (uint32_t *)UlongToPtr(params->pImageIndex));
+    params->result = vk_funcs->p_vkAcquireNextImageKHR((VkDevice)UlongToPtr(params->device), params->swapchain, params->timeout, params->semaphore, params->fence, (uint32_t *)UlongToPtr(params->pImageIndex));
     return STATUS_SUCCESS;
 }
 
@@ -45155,7 +45155,7 @@ static NTSTATUS thunk64_vkCreateSwapchainKHR(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pSwapchain);
 
-    params->result = wine_vkCreateSwapchainKHR(params->device, params->pCreateInfo, params->pAllocator, params->pSwapchain);
+    params->result = vk_funcs->p_vkCreateSwapchainKHR(params->device, params->pCreateInfo, params->pAllocator, params->pSwapchain);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -45178,7 +45178,7 @@ static NTSTATUS thunk32_vkCreateSwapchainKHR(void *args)
 
     init_conversion_context(ctx);
     convert_VkSwapchainCreateInfoKHR_win32_to_unwrapped_host(ctx, (const VkSwapchainCreateInfoKHR32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    params->result = wine_vkCreateSwapchainKHR((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkSwapchainKHR *)UlongToPtr(params->pSwapchain));
+    params->result = vk_funcs->p_vkCreateSwapchainKHR((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkSwapchainKHR *)UlongToPtr(params->pSwapchain));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -45291,7 +45291,7 @@ static NTSTATUS thunk64_vkCreateWin32SurfaceKHR(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
 
-    params->result = wine_vkCreateWin32SurfaceKHR(params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
+    params->result = vk_funcs->p_vkCreateWin32SurfaceKHR(params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -45311,7 +45311,7 @@ static NTSTATUS thunk32_vkCreateWin32SurfaceKHR(void *args)
     TRACE("%#x, %#x, %#x, %#x\n", params->instance, params->pCreateInfo, params->pAllocator, params->pSurface);
 
     convert_VkWin32SurfaceCreateInfoKHR_win32_to_host((const VkWin32SurfaceCreateInfoKHR32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    params->result = wine_vkCreateWin32SurfaceKHR((VkInstance)UlongToPtr(params->instance), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkSurfaceKHR *)UlongToPtr(params->pSurface));
+    params->result = vk_funcs->p_vkCreateWin32SurfaceKHR((VkInstance)UlongToPtr(params->instance), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkSurfaceKHR *)UlongToPtr(params->pSurface));
     return STATUS_SUCCESS;
 }
 
@@ -46587,7 +46587,7 @@ static NTSTATUS thunk64_vkDestroySurfaceKHR(void *args)
 
     TRACE("%p, 0x%s, %p\n", params->instance, wine_dbgstr_longlong(params->surface), params->pAllocator);
 
-    wine_vkDestroySurfaceKHR(params->instance, params->surface, params->pAllocator);
+    vk_funcs->p_vkDestroySurfaceKHR(params->instance, params->surface, params->pAllocator);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -46603,7 +46603,7 @@ static NTSTATUS thunk32_vkDestroySurfaceKHR(void *args)
 
     TRACE("%#x, 0x%s, %#x\n", params->instance, wine_dbgstr_longlong(params->surface), params->pAllocator);
 
-    wine_vkDestroySurfaceKHR((VkInstance)UlongToPtr(params->instance), params->surface, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
+    vk_funcs->p_vkDestroySurfaceKHR((VkInstance)UlongToPtr(params->instance), params->surface, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
     return STATUS_SUCCESS;
 }
 
@@ -46614,7 +46614,7 @@ static NTSTATUS thunk64_vkDestroySwapchainKHR(void *args)
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->swapchain), params->pAllocator);
 
-    wine_vkDestroySwapchainKHR(params->device, params->swapchain, params->pAllocator);
+    vk_funcs->p_vkDestroySwapchainKHR(params->device, params->swapchain, params->pAllocator);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -46630,7 +46630,7 @@ static NTSTATUS thunk32_vkDestroySwapchainKHR(void *args)
 
     TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->swapchain), params->pAllocator);
 
-    wine_vkDestroySwapchainKHR((VkDevice)UlongToPtr(params->device), params->swapchain, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
+    vk_funcs->p_vkDestroySwapchainKHR((VkDevice)UlongToPtr(params->device), params->swapchain, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
     return STATUS_SUCCESS;
 }
 
@@ -50352,7 +50352,7 @@ static NTSTATUS thunk64_vkGetPhysicalDevicePresentRectanglesKHR(void *args)
 
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pRectCount, params->pRects);
 
-    params->result = wine_vkGetPhysicalDevicePresentRectanglesKHR(params->physicalDevice, params->surface, params->pRectCount, params->pRects);
+    params->result = vk_funcs->p_vkGetPhysicalDevicePresentRectanglesKHR(params->physicalDevice, params->surface, params->pRectCount, params->pRects);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50370,7 +50370,7 @@ static NTSTATUS thunk32_vkGetPhysicalDevicePresentRectanglesKHR(void *args)
 
     TRACE("%#x, 0x%s, %#x, %#x\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pRectCount, params->pRects);
 
-    params->result = wine_vkGetPhysicalDevicePresentRectanglesKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), params->surface, (uint32_t *)UlongToPtr(params->pRectCount), (VkRect2D *)UlongToPtr(params->pRects));
+    params->result = vk_funcs->p_vkGetPhysicalDevicePresentRectanglesKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), params->surface, (uint32_t *)UlongToPtr(params->pRectCount), (VkRect2D *)UlongToPtr(params->pRects));
     return STATUS_SUCCESS;
 }
 
@@ -50740,7 +50740,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
 
-    params->result = wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
+    params->result = vk_funcs->p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50764,7 +50764,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_host(ctx, (const VkPhysicalDeviceSurfaceInfo2KHR32 *)UlongToPtr(params->pSurfaceInfo), &pSurfaceInfo_host);
     convert_VkSurfaceCapabilities2KHR_win32_to_host(ctx, (VkSurfaceCapabilities2KHR32 *)UlongToPtr(params->pSurfaceCapabilities), &pSurfaceCapabilities_host);
-    params->result = wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pSurfaceInfo_host, &pSurfaceCapabilities_host);
+    params->result = vk_funcs->p_vkGetPhysicalDeviceSurfaceCapabilities2KHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pSurfaceInfo_host, &pSurfaceCapabilities_host);
     convert_VkSurfaceCapabilities2KHR_host_to_win32(&pSurfaceCapabilities_host, (VkSurfaceCapabilities2KHR32 *)UlongToPtr(params->pSurfaceCapabilities));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50777,7 +50777,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 
     TRACE("%p, 0x%s, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceCapabilities);
 
-    params->result = wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(params->physicalDevice, params->surface, params->pSurfaceCapabilities);
+    params->result = vk_funcs->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(params->physicalDevice, params->surface, params->pSurfaceCapabilities);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50794,7 +50794,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(void *args)
 
     TRACE("%#x, 0x%s, %#x\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceCapabilities);
 
-    params->result = wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), params->surface, (VkSurfaceCapabilitiesKHR *)UlongToPtr(params->pSurfaceCapabilities));
+    params->result = vk_funcs->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), params->surface, (VkSurfaceCapabilitiesKHR *)UlongToPtr(params->pSurfaceCapabilities));
     return STATUS_SUCCESS;
 }
 
@@ -50805,7 +50805,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
 
-    params->result = wine_vkGetPhysicalDeviceSurfaceFormats2KHR(params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
+    params->result = vk_funcs->p_vkGetPhysicalDeviceSurfaceFormats2KHR(params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50830,7 +50830,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
     init_conversion_context(ctx);
     convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_host(ctx, (const VkPhysicalDeviceSurfaceInfo2KHR32 *)UlongToPtr(params->pSurfaceInfo), &pSurfaceInfo_host);
     pSurfaceFormats_host = convert_VkSurfaceFormat2KHR_array_win32_to_host(ctx, (VkSurfaceFormat2KHR32 *)UlongToPtr(params->pSurfaceFormats), *(uint32_t *)UlongToPtr(params->pSurfaceFormatCount));
-    params->result = wine_vkGetPhysicalDeviceSurfaceFormats2KHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pSurfaceInfo_host, (uint32_t *)UlongToPtr(params->pSurfaceFormatCount), pSurfaceFormats_host);
+    params->result = vk_funcs->p_vkGetPhysicalDeviceSurfaceFormats2KHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pSurfaceInfo_host, (uint32_t *)UlongToPtr(params->pSurfaceFormatCount), pSurfaceFormats_host);
     convert_VkSurfaceFormat2KHR_array_host_to_win32(pSurfaceFormats_host, (VkSurfaceFormat2KHR32 *)UlongToPtr(params->pSurfaceFormats), *(uint32_t *)UlongToPtr(params->pSurfaceFormatCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -50843,7 +50843,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceSurfaceFormatsKHR(void *args)
 
     TRACE("%p, 0x%s, %p, %p\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceFormatCount, params->pSurfaceFormats);
 
-    params->result = wine_vkGetPhysicalDeviceSurfaceFormatsKHR(params->physicalDevice, params->surface, params->pSurfaceFormatCount, params->pSurfaceFormats);
+    params->result = vk_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR(params->physicalDevice, params->surface, params->pSurfaceFormatCount, params->pSurfaceFormats);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -50861,7 +50861,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceFormatsKHR(void *args)
 
     TRACE("%#x, 0x%s, %#x, %#x\n", params->physicalDevice, wine_dbgstr_longlong(params->surface), params->pSurfaceFormatCount, params->pSurfaceFormats);
 
-    params->result = wine_vkGetPhysicalDeviceSurfaceFormatsKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), params->surface, (uint32_t *)UlongToPtr(params->pSurfaceFormatCount), (VkSurfaceFormatKHR *)UlongToPtr(params->pSurfaceFormats));
+    params->result = vk_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), params->surface, (uint32_t *)UlongToPtr(params->pSurfaceFormatCount), (VkSurfaceFormatKHR *)UlongToPtr(params->pSurfaceFormats));
     return STATUS_SUCCESS;
 }
 
@@ -51112,7 +51112,7 @@ static NTSTATUS thunk64_vkGetPhysicalDeviceWin32PresentationSupportKHR(void *arg
 
     TRACE("%p, %u\n", params->physicalDevice, params->queueFamilyIndex);
 
-    params->result = vk_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->queueFamilyIndex);
+    params->result = vk_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR(params->physicalDevice, params->queueFamilyIndex);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -51128,7 +51128,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceWin32PresentationSupportKHR(void *arg
 
     TRACE("%#x, %u\n", params->physicalDevice, params->queueFamilyIndex);
 
-    params->result = vk_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, params->queueFamilyIndex);
+    params->result = vk_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR((VkPhysicalDevice)UlongToPtr(params->physicalDevice), params->queueFamilyIndex);
     return STATUS_SUCCESS;
 }
 
@@ -52496,7 +52496,7 @@ static NTSTATUS thunk64_vkQueuePresentKHR(void *args)
 
     TRACE("%p, %p\n", params->queue, params->pPresentInfo);
 
-    params->result = wine_vkQueuePresentKHR(params->queue, params->pPresentInfo);
+    params->result = vk_funcs->p_vkQueuePresentKHR(params->queue, params->pPresentInfo);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -52517,7 +52517,7 @@ static NTSTATUS thunk32_vkQueuePresentKHR(void *args)
 
     init_conversion_context(ctx);
     convert_VkPresentInfoKHR_win32_to_unwrapped_host(ctx, (const VkPresentInfoKHR32 *)UlongToPtr(params->pPresentInfo), &pPresentInfo_host);
-    params->result = wine_vkQueuePresentKHR((VkQueue)UlongToPtr(params->queue), &pPresentInfo_host);
+    params->result = vk_funcs->p_vkQueuePresentKHR((VkQueue)UlongToPtr(params->queue), &pPresentInfo_host);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }

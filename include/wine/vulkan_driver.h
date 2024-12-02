@@ -77,6 +77,8 @@ struct vulkan_instance
 #define USE_VK_FUNC(x) PFN_ ## x p_ ## x;
     ALL_VK_INSTANCE_FUNCS
 #undef USE_VK_FUNC
+    void (*p_insert_object)( struct vulkan_instance *instance, struct vulkan_object *obj );
+    void (*p_remove_object)( struct vulkan_instance *instance, struct vulkan_object *obj );
 };
 
 static inline struct vulkan_instance *vulkan_instance_from_handle( VkInstance handle )
@@ -151,17 +153,24 @@ struct vulkan_funcs
      * needs to provide. Other function calls will be provided indirectly by dispatch
      * tables part of dispatchable Vulkan objects such as VkInstance or vkDevice.
      */
+    PFN_vkAcquireNextImage2KHR p_vkAcquireNextImage2KHR;
+    PFN_vkAcquireNextImageKHR p_vkAcquireNextImageKHR;
+    PFN_vkCreateSwapchainKHR p_vkCreateSwapchainKHR;
     PFN_vkCreateWin32SurfaceKHR p_vkCreateWin32SurfaceKHR;
     PFN_vkDestroySurfaceKHR p_vkDestroySurfaceKHR;
+    PFN_vkDestroySwapchainKHR p_vkDestroySwapchainKHR;
     PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
     PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
+    PFN_vkGetPhysicalDevicePresentRectanglesKHR p_vkGetPhysicalDevicePresentRectanglesKHR;
+    PFN_vkGetPhysicalDeviceSurfaceCapabilities2KHR p_vkGetPhysicalDeviceSurfaceCapabilities2KHR;
+    PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
+    PFN_vkGetPhysicalDeviceSurfaceFormats2KHR p_vkGetPhysicalDeviceSurfaceFormats2KHR;
+    PFN_vkGetPhysicalDeviceSurfaceFormatsKHR p_vkGetPhysicalDeviceSurfaceFormatsKHR;
     PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
-    VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *, VkSurfaceKHR *surfaces);
+    PFN_vkQueuePresentKHR p_vkQueuePresentKHR;
 
     /* winevulkan specific functions */
     const char *(*p_get_host_surface_extension)(void);
-    VkSurfaceKHR (*p_wine_get_host_surface)(VkSurfaceKHR);
-    void (*p_vulkan_surface_update)(VkSurfaceKHR);
 };
 
 /* interface between win32u and the user drivers */

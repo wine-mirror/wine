@@ -194,18 +194,25 @@ FUNCTION_OVERRIDES = {
 
 # functions for which a user driver entry must be generated
 USER_DRIVER_FUNCS = {
+    "vkAcquireNextImage2KHR",
+    "vkAcquireNextImageKHR",
+    "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
     "vkDestroySurfaceKHR",
+    "vkDestroySwapchainKHR",
     "vkGetDeviceProcAddr",
     "vkGetInstanceProcAddr",
+    "vkGetPhysicalDevicePresentRectanglesKHR",
+    "vkGetPhysicalDeviceSurfaceCapabilities2KHR",
+    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR",
+    "vkGetPhysicalDeviceSurfaceFormats2KHR",
+    "vkGetPhysicalDeviceSurfaceFormatsKHR",
     "vkGetPhysicalDeviceWin32PresentationSupportKHR",
     "vkQueuePresentKHR",
 }
 
 # functions for which the unix thunk is manually implemented
 MANUAL_UNIX_THUNKS = {
-    "vkAcquireNextImage2KHR",
-    "vkAcquireNextImageKHR",
     "vkAllocateCommandBuffers",
     "vkAllocateMemory",
     "vkCreateBuffer",
@@ -216,16 +223,12 @@ MANUAL_UNIX_THUNKS = {
     "vkCreateDevice",
     "vkCreateImage",
     "vkCreateInstance",
-    "vkCreateSwapchainKHR",
-    "vkCreateWin32SurfaceKHR",
     "vkDestroyCommandPool",
     "vkDestroyDebugReportCallbackEXT",
     "vkDestroyDebugUtilsMessengerEXT",
     "vkDestroyDeferredOperationKHR",
     "vkDestroyDevice",
     "vkDestroyInstance",
-    "vkDestroySurfaceKHR",
-    "vkDestroySwapchainKHR",
     "vkEnumerateDeviceExtensionProperties",
     "vkEnumerateDeviceLayerProperties",
     "vkEnumerateInstanceExtensionProperties",
@@ -252,14 +255,8 @@ MANUAL_UNIX_THUNKS = {
     "vkGetPhysicalDeviceExternalSemaphorePropertiesKHR",
     "vkGetPhysicalDeviceImageFormatProperties2",
     "vkGetPhysicalDeviceImageFormatProperties2KHR",
-    "vkGetPhysicalDevicePresentRectanglesKHR",
-    "vkGetPhysicalDeviceSurfaceCapabilities2KHR",
-    "vkGetPhysicalDeviceSurfaceCapabilitiesKHR",
-    "vkGetPhysicalDeviceSurfaceFormats2KHR",
-    "vkGetPhysicalDeviceSurfaceFormatsKHR",
     "vkMapMemory",
     "vkMapMemory2KHR",
-    "vkQueuePresentKHR",
     "vkUnmapMemory",
     "vkUnmapMemory2KHR",
 }
@@ -335,16 +332,12 @@ def convert_suffix(direction, win_type, unwrap, is_wrapped):
             return "host_to_{0}".format(win_type)
         if unwrap == Unwrap.NONE:
             return "unwrapped_host_to_{0}".format(win_type)
-        if unwrap == Unwrap.DRIVER:
-            return "driver_to_{0}".format(win_type)
         return "host_to_{0}".format(win_type)
     else:
         if not is_wrapped:
             return "{0}_to_host".format(win_type)
         if unwrap == Unwrap.NONE:
             return "{0}_to_unwrapped_host".format(win_type)
-        if unwrap == Unwrap.DRIVER:
-            return "{0}_to_driver".format(win_type)
         return "{0}_to_host".format(win_type)
 
 
@@ -645,10 +638,8 @@ class VkFunction(object):
         # and is used by the code generation.
         self.required = True if func_info else False
 
-        if self.name in MANUAL_UNIX_THUNKS:
+        if self.name in MANUAL_UNIX_THUNKS | USER_DRIVER_FUNCS:
             self.unwrap = Unwrap.NONE
-        elif self.name in USER_DRIVER_FUNCS:
-            self.unwrap = Unwrap.DRIVER
         else:
             self.unwrap = Unwrap.HOST
 
@@ -1210,17 +1201,7 @@ class VkHandle(object):
             LOGGER.error("Unhandled host handle for: {0}".format(self.name))
         return None
 
-    def driver_handle(self, name):
-        """ Provide access to the handle that should be passed to the wine driver """
-
-        if self.name == "VkSurfaceKHR":
-            return "wine_surface_from_handle({0})->driver_surface".format(name)
-
-        return self.host_handle(name)
-
     def unwrap_handle(self, name, unwrap):
-        if unwrap == Unwrap.DRIVER:
-            return self.driver_handle(name)
         if unwrap == Unwrap.HOST:
             return self.host_handle(name)
         assert unwrap != Unwrap.NONE
@@ -1590,8 +1571,6 @@ class VkMember(VkVariable):
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
                     LOGGER.error("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
-                if unwrap == Unwrap.DRIVER and self.is_wrapped(Unwrap.DRIVER):
-                    LOGGER.error("DRIVER unwrapping of {0}.{1} not implemented".format(self.type, self.name))
                 return "{0}{1} = wine_vk_unwrap_handle({2}{3}, {2}{1});\n".format(output, self.name, input, self.object_type)
             else:
                 selector_part = ", {0}{1}".format(input, self.selector) if self.selector else ""
@@ -1994,8 +1973,6 @@ class VkParam(VkVariable):
         if unwrap != Unwrap.NONE:
             unwrap_handle = None
             if self.object_type != None and self.type == "uint64_t":
-                if unwrap == Unwrap.DRIVER and self.is_wrapped(Unwrap.DRIVER):
-                    LOGGER.error("DRIVER unwrapping of {0}.{1} not implemented".format(self.type, self.name))
                 unwrap_handle = "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(
                     params_prefix, self.object_type, self.name)
 
