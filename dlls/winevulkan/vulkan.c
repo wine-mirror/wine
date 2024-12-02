@@ -867,7 +867,7 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice client_device, const VkCommandBu
     for (i = 0; i < allocate_info->commandBufferCount; i++)
     {
         VkCommandBufferAllocateInfo allocate_info_host;
-        VkCommandBuffer host_command_buffer, client_command_buffer = *buffers++;
+        VkCommandBuffer host_command_buffer, client_command_buffer = buffers[i];
 
         /* TODO: future extensions (none yet) may require pNext conversion. */
         allocate_info_host.pNext = allocate_info->pNext;
