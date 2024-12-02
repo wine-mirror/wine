@@ -1407,6 +1407,10 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
             symt = &symt_new_udt(ctp->module, buf, 0, UdtStruct)->symt;
         }
         break;
+    /* types we can simply silence for now */
+    case LF_LABEL_V1:
+    case LF_VFTABLE_V3:
+        break;
     default:
         FIXME("Unsupported type-id leaf %x\n", type->generic.id);
         dump(type, 2 + type->generic.len);
@@ -2800,12 +2804,14 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             break;
 
         /* the symbols we can safely ignore for now */
+        case S_SKIP:
         case S_TRAMPOLINE:
         case S_FRAMECOOKIE:
         case S_SECTION:
         case S_COFFGROUP:
         case S_EXPORT:
         case S_CALLSITEINFO:
+        case S_ARMSWITCHTABLE:
             /* even if S_LOCAL groks all the S_DEFRANGE* records following itself,
              * those kinds of records can also be present after a S_FILESTATIC record
              * so silence them until (at least) S_FILESTATIC is supported
