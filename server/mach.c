@@ -440,12 +440,6 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
     aligned_address = (mach_vm_address_t)(ptr - offset);
     aligned_size = (size + offset + page_size - 1) / page_size * page_size;
 
-    if ((ret = task_suspend( process_port )) != KERN_SUCCESS)
-    {
-        mach_set_error( ret );
-        return 0;
-    }
-
     ret = mach_vm_read( process_port, aligned_address, aligned_size, &task_mem, &bytes_read );
     if (ret != KERN_SUCCESS)
     {
@@ -489,13 +483,11 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         mach_vm_deallocate( mach_task_self(), task_mem, bytes_read );
         /* restore protection */
         mach_vm_protect( process_port, aligned_address, aligned_size, 0, info.protection );
-        task_resume( process_port );
         return 1;
     }
 
 failed:
     if (task_mem) mach_vm_deallocate( mach_task_self(), task_mem, bytes_read );
-    task_resume( process_port );
     return 0;
 }
 
