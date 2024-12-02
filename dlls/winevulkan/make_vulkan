@@ -904,10 +904,12 @@ class VkFunction(object):
             else:
                 params += ", {0}{1}".format(params_prefix, self.extra_param)
 
-        if self.name not in MANUAL_UNIX_THUNKS:
-            func_prefix = "{0}->p_".format(self.params[0].dispatch_table(params_prefix, conv))
-        else:
+        if self.name in MANUAL_UNIX_THUNKS:
             func_prefix = "wine_"
+        elif self.name in USER_DRIVER_FUNCS:
+            func_prefix = "vk_funcs->p_"
+        else:
+            func_prefix = "{0}->p_".format(self.params[0].dispatch_table(params_prefix, conv))
 
         # Call the host Vulkan function.
         if self.type == "void":

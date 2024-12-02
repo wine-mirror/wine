@@ -128,7 +128,7 @@ static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
     return result;
 }
 
-static const struct vulkan_funcs *vk_funcs;
+const struct vulkan_funcs *vk_funcs;
 
 static int vulkan_object_compare(const void *key, const struct rb_entry *entry)
 {
@@ -1702,7 +1702,7 @@ VkResult wine_vkCreateWin32SurfaceKHR(VkInstance client_instance, const VkWin32S
         create_info_host.hwnd = surface->hwnd = dummy;
     }
 
-    res = instance->p_vkCreateWin32SurfaceKHR(instance->host.instance, &create_info_host,
+    res = vk_funcs->p_vkCreateWin32SurfaceKHR(instance->host.instance, &create_info_host,
                                                     NULL /* allocator */, &surface->driver_surface);
     if (res != VK_SUCCESS)
     {
@@ -1732,7 +1732,7 @@ void wine_vkDestroySurfaceKHR(VkInstance client_instance, VkSurfaceKHR client_su
     if (!surface)
         return;
 
-    instance->p_vkDestroySurfaceKHR(instance->host.instance, surface->driver_surface, NULL);
+    vk_funcs->p_vkDestroySurfaceKHR(instance->host.instance, surface->driver_surface, NULL);
     vulkan_instance_remove_object(instance, &surface->obj.obj);
     window_surfaces_remove(surface);
 

@@ -30,6 +30,8 @@
 
 #include "wine/rbtree.h"
 
+extern const struct vulkan_funcs *vk_funcs;
+
 struct wine_cmd_buffer
 {
     VULKAN_OBJECT_HEADER( VkCommandBuffer, command_buffer );
