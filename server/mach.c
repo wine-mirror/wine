@@ -522,25 +522,20 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
         return;
     }
 
-    if ((ret = task_suspend( process_port )) == KERN_SUCCESS)
-    {
-        mach_vm_offset_t offset = process->ldt_copy % page_size;
-        mach_vm_address_t aligned_address = (mach_vm_address_t)(process->ldt_copy - offset);
-        mach_vm_size_t aligned_size = (total_size + offset + page_size - 1) / page_size * page_size;
+    mach_vm_offset_t offset = process->ldt_copy % page_size;
+    mach_vm_address_t aligned_address = (mach_vm_address_t)(process->ldt_copy - offset);
+    mach_vm_size_t aligned_size = (total_size + offset + page_size - 1) / page_size * page_size;
 
-        ret = mach_vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
-        if (ret != KERN_SUCCESS) mach_set_error( ret );
-        else
-        {
-            const int *ldt = (const int *)((char *)data + offset);
-            memcpy( base, ldt + entry, sizeof(int) );
-            memcpy( limit, ldt + entry + 8192, sizeof(int) );
-            memcpy( flags, (char *)(ldt + 2 * 8192) + entry, 1 );
-            mach_vm_deallocate( mach_task_self(), data, bytes_read );
-        }
-        task_resume( process_port );
+    ret = mach_vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
+    if (ret != KERN_SUCCESS) mach_set_error( ret );
+    else
+    {
+        const int *ldt = (const int *)((char *)data + offset);
+        memcpy( base, ldt + entry, sizeof(int) );
+        memcpy( limit, ldt + entry + 8192, sizeof(int) );
+        memcpy( flags, (char *)(ldt + 2 * 8192) + entry, 1 );
+        mach_vm_deallocate( mach_task_self(), data, bytes_read );
     }
-    else mach_set_error( ret );
 }
 
 #endif  /* USE_MACH */
