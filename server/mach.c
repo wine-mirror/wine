@@ -392,12 +392,7 @@ int send_thread_signal( struct thread *thread, int sig )
 int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest )
 {
     kern_return_t ret;
-    mach_msg_type_number_t bytes_read;
-    mach_vm_offset_t offset;
-    vm_offset_t data;
-    mach_vm_address_t aligned_address;
-    mach_vm_size_t aligned_size;
-    unsigned int page_size = get_page_size();
+    mach_vm_size_t bytes_read;
     mach_port_t process_port = get_process_port( process );
 
     if (!process_port)
@@ -411,17 +406,8 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         return 0;
     }
 
-    offset = ptr % page_size;
-    aligned_address = (mach_vm_address_t)(ptr - offset);
-    aligned_size = (size + offset + page_size - 1) / page_size * page_size;
-
-    ret = mach_vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
-    if (ret != KERN_SUCCESS) mach_set_error( ret );
-    else
-    {
-        memcpy( dest, (char *)data + offset, size );
-        mach_vm_deallocate( mach_task_self(), data, bytes_read );
-    }
+    ret = mach_vm_read_overwrite( process_port, (mach_vm_address_t)ptr, (mach_vm_size_t)size, (mach_vm_address_t)dest, &bytes_read );
+    mach_set_error( ret );
     return (ret == KERN_SUCCESS);
 }
 
