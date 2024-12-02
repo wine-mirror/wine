@@ -58,8 +58,10 @@ enum unix_call
     unix_vkCmdBindDescriptorBufferEmbeddedSamplersEXT,
     unix_vkCmdBindDescriptorBuffersEXT,
     unix_vkCmdBindDescriptorSets,
+    unix_vkCmdBindDescriptorSets2,
     unix_vkCmdBindDescriptorSets2KHR,
     unix_vkCmdBindIndexBuffer,
+    unix_vkCmdBindIndexBuffer2,
     unix_vkCmdBindIndexBuffer2KHR,
     unix_vkCmdBindInvocationMaskHUAWEI,
     unix_vkCmdBindPipeline,
@@ -163,9 +165,14 @@ enum unix_call
     unix_vkCmdPreprocessGeneratedCommandsEXT,
     unix_vkCmdPreprocessGeneratedCommandsNV,
     unix_vkCmdPushConstants,
+    unix_vkCmdPushConstants2,
     unix_vkCmdPushConstants2KHR,
+    unix_vkCmdPushDescriptorSet,
+    unix_vkCmdPushDescriptorSet2,
     unix_vkCmdPushDescriptorSet2KHR,
     unix_vkCmdPushDescriptorSetKHR,
+    unix_vkCmdPushDescriptorSetWithTemplate,
+    unix_vkCmdPushDescriptorSetWithTemplate2,
     unix_vkCmdPushDescriptorSetWithTemplate2KHR,
     unix_vkCmdPushDescriptorSetWithTemplateKHR,
     unix_vkCmdResetEvent,
@@ -230,6 +237,7 @@ enum unix_call
     unix_vkCmdSetFrontFace,
     unix_vkCmdSetFrontFaceEXT,
     unix_vkCmdSetLineRasterizationModeEXT,
+    unix_vkCmdSetLineStipple,
     unix_vkCmdSetLineStippleEXT,
     unix_vkCmdSetLineStippleEnableEXT,
     unix_vkCmdSetLineStippleKHR,
@@ -251,7 +259,9 @@ enum unix_call
     unix_vkCmdSetRasterizerDiscardEnable,
     unix_vkCmdSetRasterizerDiscardEnableEXT,
     unix_vkCmdSetRayTracingPipelineStackSizeKHR,
+    unix_vkCmdSetRenderingAttachmentLocations,
     unix_vkCmdSetRenderingAttachmentLocationsKHR,
+    unix_vkCmdSetRenderingInputAttachmentIndices,
     unix_vkCmdSetRenderingInputAttachmentIndicesKHR,
     unix_vkCmdSetRepresentativeFragmentTestEnableNV,
     unix_vkCmdSetSampleLocationsEXT,
@@ -298,9 +308,12 @@ enum unix_call
     unix_vkCompileDeferredNV,
     unix_vkCopyAccelerationStructureKHR,
     unix_vkCopyAccelerationStructureToMemoryKHR,
+    unix_vkCopyImageToImage,
     unix_vkCopyImageToImageEXT,
+    unix_vkCopyImageToMemory,
     unix_vkCopyImageToMemoryEXT,
     unix_vkCopyMemoryToAccelerationStructureKHR,
+    unix_vkCopyMemoryToImage,
     unix_vkCopyMemoryToImageEXT,
     unix_vkCopyMemoryToMicromapEXT,
     unix_vkCopyMicromapEXT,
@@ -460,6 +473,7 @@ enum unix_call
     unix_vkGetDeviceImageMemoryRequirementsKHR,
     unix_vkGetDeviceImageSparseMemoryRequirements,
     unix_vkGetDeviceImageSparseMemoryRequirementsKHR,
+    unix_vkGetDeviceImageSubresourceLayout,
     unix_vkGetDeviceImageSubresourceLayoutKHR,
     unix_vkGetDeviceMemoryCommitment,
     unix_vkGetDeviceMemoryOpaqueCaptureAddress,
@@ -483,6 +497,7 @@ enum unix_call
     unix_vkGetImageSparseMemoryRequirements2,
     unix_vkGetImageSparseMemoryRequirements2KHR,
     unix_vkGetImageSubresourceLayout,
+    unix_vkGetImageSubresourceLayout2,
     unix_vkGetImageSubresourceLayout2EXT,
     unix_vkGetImageSubresourceLayout2KHR,
     unix_vkGetImageViewAddressNVX,
@@ -562,6 +577,7 @@ enum unix_call
     unix_vkGetRayTracingShaderGroupHandlesNV,
     unix_vkGetRayTracingShaderGroupStackSizeKHR,
     unix_vkGetRenderAreaGranularity,
+    unix_vkGetRenderingAreaGranularity,
     unix_vkGetRenderingAreaGranularityKHR,
     unix_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     unix_vkGetSemaphoreCounterValue,
@@ -577,6 +593,7 @@ enum unix_call
     unix_vkInvalidateMappedMemoryRanges,
     unix_vkLatencySleepNV,
     unix_vkMapMemory,
+    unix_vkMapMemory2,
     unix_vkMapMemory2KHR,
     unix_vkMergePipelineCaches,
     unix_vkMergeValidationCachesEXT,
@@ -614,11 +631,13 @@ enum unix_call
     unix_vkSignalSemaphore,
     unix_vkSignalSemaphoreKHR,
     unix_vkSubmitDebugUtilsMessageEXT,
+    unix_vkTransitionImageLayout,
     unix_vkTransitionImageLayoutEXT,
     unix_vkTrimCommandPool,
     unix_vkTrimCommandPoolKHR,
     unix_vkUninitializePerformanceApiINTEL,
     unix_vkUnmapMemory,
+    unix_vkUnmapMemory2,
     unix_vkUnmapMemory2KHR,
     unix_vkUpdateDescriptorSetWithTemplate,
     unix_vkUpdateDescriptorSetWithTemplateKHR,
@@ -913,10 +932,16 @@ struct vkCmdBindDescriptorSets_params
     const uint32_t *pDynamicOffsets;
 };
 
+struct vkCmdBindDescriptorSets2_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkBindDescriptorSetsInfo *pBindDescriptorSetsInfo;
+};
+
 struct vkCmdBindDescriptorSets2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkBindDescriptorSetsInfoKHR *pBindDescriptorSetsInfo;
+    const VkBindDescriptorSetsInfo *pBindDescriptorSetsInfo;
 };
 
 struct vkCmdBindIndexBuffer_params
@@ -924,6 +949,15 @@ struct vkCmdBindIndexBuffer_params
     VkCommandBuffer commandBuffer;
     VkBuffer DECLSPEC_ALIGN(8) buffer;
     VkDeviceSize DECLSPEC_ALIGN(8) offset;
+    VkIndexType indexType;
+};
+
+struct vkCmdBindIndexBuffer2_params
+{
+    VkCommandBuffer commandBuffer;
+    VkBuffer DECLSPEC_ALIGN(8) buffer;
+    VkDeviceSize DECLSPEC_ALIGN(8) offset;
+    VkDeviceSize DECLSPEC_ALIGN(8) size;
     VkIndexType indexType;
 };
 
@@ -1751,16 +1785,38 @@ struct vkCmdPushConstants_params
     const void *pValues;
 };
 
+struct vkCmdPushConstants2_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkPushConstantsInfo *pPushConstantsInfo;
+};
+
 struct vkCmdPushConstants2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkPushConstantsInfoKHR *pPushConstantsInfo;
+    const VkPushConstantsInfo *pPushConstantsInfo;
+};
+
+struct vkCmdPushDescriptorSet_params
+{
+    VkCommandBuffer commandBuffer;
+    VkPipelineBindPoint pipelineBindPoint;
+    VkPipelineLayout DECLSPEC_ALIGN(8) layout;
+    uint32_t set;
+    uint32_t descriptorWriteCount;
+    const VkWriteDescriptorSet *pDescriptorWrites;
+};
+
+struct vkCmdPushDescriptorSet2_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkPushDescriptorSetInfo *pPushDescriptorSetInfo;
 };
 
 struct vkCmdPushDescriptorSet2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkPushDescriptorSetInfoKHR *pPushDescriptorSetInfo;
+    const VkPushDescriptorSetInfo *pPushDescriptorSetInfo;
 };
 
 struct vkCmdPushDescriptorSetKHR_params
@@ -1773,10 +1829,25 @@ struct vkCmdPushDescriptorSetKHR_params
     const VkWriteDescriptorSet *pDescriptorWrites;
 };
 
+struct vkCmdPushDescriptorSetWithTemplate_params
+{
+    VkCommandBuffer commandBuffer;
+    VkDescriptorUpdateTemplate DECLSPEC_ALIGN(8) descriptorUpdateTemplate;
+    VkPipelineLayout DECLSPEC_ALIGN(8) layout;
+    uint32_t set;
+    const void *pData;
+};
+
+struct vkCmdPushDescriptorSetWithTemplate2_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkPushDescriptorSetWithTemplateInfo *pPushDescriptorSetWithTemplateInfo;
+};
+
 struct vkCmdPushDescriptorSetWithTemplate2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkPushDescriptorSetWithTemplateInfoKHR *pPushDescriptorSetWithTemplateInfo;
+    const VkPushDescriptorSetWithTemplateInfo *pPushDescriptorSetWithTemplateInfo;
 };
 
 struct vkCmdPushDescriptorSetWithTemplateKHR_params
@@ -2202,6 +2273,13 @@ struct vkCmdSetLineRasterizationModeEXT_params
     VkLineRasterizationModeEXT lineRasterizationMode;
 };
 
+struct vkCmdSetLineStipple_params
+{
+    VkCommandBuffer commandBuffer;
+    uint32_t lineStippleFactor;
+    uint16_t lineStipplePattern;
+};
+
 struct vkCmdSetLineStippleEXT_params
 {
     VkCommandBuffer commandBuffer;
@@ -2333,16 +2411,28 @@ struct vkCmdSetRayTracingPipelineStackSizeKHR_params
     uint32_t pipelineStackSize;
 };
 
+struct vkCmdSetRenderingAttachmentLocations_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkRenderingAttachmentLocationInfo *pLocationInfo;
+};
+
 struct vkCmdSetRenderingAttachmentLocationsKHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkRenderingAttachmentLocationInfoKHR *pLocationInfo;
+    const VkRenderingAttachmentLocationInfo *pLocationInfo;
+};
+
+struct vkCmdSetRenderingInputAttachmentIndices_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkRenderingInputAttachmentIndexInfo *pInputAttachmentIndexInfo;
 };
 
 struct vkCmdSetRenderingInputAttachmentIndicesKHR_params
 {
     VkCommandBuffer commandBuffer;
-    const VkRenderingInputAttachmentIndexInfoKHR *pInputAttachmentIndexInfo;
+    const VkRenderingInputAttachmentIndexInfo *pInputAttachmentIndexInfo;
 };
 
 struct vkCmdSetRepresentativeFragmentTestEnableNV_params
@@ -2713,17 +2803,31 @@ struct vkCopyAccelerationStructureToMemoryKHR_params
     VkResult result;
 };
 
+struct vkCopyImageToImage_params
+{
+    VkDevice device;
+    const VkCopyImageToImageInfo *pCopyImageToImageInfo;
+    VkResult result;
+};
+
 struct vkCopyImageToImageEXT_params
 {
     VkDevice device;
-    const VkCopyImageToImageInfoEXT *pCopyImageToImageInfo;
+    const VkCopyImageToImageInfo *pCopyImageToImageInfo;
+    VkResult result;
+};
+
+struct vkCopyImageToMemory_params
+{
+    VkDevice device;
+    const VkCopyImageToMemoryInfo *pCopyImageToMemoryInfo;
     VkResult result;
 };
 
 struct vkCopyImageToMemoryEXT_params
 {
     VkDevice device;
-    const VkCopyImageToMemoryInfoEXT *pCopyImageToMemoryInfo;
+    const VkCopyImageToMemoryInfo *pCopyImageToMemoryInfo;
     VkResult result;
 };
 
@@ -2735,10 +2839,17 @@ struct vkCopyMemoryToAccelerationStructureKHR_params
     VkResult result;
 };
 
+struct vkCopyMemoryToImage_params
+{
+    VkDevice device;
+    const VkCopyMemoryToImageInfo *pCopyMemoryToImageInfo;
+    VkResult result;
+};
+
 struct vkCopyMemoryToImageEXT_params
 {
     VkDevice device;
-    const VkCopyMemoryToImageInfoEXT *pCopyMemoryToImageInfo;
+    const VkCopyMemoryToImageInfo *pCopyMemoryToImageInfo;
     VkResult result;
 };
 
@@ -4004,11 +4115,18 @@ struct vkGetDeviceImageSparseMemoryRequirementsKHR_params
     VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements;
 };
 
+struct vkGetDeviceImageSubresourceLayout_params
+{
+    VkDevice device;
+    const VkDeviceImageSubresourceInfo *pInfo;
+    VkSubresourceLayout2 *pLayout;
+};
+
 struct vkGetDeviceImageSubresourceLayoutKHR_params
 {
     VkDevice device;
-    const VkDeviceImageSubresourceInfoKHR *pInfo;
-    VkSubresourceLayout2KHR *pLayout;
+    const VkDeviceImageSubresourceInfo *pInfo;
+    VkSubresourceLayout2 *pLayout;
 };
 
 struct vkGetDeviceMemoryCommitment_params
@@ -4178,20 +4296,28 @@ struct vkGetImageSubresourceLayout_params
     VkSubresourceLayout *pLayout;
 };
 
+struct vkGetImageSubresourceLayout2_params
+{
+    VkDevice device;
+    VkImage DECLSPEC_ALIGN(8) image;
+    const VkImageSubresource2 *pSubresource;
+    VkSubresourceLayout2 *pLayout;
+};
+
 struct vkGetImageSubresourceLayout2EXT_params
 {
     VkDevice device;
     VkImage DECLSPEC_ALIGN(8) image;
-    const VkImageSubresource2KHR *pSubresource;
-    VkSubresourceLayout2KHR *pLayout;
+    const VkImageSubresource2 *pSubresource;
+    VkSubresourceLayout2 *pLayout;
 };
 
 struct vkGetImageSubresourceLayout2KHR_params
 {
     VkDevice device;
     VkImage DECLSPEC_ALIGN(8) image;
-    const VkImageSubresource2KHR *pSubresource;
-    VkSubresourceLayout2KHR *pLayout;
+    const VkImageSubresource2 *pSubresource;
+    VkSubresourceLayout2 *pLayout;
 };
 
 struct vkGetImageViewAddressNVX_params
@@ -4808,10 +4934,17 @@ struct vkGetRenderAreaGranularity_params
     VkExtent2D *pGranularity;
 };
 
+struct vkGetRenderingAreaGranularity_params
+{
+    VkDevice device;
+    const VkRenderingAreaInfo *pRenderingAreaInfo;
+    VkExtent2D *pGranularity;
+};
+
 struct vkGetRenderingAreaGranularityKHR_params
 {
     VkDevice device;
-    const VkRenderingAreaInfoKHR *pRenderingAreaInfo;
+    const VkRenderingAreaInfo *pRenderingAreaInfo;
     VkExtent2D *pGranularity;
 };
 
@@ -4934,10 +5067,18 @@ struct vkMapMemory_params
     VkResult result;
 };
 
+struct vkMapMemory2_params
+{
+    VkDevice device;
+    const VkMemoryMapInfo *pMemoryMapInfo;
+    void **ppData;
+    VkResult result;
+};
+
 struct vkMapMemory2KHR_params
 {
     VkDevice device;
-    const VkMemoryMapInfoKHR *pMemoryMapInfo;
+    const VkMemoryMapInfo *pMemoryMapInfo;
     void **ppData;
     VkResult result;
 };
@@ -5213,11 +5354,19 @@ struct vkSubmitDebugUtilsMessageEXT_params
     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData;
 };
 
+struct vkTransitionImageLayout_params
+{
+    VkDevice device;
+    uint32_t transitionCount;
+    const VkHostImageLayoutTransitionInfo *pTransitions;
+    VkResult result;
+};
+
 struct vkTransitionImageLayoutEXT_params
 {
     VkDevice device;
     uint32_t transitionCount;
-    const VkHostImageLayoutTransitionInfoEXT *pTransitions;
+    const VkHostImageLayoutTransitionInfo *pTransitions;
     VkResult result;
 };
 
@@ -5246,10 +5395,17 @@ struct vkUnmapMemory_params
     VkDeviceMemory DECLSPEC_ALIGN(8) memory;
 };
 
+struct vkUnmapMemory2_params
+{
+    VkDevice device;
+    const VkMemoryUnmapInfo *pMemoryUnmapInfo;
+    VkResult result;
+};
+
 struct vkUnmapMemory2KHR_params
 {
     VkDevice device;
-    const VkMemoryUnmapInfoKHR *pMemoryUnmapInfo;
+    const VkMemoryUnmapInfo *pMemoryUnmapInfo;
     VkResult result;
 };
 
