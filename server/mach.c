@@ -505,10 +505,9 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 {
     const unsigned int total_size = (2 * sizeof(int) + 1) * 8192;
     struct process *process = thread->process;
-    unsigned int page_size = get_page_size();
-    vm_offset_t data;
+    mach_vm_address_t data;
     kern_return_t ret;
-    mach_msg_type_number_t bytes_read;
+    mach_vm_size_t bytes_read;
     mach_port_t process_port = get_process_port( thread->process );
 
     if (!process->ldt_copy || !process_port)
@@ -518,24 +517,27 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
     }
     if (entry >= 8192)
     {
-        set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
+        set_error( STATUS_ACCESS_VIOLATION );
         return;
     }
 
-    mach_vm_offset_t offset = process->ldt_copy % page_size;
-    mach_vm_address_t aligned_address = (mach_vm_address_t)(process->ldt_copy - offset);
-    mach_vm_size_t aligned_size = (total_size + offset + page_size - 1) / page_size * page_size;
+    if (!(data = (mach_vm_address_t)malloc( total_size )))
+    {
+        set_error( STATUS_NO_MEMORY );
+        return;
+    }
 
-    ret = mach_vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
+    ret = mach_vm_read_overwrite( process_port, (mach_vm_address_t)process->ldt_copy, (mach_vm_size_t)total_size, data, &bytes_read );
     if (ret != KERN_SUCCESS) mach_set_error( ret );
     else
     {
-        const int *ldt = (const int *)((char *)data + offset);
+        const int *ldt = (const int *)data;
         memcpy( base, ldt + entry, sizeof(int) );
         memcpy( limit, ldt + entry + 8192, sizeof(int) );
         memcpy( flags, (char *)(ldt + 2 * 8192) + entry, 1 );
-        mach_vm_deallocate( mach_task_self(), data, bytes_read );
     }
+
+    free( (void *)data );
 }
 
 #endif  /* USE_MACH */
