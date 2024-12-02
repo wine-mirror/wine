@@ -395,6 +395,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, const WC
 
     if (!(alg = create_algorithm( alg_id, 0, flags ))) return STATUS_NO_MEMORY;
     *handle = alg;
+    TRACE( "returning handle %p\n", *handle );
     return STATUS_SUCCESS;
 }
 
@@ -1078,6 +1079,7 @@ NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE handle, BCRYPT_HASH_HANDLE *
 
     if ((status = hash_create( alg, secret, secret_len, flags, &hash ))) return status;
     *ret_handle = hash;
+    TRACE( "returning handle %p\n", *ret_handle );
     return STATUS_SUCCESS;
 }
 
@@ -1104,6 +1106,7 @@ NTSTATUS WINAPI BCryptDuplicateHash( BCRYPT_HASH_HANDLE handle, BCRYPT_HASH_HAND
     memcpy( hash_copy->secret, hash_orig->secret, hash_orig->secret_len );
 
     *handle_copy = hash_copy;
+    TRACE( "returning handle %p\n", *handle_copy );
     return STATUS_SUCCESS;
 }
 
@@ -1984,6 +1987,7 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY
                                             ULONG flags )
 {
     struct algorithm *alg = get_alg_object( handle );
+    NTSTATUS status;
 
     TRACE( "%p, %p, %p, %lu, %p, %lu, %#lx\n", handle, ret_handle, object, object_len, secret, secret_len, flags );
     if (object) FIXME( "ignoring object buffer\n" );
@@ -1994,7 +1998,9 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY
     }
 
     if (!alg) return STATUS_INVALID_HANDLE;
-    return generate_symmetric_key( alg, ret_handle, secret, secret_len );
+    if ((status = generate_symmetric_key( alg, ret_handle, secret, secret_len ))) return status;
+    TRACE( "returning handle %p\n", *ret_handle );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI BCryptGenerateKeyPair( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE *ret_handle, ULONG key_len,
@@ -2011,6 +2017,7 @@ NTSTATUS WINAPI BCryptGenerateKeyPair( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HAND
 
     if ((status = key_asymmetric_create( alg->id, key_len, &key ))) return status;
     *ret_handle = key;
+    TRACE( "returning handle %p\n", *ret_handle );
     return STATUS_SUCCESS;
 }
 
@@ -2032,6 +2039,7 @@ NTSTATUS WINAPI BCryptImportKey( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE dec
                                  ULONG input_len, ULONG flags )
 {
     struct algorithm *alg = get_alg_object( handle );
+    NTSTATUS status;
 
     TRACE( "%p, %p, %s, %p, %p, %lu, %p, %lu, %#lx\n", handle, decrypt_key, debugstr_w(type), ret_handle, object,
           object_len, input, input_len, flags );
@@ -2044,7 +2052,9 @@ NTSTATUS WINAPI BCryptImportKey( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE dec
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    return key_import( alg, type, ret_handle, object, object_len, input, input_len );
+    if ((status = key_import( alg, type, ret_handle, object, object_len, input, input_len ))) return status;
+    TRACE( "returning handle %p\n", *ret_handle );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI BCryptExportKey( BCRYPT_KEY_HANDLE export_key_handle, BCRYPT_KEY_HANDLE encrypt_key_handle,
@@ -2122,6 +2132,7 @@ NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE 
     if ((status = key_duplicate( key_orig, &key_copy ))) return status;
 
     *handle_copy = key_copy;
+    TRACE( "returning handle %p\n", *handle_copy );
     return STATUS_SUCCESS;
 }
 
@@ -2157,6 +2168,7 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE
                                      BCRYPT_KEY_HANDLE *ret_handle, UCHAR *input, ULONG input_len, ULONG flags )
 {
     struct algorithm *alg = get_alg_object( handle );
+    NTSTATUS status;
 
     TRACE( "%p, %p, %s, %p, %p, %lu, %#lx\n", handle, decrypt_key_handle, debugstr_w(type), ret_handle, input,
            input_len, flags );
@@ -2170,7 +2182,9 @@ NTSTATUS WINAPI BCryptImportKeyPair( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    return key_import_pair( alg, type, ret_handle, input, input_len );
+    if ((status = key_import_pair( alg, type, ret_handle, input, input_len ))) return status;
+    TRACE( "returning handle %p\n", *ret_handle );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI BCryptSignHash( BCRYPT_KEY_HANDLE handle, void *padding, UCHAR *input, ULONG input_len,
@@ -2529,6 +2543,7 @@ NTSTATUS WINAPI BCryptSecretAgreement( BCRYPT_KEY_HANDLE privkey_handle, BCRYPT_
     }
 
     *ret_handle = secret;
+    TRACE( "returning handle %p\n", *ret_handle );
     return STATUS_SUCCESS;
 }
 
