@@ -1812,6 +1812,46 @@ static void test_no_output_blob(void)
     ok(!errors, "Unexpected errors blob.\n");
 }
 
+static void test_hlsl_double(void)
+{
+    static const char ps_hlsl[] =
+            "float func(float x){return 0.1;}\n"
+            "float func(half x){return 0.2;}\n"
+            "float func(double x){return 0.3;}\n"
+            "\n"
+            "float4 main(uniform double u) : COLOR\n"
+            "{\n"
+            "    return func(u);\n"
+            "}\n";
+    ID3DBlob *ps_bytecode, *errors;
+    struct test_context context;
+    struct vec4 color;
+    HRESULT hr;
+
+    if (!init_test_context(&context))
+        return;
+
+    hr = D3DCompile(ps_hlsl, sizeof(ps_hlsl), NULL, NULL, NULL, "main", "ps_2_0", 0, 0, &ps_bytecode, &errors);
+#if D3D_COMPILER_VERSION >= 46
+    todo_wine ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+#else
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+#endif
+    if (FAILED(hr))
+    {
+        trace("%s\n", (char *)ID3D10Blob_GetBufferPointer(errors));
+        release_test_context(&context);
+        return;
+    }
+
+    draw_quad(context.device, ps_bytecode);
+
+    color = get_color_vec4(context.device, 320, 240);
+    ok(compare_vec4(&color, 0.3, 0.3, 0.3, 0.3, 0), "Unexpected color {%.8e, %.8e, %.8e, %.8e}.\n",
+            color.x, color.y, color.z, color.w);
+    release_test_context(&context);
+}
+
 START_TEST(hlsl_d3d9)
 {
     char buffer[20];
@@ -1841,9 +1881,9 @@ START_TEST(hlsl_d3d9)
     test_struct_semantics();
     test_global_initializer();
     test_samplers();
-
     test_constant_table();
     test_fail();
     test_include();
     test_no_output_blob();
+    test_hlsl_double();
 }
