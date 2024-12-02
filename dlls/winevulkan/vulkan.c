@@ -537,11 +537,11 @@ static void wine_vk_free_command_buffers(struct vulkan_device *device,
     }
 }
 
-static void wine_vk_device_init_queues(struct wine_device *object, const VkDeviceQueueCreateInfo *info,
-        VkQueue *client_queues)
+static void wine_vk_device_init_queues(struct wine_device *object, const VkDeviceQueueCreateInfo *info)
 {
     struct wine_queue *queues = object->queues + object->queue_count;
     struct vulkan_device *device = &object->obj;
+    VkQueue client_queues = device->client.device->queues + object->queue_count;
     VkDeviceQueueInfo2 queue_info;
     UINT i;
 
@@ -550,7 +550,7 @@ static void wine_vk_device_init_queues(struct wine_device *object, const VkDevic
     for (i = 0; i < info->queueCount; i++)
     {
         struct wine_queue *queue = queues + i;
-        VkQueue host_queue, client_queue = *client_queues++;
+        VkQueue host_queue, client_queue = client_queues + i;
 
         /* The Vulkan spec says:
          *
@@ -912,7 +912,6 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
     struct vulkan_instance *instance = physical_device->instance;
     VkDevice host_device, client_device = client_ptr;
     VkDeviceCreateInfo create_info_host;
-    struct VkQueue_T *client_queues;
     struct conversion_context ctx;
     struct wine_device *device;
     unsigned int queue_count, i;
@@ -965,9 +964,8 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice client_physical_device, const VkDe
     ALL_VK_DEVICE_FUNCS
 #undef USE_VK_FUNC
 
-    client_queues = client_device->queues;
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
-        wine_vk_device_init_queues(device, create_info_host.pQueueCreateInfos + i, &client_queues);
+        wine_vk_device_init_queues(device, create_info_host.pQueueCreateInfos + i);
 
     client_device->quirks = CONTAINING_RECORD(instance, struct wine_instance, obj)->quirks;
 
