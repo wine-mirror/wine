@@ -415,15 +415,9 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
 {
     kern_return_t ret;
-    mach_vm_address_t aligned_address, region_address;
-    mach_vm_size_t aligned_size, region_size;
-    mach_msg_type_number_t info_size, bytes_read;
-    mach_vm_offset_t offset;
-    vm_offset_t task_mem = 0;
-    struct vm_region_basic_info_64 info;
-    mach_port_t dummy;
     unsigned int page_size = get_page_size();
     mach_port_t process_port = get_process_port( process );
+    mach_vm_offset_t data;
 
     if (!process_port)
     {
@@ -435,60 +429,18 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-
-    offset = ptr % page_size;
-    aligned_address = (mach_vm_address_t)(ptr - offset);
-    aligned_size = (size + offset + page_size - 1) / page_size * page_size;
-
-    ret = mach_vm_read( process_port, aligned_address, aligned_size, &task_mem, &bytes_read );
-    if (ret != KERN_SUCCESS)
+    if (posix_memalign( (void **)&data, page_size, size ))
     {
-        mach_set_error( ret );
-        goto failed;
-    }
-    region_address = aligned_address;
-    info_size = sizeof(info);
-    ret = mach_vm_region( process_port, &region_address, &region_size, VM_REGION_BASIC_INFO_64,
-                     (vm_region_info_t)&info, &info_size, &dummy );
-    if (ret != KERN_SUCCESS)
-    {
-        mach_set_error( ret );
-        goto failed;
-    }
-    if (region_address > aligned_address ||
-        region_address + region_size < aligned_address + aligned_size)
-    {
-        /* FIXME: should support multiple regions */
-        set_error( ERROR_ACCESS_DENIED );
-        goto failed;
-    }
-    ret = mach_vm_protect( process_port, aligned_address, aligned_size, 0, VM_PROT_READ | VM_PROT_WRITE );
-    if (ret != KERN_SUCCESS)
-    {
-        mach_set_error( ret );
-        goto failed;
+        set_error( STATUS_NO_MEMORY );
+        return 0;
     }
 
-    /* FIXME: there's an optimization that can be made: check first and last */
-    /* pages for writability; read first and last pages; write interior */
-    /* pages to task without ever reading&modifying them; if that succeeds, */
-    /* modify first and last pages and write them. */
+    memcpy( (void *)data, src, size );
 
-    memcpy( (char*)task_mem + offset, src, size );
-
-    ret = mach_vm_write( process_port, aligned_address, task_mem, bytes_read );
-    if (ret != KERN_SUCCESS) mach_set_error( ret );
-    else
-    {
-        mach_vm_deallocate( mach_task_self(), task_mem, bytes_read );
-        /* restore protection */
-        mach_vm_protect( process_port, aligned_address, aligned_size, 0, info.protection );
-        return 1;
-    }
-
-failed:
-    if (task_mem) mach_vm_deallocate( mach_task_self(), task_mem, bytes_read );
-    return 0;
+    ret = mach_vm_write( process_port, (mach_vm_address_t)ptr, data, (mach_msg_type_number_t)size );
+    free( (void *)data );
+    mach_set_error( ret );
+    return (ret == KERN_SUCCESS);
 }
 
 /* retrieve an LDT selector entry */
