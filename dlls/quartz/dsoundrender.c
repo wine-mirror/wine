@@ -353,7 +353,6 @@ static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample
 static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
-    REFERENCE_TIME start, stop;
     HRESULT hr;
 
     TRACE("filter %p, sample %p.\n", filter, sample);
@@ -366,9 +365,6 @@ static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IM
 
     if (FAILED(hr = configure_buffer(filter, sample)))
         return hr;
-
-    if (filter->filter.clock && SUCCEEDED(IMediaSample_GetTime(sample, &start, &stop)))
-        strmbase_passthrough_update_time(&filter->passthrough, start);
 
     if (filter->filter.state == State_Paused)
         SetEvent(filter->state_event);
@@ -469,7 +465,6 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
                 (LONG_PTR)&filter->filter.IBaseFilter_iface);
         IMediaEventSink_Release(event_sink);
     }
-    strmbase_passthrough_eos(&filter->passthrough);
     SetEvent(filter->state_event);
 
     handle_eos(filter);
@@ -496,7 +491,6 @@ static HRESULT dsound_render_sink_end_flush(struct strmbase_sink *iface)
     EnterCriticalSection(&filter->filter.stream_cs);
 
     filter->eos = FALSE;
-    strmbase_passthrough_invalidate_time(&filter->passthrough);
     ResetEvent(filter->flush_event);
 
     if (filter->dsbuffer)
@@ -638,7 +632,6 @@ static HRESULT dsound_render_cleanup_stream(struct strmbase_filter *iface)
 {
     struct dsound_render *filter = impl_from_strmbase_filter(iface);
 
-    strmbase_passthrough_invalidate_time(&filter->passthrough);
     SetEvent(filter->state_event);
     SetEvent(filter->flush_event);
 

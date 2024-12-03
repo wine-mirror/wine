@@ -738,7 +738,7 @@ static HRESULT WINAPI testseek_GetCurrentPosition(IMediaSeeking *iface, LONGLONG
 static HRESULT WINAPI testseek_ConvertTimeFormat(IMediaSeeking *iface, LONGLONG *target,
         const GUID *target_format, LONGLONG source, const GUID *source_format)
 {
-    todo_wine ok(0, "Unexpected call.\n");
+    ok(0, "Unexpected call.\n");
     return E_NOTIMPL;
 }
 
@@ -980,7 +980,7 @@ static void test_filter_state(IMemInputPin *input, IMediaSeeking *seeking, IMedi
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    todo_wine ok(hr == 0xdeadbeef, "Got hr %#lx.\n", hr);
+    ok(hr == 0xdeadbeef, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
