@@ -239,6 +239,7 @@ static void test_utf8(void)
     const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
 
     char file2[32], buf[256], *p;
+    struct _stat64 stat;
     FILE *f;
     int ret;
 
@@ -286,6 +287,9 @@ static void test_utf8(void)
 
     ret = access(file, 0);
     ok(!ret, "access returned %d, error %d\n", ret, errno);
+
+    ret = _stat64(file, &stat);
+    ok(!ret, "_stat64 returned %d, error %d\n", ret, errno);
 
     ret = _chmod(file, _S_IREAD | _S_IWRITE);
     ok(!ret, "_chmod returned %d, error %d\n", ret, errno);
