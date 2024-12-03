@@ -149,7 +149,7 @@ static void update_positions(struct dsound_render *filter, DWORD *seqwritepos, D
 }
 
 static HRESULT get_write_pos(struct dsound_render *filter,
-        DWORD *ret_writepos, REFERENCE_TIME write_at, DWORD *pfree, DWORD *skip)
+        DWORD *ret_writepos, REFERENCE_TIME write_at, DWORD *pfree)
 {
     DWORD writepos, min_writepos, playpos;
     REFERENCE_TIME max_lag = 50 * 10000;
@@ -168,7 +168,6 @@ static HRESULT get_write_pos(struct dsound_render *filter,
     if (writepos == min_writepos)
         max_lag = 0;
 
-    *skip = 0;
     if (write_at < 0)
     {
         *ret_writepos = writepos;
@@ -184,36 +183,21 @@ static HRESULT get_write_pos(struct dsound_render *filter,
     /* cur: current time of play position */
     /* writepos_t: current time of our pointer play position */
     delta_t = write_at - writepos_t;
-    if (delta_t >= -max_lag && delta_t <= max_lag)
+    TRACE("Last sample end %s, this sample start %s.\n",
+            debugstr_time(writepos_t), debugstr_time(write_at));
+    if (delta_t <= max_lag)
     {
-        TRACE("Continuing from old position\n");
+        /* If the stream time of a sample is in the past (i.e. the sample is
+         * late, in which case write_at < min_writepos), or earlier than the
+         * last sample's end time, or there is a gap between the last sample's
+         * end time and this sample less than a certain threshold, native
+         * simply treats the two as continuous, ignoring this sample's play time
+         * and rendering the whole sample even if it's late. */
+        TRACE("Difference %s is less than threshold %s; treating sample as continuous.\n",
+                debugstr_time(delta_t), debugstr_time(max_lag));
         *ret_writepos = writepos;
     }
-    else if (delta_t < 0)
-    {
-        REFERENCE_TIME past, min_writepos_t;
-        WARN("Delta too big %s/%s, overwriting old data or even skipping.\n",
-                debugstr_time(delta_t), debugstr_time(max_lag));
-        if (min_writepos >= playpos)
-            min_writepos_t = cur + time_from_pos(filter, min_writepos - playpos);
-        else
-            min_writepos_t = cur + time_from_pos(filter, filter->buf_size - playpos + min_writepos);
-        past = min_writepos_t - write_at;
-        if (past >= 0)
-        {
-            DWORD skipbytes = pos_from_time(filter, past);
-            WARN("Skipping %lu bytes.\n", skipbytes);
-            *skip = skipbytes;
-            *ret_writepos = min_writepos;
-        }
-        else
-        {
-            DWORD aheadbytes = pos_from_time(filter, -past);
-            WARN("Advancing %lu bytes.\n", aheadbytes);
-            *ret_writepos = (min_writepos + aheadbytes) % filter->buf_size;
-        }
-    }
-    else /* delta_t > 0 */
+    else
     {
         DWORD aheadbytes;
         WARN("Delta too big %s/%s, too far ahead.\n", debugstr_time(delta_t), debugstr_time(max_lag));
@@ -259,11 +243,11 @@ static HRESULT send_sample_data(struct dsound_render *filter,
 
     while (size && filter->filter.state != State_Stopped)
     {
-        DWORD writepos, skip = 0, free, size1, size2, ret;
+        DWORD writepos, free, size1, size2, ret;
         BYTE *buf1, *buf2;
 
         if (filter->filter.state == State_Running)
-            hr = get_write_pos(filter, &writepos, tStart, &free, &skip);
+            hr = get_write_pos(filter, &writepos, tStart, &free);
         else
             hr = S_FALSE;
 
@@ -277,13 +261,6 @@ static HRESULT send_sample_data(struct dsound_render *filter,
             continue;
         }
         tStart = -1;
-
-        if (skip)
-            FIXME("Sample dropped %lu of %lu bytes.\n", skip, size);
-        if (skip >= size)
-            return S_OK;
-        data += skip;
-        size -= skip;
 
         hr = IDirectSoundBuffer_Lock(filter->dsbuffer, writepos, min(free, size),
                 (void **)&buf1, &size1, (void **)&buf2, &size2, 0);
