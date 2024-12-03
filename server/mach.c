@@ -438,6 +438,102 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
     memcpy( (void *)data, src, size );
 
     ret = mach_vm_write( process_port, (mach_vm_address_t)ptr, data, (mach_msg_type_number_t)size );
+
+    /*
+     * On arm64 macOS, enabling execute permission for a memory region automatically disables write
+     * permission for that region. This can also happen under Rosetta sometimes.
+     * In that case mach_vm_write returns KERN_INVALID_ADDRESS.
+     */
+
+    if (ret == KERN_INVALID_ADDRESS)
+    {
+        mach_vm_address_t current_address = (mach_vm_address_t)ptr;
+        mach_vm_address_t region_address = current_address;
+        mach_vm_size_t region_size, write_size;
+        vm_region_basic_info_data_t info;
+        mach_msg_type_number_t info_count = VM_REGION_BASIC_INFO_COUNT_64;
+        mach_port_t object_name;
+        data_size_t remaining_size = size;
+
+        ret = mach_vm_region( process_port, &region_address, &region_size, VM_REGION_BASIC_INFO_64,
+                     (vm_region_info_t)&info, &info_count, &object_name );
+        if (ret != KERN_SUCCESS)
+            goto out;
+
+        /*
+         * Actually check that everything is sane before suspending.
+         * KERN_INVALID_ADDRESS can also be returned when address is illegal or
+         * specifies a non-allocated region.
+         */
+        if (region_address > current_address ||
+            region_address + region_size <= current_address)
+        {
+            ret = KERN_INVALID_ADDRESS;
+            goto out;
+        }
+
+        /*
+         * FIXME: Rosetta can turn RWX pages into R-X pages during execution.
+         * For now we will just have to ignore failures due to the wrong
+         * protection here.
+         */
+        if (!is_rosetta() && !(info.protection & VM_PROT_WRITE))
+        {
+            ret = KERN_PROTECTION_FAILURE;
+            goto out;
+        }
+
+        /* The following operations should seem atomic from the perspective of the
+         * target process. */
+        if ((ret = task_suspend( process_port )) != KERN_SUCCESS)
+            goto out;
+
+        /* Iterate over all applicable memory regions until the write is completed. */
+        while (remaining_size)
+        {
+            region_address = current_address;
+            info_count = VM_REGION_BASIC_INFO_COUNT_64;
+            ret = mach_vm_region( process_port, &region_address, &region_size, VM_REGION_BASIC_INFO_64,
+                     (vm_region_info_t)&info, &info_count, &object_name );
+            if (ret != KERN_SUCCESS) break;
+
+            if (region_address > current_address ||
+                region_address + region_size <= current_address)
+            {
+                ret = KERN_INVALID_ADDRESS;
+                break;
+            }
+
+            /* FIXME: See the above Rosetta remark. */
+            if (!is_rosetta() && !(info.protection & VM_PROT_WRITE))
+            {
+                ret = KERN_PROTECTION_FAILURE;
+                break;
+            }
+
+            write_size = region_size - (current_address - region_address);
+            if (write_size > remaining_size) write_size = remaining_size;
+
+            ret = mach_vm_protect( process_port, current_address, write_size, 0,
+                    VM_PROT_READ | VM_PROT_WRITE );
+            if (ret != KERN_SUCCESS) break;
+
+            ret = mach_vm_write( process_port, current_address,
+                    data + (current_address - (mach_vm_address_t)ptr), write_size );
+            if (ret != KERN_SUCCESS) break;
+
+            ret = mach_vm_protect( process_port, current_address, write_size, 0,
+                    info.protection );
+            if (ret != KERN_SUCCESS) break;
+
+            current_address += write_size;
+            remaining_size  -= write_size;
+        }
+
+        task_resume( process_port );
+    }
+
+out:
     free( (void *)data );
     mach_set_error( ret );
     return (ret == KERN_SUCCESS);
