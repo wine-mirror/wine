@@ -993,21 +993,13 @@ FILE * CDECL __acrt_iob_func(unsigned idx)
  */
 int CDECL _access(const char *filename, int mode)
 {
-  DWORD attr = GetFileAttributesA(filename);
+    wchar_t *filenameW = NULL;
+    int ret;
 
-  TRACE("(%s,%d) %ld\n", filename, mode, attr);
-
-  if (!filename || attr == INVALID_FILE_ATTRIBUTES)
-  {
-    msvcrt_set_errno(GetLastError());
-    return -1;
-  }
-  if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & MSVCRT_W_OK))
-  {
-    msvcrt_set_errno(ERROR_ACCESS_DENIED);
-    return -1;
-  }
-  return 0;
+    if (filename && !(filenameW = wstrdupa_utf8(filename))) return -1;
+    ret = _waccess(filenameW, mode);
+    free(filenameW);
+    return ret;
 }
 
 /*********************************************************************

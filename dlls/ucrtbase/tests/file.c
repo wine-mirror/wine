@@ -283,6 +283,9 @@ static void test_utf8(void)
     ok(!!f, "fopen returned %d, error %d\n", ret, errno);
     fclose(f);
 
+    ret = access(file, 0);
+    ok(!ret, "access returned %d, error %d\n", ret, errno);
+
     ret = _wunlink(fileW);
     todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wunlink returned %d, errno %d\n", ret, errno);
     if (ret)
