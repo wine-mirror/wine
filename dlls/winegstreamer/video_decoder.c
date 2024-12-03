@@ -791,7 +791,7 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
         return S_OK;
 
     case MFT_MESSAGE_COMMAND_DRAIN:
-        return wg_transform_drain(decoder->wg_transform);
+        return decoder->wg_transform ? wg_transform_drain(decoder->wg_transform) : MF_E_TRANSFORM_TYPE_NOT_SET;
 
     case MFT_MESSAGE_COMMAND_FLUSH:
         return wg_transform_flush(decoder->wg_transform);
