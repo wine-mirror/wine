@@ -237,7 +237,7 @@ static HRESULT handle_eos(struct dsound_render *filter)
 }
 
 static HRESULT send_sample_data(struct dsound_render *filter,
-        REFERENCE_TIME tStart, REFERENCE_TIME tStop, const BYTE *data, DWORD size)
+        REFERENCE_TIME tStart, const BYTE *data, DWORD size)
 {
     HRESULT hr;
 
@@ -347,7 +347,7 @@ static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample
     }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
-    return send_sample_data(filter, tStart, tStop, pbSrcStream, cbSrcStream);
+    return send_sample_data(filter, tStart, pbSrcStream, cbSrcStream);
 }
 
 static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
