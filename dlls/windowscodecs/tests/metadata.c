@@ -1405,62 +1405,51 @@ static void test_create_reader(void)
     stream = create_stream(metadata_tEXt, sizeof(metadata_tEXt));
 
     hr = IWICComponentFactory_CreateMetadataReader(factory, NULL, NULL, 0, stream, &reader);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     memset(&format, 0xcc, sizeof(format));
     hr = IWICComponentFactory_CreateMetadataReader(factory, &format, NULL, 0, stream, &reader);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (SUCCEEDED(hr))
-{
+
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&format, &GUID_MetadataFormatUnknown), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataReader_Release(reader);
-}
 
     memset(&format, 0xcc, sizeof(format));
     hr = IWICComponentFactory_CreateMetadataReader(factory, &format, NULL, WICMetadataCreationFailUnknown, stream, &reader);
-    todo_wine
     ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICComponentFactory_CreateMetadataReader(factory, &GUID_MetadataFormatChunktEXt,
             NULL, 0, NULL, &reader);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (SUCCEEDED(hr))
-{
+
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&format, &GUID_MetadataFormatChunktEXt), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataReader_Release(reader);
-}
 
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IWICComponentFactory_CreateMetadataReader(factory, &GUID_MetadataFormatChunktEXt, NULL, 0,
             stream, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IWICComponentFactory_CreateMetadataReader(factory, &GUID_ContainerFormatPng, NULL, 0, stream, &reader);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (SUCCEEDED(hr))
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatUnknown), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataReader_Release(reader);
 
     hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IWICComponentFactory_CreateMetadataReader(factory, &GUID_MetadataFormatChunktEXt, NULL, 0, stream, &reader);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-if (SUCCEEDED(hr))
-{
     check_interface(reader, &IID_IWICMetadataReader, TRUE);
     check_interface(reader, &IID_IWICMetadataWriter, FALSE);
     check_interface(reader, &IID_IPersist, TRUE);
@@ -1477,7 +1466,16 @@ if (SUCCEEDED(hr))
     ok(IsEqualGUID(&format, &GUID_MetadataFormatChunktEXt), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
 
     IWICMetadataReader_Release(reader);
-}
+
+    /* Invalid vendor. */
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICComponentFactory_CreateMetadataReader(factory, &GUID_MetadataFormatChunktEXt, &IID_IUnknown, 0, stream, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatChunktEXt), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+    IWICMetadataReader_Release(reader);
 
     /* Mismatching metadata format. */
     hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);

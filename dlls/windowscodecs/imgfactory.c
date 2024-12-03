@@ -1322,6 +1322,71 @@ static enum iterator_result create_metadata_reader_from_container_iterator(IUnkn
     return ITER_SKIP;
 }
 
+static enum iterator_result create_metadata_reader_iterator(IUnknown *item,
+        struct iterator_context *context)
+{
+    IWICPersistStream *persist_stream = NULL;
+    IWICMetadataReaderInfo *readerinfo;
+    IWICMetadataReader *reader = NULL;
+    LARGE_INTEGER zero = {{0}};
+    HRESULT hr;
+    GUID guid;
+
+    if (FAILED(IUnknown_QueryInterface(item, &IID_IWICMetadataReaderInfo, (void **)&readerinfo)))
+        return ITER_SKIP;
+
+    if (context->vendor)
+    {
+        hr = IWICMetadataReaderInfo_GetVendorGUID(readerinfo, &guid);
+
+        if (FAILED(hr) || !IsEqualIID(context->vendor, &guid))
+        {
+            IWICMetadataReaderInfo_Release(readerinfo);
+            return ITER_SKIP;
+        }
+    }
+
+    hr = IWICMetadataReaderInfo_GetMetadataFormat(readerinfo, &guid);
+
+    if (FAILED(hr) || !IsEqualIID(context->format, &guid))
+    {
+        IWICMetadataReaderInfo_Release(readerinfo);
+        return ITER_SKIP;
+    }
+
+    if (SUCCEEDED(hr))
+        hr = IWICMetadataReaderInfo_CreateInstance(readerinfo, &reader);
+
+    IWICMetadataReaderInfo_Release(readerinfo);
+
+    if (context->stream)
+    {
+        if (SUCCEEDED(hr))
+            hr = IStream_Seek(context->stream, zero, STREAM_SEEK_SET, NULL);
+
+        if (SUCCEEDED(hr))
+            hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist_stream);
+
+        if (SUCCEEDED(hr))
+            hr = IWICPersistStream_LoadEx(persist_stream, context->stream, context->vendor,
+                    context->options & WICPersistOptionMask);
+
+        if (persist_stream)
+            IWICPersistStream_Release(persist_stream);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        *context->result = reader;
+        return ITER_DONE;
+    }
+
+    if (reader)
+        IWICMetadataReader_Release(reader);
+
+    return ITER_SKIP;
+}
+
 static HRESULT foreach_component(DWORD mask, iterator_func func, struct iterator_context *context)
 {
     enum iterator_result ret;
@@ -1382,9 +1447,36 @@ static HRESULT create_unknown_metadata_reader(IStream *stream, DWORD options, IW
 static HRESULT WINAPI ComponentFactory_CreateMetadataReader(IWICComponentFactory *iface,
         REFGUID format, const GUID *vendor, DWORD options, IStream *stream, IWICMetadataReader **reader)
 {
-    FIXME("%p,%s,%s,%lx,%p,%p: stub\n", iface, debugstr_guid(format), debugstr_guid(vendor),
+    struct iterator_context context = { 0 };
+    HRESULT hr;
+
+    TRACE("%p,%s,%s,%lx,%p,%p\n", iface, debugstr_guid(format), debugstr_guid(vendor),
         options, stream, reader);
-    return E_NOTIMPL;
+
+    if (!format || !reader)
+        return E_INVALIDARG;
+
+    context.format = format;
+    context.vendor = vendor;
+    context.options = options;
+    context.stream = stream;
+    context.result = (void **)reader;
+
+    hr = foreach_component(WICMetadataReader, create_metadata_reader_iterator, &context);
+
+    if (FAILED(hr) && vendor)
+    {
+        context.vendor = NULL;
+        hr = foreach_component(WICMetadataReader, create_metadata_reader_iterator, &context);
+    }
+
+    if (FAILED(hr))
+        WARN("Failed to create a metadata reader instance, hr %#lx.\n", hr);
+
+    if (!*reader && !(options & WICMetadataCreationFailUnknown))
+        hr = create_unknown_metadata_reader(stream, options, reader);
+
+    return *reader ? S_OK : WINCODEC_ERR_COMPONENTNOTFOUND;
 }
 
 static HRESULT WINAPI ComponentFactory_CreateMetadataReaderFromContainer(IWICComponentFactory *iface,
