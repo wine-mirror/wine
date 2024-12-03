@@ -228,21 +228,6 @@ end:
     return S_OK;
 }
 
-static HRESULT handle_eos(struct dsound_render *filter)
-{
-    while (filter->filter.state == State_Running)
-    {
-        DWORD pos1, pos2;
-        update_positions(filter, &pos1, &pos2);
-        if (pos1 == pos2)
-            break;
-
-        WaitForSingleObject(filter->flush_event, 10);
-    }
-
-    return S_OK;
-}
-
 static HRESULT send_sample_data(struct dsound_render *filter,
         REFERENCE_TIME tStart, const BYTE *data, DWORD size)
 {
@@ -276,14 +261,27 @@ static HRESULT send_sample_data(struct dsound_render *filter,
             ERR("Failed to lock sound buffer, hr %#lx.\n", hr);
             break;
         }
-        memcpy(buf1, data, size1);
-        if (size2)
-            memcpy(buf2, data+size1, size2);
+
+        if (data)
+        {
+            memcpy(buf1, data, size1);
+            if (size2)
+                memcpy(buf2, data + size1, size2);
+            data += size1 + size2;
+        }
+        else
+        {
+            const WAVEFORMATEX *wfx = (const WAVEFORMATEX *)filter->sink.pin.mt.pbFormat;
+            char silence = (wfx->wBitsPerSample == 8 ? 0x80 : 0);
+
+            memset(buf1, silence, size1);
+            if (size2)
+                memset(buf2, silence, size2);
+        }
         IDirectSoundBuffer_Unlock(filter->dsbuffer, buf1, size1, buf2, size2);
         filter->writepos = (writepos + size1 + size2) % filter->buf_size;
         TRACE("Wrote %lu bytes at %lu, next at %lu - (%lu/%lu)\n",
                 size1 + size2, writepos, filter->writepos, free, size);
-        data += size1 + size2;
         size -= size1 + size2;
     }
     return S_OK;
@@ -362,6 +360,17 @@ static DWORD WINAPI render_thread_run(void *arg)
     while (!filter->render_thread_shutdown)
     {
         IMediaSample *sample;
+
+        if (filter->eos)
+        {
+            LeaveCriticalSection(&filter->render_cs);
+            TRACE("Got EOS.\n");
+            /* Clear the buffer. */
+            send_sample_data(filter, -1, NULL, filter->buf_size);
+
+            TRACE("Render thread exiting.\n");
+            return 0;
+        }
 
         if (!filter->queued_sample_count)
         {
@@ -503,10 +512,11 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
     IFilterGraph *graph = filter->filter.graph;
     IMediaEventSink *event_sink;
-    void *buffer;
-    DWORD size;
 
+    EnterCriticalSection(&filter->render_cs);
     filter->eos = TRUE;
+    LeaveCriticalSection(&filter->render_cs);
+    WakeConditionVariable(&filter->render_cv);
 
     if (filter->filter.state == State_Running && graph
             && SUCCEEDED(IFilterGraph_QueryInterface(graph,
@@ -517,12 +527,6 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
         IMediaEventSink_Release(event_sink);
     }
     SetEvent(filter->state_event);
-
-    handle_eos(filter);
-
-    IDirectSoundBuffer_Lock(filter->dsbuffer, 0, 0, &buffer, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER);
-    memset(buffer, 0, size);
-    IDirectSoundBuffer_Unlock(filter->dsbuffer, buffer, size, NULL, 0);
 
     return S_OK;
 }
