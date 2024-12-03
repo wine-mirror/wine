@@ -232,10 +232,13 @@ static BOOL is_lossless_convertion(const char *str)
 
 static void test_utf8(void)
 {
+    const char file[] = "file\xc4\x99\xc5\x9b\xc4\x87.a";
     const char dir[] = "dir\xc4\x99\xc5\x9b\xc4\x87";
+    const WCHAR fileW[] = L"file\x0119\x015b\x0107.a";
     const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
 
     char buf[256], *p;
+    FILE *f;
     int ret;
 
     if (!setlocale(LC_ALL, ".utf8"))
@@ -275,6 +278,18 @@ static void test_utf8(void)
     ok(!!p, "strrchr returned NULL, buf = %s\n", debugstr_a(buf));
     todo_wine_if(!is_lossless_convertion(dir))
         ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
+
+    f = fopen(file, "w");
+    ok(!!f, "fopen returned %d, error %d\n", ret, errno);
+    fclose(f);
+
+    ret = _wunlink(fileW);
+    todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wunlink returned %d, errno %d\n", ret, errno);
+    if (ret)
+    {
+        ret = _unlink(file);
+        ok(!ret, "_unlink returned %d, errno %d\n", ret, errno);
+    }
 
     ret = _chdir("..");
     ok(!ret, "_chdir returned %d, error %d\n", ret, errno);

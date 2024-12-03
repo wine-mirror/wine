@@ -4351,19 +4351,13 @@ FILE * CDECL _wfsopen(const wchar_t *path, const wchar_t *mode, int share)
  */
 FILE * CDECL _fsopen(const char *path, const char *mode, int share)
 {
-    FILE *ret;
     wchar_t *pathW = NULL, *modeW = NULL;
+    FILE *ret;
 
-    if (path && !(pathW = msvcrt_wstrdupa(path))) {
-        _invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *_errno() = EINVAL;
-        return NULL;
-    }
-    if (mode && !(modeW = msvcrt_wstrdupa(mode)))
+    if (path && !(pathW = wstrdupa_utf8(path))) return NULL;
+    if (mode && !(modeW = wstrdupa_utf8(mode)))
     {
         free(pathW);
-        _invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *_errno() = EINVAL;
         return NULL;
     }
 
