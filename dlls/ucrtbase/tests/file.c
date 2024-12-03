@@ -307,6 +307,12 @@ static void test_utf8(void)
     ok(!memcmp(buf, file, sizeof(file) - 1), "buf = %s\n", debugstr_a(buf));
     ok(p[ARRAY_SIZE(file) - 1] == 'b', "p = %s\n", debugstr_a(p));
 
+    strcpy(buf, file);
+    strcat(buf, "XXXXXX");
+    ret = _mktemp_s(buf, sizeof(buf));
+    ok(!memcmp(buf, file, sizeof(file) - 1), "buf = %s\n", debugstr_a(buf));
+    ok(buf[ARRAY_SIZE(file) - 1] == 'b', "buf = %s\n", debugstr_a(buf));
+
     ret = remove(file2);
     ok(!ret, "remove returned %d, errno %d\n", ret, errno);
 

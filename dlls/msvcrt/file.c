@@ -2133,7 +2133,8 @@ intptr_t CDECL _get_osfhandle(int fd)
  */
 int CDECL _mktemp_s(char *pattern, size_t size)
 {
-    DWORD len, xno, id;
+    DWORD len, wlen, xno, id;
+    wchar_t *pathW;
 
     if(!MSVCRT_CHECK_PMT(pattern!=NULL))
         return EINVAL;
@@ -2157,10 +2158,16 @@ int CDECL _mktemp_s(char *pattern, size_t size)
         id /= 10;
     }
 
-    for(pattern[len-6]='a'; pattern[len-6]<='z'; pattern[len-6]++) {
-        if(GetFileAttributesA(pattern) == INVALID_FILE_ATTRIBUTES)
+    if(!(pathW = wstrdupa_utf8(pattern))) return *_errno();
+    wlen = wcslen(pathW);
+    for(pathW[wlen-6]='a'; pathW[wlen-6]<='z'; pathW[wlen-6]++) {
+        if(GetFileAttributesW(pathW) == INVALID_FILE_ATTRIBUTES) {
+            pattern[len-6] = pathW[wlen-6];
+            free(pathW);
             return 0;
+        }
     }
+    free(pathW);
 
     pattern[0] = 0;
     *_errno() = EEXIST;
