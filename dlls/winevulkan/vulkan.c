@@ -2144,8 +2144,14 @@ NTSTATUS vk_is_available_instance_function32(void *arg)
         UINT32 instance;
         UINT32 name;
     } *params = arg;
-    struct vulkan_instance *instance = vulkan_instance_from_handle(UlongToPtr(params->instance));
-    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->host.instance, UlongToPtr(params->name));
+    struct wine_instance *instance = wine_instance_from_handle(UlongToPtr(params->instance));
+
+    if (!strcmp(UlongToPtr(params->name), "vkCreateWin32SurfaceKHR"))
+        return instance->enable_win32_surface;
+    if (!strcmp(UlongToPtr(params->name), "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
+        return instance->enable_win32_surface;
+
+    return !!vk_funcs->p_vkGetInstanceProcAddr(instance->obj.host.instance, UlongToPtr(params->name));
 }
 
 NTSTATUS vk_is_available_device_function32(void *arg)
