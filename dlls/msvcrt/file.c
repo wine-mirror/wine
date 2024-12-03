@@ -2172,6 +2172,7 @@ int CDECL _mktemp_s(char *pattern, size_t size)
  */
 char * CDECL _mktemp(char *pattern)
 {
+  wchar_t *pathW, *p;
   int numX = 0;
   char *retVal = pattern;
   int id;
@@ -2194,12 +2195,20 @@ char * CDECL _mktemp(char *pattern)
     id = tempNum;
   }
   pattern++;
+  if (!(pathW = wstrdupa_utf8(retVal)))
+    return NULL;
+  p = pathW + wcslen(pathW) - 6;
   do
   {
-    *pattern = letter++;
-    if (GetFileAttributesA(retVal) == INVALID_FILE_ATTRIBUTES)
+    *p = letter++;
+    if (GetFileAttributesW(pathW) == INVALID_FILE_ATTRIBUTES)
+    {
+      *pattern = *p;
+      free(pathW);
       return retVal;
+    }
   } while(letter <= 'z');
+  free(pathW);
   return NULL;
 }
 

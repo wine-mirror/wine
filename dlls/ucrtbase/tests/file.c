@@ -238,7 +238,7 @@ static void test_utf8(void)
     const WCHAR fileW[] = L"file\x0119\x015b\x0107.a";
     const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
 
-    char buf[256], *p;
+    char file2[32], buf[256], *p;
     FILE *f;
     int ret;
 
@@ -289,6 +289,26 @@ static void test_utf8(void)
 
     ret = _chmod(file, _S_IREAD | _S_IWRITE);
     ok(!ret, "_chmod returned %d, error %d\n", ret, errno);
+
+    strcpy(file2, file);
+    strcat(file2, "XXXXXX");
+    p = _mktemp(file2);
+    ok(p == file2, "_mktemp returned %p, file2 %p, errno %d\n", p, file2, errno);
+    ok(!memcmp(file2, file, sizeof(file) - 1), "file2 = %s\n", debugstr_a(file2));
+    ok(p[ARRAY_SIZE(file) - 1] == 'a', "p = %s\n", debugstr_a(p));
+    f = fopen(p, "w");
+    ok(!!f, "fopen returned %d, error %d\n", ret, errno);
+    fclose(f);
+
+    strcpy(buf, file);
+    strcat(buf, "XXXXXX");
+    p = _mktemp(buf);
+    ok(p == buf, "_mktemp returned %p, buf %p, errno %d\n", p, buf, errno);
+    ok(!memcmp(buf, file, sizeof(file) - 1), "buf = %s\n", debugstr_a(buf));
+    ok(p[ARRAY_SIZE(file) - 1] == 'b', "p = %s\n", debugstr_a(p));
+
+    ret = remove(file2);
+    ok(!ret, "remove returned %d, errno %d\n", ret, errno);
 
     ret = _wunlink(fileW);
     todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wunlink returned %d, errno %d\n", ret, errno);
