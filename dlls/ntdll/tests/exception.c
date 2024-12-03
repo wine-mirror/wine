@@ -8056,7 +8056,7 @@ static DWORD WINAPI brk_exception_handler( EXCEPTION_RECORD *rec, void *frame,
 {
     ok( rec->ExceptionCode == brk_exception_handler_code, "got: %08lx\n", rec->ExceptionCode );
     ok( rec->NumberParameters == 0, "got: %ld\n", rec->NumberParameters );
-    ok( rec->ExceptionAddress == (void *)context->Pc, "got addr: %p, pc: %p\n", rec->ExceptionAddress, context->Pc );
+    ok( rec->ExceptionAddress == (void *)context->Pc, "got addr: %p, pc: %p\n", rec->ExceptionAddress, (void *)context->Pc );
     context->Pc += 4;
     return ExceptionContinueExecution;
 }
