@@ -1101,12 +1101,13 @@ int CDECL _wchmod(const wchar_t *path, int flags)
  */
 int CDECL _unlink(const char *path)
 {
-  TRACE("%s\n", debugstr_a(path));
-  if(DeleteFileA(path))
-    return 0;
-  TRACE("failed (%ld)\n", GetLastError());
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    wchar_t *pathW = NULL;
+    int ret;
+
+    if (path && !(pathW = wstrdupa_utf8(path))) return -1;
+    ret = _wunlink(pathW);
+    free(pathW);
+    return ret;
 }
 
 /*********************************************************************
