@@ -686,6 +686,7 @@ void X11DRV_ThreadDetach(void)
     {
         if (data->xim) XCloseIM( data->xim );
         if (data->font_set) XFreeFontSet( data->display, data->font_set );
+        if (data->net_supported) XFree( data->net_supported );
         XSync( gdi_display, False ); /* make sure XReparentWindow requests have completed before closing the thread display */
         XCloseDisplay( data->display );
         free( data );
@@ -752,6 +753,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
 
     if (use_xim) xim_thread_attach( data );
     x11drv_xinput2_init( data );
+    net_supported_init( data );
 
     return data;
 }

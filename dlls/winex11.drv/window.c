@@ -104,11 +104,6 @@ static XContext host_window_context = 0;
 static Time last_user_time;
 static Window user_time_window;
 
-/* list of _NET_SUPPORTED atoms */
-static Atom *net_supported;
-static int net_supported_count;
-static UINT net_wm_state_mask;
-
 static const WCHAR whole_window_prop[] =
     {'_','_','w','i','n','e','_','x','1','1','_','w','h','o','l','e','_','w','i','n','d','o','w',0};
 static const WCHAR clip_window_prop[] =
@@ -1219,7 +1214,7 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
 {
     UINT i, count, old_state = data->pending_state.net_wm_state;
 
-    new_state &= net_wm_state_mask;
+    new_state &= x11drv_thread_data()->net_wm_state_mask;
     data->desired_state.net_wm_state = new_state;
     if (!data->whole_window) return; /* no window, nothing to update */
     if (data->wm_state_serial) return; /* another WM_STATE update is pending, wait for it to complete */
@@ -3276,10 +3271,15 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
  */
 static BOOL is_netwm_supported( Atom atom )
 {
+    struct x11drv_thread_data *data = x11drv_thread_data();
+    BOOL supported;
     int i;
-    for (i = 0; i < net_supported_count; i++)
-        if (net_supported[i] == atom) return TRUE;
-    return FALSE;
+
+    for (i = 0; i < data->net_supported_count; i++)
+        if (data->net_supported[i] == atom) break;
+    supported = i < data->net_supported_count;
+
+    return supported;
 }
 
 
@@ -3405,22 +3405,25 @@ void X11DRV_FlashWindowEx( FLASHWINFO *pfinfo )
     release_win_data( data );
 }
 
-void init_win_context(void)
+void net_supported_init( struct x11drv_thread_data *data )
 {
     unsigned long count, remaining;
     int format, i;
     Atom type;
 
-    if (!XGetWindowProperty( gdi_display, DefaultRootWindow( gdi_display ), x11drv_atom(_NET_SUPPORTED), 0, 65536 / sizeof(CARD32),
-                             False, XA_ATOM, &type, &format, &count, &remaining, (unsigned char **)&net_supported ))
-        net_supported_count = get_property_size( format, count ) / sizeof(Atom);
+    if (!XGetWindowProperty( data->display, DefaultRootWindow( data->display ), x11drv_atom(_NET_SUPPORTED), 0, 65536 / sizeof(CARD32),
+                             False, XA_ATOM, &type, &format, &count, &remaining, (unsigned char **)&data->net_supported ))
+        data->net_supported_count = get_property_size( format, count ) / sizeof(Atom);
 
     for (i = 0; i < NB_NET_WM_STATES; i++)
     {
         Atom atom = X11DRV_Atoms[net_wm_state_atoms[i] - FIRST_XATOM];
-        if (is_netwm_supported( atom )) net_wm_state_mask |= (1 << i);
+        if (is_netwm_supported( atom )) data->net_wm_state_mask |= (1 << i);
     }
+}
 
+void init_win_context(void)
+{
     init_recursive_mutex( &win_data_mutex );
 
     winContext = XUniqueContext();
