@@ -340,12 +340,6 @@ static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample
         start = stop = -1;
     }
 
-    if (IMediaSample_IsPreroll(pSample) == S_OK)
-    {
-        TRACE("Preroll!\n");
-        return S_OK;
-    }
-
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
     return send_sample_data(filter, start, pbSrcStream, cbSrcStream);
 }
