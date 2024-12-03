@@ -676,6 +676,41 @@ static void test_imagingfactory_interfaces(void)
     IWICImagingFactory_Release(factory);
 }
 
+static void test_component_enumerator(void)
+{
+    static const unsigned int types[] =
+    {
+        WICDecoder,
+        WICEncoder,
+        WICPixelFormatConverter,
+        WICMetadataReader,
+        WICPixelFormat,
+    };
+    IWICImagingFactory *factory;
+    IEnumUnknown *enumerator;
+    unsigned int i;
+    IUnknown *item;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(types); ++i)
+    {
+        hr = IWICImagingFactory_CreateComponentEnumerator(factory, types[i], 0, &enumerator);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IEnumUnknown_Next(enumerator, 1, &item, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IUnknown_Release(item);
+
+        IEnumUnknown_Release(enumerator);
+    }
+
+    IWICImagingFactory_Release(factory);
+}
+
 START_TEST(info)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -684,6 +719,7 @@ START_TEST(info)
     test_reader_info();
     test_pixelformat_info();
     test_imagingfactory_interfaces();
+    test_component_enumerator();
 
     CoUninitialize();
 }
