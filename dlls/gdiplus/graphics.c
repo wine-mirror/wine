@@ -7332,9 +7332,8 @@ GpStatus gdip_transform_points(GpGraphics *graphics, GpCoordinateSpace dst_space
 GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
                                         GpCoordinateSpace src_space, GpPointF *points, INT count)
 {
-    if(!graphics || !points || count <= 0 ||
-       dst_space < 0 || dst_space > CoordinateSpaceDevice ||
-       src_space < 0 || src_space > CoordinateSpaceDevice)
+    if(!graphics || !points || count <= 0 || (UINT)dst_space > CoordinateSpaceDevice ||
+       (UINT)src_space > CoordinateSpaceDevice)
         return InvalidParameter;
 
     if(graphics->busy)
