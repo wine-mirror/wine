@@ -4969,12 +4969,19 @@ int CDECL _wremove(const wchar_t *path)
  */
 int CDECL rename(const char *oldpath,const char *newpath)
 {
-  TRACE(":from %s to %s\n", oldpath, newpath);
-  if (MoveFileExA(oldpath, newpath, MOVEFILE_COPY_ALLOWED))
-    return 0;
-  TRACE(":failed (%ld)\n", GetLastError());
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    wchar_t *oldpathW = NULL, *newpathW = NULL;
+    int ret;
+
+    if (oldpath && !(oldpathW = wstrdupa_utf8(oldpath))) return -1;
+    if (newpath && !(newpathW = wstrdupa_utf8(newpath)))
+    {
+        free(oldpathW);
+        return -1;
+    }
+    ret = _wrename(oldpathW, newpathW);
+    free(oldpathW);
+    free(newpathW);
+    return ret;
 }
 
 /*********************************************************************
