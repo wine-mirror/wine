@@ -617,7 +617,7 @@ __ASM_STDCALL_FUNC( DbgUserBreakPoint, 0, "int $3; ret"
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
  */
-__ASM_STDCALL_FUNC( NtCurrentTeb, 0, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
+__ASM_STDCALL_FUNC( NtCurrentTeb, 0, "movl %fs:0x18,%eax\n\tret" )
 
 
 /**************************************************************************
@@ -683,20 +683,16 @@ __ASM_GLOBAL_FUNC(call_exception_handler,
                   "subl $12,%esp\n\t"
                   "pushl 12(%ebp)\n\t"      /* make any exceptions in this... */
                   "pushl %edx\n\t"          /* handler be handled by... */
-                  ".byte 0x64\n\t"
-                  "pushl (0)\n\t"           /* nested_handler (passed in edx). */
-                  ".byte 0x64\n\t"
-                  "movl %esp,(0)\n\t"       /* push the new exception frame onto the exception stack. */
+                  "pushl %fs:0\n\t"         /* nested_handler (passed in edx). */
+                  "movl %esp,%fs:0\n\t"     /* push the new exception frame onto the exception stack. */
                   "pushl 20(%ebp)\n\t"
                   "pushl 16(%ebp)\n\t"
                   "pushl 12(%ebp)\n\t"
                   "pushl 8(%ebp)\n\t"
                   "movl 24(%ebp), %ecx\n\t" /* (*1) */
                   "call *%ecx\n\t"          /* call handler. (*2) */
-                  ".byte 0x64\n\t"
-                  "movl (0), %esp\n\t"      /* restore previous... (*3) */
-                  ".byte 0x64\n\t"
-                  "popl (0)\n\t"            /* exception frame. */
+                  "movl %fs:0, %esp\n\t"    /* restore previous... (*3) */
+                  "popl %fs:0\n\t"          /* exception frame. */
                   "movl %ebp, %esp\n\t"     /* restore saved stack, in case it was corrupted */
                   "popl %ebp\n\t"
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
