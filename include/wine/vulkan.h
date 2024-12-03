@@ -21,8 +21,8 @@
 #include <windef.h>
 #include <stdint.h>
 
-/* Define WINE_VK_HOST to get 'host' headers. */
-#ifdef WINE_VK_HOST
+#ifdef WINE_UNIX_LIB
+#define VK_NO_PROTOTYPES
 #define VKAPI_CALL
 #define WINE_VK_ALIGN(x)
 #endif

@@ -3029,8 +3029,8 @@ class VkGenerator(object):
         f.write("#include <windef.h>\n")
         f.write("#include <stdint.h>\n\n")
 
-        f.write("/* Define WINE_VK_HOST to get 'host' headers. */\n")
-        f.write("#ifdef WINE_VK_HOST\n")
+        f.write("#ifdef WINE_UNIX_LIB\n")
+        f.write("#define VK_NO_PROTOTYPES\n")
         f.write("#define VKAPI_CALL\n")
         f.write('#define WINE_VK_ALIGN(x)\n')
         f.write("#endif\n\n")

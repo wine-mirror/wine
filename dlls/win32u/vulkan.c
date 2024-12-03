@@ -32,11 +32,6 @@
 #include "win32u_private.h"
 #include "ntuser_private.h"
 
-#define VK_NO_PROTOTYPES
-#define WINE_VK_HOST
-#include "wine/vulkan.h"
-#include "wine/vulkan_driver.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr = NULL;

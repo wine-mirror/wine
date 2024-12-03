@@ -42,7 +42,6 @@ struct vulkan_client_object
 
 #ifdef WINE_UNIX_LIB
 
-#define WINE_VK_HOST
 #include "wine/vulkan.h"
 #include "wine/rbtree.h"
 

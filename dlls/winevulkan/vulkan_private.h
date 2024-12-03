@@ -20,9 +20,6 @@
 #ifndef __WINE_VULKAN_PRIVATE_H
 #define __WINE_VULKAN_PRIVATE_H
 
-#define WINE_VK_HOST
-#define VK_NO_PROTOTYPES
-
 #include <pthread.h>
 
 #include "vulkan_loader.h"

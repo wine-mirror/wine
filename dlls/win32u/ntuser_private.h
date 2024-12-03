@@ -27,6 +27,7 @@
 #include "shlobj.h"
 #include "wine/list.h"
 #include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
 
 
 #define WM_POPUPSYSTEMMENU  0x0313

@@ -39,9 +39,6 @@
 #include "x11drv.h"
 #include "xcomposite.h"
 
-#define VK_NO_PROTOTYPES
-#define WINE_VK_HOST
-
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 
