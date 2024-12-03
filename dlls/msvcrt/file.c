@@ -5008,12 +5008,7 @@ int CDECL _putws(const wchar_t *s)
  */
 int CDECL remove(const char *path)
 {
-  TRACE("(%s)\n", path);
-  if (DeleteFileA(path))
-    return 0;
-  TRACE(":failed (%ld)\n", GetLastError());
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    return _unlink(path);
 }
 
 /*********************************************************************
