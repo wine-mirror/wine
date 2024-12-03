@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <locale.h>
 #include <share.h>
+#include <sys/stat.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -285,6 +286,9 @@ static void test_utf8(void)
 
     ret = access(file, 0);
     ok(!ret, "access returned %d, error %d\n", ret, errno);
+
+    ret = _chmod(file, _S_IREAD | _S_IWRITE);
+    ok(!ret, "_chmod returned %d, error %d\n", ret, errno);
 
     ret = _wunlink(fileW);
     todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wunlink returned %d, errno %d\n", ret, errno);

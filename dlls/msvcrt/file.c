@@ -1055,18 +1055,13 @@ int CDECL _waccess_s(const wchar_t *filename, int mode)
  */
 int CDECL _chmod(const char *path, int flags)
 {
-  DWORD oldFlags = GetFileAttributesA(path);
+    wchar_t *pathW = NULL;
+    int ret;
 
-  if (oldFlags != INVALID_FILE_ATTRIBUTES)
-  {
-    DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
-      oldFlags | FILE_ATTRIBUTE_READONLY;
-
-    if (newFlags == oldFlags || SetFileAttributesA(path, newFlags))
-      return 0;
-  }
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    if (path && !(pathW = wstrdupa_utf8(path))) return -1;
+    ret = _wchmod(pathW, flags);
+    free(pathW);
+    return ret;
 }
 
 /*********************************************************************
