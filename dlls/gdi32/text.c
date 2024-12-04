@@ -1384,6 +1384,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, const WCHAR *str, INT count, INT max
     BOOL ret = TRUE;
 
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (count < 0) return FALSE;
 
     bidi_flags = dc_attr->text_align & TA_RTLREADING ? WINE_GCPW_FORCE_RTL : WINE_GCPW_FORCE_LTR;
     bidi_flags |= WINE_GCPW_DISABLE_REORDERING;
