@@ -6793,11 +6793,6 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     dispex_info_add_interface(info, IHTMLUniqueName_tid, NULL);
 }
 
-const DISPID HTMLElement_toString_dispids[] = {
-    DISPID_IHTMLELEMENT_TOSTRING,
-    DISPID_UNKNOWN
-};
-
 static const event_target_vtbl_t HTMLElement_event_target_vtbl = {
     {
         HTMLELEMENT_DISPEX_VTBL_ENTRIES,
