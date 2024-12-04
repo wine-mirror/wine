@@ -423,7 +423,7 @@ struct syscall_frame
     void                 *syscall_cfa;   /* 00a8 */
     DWORD                 syscall_flags; /* 00b0 */
     DWORD                 restore_flags; /* 00b4 */
-    DWORD                 align[2];      /* 00b8 */
+    ULONG64               teb;           /* 00b8 */
     XMM_SAVE_AREA32       xsave;         /* 00c0 */
     DECLSPEC_ALIGN(64) XSAVE_AREA_HEADER xstate;    /* 02c0 */
 };
@@ -2634,6 +2634,7 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     frame->restore_flags |= CONTEXT_INTEGER;
     frame->syscall_flags = syscall_flags;
     frame->syscall_cfa   = syscall_cfa;
+    frame->teb = (ULONG64)teb;
     if ((callback = instrumentation_callback))
     {
         frame->r10 = frame->rip;
@@ -2721,6 +2722,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movw %ss,0x90(%rcx)\n\t"
                    "movq %rbp,0x98(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
+                   "movq %gs:0x30,%r14\n\t"
+                   "movq %r14,0xb8(%rcx)\n\t"       /* frame->teb */
                    /* Legends of Runeterra hooks the first system call return instruction, and
                     * depends on us returning to it. Adjust the return address accordingly. */
                    "subq $0xb,0x70(%rcx)\n\t"
@@ -2780,10 +2783,14 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_offset %r15,-0x38\n\t")
                    __ASM_CFI(".cfi_undefined %rdi\n\t")
                    __ASM_CFI(".cfi_undefined %rsi\n\t")
+                   /* When on the kernel stack, use frame->teb instead of %gs to access the TEB.
+                    * (on macOS, signal handlers set gsbase to pthread_teb when on the kernel stack).
+                    */
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 2f\n\t"
-                   "movq %gs:0x320,%rsi\n\t"       /* amd64_thread_data()->pthread_teb */
+                   "movq 0xb8(%rcx),%rsi\n\t"      /* frame->teb */
+                   "movq 0x320(%rsi),%rsi\n\t"     /* amd64_thread_data()->pthread_teb */
                    "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
                    "wrfsbase %rsi\n\t"
@@ -2799,12 +2806,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
                    "andl $0x30,%ebx\n\t"           /* syscall table number */
-#ifdef __APPLE__
-                   "movq %gs:0x30,%rcx\n\t"
-                   "movq 0x330(%rcx),%rcx\n\t"
-#else
-                   "movq %gs:0x330,%rcx\n\t"       /* amd64_thread_data()->syscall_table */
-#endif
+                   "movq 0xb8(%rcx),%rcx\n\t"      /* frame->teb */
+                   "movq 0x330(%rcx),%rcx\n\t"     /* amd64_thread_data()->syscall_table */
                    "leaq (%rcx,%rbx,2),%rbx\n\t"
                    "andl $0xfff,%eax\n\t"          /* syscall number */
                    "cmpq 16(%rbx),%rax\n\t"        /* table->ServiceLimit */
