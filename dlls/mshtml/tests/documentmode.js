@@ -871,13 +871,10 @@ sync_test("style_props", function() {
 
     if(Object.getOwnPropertyNames) {
         r = Object.getOwnPropertyNames(style);
-        todo_wine.
         ok(!r.length, "style has own props: " + r);
         r = Object.getOwnPropertyNames(currentStyle);
-        todo_wine.
         ok(!r.length, "currentStyle has own props: " + r);
         r = Object.getOwnPropertyNames(computedStyle);
-        todo_wine_if(v >= 9).
         ok(!r.length, "computedStyle has own props: " + r);
 
         r = Object.getOwnPropertyDescriptor(style, "z-index");

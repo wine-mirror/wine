@@ -109,6 +109,7 @@ static const WCHAR *overflow_values[] = {
 #define ATTR_REMOVE_COMMA   0x0010
 #define ATTR_NO_NULL        0x0020
 #define ATTR_COMPAT_IE10    0x0040
+#define ATTR_BUILTIN_NAME   0x0080
 
 typedef struct {
     const WCHAR *name;
@@ -134,7 +135,7 @@ static const style_tbl_entry_t style_tbl[] = {
         L"animation",
         DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATION,
         DISPID_UNKNOWN,
-        ATTR_COMPAT_IE10
+        ATTR_COMPAT_IE10 | ATTR_BUILTIN_NAME,
     },
     {
         L"animation-name",
@@ -145,7 +146,8 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"background",
         DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUND,
-        DISPID_A_BACKGROUND
+        DISPID_A_BACKGROUND,
+        ATTR_BUILTIN_NAME
     },
     {
         L"background-attachment",
@@ -200,7 +202,8 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"border",
         DISPID_IHTMLCSSSTYLEDECLARATION_BORDER,
-        DISPID_A_BORDER
+        DISPID_A_BORDER,
+        ATTR_BUILTIN_NAME
     },
     {
         L"border-bottom",
@@ -326,7 +329,7 @@ static const style_tbl_entry_t style_tbl[] = {
         L"bottom",
         DISPID_IHTMLCSSSTYLEDECLARATION_BOTTOM,
         STDPROPID_XOBJ_BOTTOM,
-        ATTR_FIX_PX
+        ATTR_FIX_PX | ATTR_BUILTIN_NAME,
     },
     {
         L"box-sizing",
@@ -336,19 +339,20 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"clear",
         DISPID_IHTMLCSSSTYLEDECLARATION_CLEAR,
-        DISPID_A_CLEAR
+        DISPID_A_CLEAR,
+        ATTR_BUILTIN_NAME
     },
     {
         L"clip",
         DISPID_IHTMLCSSSTYLEDECLARATION_CLIP,
         DISPID_A_CLIP,
-        ATTR_REMOVE_COMMA
+        ATTR_REMOVE_COMMA | ATTR_BUILTIN_NAME
     },
     {
         L"color",
         DISPID_IHTMLCSSSTYLEDECLARATION_COLOR,
         DISPID_A_COLOR,
-        ATTR_HEX_INT
+        ATTR_HEX_INT | ATTR_BUILTIN_NAME
     },
     {
         L"column-count",
@@ -407,22 +411,26 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"cursor",
         DISPID_IHTMLCSSSTYLEDECLARATION_CURSOR,
-        DISPID_A_CURSOR
+        DISPID_A_CURSOR,
+        ATTR_BUILTIN_NAME
     },
     {
         L"direction",
         DISPID_IHTMLCSSSTYLEDECLARATION_DIRECTION,
-        DISPID_A_DIRECTION
+        DISPID_A_DIRECTION,
+        ATTR_BUILTIN_NAME
     },
     {
         L"display",
         DISPID_IHTMLCSSSTYLEDECLARATION_DISPLAY,
-        DISPID_A_DISPLAY
+        DISPID_A_DISPLAY,
+        ATTR_BUILTIN_NAME
     },
     {
         L"filter",
         DISPID_IHTMLCSSSTYLEDECLARATION_FILTER,
-        DISPID_A_FILTER
+        DISPID_A_FILTER,
+        ATTR_BUILTIN_NAME
     },
     {
         L"float",
@@ -462,12 +470,13 @@ static const style_tbl_entry_t style_tbl[] = {
         L"height",
         DISPID_IHTMLCSSSTYLEDECLARATION_HEIGHT,
         STDPROPID_XOBJ_HEIGHT,
-        ATTR_FIX_PX
+        ATTR_FIX_PX | ATTR_BUILTIN_NAME
     },
     {
         L"left",
         DISPID_IHTMLCSSSTYLEDECLARATION_LEFT,
-        STDPROPID_XOBJ_LEFT
+        STDPROPID_XOBJ_LEFT,
+        ATTR_BUILTIN_NAME
     },
     {
         L"letter-spacing",
@@ -497,7 +506,8 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"margin",
         DISPID_IHTMLCSSSTYLEDECLARATION_MARGIN,
-        DISPID_A_MARGIN
+        DISPID_A_MARGIN,
+        ATTR_BUILTIN_NAME
     },
     {
         L"margin-bottom",
@@ -549,19 +559,21 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"opacity",
         DISPID_IHTMLCSSSTYLEDECLARATION_OPACITY,
-        DISPID_UNKNOWN
+        DISPID_UNKNOWN,
+        ATTR_BUILTIN_NAME
     },
     {
         L"outline",
         DISPID_IHTMLCSSSTYLEDECLARATION_OUTLINE,
         DISPID_A_OUTLINE,
-        ATTR_NO_NULL
+        ATTR_NO_NULL | ATTR_BUILTIN_NAME
     },
     {
         L"overflow",
         DISPID_IHTMLCSSSTYLEDECLARATION_OVERFLOW,
         DISPID_A_OVERFLOW,
-        0, overflow_values
+        ATTR_BUILTIN_NAME,
+        overflow_values
     },
     {
         L"overflow-x",
@@ -576,7 +588,8 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"padding",
         DISPID_IHTMLCSSSTYLEDECLARATION_PADDING,
-        DISPID_A_PADDING
+        DISPID_A_PADDING,
+        ATTR_BUILTIN_NAME
     },
     {
         L"padding-bottom",
@@ -615,17 +628,20 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"perspective",
         DISPID_IHTMLCSSSTYLEDECLARATION2_PERSPECTIVE,
-        DISPID_UNKNOWN
+        DISPID_UNKNOWN,
+        ATTR_BUILTIN_NAME
     },
     {
         L"position",
         DISPID_IHTMLCSSSTYLEDECLARATION_POSITION,
-        DISPID_A_POSITION
+        DISPID_A_POSITION,
+        ATTR_BUILTIN_NAME
     },
     {
         L"right",
         DISPID_IHTMLCSSSTYLEDECLARATION_RIGHT,
-        STDPROPID_XOBJ_RIGHT
+        STDPROPID_XOBJ_RIGHT,
+        ATTR_BUILTIN_NAME
     },
     {
         L"table-layout",
@@ -657,19 +673,20 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"top",
         DISPID_IHTMLCSSSTYLEDECLARATION_TOP,
-        STDPROPID_XOBJ_TOP
+        STDPROPID_XOBJ_TOP,
+        ATTR_BUILTIN_NAME
     },
     {
         L"transform",
         DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORM,
         DISPID_UNKNOWN,
-        ATTR_COMPAT_IE10
+        ATTR_COMPAT_IE10 | ATTR_BUILTIN_NAME
     },
     {
         L"transition",
         DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITION,
         DISPID_UNKNOWN,
-        ATTR_COMPAT_IE10
+        ATTR_COMPAT_IE10 | ATTR_BUILTIN_NAME
     },
     {
         L"vertical-align",
@@ -680,7 +697,8 @@ static const style_tbl_entry_t style_tbl[] = {
     {
         L"visibility",
         DISPID_IHTMLCSSSTYLEDECLARATION_VISIBILITY,
-        DISPID_A_VISIBILITY
+        DISPID_A_VISIBILITY,
+        ATTR_BUILTIN_NAME
     },
     {
         L"white-space",
@@ -691,7 +709,7 @@ static const style_tbl_entry_t style_tbl[] = {
         L"width",
         DISPID_IHTMLCSSSTYLEDECLARATION_WIDTH,
         STDPROPID_XOBJ_WIDTH,
-        ATTR_FIX_PX
+        ATTR_FIX_PX | ATTR_BUILTIN_NAME
     },
     {
         L"word-spacing",
@@ -725,7 +743,7 @@ static const WCHAR *get_style_prop_nsname(const style_tbl_entry_t *style_entry, 
     return style_entry ? get_style_nsname(style_entry) : orig_name;
 }
 
-static const style_tbl_entry_t *lookup_style_tbl(CSSStyle *style, const WCHAR *name)
+static const style_tbl_entry_t *lookup_style_tbl(CSSStyle *style, const WCHAR *name, unsigned exclude_mask)
 {
     int c, i, min = 0, max = ARRAY_SIZE(style_tbl)-1;
 
@@ -734,6 +752,8 @@ static const style_tbl_entry_t *lookup_style_tbl(CSSStyle *style, const WCHAR *n
 
         c = wcscmp(style_tbl[i].name, name);
         if(!c) {
+            if(style_tbl[i].flags & exclude_mask)
+                return NULL;
             if((style_tbl[i].flags & ATTR_COMPAT_IE10) && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE10)
                 return NULL;
             return style_tbl+i;
@@ -2934,7 +2954,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 
     TRACE("(%p)->(%s %08lx %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
-    style_entry = lookup_style_tbl(&This->css_style, strAttributeName);
+    style_entry = lookup_style_tbl(&This->css_style, strAttributeName, 0);
     if(!style_entry) {
         DWORD fdex = (lFlags & 1) ? fdexNameCaseSensitive : fdexNameCaseInsensitive;
         compat_mode_t compat_mode = dispex_compat_mode(&This->css_style.dispex);
@@ -4506,7 +4526,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_getPropertyValue(IHTMLCSSStyleDecl
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), value);
 
-    style_entry = lookup_style_tbl(This, name);
+    style_entry = lookup_style_tbl(This, name, 0);
     nsAString_InitDepend(&name_str, get_style_prop_nsname(style_entry, name));
     nsAString_InitDepend(&value_str, NULL);
     nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(This->nsstyle, &name_str, &value_str);
@@ -4530,7 +4550,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_removeProperty(IHTMLCSSStyleDeclar
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrPropertyName), pbstrPropertyValue);
 
-    style_entry = lookup_style_tbl(This, bstrPropertyName);
+    style_entry = lookup_style_tbl(This, bstrPropertyName, 0);
     nsAString_InitDepend(&name_str, get_style_prop_nsname(style_entry, bstrPropertyName));
     nsAString_Init(&ret_str, NULL);
     nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->nsstyle, &name_str, &ret_str);
@@ -4548,7 +4568,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclarati
 
     TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(name), debugstr_variant(value), debugstr_variant(priority));
 
-    style_entry = lookup_style_tbl(This, name);
+    style_entry = lookup_style_tbl(This, name, 0);
     hres = var_to_styleval(This, value, style_entry, &value_str);
     if(FAILED(hres))
         return hres;
@@ -9626,7 +9646,7 @@ HRESULT CSSStyle_get_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, 
     CSSStyle *This = impl_from_DispatchEx(dispex);
     const style_tbl_entry_t *style_entry;
 
-    style_entry = lookup_style_tbl(This, name);
+    style_entry = lookup_style_tbl(This, name, ATTR_BUILTIN_NAME);
     if(style_entry) {
         DISPID id = dispex_compat_mode(dispex) >= COMPAT_MODE_IE9
             ? style_entry->dispid : style_entry->compat_dispid;
