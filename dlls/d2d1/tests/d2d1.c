@@ -15471,14 +15471,10 @@ static void test_get_dxgi_device(BOOL d3d11)
     hr = ID2D1Factory3_CreateDevice(ctx.factory3, ctx.device, &device2);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
-        IDXGIDevice_Release(dxgi_device);
-    }
+    ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
 
+    IDXGIDevice_Release(dxgi_device);
     ID2D1Device2_Release(device2);
 
     /* WIC target */
@@ -15507,9 +15503,7 @@ static void test_get_dxgi_device(BOOL d3d11)
 
     dxgi_device = (IDXGIDevice *)0xdeadbeef;
     hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
-    todo_wine
     ok(hr == D2DERR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!dxgi_device, "Expected NULL DXGI device.\n");
 
     ID2D1Device2_Release(device2);
@@ -15544,9 +15538,7 @@ static void test_get_dxgi_device(BOOL d3d11)
 
     dxgi_device = (IDXGIDevice *)0xdeadbeef;
     hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
-    todo_wine
     ok(hr == D2DERR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!dxgi_device, "Expected NULL DXGI device.\n");
 
     ID2D1Device2_Release(device2);
@@ -15561,14 +15553,10 @@ static void test_get_dxgi_device(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
-        IDXGIDevice_Release(dxgi_device);
-    }
+    ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
 
+    IDXGIDevice_Release(dxgi_device);
     ID2D1Device2_Release(device2);
     ID2D1Device_Release(device);
 
@@ -15586,14 +15574,10 @@ static void test_get_dxgi_device(BOOL d3d11)
 
     dxgi_device = (IDXGIDevice *)0xdeadbeef;
     hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
-        IDXGIDevice_Release(dxgi_device);
-    }
+    ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
 
+    IDXGIDevice_Release(dxgi_device);
     ID2D1Device2_Release(device2);
     ID2D1Device_Release(device);
     ID2D1DeviceContext_Release(context);
@@ -15618,9 +15602,7 @@ static void test_get_dxgi_device(BOOL d3d11)
 
     dxgi_device = (IDXGIDevice *)0xdeadbeef;
     hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
-    todo_wine
     ok(hr == D2DERR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!dxgi_device, "Expected NULL DXGI device.\n");
 
     ID2D1Device2_Release(device2);

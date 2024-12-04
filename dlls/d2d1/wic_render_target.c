@@ -252,7 +252,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
         return hr;
     }
 
-    hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
+    hr = d2d_factory_create_device(factory, dxgi_device, false, &IID_ID2D1Device, (void **)&device);
     IDXGIDevice_Release(dxgi_device);
     if (FAILED(hr))
     {
