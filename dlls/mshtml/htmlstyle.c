@@ -9711,10 +9711,17 @@ void MSCSSProperties_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const dispex_hook_t styledecl_ie11_hooks[] = {
         {DISPID_IHTMLCSSSTYLEDECLARATION_BEHAVIOR},
+
+        /* IE10 and below */
+        {DISPID_IHTMLCSSSTYLEDECLARATION_CLIPTOP},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_CLIPRIGHT},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_CLIPBOTTOM},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_CLIPLEFT},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const styledecl_hooks = styledecl_ie11_hooks + 1;
     if(mode >= COMPAT_MODE_IE9) {
-        dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, mode >= COMPAT_MODE_IE11 ? styledecl_ie11_hooks : NULL);
+        dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, mode >= COMPAT_MODE_IE11 ? styledecl_ie11_hooks : styledecl_hooks);
         dispex_info_add_interface(info, IWineCSSProperties_tid, NULL);
     }
     if(mode >= COMPAT_MODE_IE10)
@@ -9878,6 +9885,10 @@ static void CSSStyleDeclaration_init_dispex_info(dispex_data_t *info, compat_mod
         {DISPID_IHTMLCSSSTYLEDECLARATION_TEXTKASHIDASPACE},
         {DISPID_IHTMLCSSSTYLEDECLARATION_MSINTERPOLATIONMODE},
         {DISPID_IHTMLCSSSTYLEDECLARATION_MSBLOCKPROGRESSION},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_CLIPTOP},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_CLIPRIGHT},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_CLIPBOTTOM},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_CLIPLEFT},
         {DISPID_UNKNOWN}
     };
     const dispex_hook_t *const styledecl_ie10_hooks = styledecl_hooks + 1;

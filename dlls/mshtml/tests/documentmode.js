@@ -3812,9 +3812,8 @@ sync_test("prototype props", function() {
         "wordSpacing", "wordWrap", "zIndex"
     ], [
         ["alignContent",11], ["alignItems",11], ["alignSelf",11], ["borderImage",11], ["borderImageOutset",11], ["borderImageRepeat",11], ["borderImageSlice",11],
-        ["borderImageSource",11], ["borderImageWidth",11], "clipBottom", "clipLeft", "clipRight", "clipTop", ["flex",11], ["flexBasis",11], ["flexDirection",11],
-        ["flexFlow",11], ["flexGrow",11], ["flexShrink",11], ["flexWrap",11], ["justifyContent",11], ["msImeAlign",11], ["msTextCombineHorizontal",11],
-        ["msTextSizeAdjust",11], ["order",11], ["touchAction",11]
+        ["borderImageSource",11], ["borderImageWidth",11], ["flex",11], ["flexBasis",11], ["flexDirection",11], ["flexFlow",11], ["flexGrow",11], ["flexShrink",11],
+        ["flexWrap",11], ["justifyContent",11], ["msImeAlign",11], ["msTextCombineHorizontal",11], ["msTextSizeAdjust",11], ["order",11], ["touchAction",11]
     ]);
     check(CSSStyleRule, [ "readOnly", "selectorText", "style" ]);
     check(CustomEvent, [ "detail", "initCustomEvent" ]);
@@ -3946,8 +3945,7 @@ sync_test("prototype props", function() {
         "scrollbarHighlightColor", "scrollbarShadowColor", "scrollbarTrackColor", "setAttribute", "styleFloat",
         "textAutospace", "textJustifyTrim", "textKashida", "textKashidaSpace", "writingMode", "zoom"
     ]);
-    check(MSCurrentStyleCSSProperties, [ "blockDirection", "clipBottom", "clipLeft", "clipRight", "clipTop", "hasLayout" ],
-                                       [ "clipBottom", "clipLeft", "clipRight", "clipTop"]);
+    check(MSCurrentStyleCSSProperties, [ "blockDirection", "clipBottom", "clipLeft", "clipRight", "clipTop", "hasLayout" ]);
     check(MSStyleCSSProperties, [
         "pixelBottom", "pixelHeight", "pixelLeft", "pixelRight", "pixelTop", "pixelWidth", "posBottom",
         "posHeight", "posLeft", "posRight", "posTop", "posWidth", "textDecorationBlink", "textDecorationLineThrough",
