@@ -154,6 +154,7 @@ condition:
         {
             COND_input* cond = (COND_input*) info;
             cond->result = MSICONDITION_NONE;
+            (void)cond_nerrs; /* avoid unused variable warning */
         }
     ;
 
