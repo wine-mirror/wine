@@ -154,7 +154,7 @@ static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user)
     while (ret && addr && ReadProcessMemory(hProcess, addr, &channel, sizeof(channel), NULL))
     {
         if (!channel.name[0]) break;
-        ret = ce(hProcess, addr, &channel, user);
+        if (channel.flags & (1 << __WINE_DBCL_INIT)) ret = ce(hProcess, addr, &channel, user);
         addr = (struct __wine_debug_channel *)addr + 1;
     }
     return 0;
