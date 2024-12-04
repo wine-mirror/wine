@@ -344,6 +344,12 @@ static void test_utf8(void)
     ok(hfind != -1, "_findfirst64 returned %Id, errno %d\n", hfind, errno);
     todo_wine_if(!is_lossless_convertion(dir))
         ok(!memcmp(file, fdata64.name, sizeof(file) - 1), "fdata64.name = %s\n", debugstr_a(fdata64.name));
+
+    fdata64.name[0] = 'x';
+    ret = _findnext64(hfind, &fdata64);
+    ok(!ret, "_findnext64 returned %d, errno %d\n", ret, errno);
+    todo_wine_if(!is_lossless_convertion(dir))
+        ok(!memcmp(file, fdata64.name, sizeof(file) - 1), "fdata64.name = %s\n", debugstr_a(fdata64.name));
     ret = _findclose(hfind);
     ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
 
