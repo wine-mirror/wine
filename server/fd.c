@@ -1943,15 +1943,6 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
 
     fd->nt_name = dup_nt_name( root, nt_name, &fd->nt_namelen );
     fd->unix_name = NULL;
-    if ((path = dup_fd_name( root, name )))
-    {
-        fd->unix_name = realpath( path, NULL );
-        free( path );
-    }
-
-    closed_fd->unix_fd = fd->unix_fd;
-    closed_fd->disp_flags = 0;
-    closed_fd->unix_name = fd->unix_name;
     fstat( fd->unix_fd, &st );
     *mode = st.st_mode;
 
@@ -1968,6 +1959,16 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
              */
             goto error;
         }
+
+        if ((path = dup_fd_name( root, name )))
+        {
+            fd->unix_name = realpath( path, NULL );
+            free( path );
+        }
+
+        closed_fd->unix_fd = fd->unix_fd;
+        closed_fd->unix_name = fd->unix_name;
+        closed_fd->disp_flags = 0;
         fd->inode = inode;
         fd->closed = closed_fd;
         fd->cacheable = !inode->device->removable;

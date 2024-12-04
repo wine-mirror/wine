@@ -1643,8 +1643,8 @@ static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expect
     add_object_type( type );
 }
 
-#define test_object_name(a,b,c) _test_object_name(__LINE__,a,b,c)
-static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expected_name, BOOL todo )
+#define test_object_name(a,b) _test_object_name(__LINE__,a,b)
+static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expected_name )
 {
     char buffer[1024];
     UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
@@ -1657,9 +1657,8 @@ static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expect
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
     ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryObject failed %lx\n", status );
     ok_(__FILE__,line)( len >= sizeof(OBJECT_NAME_INFORMATION) + str->Length, "unexpected len %lu\n", len );
-    todo_wine_if (todo)
-        ok_(__FILE__,line)(compare_unicode_string( str, expected_name ), "got %s, expected %s\n",
-            debugstr_w(str->Buffer), debugstr_w(expected_name));
+    ok_(__FILE__,line)( compare_unicode_string( str, expected_name ), "got %s, expected %s\n",
+                        debugstr_w(str->Buffer), debugstr_w(expected_name) );
 }
 
 static void test_query_object(void)
@@ -1800,7 +1799,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_debug" );
     status = pNtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateDebugObject failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_debug", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_debug" );
     test_object_type( handle, L"DebugObject" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1808,7 +1807,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_mutant" );
     status = pNtCreateMutant( &handle, MUTANT_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateMutant failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_mutant", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_mutant" );
     test_object_type( handle, L"Mutant" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1816,7 +1815,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_sem" );
     status = pNtCreateSemaphore( &handle, SEMAPHORE_ALL_ACCESS, &attr, 1, 2 );
     ok(!status, "NtCreateSemaphore failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_sem", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_sem" );
     test_object_type( handle, L"Semaphore" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1824,7 +1823,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_keyed" );
     status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateKeyedEvent failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_keyed", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_keyed" );
     test_object_type( handle, L"KeyedEvent" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1832,7 +1831,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_compl" );
     status = pNtCreateIoCompletion( &handle, IO_COMPLETION_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateIoCompletion failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_compl", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_compl" );
     test_object_type( handle, L"IoCompletion" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1840,7 +1839,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_job" );
     status = pNtCreateJobObject( &handle, JOB_OBJECT_ALL_ACCESS, &attr );
     ok(!status, "NtCreateJobObject failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_job", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_job" );
     test_object_type( handle, L"Job" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1862,12 +1861,12 @@ static void test_query_object(void)
 
     handle = GetProcessWindowStation();
     swprintf( expect, ARRAY_SIZE(expect), L"\\Sessions\\%u\\Windows\\WindowStations\\WinSta0", NtCurrentTeb()->Peb->SessionId );
-    test_object_name( handle, expect, FALSE );
+    test_object_name( handle, expect );
     test_object_type( handle, L"WindowStation" );
     test_no_file_info( handle );
 
     handle = GetThreadDesktop( GetCurrentThreadId() );
-    test_object_name( handle, L"\\Default", FALSE );
+    test_object_name( handle, L"\\Default" );
     test_object_type( handle, L"Desktop" );
     test_no_file_info( handle );
 
@@ -1892,7 +1891,7 @@ static void test_query_object(void)
     handle = CreateMailslotA( "\\\\.\\mailslot\\test_mailslot", 100, 1000, NULL );
     ok( handle != INVALID_HANDLE_VALUE, "CreateMailslot failed err %lu\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\Mailslot\\test_mailslot", FALSE );
+    test_object_name( handle, L"\\Device\\Mailslot\\test_mailslot" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1918,7 +1917,7 @@ static void test_query_object(void)
     handle = CreateFileA( "\\\\.\\mailslot", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\Mailslot", FALSE );
+    test_object_name( handle, L"\\Device\\Mailslot" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1928,7 +1927,7 @@ static void test_query_object(void)
                                1, 1000, 1000, 1000, NULL );
     ok( handle != INVALID_HANDLE_VALUE, "CreateNamedPipe failed err %lu\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\NamedPipe\\test_pipe", FALSE );
+    test_object_name( handle, L"\\Device\\NamedPipe\\test_pipe" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1945,7 +1944,7 @@ static void test_query_object(void)
     handle = CreateFileA( "\\\\.\\pipe", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\NamedPipe", FALSE );
+    test_object_name( handle, L"\\Device\\NamedPipe" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1954,7 +1953,7 @@ static void test_query_object(void)
     handle = CreateFileA( "\\\\.\\pipe\\", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%lu)\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\NamedPipe\\", FALSE );
+    test_object_name( handle, L"\\Device\\NamedPipe\\" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1964,23 +1963,23 @@ static void test_query_object(void)
     status = pNtCreateKey( &handle, KEY_READ, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed status %lx\n", status );
 
-    test_object_name( handle, L"\\REGISTRY\\MACHINE", FALSE );
+    test_object_name( handle, L"\\REGISTRY\\MACHINE" );
     test_object_type( handle, L"Key" );
 
     pNtClose( handle );
 
-    test_object_name( GetCurrentProcess(), L"", FALSE );
+    test_object_name( GetCurrentProcess(), L"" );
     test_object_type( GetCurrentProcess(), L"Process" );
     test_no_file_info( GetCurrentProcess() );
 
-    test_object_name( GetCurrentThread(), L"", FALSE );
+    test_object_name( GetCurrentThread(), L"" );
     test_object_type( GetCurrentThread(), L"Thread" );
     test_no_file_info( GetCurrentThread() );
 
     status = pNtOpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &handle);
     ok(!status, "OpenProcessToken failed: %lx\n", status);
 
-    test_object_name( handle, L"", FALSE );
+    test_object_name( handle, L"" );
     test_object_type( handle, L"Token" );
     test_no_file_info( handle );
 
@@ -1988,7 +1987,7 @@ static void test_query_object(void)
 
     handle = CreateFileA( "nul", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError() );
-    test_object_name( handle, L"\\Device\\Null", TRUE );
+    test_object_name( handle, L"\\Device\\Null" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
     pNtClose( handle );
@@ -2855,10 +2854,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateEvent(&handle, GENERIC_ALL, &attr, NotificationEvent, FALSE);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenEvent(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     status = pNtOpenEvent(&handle2, GENERIC_ALL, &attr2);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -2884,7 +2883,7 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateDebugObject(&handle, GENERIC_ALL, &attr, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     pNtClose(handle);
     status = pNtCreateDebugObject(&handle, GENERIC_ALL, &attr2, 0);
     ok(!status, "got %08lx\n", status);
@@ -2897,10 +2896,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateMutant(&handle, GENERIC_ALL, &attr, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenMutant(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     status = pNtOpenMutant(&handle2, GENERIC_ALL, &attr2);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -2926,10 +2925,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateSemaphore(&handle, GENERIC_ALL, &attr, 1, 2);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenSemaphore(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     status = pNtOpenSemaphore(&handle2, GENERIC_ALL, &attr2);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -2955,10 +2954,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateKeyedEvent(&handle, GENERIC_ALL, &attr, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenKeyedEvent(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     status = pNtOpenKeyedEvent(&handle2, GENERIC_ALL, &attr2);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -2984,10 +2983,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateIoCompletion(&handle, GENERIC_ALL, &attr, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenIoCompletion(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     pNtClose(handle);
     status = pNtCreateIoCompletion(&handle, GENERIC_ALL, &attr2, 0);
@@ -3009,10 +3008,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateJobObject(&handle, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenJobObject(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     pNtClose(handle);
     status = pNtCreateJobObject(&handle, GENERIC_ALL, &attr2);
@@ -3034,10 +3033,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateTimer(&handle, GENERIC_ALL, &attr, NotificationTimer);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenTimer(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     pNtClose(handle);
     status = pNtCreateTimer(&handle, GENERIC_ALL, &attr2, NotificationTimer);
@@ -3060,10 +3059,10 @@ static void test_null_in_object_name(void)
     size.QuadPart = 4096;
     status = pNtCreateSection(&handle, GENERIC_ALL, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenSection(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     pNtClose(handle);
     status = pNtCreateSection(&handle, GENERIC_ALL, &attr2, &size, PAGE_READWRITE, SEC_COMMIT, 0);
@@ -3118,10 +3117,10 @@ static void test_null_in_object_name(void)
     ok(!status || status == STATUS_ACCESS_DENIED || broken(status == STATUS_OBJECT_PATH_NOT_FOUND) /* win8 */, "got %08lx\n", status);
     if (!status)
     {
-        test_object_name(handle, name_exp, FALSE);
+        test_object_name(handle, name_exp);
         status = pNtOpenKey(&handle2, GENERIC_ALL, &attr);
         ok(!status, "got %08lx\n", status);
-        test_object_name(handle2, name_exp, FALSE);
+        test_object_name(handle2, name_exp);
         pNtClose(handle2);
         status = pNtOpenKey(&handle2, GENERIC_ALL, &attr2);
         ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
