@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "mshtml_private.h"
 #include "htmlstyle.h"
@@ -1170,6 +1171,16 @@ static void HTMLCurrentStyle_unlink(DispatchEx *dispex)
     }
 }
 
+static void MSCurrentStyleCSSProperties_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t currentstyle_ie11_hooks[] = {
+        {DISPID_IHTMLCURRENTSTYLE_BEHAVIOR},
+        {DISPID_UNKNOWN}
+    };
+    MSCSSProperties_init_dispex_info(info, mode);
+    dispex_info_add_interface(info, IHTMLCurrentStyle_tid, mode >= COMPAT_MODE_IE11 ? currentstyle_ie11_hooks : NULL);
+}
+
 static const dispex_static_data_vtbl_t MSCurrentStyleCSSProperties_dispex_vtbl = {
     CSSSTYLE_DISPEX_VTBL_ENTRIES,
     .query_interface   = HTMLCurrentStyle_query_interface,
@@ -1178,7 +1189,6 @@ static const dispex_static_data_vtbl_t MSCurrentStyleCSSProperties_dispex_vtbl =
 };
 
 static const tid_t MSCurrentStyleCSSProperties_iface_tids[] = {
-    IHTMLCurrentStyle_tid,
     IHTMLCurrentStyle2_tid,
     IHTMLCurrentStyle3_tid,
     IHTMLCurrentStyle4_tid,
@@ -1190,7 +1200,7 @@ dispex_static_data_t MSCurrentStyleCSSProperties_dispex = {
     .vtbl         = &MSCurrentStyleCSSProperties_dispex_vtbl,
     .disp_tid     = DispHTMLCurrentStyle_tid,
     .iface_tids   = MSCurrentStyleCSSProperties_iface_tids,
-    .init_info    = MSCSSProperties_init_dispex_info,
+    .init_info    = MSCurrentStyleCSSProperties_init_dispex_info,
 };
 
 HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)

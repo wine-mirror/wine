@@ -9727,6 +9727,16 @@ dispex_static_data_t MSCSSProperties_dispex = {
     .init_info    = MSCSSProperties_init_dispex_info,
 };
 
+static void MSStyleCSSProperties_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t style2_ie11_hooks[] = {
+        {DISPID_IHTMLSTYLE2_BEHAVIOR},
+        {DISPID_UNKNOWN}
+    };
+    MSCSSProperties_init_dispex_info(info, mode);
+    dispex_info_add_interface(info, IHTMLStyle2_tid, mode >= COMPAT_MODE_IE11 ? style2_ie11_hooks : NULL);
+}
+
 static const dispex_static_data_vtbl_t MSStyleCSSProperties_dispex_vtbl = {
     CSSSTYLE_DISPEX_VTBL_ENTRIES,
     .query_interface   = HTMLStyle_query_interface,
@@ -9739,7 +9749,6 @@ static const tid_t MSStyleCSSProperties_iface_tids[] = {
     IHTMLStyle5_tid,
     IHTMLStyle4_tid,
     IHTMLStyle3_tid,
-    IHTMLStyle2_tid,
     IHTMLStyle_tid,
     0
 };
@@ -9749,7 +9758,7 @@ dispex_static_data_t MSStyleCSSProperties_dispex = {
     .vtbl         = &MSStyleCSSProperties_dispex_vtbl,
     .disp_tid     = DispHTMLStyle_tid,
     .iface_tids   = MSStyleCSSProperties_iface_tids,
-    .init_info    = MSCSSProperties_init_dispex_info,
+    .init_info    = MSStyleCSSProperties_init_dispex_info,
 };
 
 static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration **ret)
