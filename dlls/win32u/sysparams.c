@@ -1273,7 +1273,6 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
 
     if (!ctx->mutex)
     {
-        pthread_mutex_lock( &display_lock );
         ctx->mutex = get_display_device_init_mutex();
         prepare_devices();
     }
@@ -1724,7 +1723,6 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
 {
     if (ctx->mutex)
     {
-        pthread_mutex_unlock( &display_lock );
         release_display_device_init_mutex( ctx->mutex );
         ctx->mutex = 0;
     }
@@ -1993,7 +1991,6 @@ static BOOL update_display_cache_from_registry(void)
 
     if (key.LastWriteTime.QuadPart <= last_query_display_time) return TRUE;
 
-    pthread_mutex_lock( &display_lock );
     mutex = get_display_device_init_mutex();
 
     clear_display_devices();
@@ -2050,7 +2047,6 @@ static BOOL update_display_cache_from_registry(void)
         last_query_display_time = key.LastWriteTime.QuadPart;
 
     set_winstation_monitors();
-    pthread_mutex_unlock( &display_lock );
     release_display_device_init_mutex( mutex );
     return ret;
 }
@@ -2260,6 +2256,8 @@ static BOOL lock_display_devices( BOOL force )
 
     if (!force) get_display_driver(); /* make sure at least to load the user driver */
 
+    pthread_mutex_lock( &display_lock );
+
     if (!force && !update_display_cache_from_registry()) force = TRUE;
     if (force)
     {
@@ -2271,8 +2269,11 @@ static BOOL lock_display_devices( BOOL force )
         ret = update_display_cache_from_registry();
     }
 
-    if (!ret) ERR( "Failed to read display config.\n" );
-    else pthread_mutex_lock( &display_lock );
+    if (!ret)
+    {
+        ERR( "Failed to read display config.\n" );
+        pthread_mutex_unlock( &display_lock );
+    }
     return ret;
 }
 
