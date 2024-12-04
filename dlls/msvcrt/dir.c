@@ -157,26 +157,6 @@ static void msvcrt_wfttofd64( const WIN32_FIND_DATAW *fd, struct _wfinddata64_t*
   wcscpy(ft->name, fd->cFileName);
 }
 
-/* INTERNAL: Translate WIN32_FIND_DATAA to finddata64i32_t  */
-static void msvcrt_fttofd64i32( const WIN32_FIND_DATAA *fd, struct _finddata64i32_t* ft)
-{
-  DWORD dw;
-
-  if (fd->dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
-    ft->attrib = 0;
-  else
-    ft->attrib = fd->dwFileAttributes;
-
-  RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftCreationTime, &dw );
-  ft->time_create = dw;
-  RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastAccessTime, &dw );
-  ft->time_access = dw;
-  RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
-  ft->time_write = dw;
-  ft->size = fd->nFileSizeLow;
-  strcpy(ft->name, fd->cFileName);
-}
-
 /* INTERNAL: Translate WIN32_FIND_DATAW to wfinddatai64_t  */
 static void msvcrt_wfttofdi64( const WIN32_FIND_DATAW *fd, struct _wfinddatai64_t* ft)
 {
@@ -688,25 +668,6 @@ int CDECL _findnext64(intptr_t hand, struct _finddata64_t * ft)
 }
 
 /*********************************************************************
- *		_findnext64i32 (MSVCRT.@)
- *
- * 64-bit/32-bit version of _findnext.
- */
-int CDECL _findnext64i32(intptr_t hand, struct _finddata64i32_t * ft)
-{
-  WIN32_FIND_DATAA find_data;
-
-  if (!FindNextFileA((HANDLE)hand, &find_data))
-  {
-    *_errno() = ENOENT;
-    return -1;
-  }
-
-  msvcrt_fttofd64i32(&find_data,ft);
-  return 0;
-}
-
-/*********************************************************************
  *		_wfindnexti64 (MSVCRT.@)
  *
  * Unicode version of _findnexti64.
@@ -742,6 +703,21 @@ int CDECL _wfindnext64i32(intptr_t hand, struct _wfinddata64i32_t * ft)
 
   msvcrt_wfttofd64i32(&find_data,ft);
   return 0;
+}
+
+/*********************************************************************
+ *		_findnext64i32 (MSVCRT.@)
+ *
+ * 64-bit/32-bit version of _findnext.
+ */
+int CDECL _findnext64i32(intptr_t hand, struct _finddata64i32_t *ft)
+{
+    struct _wfinddata64i32_t wft;
+    int ret;
+
+    ret = _wfindnext64i32(hand, &wft);
+    if (!ret && !finddata64i32_wtoa(&wft, ft)) ret = -1;
+    return ret;
 }
 
 /*********************************************************************
