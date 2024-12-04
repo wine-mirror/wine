@@ -2237,7 +2237,7 @@ static void commit_display_devices( struct device_manager_ctx *ctx )
     set_winstation_monitors();
 }
 
-BOOL update_display_cache( BOOL force )
+static BOOL lock_display_devices( BOOL force )
 {
     static const WCHAR wine_service_station_name[] =
         {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
@@ -2254,7 +2254,6 @@ BOOL update_display_cache( BOOL force )
         clear_display_devices();
         list_add_tail( &monitors, &virtual_monitor.entry );
         set_winstation_monitors();
-        pthread_mutex_unlock( &display_lock );
         return TRUE;
     }
 
@@ -2281,15 +2280,9 @@ BOOL update_display_cache( BOOL force )
             return FALSE;
         }
 
-        return update_display_cache( TRUE );
+        if (!lock_display_devices( TRUE )) return FALSE;
     }
 
-    return TRUE;
-}
-
-static BOOL lock_display_devices( BOOL force )
-{
-    if (!update_display_cache( force )) return FALSE;
     pthread_mutex_lock( &display_lock );
     return TRUE;
 }
@@ -2297,6 +2290,13 @@ static BOOL lock_display_devices( BOOL force )
 static void unlock_display_devices(void)
 {
     pthread_mutex_unlock( &display_lock );
+}
+
+BOOL update_display_cache( BOOL force )
+{
+    if (!lock_display_devices( force )) return FALSE;
+    unlock_display_devices();
+    return TRUE;
 }
 
 static HDC get_display_dc(void)
