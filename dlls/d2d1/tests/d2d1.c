@@ -15439,6 +15439,198 @@ static void test_effect_blob_property(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_get_dxgi_device(BOOL d3d11)
+{
+    D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
+    D2D1_RENDER_TARGET_PROPERTIES rt_desc;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    ID2D1BitmapRenderTarget *bitmap_rt;
+    IWICImagingFactory *wic_factory;
+    ID2D1HwndRenderTarget *hwnd_rt;
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    IDXGIDevice *dxgi_device;
+    D2D1_SIZE_U pixel_size;
+    IWICBitmap *wic_bitmap;
+    ID2D1Device2 *device2;
+    ID2D1RenderTarget *rt;
+    ID2D1Device *device;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    if (!ctx.factory3)
+    {
+        win_skip("ID2D1Factory3 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    /* Test user-provided DXGI device */
+    hr = ID2D1Factory3_CreateDevice(ctx.factory3, ctx.device, &device2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
+        IDXGIDevice_Release(dxgi_device);
+    }
+
+    ID2D1Device2_Release(device2);
+
+    /* WIC target */
+    rt_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    rt_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    rt_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    rt_desc.dpiX = 96.0f;
+    rt_desc.dpiY = 96.0f;
+    rt_desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    rt_desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&wic_factory);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IWICImagingFactory_CreateBitmap(wic_factory, 16, 16, &GUID_WICPixelFormat32bppPBGRA,
+            WICBitmapCacheOnDemand, &wic_bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_CreateWicBitmapRenderTarget(ctx.factory1, wic_bitmap, &rt_desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DeviceContext_GetDevice(context, &device);
+    hr = ID2D1Device_QueryInterface(device, &IID_ID2D1Device2, (void **)&device2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    dxgi_device = (IDXGIDevice *)0xdeadbeef;
+    hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
+    todo_wine
+    ok(hr == D2DERR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!dxgi_device, "Expected NULL DXGI device.\n");
+
+    ID2D1Device2_Release(device2);
+    ID2D1Device_Release(device);
+    ID2D1DeviceContext_Release(context);
+    ID2D1RenderTarget_Release(rt);
+    IWICBitmap_Release(wic_bitmap);
+    IWICImagingFactory_Release(wic_factory);
+    CoUninitialize();
+
+    /* HWND target */
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 0.0f;
+    desc.dpiY = 0.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    hwnd_rt_desc.hwnd = create_window();
+    hwnd_rt_desc.pixelSize.width = 64;
+    hwnd_rt_desc.pixelSize.height = 64;
+    hwnd_rt_desc.presentOptions = D2D1_PRESENT_OPTIONS_NONE;
+
+    hr = ID2D1Factory_CreateHwndRenderTarget(ctx.factory, &desc, &hwnd_rt_desc, &hwnd_rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1HwndRenderTarget_QueryInterface(hwnd_rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DeviceContext_GetDevice(context, &device);
+    hr = ID2D1Device_QueryInterface(device, &IID_ID2D1Device2, (void **)&device2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    dxgi_device = (IDXGIDevice *)0xdeadbeef;
+    hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
+    todo_wine
+    ok(hr == D2DERR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!dxgi_device, "Expected NULL DXGI device.\n");
+
+    ID2D1Device2_Release(device2);
+    ID2D1Device_Release(device);
+    ID2D1DeviceContext_Release(context);
+    ID2D1HwndRenderTarget_Release(hwnd_rt);
+    DestroyWindow(hwnd_rt_desc.hwnd);
+
+    /* DXGI surface target */
+    ID2D1DeviceContext_GetDevice(ctx.context, &device);
+    hr = ID2D1Device_QueryInterface(device, &IID_ID2D1Device2, (void **)&device2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
+        IDXGIDevice_Release(dxgi_device);
+    }
+
+    ID2D1Device2_Release(device2);
+    ID2D1Device_Release(device);
+
+    /* DXGI compatible bitmap target */
+    set_size_u(&pixel_size, 32, 32);
+    hr = ID2D1RenderTarget_CreateCompatibleRenderTarget(ctx.rt, NULL, &pixel_size, NULL,
+            D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &bitmap_rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1BitmapRenderTarget_QueryInterface(bitmap_rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DeviceContext_GetDevice(context, &device);
+    hr = ID2D1Device_QueryInterface(device, &IID_ID2D1Device2, (void **)&device2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    dxgi_device = (IDXGIDevice *)0xdeadbeef;
+    hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(dxgi_device == ctx.device, "Got unexpected IDXGIDevice.\n");
+        IDXGIDevice_Release(dxgi_device);
+    }
+
+    ID2D1Device2_Release(device2);
+    ID2D1Device_Release(device);
+    ID2D1DeviceContext_Release(context);
+    ID2D1BitmapRenderTarget_Release(bitmap_rt);
+
+    /* DC target */
+    rt_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    rt_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    rt_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    rt_desc.dpiX = 96.0f;
+    rt_desc.dpiY = 96.0f;
+    rt_desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    rt_desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    hr = ID2D1Factory1_CreateDCRenderTarget(ctx.factory1, &rt_desc, (ID2D1DCRenderTarget **)&rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DeviceContext_GetDevice(context, &device);
+    hr = ID2D1Device_QueryInterface(device, &IID_ID2D1Device2, (void **)&device2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    dxgi_device = (IDXGIDevice *)0xdeadbeef;
+    hr = ID2D1Device2_GetDxgiDevice(device2, &dxgi_device);
+    todo_wine
+    ok(hr == D2DERR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!dxgi_device, "Expected NULL DXGI device.\n");
+
+    ID2D1Device2_Release(device2);
+    ID2D1Device_Release(device);
+    ID2D1DeviceContext_Release(context);
+    ID2D1RenderTarget_Release(rt);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -15535,6 +15727,7 @@ START_TEST(d2d1)
     queue_test(test_compute_geometry_area);
     queue_test(test_wic_target_format);
     queue_test(test_effect_blob_property);
+    queue_test(test_get_dxgi_device);
 
     run_queued_tests();
 }
