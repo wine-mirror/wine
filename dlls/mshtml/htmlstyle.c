@@ -9736,6 +9736,10 @@ dispex_static_data_t MSCSSProperties_dispex = {
 
 static void MSStyleCSSProperties_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
+    static const dispex_hook_t style_ie9_hooks[] = {
+        {DISPID_IHTMLSTYLE_TOSTRING},
+        {DISPID_UNKNOWN}
+    };
     static const dispex_hook_t style2_ie11_hooks[] = {
         {DISPID_IHTMLSTYLE2_BEHAVIOR},
 
@@ -9750,6 +9754,7 @@ static void MSStyleCSSProperties_init_dispex_info(dispex_data_t *info, compat_mo
     MSCSSProperties_init_dispex_info(info, mode);
     dispex_info_add_interface(info, IHTMLStyle2_tid, mode >= COMPAT_MODE_IE11 ? style2_ie11_hooks :
                                                      mode >= COMPAT_MODE_IE9  ? style2_ie9_hooks  : NULL);
+    dispex_info_add_interface(info, IHTMLStyle_tid, mode >= COMPAT_MODE_IE9 ? style_ie9_hooks : NULL);
 }
 
 static const dispex_static_data_vtbl_t MSStyleCSSProperties_dispex_vtbl = {
@@ -9764,7 +9769,6 @@ static const tid_t MSStyleCSSProperties_iface_tids[] = {
     IHTMLStyle5_tid,
     IHTMLStyle4_tid,
     IHTMLStyle3_tid,
-    IHTMLStyle_tid,
     0
 };
 dispex_static_data_t MSStyleCSSProperties_dispex = {

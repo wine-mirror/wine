@@ -3951,7 +3951,7 @@ sync_test("prototype props", function() {
         "pixelBottom", "pixelHeight", "pixelLeft", "pixelRight", "pixelTop", "pixelWidth", "posBottom",
         "posHeight", "posLeft", "posRight", "posTop", "posWidth", "textDecorationBlink", "textDecorationLineThrough",
         "textDecorationNone", "textDecorationOverline", "textDecorationUnderline"
-    ], [ "toString" ]);
+    ]);
     check(Node, [
         "ATTRIBUTE_NODE", "CDATA_SECTION_NODE", "COMMENT_NODE", "DOCUMENT_FRAGMENT_NODE",  "DOCUMENT_NODE",
         "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_CONTAINS", "DOCUMENT_POSITION_DISCONNECTED",
