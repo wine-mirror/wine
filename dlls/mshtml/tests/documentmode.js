@@ -856,7 +856,7 @@ sync_test("style_props", function() {
     test_exposed("removeAttribute", true, v >= 9, false);
     test_exposed("zIndex", true, true, true);
     test_exposed("z-index", true, true, true, true);
-    test_exposed("filter", true, true, broken(true) ? v >= 10 : v >= 9 /* todo_wine */);
+    test_exposed("filter", true, true, v >= 10);
     test_exposed("pixelTop", true, false, false);
     test_exposed("float", true, true, true, true);
     test_exposed("css-float", false, false, false);
@@ -3812,7 +3812,7 @@ sync_test("prototype props", function() {
         "wordSpacing", "wordWrap", "zIndex"
     ], [
         ["alignContent",11], ["alignItems",11], ["alignSelf",11], ["borderImage",11], ["borderImageOutset",11], ["borderImageRepeat",11], ["borderImageSlice",11],
-        ["borderImageSource",11], ["borderImageWidth",11], "clipBottom", "clipLeft", "clipRight", "clipTop", ["filter",9,9], ["flex",11], ["flexBasis",11], ["flexDirection",11],
+        ["borderImageSource",11], ["borderImageWidth",11], "clipBottom", "clipLeft", "clipRight", "clipTop", ["flex",11], ["flexBasis",11], ["flexDirection",11],
         ["flexFlow",11], ["flexGrow",11], ["flexShrink",11], ["flexWrap",11], ["justifyContent",11], ["msImeAlign",11], ["msTextCombineHorizontal",11],
         ["msTextSizeAdjust",11], ["order",11], ["touchAction",11]
     ]);
@@ -3945,7 +3945,7 @@ sync_test("prototype props", function() {
         "scrollbarArrowColor", "scrollbarBaseColor", "scrollbarDarkShadowColor", "scrollbarFaceColor",
         "scrollbarHighlightColor", "scrollbarShadowColor", "scrollbarTrackColor", "setAttribute", "styleFloat",
         "textAutospace", "textJustifyTrim", "textKashida", "textKashidaSpace", "writingMode", "zoom"
-    ], [ ["filter",9,9] ]);
+    ]);
     check(MSCurrentStyleCSSProperties, [ "blockDirection", "clipBottom", "clipLeft", "clipRight", "clipTop", "hasLayout" ],
                                        [ ["behavior",11], "clipBottom", "clipLeft", "clipRight", "clipTop"]);
     check(MSStyleCSSProperties, [

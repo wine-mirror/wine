@@ -9837,6 +9837,9 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
 static void CSSStyleDeclaration_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const dispex_hook_t styledecl_hooks[] = {
+        {DISPID_IHTMLCSSSTYLEDECLARATION_FILTER},
+
+        /* IE10+ */
         {DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONX},
         {DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONY},
         {DISPID_IHTMLCSSSTYLEDECLARATION_STYLEFLOAT},
@@ -9868,8 +9871,9 @@ static void CSSStyleDeclaration_init_dispex_info(dispex_data_t *info, compat_mod
         {DISPID_IHTMLCSSSTYLEDECLARATION_MSBLOCKPROGRESSION},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const styledecl_ie10_hooks = styledecl_hooks + 1;
 
-    dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, styledecl_hooks);
+    dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, mode >= COMPAT_MODE_IE10 ? styledecl_ie10_hooks : styledecl_hooks);
     if(mode >= COMPAT_MODE_IE10)
         dispex_info_add_interface(info, IHTMLCSSStyleDeclaration2_tid, NULL);
 }
