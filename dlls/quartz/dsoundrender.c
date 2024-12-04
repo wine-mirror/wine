@@ -321,9 +321,9 @@ static HRESULT configure_buffer(struct dsound_render *filter, IMediaSample *pSam
 
 static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample)
 {
+    REFERENCE_TIME start = -1, stop = -1;
     LPBYTE pbSrcStream = NULL;
     LONG cbSrcStream = 0;
-    REFERENCE_TIME tStart, tStop;
     HRESULT hr;
 
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
@@ -333,11 +333,11 @@ static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample
         return hr;
     }
 
-    hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
-    if (FAILED(hr))
+    if (IMediaSample_IsDiscontinuity(pSample) == S_OK
+            && FAILED(hr = IMediaSample_GetTime(pSample, &start, &stop)))
     {
         ERR("Failed to get sample time, hr %#lx.\n", hr);
-        tStart = tStop = -1;
+        start = stop = -1;
     }
 
     if (IMediaSample_IsPreroll(pSample) == S_OK)
@@ -347,7 +347,7 @@ static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample
     }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
-    return send_sample_data(filter, tStart, pbSrcStream, cbSrcStream);
+    return send_sample_data(filter, start, pbSrcStream, cbSrcStream);
 }
 
 static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
