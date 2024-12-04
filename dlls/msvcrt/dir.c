@@ -77,26 +77,6 @@ static void msvcrt_fttofd( const WIN32_FIND_DATAA *fd, struct _finddata_t* ft)
   strcpy(ft->name, fd->cFileName);
 }
 
-/* INTERNAL: Translate WIN32_FIND_DATAA to finddata32_t  */
-static void msvcrt_fttofd32( const WIN32_FIND_DATAA *fd, struct _finddata32_t* ft)
-{
-  DWORD dw;
-
-  if (fd->dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
-    ft->attrib = 0;
-  else
-    ft->attrib = fd->dwFileAttributes;
-
-  RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftCreationTime, &dw );
-  ft->time_create = dw;
-  RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastAccessTime, &dw );
-  ft->time_access = dw;
-  RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
-  ft->time_write = dw;
-  ft->size = fd->nFileSizeLow;
-  strcpy(ft->name, fd->cFileName);
-}
-
 /* INTERNAL: Translate WIN32_FIND_DATAW to wfinddata_t  */
 static void msvcrt_wfttofd( const WIN32_FIND_DATAW *fd, struct _wfinddata_t* ft)
 {
@@ -612,23 +592,6 @@ int CDECL _findnext(intptr_t hand, struct _finddata_t * ft)
 }
 
 /*********************************************************************
- *               _findnext32 (MSVCRT.@)
- */
-int CDECL _findnext32(intptr_t hand, struct _finddata32_t * ft)
-{
-  WIN32_FIND_DATAA find_data;
-
-  if (!FindNextFileA((HANDLE)hand, &find_data))
-  {
-    *_errno() = ENOENT;
-    return -1;
-  }
-
-  msvcrt_fttofd32(&find_data, ft);
-  return 0;
-}
-
-/*********************************************************************
  *               _wfindnext32 (MSVCRT.@)
  */
 int CDECL _wfindnext32(intptr_t hand, struct _wfinddata32_t * ft)
@@ -643,6 +606,19 @@ int CDECL _wfindnext32(intptr_t hand, struct _wfinddata32_t * ft)
 
   msvcrt_wfttofd32(&find_data, ft);
   return 0;
+}
+
+/*********************************************************************
+ *               _findnext32 (MSVCRT.@)
+ */
+int CDECL _findnext32(intptr_t hand, struct _finddata32_t *ft)
+{
+    struct _wfinddata32_t wft;
+    int ret;
+
+    ret = _wfindnext32(hand, &wft);
+    if (!ret && !finddata32_wtoa(&wft, ft)) ret = -1;
+    return ret;
 }
 
 /*********************************************************************

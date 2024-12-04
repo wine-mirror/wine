@@ -327,8 +327,14 @@ static void test_utf8(void)
     todo_wine_if(!is_lossless_convertion(dir))
         ok(!memcmp(file, fdata32.name, sizeof(file) - 1), "fdata32.name = %s\n", debugstr_a(fdata32.name));
 
+    fdata32.name[0] = 'x';
+    ret = _findnext32(hfind, &fdata32);
+    ok(!ret, "_findnext32 returned %d, errno %d\n", ret, errno);
+    todo_wine_if(!is_lossless_convertion(dir))
+        ok(!memcmp(file, fdata32.name, sizeof(file) - 1), "fdata32.name = %s\n", debugstr_a(fdata32.name));
     ret = _findclose(hfind);
     ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
+
 
     ret = remove(file2);
     ok(!ret, "remove returned %d, errno %d\n", ret, errno);
