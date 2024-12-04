@@ -12740,33 +12740,23 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
         mt.subtype = *audio_types[i];
 
         hr = MFInitMediaTypeFromAMMediaType(media_type, &mt);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = IMFMediaType_GetCount(media_type, &value32);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine
         ok(value32 == 4, "Unexpected value %#x.\n", value32);
 
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine
         ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected guid %s.\n", debugstr_guid(&guid));
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine
         ok(IsEqualGUID(&guid, audio_types[i]), "Unexpected guid %s.\n", debugstr_guid(&guid));
         hr = IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value32);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine
         ok(value32 == 1, "Unexpected value %#x.\n", value32);
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_AM_FORMAT_TYPE, &guid);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine
         ok(IsEqualGUID(&guid, &GUID_NULL), "Unexpected guid %s.\n", debugstr_guid(&guid));
     }
 

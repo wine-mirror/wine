@@ -4415,6 +4415,13 @@ HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM
         else if (IsEqualGUID(&am_type->formattype, &FORMAT_WaveFormatEx)
                 && am_type->cbFormat >= sizeof(WAVEFORMATEX))
             hr = MFInitMediaTypeFromWaveFormatEx(media_type, (WAVEFORMATEX *)am_type->pbFormat, am_type->cbFormat);
+        else if (IsEqualGUID(&am_type->formattype, &GUID_NULL))
+        {
+            mediatype_set_guid(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio, &hr);
+            mediatype_set_guid(media_type, &MF_MT_SUBTYPE, &am_type->subtype, &hr);
+            mediatype_set_guid(media_type, &MF_MT_AM_FORMAT_TYPE, &GUID_NULL, &hr);
+            mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
+        }
         else
         {
             FIXME("Unsupported format type %s / size %ld.\n", debugstr_guid(&am_type->formattype), am_type->cbFormat);
