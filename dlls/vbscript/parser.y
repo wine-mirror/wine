@@ -178,7 +178,9 @@ GlobalDimDeclaration
     : tPRIVATE tCONST ConstDeclList         { $$ = new_const_statement(ctx, @$, $3); CHECK_ERROR; }
     | tPUBLIC  tCONST ConstDeclList         { $$ = new_const_statement(ctx, @$, $3); CHECK_ERROR; }
     | tPRIVATE DimDeclList                  { $$ = new_dim_statement(ctx, @$, $2); CHECK_ERROR; }
-    | tPUBLIC  DimDeclList                  { $$ = new_dim_statement(ctx, @$, $2); CHECK_ERROR; }
+    | tPUBLIC  DimDeclList                  { $$ = new_dim_statement(ctx, @$, $2);
+                                              (void)parser_nerrs; /* avoid unused variable warning */
+                                              CHECK_ERROR; }
 
 ExpressionNl_opt
     : /* empty */                           { $$ = NULL; }
