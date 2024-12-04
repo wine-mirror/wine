@@ -1747,8 +1747,8 @@ int CDECL _wsearchenv_s(const wchar_t* file, const wchar_t* env,
   /* Try CWD first */
   if (GetFileAttributesW( file ) != INVALID_FILE_ATTRIBUTES)
   {
-    if (GetFullPathNameW( file, count, buf, NULL )) return 0;
-    msvcrt_set_errno(GetLastError());
+    if (!_wfullpath(buf, file, count))
+        return *_errno();
     return 0;
   }
 
