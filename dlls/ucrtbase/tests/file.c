@@ -238,7 +238,7 @@ static void test_utf8(void)
     const WCHAR fileW[] = L"file\x0119\x015b\x0107.a";
     const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
 
-    char file2[32], buf[256], *p;
+    char file2[32], buf[256], *p, *q;
     struct _stat64 stat;
     FILE *f;
     int ret;
@@ -338,6 +338,14 @@ static void test_utf8(void)
         ret = _rmdir(dir);
         ok(!ret, "_rmdir returned %d, errno %d\n", ret, errno);
     }
+
+    p = _tempnam(NULL, file);
+    ok(!!p, "_tempnam returned NULL, error %d\n", errno);
+    q = strrchr(p, '\\');
+    ok(!!q, "_tempnam returned %s\n", debugstr_a(p));
+    todo_wine ok(!memcmp(q + 1, file, ARRAY_SIZE(file) - 1),
+            "incorrect file prefix: %s\n", debugstr_a(p));
+    free(p);
 
     setlocale(LC_ALL, "C");
 }

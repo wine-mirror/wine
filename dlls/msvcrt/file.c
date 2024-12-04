@@ -3440,20 +3440,22 @@ __int64 CDECL _telli64(int fd)
  */
 char * CDECL _tempnam(const char *dir, const char *prefix)
 {
-  char tmpbuf[MAX_PATH];
-  const char *tmp_dir = getenv("TMP");
+    wchar_t *dirW = NULL, *prefixW = NULL, *retW;
+    char *ret;
 
-  if (tmp_dir) dir = tmp_dir;
-
-  TRACE("dir (%s) prefix (%s)\n", dir, prefix);
-  if (GetTempFileNameA(dir,prefix,0,tmpbuf))
-  {
-    TRACE("got name (%s)\n", tmpbuf);
-    DeleteFileA(tmpbuf);
-    return _strdup(tmpbuf);
-  }
-  TRACE("failed (%ld)\n", GetLastError());
-  return NULL;
+    if (dir && !(dirW = wstrdupa_utf8(dir))) return NULL;
+    if (prefix && !(prefixW = wstrdupa_utf8(prefix)))
+    {
+        free(dirW);
+        return NULL;
+    }
+    retW = _wtempnam(dirW, prefixW);
+    free(dirW);
+    free(prefixW);
+    /* TODO: don't do the conversion */
+    ret = astrdupw_utf8(retW);
+    free(retW);
+    return ret;
 }
 
 /*********************************************************************
@@ -3467,6 +3469,7 @@ wchar_t * CDECL _wtempnam(const wchar_t *dir, const wchar_t *prefix)
   if (tmp_dir) dir = tmp_dir;
 
   TRACE("dir (%s) prefix (%s)\n", debugstr_w(dir), debugstr_w(prefix));
+  /* TODO: use whole prefix */
   if (GetTempFileNameW(dir,prefix,0,tmpbuf))
   {
     TRACE("got name (%s)\n", debugstr_w(tmpbuf));
