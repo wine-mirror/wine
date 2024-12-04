@@ -12715,11 +12715,60 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
         { &MEDIASUBTYPE_h264, &MEDIASUBTYPE_h264 },
         { &MEDIASUBTYPE_H264, &MFVideoFormat_H264 },
     };
+    static const GUID *audio_types[] =
+    {
+        &MEDIASUBTYPE_MP3,
+        &MEDIASUBTYPE_MSAUDIO1,
+        &MEDIASUBTYPE_WMAUDIO2,
+        &MEDIASUBTYPE_WMAUDIO3,
+        &MEDIASUBTYPE_WMAUDIO_LOSSLESS,
+        &MEDIASUBTYPE_PCM,
+        &MEDIASUBTYPE_IEEE_FLOAT,
+        &DUMMY_CLSID,
+    };
     MFVideoArea aperture;
     unsigned int i;
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    memset(&mt, 0, sizeof(mt));
+    mt.majortype = MEDIATYPE_Audio;
+
+    for (i = 0; i < ARRAY_SIZE(audio_types); i++)
+    {
+        mt.subtype = *audio_types[i];
+
+        hr = MFInitMediaTypeFromAMMediaType(media_type, &mt);
+        todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaType_GetCount(media_type, &value32);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(value32 == 4, "Unexpected value %#x.\n", value32);
+
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
+        todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected guid %s.\n", debugstr_guid(&guid));
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+        todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(IsEqualGUID(&guid, audio_types[i]), "Unexpected guid %s.\n", debugstr_guid(&guid));
+        hr = IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value32);
+        todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(value32 == 1, "Unexpected value %#x.\n", value32);
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_AM_FORMAT_TYPE, &guid);
+        todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(IsEqualGUID(&guid, &GUID_NULL), "Unexpected guid %s.\n", debugstr_guid(&guid));
+    }
 
     memset(&mt, 0, sizeof(mt));
     mt.majortype = MEDIATYPE_Video;
