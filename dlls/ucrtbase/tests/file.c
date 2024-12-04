@@ -242,6 +242,7 @@ static void test_utf8(void)
     struct _finddata64i32_t fdata64i32;
     struct _finddata32_t fdata32;
     struct _finddata64_t fdata64;
+    WCHAR bufW[256], *pW;
     struct _stat64 stat;
     intptr_t hfind;
     FILE *f;
@@ -406,6 +407,52 @@ static void test_utf8(void)
     todo_wine ok(!memcmp(q + 1, file, ARRAY_SIZE(file) - 1),
             "incorrect file prefix: %s\n", debugstr_a(p));
     free(p);
+
+    /* native implementation mixes CP_UTF8 and CP_ACP */
+    if (GetACP() != CP_UTF8)
+    {
+        /* make sure wide environment is initialized (works around bug in native) */
+        ret = _putenv("__wine_env_test=test");
+        ok(!ret, "_putenv returned %d, errno %d\n", ret, errno);
+        _wgetenv(L"__wine_env_test");
+
+        strcpy(buf, file);
+        strcat(buf, "=test");
+        ret = _putenv(buf);
+        ok(!ret, "_putenv returned %d, errno %d\n", ret, errno);
+        /* bug in native _wgetenv/_putenv implementation */
+        pW = _wgetenv(fileW);
+        ok(!pW, "environment variable name was converted\n");
+        bufW[0] = 0;
+        ret = GetEnvironmentVariableW(fileW, bufW, sizeof(bufW));
+        todo_wine ok(ret, "GetEnvironmentVariableW returned error %lu\n", GetLastError());
+        todo_wine ok(!wcscmp(bufW, L"test"), "bufW = %s\n", debugstr_w(bufW));
+        strcpy(buf, file);
+        strcat(buf, "=");
+        ret = _putenv(buf);
+        ok(!ret, "_putenv returned %d, errno %d\n", ret, errno);
+
+        strcpy(buf, "__wine_env_test=");
+        strcat(buf, file);
+        ret = _putenv(buf);
+        ok(!ret, "_putenv returned %d, errno %d\n", ret, errno);
+        /* bug in native _wgetenv/_putenv implementation */
+        pW = _wgetenv(L"__wine_env_test");
+        ok(wcscmp(pW, fileW), "pW = %s\n", debugstr_w(pW));
+        ret = GetEnvironmentVariableW(L"__wine_env_test", bufW, sizeof(bufW));
+        ok(ret, "GetEnvironmentVariableW returned error %lu\n", GetLastError());
+        todo_wine ok(!wcscmp(bufW, fileW), "bufW = %s\n", debugstr_w(bufW));
+
+        wcscpy(bufW, L"__wine_env_test=");
+        wcscat(bufW, fileW);
+        ret = _wputenv(bufW);
+        ok(!ret, "_wputenv returned %d, errno %d\n", ret, errno);
+        p = getenv("__wine_env_test");
+        ok(strcmp(p, file), "environment variable was converted\n");
+        strcpy(buf, "__wine_env_test=");
+        ret = _putenv(buf);
+        ok(!ret, "_putenv returned %d, errno %d\n", ret, errno);
+    }
 
     setlocale(LC_ALL, "C");
 }
