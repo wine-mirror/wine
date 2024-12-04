@@ -854,6 +854,7 @@ sync_test("style_props", function() {
     var v = document.documentMode;
 
     test_exposed("removeAttribute", true, v >= 9, false);
+    test_exposed("setExpression", v < 9, false, false);
     test_exposed("zIndex", true, true, true);
     test_exposed("z-index", true, true, true, true);
     test_exposed("filter", true, true, v >= 10);
@@ -3950,7 +3951,7 @@ sync_test("prototype props", function() {
         "pixelBottom", "pixelHeight", "pixelLeft", "pixelRight", "pixelTop", "pixelWidth", "posBottom",
         "posHeight", "posLeft", "posRight", "posTop", "posWidth", "textDecorationBlink", "textDecorationLineThrough",
         "textDecorationNone", "textDecorationOverline", "textDecorationUnderline"
-    ], [ "getExpression", "removeExpression", "setExpression", "toString" ]);
+    ], [ "toString" ]);
     check(Node, [
         "ATTRIBUTE_NODE", "CDATA_SECTION_NODE", "COMMENT_NODE", "DOCUMENT_FRAGMENT_NODE",  "DOCUMENT_NODE",
         "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_CONTAINS", "DOCUMENT_POSITION_DISCONNECTED",

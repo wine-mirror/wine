@@ -9738,10 +9738,18 @@ static void MSStyleCSSProperties_init_dispex_info(dispex_data_t *info, compat_mo
 {
     static const dispex_hook_t style2_ie11_hooks[] = {
         {DISPID_IHTMLSTYLE2_BEHAVIOR},
+
+        /* IE9+ */
+        {DISPID_IHTMLSTYLE2_SETEXPRESSION},
+        {DISPID_IHTMLSTYLE2_GETEXPRESSION},
+        {DISPID_IHTMLSTYLE2_REMOVEEXPRESSION},
         {DISPID_UNKNOWN}
     };
+    const dispex_hook_t *const style2_ie9_hooks = style2_ie11_hooks + 1;
+
     MSCSSProperties_init_dispex_info(info, mode);
-    dispex_info_add_interface(info, IHTMLStyle2_tid, mode >= COMPAT_MODE_IE11 ? style2_ie11_hooks : NULL);
+    dispex_info_add_interface(info, IHTMLStyle2_tid, mode >= COMPAT_MODE_IE11 ? style2_ie11_hooks :
+                                                     mode >= COMPAT_MODE_IE9  ? style2_ie9_hooks  : NULL);
 }
 
 static const dispex_static_data_vtbl_t MSStyleCSSProperties_dispex_vtbl = {
