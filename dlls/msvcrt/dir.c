@@ -388,25 +388,6 @@ intptr_t CDECL _findfirst(const char * fspec, struct _finddata_t* ft)
 }
 
 /*********************************************************************
- *              _findfirst32 (MSVCRT.@)
- */
-intptr_t CDECL _findfirst32(const char * fspec, struct _finddata32_t* ft)
-{
-  WIN32_FIND_DATAA find_data;
-  HANDLE hfind;
-
-  hfind  = FindFirstFileA(fspec, &find_data);
-  if (hfind == INVALID_HANDLE_VALUE)
-  {
-    msvcrt_set_errno(GetLastError());
-    return -1;
-  }
-  msvcrt_fttofd32(&find_data, ft);
-  TRACE(":got handle %p\n", hfind);
-  return (intptr_t)hfind;
-}
-
-/*********************************************************************
  *             _wfindfirst (MSVCRT.@)
  *
  * Unicode version of _findfirst.
@@ -446,6 +427,32 @@ intptr_t CDECL _wfindfirst32(const wchar_t * fspec, struct _wfinddata32_t* ft)
   msvcrt_wfttofd32(&find_data, ft);
   TRACE(":got handle %p\n", hfind);
   return (intptr_t)hfind;
+}
+
+static int finddata32_wtoa(const struct _wfinddata32_t *wfd, struct _finddata32_t *fd)
+{
+    fd->attrib = wfd->attrib;
+    fd->time_create = wfd->time_create;
+    fd->time_access = wfd->time_access;
+    fd->time_write = wfd->time_write;
+    fd->size = wfd->size;
+    return convert_wcs_to_acp_utf8(wfd->name, fd->name, ARRAY_SIZE(fd->name));
+}
+
+/*********************************************************************
+ *              _findfirst32 (MSVCRT.@)
+ */
+intptr_t CDECL _findfirst32(const char *fspec, struct _finddata32_t *ft)
+{
+    struct _wfinddata32_t wft;
+    wchar_t *fspecW = NULL;
+    intptr_t ret;
+
+    if (fspec && !(fspecW = wstrdupa_utf8(fspec))) return -1;
+    ret = _wfindfirst32(fspecW, &wft);
+    free(fspecW);
+    if (!finddata32_wtoa(&wft, ft)) return -1;
+    return ret;
 }
 
 /*********************************************************************

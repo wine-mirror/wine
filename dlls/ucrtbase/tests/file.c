@@ -239,7 +239,9 @@ static void test_utf8(void)
     const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
 
     char file2[32], buf[256], *p, *q;
+    struct _finddata32_t fdata32;
     struct _stat64 stat;
+    intptr_t hfind;
     FILE *f;
     int ret;
 
@@ -316,6 +318,17 @@ static void test_utf8(void)
     ret = _mktemp_s(buf, sizeof(buf));
     ok(!memcmp(buf, file, sizeof(file) - 1), "buf = %s\n", debugstr_a(buf));
     ok(buf[ARRAY_SIZE(file) - 1] == 'b', "buf = %s\n", debugstr_a(buf));
+
+    strcpy(buf, file);
+    strcat(buf, "*");
+    fdata32.name[0] = 'x';
+    hfind = _findfirst32(buf, &fdata32);
+    ok(hfind != -1, "_findfirst32 returned %Id, errno %d\n", hfind, errno);
+    todo_wine_if(!is_lossless_convertion(dir))
+        ok(!memcmp(file, fdata32.name, sizeof(file) - 1), "fdata32.name = %s\n", debugstr_a(fdata32.name));
+
+    ret = _findclose(hfind);
+    ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
 
     ret = remove(file2);
     ok(!ret, "remove returned %d, errno %d\n", ret, errno);
