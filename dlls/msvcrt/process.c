@@ -1311,7 +1311,13 @@ int CDECL system(const char* cmd)
  */
 intptr_t CDECL _loaddll(const char* dllname)
 {
-  return (intptr_t)LoadLibraryA(dllname);
+    wchar_t *dllnameW = NULL;
+    intptr_t ret;
+
+    if (dllname && !(dllnameW = wstrdupa_utf8(dllname))) return 0;
+    ret = (intptr_t)LoadLibraryW(dllnameW);
+    free(dllnameW);
+    return ret;
 }
 
 /*********************************************************************
