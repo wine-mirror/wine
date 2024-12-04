@@ -2606,14 +2606,13 @@ int WINAPIV _wsopen( const wchar_t *path, int oflags, int shflags, ... )
 int CDECL _sopen_dispatch( const char *path, int oflags, int shflags,
     int pmode, int *fd, int secure)
 {
-    wchar_t *pathW;
+    wchar_t *pathW = NULL;
     int ret;
 
     if (!MSVCRT_CHECK_PMT(fd != NULL))
         return EINVAL;
     *fd = -1;
-    if(!MSVCRT_CHECK_PMT(path && (pathW = msvcrt_wstrdupa(path))))
-        return EINVAL;
+    if (path && !(pathW = wstrdupa_utf8(path))) return *_errno();
 
     ret = _wsopen_dispatch(pathW, oflags, shflags, pmode, fd, secure);
     free(pathW);
