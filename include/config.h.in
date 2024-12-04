@@ -345,6 +345,9 @@
 /* Define to 1 if you have the 'res_getservers' function. */
 #undef HAVE_RES_GETSERVERS
 
+/* Define to 1 if you have the 'sched_getcpu' function. */
+#undef HAVE_SCHED_GETCPU
+
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 

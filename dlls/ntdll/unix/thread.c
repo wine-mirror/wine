@@ -37,6 +37,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif
 #ifdef HAVE_SYS_TIMES_H
 #include <sys/times.h>
 #endif
@@ -2560,9 +2563,9 @@ ULONG WINAPI NtGetCurrentProcessorNumber(void)
 {
     ULONG processor;
 
-#if defined(__linux__) && defined(__NR_getcpu)
-    int res = syscall(__NR_getcpu, &processor, NULL, NULL);
-    if (res != -1) return processor;
+#if defined(HAVE_SCHED_GETCPU)
+    int res = sched_getcpu();
+    if (res >= 0) return res;
 #elif defined(__APPLE__) && (defined(__x86_64__) || defined(__i386__))
     struct {
         unsigned long p1, p2;

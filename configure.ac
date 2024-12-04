@@ -2079,6 +2079,7 @@ AC_CHECK_FUNCS(\
 	posix_fadvise \
 	posix_fallocate \
 	prctl \
+	sched_getcpu \
 	sched_yield \
 	setproctitle \
 	setprogname \

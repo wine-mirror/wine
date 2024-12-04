@@ -21046,6 +21046,12 @@ then :
   printf "%s\n" "#define HAVE_PRCTL 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "sched_getcpu" "ac_cv_func_sched_getcpu"
+if test "x$ac_cv_func_sched_getcpu" = xyes
+then :
+  printf "%s\n" "#define HAVE_SCHED_GETCPU 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "sched_yield" "ac_cv_func_sched_yield"
 if test "x$ac_cv_func_sched_yield" = xyes
 then :
