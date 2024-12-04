@@ -251,7 +251,8 @@ static expression_t *new_prop_and_value_expression(parser_ctx_t*,property_list_t
 
 /* ECMA-262 10th Edition    15.1 */
 Script
-       : ScriptBody HtmlComment { ctx->source = $1 ? $1->head : NULL; }
+       : ScriptBody HtmlComment { ctx->source = $1 ? $1->head : NULL;
+                                  (void)parser_nerrs; /* avoid unused variable warning */ }
 
 /* ECMA-262 10th Edition    15.1 */
 ScriptBody
