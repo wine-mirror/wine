@@ -209,6 +209,23 @@ interface IWineHTMLElementPrivate : IDispatch
     oleautomation,
     dual,
     hidden,
+    uuid(465908fd-f394-489f-b7a3-4c00fbbe9eed)
+]
+interface IWineCSSProperties : IDispatch
+{
+    [id(DISPID_IHTMLSTYLE_SETATTRIBUTE)]
+    HRESULT setAttribute([in] BSTR name, [in] VARIANT value, [defaultvalue(1), in] LONG flags);
+    [id(DISPID_IHTMLSTYLE_GETATTRIBUTE)]
+    HRESULT getAttribute([in] BSTR name, [defaultvalue(0), in] LONG flags, [out, retval] VARIANT *p);
+    [id(DISPID_IHTMLSTYLE_REMOVEATTRIBUTE)]
+    HRESULT removeAttribute([in] BSTR name, [defaultvalue(1), in] LONG flags, [out, retval] VARIANT_BOOL *p);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
     uuid(08ef0edd-5fb8-4178-a2f0-9f686e00441b)
 ]
 interface IWineDOMTokenList : IDispatch

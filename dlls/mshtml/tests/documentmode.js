@@ -853,7 +853,7 @@ sync_test("style_props", function() {
 
     var v = document.documentMode;
 
-    test_exposed("removeAttribute", true, broken(true) ? v >= 9 : false /* todo_wine */, false);
+    test_exposed("removeAttribute", true, v >= 9, false);
     test_exposed("zIndex", true, true, true);
     test_exposed("z-index", true, true, true, true);
     test_exposed("filter", true, true, broken(true) ? v >= 10 : v >= 9 /* todo_wine */);
@@ -877,7 +877,7 @@ sync_test("style_props", function() {
         todo_wine.
         ok(!r.length, "currentStyle has own props: " + r);
         r = Object.getOwnPropertyNames(computedStyle);
-        todo_wine.
+        todo_wine_if(v >= 9).
         ok(!r.length, "computedStyle has own props: " + r);
 
         r = Object.getOwnPropertyDescriptor(style, "z-index");
@@ -3770,6 +3770,55 @@ sync_test("prototype props", function() {
 
     check(CharacterData, [ "appendData", "data", "deleteData", "insertData", "length", "replaceData", "substringData" ]);
     check(Comment, [ "text" ]);
+    check(CSSStyleDeclaration, [
+        ["alignContent",11], ["alignItems",11], ["alignSelf",11], "alignmentBaseline", ["animation",10], ["animationDelay",10],
+        ["animationDirection",10], ["animationDuration",10], ["animationFillMode",10], ["animationIterationCount",10], ["animationName",10],
+        ["animationPlayState",10], ["animationTimingFunction",10], ["backfaceVisibility",10], "background", "backgroundAttachment",
+        "backgroundClip", "backgroundColor", "backgroundImage", "backgroundOrigin", "backgroundPosition", "backgroundRepeat", "backgroundSize",
+        "baselineShift", "border", "borderBottom", "borderBottomColor", "borderBottomLeftRadius", "borderBottomRightRadius", "borderBottomStyle",
+        "borderBottomWidth", "borderCollapse", "borderColor", ["borderImage",11], ["borderImageOutset",11], ["borderImageRepeat",11],
+        ["borderImageSlice",11], ["borderImageSource",11], ["borderImageWidth",11], "borderLeft", "borderLeftColor", "borderLeftStyle",
+        "borderLeftWidth", "borderRadius", "borderRight", "borderRightColor", "borderRightStyle", "borderRightWidth", "borderSpacing",
+        "borderStyle", "borderTop", "borderTopColor", "borderTopLeftRadius", "borderTopRightRadius", "borderTopStyle", "borderTopWidth",
+        "borderWidth", "bottom", "boxShadow", "boxSizing", ["breakAfter",10], ["breakBefore",10], ["breakInside",10], "captionSide", "clear",
+        "clip", "clipPath", "clipRule", "color", ["colorInterpolationFilters",10], ["columnCount",10], ["columnFill",10], ["columnGap",10],
+        ["columnRule",10], ["columnRuleColor",10], ["columnRuleStyle",10], ["columnRuleWidth",10], ["columnSpan",10], ["columnWidth",10],
+        ["columns",10], "content", "counterIncrement", "counterReset", "cssFloat", "cssText", "cursor", "direction", "display", "dominantBaseline",
+        "emptyCells", ["enableBackground",10], "fill", "fillOpacity", "fillRule", ["filter",10], ["flex",11], ["flexBasis",11], ["flexDirection",11],
+        ["flexFlow",11], ["flexGrow",11], ["flexShrink",11], ["flexWrap",11], ["floodColor",10], ["floodOpacity",10], "font", "fontFamily",
+        ["fontFeatureSettings",10], "fontSize", "fontSizeAdjust", "fontStretch", "fontStyle", "fontVariant", "fontWeight", "getPropertyPriority",
+        "getPropertyValue", "glyphOrientationHorizontal", "glyphOrientationVertical", "height", "item", ["justifyContent",11], "kerning", "left",
+        "length", "letterSpacing", ["lightingColor",10], "lineHeight", "listStyle", "listStyleImage", "listStylePosition", "listStyleType", "margin",
+        "marginBottom", "marginLeft", "marginRight", "marginTop", "marker", "markerEnd", "markerMid", "markerStart", "mask", "maxHeight", "maxWidth",
+        "minHeight", "minWidth", ["msAnimation",10], ["msAnimationDelay",10], ["msAnimationDirection",10], ["msAnimationDuration",10],
+        ["msAnimationFillMode",10], ["msAnimationIterationCount",10], ["msAnimationName",10], ["msAnimationPlayState",10], ["msAnimationTimingFunction",10],
+        ["msBackfaceVisibility",10], ["msContentZoomChaining",10], ["msContentZoomLimit",10], ["msContentZoomLimitMax",10], ["msContentZoomLimitMin",10],
+        ["msContentZoomSnap",10], ["msContentZoomSnapPoints",10], ["msContentZoomSnapType",10], ["msContentZooming",10], ["msFlex",10], ["msFlexAlign",10],
+        ["msFlexDirection",10], ["msFlexFlow",10], ["msFlexItemAlign",10], ["msFlexLinePack",10], ["msFlexNegative",10], ["msFlexOrder",10],
+        ["msFlexPack",10], ["msFlexPositive",10], ["msFlexPreferredSize",10], ["msFlexWrap",10], ["msFlowFrom",10], ["msFlowInto",10],
+        ["msFontFeatureSettings",10], ["msGridColumn",10], ["msGridColumnAlign",10], ["msGridColumnSpan",10], ["msGridColumns",10], ["msGridRow",10],
+        ["msGridRowAlign",10], ["msGridRowSpan",10], ["msGridRows",10], ["msHighContrastAdjust",10], ["msHyphenateLimitChars",10],
+        ["msHyphenateLimitLines",10], ["msHyphenateLimitZone",10], ["msHyphens",10], ["msImeAlign",11], ["msOverflowStyle",10], ["msPerspective",10],
+        ["msPerspectiveOrigin",10], ["msScrollChaining",10], ["msScrollLimit",10], ["msScrollLimitXMax",10], ["msScrollLimitXMin",10],
+        ["msScrollLimitYMax",10], ["msScrollLimitYMin",10], ["msScrollRails",10], ["msScrollSnapPointsX",10], ["msScrollSnapPointsY",10],
+        ["msScrollSnapType",10], ["msScrollSnapX",10], ["msScrollSnapY",10], ["msScrollTranslation",10], ["msTextCombineHorizontal",11],
+        ["msTextSizeAdjust",11], ["msTouchAction",10], ["msTouchSelect",10], "msTransform", "msTransformOrigin", ["msTransformStyle",10], ["msTransition",10],
+        ["msTransitionDelay",10], ["msTransitionDuration",10], ["msTransitionProperty",10], ["msTransitionTimingFunction",10], ["msUserSelect",10],
+        ["msWrapFlow",10], ["msWrapMargin",10], ["msWrapThrough",10], "opacity", ["order",11], "orphans", "outline", "outlineColor", "outlineStyle",
+        "outlineWidth", "overflow", "overflowX", "overflowY", "padding", "paddingBottom", "paddingLeft", "paddingRight", "paddingTop", "pageBreakAfter",
+        "pageBreakBefore", "pageBreakInside", "parentRule", ["perspective",10], ["perspectiveOrigin",10], "pointerEvents", "position", "quotes",
+        "removeProperty", "right", "rubyAlign", "rubyOverhang", "rubyPosition", "setProperty", "stopColor", "stopOpacity", "stroke", "strokeDasharray",
+        "strokeDashoffset", "strokeLinecap", "strokeLinejoin", "strokeMiterlimit", "strokeOpacity", "strokeWidth", "tableLayout", "textAlign", "textAlignLast",
+        "textAnchor", "textDecoration", "textIndent", "textJustify", "textOverflow", ["textShadow",10], "textTransform", "textUnderlinePosition", "top",
+        ["touchAction",11], ["transform",10], ["transformOrigin",10], ["transformStyle",10], ["transition",10], ["transitionDelay",10], ["transitionDuration",10],
+        ["transitionProperty",10], ["transitionTimingFunction",10], "unicodeBidi", "verticalAlign", "visibility", "whiteSpace", "widows", "width", "wordBreak",
+        "wordSpacing", "wordWrap", "zIndex"
+    ], [
+        ["alignContent",11], ["alignItems",11], ["alignSelf",11], ["borderImage",11], ["borderImageOutset",11], ["borderImageRepeat",11], ["borderImageSlice",11],
+        ["borderImageSource",11], ["borderImageWidth",11], "clipBottom", "clipLeft", "clipRight", "clipTop", ["filter",9,9], ["flex",11], ["flexBasis",11], ["flexDirection",11],
+        ["flexFlow",11], ["flexGrow",11], ["flexShrink",11], ["flexWrap",11], ["justifyContent",11], ["msImeAlign",11], ["msTextCombineHorizontal",11],
+        ["msTextSizeAdjust",11], ["order",11], ["touchAction",11]
+    ]);
     check(CSSStyleRule, [ "readOnly", "selectorText", "style" ]);
     check(CustomEvent, [ "detail", "initCustomEvent" ]);
     check(Document, [
@@ -3892,6 +3941,21 @@ sync_test("prototype props", function() {
         "initMouseEvent", "layerX", "layerY", "metaKey", "offsetX", "offsetY", "pageX", "pageY", "relatedTarget",
         "screenX", "screenY", "shiftKey", "toElement", "which", "x", "y"
     ]);
+    check(MSCSSProperties, [
+        "accelerator", "backgroundPositionX", "backgroundPositionY", ["behavior",9,10], ["filter",9,9], "getAttribute",
+        "imeMode", "layoutFlow", "layoutGrid", "layoutGridChar", "layoutGridLine", "layoutGridMode", "layoutGridType",
+        "lineBreak", "msBlockProgression", "msInterpolationMode", "removeAttribute", "scrollbar3dLightColor",
+        "scrollbarArrowColor", "scrollbarBaseColor", "scrollbarDarkShadowColor", "scrollbarFaceColor",
+        "scrollbarHighlightColor", "scrollbarShadowColor", "scrollbarTrackColor", "setAttribute", "styleFloat",
+        "textAutospace", "textJustifyTrim", "textKashida", "textKashidaSpace", "writingMode", "zoom"
+    ], [ ["filter",9,9] ]);
+    check(MSCurrentStyleCSSProperties, [ "blockDirection", "clipBottom", "clipLeft", "clipRight", "clipTop", "hasLayout" ],
+                                       [ ["behavior",11], "clipBottom", "clipLeft", "clipRight", "clipTop"]);
+    check(MSStyleCSSProperties, [
+        "pixelBottom", "pixelHeight", "pixelLeft", "pixelRight", "pixelTop", "pixelWidth", "posBottom",
+        "posHeight", "posLeft", "posRight", "posTop", "posWidth", "textDecorationBlink", "textDecorationLineThrough",
+        "textDecorationNone", "textDecorationOverline", "textDecorationUnderline"
+    ], [ ["behavior",11], "getExpression", "removeExpression", "setExpression", "toString" ]);
     check(Node, [
         "ATTRIBUTE_NODE", "CDATA_SECTION_NODE", "COMMENT_NODE", "DOCUMENT_FRAGMENT_NODE",  "DOCUMENT_NODE",
         "DOCUMENT_POSITION_CONTAINED_BY", "DOCUMENT_POSITION_CONTAINS", "DOCUMENT_POSITION_DISCONNECTED",

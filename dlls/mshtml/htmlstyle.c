@@ -4437,6 +4437,44 @@ static const IHTMLStyle6Vtbl HTMLStyle6Vtbl = {
     HTMLStyle6_get_quotes
 };
 
+static inline HTMLStyle *impl_from_IWineCSSProperties(IWineCSSProperties *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLStyle, IWineCSSProperties_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(HTMLStyle_CSSProperties, IWineCSSProperties, impl_from_IWineCSSProperties(iface)->css_style.dispex)
+
+static HRESULT WINAPI HTMLStyle_CSSProperties_getAttribute(IWineCSSProperties *iface, BSTR name, LONG flags, VARIANT *p)
+{
+    HTMLStyle *This = impl_from_IWineCSSProperties(iface);
+    return HTMLStyle_getAttribute(&This->IHTMLStyle_iface, name, flags, p);
+}
+
+static HRESULT WINAPI HTMLStyle_CSSProperties_setAttribute(IWineCSSProperties *iface, BSTR name, VARIANT value, LONG flags)
+{
+    HTMLStyle *This = impl_from_IWineCSSProperties(iface);
+    return HTMLStyle_setAttribute(&This->IHTMLStyle_iface, name, value, flags);
+}
+
+static HRESULT WINAPI HTMLStyle_CSSProperties_removeAttribute(IWineCSSProperties *iface, BSTR name, LONG flags, VARIANT_BOOL *p)
+{
+    HTMLStyle *This = impl_from_IWineCSSProperties(iface);
+    return HTMLStyle_removeAttribute(&This->IHTMLStyle_iface, name, flags, p);
+}
+
+static const IWineCSSPropertiesVtbl HTMLStyle_CSSPropertiesVtbl = {
+    HTMLStyle_CSSProperties_QueryInterface,
+    HTMLStyle_CSSProperties_AddRef,
+    HTMLStyle_CSSProperties_Release,
+    HTMLStyle_CSSProperties_GetTypeInfoCount,
+    HTMLStyle_CSSProperties_GetTypeInfo,
+    HTMLStyle_CSSProperties_GetIDsOfNames,
+    HTMLStyle_CSSProperties_Invoke,
+    HTMLStyle_CSSProperties_setAttribute,
+    HTMLStyle_CSSProperties_getAttribute,
+    HTMLStyle_CSSProperties_removeAttribute
+};
+
 static inline CSSStyle *impl_from_IHTMLCSSStyleDeclaration(IHTMLCSSStyleDeclaration *iface)
 {
     return CONTAINING_RECORD(iface, CSSStyle, IHTMLCSSStyleDeclaration_iface);
@@ -9623,6 +9661,8 @@ static void *HTMLStyle_query_interface(DispatchEx *dispex, REFIID riid)
         return &This->IHTMLStyle5_iface;
     if(IsEqualGUID(&IID_IHTMLStyle6, riid))
         return &This->IHTMLStyle6_iface;
+    if(IsEqualGUID(&IID_IWineCSSProperties, riid))
+        return &This->IWineCSSProperties_iface;
     return CSSStyle_query_interface(&This->css_style.dispex, riid);
 }
 
@@ -9647,10 +9687,16 @@ static void HTMLStyle_unlink(DispatchEx *dispex)
     }
 }
 
-void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+void MSCSSProperties_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
-    if(mode >= COMPAT_MODE_IE9)
-        dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, NULL);
+    static const dispex_hook_t styledecl_ie11_hooks[] = {
+        {DISPID_IHTMLCSSSTYLEDECLARATION_BEHAVIOR},
+        {DISPID_UNKNOWN}
+    };
+    if(mode >= COMPAT_MODE_IE9) {
+        dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, mode >= COMPAT_MODE_IE11 ? styledecl_ie11_hooks : NULL);
+        dispex_info_add_interface(info, IWineCSSProperties_tid, NULL);
+    }
     if(mode >= COMPAT_MODE_IE10)
         dispex_info_add_interface(info, IHTMLCSSStyleDeclaration2_tid, NULL);
 }
@@ -9658,6 +9704,7 @@ void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 dispex_static_data_t MSCSSProperties_dispex = {
     .id           = PROT_MSCSSProperties,
     .prototype_id = PROT_CSSStyleDeclaration,
+    .init_info    = MSCSSProperties_init_dispex_info,
 };
 
 static const dispex_static_data_vtbl_t MSStyleCSSProperties_dispex_vtbl = {
@@ -9682,7 +9729,7 @@ dispex_static_data_t MSStyleCSSProperties_dispex = {
     .vtbl         = &MSStyleCSSProperties_dispex_vtbl,
     .disp_tid     = DispHTMLStyle_tid,
     .iface_tids   = MSStyleCSSProperties_iface_tids,
-    .init_info    = CSSStyle_init_dispex_info,
+    .init_info    = MSCSSProperties_init_dispex_info,
 };
 
 static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration **ret)
@@ -9755,6 +9802,7 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
     style->IHTMLStyle4_iface.lpVtbl = &HTMLStyle4Vtbl;
     style->IHTMLStyle5_iface.lpVtbl = &HTMLStyle5Vtbl;
     style->IHTMLStyle6_iface.lpVtbl = &HTMLStyle6Vtbl;
+    style->IWineCSSProperties_iface.lpVtbl = &HTMLStyle_CSSPropertiesVtbl;
 
     style->elem = elem;
     IHTMLDOMNode_AddRef(&elem->node.IHTMLDOMNode_iface);
@@ -9764,6 +9812,46 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
 
     *ret = style;
     return S_OK;
+}
+
+static void CSSStyleDeclaration_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t styledecl_hooks[] = {
+        {DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONX},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDPOSITIONY},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_STYLEFLOAT},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_BEHAVIOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_IMEMODE},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDCHAR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDLINE},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDMODE},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRIDTYPE},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTGRID},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_LINEBREAK},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_TEXTJUSTIFYTRIM},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_TEXTKASHIDA},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_TEXTAUTOSPACE},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_ACCELERATOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_LAYOUTFLOW},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_ZOOM},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARBASECOLOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARFACECOLOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBAR3DLIGHTCOLOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARSHADOWCOLOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARHIGHLIGHTCOLOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARDARKSHADOWCOLOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARARROWCOLOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_SCROLLBARTRACKCOLOR},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_WRITINGMODE},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_TEXTKASHIDASPACE},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_MSINTERPOLATIONMODE},
+        {DISPID_IHTMLCSSSTYLEDECLARATION_MSBLOCKPROGRESSION},
+        {DISPID_UNKNOWN}
+    };
+
+    dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, styledecl_hooks);
+    if(mode >= COMPAT_MODE_IE10)
+        dispex_info_add_interface(info, IHTMLCSSStyleDeclaration2_tid, NULL);
 }
 
 static const dispex_static_data_vtbl_t CSSStyleDeclaration_dispex_vtbl = {
@@ -9777,7 +9865,7 @@ dispex_static_data_t CSSStyleDeclaration_dispex = {
     .id        = PROT_CSSStyleDeclaration,
     .vtbl      = &CSSStyleDeclaration_dispex_vtbl,
     .disp_tid  = DispHTMLW3CComputedStyle_tid,
-    .init_info = CSSStyle_init_dispex_info,
+    .init_info = CSSStyleDeclaration_init_dispex_info,
 };
 
 HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, DispatchEx *owner, IHTMLCSSStyleDeclaration **p)
