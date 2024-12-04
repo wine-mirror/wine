@@ -245,17 +245,16 @@ static HRESULT get_output_samples(struct dmo_wrapper *filter)
 static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
 {
     DMO_OUTPUT_DATA_BUFFER *buffers = filter->buffers;
+    HRESULT hr = S_OK;
     DWORD status, i;
     BOOL more_data;
-    HRESULT hr;
 
     do
     {
         more_data = FALSE;
 
-        hr = IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER,
-                filter->source_count, buffers, &status);
-        if (hr != S_OK)
+        if (FAILED(IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER,
+                filter->source_count, buffers, &status)))
             break;
 
         for (i = 0; i < filter->source_count; ++i)
@@ -284,7 +283,7 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
 
             if (IMediaSample_GetActualDataLength(sample))
             {
-                if (FAILED(hr = IMemInputPin_Receive(filter->sources[i].pin.pMemInputPin, sample)))
+                if ((hr = IMemInputPin_Receive(filter->sources[i].pin.pMemInputPin, sample)) != S_OK)
                 {
                     WARN("Downstream sink returned %#lx.\n", hr);
                     release_output_samples(filter);
@@ -305,9 +304,9 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
     struct dmo_wrapper *filter = impl_from_strmbase_filter(iface->pin.filter);
     DWORD index = iface - filter->sinks;
     REFERENCE_TIME start = 0, stop = 0;
-    HRESULT process_hr, hr;
     IMediaObject *dmo;
     DWORD flags = 0;
+    HRESULT hr;
 
     if (filter->filter.state == State_Stopped)
         return VFW_E_WRONG_STATE;
@@ -329,11 +328,8 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
          * states that we should call ProcessOutput() again in this case. */
         if (FAILED(hr = get_output_samples(filter)))
             goto out;
-        if (FAILED(process_hr = process_output(filter, dmo)))
-        {
-            hr = process_hr;
+        if ((hr = process_output(filter, dmo)) != S_OK)
             goto out;
-        }
     }
 
     if (FAILED(hr = get_output_samples(filter)))
@@ -357,8 +353,7 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
         goto out;
     }
 
-    if (FAILED(process_hr = process_output(filter, dmo)))
-        hr = process_hr;
+    hr = process_output(filter, dmo);
 
 out:
     filter->input_buffer.sample = NULL;

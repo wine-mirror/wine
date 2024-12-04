@@ -1766,13 +1766,9 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     /* Test Receive if downstream Receive return S_FALSE. */
     sink_receive_hr = S_FALSE;
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == S_FALSE, "Receive returned %#lx.\n", hr);
-    todo_wine
     ok(got_ProcessInput == 0, "Got %u calls to ProcessInput().\n", got_ProcessInput);
-    todo_wine
     ok(got_ProcessOutput == 1, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
-    todo_wine
     ok(got_Receive == 1, "Got %u calls to Receive().\n", got_Receive);
     ok(got_Discontinuity == 1, "Got %u calls to Discontinuity().\n", got_Discontinuity);
     got_ProcessInput = got_ProcessOutput = got_Receive = got_Discontinuity = 0;
@@ -1785,7 +1781,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     ok(hr == S_OK, "Receive returned %#lx.\n", hr);
     ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
     ok(got_ProcessOutput == 2, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
-    todo_wine
     ok(got_Receive == 2, "Got %u calls to Receive().\n", got_Receive);
     ok(got_Discontinuity == 1, "Got %u calls to Discontinuity().\n", got_Discontinuity);
     got_ProcessInput = got_ProcessOutput = got_Receive = got_Discontinuity = 0;
@@ -1793,11 +1788,8 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     /* Test Receive if ProcessOutput fails. */
     process_output_hr = E_FAIL;
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == S_OK, "Receive returned %#lx.\n", hr);
-    todo_wine
     ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
-    todo_wine
     ok(got_ProcessOutput == 2, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
     ok(got_Receive == 0, "Got %u calls to Receive().\n", got_Receive);
     ok(got_Discontinuity == 1, "Got %u calls to Discontinuity().\n", got_Discontinuity);
@@ -1806,11 +1798,8 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     /* Test Receive if ProcessOutput needs more inputs. */
     process_output_hr = MF_E_TRANSFORM_NEED_MORE_INPUT;
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == S_OK, "Receive returned %#lx.\n", hr);
-    todo_wine
     ok(got_ProcessInput == 1, "Got %u calls to ProcessInput().\n", got_ProcessInput);
-    todo_wine
     ok(got_ProcessOutput == 2, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
     ok(got_Receive == 0, "Got %u calls to Receive().\n", got_Receive);
     ok(got_Discontinuity == 1, "Got %u calls to Discontinuity().\n", got_Discontinuity);
