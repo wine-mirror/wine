@@ -4626,7 +4626,7 @@ FILE* CDECL freopen(const char *path, const char *mode, FILE* file)
     FILE *ret;
     wchar_t *pathW = NULL, *modeW = NULL;
 
-    if (path && !(pathW = msvcrt_wstrdupa(path))) return NULL;
+    if (path && !(pathW = wstrdupa_utf8(path))) return NULL;
     if (mode && !(modeW = msvcrt_wstrdupa(mode)))
     {
         free(pathW);
