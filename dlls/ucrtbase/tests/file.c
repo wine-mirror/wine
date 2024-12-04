@@ -320,6 +320,13 @@ static void test_utf8(void)
     ret = remove(file2);
     ok(!ret, "remove returned %d, errno %d\n", ret, errno);
 
+    buf[0] = 'x';
+    _searchenv(file, "env", buf);
+    p = strrchr(buf, '\\');
+    ok(!!p, "buf = %s\n", debugstr_a(buf));
+    todo_wine_if(!is_lossless_convertion(file))
+        ok(!strcmp(p + 1, file), "buf = %s\n", debugstr_a(buf));
+
     ret = _wunlink(fileW);
     todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wunlink returned %d, errno %d\n", ret, errno);
     if (ret)

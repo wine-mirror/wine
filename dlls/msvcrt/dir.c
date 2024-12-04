@@ -1639,6 +1639,7 @@ int CDECL _searchenv_s(const char* file, const char* env, char *buf, size_t coun
   char *envVal, *penv, *end;
   char path[MAX_PATH];
   size_t path_len, fname_len;
+  int old_errno, access;
 
   if (!MSVCRT_CHECK_PMT(file != NULL)) return EINVAL;
   if (!MSVCRT_CHECK_PMT(buf != NULL)) return EINVAL;
@@ -1651,10 +1652,13 @@ int CDECL _searchenv_s(const char* file, const char* env, char *buf, size_t coun
   *buf = '\0';
 
   /* Try CWD first */
-  if (GetFileAttributesA( file ) != INVALID_FILE_ATTRIBUTES)
+  old_errno = *_errno();
+  access = _access(file, 0);
+  *_errno() = old_errno;
+  if (!access)
   {
-    if (GetFullPathNameA( file, count, buf, NULL )) return 0;
-    msvcrt_set_errno(GetLastError());
+    if (!_fullpath(buf, file, count))
+      return *_errno();
     return 0;
   }
 
@@ -1700,7 +1704,10 @@ int CDECL _searchenv_s(const char* file, const char* env, char *buf, size_t coun
 
     memcpy(path + path_len, file, fname_len + 1);
     TRACE("Checking for file %s\n", path);
-    if (GetFileAttributesA( path ) != INVALID_FILE_ATTRIBUTES)
+    old_errno = *_errno();
+    access = _access(path, 0);
+    *_errno() = old_errno;
+    if (!access)
     {
       if (path_len + fname_len + 1 > count)
       {
