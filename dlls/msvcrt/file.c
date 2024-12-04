@@ -2407,8 +2407,9 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
         debugstr_w(path), oflags, shflags, pmode, fd, secure);
 
   if (!MSVCRT_CHECK_PMT( fd != NULL )) return EINVAL;
-
   *fd = -1;
+  if (!MSVCRT_CHECK_PMT(path != NULL)) return EINVAL;
+
   wxflag = split_oflags(oflags);
   switch (oflags & (_O_RDONLY | _O_WRONLY | _O_RDWR))
   {
