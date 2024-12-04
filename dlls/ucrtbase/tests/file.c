@@ -240,6 +240,7 @@ static void test_utf8(void)
 
     char file2[32], buf[256], *p, *q;
     struct _finddata32_t fdata32;
+    struct _finddata64_t fdata64;
     struct _stat64 stat;
     intptr_t hfind;
     FILE *f;
@@ -335,6 +336,16 @@ static void test_utf8(void)
     ret = _findclose(hfind);
     ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
 
+
+    strcpy(buf, file);
+    strcat(buf, "*");
+    fdata64.name[0] = 'x';
+    hfind = _findfirst64(buf, &fdata64);
+    ok(hfind != -1, "_findfirst64 returned %Id, errno %d\n", hfind, errno);
+    todo_wine_if(!is_lossless_convertion(dir))
+        ok(!memcmp(file, fdata64.name, sizeof(file) - 1), "fdata64.name = %s\n", debugstr_a(fdata64.name));
+    ret = _findclose(hfind);
+    ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
 
     ret = remove(file2);
     ok(!ret, "remove returned %d, errno %d\n", ret, errno);

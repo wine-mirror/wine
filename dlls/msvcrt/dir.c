@@ -457,27 +457,6 @@ intptr_t CDECL _findfirsti64(const char * fspec, struct _finddatai64_t* ft)
 }
 
 /*********************************************************************
- *		_findfirst64 (MSVCRT.@)
- *
- * 64-bit version of _findfirst.
- */
-intptr_t CDECL _findfirst64(const char * fspec, struct _finddata64_t* ft)
-{
-  WIN32_FIND_DATAA find_data;
-  HANDLE hfind;
-
-  hfind  = FindFirstFileA(fspec, &find_data);
-  if (hfind == INVALID_HANDLE_VALUE)
-  {
-    msvcrt_set_errno(GetLastError());
-    return -1;
-  }
-  msvcrt_fttofd64(&find_data,ft);
-  TRACE(":got handle %p\n",hfind);
-  return (intptr_t)hfind;
-}
-
-/*********************************************************************
  *		_wfindfirst64 (MSVCRT.@)
  *
  * Unicode version of _findfirst64.
@@ -496,6 +475,34 @@ intptr_t CDECL _wfindfirst64(const wchar_t * fspec, struct _wfinddata64_t* ft)
   msvcrt_wfttofd64(&find_data,ft);
   TRACE(":got handle %p\n",hfind);
   return (intptr_t)hfind;
+}
+
+static int finddata64_wtoa(const struct _wfinddata64_t *wfd, struct _finddata64_t *fd)
+{
+    fd->attrib = wfd->attrib;
+    fd->time_create = wfd->time_create;
+    fd->time_access = wfd->time_access;
+    fd->time_write = wfd->time_write;
+    fd->size = wfd->size;
+    return convert_wcs_to_acp_utf8(wfd->name, fd->name, ARRAY_SIZE(fd->name));
+}
+
+/*********************************************************************
+ *		_findfirst64 (MSVCRT.@)
+ *
+ * 64-bit version of _findfirst.
+ */
+intptr_t CDECL _findfirst64(const char *fspec, struct _finddata64_t *ft)
+{
+    struct _wfinddata64_t wft;
+    wchar_t *fspecW = NULL;
+    intptr_t ret;
+
+    if (fspec && !(fspecW = wstrdupa_utf8(fspec))) return -1;
+    ret = _wfindfirst64(fspecW, &wft);
+    free(fspecW);
+    if (!finddata64_wtoa(&wft, ft)) return -1;
+    return ret;
 }
 
 /*********************************************************************
