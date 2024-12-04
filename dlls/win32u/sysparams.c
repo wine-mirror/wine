@@ -2245,6 +2245,7 @@ static BOOL lock_display_devices( BOOL force )
     struct device_manager_ctx ctx = {.vulkan_gpus = LIST_INIT(ctx.vulkan_gpus)};
     UINT status;
     WCHAR name[MAX_PATH];
+    BOOL ret = TRUE;
 
     /* services do not have any adapters, only a virtual monitor */
     if (NtUserGetObjectInformation( winstation, UOI_NAME, name, sizeof(name), NULL )
@@ -2258,33 +2259,21 @@ static BOOL lock_display_devices( BOOL force )
     }
 
     if (!force) get_display_driver(); /* make sure at least to load the user driver */
-    else
+
+    if (!force && !update_display_cache_from_registry()) force = TRUE;
+    if (force)
     {
         if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any vulkan GPU\n" );
         if (!(status = update_display_devices( &ctx ))) commit_display_devices( &ctx );
         else WARN( "Failed to update display devices, status %#x\n", status );
         release_display_manager_ctx( &ctx );
+
+        ret = update_display_cache_from_registry();
     }
 
-    if (!update_display_cache_from_registry())
-    {
-        if (force)
-        {
-            ERR( "Failed to read display config.\n" );
-            return FALSE;
-        }
-
-        if (ctx.gpu_count)
-        {
-            ERR( "Driver reported devices, but we failed to read them.\n" );
-            return FALSE;
-        }
-
-        if (!lock_display_devices( TRUE )) return FALSE;
-    }
-
-    pthread_mutex_lock( &display_lock );
-    return TRUE;
+    if (!ret) ERR( "Failed to read display config.\n" );
+    else pthread_mutex_lock( &display_lock );
+    return ret;
 }
 
 static void unlock_display_devices(void)
