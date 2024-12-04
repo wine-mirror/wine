@@ -239,6 +239,7 @@ static void test_utf8(void)
     const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
 
     char file2[32], buf[256], *p, *q;
+    struct _finddata64i32_t fdata64i32;
     struct _finddata32_t fdata32;
     struct _finddata64_t fdata64;
     struct _stat64 stat;
@@ -350,6 +351,16 @@ static void test_utf8(void)
     ok(!ret, "_findnext64 returned %d, errno %d\n", ret, errno);
     todo_wine_if(!is_lossless_convertion(dir))
         ok(!memcmp(file, fdata64.name, sizeof(file) - 1), "fdata64.name = %s\n", debugstr_a(fdata64.name));
+    ret = _findclose(hfind);
+    ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
+
+    strcpy(buf, file);
+    strcat(buf, "*");
+    fdata64i32.name[0] = 'x';
+    hfind = _findfirst64i32(buf, &fdata64i32);
+    ok(hfind != -1, "_findfirst64i32 returned %Id, errno %d\n", hfind, errno);
+    todo_wine_if(!is_lossless_convertion(dir))
+        ok(!memcmp(file, fdata64i32.name, sizeof(file) - 1), "fdata64i32.name = %s\n", debugstr_a(fdata64i32.name));
     ret = _findclose(hfind);
     ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
 
