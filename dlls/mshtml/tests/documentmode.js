@@ -3816,6 +3816,10 @@ sync_test("prototype props", function() {
         ["borderImageSource",11], ["borderImageWidth",11], ["flex",11], ["flexBasis",11], ["flexDirection",11], ["flexFlow",11], ["flexGrow",11], ["flexShrink",11],
         ["flexWrap",11], ["justifyContent",11], ["msImeAlign",11], ["msTextCombineHorizontal",11], ["msTextSizeAdjust",11], ["order",11], ["touchAction",11]
     ]);
+    check(CSSStyleSheet, [
+        "addImport", "addPageRule", "addRule", "cssRules", "cssText", "deleteRule", "href", "id", "imports", "insertRule",
+        "isAlternate", "isPrefAlternate", "ownerRule", "owningElement", "pages", "readOnly", "removeImport", "removeRule", "rules"
+    ], [ "addPageRule", "href", "isAlternate", "isPrefAlternate", "pages" ]);
     check(CSSStyleRule, [ "readOnly", "selectorText", "style" ]);
     check(CustomEvent, [ "detail", "initCustomEvent" ]);
     check(Document, [
@@ -3974,6 +3978,7 @@ sync_test("prototype props", function() {
     if(v >= 10)
         check(ProgressEvent, [ "initProgressEvent", "lengthComputable", "loaded", "total" ]);
     check(StorageEvent, [ "initStorageEvent", "key", "newValue", "oldValue", "storageArea", "url" ]);
+    check(StyleSheet, [ "disabled", "href", "media", "ownerNode", "parentStyleSheet", "title", "type" ]);
     check(Text, [ "removeNode", "replaceNode", "replaceWholeText", "splitText", "swapNode", "wholeText" ], [ "replaceWholeText", "wholeText" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);
 });

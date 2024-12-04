@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -1199,6 +1200,25 @@ static void HTMLStyleSheet_destructor(DispatchEx *dispex)
     free(This);
 }
 
+static void StyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const DISPID stylesheet_dispids[] = {
+        DISPID_IHTMLSTYLESHEET_PARENTSTYLESHEET,
+        DISPID_IHTMLSTYLESHEET_DISABLED,
+        DISPID_UNKNOWN
+    };
+    static const DISPID stylesheet4_dispids[] = {
+        DISPID_IHTMLSTYLESHEET4_IE9_TYPE,
+        DISPID_IHTMLSTYLESHEET4_IE9_HREF,
+        DISPID_IHTMLSTYLESHEET4_IE9_TITLE,
+        DISPID_IHTMLSTYLESHEET4_OWNERNODE,
+        DISPID_IHTMLSTYLESHEET4_IE9_MEDIA,
+        DISPID_UNKNOWN
+    };
+    dispex_info_add_dispids(info, IHTMLStyleSheet4_tid, stylesheet4_dispids);
+    dispex_info_add_dispids(info, IHTMLStyleSheet_tid, stylesheet_dispids);
+}
+
 static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     if(mode >= COMPAT_MODE_IE9)
@@ -1206,7 +1226,8 @@ static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t m
 }
 
 dispex_static_data_t StyleSheet_dispex = {
-    .id = PROT_StyleSheet,
+    .id           = PROT_StyleSheet,
+    .init_info    = StyleSheet_init_dispex_info,
 };
 
 static const dispex_static_data_vtbl_t CSSStyleSheet_dispex_vtbl = {
