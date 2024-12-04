@@ -815,42 +815,97 @@ sync_test("xhr open", function() {
 });
 
 sync_test("style_props", function() {
-    var style = document.body.style, currentStyle = document.body.currentStyle, computedStyle = window.getComputedStyle ? window.getComputedStyle(document.body) : undefined;
+    var r, style = document.body.style, currentStyle = document.body.currentStyle, computedStyle = window.getComputedStyle ? window.getComputedStyle(document.body) : undefined;
 
-    function test_exposed(prop, expect_style, expect_currentStyle, expect_computedStyle) {
-        if(expect_style)
-            ok(prop in style, prop + " not found in style object.");
-        else
-            ok(!(prop in style), prop + " found in style object.");
-        if(expect_currentStyle)
-            ok(prop in currentStyle, prop + " not found in currentStyle object.");
-        else
-            ok(!(prop in currentStyle), prop + " found in currentStyle object.");
-        if(computedStyle) {
-            if(expect_computedStyle)
-                ok(prop in computedStyle, prop + " not found in computedStyle object.");
-            else
-                ok(!(prop in computedStyle), prop + " found in computedStyle object.");
+    function test_exposed(prop, expect_style, expect_currentStyle, expect_computedStyle, own_prop) {
+        if(own_prop === undefined)
+            own_prop = (v < 9);
+        function test(prop, obj, expect, name) {
+            if(!expect)
+                ok(!(prop in obj), prop + " found in " + name + " object.");
+            else {
+                ok(prop in obj, prop + " not found in " + name + " object.");
+                if(own_prop) {
+                    ok(Object.prototype.hasOwnProperty.call(obj, prop), prop + " not prop of " + name + " object.");
+                    if(Object.getOwnPropertyDescriptor) {
+                        var desc = Object.getOwnPropertyDescriptor(obj, prop);
+                        if(name === "computedStyle" && prop.indexOf("-") === -1) {
+                            todo_wine.
+                            ok(desc === undefined, prop + " of " + name + " object is not undefined.");
+                            return;
+                        }
+                        ok(desc.value === obj[prop], prop + " of " + name + " object value = ." + desc.value + ", expected " + obj[prop]);
+                        ok(!("get" in desc), prop + " of " + name + " object has a getter.");
+                        ok(!("set" in desc), prop + " of " + name + " object has a setter.");
+                        ok(desc.writable === true, prop + " of " + name + " object not writable.");
+                        ok(desc.enumerable === true, prop + " of " + name + " object not enumerable.");
+                        ok(desc.configurable === true, prop + " of " + name + " object not configurable.");
+                    }
+                }
+            }
         }
+
+        test(prop, style, expect_style, "style");
+        test(prop, currentStyle, expect_currentStyle, "currentStyle");
+        if(computedStyle)
+            test(prop, computedStyle, expect_computedStyle, "computedStyle");
     }
 
     var v = document.documentMode;
 
     test_exposed("removeAttribute", true, broken(true) ? v >= 9 : false /* todo_wine */, false);
     test_exposed("zIndex", true, true, true);
-    test_exposed("z-index", true, true, true);
+    test_exposed("z-index", true, true, true, true);
     test_exposed("filter", true, true, broken(true) ? v >= 10 : v >= 9 /* todo_wine */);
     test_exposed("pixelTop", true, false, false);
-    test_exposed("float", true, true, true);
+    test_exposed("float", true, true, true, true);
     test_exposed("css-float", false, false, false);
     test_exposed("style-float", false, false, false);
     test_exposed("setProperty", v >= 9, v >= 9, v >= 9);
     test_exposed("removeProperty", v >= 9, v >= 9, v >= 9);
-    test_exposed("background-clip", v >= 9, v >= 9, v >= 9);
+    test_exposed("background-clip", v >= 9, v >= 9, v >= 9, true);
     test_exposed("msTransform", v >= 9, v >= 9, v >= 9);
     test_exposed("msTransition", v >= 10, v >= 10, v >= 10);
     test_exposed("transform", v >= 10, v >= 10, v >= 10);
     test_exposed("transition", v >= 10, v >= 10, v >= 10);
+
+    if(Object.getOwnPropertyNames) {
+        r = Object.getOwnPropertyNames(style);
+        todo_wine.
+        ok(!r.length, "style has own props: " + r);
+        r = Object.getOwnPropertyNames(currentStyle);
+        todo_wine.
+        ok(!r.length, "currentStyle has own props: " + r);
+        r = Object.getOwnPropertyNames(computedStyle);
+        todo_wine.
+        ok(!r.length, "computedStyle has own props: " + r);
+
+        r = Object.getOwnPropertyDescriptor(style, "z-index");
+        ok(r.value === "", "style z-index value = " + r.value);
+        style.zIndex = 1;
+        r = Object.getOwnPropertyDescriptor(style, "z-index");
+        ok(r.value === 1, "style z-index value after set = " + r.value);
+
+        Object.defineProperty(style, "z-index", { get: function() { return "42"; }, configurable: true });
+        todo_wine.
+        ok(style.zIndex === 1, "style zIndex after defineProperty = " + style.zIndex);
+        todo_wine.
+        ok(style["z-index"] === "42", "style z-index after defineProperty = " + style["z-index"]);
+
+        r = Object.getOwnPropertyDescriptor(style, "z-index");
+        todo_wine.
+        ok(!("value" in r), "style z-index after defineProperty still has value");
+        todo_wine.
+        ok(typeof(r.get) === "function", "style z-index after defineProperty not a getter");
+
+        r = delete style["z-index"];
+        ok(r === true, "delete style z-index returned " + r);
+        ok(style["z-index"] === 1, "style z-index after delete = " + style["z-index"]);
+
+        r = Object.getOwnPropertyNames(style);
+        todo_wine.
+        ok(!r.length, "style has own props after delete: " + r);
+    }
 });
 
 sync_test("createElement_inline_attr", function() {
