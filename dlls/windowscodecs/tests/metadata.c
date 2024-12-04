@@ -379,19 +379,21 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
 
     for (i = 0; i < count; i++)
     {
+        winetest_push_context("%lu", i);
+
         hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &items_returned);
         ok(hr == S_OK, "Next error %#lx\n", hr);
         ok(items_returned == 1, "unexpected item count %lu\n", items_returned);
 
-        ok(schema.vt == VT_EMPTY, "%lu: unexpected vt: %u\n", i, schema.vt);
-        ok(id.vt == VT_UI2 || id.vt == VT_LPWSTR || id.vt == VT_EMPTY, "%lu: unexpected vt: %u\n", i, id.vt);
+        ok(schema.vt == VT_EMPTY, "Unexpected vt: %u\n", schema.vt);
+        ok(id.vt == VT_UI2 || id.vt == VT_LPWSTR || id.vt == VT_EMPTY, "Unexpected vt: %u\n", id.vt);
         if (id.vt == VT_UI2)
-            ok(id.uiVal == td[i].id, "%lu: expected id %#lx, got %#x\n", i, td[i].id, id.uiVal);
+            ok(id.uiVal == td[i].id, "Expected id %#lx, got %#x\n", td[i].id, id.uiVal);
         else if (id.vt == VT_LPWSTR)
             ok(!lstrcmpW(td[i].id_string, id.pwszVal),
-               "%lu: expected %s, got %s\n", i, wine_dbgstr_w(td[i].id_string), wine_dbgstr_w(id.pwszVal));
+               "Expected %s, got %s\n", wine_dbgstr_w(td[i].id_string), wine_dbgstr_w(id.pwszVal));
 
-        ok(value.vt == td[i].type, "%lu: expected vt %#lx, got %#x\n", i, td[i].type, value.vt);
+        ok(value.vt == td[i].type, "Expected vt %#lx, got %#x\n", td[i].type, value.vt);
         if (value.vt & VT_VECTOR)
         {
             ULONG j;
@@ -399,37 +401,37 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
             {
             case VT_I1:
             case VT_UI1:
-                ok(td[i].count == value.caub.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.caub.cElems);
+                ok(td[i].count == value.caub.cElems, "Expected cElems %d, got %ld\n", td[i].count, value.caub.cElems);
                 for (j = 0; j < value.caub.cElems; j++)
-                    ok(td[i].value[j] == value.caub.pElems[j], "%lu: expected value[%ld] %#I64x, got %#x\n", i, j, td[i].value[j], value.caub.pElems[j]);
+                    ok(td[i].value[j] == value.caub.pElems[j], "Expected value[%ld] %#I64x, got %#x\n", j, td[i].value[j], value.caub.pElems[j]);
                 break;
             case VT_I2:
             case VT_UI2:
-                ok(td[i].count == value.caui.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.caui.cElems);
+                ok(td[i].count == value.caui.cElems, "Expected cElems %d, got %ld\n", td[i].count, value.caui.cElems);
                 for (j = 0; j < value.caui.cElems; j++)
-                    ok(td[i].value[j] == value.caui.pElems[j], "%lu: expected value[%ld] %#I64x, got %#x\n", i, j, td[i].value[j], value.caui.pElems[j]);
+                    ok(td[i].value[j] == value.caui.pElems[j], "Expected value[%ld] %#I64x, got %#x\n", j, td[i].value[j], value.caui.pElems[j]);
                 break;
             case VT_I4:
             case VT_UI4:
             case VT_R4:
-                ok(td[i].count == value.caul.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.caul.cElems);
+                ok(td[i].count == value.caul.cElems, "Expected cElems %d, got %ld\n", td[i].count, value.caul.cElems);
                 for (j = 0; j < value.caul.cElems; j++)
-                    ok(td[i].value[j] == value.caul.pElems[j], "%lu: expected value[%ld] %#I64x, got %#lx\n", i, j, td[i].value[j], value.caul.pElems[j]);
+                    ok(td[i].value[j] == value.caul.pElems[j], "Expected value[%ld] %#I64x, got %#lx\n", j, td[i].value[j], value.caul.pElems[j]);
                 break;
             case VT_I8:
             case VT_UI8:
             case VT_R8:
-                ok(td[i].count == value.cauh.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.cauh.cElems);
+                ok(td[i].count == value.cauh.cElems, "Expected cElems %d, got %ld\n", td[i].count, value.cauh.cElems);
                 for (j = 0; j < value.cauh.cElems; j++)
-                    ok(td[i].value[j] == value.cauh.pElems[j].QuadPart, "%lu: expected value[%ld] %I64x, got %08lx/%08lx\n", i, j, td[i].value[j], value.cauh.pElems[j].u.LowPart, value.cauh.pElems[j].u.HighPart);
+                    ok(td[i].value[j] == value.cauh.pElems[j].QuadPart, "Expected value[%ld] %I64x, got %08lx/%08lx\n", j, td[i].value[j], value.cauh.pElems[j].u.LowPart, value.cauh.pElems[j].u.HighPart);
                 break;
             case VT_LPSTR:
-                ok(td[i].count == value.calpstr.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, value.caub.cElems);
+                ok(td[i].count == value.calpstr.cElems, "Expected cElems %d, got %ld\n", td[i].count, value.caub.cElems);
                 for (j = 0; j < value.calpstr.cElems; j++)
                     trace("%lu: %s\n", j, value.calpstr.pElems[j]);
                 /* fall through to not handled message */
             default:
-                ok(0, "%lu: array of type %d is not handled\n", i, value.vt & ~VT_VECTOR);
+                ok(0, "vector of type %d is not handled\n", value.vt & ~VT_VECTOR);
                 break;
             }
         }
@@ -437,23 +439,25 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
         {
             ok(td[i].count == strlen(value.pszVal) ||
                broken(td[i].count == strlen(value.pszVal) + 1), /* before Win7 */
-               "%lu: expected count %d, got %d\n", i, td[i].count, lstrlenA(value.pszVal));
+                   "Expected count %d, got %d\n", td[i].count, lstrlenA(value.pszVal));
             if (td[i].count == strlen(value.pszVal))
                 ok(!strcmp(td[i].string, value.pszVal),
-                   "%lu: expected %s, got %s\n", i, td[i].string, value.pszVal);
+                   "Expected %s, got %s\n", td[i].string, value.pszVal);
         }
         else if (value.vt == VT_BLOB)
         {
-            ok(td[i].count == value.blob.cbSize, "%lu: expected count %d, got %ld\n", i, td[i].count, value.blob.cbSize);
-            ok(!memcmp(td[i].string, value.blob.pBlobData, td[i].count), "%lu: expected %s, got %s\n", i, td[i].string, value.blob.pBlobData);
+            ok(td[i].count == value.blob.cbSize, "Expected count %d, got %ld\n", td[i].count, value.blob.cbSize);
+            ok(!memcmp(td[i].string, value.blob.pBlobData, td[i].count), "Expected %s, got %s\n", td[i].string, value.blob.pBlobData);
         }
         else
-            ok(value.uhVal.QuadPart == td[i].value[0], "%lu: expected value %#I64x got %#lx/%#lx\n",
-               i, td[i].value[0], value.uhVal.u.LowPart, value.uhVal.u.HighPart);
+            ok(value.uhVal.QuadPart == td[i].value[0], "Eexpected value %#I64x got %#lx/%#lx\n",
+               td[i].value[0], value.uhVal.u.LowPart, value.uhVal.u.HighPart);
 
         PropVariantClear(&schema);
         PropVariantClear(&id);
         PropVariantClear(&value);
+
+        winetest_pop_context();
     }
 
     hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &items_returned);
@@ -3408,20 +3412,22 @@ static void test_queryreader(void)
 
     for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
+        winetest_push_context("%u", i);
+
         current_metadata = test_data[i].data;
 
         hr = IWICMetadataQueryReader_GetContainerFormat(reader, &format);
-        ok(hr == S_OK, "%u: GetContainerFormat error %#lx\n", i, hr);
-        ok(IsEqualGUID(&format, test_data[i].data->container_format), "%u: expected %s, got %s\n",
-           i, wine_dbgstr_guid(test_data[i].data->container_format), wine_dbgstr_guid(&format));
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&format, test_data[i].data->container_format), "Expected %s, got %s.\n",
+                wine_dbgstr_guid(test_data[i].data->container_format), wine_dbgstr_guid(&format));
 
         PropVariantInit(&value);
         hr = IWICMetadataQueryReader_GetMetadataByName(reader, test_data[i].query, &value);
         todo_wine_if(test_data[i].todo)
-        ok(hr == test_data[i].hr, "%u: expected %#lx, got %#lx\n", i, test_data[i].hr, hr);
+        ok(hr == test_data[i].hr, "Expected %#lx, got %#lx.\n", test_data[i].hr, hr);
         if (hr == S_OK)
         {
-            ok(value.vt == test_data[i].vt, "%u: expected %u, got %u\n", i, test_data[i].vt, value.vt);
+            ok(value.vt == test_data[i].vt, "Expected %u, got %u.\n", test_data[i].vt, value.vt);
             if (test_data[i].vt == value.vt)
             {
                 if (value.vt == VT_UNKNOWN)
@@ -3474,17 +3480,19 @@ static void test_queryreader(void)
                     PropVariantClear(&value);
                 }
                 else if (value.vt == VT_LPSTR)
-                    ok(!lstrcmpA(value.pszVal, test_data[i].str_value), "%u: expected %s, got %s\n",
-                       i, test_data[i].str_value, value.pszVal);
+                    ok(!lstrcmpA(value.pszVal, test_data[i].str_value), "Expected %s, got %s.\n",
+                           test_data[i].str_value, value.pszVal);
                 else
-                    ok(value.uiVal == test_data[i].value, "%u: expected %u, got %u\n",
-                       i, test_data[i].value, value.uiVal);
+                    ok(value.uiVal == test_data[i].value, "Expected %u, got %u\n",
+                           test_data[i].value, value.uiVal);
             }
 
             /*
              * Do NOT call PropVariantClear(&value) for fake value types.
              */
         }
+
+        winetest_pop_context();
     }
 
     IWICMetadataQueryReader_Release(reader);
@@ -3524,78 +3532,83 @@ static void test_metadata_writer(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        winetest_push_context("%u", i);
+
         hr = CoCreateInstance(tests[i].rclsid, NULL, CLSCTX_INPROC_SERVER,
                 &IID_IWICBitmapEncoder, (void **)&encoder);
-        todo_wine_if(!tests[i].wine_supports_encoder) ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+        todo_wine_if(!tests[i].wine_supports_encoder) ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         if (FAILED(hr))
+        {
+            winetest_pop_context();
             continue;
+        }
 
         blockwriter = NULL;
         querywriter = querywriter2 = NULL;
 
         hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-        ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
-        ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frameencode, NULL);
-        ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = IWICBitmapFrameEncode_QueryInterface(frameencode, &IID_IWICMetadataBlockWriter, (void**)&blockwriter);
-        ok(hr == (tests[i].metadata_supported ? S_OK : E_NOINTERFACE), "Got unexpected hr %#lx, i %u.\n", hr, i);
+        ok(hr == (tests[i].metadata_supported ? S_OK : E_NOINTERFACE), "Got unexpected hr %#lx.\n", hr);
 
         hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
                 &IID_IWICComponentFactory, (void**)&factory);
-        ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = IWICComponentFactory_CreateQueryWriterFromBlockWriter(factory, blockwriter, &querywriter);
-        ok(hr == (tests[i].metadata_supported ? S_OK : E_INVALIDARG), "Got unexpected hr %#lx, i %u.\n", hr, i);
+        ok(hr == (tests[i].metadata_supported ? S_OK : E_INVALIDARG), "Got unexpected hr %#lx.\n", hr);
 
         hr = IWICBitmapFrameEncode_GetMetadataQueryWriter(frameencode, &querywriter2);
         ok(hr == (tests[i].succeeds_uninitialized ? S_OK : WINCODEC_ERR_NOTINITIALIZED),
-                "Got unexpected hr %#lx, i %u.\n", hr, i);
+                "Got unexpected hr %#lx.\n", hr);
         if (hr == S_OK)
             IWICMetadataQueryWriter_Release(querywriter2);
 
         hr = IWICBitmapFrameEncode_Initialize(frameencode, NULL);
-        ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = IWICBitmapFrameEncode_GetMetadataQueryWriter(frameencode, &querywriter2);
         ok(hr == (tests[i].metadata_supported ? S_OK : WINCODEC_ERR_UNSUPPORTEDOPERATION),
-                "Got unexpected hr %#lx, i %u.\n", hr, i);
+                "Got unexpected hr %#lx.\n", hr);
 
         if (tests[i].metadata_supported)
-            ok(querywriter2 != querywriter, "Got unexpected interfaces %p, %p, i %u.\n", querywriter, querywriter2, i);
+            ok(querywriter2 != querywriter, "Got unexpected interfaces %p, %p.\n", querywriter, querywriter2);
 
         IWICComponentFactory_Release(factory);
         if (querywriter)
         {
             ref = get_refcount(querywriter);
-            ok(ref == 1, "Got unexpected ref %lu, i %u.\n", ref, i);
+            ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
             hr = IWICMetadataQueryWriter_QueryInterface(querywriter, &IID_IEnumString, (void **)&enumstring);
-            ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx, i %u.\n", hr, i);
+            ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
 
             hr = IWICMetadataQueryWriter_GetEnumerator(querywriter, &enumstring);
-            ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
             ref = get_refcount(querywriter);
-            ok(ref == 1, "Got unexpected ref %lu, i %u.\n", ref, i);
+            ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
             hr = IEnumString_Skip(enumstring, 0);
-            ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
             count = 0xdeadbeef;
             hr = IEnumString_Next(enumstring, 0, NULL, &count);
-            ok(hr == E_INVALIDARG, "Got unexpected hr %#lx, i %u.\n", hr, i);
-            ok(count == 0xdeadbeef, "Got unexpected count %lu, i %u.\n", count, i);
+            ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+            ok(count == 0xdeadbeef, "Got unexpected count %lu.\n", count);
 
             hr = IEnumString_Next(enumstring, 0, &olestring, &count);
-            ok(hr == S_OK || hr == WINCODEC_ERR_VALUEOUTOFRANGE, "Got unexpected hr %#lx, i %u.\n", hr, i);
+            ok(hr == S_OK || hr == WINCODEC_ERR_VALUEOUTOFRANGE, "Got unexpected hr %#lx.\n", hr);
 
             count = 0xdeadbeef;
             hr = IEnumString_Next(enumstring, 1, &olestring, &count);
             ok(hr == S_OK || hr == S_FALSE, "Got unexpected hr %#lx, i %u.\n", hr, i);
-            ok((hr && !count) || (!hr && count == 1), "Got unexpected hr %#lx, count %lu, i %u.\n", hr, count, i);
+            ok((hr && !count) || (!hr && count == 1), "Got unexpected hr %#lx, count %lu.\n", hr, count);
             if (count)
             {
                 CoTaskMemFree(olestring);
@@ -3603,10 +3616,10 @@ static void test_metadata_writer(void)
                 /* IEnumString_Skip() crashes at least on Win7 when
                  * trying to skip past the string count. */
                 hr = IEnumString_Reset(enumstring);
-                ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
                 hr = IEnumString_Skip(enumstring, 1);
-                ok(hr == S_OK, "Got unexpected hr %#lx, i %u.\n", hr, i);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             }
             IEnumString_Release(enumstring);
 
@@ -3617,6 +3630,8 @@ static void test_metadata_writer(void)
         IWICBitmapFrameEncode_Release(frameencode);
         IStream_Release(stream);
         IWICBitmapEncoder_Release(encoder);
+
+        winetest_pop_context();
     }
 }
 
