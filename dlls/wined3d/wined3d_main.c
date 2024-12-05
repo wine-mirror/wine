@@ -30,7 +30,7 @@
 #include "d3d12.h"
 #define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
-#include <vkd3d.h>
+#include <vkd3d_utils.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(vkd3d);
@@ -490,7 +490,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         else putenv( "VKD3D_SHADER_DEBUG=none" );
     }
 
-    vkd3d_set_log_callback(vkd3d_log_callback);
+    vkd3d_utils_set_log_callback(vkd3d_log_callback);
 
     return TRUE;
 }
