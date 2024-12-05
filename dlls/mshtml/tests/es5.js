@@ -2971,3 +2971,58 @@ sync_test("prototypes", function() {
     ok(document.body instanceof Element, "body is not an instance of Element");
     ok(document.body instanceof Node, "body is not an instance of Node");
 });
+
+sync_test("prototypes_delete", function() {
+    function check_prop(name) {
+        var orig = Object.getOwnPropertyDescriptor(Element.prototype, name);
+        ok(orig != undefined, "Could not get " + name + " descriptor");
+        var is_func = "value" in orig;
+
+        function check(obj, has_own, has_prop, has_enum, todo_enum) {
+            var r = obj.hasOwnProperty(name);
+            ok(r === has_own, obj + ".hasOwnProperty(" + name + ") returned " + r);
+            r = name in obj;
+            ok(r === has_prop, name + " in " + obj + " returned " + r);
+            r = check_enum(obj, name);
+            todo_wine_if(todo_enum).
+            ok(r === has_enum, "enumerating " + name + " in " + obj + "returned " + r);
+        }
+
+        check(document.body, false, true, true, is_func);
+        check(Element.prototype, true, true, true, is_func);
+        check(Node.prototype, false, false, false);
+
+        delete Element.prototype[name];
+        check(document.body, false, false, false);
+        check(Element.prototype, false, false, false);
+        check(Node.prototype, false, false, false);
+
+        Element.prototype[name] = -2;
+        Node.prototype[name] = -3;
+        ok(document.body[name] === -2, "document.body[" + name + "] = " + Element.prototype[name]);
+
+        check(document.body, false, true, true);
+        check(Element.prototype, true, true, true);
+        check(Node.prototype, true, true, true);
+
+        delete Element.prototype[name];
+        ok(document.body[name] === -3, "document.body[" + name + "] = " + Element.prototype[name]);
+        check(document.body, false, true, true);
+        check(Element.prototype, false, true, true);
+        check(Node.prototype, true, true, true);
+
+        delete Node.prototype[name];
+        check(document.body, false, false, false);
+        check(Element.prototype, false, false, false);
+        check(Node.prototype, false, false, false);
+
+        /* Restore the prop */
+        Object.defineProperty(Element.prototype, name, orig);
+        check(document.body, false, true, true, is_func);
+        check(Element.prototype, true, true, true, is_func);
+        check(Node.prototype, false, false, false);
+    }
+
+    check_prop("scrollLeft"); /* accessor prop */
+    check_prop("getBoundingClientRect"); /* function prop */
+});

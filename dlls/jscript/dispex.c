@@ -274,12 +274,16 @@ static HRESULT update_external_prop(jsdisp_t *obj, const WCHAR *name, dispex_pro
 
     if(desc->name)
         name = desc->name;
-    if(!prop && !(prop = alloc_prop(obj, name, PROP_DELETED, 0)))
-        return E_OUTOFMEMORY;
 
     if(!desc->iid) {
+        if(!prop && !(prop = alloc_prop(obj, name, PROP_DELETED, 0)))
+            return E_OUTOFMEMORY;
         prop->type = PROP_EXTERN;
         prop->u.id = desc->id;
+    }else if(prop) {
+        /* If a property for a host non-volatile already exists, it must have been deleted. */
+        *ret = prop;
+        return S_OK;
     }else if(desc->flags & PROPF_METHOD) {
         jsdisp_t *func;
 
@@ -287,7 +291,8 @@ static HRESULT update_external_prop(jsdisp_t *obj, const WCHAR *name, dispex_pro
         if(FAILED(hres))
             return hres;
 
-        prop->type = PROP_JSVAL;
+        if(!(prop = alloc_prop(obj, name, PROP_JSVAL, 0)))
+            return E_OUTOFMEMORY;
         prop->u.val = jsval_obj(func);
     }else {
         jsdisp_t *getter, *setter = NULL;
@@ -304,7 +309,8 @@ static HRESULT update_external_prop(jsdisp_t *obj, const WCHAR *name, dispex_pro
             }
         }
 
-        prop->type = PROP_ACCESSOR;
+        if(!(prop = alloc_prop(obj, name, PROP_ACCESSOR, 0)))
+            return E_OUTOFMEMORY;
         prop->u.accessor.getter = getter;
         prop->u.accessor.setter = setter;
     }
