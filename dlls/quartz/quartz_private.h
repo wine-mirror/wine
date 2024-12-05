@@ -21,6 +21,7 @@
 #define __QUARTZ_PRIVATE_INCLUDED__
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <wchar.h>
 
 #define COBJMACROS
@@ -47,6 +48,8 @@
 /* see IAsyncReader::Request on MSDN for the explanation of this */
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 #define BYTES_FROM_MEDIATIME(time) ((time) / 10000000)
+
+bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size);
 
 HRESULT acm_wrapper_create(IUnknown *outer, IUnknown **out);
 HRESULT async_reader_create(IUnknown *outer, IUnknown **out);

@@ -50,6 +50,13 @@ struct dsound_render
 
     struct strmbase_sink sink;
 
+    HANDLE render_thread;
+    CRITICAL_SECTION render_cs;
+    CONDITION_VARIABLE render_cv;
+    IMediaSample **queued_samples;
+    size_t queued_sample_count, queued_samples_capacity;
+    bool render_thread_shutdown;
+
     /* Signaled when the filter has completed a state change. The filter waits
      * for this event in IBaseFilter::GetState(). */
     HANDLE state_event;
@@ -243,7 +250,7 @@ static HRESULT send_sample_data(struct dsound_render *filter,
 
     while (size && filter->filter.state != State_Stopped)
     {
-        DWORD writepos, free, size1, size2, ret;
+        DWORD writepos, free, size1, size2;
         BYTE *buf1, *buf2;
 
         if (filter->filter.state == State_Running)
@@ -253,11 +260,11 @@ static HRESULT send_sample_data(struct dsound_render *filter,
 
         if (hr != S_OK)
         {
-            ret = WaitForSingleObject(filter->flush_event, 10);
-            if (filter->sink.flushing || filter->filter.state == State_Stopped)
-                return filter->filter.state == State_Paused ? S_OK : VFW_E_WRONG_STATE;
-            if (ret != WAIT_TIMEOUT)
-                ERR("WaitForSingleObject() returned %ld.\n", ret);
+            if (!WaitForSingleObject(filter->flush_event, 10))
+            {
+                TRACE("Flush signaled; discarding sample.\n");
+                return VFW_E_WRONG_STATE;
+            }
             continue;
         }
         tStart = -1;
@@ -344,6 +351,42 @@ static HRESULT render_sample(struct dsound_render *filter, IMediaSample *pSample
     return send_sample_data(filter, start, pbSrcStream, cbSrcStream);
 }
 
+static DWORD WINAPI render_thread_run(void *arg)
+{
+    struct dsound_render *filter = arg;
+
+    TRACE("Render thread started.\n");
+
+    EnterCriticalSection(&filter->render_cs);
+
+    while (!filter->render_thread_shutdown)
+    {
+        IMediaSample *sample;
+
+        if (!filter->queued_sample_count)
+        {
+            SleepConditionVariableCS(&filter->render_cv, &filter->render_cs, INFINITE);
+            continue;
+        }
+
+        sample = filter->queued_samples[0];
+        if (--filter->queued_sample_count)
+            memmove(filter->queued_samples, filter->queued_samples + 1,
+                    filter->queued_sample_count * sizeof(*filter->queued_samples));
+
+        LeaveCriticalSection(&filter->render_cs);
+
+        render_sample(filter, sample);
+        IMediaSample_Release(sample);
+
+        EnterCriticalSection(&filter->render_cs);
+    }
+
+    LeaveCriticalSection(&filter->render_cs);
+    TRACE("Render thread exiting.\n");
+    return 0;
+}
+
 static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
@@ -363,7 +406,21 @@ static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IM
     if (filter->filter.state == State_Paused)
         SetEvent(filter->state_event);
 
-    return render_sample(filter, sample);
+    EnterCriticalSection(&filter->render_cs);
+
+    if (!array_reserve((void **)&filter->queued_samples, &filter->queued_samples_capacity,
+            filter->queued_sample_count + 1, sizeof(*filter->queued_samples)))
+    {
+        LeaveCriticalSection(&filter->render_cs);
+        return E_OUTOFMEMORY;
+    }
+
+    filter->queued_samples[filter->queued_sample_count++] = sample;
+    IMediaSample_AddRef(sample);
+
+    LeaveCriticalSection(&filter->render_cs);
+    WakeConditionVariable(&filter->render_cv);
+    return S_OK;
 }
 
 static HRESULT dsound_render_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
@@ -536,6 +593,9 @@ static void dsound_render_destroy(struct strmbase_filter *iface)
     CloseHandle(filter->state_event);
     CloseHandle(filter->flush_event);
 
+    filter->render_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->render_cs);
+
     strmbase_passthrough_cleanup(&filter->passthrough);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -577,12 +637,19 @@ static HRESULT dsound_render_init_stream(struct strmbase_filter *iface)
 {
     struct dsound_render *filter = impl_from_strmbase_filter(iface);
 
-    if (filter->sink.pin.peer)
-        ResetEvent(filter->state_event);
     filter->eos = FALSE;
     ResetEvent(filter->flush_event);
 
-    return filter->sink.pin.peer ? S_FALSE : S_OK;
+    if (!filter->sink.pin.peer)
+        return S_OK;
+
+    ResetEvent(filter->state_event);
+
+    filter->render_thread_shutdown = false;
+    if (!(filter->render_thread = CreateThread(NULL, 0, render_thread_run, filter, 0, NULL)))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    return S_FALSE;
 }
 
 static HRESULT dsound_render_start_stream(struct strmbase_filter *iface, REFERENCE_TIME start)
@@ -628,6 +695,21 @@ static HRESULT dsound_render_cleanup_stream(struct strmbase_filter *iface)
 
     SetEvent(filter->state_event);
     SetEvent(filter->flush_event);
+
+    if (filter->render_thread)
+    {
+        EnterCriticalSection(&filter->render_cs);
+        filter->render_thread_shutdown = true;
+        LeaveCriticalSection(&filter->render_cs);
+        WakeConditionVariable(&filter->render_cv);
+        WaitForSingleObject(filter->render_thread, INFINITE);
+        CloseHandle(filter->render_thread);
+        filter->render_thread = NULL;
+
+        for (unsigned int i = 0; i < filter->queued_sample_count; ++i)
+            IMediaSample_Release(filter->queued_samples[i]);
+        filter->queued_sample_count = 0;
+    }
 
     return S_OK;
 }
@@ -1019,6 +1101,10 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
     object->IBasicAudio_iface.lpVtbl = &basic_audio_vtbl;
     object->IAMDirectSound_iface.lpVtbl = &direct_sound_vtbl;
     object->IQualityControl_iface.lpVtbl = &quality_control_vtbl;
+
+    InitializeCriticalSectionEx(&object->render_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
+    object->render_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": dsound_render.render_cs");
+    InitializeConditionVariable(&object->render_cv);
 
     TRACE("Created DirectSound renderer %p.\n", object);
     *out = &object->filter.IUnknown_inner;

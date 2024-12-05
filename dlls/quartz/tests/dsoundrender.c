@@ -947,7 +947,7 @@ static void test_filter_state(IMemInputPin *input, IMediaSeeking *seeking, IMedi
     ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -965,7 +965,7 @@ static void test_filter_state(IMemInputPin *input, IMediaSeeking *seeking, IMedi
     ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1020,7 +1020,7 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1121,7 +1121,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaSeeking *seeking, IMe
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaControl_Run(control);
@@ -1168,7 +1168,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaSeeking *seeking, IMe
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaControl_Run(control);
