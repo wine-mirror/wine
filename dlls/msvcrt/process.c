@@ -316,7 +316,7 @@ static wchar_t *msvcrt_valisttos_aw(const char *arg0, va_list alist, wchar_t del
 
     for (arg = arg0; arg; arg = va_arg( alist, char * ))
     {
-        unsigned int len = MultiByteToWideChar( CP_ACP, 0, arg, -1, NULL, 0 );
+        unsigned int len = convert_acp_utf8_to_wcs( arg, NULL, 0 );
         if (pos + len >= size)
         {
             size = max( 256, size * 2 );
@@ -328,7 +328,7 @@ static wchar_t *msvcrt_valisttos_aw(const char *arg0, va_list alist, wchar_t del
             }
             ret = new;
         }
-        pos += MultiByteToWideChar( CP_ACP, 0, arg, -1, ret + pos, size - pos );
+        pos += convert_acp_utf8_to_wcs( arg, ret + pos, size - pos );
         ret[pos - 1] = delim;
     }
     if (pos)
@@ -711,7 +711,7 @@ intptr_t WINAPIV _spawnl(int flags, const char* name, const char* arg0, ...)
   wchar_t *nameW, *args;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');

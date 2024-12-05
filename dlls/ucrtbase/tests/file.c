@@ -22,6 +22,7 @@
 #include <direct.h>
 #include <stdarg.h>
 #include <locale.h>
+#include <process.h>
 #include <share.h>
 #include <sys/stat.h>
 
@@ -231,7 +232,7 @@ static BOOL is_lossless_convertion(const char *str)
     return !strcmp(str, buf);
 }
 
-static void test_utf8(void)
+static void test_utf8(const char *argv0)
 {
     const char file[] = "file\xc4\x99\xc5\x9b\xc4\x87.a";
     const char dir[] = "dir\xc4\x99\xc5\x9b\xc4\x87";
@@ -242,9 +243,9 @@ static void test_utf8(void)
     struct _finddata64i32_t fdata64i32;
     struct _finddata32_t fdata32;
     struct _finddata64_t fdata64;
+    intptr_t hfind, hproc;
     WCHAR bufW[256], *pW;
     struct _stat64 stat;
-    intptr_t hfind;
     FILE *f;
     int ret;
 
@@ -454,14 +455,39 @@ static void test_utf8(void)
         ok(!ret, "_putenv returned %d, errno %d\n", ret, errno);
     }
 
+    hproc = _spawnl(_P_NOWAIT, argv0, argv0, "file", "utf8", file, NULL);
+    ok(hproc != -1, "_spawnl returned %Id, errno %d\n", hproc, errno);
+    wait_child_process((HANDLE)hproc);
+    CloseHandle((HANDLE)hproc);
+
     setlocale(LC_ALL, "C");
+}
+
+static void test_utf8_argument(void)
+{
+    const WCHAR *cmdline = GetCommandLineW(), *p;
+
+    p = wcsrchr(cmdline, ' ');
+    ok(!!p, "cmdline = %s\n", debugstr_w(cmdline));
+    todo_wine_if(GetACP() != CP_UTF8)
+        ok(!wcscmp(p + 1, L"file\x0119\x015b\x0107.a"), "cmdline = %s\n", debugstr_w(cmdline));
 }
 
 START_TEST(file)
 {
+    int arg_c;
+    char** arg_v;
+
+    arg_c = winetest_get_mainargs(&arg_v);
+    if(arg_c == 4 && !strcmp(arg_v[2], "utf8"))
+    {
+        test_utf8_argument();
+        return;
+    }
+
     test_std_stream_buffering();
     test_iobuf_layout();
     test_std_stream_open();
     test_fopen();
-    test_utf8();
+    test_utf8(arg_v[0]);
 }
