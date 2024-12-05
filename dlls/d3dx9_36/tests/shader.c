@@ -6904,7 +6904,7 @@ static void test_implicit_truncation_warning(void)
     hr = D3DXCompileShader(hlsl, sizeof(hlsl), NULL, NULL, "main", "vs_2_0", 0, &bytecode, &errors, NULL);
     ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
     if (D3DX_SDK_VERSION < 42)
-        todo_wine ok(!errors, "Expected no errors.\n");
+        ok(!errors, "Expected no errors.\n");
     else
         ok(!!errors, "Expected errors.\n");
     if (errors)

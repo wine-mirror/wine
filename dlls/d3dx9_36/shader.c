@@ -431,6 +431,12 @@ HRESULT WINAPI D3DXAssembleShaderFromResourceW(HMODULE module, const WCHAR *reso
                               shader, error_messages);
 }
 
+HRESULT WINAPI vkd3d_D3DCompile2VKD3D(const void *data, SIZE_T data_size, const char *filename,
+        const D3D_SHADER_MACRO *defines, ID3DInclude *include, const char *entrypoint,
+        const char *target, UINT flags, UINT effect_flags, UINT secondary_flags,
+        const void *secondary_data, SIZE_T secondary_data_size, ID3DBlob **shader,
+        ID3DBlob **error_messages, unsigned int compiler_version);
+
 HRESULT WINAPI D3DXCompileShader(const char *data, UINT length, const D3DXMACRO *defines,
         ID3DXInclude *include, const char *function, const char *profile, DWORD flags,
         ID3DXBuffer **shader, ID3DXBuffer **error_msgs, ID3DXConstantTable **constant_table)
@@ -445,8 +451,16 @@ HRESULT WINAPI D3DXCompileShader(const char *data, UINT length, const D3DXMACRO 
     if (D3DX_SDK_VERSION <= 36)
         flags |= D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
 
+#if D3DX_SDK_VERSION < 42
+    if (shader)
+        *shader = NULL;
+
+    hr = vkd3d_D3DCompile2VKD3D(data, length, NULL, (D3D_SHADER_MACRO *)defines, (ID3DInclude *)include,
+            function, profile, flags, 0, 0, NULL, 0, (ID3DBlob **)shader, (ID3DBlob **)error_msgs, D3DX_SDK_VERSION);
+#else
     hr = D3DCompile(data, length, NULL, (D3D_SHADER_MACRO *)defines, (ID3DInclude *)include,
                     function, profile, flags, 0, (ID3DBlob **)shader, (ID3DBlob **)error_msgs);
+#endif
 
     if (SUCCEEDED(hr) && constant_table)
     {
@@ -526,16 +540,8 @@ HRESULT WINAPI D3DXCompileShaderFromFileW(const WCHAR *filename, const D3DXMACRO
         return D3DXERR_INVALIDDATA;
     }
 
-    if (D3DX_SDK_VERSION <= 36)
-        flags |= D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
-
-    hr = D3DCompile(buffer, len, filename_a, (const D3D_SHADER_MACRO *)defines,
-                    (ID3DInclude *)include, entrypoint, profile, flags, 0,
-                    (ID3DBlob **)shader, (ID3DBlob **)error_messages);
-
-    if (SUCCEEDED(hr) && constant_table)
-        hr = D3DXGetShaderConstantTable(ID3DXBuffer_GetBufferPointer(*shader),
-                                        constant_table);
+    hr = D3DXCompileShader(buffer, len, defines, include, entrypoint,
+            profile, flags, shader, error_messages, constant_table);
 
     ID3DXInclude_Close(include, buffer);
     LeaveCriticalSection(&from_file_mutex);
