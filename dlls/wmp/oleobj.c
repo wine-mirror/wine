@@ -157,7 +157,7 @@ static HRESULT activate_inplace(WindowsMediaPlayer *This)
         IOleInPlaceSiteEx_OnInPlaceActivateEx(ipsiteex, &redraw, 0);
         ipsite = (IOleInPlaceSite*)ipsiteex;
     }else {
-        IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSite, (void**)&ipsite);
+        hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSite, (void**)&ipsite);
         if(FAILED(hres)) {
             FIXME("No IOleInPlaceSite instance\n");
             return hres;
