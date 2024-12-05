@@ -3458,7 +3458,6 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         struct d2d_device *device, IUnknown *outer_unknown, const struct d2d_device_context_ops *ops)
 {
     D3D11_SUBRESOURCE_DATA buffer_data;
-    struct d2d_device *device_impl;
     IDWriteFactory *dwrite_factory;
     D3D11_RASTERIZER_DESC rs_desc;
     D3D11_BUFFER_DESC buffer_desc;
@@ -3986,8 +3985,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     render_target->outer_unknown = outer_unknown ? outer_unknown : &render_target->IUnknown_iface;
     render_target->ops = ops;
 
-    device_impl = unsafe_impl_from_ID2D1Device((ID2D1Device1 *)device);
-    if (FAILED(hr = IDXGIDevice_QueryInterface(device_impl->dxgi_device,
+    if (FAILED(hr = IDXGIDevice_QueryInterface(device->dxgi_device,
             &IID_ID3D11Device1, (void **)&render_target->d3d_device)))
     {
         WARN("Failed to query ID3D11Device1 interface, hr %#lx.\n", hr);
