@@ -696,6 +696,7 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.344
 11,,mshtml.dll,1
 11,,msisip.dll,1
 11,,msmpeg2vdec.dll,1
+11,,msvdsp.dll,1
 11,,msvproc.dll,1
 11,,qcap.dll,1
 11,,qedit.dll,1

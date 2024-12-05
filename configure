@@ -1325,6 +1325,7 @@ enable_msvcrt
 enable_msvcrt20
 enable_msvcrt40
 enable_msvcrtd
+enable_msvdsp
 enable_msvfw32
 enable_msvidc32
 enable_msvproc
@@ -22846,6 +22847,7 @@ wine_fn_config_makefile dlls/msvcrt20 enable_msvcrt20
 wine_fn_config_makefile dlls/msvcrt40 enable_msvcrt40
 wine_fn_config_makefile dlls/msvcrtd enable_msvcrtd
 wine_fn_config_makefile dlls/msvcrtd/tests enable_tests
+wine_fn_config_makefile dlls/msvdsp enable_msvdsp
 wine_fn_config_makefile dlls/msvfw32 enable_msvfw32
 wine_fn_config_makefile dlls/msvfw32/tests enable_tests
 wine_fn_config_makefile dlls/msvidc32 enable_msvidc32
