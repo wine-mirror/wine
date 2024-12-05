@@ -828,6 +828,15 @@ typedef struct tagDBTIMESTAMP {
 	ULONG fraction;
 } DBTIMESTAMP;
 
+typedef signed char SBYTE;
+
+typedef struct tagDB_VARNUMERIC {
+	BYTE  precision;
+	SBYTE scale;
+	BYTE  sign;
+	BYTE  val[];
+} DB_VARNUMERIC;
+
 typedef DWORD DBREASON;
 typedef DWORD DBEVENTPHASE;
 
