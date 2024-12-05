@@ -444,7 +444,7 @@ static struct list pp_includelogiclist = LIST_INIT( pp_includelogiclist );
 <pp_def>{cident}		ppy_lval.cptr = xstrdup(ppy_text); yy_pp_state(pp_define); return tDEFINE;
 <pp_def>{ws}+			;
 <pp_def>\\\r?\n			newline(0);
-<pp_def>(\\\r?)|(\n)|(.)	perror("Identifier expected");
+<pp_def>(\\\r?)|(\n)|(.)	ppy_error("Identifier expected");
 
 	/*
 	 * Scan the substitution of a define
