@@ -268,9 +268,14 @@ static dispex_prop_t *lookup_dispex_prop(jsdisp_t *obj, unsigned hash, const WCH
     return NULL;
 }
 
-static HRESULT update_external_prop(jsdisp_t *obj, dispex_prop_t *prop, const struct property_info *desc)
+static HRESULT update_external_prop(jsdisp_t *obj, const WCHAR *name, dispex_prop_t *prop, const struct property_info *desc, dispex_prop_t **ret)
 {
     HRESULT hres;
+
+    if(desc->name)
+        name = desc->name;
+    if(!prop && !(prop = alloc_prop(obj, name, PROP_DELETED, 0)))
+        return E_OUTOFMEMORY;
 
     if(!desc->iid) {
         prop->type = PROP_EXTERN;
@@ -305,6 +310,7 @@ static HRESULT update_external_prop(jsdisp_t *obj, dispex_prop_t *prop, const st
     }
 
     prop->flags = desc->flags & PROPF_ALL;
+    *ret = prop;
     return S_OK;
 }
 
@@ -327,12 +333,8 @@ static HRESULT find_external_prop(jsdisp_t *This, const WCHAR *name, BOOL case_i
                     return S_OK;
                 }
             }
-            if(!prop && !(prop = alloc_prop(This, desc.name ? desc.name : name, PROP_DELETED, 0)))
-                return E_OUTOFMEMORY;
 
-            hres = update_external_prop(This, prop, &desc);
-            *ret = prop;
-            return hres;
+            return update_external_prop(This, name, prop, &desc, ret);
         }else if(prop && prop->type == PROP_EXTERN) {
             prop->type = PROP_DELETED;
         }
@@ -456,13 +458,8 @@ static HRESULT ensure_prop_name(jsdisp_t *This, const WCHAR *name, DWORD create_
         if(This->builtin_info->lookup_prop) {
             struct property_info desc;
             hres = This->builtin_info->lookup_prop(This, name, fdexNameEnsure, &desc);
-            if(hres == S_OK) {
-                hres = update_external_prop(This, prop, &desc);
-                if(FAILED(hres))
-                    return hres;
-                *ret = prop;
-                return S_OK;
-            }
+            if(hres == S_OK)
+                return update_external_prop(This, name, prop, &desc, ret);
         }
 
         hres = S_OK;
@@ -765,10 +762,7 @@ static HRESULT fill_props(jsdisp_t *obj)
 
             prop = lookup_dispex_prop(obj, string_hash(desc.name), desc.name, FALSE);
             if(!prop) {
-                prop = alloc_prop(obj, desc.name, PROP_DELETED, 0);
-                if(!prop)
-                    return E_OUTOFMEMORY;
-                hres = update_external_prop(obj, prop, &desc);
+                hres = update_external_prop(obj, desc.name, NULL, &desc, &prop);
                 if(FAILED(hres))
                     return hres;
             }
