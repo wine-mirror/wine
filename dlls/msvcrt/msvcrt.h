@@ -412,14 +412,19 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 
 #define INHERIT_THREAD_PRIORITY 0xF000
 
+static inline UINT get_aw_cp(void)
+{
+    return CP_ACP;
+}
+
 static inline int convert_acp_utf8_to_wcs(const char *str, wchar_t *wstr, int len)
 {
-    return MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, str, -1, wstr, len);
+    return MultiByteToWideChar(get_aw_cp(), MB_PRECOMPOSED, str, -1, wstr, len);
 }
 
 static inline int convert_wcs_to_acp_utf8(const wchar_t *wstr, char *str, int len)
 {
-    return WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, len, NULL, NULL);
+    return WideCharToMultiByte(get_aw_cp(), 0, wstr, -1, str, len, NULL, NULL);
 }
 
 static inline wchar_t* wstrdupa_utf8(const char *str)

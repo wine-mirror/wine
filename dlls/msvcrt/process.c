@@ -228,10 +228,10 @@ static wchar_t* msvcrt_argvtos(const wchar_t* const* arg, wchar_t delim)
   return ret;
 }
 
-/* INTERNAL: Convert ansi argv list to a single 'delim'-separated wide string, with an
- * extra '\0' to terminate it.
+/* INTERNAL: Convert ansi argv list to a single wide string, use ' ' or '\0'
+ * as separator depending on env argument.
  */
-static wchar_t *msvcrt_argvtos_aw(const char * const *arg, wchar_t delim)
+static wchar_t *msvcrt_argvtos_aw(const char * const *arg, BOOL env)
 {
   const char * const *a;
   unsigned int len;
@@ -248,7 +248,7 @@ static wchar_t *msvcrt_argvtos_aw(const char * const *arg, wchar_t delim)
   len = 0;
   while (*a)
   {
-    len += MultiByteToWideChar(CP_ACP, 0, *a, -1, NULL, 0);
+    len += MultiByteToWideChar(get_aw_cp(), 0, *a, -1, NULL, 0);
     a++;
   }
 
@@ -261,11 +261,11 @@ static wchar_t *msvcrt_argvtos_aw(const char * const *arg, wchar_t delim)
   p = ret;
   while (*a)
   {
-    p += MultiByteToWideChar(CP_ACP, 0, *a, strlen(*a), p, len - (p - ret));
-    *p++ = delim;
+    p += MultiByteToWideChar(get_aw_cp(), 0, *a, strlen(*a), p, len - (p - ret));
+    *p++ = env ? 0 : ' ';
     a++;
   }
-  if (delim && p > ret) p[-1] = 0;
+  if (!env && p > ret) p[-1] = 0;
   else *p = 0;
   return ret;
 }
@@ -469,7 +469,7 @@ intptr_t WINAPIV _execle(const char* name, const char* arg0, ...)
   const char * const *envp;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -478,7 +478,7 @@ intptr_t WINAPIV _execle(const char* name, const char* arg0, ...)
   va_start(ap, arg0);
   while (va_arg( ap, char * ) != NULL) /*nothing*/;
   envp = va_arg( ap, const char * const * );
-  if (envp) envs = msvcrt_argvtos_aw(envp, 0);
+  if (envp) envs = msvcrt_argvtos_aw(envp, TRUE);
   va_end(ap);
 
   ret = msvcrt_spawn(_P_OVERLAY, nameW, args, envs, 0);
@@ -583,7 +583,7 @@ intptr_t WINAPIV _execlpe(const char* name, const char* arg0, ...)
   va_start(ap, arg0);
   while (va_arg( ap, char * ) != NULL) /*nothing*/;
   envp = va_arg( ap, const char * const * );
-  if (envp) envs = msvcrt_argvtos_aw(envp, 0);
+  if (envp) envs = msvcrt_argvtos_aw(envp, TRUE);
   va_end(ap);
 
   ret = msvcrt_spawn(_P_OVERLAY, nameW, args, envs, 1);
@@ -772,7 +772,7 @@ intptr_t WINAPIV _spawnle(int flags, const char* name, const char* arg0, ...)
   va_start(ap, arg0);
   while (va_arg( ap, char * ) != NULL) /*nothing*/;
   envp = va_arg( ap, const char * const * );
-  if (envp) envs = msvcrt_argvtos_aw(envp, 0);
+  if (envp) envs = msvcrt_argvtos_aw(envp, TRUE);
   va_end(ap);
 
   ret = msvcrt_spawn(flags, nameW, args, envs, 0);
@@ -877,7 +877,7 @@ intptr_t WINAPIV _spawnlpe(int flags, const char* name, const char* arg0, ...)
   va_start(ap, arg0);
   while (va_arg( ap, char * ) != NULL) /*nothing*/;
   envp = va_arg( ap, const char * const * );
-  if (envp) envs = msvcrt_argvtos_aw(envp, 0);
+  if (envp) envs = msvcrt_argvtos_aw(envp, TRUE);
   va_end(ap);
 
   ret = msvcrt_spawn(flags, nameW, args, envs, 1);
@@ -902,8 +902,8 @@ intptr_t CDECL _spawnve(int flags, const char* name, const char* const* argv,
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
-  args = msvcrt_argvtos_aw(argv, ' ');
-  envs = msvcrt_argvtos_aw(envv, 0);
+  args = msvcrt_argvtos_aw(argv, FALSE);
+  envs = msvcrt_argvtos_aw(envv, TRUE);
 
   ret = msvcrt_spawn(flags, nameW, args, envs, 0);
 
@@ -969,8 +969,8 @@ intptr_t CDECL _spawnvpe(int flags, const char* name, const char* const* argv,
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
-  args = msvcrt_argvtos_aw(argv, ' ');
-  envs = msvcrt_argvtos_aw(envv, 0);
+  args = msvcrt_argvtos_aw(argv, FALSE);
+  envs = msvcrt_argvtos_aw(envv, TRUE);
 
   ret = msvcrt_spawn(flags, nameW, args, envs, 1);
 
