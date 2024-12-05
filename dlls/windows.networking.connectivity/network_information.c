@@ -250,13 +250,13 @@ static HRESULT WINAPI connection_profile_get_NetworkAdapter( IConnectionProfile 
 
 static HRESULT WINAPI connection_profile_GetLocalUsage( IConnectionProfile *iface, DateTime start, DateTime end, IDataUsage **value )
 {
-    FIXME( "iface %p, start %llu, end %llu, value %p stub!\n", iface, start.UniversalTime, end.UniversalTime, value );
+    FIXME( "iface %p, start %I64d, end %I64d, value %p stub!\n", iface, start.UniversalTime, end.UniversalTime, value );
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI connection_profile_GetLocalUsagePerRoamingStates( IConnectionProfile *iface, DateTime start, DateTime end, RoamingStates states, IDataUsage **value )
 {
-    FIXME( "iface %p, start %llu, end %llu, states %u, value %p stub!\n", iface, start.UniversalTime, end.UniversalTime, states, value );
+    FIXME( "iface %p, start %I64d, end %I64d, states %u, value %p stub!\n", iface, start.UniversalTime, end.UniversalTime, states, value );
     return E_NOTIMPL;
 }
 
