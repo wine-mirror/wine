@@ -306,7 +306,6 @@ extern void output_function_header( const char *func, int global );
 extern void output_function_size( const char *name );
 extern void output_gnu_stack_note(void);
 
-extern void add_import_dll( const char *name, const char *filename );
 extern void add_delayed_import( const char *name );
 extern void add_extra_ld_symbol( const char *name );
 extern void add_spec_extra_ld_symbol( const char *name );
@@ -383,7 +382,6 @@ extern char *spec_file_name;
 extern FILE *output_file;
 extern const char *output_file_name;
 
-extern struct strarray lib_path;
 extern struct strarray tools_path;
 extern struct strarray as_command;
 extern struct strarray cc_command;

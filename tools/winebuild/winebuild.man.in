@@ -167,15 +167,6 @@ application supports address spaces larger than 2 gigabytes.
 Specify the command to use to link the object files; the default is
 \fBld\fR.
 .TP
-.BI \-L,\ --library-path= directory
-Append the specified directory to the list of directories that are
-searched for import libraries.
-.TP
-.BI \-l,\ --library= name
-Import the specified library, looking for a corresponding
-\fIlibname.def\fR file in the directories specified with the \fB-L\fR
-option.
-.TP
 .B \-m16, -m32, -m64
 Generate respectively 16-bit, 32-bit or 64-bit code.
 .TP
