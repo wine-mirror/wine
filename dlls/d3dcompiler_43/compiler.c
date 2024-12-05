@@ -188,18 +188,15 @@ static const char *get_line(const char **ptr)
     return p;
 }
 
+HRESULT WINAPI vkd3d_D3DPreprocess(const void *data, SIZE_T size, const char *filename,
+        const D3D_SHADER_MACRO *macros, ID3DInclude *include,
+        ID3DBlob **preprocessed_blob, ID3DBlob **messages_blob);
+
 static HRESULT preprocess_shader(const void *data, SIZE_T data_size, const char *filename,
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, ID3DBlob **shader_blob,
         ID3DBlob **messages_blob)
 {
     struct d3dcompiler_include_from_file include_from_file;
-    struct vkd3d_shader_preprocess_info preprocess_info;
-    struct vkd3d_shader_compile_info compile_info;
-    const D3D_SHADER_MACRO *def = defines;
-    struct vkd3d_shader_code byte_code;
-    char *messages;
-    HRESULT hr;
-    int ret;
 
     if (include == D3D_COMPILE_STANDARD_FILE_INCLUDE)
     {
@@ -208,78 +205,7 @@ static HRESULT preprocess_shader(const void *data, SIZE_T data_size, const char 
         include = &include_from_file.ID3DInclude_iface;
     }
 
-    compile_info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
-    compile_info.next = &preprocess_info;
-    compile_info.source.code = data;
-    compile_info.source.size = data_size;
-    compile_info.source_type = VKD3D_SHADER_SOURCE_HLSL;
-    compile_info.target_type = VKD3D_SHADER_TARGET_NONE;
-    compile_info.options = NULL;
-    compile_info.option_count = 0;
-    compile_info.log_level = VKD3D_SHADER_LOG_INFO;
-    compile_info.source_name = filename;
-
-    preprocess_info.type = VKD3D_SHADER_STRUCTURE_TYPE_PREPROCESS_INFO;
-    preprocess_info.next = NULL;
-    preprocess_info.macros = (const struct vkd3d_shader_macro *)defines;
-    preprocess_info.macro_count = 0;
-    if (defines)
-    {
-        for (def = defines; def->Name; ++def)
-            ++preprocess_info.macro_count;
-    }
-    preprocess_info.pfn_open_include = open_include;
-    preprocess_info.pfn_close_include = close_include;
-    preprocess_info.include_context = include;
-
-    ret = vkd3d_shader_preprocess(&compile_info, &byte_code, &messages);
-
-    if (ret)
-        ERR("Failed to preprocess shader, vkd3d result %d.\n", ret);
-
-    if (messages)
-    {
-        if (*messages && ERR_ON(d3dcompiler))
-        {
-            const char *ptr = messages;
-            const char *line;
-
-            ERR("Shader log:\n");
-            while ((line = get_line(&ptr)))
-            {
-                ERR("    %.*s", (int)(ptr - line), line);
-            }
-            ERR("\n");
-        }
-
-        if (messages_blob)
-        {
-            size_t size = strlen(messages);
-            if (FAILED(hr = D3DCreateBlob(size, messages_blob)))
-            {
-                vkd3d_shader_free_messages(messages);
-                vkd3d_shader_free_shader_code(&byte_code);
-                return hr;
-            }
-            memcpy(ID3D10Blob_GetBufferPointer(*messages_blob), messages, size);
-        }
-        else
-        {
-            vkd3d_shader_free_messages(messages);
-        }
-    }
-
-    if (!ret)
-    {
-        if (FAILED(hr = D3DCreateBlob(byte_code.size, shader_blob)))
-        {
-            vkd3d_shader_free_shader_code(&byte_code);
-            return hr;
-        }
-        memcpy(ID3D10Blob_GetBufferPointer(*shader_blob), byte_code.code, byte_code.size);
-    }
-
-    return hresult_from_vkd3d_result(ret);
+    return vkd3d_D3DPreprocess(data, data_size, filename, defines, include, shader_blob, messages_blob);
 }
 
 static HRESULT assemble_shader(const char *preproc_shader, ID3DBlob **shader_blob, ID3DBlob **error_messages)
@@ -377,7 +303,6 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
     if (flags) FIXME("flags %x\n", flags);
 
     if (shader) *shader = NULL;
-    if (error_messages) *error_messages = NULL;
 
     hr = preprocess_shader(data, datasize, filename, defines, include, &preproc_shader, error_messages);
     if (SUCCEEDED(hr))
@@ -656,11 +581,10 @@ HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename
     TRACE("data %p, size %Iu, filename %s, defines %p, include %p, shader %p, error_messages %p.\n",
           data, size, debugstr_a(filename), defines, include, shader, error_messages);
 
-    if (!data)
+    if (!data || !shader)
         return E_INVALIDARG;
 
-    if (shader) *shader = NULL;
-    if (error_messages) *error_messages = NULL;
+    *shader = NULL;
 
     return preprocess_shader(data, size, filename, defines, include, shader, error_messages);
 }

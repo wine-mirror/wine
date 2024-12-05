@@ -339,6 +339,8 @@
 @ cdecl wined3d_vertex_declaration_get_parent(ptr)
 @ cdecl wined3d_vertex_declaration_incref(ptr)
 
+@ stdcall vkd3d_D3DPreprocess(ptr long ptr ptr ptr ptr ptr) D3DPreprocess
+
 @ cdecl vkd3d_acquire_vk_queue(ptr)
 @ cdecl vkd3d_create_device(ptr ptr ptr)
 @ cdecl vkd3d_create_image_resource(ptr ptr ptr)
