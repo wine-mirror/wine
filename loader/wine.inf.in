@@ -702,6 +702,7 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.344
 11,,qedit.dll,1
 11,,resampledmo.dll,1
 11,,urlmon.dll,1
+11,,vidreszr.dll,1
 11,,windowscodecs.dll,1
 11,,winegstreamer.dll,1
 55,,wineps.drv,1
