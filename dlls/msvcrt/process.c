@@ -417,7 +417,7 @@ intptr_t WINAPIV _execl(const char* name, const char* arg0, ...)
   wchar_t *nameW, *args;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -522,7 +522,7 @@ intptr_t WINAPIV _execlp(const char* name, const char* arg0, ...)
   wchar_t *nameW, *args;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -574,7 +574,7 @@ intptr_t WINAPIV _execlpe(const char* name, const char* arg0, ...)
   const char * const *envp;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -763,7 +763,7 @@ intptr_t WINAPIV _spawnle(int flags, const char* name, const char* arg0, ...)
   const char * const *envp;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -816,7 +816,7 @@ intptr_t WINAPIV _spawnlp(int flags, const char* name, const char* arg0, ...)
   wchar_t *nameW, *args;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -868,7 +868,7 @@ intptr_t WINAPIV _spawnlpe(int flags, const char* name, const char* arg0, ...)
   const char * const *envp;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   va_start(ap, arg0);
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
@@ -900,7 +900,7 @@ intptr_t CDECL _spawnve(int flags, const char* name, const char* const* argv,
   wchar_t *nameW, *args, *envs;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   args = msvcrt_argvtos_aw(argv, FALSE);
   envs = msvcrt_argvtos_aw(envv, TRUE);
@@ -967,7 +967,7 @@ intptr_t CDECL _spawnvpe(int flags, const char* name, const char* const* argv,
   wchar_t *nameW, *args, *envs;
   intptr_t ret;
 
-  if (!(nameW = msvcrt_wstrdupa(name))) return -1;
+  if (!(nameW = wstrdupa_utf8(name))) return -1;
 
   args = msvcrt_argvtos_aw(argv, FALSE);
   envs = msvcrt_argvtos_aw(envv, TRUE);
@@ -1189,7 +1189,7 @@ FILE* CDECL _popen(const char* command, const char* mode)
   if (!command || !mode)
     return NULL;
 
-  if (!(cmdW = msvcrt_wstrdupa(command))) return NULL;
+  if (!(cmdW = wstrdupa_utf8(command))) return NULL;
   if (!(modeW = msvcrt_wstrdupa(mode)))
   {
     free(cmdW);
@@ -1298,7 +1298,7 @@ int CDECL system(const char* cmd)
   if (cmd == NULL)
     return _wsystem(NULL);
 
-  if ((cmdW = msvcrt_wstrdupa(cmd)))
+  if ((cmdW = wstrdupa_utf8(cmd)))
   {
     res = _wsystem(cmdW);
     free(cmdW);
