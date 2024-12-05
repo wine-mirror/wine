@@ -45,6 +45,7 @@ int64_t unix_seek_callback( void *opaque, int64_t offset, int whence )
     if (whence == AVSEEK_SIZE) return context->length;
     if (whence == SEEK_END) offset += context->length;
     if (whence == SEEK_CUR) offset += context->position;
+    if ((UINT64)offset > context->length) offset = context->length;
 
     params.offset = offset;
     status = KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
