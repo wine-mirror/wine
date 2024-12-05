@@ -53,6 +53,7 @@ typedef struct _iobuf
 #endif
 
 #include <errno.h>
+#include <locale.h>
 #include <stdarg.h>
 #include <stdint.h>
 #define _NO_CRT_STDIO_INLINE
@@ -414,6 +415,9 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 
 static inline UINT get_aw_cp(void)
 {
+#if _MSVCR_VER>=140
+    if (___lc_codepage_func() == CP_UTF8) return CP_UTF8;
+#endif
     return CP_ACP;
 }
 

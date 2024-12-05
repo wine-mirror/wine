@@ -181,14 +181,13 @@ static void test_fopen(void)
     static const struct {
         const char *loc;
         const char *path;
-        int is_todo;
     } tests[] = {
-        { "German.utf8",    "t\xc3\xa4\xc3\x8f\xc3\xb6\xc3\x9f.txt", TRUE },
-        { "Polish.utf8",    "t\xc4\x99\xc5\x9b\xc4\x87.txt", TRUE },
-        { "Turkish.utf8",   "t\xc3\x87\xc4\x9e\xc4\xb1\xc4\xb0\xc5\x9e.txt", TRUE },
-        { "Arabic.utf8",    "t\xd8\xaa\xda\x86.txt", TRUE },
-        { "Japanese.utf8",  "t\xe3\x82\xaf\xe3\x83\xa4.txt", TRUE },
-        { "Chinese.utf8",   "t\xe4\xb8\x82\xe9\xbd\xab.txt", TRUE },
+        { "German.utf8",    "t\xc3\xa4\xc3\x8f\xc3\xb6\xc3\x9f.txt" },
+        { "Polish.utf8",    "t\xc4\x99\xc5\x9b\xc4\x87.txt" },
+        { "Turkish.utf8",   "t\xc3\x87\xc4\x9e\xc4\xb1\xc4\xb0\xc5\x9e.txt" },
+        { "Arabic.utf8",    "t\xd8\xaa\xda\x86.txt" },
+        { "Japanese.utf8",  "t\xe3\x82\xaf\xe3\x83\xa4.txt" },
+        { "Chinese.utf8",   "t\xe4\xb8\x82\xe9\xbd\xab.txt" },
         { "Japanese",       "t\xb8\xd5.txt" },
 
     };
@@ -209,7 +208,6 @@ static void test_fopen(void)
         fclose(f);
 
         f = _wfsopen(wpath, L"r", SH_DENYNO);
-        todo_wine_if(tests[i].is_todo && GetACP() != CP_UTF8)
         ok(!!f, "failed to open %s with locale %s\n",
                 debugstr_a(tests[i].path), tests[i].loc);
         if(f) fclose(f);
@@ -218,18 +216,6 @@ static void test_fopen(void)
                 tests[i].path, tests[i].loc);
     }
     setlocale(LC_ALL, "C");
-}
-
-static BOOL is_lossless_convertion(const char *str)
-{
-    wchar_t bufW[32];
-    char buf[32];
-
-    if (!MultiByteToWideChar(CP_ACP, 0, str, -1, bufW, ARRAY_SIZE(bufW)))
-        return FALSE;
-    if (!WideCharToMultiByte(CP_ACP, 0, bufW, -1, buf, ARRAY_SIZE(buf), NULL, NULL))
-        return FALSE;
-    return !strcmp(str, buf);
 }
 
 static void test_utf8(const char *argv0)
@@ -270,22 +256,19 @@ static void test_utf8(const char *argv0)
     ok(p == buf, "_getcwd returned %p, errno %d\n", p, errno);
     p = strrchr(p, '\\');
     ok(!!p, "strrchr returned NULL, buf = %s\n", debugstr_a(buf));
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
+    ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
 
     p = _getdcwd(_getdrive(), buf, sizeof(buf));
     ok(p == buf, "_getdcwd returned %p, errno %d\n", p, errno);
     p = strrchr(p, '\\');
     ok(!!p, "strrchr returned NULL, buf = %s\n", debugstr_a(buf));
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
+    ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
 
     p = _fullpath(buf, NULL, sizeof(buf));
     ok(p == buf, "_fulpath returned %p, errno %d\n", p, errno);
     p = strrchr(p, '\\');
     ok(!!p, "strrchr returned NULL, buf = %s\n", debugstr_a(buf));
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
+    ok(!strcmp(p + 1, dir), "unexpected working directory: %s\n", debugstr_a(buf));
 
     f = fopen(file, "w");
     ok(!!f, "fopen returned %d, error %d\n", ret, errno);
@@ -328,14 +311,12 @@ static void test_utf8(const char *argv0)
     fdata32.name[0] = 'x';
     hfind = _findfirst32(buf, &fdata32);
     ok(hfind != -1, "_findfirst32 returned %Id, errno %d\n", hfind, errno);
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!memcmp(file, fdata32.name, sizeof(file) - 1), "fdata32.name = %s\n", debugstr_a(fdata32.name));
+    ok(!memcmp(file, fdata32.name, sizeof(file) - 1), "fdata32.name = %s\n", debugstr_a(fdata32.name));
 
     fdata32.name[0] = 'x';
     ret = _findnext32(hfind, &fdata32);
     ok(!ret, "_findnext32 returned %d, errno %d\n", ret, errno);
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!memcmp(file, fdata32.name, sizeof(file) - 1), "fdata32.name = %s\n", debugstr_a(fdata32.name));
+    ok(!memcmp(file, fdata32.name, sizeof(file) - 1), "fdata32.name = %s\n", debugstr_a(fdata32.name));
     ret = _findclose(hfind);
     ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
 
@@ -345,14 +326,12 @@ static void test_utf8(const char *argv0)
     fdata64.name[0] = 'x';
     hfind = _findfirst64(buf, &fdata64);
     ok(hfind != -1, "_findfirst64 returned %Id, errno %d\n", hfind, errno);
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!memcmp(file, fdata64.name, sizeof(file) - 1), "fdata64.name = %s\n", debugstr_a(fdata64.name));
+    ok(!memcmp(file, fdata64.name, sizeof(file) - 1), "fdata64.name = %s\n", debugstr_a(fdata64.name));
 
     fdata64.name[0] = 'x';
     ret = _findnext64(hfind, &fdata64);
     ok(!ret, "_findnext64 returned %d, errno %d\n", ret, errno);
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!memcmp(file, fdata64.name, sizeof(file) - 1), "fdata64.name = %s\n", debugstr_a(fdata64.name));
+    ok(!memcmp(file, fdata64.name, sizeof(file) - 1), "fdata64.name = %s\n", debugstr_a(fdata64.name));
     ret = _findclose(hfind);
     ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
 
@@ -361,14 +340,12 @@ static void test_utf8(const char *argv0)
     fdata64i32.name[0] = 'x';
     hfind = _findfirst64i32(buf, &fdata64i32);
     ok(hfind != -1, "_findfirst64i32 returned %Id, errno %d\n", hfind, errno);
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!memcmp(file, fdata64i32.name, sizeof(file) - 1), "fdata64i32.name = %s\n", debugstr_a(fdata64i32.name));
+    ok(!memcmp(file, fdata64i32.name, sizeof(file) - 1), "fdata64i32.name = %s\n", debugstr_a(fdata64i32.name));
 
     fdata64i32.name[0] = 'x';
     ret = _findnext64i32(hfind, &fdata64i32);
     ok(!ret, "_findnext64i32 returned %d, errno %d\n", ret, errno);
-    todo_wine_if(!is_lossless_convertion(dir))
-        ok(!memcmp(file, fdata64i32.name, sizeof(file) - 1), "fdata64i32.name = %s\n", debugstr_a(fdata64i32.name));
+    ok(!memcmp(file, fdata64i32.name, sizeof(file) - 1), "fdata64i32.name = %s\n", debugstr_a(fdata64i32.name));
     ret = _findclose(hfind);
     ok(!ret, "_findclose returned %d, errno %d\n", ret, errno);
 
@@ -379,27 +356,16 @@ static void test_utf8(const char *argv0)
     _searchenv(file, "env", buf);
     p = strrchr(buf, '\\');
     ok(!!p, "buf = %s\n", debugstr_a(buf));
-    todo_wine_if(!is_lossless_convertion(file))
-        ok(!strcmp(p + 1, file), "buf = %s\n", debugstr_a(buf));
+    ok(!strcmp(p + 1, file), "buf = %s\n", debugstr_a(buf));
 
     ret = _wunlink(fileW);
-    todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wunlink returned %d, errno %d\n", ret, errno);
-    if (ret)
-    {
-        ret = _unlink(file);
-        ok(!ret, "_unlink returned %d, errno %d\n", ret, errno);
-    }
+    ok(!ret, "_wunlink returned %d, errno %d\n", ret, errno);
 
     ret = _chdir("..");
     ok(!ret, "_chdir returned %d, error %d\n", ret, errno);
 
     ret = _wrmdir(dirW);
-    todo_wine_if(GetACP() != CP_UTF8) ok(!ret, "_wrmdir returned %d, errno %d\n", ret, errno);
-    if (ret)
-    {
-        ret = _rmdir(dir);
-        ok(!ret, "_rmdir returned %d, errno %d\n", ret, errno);
-    }
+    ok(!ret, "_wrmdir returned %d, errno %d\n", ret, errno);
 
     p = _tempnam(NULL, file);
     ok(!!p, "_tempnam returned NULL, error %d\n", errno);
@@ -469,8 +435,7 @@ static void test_utf8_argument(void)
 
     p = wcsrchr(cmdline, ' ');
     ok(!!p, "cmdline = %s\n", debugstr_w(cmdline));
-    todo_wine_if(GetACP() != CP_UTF8)
-        ok(!wcscmp(p + 1, L"file\x0119\x015b\x0107.a"), "cmdline = %s\n", debugstr_w(cmdline));
+    ok(!wcscmp(p + 1, L"file\x0119\x015b\x0107.a"), "cmdline = %s\n", debugstr_w(cmdline));
 }
 
 START_TEST(file)
