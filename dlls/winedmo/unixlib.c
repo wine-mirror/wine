@@ -63,7 +63,7 @@ int unix_read_callback( void *opaque, uint8_t *buffer, int size )
 
     TRACE( "opaque %p, buffer %p, size %#x\n", opaque, buffer, size );
 
-    if (!size) return AVERROR_EOF;
+    if (!(size = min( (UINT64)size, context->length - context->position ))) return AVERROR_EOF;
 
     do
     {
