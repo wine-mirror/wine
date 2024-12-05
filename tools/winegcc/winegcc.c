@@ -952,7 +952,7 @@ static void add_library( struct options *opts, struct strarray lib_dirs,
 /* run winebuild to generate the .spec.o file */
 static void build_spec_obj( struct options *opts, const char *spec_file, const char *output_file,
                             const char *target, struct strarray files, struct strarray resources,
-                            struct strarray lib_dirs, const char *entry_point, struct strarray *spec_objs )
+                            const char *entry_point, struct strarray *spec_objs )
 {
     unsigned int i;
     int is_pe = is_pe_target( opts );
@@ -1019,9 +1019,6 @@ static void build_spec_obj( struct options *opts, const char *spec_file, const c
         strarray_add(&spec_args, "--subsystem");
         strarray_add(&spec_args, opts->subsystem);
     }
-
-    for (i = 0; i < lib_dirs.count; i++)
-	strarray_add(&spec_args, strmake("-L%s", lib_dirs.str[i]));
 
     if (!is_pe)
     {
@@ -1144,7 +1141,6 @@ static void build(struct options* opts)
 	{
 	    switch(get_file_type(file))
 	    {
-		case file_def:
 		case file_spec:
 		    if (spec_file)
 			error("Only one spec file can be specified\n");
@@ -1237,14 +1233,14 @@ static void build(struct options* opts)
     for (i = 0; i < files.count; i++)
 	if (files.str[i][1] == 'r') strarray_add( &resources, files.str[i] );
 
-    build_spec_obj( opts, spec_file, output_file, opts->target_alias, files, resources, lib_dirs,
+    build_spec_obj( opts, spec_file, output_file, opts->target_alias, files, resources,
                     entry_point, &spec_objs );
     if (opts->native_arch)
     {
         const char *suffix = strchr( opts->target_alias, '-' );
         if (!suffix) suffix = "";
         build_spec_obj( opts, spec_file, output_file, strmake( "%s%s", opts->native_arch, suffix ),
-                        files, empty_strarray, lib_dirs, entry_point, &spec_objs );
+                        files, empty_strarray, entry_point, &spec_objs );
     }
 
     if (opts->fake_module) return;  /* nothing else to do */

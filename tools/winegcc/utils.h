@@ -36,7 +36,7 @@ void DECLSPEC_NORETURN error(const char* s, ...);
 
 typedef enum { 
     file_na, file_other, file_obj, file_res, file_rc, 
-    file_arh, file_dll, file_so, file_def, file_spec
+    file_arh, file_dll, file_so, file_spec
 } file_type;
 
 void create_file(const char* name, int mode, const char* fmt, ...);
