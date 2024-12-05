@@ -101,6 +101,30 @@ static inline int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 #define __WALL 0
 #endif
 
+static const char *get_signal_name( int sig )
+{
+    static char buffer[20];
+    switch (sig)
+    {
+#define X(x) case x: return #x
+    X(SIGABRT);
+    X(SIGBUS);
+    X(SIGFPE);
+    X(SIGILL);
+    X(SIGINT);
+    X(SIGQUIT);
+    X(SIGSEGV);
+    X(SIGSTOP);
+    X(SIGTRAP);
+    X(SIGUSR1);
+    X(SIGUSR2);
+#undef X
+    default:
+        sprintf( buffer, "signal=%d", sig );
+        return buffer;
+    }
+}
+
 /* handle a status returned by waitpid */
 static int handle_child_status( struct thread *thread, int pid, int status, int want_sig )
 {
@@ -108,7 +132,7 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
     {
         int sig = WSTOPSIG(status);
         if (debug_level && thread)
-            fprintf( stderr, "%04x: *signal* signal=%d\n", thread->id, sig );
+            fprintf( stderr, "%04x: *signal* %s\n", thread->id, get_signal_name( sig ));
         if (sig != want_sig)
         {
             /* ignore other signals for now */
@@ -123,8 +147,8 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
         if (debug_level)
         {
             if (WIFSIGNALED(status))
-                fprintf( stderr, "%04x: *exited* signal=%d\n",
-                         thread->id, WTERMSIG(status) );
+                fprintf( stderr, "%04x: *exited* %s\n",
+                         thread->id, get_signal_name( WTERMSIG(status) ));
             else
                 fprintf( stderr, "%04x: *exited* status=%d\n",
                          thread->id, WEXITSTATUS(status) );
@@ -251,7 +275,7 @@ int send_thread_signal( struct thread *thread, int sig )
         }
     }
     if (debug_level && ret != -1)
-        fprintf( stderr, "%04x: *sent signal* signal=%d\n", thread->id, sig );
+        fprintf( stderr, "%04x: *sent signal* %s\n", thread->id, get_signal_name( sig ));
     return (ret != -1);
 }
 
