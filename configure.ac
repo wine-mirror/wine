@@ -1997,7 +1997,8 @@ int a(int b, ...) { __builtin_ms_va_list list; __builtin_ms_va_start(list,b); }]
   then
       WINE_TRY_CFLAGS([-Werror])
   fi
-  test "x$enable_build_id" != xyes || WINE_TRY_CFLAGS([-Wl,--build-id], [LDFLAGS="$LDFLAGS -Wl,--build-id"])
+
+  AS_VAR_IF([enable_build_id],[yes],[WINE_TRY_CFLAGS([-Wl,--build-id],[LDFLAGS="$LDFLAGS -Wl,--build-id"])])
 fi
 
 dnl **** Disable Fortify, it has too many false positives
