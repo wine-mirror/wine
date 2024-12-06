@@ -195,7 +195,7 @@ ULONG WINAPI HttpCreateHttpHandle(HANDLE *handle, ULONG reserved)
         return ERROR_INVALID_PARAMETER;
 
     attr.ObjectName = &string;
-    return RtlNtStatusToDosError(NtCreateFile(handle, 0, &attr, &iosb, NULL,
+    return RtlNtStatusToDosError(NtCreateFile(handle, SYNCHRONIZE, &attr, &iosb, NULL,
             FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0));
 }
 
@@ -843,7 +843,7 @@ ULONG WINAPI HttpCreateRequestQueue(HTTPAPI_VERSION version, const WCHAR *name,
     if (sa && sa->bInheritHandle)
         attr.Attributes |= OBJ_INHERIT;
     attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
-    return RtlNtStatusToDosError(NtCreateFile(handle, 0, &attr, &iosb, NULL,
+    return RtlNtStatusToDosError(NtCreateFile(handle, SYNCHRONIZE, &attr, &iosb, NULL,
             FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0));
 }
 
