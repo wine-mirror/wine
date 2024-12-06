@@ -225,7 +225,7 @@ static void test_utf8(const char *argv0)
     const WCHAR fileW[] = L"file\x0119\x015b\x0107.a";
     const WCHAR dirW[] = L"dir\x0119\x015b\x0107";
 
-    char file2[32], buf[256], *p, *q;
+    char file2[32], buf[256], *p, *q, *env[2];
     struct _finddata64i32_t fdata64i32;
     struct _finddata32_t fdata32;
     struct _finddata64_t fdata64;
@@ -421,7 +421,11 @@ static void test_utf8(const char *argv0)
         ok(!ret, "_putenv returned %d, errno %d\n", ret, errno);
     }
 
-    hproc = _spawnl(_P_NOWAIT, argv0, argv0, "file", "utf8", file, NULL);
+    strcpy(buf, "__wine_env_test=");
+    strcat(buf, file);
+    env[0] = buf;
+    env[1] = NULL;
+    hproc = _spawnle(_P_NOWAIT, argv0, argv0, "file", "utf8", file, NULL, env);
     ok(hproc != -1, "_spawnl returned %Id, errno %d\n", hproc, errno);
     wait_child_process((HANDLE)hproc);
     CloseHandle((HANDLE)hproc);
@@ -431,11 +435,21 @@ static void test_utf8(const char *argv0)
 
 static void test_utf8_argument(void)
 {
+    static const WCHAR nameW[] = L"file\x0119\x015b\x0107.a";
     const WCHAR *cmdline = GetCommandLineW(), *p;
+    WCHAR buf[256];
+    DWORD ret;
 
     p = wcsrchr(cmdline, ' ');
     ok(!!p, "cmdline = %s\n", debugstr_w(cmdline));
-    ok(!wcscmp(p + 1, L"file\x0119\x015b\x0107.a"), "cmdline = %s\n", debugstr_w(cmdline));
+    ok(!wcscmp(p + 1, nameW), "cmdline = %s\n", debugstr_w(cmdline));
+
+    ret = GetEnvironmentVariableW(L"__wine_env_test", buf, sizeof(buf));
+    ok(ret, "GetEnvironmentVariableW returned error %lu\n", GetLastError());
+    if (GetACP() == CP_UTF8)
+        ok(!wcscmp(buf, nameW), "__wine_env_test = %s\n", debugstr_w(buf));
+    else
+        ok(wcscmp(buf, nameW), "environment was converted\n");
 }
 
 START_TEST(file)

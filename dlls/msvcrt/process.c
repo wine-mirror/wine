@@ -233,6 +233,7 @@ static wchar_t* msvcrt_argvtos(const wchar_t* const* arg, wchar_t delim)
  */
 static wchar_t *msvcrt_argvtos_aw(const char * const *arg, BOOL env)
 {
+  UINT cp = env ? CP_ACP : get_aw_cp();
   const char * const *a;
   unsigned int len;
   wchar_t *p, *ret;
@@ -248,7 +249,7 @@ static wchar_t *msvcrt_argvtos_aw(const char * const *arg, BOOL env)
   len = 0;
   while (*a)
   {
-    len += MultiByteToWideChar(get_aw_cp(), 0, *a, -1, NULL, 0);
+    len += MultiByteToWideChar(cp, 0, *a, -1, NULL, 0);
     a++;
   }
 
@@ -261,7 +262,7 @@ static wchar_t *msvcrt_argvtos_aw(const char * const *arg, BOOL env)
   p = ret;
   while (*a)
   {
-    p += MultiByteToWideChar(get_aw_cp(), 0, *a, strlen(*a), p, len - (p - ret));
+    p += MultiByteToWideChar(cp, 0, *a, strlen(*a), p, len - (p - ret));
     *p++ = env ? 0 : ' ';
     a++;
   }
