@@ -1032,7 +1032,7 @@ static HKEY open_file_mapping_key( const WCHAR *filename )
 
     if (!mapping_key && RegOpenKeyExW( HKEY_LOCAL_MACHINE,
                                        L"Software\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping",
-                                       0, KEY_WOW64_64KEY, &mapping_key ))
+                                       0, KEY_ENUMERATE_SUB_KEYS | KEY_WOW64_64KEY, &mapping_key ))
         mapping_key = NULL;
 
     LeaveCriticalSection( &PROFILE_CritSect );
