@@ -842,7 +842,7 @@ static void remove_device(struct device *device)
     RegDeleteKeyW(device->key, emptyW);
 
     /* delete all empty parents of the key */
-    if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, 0, &enum_key))
+    if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, KEY_ENUMERATE_SUB_KEYS, &enum_key))
     {
         lstrcpyW(id, device->instanceId);
 
