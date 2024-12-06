@@ -205,7 +205,7 @@ static HRESULT WINAPI property_bag_Read(IPropertyBag *iface,
             StringFromGUID2(&moniker->class, path + wcslen(path), CHARS_IN_GUID);
             wcscat(path, L"\\Instance");
         }
-        if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, path, 0, 0, &parent)))
+        if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, path, 0, KEY_ENUMERATE_SUB_KEYS, &parent)))
             return HRESULT_FROM_WIN32(ret);
         break;
 
@@ -213,7 +213,7 @@ static HRESULT WINAPI property_bag_Read(IPropertyBag *iface,
         wcscpy(path, L"Software\\Microsoft\\ActiveMovie\\devenum\\");
         if (moniker->has_class)
             StringFromGUID2(&moniker->class, path + wcslen(path), CHARS_IN_GUID);
-        if ((ret = RegOpenKeyExW(HKEY_CURRENT_USER, path, 0, 0, &parent)))
+        if ((ret = RegOpenKeyExW(HKEY_CURRENT_USER, path, 0, KEY_ENUMERATE_SUB_KEYS, &parent)))
             return HRESULT_FROM_WIN32(ret);
         break;
 
@@ -317,7 +317,7 @@ static HRESULT WINAPI property_bag_Write(IPropertyBag *iface, const WCHAR *name,
             StringFromGUID2(&moniker->class, path + wcslen(path), CHARS_IN_GUID);
             wcscat(path, L"\\Instance");
         }
-        if ((ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, path, 0, NULL, 0, 0, NULL, &parent, NULL)))
+        if ((ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, path, 0, NULL, 0, KEY_ENUMERATE_SUB_KEYS, NULL, &parent, NULL)))
             return HRESULT_FROM_WIN32(ret);
         break;
 
@@ -325,7 +325,7 @@ static HRESULT WINAPI property_bag_Write(IPropertyBag *iface, const WCHAR *name,
         wcscpy(path, L"Software\\Microsoft\\ActiveMovie\\devenum\\");
         if (moniker->has_class)
             StringFromGUID2(&moniker->class, path + wcslen(path), CHARS_IN_GUID);
-        if ((ret = RegCreateKeyExW(HKEY_CURRENT_USER, path, 0, NULL, 0, 0, NULL, &parent, NULL)))
+        if ((ret = RegCreateKeyExW(HKEY_CURRENT_USER, path, 0, NULL, 0, KEY_ENUMERATE_SUB_KEYS, NULL, &parent, NULL)))
             return HRESULT_FROM_WIN32(ret);
         break;
 
