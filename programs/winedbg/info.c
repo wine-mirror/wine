@@ -922,10 +922,10 @@ void info_win32_virtual(DWORD pid)
 
 void info_wine_dbg_channel(BOOL turn_on, const char* cls, const char* name)
 {
-    struct dbg_lvalue           lvalue;
+    PROCESS_BASIC_INFORMATION   info;
     struct __wine_debug_channel channel;
-    unsigned char               mask;
-    int                         done = 0;
+    unsigned char               mask = 0;
+    int                         done = 0, dynfail = 0;
     BOOL                        bAll;
     void*                       addr;
 
@@ -934,14 +934,16 @@ void info_wine_dbg_channel(BOOL turn_on, const char* cls, const char* name)
         dbg_printf("Cannot set/get debug channels while no process is loaded\n");
         return;
     }
-
-    if (symbol_get_lvalue("debug_options", -1, &lvalue, FALSE) != sglv_found)
+    if (NtQueryInformationProcess(dbg_curr_process->handle, ProcessBasicInformation, &info, sizeof(info), NULL ))
     {
+        dbg_printf("Cannot access process details\n");
         return;
     }
-    addr = memory_to_linear_addr(&lvalue.addr);
+    /* default Wine layout */
+    addr = (char*)info.PebBaseAddress + (dbg_curr_process->be_cpu->pointer_size == 8 ? 0x2000 : 0x1000);
 
-    if (!cls)                          mask = ~0;
+    if (!cls)                          mask = (1 << __WINE_DBCL_FIXME) | (1 << __WINE_DBCL_ERR) |
+                                              (1 << __WINE_DBCL_WARN)  | (1 << __WINE_DBCL_TRACE);
     else if (!strcmp(cls, "fixme"))    mask = (1 << __WINE_DBCL_FIXME);
     else if (!strcmp(cls, "err"))      mask = (1 << __WINE_DBCL_ERR);
     else if (!strcmp(cls, "warn"))     mask = (1 << __WINE_DBCL_WARN);
@@ -953,19 +955,27 @@ void info_wine_dbg_channel(BOOL turn_on, const char* cls, const char* name)
     }
 
     bAll = !strcmp("all", name);
-    while (addr && dbg_read_memory(addr, &channel, sizeof(channel)))
+    while (dbg_read_memory(addr, &channel, sizeof(channel)))
     {
         if (!channel.name[0]) break;
         if (bAll || !strcmp( channel.name, name ))
         {
-            if (turn_on) channel.flags |= mask;
-            else channel.flags &= ~mask;
-            if (dbg_write_memory(addr, &channel, sizeof(channel))) done++;
+            if (channel.flags & (1 << __WINE_DBCL_INIT))
+            {
+                if (turn_on) channel.flags |= mask;
+                else channel.flags &= ~mask;
+                if (dbg_write_memory(addr, &channel, sizeof(channel))) done++;
+            }
+            else
+            {
+                dbg_printf("Channel %s cannot be dynamically changed\n", channel.name);
+                dynfail++;
+            }
         }
         addr = (struct __wine_debug_channel *)addr + 1;
     }
-    if (!done) dbg_printf("Unable to find debug channel %s\n", name);
-    else WINE_TRACE("Changed %d channel instances\n", done);
+    if (!done && !dynfail) dbg_printf("Unable to find debug channel %s\n", name);
+    else WINE_TRACE("Changed %d channel instances, and %d not dynamically settable\n", done, dynfail);
 }
 
 void info_win32_exception(void)
