@@ -162,15 +162,15 @@ void test_BluetoothGetRadioInfo( HANDLE radio )
     BLUETOOTH_RADIO_INFO info = {0};
 
     err = BluetoothGetRadioInfo( NULL, NULL );
-    todo_wine ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
+    ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
     err = BluetoothGetRadioInfo( radio, NULL );
-    todo_wine ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
+    ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
     err = BluetoothGetRadioInfo( radio, &info );
-    todo_wine ok( err == ERROR_REVISION_MISMATCH, "%lu != %d\n", err, ERROR_REVISION_MISMATCH );
+    ok( err == ERROR_REVISION_MISMATCH, "%lu != %d\n", err, ERROR_REVISION_MISMATCH );
 
     info.dwSize = sizeof( info );
     err = BluetoothGetRadioInfo( radio, &info );
-    todo_wine ok( !err, "BluetoothGetRadioInfo failed: %lu\n", err );
+    ok( !err, "BluetoothGetRadioInfo failed: %lu\n", err );
     if (err)
         return;
 

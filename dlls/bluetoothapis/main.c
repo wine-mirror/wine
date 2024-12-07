@@ -20,18 +20,23 @@
  */
 
 #include <stdarg.h>
+#include <winternl.h>
 #include <windef.h>
 #include <winbase.h>
 #include <winuser.h>
 #include <winreg.h>
+#include <winnls.h>
 
-#include "wine/debug.h"
 #include "bthsdpdef.h"
 #include "bluetoothapis.h"
 #include "setupapi.h"
+#include "winioctl.h"
 
 #include "initguid.h"
 #include "bthdef.h"
+#include "bthioctl.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bluetoothapis);
 
@@ -177,10 +182,34 @@ BOOL WINAPI BluetoothFindNextRadio( HBLUETOOTH_RADIO_FIND find_handle, HANDLE *r
 /*********************************************************************
  *  BluetoothGetRadioInfo
  */
-DWORD WINAPI BluetoothGetRadioInfo(HANDLE radio, PBLUETOOTH_RADIO_INFO info)
+DWORD WINAPI BluetoothGetRadioInfo( HANDLE radio, PBLUETOOTH_RADIO_INFO info )
 {
-    FIXME("(%p, %p): stub!\n", radio, info);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    BOOL ret;
+    DWORD bytes = 0;
+    BTH_LOCAL_RADIO_INFO radio_info = {0};
+
+    TRACE( "(%p, %p)\n", radio, info );
+
+    if (!radio || !info)
+        return ERROR_INVALID_PARAMETER;
+    if (info->dwSize != sizeof( *info ))
+        return ERROR_REVISION_MISMATCH;
+
+    ret = DeviceIoControl( radio, IOCTL_BTH_GET_LOCAL_INFO, NULL, 0, &radio_info, sizeof( radio_info ), &bytes, NULL );
+    if (!ret)
+        return GetLastError();
+
+    if (radio_info.localInfo.flags & BDIF_ADDRESS)
+        info->address.ullLong = RtlUlonglongByteSwap( radio_info.localInfo.address );
+    if (radio_info.localInfo.flags & BDIF_COD)
+        info->ulClassofDevice = radio_info.localInfo.classOfDevice;
+    if (radio_info.localInfo.flags & BDIF_NAME)
+        MultiByteToWideChar( CP_ACP, 0, radio_info.localInfo.name, -1, info->szName, ARRAY_SIZE( info->szName ) );
+
+    info->lmpSubversion = radio_info.radioInfo.lmpSubversion;
+    info->manufacturer = radio_info.radioInfo.mfg;
+
+    return ERROR_SUCCESS;
 }
 
 /*********************************************************************
