@@ -106,7 +106,7 @@ static HRESULT create_key( HKEY root, const WCHAR *subkey, IWbemContext *context
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
-    res = RegCreateKeyExW( root, subkey, 0, NULL, 0, get_access_mask( context ), NULL, &hkey, NULL );
+    res = RegCreateKeyExW( root, subkey, 0, NULL, 0, KEY_ENUMERATE_SUB_KEYS | get_access_mask( context ), NULL, &hkey, NULL );
     set_variant( VT_UI4, res, NULL, retval );
     if (!res)
     {
