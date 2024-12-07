@@ -467,6 +467,42 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
     IWICEnumMetadataItem_Release(enumerator);
 }
 
+#define test_reader_container_format(a, b) _test_reader_container_format(a, b, __LINE__)
+static void _test_reader_container_format(IWICMetadataReader *reader, const GUID *format, unsigned int line)
+{
+    IWICMetadataHandlerInfo *info;
+    BOOL found = FALSE;
+    GUID formats[8];
+    UINT count;
+    HRESULT hr;
+
+    hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataHandlerInfo_GetContainerFormats(info, ARRAY_SIZE(formats), formats, &count);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(count > 0, "Unexpected count.\n");
+
+    for (unsigned i = 0; i < count; ++i)
+    {
+        if (IsEqualGUID(&formats[i], format))
+        {
+            found = TRUE;
+            break;
+        }
+    }
+    ok_(__FILE__, line)(found, "Container format %s was not found.\n", wine_dbgstr_guid(format));
+
+    if (!found)
+    {
+        for (unsigned i = 0; i < count; ++i)
+            ok_(__FILE__, line)(0, "Available format %s.\n", wine_dbgstr_guid(&formats[i]));
+    }
+
+    IWICMetadataHandlerInfo_Release(info);
+}
+
+
 static void test_metadata_unknown(void)
 {
     HRESULT hr;
@@ -556,6 +592,7 @@ static void test_metadata_unknown(void)
 
 static void test_metadata_tEXt(void)
 {
+    IWICMetadataHandlerInfo *info;
     HRESULT hr;
     IWICMetadataReader *reader;
     IWICEnumMetadataItem *enumerator;
@@ -588,6 +625,12 @@ static void test_metadata_tEXt(void)
     ok(count == 0, "unexpected count %i\n", count);
 
     load_stream(reader, metadata_tEXt, sizeof(metadata_tEXt), WICPersistOptionDefault);
+
+    hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
+    todo_wine
+    ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        IWICMetadataHandlerInfo_Release(info);
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount failed, hr=%lx\n", hr);
@@ -697,6 +740,7 @@ static void test_metadata_tEXt(void)
 
 static void test_metadata_gAMA(void)
 {
+    IWICMetadataHandlerInfo *info;
     HRESULT hr;
     IWICMetadataReader *reader;
     PROPVARIANT schema, id, value;
@@ -720,6 +764,12 @@ static void test_metadata_gAMA(void)
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
     load_stream(reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionDefault);
+
+    hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
+    todo_wine
+    ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        IWICMetadataHandlerInfo_Release(info);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%lx\n", hr);
@@ -1148,6 +1198,8 @@ static void test_metadata_IFD(void)
 
     load_stream(reader, (const char *)&IFD_data, sizeof(IFD_data), persist_options);
 
+    test_reader_container_format(reader, &GUID_ContainerFormatTiff);
+
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);
@@ -1292,6 +1344,8 @@ static void test_metadata_Exif(void)
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == 0, "unexpected count %u\n", count);
+
+    test_reader_container_format(reader, &GUID_MetadataFormatIfd);
 
     IWICMetadataReader_Release(reader);
 
@@ -1568,6 +1622,8 @@ static void test_metadata_png(void)
                broken(IsEqualGUID(&containerformat, &GUID_MetadataFormatUnknown)) /* Windows XP */,
                "unexpected container format\n");
 
+            test_reader_container_format(reader, &GUID_ContainerFormatPng);
+
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#lx\n", hr);
             ok(count == 6 || broken(count == 1) /* XP */, "expected 6, got %u\n", count);
@@ -1737,6 +1793,8 @@ static void test_metadata_gif(void)
             ok(hr == S_OK, "GetMetadataFormat failed, hr=%#lx\n", hr);
             ok(IsEqualGUID(&format, &GUID_MetadataFormatLSD), /* Logical Screen Descriptor */
                "wrong metadata format %s\n", wine_dbgstr_guid(&format));
+
+            test_reader_container_format(reader, &GUID_ContainerFormatGif);
 
             hr = IWICMetadataReader_GetCount(reader, &count);
             ok(hr == S_OK, "GetCount error %#lx\n", hr);
@@ -2269,6 +2327,8 @@ static void test_metadata_LSD(void)
 
     stream = create_stream(LSD_data, sizeof(LSD_data));
 
+    test_reader_container_format(reader, &GUID_ContainerFormatGif);
+
     pos.QuadPart = 6;
     hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
@@ -2361,6 +2421,8 @@ static void test_metadata_IMD(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
 
+    test_reader_container_format(reader, &GUID_ContainerFormatGif);
+
     stream = create_stream(IMD_data, sizeof(IMD_data));
 
     pos.QuadPart = 12;
@@ -2451,6 +2513,8 @@ static void test_metadata_GCE(void)
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
+
+    test_reader_container_format(reader, &GUID_ContainerFormatGif);
 
     stream = create_stream(GCE_data, sizeof(GCE_data));
 
@@ -2544,6 +2608,8 @@ static void test_metadata_APE(void)
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
+
+    test_reader_container_format(reader, &GUID_ContainerFormatGif);
 
     stream = create_stream(APE_data, sizeof(APE_data));
 
@@ -2644,6 +2710,8 @@ static void test_metadata_GIF_comment(void)
     check_interface(reader, &IID_IPersistStream, TRUE);
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
+
+    test_reader_container_format(reader, &GUID_ContainerFormatGif);
 
     stream = create_stream(GIF_comment_data, sizeof(GIF_comment_data));
 
