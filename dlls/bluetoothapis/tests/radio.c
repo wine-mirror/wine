@@ -119,9 +119,74 @@ void test_BluetoothFindRadioClose( void )
     ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
 }
 
+void test_for_all_radios( void (*test)( HANDLE radio ) )
+{
+    DWORD err, idx = 0;
+    HANDLE radio;
+    HBLUETOOTH_RADIO_FIND find;
+    BLUETOOTH_FIND_RADIO_PARAMS find_params;
+
+    find_params.dwSize = sizeof( find_params );
+    find = BluetoothFindFirstRadio( &find_params, &radio );
+    if (!find)
+    {
+        err = GetLastError();
+        ok( err == ERROR_NO_MORE_ITEMS, "%lu != %d\n", err, ERROR_NO_MORE_ITEMS );
+        skip( "No Bluetooth radios found.\n" );
+        return;
+    }
+
+    for(;;)
+    {
+        BOOL ret;
+
+        winetest_push_context( "radio %lu", idx++ );
+        test( radio );
+        winetest_pop_context();
+
+        CloseHandle( radio );
+        ret = BluetoothFindNextRadio( find, &radio );
+        if (!ret)
+        {
+            err = GetLastError();
+            ok( err == ERROR_NO_MORE_ITEMS, "%lu != %d\n", err, ERROR_NO_MORE_ITEMS );
+            break;
+        }
+    }
+    BluetoothFindRadioClose( find );
+}
+
+void test_BluetoothGetRadioInfo( HANDLE radio )
+{
+    DWORD err;
+    BLUETOOTH_RADIO_INFO info = {0};
+
+    err = BluetoothGetRadioInfo( NULL, NULL );
+    todo_wine ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
+    err = BluetoothGetRadioInfo( radio, NULL );
+    todo_wine ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
+    err = BluetoothGetRadioInfo( radio, &info );
+    todo_wine ok( err == ERROR_REVISION_MISMATCH, "%lu != %d\n", err, ERROR_REVISION_MISMATCH );
+
+    info.dwSize = sizeof( info );
+    err = BluetoothGetRadioInfo( radio, &info );
+    todo_wine ok( !err, "BluetoothGetRadioInfo failed: %lu\n", err );
+    if (err)
+        return;
+
+    trace( "address: %x:%x:%x:%x:%x:%x\n", info.address.rgBytes[0], info.address.rgBytes[1], info.address.rgBytes[2],
+           info.address.rgBytes[3], info.address.rgBytes[4], info.address.rgBytes[5] );
+    trace( "name: %s\n", debugstr_w( info.szName ) );
+    trace( "class: %lx\n", info.ulClassofDevice );
+    trace( "LMP subversion: %x\n", info.lmpSubversion );
+    trace( "manufacturer: %x\n", info.manufacturer );
+}
+
 START_TEST( radio )
 {
     test_BluetoothFindFirstRadio();
     test_BluetoothFindNextRadio();
     test_BluetoothFindRadioClose();
+
+    test_for_all_radios( test_BluetoothGetRadioInfo );
 }
