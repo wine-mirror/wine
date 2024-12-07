@@ -595,7 +595,17 @@ DWORD EVENT_x11_time_to_win32_time(Time time)
 static inline BOOL can_activate_window( HWND hwnd )
 {
     LONG style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
+    struct x11drv_win_data *data;
     RECT rect;
+
+    if ((data = get_win_data( hwnd )))
+    {
+        style = style & ~(WS_VISIBLE | WS_MINIMIZE | WS_MAXIMIZE);
+        if (data->current_state.wm_state != WithdrawnState) style |= WS_VISIBLE;
+        if (data->current_state.wm_state == IconicState) style |= WS_MINIMIZE;
+        if (data->current_state.net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)) style |= WS_MAXIMIZE;
+        release_win_data( data );
+    }
 
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
