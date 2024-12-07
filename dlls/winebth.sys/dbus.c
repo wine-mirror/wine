@@ -895,18 +895,18 @@ static BOOL bluez_watcher_event_queue_ready( struct bluez_watcher_ctx *ctx, stru
     }
     if (!list_empty( &ctx->event_list ))
     {
-        struct bluez_watcher_event *event =
+        struct bluez_watcher_event *watcher_event =
             LIST_ENTRY( list_head( &ctx->event_list ), struct bluez_watcher_event, entry );
 
-        if (event->pending_call && !p_dbus_pending_call_get_completed( event->pending_call ))
+        if (watcher_event->pending_call && !p_dbus_pending_call_get_completed( watcher_event->pending_call ))
             return FALSE;
 
-        event->event_type = event->event_type;
-        event->event = event->event;
-        list_remove( &event->entry );
-        if (event->pending_call)
-            p_dbus_pending_call_unref( event->pending_call );
-        free( event );
+        event->event_type = watcher_event->event_type;
+        event->event_data = watcher_event->event;
+        list_remove( &watcher_event->entry );
+        if (watcher_event->pending_call)
+            p_dbus_pending_call_unref( watcher_event->pending_call );
+        free( watcher_event );
         return TRUE;
     }
     return FALSE;
