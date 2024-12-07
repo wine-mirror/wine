@@ -3876,7 +3876,7 @@ static HRESULT knownfolder_set_id(
     /* check is it registry-registered folder */
     hr = get_known_folder_registry_path(kfid, NULL, &knownfolder->registryPath);
     if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, 0, 0, &hKey));
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, 0, KEY_ENUMERATE_SUB_KEYS, &hKey));
 
     if(SUCCEEDED(hr))
     {
@@ -4322,7 +4322,7 @@ static BOOL is_knownfolder( struct foldermanager *fm, const KNOWNFOLDERID *id )
     hr = get_known_folder_registry_path(id, NULL, &registryPath);
     if(SUCCEEDED(hr))
     {
-        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, 0, &hKey));
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, KEY_ENUMERATE_SUB_KEYS, &hKey));
         free(registryPath);
     }
 
