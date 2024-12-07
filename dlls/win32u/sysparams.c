@@ -2243,6 +2243,8 @@ static BOOL lock_display_devices( BOOL force )
     WCHAR name[MAX_PATH];
     BOOL ret = TRUE;
 
+    init_display_driver(); /* make sure to load the driver before anything else */
+
     /* services do not have any adapters, only a virtual monitor */
     if (NtUserGetObjectInformation( winstation, UOI_NAME, name, sizeof(name), NULL )
         && !wcscmp( name, wine_service_station_name ))
@@ -2253,8 +2255,6 @@ static BOOL lock_display_devices( BOOL force )
         set_winstation_monitors();
         return TRUE;
     }
-
-    if (!force) get_display_driver(); /* make sure at least to load the user driver */
 
     pthread_mutex_lock( &display_lock );
 

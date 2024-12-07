@@ -227,6 +227,7 @@ extern const struct gdi_dc_funcs dib_driver;
 extern const struct gdi_dc_funcs path_driver;
 extern const struct gdi_dc_funcs font_driver;
 extern const struct gdi_dc_funcs *get_display_driver(void);
+extern void init_display_driver(void);
 
 /* font.c */
 
