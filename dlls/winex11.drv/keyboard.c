@@ -1335,12 +1335,17 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     int ascii_chars;
     XIC xic = X11DRV_get_ic( hwnd );
     DWORD event_time = EVENT_x11_time_to_win32_time(event->time);
+    struct x11drv_win_data *data;
     Status status = 0;
 
     TRACE_(key)("type %d, window %lx, state 0x%04x, keycode %u\n",
 		event->type, event->window, event->state, event->keycode);
 
-    if (event->type == KeyPress) update_user_time( event->time );
+    if (event->type == KeyPress && (data = get_win_data( hwnd )))
+    {
+        window_set_user_time( data, event->time );
+        release_win_data( data );
+    }
 
     /* Clients should pass only KeyPress events to XmbLookupString */
     if (xic && event->type == KeyPress)

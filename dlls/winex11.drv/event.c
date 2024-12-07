@@ -701,8 +701,6 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
 
     if (protocol == x11drv_atom(WM_DELETE_WINDOW))
     {
-        update_user_time( event_time );
-
         if (hwnd == NtUserGetDesktopWindow())
         {
             /* The desktop window does not have a close button that we can

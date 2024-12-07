@@ -100,10 +100,6 @@ XContext winContext = 0;
 static XContext win_data_context = 0;
 static XContext host_window_context = 0;
 
-/* time of last user event and window where it's stored */
-static Time last_user_time;
-static Window user_time_window;
-
 static const WCHAR whole_window_prop[] =
     {'_','_','w','i','n','e','_','x','1','1','_','w','h','o','l','e','_','w','i','n','d','o','w',0};
 static const WCHAR clip_window_prop[] =
@@ -253,7 +249,7 @@ void host_window_set_parent( struct host_window *win, Window parent )
 /***********************************************************************
  * http://standards.freedesktop.org/startup-notification-spec
  */
-static void remove_startup_notification(Display *display, Window window)
+static void remove_startup_notification( struct x11drv_win_data *data )
 {
     static LONG startup_notification_removed = 0;
     char message[1024];
@@ -268,8 +264,7 @@ static void remove_startup_notification(Display *display, Window window)
         return;
 
     if (!(id = getenv( "DESKTOP_STARTUP_ID" )) || !id[0]) return;
-
-    if ((src = strstr( id, "_TIME" ))) update_user_time( atol( src + 5 ));
+    if ((src = strstr( id, "_TIME" ))) window_set_user_time( data, atol( src + 5 ) );
 
     pos = snprintf(message, sizeof(message), "remove: ID=");
     message[pos++] = '"';
@@ -285,8 +280,8 @@ static void remove_startup_notification(Display *display, Window window)
 
     xevent.xclient.type = ClientMessage;
     xevent.xclient.message_type = x11drv_atom(_NET_STARTUP_INFO_BEGIN);
-    xevent.xclient.display = display;
-    xevent.xclient.window = window;
+    xevent.xclient.display = data->display;
+    xevent.xclient.window = data->whole_window;
     xevent.xclient.format = 8;
 
     src = message;
@@ -302,7 +297,7 @@ static void remove_startup_notification(Display *display, Window window)
         src += msglen;
         srclen -= msglen;
 
-        XSendEvent( display, DefaultRootWindow( display ), False, PropertyChangeMask, &xevent );
+        XSendEvent( data->display, DefaultRootWindow( data->display ), False, PropertyChangeMask, &xevent );
         xevent.xclient.message_type = x11drv_atom(_NET_STARTUP_INFO);
     }
 }
@@ -385,6 +380,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         data->display = display;
         data->vis = default_visual;
         data->hwnd = hwnd;
+        data->user_time = -1;
         pthread_mutex_lock( &win_data_mutex );
         XSaveContext( gdi_display, (XID)hwnd, win_data_context, (char *)data );
     }
@@ -1048,11 +1044,6 @@ static void set_initial_wm_hints( Display *display, Window window )
 
     XChangeProperty( display, window, x11drv_atom(XdndAware),
                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
-
-    update_user_time( 0 );  /* make sure that the user time window exists */
-    if (user_time_window)
-        XChangeProperty( display, window, x11drv_atom(_NET_WM_USER_TIME_WINDOW),
-                         XA_WINDOW, 32, PropModeReplace, (unsigned char *)&user_time_window, 1 );
 }
 
 
@@ -1119,28 +1110,17 @@ Window init_clip_window(void)
 
 
 /***********************************************************************
- *     update_user_time
+ *     window_set_user_time
  */
-void update_user_time( Time time )
+void window_set_user_time( struct x11drv_win_data *data, Time time )
 {
-    if (!user_time_window)
-    {
-        Window win = XCreateWindow( gdi_display, root_window, -1, -1, 1, 1, 0, CopyFromParent,
-                                    InputOnly, CopyFromParent, 0, NULL );
-        if (InterlockedCompareExchangePointer( (void **)&user_time_window, (void *)win, 0 ))
-            XDestroyWindow( gdi_display, win );
-        TRACE( "user time window %lx\n", user_time_window );
-    }
+    if (data->user_time == time) return;
+    data->user_time = time;
 
-    if (!time) return;
-    XLockDisplay( gdi_display );
-    if (!last_user_time || (long)(time - last_user_time) > 0)
-    {
-        last_user_time = time;
-        XChangeProperty( gdi_display, user_time_window, x11drv_atom(_NET_WM_USER_TIME),
-                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&time, 1 );
-    }
-    XUnlockDisplay( gdi_display );
+    TRACE( "window %p/%lx, requesting _NET_WM_USER_TIME %ld serial %lu\n", data->hwnd, data->whole_window,
+           data->user_time, NextRequest( data->display ) );
+    XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_USER_TIME), XA_CARDINAL,
+                     32, PropModeReplace, (unsigned char *)&time, 1 );
 }
 
 /* Update _NET_WM_FULLSCREEN_MONITORS when _NET_WM_STATE_FULLSCREEN is set to support fullscreen
@@ -1439,7 +1419,7 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
     {
     case MAKELONG(WithdrawnState, IconicState):
     case MAKELONG(WithdrawnState, NormalState):
-        remove_startup_notification( data->display, data->whole_window );
+        remove_startup_notification( data );
         set_wm_hints( data );
         update_net_wm_states( data );
         sync_window_style( data );
