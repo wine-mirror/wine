@@ -755,7 +755,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
     {
         HWND last_focus = x11drv_thread_data()->last_focus, foreground = NtUserGetForegroundWindow();
 
-        if (window_has_pending_wm_state( hwnd, -1 ))
+        if (window_has_pending_wm_state( hwnd, -1 ) || (hwnd != foreground && !window_should_take_focus( foreground, event_time )))
         {
             WARN( "Ignoring window %p/%lx WM_TAKE_FOCUS serial %lu, event_time %ld, foreground %p during WM_STATE change\n",
                   hwnd, event->window, event->serial, event_time, foreground );
@@ -1225,7 +1225,7 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event )
 
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_wm_state( event->display, event->window );
-    window_wm_state_notify( data, event->serial, value );
+    window_wm_state_notify( data, event->serial, value, event->time );
     release_win_data( data );
 
     NtUserPostMessage( hwnd, WM_WINE_WINDOW_STATE_CHANGED, 0, 0 );
@@ -1238,7 +1238,7 @@ static void handle_xembed_info_notify( HWND hwnd, XPropertyEvent *event )
 
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_xembed_info( event->display, event->window );
-    window_wm_state_notify( data, event->serial, value ? NormalState : WithdrawnState );
+    window_wm_state_notify( data, event->serial, value ? NormalState : WithdrawnState, event->time );
     release_win_data( data );
 }
 

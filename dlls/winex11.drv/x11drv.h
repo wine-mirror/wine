@@ -673,8 +673,9 @@ extern void set_gl_drawable_parent( HWND hwnd, HWND parent );
 extern void destroy_gl_drawable( HWND hwnd );
 extern void destroy_vk_surface( HWND hwnd );
 
+extern BOOL window_should_take_focus( HWND hwnd, Time time );
 extern BOOL window_has_pending_wm_state( HWND hwnd, UINT state );
-extern void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
+extern void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value, Time time );
 extern void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
 extern void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *rect );
 
