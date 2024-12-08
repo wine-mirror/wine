@@ -2258,7 +2258,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
             /* SetIntArray */
             *input_value = 123456;
-            for (l = 0; l < res[k].bytes / sizeof(*input_value); ++l)
+            for (l = 1; l < res[k].bytes / sizeof(*input_value); ++l)
             {
                 *(input_value + l) = *(input_value + l - 1) + 23;
             }
