@@ -257,7 +257,7 @@ static void test_status_control(void)
 {
     HWND hWndStatus;
     int r;
-    int nParts[] = {50, 150, -1};
+    int nParts[] = {50, 150, -1, -1};
     int checkParts[] = {0, 0, 0, 0, 0};
     int borders[] = {0, 0, 0};
     RECT rc;
