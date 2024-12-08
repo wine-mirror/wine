@@ -391,7 +391,7 @@ static void test_utf8(const char *argv0)
         pW = _wgetenv(fileW);
         ok(!pW, "environment variable name was converted\n");
         bufW[0] = 0;
-        ret = GetEnvironmentVariableW(fileW, bufW, sizeof(bufW));
+        ret = GetEnvironmentVariableW(fileW, bufW, ARRAY_SIZE(bufW));
         todo_wine ok(ret, "GetEnvironmentVariableW returned error %lu\n", GetLastError());
         todo_wine ok(!wcscmp(bufW, L"test"), "bufW = %s\n", debugstr_w(bufW));
         strcpy(buf, file);
@@ -406,7 +406,7 @@ static void test_utf8(const char *argv0)
         /* bug in native _wgetenv/_putenv implementation */
         pW = _wgetenv(L"__wine_env_test");
         ok(wcscmp(pW, fileW), "pW = %s\n", debugstr_w(pW));
-        ret = GetEnvironmentVariableW(L"__wine_env_test", bufW, sizeof(bufW));
+        ret = GetEnvironmentVariableW(L"__wine_env_test", bufW, ARRAY_SIZE(bufW));
         ok(ret, "GetEnvironmentVariableW returned error %lu\n", GetLastError());
         todo_wine ok(!wcscmp(bufW, fileW), "bufW = %s\n", debugstr_w(bufW));
 
@@ -444,7 +444,7 @@ static void test_utf8_argument(void)
     ok(!!p, "cmdline = %s\n", debugstr_w(cmdline));
     ok(!wcscmp(p + 1, nameW), "cmdline = %s\n", debugstr_w(cmdline));
 
-    ret = GetEnvironmentVariableW(L"__wine_env_test", buf, sizeof(buf));
+    ret = GetEnvironmentVariableW(L"__wine_env_test", buf, ARRAY_SIZE(buf));
     ok(ret, "GetEnvironmentVariableW returned error %lu\n", GetLastError());
     if (GetACP() == CP_UTF8)
         ok(!wcscmp(buf, nameW), "__wine_env_test = %s\n", debugstr_w(buf));
