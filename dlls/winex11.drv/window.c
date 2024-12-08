@@ -1393,11 +1393,12 @@ static void set_xembed_flags( struct x11drv_win_data *data, unsigned long flags 
                      x11drv_atom(_XEMBED_INFO), 32, PropModeReplace, (unsigned char*)info, 2 );
 }
 
-static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
+static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state, BOOL activate )
 {
     UINT old_state = data->pending_state.wm_state;
 
     data->desired_state.wm_state = new_state;
+    data->desired_state.activate = activate;
     if (!data->whole_window) return; /* no window, nothing to update */
     if (data->wm_state_serial && !data->current_state.wm_state != !data->pending_state.wm_state)
         return; /* another map/unmap WM_STATE update is pending, wait for it to complete */
@@ -1412,8 +1413,8 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
     if (data->managed && MAKELONG(old_state, new_state) == MAKELONG(IconicState, NormalState))
     {
         WARN( "window %p/%lx is iconic, remapping to workaround Mutter issues.\n", data->hwnd, data->whole_window );
-        window_set_wm_state( data, WithdrawnState );
-        window_set_wm_state( data, NormalState );
+        window_set_wm_state( data, WithdrawnState, FALSE );
+        window_set_wm_state( data, NormalState, activate );
         return;
     }
 
@@ -1436,9 +1437,10 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
     if (new_state == NormalState && data->managed) NtUserSetProp( data->hwnd, focus_time_prop, (HANDLE)-1 );
 
     data->pending_state.wm_state = new_state;
+    data->pending_state.activate = activate;
     data->wm_state_serial = NextRequest( data->display );
-    TRACE( "window %p/%lx, requesting WM_STATE %#x -> %#x serial %lu, foreground %p\n", data->hwnd, data->whole_window,
-           old_state, new_state, data->wm_state_serial, NtUserGetForegroundWindow() );
+    TRACE( "window %p/%lx, requesting WM_STATE %#x -> %#x serial %lu, foreground %p, activate %u\n", data->hwnd, data->whole_window,
+           old_state, new_state, data->wm_state_serial, NtUserGetForegroundWindow(), activate );
 
     switch (MAKELONG(old_state, new_state))
     {
@@ -1468,7 +1470,7 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
 static void window_set_managed( struct x11drv_win_data *data, BOOL new_managed )
 {
     XSetWindowAttributes attr = {.override_redirect = !new_managed};
-    UINT wm_state = data->desired_state.wm_state;
+    UINT wm_state = data->desired_state.wm_state, activate = data->desired_state.activate;
     BOOL old_managed = data->managed;
 
     if (!data->whole_window) return; /* no window, nothing to update */
@@ -1479,21 +1481,21 @@ static void window_set_managed( struct x11drv_win_data *data, BOOL new_managed )
         return;
     }
 
-    window_set_wm_state( data, WithdrawnState ); /* no WM_STATE is pending, requested immediately */
+    window_set_wm_state( data, WithdrawnState, FALSE ); /* no WM_STATE is pending, requested immediately */
 
     data->managed = new_managed;
     TRACE( "window %p/%lx, requesting override-redirect %u -> %u serial %lu\n", data->hwnd, data->whole_window,
            !old_managed, !new_managed, NextRequest( data->display ) );
     XChangeWindowAttributes( data->display, data->whole_window, CWOverrideRedirect, &attr );
 
-    window_set_wm_state( data, wm_state ); /* queue another WM_STATE request with the desired state */
+    window_set_wm_state( data, wm_state, activate ); /* queue another WM_STATE request with the desired state */
 }
 
 
 /***********************************************************************
  *     map_window
  */
-static void map_window( HWND hwnd, DWORD new_style )
+static void map_window( HWND hwnd, DWORD new_style, BOOL activate )
 {
     struct x11drv_win_data *data;
 
@@ -1501,7 +1503,7 @@ static void map_window( HWND hwnd, DWORD new_style )
 
     if (!(data = get_win_data( hwnd ))) return;
     TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-    window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
+    window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState, activate );
     release_win_data( data );
 }
 
@@ -1661,9 +1663,10 @@ void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial,
     if (!handle_state_change( serial, expect_serial, sizeof(value), &value, desired, pending,
                               current, expected, prefix, received, reason ))
         return;
+    data->current_state.activate = data->pending_state.activate;
 
     /* send any pending changes from the desired state */
-    window_set_wm_state( data, data->desired_state.wm_state );
+    window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
     window_set_net_wm_state( data, data->desired_state.net_wm_state );
     window_set_config( data, &data->desired_state.rect, FALSE );
 
@@ -1686,7 +1689,7 @@ void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long ser
         return;
 
     /* send any pending changes from the desired state */
-    window_set_wm_state( data, data->desired_state.wm_state );
+    window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
     window_set_net_wm_state( data, data->desired_state.net_wm_state );
     window_set_config( data, &data->desired_state.rect, FALSE );
 }
@@ -1774,11 +1777,11 @@ BOOL window_should_take_focus( HWND hwnd, Time time )
 void make_window_embedded( struct x11drv_win_data *data )
 {
     /* the window cannot be mapped before being embedded */
-    window_set_wm_state( data, WithdrawnState );
+    window_set_wm_state( data, WithdrawnState, FALSE );
     if (data->managed) WARN( "Window is already managed, should wait for WithdrawnState\n" );
     else window_set_managed( data, TRUE );
     data->embedded = TRUE;
-    window_set_wm_state( data, NormalState );
+    window_set_wm_state( data, NormalState, FALSE );
 }
 
 
@@ -2587,7 +2590,7 @@ BOOL X11DRV_SystrayDockRemove( HWND hwnd )
 
     if ((data = get_win_data( hwnd )))
     {
-        if ((ret = data->embedded)) window_set_wm_state( data, WithdrawnState );
+        if ((ret = data->embedded)) window_set_wm_state( data, WithdrawnState, FALSE );
         release_win_data( data );
     }
 
@@ -2932,7 +2935,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     struct x11drv_win_data *data;
     UINT new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE ), old_style;
     struct window_rects old_rects;
-    BOOL was_fullscreen;
+    BOOL was_fullscreen, activate = !(swp_flags & SWP_NOACTIVATE);
 
     sync_gl_drawable( hwnd, FALSE );
 
@@ -2967,7 +2970,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
         if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
             (!(new_style & WS_MINIMIZE) && !is_window_rect_mapped( &new_rects->window ) && is_window_rect_mapped( &old_rects.window )))
         {
-            window_set_wm_state( data, WithdrawnState );
+            window_set_wm_state( data, WithdrawnState, FALSE );
             release_win_data( data );
             if (was_fullscreen) NtUserClipCursor( NULL );
             if (!(data = get_win_data( hwnd ))) return;
@@ -3007,12 +3010,12 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
                 needs_map = data->layered || IsRectEmpty( &new_rects->window );
             release_win_data( data );
             if (needs_icon) fetch_icon_data( hwnd, 0, 0 );
-            if (needs_map) map_window( hwnd, new_style );
+            if (needs_map) map_window( hwnd, new_style, activate );
             return;
         }
         else if ((swp_flags & SWP_STATECHANGED) && ((old_style ^ new_style) & WS_MINIMIZE))
         {
-            window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState );
+            window_set_wm_state( data, (new_style & WS_MINIMIZE) ? IconicState : NormalState, activate );
             update_net_wm_states( data );
         }
         else
@@ -3160,7 +3163,7 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
                 ((style & WS_MINIMIZE) || is_window_rect_mapped( &data->rects.window )))
             {
                 release_win_data( data );
-                map_window( hwnd, style );
+                map_window( hwnd, style, TRUE );
                 return;
             }
         }
@@ -3201,7 +3204,7 @@ void X11DRV_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags )
         DWORD style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
 
         if ((style & WS_VISIBLE) && ((style & WS_MINIMIZE) || is_window_rect_mapped( &data->rects.window )))
-            map_window( hwnd, style );
+            map_window( hwnd, style, TRUE );
     }
 }
 

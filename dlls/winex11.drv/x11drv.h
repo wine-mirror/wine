@@ -621,6 +621,7 @@ enum x11drv_net_wm_state
 struct window_state
 {
     UINT wm_state;
+    BOOL activate;
     UINT net_wm_state;
     RECT rect;
 };
