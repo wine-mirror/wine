@@ -433,6 +433,8 @@ BOOL WINAPI NtUserSetProcessWindowStation( HWINSTA handle )
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+
+    reset_monitor_update_serial();
     return ret;
 }
 

@@ -198,6 +198,7 @@ extern MONITORINFO monitor_info_from_rect( RECT rect, UINT dpi );
 extern MONITORINFO monitor_info_from_window( HWND hwnd, UINT flags );
 extern UINT monitor_dpi_from_rect( RECT rect, UINT dpi, UINT *raw_dpi );
 extern BOOL update_display_cache( BOOL force );
+extern void reset_monitor_update_serial(void);
 extern void user_lock(void);
 extern void user_unlock(void);
 extern void user_check_not_lock(void);
