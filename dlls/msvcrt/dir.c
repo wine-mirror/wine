@@ -391,7 +391,11 @@ intptr_t CDECL _findfirst32(const char *fspec, struct _finddata32_t *ft)
     if (fspec && !(fspecW = wstrdupa_utf8(fspec))) return -1;
     ret = _wfindfirst32(fspecW, &wft);
     free(fspecW);
-    if (!finddata32_wtoa(&wft, ft)) return -1;
+    if (ret != -1 && !finddata32_wtoa(&wft, ft))
+    {
+        _findclose(ret);
+        return -1;
+    }
     return ret;
 }
 
@@ -461,7 +465,11 @@ intptr_t CDECL _findfirst64(const char *fspec, struct _finddata64_t *ft)
     if (fspec && !(fspecW = wstrdupa_utf8(fspec))) return -1;
     ret = _wfindfirst64(fspecW, &wft);
     free(fspecW);
-    if (!finddata64_wtoa(&wft, ft)) return -1;
+    if (ret != -1 && !finddata64_wtoa(&wft, ft))
+    {
+        _findclose(ret);
+        return -1;
+    }
     return ret;
 }
 
@@ -510,7 +518,11 @@ intptr_t CDECL _findfirst64i32(const char *fspec, struct _finddata64i32_t *ft)
     if (fspec && !(fspecW = wstrdupa_utf8(fspec))) return -1;
     ret = _wfindfirst64i32(fspecW, &wft);
     free(fspecW);
-    if (!finddata64i32_wtoa(&wft, ft)) return -1;
+    if (ret != -1 && !finddata64i32_wtoa(&wft, ft))
+    {
+        _findclose(ret);
+        return -1;
+    }
     return ret;
 }
 
