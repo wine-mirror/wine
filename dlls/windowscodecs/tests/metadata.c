@@ -49,29 +49,34 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
         IUnknown_Release(unk);
 }
 
-#define expect_blob(propvar, data, length) do { \
-    ok((propvar).vt == VT_BLOB, "unexpected vt: %i\n", (propvar).vt); \
-    if ((propvar).vt == VT_BLOB) { \
-        ok(propvar.blob.cbSize == (length), "expected size %lu, got %lu\n", (ULONG)(length), propvar.blob.cbSize); \
-        if (propvar.blob.cbSize == (length)) { \
-            ok(!memcmp(propvar.blob.pBlobData, (data), (length)), "unexpected data\n"); \
-        } \
-    } \
-} while (0)
+#define compare_blob(a,b,c) compare_blob_(__LINE__,a,b,c)
+static void compare_blob_(unsigned int line, const PROPVARIANT *propvar, const char *data, ULONG length)
+{
+    ok_(__FILE__, line)(propvar->vt == VT_BLOB, "Unexpected vt: %i\n", propvar->vt);
+    if (propvar->vt == VT_BLOB)
+    {
+        ok_(__FILE__, line)(propvar->blob.cbSize == length, "Expected size %lu, got %lu.\n", length, propvar->blob.cbSize);
+        if (propvar->blob.cbSize == length)
+            ok_(__FILE__, line)(!memcmp(propvar->blob.pBlobData, data, length), "Unexpected data.\n");
+    }
+}
 
-#define IFD_BYTE 1
-#define IFD_ASCII 2
-#define IFD_SHORT 3
-#define IFD_LONG 4
-#define IFD_RATIONAL 5
-#define IFD_SBYTE 6
-#define IFD_UNDEFINED 7
-#define IFD_SSHORT 8
-#define IFD_SLONG 9
-#define IFD_SRATIONAL 10
-#define IFD_FLOAT 11
-#define IFD_DOUBLE 12
-#define IFD_IFD 13
+enum ifd_entry_type
+{
+    IFD_BYTE = 1,
+    IFD_ASCII = 2,
+    IFD_SHORT = 3,
+    IFD_LONG = 4,
+    IFD_RATIONAL = 5,
+    IFD_SBYTE = 6,
+    IFD_UNDEFINED = 7,
+    IFD_SSHORT = 8,
+    IFD_SLONG = 9,
+    IFD_SRATIONAL = 10,
+    IFD_FLOAT = 11,
+    IFD_DOUBLE = 12,
+    IFD_IFD = 13,
+};
 
 #include "pshpack2.h"
 struct IFD_entry
@@ -543,7 +548,7 @@ static void test_metadata_unknown(void)
         {
             ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
             ok(id.vt == VT_EMPTY, "unexpected vt: %i\n", id.vt);
-            expect_blob(value, metadata_unknown, sizeof(metadata_unknown));
+            compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
 
             PropVariantClear(&schema);
             PropVariantClear(&id);
