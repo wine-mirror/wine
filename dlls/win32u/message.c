@@ -3270,8 +3270,20 @@ BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, U
     {
         if (!ret)
         {
+            struct thunk_lock_params params = {.dispatch.callback = thunk_lock_callback};
+            void *ret_ptr;
+            ULONG ret_len;
+
             flush_window_surfaces( TRUE );
+
+            if (!KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len ) &&
+                ret_len == sizeof(params.locks))
+            {
+                params.locks = *(DWORD *)ret_ptr;
+                params.restore = TRUE;
+            }
             NtYieldExecution();
+            KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
         }
         return FALSE;
     }
