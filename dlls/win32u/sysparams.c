@@ -2237,7 +2237,6 @@ static BOOL lock_display_devices( BOOL force )
 {
     static const WCHAR wine_service_station_name[] =
         {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
-    HWINSTA winstation = NtUserGetProcessWindowStation();
     struct device_manager_ctx ctx = {.vulkan_gpus = LIST_INIT(ctx.vulkan_gpus)};
     UINT status;
     WCHAR name[MAX_PATH];
@@ -2245,18 +2244,17 @@ static BOOL lock_display_devices( BOOL force )
 
     init_display_driver(); /* make sure to load the driver before anything else */
 
+    pthread_mutex_lock( &display_lock );
+
     /* services do not have any adapters, only a virtual monitor */
-    if (NtUserGetObjectInformation( winstation, UOI_NAME, name, sizeof(name), NULL )
+    if (NtUserGetObjectInformation( NtUserGetProcessWindowStation(), UOI_NAME, name, sizeof(name), NULL )
         && !wcscmp( name, wine_service_station_name ))
     {
-        pthread_mutex_lock( &display_lock );
         clear_display_devices();
         list_add_tail( &monitors, &virtual_monitor.entry );
         set_winstation_monitors();
         return TRUE;
     }
-
-    pthread_mutex_lock( &display_lock );
 
     if (!force && !update_display_cache_from_registry()) force = TRUE;
     if (force)
