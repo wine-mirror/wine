@@ -7568,7 +7568,7 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     ok(scanline0 == data, "Unexpected scanline0.\n");
     hr = IMF2DBuffer2_Unlock2D(buffer_2d2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IMF2DBuffer_Release(buffer_2d);
+    IMF2DBuffer2_Release(buffer_2d2);
 
     IMFMediaBuffer_Release(buffer);
 
@@ -7585,7 +7585,7 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     ok(scanline0 == data - pitch * 7, "Unexpected scanline0.\n");
     hr = IMF2DBuffer2_Unlock2D(buffer_2d2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IMF2DBuffer_Release(buffer_2d);
+    IMF2DBuffer2_Release(buffer_2d2);
 
     IMFMediaBuffer_Release(buffer);
 
