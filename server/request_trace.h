@@ -2026,7 +2026,13 @@ static void dump_close_winstation_request( const struct close_winstation_request
 
 static void dump_set_winstation_monitors_request( const struct set_winstation_monitors_request *req )
 {
-    dump_varargs_monitor_infos( " infos=", cur_size );
+    fprintf( stderr, " increment=%d", req->increment );
+    dump_varargs_monitor_infos( ", infos=", cur_size );
+}
+
+static void dump_set_winstation_monitors_reply( const struct set_winstation_monitors_reply *req )
+{
+    dump_uint64( " serial=", &req->serial );
 }
 
 static void dump_get_process_winstation_request( const struct get_process_winstation_request *req )
@@ -3810,7 +3816,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] =
     (dump_func)dump_create_winstation_reply,
     (dump_func)dump_open_winstation_reply,
     NULL,
-    NULL,
+    (dump_func)dump_set_winstation_monitors_reply,
     (dump_func)dump_get_process_winstation_reply,
     NULL,
     (dump_func)dump_enum_winstation_reply,

@@ -149,6 +149,7 @@ static struct winstation *create_winstation( struct object *root, const struct u
             winstation->atom_table = NULL;
             winstation->monitors = NULL;
             winstation->monitor_count = 0;
+            winstation->monitor_serial = 1;
             list_add_tail( &winstation_list, &winstation->entry );
             list_init( &winstation->desktops );
             if (!(winstation->desktop_names = create_namespace( 7 )))
@@ -322,6 +323,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
                 shared->cursor.clip.right = 0;
                 shared->cursor.clip.bottom = 0;
                 memset( (void *)shared->keystate, 0, sizeof(shared->keystate) );
+                shared->monitor_serial = winstation->monitor_serial;
             }
             SHARED_WRITE_END;
         }
@@ -643,19 +645,34 @@ DECL_HANDLER(close_winstation)
 DECL_HANDLER(set_winstation_monitors)
 {
     struct winstation *winstation;
-    unsigned int size;
+    struct desktop *desktop;
+    unsigned int size = get_req_data_size();
 
     if (!(winstation = (struct winstation *)get_handle_obj( current->process, current->process->winstation,
                                                            0, &winstation_ops )))
         return;
 
+    if (req->increment || winstation->monitor_count != size / sizeof(*winstation->monitors) ||
+        !winstation->monitors || memcmp( winstation->monitors, get_req_data(), size ))
+        winstation->monitor_serial++;
+
     free( winstation->monitors );
     winstation->monitors = NULL;
     winstation->monitor_count = 0;
 
-    if ((size = get_req_data_size()) && (winstation->monitors = memdup( get_req_data(), size )))
+    LIST_FOR_EACH_ENTRY(desktop, &winstation->desktops, struct desktop, entry)
+    {
+        SHARED_WRITE_BEGIN( desktop->shared, desktop_shm_t )
+        {
+            shared->monitor_serial = winstation->monitor_serial;
+        }
+        SHARED_WRITE_END;
+    }
+
+    if (size && (winstation->monitors = memdup( get_req_data(), size )))
         winstation->monitor_count = size / sizeof(*winstation->monitors);
 
+    reply->serial = winstation->monitor_serial;
     release_object( winstation );
 }
 

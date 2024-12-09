@@ -57,6 +57,7 @@ struct winstation
     struct namespace  *desktop_names;      /* namespace for desktops of this winstation */
     unsigned int       monitor_count;      /* number of monitors */
     struct monitor_info *monitors;         /* window station monitors */
+    unsigned __int64   monitor_serial;     /* winstation monitor update counter */
 };
 
 struct key_repeat

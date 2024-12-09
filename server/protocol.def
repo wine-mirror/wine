@@ -979,6 +979,7 @@ typedef volatile struct
     unsigned int         flags;            /* desktop flags */
     struct shared_cursor cursor;           /* global cursor information */
     unsigned char        keystate[256];    /* asynchronous key state */
+    unsigned __int64     monitor_serial;   /* winstation monitor update counter */
 } desktop_shm_t;
 
 typedef volatile struct
@@ -2882,7 +2883,10 @@ enum coords_relative
 
 /* Update the process current window station monitors */
 @REQ(set_winstation_monitors)
+    int              increment;   /* force increment the monitor update counter */
     VARARG(infos,monitor_infos);  /* window station monitors */
+@REPLY
+    unsigned __int64 serial;      /* winstation monitor update counter */
 @END
 
 
