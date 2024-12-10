@@ -931,6 +931,89 @@ static void test_ntdll_wndprocs(void)
     }
 }
 
+static void test_wndproc_forwards(void)
+{
+    WCHAR path[MAX_PATH];
+    HMODULE user32 = GetModuleHandleA( "user32.dll" );
+    HANDLE map, file;
+    char *base;
+    ULONG i, size, *names, *functions;
+    WORD *ordinals;
+    IMAGE_EXPORT_DIRECTORY *exp;
+
+    /* file on disk contains forwards */
+
+    GetModuleFileNameW( user32, path, ARRAY_SIZE(path) );
+    file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "cannot open %s err %lu\n", debugstr_w(path), GetLastError() );
+    map = CreateFileMappingW( file, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, 0 );
+    ok( map != NULL, "failed to create mapping %lu\n", GetLastError() );
+    base = MapViewOfFile( map, FILE_MAP_READ, 0, 0, 0 );
+    ok( base != NULL, "failed to map file %lu\n", GetLastError() );
+    exp = RtlImageDirectoryEntryToData( (HMODULE)base, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+    ok( exp != NULL, "no exports\n" );
+    functions = (ULONG *)(base + exp->AddressOfFunctions);
+    names = (ULONG *)(base + exp->AddressOfNames);
+    ordinals = (WORD *)(base + exp->AddressOfNameOrdinals);
+    for (i = 0; i < exp->NumberOfNames; i++)
+    {
+        const char *name = base + names[i];
+        const char *forward = base + functions[ordinals[i]];
+        if (strcmp( name, "DefDlgProcA" ) &&
+            strcmp( name, "DefDlgProcW" ) &&
+            strcmp( name, "DefWindowProcA" ) &&
+            strcmp( name, "DefWindowProcW" )) continue;
+
+        if (!strcmp( name, "DefDlgProcA" ) && !(forward >= (char *)exp && forward < (char *)exp + size))
+        {
+            win_skip( "Windows version too old, not using forwards\n" );
+            UnmapViewOfFile( base );
+            CloseHandle( file );
+            CloseHandle( map );
+            return;
+        }
+        ok( forward >= (char *)exp && forward < (char *)exp + size,
+            "not a forward %s %lx\n", name, functions[ordinals[i]] );
+        ok( !strncmp( forward, "NTDLL.Ntdll", 11 ), "wrong forward %s -> %s\n", name, forward );
+    }
+    UnmapViewOfFile( base );
+    CloseHandle( file );
+    CloseHandle( map );
+
+    /* loaded dll is patched to avoid forwards (on 32-bit) */
+
+    base = (char *)user32;
+    exp = RtlImageDirectoryEntryToData( (HMODULE)base, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+    ok( exp != NULL, "no exports\n" );
+    functions = (ULONG *)(base + exp->AddressOfFunctions);
+    names = (ULONG *)(base + exp->AddressOfNames);
+    ordinals = (WORD *)(base + exp->AddressOfNameOrdinals);
+    for (i = 0; i < exp->NumberOfNames; i++)
+    {
+        const char *name = base + names[i];
+        const char *forward = base + functions[ordinals[i]];
+        if (strcmp( name, "DefDlgProcA" ) &&
+            strcmp( name, "DefDlgProcW" ) &&
+            strcmp( name, "DefWindowProcA" ) &&
+            strcmp( name, "DefWindowProcW" )) continue;
+        if (is_win64)
+        {
+            ok( forward >= (char *)exp && forward < (char *)exp + size,
+                "not a forward %s %lx\n", name, functions[ordinals[i]] );
+            ok( !strncmp( forward, "NTDLL.Ntdll", 11 ), "wrong forward %s -> %s\n", name, forward );
+        }
+        else
+        {
+            void *expect = GetProcAddress( user32, name );
+            ok( !(forward >= (char *)exp && forward < (char *)exp + size),
+                "%s %lx is a forward\n", name, functions[ordinals[i]] );
+            ok( forward == expect ||
+                broken( !strcmp( name, "DefWindowProcW" )), /* DefWindowProcW can be hooked on first run */
+                "wrong function %s %p / %p\n", name, forward, expect );
+        }
+    }
+}
+
 
 static LRESULT WINAPI TestDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1648,6 +1731,7 @@ START_TEST(class)
     test_styles();
     test_builtinproc();
     test_ntdll_wndprocs();
+    test_wndproc_forwards();
     test_icons();
     test_comctl32_classes();
     test_actctx_classes();

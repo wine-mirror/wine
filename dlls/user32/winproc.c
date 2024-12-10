@@ -1023,6 +1023,57 @@ static LRESULT WINAPI StaticWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     return wow_handlers.static_proc( hwnd, msg, wParam, lParam, TRUE );
 }
 
+#ifndef _WIN64
+
+static inline void *user32_rva( DWORD va )
+{
+    return (void *)((char *)user32_module + va);
+}
+
+/**********************************************************************
+ *		fixup_forwards
+ *
+ * Replace the DefWindowProcA etc. NTDLL forwards with a real RVA.
+ * Many broken apps resolve functions by hand and don't handle forwards correctly.
+ */
+static void fixup_forwards(void)
+{
+    IMAGE_EXPORT_DIRECTORY *exp;
+    ULONG i, size;
+    DWORD old_prot;
+    DWORD *functions, *names;
+    WORD *ordinals;
+    const char *procs[] = { "DefDlgProcA", "DefDlgProcW", "DefWindowProcA", "DefWindowProcW" };
+
+    if (!(exp = RtlImageDirectoryEntryToData( user32_module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size )))
+        return;
+    functions = user32_rva( exp->AddressOfFunctions );
+    ordinals = user32_rva( exp->AddressOfNameOrdinals );
+    names = user32_rva( exp->AddressOfNames );
+
+    VirtualProtect( functions, exp->NumberOfFunctions * sizeof(*functions), PAGE_READWRITE, &old_prot );
+    for (i = 0; i < ARRAY_SIZE(procs); i++)
+    {
+        void *dest = GetProcAddress( user32_module, procs[i] ); /* resolve the forward */
+        int min = 0, max = exp->NumberOfNames - 1;
+
+        while (min <= max)
+        {
+            int res, pos = (min + max) / 2;
+            if (!(res = strcmp( user32_rva( names[pos] ), procs[i] )))
+            {
+                functions[ordinals[pos]] = (char *)dest - (char *)user32_module;
+                break;
+            }
+            if (res > 0) max = pos - 1;
+            else min = pos + 1;
+        }
+    }
+    VirtualProtect( functions, exp->NumberOfFunctions * sizeof(*functions), old_prot, &old_prot );
+}
+
+#endif
+
 /**********************************************************************
  *		UserRegisterWowHandlers (USER32.@)
  *
@@ -1084,4 +1135,7 @@ void winproc_init(void)
                             client_procs.workers, sizeof(client_procs.workers) );
     RtlRetrieveNtUserPfn( (const void **)&ptr_A, (const void **)&ptr_W, (const void **)&ptr_workers );
     NtUserInitializeClientPfnArrays( ptr_A, ptr_W, ptr_workers, user32_module );
+#ifndef _WIN64
+    fixup_forwards();
+#endif
 }
