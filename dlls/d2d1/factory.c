@@ -1068,7 +1068,7 @@ static HRESULT d2d_factory_register_effect_from_string(struct d2d_factory *facto
 
     size = sizeof(*property_xml) * (wcslen(property_xml) + 1);
     if (SUCCEEDED(hr = IStream_Write(stream, property_xml, size, NULL)))
-        hr = IStream_Seek(stream, zero, SEEK_SET, NULL);
+        hr = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
 
     if (SUCCEEDED(hr))
         hr = d2d_factory_register_effect_from_stream(factory, effect_id, stream, bindings,
