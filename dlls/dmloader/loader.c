@@ -271,7 +271,7 @@ static struct cache_entry *find_cache_object(struct loader *This, DMUS_OBJECTDES
 
 static HRESULT WINAPI loader_GetObject(IDirectMusicLoader8 *iface, DMUS_OBJECTDESC *pDesc, REFIID riid, void **ppv)
 {
-    static const DWORD source_flags = DMUS_OBJ_STREAM | DMUS_OBJ_FILENAME | DMUS_OBJ_URL | DMUS_OBJ_STREAM;
+    static const DWORD source_flags = DMUS_OBJ_STREAM | DMUS_OBJ_FILENAME | DMUS_OBJ_URL;
 	struct loader *This = impl_from_IDirectMusicLoader8(iface);
 	HRESULT result = S_OK;
 	HRESULT ret = S_OK; /* used at the end of function, to determine whether everything went OK */
