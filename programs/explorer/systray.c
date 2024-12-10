@@ -1114,7 +1114,7 @@ static LRESULT WINAPI shell_traywnd_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     {
         WINDOWPOS *p = (WINDOWPOS *)lparam;
 
-        if (p->flags & SWP_SHOWWINDOW && (!show_systray || (!nb_displayed && !enable_taskbar)))
+        if (p->flags & SWP_SHOWWINDOW && (!show_systray || !nb_displayed) && !enable_taskbar)
         {
             TRACE( "WM_WINDOWPOSCHANGING clearing SWP_SHOWWINDOW.\n" );
             p->flags &= ~SWP_SHOWWINDOW;
