@@ -708,8 +708,7 @@ static BOOL symt_fill_sym_info(struct module_pair* pair,
     sym_info->Reserved[0] = sym_info->Reserved[1] = 0;
     if (!symt_get_info(pair->effective, sym, TI_GET_LENGTH, &size) &&
         (!sym_info->TypeIndex ||
-         !symt_get_info(pair->effective, symt_index2ptr(pair->effective, sym_info->TypeIndex),
-                         TI_GET_LENGTH, &size)))
+         !symt_get_info_from_index(pair->effective, sym_info->TypeIndex, TI_GET_LENGTH, &size)))
         size = 0;
     sym_info->Size = (DWORD)size;
     sym_info->ModBase = pair->requested->module.BaseOfImage;
@@ -991,7 +990,7 @@ static void symt_get_length(struct module* module, const struct symt* symt, ULON
         return;
 
     if (symt_get_info(module, symt, TI_GET_TYPE, &type_index) &&
-        symt_get_info(module, symt_index2ptr(module, type_index), TI_GET_LENGTH, size)) return;
+        symt_get_info_from_index(module, type_index, TI_GET_LENGTH, size)) return;
     *size = 1; /* no size info */
 }
 

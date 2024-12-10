@@ -1111,6 +1111,12 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
     return TRUE;
 }
 
+BOOL symt_get_info_from_index(struct module* module, DWORD index,
+                              IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo)
+{
+    return symt_get_info(module, symt_index2ptr(module, index), req, pInfo);
+}
+
 /******************************************************************
  *		SymGetTypeInfo (DBGHELP.@)
  *
@@ -1122,7 +1128,7 @@ BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase,
     struct module_pair  pair;
 
     if (!module_init_pair(&pair, hProcess, ModBase)) return FALSE;
-    return symt_get_info(pair.effective, symt_index2ptr(pair.effective, TypeId), GetType, pInfo);
+    return symt_get_info_from_index(pair.effective, TypeId, GetType, pInfo);
 }
 
 /******************************************************************

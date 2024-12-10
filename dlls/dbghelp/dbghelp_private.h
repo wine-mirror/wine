@@ -972,6 +972,8 @@ extern BOOL         lineinfo_set_nameA(struct process* pcs, struct lineinfo_t* i
 extern void         symt_init_basic(struct module* module);
 extern BOOL         symt_get_info(struct module* module, const struct symt* type,
                                   IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo);
+extern BOOL         symt_get_info_from_index(struct module* module, DWORD index,
+                                             IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo);
 extern struct symt_basic*
                     symt_get_basic(enum BasicType, unsigned size);
 extern struct symt_udt*
