@@ -1285,7 +1285,7 @@ static void window_set_config( struct x11drv_win_data *data, const RECT *new_rec
 
     data->desired_state.rect = *new_rect;
     if (!data->whole_window) return; /* no window, nothing to update */
-    if (EqualRect( old_rect, new_rect )) return; /* rects are the same, nothing to update */
+    if (EqualRect( old_rect, new_rect ) && !above) return; /* rects are the same, no need to be raised, nothing to update */
 
     if (data->pending_state.wm_state == NormalState && data->net_wm_state_serial &&
         !(data->pending_state.net_wm_state & fullscreen_mask) &&
@@ -1300,7 +1300,9 @@ static void window_set_config( struct x11drv_win_data *data, const RECT *new_rec
     }
 
     /* resizing a managed maximized window is not allowed */
-    if (!(style & WS_MAXIMIZE) || !data->managed)
+    if ((old_rect->right - old_rect->left != new_rect->right - new_rect->left ||
+         old_rect->bottom - old_rect->top != new_rect->bottom - new_rect->top) &&
+        (!(style & WS_MAXIMIZE) || !data->managed))
     {
         changes.width = new_rect->right - new_rect->left;
         changes.height = new_rect->bottom - new_rect->top;
@@ -1312,7 +1314,8 @@ static void window_set_config( struct x11drv_win_data *data, const RECT *new_rec
     }
 
     /* only the size is allowed to change for the desktop window or systray docked windows */
-    if (data->whole_window != root_window && !data->embedded)
+    if ((old_rect->left != new_rect->left || old_rect->top != new_rect->top) &&
+        (data->whole_window != root_window && !data->embedded))
     {
         POINT pt = virtual_screen_to_root( new_rect->left, new_rect->top );
         changes.x = pt.x;
