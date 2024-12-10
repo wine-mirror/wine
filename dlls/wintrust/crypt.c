@@ -1448,17 +1448,17 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     /* get basic offset & size info */
-    base_offset = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, SEEK_CUR);
+    base_offset = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, FILE_CURRENT);
 
-    if (SetFilePointer(pSubjectInfo->hFile, 0, NULL, SEEK_END) == INVALID_SET_FILE_POINTER)
+    if (SetFilePointer(pSubjectInfo->hFile, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER)
     {
         TRACE("seek error\n");
         return FALSE;
     }
 
-    cabsize = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, SEEK_CUR);
+    cabsize = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, FILE_CURRENT);
     if ((cabsize == -1) || (base_offset == -1) ||
-     (SetFilePointer(pSubjectInfo->hFile, 0, NULL, SEEK_SET) == INVALID_SET_FILE_POINTER))
+     (SetFilePointer(pSubjectInfo->hFile, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER))
     {
         TRACE("seek error\n");
         return FALSE;
@@ -1542,7 +1542,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
         return FALSE;
     }
 
-    SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, SEEK_SET);
+    SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, FILE_BEGIN);
     if (!pbSignedDataMsg)
     {
         *pcbSignedDataMsg = cert_size;
@@ -1554,7 +1554,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
-    if (SetFilePointer(pSubjectInfo->hFile, cert_offset, NULL, SEEK_SET) == INVALID_SET_FILE_POINTER)
+    if (SetFilePointer(pSubjectInfo->hFile, cert_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
     {
         ERR("couldn't seek to cert location\n");
         return FALSE;
@@ -1563,7 +1563,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
      NULL) || dwRead != cert_size)
     {
         ERR("couldn't read cert\n");
-        SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, SEEK_SET);
+        SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, FILE_BEGIN);
         return FALSE;
     }
     /* The encoding of the files I've seen appears to be in ASN.1
@@ -1572,7 +1572,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
      */
     *pdwEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
     /* Restore base offset */
-    SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, SEEK_SET);
+    SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, FILE_BEGIN);
     return TRUE;
 }
 
