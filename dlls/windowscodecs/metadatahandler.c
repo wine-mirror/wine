@@ -837,7 +837,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         if (!item->value.caub.pElems) return E_OUTOFMEMORY;
 
         pos.QuadPart = value;
-        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        hr = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
         if (FAILED(hr))
         {
             CoTaskMemFree(item->value.caub.pElems);
@@ -882,7 +882,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         if (!item->value.caui.pElems) return E_OUTOFMEMORY;
 
         pos.QuadPart = value;
-        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        hr = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
         if (FAILED(hr))
         {
             CoTaskMemFree(item->value.caui.pElems);
@@ -915,7 +915,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         if (!item->value.caul.pElems) return E_OUTOFMEMORY;
 
         pos.QuadPart = value;
-        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        hr = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
         if (FAILED(hr))
         {
             CoTaskMemFree(item->value.caul.pElems);
@@ -946,7 +946,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
             ULONGLONG ull;
 
             pos.QuadPart = value;
-            hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+            hr = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
             if (FAILED(hr)) return hr;
 
             hr = IStream_Read(input, &ull, sizeof(ull), &bytesread);
@@ -972,7 +972,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
             if (!item->value.cauh.pElems) return E_OUTOFMEMORY;
 
             pos.QuadPart = value;
-            hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+            hr = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
             if (FAILED(hr))
             {
                 CoTaskMemFree(item->value.cauh.pElems);
@@ -1010,7 +1010,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         }
 
         pos.QuadPart = value;
-        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        hr = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
         if (FAILED(hr))
         {
             CoTaskMemFree(item->value.pszVal);
@@ -1046,7 +1046,7 @@ static HRESULT load_IFD_entry(IStream *input, const struct IFD_entry *entry,
         }
 
         pos.QuadPart = value;
-        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        hr = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
         if (FAILED(hr))
         {
             CoTaskMemFree(item->value.blob.pBlobData);
@@ -1118,7 +1118,7 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
         if (!next_ifd_offset) break;
 
         pos.QuadPart = next_ifd_offset;
-        hr = IStream_Seek(input, pos, SEEK_SET, NULL);
+        hr = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
         if (FAILED(hr)) break;
 
         hr = IStream_Read(input, &next_ifd_count, sizeof(next_ifd_count), &bytesread);
@@ -1128,7 +1128,7 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
         SWAP_USHORT(next_ifd_count);
 
         pos.QuadPart = next_ifd_count * sizeof(*entry);
-        hr = IStream_Seek(input, pos, SEEK_CUR, NULL);
+        hr = IStream_Seek(input, pos, STREAM_SEEK_CUR, NULL);
         if (FAILED(hr)) break;
     }
 
