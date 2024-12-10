@@ -537,15 +537,6 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report_buf, DWORD re
 
     TRACE("device %p report_buf %p (%#x), report_len %#lx\n", device, report_buf, *report_buf, report_len);
 
-    if (!ext->collection_desc.ReportIDs[0].ReportID) last_report = ext->last_reports[0];
-    else last_report = ext->last_reports[report_buf[0]];
-
-    if (!last_report)
-    {
-        WARN("Ingoring report with unexpected id %#x\n", *report_buf);
-        return;
-    }
-
     if (!(report = RtlAllocateHeap(GetProcessHeap(), 0, size))) return;
     memcpy(report->buffer, report_buf, report_len);
     report->length = report_len;
@@ -604,6 +595,22 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report_buf, DWORD re
     }
 
     RtlEnterCriticalSection(&ext->cs);
+
+    if (ext->state != DEVICE_STATE_STARTED)
+    {
+        RtlLeaveCriticalSection(&ext->cs);
+        return;
+    }
+
+    if (!ext->collection_desc.ReportIDs[0].ReportID) last_report = ext->last_reports[0];
+    else last_report = ext->last_reports[report_buf[0]];
+    if (!last_report)
+    {
+        WARN("Ignoring report with unexpected id %#x\n", *report_buf);
+        RtlLeaveCriticalSection(&ext->cs);
+        return;
+    }
+
     list_add_tail(&ext->reports, &report->entry);
 
     memcpy(last_report->buffer, report_buf, report_len);
