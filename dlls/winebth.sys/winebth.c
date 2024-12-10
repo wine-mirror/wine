@@ -129,6 +129,7 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
             info->radioInfo.mfg = ext->props.manufacturer;
         LeaveCriticalSection( &ext->props_cs );
 
+        irp->IoStatus.Information = sizeof( *info );
         status = STATUS_SUCCESS;
         break;
     }
