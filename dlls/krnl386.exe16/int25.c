@@ -49,7 +49,7 @@ BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
     if (h != INVALID_HANDLE_VALUE)
     {
         DWORD r;
-        SetFilePointer(h, begin * 512, NULL, SEEK_SET );
+        SetFilePointer(h, begin * 512, NULL, FILE_BEGIN );
         /* FIXME: check errors */
         ReadFile(h, dataptr, nr_sect * 512, &r, NULL );
         CloseHandle(h);

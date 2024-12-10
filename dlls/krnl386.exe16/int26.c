@@ -48,7 +48,7 @@ BOOL DOSVM_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL 
                     0, NULL);
     if (h != INVALID_HANDLE_VALUE)
     {
-        SetFilePointer(h, begin * 512, NULL, SEEK_SET );
+        SetFilePointer(h, begin * 512, NULL, FILE_BEGIN );
         /* FIXME: check errors */
         WriteFile( h, dataptr, nr_sect * 512, &w, NULL );
         CloseHandle( h );
