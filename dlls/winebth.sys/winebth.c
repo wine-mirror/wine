@@ -467,14 +467,9 @@ static void bluetooth_radio_set_properties( DEVICE_OBJECT *obj,
 {
     if (mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS)
     {
-        union
-        {
-            UINT64 uint;
-            BYTE addr[8];
-        } radio_addr = {0};
-        memcpy( &radio_addr.addr[2], props->address.rgBytes, sizeof( props->address.rgBytes ) );
+        BTH_ADDR addr = RtlUlonglongByteSwap( props->address.ullLong );
         IoSetDevicePropertyData( obj, &DEVPKEY_BluetoothRadio_Address, LOCALE_NEUTRAL, 0,
-                                 DEVPROP_TYPE_UINT64, sizeof( radio_addr ), &radio_addr );
+                                 DEVPROP_TYPE_UINT64, sizeof( addr ), &addr );
     }
     if (mask & WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER)
     {
