@@ -618,7 +618,8 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
                 strcpy(tmp, "__inherited_class_");
                 strcat(tmp, symt_get_name(adt));
 
-                symt_add_udt_element(ptd->module, sdt, tmp, adt, ofs, 0, 0);
+                symt_add_udt_element(ptd->module, sdt, tmp, symt_ptr_to_symref(adt),
+                                     ofs, 0, 0);
             }
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
         }
@@ -692,7 +693,8 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
             PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &sz) == -1);
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
 
-            if (doadd) symt_add_udt_element(ptd->module, sdt, ptd->buf + idx, adt, ofs, 0, 0);
+            if (doadd) symt_add_udt_element(ptd->module, sdt, ptd->buf + idx, symt_ptr_to_symref(adt),
+                                            ofs, 0, 0);
             break;
         case ':':
             {
@@ -1171,7 +1173,7 @@ static void pending_flush(struct pending_list* pending, struct module* module,
         case PENDING_VAR:
             symt_add_func_local(module, func,
                                 pending->objs[i].u.var.kind, &pending->objs[i].u.var.loc,
-                                block, pending->objs[i].u.var.type, pending->objs[i].u.var.name);
+                                block, symt_ptr_to_symref(pending->objs[i].u.var.type), pending->objs[i].u.var.name);
             break;
         case PENDING_LINE:
             if (module->type == DMT_MACHO)
@@ -1363,7 +1365,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             loc.reg = 0;
             loc.offset = load_offset + n_value;
             symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
-                                     loc, 0, stabs_parse_type(ptr));
+                                     loc, 0, symt_ptr_to_symref(stabs_parse_type(ptr)));
             break;
         case N_LCSYM:
         case N_STSYM:
@@ -1378,7 +1380,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             loc.reg = 0;
             loc.offset = load_offset + n_value;
             symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
-                                     loc, 0, stabs_parse_type(ptr));
+                                     loc, 0, symt_ptr_to_symref(stabs_parse_type(ptr)));
             break;
         case N_LBRAC:
             if (curr_func)
@@ -1412,9 +1414,9 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                 loc.offset = n_value;
                 symt_add_func_local(module, curr_func,
                                     (int)n_value >= 0 ? DataIsParam : DataIsLocal,
-                                    &loc, NULL, param_type, symname);
-                symt_add_function_signature_parameter(module, 
-                                                      (struct symt_function_signature*)curr_func->type, 
+                                    &loc, NULL, symt_ptr_to_symref(param_type), symname);
+                symt_add_function_signature_parameter(module,
+                                                      (struct symt_function_signature*)curr_func->type,
                                                       param_type);
             }
             break;
@@ -1476,9 +1478,9 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                     struct symt*    param_type = stabs_parse_type(ptr);
                     stab_strcpy(symname, sizeof(symname), ptr);
                     symt_add_func_local(module, curr_func, DataIsParam, &loc,
-                                        NULL, param_type, symname);
-                    symt_add_function_signature_parameter(module, 
-                                                          (struct symt_function_signature*)curr_func->type, 
+                                        NULL, symt_ptr_to_symref(param_type), symname);
+                    symt_add_function_signature_parameter(module,
+                                                          (struct symt_function_signature*)curr_func->type,
                                                           param_type);
                 }
                 else
@@ -1547,9 +1549,9 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                 }
                 func_type = symt_new_function_signature(module, 
                                                         stabs_parse_type(ptr), -1);
-                curr_func = symt_new_function(module, compiland, symname, 
+                curr_func = symt_new_function(module, compiland, symname,
                                               load_offset + n_value, 0,
-                                              &func_type->symt);
+                                              symt_ptr_to_symref(&func_type->symt));
                 pending_flush(&pending_func, module, curr_func, NULL);
             }
             else

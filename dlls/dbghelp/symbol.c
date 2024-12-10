@@ -125,6 +125,11 @@ struct symt*      symt_index_to_ptr(struct module* module, DWORD id)
     return (id >= vector_length(vector)) ? NULL : *(struct symt**)vector_at(vector, id);
 }
 
+DWORD symt_symref_to_index(struct module *module, symref_t ref)
+{
+    return symt_ptr_to_index(module, (struct symt*)ref);
+}
+
 static BOOL symt_grow_sorttab(struct module* module, unsigned sz)
 {
     struct symt_ht**    new;
@@ -288,13 +293,13 @@ struct symt_data* symt_new_global_variable(struct module* module,
                                            struct symt_compiland* compiland, 
                                            const char* name, unsigned is_static,
                                            struct location loc, ULONG_PTR size,
-                                           struct symt* type)
+                                           symref_t type)
 {
     struct symt_data*   sym;
     struct symt**       p;
     DWORD64             tsz;
 
-    TRACE_(dbghelp_symt)("Adding global symbol %s:%s %d@%Ix %p\n",
+    TRACE_(dbghelp_symt)("Adding global symbol %s:%s %d@%Ix %Ix\n",
                          debugstr_w(module->modulename), debugstr_a(name), loc.kind, loc.offset, type);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -304,7 +309,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         sym->container     = compiland ? &compiland->symt : &module->top->symt;
         sym->type          = type;
         sym->u.var         = loc;
-        if (type && size && symt_get_info(module, type, TI_GET_LENGTH, &tsz))
+        if (type && size && symt_get_info_from_symref(module, type, TI_GET_LENGTH, &tsz))
         {
             if (tsz != size)
                 FIXME("Size mismatch for %s.%s between type (%I64u) and src (%Iu)\n",
@@ -321,12 +326,11 @@ static struct symt_function* init_function_or_inlinesite(struct module* module,
                                                          DWORD tag,
                                                          struct symt* container,
                                                          const char* name,
-                                                         struct symt* sig_type,
+                                                         symref_t sig_type,
                                                          unsigned num_ranges)
 {
     struct symt_function* sym;
 
-    assert(!sig_type || sig_type->tag == SymTagFunctionType);
     if ((sym = pool_alloc(&module->pool, offsetof(struct symt_function, ranges[num_ranges]))))
     {
         sym->symt.tag  = tag;
@@ -344,7 +348,7 @@ struct symt_function* symt_new_function(struct module* module,
                                         struct symt_compiland* compiland,
                                         const char* name,
                                         ULONG_PTR addr, ULONG_PTR size,
-                                        struct symt* sig_type)
+                                        symref_t sig_type)
 {
     struct symt_function* sym;
 
@@ -370,7 +374,7 @@ struct symt_function* symt_new_inlinesite(struct module* module,
                                           struct symt_function* func,
                                           struct symt* container,
                                           const char* name,
-                                          struct symt* sig_type,
+                                          symref_t sig_type,
                                           unsigned num_ranges)
 {
     struct symt_function* sym;
@@ -461,17 +465,17 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
  * Otherwise, the variable is stored on the stack:
  *      - offset is then the offset from the frame register
  */
-struct symt_data* symt_add_func_local(struct module* module, 
-                                      struct symt_function* func, 
+struct symt_data* symt_add_func_local(struct module* module,
+                                      struct symt_function* func,
                                       enum DataKind dt,
                                       const struct location* loc,
-                                      struct symt_block* block, 
-                                      struct symt* type, const char* name)
+                                      struct symt_block* block,
+                                      symref_t type, const char* name)
 {
     struct symt_data*   locsym;
     struct symt**       p;
 
-    TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %p\n",
+    TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %Ix\n",
                          debugstr_w(module->modulename), debugstr_a(func->hash_elt.name),
                          debugstr_a(name), type);
 
@@ -504,13 +508,13 @@ struct symt_data* symt_add_func_local(struct module* module,
 struct symt_data* symt_add_func_constant(struct module* module,
                                          struct symt_function* func,
                                          struct symt_block* block,
-                                         struct symt* type, const char* name,
+                                         symref_t type, const char* name,
                                          VARIANT* v)
 {
     struct symt_data*   locsym;
     struct symt**       p;
 
-    TRACE_(dbghelp_symt)("Adding local constant (%s:%s): %s %p\n",
+    TRACE_(dbghelp_symt)("Adding local constant (%s:%s): %s %Ix\n",
                          debugstr_w(module->modulename), debugstr_a(func->hash_elt.name),
                          debugstr_a(name), type);
 
@@ -620,7 +624,7 @@ struct symt_thunk* symt_new_thunk(struct module* module,
 
 struct symt_data* symt_new_constant(struct module* module,
                                     struct symt_compiland* compiland,
-                                    const char* name, struct symt* type,
+                                    const char* name, symref_t type,
                                     const VARIANT* v)
 {
     struct symt_data*  sym;

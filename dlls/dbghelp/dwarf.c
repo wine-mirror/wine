@@ -1894,7 +1894,8 @@ static void dwarf2_parse_udt_member(dwarf2_debug_info_t* di,
         bit_offset.u.uvalue = nbytes.u.uvalue * 8 - bit_offset.u.uvalue - bit_size.u.uvalue;
     }
     else bit_offset.u.uvalue = 0;
-    symt_add_udt_element(di->unit_ctx->module_ctx->module, parent, name.u.string, elt_type,
+    symt_add_udt_element(di->unit_ctx->module_ctx->module, parent, name.u.string,
+                         symt_ptr_to_symref(elt_type),
                          loc.offset, bit_offset.u.uvalue,
                          bit_size.u.uvalue);
 
@@ -2118,14 +2119,14 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                 if (ext.u.uvalue) WARN("unexpected global inside a function\n");
                 symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->current_func,
                                     DataIsStaticLocal, &loc, subpgm->current_block,
-                                    param_type, dwarf2_get_cpp_name(di, name.u.string));
+                                    symt_ptr_to_symref(param_type), dwarf2_get_cpp_name(di, name.u.string));
             }
             else
             {
                 symt_new_global_variable(subpgm->ctx->module_ctx->module,
                                          ext.u.uvalue ? NULL : subpgm->ctx->compiland,
                                          dwarf2_get_cpp_name(di, name.u.string), !ext.u.uvalue,
-                                         loc, 0, param_type);
+                                         loc, 0, symt_ptr_to_symref(param_type));
             }
             break;
         default:
@@ -2139,7 +2140,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             if (subpgm->current_func)
                 symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->current_func,
                                     is_pmt ? DataIsParam : DataIsLocal,
-                                    &loc, subpgm->current_block, param_type, name.u.string);
+                                    &loc, subpgm->current_block, symt_ptr_to_symref(param_type), name.u.string);
             break;
         }
     }
@@ -2157,11 +2158,11 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                              debugstr_a(name.u.string), debugstr_a(subpgm->current_func->hash_elt.name));
             di->symt = &symt_add_func_constant(subpgm->ctx->module_ctx->module,
                                                subpgm->current_func, subpgm->current_block,
-                                               param_type, name.u.string, &v)->symt;
+                                               symt_ptr_to_symref(param_type), name.u.string, &v)->symt;
         }
         else
             di->symt = &symt_new_constant(subpgm->ctx->module_ctx->module, subpgm->ctx->compiland,
-                                          name.u.string, param_type, &v)->symt;
+                                          name.u.string, symt_ptr_to_symref(param_type), &v)->symt;
     }
     else
     {
@@ -2172,7 +2173,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             loc.reg = loc_err_no_location;
             symt_add_func_local(subpgm->ctx->module_ctx->module, subpgm->current_func,
                                 is_pmt ? DataIsParam : DataIsLocal,
-                                &loc, subpgm->current_block, param_type, name.u.string);
+                                &loc, subpgm->current_block, symt_ptr_to_symref(param_type), name.u.string);
         }
         else
         {
@@ -2241,7 +2242,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                   subpgm->top_func,
                                   subpgm->current_block ? &subpgm->current_block->symt : &subpgm->current_func->symt,
                                   dwarf2_get_cpp_name(di, name.u.string),
-                                  dwarf2_parse_subroutine_type(di), num_ranges);
+                                  symt_ptr_to_symref(dwarf2_parse_subroutine_type(di)), num_ranges);
     subpgm->current_func = inlined;
     subpgm->current_block = NULL;
 
@@ -2451,7 +2452,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
     subpgm.top_func = symt_new_function(di->unit_ctx->module_ctx->module, di->unit_ctx->compiland,
                                         dwarf2_get_cpp_name(di, name.u.string),
                                         addr_ranges[0].low, addr_ranges[0].high - addr_ranges[0].low,
-                                        dwarf2_parse_subroutine_type(di));
+                                        symt_ptr_to_symref(dwarf2_parse_subroutine_type(di)));
     if (num_addr_ranges > 1)
         WARN("Function %s has multiple address ranges, only using the first one\n", debugstr_a(name.u.string));
     free(addr_ranges);

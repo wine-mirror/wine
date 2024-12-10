@@ -280,12 +280,12 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
 
             /* FIXME: was adding symbol to this_file ??? */
             coff_add_symbol(&coff_files.files[curr_file_idx],
-                            &symt_new_function(msc_dbg->module, 
-                                               coff_files.files[curr_file_idx].compiland, 
+                            &symt_new_function(msc_dbg->module,
+                                               coff_files.files[curr_file_idx].compiland,
                                                nampnt,
                                                msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
                                                0 /* FIXME */,
-                                               NULL /* FIXME */)->symt);
+                                               0 /* FIXME */)->symt);
             continue;
 	}
 
@@ -316,15 +316,15 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             if (j < coff_files.nfiles)
             {
                 coff_add_symbol(&coff_files.files[j],
-                                &symt_new_function(msc_dbg->module, compiland, nampnt, 
+                                &symt_new_function(msc_dbg->module, compiland, nampnt,
                                                    msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
-                                                   0 /* FIXME */, NULL /* FIXME */)->symt);
-            } 
-            else 
+                                                   0 /* FIXME */, 0 /* FIXME */)->symt);
+            }
+            else
             {
-                symt_new_function(msc_dbg->module, NULL, nampnt, 
+                symt_new_function(msc_dbg->module, NULL, nampnt,
                                   msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
-                                  0 /* FIXME */, NULL /* FIXME */);
+                                  0 /* FIXME */, 0 /* FIXME */);
             }
             i += naux;
             continue;
@@ -353,7 +353,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             loc.reg = 0;
             loc.offset = msc_dbg->module->module.BaseOfImage + base + coff_sym->Value;
             symt_new_global_variable(msc_dbg->module, NULL, nampnt, TRUE /* FIXME */,
-                                     loc, 0 /* FIXME */, NULL /* FIXME */);
+                                     loc, 0 /* FIXME */, 0 /* FIXME */);
             i += naux;
             continue;
 	}

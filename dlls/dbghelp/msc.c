@@ -964,13 +964,13 @@ static void codeview_add_udt_element(struct codeview_type_parse* ctp,
         {
         case LF_BITFIELD_V1:
             symt_add_udt_element(ctp->module, symt, name,
-                                 codeview_fetch_type(ctp, cv_type->bitfield_v1.type),
+                                 symt_ptr_to_symref(codeview_fetch_type(ctp, cv_type->bitfield_v1.type)),
                                  value, cv_type->bitfield_v1.bitoff,
                                  cv_type->bitfield_v1.nbits);
             return;
         case LF_BITFIELD_V2:
             symt_add_udt_element(ctp->module, symt, name,
-                                 codeview_fetch_type(ctp, cv_type->bitfield_v2.type),
+                                 symt_ptr_to_symref(codeview_fetch_type(ctp, cv_type->bitfield_v2.type)),
                                  value, cv_type->bitfield_v2.bitoff,
                                  cv_type->bitfield_v2.nbits);
             return;
@@ -982,7 +982,8 @@ static void codeview_add_udt_element(struct codeview_type_parse* ctp,
     {
         DWORD64 elem_size = 0;
         symt_get_info(ctp->module, subtype, TI_GET_LENGTH, &elem_size);
-        symt_add_udt_element(ctp->module, symt, name, subtype, value, 0, 0);
+        symt_add_udt_element(ctp->module, symt, name, symt_ptr_to_symref(subtype),
+                             value, 0, 0);
     }
 }
 
@@ -1815,7 +1816,7 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
         {
             if (!is_local || in_tls) WARN("Unsupported construct\n");
             symt_add_func_local(msc_dbg->module, func, DataIsStaticLocal, &loc, block,
-                                codeview_get_type(symtype, FALSE), name);
+                                symt_ptr_to_symref(codeview_get_type(symtype, FALSE)), name);
             return;
         }
         if (!dontcheck && !in_tls)
@@ -1848,7 +1849,7 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
         }
         if (is_local ^ (compiland != NULL)) FIXME("Unsupported construct\n");
         symt_new_global_variable(msc_dbg->module, compiland, name, is_local, loc, 0,
-                                 codeview_get_type(symtype, FALSE));
+                                 symt_ptr_to_symref(codeview_get_type(symtype, FALSE)));
      }
 }
 
@@ -2183,14 +2184,14 @@ static struct symt_function* codeview_create_inline_site(const struct msc_debug_
     case LF_FUNC_ID:
         inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
                                       cvt->func_id_v3.name,
-                                      codeview_get_type(cvt->func_id_v3.type, FALSE),
+                                      symt_ptr_to_symref(codeview_get_type(cvt->func_id_v3.type, FALSE)),
                                       num_ranges);
         break;
     case LF_MFUNC_ID:
         /* FIXME we just declare a function, not a method */
         inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
                                       cvt->mfunc_id_v3.name,
-                                      codeview_get_type(cvt->mfunc_id_v3.type, FALSE),
+                                      symt_ptr_to_symref(codeview_get_type(cvt->mfunc_id_v3.type, FALSE)),
                                       num_ranges);
         break;
     default:
@@ -2305,6 +2306,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 {
     struct symt_function*               top_func = NULL;
     struct symt_function*               curr_func = NULL;
+    struct symt*                        func_signature;
     int                                 i, length;
     struct symt_block*                  block = NULL;
     struct symt*                        symt;
@@ -2405,47 +2407,59 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 	case S_GPROC32_16t:
 	case S_LPROC32_16t:
             if (top_func) FIXME("nested function\n");
-            top_func = symt_new_function(msc_dbg->module, compiland,
-                                         terminate_string(&sym->proc_v1.p_name),
-                                         codeview_get_address(msc_dbg, sym->proc_v1.segment, sym->proc_v1.offset),
-                                         sym->proc_v1.proc_len,
-                                         codeview_get_type(sym->proc_v1.proctype, FALSE));
-            curr_func = top_func;
-            loc.kind = loc_absolute;
-            loc.offset = sym->proc_v1.debug_start;
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
-            loc.offset = sym->proc_v1.debug_end;
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
+            func_signature = codeview_get_type(sym->proc_v1.proctype, FALSE);
+            if (!func_signature || func_signature->tag == SymTagFunctionType)
+            {
+                top_func = symt_new_function(msc_dbg->module, compiland,
+                                             terminate_string(&sym->proc_v1.p_name),
+                                             codeview_get_address(msc_dbg, sym->proc_v1.segment, sym->proc_v1.offset),
+                                             sym->proc_v1.proc_len,
+                                             symt_ptr_to_symref(func_signature));
+                curr_func = top_func;
+                loc.kind = loc_absolute;
+                loc.offset = sym->proc_v1.debug_start;
+                symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
+                loc.offset = sym->proc_v1.debug_end;
+                symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
+            }
 	    break;
 	case S_GPROC32_ST:
 	case S_LPROC32_ST:
             if (top_func) FIXME("nested function\n");
-            top_func = symt_new_function(msc_dbg->module, compiland,
-                                         terminate_string(&sym->proc_v2.p_name),
-                                         codeview_get_address(msc_dbg, sym->proc_v2.segment, sym->proc_v2.offset),
-                                         sym->proc_v2.proc_len,
-                                         codeview_get_type(sym->proc_v2.proctype, FALSE));
-            curr_func = top_func;
-            loc.kind = loc_absolute;
-            loc.offset = sym->proc_v2.debug_start;
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
-            loc.offset = sym->proc_v2.debug_end;
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
+            func_signature = codeview_get_type(sym->proc_v2.proctype, FALSE);
+            if (!func_signature || func_signature->tag == SymTagFunctionType)
+            {
+                top_func = symt_new_function(msc_dbg->module, compiland,
+                                             terminate_string(&sym->proc_v2.p_name),
+                                             codeview_get_address(msc_dbg, sym->proc_v2.segment, sym->proc_v2.offset),
+                                             sym->proc_v2.proc_len,
+                                             symt_ptr_to_symref(func_signature));
+                curr_func = top_func;
+                loc.kind = loc_absolute;
+                loc.offset = sym->proc_v2.debug_start;
+                symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
+                loc.offset = sym->proc_v2.debug_end;
+                symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
+            }
 	    break;
 	case S_GPROC32:
 	case S_LPROC32:
             if (top_func) FIXME("nested function\n");
-            top_func = symt_new_function(msc_dbg->module, compiland,
-                                         sym->proc_v3.name,
-                                         codeview_get_address(msc_dbg, sym->proc_v3.segment, sym->proc_v3.offset),
-                                         sym->proc_v3.proc_len,
-                                         codeview_get_type(sym->proc_v3.proctype, FALSE));
-            curr_func = top_func;
-            loc.kind = loc_absolute;
-            loc.offset = sym->proc_v3.debug_start;
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
-            loc.offset = sym->proc_v3.debug_end;
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
+            func_signature = codeview_get_type(sym->proc_v3.proctype, FALSE);
+            if (!func_signature || func_signature->tag == SymTagFunctionType)
+            {
+                top_func = symt_new_function(msc_dbg->module, compiland,
+                                             sym->proc_v3.name,
+                                             codeview_get_address(msc_dbg, sym->proc_v3.segment, sym->proc_v3.offset),
+                                             sym->proc_v3.proc_len,
+                                             symt_ptr_to_symref(func_signature));
+                curr_func = top_func;
+                loc.kind = loc_absolute;
+                loc.offset = sym->proc_v3.debug_start;
+                symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
+                loc.offset = sym->proc_v3.debug_end;
+                symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
+            }
 	    break;
         /*
          * Function parameters and stack variables.
@@ -2458,7 +2472,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             symt_add_func_local(msc_dbg->module, curr_func,
                                 sym->stack_v1.offset > 0 ? DataIsParam : DataIsLocal,
                                 &loc, block,
-                                codeview_get_type(sym->stack_v1.symtype, FALSE),
+                                symt_ptr_to_symref(codeview_get_type(sym->stack_v1.symtype, FALSE)),
                                 terminate_string(&sym->stack_v1.p_name));
             break;
 	case S_BPREL32_ST:
@@ -2469,7 +2483,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             symt_add_func_local(msc_dbg->module, curr_func,
                                 sym->stack_v2.offset > 0 ? DataIsParam : DataIsLocal,
                                 &loc, block,
-                                codeview_get_type(sym->stack_v2.symtype, FALSE),
+                                symt_ptr_to_symref(codeview_get_type(sym->stack_v2.symtype, FALSE)),
                                 terminate_string(&sym->stack_v2.p_name));
             break;
 	case S_BPREL32:
@@ -2482,7 +2496,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             symt_add_func_local(msc_dbg->module, curr_func,
                                 sym->stack_v3.offset > 0 ? DataIsParam : DataIsLocal,
                                 &loc, block,
-                                codeview_get_type(sym->stack_v3.symtype, FALSE),
+                                symt_ptr_to_symref(codeview_get_type(sym->stack_v3.symtype, FALSE)),
                                 sym->stack_v3.name);
             break;
 	case S_REGREL32:
@@ -2495,7 +2509,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             symt_add_func_local(msc_dbg->module, curr_func,
                                 sym->regrel_v3.offset >= top_frame_size ? DataIsParam : DataIsLocal,
                                 &loc, block,
-                                codeview_get_type(sym->regrel_v3.symtype, FALSE),
+                                symt_ptr_to_symref(codeview_get_type(sym->regrel_v3.symtype, FALSE)),
                                 sym->regrel_v3.name);
             break;
 
@@ -2504,8 +2518,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             loc.reg = sym->register_v1.reg;
             loc.offset = 0;
             symt_add_func_local(msc_dbg->module, curr_func,
-                                DataIsLocal, &loc,
-                                block, codeview_get_type(sym->register_v1.type, FALSE),
+                                DataIsLocal, &loc, block,
+                                symt_ptr_to_symref(codeview_get_type(sym->register_v1.type, FALSE)),
                                 terminate_string(&sym->register_v1.p_name));
             break;
         case S_REGISTER_ST:
@@ -2513,8 +2527,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             loc.reg = sym->register_v2.reg;
             loc.offset = 0;
             symt_add_func_local(msc_dbg->module, curr_func,
-                                DataIsLocal, &loc,
-                                block, codeview_get_type(sym->register_v2.type, FALSE),
+                                DataIsLocal, &loc, block,
+                                symt_ptr_to_symref(codeview_get_type(sym->register_v2.type, FALSE)),
                                 terminate_string(&sym->register_v2.p_name));
             break;
         case S_REGISTER:
@@ -2524,8 +2538,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             loc.reg = sym->register_v3.reg;
             loc.offset = 0;
             symt_add_func_local(msc_dbg->module, curr_func,
-                                DataIsLocal, &loc,
-                                block, codeview_get_type(sym->register_v3.type, FALSE),
+                                DataIsLocal, &loc, block,
+                                symt_ptr_to_symref(codeview_get_type(sym->register_v3.type, FALSE)),
                                 sym->register_v3.name);
             break;
 
@@ -2625,7 +2639,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 
                 TRACE("S-Constant-V1 %u %s %x\n", V_INT(&v), terminate_string(name), sym->constant_v1.type);
                 symt_new_constant(msc_dbg->module, compiland, terminate_string(name),
-                                  se, &v);
+                                  symt_ptr_to_symref(se), &v);
             }
             break;
         case S_CONSTANT_ST:
@@ -2641,7 +2655,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 
                 TRACE("S-Constant-V2 %u %s %x\n", V_INT(&v), terminate_string(name), sym->constant_v2.type);
                 symt_new_constant(msc_dbg->module, compiland, terminate_string(name),
-                                  se, &v);
+                                  symt_ptr_to_symref(se), &v);
             }
             break;
         case S_CONSTANT:
@@ -2657,7 +2671,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 
                 TRACE("S-Constant-V3 %u %s %x\n", V_INT(&v), debugstr_a(name), sym->constant_v3.type);
                 /* FIXME: we should add this as a constant value */
-                symt_new_constant(msc_dbg->module, compiland, name, se, &v);
+                symt_new_constant(msc_dbg->module, compiland, name, symt_ptr_to_symref(se), &v);
             }
             break;
 
@@ -2712,7 +2726,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 symt_add_func_local(msc_dbg->module, curr_func,
                                     sym->local_v3.varflags.is_param ? DataIsParam : DataIsLocal,
                                     &loc, block,
-                                    codeview_get_type(sym->local_v3.symtype, FALSE),
+                                    symt_ptr_to_symref(codeview_get_type(sym->local_v3.symtype, FALSE)),
                                     sym->local_v3.name);
             }
             else

@@ -182,6 +182,8 @@ static inline BOOL symt_check_tag(const struct symt* s, enum SymTagEnum tag)
     return s && s->tag == tag;
 }
 
+typedef ULONG_PTR symref_t;
+
 /* lexical tree */
 struct symt_block
 {
@@ -215,7 +217,7 @@ struct symt_data
     struct hash_table_elt       hash_elt;       /* if global symbol */
     enum DataKind               kind;
     struct symt*                container;
-    struct symt*                type;
+    symref_t                    type;
     union                                       /* depends on kind */
     {
         /* DataIs{Global, FileStatic, StaticLocal}:
@@ -292,7 +294,7 @@ struct symt_function
     struct symt                 symt;           /* SymTagFunction or SymTagInlineSite */
     struct hash_table_elt       hash_elt;       /* if global symbol, inline site */
     struct symt*                container;      /* compiland (for SymTagFunction) or function (for SymTagInlineSite) */
-    struct symt*                type;           /* points to function_signature */
+    symref_t                    type;           /* points to function_signature */
     struct vector               vlines;
     struct vector               vchildren;      /* locals, params, blocks, start/end, labels, inline sites */
     struct symt_function*       next_inlinesite;/* linked list of inline sites in this function */
@@ -900,38 +902,38 @@ extern struct symt_public*
                                     ULONG_PTR address,
                                     unsigned size);
 extern struct symt_data*
-                    symt_new_global_variable(struct module* module, 
+                    symt_new_global_variable(struct module* module,
                                              struct symt_compiland* parent,
                                              const char* name, unsigned is_static,
                                              struct location loc, ULONG_PTR size,
-                                             struct symt* type);
+                                             symref_t type);
 extern struct symt_function*
                     symt_new_function(struct module* module,
                                       struct symt_compiland* parent,
                                       const char* name,
                                       ULONG_PTR addr, ULONG_PTR size,
-                                      struct symt* type);
+                                      symref_t type);
 extern struct symt_function*
                     symt_new_inlinesite(struct module* module,
                                         struct symt_function* func,
                                         struct symt* parent,
                                         const char* name,
-                                        struct symt* type,
+                                        symref_t type,
                                         unsigned num_ranges);
 extern void         symt_add_func_line(struct module* module,
                                        struct symt_function* func, 
                                        unsigned source_idx, int line_num, 
                                        ULONG_PTR offset);
 extern struct symt_data*
-                    symt_add_func_local(struct module* module, 
-                                        struct symt_function* func, 
+                    symt_add_func_local(struct module* module,
+                                        struct symt_function* func,
                                         enum DataKind dt, const struct location* loc,
                                         struct symt_block* block,
-                                        struct symt* type, const char* name);
+                                        symref_t, const char* name);
 extern struct symt_data*
                     symt_add_func_constant(struct module* module,
                                            struct symt_function* func, struct symt_block* block,
-                                           struct symt* type, const char* name, VARIANT* v);
+                                           symref_t, const char* name, VARIANT* v);
 extern struct symt_block*
                     symt_open_func_block(struct module* module,
                                          struct symt_function* func,
@@ -955,7 +957,7 @@ extern struct symt_thunk*
 extern struct symt_data*
                     symt_new_constant(struct module* module,
                                       struct symt_compiland* parent,
-                                      const char* name, struct symt* type,
+                                      const char* name, symref_t type,
                                       const VARIANT* v);
 extern struct symt_hierarchy_point*
                     symt_new_label(struct module* module,
@@ -963,6 +965,9 @@ extern struct symt_hierarchy_point*
                                    const char* name, ULONG_PTR address);
 extern struct symt* symt_index_to_ptr(struct module* module, DWORD id);
 extern DWORD        symt_ptr_to_index(struct module* module, const struct symt* sym);
+extern DWORD        symt_symref_to_index(struct module* module, symref_t ref);
+static inline symref_t
+                    symt_ptr_to_symref(const struct symt *symt) {return (ULONG_PTR)symt;}
 extern struct symt_custom*
                     symt_new_custom(struct module* module, const char* name,
                                     DWORD64 addr, DWORD size);
@@ -974,6 +979,8 @@ extern BOOL         symt_get_info(struct module* module, const struct symt* type
                                   IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo);
 extern BOOL         symt_get_info_from_index(struct module* module, DWORD index,
                                              IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo);
+extern BOOL         symt_get_info_from_symref(struct module* module, symref_t type,
+                                              IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo);
 extern struct symt_basic*
                     symt_get_basic(enum BasicType, unsigned size);
 extern struct symt_udt*
@@ -981,10 +988,10 @@ extern struct symt_udt*
                                  unsigned size, enum UdtKind kind);
 extern BOOL         symt_set_udt_size(struct module* module,
                                       struct symt_udt* type, unsigned size);
-extern BOOL         symt_add_udt_element(struct module* module, 
-                                         struct symt_udt* udt_type, 
+extern BOOL         symt_add_udt_element(struct module* module,
+                                         struct symt_udt* udt_type,
                                          const char* name,
-                                         struct symt* elt_type, unsigned offset, 
+                                         symref_t elt_type, unsigned offset,
                                          unsigned bit_offset, unsigned bit_size);
 extern struct symt_enum*
                     symt_new_enum(struct module* module, const char* typename,

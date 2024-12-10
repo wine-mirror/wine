@@ -960,7 +960,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
                 {
                 case ELF_STT_FUNC:
                     symt_new_function(module, ste->compiland, ste->ht_elt.name,
-                                      addr, ste->sym.st_size, NULL);
+                                      addr, ste->sym.st_size, 0);
                     break;
                 case ELF_STT_OBJECT:
                     loc.kind = loc_absolute;
@@ -968,7 +968,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
                     loc.offset = addr;
                     symt_new_global_variable(module, ste->compiland, ste->ht_elt.name,
                                              elf_is_local_symbol(ste->sym.st_info),
-                                             loc, ste->sym.st_size, NULL);
+                                             loc, ste->sym.st_size, 0);
                     break;
                 default:
                     FIXME("Shouldn't happen\n");

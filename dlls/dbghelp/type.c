@@ -280,7 +280,7 @@ BOOL symt_set_udt_size(struct module* module, struct symt_udt* udt, unsigned siz
  * the others (bit fields)
  */
 BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
-                          const char* name, struct symt* elt_type,
+                          const char* name, symref_t elt_type,
                           unsigned offset, unsigned bit_offset, unsigned bit_size)
 {
     struct symt_data*   m;
@@ -356,7 +356,7 @@ BOOL symt_add_enum_element(struct module* module, struct symt_enum* enum_type,
     e->hash_elt.next = NULL;
     e->kind = DataIsConstant;
     e->container = &enum_type->symt;
-    e->type = enum_type->base_type;
+    e->type = symt_ptr_to_symref(enum_type->base_type);
     e->u.value = *variant;
 
     p = vector_add(&enum_type->vchildren, &module->pool);
@@ -804,7 +804,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
                 X(DWORD64) = ((const struct symt_data*)type)->u.member.bit_length;
                 break;
             default:
-                if (!symt_get_info(module, ((const struct symt_data*)type)->type, TI_GET_LENGTH, pInfo))
+                if (!symt_get_info_from_symref(module, ((const struct symt_data*)type)->type, TI_GET_LENGTH, pInfo))
                     return FALSE;
             }
             break;
@@ -994,11 +994,11 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             break;
             /* lexical => hierarchical */
         case SymTagData:
-            X(DWORD) = symt_ptr_to_index(module, ((const struct symt_data*)type)->type);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_data*)type)->type);
             break;
         case SymTagFunction:
         case SymTagInlineSite:
-            X(DWORD) = symt_ptr_to_index(module, ((const struct symt_function*)type)->type);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_function*)type)->type);
             break;
         case SymTagEnum:
             X(DWORD) = symt_ptr_to_index(module, ((const struct symt_enum*)type)->base_type);
@@ -1115,6 +1115,12 @@ BOOL symt_get_info_from_index(struct module* module, DWORD index,
                               IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo)
 {
     return symt_get_info(module, symt_index_to_ptr(module, index), req, pInfo);
+}
+
+BOOL symt_get_info_from_symref(struct module* module, symref_t ref,
+                               IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo)
+{
+    return symt_get_info(module, (struct symt*)ref, req, pInfo);
 }
 
 /******************************************************************
