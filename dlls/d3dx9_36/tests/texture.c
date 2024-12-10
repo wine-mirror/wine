@@ -25,6 +25,7 @@
 #include "d3dx9tex.h"
 #include "resources.h"
 #include <stdint.h>
+#include <assert.h>
 #include "d3dx9_test_images.h"
 
 static int has_2d_dxt1, has_2d_dxt3, has_2d_dxt5, has_cube_dxt5, has_3d_dxt3;
@@ -3137,6 +3138,195 @@ static void WINAPI fill_func(D3DXVECTOR4 *value, const D3DXVECTOR2 *coord, const
     *value = quadrant_color[idx];
 }
 
+static void test_save_texture_to_dds_file(IDirect3DDevice9 *device)
+{
+    static const struct
+    {
+        D3DRESOURCETYPE type;
+        D3DFORMAT format;
+        D3DPOOL pool;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        uint32_t mip_levels;
+        const PALETTEENTRY *palette;
+
+        HRESULT expected_hr;
+        struct dds_pixel_format expected_pixel_format;
+        uint32_t expected_flags;
+        uint32_t expected_width;
+        uint32_t expected_height;
+        uint32_t expected_pitch;
+        uint32_t expected_depth;
+        uint32_t expected_mip_levels;
+        uint32_t expected_caps;
+        uint32_t expected_caps2;
+        uint32_t expected_buffer_size;
+        BOOL todo_hr;
+    } tests[] =
+    {
+        /* Paletted format tests. */
+        {
+            D3DRTYPE_TEXTURE, D3DFMT_P8, D3DPOOL_SCRATCH, 4, 4, 0, 3, test_palette, D3D_OK,
+            { 32, DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT), 4, 4, 0, 0, 3,
+            (DDSCAPS_TEXTURE | DDSCAPS_PALETTE | DDSCAPS_MIPMAP | DDSCAPS_COMPLEX),
+            0, PALETTED_DDS_FILE_HEADER_SIZE + 21,
+            .todo_hr = TRUE
+        },
+        {
+            D3DRTYPE_CUBETEXTURE, D3DFMT_P8, D3DPOOL_SCRATCH, 4, 0, 0, 3, test_palette, D3D_OK,
+            { 32, DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT), 4, 4, 0, 0, 3,
+            (DDSCAPS_TEXTURE | DDSCAPS_PALETTE | DDSCAPS_MIPMAP | DDSCAPS_COMPLEX),
+            (DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES), PALETTED_DDS_FILE_HEADER_SIZE + 126,
+            .todo_hr = TRUE
+        },
+        {
+            D3DRTYPE_VOLUMETEXTURE, D3DFMT_P8, D3DPOOL_SCRATCH, 4, 4, 4, 3, test_palette, D3D_OK,
+            { 32, DDS_PF_INDEXED, 0, 8, 0, 0, 0, 0 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT | DDSD_DEPTH), 4, 4, 0, 4, 3,
+            (DDSCAPS_TEXTURE | DDSCAPS_PALETTE | DDSCAPS_MIPMAP | DDSCAPS_COMPLEX),
+            DDSCAPS2_VOLUME, PALETTED_DDS_FILE_HEADER_SIZE + 73,
+            .todo_hr = TRUE
+        },
+        /* D3DFMT_A8R8G8B8 textures with multiple levels. */
+        {
+            D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, 4, 4, 0, 3, NULL, D3D_OK,
+            { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT), 4, 4, 0, 0, 3,
+            (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP | DDSCAPS_COMPLEX | DDSCAPS_ALPHA),
+            0, DDS_FILE_HEADER_SIZE + 84,
+            .todo_hr = TRUE
+        },
+        {
+            D3DRTYPE_CUBETEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, 4, 0, 0, 3, NULL, D3D_OK,
+            { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT), 4, 4, 0, 0, 3,
+            (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP | DDSCAPS_ALPHA | DDSCAPS_COMPLEX),
+            (DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES), DDS_FILE_HEADER_SIZE + 504,
+            .todo_hr = TRUE
+        },
+        /* 5 */
+        /*
+         * Volume texture with D3DPOOL default. Can't be mapped for read,
+         * can't be saved.
+         */
+        {
+            D3DRTYPE_VOLUMETEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, 4, 4, 4, 3, NULL, D3DERR_INVALIDCALL,
+            .todo_hr = TRUE
+        },
+        /* D3DPOOL_SYSTEMMEM can be saved. */
+        {
+            D3DRTYPE_VOLUMETEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, 4, 4, 4, 3, NULL, D3D_OK,
+            { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_DEPTH | DDSD_MIPMAPCOUNT), 4, 4, 0, 4, 3,
+            (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP | DDSCAPS_ALPHA | DDSCAPS_COMPLEX),
+            DDSCAPS2_VOLUME, DDS_FILE_HEADER_SIZE + 292,
+            .todo_hr = TRUE
+        },
+        /* Single mip level, no mip flags. */
+        {
+            D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, 4, 4, 0, 1, NULL, D3D_OK,
+            { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT), 4, 4, 0, 0, 0,
+            (DDSCAPS_TEXTURE | DDSCAPS_ALPHA),
+            0, DDS_FILE_HEADER_SIZE + 64,
+            .todo_hr = TRUE
+        },
+        {
+            D3DRTYPE_CUBETEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, 4, 0, 0, 1, NULL, D3D_OK,
+            { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT), 4, 4, 0, 0, 0,
+            (DDSCAPS_TEXTURE | DDSCAPS_ALPHA | DDSCAPS_COMPLEX),
+            (DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES), DDS_FILE_HEADER_SIZE + 384,
+            .todo_hr = TRUE
+        },
+        {
+            D3DRTYPE_VOLUMETEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, 4, 4, 4, 1, NULL, D3D_OK,
+            { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_DEPTH), 4, 4, 0, 4, 0,
+            (DDSCAPS_TEXTURE | DDSCAPS_ALPHA),
+            DDSCAPS2_VOLUME, DDS_FILE_HEADER_SIZE + 256,
+            .todo_hr = TRUE
+        },
+        /* 10. */
+        /* Volume texture with a depth of 1. */
+        {
+            D3DRTYPE_VOLUMETEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, 4, 4, 1, 1, NULL, D3D_OK,
+            { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 },
+            (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT), 4, 4, 0, 0, 0,
+            (DDSCAPS_TEXTURE | DDSCAPS_ALPHA),
+            0, DDS_FILE_HEADER_SIZE + 64,
+            .todo_hr = TRUE
+        },
+    };
+    struct
+    {
+         DWORD magic;
+         struct dds_header header;
+         BYTE *data;
+    } *dds;
+    IDirect3DVolumeTexture9 *volume_texture;
+    IDirect3DCubeTexture9 *cube_texture;
+    IDirect3DBaseTexture9 *save_tex;
+    IDirect3DTexture9 *texture;
+    ID3DXBuffer *buffer;
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("Test %u", i);
+
+        switch (tests[i].type)
+        {
+            case D3DRTYPE_TEXTURE:
+                hr = IDirect3DDevice9_CreateTexture(device, tests[i].width, tests[i].height, tests[i].mip_levels, 0,
+                        tests[i].format, tests[i].pool, &texture, NULL);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+                save_tex = (IDirect3DBaseTexture9 *)texture;
+                break;
+
+            case D3DRTYPE_CUBETEXTURE:
+                hr = IDirect3DDevice9_CreateCubeTexture(device, tests[i].width, tests[i].mip_levels, 0,
+                        tests[i].format, tests[i].pool, &cube_texture, NULL);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+                save_tex = (IDirect3DBaseTexture9 *)cube_texture;
+                break;
+
+            case D3DRTYPE_VOLUMETEXTURE:
+                hr = IDirect3DDevice9_CreateVolumeTexture(device, tests[i].width, tests[i].height, tests[i].depth,
+                        tests[i].mip_levels, 0, tests[i].format, tests[i].pool, &volume_texture, NULL);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+                save_tex = (IDirect3DBaseTexture9 *)volume_texture;
+                break;
+
+            default:
+                assert(0);
+                break;
+        }
+
+        hr = D3DXSaveTextureToFileInMemory(&buffer, D3DXIFF_DDS, save_tex, tests[i].palette);
+        todo_wine_if(tests[i].todo_hr) ok(hr == tests[i].expected_hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(ID3DXBuffer_GetBufferSize(buffer) == tests[i].expected_buffer_size, "Unexpected buffer size %lu.\n",
+                    ID3DXBuffer_GetBufferSize(buffer));
+
+            dds = ID3DXBuffer_GetBufferPointer(buffer);
+            check_dds_header(&dds->header, tests[i].expected_flags, tests[i].expected_height, tests[i].expected_width,
+                    tests[i].expected_pitch, tests[i].expected_depth, tests[i].expected_mip_levels,
+                    &tests[i].expected_pixel_format, tests[i].expected_caps, tests[i].expected_caps2,
+                    FALSE);
+            ID3DXBuffer_Release(buffer);
+        }
+
+        IDirect3DBaseTexture9_Release(save_tex);
+        winetest_pop_context();
+    }
+}
+
 static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
 {
     const D3DXVECTOR4 clear_val = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -3369,6 +3559,8 @@ static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
     release_surface_readback(&rb);
 
     IDirect3DTexture9_Release(texture);
+
+    test_save_texture_to_dds_file(device);
 }
 
 static void test_texture_shader(void)
