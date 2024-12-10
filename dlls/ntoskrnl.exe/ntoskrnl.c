@@ -3915,6 +3915,16 @@ static void WINAPI ldr_notify_callback(ULONG reason, LDR_DLL_NOTIFICATION_DATA *
     }
 }
 
+static WCHAR *get_windir_path( const WCHAR *path )
+{
+    WCHAR buffer[MAX_PATH];
+    int len = GetWindowsDirectoryW( buffer, MAX_PATH );
+    int len2 = wcslen( path );
+    WCHAR *ret = HeapAlloc( GetProcessHeap(), 0, (len + len2 + 1) * sizeof(WCHAR) );
+    swprintf( ret, len + len2 + 1, L"%s\\%s", buffer, path );
+    return ret;
+}
+
 /* load the .sys module for a device driver */
 static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyname )
 {
@@ -3954,14 +3964,13 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
 
         if (!wcsnicmp( path, systemrootW, 12 ))
         {
-            WCHAR buffer[MAX_PATH];
-
-            GetWindowsDirectoryW(buffer, MAX_PATH);
-
-            str = HeapAlloc(GetProcessHeap(), 0, (size -11 + lstrlenW(buffer))
-                                                        * sizeof(WCHAR));
-            lstrcpyW(str, buffer);
-            lstrcatW(str, path + 11);
+            str = get_windir_path( path + 12 );
+            HeapFree( GetProcessHeap(), 0, path );
+            path = str;
+        }
+        else if (RtlDetermineDosPathNameType_U( path ) == RELATIVE_PATH)
+        {
+            str = get_windir_path( path );
             HeapFree( GetProcessHeap(), 0, path );
             path = str;
         }
