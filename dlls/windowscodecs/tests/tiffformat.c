@@ -495,7 +495,7 @@ static void test_QueryCapability(void)
     ok(hr == WINCODEC_ERR_FRAMEMISSING || broken(hr == E_POINTER) /* XP */, "expected WINCODEC_ERR_FRAMEMISSING, got %#lx\n", hr);
 
     pos.QuadPart = 4;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     capability = 0xdeadbeef;
@@ -514,7 +514,7 @@ static void test_QueryCapability(void)
     IWICBitmapFrameDecode_Release(frame);
 
     pos.QuadPart = 5;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
@@ -534,7 +534,7 @@ static void test_QueryCapability(void)
         IWICBitmapDecoder_Release(decoder);
 
     pos.QuadPart = 0;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);

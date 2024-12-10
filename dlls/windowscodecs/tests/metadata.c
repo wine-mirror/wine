@@ -403,7 +403,7 @@ static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD 
     IWICPersistStream_Release(persist);
 
     pos.QuadPart = 0;
-    hr = IStream_Seek(stream, pos, SEEK_CUR, &cur_pos);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &cur_pos);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
     /* IFD metadata reader doesn't rewind the stream to the start */
     ok(cur_pos.QuadPart == 0 || cur_pos.QuadPart <= data_size,
@@ -2555,7 +2555,7 @@ static void test_metadata_LSD(void)
     test_reader_container_format(reader, &GUID_ContainerFormatGif);
 
     pos.QuadPart = 6;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
@@ -2656,7 +2656,7 @@ static void test_metadata_IMD(void)
     stream = create_stream(IMD_data, sizeof(IMD_data));
 
     pos.QuadPart = 12;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
@@ -2754,7 +2754,7 @@ static void test_metadata_GCE(void)
     stream = create_stream(GCE_data, sizeof(GCE_data));
 
     pos.QuadPart = 12;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);

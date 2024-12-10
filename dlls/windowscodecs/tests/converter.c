@@ -1175,7 +1175,7 @@ static void check_tiff_format(IStream *stream, const WICPixelFormatGUID *format)
     ok(tiff.version == 42, "wrong TIFF version %u\n", tiff.version);
 
     pos.QuadPart = tiff.dir_offset;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
@@ -1475,7 +1475,7 @@ static void check_bitmap_format(IStream *stream, const CLSID *encoder, const WIC
     LARGE_INTEGER pos;
 
     pos.QuadPart = 0;
-    hr = IStream_Seek(stream, pos, SEEK_SET, (ULARGE_INTEGER *)&pos);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, (ULARGE_INTEGER *)&pos);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     if (IsEqualGUID(encoder, &CLSID_WICPngEncoder))
@@ -1489,7 +1489,7 @@ static void check_bitmap_format(IStream *stream, const CLSID *encoder, const WIC
     else
         ok(0, "unknown encoder %s\n", wine_dbgstr_guid(encoder));
 
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 }
 
