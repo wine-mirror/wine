@@ -587,6 +587,43 @@ interface ID2D1DeviceContext6 : ID2D1DeviceContext5
     );
 }
 
+cpp_quote("#ifndef DWRITE_PAINT_FEATURE_LEVEL_DEFINED")
+cpp_quote("#define DWRITE_PAINT_FEATURE_LEVEL_DEFINED")
+typedef enum DWRITE_PAINT_FEATURE_LEVEL
+{
+    DWRITE_PAINT_FEATURE_LEVEL_NONE = 0,
+    DWRITE_PAINT_FEATURE_LEVEL_COLR_V0 = 1,
+    DWRITE_PAINT_FEATURE_LEVEL_COLR_V1 = 2,
+} DWRITE_PAINT_FEATURE_LEVEL;
+cpp_quote("#endif /* DWRITE_PAINT_FEATURE_LEVEL_DEFINED */")
+
+[
+    object,
+    uuid(ec891cf7-9b69-4851-9def-4e0915771e62),
+    local,
+]
+interface ID2D1DeviceContext7 : ID2D1DeviceContext6
+{
+    DWRITE_PAINT_FEATURE_LEVEL GetPaintFeatureLevel();
+    void DrawPaintGlyphRun(
+        [in] D2D1_POINT_2F origin,
+        [in] const DWRITE_GLYPH_RUN *run,
+        [in, defaultvalue(NULL)] ID2D1Brush *brush,
+        [in, defaultvalue(0)] UINT32 palette_index,
+        [in, defaultvalue(DWRITE_MEASURING_MODE_NATURAL)] DWRITE_MEASURING_MODE measuring_mode
+    );
+    void DrawGlyphRunWithColorSupport(
+        [in] D2D1_POINT_2F origin,
+        [in] const DWRITE_GLYPH_RUN *run,
+        [in] const DWRITE_GLYPH_RUN_DESCRIPTION *run_desc,
+        [in] ID2D1Brush *brush,
+        [in] ID2D1SvgGlyphStyle *style,
+        [in, defaultvalue(0)] UINT32 palette_index,
+        [in, defaultvalue(DWRITE_MEASURING_MODE_NATURAL)] DWRITE_MEASURING_MODE measuring_mode,
+        [in, defaultvalue(D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION_DEFAULT)] D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION snap_option
+    );
+}
+
 [
     object,
     uuid(a44472e1-8dfb-4e60-8492-6e2861c9ca8b),
@@ -664,6 +701,19 @@ interface ID2D1Device6 : ID2D1Device5
 
 [
     object,
+    uuid(f07c8968-dd4e-4ba6-9cbd-eb6d3752dcbb),
+    local,
+]
+interface ID2D1Device7 : ID2D1Device6
+{
+    HRESULT CreateDeviceContext(
+        [in] D2D1_DEVICE_CONTEXT_OPTIONS options,
+        [out] ID2D1DeviceContext7 **context
+    );
+}
+
+[
+    object,
     uuid(0869759f-4f00-413f-b03e-2bda45404d0f),
     local,
 ]
@@ -724,6 +774,19 @@ interface ID2D1Factory7 : ID2D1Factory6
     HRESULT CreateDevice(
         [in] IDXGIDevice *dxgi_device,
         [out] ID2D1Device6 **d2d_device
+    );
+}
+
+[
+    object,
+    uuid(677c9311-f36d-4b1f-ae86-86d1223ffd3a),
+    local,
+]
+interface ID2D1Factory8 : ID2D1Factory7
+{
+    HRESULT CreateDevice(
+        [in] IDXGIDevice *dxgi_device,
+        [out] ID2D1Device7 **d2d_device
     );
 }
 
