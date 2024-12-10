@@ -1405,7 +1405,7 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     frame_decode->info.pixel_format_bpp = This->info.pixel_format_bpp;
     frame_decode->block_data = malloc(frame_size);
     frame_decode->pixel_data = NULL;
-    hr = IStream_Seek(This->stream, seek, SEEK_SET, NULL);
+    hr = IStream_Seek(This->stream, seek, STREAM_SEEK_SET, NULL);
     if (hr != S_OK) goto end;
     hr = IStream_Read(This->stream, frame_decode->block_data, frame_size, &bytesread);
     if (hr != S_OK || bytesread != frame_size) {
@@ -1470,7 +1470,7 @@ static HRESULT WINAPI DdsDecoder_Wine_Initialize(IWICWineDecoder *iface, IStream
     }
 
     seek.QuadPart = 0;
-    hr = IStream_Seek(stream, seek, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) goto end;
 
     hr = IStream_Read(stream, &magic, sizeof(magic), &bytesread);
