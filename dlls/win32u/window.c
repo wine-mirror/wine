@@ -2064,7 +2064,12 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 
     if (!(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
     old_surface = win->surface;
-    if (old_surface != new_surface) swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
+    if (old_surface != new_surface)
+    {
+        if (old_surface && new_surface) window_surface_set_shape( new_surface, old_surface->shape_region );
+        swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
+    }
+
     if (new_surface == &dummy_surface) swp_flags |= SWP_NOREDRAW;
     else if (old_surface == &dummy_surface)
     {
