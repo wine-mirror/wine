@@ -2076,11 +2076,6 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                 WARN("dropping global variable %s which has been optimized away\n", debugstr_a(name.u.string));
         }
     }
-    if (is_pmt && subpgm->current_func && symt_check_tag(subpgm->current_func->type, SymTagFunctionType))
-        symt_add_function_signature_parameter(subpgm->ctx->module_ctx->module,
-                                              (struct symt_function_signature*)subpgm->current_func->type,
-                                              param_type);
-
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
 }
 
@@ -2116,8 +2111,6 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                             dwarf2_debug_info_t* di)
 {
     struct attribute    name;
-    struct symt*        ret_type;
-    struct symt_function_signature* sig_type;
     struct symt_function* inlined;
     struct vector*      children;
     dwarf2_debug_info_t*child;
@@ -2136,16 +2129,12 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
         FIXME("No name for function... dropping function\n");
         return;
     }
-    ret_type = dwarf2_lookup_type(di);
-
-    /* FIXME: assuming C source code */
-    sig_type = symt_new_function_signature(subpgm->ctx->module_ctx->module, ret_type, CV_CALL_FAR_C);
 
     inlined = symt_new_inlinesite(subpgm->ctx->module_ctx->module,
                                   subpgm->top_func,
                                   subpgm->current_block ? &subpgm->current_block->symt : &subpgm->current_func->symt,
                                   dwarf2_get_cpp_name(di, name.u.string),
-                                  &sig_type->symt, num_ranges);
+                                  dwarf2_parse_subroutine_type(di), num_ranges);
     subpgm->current_func = inlined;
     subpgm->current_block = NULL;
 
@@ -2254,7 +2243,8 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
             dwarf2_parse_pointer_type(child);
             break;
         case DW_TAG_subroutine_type:
-            dwarf2_parse_subroutine_type(child);
+            if (!child->symt)
+                child->symt = dwarf2_parse_subroutine_type(child);
             break;
         case DW_TAG_const_type:
             dwarf2_parse_const_type(child);
@@ -2304,8 +2294,6 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
     unsigned num_addr_ranges;
     struct attribute is_decl;
     struct attribute inline_flags;
-    struct symt* ret_type;
-    struct symt_function_signature* sig_type;
     dwarf2_subprogram_t subpgm;
     struct vector* children;
     dwarf2_debug_info_t* child;
@@ -2352,13 +2340,11 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
         free(addr_ranges);
         return NULL;
     }
-    ret_type = dwarf2_lookup_type(di);
 
-    /* FIXME: assuming C source code */
-    sig_type = symt_new_function_signature(di->unit_ctx->module_ctx->module, ret_type, CV_CALL_FAR_C);
     subpgm.top_func = symt_new_function(di->unit_ctx->module_ctx->module, di->unit_ctx->compiland,
                                         dwarf2_get_cpp_name(di, name.u.string),
-                                        addr_ranges[0].low, addr_ranges[0].high - addr_ranges[0].low, &sig_type->symt);
+                                        addr_ranges[0].low, addr_ranges[0].high - addr_ranges[0].low,
+                                        dwarf2_parse_subroutine_type(di));
     if (num_addr_ranges > 1)
         WARN("Function %s has multiple address ranges, only using the first one\n", debugstr_a(name.u.string));
     free(addr_ranges);
@@ -2446,8 +2432,6 @@ static struct symt* dwarf2_parse_subroutine_type(dwarf2_debug_info_t* di)
     dwarf2_debug_info_t* child;
     unsigned int i;
 
-    if (di->symt) return di->symt;
-
     TRACE("%s\n", dwarf2_debug_di(di));
 
     ret_type = dwarf2_lookup_type(di);
@@ -2472,7 +2456,7 @@ static struct symt* dwarf2_parse_subroutine_type(dwarf2_debug_info_t* di)
 	}
     }
 
-    return di->symt = &sig_type->symt;
+    return &sig_type->symt;
 }
 
 static void dwarf2_parse_namespace(dwarf2_debug_info_t* di)
@@ -2561,7 +2545,8 @@ static void dwarf2_load_one_entry(dwarf2_debug_info_t* di)
         dwarf2_parse_subprogram(di);
         break;
     case DW_TAG_subroutine_type:
-        dwarf2_parse_subroutine_type(di);
+        if (!di->symt)
+            di->symt = dwarf2_parse_subroutine_type(di);
         break;
     case DW_TAG_variable:
         {
