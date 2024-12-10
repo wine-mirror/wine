@@ -1519,3 +1519,67 @@ interface IDWriteFactory7 : IDWriteFactory6
         [out] IDWriteFontCollection3 **collection
     );
 }
+
+[
+    local,
+    object,
+    uuid(ee0a7fb5-def4-4c23-a454-c9c7dc878398)
+]
+interface IDWriteFactory8 : IDWriteFactory7
+{
+    HRESULT TranslateColorGlyphRun(
+        [in] D2D1_POINT_2F origin,
+        [in] DWRITE_GLYPH_RUN const *glyph_run,
+        [in] DWRITE_GLYPH_RUN_DESCRIPTION const *glyph_run_desc,
+        [in] DWRITE_GLYPH_IMAGE_FORMATS image_formats,
+        [in] DWRITE_PAINT_FEATURE_LEVEL feature_level,
+        [in] DWRITE_MEASURING_MODE measuring_mode,
+        [in] DWRITE_MATRIX const *world_and_dpi_transform,
+        [in] UINT32 palette_index,
+        [out] IDWriteColorGlyphRunEnumerator1 **enumerator);
+}
+
+typedef struct DWRITE_BITMAP_DATA_BGRA32
+{
+    UINT32 width;
+    UINT32 height;
+    UINT32 *pixels;
+} DWRITE_BITMAP_DATA_BGRA32;
+
+[
+    local,
+    object,
+    uuid(c553a742-fc01-44da-a66e-b8b9ed6c3995)
+]
+interface IDWriteBitmapRenderTarget2 : IDWriteBitmapRenderTarget1
+{
+    HRESULT GetBitmapData([out] DWRITE_BITMAP_DATA_BGRA32 *bitmap_data);
+}
+
+[
+    local,
+    object,
+    uuid(aeec37db-c337-40f1-8e2a-9a41b167b238)
+]
+interface IDWriteBitmapRenderTarget3 : IDWriteBitmapRenderTarget2
+{
+    DWRITE_PAINT_FEATURE_LEVEL GetPaintFeatureLevel();
+    HRESULT DrawPaintGlyphRun(
+        [in] FLOAT origin_x,
+        [in] FLOAT origin_y,
+        [in] DWRITE_MEASURING_MODE measuring_mode,
+        [in] DWRITE_GLYPH_RUN const *run,
+        [in] DWRITE_GLYPH_IMAGE_FORMATS image_format,
+        [in] COLORREF text_color,
+        [in] UINT32 palette_index,
+        [out] RECT *black_box);
+    HRESULT DrawGlyphRunWithColorSupport(
+        [in] FLOAT origin_x,
+        [in] FLOAT origin_y,
+        [in] DWRITE_MEASURING_MODE measuring_mode,
+        [in] DWRITE_GLYPH_RUN const *run,
+        [in] IDWriteRenderingParams *params,
+        [in] COLORREF text_color,
+        [in] UINT32 palette_index,
+        [out] RECT *black_box);
+}
