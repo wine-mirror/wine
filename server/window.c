@@ -134,6 +134,7 @@ static const struct object_ops window_ops =
 #define PAINT_NONCLIENT          0x0040  /* needs WM_NCPAINT */
 #define PAINT_DELAYED_ERASE      0x0080  /* still needs erase after WM_ERASEBKGND */
 #define PAINT_PIXEL_FORMAT_CHILD 0x0100  /* at least one child has a custom pixel format */
+#define PAINT_REGION_CHANGED     0x0200  /* window region has changed */
 
 /* growable array of user handles */
 struct user_handle_array
@@ -2075,6 +2076,9 @@ static void set_window_region( struct window *win, struct region *region, int re
 
     if (redraw) old_vis_rgn = get_visible_region( win, DCX_WINDOW );
 
+    if (!region != !win->win_region || (region && !is_region_equal( region, win->win_region )))
+        win->paint_flags |= PAINT_REGION_CHANGED;
+
     if (win->win_region) free_region( win->win_region );
     win->win_region = region;
 
@@ -2650,8 +2654,8 @@ DECL_HANDLER(set_window_pos)
     if (is_visible( top ) && (top->paint_flags & PAINT_HAS_SURFACE))
     {
         reply->surface_win = top->handle;
-        reply->needs_update = !!(top->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD)) ||
-                              !!top->win_region;
+        reply->needs_update = !!(top->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD | PAINT_REGION_CHANGED));
+        top->paint_flags &= ~PAINT_REGION_CHANGED;
     }
 }
 
