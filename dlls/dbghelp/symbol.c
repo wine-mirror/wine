@@ -70,15 +70,15 @@ int __cdecl symt_cmp_addr(const void* p1, const void* p2)
  *     which is exposed to the caller and index is the index of the symbol in
  *     this array
  */
-DWORD             symt_ptr_to_index(struct module* module, const struct symt* sym)
+DWORD             symt_symref_to_index(struct module* module, symref_t symref)
 {
     struct vector* vector;
     DWORD offset;
-    const struct symt** c;
+    symref_t *c;
     int len, i;
 
-    if (!sym) return 0;
-    if (sym->tag == SymTagCustom)
+    if (!symref) return 0;
+    if (symt_is_symref_ptr(symref) && ((struct symt*)symref)->tag == SymTagCustom)
     {
         vector = &module->vcustom_symt;
         offset = BASE_CUSTOM_SYMT;
@@ -89,23 +89,23 @@ DWORD             symt_ptr_to_index(struct module* module, const struct symt* sy
         vector = &module->vsymt;
         offset = 1;
 #else
-        return (DWORD)sym;
+        return (DWORD)symref;
 #endif
     }
     len = vector_length(vector);
     /* FIXME: this is inefficient */
     for (i = 0; i < len; i++)
     {
-        if (*(struct symt**)vector_at(vector, i) == sym)
+        if (*(symref_t*)vector_at(vector, i) == symref)
             return i + offset;
     }
     /* not found */
     c = vector_add(vector, &module->pool);
-    if (c) *c = sym;
+    if (c) *c = symref;
     return len + offset;
 }
 
-struct symt*      symt_index_to_ptr(struct module* module, DWORD id)
+symref_t      symt_index_to_symref(struct module* module, DWORD id)
 {
     struct vector* vector;
     if (id >= BASE_CUSTOM_SYMT)
@@ -116,18 +116,13 @@ struct symt*      symt_index_to_ptr(struct module* module, DWORD id)
     else
     {
 #ifdef _WIN64
-        if (!id--) return NULL;
+        if (!id--) return 0;
         vector = &module->vsymt;
 #else
-        return (struct symt*)id;
+        return (symref_t)id;
 #endif
     }
-    return (id >= vector_length(vector)) ? NULL : *(struct symt**)vector_at(vector, id);
-}
-
-DWORD symt_symref_to_index(struct module *module, symref_t ref)
-{
-    return symt_ptr_to_index(module, (struct symt*)ref);
+    return (id >= vector_length(vector)) ? 0 : *(symref_t *)vector_at(vector, id);
 }
 
 static BOOL symt_grow_sorttab(struct module* module, unsigned sz)
@@ -2653,14 +2648,15 @@ BOOL WINAPI SymGetLineFromNameW64(HANDLE hProcess, PCWSTR ModuleName, PCWSTR Fil
 BOOL WINAPI SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBOL_INFO symbol)
 {
     struct module_pair  pair;
-    struct symt*        sym;
+    symref_t            symref;
 
     TRACE("hProcess = %p, BaseOfDll = %I64x, index = %ld, symbol = %p\n",
           hProcess, BaseOfDll, index, symbol);
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
-    if ((sym = symt_index_to_ptr(pair.effective, index)) == NULL) return FALSE;
-    symt_fill_sym_info(&pair, NULL, sym, symbol);
+    if ((symref = symt_index_to_symref(pair.effective, index)) == 0) return FALSE;
+    if (!symt_is_symref_ptr(symref)) return FALSE;
+    symt_fill_sym_info(&pair, NULL, (struct symt*)symref, symbol);
     return TRUE;
 }
 

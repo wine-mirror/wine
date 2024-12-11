@@ -197,8 +197,8 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
         module->cpu = dbghelp_current_cpu;
     module->debug_format_bitmask = 0;
 
-    vector_init(&module->vsymt, sizeof(struct symt*), 0);
-    vector_init(&module->vcustom_symt, sizeof(struct symt*), 0);
+    vector_init(&module->vsymt, sizeof(symref_t), 0);
+    vector_init(&module->vcustom_symt, sizeof(symref_t), 0);
     /* FIXME: this seems a bit too high (on a per module basis)
      * need some statistics about this
      */

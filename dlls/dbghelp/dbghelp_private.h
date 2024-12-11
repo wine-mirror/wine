@@ -31,6 +31,7 @@
 #include "winnls.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
+#include "wine/debug.h"
 
 #include "cvconst.h"
 
@@ -963,11 +964,12 @@ extern struct symt_hierarchy_point*
                     symt_new_label(struct module* module,
                                    struct symt_compiland* compiland,
                                    const char* name, ULONG_PTR address);
-extern struct symt* symt_index_to_ptr(struct module* module, DWORD id);
-extern DWORD        symt_ptr_to_index(struct module* module, const struct symt* sym);
-extern DWORD        symt_symref_to_index(struct module* module, symref_t ref);
 static inline symref_t
                     symt_ptr_to_symref(const struct symt *symt) {return (ULONG_PTR)symt;}
+extern symref_t     symt_index_to_symref(struct module* module, DWORD id);
+extern DWORD        symt_symref_to_index(struct module* module, symref_t sym);
+static inline DWORD symt_ptr_to_index(struct module *module, const struct symt *symt) {return symt_symref_to_index(module, symt_ptr_to_symref(symt));}
+static inline BOOL  symt_is_symref_ptr(symref_t ref) {return (ref & 3) == 0;}
 extern struct symt_custom*
                     symt_new_custom(struct module* module, const char* name,
                                     DWORD64 addr, DWORD size);

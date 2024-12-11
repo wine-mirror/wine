@@ -717,12 +717,15 @@ BOOL WINAPI SymSetScopeFromAddr(HANDLE hProcess, ULONG64 addr)
 BOOL WINAPI SymSetScopeFromIndex(HANDLE hProcess, ULONG64 addr, DWORD index)
 {
     struct module_pair pair;
+    symref_t symref;
     struct symt* sym;
 
     TRACE("(%p %#I64x %lu)\n", hProcess, addr, index);
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    sym = symt_index_to_ptr(pair.effective, index);
+    symref = symt_index_to_symref(pair.effective, index);
+    if (!symt_is_symref_ptr(symref)) return FALSE;
+    sym = (struct symt*)symref;
     if (!symt_check_tag(sym, SymTagFunction)) return FALSE;
 
     pair.pcs->localscope_pc = ((struct symt_function*)sym)->ranges[0].low; /* FIXME of FuncDebugStart when it exists? */

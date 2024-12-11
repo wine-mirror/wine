@@ -1114,7 +1114,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
 BOOL symt_get_info_from_index(struct module* module, DWORD index,
                               IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo)
 {
-    return symt_get_info(module, symt_index_to_ptr(module, index), req, pInfo);
+    return symt_get_info_from_symref(module, symt_index_to_symref(module, index), req, pInfo);
 }
 
 BOOL symt_get_info_from_symref(struct module* module, symref_t ref,
