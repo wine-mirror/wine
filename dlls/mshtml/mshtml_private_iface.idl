@@ -113,7 +113,6 @@ interface IWineMSHTMLMediaQueryList : IDispatch
     HRESULT removeListener([in] VARIANT *listener);
 }
 
-const long DISPID_IWINEHTMLWINDOWPRIVATE_MUTATIONOBSERVER = 55;
 [
     odl,
     oleautomation,

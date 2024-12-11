@@ -4214,19 +4214,12 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
         {DISPID_UNKNOWN}
     };
 
-    /* Hide props not available in IE10 */
-    static const dispex_hook_t private_ie10_hooks[] = {
-        {DISPID_IWINEHTMLWINDOWPRIVATE_MUTATIONOBSERVER},
-        {DISPID_UNKNOWN}
-    };
-
     if(compat_mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLWindow7_tid, NULL);
     else
         dispex_info_add_interface(info, IWineHTMLWindowCompatPrivate_tid, NULL);
     if(compat_mode >= COMPAT_MODE_IE10)
-        dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid,
-                                  compat_mode >= COMPAT_MODE_IE11 ? NULL : private_ie10_hooks);
+        dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid, NULL);
 
     dispex_info_add_interface(info, IHTMLWindow6_tid, window6_hooks);
     if(compat_mode < COMPAT_MODE_IE9)
