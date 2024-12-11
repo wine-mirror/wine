@@ -3920,8 +3920,8 @@ static WCHAR *get_windir_path( const WCHAR *path )
     WCHAR buffer[MAX_PATH];
     int len = GetWindowsDirectoryW( buffer, MAX_PATH );
     int len2 = wcslen( path );
-    WCHAR *ret = HeapAlloc( GetProcessHeap(), 0, (len + len2 + 1) * sizeof(WCHAR) );
-    swprintf( ret, len + len2 + 1, L"%s\\%s", buffer, path );
+    WCHAR *ret = HeapAlloc( GetProcessHeap(), 0, (len + len2 + 2) * sizeof(WCHAR) );
+    swprintf( ret, len + len2 + 2, L"%s\\%s", buffer, path );
     return ret;
 }
 
