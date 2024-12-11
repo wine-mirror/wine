@@ -1134,7 +1134,7 @@ static void byte_swap_ifd_data(char *data)
     }
 }
 
-static void test_metadata_IFD(void)
+static void test_ifd_content(IWICMetadataReader *reader)
 {
     static const struct test_data td[28] =
     {
@@ -1170,35 +1170,16 @@ static void test_metadata_IFD(void)
             ((LONGLONG)0x50607080 << 32) | 0x10203040,
             ((LONGLONG)0x55667788 << 32) | 0x11223344 } },
     };
-    HRESULT hr;
-    IWICMetadataReader *reader;
-    IWICMetadataWriter *writer;
     PROPVARIANT schema, id, value;
-    UINT count;
-    GUID format;
     char *IFD_data_swapped;
-
-    hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICMetadataReader, (void**)&reader);
-    ok(hr == S_OK, "CoCreateInstance error %#lx\n", hr);
-
-    check_interface(reader, &IID_IWICMetadataReader, TRUE);
-    check_interface(reader, &IID_IPersist, TRUE);
-    check_interface(reader, &IID_IPersistStream, TRUE);
-    check_interface(reader, &IID_IWICPersistStream, TRUE);
-    check_interface(reader, &IID_IWICStreamProvider, TRUE);
-    check_interface(reader, &IID_IWICMetadataBlockReader, FALSE);
-
-    hr = IWICMetadataReader_GetCount(reader, NULL);
-    ok(hr == E_INVALIDARG, "GetCount error %#lx\n", hr);
+    UINT count;
+    HRESULT hr;
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == 0, "unexpected count %u\n", count);
 
     load_stream(reader, (const char *)&IFD_data, sizeof(IFD_data), WICPersistOptionLittleEndian);
-
-    test_reader_container_format(reader, &GUID_ContainerFormatTiff);
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
@@ -1216,13 +1197,6 @@ static void test_metadata_IFD(void)
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);
     compare_metadata(reader, td, count);
     HeapFree(GetProcessHeap(), 0, IFD_data_swapped);
-
-    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
-    ok(hr == S_OK, "GetMetadataFormat error %#lx\n", hr);
-    ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "unexpected format %s\n", wine_dbgstr_guid(&format));
-
-    hr = IWICMetadataReader_GetMetadataFormat(reader, NULL);
-    ok(hr == E_INVALIDARG, "GetMetadataFormat should fail\n");
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, NULL);
     ok(hr == S_OK, "GetValueByIndex error %#lx\n", hr);
@@ -1295,6 +1269,44 @@ static void test_metadata_IFD(void)
     ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
     ok(!strcmp(value.pszVal, "Hello World!"), "unexpected value: %s\n", value.pszVal);
     PropVariantClear(&value);
+}
+
+static void test_metadata_Ifd(void)
+{
+    IWICMetadataReader *reader;
+    IWICMetadataWriter *writer;
+    GUID format;
+    UINT count;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICMetadataReader, (void**)&reader);
+    ok(hr == S_OK, "CoCreateInstance error %#lx\n", hr);
+
+    check_interface(reader, &IID_IWICMetadataReader, TRUE);
+    check_interface(reader, &IID_IPersist, TRUE);
+    check_interface(reader, &IID_IPersistStream, TRUE);
+    check_interface(reader, &IID_IWICPersistStream, TRUE);
+    check_interface(reader, &IID_IWICStreamProvider, TRUE);
+    check_interface(reader, &IID_IWICMetadataBlockReader, FALSE);
+
+    hr = IWICMetadataReader_GetCount(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetCount error %#lx\n", hr);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount error %#lx\n", hr);
+    ok(count == 0, "unexpected count %u\n", count);
+
+    test_ifd_content(reader);
+
+    test_reader_container_format(reader, &GUID_ContainerFormatTiff);
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "GetMetadataFormat error %#lx\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "unexpected format %s\n", wine_dbgstr_guid(&format));
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetMetadataFormat should fail\n");
 
     IWICMetadataReader_Release(reader);
 
@@ -3712,7 +3724,7 @@ START_TEST(metadata)
     test_metadata_cHRM();
     test_metadata_hIST();
     test_metadata_tIME();
-    test_metadata_IFD();
+    test_metadata_Ifd();
     test_metadata_Exif();
     test_create_reader_from_container();
     test_create_reader();
