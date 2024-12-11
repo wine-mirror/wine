@@ -1670,7 +1670,7 @@ static SIZE *get_screen_sizes( const DEVMODEW *maximum, const DEVMODEW *modes, U
 static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial, const DEVMODEW *maximum,
                                     const DEVMODEW *host_modes, UINT host_modes_count, UINT32 *modes_count )
 {
-    UINT depths[] = {8, 16, initial->dmBitsPerPel}, sizes_count, i, j, count = 0;
+    UINT depths[] = {8, 16, initial->dmBitsPerPel}, freqs[] = {60, -1}, sizes_count, i, j, f, count = 0;
     DEVMODEW *modes = NULL;
     SIZE *screen_sizes;
     BOOL vertical;
@@ -1680,19 +1680,24 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
      * device, which isn't necessarily a horizontal mode */
     vertical = initial->dmPelsHeight > initial->dmPelsWidth;
 
+    freqs[1] = devmode_get( initial, DM_DISPLAYFREQUENCY );
+    if (freqs[1] <= 60) freqs[1] = 0;
+
     if (!(screen_sizes = get_screen_sizes( maximum, host_modes, host_modes_count, &sizes_count ))) return NULL;
-    modes = malloc( ARRAY_SIZE(depths) * (sizes_count + 2) * sizeof(*modes) );
+    modes = malloc( ARRAY_SIZE(freqs) * ARRAY_SIZE(depths) * (sizes_count + 2) * sizeof(*modes) );
 
     for (i = 0; modes && i < ARRAY_SIZE(depths); ++i)
+    for (f = 0; f < ARRAY_SIZE(freqs); ++f)
     {
         DEVMODEW mode =
         {
             .dmSize = sizeof(mode),
             .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-            .dmDisplayFrequency = 60,
+            .dmDisplayFrequency = freqs[f],
             .dmBitsPerPel = depths[i],
             .dmDisplayOrientation = initial->dmDisplayOrientation,
         };
+        if (!mode.dmDisplayFrequency) continue;
 
         for (j = 0; j < sizes_count; ++j)
         {
