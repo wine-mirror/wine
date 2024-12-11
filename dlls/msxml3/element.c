@@ -1819,10 +1819,16 @@ static HRESULT domelem_get_item(const xmlNodePtr node, LONG index, IXMLDOMNode *
     if (!node->nsDef)
         return S_FALSE;
 
-    attrIndex++;
     ns = node->nsDef;
-    for (; attrIndex < index && ns->next != NULL; attrIndex++)
+    while (attrIndex < index)
+    {
+        attrIndex++;
+
+        if (!ns->next)
+            break;
+
         ns = ns->next;
+    }
 
     if (attrIndex < index)
         return S_FALSE;
