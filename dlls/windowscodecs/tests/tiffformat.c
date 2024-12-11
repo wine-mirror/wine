@@ -75,11 +75,7 @@ static const struct tiff_1bpp_data
     BYTE pixel_data[4];
 } tiff_1bpp_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_1bpp_data, number_of_entries),
     13,
@@ -115,11 +111,7 @@ static const struct tiff_8bpp_alpha
     BYTE pixel_data[8];
 } tiff_8bpp_alpha =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_8bpp_alpha, number_of_entries),
     15,
@@ -158,11 +150,7 @@ static const struct tiff_8bpp_data
     BYTE pixel_data[4];
 } tiff_8bpp_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_8bpp_data, number_of_entries),
     14,
@@ -234,11 +222,7 @@ static struct tiff_resolution_image_data
     BYTE pixel_data[4];
 } tiff_resolution_image_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_resolution_image_data, number_of_entries),
     13,
@@ -275,11 +259,7 @@ static const struct tiff_24bpp_data
     BYTE pixel_data[3];
 } tiff_24bpp_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_1bpp_data, number_of_entries),
     13,
@@ -315,11 +295,7 @@ static const struct tiff_4bps_bgra
     BYTE pixel_data[4];
 } tiff_4bps_bgra =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_4bps_bgra, number_of_entries),
     14,
@@ -853,11 +829,7 @@ static const struct tiff_1x1_data
     BYTE pixel_data[32];
 } tiff_1x1_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_1x1_data, number_of_entries),
     13,

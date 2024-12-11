@@ -1177,11 +1177,6 @@ static void test_metadata_IFD(void)
     UINT count;
     GUID format;
     char *IFD_data_swapped;
-#ifdef WORDS_BIGENDIAN
-    DWORD persist_options = WICPersistOptionBigEndian;
-#else
-    DWORD persist_options = WICPersistOptionLittleEndian;
-#endif
 
     hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICMetadataReader, (void**)&reader);
@@ -1201,7 +1196,7 @@ static void test_metadata_IFD(void)
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == 0, "unexpected count %u\n", count);
 
-    load_stream(reader, (const char *)&IFD_data, sizeof(IFD_data), persist_options);
+    load_stream(reader, (const char *)&IFD_data, sizeof(IFD_data), WICPersistOptionLittleEndian);
 
     test_reader_container_format(reader, &GUID_ContainerFormatTiff);
 
@@ -1211,16 +1206,11 @@ static void test_metadata_IFD(void)
 
     compare_metadata(reader, td, count);
 
-    /* test IFD data with different endianness */
-    if (persist_options == WICPersistOptionLittleEndian)
-        persist_options = WICPersistOptionBigEndian;
-    else
-        persist_options = WICPersistOptionLittleEndian;
-
+    /* Test big-endian IFD data */
     IFD_data_swapped = HeapAlloc(GetProcessHeap(), 0, sizeof(IFD_data));
     memcpy(IFD_data_swapped, &IFD_data, sizeof(IFD_data));
     byte_swap_ifd_data(IFD_data_swapped);
-    load_stream(reader, IFD_data_swapped, sizeof(IFD_data), persist_options);
+    load_stream(reader, IFD_data_swapped, sizeof(IFD_data), WICPersistOptionBigEndian);
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);

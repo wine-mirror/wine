@@ -962,16 +962,11 @@ static void load_stream(IUnknown *reader, IStream *stream)
 {
     HRESULT hr;
     IWICPersistStream *persist;
-#ifdef WORDS_BIGENDIAN
-    DWORD persist_options = WICPersistOptionBigEndian;
-#else
-    DWORD persist_options = WICPersistOptionLittleEndian;
-#endif
 
     hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
     ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
 
-    hr = IWICPersistStream_LoadEx(persist, stream, NULL, persist_options);
+    hr = IWICPersistStream_LoadEx(persist, stream, NULL, 0);
     ok(hr == S_OK, "LoadEx failed, hr=%lx\n", hr);
 
     IWICPersistStream_Release(persist);
