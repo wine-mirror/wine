@@ -1579,11 +1579,8 @@ static UINT add_virtual_mode( DEVMODEW *modes, UINT count, const DEVMODEW *mode 
 static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial, const DEVMODEW *maximum,
                                     const DEVMODEW *host_modes, UINT host_modes_count, UINT32 *modes_count )
 {
-    static struct screen_size
+    static SIZE screen_sizes[] =
     {
-        unsigned int width;
-        unsigned int height;
-    } screen_sizes[] = {
         /* 4:3 */
         { 320,  240},
         { 400,  300},
@@ -1616,7 +1613,7 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
         {1920, 1200},
         {2560, 1600}
     };
-    UINT depths[] = {8, 16, initial->dmBitsPerPel}, i, j, count;
+    UINT depths[] = {8, 16, initial->dmBitsPerPel}, i, j, count = 0;
     BOOL vertical;
     DEVMODEW *modes;
 
@@ -1627,7 +1624,7 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
 
     modes = malloc( ARRAY_SIZE(depths) * (ARRAY_SIZE(screen_sizes) + 2) * sizeof(*modes) );
 
-    for (count = i = 0; modes && i < ARRAY_SIZE(depths); ++i)
+    for (i = 0; modes && i < ARRAY_SIZE(depths); ++i)
     {
         DEVMODEW mode =
         {
@@ -1640,8 +1637,8 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
 
         for (j = 0; j < ARRAY_SIZE(screen_sizes); ++j)
         {
-            mode.dmPelsWidth = vertical ? screen_sizes[j].height : screen_sizes[j].width;
-            mode.dmPelsHeight = vertical ? screen_sizes[j].width : screen_sizes[j].height;
+            mode.dmPelsWidth = vertical ? screen_sizes[j].cy : screen_sizes[j].cx;
+            mode.dmPelsHeight = vertical ? screen_sizes[j].cx : screen_sizes[j].cy;
 
             if (mode.dmPelsWidth > maximum->dmPelsWidth || mode.dmPelsHeight > maximum->dmPelsHeight) continue;
             if (mode.dmPelsWidth == maximum->dmPelsWidth && mode.dmPelsHeight == maximum->dmPelsHeight) continue;
