@@ -287,6 +287,9 @@ static const union {
 _ACRTIMP short __cdecl _dtest(double*);
 _ACRTIMP short __cdecl _ldtest(long double*);
 _ACRTIMP short __cdecl _fdtest(float*);
+_ACRTIMP int   __cdecl _dsign(double);
+_ACRTIMP int   __cdecl _ldsign(long double);
+_ACRTIMP int   __cdecl _fdsign(float);
 
 #ifdef __cplusplus
 
@@ -294,6 +297,9 @@ extern "C++" {
 inline int fpclassify(float x) throw() { return _fdtest(&x); }
 inline int fpclassify(double x) throw() { return _dtest(&x); }
 inline int fpclassify(long double x) throw() { return _ldtest(&x); }
+inline bool signbit(float x) throw() { return _fdsign(x) != 0; }
+inline bool signbit(double x) throw() { return _dsign(x) != 0; }
+inline bool signbit(long double x) throw() { return _ldsign(x) != 0; }
 template <class T> inline bool isfinite(T x) throw() { return fpclassify(x) <= 0; }
 template <class T> inline bool isinf(T x) throw() { return fpclassify(x) == FP_INFINITE; }
 template <class T> inline bool isnan(T x) throw() { return fpclassify(x) == FP_NAN; }
@@ -303,8 +309,6 @@ template <class T> inline bool isnan(T x) throw() { return fpclassify(x) == FP_N
 
 _ACRTIMP short __cdecl _dclass(double);
 _ACRTIMP short __cdecl _fdclass(float);
-_ACRTIMP int   __cdecl _dsign(double);
-_ACRTIMP int   __cdecl _fdsign(float);
 
 #define fpclassify(x) (sizeof(x) == sizeof(float) ? _fdclass(x) : _dclass(x))
 #define signbit(x)    (sizeof(x) == sizeof(float) ? _fdsign(x) : _dsign(x))
