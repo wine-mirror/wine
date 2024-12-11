@@ -1576,10 +1576,10 @@ static UINT add_virtual_mode( DEVMODEW *modes, UINT count, const DEVMODEW *mode 
     return 1;
 }
 
-static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial, const DEVMODEW *maximum,
-                                    const DEVMODEW *host_modes, UINT host_modes_count, UINT32 *modes_count )
+static SIZE *get_screen_sizes( const DEVMODEW *maximum, const DEVMODEW *modes, UINT modes_count,
+                               UINT *sizes_count )
 {
-    static SIZE screen_sizes[] =
+    static SIZE default_sizes[] =
     {
         /* 4:3 */
         { 320,  240},
@@ -1611,18 +1611,34 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
         {1440,  900},
         {1680, 1050},
         {1920, 1200},
-        {2560, 1600}
+        {2560, 1600},
     };
-    UINT depths[] = {8, 16, initial->dmBitsPerPel}, i, j, count = 0;
+    SIZE *sizes;
+    UINT count;
+
+    count = ARRAY_SIZE(default_sizes);
+    if (!(sizes = malloc( count * sizeof(*sizes) ))) return NULL;
+    memcpy( sizes, default_sizes, count * sizeof(*sizes) );
+
+    *sizes_count = count;
+    return sizes;
+}
+
+static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial, const DEVMODEW *maximum,
+                                    const DEVMODEW *host_modes, UINT host_modes_count, UINT32 *modes_count )
+{
+    UINT depths[] = {8, 16, initial->dmBitsPerPel}, sizes_count, i, j, count = 0;
+    DEVMODEW *modes = NULL;
+    SIZE *screen_sizes;
     BOOL vertical;
-    DEVMODEW *modes;
 
     /* Check the ratio of dmPelsWidth to dmPelsHeight to determine whether the initial display mode
      * is in horizontal or vertical orientation. DMDO_DEFAULT is the natural orientation of the
      * device, which isn't necessarily a horizontal mode */
     vertical = initial->dmPelsHeight > initial->dmPelsWidth;
 
-    modes = malloc( ARRAY_SIZE(depths) * (ARRAY_SIZE(screen_sizes) + 2) * sizeof(*modes) );
+    if (!(screen_sizes = get_screen_sizes( maximum, host_modes, host_modes_count, &sizes_count ))) return NULL;
+    modes = malloc( ARRAY_SIZE(depths) * (sizes_count + 2) * sizeof(*modes) );
 
     for (i = 0; modes && i < ARRAY_SIZE(depths); ++i)
     {
@@ -1635,7 +1651,7 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
             .dmDisplayOrientation = initial->dmDisplayOrientation,
         };
 
-        for (j = 0; j < ARRAY_SIZE(screen_sizes); ++j)
+        for (j = 0; j < sizes_count; ++j)
         {
             mode.dmPelsWidth = vertical ? screen_sizes[j].cy : screen_sizes[j].cx;
             mode.dmPelsHeight = vertical ? screen_sizes[j].cx : screen_sizes[j].cy;
@@ -1659,6 +1675,7 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
     }
 
     *modes_count = count;
+    free( screen_sizes );
     return modes;
 }
 
