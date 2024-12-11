@@ -1569,6 +1569,13 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
     }
 }
 
+static UINT add_virtual_mode( DEVMODEW *modes, UINT count, const DEVMODEW *mode )
+{
+    TRACE( "adding mode %s\n", debugstr_devmodew(mode) );
+    modes[count] = *mode;
+    return 1;
+}
+
 static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial,
                                     const DEVMODEW *maximum, UINT32 *modes_count )
 {
@@ -1639,18 +1646,18 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
             if (mode.dmPelsWidth > maximum->dmPelsWidth || mode.dmPelsHeight > maximum->dmPelsHeight) continue;
             if (mode.dmPelsWidth == maximum->dmPelsWidth && mode.dmPelsHeight == maximum->dmPelsHeight) continue;
             if (mode.dmPelsWidth == initial->dmPelsWidth && mode.dmPelsHeight == initial->dmPelsHeight) continue;
-            modes[count++] = mode;
+            count += add_virtual_mode( modes, count, &mode );
         }
 
         mode.dmPelsWidth = vertical ? initial->dmPelsHeight : initial->dmPelsWidth;
         mode.dmPelsHeight = vertical ? initial->dmPelsWidth : initial->dmPelsHeight;
-        modes[count++] = mode;
+        count += add_virtual_mode( modes, count, &mode );
 
         if (maximum->dmPelsWidth != initial->dmPelsWidth || maximum->dmPelsHeight != initial->dmPelsHeight)
         {
             mode.dmPelsWidth = vertical ? maximum->dmPelsHeight : maximum->dmPelsWidth;
             mode.dmPelsHeight = vertical ? maximum->dmPelsWidth : maximum->dmPelsHeight;
-            modes[count++] = mode;
+            count += add_virtual_mode( modes, count, &mode );
         }
     }
 
