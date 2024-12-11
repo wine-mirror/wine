@@ -1576,8 +1576,8 @@ static UINT add_virtual_mode( DEVMODEW *modes, UINT count, const DEVMODEW *mode 
     return 1;
 }
 
-static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial,
-                                    const DEVMODEW *maximum, UINT32 *modes_count )
+static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial, const DEVMODEW *maximum,
+                                    const DEVMODEW *host_modes, UINT host_modes_count, UINT32 *modes_count )
 {
     static struct screen_size
     {
@@ -1665,14 +1665,16 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
     return modes;
 }
 
-static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param )
+static void add_modes( const DEVMODEW *current, UINT host_modes_count, const DEVMODEW *host_modes, void *param )
 {
     struct device_manager_ctx *ctx = param;
     DEVMODEW dummy, physical, detached = *current, virtual, *virtual_modes = NULL;
+    UINT virtual_count, modes_count = host_modes_count;
+    const DEVMODEW *modes = host_modes;
     struct source *source;
-    UINT virtual_count;
 
-    TRACE( "current %s, modes_count %u, modes %p, param %p\n", debugstr_devmodew( current ), modes_count, modes, param );
+    TRACE( "current %s, host_modes_count %u, host_modes %p, param %p\n", debugstr_devmodew( current ),
+           host_modes_count, host_modes, param );
 
     assert( !list_empty( &sources ) );
     source = LIST_ENTRY( list_tail( &sources ), struct source, entry );
@@ -1700,7 +1702,7 @@ static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW
         if (!read_source_mode( source->key, ENUM_CURRENT_SETTINGS, &virtual ))
             virtual = physical;
 
-        if ((virtual_modes = get_virtual_modes( &virtual, current, &physical, &virtual_count )))
+        if ((virtual_modes = get_virtual_modes( &virtual, current, &physical, host_modes, host_modes_count, &virtual_count )))
         {
             modes_count = virtual_count;
             modes = virtual_modes;
@@ -2217,7 +2219,7 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
     add_monitor( &monitor, ctx );
 
     /* Expose the virtual source display modes as physical modes, to avoid DPI scaling */
-    if (!(modes = get_virtual_modes( &current, &initial, &maximum, &modes_count ))) return STATUS_NO_MEMORY;
+    if (!(modes = get_virtual_modes( &current, &initial, &maximum, NULL, 0, &modes_count ))) return STATUS_NO_MEMORY;
     add_modes( &current, modes_count, modes, ctx );
     free( modes );
 
