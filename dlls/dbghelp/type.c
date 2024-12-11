@@ -1120,7 +1120,14 @@ BOOL symt_get_info_from_index(struct module* module, DWORD index,
 BOOL symt_get_info_from_symref(struct module* module, symref_t ref,
                                IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo)
 {
-    return symt_get_info(module, (struct symt*)ref, req, pInfo);
+    if (symt_is_symref_ptr(ref))
+        return symt_get_info(module, (struct symt *)ref, req, pInfo);
+    if (module->ops_symref_modfmt)
+    {
+        enum method_result result = module->ops_symref_modfmt->vtable->request_symref_t(module->ops_symref_modfmt, ref, req, pInfo);
+        if (result == MR_SUCCESS) return TRUE;
+    }
+    return FALSE;
 }
 
 /******************************************************************

@@ -1149,9 +1149,156 @@ static void pdb_method_location_compute(const struct module_format *modfmt,
     loc->reg = loc_err_out_of_scope;
 }
 
+static symref_t encode_symref(unsigned v)
+{
+    return (v << 2) | 1;
+}
+
+static inline unsigned decode_symref(symref_t ref)
+{
+    return ref >> 2;
+}
+
+static struct {enum BasicType bt; unsigned char size;} supported_basic[T_MAXBASICTYPE] =
+{
+    /* all others are defined as 0 = btNoType */
+    [T_VOID]     = {btVoid, 0},
+    [T_CURRENCY] = {btCurrency, 8},
+    [T_CHAR]     = {btInt, 1},
+    [T_SHORT]    = {btInt, 2},
+    [T_LONG]     = {btLong, 4},
+    [T_QUAD]     = {btInt, 8},
+    [T_OCT]      = {btInt, 16},
+    [T_UCHAR]    = {btUInt, 1},
+    [T_USHORT]   = {btUInt, 2},
+    [T_ULONG]    = {btULong, 4},
+    [T_UQUAD]    = {btUInt, 8},
+    [T_UOCT]     = {btUInt, 16},
+    [T_BOOL08]   = {btBool, 1},
+    [T_BOOL16]   = {btBool, 2},
+    [T_BOOL32]   = {btBool, 4},
+    [T_BOOL64]   = {btBool, 8},
+    [T_REAL16]   = {btFloat, 2},
+    [T_REAL32]   = {btFloat, 4},
+    [T_REAL64]   = {btFloat, 8},
+    [T_REAL80]   = {btFloat, 10},
+    [T_REAL128]  = {btFloat, 16},
+    [T_RCHAR]   = {btChar, 1},
+    [T_WCHAR]   = {btWChar, 2},
+    [T_CHAR16]  = {btChar16, 2},
+    [T_CHAR32]  = {btChar32, 4},
+    [T_CHAR8]   = {btChar8, 1},
+    [T_INT2]    = {btInt, 2},
+    [T_UINT2]   = {btUInt, 2},
+    [T_INT4]    = {btInt, 4},
+    [T_UINT4]   = {btUInt, 4},
+    [T_INT8]    = {btInt, 8},
+    [T_UINT8]   = {btUInt, 8},
+    [T_HRESULT] = {btUInt, 4},
+    [T_CPLX32]  = {btComplex, 8},
+    [T_CPLX64]  = {btComplex, 16},
+    [T_CPLX128] = {btComplex, 32},
+};
+
+static inline BOOL is_basic_supported(unsigned basic)
+{
+    return basic <= T_MAXBASICTYPE && supported_basic[basic].bt != btNoType;
+}
+
+static enum method_result pdb_reader_default_request(struct pdb_reader *pdb, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    switch (req)
+    {
+    case TI_FINDCHILDREN:
+        return ((TI_FINDCHILDREN_PARAMS*)data)->Count == 0 ? MR_SUCCESS : MR_FAILURE;
+    case TI_GET_CHILDRENCOUNT:
+        *((DWORD*)data) = 0;
+        return MR_SUCCESS;
+    case TI_GET_LEXICALPARENT:
+        *((DWORD*)data) = symt_ptr_to_index(pdb->module, &pdb->module->top->symt);
+        return MR_SUCCESS;
+    default:
+        FIXME("Unexpected request %x\n", req);
+        return MR_FAILURE;
+    }
+}
+
+static enum method_result pdb_reader_basic_request(struct pdb_reader *pdb, unsigned basic, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    if (!is_basic_supported(basic & T_BASICTYPE_MASK))
+    {
+        FIXME("Unsupported basic type %x\n", basic);
+        return MR_FAILURE;
+    }
+
+    switch (req)
+    {
+    case TI_GET_BASETYPE:
+        if (basic >= T_MAXBASICTYPE) return MR_FAILURE;
+        *((DWORD*)data) = supported_basic[basic].bt;
+        break;
+    case TI_GET_LENGTH:
+        switch (basic & T_MODE_MASK)
+        {
+        case 0:                *((DWORD64*)data) = supported_basic[basic].size; break;
+        /* pointer type */
+        case T_NEARPTR_BITS:   *((DWORD64*)data) = pdb->module->cpu->word_size; break;
+        case T_NEAR32PTR_BITS: *((DWORD64*)data) = 4; break;
+        case T_NEAR64PTR_BITS: *((DWORD64*)data) = 8; break;
+        default: return MR_FAILURE;
+        }
+        break;
+    case TI_GET_SYMTAG:
+        *((DWORD*)data) = (basic < T_MAXBASICTYPE) ? SymTagBaseType : SymTagPointerType;
+        break;
+    case TI_GET_TYPE:
+    case TI_GET_TYPEID:
+        if (basic < T_MAXBASICTYPE) return MR_FAILURE;
+        *((DWORD*)data) = encode_symref(basic & T_BASICTYPE_MASK);
+        break;
+    case TI_FINDCHILDREN:
+    case TI_GET_CHILDRENCOUNT:
+    case TI_GET_LEXICALPARENT:
+        return pdb_reader_default_request(pdb, req, data);
+    default: return MR_FAILURE;
+    }
+    return MR_SUCCESS;
+}
+
+static enum method_result pdb_method_request_symref_t(struct module_format *modfmt, symref_t ref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    struct pdb_reader *pdb;
+    cv_typ_t cv_typeid;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+    if (req == TI_GET_SYMINDEX)
+    {
+        *((DWORD*)data) = ref;
+        return MR_SUCCESS;
+    }
+    cv_typeid = decode_symref(ref);
+    if (cv_typeid < T_MAXPREDEFINEDTYPE)
+        return pdb_reader_basic_request(pdb, cv_typeid, req, data);
+    return MR_NOT_FOUND;
+}
+
+symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, struct symt *symt)
+{
+    if (pdb)
+    {
+        if (symt_check_tag(symt, SymTagBaseType))
+        {
+            if (cv_typeid < T_MAXPREDEFINEDTYPE)
+                return encode_symref(cv_typeid);
+        }
+    }
+    return symt_ptr_to_symref(symt);
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
+    pdb_method_request_symref_t,
     pdb_method_location_compute,
     pdb_method_get_line_from_address,
     pdb_method_advance_line_info,

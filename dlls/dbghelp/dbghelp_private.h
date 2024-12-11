@@ -436,6 +436,10 @@ struct module_format_vtable
 {
     /* module handling */
     void                        (*remove)(struct module_format* modfmt);
+
+    /* index management */
+    enum method_result          (*request_symref_t)(struct module_format *modfmt, symref_t ref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data);
+
     /* stack walk */
     void                        (*loc_compute)(const struct module_format* modfmt,
                                                const struct symt_function* func,
@@ -489,6 +493,7 @@ struct module
     /* specific information for debug types */
     struct module_format*       format_info[DFI_LAST];
     unsigned                    debug_format_bitmask;
+    struct module_format       *ops_symref_modfmt; /* HACK for fast access to the ops table */
 
     /* memory allocation pool */
     struct pool                 pool;
@@ -977,6 +982,8 @@ extern BOOL         lineinfo_set_nameA(struct process* pcs, struct lineinfo_t* i
 
 /* type.c */
 extern void         symt_init_basic(struct module* module);
+extern BOOL         symt_get_info_raw(struct module* module, const struct symt* type,
+                                      IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo);
 extern BOOL         symt_get_info(struct module* module, const struct symt* type,
                                   IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo);
 extern BOOL         symt_get_info_from_index(struct module* module, DWORD index,
@@ -1064,3 +1071,4 @@ struct pdb_reader;
 extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream);
 extern void pdb_reader_dispose(struct pdb_reader *pdb);
 extern struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections);
+extern symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, unsigned typeno, struct symt *symt);

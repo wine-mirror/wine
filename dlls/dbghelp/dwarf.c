@@ -4297,6 +4297,7 @@ static BOOL dwarf2_unload_CU_module(dwarf2_parse_module_context_t* module_ctx)
 static const struct module_format_vtable dwarf2_module_format_vtable =
 {
     dwarf2_module_remove,
+    NULL,
     dwarf2_location_compute,
 };
 
