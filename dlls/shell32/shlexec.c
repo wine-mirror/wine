@@ -1670,10 +1670,13 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
             wszApplicationName[len-2] = '\0';
         TRACE("wszApplicationName=%s\n",debugstr_w(wszApplicationName));
     } else {
-        DWORD l = lstrlenW(sei_tmp.lpFile)+1;
-        if(l > dwApplicationNameLen) dwApplicationNameLen = l+1;
-        wszApplicationName = malloc(dwApplicationNameLen * sizeof(WCHAR));
-        memcpy(wszApplicationName, sei_tmp.lpFile, l*sizeof(WCHAR));
+        /* remove trailing spaces */
+        WCHAR *buf = wcsdup(sei->lpFile), *end = buf + wcslen( buf ) - 1;
+        while (end >= buf && *end == ' ') *end-- = 0;
+
+        len = lstrlenW(buf)+1;
+        if(len > dwApplicationNameLen) dwApplicationNameLen = len+1;
+        wszApplicationName = buf;
     }
 
     wszParameters = parametersBuffer;

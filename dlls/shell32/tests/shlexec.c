@@ -1166,6 +1166,15 @@ static void test_lpFile_parsed(void)
                         NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL, NULL);
     okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
             "failed: rc=%Iu\n", rc);
+    /* test lpfile + trailing space */
+    rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
+                        NULL, "%TMPDIR%\\simple.shlexec ", NULL, NULL, NULL);
+    okShell(rc > 32, "failed: rc=%Iu\n", rc);
+    /* test lpfile + leading space */
+    rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
+                        NULL, " %TMPDIR%\\simple.shlexec", NULL, NULL, NULL);
+    okShell(rc == SE_ERR_FNF, "failed: rc=%Iu\n", rc);
+
 }
 
 typedef struct
