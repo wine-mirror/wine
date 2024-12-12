@@ -333,7 +333,7 @@ static struct symt_function* init_function_or_inlinesite(struct module* module,
         sym->hash_elt.name = pool_strdup(&module->pool, name);
         sym->container = container;
         sym->type      = sig_type;
-        vector_init(&sym->vlines,  sizeof(struct line_info), 64);
+        vector_init(&sym->vlines,  sizeof(struct line_info), tag == SymTagFunction ? 8 : 4);
         vector_init(&sym->vchildren, sizeof(struct symt*), 8);
         sym->num_ranges = num_ranges;
     }
