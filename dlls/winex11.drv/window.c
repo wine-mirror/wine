@@ -2944,10 +2944,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     XFlush( gdi_display );  /* make sure painting is done before we move the window */
 
     sync_client_position( data, &old_rects );
-
-    if (data->rects.client.right - data->rects.client.left != old_rects.client.right - old_rects.client.left ||
-        data->rects.client.bottom - data->rects.client.top != old_rects.client.bottom - old_rects.client.top)
-        sync_gl_drawable( hwnd, FALSE );
+    sync_gl_drawable( hwnd, FALSE );
 
     if (!data->whole_window)
     {
