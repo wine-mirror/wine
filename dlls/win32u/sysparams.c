@@ -1610,8 +1610,13 @@ static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *ini
         {2560, 1600}
     };
     UINT depths[] = {8, 16, initial->dmBitsPerPel}, i, j, count;
-    BOOL vertical = initial->dmDisplayOrientation & 1;
+    BOOL vertical;
     DEVMODEW *modes;
+
+    /* Check the ratio of dmPelsWidth to dmPelsHeight to determine whether the initial display mode
+     * is in horizontal or vertical orientation. DMDO_DEFAULT is the natural orientation of the
+     * device, which isn't necessarily a horizontal mode */
+    vertical = initial->dmPelsHeight > initial->dmPelsWidth;
 
     modes = malloc( ARRAY_SIZE(depths) * (ARRAY_SIZE(screen_sizes) + 2) * sizeof(*modes) );
 
