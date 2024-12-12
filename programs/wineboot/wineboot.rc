@@ -43,7 +43,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     ICON "", IDC_WAITICON, 3, 3, 10, 10
     LTEXT "The Wine configuration in %s is being updated, please wait...",
-          IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
+          IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX | SS_EDITCONTROL
 END
 
 /* @makedep: wineboot.manifest */
