@@ -3776,8 +3776,16 @@ static const struct app1_data
     ULONG ifd0_offset;
 
     USHORT ifd0_count;
-    struct IFD_entry ifd0[2];
+    struct IFD_entry ifd0[4];
     ULONG next_IFD;
+
+    USHORT exif_ifd_count;
+    struct IFD_entry exif_ifd[1];
+    ULONG next_IFD_2;
+
+    USHORT gps_ifd_count;
+    struct IFD_entry gps_ifd[1];
+    ULONG next_IFD_3;
 }
 app1_data =
 {
@@ -3787,18 +3795,36 @@ app1_data =
     0x8,
 
     /* IFD 0 */
-    2,
+    4,
     {
-        { 0x100, IFD_LONG, 1, 222 }, /* IMAGEWIDTH */
-        { 0x101, IFD_LONG, 1, 333 }, /* IMAGELENGTH */
+        { 0x100,  IFD_LONG, 1, 222 }, /* IMAGEWIDTH */
+        { 0x101,  IFD_LONG, 1, 333 }, /* IMAGELENGTH */
+        /* Exif IFD pointer */
+        { 0x8769, IFD_LONG, 1, FIELD_OFFSET(struct app1_data, exif_ifd_count) - 6 },
+        /* GPS IFD pointer */
+        { 0x8825, IFD_LONG, 1, FIELD_OFFSET(struct app1_data, gps_ifd_count) - 6 },
     },
-    0
+    0,
+
+    /* Exif IFD */
+    1,
+    {
+        { 0x200, IFD_SHORT, 1, 444 },
+    },
+    0,
+
+    /* GPS IFD */
+    1,
+    {
+        { 0x300, IFD_SHORT, 1, 555 },
+    },
+    0,
 };
 #include "poppack.h"
 
 static void test_metadata_App1(void)
 {
-    IWICMetadataReader *reader, *reader2;
+    IWICMetadataReader *reader, *ifd_reader, *exif_reader, *gps_reader;
     IWICMetadataWriter *writer;
     PROPVARIANT id, value;
     GUID format;
@@ -3850,39 +3876,95 @@ static void test_metadata_App1(void)
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
     ok(!!value.punkVal, "Unexpected value.\n");
 
-    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)&reader2);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)&ifd_reader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     PropVariantClear(&value);
 
-    hr = IWICMetadataReader_GetMetadataFormat(reader2, &format);
+    hr = IWICMetadataReader_GetMetadataFormat(ifd_reader, &format);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
 
-    hr = IWICMetadataReader_GetCount(reader2, &count);
+    hr = IWICMetadataReader_GetCount(ifd_reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(count == 2, "Unexpected count %u.\n", count);
+    ok(count == 4, "Unexpected count %u.\n", count);
 
     PropVariantInit(&id);
     PropVariantInit(&value);
-    hr = IWICMetadataReader_GetValueByIndex(reader2, 0, NULL, &id, &value);
+    hr = IWICMetadataReader_GetValueByIndex(ifd_reader, 0, NULL, &id, &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ok(id.vt == VT_UI2, "Unexpected id type: %u.\n", id.vt);
-    ok(id.uiVal == 0x100, "Unexpected id %u.\n", id.uiVal);
+    ok(id.uiVal == 0x100, "Unexpected id %#x.\n", id.uiVal);
     ok(value.vt == VT_UI4, "Unexpected value type: %u.\n", value.vt);
     ok(value.ulVal == 222, "Unexpected value %lu.\n", value.ulVal);
 
     PropVariantInit(&id);
     PropVariantInit(&value);
-    hr = IWICMetadataReader_GetValueByIndex(reader2, 1, NULL, &id, &value);
+    hr = IWICMetadataReader_GetValueByIndex(ifd_reader, 1, NULL, &id, &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     ok(id.vt == VT_UI2, "Unexpected id type: %u.\n", id.vt);
-    ok(id.uiVal == 0x101, "Unexpected id %u.\n", id.uiVal);
+    ok(id.uiVal == 0x101, "Unexpected id %#x.\n", id.uiVal);
     ok(value.vt == VT_UI4, "Unexpected value type: %u.\n", value.vt);
     ok(value.ulVal == 333, "Unexpected value %lu.\n", value.ulVal);
 
-    IWICMetadataReader_Release(reader2);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICMetadataReader_GetValueByIndex(ifd_reader, 2, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ok(id.vt == VT_UI2, "Unexpected id type: %u.\n", id.vt);
+    ok(id.uiVal == 0x8769, "Unexpected id %#x.\n", id.uiVal);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)&exif_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
+
+    /* Exif IFD */
+    hr = IWICMetadataReader_GetCount(exif_reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICMetadataReader_GetValueByIndex(exif_reader, 0, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ok(id.vt == VT_UI2, "Unexpected id type: %u.\n", id.vt);
+    ok(id.uiVal == 0x200, "Unexpected id %#x.\n", id.uiVal);
+    ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 444, "Unexpected value %lu.\n", value.ulVal);
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICMetadataReader_GetValueByIndex(ifd_reader, 3, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ok(id.vt == VT_UI2, "Unexpected id type: %u.\n", id.vt);
+    ok(id.uiVal == 0x8825, "Unexpected id %#x.\n", id.uiVal);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)&gps_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
+
+    /* GPS IFD */
+    hr = IWICMetadataReader_GetCount(gps_reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICMetadataReader_GetValueByIndex(gps_reader, 0, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ok(id.vt == VT_UI2, "Unexpected id type: %u.\n", id.vt);
+    ok(id.uiVal == 0x300, "Unexpected id %#x.\n", id.uiVal);
+    ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 555, "Unexpected value %lu.\n", value.ulVal);
+
+    IWICMetadataReader_Release(gps_reader);
+    IWICMetadataReader_Release(exif_reader);
+    IWICMetadataReader_Release(ifd_reader);
 
     IWICMetadataReader_Release(reader);
 
