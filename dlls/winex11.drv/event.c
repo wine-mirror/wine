@@ -1085,6 +1085,7 @@ static BOOL X11DRV_ReparentNotify( HWND hwnd, XEvent *xev )
 static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 {
     XConfigureEvent *event = &xev->xconfigure;
+    SIZE size = {event->width, event->height};
     struct x11drv_win_data *data;
     RECT rect;
     POINT pos = {event->x, event->y};
@@ -1104,7 +1105,8 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     else if (is_virtual_desktop()) FIXME( "synthetic event mapping not implemented\n" );
 
     pos = root_to_virtual_screen( pos.x, pos.y );
-    SetRect( &rect, pos.x, pos.y, pos.x + event->width, pos.y + event->height );
+    if (size.cx == 1 && size.cy == 1 && IsRectEmpty( &data->rects.window )) size.cx = size.cy = 0;
+    SetRect( &rect, pos.x, pos.y, pos.x + size.cx, pos.y + size.cy );
     window_configure_notify( data, event->serial, &rect );
 
     release_win_data( data );
