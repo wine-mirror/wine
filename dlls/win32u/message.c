@@ -3059,14 +3059,22 @@ static HANDLE get_server_queue_handle(void)
     return ret;
 }
 
+/* monotonic timer tick for throttling driver event checks */
+static inline LONGLONG get_driver_check_time(void)
+{
+    LARGE_INTEGER counter, freq;
+    NtQueryPerformanceCounter( &counter, &freq );
+    return counter.QuadPart * 8000 / freq.QuadPart; /* 8kHz */
+}
+
 /* check for driver events if we detect that the app is not properly consuming messages */
 static inline void check_for_driver_events(void)
 {
-    if (get_user_thread_info()->last_driver_time != NtGetTickCount())
+    if (get_user_thread_info()->last_driver_time != get_driver_check_time())
     {
         flush_window_surfaces( FALSE );
         user_driver->pProcessEvents( QS_ALLINPUT );
-        get_user_thread_info()->last_driver_time = NtGetTickCount();
+        get_user_thread_info()->last_driver_time = get_driver_check_time();
     }
 }
 
@@ -3108,7 +3116,7 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
     }
 
     if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
-    if (ret == count - 1) get_user_thread_info()->last_driver_time = NtGetTickCount();
+    if (ret == count - 1) get_user_thread_info()->last_driver_time = get_driver_check_time();
 
     KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
 
