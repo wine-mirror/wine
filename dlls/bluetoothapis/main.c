@@ -212,6 +212,7 @@ DWORD WINAPI BluetoothGetRadioInfo( HANDLE radio, PBLUETOOTH_RADIO_INFO info )
     return ERROR_SUCCESS;
 }
 
+#define LOCAL_RADIO_DISCOVERABLE 0x0001
 #define LOCAL_RADIO_CONNECTABLE  0x0002
 
 /*********************************************************************
@@ -267,8 +268,47 @@ BOOL WINAPI BluetoothIsConnectable( HANDLE radio )
  */
 BOOL WINAPI BluetoothIsDiscoverable( HANDLE radio )
 {
-    FIXME( "(%p): stub!\n", radio );
-    return FALSE;
+    TRACE( "(%p)\n", radio );
+
+    if (!radio)
+    {
+        BLUETOOTH_FIND_RADIO_PARAMS params = {.dwSize = sizeof( params )};
+        HBLUETOOTH_RADIO_FIND find = BluetoothFindFirstRadio( &params, &radio );
+
+        if (!find)
+            return FALSE;
+        for (;;)
+        {
+            if (BluetoothIsDiscoverable( radio ))
+            {
+                CloseHandle( radio );
+                BluetoothFindRadioClose( find );
+                return TRUE;
+            }
+
+            CloseHandle( radio );
+            if (!BluetoothFindNextRadio( find, &radio ))
+            {
+                BluetoothFindRadioClose( find );
+                return FALSE;
+            }
+        }
+    }
+    else
+    {
+        BTH_LOCAL_RADIO_INFO radio_info = {0};
+        DWORD bytes;
+        DWORD ret;
+
+        ret = DeviceIoControl( radio, IOCTL_BTH_GET_LOCAL_INFO, NULL, 0, &radio_info, sizeof( radio_info ), &bytes,
+                               NULL );
+        if (!ret)
+        {
+            ERR( "DeviceIoControl failed: %#lx\n", GetLastError() );
+            return FALSE;
+        }
+        return !!(radio_info.flags & LOCAL_RADIO_DISCOVERABLE);
+    }
 }
 
 /*********************************************************************
