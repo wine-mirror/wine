@@ -1097,6 +1097,21 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 static void ill_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { EXCEPTION_ILLEGAL_INSTRUCTION };
+    ucontext_t *context = sigcontext;
+
+    if (!(PSTATE_sig( context ) & 0x10) && /* AArch64 (not WoW) */
+        !(PC_sig( context ) & 3))
+    {
+        ULONG instr = *(ULONG *)PC_sig( context );
+        /* emulate mrs xN, CurrentEL */
+        if ((instr & ~0x1f) == 0xd5384240) {
+            ULONG reg = instr & 0x1f;
+            /* ignore writes to xzr */
+            if (reg != 31) REGn_sig(reg, context) = 0;
+            PC_sig(context) += 4;
+            return;
+        }
+    }
 
     setup_exception( sigcontext, &rec );
 }

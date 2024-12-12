@@ -8296,6 +8296,25 @@ static void test_restore_context(void)
         ok(0, "unexpected pass %ld\n", pass);
 }
 
+static void test_mrs_currentel(void)
+{
+    DWORD64 (*func_ptr)(void) = code_mem;
+    DWORD64 result;
+
+    static const DWORD call_func[] =
+    {
+        0xd5384240, /* mrs x0, CurrentEL */
+        0xd538425f, /* mrs xzr, CurrentEL */
+        0xd65f03c0, /* ret */
+    };
+
+    memcpy( func_ptr, call_func, sizeof(call_func) );
+    FlushInstructionCache( GetCurrentProcess(), func_ptr, sizeof(call_func) );
+    result = func_ptr();
+    ok( result == 0, "expected 0, got %llx\n", result );
+}
+
+
 #endif  /* __aarch64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -12024,6 +12043,7 @@ START_TEST(exception)
     test_nested_exception();
     test_collided_unwind();
     test_restore_context();
+    test_mrs_currentel();
 
 #elif defined(__arm__)
 
