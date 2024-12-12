@@ -119,7 +119,7 @@ void test_BluetoothFindRadioClose( void )
     ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
 }
 
-void test_for_all_radios( void (*test)( HANDLE radio ) )
+void test_for_all_radios( void (*test)( HANDLE radio, void *data ), void *data )
 {
     DWORD err, idx = 0;
     HANDLE radio;
@@ -141,7 +141,7 @@ void test_for_all_radios( void (*test)( HANDLE radio ) )
         BOOL ret;
 
         winetest_push_context( "radio %lu", idx++ );
-        test( radio );
+        test( radio, data );
         winetest_pop_context();
 
         CloseHandle( radio );
@@ -156,7 +156,7 @@ void test_for_all_radios( void (*test)( HANDLE radio ) )
     BluetoothFindRadioClose( find );
 }
 
-void test_BluetoothGetRadioInfo( HANDLE radio )
+void test_BluetoothGetRadioInfo( HANDLE radio, void *data )
 {
     DWORD err;
     BLUETOOTH_RADIO_INFO info = {0};
@@ -182,11 +182,50 @@ void test_BluetoothGetRadioInfo( HANDLE radio )
     trace( "manufacturer: %x\n", info.manufacturer );
 }
 
+void test_radio_BluetoothIsConnectable( HANDLE radio, void *data )
+{
+    BOOL *result = data;
+
+    *result |= BluetoothIsConnectable( radio );
+}
+
+void test_BluetoothIsConnectable( void )
+{
+    BOOL ret;
+    BOOL result = FALSE;
+
+    ret = BluetoothIsConnectable( NULL );
+    /* If ret is true, then at least one radio must be connectable. If ret returns false, then no radios are connectable. */
+    test_for_all_radios( test_radio_BluetoothIsConnectable, &result );
+
+    ok( ret == result, "%d != %d\n", ret, result );
+}
+
+void test_radio_BluetoothIsDiscoverable( HANDLE radio, void *data )
+{
+    BOOL *result = data;
+
+    *result |= BluetoothIsDiscoverable( radio );
+}
+
+void test_BluetoothIsDiscoverable( void )
+{
+    BOOL ret;
+    BOOL result = FALSE;
+
+    ret = BluetoothIsDiscoverable( NULL );
+    test_for_all_radios( test_radio_BluetoothIsDiscoverable, &result );
+
+    ok( ret == result, "%d != %d\n", ret, result );
+}
+
 START_TEST( radio )
 {
     test_BluetoothFindFirstRadio();
     test_BluetoothFindNextRadio();
     test_BluetoothFindRadioClose();
 
-    test_for_all_radios( test_BluetoothGetRadioInfo );
+    test_for_all_radios( test_BluetoothGetRadioInfo, NULL );
+    test_BluetoothIsDiscoverable();
+    test_BluetoothIsConnectable();
 }
