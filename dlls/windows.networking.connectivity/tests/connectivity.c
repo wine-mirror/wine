@@ -53,6 +53,7 @@ static void test_NetworkInformationStatics(void)
     INetworkInformationStatics *network_information_statics = (void *)0xdeadbeef;
     INetworkListManager *network_list_manager = (void *)0xdeadbeef;
     IConnectionProfile *connection_profile = (void *)0xdeadbeef;
+    IConnectionProfile2 *connection_profile2;
     NetworkConnectivityLevel network_connectivity_level;
     IActivationFactory *factory = (void *)0xdeadbeef;
     NLM_CONNECTIVITY connectivity;
@@ -100,6 +101,68 @@ static void test_NetworkInformationStatics(void)
         ok( !connection_profile, "expected NULL, got connection_profile %p.\n", connection_profile );
         skip( "Internet connection unavailable, skipping tests.\n" );
         goto cleanup;
+    }
+
+    hr = IConnectionProfile_QueryInterface( connection_profile, &IID_IConnectionProfile2, (void **)&connection_profile2 );
+
+    if (hr == E_NOINTERFACE)
+    {
+        skip ( "IConnectionProfile2 not available, skipping those tests\n" );
+    }
+    else
+    {
+        IUnknown *unknown1 = 0, *unknown2 = 0;
+        IInspectable *inspectable1 = 0, *inspectable2 = 0;
+        IAgileObject *agile1 = 0, *agile2 = 0;
+        IConnectionProfile *profile1 = 0;
+        IConnectionProfile2 *profile2 = 0;
+
+        hr = IUnknown_QueryInterface( connection_profile, &IID_IUnknown, (void **)&unknown1 );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+        hr = IUnknown_QueryInterface( connection_profile, &IID_IInspectable, (void **)&inspectable1 );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+        hr = IUnknown_QueryInterface( connection_profile, &IID_IAgileObject, (void **)&agile1 );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+        hr = IUnknown_QueryInterface( connection_profile2, &IID_IUnknown, (void **)&unknown2 );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+        hr = IUnknown_QueryInterface( connection_profile2, &IID_IInspectable, (void **)&inspectable2 );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+        hr = IUnknown_QueryInterface( connection_profile2, &IID_IAgileObject, (void **)&agile2 );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+        hr = IUnknown_QueryInterface( connection_profile2, &IID_IConnectionProfile, (void **)&profile1 );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+        hr = IUnknown_QueryInterface( connection_profile2, &IID_IConnectionProfile2, (void **)&profile2 );
+        ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+        ok( (void*)connection_profile != (void*)connection_profile2, "Interfaces should not be equal\n");
+
+        ok( (void*)connection_profile == (void*)unknown1, "Interfaces not equal\n");
+        ok( (void*)connection_profile == (void*)inspectable1, "Interfaces not equal\n");
+        todo_wine ok( (void*)connection_profile != (void*)agile1, "Interfaces should not be equal\n");
+
+        ok( (void*)unknown1 == (void*)unknown2, "Interfaces not equal\n");
+        ok( (void*)inspectable1 == (void*)inspectable2, "Interfaces not equal\n");
+        ok( (void*)agile1 == (void*)agile2, "Interfaces not equal\n");
+
+        ok( (void*)connection_profile2 == (void*)profile2, "Interfaces not equal\n");
+        ok( (void*)connection_profile == (void*)profile1, "Interfaces not equal\n");
+
+        if (unknown1) IUnknown_Release( unknown1 );
+        if (unknown2) IUnknown_Release( unknown2 );
+        if (inspectable1) IInspectable_Release( inspectable1 );
+        if (inspectable2) IInspectable_Release( inspectable2 );
+        if (agile1) IAgileObject_Release( agile1 );
+        if (agile2) IAgileObject_Release( agile2 );
+        if (profile1) IConnectionProfile_Release( profile1 );
+        if (profile2) IConnectionProfile2_Release( profile2 );
+        IConnectionProfile2_Release( connection_profile2 );
     }
 
     hr = IConnectionProfile_GetNetworkConnectivityLevel( connection_profile, NULL );

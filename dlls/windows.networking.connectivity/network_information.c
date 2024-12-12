@@ -121,6 +121,7 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 struct connection_profile
 {
     IConnectionProfile IConnectionProfile_iface;
+    IConnectionProfile2 IConnectionProfile2_iface;
     LONG ref;
 
     INetworkListManager *network_list_manager;
@@ -147,6 +148,12 @@ static HRESULT WINAPI connection_profile_QueryInterface( IConnectionProfile *ifa
         return S_OK;
     }
 
+    if (IsEqualGUID( iid, &IID_IConnectionProfile2 ))
+    {
+        *out = &impl->IConnectionProfile2_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
     FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
@@ -287,6 +294,126 @@ static const struct IConnectionProfileVtbl connection_profile_vtbl =
     connection_profile_get_NetworkSecuritySettings,
 };
 
+static inline struct connection_profile *impl_from_IConnectionProfile2( IConnectionProfile2 *iface )
+{
+    return CONTAINING_RECORD( iface, struct connection_profile, IConnectionProfile2_iface );
+}
+
+static HRESULT WINAPI connection_profile2_QueryInterface( IConnectionProfile2 *iface, REFIID iid, void **out )
+{
+    struct connection_profile *impl = impl_from_IConnectionProfile2( iface );
+    return IConnectionProfile_QueryInterface(&impl->IConnectionProfile_iface, iid, out);
+}
+
+static ULONG WINAPI connection_profile2_AddRef( IConnectionProfile2 *iface )
+{
+    struct connection_profile *impl = impl_from_IConnectionProfile2( iface );
+    return IConnectionProfile_AddRef(&impl->IConnectionProfile_iface);
+}
+
+static ULONG WINAPI connection_profile2_Release( IConnectionProfile2 *iface )
+{
+    struct connection_profile *impl = impl_from_IConnectionProfile2( iface );
+    return IConnectionProfile_Release(&impl->IConnectionProfile_iface);
+}
+
+static HRESULT WINAPI connection_profile2_GetIids( IConnectionProfile2 *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile2_GetRuntimeClassName( IConnectionProfile2 *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_profile2_GetTrustLevel( IConnectionProfile2 *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_get_IsWwanConnectionProfile( IConnectionProfile2 *iface, boolean *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_get_IsWlanConnectionProfile( IConnectionProfile2 *iface, boolean *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_get_WwanConnectionProfileDetails( IConnectionProfile2 *iface, IWwanConnectionProfileDetails **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_get_WlanConnectionProfileDetails( IConnectionProfile2 *iface, IWlanConnectionProfileDetails **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_get_ServiceProviderGuid( IConnectionProfile2 *iface, IReference_GUID **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_GetSignalBars( IConnectionProfile2 *iface, IReference_BYTE **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_GetDomainConnectivityLevel( IConnectionProfile2 *iface, DomainConnectivityLevel *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_GetNetworkUsageAsync( IConnectionProfile2 *iface, DateTime time_start, DateTime time_end,
+        DataUsageGranularity granularity, NetworkUsageStates states, IAsyncOperation_IVectorView_NetworkUsage **value )
+{
+    FIXME( "iface %p, time_start %I64d, time_end %I64d, granularity %d, states %d-%d, value %p stub!\n",
+            iface, time_start.UniversalTime, time_end.UniversalTime, granularity, states.Roaming, states.Shared, value );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI connection_profile2_GetConnectivityIntervalsAsync( IConnectionProfile2 *iface, DateTime time_start, DateTime time_end,
+        NetworkUsageStates states, IAsyncOperation_IVectorView_ConnectivityInterval **value )
+{
+    FIXME( "iface %p, time_start %I64d, time_end %I64d, states %d-%d, value %p stub!\n",
+            iface, time_start.UniversalTime, time_end.UniversalTime, states.Roaming, states.Shared, value );
+    return E_NOTIMPL;
+}
+
+static const struct IConnectionProfile2Vtbl connection_profile2_vtbl =
+{
+    connection_profile2_QueryInterface,
+    connection_profile2_AddRef,
+    connection_profile2_Release,
+    /* IInspectable methods */
+    connection_profile2_GetIids,
+    connection_profile2_GetRuntimeClassName,
+    connection_profile2_GetTrustLevel,
+    /* IConnectionProfile2 methods */
+    connection_profile2_get_IsWwanConnectionProfile,
+    connection_profile2_get_IsWlanConnectionProfile,
+    connection_profile2_get_WwanConnectionProfileDetails,
+    connection_profile2_get_WlanConnectionProfileDetails,
+    connection_profile2_get_ServiceProviderGuid,
+    connection_profile2_GetSignalBars,
+    connection_profile2_GetDomainConnectivityLevel,
+    connection_profile2_GetNetworkUsageAsync,
+    connection_profile2_GetConnectivityIntervalsAsync,
+};
+
 DEFINE_IINSPECTABLE( network_information_statics, INetworkInformationStatics, struct network_information_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI network_information_statics_GetConnectionProfiles( INetworkInformationStatics *iface, IVectorView_ConnectionProfile **value )
@@ -313,6 +440,7 @@ static HRESULT WINAPI network_information_statics_GetInternetConnectionProfile( 
     }
 
     impl->IConnectionProfile_iface.lpVtbl = &connection_profile_vtbl;
+    impl->IConnectionProfile2_iface.lpVtbl = &connection_profile2_vtbl;
     impl->ref = 1;
     impl->network_list_manager = network_list_manager;
 
