@@ -1502,10 +1502,15 @@ static INT_PTR CALLBACK wait_dlgproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp 
     {
     case WM_INITDIALOG:
         {
-            DWORD len;
+            DWORD len, icon_size;
+            RECT rect;
             WCHAR *buffer, text[1024];
             const WCHAR *name = (WCHAR *)lp;
-            HICON icon = LoadImageW( 0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, 48, 48, LR_SHARED );
+            HICON icon;
+
+            GetClientRect( GetDlgItem( hwnd, IDC_WAITICON ), &rect );
+            icon_size = min( rect.right, rect.bottom );
+            icon = LoadImageW( 0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, icon_size, icon_size, LR_SHARED );
             SendDlgItemMessageW( hwnd, IDC_WAITICON, STM_SETICON, (WPARAM)icon, 0 );
             SendDlgItemMessageW( hwnd, IDC_WAITTEXT, WM_GETTEXT, 1024, (LPARAM)text );
             len = lstrlenW(text) + lstrlenW(name) + 1;
