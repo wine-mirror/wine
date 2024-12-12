@@ -1474,6 +1474,28 @@ static BOOL start_services_process(void)
     return TRUE;
 }
 
+static void set_wait_dialog_text( HWND hwnd, HWND text, const WCHAR *string )
+{
+    RECT win_rect, old_rect, new_rect;
+    HDC hdc = GetDC( text );
+
+    GetClientRect( text, &old_rect );
+    new_rect = old_rect;
+    SelectObject( hdc, (HFONT)SendMessageW( text, WM_GETFONT, 0, 0 ));
+    DrawTextW( hdc, string, -1, &new_rect, DT_CALCRECT | DT_EDITCONTROL | DT_WORDBREAK | DT_NOPREFIX );
+    ReleaseDC( text, hdc );
+    if (new_rect.bottom > old_rect.bottom)
+    {
+        GetWindowRect( hwnd, &win_rect );
+        win_rect.bottom += new_rect.bottom - old_rect.bottom;
+        SetWindowPos( hwnd, 0, 0, 0, win_rect.right - win_rect.left, win_rect.bottom - win_rect.top,
+                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+        SetWindowPos( text, 0, 0, 0, new_rect.right, new_rect.bottom,
+                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+    }
+    SendMessageW( text, WM_SETTEXT, 0, (LPARAM)string );
+}
+
 static INT_PTR CALLBACK wait_dlgproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     switch (msg)
@@ -1489,7 +1511,7 @@ static INT_PTR CALLBACK wait_dlgproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp 
             len = lstrlenW(text) + lstrlenW(name) + 1;
             buffer = malloc( len * sizeof(WCHAR) );
             swprintf( buffer, len, text, name );
-            SendDlgItemMessageW( hwnd, IDC_WAITTEXT, WM_SETTEXT, 0, (LPARAM)buffer );
+            set_wait_dialog_text( hwnd, GetDlgItem( hwnd, IDC_WAITTEXT ), buffer );
             free( buffer );
         }
         break;
