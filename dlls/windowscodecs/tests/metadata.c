@@ -1332,6 +1332,7 @@ static void test_metadata_Exif(void)
     IWICMetadataReader *reader;
     IWICMetadataWriter *writer;
     UINT count=0;
+    GUID format;
 
     hr = CoCreateInstance(&CLSID_WICExifMetadataReader, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICMetadataReader, (void**)&reader);
@@ -1352,7 +1353,12 @@ static void test_metadata_Exif(void)
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == 0, "unexpected count %u\n", count);
 
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatExif), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+
     test_reader_container_format(reader, &GUID_MetadataFormatIfd);
+    test_ifd_content(reader);
 
     IWICMetadataReader_Release(reader);
 
