@@ -213,6 +213,24 @@ DWORD WINAPI BluetoothGetRadioInfo( HANDLE radio, PBLUETOOTH_RADIO_INFO info )
 }
 
 /*********************************************************************
+ *  BluetoothIsConnectable
+ */
+BOOL WINAPI BluetoothIsConnectable( HANDLE radio )
+{
+    FIXME( "(%p): stub!\n", radio );
+    return FALSE;
+}
+
+/*********************************************************************
+ *  BluetoothIsDiscoverable
+ */
+BOOL WINAPI BluetoothIsDiscoverable( HANDLE radio )
+{
+    FIXME( "(%p): stub!\n", radio );
+    return FALSE;
+}
+
+/*********************************************************************
  *  BluetoothFindNextDevice
  */
 BOOL WINAPI BluetoothFindNextDevice(HBLUETOOTH_DEVICE_FIND find, BLUETOOTH_DEVICE_INFO *info)
