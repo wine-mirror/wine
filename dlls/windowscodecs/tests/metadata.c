@@ -1378,6 +1378,57 @@ static void test_metadata_Exif(void)
     IWICMetadataWriter_Release(writer);
 }
 
+static void test_metadata_Gps(void)
+{
+    IWICMetadataReader *reader;
+    IWICMetadataWriter *writer;
+    UINT count=0;
+    GUID format;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICGpsMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataReader, (void **)&reader);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) return;
+
+    check_interface(reader, &IID_IWICMetadataReader, TRUE);
+    check_interface(reader, &IID_IPersist, TRUE);
+    check_interface(reader, &IID_IPersistStream, TRUE);
+    check_interface(reader, &IID_IWICPersistStream, TRUE);
+    check_interface(reader, &IID_IWICStreamProvider, TRUE);
+    check_interface(reader, &IID_IWICMetadataBlockReader, FALSE);
+
+    hr = IWICMetadataReader_GetCount(reader, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount error %#lx\n", hr);
+    ok(!count, "Unexpected count %u.\n", count);
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatGps), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+
+    test_reader_container_format(reader, &GUID_MetadataFormatIfd);
+    test_ifd_content(reader);
+
+    IWICMetadataReader_Release(reader);
+
+    hr = CoCreateInstance(&CLSID_WICGpsMetadataWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataWriter, (void **)&writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) return;
+
+    check_interface(writer, &IID_IWICMetadataWriter, TRUE);
+    check_interface(writer, &IID_IWICMetadataReader, TRUE);
+    check_interface(writer, &IID_IPersist, TRUE);
+    check_interface(writer, &IID_IPersistStream, TRUE);
+    check_interface(writer, &IID_IWICPersistStream, TRUE);
+    check_interface(writer, &IID_IWICStreamProvider, TRUE);
+
+    IWICMetadataWriter_Release(writer);
+}
+
 static void test_create_reader_from_container(void)
 {
     HRESULT hr;
@@ -3732,6 +3783,7 @@ START_TEST(metadata)
     test_metadata_tIME();
     test_metadata_Ifd();
     test_metadata_Exif();
+    test_metadata_Gps();
     test_create_reader_from_container();
     test_create_reader();
     test_metadata_png();
