@@ -338,13 +338,15 @@ static HRESULT WINAPI connection_profile2_GetTrustLevel( IConnectionProfile2 *if
 HRESULT WINAPI connection_profile2_get_IsWwanConnectionProfile( IConnectionProfile2 *iface, boolean *value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    *value = 0;
+    return S_OK;
 }
 
 HRESULT WINAPI connection_profile2_get_IsWlanConnectionProfile( IConnectionProfile2 *iface, boolean *value )
 {
     FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    *value = 0;
+    return S_OK;
 }
 
 HRESULT WINAPI connection_profile2_get_WwanConnectionProfileDetails( IConnectionProfile2 *iface, IWwanConnectionProfileDetails **value )
