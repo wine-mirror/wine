@@ -211,7 +211,7 @@ static BOOL needs_client_window_clipping( HWND hwnd )
     if ((region = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
     {
         ret = NtGdiGetRandomRgn( hdc, region, SYSRGN | NTGDI_RGN_MONITOR_DPI );
-        if (ret > 0 && (ret = NtGdiGetRgnBox( region, &rect )) <= NULLREGION) ret = 0;
+        if (ret > 0 && (ret = NtGdiGetRgnBox( region, &rect )) < NULLREGION) ret = 0;
         if (ret == SIMPLEREGION && EqualRect( &rect, &client )) ret = 0;
         NtGdiDeleteObjectApp( region );
     }
