@@ -2185,6 +2185,33 @@ static void test_empty_rect(void)
     GdipDeletePath(path);
 }
 
+static path_test_t rect_line_path[] = {
+    {1.0, 4.0, PathPointTypeStart, 0, 0}, /*0*/
+    {17.0, 4.0, PathPointTypeLine, 0, 0}, /*1*/
+    {17.0, 68.0, PathPointTypeLine, 0, 0}, /*2*/
+    {1.0, 68.0, PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {1.0, 8.0, PathPointTypeStart, 0, 0}, /*4*/
+    {17.0, 8.0, PathPointTypeLine, 0, 0} /*5*/
+    };
+
+static void test_rect_line(void)
+{
+    GpStatus status;
+    GpPath* path;
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    status = GdipAddPathRectangleI(path, 1, 4, 16, 64);
+    expect(Ok, status);
+
+    status = GdipAddPathLineI(path, 1, 8, 17, 8);
+    expect(Ok, status);
+
+    ok_path(path, rect_line_path, ARRAY_SIZE(rect_line_path), FALSE);
+
+    GdipDeletePath(path);
+}
+
 START_TEST(graphicspath)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2228,6 +2255,7 @@ START_TEST(graphicspath)
     test_isvisible();
     test_is_outline_visible_path_point();
     test_empty_rect();
+    test_rect_line();
 
     GdiplusShutdown(gdiplusToken);
 }

@@ -2703,6 +2703,7 @@ GpStatus WINGDIPAPI GdipAddPathRectangle(GpPath *path, REAL x, REAL y,
 
     if((retstat = GdipAddPathLine2(path, ptf, 2)) != Ok)  goto fail;
     path->pathdata.Types[path->pathdata.Count-1] |= PathPointTypeCloseSubpath;
+    path->newfigure = TRUE;
 
     /* free backup */
     GdipDeletePath(backup);
