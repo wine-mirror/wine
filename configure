@@ -1159,6 +1159,7 @@ enable_fntcache
 enable_fontsub
 enable_fusion
 enable_fwpuclnt
+enable_gameinput
 enable_gameux
 enable_gamingtcui
 enable_gdi32
@@ -22444,6 +22445,7 @@ wine_fn_config_makefile dlls/fontsub enable_fontsub
 wine_fn_config_makefile dlls/fusion enable_fusion
 wine_fn_config_makefile dlls/fusion/tests enable_tests
 wine_fn_config_makefile dlls/fwpuclnt enable_fwpuclnt
+wine_fn_config_makefile dlls/gameinput enable_gameinput
 wine_fn_config_makefile dlls/gameux enable_gameux
 wine_fn_config_makefile dlls/gameux/tests enable_tests
 wine_fn_config_makefile dlls/gamingtcui enable_gamingtcui

@@ -204,6 +204,7 @@ F:	dlls/jscript/
 Joystick input
 M:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/dinput*/
+F:	dlls/gameinput/
 F:	dlls/joy.cpl/
 F:	dlls/windows.gaming.input/
 F:	dlls/winebus.sys/

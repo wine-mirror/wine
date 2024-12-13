@@ -1,0 +1,7 @@
+MODULE     = gameinput.dll
+EXTRADEFS  = -D_GAMEINPUT_
+
+EXTRADLLFLAGS = -Wb,--prefer-native
+
+SOURCES = \
+	gameinput.c
