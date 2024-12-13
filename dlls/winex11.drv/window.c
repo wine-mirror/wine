@@ -208,6 +208,9 @@ static void host_window_reparent( struct host_window **win, Window parent, Windo
         old->children_count--;
     }
 
+    TRACE( "parent %lx, window %lx, rect %s, old %p/%lx -> new %p/%lx\n", parent, window,
+           wine_dbgstr_rect(&rect), old, old ? old->window : 0, new, new ? new->window : 0 );
+
     if (new && (index = find_host_window_child( new, window )) == new->children_count)
     {
         if (!(tmp = realloc( new->children, (index + 1) * sizeof(*new->children) ))) return;
@@ -226,6 +229,9 @@ static void host_window_reparent( struct host_window **win, Window parent, Windo
 RECT host_window_configure_child( struct host_window *win, Window window, RECT rect, BOOL root_coords )
 {
     unsigned int index;
+
+    TRACE( "host win %p/%lx, window %lx, rect %s, root_coords %u\n", win, win->window,
+           window, wine_dbgstr_rect(&rect), root_coords );
 
     if (root_coords)
     {
@@ -2479,7 +2485,7 @@ void set_window_parent( struct x11drv_win_data *data, Window parent )
     {
         RECT rect = data->rects.visible;
         OffsetRect( &rect, -rect.left, -rect.top );
-        host_window_configure_child( data->parent, data->whole_window, rect, TRUE );
+        host_window_configure_child( data->parent, data->whole_window, rect, FALSE );
     }
     data->parent_invalid = 0;
 }
