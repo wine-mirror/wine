@@ -65,6 +65,25 @@ typedef uint32_t pdbsize_t; /* size inside a stream (including offset from beg o
 struct pdb_reader;
 typedef enum pdb_result (*pdb_reader_fetch_t)(struct pdb_reader *pdb, void *buffer, pdboff_t offset, pdbsize_t size);
 
+struct pdb_reader_walker
+{
+    unsigned stream_id;
+    pdbsize_t offset;
+    pdbsize_t last;
+};
+
+struct pdb_type_details
+{
+    pdboff_t stream_offset; /* inside TPI stream */
+    struct symt *symt; /* HACK to help during migration */
+};
+
+struct pdb_type_hash_entry
+{
+    cv_typ_t cv_typeid;
+    struct pdb_type_hash_entry *next;
+};
+
 struct pdb_reader
 {
     struct module *module;
@@ -84,7 +103,14 @@ struct pdb_reader
     } *streams;
     char *stream_names;
 
-    unsigned source_listed : 1;
+    unsigned source_listed : 1,
+        TPI_types_invalid;
+
+    /* types management */
+    PDB_TYPES tpi_header;
+    struct pdb_reader_walker tpi_types_walker;
+    struct pdb_type_details *tpi_typemap; /* from first to last */
+    struct pdb_type_hash_entry *tpi_types_hash;
 
     /* cache PE module sections for mapping...
      * we should rather use pe_module information
@@ -106,6 +132,9 @@ enum pdb_result
     R_PDB_NOT_FOUND,
     R_PDB_BUFFER_TOO_SMALL,
 };
+
+static const unsigned short  PDB_STREAM_TPI = 2;
+static const unsigned short  PDB_STREAM_DBI = 3;
 
 static enum pdb_result pdb_reader_fetch_file(struct pdb_reader *pdb, void *buffer, pdboff_t offset, pdbsize_t size)
 {
@@ -178,13 +207,6 @@ static enum pdb_result pdb_reader_internal_read_from_blocks(struct pdb_reader *p
     if (num_read) *num_read = initial_size - size;
     return size != initial_size ? R_PDB_SUCCESS : R_PDB_INVALID_ARGUMENT;
 }
-
-struct pdb_reader_walker
-{
-    unsigned stream_id;
-    pdbsize_t offset;
-    pdbsize_t last;
-};
 
 static inline enum pdb_result pdb_reader_walker_init(struct pdb_reader *pdb, unsigned stream_id, struct pdb_reader_walker *walker)
 {
@@ -475,7 +497,7 @@ static enum pdb_result pdb_reader_read_DBI_header(struct pdb_reader* pdb, PDB_SY
     enum pdb_result result;
 
     /* assuming we always have that size (even for old format) in stream */
-    if ((result = pdb_reader_walker_init(pdb, 3, walker)) ||
+    if ((result = pdb_reader_walker_init(pdb, PDB_STREAM_DBI, walker)) ||
         (result = pdb_reader_READ(pdb, walker, dbi_header))) return result;
     if (dbi_header->signature != 0xffffffff)
     {
@@ -1282,6 +1304,160 @@ static enum method_result pdb_method_request_symref_t(struct module_format *modf
     return MR_NOT_FOUND;
 }
 
+static enum pdb_result pdb_reader_read_cv_typeid_hash(struct pdb_reader *pdb, cv_typ_t cv_typeid, unsigned *hash)
+{
+    enum pdb_result result;
+    struct pdb_reader_walker walker;
+    unsigned value = 0;
+
+    if ((result = pdb_reader_walker_init(pdb, pdb->tpi_header.hash_stream, &walker))) return result;
+    walker.offset += pdb->tpi_header.hash_offset + (cv_typeid - pdb->tpi_header.first_index) * pdb->tpi_header.hash_value_size;
+
+    /* little endian reading */
+    if ((result = pdb_reader_internal_read_advance(pdb, &walker, &value, pdb->tpi_header.hash_value_size))) return result;
+    if (value >= pdb->tpi_header.hash_num_buckets)
+    {
+        WARN("hash value %x isn't within hash table boundaries (0, %x(\n", value, pdb->tpi_header.hash_num_buckets);
+        return R_PDB_INVALID_PDB_FILE;
+    }
+    *hash = value;
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_init_TPI(struct pdb_reader *pdb)
+{
+    enum pdb_result result;
+    unsigned i;
+
+    if (pdb->TPI_types_invalid) return R_PDB_INVALID_PDB_FILE;
+    if (!pdb->tpi_typemap) /* load basic types information and hash table */
+    {
+        if ((result = pdb_reader_walker_init(pdb, PDB_STREAM_TPI, &pdb->tpi_types_walker))) goto invalid_file;
+        /* assuming stream is always big enough go hold a full PDB_TYPES */
+        if ((result = pdb_reader_READ(pdb, &pdb->tpi_types_walker, &pdb->tpi_header))) goto invalid_file;
+        result = R_PDB_INVALID_PDB_FILE;
+        if (pdb->tpi_header.version < 19960000 || pdb->tpi_header.type_offset < sizeof(PDB_TYPES))
+        {
+            /* not supported yet... */
+            FIXME("Old PDB_TYPES header, skipping\n");
+            goto invalid_file;
+        }
+        /* validate some bits */
+        if (pdb->tpi_header.hash_size != (pdb->tpi_header.last_index - pdb->tpi_header.first_index) * pdb->tpi_header.hash_value_size ||
+            pdb->tpi_header.search_size % sizeof(uint32_t[2]))
+            goto invalid_file;
+        if (pdb->tpi_header.hash_value_size > sizeof(unsigned))
+        {
+            FIXME("Unexpected hash value size %u\n", pdb->tpi_header.hash_value_size);
+            goto invalid_file;
+        }
+        pdb->tpi_types_walker.offset = pdb->tpi_header.type_offset;
+
+        if ((result = pdb_reader_alloc(pdb, (pdb->tpi_header.last_index - pdb->tpi_header.first_index) * sizeof(pdb->tpi_typemap[0]),
+                                       (void **)&pdb->tpi_typemap)))
+            goto invalid_file;
+        memset(pdb->tpi_typemap, 0, (pdb->tpi_header.last_index - pdb->tpi_header.first_index) * sizeof(pdb->tpi_typemap[0]));
+        if ((result = pdb_reader_alloc(pdb, pdb->tpi_header.hash_num_buckets * sizeof(struct pdb_type_hash_entry), (void **)&pdb->tpi_types_hash)))
+            goto invalid_file;
+        /* create hash table: mark empty slots */
+        for (i = 0; i < pdb->tpi_header.hash_num_buckets; i++)
+            pdb->tpi_types_hash[i].next = &pdb->tpi_types_hash[i];
+
+        for (i = pdb->tpi_header.first_index; i < pdb->tpi_header.last_index; i++)
+        {
+            unsigned hash;
+
+            if ((result = pdb_reader_read_cv_typeid_hash(pdb, i, &hash))) goto invalid_file;
+            if (pdb->tpi_types_hash[hash].next == &pdb->tpi_types_hash[hash])
+            {
+                pdb->tpi_types_hash[hash].next = NULL;
+            }
+            else
+            {
+                struct pdb_type_hash_entry *hash_entry;
+                if ((result = pdb_reader_alloc(pdb, sizeof(*hash_entry), (void**)&hash_entry))) goto invalid_file;
+                *hash_entry = pdb->tpi_types_hash[hash];
+                pdb->tpi_types_hash[hash].next = hash_entry;
+            }
+            pdb->tpi_types_hash[hash].cv_typeid = i;
+        }
+        if (pdb->tpi_header.type_remap_size)
+        {
+            struct pdb_reader_walker remap_walker, remap_bitset_walker;
+            struct {uint32_t count, capacity, count_present;} head;
+            uint32_t deleted_bitset_count, i, mask;
+            unsigned hash;
+
+            TRACE("Loading TPI remap information\n");
+            if ((result = pdb_reader_walker_init(pdb, pdb->tpi_header.hash_stream, &remap_walker))) goto invalid_file;
+            remap_walker.offset = pdb->tpi_header.type_remap_offset;
+            if ((result = pdb_reader_READ(pdb, &remap_walker, &head))) goto invalid_file;
+            remap_bitset_walker = remap_walker;
+            remap_walker.offset += head.count_present * sizeof(uint32_t); /* skip bitset */
+            if ((result = pdb_reader_READ(pdb, &remap_walker, &deleted_bitset_count))) goto invalid_file;
+            remap_walker.offset += deleted_bitset_count * sizeof(uint32_t); /* skip deleted bitset */
+            for (i = 0; i < head.capacity; ++i)
+            {
+                if ((i % (8 * sizeof(uint32_t))) == 0 &&
+                    (result = pdb_reader_READ(pdb, &remap_bitset_walker, &mask))) goto invalid_file;
+                if (mask & (1u << (i % (8 * sizeof(uint32_t)))))
+                {
+                    /* remap[0] is an offset for a string in /string stream, followed by type_id to force */
+                    uint32_t target_cv_typeid;
+                    struct pdb_type_hash_entry *hash_entry, *prev_hash_entry = NULL;
+
+                    remap_walker.offset += sizeof(uint32_t); /* skip offset in /string stream */
+                    if ((result = pdb_reader_READ(pdb, &remap_walker, &target_cv_typeid))) goto invalid_file;
+                    if ((result = pdb_reader_read_cv_typeid_hash(pdb, target_cv_typeid, &hash))) goto invalid_file;
+                    if (pdb->tpi_types_hash[hash].next == &pdb->tpi_types_hash[hash]) /* empty list */
+                        goto invalid_file;
+                    for (hash_entry = &pdb->tpi_types_hash[hash]; hash_entry; hash_entry = hash_entry->next)
+                    {
+                        if (hash_entry->cv_typeid == target_cv_typeid)
+                        {
+                            struct pdb_type_hash_entry swap;
+
+                            TRACE("Remap: using cv_typeid %x instead of %x\n", hash_entry->cv_typeid, pdb->tpi_types_hash[hash].cv_typeid);
+                            /* put hash_entry content at head in list */
+                            if (prev_hash_entry)
+                            {
+                                prev_hash_entry->next = hash_entry->next;
+                                swap = pdb->tpi_types_hash[hash];
+                                pdb->tpi_types_hash[hash] = *hash_entry;
+                                pdb->tpi_types_hash[hash].next = hash_entry;
+                                *hash_entry = swap;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return R_PDB_SUCCESS;
+invalid_file:
+    WARN("Invalid TPI hash table\n");
+    /* free hash table upon error!! */
+    if (pdb->tpi_types_hash)
+    {
+        struct pdb_type_hash_entry *hash_entry, *hash_entry_next;
+        for (i = 0; i < pdb->tpi_header.hash_num_buckets; i++)
+            if (pdb->tpi_types_hash[i].next != &pdb->tpi_types_hash[i])
+            {
+                for (hash_entry = pdb->tpi_types_hash[i].next; hash_entry; hash_entry = hash_entry_next)
+                {
+                    hash_entry_next = hash_entry->next;
+                    pdb_reader_free(pdb, hash_entry);
+                }
+            }
+        pdb_reader_free(pdb, pdb->tpi_types_hash);
+        pdb->tpi_types_hash = NULL;
+    }
+    pdb_reader_free(pdb, pdb->tpi_typemap);
+    pdb->TPI_types_invalid = 1;
+    return result;
+}
+
 symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, struct symt *symt)
 {
     if (pdb)
@@ -1293,6 +1469,18 @@ symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, struc
         }
     }
     return symt_ptr_to_symref(symt);
+}
+
+struct symt *pdb_hack_advertize_codeview_type(struct pdb_reader *pdb, cv_typ_t cv_typeid, struct symt *symt, unsigned offset)
+{
+    if (pdb_reader_init_TPI(pdb)) return symt;
+    if (!pdb->tpi_typemap[cv_typeid - pdb->tpi_header.first_index].symt)
+    {
+        pdb->tpi_typemap[cv_typeid - pdb->tpi_header.first_index].symt = symt;
+        pdb->tpi_typemap[cv_typeid - pdb->tpi_header.first_index].stream_offset = offset;
+    }
+
+    return symt;
 }
 
 static struct module_format_vtable pdb_module_format_vtable =

@@ -600,9 +600,10 @@ static inline const void* codeview_jump_to_type(const struct codeview_type_parse
         ctp->table + ctp->offset[idx - ctp->header.first_index] : NULL;
 }
 
-static int codeview_add_type(unsigned int typeno, struct symt* dt)
+static int codeview_add_type(unsigned int typeno, struct symt* dt, unsigned offset)
 {
     unsigned idx;
+
     if (!cv_current_module)
     {
         FIXME("Adding %x to non allowed module\n", typeno);
@@ -618,6 +619,9 @@ static int codeview_add_type(unsigned int typeno, struct symt* dt)
         return FALSE;
     }
     idx = typeno - cv_current_module->first_type_index;
+    if (cv_current_module->pdb)
+        pdb_hack_advertize_codeview_type(cv_current_module->pdb, typeno, dt, offset);
+
     if (cv_current_module->defined_types[idx])
     {
         if (cv_current_module->defined_types[idx] != dt)
@@ -1442,7 +1446,8 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         dump(type, 2 + type->generic.len);
         return NULL;
     }
-    return symt && codeview_add_type(curr_type, symt) ? symt : NULL;
+    return symt && codeview_add_type(curr_type, symt,
+                                     (const BYTE*)type - ctp->table + ctp->header.type_offset) ? symt : NULL;
 }
 
 static struct symt* codeview_load_forwardable_type(struct codeview_type_parse* ctp,
@@ -1573,7 +1578,8 @@ static BOOL codeview_parse_type_table(struct codeview_type_parse* ctp)
                     {
                         /* no load it */
                         if ((symt = codeview_load_forwardable_type(ctp, codeview_jump_to_type(ctp, impl_type))))
-                            codeview_add_type(impl_type, symt);
+                            codeview_add_type(impl_type, symt,
+                                              (const BYTE*)codeview_jump_to_type(ctp, impl_type) - ctp->table + ctp->header.type_offset);
                         else
                             FIXME("forward def of %x => %x, unable to load impl\n", hl->id, impl_type);
                     }
@@ -1588,7 +1594,7 @@ static BOOL codeview_parse_type_table(struct codeview_type_parse* ctp)
                 if (!(symt = codeview_get_type(hl->id, TRUE)))
                     symt = codeview_load_forwardable_type(ctp, type);
             }
-            codeview_add_type(hl->id, symt);
+            codeview_add_type(hl->id, symt, (const BYTE*)type - ctp->table + ctp->header.type_offset);
         }
     }
     /* pass II: + non forwardable types: load them, but since they can be indirectly

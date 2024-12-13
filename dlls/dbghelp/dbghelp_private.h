@@ -1072,3 +1072,4 @@ extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_read
 extern void pdb_reader_dispose(struct pdb_reader *pdb);
 extern struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections);
 extern symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, unsigned typeno, struct symt *symt);
+extern struct symt *pdb_hack_advertize_codeview_type(struct pdb_reader *pdb, unsigned typeid, struct symt *symt, unsigned offset);
