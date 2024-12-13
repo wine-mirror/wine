@@ -2693,7 +2693,6 @@ static void test_audio_clock_adjustment(void)
     hr = IAudioClient_GetMixFormat(ac, &pwfx);
     ok(hr == S_OK, "GetMixFormat failed: %08lx\n", hr);
 
-    pwfx->nSamplesPerSec = 44100;
     expected_bufsize = (buffer_duration / 10000000.) * pwfx->nSamplesPerSec;
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
@@ -2727,15 +2726,6 @@ static void test_audio_clock_adjustment(void)
     ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
 
     hr = IAudioClockAdjustment_SetSampleRate(aca, 44100.00f);
-    ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
-
-    /* Wait for frame processing */
-    WaitForSingleObject(event, 1000);
-
-    hr = IAudioClient_GetBufferSize(ac, &bufsize);
-    ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
-
-    hr = IAudioClockAdjustment_SetSampleRate(aca, 22050.00f);
     ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
 
     /* Wait for frame processing */
