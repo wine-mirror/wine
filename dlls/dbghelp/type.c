@@ -1178,7 +1178,7 @@ BOOL symt_get_info_from_symref(struct module* module, symref_t ref,
     if (module->ops_symref_modfmt)
     {
         enum method_result result = module->ops_symref_modfmt->vtable->request_symref_t(module->ops_symref_modfmt, ref, req, pInfo);
-        if (result == MR_SUCCESS) return TRUE;
+        return result == MR_SUCCESS;
     }
     return FALSE;
 }

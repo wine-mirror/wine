@@ -74,8 +74,9 @@ struct pdb_reader_walker
 
 struct pdb_type_details
 {
-    pdboff_t stream_offset; /* inside TPI stream */
-    struct symt *symt; /* HACK to help during migration */
+    pdbsize_t stream_offset; /* inside TPI stream */
+    cv_typ_t resolved_cv_typeid;
+    struct symt *symt;
 };
 
 struct pdb_type_hash_entry
@@ -247,6 +248,49 @@ static enum pdb_result pdb_reader_read_from_stream(struct pdb_reader *pdb, const
 
     if ((result = pdb_reader_internal_read_from_blocks(pdb, blocks, delta, buffer, size, num_read)))
         return result;
+    return R_PDB_SUCCESS;
+}
+
+struct symref_code
+{
+    enum {symref_code_cv_typeid} kind;
+    cv_typ_t cv_typeid;
+};
+
+static inline struct symref_code *symref_code_init_from_cv_typeid(struct symref_code *code, cv_typ_t cv_typeid)
+{
+    code->kind = symref_code_cv_typeid;
+    code->cv_typeid = cv_typeid;
+    return code;
+}
+
+static enum pdb_result pdb_reader_encode_symref(struct pdb_reader *pdb, const struct symref_code *code, symref_t *symref)
+{
+    unsigned v;
+    if (code->kind == symref_code_cv_typeid)
+    {
+        if (code->cv_typeid < T_MAXPREDEFINEDTYPE)
+            v = code->cv_typeid;
+        else if (code->cv_typeid >= pdb->tpi_header.first_index && code->cv_typeid < pdb->tpi_header.last_index)
+            v = T_MAXPREDEFINEDTYPE + (code->cv_typeid - pdb->tpi_header.first_index);
+        else
+            return R_PDB_INVALID_ARGUMENT;
+        *symref = (v << 2) | 1;
+    }
+    else return R_PDB_INVALID_ARGUMENT;
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_decode_symref(struct pdb_reader *pdb, symref_t ref, struct symref_code *code)
+{
+    if ((ref & 3) != 1) return R_PDB_INVALID_ARGUMENT;
+    ref >>= 2;
+    if (ref < T_MAXPREDEFINEDTYPE)
+        symref_code_init_from_cv_typeid(code, ref);
+    else if (ref < T_MAXPREDEFINEDTYPE + pdb->tpi_header.last_index - pdb->tpi_header.first_index)
+        symref_code_init_from_cv_typeid(code, pdb->tpi_header.first_index + (ref - T_MAXPREDEFINEDTYPE));
+    else
+        return R_PDB_INVALID_ARGUMENT;
     return R_PDB_SUCCESS;
 }
 
@@ -993,7 +1037,7 @@ static enum method_result pdb_method_enumerate_sources(struct module_format *mod
 {
     struct pdb_reader *pdb;
 
-    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return -1;
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
 
     /* Note: in PDB, each compiland lists its used files, which are all in global string table,
      * but there's no global source files table AFAICT.
@@ -1236,16 +1280,6 @@ static void pdb_method_location_compute(const struct module_format *modfmt,
     loc->reg = loc_err_out_of_scope;
 }
 
-static symref_t encode_symref(unsigned v)
-{
-    return (v << 2) | 1;
-}
-
-static inline unsigned decode_symref(symref_t ref)
-{
-    return ref >> 2;
-}
-
 static struct {enum BasicType bt; unsigned char size;} supported_basic[T_MAXBASICTYPE] =
 {
     /* all others are defined as 0 = btNoType */
@@ -1312,6 +1346,9 @@ static enum method_result pdb_reader_default_request(struct pdb_reader *pdb, IMA
 
 static enum method_result pdb_reader_basic_request(struct pdb_reader *pdb, unsigned basic, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
+    struct symref_code code;
+    symref_t symref;
+
     if (!is_basic_supported(basic & T_BASICTYPE_MASK))
     {
         FIXME("Unsupported basic type %x\n", basic);
@@ -1341,32 +1378,17 @@ static enum method_result pdb_reader_basic_request(struct pdb_reader *pdb, unsig
     case TI_GET_TYPE:
     case TI_GET_TYPEID:
         if (basic < T_MAXBASICTYPE) return MR_FAILURE;
-        *((DWORD*)data) = encode_symref(basic & T_BASICTYPE_MASK);
+        if (pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, basic & T_BASICTYPE_MASK), &symref)) return MR_FAILURE;
+        *((DWORD*)data) = symt_symref_to_index(pdb->module, symref);
         break;
     case TI_FINDCHILDREN:
     case TI_GET_CHILDRENCOUNT:
     case TI_GET_LEXICALPARENT:
         return pdb_reader_default_request(pdb, req, data);
-    default: return MR_FAILURE;
+    default:
+        return MR_FAILURE;
     }
     return MR_SUCCESS;
-}
-
-static enum method_result pdb_method_request_symref_t(struct module_format *modfmt, symref_t ref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
-{
-    struct pdb_reader *pdb;
-    cv_typ_t cv_typeid;
-
-    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
-    if (req == TI_GET_SYMINDEX)
-    {
-        *((DWORD*)data) = ref;
-        return MR_SUCCESS;
-    }
-    cv_typeid = decode_symref(ref);
-    if (cv_typeid < T_MAXPREDEFINEDTYPE)
-        return pdb_reader_basic_request(pdb, cv_typeid, req, data);
-    return MR_NOT_FOUND;
 }
 
 static enum pdb_result pdb_reader_read_cv_typeid_hash(struct pdb_reader *pdb, cv_typ_t cv_typeid, unsigned *hash)
@@ -1755,6 +1777,78 @@ static enum method_result pdb_method_find_type(struct module_format *modfmt, con
     return MR_SUCCESS;
 }
 
+static BOOL codeview_type_is_forward(const union codeview_type* cvtype)
+{
+    cv_property_t property;
+
+    switch (cvtype->generic.id)
+    {
+    case LF_STRUCTURE_V3:
+    case LF_CLASS_V3:     property = cvtype->struct_v3.property;       break;
+    case LF_UNION_V3:     property = cvtype->union_v3.property;        break;
+    case LF_ENUM_V3:      property = cvtype->enumeration_v3.property;  break;
+    default:              return FALSE;
+    }
+    return property.is_forward_defn;
+}
+
+/* resolves forward declaration to the actual implementation
+ * resolves incremental linker remap bits
+ */
+static enum pdb_result pdb_reader_resolve_cv_typeid(struct pdb_reader *pdb, cv_typ_t raw_cv_typeid, cv_typ_t *cv_typeid)
+{
+    enum pdb_result result;
+    pdbsize_t tpi_offset;
+    union codeview_type cv_type;
+    struct pdb_type_details *type_details;
+    struct pdb_reader_walker type_walker;
+
+    if (raw_cv_typeid < T_FIRSTDEFINABLETYPE)
+    {
+        *cv_typeid = raw_cv_typeid;
+        return R_PDB_SUCCESS;
+    }
+    if ((result = pdb_reader_get_type_details(pdb, raw_cv_typeid, &type_details))) return result;
+    if (type_details->resolved_cv_typeid)
+    {
+        *cv_typeid = type_details->resolved_cv_typeid;
+        return R_PDB_SUCCESS;
+    }
+    if ((result = pdb_reader_TPI_offset_from_cv_typeid(pdb, raw_cv_typeid, &tpi_offset))) return result;
+
+    type_walker = pdb->tpi_types_walker;
+    type_walker.offset = tpi_offset;
+    if ((result = pdb_reader_read_partial_codeview_type(pdb, &type_walker, &cv_type))) return result;
+
+    if (codeview_type_is_forward(&cv_type))
+    {
+        VARIANT v;
+        char *udt_name;
+        struct pdb_reader_walker other_walker = pdb->tpi_types_walker;
+        union codeview_type other_cv_type;
+        cv_typ_t other_cv_typeid;
+
+        if ((result = pdb_reader_alloc_and_read_codeview_type_variablepart(pdb, type_walker, &cv_type, &v, &udt_name, NULL))) return result;
+        result = pdb_reader_read_codeview_type_by_name(pdb, udt_name, &other_walker, &other_cv_type, &other_cv_typeid);
+        pdb_reader_free(pdb, udt_name);
+        switch (result)
+        {
+        case R_PDB_SUCCESS:
+            type_details->resolved_cv_typeid = other_cv_typeid;
+            break;
+        case R_PDB_NOT_FOUND: /* we can have a forward decl without a real implementation */
+            type_details->resolved_cv_typeid = raw_cv_typeid;
+            break;
+        default:
+            return result;
+        }
+    }
+    else type_details->resolved_cv_typeid = raw_cv_typeid;
+
+    *cv_typeid = type_details->resolved_cv_typeid;
+    return R_PDB_SUCCESS;
+}
+
 static enum method_result pdb_method_enumerate_types(struct module_format *modfmt, BOOL (*cb)(symref_t, const char *, void*), void *user)
 {
     struct pdb_reader *pdb;
@@ -1777,8 +1871,14 @@ static enum method_result pdb_method_enumerate_types(struct module_format *modfm
         if (&pdb->tpi_types_hash[i] == pdb->tpi_types_hash[i].next) continue; /* empty */
         for (hash_entry = &pdb->tpi_types_hash[i]; hash_entry; hash_entry = hash_entry->next)
         {
-            if ((result = pdb_reader_get_type_details(pdb, hash_entry->cv_typeid, &type_details)))
-                continue;
+            cv_typ_t cv_typeid;
+
+            /* We don't advertize a forward declaration unless a real declaration exists.
+             * So advertize only TPI entries that are resolved to themselves.
+             */
+            if ((result = pdb_reader_resolve_cv_typeid(pdb, hash_entry->cv_typeid, &cv_typeid))) continue;
+            if (hash_entry->cv_typeid != cv_typeid) continue;
+            if ((result = pdb_reader_get_type_details(pdb, cv_typeid, &type_details))) continue;
 
             walker.offset = type_details->stream_offset;
             if ((result = pdb_reader_read_partial_codeview_type(pdb, &walker, &cv_type))) return pdb_method_result(result);
@@ -1797,14 +1897,109 @@ static enum method_result pdb_method_enumerate_types(struct module_format *modfm
     return MR_NOT_FOUND; /* hack: as typedef are not migrated yet, ask to continue searching */
 }
 
+static enum pdb_result pdb_reader_index_from_cv_typeid(struct pdb_reader *pdb, cv_typ_t cv_typeid, DWORD *index)
+{
+    enum pdb_result result;
+    struct symref_code code;
+    symref_t symref;
+
+    if (cv_typeid > T_MAXPREDEFINEDTYPE)
+    {
+        struct pdb_type_details *type_details;
+
+        if ((result = pdb_reader_resolve_cv_typeid(pdb, cv_typeid, &cv_typeid))) return result;
+        if ((result = pdb_reader_get_type_details(pdb, cv_typeid, &type_details))) return result;
+        symref = cv_hack_ptr_to_symref(pdb, cv_typeid, type_details->symt);
+    }
+    else if ((result = pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &symref))) return result;
+    *index = symt_symref_to_index(pdb->module, symref);
+    return R_PDB_SUCCESS;
+}
+
+static enum method_result pdb_reader_TPI_pointer_request(struct pdb_reader *pdb, const union codeview_type *cv_type, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    switch (req)
+    {
+    case TI_GET_SYMTAG:
+        *((DWORD*)data) = SymTagPointerType;
+        return MR_SUCCESS;
+    case TI_GET_LENGTH:
+        *((DWORD64*)data) = pdb->module->cpu->word_size;
+        return MR_SUCCESS;
+    case TI_GET_TYPE:
+    case TI_GET_TYPEID:
+        return pdb_reader_index_from_cv_typeid(pdb, cv_type->pointer_v2.datatype,
+                                               (DWORD*)data) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
+    case TI_FINDCHILDREN:
+    case TI_GET_CHILDRENCOUNT:
+    case TI_GET_LEXICALPARENT:
+        return pdb_reader_default_request(pdb, req, data);
+
+    default:
+        return MR_FAILURE;
+    }
+}
+
+static enum method_result pdb_reader_TPI_request(struct pdb_reader *pdb, struct pdb_type_details *type_details, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    enum pdb_result result;
+    struct pdb_reader_walker walker;
+    union codeview_type cv_type;
+    enum method_result ret;
+
+    if ((result = pdb_reader_init_TPI(pdb))) return MR_FAILURE;
+    walker = pdb->tpi_types_walker;
+    walker.offset = type_details->stream_offset;
+    if ((result = pdb_reader_read_partial_codeview_type(pdb, &walker, &cv_type))) return MR_FAILURE;
+
+    switch (cv_type.generic.id)
+    {
+    case LF_POINTER_V2:
+        ret = pdb_reader_TPI_pointer_request(pdb, &cv_type, req, data);
+        break;
+    default:
+        FIXME("Unexpected id %x\n", cv_type.generic.id);
+        ret = MR_FAILURE;
+        break;
+    }
+
+    return ret;
+}
+
+static enum method_result pdb_method_request_symref_t(struct module_format *modfmt, symref_t symref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    struct pdb_reader *pdb;
+    struct pdb_type_details *type_details;
+    struct symref_code code;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+    if (req == TI_GET_SYMINDEX)
+    {
+        *((DWORD*)data) = symt_symref_to_index(modfmt->module, symref);
+        return MR_SUCCESS;
+    }
+    if (pdb_reader_decode_symref(pdb, symref, &code)) return MR_FAILURE;
+    if (code.cv_typeid < T_MAXPREDEFINEDTYPE)
+        return pdb_reader_basic_request(pdb, code.cv_typeid, req, data);
+    if (pdb_reader_get_type_details(pdb, code.cv_typeid, &type_details)) return MR_FAILURE;
+    return pdb_reader_TPI_request(pdb, type_details, req, data);
+}
+
 symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, struct symt *symt)
 {
+    struct symref_code code;
+    symref_t symref;
+
     if (pdb)
     {
         if (symt_check_tag(symt, SymTagBaseType))
         {
             if (cv_typeid < T_MAXPREDEFINEDTYPE)
-                return encode_symref(cv_typeid);
+                return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &symref) ? 0 : symref;
+        }
+        if (symt_check_tag(symt, SymTagPointerType))
+        {
+            return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &symref) ? 0 : symref;
         }
     }
     return symt_ptr_to_symref(symt);
