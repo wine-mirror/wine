@@ -1833,6 +1833,9 @@ SQLRETURN WINAPI SQLExecDirect(SQLHSTMT StatementHandle, SQLCHAR *StatementText,
 static void len_to_user( SQLLEN *ptr, UINT8 *len, UINT row_count, UINT width )
 {
     UINT i;
+
+    if (ptr == NULL) return;
+
     for (i = 0; i < row_count; i++)
     {
         *ptr++ = *(SQLLEN *)(len + i * width);
@@ -1842,6 +1845,9 @@ static void len_to_user( SQLLEN *ptr, UINT8 *len, UINT row_count, UINT width )
 static void len_from_user( UINT8 *len, SQLLEN *ptr, UINT row_count, UINT width )
 {
     UINT i;
+
+    if (ptr == NULL) return;
+
     for (i = 0; i < row_count; i++)
     {
         *(SQLLEN *)(len + i * width) = *ptr++;
