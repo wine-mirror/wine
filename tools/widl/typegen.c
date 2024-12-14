@@ -4909,7 +4909,7 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
                 fprintf(file, "(*%s)", var->name);
             } else
                 fprintf(file, "%s", var->name);
-            write_type_right(file, var->declspec.type, FALSE);
+            write_type_right( file, var->declspec.type, false );
             fprintf(file, ";\n");
 
             if (decl_indirect(var->declspec.type))
