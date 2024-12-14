@@ -89,39 +89,42 @@ typedef struct DWRITE_COLOR_GLYPH_RUN
 ]
 interface IDWriteTextRenderer1 : IDWriteTextRenderer
 {
-    HRESULT DrawGlyphRun(void *context,
-                         FLOAT originX,
-                         FLOAT originY,
-                         DWRITE_GLYPH_ORIENTATION_ANGLE angle,
-                         DWRITE_MEASURING_MODE mode,
-                         DWRITE_GLYPH_RUN const *run,
-                         DWRITE_GLYPH_RUN_DESCRIPTION const *rundescr,
-                         IUnknown *effect);
-
-    HRESULT DrawUnderline(void *context,
-                          FLOAT originX,
-                          FLOAT originY,
-                          DWRITE_GLYPH_ORIENTATION_ANGLE angle,
-                          DWRITE_UNDERLINE const *underline,
-                          IUnknown *effect);
-
-    HRESULT DrawStrikethrough(void *context,
-                              FLOAT originX,
-                              FLOAT originY,
-                              DWRITE_GLYPH_ORIENTATION_ANGLE angle,
-                              DWRITE_STRIKETHROUGH const *strikethrough,
-                              IUnknown *effect
-                             );
-
-    HRESULT DrawInlineObject(void *context,
-                             FLOAT originX,
-                             FLOAT originY,
-                             DWRITE_GLYPH_ORIENTATION_ANGLE angle,
-                             IDWriteInlineObject *inlineObject,
-                             BOOL is_sideways,
-                             BOOL is_rtl,
-                             IUnknown *effect
-                            );
+    HRESULT DrawGlyphRun(
+        [in] void *context,
+        [in] FLOAT originX,
+        [in] FLOAT originY,
+        [in] DWRITE_GLYPH_ORIENTATION_ANGLE angle,
+        [in] DWRITE_MEASURING_MODE mode,
+        [in] DWRITE_GLYPH_RUN const *run,
+        [in] DWRITE_GLYPH_RUN_DESCRIPTION const *rundescr,
+        [in] IUnknown *effect
+    );
+    HRESULT DrawUnderline(
+        [in] void *context,
+        [in] FLOAT originX,
+        [in] FLOAT originY,
+        [in] DWRITE_GLYPH_ORIENTATION_ANGLE angle,
+        [in] DWRITE_UNDERLINE const *underline,
+        [in] IUnknown *effect
+    );
+    HRESULT DrawStrikethrough(
+        [in] void *context,
+        [in] FLOAT originX,
+        [in] FLOAT originY,
+        [in] DWRITE_GLYPH_ORIENTATION_ANGLE angle,
+        [in] DWRITE_STRIKETHROUGH const *strikethrough,
+        [in] IUnknown *effect
+    );
+    HRESULT DrawInlineObject(
+        [in] void *context,
+        [in] FLOAT originX,
+        [in] FLOAT originY,
+        [in] DWRITE_GLYPH_ORIENTATION_ANGLE angle,
+        [in] IDWriteInlineObject *inlineObject,
+        [in] BOOL is_sideways,
+        [in] BOOL is_rtl,
+        [in] IUnknown *effect
+    );
 }
 
 [
@@ -131,18 +134,19 @@ interface IDWriteTextRenderer1 : IDWriteTextRenderer
 ]
 interface IDWriteFontFallback : IUnknown
 {
-    HRESULT MapCharacters(IDWriteTextAnalysisSource *source,
-                          UINT32 position,
-                          UINT32 length,
-                          IDWriteFontCollection *basecollection,
-                          const WCHAR *baseFamilyName,
-                          DWRITE_FONT_WEIGHT baseWeight,
-                          DWRITE_FONT_STYLE baseStyle,
-                          DWRITE_FONT_STRETCH baseStretch,
-                          UINT32 *mappedLength,
-                          IDWriteFont **mappedFont,
-                          FLOAT *scale
-                         );
+    HRESULT MapCharacters(
+        [in] IDWriteTextAnalysisSource *source,
+        [in] UINT32 position,
+        [in] UINT32 length,
+        [in] IDWriteFontCollection *basecollection,
+        [in] const WCHAR *baseFamilyName,
+        [in] DWRITE_FONT_WEIGHT baseWeight,
+        [in] DWRITE_FONT_STYLE baseStyle,
+        [in] DWRITE_FONT_STRETCH baseStretch,
+        [out] UINT32 *mappedLength,
+        [out] IDWriteFont **mappedFont,
+        [out] FLOAT *scale
+    );
 }
 
 [
@@ -152,14 +156,23 @@ interface IDWriteFontFallback : IUnknown
 ]
 interface IDWriteTextFormat1 : IDWriteTextFormat
 {
-    HRESULT SetVerticalGlyphOrientation(DWRITE_VERTICAL_GLYPH_ORIENTATION orientation);
+    HRESULT SetVerticalGlyphOrientation(
+        [in] DWRITE_VERTICAL_GLYPH_ORIENTATION orientation);
     DWRITE_VERTICAL_GLYPH_ORIENTATION GetVerticalGlyphOrientation();
-    HRESULT SetLastLineWrapping(BOOL lastline_wrapping_enabled);
+    HRESULT SetLastLineWrapping(
+        [in] BOOL lastline_wrapping_enabled
+    );
     BOOL GetLastLineWrapping();
-    HRESULT SetOpticalAlignment(DWRITE_OPTICAL_ALIGNMENT alignment);
+    HRESULT SetOpticalAlignment(
+        [in] DWRITE_OPTICAL_ALIGNMENT alignment
+    );
     DWRITE_OPTICAL_ALIGNMENT GetOpticalAlignment();
-    HRESULT SetFontFallback(IDWriteFontFallback *fallback);
-    HRESULT GetFontFallback(IDWriteFontFallback **fallback);
+    HRESULT SetFontFallback(
+        [in] IDWriteFontFallback *fallback
+    );
+    HRESULT GetFontFallback(
+        [in] IDWriteFontFallback **fallback
+    );
 }
 
 [
@@ -169,15 +182,27 @@ interface IDWriteTextFormat1 : IDWriteTextFormat
 ]
 interface IDWriteTextLayout2 : IDWriteTextLayout1
 {
-    HRESULT GetMetrics(DWRITE_TEXT_METRICS1 *metrics);
-    HRESULT SetVerticalGlyphOrientation(DWRITE_VERTICAL_GLYPH_ORIENTATION orientation);
+    HRESULT GetMetrics(
+        [out] DWRITE_TEXT_METRICS1 *metrics
+    );
+    HRESULT SetVerticalGlyphOrientation(
+        [in] DWRITE_VERTICAL_GLYPH_ORIENTATION orientation
+    );
     DWRITE_VERTICAL_GLYPH_ORIENTATION GetVerticalGlyphOrientation();
-    HRESULT SetLastLineWrapping(BOOL lastline_wrapping_enabled);
+    HRESULT SetLastLineWrapping(
+        [in] BOOL lastline_wrapping_enabled
+    );
     BOOL GetLastLineWrapping();
-    HRESULT SetOpticalAlignment(DWRITE_OPTICAL_ALIGNMENT alignment);
+    HRESULT SetOpticalAlignment(
+        [in] DWRITE_OPTICAL_ALIGNMENT alignment
+    );
     DWRITE_OPTICAL_ALIGNMENT GetOpticalAlignment();
-    HRESULT SetFontFallback(IDWriteFontFallback *fallback);
-    HRESULT GetFontFallback(IDWriteFontFallback **fallback);
+    HRESULT SetFontFallback(
+        [in] IDWriteFontFallback *fallback
+    );
+    HRESULT GetFontFallback(
+        [out] IDWriteFontFallback **fallback
+    );
 }
 
 [
@@ -187,28 +212,30 @@ interface IDWriteTextLayout2 : IDWriteTextLayout1
 ]
 interface IDWriteTextAnalyzer2 : IDWriteTextAnalyzer1
 {
-    HRESULT GetGlyphOrientationTransform(DWRITE_GLYPH_ORIENTATION_ANGLE angle,
-                                         BOOL is_sideways,
-                                         FLOAT originX,
-                                         FLOAT originY,
-                                         DWRITE_MATRIX *transform
-                                        );
-    HRESULT GetTypographicFeatures(IDWriteFontFace *fontface,
-                                   DWRITE_SCRIPT_ANALYSIS analysis,
-                                   const WCHAR *localeName,
-                                   UINT32 max_tagcount,
-                                   UINT32 *actual_tagcount,
-                                   DWRITE_FONT_FEATURE_TAG *tags
-                                  );
-
-    HRESULT CheckTypographicFeature(IDWriteFontFace *fontface,
-                                    DWRITE_SCRIPT_ANALYSIS analysis,
-                                    const WCHAR *localeName,
-                                    DWRITE_FONT_FEATURE_TAG feature,
-                                    UINT32 glyph_count,
-                                    const UINT16 *indices,
-                                    UINT8 *feature_applies
-                                   );
+    HRESULT GetGlyphOrientationTransform(
+        [in] DWRITE_GLYPH_ORIENTATION_ANGLE angle,
+        [in] BOOL is_sideways,
+        [in] FLOAT originX,
+        [in] FLOAT originY,
+        [out] DWRITE_MATRIX *transform
+    );
+    HRESULT GetTypographicFeatures(
+        [in] IDWriteFontFace *fontface,
+        [in] DWRITE_SCRIPT_ANALYSIS analysis,
+        [in] const WCHAR *localeName,
+        [in] UINT32 max_tagcount,
+        [out] UINT32 *actual_tagcount,
+        [out] DWRITE_FONT_FEATURE_TAG *tags
+    );
+    HRESULT CheckTypographicFeature(
+        [in] IDWriteFontFace *fontface,
+        [in] DWRITE_SCRIPT_ANALYSIS analysis,
+        [in] const WCHAR *localeName,
+        [in] DWRITE_FONT_FEATURE_TAG feature,
+        [in] UINT32 glyph_count,
+        [in] const UINT16 *indices,
+        [out] UINT8 *feature_applies
+    );
 }
 
 [
@@ -218,17 +245,22 @@ interface IDWriteTextAnalyzer2 : IDWriteTextAnalyzer1
 ]
 interface IDWriteFontFallbackBuilder : IUnknown
 {
-    HRESULT AddMapping(const DWRITE_UNICODE_RANGE *ranges,
-                       UINT32 rangesCount,
-                       WCHAR const **targetFamilyNames,
-                       UINT32 targetFamilyNamesCount,
-                       [defaultvalue(NULL)] IDWriteFontCollection *collection,
-                       [defaultvalue(NULL)] WCHAR const *localeName,
-                       [defaultvalue(NULL)] WCHAR const *baseFamilyName,
-                       [defaultvalue(1)] FLOAT scale
-                      );
-    HRESULT AddMappings(IDWriteFontFallback *fallback);
-    HRESULT CreateFontFallback(IDWriteFontFallback **fallback);
+    HRESULT AddMapping(
+        [in] const DWRITE_UNICODE_RANGE *ranges,
+        [in] UINT32 rangesCount,
+        [in] WCHAR const **targetFamilyNames,
+        [in] UINT32 targetFamilyNamesCount,
+        [in, defaultvalue(NULL)] IDWriteFontCollection *collection,
+        [in, defaultvalue(NULL)] WCHAR const *localeName,
+        [in, defaultvalue(NULL)] WCHAR const *baseFamilyName,
+        [in, defaultvalue(1)] FLOAT scale
+    );
+    HRESULT AddMappings(
+        [in] IDWriteFontFallback *fallback
+    );
+    HRESULT CreateFontFallback(
+        [out] IDWriteFontFallback **fallback
+    );
 }
 
 [
@@ -251,22 +283,24 @@ interface IDWriteFontFace2 : IDWriteFontFace1
     BOOL IsColorFont();
     UINT32 GetColorPaletteCount();
     UINT32 GetPaletteEntryCount();
-    HRESULT GetPaletteEntries(UINT32 palette_index,
-                              UINT32 first_entry_index,
-                              UINT32 entry_count,
-                              DWRITE_COLOR_F *entries
-                             );
-    HRESULT GetRecommendedRenderingMode(FLOAT fontEmSize,
-                                        FLOAT dpiX,
-                                        FLOAT dpiY,
-                                        DWRITE_MATRIX const *transform,
-                                        BOOL is_sideways,
-                                        DWRITE_OUTLINE_THRESHOLD threshold,
-                                        DWRITE_MEASURING_MODE measuringmode,
-                                        IDWriteRenderingParams *params,
-                                        DWRITE_RENDERING_MODE *renderingmode,
-                                        DWRITE_GRID_FIT_MODE *gridfitmode
-                                       );
+    HRESULT GetPaletteEntries(
+        [in] UINT32 palette_index,
+        [in] UINT32 first_entry_index,
+        [in] UINT32 entry_count,
+        [out] DWRITE_COLOR_F *entries
+    );
+    HRESULT GetRecommendedRenderingMode(
+        [in] FLOAT fontEmSize,
+        [in] FLOAT dpiX,
+        [in] FLOAT dpiY,
+        [in] DWRITE_MATRIX const *transform,
+        [in] BOOL is_sideways,
+        [in] DWRITE_OUTLINE_THRESHOLD threshold,
+        [in] DWRITE_MEASURING_MODE measuringmode,
+        [in] IDWriteRenderingParams *params,
+        [out] DWRITE_RENDERING_MODE *renderingmode,
+        [out] DWRITE_GRID_FIT_MODE *gridfitmode
+    );
 }
 
 [
@@ -276,8 +310,12 @@ interface IDWriteFontFace2 : IDWriteFontFace1
 ]
 interface IDWriteColorGlyphRunEnumerator : IUnknown
 {
-    HRESULT MoveNext(BOOL *hasRun);
-    HRESULT GetCurrentRun(DWRITE_COLOR_GLYPH_RUN const **run);
+    HRESULT MoveNext(
+        [out] BOOL *hasRun
+    );
+    HRESULT GetCurrentRun(
+        [out] DWRITE_COLOR_GLYPH_RUN const **run
+    );
 }
 
 [
@@ -297,36 +335,41 @@ interface IDWriteRenderingParams2 : IDWriteRenderingParams1
 ]
 interface IDWriteFactory2 : IDWriteFactory1
 {
-    HRESULT GetSystemFontFallback(IDWriteFontFallback **fallback);
-    HRESULT CreateFontFallbackBuilder(IDWriteFontFallbackBuilder **fallbackbuilder);
-    HRESULT TranslateColorGlyphRun(FLOAT originX,
-                                   FLOAT originY,
-                                   const DWRITE_GLYPH_RUN *run,
-                                   const DWRITE_GLYPH_RUN_DESCRIPTION *rundescr,
-                                   DWRITE_MEASURING_MODE mode,
-                                   const DWRITE_MATRIX *transform,
-                                   UINT32 palette_index,
-                                   IDWriteColorGlyphRunEnumerator **colorlayers
-                                  );
-
-    HRESULT CreateCustomRenderingParams(FLOAT gamma,
-                                        FLOAT contrast,
-                                        FLOAT grayscalecontrast,
-                                        FLOAT cleartypeLevel,
-                                        DWRITE_PIXEL_GEOMETRY pixelGeometry,
-                                        DWRITE_RENDERING_MODE renderingMode,
-                                        DWRITE_GRID_FIT_MODE gridFitMode,
-                                        IDWriteRenderingParams2 **params
-                                       );
-
-    HRESULT CreateGlyphRunAnalysis(const DWRITE_GLYPH_RUN *run,
-                                   const DWRITE_MATRIX *transform,
-                                   DWRITE_RENDERING_MODE renderingMode,
-                                   DWRITE_MEASURING_MODE measuringMode,
-                                   DWRITE_GRID_FIT_MODE gridFitMode,
-                                   DWRITE_TEXT_ANTIALIAS_MODE antialiasMode,
-                                   FLOAT originX,
-                                   FLOAT originY,
-                                   IDWriteGlyphRunAnalysis **analysis
-                                  );
+    HRESULT GetSystemFontFallback(
+        [out] IDWriteFontFallback **fallback
+    );
+    HRESULT CreateFontFallbackBuilder(
+        [out] IDWriteFontFallbackBuilder **fallbackbuilder
+    );
+    HRESULT TranslateColorGlyphRun(
+        [in] FLOAT originX,
+        [in] FLOAT originY,
+        [in] const DWRITE_GLYPH_RUN *run,
+        [in] const DWRITE_GLYPH_RUN_DESCRIPTION *rundescr,
+        [in] DWRITE_MEASURING_MODE mode,
+        [in] const DWRITE_MATRIX *transform,
+        [in] UINT32 palette_index,
+        [out] IDWriteColorGlyphRunEnumerator **colorlayers
+    );
+    HRESULT CreateCustomRenderingParams(
+        [in] FLOAT gamma,
+        [in] FLOAT contrast,
+        [in] FLOAT grayscalecontrast,
+        [in] FLOAT cleartypeLevel,
+        [in] DWRITE_PIXEL_GEOMETRY pixelGeometry,
+        [in] DWRITE_RENDERING_MODE renderingMode,
+        [in] DWRITE_GRID_FIT_MODE gridFitMode,
+        [out] IDWriteRenderingParams2 **params
+    );
+    HRESULT CreateGlyphRunAnalysis(
+        [in] const DWRITE_GLYPH_RUN *run,
+        [in] const DWRITE_MATRIX *transform,
+        [in] DWRITE_RENDERING_MODE renderingMode,
+        [in] DWRITE_MEASURING_MODE measuringMode,
+        [in] DWRITE_GRID_FIT_MODE gridFitMode,
+        [in] DWRITE_TEXT_ANTIALIAS_MODE antialiasMode,
+        [in] FLOAT originX,
+        [in] FLOAT originY,
+        [out] IDWriteGlyphRunAnalysis **analysis
+    );
 }
