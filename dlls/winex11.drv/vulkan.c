@@ -246,7 +246,7 @@ static void X11DRV_vulkan_surface_presented( HWND hwnd, void *private, VkResult 
                      surface->hdc_src, 0, 0, surface->rect.right, surface->rect.bottom, SRCCOPY, 0 );
 
     if (region) NtGdiDeleteObjectApp( region );
-    if (hdc) NtGdiDeleteObjectApp( hdc );
+    if (hdc) NtUserReleaseDC( hwnd, hdc );
 }
 
 static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,

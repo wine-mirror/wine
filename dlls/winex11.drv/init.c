@@ -215,7 +215,7 @@ static BOOL needs_client_window_clipping( HWND hwnd )
         if (ret == SIMPLEREGION && EqualRect( &rect, &client )) ret = 0;
         NtGdiDeleteObjectApp( region );
     }
-    NtGdiDeleteObjectApp( hdc );
+    NtUserReleaseDC( hwnd, hdc );
 
     return ret > 0;
 }
