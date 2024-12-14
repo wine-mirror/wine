@@ -383,11 +383,11 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, b
         fprintf(h, "void");
         break;
       case TYPE_BITFIELD:
-      {
-        const decl_spec_t ds = {.type = type_bitfield_get_field(t)};
-        write_type_left(h, &ds, name_type, define, TRUE);
-        break;
-      }
+          t = type_bitfield_get_field( t );
+          if (!type_is_alias( t )) append_basic_type( &str, t );
+          else strappend( &str, "%s", type_get_name( t, name_type ) );
+          fwrite( str.buf, 1, str.pos, h );
+          break;
       case TYPE_ALIAS:
         /* handled elsewhere */
         assert(0);
