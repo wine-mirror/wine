@@ -270,14 +270,6 @@ static void create_buffer_texture(struct wined3d_gl_view *view, struct wined3d_c
     {
         gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
     }
-    else if (gl_info->supported[ARB_BINDLESS_TEXTURE])
-    {
-        /* If we already bound this view to a shader, we acquired a handle to
-         * it, and it's now immutable. This means we can't bind a new buffer
-         * storage to it, so recreate the texture. */
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->name);
-        gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
-    }
 
     wined3d_context_gl_bind_texture(context_gl, GL_TEXTURE_BUFFER, view->name);
     if (gl_info->supported[ARB_TEXTURE_BUFFER_RANGE])
@@ -1315,37 +1307,6 @@ static void shader_resource_view_gl_bind_and_dirtify(struct wined3d_shader_resou
     context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
     wined3d_context_gl_bind_texture(context_gl, view_gl->gl_view.target, view_gl->gl_view.name);
-}
-
-GLuint64 wined3d_shader_resource_view_gl_get_bindless_handle(struct wined3d_shader_resource_view_gl *view_gl,
-        struct wined3d_sampler_gl *sampler_gl, struct wined3d_context_gl *context_gl)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    GLuint64 handle;
-    GLuint name;
-
-    if (view_gl->gl_view.name)
-    {
-        name = view_gl->gl_view.name;
-    }
-    else if (view_gl->v.resource->type == WINED3D_RTYPE_BUFFER)
-    {
-        FIXME("Buffer shader resources not supported.\n");
-        return 0;
-    }
-    else
-    {
-        struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(wined3d_texture_from_resource(view_gl->v.resource));
-        name = wined3d_texture_gl_prepare_gl_texture(texture_gl, context_gl, FALSE);
-    }
-
-    handle = GL_EXTCALL(glGetTextureSamplerHandleARB(name, sampler_gl->name));
-    checkGLcall("glGetTextureSamplerHandleARB");
-    /* It is an error to make a handle resident if it is already resident. */
-    if (!GL_EXTCALL(glIsTextureHandleResidentARB(handle)))
-        GL_EXTCALL(glMakeTextureHandleResidentARB(handle));
-    checkGLcall("glMakeTextureHandleResidentARB");
-    return handle;
 }
 
 void wined3d_shader_resource_view_gl_generate_mipmap(struct wined3d_shader_resource_view_gl *view_gl,

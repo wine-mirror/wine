@@ -36183,7 +36183,7 @@ static void test_high_resource_count(void)
     ID3D11DeviceContext_PSSetSamplers(context, 0, 2, samplers);
     draw_quad(&test_context);
 
-    check_texture_vec4(rt, &expect, 0);
+    todo_wine_if (!damavand) check_texture_vec4(rt, &expect, 0);
 
     /* Discard the data in one of the buffers and draw again. */
 
@@ -36195,7 +36195,7 @@ static void test_high_resource_count(void)
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)buffers[1], 0);
     draw_quad(&test_context);
 
-    check_texture_vec4(rt, &expect2, 0);
+    todo_wine_if (!damavand) check_texture_vec4(rt, &expect2, 0);
 
     ID3D11Texture2D_Release(rt);
     ID3D11RenderTargetView_Release(rtv);

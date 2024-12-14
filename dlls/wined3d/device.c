@@ -568,18 +568,6 @@ out:
     if (hbm) DeleteObject(hbm);
 }
 
-static GLuint64 create_dummy_bindless_handle(const struct wined3d_gl_info *gl_info, GLuint texture)
-{
-    GLuint64 handle;
-
-    if (!texture || !gl_info->supported[ARB_BINDLESS_TEXTURE])
-        return 0;
-
-    handle = GL_EXTCALL(glGetTextureHandleARB(texture));
-    GL_EXTCALL(glMakeTextureHandleResidentARB(handle));
-    return handle;
-}
-
 /* Context activation is done by the caller. */
 static void wined3d_device_gl_create_dummy_textures(struct wined3d_device_gl *device_gl,
         struct wined3d_context_gl *context_gl)
@@ -700,18 +688,6 @@ static void wined3d_device_gl_create_dummy_textures(struct wined3d_device_gl *de
             WARN("ARB_clear_texture is currently required to clear dummy multisample textures.\n");
         }
     }
-
-    textures->bindless.tex_1d = create_dummy_bindless_handle(gl_info, textures->tex_1d);
-    textures->bindless.tex_2d = create_dummy_bindless_handle(gl_info, textures->tex_2d);
-    textures->bindless.tex_rect = create_dummy_bindless_handle(gl_info, textures->tex_rect);
-    textures->bindless.tex_3d = create_dummy_bindless_handle(gl_info, textures->tex_3d);
-    textures->bindless.tex_cube = create_dummy_bindless_handle(gl_info, textures->tex_cube);
-    textures->bindless.tex_cube_array = create_dummy_bindless_handle(gl_info, textures->tex_cube_array);
-    textures->bindless.tex_1d_array = create_dummy_bindless_handle(gl_info, textures->tex_1d_array);
-    textures->bindless.tex_2d_array = create_dummy_bindless_handle(gl_info, textures->tex_2d_array);
-    textures->bindless.tex_buffer = create_dummy_bindless_handle(gl_info, textures->tex_buffer);
-    textures->bindless.tex_2d_ms = create_dummy_bindless_handle(gl_info, textures->tex_2d_ms);
-    textures->bindless.tex_2d_ms_array = create_dummy_bindless_handle(gl_info, textures->tex_2d_ms_array);
 
     checkGLcall("create dummy textures");
 

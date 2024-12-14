@@ -1285,8 +1285,8 @@ void wined3d_gl_texture_swizzle_from_color_fixup(GLint swizzle[4], struct color_
 }
 
 /* Context activation is done by the caller. */
-GLuint wined3d_texture_gl_prepare_gl_texture(struct wined3d_texture_gl *texture_gl,
-         struct wined3d_context_gl *context_gl, BOOL srgb)
+void wined3d_texture_gl_bind(struct wined3d_texture_gl *texture_gl,
+        struct wined3d_context_gl *context_gl, BOOL srgb)
 {
     const struct wined3d_format *format = texture_gl->t.resource.format;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
@@ -1309,7 +1309,10 @@ GLuint wined3d_texture_gl_prepare_gl_texture(struct wined3d_texture_gl *texture_
     target = texture_gl->target;
 
     if (gl_tex->name)
-        return gl_tex->name;
+    {
+        wined3d_context_gl_bind_texture(context_gl, target, gl_tex->name);
+        return;
+    }
 
     gl_info->gl_ops.gl.p_glGenTextures(1, &gl_tex->name);
     checkGLcall("glGenTextures");
@@ -1318,7 +1321,7 @@ GLuint wined3d_texture_gl_prepare_gl_texture(struct wined3d_texture_gl *texture_
     if (!gl_tex->name)
     {
         ERR("Failed to generate a texture name.\n");
-        return 0;
+        return;
     }
 
     /* Initialise the state of the texture object to the OpenGL defaults, not
@@ -1396,8 +1399,6 @@ GLuint wined3d_texture_gl_prepare_gl_texture(struct wined3d_texture_gl *texture_
         gl_info->gl_ops.gl.p_glTexParameteriv(target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
         checkGLcall("set format swizzle");
     }
-
-    return gl_tex->name;
 }
 
 /* Context activation is done by the caller. */
@@ -1410,13 +1411,6 @@ void wined3d_texture_gl_bind_and_dirtify(struct wined3d_texture_gl *texture_gl,
     context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
     wined3d_texture_gl_bind(texture_gl, context_gl, srgb);
-}
-
-void wined3d_texture_gl_bind(struct wined3d_texture_gl *texture_gl,
-        struct wined3d_context_gl *context_gl, BOOL srgb)
-{
-    wined3d_context_gl_bind_texture(context_gl, texture_gl->target,
-            wined3d_texture_gl_prepare_gl_texture(texture_gl, context_gl, srgb));
 }
 
 /* Context activation is done by the caller (state handler). */
