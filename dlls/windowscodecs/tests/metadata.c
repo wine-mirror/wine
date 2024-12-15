@@ -571,7 +571,9 @@ static void test_metadata_unknown(void)
     IWICEnumMetadataItem *enumerator;
     PROPVARIANT schema, id, value;
     IWICMetadataWriter *writer;
+    IWICPersistStream *persist;
     ULONG items_returned;
+    UINT count;
 
     hr = CoCreateInstance(&CLSID_WICUnknownMetadataReader, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICMetadataReader, (void**)&reader);
@@ -632,6 +634,19 @@ static void test_metadata_unknown(void)
 
         IWICEnumMetadataItem_Release(enumerator);
     }
+
+    hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+    hr = IWICPersistStream_LoadEx(persist, NULL, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == 1, "Unexpected count %u.\n", count);
+    IWICPersistStream_Release(persist);
 
     IWICMetadataReader_Release(reader);
 
@@ -2548,6 +2563,8 @@ static void test_metadata_LSD(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
+    todo_wine
+    check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
 
@@ -2647,6 +2664,8 @@ static void test_metadata_IMD(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
+    todo_wine
+    check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
 
@@ -2743,6 +2762,8 @@ static void test_metadata_GCE(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
+    todo_wine
+    check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
 
@@ -2837,6 +2858,8 @@ static void test_metadata_APE(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
+    todo_wine
+    check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
 
@@ -2942,6 +2965,8 @@ static void test_metadata_GIF_comment(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
+    todo_wine
+    check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
 
