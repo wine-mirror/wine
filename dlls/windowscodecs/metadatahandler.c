@@ -41,6 +41,7 @@ typedef struct MetadataHandler {
     const MetadataHandlerVtbl *vtable;
     MetadataItem *items;
     DWORD item_count;
+    DWORD persist_options;
     CRITICAL_SECTION lock;
 } MetadataHandler;
 
@@ -379,6 +380,8 @@ static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
         MetadataHandler_FreeItems(This);
         This->items = new_items;
         This->item_count = item_count;
+
+        This->persist_options = dwPersistOptions & WICPersistOptionMask;
     }
 
     LeaveCriticalSection(&This->lock);
@@ -433,9 +436,16 @@ static HRESULT WINAPI metadatahandler_stream_provider_GetStream(IWICStreamProvid
 
 static HRESULT WINAPI metadatahandler_stream_provider_GetPersistOptions(IWICStreamProvider *iface, DWORD *options)
 {
-    FIXME("%p, %p stub\n", iface, options);
+    MetadataHandler *handler = impl_from_IWICStreamProvider(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, options);
+
+    if (!options)
+        return E_INVALIDARG;
+
+    *options = handler->persist_options;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI metadatahandler_stream_provider_GetPreferredVendorGUID(IWICStreamProvider *iface, GUID *guid)
@@ -472,7 +482,7 @@ HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, voi
 
     *ppv = NULL;
 
-    This = malloc(sizeof(MetadataHandler));
+    This = calloc(1, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICMetadataWriter_iface.lpVtbl = &MetadataHandler_Vtbl;
@@ -480,8 +490,6 @@ HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, voi
     This->IWICStreamProvider_iface.lpVtbl = &MetadataHandler_StreamProvider_Vtbl;
     This->ref = 1;
     This->vtable = vtable;
-    This->items = NULL;
-    This->item_count = 0;
 
     InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MetadataHandler.lock");

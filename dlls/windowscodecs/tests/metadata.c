@@ -346,14 +346,11 @@ static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD 
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICStreamProvider_GetPersistOptions(stream_provider, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     flags = 123;
     hr = IWICStreamProvider_GetPersistOptions(stream_provider, &flags);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!flags, "Unexpected options %#lx.\n", flags);
 
     stream2 = (void *)0xdeadbeef;
@@ -374,9 +371,7 @@ static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD 
 
     flags = ~persist_options;
     hr = IWICStreamProvider_GetPersistOptions(stream_provider, &flags);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(flags == persist_options, "Unexpected options %#lx.\n", flags);
 
     if (persist_options & WICPersistOptionNoCacheStream)
@@ -1281,7 +1276,6 @@ static void test_ifd_content(IWICMetadataReader *reader)
     memcpy(IFD_data_swapped, &IFD_data, sizeof(IFD_data));
     byte_swap_ifd_data(IFD_data_swapped);
     load_stream(reader, IFD_data_swapped, sizeof(IFD_data), WICPersistOptionBigEndian);
-    todo_wine
     check_persist_options(reader, WICPersistOptionBigEndian);
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
@@ -1760,7 +1754,6 @@ static void test_CreateMetadataReader(void)
     hr = get_persist_stream(reader, &stream2);
     todo_wine
     ok(hr == WINCODEC_ERR_STREAMNOTAVAILABLE, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     check_persist_options(reader, WICPersistOptionNoCacheStream);
 
     IWICPersistStream_Release(persist_stream);
@@ -2563,7 +2556,6 @@ static void test_metadata_LSD(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
-    todo_wine
     check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
@@ -2664,7 +2656,6 @@ static void test_metadata_IMD(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
-    todo_wine
     check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
@@ -2762,7 +2753,6 @@ static void test_metadata_GCE(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
-    todo_wine
     check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
@@ -2858,7 +2848,6 @@ static void test_metadata_APE(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
-    todo_wine
     check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
@@ -2965,7 +2954,6 @@ static void test_metadata_GIF_comment(void)
 
     hr = IWICPersistStream_Load(persist, stream);
     ok(hr == S_OK, "Load error %#lx\n", hr);
-    todo_wine
     check_persist_options(reader, 0);
 
     IWICPersistStream_Release(persist);
@@ -4220,7 +4208,6 @@ static void test_CreateMetadataWriterFromReader(void)
     hr = IWICComponentFactory_CreateMetadataReader(factory, &GUID_MetadataFormatChunktEXt,
             NULL, 0, NULL, &reader);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     check_persist_options(reader, 0);
 
     hr = IWICComponentFactory_CreateMetadataWriterFromReader(factory, reader, NULL, &writer);
