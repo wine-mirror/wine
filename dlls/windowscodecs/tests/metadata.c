@@ -309,9 +309,10 @@ static IStream *create_stream(const char *data, int data_size)
     return stream;
 }
 
-static void load_stream(IWICMetadataReader *reader, const char *data, int data_size, DWORD persist_options)
+static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD persist_options)
 {
     IWICStreamProvider *stream_provider;
+    IUnknown *iface = iface_ptr;
     HRESULT hr;
     IWICPersistStream *persist;
     IStream *stream, *stream2;
@@ -324,13 +325,13 @@ static void load_stream(IWICMetadataReader *reader, const char *data, int data_s
     if (!stream)
         return;
 
-    hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void**)&persist);
+    hr = IUnknown_QueryInterface(iface, &IID_IWICPersistStream, (void **)&persist);
     ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
 
     hr = IWICPersistStream_LoadEx(persist, NULL, NULL, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICStreamProvider, (void **)&stream_provider);
+    hr = IUnknown_QueryInterface(iface, &IID_IWICStreamProvider, (void **)&stream_provider);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     memset(&guid, 0, sizeof(guid));
@@ -378,14 +379,25 @@ static void load_stream(IWICMetadataReader *reader, const char *data, int data_s
     todo_wine
     ok(flags == persist_options, "Unexpected options %#lx.\n", flags);
 
-    stream2 = NULL;
-    hr = IWICStreamProvider_GetStream(stream_provider, &stream2);
-    todo_wine
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
-    ok(stream2 == stream, "Unexpected stream pointer.\n");
-    if (stream2)
-        IStream_Release(stream2);
+    if (persist_options & WICPersistOptionNoCacheStream)
+    {
+        stream2 = (void *)0xdeadbeef;
+        hr = IWICStreamProvider_GetStream(stream_provider, &stream2);
+        todo_wine
+        ok(hr == WINCODEC_ERR_STREAMNOTAVAILABLE, "Unexpected hr %#lx.\n", hr);
+        ok(stream2 == (void *)0xdeadbeef, "Unexpected stream pointer.\n");
+    }
+    else
+    {
+        stream2 = NULL;
+        hr = IWICStreamProvider_GetStream(stream_provider, &stream2);
+        todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(stream2 == stream, "Unexpected stream pointer.\n");
+        if (stream2)
+            IStream_Release(stream2);
+    }
 
     IWICStreamProvider_Release(stream_provider);
     IWICPersistStream_Release(persist);
@@ -636,6 +648,9 @@ static void test_metadata_unknown(void)
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, metadata_unknown, sizeof(metadata_unknown), 0);
+    load_stream(writer, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -784,6 +799,9 @@ static void test_metadata_tEXt(void)
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, metadata_tEXt, sizeof(metadata_tEXt), 0);
+    load_stream(writer, metadata_tEXt, sizeof(metadata_tEXt), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -856,6 +874,9 @@ static void test_metadata_gAMA(void)
     check_interface(writer, &IID_IPersistStream, TRUE);
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
+
+    load_stream(writer, metadata_gAMA, sizeof(metadata_gAMA), 0);
+    load_stream(writer, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionNoCacheStream);
 
     IWICMetadataWriter_Release(writer);
 }
@@ -941,6 +962,9 @@ static void test_metadata_cHRM(void)
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, metadata_cHRM, sizeof(metadata_cHRM), 0);
+    load_stream(writer, metadata_cHRM, sizeof(metadata_cHRM), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -1009,6 +1033,9 @@ static void test_metadata_hIST(void)
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, metadata_hIST, sizeof(metadata_hIST), 0);
+    load_stream(writer, metadata_hIST, sizeof(metadata_hIST), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -1066,6 +1093,9 @@ static void test_metadata_tIME(void)
     check_interface(writer, &IID_IPersistStream, TRUE);
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
+
+    load_stream(writer, metadata_tIME, sizeof(metadata_tIME), 0);
+    load_stream(writer, metadata_tIME, sizeof(metadata_tIME), WICPersistOptionNoCacheStream);
 
     IWICMetadataWriter_Release(writer);
 }
@@ -1369,6 +1399,9 @@ static void test_metadata_Ifd(void)
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, (const char *)&IFD_data, sizeof(IFD_data), 0);
+    load_stream(writer, (const char *)&IFD_data, sizeof(IFD_data), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -1421,6 +1454,9 @@ static void test_metadata_Exif(void)
     todo_wine
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, (const char *)&IFD_data, sizeof(IFD_data), 0);
+    load_stream(writer, (const char *)&IFD_data, sizeof(IFD_data), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -1471,6 +1507,9 @@ static void test_metadata_Gps(void)
     check_interface(writer, &IID_IPersistStream, TRUE);
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
+
+    load_stream(writer, (const char *)&IFD_data, sizeof(IFD_data), 0);
+    load_stream(writer, (const char *)&IFD_data, sizeof(IFD_data), WICPersistOptionNoCacheStream);
 
     IWICMetadataWriter_Release(writer);
 }
@@ -2551,6 +2590,9 @@ static void test_metadata_LSD(void)
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, LSD_data, sizeof(LSD_data), 0);
+    load_stream(writer, LSD_data, sizeof(LSD_data), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -2647,6 +2689,9 @@ static void test_metadata_IMD(void)
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, IMD_data, sizeof(IMD_data), 0);
+    load_stream(writer, IMD_data, sizeof(IMD_data), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -2739,6 +2784,9 @@ static void test_metadata_GCE(void)
     check_interface(writer, &IID_IPersistStream, TRUE);
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
+
+    load_stream(writer, GCE_data, sizeof(GCE_data), 0);
+    load_stream(writer, GCE_data, sizeof(GCE_data), WICPersistOptionNoCacheStream);
 
     IWICMetadataWriter_Release(writer);
 }
@@ -2843,6 +2891,9 @@ static void test_metadata_APE(void)
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
+    load_stream(writer, APE_data, sizeof(APE_data), 0);
+    load_stream(writer, APE_data, sizeof(APE_data), WICPersistOptionNoCacheStream);
+
     IWICMetadataWriter_Release(writer);
 }
 
@@ -2942,6 +2993,9 @@ static void test_metadata_GIF_comment(void)
     check_interface(writer, &IID_IPersistStream, TRUE);
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
+
+    load_stream(writer, GIF_comment_data, sizeof(GIF_comment_data), 0);
+    load_stream(writer, GIF_comment_data, sizeof(GIF_comment_data), WICPersistOptionNoCacheStream);
 
     IWICMetadataWriter_Release(writer);
 }
