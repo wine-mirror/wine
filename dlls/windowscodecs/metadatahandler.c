@@ -42,6 +42,7 @@ typedef struct MetadataHandler {
     MetadataItem *items;
     DWORD item_count;
     DWORD persist_options;
+    IStream *stream;
     CRITICAL_SECTION lock;
 } MetadataHandler;
 
@@ -132,6 +133,8 @@ static ULONG WINAPI MetadataHandler_Release(IWICMetadataWriter *iface)
 
     if (ref == 0)
     {
+        if (This->stream)
+            IStream_Release(This->stream);
         MetadataHandler_FreeItems(This);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
@@ -375,13 +378,23 @@ static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
                 &new_items, &item_count);
     }
 
-    if (SUCCEEDED(hr))
+    if (This->stream)
+        IStream_Release(This->stream);
+    This->stream = NULL;
+
+    if (!(dwPersistOptions & WICPersistOptionNoCacheStream))
+    {
+        This->stream = stream;
+        if (This->stream)
+            IStream_AddRef(This->stream);
+    }
+    This->persist_options = dwPersistOptions & WICPersistOptionMask;
+
+    if (new_items)
     {
         MetadataHandler_FreeItems(This);
         This->items = new_items;
         This->item_count = item_count;
-
-        This->persist_options = dwPersistOptions & WICPersistOptionMask;
     }
 
     LeaveCriticalSection(&This->lock);
@@ -429,9 +442,29 @@ static ULONG WINAPI metadatahandler_stream_provider_Release(IWICStreamProvider *
 
 static HRESULT WINAPI metadatahandler_stream_provider_GetStream(IWICStreamProvider *iface, IStream **stream)
 {
-    FIXME("%p, %p stub\n", iface, stream);
+    MetadataHandler *handler = impl_from_IWICStreamProvider(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, stream);
+
+    if (!stream)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&handler->lock);
+
+    if (handler->stream)
+    {
+        *stream = handler->stream;
+        IStream_AddRef(*stream);
+    }
+    else
+    {
+        hr = WINCODEC_ERR_STREAMNOTAVAILABLE;
+    }
+
+    LeaveCriticalSection(&handler->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI metadatahandler_stream_provider_GetPersistOptions(IWICStreamProvider *iface, DWORD *options)
