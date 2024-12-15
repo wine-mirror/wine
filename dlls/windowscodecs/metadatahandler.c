@@ -1215,3 +1215,15 @@ HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv)
 {
     return MetadataReader_Create(&IfdMetadataReader_Vtbl, iid, ppv);
 }
+
+static const MetadataHandlerVtbl GpsMetadataReader_Vtbl =
+{
+    0,
+    &CLSID_WICGpsMetadataReader,
+    LoadIfdMetadata
+};
+
+HRESULT GpsMetadataReader_CreateInstance(REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&GpsMetadataReader_Vtbl, iid, ppv);
+}

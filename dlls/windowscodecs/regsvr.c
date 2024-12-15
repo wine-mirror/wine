@@ -1575,6 +1575,14 @@ static const struct reader_containers ifd_containers[] = {
     { NULL } /* list terminator */
 };
 
+static const struct reader_containers gps_containers[] = {
+    {
+        &GUID_MetadataFormatIfd,
+        ifd_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
 static const BYTE tEXt[] = "tEXt";
 
 static const struct metadata_pattern pngtext_metadata_pattern[] = {
@@ -1744,6 +1752,16 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         &GUID_MetadataFormatIfd,
         1, 1, 0,
         ifd_containers
+    },
+    {   &CLSID_WICGpsMetadataReader,
+        "The Wine Project",
+        "Gps Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatGps,
+        1, 1, 0,
+        gps_containers
     },
     {   &CLSID_WICPngChrmMetadataReader,
         "The Wine Project",
