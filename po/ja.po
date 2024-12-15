@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-12-18 22:35+0900\n"
+"PO-Revision-Date: 2024-12-15 22:00+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -3144,18 +3144,12 @@ msgid "Not yet implemented"
 msgstr "未実装"
 
 #: dlls/desk.cpl/desk.rc:35
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Desktop"
 msgstr "デスクトップ"
 
 #: dlls/desk.cpl/desk.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Virtual Desktop"
-msgstr "デスクトップ"
+msgstr "仮想デスクトップ"
 
 #: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
 msgid "&Reset"
@@ -3163,17 +3157,15 @@ msgstr "リセット(&R)"
 
 #: dlls/desk.cpl/desk.rc:42
 msgid "Emulate display mode changes (requires restart)"
-msgstr ""
+msgstr "ディスプレイ モードの変更を模倣する (再スタートが必要)"
 
 #: dlls/desk.cpl/desk.rc:29
-#, fuzzy
-#| msgid "Default Settings"
 msgid "Display Settings"
-msgstr "既定の設定"
+msgstr "ディスプレイ設定"
 
 #: dlls/desk.cpl/desk.rc:30
 msgid "Configure monitors and display devices."
-msgstr ""
+msgstr "モニターとディスプレイ デバイスを設定します。"
 
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
@@ -3765,16 +3757,12 @@ msgid "&Enable"
 msgstr "有効化(&E)"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (DirectInput devices)"
-msgstr "接続済み (xinputデバイス)"
+msgstr "接続済み (DirectInput デバイス)"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (XInput devices)"
-msgstr "接続済み (xinputデバイス)"
+msgstr "接続済み (XInput デバイス)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3782,19 +3770,15 @@ msgstr "無効"
 
 #: dlls/joy.cpl/joy.rc:51
 msgid "Advanced settings (restart prefix required to take effect)"
-msgstr ""
+msgstr "高度な設定 (有効にするにはプレフィックスの再スタートが必要)"
 
 #: dlls/joy.cpl/joy.rc:52
-#, fuzzy
-#| msgid "&Enable"
 msgid "Enable SDL"
-msgstr "有効化(&E)"
+msgstr "SDL を有効にする"
 
 #: dlls/joy.cpl/joy.rc:53
-#, fuzzy
-#| msgid "Disabled"
 msgid "Disable hidraw"
-msgstr "無効"
+msgstr "hidraw を無効にする"
 
 #: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
@@ -4118,22 +4102,20 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "書換不可のプロパティ '|' は変更できません"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a DataView object"
-msgstr "'this' は | オブジェクトではありません"
+msgstr "'this' は DataView オブジェクトではありません"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Required argument offset or value in DataView method is not specified"
-msgstr ""
+msgstr "DataView メソッドでオフセットと値の引数は省略できません"
 
 #: dlls/jscript/jscript.rc:83
 msgid "DataView operation access beyond specified buffer length"
-msgstr ""
+msgstr "DataView 操作によるアクセスが指定されたバッファ長を超えています"
 
 #: dlls/jscript/jscript.rc:84
 msgid "DataView constructor argument offset is invalid"
-msgstr ""
+msgstr "DataView コンストラクター引数のオフセットが正しくありません"
 
 #: dlls/jscript/jscript.rc:85
 msgid "'this' is not a | object"
@@ -4144,10 +4126,8 @@ msgid "'key' is not an object"
 msgstr "'key' はオブジェクトではありません"
 
 #: dlls/jscript/jscript.rc:87
-#, fuzzy
-#| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
-msgstr "配列オブジェクトを期待していました"
+msgstr "ArrayBuffer オブジェクトを期待していました"
 
 #: dlls/jscript/jscript.rc:88
 msgid "Property cannot have both accessors and a value"
@@ -7173,7 +7153,7 @@ msgstr "引数は正しくありません。\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Cannot assign requested address.\n"
-msgstr ""
+msgstr "要求されたアドレスを割り当てられません。\n"
 
 #: dlls/kernelbase/winerror.mc:3783
 msgid "Connection reset by peer.\n"
@@ -10188,7 +10168,7 @@ msgstr "コントロール パネル"
 
 #: dlls/shell32/shell32.rc:162
 msgid "Ne&w"
-msgstr ""
+msgstr "新規作成(&W)"
 
 #: dlls/shell32/shell32.rc:164
 msgid "E&xplore"
@@ -10196,7 +10176,7 @@ msgstr "エクスプローラ(&X)"
 
 #: dlls/shell32/shell32.rc:167
 msgid "Run as &Administrator"
-msgstr ""
+msgstr "管理者として実行(&A)"
 
 #: dlls/shell32/shell32.rc:189
 msgid "Restart"
@@ -14611,22 +14591,16 @@ msgstr ""
 "8 進数 (056) のいずれかとする必要があります。\n"
 
 #: programs/cmd/cmd.rc:407
-#, fuzzy
-#| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
-msgstr "構文エラー\n"
+msgstr "構文エラー: 予期しない %1\n"
 
 #: programs/cmd/cmd.rc:408
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of line"
-msgstr "ファイルの終端です。\n"
+msgstr "行末"
 
 #: programs/cmd/cmd.rc:409
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of file"
-msgstr "ファイルの終端です。\n"
+msgstr "ファイルの終端"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -14811,11 +14785,8 @@ msgid ""
 msgstr "すべてのプログラムを閉じて、仮想デスクトップを終了しますか?"
 
 #: programs/explorer/explorer.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Wine Desktop"
-msgstr "デスクトップ"
+msgstr "Wine デスクトップ"
 
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
@@ -14986,8 +14957,6 @@ msgid "Current LogonId is"
 msgstr "現在のログオン ID は"
 
 #: programs/klist/klist.rc:38
-#, fuzzy
-#| msgid "client"
 msgid "Client"
 msgstr "クライアント"
 
@@ -19422,10 +19391,8 @@ msgid "Help topics: "
 msgstr "ヘルプ トピック: "
 
 #: programs/wmic/wmic.rc:28
-#, fuzzy
-#| msgid "Error: Command line not supported\n"
 msgid "Error: Command not supported\n"
-msgstr "エラー: コマンド ラインはサポートされていません\n"
+msgstr "エラー: コマンドはサポートされていません\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
@@ -19440,10 +19407,8 @@ msgid "Error: Invalid syntax for PATH\n"
 msgstr "エラー: PATH の構文が無効です\n"
 
 #: programs/wmic/wmic.rc:32
-#, fuzzy
-#| msgid "Bad command.\n"
 msgid "Supply a command\n"
-msgstr "コマンドが不正です。\n"
+msgstr "コマンドを入力してください\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
