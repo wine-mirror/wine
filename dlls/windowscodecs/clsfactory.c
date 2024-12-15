@@ -65,6 +65,7 @@ static const classinfo wic_classes[] = {
     {&CLSID_WICIfdMetadataReader, IfdMetadataReader_CreateInstance},
     {&CLSID_WICGpsMetadataReader, GpsMetadataReader_CreateInstance},
     {&CLSID_WICExifMetadataReader, ExifMetadataReader_CreateInstance},
+    {&CLSID_WICApp1MetadataReader, App1MetadataReader_CreateInstance},
     {&CLSID_WICPngChrmMetadataReader, PngChrmReader_CreateInstance},
     {&CLSID_WICPngGamaMetadataReader, PngGamaReader_CreateInstance},
     {&CLSID_WICPngHistMetadataReader, PngHistReader_CreateInstance},

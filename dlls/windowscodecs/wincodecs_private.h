@@ -219,6 +219,7 @@ extern HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GpsMetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT ExifMetadataReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT App1MetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngHistReader_CreateInstance(REFIID iid, void** ppv);
@@ -316,6 +317,9 @@ HRESULT CDECL decoder_get_metadata_blocks(struct decoder* This, UINT frame, UINT
 HRESULT CDECL decoder_get_color_context(struct decoder* This, UINT frame, UINT num,
     BYTE **data, DWORD *datasize);
 void CDECL decoder_destroy(struct decoder *This);
+
+HRESULT create_metadata_reader(REFGUID format, const GUID *vendor, DWORD options, IStream *stream,
+        IWICMetadataReader **reader);
 
 struct encoder_funcs;
 

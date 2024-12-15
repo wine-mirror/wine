@@ -1591,6 +1591,14 @@ static const struct reader_containers exif_containers[] = {
     { NULL } /* list terminator */
 };
 
+static const struct reader_containers app1_containers[] = {
+    {
+        &GUID_ContainerFormatJpeg,
+        ifd_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
 static const BYTE tEXt[] = "tEXt";
 
 static const struct metadata_pattern pngtext_metadata_pattern[] = {
@@ -1780,6 +1788,16 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         &GUID_MetadataFormatExif,
         1, 1, 0,
         exif_containers
+    },
+    {   &CLSID_WICApp1MetadataReader,
+        "The Wine Project",
+        "App1 Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatApp1,
+        1, 1, 0,
+        app1_containers
     },
     {   &CLSID_WICPngChrmMetadataReader,
         "The Wine Project",

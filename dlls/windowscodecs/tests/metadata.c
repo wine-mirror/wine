@@ -1369,8 +1369,28 @@ static void test_ifd_content(IWICMetadataReader *reader)
 
 static void test_metadata_Ifd(void)
 {
+#include "pshpack2.h"
+    static const struct ifd0_data
+    {
+        USHORT count;
+        struct IFD_entry ifd0[2];
+        ULONG next_IFD;
+    }
+    ifd0_data =
+    {
+        2,
+        {
+            /* Exif IFD pointer */
+            { 0x8769, IFD_LONG, 1, 0 },
+            /* GPS IFD pointer */
+            { 0x8825, IFD_LONG, 1, 0 },
+        },
+    };
+#include "poppack.h"
+
     IWICMetadataReader *reader;
     IWICMetadataWriter *writer;
+    PROPVARIANT id, value;
     GUID format;
     UINT count;
     HRESULT hr;
@@ -1403,6 +1423,26 @@ static void test_metadata_Ifd(void)
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, NULL);
     ok(hr == E_INVALIDARG, "GetMetadataFormat should fail\n");
+
+    /* IFD contains pointer tags. */
+    load_stream(reader, (const char *)&ifd0_data, sizeof(ifd0_data), 0);
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount error %#lx\n", hr);
+    ok(count == 2, "unexpected count %u\n", count);
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type %u.\n", value.vt);
+    PropVariantClear(&value);
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICMetadataReader_GetValueByIndex(reader, 1, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type %u.\n", value.vt);
+    PropVariantClear(&value);
 
     IWICMetadataReader_Release(reader);
 
@@ -1738,7 +1778,6 @@ static void test_CreateMetadataReader(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICPersistStream_LoadEx(persist_stream, stream, NULL, 0);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = get_persist_stream(reader, &stream2);
@@ -4008,9 +4047,7 @@ static void test_metadata_App1(void)
 
     hr = CoCreateInstance(&CLSID_WICApp1MetadataReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_IWICMetadataReader, (void **)&reader);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr)) return;
 
     check_interface(reader, &IID_IWICMetadataReader, TRUE);
     check_interface(reader, &IID_IPersist, TRUE);
@@ -4175,6 +4212,7 @@ static void test_metadata_App1(void)
 
     hr = CoCreateInstance(&CLSID_WICApp1MetadataWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IWICMetadataWriter, (void **)&writer);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (FAILED(hr)) return;
 

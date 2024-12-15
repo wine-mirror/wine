@@ -1328,7 +1328,8 @@ static enum iterator_result create_metadata_reader_iterator(IUnknown *item,
     IWICPersistStream *persist_stream = NULL;
     IWICMetadataReaderInfo *readerinfo;
     IWICMetadataReader *reader = NULL;
-    LARGE_INTEGER zero = {{0}};
+    LARGE_INTEGER move = {{0}};
+    ULARGE_INTEGER pos;
     HRESULT hr;
     GUID guid;
 
@@ -1361,8 +1362,13 @@ static enum iterator_result create_metadata_reader_iterator(IUnknown *item,
 
     if (context->stream)
     {
+        BOOL restore = FALSE;
+
         if (SUCCEEDED(hr))
-            hr = IStream_Seek(context->stream, zero, STREAM_SEEK_SET, NULL);
+        {
+            move.QuadPart = 0;
+            restore = SUCCEEDED(hr = IStream_Seek(context->stream, move, STREAM_SEEK_CUR, &pos));
+        }
 
         if (SUCCEEDED(hr))
             hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist_stream);
@@ -1370,6 +1376,12 @@ static enum iterator_result create_metadata_reader_iterator(IUnknown *item,
         if (SUCCEEDED(hr))
             hr = IWICPersistStream_LoadEx(persist_stream, context->stream, context->vendor,
                     context->options & WICPersistOptionMask);
+
+        if (restore)
+        {
+            memcpy(&move, &pos, sizeof(pos));
+            hr = IStream_Seek(context->stream, move, STREAM_SEEK_SET, NULL);
+        }
 
         if (persist_stream)
             IWICPersistStream_Release(persist_stream);
@@ -1444,17 +1456,11 @@ static HRESULT create_unknown_metadata_reader(IStream *stream, DWORD options, IW
     return hr;
 }
 
-static HRESULT WINAPI ComponentFactory_CreateMetadataReader(IWICComponentFactory *iface,
-        REFGUID format, const GUID *vendor, DWORD options, IStream *stream, IWICMetadataReader **reader)
+HRESULT create_metadata_reader(REFGUID format, const GUID *vendor, DWORD options, IStream *stream,
+        IWICMetadataReader **reader)
 {
     struct iterator_context context = { 0 };
     HRESULT hr;
-
-    TRACE("%p,%s,%s,%lx,%p,%p\n", iface, debugstr_guid(format), debugstr_guid(vendor),
-        options, stream, reader);
-
-    if (!format || !reader)
-        return E_INVALIDARG;
 
     context.format = format;
     context.vendor = vendor;
@@ -1477,6 +1483,18 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataReader(IWICComponentFactory
         hr = create_unknown_metadata_reader(stream, options, reader);
 
     return *reader ? S_OK : WINCODEC_ERR_COMPONENTNOTFOUND;
+}
+
+static HRESULT WINAPI ComponentFactory_CreateMetadataReader(IWICComponentFactory *iface,
+        REFGUID format, const GUID *vendor, DWORD options, IStream *stream, IWICMetadataReader **reader)
+{
+    TRACE("%p,%s,%s,%lx,%p,%p\n", iface, debugstr_guid(format), debugstr_guid(vendor),
+        options, stream, reader);
+
+    if (!format || !reader)
+        return E_INVALIDARG;
+
+    return create_metadata_reader(format, vendor, options, stream, reader);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateMetadataReaderFromContainer(IWICComponentFactory *iface,

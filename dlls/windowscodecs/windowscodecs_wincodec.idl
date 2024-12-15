@@ -175,6 +175,13 @@ coclass WICGpsMetadataReader { interface IWICMetadataReader; }
 coclass WICExifMetadataReader { interface IWICMetadataReader; }
 
 [
+    helpstring("WIC App1 Metadata Reader"),
+    threading(both),
+    uuid(dde33513-774e-4bcd-ae79-02f4adfe62fc)
+]
+coclass WICApp1MetadataReader { interface IWICMetadataReader; }
+
+[
     helpstring("WIC Png cHRM Metadata Reader"),
     threading(both),
     uuid(f90b5f36-367b-402a-9dd1-bc0fd59d8f62)
