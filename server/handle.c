@@ -836,7 +836,7 @@ static int enum_handles( struct process *process, void *user )
     struct handle_table *table = process->handles;
     struct handle_entry *entry;
     struct handle_info *handle;
-    unsigned int i;
+    int i;
 
     if (!table)
         return 0;
@@ -896,7 +896,7 @@ static int enum_process_handles_cb( struct process *process, void *user )
     struct enum_process_handles_info *info = user;
     struct handle_table *table = process->handles;
     struct handle_entry *entry;
-    unsigned int i;
+    int i;
 
     if (!table)
         return 0;
