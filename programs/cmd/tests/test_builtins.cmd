@@ -960,7 +960,9 @@ echo %WINE_VAR:*TY==_%
 echo %WINE_VAR:*TY=%
 set WINE_VAR=
 mkdir dummydir
+set WINE_VAR=\foo;\bar;%CD%
 cd dummydir
+for %%i in (dummydir) do echo %%~$WINE_VAR:i
 echo %CD:~-6,6%
 cd ..
 rmdir dummydir
