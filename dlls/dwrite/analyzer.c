@@ -1855,7 +1855,7 @@ static inline UINT32 get_cluster_length(UINT16 const *clustermap, UINT32 start, 
     UINT16 g = clustermap[start];
     UINT32 length = 1;
 
-    while (start < text_len && clustermap[++start] == g)
+    while (start < (text_len - 1) && clustermap[++start] == g)
         length++;
     return length;
 }
