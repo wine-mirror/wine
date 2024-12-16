@@ -764,7 +764,7 @@ azertyazERTY
 ertyERTY
 =_QWERTY
 QWERTY
-@todo_wine@@drive@@path@dummydir
+@drive@@path@dummydir
 mmydir
 ------------ Testing variable substitution ------------
 --- in FOR variables

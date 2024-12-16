@@ -350,7 +350,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
   }
   if (lastModifier == firstModifier) return; /* Invalid syntax */
   /* put all modifiers in lowercase */
-  for (pos = firstModifier; pos < lastModifier; pos++)
+  for (pos = firstModifier; pos < lastModifier && *pos != L'$'; pos++)
       *pos = towlower(*pos);
 
   /* So now, firstModifier points to beginning of modifiers, lastModifier
