@@ -1125,12 +1125,11 @@ release:
     return hr;
 }
 
-static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
+static void cpu_blitter_clear_texture(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_box *box, const struct wined3d_color *colour)
 {
-    struct wined3d_device *device = view->resource->device;
+    struct wined3d_device *device = texture->resource.device;
     struct wined3d_context *context;
-    struct wined3d_texture *texture;
     struct wined3d_bo_address data;
     struct wined3d_box level_box;
     struct wined3d_map_desc map;
@@ -1139,14 +1138,41 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
     unsigned int level;
     DWORD map_binding;
 
-    TRACE("view %p, box %s, colour %s.\n", view, debug_box(box), debug_color(colour));
+    TRACE("texture %p, sub_resource_idx %u, box %s, colour %s.\n",
+            texture, sub_resource_idx, debug_box(box), debug_color(colour));
 
-    if (view->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
+    if (texture->resource.format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
     {
-        FIXME("Not implemented for format %s.\n", debug_d3dformat(view->format->id));
+        FIXME("Not implemented for format %s.\n", debug_d3dformat(texture->resource.format->id));
         return;
     }
 
+    context = context_acquire(device, NULL, 0);
+
+    level = sub_resource_idx % texture->level_count;
+    wined3d_texture_get_level_box(texture, level, &level_box);
+    full_subresource = !memcmp(box, &level_box, sizeof(*box));
+
+    map_binding = texture->resource.map_binding;
+    if (!wined3d_texture_load_location(texture, sub_resource_idx, context, map_binding))
+        ERR("Failed to load the sub-resource into %s.\n", wined3d_debug_location(map_binding));
+    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~map_binding);
+    wined3d_texture_get_pitch(texture, level, &map.row_pitch, &map.slice_pitch);
+    wined3d_texture_get_bo_address(texture, sub_resource_idx, &data, map_binding);
+    map.data = wined3d_context_map_bo_address(context, &data,
+            texture->sub_resources[sub_resource_idx].size, WINED3D_MAP_WRITE);
+    range.offset = 0;
+    range.size = texture->sub_resources[sub_resource_idx].size;
+
+    wined3d_resource_memory_colour_fill(&texture->resource, &map, colour, box, full_subresource);
+
+    wined3d_context_unmap_bo_address(context, &data, 1, &range);
+    context_release(context);
+}
+
+static void cpu_blitter_clear_rtv(struct wined3d_rendertarget_view *view,
+        const struct wined3d_box *box, const struct wined3d_color *colour)
+{
     if (view->format->id != view->resource->format->id)
         FIXME("View format %s doesn't match resource format %s.\n",
                 debug_d3dformat(view->format->id), debug_d3dformat(view->resource->format->id));
@@ -1157,28 +1183,7 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
         return;
     }
 
-    context = context_acquire(device, NULL, 0);
-
-    texture = texture_from_resource(view->resource);
-    level = view->sub_resource_idx % texture->level_count;
-    wined3d_texture_get_level_box(texture_from_resource(view->resource), level, &level_box);
-    full_subresource = !memcmp(box, &level_box, sizeof(*box));
-
-    map_binding = texture->resource.map_binding;
-    if (!wined3d_texture_load_location(texture, view->sub_resource_idx, context, map_binding))
-        ERR("Failed to load the sub-resource into %s.\n", wined3d_debug_location(map_binding));
-    wined3d_texture_invalidate_location(texture, view->sub_resource_idx, ~map_binding);
-    wined3d_texture_get_pitch(texture, level, &map.row_pitch, &map.slice_pitch);
-    wined3d_texture_get_bo_address(texture, view->sub_resource_idx, &data, map_binding);
-    map.data = wined3d_context_map_bo_address(context, &data,
-            texture->sub_resources[view->sub_resource_idx].size, WINED3D_MAP_WRITE);
-    range.offset = 0;
-    range.size = texture->sub_resources[view->sub_resource_idx].size;
-
-    wined3d_resource_memory_colour_fill(view->resource, &map, colour, box, full_subresource);
-
-    wined3d_context_unmap_bo_address(context, &data, 1, &range);
-    context_release(context);
+    cpu_blitter_clear_texture(texture_from_resource(view->resource), view->sub_resource_idx, box, colour);
 }
 
 static bool wined3d_box_intersect(struct wined3d_box *ret, const struct wined3d_box *b1,
@@ -1225,7 +1230,7 @@ static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
                 {
                     wined3d_rendertarget_view_get_box(view, &box_view);
                     if (wined3d_box_intersect(&box_clip, &box_view, &box))
-                        surface_cpu_blt_colour_fill(view, &box_clip, colour);
+                        cpu_blitter_clear_rtv(view, &box_clip, colour);
                 }
             }
         }
@@ -1238,7 +1243,7 @@ static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
 
             wined3d_rendertarget_view_get_box(view, &box_view);
             if (wined3d_box_intersect(&box_clip, &box_view, &box))
-                surface_cpu_blt_colour_fill(view, &box_clip, &c);
+                cpu_blitter_clear_rtv(view, &box_clip, &c);
         }
     }
 }
