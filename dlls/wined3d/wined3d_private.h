@@ -2035,6 +2035,9 @@ struct wined3d_blitter_ops
 struct wined3d_blitter *wined3d_cpu_blitter_create(void);
 void wined3d_vk_blitter_create(struct wined3d_blitter **next);
 
+void cpu_blitter_clear_texture(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+        const struct wined3d_box *box, const struct wined3d_color *colour);
+
 BOOL wined3d_clip_blit(const RECT *clip_rect, RECT *clipped, RECT *other);
 
 void context_invalidate_compute_state(struct wined3d_context *context, DWORD state_id);

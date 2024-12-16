@@ -1125,7 +1125,7 @@ release:
     return hr;
 }
 
-static void cpu_blitter_clear_texture(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+void cpu_blitter_clear_texture(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const struct wined3d_box *box, const struct wined3d_color *colour)
 {
     struct wined3d_device *device = texture->resource.device;

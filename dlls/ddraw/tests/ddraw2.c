@@ -16957,7 +16957,7 @@ static void test_sysmem_x_channel(void)
     hr = IDirectDrawSurface_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     colour = *(unsigned int *)surface_desc.lpSurface;
-    todo_wine ok(colour == 0x0000ff00, "Got colour %08x.\n", colour);
+    ok(colour == 0x0000ff00, "Got colour %08x.\n", colour);
     hr = IDirectDrawSurface_Unlock(surface, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 

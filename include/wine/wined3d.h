@@ -2433,6 +2433,9 @@ HRESULT __cdecl wined3d_device_context_blt(struct wined3d_device_context *contex
         struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, const RECT *dst_rect,
         struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx, const RECT *src_rect,
         unsigned int flags, const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter);
+HRESULT __cdecl wined3d_device_context_clear_sysmem_texture(struct wined3d_device_context *context,
+        struct wined3d_texture *texture, unsigned int sub_resource_idx, const RECT *rect,
+        unsigned int flags, const struct wined3d_color *color);
 HRESULT __cdecl wined3d_device_context_clear_rendertarget_view(struct wined3d_device_context *context,
         struct wined3d_rendertarget_view *view, const RECT *rect, unsigned int flags,
         const struct wined3d_color *color, float depth, unsigned int stencil);
