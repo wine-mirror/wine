@@ -1242,12 +1242,11 @@ static BOOL CSignedEncodeMsg_GetParam(HCRYPTMSG hCryptMsg, DWORD dwParamType,
     {
         CRYPT_SIGNED_INFO info;
         BOOL freeContent = FALSE;
+        char oid_rsa_data[] = szOID_RSA_data;
 
         info = *msg->msg_data.info;
         if (!msg->innerOID || !strcmp(msg->innerOID, szOID_RSA_data))
         {
-            char oid_rsa_data[] = szOID_RSA_data;
-
             /* Quirk:  OID is only encoded messages if an update has happened */
             if (msg->base.state != MsgStateInit)
                 info.content.pszObjId = oid_rsa_data;
