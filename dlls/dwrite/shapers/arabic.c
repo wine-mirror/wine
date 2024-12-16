@@ -144,7 +144,7 @@ static void arabic_setup_masks(struct scriptshaping_context *context,
         const struct shaping_features *features)
 {
     unsigned int i, prev = ~0u, state = 0;
-    unsigned int masks[NUM_FEATURES];
+    unsigned int masks[NUM_FEATURES+1];
 
     for (i = 0; i < context->glyph_count; ++i)
     {
@@ -168,8 +168,9 @@ static void arabic_setup_masks(struct scriptshaping_context *context,
         state = entry->next_state;
     }
 
-    for (i = 0; i < ARRAY_SIZE(masks); ++i)
+    for (i = 0; i < NUM_FEATURES; ++i)
         masks[i] = shape_get_feature_1_mask(features, arabic_features[i]);
+    masks[NONE] = 0;
 
     /* Unaffected glyphs get action NONE with zero mask. */
     for (i = 0; i < context->glyph_count; ++i)
