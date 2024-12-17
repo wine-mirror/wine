@@ -968,6 +968,7 @@ static struct block *split_block( struct heap *heap, ULONG flags, struct block *
 
 static void *allocate_region( struct heap *heap, ULONG flags, SIZE_T *region_size, SIZE_T *commit_size )
 {
+    const SIZE_T align = 0x400 * sizeof(void*);  /* minimum alignment for virtual allocations */
     void *addr = NULL;
     NTSTATUS status;
 
@@ -976,6 +977,9 @@ static void *allocate_region( struct heap *heap, ULONG flags, SIZE_T *region_siz
         WARN( "Heap %p isn't growable, cannot allocate %#Ix bytes\n", heap, *region_size );
         return NULL;
     }
+
+    *region_size = ROUND_SIZE( *region_size, align - 1 );
+    *commit_size = ROUND_SIZE( *commit_size, align - 1 );
 
     /* allocate the memory block */
     if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, region_size, MEM_RESERVE,
