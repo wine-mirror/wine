@@ -935,10 +935,12 @@ union codeview_fieldtype
 #define T_SHORT             0x0011  /* short */
 #define T_LONG              0x0012  /* long */
 #define T_QUAD              0x0013  /* long long */
+#define T_OCT               0x0014  /* 128bit int */
 #define T_UCHAR             0x0020  /* unsigned  char */
 #define T_USHORT            0x0021  /* unsigned short */
 #define T_ULONG             0x0022  /* unsigned long */
 #define T_UQUAD             0x0023  /* unsigned long long */
+#define T_UOCT              0x0024  /* 128bit unsigned int */
 #define T_BOOL08            0x0030  /* 8-bit boolean */
 #define T_BOOL16            0x0031  /* 16-bit boolean */
 #define T_BOOL32            0x0032  /* 32-bit boolean */
@@ -948,6 +950,7 @@ union codeview_fieldtype
 #define T_REAL80            0x0042  /* 80-bit real */
 #define T_REAL128           0x0043  /* 128-bit real */
 #define T_REAL48            0x0044  /* 48-bit real */
+#define T_REAL16            0x0046  /* 16-bit real */
 #define T_CPLX32            0x0050  /* 32-bit complex number */
 #define T_CPLX64            0x0051  /* 64-bit complex number */
 #define T_CPLX80            0x0052  /* 80-bit complex number */
@@ -968,14 +971,17 @@ union codeview_fieldtype
 
 /* near pointers to basic types */
 #define T_PVOID             0x0103  /* near pointer to void */
+#define T_PCURRENCY         0x0104  /* near pointer to currency */
 #define T_PCHAR             0x0110  /* Near pointer to 8-bit signed */
 #define T_PSHORT            0x0111  /* Near pointer to 16-bit signed */
 #define T_PLONG             0x0112  /* Near pointer to 32-bit signed */
 #define T_PQUAD             0x0113  /* Near pointer to 64-bit signed */
+#define T_POCT              0x0114  /* Near pointer to 128-bit signed */
 #define T_PUCHAR            0x0120  /* Near pointer to 8-bit unsigned */
 #define T_PUSHORT           0x0121  /* Near pointer to 16-bit unsigned */
 #define T_PULONG            0x0122  /* Near pointer to 32-bit unsigned */
 #define T_PUQUAD            0x0123  /* Near pointer to 64-bit unsigned */
+#define T_PUOCT             0x0124  /* Near pointer to 128-bit unsigned */
 #define T_PBOOL08           0x0130  /* Near pointer to 8-bit Boolean */
 #define T_PBOOL16           0x0131  /* Near pointer to 16-bit Boolean */
 #define T_PBOOL32           0x0132  /* Near pointer to 32-bit Boolean */
@@ -985,6 +991,7 @@ union codeview_fieldtype
 #define T_PREAL80           0x0142  /* Near pointer to 80-bit real */
 #define T_PREAL128          0x0143  /* Near pointer to 128-bit real */
 #define T_PREAL48           0x0144  /* Near pointer to 48-bit real */
+#define T_PREAL16           0x0146  /* Near pointer to 16-bit real */
 #define T_PCPLX32           0x0150  /* Near pointer to 32-bit complex */
 #define T_PCPLX64           0x0151  /* Near pointer to 64-bit complex */
 #define T_PCPLX80           0x0152  /* Near pointer to 80-bit complex */
@@ -1003,14 +1010,17 @@ union codeview_fieldtype
 
 /* far pointers to basic types */
 #define T_PFVOID            0x0203  /* Far pointer to void */
+#define T_PFCURRENCT        0x0204  /* Far pointer to currency */
 #define T_PFCHAR            0x0210  /* Far pointer to 8-bit signed */
 #define T_PFSHORT           0x0211  /* Far pointer to 16-bit signed */
 #define T_PFLONG            0x0212  /* Far pointer to 32-bit signed */
 #define T_PFQUAD            0x0213  /* Far pointer to 64-bit signed */
+#define T_PFOCT             0x0214  /* Far pointer to 128-bit signed */
 #define T_PFUCHAR           0x0220  /* Far pointer to 8-bit unsigned */
 #define T_PFUSHORT          0x0221  /* Far pointer to 16-bit unsigned */
 #define T_PFULONG           0x0222  /* Far pointer to 32-bit unsigned */
 #define T_PFUQUAD           0x0223  /* Far pointer to 64-bit unsigned */
+#define T_PFUOCT            0x0224  /* Far pointer to 128-bit unsigned */
 #define T_PFBOOL08          0x0230  /* Far pointer to 8-bit Boolean */
 #define T_PFBOOL16          0x0231  /* Far pointer to 16-bit Boolean */
 #define T_PFBOOL32          0x0232  /* Far pointer to 32-bit Boolean */
@@ -1020,6 +1030,7 @@ union codeview_fieldtype
 #define T_PFREAL80          0x0242  /* Far pointer to 80-bit real */
 #define T_PFREAL128         0x0243  /* Far pointer to 128-bit real */
 #define T_PFREAL48          0x0244  /* Far pointer to 48-bit real */
+#define T_PFREAL16          0x0246  /* Far pointer to 16-bit real */
 #define T_PFCPLX32          0x0250  /* Far pointer to 32-bit complex */
 #define T_PFCPLX64          0x0251  /* Far pointer to 64-bit complex */
 #define T_PFCPLX80          0x0252  /* Far pointer to 80-bit complex */
@@ -1038,14 +1049,17 @@ union codeview_fieldtype
 
 /* huge pointers to basic types */
 #define T_PHVOID            0x0303  /* Huge pointer to void */
+#define T_PHCURRENCY        0x0304  /* Huge pointer to currency */
 #define T_PHCHAR            0x0310  /* Huge pointer to 8-bit signed */
 #define T_PHSHORT           0x0311  /* Huge pointer to 16-bit signed */
 #define T_PHLONG            0x0312  /* Huge pointer to 32-bit signed */
 #define T_PHQUAD            0x0313  /* Huge pointer to 64-bit signed */
+#define T_PHOCT             0x0314  /* Huge pointer to 128-bit signed */
 #define T_PHUCHAR           0x0320  /* Huge pointer to 8-bit unsigned */
 #define T_PHUSHORT          0x0321  /* Huge pointer to 16-bit unsigned */
 #define T_PHULONG           0x0322  /* Huge pointer to 32-bit unsigned */
 #define T_PHUQUAD           0x0323  /* Huge pointer to 64-bit unsigned */
+#define T_PHUOCT            0x0324  /* Huge pointer to 128-bit unsigned */
 #define T_PHBOOL08          0x0330  /* Huge pointer to 8-bit Boolean */
 #define T_PHBOOL16          0x0331  /* Huge pointer to 16-bit Boolean */
 #define T_PHBOOL32          0x0332  /* Huge pointer to 32-bit Boolean */
@@ -1055,6 +1069,7 @@ union codeview_fieldtype
 #define T_PHREAL80          0x0342  /* Huge pointer to 80-bit real */
 #define T_PHREAL128         0x0343  /* Huge pointer to 128-bit real */
 #define T_PHREAL48          0x0344  /* Huge pointer to 48-bit real */
+#define T_PHREAL16          0x0346  /* Far pointer to 16-bit real */
 #define T_PHCPLX32          0x0350  /* Huge pointer to 32-bit complex */
 #define T_PHCPLX64          0x0351  /* Huge pointer to 64-bit complex */
 #define T_PHCPLX80          0x0352  /* Huge pointer to 80-bit complex */
@@ -1073,15 +1088,18 @@ union codeview_fieldtype
 
 /* 32-bit near pointers to basic types */
 #define T_32PVOID           0x0403  /* 32-bit near pointer to void */
+#define T_32PCURRENCY       0x0404  /* 32-bit near pointer to currency */
 #define T_32PHRESULT        0x0408  /* 16:32 near pointer to HRESULT - or error code ??? */
 #define T_32PCHAR           0x0410  /* 16:32 near pointer to 8-bit signed */
 #define T_32PSHORT          0x0411  /* 16:32 near pointer to 16-bit signed */
 #define T_32PLONG           0x0412  /* 16:32 near pointer to 32-bit signed */
 #define T_32PQUAD           0x0413  /* 16:32 near pointer to 64-bit signed */
+#define T_32POCT            0x0414  /* 16:32 near pointer to 128-bit signed */
 #define T_32PUCHAR          0x0420  /* 16:32 near pointer to 8-bit unsigned */
 #define T_32PUSHORT         0x0421  /* 16:32 near pointer to 16-bit unsigned */
 #define T_32PULONG          0x0422  /* 16:32 near pointer to 32-bit unsigned */
 #define T_32PUQUAD          0x0423  /* 16:32 near pointer to 64-bit unsigned */
+#define T_32PUOCT           0x0424  /* 16:32 near pointer to 128-bit unsigned */
 #define T_32PBOOL08         0x0430  /* 16:32 near pointer to 8-bit Boolean */
 #define T_32PBOOL16         0x0431  /* 16:32 near pointer to 16-bit Boolean */
 #define T_32PBOOL32         0x0432  /* 16:32 near pointer to 32-bit Boolean */
@@ -1091,6 +1109,7 @@ union codeview_fieldtype
 #define T_32PREAL80         0x0442  /* 16:32 near pointer to 80-bit real */
 #define T_32PREAL128        0x0443  /* 16:32 near pointer to 128-bit real */
 #define T_32PREAL48         0x0444  /* 16:32 near pointer to 48-bit real */
+#define T_32PREAL16         0x0446  /* 16:32 near pointer to 16-bit real */
 #define T_32PCPLX32         0x0450  /* 16:32 near pointer to 32-bit complex */
 #define T_32PCPLX64         0x0451  /* 16:32 near pointer to 64-bit complex */
 #define T_32PCPLX80         0x0452  /* 16:32 near pointer to 80-bit complex */
@@ -1109,15 +1128,18 @@ union codeview_fieldtype
 
 /* 32-bit far pointers to basic types */
 #define T_32PFVOID          0x0503  /* 32-bit far pointer to void */
+#define T_32PFCURRENCY      0x0504  /* 32-bit far pointer to void */
 #define T_32PFHRESULT       0x0508  /* 16:32 far pointer to HRESULT - or error code ??? */
 #define T_32PFCHAR          0x0510  /* 16:32 far pointer to 8-bit signed */
 #define T_32PFSHORT         0x0511  /* 16:32 far pointer to 16-bit signed */
 #define T_32PFLONG          0x0512  /* 16:32 far pointer to 32-bit signed */
 #define T_32PFQUAD          0x0513  /* 16:32 far pointer to 64-bit signed */
+#define T_32PFOCT           0x0514  /* 16:32 far pointer to 128-bit signed */
 #define T_32PFUCHAR         0x0520  /* 16:32 far pointer to 8-bit unsigned */
 #define T_32PFUSHORT        0x0521  /* 16:32 far pointer to 16-bit unsigned */
 #define T_32PFULONG         0x0522  /* 16:32 far pointer to 32-bit unsigned */
 #define T_32PFUQUAD         0x0523  /* 16:32 far pointer to 64-bit unsigned */
+#define T_32PFUOCT          0x0524  /* 16:32 far pointer to 128-bit unsigned */
 #define T_32PFBOOL08        0x0530  /* 16:32 far pointer to 8-bit Boolean */
 #define T_32PFBOOL16        0x0531  /* 16:32 far pointer to 16-bit Boolean */
 #define T_32PFBOOL32        0x0532  /* 16:32 far pointer to 32-bit Boolean */
@@ -1127,6 +1149,7 @@ union codeview_fieldtype
 #define T_32PFREAL80        0x0542  /* 16:32 far pointer to 80-bit real */
 #define T_32PFREAL128       0x0543  /* 16:32 far pointer to 128-bit real */
 #define T_32PFREAL48        0x0544  /* 16:32 far pointer to 48-bit real */
+#define T_32PFREAL16        0x0546  /* 16:32 far pointer to 16-bit real */
 #define T_32PFCPLX32        0x0550  /* 16:32 far pointer to 32-bit complex */
 #define T_32PFCPLX64        0x0551  /* 16:32 far pointer to 64-bit complex */
 #define T_32PFCPLX80        0x0552  /* 16:32 far pointer to 80-bit complex */
@@ -1145,15 +1168,18 @@ union codeview_fieldtype
 
 /* 64-bit near pointers to basic types */
 #define T_64PVOID           0x0603  /* 64-bit near pointer to void */
+#define T_64PCURRENCY       0x0604  /* 64-bit near pointer to void */
 #define T_64PHRESULT        0x0608  /* 64 near pointer to HRESULT - or error code ??? */
 #define T_64PCHAR           0x0610  /* 64 near pointer to 8-bit signed */
 #define T_64PSHORT          0x0611  /* 64 near pointer to 16-bit signed */
 #define T_64PLONG           0x0612  /* 64 near pointer to 32-bit signed */
 #define T_64PQUAD           0x0613  /* 64 near pointer to 64-bit signed */
+#define T_64POCT            0x0614  /* 64 near pointer to 128-bit signed */
 #define T_64PUCHAR          0x0620  /* 64 near pointer to 8-bit unsigned */
 #define T_64PUSHORT         0x0621  /* 64 near pointer to 16-bit unsigned */
 #define T_64PULONG          0x0622  /* 64 near pointer to 32-bit unsigned */
 #define T_64PUQUAD          0x0623  /* 64 near pointer to 64-bit unsigned */
+#define T_64PUOCT           0x0624  /* 64 near pointer to 128-bit unsigned */
 #define T_64PBOOL08         0x0630  /* 64 near pointer to 8-bit Boolean */
 #define T_64PBOOL16         0x0631  /* 64 near pointer to 16-bit Boolean */
 #define T_64PBOOL32         0x0632  /* 64 near pointer to 32-bit Boolean */
@@ -1163,6 +1189,7 @@ union codeview_fieldtype
 #define T_64PREAL80         0x0642  /* 64 near pointer to 80-bit real */
 #define T_64PREAL128        0x0643  /* 64 near pointer to 128-bit real */
 #define T_64PREAL48         0x0644  /* 64 near pointer to 48-bit real */
+#define T_64PREAL16         0x0646  /* 64 near pointer to 16-bit real */
 #define T_64PCPLX32         0x0650  /* 64 near pointer to 32-bit complex */
 #define T_64PCPLX64         0x0651  /* 64 near pointer to 64-bit complex */
 #define T_64PCPLX80         0x0652  /* 64 near pointer to 80-bit complex */
@@ -1338,6 +1365,12 @@ union codeview_fieldtype
 #define LF_COMPLEX80            0x800e
 #define LF_COMPLEX128           0x800f
 #define LF_VARSTRING            0x8010
+#define LF_OCTWORD              0x8017
+#define LF_UOCTWORD             0x8018
+#define LF_DECIMAL              0x8019
+#define LF_DATE                 0x801a
+#define LF_UTF8STRING           0x801b
+#define LF_REAL16               0x801c
 
 /* symtype e.g. for public_vx.symtype */
 #define SYMTYPE_NONE            0x0000
