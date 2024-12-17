@@ -440,6 +440,9 @@ struct module_format_vtable
     /* index management */
     enum method_result          (*request_symref_t)(struct module_format *modfmt, symref_t ref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data);
 
+    /* types management */
+    enum method_result          (*find_type)(struct module_format *modfmt, const char *name, symref_t *ref);
+
     /* stack walk */
     void                        (*loc_compute)(const struct module_format* modfmt,
                                                const struct symt_function* func,

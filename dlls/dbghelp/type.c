@@ -1154,10 +1154,36 @@ BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
     struct module_pair  pair;
     struct symt*        type;
     DWORD64             size;
+    BOOL                hack_only_typedef = FALSE;
+    struct module_format_vtable_iterator iter = {};
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
+
+    while ((module_format_vtable_iterator_next(pair.effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(find_type))))
+    {
+        symref_t symref;
+        enum method_result result = iter.modfmt->vtable->find_type(iter.modfmt, Name, &symref);
+        if (result == MR_SUCCESS)
+        {
+            WCHAR *name;
+            Symbol->Index = Symbol->TypeIndex = symt_symref_to_index(pair.effective, symref);
+            symt_get_info_from_symref(pair.effective, symref, TI_GET_SYMNAME, &name);
+            Symbol->NameLen = WideCharToMultiByte(CP_ACP, 0, name, -1, Symbol->Name, Symbol->MaxNameLen, NULL, NULL);
+            if (Symbol->NameLen) Symbol->NameLen--;
+            HeapFree(GetProcessHeap(), 0, name);
+            symt_get_info_from_symref(pair.effective, symref, TI_GET_LENGTH, &size);
+            Symbol->Size = size;
+            Symbol->ModBase = pair.requested->module.BaseOfImage;
+            symt_get_info_from_symref(pair.effective, symref, TI_GET_SYMTAG, &Symbol->Tag);
+            return TRUE;
+        }
+        hack_only_typedef = TRUE;
+    }
+
     type = symt_find_type_by_name(pair.effective, SymTagNull, Name);
     if (!type) return FALSE;
+    if (hack_only_typedef && !symt_check_tag(type, SymTagTypedef)) return FALSE;
     Symbol->Index = Symbol->TypeIndex = symt_ptr_to_index(pair.effective, type);
     symbol_setname(Symbol, symt_get_name(type));
     symt_get_info(pair.effective, type, TI_GET_LENGTH, &size);
