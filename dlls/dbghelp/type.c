@@ -445,17 +445,69 @@ struct symt_typedef* symt_new_typedef(struct module* module, symref_t ref,
     return sym;
 }
 
+struct sym_modfmt_type_enum
+{
+    struct module *module;
+    SYMBOL_INFO *sym_info;
+    PSYM_ENUMERATESYMBOLS_CALLBACK cb;
+    void *user;
+    const char *type_name;
+};
+
+static BOOL sym_modfmt_type_enum_cb(symref_t symref, const char *name, void *user)
+{
+    struct sym_modfmt_type_enum *info = user;
+    DWORD64 size;
+
+    if (info->type_name && !SymMatchStringA(name, info->type_name, TRUE)) return TRUE;
+    info->sym_info->TypeIndex = symt_symref_to_index(info->module, symref);
+    info->sym_info->Index = 0;
+    symt_get_info_from_symref(info->module, symref, TI_GET_LENGTH, &size);
+    info->sym_info->Size = size;
+    info->sym_info->ModBase = info->module->module.BaseOfImage;
+    info->sym_info->Flags = 0; /* FIXME */
+    info->sym_info->Value = 0; /* FIXME */
+    info->sym_info->Address = 0; /* FIXME */
+    info->sym_info->Register = 0; /* FIXME */
+    info->sym_info->Scope = 0; /* FIXME */
+    symt_get_info_from_symref(info->module, symref, TI_GET_SYMTAG, &info->sym_info->Tag);
+    symbol_setname(info->sym_info, name);
+
+    return (*info->cb)(info->sym_info, info->sym_info->Size, info->user);
+}
+
 static BOOL sym_enum_types(struct module_pair *pair, const char *type_name, PSYM_ENUMERATESYMBOLS_CALLBACK cb, void *user)
 {
+    struct module_format_vtable_iterator iter = {};
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO        *sym_info = (SYMBOL_INFO*)buffer;
     struct hash_table_iter hti;
     void*               ptr;
     struct symt_ht     *type;
     DWORD64             size;
+    BOOL                hack_only_typedef = FALSE;
 
     sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
     sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
+
+    /* FIXME could optim if type_name doesn't contain wild cards */
+    while ((module_format_vtable_iterator_next(pair->effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(enumerate_types))))
+    {
+        struct sym_modfmt_type_enum info = {pair->effective, sym_info, cb, user, type_name};
+        enum method_result result = iter.modfmt->vtable->enumerate_types(iter.modfmt, sym_modfmt_type_enum_cb, &info);
+
+        switch (result)
+        {
+        case MR_FAILURE:
+            return FALSE;
+        case MR_SUCCESS:
+            return TRUE;
+        case MR_NOT_FOUND:
+            hack_only_typedef = TRUE;
+            break;
+        }
+    }
 
     hash_table_iter_init(&pair->effective->ht_types, &hti, type_name);
     while ((ptr = hash_table_iter_up(&hti)))
@@ -463,6 +515,7 @@ static BOOL sym_enum_types(struct module_pair *pair, const char *type_name, PSYM
         type = CONTAINING_RECORD(ptr, struct symt_ht, hash_elt);
 
         if (type_name && !SymMatchStringA(type->hash_elt.name, type_name, TRUE)) continue;
+        if (hack_only_typedef && !symt_check_tag(&type->symt, SymTagTypedef)) continue;
 
         sym_info->TypeIndex = symt_ptr_to_index(pair->effective, &type->symt);
         sym_info->Index = 0; /* FIXME */

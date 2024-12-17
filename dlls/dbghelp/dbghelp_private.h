@@ -442,6 +442,7 @@ struct module_format_vtable
 
     /* types management */
     enum method_result          (*find_type)(struct module_format *modfmt, const char *name, symref_t *ref);
+    enum method_result          (*enumerate_types)(struct module_format *modfmt, BOOL (*cb)(symref_t, const char *, void*), void *user);
 
     /* stack walk */
     void                        (*loc_compute)(const struct module_format* modfmt,

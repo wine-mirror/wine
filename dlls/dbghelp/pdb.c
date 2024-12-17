@@ -1755,6 +1755,48 @@ static enum method_result pdb_method_find_type(struct module_format *modfmt, con
     return MR_SUCCESS;
 }
 
+static enum method_result pdb_method_enumerate_types(struct module_format *modfmt, BOOL (*cb)(symref_t, const char *, void*), void *user)
+{
+    struct pdb_reader *pdb;
+    enum pdb_result result;
+    unsigned i;
+    struct pdb_reader_walker walker;
+    struct pdb_type_details *type_details;
+    struct pdb_type_hash_entry *hash_entry;
+    union codeview_type cv_type;
+    char *name;
+    VARIANT v;
+    BOOL ret;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+    if ((result = pdb_reader_init_TPI(pdb))) return pdb_method_result(result);
+    walker = pdb->tpi_types_walker;
+    /* Note: walking the types through the hash table may not be the most efficient */
+    for (i = 0; i < pdb->tpi_header.hash_num_buckets; i++)
+    {
+        if (&pdb->tpi_types_hash[i] == pdb->tpi_types_hash[i].next) continue; /* empty */
+        for (hash_entry = &pdb->tpi_types_hash[i]; hash_entry; hash_entry = hash_entry->next)
+        {
+            if ((result = pdb_reader_get_type_details(pdb, hash_entry->cv_typeid, &type_details)))
+                continue;
+
+            walker.offset = type_details->stream_offset;
+            if ((result = pdb_reader_read_partial_codeview_type(pdb, &walker, &cv_type))) return pdb_method_result(result);
+            result = pdb_reader_alloc_and_read_codeview_type_variablepart(pdb, walker, &cv_type, &v, &name, NULL);
+            if (!result)
+            {
+                if (*name)
+                    ret = (*cb)(cv_hack_ptr_to_symref(pdb, hash_entry->cv_typeid, type_details->symt), name, user);
+                else
+                    ret = TRUE;
+                pdb_reader_free(pdb, name);
+                if (!ret) return MR_SUCCESS;
+            }
+        }
+    }
+    return MR_NOT_FOUND; /* hack: as typedef are not migrated yet, ask to continue searching */
+}
+
 symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, struct symt *symt)
 {
     if (pdb)
@@ -1785,6 +1827,7 @@ static struct module_format_vtable pdb_module_format_vtable =
     NULL,/*pdb_module_remove*/
     pdb_method_request_symref_t,
     pdb_method_find_type,
+    pdb_method_enumerate_types,
     pdb_method_location_compute,
     pdb_method_get_line_from_address,
     pdb_method_advance_line_info,
