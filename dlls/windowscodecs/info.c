@@ -658,10 +658,7 @@ static HRESULT BitmapDecoderInfo_Constructor(HKEY classkey, REFCLSID clsid, Comp
 
     This = calloc(1, sizeof(BitmapDecoderInfo));
     if (!This)
-    {
-        RegCloseKey(classkey);
         return E_OUTOFMEMORY;
-    }
 
     This->base.IWICComponentInfo_iface.lpVtbl = (const IWICComponentInfoVtbl*)&BitmapDecoderInfo_Vtbl;
     This->base.ref = 1;
@@ -951,10 +948,7 @@ static HRESULT BitmapEncoderInfo_Constructor(HKEY classkey, REFCLSID clsid, Comp
 
     This = malloc(sizeof(BitmapEncoderInfo));
     if (!This)
-    {
-        RegCloseKey(classkey);
         return E_OUTOFMEMORY;
-    }
 
     This->base.IWICComponentInfo_iface.lpVtbl = (const IWICComponentInfoVtbl*)&BitmapEncoderInfo_Vtbl;
     This->base.ref = 1;
@@ -1164,10 +1158,7 @@ static HRESULT FormatConverterInfo_Constructor(HKEY classkey, REFCLSID clsid, Co
 
     This = malloc(sizeof(FormatConverterInfo));
     if (!This)
-    {
-        RegCloseKey(classkey);
         return E_OUTOFMEMORY;
-    }
 
     This->base.IWICComponentInfo_iface.lpVtbl = (const IWICComponentInfoVtbl*)&FormatConverterInfo_Vtbl;
     This->base.ref = 1;
@@ -1452,10 +1443,7 @@ static HRESULT PixelFormatInfo_Constructor(HKEY classkey, REFCLSID clsid, Compon
 
     This = malloc(sizeof(PixelFormatInfo));
     if (!This)
-    {
-        RegCloseKey(classkey);
         return E_OUTOFMEMORY;
-    }
 
     This->base.IWICComponentInfo_iface.lpVtbl = (const IWICComponentInfoVtbl*)&PixelFormatInfo_Vtbl;
     This->base.ref = 1;
@@ -1975,10 +1963,7 @@ static HRESULT MetadataReaderInfo_Constructor(HKEY classkey, REFCLSID clsid, Com
 
     This = calloc(1, sizeof(*This));
     if (!This)
-    {
-        RegCloseKey(classkey);
         return E_OUTOFMEMORY;
-    }
 
     This->base.IWICComponentInfo_iface.lpVtbl = (const IWICComponentInfoVtbl*)&MetadataReaderInfo_Vtbl;
     This->base.ref = 1;
@@ -2086,7 +2071,11 @@ HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo)
     {
         res = RegOpenKeyExW(clsidkey, guidstring, 0, KEY_READ, &classkey);
         if (res == ERROR_SUCCESS)
-            hr = category->constructor(classkey, clsid, &info);
+        {
+            /* Key handle ownership is transferred to the object. */
+            if (FAILED(hr = category->constructor(classkey, clsid, &info)))
+                RegCloseKey(classkey);
+        }
         else
             hr = HRESULT_FROM_WIN32(res);
     }
