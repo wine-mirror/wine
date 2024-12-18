@@ -2363,16 +2363,57 @@ static HRESULT WINAPI StorageBaseImpl_CopyTo(
 /*************************************************************************
  * MoveElementTo (IStorage)
  */
-static HRESULT WINAPI StorageBaseImpl_MoveElementTo(
-  IStorage*     iface,
-  const OLECHAR *pwcsName,   /* [string][in] */
-  IStorage      *pstgDest,   /* [unique][in] */
-  const OLECHAR *pwcsNewName,/* [string][in] */
-  DWORD           grfFlags)    /* [in] */
+static HRESULT WINAPI StorageBaseImpl_MoveElementTo(IStorage *iface,
+        const OLECHAR *name, IStorage *dest, const OLECHAR *new_name, DWORD mode)
 {
-  FIXME("%p, %s, %p, %s, %#lx: stub\n", iface, debugstr_w(pwcsName), pstgDest,
-      debugstr_w(pwcsNewName), grfFlags);
-  return E_NOTIMPL;
+    IStream *src, *dst;
+    HRESULT hr;
+    DWORD create_mode;
+
+    TRACE("%p, %s, %p, %s, %#lx\n", iface, debugstr_w(name), dest, debugstr_w(new_name), mode);
+
+    if (mode != STGMOVE_COPY && mode != STGMOVE_MOVE)
+        return STG_E_INVALIDFLAG;
+
+    if (!name || !new_name)
+        return STG_E_INVALIDNAME;
+
+    if (!dest)
+        return STG_E_INVALIDPOINTER;
+
+    if (iface == dest) /* FIXME */
+        return STG_E_ACCESSDENIED;
+
+    create_mode = STGM_WRITE | STGM_SHARE_EXCLUSIVE;
+    create_mode |= (mode == STGMOVE_MOVE) ? STGM_FAILIFTHERE : STGM_CREATE;
+
+    /* FIXME: Handle STGTY_STORAGE */
+    hr = IStorage_OpenStream(iface, name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &src);
+    if (hr == S_OK)
+    {
+        STATSTG stat;
+
+        hr = IStream_Stat(src, &stat, STATFLAG_NONAME);
+        if (hr != S_OK)
+        {
+            IStream_Release(src);
+            return hr;
+        }
+
+        hr = IStorage_CreateStream(dest, new_name, create_mode, 0, 0, &dst);
+        if (hr == S_OK)
+        {
+            hr = IStream_CopyTo(src, dst, stat.cbSize, NULL, NULL);
+            IStream_Release(dst);
+        }
+
+        IStream_Release(src);
+    }
+
+    if (hr == S_OK && mode == STGMOVE_MOVE)
+        hr = IStorage_DestroyElement(iface, name);
+
+    return hr;
 }
 
 /*************************************************************************

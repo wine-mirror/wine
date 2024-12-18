@@ -3960,9 +3960,7 @@ static void test_MoveElementTo(void)
     /* STGTY_STREAM */
 
     hr = IStorage_MoveElementTo(src, NULL, NULL, NULL, 0);
-    todo_wine
     ok(hr == STG_E_INVALIDNAME, "got %#lx\n", hr);
-    if (hr != STG_E_INVALIDNAME) goto next;
 
     hr = IStorage_MoveElementTo(src, strmA_name, dst, strmC_name, ~0);
     ok(hr == STG_E_INVALIDFLAG, "got %#lx\n", hr);
@@ -4011,7 +4009,6 @@ static void test_MoveElementTo(void)
 
     /* STGTY_STORAGE */
 
-next:
     hr = IStorage_MoveElementTo(src, stgA_name, dst, stgB_name, STGMOVE_COPY);
     todo_wine
     ok(hr == S_OK, "got %#lx\n", hr);
