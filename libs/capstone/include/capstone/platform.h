@@ -4,30 +4,7 @@
 #ifndef CAPSTONE_PLATFORM_H
 #define CAPSTONE_PLATFORM_H
 
-
-// handle C99 issue (for pre-2013 VisualStudio)
-#if !defined(__CYGWIN__) && !defined(__MINGW32__) && !defined(__MINGW64__) && (defined (WIN32) || defined (WIN64) || defined (_WIN32) || defined (_WIN64))
-// MSVC
-
-// stdbool.h
-#if (_MSC_VER < 1800) || defined(_KERNEL_MODE)
-// this system does not have stdbool.h
-#ifndef __cplusplus
-typedef unsigned char bool;
-#define false 0
-#define true 1
-#endif  // __cplusplus
-
-#else
-// VisualStudio 2013+ -> C99 is supported
 #include <stdbool.h>
-#endif  // (_MSC_VER < 1800) || defined(_KERNEL_MODE)
-
-#else
-// not MSVC -> C99 is supported
-#include <stdbool.h>
-#endif  // !defined(__CYGWIN__) && !defined(__MINGW32__) && !defined(__MINGW64__) && (defined (WIN32) || defined (WIN64) || defined (_WIN32) || defined (_WIN64))
-
 
 // handle inttypes.h / stdint.h compatibility
 #if defined(_WIN32_WCE) && (_WIN32_WCE < 0x800)
