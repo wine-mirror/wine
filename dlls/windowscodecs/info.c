@@ -1975,6 +1975,253 @@ static HRESULT MetadataReaderInfo_Constructor(HKEY classkey, REFCLSID clsid, Com
     return S_OK;
 }
 
+struct metadata_writer_info
+{
+    ComponentInfo base;
+};
+
+static inline struct metadata_writer_info *impl_from_IWICMetadataWriterInfo(IWICMetadataWriterInfo *iface)
+{
+    return CONTAINING_RECORD(iface, struct metadata_writer_info, base.IWICComponentInfo_iface);
+}
+
+static HRESULT WINAPI metadata_writer_info_QueryInterface(IWICMetadataWriterInfo *iface, REFIID riid, void **ppv)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, riid) ||
+        IsEqualIID(&IID_IWICComponentInfo, riid) ||
+        IsEqualIID(&IID_IWICMetadataHandlerInfo, riid) ||
+        IsEqualIID(&IID_IWICMetadataWriterInfo, riid))
+    {
+        *ppv = &info->base.IWICComponentInfo_iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI metadata_writer_info_AddRef(IWICMetadataWriterInfo *iface)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+    ULONG ref = InterlockedIncrement(&info->base.ref);
+
+    TRACE("(%p) refcount=%lu\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI metadata_writer_info_Release(IWICMetadataWriterInfo *iface)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+    ULONG ref = InterlockedDecrement(&info->base.ref);
+
+    TRACE("(%p) refcount=%lu\n", iface, ref);
+
+    if (!ref)
+    {
+        component_info_cleanup(&info->base);
+        free(info);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI metadata_writer_info_GetComponentType(IWICMetadataWriterInfo *iface, WICComponentType *type)
+{
+    TRACE("(%p,%p)\n", iface, type);
+
+    if (!type)
+        return E_INVALIDARG;
+
+    *type = WICMetadataWriter;
+    return S_OK;
+}
+
+static HRESULT WINAPI metadata_writer_info_GetCLSID(IWICMetadataWriterInfo *iface, CLSID *clsid)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, clsid);
+
+    if (!clsid)
+        return E_INVALIDARG;
+
+    *clsid = info->base.clsid;
+    return S_OK;
+}
+
+static HRESULT WINAPI metadata_writer_info_GetSigningStatus(IWICMetadataWriterInfo *iface, DWORD *status)
+{
+    FIXME("(%p,%p): stub\n", iface, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI metadata_writer_info_GetAuthor(IWICMetadataWriterInfo *iface,
+        UINT length, WCHAR *author, UINT *actual_length)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, length, author, actual_length);
+
+    return ComponentInfo_GetStringValue(&info->base, L"Author", length, author, actual_length);
+}
+
+static HRESULT WINAPI metadata_writer_info_GetVendorGUID(IWICMetadataWriterInfo *iface, GUID *vendor)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, vendor);
+
+    return ComponentInfo_GetGUIDValue(&info->base, L"Vendor", vendor);
+}
+
+static HRESULT WINAPI metadata_writer_info_GetVersion(IWICMetadataWriterInfo *iface, UINT length,
+        WCHAR *version, UINT *actual_length)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, length, version, actual_length);
+
+    return ComponentInfo_GetStringValue(&info->base, L"Version", length, version, actual_length);
+}
+
+static HRESULT WINAPI metadata_writer_info_GetSpecVersion(IWICMetadataWriterInfo *iface,
+        UINT length, WCHAR *version, UINT *actual_length)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, length, version, actual_length);
+
+    return ComponentInfo_GetStringValue(&info->base, L"SpecVersion", length, version, actual_length);
+}
+
+static HRESULT WINAPI metadata_writer_info_GetFriendlyName(IWICMetadataWriterInfo *iface,
+        UINT length, WCHAR *name, UINT *actual_length)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%u,%p,%p)\n", iface, length, name, actual_length);
+
+    return ComponentInfo_GetStringValue(&info->base, L"FriendlyName", length, name, actual_length);
+}
+
+static HRESULT WINAPI metadata_writer_info_GetMetadataFormat(IWICMetadataWriterInfo *iface, GUID *format)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, format);
+
+    return ComponentInfo_GetGUIDValue(&info->base, L"MetadataFormat", format);
+}
+
+static HRESULT WINAPI metadata_writer_info_GetContainerFormats(IWICMetadataWriterInfo *iface,
+        UINT length, GUID *formats, UINT *actual_length)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, formats, actual_length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI metadata_writer_info_GetDeviceManufacturer(IWICMetadataWriterInfo *iface,
+        UINT length, WCHAR *manufacturer, UINT *actual_length)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, manufacturer, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI metadata_writer_info_GetDeviceModels(IWICMetadataWriterInfo *iface,
+        UINT length, WCHAR *models, UINT *actual_length)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, length, models, actual_length);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI metadata_writer_info_DoesRequireFullStream(IWICMetadataWriterInfo *iface, BOOL *param)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, param);
+
+    return ComponentInfo_GetUINTValue(&info->base, L"RequiresFullStream", param);
+}
+
+static HRESULT WINAPI metadata_writer_info_DoesSupportPadding(IWICMetadataWriterInfo *iface, BOOL *param)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, param);
+
+    return ComponentInfo_GetUINTValue(&info->base, L"SupportsPadding", param);
+}
+
+static HRESULT WINAPI metadata_writer_info_DoesRequireFixedSize(IWICMetadataWriterInfo *iface, BOOL *param)
+{
+    FIXME("(%p,%p): stub\n", iface, param);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI metadata_writer_info_GetHeader(IWICMetadataWriterInfo *iface, REFGUID container_format,
+        UINT size, WICMetadataHeader *header, UINT *actual_size)
+{
+    FIXME("(%p,%s,%u,%p,%p): stub\n", iface, debugstr_guid(container_format), size, header, actual_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI metadata_writer_info_CreateInstance(IWICMetadataWriterInfo *iface, IWICMetadataWriter **writer)
+{
+    struct metadata_writer_info *info = impl_from_IWICMetadataWriterInfo(iface);
+
+    TRACE("(%p,%p)\n", iface, writer);
+
+    return create_instance(&info->base.clsid, &IID_IWICMetadataWriter, (void **)writer);
+}
+
+static const IWICMetadataWriterInfoVtbl metadata_writer_info_vtbl =
+{
+    metadata_writer_info_QueryInterface,
+    metadata_writer_info_AddRef,
+    metadata_writer_info_Release,
+    metadata_writer_info_GetComponentType,
+    metadata_writer_info_GetCLSID,
+    metadata_writer_info_GetSigningStatus,
+    metadata_writer_info_GetAuthor,
+    metadata_writer_info_GetVendorGUID,
+    metadata_writer_info_GetVersion,
+    metadata_writer_info_GetSpecVersion,
+    metadata_writer_info_GetFriendlyName,
+    metadata_writer_info_GetMetadataFormat,
+    metadata_writer_info_GetContainerFormats,
+    metadata_writer_info_GetDeviceManufacturer,
+    metadata_writer_info_GetDeviceModels,
+    metadata_writer_info_DoesRequireFullStream,
+    metadata_writer_info_DoesSupportPadding,
+    metadata_writer_info_DoesRequireFixedSize,
+    metadata_writer_info_GetHeader,
+    metadata_writer_info_CreateInstance,
+};
+
+static HRESULT MetadataWriterInfo_Constructor(HKEY classkey, REFCLSID clsid, ComponentInfo **info)
+{
+    struct metadata_writer_info *obj;
+
+    if (!(obj = calloc(1, sizeof(*obj))))
+        return E_OUTOFMEMORY;
+
+    component_info_init(&obj->base, classkey, clsid, (const IWICComponentInfoVtbl *)&metadata_writer_info_vtbl);
+
+    *info = &obj->base;
+    return S_OK;
+}
+
 struct category {
     WICComponentType type;
     const GUID *catid;
@@ -1987,6 +2234,7 @@ static const struct category categories[] = {
     {WICPixelFormatConverter, &CATID_WICFormatConverters, FormatConverterInfo_Constructor},
     {WICPixelFormat, &CATID_WICPixelFormats, PixelFormatInfo_Constructor},
     {WICMetadataReader, &CATID_WICMetadataReader, MetadataReaderInfo_Constructor},
+    {WICMetadataWriter, &CATID_WICMetadataWriter, MetadataWriterInfo_Constructor},
     {0}
 };
 
