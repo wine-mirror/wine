@@ -20645,6 +20645,79 @@ static void test_radiobutton_focus(void)
     DestroyWindow(hwnd);
 }
 
+static LONG test_hook_cleanup_hook_proc_child_id;
+static DWORD test_hook_cleanup_hook_proc_thread_id, test_hook_cleanup_hook_proc_call_thread_id;
+
+static void CALLBACK test_hook_cleanup_hook_proc( HWINEVENTHOOK hook, DWORD event_id, HWND hwnd, LONG obj_id,
+                                                  LONG child_id, DWORD thread_id, DWORD event_time )
+{
+    test_hook_cleanup_hook_proc_child_id = child_id;
+    test_hook_cleanup_hook_proc_call_thread_id = GetCurrentThreadId();
+    test_hook_cleanup_hook_proc_thread_id = thread_id;
+}
+
+struct test_hook_cleanup_data
+{
+    HWND hwnd;
+    HANDLE hook_installed_event;
+    HANDLE done_event;
+    DWORD main_thread_id;
+};
+
+static DWORD WINAPI test_hook_cleanup_thread_proc( void *context )
+{
+    struct test_hook_cleanup_data *d = context;
+    HWINEVENTHOOK hook;
+
+    hook = SetWinEventHook( EVENT_MIN, EVENT_MAX, GetModuleHandleW( NULL ), test_hook_cleanup_hook_proc,
+                            GetCurrentProcessId(), 0, WINEVENT_INCONTEXT );
+    ok( !!hook, "got error %ld.\n", GetLastError() );
+
+    test_hook_cleanup_hook_proc_child_id = -1;
+    NotifyWinEvent( EVENT_MIN, d->hwnd, 1, 1 );
+    ok( test_hook_cleanup_hook_proc_child_id == 1, "got %ld.\n", test_hook_cleanup_hook_proc_child_id );
+    todo_wine ok( test_hook_cleanup_hook_proc_thread_id == d->main_thread_id, "got %#lx.\n",
+        test_hook_cleanup_hook_proc_thread_id );
+    ok( test_hook_cleanup_hook_proc_call_thread_id == GetCurrentThreadId(), "got %#lx.\n",
+        test_hook_cleanup_hook_proc_call_thread_id );
+
+    SetEvent( d->hook_installed_event );
+    WaitForSingleObject( d->done_event, INFINITE );
+    return 0;
+}
+
+static void test_hook_cleanup(void)
+{
+    struct test_hook_cleanup_data d;
+    HANDLE thread;
+
+    d.main_thread_id = GetCurrentThreadId();
+    d.hwnd = CreateWindowA ("static", "window", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, 0, 0 );
+    d.hook_installed_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    d.done_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+
+    thread = CreateThread( NULL, 0, test_hook_cleanup_thread_proc, &d, 0, NULL );
+    WaitForSingleObject( d.hook_installed_event, INFINITE );
+
+    test_hook_cleanup_hook_proc_child_id = -1;
+    NotifyWinEvent( EVENT_MIN, d.hwnd, 1, 2 );
+    ok( test_hook_cleanup_hook_proc_child_id == 2, "got %ld.\n", test_hook_cleanup_hook_proc_child_id );
+    ok( test_hook_cleanup_hook_proc_thread_id == GetCurrentThreadId(), "got %#lx.\n",
+        test_hook_cleanup_hook_proc_thread_id );
+    ok( test_hook_cleanup_hook_proc_call_thread_id == GetCurrentThreadId(), "got %#lx.\n",
+        test_hook_cleanup_hook_proc_call_thread_id );
+
+    SetEvent( d.done_event );
+    WaitForSingleObject( thread, INFINITE );
+
+    /* Hook is removed when thread which created it is terminated. */
+    test_hook_cleanup_hook_proc_child_id = -1;
+    NotifyWinEvent( EVENT_MIN, d.hwnd, 1, 3 );
+    ok( test_hook_cleanup_hook_proc_child_id == -1, "got %ld.\n", test_hook_cleanup_hook_proc_child_id );
+
+    DestroyWindow( d.hwnd );
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -20768,6 +20841,7 @@ START_TEST(msg)
     test_DoubleSetCapture();
     test_create_name();
     test_hook_changing_window_proc();
+    test_hook_cleanup();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
      */
