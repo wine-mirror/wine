@@ -153,6 +153,8 @@ static void free_dc_attr( DC_ATTR *dc_attr )
  */
 static void set_initial_dc_state( DC *dc )
 {
+    if (dc->dce && dc->dpi && dc->scale.num) dc->dirty = 1;
+
     dc->attr->wnd_org.x     = 0;
     dc->attr->wnd_org.y     = 0;
     dc->attr->wnd_ext.cx    = 1;
@@ -194,6 +196,9 @@ static void set_initial_dc_state( DC *dc )
     dc->xformWorld2Vport    = dc->xformWorld2Wnd;
     dc->xformVport2World    = dc->xformWorld2Wnd;
     dc->vport2WorldValid    = TRUE;
+    dc->dpi                 = 0;
+    dc->scale.num           = 0;
+    dc->scale.den           = 0;
 
     reset_bounds( &dc->bounds );
 }
@@ -253,6 +258,7 @@ static void free_dc_state( DC *dc )
     if (dc->hMetaRgn) NtGdiDeleteObjectApp( dc->hMetaRgn );
     if (dc->hVisRgn) NtGdiDeleteObjectApp( dc->hVisRgn );
     if (dc->region) NtGdiDeleteObjectApp( dc->region );
+    if (dc->monitor_region) NtGdiDeleteObjectApp( dc->monitor_region );
     if (dc->path) free_gdi_path( dc->path );
     free_dc_attr( dc->attr );
     free( dc );

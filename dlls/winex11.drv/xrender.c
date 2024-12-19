@@ -1014,15 +1014,15 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
 /***********************************************************************
  *           xrenderdrv_SetDeviceClipping
  */
-static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn, HRGN monitor_rgn )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
 
-    physdev->region = rgn;
+    physdev->region = monitor_rgn;
     physdev->update_clip = TRUE;
 
     dev = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
-    dev->funcs->pSetDeviceClipping( dev, rgn );
+    dev->funcs->pSetDeviceClipping( dev, rgn, monitor_rgn );
 }
 
 

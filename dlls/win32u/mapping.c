@@ -190,6 +190,7 @@ BOOL dp_to_lp( DC *dc, POINT *points, INT count )
         {
             double x = points->x;
             double y = points->y;
+            *points = map_dpi_point( *points, dc->scale.num, dc->dpi * dc->scale.den );
             points->x = GDI_ROUND( x * dc->xformVport2World.eM11 +
                                    y * dc->xformVport2World.eM21 +
                                    dc->xformVport2World.eDx );
@@ -247,6 +248,22 @@ BOOL WINAPI NtGdiTransformPoints( HDC hdc, const POINT *points_in, POINT *points
         ret = TRUE;
         break;
 
+    case NtGdiLPtoDPRaw:
+        for (i = 0; i < count; i++)
+        {
+            double x = points_in[i].x;
+            double y = points_in[i].y;
+            points_out[i].x = GDI_ROUND( x * dc->xformWorld2Vport.eM11 +
+                                         y * dc->xformWorld2Vport.eM21 +
+                                         dc->xformWorld2Vport.eDx );
+            points_out[i].y = GDI_ROUND( x * dc->xformWorld2Vport.eM12 +
+                                         y * dc->xformWorld2Vport.eM22 +
+                                         dc->xformWorld2Vport.eDy );
+            points_out[i] = map_dpi_point( points_out[i], dc->dpi * dc->scale.den, dc->scale.num );
+        }
+        ret = TRUE;
+        break;
+
     default:
         WARN( "invalid mode %x\n", mode );
         break;
@@ -274,6 +291,7 @@ void lp_to_dp( DC *dc, POINT *points, INT count )
         points->y = GDI_ROUND( x * dc->xformWorld2Vport.eM12 +
                                y * dc->xformWorld2Vport.eM22 +
                                dc->xformWorld2Vport.eDy );
+        *points = map_dpi_point( *points, dc->dpi * dc->scale.den, dc->scale.num );
         points++;
     }
 }

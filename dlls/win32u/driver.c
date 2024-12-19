@@ -480,7 +480,7 @@ static COLORREF nulldrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
     return color;
 }
 
-static void nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+static void nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn, HRGN monitor_rgn )
 {
 }
 

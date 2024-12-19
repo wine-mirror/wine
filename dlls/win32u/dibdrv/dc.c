@@ -375,7 +375,7 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 /***********************************************************************
  *           dibdrv_SetDeviceClipping
  */
-static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn, HRGN monitor_rgn )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p, %p)\n", dev, rgn);
@@ -935,15 +935,15 @@ static INT windrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx
     return ret;
 }
 
-static void windrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
+static void windrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn, HRGN monitor_rgn )
 {
     dev = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
-    dev->funcs->pSetDeviceClipping( dev, rgn );
+    dev->funcs->pSetDeviceClipping( dev, rgn, monitor_rgn );
     /* also forward to the graphics driver for the OpenGL case */
     if (dev->funcs == &dib_driver)
     {
         dev = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
-        dev->funcs->pSetDeviceClipping( dev, rgn );
+        dev->funcs->pSetDeviceClipping( dev, rgn, monitor_rgn );
     }
 }
 

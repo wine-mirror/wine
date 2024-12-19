@@ -207,7 +207,7 @@ struct gdi_dc_funcs
     COLORREF (*pSetDCBrushColor)(PHYSDEV, COLORREF);
     COLORREF (*pSetDCPenColor)(PHYSDEV, COLORREF);
     INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,BITMAPINFO*,UINT);
-    VOID     (*pSetDeviceClipping)(PHYSDEV,HRGN);
+    VOID     (*pSetDeviceClipping)(PHYSDEV,HRGN,HRGN);
     UINT     (*pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
     COLORREF (*pSetPixel)(PHYSDEV,INT,INT,COLORREF);
     COLORREF (*pSetTextColor)(PHYSDEV,COLORREF);
