@@ -869,6 +869,7 @@ static void test_NtUserQueryWindow(void)
             ok( !ret, "wrong value %p\n", ret );
             break;
         case WindowIsForegroundThread:
+            flaky  /* foreground thread may change */
             ok( ret == (HANDLE)TRUE, "wrong value %p\n", ret );
             break;
         case WindowDefaultImeWindow:
