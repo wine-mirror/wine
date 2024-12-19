@@ -2111,6 +2111,15 @@ static struct regsvr_metadatawriter const metadatawriters_list[] =
         &GUID_VendorMicrosoft,
         &GUID_MetadataFormatExif,
     },
+    {
+        &CLSID_WICIfdMetadataWriter,
+        "The Wine Project",
+        "Ifd Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatIfd,
+    },
     { NULL } /* list terminator */
 };
 

@@ -1285,11 +1285,18 @@ static HRESULT load_ifd_metadata_internal(IStream *input, const GUID *vendor,
     return S_OK;
 }
 
-static HRESULT LoadIfdMetadata(IStream *input, const GUID *vendor,
+static HRESULT LoadIfdMetadataReader(IStream *input, const GUID *vendor,
         DWORD options, MetadataItem **items, DWORD *item_count)
 {
     TRACE("%p, %#lx.\n", input, options);
     return load_ifd_metadata_internal(input, vendor, options, true, false, items, item_count);
+}
+
+static HRESULT LoadIfdMetadataWriter(IStream *input, const GUID *vendor,
+        DWORD options, MetadataItem **items, DWORD *item_count)
+{
+    TRACE("%p, %#lx.\n", input, options);
+    return load_ifd_metadata_internal(input, vendor, options, true, true, items, item_count);
 }
 
 static HRESULT LoadExifMetadataReader(IStream *input, const GUID *vendor,
@@ -1411,12 +1418,24 @@ static HRESULT LoadApp1Metadata(IStream *input, const GUID *vendor, DWORD option
 static const MetadataHandlerVtbl IfdMetadataReader_Vtbl = {
     0,
     &CLSID_WICIfdMetadataReader,
-    LoadIfdMetadata
+    LoadIfdMetadataReader
 };
 
 HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv)
 {
     return MetadataReader_Create(&IfdMetadataReader_Vtbl, iid, ppv);
+}
+
+static const MetadataHandlerVtbl IfdMetadataWriter_Vtbl =
+{
+    .is_writer = true,
+    &CLSID_WICIfdMetadataWriter,
+    LoadIfdMetadataWriter
+};
+
+HRESULT IfdMetadataWriter_CreateInstance(REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&IfdMetadataWriter_Vtbl, iid, ppv);
 }
 
 static const MetadataHandlerVtbl GpsMetadataReader_Vtbl =

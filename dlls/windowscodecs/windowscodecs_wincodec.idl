@@ -168,6 +168,13 @@ coclass WICUnknownMetadataWriter { interface IWICMetadataWriter; }
 coclass WICIfdMetadataReader { interface IWICMetadataReader; }
 
 [
+    helpstring("WIC Ifd Metadata Writer"),
+    threading(both),
+    uuid(b1ebfc28-c9bd-47a2-8d33-b948769777a7)
+]
+coclass WICIfdMetadataWriter { interface IWICMetadataWriter; }
+
+[
     helpstring("WIC Gps Metadata Reader"),
     threading(both),
     uuid(3697790b-223b-484e-9925-c4869218f17a)

@@ -220,6 +220,7 @@ extern HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID i
 extern HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT UnknownMetadataWriter_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT IfdMetadataWriter_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GpsMetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GpsMetadataWriter_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT ExifMetadataReader_CreateInstance(REFIID iid, void **ppv);
