@@ -229,7 +229,7 @@ LPDIOBJECTDATAFORMAT dataformat_to_odf_by_type(LPCDIDATAFORMAT df, int n, DWORD 
 }
 
 static BOOL match_device_object( const DIDATAFORMAT *device_format, DIDATAFORMAT *user_format,
-                                 const DIOBJECTDATAFORMAT *match_obj, DWORD version )
+                                 const DIOBJECTDATAFORMAT *match_obj, DWORD version, BOOL *identical )
 {
     DWORD i, device_instance, instance = DIDFT_GETINSTANCE( match_obj->dwType );
     DIOBJECTDATAFORMAT *device_obj, *user_obj;
@@ -251,6 +251,7 @@ static BOOL match_device_object( const DIDATAFORMAT *device_format, DIDATAFORMAT
                debugstr_diobjectdataformat( device_obj ) );
 
         *user_obj = *device_obj;
+        if (user_obj->dwOfs != match_obj->dwOfs) *identical = FALSE;
         user_obj->dwOfs = match_obj->dwOfs;
         return TRUE;
     }
@@ -262,6 +263,7 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
 {
     DIDATAFORMAT *user_format = &impl->user_format, *device_format = &impl->device_format;
     DIOBJECTDATAFORMAT *user_obj, *match_obj;
+    BOOL identical = TRUE;
     DWORD i;
 
     *user_format = *device_format;
@@ -280,17 +282,24 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
     {
         match_obj = format->rgodf + i;
 
-        if (!match_device_object( device_format, user_format, match_obj, impl->dinput->dwVersion ))
+        if (!match_device_object( device_format, user_format, match_obj, impl->dinput->dwVersion, &identical ))
         {
             WARN( "object %s not found\n", debugstr_diobjectdataformat( match_obj ) );
             if (!(match_obj->dwType & DIDFT_OPTIONAL)) goto failed;
             user_obj = user_format->rgodf + device_format->dwNumObjs + i;
             *user_obj = *match_obj;
+            identical = FALSE;
         }
     }
 
     user_obj = user_format->rgodf + user_format->dwNumObjs;
     while (user_obj-- > user_format->rgodf) user_obj->dwType &= ~DIDFT_OPTIONAL;
+
+    if (identical)
+    {
+        memcpy( user_format->rgodf, device_format->rgodf, device_format->dwNumObjs * sizeof(*user_format->rgodf) );
+        user_format->dwNumObjs = device_format->dwNumObjs;
+    }
 
     return DI_OK;
 
