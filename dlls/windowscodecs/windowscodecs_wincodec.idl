@@ -175,6 +175,13 @@ coclass WICIfdMetadataReader { interface IWICMetadataReader; }
 coclass WICGpsMetadataReader { interface IWICMetadataReader; }
 
 [
+    helpstring("WIC Gps Metadata Writer"),
+    threading(both),
+    uuid(cb8c13e4-62b5-4c96-a48b-6ba6ace39c76)
+]
+coclass WICGpsMetadataWriter { interface IWICMetadataWriter; }
+
+[
     helpstring("WIC Exif Metadata Reader"),
     threading(both),
     uuid(d9403860-297f-4a49-bf9b-77898150a442)

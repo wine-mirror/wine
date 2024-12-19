@@ -1189,7 +1189,7 @@ static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options,
 }
 
 static HRESULT load_ifd_metadata_internal(IStream *input, const GUID *vendor,
-    DWORD persist_options, BOOL resolve_pointer_tags, MetadataItem **items, DWORD *item_count)
+    DWORD persist_options, bool resolve_pointer_tags, bool writer, MetadataItem **items, DWORD *item_count)
 {
     HRESULT hr;
     MetadataItem *result;
@@ -1289,7 +1289,7 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *vendor,
         DWORD options, MetadataItem **items, DWORD *item_count)
 {
     TRACE("%p, %#lx.\n", input, options);
-    return load_ifd_metadata_internal(input, vendor, options, TRUE, items, item_count);
+    return load_ifd_metadata_internal(input, vendor, options, true, false, items, item_count);
 }
 
 static HRESULT LoadExifMetadata(IStream *input, const GUID *vendor,
@@ -1297,15 +1297,23 @@ static HRESULT LoadExifMetadata(IStream *input, const GUID *vendor,
 {
     TRACE("%p, %#lx.\n", input, options);
 
-    return load_ifd_metadata_internal(input, vendor, options, FALSE, items, item_count);
+    return load_ifd_metadata_internal(input, vendor, options, false, false, items, item_count);
 }
 
-static HRESULT LoadGpsMetadata(IStream *input, const GUID *vendor,
+static HRESULT LoadGpsMetadataReader(IStream *input, const GUID *vendor,
         DWORD options, MetadataItem **items, DWORD *item_count)
 {
     TRACE("%p, %#lx.\n", input, options);
 
-    return load_ifd_metadata_internal(input, vendor, options, FALSE, items, item_count);
+    return load_ifd_metadata_internal(input, vendor, options, false, false, items, item_count);
+}
+
+static HRESULT LoadGpsMetadataWriter(IStream *input, const GUID *vendor,
+        DWORD options, MetadataItem **items, DWORD *item_count)
+{
+    TRACE("%p, %#lx.\n", input, options);
+
+    return load_ifd_metadata_internal(input, vendor, options, false, true, items, item_count);
 }
 
 static HRESULT LoadApp1Metadata(IStream *input, const GUID *vendor, DWORD options, MetadataItem **items, DWORD *item_count)
@@ -1407,12 +1415,24 @@ static const MetadataHandlerVtbl GpsMetadataReader_Vtbl =
 {
     0,
     &CLSID_WICGpsMetadataReader,
-    LoadGpsMetadata
+    LoadGpsMetadataReader
 };
 
 HRESULT GpsMetadataReader_CreateInstance(REFIID iid, void **ppv)
 {
     return MetadataReader_Create(&GpsMetadataReader_Vtbl, iid, ppv);
+}
+
+static const MetadataHandlerVtbl GpsMetadataWriter_Vtbl =
+{
+    .is_writer = true,
+    &CLSID_WICGpsMetadataWriter,
+    LoadGpsMetadataWriter
+};
+
+HRESULT GpsMetadataWriter_CreateInstance(REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&GpsMetadataWriter_Vtbl, iid, ppv);
 }
 
 static const MetadataHandlerVtbl ExifMetadataReader_Vtbl =
