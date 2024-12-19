@@ -4174,6 +4174,7 @@ static void test_RegNotifyChangeKeyValue(void)
     ret = RegOpenKeyA(hkey_main, "TestKey", &key);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
+    data.key = key;
     data.flags = REG_NOTIFY_THREAD_AGNOSTIC;
     thread = CreateThread(NULL, 0, notify_change_thread, &data, 0, NULL);
     WaitForSingleObject(thread, INFINITE);
