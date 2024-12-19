@@ -719,7 +719,7 @@ static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
     return TRUE;
 }
 
-static BOOL PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
+BOOL WINAPI PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
 {
     BOOL is_file_spec = PathIsFileSpecW(path);
     DWORD dwWhich = flags & PRF_DONTFINDLNK ? 0xf : 0xbf;

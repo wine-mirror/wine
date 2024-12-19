@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(exec);
 
 typedef UINT_PTR (*SHELL_ExecuteW32)(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 			    const SHELLEXECUTEINFOW *sei, LPSHELLEXECUTEINFOW sei_out);
-extern BOOL WINAPI PathResolveAW(void *path, const void **paths, DWORD flags);
+extern BOOL WINAPI PathResolveW(void *path, const WCHAR **paths, DWORD flags);
 extern BOOL WINAPI PathFileExistsDefExtW(LPWSTR lpszPath,DWORD dwWhich);
 
 static inline BOOL isSpace(WCHAR c)
@@ -669,7 +669,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
         else
             search_paths[0] = curdir;
         lstrcpyW(xlpFile, lpFile);
-        if (PathResolveAW(xlpFile, (const void **)search_paths, PRF_TRYPROGRAMEXTENSIONS | PRF_VERIFYEXISTS))
+        if (PathResolveW(xlpFile, search_paths, PRF_TRYPROGRAMEXTENSIONS | PRF_VERIFYEXISTS))
         {
             TRACE("PathResolveAW returned non-zero\n");
             lpFile = xlpFile;
