@@ -770,15 +770,27 @@ static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
     return S_OK;
 }
 
-static const MetadataHandlerVtbl UnknownMetadataReader_Vtbl = {
-    0,
-    &CLSID_WICUnknownMetadataReader,
-    LoadUnknownMetadata
+static const MetadataHandlerVtbl UnknownMetadataReader_Vtbl =
+{
+    .clsid = &CLSID_WICUnknownMetadataReader,
+    .fnLoad = LoadUnknownMetadata
 };
 
 HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv)
 {
     return MetadataReader_Create(&UnknownMetadataReader_Vtbl, iid, ppv);
+}
+
+static const MetadataHandlerVtbl UnknownMetadataWriter_Vtbl =
+{
+    .is_writer = true,
+    .clsid = &CLSID_WICUnknownMetadataWriter,
+    .fnLoad = LoadUnknownMetadata
+};
+
+HRESULT UnknownMetadataWriter_CreateInstance(REFIID iid, void** ppv)
+{
+    return MetadataReader_Create(&UnknownMetadataWriter_Vtbl, iid, ppv);
 }
 
 #define SWAP_USHORT(x) do { if (!native_byte_order) (x) = RtlUshortByteSwap(x); } while(0)

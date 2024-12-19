@@ -380,7 +380,6 @@ static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD 
     {
         stream2 = (void *)0xdeadbeef;
         hr = IWICStreamProvider_GetStream(stream_provider, &stream2);
-        todo_wine
         ok(hr == WINCODEC_ERR_STREAMNOTAVAILABLE, "Unexpected hr %#lx.\n", hr);
         ok(stream2 == (void *)0xdeadbeef, "Unexpected stream pointer.\n");
     }
@@ -658,9 +657,7 @@ static void test_metadata_unknown(void)
 
     hr = CoCreateInstance(&CLSID_WICUnknownMetadataWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IWICMetadataWriter, (void **)&writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr)) return;
 
     check_interface(writer, &IID_IWICMetadataWriter, TRUE);
     check_interface(writer, &IID_IWICMetadataReader, TRUE);
@@ -670,6 +667,25 @@ static void test_metadata_unknown(void)
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
 
     load_stream(writer, metadata_unknown, sizeof(metadata_unknown), 0);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+    hr = IWICMetadataWriter_GetValueByIndex(writer, 0, NULL, NULL, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
+    PropVariantClear(&value);
+
+    load_stream(writer, metadata_unknown, sizeof(metadata_unknown), 0);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+    hr = IWICMetadataWriter_GetValueByIndex(writer, 0, NULL, NULL, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
+    PropVariantClear(&value);
+
     load_stream(writer, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionNoCacheStream);
 
     IWICMetadataWriter_Release(writer);

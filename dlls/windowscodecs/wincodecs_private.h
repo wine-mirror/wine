@@ -19,6 +19,8 @@
 #ifndef WINCODECS_PRIVATE_H
 #define WINCODECS_PRIVATE_H
 
+#include <stdbool.h>
+
 #include "wincodec.h"
 #include "wincodecsdk.h"
 
@@ -203,7 +205,7 @@ typedef struct _MetadataItem
 
 typedef struct _MetadataHandlerVtbl
 {
-    int is_writer;
+    bool is_writer;
     const CLSID *clsid;
     HRESULT (*fnLoad)(IStream *stream, const GUID *preferred_vendor,
         DWORD persist_options, MetadataItem **items, DWORD *item_count);
@@ -216,6 +218,7 @@ typedef struct _MetadataHandlerVtbl
 extern HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, void** ppv);
 
 extern HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT UnknownMetadataWriter_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GpsMetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT ExifMetadataReader_CreateInstance(REFIID iid, void **ppv);
