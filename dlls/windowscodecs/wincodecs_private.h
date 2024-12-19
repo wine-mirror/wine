@@ -223,6 +223,7 @@ extern HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GpsMetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GpsMetadataWriter_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT ExifMetadataReader_CreateInstance(REFIID iid, void **ppv);
+extern HRESULT ExifMetadataWriter_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT App1MetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv);
