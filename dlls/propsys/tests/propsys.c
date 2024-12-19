@@ -1677,7 +1677,7 @@ static void test_PropVariantToBSTR(void)
     check_PropVariantToBSTR(VT_UI4,    ulVal,          0xdeadbeef,           L"3735928559");
     check_PropVariantToBSTR(VT_UI8,    uhVal.QuadPart, 0xdeadbeefdeadbeef,   L"16045690984833335023");
     check_PropVariantToBSTR(VT_BOOL,   boolVal,        TRUE,                 L"1");
-    check_PropVariantToBSTR(VT_R4,     fltVal,         0.123f,               L"0.123000003397464752");
+    check_PropVariantToBSTR(VT_R4,     fltVal,         0.125f,               L"0.125");
     check_PropVariantToBSTR(VT_R8,     dblVal,         0.456,                L"0.456");
     }
     check_PropVariantToBSTR(VT_CLSID,  puuid,          (CLSID *)&dummy_guid, dummy_guid_str);
