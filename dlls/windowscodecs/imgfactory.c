@@ -1399,6 +1399,50 @@ static enum iterator_result create_metadata_reader_iterator(IUnknown *item,
     return ITER_SKIP;
 }
 
+static enum iterator_result create_metadata_writer_iterator(IUnknown *item,
+        struct iterator_context *context)
+{
+    IWICMetadataWriterInfo *writerinfo;
+    IWICMetadataWriter *writer = NULL;
+    HRESULT hr;
+    GUID guid;
+
+    if (FAILED(IUnknown_QueryInterface(item, &IID_IWICMetadataWriterInfo, (void **)&writerinfo)))
+        return ITER_SKIP;
+
+    if (context->vendor)
+    {
+        hr = IWICMetadataWriterInfo_GetVendorGUID(writerinfo, &guid);
+
+        if (FAILED(hr) || !IsEqualIID(context->vendor, &guid))
+        {
+            IWICMetadataWriterInfo_Release(writerinfo);
+            return ITER_SKIP;
+        }
+    }
+
+    hr = IWICMetadataWriterInfo_GetMetadataFormat(writerinfo, &guid);
+
+    if (FAILED(hr) || !IsEqualIID(context->format, &guid))
+    {
+        IWICMetadataWriterInfo_Release(writerinfo);
+        return ITER_SKIP;
+    }
+
+    if (SUCCEEDED(hr))
+        hr = IWICMetadataWriterInfo_CreateInstance(writerinfo, &writer);
+
+    IWICMetadataWriterInfo_Release(writerinfo);
+
+    if (SUCCEEDED(hr))
+    {
+        *context->result = writer;
+        return ITER_DONE;
+    }
+
+    return ITER_SKIP;
+}
+
 static HRESULT foreach_component(DWORD mask, iterator_func func, struct iterator_context *context)
 {
     enum iterator_result ret;
@@ -1532,11 +1576,47 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataReaderFromContainer(IWICCom
     return *reader ? S_OK : WINCODEC_ERR_COMPONENTNOTFOUND;
 }
 
+static HRESULT create_metadata_writer(REFGUID format, const GUID *vendor, DWORD options,
+        IWICMetadataWriter **writer)
+{
+    struct iterator_context context = { 0 };
+    IWICMetadataWriter *object = NULL;
+    HRESULT hr;
+
+    context.format = format;
+    context.vendor = vendor;
+    context.options = options;
+    context.result = (void **)&object;
+
+    hr = foreach_component(WICMetadataWriter, create_metadata_writer_iterator, &context);
+
+    if (FAILED(hr) && vendor)
+    {
+        context.vendor = NULL;
+        hr = foreach_component(WICMetadataWriter, create_metadata_writer_iterator, &context);
+    }
+
+    if (FAILED(hr))
+        WARN("Failed to create a metadata writer instance, hr %#lx.\n", hr);
+
+    if (!object && !(options & WICMetadataCreationFailUnknown))
+        hr = UnknownMetadataWriter_CreateInstance(&IID_IWICMetadataWriter, (void **)&object);
+
+    if (SUCCEEDED(hr))
+        *writer = object;
+
+    return object ? S_OK : WINCODEC_ERR_COMPONENTNOTFOUND;
+}
+
 static HRESULT WINAPI ComponentFactory_CreateMetadataWriter(IWICComponentFactory *iface,
         REFGUID format, const GUID *vendor, DWORD options, IWICMetadataWriter **writer)
 {
-    FIXME("%p,%s,%s,%lx,%p: stub\n", iface, debugstr_guid(format), debugstr_guid(vendor), options, writer);
-    return E_NOTIMPL;
+    TRACE("%p,%s,%s,%lx,%p\n", iface, debugstr_guid(format), debugstr_guid(vendor), options, writer);
+
+    if (!format || !writer)
+        return E_INVALIDARG;
+
+    return create_metadata_writer(format, vendor, options, writer);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateMetadataWriterFromReader(IWICComponentFactory *iface,
