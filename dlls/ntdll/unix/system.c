@@ -3664,6 +3664,21 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     case SystemCpuSetInformation:  /* 175 */
         return NtQuerySystemInformationEx(class, NULL, 0, info, size, ret_size);
 
+    case SystemLeapSecondInformation:  /* 206 */
+    {
+        SYSTEM_LEAP_SECOND_INFORMATION *leap = info;
+
+        len = sizeof(*leap);
+        if (size >= len)
+        {
+            FIXME( "SystemLeapSecondInformation - stub\n" );
+            leap->Enabled = TRUE;
+            leap->Flags   = 0;
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
     /* Wine extensions */
 
     case SystemWineVersionInformation:  /* 1000 */
