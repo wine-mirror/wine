@@ -22,6 +22,45 @@ Dim x
 Class EmptyClass
 End Class
 
+' Returns the amount of dimensions of an array.
+' Returns 0 when it is not an array
+Function GetDimensions(arr)
+    Dim dimension, upperBound
+    On error resume next
+    For dimension = 1 to 255
+        upperBound = ubound(arr, dimension)
+        If err.Number <> 0 Then Exit for
+    Next
+    On error goto 0
+    GetDimensions = dimension-1
+End Function
+
+' Helper function to print a variable
+Function ToString(x)
+    If IsEmpty(x) Then
+        ToString = "Empty"
+    ElseIf IsNull(x) Then
+        ToString = "Null"
+    ElseIf IsObject(x) Then
+        ToString = "Object"
+    ElseIf IsArray(x) Then
+        Dim i, arrStr
+        arrStr = "Array("
+        If GetDimensions(x) = 1 Then
+            For i = LBound(x) To UBound(x)
+                arrStr = arrStr & ToString(x(i))
+                If i < UBound(x) Then arrStr = arrStr & ", "
+            Next
+        Else
+           arrStr = arrStr & "...multidim..."
+        End If
+        arrStr = arrStr & ")"
+        ToString = arrStr
+    Else
+        ToString = CStr(x)
+    End If
+End Function
+
 Call ok(vbSunday = 1, "vbSunday = " & vbSunday)
 Call ok(getVT(vbSunday) = "VT_I2", "getVT(vbSunday) = " & getVT(vbSunday))
 Call ok(vbMonday = 2, "vbMonday = " & vbMonday)
@@ -712,6 +751,63 @@ if isEnglishLang then TestLCase true, "true"
 TestLCase 0.123, doubleAsString(0.123)
 TestLCase Empty, ""
 Call ok(getVT(LCase(Null)) = "VT_NULL", "getVT(LCase(Null)) = " & getVT(LCase(Null)))
+
+' Join
+
+Sub TestJoin(arg, ex)
+    x = Join(arg)
+    Call ok(x = ex, "Join(" & ToString(arg) & ") = " & x & " expected " & ex)
+End Sub
+
+Sub TestJoin2(arg1, arg2, ex)
+    x = Join(arg1, arg2)
+    Call ok(x = ex, "Join(" & ToString(arg1) & "," & arg2 & ") = " & x & " expected " & ex)
+End Sub
+
+Sub TestJoinError(arg, num)
+    On Error Resume Next
+    Call Join(arg)
+    Dim err_num: err_num = Err.number
+    Call Err.clear()
+    On Error GoTo 0
+    Call ok(err_num = num, "Join(" & ToString(arg) & ") expected Err.number = " & num & " got " & err_num)
+End Sub
+
+TestJoin Array(), ""
+TestJoin Array("a", "b", "c"), "a b c"
+TestJoin Array("a", "b", "c", 1, 2, 3), "a b c 1 2 3"
+TestJoin Array(1, Empty), "1 "
+
+TestJoin2 Array(), "", ""
+TestJoin2 Array("a"), "-", "a"
+TestJoin2 Array("a", "b"), "-", "a-b"
+TestJoin2 Array("a", "b", "c"), "", "abc"
+TestJoin2 Array("a", "b", "c"), "123", "a123b123c"
+TestJoin2 Array(1, "Hello"), "-", "1-Hello"
+TestJoin2 Array("a", "b", "c"), Empty, "abc"
+
+TestJoinError Null , 94
+TestJoinError Empty, 13
+TestJoinError 1, 13
+TestJoinError "test", 13
+TestJoinError 1.2, 13
+TestJoinError New EmptyClass, 438
+TestJoinError Array(1, Null), 13
+TestJoinError Array(Array(1, 2), Array(3, 4)), 13
+Dim multidim(2, 2)
+TestJoinError multidim, 13
+
+On Error Resume Next
+Call Join(Array(), Null)
+Call ok(Err.number = 94, "Join(Array(), Null) expected Err.number = 94 got " & Err.number)
+Call Err.clear
+On Error GoTo 0
+
+On Error Resume Next
+Call Join(Array(), "a", "b")
+Call ok(Err.number = 450, "Join(Array(), ""a"", ""b"") expected Err.number = 450 got " & Err.number)
+Call Err.clear
+On Error GoTo 0
 
 x=Split("abc")
 Call ok(x(0) = "abc", "Split(""abc"")(0)=" & x(0))
