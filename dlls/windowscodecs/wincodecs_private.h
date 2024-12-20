@@ -326,6 +326,8 @@ void CDECL decoder_destroy(struct decoder *This);
 
 HRESULT create_metadata_reader(REFGUID format, const GUID *vendor, DWORD options, IStream *stream,
         IWICMetadataReader **reader);
+HRESULT create_metadata_writer(REFGUID format, const GUID *vendor, DWORD options,
+        IWICMetadataWriter **writer);
 
 struct encoder_funcs;
 

@@ -871,11 +871,10 @@ static HRESULT create_stream_wrapper(IStream *input, ULONG offset, IStream **wra
 }
 
 static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options, const struct IFD_entry *entry,
-        MetadataItem *item, BOOL resolve_pointer_tags)
+        MetadataItem *item, bool resolve_pointer_tags, bool is_writer)
 {
     BOOL native_byte_order = !(options & WICPersistOptionBigEndian);
     ULONG count, value, i, bytesread;
-    IWICMetadataReader *sub_reader;
     IStream *sub_stream;
     SHORT type;
     LARGE_INTEGER pos;
@@ -1154,6 +1153,9 @@ static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options,
     {
         case IFD_EXIF_TAG:
         case IFD_GPS_TAG:
+        {
+           IWICPersistStream *persist_stream = NULL;
+           IWICMetadataReader *sub_reader = NULL;
 
            if (!resolve_pointer_tags)
                break;
@@ -1168,19 +1170,40 @@ static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options,
                hr = IStream_Seek(sub_stream, pos, STREAM_SEEK_SET, NULL);
 
            if (SUCCEEDED(hr))
-               hr = create_metadata_reader(item->id.uiVal == IFD_EXIF_TAG ? &GUID_MetadataFormatExif : &GUID_MetadataFormatGps,
-                       vendor, options | WICMetadataCreationFailUnknown, sub_stream, &sub_reader);
+           {
+               const GUID *format = item->id.uiVal == IFD_EXIF_TAG ? &GUID_MetadataFormatExif : &GUID_MetadataFormatGps;
+
+               if (is_writer)
+                   hr = create_metadata_writer(format, vendor, options | WICMetadataCreationFailUnknown,
+                           (IWICMetadataWriter **)&sub_reader);
+               else
+                   hr = create_metadata_reader(format, vendor, options | WICMetadataCreationFailUnknown,
+                           NULL, &sub_reader);
+           }
+
+           if (SUCCEEDED(hr))
+               hr = IWICMetadataReader_QueryInterface(sub_reader, &IID_IWICPersistStream, (void **)&persist_stream);
+
+           if (SUCCEEDED(hr))
+               hr = IWICPersistStream_LoadEx(persist_stream, sub_stream, vendor, options);
+
+           if (persist_stream)
+               IWICPersistStream_Release(persist_stream);
 
            if (SUCCEEDED(hr))
            {
                item->value.vt = VT_UNKNOWN;
                item->value.punkVal = (IUnknown *)sub_reader;
+               IUnknown_AddRef(item->value.punkVal);
            }
 
            if (sub_stream)
                IStream_Release(sub_stream);
+           if (sub_reader)
+               IWICMetadataReader_Release(sub_reader);
 
            break;
+        }
         default:
            break;
     }
@@ -1189,7 +1212,7 @@ static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options,
 }
 
 static HRESULT load_ifd_metadata_internal(IStream *input, const GUID *vendor,
-    DWORD persist_options, bool resolve_pointer_tags, bool writer, MetadataItem **items, DWORD *item_count)
+    DWORD persist_options, bool resolve_pointer_tags, bool is_writer, MetadataItem **items, DWORD *item_count)
 {
     HRESULT hr;
     MetadataItem *result;
@@ -1268,7 +1291,7 @@ static HRESULT load_ifd_metadata_internal(IStream *input, const GUID *vendor,
 
     for (i = 0; i < count; i++)
     {
-        hr = load_IFD_entry(input, vendor, persist_options, &entry[i], &result[i], resolve_pointer_tags);
+        hr = load_IFD_entry(input, vendor, persist_options, &entry[i], &result[i], resolve_pointer_tags, is_writer);
         if (FAILED(hr))
         {
             free(entry);

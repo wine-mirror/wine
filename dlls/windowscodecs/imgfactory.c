@@ -1576,7 +1576,7 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataReaderFromContainer(IWICCom
     return *reader ? S_OK : WINCODEC_ERR_COMPONENTNOTFOUND;
 }
 
-static HRESULT create_metadata_writer(REFGUID format, const GUID *vendor, DWORD options,
+HRESULT create_metadata_writer(REFGUID format, const GUID *vendor, DWORD options,
         IWICMetadataWriter **writer)
 {
     struct iterator_context context = { 0 };

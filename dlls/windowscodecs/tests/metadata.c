@@ -4485,12 +4485,19 @@ static void test_CreateMetadataWriter(void)
     hr = IWICComponentFactory_CreateMetadataWriter(factory, &GUID_MetadataFormatApp1, NULL, 0, &writer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     check_persist_options(writer, 0);
+    hr = IWICMetadataWriter_GetMetadataFormat(writer, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatApp1), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataWriter_Release(writer);
 
     /* Ifd */
     hr = IWICComponentFactory_CreateMetadataWriter(factory, &GUID_MetadataFormatIfd, NULL, 0, &writer);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     check_persist_options(writer, 0);
+    hr = IWICMetadataWriter_GetMetadataFormat(writer, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataWriter_Release(writer);
 
     IWICComponentFactory_Release(factory);
