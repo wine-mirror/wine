@@ -317,15 +317,18 @@ static enum install_res install_from_default_dir(void)
 
 static WCHAR *get_cache_file_name(BOOL ensure_exists)
 {
-    const char *xdg_dir;
+    const WCHAR *xdg_dir;
     const WCHAR *home_dir;
-    WCHAR *cache_dir, *ret;
+    WCHAR *cache_dir=NULL, *ret;
     size_t len, size;
 
-    xdg_dir = getenv( "XDG_CACHE_HOME" );
-    if (xdg_dir && *xdg_dir && p_wine_get_dos_file_name)
+    xdg_dir = _wgetenv( L"XDG_CACHE_HOME" );
+    if (xdg_dir && *xdg_dir)
     {
-        if (!(cache_dir = p_wine_get_dos_file_name( xdg_dir ))) return NULL;
+        if (!(cache_dir = HeapAlloc( GetProcessHeap(), 0, wcslen(xdg_dir) * sizeof(WCHAR) + sizeof(L"\\\\?\\unix") ))) return NULL;
+        lstrcpyW( cache_dir, L"\\\\?\\unix" );
+        lstrcatW( cache_dir, xdg_dir );
+        TRACE("cache dir %s\n", debugstr_w(cache_dir));
     }
     else if ((home_dir = _wgetenv( L"WINEHOMEDIR" )))
     {
