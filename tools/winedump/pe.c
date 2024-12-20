@@ -1219,8 +1219,8 @@ static void dump_cxx_exception_data_v4( unsigned int rva, unsigned int func_rva 
             {
                 UINT cont[3];
                 const BYTE *p = RVA( catchblock, 1 );
-                count = v4_decode_uint( &p );
-                for (j = 0; j < count; j++)
+                UINT count2 = v4_decode_uint( &p );
+                for (j = 0; j < count2; j++)
                 {
                     BYTE flags = *p++;
                     printf( "          %u:", j );
