@@ -295,7 +295,7 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
     user_obj = user_format->rgodf + user_format->dwNumObjs;
     while (user_obj-- > user_format->rgodf) user_obj->dwType &= ~DIDFT_OPTIONAL;
 
-    if (identical)
+    if (identical && device_format->dwDataSize <= user_format->dwDataSize)
     {
         memcpy( user_format->rgodf, device_format->rgodf, device_format->dwNumObjs * sizeof(*user_format->rgodf) );
         user_format->dwNumObjs = device_format->dwNumObjs;
