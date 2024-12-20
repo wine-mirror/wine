@@ -1,9 +1,9 @@
-The Wine development release 10.0-rc2 is now available.
+The Wine development release 10.0-rc3 is now available.
 
 What's new in this release:
   - Bug fixes only, we are in code freeze.
 
-The source is available at <https://dl.winehq.org/wine/source/10.0/wine-10.0-rc2.tar.xz>
+The source is available at <https://dl.winehq.org/wine/source/10.0/wine-10.0-rc3.tar.xz>
 
 Binary packages for various distributions will be available
 from the respective [download sites][1].
@@ -15,108 +15,97 @@ See the file [AUTHORS][3] for the complete list.
 
 [1]: https://gitlab.winehq.org/wine/wine/-/wikis/Download
 [2]: https://gitlab.winehq.org/wine/wine/-/wikis/Documentation
-[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-10.0-rc2/AUTHORS
+[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-10.0-rc3/AUTHORS
 
 ----------------------------------------------------------------
 
-### Bugs fixed in 10.0-rc2 (total 21):
+### Bugs fixed in 10.0-rc3 (total 15):
 
- - #28861  Final Fantasy XI hangs after character selection
- - #47640  No Man's Sky (Beyond) does not start anymore: Unable to initialize Vulkan (vkEnumerateInstanceExtensionProperties failed)
- - #51998  Unable to start CloneCD
- - #53453  Command & Conquer 3: Tiberium Wars - fails to start (splash screen not even shown)
- - #54437  ntoskrnl.exe:ntoskrnl breaks test_rawinput() [(RIM|WM)_INPUT] in user32:input for non-English locales on Windows 7
- - #55583  d3d8:device - test_wndproc() often is missing a WM_WINDOWPOSCHANGING in Wine
- - #56056  Exiting IrfanView full screen mode creates a redundant task bar "Untitled window" item which is not clickable
- - #56325  Prefix path string in wineboot dialog is cut off
- - #56940  vs_community.exe halts:"The application cannot find one of its required files, possibly because it was unable to create it in the folder."
- - #57216  Mouse wheel input in IL-2 1946 is not applied consistently to UI elements and throttle
- - #57285  Foxit Reader - maximized view don't work properly
- - #57384  The shareware installer for Daytona (16-bit) hangs at the end of installing.
- - #57418  PlayOnline Viewer throws an application error at launch.
- - #57442  Several applications: abnormal input delay with Wine
- - #57481  Prey (2016) X11 fullscreen fails in 9.22
- - #57503  World in conflict has a frozen screen -  updating only when alt-tabbing out and in
- - #57504  Possible regression with Unity3D games: Framedrops when moving cursor.
- - #57506  Wine doesn't show any window
- - #57524  Commit c9592bae7f475c1b208de0a72ed29e94e3017094 breaks VKB Gladiator HIDRAW support
- - #57527  Drop-down list appears behind the main window
- - #57530  Regression: Tiny extra form displays in Delphi programs
+ - #11674  Dual-core unsupported in WoW and SC2
+ - #49473  Chaos Legion videos are played upside down
+ - #52738  No keyboard input in "STREET CHAVES - O LUTADOR DA VILA"
+ - #56319  Parallel Port Tester won't start (fails to locate driver "System32\Drivers\inpoutx64.sys", but changing to absolute path works)
+ - #56348  Bricks: moving a brick causes it to rapidly alternate positions
+ - #56471  starting of native program with "start /unix ..." is broken
+ - #56632  Explorer cannot run any files in Windows ME compatibility mode (or below)
+ - #56714  Startopia is stuck on a black screen on launch
+ - #57227  IL-2 1946 crash at startup
+ - #57286  Dark Age of Camelot - camelot.exe required igd10umd32.dll but the .dll file is not found.
+ - #57319  Painting in a proprietary application is broken with vulkan renderer
+ - #57515  desktop mode did not show taskbar anymore
+ - #57523  PokerTracker 4: cannot launch anymore
+ - #57525  Systray icons cannot be interacted with
+ - #57541  CMake doesn't find toolchain
 
-### Changes since 10.0-rc1:
+### Changes since 10.0-rc2:
 ```
-Alexandre Julliard (7):
-      user32: Fixup forwarded functions on 32-bit.
-      ntoskrnl: Support relative driver paths.
-      ntoskrnl: Fix off-by-one error in buffer size.
-      wineboot: Always wrap the wait dialog text.
-      wineboot: Resize the wait dialog to accommodate the text size.
-      wineboot: Scale the wait dialog icon with the dialog size.
-      winetest: Filter out color escapes for junit output.
+Akihiro Sagawa (1):
+      po: Update Japanese translation.
 
-Eric Pouech (2):
-      dbghelp: Fix error handling in PDB/FPO unwinder.
-      dbghelp: Lower vector allocation for local variables.
+Alanas Tebuev (1):
+      comctl32/tests: Initialize hwnd to NULL before calling rebuild_toolbar().
+
+Alexandre Julliard (6):
+      ntdll: Align heap virtual allocations to a multiple of the page size.
+      shell32: Don't call AW functions internally.
+      shell32: Return the file itself without extension if it exists.
+      propsys/tests: Fix a test that fails on some Windows versions.
+      win32u/tests: Mark the foreground thread test as flaky.
+      advapi32/tests: Use the correct key handle in the notify thread.
+
+Alistair Leslie-Hughes (1):
+      msxml3: Correct looping of Document Element node map.
+
+Bernhard Übelacker (4):
+      server: Avoid crash when handle table is allocated but not yet filled.
+      crypt32: Avoid stack-use-after-scope in CSignedEncodeMsg_GetParam (ASan).
+      d3dx9_36/tests: Fix logging of expected bytes in check_vertex_components. (ASan).
+      xmllite/tests: Avoid buffer overflow by using LONG_PTR (ASan).
+
+Elizabeth Figura (2):
+      wined3d: Add nop state entries for states now invalidated on the client side.
+      Revert "wined3d: Use bindless textures for GLSL shaders if possible.".
+
+Eric Pouech (3):
+      cmd/tests: Add more tests about variable expansion.
+      cmd: Fix regression in variable search in expansion.
+      winedump: Fix variable overwrite when dumping exception.
 
 Esme Povirk (1):
-      mscoree: Use correct variable for codebase path.
-
-Gabriel Ivăncescu (1):
-      mshtml: Remove unused MutationObserver DISPID and related hook.
+      gdiplus: GdipPathAddRectangle should close the path.
 
 Gerald Pfeifer (1):
-      webservices: Rename a struct member from bool to boolean.
+      capstone: Avoid GCC being treated as old VisualStudio.
 
 Jacek Caban (1):
-      configure: Define _load_config_used symbol in the cross-compiler test program.
+      mshtml: Ignore Gecko events on detached nodes.
 
 Louis Lenders (1):
-      shell32: Remove trailing spaces in SHELL_execute.
+      kernelbase: Don't try to print the path in the FIXME in GetTempPath2.
 
-Marcus Meissner (1):
-      ucrtbase/tests: Use correct size to GetEnvironmentVariableW.
+Nikolay Sivov (9):
+      windowscodecs/tests: Added some tests for Exif and Gps IFDs embedded in App1 blob.
+      windowscodecs/tests: Add some tests for CreateMetadataWriterFromReader().
+      windowscodecs/tests: Add some tests for CreateMetadataWriter().
+      windowscodecs/tests: Add some tests for metadata stream objects handling.
+      windowscodecs/tests: Add loading tests for the writers.
+      windowscodecs/tests: Check persist options after Load().
+      windowscodecs: Fix a typo in interface name.
+      include: Add methods arguments annotations for DirectWrite types.
+      dwrite/tests: Allocate test inline objects dynamically.
 
-Nikolay Sivov (8):
-      windowscodecs/tests: Use test context in a few metadata tests.
-      windowscodecs/tests: Add some tests for GetContainerFormats().
-      windowscodecs/tests: Use a helper instead of a macro.
-      windowscodecs/tests: Remove endianess compile time checks from the tests.
-      windowscodecs/tests: Move IFD data tests to a helper.
-      windowscodecs/tests: Run data test on the Exif reader.
-      windowscodecs/tests: Add some tests for the Gps reader.
-      windowscodecs/tests: Add some tests for the App1 reader.
+Owen Rudge (2):
+      odbc32: Avoid crashing if str is null in debugstr_sqlstr.
+      odbc32: Add null pointer checks to update_result_lengths helpers.
 
-Piotr Caban (1):
-      msvcrt: Don't leak find handle or error in _findfirst().
+Paul Gofman (2):
+      winex11: Use NtUserReleaseDC() with hdc.
+      server: Cleanup all the global hooks owned by terminating thread.
 
-Rémi Bernon (17):
-      win32u: Skip updating the cache on driver load if we're already updating it.
-      win32u: Release the Win16 mutex when yielding in peek_message.
-      win32u: Copy the shape from the old surface when surface is recreated.
-      server: Force surface region update when window region is modified.
-      win32u: Extend display_lock CS around winstation check.
-      server: Add a winstation monitor update serial counter.
-      win32u: Use the winstation monitor update serial to detect updates.
-      winex11: Request window config when it needs to be raised.
-      winebus: Wait until the device is started before processing reports.
-      dmloader: Remove redundant flag.
-      winex11: Fixup window config size back to 0x0 if we've requested 1x1.
-      winex11: Always check if the GL drawable offscreen state needs to be changed.
-      winex11: Skip offscreening if the children don't require clipping.
-      dinput: Queue the relative wheel motion as event data.
-      explorer: Avoid hiding the taskbar if it's enabled.
-      server: Allow merging WM_MOUSEMOVE across internal messages.
-      winex11: Fix inconsistent coordinates when reparenting host window.
-
-Vibhav Pant (3):
-      winebth.sys: Fix new bluetooth events being incorrect set due to variable shadowing.
-      winebth.sys: Set the Information field in the IRP's STATUS_BLOCK after handling IOCTL_BTH_GET_LOCAL_INFO.
-      winebth.sys: Use the correct byte-ordering for setting the radio's address property.
-
-William Horvath (2):
-      include: Use inline assembly on Clang MSVC mode in YieldProcessor().
-      win32u: Check for driver events more often.
-
-Zhiyi Zhang (1):
-      win32u: Use width and height to check if the display mode is vertical.
+Rémi Bernon (5):
+      winex11: Sync gl drawable outside of the win_data mutex.
+      winex11: Use DCX_USESTYLE when checking DC clipping regions.
+      winex11: Move GL/VK offscreen if the clipping region is NULLREGION.
+      dinput: Copy the device format if the user format is a subset of it.
+      dinput: Check that the device format data fits in the user format data.
 ```
