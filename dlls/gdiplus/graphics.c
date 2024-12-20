@@ -5359,29 +5359,42 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
     HFONT map_hfont, hfont, old_font;
     LONG processed, progress = 0;
     struct gdip_font_link_section *section;
-    DWORD font_codepages, string_codepages;
+    DWORD string_codepages;
+    WORD *glyph_indices;
 
     list_init(&info->font_link_info.sections);
     info->font_link_info.base_font = base_font;
 
+    glyph_indices = calloc(length, sizeof(*glyph_indices));
+    GetGlyphIndicesW(info->hdc, info->string, length, glyph_indices, GGI_MARK_NONEXISTING_GLYPHS);
+
+    /* Newlines won't have a glyph but don't need a fallback */
+    for (progress = 0; progress < length; progress++)
+        if (info->string[progress] == '\r' || info->string[progress] == '\n')
+            glyph_indices[progress] = 0;
+
     GetGlobalFontLinkObject(&iMLFL);
 
     get_font_hfont(info->graphics, base_font, NULL, &hfont, NULL, NULL);
-    IMLangFontLink_GetFontCodePages(iMLFL, info->hdc, hfont, &font_codepages);
 
+    progress = 0;
     while (progress < length)
     {
         section = calloc(1, sizeof(*section));
         section->start = progress;
-        IMLangFontLink_GetStrCodePages(iMLFL, &info->string[progress], length - progress,
-                                        font_codepages, &string_codepages, &processed);
 
-        if (font_codepages & string_codepages)
+        if (glyph_indices[progress] != 0xffff)
         {
             section->font = (GpFont *)base_font;
+
+            processed = 0;
+            while (progress + processed < length && glyph_indices[progress + processed] != 0xffff)
+                processed++;
         }
         else
         {
+            IMLangFontLink_GetStrCodePages(iMLFL, &info->string[progress], length - progress,
+                                            0, &string_codepages, &processed);
             IMLangFontLink_MapFont(iMLFL, info->hdc, string_codepages, hfont, &map_hfont);
             old_font = SelectObject(info->hdc, map_hfont);
             GdipCreateFontFromDC(info->hdc, &gpfont);
@@ -5397,6 +5410,7 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
 
     DeleteObject(hfont);
     IMLangFontLink_Release(iMLFL);
+    free(glyph_indices);
 }
 
 static void font_link_get_text_extent_point(struct gdip_format_string_info *info,
