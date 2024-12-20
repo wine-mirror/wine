@@ -4423,6 +4423,7 @@ static void test_CreateMetadataWriter(void)
         { &GUID_MetadataFormatIfd, WICPersistOptionNoCacheStream },
         { &GUID_MetadataFormatChunktEXt, WICPersistOptionNoCacheStream },
         { &GUID_MetadataFormatApp1, 0x100 },
+        { &GUID_MetadataFormatApp1, 0x1000 },
     };
     IWICStreamProvider *stream_provider;
     IWICComponentFactory *factory;
@@ -4440,9 +4441,10 @@ static void test_CreateMetadataWriter(void)
     {
         const struct options_test *test = &options_tests[i];
 
+        writer = (void *)0xdeadbeef;
         hr = IWICComponentFactory_CreateMetadataWriter(factory, test->clsid, NULL, test->options, &writer);
-        todo_wine
         ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(writer == (void *)0xdeadbeef, "Unexpected value %p.\n", writer);
     }
 
     hr = IWICComponentFactory_CreateMetadataWriter(factory, &GUID_MetadataFormatChunktEXt, NULL, 0, &writer);

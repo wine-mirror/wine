@@ -1616,6 +1616,9 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataWriter(IWICComponentFactory
     if (!format || !writer)
         return E_INVALIDARG;
 
+    if (options & WICPersistOptionMask)
+        return E_INVALIDARG;
+
     return create_metadata_writer(format, vendor, options, writer);
 }
 
