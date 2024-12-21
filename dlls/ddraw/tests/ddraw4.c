@@ -19660,6 +19660,20 @@ static void test_enum_devices(void)
 
 static void test_multiple_devices(void)
 {
+    D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0xff0000ff},
+        {{-1.0f,  1.0f, 0.1f}, 0xff0000ff},
+        {{ 1.0f, -1.0f, 0.1f}, 0xff0000ff},
+        {{ 1.0f,  1.0f, 0.1f}, 0xff0000ff},
+    };
+
     IDirect3DDevice3 *device, *device2, *device3;
     D3DMATERIALHANDLE mat_handle, mat_handle2;
     IDirect3DViewport3 *viewport, *viewport2;
@@ -19668,6 +19682,7 @@ static void test_multiple_devices(void)
     IDirectDraw4 *ddraw;
     IDirect3D3 *d3d;
     ULONG refcount;
+    DWORD colour;
     DWORD value;
     HWND window;
     HRESULT hr;
@@ -19743,6 +19758,53 @@ static void test_multiple_devices(void)
     hr = IDirect3DDevice3_GetRenderState(device3, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!value, "got %#lx.\n", value);
+
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice3_SetRenderState(device2, D3DRENDERSTATE_ZENABLE, TRUE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device2, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device2, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 0.0f, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_BeginScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
+            D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_EndScene(device);
+    colour = get_surface_color(surface, 320, 240);
+    ok(colour == 0x0000ff, "got %#lx.\n", colour);
+
+    hr = IDirect3DViewport3_Clear2(viewport2, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 0.0f, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_BeginScene(device2);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_DrawPrimitive(device2, D3DPT_TRIANGLESTRIP,
+            D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_EndScene(device2);
+    colour = get_surface_color(surface, 320, 240);
+    ok(colour == 0xff0000, "got %#lx.\n", colour);
+
+    hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 0.0f, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_BeginScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
+            D3DFVF_XYZ | D3DFVF_DIFFUSE, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_EndScene(device);
+    colour = get_surface_color(surface, 320, 240);
+    todo_wine ok(colour == 0x0000ff, "got %#lx.\n", colour);
 
     IDirect3DMaterial3_Release(material);
     IDirect3DViewport3_Release(viewport);

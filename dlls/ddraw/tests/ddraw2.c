@@ -16593,6 +16593,15 @@ static void run_for_each_device_type(void (*test_func)(const GUID *))
 
 static void test_multiple_devices(void)
 {
+    D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static D3DLVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.1f}, 0, {0x800000ff}},
+        {{-1.0f}, { 1.0f}, {0.1f}, 0, {0x800000ff}},
+        {{ 1.0f}, {-1.0f}, {0.1f}, 0, {0x800000ff}},
+        {{ 1.0f}, { 1.0f}, {0.1f}, 0, {0x800000ff}},
+    };
+
     D3DTEXTUREHANDLE texture_handle, texture_handle2, texture_handle3;
     IDirectDrawSurface *surface, *texture_surf, *texture_surf2;
     IDirect3DDevice2 *device, *device2, *device3;
@@ -16604,6 +16613,7 @@ static void test_multiple_devices(void)
     DDSURFACEDESC surface_desc;
     IDirect3D2 *d3d;
     ULONG refcount;
+    DWORD colour;
     DWORD value;
     HWND window;
     HRESULT hr;
@@ -16735,6 +16745,60 @@ static void test_multiple_devices(void)
     hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, &texture_handle2);
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     ok(texture_handle2 == texture_handle, "got different handles.\n");
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, 0);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_TEXTUREHANDLE, 0);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_ZENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_ALPHATESTENABLE, TRUE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_ALPHAFUNC, D3DCMP_LESS);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_ALPHAREF, 0x70);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_BeginScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device);
+    colour = get_surface_color(surface, 320, 240);
+    ok(colour == 0x0000ff, "got %#lx.\n", colour);
+
+    hr = IDirect3DViewport2_Clear(viewport2, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_BeginScene(device2);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device2, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device2);
+    colour = get_surface_color(surface, 320, 240);
+    ok(colour == 0xff0000, "got %#lx.\n", colour);
+
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_BeginScene(device);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device);
+    colour = get_surface_color(surface, 320, 240);
+    todo_wine ok(colour == 0x0000ff, "got %#lx.\n", colour);
 
     IDirect3DTexture2_Release(texture2);
     IDirect3DTexture2_Release(texture);

@@ -15654,6 +15654,7 @@ static void test_pinned_sysmem(void)
 
 static void test_multiple_devices(void)
 {
+    D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
     static D3DMATRIX test_matrix =
     {
         1.0f, 0.0f, 0.0f, 0.0f,
@@ -15661,21 +15662,33 @@ static void test_multiple_devices(void)
         0.0f, 0.0f, 3.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 4.0f,
     };
+    static D3DLVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.1f}, 0, {0x800000ff}},
+        {{-1.0f}, { 1.0f}, {0.1f}, 0, {0x800000ff}},
+        {{ 1.0f}, {-1.0f}, {0.1f}, 0, {0x800000ff}},
+        {{ 1.0f}, { 1.0f}, {0.1f}, 0, {0x800000ff}},
+    };
 
     D3DTEXTUREHANDLE texture_handle, texture_handle2, texture_handle3;
-    IDirectDrawSurface *texture_surf, *texture_surf2;
+    IDirectDrawSurface *texture_surf, *texture_surf2, *rt, *rt2;
+    IDirect3DExecuteBuffer *execute_buffer, *execute_buffer2;
     D3DMATERIALHANDLE mat_handle, mat_handle2;
     IDirect3DViewport *viewport, *viewport2;
     IDirect3DTexture *texture, *texture2;
     IDirect3DDevice *device, *device2;
+    D3DEXECUTEBUFFERDESC exec_desc;
     D3DMATRIXHANDLE matrix_handle;
     IDirectDraw *ddraw, *ddraw2;
     IDirect3DMaterial *material;
     DDSURFACEDESC surface_desc;
     D3DMATRIX matrix;
+    UINT inst_length;
     ULONG refcount;
+    DWORD colour;
     HWND window;
     HRESULT hr;
+    void *ptr;
 
     window = create_window();
     ddraw = create_ddraw();
@@ -15693,6 +15706,11 @@ static void test_multiple_devices(void)
 
     device2 = create_device_ex(ddraw2, window, DDSCL_NORMAL, &IID_IDirect3DHALDevice);
     ok(!!device2, "got NULL.\n");
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice_QueryInterface(device2, &IID_IDirectDrawSurface, (void **)&rt2);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
     viewport = create_viewport(device, 0, 0, 640, 480);
     viewport2 = create_viewport(device2, 0, 0, 640, 480);
@@ -15760,6 +15778,91 @@ static void test_multiple_devices(void)
     ok(hr == D3D_OK, "got %#lx.\n", hr);
     ok(!memcmp(&matrix, &test_matrix, sizeof(matrix)), "matrix does not match.\n");
 
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    memcpy(exec_desc.lpData, quad, sizeof(quad));
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ALPHATESTENABLE, FALSE);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, ARRAY_SIZE(quad));
+    emit_tquad(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(quad);
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    set_execute_data(execute_buffer, ARRAY_SIZE(quad), sizeof(quad), inst_length);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+    hr = IDirect3DDevice_CreateExecuteBuffer(device2, &exec_desc, &execute_buffer2, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer2, &exec_desc);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    memcpy(exec_desc.lpData, quad, sizeof(quad));
+    ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ALPHATESTENABLE, TRUE);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ALPHAFUNC, D3DCMP_LESS);
+    emit_set_rs(&ptr, D3DRENDERSTATE_ALPHAREF, 0x70);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, ARRAY_SIZE(quad));
+    emit_tquad(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+    inst_length -= sizeof(quad);
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer2);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    set_execute_data(execute_buffer2, ARRAY_SIZE(quad), sizeof(quad), inst_length);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    colour = get_surface_color(rt, 320, 240);
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    colour = get_surface_color(rt, 320, 240);
+    ok(colour == 0x0000ff, "got %#lx.\n", colour);
+
+    hr = IDirect3DViewport_Clear(viewport2, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    colour = get_surface_color(rt2, 320, 240);
+    hr = IDirect3DDevice_BeginScene(device2);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice_Execute(device2, execute_buffer2, viewport2, D3DEXECUTE_CLIPPED);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice_EndScene(device2);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    colour = get_surface_color(rt2, 320, 240);
+    ok(colour == 0xff0000, "got %#lx.\n", colour);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    colour = get_surface_color(rt, 320, 240);
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    colour = get_surface_color(rt, 320, 240);
+    ok(colour == 0x0000ff, "got %#lx.\n", colour);
+
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    IDirect3DExecuteBuffer_Release(execute_buffer2);
+
     IDirect3DTexture_Release(texture2);
     IDirectDrawSurface_Release(texture_surf2);
     IDirect3DTexture_Release(texture);
@@ -15767,6 +15870,9 @@ static void test_multiple_devices(void)
     IDirect3DMaterial_Release(material);
     IDirect3DViewport_Release(viewport);
     IDirect3DViewport_Release(viewport2);
+
+    IDirectDrawSurface_Release(rt);
+    IDirectDrawSurface_Release(rt2);
 
     refcount = IDirect3DDevice_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
