@@ -2451,7 +2451,6 @@ echo b >> foo
 echo c >> foo
 for /f "skip=2" %%i in (foo) do echo %%i
 for /f "skip=2@tab@" %%i in (foo) do echo %%i
-echo ---- resync
 for /f "skip=3" %%i in (foo) do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
 for /f "skip=4" %%i in (foo) do echo %%i > output_file

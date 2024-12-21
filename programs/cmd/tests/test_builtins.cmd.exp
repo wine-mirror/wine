@@ -1598,8 +1598,7 @@ foo bar baz
 c:\
 ------ skip option
 c
-@todo_wine@c
----- resync
+c
 no output
 no output
 c
