@@ -1623,10 +1623,93 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataWriter(IWICComponentFactory
 }
 
 static HRESULT WINAPI ComponentFactory_CreateMetadataWriterFromReader(IWICComponentFactory *iface,
-        IWICMetadataReader *reader, const GUID *vendor, IWICMetadataWriter **writer)
+        IWICMetadataReader *reader, const GUID *vendor, IWICMetadataWriter **out_writer)
 {
-    FIXME("%p,%p,%s,%p: stub\n", iface, reader, debugstr_guid(vendor), writer);
-    return E_NOTIMPL;
+    IWICStreamProvider *stream_provider = NULL;
+    IWICMetadataWriter *writer = NULL;
+    IStream *stream = NULL;
+    DWORD options = 0;
+    GUID format;
+    HRESULT hr;
+
+    TRACE("%p,%p,%s,%p\n", iface, reader, debugstr_guid(vendor), out_writer);
+
+    if (!reader || !out_writer)
+        return E_INVALIDARG;
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+
+    if (SUCCEEDED(hr))
+        hr = create_metadata_writer(&format, vendor, 0, &writer);
+
+    if (SUCCEEDED(hr))
+        hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICStreamProvider, (void **)&stream_provider);
+
+    if (SUCCEEDED(hr))
+    {
+        IStream *cached_stream = NULL;
+
+        hr = IWICStreamProvider_GetStream(stream_provider, &cached_stream);
+
+        /* Reader does not have to provide a stream. */
+        if (hr == WINCODEC_ERR_STREAMNOTAVAILABLE)
+        {
+            hr = S_OK;
+        }
+
+        if (cached_stream)
+        {
+            hr = create_stream_wrapper(cached_stream, 0, &stream);
+            IStream_Release(cached_stream);
+        }
+    }
+
+    if (SUCCEEDED(hr))
+        hr = IWICStreamProvider_GetPersistOptions(stream_provider, &options);
+
+    if (SUCCEEDED(hr))
+    {
+        if (stream)
+        {
+            IWICPersistStream *persist_stream;
+
+            /* TODO: probably need to check for a dirty stream */
+
+            if (SUCCEEDED(hr = IWICMetadataWriter_QueryInterface(writer, &IID_IWICPersistStream, (void **)&persist_stream)))
+            {
+                hr = IWICPersistStream_LoadEx(persist_stream, stream, vendor, options);
+                IWICPersistStream_Release(persist_stream);
+            }
+        }
+        else
+        {
+            UINT count;
+
+            hr = IWICMetadataReader_GetCount(reader, &count);
+
+            if (SUCCEEDED(hr))
+            {
+                if (count)
+                    FIXME("Copy metadata items to the writer.\n");
+            }
+        }
+    }
+
+    if (stream_provider)
+        IWICStreamProvider_Release(stream_provider);
+
+    if (SUCCEEDED(hr))
+    {
+        *out_writer = writer;
+        IWICMetadataWriter_AddRef(*out_writer);
+    }
+
+    if (writer)
+        IWICMetadataWriter_Release(writer);
+    if (stream)
+        IStream_Release(stream);
+
+    return hr;
 }
 
 static HRESULT WINAPI ComponentFactory_CreateQueryReaderFromBlockReader(IWICComponentFactory *iface,

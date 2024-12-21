@@ -164,6 +164,8 @@ extern HRESULT ColorContext_Create(IWICColorContext **context);
 extern HRESULT ColorTransform_Create(IWICColorTransform **transform);
 extern HRESULT BitmapClipper_Create(IWICBitmapClipper **clipper);
 
+extern HRESULT create_stream_wrapper(IStream *input, ULONG offset, IStream **wrapper);
+
 extern HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     UINT srcwidth, UINT srcheight, INT srcstride,
     const WICRect *rc, UINT dststride, UINT dstbuffersize, BYTE *dstbuffer);

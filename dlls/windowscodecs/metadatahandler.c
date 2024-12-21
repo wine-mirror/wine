@@ -847,7 +847,7 @@ static int tag_to_vt(SHORT tag)
     return (tag > 0 && tag <= 13) ? tag2vt[tag] : VT_BLOB;
 }
 
-static HRESULT create_stream_wrapper(IStream *input, ULONG offset, IStream **wrapper)
+HRESULT create_stream_wrapper(IStream *input, ULONG offset, IStream **wrapper)
 {
     ULARGE_INTEGER start, maxsize;
     IWICStream *wic_stream = NULL;
