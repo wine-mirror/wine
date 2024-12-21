@@ -60,8 +60,11 @@ void test_BluetoothFindFirstRadio( void )
     ok( err == exp, "%lu != %lu\n", err, exp );
     if (find)
     {
+        BOOL ret;
+
         CloseHandle( radio );
-        ok( BluetoothFindRadioClose( find ), "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
+        ret = BluetoothFindRadioClose( find );
+        ok( ret, "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
     }
 }
 
@@ -102,7 +105,8 @@ void test_BluetoothFindNextRadio( void )
         }
         CloseHandle( radio );
     }
-    ok( BluetoothFindRadioClose( find ), "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
+    ret = BluetoothFindRadioClose( find );
+    ok( ret, "BluetoothFindRadioClose failed: %lu\n", GetLastError() );
 }
 
 void test_BluetoothFindRadioClose( void )
