@@ -5981,6 +5981,333 @@ static void test_D3DKMTCreateDCFromMemory( void )
     ok(ret, "Failed to free memory, error %lu.\n", GetLastError());
 }
 
+static void test_arcs(void)
+{
+    static const unsigned int dib_width = 100, dib_height = 100;
+    unsigned int *bits;
+    HBITMAP bitmap;
+    XFORM xform;
+    BOOL ret;
+    HPEN pen;
+    HDC dc;
+
+    static const BITMAPINFO bitmap_info =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = dib_width,
+        .bmiHeader.biHeight = dib_height,
+        .bmiHeader.biBitCount = 32,
+        .bmiHeader.biPlanes = 1,
+    };
+
+    dc = CreateCompatibleDC( 0 );
+    bitmap = CreateDIBSection( dc, &bitmap_info, DIB_RGB_COLORS, (void **)&bits, NULL, 0 );
+    SelectObject( dc, bitmap );
+    pen = CreatePen( PS_SOLID, 1, 0x111111 );
+    SelectObject( dc, pen );
+
+    SelectObject( dc, CreateSolidBrush(0));
+
+    /* Don't test exact pixels, since approximating the native arc drawing
+     * algorithm is difficult. Do test that we're drawing to the right bounds,
+     * though. */
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    Arc( dc, 10, 10, 40, 25, 0, 15, 20, 0 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x >= 40 || y >= 25 || (x < 22 && y < 16))
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+            if (((x == 24 || x == 25) && (y == 10 || y == 24)) /* top/bottom center */
+                    || ((x == 10 || x == 39) && y == 17)) /* left/right center */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    RoundRect( dc, 10, 10, 40, 25, 6, 9 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x >= 40 || y >= 25
+                    || ((x == 10 || x == 39) && (y == 10 || y == 24))) /* corners */
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+            if (((x >= 13 && x < 37) && (y == 10 || y == 24)) /* top/bottom edge */
+                    || ((y >= 14 && y < 21) && (x == 10 || x == 39))) /* left/right edge */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* Same round rect, but with the ellipse width and height inverted. */
+    memset( bits, 0, dib_width * dib_height * 4 );
+    RoundRect( dc, 10, 10, 40, 25, -6, -9 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x >= 40 || y >= 25
+                    || ((x == 10 || x == 39) && (y == 10 || y == 24))) /* corners */
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+            if (((x >= 13 && x < 37) && (y == 10 || y == 24)) /* top/bottom edge */
+                    || ((y >= 14 && y < 21) && (x == 10 || x == 39))) /* left/right edge */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* Round rect with ellipse sizes larger than the rectangle dimensions.
+     * This draws the whole ellipse, effectively clamping to the relevant dimensions. */
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    RoundRect( dc, 10, 10, 40, 25, 6, 20 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x >= 40 || y >= 25)
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+            if (((x >= 13 && x < 37) && (y == 10 || y == 24)) /* top/bottom edge */
+                    || ((x == 10 || x == 39) && y == 17)) /* left/right center */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* Round rect with a 1-pixel ellipse. */
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    RoundRect( dc, 10, 10, 40, 25, 1, 1 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x >= 40 || y >= 25)
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+            if (((x >= 11 && x < 39) && (y == 10 || y == 24)) /* top/bottom edge */
+                    || ((x == 10 || x == 39) && (y >= 11 && y < 24))) /* left/right edge */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* Round rect with a 0-pixel ellipse, which is identical to a simple rect. */
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    RoundRect( dc, 10, 10, 40, 25, 0, 0 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (((x >= 10 && x < 40) && (y == 10 || y == 24)) /* top/bottom edge */
+                    || ((x == 10 || x == 39) && (y >= 10 && y < 25))) /* left/right edge */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+            else
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* 0-pixel arc. */
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    ret = Arc( dc, 10, 10, 40, 10, 0, 1, 1, 0 );
+    ok(ret == TRUE, "Got %d.\n", ret);
+
+    for (unsigned int y = 9; y <= 11; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* Arc with identical start/end points draws the whole ellipse. */
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    Arc( dc, 10, 10, 40, 25, 0, 1, 0, 1 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x >= 40 || y >= 25)
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+            if (((x == 24 || x == 25) && (y == 10 || y == 24)) /* top/bottom center */
+                    || ((x == 10 || x == 39) && y == 17)) /* left/right center */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* Flipped arc direction. */
+
+    SetArcDirection( dc, AD_CLOCKWISE );
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    Arc( dc, 10, 10, 40, 25, 20, 0, 0, 15 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x >= 40 || y >= 25 || (x < 22 && y < 16))
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+            if (((x == 24 || x == 25) && (y == 10 || y == 24)) /* top/bottom center */
+                    || ((x == 10 || x == 39) && y == 17)) /* left/right center */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* Flip the arc rect. */
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    Arc( dc, 40, 10, 10, 25, 20, 0, 0, 15 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x >= 40 || y >= 25 || (x < 22 && y < 16))
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+            if (((x == 24 || x == 25) && (y == 10 || y == 24)) /* top/bottom center */
+                    || ((x == 10 || x == 39) && y == 17)) /* left/right center */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+        }
+    }
+
+    /* Test with GM_ADVANCED. */
+
+    SetGraphicsMode( dc, GM_ADVANCED );
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    Arc( dc, 10, 10, 40, 25, 20, 0, 0, 14 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x > 40 || y > 25 || (x < 22 && y < 16))
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+todo_wine_if (y == 25 || x == 40)
+{
+            if ((x == 25 && (y == 10 || y == 25)) /* top/bottom center */
+                    || ((x == 10 || x == 40) && (y == 17 || y == 18))) /* left/right center */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+}
+        }
+    }
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    RoundRect( dc, 10, 10, 40, 25, 6, 9 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x > 40 || y > 25)
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+todo_wine_if (y == 25 || x == 40)
+{
+            if (((x >= 13 && x <= 37) && (y == 10 || y == 25)) /* top/bottom edge */
+                    || ((y >= 14 && y <= 21) && (x == 10 || x == 40))) /* left/right edge */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+}
+        }
+    }
+
+    /* Flip the world transform. */
+
+    memset( &xform, 0, sizeof(xform) );
+    xform.eM11 = 1.0f;
+    xform.eM22 = -1.0f;
+    xform.eDy = 35.0f;
+    SetWorldTransform( dc, &xform );
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    Arc( dc, 10, 10, 40, 25, 20, 0, 0, 14 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x > 40 || y > 25 || (x < 22 && y > 19))
+                todo_wine_if (colour) ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+todo_wine
+{
+            if ((x == 25 && (y == 10 || y == 25)) /* top/bottom center */
+                    || ((x == 10 || x == 40) && (y == 17 || y == 18))) /* left/right center */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+}
+        }
+    }
+
+    memset( bits, 0, dib_width * dib_height * 4 );
+    RoundRect( dc, 10, 10, 40, 25, 6, 9 );
+
+    for (unsigned int y = 9; y <= 26; ++y)
+    {
+        for (unsigned int x = 9; x <= 41; ++x)
+        {
+            int colour = bits[(dib_height - 1 - y) * dib_width + x];
+
+            if (x < 10 || y < 10 || x > 40 || y > 25)
+                ok(!colour, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+
+todo_wine_if (y == 25 || x == 40)
+{
+            if (((x >= 13 && x <= 37) && (y == 10 || y == 25)) /* top/bottom edge */
+                    || ((y >= 14 && y <= 21) && (x == 10 || x == 40))) /* left/right edge */
+                ok(colour == 0x111111, "Got unexpected colour %08x at (%u, %u).\n", colour, x, y);
+}
+        }
+    }
+
+    DeleteObject( bitmap );
+    DeleteObject( pen );
+    DeleteDC( dc );
+}
+
 START_TEST(bitmap)
 {
     HMODULE hdll;
@@ -6027,4 +6354,5 @@ START_TEST(bitmap)
     test_SetDIBitsToDevice();
     test_SetDIBitsToDevice_RLE8();
     test_D3DKMTCreateDCFromMemory();
+    test_arcs();
 }
