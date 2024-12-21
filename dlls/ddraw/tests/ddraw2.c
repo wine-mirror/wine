@@ -16798,7 +16798,7 @@ static void test_multiple_devices(void)
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice2_EndScene(device);
     colour = get_surface_color(surface, 320, 240);
-    todo_wine ok(colour == 0x0000ff, "got %#lx.\n", colour);
+    ok(colour == 0x0000ff, "got %#lx.\n", colour);
 
     IDirect3DTexture2_Release(texture2);
     IDirect3DTexture2_Release(texture);

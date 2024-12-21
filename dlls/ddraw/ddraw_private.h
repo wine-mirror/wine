@@ -114,6 +114,7 @@ struct ddraw
     /* D3D things */
     HWND                    d3d_window;
     struct list             d3ddevice_list;
+    struct d3d_device      *device_last_applied_state;
     int                     d3dversion;
 
     /* Various HWNDs */

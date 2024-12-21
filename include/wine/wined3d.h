@@ -2369,6 +2369,8 @@ ULONG __cdecl wined3d_depth_stencil_state_incref(struct wined3d_depth_stencil_st
 
 HRESULT __cdecl wined3d_device_acquire_focus_window(struct wined3d_device *device, HWND window);
 void __cdecl wined3d_device_apply_stateblock(struct wined3d_device *device, struct wined3d_stateblock *stateblock);
+void __cdecl wined3d_stateblock_primary_dirtify_all_states(struct wined3d_device *device, struct wined3d_stateblock *stateblock);
+
 HRESULT __cdecl wined3d_device_begin_scene(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_clear(struct wined3d_device *device, unsigned int rect_count, const RECT *rects,
         uint32_t flags, const struct wined3d_color *color, float z, unsigned int stencil);

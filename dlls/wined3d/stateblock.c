@@ -309,6 +309,31 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     memset(states->vs_consts_f, 0xffu, sizeof(states->vs_consts_f));
 }
 
+void CDECL wined3d_stateblock_primary_dirtify_all_states(struct wined3d_device *device, struct wined3d_stateblock *stateblock)
+{
+    struct rb_tree *lights_tree = &stateblock->stateblock_state.light_state->lights_tree;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
+    struct wined3d_saved_states *states = &stateblock->changed;
+    struct wined3d_light_info *light;
+
+    stateblock_savedstates_set_all(states, d3d_info->limits.vs_uniform_count, d3d_info->limits.ps_uniform_count);
+    states->ffp_ps_constants = 1;
+    states->texture_matrices = 1;
+    states->modelview_matrices = 1;
+    states->point_scale = 1;
+    states->ffp_vs_settings = 1;
+    states->ffp_ps_settings = 1;
+    states->rasterizer_state = 1;
+    states->position_transformed = 1;
+
+    list_init(&stateblock->changed.changed_lights);
+    RB_FOR_EACH_ENTRY(light, lights_tree, struct wined3d_light_info, entry)
+    {
+        light->changed = true;
+        list_add_tail(&stateblock->changed.changed_lights, &light->changed_entry);
+    }
+}
+
 static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states, const DWORD num_constants)
 {
     DWORD texture_mask = 0;

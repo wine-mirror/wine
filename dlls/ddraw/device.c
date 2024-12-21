@@ -329,6 +329,8 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
          * the device from it before so it doesn't try to save / restore state on the teared down device. */
         if (This->ddraw)
         {
+            if (This->ddraw->device_last_applied_state == This)
+                This->ddraw->device_last_applied_state = NULL;
             list_remove(&This->ddraw_entry);
             This->ddraw = NULL;
         }
@@ -3451,6 +3453,11 @@ void d3d_device_sync_surfaces(struct d3d_device *device)
 
 void d3d_device_apply_state(struct d3d_device *device, BOOL clear_state)
 {
+    if (device->ddraw && device->ddraw->device_last_applied_state != device)
+    {
+        wined3d_stateblock_primary_dirtify_all_states(device->wined3d_device, device->state);
+        device->ddraw->device_last_applied_state = device;
+    }
     if (clear_state)
         wined3d_stateblock_apply_clear_state(device->state, device->wined3d_device);
     else
