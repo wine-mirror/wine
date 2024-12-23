@@ -150,11 +150,11 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <class_decl> ClassDeclaration ClassBody
 %type <uint> Storage Storage_opt IntegerValue
-%type <dim_decl> DimDeclList DimDecl
+%type <dim_decl> DimDeclList DimDecl MemberDeclList MemberDecl
 %type <dim_list> DimList
 %type <redim_decl> ReDimDeclList ReDimDecl
 %type <const_decl> ConstDecl ConstDeclList
-%type <string> Identifier
+%type <string> Identifier MemberIdentifier
 %type <case_clausule> CaseClausules
 
 %%
@@ -256,6 +256,15 @@ MemberExpression
 Preserve_opt
     : /* empty */                           { $$ = FALSE; }
     | tPRESERVE                             { $$ = TRUE; }
+
+MemberDeclList
+    : MemberDecl                            { $$ = $1; }
+    | MemberDecl ',' MemberDeclList         { $1->next = $3; $$ = $1; }
+
+MemberDecl
+    : MemberIdentifier                      { $$ = new_dim_decl(ctx, $1, FALSE, NULL); CHECK_ERROR; }
+    | MemberIdentifier '(' DimList ')'      { $$ = new_dim_decl(ctx, $1, TRUE, $3); CHECK_ERROR; }
+    | MemberIdentifier tEMPTYBRACKETS       { $$ = new_dim_decl(ctx, $1, TRUE, NULL); CHECK_ERROR; }
 
 ReDimDecl
     : tIdentifier '(' ArgumentList ')'      { $$ = new_redim_decl(ctx, $1, $3); CHECK_ERROR; }
@@ -458,13 +467,10 @@ ClassBody
     : /* empty */                                 { $$ = new_class_decl(ctx); }
     | FunctionDecl                                { $$ = add_class_function(ctx, new_class_decl(ctx), $1); CHECK_ERROR; }
     | FunctionDecl StSep ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
-    /* FIXME: We should use DimDecl here to support arrays, but that conflicts with PropertyDecl. */
-    | Storage tIdentifier                         { dim_decl_t *dim_decl = new_dim_decl(ctx, $2, FALSE, NULL); CHECK_ERROR;
-                                                  $$ = add_dim_prop(ctx, new_class_decl(ctx), dim_decl, $1); CHECK_ERROR; }
-    | Storage tIdentifier StSep ClassBody         { dim_decl_t *dim_decl = new_dim_decl(ctx, $2, FALSE, NULL); CHECK_ERROR;
-                                                  $$ = add_dim_prop(ctx, $4, dim_decl, $1); CHECK_ERROR; }
-    | tDIM DimDecl                                { $$ = add_dim_prop(ctx, new_class_decl(ctx), $2, 0); CHECK_ERROR; }
-    | tDIM DimDecl StSep ClassBody                { $$ = add_dim_prop(ctx, $4, $2, 0); CHECK_ERROR; }
+    | Storage MemberDeclList                      { $$ = add_dim_prop(ctx, new_class_decl(ctx), $2, $1); CHECK_ERROR; }
+    | Storage MemberDeclList StSep ClassBody      { $$ = add_dim_prop(ctx, $4, $2, $1); CHECK_ERROR; }
+    | tDIM DimDeclList                            { $$ = add_dim_prop(ctx, new_class_decl(ctx), $2, 0); CHECK_ERROR; }
+    | tDIM DimDeclList StSep ClassBody            { $$ = add_dim_prop(ctx, $4, $2, 0); CHECK_ERROR; }
     | PropertyDecl                                { $$ = add_class_function(ctx, new_class_decl(ctx), $1); CHECK_ERROR; }
     | PropertyDecl StSep ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
 
@@ -513,6 +519,12 @@ ArgumentDecl
     | tBYVAL Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, FALSE); }
 
 /* these keywords may also be an identifier, depending on context */
+MemberIdentifier
+    : tIdentifier    { $$ = $1; }
+    | tERROR         { ctx->last_token = tIdentifier; $$ = $1; }
+    | tEXPLICIT      { ctx->last_token = tIdentifier; $$ = $1; }
+    | tSTEP          { ctx->last_token = tIdentifier; $$ = $1; }
+
 Identifier
     : tIdentifier    { $$ = $1; }
     | tDEFAULT       { ctx->last_token = tIdentifier; $$ = $1; }
@@ -1135,14 +1147,22 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
 
 static class_decl_t *add_dim_prop(parser_ctx_t *ctx, class_decl_t *class_decl, dim_decl_t *dim_decl, unsigned storage_flags)
 {
+    dim_decl_t *iter;
+
     if(storage_flags & STORAGE_IS_DEFAULT) {
         FIXME("variant prop can't be default value\n");
         ctx->hres = E_FAIL;
         return NULL;
     }
 
-    dim_decl->is_public = !(storage_flags & STORAGE_IS_PRIVATE);
-    dim_decl->next = class_decl->props;
+    iter = dim_decl;
+    while(1) {
+        iter->is_public = !(storage_flags & STORAGE_IS_PRIVATE);
+        if (!iter->next) break;
+        iter = iter->next;
+    }
+
+    iter->next = class_decl->props;
     class_decl->props = dim_decl;
     return class_decl;
 }
