@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-11-10 20:20+0100\n"
+"PO-Revision-Date: 2024-12-23 17:30+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -3170,11 +3170,11 @@ msgstr "Virtueel Bureaublad"
 
 #: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
 msgid "&Reset"
-msgstr "&Terugzetten"
+msgstr "Te&rugzetten"
 
 #: dlls/desk.cpl/desk.rc:42
 msgid "Emulate display mode changes (requires restart)"
-msgstr ""
+msgstr "Wijzigen van de resolutie simuleren (herstart vereist)"
 
 #: dlls/desk.cpl/desk.rc:29
 msgid "Display Settings"
