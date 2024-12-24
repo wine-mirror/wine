@@ -1466,7 +1466,9 @@ static void test_TCS_OWNERDRAWFIXED(void)
     itemdata = 0;
     memset(&itemdata, 0xde, min(4, sizeof(LPARAM)-1));
     todo_wine_if(sizeof(void *) == 4)
-    ok(g_drawitem.itemData == itemdata, "got 0x%Ix, expected 0x%Ix\n", g_drawitem.itemData, itemdata);
+    ok(g_drawitem.itemData == itemdata ||
+       broken(sizeof(void *) == 4 && g_drawitem.itemData == 0xdededede), /* Win7-32-bit */
+       "got 0x%Ix, expected 0x%Ix\n", g_drawitem.itemData, itemdata);
 
     DestroyWindow(hTab);
 }
