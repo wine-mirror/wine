@@ -1621,6 +1621,9 @@ static void test_reg_load_key(void)
     ret = RegUnLoadKeyA(HKEY_LOCAL_MACHINE, "Test");
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
+    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", "");
+    ok(ret == ERROR_INVALID_PARAMETER, "expected INVALID_PARAMETER, got %ld\n", ret);
+
     /* check if modifications are saved */
     ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", saved_key);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);

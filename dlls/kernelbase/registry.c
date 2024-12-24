@@ -2456,7 +2456,8 @@ LSTATUS WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
     file.Attributes = OBJ_CASE_INSENSITIVE;
     file.SecurityDescriptor = NULL;
     file.SecurityQualityOfService = NULL;
-    RtlDosPathNameToNtPathName_U(filename, &filenameW, NULL, NULL);
+    if (!RtlDosPathNameToNtPathName_U(filename, &filenameW, NULL, NULL))
+        return ERROR_INVALID_PARAMETER;
 
     status = NtLoadKey(&destkey, &file);
     RtlFreeUnicodeString(&filenameW);
