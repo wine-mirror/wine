@@ -2136,6 +2136,10 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         {
             if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
             send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
+
+            /* state change might have changed the window config already, check again */
+            user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &config_cmd, &window_rect );
+            if (state_cmd) WARN( "window %p state needs another update, ignoring\n", hwnd );
         }
         if (config_cmd)
         {
