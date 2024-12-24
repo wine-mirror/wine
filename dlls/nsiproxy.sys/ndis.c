@@ -405,6 +405,8 @@ static void ifinfo_fill_dynamic( struct if_entry *entry, struct nsi_ndis_ifinfo_
                     data->out_ucast_pkts = values[6];
                     data->out_errors     = values[7];
                     data->out_discards   = values[8];
+                    /* Some applications check for link speed >= 1000000 */
+                    data->rcv_speed = data->xmit_speed = 1000000;
                     break;
                 }
             }
