@@ -430,7 +430,7 @@ struct symt_pointer* symt_new_pointer(struct module* module, struct symt* ref_ty
     return sym;
 }
 
-struct symt_typedef* symt_new_typedef(struct module* module, struct symt* ref,
+struct symt_typedef* symt_new_typedef(struct module* module, symref_t ref,
                                       const char* typename)
 {
     struct symt_typedef* sym;
@@ -818,7 +818,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             X(DWORD64) = ((const struct symt_public*)type)->size;
             break;
         case SymTagTypedef:
-            return symt_get_info(module, ((const struct symt_typedef*)type)->type, TI_GET_LENGTH, pInfo);
+            return symt_get_info_from_symref(module, ((const struct symt_typedef*)type)->type, TI_GET_LENGTH, pInfo);
         case SymTagThunk:
             X(DWORD64) = ((const struct symt_thunk*)type)->size;
             break;
@@ -990,7 +990,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             X(DWORD) = symt_ptr_to_index(module, ((const struct symt_function_signature*)type)->rettype);
             break;
         case SymTagTypedef:
-            X(DWORD) = symt_ptr_to_index(module, ((const struct symt_typedef*)type)->type);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_typedef*)type)->type);
             break;
             /* lexical => hierarchical */
         case SymTagData:

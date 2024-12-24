@@ -2679,7 +2679,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             if (sym->udt_v1.type)
             {
                 if ((symt = codeview_get_type(sym->udt_v1.type, FALSE)))
-                    symt_new_typedef(msc_dbg->module, symt,
+                    symt_new_typedef(msc_dbg->module, symt_ptr_to_symref(symt),
                                      terminate_string(&sym->udt_v1.p_name));
                 else
                     FIXME("S-Udt %s: couldn't find type 0x%x\n",
@@ -2690,7 +2690,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             if (sym->udt_v2.type)
             {
                 if ((symt = codeview_get_type(sym->udt_v2.type, FALSE)))
-                    symt_new_typedef(msc_dbg->module, symt,
+                    symt_new_typedef(msc_dbg->module, symt_ptr_to_symref(symt),
                                      terminate_string(&sym->udt_v2.p_name));
                 else
                     FIXME("S-Udt %s: couldn't find type 0x%x\n",
@@ -2701,7 +2701,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             if (sym->udt_v3.type)
             {
                 if ((symt = codeview_get_type(sym->udt_v3.type, FALSE)))
-                    symt_new_typedef(msc_dbg->module, symt, sym->udt_v3.name);
+                    symt_new_typedef(msc_dbg->module, symt_ptr_to_symref(symt), sym->udt_v3.name);
                 else
                     FIXME("S-Udt %s: couldn't find type 0x%x\n",
                           debugstr_a(sym->udt_v3.name), sym->udt_v3.type);
@@ -2988,7 +2988,7 @@ static BOOL pdb_global_feed_types(const struct msc_debug_info* msc_dbg, const un
         if (sym->udt_v1.type)
         {
             if ((symt = codeview_get_type(sym->udt_v1.type, FALSE)))
-                symt_new_typedef(msc_dbg->module, symt,
+                symt_new_typedef(msc_dbg->module, symt_ptr_to_symref(symt),
                                  terminate_string(&sym->udt_v1.p_name));
             else
                 FIXME("S-Udt %s: couldn't find type 0x%x\n",
@@ -2999,7 +2999,7 @@ static BOOL pdb_global_feed_types(const struct msc_debug_info* msc_dbg, const un
         if (sym->udt_v2.type)
         {
             if ((symt = codeview_get_type(sym->udt_v2.type, FALSE)))
-                symt_new_typedef(msc_dbg->module, symt,
+                symt_new_typedef(msc_dbg->module, symt_ptr_to_symref(symt),
                                  terminate_string(&sym->udt_v2.p_name));
             else
                 FIXME("S-Udt %s: couldn't find type 0x%x\n",
@@ -3010,7 +3010,7 @@ static BOOL pdb_global_feed_types(const struct msc_debug_info* msc_dbg, const un
         if (sym->udt_v3.type)
         {
             if ((symt = codeview_get_type(sym->udt_v3.type, FALSE)))
-                symt_new_typedef(msc_dbg->module, symt, sym->udt_v3.name);
+                symt_new_typedef(msc_dbg->module, symt_ptr_to_symref(symt), sym->udt_v3.name);
             else
                 FIXME("S-Udt %s: couldn't find type 0x%x\n",
                       debugstr_a(sym->udt_v3.name), sym->udt_v3.type);

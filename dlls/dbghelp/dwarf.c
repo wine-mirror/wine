@@ -715,7 +715,7 @@ static BOOL dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
 static struct symt *symt_get_real_type(struct symt *symt)
 {
     while (symt && symt->tag == SymTagTypedef)
-        symt = ((struct symt_typedef*)symt)->type;
+        symt = (struct symt*)(((struct symt_typedef*)symt)->type);
     return symt;
 }
 
@@ -1650,7 +1650,7 @@ static struct symt* dwarf2_parse_typedef(dwarf2_debug_info_t* di)
          */
         if ((is_c_language(di->unit_ctx) || is_cpp_language(di->unit_ctx)) && !strcmp(name.u.string, "WCHAR"))
             ref_type = &symt_get_basic(btWChar, 2)->symt;
-        di->symt = &symt_new_typedef(di->unit_ctx->module_ctx->module, ref_type, name.u.string)->symt;
+        di->symt = &symt_new_typedef(di->unit_ctx->module_ctx->module, symt_ptr_to_symref(ref_type), name.u.string)->symt;
     }
     if (dwarf2_get_di_children(di)) FIXME("Unsupported children\n");
     return di->symt;
@@ -1822,7 +1822,7 @@ static struct symt* dwarf2_parse_unspecified_type(dwarf2_debug_info_t* di)
     basic = &symt_get_basic(btVoid, 0)->symt;
     if (dwarf2_find_attribute(di, DW_AT_name, &name))
         /* define the missing type as a typedef to void... */
-        di->symt = &symt_new_typedef(di->unit_ctx->module_ctx->module, basic, name.u.string)->symt;
+        di->symt = &symt_new_typedef(di->unit_ctx->module_ctx->module, symt_ptr_to_symref(basic), name.u.string)->symt;
     else /* or use void if it doesn't even have a name */
         di->symt = basic;
 

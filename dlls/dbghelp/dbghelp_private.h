@@ -388,7 +388,7 @@ struct symt_typedef
 {
     struct symt                 symt;
     struct hash_table_elt       hash_elt;
-    struct symt*                type;
+    symref_t                    type;
 };
 
 struct symt_udt
@@ -1010,11 +1010,11 @@ extern BOOL         symt_add_function_signature_parameter(struct module* module,
                                                           struct symt_function_signature* sig,
                                                           struct symt* param);
 extern struct symt_pointer*
-                    symt_new_pointer(struct module* module, 
+                    symt_new_pointer(struct module* module,
                                      struct symt* ref_type,
                                      ULONG_PTR size);
 extern struct symt_typedef*
-                    symt_new_typedef(struct module* module, struct symt* ref, 
+                    symt_new_typedef(struct module* module, symref_t ref,
                                      const char* name);
 extern struct symt_function*
                     symt_find_lowest_inlined(struct symt_function* func, DWORD64 addr);
