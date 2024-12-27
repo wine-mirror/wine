@@ -3238,7 +3238,7 @@ static void test_coop_level_mode_set(void)
     expect_messages = release_messages;
     IDirectDrawSurface7_Release(primary);
     flush_events();
-    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
 
     memset(&ddsd, 0, sizeof(ddsd));
@@ -3506,7 +3506,7 @@ static void test_coop_level_mode_set(void)
     expect_messages = release_messages;
     IDirectDrawSurface7_Release(primary);
     flush_events();
-    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
 
     memset(&ddsd, 0, sizeof(ddsd));
@@ -3696,7 +3696,7 @@ static void test_coop_level_mode_set(void)
     expect_messages = release_messages;
     IDirectDrawSurface7_Release(primary);
     flush_events();
-    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
 
     memset(&ddsd, 0, sizeof(ddsd));
@@ -3866,7 +3866,7 @@ static void test_coop_level_mode_set(void)
     expect_messages = release_messages;
     IDirectDrawSurface7_Release(primary);
     flush_events();
-    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
 
     hr = IDirectDraw7_RestoreDisplayMode(ddraw);
