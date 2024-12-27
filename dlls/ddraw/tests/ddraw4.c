@@ -3347,6 +3347,12 @@ static void test_coop_level_mode_set(void)
         {0,                     FALSE,  0},
     };
 
+    static const struct message release_messages[] =
+    {
+        {WM_PAINT,              FALSE,  0},
+        {0,                     FALSE,  0},
+    };
+
     memset(&devmode, 0, sizeof(devmode));
     devmode.dmSize = sizeof(devmode);
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
@@ -3455,7 +3461,13 @@ static void test_coop_level_mode_set(void)
             param.user32_width, ddsd.dwWidth);
     ok(ddsd.dwHeight == param.user32_height, "Expected surface height %lu, got %lu.\n",
             param.user32_height, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    expect_messages = NULL;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -3472,6 +3484,7 @@ static void test_coop_level_mode_set(void)
             param.ddraw_height, ddsd.dwHeight);
 
     GetWindowRect(window, &r);
+    flaky /* win10 21H2 with QXL driver */
     ok(EqualRect(&r, &ddraw_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&ddraw_rect),
             wine_dbgstr_rect(&r));
 
@@ -3582,7 +3595,14 @@ static void test_coop_level_mode_set(void)
             param.ddraw_width, ddsd.dwWidth);
     ok(ddsd.dwHeight == param.ddraw_height, "Expected surface height %lu, got %lu.\n",
             param.ddraw_height, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    flaky /* win10 21H2 with QXL driver */
+    ok(expect_messages->message == WM_PAINT, "Unexpected WM_PAINT.\n");
+    expect_messages = NULL;
 
     /* For Wine. */
     change_ret = ChangeDisplaySettingsW(NULL, CDS_FULLSCREEN);
@@ -3628,7 +3648,14 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, ddsd.dwWidth);
     ok(ddsd.dwHeight == registry_mode.dmPelsHeight, "Expected surface height %lu, got %lu.\n",
             registry_mode.dmPelsHeight, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    flaky /* win10 21H2 with QXL driver */
+    ok(expect_messages->message == WM_PAINT, "Unexpected WM_PAINT.\n");
+    expect_messages = NULL;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -3702,7 +3729,13 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, ddsd.dwWidth);
     ok(ddsd.dwHeight == registry_mode.dmPelsHeight, "Expected surface height %lu, got %lu.\n",
             registry_mode.dmPelsHeight, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    expect_messages = NULL;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -3750,7 +3783,14 @@ static void test_coop_level_mode_set(void)
             param.ddraw_width, ddsd.dwWidth);
     ok(ddsd.dwHeight == param.ddraw_height, "Expected surface height %lu, got %lu.\n",
             param.ddraw_height, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    flaky /* win10 21H2 with QXL driver */
+    ok(expect_messages->message == WM_PAINT, "Unexpected WM_PAINT.\n");
+    expect_messages = NULL;
 
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
@@ -3798,7 +3838,14 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, ddsd.dwWidth);
     ok(ddsd.dwHeight == registry_mode.dmPelsHeight, "Expected surface height %lu, got %lu.\n",
             registry_mode.dmPelsHeight, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    flaky /* win10 21H2 with QXL driver */
+    ok(expect_messages->message == WM_PAINT, "Unexpected WM_PAINT.\n");
+    expect_messages = NULL;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -3872,7 +3919,13 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, ddsd.dwWidth);
     ok(ddsd.dwHeight == registry_mode.dmPelsHeight, "Expected surface height %lu, got %lu.\n",
             registry_mode.dmPelsHeight, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    expect_messages = NULL;
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -3920,7 +3973,14 @@ static void test_coop_level_mode_set(void)
             param.ddraw_width, ddsd.dwWidth);
     ok(ddsd.dwHeight == param.ddraw_height, "Expected surface height %lu, got %lu.\n",
             param.ddraw_height, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    flaky /* win10 21H2 with QXL driver */
+    ok(expect_messages->message == WM_PAINT, "Unexpected WM_PAINT.\n");
+    expect_messages = NULL;
 
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
     ok(ret, "Failed to get display mode.\n");
@@ -3945,7 +4005,14 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, ddsd.dwWidth);
     ok(ddsd.dwHeight == registry_mode.dmPelsHeight, "Expected surface height %lu, got %lu.\n",
             registry_mode.dmPelsHeight, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    flaky /* win10 21H2 with QXL driver */
+    ok(expect_messages->message == WM_PAINT, "Unexpected WM_PAINT.\n");
+    expect_messages = NULL;
 
     GetWindowRect(window, &r);
     flaky /* win8 */
@@ -3991,7 +4058,14 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, ddsd.dwWidth);
     ok(ddsd.dwHeight == registry_mode.dmPelsHeight, "Expected surface height %lu, got %lu.\n",
             registry_mode.dmPelsHeight, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    flaky /* win10 21H2 with QXL driver */
+    ok(expect_messages->message == WM_PAINT, "Unexpected WM_PAINT.\n");
+    expect_messages = NULL;
 
     /* The screen restore is a property of DDSCL_EXCLUSIVE  */
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL | DDSCL_FULLSCREEN);
@@ -4015,7 +4089,13 @@ static void test_coop_level_mode_set(void)
             param.ddraw_width, ddsd.dwWidth);
     ok(ddsd.dwHeight == param.ddraw_height, "Expected surface height %lu, got %lu.\n",
             param.ddraw_height, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    todo_wine ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
+    expect_messages = NULL;
 
     hr = IDirectDraw4_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#lx.\n", hr);
@@ -4047,6 +4127,7 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, registry_mode.dmPelsHeight, screen_size2.cx, screen_size2.cy);
 
     GetWindowRect(window, &r);
+    flaky /* win10 21H2 with QXL driver */
     ok(EqualRect(&r, &ddraw_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&ddraw_rect),
             wine_dbgstr_rect(&r));
     GetWindowRect(window2, &r);
@@ -4066,12 +4147,20 @@ static void test_coop_level_mode_set(void)
             registry_mode.dmPelsWidth, ddsd.dwWidth);
     ok(ddsd.dwHeight == registry_mode.dmPelsHeight, "Expected surface height %lu, got %lu.\n",
             registry_mode.dmPelsHeight, ddsd.dwHeight);
+
+    flush_events();
+    expect_messages = release_messages;
     IDirectDrawSurface4_Release(primary);
+    flush_events();
+    flaky /* win10 21H2 with QXL driver */
+    ok(expect_messages->message == WM_PAINT, "Unexpected WM_PAINT.\n");
+    expect_messages = NULL;
 
     ref = IDirectDraw4_Release(ddraw);
     ok(!ref, "Unexpected refcount %lu.\n", ref);
 
     GetWindowRect(window, &r);
+    flaky /* win10 21H2 with QXL driver */
     ok(EqualRect(&r, &ddraw_rect), "Expected %s, got %s.\n", wine_dbgstr_rect(&ddraw_rect),
             wine_dbgstr_rect(&r));
 
