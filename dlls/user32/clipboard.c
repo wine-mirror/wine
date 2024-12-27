@@ -766,9 +766,13 @@ static HRESULT format_iterator_create( IDataObject *object, IEnumFORMATETC **out
 
 static HRESULT WINAPI format_iterator_Clone( IEnumFORMATETC *iface, IEnumFORMATETC **out )
 {
+    HRESULT hr;
     struct format_iterator *iterator = format_iterator_from_IEnumFORMATETC( iface );
     TRACE( "iterator %p, out %p\n", iterator, out );
-    return format_iterator_create( iterator->object, out );
+    hr = format_iterator_create( iterator->object, out );
+    if (SUCCEEDED(hr))
+        format_iterator_from_IEnumFORMATETC( *out )->entry = iterator->entry;
+    return hr;
 }
 
 static const IEnumFORMATETCVtbl format_iterator_vtbl =
