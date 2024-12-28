@@ -156,7 +156,6 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance client_instance, cons
         release_win_ptr( win );
     }
 
-    surface->hwnd = create_info->hwnd;
     vulkan_object_init( &surface->obj.obj, host_surface );
     surface->obj.instance = instance;
     instance->p_insert_object( instance, &surface->obj.obj );
