@@ -9325,6 +9325,9 @@ static void subtest_swp_paint_regions_( int line, int wrap_toplevel, LPCSTR pare
     ok( hauxchild != 0, "Creating child window (%s) returned error %lu\n",
         debugstr_a( child_class ), GetLastError() );
 
+    SetWindowPos( htoplevel ? htoplevel : hparent, NULL, 0, 0, 0, 0,
+                  SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW );
+
     for (i = 0; i < ARRAY_SIZE(exposure_tests); i++)
     {
         const struct exposure_test *extest = &exposure_tests[i];
