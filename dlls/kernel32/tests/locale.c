@@ -2970,8 +2970,8 @@ static void test_LocaleNameToLCID(void)
     buffer[0] = 0;
     SetLastError(0xdeadbeef);
     lcid = LocaleNameToLCID(LOCALE_NAME_SYSTEM_DEFAULT, 0);
-    ok(lcid == GetSystemDefaultLCID(),
-       "Expected lcid == %08lx, got %08lx, error %ld\n", GetSystemDefaultLCID(), lcid, GetLastError());
+    expect = GetSystemDefaultLCID();
+    ok(lcid == expect, "Expected lcid == %08lx, got %08lx, error %ld\n", expect, lcid, GetLastError());
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
     ok(ret > 0, "Expected ret > 0, got %d, error %ld\n", ret, GetLastError());
     trace("%08lx, %s\n", lcid, wine_dbgstr_w(buffer));
