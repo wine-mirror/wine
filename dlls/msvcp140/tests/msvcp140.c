@@ -1703,7 +1703,7 @@ static void test__Mtx(void)
 
 static void test__Fiopen(void)
 {
-    int i;
+    int i, ret;
     FILE *f;
     wchar_t wpath[MAX_PATH];
     static const struct {
@@ -1724,8 +1724,8 @@ static void test__Fiopen(void)
             continue;
         }
 
-        ok(MultiByteToWideChar(CP_UTF8, 0, tests[i].path, -1, wpath, MAX_PATH),
-                "MultiByteToWideChar failed on %s with locale %s: %lx\n",
+        ret = MultiByteToWideChar(CP_UTF8, 0, tests[i].path, -1, wpath, MAX_PATH);
+        ok(ret, "MultiByteToWideChar failed on %s with locale %s: %lx\n",
                 debugstr_a(tests[i].path), tests[i].loc, GetLastError());
 
         f = p__Fiopen(tests[i].path, OPENMODE_out, SH_DENYNO);
