@@ -250,11 +250,11 @@ extern unsigned int MSVCRT__commode;
 /* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.
  */
-void* __cdecl operator_new(size_t);
 void __cdecl operator_delete(void*);
+void* __cdecl operator_new(size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(operator_delete) __WINE_MALLOC;
 int __cdecl _set_new_mode(int mode);
 
-typedef void* (__cdecl *malloc_func_t)(size_t);
+typedef void* (__cdecl __WINE_ALLOC_SIZE(1) *malloc_func_t)(size_t);
 typedef void  (__cdecl *free_func_t)(void*);
 
 /* Setup and teardown multi threaded locks */
