@@ -246,7 +246,7 @@ void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const 
    _invalid_parameter_noinfo();
 }
 #else
-static void* (__cdecl *MSVCRT_operator_new)(size_t);
+static void* (__cdecl __WINE_ALLOC_SIZE(1) *MSVCRT_operator_new)(size_t);
 static void (__cdecl *MSVCRT_operator_delete)(void*);
 
 void* __cdecl operator_new(size_t size)

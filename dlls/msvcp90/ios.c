@@ -296,7 +296,7 @@ typedef struct {
     char *endsave;
     char *seekhigh;
     int strmode;
-    void* (__cdecl *palloc)(size_t);
+    void* (__cdecl __WINE_ALLOC_SIZE(1) *palloc)(size_t);
     void (__cdecl *pfree)(void*);
 } strstreambuf;
 
