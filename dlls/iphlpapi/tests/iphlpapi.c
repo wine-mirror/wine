@@ -1947,8 +1947,10 @@ static void test_GetExtendedTcpTable_owner( int family )
         addr.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
         addr.sin_port = 0;
 
-        ok( bind( sock, (struct sockaddr *)&addr, addr_len ) == 0, "bind error %d\n", WSAGetLastError() );
-        ok( getsockname( sock, (struct sockaddr *)&addr, &addr_len ) == 0, "getsockname error %d\n", WSAGetLastError() );
+        ret = bind( sock, (struct sockaddr *)&addr, addr_len );
+        ok( !ret, "bind error %d\n", WSAGetLastError() );
+        ret = getsockname( sock, (struct sockaddr *)&addr, &addr_len );
+        ok( !ret, "getsockname error %d\n", WSAGetLastError() );
 
         port = addr.sin_port;
     }
@@ -1961,8 +1963,10 @@ static void test_GetExtendedTcpTable_owner( int family )
         addr.sin6_addr = in6addr_loopback;
         addr.sin6_port = 0;
 
-        ok( bind( sock, (struct sockaddr *)&addr, addr_len ) == 0, "bind error %d\n", WSAGetLastError() );
-        ok( getsockname( sock, (struct sockaddr *)&addr, &addr_len ) == 0, "getsockname error %d\n", WSAGetLastError() );
+        ret = bind( sock, (struct sockaddr *)&addr, addr_len );
+        ok( !ret, "bind error %d\n", WSAGetLastError() );
+        ret = getsockname( sock, (struct sockaddr *)&addr, &addr_len );
+        ok( !ret, "getsockname error %d\n", WSAGetLastError() );
 
         port = addr.sin6_port;
     }
@@ -2136,8 +2140,10 @@ static void test_GetExtendedUdpTable_owner( int family )
         addr.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
         addr.sin_port = 0;
 
-        ok( bind( sock, (struct sockaddr *)&addr, addr_len ) == 0, "bind error %d\n", WSAGetLastError() );
-        ok( getsockname( sock, (struct sockaddr *)&addr, &addr_len ) == 0, "getsockname error %d\n", WSAGetLastError() );
+        ret = bind( sock, (struct sockaddr *)&addr, addr_len );
+        ok( !ret, "bind error %d\n", WSAGetLastError() );
+        ret = getsockname( sock, (struct sockaddr *)&addr, &addr_len );
+        ok( !ret, "getsockname error %d\n", WSAGetLastError() );
 
         port = addr.sin_port;
     }
@@ -2150,8 +2156,10 @@ static void test_GetExtendedUdpTable_owner( int family )
         addr.sin6_addr = in6addr_loopback;
         addr.sin6_port = 0;
 
-        ok( bind( sock, (struct sockaddr *)&addr, addr_len ) == 0, "bind error %d\n", WSAGetLastError() );
-        ok( getsockname( sock, (struct sockaddr *)&addr, &addr_len ) == 0, "getsockname error %d\n", WSAGetLastError() );
+        ret = bind( sock, (struct sockaddr *)&addr, addr_len );
+        ok( !ret, "bind error %d\n", WSAGetLastError() );
+        ret = getsockname( sock, (struct sockaddr *)&addr, &addr_len );
+        ok( !ret, "getsockname error %d\n", WSAGetLastError() );
 
         port = addr.sin6_port;
     }
