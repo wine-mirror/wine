@@ -75,12 +75,9 @@ static void test_ColorHelper(void)
 
     memset( &color, 0, sizeof( color ) );
     hr = IColorHelperStatics_FromArgb( color_helper_statics, 255, 255, 255, 255, NULL );
-    todo_wine
     ok( hr == E_POINTER, "got hr %#lx.\n", hr );
     hr = IColorHelperStatics_FromArgb( color_helper_statics, 255, 255, 255, 255, &color );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine
     ok( color.A == 255 && color.R == 255 && color.G == 255 && color.B == 255,
         "got color.A = %u, color.R = %u, color.G = %u, color.B = %u,\n", color.A, color.R, color.G, color.B );
 

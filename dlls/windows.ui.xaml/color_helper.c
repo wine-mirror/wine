@@ -118,8 +118,19 @@ DEFINE_IINSPECTABLE( color_helper_statics, IColorHelperStatics, struct color_hel
 
 static HRESULT WINAPI color_helper_statics_FromArgb( IColorHelperStatics *iface, BYTE a, BYTE r, BYTE g, BYTE b, Color *value )
 {
-    FIXME( "iface %p, a %u, r %u, g %u, b %u, value %p stub!\n", iface, a, r, g, b, value );
-    return E_NOTIMPL;
+    Color color;
+
+    TRACE( "iface %p, a %u, r %u, g %u, b %u, value %p\n", iface, a, r, g, b, value );
+
+    if (!value) return E_POINTER;
+
+    color.A = a;
+    color.R = r;
+    color.G = g;
+    color.B = b;
+
+    *value = color;
+    return S_OK;
 }
 
 static const struct IColorHelperStaticsVtbl color_helper_statics_vtbl =
