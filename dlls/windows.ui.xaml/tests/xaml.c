@@ -51,6 +51,7 @@ static void test_ColorHelper(void)
     static const WCHAR *color_helper_statics_name = L"Windows.UI.ColorHelper";
     IColorHelperStatics *color_helper_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
+    Color color;
     HSTRING str;
     HRESULT hr;
 
@@ -71,6 +72,17 @@ static void test_ColorHelper(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IColorHelperStatics, (void **)&color_helper_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    memset( &color, 0, sizeof( color ) );
+    hr = IColorHelperStatics_FromArgb( color_helper_statics, 255, 255, 255, 255, NULL );
+    todo_wine
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    hr = IColorHelperStatics_FromArgb( color_helper_statics, 255, 255, 255, 255, &color );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine
+    ok( color.A == 255 && color.R == 255 && color.G == 255 && color.B == 255,
+        "got color.A = %u, color.R = %u, color.G = %u, color.B = %u,\n", color.A, color.R, color.G, color.B );
 
     IColorHelperStatics_Release( color_helper_statics );
     IActivationFactory_Release( factory );
