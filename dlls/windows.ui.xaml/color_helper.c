@@ -24,6 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(xaml);
 struct color_helper_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IColorHelperStatics IColorHelperStatics_iface;
     LONG ref;
 };
 
@@ -44,6 +45,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IColorHelperStatics ))
+    {
+        *out = &impl->IColorHelperStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -106,9 +114,31 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( color_helper_statics, IColorHelperStatics, struct color_helper_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI color_helper_statics_FromArgb( IColorHelperStatics *iface, BYTE a, BYTE r, BYTE g, BYTE b, Color *value )
+{
+    FIXME( "iface %p, a %u, r %u, g %u, b %u, value %p stub!\n", iface, a, r, g, b, value );
+    return E_NOTIMPL;
+}
+
+static const struct IColorHelperStaticsVtbl color_helper_statics_vtbl =
+{
+    color_helper_statics_QueryInterface,
+    color_helper_statics_AddRef,
+    color_helper_statics_Release,
+    /* IInspectable methods */
+    color_helper_statics_GetIids,
+    color_helper_statics_GetRuntimeClassName,
+    color_helper_statics_GetTrustLevel,
+    /* IColorHelperStatics methods */
+    color_helper_statics_FromArgb,
+};
+
 static struct color_helper_statics color_helper_statics =
 {
     {&factory_vtbl},
+    {&color_helper_statics_vtbl},
     1,
 };
 

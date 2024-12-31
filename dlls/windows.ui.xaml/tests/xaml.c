@@ -49,6 +49,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
 static void test_ColorHelper(void)
 {
     static const WCHAR *color_helper_statics_name = L"Windows.UI.ColorHelper";
+    IColorHelperStatics *color_helper_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     HSTRING str;
     HRESULT hr;
@@ -68,6 +69,10 @@ static void test_ColorHelper(void)
     check_interface( factory, &IID_IInspectable, FALSE );
     check_interface( factory, &IID_IAgileObject, TRUE /* Missing on Windows older than 1809v2 */ );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IColorHelperStatics, (void **)&color_helper_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    IColorHelperStatics_Release( color_helper_statics );
     IActivationFactory_Release( factory );
 }
 
