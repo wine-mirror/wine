@@ -36,6 +36,66 @@
 
 static BOOL is_wow64;
 
+#define check_interface(obj, iid, supported) check_interface_(__LINE__, obj, iid, supported)
+static void check_interface_(unsigned int line, void *obj, const IID *iid, BOOL supported)
+{
+    HRESULT hr, expected_hr;
+    IUnknown *iface = obj;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    static WCHAR class_name[1024];
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    wcscpy(class_name, L"Windows.Foundation.Metadata.ApiInformation");
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* pre-win8 */, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        check_interface(factory, &IID_IUnknown, TRUE);
+        check_interface(factory, &IID_IInspectable, TRUE);
+        check_interface(factory, &IID_IAgileObject, TRUE);
+        check_interface(factory, &IID_IActivationFactory, TRUE);
+        check_interface(factory, &IID_IApiInformationStatics, TRUE);
+        todo_wine check_interface(factory, &IID_IPropertyValueStatics, FALSE);
+        IActivationFactory_Release(factory);
+    }
+    else
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+    WindowsDeleteString(str);
+
+    wcscpy(class_name, L"Windows.Foundation.PropertyValue");
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    check_interface(factory, &IID_IAgileObject, TRUE);
+    check_interface(factory, &IID_IActivationFactory, TRUE);
+    todo_wine check_interface(factory, &IID_IApiInformationStatics, FALSE);
+    check_interface(factory, &IID_IPropertyValueStatics, TRUE);
+    IActivationFactory_Release(factory);
+    WindowsDeleteString(str);
+
+    RoUninitialize();
+}
+
 static void test_IApiInformationStatics(void)
 {
     static const struct
@@ -965,6 +1025,7 @@ START_TEST(wintypes)
 {
     IsWow64Process(GetCurrentProcess(), &is_wow64);
 
+    test_interfaces();
     test_IApiInformationStatics();
     test_IPropertyValueStatics();
     test_RoParseTypeName();
