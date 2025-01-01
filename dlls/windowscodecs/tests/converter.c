@@ -707,6 +707,178 @@ static void test_default_converter(void)
     DeleteTestBitmap(src_obj);
 }
 
+static void test_can_convert(void)
+{
+#define WIC_PIXEL_FORMAT(fmt) #fmt, &GUID_WICPixelFormat ## fmt
+    static const struct test_data
+    {
+        const char *name;
+        const WICPixelFormatGUID *format;
+        BOOL src_valid;
+        BOOL dst_valid;
+        UINT dst_todo_count;
+        BOOL broken;
+    }
+    td[] =
+    {
+        {WIC_PIXEL_FORMAT(Undefined)},
+        {WIC_PIXEL_FORMAT(1bppIndexed), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(2bppIndexed), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(4bppIndexed), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(8bppIndexed), TRUE, TRUE, 27},
+        {WIC_PIXEL_FORMAT(BlackWhite), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(2bppGray), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(4bppGray), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(8bppGray), TRUE, TRUE, 27},
+        {WIC_PIXEL_FORMAT(16bppGray), TRUE, TRUE, 35},
+
+        {WIC_PIXEL_FORMAT(8bppAlpha), TRUE, TRUE, 35, TRUE},
+
+        {WIC_PIXEL_FORMAT(16bppBGR555), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(16bppBGR565), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(16bppBGRA5551), TRUE, TRUE, 33, TRUE},
+        {WIC_PIXEL_FORMAT(24bppBGR), TRUE, TRUE, 28},
+        {WIC_PIXEL_FORMAT(24bppRGB), TRUE, TRUE, 30},
+        {WIC_PIXEL_FORMAT(32bppBGR), TRUE, TRUE, 15},
+        {WIC_PIXEL_FORMAT(32bppBGRA), TRUE, TRUE, 15},
+        {WIC_PIXEL_FORMAT(32bppPBGRA), TRUE, TRUE, 15},
+        {WIC_PIXEL_FORMAT(32bppRGB), TRUE, TRUE, 13, TRUE},
+        {WIC_PIXEL_FORMAT(32bppRGBA), TRUE, TRUE, 13, TRUE},
+        {WIC_PIXEL_FORMAT(32bppPRGBA), TRUE, TRUE, 13, TRUE},
+        {WIC_PIXEL_FORMAT(32bppGrayFloat), TRUE, TRUE, 14},
+
+        {WIC_PIXEL_FORMAT(48bppRGB), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(48bppBGR), TRUE, TRUE, 35, TRUE},
+        {WIC_PIXEL_FORMAT(64bppRGB), TRUE, TRUE, 35, TRUE},
+        {WIC_PIXEL_FORMAT(64bppRGBA), TRUE, TRUE, 33},
+        {WIC_PIXEL_FORMAT(64bppBGRA), TRUE, TRUE, 35, TRUE},
+        {WIC_PIXEL_FORMAT(64bppPRGBA), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(64bppPBGRA), TRUE, TRUE, 35, TRUE},
+
+        {WIC_PIXEL_FORMAT(16bppGrayFixedPoint)},
+        {WIC_PIXEL_FORMAT(32bppBGR101010), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(48bppRGBFixedPoint)},
+        {WIC_PIXEL_FORMAT(48bppBGRFixedPoint)},
+        {WIC_PIXEL_FORMAT(96bppRGBFixedPoint)},
+        {WIC_PIXEL_FORMAT(96bppRGBFloat), TRUE, TRUE, 35, TRUE},
+        {WIC_PIXEL_FORMAT(128bppRGBAFloat), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(128bppPRGBAFloat), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(128bppRGBFloat), TRUE, TRUE, 35},
+
+        {WIC_PIXEL_FORMAT(32bppCMYK)},
+
+        {WIC_PIXEL_FORMAT(64bppRGBAFixedPoint)},
+        {WIC_PIXEL_FORMAT(64bppBGRAFixedPoint)},
+        {WIC_PIXEL_FORMAT(64bppRGBFixedPoint)},
+        {WIC_PIXEL_FORMAT(128bppRGBAFixedPoint)},
+        {WIC_PIXEL_FORMAT(128bppRGBFixedPoint)},
+
+        {WIC_PIXEL_FORMAT(64bppRGBAHalf)},
+        {WIC_PIXEL_FORMAT(64bppPRGBAHalf)},
+        {WIC_PIXEL_FORMAT(64bppRGBHalf)},
+        {WIC_PIXEL_FORMAT(48bppRGBHalf)},
+
+        {WIC_PIXEL_FORMAT(32bppRGBE)},
+
+        {WIC_PIXEL_FORMAT(16bppGrayHalf)},
+        {WIC_PIXEL_FORMAT(32bppGrayFixedPoint)},
+
+        {WIC_PIXEL_FORMAT(32bppRGBA1010102)},
+        {WIC_PIXEL_FORMAT(32bppRGBA1010102XR)},
+
+        /* Starting with Windows 10 v1809, this works as a source format */
+        {WIC_PIXEL_FORMAT(32bppR10G10B10A2), TRUE, FALSE, 0, TRUE},
+
+        {WIC_PIXEL_FORMAT(32bppR10G10B10A2HDR10)},
+
+        {WIC_PIXEL_FORMAT(64bppCMYK)},
+
+        {WIC_PIXEL_FORMAT(24bpp3Channels)},
+        {WIC_PIXEL_FORMAT(32bpp4Channels)},
+        {WIC_PIXEL_FORMAT(40bpp5Channels)},
+        {WIC_PIXEL_FORMAT(48bpp6Channels)},
+        {WIC_PIXEL_FORMAT(56bpp7Channels)},
+        {WIC_PIXEL_FORMAT(64bpp8Channels)},
+
+        {WIC_PIXEL_FORMAT(48bpp3Channels)},
+        {WIC_PIXEL_FORMAT(64bpp4Channels)},
+        {WIC_PIXEL_FORMAT(80bpp5Channels)},
+        {WIC_PIXEL_FORMAT(96bpp6Channels)},
+        {WIC_PIXEL_FORMAT(112bpp7Channels)},
+        {WIC_PIXEL_FORMAT(128bpp8Channels)},
+
+        {WIC_PIXEL_FORMAT(40bppCMYKAlpha)},
+        {WIC_PIXEL_FORMAT(80bppCMYKAlpha)},
+
+        {WIC_PIXEL_FORMAT(32bpp3ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(40bpp4ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(48bpp5ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(56bpp6ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(64bpp7ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(72bpp8ChannelsAlpha)},
+
+        {WIC_PIXEL_FORMAT(64bpp3ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(80bpp4ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(96bpp5ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(112bpp6ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(128bpp7ChannelsAlpha)},
+        {WIC_PIXEL_FORMAT(144bpp8ChannelsAlpha)},
+
+        {WIC_PIXEL_FORMAT(8bppY)},
+        {WIC_PIXEL_FORMAT(8bppCb)},
+        {WIC_PIXEL_FORMAT(8bppCr)},
+        {WIC_PIXEL_FORMAT(16bppCbCr)},
+
+        {WIC_PIXEL_FORMAT(16bppYQuantizedDctCoefficients)},
+        {WIC_PIXEL_FORMAT(16bppCbQuantizedDctCoefficients)},
+        {WIC_PIXEL_FORMAT(16bppCrQuantizedDctCoefficients)},
+    };
+#undef WIC_PIXEL_FORMAT
+    BOOL can_convert, can_native, can_broken;
+    HRESULT hr, expect_hr, broken_hr;
+    IWICFormatConverter *converter;
+    UINT todo_count;
+    UINT i, j;
+
+    hr = CoCreateInstance(&CLSID_WICDefaultFormatConverter, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICFormatConverter, (void**)&converter);
+    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%lx\n", hr);
+    if (FAILED(hr))
+        return;
+
+    for (j = 0; j < ARRAY_SIZE(td); j++)
+    {
+        todo_count = 0;
+
+        for (i = 0; i < ARRAY_SIZE(td); i++)
+        {
+            can_native = td[i].src_valid && td[j].dst_valid;
+            can_broken = !(td[i].broken || td[j].broken) && !can_native;
+            expect_hr = can_native ? S_OK : WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+            broken_hr = can_broken ? S_OK : WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+
+            can_convert = -1;
+            hr = IWICFormatConverter_CanConvert(converter, td[i].format, td[j].format, &can_convert);
+            todo_wine_if (can_native != can_convert) {
+                ok(hr == expect_hr || broken(hr == broken_hr),
+                        "CanConvert (%s -> %s) returned %lx\n", td[i].name, td[j].name, hr);
+                ok(can_convert == can_native || broken(can_convert == can_broken),
+                        "expected %i, got %i \n", can_native, can_convert);
+            }
+            /* Note that we ignore any conversions that Windows does not support */
+            if (can_native && !can_convert)
+                todo_count++;
+        }
+
+        todo_wine_if (td[j].dst_todo_count == todo_count && todo_count != 0)
+        ok(todo_count == 0 || broken(todo_count == 35 || todo_count == 11 || todo_count == 4 || todo_count == 1),
+            "CanConvert missing %d expected source formats to destination format %s.\n",
+            todo_count, td[j].name);
+    }
+
+    IWICFormatConverter_Release(converter);
+}
+
 static void test_converter_4bppGray(void)
 {
     BitmapTestSrc *src_obj;
@@ -723,7 +895,7 @@ static void test_converter_4bppGray(void)
     {
         hr = IWICFormatConverter_CanConvert(converter, &GUID_WICPixelFormat32bppBGRA,
             &GUID_WICPixelFormat4bppGray, &can_convert);
-        ok(SUCCEEDED(hr), "CanConvert returned %lx\n", hr);
+        todo_wine ok(SUCCEEDED(hr), "CanConvert returned %lx\n", hr);
         todo_wine ok(can_convert, "expected TRUE, got %i\n", can_convert);
 
         hr = IWICFormatConverter_Initialize(converter, &src_obj->IWICBitmapSource_iface,
@@ -2088,6 +2260,7 @@ START_TEST(converter)
 
     test_invalid_conversion();
     test_default_converter();
+    test_can_convert();
     test_converter_4bppGray();
     test_converter_8bppGray();
     test_converter_8bppIndexed();

@@ -59,6 +59,18 @@ enum pixelformat {
     format_48bppRGB,
     format_64bppRGBA,
     format_32bppCMYK,
+    format_8bppAlpha,
+    format_48bppBGR,
+    format_64bppRGB,
+    format_64bppBGRA,
+    format_64bppPRGBA,
+    format_64bppPBGRA,
+    format_32bppBGR101010,
+    format_96bppRGBFloat,
+    format_128bppRGBAFloat,
+    format_128bppPRGBAFloat,
+    format_128bppRGBFloat,
+    format_32bppR10G10B10A2,
 };
 
 typedef HRESULT (*copyfunc)(struct FormatConverter *This, const WICRect *prc,
@@ -1640,6 +1652,18 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_48bppRGB, &GUID_WICPixelFormat48bppRGB, NULL},
     {format_64bppRGBA, &GUID_WICPixelFormat64bppRGBA, copypixels_to_64bppRGBA},
     {format_32bppCMYK, &GUID_WICPixelFormat32bppCMYK, NULL},
+    {format_8bppAlpha, &GUID_WICPixelFormat8bppAlpha, NULL},
+    {format_48bppBGR, &GUID_WICPixelFormat48bppBGR, NULL},
+    {format_64bppRGB, &GUID_WICPixelFormat64bppRGB, NULL},
+    {format_64bppBGRA, &GUID_WICPixelFormat64bppBGRA, NULL},
+    {format_64bppPRGBA, &GUID_WICPixelFormat64bppPRGBA, NULL},
+    {format_64bppPBGRA, &GUID_WICPixelFormat64bppPBGRA, NULL},
+    {format_32bppBGR101010, &GUID_WICPixelFormat32bppBGR101010, NULL},
+    {format_96bppRGBFloat, &GUID_WICPixelFormat96bppRGBFloat, NULL},
+    {format_128bppRGBAFloat, &GUID_WICPixelFormat128bppRGBAFloat, NULL},
+    {format_128bppPRGBAFloat, &GUID_WICPixelFormat128bppPRGBAFloat, NULL},
+    {format_128bppRGBFloat, &GUID_WICPixelFormat128bppRGBFloat, NULL},
+    {format_32bppR10G10B10A2, &GUID_WICPixelFormat32bppR10G10B10A2, NULL},
     {0}
 };
 
@@ -1914,26 +1938,28 @@ static HRESULT WINAPI FormatConverter_CanConvert(IWICFormatConverter *iface,
     srcinfo = get_formatinfo(srcPixelFormat);
     if (!srcinfo)
     {
-        FIXME("Unsupported source format %s\n", debugstr_guid(srcPixelFormat));
+        *pfCanConvert = FALSE;
         return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
     }
 
     dstinfo = get_formatinfo(dstPixelFormat);
     if (!dstinfo)
     {
-        FIXME("Unsupported destination format %s\n", debugstr_guid(dstPixelFormat));
+        *pfCanConvert = FALSE;
         return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
     }
 
-    if (dstinfo->copy_function &&
-        SUCCEEDED(dstinfo->copy_function(This, NULL, 0, 0, NULL, dstinfo->format)))
-        *pfCanConvert = TRUE;
-    else
+    if (!dstinfo->copy_function ||
+        FAILED(dstinfo->copy_function(This, NULL, 0, 0, NULL, srcinfo->format)))
     {
-        FIXME("Unsupported conversion %s -> %s\n", debugstr_guid(srcPixelFormat), debugstr_guid(dstPixelFormat));
+        if (dstinfo->format != format_32bppR10G10B10A2 &&
+                srcinfo->format != format_32bppCMYK && dstinfo->format != format_32bppCMYK)
+            FIXME("Unsupported conversion %s -> %s\n", debugstr_guid(srcPixelFormat), debugstr_guid(dstPixelFormat));
         *pfCanConvert = FALSE;
+        return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
     }
 
+    *pfCanConvert = TRUE;
     return S_OK;
 }
 
