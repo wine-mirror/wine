@@ -1417,7 +1417,7 @@ interface IDWriteTextAnalysisSink : IUnknown
     HRESULT SetNumberSubstitution(
         [in] UINT32 position,
         [in] UINT32 length,
-        [out] IDWriteNumberSubstitution* substitution
+        [in] IDWriteNumberSubstitution *substitution
     );
 }
 
@@ -1450,7 +1450,7 @@ interface IDWriteTextAnalyzer : IUnknown
         [in] IDWriteTextAnalysisSource *source,
         [in] UINT32 position,
         [in] UINT32 length,
-        [out] IDWriteTextAnalysisSink *sink
+        [in] IDWriteTextAnalysisSink *sink
     );
     HRESULT GetGlyphs(
         [in] WCHAR const *text,
@@ -1596,7 +1596,7 @@ interface IDWriteFactory : IUnknown
         [in] FLOAT cleartype_level,
         [in] DWRITE_PIXEL_GEOMETRY geometry,
         [in] DWRITE_RENDERING_MODE mode,
-        [in] IDWriteRenderingParams **params
+        [out] IDWriteRenderingParams **params
     );
     HRESULT RegisterFontFileLoader(
         [in] IDWriteFontFileLoader *loader
@@ -1645,7 +1645,7 @@ interface IDWriteFactory : IUnknown
         [out] IDWriteInlineObject **trimming_sign
     );
     HRESULT CreateTextAnalyzer(
-        [in] IDWriteTextAnalyzer **analyzer
+        [out] IDWriteTextAnalyzer **analyzer
     );
     HRESULT CreateNumberSubstitution(
         [in] DWRITE_NUMBER_SUBSTITUTION_METHOD method,
