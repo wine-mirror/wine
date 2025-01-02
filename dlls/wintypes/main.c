@@ -57,25 +57,24 @@ static BOOLEAN is_api_contract_present( const HSTRING hname, unsigned int versio
     return FALSE;
 }
 
-struct wintypes
+struct api_information_statics
 {
     IActivationFactory IActivationFactory_iface;
     IApiInformationStatics IApiInformationStatics_iface;
-    IPropertyValueStatics IPropertyValueStatics_iface;
     LONG ref;
 };
 
-static inline struct wintypes *impl_from_IActivationFactory(IActivationFactory *iface)
+static inline struct api_information_statics *impl_ais_from_IActivationFactory(IActivationFactory *iface)
 {
-    return CONTAINING_RECORD(iface, struct wintypes, IActivationFactory_iface);
+    return CONTAINING_RECORD(iface, struct api_information_statics, IActivationFactory_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE wintypes_QueryInterface(IActivationFactory *iface, REFIID iid,
+static HRESULT STDMETHODCALLTYPE api_information_statics_factory_QueryInterface(IActivationFactory *iface, REFIID iid,
         void **out)
 {
-    struct wintypes *impl = impl_from_IActivationFactory(iface);
+    struct api_information_statics *impl = impl_ais_from_IActivationFactory(iface);
 
-    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown)
             || IsEqualGUID(iid, &IID_IInspectable)
@@ -94,76 +93,69 @@ static HRESULT STDMETHODCALLTYPE wintypes_QueryInterface(IActivationFactory *ifa
         return S_OK;
     }
 
-    if (IsEqualGUID(iid, &IID_IPropertyValueStatics))
-    {
-        IUnknown_AddRef(iface);
-        *out = &impl->IPropertyValueStatics_iface;
-        return S_OK;
-    }
-
-    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
     *out = NULL;
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE wintypes_AddRef(IActivationFactory *iface)
+static ULONG STDMETHODCALLTYPE api_information_statics_factory_AddRef(IActivationFactory *iface)
 {
-    struct wintypes *impl = impl_from_IActivationFactory(iface);
+    struct api_information_statics *impl = impl_ais_from_IActivationFactory(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
     TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
-static ULONG STDMETHODCALLTYPE wintypes_Release(IActivationFactory *iface)
+static ULONG STDMETHODCALLTYPE api_information_statics_factory_Release(IActivationFactory *iface)
 {
-    struct wintypes *impl = impl_from_IActivationFactory(iface);
+    struct api_information_statics *impl = impl_ais_from_IActivationFactory(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
     TRACE("iface %p, ref %lu.\n", iface, ref);
     return ref;
 }
 
-static HRESULT STDMETHODCALLTYPE wintypes_GetIids(IActivationFactory *iface, ULONG *iid_count,
+static HRESULT STDMETHODCALLTYPE api_information_statics_factory_GetIids(IActivationFactory *iface, ULONG *iid_count,
         IID **iids)
 {
     FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE wintypes_GetRuntimeClassName(IActivationFactory *iface,
+static HRESULT STDMETHODCALLTYPE api_information_statics_factory_GetRuntimeClassName(IActivationFactory *iface,
         HSTRING *class_name)
 {
     FIXME("iface %p, class_name %p stub!\n", iface, class_name);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE wintypes_GetTrustLevel(IActivationFactory *iface,
+static HRESULT STDMETHODCALLTYPE api_information_statics_factory_GetTrustLevel(IActivationFactory *iface,
         TrustLevel *trust_level)
 {
     FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE wintypes_ActivateInstance(IActivationFactory *iface,
+static HRESULT STDMETHODCALLTYPE api_information_statics_factory_ActivateInstance(IActivationFactory *iface,
         IInspectable **instance)
 {
     FIXME("iface %p, instance %p stub!\n", iface, instance);
     return E_NOTIMPL;
 }
 
-static const struct IActivationFactoryVtbl activation_factory_vtbl =
+static const struct IActivationFactoryVtbl api_information_statics_factory_vtbl =
 {
-    wintypes_QueryInterface,
-    wintypes_AddRef,
-    wintypes_Release,
+    api_information_statics_factory_QueryInterface,
+    api_information_statics_factory_AddRef,
+    api_information_statics_factory_Release,
     /* IInspectable methods */
-    wintypes_GetIids,
-    wintypes_GetRuntimeClassName,
-    wintypes_GetTrustLevel,
+    api_information_statics_factory_GetIids,
+    api_information_statics_factory_GetRuntimeClassName,
+    api_information_statics_factory_GetTrustLevel,
     /* IActivationFactory methods */
-    wintypes_ActivateInstance,
+    api_information_statics_factory_ActivateInstance,
 };
 
-DEFINE_IINSPECTABLE(api_information_statics, IApiInformationStatics, struct wintypes, IActivationFactory_iface)
+DEFINE_IINSPECTABLE(api_information_statics, IApiInformationStatics, struct api_information_statics, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE api_information_statics_IsTypePresent(
         IApiInformationStatics *iface, HSTRING type_name, BOOLEAN *value)
@@ -309,6 +301,111 @@ static const struct IApiInformationStaticsVtbl api_information_statics_vtbl =
     api_information_statics_IsEnumNamedValuePresent,
     api_information_statics_IsApiContractPresentByMajor,
     api_information_statics_IsApiContractPresentByMajorAndMinor
+};
+
+static struct api_information_statics api_information_statics =
+{
+    {&api_information_statics_factory_vtbl},
+    {&api_information_statics_vtbl},
+    1
+};
+
+struct property_value_statics
+{
+    IActivationFactory IActivationFactory_iface;
+    IPropertyValueStatics IPropertyValueStatics_iface;
+    LONG ref;
+};
+
+static inline struct property_value_statics *impl_pvs_from_IActivationFactory(IActivationFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct property_value_statics, IActivationFactory_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_statics_factory_QueryInterface(IActivationFactory *iface, REFIID iid,
+        void **out)
+{
+    struct property_value_statics *impl = impl_pvs_from_IActivationFactory(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IInspectable)
+            || IsEqualGUID(iid, &IID_IAgileObject)
+            || IsEqualGUID(iid, &IID_IActivationFactory))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IPropertyValueStatics))
+    {
+        IUnknown_AddRef(iface);
+        *out = &impl->IPropertyValueStatics_iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE property_value_statics_factory_AddRef(IActivationFactory *iface)
+{
+    struct property_value_statics *impl = impl_pvs_from_IActivationFactory(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE property_value_statics_factory_Release(IActivationFactory *iface)
+{
+    struct property_value_statics *impl = impl_pvs_from_IActivationFactory(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_statics_factory_GetIids(IActivationFactory *iface, ULONG *iid_count,
+        IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_statics_factory_GetRuntimeClassName(IActivationFactory *iface,
+        HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_statics_factory_GetTrustLevel(IActivationFactory *iface,
+        TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE property_value_statics_factory_ActivateInstance(IActivationFactory *iface,
+        IInspectable **instance)
+{
+    FIXME("iface %p, instance %p stub!\n", iface, instance);
+    return E_NOTIMPL;
+}
+
+static const struct IActivationFactoryVtbl property_value_statics_factory_vtbl =
+{
+    property_value_statics_factory_QueryInterface,
+    property_value_statics_factory_AddRef,
+    property_value_statics_factory_Release,
+    /* IInspectable methods */
+    property_value_statics_factory_GetIids,
+    property_value_statics_factory_GetRuntimeClassName,
+    property_value_statics_factory_GetTrustLevel,
+    /* IActivationFactory methods */
+    property_value_statics_factory_ActivateInstance,
 };
 
 struct property_value
@@ -865,7 +962,7 @@ static const struct IReference_DOUBLEVtbl iref_double_vtbl =
     iref_double_get_Value,
 };
 
-DEFINE_IINSPECTABLE(property_value_statics, IPropertyValueStatics, struct wintypes, IActivationFactory_iface)
+DEFINE_IINSPECTABLE(property_value_statics, IPropertyValueStatics, struct property_value_statics, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateEmpty(IPropertyValueStatics *iface,
         IInspectable **property_value)
@@ -1197,10 +1294,9 @@ static const struct IPropertyValueStaticsVtbl property_value_statics_vtbl =
     property_value_statics_CreateRectArray,
 };
 
-static struct wintypes wintypes =
+static struct property_value_statics property_value_statics =
 {
-    {&activation_factory_vtbl},
-    {&api_information_statics_vtbl},
+    {&property_value_statics_factory_vtbl},
     {&property_value_statics_vtbl},
     1
 };
@@ -1213,10 +1309,19 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 
 HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **factory)
 {
+    const WCHAR *buffer = WindowsGetStringRawBuffer(classid, NULL);
+
     TRACE("classid %s, factory %p.\n", debugstr_hstring(classid), factory);
-    *factory = &wintypes.IActivationFactory_iface;
-    IUnknown_AddRef(*factory);
-    return S_OK;
+
+    *factory = NULL;
+
+    if (!wcscmp(buffer, L"Windows.Foundation.Metadata.ApiInformation"))
+        IActivationFactory_AddRef((*factory = &api_information_statics.IActivationFactory_iface));
+    if (!wcscmp(buffer, L"Windows.Foundation.PropertyValue"))
+        IActivationFactory_AddRef((*factory = &property_value_statics.IActivationFactory_iface));
+
+    if (*factory) return S_OK;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 HRESULT WINAPI RoIsApiContractMajorVersionPresent(const WCHAR *name, UINT16 major, BOOL *result)

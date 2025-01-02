@@ -72,7 +72,7 @@ static void test_interfaces(void)
         check_interface(factory, &IID_IAgileObject, TRUE);
         check_interface(factory, &IID_IActivationFactory, TRUE);
         check_interface(factory, &IID_IApiInformationStatics, TRUE);
-        todo_wine check_interface(factory, &IID_IPropertyValueStatics, FALSE);
+        check_interface(factory, &IID_IPropertyValueStatics, FALSE);
         IActivationFactory_Release(factory);
     }
     else
@@ -88,7 +88,7 @@ static void test_interfaces(void)
     check_interface(factory, &IID_IInspectable, TRUE);
     check_interface(factory, &IID_IAgileObject, TRUE);
     check_interface(factory, &IID_IActivationFactory, TRUE);
-    todo_wine check_interface(factory, &IID_IApiInformationStatics, FALSE);
+    check_interface(factory, &IID_IApiInformationStatics, FALSE);
     check_interface(factory, &IID_IPropertyValueStatics, TRUE);
     IActivationFactory_Release(factory);
     WindowsDeleteString(str);
