@@ -67,6 +67,7 @@ enum SymTagEnum
    SymTagHeapAllocationSite,
    SymTagCoffGroup,
    SymTagInlinee,
+   SymTagTaggedUnionCase,
    SymTagMax
 };
 
@@ -759,6 +760,12 @@ typedef enum CV_CFL_LANG
     CV_CFL_JSCRIPT,
     CV_CFL_MSIL,
     CV_CFL_HLSL,
+    CV_CFL_OBJC,
+    CV_CFL_OBJCXX,
+    CV_CFL_SWIFT,
+    CV_CFL_ALIASOBJ,
+    CV_CFL_RUST,
+    CV_CFL_GO,
 } CV_CFL_LANG;
 
 typedef enum CV_CPU_TYPE_e
