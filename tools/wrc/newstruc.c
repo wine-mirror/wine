@@ -156,13 +156,6 @@ lvc_t *new_lvc(void)
     return ret;
 }
 
-res_count_t *new_res_count(void)
-{
-    res_count_t *ret = xmalloc( sizeof(*ret) );
-    memset( ret, 0, sizeof(*ret) );
-    return ret;
-}
-
 string_t *new_string(void)
 {
     string_t *ret = xmalloc( sizeof(*ret) );
