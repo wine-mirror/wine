@@ -3630,7 +3630,7 @@ struct set_window_pos_reply
     unsigned int   new_style;
     unsigned int   new_ex_style;
     user_handle_t  surface_win;
-    int            needs_update;
+    char __pad_20[4];
 };
 #define SET_WINPOS_PAINT_SURFACE    0x01
 #define SET_WINPOS_PIXEL_FORMAT     0x02
@@ -6775,6 +6775,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 854
+#define SERVER_PROTOCOL_VERSION 855
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

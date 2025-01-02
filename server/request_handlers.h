@@ -1540,7 +1540,6 @@ C_ASSERT( sizeof(struct set_window_pos_request) == 64 );
 C_ASSERT( offsetof(struct set_window_pos_reply, new_style) == 8 );
 C_ASSERT( offsetof(struct set_window_pos_reply, new_ex_style) == 12 );
 C_ASSERT( offsetof(struct set_window_pos_reply, surface_win) == 16 );
-C_ASSERT( offsetof(struct set_window_pos_reply, needs_update) == 20 );
 C_ASSERT( sizeof(struct set_window_pos_reply) == 24 );
 C_ASSERT( offsetof(struct get_window_rectangles_request, handle) == 12 );
 C_ASSERT( offsetof(struct get_window_rectangles_request, relative) == 16 );

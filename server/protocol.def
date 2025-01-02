@@ -2692,7 +2692,6 @@ enum message_type
     unsigned int   new_style;     /* new window style */
     unsigned int   new_ex_style;  /* new window extended style */
     user_handle_t  surface_win;   /* parent window that holds the surface */
-    int            needs_update;  /* whether the surface region needs an update */
 @END
 #define SET_WINPOS_PAINT_SURFACE    0x01  /* window has a paintable surface */
 #define SET_WINPOS_PIXEL_FORMAT     0x02  /* window has a custom pixel format */
