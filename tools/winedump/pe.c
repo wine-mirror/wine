@@ -4509,6 +4509,126 @@ static void dump_text_data( const void *ptr, unsigned int size, const char *pref
     }
 }
 
+/* dump data for an MUI resource */
+static void dump_mui_data( const void *ptr, unsigned int size, const char *prefix )
+{
+    UINT i;
+
+    const struct mui_resource
+    {
+        UINT signature;
+        UINT size;
+        UINT version;
+        UINT path_type;
+        UINT file_type;
+        UINT system_attributes;
+        UINT fallback_location;
+        BYTE service_checksum[16];
+        BYTE checksum[16];
+        UINT unk1[2];
+        UINT mui_path_off;
+        UINT mui_path_size;
+        UINT unk2[2];
+        UINT ln_type_name_off;
+        UINT ln_type_name_size;
+        UINT ln_type_id_off;
+        UINT ln_type_id_size;
+        UINT mui_type_name_off;
+        UINT mui_type_name_size;
+        UINT mui_type_id_off;
+        UINT mui_type_id_size;
+        UINT lang_off;
+        UINT lang_size;
+        UINT fallback_lang_off;
+        UINT fallback_lang_size;
+    } *data = ptr;
+
+    printf( "%sSignature:     %x\n", prefix, data->signature );
+    printf( "%sVersion:       %u.%u\n", prefix, HIWORD(data->version), LOWORD(data->version) );
+    printf( "%sPath type:     %x\n", prefix, data->path_type );
+    printf( "%sFile type:     %x\n", prefix, data->file_type );
+    printf( "%sAttributes:    %x\n", prefix, data->system_attributes );
+    printf( "%sFallback:      %x\n", prefix, data->fallback_location );
+    printf( "%sChecksum:      ", prefix );
+    for (i = 0; i < sizeof(data->checksum); i++) printf( "%02x", data->checksum[i] );
+    printf( "\n%sSvc checksum:  ", prefix );
+    for (i = 0; i < sizeof(data->service_checksum); i++) printf( "%02x", data->service_checksum[i] );
+    printf( "\n" );
+    printf( "%sUnknown1:      %08x %08x\n", prefix, data->unk1[0], data->unk1[1]  );
+    printf( "%sUnknown2:      %08x %08x\n", prefix, data->unk2[0], data->unk2[1]  );
+
+    if (data->mui_path_off)
+    {
+        const WCHAR *name = (WCHAR *)((char *)data + data->mui_path_off);
+        printf( "%sMUI path:      ", prefix );
+        dump_strW( name, strlenW(name) );
+        printf( "\n" );
+    }
+
+    printf( "%sResources:     {", prefix );
+    if (data->ln_type_name_off)
+    {
+        const WCHAR *names = (WCHAR *)((char *)data + data->ln_type_name_off);
+        while (*names)
+        {
+            printf( " " );
+            dump_strW( names, strlenW(names) );
+            names += strlenW( names ) + 1;
+        }
+    }
+    if (data->ln_type_id_off)
+    {
+        const UINT *types = (UINT *)((char *)data + data->ln_type_id_off);
+        for (i = 0; i < data->ln_type_id_size / sizeof(*types); i++)
+        {
+            const char *type = get_resource_type( types[i] );
+            if (type) printf( " %s", type );
+            else printf( " %04x", types[i] );
+        }
+    }
+    printf( " }\n" );
+
+    printf( "%sMUI resources: {", prefix );
+    if (data->mui_type_name_off)
+    {
+        const WCHAR *names = (WCHAR *)((char *)data + data->mui_type_name_off);
+        while (*names)
+        {
+            printf( " " );
+            dump_strW( names, strlenW(names) );
+            names += strlenW( names ) + 1;
+        }
+    }
+    if (data->mui_type_id_off)
+    {
+        const UINT *types = (UINT *)((char *)data + data->mui_type_id_off);
+        for (i = 0; i < data->mui_type_id_size / sizeof(*types); i++)
+        {
+            const char *type = get_resource_type( types[i] );
+            if (type) printf( " %s", type );
+            else printf( " %04x", types[i] );
+        }
+    }
+    printf( " }\n" );
+
+    if (data->lang_off)
+    {
+        const WCHAR *name = (WCHAR *)((char *)data + data->lang_off);
+        printf( "%sLanguage:      ", prefix );
+        dump_strW( name, strlenW(name) );
+        printf( "\n" );
+    }
+
+    if (data->fallback_lang_off)
+    {
+        const WCHAR *name = (WCHAR *)((char *)data + data->fallback_lang_off);
+        printf( "%sFallback lang: ", prefix );
+        dump_strW( name, strlenW(name) );
+        printf( "\n" );
+    }
+    dump_data( ptr, size, prefix );
+}
+
 static int cmp_resource_name( const IMAGE_RESOURCE_DIR_STRING_U *str_res, const char *str )
 {
     unsigned int i;
@@ -4576,6 +4696,8 @@ static void dump_dir_resource(void)
                     string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->NameOffset);
                     if (!cmp_resource_name( string, "TYPELIB" ))
                         tlb_dump_resource( (void *)RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
+                    else if (!cmp_resource_name( string, "MUI" ))
+                        dump_mui_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
                     else if (!cmp_resource_name( string, "WINE_REGISTRY" ))
                         dump_text_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
                     else
