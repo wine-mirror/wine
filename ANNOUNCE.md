@@ -1,9 +1,9 @@
-The Wine development release 10.0-rc3 is now available.
+The Wine development release 10.0-rc4 is now available.
 
 What's new in this release:
   - Bug fixes only, we are in code freeze.
 
-The source is available at <https://dl.winehq.org/wine/source/10.0/wine-10.0-rc3.tar.xz>
+The source is available at <https://dl.winehq.org/wine/source/10.0/wine-10.0-rc4.tar.xz>
 
 Binary packages for various distributions will be available
 from the respective [download sites][1].
@@ -15,97 +15,78 @@ See the file [AUTHORS][3] for the complete list.
 
 [1]: https://gitlab.winehq.org/wine/wine/-/wikis/Download
 [2]: https://gitlab.winehq.org/wine/wine/-/wikis/Documentation
-[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-10.0-rc3/AUTHORS
+[3]: https://gitlab.winehq.org/wine/wine/-/raw/wine-10.0-rc4/AUTHORS
 
 ----------------------------------------------------------------
 
-### Bugs fixed in 10.0-rc3 (total 15):
+### Bugs fixed in 10.0-rc4 (total 13):
 
- - #11674  Dual-core unsupported in WoW and SC2
- - #49473  Chaos Legion videos are played upside down
- - #52738  No keyboard input in "STREET CHAVES - O LUTADOR DA VILA"
- - #56319  Parallel Port Tester won't start (fails to locate driver "System32\Drivers\inpoutx64.sys", but changing to absolute path works)
- - #56348  Bricks: moving a brick causes it to rapidly alternate positions
- - #56471  starting of native program with "start /unix ..." is broken
- - #56632  Explorer cannot run any files in Windows ME compatibility mode (or below)
- - #56714  Startopia is stuck on a black screen on launch
- - #57227  IL-2 1946 crash at startup
- - #57286  Dark Age of Camelot - camelot.exe required igd10umd32.dll but the .dll file is not found.
- - #57319  Painting in a proprietary application is broken with vulkan renderer
- - #57515  desktop mode did not show taskbar anymore
- - #57523  PokerTracker 4: cannot launch anymore
- - #57525  Systray icons cannot be interacted with
- - #57541  CMake doesn't find toolchain
+ - #37372  Unexpected order of results in wildcard expansion
+ - #48877  Melodyne crashes when using the Pitch tool
+ - #51656  Gaea Installer crashes in riched when pressing enter
+ - #52447  64-bit .NET framework 2.0 installer hangs while generating/installing native images of 'System.Windows.Forms' assembly into GAC
+ - #53405  Into The Breach freezes when enabling fullscreen
+ - #54342  ws2_32:sock - test_WSARecv() sometimes fails with "got apc_count 1." on Windows
+ - #56531  Final Fantasy XI Online: Some textures are transparent, malformed, or misplaced.
+ - #56533  Final Fantasy XI Online: Incorrect/corrupt textures shown on models.
+ - #56885  WinCatalog has a crash at startup
+ - #57248  Rhinoceros 8.11 installer crashes on start
+ - #57568  Arcanum (and many other titles) crashes on start
+ - #57577  Minimised applications are restored with -4 vertical pixels.
+ - #57587  10.0-rc1 regression (dsoundrender): no audio or hangs in some videos
 
-### Changes since 10.0-rc2:
+### Changes since 10.0-rc3:
 ```
-Akihiro Sagawa (1):
-      po: Update Japanese translation.
+Alexandre Julliard (3):
+      Update copyright info for 2025.
+      ntdll: Set the processor architecture variable from the current arch.
+      xml: Disable the non-determinist schema check.
 
-Alanas Tebuev (1):
-      comctl32/tests: Initialize hwnd to NULL before calling rebuild_toolbar().
+André Zwing (6):
+      bluetoothapis/tests: Don't test functions directly when reporting GetLastError().
+      kernel32/tests: Don't test functions directly when reporting GetLastError().
+      iphlpapi/tests: Don't test functions directly when reporting GetLastError().
+      msvcr120/tests: Don't test function directly when reporting GetLastError().
+      msvcp140/tests: Don't test function directly when reporting GetLastError().
+      msvcp120/tests: Don't test function directly when reporting GetLastError().
 
-Alexandre Julliard (6):
-      ntdll: Align heap virtual allocations to a multiple of the page size.
-      shell32: Don't call AW functions internally.
-      shell32: Return the file itself without extension if it exists.
-      propsys/tests: Fix a test that fails on some Windows versions.
-      win32u/tests: Mark the foreground thread test as flaky.
-      advapi32/tests: Use the correct key handle in the notify thread.
+Bernhard Übelacker (7):
+      mfplat/tests: Fix copy-paste release calls.
+      dwrite: Avoid stack-buffer-overflow in arabic_setup_masks.
+      comctl32/tests: Fix test array size (ASan).
+      comctl32/tests: Use sufficient user data buffer in the Tab tests (ASan).
+      comctl32/tests: Mark a test as broken on Windows.
+      dwrite: Fix off-by-one clustermap indexing (ASan).
+      uiautomationcore: Fix a double-free of advisers array (ASan).
 
-Alistair Leslie-Hughes (1):
-      msxml3: Correct looping of Document Element node map.
+Elizabeth Figura (1):
+      qasf/dmowrapper: Acquire new output samples for each ProcessOutput() call.
 
-Bernhard Übelacker (4):
-      server: Avoid crash when handle table is allocated but not yet filled.
-      crypt32: Avoid stack-use-after-scope in CSignedEncodeMsg_GetParam (ASan).
-      d3dx9_36/tests: Fix logging of expected bytes in check_vertex_components. (ASan).
-      xmllite/tests: Avoid buffer overflow by using LONG_PTR (ASan).
+Eric Pouech (1):
+      kernelbase: Don't free pathname if query failed.
 
-Elizabeth Figura (2):
-      wined3d: Add nop state entries for states now invalidated on the client side.
-      Revert "wined3d: Use bindless textures for GLSL shaders if possible.".
+Etaash Mathamsetty (1):
+      nsiproxy: Set rcv/xmit speed to 1000000 on linux.
 
-Eric Pouech (3):
-      cmd/tests: Add more tests about variable expansion.
-      cmd: Fix regression in variable search in expansion.
-      winedump: Fix variable overwrite when dumping exception.
+Floris Renaud (1):
+      po: Update Dutch translation.
 
-Esme Povirk (1):
-      gdiplus: GdipPathAddRectangle should close the path.
+Jinoh Kang (1):
+      user32/tests: Force window to be visible in subtest_swp_paint_regions.
 
-Gerald Pfeifer (1):
-      capstone: Avoid GCC being treated as old VisualStudio.
+Piotr Caban (2):
+      msvcr120/tests: Skip _fsopen tests if file can't be created.
+      msvcp120/tests: Skip _Fiopen tests if file can't be created.
 
-Jacek Caban (1):
-      mshtml: Ignore Gecko events on detached nodes.
+Rémi Bernon (6):
+      winex11: Improve GetWindowStateUpdates traces.
+      win32u: Check window state updates again after applying new state.
+      win32u: Don't overwrite dummy vulkan window.
+      win32u: Always update the surface regions in apply_window_pos.
+      server: Remove now unnecessary needs_update member.
+      winex11: Don't re-create the GL drawable if pixel format didn't change.
 
-Louis Lenders (1):
-      kernelbase: Don't try to print the path in the FIXME in GetTempPath2.
-
-Nikolay Sivov (9):
-      windowscodecs/tests: Added some tests for Exif and Gps IFDs embedded in App1 blob.
-      windowscodecs/tests: Add some tests for CreateMetadataWriterFromReader().
-      windowscodecs/tests: Add some tests for CreateMetadataWriter().
-      windowscodecs/tests: Add some tests for metadata stream objects handling.
-      windowscodecs/tests: Add loading tests for the writers.
-      windowscodecs/tests: Check persist options after Load().
-      windowscodecs: Fix a typo in interface name.
-      include: Add methods arguments annotations for DirectWrite types.
-      dwrite/tests: Allocate test inline objects dynamically.
-
-Owen Rudge (2):
-      odbc32: Avoid crashing if str is null in debugstr_sqlstr.
-      odbc32: Add null pointer checks to update_result_lengths helpers.
-
-Paul Gofman (2):
-      winex11: Use NtUserReleaseDC() with hdc.
-      server: Cleanup all the global hooks owned by terminating thread.
-
-Rémi Bernon (5):
-      winex11: Sync gl drawable outside of the win_data mutex.
-      winex11: Use DCX_USESTYLE when checking DC clipping regions.
-      winex11: Move GL/VK offscreen if the clipping region is NULLREGION.
-      dinput: Copy the device format if the user format is a subset of it.
-      dinput: Check that the device format data fits in the user format data.
+Zhiyi Zhang (2):
+      d2d1/tests: Remove a duplicate test.
+      dxgi: Support more feature levels in debug_feature_level().
 ```
