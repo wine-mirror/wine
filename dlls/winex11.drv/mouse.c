@@ -497,7 +497,9 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
     TRACE( "hwnd %p, window %lx, event_root %lx, x_root %d, y_root %d, input %p\n", hwnd, window, event_root,
            x_root, y_root, input );
 
-    if (!hwnd)
+    if (window == root_window) pt = root_to_virtual_screen( pt.x, pt.y );
+    else if (event_root == root_window) pt = root_to_virtual_screen( x_root, y_root );
+    else if (!hwnd)
     {
         thread_data = x11drv_thread_data();
         if (!thread_data->clipping_cursor) return;
@@ -507,9 +509,7 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
     }
     else if ((data = get_win_data( hwnd )))
     {
-        if (window == root_window) pt = root_to_virtual_screen( pt.x, pt.y );
-        else if (event_root == root_window) pt = root_to_virtual_screen( x_root, y_root );
-        else if (window == data->client_window)
+        if (window == data->client_window)
         {
             pt.x += data->rects.client.left;
             pt.y += data->rects.client.top;
