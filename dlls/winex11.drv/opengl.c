@@ -1879,7 +1879,7 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
     return TRUE;
 }
 
-static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOOL flush )
+static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOOL flush, BOOL gl_finish )
 {
     HWND toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
     struct x11drv_win_data *data;
@@ -1898,6 +1898,7 @@ static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOO
     window = get_dc_drawable( hdc, &rect );
     region = get_dc_monitor_region( hwnd, hdc );
 
+    if (gl_finish) pglFinish();
     if (flush) XFlush( gdi_display );
 
     NtUserGetClientRect( hwnd, &rect_dst, NtUserGetWinMonitorDpi( hwnd, MDT_RAW_DPI ) );
@@ -1931,7 +1932,7 @@ static void wglFinish(void)
     {
         sync_context(ctx);
         pglFinish();
-        present_gl_drawable( hwnd, ctx->hdc, gl, TRUE );
+        present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, FALSE );
         release_gl_drawable( gl );
     }
 }
@@ -1947,7 +1948,7 @@ static void wglFlush(void)
     {
         sync_context(ctx);
         pglFlush();
-        present_gl_drawable( hwnd, ctx->hdc, gl, TRUE );
+        present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, TRUE );
         release_gl_drawable( gl );
     }
 }
@@ -2869,7 +2870,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     if (ctx && drawable && pglXWaitForSbcOML)
         pglXWaitForSbcOML( gdi_display, gl->drawable, target_sbc, &ust, &msc, &sbc );
 
-    present_gl_drawable( hwnd, ctx ? ctx->hdc : hdc, gl, !pglXWaitForSbcOML );
+    present_gl_drawable( hwnd, ctx ? ctx->hdc : hdc, gl, !pglXWaitForSbcOML, FALSE );
     update_gl_drawable_size( gl );
     release_gl_drawable( gl );
     return TRUE;
