@@ -75,8 +75,8 @@ static void set_wow64_environment( WCHAR **env )
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
-    RtlSetEnvironmentVariable( env, &arch_strW, get_machine_name( machine, &nameW ));
-    if (NtCurrentTeb()->WowTebOffset)
+    RtlSetEnvironmentVariable( env, &arch_strW, get_machine_name( current_machine, &nameW ));
+    if (!is_win64 && NtCurrentTeb()->WowTebOffset)
     {
         RtlWow64GetProcessMachines( GetCurrentProcess(), NULL, &machine );
         RtlSetEnvironmentVariable( env, &arch6432_strW, get_machine_name( machine, &nameW ));
