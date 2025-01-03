@@ -1208,22 +1208,24 @@ static BOOL set_win_format( HWND hwnd, const struct glx_pixel_format *format, BO
 
     if (!format->visual) return FALSE;
 
-    old = get_gl_drawable( hwnd, 0 );
-
-    if (!(gl = create_gl_drawable( hwnd, format, FALSE, internal )))
+    if (!(old = get_gl_drawable( hwnd, 0 )) || old->format != format)
     {
-        release_gl_drawable( old );
-        return FALSE;
+        if (!(gl = create_gl_drawable( hwnd, format, FALSE, internal )))
+        {
+            release_gl_drawable( old );
+            return FALSE;
+        }
+
+        TRACE( "created GL drawable %lx for win %p %s\n",
+               gl->drawable, hwnd, debugstr_fbconfig( format->fbconfig ));
+
+        if (old)
+            mark_drawable_dirty( old, gl );
+
+        XFlush( gdi_display );
+        release_gl_drawable( gl );
     }
 
-    TRACE( "created GL drawable %lx for win %p %s\n",
-           gl->drawable, hwnd, debugstr_fbconfig( format->fbconfig ));
-
-    if (old)
-        mark_drawable_dirty( old, gl );
-
-    XFlush( gdi_display );
-    release_gl_drawable( gl );
     release_gl_drawable( old );
 
     win32u_set_window_pixel_format( hwnd, pixel_format_index( format ), internal );
