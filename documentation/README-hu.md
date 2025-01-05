@@ -33,11 +33,11 @@ https://www.winehq.org.
 A Wine-nak a fordításához és futtatásához önnek szüksége lesz a következõkbõl
 egynek:
 
-- Linux 2.0.36-os, vagy feletti verzió
+- Linux 2.6.22-os, vagy feletti verzió
 - FreeBSD 12.4, vagy késõbbi
 - Solaris x86 9, vagy késõbbi
 - NetBSD-current
-- Mac OS X 10.8, vagy késõbbi
+- Mac OS X 10.12, vagy késõbbi
 
 Mivel a Wine-nak kükséges kernelszintû futási szál támogatás a futtatáshoz, csak
 a fent említett operációs rendszerek támogatottak.

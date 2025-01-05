@@ -41,11 +41,11 @@ information och tips om hur problem kan lösas.
 
 För att kompilera och köra Wine krävs ett av följande:
 
-- Linux version 2.0.36 eller senare
+- Linux version 2.6.22 eller senare
 - FreeBSD 12.4 eller senare
 - Solaris x86 9 eller senare
 - NetBSD-current
-- Mac OS X 10.8 eller senare
+- Mac OS X 10.12 eller senare
 
 Wine kräver stöd för trådar på kernelnivå, och därför är det bara
 operativsystemen ovan som stöds. Andra operativsystem som

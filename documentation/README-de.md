@@ -46,11 +46,11 @@ Informationen, die Sie auf https://www.winehq.org finden.
 Um Wine kompilieren und ausführen zu können, benötigen Sie eines der
 folgenden Betriebssysteme:
 
-- Linux version 2.0.36 oder neuer
+- Linux version 2.6.22 oder neuer
 - FreeBSD 12.4 oder neuer
 - Solaris x86 9 oder neuer
 - NetBSD-current
-- Mac OS X 10.8 oder neuer
+- Mac OS X 10.12 oder neuer
 
 Da Wine Thread-Unterstützung auf Kernelebene benötigt, werden nur die oben
 aufgeführten Betriebssysteme unterstützt.

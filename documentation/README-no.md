@@ -31,11 +31,11 @@ problemløsing.
 
 Følgende kreves for å bygge og kjøre Wine:
 
-- Linux versjon 2.0.36 eller nyere
+- Linux versjon 2.6.22 eller nyere
 - FreeBSD 12.4 eller nyere
 - Solaris x86 9 eller nyere
 - NetBSD-current
-- Mac OS X 10.8 eller nyere
+- Mac OS X 10.12 eller nyere
 
 Wine krever støtte for tråder på kjernenivå, og derfor er det bare
 operativsystemene ovenfor som støttes. Andre operativsystemer som

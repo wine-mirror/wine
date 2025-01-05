@@ -32,11 +32,11 @@ zengin bilgi arşivini tarayabilirsiniz.
 Wine'ı derlemek ve çalıştırmak için, aşağıdakilerden en az birine sahip
 olmanız gerekir:
 
-- Linux 2.0.36 veya sonrası
+- Linux 2.6.22 veya sonrası
 - FreeBSD 12.4 veya sonrası
 - Solaris x86 9 veya sonrası
 - NetBSD-current
-- macOS 10.8 veya sonrası
+- macOS 10.12 veya sonrası
 
 Wine çalışmak için çekirdek düzeyinde iş parçacığı desteğine ihtiyaç
 duyduğundan sadece yukarıda söz edilen işletim sistemleri
