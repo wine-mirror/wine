@@ -937,6 +937,9 @@ INT WINAPI GetGraphicsMode( HDC hdc )
 INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
 {
     DWORD ret;
+
+    TRACE( "dc %p mode %#x\n", hdc, mode );
+
     return NtGdiGetAndSetDCDword( hdc, NtGdiSetGraphicsMode, mode, &ret ) ? ret : 0;
 }
 
@@ -956,6 +959,8 @@ INT WINAPI SetArcDirection( HDC hdc, INT dir )
 {
     DC_ATTR *dc_attr;
     INT ret;
+
+    TRACE( "dc %p dir %#x\n", hdc, dir );
 
     if (dir != AD_COUNTERCLOCKWISE && dir != AD_CLOCKWISE)
     {
@@ -1309,6 +1314,9 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
 {
     DC_ATTR *dc_attr;
 
+    TRACE( "dc %p matrix {%.8e %.8e} {%.8e %.8e} offset {%.8e %.8e} mode %#lx\n",
+           hdc, xform->eM11, xform->eM12, xform->eM21, xform->eM22, xform->eDx, xform->eDy, mode );
+
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_ModifyWorldTransform( dc_attr, xform, mode )) return FALSE;
     return NtGdiModifyWorldTransform( hdc, xform, mode );
@@ -1320,6 +1328,9 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
 BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
 {
     DC_ATTR *dc_attr;
+
+    TRACE( "dc %p matrix {%.8e %.8e} {%.8e %.8e} offset {%.8e %.8e}\n",
+           hdc, xform->eM11, xform->eM12, xform->eM21, xform->eM22, xform->eDx, xform->eDy );
 
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_SetWorldTransform( dc_attr, xform )) return FALSE;
