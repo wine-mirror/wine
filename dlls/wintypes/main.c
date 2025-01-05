@@ -16,23 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#define COBJMACROS
 #include "initguid.h"
-#include "windef.h"
-#include "winbase.h"
-#include "winstring.h"
-#include "wine/debug.h"
-#include "objbase.h"
-
-#include "activation.h"
-#include "rometadataresolution.h"
-
-#define WIDL_using_Windows_Foundation
-#define WIDL_using_Windows_Foundation_Metadata
-#include "windows.foundation.metadata.h"
-#include "wintypes_private.h"
+#include "private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintypes);
 
@@ -1319,6 +1304,8 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
         IActivationFactory_AddRef((*factory = &api_information_statics.IActivationFactory_iface));
     if (!wcscmp(buffer, L"Windows.Foundation.PropertyValue"))
         IActivationFactory_AddRef((*factory = &property_value_statics.IActivationFactory_iface));
+    if (!wcscmp(buffer, L"Windows.Storage.Streams.DataWriter"))
+        IActivationFactory_AddRef((*factory = data_writer_activation_factory));
 
     if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;

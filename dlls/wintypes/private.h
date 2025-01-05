@@ -1,7 +1,6 @@
 /*
- * Runtime Classes for wintypes.dll
- *
- * Copyright 2022 Zhiyi Zhang for CodeWeavers
+ * Copyright 2022-2024 Zhiyi Zhang for CodeWeavers
+ * Copyright 2025 Jactry Zeng for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,14 +17,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep register
+#include <stdarg.h>
 
-#ifdef __WIDL__
-#pragma winrt ns_prefix
-#endif
+#define COBJMACROS
+#include "windef.h"
+#include "winbase.h"
+#include "winstring.h"
+#include "wine/debug.h"
+#include "objbase.h"
 
-#define DO_NO_IMPORTS
-#define _WINTYPES
-#include "windows.foundation.idl"
-#include "windows.foundation.metadata.idl"
-#include "windows.storage.streams.idl"
+#include "activation.h"
+#include "rometadataresolution.h"
+
+#define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Metadata
+#include "windows.foundation.metadata.h"
+#define WIDL_using_Windows_Storage_Streams
+#include "windows.storage.streams.h"
+#include "wintypes_private.h"
+
+extern IActivationFactory *data_writer_activation_factory;

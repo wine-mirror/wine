@@ -32,6 +32,9 @@
 #include "windows.foundation.metadata.h"
 #include "wintypes_test.h"
 
+#define WIDL_using_Windows_Storage_Streams
+#include "windows.storage.streams.h"
+
 #include "wine/test.h"
 
 static BOOL is_wow64;
@@ -54,6 +57,7 @@ static void test_interfaces(void)
 {
     static WCHAR class_name[1024];
     IActivationFactory *factory;
+    IUnknown *unk;
     HSTRING str;
     HRESULT hr;
 
@@ -90,6 +94,40 @@ static void test_interfaces(void)
     check_interface(factory, &IID_IActivationFactory, TRUE);
     check_interface(factory, &IID_IApiInformationStatics, FALSE);
     check_interface(factory, &IID_IPropertyValueStatics, TRUE);
+    IActivationFactory_Release(factory);
+    WindowsDeleteString(str);
+
+    wcscpy(class_name, L"Windows.Storage.Streams.DataWriter");
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    check_interface(factory, &IID_IAgileObject, TRUE);
+    check_interface(factory, &IID_IActivationFactory, TRUE);
+    todo_wine check_interface(factory, &IID_IDataWriterFactory, TRUE);
+    check_interface(factory, &IID_IRandomAccessStreamReferenceStatics, FALSE);
+    check_interface(factory, &IID_IApiInformationStatics, FALSE);
+    check_interface(factory, &IID_IPropertyValueStatics, FALSE);
+    IActivationFactory_Release(factory);
+    WindowsDeleteString(str);
+
+    wcscpy(class_name, L"Windows.Storage.Streams.RandomAccessStreamReference");
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&unk);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* pre win10 v1809 */, "Got hr %#lx.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(unk);
+    check_interface(factory, &IID_IActivationFactory, TRUE);
+    check_interface(factory, &IID_IDataWriterFactory, FALSE);
+    todo_wine check_interface(factory, &IID_IRandomAccessStreamReferenceStatics, TRUE);
+    check_interface(factory, &IID_IApiInformationStatics, FALSE);
+    check_interface(factory, &IID_IPropertyValueStatics, FALSE);
     IActivationFactory_Release(factory);
     WindowsDeleteString(str);
 
