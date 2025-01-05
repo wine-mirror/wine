@@ -163,8 +163,8 @@ msgid ""
 "install it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> for details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Wine ei löytänyt Gecko-pakettia, jota tarvitaan HTML:ää sisältävien "
 "ohjelmien toimintaan. Wine voi ladata ja asentaa sen puolestasi.\n"
@@ -3142,17 +3142,12 @@ msgid "Not yet implemented"
 msgstr "Ei vielä toteutettu"
 
 #: dlls/desk.cpl/desk.rc:35
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Desktop"
 msgstr "Työpöytä"
 
 #: dlls/desk.cpl/desk.rc:38
-#, fuzzy
-#| msgid "Wine Desktop"
 msgid "Virtual Desktop"
-msgstr "Winen Työpöytä"
+msgstr "Virtuaalityöpöytä"
 
 #: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
 msgid "&Reset"
@@ -3160,17 +3155,15 @@ msgstr "&Nollaa"
 
 #: dlls/desk.cpl/desk.rc:42
 msgid "Emulate display mode changes (requires restart)"
-msgstr ""
+msgstr "Emuloi näyttötilan muutokia (vaatii uudelleenkäynnistyksen)"
 
 #: dlls/desk.cpl/desk.rc:29
-#, fuzzy
-#| msgid "Default Settings"
 msgid "Display Settings"
-msgstr "Oletusasetukset"
+msgstr "Näyttöasetukset"
 
 #: dlls/desk.cpl/desk.rc:30
 msgid "Configure monitors and display devices."
-msgstr ""
+msgstr "Säädä näyttöjä ja näyttölaitteita."
 
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
@@ -3764,16 +3757,12 @@ msgid "&Enable"
 msgstr "&Käytä"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (DirectInput devices)"
-msgstr "Liitetty (xinput-laite)"
+msgstr "Liitetty (DirectInput-laitteet)"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (XInput devices)"
-msgstr "Liitetty (xinput-laite)"
+msgstr "Liitetty (XInput-laitteet)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3781,19 +3770,15 @@ msgstr "Ei käytössä"
 
 #: dlls/joy.cpl/joy.rc:51
 msgid "Advanced settings (restart prefix required to take effect)"
-msgstr ""
+msgstr "Edistyneet asetukset (vaativat prefiksin uudelleenkäynnistyksen)"
 
 #: dlls/joy.cpl/joy.rc:52
-#, fuzzy
-#| msgid "&Enable"
 msgid "Enable SDL"
-msgstr "&Käytä"
+msgstr "Ota käyttöön SDL"
 
 #: dlls/joy.cpl/joy.rc:53
-#, fuzzy
-#| msgid "Disabled"
 msgid "Disable hidraw"
-msgstr "Ei käytössä"
+msgstr "Poista käytöstä hidraw"
 
 #: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
@@ -4116,22 +4101,20 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Kirjoitussuojattua ominaisuutta '|' ei voi muokata"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a DataView object"
-msgstr "'this' ei ole |-objekti"
+msgstr "'this' ei ole DataView-objekti"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Required argument offset or value in DataView method is not specified"
-msgstr ""
+msgstr "DataView'n metodin vaatima argumentti (kohta tai arvo) puuttuu"
 
 #: dlls/jscript/jscript.rc:83
 msgid "DataView operation access beyond specified buffer length"
-msgstr ""
+msgstr "DataView-operaatio ylittää puskurin pituuden"
 
 #: dlls/jscript/jscript.rc:84
 msgid "DataView constructor argument offset is invalid"
-msgstr ""
+msgstr "DataView'n muodostimen kohta-argumentti (offset) ei kelpaa"
 
 #: dlls/jscript/jscript.rc:85
 msgid "'this' is not a | object"
@@ -4142,10 +4125,8 @@ msgid "'key' is not an object"
 msgstr "'key' ei ole objekti"
 
 #: dlls/jscript/jscript.rc:87
-#, fuzzy
-#| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
-msgstr "Odotettiin taulukkoa"
+msgstr "Odotettiin ArrayBuffer-objektia"
 
 #: dlls/jscript/jscript.rc:88
 msgid "Property cannot have both accessors and a value"
@@ -7170,7 +7151,7 @@ msgstr "Argumentti ei kelpaa.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Cannot assign requested address.\n"
-msgstr ""
+msgstr "Annettua osoitetta ei voi asettaa.\n"
 
 #: dlls/kernelbase/winerror.mc:3783
 msgid "Connection reset by peer.\n"
@@ -9496,16 +9477,16 @@ msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Lisää leikepöydän sisällön dokumenttiisi niin, että voit aktivoida sen %s:"
-"lla."
+"Lisää leikepöydän sisällön dokumenttiisi niin, että voit aktivoida sen "
+"%s:lla."
 
 #: dlls/oledlg/oledlg.rc:43
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Lisää leikepöydän sisällön dokumenttiisi niin, että voit aktivoida sen %s:"
-"lla. Se näytetään kuvakkeena."
+"Lisää leikepöydän sisällön dokumenttiisi niin, että voit aktivoida sen "
+"%s:lla. Se näytetään kuvakkeena."
 
 #: dlls/oledlg/oledlg.rc:44
 msgid ""
@@ -10183,7 +10164,7 @@ msgstr "Ohjauspaneeli"
 
 #: dlls/shell32/shell32.rc:162
 msgid "Ne&w"
-msgstr ""
+msgstr "&Uusi"
 
 #: dlls/shell32/shell32.rc:164
 msgid "E&xplore"
@@ -10191,7 +10172,7 @@ msgstr "&Selaa"
 
 #: dlls/shell32/shell32.rc:167
 msgid "Run as &Administrator"
-msgstr ""
+msgstr "&Aja järjestelmänvalvojana"
 
 #: dlls/shell32/shell32.rc:189
 msgid "Restart"
@@ -13247,8 +13228,9 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Kaikki äänilaitteet, jotka osaisivat soittaa tiedostoja nykyisessä muodossa,"
-"ovat jo käytössä. Odota, että jokin laite vapautuu, ja yritä uudelleen."
+"Kaikki äänilaitteet, jotka osaisivat soittaa tiedostoja nykyisessä "
+"muodossa,ovat jo käytössä. Odota, että jokin laite vapautuu, ja yritä "
+"uudelleen."
 
 #: dlls/winmm/winmm.rc:113
 msgid ""
@@ -13263,8 +13245,9 @@ msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Kaikki äänilaitteet, jotka osaisivat äänittää tiedostoja nykyisessä muodossa,"
-"ovat jo käytössä. Odota, että jokin laite vapautuu, ja yritä uudelleen."
+"Kaikki äänilaitteet, jotka osaisivat äänittää tiedostoja nykyisessä "
+"muodossa,ovat jo käytössä. Odota, että jokin laite vapautuu, ja yritä "
+"uudelleen."
 
 #: dlls/winmm/winmm.rc:115
 msgid ""
@@ -14951,10 +14934,8 @@ msgid "Current LogonId is"
 msgstr "Nykyinen LogonId on"
 
 #: programs/klist/klist.rc:38
-#, fuzzy
-#| msgid "client"
 msgid "Client"
-msgstr "asiakas"
+msgstr "Asiakas"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
