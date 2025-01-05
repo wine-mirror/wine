@@ -5,15 +5,15 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-12-15 07:05+0100\n"
+"PO-Revision-Date: 2025-01-04 21:17-0600\n"
 "Last-Translator: Jactry Zeng <jzeng@codeweavers.com>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -162,14 +162,15 @@ msgid ""
 "install it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> for details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Wine 未找到到用于支持嵌入 HTML 的 Gecko 引擎。Wine 可以自动并下载安装该组"
 "件。\n"
 "\n"
-"注意: 推荐您安装为发行版定制的软件包。具体请参看 <a href=\"https://wiki."
-"winehq.org/Gecko\">https://gitlab.winehq.org/wine/wine/-/wikis/Gecko</a>。"
+"注意: 推荐您安装为发行版定制的软件包。具体请参看 <a href=\"https://"
+"wiki.winehq.org/Gecko\">https://gitlab.winehq.org/wine/wine/-/wikis/Gecko</"
+"a>。"
 
 #: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
 msgid "&Install"
@@ -235,9 +236,9 @@ msgstr ""
 "Wine 未找到到用于支持 .NET 应用的 wine-mono 组件。Wine 可以自动并下载安装该组"
 "件。\n"
 "\n"
-"注意: 推荐您安装为发行版定制的软件包。具体请参看 <a https://gitlab.winehq."
-"org/wine/wine/-/wikis/Wine-Mono\">https://gitlab.winehq.org/wine/wine/-/"
-"wikis/Wine-Mono</a>。"
+"注意: 推荐您安装为发行版定制的软件包。具体请参看 <a https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono\">https://gitlab.winehq.org/"
+"wine/wine/-/wikis/Wine-Mono</a>。"
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -2327,7 +2328,7 @@ msgstr "选择证书存储"
 
 #: dlls/cryptui/cryptui.rc:276
 msgid "Select the certificate store you want to use:"
-msgstr "选择您要使用的证书存储"
+msgstr "选择您要使用的证书存储:"
 
 #: dlls/cryptui/cryptui.rc:279
 msgid "&Show physical stores"
@@ -3102,18 +3103,12 @@ msgid "Not yet implemented"
 msgstr "尚未实现"
 
 #: dlls/desk.cpl/desk.rc:35
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Desktop"
 msgstr "桌面"
 
 #: dlls/desk.cpl/desk.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Virtual Desktop"
-msgstr "桌面"
+msgstr "虚拟桌面"
 
 #: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
 msgid "&Reset"
@@ -3121,17 +3116,15 @@ msgstr "重置(&R)"
 
 #: dlls/desk.cpl/desk.rc:42
 msgid "Emulate display mode changes (requires restart)"
-msgstr ""
+msgstr "模拟显示模式改变（需要重启）"
 
 #: dlls/desk.cpl/desk.rc:29
-#, fuzzy
-#| msgid "Default Settings"
 msgid "Display Settings"
-msgstr "默认设置"
+msgstr "显示设置"
 
 #: dlls/desk.cpl/desk.rc:30
 msgid "Configure monitors and display devices."
-msgstr ""
+msgstr "监视器与显示设备配置。"
 
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
@@ -3722,16 +3715,12 @@ msgid "&Enable"
 msgstr "启用(&E)"
 
 #: dlls/joy.cpl/joy.rc:44
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (DirectInput devices)"
-msgstr "已连接 (xinput 设备)"
+msgstr "已连接 (DirectInput 设备)"
 
 #: dlls/joy.cpl/joy.rc:46
-#, fuzzy
-#| msgid "Connected (xinput device)"
 msgid "Connected (XInput devices)"
-msgstr "已连接 (xinput 设备)"
+msgstr "已连接 (XInput 设备)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3739,19 +3728,15 @@ msgstr "停用"
 
 #: dlls/joy.cpl/joy.rc:51
 msgid "Advanced settings (restart prefix required to take effect)"
-msgstr ""
+msgstr "高级设置（重启 prefix 后生效）"
 
 #: dlls/joy.cpl/joy.rc:52
-#, fuzzy
-#| msgid "&Enable"
 msgid "Enable SDL"
-msgstr "启用(&E)"
+msgstr "启用 SDL"
 
 #: dlls/joy.cpl/joy.rc:53
-#, fuzzy
-#| msgid "Disabled"
 msgid "Disable hidraw"
-msgstr "停用"
+msgstr "停用 hidraw"
 
 #: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
@@ -4071,22 +4056,20 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "无法更改不可写的属性 '|'"
 
 #: dlls/jscript/jscript.rc:81
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a DataView object"
-msgstr "'this' 不是 | 对象"
+msgstr "'this' 不是 DataView 对象"
 
 #: dlls/jscript/jscript.rc:82
 msgid "Required argument offset or value in DataView method is not specified"
-msgstr ""
+msgstr "未指定 DataView 方法所必需的参数偏移量或值"
 
 #: dlls/jscript/jscript.rc:83
 msgid "DataView operation access beyond specified buffer length"
-msgstr ""
+msgstr "DataView 操作访问超出指定的缓冲区长度"
 
 #: dlls/jscript/jscript.rc:84
 msgid "DataView constructor argument offset is invalid"
-msgstr ""
+msgstr "DataView 构造函数参数偏移量无效"
 
 #: dlls/jscript/jscript.rc:85
 msgid "'this' is not a | object"
@@ -4097,10 +4080,8 @@ msgid "'key' is not an object"
 msgstr "'key' 不是一个对象"
 
 #: dlls/jscript/jscript.rc:87
-#, fuzzy
-#| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
-msgstr "期望得到 Array 对象"
+msgstr "期望得到 ArrayBuffer 对象"
 
 #: dlls/jscript/jscript.rc:88
 msgid "Property cannot have both accessors and a value"
@@ -7125,7 +7106,7 @@ msgstr "无效的参数。\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Cannot assign requested address.\n"
-msgstr ""
+msgstr "无法分配所请求的地址。\n"
 
 #: dlls/kernelbase/winerror.mc:3783
 msgid "Connection reset by peer.\n"
@@ -10122,7 +10103,7 @@ msgstr "控制面板"
 
 #: dlls/shell32/shell32.rc:162
 msgid "Ne&w"
-msgstr ""
+msgstr "新建(&W)"
 
 #: dlls/shell32/shell32.rc:164
 msgid "E&xplore"
@@ -10130,7 +10111,7 @@ msgstr "资源管理器(&X)"
 
 #: dlls/shell32/shell32.rc:167
 msgid "Run as &Administrator"
-msgstr ""
+msgstr "以管理员运行(&A)"
 
 #: dlls/shell32/shell32.rc:189
 msgid "Restart"
@@ -14404,22 +14385,16 @@ msgstr ""
 " 十六进制 (0x34) 或者八进制 (056)。\n"
 
 #: programs/cmd/cmd.rc:407
-#, fuzzy
-#| msgid "Syntax error\n"
 msgid "Syntax error: unexpected %1\n"
-msgstr "语法错误\n"
+msgstr "语法错误: 非预期 %1\n"
 
 #: programs/cmd/cmd.rc:408
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of line"
-msgstr "文件尾。\n"
+msgstr "行尾"
 
 #: programs/cmd/cmd.rc:409
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of file"
-msgstr "文件尾。\n"
+msgstr "文件尾"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -14603,11 +14578,8 @@ msgid ""
 msgstr "您确认要关闭所有程序并退出虚拟桌面吗?"
 
 #: programs/explorer/explorer.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Wine Desktop"
-msgstr "桌面"
+msgstr "Wine 桌面"
 
 #: programs/findstr/findstr.rc:28
 msgid "Usage: findstr /options string\n"
@@ -14776,8 +14748,6 @@ msgid "Current LogonId is"
 msgstr "当前 LogonId 是"
 
 #: programs/klist/klist.rc:38
-#, fuzzy
-#| msgid "client"
 msgid "Client"
 msgstr "客户端"
 
@@ -18161,8 +18131,8 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"对不同的程序，可以让 Wine 假装成不同版本的 Windows，也可以在“函数库”与“显"
-"示”标签页中作不同的设置。"
+"对不同的程序，可以让 Wine 假装成不同版本的 Windows，也可以在“函数库”与“显示”"
+"标签页中作不同的设置。"
 
 #: programs/winecfg/winecfg.rc:164
 msgid "Add appli&cation..."
@@ -19158,10 +19128,8 @@ msgid "Help topics: "
 msgstr "帮助主题: "
 
 #: programs/wmic/wmic.rc:28
-#, fuzzy
-#| msgid "Error: Command line not supported\n"
 msgid "Error: Command not supported\n"
-msgstr "错误: 不支持此命令行\n"
+msgstr "错误: 不支持此命令\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
@@ -19176,10 +19144,8 @@ msgid "Error: Invalid syntax for PATH\n"
 msgstr "错误: PATH 语法无效\n"
 
 #: programs/wmic/wmic.rc:32
-#, fuzzy
-#| msgid "Bad command.\n"
 msgid "Supply a command\n"
-msgstr "错误指令。\n"
+msgstr "请提供命令\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
