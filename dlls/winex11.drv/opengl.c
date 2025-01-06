@@ -1931,7 +1931,7 @@ static void wglFinish(void)
     {
         sync_context(ctx);
         pglFinish();
-        present_gl_drawable( hwnd, ctx->hdc, gl, FALSE );
+        present_gl_drawable( hwnd, ctx->hdc, gl, TRUE );
         release_gl_drawable( gl );
     }
 }
@@ -1947,7 +1947,7 @@ static void wglFlush(void)
     {
         sync_context(ctx);
         pglFlush();
-        present_gl_drawable( hwnd, ctx->hdc, gl, FALSE );
+        present_gl_drawable( hwnd, ctx->hdc, gl, TRUE );
         release_gl_drawable( gl );
     }
 }
