@@ -2161,7 +2161,15 @@ static DWORD verify_cert_revocation_from_aia_ext(const CRYPT_DATA_BLOB *value, c
             {
                 const WCHAR *url = aia->rgAccDescr[i].AccessLocation.pwszURL;
                 TRACE("OCSP URL = %s\n", debugstr_w(url));
-                error = verify_cert_revocation_with_ocsp(cert, url, pRevPara, next_update);
+                if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
+                {
+                    TRACE("Cache only revocation, returning CRYPT_E_REVOCATION_OFFLINE.\n");
+                    error = CRYPT_E_REVOCATION_OFFLINE;
+                }
+                else
+                {
+                    error = verify_cert_revocation_with_ocsp(cert, url, pRevPara, next_update);
+                }
             }
             else
             {
