@@ -1902,7 +1902,7 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     info->bmiHeader.biPlanes      = 1;
     info->bmiHeader.biBitCount    = format->bits_per_pixel;
     info->bmiHeader.biSizeImage   = get_dib_image_size( info );
-    if (format->bits_per_pixel > 8) set_color_info( vis, info, use_alpha );
+    set_color_info( vis, info, use_alpha );
 
     if (!(image = x11drv_image_create( info, vis ))) return NULL;
 
