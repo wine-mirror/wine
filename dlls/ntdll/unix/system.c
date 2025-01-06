@@ -2059,7 +2059,16 @@ static struct smbios_prologue *create_smbios_data(void)
     struct smbios_buffer buf = { 0 };
     struct smbios_prologue *ret;
 
-    if ((ret = get_smbios_from_iokit())) return ret;
+    ret = get_smbios_from_iokit();
+    if (ret)
+    {
+        /* wineboot requires SMBIOS 2.5 or higher tables. */
+        if ((ret->major_version >= 3) ||
+            (ret->major_version == 2 && ret->minor_version >= 5))
+            return ret;
+        else
+            free(ret);
+    }
 
     /* Apple Silicon Macs don't have SMBIOS, we need to generate it.
      * Use strings and data from IOKit when available.
