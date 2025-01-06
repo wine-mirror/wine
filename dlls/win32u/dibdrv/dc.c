@@ -790,12 +790,10 @@ static void unlock_windrv_bits( struct gdi_image_bits *bits )
 
 void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
 {
-    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-    BITMAPINFO *info = (BITMAPINFO *)buffer;
-    void *bits;
     PHYSDEV windev;
     struct windrv_physdev *physdev;
     struct dibdrv_physdev *dibdrv;
+    BITMAPOBJ *bmp;
 
     TRACE( "%p %p\n", dc->hSelf, surface );
 
@@ -817,8 +815,19 @@ void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
         physdev->surface = surface;
 
         dibdrv = physdev->dibdrv;
-        bits = window_surface_get_color( surface, info );
-        init_dib_info_from_bitmapinfo( &dibdrv->dib, info, bits );
+        if (!(bmp = GDI_GetObjPtr( surface->color_bitmap, NTGDI_OBJ_BITMAP )))
+        {
+            static BITMAPINFO info = {.bmiHeader = {.biSize = sizeof(BITMAPINFOHEADER), .biWidth = 1, .biHeight = 1,
+                                                    .biPlanes = 1, .biBitCount = 32, .biCompression = BI_RGB}};
+            static DWORD bits;
+
+            init_dib_info_from_bitmapinfo( &dibdrv->dib, &info, &bits );
+        }
+        else
+        {
+            init_dib_info_from_bitmapobj( &dibdrv->dib, bmp );
+            GDI_ReleaseObj( surface->color_bitmap );
+        }
         dibdrv->dib.rect = dc->attr->vis_rect;
         OffsetRect( &dibdrv->dib.rect, -dc->device_rect.left, -dc->device_rect.top );
         dibdrv->bounds = &surface->bounds;
