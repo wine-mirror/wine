@@ -2081,6 +2081,8 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORM
 
     TRACE( "%p %p %u %p %p %u\n", handle, info, (int)count, written, timeout, alertable );
 
+    if (!count) return STATUS_INVALID_PARAMETER;
+
     while (i < count)
     {
         SERVER_START_REQ( remove_completion )

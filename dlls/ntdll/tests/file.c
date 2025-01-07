@@ -1040,6 +1040,11 @@ static void test_set_io_completion(void)
     }
 
     count = 0xdeadbeef;
+    res = pNtRemoveIoCompletionEx( h, info, 0, &count, &timeout, FALSE );
+    ok( res == STATUS_INVALID_PARAMETER, "NtRemoveIoCompletionEx failed: %#lx\n", res );
+    ok( count == 0xdeadbeef, "wrong count %lu\n", count );
+
+    count = 0xdeadbeef;
     res = pNtRemoveIoCompletionEx( h, info, 2, &count, &timeout, FALSE );
     ok( res == STATUS_TIMEOUT, "NtRemoveIoCompletionEx failed: %#lx\n", res );
     ok( count <= 1, "wrong count %lu\n", count );

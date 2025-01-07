@@ -751,7 +751,11 @@ NTSTATUS WINAPI wow64_NtRemoveIoCompletionEx( UINT *args )
 
     NTSTATUS status;
     ULONG i;
-    FILE_IO_COMPLETION_INFORMATION *info = Wow64AllocateTemp( count * sizeof(*info) );
+    FILE_IO_COMPLETION_INFORMATION *info;
+
+    if (!count) return STATUS_INVALID_PARAMETER;
+
+    info = Wow64AllocateTemp( count * sizeof(*info) );
 
     status = NtRemoveIoCompletionEx( handle, info, count, written, timeout, alertable );
     for (i = 0; i < *written; i++)
