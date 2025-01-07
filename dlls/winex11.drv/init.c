@@ -196,21 +196,18 @@ static HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 
 static BOOL needs_client_window_clipping( HWND hwnd )
 {
-    struct x11drv_win_data *data;
     RECT rect, client;
     UINT ret = 0;
     HRGN region;
     HDC hdc;
 
-    if (!(data = get_win_data( hwnd ))) return TRUE;
-    client = data->rects.client;
-    release_win_data( data );
+    NtUserGetClientRect( hwnd, &client, NtUserGetDpiForWindow( hwnd ) );
     OffsetRect( &client, -client.left, -client.top );
 
     if (!(hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_USESTYLE ))) return FALSE;
     if ((region = NtGdiCreateRectRgn( 0, 0, 0, 0 )))
     {
-        ret = NtGdiGetRandomRgn( hdc, region, SYSRGN | NTGDI_RGN_MONITOR_DPI );
+        ret = NtGdiGetRandomRgn( hdc, region, SYSRGN );
         if (ret > 0 && (ret = NtGdiGetRgnBox( region, &rect )) < NULLREGION) ret = 0;
         if (ret == SIMPLEREGION && EqualRect( &rect, &client )) ret = 0;
         NtGdiDeleteObjectApp( region );
