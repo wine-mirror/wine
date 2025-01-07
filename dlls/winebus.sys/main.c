@@ -304,6 +304,18 @@ static void remove_pending_irps(DEVICE_OBJECT *device)
     }
 }
 
+static void make_unique_serial(struct device_extension *device)
+{
+    struct device_extension *ext;
+
+    LIST_FOR_EACH_ENTRY(ext, &device_list, struct device_extension, entry)
+        if (!wcscmp(device->desc.serialnumber, ext->desc.serialnumber)) break;
+    if (&ext->entry == &device_list && *device->desc.serialnumber) return;
+
+    swprintf(device->desc.serialnumber, ARRAY_SIZE(device->desc.serialnumber), L"%04x%08x%04x%04x",
+             device->index, device->desc.input, device->desc.pid, device->desc.vid);
+}
+
 static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 unix_device)
 {
     struct device_extension *ext;
@@ -347,6 +359,10 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
 
     InitializeCriticalSectionEx(&ext->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     ext->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
+
+    /* Overcooked! All You Can Eat only adds controllers with unique serial numbers
+     * Prefer keeping serial numbers unique over keeping them consistent across runs */
+    make_unique_serial(ext);
 
     /* add to list of pnp devices */
     if (before)

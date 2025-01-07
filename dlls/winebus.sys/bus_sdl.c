@@ -940,7 +940,7 @@ static void sdl_add_device(unsigned int index)
     SDL_JoystickType joystick_type;
     SDL_GameController *controller = NULL;
     const char *product, *sdl_serial;
-    char guid_str[33], buffer[ARRAY_SIZE(desc.product)];
+    char buffer[ARRAY_SIZE(desc.product)];
     int axis_count, axis_offset;
 
     if ((joystick = pSDL_JoystickOpen(index)) == NULL)
@@ -974,18 +974,7 @@ static void sdl_add_device(unsigned int index)
     }
 
     if (pSDL_JoystickGetSerial && (sdl_serial = pSDL_JoystickGetSerial(joystick)))
-    {
         ntdll_umbstowcs(sdl_serial, strlen(sdl_serial) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
-    }
-    else
-    {
-        /* Overcooked! All You Can Eat only adds controllers with unique serial numbers
-         * Prefer keeping serial numbers unique over keeping them consistent across runs */
-        pSDL_JoystickGetGUIDString(pSDL_JoystickGetGUID(joystick), guid_str, sizeof(guid_str));
-        snprintf(buffer, sizeof(buffer), "%s.%d", guid_str, index);
-        TRACE("Making up serial number for %s: %s\n", product, buffer);
-        ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
-    }
 
     if (controller)
     {
