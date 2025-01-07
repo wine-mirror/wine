@@ -4047,9 +4047,11 @@ app1_data =
 static void test_metadata_App1(void)
 {
     IWICMetadataReader *reader, *ifd_reader, *exif_reader, *gps_reader;
+    IWICEnumMetadataItem *enumerator;
     IStream *app1_stream, *stream2;
     IWICMetadataWriter *writer;
     PROPVARIANT id, value;
+    ULONG fetched;
     GUID format;
     HRESULT hr;
     UINT count;
@@ -4087,6 +4089,29 @@ static void test_metadata_App1(void)
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 1, "Unexpected count %u.\n", count);
+
+    /* Enumerator returns top level item. */
+    hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICEnumMetadataItem_Next(enumerator, 1, NULL, &id, &value, &fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    ok(id.vt == VT_UI2, "Unexpected id type: %u.\n", id.vt);
+    ok(id.uiVal == 0, "Unexpected id %u.\n", id.uiVal);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    ok(!!value.punkVal, "Unexpected value.\n");
+    PropVariantClear(&value);
+
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICEnumMetadataItem_Next(enumerator, 1, NULL, &id, &value, &fetched);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!fetched, "Unexpected count %lu.\n", fetched);
+
+    IWICEnumMetadataItem_Release(enumerator);
 
     PropVariantInit(&id);
     PropVariantInit(&value);
