@@ -54,6 +54,9 @@
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
+#ifdef HAVE_SYS_AUXV_H
+# include <sys/auxv.h>
+#endif
 #ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
 # include <IOKit/IOKitLib.h>
@@ -1691,6 +1694,8 @@ static WORD append_smbios_boot_info( struct smbios_buffer *buf )
 #ifdef __aarch64__
 #ifdef linux
 
+#include <asm/hwcap.h>
+
 static DWORD get_core_id_regs_arm64( struct smbios_wine_id_reg_value_arm64 *regs,
                                      WORD logical_thread_id )
 {
@@ -1707,6 +1712,12 @@ static DWORD get_core_id_regs_arm64( struct smbios_wine_id_reg_value_arm64 *regs
         fscanf( fp, "%lx", &value );
         fclose( fp );
         regs[regidx++] = (struct smbios_wine_id_reg_value_arm64){ 0x4000, value };
+    }
+
+    if (!(getauxval(AT_HWCAP) & HWCAP_CPUID))
+    {
+        WARN( "Skipping ID register population as kernel is missing emulation support.\n" );
+        return regidx;
     }
 
 #define STR(a) #a
