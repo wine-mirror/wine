@@ -61,16 +61,19 @@ static inline MetadataHandler *impl_from_IWICStreamProvider(IWICStreamProvider *
     return CONTAINING_RECORD(iface, MetadataHandler, IWICStreamProvider_iface);
 }
 
+static void clear_metadata_item(MetadataItem *item)
+{
+    PropVariantClear(&item->schema);
+    PropVariantClear(&item->id);
+    PropVariantClear(&item->value);
+}
+
 static void MetadataHandler_FreeItems(MetadataHandler *This)
 {
     DWORD i;
 
     for (i=0; i<This->item_count; i++)
-    {
-        PropVariantClear(&This->items[i].schema);
-        PropVariantClear(&This->items[i].id);
-        PropVariantClear(&This->items[i].value);
-    }
+        clear_metadata_item(&This->items[i]);
 
     free(This->items);
     This->items = NULL;
@@ -224,12 +227,32 @@ static HRESULT WINAPI MetadataHandler_GetValueByIndex(IWICMetadataWriter *iface,
     return hr;
 }
 
+static MetadataItem *metadatahandler_get_item(MetadataHandler *handler, const PROPVARIANT *schema,
+        const PROPVARIANT *id)
+{
+    UINT i;
+
+    for (i = 0; i < handler->item_count; i++)
+    {
+        if (schema && handler->items[i].schema.vt != VT_EMPTY)
+        {
+            if (PropVariantCompareEx(schema, &handler->items[i].schema, 0, PVCF_USESTRCMPI) != 0) continue;
+        }
+
+        if (PropVariantCompareEx(id, &handler->items[i].id, 0, PVCF_USESTRCMPI) != 0) continue;
+
+        return &handler->items[i];
+    }
+
+    return NULL;
+}
+
 static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,
     const PROPVARIANT *schema, const PROPVARIANT *id, PROPVARIANT *value)
 {
-    UINT i;
-    HRESULT hr = WINCODEC_ERR_PROPERTYNOTFOUND;
     MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
+    HRESULT hr = WINCODEC_ERR_PROPERTYNOTFOUND;
+    MetadataItem *item;
 
     TRACE("(%p,%s,%s,%p)\n", iface, wine_dbgstr_variant((const VARIANT *)schema), wine_dbgstr_variant((const VARIANT *)id), value);
 
@@ -237,17 +260,9 @@ static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,
 
     EnterCriticalSection(&This->lock);
 
-    for (i = 0; i < This->item_count; i++)
+    if ((item = metadatahandler_get_item(This, schema, id)))
     {
-        if (schema && This->items[i].schema.vt != VT_EMPTY)
-        {
-            if (PropVariantCompareEx(schema, &This->items[i].schema, 0, PVCF_USESTRCMPI) != 0) continue;
-        }
-
-        if (PropVariantCompareEx(id, &This->items[i].id, 0, PVCF_USESTRCMPI) != 0) continue;
-
-        hr = value ? PropVariantCopy(value, &This->items[i].value) : S_OK;
-        break;
+        hr = value ? PropVariantCopy(value, &item->value) : S_OK;
     }
 
     LeaveCriticalSection(&This->lock);
@@ -263,10 +278,58 @@ static HRESULT WINAPI MetadataHandler_GetEnumerator(IWICMetadataWriter *iface,
 }
 
 static HRESULT WINAPI MetadataHandler_SetValue(IWICMetadataWriter *iface,
-    const PROPVARIANT *pvarSchema, const PROPVARIANT *pvarId, const PROPVARIANT *pvarValue)
+        const PROPVARIANT *schema, const PROPVARIANT *id, const PROPVARIANT *value)
 {
-    FIXME("(%p,%p,%p,%p): stub\n", iface, pvarSchema, pvarId, pvarValue);
-    return E_NOTIMPL;
+    MetadataHandler *This = impl_from_IWICMetadataWriter(iface);
+    MetadataItem *item, *new_items;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%p,%p)\n", iface, schema, id, value);
+
+    if (!id || !value)
+        return E_INVALIDARG;
+
+    /* Replace value of an existing item, or append a new one. */
+
+    EnterCriticalSection(&This->lock);
+
+    if ((item = metadatahandler_get_item(This, schema, id)))
+    {
+        PropVariantClear(&item->value);
+        hr = PropVariantCopy(&item->value, value);
+    }
+    else
+    {
+        new_items = realloc(This->items, (This->item_count + 1) * sizeof(*new_items));
+        if (new_items)
+        {
+            This->items = new_items;
+
+            item = &This->items[This->item_count];
+
+            PropVariantInit(&item->schema);
+            PropVariantInit(&item->id);
+            PropVariantInit(&item->value);
+
+            /* Skip setting the schema value, it's probably format-dependent. */
+            hr = PropVariantCopy(&item->id, id);
+            if (SUCCEEDED(hr))
+                hr = PropVariantCopy(&item->value, value);
+
+            if (SUCCEEDED(hr))
+                ++This->item_count;
+            else
+                clear_metadata_item(item);
+        }
+        else
+        {
+            hr = E_OUTOFMEMORY;
+        }
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI MetadataHandler_SetValueByIndex(IWICMetadataWriter *iface,

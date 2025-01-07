@@ -3853,7 +3853,7 @@ static void test_queryreader(void)
     IWICComponentFactory_Release(factory);
 }
 
-static void test_metadata_writer(void)
+static void test_metadata_query_writer(void)
 {
     static struct
     {
@@ -4544,6 +4544,107 @@ static void test_CreateMetadataWriter(void)
     IWICComponentFactory_Release(factory);
 }
 
+static void test_metadata_writer(void)
+{
+    IWICComponentFactory *factory;
+    IWICMetadataWriter *writer;
+    GUID format;
+    HRESULT hr;
+    UINT count;
+    PROPVARIANT schema, id, value;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateMetadataWriter(factory, &GUID_MetadataFormatIfd, NULL, 0, &writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_GetMetadataFormat(writer, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!count, "Unexpected count %u.\n", count);
+
+    schema.vt = VT_I4;
+    schema.lVal = 100;
+    id.vt = VT_UI2;
+    id.uiVal = 200;
+    value.vt = VT_UI4;
+    value.ulVal = 300;
+    hr = IWICMetadataWriter_SetValueByIndex(writer, 0, &schema, &id, &value);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_SetValue(writer, &schema, NULL, &value);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    id.vt = VT_UI2;
+    id.uiVal = 201;
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+
+    /* Same id with differing schema does not add a new item. */
+    schema.vt = VT_I4;
+    schema.lVal = 101;
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICMetadataWriter_GetValueByIndex(writer, 0, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(schema.vt == VT_EMPTY, "Unexpected type %u.\n", schema.vt);
+    ok(!schema.lVal, "Unexpected value %lu.\n", schema.lVal);
+    ok(id.vt == VT_UI2, "Unexpected type %u.\n", id.vt);
+    ok(id.uiVal == 200, "Unexpected value %u.\n", id.uiVal);
+    ok(value.vt == VT_UI4, "Unexpected type %u.\n", value.vt);
+    ok(value.uiVal == 300, "Unexpected value %lu.\n", value.ulVal);
+
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    hr = IWICMetadataWriter_GetValueByIndex(writer, 1, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(schema.vt == VT_EMPTY, "Unexpected type %u.\n", schema.vt);
+    ok(!schema.lVal, "Unexpected value %lu.\n", schema.lVal);
+    ok(id.vt == VT_UI2, "Unexpected type %u.\n", id.vt);
+    ok(id.uiVal == 201, "Unexpected value %u.\n", id.uiVal);
+    ok(value.vt == VT_UI4, "Unexpected type %u.\n", value.vt);
+    ok(value.uiVal == 300, "Unexpected value %lu.\n", value.ulVal);
+
+    value.vt = VT_UI4;
+    value.ulVal = 301;
+    hr = IWICMetadataWriter_SetValueByIndex(writer, 1, &schema, &id, &value);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Unexpected hr %#lx.\n", hr);
+
+    IWICMetadataWriter_Release(writer);
+
+    IWICComponentFactory_Release(factory);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -4570,10 +4671,11 @@ START_TEST(metadata)
     test_metadata_GCE();
     test_metadata_APE();
     test_metadata_GIF_comment();
-    test_metadata_writer();
+    test_metadata_query_writer();
     test_metadata_App1();
     test_CreateMetadataWriterFromReader();
     test_CreateMetadataWriter();
+    test_metadata_writer();
 
     CoUninitialize();
 }
