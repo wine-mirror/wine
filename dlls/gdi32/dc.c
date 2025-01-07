@@ -46,6 +46,14 @@ static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 typedef HDC (CDECL *driver_entry_point)( const WCHAR *device,
         const DEVMODEW *devmode, const WCHAR *output );
 
+static const char *debugstr_xform( const XFORM *xform )
+{
+    if (!xform) return "(null)";
+    return wine_dbg_sprintf( "matrix {%.8e %.8e} {%.8e %.8e} offset {%.8e %.8e}",
+                             xform->eM11, xform->eM12, xform->eM21, xform->eM22,
+                             xform->eDx, xform->eDy );
+}
+
 struct graphics_driver
 {
     struct list         entry;
@@ -1314,8 +1322,7 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
 {
     DC_ATTR *dc_attr;
 
-    TRACE( "dc %p matrix {%.8e %.8e} {%.8e %.8e} offset {%.8e %.8e} mode %#lx\n",
-           hdc, xform->eM11, xform->eM12, xform->eM21, xform->eM22, xform->eDx, xform->eDy, mode );
+    TRACE( "dc %p xform %s mode %#lx\n", hdc, debugstr_xform( xform ), mode );
 
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_ModifyWorldTransform( dc_attr, xform, mode )) return FALSE;
@@ -1329,8 +1336,7 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
 {
     DC_ATTR *dc_attr;
 
-    TRACE( "dc %p matrix {%.8e %.8e} {%.8e %.8e} offset {%.8e %.8e}\n",
-           hdc, xform->eM11, xform->eM12, xform->eM21, xform->eM22, xform->eDx, xform->eDy );
+    TRACE( "dc %p xform %s\n", hdc, debugstr_xform( xform ) );
 
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
     if (dc_attr->emf && !EMFDC_SetWorldTransform( dc_attr, xform )) return FALSE;
