@@ -6722,7 +6722,7 @@ static BOOL WINAPI CRYPT_AsnDecodeOCSPBasicResponse(DWORD dwCertEncodingType,
      { ASN_SEQUENCEOF, offsetof(OCSP_BASIC_RESPONSE_INFO, cResponseEntry),
        CRYPT_AsnDecodeOCSPBasicResponseEntriesArray, MEMBERSIZE(OCSP_BASIC_RESPONSE_INFO, cResponseEntry, cExtension),
        TRUE, TRUE, offsetof(OCSP_BASIC_RESPONSE_INFO, rgResponseEntry) },
-     { ASN_CONTEXT | ASN_CONSTRUCTOR, offsetof(OCSP_BASIC_RESPONSE_INFO, cExtension),
+     { ASN_CONTEXT | ASN_CONSTRUCTOR | 1, offsetof(OCSP_BASIC_RESPONSE_INFO, cExtension),
        CRYPT_AsnDecodeCertExtensions, FINALMEMBERSIZE(OCSP_BASIC_RESPONSE_INFO, cExtension),
        TRUE, TRUE, offsetof(OCSP_BASIC_RESPONSE_INFO, rgExtension), 0 },
      };
