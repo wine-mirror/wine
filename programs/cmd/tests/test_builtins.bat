@@ -35,12 +35,41 @@ rem call :setError 666 & (foobar.IDontExist &&echo SUCCESS !errorlevel!||echo FA
 cd .. && rd /q /s foo
 echo --- success/failure for CALL command
 mkdir foo & cd foo
-echo exit /b %%1 > foobar.bat
+rem generating different condition of child.bat termination (success/failure, errorlevel set or not...)
+echo exit /b %%1 > foobarEB.bat
+echo type NUL > foobarS0.bat
+echo rmdir foobar.dir > foobarSEL.bat
+echo title foo >> foobarSEL.bat
+echo rmdir foobar.dir > foobarF2.bat
+echo type NUL > foobarS0WS.bat
+echo.>> foobarS0WS.bat
+echo goto :EOF > foobarGE.bat
+echo goto :end > foobarGL.bat
+echo :end >> foobarGL.bat
+echo goto :end > foobarGX.bat
+echo rmdir foobar.dir > foobarFGE.bat
+echo goto :EOF >> foobarFGE.bat
+echo rmdir foobar.dir > foobarFGL.bat
+echo goto :end >> foobarFGL.bat
+echo :end >> foobarFGL.bat
+echo rmdir foobar.dir > foobarFGX.bat
+echo goto :end >> foobarFGX.bat
+
 rem call :setError 666 & (call I\dont\exist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem terminates batch exec on native...
 call :setError 666 & (call Idontexist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-call :setError 666 & (call .\foobar.bat 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-call :setError 666 & (call .\foobar.bat 1024 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarEB.bat 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarEB.bat 1024 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarS0.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarS0WS.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarSEL.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarF2.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarGE.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarGL.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarGX.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarFGE.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarFGL.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarFGX.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call cmd.exe /c "echo foo & exit /b 0" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call cmd.exe /c "echo foo & exit /b 1025" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call rmdir foobar.dir &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)

@@ -482,6 +482,16 @@ FAILURE 1
 FAILURE 1
 SUCCESS 0
 FAILURE 1024
+SUCCESS 0
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 666
+FAILURE 2
+FAILURE 666
+FAILURE 666
+FAILURE 1
+FAILURE 666
+FAILURE 666
+FAILURE 1
 foo@space@
 SUCCESS 0
 foo@space@
@@ -1588,6 +1598,8 @@ foo bar baz
 c:\
 ------ skip option
 c
+@todo_wine@c
+---- resync
 no output
 no output
 c
