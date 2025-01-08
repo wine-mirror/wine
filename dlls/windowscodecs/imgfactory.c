@@ -1622,8 +1622,59 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataWriter(IWICComponentFactory
     return create_metadata_writer(format, vendor, options, writer);
 }
 
-static HRESULT WINAPI ComponentFactory_CreateMetadataWriterFromReader(IWICComponentFactory *iface,
-        IWICMetadataReader *reader, const GUID *vendor, IWICMetadataWriter **out_writer)
+static HRESULT create_metadata_writer_from_reader(IWICMetadataReader *reader, const GUID *vendor,
+        IWICMetadataWriter **out_writer);
+
+static HRESULT metadata_writer_copy_items_from_reader(IWICMetadataWriter *writer, const GUID *vendor, IWICMetadataReader *reader)
+{
+    IWICMetadataReader *sub_reader;
+    IWICMetadataWriter *sub_writer;
+    PROPVARIANT schema, id, value;
+    UINT i, count;
+    HRESULT hr;
+
+    if (FAILED(hr = IWICMetadataReader_GetCount(reader, &count)))
+        return hr;
+
+    for (i = 0; i < count; ++i)
+    {
+        PropVariantInit(&schema);
+        PropVariantInit(&id);
+        PropVariantInit(&value);
+        if (FAILED(hr = IWICMetadataReader_GetValueByIndex(reader, i, &schema, &id, &value)))
+            break;
+
+        /* Recursively create writers from the nested readers.  */
+        if (value.vt == VT_UNKNOWN)
+        {
+            if (SUCCEEDED(IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)&sub_reader)))
+            {
+                hr = create_metadata_writer_from_reader(sub_reader, vendor, &sub_writer);
+                if (SUCCEEDED(hr))
+                {
+                   IUnknown_Release(value.punkVal);
+                   value.punkVal = (IUnknown *)sub_writer;
+                }
+
+                IWICMetadataReader_Release(sub_reader);
+            }
+        }
+
+        if (SUCCEEDED(hr))
+            hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+
+        PropVariantClear(&schema);
+        PropVariantClear(&id);
+        PropVariantClear(&value);
+        if (FAILED(hr))
+            break;
+    }
+
+    return hr;
+}
+
+static HRESULT create_metadata_writer_from_reader(IWICMetadataReader *reader, const GUID *vendor,
+        IWICMetadataWriter **out_writer)
 {
     IWICStreamProvider *stream_provider = NULL;
     IWICMetadataWriter *writer = NULL;
@@ -1631,11 +1682,6 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataWriterFromReader(IWICCompon
     DWORD options = 0;
     GUID format;
     HRESULT hr;
-
-    TRACE("%p,%p,%s,%p\n", iface, reader, debugstr_guid(vendor), out_writer);
-
-    if (!reader || !out_writer)
-        return E_INVALIDARG;
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
 
@@ -1683,15 +1729,7 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataWriterFromReader(IWICCompon
         }
         else
         {
-            UINT count;
-
-            hr = IWICMetadataReader_GetCount(reader, &count);
-
-            if (SUCCEEDED(hr))
-            {
-                if (count)
-                    FIXME("Copy metadata items to the writer.\n");
-            }
+            hr = metadata_writer_copy_items_from_reader(writer, vendor, reader);
         }
     }
 
@@ -1710,6 +1748,17 @@ static HRESULT WINAPI ComponentFactory_CreateMetadataWriterFromReader(IWICCompon
         IStream_Release(stream);
 
     return hr;
+}
+
+static HRESULT WINAPI ComponentFactory_CreateMetadataWriterFromReader(IWICComponentFactory *iface,
+        IWICMetadataReader *reader, const GUID *vendor, IWICMetadataWriter **writer)
+{
+    TRACE("%p,%p,%s,%p\n", iface, reader, debugstr_guid(vendor), writer);
+
+    if (!reader || !writer)
+        return E_INVALIDARG;
+
+    return create_metadata_writer_from_reader(reader, vendor, writer);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateQueryReaderFromBlockReader(IWICComponentFactory *iface,
