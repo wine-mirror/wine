@@ -4335,9 +4335,85 @@ static void test_RC4_salt(void)
     }
 }
 
+static void test_RC4_session_key(void)
+{
+    static const BYTE zero[11];
+    static const char hello_world[12] = "Hello World!";
+    BYTE data[sizeof(hello_world)], salt[11], salt2[11];
+    HCRYPTPROV hprov;
+    HCRYPTKEY hkey, hkeyx;
+    DWORD size, blob_size;
+    void *blob;
+    BOOL ret;
+
+    ret = CryptAcquireContextA(&hprov, NULL, MS_DEF_PROV_A, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    ok(ret, "error %#lx\n", GetLastError());
+
+    /* Client: Generate session key */
+    ret = CryptGenKey(hprov, CALG_RC4, CRYPT_EXPORTABLE, &hkey);
+    ok(ret, "error %#lx\n", GetLastError());
+    size = 0xdeadbeef;
+    ret = CryptGetKeyParam(hkey, KP_SALT, NULL, &size, 0);
+    ok(ret, "error %#lx\n", GetLastError());
+    ok(size == 11, "got %lu\n", size);
+    ret = CryptGetKeyParam(hkey, KP_SALT, salt, &size, 0);
+    ok(ret, "error %#lx\n", GetLastError());
+    todo_wine
+    ok(!memcmp(salt, zero, size), "wrong salt %.11s\n", salt);
+
+    /* Client: Import the server's public key */
+    ret = CryptImportKey(hprov, PUBLIC_EXCH_blob, sizeof(PUBLIC_EXCH_blob), 0, 0, &hkeyx);
+    ok(ret, "error %#lx\n", GetLastError());
+
+    /* Client: Export encrypted session key using the server's public key */
+    ret = CryptExportKey(hkey, hkeyx, SIMPLEBLOB, 0, NULL, &blob_size);
+    ok(ret, "error %#lx\n", GetLastError());
+    blob = malloc(blob_size);
+    ret = CryptExportKey(hkey, hkeyx, SIMPLEBLOB, 0, blob, &blob_size);
+    ok(ret, "error %#lx\n", GetLastError());
+
+    /* Client: Encrypt data using the session key */
+    size = sizeof(hello_world);
+    memcpy(data, hello_world, size);
+    ret = CryptEncrypt(hkey, 0, TRUE, 0, data, &size, size);
+    ok(ret, "error %#lx\n", GetLastError());
+
+    CryptDestroyKey(hkeyx);
+    CryptDestroyKey(hkey);
+
+    /* Server: Use the server's private key */
+    ret = CryptImportKey(hprov, PRIVATE_EXCH_blob, sizeof(PRIVATE_EXCH_blob), 0, 0, &hkeyx);
+    ok(ret, "error %#lx\n", GetLastError());
+
+    /* Server: Import encrypted session key using the server's private key */
+    ret = CryptImportKey(hprov, blob, blob_size, hkeyx, 0, &hkey);
+    ok(ret, "error %#lx\n", GetLastError());
+    size = 0xdeadbeef;
+    ret = CryptGetKeyParam(hkey, KP_SALT, NULL, &size, 0);
+    ok(ret, "error %#lx\n", GetLastError());
+    ok(size == 11, "got %lu\n", size);
+    ret = CryptGetKeyParam(hkey, KP_SALT, salt2, &size, 0);
+    ok(ret, "error %#lx\n", GetLastError());
+    ok(!memcmp(salt2, zero, size), "wrong salt %.11s\n", salt2);
+
+    /* Server: Decrypt data using the session key */
+    size = sizeof(hello_world);
+    ret = CryptDecrypt(hkey, 0, TRUE, 0, data, &size);
+    ok(ret, "error %#lx\n", GetLastError());
+    ok(size == sizeof(hello_world), "got %lu\n", size);
+    todo_wine
+    ok(!memcmp(data, hello_world, size), "wrong data\n");
+
+    free(blob);
+    CryptDestroyKey(hkey);
+    CryptDestroyKey(hkeyx);
+    CryptReleaseContext(hprov, 0);
+}
+
 START_TEST(rsaenh)
 {
     test_RC4_salt();
+    test_RC4_session_key();
 
     for (iProv = 0; iProv < ARRAY_SIZE(szProviders); iProv++)
     {
