@@ -669,7 +669,8 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
         else
             search_paths[0] = curdir;
         lstrcpyW(xlpFile, lpFile);
-        if (PathResolveW(xlpFile, search_paths, PRF_TRYPROGRAMEXTENSIONS | PRF_VERIFYEXISTS))
+        if (PathResolveW(xlpFile, search_paths, PRF_TRYPROGRAMEXTENSIONS | PRF_VERIFYEXISTS) ||
+            PathFindOnPathW(xlpFile, search_paths))
         {
             TRACE("PathResolveAW returned non-zero\n");
             lpFile = xlpFile;
