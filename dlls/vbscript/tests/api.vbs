@@ -632,6 +632,16 @@ Sub TestMid2(str, start, ex)
     Call ok(x = ex, "Mid(" & str & ", " & start & ") = " & x & " expected " & ex)
 End Sub
 
+Sub TestMidNull(str, start, len)
+    x = Mid(str, start, len)
+    Call ok(IsNull(x), "Mid(" & str & ", " & start & ", " & len & ") = " & x & " expected Null")
+End Sub
+
+Sub TestMidNull2(str, start)
+    x = Mid(str, start)
+    Call ok(IsNull(x), "Mid(" & str & ", " & start & ") = " & x & " expected Null")
+End Sub
+
 Sub TestMidError(str, start, len, number)
     On Error Resume Next
     Call Mid(str, start, len)
@@ -654,6 +664,11 @@ TestMid2 "test", 2, "est"
 TestMid2 "test", 4, "t"
 TestMid2 "test", 5, ""
 TestMid2 1234, 5, ""
+TestMid empty, 5, 2, ""
+TestMid2 empty, 5, ""
+
+TestMidNull null, 5, 2
+TestMidNull2 null, 5
 
 TestMidError "test", "a", 1, 13
 TestMidError "test", "a", null, 94

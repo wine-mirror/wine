@@ -1404,9 +1404,6 @@ static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
 
     assert(args_cnt == 2 || args_cnt == 3);
 
-    if(V_VT(args) == VT_EMPTY)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-
     if(V_VT(args+1) == VT_NULL || (args_cnt == 3 && V_VT(args+2) == VT_NULL))
         return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
 
@@ -1417,7 +1414,7 @@ static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
     if(FAILED(hres))
         return hres;
 
-    if(start < 0)
+    if(start <= 0)
         return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
 
     if(args_cnt == 3) {
@@ -1431,6 +1428,12 @@ static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
         if(len < 0)
             return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
     }
+
+    if(V_VT(args) == VT_EMPTY)
+        return return_string(res, L"");
+
+    if(V_VT(args) == VT_NULL)
+        return return_null(res);
 
     if(V_VT(args) == VT_BSTR) {
         str = V_BSTR(args);
