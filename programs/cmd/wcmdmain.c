@@ -1324,8 +1324,6 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
             TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
             context->skip_rest = TRUE;
         }
-        if (return_code != RETURN_CODE_ABORTED)
-            errorlevel = return_code;
         return return_code;
     }
 

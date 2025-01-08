@@ -90,7 +90,9 @@ RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
     free(context);
     context = prev_context;
 
-    return return_code;
+    if (return_code != NO_ERROR && return_code != RETURN_CODE_ABORTED)
+        errorlevel = return_code;
+    return errorlevel;
 }
 
 /*******************************************************************
