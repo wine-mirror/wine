@@ -2536,6 +2536,11 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
     }
     else
     {
+        if (!builder->num) /* line without tokens */
+        {
+            *node = NULL;
+            return TRUE;
+        }
         if (node_builder_parse(builder, 0, node) &&
             builder->pos + 1 >= builder->num) /* consumed all tokens? */
             return TRUE;
