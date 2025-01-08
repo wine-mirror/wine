@@ -632,6 +632,15 @@ Sub TestMid2(str, start, ex)
     Call ok(x = ex, "Mid(" & str & ", " & start & ") = " & x & " expected " & ex)
 End Sub
 
+Sub TestMidError(str, start, len, number)
+    On Error Resume Next
+    Call Mid(str, start, len)
+    Dim err_num: err_num = Err.number
+    Call Err.clear()
+    On Error GoTo 0
+    Call ok(err_num = number, "Mid(" & str & ", " & start & ", " & len & ") " & " expected Err.number = " & number)
+End Sub
+
 TestMid "test", 2, 2, "es"
 TestMid "test", 2, 4, "est"
 TestMid "test", 1, 2, "te"
@@ -646,51 +655,20 @@ TestMid2 "test", 4, "t"
 TestMid2 "test", 5, ""
 TestMid2 1234, 5, ""
 
-sub TestMidError()
-    on error resume next
-    call Err.clear()
-    call Mid("test", "a", 1)
-    call ok(Err.number = 13, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", "a", null)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", "a", empty)
-    call ok(Err.number = 13, "Err.number = " & Err.number)
-    call Mid("test", 0, -1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", -1, -1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid(null, -1, -1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", 0, null)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", -1, null)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", null, 2)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", null, -1)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid(null, -1, -1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", empty, 1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", 0, empty)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid(empty, 0, 0)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-end sub
-call TestMidError()
+TestMidError "test", "a", 1, 13
+TestMidError "test", "a", null, 94
+TestMidError "test", "a", empty, 13
+TestMidError "test", 0, 3, 5
+TestMidError "test", 0, -1, 5
+TestMidError "test", -1, -1, 5
+TestMidError "test", 0, null, 94
+TestMidError "test", -1, null, 94
+TestMidError "test", null, 2, 94
+TestMidError "test", null, -1, 94
+TestMidError null, -1, -1, 5
+TestMidError "test", empty, 1, 5
+TestMidError "test", 0, empty, 5
+TestMidError empty, 0, 0, 5
 
 Sub TestUCase(str, ex)
     x = UCase(str)
