@@ -1444,7 +1444,8 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
 
     data->desired_state.wm_state = new_state;
     if (!data->whole_window) return; /* no window, nothing to update */
-    if (data->wm_state_serial) return; /* another WM_STATE update is pending, wait for it to complete */
+    if (data->wm_state_serial && !data->current_state.wm_state != !data->pending_state.wm_state)
+        return; /* another map/unmap WM_STATE update is pending, wait for it to complete */
     if (old_state == new_state) return; /* states are the same, nothing to update */
 
     switch (MAKELONG(old_state, new_state))
