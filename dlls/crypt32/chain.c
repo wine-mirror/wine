@@ -2707,6 +2707,7 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
 
                     switch (revocationStatus.dwError)
                     {
+                    case CRYPT_E_REVOCATION_OFFLINE:
                     case CRYPT_E_NO_REVOCATION_CHECK:
                     case CRYPT_E_NO_REVOCATION_DLL:
                     case CRYPT_E_NOT_IN_REVOCATION_DATABASE:
@@ -2715,9 +2716,6 @@ static void CRYPT_VerifyChainRevocation(PCERT_CHAIN_CONTEXT chain,
                          */
                         error = CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
                          CERT_TRUST_IS_OFFLINE_REVOCATION;
-                        break;
-                    case CRYPT_E_REVOCATION_OFFLINE:
-                        error = CERT_TRUST_IS_OFFLINE_REVOCATION;
                         break;
                     case CRYPT_E_REVOKED:
                         error = CERT_TRUST_IS_REVOKED;
@@ -3519,12 +3517,12 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
          &pPolicyStatus->lElementIndex);
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
-     CERT_TRUST_IS_OFFLINE_REVOCATION &&
+     CERT_TRUST_REVOCATION_STATUS_UNKNOWN &&
      !(checks & SECURITY_FLAG_IGNORE_REVOCATION))
     {
         pPolicyStatus->dwError = CRYPT_E_REVOCATION_OFFLINE;
         find_element_with_error(pChainContext,
-         CERT_TRUST_IS_OFFLINE_REVOCATION, &pPolicyStatus->lChainIndex,
+         CERT_TRUST_REVOCATION_STATUS_UNKNOWN, &pPolicyStatus->lChainIndex,
          &pPolicyStatus->lElementIndex);
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
