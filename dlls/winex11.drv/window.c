@@ -1778,6 +1778,7 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags )
     DWORD style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
     DWORD ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
     BOOL above = FALSE;
+    RECT new_rect;
 
     if (data->managed && data->desired_state.wm_state == IconicState) return;
 
@@ -1795,7 +1796,19 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags )
     set_size_hints( data, style );
     set_mwm_hints( data, style, ex_style );
     update_net_wm_states( data );
-    window_set_config( data, &data->rects.visible, above );
+
+    new_rect = data->rects.visible;
+    if (swp_flags & SWP_NOSIZE)
+    {
+        new_rect.right = new_rect.left + data->desired_state.rect.right - data->desired_state.rect.left;
+        new_rect.bottom = new_rect.top + data->desired_state.rect.bottom - data->desired_state.rect.top;
+    }
+    if (swp_flags & SWP_NOMOVE)
+    {
+        OffsetRect( &new_rect, data->desired_state.rect.left - new_rect.left,
+                    data->desired_state.rect.top - new_rect.top );
+    }
+    window_set_config( data, &new_rect, above );
 }
 
 
