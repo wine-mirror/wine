@@ -4288,7 +4288,7 @@ static void test_RC4_salt(void)
             ok(ret, "error %#lx\n", GetLastError());
             if (td[i].flags & CRYPT_CREATE_SALT)
                 ok(memcmp(salt, zero, size) != 0, "wrong salt %.11s\n", salt);
-            else todo_wine_if(i == 0 || i == 1 || i == 6)
+            else
                 ok(memcmp(salt, zero, size) == 0, "wrong salt %.11s\n", salt);
         }
 
@@ -4362,7 +4362,6 @@ static void test_RC4_session_key(void)
     ok(size == 11, "got %lu\n", size);
     ret = CryptGetKeyParam(hkey, KP_SALT, salt, &size, 0);
     ok(ret, "error %#lx\n", GetLastError());
-    todo_wine
     ok(!memcmp(salt, zero, size), "wrong salt %.11s\n", salt);
 
     /* Client: Import the server's public key */
@@ -4409,7 +4408,6 @@ static void test_RC4_session_key(void)
     ret = CryptDecrypt(hkey, 0, TRUE, 0, data, &size);
     ok(ret, "error %#lx\n", GetLastError());
     ok(size == sizeof(hello_world), "got %lu\n", size);
-    todo_wine
     ok(!memcmp(data, hello_world, size), "wrong data\n");
 
     free(blob);
