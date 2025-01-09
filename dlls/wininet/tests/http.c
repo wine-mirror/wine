@@ -6819,7 +6819,7 @@ typedef struct {
 } cert_struct_test_t;
 
 static const cert_struct_test_t test_winehq_org_cert = {
-    "winehq.org",
+    "test.winehq.org",
 
     "US\r\n"
     "Let's Encrypt\r\n"
