@@ -5385,7 +5385,6 @@ static void test_VerifyCertChainPolicy_flags(void)
         DWORD policy_flags;
         DWORD ssl_policy_flags;
         DWORD expected_error;
-        BOOL wine_todo;
     }
     tests[] =
     {
@@ -5415,7 +5414,7 @@ static void test_VerifyCertChainPolicy_flags(void)
         { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 1, 0, 0, CERT_E_WRONG_USAGE },
         { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 2, 0, 0, CERT_E_WRONG_USAGE },
         { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0, 0, SECURITY_FLAG_IGNORE_WRONG_USAGE, ERROR_SUCCESS },
-        { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0, CERT_CHAIN_POLICY_IGNORE_WRONG_USAGE_FLAG, 0, ERROR_SUCCESS, TRUE },
+        { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0, CERT_CHAIN_POLICY_IGNORE_WRONG_USAGE_FLAG, 0, ERROR_SUCCESS },
 
         { CERT_TRUST_IS_SELF_SIGNED, 0, 0, 0, TRUST_E_CERT_SIGNATURE },
         { CERT_TRUST_IS_SELF_SIGNED, 1, 0, 0, TRUST_E_CERT_SIGNATURE },
@@ -5485,7 +5484,7 @@ static void test_VerifyCertChainPolicy_flags(void)
         policy_para.pvExtraPolicyPara = &ssl_para;
         ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, chain, &policy_para, &status);
         ok(ret, "got error %#lx.\n", GetLastError());
-        todo_wine_if(tests[i].wine_todo) ok(status.dwError == tests[i].expected_error, "got %#lx, expected %#lx.\n", status.dwError, tests[i].expected_error);
+        ok(status.dwError == tests[i].expected_error, "got %#lx, expected %#lx.\n", status.dwError, tests[i].expected_error);
         if (status.dwError)
         {
             ok(!status.lChainIndex, "got %ld.\n", status.lChainIndex);

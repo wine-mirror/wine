@@ -3519,7 +3519,7 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_IS_NOT_VALID_FOR_USAGE &&
-     !(checks & SECURITY_FLAG_IGNORE_WRONG_USAGE))
+     !(checks & SECURITY_FLAG_IGNORE_WRONG_USAGE) && !(baseChecks & CERT_CHAIN_POLICY_IGNORE_WRONG_USAGE_FLAG))
     {
         pPolicyStatus->dwError = CERT_E_WRONG_USAGE;
         find_element_with_error(pChainContext,
