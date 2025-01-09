@@ -635,7 +635,6 @@ static void test_transform(void)
     }
 
     GdipDeleteMatrix(m);
-    GdipDeleteGraphics(graphics);
     ReleaseDC(0, hdc);
 }
 
