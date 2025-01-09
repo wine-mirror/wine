@@ -3518,7 +3518,7 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_REVOCATION_STATUS_UNKNOWN &&
-     !(checks & SECURITY_FLAG_IGNORE_REVOCATION))
+     !(checks & SECURITY_FLAG_IGNORE_REVOCATION) && !(baseChecks & CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG))
     {
         pPolicyStatus->dwError = CRYPT_E_REVOCATION_OFFLINE;
         find_element_with_error(pChainContext,
