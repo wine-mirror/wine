@@ -211,7 +211,7 @@ Statement
 
 SimpleStatement
     : CallExpression ArgumentList_opt       { call_expression_t *call_expr = make_call_expression(ctx, $1, $2); CHECK_ERROR;
-                                              $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; };
+                                              $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; }
     | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, @$, $2); CHECK_ERROR; }
     | CallExpression '=' Expression
                                             { $$ = new_assign_statement(ctx, @$, $1, $3); CHECK_ERROR; }
