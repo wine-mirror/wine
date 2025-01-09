@@ -2989,6 +2989,24 @@ static void find_element_with_error(PCCERT_CHAIN_CONTEXT chain, DWORD error,
             }
 }
 
+static BOOL find_chain_first_element_with_error(PCCERT_CHAIN_CONTEXT chain, DWORD error, LONG *chain_idx,
+                                                LONG *element_idx)
+{
+    unsigned int i;
+
+    for (i = 0; i < chain->cChain; i++)
+    {
+        if (!chain->rgpChain[i]->cElement) continue;
+        if (chain->rgpChain[i]->rgpElement[0]->TrustStatus.dwErrorStatus & error)
+        {
+            *chain_idx = i;
+            *element_idx = 0;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static BOOL WINAPI verify_base_policy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
@@ -3518,12 +3536,11 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_REVOCATION_STATUS_UNKNOWN &&
-     !(checks & SECURITY_FLAG_IGNORE_REVOCATION) && !(baseChecks & CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG))
+     !(checks & SECURITY_FLAG_IGNORE_REVOCATION) && !(baseChecks & CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG)
+     && find_chain_first_element_with_error(pChainContext, CERT_TRUST_REVOCATION_STATUS_UNKNOWN,
+                                            &pPolicyStatus->lChainIndex, &pPolicyStatus->lElementIndex))
     {
         pPolicyStatus->dwError = CRYPT_E_REVOCATION_OFFLINE;
-        find_element_with_error(pChainContext,
-         CERT_TRUST_REVOCATION_STATUS_UNKNOWN, &pPolicyStatus->lChainIndex,
-         &pPolicyStatus->lElementIndex);
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT)
