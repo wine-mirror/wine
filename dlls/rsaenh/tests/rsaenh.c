@@ -4255,7 +4255,7 @@ static void test_RC4_salt(void)
     HCRYPTKEY hkey, hkeyx;
     DWORD i, key_length, size, blob_size;
     void *blob;
-    BYTE salt[16], salt2[16];
+    BYTE salt[16];
     CRYPT_DATA_BLOB data;
     BOOL ret;
 
@@ -4309,6 +4309,10 @@ static void test_RC4_salt(void)
 
         CryptDestroyKey(hkey);
         CryptDestroyKey(hkeyx);
+        CryptReleaseContext(hprov, 0);
+
+        ret = CryptAcquireContextA(&hprov, NULL, td[i].prov, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+        ok(ret, "error %#lx\n", GetLastError());
 
         ret = CryptImportKey(hprov, PRIVATE_EXCH_blob, sizeof(PRIVATE_EXCH_blob), 0, 0, &hkeyx);
         ok(ret, "error %#lx\n", GetLastError());
@@ -4322,9 +4326,9 @@ static void test_RC4_salt(void)
             ok(size == 11, "got %lu, expected 11\n", size);
         else
             ok(size == 0, "got %lu, expected 0\n", size);
-        ret = CryptGetKeyParam(hkey, KP_SALT, salt2, &size, 0);
+        ret = CryptGetKeyParam(hkey, KP_SALT, salt, &size, 0);
         ok(ret, "error %#lx\n", GetLastError());
-        ok(!memcmp(salt2, zero, size), "wrong salt %.11s\n", salt2);
+        ok(!memcmp(salt, zero, size), "wrong salt %.11s\n", salt);
 
         free(blob);
         CryptDestroyKey(hkey);
@@ -4339,7 +4343,7 @@ static void test_RC4_session_key(void)
 {
     static const BYTE zero[11];
     static const char hello_world[12] = "Hello World!";
-    BYTE data[sizeof(hello_world)], salt[11], salt2[11];
+    BYTE data[sizeof(hello_world)], salt[11];
     HCRYPTPROV hprov;
     HCRYPTKEY hkey, hkeyx;
     DWORD size, blob_size;
@@ -4380,6 +4384,10 @@ static void test_RC4_session_key(void)
 
     CryptDestroyKey(hkeyx);
     CryptDestroyKey(hkey);
+    CryptReleaseContext(hprov, 0);
+
+    ret = CryptAcquireContextA(&hprov, NULL, MS_DEF_PROV_A, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    ok(ret, "error %#lx\n", GetLastError());
 
     /* Server: Use the server's private key */
     ret = CryptImportKey(hprov, PRIVATE_EXCH_blob, sizeof(PRIVATE_EXCH_blob), 0, 0, &hkeyx);
@@ -4392,9 +4400,9 @@ static void test_RC4_session_key(void)
     ret = CryptGetKeyParam(hkey, KP_SALT, NULL, &size, 0);
     ok(ret, "error %#lx\n", GetLastError());
     ok(size == 11, "got %lu\n", size);
-    ret = CryptGetKeyParam(hkey, KP_SALT, salt2, &size, 0);
+    ret = CryptGetKeyParam(hkey, KP_SALT, salt, &size, 0);
     ok(ret, "error %#lx\n", GetLastError());
-    ok(!memcmp(salt2, zero, size), "wrong salt %.11s\n", salt2);
+    ok(!memcmp(salt, zero, size), "wrong salt %.11s\n", salt);
 
     /* Server: Decrypt data using the session key */
     size = sizeof(hello_world);
