@@ -117,7 +117,7 @@ static void test_DnsQuery(void)
 
     /* Show that DNS_TYPE_A returns CNAMEs too */
     rec = NULL;
-    wcscpy(domain, L"test.winehq.org"); /* should be a CNAME */
+    wcscpy(domain, L"test-cname.winehq.org"); /* should be a CNAME */
     status = DnsQuery_W(domain, DNS_TYPE_A, DNS_QUERY_STANDARD, NULL, &rec, NULL);
     if (status == ERROR_TIMEOUT)
     {
@@ -134,7 +134,7 @@ static void test_DnsQuery(void)
     ptr = rec; /* CNAMEs come first */
     ok(!wcscmp(domain, ptr->pName), "expected record name %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->pName));
     ok(DNS_TYPE_CNAME == ptr->wType, "expected record type %d, got %d\n", DNS_TYPE_CNAME, ptr->wType);
-    wcscpy(domain, L"testbot.winehq.org");
+    wcscpy(domain, L"test.winehq.org");
     if (ptr->wType == DNS_TYPE_CNAME)
         ok(!wcscmp(domain, ptr->Data.CNAME.pNameHost), "expected CNAME target %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->Data.CNAME.pNameHost));
     ptr = ptr->pNext;
@@ -160,8 +160,8 @@ static void test_DnsQuery(void)
      * return other related records!
      */
     rec = NULL;
-    wcscpy(domain, L"test.winehq.org");
-    status = DnsQuery_W(L"test.winehq.org", DNS_TYPE_CNAME, DNS_QUERY_STANDARD, NULL, &rec, NULL);
+    wcscpy(domain, L"test-cname.winehq.org");
+    status = DnsQuery_W(L"test-cname.winehq.org", DNS_TYPE_CNAME, DNS_QUERY_STANDARD, NULL, &rec, NULL);
     if (status == ERROR_TIMEOUT)
     {
         skip("query timed out\n");
@@ -177,7 +177,7 @@ static void test_DnsQuery(void)
     ptr = rec;
     ok(!wcscmp(domain, ptr->pName), "expected record name %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->pName));
     ok(DNS_TYPE_CNAME == ptr->wType, "expected record type %d, got %d\n", DNS_TYPE_CNAME, ptr->wType);
-    wcscpy(domain, L"testbot.winehq.org");
+    wcscpy(domain, L"test.winehq.org");
     if (ptr->wType == DNS_TYPE_CNAME)
         ok(!wcscmp(domain, ptr->Data.CNAME.pNameHost), "expected CNAME target %s, got %s\n", wine_dbgstr_w(domain), wine_dbgstr_w(ptr->Data.CNAME.pNameHost));
     DnsRecordListFree(rec, DnsFreeRecordList);
