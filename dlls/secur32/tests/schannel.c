@@ -1203,6 +1203,7 @@ static void test_communication(void)
         test_remote_cert(cert);
 
         status = QueryContextAttributesA(&context, SECPKG_ATTR_ENDPOINT_BINDINGS, &bindings);
+        todo_wine
         ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_ENDPOINT_BINDINGS) failed: %08lx\n", status);
         if (status == SEC_E_OK)
         {
@@ -1211,7 +1212,7 @@ static void test_communication(void)
             BYTE hash[64];
             DWORD hash_size;
 
-            ok(bindings.BindingsLength == sizeof(*bindings.Bindings) + sizeof(prefix)-1 + 32 /* hash size */,
+            ok(bindings.BindingsLength == sizeof(*bindings.Bindings) + sizeof(prefix)-1 + 48 /* hash size */,
                "bindings.BindingsLength = %lu\n", bindings.BindingsLength);
             ok(!bindings.Bindings->dwInitiatorAddrType, "dwInitiatorAddrType = %lx\n", bindings.Bindings->dwInitiatorAddrType);
             ok(!bindings.Bindings->cbInitiatorLength, "cbInitiatorLength = %lx\n", bindings.Bindings->cbInitiatorLength);
@@ -1228,9 +1229,9 @@ static void test_communication(void)
             p += sizeof(prefix)-1;
 
             hash_size = sizeof(hash);
-            ret = CryptHashCertificate(0, CALG_SHA_256, 0, cert->pbCertEncoded, cert->cbCertEncoded, hash, &hash_size);
+            ret = CryptHashCertificate(0, CALG_SHA_384, 0, cert->pbCertEncoded, cert->cbCertEncoded, hash, &hash_size);
             ok(ret, "got %lu\n", GetLastError());
-            ok(hash_size == 32, "hash_size = %lu\n", hash_size);
+            ok(hash_size == 48, "hash_size = %lu\n", hash_size);
             ok(!memcmp(hash, p, hash_size), "unexpected hash part\n");
             FreeContextBuffer(bindings.Bindings);
         }
@@ -1276,37 +1277,37 @@ static void test_communication(void)
     {
         ok(cipher.dwProtocol == 0x303, "got %lx\n", cipher.dwProtocol);
         todo_wine
-        ok(cipher.dwCipherSuite == 0xc030 || broken(cipher.dwCipherSuite == 0x9f) /* <= win8 */,
+        ok(cipher.dwCipherSuite == 0xc02c || broken(cipher.dwCipherSuite == 0x9f) /* <= win8 */,
            "got %lx\n", cipher.dwCipherSuite);
         todo_wine
-        ok(cipher.dwBaseCipherSuite == 0xc030 || broken(cipher.dwCipherSuite == 0x9f) /* <= win8 */,
+        ok(cipher.dwBaseCipherSuite == 0xc02c || broken(cipher.dwCipherSuite == 0x9f) /* <= win8 */,
            "got %lx\n", cipher.dwBaseCipherSuite);
-        ok(!wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384") ||
-           !wcscmp(cipher.szCipherSuite, L"TLS_DHE_RSA_WITH_AES_256_GCM_SHA384") /* <= win8 */,
+        ok(!wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384") ||
+           !wcscmp(cipher.szCipherSuite, L"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384_P384") /* <= win8 */,
            "got %s\n", wine_dbgstr_w(cipher.szCipherSuite));
         ok(!wcscmp(cipher.szCipher, L"AES"), "got %s\n", wine_dbgstr_w(cipher.szCipher));
         ok(cipher.dwCipherLen == 256, "got %lu\n", cipher.dwCipherLen);
         ok(cipher.dwCipherBlockLen == 16, "got %lu\n", cipher.dwCipherBlockLen);
         ok(!cipher.szHash[0], "got %s\n", wine_dbgstr_w(cipher.szHash));
         ok(!cipher.dwHashLen, "got %lu\n", cipher.dwHashLen);
-        ok(!wcscmp(cipher.szExchange, L"ECDH") || !wcscmp(cipher.szExchange, L"ECDH_P256") ||
+        ok(!wcscmp(cipher.szExchange, L"ECDH") || !wcscmp(cipher.szExchange, L"ECDH_P384") ||
            !wcscmp(cipher.szExchange, L"DH") /* <= win8 */, "got %s\n", wine_dbgstr_w(cipher.szExchange));
         ok(cipher.dwMinExchangeLen == 0 || cipher.dwMinExchangeLen == 256 /* < win10 */ ||
-           cipher.dwMinExchangeLen == 1024 /* <= win8 */, "got %lu\n", cipher.dwMinExchangeLen);
+           cipher.dwMinExchangeLen == 384 /* <= win8 */, "got %lu\n", cipher.dwMinExchangeLen);
         ok(cipher.dwMaxExchangeLen == 65536 || cipher.dwMaxExchangeLen == 256 /* < win10 */ ||
-           cipher.dwMinExchangeLen == 1024 /* <= win8 */, "got %lu\n", cipher.dwMaxExchangeLen);
-        ok(!wcscmp(cipher.szCertificate, L"RSA"), "got %s\n", wine_dbgstr_w(cipher.szCertificate));
+           cipher.dwMinExchangeLen == 384 /* <= win8 */, "got %lu\n", cipher.dwMaxExchangeLen);
+        ok(!wcscmp(cipher.szCertificate, L"ECDSA"), "got %s\n", wine_dbgstr_w(cipher.szCertificate));
         todo_wine
-        ok(cipher.dwKeyType == 0x1d || cipher.dwKeyType == 0x17 /* < win10 */ ||
+        ok(cipher.dwKeyType == 0x1d || cipher.dwKeyType == 0x17 || cipher.dwKeyType == 0x18 /* < win10 */ ||
            broken(!cipher.dwKeyType) /* <= win8 */, "got %#lx\n", cipher.dwKeyType);
     }
 
     status = QueryContextAttributesA(&context, SECPKG_ATTR_KEY_INFO, &key_info);
     ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_KEY_INFO) failed: %08lx\n", status);
     if(status == SEC_E_OK) {
-        ok(key_info.SignatureAlgorithm == CALG_RSA_SIGN,
+        ok(key_info.SignatureAlgorithm == CALG_ECDSA,
            "key_info.SignatureAlgorithm = %04lx\n", key_info.SignatureAlgorithm);
-        ok(!strcmp(key_info.sSignatureAlgorithmName, "RSA"),
+        ok(!strcmp(key_info.sSignatureAlgorithmName, "ECDSA"),
            "key_info.sSignatureAlgorithmName = %s\n", key_info.sSignatureAlgorithmName);
         ok(key_info.KeySize >= 128, "key_info.KeySize = %ld\n", key_info.KeySize);
     }
