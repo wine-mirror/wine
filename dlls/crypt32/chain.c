@@ -3513,7 +3513,7 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     else if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_IS_REVOKED && !(checks & SECURITY_FLAG_IGNORE_REVOCATION))
     {
-        pPolicyStatus->dwError = CERT_E_REVOKED;
+        pPolicyStatus->dwError = CRYPT_E_REVOKED;
         find_element_with_error(pChainContext,
          CERT_TRUST_IS_REVOKED, &pPolicyStatus->lChainIndex,
          &pPolicyStatus->lElementIndex);
@@ -3522,7 +3522,7 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
      CERT_TRUST_IS_OFFLINE_REVOCATION &&
      !(checks & SECURITY_FLAG_IGNORE_REVOCATION))
     {
-        pPolicyStatus->dwError = CERT_E_REVOCATION_FAILURE;
+        pPolicyStatus->dwError = CRYPT_E_REVOCATION_OFFLINE;
         find_element_with_error(pChainContext,
          CERT_TRUST_IS_OFFLINE_REVOCATION, &pPolicyStatus->lChainIndex,
          &pPolicyStatus->lElementIndex);
