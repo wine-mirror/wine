@@ -5283,6 +5283,12 @@ static void test_featureparents(void)
     /* msidbFeatureAttributesUIDisallowAbsent */
     add_feature_entry( hdb, "'lyra', '', '', '', 2, 1, '', 16" );
 
+    /* msidbFeatureAttributesDisallowAdvertise */
+    add_feature_entry( hdb, "'cygnus', '', '', '', 2, 1, '', 8" );
+
+    /* advertise allowed */
+    add_feature_entry( hdb, "'lacerta', '', '', '', 2, 1, '', 0" );
+
     /* disabled because of install level */
     add_feature_entry( hdb, "'waters', '', '', '', 15, 101, '', 9" );
 
@@ -5378,6 +5384,8 @@ static void test_featureparents(void)
     test_feature_states( __LINE__, hpkg, "perseus", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
     test_feature_states( __LINE__, hpkg, "orion", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
     test_feature_states( __LINE__, hpkg, "lyra", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "cygnus", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "lacerta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
     test_feature_states( __LINE__, hpkg, "waters", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_feature_states( __LINE__, hpkg, "bayer", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
@@ -5402,10 +5410,18 @@ static void test_featureparents(void)
     r = MsiSetFeatureStateA(hpkg, "nosuchfeature", INSTALLSTATE_ABSENT);
     ok( r == ERROR_UNKNOWN_FEATURE, "Expected ERROR_UNKNOWN_FEATURE, got %u\n", r);
 
+    r = MsiSetFeatureStateA(hpkg, "cygnus", INSTALLSTATE_ADVERTISED);
+    todo_wine ok(!r, "got %d\n", r);
+
+    r = MsiSetFeatureStateA(hpkg, "lacerta", INSTALLSTATE_ADVERTISED);
+    ok(!r, "got %d\n", r);
+
     test_feature_states( __LINE__, hpkg, "zodiac", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
     test_feature_states( __LINE__, hpkg, "perseus", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
     test_feature_states( __LINE__, hpkg, "orion", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_ABSENT, FALSE );
     test_feature_states( __LINE__, hpkg, "lyra", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_ABSENT, FALSE );
+    test_feature_states( __LINE__, hpkg, "cygnus", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_ABSENT, TRUE );
+    test_feature_states( __LINE__, hpkg, "lacerta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_ADVERTISED, FALSE );
     test_feature_states( __LINE__, hpkg, "waters", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_feature_states( __LINE__, hpkg, "bayer", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
