@@ -128,7 +128,8 @@ static void test_CM_Get_Device_ID_List(void)
     SP_DEVINFO_DATA device = { sizeof(device) };
     unsigned int i, count, expected_count;
     WCHAR wguid_str[64], id[128], *wbuf, *wp;
-    char guid_str[64], *buf, *p;
+    char guid_str[64], id_a[128], *buf, *p;
+    DEVINST devinst;
     CONFIGRET ret;
     HDEVINFO set;
     ULONG len;
@@ -209,6 +210,19 @@ static void test_CM_Get_Device_ID_List(void)
     }
     SetupDiDestroyDeviceInfoList(set);
     expected_count = i;
+    ok(expected_count, "got 0.\n");
+
+    wcscpy(id, L"q");
+    devinst = 0xdeadbeef;
+    ret = CM_Locate_DevNodeW(&devinst, id, 0);
+    todo_wine_if(ret == CR_NO_SUCH_DEVNODE) ok(ret == CR_INVALID_DEVICE_ID, "got %#lx.\n", ret);
+    ok(!devinst, "got %#lx.\n", devinst);
+
+    wcscpy(id, instances[0].id);
+    id[0] = 'Q';
+    ret = CM_Locate_DevNodeW(&devinst, id, 0);
+    ok(ret == CR_NO_SUCH_DEVNODE, "got %#lx.\n", ret);
+
     for (i = 0; i < expected_count; ++i)
     {
         DEVPROPTYPE type;
@@ -223,6 +237,19 @@ static void test_CM_Get_Device_ID_List(void)
         ok(!ret || ret == CR_NO_SUCH_VALUE, "got %#lx.\n", ret);
         if (!ret)
             ok(type == DEVPROP_TYPE_UINT64, "got %#lx.\n", type);
+
+        devinst = 0xdeadbeef;
+        ret = CM_Locate_DevNodeW(&devinst, instances[i].id, 0);
+        ok(!ret, "got %#lx, id %s.\n", ret, debugstr_w(instances[i].id));
+        ok(devinst == instances[i].inst, "got %#lx, expected %#lx.\n", devinst, instances[i].inst);
+        p = id_a;
+        wp = instances[i].id;
+        while((*p++ = *wp++))
+            ;
+        devinst = 0xdeadbeef;
+        ret = CM_Locate_DevNodeA(&devinst, id_a, 0);
+        ok(!ret, "got %#lx, id %s.\n", ret, debugstr_a(id_a));
+        ok(devinst == instances[i].inst, "got %#lx, expected %#lx.\n", devinst, instances[i].inst);
     }
 
     memset(wbuf, 0xcc, len * sizeof(*wbuf));

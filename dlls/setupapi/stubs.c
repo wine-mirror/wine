@@ -268,46 +268,6 @@ BOOL WINAPI SetupDiGetClassImageIndex(PSP_CLASSIMAGELIST_DATA ClassImageListData
 }
 
 /***********************************************************************
- *      CM_Locate_DevNodeA (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags)
-{
-    FIXME("%p %s 0x%08lx: stub\n", pdnDevInst, debugstr_a(pDeviceID), ulFlags);
-
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Locate_DevNodeW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Locate_DevNodeW(PDEVINST pdnDevInst, DEVINSTID_W pDeviceID, ULONG ulFlags)
-{
-    FIXME("%p %s 0x%08lx: stub\n", pdnDevInst, debugstr_w(pDeviceID), ulFlags);
-
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Locate_DevNode_ExA (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Locate_DevNode_ExA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags, HMACHINE hMachine)
-{
-    FIXME("%p %s 0x%08lx %p: stub\n", pdnDevInst, debugstr_a(pDeviceID), ulFlags, hMachine);
-
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Locate_DevNode_ExW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Locate_DevNode_ExW(PDEVINST pdnDevInst, DEVINSTID_W pDeviceID, ULONG ulFlags, HMACHINE hMachine)
-{
-    FIXME("%p %s 0x%08lx %p: stub\n", pdnDevInst, debugstr_w(pDeviceID), ulFlags, hMachine);
-
-    return CR_FAILURE;
-}
-
-/***********************************************************************
  *      CM_Get_Device_Interface_List_SizeA (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeA(PULONG len, LPGUID class, DEVINSTID_A id,

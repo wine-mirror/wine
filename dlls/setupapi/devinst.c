@@ -4227,6 +4227,87 @@ CONFIGRET WINAPI CM_Get_Device_ID_Size(ULONG *len, DEVINST devnode, ULONG flags)
     return CR_SUCCESS;
 }
 
+/***********************************************************************
+ *      CM_Locate_DevNodeA (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNodeA(DEVINST *devinst, DEVINSTID_A device_id, ULONG flags)
+{
+    TRACE("%p %s %#lx.\n", devinst, debugstr_a(device_id), flags);
+
+    return CM_Locate_DevNode_ExA(devinst, device_id, flags, NULL);
+}
+
+/***********************************************************************
+ *      CM_Locate_DevNodeW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNodeW(DEVINST *devinst, DEVINSTID_W device_id, ULONG flags)
+{
+    TRACE("%p %s %#lx.\n", devinst, debugstr_w(device_id), flags);
+
+    return CM_Locate_DevNode_ExW(devinst, device_id, flags, NULL);
+}
+
+/***********************************************************************
+ *      CM_Locate_DevNode_ExA (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNode_ExA(DEVINST *devinst, DEVINSTID_A device_id, ULONG flags, HMACHINE machine)
+{
+    CONFIGRET ret;
+    DEVINSTID_W device_idw;
+    unsigned int slen;
+
+    TRACE("%p %s %#lx %p.\n", devinst, debugstr_a(device_id), flags, machine);
+
+    if (!device_id)
+    {
+        FIXME("NULL device_id unsupported.\n");
+        return CR_CALL_NOT_IMPLEMENTED;
+    }
+
+    slen = strlen(device_id) + 1;
+    if (!(device_idw = malloc(slen * sizeof(*device_idw))))
+        return CR_OUT_OF_MEMORY;
+
+    MultiByteToWideChar(CP_ACP, 0, device_id, slen, device_idw, slen);
+    ret = CM_Locate_DevNode_ExW(devinst, device_idw, flags, NULL);
+    free(device_idw);
+    return ret;
+}
+
+/***********************************************************************
+ *      CM_Locate_DevNode_ExW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Locate_DevNode_ExW(DEVINST *devinst, DEVINSTID_W device_id, ULONG flags, HMACHINE machine)
+{
+    DEVINST ret;
+
+    TRACE("%p %s %#lx %p.\n", devinst, debugstr_w(device_id), flags, machine);
+
+    if (!devinst)
+        return CR_INVALID_POINTER;
+
+    *devinst = 0;
+
+    if (machine)
+        FIXME("machine %p not supported.\n", machine);
+    if (flags)
+        FIXME("flags %#lx are not supported.\n", flags);
+
+    if (!device_id)
+    {
+        FIXME("NULL device_id unsupported.\n");
+        return CR_CALL_NOT_IMPLEMENTED;
+    }
+
+    if ((ret = get_devinst_for_device_id(device_id)) < devinst_table_size && devinst_table[ret])
+    {
+        *devinst = ret;
+        return CR_SUCCESS;
+    }
+
+    return CR_NO_SUCH_DEVNODE;
+}
+
 static CONFIGRET get_device_id_list(const WCHAR *filter, WCHAR *buffer, ULONG *len, ULONG flags)
 {
     const ULONG supported_flags = CM_GETIDLIST_FILTER_NONE | CM_GETIDLIST_FILTER_CLASS | CM_GETIDLIST_FILTER_PRESENT;
