@@ -3039,6 +3039,7 @@ static void test_download(DWORD flags)
     SET_EXPECT(Invoke_COMMANDSTATECHANGE_UPDATECOMMANDS);
 
     SET_EXPECT(Invoke_STATUSTEXTCHANGE);
+    SET_EXPECT(Invoke_PROPERTYCHANGE);
     SET_EXPECT(SetStatusText);
     SET_EXPECT(EnableModeless_TRUE);
     if(!is_first_load)
@@ -3070,7 +3071,7 @@ static void test_download(DWORD flags)
         DispatchMessageW(&msg);
     }
 
-    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)))
+    if(flags & DWL_EXPECT_BEFORE_NAVIGATE)
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
     else if(flags & (DWL_FROM_GOFORWARD|DWL_REFRESH))
         CLEAR_CALLED(Invoke_PROPERTYCHANGE); /* called by IE11 */
@@ -3255,8 +3256,7 @@ static void test_put_href(IWebBrowser2 *unk, const WCHAR *url)
 
     SET_EXPECT(TranslateUrl);
     SET_EXPECT(Invoke_BEFORENAVIGATE2);
-    if(!is_http)
-        SET_EXPECT(Invoke_PROPERTYCHANGE);
+    SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     dwl_flags = DWL_FROM_PUT_HREF;
 
@@ -3266,8 +3266,7 @@ static void test_put_href(IWebBrowser2 *unk, const WCHAR *url)
 
     CHECK_CALLED(TranslateUrl);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
-    if(!is_http)
-        todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+    todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
 
     IHTMLLocation_Release(location);
     SysFreeString(str);
