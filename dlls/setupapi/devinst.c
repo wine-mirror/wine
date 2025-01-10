@@ -4342,6 +4342,96 @@ CONFIGRET WINAPI CM_Get_Device_ID_List_SizeW(ULONG *len, const WCHAR *filter, UL
 }
 
 /***********************************************************************
+ *             CM_Get_Device_ID_List_ExA  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_List_ExA(const char *filter, char *buffer, ULONG len, ULONG flags, HMACHINE machine)
+{
+    WCHAR *wbuffer, *wfilter = NULL, *p;
+    unsigned int slen;
+    CONFIGRET ret;
+
+    TRACE("%s %p %ld %#lx.\n", debugstr_a(filter), buffer, len, flags);
+
+    if (machine)
+        FIXME("machine %p.\n", machine);
+
+    if (!buffer || !len)
+        return CR_INVALID_POINTER;
+
+    if (!(wbuffer = malloc(len * sizeof(*wbuffer))))
+        return CR_OUT_OF_MEMORY;
+
+    if (filter)
+    {
+        slen = strlen(filter) + 1;
+        if (!(wfilter = malloc(slen * sizeof(*wfilter))))
+        {
+            free(wbuffer);
+            return CR_OUT_OF_MEMORY;
+        }
+        MultiByteToWideChar(CP_ACP, 0, filter, slen, wfilter, slen);
+    }
+
+    if (!(ret = CM_Get_Device_ID_ListW(wfilter, wbuffer, len, flags)))
+    {
+        p = wbuffer;
+        while (*p)
+        {
+            slen = wcslen(p) + 1;
+            WideCharToMultiByte(CP_ACP, 0, p, slen, buffer, slen, NULL, NULL);
+            p += slen;
+            buffer += slen;
+        }
+        *buffer = 0;
+    }
+    free(wfilter);
+    free(wbuffer);
+    return ret;
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_ListA  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_ListA(const char *filter, char *buffer, ULONG len, ULONG flags)
+{
+    return CM_Get_Device_ID_List_ExA(filter, buffer, len, flags, NULL);
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_List_Size_ExA  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_List_Size_ExA(ULONG *len, const char *filter, ULONG flags, HMACHINE machine)
+{
+    WCHAR *wfilter = NULL;
+    unsigned int slen;
+    CONFIGRET ret;
+
+    TRACE("%p %s %#lx.\n", len, debugstr_a(filter), flags);
+
+    if (machine)
+        FIXME("machine %p.\n", machine);
+
+    if (filter)
+    {
+        slen = strlen(filter) + 1;
+        if (!(wfilter = malloc(slen * sizeof(*wfilter))))
+            return CR_OUT_OF_MEMORY;
+        MultiByteToWideChar(CP_ACP, 0, filter, slen, wfilter, slen);
+    }
+    ret = CM_Get_Device_ID_List_SizeW(len, wfilter, flags);
+    free(wfilter);
+    return ret;
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_List_SizeA  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_List_SizeA(ULONG *len, const char *filter, ULONG flags)
+{
+    return CM_Get_Device_ID_List_Size_ExA(len, filter, flags, NULL);
+}
+
+/***********************************************************************
  *      SetupDiGetINFClassA (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiGetINFClassA(PCSTR inf, LPGUID class_guid, PSTR class_name,

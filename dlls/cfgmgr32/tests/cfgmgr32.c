@@ -118,12 +118,16 @@ static void test_CM_MapCrToWin32Err(void)
 static void test_CM_Get_Device_ID_List(void)
 {
     WCHAR wguid_str[64], *wbuf, *wp;
+    char guid_str[64], *buf, *p;
     unsigned int count;
     CONFIGRET ret;
     ULONG len;
 
     StringFromGUID2(&GUID_DEVCLASS_DISPLAY, wguid_str, ARRAY_SIZE(wguid_str));
     wp = wguid_str;
+    p = guid_str;
+    while ((*p++ = *wp++))
+        ;
 
     ret = CM_Get_Device_ID_List_SizeW(NULL, wguid_str, CM_GETIDLIST_FILTER_CLASS);
     ok(ret == CR_INVALID_POINTER, "got %#lx.\n", ret);
@@ -136,12 +140,24 @@ static void test_CM_Get_Device_ID_List(void)
     ok(ret == CR_INVALID_DATA, "got %#lx.\n", ret);
     ok(!len, "got %#lx.\n", len);
 
+    ret = CM_Get_Device_ID_List_SizeA(NULL, guid_str, CM_GETIDLIST_FILTER_CLASS);
+    ok(ret == CR_INVALID_POINTER, "got %#lx.\n", ret);
+    len = 0xdeadbeef;
+    ret = CM_Get_Device_ID_List_SizeA(&len, NULL, CM_GETIDLIST_FILTER_CLASS);
+    ok(ret == CR_INVALID_POINTER, "got %#lx.\n", ret);
+    ok(!len, "got %#lx.\n", len);
+    len = 0xdeadbeef;
+    ret = CM_Get_Device_ID_List_SizeA(&len, "q", CM_GETIDLIST_FILTER_CLASS);
+    ok(ret == CR_INVALID_DATA, "got %#lx.\n", ret);
+    ok(!len, "got %#lx.\n", len);
+
     len = 0xdeadbeef;
     ret = CM_Get_Device_ID_List_SizeW(&len, NULL, 0);
     ok(!ret, "got %#lx.\n", ret);
     ok(len > 2, "got %#lx.\n", len);
 
     wbuf = malloc(len * sizeof(*wbuf));
+    buf = malloc(len);
 
     ret = CM_Get_Device_ID_ListW(NULL, wbuf, len, 0);
     ok(!ret, "got %#lx.\n", ret);
@@ -159,6 +175,19 @@ static void test_CM_Get_Device_ID_List(void)
     ok(ret == CR_BUFFER_SMALL, "got %#lx.\n", ret);
     ok(!wbuf[0], "got %#x.\n", wbuf[0]);
 
+    len = 0xdeadbeef;
+    ret = CM_Get_Device_ID_List_SizeA(&len, guid_str, CM_GETIDLIST_FILTER_CLASS | CM_GETIDLIST_FILTER_PRESENT);
+    ok(!ret, "got %#lx.\n", ret);
+    ok(len > 2, "got %lu.\n", len);
+    memset(buf, 0x7c, len);
+    ret = CM_Get_Device_ID_ListA(guid_str, buf, 0, CM_GETIDLIST_FILTER_CLASS | CM_GETIDLIST_FILTER_PRESENT);
+    ok(ret == CR_INVALID_POINTER, "got %#lx.\n", ret);
+    ok(buf[0] == 0x7c, "got %#x.\n", buf[0]);
+    memset(buf, 0x7c, len);
+    ret = CM_Get_Device_ID_ListA(guid_str, buf, 1, CM_GETIDLIST_FILTER_CLASS | CM_GETIDLIST_FILTER_PRESENT);
+    ok(ret == CR_BUFFER_SMALL, "got %#lx.\n", ret);
+    ok(buf[0] == 0x7c, "got %#x.\n", buf[0]);
+
     memset(wbuf, 0xcc, len * sizeof(*wbuf));
     ret = CM_Get_Device_ID_ListW(wguid_str, wbuf, len, CM_GETIDLIST_FILTER_CLASS | CM_GETIDLIST_FILTER_PRESENT);
     ok(!ret, "got %#lx.\n", ret);
@@ -172,7 +201,21 @@ static void test_CM_Get_Device_ID_List(void)
     }
     ok(count, "got 0.\n");
 
+    memset(buf, 0xcc, len * sizeof(*buf));
+    ret = CM_Get_Device_ID_ListA(guid_str, buf, len, CM_GETIDLIST_FILTER_CLASS | CM_GETIDLIST_FILTER_PRESENT);
+    ok(!ret, "got %#lx.\n", ret);
+    count = 0;
+    p = buf;
+    while (*p)
+    {
+        ++count;
+        ok(!strnicmp(p, "PCI\\", 4) || !strnicmp(p, "VMBUS\\", 6), "got %s.\n", debugstr_a(p));
+        p += strlen(p) + 1;
+    }
+    ok(count, "got 0.\n");
+
     free(wbuf);
+    free(buf);
 }
 
 START_TEST(cfgmgr32)
