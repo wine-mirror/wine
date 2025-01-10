@@ -2521,7 +2521,7 @@ static HRESULT media_engine_transfer_d3d11(struct media_engine *engine, ID3D11Te
     src_box.back = 1;
 
     if (dst_rect->left + src_box.right - src_box.left > dst_desc.Width ||
-            dst_rect->top + src_box.top - src_box.bottom > dst_desc.Height)
+            dst_rect->top + src_box.bottom - src_box.top > dst_desc.Height)
     {
         ID3D11Texture2D_Release(src_texture);
         return MF_E_UNEXPECTED;
