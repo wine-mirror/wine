@@ -241,50 +241,45 @@ static inline void copy_device_iface_data(SP_DEVICE_INTERFACE_DATA *data,
     data->Reserved = (ULONG_PTR)iface;
 }
 
-static struct device **devnode_table;
-static unsigned int devnode_table_size;
+static WCHAR **devinst_table;
+static unsigned int devinst_table_size;
 
-static DEVINST alloc_devnode(struct device *device)
+static DEVINST get_devinst_for_device_id(const WCHAR *id)
 {
     unsigned int i;
 
-    for (i = 0; i < devnode_table_size; ++i)
+    for (i = 0; i < devinst_table_size; ++i)
     {
-        if (!devnode_table[i])
+        if (!devinst_table[i])
             break;
+        if (!wcsicmp(devinst_table[i], id))
+            return i;
     }
-
-    if (i == devnode_table_size)
-    {
-        if (devnode_table)
-        {
-            devnode_table = realloc(devnode_table, devnode_table_size * 2 * sizeof(*devnode_table));
-            memset(devnode_table + devnode_table_size, 0, devnode_table_size * sizeof(*devnode_table));
-            devnode_table_size *= 2;
-        }
-        else
-        {
-            devnode_table_size = 256;
-            devnode_table = calloc(devnode_table_size, sizeof(*devnode_table));
-        }
-    }
-
-    devnode_table[i] = device;
     return i;
 }
 
-static void free_devnode(DEVINST devnode)
+static DEVINST alloc_devinst_for_device_id(const WCHAR *id)
 {
-    devnode_table[devnode] = NULL;
-}
+    DEVINST ret;
 
-static struct device *get_devnode_device(DEVINST devnode)
-{
-    if (devnode < devnode_table_size)
-        return devnode_table[devnode];
-
-    WARN("device node %lu not found\n", devnode);
-    return NULL;
+    ret = get_devinst_for_device_id(id);
+    if (ret == devinst_table_size)
+    {
+        if (devinst_table)
+        {
+            devinst_table = realloc(devinst_table, devinst_table_size * 2 * sizeof(*devinst_table));
+            memset(devinst_table + devinst_table_size, 0, devinst_table_size * sizeof(*devinst_table));
+            devinst_table_size *= 2;
+        }
+        else
+        {
+            devinst_table_size = 256;
+            devinst_table = calloc(devinst_table_size, sizeof(*devinst_table));
+        }
+    }
+    if (!devinst_table[ret])
+        devinst_table[ret] = wcsdup(id);
+    return ret;
 }
 
 static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
@@ -831,7 +826,6 @@ static void delete_device(struct device *device)
     {
         delete_device_iface(iface);
     }
-    free_devnode(device->devnode);
     list_remove(&device->entry);
     free(device);
 }
@@ -877,7 +871,7 @@ static struct device *create_device(struct DeviceInfoSet *set,
     device->phantom = phantom;
     list_init(&device->interfaces);
     device->class = *class;
-    device->devnode = alloc_devnode(device);
+    device->devnode = alloc_devinst_for_device_id(device->instanceId);
     device->removed = FALSE;
     list_add_tail(&set->devices, &device->entry);
     device->params.cbSize = sizeof(SP_DEVINSTALL_PARAMS_W);
@@ -897,6 +891,28 @@ static struct device *create_device(struct DeviceInfoSet *set,
 
     TRACE("Created new device %p.\n", device);
     return device;
+}
+
+static struct device *get_devnode_device(DEVINST devnode, HDEVINFO *set)
+{
+    SP_DEVINFO_DATA data = { sizeof(data) };
+
+    *set = NULL;
+    if (devnode >= devinst_table_size || !devinst_table[devnode])
+    {
+        WARN("device node %lu not found\n", devnode);
+        return NULL;
+    }
+
+    *set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
+    if (*set == INVALID_HANDLE_VALUE) return NULL;
+    if (!SetupDiOpenDeviceInfoW(*set, devinst_table[devnode], NULL, 0, &data))
+    {
+        SetupDiDestroyDeviceInfoList(*set);
+        *set = NULL;
+        return NULL;
+    }
+    return get_device(*set, &data);
 }
 
 /***********************************************************************
@@ -4172,14 +4188,12 @@ BOOL WINAPI SetupDiDeleteDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
  */
 CONFIGRET WINAPI CM_Get_Device_IDA(DEVINST devnode, char *buffer, ULONG len, ULONG flags)
 {
-    struct device *device = get_devnode_device(devnode);
-
     TRACE("%lu, %p, %lu, %#lx\n", devnode, buffer, len, flags);
 
-    if (!device)
+    if (devnode >= devinst_table_size || !devinst_table[devnode])
         return CR_NO_SUCH_DEVINST;
 
-    WideCharToMultiByte(CP_ACP, 0, device->instanceId, -1, buffer, len, 0, 0);
+    WideCharToMultiByte(CP_ACP, 0, devinst_table[devnode], -1, buffer, len, 0, 0);
     TRACE("Returning %s\n", debugstr_a(buffer));
     return CR_SUCCESS;
 }
@@ -4189,14 +4203,12 @@ CONFIGRET WINAPI CM_Get_Device_IDA(DEVINST devnode, char *buffer, ULONG len, ULO
  */
 CONFIGRET WINAPI CM_Get_Device_IDW(DEVINST devnode, WCHAR *buffer, ULONG len, ULONG flags)
 {
-    struct device *device = get_devnode_device(devnode);
-
     TRACE("%lu, %p, %lu, %#lx\n", devnode, buffer, len, flags);
 
-    if (!device)
+    if (devnode >= devinst_table_size || !devinst_table[devnode])
         return CR_NO_SUCH_DEVINST;
 
-    lstrcpynW(buffer, device->instanceId, len);
+    lstrcpynW(buffer, devinst_table[devnode], len);
     TRACE("Returning %s\n", debugstr_w(buffer));
     return CR_SUCCESS;
 }
@@ -4206,14 +4218,12 @@ CONFIGRET WINAPI CM_Get_Device_IDW(DEVINST devnode, WCHAR *buffer, ULONG len, UL
  */
 CONFIGRET WINAPI CM_Get_Device_ID_Size(ULONG *len, DEVINST devnode, ULONG flags)
 {
-    struct device *device = get_devnode_device(devnode);
-
     TRACE("%p, %lu, %#lx\n", len, devnode, flags);
 
-    if (!device)
+    if (devnode >= devinst_table_size || !devinst_table[devnode])
         return CR_NO_SUCH_DEVINST;
 
-    *len = lstrlenW(device->instanceId);
+    *len = lstrlenW(devinst_table[devnode]);
     return CR_SUCCESS;
 }
 
@@ -4789,7 +4799,8 @@ BOOL WINAPI SetupDiGetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
 CONFIGRET WINAPI CM_Get_DevNode_Property_ExW(DEVINST devnode, const DEVPROPKEY *prop_key, DEVPROPTYPE *prop_type,
     BYTE *prop_buff, ULONG *prop_buff_size, ULONG flags, HMACHINE machine)
 {
-    struct device *device = get_devnode_device(devnode);
+    HDEVINFO set;
+    struct device *device;
     LSTATUS ls;
 
     TRACE("%lu, %p, %p, %p, %p, %#lx, %p\n", devnode, prop_key, prop_type, prop_buff, prop_buff_size,
@@ -4798,13 +4809,14 @@ CONFIGRET WINAPI CM_Get_DevNode_Property_ExW(DEVINST devnode, const DEVPROPKEY *
     if (machine)
         return CR_MACHINE_UNAVAILABLE;
 
-    if (!device)
-        return CR_NO_SUCH_DEVINST;
-
     if (!prop_buff_size)
         return CR_INVALID_POINTER;
 
+    if (!(device = get_devnode_device(devnode, &set)))
+        return CR_NO_SUCH_DEVINST;
+
     ls = get_device_property(device, prop_key, prop_type, prop_buff, *prop_buff_size, prop_buff_size, flags);
+    SetupDiDestroyDeviceInfoList(set);
     switch (ls)
     {
     case NO_ERROR:
