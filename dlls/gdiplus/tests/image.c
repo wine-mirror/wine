@@ -106,11 +106,30 @@ static void expect_image_properties(GpImage *image, UINT width, UINT height, int
     ok_(__FILE__, line)(format == PixelFormat32bppARGB, "Expected %d, got %d\n", PixelFormat32bppARGB, format);
 }
 
+static const char * dbgstr_hexdata(const BYTE *data, UINT len)
+{
+    UINT i, offset = 0;
+    char buffer[770];
+    const UINT max_len = 256;
+    const UINT output_len = (len <= max_len) ? len : max_len - 1;
+
+    if (!len) return "";
+
+    for (i = 0; i < output_len; i++)
+        offset += sprintf(buffer + offset, " %02x", data[i]);
+
+    if (len > output_len)
+        offset += sprintf(buffer + offset, " ...");
+
+    return __wine_dbg_strdup( buffer );
+}
+
 static void expect_bitmap_locked_data(GpBitmap *bitmap, const BYTE *expect_bits,
         UINT width, UINT height, UINT stride, int line)
 {
     GpStatus stat;
     BitmapData lockeddata;
+    int match;
 
     memset(&lockeddata, 0x55, sizeof(lockeddata));
     stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead, PixelFormat32bppARGB, &lockeddata);
@@ -120,8 +139,13 @@ static void expect_bitmap_locked_data(GpBitmap *bitmap, const BYTE *expect_bits,
     ok_(__FILE__, line)(lockeddata.Stride == stride, "Expected %d, got %d\n", stride, lockeddata.Stride);
     ok_(__FILE__, line)(lockeddata.PixelFormat == PixelFormat32bppARGB,
             "Expected %d, got %d\n", PixelFormat32bppARGB, lockeddata.PixelFormat);
-    ok_(__FILE__, line)(!memcmp(expect_bits, lockeddata.Scan0, lockeddata.Height * lockeddata.Stride),
-            "data mismatch\n");
+    match = !memcmp(expect_bits, lockeddata.Scan0, lockeddata.Height * lockeddata.Stride);
+    ok_(__FILE__, line)(match, "data mismatch\n");
+    if (!match)
+    {
+        trace("Expected: %s\n", dbgstr_hexdata(expect_bits, lockeddata.Height * lockeddata.Stride));
+        trace("Got:      %s\n", dbgstr_hexdata(lockeddata.Scan0, lockeddata.Height * lockeddata.Stride));
+    }
     GdipBitmapUnlockBits(bitmap, &lockeddata);
 }
 
@@ -153,24 +177,6 @@ static BOOL get_encoder_clsid(LPCWSTR mime, GUID *format, CLSID *clsid)
 
     GdipFree(info);
     return ret;
-}
-
-static const char * dbgstr_hexdata(const BYTE *data, UINT len)
-{
-    UINT i, offset = 0;
-    char buffer[770];
-    const UINT max_len = 256;
-    const UINT output_len = (len <= max_len) ? len : max_len - 1;
-
-    if (!len) return "";
-
-    for (i = 0; i < output_len; i++)
-        offset += sprintf(buffer + offset, " %02x", data[i]);
-
-    if (len > output_len)
-        offset += sprintf(buffer + offset, " ...");
-
-    return __wine_dbg_strdup( buffer );
 }
 
 static void test_bufferrawformat(void* buff, int size, REFGUID expected, int line, BOOL todo)
