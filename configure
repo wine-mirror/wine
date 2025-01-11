@@ -10358,12 +10358,24 @@ test -n "$x86_64_CC" || x86_64_CC="false"
         esac
 fi
 
-    CFLAGS=${CROSSCFLAGS:-"-g -O2"}
     CPPFLAGS=""
-    LDFLAGS=$CROSSLDFLAGS
+    if eval test \${${wine_arch}_CFLAGS+y}
+then :
+
+else case e in #(
+  e) eval "${wine_arch}_CFLAGS=\${CROSSCFLAGS:-\"-g -O2\"}" ;;
+esac
+fi
+    if eval test \${${wine_arch}_LDFLAGS+y}
+then :
+
+else case e in #(
+  e) eval "${wine_arch}_LDFLAGS=\$CROSSLDFLAGS" ;;
+esac
+fi
     eval CC=\$${wine_arch}_CC
-    eval ${wine_arch}_CFLAGS=\$CFLAGS
-    eval ${wine_arch}_LDFLAGS=\$LDFLAGS
+    eval CFLAGS=\$${wine_arch}_CFLAGS
+    eval LDFLAGS=\$${wine_arch}_LDFLAGS
     eval "${wine_arch}_EXTRACFLAGS=\"-D__WINE_PE_BUILD -Wall\""
 
     target=""
