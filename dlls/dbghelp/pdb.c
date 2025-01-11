@@ -1275,12 +1275,9 @@ static enum pdb_result pdb_reader_read_leaf_as_variant(struct pdb_reader *pdb, s
 }
 
 /* read a codeview numeric leaf from a partially loaded codeview type */
-static enum pdb_result codeview_fetch_leaf_as_int(const union codeview_type *cv_type, const unsigned char *data, int *value)
+static enum pdb_result codeview_leaf_as_int(const unsigned char *data, int *value)
 {
-    unsigned data_len = min(sizeof(*cv_type), sizeof(cv_type->generic.len) + cv_type->generic.len) - (data - (const unsigned char*)cv_type);
     unsigned short int type;
-
-    if (data_len < sizeof(unsigned short)) return R_PDB_BUFFER_TOO_SMALL;
 
     type = *(unsigned short int*)data;
     if (type < LF_NUMERIC)
@@ -1289,9 +1286,6 @@ static enum pdb_result codeview_fetch_leaf_as_int(const union codeview_type *cv_
     }
     else
     {
-        if (data_len < codeview_get_leaf_length(type))
-            return R_PDB_BUFFER_TOO_SMALL;
-
         switch (type)
         {
         case LF_CHAR:      *value = *(char*)(data + 2); break;
@@ -1325,6 +1319,19 @@ static enum pdb_result codeview_fetch_leaf_as_int(const union codeview_type *cv_
     }
 
     return R_PDB_SUCCESS;
+}
+
+static enum pdb_result codeview_fetch_leaf_as_int(const union codeview_type *cv_type, const unsigned char *data, int *value)
+{
+    unsigned data_len = min(sizeof(*cv_type), sizeof(cv_type->generic.len) + cv_type->generic.len) - (data - (const unsigned char*)cv_type);
+    unsigned short int type;
+
+    if (data_len < sizeof(unsigned short)) return R_PDB_BUFFER_TOO_SMALL;
+
+    type = *(unsigned short int*)data;
+    if (type >= LF_NUMERIC && data_len < codeview_get_leaf_length(type))
+        return R_PDB_BUFFER_TOO_SMALL;
+    return codeview_leaf_as_int(data, value);
 }
 
 static WCHAR *heap_allocate_symname(const char *string)
@@ -2328,6 +2335,35 @@ static enum method_result pdb_reader_TPI_procsignature_request(struct pdb_reader
     }
 }
 
+struct pdb_children_filler
+{
+    DWORD *indexes;
+    unsigned count; /* max allowed indexes */
+    unsigned actual; /* actual index in indexes when filling */
+};
+
+static enum pdb_result pdb_reader_push_children_filler(struct pdb_reader *pdb, struct pdb_children_filler *children, symref_t symref)
+{
+    if (children->actual >= children->count) return R_PDB_BUFFER_TOO_SMALL;
+    if (children->indexes)
+        children->indexes[children->actual] = symt_symref_to_index(pdb->module, symref);
+    children->actual++;
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_push_action_and_filler(struct pdb_reader *pdb, enum pdb_action_type action, pdbsize_t stream_offset,
+                                                         unsigned id_size, symref_t container_symref, struct pdb_children_filler *children)
+{
+    enum pdb_result result;
+    symref_t symref;
+
+    if (!children->indexes)
+        symref = 0;
+    else
+        if ((result = pdb_reader_push_action(pdb, action, stream_offset, id_size, container_symref, &symref))) return result;
+    return pdb_reader_push_children_filler(pdb, children, symref);
+}
+
 static enum pdb_result pdb_reader_TPI_fillin_enumlist(struct pdb_reader *pdb, symref_t container_symref,
                                                       cv_typ_t enumlist_cv_typeid, unsigned count, DWORD *index)
  {
@@ -2433,10 +2469,214 @@ static enum method_result pdb_reader_TPI_enum_request(struct pdb_reader *pdb, sy
     }
 }
 
+static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, symref_t container_symref,
+                                                     cv_typ_t udtlist_cv_typeid, struct pdb_children_filler *children)
+{
+    enum pdb_result result;
+    union codeview_reftype *cv_reftype;
+    pdbsize_t tpi_offset;
+    const unsigned char *start, *ptr, *last;
+    const union codeview_fieldtype *cv_field;
+    unsigned length;
+    VARIANT v;
+
+    if ((result = pdb_reader_TPI_alloc_and_read_full_reftype(pdb, udtlist_cv_typeid, &cv_reftype, &tpi_offset))) return result;
+    if (cv_reftype->generic.id != LF_FIELDLIST_V2) return PDB_REPORT_UNEXPECTED("list", cv_reftype->generic.id);
+    start = ptr = (const unsigned char *)cv_reftype->fieldlist.list;
+    last = (const unsigned char *)cv_reftype + sizeof(cv_reftype->generic.id) + cv_reftype->generic.len;
+
+    tpi_offset += offsetof(union codeview_reftype, fieldlist.list);
+
+    while (ptr < last)
+    {
+        if (*ptr >= 0xf0) /* Padding */
+        {
+            ptr += *ptr & 0x0f;
+            continue;
+        }
+        cv_field = (const union codeview_fieldtype *)ptr;
+        result = R_PDB_SUCCESS;
+        switch (cv_field->generic.id)
+        {
+        case LF_BCLASS_V2:
+            length = offsetof(union codeview_fieldtype, bclass_v2.data);
+            length += codeview_leaf_as_variant(ptr + length, &v);
+            /* FIXME: ignored for now */
+            break;
+
+        case LF_VBCLASS_V2:
+        case LF_IVBCLASS_V2:
+            length = offsetof(union codeview_fieldtype, vbclass_v2.data);
+            length += codeview_leaf_as_variant(ptr + length, &v); /* vbpoff */
+            length += codeview_leaf_as_variant(ptr + length, &v); /* vboff */
+            /* FIXME: ignored for now */
+            break;
+
+         case LF_MEMBER_V3:
+            length = offsetof(union codeview_fieldtype, member_v3.data);
+            length += codeview_leaf_as_variant(ptr + length, &v);
+            length += strlen((const char *)ptr + length) + 1;
+            result = pdb_reader_push_action_and_filler(pdb, action_type_field, tpi_offset + (ptr - start), length, container_symref, children);
+            break;
+
+        case LF_STMEMBER_V3:
+            /* FIXME: ignored for now */
+            length = offsetof(union codeview_fieldtype, stmember_v3.name) + strlen(cv_field->stmember_v3.name) + 1;
+            break;
+
+        case LF_METHOD_V3:
+            /* FIXME: ignored for now */
+            length = offsetof(union codeview_fieldtype, method_v3.name) + strlen(cv_field->method_v3.name) + 1;
+            break;
+
+        case LF_NESTTYPE_V3:
+            /* FIXME: ignored for now */
+            length = offsetof(union codeview_fieldtype, nesttype_v3.name) + strlen(cv_field->nesttype_v3.name) + 1;
+            break;
+
+        case LF_VFUNCTAB_V2:
+            /* FIXME: ignored for now */
+            length = sizeof(cv_field->vfunctab_v2);
+            break;
+
+        case LF_ONEMETHOD_V3:
+            /* FIXME: ignored for now */
+            switch ((cv_field->onemethod_v3.attribute >> 2) & 7)
+            {
+            case 4: case 6: /* (pure) introducing virtual method */
+                length = offsetof(union codeview_fieldtype, onemethod_virt_v3.name);
+                break;
+            default:
+                length = offsetof(union codeview_fieldtype, onemethod_v3.name);
+                break;
+            }
+            length += strlen((const char *)ptr + length) + 1;
+            break;
+
+        case LF_INDEX_V2:
+            if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, cv_field->index_v2.ref, children))) return result;
+            length = sizeof(cv_field->index_v2);
+            break;
+
+        default:
+            result = PDB_REPORT_UNEXPECTED("UDT field list", cv_field->generic.id);
+        }
+        ptr += length;
+        if (result) break;
+    }
+
+    pdb_reader_free(pdb, cv_reftype);
+    return result;
+}
+
+static enum pdb_result pdb_reader_count_advertized_in_UDT_fieldlist(struct pdb_reader *pdb, symref_t container_symref,
+                                                                    cv_typ_t fieldlist_cv_typeid, DWORD *count)
+{
+    enum pdb_result result;
+    struct pdb_children_filler filler = {.actual = 0, .count = ~0u, .indexes = NULL};
+
+    if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, fieldlist_cv_typeid, &filler))) return result;
+    *count = filler.actual;
+    return R_PDB_SUCCESS;
+}
+
+static enum method_result pdb_reader_TPI_UDT_request(struct pdb_reader *pdb, symref_t symref, const union codeview_type *cv_type,
+                                                     const struct pdb_reader_walker *walker, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    enum UdtKind kind;
+    unsigned count;
+    const unsigned char *var;
+    cv_typ_t fieldlist_cv_typeid;
+    cv_property_t property;
+
+    switch (cv_type->generic.id)
+    {
+    case LF_CLASS_V3:
+    case LF_STRUCTURE_V3:
+        kind = cv_type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct;
+        count = cv_type->struct_v3.n_element;
+        fieldlist_cv_typeid = cv_type->struct_v3.fieldlist;
+        property = cv_type->struct_v3.property;
+        var = cv_type->struct_v3.data;
+        break;
+    case LF_UNION_V3:
+        kind = UdtUnion;
+        count = cv_type->union_v3.count;
+        fieldlist_cv_typeid = cv_type->union_v3.fieldlist;
+        property = cv_type->union_v3.property;
+        var = cv_type->union_v3.data;
+        break;
+    default:
+        return MR_FAILURE;
+    }
+    /* Note: we can have a forward type here when its declared but not defined. */
+
+    switch (req)
+    {
+    case TI_GET_SYMTAG:
+        *((DWORD*)data) = SymTagUDT;
+        return MR_SUCCESS;
+    case TI_FINDCHILDREN:
+        {
+            TI_FINDCHILDREN_PARAMS *p = data;
+            struct pdb_children_filler filler = {.actual = 0, .count = p->Count, .indexes = p->ChildId};
+
+            if (p->Start != 0) return MR_FAILURE;
+            if (property.is_forward_defn && !p->Count) return MR_SUCCESS;
+            if (pdb_reader_TPI_fillin_UDTlist(pdb, symref, fieldlist_cv_typeid, &filler)) return MR_FAILURE;
+            if (filler.actual != filler.count) {WARN("Count mismatch %u^%u %u\n", filler.actual, filler.count, count); return MR_FAILURE;}
+        }
+        return MR_SUCCESS;
+    case TI_GET_CHILDRENCOUNT:
+        if (!property.is_forward_defn)
+            /* Unfortunately the count field describes the number of entries in the field_list, not
+             * the count of entries we currently advertize (we drop a bunch of them in the fillin_ helpers).
+             * Be on the save side and always recompute.
+             */
+            return pdb_reader_count_advertized_in_UDT_fieldlist(pdb, symref, fieldlist_cv_typeid, (DWORD*)data) ? MR_FAILURE : MR_SUCCESS;
+        *((DWORD*)data) = 0;
+        return MR_SUCCESS;
+    case TI_GET_SYMNAME:
+        {
+            VARIANT v;
+            char *string;
+
+            if (pdb_reader_alloc_and_read_codeview_type_variablepart(pdb, *walker, cv_type, &v, &string, NULL))
+                return MR_FAILURE;
+            *((WCHAR**)data) = heap_allocate_symname(string);
+            pdb_reader_free(pdb, string);
+        }
+        return *((WCHAR**)data) != NULL ? MR_SUCCESS : MR_FAILURE;
+    case TI_GET_LENGTH:
+        {
+            int value;
+            if (codeview_fetch_leaf_as_int(cv_type, var, &value)) return MR_FAILURE;
+            *((DWORD64*)data) = (unsigned)value;
+        }
+        return MR_SUCCESS;
+    case TI_GET_NESTED:
+        *((DWORD*)data) = property.is_nested;
+        return MR_SUCCESS;
+    case TI_GET_UDTKIND:
+        *((DWORD*)data) = kind;
+        return MR_SUCCESS;
+    case TI_GET_LEXICALPARENT:
+        *((DWORD*)data) = symt_ptr_to_index(pdb->module, &pdb->module->top->symt);
+        return MR_SUCCESS;
+    default:
+        return MR_FAILURE;
+    }
+}
+
 static enum method_result pdb_reader_request_symref_t(struct pdb_reader *pdb, symref_t symref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data);
 
-static enum method_result pdb_reader_TPI_argtype_request(struct pdb_reader *pdb, struct pdb_action_entry *entry, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+static enum method_result pdb_reader_TPI_modifier_request(struct pdb_reader *pdb, symref_t symref, const union codeview_type *cv_type,
+                                                          IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    return pdb_reader_request_cv_typeid(pdb, cv_type->modifier_v2.type, req, data) ? MR_SUCCESS : MR_FAILURE;
+}
 
+static enum method_result pdb_reader_TPI_argtype_request(struct pdb_reader *pdb, struct pdb_action_entry *entry, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
     enum pdb_result result;
 
@@ -2472,7 +2712,7 @@ static enum method_result pdb_reader_TPI_argtype_request(struct pdb_reader *pdb,
 }
 
 static enum method_result pdb_reader_TPI_enumerate_request(struct pdb_reader *pdb, struct pdb_action_entry *entry, const union codeview_fieldtype *cv_field,
-                                                IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+                                                           IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
     pdbsize_t var;
     VARIANT v;
@@ -2509,6 +2749,61 @@ static enum method_result pdb_reader_TPI_enumerate_request(struct pdb_reader *pd
     }
 }
 
+static enum method_result pdb_reader_TPI_UDT_field_request(struct pdb_reader *pdb, struct pdb_action_entry *entry, const union codeview_fieldtype *cv_field,
+                                                           IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+{
+    union codeview_reftype cv_reftype;
+    pdbsize_t tpi_offset;
+
+    switch (req)
+    {
+    case TI_GET_SYMTAG:
+        *((DWORD*)data) = SymTagData;
+        return MR_SUCCESS;
+    case TI_GET_SYMNAME:
+        {
+            const unsigned char *var;
+            VARIANT v;
+            var = cv_field->member_v3.data;
+            var += codeview_leaf_as_variant(var, &v);
+            *((WCHAR **)data) = heap_allocate_symname((const char *)var);
+        }
+        return *((WCHAR **)data) != NULL ? MR_SUCCESS : MR_FAILURE;
+     case TI_GET_DATAKIND:
+        *((DWORD*)data) = DataIsMember;
+        return MR_SUCCESS;
+    case TI_GET_OFFSET:
+        return codeview_leaf_as_int( cv_field->member_v3.data, (int*)data) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
+    case TI_GET_LENGTH:
+        if (cv_field->member_v3.type < T_FIRSTDEFINABLETYPE ||
+            pdb_reader_TPI_read_partial_reftype(pdb, cv_field->member_v3.type, &cv_reftype, &tpi_offset) ||
+            cv_reftype.generic.id != LF_BITFIELD_V2)
+            return MR_FAILURE;
+        *((DWORD64*)data) = cv_reftype.bitfield_v2.nbits;
+        return MR_SUCCESS;
+    case TI_GET_BITPOSITION:
+        if (cv_field->member_v3.type < T_FIRSTDEFINABLETYPE ||
+            pdb_reader_TPI_read_partial_reftype(pdb, cv_field->member_v3.type, &cv_reftype, &tpi_offset) ||
+            cv_reftype.generic.id != LF_BITFIELD_V2)
+            return MR_FAILURE;
+        *((DWORD*)data) = cv_reftype.bitfield_v2.bitoff;
+        return MR_SUCCESS;
+    case TI_GET_TYPE:
+    case TI_GET_TYPEID:
+        if (cv_field->member_v3.type >= T_FIRSTDEFINABLETYPE &&
+            !pdb_reader_TPI_read_partial_reftype(pdb, cv_field->member_v3.type, &cv_reftype, &tpi_offset) &&
+            cv_reftype.generic.id == LF_BITFIELD_V2)
+            return pdb_reader_index_from_cv_typeid(pdb, cv_reftype.bitfield_v2.type, (DWORD *)data) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
+        return pdb_reader_index_from_cv_typeid(pdb, cv_field->member_v3.type, (DWORD *)data) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
+    case TI_FINDCHILDREN:
+    case TI_GET_CHILDRENCOUNT:
+    case TI_GET_LEXICALPARENT:
+        return pdb_reader_default_request(pdb, req, data);
+    default:
+        return MR_FAILURE;
+    }
+}
+
 static enum method_result pdb_reader_TPI_field_request(struct pdb_reader *pdb, struct pdb_action_entry *entry, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
     enum pdb_result result;
@@ -2519,14 +2814,18 @@ static enum method_result pdb_reader_TPI_field_request(struct pdb_reader *pdb, s
 
     walker = pdb->tpi_types_walker;
     walker.offset = entry->stream_offset;
+
     if ((result = pdb_reader_alloc(pdb, entry->action_length, (void**)&cv_field))) return MR_FAILURE;
-    if (!pdb_reader_read_from_stream(pdb, &walker, cv_field, entry->action_length, &num_read) &&
-        num_read == entry->action_length)
+    if ((result = pdb_reader_read_from_stream(pdb, &walker, cv_field, entry->action_length, &num_read))) return MR_FAILURE;
+    if (num_read == entry->action_length)
     {
         switch (cv_field->generic.id)
         {
         case LF_ENUMERATE_V3:
             ret = pdb_reader_TPI_enumerate_request(pdb, entry, cv_field, req, data);
+            break;
+        case LF_MEMBER_V3:
+            ret = pdb_reader_TPI_UDT_field_request(pdb, entry, cv_field, req, data);
             break;
         default:
             PDB_REPORT_UNEXPECTED("field list", cv_field->generic.id);
@@ -2564,6 +2863,14 @@ static enum method_result pdb_reader_TPI_request(struct pdb_reader *pdb, symref_
 
     case LF_ENUM_V3:
         return pdb_reader_TPI_enum_request(pdb, symref, &cv_type, &walker, req, data);
+
+    case LF_UNION_V3:
+    case LF_STRUCTURE_V3:
+    case LF_CLASS_V3:
+        return pdb_reader_TPI_UDT_request(pdb, symref, &cv_type, &walker, req, data);
+
+    case LF_MODIFIER_V2:
+        return pdb_reader_TPI_modifier_request(pdb, symref, &cv_type, req, data);
 
     default:
         PDB_REPORT_UNEXPECTED("codeview type id", cv_type.generic.id);
@@ -2638,7 +2945,10 @@ symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, struc
             symt_check_tag(symt, SymTagFunctionType) ||
             symt_check_tag(symt, SymTagFunctionArgType) ||
             symt_check_tag(symt, SymTagEnum) ||
-            (symt_check_tag(symt, SymTagData) && symt_check_tag(((struct symt_data*)symt)->container, SymTagEnum)))
+            (symt_check_tag(symt, SymTagData) && symt_check_tag(((struct symt_data*)symt)->container, SymTagEnum)) ||
+            symt_check_tag(symt, SymTagUDT) ||
+            (symt_check_tag(symt, SymTagData) && symt_check_tag(((struct symt_data*)symt)->container, SymTagUDT)))
+
         {
             return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &symref) ? 0 : symref;
         }
