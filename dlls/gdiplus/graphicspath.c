@@ -881,7 +881,6 @@ GpStatus WINGDIPAPI GdipAddPathPie(GpPath *path, REAL x, REAL y, REAL width, REA
     REAL startAngle, REAL sweepAngle)
 {
     GpPointF *ptf;
-    GpStatus status;
     INT i, count;
 
     TRACE("(%p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n",
@@ -912,28 +911,29 @@ GpStatus WINGDIPAPI GdipAddPathPie(GpPath *path, REAL x, REAL y, REAL width, REA
 
     arc2polybezier(ptf, x, y, width, height, startAngle, sweepAngle);
 
-    status = GdipAddPathLine(path, x + width/2, y + height/2, ptf[0].X, ptf[0].Y);
-    if(status != Ok){
-        free(ptf);
-        return status;
-    }
-    /* one spline is already added as a line endpoint */
-    if(!lengthen_path(path, count - 1)){
+    if (!lengthen_path(path, count + 1))
+    {
         free(ptf);
         return OutOfMemory;
     }
 
-    memcpy(&(path->pathdata.Points[path->pathdata.Count]), &(ptf[1]),sizeof(GpPointF)*(count-1));
-    for(i = 0; i < count-1; i++)
-        path->pathdata.Types[path->pathdata.Count+i] = PathPointTypeBezier;
+    path->pathdata.Points[path->pathdata.Count].X = x + width/2;
+    path->pathdata.Points[path->pathdata.Count].Y = y + height/2;
+    path->pathdata.Types[path->pathdata.Count] = PathPointTypeStart;
 
-    path->pathdata.Count += count-1;
+    memcpy(&(path->pathdata.Points[path->pathdata.Count + 1]), ptf, sizeof(GpPointF)*(count));
+
+    path->pathdata.Types[path->pathdata.Count + 1] = PathPointTypeLine;
+    for(i = 0; i < count-1; i++)
+        path->pathdata.Types[path->pathdata.Count + 2 + i] = PathPointTypeBezier;
+
+    path->pathdata.Count += count + 1;
 
     GdipClosePathFigure(path);
 
     free(ptf);
 
-    return status;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipAddPathPieI(GpPath *path, INT x, INT y, INT width, INT height,
