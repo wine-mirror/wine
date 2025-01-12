@@ -404,10 +404,10 @@ BOOL X11DRV_DisplayDevices_SupportEventHandlers(void)
 
 UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, void *param )
 {
+    INT gpu_count, adapter_count, monitor_count, current_adapter_count = 0;
     struct x11drv_adapter *adapters;
     struct gdi_monitor *monitors;
     struct x11drv_gpu *gpus;
-    INT gpu_count, adapter_count, monitor_count;
     INT gpu, adapter, monitor;
     DEVMODEW *modes;
     UINT mode_count;
@@ -448,7 +448,7 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             host_handler.free_monitors( monitors, monitor_count );
 
             /* Get the settings handler id for the adapter */
-            snprintf( buffer, sizeof(buffer), "\\\\.\\DISPLAY%d", adapter + 1 );
+            snprintf( buffer, sizeof(buffer), "\\\\.\\DISPLAY%d", current_adapter_count + adapter + 1 );
             asciiz_to_unicode( devname, buffer );
             if (!settings_handler.get_id( devname, is_primary, &settings_id )) break;
 
@@ -460,6 +460,7 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             }
         }
 
+        current_adapter_count += adapter_count;
         host_handler.free_adapters( adapters );
     }
 
