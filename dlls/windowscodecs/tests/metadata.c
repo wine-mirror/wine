@@ -31,9 +31,6 @@
 #include "propvarutil.h"
 #include "wine/test.h"
 
-#include "initguid.h"
-DEFINE_GUID(IID_MdbrUnknown, 0x00240e6f,0x3f23,0x4432,0xb0,0xcc,0x48,0xd5,0xbb,0xff,0x6c,0x36);
-
 #define expect_ref(obj,ref) expect_ref_((IUnknown *)obj, ref, __LINE__)
 static void expect_ref_(IUnknown *obj, ULONG ref, int line)
 {
@@ -3360,18 +3357,29 @@ struct metadata
     const struct metadata_block *block;
 };
 
-static const struct metadata *current_metadata;
-static const struct metadata_block *current_metadata_block;
-
 static char the_best[] = "The Best";
 static char the_worst[] = "The Worst";
 
-static HRESULT WINAPI mdr_QueryInterface(IWICMetadataReader *iface, REFIID iid, void **out)
+struct test_writer
+{
+    IWICMetadataWriter IWICMetadataWriter_iface;
+    LONG refcount;
+    const struct metadata_block *block;
+};
+
+static inline struct test_writer *impl_from_IWICMetadataWriter(IWICMetadataWriter *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_writer, IWICMetadataWriter_iface);
+}
+
+static HRESULT WINAPI test_writer_QueryInterface(IWICMetadataWriter *iface, REFIID iid, void **out)
 {
     if (IsEqualIID(iid, &IID_IUnknown) ||
-        IsEqualIID(iid, &IID_IWICMetadataReader))
+        IsEqualIID(iid, &IID_IWICMetadataReader) ||
+        IsEqualIID(iid, &IID_IWICMetadataWriter))
     {
         *out = iface;
+        IWICMetadataWriter_AddRef(iface);
         return S_OK;
     }
 
@@ -3381,41 +3389,47 @@ static HRESULT WINAPI mdr_QueryInterface(IWICMetadataReader *iface, REFIID iid, 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI mdr_AddRef(IWICMetadataReader *iface)
+static ULONG WINAPI test_writer_AddRef(IWICMetadataWriter *iface)
 {
-    return 2;
+    struct test_writer *writer = impl_from_IWICMetadataWriter(iface);
+    return InterlockedIncrement(&writer->refcount);
 }
 
-static ULONG WINAPI mdr_Release(IWICMetadataReader *iface)
+static ULONG WINAPI test_writer_Release(IWICMetadataWriter *iface)
 {
-    return 1;
+    struct test_writer *writer = impl_from_IWICMetadataWriter(iface);
+    ULONG refcount = InterlockedDecrement(&writer->refcount);
+
+    if (!refcount)
+        free(writer);
+
+    return refcount;
 }
 
-static HRESULT WINAPI mdr_GetMetadataFormat(IWICMetadataReader *iface, GUID *format)
+static HRESULT WINAPI test_writer_GetMetadataFormat(IWICMetadataWriter *iface, GUID *format)
 {
-    ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
-    if (!current_metadata_block) return E_POINTER;
+    struct test_writer *writer = impl_from_IWICMetadataWriter(iface);
 
-    *format = *current_metadata_block->metadata_format;
+    *format = *writer->block->metadata_format;
     return S_OK;
 }
 
-static HRESULT WINAPI mdr_GetMetadataHandlerInfo(IWICMetadataReader *iface, IWICMetadataHandlerInfo **handler)
+static HRESULT WINAPI test_writer_GetMetadataHandlerInfo(IWICMetadataWriter *iface, IWICMetadataHandlerInfo **handler)
 {
     ok(0, "not implemented\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mdr_GetCount(IWICMetadataReader *iface, UINT *count)
+static HRESULT WINAPI test_writer_GetCount(IWICMetadataWriter *iface, UINT *count)
 {
-    ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
-    if (!current_metadata_block) return E_POINTER;
+    struct test_writer *writer = impl_from_IWICMetadataWriter(iface);
 
-    *count = current_metadata_block->count;
+    *count = writer->block->count;
     return S_OK;
 }
 
-static HRESULT WINAPI mdr_GetValueByIndex(IWICMetadataReader *iface, UINT index, PROPVARIANT *schema, PROPVARIANT *id, PROPVARIANT *value)
+static HRESULT WINAPI test_writer_GetValueByIndex(IWICMetadataWriter *iface, UINT index,
+        PROPVARIANT *schema, PROPVARIANT *id, PROPVARIANT *value)
 {
     ok(0, "not implemented\n");
     return E_NOTIMPL;
@@ -3432,26 +3446,24 @@ static int propvar_cmp(const PROPVARIANT *v1, LONGLONG value2)
     return 0;
 }
 
-static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT *schema, const PROPVARIANT *id, PROPVARIANT *value)
+static HRESULT WINAPI test_writer_GetValue(IWICMetadataWriter *iface, const PROPVARIANT *schema, const PROPVARIANT *id, PROPVARIANT *value)
 {
+    struct test_writer *writer = impl_from_IWICMetadataWriter(iface);
     UINT i;
-
-    ok(current_metadata_block != NULL, "current_metadata_block can't be NULL\n");
-    if (!current_metadata_block) return E_POINTER;
 
     ok(schema != NULL && id != NULL && value != NULL, "%p, %p, %p should not be NULL\n", schema, id, value);
 
-    for (i = 0; i < current_metadata_block->count; i++)
+    for (i = 0; i < writer->block->count; i++)
     {
         if (schema->vt != VT_EMPTY)
         {
-            if (!current_metadata_block->item[i].schema)
+            if (!writer->block->item[i].schema)
                 continue;
 
             switch (schema->vt)
             {
             case VT_LPSTR:
-                if (lstrcmpA(schema->pszVal, current_metadata_block->item[i].schema) != 0)
+                if (lstrcmpA(schema->pszVal, writer->block->item[i].schema) != 0)
                     continue;
                 break;
 
@@ -3459,7 +3471,7 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
             {
                 char schemaA[256];
                 WideCharToMultiByte(CP_ACP, 0, schema->pwszVal, -1, schemaA, sizeof(schemaA), NULL, NULL);
-                if (lstrcmpA(schemaA, current_metadata_block->item[i].schema) != 0)
+                if (lstrcmpA(schemaA, writer->block->item[i].schema) != 0)
                     continue;
                 break;
             }
@@ -3469,15 +3481,15 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
                 continue;
             }
         }
-        else if (current_metadata_block->item[i].schema)
+        else if (writer->block->item[i].schema)
             continue;
 
         switch (id->vt)
         {
         case VT_LPSTR:
-            if (current_metadata_block->item[i].id_str)
+            if (writer->block->item[i].id_str)
             {
-                if (!lstrcmpA(id->pszVal, current_metadata_block->item[i].id_str))
+                if (!lstrcmpA(id->pszVal, writer->block->item[i].id_str))
                 {
                     value->vt = VT_LPSTR;
                     value->pszVal = the_best;
@@ -3488,11 +3500,11 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
             break;
 
         case VT_LPWSTR:
-            if (current_metadata_block->item[i].id_str)
+            if (writer->block->item[i].id_str)
             {
                 char idA[256];
                 WideCharToMultiByte(CP_ACP, 0, id->pwszVal, -1, idA, sizeof(idA), NULL, NULL);
-                if (!lstrcmpA(idA, current_metadata_block->item[i].id_str))
+                if (!lstrcmpA(idA, writer->block->item[i].id_str))
                 {
                     value->vt = VT_LPSTR;
                     value->pszVal = the_worst;
@@ -3513,10 +3525,10 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
             break;
 
         default:
-            if (!propvar_cmp(id, current_metadata_block->item[i].id))
+            if (!propvar_cmp(id, writer->block->item[i].id))
             {
-                value->vt = current_metadata_block->item[i].type;
-                value->uiVal = current_metadata_block->item[i].value;
+                value->vt = writer->block->item[i].type;
+                value->uiVal = writer->block->item[i].value;
                 return S_OK;
             }
             break;
@@ -3526,108 +3538,227 @@ static HRESULT WINAPI mdr_GetValue(IWICMetadataReader *iface, const PROPVARIANT 
     return 0xdeadbeef;
 }
 
-static HRESULT WINAPI mdr_GetEnumerator(IWICMetadataReader *iface, IWICEnumMetadataItem **enumerator)
+static HRESULT WINAPI test_writer_GetEnumerator(IWICMetadataWriter *iface, IWICEnumMetadataItem **enumerator)
 {
     ok(0, "not implemented\n");
     return E_NOTIMPL;
 }
 
-static const IWICMetadataReaderVtbl mdr_vtbl =
+static HRESULT WINAPI test_writer_SetValue(IWICMetadataWriter *iface, const PROPVARIANT *schema,
+        const PROPVARIANT *id, const PROPVARIANT *value)
 {
-    mdr_QueryInterface,
-    mdr_AddRef,
-    mdr_Release,
-    mdr_GetMetadataFormat,
-    mdr_GetMetadataHandlerInfo,
-    mdr_GetCount,
-    mdr_GetValueByIndex,
-    mdr_GetValue,
-    mdr_GetEnumerator
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_writer_SetValueByIndex(IWICMetadataWriter *iface, UINT index,
+        const PROPVARIANT *schema, const PROPVARIANT *id, const PROPVARIANT *value)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_writer_RemoveValue(IWICMetadataWriter *iface, const PROPVARIANT *schema,
+        const PROPVARIANT *id)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_writer_RemoveValueByIndex(IWICMetadataWriter *iface, UINT index)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataWriterVtbl test_writer_vtbl =
+{
+    test_writer_QueryInterface,
+    test_writer_AddRef,
+    test_writer_Release,
+    test_writer_GetMetadataFormat,
+    test_writer_GetMetadataHandlerInfo,
+    test_writer_GetCount,
+    test_writer_GetValueByIndex,
+    test_writer_GetValue,
+    test_writer_GetEnumerator,
+    test_writer_SetValue,
+    test_writer_SetValueByIndex,
+    test_writer_RemoveValue,
+    test_writer_RemoveValueByIndex,
 };
 
-static IWICMetadataReader mdr = { &mdr_vtbl };
+static IWICMetadataWriter *create_test_writer(const struct metadata_block *block)
+{
+    struct test_writer *writer;
 
-static HRESULT WINAPI mdbr_QueryInterface(IWICMetadataBlockReader *iface, REFIID iid, void **out)
+    writer = calloc(1, sizeof(*writer));
+    writer->IWICMetadataWriter_iface.lpVtbl = &test_writer_vtbl;
+    writer->refcount = 1;
+    writer->block = block;
+
+    return &writer->IWICMetadataWriter_iface;
+}
+
+struct test_block_writer
+{
+    IWICMetadataBlockWriter IWICMetadataBlockWriter_iface;
+    LONG refcount;
+
+    IWICMetadataWriter **writers;
+    unsigned int count;
+
+    GUID container_format;
+};
+
+static inline struct test_block_writer *impl_from_IWICMetadataBlockWriter(IWICMetadataBlockWriter *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_block_writer, IWICMetadataBlockWriter_iface);
+}
+
+static HRESULT WINAPI test_block_writer_QueryInterface(IWICMetadataBlockWriter *iface, REFIID iid, void **out)
 {
     if (IsEqualIID(iid, &IID_IUnknown) ||
-        IsEqualIID(iid, &IID_IWICMetadataBlockReader))
+        IsEqualIID(iid, &IID_IWICMetadataBlockReader) ||
+        IsEqualIID(iid, &IID_IWICMetadataBlockWriter))
     {
         *out = iface;
+        IWICMetadataBlockWriter_AddRef(iface);
         return S_OK;
     }
-
-    /* Windows 8/10 query for some undocumented IID */
-    if (!IsEqualIID(iid, &IID_MdbrUnknown))
-        ok(0, "unknown iid %s\n", wine_dbgstr_guid(iid));
 
     *out = NULL;
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI mdbr_AddRef(IWICMetadataBlockReader *iface)
+static ULONG WINAPI test_block_writer_AddRef(IWICMetadataBlockWriter *iface)
 {
-    return 2;
+    struct test_block_writer *writer = impl_from_IWICMetadataBlockWriter(iface);
+    return InterlockedIncrement(&writer->refcount);
 }
 
-static ULONG WINAPI mdbr_Release(IWICMetadataBlockReader *iface)
+static ULONG WINAPI test_block_writer_Release(IWICMetadataBlockWriter *iface)
 {
-    return 1;
-}
+    struct test_block_writer *writer = impl_from_IWICMetadataBlockWriter(iface);
+    ULONG refcount = InterlockedDecrement(&writer->refcount);
+    unsigned int i;
 
-static HRESULT WINAPI mdbr_GetContainerFormat(IWICMetadataBlockReader *iface, GUID *format)
-{
-    ok(current_metadata != NULL, "current_metadata can't be NULL\n");
-    if (!current_metadata) return E_POINTER;
-
-    *format = *current_metadata->container_format;
-    return S_OK;
-}
-
-static HRESULT WINAPI mdbr_GetCount(IWICMetadataBlockReader *iface, UINT *count)
-{
-    ok(current_metadata != NULL, "current_metadata can't be NULL\n");
-    if (!current_metadata) return E_POINTER;
-
-    *count = current_metadata->count;
-    return S_OK;
-}
-
-static HRESULT WINAPI mdbr_GetReaderByIndex(IWICMetadataBlockReader *iface, UINT index, IWICMetadataReader **out)
-{
-    *out = NULL;
-
-    ok(current_metadata != NULL, "current_metadata can't be NULL\n");
-    if (!current_metadata) return E_POINTER;
-
-    if (index < current_metadata->count)
+    if (!refcount)
     {
-        current_metadata_block = &current_metadata->block[index];
-        *out = &mdr;
-        return S_OK;
+        for (i = 0; i < writer->count; ++i)
+            IWICMetadataWriter_Release(writer->writers[i]);
+        free(writer->writers);
+        free(writer);
     }
 
-    current_metadata_block = NULL;
-    return E_INVALIDARG;
+    return refcount;
 }
 
-static HRESULT WINAPI mdbr_GetEnumerator(IWICMetadataBlockReader *iface, IEnumUnknown **enumerator)
+static HRESULT WINAPI test_block_writer_GetContainerFormat(IWICMetadataBlockWriter *iface, GUID *format)
+{
+    struct test_block_writer *writer = impl_from_IWICMetadataBlockWriter(iface);
+
+    *format = writer->container_format;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_block_writer_GetCount(IWICMetadataBlockWriter *iface, UINT *count)
+{
+    struct test_block_writer *writer = impl_from_IWICMetadataBlockWriter(iface);
+
+    *count = writer->count;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_block_writer_GetReaderByIndex(IWICMetadataBlockWriter *iface, UINT index, IWICMetadataReader **out)
+{
+    struct test_block_writer *writer = impl_from_IWICMetadataBlockWriter(iface);
+
+    *out = NULL;
+
+    if (index >= writer->count)
+        return E_INVALIDARG;
+
+    *out = (IWICMetadataReader *)writer->writers[index];
+    IWICMetadataReader_AddRef(*out);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI test_block_writer_GetEnumerator(IWICMetadataBlockWriter *iface, IEnumUnknown **enumerator)
 {
     ok(0, "not implemented\n");
     return E_NOTIMPL;
 }
 
-static const IWICMetadataBlockReaderVtbl mdbr_vtbl =
+static HRESULT WINAPI test_block_writer_InitializeFromBlockReader(IWICMetadataBlockWriter *iface,
+        IWICMetadataBlockReader *reader)
 {
-    mdbr_QueryInterface,
-    mdbr_AddRef,
-    mdbr_Release,
-    mdbr_GetContainerFormat,
-    mdbr_GetCount,
-    mdbr_GetReaderByIndex,
-    mdbr_GetEnumerator
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_block_writer_GetWriterByIndex(IWICMetadataBlockWriter *iface, UINT index,
+        IWICMetadataWriter **writer)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_block_writer_AddWriter(IWICMetadataBlockWriter *iface,
+        IWICMetadataWriter *_writer)
+{
+    struct test_block_writer *writer = impl_from_IWICMetadataBlockWriter(iface);
+
+    writer->writers = realloc(writer->writers, (writer->count + 1) * sizeof(*writer->writers));
+    writer->writers[writer->count++] = _writer;
+    IWICMetadataWriter_AddRef(_writer);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI test_block_writer_SetWriterByIndex(IWICMetadataBlockWriter *iface, UINT index,
+        IWICMetadataWriter *writer)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_block_writer_RemoveWriterByIndex(IWICMetadataBlockWriter *iface, UINT index)
+{
+    ok(0, "not implemented\n");
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataBlockWriterVtbl test_block_writer_vtbl =
+{
+    test_block_writer_QueryInterface,
+    test_block_writer_AddRef,
+    test_block_writer_Release,
+    test_block_writer_GetContainerFormat,
+    test_block_writer_GetCount,
+    test_block_writer_GetReaderByIndex,
+    test_block_writer_GetEnumerator,
+    test_block_writer_InitializeFromBlockReader,
+    test_block_writer_GetWriterByIndex,
+    test_block_writer_AddWriter,
+    test_block_writer_SetWriterByIndex,
+    test_block_writer_RemoveWriterByIndex,
 };
 
-static IWICMetadataBlockReader mdbr = { &mdbr_vtbl };
+static HRESULT create_test_block_writer(const GUID *container_format, IWICMetadataBlockWriter **writer)
+{
+    struct test_block_writer *object;
+
+    object = calloc(1, sizeof(*object));
+    object->IWICMetadataBlockWriter_iface.lpVtbl = &test_block_writer_vtbl;
+    object->refcount = 1;
+    object->container_format = *container_format;
+
+    *writer = &object->IWICMetadataBlockWriter_iface;
+
+    return S_OK;
+}
 
 static const char xmp[] = "http://ns.adobe.com/xap/1.0/";
 static const char dc[] = "http://purl.org/dc/elements/1.1/";
@@ -3702,6 +3833,37 @@ static const struct metadata data3 =
     5, block3
 };
 
+static HRESULT create_query_reader(IWICComponentFactory *factory, const struct metadata *data,
+        IWICMetadataQueryReader **reader)
+{
+    IWICMetadataBlockWriter *block_writer;
+    IWICMetadataWriter *writer;
+    unsigned int i;
+    HRESULT hr;
+
+    hr = create_test_block_writer(data->container_format, &block_writer);
+    if (SUCCEEDED(hr))
+    {
+        for (i = 0; i < data->count; ++i)
+        {
+            writer = create_test_writer(&data->block[i]);
+            ok(!!writer, "Failed to create a writer.\n");
+            hr = IWICMetadataBlockWriter_AddWriter(block_writer, writer);
+            ok(hr == S_OK, "Failed to add a writer, hr %#lx.\n", hr);
+            IWICMetadataWriter_Release(writer);
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory,
+                (IWICMetadataBlockReader *)block_writer, reader);
+        IWICMetadataBlockWriter_Release(block_writer);
+    }
+
+    return hr;
+}
+
 static void test_queryreader(void)
 {
     static const struct
@@ -3761,14 +3923,12 @@ static void test_queryreader(void)
             &IID_IWICComponentFactory, (void **)&factory);
     ok(hr == S_OK, "CoCreateInstance error %#lx\n", hr);
 
-    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, &mdbr, &reader);
-    ok(hr == S_OK, "CreateQueryReaderFromBlockReader error %#lx\n", hr);
-
     for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
         winetest_push_context("%u", i);
 
-        current_metadata = test_data[i].data;
+        hr = create_query_reader(factory, test_data[i].data, &reader);
+        ok(hr == S_OK, "Failed to create a query reader, hr %#lx.\n", hr);
 
         hr = IWICMetadataQueryReader_GetContainerFormat(reader, &format);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3846,10 +4006,11 @@ static void test_queryreader(void)
              */
         }
 
+        IWICMetadataQueryReader_Release(reader);
+
         winetest_pop_context();
     }
 
-    IWICMetadataQueryReader_Release(reader);
     IWICComponentFactory_Release(factory);
 }
 
