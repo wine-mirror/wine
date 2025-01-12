@@ -76,7 +76,6 @@ struct pdb_type_details
 {
     pdbsize_t stream_offset; /* inside TPI stream */
     cv_typ_t resolved_cv_typeid;
-    struct symt *symt;
 };
 
 enum pdb_action_type
@@ -303,6 +302,11 @@ static enum pdb_result pdb_reader_encode_symref(struct pdb_reader *pdb, const st
     switch (code->kind)
     {
     case symref_code_cv_typeid:
+        if (!code->cv_typeid)
+        {
+            *symref = 0;
+            return R_PDB_SUCCESS;
+        }
         if (code->cv_typeid < T_MAXPREDEFINEDTYPE)
             v = code->cv_typeid;
         else if (code->cv_typeid >= pdb->tpi_header.first_index && code->cv_typeid < pdb->tpi_header.last_index)
@@ -410,6 +414,9 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *mo
         }
         pdb->streams[i].name = NULL;
     }
+    /* hack (must be set before loading debug info so it can be used therein) */
+    pdb->module->ops_symref_modfmt = module->format_info[DFI_PDB];
+
     return R_PDB_SUCCESS;
 
 failure:
@@ -2025,14 +2032,14 @@ static enum method_result pdb_method_find_type(struct module_format *modfmt, con
     struct pdb_reader_walker walker;
     cv_typ_t cv_typeid;
     union codeview_type cv_type;
+    struct symref_code code;
     struct pdb_type_details *type_details;
 
     if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
     if ((result = pdb_reader_init_TPI(pdb))) return pdb_method_result(result);
     if ((result = pdb_reader_read_codeview_type_by_name(pdb, name, &walker, &cv_type, &cv_typeid))) return pdb_method_result(result);
     if ((result = pdb_reader_get_type_details(pdb, cv_typeid, &type_details))) return pdb_method_result(result);
-    *ref = cv_hack_ptr_to_symref(pdb, cv_typeid, type_details->symt);
-    return MR_SUCCESS;
+    return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), ref) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
 }
 
 static BOOL codeview_type_is_forward(const union codeview_type* cvtype)
@@ -2093,15 +2100,21 @@ static enum pdb_result pdb_reader_resolve_cv_typeid(struct pdb_reader *pdb, cv_t
         {
         case R_PDB_SUCCESS:
             type_details->resolved_cv_typeid = other_cv_typeid;
+            if (!type_details->stream_offset) type_details->stream_offset = other_walker.offset;
             break;
         case R_PDB_NOT_FOUND: /* we can have a forward decl without a real implementation */
             type_details->resolved_cv_typeid = raw_cv_typeid;
+            if (!type_details->stream_offset) type_details->stream_offset = tpi_offset;
             break;
         default:
             return result;
         }
     }
-    else type_details->resolved_cv_typeid = raw_cv_typeid;
+    else
+    {
+        type_details->resolved_cv_typeid = raw_cv_typeid;
+        if (!type_details->stream_offset) type_details->stream_offset = tpi_offset;
+    }
 
     *cv_typeid = type_details->resolved_cv_typeid;
     return R_PDB_SUCCESS;
@@ -2116,6 +2129,8 @@ static enum method_result pdb_method_enumerate_types(struct module_format *modfm
     struct pdb_type_details *type_details;
     struct pdb_type_hash_entry *hash_entry;
     union codeview_type cv_type;
+    struct symref_code code;
+    symref_t symref;
     char *name;
     VARIANT v;
     BOOL ret;
@@ -2143,8 +2158,8 @@ static enum method_result pdb_method_enumerate_types(struct module_format *modfm
             result = pdb_reader_alloc_and_read_codeview_type_variablepart(pdb, walker, &cv_type, &v, &name, NULL);
             if (!result)
             {
-                if (*name)
-                    ret = (*cb)(cv_hack_ptr_to_symref(pdb, hash_entry->cv_typeid, type_details->symt), name, user);
+                if (*name && pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, hash_entry->cv_typeid), &symref) == R_PDB_SUCCESS)
+                    ret = (*cb)(symref, name, user);
                 else
                     ret = TRUE;
                 pdb_reader_free(pdb, name);
@@ -2162,14 +2177,9 @@ static enum pdb_result pdb_reader_index_from_cv_typeid(struct pdb_reader *pdb, c
     symref_t symref;
 
     if (cv_typeid > T_MAXPREDEFINEDTYPE)
-    {
-        struct pdb_type_details *type_details;
-
         if ((result = pdb_reader_resolve_cv_typeid(pdb, cv_typeid, &cv_typeid))) return result;
-        if ((result = pdb_reader_get_type_details(pdb, cv_typeid, &type_details))) return result;
-        symref = cv_hack_ptr_to_symref(pdb, cv_typeid, type_details->symt);
-    }
-    else if ((result = pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &symref))) return result;
+    if ((result = pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &symref))) return result;
+
     *index = symt_symref_to_index(pdb->module, symref);
     return R_PDB_SUCCESS;
 }
@@ -2898,6 +2908,7 @@ static enum method_result pdb_reader_request_symref_t(struct pdb_reader *pdb, sy
     case symref_code_cv_typeid:
         if (code.cv_typeid < T_MAXPREDEFINEDTYPE)
             return pdb_reader_basic_request(pdb, code.cv_typeid, req, data);
+        if (pdb_reader_resolve_cv_typeid(pdb, code.cv_typeid, &code.cv_typeid)) return MR_FAILURE;
         if (pdb_reader_get_type_details(pdb, code.cv_typeid, &type_details)) return MR_FAILURE;
         return pdb_reader_TPI_request(pdb, symref, type_details, req, data);
     case symref_code_action:
@@ -2925,47 +2936,17 @@ static enum method_result pdb_method_request_symref_t(struct module_format *modf
     struct pdb_reader *pdb;
 
     if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+    if (pdb_reader_init_TPI(pdb)) return MR_FAILURE;
     return pdb_reader_request_symref_t(pdb, symref, req, data);
 }
 
-symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, struct symt *symt)
+BOOL cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, symref_t *symref)
 {
     struct symref_code code;
-    symref_t symref;
 
-    if (pdb)
-    {
-        if (symt_check_tag(symt, SymTagBaseType))
-        {
-            if (cv_typeid < T_MAXPREDEFINEDTYPE)
-                return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &symref) ? 0 : symref;
-        }
-        if (symt_check_tag(symt, SymTagPointerType) ||
-            symt_check_tag(symt, SymTagArrayType) ||
-            symt_check_tag(symt, SymTagFunctionType) ||
-            symt_check_tag(symt, SymTagFunctionArgType) ||
-            symt_check_tag(symt, SymTagEnum) ||
-            (symt_check_tag(symt, SymTagData) && symt_check_tag(((struct symt_data*)symt)->container, SymTagEnum)) ||
-            symt_check_tag(symt, SymTagUDT) ||
-            (symt_check_tag(symt, SymTagData) && symt_check_tag(((struct symt_data*)symt)->container, SymTagUDT)))
-
-        {
-            return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &symref) ? 0 : symref;
-        }
-    }
-    return symt_ptr_to_symref(symt);
-}
-
-struct symt *pdb_hack_advertize_codeview_type(struct pdb_reader *pdb, cv_typ_t cv_typeid, struct symt *symt, unsigned offset)
-{
-    if (pdb_reader_init_TPI(pdb)) return symt;
-    if (!pdb->tpi_typemap[cv_typeid - pdb->tpi_header.first_index].symt)
-    {
-        pdb->tpi_typemap[cv_typeid - pdb->tpi_header.first_index].symt = symt;
-        pdb->tpi_typemap[cv_typeid - pdb->tpi_header.first_index].stream_offset = offset;
-    }
-
-    return symt;
+    if (!pdb) return FALSE;
+    if (pdb_reader_init_TPI(pdb)) return FALSE;
+    return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), symref) == R_PDB_SUCCESS;
 }
 
 static struct module_format_vtable pdb_module_format_vtable =

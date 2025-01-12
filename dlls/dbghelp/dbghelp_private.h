@@ -316,7 +316,7 @@ struct symt_public
     struct symt                 symt;
     struct hash_table_elt       hash_elt;
     struct symt*                container;      /* compiland */
-    BOOL is_function;
+    BOOL                        is_function;
     ULONG_PTR                   address;
     ULONG_PTR                   size;
 };
@@ -1075,5 +1075,4 @@ struct pdb_reader;
 extern BOOL pdb_hack_get_main_info(struct module_format *modfmt, struct pdb_reader **pdb, unsigned *fpoext_stream);
 extern void pdb_reader_dispose(struct pdb_reader *pdb);
 extern struct pdb_reader *pdb_hack_reader_init(struct module *module, HANDLE file, const IMAGE_SECTION_HEADER *sections, unsigned num_sections);
-extern symref_t cv_hack_ptr_to_symref(struct pdb_reader *pdb, unsigned typeno, struct symt *symt);
-extern struct symt *pdb_hack_advertize_codeview_type(struct pdb_reader *pdb, unsigned typeid, struct symt *symt, unsigned offset);
+extern BOOL cv_hack_ptr_to_symref(struct pdb_reader *pdb, unsigned typeno, symref_t *symref);
