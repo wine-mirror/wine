@@ -43,6 +43,7 @@ struct spstream
     IStream *base_stream;
     GUID format;
     WAVEFORMATEX *wfx;
+    BOOL closed;
 };
 
 static inline struct spstream *impl_from_ISpStream(ISpStream *iface)
@@ -198,7 +199,7 @@ static HRESULT WINAPI spstream_SetBaseStream(ISpStream *iface, IStream *stream, 
     if (!stream || !format)
         return E_INVALIDARG;
 
-    if (This->base_stream)
+    if (This->base_stream || This->closed)
         return SPERR_ALREADY_INITIALIZED;
 
     This->format = *format;
@@ -225,7 +226,9 @@ static HRESULT WINAPI spstream_GetBaseStream(ISpStream *iface, IStream **stream)
     if (!stream)
         return E_INVALIDARG;
 
-    if (!This->base_stream)
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
         return SPERR_UNINITIALIZED;
 
     *stream = This->base_stream;
@@ -246,9 +249,19 @@ static HRESULT WINAPI spstream_BindToFile(ISpStream *iface, LPCWSTR filename, SP
 
 static HRESULT WINAPI spstream_Close(ISpStream *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p).\n", iface);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    IStream_Release(This->base_stream);
+    This->base_stream = NULL;
+    This->closed = TRUE;
+    return S_OK;
 }
 
 const static ISpStreamVtbl spstream_vtbl =
@@ -286,6 +299,7 @@ HRESULT speech_stream_create(IUnknown *outer, REFIID iid, void **obj)
     This->base_stream = NULL;
     This->format = GUID_NULL;
     This->wfx = NULL;
+    This->closed = FALSE;
 
     hr = ISpStream_QueryInterface(&This->ISpStream_iface, iid, obj);
 

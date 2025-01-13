@@ -142,6 +142,18 @@ static void test_spstream(void)
     ok(base_stream2 == base_stream, "got %p.\n", base_stream2);
     IStream_Release(base_stream2);
 
+    hr = ISpStream_Close(stream);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpStream_SetBaseStream(stream, base_stream, &fmtid, wfx);
+    ok(hr == SPERR_ALREADY_INITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_GetBaseStream(stream, &base_stream2);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Close(stream);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
     ISpStream_Release(stream);
     IStream_Release(base_stream);
     ISpMMSysAudio_Release(mmaudio);
