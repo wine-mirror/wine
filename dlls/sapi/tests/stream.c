@@ -93,6 +93,11 @@ static void test_spstream(void)
     IStream *base_stream, *base_stream2;
     GUID fmtid, fmtid2;
     WAVEFORMATEX *wfx = NULL, *wfx2 = NULL;
+    char buf[4] = {0};
+    ULONG read, written;
+    LARGE_INTEGER zero = {0};
+    ULARGE_INTEGER uzero = {0}, size, pos;
+    STATSTG statstg;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_SpMMAudioOut, NULL, CLSCTX_INPROC_SERVER,
@@ -110,12 +115,6 @@ static void test_spstream(void)
                           &IID_ISpStream, (void **)&stream);
     ok(hr == S_OK, "Failed to create ISpStream interface: %#lx.\n", hr);
 
-    hr = ISpStream_SetBaseStream(stream, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
-
-    hr = ISpStream_SetBaseStream(stream, base_stream, NULL, NULL);
-    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
-
     hr = ISpStream_GetBaseStream(stream, &base_stream2);
     ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
 
@@ -130,6 +129,40 @@ static void test_spstream(void)
     hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpStream, (void **)&stream);
     ok(hr == S_OK, "Failed to create ISpStream interface: %#lx.\n", hr);
+
+    hr = ISpStream_Read(stream, buf, sizeof(buf), &read);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Write(stream, buf, sizeof(buf), &written);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Seek(stream, zero, STREAM_SEEK_CUR, &pos);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    size.QuadPart = 4;
+    hr = ISpStream_SetSize(stream, size);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_CopyTo(stream, NULL, size, NULL, NULL);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Commit(stream, 0);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Revert(stream);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_LockRegion(stream, uzero, size, LOCK_WRITE);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_UnlockRegion(stream, uzero, size, LOCK_WRITE);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Stat(stream, &statstg, 0);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Clone(stream, NULL);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
 
     hr = ISpStream_GetFormat(stream, &fmtid2, &wfx2);
     ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
@@ -157,6 +190,40 @@ static void test_spstream(void)
     ok(!memcmp(wfx, wfx2, sizeof(WAVEFORMATEX)), "wfx mismatch.\n");
     CoTaskMemFree(wfx2);
 
+    /* TODO: Many IStream methods are not yet implemented in SpMMSysAudio. */
+    hr = ISpStream_Read(stream, buf, sizeof(buf), &read);
+    todo_wine ok(hr == STG_E_ACCESSDENIED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Write(stream, buf, sizeof(buf), &written);
+    ok(hr == SP_AUDIO_STOPPED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Seek(stream, zero, STREAM_SEEK_CUR, &pos);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpStream_SetSize(stream, size);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpStream_CopyTo(stream, NULL, size, NULL, NULL);
+    todo_wine ok(hr == STG_E_ACCESSDENIED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Commit(stream, 0);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpStream_Revert(stream);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+
+    hr = ISpStream_LockRegion(stream, uzero, size, LOCK_WRITE);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+
+    hr = ISpStream_UnlockRegion(stream, uzero, size, LOCK_WRITE);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+
+    hr = ISpStream_Stat(stream, &statstg, 0);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpStream_Clone(stream, NULL);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+
     hr = ISpStream_Close(stream);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
@@ -168,6 +235,39 @@ static void test_spstream(void)
 
     hr = ISpStream_GetFormat(stream, &fmtid2, &wfx2);
     ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Read(stream, buf, sizeof(buf), &read);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Write(stream, buf, sizeof(buf), &written);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Seek(stream, zero, STREAM_SEEK_CUR, &pos);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_SetSize(stream, size);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_CopyTo(stream, NULL, size, NULL, NULL);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Commit(stream, 0);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Revert(stream);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_LockRegion(stream, uzero, size, LOCK_WRITE);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_UnlockRegion(stream, uzero, size, LOCK_WRITE);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Stat(stream, &statstg, 0);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_Clone(stream, NULL);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
 
     hr = ISpStream_Close(stream);
     ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
