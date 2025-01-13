@@ -86,9 +86,71 @@ static void test_interfaces(void)
     ISpStream_Release(speech_stream);
 }
 
+static void test_spstream(void)
+{
+    ISpStream *stream;
+    ISpMMSysAudio *mmaudio;
+    IStream *base_stream, *base_stream2;
+    GUID fmtid;
+    WAVEFORMATEX *wfx = NULL;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SpMMAudioOut, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpMMSysAudio, (void **)&mmaudio);
+    ok(hr == S_OK, "Failed to create ISpMMSysAudio interface: %#lx.\n", hr);
+
+    hr = ISpMMSysAudio_GetFormat(mmaudio, &fmtid, &wfx);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(IsEqualGUID(&fmtid, &SPDFID_WaveFormatEx), "got %s.\n", wine_dbgstr_guid(&fmtid));
+
+    hr = ISpMMSysAudio_QueryInterface(mmaudio, &IID_IStream, (void **)&base_stream);
+    ok(hr == S_OK, "Failed to get IStream interface from mmaudio: %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpStream, (void **)&stream);
+    ok(hr == S_OK, "Failed to create ISpStream interface: %#lx.\n", hr);
+
+    hr = ISpStream_SetBaseStream(stream, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = ISpStream_SetBaseStream(stream, base_stream, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = ISpStream_GetBaseStream(stream, &base_stream2);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
+    hr = ISpStream_SetBaseStream(stream, base_stream, &SPDFID_Text, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpStream_SetBaseStream(stream, base_stream, &fmtid, wfx);
+    ok(hr == SPERR_ALREADY_INITIALIZED, "got %#lx.\n", hr);
+
+    ISpStream_Release(stream);
+
+    hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpStream, (void **)&stream);
+    ok(hr == S_OK, "Failed to create ISpStream interface: %#lx.\n", hr);
+
+    hr = ISpStream_SetBaseStream(stream, base_stream, &SPDFID_WaveFormatEx, NULL);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = ISpStream_SetBaseStream(stream, base_stream, &SPDFID_WaveFormatEx, wfx);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpStream_GetBaseStream(stream, &base_stream2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(base_stream2 == base_stream, "got %p.\n", base_stream2);
+    IStream_Release(base_stream2);
+
+    ISpStream_Release(stream);
+    IStream_Release(base_stream);
+    ISpMMSysAudio_Release(mmaudio);
+}
+
 START_TEST(stream)
 {
     CoInitialize(NULL);
     test_interfaces();
+    test_spstream();
     CoUninitialize();
 }

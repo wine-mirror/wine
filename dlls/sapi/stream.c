@@ -27,6 +27,7 @@
 #include "objbase.h"
 
 #include "sapiddk.h"
+#include "sperror.h"
 
 #include "wine/debug.h"
 
@@ -38,6 +39,10 @@ struct spstream
 {
     ISpStream ISpStream_iface;
     LONG ref;
+
+    IStream *base_stream;
+    GUID format;
+    WAVEFORMATEX *wfx;
 };
 
 static inline struct spstream *impl_from_ISpStream(ISpStream *iface)
@@ -87,6 +92,8 @@ static ULONG WINAPI spstream_Release(ISpStream *iface)
 
     if (!ref)
     {
+        if (This->base_stream) IStream_Release(This->base_stream);
+        free(This->wfx);
         free(This);
     }
 
@@ -182,18 +189,49 @@ static HRESULT WINAPI spstream_GetFormat(ISpStream *iface, GUID *format, WAVEFOR
 }
 
 static HRESULT WINAPI spstream_SetBaseStream(ISpStream *iface, IStream *stream, REFGUID format,
-                                             const WAVEFORMATEX *wave)
+                                             const WAVEFORMATEX *wfx)
 {
-    FIXME("(%p, %p, %s, %p): stub.\n", iface, stream, debugstr_guid(format), wave);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %s, %p).\n", iface, stream, debugstr_guid(format), wfx);
+
+    if (!stream || !format)
+        return E_INVALIDARG;
+
+    if (This->base_stream)
+        return SPERR_ALREADY_INITIALIZED;
+
+    This->format = *format;
+    if (IsEqualGUID(format, &SPDFID_WaveFormatEx))
+    {
+        if (!wfx)
+            return E_INVALIDARG;
+        if (!(This->wfx = malloc(sizeof(WAVEFORMATEX) + wfx->cbSize)))
+            return E_OUTOFMEMORY;
+        memcpy(This->wfx, wfx, sizeof(WAVEFORMATEX) + wfx->cbSize);
+    }
+
+    IStream_AddRef(stream);
+    This->base_stream = stream;
+    return S_OK;
 }
 
 static HRESULT WINAPI spstream_GetBaseStream(ISpStream *iface, IStream **stream)
 {
-    FIXME("(%p, %p): stub.\n", iface, stream);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, stream);
+
+    if (!stream)
+        return E_INVALIDARG;
+
+    if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    *stream = This->base_stream;
+    if (*stream)
+        IStream_AddRef(*stream);
+    return S_OK;
 }
 
 static HRESULT WINAPI spstream_BindToFile(ISpStream *iface, LPCWSTR filename, SPFILEMODE mode,
@@ -244,6 +282,10 @@ HRESULT speech_stream_create(IUnknown *outer, REFIID iid, void **obj)
     if (!This) return E_OUTOFMEMORY;
     This->ISpStream_iface.lpVtbl = &spstream_vtbl;
     This->ref = 1;
+
+    This->base_stream = NULL;
+    This->format = GUID_NULL;
+    This->wfx = NULL;
 
     hr = ISpStream_QueryInterface(&This->ISpStream_iface, iid, obj);
 
