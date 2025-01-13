@@ -100,7 +100,6 @@ static void CALLBACK async_worker(TP_CALLBACK_INSTANCE *instance, void *ctx)
 cancel:
     async_empty_queue(queue);
     CoUninitialize();
-    TRACE("cancelled.\n");
     SetEvent(queue->ready);
 }
 
