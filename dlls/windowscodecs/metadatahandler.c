@@ -230,7 +230,37 @@ static HRESULT WINAPI MetadataHandler_GetValueByIndex(IWICMetadataWriter *iface,
 static MetadataItem *metadatahandler_get_item(MetadataHandler *handler, const PROPVARIANT *schema,
         const PROPVARIANT *id)
 {
+    PROPVARIANT index;
+    GUID format;
+    HRESULT hr;
     UINT i;
+
+    PropVariantInit(&index);
+    if (id->vt == VT_CLSID && SUCCEEDED(PropVariantChangeType(&index, schema, 0, VT_UI4)))
+    {
+        for (i = 0; i < handler->item_count; i++)
+        {
+            PROPVARIANT *value = &handler->items[i].value;
+            IWICMetadataReader *reader;
+
+            if (value->vt != VT_UNKNOWN) continue;
+
+            if (SUCCEEDED(IUnknown_QueryInterface(value->punkVal, &IID_IWICMetadataReader, (void **)&reader)))
+            {
+                hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+                IWICMetadataReader_Release(reader);
+
+                if (SUCCEEDED(hr))
+                {
+                    if (IsEqualGUID(&format, id->puuid))
+                    {
+                        if (!index.ulVal) return &handler->items[i];
+                        --index.ulVal;
+                    }
+                }
+            }
+        }
+    }
 
     for (i = 0; i < handler->item_count; i++)
     {

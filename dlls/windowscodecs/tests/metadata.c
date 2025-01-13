@@ -4280,8 +4280,8 @@ static void test_metadata_App1(void)
     IWICEnumMetadataItem *enumerator;
     IStream *app1_stream, *stream2;
     IWICComponentFactory *factory;
+    PROPVARIANT schema, id, value;
     IWICMetadataWriter *writer;
-    PROPVARIANT id, value;
     UINT length, count;
     WCHAR path[64];
     ULONG fetched;
@@ -4400,6 +4400,19 @@ static void test_metadata_App1(void)
     ok(value.vt == VT_UI4, "Unexpected value type: %u.\n", value.vt);
     ok(value.ulVal == 333, "Unexpected value %lu.\n", value.ulVal);
 
+    /* Nested handlers are accessible by format GUIDs. */
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
+    InitPropVariantFromCLSID(&GUID_MetadataFormatExif, &id);
+    hr = IWICMetadataReader_GetValue(ifd_reader, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)&exif_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
+    PropVariantClear(&id);
+
     PropVariantInit(&id);
     PropVariantInit(&value);
     hr = IWICMetadataReader_GetValueByIndex(ifd_reader, 2, NULL, &id, &value);
@@ -4507,103 +4520,73 @@ static void test_metadata_App1(void)
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!lstrcmpW(path, L"/app1/ifd"), "Unexpected path %s.\n", wine_dbgstr_w(path));
-        IWICMetadataQueryReader_Release(query_reader2);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(path, L"/app1/ifd"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    IWICMetadataQueryReader_Release(query_reader2);
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/gps", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!lstrcmpW(path, L"/app1/ifd/gps"), "Unexpected path %s.\n", wine_dbgstr_w(path));
-        IWICMetadataQueryReader_Release(query_reader2);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(path, L"/app1/ifd/gps"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    IWICMetadataQueryReader_Release(query_reader2);
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/exif", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!lstrcmpW(path, L"/app1/ifd/exif"), "Unexpected path %s.\n", wine_dbgstr_w(path));
-        IWICMetadataQueryReader_Release(query_reader2);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(path, L"/app1/ifd/exif"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    IWICMetadataQueryReader_Release(query_reader2);
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/exif/{ushort=512}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
-        ok(value.ulVal == 444, "Unexpected value %lu.\n", value.ulVal);
-    }
+    ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 444, "Unexpected value %lu.\n", value.ulVal);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/gps/{ushort=768}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
-        ok(value.ulVal == 555, "Unexpected value %lu.\n", value.ulVal);
-    }
+    ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 555, "Unexpected value %lu.\n", value.ulVal);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/{ushort=256}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UI4, "Unexpected value type: %u.\n", value.vt);
-        ok(value.ulVal == 222, "Unexpected value %lu.\n", value.ulVal);
-    }
+    ok(value.vt == VT_UI4, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 222, "Unexpected value %lu.\n", value.ulVal);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/{ushort=34665}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    todo_wine
+    check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/{ushort=34853}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    todo_wine
+    check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
+    PropVariantClear(&value);
 
     IWICMetadataQueryReader_Release(query_reader);
 
