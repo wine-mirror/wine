@@ -52,6 +52,9 @@ static HRESULT WINAPI spstream_QueryInterface(ISpStream *iface, REFIID iid, void
     TRACE("(%p, %s, %p).\n", iface, debugstr_guid(iid), obj);
 
     if (IsEqualIID(iid, &IID_IUnknown) ||
+        IsEqualIID(iid, &IID_ISequentialStream) ||
+        IsEqualIID(iid, &IID_IStream) ||
+        IsEqualIID(iid, &IID_ISpStreamFormat) ||
         IsEqualIID(iid, &IID_ISpStream))
         *obj = &This->ISpStream_iface;
     else

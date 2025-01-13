@@ -36,14 +36,17 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
 
 static void test_interfaces(void)
 {
+    ISpStreamFormat *stream_format;
+    ISequentialStream *seq_stream;
     ISpStream *speech_stream;
     IDispatch *dispatch;
+    IStream *stream;
     IUnknown *unk;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpStream, (void **)&speech_stream);
-    ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#lx.\n", hr);
+    ok(hr == S_OK, "Failed to create ISpStream interface: %#lx.\n", hr);
     EXPECT_REF(speech_stream, 1);
 
     hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
@@ -57,6 +60,28 @@ static void test_interfaces(void)
                           &IID_IDispatch, (void **)&dispatch);
     ok(hr == E_NOINTERFACE, "Succeeded to create IDispatch interface: %#lx.\n", hr);
     ok(!dispatch, "Expected NULL dispatch, got %p.", dispatch);
+
+    hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISequentialStream, (void **)&seq_stream);
+    ok(hr == S_OK, "Failed to create ISequentialStream interface: %#lx.\n", hr);
+    EXPECT_REF(seq_stream, 1);
+    EXPECT_REF(speech_stream, 1);
+    ISequentialStream_Release(seq_stream);
+
+    hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IStream, (void **)&stream);
+    ok(hr == S_OK, "Failed to create IStream interface: %#lx.\n", hr);
+    EXPECT_REF(stream, 1);
+    EXPECT_REF(speech_stream, 1);
+    IStream_Release(stream);
+
+    hr = CoCreateInstance(&CLSID_SpStream, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ISpStreamFormat, (void **)&stream_format);
+    ok(hr == S_OK, "Failed to create ISpStreamFormat interface: %#lx.\n", hr);
+    EXPECT_REF(stream_format, 1);
+    EXPECT_REF(speech_stream, 1);
+    ISpStreamFormat_Release(stream_format);
+
 
     ISpStream_Release(speech_stream);
 }
