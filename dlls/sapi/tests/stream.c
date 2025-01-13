@@ -91,8 +91,8 @@ static void test_spstream(void)
     ISpStream *stream;
     ISpMMSysAudio *mmaudio;
     IStream *base_stream, *base_stream2;
-    GUID fmtid;
-    WAVEFORMATEX *wfx = NULL;
+    GUID fmtid, fmtid2;
+    WAVEFORMATEX *wfx = NULL, *wfx2 = NULL;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_SpMMAudioOut, NULL, CLSCTX_INPROC_SERVER,
@@ -131,6 +131,9 @@ static void test_spstream(void)
                           &IID_ISpStream, (void **)&stream);
     ok(hr == S_OK, "Failed to create ISpStream interface: %#lx.\n", hr);
 
+    hr = ISpStream_GetFormat(stream, &fmtid2, &wfx2);
+    ok(hr == SPERR_UNINITIALIZED, "got %#lx.\n", hr);
+
     hr = ISpStream_SetBaseStream(stream, base_stream, &SPDFID_WaveFormatEx, NULL);
     ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
 
@@ -142,6 +145,18 @@ static void test_spstream(void)
     ok(base_stream2 == base_stream, "got %p.\n", base_stream2);
     IStream_Release(base_stream2);
 
+    hr = ISpStream_GetFormat(stream, NULL, NULL);
+    ok(hr == E_POINTER, "got %#lx.\n", hr);
+
+    hr = ISpStream_GetFormat(stream, &fmtid2, NULL);
+    ok(hr == E_POINTER, "got %#lx.\n", hr);
+
+    hr = ISpStream_GetFormat(stream, &fmtid2, &wfx2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(IsEqualGUID(&fmtid2, &SPDFID_WaveFormatEx), "got %s.\n", wine_dbgstr_guid(&fmtid2));
+    ok(!memcmp(wfx, wfx2, sizeof(WAVEFORMATEX)), "wfx mismatch.\n");
+    CoTaskMemFree(wfx2);
+
     hr = ISpStream_Close(stream);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
@@ -149,6 +164,9 @@ static void test_spstream(void)
     ok(hr == SPERR_ALREADY_INITIALIZED, "got %#lx.\n", hr);
 
     hr = ISpStream_GetBaseStream(stream, &base_stream2);
+    ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
+
+    hr = ISpStream_GetFormat(stream, &fmtid2, &wfx2);
     ok(hr == SPERR_STREAM_CLOSED, "got %#lx.\n", hr);
 
     hr = ISpStream_Close(stream);

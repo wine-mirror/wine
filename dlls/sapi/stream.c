@@ -182,11 +182,32 @@ static HRESULT WINAPI spstream_Clone(ISpStream *iface, IStream **stream)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI spstream_GetFormat(ISpStream *iface, GUID *format, WAVEFORMATEX **wave)
+static HRESULT WINAPI spstream_GetFormat(ISpStream *iface, GUID *format, WAVEFORMATEX **wfx)
 {
-    FIXME("(%p, %p, %p): stub.\n", iface, format, wave);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %p).\n", iface, format, wfx);
+
+    if (!format)
+        return E_POINTER;
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    if (This->wfx)
+    {
+        if (!wfx)
+            return E_POINTER;
+        if (!(*wfx = CoTaskMemAlloc(sizeof(WAVEFORMATEX) + This->wfx->cbSize)))
+            return E_OUTOFMEMORY;
+        memcpy(*wfx, This->wfx, sizeof(WAVEFORMATEX) + This->wfx->cbSize);
+    }
+
+    *format = This->format;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI spstream_SetBaseStream(ISpStream *iface, IStream *stream, REFGUID format,
