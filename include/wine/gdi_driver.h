@@ -59,7 +59,7 @@ static inline const char *debugstr_window_rects( const struct window_rects *rect
 }
 
 /* convert a visible rect to the corresponding window rect, using the window_rects offsets */
-static inline RECT window_rect_from_visible( struct window_rects *rects, RECT visible_rect )
+static inline RECT window_rect_from_visible( const struct window_rects *rects, RECT visible_rect )
 {
     RECT rect = visible_rect;
 

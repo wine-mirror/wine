@@ -1773,12 +1773,12 @@ void make_window_embedded( struct x11drv_win_data *data )
  *
  * Synchronize the X window position with the Windows one
  */
-static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags )
+static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags, const struct window_rects *old_rects )
 {
     DWORD style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
     DWORD ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
+    RECT new_rect, window_rect;
     BOOL above = FALSE;
-    RECT new_rect;
 
     if (data->managed && data->desired_state.wm_state == IconicState) return;
 
@@ -1798,16 +1798,12 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags )
     update_net_wm_states( data );
 
     new_rect = data->rects.visible;
-    if (swp_flags & SWP_NOSIZE)
-    {
-        new_rect.right = new_rect.left + data->desired_state.rect.right - data->desired_state.rect.left;
-        new_rect.bottom = new_rect.top + data->desired_state.rect.bottom - data->desired_state.rect.top;
-    }
-    if (swp_flags & SWP_NOMOVE)
-    {
-        OffsetRect( &new_rect, data->desired_state.rect.left - new_rect.left,
-                    data->desired_state.rect.top - new_rect.top );
-    }
+
+    /* if the window has been moved offscreen by the window manager, we didn't tell the Win32 side about it */
+    window_rect = window_rect_from_visible( old_rects, data->desired_state.rect );
+    if (!is_window_rect_mapped( &window_rect )) OffsetRect( &new_rect, window_rect.left - old_rects->window.left,
+                                                            window_rect.top - old_rects->window.top );
+
     window_set_config( data, &new_rect, above );
 }
 
@@ -2985,7 +2981,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     /* don't change position if we are about to minimize or maximize a managed window */
     if (!(data->managed && (swp_flags & SWP_STATECHANGED) && (new_style & (WS_MINIMIZE|WS_MAXIMIZE))))
     {
-        sync_window_position( data, swp_flags );
+        sync_window_position( data, swp_flags, &old_rects );
 #ifdef HAVE_LIBXSHAPE
         if (IsRectEmpty( &old_rects.window ) != IsRectEmpty( &new_rects->window ))
             sync_empty_window_shape( data, surface );
