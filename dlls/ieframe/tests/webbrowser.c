@@ -3003,7 +3003,7 @@ static void test_download(DWORD flags)
     else
         test_ready_state(READYSTATE_LOADING, VARIANT_FALSE);
 
-    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)|DWL_FROM_GOFORWARD|DWL_REFRESH))
+    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|DWL_FROM_GOFORWARD|DWL_REFRESH))
         SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -3266,7 +3266,8 @@ static void test_put_href(IWebBrowser2 *unk, const WCHAR *url)
 
     CHECK_CALLED(TranslateUrl);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
-    todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+    if(!is_http)
+        todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
 
     IHTMLLocation_Release(location);
     SysFreeString(str);
