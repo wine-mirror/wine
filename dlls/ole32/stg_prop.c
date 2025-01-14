@@ -1471,9 +1471,6 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
 
 static size_t propertystorage_get_elemsize(const PROPVARIANT *prop)
 {
-    if (!(prop->vt & VT_VECTOR))
-        return 0;
-
     switch (prop->vt & ~VT_VECTOR)
     {
         case VT_I1: return sizeof(*prop->cac.pElems);
@@ -1492,9 +1489,14 @@ static size_t propertystorage_get_elemsize(const PROPVARIANT *prop)
         case VT_DATE: return sizeof(*prop->cadate.pElems);
         case VT_FILETIME: return sizeof(*prop->cafiletime.pElems);
         case VT_CLSID: return sizeof(*prop->cauuid.pElems);
+        case VT_CF: return sizeof(*prop->caclipdata.pElems);
+        case VT_BSTR: return sizeof(*prop->cabstr.pElems);
+        case VT_BSTR_BLOB: return sizeof(*prop->cabstrblob.pElems);
+        case VT_LPSTR: return sizeof(*prop->calpstr.pElems);
+        case VT_LPWSTR: return sizeof(*prop->calpwstr.pElems);
         case VT_VARIANT: return sizeof(*prop->capropvar.pElems);
         default:
-            FIXME("Unhandled type %#x.\n", prop->vt);
+            ERR("Unexpected type %#x.\n", prop->vt);
             return 0;
     }
 }
