@@ -114,6 +114,8 @@ PSSTDAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret);
 PSSTDAPI PropVariantToVariant(const PROPVARIANT *propvar, VARIANT *var);
 PSSTDAPI VariantToPropVariant(const VARIANT* var, PROPVARIANT* propvar);
 
+PSSTDAPI PropVariantGetStringElem(const PROPVARIANT *propvar, ULONG idx, WCHAR **ret);
+
 #ifdef __cplusplus
 
 HRESULT InitPropVariantFromBoolean(BOOL fVal, PROPVARIANT *ppropvar);

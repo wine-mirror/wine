@@ -1263,3 +1263,52 @@ HRESULT WINAPI VariantToPropVariant(const VARIANT *var, PROPVARIANT *propvar)
 
     return S_OK;
 }
+
+HRESULT WINAPI PropVariantGetStringElem(const PROPVARIANT *propvar, ULONG idx, WCHAR **ret)
+{
+    const WCHAR *wstr;
+
+    TRACE("propvar %p, idx %lu, ret %p, propvar->vt %#x.\n", propvar, idx, ret, propvar ? propvar->vt : 0);
+
+    *ret = 0;
+    switch (propvar->vt)
+    {
+    case VT_BSTR:
+        if (idx != 0) return E_INVALIDARG;
+        wstr = propvar->bstrVal;
+        break;
+    case VT_LPWSTR:
+        if (idx != 0) return E_INVALIDARG;
+        wstr = propvar->pwszVal;
+        break;
+    case VT_BSTR | VT_VECTOR:
+        if (idx >= propvar->cabstr.cElems) return E_INVALIDARG;
+        wstr = propvar->cabstr.pElems[idx];
+        break;
+    case VT_LPWSTR | VT_VECTOR:
+        if (idx >= propvar->calpwstr.cElems) return E_INVALIDARG;
+        wstr = propvar->calpwstr.pElems[idx];
+        break;
+    case VT_BSTR | VT_ARRAY:
+    {
+        LONG l = idx;
+        HRESULT hr;
+
+        if (SafeArrayGetDim(propvar->parray) != 1) return E_INVALIDARG;
+        /* bug in native implementation: ignore lower-bound when checking bounds */
+        if (idx >= propvar->parray->rgsabound[0].cElements) return E_INVALIDARG;
+        hr = SafeArrayGetElement(propvar->parray, &l, &wstr);
+        if (FAILED(hr)) return hr;
+        break;
+    }
+    default:
+        return E_INVALIDARG;
+    }
+
+    if (!wstr) wstr = L"";
+    *ret = CoTaskMemAlloc((wcslen(wstr) + 1) * sizeof(WCHAR));
+    if (!*ret)
+        return E_OUTOFMEMORY;
+    wcscpy(*ret, wstr);
+    return S_OK;
+}

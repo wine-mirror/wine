@@ -102,7 +102,7 @@
 @ stub PropVariantGetInt16Elem
 @ stub PropVariantGetInt32Elem
 @ stub PropVariantGetInt64Elem
-@ stub PropVariantGetStringElem
+@ stdcall PropVariantGetStringElem(ptr long ptr)
 @ stub PropVariantGetUInt16Elem
 @ stub PropVariantGetUInt32Elem
 @ stub PropVariantGetUInt64Elem

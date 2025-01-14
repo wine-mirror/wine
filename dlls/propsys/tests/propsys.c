@@ -2722,6 +2722,78 @@ static void test_PropVariantToVariant(void)
     VariantClear(&var);
 }
 
+void test_PropVariantGetStringElem(void)
+{
+    const WCHAR *strings[] = { L"a", L"bc" };
+    PROPVARIANT propvar;
+    WCHAR *wstr;
+    HRESULT hr;
+    LONG idx;
+
+    propvar.vt = VT_I4;
+    propvar.lVal = 1;
+    wstr = (WCHAR*)0xdeadbeef;
+    hr = PropVariantGetStringElem(&propvar, 0, &wstr);
+    ok(hr == E_INVALIDARG, "PropVariantGetStringElem returned %#lx.\n", hr);
+    ok(!wstr, "wstr = %p\n", wstr);
+
+    propvar.vt = VT_LPSTR;
+    propvar.pszVal = (char *)"test";
+    hr = PropVariantGetStringElem(&propvar, 0, &wstr);
+    ok(hr == E_INVALIDARG, "PropVariantGetStringElem returned %#lx.\n", hr);
+
+    propvar.vt = VT_BSTR;
+    propvar.pwszVal = NULL;
+    hr = PropVariantGetStringElem(&propvar, 0, &wstr);
+    ok(!hr, "PropVariantGetStringElem returned %#lx.\n", hr);
+    ok(!wstr[0], "wstr = %s\n", debugstr_w(wstr));
+
+    propvar.vt = VT_BSTR;
+    propvar.bstrVal = SysAllocString(L"test");
+    hr = PropVariantGetStringElem(&propvar, 0, &wstr);
+    ok(!hr, "PropVariantGetStringElem returned %#lx.\n", hr);
+    ok(!wcscmp(wstr, L"test"), "wstr = %s\n", debugstr_w(wstr));
+    CoTaskMemFree(wstr);
+    hr = PropVariantGetStringElem(&propvar, 1, &wstr);
+    ok(hr == E_INVALIDARG, "PropVariantGetStringElem returned %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    hr = InitPropVariantFromStringVector(strings, ARRAY_SIZE(strings), &propvar);
+    ok(hr == S_OK, "InitPropVariantFromStringAsVector failed %lx\n", hr);
+    ok(propvar.vt == (VT_VECTOR | VT_LPWSTR), "propvar.vt = %x\n", propvar.vt);
+    hr = PropVariantGetStringElem(&propvar, 0, &wstr);
+    ok(!hr, "PropVariantGetStringElem returned %#lx.\n", hr);
+    ok(!wcscmp(wstr, L"a"), "wstr = %s\n", debugstr_w(wstr));
+    CoTaskMemFree(wstr);
+    hr = PropVariantGetStringElem(&propvar, 1, &wstr);
+    ok(!hr, "PropVariantGetStringElem returned %#lx.\n", hr);
+    ok(!wcscmp(wstr, L"bc"), "wstr = %s\n", debugstr_w(wstr));
+    CoTaskMemFree(wstr);
+    hr = PropVariantGetStringElem(&propvar, 2, &wstr);
+    ok(hr == E_INVALIDARG, "PropVariantGetStringElem returned %#lx.\n", hr);
+    PropVariantClear(&propvar);
+
+    propvar.vt = VT_BSTR | VT_ARRAY;
+    propvar.parray = SafeArrayCreateVector(VT_BSTR, 1, 2);
+    ok(propvar.parray != NULL, "SafeArrayCreate failed\n");
+    idx = 1;
+    hr = SafeArrayPutElement(propvar.parray, &idx, SysAllocString(L"test"));
+    ok(!hr, "SafeArrayPutElement returned %#lx.\n", hr);
+    idx = 2;
+    hr = SafeArrayPutElement(propvar.parray, &idx, SysAllocString(L"abc"));
+    ok(!hr, "SafeArrayPutElement returned %#lx.\n", hr);
+    hr = PropVariantGetStringElem(&propvar, 0, &wstr);
+    ok(hr == DISP_E_BADINDEX, "PropVariantGetStringElem returned %#lx.\n", hr);
+    hr = PropVariantGetStringElem(&propvar, 1, &wstr);
+    ok(!hr, "PropVariantGetStringElem returned %#lx.\n", hr);
+    ok(!wcscmp(wstr, L"test"), "wstr = %s\n", debugstr_w(wstr));
+    CoTaskMemFree(wstr);
+    /* function works incorrectry if lower-band != 0 */
+    hr = PropVariantGetStringElem(&propvar, 2, &wstr);
+    ok(hr == E_INVALIDARG, "PropVariantGetStringElem returned %#lx.\n", hr);
+    PropVariantClear(&propvar);
+}
+
 START_TEST(propsys)
 {
     test_InitPropVariantFromGUIDAsString();
@@ -2753,4 +2825,5 @@ START_TEST(propsys)
     test_VariantToString();
     test_VariantToPropVariant();
     test_PropVariantToVariant();
+    test_PropVariantGetStringElem();
 }
