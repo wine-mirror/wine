@@ -1595,43 +1595,46 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read
 
     if (prop->vt & VT_VECTOR)
     {
+        size_t elemsize = propertystorage_get_elemsize(prop);
+        PROPVARIANT elem;
         DWORD count, i;
 
-        switch (prop->vt & ~VT_VECTOR)
+        if (!elemsize)
+            return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        if (FAILED(hr = buffer_read_dword(buffer, offset, &count)))
+            return hr;
+        offset += sizeof(DWORD);
+
+        if (!(prop->cac.pElems = call_IMemoryAllocator_Allocate(pma, elemsize * count)))
+            return STG_E_INSUFFICIENTMEMORY;
+
+        prop->cac.cElems = count;
+        elem.vt = prop->vt & ~VT_VECTOR;
+
+        for (i = 0; i < count; ++i)
         {
-            case VT_BSTR:
-            case VT_VARIANT:
-            case VT_LPSTR:
-            case VT_LPWSTR:
-            case VT_CF:
-                FIXME("Vector with variable length elements are not supported.\n");
-                return STG_E_INVALIDPARAMETER;
-            default:
-                ;
-        }
-
-        if (SUCCEEDED(hr = buffer_read_dword(buffer, offset, &count)))
-        {
-            size_t elemsize = propertystorage_get_elemsize(prop);
-            PROPVARIANT elem;
-
-            offset += sizeof(DWORD);
-
-            if ((prop->capropvar.pElems = call_IMemoryAllocator_Allocate(pma, elemsize * count)))
+            if (FAILED(hr = propertystorage_read_scalar(&elem, buffer, &offset, codepage, pma)))
             {
-                prop->capropvar.cElems = count;
-                elem.vt = prop->vt & ~VT_VECTOR;
-
-                for (i = 0; i < count; ++i)
+                for (; i > 0; --i)
                 {
-                    if (SUCCEEDED(hr = propertystorage_read_scalar(&elem, buffer, &offset, codepage, pma)))
+                    switch(elem.vt)
                     {
-                        memcpy(&prop->capropvar.pElems[i], &elem.lVal, elemsize);
+                    case VT_LPSTR:
+                    case VT_LPWSTR:
+                    case VT_CF:
+                    case VT_CLSID:
+                        call_IMemoryAllocator_Free(pma, prop->calpwstr.pElems);
+                        break;
+                    case VT_BSTR:
+                        SysFreeString(prop->cabstr.pElems[i -1]);
+                        break;
                     }
                 }
+
+                call_IMemoryAllocator_Free(pma, prop->cac.pElems);
+                return hr;
             }
-            else
-                hr = STG_E_INSUFFICIENTMEMORY;
+            memcpy(prop->cac.pElems + elemsize * i, &elem.lVal, elemsize);
         }
     }
     else if (prop->vt & VT_ARRAY)
