@@ -366,7 +366,7 @@ static HRESULT WINAPI uisettings3_add_ColorValuesChanged( IUISettings3 *iface, I
 static HRESULT WINAPI uisettings3_remove_ColorValuesChanged( IUISettings3 *iface, EventRegistrationToken cookie )
 {
     FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const struct IUISettings3Vtbl uisettings3_vtbl =
