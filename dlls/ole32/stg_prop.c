@@ -1241,7 +1241,7 @@ static HRESULT buffer_read_len(const struct read_buffer *buffer, size_t offset, 
     return hr;
 }
 
-static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_buffer *buffer, size_t offset,
+static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_buffer *buffer, size_t *offset,
         UINT codepage, void* (WINAPI *allocate)(void *this, ULONG size), void *allocate_data)
 {
     HRESULT hr;
@@ -1255,55 +1255,65 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
         hr = S_OK;
         break;
     case VT_I1:
-        hr = buffer_read_byte(buffer, offset, (BYTE *)&prop->cVal);
+        hr = buffer_read_byte(buffer, *offset, (BYTE *)&prop->cVal);
+        *offset += sizeof(BYTE);
         TRACE("Read char 0x%x ('%c')\n", prop->cVal, prop->cVal);
         break;
     case VT_UI1:
-        hr = buffer_read_byte(buffer, offset, &prop->bVal);
+        hr = buffer_read_byte(buffer, *offset, &prop->bVal);
+        *offset += sizeof(BYTE);
         TRACE("Read byte 0x%x\n", prop->bVal);
         break;
     case VT_BOOL:
-        hr = buffer_read_word(buffer, offset, (WORD *)&prop->boolVal);
+        hr = buffer_read_word(buffer, *offset, (WORD *)&prop->boolVal);
+        *offset += sizeof(WORD);
         TRACE("Read bool %d\n", prop->boolVal);
         break;
     case VT_I2:
-        hr = buffer_read_word(buffer, offset, (WORD *)&prop->iVal);
+        hr = buffer_read_word(buffer, *offset, (WORD *)&prop->iVal);
+        *offset += sizeof(WORD);
         TRACE("Read short %d\n", prop->iVal);
         break;
     case VT_UI2:
-        hr = buffer_read_word(buffer, offset, &prop->uiVal);
+        hr = buffer_read_word(buffer, *offset, &prop->uiVal);
+        *offset += sizeof(WORD);
         TRACE("Read ushort %d\n", prop->uiVal);
         break;
     case VT_INT:
     case VT_I4:
-        hr = buffer_read_dword(buffer, offset, (DWORD *)&prop->lVal);
+        hr = buffer_read_dword(buffer, *offset, (DWORD *)&prop->lVal);
+        *offset += sizeof(DWORD);
         TRACE("Read long %ld\n", prop->lVal);
         break;
     case VT_UINT:
     case VT_UI4:
-        hr = buffer_read_dword(buffer, offset, &prop->ulVal);
+        hr = buffer_read_dword(buffer, *offset, &prop->ulVal);
+        *offset += sizeof(DWORD);
         TRACE("Read ulong %ld\n", prop->ulVal);
         break;
     case VT_I8:
-        hr = buffer_read_uint64(buffer, offset, (ULARGE_INTEGER *)&prop->hVal);
+        hr = buffer_read_uint64(buffer, *offset, (ULARGE_INTEGER *)&prop->hVal);
+        *offset += sizeof(UINT64);
         TRACE("Read long long %s\n", wine_dbgstr_longlong(prop->hVal.QuadPart));
         break;
     case VT_UI8:
-        hr = buffer_read_uint64(buffer, offset, &prop->uhVal);
+        hr = buffer_read_uint64(buffer, *offset, &prop->uhVal);
+        *offset += sizeof(UINT64);
         TRACE("Read ulong long %s\n", wine_dbgstr_longlong(prop->uhVal.QuadPart));
         break;
     case VT_R8:
-        hr = buffer_read_len(buffer, offset, &prop->dblVal, sizeof(prop->dblVal));
+        hr = buffer_read_len(buffer, *offset, &prop->dblVal, sizeof(prop->dblVal));
+        *offset += sizeof(prop->dblVal);
         TRACE("Read double %f\n", prop->dblVal);
         break;
     case VT_LPSTR:
     {
         DWORD count;
 
-        if (FAILED(hr = buffer_read_dword(buffer, offset, &count)))
+        if (FAILED(hr = buffer_read_dword(buffer, *offset, &count)))
             break;
 
-        offset += sizeof(DWORD);
+        *offset += sizeof(DWORD);
 
         if (codepage == CP_UNICODE && count % sizeof(WCHAR))
         {
@@ -1315,8 +1325,9 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
             prop->pszVal = allocate(allocate_data, count);
             if (prop->pszVal)
             {
-                if (FAILED(hr = buffer_read_len(buffer, offset, prop->pszVal, count)))
+                if (FAILED(hr = buffer_read_len(buffer, *offset, prop->pszVal, count)))
                     break;
+                *offset += ALIGNED_LENGTH(count, sizeof(DWORD) - 1);
 
                 /* This is stored in the code page specified in codepage.
                  * Don't convert it, the caller will just store it as-is.
@@ -1344,10 +1355,10 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
     {
         DWORD count, wcount;
 
-        if (FAILED(hr = buffer_read_dword(buffer, offset, &count)))
+        if (FAILED(hr = buffer_read_dword(buffer, *offset, &count)))
             break;
 
-        offset += sizeof(DWORD);
+        *offset += sizeof(DWORD);
 
         if (codepage == CP_UNICODE && count % sizeof(WCHAR))
         {
@@ -1360,9 +1371,9 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
                 wcount = count / sizeof(WCHAR);
             else
             {
-                if (FAILED(hr = buffer_test_offset(buffer, offset, count)))
+                if (FAILED(hr = buffer_test_offset(buffer, *offset, count)))
                     break;
-                wcount = MultiByteToWideChar(codepage, 0, (LPCSTR)(buffer->data + offset), count, NULL, 0);
+                wcount = MultiByteToWideChar(codepage, 0, (LPCSTR)(buffer->data + *offset), count, NULL, 0);
             }
 
             prop->bstrVal = SysAllocStringLen(NULL, wcount); /* FIXME: use allocator? */
@@ -1370,9 +1381,15 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
             if (prop->bstrVal)
             {
                 if (codepage == CP_UNICODE)
-                    hr = buffer_read_len(buffer, offset, prop->bstrVal, count);
+                {
+                    hr = buffer_read_len(buffer, *offset, prop->bstrVal, count);
+                    offset += ALIGNED_LENGTH(count, sizeof(DWORD) - 1);
+                }
                 else
-                    MultiByteToWideChar(codepage, 0, (LPCSTR)(buffer->data + offset), count, prop->bstrVal, wcount);
+                {
+                    MultiByteToWideChar(codepage, 0, (LPCSTR)(buffer->data + *offset), count, prop->bstrVal, wcount);
+                    offset += ALIGNED_LENGTH(wcount, sizeof(DWORD) - 1);
+                }
 
                 prop->bstrVal[wcount - 1] = '\0';
                 TRACE("Read string value %s\n", debugstr_w(prop->bstrVal));
@@ -1386,16 +1403,17 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
     {
         DWORD count;
 
-        if (FAILED(hr = buffer_read_dword(buffer, offset, &count)))
+        if (FAILED(hr = buffer_read_dword(buffer, *offset, &count)))
             break;
 
-        offset += sizeof(DWORD);
+        *offset += sizeof(DWORD);
 
         prop->blob.cbSize = count;
         prop->blob.pBlobData = allocate(allocate_data, count);
         if (prop->blob.pBlobData)
         {
-            hr = buffer_read_len(buffer, offset, prop->blob.pBlobData, count);
+            hr = buffer_read_len(buffer, *offset, prop->blob.pBlobData, count);
+            *offset += count;
             TRACE("Read blob value of size %ld\n", count);
         }
         else
@@ -1406,16 +1424,17 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
     {
         DWORD count;
 
-        if (FAILED(hr = buffer_read_dword(buffer, offset, &count)))
+        if (FAILED(hr = buffer_read_dword(buffer, *offset, &count)))
             break;
 
-        offset += sizeof(DWORD);
+        *offset += sizeof(DWORD);
 
         prop->pwszVal = allocate(allocate_data, count * sizeof(WCHAR));
         if (prop->pwszVal)
         {
-            if (SUCCEEDED(hr = buffer_read_len(buffer, offset, prop->pwszVal, count * sizeof(WCHAR))))
+            if (SUCCEEDED(hr = buffer_read_len(buffer, *offset, prop->pwszVal, count * sizeof(WCHAR))))
             {
+                *offset += ALIGNED_LENGTH(count * sizeof(WCHAR), sizeof(DWORD) - 1);
                 /* make sure string is NULL-terminated */
                 prop->pwszVal[count - 1] = '\0';
                 PropertyStorage_ByteSwapString(prop->pwszVal, count);
@@ -1427,18 +1446,19 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
         break;
     }
     case VT_FILETIME:
-        hr = buffer_read_uint64(buffer, offset, (ULARGE_INTEGER *)&prop->filetime);
+        hr = buffer_read_uint64(buffer, *offset, (ULARGE_INTEGER *)&prop->filetime);
+        *offset += sizeof(UINT64);
         break;
     case VT_CF:
         {
             DWORD len = 0, tag = 0;
 
-            if (SUCCEEDED(hr = buffer_read_dword(buffer, offset, &len)))
-                hr = buffer_read_dword(buffer, offset + sizeof(DWORD), &tag);
+            if (SUCCEEDED(hr = buffer_read_dword(buffer, *offset, &len)))
+                hr = buffer_read_dword(buffer, *offset + sizeof(DWORD), &tag);
             if (FAILED(hr))
                 break;
 
-            offset += 2 * sizeof(DWORD);
+            *offset += 2 * sizeof(DWORD);
 
             if (len > 8)
             {
@@ -1447,7 +1467,8 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
                 prop->pclipdata->cbSize = len;
                 prop->pclipdata->ulClipFmt = tag;
                 prop->pclipdata->pClipData = allocate(allocate_data, len - sizeof(prop->pclipdata->ulClipFmt));
-                hr = buffer_read_len(buffer, offset, prop->pclipdata->pClipData, len - sizeof(prop->pclipdata->ulClipFmt));
+                hr = buffer_read_len(buffer, *offset, prop->pclipdata->pClipData, len - sizeof(prop->pclipdata->ulClipFmt));
+                *offset += ALIGNED_LENGTH(len - sizeof(prop->pclipdata->ulClipFmt), sizeof(DWORD) - 1);
             }
             else
                 hr = STG_E_INVALIDPARAMETER;
@@ -1457,8 +1478,11 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
         if (!(prop->puuid = allocate(allocate_data, sizeof (*prop->puuid))))
             return STG_E_INSUFFICIENTMEMORY;
 
-        if (SUCCEEDED(hr = buffer_test_offset(buffer, offset, sizeof(*prop->puuid))))
-            StorageUtl_ReadGUID(buffer->data, offset, prop->puuid);
+        if (SUCCEEDED(hr = buffer_test_offset(buffer, *offset, sizeof(*prop->puuid))))
+        {
+            StorageUtl_ReadGUID(buffer->data, *offset, prop->puuid);
+            *offset += sizeof(*prop->puuid);
+        }
 
         break;
     default:
@@ -1547,7 +1571,7 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read
 
                 for (i = 0; i < count; ++i)
                 {
-                    if (SUCCEEDED(hr = propertystorage_read_scalar(&elem, buffer, offset + i * elemsize, codepage,
+                    if (SUCCEEDED(hr = propertystorage_read_scalar(&elem, buffer, &offset, codepage,
                             allocate, allocate_data)))
                     {
                         memcpy(&prop->capropvar.pElems[i], &elem.lVal, elemsize);
@@ -1564,7 +1588,7 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read
         hr = STG_E_INVALIDPARAMETER;
     }
     else
-        hr = propertystorage_read_scalar(prop, buffer, offset, codepage, allocate, allocate_data);
+        hr = propertystorage_read_scalar(prop, buffer, &offset, codepage, allocate, allocate_data);
 
     return hr;
 }
