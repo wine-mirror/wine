@@ -2617,7 +2617,7 @@ static void dump_dir_delay_imported_functions(void)
     printf("\n");
 }
 
-static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
+static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx, const IMAGE_SECTION_HEADER *first_section)
 {
     const	char*	str;
 
@@ -2657,8 +2657,7 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_UNKNOWN:
 	break;
     case IMAGE_DEBUG_TYPE_COFF:
-	dump_coff(idd->PointerToRawData, idd->SizeOfData,
-                  IMAGE_FIRST_SECTION(PE_nt_headers));
+	dump_coff(idd->PointerToRawData, idd->SizeOfData, first_section);
 	break;
     case IMAGE_DEBUG_TYPE_CODEVIEW:
 	dump_codeview(idd->PointerToRawData, idd->SizeOfData);
@@ -2735,7 +2734,7 @@ static void	dump_dir_debug(void)
 
     for (i = 0; i < nb_dbg; i++)
     {
-	dump_dir_debug_dir(debugDir, i);
+	dump_dir_debug_dir(debugDir, i, IMAGE_FIRST_SECTION(PE_nt_headers));
 	debugDir++;
     }
     printf("\n");
@@ -4185,7 +4184,7 @@ void	dbg_dump(void)
 
     for (i = 0; i < nb_dbg; i++)
     {
-	dump_dir_debug_dir(debugDir, i);
+	dump_dir_debug_dir(debugDir, i, (const IMAGE_SECTION_HEADER*)(separateDebugHead + 1));
 	debugDir++;
     }
 }
