@@ -4440,8 +4440,9 @@ static BOOL codeview_process_info(const struct process *pcs,
     if (ret)
     {
         msc_dbg->module->module.CVSig = *signature;
-        memcpy(msc_dbg->module->module.CVData, msc_dbg->root,
-               sizeof(msc_dbg->module->module.CVData));
+        if (*signature == CODEVIEW_RSDS_SIG)
+            memcpy(msc_dbg->module->module.CVData, msc_dbg->root,
+                   sizeof(msc_dbg->module->module.CVData));
     }
     return ret;
 }
