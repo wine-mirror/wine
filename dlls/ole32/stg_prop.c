@@ -1613,7 +1613,22 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read
 
         for (i = 0; i < count; ++i)
         {
-            if (FAILED(hr = propertystorage_read_scalar(&elem, buffer, &offset, codepage, pma)))
+            if (prop->vt == (VT_VECTOR | VT_VARIANT))
+            {
+                DWORD vt;
+
+                offset = ALIGNED_LENGTH(offset, sizeof(DWORD) - 1);
+                hr = buffer_read_dword(buffer, offset, &vt);
+                if (SUCCEEDED(hr))
+                {
+                    offset += sizeof(DWORD);
+                    elem.vt = vt;
+                }
+            }
+
+            if (SUCCEEDED(hr))
+                hr = propertystorage_read_scalar(&elem, buffer, &offset, codepage, pma);
+            if (FAILED(hr))
             {
                 for (; i > 0; --i)
                 {
@@ -1634,7 +1649,11 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const struct read
                 call_IMemoryAllocator_Free(pma, prop->cac.pElems);
                 return hr;
             }
-            memcpy(prop->cac.pElems + elemsize * i, &elem.lVal, elemsize);
+
+            if (prop->vt == (VT_VECTOR | VT_VARIANT))
+                memcpy(prop->cac.pElems + elemsize * i, &elem, elemsize);
+            else
+                memcpy(prop->cac.pElems + elemsize * i, &elem.lVal, elemsize);
         }
     }
     else if (prop->vt & VT_ARRAY)
