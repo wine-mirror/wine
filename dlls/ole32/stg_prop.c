@@ -1354,6 +1354,11 @@ static HRESULT propertystorage_read_scalar(PROPVARIANT *prop, const struct read_
         *offset += sizeof(UINT64);
         TRACE("Read ulong long %s\n", wine_dbgstr_longlong(prop->uhVal.QuadPart));
         break;
+    case VT_R4:
+        hr = buffer_read_len(buffer, *offset, &prop->fltVal, sizeof(prop->fltVal));
+        *offset += sizeof(prop->fltVal);
+        TRACE("Read float %f\n", prop->fltVal);
+        break;
     case VT_R8:
         hr = buffer_read_len(buffer, *offset, &prop->dblVal, sizeof(prop->dblVal));
         *offset += sizeof(prop->dblVal);
