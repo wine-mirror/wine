@@ -40,8 +40,8 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
     IStorage *storage = NULL;
     IStream *stream = NULL;
     IPropertyStorage *propertyStorage = NULL;
-    PROPSPEC spec;
-    PROPVARIANT var;
+    PROPSPEC spec, spec2[2];
+    PROPVARIANT var, var2[2];
     CLIPDATA clipdata;
     unsigned char clipcontent[] = "foobar";
     GUID anyOldGuid = { 0x12345678,0xdead,0xbeef, {
@@ -178,6 +178,31 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
      "Didn't get expected type or value for property (got type %d, value %s)\n",
      var.vt, var.pszVal);
     PropVariantClear(&var);
+
+    /* test read with some missing properties */
+    spec2[0].ulKind = PRSPEC_PROPID;
+    spec2[0].propid = PID_FIRST_USABLE;
+    spec2[1].ulKind = PRSPEC_PROPID;
+    spec2[1].propid = 0xdead;
+    var2[0].vt = VT_BSTR;
+    var2[1].vt = VT_BSTR;
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 2, spec2, var2);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var2[0].vt == VT_I4, "got type %d\n", var2[0].vt);
+    ok(var2[0].lVal == 1, "got value %ld\n", var2[0].lVal);
+    ok(var2[1].vt == VT_EMPTY, "got type %d\n", var2[1].vt);
+
+    spec2[0].ulKind = PRSPEC_LPWSTR;
+    spec2[0].lpwstr = propName;
+    spec2[1].ulKind = PRSPEC_LPWSTR;
+    spec2[1].lpwstr = (WCHAR *)L"non-existing";
+    var2[0].vt = VT_BSTR;
+    var2[1].vt = VT_BSTR;
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 2, spec2, var2);
+    ok(hr == S_OK, "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var2[0].vt == VT_I4, "got type %d\n", var2[0].vt);
+    ok(var2[0].lVal == 2, "got value %ld\n", var2[0].lVal);
+    ok(var2[1].vt == VT_EMPTY, "got type %d\n", var2[1].vt);
 
     /* read clipboard format */
     spec.ulKind = PRSPEC_PROPID;

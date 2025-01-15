@@ -539,7 +539,8 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     PROPVARIANT rgpropvar[])
 {
     PropertyStorage_impl *This = impl_from_IPropertyStorage(iface);
-    HRESULT hr = S_OK;
+    HRESULT hr = S_FALSE;
+    PROPVARIANT *prop;
     ULONG i;
 
     TRACE("%p, %lu, %p, %p\n", iface, cpspec, rgpspec, rgpropvar);
@@ -554,12 +555,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
         PropVariantInit(&rgpropvar[i]);
         if (rgpspec[i].ulKind == PRSPEC_LPWSTR)
         {
-            PROPVARIANT *prop = PropertyStorage_FindPropertyByName(This,
-             rgpspec[i].lpwstr);
-
-            if (prop)
-                PropertyStorage_PropVariantCopy(&rgpropvar[i], prop, GetACP(),
-                 This->codePage);
+            prop = PropertyStorage_FindPropertyByName(This, rgpspec[i].lpwstr);
         }
         else
         {
@@ -568,23 +564,25 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
                 case PID_CODEPAGE:
                     rgpropvar[i].vt = VT_I2;
                     rgpropvar[i].iVal = This->codePage;
+                    prop = NULL;
+                    hr = S_OK;
                     break;
                 case PID_LOCALE:
                     rgpropvar[i].vt = VT_I4;
                     rgpropvar[i].lVal = This->locale;
+                    prop = NULL;
+                    hr = S_OK;
                     break;
                 default:
-                {
-                    PROPVARIANT *prop = PropertyStorage_FindProperty(This,
-                     rgpspec[i].propid);
-
-                    if (prop)
-                        PropertyStorage_PropVariantCopy(&rgpropvar[i], prop,
-                         GetACP(), This->codePage);
-                    else
-                        hr = S_FALSE;
-                }
+                    prop = PropertyStorage_FindProperty(This, rgpspec[i].propid);
+                    break;
             }
+        }
+
+        if (prop)
+        {
+            PropertyStorage_PropVariantCopy(&rgpropvar[i], prop, GetACP(), This->codePage);
+            hr = S_OK;
         }
     }
     LeaveCriticalSection(&This->cs);
