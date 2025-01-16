@@ -237,6 +237,15 @@ BOOL CRYPT_SerializeContextsToReg(HKEY key, DWORD flags,
     return ret;
 }
 
+static void CRYPT_RegDeleteFromReg(HKEY key, const BYTE *sha1_hash)
+{
+    WCHAR hash[20 * 2 + 1];
+
+    CRYPT_HashToStr(sha1_hash, hash);
+    TRACE("Removing %s\n", debugstr_w(hash));
+    RegDeleteKeyW(key, hash);
+}
+
 static BOOL CRYPT_RegWriteToReg(WINE_REGSTOREINFO *store)
 {
     static const WCHAR * const subKeys[] = { L"Certificates", L"CRLs", L"CTLs" };
@@ -258,22 +267,12 @@ static BOOL CRYPT_RegWriteToReg(WINE_REGSTOREINFO *store)
             if (listToDelete[i])
             {
                 WINE_HASH_TO_DELETE *toDelete, *next;
-                WCHAR asciiHash[20 * 2 + 1];
 
                 EnterCriticalSection(&store->cs);
                 LIST_FOR_EACH_ENTRY_SAFE(toDelete, next, listToDelete[i],
                  WINE_HASH_TO_DELETE, entry)
                 {
-                    LONG rc;
-
-                    CRYPT_HashToStr(toDelete->hash, asciiHash);
-                    TRACE("Removing %s\n", debugstr_w(asciiHash));
-                    rc = RegDeleteKeyW(key, asciiHash);
-                    if (rc != ERROR_SUCCESS && rc != ERROR_FILE_NOT_FOUND)
-                    {
-                        SetLastError(rc);
-                        ret = FALSE;
-                    }
+                    CRYPT_RegDeleteFromReg(key, toDelete->hash);
                     list_remove(&toDelete->entry);
                     CryptMemFree(toDelete);
                 }
