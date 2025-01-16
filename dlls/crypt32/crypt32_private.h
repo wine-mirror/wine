@@ -354,6 +354,7 @@ BOOL CRYPT_SerializeContextToReg(HKEY key, DWORD flags, const WINE_CONTEXT_INTER
 void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType,
     HCERTSTORE store, DWORD disposition);
 void CRYPT_RegDeleteFromReg(HKEY key, const BYTE *sha1_hash);
+void CRYPT_HashToStr(const BYTE *hash, LPWSTR asciiHash);
 
 DWORD CRYPT_IsCertificateSelfSigned(const CERT_CONTEXT *cert);
 

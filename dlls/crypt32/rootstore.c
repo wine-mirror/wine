@@ -99,7 +99,26 @@ static const char *get_cert_common_name(PCCERT_CONTEXT cert)
     return name;
 }
 
-static void check_and_store_certs( HCERTSTORE cached, HKEY key )
+static void get_cert_context_hash( const CERT_CONTEXT *cert, BYTE *sha1_hash, WCHAR *hash_str )
+{
+    DWORD size;
+
+    size = 20;
+    CertGetCertificateContextProperty( cert, CERT_HASH_PROP_ID, sha1_hash, &size );
+    CRYPT_HashToStr( sha1_hash, hash_str );
+}
+
+static void mark_cert_imported( HKEY import_key, const CERT_CONTEXT *cert )
+{
+    WCHAR hash_str[20 * 2 + 1];
+    BYTE sha1_hash[20];
+    DWORD value = 1;
+
+    get_cert_context_hash( cert, sha1_hash, hash_str );
+    RegSetValueExW( import_key, hash_str, 0, REG_DWORD, (BYTE *)&value, sizeof(value) );
+}
+
+static void check_and_store_certs( HCERTSTORE cached, HKEY key, HKEY import_key )
 {
     DWORD root_count = 0;
     CERT_CHAIN_ENGINE_CONFIG chainEngineConfig = { sizeof(chainEngineConfig), 0 };
@@ -155,6 +174,7 @@ static void check_and_store_certs( HCERTSTORE cached, HKEY key )
         {
             /* Clear custom property so it is not serialized and seen by apps. */
             CertSetCertificateContextProperty( cert, CERT_FIRST_USER_PROP_ID, 0, NULL );
+            mark_cert_imported( import_key, cert );
             CRYPT_SerializeContextToReg( key, 0, pCertInterface, cert );
             root_count++;
         }
@@ -640,6 +660,29 @@ static void sync_trusted_roots_from_known_locations( HKEY key, HCERTSTORE cached
     PCCERT_CONTEXT cert, existing;
     unsigned int existing_count = 0, new_count = 0, deleted_count = 0;
     BYTE sha1_hash[20];
+    HKEY import_key;
+    WCHAR hash_str[20 * 2 + 1];
+    DWORD value;
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Wine\\HostImportedCertificates", 0, KEY_ALL_ACCESS, &import_key ))
+    {
+        if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Wine\\HostImportedCertificates_tmp", 0, NULL, 0,
+                             KEY_ALL_ACCESS, NULL, &import_key, NULL ))
+            return;
+
+        /* If the key is absent existing certificates were added by an older Wine version, mark all cached certificates
+         * as imported (as it was previously assumed) so they can be deleted when are deleted on host. */
+        cert = NULL;
+        while ((cert = CertEnumCertificatesInStore( cached, cert )))
+            mark_cert_imported( import_key, cert );
+
+        if ((value = RegRenameKey( import_key, NULL, L"HostImportedCertificates" )))
+        {
+            ERR( "Error renaming key %#lx.\n", value );
+            RegCloseKey( import_key );
+            return;
+        }
+    }
 
     CryptAcquireContextW( &prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT );
     params.buffer = CryptMemAlloc( params.size );
@@ -689,10 +732,16 @@ static void sync_trusted_roots_from_known_locations( HKEY key, HCERTSTORE cached
         if (CertGetCertificateContextProperty( cert, CERT_FIRST_USER_PROP_ID, NULL, &size ))
             continue;
 
-        size = sizeof(sha1_hash);
-        CertGetCertificateContextProperty( cert, CERT_HASH_PROP_ID, sha1_hash, &size );
+        get_cert_context_hash( cert, sha1_hash, hash_str );
+        size = sizeof(value);
+        if (RegQueryValueExW( import_key, hash_str, NULL, NULL, (BYTE *)&value, &size ))
+        {
+            TRACE( "key %s is not imported, not deleting.\n", debugstr_w(hash_str) );
+            continue;
+        }
         ++deleted_count;
         CRYPT_RegDeleteFromReg( key, sha1_hash );
+        RegDeleteValueW( import_key, hash_str );
         /* Delete from cached so deleted certs do not participate in chain verification. */
         CertDeleteCertificateFromStore( cert );
         /* Restart enumeration as it is broken by deleting cert from store. */
@@ -701,8 +750,9 @@ static void sync_trusted_roots_from_known_locations( HKEY key, HCERTSTORE cached
     }
 
     if (new_count)
-        check_and_store_certs( cached, key );
+        check_and_store_certs( cached, key, import_key );
 
+    RegCloseKey( import_key );
     TRACE( "existing %u, deleted %u, new %u.\n", existing_count, deleted_count, new_count );
 }
 

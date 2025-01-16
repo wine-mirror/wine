@@ -45,7 +45,7 @@ typedef struct _WINE_REGSTOREINFO
     struct list      ctlsToDelete;
 } WINE_REGSTOREINFO;
 
-static void CRYPT_HashToStr(const BYTE *hash, LPWSTR asciiHash)
+void CRYPT_HashToStr(const BYTE *hash, LPWSTR asciiHash)
 {
     DWORD i;
 
