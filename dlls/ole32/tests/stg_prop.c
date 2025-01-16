@@ -755,7 +755,6 @@ static void test_propertyset_storage_enum(void)
 
     hr = IPropertyStorage_Stat(prop_storage, &psstg);
     ok(hr == S_OK, "Failed to get prop storage stats, hr %#lx.\n", hr);
-    todo_wine
     ok(IsEqualCLSID(&psstg.clsid, &IID_IUnknown), "Unexpected storage clsid %s.\n", wine_dbgstr_guid(&psstg.clsid));
 
     hr = IPropertySetStorage_Enum(ps_storage, NULL);

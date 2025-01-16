@@ -2660,8 +2660,8 @@ static HRESULT PropertyStorage_ConstructFromStream(IStream *stm,
     return hr;
 }
 
-static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
- REFFMTID rfmtid, DWORD grfFlags, DWORD grfMode, IPropertyStorage** pps)
+static HRESULT PropertyStorage_ConstructEmpty(IStream *stm, REFFMTID rfmtid,
+ const CLSID *clsid, DWORD grfFlags, DWORD grfMode, IPropertyStorage** pps)
 {
     PropertyStorage_impl *ps;
     HRESULT hr;
@@ -2670,6 +2670,8 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
     hr = PropertyStorage_BaseConstruct(stm, rfmtid, grfMode, &ps);
     if (SUCCEEDED(hr))
     {
+        if (clsid)
+            ps->clsid = *clsid;
         ps->format = 0;
         ps->grfFlags = grfFlags;
         if (ps->grfFlags & PROPSETFLAG_CASE_SENSITIVE)
@@ -2976,7 +2978,7 @@ static HRESULT WINAPI IPropertySetStorage_fnCreate(
     if (FAILED(r))
         goto end;
 
-    r = PropertyStorage_ConstructEmpty(stm, rfmtid, grfFlags, grfMode, ppprstg);
+    r = PropertyStorage_ConstructEmpty(stm, rfmtid, pclsid, grfFlags, grfMode, ppprstg);
 
     IStream_Release( stm );
 
@@ -3162,7 +3164,7 @@ HRESULT WINAPI StgCreatePropStg(IUnknown *unk, REFFMTID fmt, const CLSID *clsid,
         if (FAILED(r))
             goto end;
 
-        r = PropertyStorage_ConstructEmpty(stm, fmt, flags,
+        r = PropertyStorage_ConstructEmpty(stm, fmt, clsid, flags,
                 STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, prop_stg);
 
         IStream_Release( stm );
