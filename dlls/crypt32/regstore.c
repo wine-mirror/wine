@@ -197,7 +197,7 @@ static BOOL CRYPT_WriteSerializedToReg(HKEY key, DWORD flags, const BYTE *hash, 
     return ret;
 }
 
-static BOOL CRYPT_SerializeContextToReg(HKEY key, DWORD flags, const WINE_CONTEXT_INTERFACE *context_iface,
+BOOL CRYPT_SerializeContextToReg(HKEY key, DWORD flags, const WINE_CONTEXT_INTERFACE *context_iface,
  const void *context)
 {
     BYTE hash[20];
@@ -226,7 +226,7 @@ static BOOL CRYPT_SerializeContextToReg(HKEY key, DWORD flags, const WINE_CONTEX
     return ret;
 }
 
-BOOL CRYPT_SerializeContextsToReg(HKEY key, DWORD flags,
+static BOOL CRYPT_SerializeContextsToReg(HKEY key, DWORD flags,
  const WINE_CONTEXT_INTERFACE *contextInterface, HCERTSTORE memStore)
 {
     const void *context = NULL;
@@ -241,7 +241,7 @@ BOOL CRYPT_SerializeContextsToReg(HKEY key, DWORD flags,
     return ret;
 }
 
-static void CRYPT_RegDeleteFromReg(HKEY key, const BYTE *sha1_hash)
+void CRYPT_RegDeleteFromReg(HKEY key, const BYTE *sha1_hash)
 {
     WCHAR hash[20 * 2 + 1];
 

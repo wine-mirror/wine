@@ -349,10 +349,11 @@ WINECRYPT_CERTSTORE *CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara);
 
 void CRYPT_ImportSystemRootCertsToReg(void);
-BOOL CRYPT_SerializeContextsToReg(HKEY key, DWORD flags, const WINE_CONTEXT_INTERFACE *contextInterface,
-    HCERTSTORE memStore);
+BOOL CRYPT_SerializeContextToReg(HKEY key, DWORD flags, const WINE_CONTEXT_INTERFACE *context_iface,
+    const void *context);
 void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType,
     HCERTSTORE store, DWORD disposition);
+void CRYPT_RegDeleteFromReg(HKEY key, const BYTE *sha1_hash);
 
 DWORD CRYPT_IsCertificateSelfSigned(const CERT_CONTEXT *cert);
 
