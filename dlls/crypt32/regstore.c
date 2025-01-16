@@ -197,6 +197,35 @@ static BOOL CRYPT_WriteSerializedToReg(HKEY key, DWORD flags, const BYTE *hash, 
     return ret;
 }
 
+static BOOL CRYPT_SerializeContextToReg(HKEY key, DWORD flags, const WINE_CONTEXT_INTERFACE *context_iface,
+ const void *context)
+{
+    BYTE hash[20];
+    DWORD hash_size = sizeof(hash);
+    DWORD size = 0;
+    BYTE *buf;
+    BOOL ret;
+
+    if (!context_iface->getProp(context, CERT_HASH_PROP_ID, hash,  &hash_size))
+        return FALSE;
+
+    context_iface->serialize(context, 0, NULL, &size);
+    if (!size)
+        return FALSE;
+
+    if (!(buf = CryptMemAlloc(size)))
+        return FALSE;
+
+    if (!(context_iface->serialize(context, 0, buf, &size)))
+    {
+        CryptMemFree(buf);
+        return FALSE;
+    }
+    ret = CRYPT_WriteSerializedToReg(key, flags, hash, buf, size);
+    CryptMemFree(buf);
+    return ret;
+}
+
 BOOL CRYPT_SerializeContextsToReg(HKEY key, DWORD flags,
  const WINE_CONTEXT_INTERFACE *contextInterface, HCERTSTORE memStore)
 {
@@ -205,32 +234,7 @@ BOOL CRYPT_SerializeContextsToReg(HKEY key, DWORD flags,
 
     do {
         context = contextInterface->enumContextsInStore(memStore, context);
-        if (context)
-        {
-            BYTE hash[20];
-            DWORD hashSize = sizeof(hash);
-
-            ret = contextInterface->getProp(context, CERT_HASH_PROP_ID, hash,
-             &hashSize);
-            if (ret)
-            {
-                DWORD size = 0;
-                LPBYTE buf = NULL;
-
-                ret = contextInterface->serialize(context, 0, NULL, &size);
-                if (size)
-                    buf = CryptMemAlloc(size);
-                if (buf)
-                {
-                    ret = contextInterface->serialize(context, 0, buf, &size);
-                    if (ret)
-                        ret = CRYPT_WriteSerializedToReg(key, flags, hash, buf, size);
-                }
-                CryptMemFree(buf);
-            }
-        }
-        else
-            ret = TRUE;
+        ret = !context || CRYPT_SerializeContextToReg(key, flags, contextInterface, context);
     } while (ret && context != NULL);
     if (context)
         Context_Release(context_from_ptr(context));
