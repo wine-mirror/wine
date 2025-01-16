@@ -98,74 +98,54 @@ static const char *get_cert_common_name(PCCERT_CONTEXT cert)
     return name;
 }
 
-static void check_and_store_certs(HCERTSTORE cached, HCERTSTORE new, HCERTSTORE to)
+static void check_and_store_certs( HCERTSTORE cached, HCERTSTORE new, HCERTSTORE to )
 {
     DWORD root_count = 0;
-    CERT_CHAIN_ENGINE_CONFIG chainEngineConfig =
-     { sizeof(chainEngineConfig), 0 };
+    CERT_CHAIN_ENGINE_CONFIG chainEngineConfig = { sizeof(chainEngineConfig), 0 };
     HCERTCHAINENGINE engine;
+    PCCERT_CONTEXT cert = NULL;
 
     TRACE("\n");
 
-    CertDuplicateStore(to);
-    engine = CRYPT_CreateChainEngine(to, CERT_SYSTEM_STORE_CURRENT_USER, &chainEngineConfig);
-    if (engine)
+    CertDuplicateStore( to );
+    if (!(engine = CRYPT_CreateChainEngine( to, CERT_SYSTEM_STORE_CURRENT_USER, &chainEngineConfig )))
+        return;
+
+    while ((cert = CertEnumCertificatesInStore( new, cert )))
     {
-        PCCERT_CONTEXT cert = NULL;
+        const DWORD allowed_errors = CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_VALID_FOR_USAGE
+                                    | CERT_TRUST_INVALID_BASIC_CONSTRAINTS | CERT_TRUST_IS_NOT_TIME_VALID;
+        CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
+        PCCERT_CHAIN_CONTEXT chain;
+        BOOL ret;
 
-        do {
-            cert = CertEnumCertificatesInStore(new, cert);
-            if (cert)
-            {
-                CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
-                PCCERT_CHAIN_CONTEXT chain;
-                BOOL ret;
+        ret = CertGetCertificateChain( engine, cert, NULL, cached, &chainPara, CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL, NULL, &chain );
+        if (!ret)
+        {
+            TRACE( "rejecting %s: chain creation failed.\n", get_cert_common_name( cert ));
+            continue;
+        }
 
-                ret = CertGetCertificateChain(engine, cert, NULL, cached,
-                 &chainPara, CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL, NULL, &chain);
-                if (!ret)
-                    TRACE("rejecting %s: %s\n", get_cert_common_name(cert),
-                     "chain creation failed");
-                else
-                {
-                    DWORD allowedErrors = CERT_TRUST_IS_UNTRUSTED_ROOT |
-                     CERT_TRUST_IS_NOT_VALID_FOR_USAGE |
-                     CERT_TRUST_INVALID_BASIC_CONSTRAINTS |
-                     CERT_TRUST_IS_NOT_TIME_VALID;
-
-                    /* The certificate chain verification only allows certain
-                     * invalid CA certs if they're installed locally:  CA
-                     * certs missing the key usage extension, and CA certs
-                     * missing the basic constraints extension.  Of course
-                     * there's a chicken and egg problem:  we have to accept
-                     * them here in order for them to be accepted later.
-                     * Expired, locally installed certs are also allowed here,
-                     * because we don't know (yet) what date will be checked
-                     * for an item signed by one of these certs.
-                     * Thus, accept certs with any of the allowed errors.
-                     */
-                    if (chain->TrustStatus.dwErrorStatus & ~allowedErrors)
-                        TRACE("rejecting %s: %s\n", get_cert_common_name(cert),
-                         trust_status_to_str(chain->TrustStatus.dwErrorStatus &
-                         ~CERT_TRUST_IS_UNTRUSTED_ROOT));
-                    else
-                    {
-                        DWORD i, j;
-
-                        for (i = 0; i < chain->cChain; i++)
-                            for (j = 0; j < chain->rgpChain[i]->cElement; j++)
-                                if (CertAddCertificateContextToStore(to,
-                                 chain->rgpChain[i]->rgpElement[j]->pCertContext,
-                                 CERT_STORE_ADD_NEW, NULL))
-                                    root_count++;
-                    }
-                    CertFreeCertificateChain(chain);
-                }
-            }
-        } while (cert);
-        CertFreeCertificateChainEngine(engine);
+        /* The certificate chain verification only allows certain
+         * invalid CA certs if they're installed locally:  CA
+         * certs missing the key usage extension, and CA certs
+         * missing the basic constraints extension.  Of course
+         * there's a chicken and egg problem:  we have to accept
+         * them here in order for them to be accepted later.
+         * Expired, locally installed certs are also allowed here,
+         * because we don't know (yet) what date will be checked
+         * for an item signed by one of these certs.
+         * Thus, accept certs with any of the allowed errors.
+         */
+        if (chain->TrustStatus.dwErrorStatus & ~allowed_errors)
+            TRACE( "rejecting %s: %s\n", get_cert_common_name(cert),
+                   trust_status_to_str( chain->TrustStatus.dwErrorStatus & ~CERT_TRUST_IS_UNTRUSTED_ROOT ));
+        else if (CertAddCertificateContextToStore( to, cert, CERT_STORE_ADD_NEW, NULL ))
+            root_count++;
+        CertFreeCertificateChain(chain);
     }
-    TRACE("Added %ld root certificates\n", root_count);
+    CertFreeCertificateChainEngine( engine );
+    TRACE( "Added %ld root certificates\n", root_count );
 }
 
 static const BYTE authenticode[] = {
