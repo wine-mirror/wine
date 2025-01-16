@@ -80,7 +80,7 @@ struct object_entry
 
 static void object_entry_destroy(struct object_entry *entry)
 {
-    if (entry->object) IUnknown_AddRef( entry->object );
+    if (entry->object) IUnknown_Release( entry->object );
     free(entry);
 }
 
