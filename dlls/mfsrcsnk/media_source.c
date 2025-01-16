@@ -812,7 +812,10 @@ static HRESULT media_stream_async_request(struct media_stream *stream, IMFAsyncR
     if (source->state == SOURCE_SHUTDOWN)
         hr = MF_E_SHUTDOWN;
     else if (source->state == SOURCE_RUNNING && SUCCEEDED(hr = object_queue_pop(&stream->samples, (IUnknown **)&sample)))
+    {
         media_stream_send_sample(stream, sample, token);
+        IMFSample_Release(sample);
+    }
     else if (SUCCEEDED(hr = object_queue_push(&stream->tokens, token)) && source->state == SOURCE_RUNNING)
         queue_media_source_read(source);
 
