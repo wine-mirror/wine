@@ -2886,6 +2886,15 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetMaximumFrameLatency(IDXGISwa
         return DXGI_ERROR_INVALID_CALL;
     }
 
+    if (max_latency > swapchain->frame_latency)
+    {
+        if (!SetEvent(swapchain->frame_latency_event))
+        {
+            ERR("Failed to set event, last error %lu.\n", GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+    }
+
     swapchain->frame_latency = max_latency;
     return S_OK;
 }

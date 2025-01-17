@@ -7143,7 +7143,7 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     ok(frame_latency == 3, "Got unexpected frame latency %#x.\n", frame_latency);
 
     wait_result = WaitForSingleObject(semaphore, 0);
-    todo_wine ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
+    ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     wait_result = WaitForSingleObject(semaphore, 0);
     todo_wine ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     wait_result = WaitForSingleObject(semaphore, 100);
