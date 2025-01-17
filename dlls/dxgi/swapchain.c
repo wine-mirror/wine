@@ -2296,8 +2296,7 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
 
     if (swapchain->frame_latency_fence)
     {
-        if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
-                swapchain->frame_latency_fence, op->present.frame_number + 1)))
+        if (FAILED(hr = ID3D12Fence_Signal(swapchain->frame_latency_fence, op->present.frame_number + 1)))
         {
             ERR("Failed to signal frame latency fence, hr %#lx.\n", hr);
             return hr;

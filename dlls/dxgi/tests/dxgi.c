@@ -7222,7 +7222,6 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
         for (i = 0; i < 3; i++)
         {
             wait_result = WaitForSingleObject(semaphore, 100);
-            todo_wine
             ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
         }
 
