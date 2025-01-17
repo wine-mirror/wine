@@ -2250,15 +2250,14 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         {
             x = input->mouse.x;
             y = input->mouse.y;
-            if (flags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE) &&
-                x == desktop_shm->cursor.x && y == desktop_shm->cursor.y)
-                flags &= ~MOUSEEVENTF_MOVE;
         }
         else
         {
             x = desktop_shm->cursor.x + input->mouse.x;
             y = desktop_shm->cursor.y + input->mouse.y;
         }
+        if (x == desktop_shm->cursor.x && y == desktop_shm->cursor.y)
+            flags &= ~MOUSEEVENTF_MOVE;
     }
     else
     {

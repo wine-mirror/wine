@@ -4131,6 +4131,7 @@ static void test_SendInput_mouse_messages(void)
 
     mouse_event( MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
     /* recent Windows versions don't call the hooks with no movement */
+    ok(!current_sequence_len || broken(current_sequence_len) /* before Win10 1709 */, "got %ld.\n", current_sequence_len);
     if (current_sequence_len)
     {
         ok_seq( mouse_move );
