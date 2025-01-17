@@ -485,7 +485,6 @@ static BOOL sym_enum_types(struct module_pair *pair, const char *type_name, PSYM
     void*               ptr;
     struct symt_ht     *type;
     DWORD64             size;
-    BOOL                hack_only_typedef = FALSE;
 
     sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
     sym_info->MaxNameLen = sizeof(buffer) - sizeof(SYMBOL_INFO);
@@ -496,17 +495,7 @@ static BOOL sym_enum_types(struct module_pair *pair, const char *type_name, PSYM
     {
         struct sym_modfmt_type_enum info = {pair->effective, sym_info, cb, user, type_name};
         enum method_result result = iter.modfmt->vtable->enumerate_types(iter.modfmt, sym_modfmt_type_enum_cb, &info);
-
-        switch (result)
-        {
-        case MR_FAILURE:
-            return FALSE;
-        case MR_SUCCESS:
-            return TRUE;
-        case MR_NOT_FOUND:
-            hack_only_typedef = TRUE;
-            break;
-        }
+        return result != MR_FAILURE;
     }
 
     hash_table_iter_init(&pair->effective->ht_types, &hti, type_name);
@@ -515,7 +504,6 @@ static BOOL sym_enum_types(struct module_pair *pair, const char *type_name, PSYM
         type = CONTAINING_RECORD(ptr, struct symt_ht, hash_elt);
 
         if (type_name && !SymMatchStringA(type->hash_elt.name, type_name, TRUE)) continue;
-        if (hack_only_typedef && !symt_check_tag(&type->symt, SymTagTypedef)) continue;
 
         sym_info->TypeIndex = symt_ptr_to_index(pair->effective, &type->symt);
         sym_info->Index = 0; /* FIXME */
@@ -1207,7 +1195,6 @@ BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
     struct module_pair  pair;
     struct symt*        type;
     DWORD64             size;
-    BOOL                hack_only_typedef = FALSE;
     struct module_format_vtable_iterator iter = {};
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
@@ -1231,12 +1218,11 @@ BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
             symt_get_info_from_symref(pair.effective, symref, TI_GET_SYMTAG, &Symbol->Tag);
             return TRUE;
         }
-        hack_only_typedef = TRUE;
+        if (result == MR_FAILURE) return FALSE;
     }
 
     type = symt_find_type_by_name(pair.effective, SymTagNull, Name);
     if (!type) return FALSE;
-    if (hack_only_typedef && !symt_check_tag(type, SymTagTypedef)) return FALSE;
     Symbol->Index = Symbol->TypeIndex = symt_ptr_to_index(pair.effective, type);
     symbol_setname(Symbol, symt_get_name(type));
     symt_get_info(pair.effective, type, TI_GET_LENGTH, &size);

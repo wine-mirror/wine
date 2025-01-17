@@ -3890,7 +3890,7 @@ static BOOL pdb_process_internal(const struct process *pcs,
          * streams' loading can succeed them.
          */
         globalimage = pdb_read_stream(pdb_file, symbols.gsym_stream);
-        if (globalimage)
+        if (globalimage && !pdb_file->pdb_reader)
         {
             const BYTE* data;
             unsigned global_size = pdb_get_stream_size(pdb_file, symbols.gsym_stream);
