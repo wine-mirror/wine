@@ -13331,7 +13331,11 @@ static void test_ReleaseCapture(void)
     ok(wm_mousemove_count < 10, "Got too many WM_MOUSEMOVE.\n");
 
     /* Test that ReleaseCapture() should send a WM_MOUSEMOVE if a window is captured */
+    wm_mousemove_count = 0;
     SetCapture(hwnd);
+    flush_events(TRUE);
+    ok(!wm_mousemove_count, "Got no WM_MOUSEMOVE.\n");
+
     wm_mousemove_count = 0;
     ret = ReleaseCapture();
     ok(ret, "ReleaseCapture failed, error %#lx.\n", GetLastError());

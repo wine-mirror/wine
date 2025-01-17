@@ -1850,15 +1850,6 @@ BOOL release_capture(void)
     BOOL ret;
 
     ret = set_capture_window( 0, 0, &previous );
-
-    /* Somebody may have missed some mouse movements */
-    if (ret && previous)
-    {
-        INPUT input = { .type = INPUT_MOUSE };
-        input.mi.dwFlags = MOUSEEVENTF_MOVE;
-        NtUserSendInput( 1, &input, sizeof(input) );
-    }
-
     return ret;
 }
 

@@ -3890,6 +3890,8 @@ DECL_HANDLER(set_capture_window)
             reply->full_handle = shared->capture;
         }
         SHARED_WRITE_END;
+        if (reply->previous && !req->handle && !req->flags)
+            update_cursor_pos(input->desktop);
     }
 }
 
