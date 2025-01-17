@@ -2296,12 +2296,8 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
 
     if (swapchain->frame_latency_fence)
     {
-        /* Use the same bias as d3d12_swapchain_present(). Add one to
-         * account for the "++swapchain->frame_number" there. */
-        uint64_t number = op->present.frame_number + DXGI_MAX_SWAP_CHAIN_BUFFERS + 1;
-
         if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
-                swapchain->frame_latency_fence, number)))
+                swapchain->frame_latency_fence, op->present.frame_number + 1)))
         {
             ERR("Failed to signal frame latency fence, hr %#lx.\n", hr);
             return hr;
@@ -2351,12 +2347,8 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     ++swapchain->frame_number;
     if ((frame_latency_event = swapchain->frame_latency_event))
     {
-        /* Bias the frame number to avoid underflowing in
-         * SetEventOnCompletion(). */
-        uint64_t number = swapchain->frame_number + DXGI_MAX_SWAP_CHAIN_BUFFERS;
-
         if (FAILED(hr = ID3D12Fence_SetEventOnCompletion(swapchain->frame_latency_fence,
-                number - swapchain->frame_latency, frame_latency_event)))
+                swapchain->frame_number, frame_latency_event)))
         {
             ERR("Failed to enqueue frame latency event, hr %#lx.\n", hr);
             return hr;
