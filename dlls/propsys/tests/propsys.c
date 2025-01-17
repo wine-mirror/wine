@@ -1421,6 +1421,97 @@ static void test_PropVariantChangeType_LPWSTR(void)
     PropVariantClear(&src);
 }
 
+static void test_PropVariantChangeType_UI4(void)
+{
+    static const struct
+    {
+        const char *strA;
+        const WCHAR *str;
+        unsigned int value;
+        HRESULT hr;
+    }
+    string_to_ui4[] =
+    {
+        { "0x123", L"0x123", 0x123 },
+        { "1", L"1", 1 },
+        { "+1", L"+1", 1 },
+
+        { "-1", L"-1", 0, TYPE_E_TYPEMISMATCH },
+    };
+    PROPVARIANT dest, src;
+    size_t len;
+    HRESULT hr;
+
+    PropVariantInit(&dest);
+
+    src.vt = VT_NULL;
+    dest.vt = VT_UI2;
+    dest.ulVal = 0xffbb;
+    hr = PropVariantChangeType(&dest, &src, 0, VT_UI4);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(dest.vt == VT_UI4, "Unexpected type %d.\n", dest.vt);
+        ok(dest.ulVal == 0, "Unexpected value %u.\n", dest.uiVal);
+    }
+
+    for (int i = 0; i < ARRAY_SIZE(string_to_ui4); ++i)
+    {
+        len = strlen(string_to_ui4[i].strA);
+        src.vt = VT_LPSTR;
+        src.pszVal = CoTaskMemAlloc(len + 1);
+        strcpy(src.pszVal, string_to_ui4[i].strA);
+        dest.vt = VT_UI2;
+        dest.ulVal = 0xffbb;
+        hr = PropVariantChangeType(&dest, &src, 0, VT_UI4);
+        todo_wine_if(i == 3)
+        ok(hr == string_to_ui4[i].hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(dest.vt == VT_UI4, "Unexpected type %d.\n", dest.vt);
+            ok(dest.ulVal == string_to_ui4[i].value, "Unexpected value %lu.\n", dest.ulVal);
+        }
+        else
+        {
+            todo_wine
+            ok(dest.vt == VT_EMPTY, "Unexpected type %d.\n", dest.vt);
+            todo_wine
+            ok(!dest.ulVal, "Unexpected value %lu.\n", dest.ulVal);
+        }
+        PropVariantClear(&src);
+
+        len = lstrlenW(string_to_ui4[i].str);
+        src.vt = VT_LPWSTR;
+        src.pwszVal = CoTaskMemAlloc((len + 1) * sizeof(WCHAR));
+        lstrcpyW(src.pwszVal, string_to_ui4[i].str);
+        dest.vt = VT_UI2;
+        dest.ulVal = 0xffbb;
+        hr = PropVariantChangeType(&dest, &src, 0, VT_UI4);
+        todo_wine_if(i == 3)
+        ok(hr == string_to_ui4[i].hr, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(dest.vt == VT_UI4, "Unexpected type %d.\n", dest.vt);
+            ok(dest.ulVal == string_to_ui4[i].value, "Unexpected value %lu.\n", dest.ulVal);
+        }
+        else
+        {
+            todo_wine
+            ok(dest.vt == VT_EMPTY, "Unexpected type %d.\n", dest.vt);
+            todo_wine
+            ok(!dest.ulVal, "Unexpected value %lu.\n", dest.ulVal);
+        }
+        PropVariantClear(&src);
+    }
+}
+
+static void test_PropVariantChangeType(void)
+{
+    test_PropVariantChangeType_LPWSTR();
+    test_PropVariantChangeType_UI4();
+}
+
 static void test_InitPropVariantFromCLSID(void)
 {
     PROPVARIANT propvar;
@@ -2641,7 +2732,7 @@ START_TEST(propsys)
     test_PropVariantToStringAlloc();
     test_PropVariantCompareEx();
     test_intconversions();
-    test_PropVariantChangeType_LPWSTR();
+    test_PropVariantChangeType();
     test_PropVariantToBoolean();
     test_PropVariantToStringWithDefault();
     test_PropVariantToDouble();
