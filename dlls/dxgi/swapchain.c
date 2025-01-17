@@ -1191,7 +1191,7 @@ struct d3d12_swapchain
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreen_desc;
     LONG in_set_fullscreen_state;
 
-    HANDLE frame_latency_event;
+    HANDLE frame_latency_semaphore;
 
     uint64_t frame_number;
     uint32_t frame_latency;
@@ -2053,8 +2053,8 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
     if (swapchain->present_fence)
         ID3D12Fence_Release(swapchain->present_fence);
 
-    if (swapchain->frame_latency_event)
-        CloseHandle(swapchain->frame_latency_event);
+    if (swapchain->frame_latency_semaphore)
+        CloseHandle(swapchain->frame_latency_semaphore);
 
     if (swapchain->command_queue)
         ID3D12CommandQueue_Release(swapchain->command_queue);
@@ -2290,11 +2290,11 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
         return hresult_from_vk_result(vr);
     }
 
-    if (swapchain->frame_latency_event)
+    if (swapchain->frame_latency_semaphore)
     {
-        if (!SetEvent(swapchain->frame_latency_event))
+        if (!ReleaseSemaphore(swapchain->frame_latency_semaphore, 1, NULL))
         {
-            ERR("Failed to set frame latency event, last error %ld.\n", GetLastError());
+            ERR("Failed to release frame latency semaphore, last error %ld.\n", GetLastError());
             return HRESULT_FROM_WIN32(GetLastError());
         }
     }
@@ -2865,9 +2865,9 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetMaximumFrameLatency(IDXGISwa
 
     if (max_latency > swapchain->frame_latency)
     {
-        if (!SetEvent(swapchain->frame_latency_event))
+        if (!ReleaseSemaphore(swapchain->frame_latency_semaphore, max_latency - swapchain->frame_latency, NULL))
         {
-            ERR("Failed to set event, last error %lu.\n", GetLastError());
+            ERR("Failed to release frame latency semaphore, last error %lu.\n", GetLastError());
             return HRESULT_FROM_WIN32(GetLastError());
         }
     }
@@ -2900,10 +2900,10 @@ static HANDLE STDMETHODCALLTYPE d3d12_swapchain_GetFrameLatencyWaitableObject(ID
 
     TRACE("iface %p.\n", iface);
 
-    if (!swapchain->frame_latency_event)
+    if (!swapchain->frame_latency_semaphore)
         return NULL;
 
-    ret = DuplicateHandle(GetCurrentProcess(), swapchain->frame_latency_event, GetCurrentProcess(),
+    ret = DuplicateHandle(GetCurrentProcess(), swapchain->frame_latency_semaphore, GetCurrentProcess(),
             &dup, 0, FALSE, DUPLICATE_SAME_ACCESS);
 
     if (!ret)
@@ -3344,10 +3344,10 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     {
         swapchain->frame_latency = 1;
 
-        if (!(swapchain->frame_latency_event = CreateEventW(NULL, FALSE, TRUE, NULL)))
+        if (!(swapchain->frame_latency_semaphore = CreateSemaphoreW(NULL, swapchain->frame_latency, LONG_MAX, NULL)))
         {
             hr = HRESULT_FROM_WIN32(GetLastError());
-            WARN("Failed to create frame latency event, hr %#lx.\n", hr);
+            WARN("Failed to create frame latency semaphore, hr %#lx.\n", hr);
             d3d12_swapchain_destroy(swapchain);
             return hr;
         }

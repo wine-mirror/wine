@@ -7145,7 +7145,7 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     wait_result = WaitForSingleObject(semaphore, 0);
     ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     wait_result = WaitForSingleObject(semaphore, 0);
-    todo_wine ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
+    ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     wait_result = WaitForSingleObject(semaphore, 100);
     ok(wait_result == WAIT_TIMEOUT, "Got unexpected wait result %#lx.\n", wait_result);
 
@@ -7184,7 +7184,6 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
     for (i = 0; i < 5; i++)
     {
         wait_result = WaitForSingleObject(semaphore, 100);
-        todo_wine_if(i != 0)
         ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
     }
 
@@ -7236,7 +7235,6 @@ static void test_frame_latency_event(IUnknown *device, BOOL is_d3d12)
         for (i = 0; i < 4; i++)
         {
             wait_result = WaitForSingleObject(semaphore, 100);
-            todo_wine_if(i != 0)
             ok(!wait_result, "Got unexpected wait result %#lx.\n", wait_result);
         }
 
