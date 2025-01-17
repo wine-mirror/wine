@@ -2290,13 +2290,10 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
         return hresult_from_vk_result(vr);
     }
 
-    if (swapchain->frame_latency_semaphore)
+    if (!ReleaseSemaphore(swapchain->frame_latency_semaphore, 1, NULL))
     {
-        if (!ReleaseSemaphore(swapchain->frame_latency_semaphore, 1, NULL))
-        {
-            ERR("Failed to release frame latency semaphore, last error %ld.\n", GetLastError());
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
+        ERR("Failed to release frame latency semaphore, last error %ld.\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
     }
 
     return S_OK;
@@ -2320,6 +2317,17 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     {
         WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
         return S_OK;
+    }
+
+    if (!(swapchain->desc.Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
+    {
+        /* After around two seconds Present() will succeed anyway, without any error. */
+        DWORD ret = WaitForSingleObject(swapchain->frame_latency_semaphore, 2000);
+        if (ret != WAIT_OBJECT_0 && ret != WAIT_TIMEOUT)
+        {
+            ERR("Failed to wait for frame latency semaphore, last error %ld.\n", GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
     }
 
     if (!(op = calloc(1, sizeof(*op))))
@@ -2900,8 +2908,11 @@ static HANDLE STDMETHODCALLTYPE d3d12_swapchain_GetFrameLatencyWaitableObject(ID
 
     TRACE("iface %p.\n", iface);
 
-    if (!swapchain->frame_latency_semaphore)
+    if (!(swapchain->desc.Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
+    {
+        WARN("DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT not set for swap chain %p.\n", iface);
         return NULL;
+    }
 
     ret = DuplicateHandle(GetCurrentProcess(), swapchain->frame_latency_semaphore, GetCurrentProcess(),
             &dup, 0, FALSE, DUPLICATE_SAME_ACCESS);
@@ -3341,16 +3352,16 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     swapchain->current_buffer_index = 0;
 
     if (swapchain_desc->Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
-    {
         swapchain->frame_latency = 1;
+    else
+        swapchain->frame_latency = 3;
 
-        if (!(swapchain->frame_latency_semaphore = CreateSemaphoreW(NULL, swapchain->frame_latency, LONG_MAX, NULL)))
-        {
-            hr = HRESULT_FROM_WIN32(GetLastError());
-            WARN("Failed to create frame latency semaphore, hr %#lx.\n", hr);
-            d3d12_swapchain_destroy(swapchain);
-            return hr;
-        }
+    if (!(swapchain->frame_latency_semaphore = CreateSemaphoreW(NULL, swapchain->frame_latency, LONG_MAX, NULL)))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        WARN("Failed to create frame latency semaphore, hr %#lx.\n", hr);
+        d3d12_swapchain_destroy(swapchain);
+        return hr;
     }
 
     if (FAILED(hr = ID3D12Device_CreateFence(device, 0, 0,
