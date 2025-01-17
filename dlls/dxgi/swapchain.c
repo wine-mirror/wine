@@ -2363,7 +2363,7 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         }
     }
 
-    if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
+    if (FAILED(hr = vkd3d_queue_signal_on_cpu(swapchain->command_queue,
             swapchain->present_fence, swapchain->frame_number)))
     {
         ERR("Failed to signal present fence, hf %#lx.\n", hr);

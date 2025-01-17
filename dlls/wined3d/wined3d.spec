@@ -363,6 +363,7 @@
 @ cdecl vkd3d_resource_incref(ptr)
 @ cdecl vkd3d_serialize_root_signature(ptr long ptr ptr)
 @ cdecl vkd3d_serialize_versioned_root_signature(ptr ptr ptr)
+@ cdecl vkd3d_queue_signal_on_cpu(ptr ptr long)
 
 @ cdecl vkd3d_shader_compile(ptr ptr ptr)
 @ cdecl vkd3d_shader_convert_root_signature(ptr long ptr)
