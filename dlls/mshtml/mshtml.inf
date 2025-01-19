@@ -278,6 +278,7 @@ HKCR,".tiff","Content Type",,"image/tiff"
 HKCR,"MIME\Database\Content Type\text/plain","CLSID",,"%CLSID_HTMLDocument%"
 HKCR,"MIME\Database\Content Type\text/plain","Extension",,".txt"
 HKCR,"MIME\Database\Content Type\text/plain","Encoding",1,07,00,00,00
+HKCR,".log",,,"txtfile"
 HKCR,".txt",,,"txtfile"
 HKCR,".txt","Content Type",,"text/plain"
 
