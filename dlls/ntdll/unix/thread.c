@@ -2069,7 +2069,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         {
             if (is_old_wow64())
             {
-                if (is_process_wow64( &info.ClientId ))
+                if (info.TebBaseAddress && is_process_wow64( &info.ClientId ))
                     info.TebBaseAddress = (char *)info.TebBaseAddress + teb_offset;
                 else
                     info.TebBaseAddress = NULL;
