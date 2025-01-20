@@ -5991,7 +5991,7 @@ static void test_arcs(void)
     HPEN pen;
     HDC dc;
 
-    static const BITMAPINFO bitmap_info =
+    BITMAPINFO bitmap_info =
     {
         .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
         .bmiHeader.biWidth = dib_width,
