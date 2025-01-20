@@ -199,7 +199,10 @@ struct lnxev_device
     int button_count;
     BOOL is_gamepad;
 
-    int haptic_effect_id;
+    pthread_cond_t haptics_cond;
+    pthread_t haptics_thread;
+    struct ff_effect haptics;
+
     int effect_ids[256];
     LONG effect_flags;
 };
@@ -595,7 +598,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
             return STATUS_NO_MEMORY;
     }
 
-    impl->haptic_effect_id = -1;
+    impl->haptics.id = -1;
     for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i) impl->effect_ids[i] = -1;
 
     if (test_bit(info->ff, FF_RUMBLE) && !hid_device_add_haptics(iface))
@@ -694,11 +697,53 @@ static void lnxev_device_destroy(struct unix_device *iface)
     udev_device_unref(impl->base.udev_device);
 }
 
+static void *lnxev_device_haptics_thread(void *args)
+{
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(args);
+    struct ff_effect effect = {0};
+
+    pthread_mutex_lock(&udev_cs);
+
+    for (;;)
+    {
+        while (!memcmp(&effect, &impl->haptics, sizeof(effect)))
+            pthread_cond_wait(&impl->haptics_cond, &udev_cs);
+        if (impl->haptics.type == (__u16)-1) break;
+
+        effect = impl->haptics;
+        pthread_mutex_unlock(&udev_cs);
+
+        if (effect.type && (effect.id == -1 || ioctl(impl->base.device_fd, EVIOCSFF, &effect) == -1))
+        {
+            effect.id = -1;
+            ioctl(impl->base.device_fd, EVIOCSFF, &effect);
+        }
+
+        if (effect.id != -1)
+        {
+            struct input_event event = {.type = EV_FF, .code = effect.id, .value = !!effect.type};
+            write(impl->base.device_fd, &event, sizeof(event));
+        }
+
+        pthread_mutex_lock(&udev_cs);
+        impl->haptics.id = effect.id;
+    }
+
+    pthread_mutex_unlock(&udev_cs);
+    return NULL;
+}
+
 static NTSTATUS lnxev_device_start(struct unix_device *iface)
 {
+    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
+
     pthread_mutex_lock(&udev_cs);
     start_polling_device(iface);
+    impl->haptics.type = 0;
     pthread_mutex_unlock(&udev_cs);
+
+    pthread_cond_init(&impl->haptics_cond, NULL);
+    pthread_create(&impl->haptics_thread, NULL, lnxev_device_haptics_thread, iface);
     return STATUS_SUCCESS;
 }
 
@@ -709,7 +754,12 @@ static void lnxev_device_stop(struct unix_device *iface)
     pthread_mutex_lock(&udev_cs);
     stop_polling_device(iface);
     list_remove(&impl->base.unix_device.entry);
+    impl->haptics.type = -1;
     pthread_mutex_unlock(&udev_cs);
+    pthread_cond_signal(&impl->haptics_cond);
+
+    pthread_join(impl->haptics_thread, NULL);
+    pthread_cond_destroy(&impl->haptics_cond);
 }
 
 static void lnxev_device_read_report(struct unix_device *iface)
@@ -733,39 +783,17 @@ static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, UINT durat
                                            USHORT left_intensity, USHORT right_intensity)
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
-    struct ff_effect effect =
-    {
-        .id = impl->haptic_effect_id,
-        .type = FF_RUMBLE,
-    };
-    struct input_event event;
 
     TRACE("iface %p, duration_ms %u, rumble_intensity %u, buzz_intensity %u, left_intensity %u, right_intensity %u.\n",
           iface, duration_ms, rumble_intensity, buzz_intensity, left_intensity, right_intensity);
 
-    effect.replay.length = duration_ms;
-    effect.u.rumble.strong_magnitude = rumble_intensity;
-    effect.u.rumble.weak_magnitude = buzz_intensity;
-
-    if (effect.id == -1 || ioctl(impl->base.device_fd, EVIOCSFF, &effect) == -1)
-    {
-        effect.id = -1;
-        if (ioctl(impl->base.device_fd, EVIOCSFF, &effect) == 1)
-        {
-            WARN("couldn't re-allocate rumble effect for haptics: %d %s\n", errno, strerror(errno));
-            return STATUS_UNSUCCESSFUL;
-        }
-        impl->haptic_effect_id = effect.id;
-    }
-
-    event.type = EV_FF;
-    event.code = effect.id;
-    event.value = 1;
-    if (write(impl->base.device_fd, &event, sizeof(event)) == -1)
-    {
-        WARN("couldn't start haptics rumble effect: %d %s\n", errno, strerror(errno));
-        return STATUS_UNSUCCESSFUL;
-    }
+    pthread_mutex_lock(&udev_cs);
+    impl->haptics.type = FF_RUMBLE;
+    impl->haptics.replay.length = duration_ms;
+    impl->haptics.u.rumble.strong_magnitude = rumble_intensity;
+    impl->haptics.u.rumble.weak_magnitude = buzz_intensity;
+    pthread_mutex_unlock(&udev_cs);
+    pthread_cond_signal(&impl->haptics_cond);
 
     return STATUS_SUCCESS;
 }
@@ -773,22 +801,16 @@ static NTSTATUS lnxev_device_haptics_start(struct unix_device *iface, UINT durat
 static NTSTATUS lnxev_device_haptics_stop(struct unix_device *iface)
 {
     struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
-    struct ff_effect effect =
-    {
-        .id = impl->haptic_effect_id,
-        .type = FF_RUMBLE,
-    };
-    struct input_event event;
 
     TRACE("iface %p.\n", iface);
 
-    if (effect.id == -1) return STATUS_SUCCESS;
-
-    event.type = EV_FF;
-    event.code = effect.id;
-    event.value = 0;
-    if (write(impl->base.device_fd, &event, sizeof(event)) == -1)
-        WARN("couldn't stop haptics rumble effect: %d %s\n", errno, strerror(errno));
+    pthread_mutex_lock(&udev_cs);
+    impl->haptics.type = 0;
+    impl->haptics.replay.length = 0;
+    impl->haptics.u.rumble.strong_magnitude = 0;
+    impl->haptics.u.rumble.weak_magnitude = 0;
+    pthread_mutex_unlock(&udev_cs);
+    pthread_cond_signal(&impl->haptics_cond);
 
     return STATUS_SUCCESS;
 }
