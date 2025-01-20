@@ -1603,7 +1603,7 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
     else if (IsRectEmpty( &rect )) flags |= SWP_NOSIZE;
 
     /* don't sync win32 position for offscreen windows */
-    if (!is_window_rect_mapped( &new_rect )) flags |= SWP_NOMOVE;
+    if ((data->is_offscreen = !is_window_rect_mapped( &new_rect ))) flags |= SWP_NOMOVE;
 
     if ((flags & (SWP_NOSIZE | SWP_NOMOVE)) == (SWP_NOSIZE | SWP_NOMOVE)) return 0;
 
@@ -1801,8 +1801,8 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags, 
 
     /* if the window has been moved offscreen by the window manager, we didn't tell the Win32 side about it */
     window_rect = window_rect_from_visible( old_rects, data->desired_state.rect );
-    if (!is_window_rect_mapped( &window_rect )) OffsetRect( &new_rect, window_rect.left - old_rects->window.left,
-                                                            window_rect.top - old_rects->window.top );
+    if (data->is_offscreen) OffsetRect( &new_rect, window_rect.left - old_rects->window.left,
+                                        window_rect.top - old_rects->window.top );
 
     window_set_config( data, &new_rect, above );
 }
