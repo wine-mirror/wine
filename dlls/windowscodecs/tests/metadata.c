@@ -3619,9 +3619,24 @@ struct test_block_writer
     GUID container_format;
 };
 
+struct test_block_enumerator
+{
+    IEnumUnknown IEnumUnknown_iface;
+    LONG refcount;
+
+    IUnknown **objects;
+    unsigned int count;
+    unsigned int pos;
+};
+
 static inline struct test_block_writer *impl_from_IWICMetadataBlockWriter(IWICMetadataBlockWriter *iface)
 {
     return CONTAINING_RECORD(iface, struct test_block_writer, IWICMetadataBlockWriter_iface);
+}
+
+static inline struct test_block_enumerator *impl_from_IEnumUnknown(IEnumUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_block_enumerator, IEnumUnknown_iface);
 }
 
 static HRESULT WINAPI test_block_writer_QueryInterface(IWICMetadataBlockWriter *iface, REFIID iid, void **out)
@@ -3693,10 +3708,114 @@ static HRESULT WINAPI test_block_writer_GetReaderByIndex(IWICMetadataBlockWriter
     return S_OK;
 }
 
+static HRESULT WINAPI test_block_enumerator_QueryInterface(IEnumUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualGUID(riid, &IID_IEnumUnknown) ||
+            IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IEnumUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_block_enumerator_AddRef(IEnumUnknown *iface)
+{
+    struct test_block_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    return InterlockedIncrement(&enumerator->refcount);
+}
+
+static ULONG WINAPI test_block_enumerator_Release(IEnumUnknown *iface)
+{
+    struct test_block_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&enumerator->refcount);
+
+    if (!refcount)
+    {
+        for (int i = 0; i < enumerator->count; ++i)
+            IUnknown_Release(enumerator->objects[i]);
+        free(enumerator->objects);
+        free(enumerator);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI test_block_enumerator_Next(IEnumUnknown *iface, ULONG count, IUnknown **ret, ULONG *fetched)
+{
+    struct test_block_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    ULONG tmp;
+
+    if (!fetched) fetched = &tmp;
+
+    *fetched = 0;
+
+    while (enumerator->pos < enumerator->count && *fetched < count)
+    {
+        *ret = enumerator->objects[enumerator->pos++];
+        IUnknown_AddRef(*ret);
+
+        *fetched = *fetched + 1;
+        ret++;
+    }
+
+    return *fetched == count ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI test_block_enumerator_Skip(IEnumUnknown *iface, ULONG count)
+{
+    ok(0, "%s\n", __FUNCTION__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_block_enumerator_Reset(IEnumUnknown *iface)
+{
+    ok(0, "%s\n", __FUNCTION__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_block_enumerator_Clone(IEnumUnknown *iface, IEnumUnknown **ret)
+{
+    ok(0, "%s\n", __FUNCTION__);
+    return E_NOTIMPL;
+}
+
+static const IEnumUnknownVtbl test_block_enumerator_vtbl =
+{
+    test_block_enumerator_QueryInterface,
+    test_block_enumerator_AddRef,
+    test_block_enumerator_Release,
+    test_block_enumerator_Next,
+    test_block_enumerator_Skip,
+    test_block_enumerator_Reset,
+    test_block_enumerator_Clone,
+};
+
 static HRESULT WINAPI test_block_writer_GetEnumerator(IWICMetadataBlockWriter *iface, IEnumUnknown **enumerator)
 {
-    ok(0, "not implemented\n");
-    return E_NOTIMPL;
+    struct test_block_writer *writer = impl_from_IWICMetadataBlockWriter(iface);
+    struct test_block_enumerator *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IEnumUnknown_iface.lpVtbl = &test_block_enumerator_vtbl;
+    object->refcount = 1;
+    object->objects = calloc(writer->count, sizeof(*object->objects));
+    object->count = writer->count;
+
+    for (int i = 0; i < writer->count; ++i)
+    {
+        object->objects[i] = (IUnknown *)writer->writers[i];
+        IUnknown_AddRef(object->objects[i]);
+    }
+
+    *enumerator = &object->IEnumUnknown_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI test_block_writer_InitializeFromBlockReader(IWICMetadataBlockWriter *iface,
@@ -4102,14 +4221,20 @@ static void test_metadata_query_writer(void)
 
     IWICMetadataQueryWriter *querywriter, *querywriter2;
     IWICMetadataBlockWriter *blockwriter;
+    IWICMetadataWriter *metadata_writer;
     IWICBitmapFrameEncode *frameencode;
+    IWICMetadataWriter *app1_writer;
     IWICComponentFactory *factory;
     IWICBitmapEncoder *encoder;
+    ULONG ref, count, fetched;
+    IEnumUnknown *block_enum;
     IEnumString *enumstring;
+    IUnknown *objects[1];
     LPOLESTR olestring;
-    ULONG ref, count;
+    UINT block_count;
     IStream *stream;
     unsigned int i;
+    GUID format;
     HRESULT hr;
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -4215,6 +4340,75 @@ static void test_metadata_query_writer(void)
 
         winetest_pop_context();
     }
+
+    /* Block enumerator behavior. */
+    hr = CoCreateInstance(&CLSID_WICJpegEncoder, NULL, CLSCTX_INPROC_SERVER, &IID_IWICBitmapEncoder, (void **)&encoder);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frameencode, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IWICBitmapFrameEncode_QueryInterface(frameencode, &IID_IWICMetadataBlockWriter, (void **)&blockwriter);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IWICBitmapFrameEncode_Initialize(frameencode, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataBlockWriter_GetEnumerator(blockwriter, &block_enum);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+if (SUCCEEDED(hr))
+{
+    hr = IEnumUnknown_Next(block_enum, 1, objects, &fetched);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    IUnknown_Release(*objects);
+
+    hr = IWICMetadataBlockWriter_GetCount(blockwriter, &block_count);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(block_count == 1, "Unexpected block count %u.\n", block_count);
+    hr = IWICMetadataBlockWriter_GetWriterByIndex(blockwriter, 0, &metadata_writer);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataWriter_GetMetadataFormat(metadata_writer, &format);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatApp0), "Unexpected format %s.\n", debugstr_guid(&format));
+    IWICMetadataWriter_Release(metadata_writer);
+
+    hr = CoCreateInstance(&CLSID_WICApp1MetadataWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataWriter, (void **)&app1_writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataBlockWriter_AddWriter(blockwriter, app1_writer);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataBlockWriter_GetCount(blockwriter, &block_count);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(block_count == 2, "Unexpected block count %u.\n", block_count);
+
+    /* Newly added object is not picked up. */
+    hr = IEnumUnknown_Next(block_enum, 1, objects, &fetched);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
+    ok(!fetched, "Unexpected count %lu.\n", fetched);
+
+    hr = IEnumUnknown_Reset(block_enum);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IEnumUnknown_Next(block_enum, 1, objects, &fetched);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    IUnknown_Release(*objects);
+    hr = IEnumUnknown_Next(block_enum, 1, objects, &fetched);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
+
+    IEnumUnknown_Release(block_enum);
+    IWICMetadataWriter_Release(app1_writer);
+}
+    IWICMetadataBlockWriter_Release(blockwriter);
+
+    IWICBitmapFrameEncode_Release(frameencode);
+    IWICBitmapEncoder_Release(encoder);
+    IStream_Release(stream);
 }
 
 #include "pshpack2.h"
