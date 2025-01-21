@@ -1804,3 +1804,17 @@ NTSTATUS WINAPI wow64_NtRollbackTransaction( UINT *args )
 
     return NtRollbackTransaction( handle, wait );
 }
+
+
+/**********************************************************************
+ *           wow64_NtConvertBetweenAuxiliaryCounterAndPerformanceCounter
+ */
+NTSTATUS WINAPI wow64_NtConvertBetweenAuxiliaryCounterAndPerformanceCounter( UINT *args )
+{
+    ULONG flags = get_ulong( &args );
+    ULONGLONG *from = get_ptr( &args );
+    ULONGLONG *to = get_ptr( &args );
+    ULONGLONG *error = get_ptr( &args );
+
+    return NtConvertBetweenAuxiliaryCounterAndPerformanceCounter( flags, from, to, error );
+}

@@ -45,6 +45,8 @@ static BOOL     (WINAPI *pRtlQueryUnbiasedInterruptTime)( ULONGLONG *time );
 static BOOL     (WINAPI *pRtlQueryPerformanceCounter)(LARGE_INTEGER*);
 static BOOL     (WINAPI *pRtlQueryPerformanceFrequency)(LARGE_INTEGER*);
 
+static NTSTATUS (WINAPI *pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter)(ULONG, ULONGLONG *, ULONGLONG *, ULONGLONG *);
+
 static const int MonthLengths[2][12] =
 {
 	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
@@ -479,6 +481,37 @@ static void test_user_shared_data_time(void)
             t1, timeofday.TimeZoneBias.QuadPart);
 }
 
+static void test_NtConvertBetweenAuxiliaryCounterAndPerformanceCounter(void)
+{
+    ULONGLONG qpc, error, value;
+    NTSTATUS status;
+
+    if (!pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter)
+    {
+        win_skip("NtConvertBetweenAuxiliaryCounterAndPerformanceCounter not found.\n");
+        return;
+    }
+
+    status = pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter(0, NULL, NULL, NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status);
+    qpc = error = value = 0xdeadbeef;
+    status = pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter(0, &value, &qpc, NULL);
+    ok(status == STATUS_NOT_SUPPORTED, "got %#lx.\n", status);
+    ok(value == 0xdeadbeef, "got %#I64x.\n", value);
+    ok(qpc == 0xdeadbeef, "got %#I64x.\n", qpc);
+    ok(error == 0xdeadbeef, "got %#I64x.\n", error);
+    status = pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter(1, &value, &qpc, &error);
+    ok(status == STATUS_NOT_SUPPORTED, "got %#lx.\n", status);
+    ok(value == 0xdeadbeef, "got %#I64x.\n", value);
+    ok(qpc == 0xdeadbeef, "got %#I64x.\n", qpc);
+    ok(error == 0xdeadbeef, "got %#I64x.\n", error);
+    status = pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter(2, &value, &qpc, &error);
+    ok(status == STATUS_NOT_SUPPORTED, "got %#lx.\n", status);
+    ok(value == 0xdeadbeef, "got %#I64x.\n", value);
+    ok(qpc == 0xdeadbeef, "got %#I64x.\n", qpc);
+    ok(error == 0xdeadbeef, "got %#I64x.\n", error);
+}
+
 START_TEST(time)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
@@ -493,6 +526,8 @@ START_TEST(time)
     pRtlQueryUnbiasedInterruptTime = (void *)GetProcAddress(mod, "RtlQueryUnbiasedInterruptTime");
     pRtlQueryPerformanceCounter = (void *)GetProcAddress(mod, "RtlQueryPerformanceCounter");
     pRtlQueryPerformanceFrequency = (void *)GetProcAddress(mod, "RtlQueryPerformanceFrequency");
+    pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter =
+        (void *)GetProcAddress(mod, "NtConvertBetweenAuxiliaryCounterAndPerformanceCounter");
 
     if (pRtlTimeToTimeFields && pRtlTimeFieldsToTime)
         test_pRtlTimeToTimeFields();
@@ -505,4 +540,5 @@ START_TEST(time)
     test_RtlQueryPerformanceCounter();
 #endif
     test_TimerResolution();
+    test_NtConvertBetweenAuxiliaryCounterAndPerformanceCounter();
 }

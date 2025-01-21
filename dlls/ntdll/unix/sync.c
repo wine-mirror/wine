@@ -2813,3 +2813,15 @@ NTSTATUS WINAPI NtRollbackTransaction( HANDLE transaction, BOOLEAN wait )
 
     return STATUS_ACCESS_VIOLATION;
 }
+
+/***********************************************************************
+ *           NtConvertBetweenAuxiliaryCounterAndPerformanceCounter (NTDLL.@)
+ */
+NTSTATUS WINAPI NtConvertBetweenAuxiliaryCounterAndPerformanceCounter( ULONG flag, ULONGLONG *from, ULONGLONG *to, ULONGLONG *error )
+{
+    FIXME( "%#x, %p, %p, %p.\n",  (int)flag, from, to, error );
+
+    if (!from) return STATUS_ACCESS_VIOLATION;
+
+    return STATUS_NOT_SUPPORTED;
+}
