@@ -1690,9 +1690,7 @@ static void test_PropVariantToString(void)
     propvar.vt = VT_UI4;
     propvar.lVal = 123456;
     hr = PropVariantToString(&propvar, bufferW, 4);
-    todo_wine
     ok(hr == STRSAFE_E_INSUFFICIENT_BUFFER, "PropVariantToString returned: %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(bufferW, L"123"), "Unexpected string %s.\n", debugstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
 
@@ -1767,7 +1765,6 @@ static void test_PropVariantToBSTR(void)
     todo_wine
     {
     check_PropVariantToBSTR(VT_I8,     hVal.QuadPart,  -101112,              L"-101112");
-    check_PropVariantToBSTR(VT_UI4,    ulVal,          0xdeadbeef,           L"3735928559");
     check_PropVariantToBSTR(VT_UI8,    uhVal.QuadPart, 0xdeadbeefdeadbeef,   L"16045690984833335023");
     check_PropVariantToBSTR(VT_BOOL,   boolVal,        TRUE,                 L"1");
     check_PropVariantToBSTR(VT_R4,     fltVal,         0.125f,               L"0.125");
@@ -1778,6 +1775,7 @@ static void test_PropVariantToBSTR(void)
     check_PropVariantToBSTR(VT_I4,     lVal,           -789,                 L"-789");
     check_PropVariantToBSTR(VT_UI1,    bVal,            205,                 L"205");
     check_PropVariantToBSTR(VT_UI2,    uiVal,          57005,                L"57005");
+    check_PropVariantToBSTR(VT_UI4,    ulVal,          0xdeadbeef,           L"3735928559");
     check_PropVariantToBSTR(VT_CLSID,  puuid,          (CLSID *)&dummy_guid, dummy_guid_str);
     check_PropVariantToBSTR(VT_LPSTR,  pszVal,         (char *)topic,        topicW);
     check_PropVariantToBSTR(VT_LPWSTR, pwszVal,        (WCHAR *)topicW,      topicW);
