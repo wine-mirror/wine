@@ -37,3 +37,4 @@
 #include "wintypes_private.h"
 
 extern IActivationFactory *data_writer_activation_factory;
+extern IActivationFactory *stream_reference_statics_activation_factory;

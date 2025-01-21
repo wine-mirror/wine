@@ -117,7 +117,7 @@ static void test_interfaces(void)
     hr = WindowsCreateString(class_name, wcslen(class_name), &str);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     check_interface(factory, &IID_IUnknown, TRUE);
     check_interface(factory, &IID_IInspectable, TRUE);
     hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&unk);

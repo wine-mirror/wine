@@ -116,3 +116,99 @@ struct data_writer data_writer =
 };
 
 IActivationFactory *data_writer_activation_factory = &data_writer.IActivationFactory_iface;
+
+struct stream_reference_statics
+{
+    IActivationFactory IActivationFactory_iface;
+    LONG ref;
+};
+
+static inline struct stream_reference_statics *impl_stream_reference_statics_from_IActivationFactory(IActivationFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct stream_reference_statics, IActivationFactory_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_activation_factory_QueryInterface(IActivationFactory *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IInspectable)
+            || IsEqualGUID(iid, &IID_IAgileObject)
+            || IsEqualGUID(iid, &IID_IActivationFactory))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE stream_reference_statics_activation_factory_AddRef(IActivationFactory *iface)
+{
+    struct stream_reference_statics *impl = impl_stream_reference_statics_from_IActivationFactory(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE stream_reference_statics_activation_factory_Release(IActivationFactory *iface)
+{
+    struct stream_reference_statics *impl = impl_stream_reference_statics_from_IActivationFactory(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_activation_factory_GetIids(IActivationFactory *iface,
+        ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_activation_factory_GetRuntimeClassName(IActivationFactory *iface,
+        HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_activation_factory_GetTrustLevel(IActivationFactory *iface,
+        TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_activation_factory_ActivateInstance(IActivationFactory *iface,
+        IInspectable **instance)
+{
+    FIXME("iface %p, instance %p stub!\n", iface, instance);
+    return S_OK;
+}
+
+static const struct IActivationFactoryVtbl stream_reference_statics_activation_factory_vtbl =
+{
+    stream_reference_statics_activation_factory_QueryInterface,
+    stream_reference_statics_activation_factory_AddRef,
+    stream_reference_statics_activation_factory_Release,
+    /* IInspectable methods */
+    stream_reference_statics_activation_factory_GetIids,
+    stream_reference_statics_activation_factory_GetRuntimeClassName,
+    stream_reference_statics_activation_factory_GetTrustLevel,
+    /* IActivationFactory methods */
+    stream_reference_statics_activation_factory_ActivateInstance,
+};
+
+struct stream_reference_statics stream_reference_statics =
+{
+    {&stream_reference_statics_activation_factory_vtbl},
+    1
+};
+
+IActivationFactory *stream_reference_statics_activation_factory = &stream_reference_statics.IActivationFactory_iface;
