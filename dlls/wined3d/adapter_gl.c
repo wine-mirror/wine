@@ -1297,6 +1297,16 @@ static const struct wined3d_renderer_table
 cards_nvidia_binary[] =
 {
     /* Direct 3D 11 */
+    {"RTX 4090",                    CARD_NVIDIA_GEFORCE_RTX4090},
+    {"RTX 4080 SUPER",              CARD_NVIDIA_GEFORCE_RTX4080SUPER},
+    {"RTX 4080",                    CARD_NVIDIA_GEFORCE_RTX4080},
+    {"RTX 4070 Ti SUPER",           CARD_NVIDIA_GEFORCE_RTX4070TISUPER},
+    {"RTX 4070 Ti",                 CARD_NVIDIA_GEFORCE_RTX4070TI},
+    {"RTX 4070 SUPER",              CARD_NVIDIA_GEFORCE_RTX4070SUPER},
+    {"RTX 4070",                    CARD_NVIDIA_GEFORCE_RTX4070},
+    {"RTX 4060 Ti 16GB",            CARD_NVIDIA_GEFORCE_RTX4060TI16G},
+    {"RTX 4060 Ti 8GB",             CARD_NVIDIA_GEFORCE_RTX4060TI8G},
+    {"RTX 4060",                    CARD_NVIDIA_GEFORCE_RTX4060},
     {"Tesla T4",                    CARD_NVIDIA_TESLA_T4},
     {"Ampere A10",                  CARD_NVIDIA_AMPERE_A10},
     {"RTX 3090 Ti",                 CARD_NVIDIA_GEFORCE_RTX3090TI},
