@@ -401,6 +401,28 @@ HRESULT WINAPI PropVariantToString(REFPROPVARIANT propvarIn, PWSTR ret, UINT cch
     return hr;
 }
 
+static HRESULT string_alloc_from_uint(ULONG64 value, WCHAR **ret)
+{
+    WCHAR buffer[64], *out = buffer + ARRAY_SIZE(buffer) - 1;
+
+    *out-- = 0;
+
+    do
+    {
+        unsigned int next_digit = value % 10;
+        *out-- = '0' + next_digit;
+        value = value / 10;
+    } while (value);
+
+    out++;
+
+    if (!(*ret = CoTaskMemAlloc((wcslen(out) + 1) * sizeof(*out))))
+        return E_OUTOFMEMORY;
+    wcscpy(*ret, out);
+
+    return S_OK;
+}
+
 HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
 {
     WCHAR *res = NULL;
@@ -448,6 +470,10 @@ HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
                     return E_OUTOFMEMORY;
                 StringFromGUID2(propvarIn->puuid, res, GUID_STR_LEN + 1);
             }
+            break;
+
+        case VT_UI2:
+            hr = string_alloc_from_uint(propvarIn->uiVal, &res);
             break;
 
         default:
