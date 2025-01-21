@@ -401,9 +401,23 @@ HRESULT WINAPI PropVariantToString(REFPROPVARIANT propvarIn, PWSTR ret, UINT cch
     return hr;
 }
 
-static HRESULT string_alloc_from_uint(ULONG64 value, WCHAR **ret)
+static HRESULT string_alloc_from_int(const PROPVARIANT *var, WCHAR **ret)
 {
     WCHAR buffer[64], *out = buffer + ARRAY_SIZE(buffer) - 1;
+    BOOL negative = FALSE;
+    ULONG64 value;
+
+    switch (var->vt)
+    {
+        case VT_I4:
+            value = (negative = var->lVal < 0) ? -var->lVal : var->lVal;
+            break;
+        case VT_UI2:
+            value = var->uiVal;
+            break;
+        default:
+            return E_UNEXPECTED;
+    }
 
     *out-- = 0;
 
@@ -415,6 +429,9 @@ static HRESULT string_alloc_from_uint(ULONG64 value, WCHAR **ret)
     } while (value);
 
     out++;
+
+    if (negative)
+        *--out = '-';
 
     if (!(*ret = CoTaskMemAlloc((wcslen(out) + 1) * sizeof(*out))))
         return E_OUTOFMEMORY;
@@ -472,8 +489,9 @@ HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
             }
             break;
 
+        case VT_I4:
         case VT_UI2:
-            hr = string_alloc_from_uint(propvarIn->uiVal, &res);
+            hr = string_alloc_from_int(propvarIn, &res);
             break;
 
         default:

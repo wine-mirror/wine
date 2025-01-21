@@ -1664,8 +1664,8 @@ static void test_PropVariantToString(void)
     propvar.vt = VT_I4;
     propvar.lVal = 22;
     hr = PropVariantToString(&propvar, bufferW, ARRAY_SIZE(bufferW));
-    todo_wine ok(hr == S_OK, "PropVariantToString failed: 0x%08lx.\n", hr);
-    todo_wine ok(!lstrcmpW(bufferW, L"22"), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
+    ok(hr == S_OK, "PropVariantToString failed: 0x%08lx.\n", hr);
+    ok(!lstrcmpW(bufferW, L"22"), "got wrong string: \"%s\".\n", wine_dbgstr_w(bufferW));
     memset(bufferW, 0, sizeof(bufferW));
     PropVariantClear(&propvar);
 
@@ -1768,7 +1768,6 @@ static void test_PropVariantToBSTR(void)
     {
     check_PropVariantToBSTR(VT_I1,     cVal,           -123,                 L"-123");
     check_PropVariantToBSTR(VT_I2,     iVal,           -456,                 L"-456");
-    check_PropVariantToBSTR(VT_I4,     lVal,           -789,                 L"-789");
     check_PropVariantToBSTR(VT_I8,     hVal.QuadPart,  -101112,              L"-101112");
     check_PropVariantToBSTR(VT_UI1,    bVal,           0xcd,                 L"205");
     check_PropVariantToBSTR(VT_UI4,    ulVal,          0xdeadbeef,           L"3735928559");
@@ -1777,6 +1776,7 @@ static void test_PropVariantToBSTR(void)
     check_PropVariantToBSTR(VT_R4,     fltVal,         0.125f,               L"0.125");
     check_PropVariantToBSTR(VT_R8,     dblVal,         0.456,                L"0.456");
     }
+    check_PropVariantToBSTR(VT_I4,     lVal,           -789,                 L"-789");
     check_PropVariantToBSTR(VT_UI2,    uiVal,          57005,                L"57005");
     check_PropVariantToBSTR(VT_CLSID,  puuid,          (CLSID *)&dummy_guid, dummy_guid_str);
     check_PropVariantToBSTR(VT_LPSTR,  pszVal,         (char *)topic,        topicW);
