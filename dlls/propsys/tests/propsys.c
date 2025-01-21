@@ -1767,7 +1767,6 @@ static void test_PropVariantToBSTR(void)
     todo_wine
     {
     check_PropVariantToBSTR(VT_I8,     hVal.QuadPart,  -101112,              L"-101112");
-    check_PropVariantToBSTR(VT_UI1,    bVal,           0xcd,                 L"205");
     check_PropVariantToBSTR(VT_UI4,    ulVal,          0xdeadbeef,           L"3735928559");
     check_PropVariantToBSTR(VT_UI8,    uhVal.QuadPart, 0xdeadbeefdeadbeef,   L"16045690984833335023");
     check_PropVariantToBSTR(VT_BOOL,   boolVal,        TRUE,                 L"1");
@@ -1777,6 +1776,7 @@ static void test_PropVariantToBSTR(void)
     check_PropVariantToBSTR(VT_I1,     cVal,           -123,                 L"-123");
     check_PropVariantToBSTR(VT_I2,     iVal,           -456,                 L"-456");
     check_PropVariantToBSTR(VT_I4,     lVal,           -789,                 L"-789");
+    check_PropVariantToBSTR(VT_UI1,    bVal,            205,                 L"205");
     check_PropVariantToBSTR(VT_UI2,    uiVal,          57005,                L"57005");
     check_PropVariantToBSTR(VT_CLSID,  puuid,          (CLSID *)&dummy_guid, dummy_guid_str);
     check_PropVariantToBSTR(VT_LPSTR,  pszVal,         (char *)topic,        topicW);
