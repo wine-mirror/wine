@@ -300,11 +300,11 @@ static const struct column col_physicalmemory[] =
 };
 static const struct column col_pnpentity[] =
 {
-    { L"Caption",              CIM_STRING },
+    { L"Caption",              CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ClassGuid",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"DeviceId",             CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Manufacturer",         CIM_STRING },
-    { L"Name",                 CIM_STRING },
+    { L"Name",                 CIM_STRING|COL_FLAG_DYNAMIC },
 };
 static const struct column col_printer[] =
 {
@@ -3253,55 +3253,139 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     return status;
 }
 
-static enum fill_status fill_pnpentity( struct table *table, const struct expr *cond )
+static WCHAR *get_reg_value( HKEY key, const WCHAR *value )
 {
-    struct record_pnpentity *rec;
-    enum fill_status status = FILL_STATUS_UNFILTERED;
-    HDEVINFO device_info_set;
-    SP_DEVINFO_DATA devinfo = {0};
-    DWORD idx;
+    DWORD size, type;
+    WCHAR *ret;
 
-    device_info_set = SetupDiGetClassDevsW( NULL, NULL, NULL, DIGCF_ALLCLASSES|DIGCF_PRESENT );
-
-    devinfo.cbSize = sizeof(devinfo);
-
-    idx = 0;
-    while (SetupDiEnumDeviceInfo( device_info_set, idx++, &devinfo ))
+    if (RegQueryValueExW( key, value, NULL, &type, NULL, &size ) || type != REG_SZ) return NULL;
+    size += sizeof(WCHAR);
+    if ((ret = malloc( size )))
     {
-        /* noop */
+        if (RegQueryValueExW( key, value, NULL, NULL, (BYTE *)ret, &size ))
+        {
+            free( ret );
+            ret = NULL;
+        }
+    }
+    return ret;
+}
+
+static WCHAR *build_pnp_device_id( const WCHAR *class, const WCHAR *product, const WCHAR *instance )
+{
+    static const WCHAR fmt[] = L"%s\\%s\\%s";
+    int len = wcslen(class) + 1 + wcslen(product) + 1 + wcslen(instance) + 1 + ARRAY_SIZE(fmt);
+    WCHAR *ret = malloc( len * sizeof(WCHAR) );
+    if (ret) swprintf( ret, len, fmt, class, product, instance );
+    return ret;
+}
+
+static struct record_pnpentity *get_pnp_entities( UINT *count )
+{
+    struct record_pnpentity *ret = malloc( 16 * sizeof(*ret) ), *tmp;
+    WCHAR class[MAX_PATH], product[MAX_PATH], instance[MAX_PATH];
+    DWORD nb_allocated = 16, i = 0, idx_enum = 0, idx_class = 0, idx_product = 0;
+    HKEY key_enum, key_class, key_product, key_instance;
+    LONG res;
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Enum", 0, KEY_ENUMERATE_SUB_KEYS, &key_enum ))
+        return NULL;
+    if (!(ret = malloc( nb_allocated * sizeof(*ret) )))
+    {
+        RegCloseKey( key_enum );
+        return NULL;
     }
 
-    resize_table( table, idx, sizeof(*rec) );
-    table->num_rows = 0;
-    rec = (struct record_pnpentity *)table->data;
-
-    idx = 0;
-    while (SetupDiEnumDeviceInfo( device_info_set, idx++, &devinfo ))
+    while (RegEnumKeyW( key_enum, idx_enum++, class, ARRAY_SIZE(class) ) != ERROR_NO_MORE_ITEMS)
     {
-        WCHAR device_id[MAX_PATH], guid[GUID_SIZE];
-        if (SetupDiGetDeviceInstanceIdW( device_info_set, &devinfo, device_id,
-                    ARRAY_SIZE(device_id), NULL ))
+        if (!RegOpenKeyExW( key_enum, class, 0, KEY_ENUMERATE_SUB_KEYS, &key_class ))
         {
-            StringFromGUID2( &devinfo.ClassGuid, guid, ARRAY_SIZE(guid) );
-            rec->caption = L"Wine PnP Device";
-            rec->class_guid = wcsdup( wcslwr(guid) );
-            rec->device_id = wcsdup( device_id );
-            rec->manufacturer = L"The Wine Project";
-            rec->name = L"Wine PnP Device";
-
-            table->num_rows++;
-            if (!match_row( table, table->num_rows - 1, cond, &status ))
+            while ((res = RegEnumKeyW( key_class, idx_class++, product, ARRAY_SIZE(product) )) != ERROR_NO_MORE_ITEMS)
             {
-                free_row_values( table, table->num_rows - 1 );
-                table->num_rows--;
+                if (!RegOpenKeyExW( key_class, product, 0, KEY_ENUMERATE_SUB_KEYS, &key_product ))
+                {
+                    while (RegEnumKeyW( key_product, idx_product++, instance, ARRAY_SIZE(instance) ) != ERROR_NO_MORE_ITEMS)
+                    {
+                        if (!RegOpenKeyExW( key_product, instance, 0, KEY_READ, &key_instance ))
+                        {
+                            ret[i].caption = get_reg_value( key_instance, L"DeviceDesc" );
+                            ret[i].class_guid = wcslwr( get_reg_value( key_instance, L"ClassGUID" ) );
+                            ret[i].device_id = wcsupr( build_pnp_device_id( class, product, instance ) );
+                            ret[i].manufacturer = L"The Wine Project";
+                            ret[i].name = get_reg_value( key_instance, L"DeviceDesc" );
+                            RegCloseKey( key_instance );
+                            if (++i > nb_allocated)
+                            {
+                                nb_allocated *= 2;
+                                if ((tmp = realloc( ret, nb_allocated ))) ret = tmp;
+                                else
+                                {
+                                    while (--i)
+                                    {
+                                        free( (void *)ret[i].caption );
+                                        free( (void *)ret[i].class_guid );
+                                        free( (void *)ret[i].device_id );
+                                        free( (void *)ret[i].name );
+                                    }
+                                    goto done;
+                                }
+                            }
+                        }
+                    }
+                    RegCloseKey( key_product );
+                    idx_product = 0;
+                }
             }
-            else
-                rec++;
+            RegCloseKey( key_class );
+            idx_class = 0;
         }
     }
 
-    SetupDiDestroyDeviceInfoList( device_info_set );
+done:
+    RegCloseKey( key_enum );
+    if (!i)
+    {
+        free( ret );
+        ret = NULL;
+    }
+    *count = i;
+    return ret;
+}
 
+static enum fill_status fill_pnpentity( struct table *table, const struct expr *cond )
+{
+    struct record_pnpentity *rec, *entities;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    UINT offset = 0, row = 0, count = 0, i;
+
+    if (!(entities = get_pnp_entities( &count ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, count, sizeof(*rec) ))
+    {
+        free( entities );
+        return FILL_STATUS_FAILED;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        rec = (struct record_pnpentity *)(table->data + offset);
+        rec->caption      = entities[i].caption;
+        rec->class_guid   = entities[i].class_guid;
+        rec->device_id    = entities[i].device_id;
+        rec->manufacturer = entities[i].manufacturer;
+        rec->name         = entities[i].name;
+        if (!match_row( table, row, cond, &status ))
+        {
+            free_row_values( table, row );
+            continue;
+        }
+        offset += sizeof(*rec);
+        row++;
+    }
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+
+    free( entities );
     return status;
 }
 
