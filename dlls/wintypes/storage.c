@@ -93,7 +93,7 @@ static HRESULT STDMETHODCALLTYPE data_writer_activation_factory_ActivateInstance
         IInspectable **instance)
 {
     FIXME("iface %p, instance %p stub!\n", iface, instance);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const struct IActivationFactoryVtbl data_writer_activation_factory_vtbl =
