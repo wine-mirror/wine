@@ -272,6 +272,38 @@ BOOL WINAPI QueryIdleProcessorCycleTimeEx( USHORT group_id, ULONG *size, ULONG64
 
 
 /***********************************************************************
+ *           ConvertAuxiliaryCounterToPerformanceCounter  (kernelbase.@)
+ */
+HRESULT WINAPI ConvertAuxiliaryCounterToPerformanceCounter( ULONGLONG from, ULONGLONG *to, ULONGLONG *error )
+{
+    NTSTATUS status;
+
+    TRACE( "%#I64x, %p, %p.\n", from, to, error );
+
+    if ((status = NtConvertBetweenAuxiliaryCounterAndPerformanceCounter( 0, &from, to, error )) == STATUS_NOT_SUPPORTED)
+        return E_NOTIMPL;
+
+    return HRESULT_FROM_NT(status);
+}
+
+
+/***********************************************************************
+ *           ConvertAuxiliaryCounterToPerformanceCounter  (kernelbase.@)
+ */
+HRESULT WINAPI ConvertPerformanceCounterToAuxiliaryCounter( ULONGLONG from, ULONGLONG *to, ULONGLONG *error )
+{
+    NTSTATUS status;
+
+    TRACE( "%#I64x, %p, %p.\n", from, to, error );
+
+    if ((status = NtConvertBetweenAuxiliaryCounterAndPerformanceCounter( 1, &from, to, error )) == STATUS_NOT_SUPPORTED)
+        return E_NOTIMPL;
+
+    return HRESULT_FROM_NT(status);
+}
+
+
+/***********************************************************************
  * Waits
  ***********************************************************************/
 

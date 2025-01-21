@@ -46,6 +46,8 @@ static BOOL     (WINAPI *pRtlQueryPerformanceCounter)(LARGE_INTEGER*);
 static BOOL     (WINAPI *pRtlQueryPerformanceFrequency)(LARGE_INTEGER*);
 
 static NTSTATUS (WINAPI *pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter)(ULONG, ULONGLONG *, ULONGLONG *, ULONGLONG *);
+static HRESULT (WINAPI *pConvertAuxiliaryCounterToPerformanceCounter)(ULONGLONG, ULONGLONG *, ULONGLONG *);
+static HRESULT (WINAPI *pConvertPerformanceCounterToAuxiliaryCounter)(ULONGLONG, ULONGLONG *, ULONGLONG *);
 
 static const int MonthLengths[2][12] =
 {
@@ -485,6 +487,7 @@ static void test_NtConvertBetweenAuxiliaryCounterAndPerformanceCounter(void)
 {
     ULONGLONG qpc, error, value;
     NTSTATUS status;
+    HRESULT hr;
 
     if (!pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter)
     {
@@ -510,11 +513,23 @@ static void test_NtConvertBetweenAuxiliaryCounterAndPerformanceCounter(void)
     ok(value == 0xdeadbeef, "got %#I64x.\n", value);
     ok(qpc == 0xdeadbeef, "got %#I64x.\n", qpc);
     ok(error == 0xdeadbeef, "got %#I64x.\n", error);
+
+    hr = pConvertAuxiliaryCounterToPerformanceCounter(1, &qpc, &error);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+    ok(value == 0xdeadbeef, "got %#I64x.\n", value);
+    ok(qpc == 0xdeadbeef, "got %#I64x.\n", qpc);
+    ok(error == 0xdeadbeef, "got %#I64x.\n", error);
+    QueryPerformanceCounter((LARGE_INTEGER *)&qpc);
+    hr = pConvertPerformanceCounterToAuxiliaryCounter(qpc, &value, &error);
+    ok(hr == E_NOTIMPL, "got %#lx.\n", hr);
+    ok(value == 0xdeadbeef, "got %#I64x.\n", value);
+    ok(error == 0xdeadbeef, "got %#I64x.\n", error);
 }
 
 START_TEST(time)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
+    HMODULE hkernelbase = GetModuleHandleA("kernelbase.dll");
     pRtlTimeToTimeFields = (void *)GetProcAddress(mod,"RtlTimeToTimeFields");
     pRtlTimeFieldsToTime = (void *)GetProcAddress(mod,"RtlTimeFieldsToTime");
     pNtQueryPerformanceCounter = (void *)GetProcAddress(mod, "NtQueryPerformanceCounter");
@@ -528,6 +543,9 @@ START_TEST(time)
     pRtlQueryPerformanceFrequency = (void *)GetProcAddress(mod, "RtlQueryPerformanceFrequency");
     pNtConvertBetweenAuxiliaryCounterAndPerformanceCounter =
         (void *)GetProcAddress(mod, "NtConvertBetweenAuxiliaryCounterAndPerformanceCounter");
+
+    pConvertAuxiliaryCounterToPerformanceCounter = (void *)GetProcAddress(hkernelbase, "ConvertAuxiliaryCounterToPerformanceCounter");
+    pConvertPerformanceCounterToAuxiliaryCounter = (void *)GetProcAddress(hkernelbase, "ConvertPerformanceCounterToAuxiliaryCounter");
 
     if (pRtlTimeToTimeFields && pRtlTimeFieldsToTime)
         test_pRtlTimeToTimeFields();
