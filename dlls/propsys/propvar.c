@@ -430,6 +430,9 @@ static HRESULT string_alloc_from_int(const PROPVARIANT *var, WCHAR **ret)
         case VT_UI4:
             value = var->ulVal;
             break;
+        case VT_UI8:
+            value = var->uhVal.QuadPart;
+            break;
         default:
             return E_UNEXPECTED;
     }
@@ -511,6 +514,7 @@ HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
         case VT_UI1:
         case VT_UI2:
         case VT_UI4:
+        case VT_UI8:
             hr = string_alloc_from_int(propvarIn, &res);
             break;
 
