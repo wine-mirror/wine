@@ -806,7 +806,7 @@ static void test_PropVariantCompareEx(void)
     ok(res == 0, "res=%i\n", res);
 
     res = PropVariantCompareEx(&str_2, &i2_2, 0, 0);
-    todo_wine ok(res == 0, "res=%i\n", res);
+    ok(res == 0, "res=%i\n", res);
 
     res = PropVariantCompareEx(&str_02, &i2_2, 0, 0);
     ok(res == -1, "res=%i\n", res);
@@ -1767,7 +1767,6 @@ static void test_PropVariantToBSTR(void)
     todo_wine
     {
     check_PropVariantToBSTR(VT_I1,     cVal,           -123,                 L"-123");
-    check_PropVariantToBSTR(VT_I2,     iVal,           -456,                 L"-456");
     check_PropVariantToBSTR(VT_I8,     hVal.QuadPart,  -101112,              L"-101112");
     check_PropVariantToBSTR(VT_UI1,    bVal,           0xcd,                 L"205");
     check_PropVariantToBSTR(VT_UI4,    ulVal,          0xdeadbeef,           L"3735928559");
@@ -1776,6 +1775,7 @@ static void test_PropVariantToBSTR(void)
     check_PropVariantToBSTR(VT_R4,     fltVal,         0.125f,               L"0.125");
     check_PropVariantToBSTR(VT_R8,     dblVal,         0.456,                L"0.456");
     }
+    check_PropVariantToBSTR(VT_I2,     iVal,           -456,                 L"-456");
     check_PropVariantToBSTR(VT_I4,     lVal,           -789,                 L"-789");
     check_PropVariantToBSTR(VT_UI2,    uiVal,          57005,                L"57005");
     check_PropVariantToBSTR(VT_CLSID,  puuid,          (CLSID *)&dummy_guid, dummy_guid_str);

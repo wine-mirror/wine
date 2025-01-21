@@ -409,6 +409,9 @@ static HRESULT string_alloc_from_int(const PROPVARIANT *var, WCHAR **ret)
 
     switch (var->vt)
     {
+        case VT_I2:
+            value = (negative = var->iVal < 0) ? -var->iVal : var->iVal;
+            break;
         case VT_I4:
             value = (negative = var->lVal < 0) ? -var->lVal : var->lVal;
             break;
@@ -489,6 +492,7 @@ HRESULT WINAPI PropVariantToStringAlloc(REFPROPVARIANT propvarIn, WCHAR **ret)
             }
             break;
 
+        case VT_I2:
         case VT_I4:
         case VT_UI2:
             hr = string_alloc_from_int(propvarIn, &res);
