@@ -1457,14 +1457,10 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
     if (core)
     {
         attribs[n++] = kCGLPFAOpenGLProfile;
-#if defined(MAC_OS_X_VERSION_10_9) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
         if (major == 3)
             attribs[n++] = (int)kCGLOGLPVersion_GL3_Core;
         else
             attribs[n++] = (int)kCGLOGLPVersion_GL4_Core;
-#else
-        attribs[n++] = (int)kCGLOGLPVersion_3_2_Core;
-#endif
     }
 
     attribs[n] = 0;
