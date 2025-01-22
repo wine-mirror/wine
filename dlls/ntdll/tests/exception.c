@@ -2920,6 +2920,12 @@ static const struct exception
     { { 0xb8, 0x01, 0x00, 0x00, 0x00,          /* mov $0x01, %eax */
         0xcd, 0x2d, 0xfa, 0xc3 },              /* int $0x2d; cli; ret */
       8, 0, STATUS_SUCCESS, 0 },
+    { { 0x66, 0x0f, 0xa8,                      /* push %gs */
+        0x66, 0x0f, 0xa9,                      /* pop  %gs */
+        0x65, 0x48, 0x8b, 0x04, 0x25,          /* movq %gs:0x30,%rax (NtCurrentTeb) */
+        0x30, 0x00, 0x00, 0x00,
+        0xc3 },                                /* ret */
+      8, 0, STATUS_SUCCESS, 0 },
 };
 
 static int got_exception;
