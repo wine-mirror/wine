@@ -1270,7 +1270,7 @@
 @ stdcall RtlSubAuthorityCountSid(ptr)
 @ stdcall RtlSubAuthoritySid(ptr long)
 @ stdcall RtlSubtreePredecessor(ptr)
-@ stub RtlSubtreeSuccessor
+@ stdcall RtlSubtreeSuccessor(ptr)
 @ stdcall RtlSystemTimeToLocalTime(ptr ptr)
 @ stub RtlTestBit
 @ stdcall RtlTimeFieldsToTime(ptr ptr)

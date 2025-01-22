@@ -314,6 +314,7 @@ ULONG     WINAPI RtlNumberGenericTableElements(PRTL_GENERIC_TABLE);
 ULONG     WINAPI RtlNumberGenericTableElementsAvl(PRTL_AVL_TABLE);
 BOOLEAN   WINAPI RtlPrefixUnicodeString(const UNICODE_STRING*,const UNICODE_STRING*,BOOLEAN);
 PRTL_SPLAY_LINKS WINAPI RtlSubtreePredecessor(PRTL_SPLAY_LINKS);
+PRTL_SPLAY_LINKS WINAPI RtlSubtreeSuccessor(PRTL_SPLAY_LINKS);
 NTSTATUS  WINAPI RtlUpcaseUnicodeString(UNICODE_STRING*,const UNICODE_STRING*,BOOLEAN);
 char      WINAPI RtlUpperChar(char);
 void      WINAPI RtlUpperString(STRING*,const STRING*);

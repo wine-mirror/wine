@@ -256,6 +256,25 @@ RTL_SPLAY_LINKS * WINAPI RtlSubtreePredecessor(RTL_SPLAY_LINKS *links)
 }
 
 /******************************************************************************
+ *  RtlSubtreeSuccessor           [NTDLL.@]
+ */
+RTL_SPLAY_LINKS * WINAPI RtlSubtreeSuccessor(RTL_SPLAY_LINKS *links)
+{
+    RTL_SPLAY_LINKS *child;
+
+    TRACE("(%p)\n", links);
+
+    child = RtlRightChild(links);
+    if (!child)
+        return NULL;
+
+    while (RtlLeftChild(child))
+        child = RtlLeftChild(child);
+
+    return child;
+}
+
+/******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]
  */
 void WINAPI RtlInitializeGenericTable(RTL_GENERIC_TABLE *table, PRTL_GENERIC_COMPARE_ROUTINE compare,
