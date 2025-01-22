@@ -7,6 +7,7 @@
  * Copyright 1999      Alex Korobka
  * Copyright 2003      Thomas Mertes
  * Crc32 code Copyright 1986 Gary S. Brown (Public domain)
+ * Copyright 2025      Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -235,6 +236,24 @@ NTSTATUS WINAPI RtlResetNtUserPfn(void)
     return STATUS_SUCCESS;
 }
 
+/******************************************************************************
+ *  RtlSubtreePredecessor           [NTDLL.@]
+ */
+RTL_SPLAY_LINKS * WINAPI RtlSubtreePredecessor(RTL_SPLAY_LINKS *links)
+{
+    RTL_SPLAY_LINKS *child;
+
+    TRACE("(%p)\n", links);
+
+    child = RtlLeftChild(links);
+    if (!child)
+        return NULL;
+
+    while (RtlRightChild(child))
+        child = RtlRightChild(child);
+
+    return child;
+}
 
 /******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]

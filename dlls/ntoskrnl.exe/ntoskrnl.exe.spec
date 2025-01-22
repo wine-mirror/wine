@@ -1269,7 +1269,7 @@
 @ stdcall RtlStringFromGUID(ptr ptr)
 @ stdcall RtlSubAuthorityCountSid(ptr)
 @ stdcall RtlSubAuthoritySid(ptr long)
-@ stub RtlSubtreePredecessor
+@ stdcall RtlSubtreePredecessor(ptr)
 @ stub RtlSubtreeSuccessor
 @ stdcall RtlSystemTimeToLocalTime(ptr ptr)
 @ stub RtlTestBit
