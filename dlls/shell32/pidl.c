@@ -126,10 +126,7 @@ BOOL ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR path, DWO
     {
         ret = IShellFolder_GetDisplayNameOf(lsf, pidl, flag, &strret);
         if (SUCCEEDED(ret))
-        {
-            if(!StrRetToStrNW(path, MAX_PATH, &strret, pidl))
-                ret = E_FAIL;
-        }
+            ret = StrRetToBufW(&strret, pidl, path, MAX_PATH);
     }
     else
     {
@@ -138,10 +135,7 @@ BOOL ILGetDisplayNameExW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, LPWSTR path, DWO
         {
             ret = IShellFolder_GetDisplayNameOf(psfParent, pidllast, flag, &strret);
             if (SUCCEEDED(ret))
-            {
-                if(!StrRetToStrNW(path, MAX_PATH, &strret, pidllast))
-                    ret = E_FAIL;
-            }
+                ret = StrRetToBufW(&strret, pidllast, path, MAX_PATH);
             IShellFolder_Release(psfParent);
         }
     }

@@ -34,6 +34,7 @@
 #include "docobj.h"
 #include "shlobj.h"
 #include "shellapi.h"
+#include "shlwapi.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 
@@ -269,9 +270,6 @@ typedef struct
     DWORD dwType;
     ITEMIDLIST idl;
 } CWTESTPATHSTRUCT;
-
-BOOL WINAPI StrRetToStrNA(char *, DWORD, STRRET *, const ITEMIDLIST *);
-BOOL WINAPI StrRetToStrNW(WCHAR *, DWORD, STRRET *, const ITEMIDLIST *);
 
 WCHAR *shell_get_resource_string(UINT id);
 

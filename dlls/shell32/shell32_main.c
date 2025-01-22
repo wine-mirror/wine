@@ -265,7 +265,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
             STRRET str;
             hr = IShellFolder_GetDisplayNameOf( psfParent, pidlLast,
                                                 SHGDN_INFOLDER, &str);
-            StrRetToStrNW (psfi->szDisplayName, MAX_PATH, &str, pidlLast);
+            StrRetToBufW(&str, pidlLast, psfi->szDisplayName, MAX_PATH);
         }
     }
 

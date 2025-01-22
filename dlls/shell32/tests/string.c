@@ -82,14 +82,12 @@ static void test_StrRetToStringNW(void)
     strret.uType = 3;
     memset(buff, 0xff, sizeof(buff));
     ret = pStrRetToStrNAW(buff, 0, &strret, NULL);
-    todo_wine
     ok(ret == TRUE && buff[0] == 0xffff,
        "Invalid STRRET type: dup failed, ret=%d\n", ret);
 
     strret.uType = 3;
     memset(buff, 0xff, sizeof(buff));
     ret = pStrRetToStrNAW(buff, ARRAY_SIZE(buff), &strret, NULL);
-    todo_wine
     ok(ret == TRUE && buff[0] == 0,
        "Invalid STRRET type: dup failed, ret=%d\n", ret);
 

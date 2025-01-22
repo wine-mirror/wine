@@ -286,7 +286,7 @@ static HRESULT SHELL_GetPathFromIDListForExecuteW(LPCITEMIDLIST pidl, LPWSTR psz
 	hr = IShellFolder_GetDisplayNameOf(desktop, pidl, SHGDN_FORPARSING, &strret);
 
 	if (SUCCEEDED(hr))
-	    StrRetToStrNW(pszPath, uOutSize, &strret, pidl);
+	    StrRetToBufW(&strret, pidl, pszPath, uOutSize);
 
 	IShellFolder_Release(desktop);
     }

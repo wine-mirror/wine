@@ -344,10 +344,8 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
 	    LPITEMIDLIST pidlNext = ILGetNext (pidl);
 
 	    hr = IShellFolder2_GetDisplayNameOf (psfChild, pidlNext, dwFlags, &strTemp);
-	    if (SUCCEEDED (hr)) {
-		if(!StrRetToStrNW (szOut, dwOutLen, &strTemp, pidlNext))
-                    hr = E_FAIL;
-	    }
+	    if (SUCCEEDED (hr))
+		hr = StrRetToBufW (&strTemp, pidlNext, szOut, dwOutLen);
 	    IShellFolder2_Release (psfChild);
 	}
 	ILFree (pidlFirst);
