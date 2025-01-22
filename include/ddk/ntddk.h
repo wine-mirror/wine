@@ -166,6 +166,32 @@ typedef struct _RTL_SPLAY_LINKS
     struct _RTL_SPLAY_LINKS *RightChild;
 } RTL_SPLAY_LINKS, *PRTL_SPLAY_LINKS;
 
+FORCEINLINE void RtlInitializeSplayLinks(PRTL_SPLAY_LINKS links)
+{
+    links->Parent = links;
+    links->LeftChild = NULL;
+    links->RightChild = NULL;
+}
+
+FORCEINLINE void RtlInsertAsLeftChild(PRTL_SPLAY_LINKS parent, PRTL_SPLAY_LINKS child)
+{
+    parent->LeftChild = child;
+    child->Parent = parent;
+}
+
+FORCEINLINE void RtlInsertAsRightChild(PRTL_SPLAY_LINKS parent, PRTL_SPLAY_LINKS child)
+{
+    parent->RightChild = child;
+    child->Parent = parent;
+}
+
+#define RtlParent(links)       ((PRTL_SPLAY_LINKS)(links)->Parent)
+#define RtlLeftChild(links)    ((PRTL_SPLAY_LINKS)(links)->LeftChild)
+#define RtlRightChild(links)   ((PRTL_SPLAY_LINKS)(links)->RightChild)
+#define RtlIsRoot(links)       (RtlParent(links) == (PRTL_SPLAY_LINKS)(links))
+#define RtlIsLeftChild(links)  (RtlLeftChild(RtlParent(links)) == (PRTL_SPLAY_LINKS)(links))
+#define RtlIsRightChild(links) (RtlRightChild(RtlParent(links)) == (PRTL_SPLAY_LINKS)(links))
+
 struct _RTL_GENERIC_TABLE;
 
 typedef RTL_GENERIC_COMPARE_RESULTS (WINAPI *PRTL_GENERIC_COMPARE_ROUTINE)(struct _RTL_GENERIC_TABLE *, void *, void *);
