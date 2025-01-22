@@ -537,7 +537,7 @@
 @ stdcall GetClipboardSequenceNumber() NtUserGetClipboardSequenceNumber
 @ stdcall GetClipboardViewer() NtUserGetClipboardViewer
 @ stdcall GetComboBoxInfo(long ptr)
-@ stdcall GetCurrentInputMessageSource(ptr)
+@ stdcall GetCurrentInputMessageSource(ptr) NtUserGetCurrentInputMessageSource
 @ stdcall GetCursor() NtUserGetCursor
 @ stdcall GetCursorFrameInfo(long long long ptr ptr)
 @ stdcall GetCursorInfo(ptr) NtUserGetCursorInfo

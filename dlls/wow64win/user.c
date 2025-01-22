@@ -2438,6 +2438,13 @@ NTSTATUS WINAPI wow64_NtUserGetClipboardViewer( UINT *args )
     return HandleToUlong( NtUserGetClipboardViewer() );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetCurrentInputMessageSource( UINT *args )
+{
+    INPUT_MESSAGE_SOURCE *source = get_ptr( &args );
+
+    return NtUserGetCurrentInputMessageSource( source );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetCursor( UINT *args )
 {
     return HandleToUlong( NtUserGetCursor() );

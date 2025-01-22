@@ -974,16 +974,6 @@ LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
 
 
 /***********************************************************************
- *		GetCurrentInputMessageSource (USER32.@)
- */
-BOOL WINAPI GetCurrentInputMessageSource( INPUT_MESSAGE_SOURCE *source )
-{
-    *source = NtUserGetThreadInfo()->msg_source;
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		MsgWaitForMultipleObjects (USER32.@)
  */
 DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, const HANDLE *handles,
