@@ -409,7 +409,7 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
  */
 void *get_native_context( CONTEXT *context )
 {
-    return context;
+    return is_old_wow64() ? NULL : context;
 }
 
 
@@ -418,7 +418,7 @@ void *get_native_context( CONTEXT *context )
  */
 void *get_wow_context( CONTEXT *context )
 {
-    return NULL;
+    return is_old_wow64() ? context : NULL;
 }
 
 
