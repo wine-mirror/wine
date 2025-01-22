@@ -105,7 +105,7 @@ struct wined3d_shader_spirv_compile_args
     struct vkd3d_shader_varying_map_info varying_map;
     struct vkd3d_shader_spirv_target_info spirv_target;
     enum vkd3d_shader_spirv_extension extensions[1];
-    struct vkd3d_shader_parameter sample_count;
+    struct vkd3d_shader_parameter parameters[2];
     unsigned int ps_alpha_swizzle[WINED3D_MAX_RENDER_TARGETS];
 };
 
@@ -158,6 +158,25 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
     }
 }
 
+static void fill_ps_parameters(struct wined3d_shader_spirv_compile_args *vkd3d_args,
+        const struct shader_spirv_compile_arguments *compile_args)
+{
+    struct vkd3d_shader_parameter *parameters = vkd3d_args->parameters;
+
+    parameters[0].name = VKD3D_SHADER_PARAMETER_NAME_RASTERIZER_SAMPLE_COUNT;
+    parameters[0].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
+    parameters[0].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
+    parameters[0].u.immediate_constant.u.u32 = compile_args->u.fs.sample_count;
+
+    parameters[1].name = VKD3D_SHADER_PARAMETER_NAME_FLAT_INTERPOLATION;
+    parameters[1].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
+    parameters[1].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
+    parameters[1].u.immediate_constant.u.u32 = compile_args->u.fs.args.flatshading;
+
+    vkd3d_args->spirv_target.parameter_count = 2;
+    vkd3d_args->spirv_target.parameters = vkd3d_args->parameters;
+}
+
 static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info,
         struct wined3d_shader_spirv_compile_args *args,
         struct vkd3d_shader_interface_info *vkd3d_interface, enum vkd3d_shader_spirv_environment environment,
@@ -181,18 +200,10 @@ static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info
     if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
     {
         unsigned int rt_alpha_swizzle = compile_args->u.fs.args.rt_alpha_swizzle;
-        struct vkd3d_shader_parameter *shader_parameter;
 
-        shader_parameter = &args->sample_count;
-        shader_parameter->name = VKD3D_SHADER_PARAMETER_NAME_RASTERIZER_SAMPLE_COUNT;
-        shader_parameter->type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
-        shader_parameter->data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
-        shader_parameter->u.immediate_constant.u.u32 = compile_args->u.fs.sample_count;
+        fill_ps_parameters(args, compile_args);
 
         args->spirv_target.dual_source_blending = compile_args->u.fs.args.dual_source_blend;
-
-        args->spirv_target.parameter_count = 1;
-        args->spirv_target.parameters = shader_parameter;
 
         for (i = 0; i < ARRAY_SIZE(args->ps_alpha_swizzle); ++i)
         {
@@ -1127,6 +1138,7 @@ static void spirv_vertex_pipe_vk_vp_disable(const struct wined3d_context *contex
 static void spirv_vertex_pipe_vk_vp_get_caps(const struct wined3d_adapter *adapter, struct wined3d_vertex_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
+    caps->emulated_flatshading = true;
 }
 
 static unsigned int spirv_vertex_pipe_vk_vp_get_emul_mask(const struct wined3d_adapter *adapter)
