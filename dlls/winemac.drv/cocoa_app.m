@@ -191,15 +191,6 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
             windowsBeingDragged = [[NSMutableSet alloc] init];
 
-            // On macOS 10.12+, use notifications to more reliably detect when windows are being dragged.
-            if ([NSProcessInfo instancesRespondToSelector:@selector(isOperatingSystemAtLeastVersion:)])
-            {
-                NSOperatingSystemVersion requiredVersion = { 10, 12, 0 };
-                useDragNotifications = [[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:requiredVersion];
-            }
-            else
-                useDragNotifications = NO;
-
             if (!requests || !requestsManipQueue || !eventQueues || !eventQueuesLock ||
                 !keyWindows || !originalDisplayModes || !latentDisplayModes)
             {
@@ -1844,17 +1835,6 @@ static NSString* WineLocalizedString(unsigned int stringID)
                     [window postKeyEvent:anEvent];
             }
         }
-        else if (!useDragNotifications && type == NSEventTypeAppKitDefined)
-        {
-            WineWindow *window = (WineWindow *)[anEvent window];
-            short subtype = [anEvent subtype];
-
-            // These subtypes are not documented but they appear to mean
-            // "a window is being dragged" and "a window is no longer being
-            // dragged", respectively.
-            if ((subtype == 20 || subtype == 21) && [window isKindOfClass:[WineWindow class]])
-                [self handleWindowDrag:window begin:(subtype == 20)];
-        }
 
         return ret;
     }
@@ -1914,25 +1894,23 @@ static NSString* WineLocalizedString(unsigned int stringID)
             [windowsBeingDragged removeObject:window];
         }];
 
-        if (useDragNotifications) {
-            [nc addObserverForName:NSWindowWillStartDraggingNotification
-                            object:nil
-                             queue:[NSOperationQueue mainQueue]
-                        usingBlock:^(NSNotification *note){
-                NSWindow* window = [note object];
-                if ([window isKindOfClass:[WineWindow class]])
-                    [self handleWindowDrag:(WineWindow *)window begin:YES];
-            }];
+        [nc addObserverForName:NSWindowWillStartDraggingNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *note){
+            NSWindow* window = [note object];
+            if ([window isKindOfClass:[WineWindow class]])
+                [self handleWindowDrag:(WineWindow *)window begin:YES];
+        }];
 
-            [nc addObserverForName:NSWindowDidEndDraggingNotification
-                            object:nil
-                             queue:[NSOperationQueue mainQueue]
-                        usingBlock:^(NSNotification *note){
-                NSWindow* window = [note object];
-                if ([window isKindOfClass:[WineWindow class]])
-                    [self handleWindowDrag:(WineWindow *)window begin:NO];
-            }];
-        }
+        [nc addObserverForName:NSWindowDidEndDraggingNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *note){
+            NSWindow* window = [note object];
+            if ([window isKindOfClass:[WineWindow class]])
+                [self handleWindowDrag:(WineWindow *)window begin:NO];
+        }];
 
         [nc addObserver:self
                selector:@selector(keyboardSelectionDidChange)
