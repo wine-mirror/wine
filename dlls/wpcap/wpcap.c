@@ -963,7 +963,7 @@ const unsigned char * CDECL pcap_next( struct pcap *pcap, struct pcap_pkthdr_win
 }
 
 int CDECL pcap_dispatch( struct pcap *pcap, int count,
-                         void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
+                         void (CDECL *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
                          unsigned char *user )
 {
     int processed = 0;
@@ -996,7 +996,7 @@ int CDECL pcap_dispatch( struct pcap *pcap, int count,
 }
 
 int CDECL pcap_loop( struct pcap *pcap, int count,
-                     void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
+                     void (CDECL *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
                      unsigned char *user)
 {
     int processed = 0;

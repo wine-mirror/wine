@@ -86,7 +86,7 @@ static int (CDECL *ppcap_datalink_name_to_val)( const char * );
 static const char * (CDECL *ppcap_datalink_val_to_description)( int );
 static const char * (CDECL *ppcap_datalink_val_to_name)( int );
 static int (CDECL *ppcap_dispatch)( pcap_t *, int,
-                                    void (CALLBACK *)(unsigned char *, const struct pcap_pkthdr *, const unsigned char *),
+                                    void (CDECL *)(unsigned char *, const struct pcap_pkthdr *, const unsigned char *),
                                     unsigned char * );
 static pcap_dumper_t * (CDECL *ppcap_dump_open)( pcap_t *, const char * );
 static void (CDECL *ppcap_dump)( unsigned char *, const struct pcap_pkthdr *, const unsigned char * );
@@ -107,7 +107,7 @@ static int (CDECL *ppcap_list_tstamp_types)( pcap_t *, int ** );
 static char * (CDECL *ppcap_lookupdev)( char * );
 static int (CDECL *ppcap_lookupnet)( const char *, unsigned int *, unsigned int *, char * );
 static int (CDECL *ppcap_loop)( pcap_t *, int,
-                                void (CALLBACK *)(unsigned char *, const struct pcap_pkthdr *, const unsigned char *),
+                                void (CDECL *)(unsigned char *, const struct pcap_pkthdr *, const unsigned char *),
                                 unsigned char * );
 static int (CDECL *ppcap_set_buffer_size)( pcap_t *, int );
 static int (CDECL *ppcap_set_datalink)( pcap_t *, int );
@@ -121,7 +121,7 @@ static int CDECL (*ppcap_tstamp_type_name_to_val)( const char * );
 static const char * (CDECL *ppcap_tstamp_type_val_to_description)( int );
 static const char * (CDECL *ppcap_tstamp_type_val_to_name)( int );
 
-static void CALLBACK capture_callback( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *bytes )
+static void CDECL capture_callback( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *bytes )
 {
     trace( "user %p hdr %p byte %p\n", user, hdr, bytes );
 }
@@ -266,7 +266,7 @@ static void test_datalink( void )
     ok( !strcmp(str, "Ethernet"), "got %s\n", wine_dbgstr_a(str) );
 }
 
-static void CALLBACK dump_callback( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *bytes )
+static void CDECL dump_callback( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *bytes )
 {
     trace( "user %p hdr %p bytes %p\n", user, hdr, bytes );
     ppcap_dump( user, hdr, bytes );
