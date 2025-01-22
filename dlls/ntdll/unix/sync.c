@@ -1641,8 +1641,17 @@ NTSTATUS WINAPI NtYieldExecution(void)
  */
 NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
+    unsigned int status = STATUS_SUCCESS;
+
     /* if alertable, we need to query the server */
-    if (alertable) return server_wait( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, timeout );
+    if (alertable)
+    {
+        /* Since server_wait will result in an unconditional implicit yield,
+           we never return STATUS_NO_YIELD_PERFORMED */
+        if ((status = server_wait( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, timeout )) == STATUS_TIMEOUT)
+            status = STATUS_SUCCESS;
+        return status;
+    }
 
     if (!timeout || timeout->QuadPart == TIMEOUT_INFINITE)  /* sleep forever */
     {
@@ -1659,9 +1668,10 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
             when = now.QuadPart - when;
         }
 
-        /* Note that we yield after establishing the desired timeout */
-        NtYieldExecution();
-        if (!when) return STATUS_SUCCESS;
+        /* Note that we yield after establishing the desired timeout, but
+           we only care about the result of the yield for zero timeouts */
+        status = NtYieldExecution();
+        if (!when) return status;
 
         for (;;)
         {

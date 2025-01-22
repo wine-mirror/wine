@@ -1088,7 +1088,6 @@ static void test_delayexecution(void)
         }
         else
         {
-            todo_wine_if(status == STATUS_TIMEOUT)
             ok( status == STATUS_SUCCESS || (!tests[i].timeout && status == STATUS_NO_YIELD_PERFORMED),
                 "got status %#lx.\n", status );
         }
