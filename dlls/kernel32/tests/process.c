@@ -4505,7 +4505,6 @@ static void test_ProcThreadAttributeList(void)
     }
 
     ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY, &gaff, sizeof(gaff), NULL, NULL);
-    todo_wine
     ok(ret, "got %d gle %ld\n", ret, GetLastError());
     if (ret)
     {

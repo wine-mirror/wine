@@ -1795,6 +1795,9 @@ static inline DWORD validate_proc_thread_attribute( DWORD_PTR attr, SIZE_T size 
     case PROC_THREAD_ATTRIBUTE_MACHINE_TYPE:
         if (size != sizeof(USHORT)) return ERROR_BAD_LENGTH;
         break;
+    case PROC_THREAD_ATTRIBUTE_GROUP_AFFINITY:
+        if (size != sizeof(GROUP_AFFINITY)) return ERROR_BAD_LENGTH;
+        break;
     default:
         FIXME( "Unhandled attribute %Iu\n", attr & PROC_THREAD_ATTRIBUTE_NUMBER );
         return ERROR_NOT_SUPPORTED;
