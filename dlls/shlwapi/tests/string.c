@@ -1150,6 +1150,12 @@ if (0)
         hres = pStrRetToBufW(&strret, NULL, wbuf, 10);
         ok(hres == E_FAIL, "StrRetToBufW returned %08lx\n", hres);
         ok(!wbuf[0], "StrRetToBuf returned %s\n", wine_dbgstr_w(wbuf));
+
+        memset(wbuf, 0xbf, sizeof(wbuf));
+        strret.uType = 3;
+        hres = pStrRetToBufW(&strret, NULL, wbuf, 10);
+        ok(hres == E_FAIL, "StrRetToBufW returned %08lx\n", hres);
+        ok(!wbuf[0], "StrRetToBuf returned %s\n", wine_dbgstr_w(wbuf));
     }
     else
         win_skip("StrRetToBufW() is not available\n");
