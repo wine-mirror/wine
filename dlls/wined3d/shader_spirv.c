@@ -66,9 +66,8 @@ struct shader_spirv_compile_arguments
         } vs;
         struct
         {
-            uint32_t alpha_swizzle;
+            struct ps_compile_args args;
             unsigned int sample_count;
-            bool dual_source_blending;
         } fs;
     } u;
 };
@@ -124,23 +123,17 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
         const struct wined3d_context *context, const struct wined3d_shader *shader,
         const struct wined3d_state *state, unsigned int sample_count)
 {
-    struct wined3d_rendertarget_view *rtv;
-    unsigned int i;
-
     memset(args, 0, sizeof(*args));
 
     switch (shader->reg_maps.shader_version.type)
     {
         case WINED3D_SHADER_TYPE_PIXEL:
-            for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
-            {
-                if (!(rtv = state->fb.render_targets[i]) || rtv->format->id == WINED3DFMT_NULL)
-                    continue;
-                if (rtv->format->id == WINED3DFMT_A8_UNORM && !is_identity_fixup(rtv->format->color_fixup))
-                    args->u.fs.alpha_swizzle |= 1u << i;
-            }
+            /* The context here doesn't have a valid stream info, but that's
+             * fine, because we have full_ffp_varyings. */
+            find_ps_compile_args(state, shader,
+                    state->vertex_declaration && state->vertex_declaration->position_transformed,
+                    &args->u.fs.args, context);
             args->u.fs.sample_count = sample_count;
-            args->u.fs.dual_source_blending = state->blend_state && state->blend_state->dual_source;
             break;
 
         case WINED3D_SHADER_TYPE_VERTEX:
@@ -187,7 +180,7 @@ static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info
 
     if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
     {
-        unsigned int rt_alpha_swizzle = compile_args->u.fs.alpha_swizzle;
+        unsigned int rt_alpha_swizzle = compile_args->u.fs.args.rt_alpha_swizzle;
         struct vkd3d_shader_parameter *shader_parameter;
 
         shader_parameter = &args->sample_count;
@@ -196,7 +189,7 @@ static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info
         shader_parameter->data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
         shader_parameter->u.immediate_constant.u.u32 = compile_args->u.fs.sample_count;
 
-        args->spirv_target.dual_source_blending = compile_args->u.fs.dual_source_blending;
+        args->spirv_target.dual_source_blending = compile_args->u.fs.args.dual_source_blend;
 
         args->spirv_target.parameter_count = 1;
         args->spirv_target.parameters = shader_parameter;
