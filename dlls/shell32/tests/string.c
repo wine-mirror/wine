@@ -60,7 +60,7 @@ static void test_StrRetToStringNW(void)
     strret.uType = STRRET_WSTR;
     strret.pOleStr = CoDupStrW("Test");
     memset(buff, 0xff, sizeof(buff));
-    ret = pStrRetToStrNAW(buff, ARRAY_SIZE(buff), &strret, NULL);
+    ret = pStrRetToStrNAW(buff, ARRAY_SIZE(buff) - 1, &strret, NULL);
     ok(ret == TRUE && !wcscmp(buff, szTestW),
        "STRRET_WSTR: dup failed, ret=%d\n", ret);
 
@@ -78,6 +78,20 @@ static void test_StrRetToStringNW(void)
     ret = pStrRetToStrNAW(buff, ARRAY_SIZE(buff), &strret, iidl);
     ok(ret == TRUE && !wcscmp(buff, szTestW),
        "STRRET_OFFSET: dup failed, ret=%d\n", ret);
+
+    strret.uType = 3;
+    memset(buff, 0xff, sizeof(buff));
+    ret = pStrRetToStrNAW(buff, 0, &strret, NULL);
+    todo_wine
+    ok(ret == TRUE && buff[0] == 0xffff,
+       "Invalid STRRET type: dup failed, ret=%d\n", ret);
+
+    strret.uType = 3;
+    memset(buff, 0xff, sizeof(buff));
+    ret = pStrRetToStrNAW(buff, ARRAY_SIZE(buff), &strret, NULL);
+    todo_wine
+    ok(ret == TRUE && buff[0] == 0,
+       "Invalid STRRET type: dup failed, ret=%d\n", ret);
 
     /* The next test crashes on W2K, WinXP and W2K3, so we don't test. */
 if (0)
