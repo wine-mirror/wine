@@ -2818,7 +2818,14 @@ struct wined3d_ffp_ps_constants
 
     /* States not used by the HLSL pipeline. */
     float alpha_test_ref;
+    float padding[3]; /* to align to 16 bytes */
 };
+
+/* Float/int/bool constants are bound to VKD3D_SHADER_D3DBC_*_CONSTANT_REGISTER
+ * which have the values 0/1/2 respectively.
+ * FFP uniform constants active even with shaders (e.g. alpha test ref) need to
+ * be additionally bound to a different slot. */
+#define WINED3D_FFP_CONSTANTS_EXTRA_REGISTER 3
 
 enum wined3d_push_constants
 {
