@@ -3021,6 +3021,20 @@ static struct wined3d_shader *get_ffp_pixel_shader(struct wined3d_device *device
     return ps->shader;
 }
 
+static void bind_push_constant_buffer(struct wined3d_device *device, enum wined3d_push_constants type,
+        enum wined3d_shader_type shader_type, unsigned int shader_binding)
+{
+    struct wined3d_constant_buffer_state state;
+
+    if (!device->adapter->d3d_info.gpu_push_constants || !device->push_constants[type])
+        return;
+
+    state.buffer = device->push_constants[type];
+    state.offset = 0;
+    state.size = device->push_constants[type]->resource.size,
+    wined3d_device_context_set_constant_buffers(&device->cs->c, shader_type, shader_binding, 1, &state);
+}
+
 void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_stateblock *stateblock)
 {
@@ -3041,13 +3055,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     if (changed->vertexShader)
     {
-        wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, state->vs);
         /* Clip planes are affected by the view matrix, but only if not using
          * vertex shaders. */
         changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
     }
-    if (changed->pixelShader)
-        wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_PIXEL, state->ps);
 
     for (start = 0; ; start = range.offset + range.size)
     {
@@ -3909,6 +3920,27 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 WINED3D_SHADER_CONST_FFP_PS, 0, offsetof(struct wined3d_ffp_ps_constants, color_key), &constants);
     }
 
+    if (changed->vertexShader)
+    {
+        wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, state->vs);
+        bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_VS_F,
+                WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER);
+        bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_VS_I,
+                WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER);
+        bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_VS_B,
+                WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER);
+    }
+    if (changed->pixelShader)
+    {
+        wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_PIXEL, state->ps);
+        bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_PS_F,
+                WINED3D_SHADER_TYPE_PIXEL, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER);
+        bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_PS_I,
+                WINED3D_SHADER_TYPE_PIXEL, VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER);
+        bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_PS_B,
+                WINED3D_SHADER_TYPE_PIXEL, VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER);
+    }
+
     /* XXX: We don't invalidate HLSL shaders for every field contained in
      * wined3d_ffp_vs_settings / ffp_frag_settings; only the ones that the HLSL
      * FFP pipeline cares about. The rest should eventually be removed from
@@ -3922,6 +3954,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             struct wined3d_shader *shader = get_ffp_vertex_shader(device, device->cs->c.state);
 
             wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, shader);
+            bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_VS_FFP,
+                    WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER);
         }
         else
         {
@@ -3937,6 +3971,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             struct wined3d_shader *shader = get_ffp_pixel_shader(device, device->cs->c.state);
 
             wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_PIXEL, shader);
+            bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_PS_FFP,
+                    WINED3D_SHADER_TYPE_PIXEL, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER);
         }
         else
         {

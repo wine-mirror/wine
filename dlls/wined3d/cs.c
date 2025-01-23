@@ -2143,18 +2143,17 @@ static const struct push_constant_info
     size_t size;
     unsigned int max_count;
     enum wined3d_shader_type shader_type;
-    enum vkd3d_shader_d3dbc_constant_register shader_binding;
 }
 wined3d_cs_push_constant_info[] =
 {
-    [WINED3D_PUSH_CONSTANTS_VS_F]       = {sizeof(struct wined3d_vec4),  WINED3D_MAX_VS_CONSTS_F, WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_PS_F]       = {sizeof(struct wined3d_vec4),  WINED3D_MAX_PS_CONSTS_F, WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_VS_I]       = {sizeof(struct wined3d_ivec4), WINED3D_MAX_CONSTS_I,    WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_PS_I]       = {sizeof(struct wined3d_ivec4), WINED3D_MAX_CONSTS_I,    WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_VS_B]       = {sizeof(BOOL),                 WINED3D_MAX_CONSTS_B,    WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_PS_B]       = {sizeof(BOOL),                 WINED3D_MAX_CONSTS_B,    WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_VS_FFP]     = {1, sizeof(struct wined3d_ffp_vs_constants),            WINED3D_SHADER_TYPE_VERTEX, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER},
-    [WINED3D_PUSH_CONSTANTS_PS_FFP]     = {1, sizeof(struct wined3d_ffp_ps_constants),            WINED3D_SHADER_TYPE_PIXEL,  VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER},
+    [WINED3D_PUSH_CONSTANTS_VS_F]       = {sizeof(struct wined3d_vec4),  WINED3D_MAX_VS_CONSTS_F, WINED3D_SHADER_TYPE_VERTEX},
+    [WINED3D_PUSH_CONSTANTS_PS_F]       = {sizeof(struct wined3d_vec4),  WINED3D_MAX_PS_CONSTS_F, WINED3D_SHADER_TYPE_PIXEL},
+    [WINED3D_PUSH_CONSTANTS_VS_I]       = {sizeof(struct wined3d_ivec4), WINED3D_MAX_CONSTS_I,    WINED3D_SHADER_TYPE_VERTEX},
+    [WINED3D_PUSH_CONSTANTS_PS_I]       = {sizeof(struct wined3d_ivec4), WINED3D_MAX_CONSTS_I,    WINED3D_SHADER_TYPE_PIXEL},
+    [WINED3D_PUSH_CONSTANTS_VS_B]       = {sizeof(BOOL),                 WINED3D_MAX_CONSTS_B,    WINED3D_SHADER_TYPE_VERTEX},
+    [WINED3D_PUSH_CONSTANTS_PS_B]       = {sizeof(BOOL),                 WINED3D_MAX_CONSTS_B,    WINED3D_SHADER_TYPE_PIXEL},
+    [WINED3D_PUSH_CONSTANTS_VS_FFP]     = {1, sizeof(struct wined3d_ffp_vs_constants),            WINED3D_SHADER_TYPE_VERTEX},
+    [WINED3D_PUSH_CONSTANTS_PS_FFP]     = {1, sizeof(struct wined3d_ffp_ps_constants),            WINED3D_SHADER_TYPE_PIXEL},
 };
 
 static bool prepare_push_constant_buffer(struct wined3d_device_context *context, enum wined3d_push_constants type)
@@ -2182,13 +2181,6 @@ static bool prepare_push_constant_buffer(struct wined3d_device_context *context,
     {
         ERR("Failed to create push constant buffer, hr %#lx.\n", hr);
         return false;
-    }
-
-    if (gpu)
-    {
-        struct wined3d_constant_buffer_state state = {.buffer = device->push_constants[type], .size = desc.byte_width};
-
-        wined3d_device_context_emit_set_constant_buffers(context, info->shader_type, info->shader_binding, 1, &state);
     }
 
     return true;
