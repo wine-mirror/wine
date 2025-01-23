@@ -2242,7 +2242,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                   subpgm->top_func,
                                   subpgm->current_block ? &subpgm->current_block->symt : &subpgm->current_func->symt,
                                   dwarf2_get_cpp_name(di, name.u.string),
-                                  symt_ptr_to_symref(dwarf2_parse_subroutine_type(di)), num_ranges);
+                                  symt_ptr_to_symref(dwarf2_parse_subroutine_type(di)), 0, num_ranges);
     subpgm->current_func = inlined;
     subpgm->current_block = NULL;
 
@@ -2452,7 +2452,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_debug_info_t* di)
     subpgm.top_func = symt_new_function(di->unit_ctx->module_ctx->module, di->unit_ctx->compiland,
                                         dwarf2_get_cpp_name(di, name.u.string),
                                         addr_ranges[0].low, addr_ranges[0].high - addr_ranges[0].low,
-                                        symt_ptr_to_symref(dwarf2_parse_subroutine_type(di)));
+                                        symt_ptr_to_symref(dwarf2_parse_subroutine_type(di)), 0);
     if (num_addr_ranges > 1)
         WARN("Function %s has multiple address ranges, only using the first one\n", debugstr_a(name.u.string));
     free(addr_ranges);

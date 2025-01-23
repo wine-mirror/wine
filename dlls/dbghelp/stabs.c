@@ -1547,11 +1547,11 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                                             n_value ?
                                                 (load_offset + n_value - curr_func->ranges[0].low) : 0);
                 }
-                func_type = symt_new_function_signature(module, 
+                func_type = symt_new_function_signature(module,
                                                         stabs_parse_type(ptr), -1);
                 curr_func = symt_new_function(module, compiland, symname,
                                               load_offset + n_value, 0,
-                                              symt_ptr_to_symref(&func_type->symt));
+                                              symt_ptr_to_symref(&func_type->symt), 0);
                 pending_flush(&pending_func, module, curr_func, NULL);
             }
             else

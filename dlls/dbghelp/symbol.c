@@ -322,18 +322,20 @@ static struct symt_function* init_function_or_inlinesite(struct module* module,
                                                          struct symt* container,
                                                          const char* name,
                                                          symref_t sig_type,
+                                                         DWORD_PTR user,
                                                          unsigned num_ranges)
 {
     struct symt_function* sym;
 
     if ((sym = pool_alloc(&module->pool, offsetof(struct symt_function, ranges[num_ranges]))))
     {
-        sym->symt.tag  = tag;
+        sym->symt.tag   = tag;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
-        sym->container = container;
-        sym->type      = sig_type;
+        sym->container  = container;
+        sym->type       = sig_type;
         vector_init(&sym->vlines,  sizeof(struct line_info), 0);
         vector_init(&sym->vchildren, sizeof(struct symt*), 0);
+        sym->user       = user;
         sym->num_ranges = num_ranges;
     }
     return sym;
@@ -343,13 +345,14 @@ struct symt_function* symt_new_function(struct module* module,
                                         struct symt_compiland* compiland,
                                         const char* name,
                                         ULONG_PTR addr, ULONG_PTR size,
-                                        symref_t sig_type)
+                                        symref_t sig_type, DWORD_PTR user)
 {
     struct symt_function* sym;
 
     TRACE_(dbghelp_symt)("Adding global function %s:%s @%Ix-%Ix\n",
                          debugstr_w(module->modulename), debugstr_a(name), addr, addr + size - 1);
-    if ((sym = init_function_or_inlinesite(module, SymTagFunction, &compiland->symt, name, sig_type, 1)))
+
+    if ((sym = init_function_or_inlinesite(module, SymTagFunction, &compiland->symt, name, sig_type, user, 1)))
     {
         struct symt** p;
         sym->ranges[0].low = addr;
@@ -370,12 +373,13 @@ struct symt_function* symt_new_inlinesite(struct module* module,
                                           struct symt* container,
                                           const char* name,
                                           symref_t sig_type,
+                                          DWORD_PTR user,
                                           unsigned num_ranges)
 {
     struct symt_function* sym;
 
     TRACE_(dbghelp_symt)("Adding inline site %s\n", debugstr_a(name));
-    if ((sym = init_function_or_inlinesite(module, SymTagInlineSite, container, name, sig_type, num_ranges)))
+    if ((sym = init_function_or_inlinesite(module, SymTagInlineSite, container, name, sig_type, user, num_ranges)))
     {
         struct symt** p;
         assert(container);

@@ -299,6 +299,7 @@ struct symt_function
     struct vector               vlines;
     struct vector               vchildren;      /* locals, params, blocks, start/end, labels, inline sites */
     struct symt_function*       next_inlinesite;/* linked list of inline sites in this function */
+    DWORD_PTR                   user;           /* free to use by debug info backends */
     unsigned                    num_ranges;
     struct addr_range           ranges[];
 };
@@ -922,13 +923,14 @@ extern struct symt_function*
                                       struct symt_compiland* parent,
                                       const char* name,
                                       ULONG_PTR addr, ULONG_PTR size,
-                                      symref_t type);
+                                      symref_t type, DWORD_PTR user);
 extern struct symt_function*
                     symt_new_inlinesite(struct module* module,
                                         struct symt_function* func,
                                         struct symt* parent,
                                         const char* name,
                                         symref_t type,
+                                        DWORD_PTR user,
                                         unsigned num_ranges);
 extern void         symt_add_func_line(struct module* module,
                                        struct symt_function* func, 

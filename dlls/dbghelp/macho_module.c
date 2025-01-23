@@ -1190,7 +1190,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
             if (ste->is_code)
             {
                 symt_new_function(module, ste->compiland, ste->ht_elt.name,
-                                  ste->addr, 0, 0);
+                                  ste->addr, 0, 0, 0);
             }
             else
             {

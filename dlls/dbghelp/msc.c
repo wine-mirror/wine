@@ -2188,6 +2188,7 @@ static struct symt_function* codeview_create_inline_site(const struct msc_debug_
                                                          struct symt_function* top_func,
                                                          struct symt* container,
                                                          cv_itemid_t inlinee,
+                                                         DWORD_PTR user,
                                                          const unsigned char* annot,
                                                          const unsigned char* last_annot)
 {
@@ -2214,14 +2215,14 @@ static struct symt_function* codeview_create_inline_site(const struct msc_debug_
         inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
                                       cvt->func_id_v3.name,
                                       codeview_get_symref(msc_dbg->module, cvt->func_id_v3.type),
-                                      num_ranges);
+                                      user, num_ranges);
         break;
     case LF_MFUNC_ID:
         /* FIXME we just declare a function, not a method */
         inlined = symt_new_inlinesite(msc_dbg->module, top_func, container,
                                       cvt->mfunc_id_v3.name,
                                       codeview_get_symref(msc_dbg->module, cvt->mfunc_id_v3.type),
-                                      num_ranges);
+                                      user, num_ranges);
         break;
     default:
         FIXME("unsupported inlinee kind %x\n", cvt->generic.id);
@@ -2438,7 +2439,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                                               terminate_string(&sym->proc_v1.p_name),
                                               codeview_get_address(msc_dbg, sym->proc_v1.segment, sym->proc_v1.offset),
                                               sym->proc_v1.proc_len,
-                                              codeview_get_symref(msc_dbg->module, sym->proc_v1.proctype))))
+                                              codeview_get_symref(msc_dbg->module, sym->proc_v1.proctype), i)))
             {
                 curr_func = top_func;
                 loc.kind = loc_absolute;
@@ -2455,7 +2456,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                                               terminate_string(&sym->proc_v2.p_name),
                                               codeview_get_address(msc_dbg, sym->proc_v2.segment, sym->proc_v2.offset),
                                               sym->proc_v2.proc_len,
-                                              codeview_get_symref(msc_dbg->module, sym->proc_v2.proctype))))
+                                              codeview_get_symref(msc_dbg->module, sym->proc_v2.proctype), i)))
             {
                 curr_func = top_func;
                 loc.kind = loc_absolute;
@@ -2472,7 +2473,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                                               sym->proc_v3.name,
                                               codeview_get_address(msc_dbg, sym->proc_v3.segment, sym->proc_v3.offset),
                                               sym->proc_v3.proc_len,
-                                              codeview_get_symref(msc_dbg->module, sym->proc_v3.proctype))))
+                                              codeview_get_symref(msc_dbg->module, sym->proc_v3.proctype), i)))
             {
                 curr_func = top_func;
                 loc.kind = loc_absolute;
@@ -2742,6 +2743,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 struct symt_function* inlined = codeview_create_inline_site(msc_dbg, cvmod, top_func,
                                                                             block ? &block->symt : &curr_func->symt,
                                                                             sym->inline_site_v3.inlinee,
+                                                                            i,
                                                                             sym->inline_site_v3.binaryAnnotations,
                                                                             (const unsigned char*)sym + length);
                 if (inlined)
@@ -2763,6 +2765,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 struct symt_function* inlined = codeview_create_inline_site(msc_dbg, cvmod, top_func,
                                                                             block ? &block->symt : &curr_func->symt,
                                                                             sym->inline_site2_v3.inlinee,
+                                                                            i,
                                                                             sym->inline_site2_v3.binaryAnnotations,
                                                                             (const unsigned char*)sym + length);
                 if (inlined)
@@ -2826,7 +2829,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                     struct symt_function* pfunc = (struct symt_function*)parent;
                     top_func = symt_new_function(msc_dbg->module, compiland, pfunc->hash_elt.name,
                                                  codeview_get_address(msc_dbg, sym->sepcode_v3.sect, sym->sepcode_v3.off),
-                                                 sym->sepcode_v3.length, pfunc->type);
+                                                 sym->sepcode_v3.length, pfunc->type, i);
                     curr_func = top_func;
                 }
                 else
