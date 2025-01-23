@@ -2606,7 +2606,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "popl 0x04(%ecx)\n\t"           /* frame->eflags */
                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                   ".globl " __ASM_NAME("__wine_syscall_dispatcher_prolog_end") "\n"
+                   __ASM_GLOBL(__ASM_NAME("__wine_syscall_dispatcher_prolog_end")) "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
                    "movl %esp,0x0c(%ecx)\n\t"      /* frame->esp */
                    __ASM_CFI_CFA_IS_AT1(ecx, 0x0c)
@@ -2795,7 +2795,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "popl 0x08(%ecx)\n\t"       /* frame->eip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    __ASM_CFI_REG_IS_AT1(eip, ecx, 0x08)
-                   ".globl " __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") "\n"
+                   __ASM_GLOBL(__ASM_NAME("__wine_unix_call_dispatcher_prolog_end")) "\n"
                    __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") ":\n\t"
                    "leal 0x10(%esp),%edx\n\t"
                    "movl %edx,0x0c(%ecx)\n\t"  /* frame->esp */
