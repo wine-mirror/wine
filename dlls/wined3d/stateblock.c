@@ -3180,6 +3180,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_POINTSCALE_B:
                 case WINED3D_RS_POINTSCALE_C:
                 case WINED3D_RS_TEXTUREFACTOR:
+                case WINED3D_RS_ALPHAREF:
                     break;
 
                 case WINED3D_RS_ANTIALIAS:
@@ -3918,6 +3919,15 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
                 WINED3D_SHADER_CONST_FFP_PS, 0, offsetof(struct wined3d_ffp_ps_constants, color_key), &constants);
+    }
+
+    if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_ALPHAREF))
+    {
+        float f = (state->rs[WINED3D_RS_ALPHAREF] & 0xff) / 255.0f;
+
+        wined3d_device_context_push_constants(context,
+                WINED3D_PUSH_CONSTANTS_PS_FFP, WINED3D_SHADER_CONST_PS_ALPHA_TEST,
+                offsetof(struct wined3d_ffp_ps_constants, alpha_test_ref), sizeof(f), &f);
     }
 
     if (changed->vertexShader)

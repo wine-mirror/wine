@@ -2815,6 +2815,9 @@ struct wined3d_ffp_ps_constants
         float lscale[WINED3D_MAX_FFP_TEXTURES];
         float loffset[WINED3D_MAX_FFP_TEXTURES];
     } bumpenv;
+
+    /* States not used by the HLSL pipeline. */
+    float alpha_test_ref;
 };
 
 enum wined3d_push_constants
@@ -3142,11 +3145,6 @@ struct wined3d_allocator_block *wined3d_allocator_allocate(struct wined3d_alloca
 void wined3d_allocator_cleanup(struct wined3d_allocator *allocator);
 bool wined3d_allocator_init(struct wined3d_allocator *allocator,
         size_t pool_count, const struct wined3d_allocator_ops *allocator_ops);
-
-static inline float wined3d_alpha_ref(const struct wined3d_state *state)
-{
-    return (state->render_states[WINED3D_RS_ALPHAREF] & 0xff) / 255.0f;
-}
 
 const char *wined3d_debug_resource_access(uint32_t access);
 const char *wined3d_debug_bind_flags(uint32_t bind_flags);
