@@ -4057,7 +4057,7 @@ msgstr "Az objektum nem támogatja ezt a tulajdonságot vagy metódust"
 msgid "Object doesn't support this action"
 msgstr "Az objektum nem támogatja ezt a műveletet"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Az argumentum nem opcionális"
 
@@ -13818,7 +13818,7 @@ msgstr "Az objektum nem támogatja ezt a műveletet"
 msgid "Object doesn't support current locale setting"
 msgstr "Az objektum nem támogatja ezt a műveletet"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 #| msgid "Element not found.\n"
 msgid "Named argument not found"

@@ -3992,7 +3992,7 @@ msgstr "O objeto não suporta esta propriedade ou método"
 msgid "Object doesn't support this action"
 msgstr "O objeto não suporta esta ação"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Argumento não opcional"
 
@@ -12874,7 +12874,7 @@ msgstr "O objeto não suporta argumentos nomeados"
 msgid "Object doesn't support current locale setting"
 msgstr "O objeto não suporta esta ação"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 msgid "Named argument not found"
 msgstr "Argumento nomeado não encontrado"
 

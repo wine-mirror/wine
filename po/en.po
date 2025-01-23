@@ -3944,7 +3944,7 @@ msgstr "Object doesn't support this property or method"
 msgid "Object doesn't support this action"
 msgstr "Object doesn't support this action"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Argument not optional"
 
@@ -12678,7 +12678,7 @@ msgstr "Object doesn't support named arguments"
 msgid "Object doesn't support current locale setting"
 msgstr "Object doesn't support current locale setting"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 msgid "Named argument not found"
 msgstr "Named argument not found"
 

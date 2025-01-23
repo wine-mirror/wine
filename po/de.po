@@ -3982,7 +3982,7 @@ msgstr "Das Objekt unterstützt diese Eigenschaft oder Methode nicht"
 msgid "Object doesn't support this action"
 msgstr "Das Objekt unterstützt diese Aktion nicht"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Argument nicht optional"
 
@@ -12738,7 +12738,7 @@ msgstr "Objekt unterstützt keine benannten Argumente"
 msgid "Object doesn't support current locale setting"
 msgstr "Objekt unterstützt aktuelle Regionseinstellung nicht"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 msgid "Named argument not found"
 msgstr "Benanntes Argument nicht gefunden"
 

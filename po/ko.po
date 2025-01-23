@@ -3953,7 +3953,7 @@ msgstr "개체가 이 속성이나 메소드를 지원하지 않습니다"
 msgid "Object doesn't support this action"
 msgstr "개체는 이 행동을 지원하지 않음"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "인수는 옵션이 아닙니다"
 
@@ -12685,7 +12685,7 @@ msgstr "개체는 명명된 인수를 지원하지 않습니다"
 msgid "Object doesn't support current locale setting"
 msgstr "개체는 현재 로캘 설정을 지원하지 않습니다"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 msgid "Named argument not found"
 msgstr "명명된 인수를 찾을 수 없습니다"
 

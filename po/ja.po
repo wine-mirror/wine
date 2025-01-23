@@ -3949,7 +3949,7 @@ msgstr "オブジェクトはこのプロパティまたはメソッドをサポ
 msgid "Object doesn't support this action"
 msgstr "オブジェクトはこの操作をサポートしていません"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "引数は省略できません"
 
@@ -12687,7 +12687,7 @@ msgstr "オブジェクトは名前付き引数をサポートしていません
 msgid "Object doesn't support current locale setting"
 msgstr "オブジェクトは現在のロケール設定をサポートしていません"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 msgid "Named argument not found"
 msgstr "名前付き引数が見つかりません"
 

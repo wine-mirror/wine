@@ -3979,7 +3979,7 @@ msgstr "Объект не поддерживает это свойство ил�
 msgid "Object doesn't support this action"
 msgstr "Объект не поддерживает это действие"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Отсутствует обязательный аргумент"
 
@@ -13003,7 +13003,7 @@ msgstr "Объект не поддерживает именованные арг
 msgid "Object doesn't support current locale setting"
 msgstr "Объект не поддерживает выбор локали"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 msgid "Named argument not found"
 msgstr "Именованный аргумент не найден"
 

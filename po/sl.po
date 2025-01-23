@@ -4059,7 +4059,7 @@ msgstr "Predmet ne podpira te lastnosti ali načina"
 msgid "Object doesn't support this action"
 msgstr "Predmet ne podpira tega dejanja"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Argument je obvezen"
 
@@ -13873,7 +13873,7 @@ msgstr "Predmet ne podpira tega dejanja"
 msgid "Object doesn't support current locale setting"
 msgstr "Predmet ne podpira tega dejanja"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 #| msgid "Element not found.\n"
 msgid "Named argument not found"

@@ -4010,7 +4010,7 @@ msgstr "العنصر لا يدعم هذه الآلية"
 msgid "Object doesn't support this action"
 msgstr "العنصر لا يدعم هذه الحركة"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "المتغير ليس اختياريًا"
 
@@ -13769,7 +13769,7 @@ msgstr "العنصر لا يدعم هذه الحركة"
 msgid "Object doesn't support current locale setting"
 msgstr "العنصر لا يدعم هذه الحركة"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 #| msgid "Element not found.\n"
 msgid "Named argument not found"

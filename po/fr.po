@@ -3994,7 +3994,7 @@ msgstr "Cet objet ne supporte pas cette propriété ou méthode"
 msgid "Object doesn't support this action"
 msgstr "Cet objet ne supporte pas cette action"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Argument non optionnel"
 
@@ -13241,7 +13241,7 @@ msgstr "Cet objet ne supporte pas les arguments nommés"
 msgid "Object doesn't support current locale setting"
 msgstr "Cet objet ne supporte pas les paramètres régionaux actuels"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 msgid "Named argument not found"
 msgstr "Élément nommé introuvable"
 

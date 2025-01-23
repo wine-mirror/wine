@@ -3923,7 +3923,7 @@ msgstr ""
 msgid "Object doesn't support this action"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr ""
 
@@ -13414,7 +13414,7 @@ msgstr ""
 msgid "Object doesn't support current locale setting"
 msgstr ""
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 #| msgid "Element not found.\n"
 msgid "Named argument not found"

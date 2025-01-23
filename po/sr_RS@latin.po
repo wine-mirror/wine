@@ -4117,7 +4117,7 @@ msgstr "Objekat ne podržava ovo svojstvo ili metodu"
 msgid "Object doesn't support this action"
 msgstr "Objekat ne podržava ovu radnju"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Argument je obavezan"
 
@@ -13720,7 +13720,7 @@ msgstr "Objekat ne podržava ovu radnju"
 msgid "Object doesn't support current locale setting"
 msgstr "Objekat ne podržava ovu radnju"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 msgid "Named argument not found"
 msgstr "Datoteka nije pronađena.\n"

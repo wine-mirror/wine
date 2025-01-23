@@ -3994,7 +3994,7 @@ msgstr "Obiectul nu suportă această proprietate sau metodă"
 msgid "Object doesn't support this action"
 msgstr "Obiectul nu suportă această acțiune"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Argumentul nu este opțional"
 
@@ -13752,7 +13752,7 @@ msgstr "Obiectul nu suportă această acțiune"
 msgid "Object doesn't support current locale setting"
 msgstr "Obiectul nu suportă această acțiune"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 #, fuzzy
 #| msgid "Element not found.\n"
 msgid "Named argument not found"
