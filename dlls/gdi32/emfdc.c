@@ -666,8 +666,11 @@ static DWORD emfdc_ext_create_pen( struct emf *emf, HPEN pen )
 
     if (!(size = GetObjectW( pen, 0, NULL )))
         return 0;
-    emr_size = sizeof(*emr) - sizeof(emr->elp) + size;
-    emr = HeapAlloc( GetProcessHeap(), 0, emr_size );
+
+    /* Native adds an extra 4 bytes, presumably because someone wasn't careful about the
+     * dynamic array [1] at the end of EXTLOGPEN. */
+    emr_size = sizeof(*emr) - sizeof(emr->elp) + sizeof(emr->elp.elpStyleEntry) + size;
+    emr = calloc( 1, emr_size );
     if (!emr)
         return 0;
     GetObjectW( pen, size, &emr->elp );
@@ -677,16 +680,15 @@ static DWORD emfdc_ext_create_pen( struct emf *emf, HPEN pen )
             emr->elp.elpBrushStyle == BS_PATTERN)
     {
         FIXME( "elpBrushStyle = %d\n", emr->elp.elpBrushStyle );
-        HeapFree( GetProcessHeap(), 0, emr );
+        free( emr );
         return 0;
     }
-    emr->offBmi = emr->cbBmi = emr->offBits = emr->cbBits = 0;
 
     emr->emr.iType = EMR_EXTCREATEPEN;
     emr->emr.nSize = emr_size;
     emr->ihPen = ret = emfdc_add_handle( emf, pen );
     ret = emfdc_record( emf, &emr->emr ) ? ret : 0;
-    HeapFree( GetProcessHeap(), 0, emr );
+    free( emr );
     return ret;
 }
 
