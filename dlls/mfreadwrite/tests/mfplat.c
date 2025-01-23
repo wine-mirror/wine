@@ -1702,7 +1702,6 @@ static void test_sink_writer_get_object(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFSinkWriter_QueryInterface(writer, &IID_IMFSinkWriterEx, (void **)&writer_ex);
-    todo_wine
     ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
 
     hr = MFCreateMediaType(&stream_type);
@@ -1719,13 +1718,10 @@ static void test_sink_writer_get_object(void)
     ok(hr == MF_E_UNSUPPORTED_SERVICE, "GetServiceForStream returned %#lx.\n", hr);
     ok(!transform, "Unexpected transform %p.\n", transform);
 
-    if (writer_ex)
-    {
     transform = (void *)0xdeadbeef;
     hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 0, &guid, &transform);
     ok(hr == MF_E_INVALIDINDEX, "GetTransformForStream returned %#lx.\n", hr);
     ok(!transform, "Unexpected transform %p.\n", transform);
-    }
 
     hr = MFCreateMediaType(&input_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1742,23 +1738,26 @@ static void test_sink_writer_get_object(void)
     if (hr == S_OK)
     IMFTransform_Release(transform);
 
-    if (writer_ex)
-    {
     hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 0, &guid, &transform);
+    todo_wine
     ok(hr == S_OK, "GetTransformForStream returned %#lx.\n", hr);
+    todo_wine
     ok(IsEqualGUID(&guid, &MFT_CATEGORY_VIDEO_PROCESSOR), "Unexpected guid %s.\n", debugstr_guid(&guid));
+    if (hr == S_OK)
     IMFTransform_Release(transform);
 
     hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 1, &guid, &transform);
+    todo_wine
     ok(hr == S_OK, "GetTransformForStream returned %#lx.\n", hr);
+    todo_wine
     ok(IsEqualGUID(&guid, &MFT_CATEGORY_VIDEO_ENCODER), "Unexpected guid %s.\n", debugstr_guid(&guid));
+    if (hr == S_OK)
     IMFTransform_Release(transform);
 
     transform = (void *)0xdeadbeef;
     hr = IMFSinkWriterEx_GetTransformForStream(writer_ex, 0, 2, &guid, &transform);
     ok(hr == MF_E_INVALIDINDEX, "GetTransformForStream returned %#lx.\n", hr);
     ok(!transform, "Unexpected transform %p.\n", transform);
-    }
 
     /* Get media sink before BeginWriting. */
     sink = (void *)0xdeadbeef;

@@ -65,7 +65,7 @@ struct stream
 
 struct sink_writer
 {
-    IMFSinkWriter IMFSinkWriter_iface;
+    IMFSinkWriterEx IMFSinkWriterEx_iface;
     IMFAsyncCallback events_callback;
     LONG refcount;
 
@@ -89,9 +89,9 @@ struct sink_writer
     CRITICAL_SECTION cs;
 };
 
-static struct sink_writer *impl_from_IMFSinkWriter(IMFSinkWriter *iface)
+static struct sink_writer *impl_from_IMFSinkWriterEx(IMFSinkWriterEx *iface)
 {
-    return CONTAINING_RECORD(iface, struct sink_writer, IMFSinkWriter_iface);
+    return CONTAINING_RECORD(iface, struct sink_writer, IMFSinkWriterEx_iface);
 }
 
 static struct sink_writer *impl_from_events_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -185,15 +185,16 @@ static void sink_writer_release_pending_item(struct pending_item *item)
     free(item);
 }
 
-static HRESULT WINAPI sink_writer_QueryInterface(IMFSinkWriter *iface, REFIID riid, void **out)
+static HRESULT WINAPI sink_writer_QueryInterface(IMFSinkWriterEx *iface, REFIID riid, void **out)
 {
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualIID(riid, &IID_IMFSinkWriter) ||
-            IsEqualIID(riid, &IID_IUnknown))
+    if (IsEqualIID(riid, &IID_IMFSinkWriterEx)
+            || IsEqualIID(riid, &IID_IMFSinkWriter)
+            || IsEqualIID(riid, &IID_IUnknown))
     {
         *out = iface;
-        IMFSinkWriter_AddRef(iface);
+        IMFSinkWriterEx_AddRef(iface);
         return S_OK;
     }
 
@@ -202,9 +203,9 @@ static HRESULT WINAPI sink_writer_QueryInterface(IMFSinkWriter *iface, REFIID ri
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI sink_writer_AddRef(IMFSinkWriter *iface)
+static ULONG WINAPI sink_writer_AddRef(IMFSinkWriterEx *iface)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     ULONG refcount = InterlockedIncrement(&writer->refcount);
 
     TRACE("%p, %lu.\n", iface, refcount);
@@ -222,9 +223,9 @@ static void sink_writer_drop_pending_items(struct stream *stream)
     }
 }
 
-static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
+static ULONG WINAPI sink_writer_Release(IMFSinkWriterEx *iface)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     ULONG refcount = InterlockedDecrement(&writer->refcount);
     unsigned int i;
 
@@ -284,9 +285,9 @@ static HRESULT sink_writer_add_stream(struct sink_writer *writer, IMFStreamSink 
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_AddStream(IMFSinkWriter *iface, IMFMediaType *media_type, DWORD *index)
+static HRESULT WINAPI sink_writer_AddStream(IMFSinkWriterEx *iface, IMFMediaType *media_type, DWORD *index)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     HRESULT hr = MF_E_INVALIDREQUEST;
     IMFStreamSink *stream_sink;
     DWORD id;
@@ -316,7 +317,7 @@ static HRESULT WINAPI sink_writer_AddStream(IMFSinkWriter *iface, IMFMediaType *
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_SetInputMediaType(IMFSinkWriter *iface, DWORD index, IMFMediaType *type,
+static HRESULT WINAPI sink_writer_SetInputMediaType(IMFSinkWriterEx *iface, DWORD index, IMFMediaType *type,
         IMFAttributes *parameters)
 {
     FIXME("%p, %lu, %p, %p.\n", iface, index, type, parameters);
@@ -343,9 +344,9 @@ static HRESULT sink_writer_set_presentation_clock(struct sink_writer *writer)
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriter *iface)
+static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriterEx *iface)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     HRESULT hr = S_OK;
     unsigned int i;
 
@@ -569,9 +570,9 @@ static HRESULT sink_writer_write_sample(struct sink_writer *writer, struct strea
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_WriteSample(IMFSinkWriter *iface, DWORD index, IMFSample *sample)
+static HRESULT WINAPI sink_writer_WriteSample(IMFSinkWriterEx *iface, DWORD index, IMFSample *sample)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     struct stream *stream;
     LONGLONG timestamp;
     DWORD length;
@@ -608,9 +609,9 @@ static HRESULT WINAPI sink_writer_WriteSample(IMFSinkWriter *iface, DWORD index,
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_SendStreamTick(IMFSinkWriter *iface, DWORD index, LONGLONG timestamp)
+static HRESULT WINAPI sink_writer_SendStreamTick(IMFSinkWriterEx *iface, DWORD index, LONGLONG timestamp)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     HRESULT hr;
 
     TRACE("%p, %lu, %s.\n", iface, index, wine_dbgstr_longlong(timestamp));
@@ -627,9 +628,9 @@ static HRESULT WINAPI sink_writer_SendStreamTick(IMFSinkWriter *iface, DWORD ind
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_PlaceMarker(IMFSinkWriter *iface, DWORD index, void *user_context)
+static HRESULT WINAPI sink_writer_PlaceMarker(IMFSinkWriterEx *iface, DWORD index, void *user_context)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     struct stream *stream;
     HRESULT hr;
 
@@ -651,9 +652,9 @@ static HRESULT WINAPI sink_writer_PlaceMarker(IMFSinkWriter *iface, DWORD index,
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_NotifyEndOfSegment(IMFSinkWriter *iface, DWORD index)
+static HRESULT WINAPI sink_writer_NotifyEndOfSegment(IMFSinkWriterEx *iface, DWORD index)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     HRESULT hr = S_OK;
     unsigned int i;
 
@@ -682,9 +683,9 @@ static HRESULT WINAPI sink_writer_NotifyEndOfSegment(IMFSinkWriter *iface, DWORD
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_Flush(IMFSinkWriter *iface, DWORD index)
+static HRESULT WINAPI sink_writer_Flush(IMFSinkWriterEx *iface, DWORD index)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     HRESULT hr = S_OK;
     unsigned int i;
 
@@ -713,7 +714,7 @@ static HRESULT WINAPI sink_writer_Flush(IMFSinkWriter *iface, DWORD index)
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_Finalize(IMFSinkWriter *iface)
+static HRESULT WINAPI sink_writer_Finalize(IMFSinkWriterEx *iface)
 {
     FIXME("%p.\n", iface);
 
@@ -739,10 +740,10 @@ static HRESULT sink_writer_get_service(void *object, REFGUID service, REFIID rii
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_GetServiceForStream(IMFSinkWriter *iface, DWORD index, REFGUID service,
+static HRESULT WINAPI sink_writer_GetServiceForStream(IMFSinkWriterEx *iface, DWORD index, REFGUID service,
         REFIID riid, void **object)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     HRESULT hr = E_UNEXPECTED;
     struct stream *stream;
 
@@ -770,9 +771,9 @@ static HRESULT WINAPI sink_writer_GetServiceForStream(IMFSinkWriter *iface, DWOR
     return hr;
 }
 
-static HRESULT WINAPI sink_writer_GetStatistics(IMFSinkWriter *iface, DWORD index, MF_SINK_WRITER_STATISTICS *stats)
+static HRESULT WINAPI sink_writer_GetStatistics(IMFSinkWriterEx *iface, DWORD index, MF_SINK_WRITER_STATISTICS *stats)
 {
-    struct sink_writer *writer = impl_from_IMFSinkWriter(iface);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
     struct stream *stream;
     HRESULT hr = S_OK;
 
@@ -800,7 +801,55 @@ static HRESULT WINAPI sink_writer_GetStatistics(IMFSinkWriter *iface, DWORD inde
     return hr;
 }
 
-static const IMFSinkWriterVtbl sink_writer_vtbl =
+static HRESULT WINAPI sink_writer_GetTransformForStream(IMFSinkWriterEx *iface,
+        DWORD stream_index, DWORD transform_index, GUID *out_category, IMFTransform **out_transform)
+{
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
+    IMFTransform *transform = NULL;
+    struct stream *stream;
+    GUID category = {};
+    HRESULT hr;
+
+    TRACE("%p, %#lx, %#lx, %p, %p.\n", iface, stream_index, transform_index, out_category, out_transform);
+
+    if (!out_transform)
+        return E_POINTER;
+    *out_transform = NULL;
+
+    EnterCriticalSection(&writer->cs);
+
+    if (!(stream = sink_writer_get_stream(writer, stream_index)))
+    {
+        LeaveCriticalSection(&writer->cs);
+        return MF_E_INVALIDSTREAMNUMBER;
+    }
+
+    if (stream->converter && transform_index == 0)
+    {
+        transform = stream->converter;
+        category = MFT_CATEGORY_VIDEO_PROCESSOR;
+    }
+    else if ((stream->converter && transform_index == 1)
+            || (!stream->converter && transform_index == 0))
+    {
+        transform = stream->encoder;
+        category = MFT_CATEGORY_VIDEO_ENCODER;
+    }
+
+    hr = MF_E_INVALIDINDEX;
+    if (transform)
+    {
+        IMFTransform_AddRef((*out_transform = transform));
+        if (out_category)
+            *out_category = category;
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&writer->cs);
+    return hr;
+}
+
+static const IMFSinkWriterExVtbl sink_writer_vtbl =
 {
     sink_writer_QueryInterface,
     sink_writer_AddRef,
@@ -816,6 +865,7 @@ static const IMFSinkWriterVtbl sink_writer_vtbl =
     sink_writer_Finalize,
     sink_writer_GetServiceForStream,
     sink_writer_GetStatistics,
+    sink_writer_GetTransformForStream,
 };
 
 static HRESULT WINAPI sink_writer_callback_QueryInterface(IMFAsyncCallback *iface,
@@ -837,13 +887,13 @@ static HRESULT WINAPI sink_writer_callback_QueryInterface(IMFAsyncCallback *ifac
 static ULONG WINAPI sink_writer_events_callback_AddRef(IMFAsyncCallback *iface)
 {
     struct sink_writer *writer = impl_from_events_callback_IMFAsyncCallback(iface);
-    return IMFSinkWriter_AddRef(&writer->IMFSinkWriter_iface);
+    return IMFSinkWriterEx_AddRef(&writer->IMFSinkWriterEx_iface);
 }
 
 static ULONG WINAPI sink_writer_events_callback_Release(IMFAsyncCallback *iface)
 {
     struct sink_writer *writer = impl_from_events_callback_IMFAsyncCallback(iface);
-    return IMFSinkWriter_Release(&writer->IMFSinkWriter_iface);
+    return IMFSinkWriterEx_Release(&writer->IMFSinkWriterEx_iface);
 }
 
 static HRESULT WINAPI sink_writer_callback_GetParameters(IMFAsyncCallback *iface,
@@ -987,7 +1037,7 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    object->IMFSinkWriter_iface.lpVtbl = &sink_writer_vtbl;
+    object->IMFSinkWriterEx_iface.lpVtbl = &sink_writer_vtbl;
     object->events_callback.lpVtbl = &sink_writer_events_callback_vtbl;
     object->refcount = 1;
     object->sink = sink;
@@ -1004,12 +1054,12 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
 
     if (FAILED(hr = sink_writer_initialize_existing_streams(object, sink)))
     {
-        IMFSinkWriter_Release(&object->IMFSinkWriter_iface);
+        IMFSinkWriterEx_Release(&object->IMFSinkWriterEx_iface);
         return hr;
     }
 
-    hr = IMFSinkWriter_QueryInterface(&object->IMFSinkWriter_iface, riid, out);
-    IMFSinkWriter_Release(&object->IMFSinkWriter_iface);
+    hr = IMFSinkWriterEx_QueryInterface(&object->IMFSinkWriterEx_iface, riid, out);
+    IMFSinkWriterEx_Release(&object->IMFSinkWriterEx_iface);
     return hr;
 }
 
