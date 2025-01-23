@@ -13232,6 +13232,52 @@ static void test_2dbuffer_copy(void)
     ID3D11Device_Release(device);
 }
 
+static void test_undefined_queue_id(void)
+{
+    struct test_callback *callback;
+    IMFAsyncResult *result;
+    HRESULT hr;
+    DWORD res;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    callback = create_test_callback(&test_async_callback_result_vtbl);
+
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_UNDEFINED, &callback->IMFAsyncCallback_iface, NULL);
+    todo_wine
+    ok(hr == S_OK, "got %#lx\n", hr);
+    res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 100, &result);
+    todo_wine
+    ok(res == 0, "got %#lx\n", res);
+    if (result)
+        IMFAsyncResult_Release(result);
+
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK, &callback->IMFAsyncCallback_iface, NULL);
+    todo_wine
+    ok(hr == S_OK, "got %#lx\n", hr);
+    res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 100, &result);
+    todo_wine
+    ok(res == 0, "got %#lx\n", res);
+    if (result)
+        IMFAsyncResult_Release(result);
+
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK & (MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK - 1),
+            &callback->IMFAsyncCallback_iface, NULL);
+    todo_wine
+    ok(hr == S_OK, "got %#lx\n", hr);
+    res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 100, &result);
+    todo_wine
+    ok(res == 0, "got %#lx\n", res);
+    if (result)
+        IMFAsyncResult_Release(result);
+
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -13326,6 +13372,7 @@ START_TEST(mfplat)
     test_MFInitMediaTypeFromAMMediaType();
     test_MFCreatePathFromURL();
     test_2dbuffer_copy();
+    test_undefined_queue_id();
 
     CoUninitialize();
 }
