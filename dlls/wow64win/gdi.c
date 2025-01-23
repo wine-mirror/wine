@@ -41,17 +41,6 @@ typedef struct
 
 typedef struct
 {
-    DWORD    elpPenStyle;
-    DWORD    elpWidth;
-    UINT     elpBrushStyle;
-    COLORREF elpColor;
-    ULONG    elpHatch;
-    DWORD    elpNumEntries;
-    DWORD    elpStyleEntry[1];
-} EXTLOGPEN32;
-
-typedef struct
-{
     UINT          otmSize;
     TEXTMETRICW   otmTextMetrics;
     BYTE          otmFiller;

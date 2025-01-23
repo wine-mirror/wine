@@ -1568,6 +1568,17 @@ typedef struct tagEXTLOGPEN
     DWORD elpStyleEntry[1];
 } EXTLOGPEN, *PEXTLOGPEN, *NPEXTLOGPEN, *LPEXTLOGPEN;
 
+typedef struct tagEXTLOGPEN32
+{
+    DWORD    elpPenStyle;
+    DWORD    elpWidth;
+    UINT     elpBrushStyle;
+    COLORREF elpColor;
+    ULONG    elpHatch;
+    DWORD    elpNumEntries;
+    DWORD    elpStyleEntry[1];
+} EXTLOGPEN32, *PEXTLOGPEN32, *NPEXTLOGPEN32, *LPEXTLOGPEN32;
+
 #define PS_SOLID         0x00000000
 #define PS_DASH          0x00000001
 #define PS_DOT           0x00000002
@@ -2338,7 +2349,7 @@ typedef struct {
     DWORD     cbBmi;
     DWORD     offBits;
     DWORD     cbBits;
-    EXTLOGPEN elp;
+    EXTLOGPEN32 elp;
 } EMREXTCREATEPEN, *PEMREXTCREATEPEN;
 
 typedef struct tagEMREXTESCAPE
