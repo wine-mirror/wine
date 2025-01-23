@@ -120,6 +120,7 @@ IActivationFactory *data_writer_activation_factory = &data_writer.IActivationFac
 struct stream_reference_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IRandomAccessStreamReferenceStatics IRandomAccessStreamReferenceStatics_iface;
     LONG ref;
 };
 
@@ -128,9 +129,16 @@ static inline struct stream_reference_statics *impl_stream_reference_statics_fro
     return CONTAINING_RECORD(iface, struct stream_reference_statics, IActivationFactory_iface);
 }
 
+static inline struct stream_reference_statics *impl_stream_reference_statics_from_IRandomAccessStreamReferenceStatics(IRandomAccessStreamReferenceStatics *iface)
+{
+    return CONTAINING_RECORD(iface, struct stream_reference_statics, IRandomAccessStreamReferenceStatics_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE stream_reference_statics_activation_factory_QueryInterface(IActivationFactory *iface,
         REFIID iid, void **out)
 {
+    struct stream_reference_statics *impl = impl_stream_reference_statics_from_IActivationFactory(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown)
@@ -140,6 +148,12 @@ static HRESULT STDMETHODCALLTYPE stream_reference_statics_activation_factory_Que
     {
         IUnknown_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IRandomAccessStreamReferenceStatics))
+    {
+        IUnknown_AddRef(iface);
+        *out = &impl->IRandomAccessStreamReferenceStatics_iface;
         return S_OK;
     }
 
@@ -205,9 +219,87 @@ static const struct IActivationFactoryVtbl stream_reference_statics_activation_f
     stream_reference_statics_activation_factory_ActivateInstance,
 };
 
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_statics_QueryInterface(IRandomAccessStreamReferenceStatics *iface,
+        REFIID iid, void **out)
+{
+    struct stream_reference_statics *impl = impl_stream_reference_statics_from_IRandomAccessStreamReferenceStatics(iface);
+    return IActivationFactory_QueryInterface(&impl->IActivationFactory_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE stream_reference_statics_statics_AddRef(IRandomAccessStreamReferenceStatics *iface)
+{
+    struct stream_reference_statics *impl = impl_stream_reference_statics_from_IRandomAccessStreamReferenceStatics(iface);
+    return IActivationFactory_AddRef(&impl->IActivationFactory_iface);
+}
+
+static ULONG STDMETHODCALLTYPE stream_reference_statics_statics_Release(IRandomAccessStreamReferenceStatics *iface)
+{
+    struct stream_reference_statics *impl = impl_stream_reference_statics_from_IRandomAccessStreamReferenceStatics(iface);
+    return IActivationFactory_Release(&impl->IActivationFactory_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_statics_GetIids(IRandomAccessStreamReferenceStatics *iface,
+        ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_statics_GetRuntimeClassName(IRandomAccessStreamReferenceStatics *iface,
+        HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_statics_GetTrustLevel(IRandomAccessStreamReferenceStatics *iface,
+        TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_statics_CreateFromFile(IRandomAccessStreamReferenceStatics *iface,
+        IStorageFile *file, IRandomAccessStreamReference **stream_reference_statics)
+{
+    FIXME("iface %p, file %p, reference %p stub!\n", iface, file, stream_reference_statics);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_statics_CreateFromUri(IRandomAccessStreamReferenceStatics *iface,
+        IUriRuntimeClass *uri, IRandomAccessStreamReference **stream_reference_statics)
+{
+    FIXME("iface %p, uri %p, reference %p stub!\n", iface, uri, stream_reference_statics);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE stream_reference_statics_statics_CreateFromStream(IRandomAccessStreamReferenceStatics *iface,
+        IRandomAccessStream *stream,
+        IRandomAccessStreamReference **stream_reference_statics)
+{
+    FIXME("iface %p, stream %p, reference %p stub!\n", iface, stream, stream_reference_statics);
+    return E_NOTIMPL;
+}
+
+static const struct IRandomAccessStreamReferenceStaticsVtbl stream_reference_statics_statics_vtbl =
+{
+    stream_reference_statics_statics_QueryInterface,
+    stream_reference_statics_statics_AddRef,
+    stream_reference_statics_statics_Release,
+    /* IInspectable methods */
+    stream_reference_statics_statics_GetIids,
+    stream_reference_statics_statics_GetRuntimeClassName,
+    stream_reference_statics_statics_GetTrustLevel,
+    /* IRandomAccessStreamReferenceStatics */
+    stream_reference_statics_statics_CreateFromFile,
+    stream_reference_statics_statics_CreateFromUri,
+    stream_reference_statics_statics_CreateFromStream
+};
+
 struct stream_reference_statics stream_reference_statics =
 {
     {&stream_reference_statics_activation_factory_vtbl},
+    {&stream_reference_statics_statics_vtbl},
     1
 };
 

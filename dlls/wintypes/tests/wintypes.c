@@ -125,7 +125,7 @@ static void test_interfaces(void)
     if (SUCCEEDED(hr)) IUnknown_Release(unk);
     check_interface(factory, &IID_IActivationFactory, TRUE);
     check_interface(factory, &IID_IDataWriterFactory, FALSE);
-    todo_wine check_interface(factory, &IID_IRandomAccessStreamReferenceStatics, TRUE);
+    check_interface(factory, &IID_IRandomAccessStreamReferenceStatics, TRUE);
     check_interface(factory, &IID_IApiInformationStatics, FALSE);
     check_interface(factory, &IID_IPropertyValueStatics, FALSE);
     IActivationFactory_Release(factory);

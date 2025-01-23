@@ -32,7 +32,9 @@
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Metadata
 #include "windows.foundation.metadata.h"
+#define WIDL_using_Windows_Storage
 #define WIDL_using_Windows_Storage_Streams
+#include "windows.media.h"
 #include "windows.storage.streams.h"
 #include "wintypes_private.h"
 
