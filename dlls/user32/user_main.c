@@ -235,10 +235,10 @@ static KERNEL_CALLBACK_PROC kernel_callback_table[NtUserCallCount] =
 static BOOL process_attach(void)
 {
     NtCurrentTeb()->Peb->KernelCallbackTable = kernel_callback_table;
+    RegisterWaitForInputIdle( WaitForInputIdle );
 
     winproc_init();
     SYSPARAMS_Init();
-
     return TRUE;
 }
 

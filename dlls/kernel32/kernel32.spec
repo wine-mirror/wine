@@ -1279,7 +1279,7 @@
 @ stub RegisterConsoleVDM
 @ stdcall RegisterServiceProcess(long long)
 @ stub RegisterSysMsgHandler
-@ stub RegisterWaitForInputIdle
+@ stdcall RegisterWaitForInputIdle(ptr)
 @ stdcall RegisterWaitForSingleObject(ptr long ptr ptr long long)
 @ stdcall -import RegisterWaitForSingleObjectEx(long ptr ptr long long)
 @ stub RegisterWowBaseHandlers
