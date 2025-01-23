@@ -987,7 +987,9 @@ static void cert_mgr_do_remove(HWND hwnd)
                     PCCERT_CONTEXT cert = cert_mgr_index_to_cert(hwnd,
                      selection);
 
-                    CertDeleteCertificateFromStore(cert);
+                    /* CertDeleteCertificateFromStore() releases certificate, duplicate it to keep context stored
+                     * in the list valid. */
+                    CertDeleteCertificateFromStore(CertDuplicateCertificateContext(cert));
                 }
             } while (selection >= 0);
             cert_mgr_clear_cert_selection(hwnd);

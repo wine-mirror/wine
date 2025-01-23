@@ -745,7 +745,6 @@ static void sync_trusted_roots_from_known_locations( HKEY key, HCERTSTORE cached
         /* Delete from cached so deleted certs do not participate in chain verification. */
         CertDeleteCertificateFromStore( cert );
         /* Restart enumeration as it is broken by deleting cert from store. */
-        CertFreeCertificateContext( cert );
         cert = NULL;
     }
 

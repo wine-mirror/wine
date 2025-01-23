@@ -269,10 +269,10 @@ static void testMemStore(void)
     /* close an empty store */
     ret = CertCloseStore(NULL, 0);
     ok(ret, "CertCloseStore failed: %ld\n", GetLastError());
-    ret = CertCloseStore(store1, 0);
-    ok(ret, "CertCloseStore failed: %ld\n", GetLastError());
-    ret = CertCloseStore(store2, 0);
-    ok(ret, "CertCloseStore failed: %ld\n", GetLastError());
+    ret = CertCloseStore(store1, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ret = CertCloseStore(store2, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
 
     /* This seems nonsensical, but you can open a read-only mem store, only
      * it isn't read-only
@@ -447,8 +447,8 @@ static void testRegStoreSavedCerts(void)
         ok (ret, "Failed to delete certificate from store at %ld, %lx\n", i, GetLastError());
 
         CertFreeCertificateContext(cert1);
-        CertFreeCertificateContext(cert2);
-        CertCloseStore(store, 0);
+        ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+        ok(ret, "got error %#lx.\n", GetLastError());
 
         res = RegOpenKeyExW(reg_store_saved_certs[i].key, key_name, 0, KEY_ALL_ACCESS, &key);
         ok (res, "The cert's registry entry should be absent at %li, %lx\n", i, GetLastError());
@@ -2754,7 +2754,7 @@ static void testEmptyStore(void)
 
     res = CertAddCertificateContextToStore(cert->hCertStore, cert2, CERT_STORE_ADD_NEW, &cert3);
     ok(res, "CertAddCertificateContextToStore failed\n");
-    todo_wine
+    todo_wine_if(cert3)
     ok(cert3 && cert3 != cert2, "Unexpected cert3\n");
     ok(cert3->hCertStore == cert->hCertStore, "Unexpected hCertStore\n");
 
@@ -2763,8 +2763,6 @@ static void testEmptyStore(void)
     res = CertDeleteCertificateFromStore(cert3);
     ok(res, "CertDeleteCertificateContextFromStore failed\n");
     ok(cert3->hCertStore == cert->hCertStore, "Unexpected hCertStore\n");
-
-    CertFreeCertificateContext(cert3);
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(store != NULL, "CertOpenStore failed\n");
@@ -2778,8 +2776,8 @@ static void testEmptyStore(void)
     ok(res, "CertDeleteCertificateContextFromStore failed\n");
     ok(cert3->hCertStore == store, "Unexpected hCertStore\n");
 
-    CertCloseStore(store, 0);
-    CertFreeCertificateContext(cert3);
+    res = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(res, "got error %#lx.\n", GetLastError());
 
     res = CertCloseStore(cert->hCertStore, CERT_CLOSE_STORE_CHECK_FLAG);
     ok(!res && GetLastError() == E_UNEXPECTED, "CertCloseStore returned: %x(%lx)\n", res, GetLastError());

@@ -417,6 +417,8 @@ context_t *Context_CreateDataContext(size_t contextSize, const context_vtbl_t *v
  */
 context_t *Context_CreateLinkContext(unsigned contextSize, context_t *linked, struct WINE_CRYPTCERTSTORE*);
 
+BOOL CRYPT_DeleteCertificateFromStore(PCCERT_CONTEXT pCertContext);
+
 /* Copies properties from fromContext to toContext. */
 void Context_CopyProperties(const void *to, const void *from);
 

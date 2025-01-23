@@ -934,10 +934,9 @@ PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_
     return ret ? &ret->ctx : NULL;
 }
 
-BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
+BOOL CRYPT_DeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
 {
     WINECRYPT_CERTSTORE *hcs;
-
     TRACE("(%p)\n", pCertContext);
 
     if (!pCertContext)
@@ -949,6 +948,17 @@ BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
         return FALSE;
 
     return hcs->vtbl->certs.delete(hcs, &cert_from_ptr(pCertContext)->base);
+}
+
+BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext)
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", pCertContext);
+
+    ret = CRYPT_DeleteCertificateFromStore(pCertContext);
+    CertFreeCertificateContext(pCertContext);
+    return ret;
 }
 
 BOOL WINAPI CertAddCRLContextToStore(HCERTSTORE hCertStore,
