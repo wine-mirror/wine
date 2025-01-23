@@ -683,6 +683,8 @@ static DWORD emfdc_ext_create_pen( struct emf *emf, HPEN pen )
         free( emr );
         return 0;
     }
+    /* Native sets these even if there is no bitmap or brush BITMAPINFO. */
+    emr->offBmi = emr->offBits = emr_size;
 
     emr->emr.iType = EMR_EXTCREATEPEN;
     emr->emr.nSize = emr_size;
