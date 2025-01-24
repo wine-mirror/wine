@@ -140,6 +140,11 @@ BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
     return TRUE;
 }
 
+static void memstore_free_context(context_t *context)
+{
+    Context_Free(context);
+}
+
 static BOOL MemStore_addContext(WINE_MEMSTORE *store, struct list *list, context_t *orig_context,
  context_t *existing, context_t **ret_context, BOOL use_link)
 {
@@ -208,7 +213,7 @@ static BOOL MemStore_deleteContext(WINE_MEMSTORE *store, context_t *context)
     LeaveCriticalSection(&store->cs);
 
     if(in_list && !context->ref)
-        Context_Free(context);
+        memstore_free_context(context);
     return TRUE;
 }
 
@@ -220,7 +225,7 @@ static void free_contexts(struct list *list)
     {
         TRACE("freeing %p\n", context);
         list_remove(&context->u.entry);
-        Context_Free(context);
+        memstore_free_context(context);
     }
 }
 
@@ -228,7 +233,7 @@ static void MemStore_releaseContext(WINECRYPT_CERTSTORE *store, context_t *conte
 {
     /* Free the context only if it's not in a list. Otherwise it may be reused later. */
     if(list_empty(&context->u.entry))
-        Context_Free(context);
+        memstore_free_context(context);
 }
 
 static BOOL MemStore_addCert(WINECRYPT_CERTSTORE *store, context_t *cert,
