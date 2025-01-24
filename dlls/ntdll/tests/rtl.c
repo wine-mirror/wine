@@ -117,6 +117,7 @@ static DWORD     (WINAPI *pRtlConvertDeviceFamilyInfoToString)(DWORD *, DWORD *,
 static NTSTATUS  (WINAPI *pRtlInitializeNtUserPfn)( const UINT64 *client_procsA, ULONG procsA_size,
                                                     const UINT64 *client_procsW, ULONG procsW_size,
                                                     const void *client_workers, ULONG workers_size );
+static PRTL_SPLAY_LINKS (WINAPI *pRtlRealPredecessor)(PRTL_SPLAY_LINKS);
 static NTSTATUS  (WINAPI *pRtlRetrieveNtUserPfn)( const UINT64 **client_procsA,
                                                   const UINT64 **client_procsW,
                                                   const UINT64 **client_workers );
@@ -171,6 +172,7 @@ static void InitFunctionPtrs(void)
         pRtlRbRemoveNode = (void *)GetProcAddress(hntdll, "RtlRbRemoveNode");
         pRtlConvertDeviceFamilyInfoToString = (void *)GetProcAddress(hntdll, "RtlConvertDeviceFamilyInfoToString");
         pRtlInitializeNtUserPfn = (void *)GetProcAddress(hntdll, "RtlInitializeNtUserPfn");
+        pRtlRealPredecessor = (void *)GetProcAddress(hntdll, "RtlRealPredecessor");
         pRtlRetrieveNtUserPfn = (void *)GetProcAddress(hntdll, "RtlRetrieveNtUserPfn");
         pRtlResetNtUserPfn = (void *)GetProcAddress(hntdll, "RtlResetNtUserPfn");
         pRtlSubtreePredecessor = (void *)GetProcAddress(hntdll, "RtlSubtreePredecessor");
@@ -4177,6 +4179,46 @@ static void test_RtlSubtreeSuccessor(void)
     }
 }
 
+static void test_RtlRealPredecessor(void)
+{
+    /*       3
+     *     /   \
+     *    1     5
+     *   / \   / \
+     *  0   2 4   6
+     */
+    static const struct splay_index splay_indices[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+    };
+    static const int expected_predecessors[] = {-1, 0, 1, 2, 3, 4, 5};
+    RTL_SPLAY_LINKS links[7], *predecessor;
+    unsigned int i;
+
+    if (!pRtlRealPredecessor)
+    {
+        win_skip("RtlRealPredecessor is unavailable.\n");
+        return;
+    }
+
+    init_splay_indices(links, ARRAY_SIZE(links), splay_indices, ARRAY_SIZE(splay_indices));
+    for (i = 0; i < ARRAY_SIZE(expected_predecessors); i++)
+    {
+        winetest_push_context("%d", i);
+
+        predecessor = pRtlRealPredecessor(&links[i]);
+        if (expected_predecessors[i] == -1)
+            ok(!predecessor, "Expected NULL, got unexpected %d.\n", (int)(predecessor - links));
+        else
+            ok(predecessor == &links[expected_predecessors[i]], "Expected %d, got unexpected %d.\n",
+               expected_predecessors[i], (int)(predecessor ? predecessor - links : -1));
+
+        winetest_pop_context();
+    }
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -4231,4 +4273,5 @@ START_TEST(rtl)
     test_user_procs();
     test_RtlSubtreePredecessor();
     test_RtlSubtreeSuccessor();
+    test_RtlRealPredecessor();
 }
