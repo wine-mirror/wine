@@ -1686,7 +1686,6 @@ static void test__Mtx(void)
 
     ok(mtx->thread_id == -1, "mtx.thread_id = %lx\n", mtx->thread_id);
     ok(mtx->count == 0, "mtx.count = %lx\n", mtx->count);
-    todo_wine
     ok(mtx->cs.win.Ptr == 0, "mtx.cs == %p\n", mtx->cs.win.Ptr);
     p__Mtx_lock(mtx);
     ok(mtx->thread_id == GetCurrentThreadId(), "mtx.thread_id = %lx\n", mtx->thread_id);
@@ -1699,7 +1698,6 @@ static void test__Mtx(void)
     p__Mtx_unlock(mtx);
     ok(mtx->thread_id == -1, "mtx.thread_id = %lx\n", mtx->thread_id);
     ok(mtx->count == 0, "mtx.count = %lx\n", mtx->count);
-    todo_wine
     ok(mtx->cs.win.Ptr == 0, "mtx.cs == %p\n", mtx->cs.win.Ptr);
     p__Mtx_unlock(mtx);
     ok(mtx->thread_id == -1, "mtx.thread_id = %lx\n", mtx->thread_id);
