@@ -275,10 +275,12 @@ static void testAddCert(void)
             CertFreeCertificateContext(context);
         }
 
-        CertCloseStore(collection, 0);
+        ret = CertCloseStore(collection, CERT_CLOSE_STORE_CHECK_FLAG);
+        ok(ret, "got error %#lx.\n", GetLastError());
     }
 
-    CertCloseStore(store, 0);
+    ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
 }
 
 static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,

@@ -2962,8 +2962,10 @@ static void test_I_UpdateStore(void)
     certs = countCertsInStore(store1);
     ok(certs == 0, "Expected 0 certs, got %ld\n", certs);
 
-    CertCloseStore(store1, 0);
-    CertCloseStore(store2, 0);
+    ret = CertCloseStore(store1, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ret = CertCloseStore(store2, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
 }
 
 static const BYTE pfxdata[] =
