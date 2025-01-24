@@ -969,7 +969,7 @@
 @ stub RtlReadMemoryStream
 @ stub RtlReadOutOfProcessMemoryStream
 @ stdcall RtlRealPredecessor(ptr)
-@ stub RtlRealSuccessor
+@ stdcall RtlRealSuccessor(ptr)
 @ stub RtlRegisterSecureMemoryCacheCallback
 @ stdcall RtlRegisterWait(ptr ptr ptr ptr long long)
 @ stdcall RtlReleaseActivationContext(ptr)

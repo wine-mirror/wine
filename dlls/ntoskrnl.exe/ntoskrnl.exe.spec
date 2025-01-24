@@ -1241,7 +1241,7 @@
 @ stdcall RtlRandom(ptr)
 @ stdcall RtlRandomEx(ptr)
 @ stdcall RtlRealPredecessor(ptr)
-@ stub RtlRealSuccessor
+@ stdcall RtlRealSuccessor(ptr)
 @ stub RtlRemoveUnicodePrefix
 @ stub RtlReserveChunk
 @ cdecl -arch=!i386 RtlRestoreContext(ptr ptr)
