@@ -110,7 +110,12 @@ void Context_Release(context_t *context)
     LONG ref = InterlockedDecrement(&context->ref);
 
     TRACE("(%p) ref=%ld\n", context, ref);
-    assert(ref >= 0);
+
+    if (ref < 0)
+    {
+        ERR( "ref %ld.\n", ref );
+        return;
+    }
 
     if (!ref) {
         WINECRYPT_CERTSTORE *store = context->store;
