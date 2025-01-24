@@ -968,7 +968,7 @@
 @ stdcall RtlReAllocateHeap(long long ptr long)
 @ stub RtlReadMemoryStream
 @ stub RtlReadOutOfProcessMemoryStream
-@ stub RtlRealPredecessor
+@ stdcall RtlRealPredecessor(ptr)
 @ stub RtlRealSuccessor
 @ stub RtlRegisterSecureMemoryCacheCallback
 @ stdcall RtlRegisterWait(ptr ptr ptr ptr long long)

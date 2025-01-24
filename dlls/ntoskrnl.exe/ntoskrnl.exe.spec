@@ -1240,7 +1240,7 @@
 @ stdcall RtlRaiseStatus(long)
 @ stdcall RtlRandom(ptr)
 @ stdcall RtlRandomEx(ptr)
-@ stub RtlRealPredecessor
+@ stdcall RtlRealPredecessor(ptr)
 @ stub RtlRealSuccessor
 @ stub RtlRemoveUnicodePrefix
 @ stub RtlReserveChunk
