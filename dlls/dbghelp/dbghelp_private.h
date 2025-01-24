@@ -456,6 +456,8 @@ struct module_format_vtable
                                                      struct lineinfo_t *line_info, BOOL forward);
     enum method_result          (*enumerate_lines)(struct module_format *modfmt, const WCHAR* compiland_regex,
                                                    const WCHAR *source_file_regex, PSYM_ENUMLINES_CALLBACK cb, void *user);
+    enum method_result          (*get_line_from_inlined_address)(struct module_format *modfmt, struct symt_function *inlined,
+                                                                 DWORD64 address, struct lineinfo_t *line_info);
 
     /* source files information */
     enum method_result          (*enumerate_sources)(struct module_format *modfmt, const WCHAR *sourcefile_regex,

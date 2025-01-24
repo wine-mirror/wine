@@ -2778,6 +2778,25 @@ static BOOL get_line_from_inline_context(HANDLE hProcess, DWORD64 addr, ULONG in
     {
     case IFC_MODE_INLINE:
         inlined = symt_find_inlined_site(pair.effective, addr, inline_ctx);
+        if (symt_check_tag(&inlined->symt, SymTagInlineSite))
+        {
+            struct module_format_vtable_iterator iter = {};
+            while ((module_format_vtable_iterator_next(pair.effective, &iter,
+                                                       MODULE_FORMAT_VTABLE_INDEX(get_line_from_inlined_address))))
+            {
+                enum method_result result = iter.modfmt->vtable->get_line_from_inlined_address(iter.modfmt, inlined, addr, line_info);
+                switch (result)
+                {
+                case MR_SUCCESS:
+                    if (disp) *disp = addr - line_info->address;
+                    return TRUE;
+                case MR_NOT_FOUND: /* continue */
+                    break;
+                default:
+                    return FALSE;
+                }
+            }
+        }
         if (inlined && get_line_from_function(&pair, inlined, addr, disp, line_info))
             return TRUE;
         /* fall through: check if we can find line info at top function level */

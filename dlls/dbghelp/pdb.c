@@ -189,6 +189,23 @@ static enum pdb_result pdb_reader_get_segment_address(struct pdb_reader *pdb, un
     return R_PDB_SUCCESS;
 }
 
+static enum pdb_result pdb_reader_get_segment_offset_from_address(struct pdb_reader *pdb, DWORD64 address, unsigned *segment, unsigned *offset)
+{
+    unsigned i;
+
+    for (i = 0; i < pdb->num_sections; i++)
+    {
+        if (address >= pdb->module->module.BaseOfImage + pdb->sections[i].VirtualAddress &&
+            address < pdb->module->module.BaseOfImage + pdb->sections[i].VirtualAddress + pdb->sections[i].Misc.VirtualSize)
+        {
+            *segment = i + 1;
+            *offset = address - (pdb->module->module.BaseOfImage + pdb->sections[i].VirtualAddress);
+            return R_PDB_SUCCESS;
+        }
+    }
+    return R_PDB_NOT_FOUND;
+}
+
 static inline enum pdb_result pdb_reader_alloc(struct pdb_reader *pdb, size_t size, void **ptr)
 {
     return (*ptr = pool_alloc(&pdb->pool, size)) ? R_PDB_SUCCESS : R_PDB_OUT_OF_MEMORY;
@@ -371,6 +388,9 @@ static enum pdb_result pdb_reader_push_action(struct pdb_reader *pdb, enum pdb_a
 }
 
 static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb);
+static enum pdb_result pdb_reader_internal_binary_search(size_t num_elt,
+                                                         enum pdb_result (*cmp)(unsigned idx, int *cmp_ressult, void *user),
+                                                         size_t *found, void *user);
 
 static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *module, HANDLE file)
 {
@@ -730,6 +750,74 @@ static enum pdb_result pdb_reader_compiland_iterator_next(struct pdb_reader *pdb
     return pdb_reader_read_DBI_cu_header(pdb, iter->dbi_header.version, &iter->dbi_walker, &iter->dbi_cu_header);
 }
 
+struct pdb_compiland_lookup
+{
+    struct pdb_reader *pdb;
+    struct pdb_reader_walker walker;
+    unsigned segment;
+    unsigned offset;
+    unsigned range_size;
+    PDB_SYMBOL_RANGE_EX range;
+};
+
+static enum pdb_result pdb_reader_contrib_range_cmp(unsigned idx, int *cmp, void *user)
+{
+    enum pdb_result result;
+    struct pdb_compiland_lookup *lookup = user;
+    struct pdb_reader_walker walker = lookup->walker;
+
+    walker.offset += idx * lookup->range_size;
+    if ((result = pdb_reader_READ(lookup->pdb, &walker, &lookup->range))) return result;
+    *cmp = lookup->range.segment - lookup->segment;
+    if (!*cmp)
+        *cmp = lookup->range.offset - lookup->offset;
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_lookup_compiland_by_address(struct pdb_reader *pdb, DWORD_PTR address, unsigned *compiland)
+{
+    enum pdb_result result;
+    struct pdb_compiland_lookup lookup = {.pdb = pdb};
+    UINT32 version;
+    PDB_SYMBOLS dbi_header;
+    size_t found;
+    unsigned num_ranges;
+
+    if ((result = pdb_reader_get_segment_offset_from_address(pdb, address, &lookup.segment, &lookup.offset))) return result;
+    if ((result = pdb_reader_walker_init(pdb, PDB_STREAM_DBI, &lookup.walker))) return result;
+    if ((result = pdb_reader_read_DBI_header(pdb, &dbi_header, &lookup.walker))) return result;
+    if ((result = pdb_reader_walker_narrow(&lookup.walker, lookup.walker.offset + dbi_header.module_size, dbi_header.sectcontrib_size))) return result;
+
+    if ((result = pdb_reader_READ(pdb, &lookup.walker, &version))) return result;
+    lookup.range_size = sizeof(PDB_SYMBOL_RANGE_EX);
+    switch (version)
+    {
+    case 0xeffe0000 + 19970605: break;
+    case 0xeffe0000 + 20140516: lookup.range_size += sizeof(UINT32); break;
+    default:
+        WARN("Unsupported contrib version %x\n", version);
+        return R_PDB_INVALID_PDB_FILE;
+    }
+    if ((lookup.walker.last - lookup.walker.offset) % lookup.range_size)
+    {
+        WARN("Unexpected lookup values\n");
+        return R_PDB_INVALID_PDB_FILE;
+    }
+    num_ranges = (lookup.walker.last - lookup.walker.offset) / lookup.range_size;
+    /* we assume contributions are stored in ascending order of segment / offset */
+    result = pdb_reader_internal_binary_search(num_ranges, pdb_reader_contrib_range_cmp, &found, &lookup);
+    if (result)
+    {
+        if (result != R_PDB_NOT_FOUND) return result;
+        /* ensure address is within contribution range */
+        if (lookup.segment != lookup.range.segment ||
+            lookup.offset < lookup.range.offset ||
+            lookup.offset >= lookup.range.offset + lookup.range.size) return R_PDB_NOT_FOUND;
+    }
+    *compiland = lookup.range.index;
+    return R_PDB_SUCCESS;
+}
+
 static enum pdb_result pdb_reader_subsection_next(struct pdb_reader *pdb, struct pdb_reader_walker *in_walker,
                                                   enum DEBUG_S_SUBSECTION_TYPE subsection_type,
                                                   struct pdb_reader_walker *sub_walker)
@@ -863,8 +951,8 @@ static enum pdb_result pdb_reader_get_line_from_address_internal(struct pdb_read
                                                                  DWORD64 address, struct lineinfo_t *line_info,
                                                                  pdbsize_t *compiland_offset)
 {
-    enum pdb_result result;
     struct pdb_reader_compiland_iterator compiland_iter;
+    enum pdb_result result;
 
     if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter))) return result;
     do
@@ -3256,6 +3344,359 @@ BOOL cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, symref_t 
     return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), symref) == R_PDB_SUCCESS;
 }
 
+static enum pdb_result pdb_reader_walker_from_compiland_index(struct pdb_reader *pdb, unsigned compiland, PDB_SYMBOL_FILE_EX *dbi_cu_header)
+{
+    enum pdb_result result;
+    struct pdb_reader_compiland_iterator compiland_iter;
+
+    if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter))) return result;
+    do
+    {
+        if (!compiland--)
+        {
+            *dbi_cu_header = compiland_iter.dbi_cu_header;
+            return R_PDB_SUCCESS;
+        }
+    } while (pdb_reader_compiland_iterator_next(pdb, &compiland_iter) == R_PDB_SUCCESS);
+    return R_PDB_NOT_FOUND;
+}
+
+/* walk the top level global symbols to find matching address */
+static enum pdb_result pdb_reader_search_codeview_symbol_by_address(struct pdb_reader *pdb, struct pdb_reader_walker *walker,
+                                                                    DWORD_PTR address, union codeview_symbol *cv_symbol, pdbsize_t *end_stream_offset)
+{
+    enum pdb_result result;
+    unsigned short segment;
+    unsigned offset, pend;
+    DWORD64 symbol_address;
+
+    while (pdb_reader_read_partial_codeview_symbol(pdb, walker, cv_symbol) == R_PDB_SUCCESS && cv_symbol->generic.id)
+    {
+        switch (cv_symbol->generic.id)
+        {
+        case S_GDATA32:
+        case S_LDATA32:
+            segment = cv_symbol->data_v3.segment;
+            offset = cv_symbol->data_v3.offset;
+            pend = 0;
+            break;
+        case S_THUNK32:
+            segment = cv_symbol->thunk_v3.segment;
+            offset = cv_symbol->thunk_v3.offset;
+            pend = cv_symbol->thunk_v3.pend;
+            break;
+        case S_GPROC32:
+        case S_LPROC32:
+            segment = cv_symbol->proc_v3.segment;
+            offset = cv_symbol->proc_v3.offset;
+            pend = cv_symbol->proc_v3.pend;
+            break;
+
+        default:
+            WARN("Unexpected codeview symbol id %x\n", cv_symbol->generic.id);
+            /* fall through */
+        case S_OBJNAME:
+        case S_COMPILE:
+        case S_COMPILE2:
+        case S_COMPILE3:
+        case S_BUILDINFO:
+        case S_UDT:
+        case S_UNAMESPACE:
+            segment = 0;
+            offset = 0;
+            pend = 0;
+            break;
+        }
+        if (segment)
+        {
+            if ((result = pdb_reader_get_segment_address(pdb, segment, offset, &symbol_address))) return result;
+            if (address == symbol_address)
+            {
+                *end_stream_offset = pend;
+                return R_PDB_SUCCESS;
+            }
+        }
+        if (pend) /* jump to S_END, and skip it */
+        {
+            walker->offset = pend;
+            if ((result = pdb_reader_read_partial_codeview_symbol(pdb, walker, cv_symbol))) return result;
+            if (cv_symbol->generic.id != S_END) return R_PDB_INVALID_PDB_FILE;
+        }
+        walker->offset += cv_symbol->generic.len;
+    }
+    return R_PDB_NOT_FOUND;
+}
+
+static enum pdb_result pdb_reader_alloc_and_fetch_from_checksum(struct pdb_reader *pdb, struct pdb_reader_walker checksum_walker,
+                                                                unsigned chksum_offset, char **string)
+{
+    enum pdb_result result;
+    struct CV_Checksum_t checksum;
+
+    checksum_walker.offset += chksum_offset;
+    if ((result = pdb_reader_READ(pdb, &checksum_walker, &checksum))) return result;
+    return pdb_reader_alloc_and_fetch_global_string(pdb, checksum.strOffset, string);
+}
+
+static enum pdb_result pdb_reader_alloc_and_fetch_from_checksum_subsection(struct pdb_reader *pdb, struct pdb_reader_walker linetab2_walker,
+                                                                           cv_itemid_t cv_inlinee, char **string, unsigned *line_number)
+{
+    enum pdb_result result;
+    struct pdb_reader_walker sub_walker;
+    struct pdb_reader_walker checksum_walker;
+    struct pdb_reader_walker inlineelines_walker;
+
+    sub_walker = linetab2_walker;
+    if ((result = pdb_reader_subsection_next(pdb, &sub_walker, DEBUG_S_FILECHKSMS, &checksum_walker)))
+    {
+        WARN("No DEBUG_S_FILECHKSMS found\n");
+        return R_PDB_MISSING_INFORMATION;
+    }
+
+    for (sub_walker = linetab2_walker; !(result = pdb_reader_subsection_next(pdb, &sub_walker, DEBUG_S_INLINEELINES, &inlineelines_walker)); )
+    {
+        UINT32 inlinee_kind;
+        struct CV_InlineeSourceLine_t inlsrc;
+        struct CV_InlineeSourceLineEx_t inlsrcex;
+
+        if ((result = pdb_reader_READ(pdb, &inlineelines_walker, &inlinee_kind))) return result;
+        switch (inlinee_kind)
+        {
+        case CV_INLINEE_SOURCE_LINE_SIGNATURE:
+            while (!pdb_reader_READ(pdb, &inlineelines_walker, &inlsrc))
+            {
+                if (inlsrc.inlinee == cv_inlinee)
+                {
+                    if ((result = pdb_reader_alloc_and_fetch_from_checksum(pdb, checksum_walker, inlsrc.fileId, string))) return result;
+                    *line_number = inlsrc.sourceLineNum;
+                    return R_PDB_SUCCESS;
+                }
+            }
+            break;
+        case CV_INLINEE_SOURCE_LINE_SIGNATURE_EX:
+            while (!pdb_reader_READ(pdb, &inlineelines_walker, &inlsrcex))
+            {
+                if (inlsrc.inlinee == cv_inlinee)
+                {
+                    if ((result = pdb_reader_alloc_and_fetch_from_checksum(pdb, checksum_walker, inlsrcex.fileId, string))) return result;
+                    *line_number = inlsrcex.sourceLineNum;
+                    return R_PDB_SUCCESS;
+                }
+                inlineelines_walker.offset += inlsrcex.countOfExtraFiles * sizeof(inlsrcex.extraFileId[0]);
+            }
+            break;
+        default:
+            WARN("Unknown signature %x in INLINEELINES subsection\n", inlinee_kind);
+            break;
+        }
+    }
+    return R_PDB_NOT_FOUND;
+}
+
+static enum pdb_result pdb_reader_uncompress_inlinesite_annotation(struct pdb_reader *pdb, struct pdb_reader_walker *walker, unsigned *value)
+{
+    enum pdb_result result;
+    unsigned res;
+    unsigned char ch;
+    unsigned i, num_shift;
+
+    if ((result = pdb_reader_READ(pdb, walker, &ch))) return result;
+
+    if ((ch & 0x80) == 0x00)
+    {
+        res = ch;
+        num_shift = 0;
+    }
+    else if ((ch & 0xC0) == 0x80)
+    {
+        res = ch & 0x3f;
+        num_shift = 1;
+    }
+    else if ((ch & 0xE0) == 0xC0)
+    {
+        res = (ch & 0x1f);
+        num_shift = 3;
+    }
+    else
+    {
+        res = (unsigned)(-1);
+        num_shift = 0;
+    }
+    for (i = 0; i < num_shift; i++)
+    {
+        if ((result = pdb_reader_READ(pdb, walker, &ch))) return result;
+        res <<= 8;
+        res |= ch;
+    }
+    *value = res;
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_read_inlinesite_annotation(struct pdb_reader *pdb, struct pdb_reader_walker *annotation_walker,
+                                                             unsigned *opcode, unsigned *arg1, unsigned *arg2)
+{
+    enum pdb_result result;
+
+    if ((result = pdb_reader_uncompress_inlinesite_annotation(pdb, annotation_walker, opcode))) return result;
+    if (*opcode == BA_OP_Invalid)
+        *arg1 = *arg2 = 0;
+    else if (*opcode <= BA_OP_ChangeColumnEnd)
+    {
+        if ((result = pdb_reader_uncompress_inlinesite_annotation(pdb, annotation_walker, arg1))) return result;
+        if (*opcode == BA_OP_ChangeCodeOffsetAndLineOffset)
+        {
+            *arg2 = *arg1 >> 4;
+            *arg1 &= 0x0F;
+        }
+        else if (*opcode == BA_OP_ChangeCodeLengthAndCodeOffset)
+        {
+            if ((result = pdb_reader_uncompress_inlinesite_annotation(pdb, annotation_walker, arg2))) return result;
+        }
+        else *arg2 = 0;
+    }
+    else
+    {
+        WARN("Unexpected BA annotation options %x\n", *opcode);
+        return R_PDB_INVALID_PDB_FILE;
+    }
+    return R_PDB_SUCCESS;
+}
+
+static inline int pdb_reader_convert_binannot_to_signed(unsigned i)
+{
+    return (i & 1) ? -(int)(i >> 1) : (int)(i >> 1);
+}
+
+static enum pdb_result pdb_method_get_line_from_inlined_address_internal(struct pdb_reader *pdb, struct symt_function *inlined,
+                                                                         DWORD64 address, struct lineinfo_t *line_info)
+{
+    struct symt_function *function = symt_get_function_from_inlined(inlined);
+    enum pdb_result result;
+    PDB_SYMBOL_FILE_EX dbi_cu_header;
+    struct pdb_reader_walker cu_walker;
+    struct pdb_reader_walker linetab2_walker;
+    struct pdb_reader_walker inlinee_walker;
+    DWORD64 top_function_address;
+    unsigned compiland;
+    union codeview_symbol cv_top_function_symbol;
+    union codeview_symbol cv_inlinee_symbol;
+    pdbsize_t end_stream_offset;
+    cv_itemid_t cv_inlinee;
+    size_t annotation_offset;
+    char *source_file_name;
+    unsigned line_number;
+    unsigned opcode, arg1, arg2;
+    unsigned offset_top_function;
+
+    if (!symt_get_info(pdb->module, &function->symt, TI_GET_ADDRESS, &top_function_address)) return R_PDB_INVALID_ARGUMENT;
+    if ((result = pdb_reader_lookup_compiland_by_address(pdb, top_function_address, &compiland))) return result;
+    if ((result = pdb_reader_walker_from_compiland_index(pdb, compiland, &dbi_cu_header))) return result;
+    if ((result = pdb_reader_walker_init(pdb, dbi_cu_header.stream, &cu_walker))) return result;
+    cu_walker.offset += sizeof(UINT32);
+
+    if ((result = pdb_reader_search_codeview_symbol_by_address(pdb, &cu_walker, top_function_address, &cv_top_function_symbol, &end_stream_offset))) return result;
+    if (inlined->user < cu_walker.offset || inlined->user >= end_stream_offset) return R_PDB_INVALID_ARGUMENT;
+
+    inlinee_walker.stream_id = cu_walker.stream_id;
+    inlinee_walker.offset = inlined->user;
+    inlinee_walker.last = end_stream_offset;
+    if ((result = pdb_reader_read_partial_codeview_symbol(pdb, &inlinee_walker, &cv_inlinee_symbol))) return result;
+    switch (cv_inlinee_symbol.generic.id)
+    {
+    case S_INLINESITE:
+        cv_inlinee = cv_inlinee_symbol.inline_site_v3.inlinee;
+        annotation_offset = offsetof(union codeview_symbol, inline_site_v3.binaryAnnotations);
+        break;
+    case S_INLINESITE2:
+        cv_inlinee = cv_inlinee_symbol.inline_site2_v3.inlinee;
+        annotation_offset = offsetof(union codeview_symbol, inline_site2_v3.binaryAnnotations);
+        break;
+    default:
+        WARN("Unexpected symbol id %x for %u\n", cv_inlinee_symbol.generic.id, inlined->symt.tag);
+        return R_PDB_INVALID_PDB_FILE;
+    }
+    if ((result = pdb_reader_walker_init_linetab2(pdb, &dbi_cu_header, &linetab2_walker))) return result;
+
+    if ((result = pdb_reader_alloc_and_fetch_from_checksum_subsection(pdb, linetab2_walker, cv_inlinee, &source_file_name, &line_number))) return result;
+
+    /* then walk annotations */
+    if ((result = pdb_reader_walker_narrow(&inlinee_walker,
+                                           inlinee_walker.offset + annotation_offset - sizeof(cv_inlinee_symbol.generic.len),
+                                           cv_inlinee_symbol.generic.len - annotation_offset + sizeof(cv_inlinee_symbol.generic.len)))) return result;
+    offset_top_function = 0;
+    while (!(result = pdb_reader_read_inlinesite_annotation(pdb, &inlinee_walker, &opcode, &arg1, &arg2)) &&
+           opcode != BA_OP_Invalid)
+    {
+        BOOL check_address = FALSE;
+        switch (opcode)
+        {
+        case BA_OP_CodeOffset:
+            offset_top_function = arg1;
+            break;
+        case BA_OP_ChangeCodeOffset:
+            offset_top_function += arg1;
+            check_address = TRUE;
+            break;
+        case BA_OP_ChangeCodeLength:
+            /* this op isn't widely used by MSVC, but clang uses it a lot... */
+            offset_top_function += arg1;
+            break;
+        case BA_OP_ChangeFile:
+            pdb_reader_free(pdb, source_file_name);
+            {
+                struct pdb_reader_walker sub_walker = linetab2_walker;
+                struct pdb_reader_walker checksum_walker = linetab2_walker;
+                if ((result = pdb_reader_subsection_next(pdb, &sub_walker, DEBUG_S_FILECHKSMS, &checksum_walker)))
+                {
+                    WARN("No DEBUG_S_FILECHKSMS found\n");
+                    return R_PDB_MISSING_INFORMATION;
+                }
+                if ((result = pdb_reader_alloc_and_fetch_from_checksum(pdb, checksum_walker, arg1, &source_file_name))) return result;
+            }
+            break;
+        case BA_OP_ChangeLineOffset:
+            line_number += pdb_reader_convert_binannot_to_signed(arg1);
+            break;
+        case BA_OP_ChangeCodeOffsetAndLineOffset:
+            line_number += pdb_reader_convert_binannot_to_signed(arg2);
+            offset_top_function += arg1;
+            check_address = TRUE;
+            break;
+        case BA_OP_ChangeCodeLengthAndCodeOffset:
+            offset_top_function += arg2;
+            check_address = TRUE;
+            break;
+        default:
+            WARN("Unsupported op %d\n", opcode);
+            break;
+        }
+        if (check_address)
+        {
+            if (top_function_address + offset_top_function > address) /* we're above the searched address */
+                break;
+            line_info->address = top_function_address + offset_top_function;
+            line_info->line_number = line_number;
+            if (top_function_address + offset_top_function == address) /* we've reached our address */
+                break;
+        }
+    }
+    line_info->key = NULL;
+    result = lineinfo_set_nameA(pdb->module->process, line_info, source_file_name) ? R_PDB_SUCCESS : R_PDB_OUT_OF_MEMORY;
+    pdb_reader_free(pdb, source_file_name);
+
+    return result;
+}
+
+static enum method_result pdb_method_get_line_from_inlined_address(struct module_format *modfmt, struct symt_function *inlined,
+                                                                   DWORD64 address, struct lineinfo_t *line_info)
+{
+    struct pdb_reader *pdb;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+
+    return pdb_method_result(pdb_method_get_line_from_inlined_address_internal(pdb, inlined, address, line_info));
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
@@ -3266,6 +3707,7 @@ static struct module_format_vtable pdb_module_format_vtable =
     pdb_method_get_line_from_address,
     pdb_method_advance_line_info,
     pdb_method_enumerate_lines,
+    pdb_method_get_line_from_inlined_address,
     pdb_method_enumerate_sources,
 };
 
