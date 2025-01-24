@@ -117,6 +117,19 @@ static const BYTE signedCTLWithCTLInnerContent[] = {
 0x8e,0xe7,0x5f,0x76,0x2b,0xd1,0x6a,0x82,0xb3,0x30,0x25,0x61,0xf6,0x25,0x23,
 0x57,0x6c,0x0b,0x47,0xb8 };
 
+static const BYTE certWithUsage[] = { 0x30, 0x81, 0x93, 0x02, 0x01, 0x01, 0x30,
+ 0x02, 0x06, 0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04,
+ 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00,
+ 0x30, 0x22, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30,
+ 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31,
+ 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61,
+ 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00,
+ 0x03, 0x01, 0x00, 0xa3, 0x2f, 0x30, 0x2d, 0x30, 0x2b, 0x06, 0x03, 0x55, 0x1d,
+ 0x25, 0x01, 0x01, 0xff, 0x04, 0x21, 0x30, 0x1f, 0x06, 0x08, 0x2b, 0x06, 0x01,
+ 0x05, 0x05, 0x07, 0x03, 0x03, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07,
+ 0x03, 0x02, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01 };
+
 #define test_store_is_empty(store) _test_store_is_empty(__LINE__,store)
 static void _test_store_is_empty(unsigned line, HCERTSTORE store)
 {
@@ -128,10 +141,16 @@ static void _test_store_is_empty(unsigned line, HCERTSTORE store)
 
 static void testMemStore(void)
 {
+    static const BYTE cert1_hash[] =
+        { 0x4a, 0x7f, 0x32, 0x1f, 0xcf, 0x3b, 0xc0, 0x87, 0x48, 0x2b, 0xa1, 0x86, 0x54, 0x18, 0xe4, 0x3a, 0x0e, 0x53, 0x7e, 0x2b, };
+    static const BYTE cert2_hash[] =
+        { 0xef, 0x7c, 0x6f, 0x27, 0x13, 0xff, 0x84, 0x14, 0x7c, 0xb5, 0xf0, 0x0c, 0x5a, 0x82, 0x91, 0x78, 0x96, 0x82, 0x19, 0x5c, };
     HCERTSTORE store1, store2;
-    PCCERT_CONTEXT context;
+    PCCERT_CONTEXT context, stored[2], copy;
+    unsigned int count;
+    BYTE hash[20];
     BOOL ret;
-    DWORD GLE;
+    DWORD GLE, size;
 
     /* NULL provider */
     store1 = CertOpenStore(0, 0, 0, 0, NULL);
@@ -265,6 +284,64 @@ static void testMemStore(void)
         context = CertEnumCertificatesInStore(store1, NULL);
         ok(!context, "Expected an empty store\n");
     }
+
+    /* Test deleting and adding cert during enumeration. */
+    ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, bigCert,
+     sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
+    ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, bigCert2,
+     sizeof(bigCert2), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
+
+    context = NULL;
+    count = 0;
+    while ((context = CertEnumCertificatesInStore(store1, context)))
+    {
+        ok(count < 2, "got %u.\n", count);
+        stored[count] = CertDuplicateCertificateContext(context);
+        ++count;
+    }
+    ok(count == 2, "got %u.\n", count);
+
+    count = 0;
+    context = NULL;
+    while ((context = CertEnumCertificatesInStore(store1, context)))
+    {
+        size = sizeof(hash);
+        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, hash, &size);
+        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n", GetLastError());
+        ok(!memcmp(hash, cert1_hash, sizeof(hash)), "wrong cert.\n");
+        copy = CertDuplicateCertificateContext(context);
+        ok(copy == context, "got %p, %p.\n", copy, context);
+        ret = CertDeleteCertificateFromStore(copy);
+        ok(ret, "CertDeleteCertificateFromStore failed: %08lx\n", GetLastError());
+        if (!count)
+        {
+            ret = CertDeleteCertificateFromStore(stored[1]);
+            ok(ret, "CertDeleteCertificateFromStore failed: %08lx\n", GetLastError());
+            ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, certWithUsage,
+             sizeof(certWithUsage), CERT_STORE_ADD_ALWAYS, NULL);
+            ok(ret, "CertAddEncodedCertificateToStore failed: %08lx\n", GetLastError());
+        }
+        ++count;
+    }
+    ok(count == 1, "got %u.\n", count);
+
+    count = 0;
+    context = NULL;
+    while ((context = CertEnumCertificatesInStore(store1, context)))
+    {
+        size = sizeof(hash);
+        ret = CertGetCertificateContextProperty(context, CERT_HASH_PROP_ID, hash, &size);
+        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n", GetLastError());
+        ok(!memcmp(hash, cert2_hash, sizeof(hash)), "wrong cert.\n");
+        copy = CertDuplicateCertificateContext(context);
+        ret = CertDeleteCertificateFromStore(copy);
+        ok(ret, "CertDeleteCertificateFromStore failed: %08lx\n", GetLastError());
+        ++count;
+    }
+    ok(count == 1, "got %u.\n", count);
+    CertFreeCertificateContext(stored[0]);
 
     /* close an empty store */
     ret = CertCloseStore(NULL, 0);
