@@ -145,7 +145,7 @@ extern LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 extern size_t user_message_size( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
                                  BOOL other_process, BOOL ansi, size_t *reply_size );
 extern void pack_user_message( void *buffer, size_t size, UINT message,
-                               WPARAM wparam, LPARAM lparam, BOOL ansi );
+                               WPARAM wparam, LPARAM lparam, BOOL ansi, void **extra_buffer );
 
 /* rawinput.c */
 extern BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data );

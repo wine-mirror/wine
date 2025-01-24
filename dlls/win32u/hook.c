@@ -244,8 +244,9 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
         HHOOK prev = thread_info->hook;
         BOOL prev_unicode = thread_info->hook_unicode;
         struct win_hook_params *params = info;
+        void *ret_ptr, *extra_buffer = NULL;
+        SIZE_T extra_buffer_size = 0;
         size_t reply_size;
-        void *ret_ptr;
         ULONG ret_len;
 
         size = FIELD_OFFSET( struct win_hook_params, module[module ? lstrlenW( module ) + 1 : 1] );
@@ -295,21 +296,21 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
                     CBT_CREATEWNDW *cbtc = (CBT_CREATEWNDW *)params->lparam;
                     LPARAM lp = (LPARAM)cbtc->lpcs;
                     pack_user_message( (char *)params + message_offset, message_size,
-                                       WM_CREATE, 0, lp, FALSE );
+                                       WM_CREATE, 0, lp, FALSE, &extra_buffer );
                 }
                 break;
             case WH_CALLWNDPROC:
                 {
                     CWPSTRUCT *cwp = (CWPSTRUCT *)((char *)params + lparam_offset);
                     pack_user_message( (char *)params + message_offset, message_size,
-                                       cwp->message, cwp->wParam, cwp->lParam, ansi );
+                                       cwp->message, cwp->wParam, cwp->lParam, ansi, &extra_buffer );
                 }
                 break;
             case WH_CALLWNDPROCRET:
                 {
                     CWPRETSTRUCT *cwpret = (CWPRETSTRUCT *)((char *)params + lparam_offset);
                     pack_user_message( (char *)params + message_offset, message_size,
-                                       cwpret->message, cwpret->wParam, cwpret->lParam, ansi );
+                                       cwpret->message, cwpret->wParam, cwpret->lParam, ansi, &extra_buffer );
                 }
                 break;
             }
@@ -323,6 +324,8 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
         {
             WARN("Too many hooks called recursively, skipping call.\n");
             if (params != info) free( params );
+            if (extra_buffer)
+                NtFreeVirtualMemory( GetCurrentProcess(), &extra_buffer, &extra_buffer_size, MEM_RELEASE );
             return 0;
         }
 
@@ -346,6 +349,8 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
         thread_info->hook_call_depth--;
 
         if (params != info) free( params );
+        if (extra_buffer)
+            NtFreeVirtualMemory( GetCurrentProcess(), &extra_buffer, &extra_buffer_size, MEM_RELEASE );
     }
 
     return ret;
