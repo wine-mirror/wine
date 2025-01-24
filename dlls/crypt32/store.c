@@ -162,8 +162,6 @@ static BOOL MemStore_addContext(WINE_MEMSTORE *store, struct list *list, context
         context->u.entry.prev->next = &context->u.entry;
         context->u.entry.next->prev = &context->u.entry;
         list_init(&existing->u.entry);
-        if(!existing->ref)
-            Context_Release(existing);
     }else {
         list_add_head(list, &context->u.entry);
     }
