@@ -162,6 +162,7 @@ enum {
     kVK_F16                 = 0x6A,
     kVK_F14                 = 0x6B,
     kVK_F10                 = 0x6D,
+    kVK_APPS                = 0x6E,
     kVK_F12                 = 0x6F,
     kVK_F15                 = 0x71,
     kVK_Help                = 0x72,
@@ -297,7 +298,7 @@ static const struct {
     { VK_F14,                   0x65,           TRUE },     /* kVK_F14 */
     { 0,                        0,              FALSE },    /* 0x6C unused */
     { VK_F10,                   0x44,           TRUE },     /* kVK_F10 */
-    { 0,                        0,              FALSE },    /* 0x6E unused */
+    { VK_APPS,                  0x6E,           TRUE },     /* kVK_APPS */
     { VK_F12,                   0x58,           TRUE },     /* kVK_F12 */
     { 0,                        0,              FALSE },    /* 0x70 unused */
     { VK_F15,                   0x66,           TRUE },     /* kVK_F15 */
@@ -396,6 +397,7 @@ static const struct {
     { VK_VOLUME_DOWN | 0x100,   "Volume Down" },
     { VK_VOLUME_MUTE | 0x100,   "Mute" },
     { VK_VOLUME_UP | 0x100,     "Volume Up" },
+    { VK_APPS,                  "Apps" },
 };
 
 
