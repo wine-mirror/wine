@@ -185,6 +185,7 @@ typedef struct {
 struct _context_t {
     const context_vtbl_t *vtbl;
     LONG ref;
+    BOOL deleted_from_store;
     struct WINE_CRYPTCERTSTORE *store;
     struct _context_t *linked;
     CONTEXT_PROPERTY_LIST *properties;

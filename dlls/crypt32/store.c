@@ -142,6 +142,14 @@ BOOL WINAPI I_CertUpdateStore(HCERTSTORE store1, HCERTSTORE store2, DWORD unk0,
 
 static void memstore_free_context(context_t *context)
 {
+    WINE_MEMSTORE *store = (WINE_MEMSTORE *)context->store;
+
+    TRACE(".\n");
+
+    EnterCriticalSection(&store->cs);
+    list_remove(&context->u.entry);
+    LeaveCriticalSection(&store->cs);
+
     Context_Free(context);
 }
 
@@ -157,11 +165,8 @@ static BOOL MemStore_addContext(WINE_MEMSTORE *store, struct list *list, context
     TRACE("adding %p\n", context);
     EnterCriticalSection(&store->cs);
     if (existing) {
-        context->u.entry.prev = existing->u.entry.prev;
-        context->u.entry.next = existing->u.entry.next;
-        context->u.entry.prev->next = &context->u.entry;
-        context->u.entry.next->prev = &context->u.entry;
-        list_init(&existing->u.entry);
+        list_add_before(&existing->u.entry, &context->u.entry);
+        existing->deleted_from_store = TRUE;
     }else {
         list_add_head(list, &context->u.entry);
     }
@@ -184,34 +189,37 @@ static context_t *MemStore_enumContext(WINE_MEMSTORE *store, struct list *list, 
         next = list_next(list, &prev->u.entry);
         Context_Release(prev);
     }else {
-        next = list_next(list, list);
+        next = list_head(list);
     }
+
+    while (next)
+    {
+        ret = LIST_ENTRY(next, context_t, u.entry);
+        if (!ret->deleted_from_store)
+            break;
+        next = list_next(list, next);
+    }
+    if (!next)
+        ret = NULL;
     LeaveCriticalSection(&store->cs);
 
-    if (!next) {
+    if (!ret) {
         SetLastError(CRYPT_E_NOT_FOUND);
         return NULL;
     }
 
-    ret = LIST_ENTRY(next, context_t, u.entry);
     Context_AddRef(ret);
     return ret;
 }
 
 static BOOL MemStore_deleteContext(WINE_MEMSTORE *store, context_t *context)
 {
-    BOOL in_list = FALSE;
-
-    EnterCriticalSection(&store->cs);
-    if (!list_empty(&context->u.entry)) {
-        list_remove(&context->u.entry);
-        list_init(&context->u.entry);
-        in_list = TRUE;
+    if (!context->deleted_from_store)
+    {
+        context->deleted_from_store = TRUE;
+        if (!context->ref)
+            memstore_free_context(context);
     }
-    LeaveCriticalSection(&store->cs);
-
-    if(in_list && !context->ref)
-        memstore_free_context(context);
     return TRUE;
 }
 
@@ -222,15 +230,14 @@ static void free_contexts(struct list *list)
     LIST_FOR_EACH_ENTRY_SAFE(context, next, list, context_t, u.entry)
     {
         TRACE("freeing %p\n", context);
-        list_remove(&context->u.entry);
         memstore_free_context(context);
     }
 }
 
 static void MemStore_releaseContext(WINECRYPT_CERTSTORE *store, context_t *context)
 {
-    /* Free the context only if it's not in a list. Otherwise it may be reused later. */
-    if(list_empty(&context->u.entry))
+    /* Free the context only if it is deleted from store. Otherwise it may be reused later. */
+    if (context->deleted_from_store)
         memstore_free_context(context);
 }
 
