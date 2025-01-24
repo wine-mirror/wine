@@ -47,7 +47,7 @@ struct sec_handle
 };
 
 #define WINE_NO_CACHED_CREDENTIALS 0x10000000
-#define NEGO_MAX_TOKEN 12000
+#define NEGO_MAX_TOKEN 48256
 
 static WCHAR nego_name_W[] = {'N','e','g','o','t','i','a','t','e',0};
 static char nego_name_A[] = "Negotiate";
