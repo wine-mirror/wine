@@ -739,6 +739,9 @@ void __cdecl _Mtx_init_in_situ(_Mtx_t mtx, int flags)
         FIXME("unknown flags ignored: %x\n", flags);
 
     mtx->flags = flags;
+#if _MSVCP_VER >= 140
+    mtx->unknown = 0;
+#endif
     cs_init(&mtx->cs);
     mtx->thread_id = -1;
     mtx->count = 0;

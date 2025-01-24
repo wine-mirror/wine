@@ -166,11 +166,15 @@ typedef struct
     void *tail;
 } critical_section;
 
-typedef struct
-{
+typedef union {
+    critical_section conc;
+    SRWLOCK win;
+} cs;
+
+typedef struct {
     DWORD flags;
-    critical_section cs;
     ULONG_PTR unknown;
+    cs cs;
     DWORD thread_id;
     DWORD count;
 } *_Mtx_t;
@@ -1682,15 +1686,21 @@ static void test__Mtx(void)
 
     ok(mtx->thread_id == -1, "mtx.thread_id = %lx\n", mtx->thread_id);
     ok(mtx->count == 0, "mtx.count = %lx\n", mtx->count);
+    todo_wine
+    ok(mtx->cs.win.Ptr == 0, "mtx.cs == %p\n", mtx->cs.win.Ptr);
     p__Mtx_lock(mtx);
     ok(mtx->thread_id == GetCurrentThreadId(), "mtx.thread_id = %lx\n", mtx->thread_id);
     ok(mtx->count == 1, "mtx.count = %lx\n", mtx->count);
+    ok(mtx->cs.win.Ptr != 0, "mtx.cs == %p\n", mtx->cs.win.Ptr);
     p__Mtx_lock(mtx);
     ok(mtx->thread_id == GetCurrentThreadId(), "mtx.thread_id = %lx\n", mtx->thread_id);
     ok(mtx->count == 1, "mtx.count = %lx\n", mtx->count);
+    ok(mtx->cs.win.Ptr != 0, "mtx.cs == %p\n", mtx->cs.win.Ptr);
     p__Mtx_unlock(mtx);
     ok(mtx->thread_id == -1, "mtx.thread_id = %lx\n", mtx->thread_id);
     ok(mtx->count == 0, "mtx.count = %lx\n", mtx->count);
+    todo_wine
+    ok(mtx->cs.win.Ptr == 0, "mtx.cs == %p\n", mtx->cs.win.Ptr);
     p__Mtx_unlock(mtx);
     ok(mtx->thread_id == -1, "mtx.thread_id = %lx\n", mtx->thread_id);
     ok(mtx->count == -1, "mtx.count = %lx\n", mtx->count);
