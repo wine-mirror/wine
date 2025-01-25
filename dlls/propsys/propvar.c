@@ -604,8 +604,7 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
 {
     HRESULT hr;
 
-    FIXME("(%p, %p, %d, %d, %d): semi-stub!\n", ppropvarDest, propvarSrc,
-          propvarSrc->vt, flags, vt);
+    TRACE("(%p, %p, %d, %d, %d)\n", ppropvarDest, propvarSrc, propvarSrc->vt, flags, vt);
 
     if (vt == propvarSrc->vt)
         return PropVariantCopy(ppropvarDest, propvarSrc);
