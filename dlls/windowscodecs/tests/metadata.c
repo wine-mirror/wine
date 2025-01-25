@@ -102,6 +102,107 @@ static void compare_blob_(unsigned int line, const PROPVARIANT *propvar, const c
     }
 }
 
+static void test_block_reader_enumerator(IWICMetadataBlockReader *block_reader)
+{
+    IEnumUnknown *block_enum, *block_enum2;
+    IUnknown *object, *object2;
+    UINT block_count;
+    ULONG fetched;
+    HRESULT hr;
+
+    hr = IWICMetadataBlockReader_GetEnumerator(block_reader, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataBlockReader_GetEnumerator(block_reader, &block_enum);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IWICMetadataBlockReader_GetEnumerator(block_reader, &block_enum2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(block_enum != block_enum2, "Unexpected instance.\n");
+
+    hr = IWICMetadataBlockReader_GetCount(block_reader, &block_count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(block_count > 0, "Unexpected block count %u.\n", block_count);
+
+    fetched = 0;
+    hr = IEnumUnknown_Next(block_enum, 1, &object, &fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+
+    fetched = 0;
+    hr = IEnumUnknown_Next(block_enum2, 1, &object2, &fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    ok(object == object2, "Unexpected instance.\n");
+    IUnknown_Release(object2);
+
+    hr = IEnumUnknown_Reset(block_enum2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    fetched = 0;
+    hr = IEnumUnknown_Next(block_enum2, 1, &object2, &fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    ok(object == object2, "Unexpected instance.\n");
+    IUnknown_Release(object2);
+
+    IEnumUnknown_Release(block_enum2);
+
+    /* Cloning. */
+    hr = IEnumUnknown_Clone(block_enum, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IEnumUnknown_Clone(block_enum, &block_enum2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* The cloned object inherits cursor value. */
+    fetched = 0;
+    hr = IEnumUnknown_Next(block_enum2, 1, &object2, &fetched);
+    ok(SUCCEEDED(hr), "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+        ok(object != object2, "Unexpected instance.\n");
+        IUnknown_Release(object2);
+    }
+    else
+    {
+        ok(!fetched, "Unexpected count %lu.\n", fetched);
+    }
+    IEnumUnknown_Release(block_enum2);
+
+    /* Skipping. */
+    hr = IEnumUnknown_Skip(block_enum, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumUnknown_Reset(block_enum);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumUnknown_Skip(block_enum, block_count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumUnknown_Reset(block_enum);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumUnknown_Skip(block_enum, block_count + 1);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    fetched = 0;
+    hr = IEnumUnknown_Next(block_enum, 1, &object2, &fetched);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    ok(!fetched, "Unexpected count %lu.\n", fetched);
+    hr = IEnumUnknown_Reset(block_enum);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumUnknown_Skip(block_enum, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    fetched = 0;
+    hr = IEnumUnknown_Next(block_enum, 1, &object2, &fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    ok(object == object2, "Unexpected instance.\n");
+    IUnknown_Release(object2);
+
+    IUnknown_Release(object);
+    IEnumUnknown_Release(block_enum);
+}
+
 enum ifd_entry_type
 {
     IFD_BYTE = 1,
@@ -1853,6 +1954,10 @@ static void test_metadata_png(void)
 
     if (SUCCEEDED(hr))
     {
+        winetest_push_context("png");
+        test_block_reader_enumerator(blockreader);
+        winetest_pop_context();
+
         hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, NULL);
         ok(hr == E_INVALIDARG, "GetContainerFormat failed, hr=%lx\n", hr);
 
@@ -2038,6 +2143,10 @@ static void test_metadata_gif(void)
 
     if (SUCCEEDED(hr))
     {
+        winetest_push_context("gif");
+        test_block_reader_enumerator(blockreader);
+        winetest_pop_context();
+
         hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, &format);
         ok(hr == S_OK, "GetContainerFormat error %#lx\n", hr);
         ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
@@ -4220,6 +4329,7 @@ static void test_metadata_query_writer(void)
     };
 
     IWICMetadataQueryWriter *querywriter, *querywriter2;
+    IEnumUnknown *block_enum, *block_enum2;
     IWICMetadataBlockWriter *blockwriter;
     IWICMetadataWriter *metadata_writer;
     IWICBitmapFrameEncode *frameencode;
@@ -4227,7 +4337,6 @@ static void test_metadata_query_writer(void)
     IWICComponentFactory *factory;
     IWICBitmapEncoder *encoder;
     ULONG ref, count, fetched;
-    IEnumUnknown *block_enum;
     IEnumString *enumstring;
     IUnknown *objects[1];
     LPOLESTR olestring;
@@ -4401,7 +4510,21 @@ if (SUCCEEDED(hr))
     hr = IEnumUnknown_Next(block_enum, 1, objects, &fetched);
     ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
+    /* Cloning. */
+    hr = IEnumUnknown_Clone(block_enum, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IEnumUnknown_Clone(block_enum, &block_enum2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    fetched = 0;
+    hr = IEnumUnknown_Next(block_enum2, 1, objects, &fetched);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    IUnknown_Release(*objects);
+
     IEnumUnknown_Release(block_enum);
+    IEnumUnknown_Release(block_enum2);
     IWICMetadataWriter_Release(app1_writer);
 }
     IWICMetadataBlockWriter_Release(blockwriter);
