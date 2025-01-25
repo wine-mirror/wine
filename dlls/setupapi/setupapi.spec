@@ -82,11 +82,11 @@
 @ stdcall CM_Get_Device_ID_ListA(str ptr long long)
 @ stdcall CM_Get_Device_ID_ListW(wstr ptr long long)
 @ stub CM_Get_Device_ID_List_ExA
-@ stub CM_Get_Device_ID_List_ExW
+@ stdcall CM_Get_Device_ID_List_ExW(wstr ptr long long ptr)
 @ stdcall CM_Get_Device_ID_List_SizeA(ptr str long)
 @ stdcall CM_Get_Device_ID_List_SizeW(ptr wstr long)
 @ stub CM_Get_Device_ID_List_Size_ExA
-@ stub CM_Get_Device_ID_List_Size_ExW
+@ stdcall CM_Get_Device_ID_List_Size_ExW(ptr wstr long ptr)
 @ stdcall CM_Get_Device_ID_Size(ptr ptr long)
 @ stub CM_Get_Device_ID_Size_Ex
 @ stdcall CM_Get_Device_Interface_AliasA(str ptr ptr ptr long)

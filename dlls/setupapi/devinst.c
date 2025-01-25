@@ -4217,6 +4217,130 @@ CONFIGRET WINAPI CM_Get_Device_ID_Size(ULONG *len, DEVINST devnode, ULONG flags)
     return CR_SUCCESS;
 }
 
+static CONFIGRET get_device_id_list(const WCHAR *filter, WCHAR *buffer, ULONG *len, ULONG flags)
+{
+    const ULONG supported_flags = CM_GETIDLIST_FILTER_NONE | CM_GETIDLIST_FILTER_CLASS | CM_GETIDLIST_FILTER_PRESENT;
+    SP_DEVINFO_DATA device = { sizeof(device) };
+    CONFIGRET ret = CR_SUCCESS;
+    GUID guid, *pguid = NULL;
+    unsigned int i, id_len;
+    ULONG query_flags = 0;
+    HDEVINFO set;
+    WCHAR id[64];
+    ULONG needed;
+    WCHAR *p;
+
+    if (!len || (buffer && !*len))
+        return CR_INVALID_POINTER;
+
+    needed = 1;
+
+    if (buffer)
+        *buffer = 0;
+    if (flags & ~supported_flags)
+    {
+        FIXME("Flags %#lx are not supported.\n", flags);
+        *len = needed;
+        return CR_SUCCESS;
+    }
+
+    if (!buffer)
+        *len = 0;
+
+    if (flags & CM_GETIDLIST_FILTER_CLASS)
+    {
+        if (!filter)
+            return CR_INVALID_POINTER;
+        if (IIDFromString((WCHAR *)filter, &guid))
+            return CR_INVALID_DATA;
+        pguid = &guid;
+    }
+
+    if (!buffer)
+        *len = needed;
+
+    if (!pguid)
+        query_flags |= DIGCF_ALLCLASSES;
+    if (flags & CM_GETIDLIST_FILTER_PRESENT)
+        query_flags |= DIGCF_PRESENT;
+
+    set = SetupDiGetClassDevsW(pguid, NULL, NULL, query_flags);
+    if (set == INVALID_HANDLE_VALUE)
+        return CR_SUCCESS;
+
+    p = buffer;
+    for (i = 0; SetupDiEnumDeviceInfo(set, i, &device); ++i)
+    {
+        ret = SetupDiGetDeviceInstanceIdW(set, &device, id, sizeof(id), NULL);
+        if (!ret) continue;
+        id_len = wcslen(id) + 1;
+        needed += id_len;
+        if (buffer)
+        {
+            if (needed > *len)
+            {
+                SetupDiDestroyDeviceInfoList(set);
+                *buffer = 0;
+                return CR_BUFFER_SMALL;
+            }
+            memcpy(p, id, sizeof(*p) * id_len);
+            p += id_len;
+        }
+    }
+    SetupDiDestroyDeviceInfoList(set);
+    *len = needed;
+    if (buffer)
+        *p = 0;
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_List_ExW  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_List_ExW(const WCHAR *filter, WCHAR *buffer, ULONG len, ULONG flags, HMACHINE machine)
+{
+    TRACE("%s %p %ld %#lx %p.\n", debugstr_w(filter), buffer, len, flags, machine);
+
+    if (machine)
+        FIXME("machine %p.\n", machine);
+
+    if (!buffer)
+        return CR_INVALID_POINTER;
+
+    return get_device_id_list(filter, buffer, &len, flags);
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_ListW  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_ListW(const WCHAR *filter, WCHAR *buffer, ULONG len, ULONG flags)
+{
+    return CM_Get_Device_ID_List_ExW(filter, buffer, len, flags, NULL);
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_List_Size_ExW  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_List_Size_ExW(ULONG *len, const WCHAR *filter, ULONG flags, HMACHINE machine)
+{
+    TRACE("%p %s %#lx, machine %p.\n", len, debugstr_w(filter), flags, machine);
+
+    if (machine)
+        FIXME("machine %p.\n", machine);
+
+    return get_device_id_list(filter, NULL, len, flags);
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_List_SizeW  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_List_SizeW(ULONG *len, const WCHAR *filter, ULONG flags)
+{
+    TRACE("%p %s %#lx.\n", len, debugstr_w(filter), flags);
+
+    return get_device_id_list(filter, NULL, len, flags);
+}
+
 /***********************************************************************
  *      SetupDiGetINFClassA (SETUPAPI.@)
  */

@@ -143,33 +143,11 @@ CONFIGRET WINAPI CM_Get_Device_ID_ListA(
 }
 
 /***********************************************************************
- *             CM_Get_Device_ID_ListW  (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_ID_ListW(
-    PCWSTR pszFilter, PWCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
-{
-    FIXME("%s %p %ld 0x%08lx: stub\n", debugstr_w(pszFilter), Buffer, BufferLen, ulFlags);
-
-    if (BufferLen >= 2) Buffer[0] = Buffer[1] = 0;
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
  *             CM_Get_Device_ID_List_SizeA  (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Get_Device_ID_List_SizeA( PULONG  pulLen, PCSTR  pszFilter, ULONG  ulFlags )
 {
     FIXME("%p %s 0x%08lx: stub\n", pulLen, debugstr_a(pszFilter), ulFlags);
-
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
- *             CM_Get_Device_ID_List_SizeW  (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_ID_List_SizeW( PULONG  pulLen, PCWSTR  pszFilter, ULONG  ulFlags )
-{
-    FIXME("%p %s 0x%08lx: stub\n", pulLen, debugstr_w(pszFilter), ulFlags);
 
     return CR_SUCCESS;
 }
