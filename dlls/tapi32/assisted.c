@@ -44,28 +44,19 @@ DWORD WINAPI tapiGetLocationInfoW(LPWSTR countrycode, LPWSTR citycode)
     BYTE buf[200];
     WCHAR szlockey[20];
 
-    static const WCHAR currentidW[] = {'C','u','r','r','e','n','t','I','D',0};
-    static const WCHAR locationW[]  = {'L','o','c','a','t','i','o','n','%','u',0};
-    static const WCHAR areacodeW[]  = {'A','r','e','a','C','o','d','e',0};
-    static const WCHAR countryW[]   = {'C','o','u','n','t','r','y',0};
-    static const WCHAR fmtW[]       = {'%','u',0};
-
     static const WCHAR locations_keyW[] =
-        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s','\\',
-         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'T','e','l','e','p','h','o','n','y','\\','L','o','c','a','t','i','o','n','s',0};
+        L"Software\\Microsoft\\Windows\\CurrentVersion\\Telephony\\Locations";
 
     if(RegOpenKeyW(HKEY_LOCAL_MACHINE, locations_keyW, &hkey) == ERROR_SUCCESS) {
         valsize = sizeof( DWORD);
-        if(!RegQueryValueExW(hkey, currentidW, 0, &type, (LPBYTE) &currid, &valsize) &&
+        if(!RegQueryValueExW(hkey, L"CurrentID", 0, &type, (BYTE *) &currid, &valsize) &&
            type == REG_DWORD) {
             /* find a subkey called Location1, Location2... */
-            swprintf( szlockey, ARRAY_SIZE(szlockey), locationW, currid);
+            swprintf( szlockey, ARRAY_SIZE(szlockey), L"Location%u", currid);
             if( !RegOpenKeyW( hkey, szlockey, &hsubkey)) {
                 if( citycode) {
                     bufsize=sizeof(buf);
-                    if( !RegQueryValueExW( hsubkey, areacodeW, 0, &type, buf, &bufsize) &&
+                    if( !RegQueryValueExW( hsubkey, L"AreaCode", 0, &type, buf, &bufsize) &&
                         type == REG_SZ) {
                         lstrcpynW( citycode, (WCHAR *) buf, 8);
                     } else 
@@ -73,9 +64,9 @@ DWORD WINAPI tapiGetLocationInfoW(LPWSTR countrycode, LPWSTR citycode)
                 }
                 if( countrycode) {
                     bufsize=sizeof(buf);
-                    if( !RegQueryValueExW( hsubkey, countryW, 0, &type, buf, &bufsize) &&
+                    if( !RegQueryValueExW( hsubkey, L"Country", 0, &type, buf, &bufsize) &&
                         type == REG_DWORD)
-                        swprintf( countrycode, 8, fmtW, *(LPDWORD) buf );
+                        swprintf( countrycode, 8, L"%u", *(DWORD *) buf );
                     else
                         countrycode[0] = '\0';
                 }
