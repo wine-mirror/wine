@@ -1954,39 +1954,6 @@ static void test_constantforce_effect( IDirectInputDevice8W *device, HANDLE file
             .report_buf = {0x03,0x01,0x04,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x3f,0x00},
         },
     };
-    struct hid_expect expect_create_1_todo[] =
-    {
-        /* set constantforce, magnitude 10000 */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 9,
-            .report_len = 3,
-            .report_buf = {0x09,0xff,0xff},
-            .todo = TRUE, .wine_only = TRUE,
-        },
-        /* set constantforce, magnitude 10000 */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 9,
-            .report_len = 3,
-            .report_buf = {0x09,0x10,0x27},
-            .todo = TRUE,
-        },
-        /* update envelope */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 7,
-            .report_buf = {0x06,0x19,0x4c,0x02,0x00,0x04,0x00},
-        },
-        /* update effect */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 11,
-            .report_buf = {0x03,0x01,0x04,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x3f,0x00},
-        },
-    };
 
     struct hid_expect expect_create_2[] =
     {
@@ -1995,16 +1962,7 @@ static void test_constantforce_effect( IDirectInputDevice8W *device, HANDLE file
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 9,
             .report_len = 3,
-            .report_buf = {0x09,0xff,0xff},
-            .todo = TRUE, .wine_only = TRUE,
-        },
-        /* set constantforce, magnitude -10000 */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 9,
-            .report_len = 3,
             .report_buf = {0x09,0xf0,0xd8},
-            .todo = TRUE,
         },
         /* update envelope */
         {
@@ -2170,7 +2128,7 @@ static void test_constantforce_effect( IDirectInputDevice8W *device, HANDLE file
     desc.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
     desc.lpvTypeSpecificParams = (void *)&input_constant_force[2];
 
-    set_hid_expect( file, expect_create_1_todo, sizeof(expect_create_1_todo) );
+    set_hid_expect( file, expect_create_1, sizeof(expect_create_1) );
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_ConstantForce, &desc, &effect, NULL );
     ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
