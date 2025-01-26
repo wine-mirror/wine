@@ -57,13 +57,13 @@ static void WINHELP_InitFonts(HWND hWnd)
 {
     WINHELP_WINDOW *win = (WINHELP_WINDOW*) GetWindowLongPtrW(hWnd, 0);
     LOGFONTW logfontlist[] = {
-        {-10, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}},
-        {-12, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}},
-        {-12, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}},
-        {-12, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}},
-        {-12, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}},
-        {-10, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}},
-        { -8, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, {'H','e','l','v',0}}};
+        {-10, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, L"Helv"},
+        {-12, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, L"Helv"},
+        {-12, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, L"Helv"},
+        {-12, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, L"Helv"},
+        {-12, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, L"Helv"},
+        {-10, 0, 0, 0, 700, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, L"Helv"},
+        { -8, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 32, L"Helv"}};
 
     static HFONT fonts[ARRAY_SIZE(logfontlist)];
     static BOOL init = FALSE;
