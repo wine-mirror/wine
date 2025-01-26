@@ -668,7 +668,7 @@ static LRESULT OnTopicChange(HHInfo *info, void *user_data)
         return 0;
     }
 
-    TRACE("name %s loal %s\n", debugstr_w(name), debugstr_w(local));
+    TRACE("name %s local %s\n", debugstr_w(name), debugstr_w(local));
 
     NavigateToChm(info, chmfile, local);
     return 0;
