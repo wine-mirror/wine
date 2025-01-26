@@ -7398,7 +7398,7 @@ static void test_NormalizeString(void)
             memset(dst, 0xcc, sizeof(dst));
             dstlen = pNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), dst, dstlen );
             ok(dstlen == lstrlenW( ptest->expected[i] ), "%s:%d: Copied length differed: was %d, should be %d\n",
-               wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst ));
+               wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( ptest->expected[i] ));
             str_cmp = wcsncmp( ptest->expected[i], dst, dstlen );
             ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                 wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
