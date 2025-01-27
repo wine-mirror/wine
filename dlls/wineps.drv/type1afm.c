@@ -659,15 +659,14 @@ static BOOL ParseB(LPSTR sz, OLD_AFMMETRICS *metrics)
  */
 static int __cdecl ug_name_cmp(const void *a, const void *b)
 {
-    return strcmp(((const UNICODEGLYPH *)a)->name->sz,
-            ((const UNICODEGLYPH *)b)->name->sz);
+    return strcmp(((const UNICODEGLYPH *)a)->name,
+            ((const UNICODEGLYPH *)b)->name);
 }
 
 static BOOL ParseN(LPSTR sz, OLD_AFMMETRICS *metrics)
 {
     CHAR    save, *cp, *end_ptr;
     UNICODEGLYPH ug, *pug;
-    GLYPHNAME gn;
 
     cp = sz + 1;
 
@@ -688,8 +687,7 @@ static BOOL ParseN(LPSTR sz, OLD_AFMMETRICS *metrics)
     save = *end_ptr;
     *end_ptr = '\0';
 
-    ug.name = &gn;
-    gn.sz = cp;
+    ug.name = cp;
     pug = bsearch(&ug, PSDRV_AGLbyName, PSDRV_AGLbyNameSize,
             sizeof(ug), ug_name_cmp);
     if (!pug)

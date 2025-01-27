@@ -60,7 +60,7 @@ static const char *find_ag_name(WCHAR wch)
     UNICODEGLYPH *needle;
 
     needle = bsearch(&key, PSDRV_AGLbyUV, PSDRV_AGLbyUVSize, sizeof(key), agl_by_uv);
-    return needle ? needle->name->sz : NULL;
+    return needle ? needle->name : NULL;
 }
 
 BOOL PSDRV_WriteBuiltinGlyphShow(print_ctx *ctx, LPCWSTR str, INT count)

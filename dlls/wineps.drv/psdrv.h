@@ -61,13 +61,8 @@ struct ps_brush_pattern
 };
 
 typedef struct {
-    INT		    index;
-    LPCSTR	    sz;
-} GLYPHNAME;
-
-typedef struct {
     LONG	    UV;
-    const GLYPHNAME *name;
+    const char     *name;
 } UNICODEGLYPH;
 
 typedef struct {
@@ -360,14 +355,6 @@ typedef struct
 
 extern print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
         const DEVMODEW *devmode );
-
-/*
- *  Every glyph name in the Adobe Glyph List and the 35 core PostScript fonts
- */
-
-extern const INT    PSDRV_AGLGlyphNamesSize;
-extern GLYPHNAME    PSDRV_AGLGlyphNames[];
-
 
 /*
  *  The AGL encoding vector
