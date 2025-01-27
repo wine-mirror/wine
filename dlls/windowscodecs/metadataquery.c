@@ -903,9 +903,16 @@ static HRESULT get_query_item_name(const PROPVARIANT *var, WCHAR **name)
     }
 
     if (type)
-        swprintf(*name, len, L"{%s=%s}", type, dest.pwszVal);
+    {
+        if (var->vt == VT_LPWSTR)
+            swprintf(*name, len, L"%s", dest.pwszVal);
+        else
+            swprintf(*name, len, L"{%s=%s}", type, dest.pwszVal);
+    }
     else
+    {
         wcscpy(*name, L"{}");
+    }
     PropVariantClear(&dest);
 
     return S_OK;
