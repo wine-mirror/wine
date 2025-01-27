@@ -90,6 +90,9 @@ static HRESULT get_persist_stream(void *iface_ptr, IStream **stream)
     return hr;
 }
 
+static HRESULT create_query_reader_from_metadata_reader(IWICComponentFactory *factory, IWICMetadataReader *metadata_reader,
+        const GUID *container_format, IWICMetadataQueryReader **query_reader);
+
 #define compare_blob(a,b,c) compare_blob_(__LINE__,a,b,c)
 static void compare_blob_(unsigned int line, const PROPVARIANT *propvar, const char *data, ULONG length)
 {
@@ -655,23 +658,29 @@ static void _test_reader_container_format(IWICMetadataReader *reader, const GUID
     IWICMetadataHandlerInfo_Release(info);
 }
 
-
 static void test_metadata_unknown(void)
 {
+    IWICMetadataQueryReader *query_reader, *query_reader2;
     HRESULT hr;
     IWICMetadataReader *reader;
     IWICEnumMetadataItem *enumerator;
+    IWICComponentFactory *factory;
     PROPVARIANT schema, id, value;
     IWICMetadataWriter *writer;
     IWICPersistStream *persist;
-    ULONG items_returned;
+    IEnumString *enum_string;
     IStream *stream;
+    ULONG fetched;
+    WCHAR *str;
     UINT count;
 
     hr = CoCreateInstance(&CLSID_WICUnknownMetadataReader, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICMetadataReader, (void**)&reader);
     ok(hr == S_OK, "CoCreateInstance failed, hr=%lx\n", hr);
-    if (FAILED(hr)) return;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     check_interface(reader, &IID_IWICMetadataReader, TRUE);
     check_interface(reader, &IID_IPersist, TRUE);
@@ -682,51 +691,41 @@ static void test_metadata_unknown(void)
 
     load_stream(reader, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionDefault);
 
+    /* Item enumerator. */
     hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
     ok(hr == S_OK, "GetEnumerator failed, hr=%lx\n", hr);
 
-    if (SUCCEEDED(hr))
-    {
-        PropVariantInit(&schema);
-        PropVariantInit(&id);
-        PropVariantInit(&value);
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
 
-        hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &items_returned);
-        ok(hr == S_OK, "Next failed, hr=%lx\n", hr);
-        ok(items_returned == 1, "unexpected item count %li\n", items_returned);
+    hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &fetched);
+    ok(hr == S_OK, "Next failed, hr=%lx\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
 
-        if (hr == S_OK && items_returned == 1)
-        {
-            ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
-            ok(id.vt == VT_EMPTY, "unexpected vt: %i\n", id.vt);
-            compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
+    ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
+    ok(id.vt == VT_EMPTY, "unexpected vt: %i\n", id.vt);
+    compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
 
-            PropVariantClear(&schema);
-            PropVariantClear(&id);
-            PropVariantClear(&value);
-        }
+    PropVariantClear(&schema);
+    PropVariantClear(&id);
+    PropVariantClear(&value);
 
-        hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &items_returned);
-        ok(hr == S_FALSE, "Next failed, hr=%lx\n", hr);
-        ok(items_returned == 0, "unexpected item count %li\n", items_returned);
+    hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &fetched);
+    ok(hr == S_FALSE, "Next failed, hr=%lx\n", hr);
+    ok(!fetched, "Unexpected count %lu.\n", fetched);
 
-        hr = IWICEnumMetadataItem_Reset(enumerator);
-        ok(hr == S_OK, "Reset failed, hr=%lx\n", hr);
+    hr = IWICEnumMetadataItem_Reset(enumerator);
+    ok(hr == S_OK, "Reset failed, hr=%lx\n", hr);
 
-        hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, NULL, NULL);
-        ok(hr == S_OK, "Next failed, hr=%lx\n", hr);
+    hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, NULL, NULL);
+    ok(hr == S_OK, "Next failed, hr=%lx\n", hr);
+    ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
+    ok(id.vt == VT_EMPTY, "unexpected vt: %i\n", id.vt);
+    PropVariantClear(&schema);
+    PropVariantClear(&id);
 
-        if (hr == S_OK)
-        {
-            ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
-            ok(id.vt == VT_EMPTY, "unexpected vt: %i\n", id.vt);
-
-            PropVariantClear(&schema);
-            PropVariantClear(&id);
-        }
-
-        IWICEnumMetadataItem_Release(enumerator);
-    }
+    IWICEnumMetadataItem_Release(enumerator);
 
     hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -750,6 +749,58 @@ static void test_metadata_unknown(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 1, "Unexpected count %u.\n", count);
     IWICPersistStream_Release(persist);
+
+    /* Query reader. */
+    load_stream(reader, metadata_unknown, sizeof(metadata_unknown), 0);
+
+    hr = create_query_reader_from_metadata_reader(factory, reader, &GUID_NULL, &query_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/unknown", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type %d.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
+
+    hr = IWICMetadataQueryReader_GetEnumerator(query_reader2, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    str = NULL;
+    hr = IEnumString_Next(enum_string, 1, &str, &fetched);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    if (hr == S_OK)
+    {
+        ok(!wcscmp(str, L"/{}"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+        CoTaskMemFree(str);
+    }
+    IEnumString_Release(enum_string);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader2, L"/{}", &value);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
+        PropVariantClear(&value);
+    }
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/unknown/{}", &value);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
+        PropVariantClear(&value);
+    }
+
+    IWICMetadataQueryReader_Release(query_reader2);
+    IWICMetadataQueryReader_Release(query_reader);
 
     IWICMetadataReader_Release(reader);
 
@@ -787,6 +838,7 @@ static void test_metadata_unknown(void)
     load_stream(writer, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionNoCacheStream);
 
     IWICMetadataWriter_Release(writer);
+    IWICComponentFactory_Release(factory);
 }
 
 static void test_metadata_tEXt(void)
