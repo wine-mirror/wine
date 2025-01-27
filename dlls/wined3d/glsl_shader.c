@@ -8151,7 +8151,7 @@ static void shader_glsl_generate_vs_epilogue(const struct wined3d_gl_info *gl_in
                 shader_addline(buffer, "gl_ClipDistance[%u] = dot(gl_Position, clip_planes[%u]);\n", i, i);
     }
 
-    if (args->point_size && !args->per_vertex_point_size)
+    if (args->point_size && !shader->reg_maps.point_size)
     {
         if (reg_maps->shader_version.major >= 4)
             shader_addline(buffer, "gl_PointSize = 1.0;\n");
@@ -8200,7 +8200,7 @@ static GLuint shader_glsl_generate_vertex_shader(const struct wined3d_context_gl
     for (i = 0; i < shader->input_signature.element_count; ++i)
         shader_glsl_declare_generic_vertex_attribute(buffer, gl_info, &shader->input_signature.elements[i]);
 
-    if (args->point_size && !args->per_vertex_point_size && reg_maps->shader_version.major < 4)
+    if (args->point_size && !shader->reg_maps.point_size && reg_maps->shader_version.major < 4)
     {
         shader_addline(buffer, "uniform struct\n{\n");
         shader_addline(buffer, "    float size;\n");
@@ -8752,8 +8752,6 @@ static BOOL vs_args_equal(const struct vs_compile_args *stored, const struct vs_
     if ((stored->clip_enabled) != new->clip_enabled)
         return FALSE;
     if (stored->point_size != new->point_size)
-        return FALSE;
-    if (stored->per_vertex_point_size != new->per_vertex_point_size)
         return FALSE;
     if (stored->flatshading != new->flatshading)
         return FALSE;

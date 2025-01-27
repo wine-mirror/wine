@@ -1504,10 +1504,9 @@ struct vs_compile_args
     BYTE fog_src;
     BYTE clip_enabled : 1;
     BYTE point_size : 1;
-    BYTE per_vertex_point_size : 1;
     BYTE flatshading : 1;
     BYTE next_shader_type : 3;
-    BYTE padding : 1;
+    BYTE padding : 2;
 };
 
 struct ds_compile_args
