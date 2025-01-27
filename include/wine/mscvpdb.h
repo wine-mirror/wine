@@ -1969,7 +1969,7 @@ union codeview_symbol
         unsigned int            offParent : 12;
         unsigned int            padding   : 20;
         struct cv_addr_range    range;
-        struct cv_addr_gap      gaps[0];
+        struct cv_addr_gap      gaps[];
     } defrange_subfield_register_v3;
 
     struct
@@ -1982,7 +1982,7 @@ union codeview_symbol
         unsigned short          offsetParent     : 12;
         int                     offBasePointer;
         struct cv_addr_range    range;
-        struct cv_addr_gap      gaps[0];
+        struct cv_addr_gap      gaps[];
     } defrange_registerrel_v3;
 
     struct
@@ -1999,7 +1999,7 @@ union codeview_symbol
         unsigned int            pParent;
         unsigned int            pEnd;
         cv_itemid_t             inlinee;
-        unsigned char           binaryAnnotations[0];
+        unsigned char           binaryAnnotations[];
     } inline_site_v3;
 
     struct
@@ -2020,7 +2020,7 @@ union codeview_symbol
         unsigned int            pEnd;
         cv_itemid_t             inlinee;
         unsigned int            invocations;
-        unsigned char           binaryAnnotations[0];
+        unsigned char           binaryAnnotations[];
     } inline_site2_v3;
 
     struct
@@ -2340,7 +2340,7 @@ struct CV_Checksum_t /* this one is not defined in microsoft pdb information */
     unsigned            strOffset;      /* offset in string table for filename */
     unsigned char       size;           /* size of checksum */
     unsigned char       method;         /* method used to compute check sum */
-    unsigned char       checksum[0];    /* (size) bytes */
+    unsigned char       checksum[];     /* (size) bytes */
     /* result is padded on 4-byte boundary */
 };
 
@@ -2360,7 +2360,7 @@ typedef struct CV_InlineeSourceLineEx_t
     unsigned       fileId;        /* offset in DEBUG_S_FILECHKSMS */
     unsigned       sourceLineNum; /* first line number */
     unsigned int   countOfExtraFiles;
-    unsigned       extraFileId[0];
+    unsigned       extraFileId[];
 } InlineeSourceLineEx;
 
 #ifdef __WINESRC__
