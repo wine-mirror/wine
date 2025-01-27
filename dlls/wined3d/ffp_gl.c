@@ -997,28 +997,6 @@ void clipplane(struct wined3d_context *context, const struct wined3d_state *stat
     context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
 }
 
-void ffp_vertex_update_clip_plane_constants(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
-{
-    for (unsigned int i = 0; i < gl_info->limits.user_clip_distances; ++i)
-    {
-        GLdouble plane[4];
-
-        gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
-        gl_info->gl_ops.gl.p_glPushMatrix();
-        gl_info->gl_ops.gl.p_glLoadIdentity();
-
-        plane[0] = state->clip_planes[i].x;
-        plane[1] = state->clip_planes[i].y;
-        plane[2] = state->clip_planes[i].z;
-        plane[3] = state->clip_planes[i].w;
-
-        gl_info->gl_ops.gl.p_glClipPlane(GL_CLIP_PLANE0 + i, plane);
-        checkGLcall("glClipPlane");
-
-        gl_info->gl_ops.gl.p_glPopMatrix();
-    }
-}
-
 static void streamsrc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     wined3d_context_gl_update_stream_sources(wined3d_context_gl(context), state);

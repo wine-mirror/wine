@@ -790,8 +790,6 @@ void wined3d_ffp_blitter_create(struct wined3d_blitter **next, const struct wine
 struct wined3d_blitter *wined3d_glsl_blitter_create(struct wined3d_blitter **next, const struct wined3d_device *device);
 void wined3d_raw_blitter_create(struct wined3d_blitter **next, const struct wined3d_gl_info *gl_info);
 
-void ffp_vertex_update_clip_plane_constants(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state);
-
 struct wined3d_caps_gl_ctx
 {
     HDC dc;

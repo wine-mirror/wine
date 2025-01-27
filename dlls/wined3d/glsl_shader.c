@@ -1704,6 +1704,29 @@ static void shader_glsl_clip_plane_uniform(const struct wined3d_context_gl *cont
     GL_EXTCALL(glUniform4fv(prog->vs.clip_planes_location + index, 1, &state->clip_planes[index].x));
 }
 
+static void ffp_vertex_update_clip_plane_constants(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_state *state)
+{
+    for (unsigned int i = 0; i < gl_info->limits.user_clip_distances; ++i)
+    {
+        GLdouble plane[4];
+
+        gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
+        gl_info->gl_ops.gl.p_glPushMatrix();
+        gl_info->gl_ops.gl.p_glLoadIdentity();
+
+        plane[0] = state->clip_planes[i].x;
+        plane[1] = state->clip_planes[i].y;
+        plane[2] = state->clip_planes[i].z;
+        plane[3] = state->clip_planes[i].w;
+
+        gl_info->gl_ops.gl.p_glClipPlane(GL_CLIP_PLANE0 + i, plane);
+        checkGLcall("glClipPlane");
+
+        gl_info->gl_ops.gl.p_glPopMatrix();
+    }
+}
+
 static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
         struct wined3d_context *context, const struct wined3d_state *state)
 {
