@@ -90,10 +90,8 @@ typedef struct {
 } OLD_AFMMETRICS;
 
 typedef struct {
-    INT     	    	C;  	    	    	/* AFM encoding (or -1) */
     LONG    	    	UV; 	    	    	/* Unicode value */
     FLOAT   	    	WX; 	    	    	/* Advance width */
-    const GLYPHNAME 	*N; 	    	    	/* Glyph name */
 } AFMMETRICS;
 
 typedef struct {

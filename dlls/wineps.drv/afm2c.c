@@ -91,8 +91,7 @@ static void writeHeader(FILE *of, const AFM *afm, const char *buffer)
 		" *\n"
 		" */\n"
 		"\n"
-		"#include \"psdrv.h\"\n"
-		"#include \"data/agl.h\"\n", afm->FullName);
+		"#include \"psdrv.h\"\n", afm->FullName);
 }
 
 static void writeMetrics(FILE *of, const AFM *afm, const char *buffer)
@@ -104,14 +103,12 @@ static void writeMetrics(FILE *of, const AFM *afm, const char *buffer)
     fprintf(of, "static const AFMMETRICS metrics[%i] =\n{\n",
     	    afm->NumofMetrics);
 
-    for (i = 0; i < afm->NumofMetrics - 1; ++i)
+    for (i = 0; i < afm->NumofMetrics; ++i)
     {
-    	fprintf(of, "    { %3i, 0x%.4lx, %4g, GN_%s },\n", afm->Metrics[i].C,
-	    	afm->Metrics[i].UV, afm->Metrics[i].WX, afm->Metrics[i].N->sz);
+    	fprintf(of, "    { 0x%.4lx, %4g },\n", afm->Metrics[i].UV, afm->Metrics[i].WX);
     }
 
-    fprintf(of, "    { %3i, 0x%.4lx, %4g, GN_%s }\n};\n", afm->Metrics[i].C,
-    	    afm->Metrics[i].UV, afm->Metrics[i].WX, afm->Metrics[i].N->sz);
+    fprintf(of, "};\n");
 }
 
 static void writeAFM(FILE *of, const AFM *afm, const char *buffer)

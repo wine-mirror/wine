@@ -1008,10 +1008,8 @@ static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 
     for (i = 0; i < afm->NumofMetrics; ++i, ++metrics, ++encoded_metrics)
     {
-    	metrics->C = encoded_metrics->C;
 	metrics->UV = encoded_metrics->UV;
 	metrics->WX = encoded_metrics->WX;
-	metrics->N = encoded_metrics->N;
     }
 
     HeapFree(PSDRV_Heap, 0, old_metrics);
