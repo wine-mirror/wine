@@ -81,12 +81,9 @@ typedef struct _tagAFMLIGS {
 } AFMLIGS;
 
 typedef struct {
-    int			C;		/* character */
     LONG     	    	UV;
     float		WX;
-    const GLYPHNAME	*N;		/* name */
     AFMBBOX		B;
-    const AFMLIGS	*L;		/* Ligatures */
 } OLD_AFMMETRICS;
 
 typedef struct {

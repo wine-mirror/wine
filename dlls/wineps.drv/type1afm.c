@@ -584,40 +584,6 @@ static BOOL ReadFontMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM **p_afm)
 }
 
 /*******************************************************************************
- *  ParseC
- *
- *  Fatal error:    	return FALSE (none defined)
- *
- *  Non-fatal error:	leave metrics->C set to INT_MAX
- *
- */
-static BOOL ParseC(LPSTR sz, OLD_AFMMETRICS *metrics)
-{
-    int     base = 10;
-    long    l;
-    CHAR    *cp, *end_ptr;
-
-    cp = sz + 1;
-
-    if (*cp == 'H')
-    {
-    	base = 16;
-	++cp;
-    }
-
-    errno = 0;
-    l = strtol(cp, &end_ptr, base);
-    if (end_ptr == cp || errno != 0 || l > INT_MAX || l < INT_MIN)
-    {
-    	WARN("Error parsing character code '%s'\n", sz);
-	return TRUE;
-    }
-
-    metrics->C = (INT)l;
-    return TRUE;
-}
-
-/*******************************************************************************
  *  ParseW
  *
  *  Fatal error:    	return FALSE (none defined)
@@ -763,12 +729,10 @@ static BOOL ParseN(LPSTR sz, OLD_AFMMETRICS *metrics)
     if (!pug)
     {
         FIXME("unsupported glyph name: %s\n", cp);
-        metrics->N = NULL;
         metrics->UV = -1;
     }
     else
     {
-        metrics->N = pug->name;
         metrics->UV = pug->UV;
     }
 
@@ -785,12 +749,9 @@ static BOOL ParseN(LPSTR sz, OLD_AFMMETRICS *metrics)
  */
 static const OLD_AFMMETRICS badmetrics =
 {
-    INT_MAX,	    	    	    	    	    /* C */
-    INT_MAX,	    	    	    	    	    /* UV */
+    -1,		    	    	    	    	    /* UV */
     FLT_MAX,	    	    	    	    	    /* WX */
-    NULL,   	    	    	    	    	    /* N */
     { FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX }, 	    /* B */
-    NULL    	    	    	    	    	    /* L */
 };
 
 static BOOL ParseCharMetrics(LPSTR buffer, INT len, OLD_AFMMETRICS *metrics)
@@ -806,10 +767,6 @@ static BOOL ParseCharMetrics(LPSTR buffer, INT len, OLD_AFMMETRICS *metrics)
 
 	switch(*cp)
 	{
-	    case 'C':	if (ParseC(cp, metrics) == FALSE)
-	    	    	    return FALSE;
-	    	    	break;
-
 	    case 'W':	if (ParseW(cp, metrics) == FALSE)
 	    	    	    return FALSE;
 	    	    	break;
@@ -833,8 +790,7 @@ static BOOL ParseCharMetrics(LPSTR buffer, INT len, OLD_AFMMETRICS *metrics)
 	++cp;
     }
 
-    if (metrics->C == INT_MAX || metrics->WX == FLT_MAX || metrics->N == NULL ||
-    	    metrics->B.ury == FLT_MAX)
+    if (metrics->WX == FLT_MAX || metrics->UV == -1 || metrics->B.ury == FLT_MAX)
     {
     	*metrics = badmetrics;
 	return TRUE;
@@ -972,7 +928,7 @@ static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	if(len > 0)
 	{
 	    retval = ParseCharMetrics(buffer, len, old_metrics + i);
-	    if (retval == FALSE || old_metrics[i].C == INT_MAX)
+	    if (retval == FALSE || old_metrics[i].UV == -1)
 	    	goto cleanup_old_metrics;
 
 	    continue;
