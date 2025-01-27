@@ -1752,10 +1752,7 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 #define STATE_SCISSORRECT (STATE_VIEWPORT + 1)
 #define STATE_IS_SCISSORRECT(a) ((a) == STATE_SCISSORRECT)
 
-#define STATE_CLIPPLANE(a) (STATE_SCISSORRECT + 1 + (a))
-#define STATE_IS_CLIPPLANE(a) ((a) >= STATE_CLIPPLANE(0) && (a) <= STATE_CLIPPLANE(WINED3D_MAX_CLIP_DISTANCES - 1))
-
-#define STATE_RASTERIZER (STATE_CLIPPLANE(WINED3D_MAX_CLIP_DISTANCES))
+#define STATE_RASTERIZER (STATE_SCISSORRECT + 1)
 #define STATE_IS_RASTERIZER(a) ((a) == STATE_RASTERIZER)
 
 #define STATE_DEPTH_BOUNDS (STATE_RASTERIZER + 1)
@@ -2819,6 +2816,9 @@ struct wined3d_ffp_vs_constants
         struct wined3d_color ambient;
         struct wined3d_light_constants lights[8];
     } light;
+
+    /* States not used by the HLSL pipeline. */
+    struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];
 };
 
 struct wined3d_ffp_ps_constants
@@ -2971,7 +2971,6 @@ struct wined3d_state
     uint32_t texture_states[WINED3D_MAX_FFP_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
     struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
-    struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];
     struct wined3d_viewport viewports[WINED3D_MAX_VIEWPORTS];
     unsigned int viewport_count;
     RECT scissor_rects[WINED3D_MAX_VIEWPORTS];
@@ -3766,8 +3765,6 @@ void wined3d_device_context_emit_reset_state(struct wined3d_device_context *cont
 void wined3d_device_context_emit_set_blend_state(struct wined3d_device_context *context,
         struct wined3d_blend_state *state, const struct wined3d_color *blend_factor,
         unsigned int sample_mask);
-void wined3d_device_context_emit_set_clip_plane(struct wined3d_device_context *context, unsigned int plane_idx,
-        const struct wined3d_vec4 *plane);
 void wined3d_device_context_emit_set_constant_buffers(struct wined3d_device_context *context,
         enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
         const struct wined3d_constant_buffer_state *buffers);

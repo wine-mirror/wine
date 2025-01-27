@@ -119,7 +119,6 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_RENDER_STATE,
     WINED3D_CS_OP_SET_TEXTURE_STATE,
     WINED3D_CS_OP_SET_TRANSFORM,
-    WINED3D_CS_OP_SET_CLIP_PLANE,
     WINED3D_CS_OP_SET_COLOR_KEY,
     WINED3D_CS_OP_SET_LIGHT,
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
@@ -387,13 +386,6 @@ struct wined3d_cs_set_transform
     struct wined3d_matrix matrix;
 };
 
-struct wined3d_cs_set_clip_plane
-{
-    enum wined3d_cs_op opcode;
-    UINT plane_idx;
-    struct wined3d_vec4 plane;
-};
-
 struct wined3d_cs_set_light
 {
     enum wined3d_cs_op opcode;
@@ -621,7 +613,6 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_RENDER_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TRANSFORM);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_CLIP_PLANE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_COLOR_KEY);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_LIGHT);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_LIGHT_ENABLE);
@@ -1968,27 +1959,6 @@ void wined3d_device_context_emit_set_transform(struct wined3d_device_context *co
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static void wined3d_cs_exec_set_clip_plane(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_set_clip_plane *op = data;
-
-    cs->state.clip_planes[op->plane_idx] = op->plane;
-    device_invalidate_state(cs->c.device, STATE_CLIPPLANE(op->plane_idx));
-}
-
-void wined3d_device_context_emit_set_clip_plane(struct wined3d_device_context *context,
-        unsigned int plane_idx, const struct wined3d_vec4 *plane)
-{
-    struct wined3d_cs_set_clip_plane *op;
-
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_CLIP_PLANE;
-    op->plane_idx = plane_idx;
-    op->plane = *plane;
-
-    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
-}
-
 static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_color_key *op = data;
@@ -3063,7 +3033,6 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_RENDER_STATE            */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE           */ wined3d_cs_exec_set_texture_state,
     /* WINED3D_CS_OP_SET_TRANSFORM               */ wined3d_cs_exec_set_transform,
-    /* WINED3D_CS_OP_SET_CLIP_PLANE              */ wined3d_cs_exec_set_clip_plane,
     /* WINED3D_CS_OP_SET_COLOR_KEY               */ wined3d_cs_exec_set_color_key,
     /* WINED3D_CS_OP_SET_LIGHT                   */ wined3d_cs_exec_set_light,
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE            */ wined3d_cs_exec_set_light_enable,

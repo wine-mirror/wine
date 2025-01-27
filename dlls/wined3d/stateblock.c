@@ -2727,24 +2727,6 @@ static void wined3d_device_set_light_enable(struct wined3d_device *device, unsig
         wined3d_device_context_emit_set_light_enable(&device->cs->c, light_idx, enable);
 }
 
-static void wined3d_device_set_clip_plane(struct wined3d_device *device,
-        unsigned int plane_idx, const struct wined3d_vec4 *plane)
-{
-    struct wined3d_vec4 *clip_planes = device->cs->c.state->clip_planes;
-
-    TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
-
-    if (!memcmp(&clip_planes[plane_idx], plane, sizeof(*plane)))
-    {
-        TRACE("Application is setting old values over, nothing to do.\n");
-        return;
-    }
-
-    clip_planes[plane_idx] = *plane;
-
-    wined3d_device_context_emit_set_clip_plane(&device->cs->c, plane_idx, plane);
-}
-
 static void resolve_depth_buffer(struct wined3d_device *device)
 {
     const struct wined3d_state *state = device->cs->c.state;
@@ -3735,6 +3717,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     map = changed->clipplane;
     while (map)
     {
+        struct wined3d_vec4 plane;
+
         i = wined3d_bit_scan(&map);
 
         /* In Direct3D, clipping is done based on the position as transformed
@@ -3757,17 +3741,19 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         if (!state->vs)
         {
             struct wined3d_matrix matrix;
-            struct wined3d_vec4 plane;
 
             invert_matrix(&matrix, &state->transforms[WINED3D_TS_VIEW]);
             transpose_matrix(&matrix, &matrix);
             wined3d_vec4_transform(&plane, &state->clip_planes[i], &matrix);
-            wined3d_device_set_clip_plane(device, i, &plane);
         }
         else
         {
-            wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
+            plane = state->clip_planes[i];
         }
+
+        wined3d_device_context_push_constants(context,
+                WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_VS_CLIP_PLANES,
+                offsetof(struct wined3d_ffp_vs_constants, clip_planes[i]), sizeof(plane), &plane);
     }
 
     if (changed->material)
